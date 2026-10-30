@@ -132,6 +132,13 @@ export interface HealEffect {
    * in this way". None destroyed: no heal.
    */
   readonly perDestroyedSpirit?: true;
+  /**
+   * The amount is per point of the base energy cost of the skill the
+   * trigger answers, rounded half up (#1614): Aura of Restoration's
+   * "healed for 200...400% of the Energy cost each time you cast a spell".
+   * No energy cost, or no such skill: no heal.
+   */
+  readonly perUsedSkillEnergy?: true;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -177,6 +184,12 @@ export interface EnergyGainToCaster {
    * already above gains nothing and loses nothing. Absent: its maximum.
    */
   readonly upTo?: number;
+  /**
+   * Per point of the base energy cost of the skill the trigger answers,
+   * rounded half up (#1614): Fire Attunement's "30% of the base Energy
+   * cost of the skill". No energy cost, or no such skill: no gain.
+   */
+  readonly perUsedSkillEnergy?: true;
   readonly toTarget?: never;
 }
 
@@ -254,12 +267,13 @@ export interface SacrificeHealthEffect {
  * an earlier `remove-status` of this use took off the target (#944), as
  * Rend Enchantments' "for each Monk enchantment removed, you lose
  * 55...31...25 Health". Not damage: never mitigated, and it can kill, as
- * a sacrifice.
+ * a sacrifice. `perRemovedOfProfession` `undefined`: `amount` once,
+ * flat (#1550), as Wanderlust's spirit's "loses 70...50 Health".
  */
 export interface LoseHealthEffect {
   readonly kind: "lose-health";
   readonly amount: Magnitude;
-  readonly perRemovedOfProfession: ProfessionId;
+  readonly perRemovedOfProfession: ProfessionId | undefined;
 }
 
 /**
@@ -467,6 +481,16 @@ export interface DrainOwnEnergyEffect {
 }
 
 /**
+ * The target suffers `amount` overcast (#1580), through `addOvercast`:
+ * Exhausting Assault's "target foe suffers 10 Overcast". Its energy
+ * ceiling drops; any energy above the new ceiling is lost.
+ */
+export interface OvercastEffect {
+  readonly kind: "overcast";
+  readonly amount: Magnitude;
+}
+
+/**
  * The caster gains a status, with itself as source (#1367): Ice Spear's
  * "you gain +1...4 Health regeneration for 5 seconds". Acts on the caster,
  * once however many targets the skill reached, as GW1's "you gain" does.
@@ -610,11 +634,12 @@ export type DisableOwnSkillsEffect =
 /**
  * Leave the caster's chain mark of `role` on the target (#1234), as a
  * chain attack's hit does (`chain.ts`), from a skill that is no attack:
- * Iron Palm's "counts as a lead attack".
+ * Iron Palm's "counts as a lead attack", Mantis Touch's "counts as an
+ * off-hand attack" (#1580).
  */
 export interface ChainMarkEffect {
   readonly kind: "chain-mark";
-  readonly role: "lead";
+  readonly role: "lead" | "off-hand";
 }
 
 /**
@@ -650,6 +675,26 @@ export interface CreatureTemplate {
    * the owner (GW1's pet, #1046); `undefined`: nothing happens to the owner.
    */
   readonly ownerDisableOnDeath: Magnitude | undefined;
+  /** What its death does round it (#1550); `undefined`: nothing. */
+  readonly deathBurst: DeathBurst | undefined;
+}
+
+/**
+ * A spirit's last act (#1550), as Destruction's "when this spirit dies,
+ * foes in the area take 1...10 damage for each second this spirit was
+ * alive" or Life's heal: killed, destroyed or at the end of its lifespan,
+ * every living non-spirit of `affects` within `radius` of it takes, or
+ * is healed, `perSecondAlive` × its whole seconds alive, at most `max`.
+ * Damage is typeless, from its owner.
+ */
+export interface DeathBurst {
+  readonly effect: "damage" | "heal";
+  /** Scaled by its owner, read once at summoning (#1603). */
+  readonly perSecondAlive: Magnitude;
+  /** `undefined`: no cap. */
+  readonly max: number | undefined;
+  readonly affects: "allies" | "foes";
+  readonly radius: number;
 }
 
 /**
@@ -685,8 +730,30 @@ export type CreatureDamageScaling =
   | { readonly kind: "weapon-mastery" }
   | { readonly kind: "rank"; readonly atZero: number };
 
-/** What a blow lands on whoever it hits (#1239): Shadowsong's blindness, Dissonance's interrupt. */
-export type OnHitEffect = ApplyStatusEffect | InterruptEffect | RemoveStatusEffect;
+/**
+ * What a blow lands on whoever it hits (#1239): Shadowsong's blindness,
+ * Dissonance's interrupt; Bloodsong's life steal, Anguish's damage on a
+ * hexed foe and Wanderlust's knockdown, paid in the spirit's own Health
+ * (#1550). The attacker is the caster: it steals, and it pays.
+ */
+export type OnHitEffect = UnconditionalOnHitEffect | ConditionalOnHitEffect;
+
+/** Every on-hit effect but `if`: what an on-hit `if` may hold. */
+export type UnconditionalOnHitEffect =
+  | ApplyStatusEffect
+  | InterruptEffect
+  | RemoveStatusEffect
+  | DamageEffect
+  | LifeStealEffect
+  | KnockdownEffect
+  | LoseHealthEffect;
+
+/** An `if` (#1550) holding only on-hit effects. */
+export interface ConditionalOnHitEffect {
+  readonly kind: "if";
+  readonly condition: EffectCondition;
+  readonly effects: readonly UnconditionalOnHitEffect[];
+}
 
 /**
  * A minion's GW1 level with its summoner at rank 0 and 12 in the
@@ -902,6 +969,11 @@ export type StateCondition =
    */
   | { readonly kind: "caster-wields"; readonly weapon: AttackWeaponClass }
   /**
+   * The caster holds a shield in the set in hand (#1592): Shield Bash's
+   * "while wielding a shield". A focus is no shield.
+   */
+  | { readonly kind: "caster-holds-shield" }
+  /**
    * The effect's target has less health than the caster, absolute, not a
    * share (#939): Victorious Sweep's "if target foe has less Health than
    * you". Equal is not less.
@@ -995,6 +1067,7 @@ export type UnconditionalEffect =
   | ResurrectEffect
   | ResurrectCompanionsEffect
   | DrainOwnEnergyEffect
+  | OvercastEffect
   | CasterGainsStatusEffect
   | RechargeFasterEffect
   | SplashEffect
@@ -1336,6 +1409,12 @@ export interface Skill {
 export interface CorpseRule {
   /** The nearest fresh corpse within this of the caster, world units. */
   readonly radius: number;
+  /**
+   * `target`: nearest the cast's target instead, within `radius` of it
+   * (#1583): Putrid Explosion's "the corpse nearest your target". Absent:
+   * nearest the caster.
+   */
+  readonly near?: "target";
 }
 
 /** How a flying spell flies (#535). */

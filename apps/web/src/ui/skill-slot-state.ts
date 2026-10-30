@@ -8,6 +8,7 @@ import {
   isCompanionRule,
   isSpell,
   isWeaponId,
+  preventsAttacks,
   preventsSpells,
   targetLivenessAllows,
   targetRuleAllows,
@@ -209,16 +210,21 @@ export function wrongWeapon(
 }
 
 /**
- * Which slots hold a spell `self` cannot start (#1234): a hex such as
- * Shroud of Silence bars them, the same check activation makes
- * (`preventsSpells`), so the dimmed slot and the refusal agree. A hint,
+ * Which slots hold a skill `self` cannot start: a spell while a hex such
+ * as Shroud of Silence bars them (#1234), an attack skill while Obsidian
+ * Flesh does (#1575). The same checks activation makes (`preventsSpells`,
+ * `preventsAttacks`), so the dimmed slot and the refusal agree. A hint,
  * not a gate.
  */
 export function silenced(skillBar: readonly (SkillSlot | null)[], self: PlayerSnapshot): boolean[] {
-  const barred = preventsSpells(self.statuses);
+  const noSpells = preventsSpells(self.statuses);
+  const noAttacks = preventsAttacks(self.statuses);
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
-    return barred && skill !== undefined && isSpell(skill.type);
+    return (
+      skill !== undefined &&
+      ((noSpells && isSpell(skill.type)) || (noAttacks && skill.type === "attack"))
+    );
   });
 }
 

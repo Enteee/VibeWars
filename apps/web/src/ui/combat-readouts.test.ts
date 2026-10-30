@@ -10,6 +10,7 @@ import {
   describeCombatEvent,
   dividerRow,
   floatingCueFor,
+  foldedText,
   formatAmount,
   formatRate,
   formatSimClock,
@@ -283,6 +284,11 @@ describe("describeCombatEvent", () => {
     };
     expect(describeCombatEvent(entry([interrupted]), interrupted, nameOf, isCreature)).toBe(
       "Fireball (Pyro) interrupts Caster dummy's Fireball",
+    );
+    // A plain swing Clumsiness cancelled (#1593).
+    const swing: CombatEvent = { kind: "attack-interrupted", targetId: "dummy" };
+    expect(describeCombatEvent(entry([swing]), swing, nameOf, isCreature)).toBe(
+      "Fireball (Pyro) interrupts Caster dummy's attack",
     );
     const missed: CombatEvent = { kind: "attack-missed", targetId: "dummy" };
     expect(describeCombatEvent(entry([missed]), missed, nameOf, isCreature)).toBe(
@@ -628,6 +634,15 @@ describe("appendRows", () => {
       expect(replacedLast).toBe(false);
     });
 
+    it("says no span for a fold of rows closed at the same time (#1618)", () => {
+      expect(appendRows([], [regen(12, 3), regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([
+        "regeneration heals Pyro for 6",
+      ]);
+      const fold = { key: "k", amount: 3, startedAt: 12, endedAt: 12, label: "heals" };
+      expect(foldedText(fold)).toBe("heals for 3");
+      expect(foldedText({ ...fold, amount: 57, endedAt: 31 })).toBe("heals for 57 over 19 s");
+    });
+
     it("lets a hit or a divider end the run", () => {
       const between = [row("hit"), dividerRow("re-armed", 13)];
       for (const other of between) {
@@ -765,6 +780,11 @@ describe("floatingCueFor", () => {
 
   it("calls out interrupts and deaths, and floats nothing for statuses", () => {
     expect(floatingCueFor("interrupted", undefined, false)).toEqual({
+      text: "interrupted!",
+      tone: "neutral",
+      critical: false,
+    });
+    expect(floatingCueFor("attack-interrupted", undefined, false)).toEqual({
       text: "interrupted!",
       tone: "neutral",
       critical: false,

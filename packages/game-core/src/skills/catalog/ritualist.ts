@@ -1,12 +1,13 @@
 import {
   AREA_ADJACENT,
   AREA_EARSHOT,
+  AREA_IN_THE_AREA,
   AREA_NEARBY,
   RANGE_MELEE,
   RANGE_SPELL,
   RANGE_SPIRIT,
 } from "../../distances.js";
-import type { Skill } from "../types.js";
+import { KNOCKDOWN_SECONDS, type CreatureTemplate, type DeathBurst, type Skill } from "../types.js";
 import { attackingSpirit, protectiveSpirit } from "./shared.js";
 
 export const RITUALIST_SKILLS: readonly Skill[] = [
@@ -460,6 +461,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           aura: { statusId: "recuperation", affects: "allies", radius: RANGE_SPIRIT },
           onDeath: "vanish",
           ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
         },
       },
     ],
@@ -496,6 +498,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: attackingSpirit(
           "Pain",
+          "ritualist.communing",
           182,
           { scaling: { attributeId: "ritualist.communing", atZero: 30, atTwelve: 126 } },
           { atZero: 5, atTwelve: 25 },
@@ -534,9 +537,14 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       {
         kind: "summon",
         count: 1,
-        creature: attackingSpirit("Shadowsong", 150, { flat: 30 }, { atZero: 5, atTwelve: 17 }, [
-          { kind: "apply-status", statusId: "blind", durationSeconds: 5 },
-        ]),
+        creature: attackingSpirit(
+          "Shadowsong",
+          "ritualist.communing",
+          150,
+          { flat: 30 },
+          { atZero: 5, atTwelve: 17 },
+          [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
+        ),
       },
     ],
   },
@@ -572,6 +580,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: attackingSpirit(
           "Dissonance",
+          "ritualist.communing",
           182,
           { scaling: { attributeId: "ritualist.communing", atZero: 10, atTwelve: 22 } },
           { atZero: 5, atTwelve: 17 },
@@ -612,6 +621,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: attackingSpirit(
           "Disenchantment",
+          "ritualist.communing",
           182,
           { scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 35 } },
           { atZero: 5, atTwelve: 17 },
@@ -653,6 +663,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: protectiveSpirit(
           "Shelter",
+          "ritualist.communing",
           182,
           { atZero: 30, atTwelve: 54 },
           "shelter",
@@ -692,7 +703,14 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       {
         kind: "summon",
         count: 1,
-        creature: protectiveSpirit("Union", 182, { atZero: 30, atTwelve: 54 }, "union", "allies"),
+        creature: protectiveSpirit(
+          "Union",
+          "ritualist.communing",
+          182,
+          { atZero: 30, atTwelve: 54 },
+          "union",
+          "allies",
+        ),
       },
     ],
   },
@@ -729,6 +747,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: protectiveSpirit(
           "Displacement",
+          "ritualist.communing",
           214,
           { atZero: 30, atTwelve: 54 },
           "displacement",
@@ -770,6 +789,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         count: 1,
         creature: protectiveSpirit(
           "Earthbind",
+          "ritualist.communing",
           214,
           { atZero: 15, atTwelve: 39 },
           "earthbind",
@@ -1685,4 +1705,268 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "Hold Li Ming's ashes for 5...20 seconds": 17.
     effects: [{ kind: "apply-status", statusId: "pure-was-li-ming", durationSeconds: 17 }],
   },
+  // Ritualist spirits (#1550): on-hit effects past a status, and death bursts.
+  bindingRitual({
+    id: "ritualist.bloodsong",
+    name: "Bloodsong",
+    gwId: 1253,
+    elite: false,
+    attributeId: "ritualist.channeling-magic",
+    energy: 5,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    // PvP: "Create a level 1...8 spirit who dies after 30...150 seconds.
+    // Attacks by that spirit steal up to 5...25 Health." At 12: level 6.6,
+    // 126 s, 21 stolen; its blow itself deals nothing.
+    creature: attackingSpirit(
+      "Bloodsong",
+      "ritualist.channeling-magic",
+      182,
+      { scaling: { attributeId: "ritualist.channeling-magic", atZero: 30, atTwelve: 126 } },
+      { atZero: 0, atTwelve: 0 },
+      [
+        {
+          kind: "life-steal",
+          amount: {
+            scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 21 },
+          },
+        },
+      ],
+    ),
+  }),
+  bindingRitual({
+    id: "ritualist.anguish",
+    name: "Anguish",
+    gwId: 1745,
+    elite: false,
+    attributeId: "ritualist.communing",
+    energy: 25,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    // PvP: "Create a level 1...7 spirit. This spirit's attacks deal 5...20
+    // damage and deal double damage to hexed foes. This spirit dies after
+    // 15...45 seconds." At 12: level 5.8, 17 damage, 39 s; the double is a
+    // second 17, mitigated apart.
+    creature: attackingSpirit(
+      "Anguish",
+      "ritualist.communing",
+      166,
+      { scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 39 } },
+      { atZero: 5, atTwelve: 17 },
+      [
+        {
+          kind: "if",
+          condition: { kind: "target-has", category: "hex" },
+          effects: [
+            {
+              kind: "damage",
+              amount: { scaling: { attributeId: "ritualist.communing", atZero: 5, atTwelve: 17 } },
+              type: "piercing",
+              armorPenetration: 0,
+            },
+          ],
+        },
+      ],
+    ),
+  }),
+  bindingRitual({
+    id: "ritualist.wanderlust",
+    name: "Wanderlust",
+    gwId: 1255,
+    elite: true,
+    attributeId: "ritualist.communing",
+    energy: 10,
+    activationSeconds: 3,
+    rechargeSeconds: 45,
+    // PvP: "Create a level 1...8 spirit. Whenever this spirit's attack hits
+    // a stationary foe, that foe is knocked down and the spirit loses
+    // 70...50 Health. This spirit dies after 30...60 seconds." At 12:
+    // level 6.6, 54 s, 54 a knockdown; its blow itself deals nothing.
+    creature: attackingSpirit(
+      "Wanderlust",
+      "ritualist.communing",
+      182,
+      { scaling: { attributeId: "ritualist.communing", atZero: 30, atTwelve: 54 } },
+      { atZero: 0, atTwelve: 0 },
+      [
+        {
+          kind: "if",
+          condition: { kind: "target-not-moving" },
+          effects: [
+            { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+            {
+              kind: "lose-health",
+              amount: { scaling: { attributeId: "ritualist.communing", atZero: 70, atTwelve: 54 } },
+              perRemovedOfProfession: undefined,
+            },
+          ],
+        },
+      ],
+    ),
+  }),
+  bindingRitual({
+    id: "ritualist.soothing",
+    name: "Soothing",
+    gwId: 1266,
+    elite: false,
+    attributeId: "ritualist.communing",
+    energy: 25,
+    activationSeconds: 5,
+    rechargeSeconds: 60,
+    // PvP: "Create a level 1...8 spirit. All foes within its range take
+    // twice as long to build adrenaline. This spirit dies after 15...45
+    // seconds." At 12: level 6.6, 39 s.
+    creature: protectiveSpirit(
+      "Soothing",
+      "ritualist.communing",
+      182,
+      { atZero: 15, atTwelve: 39 },
+      "soothing",
+      "foes",
+    ),
+  }),
+  bindingRitual({
+    id: "ritualist.destruction",
+    name: "Destruction",
+    gwId: 920,
+    elite: false,
+    attributeId: "ritualist.channeling-magic",
+    energy: 10,
+    activationSeconds: 3,
+    rechargeSeconds: 20,
+    // PvP: "Create a level 1...10 Spirit that dies after 30 seconds. When
+    // this Spirit dies, all foes in the area take 1...10 damage for each
+    // second the Spirit was alive (maximum of 150 damage)." At 12: level
+    // 8.2, 8 a second: a rank's number is whole, as GW1 prints it.
+    creature: burstingSpirit("Destruction", "ritualist.channeling-magic", 30, {
+      effect: "damage",
+      perSecondAlive: {
+        scaling: { attributeId: "ritualist.channeling-magic", atZero: 1, atTwelve: 8.2 },
+      },
+      max: 150,
+      affects: "foes",
+      radius: AREA_IN_THE_AREA,
+    }),
+  }),
+  bindingRitual({
+    id: "ritualist.life",
+    name: "Life",
+    gwId: 1251,
+    elite: false,
+    attributeId: "ritualist.restoration-magic",
+    energy: 10,
+    activationSeconds: 3,
+    rechargeSeconds: 20,
+    // PvP: "Create a level 1...10 spirit. When this spirit dies, all
+    // non-spirit allies within its range are healed for 1...7 Health for
+    // each second this spirit was alive. This spirit dies after 20
+    // seconds." At 12: level 8.2, 6 a second.
+    creature: burstingSpirit("Life", "ritualist.restoration-magic", 20, {
+      effect: "heal",
+      perSecondAlive: {
+        scaling: { attributeId: "ritualist.restoration-magic", atZero: 1, atTwelve: 5.8 },
+      },
+      max: undefined,
+      affects: "allies",
+      radius: RANGE_SPIRIT,
+    }),
+  }),
+  {
+    id: "ritualist.xinraes-weapon",
+    name: "Xinrae's Weapon",
+    gwId: 1750,
+    type: "weapon-spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8 seconds, the next time target ally takes damage from a foe
+    // that damage is limited to 5% of that ally's max Health and that ally
+    // steals up to 20...80 Health from that foe": the cap and the 68 are
+    // the status's.
+    effects: [{ kind: "apply-status", statusId: "xinraes-weapon", durationSeconds: 8 }],
+  },
 ];
+
+/**
+ * A binding ritual that makes one spirit (#1550), Ritualist, cast on
+ * yourself: what every spirit skill shares, round its creature.
+ */
+function bindingRitual(ritual: {
+  readonly id: string;
+  readonly name: string;
+  readonly gwId: number;
+  readonly elite: boolean;
+  readonly attributeId: string;
+  readonly energy: number;
+  readonly activationSeconds: number;
+  readonly rechargeSeconds: number;
+  readonly creature: CreatureTemplate;
+}): Skill {
+  return {
+    id: ritual.id,
+    name: ritual.name,
+    gwId: ritual.gwId,
+    type: "binding-ritual",
+    elite: ritual.elite,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: ritual.attributeId,
+    cost: { kind: "energy", amount: ritual.energy },
+    overcast: 0,
+    activationSeconds: ritual.activationSeconds,
+    rechargeSeconds: ritual.rechargeSeconds,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    effects: [{ kind: "summon", count: 1, creature: ritual.creature }],
+  };
+}
+
+/**
+ * A level 1...10 spirit that does nothing while it lives and bursts as it
+ * leaves (#1550): Destruction's and Life's, 214 Health at 12 in
+ * `attributeId`, armor 51, for `seconds` flat.
+ */
+function burstingSpirit(
+  name: string,
+  attributeId: string,
+  seconds: number,
+  deathBurst: DeathBurst,
+): CreatureTemplate {
+  return {
+    kind: "spirit",
+    look: "spirit",
+    name,
+    maxHealth: { scaling: { attributeId, atZero: 70, atTwelve: 214 } },
+    armor: { flat: 51 },
+    attack: undefined,
+    durationSeconds: { flat: seconds },
+    behaviour: { kind: "idle" },
+    aura: undefined,
+    onDeath: "vanish",
+    ownerDisableOnDeath: undefined,
+    deathBurst,
+  };
+}

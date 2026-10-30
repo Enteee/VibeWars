@@ -286,6 +286,13 @@ export interface StatusDefinition {
    */
   readonly preventsSpells: boolean;
   /**
+   * The bearer cannot attack (#1575): Obsidian Flesh's "cannot attack". It
+   * starts no auto-attack, a queued one stops, and an attack skill is
+   * refused before anything is paid. An attack skill already being used
+   * goes off; a spell or a touch skill is left alone.
+   */
+  readonly preventsAttacks: boolean;
+  /**
    * A foe of the bearer cannot start a spell with the bearer as its target
    * (#1511): Spell Breaker's "cannot be the target of enemy spells". A cast
    * already started goes off; an area or a splash still reaches the
@@ -348,6 +355,13 @@ export interface StatusDefinition {
    * bearer's own status, so allies sharing a shout wear theirs out apart.
    */
   readonly endsAfterAttacks: number | undefined;
+  /**
+   * The bearer's next this many attacks cannot be blocked, and then it
+   * ends (#1604): Guiding Hands'. One swing or one attack skill spends 1,
+   * hit or miss, a cleave's and a double strike's blows included; a shot
+   * keeps what it was released with. `undefined`: blocks as ever.
+   */
+  readonly unblockableAttacks: number | undefined;
   /**
    * Effects on whoever the bearer's physical attacks hit while it lasts
    * (#525): a preparation's rider, as Apply Poison's poison. Applied
@@ -465,6 +479,14 @@ export interface StatusDefinition {
    * `damageTakenMultiplier` (#1108): Call of Protection's 17. Never below 0.
    */
   readonly damageReduction: number;
+  /**
+   * As `damageReduction`, by the bearer's rank in `attributeId` (#1592):
+   * `perRank` a rank, at most `max`, Shield Stance's "reduced by 2 for each
+   * rank of Strength (maximum 15)". Read as each packet lands, so a
+   * Tactics-only bearer takes nothing off. `undefined`: none.
+   */
+  readonly damageReductionPerRank:
+    { readonly attributeId: string; readonly perRank: number; readonly max: number } | undefined;
   /**
    * The share of each physical hit on the bearer that its source takes
    * instead (#1108): Symbiotic Bond's 0.5, rounded down. 0: none.
@@ -597,6 +619,12 @@ export interface StatusDefinition {
    */
   readonly renewsOnChantOrShoutEnd: boolean;
   /**
+   * Whenever the bearer casts a spell, its remaining time is back to the
+   * duration it was applied with (#1614): Kinetic Armor's "whenever you
+   * cast a spell, Kinetic Armor is renewed for 12 seconds".
+   */
+  readonly renewsOnBearerSpell: boolean;
+  /**
    * It ends once its triggers have fired this many times (#1423): Finale
    * of Restoration's "the next 5 times". `undefined`: no such limit.
    */
@@ -635,6 +663,13 @@ export interface StatusDefinition {
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
   | "bearer-attacks"
+  /**
+   * The bearer begins an attack (#1593), before it resolves: an attack
+   * skill as its activation begins, a plain swing at its blow, before an
+   * arrow leaves or the blow lands. Fired by the simulation. What answers
+   * may cancel it (`cancel-attack`); a cancelled blow never `attacks`.
+   */
+  | "bearer-attack-begins"
   | "bearer-uses-skill"
   | "bearer-hits"
   /**
@@ -719,6 +754,13 @@ export type StatusTriggerEvent =
    * bearer's have ended with it. An echo's.
    */
   | "bearer-chant-or-shout-ends"
+  /**
+   * The bearer has no energy left (#1583): checked each step, after
+   * upkeep, so it fires every step it stays at 0 until the status ends.
+   * Wither's "if target foe's Energy reaches 0", which ends when triggered.
+   * A dead bearer never answers.
+   */
+  | "bearer-energy-empty"
   | "ends"
   /**
    * It ended before its time ran out (#1421): stripped, cut short by its
@@ -830,12 +872,17 @@ export interface StatusTrigger {
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
-   * Pride's. Absent: any skill.
+   * Pride's. With `adrenal`, only one paid for in adrenaline (#1592): Rage of
+   * the Ntouka's "whenever you use an adrenal skill". With `attribute`, only
+   * a skill of that attribute (#1614): Fire Attunement's "each time you use
+   * Fire Magic". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
+    readonly attribute?: string;
     readonly profession?: ProfessionId;
     readonly elite?: true;
+    readonly adrenal?: true;
   };
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
@@ -884,8 +931,22 @@ export interface EchoEffect {
   readonly seconds: number;
 }
 
-/** What a trigger can do: any skill effect, Contagion's spread or an echo. */
-export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect | EchoEffect;
+/**
+ * Clumsiness's interrupt (#1593): the attack the bearer is beginning, on
+ * `bearer-attack-begins`, is interrupted. An attack skill is, as by an
+ * `interrupt`, and recharges; a plain swing never lands, and its swing
+ * timer starts over. Answering any other event, it does nothing.
+ */
+export interface CancelAttackEffect {
+  readonly kind: "cancel-attack";
+}
+
+/**
+ * What a trigger can do: any skill effect, Contagion's spread, an echo or
+ * a cancelled attack.
+ */
+export type TriggerEffect =
+  SkillEffect | SpreadGainedConditionEffect | EchoEffect | CancelAttackEffect;
 
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
@@ -1095,6 +1156,8 @@ export interface ActiveStatus {
   attacksLeft: number | undefined;
   /** The bearer's hits before it ends (`endsAfterHits`); `undefined`: no such limit. */
   hitsLeft: number | undefined;
+  /** The bearer's unblockable attacks before it ends (`unblockableAttacks`); `undefined`: none. */
+  unblockableLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
@@ -1458,6 +1521,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
+      unblockableLeft: definition.unblockableAttacks,
       spellsLeft: definition.nextSpells?.count,
       skillsLeft: definition.nextSkill?.count,
       triggersLeft: definition.endsAfterTriggers,
@@ -1505,6 +1569,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1536,6 +1601,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1567,6 +1633,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1586,6 +1653,15 @@ export class StatusSet {
       multiplier *= getStatusDefinition(id).chantShoutDurationMultiplier;
     }
     return multiplier;
+  }
+
+  /** The bearer cast a spell (#1614): every status that renews on that is renewed. */
+  public castSpell(): void {
+    for (const status of this.#statuses.values()) {
+      if (getStatusDefinition(status.id).renewsOnBearerSpell) {
+        status.remainingSeconds = status.durationSeconds;
+      }
+    }
   }
 
   /**
@@ -1797,6 +1873,27 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer attacked (#1604): whether a status of its own makes this
+   * attack unblockable, each such status one attack fewer, and the ids
+   * that ended on it.
+   */
+  public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
+    let unblockable = false;
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      if (status.unblockableLeft !== undefined && status.unblockableLeft > 0) {
+        unblockable = true;
+        status.unblockableLeft -= 1;
+        if (status.unblockableLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    this.#end(ended);
+    return { unblockable, ended };
   }
 
   /**
@@ -2077,6 +2174,15 @@ export function untargetableByFoeSpells(statuses: readonly Pick<ActiveStatus, "i
  */
 export function preventsSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
   return statuses.some(({ id }) => getStatusDefinition(id).preventsSpells);
+}
+
+/**
+ * Whether a bearer of `statuses` cannot attack (#1575, `preventsAttacks`).
+ * The server's refusal of a swing or an attack skill and the skill bar's
+ * dimming all ask this, so they cannot disagree.
+ */
+export function preventsAttacks(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).preventsAttacks);
 }
 
 /**

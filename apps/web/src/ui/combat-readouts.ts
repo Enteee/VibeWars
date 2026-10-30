@@ -68,6 +68,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "upkeep-lost":
       return "status";
     case "interrupted":
+    case "attack-interrupted":
     case "cancelled":
     case "spell-failed":
     case "interrupt-missed":
@@ -215,6 +216,8 @@ export function describeCombatEvent(
       return `${target} catches ${STATUS_DEFINITIONS[event.statusId].name} from ${nameOf(event.fromId)}`;
     case "interrupted":
       return `${by} interrupts ${target}'s ${skillName(event.skillId) ?? event.skillId}`;
+    case "attack-interrupted":
+      return `${by} interrupts ${target}'s attack`;
     case "cancelled":
       return `${target} cancels ${skillName(event.skillId) ?? event.skillId}`;
     case "spell-failed":
@@ -434,10 +437,14 @@ export function dividerRow(label: string, atSeconds: number): LogRow {
   return { time: formatSimClock(atSeconds), text: `── ${label} ──`, tone: "divider" };
 }
 
-/** A folded run's text: "regeneration heals You for 57 over 19 s". */
+/**
+ * A folded run's text: "regeneration heals You for 57 over 19 s". A run
+ * of one tick has no span, so no tail (#1618).
+ */
 export function foldedText(fold: LogFold): string {
-  const seconds = formatAmount(fold.endedAt - fold.startedAt);
-  return `${fold.label} for ${formatAmount(fold.amount)} over ${seconds} s`;
+  const span = fold.endedAt - fold.startedAt;
+  const total = `${fold.label} for ${formatAmount(fold.amount)}`;
+  return span === 0 ? total : `${total} over ${formatAmount(span)} s`;
 }
 
 /**
@@ -622,6 +629,7 @@ export function floatingCueFor(
       // word, so it never reads as health.
       return { text: `−${formatAmount(amount ?? 0)} energy`, tone: "energy", critical: false };
     case "interrupted":
+    case "attack-interrupted":
       return { text: "interrupted!", tone: "neutral", critical: false };
     case "cancelled":
       // The caster moved and gave the cast up (#279).

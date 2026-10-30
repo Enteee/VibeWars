@@ -10,7 +10,7 @@ import {
   formatScalingRange,
 } from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
-import { resolveMagnitude } from "./scaling.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
 import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
 
@@ -192,6 +192,7 @@ describe("describeSkill", () => {
         aura: undefined,
         onDeath: "vanish",
         ownerDisableOnDeath: undefined,
+        deathBurst: undefined,
       },
     });
     const lines = (effect: SkillEffect) =>
@@ -480,7 +481,8 @@ describe("describeSkill", () => {
     // line, then one per effect of its spring (#1105), and one more if it
     // springs by itself; a pulse one, then one per effect (#1113); a
     // faster flight one, and one per on-crit or failed-to-hit rider
-    // (#1486); a volley of arrows one (#1539).
+    // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
+    // are a line each, and its death burst one more (#1550).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
@@ -496,7 +498,16 @@ describe("describeSkill", () => {
             return 1 + act.pulse.effects.length;
         }
       }
-      return effect.kind === "summon" && effect.creature.aura !== undefined ? 2 : 1;
+      if (effect.kind === "summon") {
+        const { aura, attack, deathBurst } = effect.creature;
+        return (
+          1 +
+          (aura === undefined ? 0 : 1) +
+          (attack?.onHit ?? []).length +
+          (deathBurst === undefined ? 0 : 1)
+        );
+      }
+      return 1;
     };
     const lines = (effects: readonly SkillEffect[]): number =>
       effects.reduce((sum, effect) => sum + linesOf(effect), 0);
@@ -518,7 +529,7 @@ describe("describeSkill", () => {
           lines(rule?.onCritical ?? []) +
           lines(rule?.onFailedToHit ?? []) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
-          (rule !== undefined && rule.strikes > 1 && entry.attack?.weapon === "bow" ? 1 : 0) +
+          (rule !== undefined && rule.strikes > 1 ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
           (isEasilyInterrupted(entry.type) ? 1 : 0) +
@@ -617,6 +628,17 @@ describe("attack skills (#417)", () => {
       "If target is below 50% Health: recharges all your other attack skills",
     );
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
+  });
+
+  it("says how often a melee attack strikes and how many a capped splash hits (#1618)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("warrior.sun-and-moon-slash")).toContain("Strikes twice");
+    expect(texts("ranger.dual-shot").join("\n")).toContain("Shoots 2 arrows at once");
+    expect(texts("ranger.dual-shot").join("\n")).not.toContain("Strikes");
+    expect(texts("warrior.cleave").some((text) => text.startsWith("Up to 2 adjacent foes"))).toBe(
+      true,
+    );
+    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
   });
 
   it("words the crippling knockdown chain, and a state its attack requires (#1041)", () => {
@@ -899,6 +921,20 @@ describe("formatScalingRange", () => {
       return;
     }
     expect(formatScalingRange(magnitude)).toBe("7…91 at 12");
+  });
+
+  it("rounds the ends as the live value does, so rank 12 reads what it gives", () => {
+    const scaling = { attributeId: "test", atZero: 1, atTwelve: 8.2 };
+    const atTwelve = resolveMagnitudeAtRanks({ scaling }, new Map([["test", 12]]));
+    expect(atTwelve).toBe(8);
+    expect(
+      formatScalingRange({
+        current: atTwelve,
+        atZero: scaling.atZero,
+        atTwelve: scaling.atTwelve,
+        attributeId: scaling.attributeId,
+      }),
+    ).toBe("1…8 at 12");
   });
 
   it("returns nothing for a flat magnitude, rather than a fake range", () => {

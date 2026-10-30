@@ -3,7 +3,7 @@ import type { CombatRules } from "../ruleset.js";
 import { addCopyPool } from "./adrenaline.js";
 import { copyKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
-import { applyEffects, type CombatEvent } from "./effects.js";
+import { applyEffects, interruptAttackSkill, type CombatEvent } from "./effects.js";
 import {
   getStatusDefinition,
   triggerAnswersWeapon,
@@ -62,7 +62,8 @@ export interface TriggerContext {
   /**
    * The skill the bearer just used, and its key (#469), on
    * `bearer-uses-skill` (#949): what Diversion lengthens and an echo
-   * copies. `undefined` on every other event.
+   * copies; and the spell, on `bearer-casts-spell` (#1614), whose cost
+   * Aura of Restoration reads. `undefined` on every other event.
    */
   readonly usedSkill: SlotSkill | undefined;
 }
@@ -103,8 +104,8 @@ export function fireTriggers(
 
 /**
  * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
- * unless it names a type or a profession the skill must have, or that it
- * be elite (#1473).
+ * unless it names a type, a profession or an attribute (#1614) the skill
+ * must have, or that it be elite (#1473) or adrenal (#1592).
  */
 function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
   if (trigger.usedSkill === undefined) {
@@ -114,9 +115,12 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
   return (
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
+    (trigger.usedSkill.attribute === undefined ||
+      skill.attributeId === trigger.usedSkill.attribute) &&
     (trigger.usedSkill.profession === undefined ||
       skill.profession === trigger.usedSkill.profession) &&
-    (trigger.usedSkill.elite === undefined || skill.elite)
+    (trigger.usedSkill.elite === undefined || skill.elite) &&
+    (trigger.usedSkill.adrenal === undefined || skill.cost?.kind === "adrenaline")
   );
 }
 
@@ -329,6 +333,9 @@ function fire(
     } else if (effect.kind === "echo") {
       flush();
       echo(effect, bearer, trigger.skillId, usedSkill);
+    } else if (effect.kind === "cancel-attack") {
+      flush();
+      events.push(...cancelAttack(trigger, sourceId, bearer));
     } else {
       pending.push(effect);
     }
@@ -341,6 +348,25 @@ function fire(
     events.push({ kind: "status-expired", targetId: bearer.id, statusId });
   }
   return events.length === 0 ? [] : [{ sourceId, skillId: trigger.skillId, events }];
+}
+
+/**
+ * Clumsiness's cancel (#1593) of the attack the bearer is beginning: an
+ * attack skill is interrupted by `sourceId`, unless it cannot be; a plain
+ * swing, which begins while nothing is cast, says so, and the simulation
+ * drops the blow. Answering any other event, nothing is beginning.
+ */
+function cancelAttack(trigger: StatusTrigger, sourceId: string, bearer: Combatant): CombatEvent[] {
+  const events: CombatEvent[] = [];
+  if (trigger.on !== "bearer-attack-begins") {
+    return events;
+  }
+  if (bearer.cast.isCasting) {
+    interruptAttackSkill(bearer, sourceId, events);
+  } else {
+    events.push({ kind: "attack-interrupted", targetId: bearer.id });
+  }
+  return events;
 }
 
 /** Whether status `statusId` copies its bearer's next skill (#469). */

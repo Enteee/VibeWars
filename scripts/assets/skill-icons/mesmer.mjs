@@ -40,16 +40,18 @@ export const MESMER_ICONS = {
   "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
   "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
   "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
-  // Placeholders until the asset-designer's (#1501): crowd punishers.
-  "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
-  "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
-  "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
-  // A placeholder until the asset-designer's (#1528).
-  "mesmer.spiritual-pain": { glyph: "ghost", modifier: "area" },
-  // Placeholders until the asset-designer's (#1570): Mesmer staples.
-  "mesmer.power-leak": { glyph: "interrupt", modifier: "half" },
-  "mesmer.blackout": { glyph: "eye-slash", modifier: "stun" },
-  "mesmer.shatter-hex": { glyph: "cleanse", modifier: "area" },
-  "mesmer.psychic-instability": { glyph: "interrupt", modifier: "upkeep" },
-  "mesmer.arcane-conundrum": { glyph: "slow", modifier: "hourglass" },
+  // Mesmer staples (#1570, #1594).
+  "mesmer.power-leak": { glyph: "interrupt-energy-cut" },
+  "mesmer.blackout": { glyph: "skills-off" },
+  "mesmer.shatter-hex": { glyph: "hex-shatter" },
+  "mesmer.psychic-instability": { glyph: "interrupt-knockdown" },
+  "mesmer.arcane-conundrum": { glyph: "hex-slow-star" },
+  // Crowd punishers (#1501, #1555): the shared hex ring; Epidemic is a condition spell with none.
+  "mesmer.panic": { glyph: "hex-panic" },
+  "mesmer.wastrels-demise": { glyph: "hex-rising" },
+  "mesmer.epidemic": { glyph: "drop-spread" },
+  // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
+  "mesmer.spiritual-pain": { glyph: "anti-summon-pain" },
+  // Clumsiness (#1593, #1619): the hex ring round a dropped blade.
+  "mesmer.clumsiness": { glyph: "hex-sword-drop" },
 };

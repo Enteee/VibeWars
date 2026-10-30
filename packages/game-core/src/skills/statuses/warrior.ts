@@ -1,6 +1,7 @@
 import { AREA_ADJACENT } from "../../distances.js";
 import { gw1EnergyScaled } from "../../ruleset.js";
 import type { StatusDefinition } from "../status.js";
+import { KNOCKDOWN_SECONDS } from "../types.js";
 import { define } from "./define.js";
 
 export type WarriorStatusId =
@@ -30,7 +31,11 @@ export type WarriorStatusId =
   | "riposte"
   | "deadly-riposte"
   | "charge"
-  | "enraging-charge";
+  | "enraging-charge"
+  // Warrior staples 2 (#1592).
+  | "shield-bash"
+  | "shield-stance"
+  | "rage-of-the-ntouka";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -259,6 +264,48 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         effects: [{ kind: "adrenaline-gain", strikes: 2 }],
         target: "bearer",
         skillId: "warrior.enraging-charge",
+      },
+    ],
+  }),
+  // "For 5...11 seconds, while wielding a shield, the next melee attack
+  // skill used against you is blocked, your attacker is knocked down, and
+  // that skill is disabled for an additional 15 seconds" (#1592): 10 s at
+  // rank 12, on the skill. The shield is checked on use. Any melee attack,
+  // a plain swing too, and no disable: a block trigger knows no skill.
+  "shield-bash": define("shield-bash", "Shield Bash", "skill-effect", {
+    profession: "warrior",
+    block: { chance: 1, against: "melee" },
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        blocked: "melee",
+        target: "offender",
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+        skillId: "warrior.shield-bash",
+      },
+    ],
+  }),
+  // "For 1...6 seconds, while using a shield, you have a 75% chance to
+  // block incoming attacks, and damage is reduced by 2 for each rank of
+  // Strength (maximum 15 damage reduction)" (#1592): 5 s at rank 12, on
+  // the skill. The shield is checked on use.
+  "shield-stance": define("shield-stance", "Shield Stance", "stance", {
+    profession: "warrior",
+    block: { chance: 0.75, against: "all" },
+    damageReductionPerRank: { attributeId: "warrior.strength", perRank: 2, max: 15 },
+  }),
+  // "For 8 seconds, whenever you use an adrenal skill, that skill recharges
+  // for 3 seconds" (#1592).
+  "rage-of-the-ntouka": define("rage-of-the-ntouka", "Rage of the Ntouka", "skill-effect", {
+    profession: "warrior",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { adrenal: true },
+        target: "bearer",
+        effects: [{ kind: "lengthen-recharge", of: "target-last-skill", seconds: { flat: 3 } }],
+        skillId: "warrior.rage-of-the-ntouka",
       },
     ],
   }),

@@ -28,6 +28,8 @@ export const DERVISH_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
+  // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
+  "dervish.banishing-strike": { glyph: "anti-summon-scythe" },
   // Scythe attacks that spend an enchantment share one mark: the broken ring (#1573).
   "dervish.mystic-sandstorm": { glyph: "sand-pulse" },
   "dervish.grenths-grasp": { glyph: "grasp" },
@@ -36,6 +38,13 @@ export const DERVISH_ICONS = {
   "dervish.pious-assault": { glyph: "scythe-spend", modifier: "clock" },
   "dervish.chilling-victory": { glyph: "scythe-frost" },
   "dervish.wearying-strike": { glyph: "scythe-spend", modifier: "bleed" },
-  // A placeholder until the asset-designer's (#1528).
-  "dervish.banishing-strike": { glyph: "scythe", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1604).
+  "dervish.irresistible-sweep": { glyph: "scythe-spend", modifier: "up" },
+  "dervish.crippling-sweep": { glyph: "blade-limp", modifier: "area" },
+  "dervish.rending-sweep": { glyph: "scythe-spend", modifier: "less" },
+  "dervish.pious-fury": { glyph: "blade-fury", modifier: "renew" },
+  "dervish.zealous-renewal": { glyph: "energy", modifier: "renew" },
+  "dervish.mirage-cloak": { glyph: "shield-veil", modifier: "area" },
+  "dervish.vital-boon": { glyph: "heart-plus", modifier: "hourglass" },
+  "dervish.guiding-hands": { glyph: "next-attack-unblockable", modifier: "plus" },
 };

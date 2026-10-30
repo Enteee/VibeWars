@@ -917,6 +917,7 @@ it, not baked in, so one file serves every screen.
   eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling),
   ice-cage, frost-nova, spear-ice, whirl, eye-blur, mist-shield, stone-split, head-frost (icicles under a bar, a snowflake with ice thrown out round it, a long spear, a spiral, an eye and its ghost, mist over a shield, a stone split in two, a snowflake in a head and shoulders),
   avatar-earth, avatar-wings (a figure in a god's shape: Melandru grows a two-leaf branch from the head, Dwayna spreads wings behind it; Balthazar's flame rises from its head, Grenth's scythe slants behind it, Lyssa's zigzags flank it: avatar-flame, avatar-scythe, avatar-chaos),
+  anti-summon-spell, anti-summon-scythe, anti-summon-spear, anti-summon-pain (the anti-summon skills, #1568: the skill's own mark shrunk to the top left, a small ghost struck through at the bottom right, the summoned creature it hits harder),
   was-shield, was-heart, was-cap, was-blind, was-quake, was-bolt (the Ritualist's Was spells: one urn of held ashes with no base line, a mark in its body for what they do; armor, Health, a ceiling on hits, blindness, a crack, energy; #1530 added six: an orb under a chevron is more maximum Energy, a bolt through a plate is armor pierced, with two ticks beside it for the elite's area, a ring round a dot is a cast nothing breaks, a hook back over a heart is Health stolen, a struck drop is conditions cleared: was-orb, was-pierce, was-pierce-area, was-calm, was-steal, was-clear),
   gain-barbs, gain-shield, gain-burst, hex-return (the gain-trigger skills: a plus in the top left corner is what the foe gains, spikes, a bolted shield or a burst below it is the payoff; Hex Breaker's corner is a dashed ring and an arrow goes back at it),
   scythe-spend, scythe-frost, sand-pulse, grasp, ring-rend, blink-bars (Dervish and Assassin staples, #1573: a scythe with a broken ring beside its blade spends an enchantment, the same scythe with a snowflake is cold; rings of earth pulse, a hand over a broken line grips and cripples, a ring broken open round a burst rends, step arrowheads behind bars imprison),
@@ -926,8 +927,14 @@ it, not baked in, so one file serves every screen.
   spear-flame, spear-fast, spear-weak, spear-crit, spear-heart, spear-crack, spear-burst, spear-cleanse, spear-swipe, spear-pierce (the Paragon thrown spears: a spear on the left and its rider on the right: a flame, three chevrons, a down arrow, a four-point spark, a hollow heart, a cracked shield, a burst, a struck drop; a swiped arc; a shield with the spear through it for unblockable; a drop badge below is Deep Wound),
   note-hold (a note under a fermata: Enduring Harmony),
   smite-attacking, spear-light, star-below-half, star-beam-flame, sword-star, signet-attacking, signet-energy, signet-quake, star-prone (the Monk smiting skills, #1584: a four-point star is holy light; a blade in the top left corner is the foe attacking; a signet is its ring and dot; a flat bar is a foe knocked down; a ring filled in its lower half is a foe below half Health),
+  interrupt-energy-cut, skills-off, hex-shatter, interrupt-knockdown, hex-slow-star (the Mesmer staples, #1594: a burst over a bolt with a minus for the energy an interrupt takes; four squares struck through for every skill disabled; a broken hex ring round a burst; a burst over a figure lying flat for the knockdown; the hex ring round a four-point star over crossed bars for spells that cast slowly),
+  arrow-twin, arrow-spent-ring, arrow-fast, arrow-close, shield-whirl, snake, arrow-dodge (the Ranger staples, #1585: two parallel arrows; an arrow and a broken ring for the enchantment it spends; an arrow with speed chevrons; an arrow into a close target; a shield with a turning arc round it; an S-curved snake with chevrons; chevrons under an arrow flying past),
+  shield-knock, shield-less, adrenal-fast, axe-sweep, axe-pierce, sword-sun-moon, hex-sword-drop (the Warrior staples 2 and Clumsiness, #1619: a shield with a burst and a fall mark for the knockdown; a shield with a down chevron for less damage; rising bars under fast chevrons; an axe with a swing arc for the sweep; an axe through a shield for armor penetration; a sun and a crescent under one slash for the unblockable double strike; the hex ring round a falling blade),
   sac-energy, sac-blade, drop-to-signet, hex-flame, lava-spouts, ward-elements, arrow-bolt, flame-rise (#1572: a drop given up at the bottom left with its payoff at the top right, a bolt or a blade; a drop leaving for a signet ring; the hex ring round a flame; a wavy ground with three tongues of fire; the ward post with a flame and a bolt above; an arrow with a bolt across its shaft; rising bars under a flame),
+  dagger-lotus, flame-wings, dagger-drain, hand-limp, hand-burst, drop-shock, blink-daze (#1617: a blade over an open lotus; a flame with swept wings over a blade point; a blade striking a spell star with a down arrow; a low hand with a broken line beside it; a low hand with a burst at its fingertips; a drop with a bolt cut out; the step arrowheads with three dots circling above),
+  flail, heart-shield, axe-cross, blade-limp-up, parry, shout-rush, shout-rush-adrenal (the Warrior staples, #1586: a spiked ball on a chain; a heart held in a shield; an axe with the Deep Wound cross; a blade with a limp ending in an arrow up; a shield with a blade leaving it, the drop is the bleed; sound arcs behind two chevrons, with one chevron and rising bars for the adrenaline),
   hex-hourglass, hex-overload, orb-split, hex-crown, crown-struck, hex-ache, eye-tear, hex-splash, fireball-mind (the Mesmer skill-use punishers share one mark, the dashed hex ring round a small picture of the punishment; Mind Blast stays outside it: an hourglass, a bolt through a bar, an orb split by a crack, a crown, a struck crown, a jagged ache, an eye with a tear, a burst, a fireball with an eye),
+  hex-panic, hex-rising, drop-spread (Panic: a dot with rays ending in dots, an interrupt sent to all near; Wastrel's Demise: bars rising, the pulse that grows; both in the punisher ring; Epidemic is no hex: a drop with four drops spread from it, #1555),
   block-half, block-most, shield-cut-heal, target-struck, heal-bolt, draw-drops, heal-clear, heal-drop, plus-trio, plus-cycle (the Monk staples, #1541: a shield filled to the share it blocks, half for the party's Aegis and three quarters for the one ally Shield of Deflection guards; a shield with a minus over a plus; a target ring struck through, the mark for any untargetable skill; a big plus with a bolt; a figure with drops flowing into it; a plus with a struck drop and ring; a plus with a drop; three pluses for the party; a plus in a circling arrow),
   shield-glance (a slash glancing off a shield: Bladeturn Refrain), energy-ring (a bolt in a ring: Energizing Finale), blade-fury (a blade with rising bars ending in a spike: Soldier's Fury).
   Echoes (#1482): the corner says the family, a turning arrow (`renew`) for a refrain that renews and lasts, a four-point spark (`finale`) for a finale that fires once; the type mark is the chant's note with ripples after it. A
@@ -1119,8 +1126,24 @@ implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
 The operator picked **C** (2026-10-30), with Character Builder and Team
 Builder at the rail's bottom, below a divider. Card 1 of the split (#1525)
 builds the rail, a screen per entry and the title bar's Lobby Code and Join;
-the rail's icons are the study's placeholders, ported to
-`apps/web/public/icons/mode/`, until an asset card draws the final set.
+the rail's icons live in `apps/web/public/icons/mode/`, drawn by the
+`mode` family of `scripts/assets/icons.mjs` (#1554).
+
+### Mode icons (#1554)
+
+Solid ink shapes, one drawing each, even-odd holes (the rail masks them, so
+only the shape counts, never a colour). Each differs in silhouette: a player
+tells Team Arena from GvG without the label.
+
+| File            | Entry          | Drawing                                           |
+| --------------- | -------------- | ------------------------------------------------- |
+| `random-arena`  | Random Arena   | A tilted die with five pips: the luck of the draw |
+| `team-arena`    | Team Arena     | Two shields side by side, the near one solid      |
+| `heroes-ascent` | Heroes' Ascent | A stepped altar with a flame on top               |
+| `gvg`           | GvG            | A keep with a pennant on a tall pole              |
+| `hosted-game`   | Hosted Game    | An arched door with a keyhole                     |
+| `characters`    | Character      | One helmet, crest up, an eye slit                 |
+| `teams`         | Team Builder   | Three helmets in a row, the middle one taller     |
 
 ## Creatures
 

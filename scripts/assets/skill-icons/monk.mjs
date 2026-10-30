@@ -35,6 +35,8 @@ export const MONK_ICONS = {
   "monk.symbol-of-wrath": { glyph: "ring-rays" },
   "monk.contemplation-of-purity": { glyph: "ring-heal" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
+  // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
+  "monk.banish": { glyph: "anti-summon-spell" },
   // Monk staples (#1511, #1541).
   "monk.aegis": { glyph: "block-half" },
   "monk.shield-of-deflection": { glyph: "block-most" },
@@ -46,8 +48,6 @@ export const MONK_ICONS = {
   "monk.words-of-comfort": { glyph: "heal-drop" },
   "monk.light-of-deliverance": { glyph: "plus-trio" },
   "monk.signet-of-rejuvenation": { glyph: "plus-cycle" },
-  // A placeholder until the asset-designer's (#1528).
-  "monk.banish": { glyph: "ghost", modifier: "plus" },
   // Monk smiting staples (#1519, #1584): holy star, signet ring, the foe attacking or knocked down.
   "monk.smite": { glyph: "smite-attacking" },
   "monk.spear-of-light": { glyph: "spear-light" },

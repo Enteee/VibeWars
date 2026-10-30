@@ -340,6 +340,7 @@ describe("bodies a spirit, minion or pet does not block (#1278)", () => {
       aura: undefined,
       onDeath: "vanish",
       ownerDisableSeconds: 0,
+      deathBurst: undefined,
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard",

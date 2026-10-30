@@ -33,6 +33,7 @@ const NO_BOT_USE = new Set([
   "dervish.fleeting-stability",
   "dervish.harriers-haste",
   "dervish.heart-of-fury",
+  "dervish.pious-fury",
   "dervish.pious-haste",
   "dervish.vow-of-strength",
   "elementalist.glyph-of-lesser-energy",
@@ -64,17 +65,21 @@ const NO_BOT_USE = new Set([
   "warrior.flail",
   "warrior.for-great-justice",
   "warrior.frenzy",
+  "warrior.rage-of-the-ntouka",
   "warrior.rush",
   "warrior.sprint",
   // Minions, wells and enchantment strips: no rule for them yet.
   "necromancer.animate-bone-horror",
   "necromancer.animate-bone-minions",
+  "necromancer.gaze-of-contempt",
   "necromancer.rend-enchantments",
   "necromancer.well-of-suffering",
   // A disable of a foe's elite and nothing else: no rule for it (#1473).
   "mesmer.signet-of-humility",
   // Nor of a foe's whole bar at the price of one's own (#1570).
   "mesmer.blackout",
+  // A heal that waits for its spirit's death (#1550): no rule for it.
+  "ritualist.life",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",
@@ -84,6 +89,11 @@ const NO_BOT_USE = new Set([
   "ritualist.splinter-weapon",
   "ritualist.vengeful-weapon",
   "ritualist.weapon-of-remedy",
+  // Energy engine (#1614): energy back for spells still to be cast.
+  "elementalist.fire-attunement",
+  "elementalist.water-attunement",
+  "elementalist.air-attunement",
+  "elementalist.earth-attunement",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",
@@ -119,6 +129,10 @@ const NO_BOT_USE = new Set([
   "paragon.anthem-of-guidance",
   "paragon.energizing-chorus",
   "paragon.anthem-of-envy",
+  // Elementalist staples 2 (#1575): a ward that slows foes or keeps allies
+  // standing is no rule the bot weighs.
+  "elementalist.ward-against-foes",
+  "elementalist.ward-of-stability",
 ]);
 
 function skill(id: string) {

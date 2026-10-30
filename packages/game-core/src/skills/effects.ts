@@ -7,13 +7,13 @@ import {
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { isAttacking } from "./attacking.js";
-import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
+import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
 import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
-import { effectiveMaxEnergy } from "./overcast.js";
-import { resolveMagnitude } from "./scaling.js";
+import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
+import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
 import {
   aggregateModifiers,
   getStatusDefinition,
@@ -55,6 +55,7 @@ import {
   type EffectCondition,
   type HealEffect,
   type InterruptEffect,
+  type Magnitude,
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
@@ -153,6 +154,11 @@ export type CombatEvent =
       /** The skill whose cast was cut short. */
       readonly skillId: string;
     }
+  /**
+   * A plain swing of `targetId`'s cancelled as it began (#1593):
+   * Clumsiness's. It never landed, and its swing timer starts over.
+   */
+  | { readonly kind: "attack-interrupted"; readonly targetId: string }
   /**
    * A skill on `targetId`'s bar that a disable (#914) made wait longer:
    * it is usable again in `seconds`.
@@ -347,9 +353,10 @@ function healAmount(
   target: Combatant | undefined,
   surroundings: Surroundings,
   earlier: readonly CombatEvent[],
+  usedSkill: SlotSkill | undefined,
 ): number {
   const base =
-    resolveMagnitude(effect.amount, caster) *
+    perUsedSkillEnergy(effect, caster, usedSkill) *
     perStatus(effect.perStatusOnTarget, target) *
     perRemoved(effect.perRemoved, target, earlier) *
     (effect.perDestroyedSpirit === true
@@ -584,6 +591,24 @@ function perEnergyLost(
 }
 
 /**
+ * `amount` at the caster's ranks, or with `perUsedSkillEnergy`, per point
+ * of the base energy cost of the skill the trigger answers, rounded half
+ * up (#1614): Fire Attunement's 30% of a 15-energy spell is 5. No energy
+ * cost, or no skill: 0.
+ */
+function perUsedSkillEnergy(
+  effect: { readonly amount: Magnitude; readonly perUsedSkillEnergy?: true },
+  caster: Combatant,
+  used: SlotSkill | undefined,
+): number {
+  if (effect.perUsedSkillEnergy === undefined) {
+    return resolveMagnitude(effect.amount, caster);
+  }
+  const cost = used === undefined ? undefined : getSkill(used.skillId)?.cost;
+  return cost?.kind === "energy" ? resolveMagnitudeTimes(effect.amount, caster, cost.amount) : 0;
+}
+
+/**
  * Signet of Creation's gain (#1316): `amount` for each of the caster's
  * spirits and minions in reach, at most the cap. Without
  * `perOwnCreatureWithin`, `amount` as it is.
@@ -728,6 +753,20 @@ export function interruptIfCastingSpell(
   if (skill !== undefined && isSpell(skill.type)) {
     interruptCast(target, byId, events);
   }
+}
+
+/**
+ * Clumsiness's cancel (#1593) of an attack skill `target` is beginning:
+ * interrupted, as by an `interrupt`, and recharging. Whether it was.
+ */
+export function interruptAttackSkill(
+  target: Combatant,
+  byId: string,
+  events: CombatEvent[],
+): boolean {
+  const cast = target.cast.activeCast;
+  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+  return skill?.type === "attack" && interruptCast(target, byId, events);
 }
 
 /**
@@ -1003,7 +1042,11 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(healed, healAmount(effect, caster, target, context.surroundings, earlier), events);
+      applyHeal(
+        healed,
+        healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+        events,
+      );
       return events;
     }
 
@@ -1018,7 +1061,12 @@ export function applyEffect(
         caster,
         perOwnCreature(
           effect,
-          perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
+          perEnergyLost(
+            effect,
+            perUsedSkillEnergy(effect, caster, context.usedSkill),
+            lostBy,
+            earlier,
+          ),
           caster,
           context.surroundings,
         ),
@@ -1077,7 +1125,10 @@ export function applyEffect(
       if (target === undefined) {
         return events;
       }
-      const removed = removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
+      const removed =
+        effect.perRemovedOfProfession === undefined
+          ? 1
+          : removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
       sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
       return events;
     }
@@ -1315,6 +1366,12 @@ export function applyEffect(
       return events;
     }
 
+    case "overcast":
+      if (target !== undefined && !target.dead) {
+        addOvercast(target, resolveMagnitude(effect.amount, caster));
+      }
+      return events;
+
     case "caster-gains-status": {
       if (caster.dead) {
         return events;
@@ -1470,6 +1527,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-more-energy":
     case "caster-overcast":
     case "caster-wields":
+    case "caster-holds-shield":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
@@ -1551,6 +1609,8 @@ export function stateHolds(
       return caster.overcast > 0;
     case "caster-wields":
       return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
+    case "caster-holds-shield":
+      return caster.equipment.offhandId === "shield";
     case "target-less-health":
       return target.health < caster.health;
     case "target-more-health":
@@ -1782,6 +1842,7 @@ function conditionHolds(
     case "caster-more-energy":
     case "caster-overcast":
     case "caster-wields":
+    case "caster-holds-shield":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
@@ -1902,6 +1963,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "splash":
     case "disable-skill":
     case "chain-mark":
+    case "overcast":
     case "if":
       return false;
   }

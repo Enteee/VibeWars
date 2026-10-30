@@ -88,7 +88,8 @@ channels, as often as they like.
   could at most race that joiner for its one seat.
 - **Knowing the code means being invited.** Anyone with the lobby code can
   join and see the lobby. A code is shared like a party invite; it is not a
-  credential.
+  credential, and anyone watching the relays can learn it (Known open
+  gaps, 5).
 - **Identity.** There are no accounts, passwords or tokens. A player is a
   peer in one room. Anyone can pick any name, and two players can share
   one. Do not build anything that relies on a name meaning a person.
@@ -263,10 +264,18 @@ saying so in the same PR. Keep the numbers: issues cite them.
    now has 60 messages a second handled, with bursts of up to 300, and the
    rest are ignored.
 4. **Fixed by #44:** any lobby member could send `return-to-lobby`.
-5. **Lobby codes can be guessed, slowly.** There are 23⁶ ≈ 148 million
-   codes (#379), and nothing limits how many rooms a browser tries. It is
-   an invitation, not access control, and it must not be described as
-   access control.
+5. **A live lobby's code can be read off the relays.** There are 23⁶ ≈
+   148 million codes (#379), but nobody needs to guess one. Trystero
+   announces a room on the topic `sha1("Trystero@" + APP_ID + "@" + code)`,
+   in clear in the `x` tag of ephemeral Nostr events (kinds 20000–29999),
+   and `APP_ID` ships in the client. Anyone subscribed to those kinds on our
+   relays sees every live room's topic. Hashing all 148 million codes, a
+   matter of minutes on one CPU core or a single lookup in a ~3 GB table,
+   turns each topic back into its code. The room password is the code
+   itself, so it adds nothing. Such an observer can join any lobby that is
+   announcing, and with it learn its players' names and public IP
+   addresses. A code is an invitation, not access control, and it must not
+   be described as access control.
 6. **Gone with the server (#404):** there was no cap on rooms or players on
    the shared server (#114, #265).
 7. **Gone with the server (#404):** client strings reached the server log
@@ -568,6 +577,13 @@ employee names and numbers. `kpis.json` carries a `schemaVersion`; a reader
 that finds another value treats the file as absent. `kpi-edges.json` (#1313)
 holds the 7-day utilization's 1% steps of the last 24 h, times and
 fractions only; hubd discards one of another `schemaVersion` on start.
+`ci-history.jsonl` (#1612) keeps a line per completed Actions run, eight
+days of them: run id, event, conclusion, sha, times, whether it ran on
+main, the `#N` its title starts with, and the workflow's file name only if
+it is a merge gate (else `"other"`). A fork's pull request names its own
+title, branch and workflow files, so **no GitHub free text goes into a
+file in `hub/`**: hubd keeps numbers, hashes and values checked against a
+closed set, and the reader drops a line that fails that check.
 
 **A manager is always running (#384).** The supervisor starts a missing
 manager pane within one sample, backing off to once every five minutes
