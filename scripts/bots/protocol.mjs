@@ -17,6 +17,7 @@
  * rules as the rest of the repo, and ADR-0008 bans `any`.
  */
 
+import { WORKDAY, clock, isProposalId, proposalName } from "./reboot.mjs";
 import { roleOf } from "./staff.mjs";
 
 /**
@@ -1020,6 +1021,173 @@ export function formatQuestion(n, question, answer = null) {
 /** What a stray message in the Operator topic gets back, once. */
 export const OPERATOR_HINT = "Reply to a question to answer it.";
 
+/* -------------------------------------------------------------------------- */
+/* Reboot proposals: the operator approves every reboot (#960)                */
+/* -------------------------------------------------------------------------- */
+
+/** At most this many company commits are listed on a proposal. */
+const PROPOSAL_COMMITS = 10;
+
+/** At most this many changed files are listed on a proposal. */
+const PROPOSAL_FILES = 8;
+
+/**
+ * How a proposal was closed, as its message says once edited.
+ *
+ * @typedef {{ outcome: "approved" | "rejected" | "withdrawn" | "void", note: string, at: number }} ProposalClosed
+ */
+
+/**
+ * A reboot proposal as it is posted in the Operator topic, or as it is
+ * edited once closed (`closed` set: the buttons go, and the last line says
+ * how it ended).
+ *
+ *     🔁 Manager proposes a reboot · R1a2b3c
+ *     ┃ Why: …
+ *     ┃ Onto: <target8> (main) from <boot8> (running)
+ *     ┃ Company commits (n of m since boot): • …
+ *     ┃ Company code: f files, +i −d • …
+ *     ┃ Runs: drain ≤10 min, restarter builds …
+ *     [ Approve reboot onto <target8> ]
+ *     [ Reject ]
+ *
+ * Built with entities, never `parse_mode`, like `formatQuestion`: the
+ * reason and the subjects are the company's words. Cut to
+ * MAX_MESSAGE_CHARS by listing fewer commits and files first; the header,
+ * the Onto line and the buttons are never cut, the reason last of all.
+ *
+ * @param {import("./reboot.mjs").RebootProposal} p
+ * @param {ProposalClosed | null} [closed]
+ * @returns {Pick<Queued, "text" | "entities" | "replyMarkup">}
+ */
+export function formatProposal(p, closed = null) {
+  const target = p.targetSha.slice(0, 8);
+  /** @type {MessageEntity[]} */
+  const entities = [];
+  let header = "🔁 ";
+  entities.push({ type: "bold", offset: header.length, length: "Manager".length });
+  header += `Manager proposes a reboot · ${proposalName(p.id)}`;
+
+  let footer;
+  if (closed === null) {
+    footer = "Reply to this message to tell the manager something; a reply approves nothing.";
+  } else if (closed.outcome === "approved") {
+    footer = `✅ Approved ${clock(closed.at)}`;
+  } else if (closed.outcome === "rejected") {
+    footer = `❌ Rejected ${clock(closed.at)}`;
+  } else if (closed.outcome === "withdrawn") {
+    footer = "↩️ Withdrawn by the manager";
+  } else {
+    footer = `⚠️ No longer applies: ${closed.note}`;
+  }
+
+  const onto = `Onto: ${target} (main) from ${p.bootSha.slice(0, 8)} (running)`;
+  const runs = `Runs: drain ≤10 min, restarter builds ${target}, checks out ${target}, locks it, claude-llc up`;
+  /**
+   * @param {number} commits how many commit lines to list
+   * @param {number} files how many file lines to list
+   * @param {string} why
+   * @returns {string}
+   */
+  const body = (commits, files, why) => {
+    const listed = p.commits.slice(0, commits).map(({ subject }) => `• ${subject}`);
+    const moreCommits = p.commits.length - listed.length;
+    const changed = p.stat.top
+      .slice(0, files)
+      .map((file) => `• ${file.path} +${String(file.insertions)} −${String(file.deletions)}`);
+    const moreFiles = p.stat.files - changed.length;
+    return [
+      `Why: ${why}`,
+      onto,
+      `Company commits (${String(p.commits.length)} of ${String(p.allCommits)} since boot):`,
+      ...listed,
+      ...(moreCommits > 0 ? [`+${String(moreCommits)} more`] : []),
+      `Company code: ${String(p.stat.files)} files, +${String(p.stat.insertions)} −${String(p.stat.deletions)}`,
+      ...changed,
+      ...(moreFiles > 0 ? [`+${String(moreFiles)} more`] : []),
+      runs,
+    ].join("\n");
+  };
+
+  const room = MAX_MESSAGE_CHARS - header.length - footer.length - 2;
+  const reason = p.kind === "workday" || p.reason === WORKDAY ? "end of the workday" : p.reason;
+  let commits = PROPOSAL_COMMITS;
+  let files = PROPOSAL_FILES;
+  let quoted = body(commits, files, reason);
+  while (quoted.length > room && (commits > 0 || files > 0)) {
+    if (commits > 0) {
+      commits -= 1;
+    } else {
+      files -= 1;
+    }
+    quoted = body(commits, files, reason);
+  }
+  if (quoted.length > room) {
+    const spare = room - body(0, 0, "").length;
+    quoted = body(0, 0, spare > 1 ? `${cut(reason, spare - 1)}…` : "…");
+  }
+  entities.push({ type: "blockquote", offset: header.length + 1, length: quoted.length });
+  const text = `${header}\n${quoted}\n${footer}`;
+
+  if (closed !== null) {
+    return { text, entities };
+  }
+  return {
+    text,
+    entities,
+    replyMarkup: {
+      inline_keyboard: [
+        [{ text: `Approve reboot onto ${target}`, callback_data: `r:${p.id}:approve` }],
+        [{ text: "Reject", callback_data: `r:${p.id}:reject` }],
+      ],
+    },
+  };
+}
+
+/**
+ * A system outbox entry about a reboot proposal (#960), or `null` if it is
+ * not one: `{ proposal }` to post it, `{ proposalClosed, outcome, note }`
+ * to edit its message. Only hubd writes these, to the host-only system
+ * outbox.
+ *
+ * @param {unknown} raw the outbox file's contents
+ * @returns {{ proposal: string }
+ *   | { proposalClosed: string, outcome: ProposalClosed["outcome"], note: string }
+ *   | null}
+ */
+export function parseProposalNotice(raw) {
+  const entry = obj(raw);
+  if ("proposal" in entry) {
+    return Object.keys(entry).length === 1 && isProposalId(entry.proposal)
+      ? { proposal: entry.proposal }
+      : null;
+  }
+  const { proposalClosed, outcome, note } = entry;
+  if (
+    Object.keys(entry).length !== 3 ||
+    !isProposalId(proposalClosed) ||
+    (outcome !== "approved" &&
+      outcome !== "rejected" &&
+      outcome !== "withdrawn" &&
+      outcome !== "void") ||
+    typeof note !== "string"
+  ) {
+    return null;
+  }
+  return { proposalClosed, outcome, note };
+}
+
+/**
+ * The open proposal as the sidecar knows it (#960): its posted message, and
+ * why an approval would no longer apply, `null` if it would.
+ *
+ * @typedef {{
+ *   proposal: import("./reboot.mjs").RebootProposal,
+ *   messageId: number | null,
+ *   stale: string | null,
+ * }} OpenProposal
+ */
+
 /**
  * Turn an operator's answer into its effects. The Operator topic is the only
  * place answers come from: a button tap on a question, or a Telegram reply
@@ -1036,24 +1204,35 @@ export const OPERATOR_HINT = "Reply to a question to answer it.";
  * back, because one silently handed to an agent would be worse than one that
  * bounces.
  *
+ * A reboot proposal (#960) is answered the same way, under the same
+ * checks: the operator's tap on Approve or Reject, on the proposal's own
+ * message, with the open proposal's id, is a `decision` for hubd. A tap
+ * whose approval would no longer apply still goes to hubd, which drops it
+ * and edits the message, but its toast says so at once. A reply to the
+ * proposal goes to the manager who made it and decides nothing.
+ *
  * `immediate` calls post nothing to the group (`answerCallbackQuery`), so
  * they skip the mirror's budget; `paced` ones are for the Operator topic and
  * go through `planSends`.
  *
  * @param {unknown} raw one getUpdates entry
  * @param {QuestionStore} store
- * @param {{ chatId: string, operatorId: number, operatorTopicId: number | null, now: number }} context
- *   `operatorId` is the operator's Telegram user id
+ * @param {{
+ *   chatId: string, operatorId: number, operatorTopicId: number | null, now: number,
+ *   proposal: OpenProposal | null,
+ * }} context `operatorId` is the operator's Telegram user id
  * @returns {{
  *   deliveries: { employee: string, line: InboxLine }[],
  *   immediate: { method: string, params: Record<string, unknown> }[],
  *   paced: Omit<Queued, "topicId">[],
  *   answered: { n: number, question: Question } | null,
+ *   decision: { id: string, decision: "approve" | "reject" } | null,
  * } | null} `null` when the update is not for the Operator topic
  */
 export function routeAnswer(raw, store, context) {
   const update = obj(raw);
-  const none = { deliveries: [], immediate: [], paced: [], answered: null };
+  const none = { deliveries: [], immediate: [], paced: [], answered: null, decision: null };
+  const open = context.proposal;
 
   /**
    * @param {number} n
@@ -1107,6 +1286,28 @@ export function routeAnswer(raw, store, context) {
     if (from.id !== context.operatorId) {
       return { ...none, immediate: [ack(undefined)] };
     }
+    const tap =
+      typeof query.data === "string"
+        ? /^r:([0-9a-f]{32}):(approve|reject)$/.exec(query.data)
+        : null;
+    if (tap !== null) {
+      const [, id = "", decision] = tap;
+      if (open?.proposal.id !== id) {
+        return { ...none, immediate: [ack(`${proposalName(id)} no longer applies`)] };
+      }
+      // As for a question: the tap must be on the proposal's own message.
+      if (open.messageId === null || message.message_id !== open.messageId) {
+        return { ...none, immediate: [ack(undefined)] };
+      }
+      const stale = decision === "approve" ? open.stale : null;
+      return {
+        ...none,
+        immediate: [
+          ack(stale === null ? undefined : `${proposalName(id)} no longer applies: ${stale}`),
+        ],
+        decision: { id, decision: decision === "approve" ? "approve" : "reject" },
+      };
+    }
     const data = typeof query.data === "string" ? /^q:(\d+):(\d+)$/.exec(query.data) : null;
     const n = Number(data?.[1]);
     const question = data === null ? undefined : store.questions[String(n)];
@@ -1135,6 +1336,7 @@ export function routeAnswer(raw, store, context) {
         },
       ],
       answered: { n, question: { ...question, answered: true } },
+      decision: null,
     };
   }
 
@@ -1158,6 +1360,26 @@ export function routeAnswer(raw, store, context) {
   // In a forum every message replies to the topic's first message, so only a
   // reply to a question's own message counts as an answer.
   const repliedTo = obj(message.reply_to_message).message_id;
+  if (open !== null && open.messageId !== null && open.messageId === repliedTo) {
+    return {
+      ...none,
+      deliveries: [
+        {
+          employee: open.proposal.by,
+          line: {
+            ts: context.now,
+            from: nameOf(from),
+            kind: "human",
+            text: `about reboot ${proposalName(open.proposal.id)}: ${message.text}`,
+            topicId: context.operatorTopicId,
+            messageId: 0,
+            broadcast: false,
+            nudge: null,
+          },
+        },
+      ],
+    };
+  }
   const found = Object.entries(store.questions).find(
     ([, question]) => question.messageId !== null && question.messageId === repliedTo,
   );
@@ -1189,6 +1411,7 @@ export function routeAnswer(raw, store, context) {
       },
     ],
     answered: { n, question: { ...question, answered: true } },
+    decision: null,
   };
 }
 
@@ -1204,6 +1427,7 @@ export function routeAnswer(raw, store, context) {
  * @property {{ inline_keyboard: { text: string, callback_data: string }[][] }} [replyMarkup]
  *   buttons under the message
  * @property {number} [question] the Q number, whose message id must be recorded
+ * @property {string} [proposal] the reboot proposal's id (#960), whose message id must be recorded
  * @property {number} [edit] edit this message instead of sending a new one
  * @property {number} [replyTo] send as a reply to this message
  */
