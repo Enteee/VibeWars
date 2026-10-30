@@ -59,6 +59,11 @@ the **Guild cape** designer appears under it: pick the cape colour, the
 trim colour and an emblem, and your body wears the cape behind it in every
 match. Your characters in the menu show it too. **No cape** takes it off.
 
+## Playing online
+
+Online play is peer to peer: the other players in your match see your
+IP address.
+
 ## Your record
 
 Every match you finish with one of your characters, hosted, joined or

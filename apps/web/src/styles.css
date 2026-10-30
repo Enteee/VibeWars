@@ -991,10 +991,6 @@ body {
   color: var(--ink-dim);
 }
 
-.screen-source {
-  color: inherit;
-}
-
 .screen-problem {
   padding: 0.5rem 0.7rem;
   border-left: 3px solid var(--damage);
@@ -2186,6 +2182,12 @@ body {
   padding: 1rem;
   background: var(--bg);
   border: 1px solid var(--line);
+}
+
+.help-source {
+  margin-top: 0.6rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
 }
 
 .help-page {

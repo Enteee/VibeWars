@@ -4,7 +4,7 @@ import type { LobbyPlayerSnapshot, LobbySnapshot, QueueState } from "@vibewars/g
 import { teamColour } from "../render/arena-snapshot.js";
 import { createProfessionDot, cssColour } from "./character-preview.js";
 import { characterLine } from "./lobby-screen.js";
-import { PEER_IP_NOTICE, RANDOM_ARENA_MODES } from "./menu.js";
+import { RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
 import { playerLabelElement } from "./player-label.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
@@ -323,7 +323,7 @@ export function mountQueueScreen(
   const notice = h(
     "p",
     "menu-peer-notice queue-notice",
-    `Unranked play with strangers, peer to peer. ${PEER_IP_NOTICE}`,
+    "Unranked play with strangers, peer to peer.",
   );
   const leave = button("Leave queue", "", callbacks.onLeave);
   const stay = button("Stay together", "primary", callbacks.onStayTogether);
