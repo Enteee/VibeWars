@@ -343,6 +343,13 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "gain-shield" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
   "mesmer.hex-breaker": { glyph: "hex-return" },
+  // Placeholders until the asset-designer's (#1434): Ritualist item spells.
+  "ritualist.protective-was-kaolai": { glyph: "party-heal", modifier: "hourglass" },
+  "ritualist.generous-was-tsungrai": { glyph: "heart-plus", modifier: "up" },
+  "ritualist.defiant-was-xinrae": { glyph: "shield-veil", modifier: "less" },
+  "ritualist.blind-was-mingson": { glyph: "eye-slash", modifier: "hourglass" },
+  "ritualist.grasping-was-kuurong": { glyph: "quake", modifier: "stun" },
+  "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "plus" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
@@ -360,8 +367,7 @@ export const SKILL_ICONS = {
   // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
   "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
   "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },
-  // Placeholders until the asset-designer's (#1455): forms.
-  "dervish.avatar-of-balthazar": { glyph: "flame", modifier: "hourglass" },
-  "dervish.avatar-of-grenth": { glyph: "scythe", modifier: "hourglass" },
-  "dervish.avatar-of-lyssa": { glyph: "energy", modifier: "hourglass" },
+  "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
+  "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
+  "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
 };

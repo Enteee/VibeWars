@@ -15,30 +15,27 @@ async function openMenu(page: Page): Promise<void> {
   await expect(menuHeading(page)).toBeVisible();
 }
 
-test("#578: Esc goes back on the team builds, team editor, options, music and lobby screens", async ({
-  page,
-}) => {
+/** The title bar's Solo Play / Team Play switch (#1453). */
+const playTab = (page: Page, name: "Solo Play" | "Team Play") =>
+  page.locator("#topbar .play-tabs").getByRole("button", { name, exact: true });
+
+test("#578: Esc goes back on the team editor, options and lobby screens", async ({ page }) => {
   await openMenu(page);
 
-  await page.getByRole("button", { name: "Team Builds", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
+  await playTab(page, "Team Play").click();
+  await expect(playTab(page, "Team Play")).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
+  await expect(page.locator(".screen-team-play")).toBeVisible();
+  // Team Play has no way back either.
   await page.keyboard.press("Escape");
-  await expect(menuHeading(page)).toBeVisible();
+  await expect(page.locator(".screen-team-play")).toBeVisible();
+  await playTab(page, "Solo Play").click();
+  await expect(page.locator(".roster")).toBeVisible();
 
   await page.locator(".topbar-options").click();
   await expect(page.getByRole("heading", { name: "Options" })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(menuHeading(page)).toBeVisible();
-
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
-  await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
@@ -55,7 +52,7 @@ test("#578: Esc goes back on the team builds, team editor, options, music and lo
 
 test("#578: Esc with a confirmation open cancels it, and only then goes back", async ({ page }) => {
   await openMenu(page);
-  await page.getByRole("button", { name: "Team Builds", exact: true }).click();
+  await playTab(page, "Team Play").click();
   await page.getByRole("button", { name: "New team build", exact: true }).click();
 
   // Esc from the name field is Back too, which asks first: the name changed.
@@ -75,7 +72,7 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
   await page.keyboard.press("Escape");
   await expect(discard).toBeVisible();
   await discard.click();
-  await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
+  await expect(page.locator(".screen-team-play")).toBeVisible();
 });
 
 test("#1272: the editor's Discard question takes the status's room: the bar stays one row, Save in it", async ({
@@ -239,47 +236,66 @@ test("#579: the roster's rows are buttons: Enter or Space chooses, Edit sits bes
   await page.keyboard.press("Escape");
   await expect(starter).toHaveClass(/is-selected/);
 
-  // Team Builds and Music are the menu's own buttons in the top bar; Options is its ⚙ (#1272).
-  for (const name of ["Team Builds", "Music"]) {
-    await expect(
-      page.locator("#topbar .topbar-screen-actions").getByRole("button", { name, exact: true }),
-    ).toBeVisible();
-  }
+  // Record is Solo Play's own button in the top bar; Options is its ⚙ (#1272), Music its ♪ (#1453).
+  const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
+  await expect(own).toHaveText(["Record"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
+  await expect(page.locator("#topbar .topbar-music")).toBeVisible();
 });
 
-test("#1272: on a phone, Music's ⋯ holds its other buttons and the chevron is Back", async ({
-  page,
-}) => {
+test("#1272: on a phone, the menu's ⋯ holds Record and the chevron is Back", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await openMenu(page);
   const more = page.locator("#topbar .topbar-more");
-  const screenButton = (name: string) =>
-    page.locator("#topbar .topbar-screen-actions").getByRole("button", { name, exact: true });
+  const record = page
+    .locator("#topbar .topbar-screen-actions")
+    .getByRole("button", { name: "Record", exact: true });
 
   // Folded away until ⋯ opens; the global icons with them.
-  await expect(screenButton("Music")).toBeHidden();
+  await expect(record).toBeHidden();
   await expect(page.locator("#topbar .topbar-options")).toBeHidden();
   await more.click();
   await expect(more).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
-  await screenButton("Music").click();
-  await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
+  await record.click();
+  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
   await expect(more).toHaveAttribute("aria-expanded", "false");
 
   // Only the place shows, not the crumbs before it.
   await expect(page.locator("#topbar .topbar-crumb", { hasText: "VibeWars" })).toBeHidden();
-  await expect(screenButton("Sound settings")).toBeHidden();
-  await more.click();
-  await screenButton("Sound settings").click();
-  await expect(page.getByRole("heading", { name: "Options" })).toBeVisible();
-  // Reached from Music, its breadcrumb says so.
-  await expect(page.locator("#topbar .topbar-crumbs")).toHaveText("VibeWars > Music > Options");
 
   const back = page.locator("#topbar").getByRole("button", { name: "Back", exact: true });
   await expect(back).toHaveText("‹", { useInnerText: true });
   await back.click();
-  await expect(page.getByRole("heading", { name: "Music" })).toBeVisible();
-  await back.click();
   await expect(menuHeading(page)).toBeVisible();
+});
+
+test("#1453: the title bar switches Solo Play and Team Play, and keeps the tab; each tile hosts on its own maps", async ({
+  page,
+}) => {
+  await openMenu(page);
+  await expect(playTab(page, "Solo Play")).toHaveAttribute("aria-pressed", "true");
+  await playTab(page, "Team Play").click();
+  await expect(page.locator(".team-play-tile")).toHaveText([
+    "Hosted Lobby",
+    "Team Arena",
+    "Heroes' Ascent",
+    "GvG",
+  ]);
+  // No Teams or Music in the bar; Team Play has no own buttons.
+  await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveCount(0);
+  await page.reload();
+  await expect(playTab(page, "Team Play")).toHaveAttribute("aria-pressed", "true");
+
+  // GvG plays one map, so its host sees it named, not picked.
+  await page.getByRole("button", { name: "GvG", exact: true }).click();
+  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".screen-team-play")).toBeVisible();
+
+  // Heroes' Ascent picks among its three.
+  await page.getByRole("button", { name: "Heroes' Ascent", exact: true }).click();
+  const options = page.locator("#topbar .lobby-map select option");
+  await expect(options).toHaveCount(3);
+  await expect(page.locator("#topbar .lobby-map select")).toHaveValue("relic-temples");
 });

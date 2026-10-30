@@ -45,6 +45,7 @@ const NO_BOT_USE = new Set([
   "paragon.incoming",
   "paragon.make-haste",
   "ranger.winnowing",
+  "ritualist.energetic-was-lee-sa",
   "ritualist.signet-of-creation",
   "ritualist.signet-of-spirits",
   "ritualist.weapon-of-aggression",

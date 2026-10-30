@@ -155,7 +155,7 @@ describe("status definitions", () => {
           getStatusDefinition(id).energyPips,
         ]),
       ),
-    ).toEqual({ malaise: -1, "blood-ritual": 3 });
+    ).toEqual({ malaise: -1, "blood-ritual": 3, "energetic-was-lee-sa": 2 });
   });
 
   it("makes enchantments beneficial and hexes/conditions detrimental", () => {

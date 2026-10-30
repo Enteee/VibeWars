@@ -41,6 +41,7 @@ export const SKILL_TYPE_NAME: Readonly<Record<SkillType, string>> = {
   "binding-ritual": "Binding Ritual",
   ward: "Ward",
   well: "Well",
+  "item-spell": "Item Spell",
   trap: "Trap",
   "pet-attack": "Pet Attack",
   form: "Form",
