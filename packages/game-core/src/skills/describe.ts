@@ -270,6 +270,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${definition.attackDamageType} damage`,
     );
   }
+  if (definition.attackArmorPenetration !== 0) {
+    parts.push(
+      `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
+    );
+  }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
@@ -481,6 +486,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
     );
   }
+  if (definition.skillRechargeFaster !== 0) {
+    parts.push(
+      `skills recharge ${String(Math.round(definition.skillRechargeFaster * 100))}% faster`,
+    );
+  }
   const { spellRechargeFaster, bindingRitualRechargeFaster } = definition;
   if (spellRechargeFaster !== 0 && spellRechargeFaster === bindingRitualRechargeFaster) {
     const faster = String(Math.round(spellRechargeFaster * 100));
@@ -654,6 +664,7 @@ function describeTriggers(
       trigger.effects,
       trigger.target,
       trigger.weapon,
+      trigger.blocked,
       trigger.profession,
       trigger.usedSkill,
       trigger.damageType,
@@ -750,12 +761,16 @@ const DROPPED = "drop effect";
 /**
  * What the bearer does that a trigger bound to a kind of skill or
  * enchantment answers (#1437): "uses a Dervish attack skill", "loses a
- * Dervish enchantment", or to a type of damage (#1540): "takes fire damage
- * from a foe". `undefined`: bound to none.
+ * Dervish enchantment", to a type of damage (#1540): "takes fire damage
+ * from a foe", or to a kind of block (#1549): "blocks a melee attack".
+ * `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
   if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
     return `takes ${trigger.damageType} damage from a foe`;
+  }
+  if (event === "bearer-blocks" && trigger.blocked !== undefined) {
+    return `blocks a ${trigger.blocked} attack`;
   }
   if (event === "bearer-loses-enchantment" && trigger.profession !== undefined) {
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
@@ -1108,6 +1123,10 @@ function conditionText(condition: EffectCondition): string {
       return "If target is knocked down";
     case "target-moving":
       return "If target is moving";
+    case "any-of": {
+      const [first, ...rest] = condition.conditions.map(conditionText);
+      return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
+    }
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
@@ -1429,6 +1448,11 @@ function describeEffect(
           magnitude: undefined,
         };
       }
+      if (effect.statusId !== undefined) {
+        // "Charge!"'s "lose the Crippled condition" (#1549).
+        const verb = effect.from === "caster" ? "Lose" : "Removes";
+        return { text: `${verb} ${statusName(effect.statusId)}`, magnitude: undefined };
+      }
       if (effect.from === "caster") {
         // "Lose 1 Dervish enchantment" (#845), or all of them (#1205).
         const whose =
@@ -1594,8 +1618,9 @@ function describeEffect(
       return { text: "Counts as a lead attack", magnitude: undefined };
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
+      const which = effect.of === "this-skill" ? "This skill" : "That skill";
       return {
-        text: `That skill takes ${String(magnitude.current)} seconds longer to recharge`,
+        text: `${which} takes ${String(magnitude.current)} seconds longer to recharge`,
         magnitude,
       };
     }
@@ -2139,6 +2164,18 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
+  // Dual Shot's arrows (#1539): "Shoot two arrows simultaneously at target
+  // foe. These arrows deal 25% less damage".
+  const strikes = rule?.strikes ?? 1;
+  const weaponDamage = rule?.weaponDamage ?? 1;
+  const weaker =
+    weaponDamage > 0 && weaponDamage < 1
+      ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
+      : "";
+  const arrowsLine =
+    strikes > 1 && skill.attack?.weapon === "bow"
+      ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
+      : [];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -2200,6 +2237,7 @@ export function describeSkill(
     ...cleaveAllLine,
     ...penetrationLine,
     ...flightLine,
+    ...arrowsLine,
     ...corpseLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onCritical,

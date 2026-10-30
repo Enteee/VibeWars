@@ -47,6 +47,7 @@ const NO_BOT_USE = new Set([
   "paragon.fall-back",
   "paragon.incoming",
   "paragon.make-haste",
+  "ranger.serpents-quickness",
   "ranger.winnowing",
   "ritualist.cruel-was-daoshen",
   "ritualist.destructive-was-glaive",
@@ -59,6 +60,8 @@ const NO_BOT_USE = new Set([
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
   "warrior.endure-pain",
+  "warrior.enraging-charge",
+  "warrior.flail",
   "warrior.for-great-justice",
   "warrior.frenzy",
   "warrior.rush",
@@ -102,6 +105,8 @@ const NO_BOT_USE = new Set([
   "paragon.song-of-purification",
   "paragon.hexbreaker-aria",
   "paragon.anthem-of-fury",
+  // An ally's attacks made holy and penetrating (#1519): no rule weighs it.
+  "monk.judges-insight",
   // Necromancer and Elementalist staples (#1540): an ally's energy, a
   // party's blows through an enchantment's rider, armor against one kind
   // of damage, and a spirit's adrenaline aura are none the bot weighs.

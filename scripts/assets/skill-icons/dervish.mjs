@@ -28,14 +28,14 @@ export const DERVISH_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
-  // Placeholders until the asset-designer's (#1551).
-  "dervish.mystic-sandstorm": { glyph: "twister", modifier: "area" },
-  "dervish.grenths-grasp": { glyph: "limp", modifier: "plus" },
-  "dervish.rending-aura": { glyph: "armor-crack", modifier: "area" },
-  "dervish.reapers-sweep": { glyph: "scythe", modifier: "stun" },
-  "dervish.pious-assault": { glyph: "sweep", modifier: "renew" },
-  "dervish.chilling-victory": { glyph: "snowflake", modifier: "bolt" },
-  "dervish.wearying-strike": { glyph: "scythe", modifier: "down" },
+  // Scythe attacks that spend an enchantment share one mark: the broken ring (#1573).
+  "dervish.mystic-sandstorm": { glyph: "sand-pulse" },
+  "dervish.grenths-grasp": { glyph: "grasp" },
+  "dervish.rending-aura": { glyph: "ring-rend" },
+  "dervish.reapers-sweep": { glyph: "scythe-spend", modifier: "stun" },
+  "dervish.pious-assault": { glyph: "scythe-spend", modifier: "clock" },
+  "dervish.chilling-victory": { glyph: "scythe-frost" },
+  "dervish.wearying-strike": { glyph: "scythe-spend", modifier: "bleed" },
   // A placeholder until the asset-designer's (#1528).
   "dervish.banishing-strike": { glyph: "scythe", modifier: "plus" },
 };

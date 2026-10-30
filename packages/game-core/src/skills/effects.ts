@@ -1194,6 +1194,7 @@ export function applyEffect(
         effect.category,
         removeCount(effect, caster, bearer, context.surroundings, earlier),
         effect.profession,
+        effect.statusId,
       );
       for (const statusId of removed) {
         events.push({ kind: "status-removed", targetId: bearer.id, statusId });
@@ -1419,7 +1420,8 @@ export function applyEffect(
 
     case "lengthen-recharge": {
       const used = context.usedSkill;
-      if (target === undefined || used === undefined) {
+      // This skill's own is the resolution's to add (`resolveSkillEffects`).
+      if (effect.of === "this-skill" || target === undefined || used === undefined) {
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
@@ -1472,6 +1474,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-more-health":
     case "target-attacking":
     case "target-casting-or-attacking":
+    case "any-of":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
@@ -1554,6 +1557,10 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "any-of":
+      return condition.conditions.some((each) =>
+        stateHolds(each, caster, target, surroundings, firing),
+      );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
@@ -1779,6 +1786,7 @@ function conditionHolds(
     case "target-more-health":
     case "target-attacking":
     case "target-casting-or-attacking":
+    case "any-of":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
@@ -1867,6 +1875,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect-companions":
     case "disable-own-skills":
       return true;
+    case "lengthen-recharge":
+      return effect.of === "this-skill";
     // Once, on the primary target, the spirit cast on (#1309), however
     // many allies the skill's area also caught.
     case "destroy-target-spirit":
@@ -1891,7 +1901,6 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect":
     case "splash":
     case "disable-skill":
-    case "lengthen-recharge":
     case "chain-mark":
     case "if":
       return false;
@@ -1937,6 +1946,12 @@ export interface SkillOutcome {
    */
   readonly rechargeFraction: number;
   /**
+   * How many seconds longer this use's recharge is (#1519): every
+   * `lengthen-recharge` of `this-skill` that landed, summed; else 0.
+   * Added after `rechargeFraction` and any faster recharge.
+   */
+  readonly rechargeLongerSeconds: number;
+  /**
    * The `summon`s that landed (#1052), in order: the simulation makes the
    * creatures, which only it can add to the match.
    */
@@ -1965,6 +1980,7 @@ export function resolveSkillEffects(
   );
   const events: CombatEvent[] = [];
   let rechargeFraction = 0;
+  let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
   for (const effect of skill.effects) {
@@ -1987,6 +2003,16 @@ export function resolveSkillEffects(
         }
         if (inner.kind === "recharge-others") {
           rechargeOthers(caster, skill.id, inner.which);
+        }
+        if (inner.kind === "lengthen-recharge" && inner.of === "this-skill") {
+          const seconds = resolveMagnitude(inner.seconds, caster);
+          rechargeLongerSeconds += seconds;
+          events.push({
+            kind: "recharge-lengthened",
+            targetId: caster.id,
+            skillId: skill.id,
+            seconds,
+          });
         }
         if (inner.kind === "summon") {
           summons.push(inner);
@@ -2012,7 +2038,7 @@ export function resolveSkillEffects(
       events,
     );
   }
-  return { events, rechargeFraction, summons, grounds };
+  return { events, rechargeFraction, rechargeLongerSeconds, summons, grounds };
 }
 
 /**

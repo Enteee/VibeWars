@@ -15,7 +15,9 @@ export type MonkStatusId =
   | "protective-spirit"
   | "reversal-of-fortune"
   | "vigorous-spirit"
-  | "scourge-enchantment";
+  | "scourge-enchantment"
+  // Monk smiting staples (#1519).
+  | "judges-insight";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -149,5 +151,12 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.scourge-enchantment",
       },
     ],
+  }),
+  // "...target ally's attacks deal holy damage and have +20% armor
+  // penetration" (#1519).
+  "judges-insight": define("judges-insight", "Judge's Insight", "enchantment", {
+    profession: "monk",
+    attackDamageType: "holy",
+    attackArmorPenetration: 0.2,
   }),
 };
