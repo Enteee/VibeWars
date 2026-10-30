@@ -366,13 +366,16 @@ export interface BlowRule {
   readonly armorPenetration: number;
   /**
    * More `bonus` while a state holds (#794), at the caster's ranks: read
-   * by `settleBlow` as the blow lands on each victim.
+   * by `settleBlow` as the blow lands on each victim. The skill's own,
+   * then its chants' (#1505), as Anthem of Envy's.
    */
-  readonly conditionalBonus:
-    { readonly condition: StateCondition; readonly amount: number } | undefined;
+  readonly conditionalBonuses: readonly {
+    readonly condition: StateCondition;
+    readonly amount: number;
+  }[];
   /**
    * When the blow is a critical hit whatever the roll (#1315): read, as
-   * `conditionalBonus` is, by `settleBlow`, which leaves `"always"` or
+   * `conditionalBonuses` are, by `settleBlow`, which leaves `"always"` or
    * `undefined`.
    */
   readonly criticalWhen: StateCondition | "always" | undefined;
@@ -385,7 +388,7 @@ export const PLAIN_BLOW: BlowRule = {
   strengthRank: 0,
   damageType: undefined,
   armorPenetration: 0,
-  conditionalBonus: undefined,
+  conditionalBonuses: [],
   criticalWhen: undefined,
 };
 
@@ -394,26 +397,29 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   const rule = blowRuleOf(skill);
   const bonusDamage = rule?.bonusDamage;
   const conditionalBonus = rule?.conditionalBonus;
+  // A chant's bonus on the next attack skill (#1505), taken as the skill
+  // is released, as its riders are.
+  const chants = caster.statuses.active.flatMap(({ id }) => {
+    const bonus = getStatusDefinition(id).nextAttackSkillBonus;
+    return bonus === undefined ? [] : [bonus];
+  });
   return {
     weaponDamage: rule?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
     bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
     damageType: rule?.damageType,
     armorPenetration: rule?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
-    conditionalBonus:
-      conditionalBonus === undefined
-        ? undefined
-        : {
-            condition: conditionalBonus.condition,
-            amount: resolveMagnitude(conditionalBonus.amount, caster),
-          },
+    conditionalBonuses: [
+      ...(conditionalBonus === undefined ? [] : [conditionalBonus]),
+      ...chants,
+    ].map(({ condition, amount }) => ({ condition, amount: resolveMagnitude(amount, caster) })),
     criticalWhen: rule?.criticalWhen,
   };
 }
 
 /**
- * `blow` as it lands on `victim` (#794): its `conditionalBonus` added to its bonus
- * if the state holds now, for `attacker` and `victim`, and its
+ * `blow` as it lands on `victim` (#794): each of its `conditionalBonuses` added to
+ * its bonus if its state holds now, for `attacker` and `victim`, and its
  * `criticalWhen` (#1315) `"always"` if it holds, else `undefined`. An
  * arrow whose archer has left the match has nobody to read the state of:
  * no more, and no forced critical.
@@ -424,17 +430,18 @@ export function settleBlow(
   victim: Combatant,
   surroundings: Surroundings,
 ): BlowRule {
-  const { conditionalBonus, criticalWhen } = blow;
+  const { conditionalBonuses, criticalWhen } = blow;
   const holds = (condition: StateCondition): boolean =>
     attacker !== undefined && stateHolds(condition, attacker, victim, surroundings);
   return {
     ...blow,
     bonus:
       blow.bonus +
-      (conditionalBonus !== undefined && holds(conditionalBonus.condition)
-        ? conditionalBonus.amount
-        : 0),
-    conditionalBonus: undefined,
+      conditionalBonuses.reduce(
+        (sum, { condition, amount }) => sum + (holds(condition) ? amount : 0),
+        0,
+      ),
+    conditionalBonuses: [],
     criticalWhen:
       criticalWhen === "always" || (criticalWhen !== undefined && holds(criticalWhen))
         ? "always"
@@ -647,9 +654,12 @@ export interface NextAttackSkill {
 }
 
 export function nextAttackSkillOf(attacker: Combatant): NextAttackSkill {
+  // One with only a bonus (#1505) is spent too: `skillBlow` took it.
   const holding = attacker.statuses.active.flatMap(({ id }) => {
-    const effects = getStatusDefinition(id).nextAttackSkill;
-    return effects === undefined ? [] : [{ id, effects }];
+    const { nextAttackSkill, nextAttackSkillBonus } = getStatusDefinition(id);
+    return nextAttackSkill === undefined && nextAttackSkillBonus === undefined
+      ? []
+      : [{ id, effects: nextAttackSkill ?? [] }];
   });
   return {
     statusIds: holding.map(({ id }) => id),

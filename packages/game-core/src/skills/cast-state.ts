@@ -11,6 +11,20 @@ import type { SkillBar } from "../build.js";
 import type { StatusId, StatusSet } from "./status.js";
 import type { Skill } from "./types.js";
 
+/**
+ * What chants' next-skill rules give the cast that consumed them (#1505):
+ * Song of Concentration's, Anthem of Guidance's.
+ */
+export interface CastRule {
+  /** No interrupt cancels it; a knockdown still does. */
+  readonly uninterruptible: boolean;
+  /** Its blows, if it is an attack skill, cannot be blocked. */
+  readonly unblockable: boolean;
+}
+
+/** A cast no chant's rule touched. */
+export const NO_CAST_RULE: CastRule = { uninterruptible: false, unblockable: false };
+
 export interface ActiveCast {
   readonly skillId: string;
   /** What it recharges under (#469): `SlotSkill.key`. */
@@ -22,6 +36,8 @@ export interface ActiveCast {
   remainingSeconds: number;
   /** The status its caster bears until it ends (`Skill.whileActivating`). */
   readonly whileActivating: StatusId | undefined;
+  /** What it carries from its caster's chants (#1505). */
+  readonly rule: CastRule;
 }
 
 /**
@@ -139,6 +155,7 @@ export class CastState {
   /**
    * Begin casting. A `whileActivating` status lasts until the cast ends,
    * which is what takes it off; an instant has no activation to bear it in.
+   * `rule` is what the chants it consumed give it (#1505).
    */
   public beginCast(
     skillId: string,
@@ -146,6 +163,7 @@ export class CastState {
     activationSeconds: number,
     whileActivating: StatusId | undefined,
     key: string = skillId,
+    rule: CastRule = NO_CAST_RULE,
   ): void {
     const bears = activationSeconds > 0 ? whileActivating : undefined;
     this.#activeCast = {
@@ -155,6 +173,7 @@ export class CastState {
       totalSeconds: activationSeconds,
       remainingSeconds: activationSeconds,
       whileActivating: bears,
+      rule,
     };
     if (bears !== undefined) {
       this.#statuses.apply(bears, Number.POSITIVE_INFINITY, this.#ownerId);

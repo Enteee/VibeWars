@@ -677,14 +677,18 @@ function knockDown(target: Combatant, durationSeconds: number): void {
  * spent and its recharge starts (ADR-0029). `byId` did it, and a status
  * on the target that answers an interrupt hears of it (#1473). Returns
  * whether there was a cast to interrupt. An uninterruptible bearer's
- * (#1464) never is.
+ * (#1464) never is, nor is a cast that consumed Song of Concentration
+ * (#1505).
  */
 function interruptCast(
   target: Combatant,
   byId: string | undefined,
   events: CombatEvent[],
 ): boolean {
-  if (aggregateModifiers(target.statuses.active).uninterruptible) {
+  if (
+    aggregateModifiers(target.statuses.active).uninterruptible ||
+    target.cast.activeCast?.rule.uninterruptible === true
+  ) {
     return false;
   }
   const cancelled = target.cast.cancelCast();
@@ -1118,6 +1122,36 @@ export function applyEffect(
       }
       if (effect.healPerCondition !== undefined && moved.length > 0) {
         applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
+      }
+      return events;
+    }
+
+    case "spread-conditions": {
+      const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
+      if (target === undefined || target.dead || at === undefined) {
+        return events;
+      }
+      // Read before any copy lands, so what the first foe gets the rest do too.
+      const conditions = target.statuses.active.filter(
+        ({ id }) => getStatusDefinition(id).category === "condition",
+      );
+      const reached = [...context.surroundings.values()].filter(
+        ({ combatant, position }) =>
+          !combatant.dead &&
+          combatant.id !== target.id &&
+          combatant.team !== caster.team &&
+          distance(position, at) <= effect.radius,
+      );
+      for (const combatant of nearestFirst(reached, at)) {
+        for (const { id, remainingSeconds } of conditions) {
+          landStatus(
+            combatant,
+            id,
+            scaledStatusDuration(combatant, id, remainingSeconds),
+            caster.id,
+            events,
+          );
+        }
       }
       return events;
     }
@@ -1828,6 +1862,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "damage":
     case "lose-health":
     case "transfer-conditions":
+    case "spread-conditions":
     case "give-health":
     case "apply-status":
     case "maintain-status":
