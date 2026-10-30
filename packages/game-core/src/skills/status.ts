@@ -38,6 +38,7 @@ import {
   isSpell,
   type AttackWeaponClass,
   type Combatant,
+  type ConditionalBonus,
   type DamageEffect,
   type HealEffect,
   type Skill,
@@ -185,6 +186,10 @@ export type StatusId =
   | "anthem-of-weariness"
   | "crippling-anthem"
   | "anthem-of-disruption"
+  | "song-of-concentration"
+  | "anthem-of-guidance"
+  | "energizing-chorus"
+  | "anthem-of-envy"
   // Ritualist weapon spells (#975).
   | "spirit-light-weapon"
   | "weapon-of-quickening"
@@ -590,12 +595,26 @@ export interface StatusDefinition {
    */
   readonly nextAttackSkill: readonly SkillEffect[] | undefined;
   /**
+   * More damage on the bearer's next attack skill's blows (#1505), in the
+   * blow, read on each victim before it lands: Anthem of Envy's "+10...20
+   * damage against foes with more than 50% Health". Spent as
+   * `nextAttackSkill` is. `undefined`: attack skills leave it alone.
+   */
+  readonly nextAttackSkillBonus: ConditionalBonus | undefined;
+  /**
    * What the bearer's next skills of a kind do for the bearer itself
    * (#1483): once a matching skill's use completes, its effects resolve
    * on the bearer, and it ends after `count` of them. An interrupted skill
    * and a weapon swing do not count. `undefined`: skills leave it alone.
    */
   readonly nextSkill: NextSkill | undefined;
+  /**
+   * How the bearer's next skill of a kind goes (#1505): it cannot be
+   * interrupted, cannot be blocked, or costs less. Consumed as that skill
+   * starts, before its cost is paid, and it ends then; an interrupt later
+   * does not give it back. `undefined`: skills leave it alone.
+   */
+  readonly nextSkillRule: NextSkillRule | undefined;
   /**
    * It ends the moment the bearer attacks (#758): strikes a blow or
    * releases a shot, swing or attack skill alike. A weapon spell's price.
@@ -1190,8 +1209,26 @@ export interface NextSkill {
   readonly skillId: string;
 }
 
+/**
+ * A chant's hold on how the bearer's next skill of a kind goes (#1505), as
+ * Song of Concentration's "the next skill used by each ally within
+ * earshot cannot be interrupted".
+ */
+export interface NextSkillRule {
+  /** As `NextSkill.which`. */
+  readonly which: NextSkill["which"];
+  /** That skill's activation cannot be interrupted. */
+  readonly uninterruptible: boolean;
+  /** That attack skill's blows cannot be blocked. */
+  readonly unblockable: boolean;
+  /** Energy off that skill's cost, never below 0. */
+  readonly energyDiscount: number;
+  /** The skill the log names it after: "paragon.song-of-concentration". */
+  readonly skillId: string;
+}
+
 /** Whether `skill` is of the kind `which` names (#1483). */
-function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boolean {
+export function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boolean {
   switch (which) {
     case "attack-skill":
       return skill.attack !== undefined;
@@ -1262,7 +1299,9 @@ function define(
     nextSpells: undefined,
     spreads: false,
     nextAttackSkill: undefined,
+    nextAttackSkillBonus: undefined,
     nextSkill: undefined,
+    nextSkillRule: undefined,
     endsWhenBearerAttacks: false,
     endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
@@ -2183,6 +2222,52 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "anthem-of-disruption": define("anthem-of-disruption", "Anthem of Disruption", "chant", {
     profession: "paragon",
     nextAttackSkill: [{ kind: "interrupt" }],
+  }),
+  // "For 10 seconds, the next skill used by each ally within earshot
+  // cannot be interrupted" (#1505).
+  "song-of-concentration": define("song-of-concentration", "Song of Concentration", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "any",
+      uninterruptible: true,
+      unblockable: false,
+      energyDiscount: 0,
+      skillId: "paragon.song-of-concentration",
+    },
+  }),
+  // "...the next attack skill used by each party member within earshot
+  // cannot be blocked" (#1505).
+  "anthem-of-guidance": define("anthem-of-guidance", "Anthem of Guidance", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "attack-skill",
+      uninterruptible: false,
+      unblockable: true,
+      energyDiscount: 0,
+      skillId: "paragon.anthem-of-guidance",
+    },
+  }),
+  // "...the next shout or chant used by each ally within earshot costs
+  // 3...7 less Energy" (#1505): 6 at rank 12.
+  "energizing-chorus": define("energizing-chorus", "Energizing Chorus", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "shout-or-chant",
+      uninterruptible: false,
+      unblockable: false,
+      energyDiscount: 6,
+      skillId: "paragon.energizing-chorus",
+    },
+  }),
+  // "...the next attack skill used by each ally within earshot deals
+  // +10...20 damage against foes with more than 50% Health" (#1505, PvP):
+  // 18 at rank 12.
+  "anthem-of-envy": define("anthem-of-envy", "Anthem of Envy", "chant", {
+    profession: "paragon",
+    nextAttackSkillBonus: {
+      condition: { kind: "target-health-above", fraction: 0.5 },
+      amount: { flat: 18 },
+    },
   }),
   // "+2...4...4 Health regeneration and a 50% chance to block. Weapon of
   // Warding ends if that ally attacks."
@@ -4334,6 +4419,24 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer started `skill` (#1505): every status whose
+   * `nextSkillRule` answers its kind ends. Returns each, in `active`
+   * order, with its rule.
+   */
+  public useNextSkillRules(
+    skill: Skill,
+  ): readonly { readonly statusId: StatusId; readonly rule: NextSkillRule }[] {
+    const used = this.active.flatMap(({ id }) => {
+      const rule = getStatusDefinition(id).nextSkillRule;
+      return rule !== undefined && nextSkillAnswers(rule.which, skill)
+        ? [{ statusId: id, rule }]
+        : [];
+    });
+    this.#end(used.map(({ statusId }) => statusId));
+    return used;
   }
 
   /**

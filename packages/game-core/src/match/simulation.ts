@@ -89,6 +89,7 @@ import {
   resolvedBar,
   slotSkill,
   type ActiveCast,
+  type CastRule,
   type SlotSkill,
 } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
@@ -2319,6 +2320,7 @@ export class MatchSimulation {
       return;
     }
     payCost(skill, record.combatant, key);
+    this.#useNextSkillRules(record, skill);
     beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
     pet.armedAttack = { skillId: skill.id, remainingSeconds: PET_ATTACK_SECONDS };
     const foe = record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
@@ -2379,6 +2381,7 @@ export class MatchSimulation {
 
     payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
+    const rule = this.#useNextSkillRules(record, skill);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -2403,6 +2406,7 @@ export class MatchSimulation {
       activationSeconds,
       skill.whileActivating,
       key,
+      rule,
     );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
@@ -2482,6 +2486,27 @@ export class MatchSimulation {
         })),
       });
     }
+  }
+
+  /**
+   * A skill starting, paid for, uses up every chant that holds how the
+   * next skill of its kind goes (#1505), as a glyph is: an interrupt or a
+   * cancel after this does not give it back. Returns what they give the
+   * cast; each spent logs its end under its chant.
+   */
+  #useNextSkillRules(record: ParticipantRecord, skill: Skill): CastRule {
+    const used = record.combatant.statuses.useNextSkillRules(skill);
+    this.#logFired(
+      used.map(({ statusId, rule }) => ({
+        sourceId: record.id,
+        skillId: rule.skillId,
+        events: [{ kind: "status-expired" as const, targetId: record.id, statusId }],
+      })),
+    );
+    return {
+      uninterruptible: used.some(({ rule }) => rule.uninterruptible),
+      unblockable: used.some(({ rule }) => rule.unblockable),
+    };
   }
 
   /**
@@ -3125,10 +3150,16 @@ export class MatchSimulation {
   /** Resolve a cast that has finished its activation time. */
   private resolveCast(record: ParticipantRecord, cast: ActiveCast, dt: number): void {
     const { skillId, targetId } = cast;
-    const skill = getSkill(skillId);
-    if (skill === undefined) {
+    const used = getSkill(skillId);
+    if (used === undefined) {
       return;
     }
+    // Anthem of Guidance's (#1505): this attack skill's blows, melee or
+    // flying, cannot be blocked.
+    const skill =
+      cast.rule.unblockable && used.attack !== undefined
+        ? { ...used, attack: { ...used.attack, unblockable: true } }
+        : used;
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     if (this.#failsSpell(record, skill, targetRecord, cast.key)) {

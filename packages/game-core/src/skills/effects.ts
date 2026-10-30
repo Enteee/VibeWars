@@ -677,14 +677,18 @@ function knockDown(target: Combatant, durationSeconds: number): void {
  * spent and its recharge starts (ADR-0029). `byId` did it, and a status
  * on the target that answers an interrupt hears of it (#1473). Returns
  * whether there was a cast to interrupt. An uninterruptible bearer's
- * (#1464) never is.
+ * (#1464) never is, nor is a cast that consumed Song of Concentration
+ * (#1505).
  */
 function interruptCast(
   target: Combatant,
   byId: string | undefined,
   events: CombatEvent[],
 ): boolean {
-  if (aggregateModifiers(target.statuses.active).uninterruptible) {
+  if (
+    aggregateModifiers(target.statuses.active).uninterruptible ||
+    target.cast.activeCast?.rule.uninterruptible === true
+  ) {
     return false;
   }
   const cancelled = target.cast.cancelCast();
