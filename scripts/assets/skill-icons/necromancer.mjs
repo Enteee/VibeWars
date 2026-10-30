@@ -52,4 +52,9 @@ export const NECROMANCER_ICONS = {
   "necromancer.deathly-chill": { glyph: "snowflake", modifier: "down" },
   "necromancer.putrid-explosion": { glyph: "mark-skull", modifier: "corpse" },
   "necromancer.signet-of-agony": { glyph: "drop-barbs", modifier: "area" },
+  // Touch skills (#1643), stand-ins until their art card.
+  "necromancer.vile-touch": { glyph: "mark-skull", modifier: "down" },
+  "necromancer.touch-of-agony": { glyph: "drop-touch", modifier: "bleed" },
+  "necromancer.wallows-bite": { glyph: "drop-touch", modifier: "down" },
+  "necromancer.vampiric-bite": { glyph: "drop-touch", modifier: "up" },
 };
