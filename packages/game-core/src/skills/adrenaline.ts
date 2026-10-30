@@ -9,6 +9,7 @@ import type { SkillBar } from "../build.js";
 import { ADRENALINE_PER_STRIKE } from "../ruleset.js";
 import { isCopyKey, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
+import { aggregateModifiers } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
 
 /** The units `skill` needs, and the most its pool holds: 0 for any other cost. */
@@ -29,14 +30,17 @@ export function gainUnits(combatant: Combatant, units: number, atSeconds: number
 /**
  * `gainUnits` without the stamp (#977): what a skill's `adrenaline-gain`
  * does, since an effect does not know the time. The attack skill that
- * carries one has stamped it already, with its blow.
+ * carries one has stamped it already, with its blow. A status that gains
+ * adrenaline faster (#1455) gives `floor(units × (1 + faster))`.
  */
 export function fillPools(combatant: Combatant, units: number): void {
+  const { adrenalineGainFaster } = aggregateModifiers(combatant.statuses.active);
+  const gained = Math.floor(units * (1 + adrenalineGainFaster));
   for (const [key, held] of combatant.adrenaline) {
     if ((combatant.cast.rechargeRemaining.get(key) ?? 0) > 0) {
       continue;
     }
-    combatant.adrenaline.set(key, Math.min(unitsFor(getSkill(skillIdOfKey(key))), held + units));
+    combatant.adrenaline.set(key, Math.min(unitsFor(getSkill(skillIdOfKey(key))), held + gained));
   }
 }
 

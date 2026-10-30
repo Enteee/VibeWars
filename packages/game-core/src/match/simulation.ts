@@ -2762,9 +2762,11 @@ export class MatchSimulation {
     }
     for (const { record, status, outbreak, remainingSeconds } of carriers) {
       for (const other of living) {
+        // Immune (#1455): not caught, and free to catch it once that ends.
         if (
           outbreak.infected.has(other.id) ||
-          distance(record.position, other.position) > AREA_ADJACENT
+          distance(record.position, other.position) > AREA_ADJACENT ||
+          other.combatant.statuses.isImmuneTo(status.id)
         ) {
           continue;
         }
@@ -3203,10 +3205,15 @@ export class MatchSimulation {
       // of Quickening (#975), and a binding ritual under Weapon of
       // Quickening (#1064), read now: one that ends later leaves this
       // recharge as it started. Read after the spell resolved, so Weapon of
-      // Quickening cast on yourself already shortens its own.
+      // Quickening cast on yourself already shortens its own. An
+      // enchantment of Avatar of Lyssa's profession (#1455) takes the
+      // larger of its share and the spells'.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
+      const enchantmentShares = modifiers.enchantmentRechargeFaster
+        .filter(({ profession }) => skill.type === "enchantment" && skill.profession === profession)
+        .map(({ share }) => share);
       const faster = isSpell(skill.type)
-        ? modifiers.spellRechargeFaster
+        ? Math.max(modifiers.spellRechargeFaster, ...enchantmentShares)
         : skill.type === "binding-ritual"
           ? modifiers.bindingRitualRechargeFaster
           : 0;
