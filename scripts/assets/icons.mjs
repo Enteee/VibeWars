@@ -398,22 +398,28 @@ const status = {
       `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
       `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
   ],
-  // Paragon echoes 2 (#1485), stand-ins until their art card.
-  // Echo: a blade bent off a shield, slashing damage turned.
+  // Paragon echoes 2 (#1485, #1524): each pairs with its skill icon.
+  // Echo: a blade glancing off a shield, slashing damage turned.
   "bladeturn-refrain": [
     "echo",
     (c) =>
-      `<path d="M12 3.5l7 2.5v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" ${stroke(c, 1.8)}/>` +
-      `<path d="M8 15l8-8" ${stroke(c, 2)}/>`,
+      `<path d="M9 5h10v6c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M2.5 4.5L7 9M7 9l-.3-2.8M7 9l2.8.3" ${stroke(c, 1.8)}/>`,
   ],
-  // Echo: a bolt, energy at the end of each chant.
-  "energizing-finale": ["echo", (c) => `<path d="M13 3L6 13h5l-1 8 7-10h-5z" fill="${c}"/>`],
-  // Echo: two chevrons over a sword, attacks faster under a chant.
+  // Echo: a bolt inside a ring, energy at the end of each chant.
+  "energizing-finale": [
+    "echo",
+    (c) =>
+      `<circle cx="12" cy="11.5" r="8" ${stroke(c, 1.6)}/>` +
+      `<path d="M13 5.5L8.5 12h3.5l-1 5.5 4.5-6.5h-3.5z" fill="${c}"/>`,
+  ],
+  // Echo: three rising bars topped by a spike over a sword, adrenaline and haste under a chant.
   "soldiers-fury": [
     "echo",
     (c) =>
-      `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
-      `<path d="M12 14v6M9.5 17h5" ${stroke(c, 2)}/>`,
+      `<path d="M5 12V9M10 12V6" ${stroke(c, 2.4)}/>` +
+      `<path d="M14 12V7l2.5-5L19 7v5z" fill="${c}"/>` +
+      `<path d="M12 15v6M9.5 18h5" ${stroke(c, 2)}/>`,
   ],
   // Stance: a shield, filled, armor and blocks (#1329).
   "disciplined-stance": [
@@ -1799,6 +1805,18 @@ const skillGlyph = {
     ),
   "blade-turn": () =>
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
+  // A shield with a slash glancing off it: Bladeturn Refrain (#1524).
+  "shield-glance": () =>
+    `<path d="M9.5 6h11v7c0 4-3 6.5-5.5 8-2.5-1.5-5.5-4-5.5-8z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M2.5 5L7.5 10", 2.2) +
+    inkLine("M7.5 10L7 7.5M7.5 10L10 10.5", 1.8),
+  // A bolt inside a ring: Energizing Finale (#1524).
+  "energy-ring": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 1.8)}/>` +
+    inkFill("M13.5 4.5L7.5 13H11.5L10.5 19.5L16.5 11H12.5Z"),
+  // A blade with rising bars ending in a spike: adrenaline gated on a chant, Soldier's Fury (#1524).
+  "blade-fury": () =>
+    bladeMark(inkLine("M3.5 13V10M7 13V7", 2.2) + inkFill("M9.5 13V8L12 2.5L14.5 8V13Z")),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
   // A blade with a drop struck through above it: a weapon spell that cleanses (#1048).
