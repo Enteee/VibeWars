@@ -23,7 +23,7 @@ test("#578: Esc goes back on the team builds, team editor, options, music and lo
   await page.getByRole("button", { name: "Team Builds", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
   await page.getByRole("button", { name: "New team build", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Edit team build" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
   await page.keyboard.press("Escape");
@@ -67,7 +67,7 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
 
   await page.keyboard.press("Escape");
   await expect(discard).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Edit team build" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
   await expect(name).toHaveValue("Duo");
   // Cancel hands the focus back to the bar's Back.
   await expect(page.getByRole("button", { name: "Back", exact: true })).toBeFocused();

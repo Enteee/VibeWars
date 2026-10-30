@@ -483,6 +483,26 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await expect(teamRows(page)).toHaveCount(1);
 });
 
+test("the team editor's bar puts its status on a second row from 721 to 1200 px, nothing overlapping (#1452)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha"]);
+  await page.getByRole("button", { name: "team builds" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await page.getByLabel("team name").fill("GvG Practice");
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  for (const width of [721, 800, 900, 1100, 1201]) {
+    await expectTopbarFits(
+      page,
+      width,
+      "#topbar > :not(.topbar-status), #topbar .problems-chip, #topbar .editor-unsaved",
+    );
+  }
+});
+
 test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places left (#574)", async ({
   page,
 }) => {

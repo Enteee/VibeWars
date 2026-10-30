@@ -1673,17 +1673,18 @@ body {
   min-width: 1.5ch;
 }
 
-/* The editor's bar (#1334) and the lobby's (#1368): the crumbs, the
-   screen's buttons and the icons fill a row up to 75rem, so the status
-   (the editor's pickers, the lobby's code and map) takes the second row
-   the phone's does and never runs under the buttons or the icons. */
+/* The editors' bars (#1334, #1452) and the lobby's (#1368): the crumbs,
+   the screen's buttons and the icons fill a row up to 75rem, so the status
+   (an editor's pickers and problems, the lobby's code and map) takes the
+   second row the phone's does and never runs under the buttons or the
+   icons. */
 @media (45rem < width <= 75rem) {
-  #topbar:has(.editor-professions),
+  #topbar:has(.problems-chip),
   #topbar:has(.lobby-header) {
     flex-wrap: wrap;
   }
 
-  #topbar:has(.editor-professions) .topbar-status,
+  #topbar:has(.problems-chip) .topbar-status,
   #topbar:has(.lobby-header) .topbar-status {
     flex: 1 0 100%;
     order: 10;
