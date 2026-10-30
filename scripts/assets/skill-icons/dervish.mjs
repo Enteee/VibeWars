@@ -36,4 +36,6 @@ export const DERVISH_ICONS = {
   "dervish.pious-assault": { glyph: "sweep", modifier: "renew" },
   "dervish.chilling-victory": { glyph: "snowflake", modifier: "bolt" },
   "dervish.wearying-strike": { glyph: "scythe", modifier: "down" },
+  // A placeholder until the asset-designer's (#1528).
+  "dervish.banishing-strike": { glyph: "scythe", modifier: "plus" },
 };

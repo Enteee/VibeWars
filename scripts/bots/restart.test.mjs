@@ -63,7 +63,11 @@ function commit(message, cwd) {
  * devenv stand-in's `claude-llc up` fails, as the real one does, while that
  * session is up, and also the first `failUp` times it runs.
  *
- * @param {{ failBuild?: boolean, signed?: boolean, survive?: number, failUp?: number, panePid?: number }} [options]
+ * The reboot names the new main as the commit the operator approved (#960),
+ * unless `approved` names another; `movedOn` pushes one more company commit
+ * to main after the approval.
+ *
+ * @param {{ failBuild?: boolean, signed?: boolean, survive?: number, failUp?: number, panePid?: number, approved?: string, movedOn?: boolean }} [options]
  */
 function setup(options = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "restart-test-"));
@@ -102,6 +106,12 @@ function setup(options = {}) {
   }
   sh(["push", "-q", "origin", "main"], other);
   const target = sh(["rev-parse", "HEAD"], other);
+  if (options.movedOn === true) {
+    fs.writeFileSync(path.join(other, "scripts", "bots", "later.mjs"), "x\n");
+    sh(["add", "scripts"], other);
+    commit("company: merged after the approval", other);
+    sh(["push", "-q", "origin", "main"], other);
+  }
 
   fs.mkdirSync(root, { recursive: true });
   fs.writeFileSync(path.join(root, "company.json"), JSON.stringify({ repo: "o/r" }));
@@ -113,6 +123,9 @@ function setup(options = {}) {
       by: "manager",
       deadline: 2,
       bootSha: boot,
+      targetSha: options.approved ?? target,
+      proposalId: "0123456789abcdef0123456789abcdef",
+      ready: [],
     }),
   );
 
@@ -317,8 +330,40 @@ describe("the restarter", () => {
     expect(readLock(company.root)).toBe("missing");
     expect(String(result.boot.note)).toMatch(
       new RegExp(
-        `main ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
+        `the approved ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
       ),
+    );
+    expect(result.calls).toContain(
+      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
+    );
+  });
+
+  it("boots and locks the approved commit, not what main has gained since (#960)", () => {
+    const company = setup({ movedOn: true });
+
+    const result = company.restart();
+
+    expect(result.code).toBe(0);
+    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
+    expect(readLock(company.root)).toMatchObject({ sha: company.target, by: "reboot" });
+    expect(result.boot).toMatchObject({
+      sha: company.target,
+      updated: true,
+      note: `Rebooted onto ${company.target.slice(0, 8)}: company: a new thing.`,
+    });
+  });
+
+  it("updates nothing when the approved commit is not on GitHub's main (#960)", () => {
+    const approved = "d".repeat(40);
+    const company = setup({ approved });
+
+    const result = company.restart();
+
+    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
+    expect(readLock(company.root)).toBe("missing");
+    expect(String(result.boot.note)).toBe(
+      `Rebooted, but NOT updated: the approved dddddddd is not on GitHub's main ` +
+        `(${company.target.slice(0, 8)}); running ${company.boot.slice(0, 8)}.`,
     );
     expect(result.calls).toContain(
       `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,

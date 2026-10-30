@@ -1,7 +1,8 @@
 /**
- * The company reboot (#21): the manager asks, hubd checks and records it,
- * the supervisor drains the company, and a restarter detached from tmux
- * brings it back up on the new `main`.
+ * The company reboot (#21): the manager proposes it, hubd checks it, the
+ * operator approves it in Telegram (#960), hubd records it, the supervisor
+ * drains the company, and a restarter detached from tmux brings it back up
+ * on the commit the operator approved.
  *
  * Every decision in that chain is here, as a pure function, so it can be
  * tested without a tmux session, a daemon or a clock. What is left in
@@ -39,14 +40,56 @@ export const DRAIN_MS = 10 * 60_000;
 /** How long a stop waits for a `hub` request still being served. */
 export const INFLIGHT_GRACE_MS = 60_000;
 
+/** How often hubd looks for the operator's decision on a proposal (#960). */
+export const PROPOSAL_POLL_MS = 2_000;
+
 /**
  * @typedef {{
  *   requestedAt: number, reason: string, by: string, deadline: number, bootSha: string,
- *   ready: string[],
+ *   targetSha: string, proposalId: string, ready: string[],
  * }} Reboot
  *
  * `ready` lists the employees that ran `company ready` (#62): two
- * employees of one role are two agents to wait for.
+ * employees of one role are two agents to wait for. `targetSha` is the
+ * commit the operator approved in proposal `proposalId` (#960): the one
+ * that boots, whatever `main` is by then.
+ */
+
+/**
+ * A reboot the manager proposed and the operator has not decided (#960),
+ * `.bots/reboot-proposal.json`. Only hubd writes it; the sidecar reads it
+ * to show the operator. It never lapses: it is open until approved,
+ * rejected or withdrawn.
+ *
+ * @typedef {{
+ *   id: string,
+ *   proposedAt: number,
+ *   by: string,
+ *   kind: "request" | "workday",
+ *   reason: string,
+ *   bootSha: string,
+ *   targetSha: string,
+ *   commits: { subject: string }[],
+ *   allCommits: number,
+ *   stat: {
+ *     files: number, insertions: number, deletions: number,
+ *     top: { path: string, insertions: number, deletions: number }[],
+ *   },
+ * }} RebootProposal
+ *
+ * `id` is 128 random bits in hex: unguessable from a jail, so a button
+ * cannot be forged for it. `by` is the manager employee, `reason`
+ * WORKDAY for `--workday`. `commits` are the company-code subjects on
+ * `bootSha..targetSha`, of `allCommits` commits there in all; `stat` is
+ * that range's company-code diffstat, its biggest files in `top`.
+ */
+
+/**
+ * The operator's tap on a proposal, `.bots/link/reboot-decision.json`.
+ * Only the sidecar writes it, from a tap it has checked; hubd reads it once
+ * and deletes it.
+ *
+ * @typedef {{ id: string, decision: "approve" | "reject", at: number }} RebootDecision
  */
 
 /**
@@ -198,8 +241,8 @@ export function fastForwardDecision({ branch, dirty, fastForward }) {
 }
 
 /**
- * What the manager's `company reboot` broadcasts to everyone, operator
- * included, when hubd accepts it.
+ * What hubd broadcasts to everyone, operator included, once the operator
+ * approved the manager's reboot.
  *
  * @param {Reboot} reboot
  * @param {string[]} subjects the company commits on main since the boot
@@ -209,7 +252,8 @@ export function announcement(reboot, subjects) {
   const why = reboot.reason === WORKDAY ? "End of the workday. Company reboot" : "Company reboot";
   const loads = subjects.length === 0 ? "no new company code" : subjects.join("; ");
   return (
-    `${why} by ${clock(reboot.deadline)}${reboot.reason === WORKDAY ? "" : `: ${reboot.reason}`}. It loads: ` +
+    `${why} by ${clock(reboot.deadline)}, approved by the operator` +
+    `${reboot.reason === WORKDAY ? "" : `: ${reboot.reason}`}. It loads ${reboot.targetSha.slice(0, 8)}: ` +
     `${loads}. Commit or WIP-commit your work, push it, then run ` +
     "`company ready`. Abort: `company reboot --abort` (manager), " +
     "`claude-llc reboot --abort` (operator)."
@@ -242,19 +286,190 @@ export function parseReboot(value) {
     return null;
   }
   const raw = /** @type {Record<string, unknown>} */ (value);
-  const { requestedAt, reason, by, deadline, bootSha, ready } = raw;
+  const { requestedAt, reason, by, deadline, bootSha, targetSha, proposalId, ready } = raw;
   if (
     typeof requestedAt !== "number" ||
     typeof reason !== "string" ||
     typeof by !== "string" ||
     typeof deadline !== "number" ||
     typeof bootSha !== "string" ||
+    !isSha(targetSha) ||
+    !isProposalId(proposalId) ||
     !Array.isArray(ready) ||
     !ready.every((role) => typeof role === "string")
   ) {
     return null;
   }
-  return { requestedAt, reason, by, deadline, bootSha, ready: ready.map(String) };
+  return {
+    requestedAt,
+    reason,
+    by,
+    deadline,
+    bootSha,
+    targetSha,
+    proposalId,
+    ready: ready.map(String),
+  };
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is string} a full commit sha
+ */
+function isSha(value) {
+  return typeof value === "string" && /^[0-9a-f]{40}$/.test(value);
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is string} a proposal id: 32 hex characters
+ */
+export function isProposalId(value) {
+  return typeof value === "string" && /^[0-9a-f]{32}$/.test(value);
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is number}
+ */
+function isCount(value) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {Record<string, unknown>} its fields, none if it is not an object
+ */
+function fields(value) {
+  return typeof value === "object" && value !== null
+    ? /** @type {Record<string, unknown>} */ (value)
+    : {};
+}
+
+/**
+ * @param {string} id a proposal's
+ * @returns {string} how people name it: `R` and its first six hex digits
+ */
+export function proposalName(id) {
+  return `R${id.slice(0, 6)}`;
+}
+
+/**
+ * `.bots/reboot-proposal.json`, or `null` if it is not a proposal.
+ *
+ * @param {unknown} value
+ * @returns {RebootProposal | null}
+ */
+export function parseProposal(value) {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const raw = /** @type {Record<string, unknown>} */ (value);
+  const { id, proposedAt, by, kind, reason, bootSha, targetSha, commits, allCommits, stat } = raw;
+  if (
+    !isProposalId(id) ||
+    typeof proposedAt !== "number" ||
+    typeof by !== "string" ||
+    (kind !== "request" && kind !== "workday") ||
+    typeof reason !== "string" ||
+    !isSha(bootSha) ||
+    !isSha(targetSha) ||
+    !Array.isArray(commits) ||
+    !isCount(allCommits) ||
+    typeof stat !== "object" ||
+    stat === null
+  ) {
+    return null;
+  }
+  /** @type {{ subject: string }[]} */
+  const subjects = [];
+  for (const entry of commits) {
+    const { subject } = fields(entry);
+    if (typeof subject !== "string") {
+      return null;
+    }
+    subjects.push({ subject });
+  }
+  const { files, insertions, deletions, top } = fields(stat);
+  if (!isCount(files) || !isCount(insertions) || !isCount(deletions) || !Array.isArray(top)) {
+    return null;
+  }
+  /** @type {RebootProposal["stat"]["top"]} */
+  const tops = [];
+  for (const entry of top) {
+    const file = fields(entry);
+    if (typeof file.path !== "string" || !isCount(file.insertions) || !isCount(file.deletions)) {
+      return null;
+    }
+    tops.push({ path: file.path, insertions: file.insertions, deletions: file.deletions });
+  }
+  return {
+    id,
+    proposedAt,
+    by,
+    kind,
+    reason,
+    bootSha,
+    targetSha,
+    commits: subjects,
+    allCommits,
+    stat: { files, insertions, deletions, top: tops },
+  };
+}
+
+/**
+ * `.bots/link/reboot-decision.json`, or `null` if it is not a decision.
+ *
+ * @param {unknown} value
+ * @returns {RebootDecision | null}
+ */
+export function parseDecision(value) {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const { id, decision, at } = /** @type {Record<string, unknown>} */ (value);
+  if (
+    !isProposalId(id) ||
+    (decision !== "approve" && decision !== "reject") ||
+    typeof at !== "number"
+  ) {
+    return null;
+  }
+  return { id, decision, at };
+}
+
+/**
+ * What hubd does with the operator's decision on the open proposal (#960).
+ *
+ * A decision for another proposal is ignored: it is a tap on a message
+ * whose proposal is gone. An approval schedules the reboot only if the
+ * company still runs the commit the proposal was made on and no reboot is
+ * pending; otherwise it no longer applies, and is dropped as `void`.
+ *
+ * @param {{
+ *   proposal: RebootProposal,
+ *   decision: RebootDecision,
+ *   bootSha: string | null,
+ *   pending: Reboot | null,
+ * }} input `bootSha` is `boot.json`'s, `null` if it could not be read
+ * @returns {{ action: "schedule" }
+ *   | { action: "drop", outcome: "rejected" | "void", note: string }
+ *   | { action: "ignore" }}
+ */
+export function decideProposal({ proposal, decision, bootSha, pending }) {
+  if (decision.id !== proposal.id) {
+    return { action: "ignore" };
+  }
+  if (decision.decision === "reject") {
+    return { action: "drop", outcome: "rejected", note: "rejected by the operator" };
+  }
+  if (bootSha !== proposal.bootSha) {
+    return { action: "drop", outcome: "void", note: "the company booted since" };
+  }
+  if (pending !== null) {
+    return { action: "drop", outcome: "void", note: "a reboot is already pending" };
+  }
+  return { action: "schedule" };
 }
 
 /**
