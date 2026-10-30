@@ -1664,30 +1664,29 @@ const status = {
       `<path d="M12.8 7.5l-2 3h2.4l-2 3" ${stroke(c, 1.4)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
-  // Elementalist staples 2 (#1575), stand-ins until their art card.
-  // Enchantment: a faceted stone body with a crossed-out blade, armored
-  // and unable to attack.
+  // Elementalist staples 2 (#1575, #1605).
+  // Enchantment: the skill's faceted crystal.
   "obsidian-flesh": [
     "enchantment",
     (c) =>
       `<path d="M12 3l6 4v7l-6 7-6-7V7z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v18M6 7l6 4 6-4" ${stroke(c, 1.2)}/>`,
   ],
-  // Skill effect: a ward's ground line under a slowed, dragging foot.
+  // Skill effect: the ward's ring and pole, a dragging trail of bars.
   "ward-against-foes": [
     "skill-effect",
     (c) =>
-      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
-      `<path d="M10 9.5h4" ${stroke(c, 1.6)}/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      `<ellipse cx="12" cy="18" rx="8" ry="3" ${stroke(c, 2)}/>` +
+      `<path d="M12 18v-4" ${stroke(c, 2)}/>` +
+      `<path d="M12 5h8M8 8.5h12M4 12h16" ${stroke(c, 2)}/>`,
   ],
-  // Skill effect: a ward over a planted stance, no knockdown inside it.
+  // Skill effect: the ward's ring and pole, a planted block on top.
   "ward-of-stability": [
     "skill-effect",
     (c) =>
-      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
-      `<path d="M12 7.5v5" ${stroke(c, 1.6)}/>` +
-      `<path d="M5 18.5h14M8 21h8" ${stroke(c, 2)}/>`,
+      `<ellipse cx="12" cy="18" rx="8" ry="3" ${stroke(c, 2)}/>` +
+      `<path d="M12 18v-7" ${stroke(c, 2)}/>` +
+      `<path d="M6 4h12v6H6z" fill="${c}"/>`,
   ],
   // Elementalist energy engine (#1614), stand-ins until the asset-designer's.
   // Enchantment: a flame over a rising energy bar, attuned to Fire.
@@ -1823,6 +1822,15 @@ const status = {
     (c) =>
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Mesmer staples 3 (#1627), a stand-in until its art card.
+  // Hex: an eye glancing aside over a burst, the next attack goes astray.
+  "wandering-eye": [
+    "hex",
+    (c) =>
+      `<path d="M4 10c4-5 12-5 16 0c-4 5-12 5-16 0z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="15" cy="10" r="2" fill="${c}"/>` +
+      `<path d="M12 15v5M8.5 16.5l2 2M15.5 16.5l-2 2" ${stroke(c, 1.6)}/>`,
   ],
   // Dervish staples 2 (#1604), stand-ins until their art card.
   // Stance: three fast slashes, it attacks 25% faster.
@@ -3749,6 +3757,50 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // Obsidian Flesh: a faceted black crystal, cut with light lines (#1605).
+  "stone-skin": () =>
+    inkFill("M12 2.5L19.5 7V15L12 21.5L4.5 15V7Z") +
+    `<path d="M12 2.5V21.5M4.5 7L12 12L19.5 7" fill="none" stroke="${C.bg}" stroke-width="1.6" stroke-linejoin="round"/>`,
+  // Gale: two wind curls streaming left, the lower one rolling over (#1605).
+  "gust-curl": () =>
+    inkLine("M2.5 8H14.5A3.2 3.2 0 1 0 11.3 4.8", 2.4) +
+    inkLine("M2.5 13.5H19A3.2 3.2 0 1 1 15.8 16.7", 2.4) +
+    inkLine("M2.5 19H9", 2.4),
+  // Earthquake: the ground split by a chasm, rocks thrown up out of it (#1605).
+  chasm: () =>
+    inkLine("M2 15H9L11 21M22 15H15L13 21", 2.4) +
+    inkFill("M10.2 3.5H13.8V7H10.2Z") +
+    inkFill("M5 7.5H8.4V10.8H5Z") +
+    inkFill("M15.6 7.5H19V10.8H15.6Z"),
+  // Unsteady Ground: a pulsing ring with a crack through the earth above it (#1605).
+  "ground-pulse": () =>
+    `<ellipse cx="12" cy="17" rx="9.5" ry="4" ${stroke(C.ink, 2.2)}/>` +
+    `<ellipse cx="12" cy="17" rx="4" ry="1.6" ${stroke(C.ink, 2)}/>` +
+    inkLine("M4 8L8 11L11 5.5L14 11L17.5 7L20 10", 2.4),
+  // Ward Against Foes: the ward's ring and pole, a dragging trail of bars (#1605).
+  "ward-slow": () =>
+    `<ellipse cx="12" cy="18" rx="8.5" ry="3.6" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 18V13", 2.4) +
+    inkLine("M12 3.5H21M7 7.5H21M3 11.5H21", 2.4),
+  // Ward of Stability: the ward's ring and pole, a planted block on top (#1605).
+  "ward-block": () =>
+    `<ellipse cx="12" cy="18" rx="8.5" ry="3.6" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 18V10", 2.4) +
+    inkFill("M5.5 2.5H18.5V9H5.5Z"),
+  // Lightning Touch: a hand held low, a bolt striking from it (#1605).
+  "hand-bolt": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    inkLine("M19 1.5L13.5 10.5H19.5L14 19.5", 2.6),
+  // Liquid Flame: a flame over a wavy pool, drops thrown out to both sides (#1605).
+  "flame-splash": () =>
+    `<g transform="translate(12,9) scale(0.75) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M3 20C5.5 17.5 8.5 22.5 12 20S18.5 17.5 21 20", 2.2) +
+    `<circle cx="3.8" cy="12.5" r="1.7" fill="${C.ink}"/><circle cx="20.2" cy="12.5" r="1.7" fill="${C.ink}"/>`,
+  // Glowing Gaze: an eye whose pupil is a flame, rays above it (#1605).
+  "eye-flame": () =>
+    `<path d="M2.5 14C5 9.5 8.5 7.5 12 7.5S19 9.5 21.5 14C19 18.5 15.5 20.5 12 20.5S5 18.5 2.5 14Z" ${stroke(C.ink, 2.2)}/>` +
+    `<g transform="translate(12,14) scale(0.46) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M12 1.5V4M5.5 3.5L7.3 5.5M18.5 3.5L16.7 5.5", 2),
   // The Mesmer's staples (#1570, #1594): what the skill breaks off, and what it leaves.
   "interrupt-energy-cut": () =>
     `<g transform="translate(15.5,8.5) scale(0.62) translate(-12,-12)">${skillGlyph.interrupt()}</g>` +

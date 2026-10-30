@@ -43,6 +43,11 @@ export const NECROMANCER_ICONS = {
   "necromancer.blood-is-power": { glyph: "sac-energy" },
   "necromancer.order-of-pain": { glyph: "sac-blade" },
   "necromancer.plague-signet": { glyph: "drop-to-signet" },
+  // Touch skills (#1643), stand-ins until their art card.
+  "necromancer.vile-touch": { glyph: "mark-skull", modifier: "down" },
+  "necromancer.touch-of-agony": { glyph: "drop-touch", modifier: "bleed" },
+  "necromancer.wallows-bite": { glyph: "drop-touch", modifier: "down" },
+  "necromancer.vampiric-bite": { glyph: "drop-touch", modifier: "up" },
   // Necromancer staples 2 (#1583): the shapes of their statuses where they have one.
   "necromancer.wither": { glyph: "hex-wither" },
   "necromancer.life-siphon": { glyph: "drop-siphon" },

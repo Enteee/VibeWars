@@ -1044,7 +1044,12 @@ export function applyEffect(
       }
       applyHeal(
         healed,
-        healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+        perEnergyLost(
+          effect,
+          healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+          lostBy,
+          earlier,
+        ),
         events,
       );
       return events;
@@ -1263,6 +1268,13 @@ export function applyEffect(
         // blow brought down (#817): the player's interrupt landed, so it
         // is no miss.
         if (wasInterrupted(target.id, earlier)) {
+          return events;
+        }
+        // Already missed by this resolution, as by Signet of Disruption's
+        // hexed-foe interrupt before its spell one (#1627): one miss is told.
+        if (
+          earlier.some((event) => event.kind === "interrupt-missed" && event.targetId === target.id)
+        ) {
           return events;
         }
         // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
@@ -1881,16 +1893,22 @@ function landing(
     : [];
 }
 
-/** Apply one effect to `context.target`, an `if` included (`landing`). */
+/**
+ * Apply one effect to `context.target`, an `if` included (`landing`).
+ * Each effect inside an `if` reads what the ones before it did, as
+ * Drain Delusions' gain reads the energy its loss took (#1627).
+ */
 function applyInOrder(
   effect: SkillEffect,
   context: SkillContext,
   earlier: readonly CombatEvent[],
   held: ReadonlySet<EffectCondition>,
 ): CombatEvent[] {
-  return landing(effect, context, earlier, held).flatMap((inner) =>
-    applyEffect(inner, context, earlier),
-  );
+  const events: CombatEvent[] = [];
+  for (const inner of landing(effect, context, earlier, held)) {
+    events.push(...applyEffect(inner, context, [...earlier, ...events]));
+  }
+  return events;
 }
 
 /** Apply `effects` in order to one target; an `if` reads what came before it. */
@@ -2086,7 +2104,7 @@ export function resolveSkillEffects(
         if (inner.kind === "create-ground-effect") {
           grounds.push(inner);
         }
-        events.push(...applyEffect(inner, context, before));
+        events.push(...applyEffect(inner, context, [...earlier, ...events]));
       }
     }
   }
