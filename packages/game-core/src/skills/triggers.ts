@@ -45,6 +45,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-gains-enchantment"
   | "bearer-loses-enchantment"
   | "bearer-blocks"
+  | "bearer-interrupted"
   | "bearer-creates-creature"
   | "ends"
   | "ends-early"
@@ -100,7 +101,8 @@ export function fireTriggers(
 
 /**
  * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
- * unless it names a type or a profession the skill must have.
+ * unless it names a type or a profession the skill must have, or that it
+ * be elite (#1473).
  */
 function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
   if (trigger.usedSkill === undefined) {
@@ -111,7 +113,8 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
     (trigger.usedSkill.profession === undefined ||
-      skill.profession === trigger.usedSkill.profession)
+      skill.profession === trigger.usedSkill.profession) &&
+    (trigger.usedSkill.elite === undefined || skill.elite)
   );
 }
 
@@ -142,7 +145,8 @@ export function fireCreationTriggers(
  * answered it when it happened (#953), so a killing blow still sets off
  * the hexes its death ended. Damage or life steal from a foe (#1022)
  * fires what answered it at that foe, and a block (#1329) what answered
- * it at the attacker. A hex or an enchantment gained (#1403) fires what
+ * it at the attacker, and an interrupt (#1473) what answered it at the
+ * interrupter. A hex or an enchantment gained (#1403) fires what
  * answered it, toward whoever put it on, and a hex a status broke costs
  * its caster that status's damage. An enchantment lost (#1437) fires what
  * answered it when it went. The simulation discards whatever
@@ -189,6 +193,7 @@ export function fireChangeTriggers(
       );
     case "took-damage-from-foe":
     case "blocked":
+    case "interrupted":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
       );
@@ -258,7 +263,8 @@ export function breakHex(
  * One trigger's effects, in order, from `parties`. Consecutive skill
  * effects resolve together, so one may read what an earlier one did; a
  * spread with nothing gained does nothing. A status that ends when
- * triggered (#1022) then ends, logged as its expiry.
+ * triggered (#1022) then ends, logged as its expiry. The status itself
+ * is the effects' firing status (#1473), which "another hex" leaves out.
  */
 function fire(
   trigger: StatusTrigger,
@@ -281,7 +287,17 @@ function fire(
   const events: CombatEvent[] = [];
   let pending: SkillEffect[] = [];
   const flush = (): void => {
-    events.push(...applyEffects(pending, { caster, target, rng, rules, surroundings, usedSkill }));
+    events.push(
+      ...applyEffects(pending, {
+        caster,
+        target,
+        rng,
+        rules,
+        surroundings,
+        usedSkill,
+        firingStatusId: statusId,
+      }),
+    );
     pending = [];
   };
   for (const effect of trigger.effects) {

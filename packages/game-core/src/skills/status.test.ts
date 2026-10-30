@@ -142,6 +142,8 @@ describe("status definitions", () => {
       suffering: -2,
       "lingering-curse": -3,
       "ice-spear": 3,
+      overload: -3,
+      migraine: -7,
     });
   });
 

@@ -355,4 +355,14 @@ export const SKILL_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "flame", modifier: "hourglass" },
   "dervish.avatar-of-grenth": { glyph: "scythe", modifier: "hourglass" },
   "dervish.avatar-of-lyssa": { glyph: "energy", modifier: "hourglass" },
+  // Placeholders until the asset-designer's (#1473): skill-use punishers.
+  "mesmer.wastrels-worry": { glyph: "flame", modifier: "hourglass" },
+  "mesmer.overload": { glyph: "interrupt", modifier: "area" },
+  "mesmer.frustration": { glyph: "interrupt", modifier: "self" },
+  "mesmer.price-of-pride": { glyph: "energy", modifier: "down" },
+  "mesmer.signet-of-humility": { glyph: "cleanse", modifier: "clock" },
+  "mesmer.migraine": { glyph: "slow", modifier: "down" },
+  "mesmer.visions-of-regret": { glyph: "eye-slash", modifier: "self" },
+  "mesmer.unnatural-signet": { glyph: "fireball", modifier: "area" },
+  "elementalist.mind-blast": { glyph: "fireball", modifier: "up" },
 };
