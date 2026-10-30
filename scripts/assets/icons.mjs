@@ -1716,7 +1716,7 @@ const status = {
       `<path d="M3 8L6 12L3 16Z" ${stroke(c, 1.4)}/>` +
       `<path d="M10 4V20M14 4V20M18 4V20M8 4.5H20M8 19.5H20" ${stroke(c, 1.8)}/>`,
   ],
-  // Necromancer staples 2 (#1583), stand-ins until their art card.
+  // Necromancer staples 2 (#1583).
   // Hex: a hollow drop over two falling arrows, health and energy wither away.
   wither: [
     "hex",
@@ -2296,6 +2296,51 @@ const skillGlyph = {
   lightning: () => inkLine("M15 2.5L8.5 12.5H15.5L9 21.5", 2.6),
   // An ice shard in flight, with its trail (#918).
   shard: () => inkFill("M21 3L18 13L11 6Z") + inkLine("M12.5 11.5L4 20M9 9L5 13M15 15L11 19", 2),
+  // Necromancer staples 2 (#1583): the shapes of their statuses, so skill and status read as one.
+  // A dashed ring (a hex) round a hollow drop over two falling arrows: health and energy wither.
+  "hex-wither": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
+    inkLine("M12 5.5c1.8 2.5 3 4 3 5.8a3 3 0 0 1-6 0c0-1.8 1.2-3.3 3-5.8z", 1.6) +
+    inkLine("M8.5 15v3.5M7 17l1.5 1.5L10 17M15.5 15v3.5M14 17l1.5 1.5L17 17", 1.5),
+  // A hollow drop drained into a filled one: health siphoned to the caster.
+  "drop-siphon": () =>
+    inkLine("M8 3.5c2.2 3.2 3.6 5 3.6 7.3a3.6 3.6 0 0 1-7.2 0c0-2.3 1.4-4.1 3.6-7.3z", 2) +
+    inkFill("M16.5 12c1.8 2.6 3 4.1 3 6a3 3 0 0 1-6 0c0-1.9 1.2-3.4 3-6z") +
+    inkLine("M11.5 15L13 16.5", 2),
+  // A dashed ring (a hex) round a struck-through blade trailing speed lines: fast swings that miss.
+  "hex-haste-miss": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
+    inkLine("M5.5 9.5h3M5.5 12.5h3M5.5 15.5h3", 1.6) +
+    inkLine("M10.5 15.5L16.5 8.5M10.5 8.5l6 7", 2),
+  // A ring broken open round a falling arrow: the enchantment turned to rot.
+  "ring-rot": () =>
+    `<path d="M7.5 5A8 8 0 1 0 16.5 5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 3V13M8.5 10L12 13.5L15.5 10", 2.4),
+  // A ring broken open round a drop: the enchantment stripped, health taken.
+  "ring-steal": () =>
+    `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
+    inkFill("M12 6.5c2 2.8 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0c0-2 1.5-3.7 3.5-6.5z"),
+  // A snowflake with a skull at its heart: cold that kills.
+  "chill-skull": () =>
+    inkLine("M12 2V22M3.4 7L20.6 17M3.4 17L20.6 7", 2) +
+    `<circle cx="12" cy="12" r="5.2" fill="${C.ink}" stroke="${C.bg}" stroke-width="1.2"/>` +
+    `<circle cx="10.2" cy="11.2" r="1.3" fill="${C.bg}"/><circle cx="13.8" cy="11.2" r="1.3" fill="${C.bg}"/>` +
+    `<path d="M10.5 14.8h3" ${stroke(C.bg, 1.2)}/>`,
+  // A burst round a skull: a corpse blown apart.
+  "burst-skull": () =>
+    inkFill(burst(8)) +
+    `<circle cx="12" cy="12" r="5.6" fill="${C.bg}"/>` +
+    `<circle cx="12" cy="11.5" r="4" fill="${C.ink}"/>` +
+    `<circle cx="10.4" cy="11" r="1.1" fill="${C.bg}"/><circle cx="13.6" cy="11" r="1.1" fill="${C.bg}"/>` +
+    `<path d="M10.5 14.2v1.4M12 14.2v1.4M13.5 14.2v1.4" ${stroke(C.bg, 0.9)}/>`,
+  // A ring ticked outward round a drop: the signet's pain reaches those near, the caster bleeds.
+  "signet-agony": () =>
+    `<circle cx="12" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkLine(
+      "M12 2V4.5M12 19.5V22M2 12H4.5M19.5 12H22M5 5L6.8 6.8M17.2 17.2L19 19M19 5L17.2 6.8M6.8 17.2L5 19",
+      2,
+    ) +
+    inkFill("M12 7.8c1.5 2.2 2.6 3.5 2.6 5a2.6 2.6 0 0 1-5.2 0c0-1.5 1.1-2.8 2.6-5z"),
   // A snowflake (#938): the area frozen, not a shard flying.
   snowflake: () => inkLine("M12 3V21M4.2 7.5L19.8 16.5M4.2 16.5L19.8 7.5", 2.4),
   // A blade with a mark in the empty corner above it: a weapon spell, and what it does (#984).
