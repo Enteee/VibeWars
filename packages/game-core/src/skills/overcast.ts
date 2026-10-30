@@ -4,14 +4,26 @@
  * Deep Wound. Not a status, so nothing that removes conditions touches it.
  */
 
+import { aggregateModifiers } from "./status.js";
 import type { Combatant } from "./types.js";
 
 /**
- * The ceiling energy fills to: maximum energy less overcast. Below 0 when
- * overcast exceeds the maximum, and then nothing fills.
+ * Maximum energy with the statuses' bonus (#1464, Mighty Was Vorizun),
+ * before overcast: what the energy bar is drawn against.
  */
-export function effectiveMaxEnergy(combatant: Pick<Combatant, "maxEnergy" | "overcast">): number {
-  return combatant.maxEnergy - combatant.overcast;
+export function raisedMaxEnergy(combatant: Pick<Combatant, "maxEnergy" | "statuses">): number {
+  return combatant.maxEnergy + aggregateModifiers(combatant.statuses.active).maxEnergyBonus;
+}
+
+/**
+ * The ceiling energy fills to: maximum energy, raised by statuses (#1464),
+ * less overcast. Below 0 when overcast exceeds the maximum, and then
+ * nothing fills.
+ */
+export function effectiveMaxEnergy(
+  combatant: Pick<Combatant, "maxEnergy" | "overcast" | "statuses">,
+): number {
+  return raisedMaxEnergy(combatant) - combatant.overcast;
 }
 
 /**

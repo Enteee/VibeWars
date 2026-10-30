@@ -10,7 +10,7 @@ import { isAttacking } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
-import { hitLocationOf, mitigate, skillDamage } from "./damage.js";
+import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude } from "./scaling.js";
@@ -676,13 +676,17 @@ function knockDown(target: Combatant, durationSeconds: number): void {
  * the interrupted skill recharges as if it had been used: its cost is
  * spent and its recharge starts (ADR-0029). `byId` did it, and a status
  * on the target that answers an interrupt hears of it (#1473). Returns
- * whether there was a cast to interrupt.
+ * whether there was a cast to interrupt. An uninterruptible bearer's
+ * (#1464) never is.
  */
 function interruptCast(
   target: Combatant,
   byId: string | undefined,
   events: CombatEvent[],
 ): boolean {
+  if (aggregateModifiers(target.statuses.active).uninterruptible) {
+    return false;
+  }
   const cancelled = target.cast.cancelCast();
   if (cancelled === undefined) {
     return false;
@@ -964,7 +968,11 @@ export function applyEffect(
       if (amount <= 0) {
         return events;
       }
-      const packet = skillDamage(amount, effect.type, effect.armorPenetration);
+      const packet = skillDamage(
+        amount,
+        effect.type,
+        withSkillArmorPenetration(effect.armorPenetration, caster, context.profession),
+      );
       applyDamage(
         target,
         mitigate(packet, target, context.rules, hitLocationOf(packet, context.rng)),
@@ -1893,7 +1901,7 @@ export function resolveSkillEffects(
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
       const states = (target === undefined ? undefined : held.get(target)) ?? NONE_HELD;
-      const context = { caster, target, rng, rules, surroundings };
+      const context = { caster, target, rng, rules, surroundings, profession: skill.profession };
       const before = [...earlier, ...events];
       for (const inner of landing(effect, context, before, states)) {
         if (inner.kind === "recharge-faster") {

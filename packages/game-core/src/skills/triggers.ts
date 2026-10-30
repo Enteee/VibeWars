@@ -211,6 +211,7 @@ export function fireChangeTriggers(
         fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
       );
     case "took-damage-from-foe":
+    case "hit-by-attack":
     case "blocked":
     case "interrupted":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
@@ -316,6 +317,7 @@ function fire(
         surroundings,
         usedSkill,
         firingStatusId: statusId,
+        profession: getStatusDefinition(statusId).profession,
       }),
     );
     pending = [];

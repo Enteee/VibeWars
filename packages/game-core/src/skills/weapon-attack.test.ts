@@ -1717,3 +1717,48 @@ describe("a chain attack's state requirement (#1041)", () => {
     expect(missed(true, true)).toBe(false);
   });
 });
+
+describe("hit by a foe's attack (#1464)", () => {
+  /** How many swings of 200 recorded a hit on the victim, and how many landed. */
+  function swings(blind: boolean): { recorded: number; landed: number } {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    if (blind) {
+      sword.statuses.apply("blind", 1e6, "x");
+    }
+    const target = foe("r");
+    target.combatant.statuses.apply("vengeful-was-khanhei", 1e6, "r");
+    target.combatant.statuses.apply("guardian", 1e6, "monk");
+    target.combatant.statuses.drainChanges();
+    const rng = createRng(1464);
+    let recorded = 0;
+    let landed = 0;
+    for (let i = 0; i < 200; i += 1) {
+      const { events } = resolveSwing({
+        attacker: sword,
+        target,
+        surroundings: new Map(),
+        rng,
+        rules: RULES,
+        exposed: NOWHERE,
+      });
+      landed += damages(events).length;
+      for (const change of target.combatant.statuses.drainChanges()) {
+        if (change.kind === "hit-by-attack") {
+          expect(change.offenderId).toBe("attacker");
+          recorded += 1;
+        }
+      }
+    }
+    return { recorded, landed };
+  }
+
+  it("is recorded for each landed swing, with the attacker, and never for a block or a miss", () => {
+    const sighted = swings(false);
+    expect(sighted.landed).toBeGreaterThan(50);
+    expect(sighted.landed).toBeLessThan(150);
+    expect(sighted.recorded).toBe(sighted.landed);
+    const blind = swings(true);
+    expect(blind.landed).toBeLessThan(sighted.landed);
+    expect(blind.recorded).toBe(blind.landed);
+  });
+});
