@@ -676,7 +676,8 @@ export interface CreatureTemplate {
  */
 export interface DeathBurst {
   readonly effect: "damage" | "heal";
-  readonly perSecondAlive: number;
+  /** Scaled by its owner, read once at summoning (#1603). */
+  readonly perSecondAlive: Magnitude;
   /** `undefined`: no cap. */
   readonly max: number | undefined;
   readonly affects: "allies" | "foes";

@@ -328,6 +328,11 @@ export const CREATURE_LOOKS = [
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
+/** A spirit's death burst as it arrived: its rate on its owner's rank (#1603). */
+export type ArrivedDeathBurst = Omit<DeathBurst, "perSecondAlive"> & {
+  readonly perSecondAlive: number;
+};
+
 /**
  * A body that is not a player (#1052, ADR-0035): a participant that never
  * counts for its team and has no seat. A spirit or minion is gone once it
@@ -362,8 +367,11 @@ export interface Creature {
   readonly onDeath: "vanish" | "lie" | "rise";
   /** Its owner's bar is disabled this long on its death, read at arrival; 0: never. */
   readonly ownerDisableSeconds: number;
-  /** From the template (#1550): what its leaving does round it. */
-  readonly deathBurst: DeathBurst | undefined;
+  /**
+   * From the template (#1550): what its leaving does round it, its rate
+   * read on its owner's rank at arrival (#1603).
+   */
+  readonly deathBurst: ArrivedDeathBurst | undefined;
   /**
    * The skill on its owner's bar it travels with (#1046): a companion.
    * `undefined`: summoned by a cast.
@@ -1363,7 +1371,16 @@ export class MatchSimulation {
             template.ownerDisableOnDeath === undefined
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
-          deathBurst: template.deathBurst,
+          deathBurst:
+            template.deathBurst === undefined
+              ? undefined
+              : {
+                  ...template.deathBurst,
+                  perSecondAlive: resolveMagnitude(
+                    template.deathBurst.perSecondAlive,
+                    owner.combatant,
+                  ),
+                },
           companionSkillId: companion ? skillId : undefined,
           leaderId: undefined,
           mode: "guard",
@@ -1808,7 +1825,7 @@ export class MatchSimulation {
         continue;
       }
       const amount = Math.min(
-        Math.round(burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON)),
+        burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
         burst.max ?? Number.POSITIVE_INFINITY,
       );
       if (amount <= 0) {
