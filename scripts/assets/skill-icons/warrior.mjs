@@ -46,4 +46,13 @@ export const WARRIOR_ICONS = {
   "warrior.staggering-blow": { glyph: "hammer-chevrons" },
   "warrior.earth-shaker": { glyph: "hammer-quake", modifier: "area" },
   "warrior.devastating-hammer": { glyph: "hammer-slam", modifier: "down" },
+  // Placeholders until the asset-designer's (#1549): Warrior staples.
+  "warrior.flail": { glyph: "blade-fast", modifier: "down" },
+  "warrior.defy-pain": { glyph: "heart-plus", modifier: "self" },
+  "warrior.dismember": { glyph: "axe", modifier: "half" },
+  "warrior.jaizhenju-strike": { glyph: "sword", modifier: "stun" },
+  "warrior.riposte": { glyph: "shield-blade", modifier: "self" },
+  "warrior.deadly-riposte": { glyph: "shield-blade", modifier: "bleed" },
+  "warrior.charge": { glyph: "speed", modifier: "plus" },
+  "warrior.enraging-charge": { glyph: "speed", modifier: "bolt" },
 };

@@ -796,6 +796,12 @@ export interface StatusTrigger {
    */
   readonly weapon?: AttackWeaponClass;
   /**
+   * On `bearer-blocks` only (#1549): it fires only for a blocked attack of
+   * this kind, whichever status's share the roll fell in, as Riposte's
+   * "block the next melee attack". Absent: any block.
+   */
+  readonly blocked?: "melee" | "projectile";
+  /**
    * On `bearer-loses-enchantment` only (#1437): it fires only for an
    * enchantment of this profession's (`StatusDefinition.profession`).
    * Absent: any enchantment.
@@ -1239,14 +1245,16 @@ export class StatusSet {
    * Status `statusId` blocked an attack of this kind from `offenderId`
    * (#1329), recorded only if that status answers it, with its triggers:
    * another blocking status on the bearer does not. Every status that
-   * answers any block (#1403) does, after it.
+   * answers any block (#1403), or any of this kind (#1549), does, after it.
    */
   public recordBlock(statusId: StatusId, offenderId: string, kind: "melee" | "projectile"): void {
     const fired = [
       ...this.#answering(
         kind === "melee" ? "bearer-blocks-melee" : "bearer-blocks-projectile",
       ).filter((answering) => answering.statusId === statusId),
-      ...this.#answering("bearer-blocks"),
+      ...this.#answering("bearer-blocks").filter(
+        ({ trigger }) => trigger.blocked === undefined || trigger.blocked === kind,
+      ),
     ];
     if (fired.length > 0) {
       this.#changes.push({ kind: "blocked", offenderId, fired });
@@ -1649,12 +1657,14 @@ export class StatusSet {
    * The newest applied goes first, as in GW1 (#521), where covering an
    * important enchantment or condition with a cheaper one is a tactic.
    * With a `profession`, only that profession's statuses go (#845): "lose
-   * 1 Dervish enchantment".
+   * 1 Dervish enchantment". With a `statusId`, only that status (#1549):
+   * "Charge!"'s "lose the Crippled condition".
    */
   public removeByCategory(
     category: StatusCategory,
     count = Number.POSITIVE_INFINITY,
     profession?: ProfessionId,
+    statusId?: StatusId,
   ): StatusId[] {
     const removed: StatusId[] = [];
     for (const status of [...this.#statuses.values()].reverse()) {
@@ -1664,7 +1674,8 @@ export class StatusSet {
       const definition = getStatusDefinition(status.id);
       if (
         definition.category === category &&
-        (profession === undefined || definition.profession === profession)
+        (profession === undefined || definition.profession === profession) &&
+        (statusId === undefined || status.id === statusId)
       ) {
         removed.push(status.id);
       }

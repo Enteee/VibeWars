@@ -331,6 +331,11 @@ export interface RemoveStatusEffect {
    */
   readonly profession?: ProfessionId;
   /**
+   * Only this status, which must be of `category` (#1549): "Charge!"'s
+   * "lose the Crippled condition". Absent: any of the category.
+   */
+  readonly statusId?: StatusId;
+  /**
    * `caster`: from the caster, once per use however many targets, as
    * `heal`'s `recipient` (#845). Absent: the target.
    */
