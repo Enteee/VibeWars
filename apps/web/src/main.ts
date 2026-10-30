@@ -1,5 +1,11 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type { Guild, LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/game-session";
+import type {
+  Guild,
+  LobbyCharacter,
+  LobbyConnection,
+  LobbySnapshot,
+  MatchStarting,
+} from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
@@ -88,6 +94,7 @@ import {
   type StayOffer,
 } from "./ui/queue-screen.js";
 import { hostMaps, renderLobbyScreen } from "./ui/lobby-screen.js";
+import { entryProposal, renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
 import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
@@ -100,7 +107,7 @@ import {
   saveStarterCharacterId,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
-import { renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
+import { loadActiveTeamBuildId, renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import {
   addMember,
@@ -195,6 +202,12 @@ function takeRelayLink(): TurnFragment {
 
 /** The served build id this tab last reloaded for (#1268): once per id, never a loop. */
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
+
+/** A Team Lobby's saved Team Builds, read once as it begins, and the one proposed (#1460). */
+interface TeamPicks {
+  teams: readonly StoredTeam[];
+  proposed: string | undefined;
+}
 
 /** What a player takes into a lobby, read once when they enter it (#1070). */
 interface Entrant {
@@ -301,6 +314,8 @@ async function main(): Promise<void> {
    */
   let enteringMatch = false;
   let lobbyNotice: string | undefined;
+  /** While the lobby is in a Team Lobby (#1460). */
+  let teamPicks: TeamPicks | undefined;
   /**
    * Why the last attempt to reach a lobby failed, shown on the menu
    * the player lands back on. Cleared when they try again.
@@ -557,7 +572,7 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          hostWith(name, undefined);
+          hostWith(name, undefined, false);
         },
         onJoinLobby: joinWith,
         onRandomArena: (mode, name) => {
@@ -667,13 +682,16 @@ async function main(): Promise<void> {
     editor = mountBuildEditor(screenRoot, character, editorCallbacks);
   };
 
-  /** Host a lobby as `name`, with the active Solo character, on `modes`' maps. */
-  const hostWith = (name: string, modes: TeamPlayTile["modes"]): void => {
+  /**
+   * Host a lobby as `name`, with the active Solo character, on `modes`'
+   * maps; a Team Play tile's (`teamLobby`) starts in the Team Lobby (#1460).
+   */
+  const hostWith = (name: string, modes: TeamPlayTile["modes"], teamLobby: boolean): void => {
     void (async () => {
       lobbyModes = modes;
       const entrant = await readEntrant();
       await enterLobby(name, entrant, async () => {
-        hosted = await hostLobby(name, entrant.guild, entrant.character);
+        hosted = await hostLobby(name, entrant.guild, entrant.character, teamLobby);
         return hosted.lobby;
       });
     })();
@@ -690,15 +708,14 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Team Play (#1453), as `showMenu` shows it on that tab. Its lobbies are
-   * today's hosted ones, with the active Solo character, until the Team
-   * Lobby (#1458) takes the picked Team Build.
+   * Team Play (#1453), as `showMenu` shows it on that tab. Its tiles host
+   * Team Lobbies (#1460), where the picked Team Build is proposed.
    */
   const showTeamPlay = async (): Promise<void> => {
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
     renderTeamPlay(screenRoot, teamList.teams, [...teamList.problems, ...editNotices], menuNotice, {
       onHostTile: (tile, name) => {
-        hostWith(name, tile.modes);
+        hostWith(name, tile.modes, true);
       },
       onJoinLobby: joinWith,
       onSwitchTab: showMenu,
@@ -1066,6 +1083,11 @@ async function main(): Promise<void> {
     setStatus("", "online");
     showViewport(false);
     music().screen("lobby");
+    if (snapshot.phase === "team-lobby") {
+      renderTeamLobby(lobby, snapshot);
+      return;
+    }
+    teamPicks = undefined;
     // A Team Play tile's lobby (#1453) starts on the first of its maps.
     const maps = hostMaps(availableMaps, lobbyModes);
     const [firstMap] = maps;
@@ -1108,6 +1130,74 @@ async function main(): Promise<void> {
       },
       lobbyNotice,
       maps,
+    );
+  };
+
+  /** Propose the saved Team Build `teamId` in the Team Lobby, or withdraw with `undefined`. */
+  const proposeTeam = (teamId: string | undefined): void => {
+    if (teamPicks === undefined) {
+      return;
+    }
+    const team = teamPicks.teams.find((saved) => saved.id === teamId);
+    lobby?.propose(
+      team === undefined ? null : team.members.map((member) => toPlayerBuild(member.character)),
+    );
+    teamPicks.proposed = team?.id;
+    renderLobby();
+  };
+
+  /**
+   * The Team Lobby screen (#1460). As it begins, the saved Team Builds
+   * are read once, and the one picked on Team Play is proposed if it is
+   * the side's size.
+   */
+  const renderTeamLobby = (joined: LobbyConnection, snapshot: LobbySnapshot): void => {
+    if (teamPicks === undefined) {
+      const picks: TeamPicks = { teams: [], proposed: undefined };
+      teamPicks = picks;
+      void teams.list().then(({ teams: saved }) => {
+        if (teamPicks !== picks || lobby !== joined) {
+          return;
+        }
+        picks.teams = saved;
+        const now = joined.getSnapshot();
+        const team = now.players.find((p) => p.sessionId === joined.selfSessionId)?.team ?? null;
+        const side = team === null ? null : (now.teamLobby?.sides[team] ?? null);
+        const entry =
+          side === null || now.teamLobby?.stage !== "vote"
+            ? undefined
+            : entryProposal(saved, loadActiveTeamBuildId(saved), side.size);
+        if (entry === undefined) {
+          renderLobby();
+        } else {
+          proposeTeam(entry);
+        }
+      });
+    }
+    renderTeamLobbyScreen(
+      screenRoot,
+      snapshot,
+      teamPicks.teams,
+      teamPicks.proposed,
+      {
+        onVote: (proposerId) => {
+          lobby?.vote(proposerId);
+        },
+        onPropose: proposeTeam,
+        onClaim: (slot) => {
+          lobby?.claim(slot);
+        },
+        onToggleReady: () => {
+          const self = lobby
+            ?.getSnapshot()
+            .players.find((p) => p.sessionId === lobby?.selfSessionId);
+          lobby?.setReady(!(self?.ready ?? false));
+        },
+        onLeave: () => {
+          void leaveLobby();
+        },
+      },
+      lobbyNotice,
     );
   };
 

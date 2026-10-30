@@ -8,6 +8,10 @@ import {
   NO_ANSWER_MESSAGE,
   NO_RELAY_MESSAGE,
   NOT_HOST_MESSAGE,
+  PROPOSAL_REFUSED_MESSAGE,
+  SEAT_REFUSED_MESSAGE,
+  SEAT_TAKEN_MESSAGE,
+  VOTE_REFUSED_MESSAGE,
   NO_SEAT_FOR_BOT_MESSAGE,
   PEER_UNREACHABLE_MESSAGE,
   TURN_RELAY_HINT,
@@ -48,6 +52,15 @@ describe("the notice for a refused bot (#1194)", () => {
     expect(lobbyRefusalNotice("lobby-full")).toBe(NO_SEAT_FOR_BOT_MESSAGE);
     expect(lobbyRefusalNotice("not-host")).toBe(NOT_HOST_MESSAGE);
     expect(lobbyRefusalNotice("invalid-bot")).toBe(BOT_REFUSED_MESSAGE);
+  });
+});
+
+describe("the notice for a Team Lobby refusal (#1460)", () => {
+  it("says what was refused: a proposal, a vote, a seat taken, or no such seat", () => {
+    expect(lobbyRefusalNotice("invalid-proposal")).toBe(PROPOSAL_REFUSED_MESSAGE);
+    expect(lobbyRefusalNotice("invalid-vote")).toBe(VOTE_REFUSED_MESSAGE);
+    expect(lobbyRefusalNotice("slot-taken")).toBe(SEAT_TAKEN_MESSAGE);
+    expect(lobbyRefusalNotice("invalid-slot")).toBe(SEAT_REFUSED_MESSAGE);
   });
 });
 

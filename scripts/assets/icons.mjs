@@ -1778,6 +1778,10 @@ const nextSkill = (
   );
 };
 
+/** An urn of held ashes round `mark`, the Ritualist's Was spells (#1493). @param {string} mark */
+const wasUrn = (mark) =>
+  inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   fireball: () =>
@@ -2705,6 +2709,23 @@ const skillGlyph = {
     inkLine("M5 3L2.5 8L6.5 11L3 16L6 21M19 3L21.5 8L17.5 11L21 16L18 21", 2) +
     `<circle cx="12" cy="8.5" r="3" fill="${C.ink}"/>` +
     inkLine("M7.5 22C7.5 17.5 9 14.5 12 14.5S16.5 17.5 16.5 22", 2.6),
+  // The Was spells (#1493): one urn of ashes held, the mark in its body says what they do. The urn
+  // has no base line, unlike the binding-ritual urn.
+  "was-shield": () =>
+    wasUrn(inkFill("M12 10.5L16 12V15.5C16 17.5 14 18.5 12 19.5C10 18.5 8 17.5 8 15.5V12Z")),
+  "was-heart": () =>
+    wasUrn(
+      inkFill(
+        "M12 19.5L7.5 15C6 13.5 7 11 9.2 11C10.5 11 11.5 11.8 12 12.8C12.5 11.8 13.5 11 14.8 11C17 11 18 13.5 16.5 15Z",
+      ),
+    ),
+  "was-cap": () => wasUrn(inkLine("M8 11H16M12 13V19M9.5 16.5L12 19L14.5 16.5", 1.8)),
+  "was-blind": () =>
+    wasUrn(
+      inkLine("M7.5 15C9 12 15 12 16.5 15C15 18 9 18 7.5 15", 1.6) + inkLine("M8 19L16 11", 1.8),
+    ),
+  "was-quake": () => wasUrn(inkLine("M9 10.5L12 14L9.5 15.5L12.5 19.5L15 16L12.5 14.5", 1.8)),
+  "was-bolt": () => wasUrn(inkFill("M13.5 9.5L7.5 15.5H11.5L10.5 20.5L16.5 14H12.5Z")),
   // The gain trigger: a plus in the top left corner is what the foe gains; the payoff sits below and right (#1440).
   "gain-barbs": () =>
     inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
