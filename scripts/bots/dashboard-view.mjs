@@ -966,17 +966,20 @@ function kpiSection({ kpi: { file, now } }, width) {
       : `since ${String(new Date(since).getDate())} ${MONTHS[new Date(since).getMonth()] ?? ""}, 7 d window`;
   const updated =
     now - kpis.at > KPI_STALE_MS ? `stale (${String(age)} min)` : `updated ${String(age)} min ago`;
-  /** @param {string} name */
-  const failed = (name) => {
+  /**
+   * @param {string} name
+   * @param {string} [label] the line's head, `name` by default
+   */
+  const failed = (name, label = name) => {
     const reason = obj(kpis.errors)[name];
     return cut(
-      `${name.padEnd(8)}${visible(typeof reason === "string" ? reason : "unavailable")}`,
+      `${label.padEnd(8)}${visible(typeof reason === "string" ? reason : "unavailable")}`,
       width,
     );
   };
 
   const lines = [paint(cut(`KPI (${from})  ${updated}`, width), "1")];
-  const { flow, host } = kpis;
+  const { flow, host, webCache } = kpis;
   if (flow === null) {
     lines.push(failed("flow"));
   } else {
@@ -1022,6 +1025,14 @@ function kpiSection({ kpi: { file, now } }, width) {
       lines.push(cut(`top     ${top.join(" · ")}`, width));
     }
   }
+  lines.push(
+    webCache === null
+      ? failed("webCache", "web cache ")
+      : cut(
+          `web cache ${gib(webCache.bytes)} / ${gib(webCache.limitBytes)}, ${percent(webCache.hitRate)} hits`,
+          width,
+        ),
+  );
   return lines;
 }
 

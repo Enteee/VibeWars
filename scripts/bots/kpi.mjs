@@ -6,7 +6,7 @@
  */
 
 /** A reader of `kpis.json` that finds another value treats the file as absent. */
-export const KPI_SCHEMA_VERSION = 3;
+export const KPI_SCHEMA_VERSION = 4;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -358,6 +358,7 @@ function isEdge(value) {
  *   diskHoldBelow: number } | null} host
  * @property {{ byRole: Record<string, { employed: number, live: number }>,
  *   maxAgents: number } | null} staff
+ * @property {import("./web-cache.mjs").WebCacheStats | null} webCache `hub wiki`'s (#1381)
  * @property {Record<string, string>} errors section → one line
  */
 
@@ -366,7 +367,7 @@ function isEdge(value) {
  * `errors`; the rest is still written.
  *
  * @param {number} now
- * @param {{ [K in "flow" | "claude" | "github" | "host" | "staff"]: () => Kpis[K] }} readers
+ * @param {{ [K in "flow" | "claude" | "github" | "host" | "staff" | "webCache"]: () => Kpis[K] }} readers
  * @returns {Kpis}
  */
 export function buildKpis(now, readers) {
@@ -394,6 +395,7 @@ export function buildKpis(now, readers) {
     github: section("github", readers.github),
     host: section("host", readers.host),
     staff: section("staff", readers.staff),
+    webCache: section("webCache", readers.webCache),
     errors,
   };
 }
