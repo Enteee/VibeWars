@@ -878,7 +878,7 @@ it, not baked in, so one file serves every screen.
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
-- **Every skill is its own picture.** A row in `scripts/assets/skill-icon-table.mjs`
+- **Every skill is its own picture.** A row in `scripts/assets/skill-icons/<profession>.mjs`
   names a skill's glyph and modifier, and a test fails if two rows match. Start
   from the glyph for the skill's primary effect; the modifier tells apart the
   ones that share it (heal, energy and armor repeat).
@@ -1205,7 +1205,7 @@ for the scene to tint. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it (24×24
 for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
 
-Adding a skill: add its row to `scripts/assets/skill-icon-table.mjs` and re-run.
+Adding a skill: add its row to `scripts/assets/skill-icons/<profession>.mjs` and re-run.
 Adding a status, profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
 
