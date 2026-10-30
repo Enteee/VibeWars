@@ -141,10 +141,11 @@ const skillType = {
   chant: () =>
     `<circle cx="8" cy="17.5" r="3.5" fill="${C.ink}"/>` +
     `<path d="M10.5 17.5V3.5c2.5.5 6.5 2.5 6.5 7" ${stroke(C.ink, 2.5)}/>`,
-  // A stand-in until its own (#1423): an echo answers a chant, so the chant's note.
+  // A note and its answer: an echo repeats a chant, so the chant's note with ripples after it (#1482).
   echo: () =>
-    `<circle cx="8" cy="17.5" r="3.5" fill="${C.ink}"/>` +
-    `<path d="M10.5 17.5V3.5c2.5.5 6.5 2.5 6.5 7" ${stroke(C.ink, 2.5)}/>`,
+    `<circle cx="6.5" cy="17.5" r="3.2" fill="${C.ink}"/>` +
+    `<path d="M9.2 17.5V4.5" ${stroke(C.ink, 2.4)}/>` +
+    `<path d="M13 8.5a5 5 0 0 1 0 7M16.5 6a9 9 0 0 1 0 12" ${stroke(C.ink, 2)}/>`,
   // Shield ring: a spell held on an ally's weapon, one at a time (#758).
   "weapon-spell": () =>
     `<path d="M4.5 3.5h15v7c0 4.5-3.5 7.5-7.5 9.5-4-2-7.5-5-7.5-9.5z" ${stroke(C.weaponSpell, 3)}/>`,
@@ -216,8 +217,9 @@ const plates = {
   shout: (glyph) =>
     `<path d="M6.5 2h11l5.5 10-5.5 10h-11L1 12z" fill="${C.ink}"/>` + glyph(C.plate),
   chant: (glyph) => `<path d="M3 1h18v22l-9-5-9 5z" fill="${C.ink}"/>` + glyph(C.plate),
-  // A stand-in until its own (#1423): the chant's banner.
-  echo: (glyph) => `<path d="M3 1h18v22l-9-5-9 5z" fill="${C.ink}"/>` + glyph(C.plate),
+  // The chant's banner with a swallowtail foot: the banner, answered (#1482).
+  echo: (glyph) =>
+    `<path d="M3 1h18v22l-4.5-4.5L12 23l-4.5-4.5L3 23z" fill="${C.ink}"/>` + glyph(C.plate),
   "weapon-spell": (glyph) =>
     `<path d="M1.5 1h21v10c0 6.5-5 10-10.5 12.5C6.5 21 1.5 17.5 1.5 11z" fill="${C.weaponSpell}"/>` +
     glyph(C.plate),
@@ -1167,41 +1169,59 @@ const status = {
       `<path d="M10 5.3A7 7 0 1 0 18.7 10M14 5.3A7 7 0 0 1 18.7 10" ${stroke(c, 2.2)}/>` +
       `<path d="M11 4l2 3-2 1 2 3" ${stroke(c, 1.6)}/>`,
   ],
-  // Paragon echoes (#1423), stand-ins until the asset-designer's.
-  // Echo: two chevrons, attacks faster.
-  "aggressive-refrain": ["echo", (c) => `<path d="M7 5l5 5 5-5M7 11l5 5 5-5" ${stroke(c, 2.2)}/>`],
-  // Echo: a flame, foes beside the bearer burn.
+  // Paragon echoes (#1423, #1482). Refrains renew and last, finales fire once: the glyph is the payoff.
+  // Echo: two chevrons over a minus, attacks faster, armor lost.
+  "aggressive-refrain": [
+    "echo",
+    (c) =>
+      `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
+      `<path d="M7.5 18h9" ${stroke(c, 2.2)}/>`,
+  ],
+  // Echo: a flame ringed by a burst, foes beside the bearer burn.
   "blazing-finale": [
     "echo",
     (c) =>
-      `<path d="M12 4c1 3 4 4.5 4 8a4 4 0 0 1-8 0c0-2 1-3 2-4 0 2 1 2.5 2 2.5 0-2.5-1-4.5 0-6.5z" fill="${c}"/>`,
+      `<path d="M12 6c.8 2.2 3 3.2 3 5.5a3 3 0 0 1-6 0c0-1.2.6-2 1.4-2.7 0 1 .3 1.4.9 1.6-.2-1.5 0-2.8.7-4.4z" fill="${c}"/>` +
+      `<path d="M12 2.5v1.5M12 18.5V20M4 11h1.5M18.5 11H20M6.3 5.3l1 1M16.7 5.3l-1 1M6.3 16.7l1-1M16.7 16.7l-1-1" ${stroke(c, 1.5)}/>`,
   ],
-  // Echo: a small flame over a bar, the bigger foe burns.
+  // Echo: a flame inside a target ring, the bigger foe burns.
   "burning-refrain": [
     "echo",
     (c) =>
-      `<path d="M12 4c1 2 3 3 3 5.5a3 3 0 0 1-6 0c0-1.5 1-2.5 3-5.5z" fill="${c}"/>` +
-      `<path d="M6 16h12" ${stroke(c, 2)}/>`,
+      `<circle cx="12" cy="11.5" r="7" ${stroke(c, 1.8)}/>` +
+      `<path d="M12.3 6.5c.5 1.8 2.5 2.6 2.5 4.6a2.8 2.8 0 0 1-5.6 0c0-1.3.5-2 1.3-2.6 0 1 .3 1.5.9 1.7-.2-1.6 0-2.7.9-3.7z" fill="${c}"/>`,
   ],
-  // Echo: a note held long, chants and shouts last longer.
-  "enduring-harmony": ["echo", (c) => `<path d="M5 8h14M5 12h14" ${stroke(c, 2)}/>`],
-  // Echo: a plus, a heal at each end.
-  "finale-of-restoration": ["echo", (c) => `<path d="M12 5v10M7 10h10" ${stroke(c, 2.6)}/>`],
-  // Echo: one chevron forward, faster.
-  "hasty-refrain": ["echo", (c) => `<path d="M8 4l6 6-6 6" ${stroke(c, 2.4)}/>`],
+  // Echo: a note held under a fermata, chants and shouts last longer.
+  "enduring-harmony": [
+    "echo",
+    (c) =>
+      `<circle cx="9" cy="16.5" r="2.6" fill="${c}"/>` +
+      `<path d="M11.4 16.5V9" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 8a8 6 0 0 1 16 0" ${stroke(c, 1.8)}/>` +
+      `<circle cx="12" cy="6" r="1.1" fill="${c}"/>`,
+  ],
+  // Echo: a heart with a plus, one heal at the end of each chant.
+  "finale-of-restoration": [
+    "echo",
+    (c) =>
+      `<path d="M12 19l-6-6a3.5 3.5 0 0 1 6-4 3.5 3.5 0 0 1 6 4z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 10.5v4.5M9.8 12.8h4.4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Echo: two chevrons, a faster pace.
+  "hasty-refrain": ["echo", (c) => `<path d="M5 5l5 6-5 6M12 5l5 6-5 6" ${stroke(c, 2.2)}/>`],
   // Echo: a ring with a plus, health coming back.
   "mending-refrain": [
     "echo",
     (c) =>
-      `<circle cx="12" cy="10" r="5" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 7.5v5M9.5 10h5" ${stroke(c, 1.8)}/>`,
+      `<circle cx="12" cy="11.5" r="7" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8v7M8.5 11.5h7" ${stroke(c, 2)}/>`,
   ],
   // Echo: a drop crossed out, a condition lost.
   "purifying-finale": [
     "echo",
     (c) =>
-      `<path d="M12 4c2 3 4 5 4 7.5a4 4 0 0 1-8 0C8 9 10 7 12 4z" ${stroke(c, 1.8)}/>` +
-      `<path d="M6 16L18 4" ${stroke(c, 1.8)}/>`,
+      `<path d="M12 3.5c2.5 3.5 5 6 5 9a5 5 0 0 1-10 0c0-3 2.5-5.5 5-9z" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
   ],
   // Hex: icicles under a bar, the cage that slows 66% (#1367, #1440).
   "ice-prison": [
@@ -1858,6 +1878,12 @@ const skillGlyph = {
     inkLine("M6 3V21", 2.4) +
     `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
     inkFill("M10.5 6.2h2v1.8h1.8v2h-1.8v1.8h-2v-1.8H8.7v-2h1.8z"),
+  // A note held under a fermata: a chant that is made to last (#1482).
+  "note-hold": () =>
+    `<circle cx="9" cy="17.5" r="3.4" fill="${C.ink}"/>` +
+    inkLine("M12.4 17.5V9.5", 2.2) +
+    inkLine("M3 9.5a9 7 0 0 1 18 0", 2.2) +
+    `<circle cx="12" cy="6.5" r="1.4" fill="${C.ink}"/>`,
   // A banner with a note on its cloth: a song carried to every ally (#1012).
   "banner-note": () =>
     inkLine("M6 3V21", 2.4) +
@@ -2712,6 +2738,13 @@ const skillModifier = {
     `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.5)}/><circle cx="19" cy="18" r="1.2" fill="${C.ink}"/>`,
   // An hourglass: it acts when its time runs out (#944).
   hourglass: () => inkLine("M16.8 15H21.2L16.8 21H21.2Z", 1.4),
+  // A turning arrow: a refrain renews itself each time a chant ends (#1482).
+  renew: () =>
+    `<path d="M21.6 18A2.6 2.6 0 1 1 19 15.4" ${stroke(C.ink, 1.5)}/>` +
+    inkFill("M18.2 13.6L21 15.4L18.2 17.2Z"),
+  // A four-point spark: a finale fires once, when the chant ends (#1482).
+  finale: () =>
+    inkFill("M19 14.2L20.1 16.9L22.8 18L20.1 19.1L19 21.8L17.9 19.1L15.2 18L17.9 16.9Z"),
   // A loop: maintained, it lasts until ended (#837).
   upkeep: () =>
     `<path d="M19 18c-1-1.5-3.4-1.5-3.4 0s2.4 1.5 3.4 0 3.4-1.5 3.4 0-2.4 1.5-3.4 0z" ${stroke(C.ink, 1.4)}/>`,
