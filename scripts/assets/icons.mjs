@@ -1617,41 +1617,42 @@ const status = {
       `<path d="M12 7.5v5" ${stroke(c, 1.6)}/>` +
       `<path d="M5 18.5h14M8 21h8" ${stroke(c, 2)}/>`,
   ],
-  // Elementalist energy engine (#1614), stand-ins until the asset-designer's.
-  // Enchantment: a flame over a rising energy bar, attuned to Fire.
+  // Elementalist energy engine (#1614, #1646). Attunements: the element over a ground bar, a bolt beside it.
   "fire-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M12 3c3 3.5 4 6 2.5 9-1 2-4 2-5 0-1.5-3 0-5.5 2.5-9z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M10 3c2.5 3 3.5 5.5 2.2 8.2-1 1.8-3.8 1.8-4.6 0C6.3 8.5 8 6 10 3z" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a drop over a rising energy bar, attuned to Water.
   "water-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M12 3l4 6a4 4 0 1 1-8 0z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M10 3l3.6 5.4a3.6 3.6 0 1 1-7.2 0z" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a bolt over a rising energy bar, attuned to Air.
   "air-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M13 3l-4 7h4l-2 5" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M11 3l-3.6 6.5h3.6L9 15" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a rock over a rising energy bar, attuned to Earth.
   "earth-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M6 13l3-8h6l3 8z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M4.5 15l3-8h5l3 8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M17 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a ring with a plus, healed and fed by each spell.
+  // Enchantment: a ring with a plus, a spark above it.
   "aura-of-restoration": [
     "enchantment",
     (c) =>
-      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 8v8M8 12h8" ${stroke(c, 2.2)}/>`,
+      `<circle cx="12" cy="13" r="7" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 9.5v7M8.5 13h7" ${stroke(c, 2.2)}/>` +
+      `<path d="M13 1.5l-2 3h2l-1 2.5" ${stroke(c, 1.5)}/>`,
   ],
   // Enchantment: a shield with a circling arrow, renewed by each spell.
   "kinetic-armor": [
@@ -2978,6 +2979,28 @@ const skillGlyph = {
     spiritPost() +
     `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)}/>` +
     `<g transform="translate(17,8.5) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // The Elementalist's energy engine (#1614, #1646): the Attunements share one cue, a ringed bolt in the corner.
+  "attune-fire": () => attune(skillGlyph.flame()),
+  "attune-water": () => attune(skillGlyph.snowflake()),
+  "attune-air": () => attune(skillGlyph.lightning()),
+  "attune-earth": () => attune(skillGlyph.mountain()),
+  // Aura of Restoration: a plus in a ring, a spark above it for each spell.
+  "ring-spell-heal": () =>
+    `<circle cx="12" cy="14" r="7.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 10.5V17.5M8.5 14H15.5", 2.2) +
+    `<g transform="translate(12,3.8) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // Kinetic Armor: a shield and a circling arrow, renewed by each spell.
+  "armor-spin": () =>
+    skillGlyph.armor() +
+    `<path d="M8.2 11.5A4 4 0 1 1 12 16" fill="none" stroke="${C.bg}" stroke-width="2" stroke-linecap="round"/>` +
+    `<path d="M5.8 11.5L8.2 8.8L10.6 11.8Z" fill="${C.bg}"/>`,
+  // Steam: rising vapour curls over a small flame.
+  "vapour-flame": () =>
+    `<g transform="translate(12,16.5) scale(0.55) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine(
+      "M6 11C4.5 8.5 8 7.5 6.5 4.5M12 10C10.5 7.5 14 6.5 12.5 3.5M18 11C16.5 8.5 20 7.5 18.5 4.5",
+      2,
+    ),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
@@ -3706,6 +3729,12 @@ const skillGlyph = {
     `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
+
+/** An element glyph with the ringed energy bolt in the corner: the Attunements' shared cue (#1646). */
+const attune = (/** @type {string} */ element) =>
+  `<g transform="translate(10.5,10) scale(0.78) translate(-12,-12)">${element}</g>` +
+  `<circle cx="18.5" cy="18" r="4.6" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.2" ${stroke(C.ink, 1.5)}/>` +
+  `<g transform="translate(18.5,18) scale(0.3) translate(-12,-12)">${skillGlyph.energy()}</g>`;
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
