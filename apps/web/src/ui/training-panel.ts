@@ -114,7 +114,7 @@ import {
   shouldRestoreFocus,
 } from "./training-state.js";
 import { h } from "./kit.js";
-import { playerGuild } from "./menu.js";
+import { playerGuild } from "./player-section.js";
 import { labelWeaponSets, renderWeaponSets, weaponSetSlots } from "./weapon-set-slots.js";
 
 /**

@@ -36,6 +36,7 @@ import type {
   ChainRole,
   ChainStep,
   CreateGroundEffect,
+  DisableOwnSkillsEffect,
   EffectCondition,
   EnergyGainEffect,
   HealEffect,
@@ -281,6 +282,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);
+  }
+  if (definition.skillActivationMultiplier !== 1) {
+    parts.push(
+      `skills but attacks take ${String(definition.skillActivationMultiplier)}× as long to activate`,
+    );
   }
   if (definition.interruptsSpells) {
     parts.push("spells are interrupted by attacks");
@@ -595,6 +601,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-blocks": "blocks",
+  "bearer-interrupted": "is interrupted",
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
   "bearer-loses-enchantment": "loses an enchantment",
@@ -735,8 +742,9 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, profession } = trigger.usedSkill;
+    const { type, profession, elite } = trigger.usedSkill;
     const words = [
+      ...(elite === undefined ? [] : ["elite"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
@@ -1046,6 +1054,10 @@ function conditionText(condition: EffectCondition): string {
       return `If you have no ${condition.category}`;
     case "target-casting":
       return "If target is casting a spell";
+    case "target-using-skill":
+      return "If target is using a skill";
+    case "target-lacks-other-hex":
+      return `If target has no other ${getProfession(condition.profession).name} hex`;
     case "target-alone":
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
@@ -1525,17 +1537,16 @@ function describeEffect(
         text:
           effect.which === "all"
             ? `All of the target's skills are disabled for ${time}`
-            : effect.which === "interrupted"
-              ? `The interrupted skill is disabled for ${time}`
-              : `That skill and all skills of the same attribute are disabled for ${time}`,
+            : effect.which === "elite"
+              ? `The target's elite skill is disabled for ${time}`
+              : effect.which === "interrupted"
+                ? `The interrupted skill is disabled for ${time}`
+                : `That skill and all skills of the same attribute are disabled for ${time}`,
         magnitude,
       };
     }
     case "disable-own-skills":
-      return {
-        text: `All of your spells are disabled for ${String(effect.seconds)} seconds`,
-        magnitude: undefined,
-      };
+      return { text: disableOwnText(effect), magnitude: undefined };
     case "chain-mark":
       return { text: "Counts as a lead attack", magnitude: undefined };
     case "lengthen-recharge": {
@@ -1771,6 +1782,22 @@ const TYPE_TEXT: Record<SkillType, string> = {
   form: "Form.",
   skill: "Skill.",
 };
+
+/**
+ * A `disable-own-skills` line (#1473): "All of your spells", or "All of
+ * your non-Mesmer skills except signets", "are disabled for 10 seconds".
+ */
+function disableOwnText(effect: DisableOwnSkillsEffect): string {
+  const time = `are disabled for ${String(effect.seconds)} seconds`;
+  if (effect.which === "spells") {
+    return `All of your spells ${time}`;
+  }
+  const except = effect.exceptTypes.map(
+    (type) => `${TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()}s`,
+  );
+  const exceptText = except.length === 0 ? "" : ` except ${except.join(" and ")}`;
+  return `All of your non-${getProfession(effect.profession).name} skills${exceptText} ${time}`;
+}
 
 /** GW1's words for the area radii (`distances.ts`). */
 const AREA_TEXT: ReadonlyMap<number, string> = new Map([

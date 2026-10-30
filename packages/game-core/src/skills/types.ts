@@ -529,11 +529,13 @@ export interface RechargeOthersEffect {
  * target's bar of the same attribute too, as Power Block's; a skill with
  * no attribute disables only itself. Nothing interrupted: nothing. With
  * `all`, every skill on the target's bar, nothing interrupted needed
- * (#474): Rebirth's "all of target's skills are disabled".
+ * (#474): Rebirth's "all of target's skills are disabled". With `elite`,
+ * the elite skill on the target's bar (#1473), Signet of Humility's; no
+ * elite: nothing.
  */
 export interface DisableSkillEffect {
   readonly kind: "disable-skill";
-  readonly which: "interrupted" | "interrupted-and-attribute" | "all";
+  readonly which: "interrupted" | "interrupted-and-attribute" | "all" | "elite";
   readonly seconds: Magnitude;
 }
 
@@ -552,13 +554,24 @@ export interface LengthenRechargeEffect {
  * Disable the caster's own bar skills of one kind for `seconds` (#1234),
  * running alongside their recharges as `disable-skill`'s do, as Shroud of
  * Silence's "all of your spells are disabled for 15 seconds". `spells`:
- * every spell (`isSpell`) on the bar. None on it: nothing.
+ * every spell (`isSpell`) on the bar. `other-professions` (#1473):
+ * every skill on the bar not of `profession`, the using skill's own, a
+ * common skill included, but those of `exceptTypes`: Unnatural Signet's
+ * "all your non-Mesmer skills except signets". None on it: nothing.
  */
-export interface DisableOwnSkillsEffect {
-  readonly kind: "disable-own-skills";
-  readonly which: "spells";
-  readonly seconds: number;
-}
+export type DisableOwnSkillsEffect =
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "spells";
+      readonly seconds: number;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "other-professions";
+      readonly profession: ProfessionId;
+      readonly exceptTypes: readonly SkillType[];
+      readonly seconds: number;
+    };
 
 /**
  * Leave the caster's chain mark of `role` on the target (#1234), as a
@@ -777,6 +790,18 @@ export type StateCondition =
   | { readonly kind: "target-has-any"; readonly categories: readonly StatusCategory[] }
   /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
   | { readonly kind: "target-casting"; readonly spell: true }
+  /**
+   * The effect's target is activating any skill, an attack skill included
+   * (#1473): Overload's "if target foe is using a skill". A plain weapon
+   * swing is no skill.
+   */
+  | { readonly kind: "target-using-skill" }
+  /**
+   * The effect's target has no hex of this profession's but the status
+   * whose trigger is resolving (#1473): Visions of Regret's "if not under
+   * the effects of another Mesmer hex". Outside a trigger: no such hex.
+   */
+  | { readonly kind: "target-lacks-other-hex"; readonly profession: ProfessionId }
   /**
    * The caster has at least one status of this category; with a
    * `profession`, one of that profession's (#1021): Eremite's Attack's
@@ -1432,6 +1457,11 @@ export interface SkillContext {
    * `lengthen-recharge` lengthens. Absent elsewhere.
    */
   readonly usedSkill?: SlotSkill | undefined;
+  /**
+   * The status whose trigger these effects are (#1473): what
+   * `target-lacks-other-hex` does not count. Absent outside a trigger.
+   */
+  readonly firingStatusId?: StatusId | undefined;
   /**
    * The profession of the skill, or of the status whose trigger fires
    * (#1464), whose effects these are: which `skillArmorPenetration` its
