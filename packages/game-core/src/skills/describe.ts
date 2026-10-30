@@ -16,7 +16,7 @@ import {
 import { getAttribute, getProfession } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
-import { resolveMagnitudeAtRanks } from "./scaling.js";
+import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
@@ -1742,7 +1742,11 @@ function describeEffect(
       };
     case "recharge-faster":
       return {
-        text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
+        // Bitter Chill's "recharges instantly" (#1640).
+        text:
+          effect.fraction === 1
+            ? "This skill recharges instantly"
+            : `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
         magnitude: undefined,
       };
     case "recharge-others":
@@ -2498,10 +2502,16 @@ export function describeSkill(
  * past 12 with bonuses; ours caps at `MAX_ATTRIBUTE_RANK`, so a third
  * number would just repeat the second. Showing a redundant figure would
  * imply headroom that does not exist.
+ *
+ * Both ends are rounded as the live value is, so a curve written to end
+ * at 8.2 reads "…8", the number rank 12 actually gives.
  */
 export function formatScalingRange(magnitude: MagnitudeDescription): string | undefined {
   if (magnitude.atZero === undefined || magnitude.atTwelve === undefined) {
     return undefined;
   }
-  return `${String(magnitude.atZero)}…${String(magnitude.atTwelve)} at ${String(MAX_ATTRIBUTE_RANK)}`;
+  const scaling = { atZero: magnitude.atZero, atTwelve: magnitude.atTwelve };
+  const low = magnitudeAtRank(scaling, 0);
+  const high = magnitudeAtRank(scaling, MAX_ATTRIBUTE_RANK);
+  return `${String(low)}…${String(high)} at ${String(MAX_ATTRIBUTE_RANK)}`;
 }

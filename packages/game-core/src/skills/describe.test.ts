@@ -10,7 +10,7 @@ import {
   formatScalingRange,
 } from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
-import { resolveMagnitude } from "./scaling.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
 import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
 
@@ -923,6 +923,20 @@ describe("formatScalingRange", () => {
       return;
     }
     expect(formatScalingRange(magnitude)).toBe("7…91 at 12");
+  });
+
+  it("rounds the ends as the live value does, so rank 12 reads what it gives", () => {
+    const scaling = { attributeId: "test", atZero: 1, atTwelve: 8.2 };
+    const atTwelve = resolveMagnitudeAtRanks({ scaling }, new Map([["test", 12]]));
+    expect(atTwelve).toBe(8);
+    expect(
+      formatScalingRange({
+        current: atTwelve,
+        atZero: scaling.atZero,
+        atTwelve: scaling.atTwelve,
+        attributeId: scaling.attributeId,
+      }),
+    ).toBe("1…8 at 12");
   });
 
   it("returns nothing for a flat magnitude, rather than a fake range", () => {
