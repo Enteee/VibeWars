@@ -539,6 +539,35 @@ const status = {
     (c) =>
       `<path d="M7.5 7l1.5 10 1.5-10zM10.5 7l1.5 11 1.5-11zM13.5 7l1.5 10 1.5-10z" fill="${c}"/>`,
   ],
+  // Monk staples (#1511), stand-ins until their art card.
+  // Enchantment: three small shields, a block for everyone in earshot.
+  aegis: [
+    "enchantment",
+    (c) =>
+      `<path d="M4 6h5v3c0 2-1.2 3-2.5 4C5.2 12 4 11 4 9zM15 6h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>` +
+      `<path d="M9.5 12h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Enchantment: a filled shield, a blow glancing off it.
+  "shield-of-deflection": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" fill="${c}"/>` +
+      `<path d="M4 20L9 15" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: two cupped hands under a drop, damage taken softened.
+  "shielding-hands": [
+    "enchantment",
+    (c) =>
+      `<path d="M4 12c0 4 3.5 7 8 7s8-3 8-7" ${stroke(c, 2)}/>` +
+      `<path d="M12 4c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" fill="${c}"/>`,
+  ],
+  // Enchantment: a ring with a broken spell bolt, foes' spells turned away.
+  "spell-breaker": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 5l-3 6h4l-3 6" ${stroke(c, 1.8)}/><path d="M6 18L18 6" ${stroke(c, 2.2)}/>`,
+  ],
   // Hex: a snowflake, the ground frozen under you (#938).
   "deep-freeze": ["hex", (c) => `<path d="M12 6v12M6.8 9l10.4 6M6.8 15l10.4-6" ${stroke(c, 2)}/>`],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).
@@ -2881,6 +2910,40 @@ const skillGlyph = {
     ),
   "was-quake": () => wasUrn(inkLine("M9 10.5L12 14L9.5 15.5L12.5 19.5L15 16L12.5 14.5", 1.8)),
   "was-bolt": () => wasUrn(inkFill("M13.5 9.5L7.5 15.5H11.5L10.5 20.5L16.5 14H12.5Z")),
+  // Ritualist item spells 2 (#1530): a filled orb under a chevron is more maximum Energy (the bolt is
+  // regeneration); a bolt through a plate is armor pierced, the elite adds strokes to each side for
+  // the area; a closed ring round a dot is a cast nothing breaks; a hook back over a heart is
+  // Health stolen from the striker; a struck drop is conditions cleared.
+  "was-orb": () =>
+    wasUrn(
+      `<circle cx="12" cy="16.6" r="2.8" fill="${C.ink}"/>` +
+        inkLine("M9.5 12.8L12 10.3L14.5 12.8", 1.8),
+    ),
+  "was-pierce": () =>
+    wasUrn(inkLine("M7.5 15.5H16.5", 1.8) + inkLine("M13 9.5L10.5 14.5L13.5 16.5L11 20.5", 1.6)),
+  "was-pierce-area": () =>
+    wasUrn(
+      inkLine("M7.5 15.5H16.5", 1.8) +
+        inkLine("M13 9.5L10.5 14.5L13.5 16.5L11 20.5", 1.6) +
+        inkLine("M7.5 11.5L8.5 13M16.5 11.5L15.5 13", 1.4),
+    ),
+  "was-calm": () =>
+    wasUrn(
+      `<circle cx="12" cy="15.5" r="4" ${stroke(C.ink, 1.8)}/><circle cx="12" cy="15.5" r="1.3" fill="${C.ink}"/>`,
+    ),
+  "was-steal": () =>
+    wasUrn(
+      inkLine("M16.5 14C16.5 10.8 10.5 10.3 8.8 13.6M8.8 10.8V13.8H11.8", 1.6) +
+        inkFill(
+          "M12 20.5L9.4 18C8.6 17 9.2 15.7 10.5 15.7C11.2 15.7 11.8 16.1 12 16.6C12.2 16.1 12.8 15.7 13.5 15.7C14.8 15.7 15.4 17 14.6 18Z",
+        ),
+    ),
+  "was-clear": () =>
+    wasUrn(
+      inkFill("M12 10.5C10.5 13 9 14.5 9 16.6A3 3 0 0 0 15 16.6C15 14.5 13.5 13 12 10.5Z") +
+        `<path d="M8.5 20L15.5 12.5" ${stroke(C.bg, 2.6)}/>` +
+        inkLine("M9 19.5L15 13", 1.2),
+    ),
   // The gain trigger: a plus in the top left corner is what the foe gains; the payoff sits below and right (#1440).
   "gain-barbs": () =>
     inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
