@@ -1,0 +1,47 @@
+/** @type {Readonly<Record<string, import("../skill-icon-table.mjs").SkillIconRow>>} */
+export const MESMER_ICONS = {
+  "mesmer.power-spike": { glyph: "interrupt", modifier: "down" },
+  "mesmer.power-drain": { glyph: "interrupt", modifier: "up" },
+  "mesmer.power-block": { glyph: "interrupt", modifier: "clock" },
+  "mesmer.shatter-enchantment": { glyph: "cleanse", modifier: "down" },
+  "mesmer.drain-enchantment": { glyph: "cleanse", modifier: "up" },
+  "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
+  "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
+  "mesmer.backfire": { glyph: "fireball", modifier: "self" },
+  "mesmer.empathy": { glyph: "sword", modifier: "self" },
+  "mesmer.diversion": { glyph: "slow", modifier: "clock" },
+  "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
+  "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
+  "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
+  "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
+  // A skill seen again: a spell, or any skill, echoed on (#1136).
+  "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
+  "mesmer.echo": { glyph: "echo-skill" },
+  // Illusion hexes and haste: each glyph shows the status it leaves, so the cripple and the cracks read apart (#1243).
+  "mesmer.conjure-phantasm": { glyph: "ghost", modifier: "down" },
+  "mesmer.imagined-burden": { glyph: "weight", modifier: "half" },
+  "mesmer.phantom-pain": { glyph: "ache-cross", modifier: "hourglass" },
+  "mesmer.shrinking-armor": { glyph: "armor-shrink", modifier: "hourglass" },
+  "mesmer.illusion-of-haste": { glyph: "speed-break", modifier: "self" },
+  "mesmer.ineptitude": { glyph: "eye-slash", modifier: "area" },
+  "mesmer.crippling-anguish": { glyph: "limp-drain" },
+  "mesmer.hex-breaker": { glyph: "hex-return" },
+  // Placeholders until the asset-designer's (#1473): skill-use punishers.
+  "mesmer.wastrels-worry": { glyph: "flame", modifier: "clock" },
+  "mesmer.overload": { glyph: "interrupt", modifier: "stun" },
+  "mesmer.frustration": { glyph: "interrupt", modifier: "hourglass" },
+  "mesmer.price-of-pride": { glyph: "energy", modifier: "half" },
+  "mesmer.signet-of-humility": { glyph: "cleanse", modifier: "less" },
+  "mesmer.migraine": { glyph: "slow", modifier: "down" },
+  "mesmer.visions-of-regret": { glyph: "eye-slash", modifier: "self" },
+  "mesmer.unnatural-signet": { glyph: "fireball", modifier: "plus" },
+  // The next spell fails (#1475, #1498): a struck orb, a foe's X or an ally's plus after it.
+  "mesmer.guilt": { glyph: "hex-fail-foe", modifier: "bolt" },
+  "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
+  "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
+  "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
+  // Placeholders until the asset-designer's (#1501): crowd punishers.
+  "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
+  "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
+  "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
+};
