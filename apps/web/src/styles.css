@@ -2469,6 +2469,208 @@ body {
   letter-spacing: 0.08em;
 }
 
+/* The Team Lobby (#1460, #1449 variant B): proposals as cards with the
+   voters' initials on them, then the chosen build's characters as seats. */
+.team-lobby-status {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  white-space: nowrap;
+}
+
+.team-lobby-clock {
+  color: var(--accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.team-lobby-propose {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.team-lobby-propose select {
+  max-width: 24rem;
+}
+
+/* At 800 px the cards wrap to two rows. */
+.team-lobby-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.8rem;
+}
+
+.team-lobby-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+}
+
+button.team-lobby-card:not(:disabled) {
+  cursor: pointer;
+}
+
+button.team-lobby-card:not(:disabled):hover,
+.team-lobby-card.is-voted {
+  border-color: var(--accent);
+}
+
+.team-lobby-card.is-empty {
+  justify-content: center;
+  min-height: 6rem;
+  border-style: dashed;
+  color: var(--ink-dim);
+  text-align: center;
+}
+
+/* The result: the chosen card lifted, the rest faded behind it. */
+.team-lobby-card.is-chosen {
+  border: 2px solid var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
+}
+
+.team-lobby-card.is-faded {
+  opacity: 0.4;
+}
+
+.team-lobby-card-name,
+.team-lobby-seat-name,
+.team-lobby-seat-holder {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.team-lobby-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The captain's crown: a small token after the name, as in the study. */
+.team-lobby-captain {
+  flex: 0 0 auto;
+  padding: 0 0.35rem;
+  border: 1px solid var(--elite);
+  border-radius: 999px;
+  color: var(--elite);
+  font-size: 0.7rem;
+}
+
+.team-lobby-card-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.team-lobby-votes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.team-lobby-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.team-lobby-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid var(--ink-dim);
+  border-radius: 50%;
+  font-size: 0.75rem;
+}
+
+.team-lobby-token.is-self {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.team-lobby-count {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.team-lobby-your-vote {
+  padding: 0.2rem;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  text-align: center;
+}
+
+.team-lobby-reason {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--accent);
+  font-weight: 700;
+}
+
+.team-lobby-seats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.8rem;
+}
+
+.team-lobby-seat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+}
+
+.team-lobby-seat:not(:disabled) {
+  cursor: pointer;
+}
+
+.team-lobby-seat.is-mine,
+.team-lobby-seat:not(:disabled):hover {
+  border-color: var(--accent);
+}
+
+.team-lobby-seat-character {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.team-lobby-seat-free {
+  align-self: center;
+  padding: 0.2rem 0.8rem;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.team-lobby-seat-holder {
+  align-self: center;
+  font-size: 1.05rem;
+}
+
 .lobby-ready.bot-tag {
   padding: 0.1rem 0.55rem;
   font-size: 0.78rem;

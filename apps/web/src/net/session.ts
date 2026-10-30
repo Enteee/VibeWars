@@ -86,6 +86,12 @@ export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
 export const NO_SEAT_FOR_BOT_MESSAGE = "The lobby is full: there is no seat for a bot.";
 export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
 export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
+/** A Team Lobby's refusals (#1460). */
+export const PROPOSAL_REFUSED_MESSAGE =
+  "That team build cannot be proposed: it needs your side's size and legal builds.";
+export const VOTE_REFUSED_MESSAGE = "That proposal is gone: vote for another.";
+export const SEAT_TAKEN_MESSAGE = "Someone took that seat first.";
+export const SEAT_REFUSED_MESSAGE = "That seat is not one of the chosen team build's.";
 
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
@@ -508,6 +514,14 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return NO_SEAT_FOR_BOT_MESSAGE;
     case "not-host":
       return NOT_HOST_MESSAGE;
+    case "invalid-proposal":
+      return PROPOSAL_REFUSED_MESSAGE;
+    case "invalid-vote":
+      return VOTE_REFUSED_MESSAGE;
+    case "slot-taken":
+      return SEAT_TAKEN_MESSAGE;
+    case "invalid-slot":
+      return SEAT_REFUSED_MESSAGE;
     default:
       return BOT_REFUSED_MESSAGE;
   }
