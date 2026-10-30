@@ -5,6 +5,7 @@ import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { targetRuleAllows } from "../skills/activation.js";
 import { getSkill } from "../skills/catalog.js";
+import { effectiveArmor, skillDamage } from "../skills/damage.js";
 import { aggregateModifiers, getStatusDefinition, type StatusId } from "../skills/status.js";
 import { isSpell } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -330,5 +331,66 @@ describe("the eight echoes (#1423)", () => {
     put(sim, "crippled", 20);
     chantEnds(sim);
     expect(get(sim, "a").combatant.statuses.has("crippled")).toBe(false);
+  });
+});
+
+describe("Paragon echoes 2 (#1485)", () => {
+  it("Bladeturn Refrain: +34 armor against a slashing hit, none against a blunt or piercing one, renewed", () => {
+    const sim = cast("paragon.bladeturn-refrain");
+    expect(remaining(sim, "bladeturn-refrain")).toBeGreaterThan(19);
+    expect(getStatusDefinition("bladeturn-refrain").renewsOnChantOrShoutEnd).toBe(true);
+    const ally = get(sim, "a").combatant;
+    const armorAgainst = (weapon: Weapon): number =>
+      effectiveArmor(ally, skillDamage(10, weapon.damageType, 0), "chest");
+    const plain = get(match(), "a").combatant;
+    const plainAgainst = (weapon: Weapon): number =>
+      effectiveArmor(plain, skillDamage(10, weapon.damageType, 0), "chest");
+    for (const weapon of [WEAPONS.sword, WEAPONS.axe, WEAPONS.scythe]) {
+      expect(armorAgainst(weapon) - plainAgainst(weapon), weapon.damageType).toBe(34);
+    }
+    for (const weapon of [WEAPONS.hammer, WEAPONS.spear]) {
+      expect(armorAgainst(weapon) - plainAgainst(weapon), weapon.damageType).toBe(0);
+    }
+    expect(getSkill("paragon.bladeturn-refrain")?.target).toBe("single-ally-not-spirit");
+  });
+
+  it("Energizing Finale: the ally, not the Paragon, gains 2 Energy when a chant ends on it", () => {
+    const sim = cast("paragon.energizing-finale");
+    expect(remaining(sim, "energizing-finale")).toBeGreaterThan(29);
+    const paragon = get(sim, "p").combatant;
+    const ally = get(sim, "a").combatant;
+    ally.energy = 5;
+    const paragonEnergy = paragon.energy;
+    chantEnds(sim);
+    expect(Math.floor(ally.energy)).toBe(7);
+    expect(Math.floor(paragon.energy)).toBe(Math.floor(paragonEnergy));
+  });
+
+  it("Energizing Finale: an ally at full energy gains nothing over it", () => {
+    const sim = cast("paragon.energizing-finale");
+    const ally = get(sim, "a").combatant;
+    ally.energy = ally.maxEnergy;
+    chantEnds(sim);
+    expect(ally.energy).toBe(ally.maxEnergy);
+  });
+
+  it("Soldier's Fury: -20 armor on its own; a chant adds faster attacks and adrenaline, gone as it ends", () => {
+    const sim = cast("paragon.soldiers-fury", "p");
+    const statuses = get(sim, "p").combatant.statuses;
+    expect(statuses.get("soldiers-fury")?.durationSeconds).toBe(30);
+    expect(getSkill("paragon.soldiers-fury")?.elite).toBe(true);
+    const alone = aggregateModifiers(statuses.active);
+    expect([
+      alone.armorModifier,
+      alone.attackDurationMultiplier,
+      alone.adrenalineGainFaster,
+    ]).toEqual([-20, 1, 0]);
+    put(sim, CHANT, 0.2, "p");
+    const chanted = aggregateModifiers(statuses.active);
+    expect(chanted.attackDurationMultiplier).toBe(0.67);
+    expect(chanted.adrenalineGainFaster).toBeCloseTo(0.33);
+    stepFor(sim, 0.5);
+    const after = aggregateModifiers(statuses.active);
+    expect([after.attackDurationMultiplier, after.adrenalineGainFaster]).toEqual([1, 0]);
   });
 });

@@ -432,6 +432,18 @@ describe("describeSkill", () => {
     expect(describeStatus("finale-of-restoration")).toContain("ends after it takes effect 5 times");
   });
 
+  it("says what Paragon echoes 2 do (#1485)", () => {
+    expect(describeStatus("bladeturn-refrain")).toBe(
+      "+34 slashing armor, renewed whenever a chant or shout ends on it",
+    );
+    expect(describeStatus("energizing-finale")).toBe(
+      "whenever a chant or shout ends on it: it gains 2 energy",
+    );
+    expect(describeStatus("soldiers-fury")).toBe(
+      "-20 armor, while under a shout or chant: attacks 33% faster, gain adrenaline 33% faster",
+    );
+  });
+
   it("says weakness cuts the weapon and every attribute (#762)", () => {
     expect(describeStatus("weakness")).toBe("−66% weapon damage, −1 to all attributes");
   });

@@ -377,17 +377,21 @@ export const SKILL_ICONS = {
   "paragon.hasty-refrain": { glyph: "speed", modifier: "renew" },
   "paragon.mending-refrain": { glyph: "ring-heal", modifier: "renew" },
   "paragon.purifying-finale": { glyph: "cleanse", modifier: "finale" },
+  // Placeholders until the asset-designer's (#1485): Paragon echoes 2.
+  "paragon.bladeturn-refrain": { glyph: "blade-turn", modifier: "renew" },
+  "paragon.energizing-finale": { glyph: "energy", modifier: "finale" },
+  "paragon.soldiers-fury": { glyph: "blade-adrenal", modifier: "up" },
   // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
   "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
   "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
-  // Placeholders until the asset-designer's (#1475): the next spell fails.
-  "mesmer.guilt": { glyph: "hex-mute", modifier: "down" },
-  "mesmer.shame": { glyph: "hex-mute", modifier: "up" },
-  "mesmer.mistrust": { glyph: "hex-burst", modifier: "bolt" },
-  "mesmer.fragility": { glyph: "hex-drain", modifier: "area" },
+  // The next spell fails (#1475, #1498): a struck orb, a foe's X or an ally's plus after it.
+  "mesmer.guilt": { glyph: "hex-fail-foe", modifier: "bolt" },
+  "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
+  "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
+  "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
   // Placeholders until the asset-designer's (#1501): crowd punishers.
   "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
   "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },

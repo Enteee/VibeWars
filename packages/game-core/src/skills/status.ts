@@ -264,6 +264,9 @@ export type StatusId =
   | "hasty-refrain"
   | "mending-refrain"
   | "purifying-finale"
+  | "bladeturn-refrain"
+  | "energizing-finale"
+  | "soldiers-fury"
   // Elementalist Water Magic staples (#1367).
   | "ice-prison"
   | "frozen-burst"
@@ -293,6 +296,14 @@ export type StatusId =
   // Mesmer crowd punishers (#1501).
   | "panic"
   | "wastrels-demise";
+
+/** A status's modifiers that hold only while its bearer is under another (#1485). */
+export interface WhileUnder {
+  /** The bearer must have a status of one of these categories, not this one. */
+  readonly categories: readonly StatusCategory[];
+  readonly attackDurationMultiplier: number;
+  readonly adrenalineGainFaster: number;
+}
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -729,6 +740,12 @@ export interface StatusDefinition {
    * ends.
    */
   readonly chantShoutDurationMultiplier: number;
+  /**
+   * Modifiers it adds only while the bearer holds another status of one
+   * of its categories (#1485): Soldier's Fury's "if you are under the
+   * effects of a chant or a shout". `undefined`: none.
+   */
+  readonly whileUnder: WhileUnder | undefined;
   /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
@@ -1177,6 +1194,7 @@ function define(
     renewsOnChantOrShoutEnd: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
+    whileUnder: undefined,
     triggers: [],
     ...overrides,
   };
@@ -2742,6 +2760,38 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // Paragon echoes 2 (#1485), at their rank-12 values.
+  // "...+10...40 armor against slashing damage" (PvP): 34.
+  "bladeturn-refrain": define("bladeturn-refrain", "Bladeturn Refrain", "echo", {
+    profession: "paragon",
+    conditionalArmor: [{ amount: 34, conditions: [{ kind: "vs-type", type: "slashing" }] }],
+    renewsOnChantOrShoutEnd: true,
+  }),
+  // "...whenever a shout or chant ends on target non-spirit ally, that
+  // ally gains 1...2 Energy": 2.
+  "energizing-finale": define("energizing-finale", "Energizing Finale", "echo", {
+    profession: "paragon",
+    triggers: [
+      {
+        on: "bearer-chant-or-shout-ends",
+        effects: [{ kind: "energy-gain", amount: { flat: 2 }, toTarget: true }],
+        target: "bearer",
+        skillId: "paragon.energizing-finale",
+      },
+    ],
+  }),
+  // "...if you are under the effects of a chant or a shout, you attack 33%
+  // faster and gain 33% more adrenaline, but you have -20 armor": the
+  // armor always.
+  "soldiers-fury": define("soldiers-fury", "Soldier's Fury", "echo", {
+    profession: "paragon",
+    armorModifier: -20,
+    whileUnder: {
+      categories: ["shout", "chant"],
+      attackDurationMultiplier: 0.67,
+      adrenalineGainFaster: 0.33,
+    },
+  }),
   // "For 8...20 seconds, target foe's legs are encased in ice, causing the
   // foe to move 66% slower" (#1367).
   "ice-prison": define("ice-prison", "Ice Prison", "hex", {
@@ -4272,6 +4322,11 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
+  /** Whether a status other than `self` is of one of `categories` (#1485). */
+  const underAnother = (self: Pick<ActiveStatus, "id">, categories: readonly StatusCategory[]) =>
+    statuses.some(
+      (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
+    );
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
@@ -4333,6 +4388,11 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
     adrenalineGainFaster += def.adrenalineGainFaster;
+    if (def.whileUnder !== undefined && underAnother(status, def.whileUnder.categories)) {
+      attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
+      attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
+      adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
+    }
     if (def.enchantmentRechargeFaster !== undefined) {
       enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);
     }
