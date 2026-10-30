@@ -18,7 +18,10 @@ export type ElementalistStatusId =
   | "blurred-vision"
   | "armor-of-mist"
   | "shatterstone"
-  | "mind-freeze";
+  | "mind-freeze"
+  // Necromancer and Elementalist staples (#1540).
+  | "mark-of-rodgort"
+  | "ward-against-elements";
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -117,4 +120,31 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     moveSpeedMultiplier: 0.1,
   }),
+  // Necromancer and Elementalist staples (#1540), at their rank-12 values.
+  // "...whenever each foe is struck for fire damage, that foe is set on
+  // fire for 1...4 seconds": 3. A life steal is no strike.
+  "mark-of-rodgort": define("mark-of-rodgort", "Mark of Rodgort", "hex", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        damageType: "fire",
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+        target: "bearer",
+        skillId: "elementalist.mark-of-rodgort",
+      },
+    ],
+  }),
+  // What the ward projects on the allies inside it, as Ward Against
+  // Melee's: "non-spirit allies in this area gain +24 armor against
+  // elemental damage".
+  "ward-against-elements": define(
+    "ward-against-elements",
+    "Ward Against Elements",
+    "skill-effect",
+    {
+      profession: "elementalist",
+      conditionalArmor: [{ amount: 24, conditions: [{ kind: "vs-elemental" }] }],
+    },
+  ),
 };

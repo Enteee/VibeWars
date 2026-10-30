@@ -354,7 +354,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
   for (const effect of definition.onAttackHit?.effects ?? []) {
-    parts.push(...describeAttackHit(effect));
+    parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -570,14 +570,15 @@ function damageTaken(multiplier: number): string {
 }
 
 /** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
-function describeAttackHit(effect: SkillEffect): string[] {
+function describeAttackHit(effect: SkillEffect, attackSkillsOnly: boolean): string[] {
+  const attacks = attackSkillsOnly ? "attack skills" : "physical attacks";
   if (effect.kind === "apply-status") {
     return [
-      `foes your physical attacks hit get ${statusName(effect.statusId)} ` +
+      `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
         `for ${seconds(effect.durationSeconds)}`,
     ];
   }
-  return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
+  return describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`);
 }
 
 /**
@@ -656,6 +657,7 @@ function describeTriggers(
       trigger.blocked,
       trigger.profession,
       trigger.usedSkill,
+      trigger.damageType,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -749,10 +751,14 @@ const DROPPED = "drop effect";
 /**
  * What the bearer does that a trigger bound to a kind of skill or
  * enchantment answers (#1437): "uses a Dervish attack skill", "loses a
- * Dervish enchantment", or to a kind of block (#1549): "blocks a melee
- * attack". `undefined`: bound to none.
+ * Dervish enchantment", to a type of damage (#1540): "takes fire damage
+ * from a foe", or to a kind of block (#1549): "blocks a melee attack".
+ * `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
+  if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
+    return `takes ${trigger.damageType} damage from a foe`;
+  }
   if (event === "bearer-blocks" && trigger.blocked !== undefined) {
     return `blocks a ${trigger.blocked} attack`;
   }
@@ -1084,7 +1090,9 @@ function conditionText(condition: EffectCondition): string {
         ? `If you have ${aCategory(condition.category)}`
         : `If you have a ${getProfession(condition.profession).name} ${condition.category}`;
     case "caster-lacks":
-      return `If you have no ${condition.category}`;
+      return condition.profession === undefined
+        ? `If you have no ${condition.category}`
+        : `If you have no ${getProfession(condition.profession).name} ${condition.category}`;
     case "target-casting":
       return "If target is casting a spell";
     case "target-using-skill":
@@ -1119,6 +1127,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target is attacking";
     case "target-casting-or-attacking":
       return "If target is casting a spell or attacking";
+    case "target-is-summoned":
+      return "If target is a summoned creature";
     case "caster-no-spirit-within":
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-spirit-within":
@@ -1550,14 +1560,16 @@ function describeEffect(
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
       // trap at your location for 90 seconds" (#1105), a well "at its
-      // location", the corpse's (#1104), or a symbol at your target's
-      // (#1113).
+      // location", the corpse's (#1104), a symbol at your target's
+      // (#1113), or Lava Font's burning ground where you stood (#1540).
       const magnitude = describeMagnitude(effect.durationSeconds, ranks);
       const what =
         effect.act.kind === "trap"
           ? "Sets a trap"
           : effect.act.kind === "pulse"
-            ? "Creates a symbol"
+            ? effect.anchor === "target"
+              ? "Creates a symbol"
+              : "Marks the ground"
             : effect.anchor === "corpse"
               ? "Creates a well"
               : "Creates a ward";
@@ -1799,17 +1811,22 @@ export function neededWeaponText(weapon: AttackWeaponClass): string {
 /**
  * A `transfer-conditions` line (#1511): "Moves up to 3 of your conditions
  * to the target", or "Moves all of target's conditions to you; you are
- * healed for 22 for each".
+ * healed for 22 for each", or "Moves all of your conditions with 180% of
+ * their remaining durations to the target" (#1540).
  */
 function transferText(
   effect: TransferConditionsEffect,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription {
   const count = effect.count === Infinity ? "all" : `up to ${String(effect.count)}`;
+  const lasting =
+    effect.durationMultiplier === 1
+      ? ""
+      : ` with ${String(Math.round(effect.durationMultiplier * 100))}% of their remaining durations`;
   const moves =
     effect.from === "caster"
-      ? `Moves ${count} of your conditions to the target`
-      : `Moves ${count} of target's conditions to you`;
+      ? `Moves ${count} of your conditions${lasting} to the target`
+      : `Moves ${count} of target's conditions${lasting} to you`;
   if (effect.healPerCondition === undefined) {
     return { text: moves, magnitude: undefined };
   }

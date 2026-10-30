@@ -40,3 +40,11 @@ root-cause analysis when it fails.
 
 Do not stack a second issue on an unmerged branch. If you are blocked
 on another PR, say so on Telegram and take different work.
+
+## Conflicts in generated files
+
+Never hand-merge `wire-schema.json`, the roles snapshot, the icon rows or
+`apps/web/public/icons/skill/*.svg`. `.gitattributes` keeps both sides of
+the append-only ones. For any conflict left, take your side
+(`git checkout --theirs <file>` in a rebase, `--ours` in a merge), then
+`pnpm run regen` and `git add` the result.

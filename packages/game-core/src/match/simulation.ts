@@ -174,6 +174,7 @@ import {
   nextAttackSkillRiders,
   PLAIN_BLOW,
   resolveAttackSkill,
+  resolveAttackSkillOutcome,
   resolveSwing,
   settleBlow,
   skillBlow,
@@ -3187,7 +3188,8 @@ export class MatchSimulation {
         : skill.attack === undefined
           ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined
-            ? (resolution: SkillResolution) => only(resolveAttackSkill(resolution, exposed, riders))
+            ? (resolution: SkillResolution) =>
+                resolveAttackSkillOutcome(resolution, exposed, riders)
             : (resolution: SkillResolution) =>
                 only(this.#releaseSkill(record, resolution, speed, dt));
     const targets = resolveTargets({
@@ -4821,6 +4823,7 @@ export class MatchSimulation {
             attacker.combatant,
             target.combatant,
             projectile.weaponSnapshot.mainHand,
+            skillHit !== undefined,
             this.#rng,
             this.#ruleset.combat,
             this.#participants,

@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { assertRan, selectSpecs } from "./select-e2e-specs.mjs";
+import { assertRan, countTests, planJobs, selectSpecs } from "./select-e2e-specs.mjs";
 
 describe("selectSpecs", () => {
   /** @type {string} */
@@ -82,5 +82,57 @@ describe("assertRan", () => {
     expect(assertRan(JSON.stringify({ stats: { expected: 10, unexpected: 0, flaky: 0 } }))).toBe(
       10,
     );
+  });
+});
+
+describe("planJobs", () => {
+  /** @param {{ specs: string[], repeat: number }[]} jobs */
+  const runsPerSpec = (jobs) => {
+    /** @type {Record<string, number>} */
+    const runs = {};
+    for (const job of jobs) {
+      for (const spec of job.specs) runs[spec] = (runs[spec] ?? 0) + job.repeat;
+    }
+    return runs;
+  };
+
+  it("runs a small spec ten times in one job", () => {
+    expect(planJobs({ "a.spec.ts": 3 }, 10, 80, 40)).toEqual([
+      { specs: ["a.spec.ts"], repeat: 10 },
+    ]);
+  });
+
+  it("gives every spec exactly ten runs: one big spec and nineteen small ones", () => {
+    /** @type {Record<string, number>} */
+    const weights = { "builds.spec.ts": 57 };
+    for (let i = 0; i < 19; i++) weights[`small-${String(i)}.spec.ts`] = 3;
+    const jobs = planJobs(weights, 10, 80, 40);
+    expect(Object.values(runsPerSpec(jobs))).toEqual(new Array(20).fill(10));
+    for (const job of jobs) {
+      const cost = job.specs.reduce((sum, spec) => sum + (weights[spec] ?? 0) * job.repeat, 0);
+      expect(cost).toBeLessThanOrEqual(80);
+      expect(job.specs.length).toBeGreaterThan(0);
+    }
+    expect(jobs.length).toBeLessThanOrEqual(40);
+  });
+
+  it("never puts a spec twice in one job", () => {
+    for (const job of planJobs({ "big.spec.ts": 30, "b.spec.ts": 30 }, 10, 80, 40)) {
+      expect(new Set(job.specs).size).toBe(job.specs.length);
+    }
+  });
+
+  it("refuses a selection over the budget with a clear message", () => {
+    /** @type {Record<string, number>} */
+    const weights = {};
+    for (let i = 0; i < 60; i++) weights[`s-${String(i)}.spec.ts`] = 20;
+    expect(() => planJobs(weights, 10, 80, 40)).toThrow(/split the PR/);
+  });
+});
+
+describe("countTests", () => {
+  it("counts test( calls and never returns zero", () => {
+    expect(countTests(`test("a", ...);\ntest.describe("g", () => { test("b", ...); });`)).toBe(2);
+    expect(countTests("nothing")).toBe(1);
   });
 });

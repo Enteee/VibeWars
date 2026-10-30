@@ -303,6 +303,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   "burning-refrain": define("burning-refrain", "Burning Refrain", "echo", {
     profession: "paragon",
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [
         {
           kind: "if",

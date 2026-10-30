@@ -149,6 +149,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
   "splinter-weapon": define("splinter-weapon", "Splinter Weapon", "weapon-spell", {
     profession: "ritualist",
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [
         {
           kind: "splash",

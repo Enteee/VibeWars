@@ -32,4 +32,6 @@ export const RANGER_ICONS = {
   "ranger.call-of-protection": { glyph: "paw-shield" },
   "ranger.symbiotic-bond": { glyph: "bond" },
   "ranger.revive-animal": { glyph: "paw", modifier: "up" },
+  // Placeholders until the asset-designer's (#1540).
+  "ranger.infuriating-heat": { glyph: "totem", modifier: "hourglass" },
 };
