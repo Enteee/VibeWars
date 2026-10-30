@@ -802,15 +802,18 @@ const status = {
   "avatar-of-melandru": [
     "form",
     (c) =>
-      `<path d="M6 18C6 10 10 6 18 6c0 8-4 12-12 12z" fill="${c}"/>` +
-      `<path d="M6 18l6-6" ${stroke(C.dervish, 1.5)}/>`,
+      `<circle cx="12" cy="13" r="2.5" fill="${c}"/>` +
+      `<path d="M6 20c0-3.5 2.5-5 6-5s6 1.5 6 5" ${stroke(c, 2.2)}/>` +
+      `<path d="M12 10.5V8" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 8.5C12 6 10 4.5 6.5 5c0 2.5 1.5 3.7 5.5 3.5zM12 8.5C12 6 14 4.5 17.5 5c0 2.5-1.5 3.7-5.5 3.5z" fill="${c}"/>`,
   ],
   // Form: wings spread, Dwayna's (#1437).
   "avatar-of-dwayna": [
     "form",
     (c) =>
-      `<path d="M12 15C9 9 6 7 3 7c0 5 3 8 9 8zM12 15c3-6 6-8 9-8 0 5-3 8-9 8z" fill="${c}"/>` +
-      `<circle cx="12" cy="18" r="1.8" fill="${c}"/>`,
+      `<path d="M10 14C8 9.5 5.5 8 3 8c0 4.5 2 7 7 7zM14 14c2-4.5 4.5-6 7-6 0 4.5-2 7-7 7z" fill="${c}"/>` +
+      `<circle cx="12" cy="10" r="2.3" fill="${c}"/>` +
+      `<path d="M7.5 21c0-3.5 2-5.5 4.5-5.5s4.5 2 4.5 5.5" ${stroke(c, 2)}/>`,
   ],
   // Enchantment: a chevron chasing a dot, faster and harder on runners (#1421).
   "harriers-haste": [
@@ -2396,6 +2399,19 @@ const skillGlyph = {
     `<circle cx="12" cy="9" r="6.5" ${stroke(C.ink, 2.2)}/>` +
     inkLine("M12 5.5V12.5M8.9 7.2L15.1 10.8M8.9 10.8L15.1 7.2", 1.8) +
     inkLine("M4 22C4 18 7.5 16.5 12 16.5S20 18 20 22", 2.2),
+  // A figure in a god's shape (#1468). Melandru: a branch with two leaves grows from the head.
+  "avatar-earth": () =>
+    `<circle cx="12" cy="12.5" r="3" fill="${C.ink}"/>` +
+    inkLine("M4.5 22C4.5 17.5 7.5 15.5 12 15.5S19.5 17.5 19.5 22", 2.6) +
+    inkLine("M12 9.5V6", 1.8) +
+    inkFill(
+      "M12 6.5C12 3.5 9.5 2 5.5 2.5c0 3 2 4.5 6.5 4zM12 6.5C12 3.5 14.5 2 18.5 2.5c0 3-2 4.5-6.5 4z",
+    ),
+  // Dwayna: the figure with wings spread behind it.
+  "avatar-wings": () =>
+    inkFill("M9 11C7 6.5 4.5 5 1.5 5c0 5 2.5 8 7.5 8zM15 11c2-4.5 4.5-6 7.5-6 0 5-2.5 8-7.5 8z") +
+    `<circle cx="12" cy="8.5" r="3" fill="${C.ink}"/>` +
+    inkLine("M5.5 22C5.5 17.5 8 14.5 12 14.5S18.5 17.5 18.5 22", 2.6),
   // The gain trigger: a plus in the top left corner is what the foe gains; the payoff sits below and right (#1440).
   "gain-barbs": () =>
     inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
