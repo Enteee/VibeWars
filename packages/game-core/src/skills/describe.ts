@@ -481,6 +481,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
     );
   }
+  if (definition.skillRechargeFaster !== 0) {
+    parts.push(
+      `skills recharge ${String(Math.round(definition.skillRechargeFaster * 100))}% faster`,
+    );
+  }
   const { spellRechargeFaster, bindingRitualRechargeFaster } = definition;
   if (spellRechargeFaster !== 0 && spellRechargeFaster === bindingRitualRechargeFaster) {
     const faster = String(Math.round(spellRechargeFaster * 100));
@@ -1104,6 +1109,10 @@ function conditionText(condition: EffectCondition): string {
       return "If target is knocked down";
     case "target-moving":
       return "If target is moving";
+    case "any-of": {
+      const [first, ...rest] = condition.conditions.map(conditionText);
+      return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
+    }
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
@@ -2130,6 +2139,18 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
+  // Dual Shot's arrows (#1539): "Shoot two arrows simultaneously at target
+  // foe. These arrows deal 25% less damage".
+  const strikes = rule?.strikes ?? 1;
+  const weaponDamage = rule?.weaponDamage ?? 1;
+  const weaker =
+    weaponDamage > 0 && weaponDamage < 1
+      ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
+      : "";
+  const arrowsLine =
+    strikes > 1 && skill.attack?.weapon === "bow"
+      ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
+      : [];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -2191,6 +2212,7 @@ export function describeSkill(
     ...cleaveAllLine,
     ...penetrationLine,
     ...flightLine,
+    ...arrowsLine,
     ...corpseLine,
     ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
     ...onCritical,

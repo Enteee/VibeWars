@@ -80,6 +80,7 @@ export function define(
     extraStrikesPerHit: 0,
     adrenalineGainFaster: 0,
     spellRechargeFaster: 0,
+    skillRechargeFaster: 0,
     bindingRitualRechargeFaster: 0,
     enchantmentRechargeFaster: undefined,
     skillArmorPenetration: undefined,

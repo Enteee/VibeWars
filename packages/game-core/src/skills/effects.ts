@@ -1472,6 +1472,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-more-health":
     case "target-attacking":
     case "target-casting-or-attacking":
+    case "any-of":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
@@ -1554,6 +1555,10 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "any-of":
+      return condition.conditions.some((each) =>
+        stateHolds(each, caster, target, surroundings, firing),
+      );
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
@@ -1775,6 +1780,7 @@ function conditionHolds(
     case "target-more-health":
     case "target-attacking":
     case "target-casting-or-attacking":
+    case "any-of":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":

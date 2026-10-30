@@ -516,6 +516,12 @@ export interface StatusDefinition {
    */
   readonly spellRechargeFaster: number;
   /**
+   * The share taken off the recharge of each skill the bearer finishes,
+   * of any type (#1539): Serpent's Quickness's 0.33. Read as
+   * `spellRechargeFaster` is; with a type's own share, the larger counts.
+   */
+  readonly skillRechargeFaster: number;
+  /**
    * The share taken off the recharge of each binding ritual the bearer
    * finishes (#1064): Weapon of Quickening's 0.33, read as
    * `spellRechargeFaster` is.
@@ -2128,6 +2134,8 @@ export interface StatusModifiers {
    * 1 − Π(1 − f), never more than `MAX_RECHARGE_REDUCTION` (#975).
    */
   readonly spellRechargeFaster: number;
+  /** As `spellRechargeFaster`, for a skill of any type (#1539). */
+  readonly skillRechargeFaster: number;
   /** As `spellRechargeFaster`, for a binding ritual (#1064). */
   readonly bindingRitualRechargeFaster: number;
   /** Every status's, summed (#1455). */
@@ -2222,6 +2230,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let uninterruptible = false;
   let conditionsExpireFaster = 0;
   let spellRechargeKept = 1;
+  let skillRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
   let damageFromSpiritAttacks = 0;
@@ -2314,6 +2323,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     uninterruptible ||= def.uninterruptible;
     conditionsExpireFaster += def.conditionsExpireFaster;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
+    skillRechargeKept *= 1 - def.skillRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
@@ -2352,6 +2362,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     knockdownMinSeconds,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
+    skillRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - skillRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     adrenalineGainFaster,
     enchantmentRechargeFaster,

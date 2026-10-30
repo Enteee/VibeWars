@@ -901,6 +901,12 @@ export type StateCondition =
    */
   | { readonly kind: "target-attacking" }
   /**
+   * One of `conditions` holds, each read as it would be alone (#1539):
+   * Melandru's Shot's "if target foe is moving or knocked down". An
+   * empty list never holds.
+   */
+  | { readonly kind: "any-of"; readonly conditions: readonly StateCondition[] }
+  /**
    * The effect's target is a summoned creature (#1528): a minion or a
    * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double
    * damage if target foe is a summoned creature".

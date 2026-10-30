@@ -377,6 +377,19 @@ const status = {
       `<path d="M6 8.5l4 3.5-4 3.5M11 8.5l4 3.5-4 3.5" ${stroke(c, 2.2)}/>` +
       `<path d="M18 7.5v9" ${stroke(c, 2.2)}/>`,
   ],
+  // Ranger staples (#1539), stand-ins until the asset-designer's.
+  // Stance: a circling arc, blocks and hurts who is adjacent.
+  "whirling-defense": [
+    "stance",
+    (c) => `<path d="M17 8a6 6 0 1 0 1 6M18 5v4h-4" ${stroke(c, 2.2)}/>`,
+  ],
+  // Stance: a wavy serpent, skills recharge faster.
+  "serpents-quickness": [
+    "stance",
+    (c) => `<path d="M5 16c3 0 3-8 6-8s3 8 6 8M17 16l2-2" ${stroke(c, 2.2)}/>`,
+  ],
+  // Stance: a step aside an arrow, faster and blocks projectiles.
+  dodge: ["stance", (c) => `<path d="M4 8h10M11 5l3 3-3 3M8 18l4-5 4 5" ${stroke(c, 2.2)}/>`],
   // Stance: a shield with a plus, Energy for each melee block (#1329).
   "bonettis-defense": [
     "stance",
