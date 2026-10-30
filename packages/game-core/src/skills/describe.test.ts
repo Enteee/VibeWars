@@ -788,7 +788,7 @@ describe("describeStatus", () => {
 
   it("says an item spell's drop once, all it does after it (#1434)", () => {
     expect(describeStatus("protective-was-kaolai")).toBe(
-      "+20 armor. Drop effect: heals for 80, all party members: heals for 80",
+      "+20 armor. Drop effect: you and all party members are healed for 80",
     );
     expect(describeStatus("grasping-was-kuurong")).toBe(
       "drop effect: foes in the area: deals 63 damage, knocks down for 2s",

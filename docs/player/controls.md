@@ -22,7 +22,7 @@ The default preset is **VibeWars**. **Classic** is for GW1 hands.
 | Yourself                   | G                | G                      |
 | Show names (hold)          | Shift            | Shift                  |
 | Mute                       | M                | M                      |
-| Drop the flag              | none             | none                   |
+| Drop flag, relic or ashes  | none             | none                   |
 
 These keys are fixed:
 

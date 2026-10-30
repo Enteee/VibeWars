@@ -600,6 +600,12 @@ function describeTriggers(
     if (!dropped || lines.length < 2) {
       return lines;
     }
+    const healed = partyHealed(trigger.effects, ranks);
+    if (healed !== undefined) {
+      return [
+        { text: `${DROPPED}: you and all party members are healed for ${healed}`, clause: false },
+      ];
+    }
     const what = lines.map(({ text }) => text.replace(`${DROPPED}: `, ""));
     return [{ text: `${DROPPED}: ${what.join(", ")}`, clause: false }];
   });
@@ -614,6 +620,33 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
     return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
   }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
+}
+
+/**
+ * The heal of a drop that heals its bearer and then, the same, the rest
+ * of the party (#1434): Protective Was Kaolai's "all party members are
+ * healed", said as one heal, not two. `undefined`: any other drop.
+ */
+function partyHealed(
+  effects: readonly TriggerEffect[],
+  ranks: ReadonlyMap<string, number>,
+): string | undefined {
+  const [self, splash, ...rest] = effects;
+  if (
+    rest.length > 0 ||
+    self?.kind !== "heal" ||
+    splash?.kind !== "splash" ||
+    splash.hits !== "party" ||
+    splash.effects.length !== 1
+  ) {
+    return undefined;
+  }
+  const [party] = splash.effects;
+  if (party?.kind !== "heal") {
+    return undefined;
+  }
+  const amount = String(describeMagnitude(self.amount, ranks).current);
+  return amount === String(describeMagnitude(party.amount, ranks).current) ? amount : undefined;
 }
 
 /** An item status's end (#1434), every one a drop: "Drop effect: …". */
