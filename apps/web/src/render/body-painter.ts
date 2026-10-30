@@ -5,6 +5,7 @@ import {
   teamColour,
   type RenderableActor,
 } from "./arena-snapshot.js";
+import { capeShape, type CapeLook, type EmblemPart } from "./cape-shape.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
@@ -48,11 +49,17 @@ export interface StandingBody {
   readonly offhandId: RenderableActor["offhandId"];
   /** The weapon mark's pose: `REST_FRAME` unless it is swinging. */
   readonly frame: AttackFrame;
+  /** The guild cape behind it (#1422); `undefined` wears none. */
+  readonly cape: CapeLook | undefined;
 }
 
+/** The cape's outline, as wide as the study draws it, and its trim's. */
+export const CAPE_EDGE_WIDTH = 1.6;
+export const CAPE_TRIM_WIDTH = 1.4;
+
 /**
- * The disc, its edge, the self rim on your own, then the off-hand and the
- * weapon mark on `marks` (the order #275 gives). The arena keeps marks on
+ * The cape, the disc, its edge, the self rim on your own, then the
+ * off-hand and the weapon mark on `marks` (the order #275 gives). The arena keeps marks on
  * a layer of their own, over the body glyphs (#1037); one painter for both
  * draws no glyph between them.
  */
@@ -61,9 +68,12 @@ export function paintStandingBody(painter: Painter, body: StandingBody, marks = 
   paintBodyMarks(marks, body);
 }
 
-/** The disc, its edge and the self rim on your own: what lies under the body glyph. */
+/** The cape, the disc, its edge and the self rim on your own: what lies under the body glyph. */
 export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   const { x, y, r } = body;
+  if (body.cape !== undefined) {
+    paintCape(painter, body, body.cape);
+  }
   painter.fillStyle(teamColour(body.team), 1);
   painter.fillCircle(x, y, r);
   // Centred half its width in, so the edge stays inside the collision
@@ -75,6 +85,51 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
     painter.lineStyle(2, SELF_RIM, 1);
     painter.strokeCircle(x, y, r - 2);
   }
+}
+
+/**
+ * The cape (#1422) under the disc, which covers its root: the cloth, its
+ * `edge` outline, the trim along the hem, then the emblem in the trim colour.
+ */
+function paintCape(painter: Painter, body: StandingBody, cape: CapeLook): void {
+  const shape = capeShape(body.x, body.y, body.r, body.facing, cape.emblem);
+  painter.fillStyle(cape.main, 1);
+  painter.fillPoints(shape.tab);
+  painter.lineStyle(CAPE_EDGE_WIDTH, BODY_EDGE, 1);
+  tracePoints(painter, shape.tab, true);
+  painter.lineStyle(CAPE_TRIM_WIDTH, cape.trim, 1);
+  tracePoints(painter, shape.trim, false);
+  paintEmblem(painter, shape.emblem, cape.trim);
+}
+
+/** An emblem's parts in `colour`: on a cape, and on the designer's buttons (#1422). */
+export function paintEmblem(painter: Painter, parts: readonly EmblemPart[], colour: number): void {
+  painter.fillStyle(colour, 1);
+  for (const part of parts) {
+    if (part.kind === "fill") {
+      painter.fillPoints(part.points);
+    } else {
+      painter.lineStyle(part.width, colour, 1);
+      tracePoints(painter, part.points, true);
+    }
+  }
+}
+
+/** Stroke one line through `points`, back to the first if `close`. */
+function tracePoints(painter: Painter, points: readonly Point[], close: boolean): void {
+  const [first, ...rest] = points;
+  if (first === undefined) {
+    return;
+  }
+  painter.beginPath();
+  painter.moveTo(first.x, first.y);
+  for (const point of rest) {
+    painter.lineTo(point.x, point.y);
+  }
+  if (close) {
+    painter.lineTo(first.x, first.y);
+  }
+  painter.strokePath();
 }
 
 /** The off-hand, then the weapon mark: what lies over the body glyph. */

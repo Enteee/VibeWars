@@ -792,6 +792,17 @@ describe("a profession's typed armor (#759)", () => {
   });
 });
 
+describe("a status's typed armor (#1437)", () => {
+  it("gives Avatar of Melandru's +30 against elemental damage only", () => {
+    const avatar = primary("monk");
+    avatar.statuses.apply("avatar-of-melandru", 74, "self");
+    expect(effectiveArmor(avatar, skillDamage(10, "fire", 0), "chest")).toBe(90);
+    expect(effectiveArmor(avatar, skillDamage(10, "earth", 0), "chest")).toBe(90);
+    expect(effectiveArmor(avatar, physical(10), "chest")).toBe(60);
+    expect(effectiveArmor(avatar, skillDamage(10, "chaos", 0), "chest")).toBe(60);
+  });
+});
+
 describe("Cracked Armor (#763)", () => {
   function cracked(armor: number): Combatant {
     const target = defender(armor);
