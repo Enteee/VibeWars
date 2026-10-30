@@ -136,7 +136,7 @@ export const TYPES_BY_GW_ID: ReadonlyMap<
   [22, { text: "Spell", skillType: "spell" }],
   [23, { text: "Enchantment Spell", skillType: "enchantment" }],
   [24, { text: "Hex Spell", skillType: "hex" }],
-  [25, { text: "Item Spell", skillType: undefined }],
+  [25, { text: "Item Spell", skillType: "item-spell" }],
   [26, { text: "Ward Spell", skillType: "ward" }],
   [27, { text: "Weapon Spell", skillType: "weapon-spell" }],
   [28, { text: "Well Spell", skillType: "well" }],
