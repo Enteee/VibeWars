@@ -87,6 +87,8 @@ const NO_BOT_USE = new Set([
   "ritualist.splinter-weapon",
   "ritualist.vengeful-weapon",
   "ritualist.weapon-of-remedy",
+  "ranger.kindle-arrows",
+  "ranger.ignite-arrows",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",
