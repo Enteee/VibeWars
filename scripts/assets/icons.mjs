@@ -1469,6 +1469,29 @@ const status = {
   ],
   // Hex: three rising bars, each second's pulse harder than the last.
   "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
+  // Dervish staples and Shadow Prison (#1551), stand-ins until their art card.
+  // Enchantment: a hooked hand over a limp line, attack skills cripple.
+  "grenths-grasp": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 4v7a5 5 0 0 0 10 0V4M10 4v6M14 4v6" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 20l4-3 3 2 3-3 4 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a cracked plate inside a ring, knocked-down foes stripped.
+  "rending-aura": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.4)}/>` +
+      `<path d="M8 7h8v5c0 2.5-2 4-4 5-2-1-4-2.5-4-5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 7l-1 3 2 2-1 3" ${stroke(c, 1.4)}/>`,
+  ],
+  // Hex: bars round a figure, it moves 66% slower.
+  "shadow-prison": [
+    "hex",
+    (c) =>
+      `<path d="M6 4v16M10 4v16M14 4v16M18 4v16" ${stroke(c, 1.6)}/>` +
+      `<path d="M4 4h16M4 20h16" ${stroke(c, 2)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

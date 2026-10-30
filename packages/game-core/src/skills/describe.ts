@@ -354,7 +354,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
   for (const effect of definition.onAttackHit?.effects ?? []) {
-    parts.push(...describeAttackHit(effect));
+    parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -570,14 +570,15 @@ function damageTaken(multiplier: number): string {
 }
 
 /** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
-function describeAttackHit(effect: SkillEffect): string[] {
+function describeAttackHit(effect: SkillEffect, attackSkillsOnly: boolean): string[] {
+  const attacks = attackSkillsOnly ? "attack skills" : "physical attacks";
   if (effect.kind === "apply-status") {
     return [
-      `foes your physical attacks hit get ${statusName(effect.statusId)} ` +
+      `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
         `for ${seconds(effect.durationSeconds)}`,
     ];
   }
-  return describeEffects(effect, new Map()).map(({ text }) => `your physical attacks: ${text}`);
+  return describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`);
 }
 
 /**
@@ -1079,7 +1080,9 @@ function conditionText(condition: EffectCondition): string {
         ? `If you have ${aCategory(condition.category)}`
         : `If you have a ${getProfession(condition.profession).name} ${condition.category}`;
     case "caster-lacks":
-      return `If you have no ${condition.category}`;
+      return condition.profession === undefined
+        ? `If you have no ${condition.category}`
+        : `If you have no ${getProfession(condition.profession).name} ${condition.category}`;
     case "target-casting":
       return "If target is casting a spell";
     case "target-using-skill":

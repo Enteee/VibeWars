@@ -219,6 +219,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   fragility: icon("fragility"),
   panic: icon("panic"),
   "wastrels-demise": icon("wastrels-demise"),
+  "grenths-grasp": icon("grenths-grasp"),
+  "rending-aura": icon("rending-aura"),
+  "shadow-prison": icon("shadow-prison"),
 };
 
 /** Drawn size of one icon, in world pixels. */

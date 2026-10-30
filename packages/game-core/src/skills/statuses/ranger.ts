@@ -77,6 +77,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "apply-poison": define("apply-poison", "Apply Poison", "preparation", {
     profession: "ranger",
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
       skillId: "ranger.apply-poison",
     },

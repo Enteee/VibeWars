@@ -819,11 +819,15 @@ export interface StatusTrigger {
 /**
  * What a status adds to each of the bearer's physical hits (#525), and
  * the skill the log names it after, apart from the blow (#939): "Sand
- * Shards hits", not "Scythe hits".
+ * Shards hits", not "Scythe hits". `attackSkillsOnly` (#1551): only a blow
+ * of an attack skill carries it, on each victim, before that skill's own
+ * effects, as Grenth's Grasp's "your attack skills also"; a plain swing
+ * carries none.
  */
 export interface AttackHitRider {
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
+  readonly attackSkillsOnly: boolean;
 }
 
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */

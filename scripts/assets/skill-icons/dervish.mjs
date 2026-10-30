@@ -28,4 +28,12 @@ export const DERVISH_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
+  // Placeholders until the asset-designer's (#1551).
+  "dervish.mystic-sandstorm": { glyph: "twister", modifier: "area" },
+  "dervish.grenths-grasp": { glyph: "limp", modifier: "plus" },
+  "dervish.rending-aura": { glyph: "armor-crack", modifier: "area" },
+  "dervish.reapers-sweep": { glyph: "scythe", modifier: "stun" },
+  "dervish.pious-assault": { glyph: "sweep", modifier: "renew" },
+  "dervish.chilling-victory": { glyph: "snowflake", modifier: "bolt" },
+  "dervish.wearying-strike": { glyph: "scythe", modifier: "down" },
 };
