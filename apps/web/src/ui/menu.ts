@@ -295,7 +295,7 @@ export function rosterTags(
 
 /**
  * Render the main menu (#579): your characters on the left, Play on the
- * right, and Teams, Record, Options and Music in the screen bar. Each
+ * right, and Team Builds, Record, Options and Music in the screen bar. Each
  * character's record (#1404) follows its subtitle.
  */
 export function renderMenu(
@@ -317,7 +317,7 @@ export function renderMenu(
   screenBar({
     crumbs: ["VibeWars"],
     actions: [
-      button("Teams", "", callbacks.onManageTeams),
+      button("Team Builds", "", callbacks.onManageTeams),
       button("Record", "", callbacks.onShowRecord),
       button("Music", "", callbacks.onMusic),
     ],
@@ -424,9 +424,9 @@ export function renderMenu(
   play.appendChild(h("h2", "menu-column-title", "Play"));
 
   const nameField = h("label", "field");
-  nameField.appendChild(h("span", "field-label", "Your name (other players see it)"));
   const nameInput = document.createElement("input");
   nameInput.className = "field-input";
+  nameInput.setAttribute("aria-label", "Name");
   nameInput.placeholder = "Player";
   nameInput.value = loadPlayerName();
   nameInput.addEventListener("input", () => {
@@ -579,24 +579,24 @@ export function memberCount(count: number): string {
 }
 
 /**
- * The teams, one selectable row each (#581): a press opens it in the team
- * editor. Each row shows its member count and its members' dots; an
- * empty list says so where the rows would be, with "New team".
+ * The team builds, one selectable row each (#581): a press opens it in
+ * the team editor. Each row shows its member count and its members'
+ * figures; an empty list says so where the rows would be, with "New team
+ * build".
  */
 export function renderTeamList(
   root: HTMLElement,
   teams: readonly StoredTeam[],
-  characters: readonly StoredCharacter[],
   problems: readonly string[],
   callbacks: TeamListCallbacks,
 ): void {
   root.replaceChildren();
   const panel = h("div", "screen team-list");
   screenBar({
-    crumbs: ["VibeWars", "Teams"],
+    crumbs: ["VibeWars", "Team Builds"],
     back: { label: "Back", onBack: callbacks.onBack },
-    // An empty list holds the one "New team" itself.
-    actions: teams.length === 0 ? [] : [button("New team", "primary", callbacks.onNew)],
+    // An empty list holds the one "New team build" itself.
+    actions: teams.length === 0 ? [] : [button("New team build", "primary", callbacks.onNew)],
   });
 
   for (const problem of problems) {
@@ -604,19 +604,15 @@ export function renderTeamList(
   }
 
   if (teams.length === 0) {
-    panel.appendChild(emptyState("No teams yet.", "New team", callbacks.onNew));
+    panel.appendChild(emptyState("No team builds yet.", "New team build", callbacks.onNew));
   }
 
   const list = h("div", "entity-list");
   for (const team of teams) {
-    // A member whose character is gone has no figure; the editor shows it.
     const dots = h("span", "team-list-dots");
     for (const member of team.members) {
-      const character = characters.find((c) => c.id === member.characterId);
-      if (character !== undefined) {
-        // A team is played by bots, and a bot wears no cape.
-        dots.appendChild(createCharacterFigure(character, undefined));
-      }
+      // A team is played by bots, and a bot wears no cape.
+      dots.appendChild(createCharacterFigure(member.character, undefined));
     }
     list.appendChild(
       selectableRow({

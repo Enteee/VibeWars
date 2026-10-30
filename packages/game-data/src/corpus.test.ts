@@ -49,10 +49,10 @@ describe("corpusSkills (#1220)", () => {
       profession: "common",
       attributeId: undefined,
     });
-    // Echo is a GW1 type this game lacks.
-    expect(corpus.find((skill) => skill.typeText === "Echo")?.skillType).toBeUndefined();
     // An item spell is ours (#1434).
     expect(byId.get(788)).toMatchObject({ typeText: "Item Spell", skillType: "item-spell" });
+    // A Paragon echo is ours (#1423).
+    expect(byId.get(1774)).toMatchObject({ typeText: "Echo", skillType: "echo" });
     // A flash enchantment is an enchantment, GW1's name kept (#1421).
     expect(TYPES_BY_GW_ID.get(33)).toEqual({
       text: "Flash Enchantment Spell",

@@ -148,8 +148,6 @@ const LOG_CAP = 200;
 /** The meter is summed every step, but repainted at most this often. */
 const METER_PAINT_SECONDS = 0.2;
 
-const HINT_IDLE = "click the arena to take control";
-
 /**
  * Clicking one of these takes the keyboard, so it takes arena control
  * away. Clicking anything else outside the panel (a skill box, say) edits
@@ -266,7 +264,8 @@ export function createTrainingPanel(): TrainingPanel {
   overlay.hidden = true;
   stage.appendChild(overlay);
 
-  const hint = h("p", "training-hint", HINT_IDLE);
+  // The keys, while the arena has control; empty otherwise.
+  const hint = h("p", "training-hint");
   const message = h("p", "training-message");
 
   const health = vitalBar("health");
@@ -801,11 +800,7 @@ export function createTrainingPanel(): TrainingPanel {
         // No HUD here, so the message line says what the mute key did.
         const muted = !soundPlayer().muted;
         setGlobalMute(muted);
-        flash(
-          muted
-            ? `Sound off. Press ${actionLabel(keymap, "mute", keyLabel)} to turn it on.`
-            : "Sound on.",
-        );
+        flash(muted ? "Sound off." : "Sound on.");
       }
       return;
     }
@@ -893,7 +888,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   const onStageBlur = (): void => {
     root.classList.remove("is-armed");
-    hint.textContent = HINT_IDLE;
+    hint.textContent = "";
     // The move input lets go of any held key itself, on the same blur.
   };
 

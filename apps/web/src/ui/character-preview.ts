@@ -7,7 +7,7 @@ import {
 
 import { teamColour, type RenderableActor } from "../render/arena-snapshot.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
-import type { StoredCharacter } from "../storage/schema.js";
+import type { TeamCharacter } from "../storage/schema.js";
 import { skillIcon } from "./icons.js";
 
 /**
@@ -46,7 +46,7 @@ export function professionLabel(
 }
 
 /** How many of the eight bar slots are filled. */
-export function equippedCount(character: StoredCharacter): number {
+export function equippedCount(character: TeamCharacter): number {
   return character.skillBar.filter((id) => id !== null).length;
 }
 
@@ -61,7 +61,7 @@ export function cssColour(colour: number): string {
  * Sized from the ruleset's collision radius so the proportions match the
  * arena rather than being an arbitrary pretty size.
  */
-export function createCharacterDot(character: StoredCharacter): HTMLElement {
+export function createCharacterDot(character: TeamCharacter): HTMLElement {
   return createProfessionDot(character.primaryProfession, character.secondaryProfession);
 }
 
@@ -92,7 +92,7 @@ export interface MiniSkillCell {
 }
 
 /** A character's eight slots as stored (#578); an illegal build still shows what it holds. */
-export function miniSkillCells(character: StoredCharacter): (MiniSkillCell | null)[] {
+export function miniSkillCells(character: TeamCharacter): (MiniSkillCell | null)[] {
   return Array.from({ length: SKILL_BAR_SLOTS }, (_, slot) => {
     const skillId = character.skillBar[slot] ?? null;
     if (skillId === null) {
@@ -111,7 +111,7 @@ const MINI_SKILL_ICON_PX = 16;
  * says what a character plays without opening it. The names are in the
  * cells' titles and the bar's label.
  */
-export function miniSkillBar(character: StoredCharacter): HTMLElement {
+export function miniSkillBar(character: TeamCharacter): HTMLElement {
   const bar = document.createElement("span");
   bar.className = "mini-skill-bar";
   bar.setAttribute("role", "img");

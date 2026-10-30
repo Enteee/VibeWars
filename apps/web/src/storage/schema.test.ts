@@ -22,11 +22,13 @@ const CHARACTER: StoredCharacter = {
   updatedAt: 1000,
 };
 
+const { schemaVersion: _version, updatedAt: _updated, ...MEMBER } = CHARACTER;
+
 const TEAM: StoredTeam = {
   schemaVersion: TEAM_SCHEMA_VERSION,
   id: "team-1",
   name: "Guard Team",
-  members: [{ characterId: "local-1" }],
+  members: [{ character: { ...MEMBER, id: "member-1" } }],
   rulesetId: "minimal-gw-inspired-pvp-v1",
   updatedAt: 1000,
 };
@@ -74,5 +76,18 @@ describe("isStoredTeam", () => {
   it("rejects a malformed record", () => {
     expect(isStoredTeam({ ...TEAM, members: "everyone" })).toBe(false);
     expect(isStoredTeam(null)).toBe(false);
+  });
+
+  it("rejects a v1 team, whose members referenced characters (#1452)", () => {
+    expect(isStoredTeam({ ...TEAM, schemaVersion: 1, members: [{ characterId: "local-1" }] })).toBe(
+      false,
+    );
+  });
+
+  it("rejects a member without its character, or with a malformed one (#1452)", () => {
+    expect(isStoredTeam({ ...TEAM, members: [{ characterId: "local-1" }] })).toBe(false);
+    expect(isStoredTeam({ ...TEAM, members: [{}] })).toBe(false);
+    const { skillBar: _bar, ...withoutBar } = MEMBER;
+    expect(isStoredTeam({ ...TEAM, members: [{ character: withoutBar }] })).toBe(false);
   });
 });

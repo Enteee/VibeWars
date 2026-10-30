@@ -220,6 +220,7 @@ so the silhouette identifies the profession and the colour only supports it.
 | Glyph        | Triangle plate, point down, glyph inside                |
 | Shout        | `ink` hexagon plate, glyph inside                       |
 | Chant        | `ink` banner plate, notched at the foot, glyph inside   |
+| Echo         | The chant's banner plate, a stand-in (#1423)            |
 | Weapon spell | Shield plate, glyph inside                              |
 | Skill effect | `ink-dim` wide capsule plate, glyph inside              |
 | Item         | `ink` urn plate, glyph inside (#1434)                   |
@@ -905,7 +906,7 @@ it, not baked in, so one file serves every screen.
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
   blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,
   dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, spark (a four-point star with a tail), flame-foe, flame-mind (a flame over a figure, over a bare head), flame-ring, flame-burst (short and long rays round a dot), flame-target, flame-field, hammer-prone, hammer-shield, hammer-counter, hammer-weak, hammer-chevrons, hammer-quake (the hammer over a downed foe, a shield, a turning arrow, weak chevrons, wide cracks), hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
-  broken one), eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling), ice-cage, frost-nova, spear-ice, whirl, eye-blur, mist-shield, stone-split, head-frost (icicles under a bar, a snowflake with ice thrown out round it, a long spear, a spiral, an eye and its ghost, mist over a shield, a stone split in two, a snowflake in a head and shoulders), gain-barbs, gain-shield, gain-burst, hex-return (the gain-trigger skills: a plus in the top left corner is what the foe gains, spikes, a bolted shield or a burst below it is the payoff; Hex Breaker's corner is a dashed ring and an arrow goes back at it). A
+  broken one), eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling), ice-cage, frost-nova, spear-ice, whirl, eye-blur, mist-shield, stone-split, head-frost (icicles under a bar, a snowflake with ice thrown out round it, a long spear, a spiral, an eye and its ghost, mist over a shield, a stone split in two, a snowflake in a head and shoulders), avatar-earth, avatar-wings (a figure in a god's shape: Melandru grows a two-leaf branch from the head, Dwayna spreads wings behind it; the other Avatars add their own mark to the same figure), gain-barbs, gain-shield, gain-burst, hex-return (the gain-trigger skills: a plus in the top left corner is what the foe gains, spikes, a bolted shield or a burst below it is the payoff; Hex Breaker's corner is a dashed ring and an arrow goes back at it). A
   new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
@@ -1007,6 +1008,57 @@ sheet.
   right under it holds Back and the screen's actions, grouped. Cost: the
   tallest (two rows, about 80 px), but the screen's buttons are never mixed with
   the global ones. Phone: the dock scrolls sideways, with a fade at its edge.
+
+### Solo and Team Play (#1449; decided: B, the card table)
+
+![Solo and Team Play, three variants](team-play-study.svg)
+
+**Decided: B** (the operator's pick, #1449; implementation #1453, #1460, and
+the host logic and wire in #1458 with ADR-0040). A and C stay on the sheet as
+the road not taken. Supersedes the Teams study (#1439). The title bar reads
+`VibeWars | [Solo Play] [Team Play]` in all three, the active one filled and
+underlined; `[Teams]` and `[Music]` are gone and the ♪ icon stays. Solo Play is
+today's main screen. Team Play replaces the character roster with a **Team
+Build** pick: optional, "None, the team decides" is the default row. A Team
+Build has its own characters (name, profession) and is made in the team builder;
+it has nothing to do with the Solo roster. The lobby (frame 3) is the same in
+all three because the design fixes it: players pick a side, the host sets a bot
+count per side, everyone Ready opens the Team Lobby. Every variant shows seven
+frames: Team Play with and without Team Builds, the lobby, the vote, a
+three-way tie broken by the captain, the slot claim, and a side of one player.
+`node scripts/assets/team-play-study.mjs` regenerates the sheet.
+
+- **A: one long page per phase.** Team Play is the Team Build list on the left
+  (None first, Edit on each row, "New team build") and the four modes as big
+  buttons on the right. The Team Lobby is a table: one row per player with
+  proposal, characters, votes, a Vote button; the rules sit in a legend under
+  it. Phase 2 swaps the table for a one-line summary of the winner and a row
+  of slot cards. Cost: the least new UI (rows, buttons, existing list
+  components), but each phase is a different page and the tally is easy to
+  read yet gives no sense of a table.
+- **B: a card table.** Team Play is four mode tiles across the top and Team
+  Build cards below, with "None" as the first, dashed card. In the Team Lobby
+  each proposal is a card with its characters and the voters' initials as
+  tokens; you click a card to vote, the tie winner is lifted and the rest fade.
+  Phase 2 turns the winner into four seats to sit in. Cost: a card component
+  and a seat component, the most new styling; the clearest "who is for what".
+- **C: two panes.** Team Play lists the modes on the left; the pane on the right
+  holds the Team Build picker (a dropdown, "Edit team builds…" and "New team
+  build" in it) and Host or Join. The Team Lobby keeps proposals left and the
+  slots right on one screen: the slots are a locked preview of the leading
+  proposal during the vote, then unlock when it ends. Cost: one screen for
+  both phases, so no page change for the wire state, but the two panes narrow
+  every row to 600 px, so long Team Build names are cut early.
+
+Edge cases drawn: no Team Builds saved, a long Team Build name (cut with an
+ellipsis), a player who proposes nothing (Dax), a side of one player (Red: Eli
+and three bots), who needs no vote. Every proposal is exactly the side's size
+(four), so Blue's four players fill four seats and draw no bot. Two rules
+the study had to guess were settled in #1458 (ADR-0040), and the frames
+follow it: a side with no proposals plays the house team (starter
+builds); and a human who has not
+claimed a slot when the clock ends gets the lowest free one, so only slots no
+human is left to take become bots.
 
 ## Creatures
 

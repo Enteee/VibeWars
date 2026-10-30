@@ -38,6 +38,14 @@ to four more ranks on top; see [Equipment](equipment.md). Raising the
 attribute a skill uses makes it stronger, and the numbers in its
 description change as you spend.
 
+## Echoes
+
+A Paragon's **echoes** are long buffs on one ally. A **refrain** renews
+to its full length, and a **finale** takes effect, whenever a chant or a
+shout ends on that ally. A chant or shout reapplied before it ends has not
+ended. Nothing removes an echo: it ends when it runs out or its bearer
+dies. Most cannot target a spirit.
+
 ## The library
 
 The skill library lists every skill your two professions can use,
@@ -71,4 +79,14 @@ To take one in, paste it anywhere in the editor that is not a text
 field. Both kinds work. A GW1 skill VibeWars does not have yet arrives as
 an empty slot. The build is yours once you press **Save**.
 
-A team code is pasted on the **Teams** screen instead.
+A team code is pasted on the **Team Builds** screen instead.
+
+## Team Builds
+
+A **team build** is a team of its own characters, made on the **Team
+Builds** screen and kept apart from your Solo characters. Add a member
+with **New character**, or **Add** one of your characters to copy its
+build in. A copy is the team's own: changing it, or the character it came
+from, leaves the other as it was. Press a member's name to edit it in the
+build editor; its **Save** puts it back in the team, and the team's own
+**Save** keeps it all.

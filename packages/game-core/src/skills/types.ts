@@ -64,6 +64,8 @@ export type TargetRule =
   | "single-dead-ally"
   /** A living spirit on the caster's team, whoever made it (#1309): GW1's "allied spirit". */
   | "allied-spirit"
+  /** As `"single-ally"`, yourself included, but never a spirit (#1423): GW1's "Cannot target spirits". */
+  | "single-ally-not-spirit"
   /** The caster's own companion, alive or dead, whatever is selected (#1046). */
   | "companion"
   /** As `"companion"`, but only a living one (#1108): a call on a dead pet is refused. */
@@ -911,6 +913,11 @@ export type SkillType =
   | "preparation"
   | "glyph"
   | "chant"
+  /**
+   * A Paragon's echo (#1423): a single-ally buff that renews or fires
+   * whenever a chant or shout ends on its bearer. Not a spell.
+   */
+  | "echo"
   | "weapon-spell"
   | "nature-ritual"
   | "binding-ritual"

@@ -235,10 +235,6 @@ function mountControls(container: HTMLElement): () => void {
   const panel = h("div", "keys-screen");
   container.appendChild(panel);
 
-  panel.appendChild(
-    h("p", "screen-subtitle", "Changes save at once, and play from the next match or session."),
-  );
-
   const pickerField = h("label", "field");
   pickerField.appendChild(h("span", "field-label", "Preset"));
   const picker = document.createElement("select");

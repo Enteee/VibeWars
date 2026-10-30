@@ -35,6 +35,7 @@ export const SKILL_TYPE_NAME: Readonly<Record<SkillType, string>> = {
   preparation: "Preparation",
   glyph: "Glyph",
   chant: "Chant",
+  echo: "Echo",
   "weapon-spell": "Weapon Spell",
   "nature-ritual": "Nature Ritual",
   "binding-ritual": "Binding Ritual",

@@ -11,6 +11,7 @@ import {
   isStoredCharacter,
   type StoredAttribute,
   type StoredCharacter,
+  type TeamCharacter,
 } from "./schema.js";
 
 /**
@@ -73,7 +74,7 @@ export function exportBuild(character: StoredCharacter): string {
 }
 
 /** What `exportBuild` writes, as an object: a team code holds one per member (#577). */
-export function buildPayload(character: StoredCharacter): ExportedBuild {
+export function buildPayload(character: TeamCharacter): ExportedBuild {
   return {
     format: BUILD_FORMAT,
     formatVersion: BUILD_FORMAT_VERSION,

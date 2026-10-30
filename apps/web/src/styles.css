@@ -1037,14 +1037,23 @@ body {
 }
 
 /* Name and guild tag side by side (#1406); the tag fits four wide letters. */
+/* Name and guild tag share rows: label, input, hint. The name has no
+   label, so its input sits in the second row, level with the tag's. */
 .menu-identity {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.5rem;
 }
 
-.menu-identity > .field:first-child {
-  flex: 1;
+.menu-identity > .field {
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
+  align-content: start;
+}
+
+.menu-identity > .field:first-child > .field-input {
+  grid-row: 2;
 }
 
 .menu-guild-tag .field-input {
@@ -1151,13 +1160,6 @@ body {
   color: var(--accent);
 }
 
-.menu-peer-notice {
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-  line-height: 1.4;
-}
-
 .screen button {
   padding: 0.5rem 0.9rem;
   background: var(--panel);
@@ -1195,12 +1197,6 @@ body {
 }
 
 /* The Record screen (#1404): the last matches, one row each. */
-.record-local-only {
-  margin: 0 0 0.75rem;
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-}
-
 .record-table {
   border-collapse: collapse;
 }
@@ -1297,10 +1293,6 @@ body {
   user-select: none;
 }
 
-.team-row.is-missing .team-row-handle {
-  visibility: hidden;
-}
-
 .team-row-character {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1330,20 +1322,6 @@ body {
 
 .team-row-skills {
   display: contents;
-}
-
-/* A missing character has no bar: its name spans to the × alone. */
-.team-row.is-missing .team-row-character {
-  grid-column: 2 / -2;
-}
-
-.team-row.is-missing .team-row-skills {
-  display: none;
-}
-
-.team-row.is-missing .team-row-name {
-  color: var(--ink-dim);
-  font-style: italic;
 }
 
 .team-row-controls {
@@ -1467,6 +1445,7 @@ body {
 
 .team-skill[data-skill-type="attack"],
 .team-skill[data-skill-type="chant"],
+.team-skill[data-skill-type="echo"],
 .team-skill[data-skill-type="shout"],
 .team-skill[data-skill-type="signet"],
 .team-skill[data-skill-type="skill"],
@@ -1495,10 +1474,16 @@ body {
   gap: 0.35rem;
 }
 
-.team-picker-header {
+.team-picker-header,
+.team-picker-copy {
   margin: 0;
   font-size: 0.85rem;
   color: var(--ink-dim);
+}
+
+.team-picker-copy {
+  margin-top: 0.4rem;
+  font-weight: normal;
 }
 
 .team-picker-list {
@@ -1681,17 +1666,18 @@ body {
   min-width: 1.5ch;
 }
 
-/* The editor's bar (#1334) and the lobby's (#1368): the crumbs, the
-   screen's buttons and the icons fill a row up to 75rem, so the status
-   (the editor's pickers, the lobby's code and map) takes the second row
-   the phone's does and never runs under the buttons or the icons. */
+/* The editors' bars (#1334, #1452) and the lobby's (#1368): the crumbs,
+   the screen's buttons and the icons fill a row up to 75rem, so the status
+   (an editor's pickers and problems, the lobby's code and map) takes the
+   second row the phone's does and never runs under the buttons or the
+   icons. */
 @media (45rem < width <= 75rem) {
-  #topbar:has(.editor-professions),
+  #topbar:has(.problems-chip),
   #topbar:has(.lobby-header) {
     flex-wrap: wrap;
   }
 
-  #topbar:has(.editor-professions) .topbar-status,
+  #topbar:has(.problems-chip) .topbar-status,
   #topbar:has(.lobby-header) .topbar-status {
     flex: 1 0 100%;
     order: 10;
@@ -3052,6 +3038,11 @@ body.has-expanded-training #screens {
   font-size: 0.8rem;
 }
 
+/* Both keep their line when empty, so the panel does not jump. */
+.training-hint {
+  min-height: 1.1em;
+}
+
 .training-message {
   min-height: 1.1em;
   color: var(--ink);
@@ -3385,11 +3376,6 @@ body.has-expanded-training #screens {
   right: 0.5rem;
   bottom: 0.5rem;
   font-size: 0.75rem;
-}
-
-.editor-hint {
-  color: var(--ink-dim);
-  font-size: 0.8rem;
 }
 
 /* --- the bar itself ---------------------------------------------------- */
@@ -3805,12 +3791,6 @@ body.has-expanded-training #screens {
 
 .skill-box-on:empty {
   display: none;
-}
-
-.skill-library-empty {
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-  line-height: 1.4;
 }
 
 /* --- hover tooltip ----------------------------------------------------- */
@@ -4359,21 +4339,6 @@ body.has-expanded-training #screens {
 .hud-message.is-visible {
   opacity: 1;
   transition: none;
-}
-
-/* How to target, until the first target (#55): quieter than a refusal. */
-.hud-hint {
-  color: var(--ink-dim);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
-  /* A plate, so the dim ink holds 4.5:1 over walls and bodies too. */
-  padding: 0.15rem 0.5rem;
-  background: rgb(14 17 22 / 92%);
-}
-
-.hud-hint[hidden] {
-  display: none;
 }
 
 /* An echo's copy in its slot (#1154): a strip along the bottom edge that
@@ -5370,10 +5335,6 @@ body:has(#app > .chat) .now-playing {
 
 .queue-actions {
   justify-content: center;
-}
-
-.queue-notice {
-  text-align: center;
 }
 
 .versus-splash {
