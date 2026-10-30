@@ -1645,6 +1645,18 @@ export class MatchSimulation {
   }
 
   /**
+   * Every living bearer with no energy left answers it (#1583), in
+   * participant order, after upkeep has taken its share: Wither's damage.
+   */
+  #fireEnergyEmpty(): void {
+    for (const record of this.#participants.values()) {
+      if (!record.combatant.dead && record.combatant.energy <= 0) {
+        this.#fireTriggers(record, "bearer-energy-empty", NONE_SPARED);
+      }
+    }
+  }
+
+  /**
    * One pulse of `rule` at `position` (#1113): its effects land from
    * `owner` on whoever its area takes there, in line of sight of it, and
    * it is logged as a cast is, even when it hits nobody. A pulse's
@@ -2737,6 +2749,7 @@ export class MatchSimulation {
     this.#pulseGroundEffects();
     this.#pulseStatuses();
     this.#settleUpkeep(dt);
+    this.#fireEnergyEmpty();
     this.#spreadStatuses();
     this.#fireStatusChanges();
     this.#awardKillMorale();
@@ -3021,8 +3034,7 @@ export class MatchSimulation {
     if (
       check.ok &&
       skill.corpse !== undefined &&
-      nearestFreshCorpse(record.position, skill.corpse.radius, this.#participants.values()) ===
-        undefined
+      this.#freshCorpse(record, skill.corpse, target) === undefined
     ) {
       return { ok: false, reason: "no-corpse" };
     }
@@ -3221,7 +3233,9 @@ export class MatchSimulation {
     // A corpse skill takes its corpse as it lands, not as it began (#466):
     // one used up during the cast leaves it with no effect, paid for.
     const corpse =
-      skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
+      skill.corpse === undefined
+        ? undefined
+        : this.#exploitCorpse(record, skill.corpse, targetRecord);
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds } =
       skill.corpse !== undefined && corpse === undefined
         ? only([])
@@ -5408,12 +5422,32 @@ export class MatchSimulation {
   }
 
   /**
-   * Marks the fresh corpse nearest `record` within the rule's radius as
-   * exploited (#466) and returns it; `undefined` for none. Wells and
-   * minions (#466, #467) will want its position.
+   * The fresh corpse nearest `record`, or its `target` under a rule that
+   * names it (#1583), within the rule's radius; `undefined` for none, or
+   * for no target to look round.
    */
-  #exploitCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord | undefined {
-    const corpse = nearestFreshCorpse(record.position, rule.radius, this.#participants.values());
+  #freshCorpse(
+    record: ParticipantRecord,
+    rule: CorpseRule,
+    target: ParticipantRecord | undefined,
+  ): ParticipantRecord | undefined {
+    const centre = rule.near === "target" ? target?.position : record.position;
+    return centre === undefined
+      ? undefined
+      : nearestFreshCorpse(centre, rule.radius, this.#participants.values());
+  }
+
+  /**
+   * Marks the corpse `#freshCorpse` finds as exploited (#466) and returns
+   * it; `undefined` for none. Wells and minions (#466, #467) will want
+   * its position.
+   */
+  #exploitCorpse(
+    record: ParticipantRecord,
+    rule: CorpseRule,
+    target: ParticipantRecord | undefined,
+  ): ParticipantRecord | undefined {
+    const corpse = this.#freshCorpse(record, rule, target);
     if (corpse !== undefined) {
       corpse.corpseExploited = true;
     }

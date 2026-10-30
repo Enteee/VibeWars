@@ -633,6 +633,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
+  "bearer-energy-empty": "has no energy left",
   ends: "ends",
   "ends-early": "ends prematurely",
   expires: "expires",
@@ -689,13 +690,15 @@ function describeTriggers(
           ? DROPPED
           : on.includes("bearer-chant-or-shout-ends")
             ? CHANT_OR_SHOUT_ENDS
-            : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
-              ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-              : once && on.includes("bearer-uses-skill")
-                ? NEXT_SKILL
-                : nextOnly
-                  ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-                  : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+            : on.includes("bearer-energy-empty")
+              ? ENERGY_EMPTY
+              : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
+                ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                : once && on.includes("bearer-uses-skill")
+                  ? NEXT_SKILL
+                  : nextOnly
+                    ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                    : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
       ranks,
       bearerIsFoe,
     );
@@ -727,6 +730,9 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
 
 /** An echo's (#1423), in the corpus's words. */
 const CHANT_OR_SHOUT_ENDS = "whenever a chant or shout ends on it";
+
+/** An energy-empty trigger's (#1583), in the corpus's words: Wither's. */
+const ENERGY_EMPTY = "if its energy reaches 0";
 
 /**
  * The heal of a drop that heals its bearer and then, the same, the rest
@@ -2200,11 +2206,20 @@ export function describeSkill(
     skill.target !== "self" && skill.range === RANGE_SPELL / 2
       ? [{ text: "Half the normal range", magnitude: undefined }]
       : [];
-  // A skill that exploits a corpse (#466) says so before what it does.
+  // A skill that exploits a corpse (#466) says so before what it does,
+  // and which: its own, or its target's (#1583).
   const corpseLine =
     skill.corpse === undefined
       ? []
-      : [{ text: "Exploits the nearest corpse", magnitude: undefined }];
+      : [
+          {
+            text:
+              skill.corpse.near === "target"
+                ? "Exploits the corpse nearest your target"
+                : "Exploits the nearest corpse",
+            magnitude: undefined,
+          },
+        ];
   // A pet that comes with the skill on the bar (#1046): Charm Animal's.
   const companionHealth =
     skill.companion === undefined ? undefined : describeMagnitude(skill.companion.maxHealth, ranks);

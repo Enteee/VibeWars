@@ -238,6 +238,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "grenths-grasp": icon("grenths-grasp"),
   "rending-aura": icon("rending-aura"),
   "shadow-prison": icon("shadow-prison"),
+  wither: icon("wither"),
+  "life-siphon": icon("life-siphon"),
+  "life-siphon-regen": icon("life-siphon-regen"),
+  "reckless-haste": icon("reckless-haste"),
+  "corrupt-enchantment": icon("corrupt-enchantment"),
 };
 
 /** Drawn size of one icon, in world pixels. */
