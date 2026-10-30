@@ -109,7 +109,7 @@ test("(5) a saved relay of the wrong shape is removed, and the menu says so once
   await expect(notice).toBeVisible();
   expect(await savedRelay(page)).toBeNull();
   await page.reload();
-  await page.locator(".screen-menu").waitFor();
+  await page.locator(".screen-random-arena").waitFor();
   await expect(notice).toHaveCount(0);
 });
 
@@ -117,7 +117,7 @@ test("(6) a relay link pasted into an open tab is taken out of the address bar a
   page,
 }) => {
   await page.goto("./#keep=1");
-  await page.locator(".screen-menu").waitFor();
+  await page.locator(".screen-random-arena").waitFor();
   // The same document: only the fragment changes, nothing reloads.
   await page.goto(`${link(RELAY)}&keep=1`);
   const prompt = page.getByRole("dialog", { name: "Relay link" });

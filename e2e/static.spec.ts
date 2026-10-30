@@ -1,5 +1,7 @@
 import { expect, test, type Page, type Request } from "@playwright/test";
 
+import { openRail } from "./helpers/menu.js";
+
 /**
  * The static GitHub Pages build (#103): served under a sub-path, with no
  * game server behind it, and online play peer to peer (#403).
@@ -64,9 +66,10 @@ async function settled(traffic: Traffic): Promise<void> {
 test("the menu loads under the sub-path, with every asset found", async ({ page }) => {
   const traffic = watchTraffic(page);
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
   // Profession and status icons are fetched by URL, not bundled, so they
   // are the assets a wrong base path would break.
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();
   // Every icon in the editor loaded; an icon button with no icon has no src.
@@ -113,12 +116,13 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
     }
   });
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
 
   await expect(page.getByRole("button", { name: "Join", exact: true })).toBeEnabled();
   await expect(page.getByPlaceholder("CODE")).toBeEnabled();
   await expect(page.getByRole("button", { name: "quick match" })).toHaveCount(0);
-  await page.getByRole("button", { name: "host a lobby" }).click();
+  await openRail(page, "Hosted Game");
+  await page.getByRole("button", { name: "Host a game", exact: true }).click();
   await expect(page.locator(".lobby-code")).toBeVisible();
 
   await settled(traffic);
@@ -128,7 +132,8 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
 
 test("a disabled primary button looks as disabled as any other (#137)", async ({ page }) => {
   await page.goto("./");
-  await page.getByRole("button", { name: "host a lobby" }).click();
+  await openRail(page, "Hosted Game");
+  await page.getByRole("button", { name: "Host a game", exact: true }).click();
   // Nobody on a team: nothing to start, and nobody to be ready.
   const start = page.getByRole("button", { name: "start match" });
   const ready = page.getByRole("button", { name: "Ready", exact: true });
@@ -147,13 +152,15 @@ test("a disabled primary button looks as disabled as any other (#137)", async ({
 
 test("a character saved under the sub-path survives a reload", async ({ page }) => {
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").fill("Pages Ranger");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.locator(".roster")).toContainText("Pages Ranger");
+  await expect(page.locator(".screen-characters")).toContainText("Pages Ranger");
 
+  // The rail remembers Character Builder across the reload.
   await page.reload();
-  await expect(page.locator(".roster")).toContainText("Pages Ranger");
+  await expect(page.locator(".screen-characters")).toContainText("Pages Ranger");
 });
 
 test("music plays under the sub-path, every sample from our own files", async ({
@@ -185,7 +192,7 @@ test("music plays under the sub-path, every sample from our own files", async ({
   });
 
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(page.locator(".screen-random-arena")).toBeVisible();
   await page.locator("body").click({ position: { x: 5, y: 5 } });
 
   await expect.poll(() => said, { timeout: 5_000 }).toContain("playing");
