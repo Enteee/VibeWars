@@ -81,19 +81,26 @@ export async function playOwnTeams(
 /**
  * The Team Lobby (#1460) for a spec that needs a match and not a
  * particular character: nobody proposes, so each side plays the house
- * team. Everyone is ready, then each takes its side's first seat and is
- * ready again. Resolves once each page's HUD shows the player.
+ * team. Everyone is ready, then each takes its side's seat `seats[i]`,
+ * the first unless said, and is ready again. Resolves once each page's
+ * HUD shows the player.
  */
-export async function playHouseTeams(pages: readonly Page[]): Promise<void> {
+export async function playHouseTeams(
+  pages: readonly Page[],
+  seats: readonly number[] = [],
+): Promise<void> {
   for (const page of pages) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
   }
   for (const page of pages) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
-  for (const page of pages) {
+  for (const [index, page] of pages.entries()) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    await page.locator(".team-lobby-seat").first().click();
+    await page
+      .locator(".team-lobby-seat")
+      .nth(seats[index] ?? 0)
+      .click();
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
   for (const page of pages) {

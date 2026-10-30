@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { openPeers } from "./helpers/peers.js";
+import { joinByCode, openRail, pickCharacter } from "./helpers/menu.js";
+import {
+  hostLobby as hostFromMenu,
+  openPeers,
+  playHouseTeams,
+  saveSoloTeam,
+} from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
 import { key } from "./keys.js";
@@ -33,25 +39,22 @@ async function leaveMatch(page: Page): Promise<void> {
 /** Host a lobby and return the code the host is told to read out. */
 async function hostLobby(page: Page, playerName: string): Promise<string> {
   await openMenu(page, playerName);
-  await page.getByRole("button", { name: "host a lobby" }).click();
-
-  const code = page.locator(".lobby-code");
-  await expect(code).toBeVisible();
-  const text = (await code.textContent())?.trim() ?? "";
   // Six letters, read aloud in two halves (#379).
-  expect(text).toMatch(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
-  return text;
+  return hostFromMenu(page);
 }
 
 /** Join `code` as `playerName` and wait for the lobby screen. */
 async function joinLobby(page: Page, playerName: string, code: string): Promise<void> {
   await openMenu(page, playerName);
-  await page.locator("input.code-input").fill(code);
-  await page.getByRole("button", { name: "Join", exact: true }).click();
+  await joinByCode(page, code);
   await expect(page.locator(".screen-lobby")).toBeVisible();
 }
 
-/** Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and the host starts. */
+/**
+ * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
+ * the host starts; both play the house team (#1525), side by side when they
+ * share one.
+ */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   const code = await hostLobby(host, "Host");
   await joinLobby(guest, "Guest", code);
@@ -60,6 +63,7 @@ async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Prom
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
+  await playHouseTeams([host, guest], guestTeam === 1 ? [0, 1] : [0, 0]);
   return code;
 }
 
@@ -106,11 +110,10 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
     const wrong = code === "ACD-EFG" ? "GFE-DCA" : "ACD-EFG";
 
     await openMenu(guest, "Guest");
-    await guest.locator("input.code-input").fill(wrong);
-    await guest.getByRole("button", { name: "Join", exact: true }).click();
+    await joinByCode(guest, wrong);
     await expect(guest.locator("#status")).toHaveText("connecting…");
     // Not at once: only a join that is taking a while says so.
-    const connecting = guest.locator(".menu-connecting");
+    const connecting = guest.locator(".topbar-connecting");
     await expect(connecting).toBeHidden();
     await expect(connecting).toHaveText("Connecting…");
     await expect(connecting).toBeVisible({ timeout: 5_000 });
@@ -119,12 +122,10 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
     await expect(problem).toHaveText(NO_ANSWER, { timeout: 25_000 });
     await expect(connecting).toBeHidden();
     await expect(problem).toHaveCount(1);
-    // In the Play column, right above the button to try again with (#579).
-    await expect(
-      guest.locator(".menu-play .screen-connection-problem + .menu-row").getByRole("button", {
-        name: "Host a lobby",
-      }),
-    ).toBeVisible();
+    // On the screen the join was tried from, under the title bar's Join to
+    // try again with (#579, #1525).
+    await expect(guest.locator(".rail-body .screen-connection-problem")).toBeVisible();
+    await expect(guest.getByRole("button", { name: "Join", exact: true })).toBeVisible();
     // Back on the menu, but the error must not be reset to "ready".
     await expect(guest.locator("#status")).toHaveText("could not join");
     await expect(host.locator(".screen-lobby")).not.toContainText("Guest");
@@ -203,6 +204,7 @@ test("the host starts a match and both players enter the arena", async ({ browse
     const start = host.getByRole("button", { name: "start match" });
     await expect(start).toBeEnabled();
     await start.click();
+    await playHouseTeams([host, guest]);
 
     // The arena canvas only exists once Phaser has booted into a match.
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
@@ -353,17 +355,18 @@ test("each row shows the character a player brings, an empty bar too, and Start 
     // name. Both pages share one storage, so the guest picks its own after
     // the host is in.
     await host.goto("./");
-    await host.getByRole("button", { name: "new character" }).click();
+    await openRail(host, "Character Builder");
+    await host.getByRole("button", { name: "New character", exact: true }).click();
     await host.locator("input.editor-name").fill("Cynn");
     await host.locator(".skill-box").first().locator(".skill-box-equip").click();
     await host.getByRole("button", { name: "Save", exact: true }).click();
-    await host.getByRole("button", { name: "new character" }).click();
+    await host.getByRole("button", { name: "New character", exact: true }).click();
     await host.locator("input.editor-name").fill("Blank");
     await host.getByRole("button", { name: "Save", exact: true }).click();
-    await host.locator(".roster").getByText("Cynn", { exact: true }).click();
+    await pickCharacter(host, "Cynn");
     const code = await hostLobby(host, "Host");
     await guest.goto("./");
-    await guest.locator(".roster").getByText("Blank", { exact: true }).click();
+    await pickCharacter(guest, "Blank");
     await joinLobby(guest, "Guest", code);
 
     await host.getByRole("button", { name: "join team 1" }).click();
@@ -387,7 +390,7 @@ test("each row shows the character a player brings, an empty bar too, and Start 
   }
 });
 
-test("a match plays the character the lobby lists, not one selected after joining (#1070)", async ({
+test("a match plays the seat the host took, not a character selected after joining (#1070, #1525)", async ({
   browser,
 }) => {
   const { context, pages } = await openPeers(browser, 2);
@@ -395,19 +398,22 @@ test("a match plays the character the lobby lists, not one selected after joinin
 
   try {
     // Both pages share one storage, so the guest selecting Blank changes
-    // the host's selection too. The host entered with Cynn and plays Cynn.
+    // the host's selection too. The host proposes a Team Build of Cynn,
+    // takes Cynn's seat and plays Cynn; the guest's side plays the house team.
     await host.goto("./");
-    await host.getByRole("button", { name: "new character" }).click();
+    await openRail(host, "Character Builder");
+    await host.getByRole("button", { name: "New character", exact: true }).click();
     await host.locator("input.editor-name").fill("Cynn");
     await host.locator(".skill-box").first().locator(".skill-box-equip").click();
     await host.getByRole("button", { name: "Save", exact: true }).click();
-    await host.getByRole("button", { name: "new character" }).click();
+    await host.getByRole("button", { name: "New character", exact: true }).click();
     await host.locator("input.editor-name").fill("Blank");
     await host.getByRole("button", { name: "Save", exact: true }).click();
-    await host.locator(".roster").getByText("Cynn", { exact: true }).click();
+    await pickCharacter(host, "Cynn");
+    const cynn = await saveSoloTeam(host);
     const code = await hostLobby(host, "Host");
     await guest.goto("./");
-    await guest.locator(".roster").getByText("Blank", { exact: true }).click();
+    await pickCharacter(guest, "Blank");
     await joinLobby(guest, "Guest", code);
 
     await host.getByRole("button", { name: "join team 1" }).click();
@@ -417,6 +423,9 @@ test("a match plays the character the lobby lists, not one selected after joinin
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
+    await expect(host.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    await host.locator(".team-lobby-propose select").selectOption({ label: cynn });
+    await playHouseTeams([host, guest]);
 
     // Cynn's one skill, not Blank's empty bar.
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
@@ -486,7 +495,7 @@ test("the host gives the other team a bot; it plays, named and tagged BOT (#1194
 
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  await playHouseTeams([page]);
 
   // The only foe in the arena is the bot.
   await page.keyboard.press(key("target-closest"));
