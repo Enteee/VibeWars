@@ -79,6 +79,7 @@ describe("status definitions", () => {
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
+        def.nextSkill !== undefined ||
         def.spellRechargeFaster !== 0 ||
         def.bindingRitualRechargeFaster !== 0 ||
         def.criticalChanceBonus !== 0 ||

@@ -3291,6 +3291,7 @@ export class MatchSimulation {
       skillId: skill.id,
       key: cast.key,
     });
+    this.#useNextSkill(record, skill, spared);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
       this.#fireTriggers(record, "bearer-casts-spell", spared);
@@ -3312,6 +3313,35 @@ export class MatchSimulation {
     usedSkill?: SlotSkill,
   ): void {
     this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared));
+  }
+
+  /**
+   * After its triggers answered the use (#1483): each status on the
+   * bearer that holds its next skill of this kind resolves on the bearer,
+   * as its own entry, and one that counted its last ends there, but those
+   * in `spared` (#999): Chorus of Restoration never answers its own cast.
+   */
+  #useNextSkill(record: ParticipantRecord, skill: Skill, spared: ReadonlySet<StatusId>): void {
+    const bearer = record.combatant;
+    const { answered, ended } = bearer.statuses.useNextSkill(skill, spared);
+    this.#logFired(
+      answered.map(({ statusId, next }) => ({
+        sourceId: record.id,
+        skillId: next.skillId,
+        events: [
+          ...applyEffects(next.effects, {
+            caster: bearer,
+            target: bearer,
+            rng: this.#rng,
+            rules: this.#ruleset.combat,
+            surroundings: this.#participants,
+          }),
+          ...(ended.includes(statusId)
+            ? [{ kind: "status-expired" as const, targetId: record.id, statusId }]
+            : []),
+        ],
+      })),
+    );
   }
 
   /**
