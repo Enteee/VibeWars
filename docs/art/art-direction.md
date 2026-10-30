@@ -878,7 +878,7 @@ it, not baked in, so one file serves every screen.
 
 - **Shape first.** Glyph and modifier are `ink` only; the plate's hue is
   decoration, so every icon reads with the colour taken out.
-- **Every skill is its own picture.** A row in `scripts/assets/skill-icon-table.mjs`
+- **Every skill is its own picture.** A row in `scripts/assets/skill-icons/<profession>.mjs`
   names a skill's glyph and modifier, and a test fails if two rows match. Start
   from the glyph for the skill's primary effect; the modifier tells apart the
   ones that share it (heal, energy and armor repeat).
@@ -923,7 +923,8 @@ it, not baked in, so one file serves every screen.
   hex-fail-foe, hex-fail-ally, hex-churn (the Mesmer hexes on the bearer's next spell: a dashed ring round a small struck orb, then a heavy X for a spell at a foe or a solid disc with a plus cut out for one at an ally; no chevron, so the mark stays large at 16 px; a drop between a plus and a minus for a condition gained or lost),
   next-attack-energy and its eleven siblings (the "with their next skill" chants, #1497: a small mark in the top left corner is what the ally casts next, the payoff shrunk below and right of it. Corner marks: a blade is an attack skill, a four-point star a spell, a ring round a dot a signet, sound arcs a shout or chant, three dots any of the next several skills. Payoffs: a bolt energy, a heart and plus health, a struck-through drop a condition lost, a cut ring a hex lost, rising bars adrenaline, a weak drop, a limp and a burst what the attack then inflicts. No modifier: the corner is the trigger),
   spear-flame, spear-fast, spear-weak, spear-crit, spear-heart, spear-crack, spear-burst, spear-cleanse, spear-swipe, spear-pierce (the Paragon thrown spears: a spear on the left and its rider on the right: a flame, three chevrons, a down arrow, a four-point spark, a hollow heart, a cracked shield, a burst, a struck drop; a swiped arc; a shield with the spear through it for unblockable; a drop badge below is Deep Wound),
-  note-hold (a note under a fermata: Enduring Harmony).
+  note-hold (a note under a fermata: Enduring Harmony),
+  shield-glance (a slash glancing off a shield: Bladeturn Refrain), energy-ring (a bolt in a ring: Energizing Finale), blade-fury (a blade with rising bars ending in a spike: Soldier's Fury).
   Echoes (#1482): the corner says the family, a turning arrow (`renew`) for a refrain that renews and lasts, a four-point spark (`finale`) for a finale that fires once; the type mark is the chant's note with ripples after it. A
   new primary effect adds a glyph; a new skill adds a row.
 
@@ -1204,7 +1205,7 @@ for the scene to tint. Load it in Phaser with
 `this.load.svg(key, url, { width, height })` at the size you draw it (24×24
 for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
 
-Adding a skill: add its row to `scripts/assets/skill-icon-table.mjs` and re-run.
+Adding a skill: add its row to `scripts/assets/skill-icons/<profession>.mjs` and re-run.
 Adding a status, profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
 

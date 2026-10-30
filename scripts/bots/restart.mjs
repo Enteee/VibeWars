@@ -8,10 +8,13 @@
  *
  *   1. stops the company: the tmux session, hubd, the Telegram sidecar, and
  *      any jail still running after 15 s;
- *   2. fetches GitHub's `main` into hubd's mirror and checks that it builds,
- *      from an archive of it, never a checkout;
+ *   2. fetches GitHub's `main` into hubd's mirror, checks that the commit the
+ *      operator approved (#960) is on it, and that that commit builds, from
+ *      an archive of it, never a checkout;
  *   3. fast-forwards the operator's checkout to exactly that commit, only if
- *      that is safe (reboot.mjs, `fastForwardDecision`) and it built;
+ *      that is safe (reboot.mjs, `fastForwardDecision`) and it built: main
+ *      may have moved on since the approval, and what it gained waits for
+ *      the next one;
  *   4. records what it loaded, or plainly why it did not, in
  *      `.bots/boot.json`, whose note claude-llc puts in the manager's first
  *      prompt so the manager can tell everyone, and, if it moved the checkout,
@@ -52,7 +55,7 @@ import { builds as buildsCommit, devenvShell } from "./company-build.mjs";
 import { writeLock } from "./company-lock.mjs";
 import { api } from "./link.mjs";
 import { obj, parseRegistry } from "./protocol.mjs";
-import { COMPANY_PATHSPECS, fastForwardDecision } from "./reboot.mjs";
+import { COMPANY_PATHSPECS, fastForwardDecision, parseReboot } from "./reboot.mjs";
 
 /**
  * @param {string} name
@@ -265,20 +268,21 @@ function short(sha) {
  * Move the operator's checkout to `target`, if that is safe.
  *
  * @param {(args: string[]) => { code: number, stdout: string }} git
- * @param {string} target the commit the mirror fetched from GitHub and built
+ * @param {string} target the approved commit, on the mirror's main, built
+ * @param {string} tip the mirror's main, which `target` is on
  * @returns {{ updated: boolean, why: string, tampered?: string[] }} `tampered`: the paths the checkout holds differently from the mirror's commit
  */
-function update(git, target) {
+function update(git, target, tip) {
   // From the mirror, and then checked: a URL rewrite in the checkout's
   // config could hand back any commit, and only the mirror's is reviewed.
   if (git(["fetch", "-q", "--no-tags", MIRROR, "refs/heads/main"]).code !== 0) {
     return { updated: false, why: "could not fetch main from hubd's mirror" };
   }
   const fetched = git(["rev-parse", "FETCH_HEAD"]).stdout.trim();
-  if (fetched !== target) {
+  if (fetched !== tip) {
     return {
       updated: false,
-      why: `fetching main from hubd's mirror gave ${short(fetched)}, not ${short(target)}`,
+      why: `fetching main from hubd's mirror gave ${short(fetched)}, not ${short(tip)}`,
     };
   }
   const branch = git(["symbolic-ref", "--short", "-q", "HEAD"]);
@@ -316,11 +320,13 @@ async function main() {
   if (TMUX === "") {
     throw new Error("VIBEWARS_TMUX is not set; claude-llc starts this");
   }
-  const reboot = obj(JSON.parse(fs.readFileSync(REBOOTING, "utf8")));
-  const bootSha = typeof reboot.bootSha === "string" ? reboot.bootSha : "HEAD";
+  // The supervisor started this for a record it parsed; one that does not
+  // parse now names no approved commit, so nothing is updated.
+  const reboot = parseReboot(JSON.parse(fs.readFileSync(REBOOTING, "utf8")));
+  const bootSha = reboot?.bootSha ?? "HEAD";
   const company = obj(JSON.parse(fs.readFileSync(path.join(ROOT, "company.json"), "utf8")));
   const repo = typeof company.repo === "string" ? company.repo : "";
-  log(`reboot: ${String(reboot.reason)}`);
+  log(`reboot: ${reboot === null ? "rebooting.json is malformed" : reboot.reason}`);
 
   if (!(await stopCompany())) {
     // `claude-llc up` would join the old company: better down and said so
@@ -343,20 +349,25 @@ async function main() {
     run("git", ["init", "--bare", "-q", MIRROR], { env: GIT_ENV });
   }
   /** @type {string | null} */
-  let target = null;
+  let tip = null;
   if (mirror(["fetch", "-q", "--no-tags", remote, "+refs/heads/main:refs/heads/main"]).code === 0) {
-    target = mirror(["rev-parse", "refs/heads/main"]).stdout.trim();
+    tip = mirror(["rev-parse", "refs/heads/main"]).stdout.trim();
   }
 
   /** @type {string} */
   let outcome;
   let updated = false;
+  const target = reboot?.targetSha ?? null;
   if (target === null) {
+    outcome = "Rebooted, but NOT updated: rebooting.json names no approved commit.";
+  } else if (tip === null) {
     outcome = "Rebooted, but NOT updated: could not fetch main from GitHub.";
+  } else if (mirror(["merge-base", "--is-ancestor", target, tip]).code !== 0) {
+    outcome = `Rebooted, but NOT updated: the approved ${short(target)} is not on GitHub's main (${short(tip)}); running ${short(bootSha)}.`;
   } else if (!builds(target)) {
-    outcome = `Rebooted, but NOT updated: main ${short(target)} failed to build; running ${short(bootSha)}. Log: ${LOG}`;
+    outcome = `Rebooted, but NOT updated: the approved ${short(target)} failed to build; running ${short(bootSha)}. Log: ${LOG}`;
   } else {
-    const result = update(git, target);
+    const result = update(git, target, tip);
     updated = result.updated;
     if (result.tampered !== undefined) {
       // An intrusion, not a build failure: the checkout holds bytes nobody merged,
