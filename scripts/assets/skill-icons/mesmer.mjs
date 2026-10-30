@@ -40,6 +40,12 @@ export const MESMER_ICONS = {
   "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
   "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
   "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
+  // Mesmer staples (#1570, #1594).
+  "mesmer.power-leak": { glyph: "interrupt-energy-cut" },
+  "mesmer.blackout": { glyph: "skills-off" },
+  "mesmer.shatter-hex": { glyph: "hex-shatter" },
+  "mesmer.psychic-instability": { glyph: "interrupt-knockdown" },
+  "mesmer.arcane-conundrum": { glyph: "hex-slow-star" },
   // Crowd punishers (#1501, #1555): the shared hex ring; Epidemic is a condition spell with none.
   "mesmer.panic": { glyph: "hex-panic" },
   "mesmer.wastrels-demise": { glyph: "hex-rising" },
@@ -54,4 +60,6 @@ export const MESMER_ICONS = {
   "mesmer.arcane-conundrum": { glyph: "slow", modifier: "hourglass" },
   // Clumsiness (#1593, #1619): the hex ring round a dropped blade.
   "mesmer.clumsiness": { glyph: "hex-sword-drop" },
+  // Clumsiness (#1593), a stand-in until its art card.
+  "mesmer.clumsiness": { glyph: "sword", modifier: "hourglass" },
 };

@@ -6,7 +6,7 @@
  */
 
 /** A reader of `kpis.json` that finds another value treats the file as absent. */
-export const KPI_SCHEMA_VERSION = 4;
+export const KPI_SCHEMA_VERSION = 5;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -340,6 +340,298 @@ function isEdge(value) {
 }
 
 /**
+ * One completed Actions run, a line of `ci-history.jsonl` (#1612). Times in
+ * epoch ms. Every jail reads the file, and a fork's pull request names its
+ * own title, branch and workflow files: so no free text is kept. `issue`
+ * is the `#N` a run's title starts with, `onMain` whether it ran on main,
+ * and `workflow` a gate workflow's file name or `"other"`.
+ *
+ * @typedef {{ id: number, workflow: string, event: string, onMain: boolean,
+ *   sha: string, issue: number | null, createdAt: number, completedAt: number,
+ *   conclusion: string }} CiRun
+ */
+
+/** What an Actions enum (event, conclusion) looks like; anything else is not one. */
+const ENUM = /^[a-z_]{1,40}$/;
+
+/**
+ * @param {unknown} value
+ * @returns {value is CiRun}
+ */
+function isCiRun(value) {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const run = /** @type {Record<string, unknown>} */ (value);
+  return (
+    Number.isInteger(run.id) &&
+    typeof run.workflow === "string" &&
+    /^[\w.-]{1,64}$/.test(run.workflow) &&
+    typeof run.event === "string" &&
+    ENUM.test(run.event) &&
+    typeof run.onMain === "boolean" &&
+    typeof run.sha === "string" &&
+    /^[0-9a-f]{40}$/.test(run.sha) &&
+    (run.issue === null || Number.isInteger(run.issue)) &&
+    Number.isFinite(run.createdAt) &&
+    Number.isFinite(run.completedAt) &&
+    typeof run.conclusion === "string" &&
+    ENUM.test(run.conclusion)
+  );
+}
+
+/**
+ * The runs in `ci-history.jsonl`. A line that is not one is skipped.
+ *
+ * @param {string} text
+ * @returns {CiRun[]}
+ */
+export function parseCiHistory(text) {
+  /** @type {CiRun[]} */
+  const runs = [];
+  for (const line of text.split("\n")) {
+    if (line === "") {
+      continue;
+    }
+    try {
+      /** @type {unknown} */
+      const parsed = JSON.parse(line);
+      if (isCiRun(parsed)) {
+        const { id, workflow, event, onMain, sha, issue, createdAt, completedAt, conclusion } =
+          parsed;
+        runs.push({ id, workflow, event, onMain, sha, issue, createdAt, completedAt, conclusion });
+      }
+    } catch {
+      // A torn or foreign line: skipped.
+    }
+  }
+  return runs;
+}
+
+/**
+ * A run of the REST `actions/runs` list as a history line. A re-run keeps
+ * its `id`, so the history holds a run's first completion and later
+ * attempts are never seen: close enough for KPIs.
+ *
+ * @param {unknown} value
+ * @param {readonly string[]} gate the merge gate's workflow files
+ * @returns {CiRun | null} null for a run not yet completed, or malformed
+ */
+export function ciRunFromRest(value, gate) {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const run = /** @type {Record<string, unknown>} */ (value);
+  if (run.status !== "completed" || typeof run.path !== "string") {
+    return null;
+  }
+  const file = run.path.split("/").at(-1) ?? "";
+  const issue =
+    typeof run.display_title === "string" ? /^#(\d+)\b/.exec(run.display_title)?.[1] : undefined;
+  const line = {
+    id: run.id,
+    workflow: gate.includes(file) ? file : "other",
+    event: run.event,
+    onMain: run.head_branch === "main",
+    sha: run.head_sha,
+    issue: issue === undefined ? null : Number(issue),
+    createdAt: typeof run.created_at === "string" ? Date.parse(run.created_at) : NaN,
+    completedAt: typeof run.updated_at === "string" ? Date.parse(run.updated_at) : NaN,
+    conclusion: run.conclusion,
+  };
+  return isCiRun(line) ? line : null;
+}
+
+/**
+ * A union of intervals.
+ *
+ * @param {readonly (readonly [number, number])[]} intervals `[start, end]`
+ * @returns {[number, number][]} disjoint, in order, empty ones dropped
+ */
+function union(intervals) {
+  /** @type {[number, number][]} */
+  const merged = [];
+  for (const [start, end] of [...intervals].sort((a, b) => a[0] - b[0])) {
+    const last = merged.at(-1);
+    if (end <= start) {
+      continue;
+    }
+    if (last !== undefined && start <= last[1]) {
+      last[1] = Math.max(last[1], end);
+    } else {
+      merged.push([start, end]);
+    }
+  }
+  return merged;
+}
+
+/**
+ * How much of `[start, end]` the disjoint `intervals` cover.
+ *
+ * @param {number} start
+ * @param {number} end
+ * @param {readonly (readonly [number, number])[]} intervals
+ */
+function overlap(start, end, intervals) {
+  return intervals.reduce(
+    (sum, [from, to]) => sum + Math.max(0, Math.min(end, to) - Math.max(start, from)),
+    0,
+  );
+}
+
+/** The columns `cycleShare` splits a card's time between, besides CI. */
+/** @type {ReadonlyMap<string, "inProgress" | "review" | "qa">} */
+const SHARE_COLUMNS = new Map([
+  ["In Progress", "inProgress"],
+  ["In Review", "review"],
+  ["QA", "qa"],
+]);
+
+/**
+ * Minutes in `(now - 24 h, now]` that main's `ci.yml` was red. Main takes a
+ * run's conclusion when it completes, unless a newer run already set it:
+ * an old slow run does not overwrite a newer one. Cancelled and skipped
+ * runs change nothing.
+ *
+ * @param {number} now
+ * @param {readonly CiRun[]} runs
+ */
+function mainRedMinutes(now, runs) {
+  const since = now - DAY_MS;
+  const pushes = runs
+    .filter((run) => run.workflow === "ci.yml" && run.event === "push" && run.onMain)
+    .filter((run) => run.conclusion !== "cancelled" && run.conclusion !== "skipped")
+    .sort((a, b) => a.completedAt - b.completedAt);
+  let red = 0;
+  /** @type {CiRun | null} */
+  let state = null;
+  for (const run of pushes) {
+    if (state !== null && run.createdAt <= state.createdAt) {
+      continue;
+    }
+    if (state !== null && state.conclusion !== "success") {
+      red += overlap(since, now, [[state.completedAt, run.completedAt]]);
+    }
+    state = run;
+  }
+  if (state !== null && state.conclusion !== "success") {
+    red += overlap(since, now, [[state.completedAt, now]]);
+  }
+  return Math.round(red / 60_000);
+}
+
+/**
+ * The CI numbers (#1612). A "CI run" is one PR head commit, all its gate
+ * runs together. Windows are `(now - w, now]`, by a run's completion.
+ *
+ * @param {{ now: number, runs: readonly CiRun[],
+ *   moves: readonly import("./board-history.mjs").Move[], done7d: number,
+ *   gate: readonly string[] }} facts `gate`: the merge gate's workflow files
+ * @returns {NonNullable<Kpis["ci"]>}
+ */
+export function ciKpis({ now, runs, moves, done7d, gate }) {
+  const day = now - DAY_MS;
+  const week = now - 7 * DAY_MS;
+  const gated = runs.filter((run) => run.event === "pull_request" && gate.includes(run.workflow));
+  /** @type {Map<string, CiRun[]>} */
+  const bySha = new Map();
+  for (const run of gated) {
+    bySha.set(run.sha, [...(bySha.get(run.sha) ?? []), run]);
+  }
+  /** @param {number} since */
+  const commitsSince = (since) =>
+    [...bySha].filter(([, shaRuns]) =>
+      shaRuns.some((run) => run.completedAt > since && run.completedAt <= now),
+    );
+
+  const day24 = commitsSince(day);
+  const kept = day24.filter(
+    ([, shaRuns]) => !shaRuns.some((run) => run.conclusion === "cancelled"),
+  );
+  const waits = kept.map(
+    ([, shaRuns]) =>
+      Math.max(...shaRuns.map((run) => run.completedAt)) -
+      Math.min(...shaRuns.map((run) => run.createdAt)),
+  );
+
+  return {
+    historySince: runs.length === 0 ? null : Math.min(...runs.map((run) => run.createdAt)),
+    runs24h: day24.length,
+    superseded24h: day24.length - kept.length,
+    waitMedianMs: median(waits),
+    waitP90Ms: p90(waits),
+    runsPerDone: done7d === 0 ? null : commitsSince(week).length / done7d,
+    mainRedMinutes24h: mainRedMinutes(now, runs),
+    cycleShare: cycleShare({ now, gated, moves }),
+  };
+}
+
+/**
+ * Where the cycle of every card Done in the week went (#1612): its time in
+ * In Progress, In Review and QA between its first Ready and last Done, with
+ * the time its PR's CI ran taken out of those columns into `ci`. A run is a
+ * card's when its title starts `#<issue>` (`CiRun.issue`).
+ *
+ * @param {{ now: number, gated: readonly CiRun[],
+ *   moves: readonly import("./board-history.mjs").Move[] }} facts
+ * @returns {{ inProgress: number, ci: number, review: number, qa: number } | null}
+ *   fractions summing to 1, null when no card was Done or none spent time
+ */
+function cycleShare({ now, gated, moves }) {
+  const week = now - 7 * DAY_MS;
+  /** @type {Map<number, import("./board-history.mjs").Move[]>} */
+  const byIssue = new Map();
+  for (const move of [...moves].sort((a, b) => a.ts - b.ts)) {
+    byIssue.set(move.issue, [...(byIssue.get(move.issue) ?? []), move]);
+  }
+  /** @type {Map<number, [number, number][]>} */
+  const ciByIssue = new Map();
+  for (const run of gated) {
+    if (run.issue !== null) {
+      ciByIssue.set(run.issue, [
+        ...(ciByIssue.get(run.issue) ?? []),
+        [run.createdAt, run.completedAt],
+      ]);
+    }
+  }
+
+  const totals = { inProgress: 0, ci: 0, review: 0, qa: 0 };
+  for (const [issue, history] of byIssue) {
+    const firstReady = history.find((move) => move.to === "Ready")?.ts;
+    const lastDone = history.findLast(
+      (move) => move.to === "Done" && move.ts > week && move.ts <= now,
+    )?.ts;
+    if (firstReady === undefined || lastDone === undefined) {
+      continue;
+    }
+    const ci = union(ciByIssue.get(issue) ?? []);
+    for (const [at, move] of history.entries()) {
+      const column = move.to === null ? undefined : SHARE_COLUMNS.get(move.to);
+      const left = history[at + 1]?.ts;
+      if (column === undefined || left === undefined) {
+        continue;
+      }
+      const start = Math.max(move.ts, firstReady);
+      const end = Math.min(left, lastDone);
+      if (end > start) {
+        const inCi = overlap(start, end, ci);
+        totals.ci += inCi;
+        totals[column] += end - start - inCi;
+      }
+    }
+  }
+  const total = totals.inProgress + totals.ci + totals.review + totals.qa;
+  return total === 0
+    ? null
+    : {
+        inProgress: totals.inProgress / total,
+        ci: totals.ci / total,
+        review: totals.review / total,
+        qa: totals.qa / total,
+      };
+}
+
+/**
  * @typedef {object} Kpis
  * @property {number} schemaVersion
  * @property {number} at
@@ -359,6 +651,10 @@ function isEdge(value) {
  * @property {{ byRole: Record<string, { employed: number, live: number }>,
  *   maxAgents: number } | null} staff
  * @property {import("./web-cache.mjs").WebCacheStats | null} webCache `hub wiki`'s (#1381)
+ * @property {{ historySince: number | null, runs24h: number, superseded24h: number,
+ *   waitMedianMs: number | null, waitP90Ms: number | null, runsPerDone: number | null,
+ *   mainRedMinutes24h: number, cycleShare: { inProgress: number, ci: number, review: number,
+ *   qa: number } | null } | null} ci the merge gate's runs (#1612)
  * @property {Record<string, string>} errors section → one line
  */
 
@@ -367,7 +663,7 @@ function isEdge(value) {
  * `errors`; the rest is still written.
  *
  * @param {number} now
- * @param {{ [K in "flow" | "claude" | "github" | "host" | "staff" | "webCache"]: () => Kpis[K] }} readers
+ * @param {{ [K in "flow" | "claude" | "github" | "host" | "staff" | "webCache" | "ci"]: () => Kpis[K] }} readers
  * @returns {Kpis}
  */
 export function buildKpis(now, readers) {
@@ -396,6 +692,7 @@ export function buildKpis(now, readers) {
     host: section("host", readers.host),
     staff: section("staff", readers.staff),
     webCache: section("webCache", readers.webCache),
+    ci: section("ci", readers.ci),
     errors,
   };
 }
