@@ -44,8 +44,8 @@ export interface MenuCallbacks {
   /** Open the build editor on a new character. */
   readonly onNewCharacter: () => void;
   readonly onEditCharacter: (id: string) => void;
-  /** Save a copy of the rolled starter character `id` and edit that (#1147). */
-  readonly onCloneCharacter: (id: string) => void;
+  /** Save a fresh roll beside the rolled starter character `id` and edit that (#1147, #1457). */
+  readonly onCloneStarter: (id: string) => void;
   /** Replace the rolled starter character `id` with another starter build (#853). */
   readonly onRerollCharacter: (id: string) => void;
   /** Called when the player picks who to play; re-renders the list. */
@@ -357,12 +357,12 @@ export function renderMenu(
   };
 
   for (const character of rosterOrder(characters, starter)) {
-    // The rolled character is never edited (#1147): Clone gives an
-    // ordinary copy to edit, and Reroll replaces it at once, unasked (#1146).
+    // The rolled character is never edited (#1147): Clone gives a fresh
+    // roll to edit (#1457), and Reroll replaces it at once, unasked (#1146).
     const clone = button("Clone", "roster-clone", () => {
       // One copy per press: a double-click must not save two.
       clone.disabled = true;
-      callbacks.onCloneCharacter(character.id);
+      callbacks.onCloneStarter(character.id);
     });
     const actions =
       character.id === starter
