@@ -1,3 +1,4 @@
+import { SOURCE_URL } from "../source.js";
 import { h, screenBar } from "./kit.js";
 import {
   PLAYER_DOC_PAGES,
@@ -63,6 +64,13 @@ export function openHelpOverlay(parent: HTMLElement, onClose?: () => void, pageI
     nav.appendChild(entry);
     return entry;
   });
+  // The AGPL's network clause: whoever plays it is offered the source (#1442).
+  const source = h("a", "help-source", "Source code");
+  source.setAttribute("href", SOURCE_URL);
+  // A new tab, so reading the source never leaves the game.
+  source.setAttribute("target", "_blank");
+  source.setAttribute("rel", "noopener");
+  nav.appendChild(source);
   const show = (id: string): void => {
     const page = PLAYER_DOC_PAGES.find((candidate) => candidate.id === id);
     if (page === undefined) {
