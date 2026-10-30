@@ -40,8 +40,15 @@ export function resolveMagnitudeAtRanks(
   return magnitudeAtRank(magnitude.scaling, ranks.get(magnitude.scaling.attributeId) ?? 0);
 }
 
-/** The curve itself: `scaling` at `rank`, rounded. */
-function magnitudeAtRank(scaling: AttributeScaling, rank: number): number {
+/**
+ * The curve itself: `scaling` at `rank`, rounded. The tooltip's scale
+ * hint prints its ends through this too, so "…8 at 12" is what rank 12
+ * deals rather than the raw 8.2 the curve is written with.
+ */
+export function magnitudeAtRank(
+  scaling: Pick<AttributeScaling, "atZero" | "atTwelve">,
+  rank: number,
+): number {
   const slope = (scaling.atTwelve - scaling.atZero) / MAX_ATTRIBUTE_RANK;
   return Math.round(scaling.atZero + slope * rank);
 }
