@@ -455,6 +455,12 @@ async function main(): Promise<void> {
   let idleScreen = false;
 
   const screenTurns = createScreenTurns();
+  /**
+   * Whose turn joining a lobby is (#1526): a join can wait 20 s for its
+   * host, and a newer join or a Random Arena queue started meanwhile ends
+   * an older one's, which then seats nothing.
+   */
+  const joinTurns = createScreenTurns();
 
   /**
    * The first thing every screen change does (#710): a toast belongs to
@@ -868,6 +874,15 @@ async function main(): Promise<void> {
    * open until the join is in, so a failed one keeps its code and guests.
    */
   const joinWith = (code: string, name: string): void => {
+    const turn = joinTurns.take();
+    /** Whether the tab moved on while the join waited: a newer join, a queue, a stay or a match. */
+    const movedOn = (): boolean =>
+      !turn() ||
+      queue !== undefined ||
+      joiningQueue ||
+      stay !== undefined ||
+      match !== undefined ||
+      enteringMatch;
     void (async () => {
       const current = lobby?.getSnapshot().code;
       if (current !== undefined && normalizeLobbyCode(code) === current) {
@@ -884,14 +899,27 @@ async function main(): Promise<void> {
         joined = await joinLobbyByCode(code, name, entrant.guild, entrant.character);
       } catch (error) {
         console.warn("[web] could not join the lobby", error);
+        if (movedOn()) {
+          return;
+        }
         menuNotice = joinFailureNotice(error, location, loadTurnConfig() !== undefined);
         redrawRail();
         setStatus("could not join", "error");
         return;
       }
+      if (movedOn()) {
+        // Too late: whatever the tab is in now stays, and the friend's
+        // lobby keeps no member that never arrives.
+        await joined.disconnect();
+        return;
+      }
       // In: only now does this tab's own lobby close, sending its guests
       // to fresh lobbies of their own.
       await closeLobby();
+      if (movedOn()) {
+        await joined.disconnect();
+        return;
+      }
       setStatus("", "online");
       seatLobby(name, joined, entrant);
     })();
@@ -1107,6 +1135,8 @@ async function main(): Promise<void> {
       return false;
     }
     joiningQueue = true;
+    // A join still waiting for its host is over (#1526).
+    joinTurns.take();
     let stored: StoredCharacter | undefined;
     let entrant: Entrant;
     try {

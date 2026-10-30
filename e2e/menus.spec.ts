@@ -140,6 +140,38 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
   }
 });
 
+test("#1526: a join that lands after the player queued seats nothing: the queue stays, the host gets no ghost", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+  try {
+    await openMenu(host);
+    await openMenu(guest);
+    const code = host.locator("#topbar .topbar-lobby-code");
+    await expect(code).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+    const hostCode = (await code.textContent()) ?? "";
+    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+
+    // The host's page stops answering, so the guest's join waits for it.
+    const debugger_ = await context.newCDPSession(host);
+    await debugger_.send("Debugger.enable");
+    await debugger_.send("Debugger.pause");
+    await joinByCode(guest, hostCode);
+    await guest.locator(".random-arena-tile").first().click();
+    await expect(guest.locator(".queue-count")).toBeVisible();
+
+    // The host answers: the join lands late, and is let go.
+    await debugger_.send("Debugger.resume");
+    // An absence: give the late join the time it took to land unguarded.
+    await host.waitForTimeout(3_000);
+    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+    await expect(guest.locator(".queue-count")).toContainText("searching");
+  } finally {
+    await context.close();
+  }
+});
+
 /** A rolled character's random name (#1149): "Kaelen Ashvale". */
 const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
