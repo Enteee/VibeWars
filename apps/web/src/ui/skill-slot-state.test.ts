@@ -213,6 +213,9 @@ describe("outOfRange", () => {
     const bar = [slot(ORISON)];
     expect(outOfRange(bar, self({}), foe(range + 1), undefined, [])).toEqual([false]);
     expect(outOfRange(bar, self({}), foe(range + 1, { team: 0 }), undefined, [])).toEqual([true]);
+    // An echo that may not land on a spirit goes on its caster the same way (#1423).
+    const echo = [slot("paragon.finale-of-restoration")];
+    expect(outOfRange(echo, self({}), foe(range + 1), undefined, [])).toEqual([false]);
   });
 
   it("marks no skill the target is wrong for: walking closer would not help (#599)", () => {

@@ -343,6 +343,15 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "gain-shield" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
   "mesmer.hex-breaker": { glyph: "hex-return" },
+  // Placeholders until the asset-designer's (#1423): Paragon echoes.
+  "paragon.aggressive-refrain": { glyph: "blade-fast", modifier: "self" },
+  "paragon.blazing-finale": { glyph: "flame-ring", modifier: "area" },
+  "paragon.burning-refrain": { glyph: "flame-target", modifier: "plus" },
+  "paragon.enduring-harmony": { glyph: "banner-note", modifier: "clock" },
+  "paragon.finale-of-restoration": { glyph: "heart-plus", modifier: "hourglass" },
+  "paragon.hasty-refrain": { glyph: "speed", modifier: "hourglass" },
+  "paragon.mending-refrain": { glyph: "ring-heal", modifier: "self" },
+  "paragon.purifying-finale": { glyph: "cleanse", modifier: "hourglass" },
   // Placeholders until the asset-designer's (#1421): flash enchantments.
   "dervish.enchanted-haste": { glyph: "speed", modifier: "plus" },
   "dervish.heart-of-holy-flame": { glyph: "flame", modifier: "self" },
