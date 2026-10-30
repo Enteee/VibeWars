@@ -94,7 +94,7 @@ import {
   type StayOffer,
 } from "./ui/queue-screen.js";
 import { hostMaps, renderLobbyScreen } from "./ui/lobby-screen.js";
-import { entryProposal, renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
+import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
 import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
@@ -107,7 +107,7 @@ import {
   saveStarterCharacterId,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
-import { loadActiveTeamBuildId, renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
+import { renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import {
   addMember,
@@ -1148,8 +1148,8 @@ async function main(): Promise<void> {
 
   /**
    * The Team Lobby screen (#1460). As it begins, the saved Team Builds
-   * are read once, and the one picked on Team Play is proposed if it is
-   * the side's size.
+   * are read once, for its propose control; entering proposes nothing
+   * (#1515).
    */
   const renderTeamLobby = (joined: LobbyConnection, snapshot: LobbySnapshot): void => {
     if (teamPicks === undefined) {
@@ -1160,18 +1160,7 @@ async function main(): Promise<void> {
           return;
         }
         picks.teams = saved;
-        const now = joined.getSnapshot();
-        const team = now.players.find((p) => p.sessionId === joined.selfSessionId)?.team ?? null;
-        const side = team === null ? null : (now.teamLobby?.sides[team] ?? null);
-        const entry =
-          side === null || now.teamLobby?.stage !== "vote"
-            ? undefined
-            : entryProposal(saved, loadActiveTeamBuildId(saved), side.size);
-        if (entry === undefined) {
-          renderLobby();
-        } else {
-          proposeTeam(entry);
-        }
+        renderLobby();
       });
     }
     renderTeamLobbyScreen(
