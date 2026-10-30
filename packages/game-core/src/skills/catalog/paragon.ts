@@ -1302,6 +1302,148 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // interrupt is the status's `nextAttackSkill`.
     effects: [{ kind: "apply-status", statusId: "anthem-of-disruption", durationSeconds: 8 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Paragon chants 3 (#1505): how the next skill goes                       */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "paragon.song-of-concentration",
+    name: "Song of Concentration",
+    gwId: 1567,
+    type: "chant",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: undefined,
+    cost: { kind: "adrenaline", amount: 8 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each ally within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next skill used by each ally within earshot
+    // cannot be interrupted": the status's `nextSkillRule`.
+    effects: [{ kind: "apply-status", statusId: "song-of-concentration", durationSeconds: 10 }],
+  },
+  {
+    id: "paragon.anthem-of-guidance",
+    name: "Anthem of Guidance",
+    gwId: 1568,
+    type: "chant",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "adrenaline", amount: 2 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each ally within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next attack skill used by each party member
+    // within earshot cannot be blocked": in PvP the party is the allies.
+    effects: [{ kind: "apply-status", statusId: "anthem-of-guidance", durationSeconds: 10 }],
+  },
+  {
+    id: "paragon.energizing-chorus",
+    name: "Energizing Chorus",
+    gwId: 1569,
+    type: "chant",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.motivation",
+    cost: { kind: "adrenaline", amount: 3 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each ally within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next shout or chant used by each ally within
+    // earshot costs 3...7 less Energy": 6 at rank 12, in the status.
+    effects: [{ kind: "apply-status", statusId: "energizing-chorus", durationSeconds: 10 }],
+  },
+  {
+    id: "paragon.anthem-of-envy",
+    name: "Anthem of Envy",
+    gwId: 1559,
+    type: "chant",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Each ally within earshot", the chanter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next attack skill used by each ally within
+    // earshot deals +10...20 damage against foes with more than 50%
+    // Health" (PvP, 3148's numbers): 18 at rank 12, in the status.
+    effects: [{ kind: "apply-status", statusId: "anthem-of-envy", durationSeconds: 10 }],
+  },
   {
     id: "paragon.signet-of-return",
     name: "Signet of Return",

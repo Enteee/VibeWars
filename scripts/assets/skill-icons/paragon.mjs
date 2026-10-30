@@ -31,6 +31,11 @@ export const PARAGON_ICONS = {
   "paragon.anthem-of-weariness": { glyph: "next-attack-drop-weak" },
   "paragon.crippling-anthem": { glyph: "next-attack-limp" },
   "paragon.anthem-of-disruption": { glyph: "next-attack-interrupt" },
+  // Placeholders until the asset-designer's (#1505): Paragon chants 3.
+  "paragon.song-of-concentration": { glyph: "note-hold", modifier: "area" },
+  "paragon.anthem-of-guidance": { glyph: "hex-nobloc", modifier: "area" },
+  "paragon.energizing-chorus": { glyph: "banner-note", modifier: "less" },
+  "paragon.anthem-of-envy": { glyph: "blade-plus", modifier: "half" },
   "paragon.spear-of-lightning": { glyph: "spear-bolt" },
   "paragon.never-surrender": { glyph: "banner", modifier: "area" },
   "paragon.leaders-comfort": { glyph: "banner-cross", modifier: "self" },

@@ -26,6 +26,10 @@ export type ParagonStatusId =
   | "anthem-of-weariness"
   | "crippling-anthem"
   | "anthem-of-disruption"
+  | "song-of-concentration"
+  | "anthem-of-guidance"
+  | "energizing-chorus"
+  | "anthem-of-envy"
   // Paragon command (#923).
   | "never-surrender"
   // Paragon echoes (#1423).
@@ -214,6 +218,52 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   "anthem-of-disruption": define("anthem-of-disruption", "Anthem of Disruption", "chant", {
     profession: "paragon",
     nextAttackSkill: [{ kind: "interrupt" }],
+  }),
+  // "For 10 seconds, the next skill used by each ally within earshot
+  // cannot be interrupted" (#1505).
+  "song-of-concentration": define("song-of-concentration", "Song of Concentration", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "any",
+      uninterruptible: true,
+      unblockable: false,
+      energyDiscount: 0,
+      skillId: "paragon.song-of-concentration",
+    },
+  }),
+  // "...the next attack skill used by each party member within earshot
+  // cannot be blocked" (#1505).
+  "anthem-of-guidance": define("anthem-of-guidance", "Anthem of Guidance", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "attack-skill",
+      uninterruptible: false,
+      unblockable: true,
+      energyDiscount: 0,
+      skillId: "paragon.anthem-of-guidance",
+    },
+  }),
+  // "...the next shout or chant used by each ally within earshot costs
+  // 3...7 less Energy" (#1505): 6 at rank 12.
+  "energizing-chorus": define("energizing-chorus", "Energizing Chorus", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "shout-or-chant",
+      uninterruptible: false,
+      unblockable: false,
+      energyDiscount: 6,
+      skillId: "paragon.energizing-chorus",
+    },
+  }),
+  // "...the next attack skill used by each ally within earshot deals
+  // +10...20 damage against foes with more than 50% Health" (#1505, PvP):
+  // 18 at rank 12.
+  "anthem-of-envy": define("anthem-of-envy", "Anthem of Envy", "chant", {
+    profession: "paragon",
+    nextAttackSkillBonus: {
+      condition: { kind: "target-health-above", fraction: 0.5 },
+      amount: { flat: 18 },
+    },
   }),
   // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
