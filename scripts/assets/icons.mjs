@@ -824,27 +824,30 @@ const status = {
       `<circle cx="12" cy="10" r="2.3" fill="${c}"/>` +
       `<path d="M7.5 21c0-3.5 2-5.5 4.5-5.5s4.5 2 4.5 5.5" ${stroke(c, 2)}/>`,
   ],
-  // Form: a flame over a bar, Balthazar's fire (#1455).
+  // Form: a flame over a head, Balthazar's fire (#1471).
   "avatar-of-balthazar": [
     "form",
     (c) =>
-      `<path d="M12 3c3.5 3.5 4.5 6 4.5 8.5a4.5 4.5 0 0 1-9 0c0-2.5 1.5-4 2.5-5 .3 2 1 2.5 2 3 0-2.5 0-4.5 0-6.5z" fill="${c}"/>` +
-      `<path d="M6 19.5h12" ${stroke(c, 2.2)}/>`,
+      `<path d="M12 3c2.5 2.5 3.2 4.2 3.2 6a3.2 3.2 0 0 1-6.4 0c0-1.5.8-2.7 1.8-3.5.2 1.2.7 1.7 1.4 2 0-1.8-.1-3 0-4.5z" fill="${c}"/>` +
+      `<circle cx="12" cy="13.5" r="2.2" fill="${c}"/>` +
+      `<path d="M7 21c0-3 2-4.5 5-4.5s5 1.5 5 4.5" ${stroke(c, 2)}/>`,
   ],
-  // Form: a hooded skull, Grenth's death (#1455).
+  // Form: a scythe behind a figure, Grenth's death (#1471).
   "avatar-of-grenth": [
     "form",
     (c) =>
-      `<path d="M6 13a6 6 0 0 1 12 0v3h-2.5v3h-7v-3H6z" fill="${c}"/>` +
-      `<circle cx="9.7" cy="13" r="1.4" fill="${C.dervish}"/>` +
-      `<circle cx="14.3" cy="13" r="1.4" fill="${C.dervish}"/>`,
+      `<path d="M16 21L11 6" ${stroke(c, 1.8)}/>` +
+      `<path d="M11 6C8.5 4.5 5.5 5 4 7.5c2.5-.5 4.5.2 6.5 2.5z" fill="${c}"/>` +
+      `<circle cx="9.5" cy="12" r="2.2" fill="${c}"/>` +
+      `<path d="M5 21c0-3 1.8-4.5 4.5-4.5S14 18 14 21" ${stroke(c, 2)}/>`,
   ],
-  // Form: a mask, half light and half dark, Lyssa's illusion (#1455).
+  // Form: a figure between two zigzags, Lyssa's chaos (#1471).
   "avatar-of-lyssa": [
     "form",
     (c) =>
-      `<path d="M5 8c4-1.5 10-1.5 14 0 0 6-3 10-7 10S5 14 5 8z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 7v11c-4 0-7-4-7-10 2.3-.8 4.6-1 7-1z" fill="${c}"/>`,
+      `<path d="M6.5 5L4.5 9L7.5 11.5L5 16L7 19M17.5 5L19.5 9L16.5 11.5L19 16L17 19" ${stroke(c, 1.6)}/>` +
+      `<circle cx="12" cy="10" r="2.2" fill="${c}"/>` +
+      `<path d="M8.5 21c0-3 1.5-5 3.5-5s3.5 2 3.5 5" ${stroke(c, 2)}/>`,
   ],
   // Hex: an hourglass about to burst, damage when it runs out (#1473).
   "wastrels-worry": [
@@ -2533,6 +2536,25 @@ const skillGlyph = {
     inkFill("M9 11C7 6.5 4.5 5 1.5 5c0 5 2.5 8 7.5 8zM15 11c2-4.5 4.5-6 7.5-6 0 5-2.5 8-7.5 8z") +
     `<circle cx="12" cy="8.5" r="3" fill="${C.ink}"/>` +
     inkLine("M5.5 22C5.5 17.5 8 14.5 12 14.5S18.5 17.5 18.5 22", 2.6),
+  // Balthazar: a flame rises from the figure's head.
+  "avatar-flame": () =>
+    inkFill(
+      "M12 1.5c3 3 4 5 4 7.5a4 4 0 0 1-8 0c0-2 1-3.5 2.5-4.5.2 1.5.8 2 1.5 2.5-.2-2.2-.1-4 0-5.5z",
+    ) +
+    `<circle cx="12" cy="14" r="2.8" fill="${C.ink}"/>` +
+    inkLine("M5 22C5 18.5 8 17 12 17S19 18.5 19 22", 2.6),
+  // Grenth: the figure with a scythe slanting behind it.
+  "avatar-scythe": () =>
+    inkLine("M20.5 22L11 3", 2) +
+    inkFill("M11 3C7.5 1.5 3.5 2.5 1.5 5.5c3.5-.8 6.5 0 9.5 3.5z") +
+    `<circle cx="9" cy="10.5" r="3" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    `<path d="M3.5 22C3.5 17.5 6 15 9.5 15S15.5 17.5 15.5 22" ${stroke(C.bg, 4.2)}/>` +
+    inkLine("M3.5 22C3.5 17.5 6 15 9.5 15S15.5 17.5 15.5 22", 2.6),
+  // Lyssa: the figure between two zigzags, chaos on both sides.
+  "avatar-chaos": () =>
+    inkLine("M5 3L2.5 8L6.5 11L3 16L6 21M19 3L21.5 8L17.5 11L21 16L18 21", 2) +
+    `<circle cx="12" cy="8.5" r="3" fill="${C.ink}"/>` +
+    inkLine("M7.5 22C7.5 17.5 9 14.5 12 14.5S16.5 17.5 16.5 22", 2.6),
   // The gain trigger: a plus in the top left corner is what the foe gains; the payoff sits below and right (#1440).
   "gain-barbs": () =>
     inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
