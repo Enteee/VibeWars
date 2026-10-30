@@ -100,11 +100,13 @@ let
     "detach" (leave it running) and "stop" (shut every agent down). Ctrl-C in
     an employee's window restarts just that employee, keeping its memory.
 
-    After company code changes land on main, the manager can reboot the
-    company onto it (`company reboot "<reason>"`): everyone is told, gets up
-    to ten minutes to commit and run `company ready`, and the company comes
-    back on the new main, if your checkout is a clean main that
-    fast-forwards to it. `claude-llc reboot --abort` cancels it.
+    After company code changes land on main, the manager can propose a
+    reboot onto it (`company reboot "<reason>"`). You get the why and what
+    changed in Telegram, with Approve and Reject buttons, and nothing happens
+    until you approve. Then everyone is told, gets up to ten minutes to
+    commit and run `company ready`, and the company comes back on the commit
+    you approved, if your checkout is a clean main that fast-forwards to it.
+    `claude-llc reboot --abort` cancels it while it drains.
 
     Employees coordinate over the Telegram group and take their work from the
     GitHub Projects board. Inside each sandbox: `tg` for colleagues, `board`

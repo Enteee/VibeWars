@@ -398,22 +398,28 @@ const status = {
       `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
       `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
   ],
-  // Paragon echoes 2 (#1485), stand-ins until their art card.
-  // Echo: a blade bent off a shield, slashing damage turned.
+  // Paragon echoes 2 (#1485, #1524): each pairs with its skill icon.
+  // Echo: a blade glancing off a shield, slashing damage turned.
   "bladeturn-refrain": [
     "echo",
     (c) =>
-      `<path d="M12 3.5l7 2.5v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" ${stroke(c, 1.8)}/>` +
-      `<path d="M8 15l8-8" ${stroke(c, 2)}/>`,
+      `<path d="M9 5h10v6c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M2.5 4.5L7 9M7 9l-.3-2.8M7 9l2.8.3" ${stroke(c, 1.8)}/>`,
   ],
-  // Echo: a bolt, energy at the end of each chant.
-  "energizing-finale": ["echo", (c) => `<path d="M13 3L6 13h5l-1 8 7-10h-5z" fill="${c}"/>`],
-  // Echo: two chevrons over a sword, attacks faster under a chant.
+  // Echo: a bolt inside a ring, energy at the end of each chant.
+  "energizing-finale": [
+    "echo",
+    (c) =>
+      `<circle cx="12" cy="11.5" r="8" ${stroke(c, 1.6)}/>` +
+      `<path d="M13 5.5L8.5 12h3.5l-1 5.5 4.5-6.5h-3.5z" fill="${c}"/>`,
+  ],
+  // Echo: three rising bars topped by a spike over a slanted blade, adrenaline and haste under a chant.
   "soldiers-fury": [
     "echo",
     (c) =>
-      `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
-      `<path d="M12 14v6M9.5 17h5" ${stroke(c, 2)}/>`,
+      `<path d="M5 12V9M10 12V6" ${stroke(c, 2.4)}/>` +
+      `<path d="M14 12V7l2.5-5L19 7v5z" fill="${c}"/>` +
+      `<path d="M5 21L17 13M8 15.5l4 4" ${stroke(c, 2)}/>`,
   ],
   // Stance: a shield, filled, armor and blocks (#1329).
   "disciplined-stance": [
@@ -778,6 +784,27 @@ const status = {
     (c) =>
       `<path d="M5 12l3-4 3 8 3-8 3 8 2-4" ${stroke(c, 2)}/>` +
       `<path d="M4 19L20 5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Paragon chants 3 (#1505), stand-ins until the asset-designer's.
+  // Chant: a bar held level, your next skill cannot be interrupted.
+  "song-of-concentration": ["chant", (c) => `<path d="M5 12h14M5 8v8M19 8v8" ${stroke(c, 2.2)}/>`],
+  // Chant: an arrow through a gap, your next attack skill cannot be blocked.
+  "anthem-of-guidance": [
+    "chant",
+    (c) =>
+      `<path d="M4 12h14M14 8l4 4-4 4" ${stroke(c, 2.2)}/><path d="M10 4v4M10 16v4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Chant: a bolt over a minus, your next shout or chant costs less.
+  "energizing-chorus": [
+    "chant",
+    (c) =>
+      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/><path d="M7 19h10" ${stroke(c, 2.2)}/>`,
+  ],
+  // Chant: a plus over a half bar, more damage to a foe above half Health.
+  "anthem-of-envy": [
+    "chant",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.2)}/><path d="M5 18h7" ${stroke(c, 2.6)}/><path d="M12 18h7" ${stroke(c, 1)}/>`,
   ],
   // Weapon spell: a sword, held up, warded (#758).
   "weapon-of-warding": [
@@ -1438,6 +1465,16 @@ const status = {
       `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
   ],
+  // Crowd punishers (#1501), stand-ins until the asset-designer's.
+  // Hex: a broken ring round a burst, a skill used interrupts those near.
+  panic: [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.6)} stroke-dasharray="3 2.5"/>` +
+      `<path d="M12 8v8M8 12h8M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: three rising bars, each second's pulse harder than the last.
+  "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
 };
 
 // ---------------------------------------------------------------------------
@@ -1921,6 +1958,18 @@ const skillGlyph = {
     ),
   "blade-turn": () =>
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
+  // A shield with a slash glancing off it: Bladeturn Refrain (#1524).
+  "shield-glance": () =>
+    `<path d="M9.5 6h11v7c0 4-3 6.5-5.5 8-2.5-1.5-5.5-4-5.5-8z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M2.5 5L7.5 10", 2.2) +
+    inkLine("M7.5 10L7 7.5M7.5 10L10 10.5", 1.8),
+  // A bolt inside a ring: Energizing Finale (#1524).
+  "energy-ring": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 1.8)}/>` +
+    inkFill("M13.5 4.5L7.5 13H11.5L10.5 19.5L16.5 11H12.5Z"),
+  // A blade with rising bars ending in a spike: adrenaline gated on a chant, Soldier's Fury (#1524).
+  "blade-fury": () =>
+    bladeMark(inkLine("M3.5 13V10M7 13V7", 2.2) + inkFill("M9.5 13V8L12 2.5L14.5 8V13Z")),
   "blade-fast": () =>
     bladeMark(inkLine("M3.5 5.5L6.5 8.5L3.5 11.5M7.5 5.5L10.5 8.5L7.5 11.5", 1.8)),
   // A blade with a drop struck through above it: a weapon spell that cleanses (#1048).
@@ -2892,6 +2941,40 @@ const skillGlyph = {
     ),
   "was-quake": () => wasUrn(inkLine("M9 10.5L12 14L9.5 15.5L12.5 19.5L15 16L12.5 14.5", 1.8)),
   "was-bolt": () => wasUrn(inkFill("M13.5 9.5L7.5 15.5H11.5L10.5 20.5L16.5 14H12.5Z")),
+  // Ritualist item spells 2 (#1530): a filled orb under a chevron is more maximum Energy (the bolt is
+  // regeneration); a bolt through a plate is armor pierced, the elite adds strokes to each side for
+  // the area; a closed ring round a dot is a cast nothing breaks; a hook back over a heart is
+  // Health stolen from the striker; a struck drop is conditions cleared.
+  "was-orb": () =>
+    wasUrn(
+      `<circle cx="12" cy="16.6" r="2.8" fill="${C.ink}"/>` +
+        inkLine("M9.5 12.8L12 10.3L14.5 12.8", 1.8),
+    ),
+  "was-pierce": () =>
+    wasUrn(inkLine("M7.5 15.5H16.5", 1.8) + inkLine("M13 9.5L10.5 14.5L13.5 16.5L11 20.5", 1.6)),
+  "was-pierce-area": () =>
+    wasUrn(
+      inkLine("M7.5 15.5H16.5", 1.8) +
+        inkLine("M13 9.5L10.5 14.5L13.5 16.5L11 20.5", 1.6) +
+        inkLine("M7.5 11.5L8.5 13M16.5 11.5L15.5 13", 1.4),
+    ),
+  "was-calm": () =>
+    wasUrn(
+      `<circle cx="12" cy="15.5" r="4" ${stroke(C.ink, 1.8)}/><circle cx="12" cy="15.5" r="1.3" fill="${C.ink}"/>`,
+    ),
+  "was-steal": () =>
+    wasUrn(
+      inkLine("M16.5 14C16.5 10.8 10.5 10.3 8.8 13.6M8.8 10.8V13.8H11.8", 1.6) +
+        inkFill(
+          "M12 20.5L9.4 18C8.6 17 9.2 15.7 10.5 15.7C11.2 15.7 11.8 16.1 12 16.6C12.2 16.1 12.8 15.7 13.5 15.7C14.8 15.7 15.4 17 14.6 18Z",
+        ),
+    ),
+  "was-clear": () =>
+    wasUrn(
+      inkFill("M12 10.5C10.5 13 9 14.5 9 16.6A3 3 0 0 0 15 16.6C15 14.5 13.5 13 12 10.5Z") +
+        `<path d="M8.5 20L15.5 12.5" ${stroke(C.bg, 2.6)}/>` +
+        inkLine("M9 19.5L15 13", 1.2),
+    ),
   // The gain trigger: a plus in the top left corner is what the foe gains; the payoff sits below and right (#1440).
   "gain-barbs": () =>
     inkLine("M5.5 2.5V9.5M2 6H9", 2.2) +
