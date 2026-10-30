@@ -112,6 +112,7 @@ import {
   ENERGY_PER_PIP,
   isStatusId,
   MAX_PIPS,
+  preventsAttacks,
   reducedRecharge,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
@@ -5039,6 +5040,10 @@ export class MatchSimulation {
     // Hands full of flag or relic (#1225, #1374, GW1): no weapon to swing.
     if (this.carriesBundle(record.id)) {
       return { ok: false, reason: "hands-full" };
+    }
+    // Obsidian Flesh (#1575): a queued attack stops with it.
+    if (preventsAttacks(record.combatant.statuses.active)) {
+      return { ok: false, reason: "cannot-attack" };
     }
     if (target === undefined) {
       return { ok: false, reason: "no-target" };

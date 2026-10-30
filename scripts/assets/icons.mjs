@@ -1544,6 +1544,31 @@ const status = {
       `<path d="M12.8 7.5l-2 3h2.4l-2 3" ${stroke(c, 1.4)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
+  // Elementalist staples 2 (#1575), stand-ins until their art card.
+  // Enchantment: a faceted stone body with a crossed-out blade, armored
+  // and unable to attack.
+  "obsidian-flesh": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l6 4v7l-6 7-6-7V7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3v18M6 7l6 4 6-4" ${stroke(c, 1.2)}/>`,
+  ],
+  // Skill effect: a ward's ground line under a slowed, dragging foot.
+  "ward-against-foes": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M10 9.5h4" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a ward over a planted stance, no knockdown inside it.
+  "ward-of-stability": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M12 7.5v5" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 18.5h14M8 21h8" ${stroke(c, 2)}/>`,
+  ],
   // Skill effect: two rising flames, adrenaline comes faster near the spirit.
   "infuriating-heat": [
     "skill-effect",
