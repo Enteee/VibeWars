@@ -232,6 +232,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   mistrust: icon("mistrust"),
   fragility: icon("fragility"),
   "judges-insight": icon("judges-insight"),
+  "shield-of-regeneration": icon("shield-of-regeneration"),
   "blood-is-power": icon("blood-is-power"),
   "order-of-pain": icon("order-of-pain"),
   "mark-of-rodgort": icon("mark-of-rodgort"),

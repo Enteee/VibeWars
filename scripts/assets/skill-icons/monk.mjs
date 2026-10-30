@@ -58,4 +58,16 @@ export const MONK_ICONS = {
   "monk.castigation-signet": { glyph: "energy", modifier: "bolt" },
   "monk.signet-of-judgment": { glyph: "blow", modifier: "area" },
   "monk.holy-strike": { glyph: "lightning", modifier: "up" },
+  // Monk staples 5 (#1650), stand-ins until their art card.
+  "monk.healing-whisper": { glyph: "heal-drop", modifier: "less" },
+  "monk.jameis-gaze": { glyph: "eye", modifier: "bolt" },
+  "monk.glimmer-of-light": { glyph: "heal-clear", modifier: "bolt" },
+  "monk.healing-light": { glyph: "heal-bolt", modifier: "plus" },
+  "monk.signet-of-devotion": { glyph: "plus-cycle", modifier: "up" },
+  "monk.divine-healing": { glyph: "plus-trio", modifier: "area" },
+  "monk.heavens-delight": { glyph: "plus-trio", modifier: "up" },
+  "monk.purge-conditions": { glyph: "draw-drops", modifier: "plus" },
+  "monk.mend-ailment": { glyph: "draw-drops", modifier: "clock" },
+  "monk.stonesoul-strike": { glyph: "lightning", modifier: "less" },
+  "monk.shield-of-regeneration": { glyph: "block-most", modifier: "plus" },
 };
