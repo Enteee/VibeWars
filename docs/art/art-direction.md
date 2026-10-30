@@ -1060,6 +1060,40 @@ builds); and a human who has not
 claimed a slot when the clock ends gets the lowest free one, so only slots no
 human is left to take become bots.
 
+### Game modes (#1522; study, not decided)
+
+`scripts/assets/game-modes-study.mjs` draws `docs/art/game-modes-study.svg`:
+three variants at 1280 px, desktop only. It supersedes the Solo and Team Play
+tab split. Each variant shows the title bar in three states (your own code with
+Copy; a friend's code being typed with Join lit; a guest in a friend's lobby
+with the way back), the five mode icons (Random Arena, Team Arena, Heroes'
+Ascent, GvG, Hosted Game) at 24 and 32 px, Random Arena with and without a
+character, Team Arena alone and with three friends joined, and Hosted Game.
+Team Arena stands for Heroes' Ascent and GvG: only the side size and the goal
+line change. The icons are placeholder art; the picked set is finished on the
+implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
+`net/session.ts`) is the same in all three and needs an ADR.
+
+- **A: icons and code on one row.** The operator's sketch: one 44 px bar. Only
+  the host picks the mode; a guest's icons dim. Joining closes your own lobby
+  and your friends fall back to theirs. The Team Builder is a side pane. Code:
+  the cheapest bar (a row of five buttons and a code field), a Team Lobby plus
+  Builder screen with two columns, and the lobby-closes rule is the simplest
+  session change.
+- **B: labelled icons, the code at the right.** A 66 px bar with a name under
+  each icon, so no hover is needed. Anyone in the lobby picks the mode, the
+  last click wins. Joining leaves your lobby open and ownerless. The Team
+  Builder is a tab. Code: a taller bar, a tab strip, a "who switched the mode"
+  message, and the hardest session change: a lobby that outlives its host's
+  absence.
+- **C: a mode rail on the left.** The bar holds only the name and the code;
+  the rail holds the modes, solid icons at 32 px. Only the host picks. Joining
+  takes your whole party along. The Team Builder sits below the Team Lobby.
+  Code: a new rail layout that narrows every screen by 76 px, and a party
+  that moves as one, which is a new message on the wire.
+
+The operator picks one and says why; the pick is recorded here.
+
 ## Creatures
 
 Pets, minions and spirits must read as not-a-player at a glance and say what
