@@ -482,7 +482,8 @@ describe("describeSkill", () => {
     // springs by itself; a pulse one, then one per effect (#1113); a
     // faster flight one, and one per on-crit or failed-to-hit rider
     // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
-    // are a line each, and its death burst one more (#1550).
+    // are a line each, and its death burst one more (#1550); a blow that
+    // deals damage one more (#1631).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
@@ -499,10 +500,11 @@ describe("describeSkill", () => {
         }
       }
       if (effect.kind === "summon") {
-        const { aura, attack, deathBurst } = effect.creature;
+        const { kind, aura, attack, deathBurst } = effect.creature;
         return (
           1 +
           (aura === undefined ? 0 : 1) +
+          (kind === "spirit" && (attack?.damageMax ?? 0) > 0 ? 1 : 0) +
           (attack?.onHit ?? []).length +
           (deathBurst === undefined ? 0 : 1)
         );
