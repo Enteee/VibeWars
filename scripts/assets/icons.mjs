@@ -1321,6 +1321,33 @@ const status = {
   ],
   // Ashes: a bolt, energy back.
   "energetic-was-lee-sa": ["item", (c) => `<path d="M13 6l-4 6h4l-2 5 5-7h-4z" fill="${c}"/>`],
+  // Ritualist item spells 2 (#1464), stand-ins until the asset-designer's.
+  // Ashes: a bar raised, more maximum Energy.
+  "mighty-was-vorizun": [
+    "item",
+    (c) => `<path d="M9 16V9M15 16V9M7 11l5-4 5 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a spike through a plate, armor pierced.
+  "cruel-was-daoshen": [
+    "item",
+    (c) => `<path d="M7 13h10M12 6v11M10 8l2-2 2 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a bolt in a ring, lightning on all in the area.
+  "destructive-was-glaive": [
+    "item",
+    (c) =>
+      `<circle cx="12" cy="12" r="5" ${stroke(c, 1.4)}/>` +
+      `<path d="M13 8l-3 4h3l-2 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Ashes: a level line, a cast nothing breaks.
+  "tranquil-was-tanasen": ["item", (c) => `<path d="M7 10h10M7 14h10" ${stroke(c, 1.8)}/>`],
+  // Ashes: a hook turned back on the striker.
+  "vengeful-was-khanhei": ["item", (c) => `<path d="M8 8l8 8M16 8v4h-4" ${stroke(c, 1.8)}/>`],
+  // Ashes: a drop running clear, conditions sooner gone.
+  "pure-was-li-ming": [
+    "item",
+    (c) => `<path d="M12 7c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" ${stroke(c, 1.6)}/>`,
+  ],
   // "The next spell fails" hexes (#1475), stand-ins until the asset-designer's.
   // Hex: a struck-through spark with an arrow down, a spell at a foe fails.
   guilt: [
