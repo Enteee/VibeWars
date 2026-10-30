@@ -130,6 +130,7 @@ function startMatch(plan: MatchPlan) {
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
  *
+ * `teamLobby` makes it a Team Lobby (#1458): what Team Play's tiles host.
  * `queued` hosts a Random Arena group's lobby (#880) in the group's room
  * instead of under a fresh code.
  */
@@ -137,6 +138,7 @@ export async function hostLobby(
   name: string,
   guild: Guild,
   character: LobbyCharacter | null,
+  teamLobby: boolean,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
   let settle: () => void = () => undefined;
@@ -160,8 +162,7 @@ export async function hostLobby(
     code,
     mapIds: arenaIds(),
     startMatch,
-    // Hosting from Team Play's tiles (#1453) is what makes a Team Lobby.
-    teamLobby: false,
+    teamLobby,
     random: secureRandom,
     ...(queued === undefined
       ? {}
@@ -356,7 +357,7 @@ export function enterQueue(
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guild, character, {
+        hosted = await hostLobby(name, guild, character, false, {
           group,
           key,
           verifyTicketSig,
