@@ -130,8 +130,20 @@ it brings the company up and tells you to attach with `claude-llc`.
 `claude-llc up` starts only the commit in `.bots/company.lock` (ADR-0033):
 the checkout's HEAD must equal it, be clean, and be on GitHub's `main`. Run
 `claude-llc lock` once to pin the current HEAD, and again after you move the
-checkout yourself. A reboot moves the lock on its own, onto a `main` that
-built. Until the first lock exists, `up` refuses and says so.
+checkout yourself. A reboot moves the lock on its own, onto the commit you
+approved, once it built. Until the first lock exists, `up` refuses and says so.
+
+## Approving reboots
+
+The manager cannot reboot the company alone (ADR-0034). `company reboot`
+posts a proposal in the Operator topic: why, the commit it boots onto,
+the company commits and files it loads, and two buttons. **Approve** starts
+the drain, and the company comes back on exactly that commit, even if
+`main` has moved on since. **Reject** tells the manager. A reply to the
+message reaches the manager and decides nothing. A proposal never lapses;
+the manager withdraws it with `company reboot --abort`. Only your taps
+count, on the proposal's own message: a button pressed by anyone else in
+the group, or an "approved" typed anywhere, approves nothing.
 
 ## Scaling the company by hand
 

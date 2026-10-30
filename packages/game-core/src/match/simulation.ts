@@ -2321,7 +2321,14 @@ export class MatchSimulation {
     }
     payCost(skill, record.combatant, key);
     this.#useNextSkillRules(record, skill);
-    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
+    const faster = aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster;
+    beginRecharge(
+      record.combatant.cast,
+      skill,
+      reducedRecharge(skill.rechargeSeconds, faster),
+      key,
+    );
     pet.armedAttack = { skillId: skill.id, remainingSeconds: PET_ATTACK_SECONDS };
     const foe = record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
     if (
