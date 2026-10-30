@@ -35,17 +35,6 @@ export const MONK_ICONS = {
   "monk.symbol-of-wrath": { glyph: "ring-rays" },
   "monk.contemplation-of-purity": { glyph: "ring-heal" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
-  // Placeholders until the asset-designer's (#1511): Monk staples.
-  "monk.aegis": { glyph: "shield-veil", modifier: "area" },
-  "monk.shield-of-deflection": { glyph: "armor", modifier: "plus" },
-  "monk.shielding-hands": { glyph: "armor", modifier: "hourglass" },
-  "monk.zealous-benediction": { glyph: "heal-other", modifier: "plus" },
-  "monk.draw-conditions": { glyph: "drop-pair", modifier: "self" },
-  "monk.spell-breaker": { glyph: "shield-veil", modifier: "plus" },
-  "monk.blessed-light": { glyph: "hex-heal-cut", modifier: "plus" },
-  "monk.words-of-comfort": { glyph: "heal", modifier: "half" },
-  "monk.light-of-deliverance": { glyph: "party-heal", modifier: "down" },
-  "monk.signet-of-rejuvenation": { glyph: "heal", modifier: "bolt" },
   // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
   "monk.banish": { glyph: "anti-summon-spell" },
   // Monk staples (#1511, #1541).
@@ -59,6 +48,4 @@ export const MONK_ICONS = {
   "monk.words-of-comfort": { glyph: "heal-drop" },
   "monk.light-of-deliverance": { glyph: "plus-trio" },
   "monk.signet-of-rejuvenation": { glyph: "plus-cycle" },
-  // A placeholder until the asset-designer's (#1528).
-  "monk.banish": { glyph: "ghost", modifier: "plus" },
 };
