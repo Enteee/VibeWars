@@ -1007,11 +1007,13 @@ sheet.
   tallest (two rows, about 80 px), but the screen's buttons are never mixed with
   the global ones. Phone: the dock scrolls sideways, with a fade at its edge.
 
-### Solo and Team Play (#1449)
+### Solo and Team Play (#1449; decided: B, the card table)
 
 ![Solo and Team Play, three variants](team-play-study.svg)
 
-**Study, not decided.** Supersedes the Teams study (#1439). The title bar reads
+**Decided: B** (the operator's pick, #1449; implementation #1453, #1460, and
+the host logic and wire in #1458 with ADR-0040). A and C stay on the sheet as
+the road not taken. Supersedes the Teams study (#1439). The title bar reads
 `VibeWars | [Solo Play] [Team Play]` in all three, the active one filled and
 underlined; `[Teams]` and `[Music]` are gone and the ♪ icon stays. Solo Play is
 today's main screen. Team Play replaces the character roster with a **Team
@@ -1048,10 +1050,12 @@ three-way tie broken by the captain, the slot claim, and a side of one player.
 
 Edge cases drawn: no Team Builds saved, a long Team Build name (cut with an
 ellipsis), a player who proposes nothing (Dax), fewer players than slots (the
-last slot is a Bot), and a side of one player, who needs no vote. Open rules the
-study had to assume, for the architect: a side with no proposals at all gets a
-random Team Build of a member's (frame 7 says so); the slot a player leaves
-unclaimed when the clock ends becomes a bot.
+last slot is a Bot), and a side of one player, who needs no vote. Two rules
+the study had to guess were settled in #1458 (ADR-0040), and the frames
+follow it: a side with no proposals plays the house team (starter
+builds); and a human who has not
+claimed a slot when the clock ends gets the lowest free one, so only slots no
+human is left to take become bots.
 
 ## Creatures
 

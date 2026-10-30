@@ -571,7 +571,7 @@ function teamLobbyA(kind) {
       160,
       "You are alone on this side: there is no vote, your proposal stands. The clock only ends the phase early for everyone who is Ready.",
     );
-    svg += dim(24, 180, "Propose nothing, and a random Team Build of yours is used.");
+    svg += dim(24, 180, "Propose nothing, and the house team plays.");
     svg += slotsA(230, false, slotsOf(IRON, false));
     svg += ready(1136, 372, false);
     return svg;
@@ -705,7 +705,7 @@ function teamLobbyB(kind) {
     svg += text(40, 98, "Eli", { bold: true }) + tag(40 + 3 * CH + 8, 85, "YOU", C.accent).svg;
     svg += text(40, 124, "Iron Wall", { bold: true }) + chips(40, 152, IRON);
     svg += dim(350, 100, "You are alone on this side: no vote, your proposal stands.");
-    svg += dim(350, 120, "Propose nothing, and a random Team Build of yours is used.");
+    svg += dim(350, 120, "Propose nothing, and the house team plays.");
     svg += ready(1136, 372, false);
     return svg;
   }
@@ -895,7 +895,7 @@ function teamLobbyC(kind) {
       text(200, 94, "Iron Wall", { bold: true }) +
       chips(380, 89, IRON);
     svg += dim(24, 144, "You are alone on this side: no vote, your proposal stands.");
-    svg += dim(24, 164, "Propose nothing, and a random Team Build of yours is used.");
+    svg += dim(24, 164, "Propose nothing, and the house team plays.");
     svg += slotsC(660, 56, 596, "locked", IRON).replace("Slots · leading: ", "Slots · ");
     svg += ready(1136, 372, false);
     return svg;
