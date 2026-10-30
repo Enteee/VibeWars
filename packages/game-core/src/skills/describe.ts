@@ -453,6 +453,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.renewsOnChantOrShoutEnd) {
     parts.push("renewed whenever a chant or shout ends on it");
   }
+  if (definition.renewsOnBearerSpell) {
+    parts.push("renewed whenever it casts a spell");
+  }
   if (definition.chantShoutDurationMultiplier !== 1) {
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
     parts.push(`chants and shouts last ${String(longer)}% longer on it`);
@@ -806,11 +809,12 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, profession, elite, adrenal } = trigger.usedSkill;
+    const { type, attribute, profession, elite, adrenal } = trigger.usedSkill;
     const words = [
       ...(elite === undefined ? [] : ["elite"]),
       ...(adrenal === undefined ? [] : ["adrenal"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
+      ...(attribute === undefined ? [] : [getAttribute(attribute)?.name ?? attribute]),
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
     ];
@@ -975,6 +979,38 @@ function describeTrigger(
       effect.kind === "damage" ? `it takes ${amount(effect.amount)} damage` : "",
     );
     return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
+  }
+  // An attunement's and Aura of Restoration's (#1614), said at once:
+  // "whenever it casts a spell: gains 1 energy and is healed for 360% of
+  // that skill's energy cost".
+  const perCost = trigger.effects.flatMap((effect) =>
+    (effect.kind === "energy-gain" && effect.toTarget !== true) || effect.kind === "heal"
+      ? [effect]
+      : [],
+  );
+  if (
+    trigger.target === "bearer" &&
+    perCost.length === trigger.effects.length &&
+    perCost.some((effect) => effect.perUsedSkillEnergy === true)
+  ) {
+    const share = (magnitude: Magnitude): string =>
+      percentOf(describeMagnitude(magnitude, ranks).current);
+    const gains = perCost.flatMap((effect) =>
+      effect.kind !== "energy-gain"
+        ? []
+        : effect.perUsedSkillEnergy === true
+          ? [`${share(effect.amount)} of that skill's base energy cost`]
+          : [`${amount(effect.amount)} energy`],
+    );
+    const heals = perCost.flatMap((effect) =>
+      effect.kind !== "heal"
+        ? []
+        : effect.perUsedSkillEnergy === true
+          ? [`is healed for ${share(effect.amount)} of that skill's energy cost`]
+          : [`is healed for ${amount(effect.amount)}`],
+    );
+    const what = [...(gains.length === 0 ? [] : [`gains ${gains.join(" plus ")}`]), ...heals];
+    return [sentence(`${when}: ${what.join(" and ")}`)];
   }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
@@ -1422,6 +1458,11 @@ function perPointLost(effect: { readonly perEnergyLost?: true }): string {
   return effect.perEnergyLost === undefined ? "" : " per point lost";
 }
 
+/** A per-cost share as a percentage (#1614): 0.3 is "30%", 3.6 "360%". */
+function percentOf(share: number): string {
+  return `${String(Math.round(share * 100))}%`;
+}
+
 function describeEffect(
   effect: UnconditionalEffect,
   ranks: ReadonlyMap<string, number>,
@@ -1454,13 +1495,21 @@ function describeEffect(
             ? `Heals ${amount} for each ${effect.perRemoved} removed`
             : effect.perDestroyedSpirit === true
               ? `Heals ${amount} for each spirit destroyed`
-              : effect.recipient === "caster"
-                ? `You gain ${amount} health`
-                : `Heals for ${amount}`;
+              : effect.perUsedSkillEnergy === true
+                ? `Heals for ${percentOf(magnitude.current)} of the spell's energy cost`
+                : effect.recipient === "caster"
+                  ? `You gain ${amount} health`
+                  : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
+      if (effect.toTarget !== true && effect.perUsedSkillEnergy === true) {
+        return {
+          text: `Gain ${percentOf(magnitude.current)} of the skill's base energy cost`,
+          magnitude,
+        };
+      }
       return {
         text: `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
         magnitude,

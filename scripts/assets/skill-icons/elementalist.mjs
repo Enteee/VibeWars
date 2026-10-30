@@ -53,4 +53,12 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.lightning-touch": { glyph: "lightning", modifier: "self" },
   "elementalist.liquid-flame": { glyph: "flame-field", modifier: "area" },
   "elementalist.glowing-gaze": { glyph: "eye", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1614): the energy engine.
+  "elementalist.fire-attunement": { glyph: "flame", modifier: "renew" },
+  "elementalist.water-attunement": { glyph: "snowflake", modifier: "renew" },
+  "elementalist.air-attunement": { glyph: "lightning", modifier: "renew" },
+  "elementalist.earth-attunement": { glyph: "mountain", modifier: "renew" },
+  "elementalist.aura-of-restoration": { glyph: "spark", modifier: "renew" },
+  "elementalist.kinetic-armor": { glyph: "mist-shield", modifier: "renew" },
+  "elementalist.steam": { glyph: "snowflake", modifier: "bleed" },
 };

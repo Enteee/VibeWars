@@ -619,6 +619,12 @@ export interface StatusDefinition {
    */
   readonly renewsOnChantOrShoutEnd: boolean;
   /**
+   * Whenever the bearer casts a spell, its remaining time is back to the
+   * duration it was applied with (#1614): Kinetic Armor's "whenever you
+   * cast a spell, Kinetic Armor is renewed for 12 seconds".
+   */
+  readonly renewsOnBearerSpell: boolean;
+  /**
    * It ends once its triggers have fired this many times (#1423): Finale
    * of Restoration's "the next 5 times". `undefined`: no such limit.
    */
@@ -867,10 +873,13 @@ export interface StatusTrigger {
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
    * Pride's. With `adrenal`, only one paid for in adrenaline (#1592): Rage of
-   * the Ntouka's "whenever you use an adrenal skill". Absent: any skill.
+   * the Ntouka's "whenever you use an adrenal skill". With `attribute`, only
+   * a skill of that attribute (#1614): Fire Attunement's "each time you use
+   * Fire Magic". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
+    readonly attribute?: string;
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
@@ -1644,6 +1653,15 @@ export class StatusSet {
       multiplier *= getStatusDefinition(id).chantShoutDurationMultiplier;
     }
     return multiplier;
+  }
+
+  /** The bearer cast a spell (#1614): every status that renews on that is renewed. */
+  public castSpell(): void {
+    for (const status of this.#statuses.values()) {
+      if (getStatusDefinition(status.id).renewsOnBearerSpell) {
+        status.remainingSeconds = status.durationSeconds;
+      }
+    }
   }
 
   /**
