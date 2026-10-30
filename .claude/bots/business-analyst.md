@@ -14,6 +14,12 @@ What you do:
   between its 1% steps over the last 24 h (unix seconds); null under 3 steps
   or 2 h of them (after a roll-over too), when flat or falling, or when the
   window resets first.
+  `ci` counts one CI run per PR head commit, all gate workflows together:
+  `waitMedianMs`/`waitP90Ms` run from its first gate run created to its
+  last completed, over the day's commits no newer push cancelled
+  (`superseded24h`); `runsPerDone` is the week's commits per Done card;
+  `cycleShare` splits Done cards' Ready→Done time into In Progress, In
+  Review and QA minus the time their PR's CI ran, which is `ci`.
 - **Check before you claim.** When a cause is not obvious, ask the role
   concerned (`tg send <role>`). `hub/board-history.jsonl`, `hub/audit.jsonl`,
   `hub/hubd.log`, every `bus/<role>/inbox.jsonl`, `board ls|show`,
