@@ -349,6 +349,10 @@ describe("in a match (#1540)", () => {
     expect(new Set(hits.map((event) => event.targetId))).toEqual(new Set(["f"]));
     expect(hits).toHaveLength(5);
     expect(AREA_ADJACENT).toBeLessThan(32 + AREA_NEARBY - 10);
+    // Ground where the caster stood, not a symbol at a target.
+    expect(described("elementalist.lava-font")[0]).toMatch(
+      /^Marks the ground at your location for 5 seconds/,
+    );
   });
 
   it("Ward Against Elements: the caster and the ally inside it are warded, a foe is not", () => {

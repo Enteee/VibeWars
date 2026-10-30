@@ -1545,14 +1545,16 @@ function describeEffect(
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
       // trap at your location for 90 seconds" (#1105), a well "at its
-      // location", the corpse's (#1104), or a symbol at your target's
-      // (#1113).
+      // location", the corpse's (#1104), a symbol at your target's
+      // (#1113), or Lava Font's burning ground where you stood (#1540).
       const magnitude = describeMagnitude(effect.durationSeconds, ranks);
       const what =
         effect.act.kind === "trap"
           ? "Sets a trap"
           : effect.act.kind === "pulse"
-            ? "Creates a symbol"
+            ? effect.anchor === "target"
+              ? "Creates a symbol"
+              : "Marks the ground"
             : effect.anchor === "corpse"
               ? "Creates a well"
               : "Creates a ward";
