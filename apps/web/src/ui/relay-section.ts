@@ -39,14 +39,6 @@ export function splitRelayUrls(text: string): string[] {
 function mountRelay(container: HTMLElement): () => void {
   const panel = h("div", "relay-section");
   container.appendChild(panel);
-  panel.append(
-    h(
-      "p",
-      "screen-subtitle",
-      "A TURN relay connects you to players whose network blocks direct connections. Only pairs that cannot connect directly use it. Whoever runs it sees your IP address and when you play, not the game.",
-    ),
-  );
-
   const current = h("div", "relay-current");
   const field = (label: string, input: HTMLInputElement): HTMLElement => {
     const wrap = h("label", "field");

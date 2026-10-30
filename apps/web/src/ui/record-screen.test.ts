@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { MATCH_RECORD_SCHEMA_VERSION, type StoredMatchRecord } from "../storage/schema.js";
-import { LOCAL_ONLY, NO_MATCHES, recordCells } from "./record-screen.js";
+import { recordCells } from "./record-screen.js";
 
 function played(overrides: Partial<StoredMatchRecord> = {}): StoredMatchRecord {
   return {
@@ -30,10 +30,5 @@ describe("record screen (#1404)", () => {
       "Kill Count",
       "Draw",
     ]);
-  });
-
-  it("says what is empty, and that the record is this browser's alone", () => {
-    expect(NO_MATCHES).toBe("No matches yet. Finished matches appear here.");
-    expect(LOCAL_ONLY).toBe("Kept in this browser only. Nobody else sees or checks it.");
   });
 });
