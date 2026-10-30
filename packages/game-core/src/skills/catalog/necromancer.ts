@@ -844,7 +844,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Transfer 1...3...3 negative conditions and their remaining
     // durations from yourself to target touched foe."
-    effects: [{ kind: "transfer-conditions", from: "caster", count: 3 }],
+    effects: [{ kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 }],
   },
   /* ---------------------------------------------------------------------- */
   /* Necromancer Blood Magic staples (#1338)                                */
@@ -1139,5 +1139,97 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // "For 5...20 seconds, the next time target foe blocks, that foe takes
     // 30...120 damage": 17 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "defile-defenses", durationSeconds: 17 }],
+  },
+  // Necromancer and Elementalist staples (#1540).
+  {
+    id: "necromancer.blood-is-power",
+    name: "Blood is Power",
+    gwId: 119,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, target other ally gains +3...6 Energy
+    // regeneration", for 33% of the caster's health.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 33 },
+      { kind: "apply-status", statusId: "blood-is-power", durationSeconds: 10 },
+    ],
+  },
+  {
+    id: "necromancer.order-of-pain",
+    name: "Order of Pain",
+    gwId: 134,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, whenever a party member hits a foe with physical
+    // damage, that party member does +3...16 damage": the bonus is the
+    // enchantment's. The 17% sacrifice is the caster's, once a use.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "order-of-pain", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.plague-signet",
+    name: "Plague Signet",
+    gwId: 132,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Transfer all negative conditions with 100...200% of their remaining
+    // durations from yourself to target foe": 180%, its rank-12 value.
+    // The failure chance at Curses 4 or less is not modelled.
+    effects: [
+      { kind: "transfer-conditions", from: "caster", count: Infinity, durationMultiplier: 1.8 },
+    ],
   },
 ];

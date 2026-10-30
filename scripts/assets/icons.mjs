@@ -1465,6 +1465,44 @@ const status = {
       `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
   ],
+  // Necromancer and Elementalist staples (#1540), stand-ins until their art card.
+  // Enchantment: a drop over three regeneration arrows, energy bought with blood.
+  "blood-is-power": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 7.5 10 6 12 3z" fill="${c}"/>` +
+      `<path d="M6 19l2.5-2.5L11 19M10 19l2.5-2.5L15 19M14 19l2.5-2.5L19 19" ${stroke(c, 1.6)}/>`,
+  ],
+  // Enchantment: a blade over a drop, every party blow cuts deeper.
+  "order-of-pain": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 13L14 4" ${stroke(c, 2.2)}/>` +
+      `<path d="M15 11c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0c0-2 1.5-3.5 3.5-6.5z" fill="${c}"/>`,
+  ],
+  // Hex: a ringed flame, fire sets the marked foe alight.
+  "mark-of-rodgort": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M13 6.5c.4 2.2 2.5 3.5 2.5 6.2a3.5 3.5 0 0 1-7 0c0-1.5.6-2.7 1.5-3.3 0 1.2.3 1.8.9 2.1-.3-1.8.6-3.6 2.1-5z" fill="${c}"/>`,
+  ],
+  // Skill effect: a shield with a spark on a ground line, elemental damage
+  // turned aside inside a ward.
+  "ward-against-elements": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M12.8 7.5l-2 3h2.4l-2 3" ${stroke(c, 1.4)}/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: two rising flames, adrenaline comes faster near the spirit.
+  "infuriating-heat": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1C7.2 9.8 6.8 7.6 8 6zM16 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1-.3-1.9-.7-4.1.5-5.7z" fill="${c}"/>` +
+      `<path d="M6 19.5h12" ${stroke(c, 1.8)}/>`,
+  ],
   // Crowd punishers (#1501), stand-ins until the asset-designer's.
   // Hex: a broken ring round a burst, a skill used interrupts those near.
   panic: [

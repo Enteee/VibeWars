@@ -802,6 +802,13 @@ export interface StatusTrigger {
    */
   readonly profession?: ProfessionId;
   /**
+   * On `bearer-takes-damage-from-foe` only (#1540): it fires only for
+   * damage of this type, never for a life steal, as Mark of Rodgort's
+   * "whenever each foe is struck for fire damage". Absent: any damage or
+   * steal.
+   */
+  readonly damageType?: DamageType;
+  /**
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
@@ -1258,19 +1265,22 @@ export class StatusSet {
   }
 
   /**
-   * The bearer lost health to damage or life steal from `offenderId`, a
-   * foe (#1022), recorded only if a status on it answers that, with the
-   * triggers that do. A status already waiting to answer one, undrained,
-   * does not answer another: it fires once, at the first foe.
+   * The bearer lost health to damage of `type` or, `undefined`, life
+   * steal from `offenderId`, a foe (#1022), recorded only if a status on
+   * it answers that, with the triggers that do: one with a `damageType`
+   * answers only that type (#1540). A status already waiting to answer
+   * one, undrained, does not answer another: it fires once, at the first
+   * foe.
    */
-  public recordDamageFromFoe(offenderId: string): void {
+  public recordDamageFromFoe(offenderId: string, type: DamageType | undefined): void {
     const pending = new Set(
       this.#changes.flatMap((change) =>
         change.kind === "took-damage-from-foe" ? change.fired.map(({ statusId }) => statusId) : [],
       ),
     );
     const fired = this.#answering("bearer-takes-damage-from-foe").filter(
-      ({ statusId }) => !pending.has(statusId),
+      ({ statusId, trigger }) =>
+        !pending.has(statusId) && (trigger.damageType === undefined || trigger.damageType === type),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });
