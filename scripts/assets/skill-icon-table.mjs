@@ -349,7 +349,7 @@ export const SKILL_ICONS = {
   "ritualist.defiant-was-xinrae": { glyph: "shield-veil", modifier: "less" },
   "ritualist.blind-was-mingson": { glyph: "eye-slash", modifier: "hourglass" },
   "ritualist.grasping-was-kuurong": { glyph: "quake", modifier: "stun" },
-  "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "hourglass" },
+  "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "plus" },
   // Placeholders until the asset-designer's (#1421): flash enchantments.
   "dervish.enchanted-haste": { glyph: "speed", modifier: "plus" },
   "dervish.heart-of-holy-flame": { glyph: "flame", modifier: "self" },
