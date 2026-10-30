@@ -100,6 +100,11 @@ const NO_BOT_USE = new Set([
   "paragon.song-of-purification",
   "paragon.hexbreaker-aria",
   "paragon.anthem-of-fury",
+  // Chants (#1505) on how the next skill goes: nothing the bot weighs.
+  "paragon.song-of-concentration",
+  "paragon.anthem-of-guidance",
+  "paragon.energizing-chorus",
+  "paragon.anthem-of-envy",
 ]);
 
 function skill(id: string) {
