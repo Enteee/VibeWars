@@ -1297,10 +1297,6 @@ body {
   user-select: none;
 }
 
-.team-row.is-missing .team-row-handle {
-  visibility: hidden;
-}
-
 .team-row-character {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -1330,20 +1326,6 @@ body {
 
 .team-row-skills {
   display: contents;
-}
-
-/* A missing character has no bar: its name spans to the × alone. */
-.team-row.is-missing .team-row-character {
-  grid-column: 2 / -2;
-}
-
-.team-row.is-missing .team-row-skills {
-  display: none;
-}
-
-.team-row.is-missing .team-row-name {
-  color: var(--ink-dim);
-  font-style: italic;
 }
 
 .team-row-controls {
@@ -1495,10 +1477,16 @@ body {
   gap: 0.35rem;
 }
 
-.team-picker-header {
+.team-picker-header,
+.team-picker-copy {
   margin: 0;
   font-size: 0.85rem;
   color: var(--ink-dim);
+}
+
+.team-picker-copy {
+  margin-top: 0.4rem;
+  font-weight: normal;
 }
 
 .team-picker-list {
@@ -1681,17 +1669,18 @@ body {
   min-width: 1.5ch;
 }
 
-/* The editor's bar (#1334) and the lobby's (#1368): the crumbs, the
-   screen's buttons and the icons fill a row up to 75rem, so the status
-   (the editor's pickers, the lobby's code and map) takes the second row
-   the phone's does and never runs under the buttons or the icons. */
+/* The editors' bars (#1334, #1452) and the lobby's (#1368): the crumbs,
+   the screen's buttons and the icons fill a row up to 75rem, so the status
+   (an editor's pickers and problems, the lobby's code and map) takes the
+   second row the phone's does and never runs under the buttons or the
+   icons. */
 @media (45rem < width <= 75rem) {
-  #topbar:has(.editor-professions),
+  #topbar:has(.problems-chip),
   #topbar:has(.lobby-header) {
     flex-wrap: wrap;
   }
 
-  #topbar:has(.editor-professions) .topbar-status,
+  #topbar:has(.problems-chip) .topbar-status,
   #topbar:has(.lobby-header) .topbar-status {
     flex: 1 0 100%;
     order: 10;

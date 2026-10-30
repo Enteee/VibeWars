@@ -21,6 +21,7 @@ import {
   type StoredCharacter,
   type StoredMatchRecord,
   type StoredTeam,
+  type StoredTeamMember,
 } from "./schema.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
@@ -38,12 +39,18 @@ function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   };
 }
 
+/** A team member, its own copy of `character({ id })`. */
+function member(id: string): StoredTeamMember {
+  const { schemaVersion: _version, updatedAt: _updated, ...own } = character({ id });
+  return { character: own };
+}
+
 function team(overrides: Partial<StoredTeam> = {}): StoredTeam {
   return {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id: "team-1",
     name: "Test Team",
-    members: [{ characterId: "char-1" }],
+    members: [member("char-1")],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: 1000,
     ...overrides,
@@ -191,16 +198,17 @@ describe("TeamRepository", () => {
     expect(loaded?.members).toHaveLength(1);
   });
 
-  it("references characters by id rather than copying their builds", async () => {
+  it("keeps each member's own build (#1452)", async () => {
     const repo = new TeamRepository(createMemoryStore());
-    await repo.save(team({ members: [{ characterId: "char-1" }, { characterId: "char-2" }] }));
+    const members = [member("char-1"), member("char-2")];
+    await repo.save(team({ members }));
     const loaded = await repo.load("team-1");
-    expect(loaded?.members.map((m) => m.characterId)).toEqual(["char-1", "char-2"]);
+    expect(loaded?.members).toEqual(members);
   });
 
   it("supports an arbitrary team size, not a hardcoded 8", async () => {
     const repo = new TeamRepository(createMemoryStore());
-    const members = Array.from({ length: 12 }, (_unused, i) => ({ characterId: `c${String(i)}` }));
+    const members = Array.from({ length: 12 }, (_unused, i) => member(`c${String(i)}`));
     await repo.save(team({ members }));
     expect((await repo.load("team-1"))?.members).toHaveLength(12);
   });

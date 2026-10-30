@@ -1,17 +1,22 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import {
+  CHARACTER_SCHEMA_VERSION,
+  type StoredCharacter,
+  type TeamCharacter,
+} from "../storage/schema.js";
 import {
   MAX_TEAM_SIZE,
   addMember,
   moveMember,
   newTeam,
   removeMember,
+  replaceMember,
   teamCounters,
 } from "./team-builder.js";
 import {
-  addableCharacters,
+  copyIntoTeam,
   dragMember,
   isTeamUnsaved,
   markedCells,
@@ -22,9 +27,8 @@ import {
   topAttributes,
 } from "./team-editor.js";
 
-function character(id: string): StoredCharacter {
+function character(id: string): TeamCharacter {
   return {
-    schemaVersion: CHARACTER_SCHEMA_VERSION,
     id,
     name: id,
     primaryProfession: "warrior",
@@ -32,14 +36,16 @@ function character(id: string): StoredCharacter {
     attributes: [],
     skillBar: Array.from({ length: 8 }, () => null),
     equipment: defaultBuildEquipment("warrior"),
-    updatedAt: 1,
   };
 }
 
-const roster = [character("a"), character("b"), character("c")];
+/** A team of a member per id, in order. */
+function teamOf(...ids: readonly string[]) {
+  return ids.reduce((team, id) => addMember(team, character(id)), newTeam("t1"));
+}
 
 describe("isTeamUnsaved (#573)", () => {
-  const opened = addMember(addMember(newTeam("t1"), "a"), "b");
+  const opened = teamOf("a", "b");
 
   it("is false for the team as opened, however late it was touched", () => {
     expect(isTeamUnsaved(opened, { ...opened, updatedAt: opened.updatedAt + 5000 })).toBe(false);
@@ -47,7 +53,7 @@ describe("isTeamUnsaved (#573)", () => {
 
   it("is true for a new name, an added, removed or moved member", () => {
     expect(isTeamUnsaved(opened, { ...opened, name: "Renamed" })).toBe(true);
-    expect(isTeamUnsaved(opened, addMember(opened, "c"))).toBe(true);
+    expect(isTeamUnsaved(opened, addMember(opened, character("c")))).toBe(true);
     expect(isTeamUnsaved(opened, removeMember(opened, 0))).toBe(true);
     expect(isTeamUnsaved(opened, moveMember(opened, 0, 1))).toBe(true);
   });
@@ -55,11 +61,47 @@ describe("isTeamUnsaved (#573)", () => {
   it("is false again once an edit is undone", () => {
     expect(isTeamUnsaved(opened, moveMember(moveMember(opened, 0, 1), 1, -1))).toBe(false);
   });
+
+  it("is true for a member's build edited in the build editor (#1452)", () => {
+    const edited = {
+      ...character("a"),
+      skillBar: ["warrior.sever-artery", ...Array(7).fill(null)],
+    };
+    expect(isTeamUnsaved(opened, replaceMember(opened, edited))).toBe(true);
+  });
+
+  it("is false for the same build with its fields in another order", () => {
+    const { name, ...rest } = character("a");
+    expect(isTeamUnsaved(opened, replaceMember(opened, { ...rest, name }))).toBe(false);
+  });
+});
+
+describe("copyIntoTeam (#1452)", () => {
+  const solo: StoredCharacter = {
+    ...character("solo"),
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    updatedAt: 1,
+  };
+
+  it("adds a copy under a new id, which an edit to the Solo character does not reach", () => {
+    const team = copyIntoTeam(newTeam("t1"), solo, "m1");
+    const copy = team.members[0]?.character;
+    expect(copy).toEqual({ ...character("solo"), id: "m1" });
+
+    // The copy shares no array with the Solo character it came from.
+    (solo.skillBar as (string | null)[])[0] = "warrior.sever-artery";
+    expect(copy?.skillBar[0]).toBeNull();
+  });
+
+  it("copies the same character twice as two members", () => {
+    const team = copyIntoTeam(copyIntoTeam(newTeam("t1"), solo, "m1"), solo, "m2");
+    expect(team.members.map((m) => m.character.id)).toEqual(["m1", "m2"]);
+  });
 });
 
 describe("pastedTeam (#577)", () => {
   it("is unsaved and not stored, so Save stores it and Back asks", () => {
-    const state = pastedTeam({ ...addMember(newTeam("t1"), "a"), name: "Duo" });
+    const state = pastedTeam({ ...teamOf("a"), name: "Duo" });
 
     expect(state.stored).toBe(false);
     expect(isTeamUnsaved(state.opened, state.team)).toBe(true);
@@ -68,51 +110,37 @@ describe("pastedTeam (#577)", () => {
 
 describe("teamEditorProblems (#573)", () => {
   const texts = (team: Parameters<typeof teamEditorProblems>[0]) =>
-    teamEditorProblems(team, roster).map((problem) => [problem.text, problem.blocking]);
+    teamEditorProblems(team).map((problem) => [problem.text, problem.blocking]);
 
   it("blocks a new team: it has no members", () => {
     expect(texts(newTeam("t1"))).toEqual([["A team needs at least one member.", true]]);
   });
 
   it("asks for a name in a sentence", () => {
-    expect(texts({ ...addMember(newTeam("t1"), "a"), name: "  " })).toEqual([
-      ["Give the team a name.", true],
-    ]);
+    expect(texts({ ...teamOf("a"), name: "  " })).toEqual([["Give the team a name.", true]]);
   });
 
-  it("names the slot of a member whose character was deleted", () => {
-    expect(texts(addMember(addMember(newTeam("t1"), "a"), "gone"))).toEqual([
-      ["Slot 2 references a character that no longer exists.", true],
+  it("names the slot and the name of an illegal member build (#1452)", () => {
+    const illegal = { ...character("Bravo"), skillBar: ["monk.orison-of-healing"] };
+    expect(texts(addMember(teamOf("a"), illegal))).toEqual([
+      ["Slot 2, Bravo, is not a legal build: open it to see why.", true],
     ]);
   });
 
   it("says a full team is full, as a hint that never blocks", () => {
-    const members = Array.from({ length: MAX_TEAM_SIZE }, (_, index) => ({
-      characterId: `m${String(index)}`,
-    }));
-    const characters = members.map((member) => character(member.characterId));
-    expect(
-      teamEditorProblems({ ...newTeam("t1"), members }, characters).map((problem) => [
-        problem.text,
-        problem.blocking,
-      ]),
-    ).toEqual([[`The team is full: ${String(MAX_TEAM_SIZE)} members.`, false]]);
-  });
-});
-
-describe("addableCharacters (#573)", () => {
-  it("offers everyone not on the team yet, in roster order", () => {
-    const team = addMember(newTeam("t1"), "b");
-    expect(addableCharacters(team, roster).map((c) => c.id)).toEqual(["a", "c"]);
+    const ids = Array.from({ length: MAX_TEAM_SIZE }, (_, index) => `m${String(index)}`);
+    expect(texts(teamOf(...ids))).toEqual([
+      [`The team is full: ${String(MAX_TEAM_SIZE)} members.`, false],
+    ]);
   });
 });
 
 describe("placesLeft (#574)", () => {
   it("counts down from the team size and stops at nought", () => {
     expect(placesLeft(newTeam("t1"))).toBe(MAX_TEAM_SIZE);
-    expect(placesLeft(addMember(newTeam("t1"), "a"))).toBe(MAX_TEAM_SIZE - 1);
+    expect(placesLeft(teamOf("a"))).toBe(MAX_TEAM_SIZE - 1);
     const members = Array.from({ length: MAX_TEAM_SIZE + 1 }, (_, index) => ({
-      characterId: `m${String(index)}`,
+      character: character(`m${String(index)}`),
     }));
     expect(placesLeft({ ...newTeam("t1"), members })).toBe(0);
   });
@@ -175,8 +203,8 @@ describe("topAttributes (#574)", () => {
 });
 
 describe("dragMember (#574)", () => {
-  const team = ["a", "b", "c", "d"].reduce((t, id) => addMember(t, id), newTeam("t1"));
-  const order = (t: typeof team) => t.members.map((member) => member.characterId);
+  const team = teamOf("a", "b", "c", "d");
+  const order = (t: typeof team) => t.members.map((member) => member.character.id);
 
   it("drags a row to the order the same number of ↑ or ↓ presses gives", () => {
     expect(order(dragMember(team, 0, 2))).toEqual(order(moveMember(moveMember(team, 0, 1), 1, 1)));
@@ -194,32 +222,31 @@ describe("dragMember (#574)", () => {
 });
 
 describe("markedCells (#575)", () => {
-  const withBar = (id: string, bar: readonly (string | null)[]): StoredCharacter => ({
+  const withBar = (id: string, bar: readonly (string | null)[]): TeamCharacter => ({
     ...character(id),
     skillBar: Array.from({ length: 8 }, (_, slot) => bar[slot] ?? null),
   });
-  const roster = [
-    withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"]),
+  const team = addMember(
+    addMember(newTeam("t1"), withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"])),
     withBar("b", [null, "monk.mend-condition", "warrior.distracting-blow"]),
-  ];
-  const team = addMember(addMember(newTeam("t1"), "a"), "b");
-  const counters = teamCounters(team.members, roster);
+  );
+  const counters = teamCounters(team.members);
 
   it("marks exactly a counter's cells", () => {
-    expect(markedCells({ kind: "counter", id: "interrupt" }, counters, team, roster)).toEqual(
+    expect(markedCells({ kind: "counter", id: "interrupt" }, counters, team)).toEqual(
       new Set(["a:0", "b:2"]),
     );
-    expect(markedCells({ kind: "counter", id: "empty" }, counters, team, roster)).toEqual(
+    expect(markedCells({ kind: "counter", id: "empty" }, counters, team)).toEqual(
       new Set(["a:2", "a:3", "a:4", "a:5", "a:6", "a:7", "b:0", "b:3", "b:4", "b:5", "b:6", "b:7"]),
     );
   });
 
   it("finds every copy of a skill on the team", () => {
     expect(
-      markedCells({ kind: "skill", skillId: "warrior.distracting-blow" }, counters, team, roster),
+      markedCells({ kind: "skill", skillId: "warrior.distracting-blow" }, counters, team),
     ).toEqual(new Set(["a:0", "b:2"]));
-    expect(
-      markedCells({ kind: "skill", skillId: "monk.mend-condition" }, counters, team, roster),
-    ).toEqual(new Set(["b:1"]));
+    expect(markedCells({ kind: "skill", skillId: "monk.mend-condition" }, counters, team)).toEqual(
+      new Set(["b:1"]),
+    );
   });
 });

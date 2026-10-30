@@ -17,7 +17,7 @@ import {
   type StandingBody,
 } from "../render/body-painter.js";
 import { toPlayerBuild } from "../storage/build-validation.js";
-import type { StoredCharacter } from "../storage/schema.js";
+import type { TeamCharacter } from "../storage/schema.js";
 import { cssColour, professionLabel } from "./character-preview.js";
 import { professionIcon } from "./icons.js";
 
@@ -59,7 +59,7 @@ const UNKNOWN: CharacterAppearance = { weaponId: undefined, offhandId: undefined
  * host picks at random (#852): unknowable here, so the figure is the bare
  * body. Not an error.
  */
-export function characterAppearance(character: StoredCharacter): CharacterAppearance {
+export function characterAppearance(character: TeamCharacter): CharacterAppearance {
   const { loadout, refused } = resolveJoinLoadout(
     toPlayerBuild(character),
     RULES.attributes,
@@ -210,7 +210,7 @@ function paintBodyGlyph(
  * leaves the box empty.
  */
 export function createCharacterFigure(
-  character: StoredCharacter,
+  character: TeamCharacter,
   cape: CapeLook | undefined,
 ): HTMLCanvasElement {
   const { width, height } = FIGURE_SIZE;
