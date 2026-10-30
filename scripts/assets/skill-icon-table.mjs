@@ -360,10 +360,9 @@ export const SKILL_ICONS = {
   // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
   "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
   "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },
-  // Placeholders until the asset-designer's (#1455): forms.
-  "dervish.avatar-of-balthazar": { glyph: "flame", modifier: "hourglass" },
-  "dervish.avatar-of-grenth": { glyph: "scythe", modifier: "hourglass" },
-  "dervish.avatar-of-lyssa": { glyph: "energy", modifier: "hourglass" },
+  "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
+  "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
+  "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
   // Placeholders until the asset-designer's (#1475): the next spell fails.
   "mesmer.guilt": { glyph: "hex-mute", modifier: "down" },
   "mesmer.shame": { glyph: "hex-mute", modifier: "up" },

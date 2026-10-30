@@ -7,6 +7,7 @@ import {
   MATCH_RUNNING_NOTICE,
   characterLine,
   displayLobbyCode,
+  hostMaps,
   lobbyControls,
   mapLabel,
   modeLine,
@@ -158,6 +159,27 @@ describe("mapLabel (#444)", () => {
     expect(
       mapLabel({ id: "arena-long-hall", name: "Long Hall", size: "large", mode: "annihilation" }),
     ).toBe("Long Hall (large)");
+  });
+});
+
+describe("hostMaps (#1453)", () => {
+  const maps = [
+    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation" },
+    { id: "guild-hall-isle", name: "Guild Hall Isle", size: "large", mode: "guild-battle" },
+    { id: "relic-temples", name: "Relic Temples", size: "large", mode: "relic-run" },
+    { id: "arena-open", name: "Open", size: "small", mode: "kill-count" },
+  ] as const;
+
+  it("offers every map without a filter", () => {
+    expect(hostMaps(maps, undefined)).toEqual(maps);
+  });
+
+  it("offers only the maps playing one of the filter's modes, in their order", () => {
+    expect(hostMaps(maps, ["kill-count", "annihilation"]).map((map) => map.id)).toEqual([
+      "arena-alpha",
+      "arena-open",
+    ]);
+    expect(hostMaps(maps, ["guild-battle"]).map((map) => map.id)).toEqual(["guild-hall-isle"]);
   });
 });
 
