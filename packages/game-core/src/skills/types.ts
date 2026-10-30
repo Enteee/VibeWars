@@ -826,9 +826,15 @@ export type StateCondition =
     }
   /**
    * The caster has no status of this category (#1354), the negation of
-   * `caster-has`: Pure Strike's "if you are not using a stance".
+   * `caster-has`: Pure Strike's "if you are not using a stance". With
+   * `profession`, none of that profession's (#1551): Wearying Strike's
+   * "if a Dervish enchantment is not removed".
    */
-  | { readonly kind: "caster-lacks"; readonly category: StatusCategory }
+  | {
+      readonly kind: "caster-lacks";
+      readonly category: StatusCategory;
+      readonly profession?: ProfessionId;
+    }
   /**
    * No living ally of the effect's target, the target itself excluded,
    * stands within `radius` of it (#885): Horns of the Ox's "not adjacent

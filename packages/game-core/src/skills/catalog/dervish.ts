@@ -1,5 +1,134 @@
-import { AREA_NEARBY, RANGE_MELEE, RANGE_SPELL } from "../../distances.js";
-import type { Skill } from "../types.js";
+import { AREA_ADJACENT, AREA_NEARBY, RANGE_MELEE, RANGE_SPELL } from "../../distances.js";
+import type {
+  AttackSkillRule,
+  CreateGroundEffect,
+  DamageEffect,
+  Magnitude,
+  Skill,
+  SkillEffect,
+} from "../types.js";
+
+/** A plain scythe attack skill's rule (#1551): one strike, nothing on a crit or a block. */
+function scytheAttack(
+  bonusDamage: Magnitude | undefined,
+  onFailedToHit: readonly SkillEffect[],
+): AttackSkillRule {
+  return {
+    weapon: "scythe",
+    weaponDamage: 1,
+    bonusDamage,
+    conditionalBonus: undefined,
+    strikes: 1,
+    unblockable: false,
+    chain: undefined,
+    criticalWhen: undefined,
+    damageType: undefined,
+    armorPenetration: 0,
+    flightSpeed: undefined,
+    onCritical: [],
+    onFailedToHit,
+    onBlocked: [],
+  };
+}
+
+/** "You lose 1 Dervish enchantment", as Wounding Strike's. */
+const LOSE_DERVISH_ENCHANTMENT: SkillEffect = {
+  kind: "remove-status",
+  category: "enchantment",
+  count: 1,
+  profession: "dervish",
+  from: "caster",
+};
+
+/**
+ * Mystic Sandstorm's storm (#1551): every second for `seconds`, 34 earth
+ * to each foe near where the Dervish stood, 18 more to one attacking.
+ */
+function sandstorm(seconds: number): CreateGroundEffect {
+  return {
+    kind: "create-ground-effect",
+    anchor: "caster",
+    durationSeconds: { flat: seconds },
+    act: {
+      kind: "pulse",
+      pulse: {
+        count: seconds,
+        everySeconds: 1,
+        delaySeconds: 0,
+        area: {
+          radius: AREA_NEARBY,
+          origin: "caster",
+          affects: "enemies",
+          maxTargets: undefined,
+          includesCaster: false,
+        },
+        effects: [
+          {
+            kind: "damage",
+            amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 34 } },
+            type: "earth",
+            armorPenetration: 0,
+            conditionalBonus: {
+              condition: { kind: "target-attacking" },
+              amount: {
+                scaling: { attributeId: "dervish.earth-prayers", atZero: 10, atTwelve: 18 },
+              },
+            },
+          },
+        ],
+      },
+    },
+  };
+}
+
+/** Pious Assault's spend (#1551), on a hit and on a miss alike. */
+const PIOUS_ASSAULT: readonly SkillEffect[] = [
+  LOSE_DERVISH_ENCHANTMENT,
+  {
+    kind: "if",
+    condition: { kind: "removed", category: "enchantment", from: "caster" },
+    effects: [
+      { kind: "recharge-faster", fraction: 0.75 },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "dervish.scythe-mastery", atZero: 15, atTwelve: 35 },
+            },
+            type: "slashing",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+];
+
+/** Chilling Victory's cold, to the victim and to each foe adjacent to it (#1551). */
+const CHILLING_VICTORY_DAMAGE: DamageEffect = {
+  kind: "damage",
+  amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 10, atTwelve: 26 } },
+  type: "cold",
+  armorPenetration: 0,
+};
+
+/**
+ * Wearying Strike's spend (#1551), hit or miss: Weakness unless a Dervish
+ * enchantment is there to lose, read before the loss, then the loss.
+ */
+const WEARYING_STRIKE_EITHER_WAY: readonly SkillEffect[] = [
+  {
+    kind: "if",
+    condition: { kind: "caster-lacks", category: "enchantment", profession: "dervish" },
+    effects: [{ kind: "caster-gains-status", statusId: "weakness", durationSeconds: 10 }],
+  },
+  LOSE_DERVISH_ENCHANTMENT,
+];
 
 export const DERVISH_SKILLS: readonly Skill[] = [
   {
@@ -984,6 +1113,269 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // recharge 50% faster and your attacks deal chaos damage ... This skill
     // is disabled for 45 seconds" (#1455): 74 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "avatar-of-lyssa", durationSeconds: 74 }],
+  },
+  // Dervish staples (#1551), at their rank-12 values.
+  {
+    id: "dervish.mystic-sandstorm",
+    name: "Mystic Sandstorm",
+    gwId: 1532,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "adrenaline", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create a Sandstorm at your location that lasts 3 seconds. Each
+    // second, foes nearby this location take 10...40 earth damage.
+    // Attacking foes take an additional 10...20 damage. If you are
+    // enchanted when you cast this spell, it lasts twice as long": 34 and
+    // 18, read at cast.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-lacks", category: "enchantment" },
+        effects: [sandstorm(3)],
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-has", category: "enchantment" },
+        effects: [sandstorm(6)],
+      },
+    ],
+  },
+  {
+    id: "dervish.grenths-grasp",
+    name: "Grenth's Grasp",
+    gwId: 1756,
+    type: "enchantment",
+    elite: true,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, your attack skills also Cripple that foe for
+    // 1...11 seconds and you transfer 1...3 conditions from yourself to
+    // that foe": the status carries both.
+    effects: [{ kind: "apply-status", statusId: "grenths-grasp", durationSeconds: 20 }],
+  },
+  {
+    id: "dervish.rending-aura",
+    name: "Rending Aura",
+    gwId: 1765,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "When you cast this enchantment, all nearby foes take 10...40 cold
+    // damage. For 30 seconds, your attack skills remove enchantments from
+    // knocked-down foes": 34. The status strips, and cracks armor as it ends.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 10, atTwelve: 34 } },
+            type: "cold",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      { kind: "apply-status", statusId: "rending-aura", durationSeconds: 30 },
+    ],
+  },
+  {
+    id: "dervish.reapers-sweep",
+    name: "Reaper's Sweep",
+    gwId: 1767,
+    type: "attack",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "adrenaline", amount: 7 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: scytheAttack(undefined, []),
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If this attack hits, you Cripple your target for 3...15 seconds. You
+    // lose 1 Dervish enchantment. If an enchantment was removed, this
+    // attack knocks down for 2...3 seconds": 13 s and 3 s.
+    effects: [
+      { kind: "apply-status", statusId: "crippled", durationSeconds: 13 },
+      LOSE_DERVISH_ENCHANTMENT,
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment", from: "caster" },
+        effects: [{ kind: "knockdown", durationSeconds: 3 }],
+      },
+    ],
+  },
+  {
+    // The PvP split's text (gwId 3266): no bonus damage, and it spends the
+    // enchantment hit or miss.
+    id: "dervish.pious-assault",
+    name: "Pious Assault",
+    gwId: 1490,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 12,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: { ...scytheAttack(undefined, PIOUS_ASSAULT), weapon: "melee" },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You remove 1 Dervish enchantment. If a Dervish enchantment was
+    // removed, this skill recharges 75% faster and adjacent foes take
+    // 15...40 damage": 35, round the target.
+    effects: PIOUS_ASSAULT,
+  },
+  {
+    id: "dervish.chilling-victory",
+    name: "Chilling Victory",
+    gwId: 1539,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: scytheAttack(
+      { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 13 } },
+      [],
+    ),
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If it hits, this attack strikes for +3...15 damage. For each foe hit
+    // who has less Health than you, that foe and all adjacent foes are
+    // struck for 10...30 cold damage": 13 and 26. Read after the blow, as
+    // Victorious Sweep's.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-less-health" },
+        effects: [
+          CHILLING_VICTORY_DAMAGE,
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [CHILLING_VICTORY_DAMAGE],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "dervish.wearying-strike",
+    name: "Wearying Strike",
+    gwId: 1537,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.scythe-mastery",
+    cost: { kind: "adrenaline", amount: 6 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: scytheAttack(undefined, WEARYING_STRIKE_EITHER_WAY),
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You remove 1 Dervish enchantment. If an enchantment was removed, you
+    // inflict a Deep Wound for 3...10 seconds. You suffer from Weakness for
+    // 10 seconds if an enchantment is not removed": 9 s. The removal and
+    // the Weakness, hit or miss; the Deep Wound needs the hit.
+    effects: [
+      ...WEARYING_STRIKE_EITHER_WAY,
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment", from: "caster" },
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 9 }],
+      },
+    ],
   },
   {
     id: "dervish.banishing-strike",
