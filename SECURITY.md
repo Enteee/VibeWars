@@ -577,6 +577,13 @@ employee names and numbers. `kpis.json` carries a `schemaVersion`; a reader
 that finds another value treats the file as absent. `kpi-edges.json` (#1313)
 holds the 7-day utilization's 1% steps of the last 24 h, times and
 fractions only; hubd discards one of another `schemaVersion` on start.
+`ci-history.jsonl` (#1612) keeps a line per completed Actions run, eight
+days of them: run id, event, conclusion, sha, times, whether it ran on
+main, the `#N` its title starts with, and the workflow's file name only if
+it is a merge gate (else `"other"`). A fork's pull request names its own
+title, branch and workflow files, so **no GitHub free text goes into a
+file in `hub/`**: hubd keeps numbers, hashes and values checked against a
+closed set, and the reader drops a line that fails that check.
 
 **A manager is always running (#384).** The supervisor starts a missing
 manager pane within one sample, backing off to once every five minutes
