@@ -33,6 +33,7 @@ const NO_BOT_USE = new Set([
   "dervish.fleeting-stability",
   "dervish.harriers-haste",
   "dervish.heart-of-fury",
+  "dervish.pious-fury",
   "dervish.pious-haste",
   "dervish.vow-of-strength",
   "elementalist.glyph-of-lesser-energy",

@@ -140,6 +140,7 @@
     "grasping-was-kuurong",
     "grenths-grasp",
     "guardian",
+    "guiding-hands",
     "guilt",
     "harriers-haste",
     "hasty-refrain",
@@ -177,6 +178,7 @@
     "mighty-was-vorizun",
     "migraine",
     "mind-freeze",
+    "mirage-cloak",
     "mistrust",
     "mystic-regeneration",
     "natural-stride",
@@ -189,6 +191,7 @@
     "parasitic-bond",
     "patient-spirit",
     "phantom-pain",
+    "pious-fury",
     "pious-haste",
     "pious-haste-run",
     "poison",
@@ -245,6 +248,7 @@
     "vengeful-weapon",
     "vigorous-spirit",
     "visions-of-regret",
+    "vital-boon",
     "vow-of-strength",
     "ward-against-elements",
     "ward-against-foes",
@@ -264,7 +268,8 @@
     "whirling-defense",
     "winnowing",
     "xinraes-weapon",
-    "zealous-anthem"
+    "zealous-anthem",
+    "zealous-renewal"
   ],
   "constants": {
     "FORMATION_SETTLE_MS": { "literal": 3000 },
@@ -687,6 +692,7 @@
                   { "literal": "grasping-was-kuurong" },
                   { "literal": "grenths-grasp" },
                   { "literal": "guardian" },
+                  { "literal": "guiding-hands" },
                   { "literal": "guilt" },
                   { "literal": "harriers-haste" },
                   { "literal": "hasty-refrain" },
@@ -724,6 +730,7 @@
                   { "literal": "mighty-was-vorizun" },
                   { "literal": "migraine" },
                   { "literal": "mind-freeze" },
+                  { "literal": "mirage-cloak" },
                   { "literal": "mistrust" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
@@ -736,6 +743,7 @@
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
+                  { "literal": "pious-fury" },
                   { "literal": "pious-haste" },
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
@@ -792,6 +800,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
+                  { "literal": "vital-boon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "ward-against-elements" },
                   { "literal": "ward-against-foes" },
@@ -811,7 +820,8 @@
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "xinraes-weapon" },
-                  { "literal": "zealous-anthem" }
+                  { "literal": "zealous-anthem" },
+                  { "literal": "zealous-renewal" }
                 ]
               }
             },
@@ -943,6 +953,7 @@
                   { "literal": "grasping-was-kuurong" },
                   { "literal": "grenths-grasp" },
                   { "literal": "guardian" },
+                  { "literal": "guiding-hands" },
                   { "literal": "guilt" },
                   { "literal": "harriers-haste" },
                   { "literal": "hasty-refrain" },
@@ -980,6 +991,7 @@
                   { "literal": "mighty-was-vorizun" },
                   { "literal": "migraine" },
                   { "literal": "mind-freeze" },
+                  { "literal": "mirage-cloak" },
                   { "literal": "mistrust" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
@@ -992,6 +1004,7 @@
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
+                  { "literal": "pious-fury" },
                   { "literal": "pious-haste" },
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
@@ -1048,6 +1061,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
+                  { "literal": "vital-boon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "ward-against-elements" },
                   { "literal": "ward-against-foes" },
@@ -1067,7 +1081,8 @@
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "xinraes-weapon" },
-                  { "literal": "zealous-anthem" }
+                  { "literal": "zealous-anthem" },
+                  { "literal": "zealous-renewal" }
                 ]
               }
             },
@@ -1196,6 +1211,7 @@
                   { "literal": "grasping-was-kuurong" },
                   { "literal": "grenths-grasp" },
                   { "literal": "guardian" },
+                  { "literal": "guiding-hands" },
                   { "literal": "guilt" },
                   { "literal": "harriers-haste" },
                   { "literal": "hasty-refrain" },
@@ -1233,6 +1249,7 @@
                   { "literal": "mighty-was-vorizun" },
                   { "literal": "migraine" },
                   { "literal": "mind-freeze" },
+                  { "literal": "mirage-cloak" },
                   { "literal": "mistrust" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
@@ -1245,6 +1262,7 @@
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
+                  { "literal": "pious-fury" },
                   { "literal": "pious-haste" },
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
@@ -1301,6 +1319,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
+                  { "literal": "vital-boon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "ward-against-elements" },
                   { "literal": "ward-against-foes" },
@@ -1320,7 +1339,8 @@
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "xinraes-weapon" },
-                  { "literal": "zealous-anthem" }
+                  { "literal": "zealous-anthem" },
+                  { "literal": "zealous-renewal" }
                 ]
               }
             },
@@ -1446,6 +1466,7 @@
                   { "literal": "grasping-was-kuurong" },
                   { "literal": "grenths-grasp" },
                   { "literal": "guardian" },
+                  { "literal": "guiding-hands" },
                   { "literal": "guilt" },
                   { "literal": "harriers-haste" },
                   { "literal": "hasty-refrain" },
@@ -1483,6 +1504,7 @@
                   { "literal": "mighty-was-vorizun" },
                   { "literal": "migraine" },
                   { "literal": "mind-freeze" },
+                  { "literal": "mirage-cloak" },
                   { "literal": "mistrust" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
@@ -1495,6 +1517,7 @@
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
+                  { "literal": "pious-fury" },
                   { "literal": "pious-haste" },
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
@@ -1551,6 +1574,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
+                  { "literal": "vital-boon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "ward-against-elements" },
                   { "literal": "ward-against-foes" },
@@ -1570,7 +1594,8 @@
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "xinraes-weapon" },
-                  { "literal": "zealous-anthem" }
+                  { "literal": "zealous-anthem" },
+                  { "literal": "zealous-renewal" }
                 ]
               }
             },
@@ -1803,6 +1828,7 @@
                   { "literal": "grasping-was-kuurong" },
                   { "literal": "grenths-grasp" },
                   { "literal": "guardian" },
+                  { "literal": "guiding-hands" },
                   { "literal": "guilt" },
                   { "literal": "harriers-haste" },
                   { "literal": "hasty-refrain" },
@@ -1840,6 +1866,7 @@
                   { "literal": "mighty-was-vorizun" },
                   { "literal": "migraine" },
                   { "literal": "mind-freeze" },
+                  { "literal": "mirage-cloak" },
                   { "literal": "mistrust" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
@@ -1852,6 +1879,7 @@
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
+                  { "literal": "pious-fury" },
                   { "literal": "pious-haste" },
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
@@ -1908,6 +1936,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
+                  { "literal": "vital-boon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "ward-against-elements" },
                   { "literal": "ward-against-foes" },
@@ -1927,7 +1956,8 @@
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "xinraes-weapon" },
-                  { "literal": "zealous-anthem" }
+                  { "literal": "zealous-anthem" },
+                  { "literal": "zealous-renewal" }
                 ]
               }
             },
@@ -2044,6 +2074,7 @@
                   { "literal": "grasping-was-kuurong" },
                   { "literal": "grenths-grasp" },
                   { "literal": "guardian" },
+                  { "literal": "guiding-hands" },
                   { "literal": "guilt" },
                   { "literal": "harriers-haste" },
                   { "literal": "hasty-refrain" },
@@ -2081,6 +2112,7 @@
                   { "literal": "mighty-was-vorizun" },
                   { "literal": "migraine" },
                   { "literal": "mind-freeze" },
+                  { "literal": "mirage-cloak" },
                   { "literal": "mistrust" },
                   { "literal": "mystic-regeneration" },
                   { "literal": "natural-stride" },
@@ -2093,6 +2125,7 @@
                   { "literal": "parasitic-bond" },
                   { "literal": "patient-spirit" },
                   { "literal": "phantom-pain" },
+                  { "literal": "pious-fury" },
                   { "literal": "pious-haste" },
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
@@ -2149,6 +2182,7 @@
                   { "literal": "vengeful-weapon" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
+                  { "literal": "vital-boon" },
                   { "literal": "vow-of-strength" },
                   { "literal": "ward-against-elements" },
                   { "literal": "ward-against-foes" },
@@ -2168,7 +2202,8 @@
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "xinraes-weapon" },
-                  { "literal": "zealous-anthem" }
+                  { "literal": "zealous-anthem" },
+                  { "literal": "zealous-renewal" }
                 ]
               }
             },

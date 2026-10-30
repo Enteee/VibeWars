@@ -356,6 +356,13 @@ export interface StatusDefinition {
    */
   readonly endsAfterAttacks: number | undefined;
   /**
+   * The bearer's next this many attacks cannot be blocked, and then it
+   * ends (#1604): Guiding Hands'. One swing or one attack skill spends 1,
+   * hit or miss, a cleave's and a double strike's blows included; a shot
+   * keeps what it was released with. `undefined`: blocks as ever.
+   */
+  readonly unblockableAttacks: number | undefined;
+  /**
    * Effects on whoever the bearer's physical attacks hit while it lasts
    * (#525): a preparation's rider, as Apply Poison's poison. Applied
    * where a blow lands, swing, attack skill or arrow alike, never on a
@@ -1133,6 +1140,8 @@ export interface ActiveStatus {
   attacksLeft: number | undefined;
   /** The bearer's hits before it ends (`endsAfterHits`); `undefined`: no such limit. */
   hitsLeft: number | undefined;
+  /** The bearer's unblockable attacks before it ends (`unblockableAttacks`); `undefined`: none. */
+  unblockableLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
@@ -1496,6 +1505,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
+      unblockableLeft: definition.unblockableAttacks,
       spellsLeft: definition.nextSpells?.count,
       skillsLeft: definition.nextSkill?.count,
       triggersLeft: definition.endsAfterTriggers,
@@ -1543,6 +1553,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1574,6 +1585,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1605,6 +1617,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1835,6 +1848,27 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer attacked (#1604): whether a status of its own makes this
+   * attack unblockable, each such status one attack fewer, and the ids
+   * that ended on it.
+   */
+  public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
+    let unblockable = false;
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      if (status.unblockableLeft !== undefined && status.unblockableLeft > 0) {
+        unblockable = true;
+        status.unblockableLeft -= 1;
+        if (status.unblockableLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    this.#end(ended);
+    return { unblockable, ended };
   }
 
   /**

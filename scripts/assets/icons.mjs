@@ -1672,6 +1672,37 @@ const status = {
       `<path d="M3 8L6 12L3 16Z" ${stroke(c, 1.4)}/>` +
       `<path d="M10 4V20M14 4V20M18 4V20M8 4.5H20M8 19.5H20" ${stroke(c, 1.8)}/>`,
   ],
+  // Dervish staples 2 (#1604), stand-ins until their art card.
+  // Stance: three fast slashes, it attacks 25% faster.
+  "pious-fury": ["stance", (c) => `<path d="M5 18L13 6M9 19L17 7M13 20L20 9" ${stroke(c, 2)}/>`],
+  // Enchantment: a spark over a falling bar, energy for every hit.
+  "zealous-renewal": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l2 5h-4l2 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 17h12M9 21h6" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a shield seen through a heat haze, it blocks.
+  "mirage-cloak": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 4l6 2v5c0 4-3 7-6 9-3-2-6-5-6-9V6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M9 10q1.5-1.5 3 0t3 0M9 14q1.5-1.5 3 0t3 0" ${stroke(c, 1.4)}/>`,
+  ],
+  // Enchantment: a heart with a plus, more health and a heal when it ends.
+  "vital-boon": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 9v6M9 12h6" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: an open hand over an arrow, the next attacks cannot be blocked.
+  "guiding-hands": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 12V6M10 12V4M13 12V4M16 12V6M7 12c0 4 2 6 5 6s4-2 4-6" ${stroke(c, 1.6)}/>` +
+      `<path d="M4 21h16M17 18l3 3-3 3" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

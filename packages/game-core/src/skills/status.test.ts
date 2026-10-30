@@ -48,6 +48,7 @@ describe("status definitions", () => {
         def.preventsSpells ||
         def.preventsBlocking ||
         def.unblockableBySource ||
+        def.unblockableAttacks !== undefined ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
@@ -175,6 +176,7 @@ describe("status definitions", () => {
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
       "obsidian-flesh": -2,
+      "zealous-renewal": -1,
     });
   });
 
@@ -805,7 +807,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Pious Fury (#1604) 25%", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -817,6 +819,7 @@ describe("attack duration (ADR-0029)", () => {
       "call-of-haste": 0.75,
       "aggressive-refrain": 0.75,
       flail: 0.67,
+      "pious-fury": 0.75,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

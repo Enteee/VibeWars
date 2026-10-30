@@ -38,4 +38,13 @@ export const DERVISH_ICONS = {
   "dervish.pious-assault": { glyph: "scythe-spend", modifier: "clock" },
   "dervish.chilling-victory": { glyph: "scythe-frost" },
   "dervish.wearying-strike": { glyph: "scythe-spend", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1604).
+  "dervish.irresistible-sweep": { glyph: "scythe-spend", modifier: "up" },
+  "dervish.crippling-sweep": { glyph: "blade-limp", modifier: "area" },
+  "dervish.rending-sweep": { glyph: "scythe-spend", modifier: "less" },
+  "dervish.pious-fury": { glyph: "blade-fury", modifier: "renew" },
+  "dervish.zealous-renewal": { glyph: "energy", modifier: "renew" },
+  "dervish.mirage-cloak": { glyph: "shield-veil", modifier: "area" },
+  "dervish.vital-boon": { glyph: "heart-plus", modifier: "hourglass" },
+  "dervish.guiding-hands": { glyph: "next-attack-unblockable", modifier: "plus" },
 };
