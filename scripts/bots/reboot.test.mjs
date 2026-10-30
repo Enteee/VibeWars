@@ -11,14 +11,19 @@ import {
   announcement,
   betweenTurns,
   bootNote,
+  decideProposal,
   drainStep,
   fastForwardDecision,
+  parseDecision,
+  parseProposal,
   parseReboot,
   isCompanyPath,
   rebootAllowed,
 } from "./reboot.mjs";
 
 const NOW = 1_800_000_000_000;
+const TARGET = "f".repeat(40);
+const PROPOSAL_ID = "0123456789abcdef0123456789abcdef";
 
 /** @type {string[]} */
 const dirs = [];
@@ -79,6 +84,8 @@ describe("rebootAllowed", () => {
       by: "manager",
       deadline: NOW + DRAIN_MS,
       bootSha: "abc",
+      targetSha: TARGET,
+      proposalId: PROPOSAL_ID,
       ready: [],
     };
     const answer = rebootAllowed({ ...base, pending });
@@ -142,6 +149,8 @@ describe("rebootAllowed --workday (#640)", () => {
       by: "manager",
       deadline: NOW + DRAIN_MS,
       bootSha: "abc",
+      targetSha: TARGET,
+      proposalId: PROPOSAL_ID,
       ready: [],
     };
     expect(reasonOf(rebootAllowed({ ...quiet, pending }))).toMatch(/already scheduled/);
@@ -155,12 +164,15 @@ describe("rebootAllowed --workday (#640)", () => {
         by: "manager",
         deadline: NOW,
         bootSha: "a",
+        targetSha: TARGET,
+        proposalId: PROPOSAL_ID,
         ready: [],
       },
       [],
     );
     expect(text.startsWith("End of the workday. ")).toBe(true);
-    expect(text).toContain("no new company code");
+    expect(text).toContain("approved by the operator");
+    expect(text).toContain(`It loads ${TARGET.slice(0, 8)}: no new company code`);
   });
 });
 
@@ -171,6 +183,8 @@ describe("drainStep", () => {
     by: "manager",
     deadline: NOW + DRAIN_MS,
     bootSha: "abc",
+    targetSha: TARGET,
+    proposalId: PROPOSAL_ID,
     ready: ["manager"],
   };
   const base = {
@@ -258,12 +272,107 @@ describe("parseReboot", () => {
       by: "manager",
       deadline: 2,
       bootSha: "abc",
+      targetSha: TARGET,
+      proposalId: PROPOSAL_ID,
       ready: ["qa-tester"],
     };
     expect(parseReboot(record)).toEqual(record);
+    // The approved commit is what boots (#960): a record without it is malformed.
+    const { targetSha: _target, ...untargeted } = record;
+    expect(parseReboot(untargeted)).toBeNull();
+    expect(parseReboot({ ...record, targetSha: "main" })).toBeNull();
+    const { proposalId: _id, ...unproposed } = record;
+    expect(parseReboot(unproposed)).toBeNull();
     expect(parseReboot({ ...record, ready: [1] })).toBeNull();
     expect(parseReboot({ ...record, deadline: "2" })).toBeNull();
     expect(parseReboot(null)).toBeNull();
+  });
+});
+
+/** @type {import("./reboot.mjs").RebootProposal} */
+const PROPOSAL = {
+  id: PROPOSAL_ID,
+  proposedAt: NOW,
+  by: "manager",
+  kind: "request",
+  reason: "load #960",
+  bootSha: "b".repeat(40),
+  targetSha: TARGET,
+  commits: [{ subject: "#960: proposals (#1)" }],
+  allCommits: 3,
+  stat: {
+    files: 1,
+    insertions: 40,
+    deletions: 3,
+    top: [{ path: "scripts/bots/hubd.mjs", insertions: 40, deletions: 3 }],
+  },
+};
+
+describe("parseProposal and parseDecision", () => {
+  it("read their files, and reject anything else", () => {
+    expect(parseProposal(PROPOSAL)).toEqual(PROPOSAL);
+    const { targetSha: _target, ...untargeted } = PROPOSAL;
+    expect(parseProposal(untargeted)).toBeNull();
+    expect(parseProposal({ ...PROPOSAL, id: "abc" })).toBeNull();
+    expect(parseProposal({ ...PROPOSAL, kind: "other" })).toBeNull();
+    expect(parseProposal({ ...PROPOSAL, commits: [{}] })).toBeNull();
+    expect(
+      parseProposal({ ...PROPOSAL, stat: { ...PROPOSAL.stat, top: [{ path: 1 }] } }),
+    ).toBeNull();
+    expect(parseProposal(null)).toBeNull();
+
+    const decision = { id: PROPOSAL_ID, decision: "approve", at: NOW };
+    expect(parseDecision(decision)).toEqual(decision);
+    expect(parseDecision({ ...decision, decision: "maybe" })).toBeNull();
+    expect(parseDecision({ ...decision, id: "R0123" })).toBeNull();
+    expect(parseDecision("approved")).toBeNull();
+  });
+});
+
+describe("decideProposal", () => {
+  const approve = { id: PROPOSAL_ID, decision: /** @type {const} */ ("approve"), at: NOW };
+  const base = { proposal: PROPOSAL, decision: approve, bootSha: PROPOSAL.bootSha, pending: null };
+
+  it("schedules an approval while the company runs the commit it was made on", () => {
+    expect(decideProposal(base)).toEqual({ action: "schedule" });
+  });
+
+  it("drops a rejection", () => {
+    expect(decideProposal({ ...base, decision: { ...approve, decision: "reject" } })).toEqual({
+      action: "drop",
+      outcome: "rejected",
+      note: "rejected by the operator",
+    });
+  });
+
+  it("voids an approval once the company booted since, or a reboot is pending", () => {
+    expect(decideProposal({ ...base, bootSha: "c".repeat(40) })).toEqual({
+      action: "drop",
+      outcome: "void",
+      note: "the company booted since",
+    });
+    expect(decideProposal({ ...base, bootSha: null })).toMatchObject({ outcome: "void" });
+    const pending = {
+      requestedAt: NOW,
+      reason: "x",
+      by: "manager",
+      deadline: NOW + DRAIN_MS,
+      bootSha: PROPOSAL.bootSha,
+      targetSha: TARGET,
+      proposalId: "a".repeat(32),
+      ready: [],
+    };
+    expect(decideProposal({ ...base, pending })).toEqual({
+      action: "drop",
+      outcome: "void",
+      note: "a reboot is already pending",
+    });
+  });
+
+  it("ignores a decision on another proposal: a stale button approves nothing", () => {
+    expect(decideProposal({ ...base, decision: { ...approve, id: "a".repeat(32) } })).toEqual({
+      action: "ignore",
+    });
   });
 });
 

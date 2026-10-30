@@ -949,6 +949,89 @@ describe("the company sidecar", () => {
     await until(() => telegram.calls.some((c) => c.method === "editMessageText"), "the edit");
   }, 20_000);
 
+  it("posts hubd's reboot proposal with two buttons, and records the operator's approval for hubd (#960)", async () => {
+    const telegram = await fakeTelegram();
+    const co = company(telegram.url);
+    const id = "0123456789abcdef0123456789abcdef";
+    const bootSha = "b".repeat(40);
+    fs.writeFileSync(
+      path.join(co.root, "reboot-proposal.json"),
+      JSON.stringify({
+        id,
+        proposedAt: Date.now(),
+        by: "manager",
+        kind: "request",
+        reason: "load #960",
+        bootSha,
+        targetSha: "a".repeat(40),
+        commits: [{ subject: "#960: approvals" }],
+        allCommits: 1,
+        stat: { files: 0, insertions: 0, deletions: 0, top: [] },
+      }),
+    );
+    fs.writeFileSync(path.join(co.root, "boot.json"), JSON.stringify({ sha: bootSha, at: 0 }));
+    const outbox = path.join(co.root, "bus", "_system", "outbox");
+    fs.mkdirSync(outbox, { recursive: true });
+    fs.writeFileSync(path.join(outbox, "1-proposal.json"), JSON.stringify({ proposal: id }));
+    co.start();
+
+    await until(() => telegram.sent.length === 1, "the proposal");
+    const posted = telegram.sent[0] ?? {};
+    expect(posted.message_thread_id).toBe(101);
+    expect(String(posted.text)).toMatch(
+      /^🔁 Manager proposes a reboot · R012345\nWhy: load #960\n/,
+    );
+    expect(posted.reply_markup).toEqual({
+      inline_keyboard: [
+        [{ text: "Approve reboot onto aaaaaaaa", callback_data: `r:${id}:approve` }],
+        [{ text: "Reject", callback_data: `r:${id}:reject` }],
+      ],
+    });
+    // Nobody's inbox: the proposal is the operator's.
+    expect(co.inbox("manager")).toEqual([]);
+    const message = path.join(co.root, "link", "proposal-message.json");
+    await until(
+      () => fs.existsSync(message) && fs.readFileSync(message, "utf8").includes('"messageId": 1'),
+      "the proposal's message id",
+    );
+
+    const decision = path.join(co.root, "link", "reboot-decision.json");
+    // A stranger's tap decides nothing.
+    telegram.pushUpdate({
+      callback_query: {
+        id: "cb0",
+        from: { id: 77, is_bot: false, username: "stranger" },
+        data: `r:${id}:approve`,
+        message: { message_id: 1, chat: { id: Number(CHAT) } },
+      },
+    });
+    telegram.pushUpdate({
+      callback_query: {
+        id: "cb1",
+        from: { id: 9, is_bot: false, username: "operator" },
+        data: `r:${id}:approve`,
+        message: { message_id: 1, chat: { id: Number(CHAT) } },
+      },
+    });
+    await until(() => fs.existsSync(decision), "the decision");
+    expect(JSON.parse(fs.readFileSync(decision, "utf8"))).toMatchObject({
+      id,
+      decision: "approve",
+    });
+
+    // hubd closes it: the message is edited, its buttons gone.
+    fs.writeFileSync(
+      path.join(outbox, "2-closed.json"),
+      JSON.stringify({ proposalClosed: id, outcome: "approved", note: "" }),
+    );
+    await until(() => telegram.calls.some((c) => c.method === "editMessageText"), "the edit");
+    const edit = telegram.calls.find((c) => c.method === "editMessageText")?.params ?? {};
+    expect(edit.message_id).toBe(1);
+    expect(String(edit.text)).toMatch(/✅ Approved \d\d:\d\d$/);
+    expect(edit.reply_markup).toBeUndefined();
+    expect(fs.existsSync(message)).toBe(false);
+  }, 20_000);
+
   it("lets only one sidecar run per company", async () => {
     const telegram = await fakeTelegram();
     const co = company(telegram.url);

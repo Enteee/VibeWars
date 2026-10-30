@@ -29,9 +29,11 @@ import {
   formatLine,
   deliverSystem,
   formatMirror,
+  formatProposal,
   formatQuestion,
   inboxesOf,
   parseQuestions,
+  parseProposalNotice,
   routeAnswer,
   isReadyOutboxEntry,
   mirrorTopic,
@@ -954,6 +956,116 @@ describe("questions for the operator", () => {
   });
 });
 
+/** @type {import("./reboot.mjs").RebootProposal} */
+const PROPOSAL = {
+  id: "fedcba9876543210fedcba9876543210",
+  proposedAt: 0,
+  by: "manager",
+  kind: "request",
+  reason: "load the reboot approval",
+  bootSha: "b".repeat(40),
+  targetSha: "a".repeat(40),
+  commits: [{ subject: "#960: the operator approves every reboot (#1)" }],
+  allCommits: 4,
+  stat: {
+    files: 2,
+    insertions: 43,
+    deletions: 4,
+    top: [
+      { path: "scripts/bots/hubd.mjs", insertions: 40, deletions: 3 },
+      { path: "scripts/bots/link.mjs", insertions: 3, deletions: 1 },
+    ],
+  },
+};
+
+describe("formatProposal", () => {
+  it("shows why, onto what, what it loads, and two buttons bound to the proposal", () => {
+    const posted = formatProposal(PROPOSAL);
+    expect(posted.text.split("\n")).toEqual([
+      "🔁 Manager proposes a reboot · Rfedcba",
+      "Why: load the reboot approval",
+      `Onto: aaaaaaaa (main) from bbbbbbbb (running)`,
+      "Company commits (1 of 4 since boot):",
+      "• #960: the operator approves every reboot (#1)",
+      "Company code: 2 files, +43 −4",
+      "• scripts/bots/hubd.mjs +40 −3",
+      "• scripts/bots/link.mjs +3 −1",
+      "Runs: drain ≤10 min, restarter builds aaaaaaaa, checks out aaaaaaaa, locks it, claude-llc up",
+      "Reply to this message to tell the manager something; a reply approves nothing.",
+    ]);
+    expect(posted.replyMarkup?.inline_keyboard).toEqual([
+      [{ text: "Approve reboot onto aaaaaaaa", callback_data: `r:${PROPOSAL.id}:approve` }],
+      [{ text: "Reject", callback_data: `r:${PROPOSAL.id}:reject` }],
+    ]);
+  });
+
+  it("says the end of the workday for --workday", () => {
+    const posted = formatProposal({ ...PROPOSAL, kind: "workday", reason: "workday" });
+    expect(posted.text).toContain("Why: end of the workday");
+  });
+
+  it("loses its buttons and says how it closed", () => {
+    const at = new Date(2026, 9, 30, 9, 41).getTime();
+    for (const [closed, last] of /** @type {const} */ ([
+      [{ outcome: "approved", note: "", at }, "✅ Approved 09:41"],
+      [{ outcome: "rejected", note: "", at }, "❌ Rejected 09:41"],
+      [{ outcome: "withdrawn", note: "", at }, "↩️ Withdrawn by the manager"],
+      [
+        { outcome: "void", note: "the company booted since", at },
+        "⚠️ No longer applies: the company booted since",
+      ],
+    ])) {
+      const edited = formatProposal(PROPOSAL, closed);
+      expect(edited.replyMarkup).toBeUndefined();
+      expect(edited.text.split("\n").at(-1)).toBe(last);
+    }
+  });
+
+  it("drops list lines, never the header, the Onto line or the buttons, to fit", () => {
+    const many = {
+      ...PROPOSAL,
+      reason: "r".repeat(3000),
+      commits: Array.from({ length: 30 }, (_, i) => ({
+        subject: `${"s".repeat(100)} ${String(i)}`,
+      })),
+      stat: {
+        ...PROPOSAL.stat,
+        files: 20,
+        top: Array.from({ length: 8 }, (_, i) => ({
+          path: `scripts/bots/${"f".repeat(80)}${String(i)}.mjs`,
+          insertions: 1,
+          deletions: 1,
+        })),
+      },
+    };
+    const posted = formatProposal(many);
+    expect(posted.text.length).toBeLessThanOrEqual(MAX_MESSAGE_CHARS);
+    expect(posted.text).toContain("🔁 Manager proposes a reboot · Rfedcba");
+    expect(posted.text).toContain("Onto: aaaaaaaa (main) from bbbbbbbb (running)");
+    expect(posted.text).toContain("+30 more");
+    expect(posted.replyMarkup?.inline_keyboard).toHaveLength(2);
+
+    const huge = formatProposal({ ...many, reason: "r".repeat(5000) });
+    expect(huge.text.length).toBeLessThanOrEqual(MAX_MESSAGE_CHARS);
+    expect(huge.text).toContain("Onto: aaaaaaaa (main)");
+    expect(huge.text).toContain("Runs: drain");
+    expect(huge.text).toMatch(/Why: r+…/);
+  });
+});
+
+describe("parseProposalNotice", () => {
+  const id = PROPOSAL.id;
+  it("reads hubd's two notices, strictly", () => {
+    expect(parseProposalNotice({ proposal: id })).toEqual({ proposal: id });
+    const closed = { proposalClosed: id, outcome: "rejected", note: "" };
+    expect(parseProposalNotice(closed)).toEqual(closed);
+    expect(parseProposalNotice({ proposal: "R0123" })).toBeNull();
+    expect(parseProposalNotice({ proposal: id, to: "all" })).toBeNull();
+    expect(parseProposalNotice({ ...closed, outcome: "maybe" })).toBeNull();
+    expect(parseProposalNotice({ to: "all", text: "x", nudge: null, direct: false })).toBeNull();
+  });
+});
+
 describe("routeAnswer", () => {
   /** @param {unknown} value */
   const obj = (value) => /** @type {Record<string, unknown>} */ (value);
@@ -965,6 +1077,7 @@ describe("routeAnswer", () => {
     operatorId: OPERATOR,
     operatorTopicId: OPERATOR_TOPIC,
     now: 5000,
+    proposal: null,
   };
   /** @param {boolean} answered */
   const store = (answered) => ({
@@ -1096,6 +1209,7 @@ describe("routeAnswer", () => {
       immediate: [{ method: "answerCallbackQuery", params: { callback_query_id: "cb1" } }],
       paced: [],
       answered: null,
+      decision: null,
     });
   });
 
@@ -1108,7 +1222,13 @@ describe("routeAnswer", () => {
         store(false),
         context,
       );
-      expect(routed).toEqual({ deliveries: [], immediate: [], paced: [], answered: null });
+      expect(routed).toEqual({
+        deliveries: [],
+        immediate: [],
+        paced: [],
+        answered: null,
+        decision: null,
+      });
     }
   });
 
@@ -1126,12 +1246,111 @@ describe("routeAnswer", () => {
 
   it("ignores a tap that a bot made", () => {
     const routed = routeAnswer(tap("q:7:0", { id: 1, is_bot: true }), store(false), context);
-    expect(routed).toEqual({ deliveries: [], immediate: [], paced: [], answered: null });
+    expect(routed).toEqual({
+      deliveries: [],
+      immediate: [],
+      paced: [],
+      answered: null,
+      decision: null,
+    });
   });
 
   it("leaves everything outside the Operator topic to routeInbound", () => {
     expect(routeAnswer(update({ message_thread_id: 11 }), store(false), context)).toBeNull();
     expect(routeAnswer(update({}), store(false), context)).toBeNull();
+  });
+
+  describe("on a reboot proposal (#960)", () => {
+    const PROPOSAL_MESSAGE = 600;
+    const id = "0123456789abcdef0123456789abcdef";
+    const open = {
+      proposal: { ...PROPOSAL, id },
+      messageId: PROPOSAL_MESSAGE,
+      stale: null,
+    };
+    const withOpen = { ...context, proposal: open };
+    /**
+     * @param {string} data
+     * @param {{ from?: Record<string, unknown>, messageId?: number }} [on]
+     */
+    const press = (data, on = {}) => {
+      const raw = obj(tap(data, on.from));
+      const query = obj(raw.callback_query);
+      return {
+        ...raw,
+        callback_query: {
+          ...query,
+          message: { ...obj(query.message), message_id: on.messageId ?? PROPOSAL_MESSAGE },
+        },
+      };
+    };
+
+    it("turns the operator's tap on the proposal into a decision for hubd", () => {
+      expect(routeAnswer(press(`r:${id}:approve`), store(false), withOpen)).toEqual({
+        deliveries: [],
+        immediate: [{ method: "answerCallbackQuery", params: { callback_query_id: "cb1" } }],
+        paced: [],
+        answered: null,
+        decision: { id, decision: "approve" },
+      });
+      expect(routeAnswer(press(`r:${id}:reject`), store(false), withOpen)?.decision).toEqual({
+        id,
+        decision: "reject",
+      });
+    });
+
+    it("decides nothing for anyone else's tap, another message, or another id", () => {
+      const stranger = { id: 77, is_bot: false, username: "stranger" };
+      for (const routed of [
+        routeAnswer(press(`r:${id}:approve`, { from: stranger }), store(false), withOpen),
+        routeAnswer(press(`r:${id}:approve`, { messageId: 999 }), store(false), withOpen),
+        routeAnswer(press(`r:${"a".repeat(32)}:approve`), store(false), withOpen),
+        routeAnswer(press(`r:${id}:approve`), store(false), context),
+        routeAnswer(press(`r:${id}:yes`), store(false), withOpen),
+      ]) {
+        expect(routed?.decision).toBeNull();
+        expect(routed?.deliveries).toEqual([]);
+      }
+      expect(
+        routeAnswer(press(`r:${"a".repeat(32)}:approve`), store(false), withOpen)?.immediate,
+      ).toEqual([
+        {
+          method: "answerCallbackQuery",
+          params: { callback_query_id: "cb1", text: "Raaaaaa no longer applies" },
+        },
+      ]);
+    });
+
+    it("says at once when an approval no longer applies, and leaves hubd to drop it", () => {
+      const stale = { ...withOpen, proposal: { ...open, stale: "the company booted since" } };
+      const routed = routeAnswer(press(`r:${id}:approve`), store(false), stale);
+      expect(routed?.decision).toEqual({ id, decision: "approve" });
+      expect(routed?.immediate[0]?.params).toEqual({
+        callback_query_id: "cb1",
+        text: "R012345 no longer applies: the company booted since",
+      });
+    });
+
+    it("hands a reply to the proposal to the manager, and approves nothing", () => {
+      const routed = routeAnswer(say("approved", PROPOSAL_MESSAGE), store(false), withOpen);
+      expect(routed?.decision).toBeNull();
+      expect(routed?.paced).toEqual([]);
+      expect(routed?.deliveries).toEqual([
+        {
+          employee: "manager",
+          line: {
+            ts: 5000,
+            from: "@operator",
+            kind: "human",
+            text: "about reboot R012345: approved",
+            topicId: OPERATOR_TOPIC,
+            messageId: 0,
+            broadcast: false,
+            nudge: null,
+          },
+        },
+      ]);
+    });
   });
 
   it("is never routed to everyone by routeInbound", () => {
