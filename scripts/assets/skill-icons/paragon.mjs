@@ -49,10 +49,10 @@ export const PARAGON_ICONS = {
   "paragon.hasty-refrain": { glyph: "speed", modifier: "renew" },
   "paragon.mending-refrain": { glyph: "ring-heal", modifier: "renew" },
   "paragon.purifying-finale": { glyph: "cleanse", modifier: "finale" },
-  // Placeholders until the asset-designer's (#1485): Paragon echoes 2.
-  "paragon.bladeturn-refrain": { glyph: "blade-turn", modifier: "renew" },
-  "paragon.energizing-finale": { glyph: "energy", modifier: "finale" },
-  "paragon.soldiers-fury": { glyph: "blade-adrenal", modifier: "up" },
+  // Paragon echoes 2 (#1485, #1524): a glancing blade, a ringed bolt, a spiked blade.
+  "paragon.bladeturn-refrain": { glyph: "shield-glance", modifier: "renew" },
+  "paragon.energizing-finale": { glyph: "energy-ring", modifier: "finale" },
+  "paragon.soldiers-fury": { glyph: "blade-fury" },
   // Paragon spears (#1486, #1508): a spear and its rider; the drop badge is Deep Wound.
   "paragon.blazing-spear": { glyph: "spear-flame" },
   "paragon.mighty-throw": { glyph: "spear-fast" },
