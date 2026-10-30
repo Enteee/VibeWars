@@ -4,6 +4,10 @@
  * which no jail binds, one file per URL named by its sha256, beside an
  * `index.json` of the entries and the cache's stats.
  *
+ * The index is written at most once per `flushMs` for counters and recency, at
+ * once after an eviction, and by `flush`. A crash loses at most `flushMs` of
+ * them: the start-up sweep deletes bodies the index does not name.
+ *
  * At most `limitBytes` is kept: after a store, the least recently used
  * entries go first, never the one just stored. Below the disk guard's
  * `HOLD_BELOW` free, a body is served and not stored.
@@ -18,6 +22,9 @@ import path from "node:path";
 
 /** The most the cache keeps on disk. */
 export const WEB_CACHE_LIMIT_BYTES = 10 * 2 ** 30;
+
+/** The least time between two writes of the index that only a hit or a miss asked for. */
+export const WEB_CACHE_FLUSH_MS = 10_000;
 
 const INDEX = "index.json";
 
@@ -35,6 +42,7 @@ const INDEX = "index.json";
  * @property {string} dir created if missing
  * @property {number} [limitBytes] `WEB_CACHE_LIMIT_BYTES` by default
  * @property {() => number} [now] `Date.now` by default
+ * @property {number} [flushMs] `WEB_CACHE_FLUSH_MS` by default
  * @property {() => number} freeBytes on the cache's filesystem
  * @property {number} holdBelow free bytes under which nothing is stored
  * @property {(line: string) => void} log hubd's log
@@ -105,6 +113,7 @@ export function createWebCache(deps) {
   const { dir, freeBytes, holdBelow, log } = deps;
   const limitBytes = deps.limitBytes ?? WEB_CACHE_LIMIT_BYTES;
   const now = deps.now ?? Date.now;
+  const flushMs = deps.flushMs ?? WEB_CACHE_FLUSH_MS;
   fs.mkdirSync(dir, { recursive: true });
 
   /** @type {Index} */
@@ -135,14 +144,22 @@ export function createWebCache(deps) {
   }
   /** @type {Map<string, Promise<Answer>>} */
   const inFlight = new Map();
+  let bytes = [...byUrl.values()].reduce((sum, entry) => sum + entry.bytes, 0);
+  let dirty = false;
+  let lastSave = now();
 
-  /** The index, written whole; a failed write is logged, the request still served. */
+  /**
+   * The index, written whole; a failed write is logged, the request still
+   * served, and the index stays dirty for the next eligible `touch` or `flush`.
+   */
   const save = () => {
+    lastSave = now();
     index.entries = [...byUrl.values()];
     const tmp = path.join(dir, `.${INDEX}.tmp`);
     try {
       fs.writeFileSync(tmp, JSON.stringify(index));
       fs.renameSync(tmp, indexFile);
+      dirty = false;
     } catch (error) {
       fs.rmSync(tmp, { force: true });
       log(
@@ -151,13 +168,20 @@ export function createWebCache(deps) {
     }
   };
 
+  /** The index changed: write it if `flushMs` has passed since the last write. */
+  const touch = () => {
+    dirty = true;
+    if (now() - lastSave >= flushMs) {
+      save();
+    }
+  };
+
   /** @param {Entry} entry */
   const drop = (entry) => {
     byUrl.delete(entry.url);
+    bytes -= entry.bytes;
     fs.rmSync(path.join(dir, bodyName(entry.url)), { force: true });
   };
-
-  const total = () => [...byUrl.values()].reduce((sum, entry) => sum + entry.bytes, 0);
 
   /**
    * Keep `text` for `url`, then evict down to the limit. A write that fails
@@ -183,21 +207,33 @@ export function createWebCache(deps) {
     }
     const at = now();
     const stored = { url, bytes: Buffer.byteLength(text), fetchedAt: at, usedAt: at };
+    bytes += stored.bytes - (byUrl.get(url)?.bytes ?? 0);
     byUrl.set(url, stored);
+    dirty = true;
+    if (bytes <= limitBytes) {
+      return;
+    }
     const oldestFirst = [...byUrl.values()].sort((a, b) => a.usedAt - b.usedAt);
-    let bytes = total();
     for (const entry of oldestFirst) {
       if (bytes <= limitBytes) {
         break;
       }
       if (entry !== stored) {
         drop(entry);
-        bytes -= entry.bytes;
         index.evictions += 1;
       }
     }
     if (bytes > limitBytes) {
       log(`hubd: web cache: ${url} alone is over the limit, kept`);
+    }
+    // Bodies were deleted: the index must not name them for long.
+    save();
+  };
+
+  /** Write the index if it changed since the last write. */
+  const flush = () => {
+    if (dirty) {
+      save();
     }
   };
 
@@ -231,7 +267,7 @@ export function createWebCache(deps) {
         if (text !== null) {
           entry.usedAt = now();
           hit(entry.bytes);
-          save();
+          touch();
           return { ok: true, text };
         }
       }
@@ -243,7 +279,7 @@ export function createWebCache(deps) {
         } else {
           index.misses += 1;
         }
-        save();
+        touch();
         return answer;
       }
       index.misses += 1;
@@ -252,7 +288,7 @@ export function createWebCache(deps) {
           if (answer.ok && keep(answer.text)) {
             store(url, answer.text);
           }
-          save();
+          touch();
           return answer;
         })
         .finally(() => {
@@ -262,12 +298,15 @@ export function createWebCache(deps) {
       return fetched;
     },
 
+    flush,
+
     /** @returns {WebCacheStats} */
     stats() {
+      flush();
       const { hits, misses, evictions, bytesSaved } = index;
       return {
         entries: byUrl.size,
-        bytes: total(),
+        bytes,
         limitBytes,
         hits,
         misses,
