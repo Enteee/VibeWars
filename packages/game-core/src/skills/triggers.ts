@@ -46,6 +46,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-loses-enchantment"
   | "bearer-blocks"
   | "bearer-creates-creature"
+  | "bearer-chant-or-shout-ends"
   | "ends"
   | "ends-early"
   | "expires"
@@ -137,6 +138,8 @@ export function fireCreationTriggers(
  * gained fires every status on it that answers one, in `active` order; a
  * status ended fires its own `ends` triggers, though it is no longer on
  * the bearer, and its `expires` ones too if its duration ran out (#944).
+ * A chant or a shout ended (#1423) renews what renews on that and fires
+ * every status still on a living bearer that answers it, after its own.
  * A hit the bearer landed or failed to land (#1332), or physical damage
  * it took (#935), fires what
  * answered it when it happened (#953), so a killing blow still sets off
@@ -169,9 +172,10 @@ export function fireChangeTriggers(
             context,
           ),
         );
-    case "ended":
-      return getStatusDefinition(change.id)
-        .triggers.filter(
+    case "ended": {
+      const { category, triggers } = getStatusDefinition(change.id);
+      const own = triggers
+        .filter(
           (trigger) =>
             trigger.on === "ends" ||
             (trigger.on === "expires" && change.expired) ||
@@ -180,6 +184,18 @@ export function fireChangeTriggers(
         .flatMap((trigger) =>
           fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
         );
+      if ((category !== "chant" && category !== "shout") || bearer.dead) {
+        return own;
+      }
+      return [
+        ...own,
+        ...bearer.statuses
+          .chantOrShoutEnded()
+          .flatMap(({ statusId, sourceId, trigger }) =>
+            fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
+          ),
+      ];
+    }
     case "hit":
     case "failed-to-hit":
     case "took-physical-damage":
@@ -258,7 +274,8 @@ export function breakHex(
  * One trigger's effects, in order, from `parties`. Consecutive skill
  * effects resolve together, so one may read what an earlier one did; a
  * spread with nothing gained does nothing. A status that ends when
- * triggered (#1022) then ends, logged as its expiry.
+ * triggered (#1022), or has fired as many times as it may (#1423), then
+ * ends, logged as its expiry.
  */
 function fire(
   trigger: StatusTrigger,
@@ -299,6 +316,8 @@ function fire(
   if (getStatusDefinition(statusId).endsWhenTriggered && bearer.statuses.has(statusId)) {
     bearer.statuses.end(statusId);
     events.push({ kind: "status-expired", targetId: bearer.id, statusId });
+  } else if (bearer.statuses.spendTrigger(statusId)) {
+    events.push({ kind: "status-expired", targetId: bearer.id, statusId });
   }
   return events.length === 0 ? [] : [{ sourceId, skillId: trigger.skillId, events }];
 }
@@ -312,6 +331,7 @@ export function isEchoStatus(statusId: StatusId): boolean {
 
 /**
  * Whether `skillId` puts an echo on its user (#469): Arcane Echo and Echo.
+ * The Mesmer's copy, not a Paragon's `"echo"` skill type (#1423).
  * One is never copied, and does not use up another echo already up.
  */
 export function isEchoSkill(skillId: string): boolean {

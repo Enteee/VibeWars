@@ -7,12 +7,6 @@ import { h, screenBar } from "./kit.js";
 /** How many matches the Record screen lists (#1404), newest first. */
 export const RECORD_SCREEN_ROWS = 50;
 
-/** What the Record screen says with nothing to list. */
-export const NO_MATCHES = "No matches yet. Finished matches appear here.";
-
-/** The muted line under the title: the record is nobody else's to trust. */
-export const LOCAL_ONLY = "Kept in this browser only. Nobody else sees or checks it.";
-
 /** Each mode by name, as the lobby's line starts (#476). */
 const MODE_NAMES: Readonly<Record<MatchMode, string>> = {
   annihilation: "Annihilation",
@@ -71,16 +65,9 @@ export function renderRecordScreen(
     back: { label: "Back", onBack: callbacks.onBack },
     actions: [],
   });
-  panel.appendChild(h("p", "record-local-only", LOCAL_ONLY));
 
   for (const problem of problems) {
     panel.appendChild(h("div", "screen-problem", problem));
-  }
-
-  if (records.length === 0) {
-    panel.appendChild(h("p", "empty-state-message", NO_MATCHES));
-    root.appendChild(panel);
-    return;
   }
 
   const table = document.createElement("table");
