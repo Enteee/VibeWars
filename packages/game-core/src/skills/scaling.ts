@@ -40,8 +40,31 @@ export function resolveMagnitudeAtRanks(
   return magnitudeAtRank(magnitude.scaling, ranks.get(magnitude.scaling.attributeId) ?? 0);
 }
 
+/**
+ * `magnitude` for the caster, times `factor`, rounded once, after (#1614):
+ * Aura of Restoration's 360% of a spell's cost is 18 for 5 energy, where
+ * rounding the 3.6 first would make it 20.
+ */
+export function resolveMagnitudeTimes(
+  magnitude: Magnitude,
+  caster: Combatant,
+  factor: number,
+): number {
+  if ("flat" in magnitude) {
+    return Math.round(magnitude.flat * factor);
+  }
+  return Math.round(
+    curveAt(magnitude.scaling, rankOf(caster, magnitude.scaling.attributeId)) * factor,
+  );
+}
+
 /** The curve itself: `scaling` at `rank`, rounded. */
 function magnitudeAtRank(scaling: AttributeScaling, rank: number): number {
+  return Math.round(curveAt(scaling, rank));
+}
+
+/** The curve, unrounded. */
+function curveAt(scaling: AttributeScaling, rank: number): number {
   const slope = (scaling.atTwelve - scaling.atZero) / MAX_ATTRIBUTE_RANK;
-  return Math.round(scaling.atZero + slope * rank);
+  return scaling.atZero + slope * rank;
 }
