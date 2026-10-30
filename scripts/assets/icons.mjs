@@ -2663,7 +2663,53 @@ const skillGlyph = {
   "hex-return": () =>
     `<circle cx="6" cy="6" r="3.8" ${stroke(C.ink, 1.8)} stroke-dasharray="2.6 2"/>` +
     inkLine("M21 21L10.5 10.5M10.5 17V10.5H17", 2.4),
+  // The "with their next skill" chants (#1497): the kind of skill it waits for sits top left, a
+  // chevron after it says "next", the payoff fills the space below and right.
+  "next-energy-attack": () => nextMark("attack") + nextBolt(),
+  "next-energy-spell": () => nextMark("spell") + nextBolt(),
+  "next-energy-signet": () => nextMark("signet") + nextBolt(),
+  "next-health-spell": () => nextMark("spell") + nextHeart(),
+  "next-heal-shout": () => nextMark("shout") + nextPlus(),
+  "next-cleanse-signet": () => nextMark("signet") + nextDrop(),
+  "next-cleanse-many": () => nextMark("many") + nextDrop(),
+  "next-unhex-spell": () => nextMark("spell") + nextBrokenRing(),
+  "next-adrenaline-attack": () => nextMark("attack") + nextBars(),
+  "next-weak-attack": () => nextMark("attack") + nextArrowDown(),
+  "next-cripple-attack": () => nextMark("attack") + nextLeg(),
+  "next-interrupt-attack": () => nextMark("attack") + nextZig(),
 };
+
+/**
+ * The trigger of a "next skill" chant (#1497): a small mark of the skill kind, then a chevron.
+ * @param {"attack" | "spell" | "signet" | "shout" | "many"} kind
+ */
+function nextMark(kind) {
+  const marks = {
+    attack: inkLine("M2.5 10L9 3.5M3 6.5L6 9.5", 2.2),
+    spell: `<circle cx="6" cy="6.5" r="3.4" fill="${C.ink}"/>`,
+    signet:
+      `<circle cx="6" cy="7.5" r="2.6" ${stroke(C.ink, 1.8)}/>` +
+      inkFill("M6 1.5L8 3.5L6 5.5L4 3.5Z"),
+    shout: inkLine("M6 2.5L9.5 4.5V8.5L6 10.5L2.5 8.5V4.5Z", 1.8),
+    many: inkFill("M2 3H5V6H2ZM2 7.5H5V10.5H2ZM6 3H9V6H6Z"),
+  };
+  return marks[kind] + inkLine("M11.5 3.5L14.5 6.5L11.5 9.5", 1.8);
+}
+const nextBolt = () => inkFill("M16 9L8 17.5H13L11.5 22.5L20 13.5H15Z");
+const nextHeart = () =>
+  inkFill(
+    "M13 22L6.5 15.5C4.5 13.5 6 10.5 8.8 10.5C10.8 10.5 12.3 11.5 13 13C13.7 11.5 15.2 10.5 17.2 10.5C20 10.5 21.5 13.5 19.5 15.5Z",
+  );
+const nextPlus = () => inkLine("M13 10V21M7.5 15.5H18.5", 3);
+const nextDrop = () =>
+  inkFill("M13.5 9.5C15.5 12.5 18.5 14.5 18.5 18A5 5 0 0 1 8.5 18C8.5 14.5 11.5 12.5 13.5 9.5Z") +
+  `<path d="M9.5 21L17.5 13" ${stroke(C.bg, 2)}/>`;
+const nextBrokenRing = () => inkLine("M11 10.5A6 6 0 1 0 19 16.5M15.5 10.2A6 6 0 0 1 19 13", 2.4);
+const nextBars = () => inkLine("M8 22V17M13.5 22V13M19 22V9", 3);
+const nextArrowDown = () => inkLine("M13.5 10V21M8 16L13.5 21.5L19 16", 2.8);
+const nextLeg = () => inkLine("M11 10V16L17 18.5V22", 2.8);
+const nextZig = () =>
+  inkLine("M7 20L10.5 12L14 18L17.5 11L20 15", 2.4) + inkLine("M6 11L19 22", 1.8);
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
