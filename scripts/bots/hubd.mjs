@@ -3941,6 +3941,7 @@ async function main() {
   /** @param {string} why */
   const stop = (why) => {
     console.error(`hubd: stopping on ${why}`);
+    webCache?.flush();
     fs.rmSync(ALIVE, { force: true });
     releaseLock(LOCK);
     process.exit(0);
