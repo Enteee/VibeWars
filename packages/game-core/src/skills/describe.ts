@@ -1257,7 +1257,7 @@ function describeEffects(
       // +3 Health regeneration".
       ...(aura === undefined ? [] : [describeAura(aura, "in its range")]),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
-      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst)]),
+      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
     ];
   }
   if (effect.kind === "create-ground-effect") {
@@ -1333,15 +1333,19 @@ function describeSpiritBlow(
  * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
  * area take 8 damage per second it lived (max 150)".
  */
-function describeDeathBurst(burst: DeathBurst): EffectDescription {
+function describeDeathBurst(
+  burst: DeathBurst,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
   const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
-  const amount = String(burst.perSecondAlive);
+  const rate = describeMagnitude(burst.perSecondAlive, ranks);
+  const amount = String(rate.current);
   const what =
     burst.effect === "damage" ? `take ${amount} damage` : `are healed for ${amount} Health`;
   const max = burst.max === undefined ? "" : ` (max ${String(burst.max)})`;
   return {
     text: `When it dies, ${who} ${what} per second it lived${max}`,
-    magnitude: undefined,
+    magnitude: rate,
   };
 }
 

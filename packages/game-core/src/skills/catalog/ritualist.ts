@@ -1837,10 +1837,12 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // PvP: "Create a level 1...10 Spirit that dies after 30 seconds. When
     // this Spirit dies, all foes in the area take 1...10 damage for each
     // second the Spirit was alive (maximum of 150 damage)." At 12: level
-    // 8.2, 8.2 a second.
+    // 8.2, 8 a second: a rank's number is whole, as GW1 prints it.
     creature: burstingSpirit("Destruction", "ritualist.channeling-magic", 30, {
       effect: "damage",
-      perSecondAlive: 8.2,
+      perSecondAlive: {
+        scaling: { attributeId: "ritualist.channeling-magic", atZero: 1, atTwelve: 8.2 },
+      },
       max: 150,
       affects: "foes",
       radius: AREA_IN_THE_AREA,
@@ -1858,10 +1860,12 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // PvP: "Create a level 1...10 spirit. When this spirit dies, all
     // non-spirit allies within its range are healed for 1...7 Health for
     // each second this spirit was alive. This spirit dies after 20
-    // seconds." At 12: level 8.2, 5.8 a second.
+    // seconds." At 12: level 8.2, 6 a second.
     creature: burstingSpirit("Life", "ritualist.restoration-magic", 20, {
       effect: "heal",
-      perSecondAlive: 5.8,
+      perSecondAlive: {
+        scaling: { attributeId: "ritualist.restoration-magic", atZero: 1, atTwelve: 5.8 },
+      },
       max: undefined,
       affects: "allies",
       radius: RANGE_SPIRIT,
