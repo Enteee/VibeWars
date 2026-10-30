@@ -38,6 +38,7 @@ import {
   isSpell,
   type AttackWeaponClass,
   type Combatant,
+  type ConditionalBonus,
   type DamageEffect,
   type HealEffect,
   type Skill,
@@ -185,6 +186,10 @@ export type StatusId =
   | "anthem-of-weariness"
   | "crippling-anthem"
   | "anthem-of-disruption"
+  | "song-of-concentration"
+  | "anthem-of-guidance"
+  | "energizing-chorus"
+  | "anthem-of-envy"
   // Ritualist weapon spells (#975).
   | "spirit-light-weapon"
   | "weapon-of-quickening"
@@ -316,7 +321,10 @@ export type StatusId =
   | "order-of-pain"
   | "mark-of-rodgort"
   | "ward-against-elements"
-  | "infuriating-heat";
+  | "infuriating-heat"
+  // Mesmer crowd punishers (#1501).
+  | "panic"
+  | "wastrels-demise";
 
 /** A status's modifiers that hold only while its bearer is under another (#1485). */
 export interface WhileUnder {
@@ -593,12 +601,26 @@ export interface StatusDefinition {
    */
   readonly nextAttackSkill: readonly SkillEffect[] | undefined;
   /**
+   * More damage on the bearer's next attack skill's blows (#1505), in the
+   * blow, read on each victim before it lands: Anthem of Envy's "+10...20
+   * damage against foes with more than 50% Health". Spent as
+   * `nextAttackSkill` is. `undefined`: attack skills leave it alone.
+   */
+  readonly nextAttackSkillBonus: ConditionalBonus | undefined;
+  /**
    * What the bearer's next skills of a kind do for the bearer itself
    * (#1483): once a matching skill's use completes, its effects resolve
    * on the bearer, and it ends after `count` of them. An interrupted skill
    * and a weapon swing do not count. `undefined`: skills leave it alone.
    */
   readonly nextSkill: NextSkill | undefined;
+  /**
+   * How the bearer's next skill of a kind goes (#1505): it cannot be
+   * interrupted, cannot be blocked, or costs less. Consumed as that skill
+   * starts, before its cost is paid, and it ends then; an interrupt later
+   * does not give it back. `undefined`: skills leave it alone.
+   */
+  readonly nextSkillRule: NextSkillRule | undefined;
   /**
    * It ends the moment the bearer attacks (#758): strikes a blow or
    * releases a shot, swing or attack skill alike. A weapon spell's price.
@@ -777,6 +799,12 @@ export interface StatusDefinition {
    */
   readonly failsNextSpell: FailsNextSpell | undefined;
   /**
+   * Every whole second it has been on the bearer, a pulse of growing
+   * typeless damage from its source hits the bearer and the source's
+   * foes near it (#1501): Wastrel's Demise's. `undefined`: none.
+   */
+  readonly damagePulse: DamagePulse | undefined;
+  /**
    * Whenever a chant or a shout ends on the bearer, its remaining time is
    * back to the duration it was applied with (#1423): a refrain's "this
    * echo is reapplied every time a chant or shout ends on you".
@@ -913,6 +941,32 @@ export type StatusTriggerEvent =
    */
   | "ends-early"
   | "expires";
+
+/**
+ * `StatusDefinition.damagePulse` (#1501). Pulse `k`, at `k` whole
+ * seconds since the status was applied, deals `damage + growth × (k − 1)`.
+ * A status that ends between pulses deals no partial one, and a renewal
+ * starts the count again at 1.
+ */
+export interface DamagePulse {
+  /** The first pulse's damage, typeless. */
+  readonly damage: number;
+  /** Added to each pulse after the first. */
+  readonly growth: number;
+  /** The bearer and the source's foes within this of the bearer are hit. */
+  readonly radius: number;
+  readonly skillId: string;
+}
+
+/** A `damagePulse` that came due on the bearer (#1501): what it deals, from whom. */
+export interface StatusPulse {
+  readonly id: StatusId;
+  readonly sourceId: string;
+  readonly damage: number;
+}
+
+/** Within a hair, as a swing is: twenty additions of 0.05 fall just short of 1. */
+const PULSE_EPSILON = 1e-6;
 
 /** `StatusDefinition.skillArmorPenetration` (#1464). */
 export interface SkillArmorPenetration {
@@ -1168,8 +1222,26 @@ export interface NextSkill {
   readonly skillId: string;
 }
 
+/**
+ * A chant's hold on how the bearer's next skill of a kind goes (#1505), as
+ * Song of Concentration's "the next skill used by each ally within
+ * earshot cannot be interrupted".
+ */
+export interface NextSkillRule {
+  /** As `NextSkill.which`. */
+  readonly which: NextSkill["which"];
+  /** That skill's activation cannot be interrupted. */
+  readonly uninterruptible: boolean;
+  /** That attack skill's blows cannot be blocked. */
+  readonly unblockable: boolean;
+  /** Energy off that skill's cost, never below 0. */
+  readonly energyDiscount: number;
+  /** The skill the log names it after: "paragon.song-of-concentration". */
+  readonly skillId: string;
+}
+
 /** Whether `skill` is of the kind `which` names (#1483). */
-function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boolean {
+export function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boolean {
   switch (which) {
     case "attack-skill":
       return skill.attack !== undefined;
@@ -1240,7 +1312,9 @@ function define(
     nextSpells: undefined,
     spreads: false,
     nextAttackSkill: undefined,
+    nextAttackSkillBonus: undefined,
     nextSkill: undefined,
+    nextSkillRule: undefined,
     endsWhenBearerAttacks: false,
     endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
@@ -1271,6 +1345,7 @@ function define(
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
     failsNextSpell: undefined,
+    damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
@@ -2160,6 +2235,52 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "anthem-of-disruption": define("anthem-of-disruption", "Anthem of Disruption", "chant", {
     profession: "paragon",
     nextAttackSkill: [{ kind: "interrupt" }],
+  }),
+  // "For 10 seconds, the next skill used by each ally within earshot
+  // cannot be interrupted" (#1505).
+  "song-of-concentration": define("song-of-concentration", "Song of Concentration", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "any",
+      uninterruptible: true,
+      unblockable: false,
+      energyDiscount: 0,
+      skillId: "paragon.song-of-concentration",
+    },
+  }),
+  // "...the next attack skill used by each party member within earshot
+  // cannot be blocked" (#1505).
+  "anthem-of-guidance": define("anthem-of-guidance", "Anthem of Guidance", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "attack-skill",
+      uninterruptible: false,
+      unblockable: true,
+      energyDiscount: 0,
+      skillId: "paragon.anthem-of-guidance",
+    },
+  }),
+  // "...the next shout or chant used by each ally within earshot costs
+  // 3...7 less Energy" (#1505): 6 at rank 12.
+  "energizing-chorus": define("energizing-chorus", "Energizing Chorus", "chant", {
+    profession: "paragon",
+    nextSkillRule: {
+      which: "shout-or-chant",
+      uninterruptible: false,
+      unblockable: false,
+      energyDiscount: 6,
+      skillId: "paragon.energizing-chorus",
+    },
+  }),
+  // "...the next attack skill used by each ally within earshot deals
+  // +10...20 damage against foes with more than 50% Health" (#1505, PvP):
+  // 18 at rank 12.
+  "anthem-of-envy": define("anthem-of-envy", "Anthem of Envy", "chant", {
+    profession: "paragon",
+    nextAttackSkillBonus: {
+      condition: { kind: "target-health-above", fraction: 0.5 },
+      amount: { flat: 18 },
+    },
   }),
   // "+2...4...4 Health regeneration and a 50% chance to block. Weapon of
   // Warding ends if that ally attacks."
@@ -3581,6 +3702,38 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "ranger",
     adrenalineGainFaster: 0.59,
   }),
+
+  // Mesmer crowd punishers (#1501), at their rank-12 values.
+  // "When a foe hexed with Panic successfully uses a skill, all other
+  // nearby foes are interrupted": the bearer's own allies, never itself.
+  panic: define("panic", "Panic", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "interrupt" }],
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.panic",
+      },
+    ],
+  }),
+  // "Each second while hexed, target foe and all foes adjacent to that
+  // foe take 1...10 damage and an additional 1...10 damage for each second
+  // this spell is in effect. This hex ends prematurely if target foe uses
+  // a skill": 8 and 8, so 8, 16, 24, 32, 40.
+  "wastrels-demise": define("wastrels-demise", "Wastrel's Demise", "hex", {
+    profession: "mesmer",
+    damagePulse: { damage: 8, growth: 8, radius: AREA_ADJACENT, skillId: "mesmer.wastrels-demise" },
+    endsWhenBearerUsesSkill: true,
+  }),
 };
 
 /**
@@ -3668,6 +3821,7 @@ export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): bo
 export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
+  #pulses: StatusPulse[] = [];
 
   /**
    * What happened to this set since the last drain (#887), oldest first,
@@ -3677,6 +3831,16 @@ export class StatusSet {
     const changes = this.#changes;
     this.#changes = [];
     return changes;
+  }
+
+  /**
+   * The damage pulses that came due since the last drain (#1501), oldest
+   * first, and forget them: the simulation lands them once a tick.
+   */
+  public drainPulses(): StatusPulse[] {
+    const pulses = this.#pulses;
+    this.#pulses = [];
+    return pulses;
   }
 
   /**
@@ -4321,6 +4485,24 @@ export class StatusSet {
   }
 
   /**
+   * The bearer started `skill` (#1505): every status whose
+   * `nextSkillRule` answers its kind ends. Returns each, in `active`
+   * order, with its rule.
+   */
+  public useNextSkillRules(
+    skill: Skill,
+  ): readonly { readonly statusId: StatusId; readonly rule: NextSkillRule }[] {
+    const used = this.active.flatMap(({ id }) => {
+      const rule = getStatusDefinition(id).nextSkillRule;
+      return rule !== undefined && nextSkillAnswers(rule.which, skill)
+        ? [{ statusId: id, rule }]
+        : [];
+    });
+    this.#end(used.map(({ statusId }) => statusId));
+    return used;
+  }
+
+  /**
    * A spell of the bearer's started (#526): one fewer for every status
    * that holds the next spells. Returns the ids that ended on it.
    */
@@ -4497,6 +4679,7 @@ export class StatusSet {
     const expired: StatusId[] = [];
     const conditionDt = dt * (1 + aggregateModifiers(this.active).conditionsExpireFaster);
     for (const status of this.#statuses.values()) {
+      this.#pulse(status, dt);
       status.remainingSeconds -=
         getStatusDefinition(status.id).category === "condition" ? conditionDt : dt;
       if (status.remainingSeconds > 0) {
@@ -4512,6 +4695,30 @@ export class StatusSet {
     }
     this.#end(expired, true);
     return expired;
+  }
+
+  /**
+   * Record the pulses of `status` that fall due in the next `dt` (#1501):
+   * one at each whole second since it was applied, none past its
+   * duration, so one ending between pulses deals no partial one.
+   */
+  #pulse(status: ActiveStatus, dt: number): void {
+    const pulse = getStatusDefinition(status.id).damagePulse;
+    if (pulse === undefined) {
+      return;
+    }
+    const before = status.durationSeconds - status.remainingSeconds;
+    const last = Math.min(
+      Math.floor(before + dt + PULSE_EPSILON),
+      Math.floor(status.durationSeconds + PULSE_EPSILON),
+    );
+    for (let k = Math.floor(before + PULSE_EPSILON) + 1; k <= last; k += 1) {
+      this.#pulses.push({
+        id: status.id,
+        sourceId: status.sourceId,
+        damage: pulse.damage + pulse.growth * (k - 1),
+      });
+    }
   }
 }
 

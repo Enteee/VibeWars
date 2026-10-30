@@ -107,6 +107,11 @@ const NO_BOT_USE = new Set([
   "necromancer.order-of-pain",
   "elementalist.ward-against-elements",
   "ranger.infuriating-heat",
+  // Chants (#1505) on how the next skill goes: nothing the bot weighs.
+  "paragon.song-of-concentration",
+  "paragon.anthem-of-guidance",
+  "paragon.energizing-chorus",
+  "paragon.anthem-of-envy",
 ]);
 
 function skill(id: string) {

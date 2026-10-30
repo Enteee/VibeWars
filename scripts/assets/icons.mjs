@@ -779,6 +779,27 @@ const status = {
       `<path d="M5 12l3-4 3 8 3-8 3 8 2-4" ${stroke(c, 2)}/>` +
       `<path d="M4 19L20 5" ${stroke(c, 1.6)}/>`,
   ],
+  // Paragon chants 3 (#1505), stand-ins until the asset-designer's.
+  // Chant: a bar held level, your next skill cannot be interrupted.
+  "song-of-concentration": ["chant", (c) => `<path d="M5 12h14M5 8v8M19 8v8" ${stroke(c, 2.2)}/>`],
+  // Chant: an arrow through a gap, your next attack skill cannot be blocked.
+  "anthem-of-guidance": [
+    "chant",
+    (c) =>
+      `<path d="M4 12h14M14 8l4 4-4 4" ${stroke(c, 2.2)}/><path d="M10 4v4M10 16v4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Chant: a bolt over a minus, your next shout or chant costs less.
+  "energizing-chorus": [
+    "chant",
+    (c) =>
+      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/><path d="M7 19h10" ${stroke(c, 2.2)}/>`,
+  ],
+  // Chant: a plus over a half bar, more damage to a foe above half Health.
+  "anthem-of-envy": [
+    "chant",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.2)}/><path d="M5 18h7" ${stroke(c, 2.6)}/><path d="M12 18h7" ${stroke(c, 1)}/>`,
+  ],
   // Weapon spell: a sword, held up, warded (#758).
   "weapon-of-warding": [
     "weapon-spell",
@@ -1476,6 +1497,16 @@ const status = {
       `<path d="M8 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1C7.2 9.8 6.8 7.6 8 6zM16 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1-.3-1.9-.7-4.1.5-5.7z" fill="${c}"/>` +
       `<path d="M6 19.5h12" ${stroke(c, 1.8)}/>`,
   ],
+  // Crowd punishers (#1501), stand-ins until the asset-designer's.
+  // Hex: a broken ring round a burst, a skill used interrupts those near.
+  panic: [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.6)} stroke-dasharray="3 2.5"/>` +
+      `<path d="M12 8v8M8 12h8M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: three rising bars, each second's pulse harder than the last.
+  "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
 };
 
 // ---------------------------------------------------------------------------
