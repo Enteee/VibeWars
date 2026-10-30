@@ -55,7 +55,7 @@ export const MONK_ICONS = {
   "monk.ray-of-judgment": { glyph: "flame-target", modifier: "clock" },
   "monk.judges-insight": { glyph: "sword", modifier: "bolt" },
   "monk.bane-signet": { glyph: "blow", modifier: "stun" },
-  "monk.castigation-signet": { glyph: "energy", modifier: "plus" },
+  "monk.castigation-signet": { glyph: "energy", modifier: "bolt" },
   "monk.signet-of-judgment": { glyph: "blow", modifier: "area" },
   "monk.holy-strike": { glyph: "lightning", modifier: "up" },
 };
