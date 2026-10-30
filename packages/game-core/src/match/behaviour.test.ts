@@ -355,6 +355,7 @@ describe("follow-and-attack (#467)", () => {
         aura: undefined,
         onDeath: "vanish",
         ownerDisableSeconds: 0,
+        deathBurst: undefined,
         companionSkillId: undefined,
         leaderId: undefined,
         mode: "guard",

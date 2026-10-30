@@ -79,6 +79,7 @@
     "call-of-protection",
     "charge",
     "chorus-of-restoration",
+    "clumsiness",
     "conjure-phantasm",
     "contagion",
     "cracked-armor",
@@ -197,6 +198,7 @@
     "protective-was-kaolai",
     "pure-was-li-ming",
     "purifying-finale",
+    "rage-of-the-ntouka",
     "recuperation",
     "regeneration",
     "rending-aura",
@@ -214,7 +216,9 @@
     "shard-storm",
     "shatterstone",
     "shelter",
+    "shield-bash",
     "shield-of-deflection",
+    "shield-stance",
     "shielding-hands",
     "shrinking-armor",
     "shroud-of-distress",
@@ -223,6 +227,7 @@
     "song-of-concentration",
     "song-of-purification",
     "song-of-restoration",
+    "soothing",
     "soul-barbs",
     "spell-breaker",
     "spirit-light-weapon",
@@ -258,6 +263,7 @@
     "well-of-suffering",
     "whirling-defense",
     "winnowing",
+    "xinraes-weapon",
     "zealous-anthem"
   ],
   "constants": {
@@ -620,6 +626,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -738,6 +745,7 @@
                   { "literal": "protective-was-kaolai" },
                   { "literal": "pure-was-li-ming" },
                   { "literal": "purifying-finale" },
+                  { "literal": "rage-of-the-ntouka" },
                   { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "rending-aura" },
@@ -755,7 +763,9 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-bash" },
                   { "literal": "shield-of-deflection" },
+                  { "literal": "shield-stance" },
                   { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
@@ -764,6 +774,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -799,6 +810,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -870,6 +882,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -988,6 +1001,7 @@
                   { "literal": "protective-was-kaolai" },
                   { "literal": "pure-was-li-ming" },
                   { "literal": "purifying-finale" },
+                  { "literal": "rage-of-the-ntouka" },
                   { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "rending-aura" },
@@ -1005,7 +1019,9 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-bash" },
                   { "literal": "shield-of-deflection" },
+                  { "literal": "shield-stance" },
                   { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
@@ -1014,6 +1030,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1049,6 +1066,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1117,6 +1135,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -1235,6 +1254,7 @@
                   { "literal": "protective-was-kaolai" },
                   { "literal": "pure-was-li-ming" },
                   { "literal": "purifying-finale" },
+                  { "literal": "rage-of-the-ntouka" },
                   { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "rending-aura" },
@@ -1252,7 +1272,9 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-bash" },
                   { "literal": "shield-of-deflection" },
+                  { "literal": "shield-stance" },
                   { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
@@ -1261,6 +1283,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1296,6 +1319,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1361,6 +1385,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -1479,6 +1504,7 @@
                   { "literal": "protective-was-kaolai" },
                   { "literal": "pure-was-li-ming" },
                   { "literal": "purifying-finale" },
+                  { "literal": "rage-of-the-ntouka" },
                   { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "rending-aura" },
@@ -1496,7 +1522,9 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-bash" },
                   { "literal": "shield-of-deflection" },
+                  { "literal": "shield-stance" },
                   { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
@@ -1505,6 +1533,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1540,6 +1569,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1556,6 +1586,12 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "attack-dodged" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-interrupted" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -1706,6 +1742,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -1824,6 +1861,7 @@
                   { "literal": "protective-was-kaolai" },
                   { "literal": "pure-was-li-ming" },
                   { "literal": "purifying-finale" },
+                  { "literal": "rage-of-the-ntouka" },
                   { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "rending-aura" },
@@ -1841,7 +1879,9 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-bash" },
                   { "literal": "shield-of-deflection" },
+                  { "literal": "shield-stance" },
                   { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
@@ -1850,6 +1890,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -1885,6 +1926,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }
@@ -1941,6 +1983,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -2059,6 +2102,7 @@
                   { "literal": "protective-was-kaolai" },
                   { "literal": "pure-was-li-ming" },
                   { "literal": "purifying-finale" },
+                  { "literal": "rage-of-the-ntouka" },
                   { "literal": "recuperation" },
                   { "literal": "regeneration" },
                   { "literal": "rending-aura" },
@@ -2076,7 +2120,9 @@
                   { "literal": "shard-storm" },
                   { "literal": "shatterstone" },
                   { "literal": "shelter" },
+                  { "literal": "shield-bash" },
                   { "literal": "shield-of-deflection" },
+                  { "literal": "shield-stance" },
                   { "literal": "shielding-hands" },
                   { "literal": "shrinking-armor" },
                   { "literal": "shroud-of-distress" },
@@ -2085,6 +2131,7 @@
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
                   { "literal": "song-of-restoration" },
+                  { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "spell-breaker" },
                   { "literal": "spirit-light-weapon" },
@@ -2120,6 +2167,7 @@
                   { "literal": "well-of-suffering" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
+                  { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" }
                 ]
               }

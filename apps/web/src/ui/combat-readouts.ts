@@ -68,6 +68,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "upkeep-lost":
       return "status";
     case "interrupted":
+    case "attack-interrupted":
     case "cancelled":
     case "spell-failed":
     case "interrupt-missed":
@@ -215,6 +216,8 @@ export function describeCombatEvent(
       return `${target} catches ${STATUS_DEFINITIONS[event.statusId].name} from ${nameOf(event.fromId)}`;
     case "interrupted":
       return `${by} interrupts ${target}'s ${skillName(event.skillId) ?? event.skillId}`;
+    case "attack-interrupted":
+      return `${by} interrupts ${target}'s attack`;
     case "cancelled":
       return `${target} cancels ${skillName(event.skillId) ?? event.skillId}`;
     case "spell-failed":
@@ -622,6 +625,7 @@ export function floatingCueFor(
       // word, so it never reads as health.
       return { text: `−${formatAmount(amount ?? 0)} energy`, tone: "energy", critical: false };
     case "interrupted":
+    case "attack-interrupted":
       return { text: "interrupted!", tone: "neutral", critical: false };
     case "cancelled":
       // The caster moved and gave the cast up (#279).

@@ -714,6 +714,28 @@ const status = {
     (c) =>
       `<g transform="translate(4.8,4.8) scale(0.6)"><path d="M8.5 5L14 12L8.5 19" ${stroke(c, 2.8)}/><path d="M16.5 19V15M19 19V11M21.5 19V7" ${stroke(c, 2.6)}/></g>`,
   ],
+  // Warrior staples 2 (#1592), stand-ins until the asset-designer's.
+  // Skill effect: a shield over a falling bar, the next melee attacker knocked down.
+  "shield-bash": [
+    "skill-effect",
+    (c) =>
+      `<path d="M7 4h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Stance: a shield with a minus in it, blocks and less damage.
+  "shield-stance": [
+    "stance",
+    (c) =>
+      `<path d="M6 4h12v6c0 4.5-3 7-6 9-3-2-6-4.5-6-9z" ${stroke(c, 2)}/>` +
+      `<path d="M9 10h6" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a bolt over a clock hand, adrenal skills recharge.
+  "rage-of-the-ntouka": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 2)}/>` +
+      `<path d="M13 6l-3.5 6.5h3l-1 5.5 4-7h-3z" fill="${c}"/>`,
+  ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
     "enchantment",
@@ -1114,6 +1136,20 @@ const status = {
   earthbind: [
     "skill-effect",
     (c) => `<path d="M6 13h12" ${stroke(c, 2.2)}/>` + `<path d="M6 17h12" ${stroke(c, 2)}/>`,
+  ],
+  // Ritualist spirits (#1550), stand-ins until the asset-designer's.
+  // Skill effect: a wave flattened, adrenaline built half as fast.
+  soothing: [
+    "skill-effect",
+    (c) =>
+      `<path d="M5 10c2-3 4-3 7 0s5 3 7 0" ${stroke(c, 2)}/><path d="M5 16h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Weapon spell: a blade over a bar, one hit capped, Health stolen back.
+  "xinraes-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M15 8h5M15 12h5" ${stroke(c, 1.8)}/>`,
   ],
   // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
   "ward-against-melee": [
@@ -1604,6 +1640,14 @@ const status = {
     (c) =>
       `<path d="M7 5h10M7 19h10M8 5c0 4 8 4 8 7s-8 3-8 7M16 5c0 4-8 4-8 7" ${stroke(c, 1.6)}/>` +
       `<circle cx="12" cy="16.5" r="1" fill="${c}"/>`,
+  ],
+  // Clumsiness (#1593), a stand-in until its art card.
+  // Hex: a blade dropped from a hand, the next attack is interrupted.
+  clumsiness: [
+    "hex",
+    (c) =>
+      `<path d="M9 5l6 6M8 12l3-3" ${stroke(c, 2.2)}/>` +
+      `<path d="M13 15l3 4M6 18h12" ${stroke(c, 1.8)}/>`,
   ],
   // Dervish staples and Shadow Prison (#1551, #1573): each matches its skill icon.
   // Enchantment: a hand over a broken line, attack skills cripple.
@@ -3043,6 +3087,34 @@ const skillGlyph = {
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
     inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
+  // The crowd punishers (#1555). Panic: a skill used sends an interrupt out to everyone near, a
+  // dot with rays ending in dots. Wastrel's Demise: bars rising, the pulse that grows.
+  "hex-panic": () =>
+    punisher(
+      `<circle cx="12" cy="12" r="3.6" fill="${C.ink}"/>` +
+        inkLine("M12 8V4M12 16V20M8 12H4M16 12H20", 2.6) +
+        [
+          [12, 2.5],
+          [12, 21.5],
+          [2.5, 12],
+          [21.5, 12],
+        ]
+          .map(([x, y]) => `<circle cx="${String(x)}" cy="${String(y)}" r="2" fill="${C.ink}"/>`)
+          .join(""),
+    ),
+  "hex-rising": () => punisher(inkFill("M3 20V15H8V20ZM9.5 20V10H14.5V20ZM16 20V3.5H21V20Z")),
+  // Epidemic is no hex: a drop with four drops spread out from it, a condition copied to the foes near.
+  "drop-spread": () =>
+    inkFill("M12 7C10 10 8.8 11.4 8.8 13.4A3.2 3.2 0 0 0 15.2 13.4C15.2 11.4 14 10 12 7Z") +
+    inkFill("M4.5 2C2.9 4.2 2.1 5 2.1 5.8A2.4 2.4 0 0 0 6.9 5.8C6.9 5 6.1 4.2 4.5 2Z") +
+    inkFill("M19.5 2C17.9 4.2 17.1 5 17.1 5.8A2.4 2.4 0 0 0 21.9 5.8C21.9 5 21.1 4.2 19.5 2Z") +
+    inkFill(
+      "M4.5 16.5C2.9 18.7 2.1 19.5 2.1 20.3A2.4 2.4 0 0 0 6.9 20.3C6.9 19.5 6.1 18.7 4.5 16.5Z",
+    ) +
+    inkFill(
+      "M19.5 16.5C17.9 18.7 17.1 19.5 17.1 20.3A2.4 2.4 0 0 0 21.9 20.3C21.9 19.5 21.1 18.7 19.5 16.5Z",
+    ) +
+    inkLine("M9 11L6.5 8.5M15 11L17.5 8.5M9 15.5L6.5 17M15 15.5L17.5 17", 1.5),
   // The Monk staples (#1541). A shield filled to the share it blocks: half for the party's Aegis, three
   // quarters for the one ally Shield of Deflection guards; dots above are the party.
   "block-half": () =>
@@ -3413,6 +3485,32 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The Ranger's staples (#1539, #1585): an arrow and what it brings.
+  "arrow-twin": () =>
+    `<g transform="translate(8.2,15.8) scale(0.8) translate(-12,-12)">${skillGlyph.arrow()}</g>` +
+    `<g transform="translate(15.8,8.2) scale(0.8) translate(-12,-12)">${skillGlyph.arrow()}</g>`,
+  "arrow-spent-ring": () =>
+    `<g transform="translate(14,10) scale(0.85) translate(-12,-12)">${skillGlyph.arrow()}</g>` +
+    `<circle cx="7" cy="17" r="4.2" ${stroke(C.ink, 2)} stroke-dasharray="3.4 2.4"/>`,
+  "arrow-fast": () =>
+    `<g transform="translate(15,9) scale(0.85) translate(-12,-12)">${skillGlyph.arrow()}</g>` +
+    `<g transform="translate(6.5,17.5) scale(0.55) translate(-12,-12)">${skillGlyph.speed()}</g>`,
+  "arrow-close": () =>
+    inkLine("M3 21L11.5 12.5", 2.4) +
+    inkFill("M16 8L8.5 10L14 15.5Z") +
+    `<circle cx="18" cy="6" r="4" ${stroke(C.ink, 2)}/><circle cx="18" cy="6" r="1.2" fill="${C.ink}"/>`,
+  "shield-whirl": () =>
+    `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${skillGlyph["shield-stance"]()}</g>` +
+    `<path d="M20.5 12A8.5 8.5 0 1 1 12 3.5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M12 0.5L16 3.5L12 6.5Z"),
+  snake: () =>
+    inkLine("M17 4C7 4 6 10 12 12C18 14 17 20 7 20", 3) +
+    `<circle cx="18.5" cy="4" r="2.2" fill="${C.ink}"/>` +
+    `<g transform="translate(19,19) scale(0.4) translate(-12,-12)">${skillGlyph.speed()}</g>`,
+  "arrow-dodge": () =>
+    `<g transform="translate(12,15.5) scale(0.8) translate(-12,-12)">${skillGlyph.speed()}</g>` +
+    inkLine("M3 5H16", 2.2) +
+    inkFill("M22 5L16 2V8Z"),
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 
@@ -3521,6 +3619,77 @@ function skillIcon(id, row) {
   );
 }
 
+/**
+ * A hole in an even-odd fill: a circle of radius `r` at (`x`, `y`).
+ * @param {number} x @param {number} y @param {number} r
+ */
+const hole = (x, y, r) =>
+  `M${String(x - r)} ${String(y)}a${String(r)} ${String(r)} 0 1 0 ${String(2 * r)} 0a${String(r)} ${String(r)} 0 1 0 ${String(-2 * r)} 0Z`;
+
+/** Solid shapes with even-odd holes, in the ink: the rail masks them, so only the shape counts (#1554). @param {string} d */
+const solid = (d) => `<path fill-rule="evenodd" d="${d}" fill="${C.ink}"/>`;
+/** @param {string} d @param {number} [w] */
+const rule = (d, w = 1.6) => `<path d="${d}" ${stroke(C.ink, w)}/>`;
+
+/** A helmet of width `w` standing on y = 20, a slit for the eyes (#1554). @param {number} cx @param {number} w @param {number} top */
+const helm = (cx, w, top) => {
+  const l = cx - w / 2;
+  const r = cx + w / 2;
+  const f = (/** @type {number} */ n) => String(Math.round(n * 100) / 100);
+  const arc = w / 2;
+  const yEye = top + arc + 0.5;
+  return (
+    `M${f(l)} 20V${f(top + arc)}A${f(arc)} ${f(arc)} 0 0 1 ${f(r)} ${f(top + arc)}V20Z` +
+    `M${f(l + 1.4)} ${f(yEye)}H${f(r - 1.4)}V${f(yEye + 1.5)}H${f(l + 1.4)}Z`
+  );
+};
+
+/** The five pips of the die (#1554). @type {readonly (readonly [number, number])[]} */
+const PIPS = [
+  [8.3, 8.3],
+  [15.7, 8.3],
+  [12, 12],
+  [8.3, 15.7],
+  [15.7, 15.7],
+];
+
+/** @type {Record<string, () => string>} */
+const mode = {
+  // A tilted die with five pips: the luck of the draw.
+  "random-arena": () =>
+    `<g transform="rotate(-12 12 12)">` +
+    solid(
+      "M7 3.5H17A3.5 3.5 0 0 1 20.5 7V17A3.5 3.5 0 0 1 17 20.5H7A3.5 3.5 0 0 1 3.5 17V7A3.5 3.5 0 0 1 7 3.5Z" +
+        PIPS.map(([x, y]) => hole(x, y, 1.5)).join(""),
+    ) +
+    "</g>",
+  // Two shields side by side, the near one solid: a team against a team.
+  "team-arena": () =>
+    solid("M2.5 8L8.5 6L14.5 8V13C14.5 17 11.5 19.5 8.5 21C5.5 19.5 2.5 17 2.5 13Z") +
+    rule("M10.5 4.6L15.5 3L21.5 4.6V9.6C21.5 13.4 19 15.8 16.4 17.2", 1.8),
+  // A stepped altar with a flame on top: the relic run's goal.
+  "heroes-ascent": () =>
+    solid("M2.5 21.5V17.5H5.5V13.5H8.5V10H15.5V13.5H18.5V17.5H21.5V21.5Z") +
+    solid("M12 2C13.9 4.3 14.9 5.4 14.9 6.8A2.9 2.9 0 0 1 9.1 6.8C9.1 5.5 10.2 4.8 12 2Z"),
+  // A keep with a pennant on a tall pole: guild against guild.
+  gvg: () =>
+    solid(
+      "M3.5 21.5V11H6.5V13H8.5V11H15.5V13H17.5V11H20.5V21.5Z" +
+        "M10.5 21.5V17.5A1.5 1.5 0 0 1 13.5 17.5V21.5Z",
+    ) +
+    rule("M12 11V2.5", 1.6) +
+    solid("M12 2.5H19L16.6 5L19 7.5H12Z"),
+  // A door with a keyhole: you open the room, your friends come in.
+  "hosted-game": () =>
+    solid(
+      "M5.5 21V9.5A6.5 6.5 0 0 1 18.5 9.5V21Z" + hole(12, 11, 1.8) + "M11 12.5H13L13.6 17H10.4Z",
+    ) + rule("M3 21.5H21", 1.6),
+  // One helmet, crest up: your character.
+  characters: () => solid(helm(12, 16, 4)) + solid("M10.5 4.5V2H13.5V4.5Z"),
+  // Three helmets in a row, the middle one taller: the team.
+  teams: () => solid(helm(5, 7, 7.5)) + solid(helm(12, 8.4, 3)) + solid(helm(19, 7, 7.5)),
+};
+
 /** @type {Record<string, Record<string, string>>} */
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
@@ -3540,6 +3709,7 @@ const families = {
     ),
     ...Object.fromEntries(Object.entries(SKILL_ICONS).map(([id, row]) => [id, skillIcon(id, row)])),
   },
+  mode: Object.fromEntries(Object.entries(mode).map(([k, f]) => [k, svg(f())])),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
     Object.entries(projectile).map(([k, parts]) => [k, projectileSprite(parts)]),

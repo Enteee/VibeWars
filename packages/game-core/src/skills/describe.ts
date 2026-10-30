@@ -34,6 +34,7 @@ import type {
   RadiusArea,
   AttackWeaponClass,
   Aura,
+  DeathBurst,
   ChainRole,
   ChainStep,
   CreateGroundEffect,
@@ -180,6 +181,15 @@ function signed(n: number): string {
 }
 
 /**
+ * A change in how fast adrenaline builds: "gain adrenaline 33% faster",
+ * or, slowed, as Soothing's (#1550), "gain adrenaline 50% slower".
+ */
+function adrenalineGainText(faster: number): string {
+  const percent = String(Math.round(Math.abs(faster) * 100));
+  return `gain adrenaline ${percent}% ${faster > 0 ? "faster" : "slower"}`;
+}
+
+/**
  * What a status actually does, so a tooltip does not just name it.
  * `ranks` are its caster's, for a trigger an attribute scales (#944):
  * Patient Spirit's heal. Empty, it reads at rank 0.
@@ -280,9 +290,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`immune to ${names.join(" and ")}`);
   }
   if (definition.adrenalineGainFaster !== 0) {
-    parts.push(
-      `gain adrenaline ${String(Math.round(definition.adrenalineGainFaster * 100))}% faster`,
-    );
+    parts.push(adrenalineGainText(definition.adrenalineGainFaster));
   }
   if (definition.attributeDelta !== 0) {
     parts.push(`${signed(definition.attributeDelta)} to all attributes`);
@@ -404,6 +412,14 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.damageReduction > 0) {
     parts.push(`−${String(definition.damageReduction)} damage taken`);
   }
+  if (definition.damageReductionPerRank !== undefined) {
+    const { attributeId, perRank, max } = definition.damageReductionPerRank;
+    const now = Math.min(max, perRank * (ranks.get(attributeId) ?? 0));
+    const attribute = getAttribute(attributeId)?.name ?? attributeId;
+    parts.push(
+      `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
+    );
+  }
   if (definition.redirectsPhysicalDamage > 0) {
     parts.push(
       `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
@@ -443,9 +459,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       ...(attackDurationMultiplier === 1
         ? []
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
-      ...(adrenalineGainFaster === 0
-        ? []
-        : [`gain adrenaline ${String(Math.round(adrenalineGainFaster * 100))}% faster`]),
+      ...(adrenalineGainFaster === 0 ? [] : [adrenalineGainText(adrenalineGainFaster)]),
     ];
     parts.push(`while under a ${categories.join(" or ")}: ${gains.join(", ")}`);
   }
@@ -619,6 +633,7 @@ function statusArmorText(bonus: ConditionalArmor): string {
 const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-casts-spell": "casts a spell",
   "bearer-attacks": "attacks",
+  "bearer-attack-begins": "attacks",
   "bearer-uses-skill": "uses a skill",
   "bearer-hits": "hits with an attack",
   "bearer-fails-to-hit": "fails to hit",
@@ -779,9 +794,10 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, profession, elite } = trigger.usedSkill;
+    const { type, profession, elite, adrenal } = trigger.usedSkill;
     const words = [
       ...(elite === undefined ? [] : ["elite"]),
+      ...(adrenal === undefined ? [] : ["adrenal"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
@@ -845,9 +861,10 @@ function describeCreation(
         );
         return `${who} ${where} ${what.join(" and ")}`;
       }
-      // Neither answers a creation.
+      // None answers a creation.
       case "spread-gained-condition":
       case "echo":
+      case "cancel-attack":
         return "";
       default:
         return describeEffects(effect, ranks)
@@ -925,11 +942,27 @@ function describeTrigger(
         const plural = effect.count === 1 ? "" : "s";
         return [`loses ${String(effect.count)} ${effect.category}${plural}`];
       }
-      return effect.kind === "spread-gained-condition" || effect.kind === "echo"
+      return effect.kind === "spread-gained-condition" ||
+        effect.kind === "echo" ||
+        effect.kind === "cancel-attack"
         ? []
         : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
     });
     return [sentence(`${when}: ${answers.join(", ")}`)];
+  }
+  // Clumsiness's (#1593), said as one: "the next time it attacks, that
+  // attack is interrupted and it takes 66 damage".
+  const [first, ...after] = trigger.effects;
+  if (
+    first?.kind === "cancel-attack" &&
+    trigger.target === "bearer" &&
+    after.length > 0 &&
+    after.every(({ kind }) => kind === "damage")
+  ) {
+    const hurt = after.map((effect) =>
+      effect.kind === "damage" ? `it takes ${amount(effect.amount)} damage` : "",
+    );
+    return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
   }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
@@ -942,6 +975,10 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    // A cancel with nothing to say after it (#1593).
+    if (effect.kind === "cancel-attack") {
+      return [sentence(`${when}, that attack is interrupted`)];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
       return [clause(`takes ${amount(effect.amount)} damage ${when}`)];
@@ -1140,6 +1177,8 @@ function conditionText(condition: EffectCondition): string {
       return "If you are Overcast";
     case "caster-wields":
       return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
+    case "caster-holds-shield":
+      return "If you hold a shield";
     case "target-less-health":
       return "If target has less Health than you";
     case "target-more-health":
@@ -1210,10 +1249,16 @@ function describeEffects(
   effect: SkillEffect,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription[] {
-  if (effect.kind === "summon" && effect.creature.aura !== undefined) {
-    // What the spirit projects (#1064): "Non-spirit allies in its range:
-    // +3 Health regeneration".
-    return [describeEffect(effect, ranks), describeAura(effect.creature.aura, "in its range")];
+  if (effect.kind === "summon") {
+    const { aura, attack, deathBurst } = effect.creature;
+    return [
+      describeEffect(effect, ranks),
+      // What the spirit projects (#1064): "Non-spirit allies in its range:
+      // +3 Health regeneration".
+      ...(aura === undefined ? [] : [describeAura(aura, "in its range")]),
+      ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
+      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst)]),
+    ];
   }
   if (effect.kind === "create-ground-effect") {
     const { act } = effect;
@@ -1257,6 +1302,47 @@ function describeEffects(
     const { text, magnitude } = describeEffect(inner, ranks);
     return { text: `${condition}: ${lowerFirst(text)}`, magnitude };
   });
+}
+
+/**
+ * What a spirit's blows land (#1550), one line an effect, an `if` said
+ * once: "Its attacks: if target is not moving: knocks down for 2s, this
+ * spirit loses 54 Health". Health it loses is the spirit's, not its
+ * caster's. The line's scaling is its first number that scales.
+ */
+function describeSpiritBlow(
+  effect: SkillEffect,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const parts = (effect.kind === "if" ? effect.effects : [effect]).map(
+    (inner): EffectDescription => {
+      if (inner.kind === "lose-health" && inner.perRemovedOfProfession === undefined) {
+        const magnitude = describeMagnitude(inner.amount, ranks);
+        return { text: `this spirit loses ${String(magnitude.current)} Health`, magnitude };
+      }
+      return describeEffect(inner, ranks);
+    },
+  );
+  const when = effect.kind === "if" ? `${lowerFirst(conditionText(effect.condition))}: ` : "";
+  const what = parts.map(({ text }) => lowerFirst(text)).join(", ");
+  const scaled = parts.find(({ magnitude }) => magnitude?.atZero !== undefined);
+  return { text: `Its attacks: ${when}${what}`, magnitude: (scaled ?? parts[0])?.magnitude };
+}
+
+/**
+ * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
+ * area take 8 damage per second it lived (max 150)".
+ */
+function describeDeathBurst(burst: DeathBurst): EffectDescription {
+  const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
+  const amount = String(burst.perSecondAlive);
+  const what =
+    burst.effect === "damage" ? `take ${amount} damage` : `are healed for ${amount} Health`;
+  const max = burst.max === undefined ? "" : ` (max ${String(burst.max)})`;
+  return {
+    text: `When it dies, ${who} ${what} per second it lived${max}`,
+    magnitude: undefined,
+  };
 }
 
 /** Who an aura reaches and what they wear: "Non-spirit allies in its range: …". */
@@ -1385,13 +1471,15 @@ function describeEffect(
         magnitude: undefined,
       };
     case "lose-health": {
-      // "For each Monk enchantment removed, you lose 31 Health" (#944).
+      // "For each Monk enchantment removed, you lose 31 Health" (#944), or
+      // once, flat (#1550): "You lose 54 health".
       const magnitude = describeMagnitude(effect.amount, ranks);
+      const lose = `You lose ${String(magnitude.current)} health`;
+      if (effect.perRemovedOfProfession === undefined) {
+        return { text: lose, magnitude };
+      }
       const whose = getProfession(effect.perRemovedOfProfession).name;
-      return {
-        text: `You lose ${String(magnitude.current)} health for each ${whose} enchantment removed`,
-        magnitude,
-      };
+      return { text: `${lose} for each ${whose} enchantment removed`, magnitude };
     }
     case "transfer-conditions":
       return transferText(effect, ranks);
@@ -1618,7 +1706,14 @@ function describeEffect(
     case "disable-own-skills":
       return { text: disableOwnText(effect), magnitude: undefined };
     case "chain-mark":
-      return { text: "Counts as a lead attack", magnitude: undefined };
+      return {
+        text: effect.role === "lead" ? "Counts as a lead attack" : "Counts as an off-hand attack",
+        magnitude: undefined,
+      };
+    case "overcast": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `Target suffers ${String(magnitude.current)} overcast`, magnitude };
+    }
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const which = effect.of === "this-skill" ? "This skill" : "That skill";
