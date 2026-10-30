@@ -121,7 +121,8 @@ jobs:
 
       # An asset-only pull request skips the work below, but the job still
       # reports (#1609). main always runs everything, and so does a diff that
-      # fails: scripts/ci/e2e-needed.mjs fails closed. The checkout is the
+      # fails: scripts/ci/e2e-needed.mjs fails closed, and only an explicit
+      # "false" skips. The checkout is the
       # merge commit, so its diff against the base tip is the pull request.
       - name: Is e2e needed
         id: needed
@@ -131,22 +132,22 @@ jobs:
         run: |
           needed=true
           if [ "$EVENT" = pull_request ] && git fetch --no-tags --depth=1 origin "$BASE_REF"; then
-            needed=$(node scripts/ci/e2e-needed.mjs FETCH_HEAD HEAD || echo true)
+            needed=$(node scripts/ci/e2e-needed.mjs FETCH_HEAD HEAD 2>/dev/null || echo true)
           fi
           echo "needed=$needed" >> "$GITHUB_OUTPUT"
 
       - uses: ./.github/actions/devenv
-        if: steps.needed.outputs.needed == 'true'
+        if: steps.needed.outputs.needed != 'false'
 
       # e2e serves the built client.
       - name: Build
-        if: steps.needed.outputs.needed == 'true'
+        if: steps.needed.outputs.needed != 'false'
         run: devenv shell -- pnpm run build
 
       # Drives the Chromium the shell pins (VIBEWARS_CHROMIUM), so there is
       # no `playwright install`.
       - name: End-to-end tests
-        if: steps.needed.outputs.needed == 'true'
+        if: steps.needed.outputs.needed != 'false'
         run: devenv shell -- pnpm run test:e2e
 
       - name: Upload Playwright output
