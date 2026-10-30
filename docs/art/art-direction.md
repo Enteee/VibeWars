@@ -901,7 +901,7 @@ it, not baked in, so one file serves every screen.
   drop-pair, plus-sparks, plus-gusts, party-heal, plus-ripple, meteor-trio,
   ring-heal, hammer-slam, hex-burst, drop-arrow, pain-cross, eye-drop, blink,
   totem, spirit-pain, spirit-blind, spirit-quiet, spirit-strip, spirit-cap, spirit-share, spirit-rupture (a cracked post and the jagged mark), spirit-break, spirit-feast (two cracked posts),
-  spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
+  spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, spirit-blood, spirit-hexed, spirit-run, spirit-calm, spirit-last-burn, spirit-last-heal (the two death-burst spirits share a cracked post), blade-cap-drop, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
   blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,

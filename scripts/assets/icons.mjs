@@ -1138,19 +1138,20 @@ const status = {
     "skill-effect",
     (c) => `<path d="M6 13h12" ${stroke(c, 2.2)}/>` + `<path d="M6 17h12" ${stroke(c, 2)}/>`,
   ],
-  // Ritualist spirits (#1550), stand-ins until the asset-designer's.
-  // Skill effect: a wave flattened, adrenaline built half as fast.
+  // Ritualist spirits (#1550, #1622).
+  // Skill effect: a wave pressed flat, adrenaline built half as fast.
   soothing: [
     "skill-effect",
     (c) =>
-      `<path d="M5 10c2-3 4-3 7 0s5 3 7 0" ${stroke(c, 2)}/><path d="M5 16h14" ${stroke(c, 2.2)}/>`,
+      `<path d="M5 9c2-3 4-3 7 0s5 3 7 0" ${stroke(c, 2)}/><path d="M5 16h14" ${stroke(c, 2.4)}/>`,
   ],
-  // Weapon spell: a blade over a bar, one hit capped, Health stolen back.
+  // Weapon spell: a blade, a bar capping the blow, a drop lost by the attacker.
   "xinraes-weapon": [
     "weapon-spell",
     (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M15 8h5M15 12h5" ${stroke(c, 1.8)}/>`,
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M10 4.5h8" ${stroke(c, 2.2)}/>` +
+      `<path d="M19 11c0 0-2.5 2.6-2.5 4.1a2.5 2.5 0 0 0 5 0C21.5 13.6 19 11 19 11z" fill="${c}"/>`,
   ],
   // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
   "ward-against-melee": [
@@ -3023,6 +3024,42 @@ const skillGlyph = {
     spiritPost() +
     `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)}/>` +
     `<g transform="translate(17,8.5) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // The Ritualist's binding spirits 2 (#1550, #1622): the post and what its blows or its death bring.
+  // Bloodsong steals Health: a drop.
+  "spirit-blood": () =>
+    spiritPost() +
+    `<path d="M17 2.5C17 2.5 12.5 7.5 12.5 10.2A4.5 4.5 0 0 0 21.5 10.2C21.5 7.5 17 2.5 17 2.5Z" fill="${C.ink}"/>`,
+  // Anguish hurts the hexed: a bolt through a dashed ring.
+  "spirit-hexed": () =>
+    spiritPost() +
+    `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)} stroke-dasharray="3.4 2.6"/>` +
+    `<g transform="translate(17,8.5) scale(0.42) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // Wanderlust drops the moving: running chevrons over a flat ground line.
+  "spirit-run": () =>
+    spiritPost() +
+    inkLine("M12 4.5L15.5 8L12 11.5M17.5 4.5L21 8L17.5 11.5", 2) +
+    inkLine("M11.5 14.5H22.5", 2.4),
+  // Soothing slows adrenaline: a wave pressed flat above a bar.
+  "spirit-calm": () =>
+    spiritPost() +
+    inkLine("M11 7.5C12.5 4.5 14 4.5 15.5 7.5S18.5 10.5 22 7.5", 2) +
+    inkLine("M11 14H22", 2.4),
+  // The two death-burst spirits share a cracked post; the mark is what comes out (#1622).
+  // Destruction: a burst.
+  "spirit-last-burn": () =>
+    brokenPost(7) +
+    `<g transform="translate(17.5,7.5) scale(0.6) translate(-12,-12)">${inkFill(burst(8))}</g>`,
+  // Life: a plus in a ring.
+  "spirit-last-heal": () =>
+    brokenPost(7) +
+    `<circle cx="17.5" cy="8" r="5.2" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M17.5 5.2V10.8M14.7 8H20.3", 1.9),
+  // Xinrae's Weapon: a blade, a bar capping the blow, a drop lost by the attacker.
+  "blade-cap-drop": () =>
+    bladeMark(
+      inkLine("M2.5 3H12.5", 2.4) +
+        `<path d="M8 5.5C8 5.5 5 8.6 5 10.4A3 3 0 0 0 11 10.4C11 8.6 8 5.5 8 5.5Z" fill="${C.ink}"/>`,
+    ),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
