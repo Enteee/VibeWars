@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Request } from "@playwright/test";
 
 /**
  * The static GitHub Pages build (#103): served under a sub-path, with no
@@ -12,11 +12,30 @@ import { expect, test, type Page } from "@playwright/test";
 interface Traffic {
   readonly failed: string[];
   readonly online: string[];
+  /** Requests started and not yet finished or failed (#1506). */
+  readonly pending: Set<Request>;
 }
 
-/** Record every response that isn't a 200, and anything aimed at a server. */
+/**
+ * Record every response that isn't a 200, every request that failed,
+ * anything aimed at a server, and what is still in flight.
+ */
 function watchTraffic(page: Page): Traffic {
-  const traffic: Traffic = { failed: [], online: [] };
+  const traffic: Traffic = { failed: [], online: [], pending: new Set() };
+  page.on("request", (request) => {
+    const { protocol } = new URL(request.url());
+    // Playwright settles some data: and blob: requests with no event.
+    if (protocol !== "data:" && protocol !== "blob:") {
+      traffic.pending.add(request);
+    }
+  });
+  page.on("requestfinished", (request) => {
+    traffic.pending.delete(request);
+  });
+  page.on("requestfailed", (request) => {
+    traffic.pending.delete(request);
+    traffic.failed.push(`requestfailed ${request.url()} ${request.failure()?.errorText ?? ""}`);
+  });
   page.on("response", (response) => {
     if (response.status() !== 200) {
       traffic.failed.push(`${String(response.status())} ${response.url()}`);
@@ -33,6 +52,15 @@ function watchTraffic(page: Page): Traffic {
   return traffic;
 }
 
+/**
+ * Wait until every request the page started has settled (#1506), so
+ * `failed` and `online` are complete. Not `networkidle`: that wants
+ * 500 ms of silence, which a loaded runner's background fetches deny.
+ */
+async function settled(traffic: Traffic): Promise<void> {
+  await expect.poll(() => [...traffic.pending].map((request) => request.url())).toEqual([]);
+}
+
 test("the menu loads under the sub-path, with every asset found", async ({ page }) => {
   const traffic = watchTraffic(page);
   await page.goto("./");
@@ -41,7 +69,21 @@ test("the menu loads under the sub-path, with every asset found", async ({ page 
   // are the assets a wrong base path would break.
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();
-  await page.waitForLoadState("networkidle");
+  // Every icon in the editor loaded; an icon button with no icon has no src.
+  const icons = page.locator(".editor-layout img[src]");
+  await expect(icons.first()).toBeAttached();
+  await expect
+    .poll(() =>
+      icons.evaluateAll((images) =>
+        images
+          .filter(
+            (img) => !(img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0),
+          )
+          .map((img) => img.getAttribute("src")),
+      ),
+    )
+    .toEqual([]);
+  await settled(traffic);
 
   expect(traffic.failed).toEqual([]);
   expect(traffic.online).toEqual([]);
@@ -79,7 +121,7 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
   await page.getByRole("button", { name: "host a lobby" }).click();
   await expect(page.locator(".lobby-code")).toBeVisible();
 
-  await page.waitForLoadState("networkidle");
+  await settled(traffic);
   expect(traffic.online).toEqual([]);
   expect(foreign).toEqual([]);
 });
