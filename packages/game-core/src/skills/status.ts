@@ -286,6 +286,13 @@ export interface StatusDefinition {
    */
   readonly preventsSpells: boolean;
   /**
+   * The bearer cannot attack (#1575): Obsidian Flesh's "cannot attack". It
+   * starts no auto-attack, a queued one stops, and an attack skill is
+   * refused before anything is paid. An attack skill already being used
+   * goes off; a spell or a touch skill is left alone.
+   */
+  readonly preventsAttacks: boolean;
+  /**
    * A foe of the bearer cannot start a spell with the bearer as its target
    * (#1511): Spell Breaker's "cannot be the target of enemy spells". A cast
    * already started goes off; an area or a splash still reaches the
@@ -2084,6 +2091,15 @@ export function untargetableByFoeSpells(statuses: readonly Pick<ActiveStatus, "i
  */
 export function preventsSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
   return statuses.some(({ id }) => getStatusDefinition(id).preventsSpells);
+}
+
+/**
+ * Whether a bearer of `statuses` cannot attack (#1575, `preventsAttacks`).
+ * The server's refusal of a swing or an attack skill and the skill bar's
+ * dimming all ask this, so they cannot disagree.
+ */
+export function preventsAttacks(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).preventsAttacks);
 }
 
 /**

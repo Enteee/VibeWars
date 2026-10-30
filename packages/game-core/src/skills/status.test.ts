@@ -179,6 +179,7 @@ describe("status definitions", () => {
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
       wither: -1,
+      "obsidian-flesh": -2,
     });
   });
 
