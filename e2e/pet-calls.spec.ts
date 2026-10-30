@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
+import { openRail, pickCharacter } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
 
@@ -44,6 +45,7 @@ async function selectWolf(page: Page): Promise<void> {
 
 test("Call of Haste goes on your wolf and recharges (#1108)", async ({ page }) => {
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
   await page.locator("input.editor-name").fill("Houndmaster");
@@ -51,7 +53,7 @@ test("Call of Haste goes on your wolf and recharges (#1108)", async ({ page }) =
     await page.locator(".skill-box", { hasText: name }).locator(".skill-box-equip").click();
   }
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".roster").getByText("Houndmaster", { exact: true }).click();
+  await pickCharacter(page, "Houndmaster");
   await startSoloMatch(page);
 
   const slot = page.locator(".hud-skill").nth(1);

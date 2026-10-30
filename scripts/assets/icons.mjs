@@ -1583,6 +1583,14 @@ const status = {
   ],
   // Hex: three rising bars, each second's pulse harder than the last.
   "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
+  // Mesmer staples (#1570), a stand-in until its art card.
+  // Hex: a question mark in a doubled hourglass, spells take twice as long.
+  "arcane-conundrum": [
+    "hex",
+    (c) =>
+      `<path d="M7 5h10M7 19h10M8 5c0 4 8 4 8 7s-8 3-8 7M16 5c0 4-8 4-8 7" ${stroke(c, 1.6)}/>` +
+      `<circle cx="12" cy="16.5" r="1" fill="${c}"/>`,
+  ],
   // Dervish staples and Shadow Prison (#1551, #1573): each matches its skill icon.
   // Enchantment: a hand over a broken line, attack skills cripple.
   "grenths-grasp": [
@@ -2072,6 +2080,14 @@ const hexFail = (target) =>
 /** An urn of held ashes round `mark`, the Ritualist's Was spells (#1493). @param {string} mark */
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
+
+/** The blood drop, a sacrifice (#1572). */
+const DROP = inkFill("M12 2.5C16 8.5 19 12 19 15.5A7 7 0 0 1 5 15.5C5 12 8 8.5 12 2.5Z");
+
+/** A drop given up at the bottom left, `payoff` at the top right (#1572). @param {string} payoff */
+const sacrifice = (payoff) =>
+  `<g transform="translate(7.5,16) scale(0.66) translate(-12,-12)">${DROP}</g>` +
+  `<g transform="translate(15,9) scale(0.7) translate(-12,-12)">${payoff}</g>`;
 
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
@@ -3289,6 +3305,46 @@ const skillGlyph = {
   "next-attack-unblockable": () => nextSkill("attack", "armor-crack"),
   "next-chant-cheaper": () => nextSkill("chant", "energy-cut"),
   "next-attack-vs-healthy": () => nextSkill("attack", "health-above"),
+  // The Necromancer's sacrifice skills (#1572): a drop given up at the bottom left, its payoff at the top right.
+  "sac-energy": () => sacrifice(skillGlyph.energy()),
+  "sac-blade": () => sacrifice(skillGlyph.sword()),
+  // Plague Signet: a drop leaving for a signet ring and dot (#1572).
+  "drop-to-signet": () =>
+    `<g transform="translate(7,12) scale(0.62) translate(-12,-12)">${DROP}</g>` +
+    inkLine("M12.5 12H15.5M13.5 9.5L16 12L13.5 14.5", 2) +
+    `<circle cx="19" cy="12" r="3.6" ${stroke(C.ink, 2)}/><circle cx="19" cy="12" r="1.2" fill="${C.ink}"/>`,
+  // Mark of Rodgort: the hex ring with a flame inside (#1572).
+  "hex-flame": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.5 3.2"/>` +
+    `<g transform="translate(12,12.5) scale(0.62) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // Lava Font: a wavy ground, three tongues of fire rising from it (#1572).
+  "lava-spouts": () =>
+    inkLine("M2 20Q5 17 8 20T14 20T22 20", 2.4) +
+    [
+      [5.5, 0.5],
+      [12, 0.8],
+      [18.5, 0.5],
+    ]
+      .map(
+        ([x, k]) =>
+          `<g transform="translate(${String(x)},${String(14 - 6 * k)}) scale(${String(k)}) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+      )
+      .join(""),
+  // Ward Against Elements: the ward's ring and pole, a flame and a bolt above (#1572).
+  "ward-elements": () =>
+    `<ellipse cx="12" cy="18" rx="8.5" ry="3.6" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 18V12", 2.4) +
+    `<g transform="translate(6.5,7) scale(0.5) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M18 1.5L15 7H19L16 12.5", 2),
+  // Shock Arrow: an arrow with a bolt across its shaft (#1572).
+  "arrow-bolt": () =>
+    inkLine("M3.5 20.5L17 7", 2.4) +
+    inkFill("M22 2L20.5 10L14 3.5Z") +
+    inkLine("M8 4.5L5.5 10H10L7.5 15.5", 2),
+  // Infuriating Heat: rising bars, a flame above (#1572).
+  "flame-rise": () =>
+    inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
+    `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { openPeers, startSoloMatch } from "./helpers/peers.js";
+import { joinByCode } from "./helpers/menu.js";
+import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
 
@@ -27,11 +28,9 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
   const { context, pages } = await openPeers(browser, 2);
   const [host, guest] = pages as [Page, Page];
   await openMenu(host, "Ann");
-  await host.getByRole("button", { name: "host a lobby" }).click();
-  const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
+  const code = await hostLobby(host);
   await openMenu(guest, "Bob");
-  await guest.locator("input.code-input").fill(code);
-  await guest.getByRole("button", { name: "Join", exact: true }).click();
+  await joinByCode(guest, code);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: "join team 2" }).click();
 
@@ -44,7 +43,8 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
-  await expect(guest.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  // Any characters will do: both sides play the house team (#1525).
+  await playHouseTeams([host, guest]);
 
   // In a match, team chat is the default; `!` says it to all.
   await say(host, "spike their monk");

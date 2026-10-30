@@ -1,11 +1,13 @@
 # Modes
 
 Each map plays one mode, and the lobby says which under the map's name.
-Nobody picks it, but a Team Play tile picks the modes its lobby's maps
-play: **Team Arena** Annihilation, Kill Count and Priest Annihilation,
-**Heroes' Ascent** Relic Run, King of the Hill and Capture Points, and
-**GvG** the Guild Battle. **Hosted Lobby** offers every map. A Random Arena picks a map for you, and with it the
-mode, but never a Guild Battle, a Relic Run, King of the Hill or Capture
+The modes are the entries of the rail on the left of the main screen.
+Nobody picks a map's mode, but the rail entry you host from picks the
+modes its lobby's maps play: **Team Arena** Annihilation, Kill Count and
+Priest Annihilation, **Heroes' Ascent** Relic Run, King of the Hill and
+Capture Points, and **GvG** the Guild Battle. **Hosted Game** offers
+every map. A **Random Arena** picks a map for you, and with it the mode,
+but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points.
 
 In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
@@ -164,8 +166,7 @@ Forgotten Shrines plays it.
 
 ## Team Lobby
 
-A lobby hosted from Team Play does not start the match when everyone is
-ready. It opens the Team Lobby first, where each side picks one Team
+A hosted lobby does not start the match when everyone is ready. It opens the Team Lobby first, where each side picks one Team
 Build together and then splits its characters. Each side is as big as
 it was when the Team Lobby opened, its bots included, and at most 8.
 Each stage lasts 60 seconds and ends early once everyone on both sides
@@ -175,7 +176,7 @@ is ready.
 side's size, one proposal each, with **Propose**, and vote for one of
 their side's proposals, their own included. Each proposal is a card
 with the initials of who voted for it: click a card to vote, and click
-it again to take your vote back. Nothing is proposed for you: Team Play
+it again to take your vote back. Nothing is proposed for you: the menu
 only makes and edits Team Builds. A new proposal replaces your old one,
 and the votes for it go back to none. The most votes wins. On a tie the
 captain's vote decides: the host on the host's side, the earliest to

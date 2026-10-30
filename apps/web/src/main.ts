@@ -99,16 +99,23 @@ import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
-  loadPlayTab,
   loadStarterCharacterId,
-  renderMenu,
+  renderCharacterBuilder,
+  renderRandomArena,
   saveActiveCharacterId,
   saveStarterCharacterId,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { playerGuild } from "./ui/player-section.js";
-import { renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
+import { loadRail, type RailEntry } from "./ui/rail.js";
+import {
+  isHostEntry,
+  renderHostScreen,
+  renderTeamBuilder,
+  type HostScreen,
+  type TeamPlayCallbacks,
+} from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import {
   addMember,
@@ -301,8 +308,8 @@ async function main(): Promise<void> {
   let lobby: LobbyConnection | undefined;
   /** The lobby this tab hosts, while it hosts one: leaving it ends it for everyone. */
   let hosted: HostedLobby | undefined;
-  /** The modes the hosted lobby's maps play (#1453): a Team Play tile's; `undefined` for all. */
-  let lobbyModes: TeamPlayTile["modes"];
+  /** The modes the hosted lobby's maps play (#1453, #1525): its screen's; `undefined` for all. */
+  let lobbyModes: HostScreen["modes"];
   let match: MatchView | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
@@ -445,14 +452,17 @@ async function main(): Promise<void> {
       openHelpOverlay(app);
     },
     onOptions: () => {
-      // Closed over Solo Play, its roster wears the cape just picked in
+      // Closed over the menu, its characters wear the cape just picked in
       // Options (#1513). Not when a match starting closed it, which leaves
       // the screen first; any other screen keeps what it joined with.
       openOptionsOverlay(app, () => {
-        if (idleScreen && screenRoot.querySelector(".screen-menu") !== null) {
+        if (idleScreen && screenRoot.querySelector(".screen-rail") !== null) {
           showMenu();
         }
       });
+    },
+    onJoin: (code, name) => {
+      joinWith(code, name);
     },
   });
 
@@ -551,8 +561,10 @@ async function main(): Promise<void> {
     showViewport(false);
     music().screen("menu");
     idleScreen = true;
-    if (loadPlayTab() === "team") {
-      void showTeamPlay();
+    // The rail entry last shown (#1525).
+    const entry = loadRail();
+    if (entry !== "random-arena" && entry !== "characters") {
+      void showTeamScreen(entry, turn);
       return;
     }
     void (async () => {
@@ -566,6 +578,7 @@ async function main(): Promise<void> {
         return;
       }
       renderMenuWith(
+        entry,
         list,
         [...problems, ...played.problems, ...editNotices],
         tally(played.records),
@@ -580,22 +593,20 @@ async function main(): Promise<void> {
     renderRecordScreen(screenRoot, played, problems, { onBack: showMenu });
   };
 
+  /** Random Arena or Character Builder (#1525), with `list`. */
   const renderMenuWith = (
+    entry: "random-arena" | "characters",
     list: readonly StoredCharacter[],
     problems: readonly string[] = [],
     tallies: ReadonlyMap<string, Tally> = new Map(),
   ): void => {
-    renderMenu(
+    (entry === "random-arena" ? renderRandomArena : renderCharacterBuilder)(
       screenRoot,
       {
-        onCreateLobby: (name) => {
-          hostWith(name, undefined, false);
-        },
-        onJoinLobby: joinWith,
         onRandomArena: (mode, name) => {
           void enterRandomArena(mode, name);
         },
-        onSwitchTab: showMenu,
+        onSwitch: showMenu,
         onShowRecord: () => {
           void showRecord();
         },
@@ -654,7 +665,7 @@ async function main(): Promise<void> {
         // highlighted row matches what was just picked, without a round
         // trip to storage for a list we already hold.
         onSelectCharacter: () => {
-          renderMenuWith(list, problems, tallies);
+          renderMenuWith(entry, list, problems, tallies);
         },
       },
       list,
@@ -700,15 +711,15 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Host a lobby as `name`, with the active Solo character, on `modes`'
-   * maps; a Team Play tile's (`teamLobby`) starts in the Team Lobby (#1460).
+   * Host a lobby as `name` on `modes`' maps; it starts in the Team Lobby
+   * (#1460, #1525). Only the Random Arena queue hosts any other kind.
    */
-  const hostWith = (name: string, modes: TeamPlayTile["modes"], teamLobby: boolean): void => {
+  const hostWith = (name: string, modes: HostScreen["modes"]): void => {
     void (async () => {
       lobbyModes = modes;
       const entrant = await readEntrant();
       await enterLobby(name, entrant, async () => {
-        hosted = await hostLobby(name, entrant.guild, entrant.character, teamLobby);
+        hosted = await hostLobby(name, entrant.guild, entrant.character, true);
         return hosted.lobby;
       });
     })();
@@ -725,17 +736,23 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Team Play (#1453), as `showMenu` shows it on that tab. Its tiles host
-   * Team Lobbies (#1460), where the picked Team Build is proposed.
+   * A team mode, Hosted Game or Team Builder (#1525), as `showMenu` shows
+   * them. They host Team Lobbies (#1460), where a Team Build is proposed.
    */
-  const showTeamPlay = async (): Promise<void> => {
+  const showTeamScreen = async (
+    entry: Exclude<RailEntry, "random-arena" | "characters">,
+    turn: ScreenTurn,
+  ): Promise<void> => {
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
-    renderTeamPlay(screenRoot, teamList.teams, [...teamList.problems, ...editNotices], menuNotice, {
-      onHostTile: (tile, name) => {
-        hostWith(name, tile.modes, true);
+    // Host or Join pressed on the old screen while this awaited (#1513).
+    if (!turn()) {
+      return;
+    }
+    const callbacks: TeamPlayCallbacks = {
+      onHost: (modes, name) => {
+        hostWith(name, modes);
       },
-      onJoinLobby: joinWith,
-      onSwitchTab: showMenu,
+      onSwitch: showMenu,
       // A new team is stored only once it is saved (#573).
       onNewTeam: () => {
         showTeamEditor(openedTeam(newTeam(crypto.randomUUID()), false), characterList.characters);
@@ -756,7 +773,13 @@ async function main(): Promise<void> {
         }
         openPastedTeam(result.team, characterList.characters);
       },
-    });
+    };
+    const problems = [...teamList.problems, ...editNotices];
+    if (isHostEntry(entry)) {
+      renderHostScreen(screenRoot, entry, teamList.teams, problems, menuNotice, callbacks);
+    } else {
+      renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
+    }
     editNotices = [];
   };
 
@@ -814,7 +837,7 @@ async function main(): Promise<void> {
     );
   };
 
-  /** The open team editor; every way out of it passes through `showMenu`, to Team Play. */
+  /** The open team editor; every way out of it passes through `showMenu`, to the menu. */
   let teamEditor: TeamEditorView | undefined;
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
@@ -1105,7 +1128,7 @@ async function main(): Promise<void> {
       return;
     }
     teamPicks = undefined;
-    // A Team Play tile's lobby (#1453) starts on the first of its maps.
+    // A mode's lobby (#1453, #1525) starts on the first of its maps.
     const maps = hostMaps(availableMaps, lobbyModes);
     const [firstMap] = maps;
     if (

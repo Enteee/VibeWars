@@ -1,4 +1,10 @@
-import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY, RANGE_SPELL } from "../../distances.js";
+import {
+  AREA_ADJACENT,
+  AREA_IN_THE_AREA,
+  AREA_NEARBY,
+  RANGE_MELEE,
+  RANGE_SPELL,
+} from "../../distances.js";
 import type { Skill } from "../types.js";
 
 export const MESMER_SKILLS: readonly Skill[] = [
@@ -1431,6 +1437,219 @@ export const MESMER_SKILLS: readonly Skill[] = [
             },
           },
         ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Mesmer staples (#1570), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.power-leak",
+    name: "Power Leak",
+    gwId: 24,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a spell or chant, that skill is interrupted
+    // and target foe loses 3...17 Energy": 14.
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 3, atTwelve: 14 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.blackout",
+    name: "Blackout",
+    gwId: 29,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    // "Touched target foe."
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 2...8 seconds, all of touched target foe's skills are disabled,
+    // and all of your skills are disabled for 5 seconds": 7. A cast the
+    // foe is in finishes: a disable is no interrupt.
+    effects: [
+      {
+        kind: "disable-skill",
+        which: "all",
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 2, atTwelve: 7 } },
+      },
+      { kind: "disable-own-skills", which: "all", seconds: 5 },
+    ],
+  },
+  {
+    id: "mesmer.shatter-hex",
+    name: "Shatter Hex",
+    gwId: 67,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally. If a hex is removed, foes near that
+    // ally take 30...120 damage": 102, as Smite Hex's.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "mesmer.domination-magic", atZero: 30, atTwelve: 102 },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.psychic-instability",
+    name: "Psychic Instability",
+    gwId: 1057,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Interrupts the target foe's action. If that action is a skill, that
+    // foe and all adjacent foes are knocked down for 2...3 seconds" (PvP):
+    // 3. Only a skill is ever interrupted; a swing is a miss. Its "50%
+    // failure chance with Fast Casting 4 or less" is out of reach at 12.
+    effects: [
+      { kind: "interrupt" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          { kind: "knockdown", durationSeconds: 3 },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [{ kind: "knockdown", durationSeconds: 3 }],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.arcane-conundrum",
+    name: "Arcane Conundrum",
+    gwId: 36,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...15 seconds, spells cast by target foe and all adjacent foes
+    // take twice as long to cast. When this hex ends, you gain 1...7
+    // energy": 13 s, and 6 for each foe it caught.
+    effects: [
+      { kind: "apply-status", statusId: "arcane-conundrum", durationSeconds: 13 },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [{ kind: "apply-status", statusId: "arcane-conundrum", durationSeconds: 13 }],
       },
     ],
   },

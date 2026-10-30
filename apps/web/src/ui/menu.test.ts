@@ -1,20 +1,24 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import {
-  PLAY_TABS,
+  NO_CHARACTER_FOR_QUEUE,
   isPlayable,
-  loadPlayTab,
-  renderMenu,
+  randomArenaActions,
+  renderCharacterBuilder,
+  renderRandomArena,
   rosterOrder,
   rosterSubtitle,
   rosterTags,
-  savePlayTab,
-  soloPlayActions,
   type MenuCallbacks,
 } from "./menu.js";
+
+// The figure draws on a canvas, which Node has none of.
+vi.mock("./character-figure.js", () => ({
+  createCharacterFigure: () => document.createElement("canvas"),
+}));
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
@@ -111,39 +115,15 @@ describe("rosterOrder (#1425)", () => {
   });
 });
 
-describe("Solo Play / Team Play (#1453)", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("reads Solo Play, then Team Play", () => {
-    expect(PLAY_TABS.map(({ label }) => label)).toEqual(["Solo Play", "Team Play"]);
-  });
-
+describe("Random Arena's bar (#1453, #1525)", () => {
   it("keeps Record in the bar, and no Teams or Music", () => {
-    expect(soloPlayActions({ onShowRecord: () => undefined }).map(({ label }) => label)).toEqual([
-      "Record",
-    ]);
-  });
-
-  it("starts on Solo Play and remembers the tab last switched to", () => {
-    const stored = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      getItem: (key: string) => stored.get(key) ?? null,
-      setItem: (key: string, value: string) => stored.set(key, value),
-    });
-    expect(loadPlayTab()).toBe("solo");
-    savePlayTab("team");
-    expect(stored.get(`${STORAGE_NAMESPACE}.playTab`)).toBe("team");
-    expect(loadPlayTab()).toBe("team");
-    savePlayTab("solo");
-    expect(loadPlayTab()).toBe("solo");
-    stored.set(`${STORAGE_NAMESPACE}.playTab`, "teams");
-    expect(loadPlayTab()).toBe("solo");
+    expect(randomArenaActions({ onShowRecord: () => undefined }).map(({ label }) => label)).toEqual(
+      ["Record"],
+    );
   });
 });
 
-/** Just enough DOM to render Solo Play; the unit tests run in Node. */
+/** Just enough DOM to render the menu's screens; the unit tests run in Node. */
 class FakeElement {
   className = "";
   textContent = "";
@@ -151,6 +131,7 @@ class FakeElement {
   placeholder = "";
   disabled = false;
   hidden = false;
+  title = "";
   type = "";
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -198,41 +179,114 @@ class FakeElement {
   }
 }
 
-describe("Solo Play's name (#1513)", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
+describe("the character screens (#1525)", () => {
+  let queued: string[];
+  let edited: string[];
+  let cloned: string[];
+  let rerolled: string[];
+  let added: number;
+  let switched: string[];
+  const callbacks: MenuCallbacks = {
+    onRandomArena: (mode, name) => queued.push(`${mode} ${name}`),
+    onSwitch: (entry) => switched.push(entry),
+    onShowRecord: () => undefined,
+    onNewCharacter: () => {
+      added += 1;
+    },
+    onEditCharacter: (id) => edited.push(id),
+    onCloneStarter: (id) => cloned.push(id),
+    onRerollCharacter: (id) => rerolled.push(id),
+    onSelectCharacter: () => undefined,
+  };
+  let stored: Map<string, string>;
 
-  it("has no Name or Guild tag field, and hosts as the name saved in Options", () => {
-    const stored = new Map([[`${STORAGE_NAMESPACE}.playerName`, "Rurik"]]);
-    vi.stubGlobal("localStorage", { getItem: (key: string) => stored.get(key) ?? null });
+  beforeEach(() => {
+    queued = [];
+    edited = [];
+    cloned = [];
+    rerolled = [];
+    added = 0;
+    switched = [];
+    stored = new Map([
+      [`${STORAGE_NAMESPACE}.playerName`, "Rurik"],
+      [`${STORAGE_NAMESPACE}.starterCharacterId`, "rolled"],
+    ]);
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => stored.set(key, value),
+    });
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
       activeElement: null,
       createElement: (tag: string) => new FakeElement(tag),
     });
-    const hosted: string[] = [];
-    const callbacks: MenuCallbacks = {
-      onRandomArena: () => undefined,
-      onCreateLobby: (name) => hosted.push(name),
-      onJoinLobby: () => undefined,
-      onSwitchTab: () => undefined,
-      onShowRecord: () => undefined,
-      onNewCharacter: () => undefined,
-      onEditCharacter: () => undefined,
-      onCloneStarter: () => undefined,
-      onRerollCharacter: () => undefined,
-      onSelectCharacter: () => undefined,
-    };
-    const root = new FakeElement("div");
-    renderMenu(root as unknown as HTMLElement, callbacks);
+  });
 
-    const shown = root.all();
-    // The join code is the only text field left.
-    expect(shown.filter((node) => node.tagName === "input")).toHaveLength(1);
-    expect(shown.some((node) => node.textContent === "Guild tag")).toBe(false);
-    expect(shown.some((node) => node.className.includes("cape"))).toBe(false);
-    shown.find((node) => node.textContent === "Host a lobby")?.click();
-    expect(hosted).toEqual(["Rurik"]);
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const roster = [
+    character({ id: "mine", name: "Mine" }),
+    character({ id: "rolled", name: "Rolled" }),
+  ];
+  const shown = (render: typeof renderRandomArena, list = roster): FakeElement[] => {
+    const root = new FakeElement("div");
+    render(root as unknown as HTMLElement, callbacks, list);
+    return root.all();
+  };
+  const press = (nodes: FakeElement[], label: string): void => {
+    nodes.find((node) => node.tagName === "button" && node.textContent === label)?.click();
+  };
+  const labels = (nodes: FakeElement[]): string[] =>
+    nodes.filter((node) => node.tagName === "button").map((node) => node.textContent);
+
+  it("Random Arena picks only: no Edit, Clone, Reroll or New, and no text field", () => {
+    const nodes = shown(renderRandomArena);
+    expect(labels(nodes)).not.toEqual(
+      expect.arrayContaining([expect.stringMatching(/^(Edit|Clone|Reroll|New character)$/)]),
+    );
+    expect(nodes.filter((node) => node.tagName === "input")).toHaveLength(0);
+    const cards = nodes.filter((node) => node.className === "play-card-open");
+    expect(cards.map((card) => card.attributes.get("aria-pressed"))).toEqual(["false", "false"]);
+    cards[1]?.click();
+    expect(stored.get(`${STORAGE_NAMESPACE}.activeCharacterId`)).toBe("rolled");
+  });
+
+  it("Random Arena's tiles queue as the saved name, once a character is picked", () => {
+    let nodes = shown(renderRandomArena);
+    const tiles = nodes.filter((node) => node.className === "random-arena-tile");
+    expect(tiles.map((tile) => tile.textContent)).toEqual(["1v1", "2v2", "4v4"]);
+    expect(tiles.every((tile) => tile.disabled)).toBe(true);
+    expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(true);
+
+    stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
+    nodes = shown(renderRandomArena);
+    expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(false);
+    press(nodes, "2v2");
+    expect(queued).toEqual(["random-arena-2v2 Rurik"]);
+  });
+
+  it("Random Arena with no characters points to Character Builder", () => {
+    const nodes = shown(renderRandomArena, []);
+    expect(nodes.some((node) => node.textContent === "No characters yet.")).toBe(true);
+    press(nodes, "Character Builder");
+    expect(switched).toEqual(["characters"]);
+  });
+
+  it("Character Builder has Edit, Clone and Reroll on the starter, and New character", () => {
+    const nodes = shown(renderCharacterBuilder);
+    expect(labels(nodes).filter((label) => label !== "")).toEqual(
+      expect.arrayContaining(["Edit", "Clone", "Reroll", "New character"]),
+    );
+    press(nodes, "Edit");
+    nodes.find((node) => node.className === "play-card-open" && node.tagName === "button")?.click();
+    press(nodes, "Clone");
+    press(nodes, "Reroll");
+    press(nodes, "New character");
+    expect(edited).toEqual(["mine", "mine"]);
+    expect(cloned).toEqual(["rolled"]);
+    expect(rerolled).toEqual(["rolled"]);
+    expect(added).toBe(1);
   });
 });

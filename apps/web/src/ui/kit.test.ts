@@ -552,7 +552,12 @@ describe("screenBar in the top bar (#578, #1272)", () => {
       own: "options",
     });
     expect(slots.crumbs.text).toBe("VibeWars > Options");
-    expect(shown.at(-1)).toEqual({ place: "VibeWars / Options", own: "options", overlay: true });
+    expect(shown.at(-1)).toEqual({
+      place: "VibeWars / Options",
+      own: "options",
+      overlay: true,
+      join: false,
+    });
     // A lobby repaints under it: the overlay's bar stays.
     const repainted = screen(undefined, "Lobby");
     expect(slots.crumbs.text).toBe("VibeWars > Options");
@@ -565,7 +570,12 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     overlay.release();
     expect(slots.crumbs.text).toBe("VibeWars > Lobby");
     expect(slots.back.children).toEqual([repainted.back]);
-    expect(shown.at(-1)).toEqual({ place: "VibeWars / Lobby", own: undefined, overlay: false });
+    expect(shown.at(-1)).toEqual({
+      place: "VibeWars / Lobby",
+      own: undefined,
+      overlay: false,
+      join: false,
+    });
     pressEscape();
     expect(onClose).toHaveBeenCalledOnce();
     expect(repainted.onBack).toHaveBeenCalledOnce();
