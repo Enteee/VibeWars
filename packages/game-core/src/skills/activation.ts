@@ -183,6 +183,14 @@ export function isCompanionRule(rule: TargetRule): boolean {
   return rule === "companion" || rule === "living-companion";
 }
 
+/**
+ * Whether `rule` lands on the caster when no ally is selected (#1423): a
+ * heal or an echo with a foe or nothing targeted goes on yourself.
+ */
+export function isAllyOrSelfRule(rule: TargetRule): boolean {
+  return rule === "single-ally" || rule === "single-ally-not-spirit";
+}
+
 /** Validate a target against a skill's targeting rule. */
 function checkTarget(request: ActivationRequest): ActivationCheck {
   const { skill, caster, target } = request;

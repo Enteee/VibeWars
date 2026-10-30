@@ -68,6 +68,7 @@ import { FLASH_LOCKOUT_SECONDS, MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from 
 import {
   canActivate,
   hasAftercast,
+  isAllyOrSelfRule,
   isCompanionRule,
   payCost,
   type ActivationCheck,
@@ -2848,7 +2849,7 @@ export class MatchSimulation {
     if (isCompanionRule(skill.target)) {
       return this.#companionOf(record)?.id;
     }
-    if (skill.target !== "single-ally") {
+    if (!isAllyOrSelfRule(skill.target)) {
       return record.targetId;
     }
     const selected =

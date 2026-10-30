@@ -220,6 +220,19 @@ describe("an echo (#1423)", () => {
     expect(ally.health).toBeLessThan(100 + HEAL);
   });
 
+  it("lands on the caster with no ally selected: nothing targeted, or a foe", () => {
+    for (const targetId of [undefined, "f"]) {
+      const sim = match(["paragon.finale-of-restoration"]);
+      if (targetId !== undefined) {
+        sim.setTarget("p", targetId);
+      }
+      expect(sim.requestSkill("p", 0)?.check).toEqual({ ok: true });
+      stepFor(sim, 1.5);
+      expect(remaining(sim, FINALE, "p")).toBeGreaterThan(29);
+      expect(get(sim, "f").combatant.statuses.has(FINALE)).toBe(false);
+    }
+  });
+
   it("but a spirit may be targeted by none that says so; a pet or yourself may", () => {
     const caster = { id: "p", team: 0 };
     const target = (id: string, team: number, creatureKind?: "spirit" | "pet") => ({
