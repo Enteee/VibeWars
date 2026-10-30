@@ -63,6 +63,10 @@ export async function openLobby(
     /** One set of rules for every match, or the rules of the `n`th, from 0. */
     matchRules?: MatchRules | ((n: number) => MatchRules);
     startMatch?: (plan: MatchPlan) => MatchHost;
+    /** Hosted from Team Play (#1458). */
+    teamLobby?: boolean;
+    /** The lobby's RNG: a fixed sequence by default. */
+    random?: () => number;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -73,6 +77,8 @@ export async function openLobby(
     transport: room,
     code: CODE,
     mapIds: MAP_IDS,
+    teamLobby: options.teamLobby ?? false,
+    random: options.random ?? (() => 0.5),
     startMatch(plan) {
       const host =
         options.startMatch?.(plan) ??

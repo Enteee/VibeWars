@@ -343,6 +343,11 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "gain-shield" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
   "mesmer.hex-breaker": { glyph: "hex-return" },
+  // Flash enchantments (#1421, #1447).
+  "dervish.enchanted-haste": { glyph: "haste-clean" },
+  "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
+  "dervish.balthazars-rage": { glyph: "flame-bars" },
+  "dervish.harriers-haste": { glyph: "chase" },
   // Placeholders until the asset-designer's (#1423): Paragon echoes.
   "paragon.aggressive-refrain": { glyph: "blade-fast", modifier: "self" },
   "paragon.blazing-finale": { glyph: "flame-ring", modifier: "area" },
@@ -352,11 +357,6 @@ export const SKILL_ICONS = {
   "paragon.hasty-refrain": { glyph: "speed", modifier: "hourglass" },
   "paragon.mending-refrain": { glyph: "ring-heal", modifier: "self" },
   "paragon.purifying-finale": { glyph: "cleanse", modifier: "hourglass" },
-  // Placeholders until the asset-designer's (#1421): flash enchantments.
-  "dervish.enchanted-haste": { glyph: "speed", modifier: "plus" },
-  "dervish.heart-of-holy-flame": { glyph: "flame", modifier: "self" },
-  "dervish.balthazars-rage": { glyph: "flame", modifier: "up" },
-  "dervish.harriers-haste": { glyph: "dash", modifier: "area" },
   // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
   "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
   "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },

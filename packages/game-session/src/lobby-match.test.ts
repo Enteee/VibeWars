@@ -179,6 +179,29 @@ describe("a lobby's own match", () => {
     expect(lobby.matches[0]?.host.draining).toBe(false);
   });
 
+  it("hands a member the match on now to watch, and none while the lobby waits (#480)", async () => {
+    const { lobby, members } = await lobbyOf([0, null]);
+    const spectator = at(members, 1);
+    expect(spectator.connection.watchMatch()).toBeUndefined();
+    await start(lobby);
+    await play(lobby.host);
+    const watch = spectator.connection.watchMatch();
+    expect(watch?.matchId).toBe(lobby.matches[0]?.plan.matchId);
+    if (watch === undefined) {
+      return;
+    }
+    const watching = connectObserver({
+      transport: watch.transport,
+      hostId: spectator.connection.getSnapshot().hostId,
+      matchId: watch.matchId,
+      timeoutMs: 1000,
+    });
+    await settle();
+    const viewer = await watching;
+    await lobby.step(OBSERVER_DELAY_SECONDS + 1);
+    expect(viewer.getSnapshot()?.players.length).toBeGreaterThan(0);
+  });
+
   it("lets the next match start while the last still drains to its spectator (#480)", async () => {
     // Only the first match is short: the second is still on when the first has drained.
     const { lobby, members } = await lobbyOf([0, 1, null, null, null], (n) =>

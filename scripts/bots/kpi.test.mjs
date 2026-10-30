@@ -353,6 +353,7 @@ describe("buildKpis", () => {
         throw new Error("systemctl missing");
       },
       staff: () => ({ byRole: {}, maxAgents: 1 }),
+      webCache: () => null,
     });
     expect(kpis.schemaVersion).toBe(KPI_SCHEMA_VERSION);
     expect(kpis.at).toBe(NOW);
@@ -360,5 +361,37 @@ describe("buildKpis", () => {
     expect(kpis.host).toBeNull();
     expect(kpis.flow).not.toBeNull();
     expect(kpis.errors).toEqual({ claude: "no logs", host: "systemctl missing" });
+  });
+
+  it("carries the web cache's stats, and nulls only that section when it cannot be read", () => {
+    const stats = {
+      entries: 3,
+      bytes: 1_200,
+      limitBytes: 10 * 2 ** 30,
+      hits: 5,
+      misses: 1,
+      evictions: 0,
+      bytesSaved: 2_000,
+      hitRate: 5 / 6,
+    };
+    const readers = {
+      flow: () => null,
+      claude: () => null,
+      github: () => null,
+      host: () => null,
+      staff: () => null,
+      webCache: () => stats,
+    };
+    expect(buildKpis(NOW, readers).webCache).toEqual(stats);
+    const failed = buildKpis(NOW, {
+      ...readers,
+      webCache: () => {
+        throw new Error("EACCES: permission denied, mkdir '.bots/web-cache'");
+      },
+    });
+    expect(failed.webCache).toBeNull();
+    expect(failed.errors).toEqual({
+      webCache: "EACCES: permission denied, mkdir '.bots/web-cache'",
+    });
   });
 });
