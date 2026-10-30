@@ -1788,13 +1788,13 @@ const skillGlyph = {
     inkLine("M6 3V21", 2.4) +
     `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
     inkFill("M10.5 6.2h2v1.8h1.8v2h-1.8v1.8h-2v-1.8H8.7v-2h1.8z"),
-  // A banner with a note on its cloth: a song carried to every ally (#1012).
   // A note held under a fermata: a chant that is made to last (#1482).
   "note-hold": () =>
     `<circle cx="9" cy="17.5" r="3.4" fill="${C.ink}"/>` +
     inkLine("M12.4 17.5V9.5", 2.2) +
     inkLine("M3 9.5a9 7 0 0 1 18 0", 2.2) +
     `<circle cx="12" cy="6.5" r="1.4" fill="${C.ink}"/>`,
+  // A banner with a note on its cloth: a song carried to every ally (#1012).
   "banner-note": () =>
     inkLine("M6 3V21", 2.4) +
     `<path d="M6 4H19.5L15.5 8.75L19.5 13.5H6Z" ${stroke(C.ink, 1.6)}/>` +
