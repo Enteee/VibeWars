@@ -1,0 +1,407 @@
+import { AREA_ADJACENT, AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
+import type { StatusDefinition } from "../status.js";
+import { define } from "./define.js";
+
+export type DervishStatusId =
+  // Dervish enchantments and stances (#845).
+  | "mystic-regeneration"
+  | "fleeting-stability"
+  | "heart-of-fury"
+  | "vow-of-strength"
+  | "sand-shards"
+  | "pious-haste"
+  | "pious-haste-run"
+  // Dervish earth enchantments (#1021).
+  | "staggering-force"
+  | "dust-cloak"
+  | "aura-of-thorns"
+  | "enchanted-haste"
+  | "heart-of-holy-flame"
+  | "balthazars-rage"
+  | "harriers-haste"
+  // Dervish forms (#1437).
+  | "avatar-of-melandru"
+  | "avatar-of-dwayna"
+  | "avatar-of-balthazar"
+  | "avatar-of-grenth"
+  | "avatar-of-lyssa";
+
+export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
+  // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
+  // each Enchantment (maximum of 3) on you."
+  "mystic-regeneration": define("mystic-regeneration", "Mystic Regeneration", "enchantment", {
+    profession: "dervish",
+    healthPipsPerEnchantment: { pips: 3, max: 3 },
+  }),
+  // "You cannot be knocked down and move 25% faster. This enchantment
+  // ends prematurely if it prevents a knockdown."
+  "fleeting-stability": define("fleeting-stability", "Fleeting Stability", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+    preventsKnockdown: true,
+    endsOnKnockdownPrevented: true,
+  }),
+  // "You attack 25% faster": GW1 counts faster as 1 − x (ADR-0029).
+  "heart-of-fury": define("heart-of-fury", "Heart of Fury", "stance", {
+    profession: "dervish",
+    attackDurationMultiplier: 0.75,
+  }),
+  // "For 15 seconds, whenever you attack a foe with your scythe, you deal
+  // 10...22...25 slashing damage to all adjacent foes": 22, its rank-12
+  // value. Hit, miss or block: an attack. Its own Dervish is the splash's
+  // centre, so the foe it attacks is among them (#939).
+  "vow-of-strength": define("vow-of-strength", "Vow of Strength", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "bearer-attacks",
+        target: "bearer",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "caster-wields", weapon: "scythe" },
+            effects: [
+              {
+                kind: "splash",
+                hits: "foes",
+                radius: AREA_ADJACENT,
+                maxTargets: undefined,
+                effects: [
+                  { kind: "damage", amount: { flat: 22 }, type: "slashing", armorPenetration: 0 },
+                ],
+              },
+            ],
+          },
+        ],
+        skillId: "dervish.vow-of-strength",
+      },
+    ],
+  }),
+  // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
+  // other adjacent foes take 10...50...60 earth damage": 4 and 50, its
+  // rank-12 values. Adjacent to the foe hit, not to the Dervish: at melee
+  // reach the two barely differ (#939).
+  "sand-shards": define("sand-shards", "Sand Shards", "enchantment", {
+    profession: "dervish",
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "caster-wields", weapon: "scythe" },
+          effects: [
+            {
+              kind: "splash",
+              hits: "foes",
+              radius: AREA_ADJACENT,
+              maxTargets: undefined,
+              effects: [
+                { kind: "damage", amount: { flat: 50 }, type: "earth", armorPenetration: 0 },
+              ],
+            },
+          ],
+        },
+      ],
+      skillId: "dervish.sand-shards",
+    },
+    endsAfterHits: { count: 4, weapon: "scythe" },
+  }),
+  // "...for 1...6...7 [seconds] you move 25% faster. If an enchantment was
+  // removed, you run 50% faster instead" (#939): two stances, so the
+  // faster replaces the slower as it lands.
+  "pious-haste": define("pious-haste", "Pious Haste", "stance", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+  }),
+  "pious-haste-run": define("pious-haste-run", "Pious Haste (run)", "stance", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.5,
+  }),
+  // "For 30 seconds, your attacks deal earth damage. When this enchantment
+  // ends, all nearby foes have Cracked Armor for 1...8...10 seconds" (#1021):
+  // 8 s, its rank-12 value. Any end counts: expiry, a strip, a death.
+  "staggering-force": define("staggering-force", "Staggering Force", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
+          },
+        ],
+        skillId: "dervish.staggering-force",
+      },
+    ],
+  }),
+  // "For 30 seconds, your attacks deal earth damage. When this Enchantment
+  // ends, all nearby foes are Blinded for 1...3...4 seconds" (#1021): 3 s.
+  "dust-cloak": define("dust-cloak", "Dust Cloak", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 3 }],
+          },
+        ],
+        skillId: "dervish.dust-cloak",
+      },
+    ],
+  }),
+  // "For 30 seconds, this enchantment does nothing. When this enchantment
+  // ends, all nearby foes are Crippled for 3...7...8 seconds" (#1021): 7 s.
+  // Until then it counts as a Dervish enchantment, nothing more.
+  "aura-of-thorns": define("aura-of-thorns", "Aura of Thorns", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 7 }],
+          },
+        ],
+        skillId: "dervish.aura-of-thorns",
+      },
+    ],
+  }),
+  // "For 7 seconds, you move 25% faster. If this enchantment ends
+  // prematurely, you lose 1 conditions" (#1421): stripped, or cut short
+  // any other way, but not run out.
+  "enchanted-haste": define("enchanted-haste", "Enchanted Haste", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+    triggers: [
+      {
+        on: "ends-early",
+        target: "bearer",
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+        skillId: "dervish.enchanted-haste",
+      },
+    ],
+  }),
+  // "For 30 seconds afterward, your attacks deal holy damage. When this
+  // enchantment ends, all nearby foes are set on fire for 2...5 seconds"
+  // (#1421): 4 s, its rank-12 value. Dust Cloak's pattern.
+  "heart-of-holy-flame": define("heart-of-holy-flame", "Heart of Holy Flame", "enchantment", {
+    profession: "dervish",
+    attackDamageType: "holy",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 4 }],
+          },
+        ],
+        skillId: "dervish.heart-of-holy-flame",
+      },
+    ],
+  }),
+  // "For 20 seconds afterward, this enchantment does nothing. When this
+  // enchantment ends, you gain 1...2 strikes of adrenaline if any foes are
+  // within earshot" (#1421): 2, its rank-12 value. A splash that reaches
+  // one foe is the "if any": the gain is the caster's, once.
+  "balthazars-rage": define("balthazars-rage", "Balthazar's Rage", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_EARSHOT,
+            maxTargets: 1,
+            effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+          },
+        ],
+        skillId: "dervish.balthazars-rage",
+      },
+    ],
+  }),
+  // "You move 25% faster and deal +3...12 more damage against moving foes"
+  // (#1421): 10, its rank-12 value, on each hit that lands on a foe moving,
+  // as a second packet beside the blow's, slashing as a scythe's.
+  "harriers-haste": define("harriers-haste", "Harrier's Haste", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [
+            { kind: "damage", amount: { flat: 10 }, type: "slashing", armorPenetration: 0 },
+          ],
+        },
+      ],
+      skillId: "dervish.harriers-haste",
+    },
+  }),
+  // "You have +100 Health, +30 elemental armor, and your attacks deal earth
+  // damage. Whenever you lose a Dervish enchantment you lose 2 conditions"
+  // (#1437, PvP).
+  "avatar-of-melandru": define("avatar-of-melandru", "Avatar of Melandru", "form", {
+    profession: "dervish",
+    maxHealthBonus: 100,
+    conditionalArmor: [{ amount: 30, conditions: [{ kind: "vs-elemental" }] }],
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [{ kind: "remove-status", category: "condition", count: 2 }],
+        skillId: "dervish.avatar-of-melandru",
+      },
+    ],
+  }),
+  // "Your attacks deal holy damage. Whenever you use a Dervish attack skill,
+  // you lose 1 hex. Whenever you lose a Dervish enchantment, you are healed
+  // for 5...50 Health" (#1437, PvP).
+  "avatar-of-dwayna": define("avatar-of-dwayna", "Avatar of Dwayna", "form", {
+    profession: "dervish",
+    attackDamageType: "holy",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { type: "attack", profession: "dervish" },
+        target: "bearer",
+        effects: [{ kind: "remove-status", category: "hex", count: 1 }],
+        skillId: "dervish.avatar-of-dwayna",
+      },
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 5, atTwelve: 41 } },
+            perStatusOnTarget: [],
+          },
+        ],
+        skillId: "dervish.avatar-of-dwayna",
+      },
+    ],
+  }),
+  // "You gain +20 armor against physical damage, you gain adrenaline 25%
+  // faster, your attacks deal holy damage, and whenever you lose a Dervish
+  // enchantment, nearby foes are set on fire for 1...3...3 second[s]"
+  // (#1455): 3 s, its rank-12 value.
+  "avatar-of-balthazar": define("avatar-of-balthazar", "Avatar of Balthazar", "form", {
+    profession: "dervish",
+    conditionalArmor: [{ amount: 20, conditions: [{ kind: "vs-physical" }] }],
+    adrenalineGainFaster: 0.25,
+    attackDamageType: "holy",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+          },
+        ],
+        skillId: "dervish.avatar-of-balthazar",
+      },
+    ],
+  }),
+  // "Your scythe attacks deal dark damage, and steal 0...10...12 Health.
+  // You are immune to Disease, and inflict Disease on all adjacent foes
+  // for 3 seconds whenever you lose a Dervish enchantment" (#1455): 10,
+  // its rank-12 value.
+  "avatar-of-grenth": define("avatar-of-grenth", "Avatar of Grenth", "form", {
+    profession: "dervish",
+    immuneTo: ["disease"],
+    attackDamageType: "dark",
+    attackDamageTypeWeapon: "scythe",
+    onAttackHit: {
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "caster-wields", weapon: "scythe" },
+          effects: [
+            {
+              kind: "life-steal",
+              amount: { scaling: { attributeId: "dervish.mysticism", atZero: 0, atTwelve: 10 } },
+            },
+          ],
+        },
+      ],
+      skillId: "dervish.avatar-of-grenth",
+    },
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [{ kind: "apply-status", statusId: "disease", durationSeconds: 3 }],
+          },
+        ],
+        skillId: "dervish.avatar-of-grenth",
+      },
+    ],
+  }),
+  // "Your Dervish enchantments recharge 50% faster and your attacks deal
+  // chaos damage. Whenever you lose a Dervish enchantment, steal 1 Energy
+  // from all nearby foes" (#1455).
+  "avatar-of-lyssa": define("avatar-of-lyssa", "Avatar of Lyssa", "form", {
+    profession: "dervish",
+    enchantmentRechargeFaster: { share: 0.5, profession: "dervish" },
+    attackDamageType: "chaos",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "energy-steal", amount: { flat: 1 } }],
+          },
+        ],
+        skillId: "dervish.avatar-of-lyssa",
+      },
+    ],
+  }),
+};

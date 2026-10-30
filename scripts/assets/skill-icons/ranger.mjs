@@ -1,0 +1,37 @@
+/** @type {Readonly<Record<string, import("../skill-icon-table.mjs").SkillIconRow>>} */
+export const RANGER_ICONS = {
+  "ranger.barrage": { glyph: "volley", modifier: "area" },
+  "ranger.broad-head-arrow": { glyph: "arrow", modifier: "stun" },
+  "ranger.troll-unguent": { glyph: "heal", modifier: "clock" },
+  "ranger.punishing-shot": { glyph: "arrow", modifier: "up" },
+  "ranger.pin-down": { glyph: "pin", modifier: "less" },
+  "ranger.hunters-shot": { glyph: "arrow", modifier: "bleed" },
+  "ranger.crippling-shot": { glyph: "arrow-pierce", modifier: "down" },
+  "ranger.debilitating-shot": { glyph: "arrow", modifier: "bolt" },
+  "ranger.burning-arrow": { glyph: "arrow-flame" },
+  "ranger.throw-dirt": { glyph: "mountain", modifier: "area" },
+  "ranger.natural-stride": { glyph: "armor", modifier: "self" },
+  "ranger.lightning-reflexes": { glyph: "shield-bolt" },
+  "ranger.escape": { glyph: "retreat" },
+  "ranger.apply-poison": { glyph: "flask" },
+  "ranger.savage-shot": { glyph: "arrow" },
+  "ranger.concussion-shot": { glyph: "arrow-burst" },
+  "ranger.distracting-shot": { glyph: "interrupt", modifier: "less" },
+  "ranger.winnowing": { glyph: "totem", modifier: "up" },
+  // Jaws on the ground, barbs that bleed (#1129).
+  "ranger.barbed-trap": { glyph: "jaws", modifier: "bleed" },
+  "ranger.flame-trap": { glyph: "trap-flame" },
+  "ranger.charm-animal": { glyph: "paw-heart" },
+  "ranger.comfort-animal": { glyph: "heal", modifier: "paw" },
+  // The pet's attacks: a glyph for the blow and the paw modifier (#1107).
+  "ranger.brutal-strike": { glyph: "claw", modifier: "paw" },
+  "ranger.maiming-strike": { glyph: "limp", modifier: "paw" },
+  "ranger.disrupting-lunge": { glyph: "interrupt", modifier: "paw" },
+  // The pet's calls and bond: shapes of the statuses they apply (#1108).
+  "ranger.call-of-haste": { glyph: "paw-speed" },
+  "ranger.call-of-protection": { glyph: "paw-shield" },
+  "ranger.symbiotic-bond": { glyph: "bond" },
+  "ranger.revive-animal": { glyph: "paw", modifier: "up" },
+  // Placeholders until the asset-designer's (#1540).
+  "ranger.infuriating-heat": { glyph: "totem", modifier: "hourglass" },
+};

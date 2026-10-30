@@ -1,0 +1,46 @@
+/** @type {Readonly<Record<string, import("../skill-icon-table.mjs").SkillIconRow>>} */
+export const NECROMANCER_ICONS = {
+  "necromancer.blood-renewal-lite": { glyph: "heal", modifier: "down" },
+  "necromancer.faintheartedness": { glyph: "slow" },
+  "necromancer.weaken-armor": { glyph: "armor", modifier: "down" },
+  "necromancer.malaise": { glyph: "energy", modifier: "down" },
+  "necromancer.blood-ritual": { glyph: "energy", modifier: "up" },
+  "necromancer.contagion": { glyph: "germ", modifier: "area" },
+  "necromancer.parasitic-bond": { glyph: "chain", modifier: "down" },
+  "necromancer.rotting-flesh": { glyph: "germ" },
+  "necromancer.enfeeble": { glyph: "sword", modifier: "down" },
+  "necromancer.enfeebling-blood": { glyph: "sword", modifier: "area" },
+  "necromancer.shadow-of-fear": { glyph: "slow", modifier: "area" },
+  "necromancer.rend-enchantments": { glyph: "cleanse", modifier: "bleed" },
+  "necromancer.plague-touch": { glyph: "germ", modifier: "self" },
+  // Shapes of their statuses (#935).
+  "necromancer.spiteful-spirit": { glyph: "hex-burst" },
+  "necromancer.insidious-parasite": { glyph: "drop-arrow" },
+  "necromancer.mark-of-pain": { glyph: "pain-cross" },
+  "necromancer.vampiric-gaze": { glyph: "eye-drop" },
+  // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
+  "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
+  "necromancer.well-of-suffering": { glyph: "well-sink", modifier: "corpse" },
+  // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
+  "necromancer.animate-bone-minions": { glyph: "bone-minions" },
+  "necromancer.animate-bone-horror": { glyph: "bone-horror" },
+  "necromancer.barbs": { glyph: "hex-barbs" },
+  "necromancer.price-of-failure": { glyph: "hex-miss" },
+  "necromancer.suffering": { glyph: "hex-drain" },
+  "necromancer.defile-flesh": { glyph: "hex-heal-cut" },
+  "necromancer.rigor-mortis": { glyph: "hex-nobloc" },
+  "necromancer.lingering-curse": { glyph: "hex-drain-cut" },
+  "necromancer.vampiric-touch": { glyph: "drop-touch" },
+  "necromancer.vampiric-swarm": { glyph: "drop-trio" },
+  "necromancer.shadow-strike": { glyph: "drop-half" },
+  "necromancer.blood-of-the-aggressor": { glyph: "drop-weak" },
+  "necromancer.barbed-signet": { glyph: "drop-barbs", modifier: "bleed" },
+  "necromancer.offering-of-blood": { glyph: "drop-energy" },
+  // Hex and enchantment gain triggers (#1403, #1440): a corner cue, a payoff.
+  "necromancer.soul-barbs": { glyph: "gain-barbs" },
+  "necromancer.defile-defenses": { glyph: "gain-shield" },
+  // Placeholders until the asset-designer's (#1540).
+  "necromancer.blood-is-power": { glyph: "energy", modifier: "plus" },
+  "necromancer.order-of-pain": { glyph: "blade-plus", modifier: "area" },
+  "necromancer.plague-signet": { glyph: "drop-pair", modifier: "plus" },
+};
