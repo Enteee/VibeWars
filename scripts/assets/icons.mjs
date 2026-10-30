@@ -1727,6 +1727,14 @@ const flameRing = (inner, outer, width, dot = true) => {
   return inkLine(d, width) + (dot ? `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>` : "");
 };
 
+/** A hex ring round a struck spell orb, a chevron, and `target` (#1498). @param {string} target */
+const hexFail = (target) =>
+  `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+  `<circle cx="8" cy="12" r="2.7" fill="${C.ink}"/>` +
+  `<path d="M5.2 15L10.8 9" ${stroke(C.bg, 1.5)}/>` +
+  inkLine("M11.8 10.6L13.2 12L11.8 13.4", 1.3) +
+  target;
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   fireball: () =>
@@ -2503,6 +2511,16 @@ const skillGlyph = {
   "hex-mute": () =>
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkLine("M6.5 12H17.5", 3.2),
+  // A dashed ring (a hex), a struck orb, a chevron and a mark: the bearer's next spell fails; an X
+  // is a foe it was aimed at, a plus an ally (#1498).
+  "hex-fail-foe": () => hexFail(inkLine("M13.9 9.6L18.5 14.4M18.5 9.6L13.9 14.4", 2.2)),
+  "hex-fail-ally": () => hexFail(inkLine("M16.2 9.4V14.6M13.6 12H18.8", 2.2)),
+  // A dashed ring (a hex) round a drop with a plus and a minus either side: damage whenever a
+  // condition is gained or lost (#1498).
+  "hex-churn": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
+    inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
   // A shield outline with a crack down its face: the block is gone (#1262).
   "armor-crack": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
