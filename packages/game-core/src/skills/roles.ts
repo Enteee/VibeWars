@@ -50,6 +50,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "energy-gain":
     case "adrenaline-gain":
     case "energy-loss":
+    case "energy-steal":
     case "life-steal":
     case "sacrifice-health":
     case "lose-health":

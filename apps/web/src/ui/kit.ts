@@ -541,6 +541,22 @@ export const TOAST_SECONDS = 5;
 let shownToast:
   { readonly element: HTMLElement; readonly timer: ReturnType<typeof setTimeout> } | undefined;
 
+/** Where a toast goes instead of the page, while a screen offers one (#1465). */
+let toastHost: HTMLElement | null = null;
+
+/**
+ * Put toasts into `host` from now on, or back on the page for `null`
+ * (#1465): a match shows them under its target frame, clear of the skill
+ * bar. A toast showing in the old host goes with it, so none is left
+ * behind on the next screen.
+ */
+export function setToastHost(host: HTMLElement | null): void {
+  if (toastHost !== null && shownToast?.element.parentElement === toastHost) {
+    dismissToast();
+  }
+  toastHost = host;
+}
+
 /** Take the toast down now, if one is up. */
 export function dismissToast(): void {
   if (shownToast === undefined) {
@@ -552,8 +568,9 @@ export function dismissToast(): void {
 }
 
 /**
- * A short note at the bottom centre (#566): "Saved", or what a change
- * removed with an Undo. One at a time: a new one replaces the old.
+ * A short note at the bottom centre (#566), or in the toast host if one
+ * is set: "Saved", or what a change removed with an Undo. One at a
+ * time: a new one replaces the old, wherever it is.
  * `problems` lists why something failed, as a problems chip lists them.
  * Returns a dismiss that takes down this toast only, not one that
  * replaced it.
@@ -580,7 +597,7 @@ export function toast(
       }),
     );
   }
-  document.body.appendChild(element);
+  (toastHost ?? document.body).appendChild(element);
   shownToast = { element, timer: setTimeout(dismissToast, TOAST_SECONDS * 1000) };
   return () => {
     if (shownToast?.element === element) {

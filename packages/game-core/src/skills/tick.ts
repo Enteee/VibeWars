@@ -1,6 +1,7 @@
 import { effectiveRank } from "../attributes.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { DamageType } from "../equipment/types.js";
+import { wieldsFor } from "../equipment/weapons.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
@@ -291,14 +292,19 @@ export function weaponDamageMultiplierOf(combatant: Combatant): number {
 
 /**
  * The type the bearer's attacks deal while a status sets one (#1021):
- * the newest such status's, a pick and not a sum. `undefined`: the
+ * the newest such status's, a pick and not a sum. One that names a weapon
+ * (#1455) counts only while the bearer wields it. `undefined`: the
  * weapon's own.
  */
 export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined {
+  const wielded = combatant.equipment.mainHand.weapon.id;
   for (const { id } of [...combatant.statuses.active].reverse()) {
-    const type = getStatusDefinition(id).attackDamageType;
-    if (type !== undefined) {
-      return type;
+    const { attackDamageType, attackDamageTypeWeapon } = getStatusDefinition(id);
+    if (
+      attackDamageType !== undefined &&
+      (attackDamageTypeWeapon === undefined || wieldsFor(wielded, attackDamageTypeWeapon))
+    ) {
+      return attackDamageType;
     }
   }
   return undefined;
