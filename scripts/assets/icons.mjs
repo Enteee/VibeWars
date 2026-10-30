@@ -670,6 +670,67 @@ const status = {
     (c) =>
       `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${c}" transform="translate(12 10) scale(0.7) translate(-12 -11.5)"/>`,
   ],
+  // Paragon chants 2 (#1483), stand-ins until the asset-designer's.
+  // Chant: a bolt, energy with your next attack skill.
+  "zealous-anthem": ["chant", (c) => `<path d="M13 3L7 12h4l-1 7 6-9h-4z" fill="${c}"/>`],
+  // Chant: a bolt over a bar, energy with your next spell.
+  "aria-of-zeal": [
+    "chant",
+    (c) =>
+      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/>` +
+      `<path d="M6 18h12" ${stroke(c, 2)}/>`,
+  ],
+  // Chant: a bolt in a ring, energy with your next signet.
+  "lyric-of-zeal": [
+    "chant",
+    (c) =>
+      `<circle cx="12" cy="11" r="7" ${stroke(c, 1.6)}/>` +
+      `<path d="M13 6l-3.5 5h2.5l-1 4 3.5-5H12z" fill="${c}"/>`,
+  ],
+  // Chant: a plus over a bar, a heal with your next spell.
+  "aria-of-restoration": [
+    "chant",
+    (c) => `<path d="M12 4v10M7 9h10" ${stroke(c, 2.6)}/>` + `<path d="M6 18h12" ${stroke(c, 2)}/>`,
+  ],
+  // Chant: a plus between two bars, a heal with your next shout or chant.
+  "chorus-of-restoration": [
+    "chant",
+    (c) =>
+      `<path d="M12 7v10M7 12h10" ${stroke(c, 2.4)}/>` +
+      `<path d="M5 4h14M5 20h14" ${stroke(c, 1.8)}/>`,
+  ],
+  // Chant: a drop in a ring, a condition lost with your next signet.
+  "lyric-of-purification": [
+    "chant",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 6.5c1.5 2.2 3 3.8 3 5.5a3 3 0 0 1-6 0c0-1.7 1.5-3.3 3-5.5z" fill="${c}"/>`,
+  ],
+  // Chant: a drop crossed out over a bar, conditions lost with your next skills.
+  "song-of-purification": [
+    "chant",
+    (c) =>
+      `<path d="M12 3c2 3 4 5 4 7.5a4 4 0 0 1-8 0C8 8 10 6 12 3z" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 15L18 3M6 19h12" ${stroke(c, 1.8)}/>`,
+  ],
+  // Chant: a broken ring, a hex lost with your next spell.
+  "hexbreaker-aria": [
+    "chant",
+    (c) => `<path d="M10 5.3A7 7 0 1 0 18.7 12M14 5.3A7 7 0 0 1 18.7 9" ${stroke(c, 2.2)}/>`,
+  ],
+  // Chant: three rising strokes, adrenaline with your next attack skill.
+  "anthem-of-fury": ["chant", (c) => `<path d="M6 18V13M12 18V9M18 18V5" ${stroke(c, 2.6)}/>`],
+  // Chant: an arrow down, your next attack skill weakens.
+  "anthem-of-weariness": ["chant", (c) => `<path d="M12 4v13M7 12l5 5 5-5" ${stroke(c, 2.4)}/>`],
+  // Chant: a bent leg, your next attack skill cripples.
+  "crippling-anthem": ["chant", (c) => `<path d="M9 4v7l6 3v6" ${stroke(c, 2.4)}/>`],
+  // Chant: a zigzag struck through, your next attack skill interrupts.
+  "anthem-of-disruption": [
+    "chant",
+    (c) =>
+      `<path d="M5 12l3-4 3 8 3-8 3 8 2-4" ${stroke(c, 2)}/>` +
+      `<path d="M4 19L20 5" ${stroke(c, 1.6)}/>`,
+  ],
   // Weapon spell: a sword, held up, warded (#758).
   "weapon-of-warding": [
     "weapon-spell",
@@ -1255,6 +1316,35 @@ const status = {
   ],
   // Ashes: a bolt, energy back.
   "energetic-was-lee-sa": ["item", (c) => `<path d="M13 6l-4 6h4l-2 5 5-7h-4z" fill="${c}"/>`],
+  // "The next spell fails" hexes (#1475), stand-ins until the asset-designer's.
+  // Hex: a struck-through spark with an arrow down, a spell at a foe fails.
+  guilt: [
+    "hex",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2)}/><path d="M5 5l14 14" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 15v5M9.5 17.5L12 20l2.5-2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a struck-through spark with an arrow up, a spell at an ally fails.
+  shame: [
+    "hex",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2)}/><path d="M5 5l14 14" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 20v-5M9.5 17.5L12 15l2.5 2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a struck-through spark bursting, the failed spell hurts around.
+  mistrust: [
+    "hex",
+    (c) =>
+      `<path d="M12 8v8M8 12h8" ${stroke(c, 2)}/><path d="M6 6l12 12" ${stroke(c, 1.8)}/>` +
+      `<path d="M3 12h2M19 12h2M12 3v2M12 19v2" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a cracked drop, conditions coming and going hurt.
+  fragility: [
+    "hex",
+    (c) =>
+      `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

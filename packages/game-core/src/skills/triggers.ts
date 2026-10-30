@@ -44,6 +44,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-gains-hex-or-enchantment"
   | "bearer-gains-enchantment"
   | "bearer-loses-enchantment"
+  | "bearer-loses-condition"
   | "bearer-blocks"
   | "bearer-interrupted"
   | "bearer-creates-creature"
@@ -152,8 +153,9 @@ export function fireCreationTriggers(
  * interrupter. A hex or an enchantment gained (#1403) fires what
  * answered it, toward whoever put it on, and a hex a status broke costs
  * its caster that status's damage. An enchantment lost (#1437) fires what
- * answered it when it went. The simulation discards whatever
- * the firing itself changes, so this never recurses either.
+ * answered it when it went, and a condition lost (#1475) what answered
+ * that. The simulation discards whatever the firing itself changes, so
+ * this never recurses either.
  */
 export function fireChangeTriggers(
   bearer: Combatant,
@@ -204,6 +206,7 @@ export function fireChangeTriggers(
     case "failed-to-hit":
     case "took-physical-damage":
     case "lost-enchantment":
+    case "lost-condition":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
       );

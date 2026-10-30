@@ -4,7 +4,12 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { WEB_CACHE_LIMIT_BYTES, createWebCache, parseIndex } from "./web-cache.mjs";
+import {
+  WEB_CACHE_FLUSH_MS,
+  WEB_CACHE_LIMIT_BYTES,
+  createWebCache,
+  parseIndex,
+} from "./web-cache.mjs";
 import { LIVE_TTL_MS } from "./wiki.mjs";
 
 const HOLD = 1_000;
@@ -63,7 +68,9 @@ const keep = () => true;
 describe("the web cache (#1381)", () => {
   it("serves a hit without fetching, across a restart", async () => {
     const page = loader("<p>Mind Blast</p>");
-    const first = await open().get("u", { ttlMs: LIVE_TTL_MS, load: page.load, keep });
+    const cache = open();
+    const first = await cache.get("u", { ttlMs: LIVE_TTL_MS, load: page.load, keep });
+    cache.flush();
     const again = await open().get("u", { ttlMs: LIVE_TTL_MS, load: page.load, keep });
     expect(first).toEqual({ ok: true, text: "<p>Mind Blast</p>" });
     expect(again).toEqual(first);
@@ -213,5 +220,97 @@ describe("the web cache (#1381)", () => {
       bytesSaved: 4,
       hitRate: 0.5,
     });
+  });
+});
+
+describe("the web cache's index writes (#1487)", () => {
+  /** The index file's last write time, or null before the first. */
+  const indexWrittenAt = () => {
+    const file = path.join(dir, "index.json");
+    return fs.existsSync(file) ? fs.statSync(file).mtimeMs : null;
+  };
+  /** @param {string} name */
+  const indexOnDisk = (name = "index.json") => fs.readFileSync(path.join(dir, name), "utf8");
+
+  it("writes the index once per interval however many hits", async () => {
+    const cache = open();
+    await cache.get("u", { ttlMs: Infinity, load: loader("page").load, keep });
+    expect(indexWrittenAt()).toBeNull();
+    for (let i = 0; i < 100; i += 1) {
+      await cache.get("u", { ttlMs: Infinity, load: loader("x").load, keep });
+    }
+    expect(indexWrittenAt()).toBeNull();
+    clock += WEB_CACHE_FLUSH_MS;
+    await cache.get("u", { ttlMs: Infinity, load: loader("x").load, keep });
+    expect(parseIndex(indexOnDisk())).toMatchObject({ hits: 101, misses: 1 });
+    // The next hit is inside a new interval: the file keeps its 101 hits.
+    await cache.get("u", { ttlMs: Infinity, load: loader("x").load, keep });
+    expect(parseIndex(indexOnDisk())).toMatchObject({ hits: 101 });
+  });
+
+  it("writes a dirty index on flush and on stats, and a clean one never", async () => {
+    const cache = open();
+    cache.flush();
+    expect(indexWrittenAt()).toBeNull();
+    await cache.get("u", { ttlMs: Infinity, load: loader("page").load, keep });
+    cache.flush();
+    expect(parseIndex(indexOnDisk())).toMatchObject({ misses: 1 });
+    fs.rmSync(path.join(dir, "index.json"));
+    cache.flush();
+    cache.stats();
+    expect(indexWrittenAt()).toBeNull();
+    await cache.get("u", { ttlMs: Infinity, load: loader("x").load, keep });
+    cache.stats();
+    expect(parseIndex(indexOnDisk())).toMatchObject({ hits: 1, misses: 1 });
+  });
+
+  it("does not evict under the limit, and under pressure drops LRU first and saves at once", async () => {
+    const cache = open({ limitBytes: 10 });
+    await cache.get("a", { ttlMs: Infinity, load: loader("aaaa").load, keep });
+    clock += 1;
+    await cache.get("b", { ttlMs: Infinity, load: loader("bbbb").load, keep });
+    expect(cache.stats()).toMatchObject({ entries: 2, bytes: 8, evictions: 0 });
+    clock += 1;
+    await cache.get("c", { ttlMs: Infinity, load: loader("cccc").load, keep });
+    const saved = parseIndex(indexOnDisk());
+    expect(saved?.entries.map((entry) => entry.url).sort()).toEqual(["b", "c"]);
+    expect(saved).toMatchObject({ evictions: 1 });
+    expect(fs.readdirSync(dir)).toHaveLength(3);
+  });
+
+  it("keeps the byte total through an overwrite and a vanished body", async () => {
+    const cache = open();
+    await cache.get("a", { ttlMs: 1, load: loader("aaaa").load, keep });
+    clock += 2;
+    await cache.get("a", { ttlMs: 1, load: loader("aa").load, keep });
+    expect(cache.stats()).toMatchObject({ entries: 1, bytes: 2 });
+    for (const name of fs.readdirSync(dir)) {
+      if (name !== "index.json") {
+        fs.rmSync(path.join(dir, name));
+      }
+    }
+    await cache.get("a", { ttlMs: Infinity, load: loader("zzz").load, keep });
+    expect(cache.stats()).toMatchObject({ entries: 1, bytes: 3 });
+  });
+
+  it("reads the same counters after a flush and a reopen", async () => {
+    const cache = open();
+    await cache.get("u", { ttlMs: Infinity, load: loader("page").load, keep });
+    await cache.get("u", { ttlMs: Infinity, load: loader("x").load, keep });
+    const before = cache.stats();
+    cache.flush();
+    expect(open().stats()).toEqual(before);
+  });
+
+  it("retries a failed write on the next flush", async () => {
+    const cache = open();
+    await cache.get("u", { ttlMs: Infinity, load: loader("page").load, keep });
+    // A directory where the index goes makes the rename fail.
+    fs.mkdirSync(path.join(dir, "index.json"));
+    cache.flush();
+    expect(logged.some((line) => line.includes("index.json not written"))).toBe(true);
+    fs.rmSync(path.join(dir, "index.json"), { recursive: true });
+    cache.flush();
+    expect(parseIndex(indexOnDisk())).toMatchObject({ misses: 1 });
   });
 });

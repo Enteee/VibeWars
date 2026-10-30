@@ -34,13 +34,15 @@ import type { DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import { gw1EnergyScaled } from "../ruleset.js";
-import type {
-  AttackWeaponClass,
-  Combatant,
-  DamageEffect,
-  HealEffect,
-  SkillEffect,
-  SkillType,
+import {
+  isSpell,
+  type AttackWeaponClass,
+  type Combatant,
+  type DamageEffect,
+  type HealEffect,
+  type Skill,
+  type SkillEffect,
+  type SkillType,
 } from "./types.js";
 import { KNOCKDOWN_SECONDS } from "./types.js";
 
@@ -166,6 +168,19 @@ export type StatusId =
   // Chants and weapon spells (#758).
   | "anthem-of-flame"
   | "weapon-of-warding"
+  // Paragon chants 2 (#1483): the next skill of a kind.
+  | "zealous-anthem"
+  | "aria-of-zeal"
+  | "lyric-of-zeal"
+  | "aria-of-restoration"
+  | "chorus-of-restoration"
+  | "lyric-of-purification"
+  | "song-of-purification"
+  | "hexbreaker-aria"
+  | "anthem-of-fury"
+  | "anthem-of-weariness"
+  | "crippling-anthem"
+  | "anthem-of-disruption"
   // Ritualist weapon spells (#975).
   | "spirit-light-weapon"
   | "weapon-of-quickening"
@@ -276,7 +291,12 @@ export type StatusId =
   | "frustration"
   | "price-of-pride"
   | "migraine"
-  | "visions-of-regret";
+  | "visions-of-regret"
+  // Mesmer "the next spell fails" hexes (#1475).
+  | "guilt"
+  | "shame"
+  | "mistrust"
+  | "fragility";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -532,6 +552,13 @@ export interface StatusDefinition {
    */
   readonly nextAttackSkill: readonly SkillEffect[] | undefined;
   /**
+   * What the bearer's next skills of a kind do for the bearer itself
+   * (#1483): once a matching skill's use completes, its effects resolve
+   * on the bearer, and it ends after `count` of them. An interrupted skill
+   * and a weapon swing do not count. `undefined`: skills leave it alone.
+   */
+  readonly nextSkill: NextSkill | undefined;
+  /**
    * It ends the moment the bearer attacks (#758): strikes a blow or
    * releases a shot, swing or attack skill alike. A weapon spell's price.
    */
@@ -683,6 +710,13 @@ export interface StatusDefinition {
    */
   readonly breaksNextHex: { readonly damage: number; readonly skillId: string } | undefined;
   /**
+   * The next spell the bearer finishes on a target of this side fails, and
+   * the status ends (#1475): Guilt's and Mistrust's foe, Shame's ally. The
+   * spell is paid for and recharges, as an interrupted one, and does
+   * nothing else. `undefined`: spells go off.
+   */
+  readonly failsNextSpell: FailsNextSpell | undefined;
+  /**
    * Whenever a chant or a shout ends on the bearer, its remaining time is
    * back to the duration it was applied with (#1423): a refrain's "this
    * echo is reapplied every time a chant or shout ends on you".
@@ -785,6 +819,13 @@ export type StatusTriggerEvent =
   | "bearer-creates-creature"
   | "bearer-gains-condition"
   /**
+   * A condition on the bearer ended (#1475), expired or removed, for any
+   * reason but the bearer's death: once per condition lost. A refresh is
+   * no loss. Fragility's. Recorded with the triggers that answered, and
+   * fired at the drain.
+   */
+  | "bearer-loses-condition"
+  /**
    * A chant or a shout ended on the bearer (#1423), for any reason but a
    * refresh: its duration, an "ends when" rule or a removal. Every status
    * still on the bearer that answers it fires, in `active` order; a dead
@@ -799,6 +840,21 @@ export type StatusTriggerEvent =
    */
   | "ends-early"
   | "expires";
+
+/** `StatusDefinition.failsNextSpell` (#1475). */
+export interface FailsNextSpell {
+  /**
+   * Which spells it catches, by the side of the spell's chosen target:
+   * one on the other team from the bearer, or one on its own, the bearer
+   * included when it targeted itself. A spell with no chosen target, a
+   * "you" spell, a well or a ward, never matches.
+   */
+  readonly on: "foe-targeted" | "ally-targeted";
+  /** Applied with the status's source as caster and the bearer as target. */
+  readonly effects: readonly SkillEffect[];
+  /** What the failure is logged as. */
+  readonly skillId: string;
+}
 
 /** `StatusDefinition.enchantmentRechargeFaster` (#1455). */
 export interface EnchantmentRechargeFaster {
@@ -937,6 +993,12 @@ export type StatusChange =
       readonly id: StatusId;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /** A condition `id` left the bearer, alive (#1475), with the triggers that answered. */
+  | {
+      readonly kind: "lost-condition";
+      readonly id: StatusId;
+      readonly fired: readonly AnsweringTrigger[];
+    }
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
@@ -999,6 +1061,38 @@ export interface NextSpells {
   readonly costReduction: number;
 }
 
+/**
+ * A chant's hold on the bearer's next skills of a kind (#1483), as Aria of
+ * Zeal's "the next time each ally within earshot uses a spell, that ally
+ * gains 1...6 Energy".
+ */
+export interface NextSkill {
+  /** Which of the bearer's skills set it off: `spell` is any `isSpell` type. */
+  readonly which: "attack-skill" | "spell" | "signet" | "shout-or-chant" | "any";
+  /** How many such skills it answers before it ends (Song of Purification: 1...6). */
+  readonly count: number;
+  /** Resolved with the bearer as both caster and target. */
+  readonly effects: readonly SkillEffect[];
+  /** The skill the log names it after: "paragon.aria-of-zeal". */
+  readonly skillId: string;
+}
+
+/** Whether `skill` is of the kind `which` names (#1483). */
+function nextSkillAnswers(which: NextSkill["which"], skill: Skill): boolean {
+  switch (which) {
+    case "attack-skill":
+      return skill.attack !== undefined;
+    case "spell":
+      return isSpell(skill.type);
+    case "signet":
+      return skill.type === "signet";
+    case "shout-or-chant":
+      return skill.type === "shout" || skill.type === "chant";
+    case "any":
+      return true;
+  }
+}
+
 function define(
   id: StatusId,
   name: string,
@@ -1053,6 +1147,7 @@ function define(
     nextSpells: undefined,
     spreads: false,
     nextAttackSkill: undefined,
+    nextSkill: undefined,
     endsWhenBearerAttacks: false,
     endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
@@ -1079,6 +1174,7 @@ function define(
     incomingHexCastTimeMultiplier: 1,
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
+    failsNextSpell: undefined,
     renewsOnChantOrShoutEnd: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
@@ -1821,6 +1917,117 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   "anthem-of-flame": define("anthem-of-flame", "Anthem of Flame", "chant", {
     profession: "paragon",
     nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+  }),
+  // "For 10 seconds, the next time each ally within earshot uses an attack
+  // skill, that ally gains 1...8 Energy" (#1483): 7, its rank-12 value.
+  "zealous-anthem": define("zealous-anthem", "Zealous Anthem", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "attack-skill",
+      count: 1,
+      effects: [{ kind: "energy-gain", amount: { flat: 7 } }],
+      skillId: "paragon.zealous-anthem",
+    },
+  }),
+  // "...uses a spell, that ally gains 1...6 Energy" (#1483): 5 at rank 12.
+  "aria-of-zeal": define("aria-of-zeal", "Aria of Zeal", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "spell",
+      count: 1,
+      effects: [{ kind: "energy-gain", amount: { flat: 5 } }],
+      skillId: "paragon.aria-of-zeal",
+    },
+  }),
+  // "...uses a signet, that ally gains 1...8 Energy" (#1483): 7 at rank 12.
+  "lyric-of-zeal": define("lyric-of-zeal", "Lyric of Zeal", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "signet",
+      count: 1,
+      effects: [{ kind: "energy-gain", amount: { flat: 7 } }],
+      skillId: "paragon.lyric-of-zeal",
+    },
+  }),
+  // "...uses a spell, that party member gains 30...90 Health" (#1483): 78
+  // at rank 12, a heal.
+  "aria-of-restoration": define("aria-of-restoration", "Aria of Restoration", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "spell",
+      count: 1,
+      effects: [{ kind: "heal", amount: { flat: 78 }, perStatusOnTarget: [] }],
+      skillId: "paragon.aria-of-restoration",
+    },
+  }),
+  // "...uses a shout or chant, that ally is healed for 30...90 Health"
+  // (#1483): 78 at rank 12.
+  "chorus-of-restoration": define("chorus-of-restoration", "Chorus of Restoration", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "shout-or-chant",
+      count: 1,
+      effects: [{ kind: "heal", amount: { flat: 78 }, perStatusOnTarget: [] }],
+      skillId: "paragon.chorus-of-restoration",
+    },
+  }),
+  // "...uses a signet, that ally loses 1 condition" (#1483).
+  "lyric-of-purification": define("lyric-of-purification", "Lyric of Purification", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "signet",
+      count: 1,
+      effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      skillId: "paragon.lyric-of-purification",
+    },
+  }),
+  // "The next 1...6 skills used by each ally within earshot remove 1
+  // condition from that ally" (#1483): 5 skills at rank 12.
+  "song-of-purification": define("song-of-purification", "Song of Purification", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "any",
+      count: 5,
+      effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+      skillId: "paragon.song-of-purification",
+    },
+  }),
+  // "...casts a spell, that ally loses 1 hex" (#1483).
+  "hexbreaker-aria": define("hexbreaker-aria", "Hexbreaker Aria", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "spell",
+      count: 1,
+      effects: [{ kind: "remove-status", category: "hex", count: 1 }],
+      skillId: "paragon.hexbreaker-aria",
+    },
+  }),
+  // "...gain 2...5 strikes of adrenaline the next time they use an attack
+  // skill" (#1483): 4 at rank 12.
+  "anthem-of-fury": define("anthem-of-fury", "Anthem of Fury", "chant", {
+    profession: "paragon",
+    nextSkill: {
+      which: "attack-skill",
+      count: 1,
+      effects: [{ kind: "adrenaline-gain", strikes: 4 }],
+      skillId: "paragon.anthem-of-fury",
+    },
+  }),
+  // "The next attack skill used by each ally within earshot also causes
+  // Weakness for 1...16 seconds" (#1483): 13 s at rank 12.
+  "anthem-of-weariness": define("anthem-of-weariness", "Anthem of Weariness", "chant", {
+    profession: "paragon",
+    nextAttackSkill: [{ kind: "apply-status", statusId: "weakness", durationSeconds: 13 }],
+  }),
+  // "...causes Crippling for 5...15 seconds" (#1483): 13 s at rank 12.
+  "crippling-anthem": define("crippling-anthem", "Crippling Anthem", "chant", {
+    profession: "paragon",
+    nextAttackSkill: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+  }),
+  // "...also interrupts an action" (#1483).
+  "anthem-of-disruption": define("anthem-of-disruption", "Anthem of Disruption", "chant", {
+    profession: "paragon",
+    nextAttackSkill: [{ kind: "interrupt" }],
   }),
   // "+2...4...4 Health regeneration and a 50% chance to block. Weapon of
   // Warding ends if that ally attacks."
@@ -3004,6 +3211,67 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // Mesmer "the next spell fails" hexes (#1475), at their rank-12 values.
+  // "...the next time target foe casts a spell that targets a foe, the
+  // spell fails and you steal up to 5...14 Energy from that foe": 12.
+  guilt: define("guilt", "Guilt", "hex", {
+    profession: "mesmer",
+    failsNextSpell: {
+      on: "foe-targeted",
+      effects: [{ kind: "energy-steal", amount: { flat: 12 } }],
+      skillId: "mesmer.guilt",
+    },
+  }),
+  // As Guilt, for "a spell that targets an ally": 12.
+  shame: define("shame", "Shame", "hex", {
+    profession: "mesmer",
+    failsNextSpell: {
+      on: "ally-targeted",
+      effects: [{ kind: "energy-steal", amount: { flat: 12 } }],
+      skillId: "mesmer.shame",
+    },
+  }),
+  // "...the next spell that target foe casts on one of your allies fails
+  // and deals 10...60 damage to that foe and 75% of that damage to all
+  // nearby foes" (PvP): 50, and 38 nearby.
+  mistrust: define("mistrust", "Mistrust", "hex", {
+    profession: "mesmer",
+    failsNextSpell: {
+      on: "foe-targeted",
+      effects: [
+        { kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_NEARBY,
+          maxTargets: undefined,
+          effects: [
+            { kind: "damage", amount: { flat: 38 }, type: "typeless", armorPenetration: 0 },
+          ],
+        },
+      ],
+      skillId: "mesmer.mistrust",
+    },
+  }),
+  // "...take 5...20 damage each time they suffer or recover from a new
+  // condition": 17.
+  fragility: define("fragility", "Fragility", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-gains-condition",
+        effects: [{ kind: "damage", amount: { flat: 17 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "mesmer.fragility",
+      },
+      {
+        on: "bearer-loses-condition",
+        effects: [{ kind: "damage", amount: { flat: 17 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "mesmer.fragility",
+      },
+    ],
+  }),
 };
 
 /**
@@ -3032,6 +3300,8 @@ export interface ActiveStatus {
   hitsLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
+  /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
+  skillsLeft: number | undefined;
   /** Times its triggers may still fire before it ends (`endsAfterTriggers`); `undefined`: no such limit. */
   triggersLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
@@ -3112,6 +3382,7 @@ export class StatusSet {
         this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired });
         if (!death) {
           this.#lostEnchantment(id);
+          this.#lostCondition(id);
         }
       }
     }
@@ -3132,6 +3403,20 @@ export class StatusSet {
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "lost-enchantment", id, fired });
+    }
+  }
+
+  /**
+   * Record condition `id` gone from the bearer (#1475), only if a status
+   * still on it answers that, with the triggers that do.
+   */
+  #lostCondition(id: StatusId): void {
+    if (getStatusDefinition(id).category !== "condition") {
+      return;
+    }
+    const fired = this.triggersOn("bearer-loses-condition");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "lost-condition", id, fired });
     }
   }
 
@@ -3271,6 +3556,15 @@ export class StatusSet {
     return false;
   }
 
+  /**
+   * The status that fails the bearer's next spell on a target of this
+   * side (#1475), if any: the newest of those that do, as removal takes
+   * the newest first. It is not ended here.
+   */
+  public spellFailer(on: FailsNextSpell["on"]): ActiveStatus | undefined {
+    return this.active.findLast(({ id }) => getStatusDefinition(id).failsNextSpell?.on === on);
+  }
+
   /** The status that would stop the next hex on the bearer (#1403), oldest first, if any. */
   public hexBreaker(): StatusId | undefined {
     return this.active.find(({ id }) => getStatusDefinition(id).breaksNextHex !== undefined)?.id;
@@ -3340,6 +3634,7 @@ export class StatusSet {
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
       spellsLeft: definition.nextSpells?.count,
+      skillsLeft: definition.nextSkill?.count,
       triggersLeft: definition.endsAfterTriggers,
       sourceId,
       outbreak,
@@ -3386,6 +3681,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       spellsLeft: undefined,
+      skillsLeft: undefined,
       triggersLeft: undefined,
       sourceId,
       outbreak,
@@ -3416,6 +3712,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       spellsLeft: undefined,
+      skillsLeft: undefined,
       triggersLeft: undefined,
       sourceId,
       outbreak: null,
@@ -3446,6 +3743,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       spellsLeft: undefined,
+      skillsLeft: undefined,
       triggersLeft: undefined,
       sourceId,
       outbreak: null,
@@ -3714,6 +4012,42 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer used `skill` (#1483): every status whose `nextSkill`
+   * answers its kind counts it, but those in `spared`, which that skill
+   * put on its own user (#999), so a chant never answers its own use.
+   * Returns what they answer with, in `active` order, and the ids that
+   * ended on it.
+   */
+  public useNextSkill(
+    skill: Skill,
+    spared: ReadonlySet<StatusId>,
+  ): {
+    readonly answered: readonly { readonly statusId: StatusId; readonly next: NextSkill }[];
+    readonly ended: readonly StatusId[];
+  } {
+    const answered: { statusId: StatusId; next: NextSkill }[] = [];
+    const ended: StatusId[] = [];
+    for (const status of this.active) {
+      const next = getStatusDefinition(status.id).nextSkill;
+      if (
+        next === undefined ||
+        status.skillsLeft === undefined ||
+        spared.has(status.id) ||
+        !nextSkillAnswers(next.which, skill)
+      ) {
+        continue;
+      }
+      answered.push({ statusId: status.id, next });
+      status.skillsLeft -= 1;
+      if (status.skillsLeft <= 0) {
+        ended.push(status.id);
+      }
+    }
+    this.#end(ended);
+    return { answered, ended };
   }
 
   /**
