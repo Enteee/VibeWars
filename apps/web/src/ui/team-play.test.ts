@@ -4,11 +4,12 @@ import { ARENA_MAPS } from "../net/maps.js";
 import { TEAM_SCHEMA_VERSION, type StoredTeam } from "../storage/schema.js";
 import { hostMaps } from "./lobby-screen.js";
 import {
+  HOST_SCREENS,
   NO_TEAM_BUILDS,
-  TEAM_PLAY_TILES,
-  renderTeamPlay,
+  renderHostScreen,
+  renderTeamBuilder,
+  type HostEntry,
   type TeamPlayCallbacks,
-  type TeamPlayTile,
 } from "./team-play.js";
 
 function team(id: string): StoredTeam {
@@ -22,43 +23,33 @@ function team(id: string): StoredTeam {
   };
 }
 
-/** The ids of the arenas `label`'s tile lets its host pick. */
-function tileMapIds(label: TeamPlayTile["label"]): string[] {
-  const tile = TEAM_PLAY_TILES.find((each) => each.label === label);
+/** The ids of the arenas `entry`'s screen lets its host pick. */
+function hostMapIds(entry: HostEntry): string[] {
   const maps = ARENA_MAPS.map((map) => ({ id: map.id, name: map.name, size: "", mode: map.mode }));
-  return tile === undefined ? [] : hostMaps(maps, tile.modes).map((map) => map.id);
+  return hostMaps(maps, HOST_SCREENS[entry].modes).map((map) => map.id);
 }
 
-describe("Team Play's mode tiles (#1453)", () => {
-  it("are the study's four, in its order", () => {
-    expect(TEAM_PLAY_TILES.map((tile) => tile.label)).toEqual([
-      "Hosted Lobby",
-      "Team Arena",
-      "Heroes' Ascent",
-      "GvG",
-    ]);
+describe("the hosting screens' maps (#1453, #1525)", () => {
+  it("host on every map from Hosted Game", () => {
+    expect(hostMapIds("hosted-game")).toEqual(ARENA_MAPS.map((map) => map.id));
   });
 
-  it("host on every map from Hosted Lobby", () => {
-    expect(tileMapIds("Hosted Lobby")).toEqual(ARENA_MAPS.map((map) => map.id));
-  });
-
-  it("host on each tile's own modes' maps", () => {
-    const modesOf = (label: string): string[] => {
-      const ids = tileMapIds(label);
+  it("host on each team mode's own maps", () => {
+    const modesOf = (entry: HostEntry): string[] => {
+      const ids = hostMapIds(entry);
       return [...new Set(ARENA_MAPS.filter((map) => ids.includes(map.id)).map((map) => map.mode))];
     };
-    expect(modesOf("Team Arena").sort()).toEqual(
+    expect(modesOf("team-arena").sort()).toEqual(
       ["annihilation", "kill-count", "priest-annihilation"].sort(),
     );
-    expect(modesOf("Heroes' Ascent").sort()).toEqual(
+    expect(modesOf("heroes-ascent").sort()).toEqual(
       ["capture-points", "king-of-the-hill", "relic-run"].sort(),
     );
-    expect(modesOf("GvG")).toEqual(["guild-battle"]);
+    expect(modesOf("gvg")).toEqual(["guild-battle"]);
   });
 });
 
-/** Just enough DOM to render Team Play; the unit tests run in Node. */
+/** Just enough DOM to render the team screens; the unit tests run in Node. */
 class FakeElement {
   className = "";
   textContent = "";
@@ -114,13 +105,15 @@ class FakeElement {
   }
 }
 
-describe("Team Play's Team Builds (#1515)", () => {
+describe("the team screens' Team Builds (#1515, #1525)", () => {
   let edited: string[];
   let added: number;
+  let hosted: (readonly string[] | undefined)[];
   const callbacks: TeamPlayCallbacks = {
-    onHostTile: () => undefined,
-    onJoinLobby: () => undefined,
-    onSwitchTab: () => undefined,
+    onHost: (modes) => {
+      hosted.push(modes);
+    },
+    onSwitch: () => undefined,
     onNewTeam: () => {
       added += 1;
     },
@@ -129,15 +122,16 @@ describe("Team Play's Team Builds (#1515)", () => {
     },
     onPasteTeam: () => undefined,
   };
-  const render = (teams: readonly StoredTeam[]): FakeElement => {
+  const render = (teams: readonly StoredTeam[], entry: HostEntry = "team-arena"): FakeElement => {
     const root = new FakeElement();
-    renderTeamPlay(root as unknown as HTMLElement, teams, [], undefined, callbacks);
+    renderHostScreen(root as unknown as HTMLElement, entry, teams, [], undefined, callbacks);
     return root;
   };
 
   beforeEach(() => {
     edited = [];
     added = 0;
+    hosted = [];
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
       addEventListener: () => undefined,
@@ -151,13 +145,13 @@ describe("Team Play's Team Builds (#1515)", () => {
 
   it("lists each Team Build, then New team build last, and no None", () => {
     const root = render([team("a"), team("b")]);
-    const [cards] = root.all("team-play-cards");
+    const [cards] = root.all("play-cards");
     expect(cards?.children.map((card) => card.className)).toEqual([
-      "team-play-card",
-      "team-play-card",
-      "team-play-card team-play-new",
+      "play-card",
+      "play-card",
+      "play-card play-card-new",
     ]);
-    expect(root.all("team-play-card-name").map((name) => name.textContent)).toEqual([
+    expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
       "Team a",
       "Team b",
     ]);
@@ -166,8 +160,7 @@ describe("Team Play's Team Builds (#1515)", () => {
       root
         .everything()
         .some(
-          (node) =>
-            node.attributes.has("aria-pressed") && node.className.startsWith("team-play-card"),
+          (node) => node.attributes.has("aria-pressed") && node.className.startsWith("play-card"),
         ),
     ).toBe(false);
     expect(root.everything().some((node) => node.textContent === "Team Builds")).toBe(true);
@@ -175,16 +168,49 @@ describe("Team Play's Team Builds (#1515)", () => {
 
   it("opens a card in the editor, as its Edit does: a card is no pick", () => {
     const root = render([team("a"), team("b")]);
-    root.all("team-play-card-open")[1]?.click();
-    root.all("team-play-card-edit")[0]?.click();
-    root.all("team-play-new")[0]?.click();
+    root.all("play-card-open")[1]?.click();
+    root.all("play-card-edit")[0]?.click();
+    root.all("play-card-new")[0]?.click();
     expect(edited).toEqual(["b", "a"]);
     expect(added).toBe(1);
   });
 
   it("with no Team Builds, shows the hint and New team build", () => {
     const root = render([]);
-    expect(root.all("team-play-new")).toHaveLength(1);
+    expect(root.all("play-card-new")).toHaveLength(1);
     expect(root.all("team-play-hint")[0]?.textContent).toBe(NO_TEAM_BUILDS);
+  });
+
+  it("hosts with its own modes, under its heading", () => {
+    for (const entry of ["team-arena", "heroes-ascent", "gvg"] as const) {
+      const root = render([team("a")], entry);
+      root
+        .everything()
+        .find((node) => node.textContent === "Host a Team Lobby")
+        ?.click();
+      expect(root.all("rail-goal")[0]?.textContent).toBe(HOST_SCREENS[entry].goal);
+    }
+    expect(hosted).toEqual([
+      HOST_SCREENS["team-arena"].modes,
+      HOST_SCREENS["heroes-ascent"].modes,
+      HOST_SCREENS.gvg.modes,
+    ]);
+  });
+
+  it("hosts on every map from Hosted Game, which has no cards", () => {
+    const root = render([team("a")], "hosted-game");
+    root
+      .everything()
+      .find((node) => node.textContent === "Host a game")
+      ?.click();
+    expect(hosted).toEqual([undefined]);
+    expect(root.all("play-card")).toHaveLength(0);
+  });
+
+  it("shows the cards alone on Team Builder", () => {
+    const root = new FakeElement();
+    renderTeamBuilder(root as unknown as HTMLElement, [team("a")], [], undefined, callbacks);
+    expect(root.all("play-card-name").map((name) => name.textContent)).toEqual(["Team a"]);
+    expect(root.everything().some((node) => node.textContent.startsWith("Host a"))).toBe(false);
   });
 });
