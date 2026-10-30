@@ -1992,7 +1992,7 @@ const hexFail = (target) =>
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
 
-/** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
+/** The blood drop, a sacrifice (#1572). */
 const DROP = inkFill("M12 2.5C16 8.5 19 12 19 15.5A7 7 0 0 1 5 15.5C5 12 8 8.5 12 2.5Z");
 
 /** A drop given up at the bottom left, `payoff` at the top right (#1572). @param {string} payoff */
@@ -2000,6 +2000,7 @@ const sacrifice = (payoff) =>
   `<g transform="translate(7.5,16) scale(0.66) translate(-12,-12)">${DROP}</g>` +
   `<g transform="translate(15,9) scale(0.7) translate(-12,-12)">${payoff}</g>`;
 
+/** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
 const skillGlyph = {
