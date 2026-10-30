@@ -43,13 +43,13 @@ export const NECROMANCER_ICONS = {
   "necromancer.blood-is-power": { glyph: "sac-energy" },
   "necromancer.order-of-pain": { glyph: "sac-blade" },
   "necromancer.plague-signet": { glyph: "drop-to-signet" },
-  // Necromancer staples 2 (#1583), stand-ins until their art card.
-  "necromancer.wither": { glyph: "hex-drain", modifier: "down" },
-  "necromancer.life-siphon": { glyph: "drop-arrow", modifier: "self" },
-  "necromancer.reckless-haste": { glyph: "hex-miss", modifier: "area" },
-  "necromancer.corrupt-enchantment": { glyph: "ring-rend", modifier: "down" },
-  "necromancer.strip-enchantment": { glyph: "ring-rend", modifier: "bleed" },
-  "necromancer.deathly-chill": { glyph: "snowflake", modifier: "down" },
-  "necromancer.putrid-explosion": { glyph: "mark-skull", modifier: "corpse" },
-  "necromancer.signet-of-agony": { glyph: "drop-barbs", modifier: "area" },
+  // Necromancer staples 2 (#1583): the shapes of their statuses where they have one.
+  "necromancer.wither": { glyph: "hex-wither" },
+  "necromancer.life-siphon": { glyph: "drop-siphon" },
+  "necromancer.reckless-haste": { glyph: "hex-haste-miss" },
+  "necromancer.corrupt-enchantment": { glyph: "ring-rot" },
+  "necromancer.strip-enchantment": { glyph: "ring-steal" },
+  "necromancer.deathly-chill": { glyph: "chill-skull" },
+  "necromancer.putrid-explosion": { glyph: "burst-skull" },
+  "necromancer.signet-of-agony": { glyph: "signet-agony" },
 };
