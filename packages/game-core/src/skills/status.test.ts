@@ -78,6 +78,8 @@ describe("status definitions", () => {
         def.conditionalArmor.length > 0 ||
         def.whileUnder !== undefined ||
         def.extraStrikesPerHit !== 0 ||
+        def.attackDamageType !== undefined ||
+        def.attackArmorPenetration !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
