@@ -2540,8 +2540,8 @@ const skillGlyph = {
   "hex-mute": () =>
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkLine("M6.5 12H17.5", 3.2),
-  // A dashed ring (a hex), a struck orb, a chevron and a mark: the bearer's next spell fails; an X
-  // is a foe it was aimed at, a plus an ally (#1498).
+  // A dashed ring (a hex), a small struck orb and a big mark: the bearer's next spell fails; an X
+  // is a foe it was aimed at, a disc with a plus an ally (#1498).
   "hex-fail-foe": () => hexFail(inkLine("M11.8 6.3L19.8 14.3M19.8 6.3L11.8 14.3", 3)),
   "hex-fail-ally": () =>
     hexFail(
