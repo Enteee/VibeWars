@@ -156,7 +156,10 @@ export class MatchTally {
           ) {
             bump(this.#kills, entry.sourceId, 1);
           }
-        } else if (event.kind === "interrupted" && entry.sourceId !== undefined) {
+        } else if (
+          (event.kind === "interrupted" || event.kind === "attack-interrupted") &&
+          entry.sourceId !== undefined
+        ) {
           bump(this.#interrupts, entry.sourceId, 1);
         }
       }

@@ -807,7 +807,9 @@ export function resolveSwing(swing: Swing): {
  *
  * A dual attack strikes twice (#885): each blow rolls its own blind,
  * block, crit and damage, and the skill's effects land after each blow
- * that hits, so a condition applied twice is refreshed. A victim the
+ * that hits, so a condition applied twice is refreshed. A later blow's
+ * effects read only what that blow did (#1580): Exhausting Assault's
+ * overcast follows the interrupt of the blow that cut the spell, once. A victim the
  * first blow killed takes no second. The weapon's own double strike is
  * never added to a skill.
  *
@@ -909,6 +911,7 @@ export function resolveAttackSkillOutcome(
   }
   const strikes = rule?.strikes ?? 1;
   for (let strike = 0; strike < strikes; strike += 1) {
+    const since = strike === 0 ? 0 : events.length;
     const hit: Combatant[] = [];
     const critical: Combatant[] = [];
     const blocked: Combatant[] = [];
@@ -973,9 +976,9 @@ export function resolveAttackSkillOutcome(
     const riders = (effects: readonly SkillEffect[], targets: Combatant[]): CombatEvent[] =>
       targets.length === 0 || effects.length === 0
         ? []
-        : land({ ...resolution, skill: { ...skill, effects }, targets }, events);
+        : land({ ...resolution, skill: { ...skill, effects }, targets }, events.slice(since));
     events.push(
-      ...(hit.length === 0 ? [] : land({ ...resolution, targets: hit }, events)),
+      ...(hit.length === 0 ? [] : land({ ...resolution, targets: hit }, events.slice(since))),
       ...riders(rule?.onCritical ?? [], critical),
       ...riders(rule?.onBlocked ?? [], blocked),
       ...riders(rule?.onFailedToHit ?? [], failed),

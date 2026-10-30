@@ -54,6 +54,7 @@ export const BONE_MINION: CreatureTemplate = {
   aura: undefined,
   onDeath: "vanish",
   ownerDisableOnDeath: undefined,
+  deathBurst: undefined,
 };
 
 /**
@@ -83,6 +84,7 @@ export const BONE_HORROR: CreatureTemplate = {
   aura: undefined,
   onDeath: "vanish",
   ownerDisableOnDeath: undefined,
+  deathBurst: undefined,
 };
 
 /**
@@ -130,6 +132,7 @@ export const WOLF: CreatureTemplate = {
   ownerDisableOnDeath: {
     scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 4 },
   },
+  deathBurst: undefined,
 };
 
 /** A spirit's shot, world units per second: a wand's (house tuning). */
@@ -139,11 +142,12 @@ export const SPIRIT_SHOT_SPEED = 900;
  * A binding ritual's attacking spirit (#1239), as Pain: it stands where
  * it was made and shoots the nearest foe within spirit range, a blow
  * every 2 s (house tuning: GW1 publishes none) for its stated damage,
- * linear in Communing. A level-L spirit has 50 + 20 per L Health; armor
- * 51, as every other spirit's.
+ * linear in `attributeId` (#1550), Communing for most. A level-L spirit
+ * has 50 + 20 per L Health; armor 51, as every other spirit's.
  */
 export function attackingSpirit(
   name: string,
+  attributeId: string,
   healthAtTwelve: number,
   durationSeconds: Magnitude,
   damage: { readonly atZero: number; readonly atTwelve: number },
@@ -153,12 +157,10 @@ export function attackingSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: {
-      scaling: { attributeId: "ritualist.communing", atZero: 70, atTwelve: healthAtTwelve },
-    },
+    maxHealth: { scaling: { attributeId, atZero: 70, atTwelve: healthAtTwelve } },
     armor: { flat: 51 },
     attack: {
-      attributeId: "ritualist.communing",
+      attributeId,
       damageMin: damage.atTwelve,
       damageMax: damage.atTwelve,
       scaling: { kind: "rank", atZero: damage.atZero },
@@ -174,6 +176,7 @@ export function attackingSpirit(
     aura: undefined,
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
+    deathBurst: undefined,
   };
 }
 
@@ -181,10 +184,11 @@ export function attackingSpirit(
  * A protective spirit (#1265): it attacks nothing and projects `statusId`
  * on whoever `affects` in its range, paying for every outcome it
  * changes with its own health. Health from its level, as Recuperation's:
- * 50 + 20 per level, armor 51.
+ * 50 + 20 per level, armor 51; both linear in `attributeId` (#1550).
  */
 export function protectiveSpirit(
   name: string,
+  attributeId: string,
   healthAtTwelve: number,
   duration: { readonly atZero: number; readonly atTwelve: number },
   statusId: StatusId,
@@ -194,15 +198,14 @@ export function protectiveSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: {
-      scaling: { attributeId: "ritualist.communing", atZero: 70, atTwelve: healthAtTwelve },
-    },
+    maxHealth: { scaling: { attributeId, atZero: 70, atTwelve: healthAtTwelve } },
     armor: { flat: 51 },
     attack: undefined,
-    durationSeconds: { scaling: { attributeId: "ritualist.communing", ...duration } },
+    durationSeconds: { scaling: { attributeId, ...duration } },
     behaviour: { kind: "idle" },
     aura: { statusId, affects, radius: RANGE_SPIRIT },
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
+    deathBurst: undefined,
   };
 }

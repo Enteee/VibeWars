@@ -76,6 +76,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
+    case "overcast":
       return [];
     // A spirit does what it projects (#1064): Recuperation heals.
     case "summon":
@@ -162,6 +163,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
             effects.flatMap((effect) =>
               effect.kind === "spread-gained-condition" ||
               effect.kind === "echo" ||
+              effect.kind === "cancel-attack" ||
               (target === "bearer" && isPrice(effect))
                 ? []
                 : [effect],
