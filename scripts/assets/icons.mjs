@@ -1064,6 +1064,20 @@ const status = {
     "skill-effect",
     (c) => `<path d="M6 13h12" ${stroke(c, 2.2)}/>` + `<path d="M6 17h12" ${stroke(c, 2)}/>`,
   ],
+  // Ritualist spirits (#1550), stand-ins until the asset-designer's.
+  // Skill effect: a wave flattened, adrenaline built half as fast.
+  soothing: [
+    "skill-effect",
+    (c) =>
+      `<path d="M5 10c2-3 4-3 7 0s5 3 7 0" ${stroke(c, 2)}/><path d="M5 16h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Weapon spell: a blade over a bar, one hit capped, Health stolen back.
+  "xinraes-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
+      `<path d="M15 8h5M15 12h5" ${stroke(c, 1.8)}/>`,
+  ],
   // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
   "ward-against-melee": [
     "skill-effect",

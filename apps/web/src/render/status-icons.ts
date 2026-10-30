@@ -152,6 +152,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   union: icon("union"),
   displacement: icon("displacement"),
   earthbind: icon("earthbind"),
+  soothing: icon("soothing"),
+  "xinraes-weapon": icon("xinraes-weapon"),
   "ward-against-melee": icon("ward-against-melee"),
   "well-of-suffering": icon("well-of-suffering"),
   "call-of-haste": icon("call-of-haste"),

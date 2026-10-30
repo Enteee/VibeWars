@@ -1795,7 +1795,7 @@ export class MatchSimulation {
         continue;
       }
       const amount = Math.min(
-        burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
+        Math.round(burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON)),
         burst.max ?? Number.POSITIVE_INFINITY,
       );
       if (amount <= 0) {

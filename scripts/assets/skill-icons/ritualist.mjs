@@ -49,4 +49,12 @@ export const RITUALIST_ICONS = {
   "ritualist.tranquil-was-tanasen": { glyph: "was-calm" },
   "ritualist.vengeful-was-khanhei": { glyph: "was-steal" },
   "ritualist.pure-was-li-ming": { glyph: "was-clear" },
+  // Placeholders until the asset-designer's (#1550): Ritualist spirits.
+  "ritualist.bloodsong": { glyph: "spirit-pain", modifier: "bleed" },
+  "ritualist.anguish": { glyph: "spirit-pain", modifier: "plus" },
+  "ritualist.wanderlust": { glyph: "spirit-ground", modifier: "stun" },
+  "ritualist.soothing": { glyph: "spirit-quiet", modifier: "down" },
+  "ritualist.destruction": { glyph: "spirit-burn", modifier: "area" },
+  "ritualist.life": { glyph: "spirit-share", modifier: "plus" },
+  "ritualist.xinraes-weapon": { glyph: "blade-hook", modifier: "half" },
 };
