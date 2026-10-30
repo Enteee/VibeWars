@@ -72,10 +72,13 @@ export function selfTargetIntent(
 
 /**
  * Whom a watcher may follow (#480): team 0's seats, then team 1's, each
- * in seat order. A creature is no one to follow.
+ * in the lobby's seat order: its players, then its bots. A creature is
+ * no one to follow.
  */
 function followOrder(players: readonly PlayerSnapshot[]): PlayerSnapshot[] {
-  return players.filter((player) => player.creature === undefined).sort((a, b) => a.team - b.team);
+  return players
+    .filter((player) => player.creature === undefined)
+    .sort((a, b) => a.team - b.team || Number(a.bot) - Number(b.bot));
 }
 
 /** The player a watcher follows first (#480): team 0's first seat; `undefined` with none. */

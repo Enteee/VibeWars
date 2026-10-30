@@ -195,6 +195,23 @@ describe("nextFollowed (#480)", () => {
     expect(firstFollowed([])).toBeUndefined();
   });
 
+  it("seats a team's players before its bots, as the lobby does, whatever the match's order", () => {
+    const bot1 = player("bot1", { team: 0, bot: true });
+    const bot2 = player("bot2", { team: 0, bot: true });
+    const host = player("host", { team: 0 });
+    const guestBot = player("guest-bot", { team: 1, bot: true });
+    const guest = player("guest", { team: 1 });
+    const players = [bot1, bot2, host, guestBot, guest];
+    expect(firstFollowed(players)).toBe("host");
+    const order: (string | undefined)[] = [];
+    let current = firstFollowed(players);
+    for (let i = 0; i < 5; i += 1) {
+      current = nextFollowed(players, current, 1);
+      order.push(current);
+    }
+    expect(order).toEqual(["bot1", "bot2", "guest", "guest-bot", "host"]);
+  });
+
   it("cycles both teams in seat order, team 0 first, and wraps; never a creature", () => {
     const order: (string | undefined)[] = [];
     let current: string | undefined = "a1";

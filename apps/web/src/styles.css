@@ -2061,6 +2061,11 @@ body {
 
 /* In a match, under the target frame (#1465), clear of the skill bar: in
    the top column's flow, no wider than it, so a long one wraps. */
+/* A watcher's, until the first delayed frame (#480). */
+.hud-top[hidden] {
+  display: none;
+}
+
 .hud-top > .toast {
   position: static;
   transform: none;

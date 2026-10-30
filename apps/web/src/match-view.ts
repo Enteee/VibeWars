@@ -423,6 +423,8 @@ export async function startMatchView(
   );
   // The compass (#486), top right under the match controls.
   const compass = createCompass(parent, compassReach(viewed.map));
+  // A watcher has none (#480), from the start, not only once it updates.
+  compass.element.hidden = seat === undefined;
   // A watcher (#480) has no body: no bars, effects or skill bar of its
   // own, and says how late what it sees is, under the score.
   hud.root.hidden = seat === undefined;
@@ -792,7 +794,9 @@ export async function startMatchView(
     flashMessage(hud, describeRefusal(message));
   });
 
-  // Where the arena will be while a watcher's delay fills (#480).
+  // Where the arena will be while a watcher's delay fills (#480). The
+  // score and the target frame have nothing to show yet, so they wait
+  // with it.
   let waiting: HTMLElement | undefined;
   let finished = false;
   /** The match as the last frame saw it, so an objective toasts once (#1226, #1387). */
@@ -806,11 +810,15 @@ export async function startMatchView(
       if (waiting === undefined) {
         waiting = watchingNotice(viewed.delaySeconds);
         parent.appendChild(waiting);
+        hud.top.hidden = true;
       }
       return;
     }
-    waiting?.remove();
-    waiting = undefined;
+    if (waiting !== undefined) {
+      waiting.remove();
+      waiting = undefined;
+      hud.top.hidden = false;
+    }
     latestMatch = match;
     const previous = lastMatch ?? match;
     lastMatch = match;

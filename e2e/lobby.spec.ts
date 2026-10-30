@@ -442,6 +442,10 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
     await expect(watcher.locator(".hud-watching")).toHaveText("Watching · 10 s delay");
     await expect(watcher.locator(".hud-skills")).toBeHidden();
     await expect(watcher.locator(".hud-bar-health")).toBeHidden();
+    // While the delay fills, no empty score, target frame or compass.
+    await expect(watcher.locator(".hud-target")).toBeHidden();
+    await expect(watcher.locator(".hud-scoreboard")).toBeHidden();
+    await expect(watcher.locator("canvas.compass")).toBeHidden();
     // The first delayed snapshot: the arena, following team 1's first seat.
     const target = watcher.locator(".hud-target-text");
     await expect(target).toHaveText("Host", { timeout: 20_000 });
