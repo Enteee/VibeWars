@@ -164,3 +164,105 @@ describe("an ends-early trigger (#1421)", () => {
     expect(self.statuses.has("poison")).toBe(true);
   });
 });
+
+describe("a bearer-loses-enchantment trigger (#1437)", () => {
+  const noSpread: SpreadGainedCondition = () => [];
+
+  /** A Dervish in Avatar of Melandru, poisoned and bleeding, under a Dervish and a Monk enchantment. */
+  function avatar(): Combatant {
+    const self = makeCombatant({ id: "d", team: 0 });
+    self.statuses.apply("poison", 20, "foe");
+    self.statuses.apply("bleeding", 20, "foe");
+    self.statuses.apply("avatar-of-melandru", 74, "d");
+    self.statuses.apply("enchanted-haste", 7, "d");
+    self.statuses.apply("guardian", 10, "monk");
+    self.statuses.drainChanges();
+    return self;
+  }
+
+  function fire(self: Combatant): string[] {
+    return self.statuses
+      .drainChanges()
+      .flatMap((change) =>
+        fireChangeTriggers(self, change, noSpread, {
+          sourceOf: (id) => (id === "d" ? self : undefined),
+          rng: createRng(1),
+          rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+          surroundings: new Map(),
+          usedSkill: undefined,
+        }),
+      )
+      .map(({ skillId }) => skillId);
+  }
+
+  const conditions = (self: Combatant): number => self.statuses.countByCategory("condition");
+
+  it("fires when a Dervish enchantment runs out", () => {
+    const self = avatar();
+    self.statuses.advance(7.05, false);
+    expect(self.statuses.has("enchanted-haste")).toBe(false);
+    expect(fire(self)).toContain("dervish.avatar-of-melandru");
+    expect(conditions(self)).toBe(0);
+  });
+
+  it("fires when a Dervish enchantment is stripped, once for each", () => {
+    const self = avatar();
+    self.statuses.apply("mystic-regeneration", 10, "d");
+    self.statuses.apply("crippled", 20, "foe");
+    self.statuses.apply("blind", 20, "foe");
+    self.statuses.drainChanges();
+    self.statuses.removeByCategory("enchantment", Number.POSITIVE_INFINITY, "dervish");
+    expect(fire(self).filter((id) => id === "dervish.avatar-of-melandru")).toHaveLength(2);
+    expect(conditions(self)).toBe(0);
+    expect(self.statuses.has("guardian")).toBe(true);
+  });
+
+  it("does not fire for another profession's enchantment", () => {
+    const self = avatar();
+    self.statuses.remove("guardian");
+    expect(fire(self)).toEqual([]);
+    expect(conditions(self)).toBe(2);
+  });
+
+  it("does not fire on death", () => {
+    const self = avatar();
+    self.statuses.endAll();
+    expect(fire(self)).not.toContain("dervish.avatar-of-melandru");
+  });
+
+  it("does not fire for a form ending, which is no enchantment", () => {
+    const self = avatar();
+    self.statuses.apply("avatar-of-dwayna", 74, "d");
+    expect(self.statuses.has("avatar-of-melandru")).toBe(false);
+    expect(fire(self)).toEqual([]);
+  });
+});
+
+describe("a bearer-uses-skill trigger bound to a kind of skill (#1437)", () => {
+  function used(skillId: string): string[] {
+    const self = makeCombatant({ id: "d", team: 0 });
+    self.statuses.apply("avatar-of-dwayna", 74, "d");
+    self.statuses.apply("faintheartedness", 10, "foe");
+    return fireTriggers(
+      self,
+      "bearer-uses-skill",
+      {
+        sourceOf: (id) => (id === "d" ? self : undefined),
+        rng: createRng(1),
+        rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+        surroundings: new Map(),
+        usedSkill: { skillId, key: skillId },
+      },
+      new Set(),
+    ).map(({ skillId: id }) => id);
+  }
+
+  it("answers a Dervish attack skill", () => {
+    expect(used("dervish.eremites-attack")).toEqual(["dervish.avatar-of-dwayna"]);
+  });
+
+  it("answers neither a Dervish skill that is no attack nor another profession's attack", () => {
+    expect(used("dervish.enchanted-haste")).toEqual([]);
+    expect(used("warrior.power-attack")).toEqual([]);
+  });
+});
