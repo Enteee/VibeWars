@@ -422,6 +422,31 @@ describe("in a match (#1511)", () => {
       expect(damageTo(log, "elementalist.fireball", "a")).toBeGreaterThan(0);
     });
 
+    it("stops a foe walking in to Fireball the bearer when it lands mid-walk", () => {
+      const sim = new MatchSimulation({
+        seed: "monk-staples-4",
+        participants: [
+          body("m", 1, vec2(0, 0), [...MONK_BAR]),
+          body("a", 1, vec2(100, 0), ["monk.orison-of-healing"]),
+          body("f", 0, vec2(100 + RANGE_SPELL * 2, 0), ["elementalist.fireball"]),
+        ],
+      });
+      const foe = sim.get("f");
+      if (foe === undefined) {
+        throw new Error("no participant f");
+      }
+      sim.setTarget("f", "a");
+      expect(sim.requestSkill("f", FIREBALL)?.check).toEqual({ ok: true });
+      expect(foe.pendingSkill).toBeDefined();
+      cast(sim, "monk.spell-breaker");
+      expect(get(sim, "a").statuses.has("spell-breaker")).toBe(true);
+      expect(foe.pendingSkill).toBeUndefined();
+      const stopped = foe.position.x;
+      stepFor(sim, 1);
+      expect(foe.position.x).toBe(stopped);
+      expect(get(sim, "f").cast.activeCast).toBeUndefined();
+    });
+
     it("leaves a Fireball already being cast at the bearer to go off", () => {
       const sim = match();
       sim.setTarget("f", "a");

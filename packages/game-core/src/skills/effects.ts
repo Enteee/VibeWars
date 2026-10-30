@@ -1081,6 +1081,8 @@ export function applyEffect(
       }
       const [giver, taker] = effect.from === "caster" ? [caster, target] : [target, caster];
       const moved = giver.statuses.takeNewest("condition", effect.count);
+      // The caster becomes every moved condition's source: a Bleeding Draw
+      // Conditions takes from an ally counts as the Monk's own from then on.
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
         landStatus(taker, id, scaledStatusDuration(taker, id, remainingSeconds), caster.id, events);
