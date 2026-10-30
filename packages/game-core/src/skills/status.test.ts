@@ -75,6 +75,7 @@ describe("status definitions", () => {
         def.reversesNextDamage !== undefined ||
         def.breaksNextHex !== undefined ||
         def.failsNextSpell !== undefined ||
+        def.damagePulse !== undefined ||
         def.chantShoutDurationMultiplier !== 1 ||
         def.conditionalArmor.length > 0 ||
         def.whileUnder !== undefined ||
