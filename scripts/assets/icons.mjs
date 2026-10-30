@@ -779,6 +779,27 @@ const status = {
       `<path d="M5 12l3-4 3 8 3-8 3 8 2-4" ${stroke(c, 2)}/>` +
       `<path d="M4 19L20 5" ${stroke(c, 1.6)}/>`,
   ],
+  // Paragon chants 3 (#1505), stand-ins until the asset-designer's.
+  // Chant: a bar held level, your next skill cannot be interrupted.
+  "song-of-concentration": ["chant", (c) => `<path d="M5 12h14M5 8v8M19 8v8" ${stroke(c, 2.2)}/>`],
+  // Chant: an arrow through a gap, your next attack skill cannot be blocked.
+  "anthem-of-guidance": [
+    "chant",
+    (c) =>
+      `<path d="M4 12h14M14 8l4 4-4 4" ${stroke(c, 2.2)}/><path d="M10 4v4M10 16v4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Chant: a bolt over a minus, your next shout or chant costs less.
+  "energizing-chorus": [
+    "chant",
+    (c) =>
+      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/><path d="M7 19h10" ${stroke(c, 2.2)}/>`,
+  ],
+  // Chant: a plus over a half bar, more damage to a foe above half Health.
+  "anthem-of-envy": [
+    "chant",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.2)}/><path d="M5 18h7" ${stroke(c, 2.6)}/><path d="M12 18h7" ${stroke(c, 1)}/>`,
+  ],
   // Weapon spell: a sword, held up, warded (#758).
   "weapon-of-warding": [
     "weapon-spell",

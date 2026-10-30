@@ -21,6 +21,7 @@ import {
   findStatusDefinition,
   getStatusDefinition,
   type NextSkill,
+  type NextSkillRule,
   type StatusCategory,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -377,8 +378,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   for (const effect of definition.nextAttackSkill ?? []) {
     parts.push(...describeNextAttackSkill(effect));
   }
+  if (definition.nextAttackSkillBonus !== undefined) {
+    const { condition, amount } = definition.nextAttackSkillBonus;
+    const more = describeMagnitude(amount, new Map());
+    parts.push(`next attack skill: ${conditionText(condition)}: +${String(more.current)} damage`);
+  }
   if (definition.nextSkill !== undefined) {
     parts.push(...describeNextSkill(definition.nextSkill));
+  }
+  if (definition.nextSkillRule !== undefined) {
+    parts.push(...describeNextSkillRule(definition.nextSkillRule));
   }
   if (definition.endsWhenBearerAttacks) {
     parts.push("ends if the bearer attacks");
@@ -1011,6 +1020,21 @@ function describeNextSkill({ which, count, effects }: NextSkill): string[] {
       ({ text }) => `with your next ${next}: ${lowerFirst(text)}`,
     ),
   );
+}
+
+/** How a chant's next skill of a kind goes (#1505): "your next skill cannot be interrupted". */
+function describeNextSkillRule({
+  which,
+  uninterruptible,
+  unblockable,
+  energyDiscount,
+}: NextSkillRule): string[] {
+  const next = `your next ${NEXT_SKILL_KIND[which][0]}`;
+  return [
+    ...(uninterruptible ? [`${next} cannot be interrupted`] : []),
+    ...(unblockable ? [`${next} cannot be blocked`] : []),
+    ...(energyDiscount > 0 ? [`${next} costs ${String(energyDiscount)} less energy`] : []),
+  ];
 }
 
 /**
