@@ -1,13 +1,14 @@
 name: e2e repeat
 
 # Repeats the e2e specs a pull request adds or changes, ten times, and fails
-# on any failure (#216). The work (specs x 10 repeats) is split over parallel
-# shard jobs (`--repeat-each=10 --shard=n/N`, #1561). N grows with the number
-# of specs, so a job runs about eight spec runs however big the PR is: one
-# shard per ten repeats held a job to a full selection, and a PR touching 20
-# specs outgrew the 30-minute cap (PR 1542; two specs did on #451). A 1-in-10
-# flake survives ten runs 35% of the time, so qa-tester's flake-check skill
-# stays: this is the floor, not a replacement.
+# on any failure (#216). A `plan` job packs whole specs into jobs (#1566),
+# so every spec gets exactly ten runs across the jobs and a job holds about
+# 80 test runs: PR 1542's old jobs ran 187 tests in 29 min (~9.7 s a test), so
+# 80 is ~13 min plus setup, well inside the 30-minute cap. A PR too big for 40
+# jobs fails `plan` with a refusal instead of timing out. Playwright's own
+# --shard is not used: it splits by test count and can leave a shard empty.
+# A 1-in-10 flake survives ten runs 35% of the time, so qa-tester's
+# flake-check skill stays: this is the floor, not a replacement.
 #
 # Its own workflow, not a job in ci.yml: the merge guard reads ci.yml's
 # pull_request job conclusions (#123). Not in EXPECTED_CHECKS and not in the
@@ -30,14 +31,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Which specs, and how many shards they need. Cheap: no build.
+  # Which specs, packed into which jobs. Cheap: no build.
   plan:
     name: plan
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       specs: ${{ steps.select.outputs.specs }}
-      shards: ${{ steps.select.outputs.shards }}
+      matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -57,36 +58,38 @@ jobs:
           specs=$(node scripts/ci/select-e2e-specs.mjs "$BASE")
           if [ -z "$specs" ]; then
             echo "no e2e specs changed"
-            shards=1
           else
             echo "Repeating: $specs"
-            n=$(echo "$specs" | wc -w)
-            # About eight spec runs per job (10 repeats per spec), at least
-            # ten shards, at most sixty. A spec has at least one test group
-            # per repeat, so no shard is empty.
-            shards=$(( (n * 10 + 7) / 8 ))
-            [ "$shards" -lt 10 ] && shards=10
-            [ "$shards" -gt 60 ] && shards=60
           fi
           echo "specs=$specs" >> "$GITHUB_OUTPUT"
-          echo "shards=$(node -e 'console.log(JSON.stringify(Array.from({length: +process.argv[1]}, (_, i) => i + 1)))' "$shards")" >> "$GITHUB_OUTPUT"
-          echo "count=$shards"
+
+      # Packs the specs into jobs; refuses a PR too big for the budget.
+      - id: plan
+        name: Plan jobs
+        env:
+          SPECS: ${{ steps.select.outputs.specs }}
+        run: |
+          # shellcheck disable=SC2086
+          matrix=$(node scripts/ci/select-e2e-specs.mjs --plan $SPECS)
+          echo "$matrix"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
 
   e2e-repeat:
-    name: e2e-repeat
+    name: e2e-repeat (${{ matrix.job }})
     needs: plan
     runs-on: ubuntu-latest
     strategy:
-      # One failing shard is the answer; the others add nothing but cost.
+      # One failing job is the answer; the others add nothing but cost.
       fail-fast: true
+      # One entry per job: { job, specs, repeat }, from the plan job.
       matrix:
-        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     # Two runs of a few specs take minutes. Without a cap, a hang would sit
     # pending for six hours, and hubd blocks the merge while it does.
     timeout-minutes: 30
     env:
-      SPECS: ${{ needs.plan.outputs.specs }}
-      SHARDS: ${{ join(fromJSON(needs.plan.outputs.shards), ' ') }}
+      SPECS: ${{ matrix.specs }}
+      REPEAT: ${{ matrix.repeat }}
     steps:
       - if: env.SPECS != ''
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -100,13 +103,12 @@ jobs:
         run: devenv shell -- pnpm run build
 
       - if: env.SPECS != ''
-        name: Repeat specs (shard ${{ matrix.shard }})
+        name: Repeat specs
         # SPECS is split on spaces on purpose: one argument per spec.
         run: |
-          total=$(echo "$SHARDS" | wc -w)
           # shellcheck disable=SC2086
           PLAYWRIGHT_JSON_OUTPUT_NAME=e2e-repeat.json devenv shell -- pnpm exec playwright test $SPECS \
-            --reporter=list,json --repeat-each=10 --shard=${{ matrix.shard }}/$total --retries=0 --workers=1
+            --reporter=list,json --repeat-each="$REPEAT" --retries=0 --workers=1
           # A pass that ran nothing (every test skipped) is not a pass.
           node scripts/ci/select-e2e-specs.mjs --assert-ran e2e-repeat.json
 
@@ -114,7 +116,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: e2e-repeat-output-${{ matrix.shard }}
+          name: e2e-repeat-output-${{ matrix.job }}
           path: |
             playwright-report/
             test-results/
