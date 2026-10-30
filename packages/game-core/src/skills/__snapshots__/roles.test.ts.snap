@@ -142,8 +142,10 @@ exports[`skillRoles > tags every elementalist skill the same way every time 1`] 
 
 exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
 {
+  "mesmer.arcane-conundrum": "hex",
   "mesmer.arcane-echo": "",
   "mesmer.backfire": "hex",
+  "mesmer.blackout": "",
   "mesmer.conjure-phantasm": "hex",
   "mesmer.crippling-anguish": "hex",
   "mesmer.cry-of-frustration": "interrupt",
@@ -171,10 +173,13 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.phantom-pain": "hex",
   "mesmer.power-block": "interrupt",
   "mesmer.power-drain": "interrupt",
+  "mesmer.power-leak": "interrupt",
   "mesmer.power-spike": "interrupt",
   "mesmer.price-of-pride": "hex",
+  "mesmer.psychic-instability": "interrupt knockdown",
   "mesmer.shame": "hex",
   "mesmer.shatter-enchantment": "",
+  "mesmer.shatter-hex": "removal",
   "mesmer.shrinking-armor": "hex",
   "mesmer.signet-of-humility": "",
   "mesmer.spiritual-pain": "",

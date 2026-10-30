@@ -237,6 +237,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "infuriating-heat": icon("infuriating-heat"),
   panic: icon("panic"),
   "wastrels-demise": icon("wastrels-demise"),
+  "arcane-conundrum": icon("arcane-conundrum"),
   "grenths-grasp": icon("grenths-grasp"),
   "rending-aura": icon("rending-aura"),
   "shadow-prison": icon("shadow-prison"),
