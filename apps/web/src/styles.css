@@ -2447,19 +2447,21 @@ body {
   color: #7ee787;
 }
 
-/* The host's Add bot (#1194): a profession and the button, under the team's name. */
-.lobby-add-bot {
+/* A team's bot count (#1454), under its name: the host's − n +. */
+.lobby-bots {
   display: flex;
+  align-items: center;
   gap: 0.35rem;
+  font-size: 0.85rem;
 }
 
-.lobby-add-bot select {
-  flex: 1 1 auto;
-  min-width: 0;
+.lobby-bot-count {
+  min-width: 1.5ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.lobby-add-bot button,
-.lobby-remove-bot {
+.lobby-bots button {
   padding: 0.15rem 0.6rem;
   font-size: 0.8rem;
 }

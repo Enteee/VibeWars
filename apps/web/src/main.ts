@@ -1061,11 +1061,8 @@ async function main(): Promise<void> {
         onWatch: () => {
           void watchMatch();
         },
-        onAddBot: (team, profession) => {
-          lobby?.addBot(team, profession);
-        },
-        onRemoveBot: (botId) => {
-          lobby?.removeBot(botId);
+        onSetBots: (team, count) => {
+          lobby?.setBots(team, count);
         },
         onLeave: () => {
           void leaveLobby();

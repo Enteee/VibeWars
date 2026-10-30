@@ -68,7 +68,8 @@ async function phoneMatch(page: Page, phone: Phone, map?: string): Promise<void>
     await page.locator(".lobby-map select").selectOption(map);
   }
   await page.getByRole("button", { name: "join team 1" }).click();
-  await page.getByRole("button", { name: "add a bot to team 2" }).click();
+  await page.getByRole("button", { name: "one bot more on team 2" }).click();
+  await expect(page.locator(".lobby-team").nth(1).locator(".lobby-bot-count")).toHaveText("1");
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
