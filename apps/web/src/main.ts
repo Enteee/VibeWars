@@ -628,6 +628,10 @@ async function main(): Promise<void> {
       if (!turn()) {
         return;
       }
+      // A lobby change redraws the screen under the player's keyboard:
+      // the card it was on keeps the focus (#1526).
+      const cardsBefore = [...screenRoot.querySelectorAll<HTMLElement>(".play-card-open")];
+      const focused = cardsBefore.findIndex((card) => card === document.activeElement);
       renderMenuWith(
         entry,
         list,
@@ -635,6 +639,9 @@ async function main(): Promise<void> {
         tally(played.records),
       );
       editNotices = [];
+      if (focused !== -1) {
+        screenRoot.querySelectorAll<HTMLElement>(".play-card-open")[focused]?.focus();
+      }
     })();
   };
 
