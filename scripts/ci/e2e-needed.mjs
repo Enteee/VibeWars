@@ -35,7 +35,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   /** @type {string[]} */
   let files = [];
   try {
-    files = execFileSync("git", ["diff", "--name-only", base, head], { encoding: "utf8" })
+    files = execFileSync("git", ["diff", "--name-only", "--no-renames", base, head], {
+      encoding: "utf8",
+    })
       .split("\n")
       .filter(Boolean);
   } catch {
