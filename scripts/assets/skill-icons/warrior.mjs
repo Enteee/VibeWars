@@ -56,4 +56,11 @@ export const WARRIOR_ICONS = {
   "warrior.deadly-riposte": { glyph: "parry", modifier: "bleed" },
   "warrior.charge": { glyph: "shout-rush" },
   "warrior.enraging-charge": { glyph: "shout-rush-adrenal" },
+  // Placeholders until the asset-designer's (#1592): Warrior staples 2.
+  "warrior.shield-bash": { glyph: "shield-blade", modifier: "down" },
+  "warrior.shield-stance": { glyph: "shield-blade", modifier: "self" },
+  "warrior.rage-of-the-ntouka": { glyph: "blade-fast", modifier: "bolt" },
+  "warrior.cleave": { glyph: "axe-cross", modifier: "area" },
+  "warrior.penetrating-blow": { glyph: "axe", modifier: "half" },
+  "warrior.sun-and-moon-slash": { glyph: "sword", modifier: "stun" },
 };

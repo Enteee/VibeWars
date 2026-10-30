@@ -72,6 +72,7 @@ export function define(
     immuneTo: [],
     damageTakenMultiplier: 1,
     damageReduction: 0,
+    damageReductionPerRank: undefined,
     redirectsPhysicalDamage: 0,
     maxDamageFractionPerHit: undefined,
     attackDamageCapFraction: undefined,

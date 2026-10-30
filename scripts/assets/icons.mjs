@@ -714,6 +714,28 @@ const status = {
     (c) =>
       `<g transform="translate(4.8,4.8) scale(0.6)"><path d="M8.5 5L14 12L8.5 19" ${stroke(c, 2.8)}/><path d="M16.5 19V15M19 19V11M21.5 19V7" ${stroke(c, 2.6)}/></g>`,
   ],
+  // Warrior staples 2 (#1592), stand-ins until the asset-designer's.
+  // Skill effect: a shield over a falling bar, the next melee attacker knocked down.
+  "shield-bash": [
+    "skill-effect",
+    (c) =>
+      `<path d="M7 4h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Stance: a shield with a minus in it, blocks and less damage.
+  "shield-stance": [
+    "stance",
+    (c) =>
+      `<path d="M6 4h12v6c0 4.5-3 7-6 9-3-2-6-4.5-6-9z" ${stroke(c, 2)}/>` +
+      `<path d="M9 10h6" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a bolt over a clock hand, adrenal skills recharge.
+  "rage-of-the-ntouka": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 2)}/>` +
+      `<path d="M13 6l-3.5 6.5h3l-1 5.5 4-7h-3z" fill="${c}"/>`,
+  ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
     "enchantment",

@@ -104,7 +104,7 @@ export function fireTriggers(
 /**
  * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
  * unless it names a type or a profession the skill must have, or that it
- * be elite (#1473).
+ * be elite (#1473) or adrenal (#1592).
  */
 function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
   if (trigger.usedSkill === undefined) {
@@ -116,7 +116,8 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
     (trigger.usedSkill.profession === undefined ||
       skill.profession === trigger.usedSkill.profession) &&
-    (trigger.usedSkill.elite === undefined || skill.elite)
+    (trigger.usedSkill.elite === undefined || skill.elite) &&
+    (trigger.usedSkill.adrenal === undefined || skill.cost?.kind === "adrenaline")
   );
 }
 
