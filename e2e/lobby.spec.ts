@@ -425,6 +425,44 @@ test("a match plays the character the lobby lists, not one selected after joinin
   }
 });
 
+test("a spectator presses Watch and follows the match 10 s late, with nothing to act with (#480)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 3);
+  const [host, guest, watcher] = pages as [Page, Page, Page];
+
+  try {
+    const code = await startTwoPlayerMatch(host, guest);
+    await expect(host.locator(".hud-leave")).toBeVisible();
+    // Joined mid-match, on no team: Watch, not Ready.
+    await joinLobby(watcher, "Watcher", code);
+    await expect(watcher.getByRole("button", { name: "Ready", exact: true })).toHaveCount(0);
+    await watcher.getByRole("button", { name: "Watch", exact: true }).click();
+
+    await expect(watcher.locator(".hud-watching")).toHaveText("Watching · 10 s delay");
+    await expect(watcher.locator(".hud-skills")).toBeHidden();
+    await expect(watcher.locator(".hud-bar-health")).toBeHidden();
+    // The first delayed snapshot: the arena, following team 1's first seat.
+    const target = watcher.locator(".hud-target-text");
+    await expect(target).toHaveText("Host", { timeout: 20_000 });
+    await expect(watcher.locator("#viewport canvas:not(.compass)")).toBeVisible();
+    await expect(watcher.locator(".hud-scoreboard")).toContainText("1 v 1");
+
+    await watcher.keyboard.press(key("target-next"));
+    await expect(target).toHaveText("Guest");
+    await watcher.keyboard.press(`Shift+${key("target-next")}`);
+    await expect(target).toHaveText("Host");
+
+    // Leaving is back to the lobby; the match goes on.
+    await watcher.keyboard.press("Escape");
+    await expect(watcher.locator(".screen-lobby")).toBeVisible();
+    await expect(watcher.getByRole("button", { name: "Watch", exact: true })).toBeVisible();
+    await expect(host.locator(".hud-leave")).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
 test("the host adds a Monk bot to the other team; it plays, named and tagged BOT (#1194)", async ({
   page,
 }) => {

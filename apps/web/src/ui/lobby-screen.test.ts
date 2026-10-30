@@ -58,6 +58,7 @@ describe("lobbyControls", () => {
       readyDisabled: true,
       startDisabled: true,
       botsDisabled: true,
+      canWatch: false,
     });
   });
 
@@ -69,6 +70,7 @@ describe("lobbyControls", () => {
       readyDisabled: true,
       startDisabled: true,
       botsDisabled: true,
+      canWatch: false,
     });
   });
 
@@ -80,6 +82,7 @@ describe("lobbyControls", () => {
       readyDisabled: false,
       startDisabled: false,
       botsDisabled: false,
+      canWatch: false,
     });
   });
 
@@ -112,6 +115,35 @@ describe("lobbyControls", () => {
     });
     expect(controls.readyDisabled).toBe(true);
     expect(controls.startDisabled).toBe(true);
+  });
+
+  it("offers Watch to a member on no team, only while the match runs (#480)", () => {
+    const teamless = (phase: LobbySnapshot["phase"]): LobbySnapshot => {
+      const shown = snapshot(phase);
+      return {
+        ...shown,
+        selfSessionId: "watcher",
+        isHost: false,
+        players: [
+          ...shown.players,
+          {
+            sessionId: "watcher",
+            name: "Watcher",
+            guildTag: null,
+            team: null,
+            ready: false,
+            isHost: false,
+            character: null,
+            bot: false,
+          },
+        ],
+      };
+    };
+    expect(lobbyControls(teamless("in-match")).canWatch).toBe(true);
+    expect(lobbyControls(teamless("waiting")).canWatch).toBe(false);
+    expect(lobbyControls(teamless("starting")).canWatch).toBe(false);
+    // Seated, the match is played, not watched.
+    expect(lobbyControls(snapshot("in-match")).canWatch).toBe(false);
   });
 });
 
@@ -300,6 +332,7 @@ describe("teamColumn: bots (#1194)", () => {
     onChooseTeam: () => undefined,
     onToggleReady: () => undefined,
     onStart: () => undefined,
+    onWatch: () => undefined,
     onLeave: () => undefined,
     onAddBot: (team: 0 | 1, profession: string) => {
       added.push([team, profession]);

@@ -6,6 +6,7 @@ import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { ARENA_MAPS, mapMode } from "./net/maps.js";
 import {
   connectMatchFor,
+  observeMatchFor,
   enterQueue,
   hostLobby,
   joinFailureNotice,
@@ -1057,6 +1058,9 @@ async function main(): Promise<void> {
         onStart: () => {
           lobby?.startMatch();
         },
+        onWatch: () => {
+          void watchMatch();
+        },
         onAddBot: (team, profession) => {
           lobby?.addBot(team, profession);
         },
@@ -1287,6 +1291,51 @@ async function main(): Promise<void> {
     }
   };
 
+  /**
+   * Watch the lobby's match from no team (#480), 10 s late, with nothing
+   * to act with. Leaving, or its end, is back to the lobby; the match
+   * goes on without the watcher either way.
+   */
+  const watchMatch = async (): Promise<void> => {
+    const from = lobby;
+    const watch = from?.watchMatch();
+    if (from === undefined || watch === undefined || match !== undefined || enteringMatch) {
+      return;
+    }
+    enteringMatch = true;
+    lobbyNotice = undefined;
+    showViewport(true);
+    setStatus("watching…", "offline");
+    try {
+      match = await startMatchView(
+        viewport,
+        {
+          onConnectionChange: (state) => {
+            if (state === "lost") {
+              void exitMatch(LOST_MATCH_NOTICE);
+            }
+          },
+          onLeave: () => {
+            void exitMatch();
+          },
+        },
+        {
+          kind: "observe",
+          selfSessionId: from.selfSessionId,
+          connect: () => observeMatchFor(from, watch),
+        },
+      );
+      setStatus("", "online");
+    } catch (error) {
+      console.error("[web] could not watch the match", error);
+      enteringMatch = false;
+      if (lobby !== undefined) {
+        lobbyNotice = matchFailureNotice(error) ?? LOST_MATCH_NOTICE;
+        renderLobby();
+      }
+    }
+  };
+
   const enterMatch = async (
     name: string,
     start: MatchStarting,
@@ -1338,7 +1387,10 @@ async function main(): Promise<void> {
             };
           },
         },
-        { connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build) },
+        {
+          kind: "play",
+          connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
+        },
       );
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");

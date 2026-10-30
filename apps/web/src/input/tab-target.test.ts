@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
-import { closestTarget, nextTabTarget, selfTargetIntent } from "./tab-target.js";
+import {
+  closestTarget,
+  firstFollowed,
+  nextFollowed,
+  nextTabTarget,
+  selfTargetIntent,
+} from "./tab-target.js";
 
 function player(sessionId: string, overrides: Partial<PlayerSnapshot> = {}): PlayerSnapshot {
   return {
@@ -162,5 +168,58 @@ describe("selfTargetIntent (#1028)", () => {
   it("sends nothing when you are already your target, or not in the match", () => {
     expect(selfTargetIntent([player("me", { targetSessionId: "me" }), NEAR], "me")).toBeUndefined();
     expect(selfTargetIntent([NEAR], "me")).toBeUndefined();
+  });
+});
+
+describe("nextFollowed (#480)", () => {
+  // Seated in this order: team 1's first, then team 0's two, then team 1's second.
+  const B1 = player("b1", { team: 1 });
+  const A1 = player("a1", { team: 0 });
+  const A2 = player("a2", { team: 0 });
+  const B2 = player("b2", { team: 1 });
+  const PET = player("pet", {
+    team: 0,
+    creature: {
+      ownerId: "a1",
+      kind: "minion",
+      look: "bone-minion",
+      mode: null,
+      armedAttack: null,
+      leaderId: null,
+    },
+  });
+  const SEATS = [B1, A1, PET, A2, B2];
+
+  it("follows team 0's first seat first", () => {
+    expect(firstFollowed(SEATS)).toBe("a1");
+    expect(firstFollowed([])).toBeUndefined();
+  });
+
+  it("cycles both teams in seat order, team 0 first, and wraps; never a creature", () => {
+    const order: (string | undefined)[] = [];
+    let current: string | undefined = "a1";
+    for (let i = 0; i < 4; i += 1) {
+      current = nextFollowed(SEATS, current, 1);
+      order.push(current);
+    }
+    expect(order).toEqual(["a2", "b1", "b2", "a1"]);
+  });
+
+  it("goes back on Shift-Tab", () => {
+    expect(nextFollowed(SEATS, "a1", -1)).toBe("b2");
+    expect(nextFollowed(SEATS, "b1", -1)).toBe("a2");
+  });
+
+  it("skips the dead, from a dead one too", () => {
+    const deadA1 = player("a1", { team: 0, dead: true });
+    const deadA2 = player("a2", { team: 0, dead: true });
+    expect(nextFollowed([B1, A1, deadA2, B2], "a1", 1)).toBe("b1");
+    expect(nextFollowed([B1, deadA1, deadA2, B2], "a1", 1)).toBe("b1");
+  });
+
+  it("follows nobody new when everyone is dead, or nobody is there", () => {
+    const allDead = SEATS.map((seat) => ({ ...seat, dead: true }));
+    expect(nextFollowed(allDead, "a1", 1)).toBeUndefined();
+    expect(nextFollowed([], undefined, 1)).toBeUndefined();
   });
 });

@@ -72,6 +72,20 @@ function match(players: readonly PlayerSnapshot[]): MatchSnapshot {
 }
 
 describe("toArenaSnapshot", () => {
+  it("draws a watcher's team 1 in the ally colour and team 2 in the enemy one (#480)", () => {
+    const arena = toArenaSnapshot(
+      { ...match([player("a", 0), { ...player("b", 0), team: 1 }]), selfSessionId: "watcher" },
+      [],
+      [],
+      undefined,
+      undefined,
+    );
+    expect(arena.actors.map((actor) => [actor.id, actor.team])).toEqual([
+      ["a", "ally"],
+      ["b", "enemy"],
+    ]);
+  });
+
   it("lays a body down while its knockdown lasts, and stands it up at 0 (#545)", () => {
     const arena = toArenaSnapshot(
       match([player("me", 0), player("down", 2.5)]),

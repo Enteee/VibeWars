@@ -374,6 +374,11 @@ body {
   font-size: 0.78rem;
 }
 
+/* A watcher has no body, so none of its bars (#480). */
+.hud[hidden] {
+  display: none;
+}
+
 /* Only interactive children take pointer events, so clicks aimed at the
    arena behind the HUD still reach the game. */
 .hud button {
@@ -2518,6 +2523,17 @@ body {
 }
 
 /* A line a flag away from home, under the scoreboard (#1226). */
+/* A watcher is told how late what it sees is (#480). */
+.hud-watching {
+  padding: 0.1rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .hud-carriers {
   display: flex;
   flex-direction: column;

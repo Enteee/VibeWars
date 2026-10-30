@@ -59,6 +59,16 @@ the **Guild cape** designer appears under it: pick the cape colour, the
 trim colour and an emblem, and your body wears the cape behind it in every
 match. Your characters in the menu show it too. **No cape** takes it off.
 
+## Watching a match
+
+In a lobby whose match is on, anyone not on a team can press **Watch**.
+You see the whole match, both teams, everything **10 seconds late**, so
+nobody watching can call the other team's moves. You cannot move,
+target or cast. The camera follows one player: **Tab** follows the next
+one alive, **Shift+Tab** the one before, and the target frame shows
+whom you follow. **Esc** or **Leave** takes you back to the lobby; the
+match goes on without you.
+
 ## Playing online
 
 Online play is peer to peer: the other players in your match see your
