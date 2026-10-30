@@ -519,7 +519,11 @@ are worked out in a worker thread, killed after 2 s, so a hostile page
 cannot stall hubd's thread. At most two run at once, beside the gh lane, so a
 slow Wayback cannot stall a merge. Accepted risk: the wiki is editable by
 anyone, so a page is untrusted text, read as information like an issue
-body; the answer goes only to the asker.
+body; the answer goes only to the asker. What hubd reads is cached in
+`.bots/web-cache/` (#1381), host-only and outside `hub/`, which every jail
+binds: at most 10 GiB, least recently used evicted first, nothing stored
+below the disk guard's free space. A cached page is served to any later
+asker, which is no wider than the wiki itself.
 
 **Peek (#19).** `agent-turn.mjs` on the host records each employee's
 recent output under `$VIBEWARS_BOT_ROOT/peek` (mode 700, files 600),

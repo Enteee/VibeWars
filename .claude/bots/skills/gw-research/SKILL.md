@@ -30,6 +30,9 @@ hub wiki diff <Page> <date> [<date> | live]
 - Page names as on the wiki: `hub wiki get "Fiery Rebuke"`.
 - A Wayback read can take 30 s. It never holds up anyone's `hub` or
   `board` request.
+- hub keeps what it read: a snapshot for good, the live page and
+  `history` for a day. Asking again is instant, and `live` can be up to a
+  day old.
 
 ## 3. Only then, ask
 

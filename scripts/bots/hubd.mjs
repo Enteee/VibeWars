@@ -120,6 +120,7 @@ import {
   WORKDAY,
 } from "./reboot.mjs";
 import { SKILLS_PREFIX, installSkills, skillFiles } from "./skills-sync.mjs";
+import { createWebCache } from "./web-cache.mjs";
 import { ARCHIVE_ORIGIN, LIVE_ORIGIN, runWiki } from "./wiki.mjs";
 import {
   readLimit,
@@ -243,6 +244,11 @@ const NUDGES = path.join(HUB, "nudges.json");
 const BOARD_HISTORY = path.join(HUB, "board-history.jsonl");
 /** The KPI snapshot (kpi.mjs), written every `KPI_EVERY_MS`; every jail reads it. */
 const KPIS = path.join(HUB, "kpis.json");
+/**
+ * What `hub wiki` read (#1381). Beside hub/, not in it: every jail binds
+ * hub/ read-only, and this is host-only.
+ */
+const WEB_CACHE = path.join(ROOT, "web-cache");
 /** The 7-day utilization's step edges (#1313), kept across restarts for its projection. */
 const KPI_EDGES = path.join(HUB, "kpi-edges.json");
 /** `blocked.json`: the column each Blocked card came from, by project item id (#639). */
@@ -3531,6 +3537,7 @@ async function writeKpis(cfg) {
         }
         return staffKpis(staff, live, cfg.maxAgents);
       },
+      webCache: () => openWebCache().stats(),
     });
     writeAtomic(KPIS, JSON.stringify(kpis));
   } catch (error) {
@@ -3622,6 +3629,26 @@ const WIKI_ORIGINS = {
   archive: process.env.HUBD_WIKI_ARCHIVE_ORIGIN ?? ARCHIVE_ORIGIN,
 };
 
+/** @type {import("./web-cache.mjs").WebCache | null} */
+let webCache = null;
+
+/**
+ * The web cache, opened on first use: by a wiki request or the KPIs.
+ *
+ * @returns {import("./web-cache.mjs").WebCache}
+ */
+function openWebCache() {
+  webCache ??= createWebCache({
+    dir: WEB_CACHE,
+    freeBytes: () => freeBytes(ROOT),
+    holdBelow: HOLD_BELOW,
+    log: (line) => {
+      console.error(line);
+    },
+  });
+  return webCache;
+}
+
 /**
  * Serve a `hub wiki` request on the side (#1380). A Wayback fetch can take
  * 30 s, and nothing in it touches GitHub, so it never holds up a merge or a
@@ -3676,7 +3703,7 @@ async function serveWiki(employee, role, argv) {
     audit({ employee, role, kind, argv, decision: "refused", reason: verdict.reason });
     return { allow: false, reason: verdict.reason, code: 77 };
   }
-  const answer = await runWiki(argv, { fetch, origins: WIKI_ORIGINS });
+  const answer = await runWiki(argv, { fetch, origins: WIKI_ORIGINS, cache: openWebCache() });
   audit({ employee, role, kind, argv, decision: "allowed", code: answer.code });
   return { allow: true, ...answer };
 }
