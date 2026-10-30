@@ -762,6 +762,19 @@ holy attacks; each Dervish attack skill you use takes off a hex;
 whenever you lose a Dervish enchantment, you heal 41. "Lose" is any end
 but your death: expiry, a strip, a flash enchantment's own end.
 
+The other three Avatars (#1455) last 74 s too. Avatar of Balthazar: +20
+armor against physical damage, adrenaline 25% faster from every source
+(hits, damage taken, skills), holy attacks; whenever you lose a Dervish
+enchantment, foes nearby burn for 3 s. Avatar of Grenth: you are immune
+to Disease, so one on you ends as it begins, none lands and none spreads
+to you; with a scythe, your attacks deal dark damage and each hit steals
+10 Health; whenever you lose a Dervish enchantment, adjacent foes get
+Disease for 3 s. Avatar of Lyssa: chaos attacks (no armor rule of its
+own); your Dervish enchantments recharge 50% faster, flash ones too, and
+with Mantra of Recovery the larger share counts, not both; whenever you
+lose a Dervish enchantment, you steal 1 energy from each foe nearby, and
+a foe with none gives nothing.
+
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the
