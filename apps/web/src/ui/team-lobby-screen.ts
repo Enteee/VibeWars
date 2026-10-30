@@ -39,7 +39,7 @@ export type ReasonLine =
   | "Most votes"
   | "Tie: captain's pick"
   | "Tie: picked at random"
-  | "Time ran out: picked at random"
+  | "No votes: picked at random"
   | "House team";
 
 /**
@@ -59,7 +59,7 @@ export function reasonLine(
     case "random":
       return proposals.some((proposal) => proposal.voterIds.length > 0)
         ? "Tie: picked at random"
-        : "Time ran out: picked at random";
+        : "No votes: picked at random";
     case "house":
       return "House team";
   }

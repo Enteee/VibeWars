@@ -194,7 +194,7 @@ describe("the Team Lobby's words (#1460)", () => {
     expect(reasonLine({ ...SUNRISE, reason: "captain" }, voted)).toBe("Tie: captain's pick");
     expect(reasonLine({ ...SUNRISE, reason: "random" }, voted)).toBe("Tie: picked at random");
     expect(reasonLine({ ...SUNRISE, reason: "random" }, unvoted)).toBe(
-      "Time ran out: picked at random",
+      "No votes: picked at random",
     );
     expect(reasonLine({ ...SUNRISE, proposerId: null, reason: "house" }, [])).toBe("House team");
   });
