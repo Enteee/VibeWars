@@ -3664,9 +3664,12 @@ async function sampleHost(now, employees) {
   return host;
 }
 
-/** How far back each KPI tick reads Actions runs: the 90-min e2e cap and queueing. */
+/**
+ * How far before the newest recorded run each KPI tick reads Actions runs:
+ * the 90-min e2e cap and queueing.
+ */
 const CI_LOOKBACK_MS = 3 * 3_600_000;
-/** How far back the first read goes, so the CI numbers exist from the first tick. */
+/** How far back the first read, and any read, goes, so the numbers exist from the first tick. */
 const CI_FIRST_LOOKBACK_MS = 7 * 24 * 3_600_000;
 /** `ci-history.jsonl` keeps runs created within this. */
 const CI_KEEP_MS = 8 * 24 * 3_600_000;
@@ -3688,7 +3691,14 @@ async function recordCiRuns(now, cfg) {
     ? parseCiHistory(fs.readFileSync(CI_HISTORY, "utf8"))
     : [];
   ciRunIds ??= new Set(history.map((run) => run.id));
-  const since = new Date(now - (history.length === 0 ? CI_FIRST_LOOKBACK_MS : CI_LOOKBACK_MS));
+  // Back past the newest run recorded, so runs that completed while hubd was down are read too.
+  const newest = history.length === 0 ? null : Math.max(...history.map((run) => run.createdAt));
+  const since = new Date(
+    Math.max(
+      now - CI_FIRST_LOOKBACK_MS,
+      newest === null ? 0 : Math.min(now, newest) - CI_LOOKBACK_MS,
+    ),
+  );
   /** @type {import("./kpi.mjs").CiRun[]} */
   const read = [];
   for (let page = 1; page <= MAX_PAGES; page += 1) {
@@ -3705,7 +3715,7 @@ async function recordCiRuns(now, cfg) {
     }
     /** @type {unknown[]} */
     const got = rows;
-    read.push(...got.flatMap((row) => ciRunFromRest(row) ?? []));
+    read.push(...got.flatMap((row) => ciRunFromRest(row, GATE_WORKFLOWS) ?? []));
     if (got.length < 100) {
       break;
     }

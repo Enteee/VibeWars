@@ -341,13 +341,18 @@ function isEdge(value) {
 
 /**
  * One completed Actions run, a line of `ci-history.jsonl` (#1612). Times in
- * epoch ms; `workflow` is the file's basename, `title` the run's display
- * title, the PR's for a `pull_request` run.
+ * epoch ms. Every jail reads the file, and a fork's pull request names its
+ * own title, branch and workflow files: so no free text is kept. `issue`
+ * is the `#N` a run's title starts with, `onMain` whether it ran on main,
+ * and `workflow` a gate workflow's file name or `"other"`.
  *
- * @typedef {{ id: number, workflow: string, event: string, branch: string,
- *   sha: string, title: string, createdAt: number, completedAt: number,
+ * @typedef {{ id: number, workflow: string, event: string, onMain: boolean,
+ *   sha: string, issue: number | null, createdAt: number, completedAt: number,
  *   conclusion: string }} CiRun
  */
+
+/** What an Actions enum (event, conclusion) looks like; anything else is not one. */
+const ENUM = /^[a-z_]{1,40}$/;
 
 /**
  * @param {unknown} value
@@ -360,11 +365,18 @@ function isCiRun(value) {
   const run = /** @type {Record<string, unknown>} */ (value);
   return (
     Number.isInteger(run.id) &&
-    ["workflow", "event", "branch", "sha", "title", "conclusion"].every(
-      (key) => typeof run[key] === "string",
-    ) &&
+    typeof run.workflow === "string" &&
+    /^[\w.-]{1,64}$/.test(run.workflow) &&
+    typeof run.event === "string" &&
+    ENUM.test(run.event) &&
+    typeof run.onMain === "boolean" &&
+    typeof run.sha === "string" &&
+    /^[0-9a-f]{40}$/.test(run.sha) &&
+    (run.issue === null || Number.isInteger(run.issue)) &&
     Number.isFinite(run.createdAt) &&
-    Number.isFinite(run.completedAt)
+    Number.isFinite(run.completedAt) &&
+    typeof run.conclusion === "string" &&
+    ENUM.test(run.conclusion)
   );
 }
 
@@ -385,9 +397,9 @@ export function parseCiHistory(text) {
       /** @type {unknown} */
       const parsed = JSON.parse(line);
       if (isCiRun(parsed)) {
-        const { id, workflow, event, branch, sha, title, createdAt, completedAt, conclusion } =
+        const { id, workflow, event, onMain, sha, issue, createdAt, completedAt, conclusion } =
           parsed;
-        runs.push({ id, workflow, event, branch, sha, title, createdAt, completedAt, conclusion });
+        runs.push({ id, workflow, event, onMain, sha, issue, createdAt, completedAt, conclusion });
       }
     } catch {
       // A torn or foreign line: skipped.
@@ -402,9 +414,10 @@ export function parseCiHistory(text) {
  * attempts are never seen: close enough for KPIs.
  *
  * @param {unknown} value
+ * @param {readonly string[]} gate the merge gate's workflow files
  * @returns {CiRun | null} null for a run not yet completed, or malformed
  */
-export function ciRunFromRest(value) {
+export function ciRunFromRest(value, gate) {
   if (typeof value !== "object" || value === null) {
     return null;
   }
@@ -412,13 +425,16 @@ export function ciRunFromRest(value) {
   if (run.status !== "completed" || typeof run.path !== "string") {
     return null;
   }
+  const file = run.path.split("/").at(-1) ?? "";
+  const issue =
+    typeof run.display_title === "string" ? /^#(\d+)\b/.exec(run.display_title)?.[1] : undefined;
   const line = {
     id: run.id,
-    workflow: run.path.split("/").at(-1) ?? "",
+    workflow: gate.includes(file) ? file : "other",
     event: run.event,
-    branch: run.head_branch,
+    onMain: run.head_branch === "main",
     sha: run.head_sha,
-    title: run.display_title,
+    issue: issue === undefined ? null : Number(issue),
     createdAt: typeof run.created_at === "string" ? Date.parse(run.created_at) : NaN,
     completedAt: typeof run.updated_at === "string" ? Date.parse(run.updated_at) : NaN,
     conclusion: run.conclusion,
@@ -483,7 +499,7 @@ const SHARE_COLUMNS = new Map([
 function mainRedMinutes(now, runs) {
   const since = now - DAY_MS;
   const pushes = runs
-    .filter((run) => run.workflow === "ci.yml" && run.event === "push" && run.branch === "main")
+    .filter((run) => run.workflow === "ci.yml" && run.event === "push" && run.onMain)
     .filter((run) => run.conclusion !== "cancelled" && run.conclusion !== "skipped")
     .sort((a, b) => a.completedAt - b.completedAt);
   let red = 0;
@@ -554,7 +570,7 @@ export function ciKpis({ now, runs, moves, done7d, gate }) {
  * Where the cycle of every card Done in the week went (#1612): its time in
  * In Progress, In Review and QA between its first Ready and last Done, with
  * the time its PR's CI ran taken out of those columns into `ci`. A run is a
- * card's when its title starts `#<issue>`.
+ * card's when its title starts `#<issue>` (`CiRun.issue`).
  *
  * @param {{ now: number, gated: readonly CiRun[],
  *   moves: readonly import("./board-history.mjs").Move[] }} facts
@@ -571,10 +587,11 @@ function cycleShare({ now, gated, moves }) {
   /** @type {Map<number, [number, number][]>} */
   const ciByIssue = new Map();
   for (const run of gated) {
-    const issue = /^#(\d+)\b/.exec(run.title)?.[1];
-    if (issue !== undefined) {
-      const key = Number(issue);
-      ciByIssue.set(key, [...(ciByIssue.get(key) ?? []), [run.createdAt, run.completedAt]]);
+    if (run.issue !== null) {
+      ciByIssue.set(run.issue, [
+        ...(ciByIssue.get(run.issue) ?? []),
+        [run.createdAt, run.completedAt],
+      ]);
     }
   }
 
