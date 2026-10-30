@@ -89,6 +89,7 @@ import {
   resolvedBar,
   slotSkill,
   type ActiveCast,
+  type CastRule,
   type SlotSkill,
 } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
@@ -148,6 +149,7 @@ import {
   type GroundAct,
   type PulseRule,
   type Skill,
+  type SkillEffect,
 } from "../skills/types.js";
 import {
   leadAimPoint,
@@ -809,6 +811,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "invalid-target-self",
   "invalid-target-ally",
   "invalid-target-enemy",
+  "invalid-target-untargetable",
 ]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */
@@ -1593,6 +1596,54 @@ export class MatchSimulation {
   }
 
   /**
+   * Every status damage pulse that came due this step (#1501), in
+   * participant order: typeless damage from the status's source to the
+   * bearer and to the source's foes within its radius of the bearer,
+   * logged as the status's skill. A bearer that died since takes none,
+   * and a source that has left the match deals none.
+   */
+  #pulseStatuses(): void {
+    for (const record of this.#participants.values()) {
+      for (const { id, sourceId, damage } of record.combatant.statuses.drainPulses()) {
+        const source = this.#participants.get(sourceId);
+        const pulse = STATUS_DEFINITIONS[id].damagePulse;
+        if (record.combatant.dead || source === undefined || pulse === undefined) {
+          continue;
+        }
+        const hit: SkillEffect = {
+          kind: "damage",
+          amount: { flat: damage },
+          type: "typeless",
+          armorPenetration: 0,
+        };
+        const effects: readonly SkillEffect[] = [
+          hit,
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: pulse.radius,
+            maxTargets: undefined,
+            effects: [hit],
+          },
+        ];
+        this.#logFired([
+          {
+            sourceId,
+            skillId: pulse.skillId,
+            events: applyEffects(effects, {
+              caster: source.combatant,
+              target: record.combatant,
+              rng: this.#rng,
+              rules: this.#ruleset.combat,
+              surroundings: this.#participants,
+            }),
+          },
+        ]);
+      }
+    }
+  }
+
+  /**
    * One pulse of `rule` at `position` (#1113): its effects land from
    * `owner` on whoever its area takes there, in line of sight of it, and
    * it is logged as a cast is, even when it hits nobody. A pulse's
@@ -2269,6 +2320,7 @@ export class MatchSimulation {
       return;
     }
     payCost(skill, record.combatant, key);
+    this.#useNextSkillRules(record, skill);
     beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
     pet.armedAttack = { skillId: skill.id, remainingSeconds: PET_ATTACK_SECONDS };
     const foe = record.targetId === undefined ? undefined : this.#participants.get(record.targetId);
@@ -2329,6 +2381,7 @@ export class MatchSimulation {
 
     payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
+    const rule = this.#useNextSkillRules(record, skill);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -2353,6 +2406,7 @@ export class MatchSimulation {
       activationSeconds,
       skill.whileActivating,
       key,
+      rule,
     );
     this.#castBegun(record, skill, castTargetId);
     // Casting stops you (operator Q33): a key held as the cast begins
@@ -2432,6 +2486,27 @@ export class MatchSimulation {
         })),
       });
     }
+  }
+
+  /**
+   * A skill starting, paid for, uses up every chant that holds how the
+   * next skill of its kind goes (#1505), as a glyph is: an interrupt or a
+   * cancel after this does not give it back. Returns what they give the
+   * cast; each spent logs its end under its chant.
+   */
+  #useNextSkillRules(record: ParticipantRecord, skill: Skill): CastRule {
+    const used = record.combatant.statuses.useNextSkillRules(skill);
+    this.#logFired(
+      used.map(({ statusId, rule }) => ({
+        sourceId: record.id,
+        skillId: rule.skillId,
+        events: [{ kind: "status-expired" as const, targetId: record.id, statusId }],
+      })),
+    );
+    return {
+      uninterruptible: used.some(({ rule }) => rule.uninterruptible),
+      unblockable: used.some(({ rule }) => rule.unblockable),
+    };
   }
 
   /**
@@ -2652,6 +2727,7 @@ export class MatchSimulation {
 
     this.#springTraps();
     this.#pulseGroundEffects();
+    this.#pulseStatuses();
     this.#settleUpkeep(dt);
     this.#spreadStatuses();
     this.#fireStatusChanges();
@@ -3074,10 +3150,16 @@ export class MatchSimulation {
   /** Resolve a cast that has finished its activation time. */
   private resolveCast(record: ParticipantRecord, cast: ActiveCast, dt: number): void {
     const { skillId, targetId } = cast;
-    const skill = getSkill(skillId);
-    if (skill === undefined) {
+    const used = getSkill(skillId);
+    if (used === undefined) {
       return;
     }
+    // Anthem of Guidance's (#1505): this attack skill's blows, melee or
+    // flying, cannot be blocked.
+    const skill =
+      cast.rule.unblockable && used.attack !== undefined
+        ? { ...used, attack: { ...used.attack, unblockable: true } }
+        : used;
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
     if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
@@ -3362,7 +3444,15 @@ export class MatchSimulation {
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
   ): void {
-    this.#logFired(fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared));
+    // Panic's interrupt (#1501) is untimed, as a pulse's: finding nothing
+    // to interrupt is no miss, so it says nothing.
+    const fired = fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared);
+    this.#logFired(
+      fired.map((each) => ({
+        ...each,
+        events: each.events.filter((event) => event.kind !== "interrupt-missed"),
+      })),
+    );
   }
 
   /**

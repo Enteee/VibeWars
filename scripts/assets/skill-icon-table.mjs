@@ -107,6 +107,11 @@ export const SKILL_ICONS = {
   "paragon.anthem-of-weariness": { glyph: "next-attack-drop-weak" },
   "paragon.crippling-anthem": { glyph: "next-attack-limp" },
   "paragon.anthem-of-disruption": { glyph: "next-attack-interrupt" },
+  // Placeholders until the asset-designer's (#1505): Paragon chants 3.
+  "paragon.song-of-concentration": { glyph: "note-hold", modifier: "area" },
+  "paragon.anthem-of-guidance": { glyph: "hex-nobloc", modifier: "area" },
+  "paragon.energizing-chorus": { glyph: "banner-note", modifier: "less" },
+  "paragon.anthem-of-envy": { glyph: "blade-plus", modifier: "half" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
   "ritualist.mend-body-and-soul": { glyph: "plaster", modifier: "area" },
   "ritualist.spirit-light": { glyph: "plaster", modifier: "bleed" },
@@ -355,6 +360,17 @@ export const SKILL_ICONS = {
   "necromancer.soul-barbs": { glyph: "gain-barbs" },
   "necromancer.defile-defenses": { glyph: "gain-shield" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
+  // Placeholders until the asset-designer's (#1511): Monk staples.
+  "monk.aegis": { glyph: "shield-veil", modifier: "area" },
+  "monk.shield-of-deflection": { glyph: "armor", modifier: "plus" },
+  "monk.shielding-hands": { glyph: "armor", modifier: "hourglass" },
+  "monk.zealous-benediction": { glyph: "heal-other", modifier: "plus" },
+  "monk.draw-conditions": { glyph: "drop-pair", modifier: "self" },
+  "monk.spell-breaker": { glyph: "shield-veil", modifier: "plus" },
+  "monk.blessed-light": { glyph: "hex-heal-cut", modifier: "plus" },
+  "monk.words-of-comfort": { glyph: "heal", modifier: "half" },
+  "monk.light-of-deliverance": { glyph: "party-heal", modifier: "down" },
+  "monk.signet-of-rejuvenation": { glyph: "heal", modifier: "bolt" },
   "mesmer.hex-breaker": { glyph: "hex-return" },
   // Ritualist item spells (#1434, #1493): an urn of ashes, the mark inside says what they do.
   "ritualist.protective-was-kaolai": { glyph: "was-shield" },
@@ -363,13 +379,13 @@ export const SKILL_ICONS = {
   "ritualist.blind-was-mingson": { glyph: "was-blind" },
   "ritualist.grasping-was-kuurong": { glyph: "was-quake" },
   "ritualist.energetic-was-lee-sa": { glyph: "was-bolt" },
-  // Placeholders until the asset-designer's (#1464): Ritualist item spells 2.
-  "ritualist.mighty-was-vorizun": { glyph: "born-energy", modifier: "up" },
-  "ritualist.cruel-was-daoshen": { glyph: "lightning", modifier: "hourglass" },
-  "ritualist.destructive-was-glaive": { glyph: "lightning", modifier: "area" },
-  "ritualist.tranquil-was-tanasen": { glyph: "shield-stance", modifier: "less" },
-  "ritualist.vengeful-was-khanhei": { glyph: "thorns", modifier: "hourglass" },
-  "ritualist.pure-was-li-ming": { glyph: "cleanse", modifier: "half" },
+  // Ritualist item spells 2 (#1464, #1530): the same urn; an orb, a bolt through a plate, a ring, a hook, a struck drop.
+  "ritualist.mighty-was-vorizun": { glyph: "was-orb" },
+  "ritualist.cruel-was-daoshen": { glyph: "was-pierce" },
+  "ritualist.destructive-was-glaive": { glyph: "was-pierce-area" },
+  "ritualist.tranquil-was-tanasen": { glyph: "was-calm" },
+  "ritualist.vengeful-was-khanhei": { glyph: "was-steal" },
+  "ritualist.pure-was-li-ming": { glyph: "was-clear" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
@@ -409,6 +425,10 @@ export const SKILL_ICONS = {
   "mesmer.shame": { glyph: "hex-fail-ally", modifier: "bolt" },
   "mesmer.mistrust": { glyph: "hex-fail-foe", modifier: "area" },
   "mesmer.fragility": { glyph: "hex-churn", modifier: "area" },
+  // Placeholders until the asset-designer's (#1501): crowd punishers.
+  "mesmer.panic": { glyph: "hex-burst", modifier: "stun" },
+  "mesmer.wastrels-demise": { glyph: "hex-drain", modifier: "up" },
+  "mesmer.epidemic": { glyph: "germ", modifier: "plus" },
   // Paragon spears (#1486, #1508): a spear and its rider; the drop badge is Deep Wound.
   "paragon.blazing-spear": { glyph: "spear-flame" },
   "paragon.mighty-throw": { glyph: "spear-fast" },

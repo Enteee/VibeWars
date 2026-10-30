@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { AREA_ADJACENT } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
@@ -16,6 +17,7 @@ import {
 import { HEALTH_PER_PIP, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
+import { vec2 } from "../vec2.js";
 import type {
   Combatant,
   EffectCondition,
@@ -1551,6 +1553,70 @@ describe("removing by what an earlier removal took (#1205)", () => {
     expect(events.filter((event) => event.kind === "heal")).toEqual([
       { kind: "heal", targetId: "caster", amount: 100 },
     ]);
+  });
+});
+
+describe("spread-conditions (#1501)", () => {
+  const spread = { kind: "spread-conditions", radius: AREA_ADJACENT } as const;
+
+  /** `target` at the origin with bleeding 4 s and crippled 2 s; who stands where. */
+  function scene() {
+    const caster = makeCombatant({ id: "caster", team: 0 });
+    const target = makeCombatant({ id: "target", team: 1 });
+    const adjacent = makeCombatant({ id: "adjacent", team: 1 });
+    const beyond = makeCombatant({ id: "beyond", team: 1 });
+    const friend = makeCombatant({ id: "friend", team: 0 });
+    target.statuses.apply("bleeding", 4, "x");
+    target.statuses.apply("crippled", 2, "x");
+    target.statuses.apply("barbs", 10, "x");
+    const at = (combatant: Combatant, x: number) =>
+      [
+        combatant.id,
+        { combatant, position: vec2(x, 0), creature: undefined, corpseExploited: false },
+      ] as const;
+    const ctx: SkillContext = {
+      ...context(caster, target),
+      surroundings: new Map([
+        at(caster, -200),
+        at(target, 0),
+        at(adjacent, AREA_ADJACENT),
+        at(beyond, AREA_ADJACENT + 1),
+        at(friend, 10),
+      ]),
+    };
+    return { ctx, target, adjacent, beyond, friend };
+  }
+
+  const left = (combatant: Combatant, id: StatusId) =>
+    combatant.statuses.active.find((status) => status.id === id)?.remainingSeconds;
+
+  it("copies every condition with the time it has left onto adjacent foes, and the target keeps its own", () => {
+    const { ctx, target, adjacent, beyond, friend } = scene();
+    applyEffect(spread, ctx);
+    expect(left(adjacent, "bleeding")).toBe(4);
+    expect(left(adjacent, "crippled")).toBe(2);
+    // A hex is no condition.
+    expect(adjacent.statuses.has("barbs")).toBe(false);
+    expect(left(target, "bleeding")).toBe(4);
+    expect(left(target, "crippled")).toBe(2);
+    expect(beyond.statuses.active).toEqual([]);
+    expect(friend.statuses.active).toEqual([]);
+    expect(adjacent.statuses.active.every(({ sourceId }) => sourceId === "caster")).toBe(true);
+  });
+
+  it("a longer one already on a foe wins", () => {
+    const { ctx, adjacent } = scene();
+    adjacent.statuses.apply("bleeding", 8, "x");
+    applyEffect(spread, ctx);
+    expect(left(adjacent, "bleeding")).toBe(8);
+    expect(left(adjacent, "crippled")).toBe(2);
+  });
+
+  it("a target with no conditions spreads nothing", () => {
+    const { ctx, target, adjacent } = scene();
+    target.statuses.removeByCategory("condition", 2);
+    expect(applyEffect(spread, ctx)).toEqual([]);
+    expect(adjacent.statuses.active).toEqual([]);
   });
 });
 

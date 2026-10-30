@@ -8,6 +8,9 @@ import { botUses, onlyInterrupts, removedCategories } from "./skill-intent.js";
  * its effects or listed here, on purpose.
  */
 const NO_BOT_USE = new Set([
+  // Spell Breaker (#1511): a foe's spells refused is not a defence the
+  // bot weighs.
+  "monk.spell-breaker",
   // Companion commands and pet attacks: out of scope for a bot.
   "ranger.brutal-strike",
   "ranger.call-of-haste",
@@ -97,6 +100,11 @@ const NO_BOT_USE = new Set([
   "paragon.song-of-purification",
   "paragon.hexbreaker-aria",
   "paragon.anthem-of-fury",
+  // Chants (#1505) on how the next skill goes: nothing the bot weighs.
+  "paragon.song-of-concentration",
+  "paragon.anthem-of-guidance",
+  "paragon.energizing-chorus",
+  "paragon.anthem-of-envy",
 ]);
 
 function skill(id: string) {
