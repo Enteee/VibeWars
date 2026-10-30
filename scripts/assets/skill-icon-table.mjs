@@ -356,13 +356,13 @@ export const SKILL_ICONS = {
   "necromancer.defile-defenses": { glyph: "gain-shield" },
   "monk.scourge-enchantment": { glyph: "gain-burst" },
   "mesmer.hex-breaker": { glyph: "hex-return" },
-  // Placeholders until the asset-designer's (#1434): Ritualist item spells.
-  "ritualist.protective-was-kaolai": { glyph: "party-heal", modifier: "hourglass" },
-  "ritualist.generous-was-tsungrai": { glyph: "heart-plus", modifier: "up" },
-  "ritualist.defiant-was-xinrae": { glyph: "shield-veil", modifier: "less" },
-  "ritualist.blind-was-mingson": { glyph: "eye-slash", modifier: "hourglass" },
-  "ritualist.grasping-was-kuurong": { glyph: "quake", modifier: "stun" },
-  "ritualist.energetic-was-lee-sa": { glyph: "energy", modifier: "plus" },
+  // Ritualist item spells (#1434, #1493): an urn of ashes, the mark inside says what they do.
+  "ritualist.protective-was-kaolai": { glyph: "was-shield" },
+  "ritualist.generous-was-tsungrai": { glyph: "was-heart" },
+  "ritualist.defiant-was-xinrae": { glyph: "was-cap" },
+  "ritualist.blind-was-mingson": { glyph: "was-blind" },
+  "ritualist.grasping-was-kuurong": { glyph: "was-quake" },
+  "ritualist.energetic-was-lee-sa": { glyph: "was-bolt" },
   // Flash enchantments (#1421, #1447).
   "dervish.enchanted-haste": { glyph: "haste-clean" },
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
