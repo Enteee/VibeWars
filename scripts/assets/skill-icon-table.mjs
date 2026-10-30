@@ -351,8 +351,8 @@ export const SKILL_ICONS = {
   // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
   "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
   "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },
-  // Placeholders until the asset-designer's (#1455): forms.
-  "dervish.avatar-of-balthazar": { glyph: "flame", modifier: "hourglass" },
-  "dervish.avatar-of-grenth": { glyph: "scythe", modifier: "hourglass" },
-  "dervish.avatar-of-lyssa": { glyph: "energy", modifier: "hourglass" },
+  // Forms (#1455): the same figure; a flame, a scythe or a split head with sparks.
+  "dervish.avatar-of-balthazar": { glyph: "avatar-fire" },
+  "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
+  "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
 };
