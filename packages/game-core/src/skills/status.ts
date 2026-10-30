@@ -2641,9 +2641,10 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   // Paragon echoes (#1423): each renews, or fires, whenever a chant or a
   // shout ends on its bearer; no removal touches one. Rank-12 values, and
   // a finale's effects scale with its Paragon's attribute.
+  // "You attack 25% faster but have -20 armor": 1 − 0.25 (ADR-0029).
   "aggressive-refrain": define("aggressive-refrain", "Aggressive Refrain", "echo", {
     profession: "paragon",
-    attackDurationMultiplier: 0.8,
+    attackDurationMultiplier: 0.75,
     armorModifier: -20,
     renewsOnChantOrShoutEnd: true,
   }),
