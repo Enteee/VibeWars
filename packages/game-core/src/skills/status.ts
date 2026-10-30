@@ -635,6 +635,13 @@ export interface StatusDefinition {
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
   | "bearer-attacks"
+  /**
+   * The bearer begins an attack (#1593), before it resolves: an attack
+   * skill as its activation begins, a plain swing at its blow, before an
+   * arrow leaves or the blow lands. Fired by the simulation. What answers
+   * may cancel it (`cancel-attack`); a cancelled blow never `attacks`.
+   */
+  | "bearer-attack-begins"
   | "bearer-uses-skill"
   | "bearer-hits"
   /**
@@ -884,8 +891,22 @@ export interface EchoEffect {
   readonly seconds: number;
 }
 
-/** What a trigger can do: any skill effect, Contagion's spread or an echo. */
-export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect | EchoEffect;
+/**
+ * Clumsiness's interrupt (#1593): the attack the bearer is beginning, on
+ * `bearer-attack-begins`, is interrupted. An attack skill is, as by an
+ * `interrupt`, and recharges; a plain swing never lands, and its swing
+ * timer starts over. Answering any other event, it does nothing.
+ */
+export interface CancelAttackEffect {
+  readonly kind: "cancel-attack";
+}
+
+/**
+ * What a trigger can do: any skill effect, Contagion's spread, an echo or
+ * a cancelled attack.
+ */
+export type TriggerEffect =
+  SkillEffect | SpreadGainedConditionEffect | EchoEffect | CancelAttackEffect;
 
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the

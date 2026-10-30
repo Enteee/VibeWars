@@ -3,7 +3,7 @@ import type { CombatRules } from "../ruleset.js";
 import { addCopyPool } from "./adrenaline.js";
 import { copyKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
-import { applyEffects, type CombatEvent } from "./effects.js";
+import { applyEffects, interruptAttackSkill, type CombatEvent } from "./effects.js";
 import {
   getStatusDefinition,
   triggerAnswersWeapon,
@@ -329,6 +329,9 @@ function fire(
     } else if (effect.kind === "echo") {
       flush();
       echo(effect, bearer, trigger.skillId, usedSkill);
+    } else if (effect.kind === "cancel-attack") {
+      flush();
+      events.push(...cancelAttack(trigger, sourceId, bearer));
     } else {
       pending.push(effect);
     }
@@ -341,6 +344,25 @@ function fire(
     events.push({ kind: "status-expired", targetId: bearer.id, statusId });
   }
   return events.length === 0 ? [] : [{ sourceId, skillId: trigger.skillId, events }];
+}
+
+/**
+ * Clumsiness's cancel (#1593) of the attack the bearer is beginning: an
+ * attack skill is interrupted by `sourceId`, unless it cannot be; a plain
+ * swing, which begins while nothing is cast, says so, and the simulation
+ * drops the blow. Answering any other event, nothing is beginning.
+ */
+function cancelAttack(trigger: StatusTrigger, sourceId: string, bearer: Combatant): CombatEvent[] {
+  const events: CombatEvent[] = [];
+  if (trigger.on !== "bearer-attack-begins") {
+    return events;
+  }
+  if (bearer.cast.isCasting) {
+    interruptAttackSkill(bearer, sourceId, events);
+  } else {
+    events.push({ kind: "attack-interrupted", targetId: bearer.id });
+  }
+  return events;
 }
 
 /** Whether status `statusId` copies its bearer's next skill (#469). */

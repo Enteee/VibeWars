@@ -79,6 +79,7 @@
     "call-of-protection",
     "charge",
     "chorus-of-restoration",
+    "clumsiness",
     "conjure-phantasm",
     "contagion",
     "cracked-armor",
@@ -617,6 +618,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -864,6 +866,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -1108,6 +1111,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -1349,6 +1353,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -1546,6 +1551,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "attack-interrupted" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "attack-missed" } },
             { "name": "reason", "optional": true, "type": { "literal": "out-of-sequence" } },
             { "name": "targetId", "optional": false, "type": "string" }
@@ -1691,6 +1702,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },
@@ -1923,6 +1935,7 @@
                   { "literal": "call-of-protection" },
                   { "literal": "charge" },
                   { "literal": "chorus-of-restoration" },
+                  { "literal": "clumsiness" },
                   { "literal": "conjure-phantasm" },
                   { "literal": "contagion" },
                   { "literal": "cracked-armor" },

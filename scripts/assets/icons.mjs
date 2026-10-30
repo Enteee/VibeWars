@@ -1577,6 +1577,14 @@ const status = {
       `<path d="M7 5h10M7 19h10M8 5c0 4 8 4 8 7s-8 3-8 7M16 5c0 4-8 4-8 7" ${stroke(c, 1.6)}/>` +
       `<circle cx="12" cy="16.5" r="1" fill="${c}"/>`,
   ],
+  // Clumsiness (#1593), a stand-in until its art card.
+  // Hex: a blade dropped from a hand, the next attack is interrupted.
+  clumsiness: [
+    "hex",
+    (c) =>
+      `<path d="M9 5l6 6M8 12l3-3" ${stroke(c, 2.2)}/>` +
+      `<path d="M13 15l3 4M6 18h12" ${stroke(c, 1.8)}/>`,
+  ],
   // Dervish staples and Shadow Prison (#1551, #1573): each matches its skill icon.
   // Enchantment: a hand over a broken line, attack skills cripple.
   "grenths-grasp": [

@@ -154,6 +154,11 @@ export type CombatEvent =
       readonly skillId: string;
     }
   /**
+   * A plain swing of `targetId`'s cancelled as it began (#1593):
+   * Clumsiness's. It never landed, and its swing timer starts over.
+   */
+  | { readonly kind: "attack-interrupted"; readonly targetId: string }
+  /**
    * A skill on `targetId`'s bar that a disable (#914) made wait longer:
    * it is usable again in `seconds`.
    */
@@ -728,6 +733,20 @@ export function interruptIfCastingSpell(
   if (skill !== undefined && isSpell(skill.type)) {
     interruptCast(target, byId, events);
   }
+}
+
+/**
+ * Clumsiness's cancel (#1593) of an attack skill `target` is beginning:
+ * interrupted, as by an `interrupt`, and recharging. Whether it was.
+ */
+export function interruptAttackSkill(
+  target: Combatant,
+  byId: string,
+  events: CombatEvent[],
+): boolean {
+  const cast = target.cast.activeCast;
+  const skill = cast === undefined ? undefined : getSkill(cast.skillId);
+  return skill?.type === "attack" && interruptCast(target, byId, events);
 }
 
 /**
