@@ -54,4 +54,10 @@ export const MESMER_ICONS = {
   "mesmer.arcane-conundrum": { glyph: "slow", modifier: "hourglass" },
   // Clumsiness (#1593), a stand-in until its art card.
   "mesmer.clumsiness": { glyph: "sword", modifier: "hourglass" },
+  // Mesmer staples 3 (#1627), stand-ins until their art card.
+  "mesmer.ether-feast": { glyph: "energy", modifier: "plus" },
+  "mesmer.drain-delusions": { glyph: "cleanse", modifier: "renew" },
+  "mesmer.signet-of-disruption": { glyph: "interrupt", modifier: "bolt" },
+  "mesmer.wandering-eye": { glyph: "eye-slash", modifier: "hourglass" },
+  "mesmer.hex-eater-vortex": { glyph: "cleanse", modifier: "bolt" },
 };

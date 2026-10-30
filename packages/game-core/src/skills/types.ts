@@ -132,6 +132,13 @@ export interface HealEffect {
    * in this way". None destroyed: no heal.
    */
   readonly perDestroyedSpirit?: true;
+  /**
+   * The amount is per point of energy the target lost to an earlier
+   * `energy-loss` of this skill, as Ether Feast's "You are healed 20...65
+   * for each point of Energy lost" (#1627), `DamageEffect.perEnergyLost`'s
+   * twin. None lost: no heal.
+   */
+  readonly perEnergyLost?: true;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */

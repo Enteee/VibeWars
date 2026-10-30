@@ -1022,7 +1022,16 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(healed, healAmount(effect, caster, target, context.surroundings, earlier), events);
+      applyHeal(
+        healed,
+        perEnergyLost(
+          effect,
+          healAmount(effect, caster, target, context.surroundings, earlier),
+          lostBy,
+          earlier,
+        ),
+        events,
+      );
       return events;
     }
 
@@ -1848,16 +1857,22 @@ function landing(
     : [];
 }
 
-/** Apply one effect to `context.target`, an `if` included (`landing`). */
+/**
+ * Apply one effect to `context.target`, an `if` included (`landing`).
+ * Each effect inside an `if` reads what the ones before it did, as
+ * Drain Delusions' gain reads the energy its loss took (#1627).
+ */
 function applyInOrder(
   effect: SkillEffect,
   context: SkillContext,
   earlier: readonly CombatEvent[],
   held: ReadonlySet<EffectCondition>,
 ): CombatEvent[] {
-  return landing(effect, context, earlier, held).flatMap((inner) =>
-    applyEffect(inner, context, earlier),
-  );
+  const events: CombatEvent[] = [];
+  for (const inner of landing(effect, context, earlier, held)) {
+    events.push(...applyEffect(inner, context, [...earlier, ...events]));
+  }
+  return events;
 }
 
 /** Apply `effects` in order to one target; an `if` reads what came before it. */
@@ -2053,7 +2068,7 @@ export function resolveSkillEffects(
         if (inner.kind === "create-ground-effect") {
           grounds.push(inner);
         }
-        events.push(...applyEffect(inner, context, before));
+        events.push(...applyEffect(inner, context, [...earlier, ...events]));
       }
     }
   }

@@ -900,6 +900,16 @@ function describeTrigger(
     String(describeMagnitude(magnitude, ranks).current);
   const clause = (text: string): TriggerLine => ({ text, clause: true });
   const sentence = (text: string): TriggerLine => ({ text, clause: false });
+  // The caster's foes beside a hexed or conditioned bearer are the
+  // bearer's allies; beside one wearing its own enchantment, its foes (#1021).
+  const splashed = (effect: SplashEffect): string => {
+    const area = AREA_TEXT.get(effect.radius);
+    return !bearerIsFoe
+      ? lowerFirst(foesWithin(effect.radius, effect.hits))
+      : area === "adjacent"
+        ? "its adjacent allies"
+        : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+  };
   // A stance's answer to its own block (#1329), in GW1's words.
   if (trigger.on === "bearer-blocks-melee" || trigger.on === "bearer-blocks-projectile") {
     const kind = trigger.on === "bearer-blocks-melee" ? "melee" : "projectile";
@@ -957,16 +967,30 @@ function describeTrigger(
     return [sentence(`${when}: ${answers.join(", ")}`)];
   }
   // Clumsiness's (#1593), said as one: "the next time it attacks, that
-  // attack is interrupted and it takes 66 damage".
+  // attack is interrupted and it takes 66 damage"; Wandering Eye's
+  // (#1627) "...and its allies nearby take 76 damage" after it.
   const [first, ...after] = trigger.effects;
+  const hurts = (effect: TriggerEffect): boolean =>
+    effect.kind === "damage" ||
+    (effect.kind === "splash" && effect.effects.every(({ kind }) => kind === "damage"));
   if (
     first?.kind === "cancel-attack" &&
     trigger.target === "bearer" &&
     after.length > 0 &&
-    after.every(({ kind }) => kind === "damage")
+    after.every(hurts)
   ) {
     const hurt = after.map((effect) =>
-      effect.kind === "damage" ? `it takes ${amount(effect.amount)} damage` : "",
+      effect.kind === "damage"
+        ? `it takes ${amount(effect.amount)} damage`
+        : effect.kind === "splash"
+          ? effect.effects
+              .map((inner) =>
+                inner.kind === "damage"
+                  ? `${splashed(effect)} take ${amount(inner.amount)} damage`
+                  : "",
+              )
+              .join(" and ")
+          : "",
     );
     return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
   }
@@ -1015,15 +1039,8 @@ function describeTrigger(
     if (effect.kind === "life-steal" && trigger.target === "bearer") {
       return [clause(`its caster steals ${amount(effect.amount)} Health ${when}`)];
     }
-    // The caster's foes beside a hexed or conditioned bearer are the
-    // bearer's allies; beside one wearing its own enchantment, its foes (#1021).
     if (effect.kind === "splash" && trigger.target === "bearer") {
-      const area = AREA_TEXT.get(effect.radius);
-      const allies = !bearerIsFoe
-        ? lowerFirst(foesWithin(effect.radius, effect.hits))
-        : area === "adjacent"
-          ? "its adjacent allies"
-          : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+      const allies = splashed(effect);
       // A drop's splash is one clause (#1434): "foes in the area: deals 63
       // damage, knocks down for 2s".
       if (when === DROPPED) {
@@ -1448,9 +1465,11 @@ function describeEffect(
             ? `Heals ${amount} for each ${effect.perRemoved} removed`
             : effect.perDestroyedSpirit === true
               ? `Heals ${amount} for each spirit destroyed`
-              : effect.recipient === "caster"
-                ? `You gain ${amount} health`
-                : `Heals for ${amount}`;
+              : effect.perEnergyLost === true
+                ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
+                : effect.recipient === "caster"
+                  ? `You gain ${amount} health`
+                  : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {

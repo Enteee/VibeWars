@@ -522,6 +522,38 @@ describe("energy-loss effect (#793)", () => {
     expect(target.health).toBe(500);
     expect(caster.energy).toBe(0);
   });
+
+  it("heals perEnergyLost: 3 lost, 3 times the amount; none lost, no heal (#1627)", () => {
+    const heal: SkillEffect = {
+      kind: "heal",
+      amount: { flat: 56 },
+      recipient: "caster",
+      perStatusOnTarget: [],
+      perEnergyLost: true,
+    };
+    const caster = makeCombatant({ id: "caster", health: 100 });
+    applyEffects([loss, heal], context(caster, makeCombatant({ id: "t", team: 1, energy: 3 })));
+    expect(caster.health).toBe(100 + 3 * 56);
+    const dry = makeCombatant({ id: "dry", health: 100 });
+    applyEffects([loss, heal], context(dry, makeCombatant({ id: "t", team: 1, energy: 0 })));
+    expect(dry.health).toBe(100);
+  });
+
+  it("an effect inside an `if` reads the ones before it there (#1627)", () => {
+    const caster = makeCombatant({ id: "caster", energy: 0 });
+    const target = makeCombatant({ id: "target", team: 1, energy: 3 });
+    const events = applyEffects(
+      [
+        {
+          kind: "if",
+          condition: { kind: "target-health-above", fraction: 0 },
+          effects: [loss, { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true }],
+        },
+      ],
+      context(caster, target),
+    );
+    expect(events).toContainEqual({ kind: "energy-gain", targetId: "caster", amount: 6 });
+  });
 });
 
 describe("sacrifice-health effect", () => {
