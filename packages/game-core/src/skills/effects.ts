@@ -674,10 +674,14 @@ function knockDown(target: Combatant, durationSeconds: number): void {
  * interrupt takes, an interrupt effect's and daze's (#546). As in GW1,
  * the interrupted skill recharges as if it had been used: its cost is
  * spent and its recharge starts (ADR-0029). Returns whether there was a
- * cast to interrupt. An uninterruptible bearer's (#1464) never is.
+ * cast to interrupt. An uninterruptible bearer's (#1464) never is, nor
+ * is a cast that consumed Song of Concentration (#1505).
  */
 function interruptCast(target: Combatant, events: CombatEvent[]): boolean {
-  if (aggregateModifiers(target.statuses.active).uninterruptible) {
+  if (
+    aggregateModifiers(target.statuses.active).uninterruptible ||
+    target.cast.activeCast?.rule.uninterruptible === true
+  ) {
     return false;
   }
   const cancelled = target.cast.cancelCast();

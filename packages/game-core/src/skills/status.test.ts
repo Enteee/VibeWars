@@ -83,6 +83,8 @@ describe("status definitions", () => {
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
         def.nextSkill !== undefined ||
+        def.nextSkillRule !== undefined ||
+        def.nextAttackSkillBonus !== undefined ||
         def.spellRechargeFaster !== 0 ||
         def.bindingRitualRechargeFaster !== 0 ||
         def.criticalChanceBonus !== 0 ||

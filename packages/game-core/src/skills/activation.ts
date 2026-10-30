@@ -12,7 +12,7 @@ import type { Vec2 } from "../vec2.js";
 
 import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
 import { addOvercast } from "./overcast.js";
-import { getStatusDefinition, preventsSpells } from "./status.js";
+import { getStatusDefinition, nextSkillAnswers, preventsSpells } from "./status.js";
 import { rankOf, type RankHolder } from "./tick.js";
 import { isSpell, type Combatant, type Skill, type TargetRule } from "./types.js";
 
@@ -297,7 +297,8 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 /**
  * The energy `skill` costs `caster` right now (#637): Expertise (#528)
  * or Mysticism (#874), less what an active glyph takes off a spell
- * (#526), never below 0. The one number the check, the spend and the
+ * (#526) and what a chant takes off the next skill of its kind (#1505),
+ * never below 0. The one number the check, the spend and the
  * skill bar use, so they cannot disagree. 0 for a skill with no energy cost.
  */
 export function energyCostOf(skill: Skill, caster: RankHolder): number {
@@ -311,13 +312,15 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
     skill,
     expertiseEnergyCost(expertise, skill, skill.cost.amount),
   );
-  if (!isSpell(skill.type)) {
-    return cost;
-  }
-  const reduction = caster.statuses.active.reduce(
-    (sum, { id }) => sum + (getStatusDefinition(id).nextSpells?.costReduction ?? 0),
-    0,
-  );
+  const reduction = caster.statuses.active.reduce((sum, { id }) => {
+    const { nextSpells, nextSkillRule } = getStatusDefinition(id);
+    const glyph = isSpell(skill.type) ? (nextSpells?.costReduction ?? 0) : 0;
+    const chant =
+      nextSkillRule !== undefined && nextSkillAnswers(nextSkillRule.which, skill)
+        ? nextSkillRule.energyDiscount
+        : 0;
+    return sum + glyph + chant;
+  }, 0);
   return Math.max(0, cost - reduction);
 }
 
