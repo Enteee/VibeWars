@@ -16,6 +16,7 @@ export type MesmerStatusId =
   | "shrinking-armor"
   | "illusion-of-haste"
   | "ineptitude"
+  | "clumsiness"
   | "crippling-anguish"
   | "hex-breaker"
   // Mesmer skill-use punishers (#1473).
@@ -190,6 +191,32 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
           { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
         ],
         skillId: "mesmer.ineptitude",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "The next time each foe attacks, the attack is interrupted and that
+  // foe suffers 10...80 damage" (#1593): fired as the attack begins, so a
+  // swing never lands and an arrow never leaves. The damage is its
+  // caster's Illusion Magic.
+  clumsiness: define("clumsiness", "Clumsiness", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-attack-begins",
+        target: "bearer",
+        effects: [
+          { kind: "cancel-attack" },
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 10, atTwelve: 66 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+        skillId: "mesmer.clumsiness",
       },
     ],
     endsWhenTriggered: true,

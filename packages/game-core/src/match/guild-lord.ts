@@ -96,6 +96,7 @@ export function guildLordSpec(lord: GuildLord, facing: number): ParticipantSpec 
       aura: undefined,
       onDeath: "vanish",
       ownerDisableSeconds: 0,
+      deathBurst: undefined,
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard",

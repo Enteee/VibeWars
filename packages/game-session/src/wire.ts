@@ -414,6 +414,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
+    case "attack-interrupted":
     case "shadow-stepped-away":
       return { ...none, kind: event.kind, targetId: event.targetId };
   }
@@ -511,6 +512,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "attack-dodged":
     case "attack-obstructed":
     case "attack-unreachable":
+    case "attack-interrupted":
     case "shadow-stepped-away":
       return { kind: event.kind, targetId };
     default:

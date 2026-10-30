@@ -66,6 +66,7 @@ function summonSkill(
     aura: undefined,
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
+    deathBurst: undefined,
   };
   TEST_SKILLS.set(id, {
     id,
