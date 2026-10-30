@@ -1,9 +1,10 @@
-import type { ProfessionId } from "@vibewars/game-core";
+import type { PlayerBuild, ProfessionId } from "@vibewars/game-core";
 import type {
   ChatChannel,
   LobbyPhase,
   LobbyRefusal,
   WirePartyFormed,
+  WireTeamLobby,
 } from "@vibewars/game-protocol";
 
 import type { TicketKey } from "./queue-client.js";
@@ -48,6 +49,11 @@ export interface LobbySnapshot {
   readonly isHost: boolean;
   /** Whole seconds until a queued lobby's match starts (#871); `null` when none is counting. */
   readonly countdownSeconds: number | null;
+  /**
+   * The Team Lobby (#1458), while `phase` is `"team-lobby"`, else `null`:
+   * this player's side only, the other side `null`.
+   */
+  readonly teamLobby: WireTeamLobby | null;
 }
 
 /**
@@ -87,6 +93,12 @@ export interface LobbyConnection {
   startMatch(): void;
   /** Host only (#1454): `team` has `count` bots, playing what the host picks. */
   setBots(team: 0 | 1, count: number): void;
+  /** In a Team Lobby's vote (#1458): propose `members` for this side, or withdraw with `null`. */
+  propose(members: readonly PlayerBuild[] | null): void;
+  /** In a Team Lobby's vote: vote for `proposerId`'s proposal, or withdraw with `null`. */
+  vote(proposerId: string | null): void;
+  /** In a Team Lobby's claim: take slot `slot` of the chosen build, or let it go with `null`. */
+  claim(slot: number | null): void;
   /** Say `text` on `channel` (#479), in the lobby or its match; the host cleans and routes it. */
   sendChat(channel: ChatChannel, text: string): void;
   onChange(handler: () => void): void;

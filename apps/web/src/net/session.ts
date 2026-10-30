@@ -160,6 +160,9 @@ export async function hostLobby(
     code,
     mapIds: arenaIds(),
     startMatch,
+    // Hosting from Team Play's tiles (#1453) is what makes a Team Lobby.
+    teamLobby: false,
+    random: secureRandom,
     ...(queued === undefined
       ? {}
       : {

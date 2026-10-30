@@ -88,7 +88,8 @@ async function runScenario(scenario: Scenario): Promise<Result> {
         name: `bench-${String(i)}`,
         guildTag: null,
         guildCape: null,
-        bot: null,
+        bot: false,
+        build: null,
       } as const,
     ]),
   );
