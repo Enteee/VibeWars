@@ -413,13 +413,13 @@ const status = {
       `<circle cx="12" cy="11.5" r="8" ${stroke(c, 1.6)}/>` +
       `<path d="M13 5.5L8.5 12h3.5l-1 5.5 4.5-6.5h-3.5z" fill="${c}"/>`,
   ],
-  // Echo: three rising bars topped by a spike over a sword, adrenaline and haste under a chant.
+  // Echo: three rising bars topped by a spike over a slanted blade, adrenaline and haste under a chant.
   "soldiers-fury": [
     "echo",
     (c) =>
       `<path d="M5 12V9M10 12V6" ${stroke(c, 2.4)}/>` +
       `<path d="M14 12V7l2.5-5L19 7v5z" fill="${c}"/>` +
-      `<path d="M12 15v6M9.5 18h5" ${stroke(c, 2)}/>`,
+      `<path d="M5 21L17 13M8 15.5l4 4" ${stroke(c, 2)}/>`,
   ],
   // Stance: a shield, filled, armor and blocks (#1329).
   "disciplined-stance": [
