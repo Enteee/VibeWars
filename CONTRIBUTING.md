@@ -86,6 +86,14 @@ Concretely:
   way it does? If yes, write it down once instead of explaining it in every
   future code review.
 
+### Generated files
+
+Merging `main` can conflict in `wire-schema.json` or the roles snapshot.
+Never hand-merge them. `.gitattributes` makes git keep both sides of the
+icon table and the roles snapshot (`merge=union`); for any conflict left
+in a generated file, take either side, run `pnpm run regen` and commit.
+The icon, snapshot and wire tests fail in CI on a stale result.
+
 ## Documentation
 
 Two audiences, kept apart:

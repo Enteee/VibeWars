@@ -25,6 +25,7 @@
     "test:e2e": "playwright test",
     "bench:ticks": "BENCH_TICKS=400 vitest run packages/game-core/src/tools/tick-bench.test.ts packages/game-maps/src/map-bench.test.ts",
     "wire:snapshot": "tsc --build tsconfig.build.json && WIRE_SNAPSHOT=write vitest run packages/game-session/src/tools/wire-snapshot.test.ts",
+    "regen": "pnpm run wire:snapshot && vitest run -u packages/game-core/src/skills/roles.test.ts",
     "ci": "pnpm run format:check && pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
     "ci:full": "pnpm run ci && pnpm run test:e2e"
   },
