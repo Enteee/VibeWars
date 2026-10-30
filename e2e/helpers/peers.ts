@@ -1,5 +1,7 @@
 import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
+import { openRail } from "./menu.js";
+
 /**
  * Pages that play with each other (#403).
  *
@@ -20,23 +22,73 @@ export async function openPeers(
   return { context, pages };
 }
 
-/** Host a lobby from the menu on show; its code, as the lobby screen shows it. */
-async function hostLobby(page: Page): Promise<string> {
-  await page.getByRole("button", { name: "host a lobby" }).click();
+/** Host a game from Hosted Game (#1525); its code, as the lobby screen shows it. */
+export async function hostLobby(page: Page): Promise<string> {
+  await openRail(page, "Hosted Game");
+  await page.getByRole("button", { name: "Host a game", exact: true }).click();
   const code = page.locator(".lobby-code");
   await expect(code).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
   return (await code.textContent())?.trim() ?? "";
 }
 
 /**
+ * Save the active character as a Team Build of one, named after it, so a
+ * side of one can propose it in the Team Lobby and play it (#1525): every
+ * hosted lobby is a Team Lobby, and a spec plays the character it
+ * brought. Ends on Team Builder; returns the Team Build's name.
+ */
+export async function saveSoloTeam(page: Page): Promise<string> {
+  await openRail(page, "Random Arena");
+  const picked = page.locator('.play-card-open[aria-pressed="true"] .play-card-name');
+  const name = (await picked.textContent())?.trim() ?? "";
+  expect(name, "a character is picked").not.toBe("");
+  await openRail(page, "Team Builder");
+  await page.getByRole("button", { name: "New team build", exact: true }).click();
+  await page.getByLabel("Team name").fill(`Solo ${name}`);
+  await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  return `Solo ${name}`;
+}
+
+/**
+ * The Team Lobby (#1460) of sides of one: each page proposes its Team
+ * Build, everyone is ready, then each takes its side's one seat and is
+ * ready again. Resolves once each page's HUD shows the player.
+ */
+export async function playOwnTeams(
+  players: readonly { readonly page: Page; readonly team: string }[],
+): Promise<void> {
+  for (const { page, team } of players) {
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    await page.locator(".team-lobby-propose select").selectOption({ label: team });
+  }
+  for (const { page } of players) {
+    await page.getByRole("button", { name: "Ready", exact: true }).click();
+  }
+  for (const { page } of players) {
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
+    await page.locator(".team-lobby-seat").first().click();
+    await page.getByRole("button", { name: "Ready", exact: true }).click();
+  }
+  for (const { page } of players) {
+    await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  }
+}
+
+/**
  * A match in a lobby of one, which `canStart` allows: what Quick Match
- * was for the tests that need nobody else. Resolves once the HUD shows
- * the player, so the match is really on. Starts from the menu on show.
+ * was for the tests that need nobody else. The player plays the active
+ * character, through a Team Build of one (#1525). Resolves once the HUD
+ * shows the player, so the match is really on. Starts from the menu.
  */
 export async function startSoloMatch(page: Page): Promise<void> {
+  const team = await saveSoloTeam(page);
   await hostLobby(page);
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  await playOwnTeams([{ page, team }]);
 }
