@@ -65,6 +65,7 @@ describe("status definitions", () => {
         def.attributeDelta !== 0 ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
+        def.untargetableByFoeSpells ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||

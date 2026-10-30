@@ -533,6 +533,35 @@ const status = {
     (c) =>
       `<path d="M7.5 7l1.5 10 1.5-10zM10.5 7l1.5 11 1.5-11zM13.5 7l1.5 10 1.5-10z" fill="${c}"/>`,
   ],
+  // Monk staples (#1511), stand-ins until their art card.
+  // Enchantment: three small shields, a block for everyone in earshot.
+  aegis: [
+    "enchantment",
+    (c) =>
+      `<path d="M4 6h5v3c0 2-1.2 3-2.5 4C5.2 12 4 11 4 9zM15 6h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>` +
+      `<path d="M9.5 12h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Enchantment: a filled shield, a blow glancing off it.
+  "shield-of-deflection": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" fill="${c}"/>` +
+      `<path d="M4 20L9 15" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: two cupped hands under a drop, damage taken softened.
+  "shielding-hands": [
+    "enchantment",
+    (c) =>
+      `<path d="M4 12c0 4 3.5 7 8 7s8-3 8-7" ${stroke(c, 2)}/>` +
+      `<path d="M12 4c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" fill="${c}"/>`,
+  ],
+  // Enchantment: a ring with a broken spell bolt, foes' spells turned away.
+  "spell-breaker": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 5l-3 6h4l-3 6" ${stroke(c, 1.8)}/><path d="M6 18L18 6" ${stroke(c, 2.2)}/>`,
+  ],
   // Hex: a snowflake, the ground frozen under you (#938).
   "deep-freeze": ["hex", (c) => `<path d="M12 6v12M6.8 9l10.4 6M6.8 15l10.4-6" ${stroke(c, 2)}/>`],
   // Enchantment: a shield in outline with a blow glancing off it, block (#534).

@@ -12,7 +12,12 @@ import type { Vec2 } from "../vec2.js";
 
 import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
 import { addOvercast } from "./overcast.js";
-import { getStatusDefinition, nextSkillAnswers, preventsSpells } from "./status.js";
+import {
+  getStatusDefinition,
+  nextSkillAnswers,
+  preventsSpells,
+  untargetableByFoeSpells,
+} from "./status.js";
 import { rankOf, type RankHolder } from "./tick.js";
 import { isSpell, type Combatant, type Skill, type TargetRule } from "./types.js";
 
@@ -65,6 +70,7 @@ export type ActivationRejection =
   | "invalid-target-creature"
   // A spell while a hex bars them, as Shroud of Silence's (#1234).
   | "cannot-cast-spells"
+  | "invalid-target-untargetable"
   // An attack or attack skill while carrying a flag (#1225): checked by
   // the simulation, which knows who carries one.
   | "hands-full"
@@ -267,6 +273,15 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   const targetCheck = checkTarget(request);
   if (!targetCheck.ok) {
     return targetCheck;
+  }
+  // Spell Breaker's bearer (#1511): refused before a walk toward it starts.
+  if (
+    isSpell(skill.type) &&
+    request.target !== undefined &&
+    request.target.team !== caster.team &&
+    untargetableByFoeSpells(request.target.statuses.active)
+  ) {
+    return reject("invalid-target-untargetable");
   }
   // A pet attack needs its pet alive and within earshot of its owner,
   // seen or not, and never walks its owner in (#1046).
