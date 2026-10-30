@@ -3338,6 +3338,31 @@
         },
         {
           "properties": [
+            {
+              "name": "character",
+              "optional": false,
+              "type": {
+                "union": [
+                  "null",
+                  {
+                    "properties": [
+                      { "name": "name", "optional": false, "type": "string" },
+                      { "name": "primary", "optional": false, "type": "string" },
+                      {
+                        "name": "secondary",
+                        "optional": false,
+                        "type": { "union": ["null", "string"] }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            { "name": "kind", "optional": false, "type": { "literal": "set-character" } }
+          ]
+        },
+        {
+          "properties": [
             { "name": "count", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
             {

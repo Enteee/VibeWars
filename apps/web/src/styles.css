@@ -246,6 +246,25 @@ body {
   #topbar.has-more.is-more-open .topbar-actions {
     display: flex;
   }
+
+  /* The lobby's code and Join fold into the ⋯ too (#1526). */
+  #topbar.has-more .topbar-join {
+    display: none;
+  }
+
+  #topbar.has-more.is-more-open .topbar-join:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+/* Short of a whole row, the code and its field go without their labels:
+   the code is the accented one, the field says CODE (#1526). */
+@media (width <= 75rem) {
+  .topbar-lobby .lobby-code-label,
+  .topbar-join-label {
+    display: none;
+  }
 }
 
 .status {
@@ -2026,19 +2045,19 @@ body {
   min-width: 1.5ch;
 }
 
-/* The editors' bars (#1334, #1452) and the lobby's (#1368): the crumbs,
-   the screen's buttons and the icons fill a row up to 75rem, so the status
-   (an editor's pickers and problems, the lobby's code and map) takes the
-   second row the phone's does and never runs under the buttons or the
-   icons. */
+/* The editors' bars (#1334, #1452) and the lobby's (#1368, #1526): the
+   crumbs, the screen's buttons, the lobby's code with Join and the icons
+   fill a row up to 75rem, so the status (an editor's pickers and problems,
+   the lobby's map) takes the second row the phone's does and never runs
+   under the buttons or the icons. */
 @media (45rem < width <= 75rem) {
   #topbar:has(.problems-chip),
-  #topbar:has(.lobby-header) {
+  #topbar:has(.lobby-map) {
     flex-wrap: wrap;
   }
 
   #topbar:has(.problems-chip) .topbar-status,
-  #topbar:has(.lobby-header) .topbar-status {
+  #topbar:has(.lobby-map) .topbar-status {
     flex: 1 0 100%;
     order: 10;
     flex-wrap: wrap;
@@ -2671,24 +2690,13 @@ body {
 
 /* --- lobby -------------------------------------------------------------- */
 
-.lobby-header {
-  display: flex;
-  align-items: baseline;
-  gap: 0.8rem;
-}
-
-/* In the top bar (#1272): the code and the map on one row, neither squeezed. */
-#topbar .lobby-header,
+/* In the top bar (#1272): the map on one row, not squeezed. */
 #topbar .lobby-map {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   gap: 0.6rem;
   white-space: nowrap;
-}
-
-#topbar .lobby-code {
-  letter-spacing: 0.2em;
 }
 
 .lobby-code-label {
@@ -5694,8 +5702,8 @@ body:has(#app > .chat) .now-playing {
 }
 
 /* --------------------------------------------------------------------------
-   Chat (#479): lower left, on the lobby screen and over its match, just
-   above the HUD. Lines are text; a sender's name is in their side's hue.
+   Chat (#479): lower left, on the menu's screens (#1526) and over a match,
+   just above the HUD. Lines are text; a sender's name is in their side's hue.
    -------------------------------------------------------------------------- */
 
 .chat {
@@ -5713,6 +5721,11 @@ body:has(#app > .chat) .now-playing {
 
 #viewport > .chat {
   bottom: calc(var(--hud-height, 10rem) + 0.4rem);
+}
+
+/* Beside the mode rail, never over its builders. */
+#app:has(.screen-rail) > .chat {
+  left: calc(76px + 0.9rem);
 }
 
 /* In a match the arena is under the panel: every click and wheel goes

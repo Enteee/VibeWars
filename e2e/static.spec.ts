@@ -121,9 +121,10 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
   await expect(page.getByRole("button", { name: "Join", exact: true })).toBeEnabled();
   await expect(page.getByPlaceholder("CODE")).toBeEnabled();
   await expect(page.getByRole("button", { name: "quick match" })).toHaveCount(0);
+  // Every page hosts its own lobby from load (#1526).
+  await expect(page.locator("#topbar .topbar-lobby-code")).toBeVisible();
   await openRail(page, "Hosted Game");
-  await page.getByRole("button", { name: "Host a game", exact: true }).click();
-  await expect(page.locator(".lobby-code")).toBeVisible();
+  await expect(page.locator(".lobby-panel")).toBeVisible();
 
   await settled(traffic);
   expect(traffic.online).toEqual([]);
@@ -133,7 +134,6 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
 test("a disabled primary button looks as disabled as any other (#137)", async ({ page }) => {
   await page.goto("./");
   await openRail(page, "Hosted Game");
-  await page.getByRole("button", { name: "Host a game", exact: true }).click();
   // Nobody on a team: nothing to start, and nobody to be ready.
   const start = page.getByRole("button", { name: "start match" });
   const ready = page.getByRole("button", { name: "Ready", exact: true });

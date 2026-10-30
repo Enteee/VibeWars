@@ -1062,7 +1062,11 @@ async function main(): Promise<void> {
     name: string,
     from: { readonly party?: PartyPlace; readonly note?: string } = {},
   ): Promise<boolean> => {
-    if (queue !== undefined || joiningQueue || (from.party === undefined && !isAlone(railParty()))) {
+    if (
+      queue !== undefined ||
+      joiningQueue ||
+      (from.party === undefined && !isAlone(railParty()))
+    ) {
       from.party?.board.close();
       return false;
     }

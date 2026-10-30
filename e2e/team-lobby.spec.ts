@@ -73,13 +73,13 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
 
     await nameOnMenu(guest, "Guest");
     await joinByCode(guest, code);
-    await expect(guest.locator(".screen-lobby")).toBeVisible();
+    await expect(guest.locator(".lobby-panel")).toBeVisible();
 
     // One side of two players and a bot.
     await host.getByRole("button", { name: "join team 1" }).click();
     await guest.getByRole("button", { name: "join team 1" }).click();
     await host.getByRole("button", { name: "One bot more on team 1" }).click();
-    await expect(host.locator(".screen-lobby")).toContainText("Guest");
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();

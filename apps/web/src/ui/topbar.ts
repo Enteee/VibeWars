@@ -142,6 +142,10 @@ export function joinControls(
       codeInput.value = "";
     },
     setLobby: (shown) => {
+      // In the lobby a code was typed for: the field has done its work.
+      if (shown !== undefined && displayLobbyCode(shown.code) !== lobbyCode.textContent) {
+        codeInput.value = "";
+      }
       lobby.hidden = shown === undefined;
       lobbyLabel.textContent = shown?.isHost === false ? JOINED_LOBBY_LABEL : OWN_LOBBY_LABEL;
       lobbyCode.textContent = shown === undefined ? "" : displayLobbyCode(shown.code);
