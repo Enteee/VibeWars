@@ -234,7 +234,6 @@ export function renderJukeboxScreen(
     back: { label: "Back", onBack: callbacks.onBack },
     actions: [button("Sound settings", "jukebox-sound-settings", callbacks.onSoundSettings)],
   });
-  screen.appendChild(h("p", "screen-subtitle", "Click a track to hear it. Changes save at once."));
   const panel = jukeboxPanel(callbacks.onBack);
   screen.appendChild(panel.element);
   root.appendChild(screen);

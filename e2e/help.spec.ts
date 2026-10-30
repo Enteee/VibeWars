@@ -11,7 +11,7 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   page,
 }) => {
   await page.goto("./");
-  const name = page.getByRole("textbox", { name: "Your name" });
+  const name = page.getByRole("textbox", { name: "Name", exact: true });
   await name.fill("Rurik");
 
   await page.locator(".topbar-help").click();

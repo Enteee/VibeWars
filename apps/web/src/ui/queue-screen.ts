@@ -320,18 +320,13 @@ export function mountQueueScreen(
     body.append(relay);
   }
   const splashHost = h("div", "queue-splash");
-  const notice = h(
-    "p",
-    "menu-peer-notice queue-notice",
-    "Unranked play with strangers, peer to peer.",
-  );
   const leave = button("Leave queue", "", callbacks.onLeave);
   const stay = button("Stay together", "primary", callbacks.onStayTogether);
   const again = button("Queue again", "primary", callbacks.onQueueAgain);
   const back = button("Back to menu", "primary", callbacks.onBack);
   const actions = h("div", "menu-row queue-actions");
   actions.append(leave, stay, again, back);
-  panel.append(body, splashHost, notice, actions);
+  panel.append(body, splashHost, actions);
   root.appendChild(panel);
 
   /** When "fell through" stops being shown, while it is. */

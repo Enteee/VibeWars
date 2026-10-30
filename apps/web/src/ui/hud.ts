@@ -134,10 +134,6 @@ export interface HudElements {
   readonly slotTips: SlotTooltips;
   /** One line above your bars, for why a key did nothing. */
   readonly message: HTMLElement;
-  /** How to target, until the first target of the match (#55). */
-  readonly hint: HTMLElement;
-  /** Set once there has been a target; the hint never comes back that match. */
-  hintDismissed: boolean;
   readonly targetPanel: HTMLElement;
   /** The target's statuses, as your own monitor shows them (#835). */
   readonly targetEffects: EffectsMonitor;
@@ -198,57 +194,18 @@ function element(tag: string, className: string, parent: HTMLElement): HTMLEleme
 }
 
 /**
- * Shown above your bars until the player first has a target (#55),
- * with the keymap's target and names keys (#253, #302). A clause whose
- * action has no key is left out.
- */
-export function targetHint(
-  keymap: Keymap,
-  mode: MatchMode,
-  label: KeyLabeller = codeLabel,
-): string {
-  // King of the Hill's first move is your own ghost, which a left click
-  // would walk to rather than target (#1377).
-  const attack = actionLabel(keymap, "attack", label);
-  if (mode === "king-of-the-hill" && attack !== "") {
-    return `Right-click your Ghostly Hero, then ${attack}: it follows you to the altar`;
-  }
-  const next = actionLabel(keymap, "target-next", label);
-  const names = actionLabel(keymap, "show-names", label);
-  return (
-    (next === "" ? "Click an enemy to target" : `Click an enemy or press ${next} to target`) +
-    (names === "" ? "" : ` · hold ${names} for names`)
-  );
-}
-
-/**
- * Label the skill slots' hotkeys and the targeting hint from `keymap`:
- * once by code when the HUD is drawn, and again once the keyboard's
- * layout is known.
+ * Label the skill slots' hotkeys from `keymap`: once by code when the
+ * HUD is drawn, and again once the keyboard's layout is known.
  */
 export function renderKeyLabels(
   hud: HudElements,
   keymap: Keymap,
-  mode: MatchMode,
   label: KeyLabeller = codeLabel,
 ): void {
-  hud.hint.textContent = targetHint(keymap, mode, label);
   hud.skillBar.querySelectorAll(".hud-skill-key").forEach((node, index) => {
     const action = SKILL_ACTIONS[index];
     node.textContent = action === undefined ? "" : actionLabel(keymap, action, label);
   });
-}
-
-/**
- * Whether the targeting hint is gone for good: it was already, or the
- * player has a target now. Clearing the target later does not bring it
- * back.
- */
-export function targetHintDismissed(
-  wasDismissed: boolean,
-  self: PlayerSnapshot | undefined,
-): boolean {
-  return wasDismissed || self?.targetSessionId !== undefined;
 }
 
 /**
@@ -334,8 +291,7 @@ export function createHud(
   );
 
   // Bottom centre, as GW1 (#1042), bottom up: the skill bar, energy,
-  // health, morale and gear, your effects growing upward, hint and message.
-  const hint = element("div", "hud-hint", root);
+  // health, morale and gear, your effects growing upward, and a message.
   const message = element("div", "hud-message", root);
   message.setAttribute("role", "status");
   // As wide as the skill bar: everything else in it takes its width.
@@ -398,8 +354,6 @@ export function createHud(
     skillBar,
     slotTips: createSlotTooltips(),
     message,
-    hint,
-    hintDismissed: false,
     targetPanel,
     targetEffects,
     targetProfessions,
@@ -441,14 +395,12 @@ export function createHud(
 export function muteButtonState(muted: boolean): {
   readonly label: string;
   readonly pressed: "true" | "false";
-  readonly title: string;
   readonly icon: string;
 } {
   return {
     // A toggle keeps one name; whether it is on is what aria-pressed says.
     label: "Mute sounds",
     pressed: muted ? "true" : "false",
-    title: muted ? "Sound off. Press M to turn it on." : "Sound on. Press M to mute.",
     icon: soundIcon(muted),
   };
 }
@@ -466,7 +418,6 @@ export function paintMuteButton(button: HTMLButtonElement, muted: boolean): void
   }
   button.setAttribute("aria-label", state.label);
   button.setAttribute("aria-pressed", state.pressed);
-  button.title = state.title;
 }
 
 /**
@@ -1843,9 +1794,6 @@ export function updateHud(
   if (self === undefined) {
     return;
   }
-
-  hud.hintDismissed = targetHintDismissed(hud.hintDismissed, self);
-  setHidden(hud.hint, hud.hintDismissed);
 
   const healthText = `${String(Math.round(self.health))} / ${String(Math.round(self.maxHealth))} hp`;
   setBar(hud.healthFill, hud.healthText, self.health, self.maxHealth, healthText);
