@@ -931,6 +931,7 @@ export class ArenaScene extends Phaser.Scene {
           weaponId: actor.weaponId,
           offhandId: actor.offhandId,
           frame: this.weaponFrame(actor),
+          cape: actor.cape,
         },
         phaserPainter(marks),
       );

@@ -16,6 +16,7 @@ function player(sessionId: string): PlayerSnapshot {
     sessionId,
     name: sessionId,
     guildTag: undefined,
+    guildCape: undefined,
     x: 100,
     y: 100,
     facing: 0,

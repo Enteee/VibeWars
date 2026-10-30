@@ -23,6 +23,7 @@ const SPELL: Skill = {
   gwId: undefined,
   elite: false,
   flash: false,
+  disabledAfterUseSeconds: undefined,
   profession: "elementalist",
   attributeId: "elementalist.fire-magic",
   cost: { kind: "energy", amount: 10 },

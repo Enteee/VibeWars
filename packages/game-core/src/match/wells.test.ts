@@ -104,6 +104,7 @@ describe("Well of Suffering (#1104)", () => {
       type: "well",
       elite: false,
       flash: false,
+      disabledAfterUseSeconds: undefined,
       attributeId: DEATH,
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 1,

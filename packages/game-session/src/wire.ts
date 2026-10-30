@@ -33,6 +33,7 @@ import {
   type WireCarried,
   type WireFlag,
   type WireRelic,
+  type WireCape,
   type WirePlayer,
   type WireProjectile,
   type WireSnapshot,
@@ -90,14 +91,15 @@ const WIRE_STATUS_RANK: Readonly<Record<StatusCategory, number>> = {
   condition: 0,
   hex: 1,
   enchantment: 2,
-  stance: 3,
-  preparation: 4,
-  glyph: 5,
-  "weapon-spell": 6,
-  shout: 7,
-  chant: 8,
-  echo: 9,
-  "skill-effect": 10,
+  form: 3,
+  stance: 4,
+  preparation: 5,
+  glyph: 6,
+  "weapon-spell": 7,
+  shout: 8,
+  chant: 9,
+  echo: 10,
+  "skill-effect": 11,
 };
 
 function wireStatusRank(id: StatusId): number {
@@ -575,7 +577,14 @@ function flagState(flag: WireFlag): FlagState {
 /** The fields of a body's `WirePlayer` that say who it is, not how it stands. */
 export type WireIdentity = Pick<
   WirePlayer,
-  "name" | "guildTag" | "team" | "primaryProfession" | "secondaryProfession" | "creature" | "bot"
+  | "name"
+  | "guildTag"
+  | "guildCape"
+  | "team"
+  | "primaryProfession"
+  | "secondaryProfession"
+  | "creature"
+  | "bot"
 >;
 
 /** What a seat says about who sits in it. */
@@ -583,6 +592,8 @@ export interface SeatIdentity {
   readonly name: string;
   /** `null` for none (#1406). */
   readonly guildTag: string | null;
+  /** `null` for none (#1422). */
+  readonly guildCape: WireCape | null;
   readonly team: 0 | 1;
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
@@ -609,6 +620,7 @@ export function wireIdentity(
     return {
       name: seat.name,
       guildTag: seat.guildTag,
+      guildCape: seat.guildCape,
       team: seat.team,
       primaryProfession: seat.primaryProfession,
       secondaryProfession: seat.secondaryProfession ?? null,
@@ -628,6 +640,7 @@ export function wireIdentity(
     : {
         name: creature.name,
         guildTag: null,
+        guildCape: null,
         team: sentTeam,
         primaryProfession: null,
         secondaryProfession: null,
@@ -666,6 +679,7 @@ export function playerSnapshot(player: WirePlayer): PlayerSnapshot | undefined {
     sessionId: player.id,
     name: player.name,
     guildTag: absent(player.guildTag),
+    guildCape: absent(player.guildCape),
     x: player.x,
     y: player.y,
     facing: player.facing,

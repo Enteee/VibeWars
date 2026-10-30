@@ -20,6 +20,7 @@ import {
   type JsonValue,
   type PeerHello,
   type PeerRejoinProof,
+  type WireCape,
 } from "@vibewars/game-protocol";
 
 import { createLocalPeer } from "./local-peer.js";
@@ -125,6 +126,7 @@ export function hello(
   overrides: Partial<{
     name: string;
     guildTag: string | null;
+    guildCape: WireCape | null;
     build: JsonValue;
     rejoin: PeerHello["rejoin"];
   }> = {},
@@ -133,6 +135,7 @@ export function hello(
     protocolVersion: PROTOCOL_VERSION,
     name: overrides.name ?? "Tester",
     guildTag: overrides.guildTag ?? null,
+    guildCape: overrides.guildCape ?? null,
     build: overrides.build ?? null,
     rejoin: overrides.rejoin ?? null,
   };

@@ -80,6 +80,7 @@ describe("Word of Healing (#794)", () => {
     expect(skill("monk.word-of-healing")).toMatchObject({
       elite: true,
       flash: false,
+      disabledAfterUseSeconds: undefined,
       profession: "monk",
       type: "spell",
     });

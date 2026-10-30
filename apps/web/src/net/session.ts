@@ -21,6 +21,7 @@ import {
   generateLobbyCode,
   joinLobby,
   type FormedGroup,
+  type Guild,
   type LobbyCharacter,
   type LobbyClosedReason,
   type LobbyConnection,
@@ -134,7 +135,7 @@ function startMatch(plan: MatchPlan) {
  */
 export async function hostLobby(
   name: string,
-  guildTag: string | null,
+  guild: Guild,
   character: LobbyCharacter | null,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
@@ -188,7 +189,7 @@ export async function hostLobby(
       transport: host.local,
       code,
       name,
-      guildTag,
+      ...guild,
       character,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -209,7 +210,7 @@ export async function hostLobby(
 export async function joinLobbyByCode(
   code: string,
   name: string,
-  guildTag: string | null,
+  guild: Guild,
   character: LobbyCharacter | null,
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
@@ -219,7 +220,7 @@ export async function joinLobbyByCode(
       transport: room,
       code,
       name,
-      guildTag,
+      ...guild,
       character,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? {} : { queued }),
@@ -296,7 +297,7 @@ export interface RandomArenaQueue {
 }
 
 /**
- * Queue for a Random Arena of `mode` as `name` tagged `guildTag`, bringing `character`
+ * Queue for a Random Arena of `mode` as `name` of `guild`, bringing `character`
  * (#854 C1–C7): a ticket on the board `joinQueueBoard` picks, ticked from
  * the host clock so a background tab keeps its place. When a group
  * settles, this tab hosts its lobby or joins it; a lobby that never fills,
@@ -309,7 +310,7 @@ export interface RandomArenaQueue {
 export function enterQueue(
   mode: QueueMode,
   name: string,
-  guildTag: string | null,
+  guild: Guild,
   character: LobbyCharacter | null,
   events: RandomArenaEvents,
   party?: PartyPlace,
@@ -352,7 +353,7 @@ export function enterQueue(
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guildTag, character, {
+        hosted = await hostLobby(name, guild, character, {
           group,
           key,
           verifyTicketSig,
@@ -367,7 +368,7 @@ export function enterQueue(
         });
         lobby = hosted.lobby;
       } else {
-        lobby = await joinLobbyByCode(group.groupId, name, guildTag, character, {
+        lobby = await joinLobbyByCode(group.groupId, name, guild, character, {
           group,
           key,
           verifyTicketSig,
@@ -541,18 +542,18 @@ function wireBuild(build: PlayerBuild | undefined): JsonValue {
   return build === undefined ? null : (JSON.parse(JSON.stringify(build)) as JsonValue);
 }
 
-/** Play the lobby's match `start` announced, as `name` tagged `guildTag`, with `build`. */
+/** Play the lobby's match `start` announced, as `name` of `guild`, with `build`. */
 export function connectMatchFor(
   lobby: LobbyConnection,
   start: MatchStarting,
   name: string,
-  guildTag: string | null,
+  guild: Guild,
   build: PlayerBuild | undefined,
 ): Promise<PeerMatchConnection> {
   const hello: PeerHello = {
     protocolVersion: PROTOCOL_VERSION,
     name,
-    guildTag,
+    ...guild,
     build: wireBuild(build),
     rejoin: null,
   };

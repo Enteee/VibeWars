@@ -855,20 +855,34 @@ const SCORE_TOAST_TEXT: Partial<Record<MatchMode, readonly [string, string]>> = 
  * scored" when the foe's did, and in King of the Hill "Altar point!" and
  * "Enemy altar point"; a spectator's side is team 0's. Points missed
  * between two frames toast once, and yours win if both sides scored.
- * `undefined` for the first snapshot, no score, and any other mode (a
- * kill-count score is silent). A `before` without the mode's relics or
- * altar is no before: the client's placeholder before its first frame is
- * 0-0 with neither, so a mid-match rejoin would otherwise toast the score
- * it walked in on.
+ * Capture Points counts them (#1408): "Shrines: +2", "Enemy shrines: +1",
+ * or on the usual tick where both sides score "Shrines: +2, enemy +1",
+ * whose sound is ours unless the enemy gained more. `undefined` for the
+ * first snapshot, no score, and any other mode (a kill-count score is
+ * silent). A `before` without the mode's relics, altar or shrines is no
+ * before: the client's placeholder before its first frame is 0-0 with
+ * none, so a mid-match rejoin would otherwise toast the score it walked
+ * in on.
  */
 export function objectiveScoreToast(
-  before: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics" | "altar"> | undefined,
+  before:
+    | Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1" | "relics" | "altar" | "capturePoints">
+    | undefined,
   after: Pick<MatchSnapshot, "scoreTeam0" | "scoreTeam1">,
   selfTeam: number | undefined,
   mode: MatchMode,
 ): ObjectiveToast | undefined {
+  if (before === undefined) {
+    return undefined;
+  }
+  const gained0 = Math.max(0, after.scoreTeam0 - before.scoreTeam0);
+  const gained1 = Math.max(0, after.scoreTeam1 - before.scoreTeam1);
+  const [ours, theirs] = (selfTeam ?? 0) === 1 ? [gained1, gained0] : [gained0, gained1];
+  if (mode === "capture-points") {
+    return before.capturePoints.length === 0 ? undefined : shrineScoreToast(ours, theirs);
+  }
   const text = SCORE_TOAST_TEXT[mode];
-  if (text === undefined || before === undefined) {
+  if (text === undefined) {
     return undefined;
   }
   const placeholder =
@@ -876,13 +890,24 @@ export function objectiveScoreToast(
   if (placeholder) {
     return undefined;
   }
-  const rose0 = after.scoreTeam0 > before.scoreTeam0;
-  const rose1 = after.scoreTeam1 > before.scoreTeam1;
-  const [ours, theirs] = (selfTeam ?? 0) === 1 ? [rose1, rose0] : [rose0, rose1];
-  if (ours) {
+  if (ours > 0) {
     return { text: text[0], side: "ours" };
   }
-  return theirs ? { text: text[1], side: "theirs" } : undefined;
+  return theirs > 0 ? { text: text[1], side: "theirs" } : undefined;
+}
+
+/** Capture Points' toast for `ours` and `theirs` points gained (#1408), or none for none. */
+function shrineScoreToast(ours: number, theirs: number): ObjectiveToast | undefined {
+  if (ours > 0 && theirs > 0) {
+    return {
+      text: `Shrines: +${String(ours)}, enemy +${String(theirs)}`,
+      side: ours >= theirs ? "ours" : "theirs",
+    };
+  }
+  if (ours > 0) {
+    return { text: `Shrines: +${String(ours)}`, side: "ours" };
+  }
+  return theirs > 0 ? { text: `Enemy shrines: +${String(theirs)}`, side: "theirs" } : undefined;
 }
 
 /**

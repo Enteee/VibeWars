@@ -506,7 +506,8 @@ describe("describeSkill", () => {
           (isEasilyInterrupted(entry.type) ? 1 : 0) +
           (entry.corpse === undefined ? 0 : 1) +
           (entry.target !== "self" && entry.range === RANGE_SPELL / 2 ? 1 : 0) +
-          (entry.companion === undefined ? 0 : 1),
+          (entry.companion === undefined ? 0 : 1) +
+          (entry.disabledAfterUseSeconds === undefined ? 0 : 1),
       );
       for (const line of described.effects) {
         expect(line.text.length, `${entry.id} has an empty description line`).toBeGreaterThan(0);

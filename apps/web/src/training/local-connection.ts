@@ -33,6 +33,7 @@ import {
   wireWeaponSets,
   type CallsSnapshot,
   type CombatMessage,
+  type Guild,
   type MatchConnection,
   type MatchSnapshot,
   type PlayerSnapshot,
@@ -75,7 +76,7 @@ export const NO_PROFESSIONS: Professions = { primary: undefined, secondary: unde
 function toPlayerSnapshot(
   participant: Participant,
   name: string,
-  guildTag: string | undefined,
+  guild: Guild,
   professions: Professions,
   pips: NetPips,
   elapsedSeconds: number,
@@ -87,7 +88,8 @@ function toPlayerSnapshot(
     sessionId: participant.id,
     // A creature (#1052) is named for its kind and has no professions.
     name: participant.creature?.name ?? name,
-    guildTag: participant.creature === undefined ? guildTag : undefined,
+    guildTag: (participant.creature === undefined ? guild.guildTag : null) ?? undefined,
+    guildCape: (participant.creature === undefined ? guild.guildCape : null) ?? undefined,
     x: participant.position.x,
     y: participant.position.y,
     facing: participant.facing,
@@ -147,12 +149,12 @@ export function createLocalConnection(options: {
   readonly map: MapDescriptor;
   /** What to call each participant: dummies by label, the player by their name. */
   readonly nameOf: (id: string) => string;
-  /** Each participant's guild tag (#1406): the player's own, a dummy's none. */
-  readonly guildTagOf: (id: string) => string | undefined;
+  /** Each participant's guild tag (#1406) and cape (#1422): the player's own, a dummy's none. */
+  readonly guildOf: (id: string) => Guild;
   /** Each participant's professions: the player's build's, a dummy's none. */
   readonly professionsOf: (id: string) => Professions;
 }): LocalMatchConnection {
-  const { simulation, selfId, map, nameOf, guildTagOf, professionsOf } = options;
+  const { simulation, selfId, map, nameOf, guildOf, professionsOf } = options;
   // What each slot holds now, a copy standing in one (#469) included.
   const held = (): readonly (SlotSkill | null)[] => {
     const self = simulation.get(selfId);
@@ -268,7 +270,7 @@ export function createLocalConnection(options: {
           toPlayerSnapshot(
             participant,
             nameOf(participant.id),
-            guildTagOf(participant.id),
+            guildOf(participant.id),
             professionsOf(participant.id),
             simulation.pips(participant),
             simulation.elapsedSeconds,

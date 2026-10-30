@@ -9,6 +9,7 @@
  * the build.
  */
 import { ANNIHILATION_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
+import type { WireCape } from "@vibewars/game-protocol";
 
 import { joinLobby } from "./lobby-client.js";
 import type { LobbyCharacter, LobbyConnection, MatchStarting } from "./lobby-connection.js";
@@ -41,7 +42,12 @@ export interface TestLobby {
   /** Each match the lobby started, with the plan it was started on. */
   readonly matches: { readonly plan: MatchPlan; readonly host: MatchHost }[];
   /** A remote member joining as `name` with `character`; resolves once it is in. */
-  join(name?: string, character?: LobbyCharacter | null, guildTag?: string | null): Promise<Member>;
+  join(
+    name?: string,
+    character?: LobbyCharacter | null,
+    guildTag?: string | null,
+    guildCape?: WireCape | null,
+  ): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
 }
@@ -93,20 +99,29 @@ export async function openLobby(
     name: string,
     character: LobbyCharacter | null,
     guildTag: string | null,
+    guildCape: WireCape | null,
   ): Promise<Member> =>
     member(
-      await joinLobby({ transport, code: CODE, name, guildTag, character, timeoutMs: 1000 }),
+      await joinLobby({
+        transport,
+        code: CODE,
+        name,
+        guildTag,
+        guildCape,
+        character,
+        timeoutMs: 1000,
+      }),
       transport,
     );
-  const host = await join(lobby.local, "Host", null, null);
+  const host = await join(lobby.local, "Host", null, null, null);
   return {
     network,
     lobby,
     room,
     host,
     matches,
-    join: (name = "Guest", character = null, guildTag = null) =>
-      join(network.join(), name, character, guildTag),
+    join: (name = "Guest", character = null, guildTag = null, guildCape = null) =>
+      join(network.join(), name, character, guildTag, guildCape),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {

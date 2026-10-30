@@ -9,6 +9,7 @@ import {
   MAX_WIRE_STATUSES,
   parseWireEnded,
   type PeerHello,
+  type WireCape,
   type WireEnded,
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
@@ -32,6 +33,9 @@ import {
 } from "./match-harness.test-support.js";
 import type { MatchSnapshot } from "./match-connection.js";
 import { MAX_MESSAGE_BYTES, messageBytes } from "./transport.js";
+
+/** A guild cape (#1422), as the designer makes one. */
+const CAPE: WireCape = { main: "violet", trim: "white", emblem: "diamond" };
 
 /** One entry of a lobby's plan. */
 type PlannedSeat = NonNullable<ReturnType<PlannedSeats["get"]>>;
@@ -144,6 +148,28 @@ describe("guild tags (#1406)", () => {
       ["Ann", "Vb1"],
       ["Bob", null],
     ]);
+  });
+});
+
+describe("guild capes (#1422)", () => {
+  it("seats a hello's cape in every snapshot, and none without a valid tag or for a bad one", async () => {
+    const match = startMatch();
+    const { connection: ann } = await match.join(
+      hello({ name: "Ann", guildTag: "Vb1", guildCape: CAPE }),
+    );
+    const { connection: bob } = await match.join(
+      hello({ name: "Bob", guildTag: "[x]", guildCape: CAPE }),
+    );
+    // A modified client's: the parser reads no cape out of it.
+    const odd = { ...hello({ name: "Cy", guildTag: "Cy" }), guildCape: { ...CAPE, main: "red" } };
+    const { connection: cy } = await match.join(odd as unknown as PeerHello);
+    await match.step(1 / RULESET.tickRateHz);
+
+    for (const who of [ann, bob, cy]) {
+      expect(playerIn(who.getSnapshot(), ann.selfSessionId)?.guildCape).toEqual(CAPE);
+      expect(playerIn(who.getSnapshot(), bob.selfSessionId)?.guildCape).toBeUndefined();
+      expect(playerIn(who.getSnapshot(), cy.selfSessionId)?.guildCape).toBeUndefined();
+    }
   });
 });
 
@@ -356,9 +382,9 @@ describe("a lobby's bots (#1193)", () => {
   const TICK = 1 / RULESET.tickRateHz;
   /** A bot's planned seat, keyed by its name as a lobby keys it by its id. */
   const bot = (team: 0 | 1, name: string, build: string) =>
-    [name, { team, name, guildTag: null, bot: starterBuild(build) }] as const;
+    [name, { team, name, guildTag: null, guildCape: null, bot: starterBuild(build) }] as const;
   const human = (team: 0 | 1) =>
-    ["host/local", { team, name: "Me", guildTag: "VIBE", bot: null }] as const;
+    ["host/local", { team, name: "Me", guildTag: "VIBE", guildCape: CAPE, bot: null }] as const;
   const named = (snapshot: MatchSnapshot, name: string) =>
     snapshot.players.find((player) => player.name === name);
 
@@ -373,9 +399,11 @@ describe("a lobby's bots (#1193)", () => {
     await match.step(TICK);
     expect(named(local.getSnapshot(), "Elementalist Bot")).toMatchObject({ team: 1, bot: true });
     expect(self(local)?.bot).toBe(false);
-    // The lobby's tag, whatever the hello says; a bot wears none (#1406).
+    // The lobby's tag and cape, whatever the hello says; a bot wears neither (#1406, #1422).
     expect(self(local)?.guildTag).toBe("VIBE");
+    expect(self(local)?.guildCape).toEqual(CAPE);
     expect(named(local.getSnapshot(), "Elementalist Bot")?.guildTag).toBeUndefined();
+    expect(named(local.getSnapshot(), "Elementalist Bot")?.guildCape).toBeUndefined();
     let cast: string | undefined;
     for (let t = 0; t < 10 && cast === undefined; t += 0.1) {
       await match.step(0.1);

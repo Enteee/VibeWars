@@ -17,6 +17,8 @@
  * - `chant`      — a chant's lingering effect (#758); no removal touches it.
  * - `weapon-spell`— a spell on an ally's weapon (#758), one at a time; not
  *   an enchantment, so enchantment removal leaves it.
+ * - `form`       — a GW1 form on its caster (#1437), one at a time; not an
+ *   enchantment, so no removal touches it. Its end stops what the bearer does.
  * - `skill-effect`— none of GW1's removable kinds: Healing Signet's armor
  *   loss while it is activated. No removal touches it either.
  *
@@ -27,6 +29,7 @@
  */
 
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_IN_THE_AREA, AREA_NEARBY } from "../distances.js";
+import type { ConditionalArmor } from "../equipment/armor.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
@@ -37,6 +40,7 @@ import type {
   DamageEffect,
   HealEffect,
   SkillEffect,
+  SkillType,
 } from "./types.js";
 
 export type StatusCategory =
@@ -51,6 +55,7 @@ export type StatusCategory =
   /** A Paragon's echo (#1423): no removal touches one; only its end or a death does. */
   | "echo"
   | "weapon-spell"
+  | "form"
   | "skill-effect";
 
 /**
@@ -63,6 +68,7 @@ export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set([
   "preparation",
   "glyph",
   "weapon-spell",
+  "form",
 ]);
 
 export type StatusId =
@@ -243,7 +249,10 @@ export type StatusId =
   | "blurred-vision"
   | "armor-of-mist"
   | "shatterstone"
-  | "mind-freeze";
+  | "mind-freeze"
+  // Dervish forms (#1437).
+  | "avatar-of-melandru"
+  | "avatar-of-dwayna";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -293,6 +302,11 @@ export interface StatusDefinition {
   readonly energyPips: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: number;
+  /**
+   * Armor added against a hit only when its conditions hold (#1437), as
+   * an insignia's: Avatar of Melandru's "+30 elemental armor".
+   */
+  readonly conditionalArmor: readonly ConditionalArmor[];
   /**
    * Armor added while the bearer is not moving (#921, `Combatant.moving`):
    * "Stand Your Ground!"'s +24.
@@ -693,6 +707,14 @@ export type StatusTriggerEvent =
   /** As `bearer-gains-hex-or-enchantment`, for an enchantment only: Scourge Enchantment's. */
   | "bearer-gains-enchantment"
   /**
+   * An enchantment on the bearer ended (#1437), for any reason but the
+   * bearer's death: expiry, a strip, its own rule. Once per enchantment
+   * lost, of `StatusTrigger.profession` if it names one: Avatar of
+   * Melandru's "whenever you lose a Dervish enchantment". Recorded with the
+   * triggers that answered, and fired at the drain.
+   */
+  | "bearer-loses-enchantment"
+  /**
    * The bearer created a creature (#1316): a spirit or a minion, once for
    * each, as it enters the world. A pet is charmed, not created. Fired by
    * the simulation from the summon itself, with the creature.
@@ -741,6 +763,18 @@ export interface StatusTrigger {
    * Absent: any attack.
    */
   readonly weapon?: AttackWeaponClass;
+  /**
+   * On `bearer-loses-enchantment` only (#1437): it fires only for an
+   * enchantment of this profession's (`StatusDefinition.profession`).
+   * Absent: any enchantment.
+   */
+  readonly profession?: ProfessionId;
+  /**
+   * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
+   * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
+   * attack skill". Absent: any skill.
+   */
+  readonly usedSkill?: { readonly type?: SkillType; readonly profession?: ProfessionId };
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
@@ -823,6 +857,12 @@ export type StatusChange =
       readonly sourceId: string;
       readonly expired: boolean;
     }
+  /** An enchantment `id` left the bearer, alive (#1437), with the triggers that answered. */
+  | {
+      readonly kind: "lost-enchantment";
+      readonly id: StatusId;
+      readonly fired: readonly AnsweringTrigger[];
+    }
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
@@ -891,6 +931,7 @@ function define(
     healthPipsPerEnchantment: undefined,
     energyPips: 0,
     armorModifier: 0,
+    conditionalArmor: [],
     armorWhileStill: 0,
     healthPerSecondWhileMoving: 0,
     healthPerSecond: 0,
@@ -2468,6 +2509,53 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     profession: "elementalist",
     moveSpeedMultiplier: 0.1,
   }),
+  // "You have +100 Health, +30 elemental armor, and your attacks deal earth
+  // damage. Whenever you lose a Dervish enchantment you lose 2 conditions"
+  // (#1437, PvP).
+  "avatar-of-melandru": define("avatar-of-melandru", "Avatar of Melandru", "form", {
+    profession: "dervish",
+    maxHealthBonus: 100,
+    conditionalArmor: [{ amount: 30, conditions: [{ kind: "vs-elemental" }] }],
+    attackDamageType: "earth",
+    triggers: [
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [{ kind: "remove-status", category: "condition", count: 2 }],
+        skillId: "dervish.avatar-of-melandru",
+      },
+    ],
+  }),
+  // "Your attacks deal holy damage. Whenever you use a Dervish attack skill,
+  // you lose 1 hex. Whenever you lose a Dervish enchantment, you are healed
+  // for 5...50 Health" (#1437, PvP).
+  "avatar-of-dwayna": define("avatar-of-dwayna", "Avatar of Dwayna", "form", {
+    profession: "dervish",
+    attackDamageType: "holy",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { type: "attack", profession: "dervish" },
+        target: "bearer",
+        effects: [{ kind: "remove-status", category: "hex", count: 1 }],
+        skillId: "dervish.avatar-of-dwayna",
+      },
+      {
+        on: "bearer-loses-enchantment",
+        profession: "dervish",
+        target: "bearer",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 5, atTwelve: 41 } },
+            perStatusOnTarget: [],
+          },
+        ],
+        skillId: "dervish.avatar-of-dwayna",
+      },
+    ],
+  }),
 };
 
 /**
@@ -2568,13 +2656,34 @@ export class StatusSet {
    * Take `ids` off the bearer, each recorded as ended: `expired` when its
    * duration ran out (`advance`), and for every other end not (#944).
    */
-  #end(ids: readonly StatusId[], expired = false): void {
+  #end(ids: readonly StatusId[], expired = false, death = false): void {
     for (const id of ids) {
       const status = this.#statuses.get(id);
       if (status !== undefined) {
         this.#statuses.delete(id);
         this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired });
+        if (!death) {
+          this.#lostEnchantment(id);
+        }
       }
+    }
+  }
+
+  /**
+   * Record enchantment `id` gone from the bearer (#1437), only if a status
+   * still on it answers that, with the triggers that do: one bound to a
+   * profession only for that profession's enchantment.
+   */
+  #lostEnchantment(id: StatusId): void {
+    const { category, profession } = getStatusDefinition(id);
+    if (category !== "enchantment") {
+      return;
+    }
+    const fired = this.triggersOn("bearer-loses-enchantment").filter(
+      ({ trigger }) => trigger.profession === undefined || trigger.profession === profession,
+    );
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "lost-enchantment", id, fired });
     }
   }
 
@@ -2943,9 +3052,11 @@ export class StatusSet {
   /**
    * End every status, of every category, each recorded as ended, in
    * `active` order: what a death does (#940), so every `ends` trigger fires.
+   * No `bearer-loses-enchantment` does.
    */
   public endAll(): void {
-    this.#end([...this.#statuses.keys()]);
+    // The dead lose no enchantment to answer (#1437).
+    this.#end([...this.#statuses.keys()], false, true);
   }
 
   /** End one status by id, recorded as ended (#1022): a trigger that spends it. */

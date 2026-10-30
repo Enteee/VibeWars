@@ -43,6 +43,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-gains-condition"
   | "bearer-gains-hex-or-enchantment"
   | "bearer-gains-enchantment"
+  | "bearer-loses-enchantment"
   | "bearer-blocks"
   | "bearer-creates-creature"
   | "bearer-chant-or-shout-ends"
@@ -73,6 +74,7 @@ export interface TriggerContext {
  * does not answer that use (#999): Song of Restoration waits for the
  * chanter's next skill. An attack trigger bound to a weapon (#1354)
  * answers only an attack with that weapon in the bearer's main hand.
+ * A use trigger bound to a kind of skill (#1437) answers only that kind.
  *
  * Nothing here fires a trigger: damage from one is never an event that
  * answers another, so triggers cannot recurse.
@@ -89,11 +91,29 @@ export function fireTriggers(
       ({ statusId, trigger }) =>
         !spared.has(statusId) &&
         (event !== "bearer-attacks" ||
-          triggerAnswersWeapon(trigger, bearer.equipment.mainHand.weapon)),
+          triggerAnswersWeapon(trigger, bearer.equipment.mainHand.weapon)) &&
+        (event !== "bearer-uses-skill" || answersUsedSkill(trigger, context.usedSkill)),
     )
     .flatMap(({ statusId, sourceId, trigger }) =>
       fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
     );
+}
+
+/**
+ * Whether a `bearer-uses-skill` trigger answers `used` (#1437): any skill,
+ * unless it names a type or a profession the skill must have.
+ */
+function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): boolean {
+  if (trigger.usedSkill === undefined) {
+    return true;
+  }
+  const skill = used === undefined ? undefined : getSkill(used.skillId);
+  return (
+    skill !== undefined &&
+    (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
+    (trigger.usedSkill.profession === undefined ||
+      skill.profession === trigger.usedSkill.profession)
+  );
 }
 
 /**
@@ -127,7 +147,8 @@ export function fireCreationTriggers(
  * fires what answered it at that foe, and a block (#1329) what answered
  * it at the attacker. A hex or an enchantment gained (#1403) fires what
  * answered it, toward whoever put it on, and a hex a status broke costs
- * its caster that status's damage. The simulation discards whatever
+ * its caster that status's damage. An enchantment lost (#1437) fires what
+ * answered it when it went. The simulation discards whatever
  * the firing itself changes, so this never recurses either.
  */
 export function fireChangeTriggers(
@@ -178,6 +199,7 @@ export function fireChangeTriggers(
     case "hit":
     case "failed-to-hit":
     case "took-physical-damage":
+    case "lost-enchantment":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
       );

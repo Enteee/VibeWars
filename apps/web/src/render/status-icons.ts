@@ -114,6 +114,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "heart-of-holy-flame": icon("heart-of-holy-flame"),
   "balthazars-rage": icon("balthazars-rage"),
   "harriers-haste": icon("harriers-haste"),
+  "avatar-of-melandru": icon("avatar-of-melandru"),
+  "avatar-of-dwayna": icon("avatar-of-dwayna"),
   "never-surrender": icon("never-surrender"),
   winnowing: icon("winnowing"),
   recuperation: icon("recuperation"),
