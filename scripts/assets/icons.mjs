@@ -785,24 +785,27 @@ const status = {
       `<path d="M4.5 19.5C8 17 14 12 19.5 5" ${stroke(c, 2)}/>` +
       `<path d="M7.5 16L6 11.5M11 13.5L9.5 9M15 10L14.5 5.5M9 17.5L11.5 20M13 14.5L16 17" ${stroke(c, 1.8)}/>`,
   ],
-  // Enchantment: two speed chevrons over a dot, faster until it ends (#1421).
+  // Enchantment: two speed chevrons and a drop, faster until it ends, and a condition goes (#1421).
   "enchanted-haste": [
     "enchantment",
-    (c) => `<path d="M6 7l5 5-5 5M12 7l5 5-5 5" ${stroke(c, 2.2)}/>`,
+    (c) =>
+      `<path d="M4 7l4.5 5L4 17M9.5 7l4.5 5-4.5 5" ${stroke(c, 2)}/>` +
+      `<path d="M18.5 8c1.5 2.2 2.5 3.4 2.5 4.8a2.5 2.5 0 0 1-5 0c0-1.4 1-2.6 2.5-4.8z" ${stroke(c, 1.6)}/>` +
+      `<path d="M15 6.5l7 13" ${stroke(c, 1.8)}/>`,
   ],
-  // Enchantment: a flame in a ring, holy attacks, burning when it ends (#1421).
+  // Enchantment: a flame under a halo, holy attacks, burning when it ends (#1421).
   "heart-of-holy-flame": [
     "enchantment",
     (c) =>
-      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 6.5c2.5 2.5 3 4.5 3 6.5a3 3 0 0 1-6 0c0-1.5.8-2.5 1.5-3.2.2 1.2.8 1.8 1.5 2.2 0-2 0-3.5 0-5.5z" ${stroke(c, 1.8)}/>`,
+      `<ellipse cx="12" cy="5.5" rx="5" ry="1.8" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 9c2.2 2.2 2.8 4 2.8 5.6a2.8 2.8 0 0 1-5.6 0c0-1.3.7-2.2 1.4-2.9.2 1 .8 1.5 1.4 1.9 0-1.7 0-3 0-4.6z" fill="${c}"/>`,
   ],
-  // Enchantment: a flame over a bar, adrenaline when it ends (#1421).
+  // Enchantment: a flame beside rising bars, adrenaline when it ends (#1421).
   "balthazars-rage": [
     "enchantment",
     (c) =>
-      `<path d="M12 4c3 3 3.5 5.5 3.5 7.5a3.5 3.5 0 0 1-7 0c0-2 1-3 2-4 .3 1.5 1 2 1.5 2.5 0-2 0-4 0-6z" ${stroke(c, 1.8)}/>` +
-      `<path d="M6 18.5h12" ${stroke(c, 2.2)}/>`,
+      `<path d="M8.5 5c2.5 2.5 3 4.5 3 6.5a3 3 0 0 1-6 0c0-1.7.8-2.7 1.7-3.6.2 1.2.8 1.7 1.3 2.1 0-1.8 0-3.2 0-5z" fill="${c}"/>` +
+      `<path d="M15 18v-3M18 18v-6M21 18V9M4 19.5h18" ${stroke(c, 1.8)}/>`,
   ],
   // Form: a leaf, Melandru's earth (#1437).
   "avatar-of-melandru": [
@@ -843,12 +846,13 @@ const status = {
       `<path d="M5 8c4-1.5 10-1.5 14 0 0 6-3 10-7 10S5 14 5 8z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 7v11c-4 0-7-4-7-10 2.3-.8 4.6-1 7-1z" fill="${c}"/>`,
   ],
-  // Enchantment: a chevron chasing a dot, faster and harder on runners (#1421).
+  // Enchantment: a chevron chasing a dot with a spark, faster and harder on runners (#1421).
   "harriers-haste": [
     "enchantment",
     (c) =>
       `<path d="M5 7l5 5-5 5" ${stroke(c, 2.2)}/>` +
-      `<circle cx="16" cy="12" r="2.5" fill="${c}"/>`,
+      `<circle cx="15" cy="12" r="2.2" fill="${c}"/>` +
+      `<path d="M19 8l2-2M19 16l2 2M20 12h2" ${stroke(c, 1.6)}/>`,
   ],
   // Skill effect: a shield struck through, armor lost while the signet is
   // activated (#524).
@@ -2427,6 +2431,27 @@ const skillGlyph = {
   "limp-drain": () =>
     inkLine("M9 3L5 9.5L9 13.5L4 20", 2.8) +
     inkLine("M13 4.5L16.5 8L20 4.5M13 10L16.5 13.5L20 10", 2.2),
+  // Two chevrons and a drop outline: faster, and a condition leaves (#1447).
+  "haste-clean": () =>
+    inkLine("M3 5L8.5 12L3 19M9.5 5L15 12L9.5 19", 2.4) +
+    `<path d="M19 7.5c1.8 2.7 3 4.2 3 6a3 3 0 0 1-6 0c0-1.8 1.2-3.3 3-6z" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M15 6L23 21", 2.2),
+  // A flame under a halo: holy attacks, and it burns when it ends (#1447).
+  "flame-halo": () =>
+    `<ellipse cx="12" cy="4.8" rx="6" ry="2.2" ${stroke(C.ink, 2)}/>` +
+    inkFill(
+      "M12.5 8c3 3 6.5 5.2 6.5 9.5a7 7 0 0 1-14 0c0-2.8 1.2-5 3-6.2 0 2.2.6 3.4 1.8 4-.6-3.3 1-5.6 2.7-7.3z",
+    ),
+  // A flame beside three rising bars: it burns, and adrenaline comes (#1447).
+  "flame-bars": () =>
+    inkFill(
+      "M8.5 3.5c2.8 2.8 4.5 5 4.5 8.5a5 5 0 0 1-10 0c0-2 .8-3.6 2.2-4.8 0 1.7.5 2.6 1.4 3-.4-2.6.3-4.4 1.9-6.7z",
+    ) + inkLine("M15 21v-5M18.5 21V12M22 21V8M3 22H13", 2.2),
+  // A chevron running after a dot, a spark off it: faster, and harder on a runner (#1447).
+  chase: () =>
+    inkLine("M3 5L9.5 12L3 19", 2.6) +
+    `<circle cx="15" cy="12" r="2.8" fill="${C.ink}"/>` +
+    inkLine("M19.5 6.5L22 4M19.5 17.5L22 20M20.5 12H23", 2),
   // A top bar with three icicles hanging from it: the cage of ice (#1440).
   "ice-cage": () =>
     inkLine("M4 4.5H20", 2.6) + inkFill("M5 6H9.5L7.2 20ZM9.8 6H14.2L12 21ZM14.5 6H19L16.8 13Z"),
