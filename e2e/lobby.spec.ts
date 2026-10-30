@@ -65,18 +65,6 @@ async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Prom
 const NO_ANSWER =
   "No lobby answered that code. Check it; if it is right, your network may be blocking peer-to-peer connections.";
 
-test("the menu says peers see your IP address before you host or join, and the lobby does not (#541)", async ({
-  page,
-}) => {
-  await openMenu(page, "Host");
-  const notice = page.getByText("can see your IP address");
-  await expect(notice).toBeVisible();
-  await expect(page.getByRole("button", { name: "host a lobby" })).toBeVisible();
-  await page.getByRole("button", { name: "host a lobby" }).click();
-  await expect(page.locator(".screen-lobby")).toBeVisible();
-  await expect(notice).toHaveCount(0);
-});
-
 test("a host creates a lobby and is shown a joinable code", async ({ page }) => {
   const code = await hostLobby(page, "Host");
 

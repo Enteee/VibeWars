@@ -47,9 +47,12 @@ test("the menu loads under the sub-path, with every asset found", async ({ page 
   expect(traffic.online).toEqual([]);
 });
 
-test("the menu links to the source, as the AGPL asks of a networked game", async ({ page }) => {
+test("Help links to the source, as the AGPL asks of a networked game (#1442)", async ({ page }) => {
   await page.goto("./");
-  const source = page.getByRole("link", { name: "source" });
+  await page.locator(".topbar-help").click();
+  const source = page
+    .getByRole("dialog", { name: "Help" })
+    .getByRole("link", { name: "Source code" });
   await expect(source).toHaveAttribute("href", "https://github.com/Enteee/VibeWars");
   await expect(source).toHaveAttribute("target", "_blank");
 });

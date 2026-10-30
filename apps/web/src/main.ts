@@ -1,5 +1,5 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type { LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/game-session";
+import type { Guild, LobbyCharacter, LobbyConnection, MatchStarting } from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
@@ -89,7 +89,7 @@ import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
   loadStarterCharacterId,
-  playerGuildTag,
+  playerGuild,
   renderMenu,
   renderTeamList,
   saveActiveCharacterId,
@@ -192,8 +192,8 @@ interface Entrant {
   readonly character: LobbyCharacter | null;
   /** Whose record its matches go on (#1404); `undefined` for a starter build. */
   readonly characterId: string | undefined;
-  /** The menu's guild tag (#1406) if it is a valid one; `null` plays untagged. */
-  readonly guildTag: string | null;
+  /** The menu's guild tag (#1406) if it is a valid one, and its cape (#1422). */
+  readonly guild: Guild;
 }
 
 async function main(): Promise<void> {
@@ -486,7 +486,7 @@ async function main(): Promise<void> {
           };
     return {
       build,
-      guildTag: playerGuildTag(),
+      guild: playerGuild(),
       character,
       characterId: character === null ? undefined : id,
     };
@@ -555,7 +555,7 @@ async function main(): Promise<void> {
           void (async () => {
             const entrant = await readEntrant();
             await enterLobby(name, entrant, async () => {
-              hosted = await hostLobby(name, entrant.guildTag, entrant.character);
+              hosted = await hostLobby(name, entrant.guild, entrant.character);
               return hosted.lobby;
             });
           })();
@@ -564,7 +564,7 @@ async function main(): Promise<void> {
           void (async () => {
             const entrant = await readEntrant();
             await enterLobby(name, entrant, async () =>
-              joinLobbyByCode(code, name, entrant.guildTag, entrant.character),
+              joinLobbyByCode(code, name, entrant.guild, entrant.character),
             );
           })();
         },
@@ -844,7 +844,7 @@ async function main(): Promise<void> {
     const place = enterQueue(
       mode,
       name,
-      entrant.guildTag,
+      entrant.guild,
       entrant.character,
       {
         // Never past `in-lobby` while a lobby is up, unless it fell through.
@@ -1327,7 +1327,7 @@ async function main(): Promise<void> {
             };
           },
         },
-        { connect: () => connectMatchFor(from, start, name, entrant.guildTag, entrant.build) },
+        { connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build) },
       );
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");

@@ -1,4 +1,9 @@
-import { MAX_CHAT_GRAPHEMES, MAX_WIRE_CHAT_TEXT } from "@vibewars/game-protocol";
+import {
+  MAX_CHAT_GRAPHEMES,
+  MAX_WIRE_CHAT_TEXT,
+  parseWireCape,
+  type WireCape,
+} from "@vibewars/game-protocol";
 
 /**
  * Display names a player asks for, made safe to show everyone (#375):
@@ -219,6 +224,38 @@ export function sanitizeGuildTag(raw: unknown): string | null {
   }
   const tag = raw.trim();
   return GUILD_TAG.test(tag) ? tag : null;
+}
+
+/**
+ * A client-supplied guild cape (#1422) if it is a valid one; `null` for
+ * none and for anything else, as a tag is. A host also drops it when the
+ * tag is `null`: the cape belongs to the guild.
+ */
+export function sanitizeGuildCape(raw: unknown): WireCape | null {
+  return parseWireCape(raw) ?? null;
+}
+
+/** A player's guild tag (#1406) and the cape that goes with it (#1422). */
+export interface Guild {
+  /** `null` for none. */
+  readonly guildTag: string | null;
+  /** `null` for none, and whenever `guildTag` is. */
+  readonly guildCape: WireCape | null;
+}
+
+/** A bot's guild: none. */
+export const NO_GUILD: Guild = { guildTag: null, guildCape: null };
+
+/**
+ * What a join or hello brought for a guild (#1406, #1422), sanitised: no
+ * tag, no cape.
+ */
+export function sanitizeGuild(raw: {
+  readonly guildTag: unknown;
+  readonly guildCape: unknown;
+}): Guild {
+  const guildTag = sanitizeGuildTag(raw.guildTag);
+  return { guildTag, guildCape: guildTag === null ? null : sanitizeGuildCape(raw.guildCape) };
 }
 
 /**
