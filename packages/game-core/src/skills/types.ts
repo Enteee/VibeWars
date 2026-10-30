@@ -139,6 +139,13 @@ export interface HealEffect {
    * twin. None lost: no heal.
    */
   readonly perEnergyLost?: true;
+  /**
+   * The amount is per point of the base energy cost of the skill the
+   * trigger answers, rounded half up (#1614): Aura of Restoration's
+   * "healed for 200...400% of the Energy cost each time you cast a spell".
+   * No energy cost, or no such skill: no heal.
+   */
+  readonly perUsedSkillEnergy?: true;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -184,6 +191,12 @@ export interface EnergyGainToCaster {
    * already above gains nothing and loses nothing. Absent: its maximum.
    */
   readonly upTo?: number;
+  /**
+   * Per point of the base energy cost of the skill the trigger answers,
+   * rounded half up (#1614): Fire Attunement's "30% of the base Energy
+   * cost of the skill". No energy cost, or no such skill: no gain.
+   */
+  readonly perUsedSkillEnergy?: true;
   readonly toTarget?: never;
 }
 

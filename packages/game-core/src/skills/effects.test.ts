@@ -1791,3 +1791,40 @@ describe("off-hand chain-mark and overcast (#1580)", () => {
     expect(ctx.caster.overcast).toBe(0);
   });
 });
+
+describe("perUsedSkillEnergy (#1614)", () => {
+  const share = (usedSkill: SkillContext["usedSkill"]): CombatEvent[] => {
+    const caster = makeCombatant({ id: "caster" });
+    caster.energy = 0;
+    caster.health = 1;
+    return applyEffects(
+      [
+        { kind: "energy-gain", amount: { flat: 0.3 }, perUsedSkillEnergy: true },
+        {
+          kind: "heal",
+          amount: { flat: 3.6 },
+          perStatusOnTarget: [],
+          recipient: "caster",
+          perUsedSkillEnergy: true,
+        },
+      ],
+      { ...context(caster), usedSkill },
+    );
+  };
+
+  it("is the share of the used skill's base energy cost, rounded half up", () => {
+    // Flare's 5: 1.5 is 2 energy, 18 Health; Searing Flames' 15: 4.5 is 5.
+    expect(share({ skillId: "elementalist.flare", key: "elementalist.flare" })).toEqual([
+      { kind: "energy-gain", targetId: "caster", amount: 2 },
+      { kind: "heal", targetId: "caster", amount: 18 },
+    ]);
+    expect(
+      share({ skillId: "elementalist.searing-flames", key: "elementalist.searing-flames" })[0],
+    ).toEqual({ kind: "energy-gain", targetId: "caster", amount: 5 });
+  });
+
+  it("gives nothing without a used skill, or for one with no energy cost", () => {
+    expect(share(undefined)).toEqual([]);
+    expect(share({ skillId: "warrior.cleave", key: "warrior.cleave" })).toEqual([]);
+  });
+});

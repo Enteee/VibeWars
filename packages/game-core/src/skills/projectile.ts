@@ -42,6 +42,8 @@ export interface Projectile {
    * for a swing's shot.
    */
   readonly skillHit: SkillHit | SpellHit | undefined;
+  /** A status of its attacker's made it unblockable as it left (#1604, Guiding Hands). */
+  readonly unblockable: boolean;
 }
 
 /**
