@@ -295,6 +295,13 @@ export type StatusId =
   | "avatar-of-balthazar"
   | "avatar-of-grenth"
   | "avatar-of-lyssa"
+  // Mesmer skill-use punishers (#1473).
+  | "wastrels-worry"
+  | "overload"
+  | "frustration"
+  | "price-of-pride"
+  | "migraine"
+  | "visions-of-regret"
   // Mesmer "the next spell fails" hexes (#1475).
   | "guilt"
   | "shame"
@@ -463,6 +470,13 @@ export interface StatusDefinition {
    * it (#524).
    */
   readonly castTimeMultiplier: number;
+  /**
+   * Multiplier on the activation of every skill the bearer starts that is
+   * not an attack skill (#1473): spells, signets, shouts and the rest.
+   * Migraine's "takes 100% longer to activate skills" is 2. It stacks with
+   * `castTimeMultiplier`, so Dazed and Migraine make a spell 4× as long.
+   */
+  readonly skillActivationMultiplier: number;
   /**
    * GW1's daze (#546): applying it interrupts a spell the bearer is
    * casting, and so does every attack that lands on the bearer while it
@@ -837,6 +851,14 @@ export type StatusTriggerEvent =
    */
   | "bearer-blocks"
   /**
+   * The bearer's skill was interrupted, by any source (#1473): an
+   * interrupt effect, Dazed or a hit that breaks an easily interrupted
+   * cast. A knockdown is no interrupt. Recorded with the interrupter,
+   * the offender, and fired at the drain, as damage from a foe is.
+   * Frustration's.
+   */
+  | "bearer-interrupted"
+  /**
    * A hex or an enchantment landed on the bearer, new or renewed (#1403):
    * Soul Barbs'. A refresh that changes nothing is no gain, and the status
    * gained never answers its own landing. Recorded with the triggers that
@@ -945,9 +967,14 @@ export interface StatusTrigger {
   /**
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
-   * attack skill". Absent: any skill.
+   * attack skill". With `elite`, only an elite skill (#1473): Price of
+   * Pride's. Absent: any skill.
    */
-  readonly usedSkill?: { readonly type?: SkillType; readonly profession?: ProfessionId };
+  readonly usedSkill?: {
+    readonly type?: SkillType;
+    readonly profession?: ProfessionId;
+    readonly elite?: true;
+  };
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
 }
@@ -1060,6 +1087,15 @@ export type StatusChange =
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /**
+   * `offenderId` interrupted the bearer (#1473), with the triggers that
+   * answered. `undefined`: a shot whose archer has left the match.
+   */
+  | {
+      readonly kind: "interrupted";
+      readonly offenderId: string | undefined;
+      readonly fired: readonly AnsweringTrigger[];
+    }
   | { readonly kind: "redirected-damage"; readonly toId: string; readonly amount: number }
   /** A status of `toId`'s changed an outcome, and `toId` pays `amount` health (#1265). */
   | {
@@ -1166,6 +1202,7 @@ function define(
     attackArmorPenetration: 0,
     attributeDelta: 0,
     castTimeMultiplier: 1,
+    skillActivationMultiplier: 1,
     interruptsSpells: false,
     attackDurationMultiplier: 1,
     preventsSpells: false,
@@ -2704,9 +2741,10 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
   // Paragon echoes (#1423): each renews, or fires, whenever a chant or a
   // shout ends on its bearer; no removal touches one. Rank-12 values, and
   // a finale's effects scale with its Paragon's attribute.
+  // "You attack 25% faster but have -20 armor": 1 − 0.25 (ADR-0029).
   "aggressive-refrain": define("aggressive-refrain", "Aggressive Refrain", "echo", {
     profession: "paragon",
-    attackDurationMultiplier: 0.8,
+    attackDurationMultiplier: 0.75,
     armorModifier: -20,
     renewsOnChantOrShoutEnd: true,
   }),
@@ -3243,6 +3281,147 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     ],
   }),
 
+  // Mesmer skill-use punishers (#1473), each at its rank-12 values; the
+  // damage is its caster's attribute, as the trigger's caster is the
+  // hex's source.
+  // "After 3 seconds, target foe takes 20...100 damage and all adjacent
+  // foes take 75% of that damage. If that foe successfully uses a skill,
+  // Wastrel's Worry ends prematurely and does no damage" (PvP): only its
+  // expiry deals it, so a strip or a skill used first does nothing.
+  "wastrels-worry": define("wastrels-worry", "Wastrel's Worry", "hex", {
+    profession: "mesmer",
+    endsWhenBearerUsesSkill: true,
+    triggers: [
+      {
+        on: "expires",
+        target: "bearer",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 20, atTwelve: 84 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "mesmer.domination-magic", atZero: 15, atTwelve: 63 },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+        skillId: "mesmer.wastrels-worry",
+      },
+    ],
+  }),
+  // "For 5 seconds, target foe suffers -1...3 Health degeneration." The
+  // damage if it is using a skill is the spell's own.
+  overload: define("overload", "Overload", "hex", {
+    profession: "mesmer",
+    healthPips: -3,
+  }),
+  // "For 5...20 seconds, target foe casts spells 50% slower and takes
+  // 5...50 damage whenever interrupted" (PvP): by anyone, Dazed included.
+  frustration: define("frustration", "Frustration", "hex", {
+    profession: "mesmer",
+    castTimeMultiplier: 1.5,
+    triggers: [
+      {
+        on: "bearer-interrupted",
+        target: "bearer",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 41 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+        skillId: "mesmer.frustration",
+      },
+    ],
+  }),
+  // "For 5 seconds, the next time target foe uses an elite skill, that
+  // foe loses 3...15 Energy."
+  "price-of-pride": define("price-of-pride", "Price of Pride", "hex", {
+    profession: "mesmer",
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { elite: true },
+        target: "bearer",
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+        ],
+        skillId: "mesmer.price-of-pride",
+      },
+    ],
+  }),
+  // "For 4...16 seconds, target foe suffers -1...8 Health degeneration
+  // and takes 100% longer to activate skills" (PvP): -7, its rank-12
+  // 6.6 rounded. GWW: attack skills are not slowed.
+  migraine: define("migraine", "Migraine", "hex", {
+    profession: "mesmer",
+    healthPips: -7,
+    skillActivationMultiplier: 2,
+  }),
+  // "For 10 seconds, target foe and adjacent foes take 10...30 damage
+  // whenever they use a skill and 5...40 additional damage if not under
+  // the effects of another Mesmer hex" (PvP): each foe it lands on bears
+  // its own.
+  "visions-of-regret": define("visions-of-regret", "Visions of Regret", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        target: "bearer",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 26 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "if",
+            condition: { kind: "target-lacks-other-hex", profession: "mesmer" },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 33 },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+        skillId: "mesmer.visions-of-regret",
+      },
+    ],
+  }),
   // Mesmer "the next spell fails" hexes (#1475), at their rank-12 values.
   // "...the next time target foe casts a spell that targets a foe, the
   // spell fails and you steal up to 5...14 Energy from that foe": 12.
@@ -3530,6 +3709,18 @@ export class StatusSet {
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });
+    }
+  }
+
+  /**
+   * `offenderId` interrupted the bearer's skill (#1473), recorded only if
+   * a status on it answers that, with the triggers that do: once for each
+   * interrupt.
+   */
+  public recordInterrupt(offenderId: string | undefined): void {
+    const fired = this.#answering("bearer-interrupted");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "interrupted", offenderId, fired });
     }
   }
 
@@ -4289,6 +4480,8 @@ export interface StatusModifiers {
   readonly physicalDamageTakenBonus: number;
   readonly attributeDelta: number;
   readonly castTimeMultiplier: number;
+  /** Every status's, multiplied (#1473). */
+  readonly skillActivationMultiplier: number;
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
@@ -4389,6 +4582,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let physicalDamageTakenBonus = 0;
   let attributeDelta = 0;
   let castTimeMultiplier = 1;
+  let skillActivationMultiplier = 1;
   let attackFaster = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
@@ -4455,6 +4649,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
     attributeDelta += def.attributeDelta;
     castTimeMultiplier *= def.castTimeMultiplier;
+    skillActivationMultiplier *= def.skillActivationMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
     damageTakenMultiplier *= def.damageTakenMultiplier;
@@ -4525,6 +4720,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     physicalDamageTakenBonus,
     attributeDelta,
     castTimeMultiplier,
+    skillActivationMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
     damageTakenMultiplier,
     damageReduction,

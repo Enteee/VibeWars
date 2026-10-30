@@ -475,7 +475,7 @@ export function landBlow(
   rules: CombatRules,
   events: CombatEvent[],
 ): boolean {
-  interruptOnHit(victim, events);
+  interruptOnHit(victim, attacker?.id, events);
   const { weapon } = snapshot.mainHand;
   const rolledCritical = rng.nextFloat() < criticalChance(snapshot, rules);
   const critical =

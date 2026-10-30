@@ -11,8 +11,8 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   page,
 }) => {
   await page.goto("./");
-  const name = page.getByRole("textbox", { name: "Name", exact: true });
-  await name.fill("Rurik");
+  const code = page.getByRole("textbox", { name: "Lobby code", exact: true });
+  await code.fill("ABCD");
 
   await page.locator(".topbar-help").click();
   const help = page.getByRole("dialog", { name: "Help" });
@@ -36,7 +36,7 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   await page.keyboard.press("Escape");
   await expect(help).toHaveCount(0);
   // The menu under it is untouched.
-  await expect(name).toHaveValue("Rurik");
+  await expect(code).toHaveValue("ABCD");
 });
 
 test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back (#1257)", async ({
