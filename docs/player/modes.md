@@ -172,16 +172,19 @@ Each stage lasts 60 seconds and ends early once everyone on both sides
 is ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
-side's size, one proposal each, and vote for one of their side's
-proposals, their own included. A new proposal replaces your old one,
+side's size, one proposal each, with **Propose**, and vote for one of
+their side's proposals, their own included. Each proposal is a card
+with the initials of who voted for it: click a card to vote, and click
+it again to take your vote back. The Team Build you picked on Team Play
+is proposed for you if it is the right size. A new proposal replaces your old one,
 and the votes for it go back to none. The most votes wins. On a tie the
 captain's vote decides: the host on the host's side, the earliest to
 join on the other. With proposals and no votes, one is picked at random.
 With no proposal, the side plays the house team of starter builds.
 Neither side sees the other's proposals, votes or choice.
 
-**Claim.** Take a character of the chosen build, first come, first
-served, one each. Whoever claimed nothing gets the first free one, and
+**Claim.** The chosen build's characters are seats: click a free seat
+to take it, or your own to leave it, first come, first served, one each. Whoever claimed nothing gets the first free one, and
 bots play the rest, under their character's name. Then the match starts.
 
 Anyone who leaves during the Team Lobby is replaced by a bot, so the

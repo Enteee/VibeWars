@@ -210,6 +210,28 @@ export function sanitizeName(raw: unknown, fallback: string): string {
   return name === "" ? fallback : name;
 }
 
+/**
+ * A build's name as a character in the Team Lobby (#1460), sanitised as
+ * `sanitizeName` does. One too long is cut at its last space or slash
+ * that fits and ends in "…", never mid-word: the starters are named
+ * "Necromancer/Elementalist", which reads "Necromancer…".
+ */
+export function sanitizeCharacterName(raw: unknown, fallback: string): string {
+  if (typeof raw !== "string") {
+    return fallback;
+  }
+  const whole = sanitizeText(raw, MAX_RAW_NAME_UNITS, Infinity, Infinity);
+  const name = sanitizeName(raw, fallback);
+  if (whole === "" || whole === name) {
+    return name;
+  }
+  // One grapheme and one code point are left for the ellipsis.
+  const room = sanitizeText(raw, MAX_RAW_NAME_UNITS, MAX_NAME_LENGTH - 1, MAX_NAME_CODE_POINTS - 1);
+  const boundary = Math.max(room.lastIndexOf(" "), room.lastIndexOf("/"));
+  const head = boundary > 0 ? room.slice(0, boundary).trim() : room;
+  return `${head}…`;
+}
+
 /** A guild tag (#1406): 2 to 4 ASCII letters or digits, case kept, as GW1's. */
 const GUILD_TAG = /^[A-Za-z0-9]{2,4}$/;
 
