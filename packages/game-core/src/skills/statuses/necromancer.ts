@@ -25,7 +25,10 @@ export type NecromancerStatusId =
   | "lingering-curse"
   // Hex and enchantment gain triggers (#1403).
   | "soul-barbs"
-  | "defile-defenses";
+  | "defile-defenses"
+  // Necromancer and Elementalist staples (#1540).
+  | "blood-is-power"
+  | "order-of-pain";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -221,5 +224,21 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       },
     ],
     endsWhenTriggered: true,
+  }),
+  // Necromancer and Elementalist staples (#1540), at their rank-12 values.
+  // "For 10 seconds, target other ally gains +3...6 Energy regeneration": 5.
+  "blood-is-power": define("blood-is-power", "Blood is Power", "enchantment", {
+    profession: "necromancer",
+    energyPips: 5,
+  }),
+  // "For 5 seconds, whenever a party member hits a foe with physical
+  // damage, that party member does +3...16 damage": 13, on each hit.
+  "order-of-pain": define("order-of-pain", "Order of Pain", "enchantment", {
+    profession: "necromancer",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      effects: [{ kind: "damage", amount: { flat: 13 }, type: "typeless", armorPenetration: 1 }],
+      skillId: "necromancer.order-of-pain",
+    },
   }),
 };
