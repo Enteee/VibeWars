@@ -43,11 +43,6 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.ward-against-elements": { glyph: "ward-elements" },
   "elementalist.shock-arrow": { glyph: "arrow-bolt" },
   "elementalist.mind-blast": { glyph: "fireball-mind", modifier: "up" },
-  // Placeholders until the asset-designer's (#1540).
-  "elementalist.mark-of-rodgort": { glyph: "flame-target", modifier: "area" },
-  "elementalist.lava-font": { glyph: "flame-field", modifier: "clock" },
-  "elementalist.ward-against-elements": { glyph: "ward-blade", modifier: "bolt" },
-  "elementalist.shock-arrow": { glyph: "lightning-orb", modifier: "plus" },
   // Placeholders until the asset-designer's (#1575).
   "elementalist.obsidian-flesh": { glyph: "mountain", modifier: "plus" },
   "elementalist.gale": { glyph: "lightning", modifier: "half" },
