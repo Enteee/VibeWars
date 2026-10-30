@@ -2,8 +2,9 @@ name: e2e repeat
 
 # Repeats the e2e specs a pull request adds or changes, ten times, and fails
 # on any failure (#216). The ten runs are split over ten parallel jobs of
-# one repeat each: two whole specs at --workers=1 outgrew one 30-minute job
-# (444 of 480 runs on #451), and a shard keeps the budget per job, not in total. A 1-in-10 flake survives ten runs 35% of the time,
+# one repeat each (#1561): each job runs `--repeat-each=10 --shard=n/10`, so the
+# work (specs x 10) is split over the jobs. Two whole specs at --workers=1 once outgrew
+# one 30-minute job (444 of 480 runs on #451). A 1-in-10 flake survives ten runs 35% of the time,
 # so qa-tester's flake-check skill stays: this is the floor, not a
 # replacement.
 #
@@ -35,8 +36,9 @@ jobs:
       # One failing shard is the answer; the others add nothing but cost.
       fail-fast: true
       matrix:
-        # Ten jobs, each --repeat-each=1: ten repeats in all (#1477). Every job runs the whole
-        # selection, so more repeats per job, not more jobs, is what grows a job.
+        # Ten jobs, ten repeats in all. Each runs `--repeat-each=10 --shard=n/10`: Playwright
+        # splits the repeated test groups across the shards (#1561), so a PR touching many
+        # specs spreads over the jobs instead of every job running the whole selection.
         shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     # Two runs of a few specs take minutes. Without a cap, a hang would sit
     # pending for six hours, and hubd blocks the merge while it does.
@@ -74,14 +76,14 @@ jobs:
         run: devenv shell -- pnpm run build
 
       - if: steps.select.outputs.specs != ''
-        name: Repeat specs once (shard ${{ matrix.shard }} of 10)
+        name: Repeat specs (shard ${{ matrix.shard }} of 10)
         env:
           SPECS: ${{ steps.select.outputs.specs }}
         # SPECS is split on spaces on purpose: one argument per spec.
         run: |
           # shellcheck disable=SC2086
           PLAYWRIGHT_JSON_OUTPUT_NAME=e2e-repeat.json devenv shell -- pnpm exec playwright test $SPECS \
-            --reporter=list,json --repeat-each=1 --retries=0 --workers=1
+            --reporter=list,json --repeat-each=10 --shard=${{ matrix.shard }}/10 --retries=0 --workers=1
           # A pass that ran nothing (every test skipped) is not a pass.
           node scripts/ci/select-e2e-specs.mjs --assert-ran e2e-repeat.json
 

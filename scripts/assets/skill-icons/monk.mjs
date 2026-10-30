@@ -46,6 +46,8 @@ export const MONK_ICONS = {
   "monk.words-of-comfort": { glyph: "heal", modifier: "half" },
   "monk.light-of-deliverance": { glyph: "party-heal", modifier: "down" },
   "monk.signet-of-rejuvenation": { glyph: "heal", modifier: "bolt" },
+  // A placeholder until the asset-designer's (#1528).
+  "monk.banish": { glyph: "ghost", modifier: "plus" },
   // Placeholders until the asset-designer's (#1519): Monk smiting staples.
   "monk.smite": { glyph: "lightning", modifier: "plus" },
   "monk.spear-of-light": { glyph: "spear-bolt", modifier: "plus" },
