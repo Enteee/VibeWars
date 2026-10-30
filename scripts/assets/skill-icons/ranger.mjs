@@ -34,4 +34,12 @@ export const RANGER_ICONS = {
   "ranger.revive-animal": { glyph: "paw", modifier: "up" },
   // Necro/Ele/Ranger staples (#1540, #1572).
   "ranger.infuriating-heat": { glyph: "flame-rise" },
+  // Placeholders until the asset-designer's (#1539): Ranger staples.
+  "ranger.dual-shot": { glyph: "arrow", modifier: "plus" },
+  "ranger.melandrus-shot": { glyph: "arrow", modifier: "half" },
+  "ranger.zojuns-shot": { glyph: "arrow", modifier: "down" },
+  "ranger.point-blank-shot": { glyph: "arrow", modifier: "self" },
+  "ranger.whirling-defense": { glyph: "shield-stance", modifier: "area" },
+  "ranger.serpents-quickness": { glyph: "speed", modifier: "less" },
+  "ranger.dodge": { glyph: "speed", modifier: "half" },
 };

@@ -37,10 +37,10 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.armor-of-mist": { glyph: "mist-shield" },
   "elementalist.shatterstone": { glyph: "stone-split", modifier: "hourglass" },
   "elementalist.mind-freeze": { glyph: "head-frost" },
-  "elementalist.mind-blast": { glyph: "fireball", modifier: "up" },
   // Necro/Ele/Ranger staples (#1540, #1572).
   "elementalist.mark-of-rodgort": { glyph: "hex-flame" },
   "elementalist.lava-font": { glyph: "lava-spouts" },
   "elementalist.ward-against-elements": { glyph: "ward-elements" },
   "elementalist.shock-arrow": { glyph: "arrow-bolt" },
+  "elementalist.mind-blast": { glyph: "fireball-mind", modifier: "up" },
 };

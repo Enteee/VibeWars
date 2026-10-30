@@ -7,8 +7,62 @@ import {
   RANGE_NATURE_RITUAL,
   RANGE_SPELL,
 } from "../../distances.js";
-import type { Skill } from "../types.js";
+import type { Skill, StateCondition } from "../types.js";
 import { RANGE_LONG, WOLF } from "./shared.js";
+
+/** Melandru's Shot's "a foe that is moving or knocked down" (#1539). */
+const MOVING_OR_KNOCKED_DOWN: StateCondition = {
+  kind: "any-of",
+  conditions: [{ kind: "target-moving" }, { kind: "target-knocked-down" }],
+};
+
+/**
+ * Zojun's Shot, or Point Blank Shot, whose text is the same (#1539):
+ * "Shoot an arrow that has half the normal range, but strikes for
+ * +10...40 damage": +34.
+ */
+function zojunsShot(id: string, name: string, gwId: number): Skill {
+  return {
+    id,
+    name,
+    gwId,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 3,
+    range: RANGE_LONG / 2,
+    target: "single-enemy",
+    area: undefined,
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.expertise", atZero: 10, atTwelve: 34 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      criticalWhen: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      flightSpeed: undefined,
+      onCritical: [],
+      onFailedToHit: [],
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [],
+  };
+}
 
 export const RANGER_SKILLS: readonly Skill[] = [
   {
@@ -1214,6 +1268,189 @@ export const RANGER_SKILLS: readonly Skill[] = [
         },
       },
     ],
+  },
+  // Ranger staples (#1539).
+  {
+    id: "ranger.dual-shot",
+    name: "Dual Shot",
+    gwId: 396,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "Shoot two arrows simultaneously at target foe. These arrows deal
+    // 25% less damage": one flight, two blows as it lands, each rolling
+    // its own blind, block and crit.
+    attack: {
+      weapon: "bow",
+      weaponDamage: 0.75,
+      bonusDamage: undefined,
+      conditionalBonus: undefined,
+      strikes: 2,
+      unblockable: false,
+      chain: undefined,
+      criticalWhen: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      flightSpeed: undefined,
+      onCritical: [],
+      onFailedToHit: [],
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [],
+  },
+  {
+    id: "ranger.melandrus-shot",
+    name: "Melandru's Shot",
+    gwId: 853,
+    type: "attack",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If it hits a foe that is moving or knocked down, that foe takes
+    // +10...25 damage" (PvP): +22, read as the arrow lands.
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: undefined,
+      conditionalBonus: {
+        condition: MOVING_OR_KNOCKED_DOWN,
+        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 10, atTwelve: 22 } },
+      },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      criticalWhen: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      flightSpeed: undefined,
+      onCritical: [],
+      onFailedToHit: [],
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If Melandru's Shot hits, your target begins Bleeding for 5...25
+    // seconds ... and is Crippled for 5...15 seconds": 21 s, and 13 s on a
+    // foe moving or knocked down.
+    effects: [
+      { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+      {
+        kind: "if",
+        condition: MOVING_OR_KNOCKED_DOWN,
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      },
+    ],
+  },
+  zojunsShot("ranger.zojuns-shot", "Zojun's Shot", 1192),
+  zojunsShot("ranger.point-blank-shot", "Point Blank Shot", 407),
+  {
+    id: "ranger.whirling-defense",
+    name: "Whirling Defense",
+    gwId: 450,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...20 seconds, you have 75% chance to block attacks": 18 s,
+    // its rank-12 value; the damage a blocked projectile spreads is the
+    // status's.
+    effects: [{ kind: "apply-status", statusId: "whirling-defense", durationSeconds: 18 }],
+  },
+  {
+    id: "ranger.serpents-quickness",
+    name: "Serpent's Quickness",
+    gwId: 456,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15...30 seconds, recharge times for your skills are reduced by
+    // 33%": 27 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "serpents-quickness", durationSeconds: 27 }],
+  },
+  {
+    id: "ranger.dodge",
+    name: "Dodge",
+    gwId: 425,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...11 seconds, you move 33% faster and have a 27...75% chance
+    // to block incoming projectiles": 10 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "dodge", durationSeconds: 10 }],
   },
   // Infuriating Heat, with the Necromancer and Elementalist staples (#1540).
   {

@@ -244,6 +244,12 @@ export interface StatusDefinition {
    */
   readonly attackDamageTypeWeapon: AttackWeaponClass | undefined;
   /**
+   * The least armor penetration the bearer's weapon attacks have (#1519):
+   * Judge's Insight's "+20% armor penetration". It joins the blow's and
+   * Strength's: the highest counts, nothing adds. 0: none.
+   */
+  readonly attackArmorPenetration: number;
+  /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
    */
@@ -515,6 +521,12 @@ export interface StatusDefinition {
    * a recharge already running keeps its length when the status ends.
    */
   readonly spellRechargeFaster: number;
+  /**
+   * The share taken off the recharge of each skill the bearer finishes,
+   * of any type (#1539): Serpent's Quickness's 0.33. Read as
+   * `spellRechargeFaster` is; with a type's own share, the larger counts.
+   */
+  readonly skillRechargeFaster: number;
   /**
    * The share taken off the recharge of each binding ritual the bearer
    * finishes (#1064): Weapon of Quickening's 0.33, read as
@@ -795,6 +807,12 @@ export interface StatusTrigger {
    * Absent: any attack.
    */
   readonly weapon?: AttackWeaponClass;
+  /**
+   * On `bearer-blocks` only (#1549): it fires only for a blocked attack of
+   * this kind, whichever status's share the roll fell in, as Riposte's
+   * "block the next melee attack". Absent: any block.
+   */
+  readonly blocked?: "melee" | "projectile";
   /**
    * On `bearer-loses-enchantment` only (#1437): it fires only for an
    * enchantment of this profession's (`StatusDefinition.profession`).
@@ -1250,14 +1268,16 @@ export class StatusSet {
    * Status `statusId` blocked an attack of this kind from `offenderId`
    * (#1329), recorded only if that status answers it, with its triggers:
    * another blocking status on the bearer does not. Every status that
-   * answers any block (#1403) does, after it.
+   * answers any block (#1403), or any of this kind (#1549), does, after it.
    */
   public recordBlock(statusId: StatusId, offenderId: string, kind: "melee" | "projectile"): void {
     const fired = [
       ...this.#answering(
         kind === "melee" ? "bearer-blocks-melee" : "bearer-blocks-projectile",
       ).filter((answering) => answering.statusId === statusId),
-      ...this.#answering("bearer-blocks"),
+      ...this.#answering("bearer-blocks").filter(
+        ({ trigger }) => trigger.blocked === undefined || trigger.blocked === kind,
+      ),
     ];
     if (fired.length > 0) {
       this.#changes.push({ kind: "blocked", offenderId, fired });
@@ -1663,12 +1683,14 @@ export class StatusSet {
    * The newest applied goes first, as in GW1 (#521), where covering an
    * important enchantment or condition with a cheaper one is a tactic.
    * With a `profession`, only that profession's statuses go (#845): "lose
-   * 1 Dervish enchantment".
+   * 1 Dervish enchantment". With a `statusId`, only that status (#1549):
+   * "Charge!"'s "lose the Crippled condition".
    */
   public removeByCategory(
     category: StatusCategory,
     count = Number.POSITIVE_INFINITY,
     profession?: ProfessionId,
+    statusId?: StatusId,
   ): StatusId[] {
     const removed: StatusId[] = [];
     for (const status of [...this.#statuses.values()].reverse()) {
@@ -1678,7 +1700,8 @@ export class StatusSet {
       const definition = getStatusDefinition(status.id);
       if (
         definition.category === category &&
-        (profession === undefined || definition.profession === profession)
+        (profession === undefined || definition.profession === profession) &&
+        (statusId === undefined || status.id === statusId)
       ) {
         removed.push(status.id);
       }
@@ -2128,6 +2151,8 @@ export interface StatusModifiers {
    * 1 − Π(1 − f), never more than `MAX_RECHARGE_REDUCTION` (#975).
    */
   readonly spellRechargeFaster: number;
+  /** As `spellRechargeFaster`, for a skill of any type (#1539). */
+  readonly skillRechargeFaster: number;
   /** As `spellRechargeFaster`, for a binding ritual (#1064). */
   readonly bindingRitualRechargeFaster: number;
   /** Every status's, summed (#1455). */
@@ -2144,6 +2169,8 @@ export interface StatusModifiers {
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, summed (#988). */
   readonly criticalChanceBonus: number;
+  /** The largest status's (#1519). */
+  readonly attackArmorPenetration: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -2222,10 +2249,12 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let uninterruptible = false;
   let conditionsExpireFaster = 0;
   let spellRechargeKept = 1;
+  let skillRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
+  let attackArmorPenetration = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
@@ -2314,10 +2343,12 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     uninterruptible ||= def.uninterruptible;
     conditionsExpireFaster += def.conditionsExpireFaster;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
+    skillRechargeKept *= 1 - def.skillRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
+    attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -2352,6 +2383,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     knockdownMinSeconds,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
+    skillRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - skillRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     adrenalineGainFaster,
     enchantmentRechargeFaster,
@@ -2360,6 +2392,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     conditionsExpireFaster,
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
+    attackArmorPenetration,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,
