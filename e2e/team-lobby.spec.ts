@@ -2,11 +2,12 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
-import { openPeers } from "./helpers/peers.js";
+import { joinByCode, openRail } from "./helpers/menu.js";
+import { hostLobby, openPeers } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
- * The Team Lobby screen (#1460): a lobby hosted from a Team Play tile
+ * The Team Lobby screen (#1460): a lobby hosted from Hosted Game (#1525)
  * votes on Team Builds, then takes the chosen one's characters as seats.
  * The two pages share one context (#403), so their storage too: the Team
  * Build saved and picked on one is the other's as well.
@@ -45,10 +46,9 @@ function trioCode(): string {
   });
 }
 
-/** On the Solo menu, play as `name`: the name is read when the lobby is entered. */
-async function nameOnSolo(page: Page, name: string): Promise<void> {
+/** On the menu, play as `name`: the name is read when the lobby is entered. */
+async function nameOnMenu(page: Page, name: string): Promise<void> {
   await page.goto("./");
-  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Solo Play" }).click();
   await namePlayer(page, name);
 }
 
@@ -60,22 +60,19 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
   const [host, guest] = pages as [Page, Page];
 
   try {
-    // Save the Trio on Team Play; it is proposed in the Team Lobby (#1515).
-    await nameOnSolo(host, "Host");
-    await host.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
-    await expect(host.getByRole("button", { name: "new team" })).toBeVisible();
+    // Save the Trio on Team Builder; it is proposed in the Team Lobby (#1515).
+    await nameOnMenu(host, "Host");
+    await openRail(host, "Team Builder");
+    await expect(host.getByRole("button", { name: "New team build", exact: true })).toBeVisible();
     await paste(host.locator(".screen"), trioCode());
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await expect(host.locator(".toast")).toHaveText("Saved");
     await host.getByRole("button", { name: "back" }).click();
 
-    await host.getByRole("button", { name: "Hosted Lobby", exact: true }).click();
-    const code = (await host.locator(".lobby-code").textContent())?.trim() ?? "";
-    expect(code).toMatch(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+    const code = await hostLobby(host);
 
-    await nameOnSolo(guest, "Guest");
-    await guest.locator("input.code-input").fill(code);
-    await guest.getByRole("button", { name: "Join", exact: true }).click();
+    await nameOnMenu(guest, "Guest");
+    await joinByCode(guest, code);
     await expect(guest.locator(".screen-lobby")).toBeVisible();
 
     // One side of two players and a bot.

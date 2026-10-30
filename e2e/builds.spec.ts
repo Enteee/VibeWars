@@ -6,6 +6,7 @@ import { CHARACTER_SCHEMA_VERSION } from "../apps/web/src/storage/schema.js";
 import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
+import { openRail, pickCharacter } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -21,11 +22,14 @@ import { skillKey } from "./keys.js";
  * and survives a reload.
  */
 
-/** The roster lives on the entry screen, so the editor is one click away. */
+/** Character Builder's cards and what it says is wrong (#1525), where a saved character shows. */
+const roster = (page: Page): Locator => page.locator(".screen-characters .rail-body");
+
+/** Character Builder makes the characters (#1525), so the editor is one click away. */
 async function newCharacter(page: Page): Promise<void> {
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
-  await page.getByRole("button", { name: "new character" }).click();
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();
 }
 
@@ -40,9 +44,9 @@ test("Close leaves at once without edits, and asks before it discards them (#566
   await newCharacter(page);
   await expect(page.locator(".editor-unsaved")).toBeHidden();
   await page.getByRole("button", { name: "close" }).click();
-  await expect(page.locator(".roster")).toBeVisible();
+  await expect(roster(page)).toBeVisible();
 
-  await page.getByRole("button", { name: "new character" }).click();
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Draft");
   await expect(page.locator(".editor-unsaved")).toBeVisible();
   await page.getByRole("button", { name: "close" }).click();
@@ -55,8 +59,8 @@ test("Close leaves at once without edits, and asks before it discards them (#566
   await page.keyboard.press("Escape");
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "discard" }).click();
-  await expect(page.locator(".roster")).toBeVisible();
-  await expect(page.locator(".selectable-row", { hasText: "Draft" })).toHaveCount(0);
+  await expect(roster(page)).toBeVisible();
+  await expect(page.locator(".character-card", { hasText: "Draft" })).toHaveCount(0);
 });
 
 test("the top bar's question stands in for the crumbs and fits the window at any width (#1320)", async ({
@@ -112,7 +116,7 @@ test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)"
   await page.locator("input.editor-name").fill("Doomed");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await page
-    .locator(".selectable-row", { hasText: "Doomed" })
+    .locator(".character-card", { hasText: "Doomed" })
     .getByRole("button", { name: "edit" })
     .click();
 
@@ -126,8 +130,8 @@ test("Delete in the ⋯ menu always asks, and cancel keeps the character (#566)"
   await more.click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
-  await expect(page.locator(".roster")).toBeVisible();
-  await expect(page.locator(".selectable-row", { hasText: "Doomed" })).toHaveCount(0);
+  await expect(roster(page)).toBeVisible();
+  await expect(page.locator(".character-card", { hasText: "Doomed" })).toHaveCount(0);
 });
 
 test("the problems chip says what is wrong in a sentence and shows where (#566)", async ({
@@ -166,18 +170,18 @@ test("a character can be created, named and saved", async ({ page }) => {
   await expect(save).toBeEnabled();
   await save.click();
 
-  await expect(page.locator(".roster")).toContainText("Test Warrior");
+  await expect(roster(page)).toContainText("Test Warrior");
 });
 
 test("a saved character survives a page reload", async ({ page }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Persistent");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.locator(".roster")).toContainText("Persistent");
+  await expect(roster(page)).toContainText("Persistent");
 
   // The real assertion: it came back from IndexedDB, not from memory.
   await page.reload();
-  await expect(page.locator(".roster")).toContainText("Persistent");
+  await expect(roster(page)).toContainText("Persistent");
 });
 
 test("a character shown in the roster survives leaving the page at once, even on a slow disk", async ({
@@ -202,10 +206,10 @@ test("a character shown in the roster survives leaving the page at once, even on
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Slow Disk");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.locator(".roster")).toContainText("Slow Disk");
+  await expect(roster(page)).toContainText("Slow Disk");
 
   await page.goto("./");
-  await expect(page.locator(".roster")).toContainText("Slow Disk");
+  await expect(roster(page)).toContainText("Slow Disk");
 });
 
 test("spending attribute points updates the remaining budget", async ({ page }) => {
@@ -291,8 +295,9 @@ test("12/12/3 spends all 200 points, GW1's split (#470)", async ({ page }) => {
 test("a rune's bonus stays clear of max, and the pips stay in line (#1102)", async ({ page }) => {
   // The Warrior/Monk starter wears a rune: its rank reads "12 +1".
   await bringStarter(page, "Warrior/Monk");
+  await openRail(page, "Character Builder");
   await page
-    .locator(".selectable-row", { hasText: "Warrior/Monk" })
+    .locator(".character-card", { hasText: "Warrior/Monk" })
     .first()
     .getByRole("button", { name: "Edit", exact: true })
     .click();
@@ -328,7 +333,7 @@ async function saveCharacters(page: Page, names: readonly string[]): Promise<voi
     // The roster re-renders only once the save has committed. Without
     // this wait, the next newCharacter's page.goto unloads the page
     // mid-write and the character is lost.
-    await expect(page.locator(".roster")).toContainText(name);
+    await expect(roster(page)).toContainText(name);
   }
 }
 
@@ -338,24 +343,24 @@ const ROLLED_STARTER = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
 const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
-/** Team Play's tab in the title bar (#1453), where the Team Builds are. */
-async function openTeamPlay(page: Page): Promise<void> {
-  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
+/** Team Builder on the rail (#1525), where the Team Builds are made. */
+async function openTeamBuilder(page: Page): Promise<void> {
+  await openRail(page, "Team Builder");
 }
-/** Team Play's Team Build cards (#1453), without New team build: "Duo · 2 members". */
-const teamRows = (page: Page) => page.locator(".team-play-card:not(.team-play-new)");
+/** Team Builder's Team Build cards (#1453, #1525), without New team build: "Duo · 2 members". */
+const teamRows = (page: Page) => page.locator(".screen-teams .play-card:not(.play-card-new)");
 async function teamList(page: Page): Promise<string[]> {
   return teamRows(page).evaluateAll((cards) =>
     cards.map((card) => {
-      const count = card.querySelectorAll(".team-play-card-member").length;
-      return `${card.querySelector(".team-play-card-name")?.textContent ?? ""} · ${String(count)} ${count === 1 ? "member" : "members"}`;
+      const count = card.querySelectorAll(".play-card-member").length;
+      return `${card.querySelector(".play-card-name")?.textContent ?? ""} · ${String(count)} ${count === 1 ? "member" : "members"}`;
     }),
   );
 }
 
 test("a new team is stored only on Save, which stays on the editor (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
 
   // Nothing stored yet: Back leaves at once and the list is still empty.
@@ -381,13 +386,13 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect(page.getByRole("button", { name: "duplicate" })).toBeEnabled();
 
   await page.reload();
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
 });
 
 test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -412,15 +417,15 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   await expect(page.locator(".toast")).toHaveText("Pasted Duo, 1 member. Save to keep it.");
 });
 
-test("Team Play's cards: New team build; a card shows its members, and it or its Edit opens it (#1453, #1515)", async ({
+test("Team Builder's cards: New team build; a card shows its members, and it or its Edit opens it (#1453, #1515)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   // Empty: only New team build, with the one line under it; no None.
   await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
   await expect(teamRows(page)).toHaveCount(0);
-  await expect(page.locator(".team-play-cards")).not.toContainText("None");
+  await expect(page.locator(".screen-teams .play-cards")).not.toContainText("None");
   await expect(page.locator(".team-play-hint")).toBeVisible();
   await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
   await page.getByRole("button", { name: "new team" }).click();
@@ -434,7 +439,7 @@ test("Team Play's cards: New team build; a card shows its members, and it or its
   await expect(teamRows(page).locator(".character-dot")).toHaveCount(2);
   await expect(page.locator(".team-play-hint")).toHaveCount(0);
   // A card is no pick: Enter on it opens it in the editor, as Edit does.
-  const duo = teamRows(page).first().locator(".team-play-card-open");
+  const duo = teamRows(page).first().locator(".play-card-open");
   await expect(duo).not.toHaveAttribute("aria-pressed");
   await duo.focus();
   await page.keyboard.press("Enter");
@@ -446,7 +451,7 @@ test("Team Play's cards: New team build; a card shows its members, and it or its
 
 test("team edits stay on screen until Save; Back and Delete ask first (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
@@ -500,7 +505,7 @@ test("the team editor's bar puts its status on a second row from 721 to 1200 px,
   page,
 }) => {
   await saveCharacters(page, ["Alpha"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -520,7 +525,7 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo", "Charlie"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
 
   const header = page.locator(".team-picker-header");
@@ -565,9 +570,9 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
         .click();
     }
     await page.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(page.locator(".roster")).toContainText(name);
+    await expect(roster(page)).toContainText(name);
   }
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "add Bravo" }).click();
@@ -603,7 +608,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Trip");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -634,11 +639,11 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   await expect(page.getByLabel("team name")).toHaveValue("Trip");
 });
 
-test("a team member is the team's own: an edit leaves the Solo character alone; New character joins on Save (#1452)", async ({
+test("a team member is the team's own: an edit leaves the saved character alone; New character joins on Save (#1452)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team build" }).click();
   await page.getByLabel("team name").fill("Own");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -664,14 +669,14 @@ test("a team member is the team's own: an edit leaves the Solo character alone; 
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
 
-  // The Solo roster is as it was: Alpha, unchanged, and no Fresh.
+  // Character Builder's are as they were: Alpha, unchanged, and no Fresh.
   await page.getByRole("button", { name: "back" }).click();
-  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Solo Play" }).click();
-  await expect(page.locator(".roster")).toContainText("Alpha");
-  await expect(page.locator(".roster")).not.toContainText("Alpha Prime");
-  await expect(page.locator(".roster")).not.toContainText("Fresh");
+  await openRail(page, "Character Builder");
+  await expect(roster(page)).toContainText("Alpha");
+  await expect(roster(page)).not.toContainText("Alpha Prime");
+  await expect(roster(page)).not.toContainText("Fresh");
   await page.reload();
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await expect.poll(() => teamList(page)).toEqual(["Own · 2 members"]);
 });
 
@@ -712,7 +717,7 @@ test("⋯ Share copies the build as one line, and a paste on the editor imports 
   // Named but never saved: Close asks first (#566).
   await page.getByRole("button", { name: "close" }).click();
   await page.getByRole("button", { name: "discard" }).click();
-  await page.getByRole("button", { name: "new character" }).click();
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Scratch");
 
   // Into the name field it is only typing.
@@ -807,11 +812,11 @@ test("Share keeps the line selected when the clipboard is refused (#572)", async
   await expect(page.locator(".toast")).toBeHidden();
 });
 
-test("Share copies a team as one line; pasted on Team Play it opens unsaved (#577)", async ({
+test("Share copies a team as one line; pasted on Team Builder it opens unsaved (#577)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await openTeamPlay(page);
+  await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -829,10 +834,10 @@ test("Share copies a team as one line; pasted on Team Play it opens unsaved (#57
   await expect(line).toBeHidden();
 
   await page.getByRole("button", { name: "back" }).click();
-  // Team Play mounts once the teams load; a paste before that finds no listener.
+  // Team Builder mounts once the teams load; a paste before that finds no listener.
   await expect(page.getByRole("button", { name: "new team" })).toBeVisible();
 
-  // On Team Play, a build code is not a team and is ignored; the team code
+  // On Team Builder, a build code is not a team and is ignored; the team code
   // opens the team unsaved, its members its own (#1452).
   const build = JSON.stringify((JSON.parse(code) as { members: unknown[] }).members[0]);
   await paste(page.locator(".screen"), build);
@@ -857,11 +862,11 @@ test("Share copies a team as one line; pasted on Team Play it opens unsaved (#57
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members", "Duo · 2 members"]);
 
   // On the build editor a team code is not imported.
-  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Solo Play" }).click();
-  await page.getByRole("button", { name: "new character" }).click();
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Scratch");
   await paste(page.locator(".editor"), code);
-  await expect(page.locator(".toast")).toHaveText("That is a team code. Paste it on Team Play.");
+  await expect(page.locator(".toast")).toHaveText("That is a team code. Paste it on Team Builder.");
   await expect(page.locator("input.editor-name")).toHaveValue("Scratch");
 });
 
@@ -875,12 +880,11 @@ test("a saved character can be chosen and is taken into a match", async ({ page 
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  // Saving returns to the entry screen, where the roster is. Clicking the
-  // row is how a player chooses who to play.
-  const row = page.locator(".selectable-row", { hasText: "Pyro" });
-  await expect(row).toBeVisible();
-  await row.click();
-  await expect(row).toHaveClass(/is-selected/);
+  // Saving returns to Character Builder. Its card on Random Arena is how
+  // a player chooses who to play (#1525).
+  await expect(roster(page)).toContainText("Pyro");
+  await pickCharacter(page, "Pyro");
+  await expect(page.locator(".character-card", { hasText: "Pyro" })).toHaveClass(/is-selected/);
 
   await startSoloMatch(page);
   await expect(page.locator("#viewport canvas:not(.compass)")).toBeVisible();
@@ -902,7 +906,7 @@ test("in a match, an empty slot's key does nothing; the next key casts its own s
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(2));
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".selectable-row", { hasText: "Gap" }).click();
+  await pickCharacter(page, "Gap");
   await startSoloMatch(page);
   const energy = page.locator(".hud-bar-energy .hud-bar-label");
   await expect(energy).toContainText("en");
@@ -961,7 +965,7 @@ test("a second elite replaces the first on the bar, framed in gold, into the mat
   await expect(page.locator(".skill-slot.is-elite")).toHaveCount(1);
 
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".selectable-row", { hasText: "Elite" }).click();
+  await pickCharacter(page, "Elite");
   await startSoloMatch(page);
   const hud = page.locator(".hud-skills .hud-skill");
   await expect(hud.nth(3)).toHaveAccessibleName("Broad Head Arrow");
@@ -984,7 +988,7 @@ test("in a match, Glyph of Lesser Energy shows Armor of Earth's discounted cost 
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(1));
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".selectable-row", { hasText: "Glyph" }).click();
+  await pickCharacter(page, "Glyph");
   await startSoloMatch(page);
   const slot = page.locator(".hud-skills .hud-skill").nth(1);
   const tip = page.locator(".skill-tip:visible");
@@ -1201,7 +1205,7 @@ test("a stale saved character is discarded, the player is told once, and it stay
   page,
 }) => {
   await page.goto("./");
-  await expect(page.locator(".roster")).toBeVisible();
+  await openRail(page, "Character Builder");
   const record = JSON.stringify(STALE_CHARACTER);
   await inCharacterStore(
     page,
@@ -1209,12 +1213,10 @@ test("a stale saved character is discarded, the player is told once, and it stay
   );
 
   await page.reload();
-  const roster = page.locator(".roster");
-  await expect(roster).toBeVisible();
-  await expect(roster.locator(".screen-problem")).toHaveText(
+  await expect(roster(page).locator(".screen-problem")).toHaveText(
     "A saved character from an older build of the game could not be read and was discarded.",
   );
-  await expect(roster).not.toContainText("Veteran");
+  await expect(roster(page)).not.toContainText("Veteran");
 
   // Deleted, not hidden: the record is gone from the real store, and the
   // notice does not come back on the next visit.
@@ -1222,8 +1224,8 @@ test("a stale saved character is discarded, the player is told once, and it stay
     await inCharacterStore(page, `(store) => store.get(${JSON.stringify(STALE_CHARACTER.id)})`),
   ).toBeNull();
   await page.reload();
-  await expect(page.locator(".roster")).toBeVisible();
-  await expect(page.locator(".roster .screen-problem")).toHaveCount(0);
+  await expect(roster(page)).toBeVisible();
+  await expect(roster(page).locator(".screen-problem")).toHaveCount(0);
 });
 
 /** A character saved legal under rules that no longer allow it (#1290): ranks past the cap. */
@@ -1242,8 +1244,7 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   page,
 }) => {
   await page.goto("./");
-  const roster = page.locator(".roster");
-  await expect(roster).toBeVisible();
+  await openRail(page, "Random Arena");
   const record = JSON.stringify(OUTLAWED_CHARACTER);
   await inCharacterStore(
     page,
@@ -1258,25 +1259,26 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   );
   await page.reload();
 
-  const outlaw = roster.locator(".selectable-row", { hasText: "Outlaw" });
+  const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);
   await expect(outlaw.locator(".roster-invalid-tag")).toHaveText("Invalid");
-  await expect(outlaw.locator(".selectable-row-choose")).toHaveAttribute("aria-disabled", "true");
-  // Kept, but no choice: nothing is chosen, so Random Arena waits.
-  await expect(roster.locator(".selectable-row.is-selected")).toHaveCount(0);
-  const queue = page.getByRole("button", { name: "Random Arena", exact: true });
+  await expect(outlaw.locator(".play-card-open")).toHaveAttribute("aria-disabled", "true");
+  // Kept, but no choice: nothing is chosen, so Random Arena's tiles wait.
+  await expect(page.locator(".character-card.is-selected")).toHaveCount(0);
+  const queue = page.locator(".random-arena-tile").first();
   await expect(queue).toBeDisabled();
 
   // Clicking it anyway chooses nothing; the rolled character still can be.
-  await outlaw.locator(".selectable-row-choose").click({ force: true });
+  await outlaw.locator(".play-card-open").click({ force: true });
   await expect(outlaw).not.toHaveClass(/is-selected/);
   await expect(queue).toBeDisabled();
-  const rolled = roster.locator(".selectable-row").filter({ hasNotText: "Outlaw" });
-  await rolled.locator(".selectable-row-choose").click();
+  const rolled = page.locator(".character-card").filter({ hasNotText: "Outlaw" });
+  await rolled.locator(".play-card-open").click();
   await expect(rolled).toHaveClass(/is-selected/);
   await expect(queue).toBeEnabled();
 
-  // Edit still opens it, to be fixed.
+  // Edit, on Character Builder, still opens it, to be fixed.
+  await openRail(page, "Character Builder");
   await outlaw.getByRole("button", { name: "Edit", exact: true }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Outlaw");
 });
@@ -1513,12 +1515,12 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await equipFromLibrary(page, "Hammer");
   await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.locator(".roster")).toContainText("Gear Keeper");
+  await expect(roster(page)).toContainText("Gear Keeper");
 
   // The real assertion: gear came back from IndexedDB, not from memory.
   await page.reload();
   await page
-    .locator(".selectable-row")
+    .locator(".character-card")
     .filter({ hasText: "Gear Keeper" })
     .getByRole("button", { name: "edit" })
     .click();
@@ -2060,6 +2062,6 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await expect(page.locator(".skill-box", { hasText: "Searing Flames" })).toHaveCount(1);
   await expect(page.locator(".skill-box, .skill-corpus-box")).toHaveCount(2);
   await page.reload();
-  await page.getByRole("button", { name: "new character" }).click();
+  await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
 });

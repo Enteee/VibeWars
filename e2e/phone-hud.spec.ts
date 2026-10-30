@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
+import { hostLobby, playHouseTeams } from "./helpers/peers.js";
 
 /**
  * A phone in a match (#1297, #1306): the HUD's top band is narrower than
@@ -63,7 +64,7 @@ async function phoneMatch(page: Page, phone: Phone, map?: string): Promise<void>
     };
     note();
   });
-  await page.getByRole("button", { name: "host a lobby" }).click();
+  await hostLobby(page);
   if (map !== undefined) {
     await page.locator(".lobby-map select").selectOption(map);
   }
@@ -72,7 +73,8 @@ async function phoneMatch(page: Page, phone: Phone, map?: string): Promise<void>
   await expect(page.locator(".lobby-team").nth(1).locator(".lobby-bot-count")).toHaveText("1");
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  // Any character will do: the house team's one seat (#1525).
+  await playHouseTeams([page]);
   await page.keyboard.press(key("target-closest"));
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
 }

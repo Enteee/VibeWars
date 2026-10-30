@@ -7,24 +7,23 @@ import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
 import { createCharacterFigure } from "./character-figure.js";
 import { equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
-import { button, emptyState, h, screenBar, selectableRow } from "./kit.js";
+import { button, emptyState, h, playCard, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
+import { railScreen, type RailEntry } from "./rail.js";
 
 /**
- * The main menu and lobby screens (brief §21).
+ * The menu's character screens (brief §21, #1525): Random Arena, where
+ * you pick who to queue as, and Character Builder, where you make them.
  *
  * Screens are plain DOM rendered into one container; `showScreen` swaps
- * which one is visible. There is no router and no framework — four
- * screens with no deep linking do not need one.
+ * which one is visible. There is no router and no framework.
  */
 
 export interface MenuCallbacks {
   /** Queue for a Random Arena of `mode` as `name` (#880), with the active character. */
   readonly onRandomArena: (mode: QueueMode, name: string) => void;
-  readonly onCreateLobby: (name: string) => void;
-  readonly onJoinLobby: (code: string, name: string) => void;
-  /** Show Solo Play or Team Play (#1453); the menu has stored it. */
-  readonly onSwitchTab: (tab: PlayTab) => void;
+  /** Show another rail entry (#1525); the rail has stored it. */
+  readonly onSwitch: (entry: RailEntry) => void;
   /** Open the Record screen (#1404). */
   readonly onShowRecord: () => void;
   /** Open the build editor on a new character. */
@@ -38,24 +37,22 @@ export interface MenuCallbacks {
   readonly onSelectCharacter: (id: string) => void;
 }
 
-/**
- * How long a join runs before the menu says it is still connecting
- * (#707): a join may take up to 20 s, which should not look like a hang.
- */
-export const CONNECTING_NOTICE_MS = 3000;
-
-/** The Random Arena modes the menu offers (Q97), as their buttons read. */
+/** The Random Arena formats (Q97), as their tiles read, smallest first. */
 export const RANDOM_ARENA_MODES: readonly { readonly mode: QueueMode; readonly label: string }[] = [
-  { mode: "random-arena-4v4", label: "4v4" },
-  { mode: "random-arena-2v2", label: "2v2" },
   { mode: "random-arena-1v1", label: "1v1" },
+  { mode: "random-arena-2v2", label: "2v2" },
+  { mode: "random-arena-4v4", label: "4v4" },
 ];
 
-/** Why *Random Arena* is greyed out: a queue needs a character to show strangers. */
+/** Why the Random Arena tiles are greyed out: a queue needs a character to show strangers. */
 export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
 
-/** The Random Arena mode picked this visit (#880): kept in memory, never stored. */
-let randomArenaMode: QueueMode = "random-arena-4v4";
+/** What Random Arena is for, under its heading. */
+export const RANDOM_ARENA_GOAL =
+  "Pick a character, then queue: random allies and foes from the server.";
+
+/** What Character Builder is for, under its heading. */
+export const CHARACTER_BUILDER_GOAL = "Make, edit and reroll the characters you play.";
 
 const CHARACTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.activeCharacterId`;
 
@@ -82,108 +79,14 @@ export function saveActiveCharacterId(id: string): void {
   }
 }
 
-/** The main screen's two tabs (#1453): your own character, or a team. */
-export type PlayTab = "solo" | "team";
-
-/** The tabs as the title bar reads them, Solo Play first. */
-export const PLAY_TABS: readonly { readonly tab: PlayTab; readonly label: string }[] = [
-  { tab: "solo", label: "Solo Play" },
-  { tab: "team", label: "Team Play" },
-];
-
-const PLAY_TAB_STORAGE_KEY = `${STORAGE_NAMESPACE}.playTab`;
-
-/** The tab last shown; Solo Play on a first start, and for anything else stored. */
-export function loadPlayTab(): PlayTab {
-  try {
-    return localStorage.getItem(PLAY_TAB_STORAGE_KEY) === "team" ? "team" : "solo";
-  } catch {
-    // Same reasoning as the name.
-    return "solo";
-  }
-}
-
-export function savePlayTab(tab: PlayTab): void {
-  try {
-    localStorage.setItem(PLAY_TAB_STORAGE_KEY, tab);
-  } catch {
-    // Same reasoning as the name.
-  }
-}
-
 /**
- * The switch after "VibeWars" in the title bar (#1453): `active` pressed,
- * the other stores itself and goes to `onSwitch`.
+ * Random Arena's own button in the title bar (#1453): Record. Music is
+ * the ♪.
  */
-export function playTabs(active: PlayTab, onSwitch: (tab: PlayTab) => void): HTMLElement {
-  const group = h("div", "play-tabs");
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", "Play");
-  for (const { tab, label } of PLAY_TABS) {
-    const choice = button(label, "play-tab", () => {
-      if (tab !== active) {
-        savePlayTab(tab);
-        onSwitch(tab);
-      }
-    });
-    choice.setAttribute("aria-pressed", String(tab === active));
-    group.appendChild(choice);
-  }
-  return group;
-}
-
-/**
- * Solo Play's own buttons in the title bar (#1453): Record. Team Builds
- * are Team Play's, and Music is the ♪.
- */
-export function soloPlayActions(
+export function randomArenaActions(
   callbacks: Pick<MenuCallbacks, "onShowRecord">,
 ): readonly { readonly label: string; readonly onPress: () => void }[] {
   return [{ label: "Record", onPress: callbacks.onShowRecord }];
-}
-
-/**
- * The join row, a code and Join, then "Connecting…" once a join has run
- * a while (#707): Solo Play's and Team Play's (#1453). `name` is read at
- * the press.
- */
-export function joinControls(
-  panel: HTMLElement,
-  name: () => string,
-  onJoin: (code: string, name: string) => void,
-): HTMLElement[] {
-  const joinRow = h("div", "menu-row");
-  const codeInput = document.createElement("input");
-  codeInput.className = "field-input code-input";
-  codeInput.placeholder = "CODE";
-  codeInput.maxLength = 8;
-  codeInput.setAttribute("aria-label", "Lobby code");
-  codeInput.addEventListener("input", () => {
-    // Codes are always upper case; doing it as they type avoids a
-    // "why didn't my code work" moment.
-    codeInput.value = codeInput.value.toUpperCase();
-  });
-  // Shown once a join has run a while; the lobby, or the menu again with
-  // why it failed, replaces this screen when it ends.
-  const connecting = h("p", "menu-connecting", "Connecting…");
-  connecting.setAttribute("role", "status");
-  connecting.hidden = true;
-  const join = (): void => {
-    onJoin(codeInput.value, name());
-    setTimeout(() => {
-      if (panel.isConnected) {
-        connecting.hidden = false;
-      }
-    }, CONNECTING_NOTICE_MS);
-  };
-  codeInput.addEventListener("keydown", (event: KeyboardEvent) => {
-    if (event.key === "Enter") {
-      join();
-    }
-  });
-  joinRow.appendChild(codeInput);
-  joinRow.appendChild(button("Join", "primary", join));
-  return [joinRow, connecting];
 }
 
 const STARTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.starterCharacterId`;
@@ -266,12 +169,54 @@ export function rosterTags(
   return tags;
 }
 
+/** The cards' shared parts: who, as the arena draws them, then their line and bar. */
+interface CharacterCardParts {
+  readonly character: StoredCharacter;
+  readonly starter: string | undefined;
+  readonly tally: Tally | undefined;
+  readonly worn: ReturnType<typeof capeLook> | undefined;
+}
+
+/** A character's card, marked Random and Invalid as its tags say (#1290, #1426). */
+function characterCard(
+  { character, starter, tally, worn }: CharacterCardParts,
+  options: Pick<Parameters<typeof playCard>[0], "onOpen" | "pressed" | "actions">,
+): HTMLElement {
+  const card = playCard({
+    name: character.name,
+    tags: rosterTags(character, starter).map((tag) =>
+      h("span", tag === "Random" ? "roster-random-tag" : "roster-invalid-tag", tag),
+    ),
+    content: [
+      createCharacterFigure(character, worn),
+      h("span", "play-card-line", rosterSubtitle(character, tally)),
+      miniSkillBar(character),
+    ],
+    ...options,
+  });
+  card.classList.add("character-card");
+  if (character.id === starter) {
+    // Dashed, not only tagged: it differs by shape, not colour (#1426).
+    card.classList.add("is-random");
+  }
+  if (!isPlayable(character)) {
+    card.classList.add("is-invalid");
+  }
+  return card;
+}
+
+/** The cape your characters wear (#1422): only with a valid tag, set in Options (#1513). */
+function wornCape(): ReturnType<typeof capeLook> | undefined {
+  const { guildCape } = playerGuild();
+  return guildCape === null ? undefined : capeLook(guildCape);
+}
+
 /**
- * Render Solo Play (#579, #1453): your characters on the left, Play on
- * the right, and the Solo/Team Play switch and Record in the screen bar. Each
- * character's record (#1404) follows its subtitle.
+ * Render Random Arena (#880, #1525): your characters as cards, to pick who
+ * to queue as and nothing more, and the three format tiles that queue.
+ * Each character's record (#1404) follows its line.
  */
-export function renderMenu(
+export function renderRandomArena(
   root: HTMLElement,
   callbacks: MenuCallbacks,
   characters: readonly StoredCharacter[] = [],
@@ -279,56 +224,114 @@ export function renderMenu(
   connectionNotice?: string,
   tallies: ReadonlyMap<string, Tally> = new Map(),
 ): void {
-  // A Reroll redraws the menu under its own button (#1425): the new
-  // row's Reroll takes the focus back.
-  const rerolled = document.activeElement?.classList.contains("roster-reroll") === true;
-  // So does closing Options (#1513), after an await: a code typed in the
-  // meantime comes along, and so does the caret.
-  const oldCode = root.querySelector<HTMLInputElement>("input.code-input");
-  const code = oldCode?.value ?? "";
-  const codeFocused = oldCode !== null && document.activeElement === oldCode;
-  root.replaceChildren();
-  const panel = h("div", "screen screen-menu");
-
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
   screenBar({
     crumbs: ["VibeWars"],
-    status: [playTabs("solo", callbacks.onSwitchTab)],
-    actions: soloPlayActions(callbacks).map(({ label, onPress }) => button(label, "", onPress)),
+    actions: randomArenaActions(callbacks).map(({ label, onPress }) => button(label, "", onPress)),
+    join: true,
   });
-  const columns = h("div", "menu-columns");
-  panel.appendChild(columns);
+  const body = railScreen(root, "random-arena", RANDOM_ARENA_GOAL, callbacks.onSwitch);
 
-  // --- your characters --------------------------------------------------
-  // The roster lives here rather than behind a "characters" button: it is
-  // the thing you pick before every match, so hiding it one click away
-  // made the build editor feel optional when it is not.
-  const roster = h("section", "roster");
-  roster.appendChild(h("h2", "menu-column-title", "Play as"));
-
+  // Why the last try failed, under the bar it was tried from.
+  if (connectionNotice !== undefined) {
+    body.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
+  }
   for (const problem of characterProblems) {
-    roster.appendChild(h("div", "screen-problem", problem));
+    body.appendChild(h("div", "screen-problem", problem));
   }
 
   const active = loadActiveCharacterId();
   // An invalid active character is no choice at all (#1290).
   const activeExists = characters.some((c) => c.id === active && isPlayable(c));
   const starter = loadStarterCharacterId();
-
-  const list = h("div", "roster-list");
-  // The cape your characters wear (#1422): only with a valid tag. Set in
-  // Options, which re-renders the menu as it closes (#1513).
-  const { guildCape } = playerGuild();
-  const worn = guildCape === null ? undefined : capeLook(guildCape);
-  /** Choose who to play, and keep the focus on the row a key chose. */
+  const worn = wornCape();
+  /** Choose who to play, and keep the focus on the card a key chose. */
   const choose = (id: string): void => {
     saveActiveCharacterId(id);
     callbacks.onSelectCharacter(id);
-    root.querySelector<HTMLElement>(".roster .selectable-row.is-selected button")?.focus();
+    root.querySelector<HTMLElement>(".play-card.is-selected .play-card-open")?.focus();
   };
 
+  if (characters.length === 0) {
+    body.appendChild(
+      emptyState("No characters yet.", "Character Builder", () => {
+        callbacks.onSwitch("characters");
+      }),
+    );
+  } else {
+    const cards = h("div", "play-cards");
+    for (const character of rosterOrder(characters, starter)) {
+      const playable = isPlayable(character);
+      const card = characterCard(
+        { character, starter, tally: tallies.get(character.id), worn },
+        {
+          pressed: character.id === active && playable,
+          onOpen: () => {
+            if (playable) {
+              choose(character.id);
+            }
+          },
+        },
+      );
+      if (!playable) {
+        // Shown plainly, never chosen; Character Builder fixes it (#1290).
+        card.querySelector(".play-card-open")?.setAttribute("aria-disabled", "true");
+      }
+      cards.appendChild(card);
+    }
+    body.appendChild(cards);
+  }
+
+  const tiles = h("div", "random-arena-tiles");
+  tiles.setAttribute("role", "group");
+  tiles.setAttribute("aria-label", "Find a match");
+  for (const { mode, label } of RANDOM_ARENA_MODES) {
+    const tile = button(label, "random-arena-tile", () => {
+      callbacks.onRandomArena(mode, loadPlayerName());
+    });
+    tile.disabled = !activeExists;
+    tiles.appendChild(tile);
+  }
+  body.appendChild(tiles);
+  if (!activeExists) {
+    body.appendChild(h("p", "random-arena-hint", NO_CHARACTER_FOR_QUEUE));
+  }
+}
+
+/**
+ * Render Character Builder (#1525): your characters as cards with what
+ * makes and changes them, what Solo Play's rows had: Edit, or
+ * Clone and Reroll on the random starter, and New character.
+ */
+export function renderCharacterBuilder(
+  root: HTMLElement,
+  callbacks: MenuCallbacks,
+  characters: readonly StoredCharacter[] = [],
+  characterProblems: readonly string[] = [],
+  connectionNotice?: string,
+  tallies: ReadonlyMap<string, Tally> = new Map(),
+): void {
+  // A Reroll redraws the screen under its own button (#1425): the new
+  // card's Reroll takes the focus back.
+  const rerolled = document.activeElement?.classList.contains("roster-reroll") === true;
+  screenBar({ crumbs: ["VibeWars"], actions: [], join: true });
+  const body = railScreen(root, "characters", CHARACTER_BUILDER_GOAL, callbacks.onSwitch);
+
+  if (connectionNotice !== undefined) {
+    body.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
+  }
+  for (const problem of characterProblems) {
+    body.appendChild(h("div", "screen-problem", problem));
+  }
+
+  const starter = loadStarterCharacterId();
+  const worn = wornCape();
+  const cards = h("div", "play-cards");
   for (const character of rosterOrder(characters, starter)) {
+    const edit = (): void => {
+      callbacks.onEditCharacter(character.id);
+    };
     // The rolled character is never edited (#1147): Clone gives a fresh
     // roll to edit (#1457), and Reroll replaces it at once, unasked (#1146).
     const clone = button("Clone", "roster-clone", () => {
@@ -336,116 +339,31 @@ export function renderMenu(
       clone.disabled = true;
       callbacks.onCloneStarter(character.id);
     });
-    const actions =
-      character.id === starter
-        ? [
-            clone,
-            button("Reroll", "roster-reroll", () => {
-              callbacks.onRerollCharacter(character.id);
-            }),
-          ]
-        : [
-            button("Edit", "roster-edit", () => {
-              callbacks.onEditCharacter(character.id);
-            }),
-          ];
-    const playable = isPlayable(character);
-    const row = selectableRow({
-      dot: createCharacterFigure(character, worn),
-      name: character.name,
-      subtitle: rosterSubtitle(character, tallies.get(character.id)),
-      miniBar: miniSkillBar(character),
-      selected: character.id === active && playable,
-      // Beside the row, not in it: editing never also chooses.
-      actions,
-      onSelect: () => {
-        if (playable) {
-          choose(character.id);
-        }
-      },
-    });
-    if (character.id === starter) {
-      // Dashed, not only tagged: it differs by shape, not colour (#1426).
-      row.classList.add("is-random");
-    }
-    if (!playable) {
-      // Shown plainly, never chosen; Edit still fixes it (#1290).
-      row.classList.add("is-invalid");
-      row.querySelector(".selectable-row-choose")?.setAttribute("aria-disabled", "true");
-    }
-    row
-      .querySelector(".selectable-row-name")
-      ?.after(
-        ...rosterTags(character, starter).map((tag) =>
-          h("span", tag === "Random" ? "roster-random-tag" : "roster-invalid-tag", tag),
-        ),
-      );
-    list.appendChild(row);
+    cards.appendChild(
+      characterCard(
+        { character, starter, tally: tallies.get(character.id), worn },
+        character.id === starter
+          ? {
+              actions: [
+                clone,
+                button("Reroll", "roster-reroll", () => {
+                  callbacks.onRerollCharacter(character.id);
+                }),
+              ],
+            }
+          : { onOpen: edit, actions: [button("Edit", "roster-edit", edit)] },
+      ),
+    );
   }
-  roster.appendChild(list);
-  roster.appendChild(
-    characters.length === 0
-      ? emptyState("No characters yet.", "New character", callbacks.onNewCharacter)
-      : button("New character", "", callbacks.onNewCharacter),
-  );
-  columns.appendChild(roster);
-
-  // --- play -------------------------------------------------------------
-  const play = h("section", "menu-play");
-  play.appendChild(h("h2", "menu-column-title", "Play"));
-
-  // Random Arena first (#854 B1): it needs no code and no friends.
-  const arenaRow = h("div", "menu-row menu-random-arena");
-  const queue = button("Random Arena", "primary", () => {
-    callbacks.onRandomArena(randomArenaMode, loadPlayerName());
-  });
-  queue.disabled = !activeExists;
-  arenaRow.appendChild(queue);
-  const modes = h("div", "random-arena-modes");
-  modes.setAttribute("role", "group");
-  modes.setAttribute("aria-label", "Random Arena mode");
-  const modeButtons = RANDOM_ARENA_MODES.map(({ mode, label }) => {
-    const choice = button(label, "random-arena-mode", () => {
-      randomArenaMode = mode;
-      for (const [index, other] of modeButtons.entries()) {
-        other.setAttribute("aria-pressed", String(RANDOM_ARENA_MODES[index]?.mode === mode));
-      }
-    });
-    choice.setAttribute("aria-pressed", String(mode === randomArenaMode));
-    modes.appendChild(choice);
-    return choice;
-  });
-  arenaRow.appendChild(modes);
-  if (!activeExists) {
-    arenaRow.appendChild(h("span", "menu-random-arena-hint", NO_CHARACTER_FOR_QUEUE));
+  if (characters.length > 0) {
+    cards.appendChild(button("New character", "play-card play-card-new", callbacks.onNewCharacter));
   }
-  play.appendChild(arenaRow);
-
-  // Why the last try failed, right above the buttons to try again with.
-  if (connectionNotice !== undefined) {
-    play.appendChild(h("div", "screen-problem screen-connection-problem", connectionNotice));
+  body.appendChild(cards);
+  if (characters.length === 0) {
+    body.appendChild(emptyState("No characters yet.", "New character", callbacks.onNewCharacter));
   }
 
-  const hostRow = h("div", "menu-row");
-  hostRow.appendChild(
-    button("Host a lobby", "primary", () => {
-      callbacks.onCreateLobby(loadPlayerName());
-    }),
-  );
-  play.appendChild(hostRow);
-
-  play.append(...joinControls(panel, loadPlayerName, callbacks.onJoinLobby));
-  columns.appendChild(play);
-
-  root.appendChild(panel);
   if (rerolled) {
     root.querySelector<HTMLElement>(".roster-reroll")?.focus();
-  }
-  const newCode = root.querySelector<HTMLInputElement>("input.code-input");
-  if (newCode !== null) {
-    newCode.value = code;
-    if (codeFocused) {
-      newCode.focus();
-    }
   }
 }

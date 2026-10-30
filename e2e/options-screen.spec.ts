@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { openRail } from "./helpers/menu.js";
 import { chooseProfession } from "./helpers/professions.js";
 
 /**
@@ -40,6 +41,7 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not Q, and survives a reloa
   await page.keyboard.press("Escape");
   await expect(page.locator(".options-screen")).toHaveCount(0);
 
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
@@ -179,12 +181,12 @@ test("Options lists every bundled npm package and the VCSL samples, each with it
   await expect(phaser.locator(".licence-text")).toContainText("Permission is hereby granted");
 });
 
-test("a lobby code typed on Solo Play survives the redraw closing Options does (#1513)", async ({
+test("a lobby code typed on Random Arena survives the redraw closing Options does (#1513)", async ({
   page,
 }) => {
   await page.goto("./");
   await page.locator("input.code-input").fill("abcd");
-  const before = await page.locator(".screen-menu").elementHandle();
+  const before = await page.locator(".screen-random-arena").elementHandle();
   await page.locator(".topbar-options").click();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   // The redraw lands after an await; waiting for the old screen to go is
