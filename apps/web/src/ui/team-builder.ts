@@ -1,16 +1,16 @@
 import { SKILL_ROLES, getSkill, skillRoles, type SkillRole } from "@vibewars/game-core";
 
-import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
-import { TEAM_SCHEMA_VERSION, type StoredCharacter, type StoredTeam } from "../storage/schema.js";
+import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
+import { TEAM_SCHEMA_VERSION, type StoredTeam, type TeamCharacter } from "../storage/schema.js";
 import { professionBadge } from "./character-preview.js";
 
 /**
  * The team builder (brief §18, §4).
  *
  * Teams are first-class and of *arbitrary* size — the brief is explicit
- * that 8 must not be hardcoded, so nothing here caps membership. Members
- * reference characters by id rather than embedding a copy of the build,
- * so editing a character updates every team that uses it.
+ * that 8 must not be hardcoded, so nothing here caps membership. Each
+ * member is a character of the team's own (#1452): one copied from a Solo
+ * character is a copy, and editing either leaves the other alone.
  */
 
 export const MAX_TEAM_SIZE = 16;
@@ -26,13 +26,40 @@ export function newTeam(id: string): StoredTeam {
   };
 }
 
-export function addMember(team: StoredTeam, characterId: string): StoredTeam {
+/**
+ * `character` as a team member under `id`: its build only, copied, so a
+ * later edit to either is not seen by the other.
+ */
+export function teamCharacter(character: TeamCharacter, id: string): TeamCharacter {
+  return {
+    id,
+    name: character.name,
+    primaryProfession: character.primaryProfession,
+    secondaryProfession: character.secondaryProfession,
+    attributes: character.attributes.map((a) => ({ attributeId: a.attributeId, rank: a.rank })),
+    skillBar: [...character.skillBar],
+    equipment: character.equipment,
+  };
+}
+
+export function addMember(team: StoredTeam, character: TeamCharacter): StoredTeam {
   if (team.members.length >= MAX_TEAM_SIZE) {
     return team;
   }
   return {
     ...team,
-    members: [...team.members, { characterId }],
+    members: [...team.members, { character }],
+    updatedAt: Date.now(),
+  };
+}
+
+/** The team with the member whose id is `character.id` replaced by `character`. */
+export function replaceMember(team: StoredTeam, character: TeamCharacter): StoredTeam {
+  return {
+    ...team,
+    members: team.members.map((member) =>
+      member.character.id === character.id ? { character } : member,
+    ),
     updatedAt: Date.now(),
   };
 }
@@ -73,16 +100,11 @@ export interface TeamProblem {
 }
 
 /**
- * Validate a team against the characters that actually exist locally
- * (brief §24). A member pointing at a deleted character is the realistic
- * failure here, and it must be surfaced rather than silently dropped.
+ * Validate a team (brief §24): its name, its size, and each member's
+ * build by the same rules a Solo character's is held to (#1452).
  */
-export function validateTeam(
-  team: StoredTeam,
-  characters: readonly StoredCharacter[],
-): TeamProblem[] {
+export function validateTeam(team: StoredTeam): TeamProblem[] {
   const problems: TeamProblem[] = [];
-  const known = new Set(characters.map((c) => c.id));
 
   if (team.name.trim() === "") {
     problems.push({ message: "team name must not be empty" });
@@ -94,10 +116,10 @@ export function validateTeam(
     problems.push({ message: `a team may not exceed ${String(MAX_TEAM_SIZE)} members` });
   }
 
-  team.members.forEach((member, index) => {
-    if (!known.has(member.characterId)) {
+  team.members.forEach(({ character }, index) => {
+    if (validateBuild(character).length > 0) {
       problems.push({
-        message: `slot ${String(index + 1)} references a character that no longer exists`,
+        message: `slot ${String(index + 1)}, ${character.name}, is not a legal build: open it to see why`,
       });
     }
   });
@@ -112,6 +134,7 @@ export function duplicateTeam(team: StoredTeam, newId: string): StoredTeam {
 
 /** One bar slot of one member: what a counter or a find-a-skill marks. */
 export interface TeamCell {
+  /** The member's `character.id`. */
   readonly characterId: string;
   readonly slot: number;
 }
@@ -141,24 +164,16 @@ const ROLE_COUNTERS: Readonly<Record<SkillRole, { label: string; title: string }
 
 /**
  * What the team's bars hold, counted per copy (#575): the seven skill
- * roles, energy and adrenaline skills, and the empty slots. A member
- * whose character is gone counts nothing.
+ * roles, energy and adrenaline skills, and the empty slots.
  */
-export function teamCounters(
-  members: StoredTeam["members"],
-  characters: readonly StoredCharacter[],
-): TeamCounter[] {
+export function teamCounters(members: StoredTeam["members"]): TeamCounter[] {
   const cells = new Map<TeamCounterId, TeamCell[]>();
   const count = (id: TeamCounterId, cell: TeamCell): void => {
     const list = cells.get(id) ?? [];
     list.push(cell);
     cells.set(id, list);
   };
-  for (const member of members) {
-    const character = characters.find((c) => c.id === member.characterId);
-    if (character === undefined) {
-      continue;
-    }
+  for (const { character } of members) {
     for (let slot = 0; slot < SKILL_BAR_SLOTS; slot += 1) {
       const cell = { characterId: character.id, slot };
       const skillId = character.skillBar[slot] ?? null;
@@ -210,16 +225,9 @@ export function teamCounters(
 }
 
 /** The team's professions as badges, most common first: "2 W/Mo · R". */
-export function professionMix(
-  members: StoredTeam["members"],
-  characters: readonly StoredCharacter[],
-): string {
+export function professionMix(members: StoredTeam["members"]): string {
   const counts = new Map<string, number>();
-  for (const member of members) {
-    const character = characters.find((c) => c.id === member.characterId);
-    if (character === undefined) {
-      continue;
-    }
+  for (const { character } of members) {
     const badge = professionBadge(character.primaryProfession, character.secondaryProfession);
     counts.set(badge, (counts.get(badge) ?? 0) + 1);
   }

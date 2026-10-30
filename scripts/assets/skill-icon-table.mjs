@@ -348,9 +348,9 @@ export const SKILL_ICONS = {
   "dervish.heart-of-holy-flame": { glyph: "flame-halo" },
   "dervish.balthazars-rage": { glyph: "flame-bars" },
   "dervish.harriers-haste": { glyph: "chase" },
-  // Placeholders until the asset-designer's (#1437): forms.
-  "dervish.avatar-of-melandru": { glyph: "armor", modifier: "hourglass" },
-  "dervish.avatar-of-dwayna": { glyph: "heal", modifier: "plus" },
+  // Forms (#1437, #1468): a figure in the god's shape, the god's mark on it.
+  "dervish.avatar-of-melandru": { glyph: "avatar-earth" },
+  "dervish.avatar-of-dwayna": { glyph: "avatar-wings" },
   // Placeholders until the asset-designer's (#1455): forms.
   "dervish.avatar-of-balthazar": { glyph: "flame", modifier: "hourglass" },
   "dervish.avatar-of-grenth": { glyph: "scythe", modifier: "hourglass" },

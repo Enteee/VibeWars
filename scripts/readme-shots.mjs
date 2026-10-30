@@ -46,11 +46,8 @@ const { values: options } = parseArgs({ options: { url: { type: "string" } } });
  */
 const BUILD_CODE = "OgVFoMm8lmMgufXOyleRGFB";
 const NAME = "Aria Stormveil";
-/** The other seven: three beside you, four against. */
-const BOTS = {
-  1: ["monk", "warrior", "ranger"],
-  2: ["necromancer", "elementalist", "warrior", "monk"],
-};
+/** The other seven: three beside you, four against; the host picks what they play (#1454). */
+const BOTS = { 1: 3, 2: 4 };
 /** The arena both match shots are on; it fills the frame at Wide. */
 const MAP = "arena-canyon";
 
@@ -257,13 +254,16 @@ async function match(page, dir) {
   await page.locator(".lobby-map select").selectOption(MAP);
   step = "join team 1";
   await page.getByRole("button", { name: "join team 1" }).click();
-  for (const [team, professions] of Object.entries(BOTS)) {
-    for (const profession of professions) {
-      step = `add a ${profession} bot to team ${team}`;
-      await page
-        .getByRole("combobox", { name: `bot profession for team ${team}` })
-        .selectOption(profession);
-      await page.getByRole("button", { name: `add a bot to team ${team}` }).click();
+  for (const [team, count] of Object.entries(BOTS)) {
+    const shown = page
+      .locator(".lobby-team")
+      .nth(Number(team) - 1)
+      .locator(".lobby-bot-count");
+    for (let bots = 1; bots <= count; bots += 1) {
+      step = `bot ${String(bots)} on team ${team}`;
+      await page.getByRole("button", { name: `one bot more on team ${team}` }).click();
+      // Each + asks for one more than the count shown: wait for it to land.
+      await shown.filter({ hasText: String(bots) }).waitFor();
     }
   }
   step = "start the match";

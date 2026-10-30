@@ -1048,7 +1048,7 @@ export function mountBuildEditor(
   // is told apart first (#577); a GW1 template code comes last (#494).
   const stopPaste = listenForPaste((text) => {
     if (looksLikeTeam(text)) {
-      toast("That is a team code. Paste it on the Teams screen.");
+      toast("That is a team code. Paste it on the Team Builds screen.");
       return true;
     }
     let result: ImportResult;

@@ -9,7 +9,7 @@ import {
   type PlayerBuild,
 } from "@vibewars/game-core";
 
-import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "./schema.js";
+import { CHARACTER_SCHEMA_VERSION, type StoredCharacter, type TeamCharacter } from "./schema.js";
 
 /**
  * Validation for stored builds (brief §23: "validate every build before
@@ -28,7 +28,7 @@ export { SKILL_BAR_SLOTS };
 export type { BuildProblem };
 
 /** Convert a stored record into the domain build. */
-export function toPlayerBuild(stored: StoredCharacter): PlayerBuild {
+export function toPlayerBuild(stored: TeamCharacter): PlayerBuild {
   return {
     name: stored.name,
     primaryProfession: stored.primaryProfession,
@@ -58,7 +58,7 @@ export function fromPlayerBuild(build: PlayerBuild, id: string, now: number): St
 }
 
 /** The character half, kept for callers that only need identity + attributes. */
-export function toCharacter(stored: StoredCharacter): Character {
+export function toCharacter(stored: TeamCharacter): Character {
   return {
     id: stored.id,
     name: stored.name,
@@ -68,10 +68,10 @@ export function toCharacter(stored: StoredCharacter): Character {
   };
 }
 
-export function validateBuild(stored: StoredCharacter): BuildProblem[] {
+export function validateBuild(stored: TeamCharacter): BuildProblem[] {
   return validatePlayerBuild(toPlayerBuild(stored), MINIMAL_GW_INSPIRED_PVP_V1.attributes);
 }
 
-export function equippableSkills(stored: StoredCharacter): typeof IMPLEMENTED_SKILLS {
+export function equippableSkills(stored: TeamCharacter): typeof IMPLEMENTED_SKILLS {
   return equippableSkillsFor(toPlayerBuild(stored));
 }
