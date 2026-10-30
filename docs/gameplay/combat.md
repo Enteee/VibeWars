@@ -748,6 +748,20 @@ a moving foe); and Enchanted Haste (no attribute, 7 s: 25% faster; if it
 ends before its time, stripped for one, you lose a condition). Attacker's
 Insight waits for a block that holds only while you attack.
 
+**Forms** (Dervish elites, #1437) are a status of their own on you, not
+an enchantment: no removal touches one, nothing that counts enchantments
+counts it, and a new form ends the one you are in. A form skill says
+"Elite Form." and is disabled for 45 s after use, beside its 20 s
+recharge. When a form ends, for any reason, your attack, your walk and
+the skill you are activating stop, the skill paid for and not
+recharging; held movement keys walk again only once you change them.
+Avatar of Melandru (74 s): +100 maximum Health, lost again when it
+ends; +30 armor against elemental damage; earth attacks; whenever you
+lose a Dervish enchantment, 2 conditions go. Avatar of Dwayna (74 s):
+holy attacks; each Dervish attack skill you use takes off a hex;
+whenever you lose a Dervish enchantment, you heal 41. "Lose" is any end
+but your death: expiry, a strip, a flash enchantment's own end.
+
 **Mantra of Recovery** (Mesmer elite stance, Fast Casting, 5 energy, 15 s
 recharge, #938) makes every spell you finish in the next 17 s recharge
 33% faster. It is read as the recharge starts: a spell finished after the

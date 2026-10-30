@@ -22,6 +22,12 @@ empty it.
 swing and your stride, so you can weave them between blows. Each one
 turns your other flash enchantments off for 1 second.
 
+**Forms** (the Dervish Avatars) change you for over a minute. A form is
+not an enchantment, so nobody can strip it, and you can be in one form
+at a time. Using one disables it for 45 seconds. When a form ends, you
+stop what you were doing: your attack, your walk and any skill you were
+activating. Press a movement key again to walk on.
+
 ## Attributes
 
 You have **200 points** to spend. Each rank of an attribute costs more

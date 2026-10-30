@@ -58,6 +58,9 @@ describe("corpusSkills (#1220)", () => {
       text: "Flash Enchantment Spell",
       skillType: "enchantment",
     });
+    // A form is a form (#1437): the Dervish Avatars.
+    expect(TYPES_BY_GW_ID.get(15)).toEqual({ text: "Form", skillType: "form" });
+    expect(byId.get(1522)).toMatchObject({ typeText: "Form", skillType: "form" });
   });
 
   it("has the catalog mark exactly its flash enchantments as flash (#1421)", () => {

@@ -10,7 +10,7 @@ import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { isAttacking, signetsOnBar } from "./attacking.js";
-import { aggregateModifiers } from "./status.js";
+import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel } from "./types.js";
 
@@ -83,7 +83,8 @@ export function hitLocationOf(packet: DamagePacket, rng: SimulationRng): HitLoca
 /**
  * The defender's armor against this packet, struck at `location`. Every
  * conditional bonus is answerable from the packet and the defender alone;
- * an insignia's only on a hit to its own piece (#1135).
+ * an insignia's only on a hit to its own piece (#1135). A status's (#1437)
+ * counts as the profession's does, wherever the hit lands.
  */
 export function effectiveArmor(
   target: Combatant,
@@ -93,7 +94,10 @@ export function effectiveArmor(
   let armor = target.equipment.baseArmor;
 
   const pieceArmor = location === null ? [] : target.equipment.pieceArmor[location];
-  for (const bonus of [...target.equipment.conditionalArmor, ...pieceArmor]) {
+  const statusArmor = target.statuses.active.flatMap(
+    ({ id }) => getStatusDefinition(id).conditionalArmor,
+  );
+  for (const bonus of [...target.equipment.conditionalArmor, ...pieceArmor, ...statusArmor]) {
     if (bonus.conditions.every((condition) => conditionHolds(condition, target, packet))) {
       armor += bonus.amount;
     }

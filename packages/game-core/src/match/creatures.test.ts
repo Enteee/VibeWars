@@ -74,6 +74,7 @@ function summonSkill(
     gwId: undefined,
     elite: false,
     flash: false,
+    disabledAfterUseSeconds: undefined,
     profession: "necromancer",
     attributeId: DEATH_MAGIC,
     cost: undefined,

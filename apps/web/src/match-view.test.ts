@@ -10,6 +10,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     sessionId,
     name: sessionId,
     guildTag: undefined,
+    guildCape: undefined,
     x: 100,
     y: 100,
     facing: 0,

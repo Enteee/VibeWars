@@ -65,6 +65,8 @@ export {
   MAX_WIRE_ACTORS,
   CREATURE_KINDS,
   CREATURE_LOOKS,
+  CAPE_COLOURS,
+  CAPE_EMBLEMS,
   MAX_WIRE_STATUS_INDEX,
   MAX_WIRE_EVENTS,
   MAX_WIRE_SLOTS,
@@ -123,11 +125,13 @@ export {
   parseWirePartyFormed,
   parseWirePartySplit,
   parseWireMatchStart,
+  parseWireCape,
 } from "./p2p.js";
 
 export type {
   Channel,
   PeerHello,
+  WireCape,
   PeerBye,
   PeerCall,
   WireCalls,
