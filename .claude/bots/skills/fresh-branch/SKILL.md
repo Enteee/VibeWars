@@ -33,6 +33,11 @@ Check `hub pr view <n> --json mergeStateStatus` on your open PRs:
 - `DIRTY`: merge `origin/main` in (merge, never rebase: no force-push),
   resolve the conflicts in your branch, push, and ask for re-review.
 
+Nobody broadcasts "main moved: merge main", and QA does not ask a
+`BEHIND` PR to merge main: that restarts a full CI run (30-60 min of
+e2e) for nothing. Only a `DIRTY` PR merges main. (Operator rule,
+2026-10-30.)
+
 Do not run the test suite: the pipeline does that, and QA does the
 root-cause analysis when it fails.
 
