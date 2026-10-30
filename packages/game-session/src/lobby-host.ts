@@ -46,7 +46,7 @@ import {
   type PlannedSeat,
   type PlannedSeats,
 } from "./match-host.js";
-import { sanitizeChatText, sanitizeGuild, sanitizeName } from "./names.js";
+import { sanitizeCharacterName, sanitizeChatText, sanitizeGuild, sanitizeName } from "./names.js";
 import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
 import { ticketsOf } from "./queue-formation.js";
 import { scopeTransport } from "./scoped-transport.js";
@@ -321,9 +321,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return (humans.find((member) => member.id === local.selfId) ?? humans[0])?.id ?? null;
   };
 
-  /** What a build is called on the wire: its name, sanitised, and professions. */
+  /** What a build is called on the wire: its name, cut at a word, and professions. */
   const characterOf = (build: PlayerBuild): LobbyCharacter => ({
-    name: sanitizeName(build.name, getProfession(build.primaryProfession).name),
+    name: sanitizeCharacterName(build.name, getProfession(build.primaryProfession).name),
     primary: build.primaryProfession,
     secondary: build.secondaryProfession ?? null,
   });

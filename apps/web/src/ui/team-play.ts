@@ -10,8 +10,8 @@ import { joinControls, loadPlayerName, playTabs, type PlayTab } from "./menu.js"
 /**
  * Team Play (#1453, #1449 variant B, the card table): four mode tiles
  * across the top, each hosting a lobby on its own maps, and the Team
- * Build cards below, "None" first. The pick is stored for the Team Lobby
- * (#1458); until it lands, a Team Play lobby is today's hosted lobby.
+ * Build cards below, "None" first. A tile's lobby opens the Team Lobby
+ * (#1460) once everyone is ready, and proposes the pick there.
  */
 
 /** A mode tile: what it reads, and the modes its lobby's maps play. */
