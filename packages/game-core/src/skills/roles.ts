@@ -160,6 +160,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   const riders = [
     ...(status.onAttackHit?.effects ?? []),
     ...(status.nextAttackSkill ?? []),
+    ...(status.nextSkill?.effects ?? []),
     ...forBearer,
   ];
   return [...roles, ...riders.flatMap(effectRoles)];
