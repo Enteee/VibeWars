@@ -3079,6 +3079,9 @@ export class MatchSimulation {
     }
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
+    if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
+      return;
+    }
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
@@ -3299,6 +3302,52 @@ export class MatchSimulation {
     if (skill.attack !== undefined) {
       this.#fireTriggers(record, "bearer-attacks", spared);
     }
+  }
+
+  /**
+   * Whether a status on `record` fails the spell it just finished on
+   * `target` (#1475): Guilt's, on a spell at a foe. The spell is paid for
+   * and recharges, as an interrupted one, and does nothing else; the
+   * status ends, and its effects land on the bearer from its source,
+   * logged as its skill. A spell with no chosen target never fails so.
+   */
+  #failsSpell(
+    record: ParticipantRecord,
+    skill: Skill,
+    target: ParticipantRecord | undefined,
+    key: string,
+  ): boolean {
+    if (!isSpell(skill.type) || skill.target === "self" || target === undefined) {
+      return false;
+    }
+    const bearer = record.combatant;
+    const failer = bearer.statuses.spellFailer(
+      target.combatant.team === bearer.team ? "ally-targeted" : "foe-targeted",
+    );
+    const fails = failer === undefined ? undefined : STATUS_DEFINITIONS[failer.id].failsNextSpell;
+    if (failer === undefined || fails === undefined) {
+      return false;
+    }
+    beginRecharge(bearer.cast, skill, skill.rechargeSeconds, key);
+    bearer.statuses.end(failer.id);
+    const events: CombatEvent[] = [
+      { kind: "spell-failed", targetId: bearer.id, skillId: skill.id },
+    ];
+    const source = this.#participants.get(failer.sourceId);
+    if (source !== undefined) {
+      events.push(
+        ...applyEffects(fails.effects, {
+          caster: source.combatant,
+          target: bearer,
+          rng: this.#rng,
+          rules: this.#ruleset.combat,
+          surroundings: this.#participants,
+          usedSkill: undefined,
+        }),
+      );
+    }
+    this.#logFired([{ sourceId: failer.sourceId, skillId: fails.skillId, events }]);
+    return true;
   }
 
   /**

@@ -284,7 +284,12 @@ export type StatusId =
   | "avatar-of-dwayna"
   | "avatar-of-balthazar"
   | "avatar-of-grenth"
-  | "avatar-of-lyssa";
+  | "avatar-of-lyssa"
+  // Mesmer "the next spell fails" hexes (#1475).
+  | "guilt"
+  | "shame"
+  | "mistrust"
+  | "fragility";
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
 export const HEALTH_PER_PIP = 2;
@@ -691,6 +696,13 @@ export interface StatusDefinition {
    */
   readonly breaksNextHex: { readonly damage: number; readonly skillId: string } | undefined;
   /**
+   * The next spell the bearer finishes on a target of this side fails, and
+   * the status ends (#1475): Guilt's and Mistrust's foe, Shame's ally. The
+   * spell is paid for and recharges, as an interrupted one, and does
+   * nothing else. `undefined`: spells go off.
+   */
+  readonly failsNextSpell: FailsNextSpell | undefined;
+  /**
    * Whenever a chant or a shout ends on the bearer, its remaining time is
    * back to the duration it was applied with (#1423): a refrain's "this
    * echo is reapplied every time a chant or shout ends on you".
@@ -785,6 +797,13 @@ export type StatusTriggerEvent =
   | "bearer-creates-creature"
   | "bearer-gains-condition"
   /**
+   * A condition on the bearer ended (#1475), expired or removed, for any
+   * reason but the bearer's death: once per condition lost. A refresh is
+   * no loss. Fragility's. Recorded with the triggers that answered, and
+   * fired at the drain.
+   */
+  | "bearer-loses-condition"
+  /**
    * A chant or a shout ended on the bearer (#1423), for any reason but a
    * refresh: its duration, an "ends when" rule or a removal. Every status
    * still on the bearer that answers it fires, in `active` order; a dead
@@ -799,6 +818,21 @@ export type StatusTriggerEvent =
    */
   | "ends-early"
   | "expires";
+
+/** `StatusDefinition.failsNextSpell` (#1475). */
+export interface FailsNextSpell {
+  /**
+   * Which spells it catches, by the side of the spell's chosen target:
+   * one on the other team from the bearer, or one on its own, the bearer
+   * included when it targeted itself. A spell with no chosen target, a
+   * "you" spell, a well or a ward, never matches.
+   */
+  readonly on: "foe-targeted" | "ally-targeted";
+  /** Applied with the status's source as caster and the bearer as target. */
+  readonly effects: readonly SkillEffect[];
+  /** What the failure is logged as. */
+  readonly skillId: string;
+}
 
 /** `StatusDefinition.enchantmentRechargeFaster` (#1455). */
 export interface EnchantmentRechargeFaster {
@@ -929,6 +963,12 @@ export type StatusChange =
   /** An enchantment `id` left the bearer, alive (#1437), with the triggers that answered. */
   | {
       readonly kind: "lost-enchantment";
+      readonly id: StatusId;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  /** A condition `id` left the bearer, alive (#1475), with the triggers that answered. */
+  | {
+      readonly kind: "lost-condition";
       readonly id: StatusId;
       readonly fired: readonly AnsweringTrigger[];
     }
@@ -1097,6 +1137,7 @@ function define(
     incomingHexCastTimeMultiplier: 1,
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
+    failsNextSpell: undefined,
     renewsOnChantOrShoutEnd: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
@@ -2991,6 +3032,68 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+
+  // Mesmer "the next spell fails" hexes (#1475), at their rank-12 values.
+  // "...the next time target foe casts a spell that targets a foe, the
+  // spell fails and you steal up to 5...14 Energy from that foe": 12.
+  guilt: define("guilt", "Guilt", "hex", {
+    profession: "mesmer",
+    failsNextSpell: {
+      on: "foe-targeted",
+      effects: [{ kind: "energy-steal", amount: { flat: 12 } }],
+      skillId: "mesmer.guilt",
+    },
+  }),
+  // As Guilt, for "a spell that targets an ally": 12.
+  shame: define("shame", "Shame", "hex", {
+    profession: "mesmer",
+    failsNextSpell: {
+      on: "ally-targeted",
+      effects: [{ kind: "energy-steal", amount: { flat: 12 } }],
+      skillId: "mesmer.shame",
+    },
+  }),
+  // "...the next spell that target foe casts on one of your allies fails
+  // and deals 10...60 damage to that foe and 75% of that damage to all
+  // nearby foes" (PvP): 50, and 38 nearby.
+  mistrust: define("mistrust", "Mistrust", "hex", {
+    profession: "mesmer",
+    failsNextSpell: {
+      on: "foe-targeted",
+      effects: [
+        { kind: "damage", amount: { flat: 50 }, type: "typeless", armorPenetration: 0 },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_NEARBY,
+          maxTargets: undefined,
+          effects: [
+            { kind: "damage", amount: { flat: 38 }, type: "typeless", armorPenetration: 0 },
+          ],
+        },
+      ],
+      skillId: "mesmer.mistrust",
+    },
+  }),
+  // "...take 5...20 damage each time they suffer or recover from a new
+  // condition": 17.
+  fragility: define("fragility", "Fragility", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-gains-condition",
+        effects: [{ kind: "damage", amount: { flat: 17 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "mesmer.fragility",
+      },
+      {
+        on: "bearer-loses-condition",
+        effects: [{ kind: "damage", amount: { flat: 17 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "mesmer.fragility",
+      },
+    ],
+  }),
 };
 
 /**
@@ -3101,6 +3204,7 @@ export class StatusSet {
         this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired });
         if (!death) {
           this.#lostEnchantment(id);
+          this.#lostCondition(id);
         }
       }
     }
@@ -3121,6 +3225,20 @@ export class StatusSet {
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "lost-enchantment", id, fired });
+    }
+  }
+
+  /**
+   * Record condition `id` gone from the bearer (#1475), only if a status
+   * still on it answers that, with the triggers that do.
+   */
+  #lostCondition(id: StatusId): void {
+    if (getStatusDefinition(id).category !== "condition") {
+      return;
+    }
+    const fired = this.triggersOn("bearer-loses-condition");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "lost-condition", id, fired });
     }
   }
 
@@ -3246,6 +3364,15 @@ export class StatusSet {
       }
     }
     return false;
+  }
+
+  /**
+   * The status that fails the bearer's next spell on a target of this
+   * side (#1475), if any: the newest of those that do, as removal takes
+   * the newest first. It is not ended here.
+   */
+  public spellFailer(on: FailsNextSpell["on"]): ActiveStatus | undefined {
+    return this.active.findLast(({ id }) => getStatusDefinition(id).failsNextSpell?.on === on);
   }
 
   /** The status that would stop the next hex on the bearer (#1403), oldest first, if any. */

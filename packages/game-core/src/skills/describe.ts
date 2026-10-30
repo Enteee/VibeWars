@@ -414,6 +414,17 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `the next hex fails, and its caster takes ${String(definition.breaksNextHex.damage)} damage`,
     );
   }
+  // Guilt's (#1475): "the next spell it casts at a foe fails: steals up to
+  // 12 energy".
+  if (definition.failsNextSpell !== undefined) {
+    const { on, effects } = definition.failsNextSpell;
+    const what = effects
+      .flatMap((effect) => describeEffects(effect, ranks))
+      .map(({ text }) => lowerFirst(text));
+    parts.push(
+      `the next spell it casts at ${on === "foe-targeted" ? "a foe" : "an ally"} fails: ${what.join(", ")}`,
+    );
+  }
   if (definition.reversesNextDamage !== undefined) {
     parts.push(
       `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
@@ -547,6 +558,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
   "bearer-loses-enchantment": "loses an enchantment",
+  "bearer-loses-condition": "loses a condition",
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
