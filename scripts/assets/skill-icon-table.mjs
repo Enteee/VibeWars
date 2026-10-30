@@ -243,6 +243,14 @@ export const SKILL_ICONS = {
   "ranger.call-of-protection": { glyph: "paw-shield" },
   "ranger.symbiotic-bond": { glyph: "bond" },
   "ranger.revive-animal": { glyph: "paw", modifier: "up" },
+  // Placeholders until the asset-designer's (#1539): Ranger staples.
+  "ranger.dual-shot": { glyph: "arrow", modifier: "plus" },
+  "ranger.melandrus-shot": { glyph: "arrow", modifier: "half" },
+  "ranger.zojuns-shot": { glyph: "arrow", modifier: "down" },
+  "ranger.point-blank-shot": { glyph: "arrow", modifier: "self" },
+  "ranger.whirling-defense": { glyph: "shield-stance", modifier: "area" },
+  "ranger.serpents-quickness": { glyph: "speed", modifier: "less" },
+  "ranger.dodge": { glyph: "speed", modifier: "half" },
   // Three meteors in a falling line; a heal cross spent from the enchantment's ring (#1214).
   "elementalist.meteor-shower": { glyph: "meteor-trio" },
   "monk.contemplation-of-purity": { glyph: "ring-heal" },

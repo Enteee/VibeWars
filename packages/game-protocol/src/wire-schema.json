@@ -98,6 +98,7 @@
     "disease",
     "displacement",
     "diversion",
+    "dodge",
     "dolyak-signet",
     "dust-cloak",
     "earthbind",
@@ -186,6 +187,7 @@
     "rush",
     "sand-shards",
     "scourge-enchantment",
+    "serpents-quickness",
     "shadow-of-fear",
     "shadow-refuge",
     "shame",
@@ -229,6 +231,7 @@
     "weapon-of-remedy",
     "weapon-of-warding",
     "well-of-suffering",
+    "whirling-defense",
     "winnowing",
     "zealous-anthem"
   ],
@@ -611,6 +614,7 @@
                   { "literal": "disease" },
                   { "literal": "displacement" },
                   { "literal": "diversion" },
+                  { "literal": "dodge" },
                   { "literal": "dolyak-signet" },
                   { "literal": "dust-cloak" },
                   { "literal": "earthbind" },
@@ -699,6 +703,7 @@
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
+                  { "literal": "serpents-quickness" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -742,6 +747,7 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "zealous-anthem" }
                 ]
@@ -833,6 +839,7 @@
                   { "literal": "disease" },
                   { "literal": "displacement" },
                   { "literal": "diversion" },
+                  { "literal": "dodge" },
                   { "literal": "dolyak-signet" },
                   { "literal": "dust-cloak" },
                   { "literal": "earthbind" },
@@ -921,6 +928,7 @@
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
+                  { "literal": "serpents-quickness" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -964,6 +972,7 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "zealous-anthem" }
                 ]
@@ -1052,6 +1061,7 @@
                   { "literal": "disease" },
                   { "literal": "displacement" },
                   { "literal": "diversion" },
+                  { "literal": "dodge" },
                   { "literal": "dolyak-signet" },
                   { "literal": "dust-cloak" },
                   { "literal": "earthbind" },
@@ -1140,6 +1150,7 @@
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
+                  { "literal": "serpents-quickness" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -1183,6 +1194,7 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "zealous-anthem" }
                 ]
@@ -1268,6 +1280,7 @@
                   { "literal": "disease" },
                   { "literal": "displacement" },
                   { "literal": "diversion" },
+                  { "literal": "dodge" },
                   { "literal": "dolyak-signet" },
                   { "literal": "dust-cloak" },
                   { "literal": "earthbind" },
@@ -1356,6 +1369,7 @@
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
+                  { "literal": "serpents-quickness" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -1399,6 +1413,7 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "zealous-anthem" }
                 ]
@@ -1585,6 +1600,7 @@
                   { "literal": "disease" },
                   { "literal": "displacement" },
                   { "literal": "diversion" },
+                  { "literal": "dodge" },
                   { "literal": "dolyak-signet" },
                   { "literal": "dust-cloak" },
                   { "literal": "earthbind" },
@@ -1673,6 +1689,7 @@
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
+                  { "literal": "serpents-quickness" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -1716,6 +1733,7 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "zealous-anthem" }
                 ]
@@ -1792,6 +1810,7 @@
                   { "literal": "disease" },
                   { "literal": "displacement" },
                   { "literal": "diversion" },
+                  { "literal": "dodge" },
                   { "literal": "dolyak-signet" },
                   { "literal": "dust-cloak" },
                   { "literal": "earthbind" },
@@ -1880,6 +1899,7 @@
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
+                  { "literal": "serpents-quickness" },
                   { "literal": "shadow-of-fear" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -1923,6 +1943,7 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "zealous-anthem" }
                 ]

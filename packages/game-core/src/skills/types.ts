@@ -880,6 +880,12 @@ export type StateCondition =
    */
   | { readonly kind: "target-attacking" }
   /**
+   * One of `conditions` holds, each read as it would be alone (#1539):
+   * Melandru's Shot's "if target foe is moving or knocked down". An
+   * empty list never holds.
+   */
+  | { readonly kind: "any-of"; readonly conditions: readonly StateCondition[] }
+  /**
    * The effect's target is activating a spell (`isSpell`) or is attacking
    * (#1511), either once: Signet of Rejuvenation's "casting a spell or
    * attacking". An attack held while a spell is cast counts once.

@@ -133,6 +133,10 @@ export type StatusId =
   | "dark-escape"
   | "natural-stride"
   | "lightning-reflexes"
+  // Ranger staples (#1539).
+  | "whirling-defense"
+  | "serpents-quickness"
+  | "dodge"
   | "escape"
   // Warrior Tactics stances (#1329).
   | "bonettis-defense"
@@ -714,6 +718,12 @@ export interface StatusDefinition {
    */
   readonly spellRechargeFaster: number;
   /**
+   * The share taken off the recharge of each skill the bearer finishes,
+   * of any type (#1539): Serpent's Quickness's 0.33. Read as
+   * `spellRechargeFaster` is; with a type's own share, the larger counts.
+   */
+  readonly skillRechargeFaster: number;
+  /**
    * The share taken off the recharge of each binding ritual the bearer
    * finishes (#1064): Weapon of Quickening's 0.33, read as
    * `spellRechargeFaster` is.
@@ -1249,6 +1259,7 @@ function define(
     extraStrikesPerHit: 0,
     adrenalineGainFaster: 0,
     spellRechargeFaster: 0,
+    skillRechargeFaster: 0,
     bindingRitualRechargeFaster: 0,
     enchantmentRechargeFaster: undefined,
     skillArmorPenetration: undefined,
@@ -1695,6 +1706,64 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     moveSpeedMultiplier: 1.33,
     block: { chance: 0.75, against: "all" },
     endsWhenBearerAttacksInMelee: true,
+  }),
+  // "For 8...20 seconds, you have 75% chance to block attacks. Whenever
+  // you block a projectile in this way, adjacent foes take 5...11 damage"
+  // (#1539): 10, its rank-12 value. The splash centres on the bearer, so
+  // a far archer takes none.
+  "whirling-defense": define("whirling-defense", "Whirling Defense", "stance", {
+    profession: "ranger",
+    block: { chance: 0.75, against: "all" },
+    triggers: [
+      {
+        on: "bearer-blocks-projectile",
+        target: "bearer",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", type: "typeless", armorPenetration: 0, amount: { flat: 10 } },
+            ],
+          },
+        ],
+        skillId: "ranger.whirling-defense",
+      },
+    ],
+  }),
+  // "For 15...30 seconds, recharge times for your skills are reduced by
+  // 33%. Serpent's Quickness ends if your Health drops below 50%" (#1539):
+  // read when a foe damages the bearer, so Bleeding or a sacrifice below
+  // half ends it only at the next foe's damage. Stances replace each
+  // other, so the one stance removed is this one.
+  "serpents-quickness": define("serpents-quickness", "Serpent's Quickness", "stance", {
+    profession: "ranger",
+    skillRechargeFaster: 0.33,
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        target: "bearer",
+        effects: [
+          {
+            kind: "if",
+            condition: { kind: "target-health-below", fraction: 0.5 },
+            effects: [{ kind: "remove-status", category: "stance", count: 1 }],
+          },
+        ],
+        skillId: "ranger.serpents-quickness",
+      },
+    ],
+  }),
+  // "For 5...11 seconds, you move 33% faster and have a 27...75% chance to
+  // block incoming projectiles. Dodge ends if you attack" (#1539): 65%,
+  // its rank-12 value.
+  dodge: define("dodge", "Dodge", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.33,
+    block: { chance: 0.65, against: "projectile" },
+    endsWhenBearerAttacks: true,
   }),
   // "For 5...11 seconds, you have a 75% chance to block melee and
   // projectile attacks. You gain 5 Energy for each successful melee attack
@@ -4541,6 +4610,8 @@ export interface StatusModifiers {
    * 1 − Π(1 − f), never more than `MAX_RECHARGE_REDUCTION` (#975).
    */
   readonly spellRechargeFaster: number;
+  /** As `spellRechargeFaster`, for a skill of any type (#1539). */
+  readonly skillRechargeFaster: number;
   /** As `spellRechargeFaster`, for a binding ritual (#1064). */
   readonly bindingRitualRechargeFaster: number;
   /** Every status's, summed (#1455). */
@@ -4635,6 +4706,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let uninterruptible = false;
   let conditionsExpireFaster = 0;
   let spellRechargeKept = 1;
+  let skillRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
   let damageFromSpiritAttacks = 0;
@@ -4727,6 +4799,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     uninterruptible ||= def.uninterruptible;
     conditionsExpireFaster += def.conditionsExpireFaster;
     spellRechargeKept *= 1 - def.spellRechargeFaster;
+    skillRechargeKept *= 1 - def.skillRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
@@ -4765,6 +4838,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     knockdownMinSeconds,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
+    skillRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - skillRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     adrenalineGainFaster,
     enchantmentRechargeFaster,
