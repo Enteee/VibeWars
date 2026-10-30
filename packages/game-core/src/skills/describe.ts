@@ -19,6 +19,7 @@ import { energyCostOf } from "./activation.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
+  getStatusDefinition,
   type StatusCategory,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -257,7 +258,19 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`take ${signed(definition.damageFromSpiritAttacks)} from spirits' attacks`);
   }
   if (definition.attackDamageType !== undefined) {
-    parts.push(`attacks deal ${definition.attackDamageType} damage`);
+    const weapon = definition.attackDamageTypeWeapon;
+    parts.push(
+      `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${definition.attackDamageType} damage`,
+    );
+  }
+  if (definition.immuneTo.length > 0) {
+    const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
+    parts.push(`immune to ${names.join(" and ")}`);
+  }
+  if (definition.adrenalineGainFaster !== 0) {
+    parts.push(
+      `gain adrenaline ${String(Math.round(definition.adrenalineGainFaster * 100))}% faster`,
+    );
   }
   if (definition.attributeDelta !== 0) {
     parts.push(`${signed(definition.attributeDelta)} to all attributes`);
@@ -408,6 +421,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       const faster = String(Math.round(bindingRitualRechargeFaster * 100));
       parts.push(`binding rituals recharge ${faster}% faster`);
     }
+  }
+  if (definition.enchantmentRechargeFaster !== undefined) {
+    const { share, profession } = definition.enchantmentRechargeFaster;
+    const faster = String(Math.round(share * 100));
+    parts.push(`${getProfession(profession).name} enchantments recharge ${faster}% faster`);
   }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
@@ -1113,6 +1131,10 @@ function describeEffect(
       const magnitude = describeMagnitude(effect.amount, ranks);
       return { text: `Target loses ${String(magnitude.current)} energy`, magnitude };
     }
+    case "energy-steal": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return { text: `Steals up to ${String(magnitude.current)} energy`, magnitude };
+    }
     case "life-steal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return { text: `Steals up to ${String(magnitude.current)} Health`, magnitude };
@@ -1409,6 +1431,13 @@ function headlineOf(
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
         text: `drains ${String(magnitude.current)} energy`,
+        scales: magnitude.attributeId !== undefined,
+      };
+    }
+    case "energy-steal": {
+      const magnitude = describeMagnitude(effect.amount, ranks);
+      return {
+        text: `steals ${String(magnitude.current)} energy`,
         scales: magnitude.attributeId !== undefined,
       };
     }
