@@ -913,6 +913,11 @@ export type StateCondition =
    */
   | { readonly kind: "caster-wields"; readonly weapon: AttackWeaponClass }
   /**
+   * The caster holds a shield in the set in hand (#1592): Shield Bash's
+   * "while wielding a shield". A focus is no shield.
+   */
+  | { readonly kind: "caster-holds-shield" }
+  /**
    * The effect's target has less health than the caster, absolute, not a
    * share (#939): Victorious Sweep's "if target foe has less Health than
    * you". Equal is not less.

@@ -64,6 +64,7 @@ const NO_BOT_USE = new Set([
   "warrior.flail",
   "warrior.for-great-justice",
   "warrior.frenzy",
+  "warrior.rage-of-the-ntouka",
   "warrior.rush",
   "warrior.sprint",
   // Minions, wells and enchantment strips: no rule for them yet.

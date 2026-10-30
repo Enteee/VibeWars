@@ -404,6 +404,14 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.damageReduction > 0) {
     parts.push(`−${String(definition.damageReduction)} damage taken`);
   }
+  if (definition.damageReductionPerRank !== undefined) {
+    const { attributeId, perRank, max } = definition.damageReductionPerRank;
+    const now = Math.min(max, perRank * (ranks.get(attributeId) ?? 0));
+    const attribute = getAttribute(attributeId)?.name ?? attributeId;
+    parts.push(
+      `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
+    );
+  }
   if (definition.redirectsPhysicalDamage > 0) {
     parts.push(
       `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
@@ -780,9 +788,10 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, profession, elite } = trigger.usedSkill;
+    const { type, profession, elite, adrenal } = trigger.usedSkill;
     const words = [
       ...(elite === undefined ? [] : ["elite"]),
+      ...(adrenal === undefined ? [] : ["adrenal"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
@@ -1162,6 +1171,8 @@ function conditionText(condition: EffectCondition): string {
       return "If you are Overcast";
     case "caster-wields":
       return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
+    case "caster-holds-shield":
+      return "If you hold a shield";
     case "target-less-health":
       return "If target has less Health than you";
     case "target-more-health":

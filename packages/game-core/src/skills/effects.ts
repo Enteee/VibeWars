@@ -1495,6 +1495,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "caster-more-energy":
     case "caster-overcast":
     case "caster-wields":
+    case "caster-holds-shield":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
@@ -1576,6 +1577,8 @@ export function stateHolds(
       return caster.overcast > 0;
     case "caster-wields":
       return wieldsFor(caster.equipment.mainHand.weapon.id, condition.weapon);
+    case "caster-holds-shield":
+      return caster.equipment.offhandId === "shield";
     case "target-less-health":
       return target.health < caster.health;
     case "target-more-health":
@@ -1807,6 +1810,7 @@ function conditionHolds(
     case "caster-more-energy":
     case "caster-overcast":
     case "caster-wields":
+    case "caster-holds-shield":
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
