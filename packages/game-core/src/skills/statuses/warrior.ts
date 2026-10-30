@@ -187,7 +187,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     ],
   }),
   // "For 1...15 seconds, you attack 33% faster but move 33% slower"
-  // (PvP, #1549): 12.2 s at rank 12, on the skill. Its "ends if you use a
+  // (PvP, #1549): 12 s at rank 12, on the skill. Its "ends if you use a
   // ranged attack skill" is left out.
   flail: define("flail", "Flail", "stance", {
     profession: "warrior",
@@ -220,7 +220,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     ],
   }),
   // As Riposte, but "your attacker is struck for 15...90 damage and begins
-  // Bleeding for 3...25 seconds" (#1549): 75 and 20.6 s at rank 12.
+  // Bleeding for 3...25 seconds" (#1549): 75 and 21 s at rank 12.
   "deadly-riposte": define("deadly-riposte", "Deadly Riposte", "skill-effect", {
     profession: "warrior",
     block: { chance: 1, against: "melee" },
@@ -232,13 +232,13 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         target: "offender",
         effects: [
           { kind: "damage", amount: { flat: 75 }, type: "typeless", armorPenetration: 0 },
-          { kind: "apply-status", statusId: "bleeding", durationSeconds: 20.6 },
+          { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
         ],
         skillId: "warrior.deadly-riposte",
       },
     ],
   }),
-  // "For 5...13 seconds, these allies move 33% faster" (#1549): 11.4 s at
+  // "For 5...13 seconds, these allies move 33% faster" (#1549): 11 s at
   // rank 12, on the skill.
   charge: define("charge", '"Charge!"', "shout", {
     profession: "warrior",

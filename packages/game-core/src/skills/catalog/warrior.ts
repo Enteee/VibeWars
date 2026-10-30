@@ -1772,8 +1772,8 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 1...15 seconds, you attack 33% faster but move 33% slower"
-    // (PvP): 12.2 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "flail", durationSeconds: 12.2 }],
+    // (PvP): 12 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "flail", durationSeconds: 12 }],
   },
   {
     id: "warrior.defy-pain",
@@ -1983,10 +1983,10 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "All allies within earshot lose the Crippled condition. For 5...13
-    // seconds, these allies move 33% faster": 11.4 s, its rank-12 value.
+    // seconds, these allies move 33% faster": 11 s, its rank-12 value.
     effects: [
       { kind: "remove-status", category: "condition", count: 1, statusId: "crippled" },
-      { kind: "apply-status", statusId: "charge", durationSeconds: 11.4 },
+      { kind: "apply-status", statusId: "charge", durationSeconds: 11 },
     ],
   },
   {

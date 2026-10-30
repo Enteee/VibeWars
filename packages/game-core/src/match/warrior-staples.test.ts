@@ -198,15 +198,15 @@ describe("a bearer-blocks trigger bound to melee (#1549)", () => {
 });
 
 describe("Flail (#1549)", () => {
-  it("attacks 33% faster and moves 33% slower for 12.2 s, for 4 adrenaline", () => {
+  it("attacks 33% faster and moves 33% slower for 12 s, for 4 adrenaline", () => {
     expect(skill(FLAIL)).toMatchObject({
       type: "stance",
       attributeId: "warrior.strength",
       cost: { kind: "adrenaline", amount: 4 },
-      effects: [{ kind: "apply-status", statusId: "flail", durationSeconds: 12.2 }],
+      effects: [{ kind: "apply-status", statusId: "flail", durationSeconds: 12 }],
     });
     const set = new StatusSet();
-    set.apply("flail", 12.2, "w");
+    set.apply("flail", 12, "w");
     const modifiers = aggregateModifiers(set.active);
     expect(modifiers.attackDurationMultiplier).toBe(0.67);
     expect(modifiers.moveSpeedMultiplier).toBe(0.67);
@@ -275,12 +275,12 @@ describe("Riposte and Deadly Riposte (#1549)", () => {
     expect(get(sim, "w").combatant.statuses.has("riposte")).toBe(false);
   });
 
-  it("Deadly Riposte strikes for 75 and Bleeding for 20.6 s", () => {
+  it("Deadly Riposte strikes for 75 and Bleeding for 21 s", () => {
     const sim = match();
     riposting(sim, DEADLY_RIPOSTE);
     const events = attacked(sim);
     expect(damageTo(events, "f")).toEqual([75]);
-    expect(get(sim, "f").combatant.statuses.get("bleeding")?.durationSeconds).toBe(20.6);
+    expect(get(sim, "f").combatant.statuses.get("bleeding")?.durationSeconds).toBe(21);
     expect(get(sim, "w").combatant.statuses.has("deadly-riposte")).toBe(false);
   });
 
@@ -317,7 +317,7 @@ describe("Riposte and Deadly Riposte (#1549)", () => {
 });
 
 describe('"Charge!" (#1549)', () => {
-  it("allies in earshot lose Crippled, not Bleeding, and move 33% faster for 11.4 s", () => {
+  it("allies in earshot lose Crippled, not Bleeding, and move 33% faster for 11 s", () => {
     const sim = match([spec("a", 0, vec2(-200, 0))]);
     const ally = get(sim, "a").combatant;
     ally.statuses.apply("crippled", 30, "f");
@@ -325,7 +325,7 @@ describe('"Charge!" (#1549)', () => {
     used(sim, CHARGE);
     expect(ally.statuses.has("crippled")).toBe(false);
     expect(ally.statuses.has("bleeding")).toBe(true);
-    expect(ally.statuses.get("charge")?.durationSeconds).toBe(11.4);
+    expect(ally.statuses.get("charge")?.durationSeconds).toBe(11);
     expect(get(sim, "w").combatant.statuses.has("charge")).toBe(true);
     expect(aggregateModifiers(ally.statuses.active).moveSpeedMultiplier).toBe(1.33);
   });
@@ -387,13 +387,13 @@ describe("the texts (#1549)", () => {
   it("say what each does", () => {
     expect(text(CHARGE)).toEqual([
       "Removes Crippled",
-      'Applies "Charge!" for 11.4s (moves at 133% speed)',
+      'Applies "Charge!" for 11s (moves at 133% speed)',
     ]);
     expect(describeStatus("riposte", ranks)).toBe(
       "100% chance to block melee attacks. The next time it blocks a melee attack: deals 68 damage",
     );
     expect(describeStatus("deadly-riposte", ranks)).toBe(
-      "100% chance to block melee attacks. The next time it blocks a melee attack: deals 75 damage, applies Bleeding for 20.6s (−3 Health degeneration)",
+      "100% chance to block melee attacks. The next time it blocks a melee attack: deals 75 damage, applies Bleeding for 21s (−3 Health degeneration)",
     );
     expect(describeStatus("enraging-charge", ranks)).toBe(
       "moves at 125% speed, ends if the bearer hits with an attack. Whenever it hits with a melee attack: gain 2 strikes of adrenaline",
