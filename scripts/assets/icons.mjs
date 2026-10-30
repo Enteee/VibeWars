@@ -3471,6 +3471,32 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The Ranger's staples (#1539, #1585): an arrow and what it brings.
+  "arrow-twin": () =>
+    `<g transform="translate(8.2,15.8) scale(0.8) translate(-12,-12)">${skillGlyph.arrow()}</g>` +
+    `<g transform="translate(15.8,8.2) scale(0.8) translate(-12,-12)">${skillGlyph.arrow()}</g>`,
+  "arrow-spent-ring": () =>
+    `<g transform="translate(14,10) scale(0.85) translate(-12,-12)">${skillGlyph.arrow()}</g>` +
+    `<circle cx="7" cy="17" r="4.2" ${stroke(C.ink, 2)} stroke-dasharray="3.4 2.4"/>`,
+  "arrow-fast": () =>
+    `<g transform="translate(15,9) scale(0.85) translate(-12,-12)">${skillGlyph.arrow()}</g>` +
+    `<g transform="translate(6.5,17.5) scale(0.55) translate(-12,-12)">${skillGlyph.speed()}</g>`,
+  "arrow-close": () =>
+    inkLine("M3 21L11.5 12.5", 2.4) +
+    inkFill("M16 8L8.5 10L14 15.5Z") +
+    `<circle cx="18" cy="6" r="4" ${stroke(C.ink, 2)}/><circle cx="18" cy="6" r="1.2" fill="${C.ink}"/>`,
+  "shield-whirl": () =>
+    `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${skillGlyph["shield-stance"]()}</g>` +
+    `<path d="M20.5 12A8.5 8.5 0 1 1 12 3.5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M12 0.5L16 3.5L12 6.5Z"),
+  snake: () =>
+    inkLine("M17 4C7 4 6 10 12 12C18 14 17 20 7 20", 3) +
+    `<circle cx="18.5" cy="4" r="2.2" fill="${C.ink}"/>` +
+    `<g transform="translate(19,19) scale(0.4) translate(-12,-12)">${skillGlyph.speed()}</g>`,
+  "arrow-dodge": () =>
+    `<g transform="translate(12,15.5) scale(0.8) translate(-12,-12)">${skillGlyph.speed()}</g>` +
+    inkLine("M3 5H16", 2.2) +
+    inkFill("M22 5L16 2V8Z"),
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 
