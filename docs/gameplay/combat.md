@@ -1080,9 +1080,13 @@ damage and Crippled for 12.6 s if the foe is moving when it hits. A
 dagger that misses does nothing. **Iron Palm** (touch, not an attack, so
 never blocked) deals 5…41…50 damage, ignoring armor, knocks down a foe
 with a hex or a condition, and counts as a lead attack: it leaves your
-lead mark, so an off-hand attack follows it.
+lead mark, so an off-hand attack follows it. **Mantis Touch** (cripples
+for 17 s) and **Palm Strike** (54 damage, ignoring armor, and Crippled
+for 4 s) are touch skills the same way, never blocked, and count as an
+off-hand attack: they leave your off-hand mark, so a dual follows them.
 
-**Dual attacks** (#885) must follow your off-hand attack, and strike
+**Dual attacks** (#885) must follow your off-hand attack (all but
+Exhausting Assault, below), and strike
 twice: each blow rolls its own miss, block and crit, and the skill's
 bonus and riders land with each blow that hits, so a condition applied
 twice is refreshed. A foe the first blow kills takes no second. A dual
@@ -1092,7 +1096,10 @@ deep-wounds; Horns of the Ox knocks down a foe with no ally adjacent.
 Moebius Strike, the elite, is an off-hand attack that follows a dual,
 and against a foe below half health recharges all your other attack
 skills at once, so the chain loops: lead, off-hand, dual, Moebius,
-dual, Moebius. The weapon's own double strike never adds to a skill.
+dual, Moebius. Exhausting Assault (#1580) is the one dual that follows
+a lead attack instead: it interrupts the foe's action, and if that
+action was a spell, the foe suffers 10 overcast, once however many
+blows land. The weapon's own double strike never adds to a skill.
 
 **Off-hand attacks that ask for a state** (#1041). Falling Spider needs
 no lead: it hits only a knocked-down foe, whoever knocked it down, read
