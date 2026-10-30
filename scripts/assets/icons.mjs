@@ -3331,6 +3331,26 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The Mesmer's staples (#1570, #1594): what the skill breaks off, and what it leaves.
+  "interrupt-energy-cut": () =>
+    `<g transform="translate(15.5,8.5) scale(0.62) translate(-12,-12)">${skillGlyph.interrupt()}</g>` +
+    `<g transform="translate(8,15.5) scale(0.7) translate(-12,-12)">${skillGlyph["energy-cut"]()}</g>`,
+  "skills-off": () =>
+    inkFill("M3 3H11V11H3ZM13 3H21V11H13ZM3 13H11V21H3ZM13 13H21V21H13Z") +
+    `<path d="M2 22L22 2" stroke="${C.bg}" stroke-width="6" stroke-linecap="round"/>` +
+    inkLine("M2 22L22 2", 2.6),
+  "hex-shatter": () =>
+    `<path d="M12 3A9 9 0 0 1 21 12M18 19.5A9 9 0 0 1 6 19.5M3 12A9 9 0 0 1 8 4" ${stroke(C.ink, 2.2)}/>` +
+    `<g transform="translate(12,12) scale(0.5) translate(-12,-12)">${skillGlyph.interrupt()}</g>`,
+  "interrupt-knockdown": () =>
+    `<g transform="translate(9,8.5) scale(0.7) translate(-12,-12)">${skillGlyph.interrupt()}</g>` +
+    `<circle cx="5.5" cy="19" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 19H21M14 19L12 15.5M18 19L20 15.5", 2.4),
+  "hex-slow-star": () =>
+    punisher(
+      inkFill("M12 1L14 6.5L19.5 8.5L14 10.5L12 16L10 10.5L4.5 8.5L10 6.5Z") +
+        inkLine("M6 18H18M6 22H18M7 18L17 22M17 18L7 22", 2),
+    ),
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 
