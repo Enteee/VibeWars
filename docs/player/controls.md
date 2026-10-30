@@ -49,6 +49,6 @@ These keys are fixed:
 ## The top bar
 
 Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
-**♪** (music), the sound mute and fullscreen. In a match the same buttons
+**♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons
 sit at the top right of the screen. In a narrow window, these icons and
 the screen's other buttons fold into **⋯**; only its main button stays out.

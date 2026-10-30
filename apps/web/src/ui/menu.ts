@@ -16,12 +16,11 @@ import {
 } from "../render/cape-shape.js";
 import type { Tally } from "../storage/match-record.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
-import type { StoredCharacter, StoredTeam } from "../storage/schema.js";
+import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
-import { looksLikeTeam } from "../storage/team-transfer.js";
 import { canvasPainter, createCharacterFigure } from "./character-figure.js";
 import { cssColour, equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
-import { button, emptyState, h, listenForPaste, screenBar, selectableRow } from "./kit.js";
+import { button, emptyState, h, screenBar, selectableRow } from "./kit.js";
 
 /**
  * The main menu and lobby screens (brief §21).
@@ -36,11 +35,10 @@ export interface MenuCallbacks {
   readonly onRandomArena: (mode: QueueMode, name: string) => void;
   readonly onCreateLobby: (name: string) => void;
   readonly onJoinLobby: (code: string, name: string) => void;
-  readonly onManageTeams: () => void;
+  /** Show Solo Play or Team Play (#1453); the menu has stored it. */
+  readonly onSwitchTab: (tab: PlayTab) => void;
   /** Open the Record screen (#1404). */
   readonly onShowRecord: () => void;
-  /** Open the jukebox (#372). */
-  readonly onMusic: () => void;
   /** Open the build editor on a new character. */
   readonly onNewCharacter: () => void;
   readonly onEditCharacter: (id: string) => void;
@@ -205,6 +203,110 @@ export function saveActiveCharacterId(id: string): void {
   }
 }
 
+/** The main screen's two tabs (#1453): your own character, or a team. */
+export type PlayTab = "solo" | "team";
+
+/** The tabs as the title bar reads them, Solo Play first. */
+export const PLAY_TABS: readonly { readonly tab: PlayTab; readonly label: string }[] = [
+  { tab: "solo", label: "Solo Play" },
+  { tab: "team", label: "Team Play" },
+];
+
+const PLAY_TAB_STORAGE_KEY = `${STORAGE_NAMESPACE}.playTab`;
+
+/** The tab last shown; Solo Play on a first start, and for anything else stored. */
+export function loadPlayTab(): PlayTab {
+  try {
+    return localStorage.getItem(PLAY_TAB_STORAGE_KEY) === "team" ? "team" : "solo";
+  } catch {
+    // Same reasoning as the name.
+    return "solo";
+  }
+}
+
+export function savePlayTab(tab: PlayTab): void {
+  try {
+    localStorage.setItem(PLAY_TAB_STORAGE_KEY, tab);
+  } catch {
+    // Same reasoning as the name.
+  }
+}
+
+/**
+ * The switch after "VibeWars" in the title bar (#1453): `active` pressed,
+ * the other stores itself and goes to `onSwitch`.
+ */
+export function playTabs(active: PlayTab, onSwitch: (tab: PlayTab) => void): HTMLElement {
+  const group = h("div", "play-tabs");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Play");
+  for (const { tab, label } of PLAY_TABS) {
+    const choice = button(label, "play-tab", () => {
+      if (tab !== active) {
+        savePlayTab(tab);
+        onSwitch(tab);
+      }
+    });
+    choice.setAttribute("aria-pressed", String(tab === active));
+    group.appendChild(choice);
+  }
+  return group;
+}
+
+/**
+ * Solo Play's own buttons in the title bar (#1453): Record. Team Builds
+ * are Team Play's, and Music is the ♪.
+ */
+export function soloPlayActions(
+  callbacks: Pick<MenuCallbacks, "onShowRecord">,
+): readonly { readonly label: string; readonly onPress: () => void }[] {
+  return [{ label: "Record", onPress: callbacks.onShowRecord }];
+}
+
+/**
+ * The join row, a code and Join, then "Connecting…" once a join has run
+ * a while (#707): Solo Play's and Team Play's (#1453). `name` is read at
+ * the press.
+ */
+export function joinControls(
+  panel: HTMLElement,
+  name: () => string,
+  onJoin: (code: string, name: string) => void,
+): HTMLElement[] {
+  const joinRow = h("div", "menu-row");
+  const codeInput = document.createElement("input");
+  codeInput.className = "field-input code-input";
+  codeInput.placeholder = "CODE";
+  codeInput.maxLength = 8;
+  codeInput.setAttribute("aria-label", "Lobby code");
+  codeInput.addEventListener("input", () => {
+    // Codes are always upper case; doing it as they type avoids a
+    // "why didn't my code work" moment.
+    codeInput.value = codeInput.value.toUpperCase();
+  });
+  // Shown once a join has run a while; the lobby, or the menu again with
+  // why it failed, replaces this screen when it ends.
+  const connecting = h("p", "menu-connecting", "Connecting…");
+  connecting.setAttribute("role", "status");
+  connecting.hidden = true;
+  const join = (): void => {
+    onJoin(codeInput.value, name());
+    setTimeout(() => {
+      if (panel.isConnected) {
+        connecting.hidden = false;
+      }
+    }, CONNECTING_NOTICE_MS);
+  };
+  codeInput.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+      join();
+    }
+  });
+  joinRow.appendChild(codeInput);
+  joinRow.appendChild(button("Join", "primary", join));
+  return [joinRow, connecting];
+}
+
 const STARTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.starterCharacterId`;
 
 /**
@@ -294,8 +396,8 @@ export function rosterTags(
 }
 
 /**
- * Render the main menu (#579): your characters on the left, Play on the
- * right, and Team Builds, Record, Options and Music in the screen bar. Each
+ * Render Solo Play (#579, #1453): your characters on the left, Play on
+ * the right, and the Solo/Team Play switch and Record in the screen bar. Each
  * character's record (#1404) follows its subtitle.
  */
 export function renderMenu(
@@ -313,14 +415,11 @@ export function renderMenu(
   const panel = h("div", "screen screen-menu");
 
   // No way back from here, so Esc has nothing to do but cancel (#578).
-  // Options is the top bar's ⚙ (#1272).
+  // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
   screenBar({
     crumbs: ["VibeWars"],
-    actions: [
-      button("Team Builds", "", callbacks.onManageTeams),
-      button("Record", "", callbacks.onShowRecord),
-      button("Music", "", callbacks.onMusic),
-    ],
+    status: [playTabs("solo", callbacks.onSwitchTab)],
+    actions: soloPlayActions(callbacks).map(({ label, onPress }) => button(label, "", onPress)),
   });
   const columns = h("div", "menu-columns");
   panel.appendChild(columns);
@@ -520,129 +619,13 @@ export function renderMenu(
   );
   play.appendChild(hostRow);
 
-  const joinRow = h("div", "menu-row");
-  const codeInput = document.createElement("input");
-  codeInput.className = "field-input code-input";
-  codeInput.placeholder = "CODE";
-  codeInput.maxLength = 8;
-  codeInput.setAttribute("aria-label", "Lobby code");
-  codeInput.addEventListener("input", () => {
-    // Codes are always upper case; doing it as they type avoids a
-    // "why didn't my code work" moment.
-    codeInput.value = codeInput.value.toUpperCase();
-  });
-  // Shown once a join has run a while; the lobby, or the menu again with
-  // why it failed, replaces this screen when it ends.
-  const connecting = h("p", "menu-connecting", "Connecting…");
-  connecting.setAttribute("role", "status");
-  connecting.hidden = true;
-  const join = (): void => {
-    callbacks.onJoinLobby(codeInput.value, nameInput.value);
-    setTimeout(() => {
-      if (panel.isConnected) {
-        connecting.hidden = false;
-      }
-    }, CONNECTING_NOTICE_MS);
-  };
-  codeInput.addEventListener("keydown", (event: KeyboardEvent) => {
-    if (event.key === "Enter") {
-      join();
-    }
-  });
-  joinRow.appendChild(codeInput);
-  joinRow.appendChild(button("Join", "primary", join));
-  play.appendChild(joinRow);
-  play.appendChild(connecting);
+  play.append(...joinControls(panel, () => nameInput.value, callbacks.onJoinLobby));
   columns.appendChild(play);
 
   root.appendChild(panel);
   if (rerolled) {
     root.querySelector<HTMLElement>(".roster-reroll")?.focus();
   }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Character / team list screens                                               */
-/* -------------------------------------------------------------------------- */
-
-export interface TeamListCallbacks {
-  readonly onNew: () => void;
-  readonly onEdit: (id: string) => void;
-  readonly onBack: () => void;
-  /** A team code was pasted on the list (#577). */
-  readonly onPasteTeam: (text: string) => void;
-}
-
-/** "1 member", "3 members". */
-export function memberCount(count: number): string {
-  return `${String(count)} ${count === 1 ? "member" : "members"}`;
-}
-
-/**
- * The team builds, one selectable row each (#581): a press opens it in
- * the team editor. Each row shows its member count and its members'
- * figures; an empty list says so where the rows would be, with "New team
- * build".
- */
-export function renderTeamList(
-  root: HTMLElement,
-  teams: readonly StoredTeam[],
-  problems: readonly string[],
-  callbacks: TeamListCallbacks,
-): void {
-  root.replaceChildren();
-  const panel = h("div", "screen team-list");
-  screenBar({
-    crumbs: ["VibeWars", "Team Builds"],
-    back: { label: "Back", onBack: callbacks.onBack },
-    // An empty list holds the one "New team build" itself.
-    actions: teams.length === 0 ? [] : [button("New team build", "primary", callbacks.onNew)],
-  });
-
-  for (const problem of problems) {
-    panel.appendChild(h("div", "screen-problem", problem));
-  }
-
-  if (teams.length === 0) {
-    panel.appendChild(emptyState("No team builds yet.", "New team build", callbacks.onNew));
-  }
-
-  const list = h("div", "entity-list");
-  for (const team of teams) {
-    const dots = h("span", "team-list-dots");
-    for (const member of team.members) {
-      // A team is played by bots, and a bot wears no cape.
-      dots.appendChild(createCharacterFigure(member.character, undefined));
-    }
-    list.appendChild(
-      selectableRow({
-        name: team.name,
-        subtitle: memberCount(team.members.length),
-        miniBar: dots,
-        onSelect: () => {
-          callbacks.onEdit(team.id);
-        },
-      }),
-    );
-  }
-  panel.appendChild(list);
-
-  root.appendChild(panel);
-
-  // A team code pasted on the list opens that team (#577); a single build
-  // code is not a team, and is ignored. The list has no dispose, so the
-  // listener stops itself once the list is off screen.
-  const stopPaste = listenForPaste((text) => {
-    if (!panel.isConnected) {
-      stopPaste();
-      return false;
-    }
-    if (!looksLikeTeam(text)) {
-      return false;
-    }
-    callbacks.onPasteTeam(text);
-    return true;
-  });
 }
 
 /** The emblem buttons' size, CSS px. */

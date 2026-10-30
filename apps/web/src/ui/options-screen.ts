@@ -2,15 +2,11 @@ import { h, screenBar, type ScreenBarBack } from "./kit.js";
 import { OPTIONS_SECTIONS } from "./options-sections.js";
 
 /**
- * The Options screen (#423): the sections of `OPTIONS_SECTIONS` listed on
- * the left, the selected one on the right. It opens on the first section,
- * or on the one asked for, as the jukebox's "sound settings" link does.
- * Back, or Esc, returns to the menu (the screen bar's, #578); a section
- * that wants Esc for itself, as Controls does while a key is being
- * rebound, stops it first.
- *
- * The same sections open as an overlay too (#454), from the top bar or a
- * match's HUD: there Close, or Esc, closes it instead of going back.
+ * Options (#423, #454): the sections of `OPTIONS_SECTIONS` listed on the
+ * left, the selected one on the right, opening on the first, as an overlay
+ * from the top bar or a match's HUD. Close, or Esc, closes it (the screen
+ * bar's, #578); a section that wants Esc for itself, as Controls does
+ * while a key is being rebound, stops it first.
  */
 
 /** A section, as far as switching between them goes. */
@@ -56,56 +52,22 @@ export class SectionSwitcher<C> {
   }
 }
 
-export interface OptionsScreenCallbacks {
-  readonly onBack: () => void;
-  /** The screen it was reached from, which its breadcrumb goes through (#1272): "Music". */
-  readonly from: string;
-}
-
-/** Torn down by `disposeOptionsScreen`, which every way back to the menu calls. */
-let disposeCurrent: (() => void) | undefined;
-
-export function disposeOptionsScreen(): void {
-  disposeCurrent?.();
-  disposeCurrent = undefined;
-}
-
-export function renderOptionsScreen(
-  root: HTMLElement,
-  callbacks: OptionsScreenCallbacks,
-  sectionId = OPTIONS_SECTIONS[0]?.id,
-): void {
-  disposeOptionsScreen();
-
-  root.replaceChildren();
-  const options = optionsPanel(
-    ["VibeWars", callbacks.from, "Options"],
-    { label: "Back", onBack: callbacks.onBack },
-    false,
-    sectionId,
-  );
-  options.panel.classList.add("screen", "options-screen");
-  root.appendChild(options.panel);
-  disposeCurrent = options.dispose;
-}
-
 /** The open overlay, closed by `closeOptionsOverlay`. */
 let overlay: { readonly element: HTMLElement; readonly dispose: () => void } | undefined;
 
 /**
  * Options above whatever runs under it (#454), from the top bar or the
- * HUD's ⚙: the same sections as the screen, in a panel over `parent`.
+ * HUD's ⚙: its sections in a panel over `parent`.
  * Close, or Esc, closes it and leaves what is under it exactly as it was;
  * a match goes on underneath. `onClose` hears every way it closes.
  */
 export function openOptionsOverlay(parent: HTMLElement, onClose?: () => void): void {
   closeOptionsOverlay();
   const backdrop = h("div", "options-overlay");
-  const options = optionsPanel(
-    ["VibeWars", "Options"],
-    { label: "Close", onBack: closeOptionsOverlay },
-    true,
-  );
+  const options = optionsPanel(["VibeWars", "Options"], {
+    label: "Close",
+    onBack: closeOptionsOverlay,
+  });
   options.panel.classList.add("screen", "options-screen");
   options.panel.setAttribute("role", "dialog");
   options.panel.setAttribute("aria-modal", "true");
@@ -137,12 +99,10 @@ export function closeOptionsOverlay(): void {
   closing.dispose();
 }
 
-/** The Options frame and its sections; the screen and the overlay differ only around it. */
+/** The Options frame and its sections. */
 function optionsPanel(
   crumbs: readonly string[],
   back: ScreenBarBack,
-  asOverlay: boolean,
-  sectionId = OPTIONS_SECTIONS[0]?.id,
 ): { readonly panel: HTMLElement; readonly dispose: () => void } {
   const panel = document.createElement("div");
 
@@ -150,7 +110,7 @@ function optionsPanel(
     crumbs,
     back,
     actions: [],
-    overlay: asOverlay,
+    overlay: true,
     own: "options",
   });
 
@@ -197,8 +157,9 @@ function optionsPanel(
     }
   };
 
-  if (sectionId !== undefined) {
-    select(sectionId);
+  const [first] = OPTIONS_SECTIONS;
+  if (first !== undefined) {
+    select(first.id);
   }
   return {
     panel,

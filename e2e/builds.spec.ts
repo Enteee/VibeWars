@@ -338,20 +338,24 @@ const ROLLED_STARTER = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
 const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
-/** The team list's rows (#581), and what each says: "Duo · 2 members". */
-const teamRows = (page: Page) => page.locator(".team-list .selectable-row");
+/** Team Play's tab in the title bar (#1453), where the Team Builds are. */
+async function openTeamPlay(page: Page): Promise<void> {
+  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
+}
+/** Team Play's Team Build cards (#1453), without None and New team build: "Duo · 2 members". */
+const teamRows = (page: Page) => page.locator(".team-play-card:not(.is-none, .team-play-new)");
 async function teamList(page: Page): Promise<string[]> {
-  return teamRows(page).evaluateAll((rows) =>
-    rows.map(
-      (row) =>
-        `${row.querySelector(".selectable-row-name")?.textContent ?? ""} · ${row.querySelector(".selectable-row-subtitle")?.textContent ?? ""}`,
-    ),
+  return teamRows(page).evaluateAll((cards) =>
+    cards.map((card) => {
+      const count = card.querySelectorAll(".team-play-card-member").length;
+      return `${card.querySelector(".team-play-card-name")?.textContent ?? ""} · ${String(count)} ${count === 1 ? "member" : "members"}`;
+    }),
   );
 }
 
 test("a new team is stored only on Save, which stays on the editor (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
 
   // Nothing stored yet: Back leaves at once and the list is still empty.
@@ -362,7 +366,7 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect(page.getByRole("button", { name: "duplicate" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "delete" })).toBeDisabled();
   await page.getByRole("button", { name: "back" }).click();
-  await expect(page.getByText("No team builds yet.")).toBeVisible();
+  await expect(page.getByText("Make a team build to propose it in the Team Lobby.")).toBeVisible();
 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
@@ -377,13 +381,13 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect(page.getByRole("button", { name: "duplicate" })).toBeEnabled();
 
   await page.reload();
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
 });
 
 test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -408,15 +412,18 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   await expect(page.locator(".toast")).toHaveText("Pasted Duo, 1 member. Save to keep it.");
 });
 
-test("the team list: an empty one offers New team; a row shows its members and opens on Enter (#581)", async ({
+test("Team Play's cards: None and New team build; a card shows its members, is picked and kept, Edit opens it (#1453)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "team builds" }).click();
-  // Empty: the one New team is where the rows would be.
-  await expect(page.locator(".empty-state")).toContainText("No team builds yet.");
+  await openTeamPlay(page);
+  // Empty: None, picked, and New team build, with the one line under them.
+  const none = page.locator(".team-play-card.is-none .team-play-card-choose");
+  await expect(none).toHaveAttribute("aria-pressed", "true");
+  await expect(teamRows(page)).toHaveCount(0);
+  await expect(page.locator(".team-play-hint")).toBeVisible();
   await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
-  await page.locator(".empty-state").getByRole("button", { name: "new team" }).click();
+  await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "add Bravo" }).click();
@@ -424,16 +431,23 @@ test("the team list: an empty one offers New team; a row shows its members and o
   await page.getByRole("button", { name: "back" }).click();
 
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
-  await expect(teamRows(page).locator(".team-list-dots .character-figure")).toHaveCount(2);
-  await expect(page.locator(".empty-state")).toHaveCount(0);
-  await teamRows(page).first().getByRole("button").focus();
+  await expect(teamRows(page).locator(".character-dot")).toHaveCount(2);
+  await expect(page.locator(".team-play-hint")).toHaveCount(0);
+  // A card is a button: Enter picks it, and the pick outlives a reload.
+  const duo = teamRows(page).first().locator(".team-play-card-choose");
+  await duo.focus();
   await page.keyboard.press("Enter");
+  await expect(duo).toHaveAttribute("aria-pressed", "true");
+  await expect(none).toHaveAttribute("aria-pressed", "false");
+  await page.reload();
+  await expect(duo).toHaveAttribute("aria-pressed", "true");
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
 });
 
 test("team edits stay on screen until Save; Back and Delete ask first (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
@@ -469,12 +483,12 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await expect.poll(() => teamList(page)).toEqual(["GvG Practice · 2 members"]);
 
   // Duplicate.
-  await teamRows(page).first().getByRole("button").click();
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await page.getByRole("button", { name: "duplicate" }).click();
   await expect(teamRows(page)).toHaveCount(2);
 
   // Delete asks; cancel keeps the team.
-  await teamRows(page).first().getByRole("button").click();
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await page.getByRole("button", { name: "delete" }).click();
   await expect(page.getByText(/^Delete .*\?$/)).toBeVisible();
   await page.getByRole("button", { name: "cancel" }).click();
@@ -487,7 +501,7 @@ test("the team editor's bar puts its status on a second row from 721 to 1200 px,
   page,
 }) => {
   await saveCharacters(page, ["Alpha"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
@@ -507,7 +521,7 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo", "Charlie"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
 
   const header = page.locator(".team-picker-header");
@@ -554,7 +568,7 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
     await page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(page.locator(".roster")).toContainText(name);
   }
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "add Bravo" }).click();
@@ -590,7 +604,7 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Trip");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -625,7 +639,7 @@ test("a team member is the team's own: an edit leaves the Solo character alone; 
   page,
 }) => {
   await saveCharacters(page, ["Alpha"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team build" }).click();
   await page.getByLabel("team name").fill("Own");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -653,12 +667,12 @@ test("a team member is the team's own: an edit leaves the Solo character alone; 
 
   // The Solo roster is as it was: Alpha, unchanged, and no Fresh.
   await page.getByRole("button", { name: "back" }).click();
-  await page.getByRole("button", { name: "back" }).click();
+  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Solo Play" }).click();
   await expect(page.locator(".roster")).toContainText("Alpha");
   await expect(page.locator(".roster")).not.toContainText("Alpha Prime");
   await expect(page.locator(".roster")).not.toContainText("Fresh");
   await page.reload();
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await expect.poll(() => teamList(page)).toEqual(["Own · 2 members"]);
 });
 
@@ -794,11 +808,11 @@ test("Share keeps the line selected when the clipboard is refused (#572)", async
   await expect(page.locator(".toast")).toBeHidden();
 });
 
-test("Share copies a team as one line; pasted on Team Builds it opens unsaved (#577)", async ({
+test("Share copies a team as one line; pasted on Team Play it opens unsaved (#577)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
-  await page.getByRole("button", { name: "team builds" }).click();
+  await openTeamPlay(page);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
@@ -816,10 +830,10 @@ test("Share copies a team as one line; pasted on Team Builds it opens unsaved (#
   await expect(line).toBeHidden();
 
   await page.getByRole("button", { name: "back" }).click();
-  // The list mounts once the teams load; a paste before that finds no listener.
+  // Team Play mounts once the teams load; a paste before that finds no listener.
   await expect(page.getByRole("button", { name: "new team" })).toBeVisible();
 
-  // On the list, a build code is not a team and is ignored; the team code
+  // On Team Play, a build code is not a team and is ignored; the team code
   // opens the team unsaved, its members its own (#1452).
   const build = JSON.stringify((JSON.parse(code) as { members: unknown[] }).members[0]);
   await paste(page.locator(".screen"), build);
@@ -844,13 +858,11 @@ test("Share copies a team as one line; pasted on Team Builds it opens unsaved (#
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members", "Duo · 2 members"]);
 
   // On the build editor a team code is not imported.
-  await page.getByRole("button", { name: "back" }).click();
+  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Solo Play" }).click();
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").fill("Scratch");
   await paste(page.locator(".editor"), code);
-  await expect(page.locator(".toast")).toHaveText(
-    "That is a team code. Paste it on the Team Builds screen.",
-  );
+  await expect(page.locator(".toast")).toHaveText("That is a team code. Paste it on Team Play.");
   await expect(page.locator("input.editor-name")).toHaveValue("Scratch");
 });
 
