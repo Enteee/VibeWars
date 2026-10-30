@@ -1241,6 +1241,14 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   }
 }
 
+/** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
+function upTo(splash: SplashEffect): string {
+  const who = foesWithin(splash.radius, splash.hits);
+  return splash.maxTargets === undefined || splash.hits === "party"
+    ? who
+    : `Up to ${String(splash.maxTargets)} ${lowerFirst(who)}`;
+}
+
 /**
  * An effect's lines: one, or for an `if`, one per effect inside it, each
  * led by its condition: "If it interrupts: deals 102 damage".
@@ -1743,7 +1751,7 @@ function describeEffect(
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${foesWithin(effect.radius, effect.hits)} ${what}`,
+        text: `${upTo(effect)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -2270,10 +2278,14 @@ export function describeSkill(
     weaponDamage > 0 && weaponDamage < 1
       ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
       : "";
+  // Sun and Moon Slash's, a dual attack's (#1618): "Strikes twice".
+  const strikesText = strikes === 2 ? "Strikes twice" : `Strikes ${String(strikes)} times`;
   const arrowsLine =
-    strikes > 1 && skill.attack?.weapon === "bow"
-      ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
-      : [];
+    strikes <= 1
+      ? []
+      : skill.attack?.weapon === "bow"
+        ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
+        : [{ text: `${strikesText}${weaker}`, magnitude: undefined }];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
