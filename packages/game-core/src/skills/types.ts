@@ -983,6 +983,13 @@ export interface ConditionalBonus {
   readonly amount: Magnitude;
 }
 
+/** A thrown attack's faster flight (#1486). */
+export interface FlightSpeed {
+  readonly multiplier: number;
+  /** Read at release, the attacker as caster; `undefined`: always. */
+  readonly when: StateCondition | undefined;
+}
+
 /** What makes an attack skill a blow of its weapon (ADR-0029). */
 export interface AttackSkillRule {
   readonly weapon: AttackWeaponClass;
@@ -1046,6 +1053,25 @@ export interface AttackSkillRule {
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.
    */
   readonly onBlocked: readonly SkillEffect[];
+  /**
+   * How much faster than its weapon's shot it flies (#1486): Mighty
+   * Throw's "three times faster". Read at release; a melee blow ignores
+   * it. `undefined`: the weapon's speed.
+   */
+  readonly flightSpeed: FlightSpeed | undefined;
+  /**
+   * What a blow of it that is a critical hit, rolled or forced, does to
+   * its victim after `effects` (#1486): Vicious Attack's "if you land a
+   * critical hit with this attack". A blocked blow is no critical.
+   */
+  readonly onCritical: readonly SkillEffect[];
+  /**
+   * What a blow of it that fails to hit does, its intended victim the
+   * target (#1486): a blind miss, a block (after `onBlocked`), a dodge
+   * or an obstruction. Spear of Redemption's "if it fails to hit, you
+   * lose one condition". A victim that died in flight is neither.
+   */
+  readonly onFailedToHit: readonly SkillEffect[];
   /** Its place in a dagger chain (#831); `undefined`: not a chain attack. */
   readonly chain: ChainStep | undefined;
 }

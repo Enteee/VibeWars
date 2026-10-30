@@ -388,4 +388,16 @@ export const SKILL_ICONS = {
   "mesmer.shame": { glyph: "hex-mute", modifier: "up" },
   "mesmer.mistrust": { glyph: "hex-burst", modifier: "bolt" },
   "mesmer.fragility": { glyph: "hex-drain", modifier: "area" },
+  // Placeholders until the asset-designer's (#1486): Paragon spears.
+  "paragon.blazing-spear": { glyph: "spear", modifier: "plus" },
+  "paragon.mighty-throw": { glyph: "spear-dash", modifier: "up" },
+  "paragon.unblockable-throw": { glyph: "spear-dash", modifier: "plus" },
+  "paragon.wearying-spear": { glyph: "spear", modifier: "less" },
+  "paragon.vicious-attack": { glyph: "spear-barb", modifier: "stun" },
+  "paragon.disrupting-throw": { glyph: "spear-bolt", modifier: "stun" },
+  "paragon.slayers-spear": { glyph: "spear-barb", modifier: "half" },
+  "paragon.swift-javelin": { glyph: "spear-dash", modifier: "bolt" },
+  "paragon.chest-thumper": { glyph: "spear-barb", modifier: "down" },
+  "paragon.spear-of-redemption": { glyph: "spear", modifier: "self" },
+  "paragon.spear-swipe": { glyph: "spear", modifier: "area" },
 };
