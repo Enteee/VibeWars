@@ -75,6 +75,8 @@ describe("status definitions", () => {
         def.breaksNextHex !== undefined ||
         def.failsNextSpell !== undefined ||
         def.chantShoutDurationMultiplier !== 1 ||
+        def.conditionalArmor.length > 0 ||
+        def.whileUnder !== undefined ||
         def.extraStrikesPerHit !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
@@ -680,6 +682,25 @@ describe("aggregateModifiers, health per enchantment (#845)", () => {
     expect(
       clampPips(pips(["mystic-regeneration", "regeneration", "guardian", "weapon-of-warding"])),
     ).toBe(MAX_PIPS);
+  });
+});
+
+describe("aggregateModifiers, while under another status (#1485)", () => {
+  it("adds Soldier's Fury's speed and adrenaline only while a chant or a shout is up", () => {
+    const alone = aggregateModifiers([{ id: "soldiers-fury" }]);
+    expect([alone.attackDurationMultiplier, alone.adrenalineGainFaster]).toEqual([1, 0]);
+    expect(alone.armorModifier).toBe(-20);
+    for (const under of ["defensive-anthem", "fall-back"] as const) {
+      const both = aggregateModifiers([{ id: "soldiers-fury" }, { id: under }]);
+      expect(both.attackDurationMultiplier, under).toBe(0.75);
+      expect(both.adrenalineGainFaster, under).toBeCloseTo(0.33);
+      expect(both.armorModifier, under).toBe(-20);
+    }
+  });
+
+  it("counts neither itself nor another echo as a chant or a shout", () => {
+    const echoes = aggregateModifiers([{ id: "soldiers-fury" }, { id: "mending-refrain" }]);
+    expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, 0]);
   });
 });
 

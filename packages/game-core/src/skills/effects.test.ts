@@ -399,6 +399,30 @@ describe("energy-gain effect", () => {
   });
 });
 
+describe("energy-gain to its target (#1485)", () => {
+  it("fills the target's energy with toTarget, and the caster's without", () => {
+    const caster = makeCombatant({ id: "caster", energy: 10 });
+    const target = makeCombatant({ id: "target", energy: 10 });
+    expect(
+      applyEffect(
+        { kind: "energy-gain", amount: { flat: 2 }, toTarget: true },
+        context(caster, target),
+      ),
+    ).toEqual([{ kind: "energy-gain", targetId: "target", amount: 2 }]);
+    expect([caster.energy, target.energy]).toEqual([10, 12]);
+    applyEffect({ kind: "energy-gain", amount: { flat: 2 } }, context(caster, target));
+    expect([caster.energy, target.energy]).toEqual([12, 12]);
+  });
+
+  it("gives a target at full energy nothing, and none to its caster either", () => {
+    const caster = makeCombatant({ id: "caster", energy: 10 });
+    const target = makeCombatant({ id: "target", energy: 50 });
+    const gain: SkillEffect = { kind: "energy-gain", amount: { flat: 2 }, toTarget: true };
+    expect(applyEffect(gain, context(caster, target))).toEqual([]);
+    expect([caster.energy, target.energy]).toEqual([10, 50]);
+  });
+});
+
 describe("a raised maximum (#1359)", () => {
   it("raises health with the maximum as it lands, and a refresh raises nothing", () => {
     const c = makeCombatant({ id: "c", health: 480, maxHealth: 480 });

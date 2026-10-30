@@ -405,6 +405,20 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
     parts.push(`chants and shouts last ${String(longer)}% longer on it`);
   }
+  // Soldier's Fury's (#1485): "while under a shout or chant: attacks 25%
+  // faster, gain adrenaline 33% faster".
+  if (definition.whileUnder !== undefined) {
+    const { categories, attackDurationMultiplier, adrenalineGainFaster } = definition.whileUnder;
+    const gains = [
+      ...(attackDurationMultiplier === 1
+        ? []
+        : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
+      ...(adrenalineGainFaster === 0
+        ? []
+        : [`gain adrenaline ${String(Math.round(adrenalineGainFaster * 100))}% faster`]),
+    ];
+    parts.push(`while under a ${categories.join(" or ")}: ${gains.join(", ")}`);
+  }
   if (definition.endsAfterTriggers !== undefined) {
     const plural = definition.endsAfterTriggers === 1 ? "" : "s";
     parts.push(`ends after it takes effect ${String(definition.endsAfterTriggers)} time${plural}`);
@@ -919,8 +933,12 @@ function describeTrigger(
         sentence(`${when}, ${condition}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
       );
     }
+    // Energizing Finale's (#1485): "whenever a chant or shout ends on it:
+    // it gains 2 energy".
     return describeEffects(effect, ranks).map(({ text }) =>
-      sentence(`${when}: ${lowerFirst(text)}`),
+      sentence(
+        `${when}: ${lowerFirst(trigger.target === "bearer" ? text.replace(/^Target gains/, "it gains") : text)}`,
+      ),
     );
   });
 }
@@ -1230,7 +1248,7 @@ function describeEffect(
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
+        text: `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
         magnitude,
       };
     }
