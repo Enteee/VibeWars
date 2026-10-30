@@ -926,6 +926,7 @@ it, not baked in, so one file serves every screen.
   next-attack-energy and its eleven siblings (the "with their next skill" chants, #1497: a small mark in the top left corner is what the ally casts next, the payoff shrunk below and right of it. Corner marks: a blade is an attack skill, a four-point star a spell, a ring round a dot a signet, sound arcs a shout or chant, three dots any of the next several skills. Payoffs: a bolt energy, a heart and plus health, a struck-through drop a condition lost, a cut ring a hex lost, rising bars adrenaline, a weak drop, a limp and a burst what the attack then inflicts; #1558 adds a struck burst for cannot be interrupted, a cracked shield for cannot be blocked, a bolt with a minus for costs less, a ring filled above its middle with a chevron up for more damage to foes above half Health. No modifier: the corner is the trigger),
   spear-flame, spear-fast, spear-weak, spear-crit, spear-heart, spear-crack, spear-burst, spear-cleanse, spear-swipe, spear-pierce (the Paragon thrown spears: a spear on the left and its rider on the right: a flame, three chevrons, a down arrow, a four-point spark, a hollow heart, a cracked shield, a burst, a struck drop; a swiped arc; a shield with the spear through it for unblockable; a drop badge below is Deep Wound),
   note-hold (a note under a fermata: Enduring Harmony),
+  arrow-twin, arrow-spent-ring, arrow-fast, arrow-close, shield-whirl, snake, arrow-dodge (the Ranger staples, #1585: two parallel arrows; an arrow and a broken ring for the enchantment it spends; an arrow with speed chevrons; an arrow into a close target; a shield with a turning arc round it; an S-curved snake with chevrons; chevrons under an arrow flying past),
   sac-energy, sac-blade, drop-to-signet, hex-flame, lava-spouts, ward-elements, arrow-bolt, flame-rise (#1572: a drop given up at the bottom left with its payoff at the top right, a bolt or a blade; a drop leaving for a signet ring; the hex ring round a flame; a wavy ground with three tongues of fire; the ward post with a flame and a bolt above; an arrow with a bolt across its shaft; rising bars under a flame),
   flail, heart-shield, axe-cross, blade-limp-up, parry, shout-rush, shout-rush-adrenal (the Warrior staples, #1586: a spiked ball on a chain; a heart held in a shield; an axe with the Deep Wound cross; a blade with a limp ending in an arrow up; a shield with a blade leaving it, the drop is the bleed; sound arcs behind two chevrons, with one chevron and rising bars for the adrenaline),
   hex-hourglass, hex-overload, orb-split, hex-crown, crown-struck, hex-ache, eye-tear, hex-splash, fireball-mind (the Mesmer skill-use punishers share one mark, the dashed hex ring round a small picture of the punishment; Mind Blast stays outside it: an hourglass, a bolt through a bar, an orb split by a crack, a crown, a struck crown, a jagged ache, an eye with a tear, a burst, a fireball with an eye),
@@ -1121,8 +1122,24 @@ implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
 The operator picked **C** (2026-10-30), with Character Builder and Team
 Builder at the rail's bottom, below a divider. Card 1 of the split (#1525)
 builds the rail, a screen per entry and the title bar's Lobby Code and Join;
-the rail's icons are the study's placeholders, ported to
-`apps/web/public/icons/mode/`, until an asset card draws the final set.
+the rail's icons live in `apps/web/public/icons/mode/`, drawn by the
+`mode` family of `scripts/assets/icons.mjs` (#1554).
+
+### Mode icons (#1554)
+
+Solid ink shapes, one drawing each, even-odd holes (the rail masks them, so
+only the shape counts, never a colour). Each differs in silhouette: a player
+tells Team Arena from GvG without the label.
+
+| File            | Entry          | Drawing                                           |
+| --------------- | -------------- | ------------------------------------------------- |
+| `random-arena`  | Random Arena   | A tilted die with five pips: the luck of the draw |
+| `team-arena`    | Team Arena     | Two shields side by side, the near one solid      |
+| `heroes-ascent` | Heroes' Ascent | A stepped altar with a flame on top               |
+| `gvg`           | GvG            | A keep with a pennant on a tall pole              |
+| `hosted-game`   | Hosted Game    | An arched door with a keyhole                     |
+| `characters`    | Character      | One helmet, crest up, an eye slit                 |
+| `teams`         | Team Builder   | Three helmets in a row, the middle one taller     |
 
 ## Creatures
 

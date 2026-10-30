@@ -404,6 +404,14 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.damageReduction > 0) {
     parts.push(`−${String(definition.damageReduction)} damage taken`);
   }
+  if (definition.damageReductionPerRank !== undefined) {
+    const { attributeId, perRank, max } = definition.damageReductionPerRank;
+    const now = Math.min(max, perRank * (ranks.get(attributeId) ?? 0));
+    const attribute = getAttribute(attributeId)?.name ?? attributeId;
+    parts.push(
+      `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
+    );
+  }
   if (definition.redirectsPhysicalDamage > 0) {
     parts.push(
       `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
@@ -619,6 +627,7 @@ function statusArmorText(bonus: ConditionalArmor): string {
 const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-casts-spell": "casts a spell",
   "bearer-attacks": "attacks",
+  "bearer-attack-begins": "attacks",
   "bearer-uses-skill": "uses a skill",
   "bearer-hits": "hits with an attack",
   "bearer-fails-to-hit": "fails to hit",
@@ -785,9 +794,10 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, profession, elite } = trigger.usedSkill;
+    const { type, profession, elite, adrenal } = trigger.usedSkill;
     const words = [
       ...(elite === undefined ? [] : ["elite"]),
+      ...(adrenal === undefined ? [] : ["adrenal"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
@@ -851,9 +861,10 @@ function describeCreation(
         );
         return `${who} ${where} ${what.join(" and ")}`;
       }
-      // Neither answers a creation.
+      // None answers a creation.
       case "spread-gained-condition":
       case "echo":
+      case "cancel-attack":
         return "";
       default:
         return describeEffects(effect, ranks)
@@ -931,11 +942,27 @@ function describeTrigger(
         const plural = effect.count === 1 ? "" : "s";
         return [`loses ${String(effect.count)} ${effect.category}${plural}`];
       }
-      return effect.kind === "spread-gained-condition" || effect.kind === "echo"
+      return effect.kind === "spread-gained-condition" ||
+        effect.kind === "echo" ||
+        effect.kind === "cancel-attack"
         ? []
         : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
     });
     return [sentence(`${when}: ${answers.join(", ")}`)];
+  }
+  // Clumsiness's (#1593), said as one: "the next time it attacks, that
+  // attack is interrupted and it takes 66 damage".
+  const [first, ...after] = trigger.effects;
+  if (
+    first?.kind === "cancel-attack" &&
+    trigger.target === "bearer" &&
+    after.length > 0 &&
+    after.every(({ kind }) => kind === "damage")
+  ) {
+    const hurt = after.map((effect) =>
+      effect.kind === "damage" ? `it takes ${amount(effect.amount)} damage` : "",
+    );
+    return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
   }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
@@ -948,6 +975,10 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    // A cancel with nothing to say after it (#1593).
+    if (effect.kind === "cancel-attack") {
+      return [sentence(`${when}, that attack is interrupted`)];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
       return [clause(`takes ${amount(effect.amount)} damage ${when}`)];
@@ -1146,6 +1177,8 @@ function conditionText(condition: EffectCondition): string {
       return "If you are Overcast";
     case "caster-wields":
       return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
+    case "caster-holds-shield":
+      return "If you hold a shield";
     case "target-less-health":
       return "If target has less Health than you";
     case "target-more-health":

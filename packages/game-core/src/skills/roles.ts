@@ -163,6 +163,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
             effects.flatMap((effect) =>
               effect.kind === "spread-gained-condition" ||
               effect.kind === "echo" ||
+              effect.kind === "cancel-attack" ||
               (target === "bearer" && isPrice(effect))
                 ? []
                 : [effect],

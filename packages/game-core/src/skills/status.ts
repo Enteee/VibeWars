@@ -473,6 +473,14 @@ export interface StatusDefinition {
    */
   readonly damageReduction: number;
   /**
+   * As `damageReduction`, by the bearer's rank in `attributeId` (#1592):
+   * `perRank` a rank, at most `max`, Shield Stance's "reduced by 2 for each
+   * rank of Strength (maximum 15)". Read as each packet lands, so a
+   * Tactics-only bearer takes nothing off. `undefined`: none.
+   */
+  readonly damageReductionPerRank:
+    { readonly attributeId: string; readonly perRank: number; readonly max: number } | undefined;
+  /**
    * The share of each physical hit on the bearer that its source takes
    * instead (#1108): Symbiotic Bond's 0.5, rounded down. 0: none.
    */
@@ -642,6 +650,13 @@ export interface StatusDefinition {
 export type StatusTriggerEvent =
   | "bearer-casts-spell"
   | "bearer-attacks"
+  /**
+   * The bearer begins an attack (#1593), before it resolves: an attack
+   * skill as its activation begins, a plain swing at its blow, before an
+   * arrow leaves or the blow lands. Fired by the simulation. What answers
+   * may cancel it (`cancel-attack`); a cancelled blow never `attacks`.
+   */
+  | "bearer-attack-begins"
   | "bearer-uses-skill"
   | "bearer-hits"
   /**
@@ -844,12 +859,14 @@ export interface StatusTrigger {
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
-   * Pride's. Absent: any skill.
+   * Pride's. With `adrenal`, only one paid for in adrenaline (#1592): Rage of
+   * the Ntouka's "whenever you use an adrenal skill". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
     readonly profession?: ProfessionId;
     readonly elite?: true;
+    readonly adrenal?: true;
   };
   /** The skill the log names it after: "mesmer.backfire". */
   readonly skillId: string;
@@ -898,8 +915,22 @@ export interface EchoEffect {
   readonly seconds: number;
 }
 
-/** What a trigger can do: any skill effect, Contagion's spread or an echo. */
-export type TriggerEffect = SkillEffect | SpreadGainedConditionEffect | EchoEffect;
+/**
+ * Clumsiness's interrupt (#1593): the attack the bearer is beginning, on
+ * `bearer-attack-begins`, is interrupted. An attack skill is, as by an
+ * `interrupt`, and recharges; a plain swing never lands, and its swing
+ * timer starts over. Answering any other event, it does nothing.
+ */
+export interface CancelAttackEffect {
+  readonly kind: "cancel-attack";
+}
+
+/**
+ * What a trigger can do: any skill effect, Contagion's spread, an echo or
+ * a cancelled attack.
+ */
+export type TriggerEffect =
+  SkillEffect | SpreadGainedConditionEffect | EchoEffect | CancelAttackEffect;
 
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
