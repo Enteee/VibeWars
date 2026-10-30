@@ -139,10 +139,13 @@ import { HOLD_BELOW, freeBytes } from "./disk.mjs";
 import {
   addEdge,
   buildKpis,
+  ciKpis,
+  ciRunFromRest,
   cpuShare,
   employeeOfUnit,
   EDGES_SCHEMA_VERSION,
   flowKpis,
+  parseCiHistory,
   parseEdges,
   parseUnits,
   projectSevenDay,
@@ -254,6 +257,8 @@ const SCHEDULES = path.join(HUB, "schedules.json");
 const NUDGES = path.join(HUB, "nudges.json");
 /** Every column change, one JSON line each (#891); history starts at the file. */
 const BOARD_HISTORY = path.join(HUB, "board-history.jsonl");
+/** Every completed Actions run of the last 8 days, one JSON line each (#1612). */
+const CI_HISTORY = path.join(HUB, "ci-history.jsonl");
 /** The KPI snapshot (kpi.mjs), written every `KPI_EVERY_MS`; every jail reads it. */
 const KPIS = path.join(HUB, "kpis.json");
 /**
@@ -453,6 +458,8 @@ async function rest(rel, cfg) {
  */
 const NAMED_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
 const EVERY_JOB_WORKFLOWS = ["e2e-repeat.yml", "codeql.yml"];
+/** Every workflow the merge gate reads, the CI KPIs' "gate" (#1612). */
+const GATE_WORKFLOWS = [...NAMED_WORKFLOWS, ...EVERY_JOB_WORKFLOWS];
 
 /**
  * The jobs that judged one commit, read from the pull-request runs of the
@@ -2824,7 +2831,7 @@ async function pullState(pr, cfg) {
 async function ciOutcome(pr, sha, cfg) {
   /** @type {Record<string, unknown>[]} */
   const finished = [];
-  for (const file of [...NAMED_WORKFLOWS, ...EVERY_JOB_WORKFLOWS]) {
+  for (const file of GATE_WORKFLOWS) {
     const listed = runsFromRest(
       await rest(
         `actions/workflows/${file}/runs?head_sha=${sha}&event=pull_request&per_page=100`,
@@ -3658,6 +3665,81 @@ async function sampleHost(now, employees) {
 }
 
 /**
+ * How far before the newest recorded run each KPI tick reads Actions runs:
+ * the 90-min e2e cap and queueing.
+ */
+const CI_LOOKBACK_MS = 3 * 3_600_000;
+/** How far back the first read, and any read, goes, so the numbers exist from the first tick. */
+const CI_FIRST_LOOKBACK_MS = 7 * 24 * 3_600_000;
+/** `ci-history.jsonl` keeps runs created within this. */
+const CI_KEEP_MS = 8 * 24 * 3_600_000;
+/** The ids `ci-history.jsonl` holds, loaded from it on the first tick. */
+let ciRunIds = /** @type {Set<number> | null} */ (null);
+
+/**
+ * Append the Actions runs completed since the last tick to
+ * `ci-history.jsonl` (#1612), once per run id, then drop runs older than
+ * 8 days. A failed read leaves the file as it is. Runs not yet completed
+ * are skipped, and read again on a later tick.
+ *
+ * @param {number} now
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./kpi.mjs").CiRun[]>} the history, after
+ */
+async function recordCiRuns(now, cfg) {
+  const history = fs.existsSync(CI_HISTORY)
+    ? parseCiHistory(fs.readFileSync(CI_HISTORY, "utf8"))
+    : [];
+  ciRunIds ??= new Set(history.map((run) => run.id));
+  // Back past the newest run recorded, so runs that completed while hubd was down are read too.
+  const newest = history.length === 0 ? null : Math.max(...history.map((run) => run.createdAt));
+  const since = new Date(
+    Math.max(
+      now - CI_FIRST_LOOKBACK_MS,
+      newest === null ? 0 : Math.min(now, newest) - CI_LOOKBACK_MS,
+    ),
+  );
+  /** @type {import("./kpi.mjs").CiRun[]} */
+  const read = [];
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const answer = await rest(
+      `actions/runs?created=${encodeURIComponent(`>=${since.toISOString()}`)}&per_page=100&page=${String(page)}`,
+      cfg,
+    );
+    const rows =
+      typeof answer === "object" && answer !== null && "workflow_runs" in answer
+        ? answer.workflow_runs
+        : undefined;
+    if (!Array.isArray(rows)) {
+      return history;
+    }
+    /** @type {unknown[]} */
+    const got = rows;
+    read.push(...got.flatMap((row) => ciRunFromRest(row, GATE_WORKFLOWS) ?? []));
+    if (got.length < 100) {
+      break;
+    }
+  }
+  /** @type {import("./kpi.mjs").CiRun[]} */
+  const fresh = [];
+  for (const run of read) {
+    if (!ciRunIds.has(run.id)) {
+      ciRunIds.add(run.id);
+      fresh.push(run);
+    }
+  }
+  if (fresh.length > 0) {
+    fs.appendFileSync(CI_HISTORY, fresh.map((run) => `${JSON.stringify(run)}\n`).join(""));
+  }
+  const all = [...history, ...fresh];
+  const kept = all.filter((run) => run.createdAt >= now - CI_KEEP_MS);
+  if (kept.length < all.length) {
+    writeAtomic(CI_HISTORY, kept.map((run) => `${JSON.stringify(run)}\n`).join(""));
+  }
+  return kept;
+}
+
+/**
  * Write `kpis.json` (#891). A section that cannot be read is `null` with its
  * reason in `errors`; hubd never dies of a KPI.
  *
@@ -3676,14 +3758,21 @@ async function writeKpis(cfg) {
     } catch (error) {
       host = error;
     }
+    /** @type {import("./kpi.mjs").CiRun[] | Error} */
+    let ciRuns;
+    try {
+      ciRuns = await recordCiRuns(now, cfg);
+    } catch (error) {
+      ciRuns = error instanceof Error ? error : new Error("CI history unreadable");
+    }
+    const moves = () =>
+      fs.existsSync(BOARD_HISTORY) ? parseHistory(fs.readFileSync(BOARD_HISTORY, "utf8")) : [];
     const kpis = buildKpis(now, {
       flow: () => {
         if (board === null) {
           throw new Error("no board yet");
         }
-        const history = fs.existsSync(BOARD_HISTORY)
-          ? parseHistory(fs.readFileSync(BOARD_HISTORY, "utf8"))
-          : [];
+        const history = moves();
         const cards = board.cards.flatMap(({ item }) => {
           const issue = itemNumber(item, cfg.repo);
           return issue === null
@@ -3737,6 +3826,17 @@ async function writeKpis(cfg) {
         return staffKpis(staff, live, cfg.maxAgents);
       },
       webCache: () => openWebCache().stats(),
+      ci: () => {
+        if (ciRuns instanceof Error) {
+          throw ciRuns;
+        }
+        if (ciRuns.length === 0) {
+          throw new Error("no CI history yet");
+        }
+        const history = moves();
+        const { done7d } = flowKpis({ now, moves: history, cards: [] });
+        return ciKpis({ now, runs: ciRuns, moves: history, done7d, gate: GATE_WORKFLOWS });
+      },
     });
     writeAtomic(KPIS, JSON.stringify(kpis));
   } catch (error) {
