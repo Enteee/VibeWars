@@ -16,7 +16,7 @@ const cell = (page: Page, action: string, index = 0): Locator =>
 async function openKeys(page: Page): Promise<void> {
   await page.locator(".topbar-options").click();
   await expect(page.locator(".options-screen")).toBeVisible();
-  // Options opens on its first section, Sound (#424).
+  // Options opens on its first section, Player (#1513).
   await page.locator('.options-entry[data-section="controls"]').click();
   await expect(page.locator('.options-entry[data-section="controls"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".keys-screen")).toBeVisible();
@@ -177,4 +177,54 @@ test("Options lists every bundled npm package and the VCSL samples, each with it
   await expect(phaser.locator(".licence-text")).toBeHidden();
   await phaser.locator("summary").click();
   await expect(phaser.locator(".licence-text")).toContainText("Permission is hereby granted");
+});
+
+test("#1513: name, guild tag and cape are set in Options' Player section, and the next lobby uses them", async ({
+  page,
+}) => {
+  await page.goto("./");
+  // Solo Play has no field of its own for them.
+  await expect(page.locator(".screen-menu")).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "Guild tag" })).toHaveCount(0);
+  const menu = await page.locator(".screen-menu").elementHandle();
+
+  await page.locator(".topbar-options").click();
+  // Player is the first section, so Options opens on it.
+  await expect(page.locator('.options-entry[data-section="player"]')).toHaveClass(/is-selected/);
+  const options = page.getByRole("dialog", { name: "Options" });
+  await options.getByRole("textbox", { name: "Name", exact: true }).fill("Rurik");
+  const tag = options.getByRole("textbox", { name: "Guild tag" });
+  const cape = options.getByRole("group", { name: "Cape" });
+  // No tag, or a wrong one: the hint, and no cape to design.
+  await expect(cape).toBeHidden();
+  await tag.fill("V");
+  await expect(tag).toHaveAttribute("aria-invalid", "true");
+  await expect(options.getByText("2–4 letters or digits")).toBeVisible();
+  await expect(cape).toBeHidden();
+  await tag.fill("VIBE");
+  await expect(tag).toHaveAttribute("aria-invalid", "false");
+  await cape.getByRole("button", { name: "gold" }).click();
+  await expect(cape.getByRole("button", { name: "gold" })).toHaveAttribute("aria-pressed", "true");
+  await expect(options).toContainText("Applies from your next lobby.");
+
+  // Closing draws Solo Play again, its figures in the cape just picked.
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(options).toHaveCount(0);
+  await expect.poll(() => menu.evaluate((node) => node.isConnected)).toBe(false);
+
+  await page.getByRole("button", { name: "Host a lobby" }).click();
+  await page.getByRole("button", { name: "join team 1" }).click();
+  const me = page.locator(".lobby-player").first();
+  await expect(me.locator(".player-label-name")).toHaveText("Rurik");
+  await expect(me.locator(".guild-tag")).toContainText("VIBE");
+
+  // Kept: Options shows them again after a reload.
+  await page.reload();
+  await page.locator(".topbar-options").click();
+  await expect(options.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Rurik");
+  await expect(options.getByRole("textbox", { name: "Guild tag" })).toHaveValue("VIBE");
+  await expect(
+    options.getByRole("group", { name: "Cape" }).getByRole("button", { name: "gold" }),
+  ).toHaveAttribute("aria-pressed", "true");
 });

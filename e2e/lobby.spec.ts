@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openPeers } from "./helpers/peers.js";
+import { setPlayerName } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
 import { key } from "./keys.js";
 
@@ -19,7 +20,7 @@ async function openMenu(page: Page, playerName: string): Promise<void> {
   await page.goto("./");
   await expect(page).toHaveTitle("VibeWars");
   await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
-  await page.locator(".screen-menu input.field-input").first().fill(playerName);
+  await setPlayerName(page, playerName);
 }
 
 /** Quit the match with the HUD's leave button, which asks first (#160). */

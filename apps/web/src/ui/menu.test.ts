@@ -4,14 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import {
-  FIRST_CAPE,
-  isInvalidGuildTag,
   PLAY_TABS,
   isPlayable,
   loadGuildCape,
   loadGuildTag,
   loadPlayTab,
-  pickCape,
   playerGuild,
   playerGuildTag,
   rosterOrder,
@@ -20,9 +17,9 @@ import {
   saveGuildCape,
   saveGuildTag,
   savePlayTab,
-  showsCapeDesigner,
   soloPlayActions,
 } from "./menu.js";
+import { FIRST_CAPE } from "./player-section.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
   return {
@@ -124,15 +121,6 @@ describe("the guild tag field (#1406)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows as invalid only what is typed and is no tag", () => {
-    expect(isInvalidGuildTag("")).toBe(false);
-    expect(isInvalidGuildTag("  ")).toBe(false);
-    expect(isInvalidGuildTag("VIBE")).toBe(false);
-    expect(isInvalidGuildTag("V")).toBe(true);
-    expect(isInvalidGuildTag("V B")).toBe(true);
-    expect(isInvalidGuildTag("[V]")).toBe(true);
-  });
-
   it("remembers what was typed, and plays it only when it is a tag", () => {
     const stored = new Map<string, string>();
     vi.stubGlobal("localStorage", {
@@ -177,29 +165,6 @@ describe("the cape designer (#1422)", () => {
     });
     return stored;
   }
-
-  it("shows only while the tag is a valid one", () => {
-    expect(showsCapeDesigner("")).toBe(false);
-    expect(showsCapeDesigner("V")).toBe(false);
-    expect(showsCapeDesigner("[VB]")).toBe(false);
-    expect(showsCapeDesigner(" Vb ")).toBe(true);
-  });
-
-  it("starts a first pick from the sample, changes one part a pick, and No cape clears it", () => {
-    const gold = pickCape(null, { part: "main", colour: "gold" });
-    expect(gold).toEqual({ ...FIRST_CAPE, main: "gold" });
-    expect(pickCape(gold, { part: "trim", colour: "gold" })).toEqual({
-      ...FIRST_CAPE,
-      main: "gold",
-      trim: "gold",
-    });
-    expect(pickCape(gold, { part: "emblem", emblem: "ring" })).toEqual({
-      ...FIRST_CAPE,
-      main: "gold",
-      emblem: "ring",
-    });
-    expect(pickCape(gold, { part: "none" })).toBeNull();
-  });
 
   it("remembers the cape, and wears it only with a valid tag", () => {
     storage();

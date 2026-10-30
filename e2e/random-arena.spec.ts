@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openPeers } from "./helpers/peers.js";
+import { setPlayerName } from "./helpers/player.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
 
@@ -48,7 +49,7 @@ async function makeCharacter(page: Page): Promise<void> {
 
 /** From the menu, queue for a 1v1 as `name`. */
 async function queue1v1(page: Page, name: string): Promise<void> {
-  await page.locator(".screen-menu input.field-input").first().fill(name);
+  await setPlayerName(page, name);
   await page.getByRole("button", { name: "1v1", exact: true }).click();
   await page.getByRole("button", { name: "Random Arena", exact: true }).click();
   await expect(page.locator("#topbar .topbar-crumb.is-place")).toHaveText(

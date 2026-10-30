@@ -70,11 +70,14 @@ team decide. When the host starts, a Team Play lobby opens the
 [Team Lobby](modes.md#team-lobby): click a card to vote for a Team Build,
 then click a seat to take one of its characters.
 
-Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
-everyone sees it after your name, like `Ente [VIBE]`. With a tag set,
-the **Guild cape** designer appears under it: pick the cape colour, the
-trim colour and an emblem, and your body wears the cape behind it in every
-match. Your characters in the menu show it too. **No cape** takes it off.
+Your **Name**, the one other players see, is set in **Options** (⚙ in the
+top bar), under Player; with none, you play as `Player`. Type a **Guild
+tag** of 2 to 4 letters or digits beside it, and everyone sees it after
+your name, like `Ente [VIBE]`. With a tag set, the **Guild cape** designer
+appears under it: pick the cape colour, the trim colour and an emblem, and
+your body wears the cape behind it in every match. Your characters in the
+menu show it too. **No cape** takes it off. A change applies from the next
+lobby you host or join.
 
 ## Watching a match
 

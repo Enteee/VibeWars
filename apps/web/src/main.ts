@@ -421,6 +421,13 @@ async function main(): Promise<void> {
   let idleScreen = false;
 
   /**
+   * On Solo Play or Team Play (#1513): closing Options draws it again, so
+   * the roster wears the cape just picked there. Every screen change
+   * clears it first.
+   */
+  let onMenu = false;
+
+  /**
    * The first thing every screen change does (#710): a toast belongs to
    * the screen that raised it, so it goes when that screen does. One the
    * next screen raises while it mounts stays. A screen added later calls
@@ -428,19 +435,25 @@ async function main(): Promise<void> {
    */
   const leaveScreen = (): void => {
     idleScreen = false;
+    onMenu = false;
     dismissToast();
     closeBeatEditor();
   };
 
   // The bar's [?] and ⚙ open Help and Options over the screen, which
   // stays as it was underneath: an editor keeps its edits, a lobby keeps
-  // updating (#454, #1257).
+  // updating (#454, #1257). Only the menu is drawn again as Options
+  // closes, for the cape (#1513).
   const topbarView = mountTopbar(topbar, {
     onHelp: () => {
       openHelpOverlay(app);
     },
     onOptions: () => {
-      openOptionsOverlay(app);
+      openOptionsOverlay(app, () => {
+        if (onMenu) {
+          showMenu();
+        }
+      });
     },
   });
 
@@ -539,6 +552,7 @@ async function main(): Promise<void> {
     showViewport(false);
     music().screen("menu");
     idleScreen = true;
+    onMenu = true;
     if (loadPlayTab() === "team") {
       void showTeamPlay();
       return;
