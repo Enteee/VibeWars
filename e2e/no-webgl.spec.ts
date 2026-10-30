@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { NO_WEBGL_NOTICE } from "../apps/web/src/ui/arena-notice.js";
+import { openRail } from "./helpers/menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 
 /**
@@ -23,6 +24,7 @@ test.beforeEach(async ({ page }) => {
 
 test("the editor says the Training Ground needs WebGL, and keeps saying it", async ({ page }) => {
   await page.goto("./");
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();
 

@@ -3,7 +3,8 @@ import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
-import { button, iconButton, setTopbarSlots, type ShownBar } from "./kit.js";
+import { button, h, iconButton, setTopbarSlots, type ShownBar } from "./kit.js";
+import { loadPlayerName } from "./player-section.js";
 
 /**
  * The top bar on the menu screens (#454, #1272): the shown screen's
@@ -37,6 +38,83 @@ export interface TopbarCallbacks {
   readonly onHelp: () => void;
   /** ⚙: Options, over whatever screen shows. */
   readonly onOptions: () => void;
+  /** Join the lobby `code` as `name` (#1525): the bar's Lobby Code and Join. */
+  readonly onJoin: (code: string, name: string) => void;
+}
+
+/**
+ * How long a join runs before the bar says it is still connecting
+ * (#707): a join may take up to 20 s, which should not look like a hang.
+ */
+export const CONNECTING_NOTICE_MS = 3000;
+
+/** The bar's Lobby Code and Join, and what the bar does with them. */
+export interface JoinControls {
+  readonly element: HTMLElement;
+  /** A new bar shows: a join it was waiting on has ended, either way. */
+  readonly settle: () => void;
+  /** Empty the code, as a place without the code field leaves it. */
+  readonly clear: () => void;
+}
+
+/**
+ * Lobby Code, its field and Join (#1525), then "Connecting…" once a join
+ * has run a while (#707). The page has one, in the title bar, so a code
+ * typed in it lives through any redraw of the screen under it. `name` is
+ * read at the press.
+ */
+export function joinControls(
+  name: () => string,
+  onJoin: (code: string, name: string) => void,
+): JoinControls {
+  const group = h("div", "topbar-join");
+  const codeInput = document.createElement("input");
+  codeInput.className = "field-input code-input";
+  codeInput.placeholder = "CODE";
+  codeInput.maxLength = 8;
+  codeInput.setAttribute("aria-label", "Lobby code");
+  codeInput.addEventListener("input", () => {
+    // Codes are always upper case; doing it as they type avoids a
+    // "why didn't my code work" moment.
+    codeInput.value = codeInput.value.toUpperCase();
+  });
+  // Shown once a join has run a while; the lobby, or the menu again with
+  // why it failed, puts it away when it ends.
+  const connecting = h("span", "topbar-connecting", "Connecting…");
+  connecting.setAttribute("role", "status");
+  connecting.hidden = true;
+  /** Bumped by every new bar, so a join's timer knows it has ended. */
+  let shown = 0;
+  const join = (): void => {
+    onJoin(codeInput.value, name());
+    const pressed = shown;
+    setTimeout(() => {
+      if (pressed === shown) {
+        connecting.hidden = false;
+      }
+    }, CONNECTING_NOTICE_MS);
+  };
+  codeInput.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+      join();
+    }
+  });
+  group.append(
+    h("span", "topbar-join-label", "Lobby Code:"),
+    codeInput,
+    button("Join", "topbar-join-button", join),
+    connecting,
+  );
+  return {
+    element: group,
+    settle: () => {
+      shown += 1;
+      connecting.hidden = true;
+    },
+    clear: () => {
+      codeInput.value = "";
+    },
+  };
 }
 
 /**
@@ -107,6 +185,10 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
   actions.append(help, options, music, mute, fullscreen);
+  // Right before the global icons, on every menu screen that asks for it.
+  const join = joinControls(loadPlayerName, callbacks.onJoin);
+  join.element.hidden = true;
+  actions.before(join.element);
   attachJukeboxPopover(music, bar);
 
   // On a phone the screen's other buttons and the global icons fold into
@@ -153,6 +235,12 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
       help.hidden = shown.own === "help";
       options.hidden = shown.own === "options";
       music.hidden = shown.own === "music";
+      join.element.hidden = !shown.join;
+      join.settle();
+      // A lobby or a match, not an overlay over the menu, ends the code.
+      if (!shown.join && !shown.overlay) {
+        join.clear();
+      }
       // Only a screen with buttons beyond its primary one has a ⋯.
       const hasMore = Array.from(screenActions.children).some(
         (node) => !node.classList.contains("primary"),

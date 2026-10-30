@@ -2,8 +2,8 @@ import { expect, type Page } from "@playwright/test";
 
 /**
  * Play as `name` (#1513): typed into the Player section of Options, which
- * opens on it, as a player would, then Options closed again. Solo Play,
- * Team Play and their lobbies read it from there.
+ * opens on it, as a player would, then Options closed again. The menu's
+ * screens and their lobbies read it from there.
  */
 export async function namePlayer(page: Page, name: string): Promise<void> {
   await page.locator(".topbar-options").click();

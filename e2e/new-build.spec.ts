@@ -1,7 +1,7 @@
 import { expect, test, type Locator } from "@playwright/test";
 
 import { NEW_VERSION_NOTICE, NEW_VERSION_WAITING } from "../apps/web/src/build-check.js";
-import { startSoloMatch } from "./helpers/peers.js";
+import { hostLobby, startSoloMatch } from "./helpers/peers.js";
 
 /**
  * A newer deployed build (#1268). The e2e build serves its own id, so
@@ -31,10 +31,17 @@ test("a match chunk the deploy removed says a new version is out, not a lost con
   );
   await page.goto("./");
 
-  await page.getByRole("button", { name: "host a lobby" }).click();
+  await hostLobby(page);
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
+  // The Team Lobby (#1460): the house team, its one seat. The match's
+  // chunk is fetched once the seats are taken.
+  await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
+  await page.locator(".team-lobby-seat").first().click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
 
   // Back on the lobby, which says why.
   await expect(page.locator(".screen-problem")).toHaveText(NEW_VERSION_NOTICE);

@@ -1082,7 +1082,7 @@ builds); and a human who has not
 claimed a slot when the clock ends gets the lowest free one, so only slots no
 human is left to take become bots.
 
-### Game modes (#1522; study, not decided)
+### Game modes (#1522; C picked)
 
 `scripts/assets/game-modes-study.mjs` draws `docs/art/game-modes-study.svg`:
 three variants at 1280 px, desktop only. It supersedes the Solo and Team Play
@@ -1114,7 +1114,11 @@ implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
   Code: a new rail layout that narrows every screen by 76 px, and a party
   that moves as one, which is a new message on the wire.
 
-The operator picks one and says why; the pick is recorded here.
+The operator picked **C** (2026-10-30), with Character Builder and Team
+Builder at the rail's bottom, below a divider. Card 1 of the split (#1525)
+builds the rail, a screen per entry and the title bar's Lobby Code and Join;
+the rail's icons are the study's placeholders, ported to
+`apps/web/public/icons/mode/`, until an asset card draws the final set.
 
 ## Creatures
 

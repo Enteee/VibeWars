@@ -135,6 +135,8 @@ export interface ScreenBarOptions {
    */
   readonly overlay?: boolean;
   readonly own?: OwnIcon;
+  /** The bar's Lobby Code and Join (#1525): on the menu's screens, not a lobby's or a match's. */
+  readonly join?: boolean;
 }
 
 /**
@@ -145,6 +147,8 @@ export interface ShownBar {
   readonly place: string;
   readonly own: OwnIcon | undefined;
   readonly overlay: boolean;
+  /** Whether it has the Lobby Code and Join. */
+  readonly join: boolean;
 }
 
 /** The parts of the top bar a screen's bar fills (index.html, topbar.ts). */
@@ -198,6 +202,7 @@ function showBar(): void {
       .join(" / "),
     own: bar.options.own,
     overlay: bar.options.overlay === true,
+    join: bar.options.join === true,
   });
 }
 
@@ -438,6 +443,49 @@ export function selectableRow(options: SelectableRowOptions): HTMLElement {
     row.appendChild(actions);
   }
   return row;
+}
+
+/** A card of the menu's screens (#1525): a character or a Team Build. */
+export interface PlayCardOptions {
+  readonly name: string;
+  /** After the name, on its line: "Random", "Invalid". */
+  readonly tags?: readonly HTMLElement[];
+  /** Under the name: a figure, a line, a team's members. */
+  readonly content: readonly HTMLElement[];
+  /** The card's own press; without one, it is only shown. */
+  readonly onOpen?: () => void;
+  /** A card that is a choice, such as who you queue as: whether it is the chosen one. */
+  readonly pressed?: boolean;
+  /** Beside the card's press, at its foot: Edit, Clone. */
+  readonly actions?: readonly HTMLElement[];
+}
+
+/**
+ * One card of the menu's card grids (#1453, #1525): the card is a button
+ * when it does something, with its own buttons in its corner, never in it.
+ */
+export function playCard(options: PlayCardOptions): HTMLElement {
+  const card = h("div", "play-card");
+  const open =
+    options.onOpen === undefined
+      ? h("div", "play-card-open")
+      : button("", "play-card-open", options.onOpen);
+  if (options.pressed !== undefined) {
+    open.setAttribute("aria-pressed", String(options.pressed));
+    card.classList.toggle("is-selected", options.pressed);
+  }
+  const head = h("span", "play-card-head");
+  const name = h("span", "play-card-name", options.name);
+  name.title = options.name;
+  head.append(name, ...(options.tags ?? []));
+  open.append(head, ...options.content);
+  card.appendChild(open);
+  if (options.actions !== undefined && options.actions.length > 0) {
+    const actions = h("span", "play-card-actions");
+    actions.append(...options.actions);
+    card.appendChild(actions);
+  }
+  return card;
 }
 
 /**

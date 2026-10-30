@@ -6,19 +6,20 @@ match. You need no account and nothing to install: the game runs in
 this browser tab. VibeWars needs a keyboard and mouse. It does not work
 on a phone or a touch-only tablet: open it on a computer.
 
-## Solo Play and Team Play
+## The mode rail
 
-The top bar switches the main screen between **Solo Play** and **Team
-Play**. Solo Play is your own characters and the ways into a match with
-one of them. Team Play is for a team: four mode tiles across the top and
-your [Team Builds](skills-and-builds.md#team-builds) below them. The game
-opens on the one you used last.
+The rail down the left of the main screen holds the
+[modes](modes.md), top to bottom: **Random Arena**, **Team Arena**,
+**Heroes' Ascent**, **GvG** and **Hosted Game**. Below them, at the
+bottom, are **Character Builder**, where you make your characters, and
+**Team Builder**, where you make your
+[Team Builds](skills-and-builds.md#team-builds). The game opens on the
+one you used last.
 
 ## Make a character
 
-Your characters are listed on the left of Solo Play, under
-**Play as**, newest first, with the random character your first start
-rolled always at the bottom.
+Your characters are the cards of **Character Builder**, newest first,
+with the random character your first start rolled always last.
 
 1. Press **New character**.
 2. Pick a **primary profession**, what your character mainly is, and a
@@ -31,8 +32,9 @@ rolled always at the bottom.
 5. Press **Save**.
 
 The editor tells you when a build cannot be played, for example when two
-elite skills are on one bar. Click a character in the list to play as it.
-A character with no skills yet plays too, with auto-attack only.
+elite skills are on one bar. Click a character's card, or its **Edit**,
+to change it. A character with no skills yet plays too, with auto-attack
+only.
 
 A character the game's rules changed under shows red stripes and
 **Invalid**. You cannot play as it until you **Edit** it into a legal
@@ -44,8 +46,9 @@ random build to try.
 
 ## Play a Random Arena
 
-The quickest way into a fight. Choose the team size, press **Random
-Arena** and wait: you are put in a team with other players, against
+The quickest way into a fight. On **Random Arena**, click the card of
+the character you play as, then press a team size, **1v1**, **2v2** or
+**4v4**, and wait: you are put in a team with other players, against
 another team, on a random map.
 
 When the match ends you can **Queue again**, or **Stay together** with
@@ -55,19 +58,21 @@ the team you just played with.
 
 To play with friends:
 
-- **Host:** press **Host a lobby**. The lobby shows a code; press
-  **Copy** and send it to your friends. Press **+** under a team's
-  **Bots:** to fill an empty place. When everyone is in, press **Start match**.
-- **Join:** paste the code you were sent into the lobby code field and
-  press **Join**.
+- **Host:** on **Hosted Game**, press **Host a game**. The lobby shows a
+  code; press **Copy** and send it to your friends. Press **+** under a
+  team's **Bots:** to fill an empty place. When everyone is in, press
+  **Start match**.
+- **Join:** paste the code you were sent into **Lobby Code** in the top
+  bar and press **Join**, or Enter.
 
-On Team Play, each mode tile hosts a lobby too, and its host picks among
-that tile's maps only: **Hosted Lobby** every map, **Team Arena** the
-Annihilation, Kill Count and Priest Annihilation maps, **Heroes' Ascent**
-the Relic Run, King of the Hill and Capture Points maps, and **GvG** the
-Guild Battle's. Below the tiles are your **Team Builds**: click one, or
-its **Edit**, to change it, or make another with **New team build**. You
-pick none here. When the host starts, a Team Play lobby opens the
+**Team Arena**, **Heroes' Ascent** and **GvG** each host a lobby too,
+with **Host a Team Lobby**, and its host picks among that mode's maps
+only: **Team Arena** the Annihilation, Kill Count and Priest Annihilation
+maps, **Heroes' Ascent** the Relic Run, King of the Hill and Capture
+Points maps, and **GvG** the Guild Battle's. **Hosted Game** offers every
+map. Below the button are your **Team Builds**: click one, or its
+**Edit**, to change it, or make another with **New team build**. You
+pick none there. When the host starts, the lobby opens the
 [Team Lobby](modes.md#team-lobby): propose a Team Build there, click a
 card to vote for one, then click a seat to take one of its characters.
 
@@ -105,7 +110,7 @@ IP address.
 Every match you finish with one of your characters, hosted, joined or
 from Random Arena, goes on that character's record. The menu shows it
 after the character's professions, such as **12W 7L**, with draws only
-once there are some. Press **Record** at the top of Solo Play for your
+once there are some. Press **Record** at the top of Random Arena for your
 last 50 matches: when, who, which map and mode, and how it went.
 
 The record is kept in this browser only. Nobody else sees or checks it.
