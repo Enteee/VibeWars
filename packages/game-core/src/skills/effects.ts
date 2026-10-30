@@ -47,6 +47,7 @@ import {
   isInvulnerable,
   isSpell,
   type Combatant,
+  type DisableOwnSkillsEffect,
   type DisableSkillEffect,
   type EnergyGainEffect,
   type Skill,
@@ -673,10 +674,16 @@ function knockDown(target: Combatant, durationSeconds: number): void {
  * Interrupt the cast `target` has in progress: the one path every
  * interrupt takes, an interrupt effect's and daze's (#546). As in GW1,
  * the interrupted skill recharges as if it had been used: its cost is
- * spent and its recharge starts (ADR-0029). Returns whether there was a
- * cast to interrupt. An uninterruptible bearer's (#1464) never is.
+ * spent and its recharge starts (ADR-0029). `byId` did it, and a status
+ * on the target that answers an interrupt hears of it (#1473). Returns
+ * whether there was a cast to interrupt. An uninterruptible bearer's
+ * (#1464) never is.
  */
-function interruptCast(target: Combatant, events: CombatEvent[]): boolean {
+function interruptCast(
+  target: Combatant,
+  byId: string | undefined,
+  events: CombatEvent[],
+): boolean {
   if (aggregateModifiers(target.statuses.active).uninterruptible) {
     return false;
   }
@@ -689,6 +696,7 @@ function interruptCast(target: Combatant, events: CombatEvent[]): boolean {
     beginRecharge(target.cast, skill, skill.rechargeSeconds, cancelled.key);
   }
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
+  target.statuses.recordInterrupt(byId);
   return true;
 }
 
@@ -697,13 +705,17 @@ function interruptCast(target: Combatant, events: CombatEvent[]): boolean {
  * interrupted. A signet, a shout, an attack skill or no cast at all is
  * left alone, and nothing is said: this is a side effect, not an
  * interrupt that can miss. Called as a status that `interruptsSpells` is
- * applied, and as an attack lands on its bearer.
+ * applied, by `byId`, its source.
  */
-export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]): void {
+export function interruptIfCastingSpell(
+  target: Combatant,
+  byId: string,
+  events: CombatEvent[],
+): void {
   const cast = target.cast.activeCast;
   const skill = cast === undefined ? undefined : getSkill(cast.skillId);
   if (skill !== undefined && isSpell(skill.type)) {
-    interruptCast(target, events);
+    interruptCast(target, byId, events);
   }
 }
 
@@ -711,9 +723,14 @@ export function interruptIfCastingSpell(target: Combatant, events: CombatEvent[]
  * What a landed attack interrupts (#1105): a spell its dazed victim is
  * casting (#546), or a cast its victim is easily interrupted in, such as
  * setting a trap. Anything else is left alone, and nothing is said.
- * Every landed attack calls it; a miss or a block never does.
+ * Every landed attack calls it, by `byId`, its attacker; a miss or a
+ * block never does.
  */
-export function interruptOnHit(victim: Combatant, events: CombatEvent[]): void {
+export function interruptOnHit(
+  victim: Combatant,
+  byId: string | undefined,
+  events: CombatEvent[],
+): void {
   const cast = victim.cast.activeCast;
   const skill = cast === undefined ? undefined : getSkill(cast.skillId);
   if (skill === undefined) {
@@ -721,7 +738,7 @@ export function interruptOnHit(victim: Combatant, events: CombatEvent[]): void {
   }
   const dazed = victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells);
   if (isEasilyInterrupted(skill.type) || (dazed && isSpell(skill.type))) {
-    interruptCast(victim, events);
+    interruptCast(victim, byId, events);
   }
 }
 
@@ -808,7 +825,7 @@ function landStatus(
   }
   // Applying Dazed interrupts a spell, even on a target already dazed.
   if (getStatusDefinition(statusId).interruptsSpells) {
-    interruptIfCastingSpell(target, events);
+    interruptIfCastingSpell(target, sourceId, events);
   }
 }
 
@@ -1146,7 +1163,7 @@ export function applyEffect(
         return events;
       }
       const refusedSkillId = refusedSkill(effect, target);
-      if (refusedSkillId !== null || !interruptCast(target, events)) {
+      if (refusedSkillId !== null || !interruptCast(target, caster.id, events)) {
         // Already interrupted by this resolution, as by the daze its own
         // blow brought down (#817): the player's interrupt landed, so it
         // is no miss.
@@ -1312,7 +1329,10 @@ export function applyEffect(
         return events;
       }
       const interrupted = interruptedSkill(target.id, earlier);
-      if (effect.which !== "all" && interrupted === undefined) {
+      if (
+        (effect.which === "interrupted" || effect.which === "interrupted-and-attribute") &&
+        interrupted === undefined
+      ) {
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
@@ -1330,7 +1350,7 @@ export function applyEffect(
 
     case "disable-own-skills": {
       const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
-      for (const { key, skillId } of bar.filter((slot) => isSpellId(slot.skillId))) {
+      for (const { key, skillId } of bar.filter((slot) => disabledOwn(effect, slot.skillId))) {
         emptyPool(caster, key);
         if (caster.cast.disable(key, effect.seconds)) {
           events.push({
@@ -1391,6 +1411,8 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-has":
     case "target-has-any":
     case "target-casting":
+    case "target-using-skill":
+    case "target-lacks-other-hex":
     case "caster-has":
     case "caster-lacks":
     case "target-alone":
@@ -1416,13 +1438,15 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
  * Whether `condition` holds for `target` and `caster` as they stand now
  * (#794). Health is a share of the maximum a deep wound left; exactly
  * the fraction is not below it. A target nowhere in `surroundings` is
- * not alone: there is nowhere to be alone.
+ * not alone: there is nowhere to be alone. `firing` is the status whose
+ * trigger is resolving (#1473), if one is.
  */
 export function stateHolds(
   condition: StateCondition,
   caster: Combatant,
   target: Combatant,
   surroundings: Surroundings,
+  firing?: StatusId,
 ): boolean {
   switch (condition.kind) {
     case "target-health-below":
@@ -1442,6 +1466,13 @@ export function stateHolds(
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
       return skill !== undefined && isSpell(skill.type);
     }
+    case "target-using-skill":
+      return target.cast.activeCast !== undefined;
+    case "target-lacks-other-hex":
+      return !target.statuses.active.some(({ id }) => {
+        const { category, profession } = getStatusDefinition(id);
+        return id !== firing && category === "hex" && profession === condition.profession;
+      });
     case "target-alone": {
       const at = surroundings.get(target.id)?.position;
       return (
@@ -1542,6 +1573,7 @@ function statesBefore(
   caster: Combatant,
   target: Combatant | undefined,
   surroundings: Surroundings,
+  firing: StatusId | undefined,
 ): ReadonlySet<EffectCondition> {
   if (target === undefined) {
     return NONE_HELD;
@@ -1551,7 +1583,7 @@ function statesBefore(
     if (
       effect.kind === "if" &&
       isStateCondition(effect.condition) &&
-      stateHolds(effect.condition, caster, target, surroundings)
+      stateHolds(effect.condition, caster, target, surroundings, firing)
     ) {
       held.add(effect.condition);
     }
@@ -1590,6 +1622,9 @@ function disabledBy(
   if (effect.which === "all") {
     return bar.map(({ key }) => key);
   }
+  if (effect.which === "elite") {
+    return bar.filter((slot) => getSkill(slot.skillId)?.elite === true).map(({ key }) => key);
+  }
   if (interrupted === undefined) {
     return [];
   }
@@ -1603,6 +1638,19 @@ function disabledBy(
     (slot) => slot.key !== key && getSkill(slot.skillId)?.attributeId === attributeId,
   );
   return [key, ...linked.map((slot) => slot.key)];
+}
+
+/** Whether `effect` disables the caster's bar skill `skillId` (#1473). */
+function disabledOwn(effect: DisableOwnSkillsEffect, skillId: string): boolean {
+  if (effect.which === "spells") {
+    return isSpellId(skillId);
+  }
+  const skill = getSkill(skillId);
+  return (
+    skill !== undefined &&
+    skill.profession !== effect.profession &&
+    !effect.exceptTypes.includes(skill.type)
+  );
 }
 
 /** Whether the skill `skillId` names is a spell (`isSpell`; a chant is not one). */
@@ -1647,6 +1695,8 @@ function conditionHolds(
     case "target-has":
     case "target-has-any":
     case "target-casting":
+    case "target-using-skill":
+    case "target-lacks-other-hex":
     case "caster-has":
     case "caster-lacks":
     case "target-alone":
@@ -1706,7 +1756,13 @@ export function applyEffects(
   effects: readonly SkillEffect[],
   context: SkillContext,
 ): CombatEvent[] {
-  const held = statesBefore(effects, context.caster, context.target, context.surroundings);
+  const held = statesBefore(
+    effects,
+    context.caster,
+    context.target,
+    context.surroundings,
+    context.firingStatusId,
+  );
   const events: CombatEvent[] = [];
   for (const effect of effects) {
     events.push(...applyInOrder(effect, context, events, held));
@@ -1833,7 +1889,8 @@ export function resolveSkillEffects(
   const { skill, caster, targets, rng, rules, surroundings } = resolution;
   const held = new Map(
     targets.map(
-      (target) => [target, statesBefore(skill.effects, caster, target, surroundings)] as const,
+      (target) =>
+        [target, statesBefore(skill.effects, caster, target, surroundings, undefined)] as const,
     ),
   );
   const events: CombatEvent[] = [];

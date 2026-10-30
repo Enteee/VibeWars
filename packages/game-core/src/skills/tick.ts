@@ -317,7 +317,9 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * Casting multiplies in too (#527), judged on the skill's own activation,
  * and speeds up a signet as well (#1100), which dazed does not.
  * A hex cast on a `target` under Holy Veil takes twice as long (#944);
- * with no target, as in a tooltip, nothing on one counts.
+ * with no target, as in a tooltip, nothing on one counts. Migraine's
+ * longer activation (#1473) slows every skill but an attack skill, and
+ * multiplies with Dazed's.
  */
 export function effectiveActivationSeconds(
   skill: Skill,
@@ -325,19 +327,19 @@ export function effectiveActivationSeconds(
   target?: Pick<Combatant, "statuses">,
 ): number {
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
+  const modifiers = aggregateModifiers(caster.statuses.active);
+  const slowed =
+    skill.type === "attack" || skill.type === "pet-attack"
+      ? 1
+      : modifiers.skillActivationMultiplier;
   if (!isSpell(skill.type)) {
-    return skill.activationSeconds * fastCasting;
+    return skill.activationSeconds * fastCasting * slowed;
   }
   const onTarget =
     skill.type === "hex" && target !== undefined
       ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
       : 1;
-  return (
-    skill.activationSeconds *
-    aggregateModifiers(caster.statuses.active).castTimeMultiplier *
-    fastCasting *
-    onTarget
-  );
+  return skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * onTarget;
 }
 
 /** The bearer's armor reduction (Cracked Armor, #763); `undefined`: none. */

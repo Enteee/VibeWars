@@ -4,24 +4,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import {
-  FIRST_CAPE,
-  isInvalidGuildTag,
   PLAY_TABS,
   isPlayable,
-  loadGuildCape,
-  loadGuildTag,
   loadPlayTab,
-  pickCape,
-  playerGuild,
-  playerGuildTag,
+  renderMenu,
   rosterOrder,
   rosterSubtitle,
   rosterTags,
-  saveGuildCape,
-  saveGuildTag,
   savePlayTab,
-  showsCapeDesigner,
   soloPlayActions,
+  type MenuCallbacks,
 } from "./menu.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
@@ -119,118 +111,6 @@ describe("rosterOrder (#1425)", () => {
   });
 });
 
-describe("the guild tag field (#1406)", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("shows as invalid only what is typed and is no tag", () => {
-    expect(isInvalidGuildTag("")).toBe(false);
-    expect(isInvalidGuildTag("  ")).toBe(false);
-    expect(isInvalidGuildTag("VIBE")).toBe(false);
-    expect(isInvalidGuildTag("V")).toBe(true);
-    expect(isInvalidGuildTag("V B")).toBe(true);
-    expect(isInvalidGuildTag("[V]")).toBe(true);
-  });
-
-  it("remembers what was typed, and plays it only when it is a tag", () => {
-    const stored = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      getItem: (key: string) => stored.get(key) ?? null,
-      setItem: (key: string, value: string) => stored.set(key, value),
-    });
-    expect(loadGuildTag()).toBe("");
-    expect(playerGuildTag()).toBeNull();
-    saveGuildTag("V!");
-    expect(loadGuildTag()).toBe("V!");
-    expect(playerGuildTag()).toBeNull();
-    saveGuildTag("Vb ");
-    expect(playerGuildTag()).toBe("Vb");
-  });
-
-  it("plays untagged when the browser keeps nothing", () => {
-    vi.stubGlobal("localStorage", {
-      getItem: () => {
-        throw new Error("private browsing");
-      },
-      setItem: () => {
-        throw new Error("private browsing");
-      },
-    });
-    saveGuildTag("VIBE");
-    expect(playerGuildTag()).toBeNull();
-  });
-});
-
-describe("the cape designer (#1422)", () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  /** A localStorage on a map, as the browser keeps one. */
-  function storage(): Map<string, string> {
-    const stored = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      getItem: (key: string) => stored.get(key) ?? null,
-      setItem: (key: string, value: string) => stored.set(key, value),
-      removeItem: (key: string) => stored.delete(key),
-    });
-    return stored;
-  }
-
-  it("shows only while the tag is a valid one", () => {
-    expect(showsCapeDesigner("")).toBe(false);
-    expect(showsCapeDesigner("V")).toBe(false);
-    expect(showsCapeDesigner("[VB]")).toBe(false);
-    expect(showsCapeDesigner(" Vb ")).toBe(true);
-  });
-
-  it("starts a first pick from the sample, changes one part a pick, and No cape clears it", () => {
-    const gold = pickCape(null, { part: "main", colour: "gold" });
-    expect(gold).toEqual({ ...FIRST_CAPE, main: "gold" });
-    expect(pickCape(gold, { part: "trim", colour: "gold" })).toEqual({
-      ...FIRST_CAPE,
-      main: "gold",
-      trim: "gold",
-    });
-    expect(pickCape(gold, { part: "emblem", emblem: "ring" })).toEqual({
-      ...FIRST_CAPE,
-      main: "gold",
-      emblem: "ring",
-    });
-    expect(pickCape(gold, { part: "none" })).toBeNull();
-  });
-
-  it("remembers the cape, and wears it only with a valid tag", () => {
-    storage();
-    expect(loadGuildCape()).toBeNull();
-    saveGuildCape(FIRST_CAPE);
-    expect(loadGuildCape()).toEqual(FIRST_CAPE);
-    expect(playerGuild()).toEqual({ guildTag: null, guildCape: null });
-    saveGuildTag("VIBE");
-    expect(playerGuild()).toEqual({ guildTag: "VIBE", guildCape: FIRST_CAPE });
-    // Cleared, the tag takes the cape off but keeps it for when it is back.
-    saveGuildTag("");
-    expect(playerGuild().guildCape).toBeNull();
-    expect(loadGuildCape()).toEqual(FIRST_CAPE);
-    saveGuildCape(null);
-    expect(loadGuildCape()).toBeNull();
-  });
-
-  it("reads anything stored that is no cape as none", () => {
-    const stored = storage();
-    for (const corrupt of [
-      "{",
-      "null",
-      '"violet"',
-      JSON.stringify({ ...FIRST_CAPE, main: "red" }),
-    ]) {
-      stored.set(`${STORAGE_NAMESPACE}.guildCape`, corrupt);
-      expect(loadGuildCape()).toBeNull();
-    }
-  });
-});
-
 describe("Solo Play / Team Play (#1453)", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -260,5 +140,99 @@ describe("Solo Play / Team Play (#1453)", () => {
     expect(loadPlayTab()).toBe("solo");
     stored.set(`${STORAGE_NAMESPACE}.playTab`, "teams");
     expect(loadPlayTab()).toBe("solo");
+  });
+});
+
+/** Just enough DOM to render Solo Play; the unit tests run in Node. */
+class FakeElement {
+  className = "";
+  textContent = "";
+  value = "";
+  placeholder = "";
+  disabled = false;
+  hidden = false;
+  type = "";
+  readonly children: FakeElement[] = [];
+  readonly attributes = new Map<string, string>();
+  readonly listeners = new Map<string, () => void>();
+  readonly classList = { add: () => undefined, toggle: () => undefined };
+
+  readonly tagName: string;
+
+  constructor(tagName: string) {
+    this.tagName = tagName;
+  }
+
+  readonly setAttribute = (name: string, value: string): void => {
+    this.attributes.set(name, value);
+  };
+
+  readonly addEventListener = (type: string, listener: () => void): void => {
+    this.listeners.set(type, listener);
+  };
+
+  readonly querySelector = (): null => null;
+
+  appendChild(child: FakeElement): FakeElement {
+    this.children.push(child);
+    return child;
+  }
+
+  append(...children: FakeElement[]): void {
+    for (const child of children) {
+      this.appendChild(child);
+    }
+  }
+
+  replaceChildren(...children: FakeElement[]): void {
+    this.children.splice(0, this.children.length, ...children);
+  }
+
+  /** Every element under this one, in document order. */
+  all(): FakeElement[] {
+    return this.children.flatMap((child) => [child, ...child.all()]);
+  }
+
+  click(): void {
+    this.listeners.get("click")?.();
+  }
+}
+
+describe("Solo Play's name (#1513)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("has no Name or Guild tag field, and hosts as the name saved in Options", () => {
+    const stored = new Map([[`${STORAGE_NAMESPACE}.playerName`, "Rurik"]]);
+    vi.stubGlobal("localStorage", { getItem: (key: string) => stored.get(key) ?? null });
+    vi.stubGlobal("window", { addEventListener: () => undefined });
+    vi.stubGlobal("document", {
+      activeElement: null,
+      createElement: (tag: string) => new FakeElement(tag),
+    });
+    const hosted: string[] = [];
+    const callbacks: MenuCallbacks = {
+      onRandomArena: () => undefined,
+      onCreateLobby: (name) => hosted.push(name),
+      onJoinLobby: () => undefined,
+      onSwitchTab: () => undefined,
+      onShowRecord: () => undefined,
+      onNewCharacter: () => undefined,
+      onEditCharacter: () => undefined,
+      onCloneStarter: () => undefined,
+      onRerollCharacter: () => undefined,
+      onSelectCharacter: () => undefined,
+    };
+    const root = new FakeElement("div");
+    renderMenu(root as unknown as HTMLElement, callbacks);
+
+    const shown = root.all();
+    // The join code is the only text field left.
+    expect(shown.filter((node) => node.tagName === "input")).toHaveLength(1);
+    expect(shown.some((node) => node.textContent === "Guild tag")).toBe(false);
+    expect(shown.some((node) => node.className.includes("cape"))).toBe(false);
+    shown.find((node) => node.textContent === "Host a lobby")?.click();
+    expect(hosted).toEqual(["Rurik"]);
   });
 });
