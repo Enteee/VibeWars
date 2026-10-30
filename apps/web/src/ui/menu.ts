@@ -282,6 +282,11 @@ export function renderMenu(
   // A Reroll redraws the menu under its own button (#1425): the new
   // row's Reroll takes the focus back.
   const rerolled = document.activeElement?.classList.contains("roster-reroll") === true;
+  // So does closing Options (#1513), after an await: a code typed in the
+  // meantime comes along, and so does the caret.
+  const oldCode = root.querySelector<HTMLInputElement>("input.code-input");
+  const code = oldCode?.value ?? "";
+  const codeFocused = oldCode !== null && document.activeElement === oldCode;
   root.replaceChildren();
   const panel = h("div", "screen screen-menu");
 
@@ -435,5 +440,12 @@ export function renderMenu(
   root.appendChild(panel);
   if (rerolled) {
     root.querySelector<HTMLElement>(".roster-reroll")?.focus();
+  }
+  const newCode = root.querySelector<HTMLInputElement>("input.code-input");
+  if (newCode !== null) {
+    newCode.value = code;
+    if (codeFocused) {
+      newCode.focus();
+    }
   }
 }
