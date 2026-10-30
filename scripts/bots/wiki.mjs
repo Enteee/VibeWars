@@ -11,7 +11,9 @@
  * would take it for the page: it is told apart by its title. Wayback has
  * archived it too, so a snapshot is checked the same way.
  *
- * There is no cache yet (#1380 is 1/2): each request asks again.
+ * hubd keeps what it reads in its web cache (#1381): a snapshot for good,
+ * the live page and the snapshot list for a day. The maintenance page and a
+ * failed read are never kept.
  */
 
 import { Worker } from "node:worker_threads";
@@ -39,6 +41,9 @@ export const READ_TIMEOUT_MS = 2_000;
 /** The most snapshots one request reads before giving up on finding a page. */
 const MAX_SNAPSHOT_TRIES = 3;
 
+/** How long the live page and the snapshot list are served from the cache. */
+export const LIVE_TTL_MS = 24 * 3_600_000;
+
 /** Lines of context around each change in a diff, as `diff -u`. */
 const CONTEXT_LINES = 3;
 
@@ -62,6 +67,7 @@ const USAGE =
  * }) => Promise<Response>} fetch
  * @property {{ live: string, archive: string }} [origins] the real hosts by default
  * @property {number} [timeoutMs] per HTTP request
+ * @property {import("./web-cache.mjs").WebCache} [cache] hubd's; without one, every read fetches
  */
 
 /**
@@ -659,6 +665,22 @@ async function fetchText(url, origins, deps) {
 }
 
 /**
+ * `fetchText` through the cache, when there is one, for `ttlMs`.
+ *
+ * @param {string} url
+ * @param {number} ttlMs
+ * @param {{ live: string, archive: string }} origins
+ * @param {WikiDeps} deps
+ * @returns {Promise<{ ok: true, text: string } | { ok: false, reason: string }>}
+ */
+function readUrl(url, ttlMs, origins, deps) {
+  const load = () => fetchText(url, origins, deps);
+  return deps.cache === undefined
+    ? load()
+    : deps.cache.get(url, { ttlMs, load, keep: (text) => !isMaintenance(text) });
+}
+
+/**
  * The body as text, or `null` past `MAX_PAGE_BYTES`, read no further.
  *
  * @param {Response} response
@@ -699,7 +721,7 @@ function reader(page, deps) {
   let listed = null;
 
   const snapshots = () => {
-    listed ??= fetchText(cdxUrl(page, origins), origins, deps).then((answer) => {
+    listed ??= readUrl(cdxUrl(page, origins), LIVE_TTL_MS, origins, deps).then((answer) => {
       if (!answer.ok) {
         return answer;
       }
@@ -730,7 +752,8 @@ function reader(page, deps) {
     let last = "none";
     for (const candidate of candidates.slice(0, MAX_SNAPSHOT_TRIES)) {
       const url = snapshotUrl(page, candidate.timestamp, origins);
-      const answer = await fetchText(url, origins, deps);
+      // A snapshot never changes.
+      const answer = await readUrl(url, Infinity, origins, deps);
       if (answer.ok && !isMaintenance(answer.text)) {
         return {
           ok: true,
@@ -754,7 +777,7 @@ function reader(page, deps) {
      */
     async live() {
       const url = liveUrl(page, origins);
-      const answer = await fetchText(url, origins, deps);
+      const answer = await readUrl(url, LIVE_TTL_MS, origins, deps);
       if (answer.ok && !isMaintenance(answer.text)) {
         return { ok: true, url, label: "live", html: answer.text };
       }

@@ -7,7 +7,7 @@ export const PROTOCOL_MISMATCH_MESSAGE =
   "This tab is running an outdated version of VibeWars. Reload the page.";
 
 /** Lobby phases, in order. A lobby only ever moves forward through these. */
-export type LobbyPhase = "waiting" | "starting" | "in-match";
+export type LobbyPhase = "waiting" | "team-lobby" | "starting" | "in-match";
 
 /**
  * Lobby codes are read aloud across a room at a LAN party, so the alphabet
@@ -250,6 +250,15 @@ export interface ChainMarksMessage {
 
 /** The maximum players a single lobby accepts (brief §4: not hardcoded to 8). */
 export const MAX_LOBBY_PLAYERS = 16;
+
+/**
+ * The most a side of a Team Lobby (#1458) may be, humans and bots: a GW1
+ * team. It bounds what one side's proposals put on the wire.
+ */
+export const MAX_TEAM_LOBBY_SIDE = 8;
+
+/** How long each stage of a Team Lobby (#1458) lasts, on the lobby's clock. */
+export const TEAM_LOBBY_STAGE_SECONDS = 60;
 
 /**
  * Every message a client is allowed to send during a match.

@@ -25,6 +25,7 @@ import {
   CHAIN_ROLES,
   COMPANION_MODES,
   MAX_LOBBY_PLAYERS,
+  MAX_TEAM_LOBBY_SIDE,
   type CompanionMode,
   type LobbyPhase,
   type WireChainMark,
@@ -944,6 +945,52 @@ export interface WireLobbyState {
    * `phase` is `"starting"`; `null` otherwise.
    */
   readonly countdownSeconds: number | null;
+  /** The Team Lobby (#1458), while `phase` is `"team-lobby"`; `null` otherwise. */
+  readonly teamLobby: WireTeamLobby | null;
+}
+
+/**
+ * A Team Lobby (#1458): each side votes on a proposed Team Build, then
+ * its players claim its characters. Both sides share one clock and stage.
+ */
+export interface WireTeamLobby {
+  readonly stage: "vote" | "claim";
+  /** Whole seconds until the stage ends. */
+  readonly secondsLeft: number;
+  /** By team; `null` for a side the recipient is not on, which is hidden from it. */
+  readonly sides: readonly [WireTeamSide | null, WireTeamSide | null];
+}
+
+/** One side of a Team Lobby, as only its own members see it. */
+export interface WireTeamSide {
+  /** Its humans and bots as the Team Lobby began: every proposal is this many. */
+  readonly size: number;
+  /** Who breaks a tie; `null` for a side with no humans. */
+  readonly captainId: string | null;
+  /** In `"vote"`, in the order they were proposed, at most one per member; `[]` in `"claim"`. */
+  readonly proposals: readonly WireTeamProposal[];
+  /** `null` until the vote is over. */
+  readonly chosen: WireTeamChoice | null;
+  /** In `"claim"`, the peer holding each slot of `chosen`, `null` for free; `[]` in `"vote"`. */
+  readonly claims: readonly (string | null)[];
+}
+
+/**
+ * A proposed Team Build: its members' professions only, which is what a
+ * vote is about. The names come with the chosen one.
+ */
+export interface WireTeamProposal {
+  readonly proposerId: string;
+  readonly members: readonly { readonly primary: string; readonly secondary: string | null }[];
+  readonly voterIds: readonly string[];
+}
+
+/** The Team Build a side plays, and why it was picked. */
+export interface WireTeamChoice {
+  /** `null` for the house team. */
+  readonly proposerId: string | null;
+  readonly reason: "votes" | "captain" | "random" | "house";
+  readonly members: readonly WireLobbyCharacter[];
 }
 
 /** Peer to lobby host: what the member asks for. The host decides. */
@@ -956,7 +1003,24 @@ export type WireLobbyCommand =
    * Host only (#1454): `team` has `count` bots, an integer from 0; the
    * host picks what they play.
    */
-  | { readonly kind: "set-bots"; readonly team: 0 | 1; readonly count: number };
+  | { readonly kind: "set-bots"; readonly team: 0 | 1; readonly count: number }
+  /**
+   * In a Team Lobby's vote (#1458): slot `slot` of a Team Build of `size`,
+   * its build opaque here. One build a message, so a side of large builds
+   * still fits: the host collects them, and the proposal stands once all
+   * `size` are in. `slot: null` withdraws it.
+   */
+  | {
+      readonly kind: "propose";
+      readonly slot: number;
+      readonly size: number;
+      readonly build: JsonValue;
+    }
+  | { readonly kind: "propose"; readonly slot: null }
+  /** In a Team Lobby's vote: vote for a proposal on one's own side; `null` withdraws. */
+  | { readonly kind: "vote"; readonly proposerId: string | null }
+  /** In a Team Lobby's claim: take that slot of the chosen build; `null` lets it go. */
+  | { readonly kind: "claim"; readonly slot: number | null };
 
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
@@ -983,6 +1047,13 @@ export const LOBBY_REFUSALS = [
   // integer from 0 (#1454), or sent in a queued lobby.
   "not-host",
   "invalid-bot",
+  // A Team Lobby's (#1458): a proposal not of the side's size or with a
+  // build that is not legal; a vote for no proposal of the voter's side;
+  // a slot someone holds, or no slot of the chosen build.
+  "invalid-proposal",
+  "invalid-vote",
+  "slot-taken",
+  "invalid-slot",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
@@ -2198,13 +2269,92 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     : undefined;
 }
 
-/** The `"lobby-state"` channel. */
-export function parseWireLobbyState(value: unknown): WireLobbyState | undefined {
+function parseProfessions(
+  value: unknown,
+): { readonly primary: string; readonly secondary: string | null } | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.primary) && isNullableString(raw.secondary)
+    ? { primary: raw.primary, secondary: raw.secondary }
+    : undefined;
+}
+
+function parseTeamProposal(value: unknown): WireTeamProposal | undefined {
+  const raw = fields(value);
+  const members = parseArray(raw?.members, MAX_TEAM_LOBBY_SIDE, parseProfessions);
+  const voterIds = parseArray(raw?.voterIds, MAX_TEAM_LOBBY_SIDE, parseString);
+  return raw !== undefined &&
+    isString(raw.proposerId) &&
+    members !== undefined &&
+    voterIds !== undefined
+    ? { proposerId: raw.proposerId, members, voterIds }
+    : undefined;
+}
+
+function parseTeamChoice(value: unknown): WireTeamChoice | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  const members = parseArray(raw?.members, MAX_TEAM_LOBBY_SIDE, (item) =>
+    item === null ? undefined : (parseLobbyCharacter(item) ?? undefined),
+  );
+  return raw !== undefined &&
+    isNullableString(raw.proposerId) &&
+    isOneOf(raw.reason, ["votes", "captain", "random", "house"] as const) &&
+    members !== undefined
+    ? { proposerId: raw.proposerId, reason: raw.reason, members }
+    : undefined;
+}
+
+function parseTeamSide(value: unknown): WireTeamSide | null | undefined {
+  if (value === null) {
+    return null;
+  }
   const raw = fields(value);
   if (
     raw === undefined ||
+    !isCount(raw.size) ||
+    raw.size > MAX_TEAM_LOBBY_SIDE ||
+    !isNullableString(raw.captainId)
+  ) {
+    return undefined;
+  }
+  const proposals = parseArray(raw.proposals, MAX_TEAM_LOBBY_SIDE, parseTeamProposal);
+  const chosen = parseTeamChoice(raw.chosen);
+  const claims = parseArray(raw.claims, raw.size, (item) =>
+    item === null ? null : parseString(item),
+  );
+  return proposals === undefined || chosen === undefined || claims === undefined
+    ? undefined
+    : { size: raw.size, captainId: raw.captainId, proposals, chosen, claims };
+}
+
+function parseTeamLobby(value: unknown): WireTeamLobby | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  const sides = Array.isArray(raw?.sides) && raw.sides.length === 2 ? raw.sides : undefined;
+  const ours = parseTeamSide(sides?.[0]);
+  const theirs = parseTeamSide(sides?.[1]);
+  return raw !== undefined &&
+    isOneOf(raw.stage, ["vote", "claim"] as const) &&
+    isCount(raw.secondsLeft) &&
+    ours !== undefined &&
+    theirs !== undefined
+    ? { stage: raw.stage, secondsLeft: raw.secondsLeft, sides: [ours, theirs] }
+    : undefined;
+}
+
+/** The `"lobby-state"` channel. */
+export function parseWireLobbyState(value: unknown): WireLobbyState | undefined {
+  const raw = fields(value);
+  const teamLobby = parseTeamLobby(raw?.teamLobby);
+  if (
+    raw === undefined ||
+    teamLobby === undefined ||
     !isString(raw.code) ||
-    !isOneOf(raw.phase, ["waiting", "starting", "in-match"] as const) ||
+    !isOneOf(raw.phase, ["waiting", "team-lobby", "starting", "in-match"] as const) ||
     !isString(raw.mapId) ||
     !isString(raw.hostId) ||
     !isNullableString(raw.matchId) ||
@@ -2223,6 +2373,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         matchId: raw.matchId,
         players,
         countdownSeconds: raw.countdownSeconds,
+        teamLobby,
       };
 }
 
@@ -2243,6 +2394,27 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
     case "set-bots":
       return isTeam(raw.team) && isNumber(raw.count)
         ? { kind: "set-bots", team: raw.team, count: raw.count }
+        : undefined;
+    case "propose": {
+      if (raw.slot === null) {
+        return { kind: "propose", slot: null };
+      }
+      const build = parseJson(raw.build);
+      return isCount(raw.slot) &&
+        isCount(raw.size) &&
+        raw.size <= MAX_TEAM_LOBBY_SIDE &&
+        raw.slot < raw.size &&
+        build !== undefined
+        ? { kind: "propose", slot: raw.slot, size: raw.size, build }
+        : undefined;
+    }
+    case "vote":
+      return isNullableString(raw.proposerId)
+        ? { kind: "vote", proposerId: raw.proposerId }
+        : undefined;
+    case "claim":
+      return raw.slot === null || isNumber(raw.slot)
+        ? { kind: "claim", slot: raw.slot }
         : undefined;
     default:
       return undefined;

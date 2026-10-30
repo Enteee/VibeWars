@@ -161,3 +161,28 @@ whoever is taking it. The scoreboard shows the points, yours first, and
 the clock.
 
 Forgotten Shrines plays it.
+
+## Team Lobby
+
+A lobby hosted from Team Play does not start the match when everyone is
+ready. It opens the Team Lobby first, where each side picks one Team
+Build together and then splits its characters. Each side is as big as
+it was when the Team Lobby opened, its bots included, and at most 8.
+Each stage lasts 60 seconds and ends early once everyone on both sides
+is ready.
+
+**Vote.** Anyone on a side may propose a Team Build of exactly that
+side's size, one proposal each, and vote for one of their side's
+proposals, their own included. A new proposal replaces your old one,
+and the votes for it go back to none. The most votes wins. On a tie the
+captain's vote decides: the host on the host's side, the earliest to
+join on the other. With proposals and no votes, one is picked at random.
+With no proposal, the side plays the house team of starter builds.
+Neither side sees the other's proposals, votes or choice.
+
+**Claim.** Take a character of the chosen build, first come, first
+served, one each. Whoever claimed nothing gets the first free one, and
+bots play the rest, under their character's name. Then the match starts.
+
+Anyone who leaves during the Team Lobby is replaced by a bot, so the
+side keeps its size. Someone joining then only watches.

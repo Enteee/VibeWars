@@ -11,6 +11,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
+  MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_COMBATS,
@@ -29,7 +30,9 @@ import {
   type WireChatLine,
   type WireCombat,
   type WireCombatBatch,
+  type WireLobbyCommand,
   type WireLobbyState,
+  type WireTeamSide,
   type WireCape,
   type WirePlayer,
   type WireProjectile,
@@ -212,6 +215,46 @@ const NECRO_ELE_ATTRIBUTES = [
   "elementalist.earth-magic",
 ];
 
+/** The largest build a player can bring: longest name, ids and every set linked. */
+function fullBuild(): PlayerBuild {
+  const linkedSet = {
+    mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
+    offHand: { offhandId: "focus", requirementAttributeId: "necromancer.soul-reaping" },
+  } as const;
+  return {
+    name: NAME,
+    primaryProfession: "necromancer",
+    secondaryProfession: "elementalist",
+    attributes: NECRO_ELE_ATTRIBUTES.map((attributeId) => ({ attributeId, rank: 12 })),
+    skillBar: [...SKILL_IDS].sort((a, b) => b.length - a.length).slice(0, 8),
+    equipment: {
+      weaponSets: [
+        {
+          mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
+          offHand: null,
+        },
+        // Every set carried, each with both hands linked: the largest gear.
+        linkedSet,
+        linkedSet,
+        linkedSet,
+      ],
+      armor: Object.fromEntries(
+        Object.keys(bare).map((slot) => [
+          slot,
+          {
+            insigniaId: INSIGNIA_ID,
+            rune: {
+              kind: "attribute",
+              attributeId: "necromancer.soul-reaping",
+              tier: "superior",
+            },
+          },
+        ]),
+      ) as ArmorSet,
+    },
+  };
+}
+
 describe("every message fits in one Trystero chunk (#403)", () => {
   /** The worst snapshot: `players`, `projectiles` and `groundEffects` at their worst. */
   function worstSnapshot(players: number, projectiles: number, groundEffects = 0): WireSnapshot {
@@ -362,42 +405,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
   });
 
   it("a hello with a full build", () => {
-    const linkedSet = {
-      mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
-      offHand: { offhandId: "focus", requirementAttributeId: "necromancer.soul-reaping" },
-    } as const;
-    const build: PlayerBuild = {
-      name: NAME,
-      primaryProfession: "necromancer",
-      secondaryProfession: "elementalist",
-      attributes: NECRO_ELE_ATTRIBUTES.map((attributeId) => ({ attributeId, rank: 12 })),
-      skillBar: [...SKILL_IDS].sort((a, b) => b.length - a.length).slice(0, 8),
-      equipment: {
-        weaponSets: [
-          {
-            mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
-            offHand: null,
-          },
-          // Every set carried, each with both hands linked: the largest gear.
-          linkedSet,
-          linkedSet,
-          linkedSet,
-        ],
-        armor: Object.fromEntries(
-          Object.keys(bare).map((slot) => [
-            slot,
-            {
-              insigniaId: INSIGNIA_ID,
-              rune: {
-                kind: "attribute",
-                attributeId: "necromancer.soul-reaping",
-                tier: "superior",
-              },
-            },
-          ]),
-        ) as ArmorSet,
-      },
-    };
+    const build = fullBuild();
     const hello: PeerHello = {
       protocolVersion: PROTOCOL_VERSION,
       name: NAME,
@@ -437,8 +445,81 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         bot: false,
       })),
       countdownSeconds: 5,
+      teamLobby: null,
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a Team Lobby proposal's slot: the largest build, one a message (#1458)", () => {
+    const propose: WireLobbyCommand = {
+      kind: "propose",
+      slot: MAX_TEAM_LOBBY_SIDE - 1,
+      size: MAX_TEAM_LOBBY_SIDE,
+      build: JSON.parse(JSON.stringify(fullBuild())) as JsonValue,
+    };
+    expect(messageBytes(propose)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a Team Lobby state, either stage: every seat taken, a full side, each of its humans proposing (#1458)", () => {
+    const professions = Object.keys(PROFESSIONS);
+    const profession = longest(professions);
+    const id = (i: number) => `${PEER_ID}${String(i)}`;
+    const side: WireTeamSide = {
+      size: MAX_TEAM_LOBBY_SIDE,
+      captainId: id(0),
+      proposals: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, i) => ({
+        proposerId: id(i),
+        members: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, () => ({
+          primary: profession,
+          secondary: profession,
+        })),
+        // Each voter votes once, so a side's votes are its humans.
+        voterIds: [id(i)],
+      })),
+      chosen: {
+        proposerId: id(0),
+        reason: "captain",
+        members: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, () => ({
+          name: NAME,
+          primary: profession,
+          secondary: profession,
+        })),
+      },
+      claims: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, i) => id(i)),
+    };
+    const state: WireLobbyState = {
+      code: "ACDEFG",
+      phase: "team-lobby",
+      mapId: longest(ARENA_MAPS.map((map) => map.id)),
+      hostId: PEER_ID,
+      matchId: null,
+      players: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
+        id: id(i),
+        name: NAME,
+        guildTag: GUILD_TAG,
+        guildCape: CAPE,
+        team: i % 2 === 0 ? 0 : 1,
+        ready: true,
+        isHost: i === 0,
+        character: { name: NAME, primary: profession, secondary: profession },
+        bot: false,
+      })),
+      countdownSeconds: null,
+      teamLobby: null,
+    };
+    // The vote has proposals and no choice yet; the claim the choice and its claims.
+    const vote = {
+      stage: "vote",
+      secondsLeft: 60,
+      sides: [{ ...side, chosen: null, claims: [] }, null],
+    } as const;
+    const claim = {
+      stage: "claim",
+      secondsLeft: 60,
+      sides: [{ ...side, proposals: [] }, null],
+    } as const;
+    expect(messageBytes({ ...state, teamLobby: vote })).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    expect(messageBytes({ ...state, teamLobby: claim })).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
   it("a chat line on its way to the host: the longest wire text, each unit a JSON-escaped control (#479)", () => {
