@@ -91,6 +91,7 @@ export {
   weaponDamageMultiplierOf,
 } from "./tick.js";
 export type { NetPips, RankHolder } from "./tick.js";
+export { raisedMaxEnergy } from "./overcast.js";
 
 export type {
   ApplyStatusEffect,
