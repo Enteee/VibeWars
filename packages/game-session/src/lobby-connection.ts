@@ -85,10 +85,8 @@ export interface LobbyConnection {
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
   startMatch(): void;
-  /** Host only (#1194): seat a bot playing `profession`'s starter build on `team`. */
-  addBot(team: 0 | 1, profession: ProfessionId): void;
-  /** Host only (#1194): unseat bot `botId`. */
-  removeBot(botId: string): void;
+  /** Host only (#1454): `team` has `count` bots, playing what the host picks. */
+  setBots(team: 0 | 1, count: number): void;
   /** Say `text` on `channel` (#479), in the lobby or its match; the host cleans and routes it. */
   sendChat(channel: ChatChannel, text: string): void;
   onChange(handler: () => void): void;

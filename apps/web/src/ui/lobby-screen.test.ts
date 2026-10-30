@@ -3,7 +3,6 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  BOT_PROFESSIONS,
   RANDOM_STARTER,
   MATCH_RUNNING_NOTICE,
   characterLine,
@@ -216,7 +215,7 @@ describe("characterLine (#580)", () => {
   });
 });
 
-describe("lobbyControls: Add bot (#1194)", () => {
+describe("lobbyControls: the bot count's + (#1194, #1454)", () => {
   it("is disabled once every seat is taken, bots counting", () => {
     const waiting = snapshot("waiting");
     const full = Array.from({ length: MAX_LOBBY_PLAYERS }, (_, n) => ({
@@ -292,20 +291,16 @@ class FakeElement {
   }
 }
 
-describe("teamColumn: bots (#1194)", () => {
-  let added: [number, string][];
-  let removed: string[];
+describe("teamColumn: bots (#1194, #1454)", () => {
+  let set: [number, number][];
   const callbacks = {
     onSelectMap: () => undefined,
     onChooseTeam: () => undefined,
     onToggleReady: () => undefined,
     onStart: () => undefined,
     onLeave: () => undefined,
-    onAddBot: (team: 0 | 1, profession: string) => {
-      added.push([team, profession]);
-    },
-    onRemoveBot: (botId: string) => {
-      removed.push(botId);
+    onSetBots: (team: 0 | 1, count: number) => {
+      set.push([team, count]);
     },
   };
   const bot: LobbyPlayerSnapshot = {
@@ -329,10 +324,20 @@ describe("teamColumn: bots (#1194)", () => {
   };
   const column = (team: 0 | 1, shown: LobbySnapshot): FakeElement =>
     teamColumn(team, shown, lobbyControls(shown), callbacks) as unknown as FakeElement;
+  /** The host's − and + for `team`. */
+  const stepper = (team: 0 | 1, shown: LobbySnapshot) => {
+    const shownColumn = column(team, shown);
+    const [fewer] = shownColumn.all("lobby-bots-fewer");
+    const [more] = shownColumn.all("lobby-bots-more");
+    const [count] = shownColumn.all("lobby-bot-count");
+    if (fewer === undefined || more === undefined || count === undefined) {
+      throw new Error("no bot count stepper");
+    }
+    return { fewer, more, count };
+  };
 
   beforeEach(() => {
-    added = [];
-    removed = [];
+    set = [];
     vi.stubGlobal("document", { createElement: () => new FakeElement() });
   });
 
@@ -340,69 +345,47 @@ describe("teamColumn: bots (#1194)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("offers the host Add bot on each team, the starter professions Warrior first", () => {
-    for (const team of [0, 1] as const) {
-      const [control] = column(team, lobby(true)).all("lobby-add-bot");
-      const select = control?.children[0];
-      expect(select?.children.map((option) => option.textContent)).toEqual([
-        "Warrior",
-        "Ranger",
-        "Monk",
-        "Necromancer",
-        "Elementalist",
-      ]);
-    }
-    expect(BOT_PROFESSIONS[0]).toBe("warrior");
+  it("shows the host each side's bot count with − and +, which ask for one fewer or more", () => {
+    const team2 = stepper(1, lobby(true));
+    expect(team2.count.textContent).toBe("1");
+    team2.more.click();
+    team2.fewer.click();
+    const team1 = stepper(0, lobby(true));
+    expect(team1.count.textContent).toBe("0");
+    team1.more.click();
+    expect(set).toEqual([
+      [1, 2],
+      [1, 0],
+      [0, 1],
+    ]);
   });
 
-  it("adds a bot of the chosen profession to that team", () => {
-    const [control] = column(0, lobby(true)).all("lobby-add-bot");
-    const [select, add] = control?.children ?? [];
-    if (select === undefined || add === undefined) {
-      throw new Error("no Add bot control");
-    }
-    select.value = "monk";
-    add.click();
-    expect(added).toEqual([[0, "monk"]]);
+  it("disables − at no bots, + in a full lobby, and both outside waiting", () => {
+    expect(stepper(0, lobby(true)).fewer.disabled).toBe(true);
+    expect(stepper(1, lobby(true)).fewer.disabled).toBe(false);
+    expect(stepper(1, lobby(true)).more.disabled).toBe(false);
+    const full = Array.from({ length: MAX_LOBBY_PLAYERS }, (_, n) => ({
+      ...bot,
+      sessionId: `bot-${String(n)}`,
+    }));
+    const crowded = stepper(1, { ...lobby(true), players: full });
+    expect([crowded.fewer.disabled, crowded.more.disabled]).toEqual([false, true]);
+    const playing = stepper(1, { ...lobby(true), phase: "in-match" });
+    expect([playing.fewer.disabled, playing.more.disabled]).toEqual([true, true]);
   });
 
-  it("keeps each team's pick when the lobby redraws", () => {
-    const pick = (team: 0 | 1): FakeElement | undefined =>
-      column(team, lobby(true)).all("lobby-add-bot")[0]?.children[0];
-    const select = pick(1);
-    if (select === undefined) {
-      throw new Error("no Add bot control");
-    }
-    select.value = "necromancer";
-    select.listeners.get("change")?.();
-    expect(pick(1)?.value).toBe("necromancer");
-    expect(pick(0)?.value).toBe("warrior");
+  it("shows a non-host the count alone, and the bot's row without a ×", () => {
+    const team = column(1, lobby(false));
+    expect(team.all("lobby-bots").map((count) => count.textContent)).toEqual(["Bots: 1"]);
+    expect(team.all("lobby-bots-more")).toEqual([]);
+    expect(team.all("lobby-bots-fewer")).toEqual([]);
+    expect(team.all("bot-tag")).toHaveLength(1);
   });
 
-  it("tags a bot's row BOT in place of its ready pill, with the host's × to remove it", () => {
+  it("tags a bot's row BOT in place of its ready pill", () => {
     const team = column(1, lobby(true));
     expect(team.all("bot-tag").map((tag) => tag.textContent)).toEqual(["BOT"]);
     // The guest's row keeps its pill; the bot's is the tag.
     expect(team.all("lobby-ready").map((pill) => pill.textContent)).toEqual(["Ready", "BOT"]);
-    const remove = team.all("lobby-remove-bot");
-    expect(remove).toHaveLength(1);
-    remove[0]?.click();
-    expect(removed).toEqual(["bot-1"]);
-  });
-
-  it("never offers × on the host's own row", () => {
-    expect(column(0, lobby(true)).all("lobby-remove-bot")).toEqual([]);
-  });
-
-  it("shows a non-host the bot's tag, but neither Add bot nor ×", () => {
-    const team = column(1, lobby(false));
-    expect(team.all("bot-tag")).toHaveLength(1);
-    expect(team.all("lobby-add-bot")).toEqual([]);
-    expect(team.all("lobby-remove-bot")).toEqual([]);
-  });
-
-  it("disables Add bot when the lobby is not waiting", () => {
-    const [control] = column(0, { ...lobby(true), phase: "in-match" }).all("lobby-add-bot");
-    expect(control?.children.every((child) => child.disabled)).toBe(true);
   });
 });

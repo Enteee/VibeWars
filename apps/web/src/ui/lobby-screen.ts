@@ -1,9 +1,4 @@
-import {
-  STARTER_BUILDS,
-  getProfession,
-  type MatchMode,
-  type ProfessionId,
-} from "@vibewars/game-core";
+import type { MatchMode } from "@vibewars/game-core";
 import { LOBBY_CODE_LENGTH, MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
 import type { LobbyCharacter, LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
@@ -26,10 +21,8 @@ export interface LobbyScreenCallbacks {
   readonly onChooseTeam: (team: 0 | 1 | null) => void;
   readonly onToggleReady: () => void;
   readonly onStart: () => void;
-  /** Host only (#1194): seat a bot playing `profession` on `team`. */
-  readonly onAddBot: (team: 0 | 1, profession: ProfessionId) => void;
-  /** Host only (#1194): unseat bot `botId`. */
-  readonly onRemoveBot: (botId: string) => void;
+  /** Host only (#1454): `team` has `count` bots. */
+  readonly onSetBots: (team: 0 | 1, count: number) => void;
   readonly onLeave: () => void;
 }
 
@@ -60,7 +53,7 @@ export interface LobbyControls {
   readonly teamsDisabled: boolean;
   readonly readyDisabled: boolean;
   readonly startDisabled: boolean;
-  /** Add bot (#1194): a bot takes a seat like anyone, so a full lobby has none for it. */
+  /** The bot count's + (#1454): a bot takes a seat like anyone, so a full lobby has none for it. */
   readonly botsDisabled: boolean;
 }
 
@@ -330,8 +323,8 @@ export function renderLobbyScreen(
 }
 
 /**
- * One team's column: its name and Join, the host's Add bot (#1194), and
- * its members, a bot's row with the host's × to remove it.
+ * One team's column: its name and Join, its bot count (#1454), which the
+ * host steps, and its members, bots among them.
  */
 export function teamColumn(
   team: 0 | 1,
@@ -350,27 +343,59 @@ export function teamColumn(
   join.disabled = controls.teamsDisabled || self?.team === team;
   title.appendChild(join);
   column.appendChild(title);
-  if (snapshot.isHost) {
-    column.appendChild(addBotControl(team, controls.botsDisabled, callbacks));
-  }
-
   const members = snapshot.players.filter((p) => p.team === team);
+  column.appendChild(
+    botCount(
+      team,
+      members.filter((member) => member.bot).length,
+      snapshot.isHost,
+      controls,
+      callbacks,
+    ),
+  );
   if (members.length === 0) {
     column.appendChild(h("div", "lobby-slot-empty", "Empty"));
   }
   for (const member of members) {
-    const row = playerRow(member, self);
-    if (member.bot && snapshot.isHost) {
-      const remove = button("×", "lobby-remove-bot", () => {
-        callbacks.onRemoveBot(member.sessionId);
-      });
-      remove.setAttribute("aria-label", `Remove ${member.name}`);
-      remove.disabled = controls.teamsDisabled;
-      row.appendChild(remove);
-    }
-    column.appendChild(row);
+    column.appendChild(playerRow(member, self));
   }
   return column;
+}
+
+/**
+ * `team`'s "Bots: n" (#1454): the host steps it with − and +; everyone
+ * else only reads it.
+ */
+function botCount(
+  team: 0 | 1,
+  count: number,
+  isHost: boolean,
+  controls: LobbyControls,
+  callbacks: LobbyScreenCallbacks,
+): HTMLElement {
+  const control = h("div", "lobby-bots");
+  if (!isHost) {
+    control.textContent = `Bots: ${String(count)}`;
+    return control;
+  }
+  const fewer = button("−", "lobby-bots-fewer", () => {
+    callbacks.onSetBots(team, count - 1);
+  });
+  fewer.setAttribute("aria-label", `One bot fewer on team ${String(team + 1)}`);
+  // Locked outside "waiting", like Join.
+  fewer.disabled = controls.teamsDisabled || count === 0;
+  const more = button("+", "lobby-bots-more", () => {
+    callbacks.onSetBots(team, count + 1);
+  });
+  more.setAttribute("aria-label", `One bot more on team ${String(team + 1)}`);
+  more.disabled = controls.botsDisabled;
+  control.append(
+    h("span", "lobby-bots-label", "Bots:"),
+    fewer,
+    h("span", "lobby-bot-count", String(count)),
+    more,
+  );
+  return control;
 }
 
 /** One player on a team: dot, name, the character they bring, and a ready pill. */
@@ -407,50 +432,4 @@ function playerRow(
         ),
   );
   return row;
-}
-
-/** The starter professions a bot can play (#1194), in `STARTER_BUILDS` order: Warrior first. */
-export const BOT_PROFESSIONS: readonly ProfessionId[] = STARTER_BUILDS.map(
-  (build) => build.primaryProfession,
-);
-
-/**
- * Each team's Add bot pick, kept across renders: the lobby redraws on
- * every change, and someone readying up must not reset the host's choice.
- */
-const botPicks: Record<0 | 1, ProfessionId> = { 0: "warrior", 1: "warrior" };
-
-/** The host's Add bot for `team` (#1194): which profession, and the button. */
-function addBotControl(
-  team: 0 | 1,
-  disabled: boolean,
-  callbacks: LobbyScreenCallbacks,
-): HTMLElement {
-  const control = h("div", "lobby-add-bot");
-  const select = document.createElement("select");
-  select.setAttribute("aria-label", `Bot profession for team ${String(team + 1)}`);
-  for (const profession of BOT_PROFESSIONS) {
-    const option = document.createElement("option");
-    option.value = profession;
-    option.textContent = getProfession(profession).name;
-    select.appendChild(option);
-  }
-  select.value = botPicks[team];
-  select.addEventListener("change", () => {
-    const profession = BOT_PROFESSIONS.find((id) => id === select.value);
-    if (profession !== undefined) {
-      botPicks[team] = profession;
-    }
-  });
-  select.disabled = disabled;
-  const add = button("Add bot", "lobby-add-bot-button", () => {
-    const profession = BOT_PROFESSIONS.find((id) => id === select.value);
-    if (profession !== undefined) {
-      callbacks.onAddBot(team, profession);
-    }
-  });
-  add.setAttribute("aria-label", `Add a bot to team ${String(team + 1)}`);
-  add.disabled = disabled;
-  control.append(select, add);
-  return control;
 }

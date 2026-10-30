@@ -84,7 +84,7 @@ import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
-import { toast } from "./ui/kit.js";
+import { setToastHost, toast } from "./ui/kit.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -321,6 +321,9 @@ export async function startMatchView(
       connection.sendIntent({ kind: "drop-bundle" });
     },
   );
+  // A toast goes under the target frame (#1465): at the bottom centre it
+  // would sit on the skill bar.
+  setToastHost(hud.top);
   // Your team's health, right middle (#1055); a row's click targets its member.
   const partyWindow = createPartyWindow(
     parent,
@@ -802,6 +805,7 @@ export async function startMatchView(
       hud.slotTips.dispose();
       hud.effects.dispose();
       hud.targetEffects.dispose();
+      setToastHost(null);
       hud.top.remove();
       hud.result.remove();
       summary?.panel.remove();

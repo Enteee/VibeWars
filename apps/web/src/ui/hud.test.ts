@@ -9,6 +9,7 @@ import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/ga
 
 import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import { isEliteSkill } from "./icons.js";
+import { dismissToast, setToastHost, toast } from "./kit.js";
 
 import {
   carriedBundle,
@@ -1536,6 +1537,7 @@ class FakeNode {
   readonly style = { setProperty: (): void => undefined };
   readonly setAttribute = (): void => undefined;
   readonly addEventListener = (): void => undefined;
+  readonly remove = (): void => undefined;
 
   appendChild(child: FakeNode): FakeNode {
     this.children.push(child);
@@ -1558,6 +1560,8 @@ function descendants(node: FakeNode): FakeNode[] {
 
 describe("createHud's layout (#1042)", () => {
   afterEach(() => {
+    setToastHost(null);
+    dismissToast();
     vi.unstubAllGlobals();
   });
 
@@ -1612,6 +1616,19 @@ describe("createHud's layout (#1042)", () => {
       "hud-target-health-row",
       "hud-target-cast",
       "effects-monitor",
+    ]);
+  });
+
+  it("shows a match's toast under the target frame, in the top column (#1465)", () => {
+    const { hud } = build();
+    setToastHost(hud.top);
+    toast("Shrines: +2");
+    const top = hud.top as unknown as FakeNode;
+    expect(top.children.map((node) => node.className)).toEqual([
+      "hud-scoreboard",
+      "hud-carriers",
+      "hud-target",
+      "toast",
     ]);
   });
 });

@@ -189,6 +189,16 @@ export interface EnergyLossEffect {
 }
 
 /**
+ * The target loses up to `amount` energy and the caster gains exactly
+ * what it lost (#1455), GW1's energy stealing: Avatar of Lyssa's. A foe
+ * with none gives nothing.
+ */
+export interface EnergyStealEffect {
+  readonly kind: "energy-steal";
+  readonly amount: Magnitude;
+}
+
+/**
  * Steal up to `amount` health from the target (#935), GW1's life
  * stealing: not damage, so no armor, no adrenaline and nothing that
  * reacts to damage sees it. The caster gains what the target lost.
@@ -850,6 +860,7 @@ export type UnconditionalEffect =
   | EnergyGainEffect
   | AdrenalineGainEffect
   | EnergyLossEffect
+  | EnergyStealEffect
   | LifeStealEffect
   | StealFromCorpseEffect
   | SacrificeHealthEffect

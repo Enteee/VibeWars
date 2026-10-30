@@ -358,4 +358,8 @@ export const SKILL_ICONS = {
   // Placeholders until the asset-designer's (#1437): forms.
   "dervish.avatar-of-melandru": { glyph: "armor", modifier: "hourglass" },
   "dervish.avatar-of-dwayna": { glyph: "heal", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1455): forms.
+  "dervish.avatar-of-balthazar": { glyph: "flame", modifier: "hourglass" },
+  "dervish.avatar-of-grenth": { glyph: "scythe", modifier: "hourglass" },
+  "dervish.avatar-of-lyssa": { glyph: "energy", modifier: "hourglass" },
 };

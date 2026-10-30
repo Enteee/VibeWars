@@ -817,6 +817,28 @@ const status = {
       `<path d="M12 15C9 9 6 7 3 7c0 5 3 8 9 8zM12 15c3-6 6-8 9-8 0 5-3 8-9 8z" fill="${c}"/>` +
       `<circle cx="12" cy="18" r="1.8" fill="${c}"/>`,
   ],
+  // Form: a flame over a bar, Balthazar's fire (#1455).
+  "avatar-of-balthazar": [
+    "form",
+    (c) =>
+      `<path d="M12 3c3.5 3.5 4.5 6 4.5 8.5a4.5 4.5 0 0 1-9 0c0-2.5 1.5-4 2.5-5 .3 2 1 2.5 2 3 0-2.5 0-4.5 0-6.5z" fill="${c}"/>` +
+      `<path d="M6 19.5h12" ${stroke(c, 2.2)}/>`,
+  ],
+  // Form: a hooded skull, Grenth's death (#1455).
+  "avatar-of-grenth": [
+    "form",
+    (c) =>
+      `<path d="M6 13a6 6 0 0 1 12 0v3h-2.5v3h-7v-3H6z" fill="${c}"/>` +
+      `<circle cx="9.7" cy="13" r="1.4" fill="${C.dervish}"/>` +
+      `<circle cx="14.3" cy="13" r="1.4" fill="${C.dervish}"/>`,
+  ],
+  // Form: a mask, half light and half dark, Lyssa's illusion (#1455).
+  "avatar-of-lyssa": [
+    "form",
+    (c) =>
+      `<path d="M5 8c4-1.5 10-1.5 14 0 0 6-3 10-7 10S5 14 5 8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 7v11c-4 0-7-4-7-10 2.3-.8 4.6-1 7-1z" fill="${c}"/>`,
+  ],
   // Enchantment: a chevron chasing a dot, faster and harder on runners (#1421).
   "harriers-haste": [
     "enchantment",

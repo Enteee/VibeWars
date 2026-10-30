@@ -467,15 +467,16 @@ export function gainEnergy(
  * Take up to `amount` energy from `target`, never below 0 (#793). Only
  * whole points go: the fraction regeneration has filled stays, as the
  * bar shows it. Current energy alone; maximum energy is untouched. A
- * loss that takes nothing is no event.
+ * loss that takes nothing is no event. Returns what it took.
  */
-function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): void {
+function loseEnergy(target: Combatant, amount: number, events: CombatEvent[]): number {
   const lost = Math.min(amount, Math.floor(target.energy));
   if (lost <= 0) {
-    return;
+    return 0;
   }
   target.energy -= lost;
   events.push({ kind: "energy-loss", targetId: target.id, amount: lost });
+  return lost;
 }
 
 /**
@@ -769,6 +770,10 @@ function landStatus(
   sourceId: string,
   events: CombatEvent[],
 ): void {
+  // Immune (#1455): it does not land, and there is nothing to say.
+  if (target.statuses.isImmuneTo(statusId)) {
+    return;
+  }
   const ending = endedByGaining(target, statusId);
   const breaker =
     getStatusDefinition(statusId).category === "hex" ? target.statuses.hexBreaker() : undefined;
@@ -854,12 +859,17 @@ function removedOfProfession(
 
 /**
  * What `statusId` newly on `target` would end (#919): its statuses that
- * end when their bearer gains that category, as Natural Stride on a hex.
+ * end when their bearer gains that category, as Natural Stride on a hex,
+ * and those `statusId` makes it immune to (#1455).
  */
 function endedByGaining(target: Combatant, statusId: StatusId): StatusId[] {
-  const { category } = getStatusDefinition(statusId);
+  const { category, immuneTo } = getStatusDefinition(statusId);
   return target.statuses.active
-    .filter(({ id }) => getStatusDefinition(id).endsWhenBearerGains.some((c) => c === category))
+    .filter(
+      ({ id }) =>
+        getStatusDefinition(id).endsWhenBearerGains.some((c) => c === category) ||
+        immuneTo.includes(id),
+    )
     .map(({ id }) => id);
 }
 
@@ -973,6 +983,18 @@ export function applyEffect(
         return events;
       }
       loseEnergy(target, resolveMagnitude(effect.amount, caster), events);
+      return events;
+    }
+
+    case "energy-steal": {
+      if (target === undefined || target.dead || caster.dead) {
+        return events;
+      }
+      gainEnergy(
+        caster,
+        loseEnergy(target, resolveMagnitude(effect.amount, caster), events),
+        events,
+      );
       return events;
     }
 
@@ -1704,6 +1726,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "remove-status":
       return effect.from === "caster";
     case "energy-loss":
+    case "energy-steal":
     case "life-steal":
     case "damage":
     case "lose-health":
