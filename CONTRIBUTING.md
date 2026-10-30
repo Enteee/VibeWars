@@ -88,10 +88,21 @@ Concretely:
 
 ### Generated files
 
-Merging `main` can conflict in `wire-schema.json` or the roles snapshot.
-Never hand-merge them. `.gitattributes` makes git keep both sides of the
-icon table and the roles snapshot (`merge=union`); for any conflict left
-in a generated file, take either side, run `pnpm run regen` and commit.
+Generated files: `packages/game-protocol/src/wire-schema.json`, the roles
+snapshot (`packages/game-core/src/skills/__snapshots__/roles.test.ts.snap`),
+the skill icon rows (`scripts/assets/skill-icon-table.mjs`,
+`scripts/assets/skill-icons/*.mjs`) and the SVGs in
+`apps/web/public/icons/skill/`. Never hand-merge them.
+
+`.gitattributes` makes git keep both sides of the icon rows and the roles
+snapshot (`merge=union`). For any conflict left in a generated file:
+
+```sh
+git checkout --theirs <file>   # your side in a rebase; --ours in a merge
+pnpm run regen
+git add <file>
+```
+
 The icon, snapshot and wire tests fail in CI on a stale result.
 
 ## Documentation

@@ -3,3 +3,4 @@
 # icon and snapshot tests in CI. See CONTRIBUTING.md, "Generated files".
 scripts/assets/skill-icon-table.mjs merge=union
 packages/game-core/src/skills/__snapshots__/roles.test.ts.snap merge=union
+scripts/assets/skill-icons/*.mjs merge=union
