@@ -181,6 +181,15 @@ function signed(n: number): string {
 }
 
 /**
+ * A change in how fast adrenaline builds: "gain adrenaline 33% faster",
+ * or, slowed, as Soothing's (#1550), "gain adrenaline 50% slower".
+ */
+function adrenalineGainText(faster: number): string {
+  const percent = String(Math.round(Math.abs(faster) * 100));
+  return `gain adrenaline ${percent}% ${faster > 0 ? "faster" : "slower"}`;
+}
+
+/**
  * What a status actually does, so a tooltip does not just name it.
  * `ranks` are its caster's, for a trigger an attribute scales (#944):
  * Patient Spirit's heal. Empty, it reads at rank 0.
@@ -281,9 +290,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`immune to ${names.join(" and ")}`);
   }
   if (definition.adrenalineGainFaster !== 0) {
-    parts.push(
-      `gain adrenaline ${String(Math.round(definition.adrenalineGainFaster * 100))}% faster`,
-    );
+    parts.push(adrenalineGainText(definition.adrenalineGainFaster));
   }
   if (definition.attributeDelta !== 0) {
     parts.push(`${signed(definition.attributeDelta)} to all attributes`);
@@ -444,9 +451,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       ...(attackDurationMultiplier === 1
         ? []
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
-      ...(adrenalineGainFaster === 0
-        ? []
-        : [`gain adrenaline ${String(Math.round(adrenalineGainFaster * 100))}% faster`]),
+      ...(adrenalineGainFaster === 0 ? [] : [adrenalineGainText(adrenalineGainFaster)]),
     ];
     parts.push(`while under a ${categories.join(" or ")}: ${gains.join(", ")}`);
   }
@@ -1218,14 +1223,7 @@ function describeEffects(
       // What the spirit projects (#1064): "Non-spirit allies in its range:
       // +3 Health regeneration".
       ...(aura === undefined ? [] : [describeAura(aura, "in its range")]),
-      // What its blows land (#1550): "Its attacks: if target is not
-      // moving: knocks down for 2s".
-      ...(attack?.onHit ?? []).flatMap((onHit) =>
-        describeEffects(onHit, ranks).map(({ text, magnitude }) => ({
-          text: `Its attacks: ${lowerFirst(text)}`,
-          magnitude,
-        })),
-      ),
+      ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst)]),
     ];
   }
@@ -1271,6 +1269,31 @@ function describeEffects(
     const { text, magnitude } = describeEffect(inner, ranks);
     return { text: `${condition}: ${lowerFirst(text)}`, magnitude };
   });
+}
+
+/**
+ * What a spirit's blows land (#1550), one line an effect, an `if` said
+ * once: "Its attacks: if target is not moving: knocks down for 2s, this
+ * spirit loses 54 Health". Health it loses is the spirit's, not its
+ * caster's. The line's scaling is its first number that scales.
+ */
+function describeSpiritBlow(
+  effect: SkillEffect,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const parts = (effect.kind === "if" ? effect.effects : [effect]).map(
+    (inner): EffectDescription => {
+      if (inner.kind === "lose-health" && inner.perRemovedOfProfession === undefined) {
+        const magnitude = describeMagnitude(inner.amount, ranks);
+        return { text: `this spirit loses ${String(magnitude.current)} Health`, magnitude };
+      }
+      return describeEffect(inner, ranks);
+    },
+  );
+  const when = effect.kind === "if" ? `${lowerFirst(conditionText(effect.condition))}: ` : "";
+  const what = parts.map(({ text }) => lowerFirst(text)).join(", ");
+  const scaled = parts.find(({ magnitude }) => magnitude?.atZero !== undefined);
+  return { text: `Its attacks: ${when}${what}`, magnitude: (scaled ?? parts[0])?.magnitude };
 }
 
 /**

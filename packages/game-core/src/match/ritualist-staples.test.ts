@@ -332,7 +332,12 @@ describe("the texts (#1550)", () => {
   it("names the on-hit effects and the bursts", () => {
     expect(lines(BLOODSONG)).toContain("Its attacks: steals up to 21 Health");
     expect(lines(ANGUISH)).toContain("Its attacks: if target has a hex: deals 17 damage");
-    expect(lines(WANDERLUST)).toContain("Its attacks: if target is not moving: you lose 54 health");
+    // One line, and the spirit pays (QA on PR 1582).
+    expect(lines(WANDERLUST)).toContain(
+      "Its attacks: if target is not moving: knocks down for 2s, this spirit loses 54 Health",
+    );
+    expect(lines(WANDERLUST).filter((line) => line.startsWith("Its attacks"))).toHaveLength(1);
+    expect(lines(SOOTHING).join(" ")).toContain("gain adrenaline 50% slower");
     expect(lines(DESTRUCTION)).toContain(
       "When it dies, non-spirit foes in the area take 8.2 damage per second it lived (max 150)",
     );
