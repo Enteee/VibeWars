@@ -129,6 +129,7 @@
     "expose-defenses",
     "faintheartedness",
     "fall-back",
+    "featherfoot-grace",
     "feigned-neutrality",
     "finale-of-restoration",
     "fire-attunement",
@@ -192,6 +193,7 @@
     "natural-stride",
     "never-surrender",
     "obsidian-flesh",
+    "onslaught",
     "order-of-pain",
     "overload",
     "painful-bond",
@@ -276,12 +278,14 @@
     "weapon-of-remedy",
     "weapon-of-warding",
     "well-of-suffering",
+    "whirling-charge",
     "whirling-defense",
     "winnowing",
     "wither",
     "xinraes-weapon",
     "zealous-anthem",
-    "zealous-renewal"
+    "zealous-renewal",
+    "zealous-vow"
   ],
   "constants": {
     "FORMATION_SETTLE_MS": { "literal": 3000 },
@@ -693,6 +697,7 @@
                   { "literal": "expose-defenses" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
+                  { "literal": "featherfoot-grace" },
                   { "literal": "feigned-neutrality" },
                   { "literal": "finale-of-restoration" },
                   { "literal": "fire-attunement" },
@@ -756,6 +761,7 @@
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
                   { "literal": "obsidian-flesh" },
+                  { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
                   { "literal": "overload" },
                   { "literal": "painful-bond" },
@@ -840,12 +846,14 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "wither" },
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
-                  { "literal": "zealous-renewal" }
+                  { "literal": "zealous-renewal" },
+                  { "literal": "zealous-vow" }
                 ]
               }
             },
@@ -966,6 +974,7 @@
                   { "literal": "expose-defenses" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
+                  { "literal": "featherfoot-grace" },
                   { "literal": "feigned-neutrality" },
                   { "literal": "finale-of-restoration" },
                   { "literal": "fire-attunement" },
@@ -1029,6 +1038,7 @@
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
                   { "literal": "obsidian-flesh" },
+                  { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
                   { "literal": "overload" },
                   { "literal": "painful-bond" },
@@ -1113,12 +1123,14 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "wither" },
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
-                  { "literal": "zealous-renewal" }
+                  { "literal": "zealous-renewal" },
+                  { "literal": "zealous-vow" }
                 ]
               }
             },
@@ -1236,6 +1248,7 @@
                   { "literal": "expose-defenses" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
+                  { "literal": "featherfoot-grace" },
                   { "literal": "feigned-neutrality" },
                   { "literal": "finale-of-restoration" },
                   { "literal": "fire-attunement" },
@@ -1299,6 +1312,7 @@
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
                   { "literal": "obsidian-flesh" },
+                  { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
                   { "literal": "overload" },
                   { "literal": "painful-bond" },
@@ -1383,12 +1397,14 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "wither" },
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
-                  { "literal": "zealous-renewal" }
+                  { "literal": "zealous-renewal" },
+                  { "literal": "zealous-vow" }
                 ]
               }
             },
@@ -1503,6 +1519,7 @@
                   { "literal": "expose-defenses" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
+                  { "literal": "featherfoot-grace" },
                   { "literal": "feigned-neutrality" },
                   { "literal": "finale-of-restoration" },
                   { "literal": "fire-attunement" },
@@ -1566,6 +1583,7 @@
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
                   { "literal": "obsidian-flesh" },
+                  { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
                   { "literal": "overload" },
                   { "literal": "painful-bond" },
@@ -1650,12 +1668,14 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "wither" },
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
-                  { "literal": "zealous-renewal" }
+                  { "literal": "zealous-renewal" },
+                  { "literal": "zealous-vow" }
                 ]
               }
             },
@@ -1877,6 +1897,7 @@
                   { "literal": "expose-defenses" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
+                  { "literal": "featherfoot-grace" },
                   { "literal": "feigned-neutrality" },
                   { "literal": "finale-of-restoration" },
                   { "literal": "fire-attunement" },
@@ -1940,6 +1961,7 @@
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
                   { "literal": "obsidian-flesh" },
+                  { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
                   { "literal": "overload" },
                   { "literal": "painful-bond" },
@@ -2024,12 +2046,14 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "wither" },
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
-                  { "literal": "zealous-renewal" }
+                  { "literal": "zealous-renewal" },
+                  { "literal": "zealous-vow" }
                 ]
               }
             },
@@ -2135,6 +2159,7 @@
                   { "literal": "expose-defenses" },
                   { "literal": "faintheartedness" },
                   { "literal": "fall-back" },
+                  { "literal": "featherfoot-grace" },
                   { "literal": "feigned-neutrality" },
                   { "literal": "finale-of-restoration" },
                   { "literal": "fire-attunement" },
@@ -2198,6 +2223,7 @@
                   { "literal": "natural-stride" },
                   { "literal": "never-surrender" },
                   { "literal": "obsidian-flesh" },
+                  { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
                   { "literal": "overload" },
                   { "literal": "painful-bond" },
@@ -2282,12 +2308,14 @@
                   { "literal": "weapon-of-remedy" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
                   { "literal": "winnowing" },
                   { "literal": "wither" },
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
-                  { "literal": "zealous-renewal" }
+                  { "literal": "zealous-renewal" },
+                  { "literal": "zealous-vow" }
                 ]
               }
             },

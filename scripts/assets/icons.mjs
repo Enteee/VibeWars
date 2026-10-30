@@ -1792,6 +1792,32 @@ const status = {
       `<path d="M7 12V6M10 12V4M13 12V4M16 12V6M7 12c0 4 2 6 5 6s4-2 4-6" ${stroke(c, 1.6)}/>` +
       `<path d="M4 21h16M17 18l3 3-3 3" ${stroke(c, 1.6)}/>`,
   ],
+  // Dervish staples 3 (#1667), stand-ins until their art card.
+  // Enchantment: two fast slashes over a rising bar, attack and adrenaline faster.
+  onslaught: [
+    "enchantment",
+    (c) =>
+      `<path d="M5 15L13 4M10 16L18 5" ${stroke(c, 2)}/>` + `<path d="M6 20h12" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a spark over two falling bars, energy per hit, less regeneration.
+  "zealous-vow": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l2 5h-4l2 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 17h12M8 21h8" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a feather, it moves faster and sheds conditions sooner.
+  "featherfoot-grace": [
+    "enchantment",
+    (c) =>
+      `<path d="M18 4C10 5 6 11 6 20M18 4c0 7-5 11-11 12" ${stroke(c, 1.8)}/>` +
+      `<path d="M10 11h4M8 15h4" ${stroke(c, 1.4)}/>`,
+  ],
+  // Enchantment: a spiral of wind, it runs and its next hit chills the crowd.
+  "whirling-charge": [
+    "enchantment",
+    (c) => `<path d="M12 12a2 2 0 1 1 2-2a4 4 0 1 1-4-4a6 6 0 1 1-6 6" ${stroke(c, 1.8)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

@@ -47,4 +47,16 @@ export const DERVISH_ICONS = {
   "dervish.mirage-cloak": { glyph: "shield-veil", modifier: "area" },
   "dervish.vital-boon": { glyph: "heart-plus", modifier: "hourglass" },
   "dervish.guiding-hands": { glyph: "next-attack-unblockable", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1667).
+  "dervish.reap-impurities": { glyph: "scythe-spend", modifier: "renew" },
+  "dervish.aura-slicer": { glyph: "ring-rend", modifier: "bleed" },
+  "dervish.crippling-victory": { glyph: "blade-limp", modifier: "down" },
+  "dervish.lyssas-assault": { glyph: "interrupt", modifier: "half" },
+  "dervish.rending-touch": { glyph: "ring-rend", modifier: "bolt" },
+  "dervish.winds-of-disenchantment": { glyph: "ring-rend", modifier: "area" },
+  "dervish.signet-of-pious-restraint": { glyph: "blade-limp", modifier: "clock" },
+  "dervish.onslaught": { glyph: "blade-fury", modifier: "up" },
+  "dervish.zealous-vow": { glyph: "energy", modifier: "hourglass" },
+  "dervish.featherfoot-grace": { glyph: "haste-clean", modifier: "plus" },
+  "dervish.whirling-charge": { glyph: "dash", modifier: "bolt" },
 };
