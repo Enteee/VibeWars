@@ -556,7 +556,7 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          hostWith(name, undefined, false);
+          hostWith(name, undefined);
         },
         onJoinLobby: joinWith,
         onRandomArena: (mode, name) => {
@@ -666,16 +666,13 @@ async function main(): Promise<void> {
     editor = mountBuildEditor(screenRoot, character, editorCallbacks);
   };
 
-  /**
-   * Host a lobby as `name`, with the active Solo character, on `modes`'
-   * maps; a Team Lobby (#1458) when `teamLobby`.
-   */
-  const hostWith = (name: string, modes: TeamPlayTile["modes"], teamLobby: boolean): void => {
+  /** Host a lobby as `name`, with the active Solo character, on `modes`' maps. */
+  const hostWith = (name: string, modes: TeamPlayTile["modes"]): void => {
     void (async () => {
       lobbyModes = modes;
       const entrant = await readEntrant();
       await enterLobby(name, entrant, async () => {
-        hosted = await hostLobby(name, entrant.guild, entrant.character, teamLobby);
+        hosted = await hostLobby(name, entrant.guild, entrant.character);
         return hosted.lobby;
       });
     })();
@@ -692,14 +689,15 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Team Play (#1453), as `showMenu` shows it on that tab. Its tiles host
-   * Team Lobbies (#1458), where each side votes on the Team Build it plays.
+   * Team Play (#1453), as `showMenu` shows it on that tab. Its lobbies are
+   * today's hosted ones, with the active Solo character, until the Team
+   * Lobby (#1458) takes the picked Team Build.
    */
   const showTeamPlay = async (): Promise<void> => {
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
     renderTeamPlay(screenRoot, teamList.teams, [...teamList.problems, ...editNotices], menuNotice, {
       onHostTile: (tile, name) => {
-        hostWith(name, tile.modes, true);
+        hostWith(name, tile.modes);
       },
       onJoinLobby: joinWith,
       onSwitchTab: showMenu,
