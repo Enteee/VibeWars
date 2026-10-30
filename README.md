@@ -93,7 +93,7 @@ own development was verified that way; see
   saved in the browser, and the **Training Ground** beside it to try a
   bar on dummies. The host validates every build and hands an illegal one
   a starter build instead.
-- **Team builder** for planning a roster (see the limits below).
+- **Team Builds**: teams of their own characters, for planning a roster (see the limits below).
 - **Music and sound**, and a **narrow-window layout**.
 - **Robustness**: a dropped player's character stays in the match for 30
   seconds and the player can rejoin it; hostile input cannot crash the

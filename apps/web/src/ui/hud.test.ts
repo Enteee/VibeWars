@@ -7,7 +7,6 @@ import type { ChainRole } from "@vibewars/game-core";
 import type { CastRefusedMessage } from "@vibewars/game-protocol";
 import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
-import { DEFAULT_KEYMAP } from "../input/keymap.js";
 import { isEliteSkill } from "./icons.js";
 import { dismissToast, setToastHost, toast } from "./kit.js";
 
@@ -41,8 +40,6 @@ import {
   targetCast,
   targetHealthLabel,
   targetHealthPercent,
-  targetHint,
-  targetHintDismissed,
   targetEffectRows,
   targetProfessionIcons,
   targetChainIcon,
@@ -1040,30 +1037,6 @@ describe("describeOutcome", () => {
   });
 });
 
-describe("targetHint (#253, #302)", () => {
-  it("tells a new player how to target and how to see every name, by their keys", () => {
-    expect(targetHint(DEFAULT_KEYMAP, "annihilation")).toBe(
-      "Click an enemy or press Tab to target · hold Shift for names",
-    );
-    expect(targetHint(DEFAULT_KEYMAP, "annihilation")).not.toContain("Ctrl");
-  });
-
-  it("leaves out a clause whose action has no key", () => {
-    expect(
-      targetHint({ ...DEFAULT_KEYMAP, "target-next": [], "show-names": [] }, "annihilation"),
-    ).toBe("Click an enemy to target");
-  });
-
-  it("in King of the Hill, tells you to lead your own ghost first, by the attack key (#1377)", () => {
-    expect(targetHint(DEFAULT_KEYMAP, "king-of-the-hill")).toBe(
-      "Right-click your Ghostly Hero, then Space: it follows you to the altar",
-    );
-    expect(targetHint({ ...DEFAULT_KEYMAP, attack: [] }, "king-of-the-hill")).toBe(
-      "Click an enemy or press Tab to target · hold Shift for names",
-    );
-  });
-});
-
 describe("a Ghostly Hero's leader (#1377, #1419)", () => {
   const me = player({ sessionId: "me", name: "me", team: 0 });
   const names = new Map([
@@ -1146,56 +1119,6 @@ describe("a Ghostly Hero's leader (#1377, #1419)", () => {
       expect(ghostNameplate(ghost(1, "foe"), me, names)).toBe("Ghostly Hero");
       expect(ghostNameplate(me, me, names)).toBe("me");
     });
-  });
-});
-
-describe("targetHintDismissed", () => {
-  const self = (targetSessionId: string | undefined): PlayerSnapshot => ({
-    sessionId: "me",
-    name: "me",
-    guildTag: undefined,
-    guildCape: undefined,
-    x: 0,
-    y: 0,
-    facing: 0,
-    targetSessionId,
-    attackTargetSessionId: undefined,
-    walking: false,
-    health: 500,
-    maxHealth: 500,
-    energy: 20,
-    maxEnergy: 50,
-    overcast: 0,
-    morale: 0,
-    armor: 60,
-    weaponId: undefined,
-    offhandId: undefined,
-    primaryProfession: undefined,
-    secondaryProfession: undefined,
-    team: 0,
-    dead: false,
-    corpseExploited: false,
-    castingSkillId: undefined,
-    castRemaining: 0,
-    castTotal: 0,
-    swingElapsed: 0,
-    swingTotal: 0,
-    knockdownRemaining: 0,
-    invulnerableSeconds: 0,
-    healthPips: 0,
-    energyPips: 0,
-    creature: undefined,
-    bot: false,
-    statuses: [],
-  });
-
-  it("keeps the hint up with no target, takes it down for good at the first one", () => {
-    expect(targetHintDismissed(false, self(undefined))).toBe(false);
-    expect(targetHintDismissed(false, undefined)).toBe(false);
-    const dismissed = targetHintDismissed(false, self("foe"));
-    expect(dismissed).toBe(true);
-    // Clearing the target later does not bring it back.
-    expect(targetHintDismissed(dismissed, self(undefined))).toBe(true);
   });
 });
 
@@ -1564,10 +1487,9 @@ describe("createHud's layout (#1042)", () => {
       .map((node) => node.className.split(" "))
       .flatMap((classes) => names.filter((name) => classes.includes(name)));
 
-  it("stacks your block, top down: hint, message, effects, morale, gear and Drop, health, energy, skills", () => {
+  it("stacks your block, top down: message, effects, morale, gear and Drop, health, energy, skills", () => {
     const { hud } = build();
     const order = [
-      "hud-hint",
       "hud-message",
       "effects-monitor",
       "hud-morale",

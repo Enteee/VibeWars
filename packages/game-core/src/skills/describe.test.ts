@@ -421,6 +421,17 @@ describe("describeSkill", () => {
     );
   });
 
+  it("says when an echo renews or fires, and how often (#1423)", () => {
+    expect(describeStatus("purifying-finale")).toBe(
+      "whenever a chant or shout ends on it: removes 1 condition",
+    );
+    expect(describeStatus("hasty-refrain")).toBe(
+      "moves at 125% speed, renewed whenever a chant or shout ends on it",
+    );
+    expect(describeStatus("enduring-harmony")).toBe("chants and shouts last 50% longer on it");
+    expect(describeStatus("finale-of-restoration")).toContain("ends after it takes effect 5 times");
+  });
+
   it("says weakness cuts the weapon and every attribute (#762)", () => {
     expect(describeStatus("weakness")).toBe("−66% weapon damage, −1 to all attributes");
   });

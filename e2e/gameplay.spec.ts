@@ -535,24 +535,21 @@ test("F10 then Esc says no, and the attack goes on (#221)", async ({ page }) => 
   await opponent.close();
 });
 
-test("Tab targets the nearest enemy, and the hint goes for good (#55)", async ({ page }) => {
+test("Tab targets the nearest enemy (#55)", async ({ page }) => {
   // A lobby of two, for the reason the test above gives.
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
-  const hint = page.locator(".hud-hint");
-  await expect(hint).toHaveText("Click an enemy or press Tab to target · hold Shift for names");
-  await expect(hint).toBeVisible();
+  const target = page.locator(".hud-target-text");
+  await expect(target).toHaveText("no target");
 
   await page.keyboard.press("Tab");
-  await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
-  await expect(hint).toBeHidden();
+  await expect(target).not.toHaveText("no target");
   // The browser kept its focus where it was: Tab is the game's now.
   expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
 
-  // Cleared again, when the target leaves, the hint stays gone.
+  // Cleared again when the target leaves.
   await leaveMatch(opponent);
-  await expect(page.locator(".hud-target-text")).toHaveText("no target");
-  await expect(hint).toBeHidden();
+  await expect(target).toHaveText("no target");
   await opponent.close();
 });
 
