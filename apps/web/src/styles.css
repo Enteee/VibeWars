@@ -2539,8 +2539,9 @@ button.team-lobby-card:not(:disabled):hover,
   box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
 }
 
-.team-lobby-card.is-faded {
+.screen .team-lobby-card.is-faded {
   opacity: 0.4;
+  cursor: default;
 }
 
 .team-lobby-card-name,
@@ -2645,6 +2646,13 @@ button.team-lobby-card:not(:disabled):hover,
 
 .team-lobby-seat:not(:disabled) {
   cursor: pointer;
+}
+
+/* Someone else's seat cannot be taken, but who sits there is the point:
+   it stays as bright as the rest. */
+.screen .team-lobby-seat.is-taken:disabled {
+  opacity: 1;
+  cursor: default;
 }
 
 .team-lobby-seat.is-mine,
