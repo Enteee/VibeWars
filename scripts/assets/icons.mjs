@@ -2075,6 +2075,21 @@ const sacrifice = (payoff) =>
   `<g transform="translate(7.5,16) scale(0.66) translate(-12,-12)">${DROP}</g>` +
   `<g transform="translate(15,9) scale(0.7) translate(-12,-12)">${payoff}</g>`;
 
+/** A four-point star, the holy mark of the Monk's smiting skills (#1584). */
+const holyStar = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) => {
+  const k = r * 0.28;
+  const p = (/** @type {number} */ x, /** @type {number} */ y) =>
+    `${(cx + x).toFixed(1)} ${(cy + y).toFixed(1)}`;
+  return inkFill(
+    `M${p(0, -r)}L${p(k, -k)}L${p(r, 0)}L${p(k, k)}L${p(0, r)}L${p(-k, k)}L${p(-r, 0)}L${p(-k, -k)}Z`,
+  );
+};
+
+/** A signet ring and its dot at `cx,cy`, radius `r` (#1584). */
+const ringDot = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) =>
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r)}" ${stroke(C.ink, 2.2)}/>` +
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r / 3)}" fill="${C.ink}"/>`;
+
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
@@ -3331,6 +3346,35 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The Monk's smiting skills (#1519, #1584): a four-point star is holy light; a blade in the top left corner
+  // is the foe attacking; a signet is its ring and dot; a flat bar is a foe knocked down.
+  "smite-attacking": () => holyStar(15, 14, 9) + `<g>${nextTrigger.attack()}</g>`,
+  "spear-light": () =>
+    inkLine("M3.5 21L15 9.5", 2.4) +
+    inkFill("M22 2L20.5 10L14 3.5Z") +
+    holyStar(18, 18, 4.5) +
+    `<g transform="translate(0,0)">${nextTrigger.attack()}</g>`,
+  "star-below-half": () =>
+    `<circle cx="12" cy="14" r="8" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M4 14A8 8 0 0 0 20 14Z") +
+    holyStar(6, 5, 4.5),
+  "star-beam-flame": () =>
+    holyStar(12, 6, 6) +
+    inkLine("M12 12.5V14M6.5 11L8 13.5M17.5 11L16 13.5", 2) +
+    `<g transform="translate(12,18) scale(0.55) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  "sword-star": () =>
+    `<g transform="translate(-1,2) scale(0.85)">${skillGlyph.sword()}</g>` + holyStar(18, 6, 5),
+  "signet-attacking": () =>
+    ringDot(15, 9, 6.5) + inkLine("M4 21H20", 2.8) + `<g>${nextTrigger.attack()}</g>`,
+  "signet-energy": () =>
+    ringDot(15, 9, 6.5) +
+    `<g transform="translate(14,18) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    `<g>${nextTrigger.attack()}</g>`,
+  "signet-quake": () => ringDot(12, 9, 6.5) + inkLine("M2 9H3.5M20.5 9H22M4 21H20", 2.4),
+  "star-prone": () =>
+    holyStar(13, 8, 7.5) +
+    `<circle cx="5.5" cy="18.5" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 18.5H20.5", 3),
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
 
