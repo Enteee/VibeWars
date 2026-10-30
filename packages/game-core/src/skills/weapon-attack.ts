@@ -193,19 +193,23 @@ export interface WeaponSnapshot {
    * weapon's: an earth scythe blow is still a physical attack.
    */
   readonly damageType: DamageType;
+  /** The least armor penetration the attacker's statuses give (#1519): Judge's Insight's 0.2. */
+  readonly armorPenetration: number;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
   const { mainHand } = attacker.equipment;
   const rank = rankIn(attacker, mainHand.attributeId);
+  const modifiers = aggregateModifiers(attacker.statuses.active);
   return {
     mainHand,
     rank,
     criticalStrikes: rankIn(attacker, CRITICAL_STRIKES_ATTRIBUTE),
     requirementMet: mainHand.attributeId === undefined || rank >= mainHand.weapon.requirement.rank,
     damageMultiplier: weaponDamageMultiplierOf(attacker),
-    criticalChanceBonus: aggregateModifiers(attacker.statuses.active).criticalChanceBonus,
+    criticalChanceBonus: modifiers.criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
+    armorPenetration: modifiers.attackArmorPenetration,
   };
 }
 
@@ -497,6 +501,7 @@ export function landBlow(
     armorPenetration: Math.max(
       blow.armorPenetration,
       strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+      snapshot.armorPenetration,
     ),
   };
   // After the crit and damage rolls: the piece it lands on (#1135).

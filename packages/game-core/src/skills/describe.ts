@@ -267,6 +267,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${definition.attackDamageType} damage`,
     );
   }
+  if (definition.attackArmorPenetration !== 0) {
+    parts.push(
+      `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
+    );
+  }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
@@ -1524,8 +1529,9 @@ function describeEffect(
       return { text: "Counts as a lead attack", magnitude: undefined };
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
+      const which = effect.of === "this-skill" ? "This skill" : "That skill";
       return {
-        text: `That skill takes ${String(magnitude.current)} seconds longer to recharge`,
+        text: `${which} takes ${String(magnitude.current)} seconds longer to recharge`,
         magnitude,
       };
     }

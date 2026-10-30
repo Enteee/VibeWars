@@ -411,4 +411,14 @@ export const SKILL_ICONS = {
   "paragon.chest-thumper": { glyph: "spear-crack", modifier: "bleed" },
   "paragon.spear-of-redemption": { glyph: "spear-cleanse" },
   "paragon.spear-swipe": { glyph: "spear-swipe", modifier: "stun" },
+  // Placeholders until the asset-designer's (#1519): Monk smiting staples.
+  "monk.smite": { glyph: "lightning", modifier: "plus" },
+  "monk.spear-of-light": { glyph: "spear-bolt", modifier: "plus" },
+  "monk.word-of-censure": { glyph: "lightning", modifier: "clock" },
+  "monk.ray-of-judgment": { glyph: "flame-target", modifier: "clock" },
+  "monk.judges-insight": { glyph: "sword", modifier: "bolt" },
+  "monk.bane-signet": { glyph: "blow", modifier: "stun" },
+  "monk.castigation-signet": { glyph: "energy", modifier: "plus" },
+  "monk.signet-of-judgment": { glyph: "blow", modifier: "area" },
+  "monk.holy-strike": { glyph: "lightning", modifier: "up" },
 };

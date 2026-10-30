@@ -95,6 +95,8 @@ const NO_BOT_USE = new Set([
   "paragon.song-of-purification",
   "paragon.hexbreaker-aria",
   "paragon.anthem-of-fury",
+  // An ally's attacks made holy and penetrating (#1519): no rule weighs it.
+  "monk.judges-insight",
 ]);
 
 function skill(id: string) {

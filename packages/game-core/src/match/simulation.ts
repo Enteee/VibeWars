@@ -3093,6 +3093,7 @@ export class MatchSimulation {
     const only = (events: CombatEvent[]): SkillOutcome => ({
       events,
       rechargeFraction: 0,
+      rechargeLongerSeconds: 0,
       summons: [],
       grounds: [],
     });
@@ -3130,7 +3131,7 @@ export class MatchSimulation {
     // one used up during the cast leaves it with no effect, paid for.
     const corpse =
       skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
-    const { events, rechargeFraction, summons, grounds } =
+    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds } =
       skill.corpse !== undefined && corpse === undefined
         ? only([])
         : resolve({
@@ -3267,7 +3268,8 @@ export class MatchSimulation {
       beginRecharge(
         record.combatant.cast,
         skill,
-        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster),
+        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) +
+          rechargeLongerSeconds,
         cast.key,
       );
       // A form's "disabled for 45 seconds" (#1437), beside its recharge.

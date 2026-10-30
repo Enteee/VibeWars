@@ -299,7 +299,9 @@ export type StatusId =
   | "guilt"
   | "shame"
   | "mistrust"
-  | "fragility";
+  | "fragility"
+  // Monk smiting staples (#1519).
+  | "judges-insight";
 
 /** A status's modifiers that hold only while its bearer is under another (#1485). */
 export interface WhileUnder {
@@ -444,6 +446,12 @@ export interface StatusDefinition {
    * `undefined`: whatever it wields.
    */
   readonly attackDamageTypeWeapon: AttackWeaponClass | undefined;
+  /**
+   * The least armor penetration the bearer's weapon attacks have (#1519):
+   * Judge's Insight's "+20% armor penetration". It joins the blow's and
+   * Strength's: the highest counts, nothing adds. 0: none.
+   */
+  readonly attackArmorPenetration: number;
   /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
@@ -1155,6 +1163,7 @@ function define(
     physicalDamageTakenBonus: 0,
     attackDamageType: undefined,
     attackDamageTypeWeapon: undefined,
+    attackArmorPenetration: 0,
     attributeDelta: 0,
     castTimeMultiplier: 1,
     interruptsSpells: false,
@@ -1368,7 +1377,7 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
     triggers: [
       {
         on: "bearer-uses-skill",
-        effects: [{ kind: "lengthen-recharge", seconds: { flat: 47 } }],
+        effects: [{ kind: "lengthen-recharge", of: "target-last-skill", seconds: { flat: 47 } }],
         target: "bearer",
         skillId: "mesmer.diversion",
       },
@@ -3295,6 +3304,13 @@ export const STATUS_DEFINITIONS: Readonly<Record<StatusId, StatusDefinition>> = 
       },
     ],
   }),
+  // "...target ally's attacks deal holy damage and have +20% armor
+  // penetration" (#1519).
+  "judges-insight": define("judges-insight", "Judge's Insight", "enchantment", {
+    profession: "monk",
+    attackDamageType: "holy",
+    attackArmorPenetration: 0.2,
+  }),
 };
 
 /**
@@ -4309,6 +4325,8 @@ export interface StatusModifiers {
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, summed (#988). */
   readonly criticalChanceBonus: number;
+  /** The largest status's (#1519). */
+  readonly attackArmorPenetration: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -4390,6 +4408,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let incomingHexCastTimeMultiplier = 1;
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
+  let attackArmorPenetration = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
@@ -4481,6 +4500,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
+    attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -4522,6 +4542,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     conditionsExpireFaster,
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
+    attackArmorPenetration,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,
