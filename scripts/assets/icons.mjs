@@ -1752,6 +1752,9 @@ const inkFill = (d) =>
 /** @param {string} d @param {number} [w] */
 const inkLine = (d, w = 2.2) => `<path d="${d}" ${stroke(C.ink, w)}/>`;
 
+/** The dashed ring of a hex, as a skill icon's frame (#1534). */
+const HEX_RING = `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>`;
+
 /** A burst of `n` points around the centre, alternating two radii. @param {number} n */
 const burst = (n) =>
   Array.from({ length: n * 2 }, (_, i) => {
@@ -2228,6 +2231,40 @@ const skillGlyph = {
     inkLine("M7 4.5L12 11", 2.4) +
     `<rect x="9.5" y="9" width="9" height="6" rx="1" transform="rotate(35 14 12)" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
     inkLine("M3 19.5H21M5 15.5L3.5 13.5M21 15.5L22 13.5", 2.2),
+  // The punishers (#1473, #1534): a dashed ring, a hex, round a picture of the punishment.
+  // An hourglass that bursts when its sand runs out: Wastrel's Worry.
+  "hex-hourglass": () =>
+    inkLine("M5 3H19M5 21H19", 2.4) +
+    inkFill(
+      "M6.5 3.5H17.5C17.5 9 12 10 12 12C12 14 17.5 15 17.5 20.5H6.5C6.5 15 12 14 12 12C12 10 6.5 9 6.5 3.5Z",
+    ),
+  // A bolt through a bar: Overload hits a foe in mid-skill.
+  "hex-overload": () =>
+    inkLine("M2.5 12H21.5", 2.4) + inkFill("M14.5 2L6 13H11.5L9.5 22L18 10.5H12.5Z"),
+  // A broken ring struck with an X: Frustration hurts when a spell is broken off.
+  "ring-broken-x": () =>
+    inkLine("M15 4.8A8 8 0 1 0 19.5 11", 2.4) + inkLine("M16.5 3.5L21 8M21 3.5L16.5 8", 2.6),
+  // A crown: Price of Pride, the elite's toll.
+  "hex-crown": () => inkFill("M3 18L4.5 6.5L9 11.5L12 4L15 11.5L19.5 6.5L21 18Z"),
+  // A crown struck through: Signet of Humility shuts an elite off.
+  "crown-struck": () =>
+    inkFill("M3.5 17.5L5.5 7L9.5 11.5L12 5L14.5 11.5L18.5 7L20.5 17.5Z") +
+    `<path d="M3 21L21 3" stroke="${C.bg}" stroke-width="5" stroke-linecap="round"/>` +
+    inkLine("M3 21L21 3", 2.4),
+  // A jagged ache across a ring: Migraine slows every skill.
+  "hex-ache": () => HEX_RING + inkLine("M4 14L8.5 7L12 15L15.5 7L20 14", 2.8),
+  // An eye with a tear: Visions of Regret.
+  "eye-tear": () =>
+    inkLine("M2.5 9.5C6.5 4 17.5 4 21.5 9.5C17.5 15 6.5 15 2.5 9.5Z", 2) +
+    inkFill("M12 7.5a2 2 0 1 0 .01 0Z") +
+    inkFill("M12 16C10.5 18 10 19 10 20A2 2 0 0 0 14 20C14 19 13.5 18 12 16Z"),
+  // A burst inside the ring: Unnatural Signet, the splash on a hexed foe.
+  "hex-splash": () => HEX_RING + inkFill(burst(5)),
+  // A fireball with an eye in it: Mind Blast.
+  "fireball-mind": () =>
+    `<circle cx="14" cy="10" r="7" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>` +
+    inkLine("M8.5 14.5L3 20M7 9L3 11.5M12.5 17L10 21.5") +
+    `<circle cx="14" cy="10" r="3" ${stroke(C.bg, 1.6)}/><circle cx="14" cy="10" r="1" fill="${C.bg}"/>`,
   // A dashed ring (a hex) with three spikes in it: blows from a weapon cut deeper (#1342).
   "hex-barbs": () =>
     `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 2.2)} stroke-dasharray="4.4 3.4"/>` +
