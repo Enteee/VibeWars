@@ -236,6 +236,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   "order-of-pain": define("order-of-pain", "Order of Pain", "enchantment", {
     profession: "necromancer",
     onAttackHit: {
+      attackSkillsOnly: false,
       effects: [{ kind: "damage", amount: { flat: 13 }, type: "typeless", armorPenetration: 1 }],
       skillId: "necromancer.order-of-pain",
     },
