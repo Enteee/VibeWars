@@ -5,6 +5,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { getSkill } from "./catalog.js";
 import {
   applyDamage,
   applyEffect,
@@ -1406,7 +1407,11 @@ describe("a knockdown prevented (#845)", () => {
 });
 
 describe("lengthen-recharge (#949)", () => {
-  const effect = { kind: "lengthen-recharge", seconds: { flat: 47 } } as const;
+  const effect = {
+    kind: "lengthen-recharge",
+    of: "target-last-skill",
+    seconds: { flat: 47 },
+  } as const;
 
   it("lengthens the skill its target just used", () => {
     const target = makeCombatant({ id: "target", team: 1 });
@@ -1425,6 +1430,56 @@ describe("lengthen-recharge (#949)", () => {
     const target = makeCombatant({ id: "target", team: 1 });
     expect(applyEffect(effect, context(undefined, target))).toEqual([]);
     expect(target.cast.rechargeRemaining.size).toBe(0);
+  });
+
+  describe("of this skill (#1519)", () => {
+    const censure = getSkill("monk.word-of-censure");
+    const resolve = (health: number) => {
+      if (censure === undefined) {
+        throw new Error("missing skill");
+      }
+      const caster = makeCombatant({ id: "caster" });
+      const target = makeCombatant({ id: "target", team: 1, health, maxHealth: 1000 });
+      return {
+        caster,
+        outcome: resolveSkillEffects({
+          surroundings: new Map(),
+          skill: censure,
+          caster,
+          targets: [target],
+          rng: createRng(1),
+          rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+        }),
+      };
+    };
+
+    it("lengthens the resolving skill's recharge once, for its starter to add", () => {
+      const { caster, outcome } = resolve(400);
+      expect(outcome.rechargeLongerSeconds).toBe(20);
+      expect(outcome.events).toContainEqual({
+        kind: "recharge-lengthened",
+        targetId: "caster",
+        skillId: "monk.word-of-censure",
+        seconds: 20,
+      });
+      // Nothing recharges yet: the recharge it lengthens starts after.
+      expect(caster.cast.rechargeRemaining.size).toBe(0);
+    });
+
+    it("reads the health before the damage: at 60% nothing", () => {
+      expect(resolve(600).outcome.rechargeLongerSeconds).toBe(0);
+    });
+
+    it("does nothing applied on its own, outside a resolution", () => {
+      const target = makeCombatant({ id: "target", team: 1 });
+      expect(
+        applyEffect(
+          { kind: "lengthen-recharge", of: "this-skill", seconds: { flat: 20 } },
+          { ...context(undefined, target), usedSkill: { skillId: "skill.a", key: "skill.a" } },
+        ),
+      ).toEqual([]);
+      expect(target.cast.rechargeRemaining.size).toBe(0);
+    });
   });
 });
 

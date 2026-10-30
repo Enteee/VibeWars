@@ -44,9 +44,11 @@ describe("filterSkillsByText", () => {
     // opening letters.
     const matched = filterSkillsByText(IMPLEMENTED_SKILLS, "arrow");
 
-    expect(matched.length).toBeGreaterThan(0);
+    expect(matched.map((skill) => skill.name)).toContain("Deflect Arrows");
+    // The description counts too (#567): Dual Shot "shoots 2 arrows" (#1539).
     for (const skill of matched) {
-      expect(skill.name.toLowerCase()).toContain("arrow");
+      const lines = describeSkill(skill).effects.map((effect) => effect.text);
+      expect([skill.name, ...lines].join(" ").toLowerCase()).toContain("arrow");
     }
   });
 

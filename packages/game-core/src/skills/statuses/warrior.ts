@@ -23,7 +23,14 @@ export type WarriorStatusId =
   | "rush"
   | "dolyak-signet"
   | "endure-pain"
-  | "warriors-endurance";
+  | "warriors-endurance"
+  // Warrior staples (#1549).
+  | "flail"
+  | "defy-pain"
+  | "riposte"
+  | "deadly-riposte"
+  | "charge"
+  | "enraging-charge";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -176,6 +183,82 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         effects: [{ kind: "energy-gain", amount: { flat: 3 }, upTo: gw1EnergyScaled(22) }],
         target: "bearer",
         skillId: "warrior.warriors-endurance",
+      },
+    ],
+  }),
+  // "For 1...15 seconds, you attack 33% faster but move 33% slower"
+  // (PvP, #1549): 12 s at rank 12, on the skill. Its "ends if you use a
+  // ranged attack skill" is left out.
+  flail: define("flail", "Flail", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    moveSpeedMultiplier: 0.67,
+  }),
+  // "For 20 seconds, you have an additional 90...300 Health and an
+  // additional 20 armor" (PvP, #1549): 258, its rank-12 value.
+  "defy-pain": define("defy-pain", "Defy Pain", "stance", {
+    profession: "warrior",
+    maxHealthBonus: 258,
+    armorModifier: 20,
+  }),
+  // "For 8 seconds, while you have a sword equipped, you block the next
+  // melee attack against you and your attacker is struck for 20...80
+  // damage" (#1549): 68, its rank-12 value. The sword is checked on use.
+  // Any status's block of a melee attack fires it, and it ends.
+  riposte: define("riposte", "Riposte", "skill-effect", {
+    profession: "warrior",
+    block: { chance: 1, against: "melee" },
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        blocked: "melee",
+        target: "offender",
+        effects: [{ kind: "damage", amount: { flat: 68 }, type: "typeless", armorPenetration: 0 }],
+        skillId: "warrior.riposte",
+      },
+    ],
+  }),
+  // As Riposte, but "your attacker is struck for 15...90 damage and begins
+  // Bleeding for 3...25 seconds" (#1549): 75 and 21 s at rank 12.
+  "deadly-riposte": define("deadly-riposte", "Deadly Riposte", "skill-effect", {
+    profession: "warrior",
+    block: { chance: 1, against: "melee" },
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        blocked: "melee",
+        target: "offender",
+        effects: [
+          { kind: "damage", amount: { flat: 75 }, type: "typeless", armorPenetration: 0 },
+          { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+        ],
+        skillId: "warrior.deadly-riposte",
+      },
+    ],
+  }),
+  // "For 5...13 seconds, these allies move 33% faster" (#1549): 11 s at
+  // rank 12, on the skill.
+  charge: define("charge", '"Charge!"', "shout", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.33,
+  }),
+  // "For 5...15 seconds, you move 25% faster. Enraging Charge ends when you
+  // successfully strike a target, at which point you gain 0...3 strikes of
+  // adrenaline if you hit with a melee attack" (#1549): 2 strikes at rank
+  // 12 (2.4). A bow hit ends it with none.
+  "enraging-charge": define("enraging-charge", "Enraging Charge", "stance", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.25,
+    endsWhenBearerHits: true,
+    triggers: [
+      {
+        on: "bearer-hits",
+        weapon: "melee",
+        effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+        target: "bearer",
+        skillId: "warrior.enraging-charge",
       },
     ],
   }),
