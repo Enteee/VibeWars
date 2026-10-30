@@ -133,6 +133,13 @@ export interface HealEffect {
    */
   readonly perDestroyedSpirit?: true;
   /**
+   * The amount is per point of energy the target lost to an earlier
+   * `energy-loss` of this skill, as Ether Feast's "You are healed 20...65
+   * for each point of Energy lost" (#1627), `DamageEffect.perEnergyLost`'s
+   * twin. None lost: no heal.
+   */
+  readonly perEnergyLost?: true;
+  /**
    * The amount is per point of the base energy cost of the skill the
    * trigger answers, rounded half up (#1614): Aura of Restoration's
    * "healed for 200...400% of the Energy cost each time you cast a spell".

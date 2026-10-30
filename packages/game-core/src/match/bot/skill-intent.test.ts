@@ -73,6 +73,8 @@ const NO_BOT_USE = new Set([
   "necromancer.animate-bone-minions",
   "necromancer.gaze-of-contempt",
   "necromancer.rend-enchantments",
+  // An enchantment strip only on a knocked-down foe (#1643).
+  "assassin.lift-enchantment",
   "necromancer.well-of-suffering",
   // A disable of a foe's elite and nothing else: no rule for it (#1473).
   "mesmer.signet-of-humility",

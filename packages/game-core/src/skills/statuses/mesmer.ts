@@ -1,5 +1,6 @@
 import { AREA_ADJACENT, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
+import type { DamageEffect } from "../types.js";
 import { define } from "./define.js";
 
 export type MesmerStatusId =
@@ -34,7 +35,17 @@ export type MesmerStatusId =
   // Mesmer crowd punishers (#1501).
   | "panic"
   | "wastrels-demise"
-  | "arcane-conundrum";
+  | "arcane-conundrum"
+  // Mesmer staples 3 (#1627).
+  | "wandering-eye";
+
+/** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
+const WANDERING_EYE_DAMAGE: DamageEffect = {
+  kind: "damage",
+  amount: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 10, atTwelve: 76 } },
+  type: "typeless",
+  armorPenetration: 0,
+};
 
 export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>> = {
   // "Whenever target foe casts a spell, that foe takes 35...119...140
@@ -483,5 +494,31 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.arcane-conundrum",
       },
     ],
+  }),
+  // "For 4 seconds, the next time target foe attacks, that attack is
+  // interrupted and all nearby foes take 10...92 damage" (PvP, #1627):
+  // 76, fired as Clumsiness's is. The bearer is one of those foes, and a
+  // splash spares its centre, so it is hit on its own.
+  "wandering-eye": define("wandering-eye", "Wandering Eye", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-attack-begins",
+        target: "bearer",
+        effects: [
+          { kind: "cancel-attack" },
+          WANDERING_EYE_DAMAGE,
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [WANDERING_EYE_DAMAGE],
+          },
+        ],
+        skillId: "mesmer.wandering-eye",
+      },
+    ],
+    endsWhenTriggered: true,
   }),
 };
