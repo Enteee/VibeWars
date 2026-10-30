@@ -1569,6 +1569,14 @@ const status = {
   ],
   // Hex: three rising bars, each second's pulse harder than the last.
   "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
+  // Mesmer staples (#1570), a stand-in until its art card.
+  // Hex: a question mark in a doubled hourglass, spells take twice as long.
+  "arcane-conundrum": [
+    "hex",
+    (c) =>
+      `<path d="M7 5h10M7 19h10M8 5c0 4 8 4 8 7s-8 3-8 7M16 5c0 4-8 4-8 7" ${stroke(c, 1.6)}/>` +
+      `<circle cx="12" cy="16.5" r="1" fill="${c}"/>`,
+  ],
   // Dervish staples and Shadow Prison (#1551, #1573): each matches its skill icon.
   // Enchantment: a hand over a broken line, attack skills cripple.
   "grenths-grasp": [

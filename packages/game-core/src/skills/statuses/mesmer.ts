@@ -32,7 +32,8 @@ export type MesmerStatusId =
   | "fragility"
   // Mesmer crowd punishers (#1501).
   | "panic"
-  | "wastrels-demise";
+  | "wastrels-demise"
+  | "arcane-conundrum";
 
 export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>> = {
   // "Whenever target foe casts a spell, that foe takes 35...119...140
@@ -440,5 +441,20 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     profession: "mesmer",
     damagePulse: { damage: 8, growth: 8, radius: AREA_ADJACENT, skillId: "mesmer.wastrels-demise" },
     endsWhenBearerUsesSkill: true,
+  }),
+  // "For 5...15 seconds, spells cast by target foe and all adjacent foes
+  // take twice as long to cast. When this hex ends, you gain 1...7
+  // energy" (#1570): 6, from each foe's own, however it ends.
+  "arcane-conundrum": define("arcane-conundrum", "Arcane Conundrum", "hex", {
+    profession: "mesmer",
+    castTimeMultiplier: 2,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "energy-gain", amount: { flat: 6 } }],
+        target: "source",
+        skillId: "mesmer.arcane-conundrum",
+      },
+    ],
   }),
 };

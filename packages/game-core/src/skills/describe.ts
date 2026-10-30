@@ -957,6 +957,10 @@ function describeTrigger(
     if (effect.kind === "heal" && trigger.target === "source") {
       return [clause(`heals its caster for ${amount(effect.amount)} ${when}`)];
     }
+    // Arcane Conundrum's (#1570): "its caster gains 6 energy when it ends".
+    if (effect.kind === "energy-gain" && trigger.target === "source") {
+      return [clause(`its caster gains ${amount(effect.amount)} energy ${when}`)];
+    }
     if (effect.kind === "lengthen-recharge" && when === NEXT_SKILL) {
       return [
         clause(`the next skill it uses takes ${amount(effect.seconds)} seconds longer to recharge`),
@@ -1632,9 +1636,11 @@ function describeEffect(
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
             ? "are interrupted if casting"
-            : each.kind === "apply-status"
-              ? suffered(each, ranks)
-              : lowerFirst(description.text),
+            : each.kind === "knockdown"
+              ? `are knocked down for ${String(each.durationSeconds)}s`
+              : each.kind === "apply-status"
+                ? suffered(each, ranks)
+                : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
@@ -1877,12 +1883,15 @@ const TYPE_TEXT: Record<SkillType, string> = {
 };
 
 /**
- * A `disable-own-skills` line (#1473): "All of your spells", "All of
- * your Smiting Prayers" (#1511), or "All of your non-Mesmer skills except
- * signets", "are disabled for 10 seconds".
+ * A `disable-own-skills` line (#1473): "All of your skills" (#1570), "All
+ * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
+ * non-Mesmer skills except signets", "are disabled for 10 seconds".
  */
 function disableOwnText(effect: DisableOwnSkillsEffect): string {
   const time = `are disabled for ${String(effect.seconds)} seconds`;
+  if (effect.which === "all") {
+    return `All of your skills ${time}`;
+  }
   if (effect.which === "spells") {
     return `All of your spells ${time}`;
   }
