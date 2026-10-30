@@ -96,6 +96,18 @@ export function proposableTeams(
   });
 }
 
+/**
+ * The Team Build to propose on entering the vote: the one picked on Team
+ * Play (#1453), if it is still saved and the side's size; else none.
+ */
+export function entryProposal(
+  teams: readonly StoredTeam[],
+  pickedId: string | undefined,
+  size: number,
+): string | undefined {
+  return teams.find((team) => team.id === pickedId && team.members.length === size)?.id;
+}
+
 /** The member at `sessionId`'s name, or the id itself for someone already gone. */
 function nameOf(players: readonly LobbyPlayerSnapshot[], sessionId: string): string {
   return players.find((player) => player.sessionId === sessionId)?.name ?? sessionId;

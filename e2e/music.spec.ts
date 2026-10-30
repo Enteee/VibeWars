@@ -159,13 +159,22 @@ function playedTracks(page: Page): Promise<string[]> {
   });
 }
 
+/**
+ * The top bar's ♪ popover (#1453), open: a click elsewhere, as on the
+ * beat editor, may have put it away.
+ */
+async function openJukebox(page: Page): Promise<void> {
+  const popover = page.locator("#topbar .hud-jukebox");
+  if (!(await popover.isVisible())) {
+    await page.locator("#topbar .topbar-music").click();
+  }
+  await expect(popover).toBeVisible();
+}
+
 test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
   await recordMessages(page);
   await page.goto("./");
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   await page
     .locator(".jukebox-row", { hasText: "Ember Deep" })
     .getByRole("button", { name: "pin" })
@@ -180,10 +189,7 @@ test("a pinned track is what plays after a reload (#372)", async ({ page }) => {
 
 test("tracks are selectable rows: Enter previews and keeps focus (#581)", async ({ page }) => {
   await page.goto("./");
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   const play = row.locator(".selectable-row-choose");
   await play.focus();
@@ -230,10 +236,7 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await recordMessages(page);
   await recordHostInbox(page);
   await page.goto("./?musicstats");
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
@@ -255,13 +258,11 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
   await expect(editor.locator(".beat-editor-edited")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(editor).toHaveCount(0);
+  await openJukebox(page);
   await expect(row).toHaveClass(/is-edited/);
 
   await page.reload();
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   await expect(row).toHaveClass(/is-edited/);
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   // CodeMirror draws only the lines in view; the change is on the last.
@@ -286,21 +287,19 @@ test("the beat editor plays a change, keeps it across a reload, and an error lea
 
   await editor.getByRole("button", { name: "Reset to shipped" }).click();
   await expect(editor.locator(".beat-editor-edited")).toBeHidden();
-  await expect(row).not.toHaveClass(/is-edited/);
   // The button disables itself; focus goes back to the code, so Esc still closes.
   await expect(code).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(editor).toHaveCount(0);
+  await openJukebox(page);
+  await expect(row).not.toHaveClass(/is-edited/);
 });
 
 test("a pasted beat that floods the game is switched off, and its edit is not replayed (#878)", async ({
   page,
 }) => {
   await page.goto("./");
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   const row = page.locator(".jukebox-row", { hasText: "Ember Deep" });
   await row.getByRole("button", { name: "Open Ember Deep in the beat editor" }).click();
   const editor = page.getByRole("dialog", { name: "Beat editor: Ember Deep" });
@@ -324,15 +323,13 @@ test("a pasted beat that floods the game is switched off, and its edit is not re
   await expect(page.locator("iframe.music-host")).toHaveCount(0);
 
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Back", exact: true }).click();
+  // The menu says so the next time it draws: here, on Team Play.
+  await page.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
   await expect(
     page.getByText("Your edit of Ember Deep stopped the music and was removed."),
   ).toBeVisible();
   await page.reload();
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   await expect(row).not.toHaveClass(/is-edited/);
 });
 
@@ -392,14 +389,9 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
 }) => {
   await recordMessages(page);
   await page.goto("./");
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   await page.locator(".jukebox-mode").selectOption("off");
-  // The music's mute lives in Options → Sound, a link away.
-  await page.getByRole("button", { name: "sound settings" }).click();
-  await expect(page.locator('.options-entry[data-section="sound"]')).toHaveClass(/is-selected/);
+  // The music's mute is above the tracks.
   await page.getByLabel("Mute music").check();
 
   await page.reload();
@@ -410,12 +402,8 @@ test("Off plays nothing after a click, and the music mute survives a reload (#37
   await page.waitForTimeout(4_000);
   expect(await playedTracks(page)).toEqual([]);
 
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Music", exact: true })
-    .click();
+  await openJukebox(page);
   await expect(page.locator(".jukebox-mode")).toHaveValue("off");
-  await page.getByRole("button", { name: "sound settings" }).click();
   await expect(page.getByLabel("Mute music")).toBeChecked();
 });
 

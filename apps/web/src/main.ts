@@ -77,13 +77,7 @@ import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
 import { mountBuildEditor, newCharacter, type BuildEditorView } from "./ui/build-editor.js";
 import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
-import { disposeJukeboxScreen, renderJukeboxScreen } from "./ui/jukebox.js";
-import {
-  closeOptionsOverlay,
-  disposeOptionsScreen,
-  openOptionsOverlay,
-  renderOptionsScreen,
-} from "./ui/options-screen.js";
+import { closeOptionsOverlay, openOptionsOverlay } from "./ui/options-screen.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { needsTouchNotice, showTouchNotice } from "./ui/touch-notice.js";
@@ -99,20 +93,21 @@ import {
   type QueueScreen,
   type StayOffer,
 } from "./ui/queue-screen.js";
-import { renderLobbyScreen } from "./ui/lobby-screen.js";
-import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
+import { hostMaps, renderLobbyScreen } from "./ui/lobby-screen.js";
+import { entryProposal, renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
 import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
+  loadPlayTab,
   loadStarterCharacterId,
   playerGuild,
   renderMenu,
-  renderTeamList,
   saveActiveCharacterId,
   saveStarterCharacterId,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import { loadActiveTeamBuildId, renderTeamPlay, type TeamPlayTile } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import {
   addMember,
@@ -305,6 +300,8 @@ async function main(): Promise<void> {
   let lobby: LobbyConnection | undefined;
   /** The lobby this tab hosts, while it hosts one: leaving it ends it for everyone. */
   let hosted: HostedLobby | undefined;
+  /** The modes the hosted lobby's maps play (#1453): a Team Play tile's; `undefined` for all. */
+  let lobbyModes: TeamPlayTile["modes"];
   let match: MatchView | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
@@ -537,11 +534,15 @@ async function main(): Promise<void> {
     dropQueue();
     editor?.dispose();
     editor = undefined;
-    disposeOptionsScreen();
-    disposeJukeboxScreen();
+    teamEditor?.dispose();
+    teamEditor = undefined;
     showViewport(false);
     music().screen("menu");
     idleScreen = true;
+    if (loadPlayTab() === "team") {
+      void showTeamPlay();
+      return;
+    }
     void (async () => {
       const [{ characters: list, problems }, played] = await Promise.all([
         characters.list(),
@@ -554,19 +555,6 @@ async function main(): Promise<void> {
       );
       editNotices = [];
     })();
-  };
-
-  const showJukebox = (): void => {
-    leaveScreen();
-    disposeOptionsScreen();
-    renderJukeboxScreen(screenRoot, {
-      onBack: showMenu,
-      onSoundSettings: () => {
-        leaveScreen();
-        disposeJukeboxScreen();
-        renderOptionsScreen(screenRoot, { onBack: showJukebox, from: "Music" }, "sound");
-      },
-    });
   };
 
   const showRecord = async (): Promise<void> => {
@@ -584,32 +572,16 @@ async function main(): Promise<void> {
       screenRoot,
       {
         onCreateLobby: (name) => {
-          void (async () => {
-            const entrant = await readEntrant();
-            await enterLobby(name, entrant, async () => {
-              hosted = await hostLobby(name, entrant.guild, entrant.character);
-              return hosted.lobby;
-            });
-          })();
+          hostWith(name, undefined, false);
         },
-        onJoinLobby: (code, name) => {
-          void (async () => {
-            const entrant = await readEntrant();
-            await enterLobby(name, entrant, async () =>
-              joinLobbyByCode(code, name, entrant.guild, entrant.character),
-            );
-          })();
-        },
+        onJoinLobby: joinWith,
         onRandomArena: (mode, name) => {
           void enterRandomArena(mode, name);
         },
-        onManageTeams: () => {
-          void showTeams();
-        },
+        onSwitchTab: showMenu,
         onShowRecord: () => {
           void showRecord();
         },
-        onMusic: showJukebox,
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
         },
@@ -710,17 +682,48 @@ async function main(): Promise<void> {
     editor = mountBuildEditor(screenRoot, character, editorCallbacks);
   };
 
-  const showTeams = async (): Promise<void> => {
-    leaveScreen();
-    teamEditor?.dispose();
-    teamEditor = undefined;
+  /**
+   * Host a lobby as `name`, with the active Solo character, on `modes`'
+   * maps; a Team Play tile's (`teamLobby`) starts in the Team Lobby (#1460).
+   */
+  const hostWith = (name: string, modes: TeamPlayTile["modes"], teamLobby: boolean): void => {
+    void (async () => {
+      lobbyModes = modes;
+      const entrant = await readEntrant();
+      await enterLobby(name, entrant, async () => {
+        hosted = await hostLobby(name, entrant.guild, entrant.character, teamLobby);
+        return hosted.lobby;
+      });
+    })();
+  };
+
+  const joinWith = (code: string, name: string): void => {
+    void (async () => {
+      lobbyModes = undefined;
+      const entrant = await readEntrant();
+      await enterLobby(name, entrant, async () =>
+        joinLobbyByCode(code, name, entrant.guild, entrant.character),
+      );
+    })();
+  };
+
+  /**
+   * Team Play (#1453), as `showMenu` shows it on that tab. Its tiles host
+   * Team Lobbies (#1460), where the picked Team Build is proposed.
+   */
+  const showTeamPlay = async (): Promise<void> => {
     const [teamList, characterList] = await Promise.all([teams.list(), characters.list()]);
-    renderTeamList(screenRoot, teamList.teams, teamList.problems, {
+    renderTeamPlay(screenRoot, teamList.teams, [...teamList.problems, ...editNotices], menuNotice, {
+      onHostTile: (tile, name) => {
+        hostWith(name, tile.modes, true);
+      },
+      onJoinLobby: joinWith,
+      onSwitchTab: showMenu,
       // A new team is stored only once it is saved (#573).
-      onNew: () => {
+      onNewTeam: () => {
         showTeamEditor(openedTeam(newTeam(crypto.randomUUID()), false), characterList.characters);
       },
-      onEdit: (id) => {
+      onEditTeam: (id) => {
         void (async () => {
           const team = await teams.load(id);
           if (team !== undefined) {
@@ -728,7 +731,6 @@ async function main(): Promise<void> {
           }
         })();
       },
-      onBack: showMenu,
       onPasteTeam: (text) => {
         const result = importTeam(text, () => crypto.randomUUID(), Date.now());
         if (!result.ok) {
@@ -738,6 +740,7 @@ async function main(): Promise<void> {
         openPastedTeam(result.team, characterList.characters);
       },
     });
+    editNotices = [];
   };
 
   /** A pasted team (#577) opens unsaved; its members are its own (#1452). */
@@ -794,7 +797,7 @@ async function main(): Promise<void> {
     );
   };
 
-  /** The open team editor; every way out of it passes through `showTeams`. */
+  /** The open team editor; every way out of it passes through `showMenu`, to Team Play. */
   let teamEditor: TeamEditorView | undefined;
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
@@ -807,17 +810,17 @@ async function main(): Promise<void> {
       onDuplicate: (source) => {
         void (async () => {
           await teams.save(duplicateTeam(source, crypto.randomUUID()));
-          await showTeams();
+          showMenu();
         })();
       },
       onDelete: (id) => {
         void (async () => {
           await teams.delete(id);
-          await showTeams();
+          showMenu();
         })();
       },
       onClose: () => {
-        void showTeams();
+        showMenu();
       },
       onImportTeam: (team) => {
         openPastedTeam(team, available);
@@ -1085,6 +1088,17 @@ async function main(): Promise<void> {
       return;
     }
     teamPicks = undefined;
+    // A Team Play tile's lobby (#1453) starts on the first of its maps.
+    const maps = hostMaps(availableMaps, lobbyModes);
+    const [firstMap] = maps;
+    if (
+      snapshot.isHost &&
+      snapshot.phase === "waiting" &&
+      firstMap !== undefined &&
+      !maps.some((map) => map.id === snapshot.mapId)
+    ) {
+      lobby.selectMap(firstMap.id);
+    }
     renderLobbyScreen(
       screenRoot,
       snapshot,
@@ -1115,7 +1129,7 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
-      availableMaps,
+      maps,
     );
   };
 
@@ -1146,7 +1160,18 @@ async function main(): Promise<void> {
           return;
         }
         picks.teams = saved;
-        renderLobby();
+        const now = joined.getSnapshot();
+        const team = now.players.find((p) => p.sessionId === joined.selfSessionId)?.team ?? null;
+        const side = team === null ? null : (now.teamLobby?.sides[team] ?? null);
+        const entry =
+          side === null || now.teamLobby?.stage !== "vote"
+            ? undefined
+            : entryProposal(saved, loadActiveTeamBuildId(saved), side.size);
+        if (entry === undefined) {
+          renderLobby();
+        } else {
+          proposeTeam(entry);
+        }
       });
     }
     renderTeamLobbyScreen(

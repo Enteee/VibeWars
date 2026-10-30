@@ -146,6 +146,7 @@ export async function hostLobby(
   name: string,
   guild: Guild,
   character: LobbyCharacter | null,
+  teamLobby: boolean,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
   let settle: () => void = () => undefined;
@@ -169,8 +170,7 @@ export async function hostLobby(
     code,
     mapIds: arenaIds(),
     startMatch,
-    // Hosting from Team Play's tiles (#1453) is what makes a Team Lobby.
-    teamLobby: false,
+    teamLobby,
     random: secureRandom,
     ...(queued === undefined
       ? {}
@@ -365,7 +365,7 @@ export function enterQueue(
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guild, character, {
+        hosted = await hostLobby(name, guild, character, false, {
           group,
           key,
           verifyTicketSig,

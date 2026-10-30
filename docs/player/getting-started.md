@@ -6,9 +6,17 @@ match. You need no account and nothing to install: the game runs in
 this browser tab. VibeWars needs a keyboard and mouse. It does not work
 on a phone or a touch-only tablet: open it on a computer.
 
+## Solo Play and Team Play
+
+The top bar switches the main screen between **Solo Play** and **Team
+Play**. Solo Play is your own characters and the ways into a match with
+one of them. Team Play is for a team: four mode tiles across the top and
+your [Team Builds](skills-and-builds.md#team-builds) below them. The game
+opens on the one you used last.
+
 ## Make a character
 
-Your characters are listed on the left of the main menu, under
+Your characters are listed on the left of Solo Play, under
 **Play as**, newest first, with the random character your first start
 rolled always at the bottom.
 
@@ -53,6 +61,15 @@ To play with friends:
 - **Join:** paste the code you were sent into the lobby code field and
   press **Join**.
 
+On Team Play, each mode tile hosts a lobby too, and its host picks among
+that tile's maps only: **Hosted Lobby** every map, **Team Arena** the
+Annihilation, Kill Count and Priest Annihilation maps, **Heroes' Ascent**
+the Relic Run, King of the Hill and Capture Points maps, and **GvG** the
+Guild Battle's. Below the tiles, pick a Team Build, or **None** to let the
+team decide. When the host starts, a Team Play lobby opens the
+[Team Lobby](modes.md#team-lobby): click a card to vote for a Team Build,
+then click a seat to take one of its characters.
+
 Type a **Guild tag** of 2 to 4 letters or digits beside your name, and
 everyone sees it after your name, like `Ente [VIBE]`. With a tag set,
 the **Guild cape** designer appears under it: pick the cape colour, the
@@ -79,7 +96,7 @@ IP address.
 Every match you finish with one of your characters, hosted, joined or
 from Random Arena, goes on that character's record. The menu shows it
 after the character's professions, such as **12W 7L**, with draws only
-once there are some. Press **Record** at the top of the menu for your
+once there are some. Press **Record** at the top of Solo Play for your
 last 50 matches: when, who, which map and mode, and how it went.
 
 The record is kept in this browser only. Nobody else sees or checks it.

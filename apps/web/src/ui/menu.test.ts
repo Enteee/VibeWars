@@ -6,9 +6,11 @@ import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schem
 import {
   FIRST_CAPE,
   isInvalidGuildTag,
+  PLAY_TABS,
   isPlayable,
   loadGuildCape,
   loadGuildTag,
+  loadPlayTab,
   pickCape,
   playerGuild,
   playerGuildTag,
@@ -17,7 +19,9 @@ import {
   rosterTags,
   saveGuildCape,
   saveGuildTag,
+  savePlayTab,
   showsCapeDesigner,
+  soloPlayActions,
 } from "./menu.js";
 
 function character(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
@@ -224,5 +228,37 @@ describe("the cape designer (#1422)", () => {
       stored.set(`${STORAGE_NAMESPACE}.guildCape`, corrupt);
       expect(loadGuildCape()).toBeNull();
     }
+  });
+});
+
+describe("Solo Play / Team Play (#1453)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("reads Solo Play, then Team Play", () => {
+    expect(PLAY_TABS.map(({ label }) => label)).toEqual(["Solo Play", "Team Play"]);
+  });
+
+  it("keeps Record in the bar, and no Teams or Music", () => {
+    expect(soloPlayActions({ onShowRecord: () => undefined }).map(({ label }) => label)).toEqual([
+      "Record",
+    ]);
+  });
+
+  it("starts on Solo Play and remembers the tab last switched to", () => {
+    const stored = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => stored.set(key, value),
+    });
+    expect(loadPlayTab()).toBe("solo");
+    savePlayTab("team");
+    expect(stored.get(`${STORAGE_NAMESPACE}.playTab`)).toBe("team");
+    expect(loadPlayTab()).toBe("team");
+    savePlayTab("solo");
+    expect(loadPlayTab()).toBe("solo");
+    stored.set(`${STORAGE_NAMESPACE}.playTab`, "teams");
+    expect(loadPlayTab()).toBe("solo");
   });
 });
