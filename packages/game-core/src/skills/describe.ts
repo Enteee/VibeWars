@@ -619,6 +619,7 @@ function statusArmorText(bonus: ConditionalArmor): string {
 const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-casts-spell": "casts a spell",
   "bearer-attacks": "attacks",
+  "bearer-attack-begins": "attacks",
   "bearer-uses-skill": "uses a skill",
   "bearer-hits": "hits with an attack",
   "bearer-fails-to-hit": "fails to hit",
@@ -845,9 +846,10 @@ function describeCreation(
         );
         return `${who} ${where} ${what.join(" and ")}`;
       }
-      // Neither answers a creation.
+      // None answers a creation.
       case "spread-gained-condition":
       case "echo":
+      case "cancel-attack":
         return "";
       default:
         return describeEffects(effect, ranks)
@@ -925,11 +927,27 @@ function describeTrigger(
         const plural = effect.count === 1 ? "" : "s";
         return [`loses ${String(effect.count)} ${effect.category}${plural}`];
       }
-      return effect.kind === "spread-gained-condition" || effect.kind === "echo"
+      return effect.kind === "spread-gained-condition" ||
+        effect.kind === "echo" ||
+        effect.kind === "cancel-attack"
         ? []
         : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
     });
     return [sentence(`${when}: ${answers.join(", ")}`)];
+  }
+  // Clumsiness's (#1593), said as one: "the next time it attacks, that
+  // attack is interrupted and it takes 66 damage".
+  const [first, ...after] = trigger.effects;
+  if (
+    first?.kind === "cancel-attack" &&
+    trigger.target === "bearer" &&
+    after.length > 0 &&
+    after.every(({ kind }) => kind === "damage")
+  ) {
+    const hurt = after.map((effect) =>
+      effect.kind === "damage" ? `it takes ${amount(effect.amount)} damage` : "",
+    );
+    return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
   }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
@@ -942,6 +960,10 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    // A cancel with nothing to say after it (#1593).
+    if (effect.kind === "cancel-attack") {
+      return [sentence(`${when}, that attack is interrupted`)];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
       return [clause(`takes ${amount(effect.amount)} damage ${when}`)];

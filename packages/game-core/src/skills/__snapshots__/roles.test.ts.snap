@@ -153,6 +153,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.arcane-echo": "",
   "mesmer.backfire": "hex",
   "mesmer.blackout": "",
+  "mesmer.clumsiness": "hex",
   "mesmer.conjure-phantasm": "hex",
   "mesmer.crippling-anguish": "hex",
   "mesmer.cry-of-frustration": "interrupt",

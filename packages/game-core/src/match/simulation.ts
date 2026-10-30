@@ -2545,6 +2545,7 @@ export class MatchSimulation {
     // as a blow does; a spell at a foe does not.
     if (skill.type === "attack") {
       this.#blowStarted(record, target);
+      this.#attackBegins(record);
     }
     if (atFoe) {
       target.outOfCombatSeconds = 0;
@@ -3457,15 +3458,30 @@ export class MatchSimulation {
     event: DirectTriggerEvent,
     spared: ReadonlySet<StatusId>,
     usedSkill?: SlotSkill,
-  ): void {
+  ): readonly FiredTrigger[] {
     // Panic's interrupt (#1501) is untimed, as a pulse's: finding nothing
     // to interrupt is no miss, so it says nothing.
-    const fired = fireTriggers(record.combatant, event, this.#triggerContext(usedSkill), spared);
-    this.#logFired(
-      fired.map((each) => ({
-        ...each,
-        events: each.events.filter((event) => event.kind !== "interrupt-missed"),
-      })),
+    const fired = fireTriggers(
+      record.combatant,
+      event,
+      this.#triggerContext(usedSkill),
+      spared,
+    ).map((each) => ({
+      ...each,
+      events: each.events.filter((event) => event.kind !== "interrupt-missed"),
+    }));
+    this.#logFired(fired);
+    return fired;
+  }
+
+  /**
+   * The bearer begins an attack (#1593): what answers fires, and whether
+   * it cancelled a plain swing, as Clumsiness does. An attack skill it
+   * cancels is interrupted there and then.
+   */
+  #attackBegins(record: ParticipantRecord): boolean {
+    return this.#fireTriggers(record, "bearer-attack-begins", NONE_SPARED).some(({ events }) =>
+      events.some((event) => event.kind === "attack-interrupted" && event.targetId === record.id),
     );
   }
 
@@ -4456,6 +4472,12 @@ export class MatchSimulation {
     }
     record.outOfCombatSeconds = 0;
     this.#blowStarted(record, target);
+    // Cancelled as it began (#1593): no arrow, no blow, and no `attacks`.
+    // A pet's armed attack is spent, as if it missed.
+    if (this.#attackBegins(record)) {
+      record.armedAttack = undefined;
+      return;
+    }
 
     if (weapon.projectileSpeed !== undefined) {
       const released = this.#release(record, target, weapon.projectileSpeed, dt, undefined);

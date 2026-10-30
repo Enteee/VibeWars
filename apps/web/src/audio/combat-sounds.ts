@@ -37,6 +37,7 @@ export function soundsForCombat(message: CombatMessage, selfId: string): SoundId
         }
         break;
       case "interrupted":
+      case "attack-interrupted":
         if (onMe || mine) {
           sounds.push("interrupt");
         }
@@ -92,6 +93,7 @@ export function hitsForCombat(message: CombatMessage, selfId: string): Hit[] {
     const hostile =
       event.kind === "damage" ||
       event.kind === "interrupted" ||
+      event.kind === "attack-interrupted" ||
       (event.kind === "status-applied" &&
         event.targetId !== message.casterSessionId &&
         findStatusDefinition(event.statusId)?.category !== "enchantment");
