@@ -150,8 +150,11 @@ interface Member {
   character: LobbyCharacter | null;
   /** The seat key it was admitted on, in a queued lobby (#882). */
   readonly seatKey: string | null;
-  /** A bot's build (#1193): it has no peer, is always ready and plays this. */
-  readonly bot: PlayerBuild | null;
+  /**
+   * A bot's build (#1193): it has no peer, is always ready and plays
+   * this, which the host refigures while the lobby waits (#1454).
+   */
+  bot: PlayerBuild | null;
 }
 
 /** Whether `member` counts as ready: a bot always is (#1193). */
@@ -269,6 +272,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   });
 
   const broadcast = (): void => {
+    // Before the start a bot is nobody's: it follows its side (#1454).
+    if (phase === "waiting") {
+      figureBots();
+    }
     transport.send("lobby-state", state());
   };
 
@@ -384,72 +391,109 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         return false;
       }
-      case "add-bot": {
+      case "set-bots": {
         if (member.id !== local.selfId) {
           refuse(member.id, "not-host");
           return false;
         }
-        const build = STARTER_BUILDS.find((held) => held.primaryProfession === command.profession);
-        if (build === undefined) {
+        const { team, count } = command;
+        if (!Number.isInteger(count) || count < 0) {
           refuse(member.id, "invalid-bot");
           return false;
         }
+        const side = [...members.values()].filter(
+          (other) => other.bot !== null && other.team === team,
+        );
         // Bots take seats like anyone.
-        if (members.size >= MAX_LOBBY_PLAYERS) {
+        if (members.size - side.length + count > MAX_LOBBY_PLAYERS) {
           refuse(member.id, "lobby-full");
           return false;
         }
-        addBot(build, command.team);
-        return true;
-      }
-      case "remove-bot": {
-        if (member.id !== local.selfId) {
-          refuse(member.id, "not-host");
-          return false;
+        // Fewer: the last added go first.
+        for (const bot of side.slice(count)) {
+          members.delete(bot.id);
         }
-        const bot = members.get(command.botId);
-        if (bot === undefined || bot.bot === null) {
-          refuse(member.id, "invalid-bot");
-          return false;
+        for (let added = side.length; added < count; added += 1) {
+          addBot(team);
         }
-        members.delete(bot.id);
-        return true;
+        return side.length !== count;
       }
     }
   };
 
-  /**
-   * Seat a bot playing `build` on `team` (#1193): `"<Profession> Bot"`,
-   * numbered from 2 when the name is taken, under an id no member has.
-   */
-  const addBot = (build: PlayerBuild, team: 0 | 1): void => {
+  /** Seat a bot on `team` (#1193), under an id no member has; `figureBots` makes it someone. */
+  const addBot = (team: 0 | 1): void => {
     let id: string;
     do {
       bots += 1;
       id = `bot-${String(bots)}`;
     } while (members.has(id));
-    const names = new Set([...members.values()].map((other) => other.name));
-    const base = `${getProfession(build.primaryProfession).name} Bot`;
-    let name = base;
-    for (let n = 2; names.has(name); n += 1) {
-      name = `${base} ${String(n)}`;
+    const [build] = STARTER_BUILDS;
+    if (build === undefined) {
+      throw new Error("there are no starter builds for a bot to play");
     }
-    name = sanitizeName(name, id);
     members.set(id, {
       id,
-      name,
+      name: id,
       guildTag: null,
       guildCape: null,
       team,
       ready: true,
-      character: {
-        name,
-        primary: build.primaryProfession,
-        secondary: build.secondaryProfession ?? null,
-      },
+      character: null,
       seatKey: null,
       bot: build,
     });
+  };
+
+  /**
+   * Give each side's bots their builds and names (#1454): bot k on a side,
+   * in the order they were added, plays the k-th starter build whose
+   * profession no player on that side plays, and past those all of them
+   * in turn, round and round. Each is `"<Profession> Bot"`, numbered from
+   * 2 when the name is taken, in the order the bots were added.
+   */
+  const figureBots = (): void => {
+    const builds = new Map<string, PlayerBuild>();
+    for (const team of [0, 1] as const) {
+      const side = [...members.values()].filter((member) => member.team === team);
+      const played = new Set(
+        side.flatMap((member) =>
+          member.bot === null && member.character !== null ? [member.character.primary] : [],
+        ),
+      );
+      const lacking = STARTER_BUILDS.filter((build) => !played.has(build.primaryProfession));
+      side
+        .filter((member) => member.bot !== null)
+        .forEach((bot, k) => {
+          const build = lacking[k] ?? STARTER_BUILDS[(k - lacking.length) % STARTER_BUILDS.length];
+          if (build !== undefined) {
+            builds.set(bot.id, build);
+          }
+        });
+    }
+    const names = new Set(
+      [...members.values()].flatMap((member) => (member.bot === null ? [member.name] : [])),
+    );
+    for (const bot of members.values()) {
+      const build = builds.get(bot.id);
+      if (build === undefined) {
+        continue;
+      }
+      const base = `${getProfession(build.primaryProfession).name} Bot`;
+      let name = base;
+      for (let n = 2; names.has(name); n += 1) {
+        name = `${base} ${String(n)}`;
+      }
+      name = sanitizeName(name, bot.id);
+      names.add(name);
+      bot.bot = build;
+      bot.name = name;
+      bot.character = {
+        name,
+        primary: build.primaryProfession,
+        secondary: build.secondaryProfession ?? null,
+      };
+    }
   };
 
   /** Seat `from`, which `join` brought, on `team`. */
@@ -623,7 +667,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     // In a queued lobby nothing is chosen, and bots are a coded lobby's (#1193).
     if (queued !== undefined) {
-      if (command.kind === "add-bot" || command.kind === "remove-bot") {
+      if (command.kind === "set-bots") {
         refuse(from, "invalid-bot");
       }
       return;

@@ -3,20 +3,22 @@
 A **bot** is a player the game plays for you. Bots fill empty places in
 a lobby you host, so you can practise, or play with fewer friends.
 
-## Adding a bot
+## Adding bots
 
-Only the host can add bots.
+Only the host sets bots. Under each team's name is **Bots:** and how
+many it has; the host presses **+** for one more and **−** for one
+fewer. Everyone else sees the count.
 
-1. Host a lobby.
-2. Under the team that needs one, pick a profession: **Warrior**,
-   **Ranger**, **Monk**, **Necromancer** or **Elementalist**.
-3. Press **Add bot**.
+You choose how many, not what they play. Bots pick professions your side
+lacks, in this order: Warrior/Monk, Ranger/Mesmer, Monk/Elementalist,
+Necromancer/Elementalist, Elementalist/Mesmer. A profession a player on
+the side already plays is skipped; once every one is taken, bots go round
+the whole list again. When players switch sides, bots change profession
+to match, until the match starts.
 
-The bot plays a ready-made build for its profession: Warrior/Monk,
-Ranger/Mesmer, Monk/Elementalist, Necromancer/Elementalist or
-Elementalist/Mesmer. It is named after it, such as
-"Warrior Bot", and shows **BOT** where players show whether they are
-ready. Press **×** beside it to take it out again.
+A bot is named after its profession, such as "Warrior Bot", and shows
+**BOT** where players show whether they are ready. Fewer bots takes out
+the last one added.
 
 A lobby holds 16 places in all, bots included.
 
