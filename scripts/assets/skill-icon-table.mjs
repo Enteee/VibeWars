@@ -107,11 +107,11 @@ export const SKILL_ICONS = {
   "paragon.anthem-of-weariness": { glyph: "next-attack-drop-weak" },
   "paragon.crippling-anthem": { glyph: "next-attack-limp" },
   "paragon.anthem-of-disruption": { glyph: "next-attack-interrupt" },
-  // Placeholders until the asset-designer's (#1505): Paragon chants 3.
-  "paragon.song-of-concentration": { glyph: "note-hold", modifier: "area" },
-  "paragon.anthem-of-guidance": { glyph: "hex-nobloc", modifier: "area" },
-  "paragon.energizing-chorus": { glyph: "banner-note", modifier: "less" },
-  "paragon.anthem-of-envy": { glyph: "blade-plus", modifier: "half" },
+  // Paragon chants 3 (#1505, #1558): the next skill is uninterruptible, unblockable, cheaper or hits harder.
+  "paragon.song-of-concentration": { glyph: "next-any-uninterruptible" },
+  "paragon.anthem-of-guidance": { glyph: "next-attack-unblockable" },
+  "paragon.energizing-chorus": { glyph: "next-chant-cheaper" },
+  "paragon.anthem-of-envy": { glyph: "next-attack-vs-healthy" },
   "ritualist.weapon-of-warding": { glyph: "armor", modifier: "up" },
   "ritualist.mend-body-and-soul": { glyph: "plaster", modifier: "area" },
   "ritualist.spirit-light": { glyph: "plaster", modifier: "bleed" },
