@@ -1513,6 +1513,14 @@ const status = {
       `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
   ],
+  // Monk smiting staples (#1519), a stand-in until the asset-designer's.
+  // Enchantment: a blade with a holy halo, attacks are holy and pierce.
+  "judges-insight": [
+    "enchantment",
+    (c) =>
+      `<ellipse cx="12" cy="5" rx="4.5" ry="1.6" ${stroke(c, 1.5)}/>` +
+      `<path d="M12 8v9M9 14h6M12 17v3" ${stroke(c, 2)}/>`,
+  ],
   // Necromancer and Elementalist staples (#1540), stand-ins until their art card.
   // Enchantment: a drop over three regeneration arrows, energy bought with blood.
   "blood-is-power": [

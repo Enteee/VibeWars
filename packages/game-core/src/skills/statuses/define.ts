@@ -31,6 +31,7 @@ export function define(
     physicalDamageTakenBonus: 0,
     attackDamageType: undefined,
     attackDamageTypeWeapon: undefined,
+    attackArmorPenetration: 0,
     attributeDelta: 0,
     castTimeMultiplier: 1,
     skillActivationMultiplier: 1,

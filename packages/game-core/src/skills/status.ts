@@ -244,6 +244,12 @@ export interface StatusDefinition {
    */
   readonly attackDamageTypeWeapon: AttackWeaponClass | undefined;
   /**
+   * The least armor penetration the bearer's weapon attacks have (#1519):
+   * Judge's Insight's "+20% armor penetration". It joins the blow's and
+   * Strength's: the highest counts, nothing adds. 0: none.
+   */
+  readonly attackArmorPenetration: number;
+  /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
    */
@@ -2163,6 +2169,8 @@ export interface StatusModifiers {
   readonly incomingHexCastTimeMultiplier: number;
   /** Every status's, summed (#988). */
   readonly criticalChanceBonus: number;
+  /** The largest status's (#1519). */
+  readonly attackArmorPenetration: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -2246,6 +2254,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let incomingHexCastTimeMultiplier = 1;
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
+  let attackArmorPenetration = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
@@ -2339,6 +2348,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
+    attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -2382,6 +2392,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     conditionsExpireFaster,
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
+    attackArmorPenetration,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,
