@@ -369,6 +369,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
+  if (definition.unblockableAttacks !== undefined) {
+    const plural = definition.unblockableAttacks === 1 ? "" : "s";
+    parts.push(
+      `your next ${String(definition.unblockableAttacks)} attack${plural} cannot be blocked`,
+    );
+  }
   for (const effect of definition.onAttackHit?.effects ?? []) {
     parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
   }

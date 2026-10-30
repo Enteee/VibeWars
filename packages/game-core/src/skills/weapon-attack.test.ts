@@ -802,6 +802,80 @@ describe("block (#534)", () => {
   });
 });
 
+describe("unblockable attacks (#1604)", () => {
+  /** Every roll 0: any block chance blocks, and daggers always strike twice. */
+  const ZERO: SimulationRng = Object.assign(createRng(1604), { nextFloat: () => 0 });
+
+  function swing(who: Combatant, target: ReturnType<typeof foe>) {
+    return resolveSwing({
+      attacker: who,
+      target,
+      surroundings: new Map(),
+      rng: ZERO,
+      rules: RULES,
+      exposed: NOWHERE,
+    });
+  }
+
+  const kinds = (events: readonly CombatEvent[]): string[] =>
+    events.flatMap((event) =>
+      event.kind === "damage" || event.kind === "attack-blocked" ? [event.kind] : [],
+    );
+
+  it("Guiding Hands' 2 stop two blocks, then it ends and the third is blocked", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    sword.statuses.apply("guiding-hands", 20, "attacker");
+    const target = foe("dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    expect(kinds(swing(sword, target).events)).toEqual(["damage"]);
+    const second = swing(sword, target).events;
+    expect(kinds(second)).toEqual(["damage"]);
+    expect(second).toContainEqual({
+      kind: "status-expired",
+      targetId: "attacker",
+      statusId: "guiding-hands",
+    });
+    expect(sword.statuses.has("guiding-hands")).toBe(false);
+    expect(kinds(swing(sword, target).events)).toEqual(["attack-blocked"]);
+  });
+
+  it("a double strike spends 1, both its blows unblockable", () => {
+    const daggers = attacker(WEAPONS.daggers, "assassin.dagger-mastery");
+    daggers.statuses.apply("guiding-hands", 20, "attacker");
+    const target = foe("dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    const first = swing(daggers, target);
+    expect(first.doubleStrike).toBe(true);
+    expect(kinds(first.events)).toEqual(["damage", "damage"]);
+    expect(daggers.statuses.get("guiding-hands")?.unblockableLeft).toBe(1);
+  });
+
+  it("an attack skill spends 1 too, and its blow is not blocked", () => {
+    const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    sword.statuses.apply("guiding-hands", 20, "attacker");
+    const target = foe("dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    const strike = getSkill("warrior.power-attack");
+    if (strike === undefined) {
+      throw new Error("no Power Attack");
+    }
+    const events = resolveAttackSkill(
+      {
+        skill: strike,
+        caster: sword,
+        targets: [target.combatant],
+        rng: ZERO,
+        rules: RULES,
+        surroundings: new Map(),
+      },
+      NOWHERE,
+      [],
+    );
+    expect(kinds(events)).toEqual(["damage"]);
+    expect(sword.statuses.get("guiding-hands")?.unblockableLeft).toBe(1);
+  });
+});
+
 describe("critical hits (#533)", () => {
   /** A stream whose crit rolls all come up `float`, and whose damage rolls are all `roll`. */
   const fixed = (float: number, roll = 10): SimulationRng =>
