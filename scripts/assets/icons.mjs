@@ -676,40 +676,43 @@ const status = {
       `<path d="M13.5 7l-5 7h3.5l-1 6 5-7.5h-3.5z" fill="${c}"/>` +
       `<path d="M5 4.5h14" ${stroke(c, 2)}/>`,
   ],
-  // Warrior staples (#1549), stand-ins until the asset-designer's.
-  // Stance: two quick slashes over a slow bar, faster attacks, slower feet.
+  // Warrior staples (#1549, #1586): each matches its skill icon.
+  // Stance: a flail, faster attacks, slower feet.
   flail: [
     "stance",
-    (c) => `<path d="M6 5l5 7M12 5l5 7" ${stroke(c, 2.2)}/><path d="M5 17h14" ${stroke(c, 2.2)}/>`,
+    (c) =>
+      `<g transform="translate(4.8,5) scale(0.6)"><path d="M4 21L11 13M11 13C10.5 8 14 5.5 16.5 6" ${stroke(c, 2.6)}/><circle cx="18.5" cy="7.5" r="3.4" fill="${c}"/></g>`,
   ],
-  // Stance: a heart behind a shield, more Health and armor.
+  // Stance: a heart held in a shield, more Health and armor.
   "defy-pain": [
     "stance",
     (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M12 14.5l-2.5-2.5a1.5 1.5 0 0 1 2.5-1.7 1.5 1.5 0 0 1 2.5 1.7z" fill="${c}"/>`,
+      `<g transform="translate(4.8,4.8) scale(0.6)"><path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(c, 2.8)}/><path d="M12 17L8 12.8a2.4 2.4 0 0 1 4-2.6 2.4 2.4 0 0 1 4 2.6z" fill="${c}"/></g>`,
   ],
-  // Skill effect: a blade turning back, the next melee attack blocked.
-  riposte: ["skill-effect", (c) => `<path d="M5 18L17 6M17 6h-5M17 6v5M8 9l7 7" ${stroke(c, 2)}/>`],
+  // Skill effect: a shield with a blade leaving it, the next melee attack blocked and answered.
+  riposte: [
+    "skill-effect",
+    (c) =>
+      `<g transform="translate(3.6,3.6) scale(0.7)"><path d="M2.5 9L8 7L13.5 9V14.5C13.5 18.4 10.8 20 8 21.8C5.2 20 2.5 18.4 2.5 14.5Z" fill="${c}"/><path d="M14 10.5L21.5 3M13.5 5.5L18.5 10.5" ${stroke(c, 2.8)}/></g>`,
+  ],
   // Skill effect: as Riposte, with a drop, the attacker bleeds.
   "deadly-riposte": [
     "skill-effect",
     (c) =>
-      `<path d="M5 18L17 6M17 6h-5M17 6v5" ${stroke(c, 2)}/>` +
-      `<path d="M16 14c1.5 2 2 3 2 4a2 2 0 0 1-4 0c0-1 .5-2 2-4z" fill="${c}"/>`,
+      `<g transform="translate(3,3) scale(0.65)"><path d="M2.5 9L8 7L13.5 9V14.5C13.5 18.4 10.8 20 8 21.8C5.2 20 2.5 18.4 2.5 14.5Z" fill="${c}"/><path d="M14 10.5L21.5 3" ${stroke(c, 3)}/></g>` +
+      `<path d="M17.5 13.5C17.5 13.5 14.5 17 14.5 18.8A3 3 0 0 0 20.5 18.8C20.5 17 17.5 13.5 17.5 13.5Z" fill="${c}"/>`,
   ],
-  // Shout: two chevrons forward and a cross off, faster, uncrippled.
+  // Shout: sound arcs behind two chevrons, allies run faster.
   charge: [
     "shout",
     (c) =>
-      `<path d="M5 7l5 5-5 5M11 7l5 5-5 5" ${stroke(c, 2.2)}/><path d="M18 6v12" ${stroke(c, 2)}/>`,
+      `<path d="M5 9.5C6.5 10.8 6.5 13.2 5 14.5" ${stroke(c, 1.6)}/><path d="M10 7L14 12L10 17M14.5 7L18.5 12L14.5 17" ${stroke(c, 2)}/>`,
   ],
-  // Stance: a chevron into a bolt, faster until the hit that gives adrenaline.
+  // Stance: a chevron and rising bars, faster until the hit that gives adrenaline.
   "enraging-charge": [
     "stance",
     (c) =>
-      `<path d="M4 8l4 4-4 4" ${stroke(c, 2.2)}/>` +
-      `<path d="M15.5 5l-4 7h3l-1 7 4.5-8h-3z" fill="${c}"/>`,
+      `<g transform="translate(4.8,4.8) scale(0.6)"><path d="M8.5 5L14 12L8.5 19" ${stroke(c, 2.8)}/><path d="M16.5 19V15M19 19V11M21.5 19V7" ${stroke(c, 2.6)}/></g>`,
   ],
   // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
   "critical-defenses": [
@@ -1552,6 +1555,31 @@ const status = {
       `<path d="M12.8 7.5l-2 3h2.4l-2 3" ${stroke(c, 1.4)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
+  // Elementalist staples 2 (#1575), stand-ins until their art card.
+  // Enchantment: a faceted stone body with a crossed-out blade, armored
+  // and unable to attack.
+  "obsidian-flesh": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l6 4v7l-6 7-6-7V7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3v18M6 7l6 4 6-4" ${stroke(c, 1.2)}/>`,
+  ],
+  // Skill effect: a ward's ground line under a slowed, dragging foot.
+  "ward-against-foes": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M10 9.5h4" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a ward over a planted stance, no knockdown inside it.
+  "ward-of-stability": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
+      `<path d="M12 7.5v5" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 18.5h14M8 21h8" ${stroke(c, 2)}/>`,
+  ],
   // Skill effect: two rising flames, adrenaline comes faster near the spirit.
   "infuriating-heat": [
     "skill-effect",
@@ -2066,6 +2094,18 @@ const hexFail = (target) =>
 /** An urn of held ashes round `mark`, the Ritualist's Was spells (#1493). @param {string} mark */
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
+
+/**
+ * The anti-summon family (#1568): the skill's own mark shrunk to the top left, a small ghost struck through
+ * at the bottom right, the summoned creature it hits harder. @param {string} main
+ */
+const antiSummon = (main) =>
+  `<g transform="translate(-0.5,-0.5) scale(0.74)">${main}</g>` +
+  `<g transform="translate(12.3,12.3) scale(0.62)" stroke="${C.bg}" stroke-width="3" paint-order="stroke">` +
+  `<path d="M3.5 22V9A5.5 5.5 0 0 1 14.5 9V22L12.2 19.8L9 22L5.8 19.8Z" fill="${C.ink}"/>` +
+  `<circle cx="6.8" cy="9.5" r="1.3" fill="${C.bg}" stroke="none"/><circle cx="11.2" cy="9.5" r="1.3" fill="${C.bg}" stroke="none"/></g>` +
+  `<path d="M12 23.5L23.5 12" ${stroke(C.bg, 3.4)}/>` +
+  `<path d="M12.5 23L23 12.5" ${stroke(C.ink, 1.4)}/>`;
 
 /** The blood drop, a sacrifice (#1572). */
 const DROP = inkFill("M12 2.5C16 8.5 19 12 19 15.5A7 7 0 0 1 5 15.5C5 12 8 8.5 12 2.5Z");
@@ -3291,9 +3331,51 @@ const skillGlyph = {
   "next-attack-unblockable": () => nextSkill("attack", "armor-crack"),
   "next-chant-cheaper": () => nextSkill("chant", "energy-cut"),
   "next-attack-vs-healthy": () => nextSkill("attack", "health-above"),
+  "anti-summon-spell": () => antiSummon(skillGlyph.spark()),
+  "anti-summon-scythe": () => antiSummon(skillGlyph.scythe()),
+  "anti-summon-spear": () => antiSummon(skillGlyph.spear()),
+  "anti-summon-pain": () => antiSummon(skillGlyph["ache-cross"]()),
+
   // The Necromancer's sacrifice skills (#1572): a drop given up at the bottom left, its payoff at the top right.
   "sac-energy": () => sacrifice(skillGlyph.energy()),
   "sac-blade": () => sacrifice(skillGlyph.sword()),
+  // Warrior staples (#1586). A flail: a short haft, a chain, a spiked ball.
+  flail: () =>
+    inkLine("M4 21L11 13", 2.6) +
+    inkLine("M11 13C10.5 8 14 5.5 16.5 6", 1.8) +
+    `<circle cx="18.5" cy="7.5" r="3.2" fill="${C.ink}"/>` +
+    inkLine(
+      "M18.5 1.8V3.3M23.2 7.5H21.7M20.4 3.8L19.6 4.6M16.6 3.8L17.4 4.6M20.4 11.2L19.6 10.4",
+      1.4,
+    ),
+  // A heart held in a shield: more Health and armor.
+  "heart-shield": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M12 17L8 12.8a2.4 2.4 0 0 1 4-2.6 2.4 2.4 0 0 1 4 2.6z"),
+  // An axe with the cross of a Deep Wound above its haft.
+  "axe-cross": () =>
+    inkLine("M7 21L17 8", 2.4) +
+    inkFill("M12 4.5C17.5 3.5 21.5 6 21 9.5C20.5 13 17 14.5 15 12.5Z") +
+    inkLine("M3 3L8 8M8 3L3 8", 2),
+  // A blade with a limp that ends in an arrow up: it hits harder on a crippled foe.
+  "blade-limp-up": () =>
+    bladeMark(
+      inkLine("M10 13V4.5M6.5 8L10 4.5L13.5 8", 2.2) + inkLine("M3.5 13L5.5 10L7.5 12.5", 1.8),
+    ),
+  // A shield held at the left, a blade leaving it up and right: a parry and its answer.
+  parry: () =>
+    inkFill("M2.5 9L8 7L13.5 9V14.5C13.5 18.4 10.8 20 8 21.8C5.2 20 2.5 18.4 2.5 14.5Z") +
+    inkLine("M14 10.5L21.5 3", 3) +
+    inkLine("M13.5 5.5L18.5 10.5", 2.4),
+  // Sound arcs behind two chevrons: a shout that hurries the party.
+  "shout-rush": () =>
+    inkLine("M3.5 8.5C6 10.5 6 13.5 3.5 15.5", 1.8) +
+    inkLine("M9 5L15.5 12L9 19M15 5L21.5 12L15 19", 2.4),
+  // The same arcs, one chevron and three rising bars: it hurries you and gives adrenaline back.
+  "shout-rush-adrenal": () =>
+    inkLine("M3.5 8.5C6 10.5 6 13.5 3.5 15.5", 1.8) +
+    inkLine("M8.5 5L14 12L8.5 19", 2.4) +
+    inkLine("M16.5 19V15M19 19V11M21.5 19V7", 2.2),
   // Plague Signet: a drop leaving for a signet ring and dot (#1572).
   "drop-to-signet": () =>
     `<g transform="translate(7,12) scale(0.62) translate(-12,-12)">${DROP}</g>` +
