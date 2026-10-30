@@ -196,6 +196,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "tranquil-was-tanasen": icon("tranquil-was-tanasen"),
   "vengeful-was-khanhei": icon("vengeful-was-khanhei"),
   "pure-was-li-ming": icon("pure-was-li-ming"),
+  guilt: icon("guilt"),
+  shame: icon("shame"),
+  mistrust: icon("mistrust"),
+  fragility: icon("fragility"),
 };
 
 /** Drawn size of one icon, in world pixels. */

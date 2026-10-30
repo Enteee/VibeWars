@@ -180,6 +180,17 @@ export type CombatEvent =
       /** The skill whose cast was abandoned. */
       readonly skillId: string;
     }
+  /**
+   * A spell `targetId` finished that a status on it failed (#1475):
+   * Guilt's. Paid for and recharging, as an interrupted one; nothing of
+   * it landed.
+   */
+  | {
+      readonly kind: "spell-failed";
+      readonly targetId: string;
+      /** The spell that failed. */
+      readonly skillId: string;
+    }
   /** An interrupt that found nothing to interrupt — a wasted cast. */
   | {
       readonly kind: "interrupt-missed";
