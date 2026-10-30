@@ -45,6 +45,8 @@ export type ActivationRejection =
   | "invalid-target-enemy"
   // A spirit skill on anything but a living spirit of your team (#1309).
   | "invalid-target-not-allied-spirit"
+  // An echo on a spirit (#1423): GW1's "Cannot target spirits".
+  | "invalid-target-spirit"
   | "out-of-range"
   | "no-line-of-sight"
   // A corpse skill with no fresh corpse in reach (#466): checked by the
@@ -134,6 +136,13 @@ export function targetRuleAllows(
     case "single-ally":
       // "Ally" includes yourself: self-healing is a normal, intended play.
       return isAlly || isSelf ? undefined : "invalid-target-enemy";
+    case "single-ally-not-spirit":
+      // A pet or a minion is allowed, as in GW1.
+      return !isAlly && !isSelf
+        ? "invalid-target-enemy"
+        : target.creatureKind === "spirit"
+          ? "invalid-target-spirit"
+          : undefined;
     case "single-other-ally":
     case "single-dead-ally":
     case "companion":
@@ -172,6 +181,14 @@ export function targetLivenessAllows(
 /** Whether `rule` acts on the caster's own companion, whatever is selected (#1046, #1108). */
 export function isCompanionRule(rule: TargetRule): boolean {
   return rule === "companion" || rule === "living-companion";
+}
+
+/**
+ * Whether `rule` lands on the caster when no ally is selected (#1423): a
+ * heal or an echo with a foe or nothing targeted goes on yourself.
+ */
+export function isAllyOrSelfRule(rule: TargetRule): boolean {
+  return rule === "single-ally" || rule === "single-ally-not-spirit";
 }
 
 /** Validate a target against a skill's targeting rule. */

@@ -4,6 +4,7 @@ import {
   distanceWithinRange,
   getSkill,
   hasLineOfSight,
+  isAllyOrSelfRule,
   isCompanionRule,
   isSpell,
   isWeaponId,
@@ -286,7 +287,7 @@ export function outOfRange(
     if (targetLivenessAllows(skill.target, target) !== undefined) {
       return false;
     }
-    if (skill.target === "single-ally" && target.team !== self.team) {
+    if (isAllyOrSelfRule(skill.target) && target.team !== self.team) {
       return false;
     }
     const refused = targetRuleAllows(
