@@ -318,6 +318,8 @@ async function main(): Promise<void> {
   let hosted: HostedLobby | undefined;
   /** What this player brought into `lobby`, and plays its matches with; a pick on the menu changes it. */
   let lobbyEntrant: Entrant | undefined;
+  /** The name this player went into `lobby` under. */
+  let lobbyName: string | undefined;
   /** While this tab's own lobby is being opened. */
   let opening = false;
   /**
@@ -482,7 +484,21 @@ async function main(): Promise<void> {
       // Options (#1513). Not when a match starting closed it, which leaves
       // the screen first; any other screen keeps what it joined with.
       openOptionsOverlay(app, () => {
-        if (idleScreen && screenRoot.querySelector(".screen-rail") !== null) {
+        const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
+        if (renamedAlone()) {
+          // Nobody else is in it to keep its code for: the lobby is opened
+          // again under the new name and tag (#1526).
+          void (async () => {
+            await closeLobby();
+            if (menu) {
+              showMenu();
+            } else {
+              openOwnLobby();
+            }
+          })();
+          return;
+        }
+        if (menu) {
           showMenu();
         }
       });
@@ -825,6 +841,14 @@ async function main(): Promise<void> {
     })();
   };
 
+  /** Whether this player is alone in its own lobby, under another name or guild than now. */
+  const renamedAlone = (): boolean =>
+    hosted !== undefined &&
+    lobby === hosted.lobby &&
+    isAlone(railParty()) &&
+    (lobbyName !== loadPlayerName() ||
+      JSON.stringify(lobbyEntrant?.guild) !== JSON.stringify(playerGuild()));
+
   /** Out of the lobby this tab is in, ending it for everyone if it is this tab's own. */
   const closeLobby = async (): Promise<void> => {
     const leaving = lobby;
@@ -832,6 +856,7 @@ async function main(): Promise<void> {
     lobby = undefined;
     hosted = undefined;
     lobbyEntrant = undefined;
+    lobbyName = undefined;
     closeChat();
     syncParty(undefined);
     await leaving?.disconnect();
@@ -1446,6 +1471,7 @@ async function main(): Promise<void> {
   const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
     lobby = joined;
     lobbyEntrant = entrant;
+    lobbyName = name;
     lobbyNotice = undefined;
     chat = mountChat({
       selfId: joined.selfSessionId,

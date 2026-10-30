@@ -19,7 +19,9 @@ choice the party makes, not a screen each player opens on their own.
 (ADR-0022). From page load the tab hosts one under a fresh code, which
 the title bar always shows with **Copy**. The code holds for the
 lobby's life; every rehost (a reload, a guest's **Leave**, the end of a
-Random Arena queue) mints a fresh one and never reuses a room name.
+Random Arena queue, a new name or guild tag while alone in it) mints a
+fresh one and never reuses a room name. In a party, a new name shows
+from the next lobby.
 
 **Joining another lobby closes your own**, and only once the join is in:
 a failed join keeps your lobby, its code and its guests. A host who
