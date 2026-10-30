@@ -245,6 +245,7 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
     scoreTeam1,
     relics,
     altar: undefined,
+    capturePoints: [],
   });
   const ours = { text: "Relic scored!", side: "ours" };
   const theirs = { text: "Enemy relic scored", side: "theirs" };
@@ -280,7 +281,13 @@ describe("objectiveScoreToast in a Relic Run (#1387)", () => {
   });
 
   it("says nothing on a mid-match rejoin, whose first frame follows the 0-0 placeholder", () => {
-    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [], altar: undefined };
+    const placeholder = {
+      scoreTeam0: 0,
+      scoreTeam1: 0,
+      relics: [],
+      altar: undefined,
+      capturePoints: [],
+    };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
 });
@@ -292,6 +299,7 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
     scoreTeam1,
     relics: [],
     altar,
+    capturePoints: [],
   });
   const ours = { text: "Altar point!", side: "ours" };
   const theirs = { text: "Enemy altar point", side: "theirs" };
@@ -320,13 +328,80 @@ describe("objectiveScoreToast in King of the Hill (#1399)", () => {
   it("says nothing without a point, on the first snapshot, or after the placeholder", () => {
     expect(toast(score(1, 1), score(1, 1), 0)).toBeUndefined();
     expect(toast(undefined, score(1, 0), 0)).toBeUndefined();
-    const placeholder = { scoreTeam0: 0, scoreTeam1: 0, relics: [], altar: undefined };
+    const placeholder = {
+      scoreTeam0: 0,
+      scoreTeam1: 0,
+      relics: [],
+      altar: undefined,
+      capturePoints: [],
+    };
     expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
 
   it("stays silent in Kill Count and Annihilation", () => {
     expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "kill-count")).toBeUndefined();
     expect(objectiveScoreToast(score(4, 0), score(5, 0), 0, "annihilation")).toBeUndefined();
+  });
+});
+
+describe("objectiveScoreToast in Capture Points (#1408)", () => {
+  const shrines = [
+    { position: { x: 0, y: 0 }, owner: 0, capturer: null, progress: 1 },
+    { position: { x: 9, y: 0 }, owner: 1, capturer: null, progress: 1 },
+  ];
+  const score = (scoreTeam0: number, scoreTeam1: number) => ({
+    scoreTeam0,
+    scoreTeam1,
+    relics: [],
+    altar: undefined,
+    capturePoints: shrines,
+  });
+  const toast = (
+    before: Parameters<typeof objectiveScoreToast>[0],
+    after: Parameters<typeof objectiveScoreToast>[1],
+    selfTeam: number | undefined,
+  ) => objectiveScoreToast(before, after, selfTeam, "capture-points");
+
+  it("counts your side's points as ours and the foe's as theirs", () => {
+    expect(toast(score(0, 0), score(2, 0), 0)).toEqual({ text: "Shrines: +2", side: "ours" });
+    expect(toast(score(0, 0), score(2, 0), 1)).toEqual({
+      text: "Enemy shrines: +2",
+      side: "theirs",
+    });
+    expect(toast(score(4, 3), score(4, 4), 1)).toEqual({ text: "Shrines: +1", side: "ours" });
+  });
+
+  it("toasts a tick where both sides score once, sounding for whoever gained more", () => {
+    expect(toast(score(0, 0), score(3, 2), 0)).toEqual({
+      text: "Shrines: +3, enemy +2",
+      side: "ours",
+    });
+    expect(toast(score(0, 0), score(2, 2), 1)).toEqual({
+      text: "Shrines: +2, enemy +2",
+      side: "ours",
+    });
+    expect(toast(score(0, 0), score(3, 1), 1)).toEqual({
+      text: "Shrines: +1, enemy +3",
+      side: "theirs",
+    });
+  });
+
+  it("reads a spectator's side as team 0's", () => {
+    expect(toast(score(0, 0), score(1, 2), undefined)).toEqual({
+      text: "Shrines: +1, enemy +2",
+      side: "theirs",
+    });
+  });
+
+  it("sums two ticks missed between frames", () => {
+    expect(toast(score(2, 0), score(6, 0), 0)).toEqual({ text: "Shrines: +4", side: "ours" });
+  });
+
+  it("says nothing without a point, on the first snapshot, or after the placeholder", () => {
+    expect(toast(score(1, 1), score(1, 1), 0)).toBeUndefined();
+    expect(toast(undefined, score(1, 0), 0)).toBeUndefined();
+    const placeholder = { ...score(0, 0), capturePoints: [] };
+    expect(toast(placeholder, score(2, 1), 0)).toBeUndefined();
   });
 });
 
