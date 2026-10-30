@@ -29,7 +29,10 @@ export type MesmerStatusId =
   | "guilt"
   | "shame"
   | "mistrust"
-  | "fragility";
+  | "fragility"
+  // Mesmer crowd punishers (#1501).
+  | "panic"
+  | "wastrels-demise";
 
 export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>> = {
   // "Whenever target foe casts a spell, that foe takes 35...119...140
@@ -405,5 +408,37 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.fragility",
       },
     ],
+  }),
+
+  // Mesmer crowd punishers (#1501), at their rank-12 values.
+  // "When a foe hexed with Panic successfully uses a skill, all other
+  // nearby foes are interrupted": the bearer's own allies, never itself.
+  panic: define("panic", "Panic", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "interrupt" }],
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.panic",
+      },
+    ],
+  }),
+  // "Each second while hexed, target foe and all foes adjacent to that
+  // foe take 1...10 damage and an additional 1...10 damage for each second
+  // this spell is in effect. This hex ends prematurely if target foe uses
+  // a skill": 8 and 8, so 8, 16, 24, 32, 40.
+  "wastrels-demise": define("wastrels-demise", "Wastrel's Demise", "hex", {
+    profession: "mesmer",
+    damagePulse: { damage: 8, growth: 8, radius: AREA_ADJACENT, skillId: "mesmer.wastrels-demise" },
+    endsWhenBearerUsesSkill: true,
   }),
 };

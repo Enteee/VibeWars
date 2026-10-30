@@ -87,6 +87,7 @@ export function define(
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
     failsNextSpell: undefined,
+    damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
