@@ -778,7 +778,8 @@ const status = {
     "enchantment",
     (c) =>
       `<path d="M4 7l4.5 5L4 17M9.5 7l4.5 5-4.5 5" ${stroke(c, 2)}/>` +
-      `<path d="M18.5 8c1.5 2.2 2.5 3.4 2.5 4.8a2.5 2.5 0 0 1-5 0c0-1.4 1-2.6 2.5-4.8z" ${stroke(c, 1.6)}/>`,
+      `<path d="M18.5 8c1.5 2.2 2.5 3.4 2.5 4.8a2.5 2.5 0 0 1-5 0c0-1.4 1-2.6 2.5-4.8z" ${stroke(c, 1.6)}/>` +
+      `<path d="M15 6.5l7 13" ${stroke(c, 1.8)}/>`,
   ],
   // Enchantment: a flame under a halo, holy attacks, burning when it ends (#1421).
   "heart-of-holy-flame": [
@@ -2346,7 +2347,8 @@ const skillGlyph = {
   // Two chevrons and a drop outline: faster, and a condition leaves (#1447).
   "haste-clean": () =>
     inkLine("M3 5L8.5 12L3 19M9.5 5L15 12L9.5 19", 2.4) +
-    `<path d="M19 7.5c1.8 2.7 3 4.2 3 6a3 3 0 0 1-6 0c0-1.8 1.2-3.3 3-6z" ${stroke(C.ink, 1.9)}/>`,
+    `<path d="M19 7.5c1.8 2.7 3 4.2 3 6a3 3 0 0 1-6 0c0-1.8 1.2-3.3 3-6z" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M15 6L23 21", 2.2),
   // A flame under a halo: holy attacks, and it burns when it ends (#1447).
   "flame-halo": () =>
     `<ellipse cx="12" cy="4.8" rx="6" ry="2.2" ${stroke(C.ink, 2)}/>` +
