@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { openPeers } from "./helpers/peers.js";
+import { namePlayer } from "./helpers/player.js";
 
 /**
  * The Team Lobby screen (#1460): a lobby hosted from a Team Play tile
@@ -48,7 +49,7 @@ function trioCode(): string {
 async function nameOnSolo(page: Page, name: string): Promise<void> {
   await page.goto("./");
   await page.locator("#topbar .play-tabs").getByRole("button", { name: "Solo Play" }).click();
-  await page.locator(".screen-menu input.field-input").first().fill(name);
+  await namePlayer(page, name);
 }
 
 test("#1460: two players and a bot propose, vote, take seats and play the claimed characters", async ({
