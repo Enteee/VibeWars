@@ -1672,6 +1672,42 @@ const status = {
       `<path d="M3 8L6 12L3 16Z" ${stroke(c, 1.4)}/>` +
       `<path d="M10 4V20M14 4V20M18 4V20M8 4.5H20M8 19.5H20" ${stroke(c, 1.8)}/>`,
   ],
+  // Necromancer staples 2 (#1583), stand-ins until their art card.
+  // Hex: a hollow drop over two falling arrows, health and energy wither away.
+  wither: [
+    "hex",
+    (c) =>
+      `<path d="M12 3c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M7 16v4M5 18l2 2 2-2M17 16v4M15 18l2 2 2-2" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a drop drawn off sideways, health siphoned to the caster.
+  "life-siphon": [
+    "hex",
+    (c) =>
+      `<path d="M9 4c2.5 3.5 4 5.5 4 8a4 4 0 0 1-8 0c0-2.5 1.5-4.5 4-8z" fill="${c}"/>` +
+      `<path d="M14 15h6M17.5 12.5L20 15l-2.5 2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect: a drop over three rising arrows, the siphoned health returning.
+  "life-siphon-regen": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 3c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 7.5 10 6 12 3z" fill="${c}"/>` +
+      `<path d="M6 19.5l2.5-2.5 2.5 2.5M10 19.5l2.5-2.5 2.5 2.5M14 19.5l2.5-2.5 2.5 2.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a struck-through blade trailing speed lines, fast swings that miss.
+  "reckless-haste": [
+    "hex",
+    (c) =>
+      `<path d="M8 17L18 7" ${stroke(c, 2.2)}/><path d="M7 7l10 10" ${stroke(c, 1.6)}/>` +
+      `<path d="M3 12h3M4 15.5h3M5 19h3" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a broken ring over a falling arrow, the enchantment turned to rot.
+  "corrupt-enchantment": [
+    "hex",
+    (c) =>
+      `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
+  ],
 };
 
 // ---------------------------------------------------------------------------

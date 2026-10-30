@@ -28,7 +28,13 @@ export type NecromancerStatusId =
   | "defile-defenses"
   // Necromancer and Elementalist staples (#1540).
   | "blood-is-power"
-  | "order-of-pain";
+  | "order-of-pain"
+  // Necromancer staples 2 (#1583).
+  | "wither"
+  | "life-siphon"
+  | "life-siphon-regen"
+  | "reckless-haste"
+  | "corrupt-enchantment";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -240,5 +246,45 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
       effects: [{ kind: "damage", amount: { flat: 13 }, type: "typeless", armorPenetration: 1 }],
       skillId: "necromancer.order-of-pain",
     },
+  }),
+  // Necromancer staples 2 (#1583), at their rank-12 values.
+  // "...suffers -2...4 Health degeneration and -1 Energy degeneration. If
+  // target foe's Energy reaches 0, that foe takes 15...75 damage and
+  // Wither ends": 4 and 63.
+  wither: define("wither", "Wither", "hex", {
+    profession: "necromancer",
+    healthPips: -4,
+    energyPips: -1,
+    triggers: [
+      {
+        on: "bearer-energy-empty",
+        effects: [{ kind: "damage", amount: { flat: 63 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "necromancer.wither",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "...target foe suffers -1...3 Health degeneration, and you gain
+  // +1...3 Health regeneration": 3 each, the caster's its own status, so
+  // it lasts its time when the hex is removed early.
+  "life-siphon": define("life-siphon", "Life Siphon", "hex", {
+    profession: "necromancer",
+    healthPips: -3,
+  }),
+  "life-siphon-regen": define("life-siphon-regen", "Life Siphon", "skill-effect", {
+    profession: "necromancer",
+    healthPips: 3,
+  }),
+  // "...they attack 25% faster but have a 50% chance to miss with attacks."
+  "reckless-haste": define("reckless-haste", "Reckless Haste", "hex", {
+    profession: "necromancer",
+    attackMissChance: 0.5,
+    attackDurationMultiplier: 0.75,
+  }),
+  // "...that foe suffers from -1...8 Health degeneration for 10 seconds": 7.
+  "corrupt-enchantment": define("corrupt-enchantment", "Corrupt Enchantment", "hex", {
+    profession: "necromancer",
+    healthPips: -7,
   }),
 };

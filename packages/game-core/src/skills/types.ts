@@ -1395,6 +1395,12 @@ export interface Skill {
 export interface CorpseRule {
   /** The nearest fresh corpse within this of the caster, world units. */
   readonly radius: number;
+  /**
+   * `target`: nearest the cast's target instead, within `radius` of it
+   * (#1583): Putrid Explosion's "the corpse nearest your target". Absent:
+   * nearest the caster.
+   */
+  readonly near?: "target";
 }
 
 /** How a flying spell flies (#535). */
