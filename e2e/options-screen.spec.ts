@@ -16,7 +16,7 @@ const cell = (page: Page, action: string, index = 0): Locator =>
 async function openKeys(page: Page): Promise<void> {
   await page.locator(".topbar-options").click();
   await expect(page.locator(".options-screen")).toBeVisible();
-  // Options opens on its first section, Sound (#424).
+  // Options opens on its first section, Player (#1513).
   await page.locator('.options-entry[data-section="controls"]').click();
   await expect(page.locator('.options-entry[data-section="controls"]')).toHaveClass(/is-selected/);
   await expect(page.locator(".keys-screen")).toBeVisible();
@@ -177,4 +177,18 @@ test("Options lists every bundled npm package and the VCSL samples, each with it
   await expect(phaser.locator(".licence-text")).toBeHidden();
   await phaser.locator("summary").click();
   await expect(phaser.locator(".licence-text")).toContainText("Permission is hereby granted");
+});
+
+test("a lobby code typed on Solo Play survives the redraw closing Options does (#1513)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.locator("input.code-input").fill("abcd");
+  const before = await page.locator(".screen-menu").elementHandle();
+  await page.locator(".topbar-options").click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  // The redraw lands after an await; waiting for the old screen to go is
+  // what makes the check below see the new one.
+  await page.waitForFunction((menu) => !menu.isConnected, before);
+  await expect(page.locator("input.code-input")).toHaveValue("ABCD");
 });
