@@ -1671,9 +1671,10 @@ export function ghostNameplate(
 }
 
 /** The target frame (#484): header, health bar and cast row. */
+/** `self` is `undefined` for a watcher (#480), who has no target but the player it follows. */
 function renderTarget(
   hud: HudElements,
-  self: PlayerSnapshot,
+  self: PlayerSnapshot | undefined,
   target: PlayerSnapshot | undefined,
   stand: StandState | undefined,
   names: ReadonlyMap<string, string>,
@@ -1681,14 +1682,16 @@ function renderTarget(
   renderTargetProfessions(hud.targetProfessions, target);
   setText(
     hud.targetText,
-    target?.name ?? objectTargetName(self.targetSessionId, self.team, stand) ?? "no target",
+    target?.name ??
+      (self === undefined ? undefined : objectTargetName(self.targetSessionId, self.team, stand)) ??
+      "no target",
   );
   setHidden(hud.targetBot, target?.bot !== true);
-  setHidden(hud.attacking, !isAttackingTarget(self, target));
+  setHidden(hud.attacking, self === undefined || !isAttackingTarget(self, target));
   const invulnerable = target === undefined || target.dead ? 0 : target.invulnerableSeconds;
   setHidden(hud.targetInvulnerable, invulnerable <= 0);
   setText(hud.targetInvulnerable, invulnerable > 0 ? invulnerableLabel(invulnerable) : "");
-  const leader = ghostLeaderLabel(self, target, names);
+  const leader = self === undefined ? undefined : ghostLeaderLabel(self, target, names);
   setHidden(hud.targetLeader, leader === undefined);
   setText(hud.targetLeader, leader ?? "");
   // Armor on hover: a number to look up, not to read at a glance.
@@ -1702,7 +1705,7 @@ function renderTarget(
     paintHealthTint(hud.targetHealth, target);
     setStyle(hud.targetHealthFill.style, "width", percent(targetHealthPercent(target) / 100));
     setStyle(hud.targetHealthLost.style, "width", percent(lostHealthPercent(target) / 100));
-    setText(hud.targetHealthText, targetHealthLabel(target, self.team));
+    setText(hud.targetHealthText, targetHealthLabel(target, self?.team));
     renderPips(hud.targetHealthPips, target.healthPips);
   }
   renderTargetCast(hud, target);
@@ -1720,14 +1723,14 @@ const TARGET_EFFECT_ICON_PX = 16;
  * None with no target, a dead one, or no match clock.
  */
 export function targetEffectRows(
-  self: PlayerSnapshot,
+  selfId: string,
   target: PlayerSnapshot | undefined,
   names: ReadonlyMap<string, string>,
   now: number | undefined,
 ): EffectRow[] {
   return target === undefined || target.dead || now === undefined
     ? []
-    : effectRows(target, self.sessionId, names, now);
+    : effectRows(target, selfId, names, now);
 }
 
 /** How far past the latest snapshot the effects count down, s: ten snapshots. */
@@ -1744,6 +1747,25 @@ function matchNow(hud: HudElements, matchSeconds: number): number {
     hud.clock = { matchSeconds, arrivedMs: nowMs };
   }
   return matchSeconds + Math.min(MAX_CLOCK_LEAD_SECONDS, (nowMs - hud.clock.arrivedMs) / 1000);
+}
+
+/**
+ * A watcher's target frame (#480): the player it follows, as a player's
+ * frame shows its target. `viewerId` is the watcher's, which no body has.
+ * `updateHud` draws the rest, with no self.
+ */
+export function updateFollowed(
+  hud: HudElements,
+  viewerId: string,
+  followed: PlayerSnapshot | undefined,
+  match: MatchSnapshot,
+): void {
+  const names = new Map(match.players.map((player) => [player.sessionId, player.name]));
+  renderTarget(hud, undefined, followed, match.stand, names);
+  renderTargetChain(hud.targetChain, undefined);
+  hud.targetEffects.update(
+    targetEffectRows(viewerId, followed, names, matchNow(hud, match.elapsedSeconds)),
+  );
 }
 
 export function updateHud(
@@ -1833,7 +1855,7 @@ export function updateHud(
 
   renderTarget(hud, self, target, match?.stand, names);
   renderTargetChain(hud.targetChain, targetChainIcon(target, chainMark));
-  hud.targetEffects.update(targetEffectRows(self, target, names, now));
+  hud.targetEffects.update(targetEffectRows(self.sessionId, target, names, now));
 
   // Grey out skills the player cannot currently afford or the weapon in
   // hand cannot use (#417), and mark those that cannot reach the target. The server is still the authority on

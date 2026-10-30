@@ -1,7 +1,16 @@
-import { STARTER_BUILDS, getProfession, type PlayerBuild } from "@vibewars/game-core";
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
+  STARTER_BUILDS,
+  getProfession,
+  parsePlayerBuild,
+  validatePlayerBuild,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
+  MAX_TEAM_LOBBY_SIDE,
   PROTOCOL_VERSION,
+  TEAM_LOBBY_STAGE_SECONDS,
   helloProtocolVersion,
   parsePeerChat,
   parsePeerLobbyHello,
@@ -22,13 +31,21 @@ import {
   type WirePartyFormed,
   type WirePartyProposal,
   type WirePartySplit,
+  type WireTeamChoice,
+  type WireTeamLobby,
+  type WireTeamSide,
 } from "@vibewars/game-protocol";
 
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { lobbyCharacter } from "./lobby-character.js";
 import type { LobbyCharacter } from "./lobby-connection.js";
 import { createLocalPeer } from "./local-peer.js";
-import { RECONNECT_WINDOW_SECONDS, type MatchHost, type PlannedSeats } from "./match-host.js";
+import {
+  RECONNECT_WINDOW_SECONDS,
+  type MatchHost,
+  type PlannedSeat,
+  type PlannedSeats,
+} from "./match-host.js";
 import { sanitizeChatText, sanitizeGuild, sanitizeName } from "./names.js";
 import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
 import { ticketsOf } from "./queue-formation.js";
@@ -76,6 +93,36 @@ interface PartyProposal {
   readonly endsAt: number;
   /** Formed or split, and those it concerns told. */
   settled: boolean;
+}
+
+/** One side of a Team Lobby (#1458), as its host keeps it. */
+interface TeamSide {
+  /** Its humans and bots as the Team Lobby began. */
+  readonly size: number;
+  /** Each proposer's builds, `size` legal ones, in the order proposed. */
+  readonly proposals: Map<string, readonly PlayerBuild[]>;
+  /** Each proposer's slots of its next proposal, as they arrive, one a message. */
+  readonly pending: Map<string, (PlayerBuild | undefined)[]>;
+  /** Each voter's proposer. */
+  readonly votes: Map<string, string>;
+  /** Once the vote is over. */
+  chosen:
+    | {
+        readonly proposerId: string | null;
+        readonly reason: WireTeamChoice["reason"];
+        readonly builds: readonly PlayerBuild[];
+      }
+    | undefined;
+  /** In the claim, the member holding each slot of `chosen`. */
+  claims: (string | null)[];
+}
+
+/** A Team Lobby (#1458): both sides vote, then claim, on one clock. */
+interface TeamLobby {
+  stage: "vote" | "claim";
+  /** In whole ms, on the lobby's clock. */
+  endsAt: number;
+  readonly sides: readonly [TeamSide, TeamSide];
 }
 
 /** A lobby's match, as the lobby hands it to whoever builds the `MatchHost`. */
@@ -127,6 +174,14 @@ export interface LobbyHostOptions {
   readonly startMatch: (plan: MatchPlan) => MatchHost;
   /** The queue's lobby, not a coded one; its map must be one of `mapIds`. */
   readonly queued?: QueuedPlan;
+  /**
+   * Hosted from Team Play (#1458): everyone ready goes to a Team Lobby,
+   * where each side votes on a Team Build, then claims its characters,
+   * before the match. Never a queued lobby.
+   */
+  readonly teamLobby: boolean;
+  /** In [0, 1): what a Team Lobby picks at random. Injected, so a test can seed it. */
+  readonly random: () => number;
 }
 
 export interface LobbyHost {
@@ -175,7 +230,7 @@ export function canStart(
 }
 
 export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
-  const { code, mapIds, startMatch, queued } = options;
+  const { code, mapIds, startMatch, queued, random } = options;
   const [defaultMap] = mapIds;
   if (defaultMap === undefined) {
     throw new Error("a lobby needs at least one map");
@@ -185,6 +240,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   }
   if (queued !== undefined && queued.key.ticketId !== queued.group.hostTicketId) {
     throw new Error("a queued lobby is hosted by its group's host ticket");
+  }
+  if (queued !== undefined && options.teamLobby) {
+    throw new Error("a queued lobby has no Team Lobby");
   }
   // Its match is on a scope of this room, so this checks every message the
   // host sends, the match's too.
@@ -246,12 +304,70 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     | undefined;
   /** `onDone` was called. */
   let queuedDone = false;
+  /** While `phase` is `"team-lobby"`. */
+  let teamLobby: TeamLobby | undefined;
 
   const nowMs = (): number => elapsed * 1000;
   /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
   const clockMs = (): number => Math.round(nowMs());
 
-  const state = (): WireLobbyState => ({
+  /** Each human on `team`, in join order. */
+  const humansOn = (team: 0 | 1): Member[] =>
+    [...members.values()].filter((member) => member.bot === null && member.team === team);
+
+  /** Who breaks a tie on `team`: the host on its own side, else its earliest-joined human. */
+  const captainOf = (team: 0 | 1): string | null => {
+    const humans = humansOn(team);
+    return (humans.find((member) => member.id === local.selfId) ?? humans[0])?.id ?? null;
+  };
+
+  /** What a build is called on the wire: its name, sanitised, and professions. */
+  const characterOf = (build: PlayerBuild): LobbyCharacter => ({
+    name: sanitizeName(build.name, getProfession(build.primaryProfession).name),
+    primary: build.primaryProfession,
+    secondary: build.secondaryProfession ?? null,
+  });
+
+  /** `team`'s side as its own members see it. */
+  const wireSide = (lobby: TeamLobby, team: 0 | 1): WireTeamSide => {
+    const side = lobby.sides[team];
+    return {
+      size: side.size,
+      captainId: captainOf(team),
+      // The vote's, over in the claim: a side's state fits one message (#1458).
+      proposals: (lobby.stage === "vote" ? [...side.proposals] : []).map(
+        ([proposerId, builds]) => ({
+          proposerId,
+          members: builds.map((build) => ({
+            primary: build.primaryProfession,
+            secondary: build.secondaryProfession ?? null,
+          })),
+          voterIds: [...side.votes].flatMap(([voterId, votedFor]) =>
+            votedFor === proposerId ? [voterId] : [],
+          ),
+        }),
+      ),
+      chosen:
+        side.chosen === undefined
+          ? null
+          : {
+              proposerId: side.chosen.proposerId,
+              reason: side.chosen.reason,
+              members: side.chosen.builds.map(characterOf),
+            },
+      claims: lobby.stage === "claim" ? [...side.claims] : [],
+    };
+  };
+
+  /** The Team Lobby as `team` sees it: the other side's choices are hidden from it. */
+  const wireTeamLobby = (lobby: TeamLobby, team: 0 | 1 | null): WireTeamLobby => ({
+    stage: lobby.stage,
+    secondsLeft: countdownLeft(lobby.endsAt),
+    sides: [team === 0 ? wireSide(lobby, 0) : null, team === 1 ? wireSide(lobby, 1) : null],
+  });
+
+  /** The lobby as `to` sees it; only a Team Lobby differs by recipient. */
+  const state = (to: Member | undefined): WireLobbyState => ({
     code,
     phase,
     mapId,
@@ -269,6 +385,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       bot: member.bot !== null,
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
+    teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
   });
 
   const broadcast = (): void => {
@@ -276,7 +393,16 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (phase === "waiting") {
       figureBots();
     }
-    transport.send("lobby-state", state());
+    if (teamLobby === undefined) {
+      transport.send("lobby-state", state(undefined));
+      return;
+    }
+    // Each member its own: a side's vote is its own (#1458).
+    for (const member of members.values()) {
+      if (member.bot === null && !away.has(member.id)) {
+        transport.send("lobby-state", state(member), member.id);
+      }
+    }
   };
 
   const note = (kind: WireLobbyNote["kind"], reason: string, to?: string): void => {
@@ -292,27 +418,30 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const countdownLeft = (endsAt: number): number =>
     Math.max(0, Math.ceil((endsAt - clockMs()) / 1000));
 
-  const start = (): void => {
+  /**
+   * Start the match. `assigned` is each member's build, a Team Lobby's
+   * (#1458); without one a bot plays its own and a human its hello's.
+   */
+  const start = (assigned: ReadonlyMap<string, PlayerBuild> = new Map()): void => {
     countdownEndsAt = undefined;
     phase = "starting";
     matches += 1;
     const id = `match-${String(matches)}`;
+    const seatOf = (member: Member, team: 0 | 1): PlannedSeat => {
+      const seat = {
+        team,
+        name: member.name,
+        guildTag: member.guildTag,
+        guildCape: member.guildCape,
+      };
+      const build = assigned.get(member.id) ?? null;
+      return member.bot === null
+        ? { ...seat, bot: false, build }
+        : { ...seat, bot: true, build: build ?? member.bot };
+    };
     const seats: PlannedSeats = new Map(
       [...members.values()].flatMap((member) =>
-        member.team === null
-          ? []
-          : [
-              [
-                member.id,
-                {
-                  team: member.team,
-                  name: member.name,
-                  guildTag: member.guildTag,
-                  guildCape: member.guildCape,
-                  bot: member.bot,
-                },
-              ],
-            ],
+        member.team === null ? [] : [[member.id, seatOf(member, member.team)] as const],
       ),
     );
     const room = scopeTransport(transport);
@@ -342,9 +471,274 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     broadcast();
     const message: WireMatchStart = { mapId, matchId: id };
     for (const [peerId, seat] of seats) {
-      if (seat.bot === null) {
+      if (!seat.bot) {
         transport.send("match-start", message, peerId);
       }
+    }
+  };
+
+  /** Everyone re-confirms: a stage, or what they agreed to, changed. */
+  const clearReady = (): void => {
+    for (const member of members.values()) {
+      member.ready = false;
+    }
+  };
+
+  /**
+   * Everyone ready, in a lobby hosted from Team Play (#1458): each side's
+   * size is frozen, and its vote begins. A side over a GW1 team is turned
+   * down, since its proposals would not fit on the wire.
+   */
+  const beginTeamLobby = (): boolean => {
+    const sizes = ([0, 1] as const).map(
+      (team) => [...members.values()].filter((member) => member.team === team).length,
+    );
+    if (sizes.some((size) => size > MAX_TEAM_LOBBY_SIDE)) {
+      note(
+        "start-rejected",
+        `a team plays at most ${String(MAX_TEAM_LOBBY_SIDE)}, bots included`,
+        local.selfId,
+      );
+      return false;
+    }
+    const side = (size: number): TeamSide => ({
+      size,
+      proposals: new Map(),
+      pending: new Map(),
+      votes: new Map(),
+      chosen: undefined,
+      claims: [],
+    });
+    phase = "team-lobby";
+    teamLobby = {
+      stage: "vote",
+      endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
+      sides: [side(sizes[0] ?? 0), side(sizes[1] ?? 0)],
+    };
+    clearReady();
+    return true;
+  };
+
+  /** One of `options`, at random from the lobby's RNG. */
+  const pick = <T>(options: readonly T[]): T | undefined =>
+    options[Math.min(options.length - 1, Math.floor(random() * options.length))];
+
+  /**
+   * The Team Build `team` plays, and why: the most votes; on a tie the
+   * captain's vote if it is one of the tied, else one of them at random;
+   * with no votes any proposal at random; with no proposal, or nobody to
+   * make one, the house team: the starter builds in order, round and round.
+   */
+  const chooseFor = (team: 0 | 1, side: TeamSide): NonNullable<TeamSide["chosen"]> => {
+    if (side.proposals.size === 0 || humansOn(team).length === 0) {
+      return {
+        proposerId: null,
+        reason: "house",
+        builds: Array.from({ length: side.size }, (_, slot) => {
+          const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
+          if (build === undefined) {
+            throw new Error("there are no starter builds for a house team");
+          }
+          return build;
+        }),
+      };
+    }
+    const tally = new Map([...side.proposals.keys()].map((proposerId) => [proposerId, 0]));
+    for (const votedFor of side.votes.values()) {
+      tally.set(votedFor, (tally.get(votedFor) ?? 0) + 1);
+    }
+    const most = Math.max(...tally.values());
+    const tied = [...tally].flatMap(([proposerId, votes]) => (votes === most ? [proposerId] : []));
+    const captain = captainOf(team);
+    const captainsVote = captain === null ? undefined : side.votes.get(captain);
+    const [only] = tied;
+    const [proposerId, reason]: [string | undefined, WireTeamChoice["reason"]] =
+      most > 0 && tied.length === 1
+        ? [only, "votes"]
+        : most > 0 && captainsVote !== undefined && tied.includes(captainsVote)
+          ? [captainsVote, "captain"]
+          : [pick(tied), "random"];
+    const builds = proposerId === undefined ? undefined : side.proposals.get(proposerId);
+    if (proposerId === undefined || builds === undefined) {
+      throw new Error("a side with proposals chose none");
+    }
+    return { proposerId, reason, builds };
+  };
+
+  /**
+   * End the Team Lobby's stage: the vote is decided and the claim begins,
+   * or the claim is over, every slot is played, and the match starts.
+   */
+  const endStage = (lobby: TeamLobby): void => {
+    if (lobby.stage === "vote") {
+      for (const team of [0, 1] as const) {
+        const side = lobby.sides[team];
+        // A proposal still arriving is not one.
+        side.pending.clear();
+        side.chosen = chooseFor(team, side);
+        side.claims = Array.from({ length: side.size }, () => null);
+      }
+      lobby.stage = "claim";
+      lobby.endsAt = clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000;
+      clearReady();
+      broadcast();
+      return;
+    }
+    const assigned = new Map<string, PlayerBuild>();
+    for (const team of [0, 1] as const) {
+      const side = lobby.sides[team];
+      const builds = side.chosen?.builds ?? [];
+      const claims = [...side.claims];
+      // A human who claimed nothing takes the lowest free slot, in join
+      // order; the side's bots, in their order, play every slot left.
+      for (const human of humansOn(team)) {
+        const free = claims.indexOf(null);
+        if (!claims.includes(human.id) && free >= 0) {
+          claims[free] = human.id;
+        }
+      }
+      const bots = [...members.values()].filter(
+        (member) => member.bot !== null && member.team === team,
+      );
+      for (const [slot, holder] of claims.entries()) {
+        const playedBy = holder ?? bots.shift()?.id;
+        const build = builds[slot];
+        if (playedBy !== undefined && build !== undefined) {
+          assigned.set(playedBy, build);
+        }
+      }
+    }
+    // A bot plays under its slot character's name.
+    for (const member of members.values()) {
+      const build = assigned.get(member.id);
+      if (member.bot !== null && build !== undefined) {
+        const character = characterOf(build);
+        member.bot = build;
+        member.name = character.name;
+        member.character = character;
+      }
+    }
+    teamLobby = undefined;
+    start(assigned);
+  };
+
+  /** Whether every human on a side is ready, which ends a Team Lobby's stage early. */
+  const everyoneReady = (): boolean =>
+    [...members.values()].every(
+      (member) => member.bot !== null || member.team === null || member.ready,
+    );
+
+  /** `proposerId`'s proposal gone, and the votes for it back to none. */
+  const dropProposal = (side: TeamSide, proposerId: string): boolean => {
+    for (const [voterId, votedFor] of side.votes) {
+      if (votedFor === proposerId) {
+        side.votes.delete(voterId);
+      }
+    }
+    return side.proposals.delete(proposerId);
+  };
+
+  /**
+   * Apply `command` from `member` in a Team Lobby (#1458); whether
+   * anything changed. Each command counts only in its own stage, and
+   * only from a member on a side.
+   */
+  const applyTeam = (lobby: TeamLobby, member: Member, command: WireLobbyCommand): boolean => {
+    if (member.team === null) {
+      return false;
+    }
+    const side = lobby.sides[member.team];
+    switch (command.kind) {
+      case "ready": {
+        const changed = member.ready !== command.ready;
+        member.ready = command.ready;
+        if (command.ready && everyoneReady()) {
+          endStage(lobby);
+          return false;
+        }
+        return changed;
+      }
+      case "propose": {
+        if (lobby.stage !== "vote") {
+          return false;
+        }
+        if (command.slot === null) {
+          side.pending.delete(member.id);
+          return dropProposal(side, member.id);
+        }
+        // Exactly the side's size, each build held to the rule a hello's is.
+        const build = parsePlayerBuild(command.build);
+        if (
+          command.size !== side.size ||
+          build === undefined ||
+          validatePlayerBuild(build, RULESET.attributes).length > 0
+        ) {
+          side.pending.delete(member.id);
+          refuse(member.id, "invalid-proposal");
+          return false;
+        }
+        const slots =
+          side.pending.get(member.id) ?? Array.from({ length: side.size }, () => undefined);
+        slots[command.slot] = build;
+        const builds = slots.flatMap((slot) => (slot === undefined ? [] : [slot]));
+        if (builds.length < side.size) {
+          side.pending.set(member.id, slots);
+          return false;
+        }
+        // Complete: a new proposal, last in the list, with no votes yet.
+        side.pending.delete(member.id);
+        dropProposal(side, member.id);
+        side.proposals.set(member.id, builds);
+        return true;
+      }
+      case "vote": {
+        if (lobby.stage !== "vote") {
+          return false;
+        }
+        if (command.proposerId === null) {
+          return side.votes.delete(member.id);
+        }
+        if (!side.proposals.has(command.proposerId)) {
+          refuse(member.id, "invalid-vote");
+          return false;
+        }
+        const changed = side.votes.get(member.id) !== command.proposerId;
+        side.votes.set(member.id, command.proposerId);
+        return changed;
+      }
+      case "claim": {
+        if (lobby.stage !== "claim") {
+          return false;
+        }
+        const held = side.claims.indexOf(member.id);
+        if (command.slot === null) {
+          if (held < 0) {
+            return false;
+          }
+          side.claims[held] = null;
+          return true;
+        }
+        const { slot } = command;
+        if (!Number.isInteger(slot) || slot < 0 || slot >= side.size) {
+          refuse(member.id, "invalid-slot");
+          return false;
+        }
+        if (side.claims[slot] === member.id) {
+          return false;
+        }
+        if (side.claims[slot] !== null) {
+          refuse(member.id, "slot-taken");
+          return false;
+        }
+        if (held >= 0) {
+          side.claims[held] = null;
+        }
+        side.claims[slot] = member.id;
+        return true;
+      }
+      default:
+        // The lobby's own choices were made before the Team Lobby began.
+        return false;
     }
   };
 
@@ -384,11 +778,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         const check = canStart(
           [...members.values()].map((other) => ({ team: other.team, ready: isReady(other) })),
         );
-        if (check.ok) {
-          start();
-        } else {
+        if (!check.ok) {
           note("start-rejected", check.reason, member.id);
+          return false;
         }
+        if (options.teamLobby) {
+          return beginTeamLobby();
+        }
+        start();
         return false;
       }
       case "set-bots": {
@@ -418,6 +815,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         return side.length !== count;
       }
+      case "propose":
+      case "vote":
+      case "claim":
+        // A Team Lobby's, and this is not one yet.
+        return false;
     }
   };
 
@@ -658,7 +1060,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   transport.on("lobby-cmd", (data, from) => {
     const member = peerMember(from);
     // Nothing a peer says before its lobby-join counts.
-    if (closed || member === undefined || !budget.take(from, nowMs()) || phase !== "waiting") {
+    if (
+      closed ||
+      member === undefined ||
+      !budget.take(from, nowMs()) ||
+      (phase !== "waiting" && phase !== "team-lobby")
+    ) {
       return;
     }
     const command = parseWireLobbyCommand(data);
@@ -672,7 +1079,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       }
       return;
     }
-    if (apply(member, command)) {
+    if (teamLobby === undefined ? apply(member, command) : applyTeam(teamLobby, member, command)) {
       broadcast();
     }
   });
@@ -935,7 +1342,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       const shown = countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt);
+      const shownStage = teamLobby === undefined ? null : countdownLeft(teamLobby.endsAt);
       elapsed += seconds;
+      if (teamLobby !== undefined) {
+        if (clockMs() >= teamLobby.endsAt) {
+          endStage(teamLobby);
+        } else if (countdownLeft(teamLobby.endsAt) !== shownStage) {
+          broadcast();
+        }
+      }
       if (queued !== undefined && !runQueue(queued, shown)) {
         return;
       }
@@ -1016,7 +1431,23 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       away.set(peerId, nowMs());
       return;
     }
+    const leaving = members.get(peerId);
     members.delete(peerId);
+    // In a Team Lobby (#1458) its proposal, vote and claim go with it, and
+    // a bot takes its seat, so its side stays the size it proposed for.
+    if (teamLobby !== undefined && leaving !== undefined && leaving.team !== null) {
+      const side = teamLobby.sides[leaving.team];
+      side.pending.delete(peerId);
+      dropProposal(side, peerId);
+      side.votes.delete(peerId);
+      side.claims = side.claims.map((holder) => (holder === peerId ? null : holder));
+      addBot(leaving.team);
+      figureBots();
+      if (everyoneReady()) {
+        endStage(teamLobby);
+        return;
+      }
+    }
     if (queued !== undefined) {
       // A winner gone is a no; the last of them gone, and the lobby is done.
       runVote(queued);

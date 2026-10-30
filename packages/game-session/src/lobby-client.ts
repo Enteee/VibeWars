@@ -11,6 +11,7 @@ import {
   parseWirePartyFormed,
   parseWirePartyProposal,
   parseWirePartySplit,
+  type JsonValue,
   type LobbyRefusal,
   type PeerPartyConsent,
   type PeerStayTogether,
@@ -264,6 +265,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
+    teamLobby: state.teamLobby,
   });
 
   return new Promise((resolve, reject) => {
@@ -302,6 +304,28 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       setBots(team, count) {
         send({ kind: "set-bots", team, count });
       },
+      propose(members) {
+        if (members === null) {
+          send({ kind: "propose", slot: null });
+          return;
+        }
+        // One a message, so large builds still fit; plain JSON, as a
+        // hello's build: the host parses and checks each.
+        members.forEach((build, slot) => {
+          send({
+            kind: "propose",
+            slot,
+            size: members.length,
+            build: JSON.parse(JSON.stringify(build)) as JsonValue,
+          });
+        });
+      },
+      vote(proposerId) {
+        send({ kind: "vote", proposerId });
+      },
+      claim(slot) {
+        send({ kind: "claim", slot });
+      },
       sendChat(channel, text) {
         if (hostId !== undefined && !closed) {
           // Past the wire's bound the host would drop it whole; it cuts to a line itself.
@@ -313,6 +337,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onMatchStarting(handler) {
         startingHandlers.push(handler);
+      },
+      watchMatch() {
+        return latest?.phase === "in-match" && latest.matchId !== null
+          ? { matchId: latest.matchId, transport: scopeTransport(transport) }
+          : undefined;
       },
       onStartRejected(handler) {
         rejectedHandlers.push(handler);

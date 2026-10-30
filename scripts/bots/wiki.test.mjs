@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import http from "node:http";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,6 +9,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   ARCHIVE_ORIGIN,
   LIVE_ORIGIN,
+  LIVE_TTL_MS,
   MAX_DIFF_CELLS,
   MAX_PAGE_BYTES,
   READ_TIMEOUT_MS,
@@ -22,6 +24,7 @@ import {
   snapshotUrl,
   unifiedDiff,
 } from "./wiki.mjs";
+import { createWebCache } from "./web-cache.mjs";
 
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures", "wiki");
 /** @param {string} name */
@@ -398,6 +401,64 @@ describe("runWiki (#1380)", () => {
 
     expect(answer.code).toBe(2);
     expect(answer.stderr).toContain("usage:");
+  });
+});
+
+describe("runWiki with the web cache (#1381)", () => {
+  /** @type {string[]} */
+  const dirs = [];
+  afterEach(() => {
+    for (const dir of dirs.splice(0)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  /** @param {{ now: () => number }} clock */
+  const cacheAt = (clock) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wiki-cache-"));
+    dirs.push(dir);
+    return createWebCache({
+      dir,
+      now: clock.now,
+      freeBytes: () => Infinity,
+      holdBelow: 0,
+      log: () => undefined,
+    });
+  };
+
+  it("reads a snapshot once for good, and the live page and the list once a day", async () => {
+    let now = 1_800_000_000_000;
+    const clock = { now: () => now };
+    const cache = cacheAt(clock);
+    const deps = { ...fakeFetch({ [LIVE]: FIREBALL_NOW, ...WAYBACK }), cache };
+    const urls = () => deps.calls.map((c) => c.url);
+
+    await runWiki(["get", "Fireball"], deps);
+    await runWiki(["get", "Fireball", "--at", "2007-05-18"], deps);
+    const first = urls();
+    expect(first).toEqual([LIVE, cdxUrl("Fireball", ORIGINS), snap("20070518013811")]);
+    const again = await runWiki(["get", "Fireball"], deps);
+    await runWiki(["get", "Fireball", "--at", "2007-05-18"], deps);
+    expect(urls()).toEqual(first);
+    expect(again.stdout).toContain("(live)");
+
+    now += LIVE_TTL_MS;
+    await runWiki(["get", "Fireball"], deps);
+    await runWiki(["get", "Fireball", "--at", "2007-05-18"], deps);
+    expect(urls()).toEqual([...first, LIVE, cdxUrl("Fireball", ORIGINS)]);
+  });
+
+  it("never keeps the maintenance page", async () => {
+    const cache = cacheAt({ now: Date.now });
+    const deps = { ...fakeFetch({ [LIVE]: MAINTENANCE, ...WAYBACK }), cache };
+
+    await runWiki(["get", "Fireball"], deps);
+    await runWiki(["get", "Fireball"], deps);
+
+    const asked = deps.calls.map((c) => c.url);
+    expect(asked.filter((url) => url === LIVE)).toHaveLength(2);
+    expect(asked.filter((url) => url === snap("20261020101500"))).toHaveLength(2);
+    expect(asked.filter((url) => url === snap("20260908144536"))).toHaveLength(1);
   });
 });
 

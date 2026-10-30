@@ -21,6 +21,8 @@ export interface LobbyScreenCallbacks {
   readonly onChooseTeam: (team: 0 | 1 | null) => void;
   readonly onToggleReady: () => void;
   readonly onStart: () => void;
+  /** A member on no team, while the match runs (#480): watch it, late. */
+  readonly onWatch: () => void;
   /** Host only (#1454): `team` has `count` bots. */
   readonly onSetBots: (team: 0 | 1, count: number) => void;
   readonly onLeave: () => void;
@@ -55,6 +57,8 @@ export interface LobbyControls {
   readonly startDisabled: boolean;
   /** The bot count's + (#1454): a bot takes a seat like anyone, so a full lobby has none for it. */
   readonly botsDisabled: boolean;
+  /** Watch (#480): only for a member on no team, and only while the match runs. */
+  readonly canWatch: boolean;
 }
 
 export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
@@ -70,6 +74,7 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
     readyDisabled: !waiting || self === undefined || self.team === null,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
     botsDisabled: !waiting || snapshot.players.length >= MAX_LOBBY_PLAYERS,
+    canWatch: snapshot.phase === "in-match" && self?.team === null,
   };
 }
 
@@ -237,7 +242,11 @@ export function renderLobbyScreen(
     callbacks.onToggleReady,
   );
   readyButton.disabled = controls.readyDisabled;
-  const actions: HTMLElement[] = [readyButton];
+  // A member on no team has nothing to ready while the match runs, but
+  // can watch it (#480).
+  const actions: HTMLElement[] = controls.canWatch
+    ? [button("Watch", "primary lobby-watch", callbacks.onWatch)]
+    : [readyButton];
   if (snapshot.isHost) {
     const start = button("Start match", ready ? "primary" : "", () => {
       // Starting answers the question: the host is staying.

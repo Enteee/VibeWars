@@ -69,3 +69,42 @@ export function selfTargetIntent(
   }
   return { kind: "target", targetSessionId: selfId };
 }
+
+/**
+ * Whom a watcher may follow (#480): team 0's seats, then team 1's, each
+ * in the lobby's seat order: its players, then its bots. A creature is
+ * no one to follow.
+ */
+function followOrder(players: readonly PlayerSnapshot[]): PlayerSnapshot[] {
+  return players
+    .filter((player) => player.creature === undefined)
+    .sort((a, b) => a.team - b.team || Number(a.bot) - Number(b.bot));
+}
+
+/** The player a watcher follows first (#480): team 0's first seat; `undefined` with none. */
+export function firstFollowed(players: readonly PlayerSnapshot[]): string | undefined {
+  return followOrder(players)[0]?.sessionId;
+}
+
+/**
+ * Tab and Shift-Tab while watching (#480): the next living player after
+ * `currentId`, through both teams in seat order, skipping the dead;
+ * `undefined` when nobody lives.
+ */
+export function nextFollowed(
+  players: readonly PlayerSnapshot[],
+  currentId: string | undefined,
+  step: 1 | -1,
+): string | undefined {
+  const order = followOrder(players);
+  const at = order.findIndex((player) => player.sessionId === currentId);
+  // From nowhere, Tab starts at the first seat and Shift-Tab at the last.
+  const from = at === -1 ? (step === 1 ? -1 : order.length) : at;
+  for (let i = 1; i <= order.length; i += 1) {
+    const next = order[(((from + step * i) % order.length) + order.length) % order.length];
+    if (next !== undefined && !next.dead) {
+      return next.sessionId;
+    }
+  }
+  return undefined;
+}
