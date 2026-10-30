@@ -481,8 +481,8 @@ describe("describeSkill", () => {
     // line, then one per effect of its spring (#1105), and one more if it
     // springs by itself; a pulse one, then one per effect (#1113); a
     // faster flight one, and one per on-crit or failed-to-hit rider
-    // (#1486). A spirit's on-hit effects are lines as a skill's, and its
-    // death burst one more (#1550).
+    // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
+    // are lines as a skill's, and its death burst one more (#1550).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
@@ -529,6 +529,7 @@ describe("describeSkill", () => {
           lines(rule?.onCritical ?? []) +
           lines(rule?.onFailedToHit ?? []) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
+          (rule !== undefined && rule.strikes > 1 && entry.attack?.weapon === "bow" ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
           (isEasilyInterrupted(entry.type) ? 1 : 0) +

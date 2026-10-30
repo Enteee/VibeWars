@@ -37,7 +37,7 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.armor-of-mist": { glyph: "mist-shield" },
   "elementalist.shatterstone": { glyph: "stone-split", modifier: "hourglass" },
   "elementalist.mind-freeze": { glyph: "head-frost" },
-  "elementalist.mind-blast": { glyph: "fireball", modifier: "up" },
+  "elementalist.mind-blast": { glyph: "fireball-mind", modifier: "up" },
   // Placeholders until the asset-designer's (#1540).
   "elementalist.mark-of-rodgort": { glyph: "flame-target", modifier: "area" },
   "elementalist.lava-font": { glyph: "flame-field", modifier: "clock" },

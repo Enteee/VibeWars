@@ -48,4 +48,14 @@ export const MONK_ICONS = {
   "monk.signet-of-rejuvenation": { glyph: "plus-cycle" },
   // A placeholder until the asset-designer's (#1528).
   "monk.banish": { glyph: "ghost", modifier: "plus" },
+  // Placeholders until the asset-designer's (#1519): Monk smiting staples.
+  "monk.smite": { glyph: "lightning", modifier: "plus" },
+  "monk.spear-of-light": { glyph: "spear-bolt", modifier: "plus" },
+  "monk.word-of-censure": { glyph: "lightning", modifier: "clock" },
+  "monk.ray-of-judgment": { glyph: "flame-target", modifier: "clock" },
+  "monk.judges-insight": { glyph: "sword", modifier: "bolt" },
+  "monk.bane-signet": { glyph: "blow", modifier: "stun" },
+  "monk.castigation-signet": { glyph: "energy", modifier: "bolt" },
+  "monk.signet-of-judgment": { glyph: "blow", modifier: "area" },
+  "monk.holy-strike": { glyph: "lightning", modifier: "up" },
 };
