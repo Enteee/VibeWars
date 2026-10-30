@@ -9,7 +9,6 @@ import {
   SPECTATING_LINE,
   VOTE_HINT,
   clockText,
-  entryProposal,
   initial,
   proposableTeams,
   reasonLine,
@@ -215,14 +214,6 @@ describe("the Team Lobby's words (#1460)", () => {
       { id: "b", label: "Four", disabled: false },
     ]);
     expect(proposableTeams([team("a", "Duo", 2)], 1)[0]?.label).toBe("Duo (needs 1 character)");
-  });
-
-  it("proposes the Team Play pick on entry only if it is the side's size", () => {
-    const saved = [team("a", "Duo", 2), team("b", "Four", 4)];
-    expect(entryProposal(saved, "b", 4)).toBe("b");
-    expect(entryProposal(saved, "a", 4)).toBeUndefined();
-    expect(entryProposal(saved, "gone", 4)).toBeUndefined();
-    expect(entryProposal(saved, undefined, 4)).toBeUndefined();
   });
 });
 

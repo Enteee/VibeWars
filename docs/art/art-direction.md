@@ -906,7 +906,7 @@ it, not baked in, so one file serves every screen.
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
   blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,
   dagger-crit (a dagger and a four-point spark), shield-crit, blink-heal, blink-fang, blink-ally (the step with a plus, two fangs, a figure), shield-veil, crescent-spark, caltrops, spark (a four-point star with a tail), flame-foe, flame-mind (a flame over a figure, over a bare head), flame-ring, flame-burst (short and long rays round a dot), flame-target, flame-field, hammer-prone, hammer-shield, hammer-counter, hammer-weak, hammer-chevrons, hammer-quake (the hammer over a downed foe, a shield, a turning arrow, weak chevrons, wide cracks), hex-barbs, hex-miss, hex-drain, hex-heal-cut, hex-nobloc, hex-drain-cut (the hex ring with spikes, a cross, falling triangles, a cut plus, a cracked shield, both), drop-touch, drop-trio, drop-half, drop-weak, drop-barbs, drop-energy (the blood drop with a plus, three drops, a half-full drop, a down arrow, barbs, a bolt), ghost, weight, ache-cross, armor-shrink, speed-break (a whole chevron and a
-  broken one), eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling), ice-cage, frost-nova, spear-ice, whirl, eye-blur, mist-shield, stone-split, head-frost (icicles under a bar, a snowflake with ice thrown out round it, a long spear, a spiral, an eye and its ghost, mist over a shield, a stone split in two, a snowflake in a head and shoulders), avatar-earth, avatar-wings (a figure in a god's shape: Melandru grows a two-leaf branch from the head, Dwayna spreads wings behind it; Balthazar's flame rises from its head, Grenth's scythe slants behind it, Lyssa's zigzags flank it: avatar-flame, avatar-scythe, avatar-chaos), was-shield, was-heart, was-cap, was-blind, was-quake, was-bolt (the Ritualist's Was spells: one urn of held ashes with no base line, a mark in its body for what they do; armor, Health, a ceiling on hits, blindness, a crack, energy; six marks stay free for #1464), gain-barbs, gain-shield, gain-burst, hex-return (the gain-trigger skills: a plus in the top left corner is what the foe gains, spikes, a bolted shield or a burst below it is the payoff; Hex Breaker's corner is a dashed ring and an arrow goes back at it), haste-clean, flame-halo, flame-bars, chase (the flash enchantments: chevrons and a struck-through drop, a flame under a halo, a flame beside rising bars, a chevron after a dot), note-hold (a note under a fermata: Enduring Harmony). Echoes (#1482): the corner says the family, a turning arrow (`renew`) for a refrain that renews and lasts, a four-point spark (`finale`) for a finale that fires once; the type mark is the chant's note with ripples after it. A
+  broken one), eye-slash, limp-drain, blow, sweep, rush, dolyak, heart-plus, bolt-cap (a melee blow, a wide sweep, three chevrons, a bull's head with horns, a heart with a plus, a bolt under a ceiling), ice-cage, frost-nova, spear-ice, whirl, eye-blur, mist-shield, stone-split, head-frost (icicles under a bar, a snowflake with ice thrown out round it, a long spear, a spiral, an eye and its ghost, mist over a shield, a stone split in two, a snowflake in a head and shoulders), avatar-earth, avatar-wings (a figure in a god's shape: Melandru grows a two-leaf branch from the head, Dwayna spreads wings behind it; Balthazar's flame rises from its head, Grenth's scythe slants behind it, Lyssa's zigzags flank it: avatar-flame, avatar-scythe, avatar-chaos), was-shield, was-heart, was-cap, was-blind, was-quake, was-bolt (the Ritualist's Was spells: one urn of held ashes with no base line, a mark in its body for what they do; armor, Health, a ceiling on hits, blindness, a crack, energy; six marks stay free for #1464), gain-barbs, gain-shield, gain-burst, hex-return (the gain-trigger skills: a plus in the top left corner is what the foe gains, spikes, a bolted shield or a burst below it is the payoff; Hex Breaker's corner is a dashed ring and an arrow goes back at it), haste-clean, flame-halo, flame-bars, chase (the flash enchantments: chevrons and a struck-through drop, a flame under a halo, a flame beside rising bars, a chevron after a dot), hex-fail-foe, hex-fail-ally, hex-churn (the Mesmer hexes on the bearer's next spell: a dashed ring round a small struck orb, then a heavy X for a spell at a foe or a solid disc with a plus cut out for one at an ally; no chevron, so the mark stays large at 16 px; a drop between a plus and a minus for a condition gained or lost), spear-flame, spear-fast, spear-weak, spear-crit, spear-heart, spear-crack, spear-burst, spear-cleanse, spear-swipe, spear-pierce (the Paragon thrown spears: a spear on the left and its rider on the right: a flame, three chevrons, a down arrow, a four-point spark, a hollow heart, a cracked shield, a burst, a struck drop; a swiped arc; a shield with the spear through it for unblockable; a drop badge below is Deep Wound), note-hold (a note under a fermata: Enduring Harmony). Echoes (#1482): the corner says the family, a turning arrow (`renew`) for a refrain that renews and lasts, a four-point spark (`finale`) for a finale that fires once; the type mark is the chant's note with ripples after it. A
   new primary effect adds a glyph; a new skill adds a row.
 
 ### Skill slot states
@@ -1059,6 +1059,40 @@ follow it: a side with no proposals plays the house team (starter
 builds); and a human who has not
 claimed a slot when the clock ends gets the lowest free one, so only slots no
 human is left to take become bots.
+
+### Game modes (#1522; study, not decided)
+
+`scripts/assets/game-modes-study.mjs` draws `docs/art/game-modes-study.svg`:
+three variants at 1280 px, desktop only. It supersedes the Solo and Team Play
+tab split. Each variant shows the title bar in three states (your own code with
+Copy; a friend's code being typed with Join lit; a guest in a friend's lobby
+with the way back), the five mode icons (Random Arena, Team Arena, Heroes'
+Ascent, GvG, Hosted Game) at 24 and 32 px, Random Arena with and without a
+character, Team Arena alone and with three friends joined, and Hosted Game.
+Team Arena stands for Heroes' Ascent and GvG: only the side size and the goal
+line change. The icons are placeholder art; the picked set is finished on the
+implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
+`net/session.ts`) is the same in all three and needs an ADR.
+
+- **A: icons and code on one row.** The operator's sketch: one 44 px bar. Only
+  the host picks the mode; a guest's icons dim. Joining closes your own lobby
+  and your friends fall back to theirs. The Team Builder is a side pane. Code:
+  the cheapest bar (a row of five buttons and a code field), a Team Lobby plus
+  Builder screen with two columns, and the lobby-closes rule is the simplest
+  session change.
+- **B: labelled icons, the code at the right.** A 66 px bar with a name under
+  each icon, so no hover is needed. Anyone in the lobby picks the mode, the
+  last click wins. Joining leaves your lobby open and ownerless. The Team
+  Builder is a tab. Code: a taller bar, a tab strip, a "who switched the mode"
+  message, and the hardest session change: a lobby that outlives its host's
+  absence.
+- **C: a mode rail on the left.** The bar holds only the name and the code;
+  the rail holds the modes, solid icons at 32 px. Only the host picks. Joining
+  takes your whole party along. The Team Builder sits below the Team Lobby.
+  Code: a new rail layout that narrows every screen by 76 px, and a party
+  that moves as one, which is a new message on the wire.
+
+The operator picks one and says why; the pick is recorded here.
 
 ## Creatures
 

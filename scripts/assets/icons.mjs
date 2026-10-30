@@ -398,6 +398,23 @@ const status = {
       `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
       `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
   ],
+  // Paragon echoes 2 (#1485), stand-ins until their art card.
+  // Echo: a blade bent off a shield, slashing damage turned.
+  "bladeturn-refrain": [
+    "echo",
+    (c) =>
+      `<path d="M12 3.5l7 2.5v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M8 15l8-8" ${stroke(c, 2)}/>`,
+  ],
+  // Echo: a bolt, energy at the end of each chant.
+  "energizing-finale": ["echo", (c) => `<path d="M13 3L6 13h5l-1 8 7-10h-5z" fill="${c}"/>`],
+  // Echo: two chevrons over a sword, attacks faster under a chant.
+  "soldiers-fury": [
+    "echo",
+    (c) =>
+      `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
+      `<path d="M12 14v6M9.5 17h5" ${stroke(c, 2)}/>`,
+  ],
   // Stance: a shield, filled, armor and blocks (#1329).
   "disciplined-stance": [
     "stance",
@@ -1333,6 +1350,33 @@ const status = {
   ],
   // Ashes: a bolt, energy back.
   "energetic-was-lee-sa": ["item", (c) => `<path d="M13 6l-4 6h4l-2 5 5-7h-4z" fill="${c}"/>`],
+  // Ritualist item spells 2 (#1464), stand-ins until the asset-designer's.
+  // Ashes: a bar raised, more maximum Energy.
+  "mighty-was-vorizun": [
+    "item",
+    (c) => `<path d="M9 16V9M15 16V9M7 11l5-4 5 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a spike through a plate, armor pierced.
+  "cruel-was-daoshen": [
+    "item",
+    (c) => `<path d="M7 13h10M12 6v11M10 8l2-2 2 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Ashes: a bolt in a ring, lightning on all in the area.
+  "destructive-was-glaive": [
+    "item",
+    (c) =>
+      `<circle cx="12" cy="12" r="5" ${stroke(c, 1.4)}/>` +
+      `<path d="M13 8l-3 4h3l-2 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Ashes: a level line, a cast nothing breaks.
+  "tranquil-was-tanasen": ["item", (c) => `<path d="M7 10h10M7 14h10" ${stroke(c, 1.8)}/>`],
+  // Ashes: a hook turned back on the striker.
+  "vengeful-was-khanhei": ["item", (c) => `<path d="M8 8l8 8M16 8v4h-4" ${stroke(c, 1.8)}/>`],
+  // Ashes: a drop running clear, conditions sooner gone.
+  "pure-was-li-ming": [
+    "item",
+    (c) => `<path d="M12 7c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" ${stroke(c, 1.6)}/>`,
+  ],
   // "The next spell fails" hexes (#1475), stand-ins until the asset-designer's.
   // Hex: a struck-through spark with an arrow down, a spell at a foe fails.
   guilt: [
@@ -1776,9 +1820,19 @@ const flameRing = (inner, outer, width, dot = true) => {
   return inkLine(d, width) + (dot ? `<circle cx="12" cy="12" r="2.2" fill="${C.ink}"/>` : "");
 };
 
+/** A hex ring round a small struck spell orb and `target`, the mark that says whom (#1498). @param {string} target */
+const hexFail = (target) =>
+  `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+  `<circle cx="7.6" cy="10.5" r="2" fill="${C.ink}"/>` +
+  `<path d="M5.4 13L9.8 8" ${stroke(C.bg, 1.3)}/>` +
+  target;
+
 /** An urn of held ashes round `mark`, the Ritualist's Was spells (#1493). @param {string} mark */
 const wasUrn = (mark) =>
   inkLine("M7 3H17M8.5 3V6.5L5 11V18L7.5 21.5H16.5L19 18V11L15.5 6.5V3", 2) + mark;
+
+/** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
+const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -2520,6 +2574,43 @@ const skillGlyph = {
     inkLine("M12 21V9", 2.4) +
     inkFill("M12 2.5L16.5 10H7.5Z") +
     inkLine("M12 18L7.5 14.5M12 14L16.5 10.5", 2),
+  // The Paragon thrown spears (#1508): a spear on the left, the rider on the right; a drop badge
+  // below is Deep Wound.
+  "spear-flame": () =>
+    sideSpear() +
+    `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${C.ink}" transform="translate(11.5 2.5) scale(0.6)"/>`,
+  "spear-fast": () =>
+    sideSpear() +
+    inkLine("M12.5 8L16 4.5L19.5 8M12.5 13L16 9.5L19.5 13M12.5 18L16 14.5L19.5 18", 2),
+  "spear-weak": () => sideSpear() + inkLine("M17 4V15M13.5 11.5L17 15L20.5 11.5", 2.4),
+  "spear-crit": () =>
+    sideSpear() + inkFill("M17.5 2.5L19 6.5L23 8L19 9.5L17.5 13.5L16 9.5L12 8L16 6.5Z"),
+  "spear-heart": () =>
+    sideSpear() +
+    inkLine(
+      "M17 14L12.8 9.7C11.5 8.2 12.6 5.5 14.7 5.5C15.8 5.5 16.6 6.1 17 7C17.4 6.1 18.2 5.5 19.3 5.5C21.4 5.5 22.5 8.2 21.2 9.7Z",
+      1.7,
+    ),
+  "spear-crack": () =>
+    sideSpear() +
+    `<path d="M17 3L22 5V9.5C22 12 19.8 13.3 17 14.5C14.2 13.3 12 12 12 9.5V5Z" ${stroke(C.ink, 1.7)}/>` +
+    inkLine("M17 4.5L15.5 8.5L18.5 9.5L17 13", 1.5),
+  "spear-burst": () =>
+    sideSpear() +
+    `<g transform="translate(17,8.5) scale(0.62) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  "spear-cleanse": () =>
+    sideSpear() +
+    inkFill("M17 3C18.8 5.8 21 7.5 21 10A4 4 0 0 1 13 10C13 7.5 15.2 5.8 17 3Z") +
+    `<path d="M13 13.5L21 5" ${stroke(C.bg, 2)}/>`,
+  "spear-swipe": () =>
+    inkLine("M3.5 21L14.5 10", 2.4) +
+    inkFill("M20 3.5L11.5 6.5L17 12Z") +
+    inkLine("M2.5 13A10.5 10.5 0 0 1 11.5 3", 2.2),
+  // A shield with a spear driven through it: nothing blocks the throw (#1508).
+  "spear-pierce": () =>
+    `<path d="M12 4L19.5 6.8V12C19.5 16 16.5 18.8 12 20.5C7.5 18.8 4.5 16 4.5 12V6.8Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2.5 21.5L15 9", 2.8) +
+    inkFill("M22 2L16 3.8L12.8 6L18 11.2Z"),
   // A spear with speed lines trailing it: a toss at a runner (#1036).
   "spear-dash": () =>
     inkLine("M15 21V9", 2.4) + inkFill("M15 2.5L19.5 10H10.5Z") + inkLine("M4 11V17M8 13V20", 2),
@@ -2562,6 +2653,20 @@ const skillGlyph = {
   "hex-mute": () =>
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
     inkLine("M6.5 12H17.5", 3.2),
+  // A dashed ring (a hex), a small struck orb and a big mark: the bearer's next spell fails; an X
+  // is a foe it was aimed at, a disc with a plus an ally (#1498).
+  "hex-fail-foe": () => hexFail(inkLine("M11.8 6.3L19.8 14.3M19.8 6.3L11.8 14.3", 3)),
+  "hex-fail-ally": () =>
+    hexFail(
+      `<circle cx="15.8" cy="10.3" r="5" fill="${C.ink}"/>` +
+        `<path d="M15.8 7.6V13M13.1 10.3H18.5" ${stroke(C.bg, 1.8)}/>`,
+    ),
+  // A dashed ring (a hex) round a drop with a plus and a minus either side: damage whenever a
+  // condition is gained or lost (#1498).
+  "hex-churn": () =>
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
+    inkFill("M12 6.8C13.8 9.4 15.6 11 15.6 13.2A3.6 3.6 0 0 1 8.4 13.2C8.4 11 10.2 9.4 12 6.8Z") +
+    inkLine("M4 9.5H7M5.5 8V11M17 15H20", 1.6),
   // A shield outline with a crack down its face: the block is gone (#1262).
   "armor-crack": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +

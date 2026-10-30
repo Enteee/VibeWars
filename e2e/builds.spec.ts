@@ -342,8 +342,8 @@ const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
 async function openTeamPlay(page: Page): Promise<void> {
   await page.locator("#topbar .play-tabs").getByRole("button", { name: "Team Play" }).click();
 }
-/** Team Play's Team Build cards (#1453), without None and New team build: "Duo · 2 members". */
-const teamRows = (page: Page) => page.locator(".team-play-card:not(.is-none, .team-play-new)");
+/** Team Play's Team Build cards (#1453), without New team build: "Duo · 2 members". */
+const teamRows = (page: Page) => page.locator(".team-play-card:not(.team-play-new)");
 async function teamList(page: Page): Promise<string[]> {
   return teamRows(page).evaluateAll((cards) =>
     cards.map((card) => {
@@ -412,15 +412,15 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   await expect(page.locator(".toast")).toHaveText("Pasted Duo, 1 member. Save to keep it.");
 });
 
-test("Team Play's cards: None and New team build; a card shows its members, is picked and kept, Edit opens it (#1453)", async ({
+test("Team Play's cards: New team build; a card shows its members, and it or its Edit opens it (#1453, #1515)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamPlay(page);
-  // Empty: None, picked, and New team build, with the one line under them.
-  const none = page.locator(".team-play-card.is-none .team-play-card-choose");
-  await expect(none).toHaveAttribute("aria-pressed", "true");
+  // Empty: only New team build, with the one line under it; no None.
+  await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
   await expect(teamRows(page)).toHaveCount(0);
+  await expect(page.locator(".team-play-cards")).not.toContainText("None");
   await expect(page.locator(".team-play-hint")).toBeVisible();
   await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
   await page.getByRole("button", { name: "new team" }).click();
@@ -433,14 +433,13 @@ test("Team Play's cards: None and New team build; a card shows its members, is p
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
   await expect(teamRows(page).locator(".character-dot")).toHaveCount(2);
   await expect(page.locator(".team-play-hint")).toHaveCount(0);
-  // A card is a button: Enter picks it, and the pick outlives a reload.
-  const duo = teamRows(page).first().locator(".team-play-card-choose");
+  // A card is no pick: Enter on it opens it in the editor, as Edit does.
+  const duo = teamRows(page).first().locator(".team-play-card-open");
+  await expect(duo).not.toHaveAttribute("aria-pressed");
   await duo.focus();
   await page.keyboard.press("Enter");
-  await expect(duo).toHaveAttribute("aria-pressed", "true");
-  await expect(none).toHaveAttribute("aria-pressed", "false");
-  await page.reload();
-  await expect(duo).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("team name")).toHaveValue("Duo");
+  await page.getByRole("button", { name: "back" }).click();
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
 });

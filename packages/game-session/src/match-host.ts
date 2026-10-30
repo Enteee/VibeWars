@@ -9,6 +9,7 @@ import {
   loadoutOf,
   resolveJoinLoadout,
   loadoutSpec,
+  raisedMaxEnergy,
   raisedMaxHealth,
   resolveLoadout,
   spawnFacing,
@@ -1031,7 +1032,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       maxHealth: raisedMaxHealth(combatant),
       // Energy below 0 is GW1's hidden energy (#489): nobody sees it.
       energy: Math.max(0, Math.round(combatant.energy)),
-      maxEnergy: combatant.maxEnergy,
+      // Raised by Mighty Was Vorizun (#1464), as health is.
+      maxEnergy: raisedMaxEnergy(combatant),
       overcast: Math.round(combatant.overcast),
       morale: combatant.morale,
       armor: combatant.equipment.baseArmor,

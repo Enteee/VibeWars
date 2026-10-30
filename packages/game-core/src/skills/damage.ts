@@ -7,6 +7,7 @@ import {
 } from "../equipment/types.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
 import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
+import type { SkillProfession } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { isAttacking, signetsOnBar } from "./attacking.js";
@@ -50,6 +51,25 @@ export interface DamagePacket {
 /** Skill damage of these types ignores armor (GW1). */
 function ignoresArmor(type: DamageType): boolean {
   return type === "holy" || type === "shadow" || type === "typeless";
+}
+
+/**
+ * A skill's own armor penetration, and what `caster`'s statuses add to
+ * one of `profession` (#1464, Cruel Was Daoshen): at most 1 in all.
+ * `undefined` is no skill's, and takes nothing.
+ */
+export function withSkillArmorPenetration(
+  own: number,
+  caster: Combatant,
+  profession: SkillProfession | undefined,
+): number {
+  if (profession === undefined) {
+    return own;
+  }
+  const added = aggregateModifiers(caster.statuses.active)
+    .skillArmorPenetration.filter((rule) => rule.profession === profession)
+    .reduce((sum, rule) => sum + rule.share, 0);
+  return Math.min(1, own + added);
 }
 
 /** A skill's damage packet, of the effect's type and armor penetration. */

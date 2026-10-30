@@ -246,6 +246,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.maxHealthBonus !== 0) {
     parts.push(`+${String(definition.maxHealthBonus)} maximum health`);
   }
+  if (definition.maxEnergyBonus !== 0) {
+    parts.push(`+${String(definition.maxEnergyBonus)} maximum energy`);
+  }
   if (definition.healingMultiplier !== 1) {
     const change = Math.round((definition.healingMultiplier - 1) * 100);
     parts.push(`${change > 0 ? "+" : "−"}${String(Math.abs(change))}% healing`);
@@ -410,6 +413,20 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
     parts.push(`chants and shouts last ${String(longer)}% longer on it`);
   }
+  // Soldier's Fury's (#1485): "while under a shout or chant: attacks 33%
+  // faster, gain adrenaline 33% faster".
+  if (definition.whileUnder !== undefined) {
+    const { categories, attackDurationMultiplier, adrenalineGainFaster } = definition.whileUnder;
+    const gains = [
+      ...(attackDurationMultiplier === 1
+        ? []
+        : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
+      ...(adrenalineGainFaster === 0
+        ? []
+        : [`gain adrenaline ${String(Math.round(adrenalineGainFaster * 100))}% faster`]),
+    ];
+    parts.push(`while under a ${categories.join(" or ")}: ${gains.join(", ")}`);
+  }
   if (definition.endsAfterTriggers !== undefined) {
     const plural = definition.endsAfterTriggers === 1 ? "" : "s";
     parts.push(`ends after it takes effect ${String(definition.endsAfterTriggers)} time${plural}`);
@@ -457,6 +474,18 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const { share, profession } = definition.enchantmentRechargeFaster;
     const faster = String(Math.round(share * 100));
     parts.push(`${getProfession(profession).name} enchantments recharge ${faster}% faster`);
+  }
+  if (definition.skillArmorPenetration !== undefined) {
+    const { share, profession } = definition.skillArmorPenetration;
+    const pierce = String(Math.round(share * 100));
+    parts.push(`${getProfession(profession).name} skills have ${pierce}% armor penetration`);
+  }
+  if (definition.uninterruptible) {
+    parts.push("the bearer's skills cannot be interrupted");
+  }
+  if (definition.conditionsExpireFaster !== 0) {
+    const faster = String(Math.round(definition.conditionsExpireFaster * 100));
+    parts.push(`conditions on the bearer expire ${faster}% faster`);
   }
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
@@ -557,6 +586,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
+  "bearer-hit-by-attack": "is hit by a foe's attack",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-blocks": "blocks",
@@ -924,8 +954,12 @@ function describeTrigger(
         sentence(`${when}, ${condition}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
       );
     }
+    // Energizing Finale's (#1485): "whenever a chant or shout ends on it:
+    // it gains 2 energy".
     return describeEffects(effect, ranks).map(({ text }) =>
-      sentence(`${when}: ${lowerFirst(text)}`),
+      sentence(
+        `${when}: ${lowerFirst(trigger.target === "bearer" ? text.replace(/^Target gains/, "it gains") : text)}`,
+      ),
     );
   });
 }
@@ -1237,7 +1271,7 @@ function describeEffect(
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `Gain ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
+        text: `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
         magnitude,
       };
     }

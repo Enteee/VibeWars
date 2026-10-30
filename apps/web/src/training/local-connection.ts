@@ -4,6 +4,7 @@ import {
   applyIntent,
   companionMode,
   drainAccumulator,
+  raisedMaxEnergy,
   raisedMaxHealth,
   resolvedBar,
   swingProgress,
@@ -104,7 +105,8 @@ function toPlayerSnapshot(
     maxHealth: raisedMaxHealth(combatant),
     // Clamped as the host clamps it: energy below 0 is hidden (#489).
     energy: Math.max(0, Math.round(combatant.energy)),
-    maxEnergy: combatant.maxEnergy,
+    // Raised by Mighty Was Vorizun (#1464), as the host sends it.
+    maxEnergy: raisedMaxEnergy(combatant),
     overcast: Math.round(combatant.overcast),
     morale: combatant.morale,
     armor: combatant.equipment.baseArmor,

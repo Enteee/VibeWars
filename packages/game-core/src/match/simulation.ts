@@ -1881,7 +1881,7 @@ export class MatchSimulation {
    * `record`'s ashes (#1434), if it holds any, fall now, where it stands:
    * their drop effect, the item status's `ends` trigger, fires at once, not
    * at the tick's drain, so a shadow step drops them before it moves. The
-   * maximum Health they raised goes first.
+   * maximum Health and Energy they raised go first.
    */
   #dropAshes(record: ParticipantRecord): void {
     const dropped = record.combatant.statuses.dropItem();
@@ -1889,7 +1889,7 @@ export class MatchSimulation {
       return;
     }
     const change: StatusChange = { kind: "ended", ...dropped, expired: false };
-    this.#loseRaisedHealth(record, change);
+    this.#loseRaisedMaxima(record, change);
     this.#logFired(
       fireChangeTriggers(record.combatant, change, this.#spread, this.#triggerContext()),
     );
@@ -3458,7 +3458,7 @@ export class MatchSimulation {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
-        this.#loseRaisedHealth(record, change);
+        this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
       }
     }
@@ -3479,7 +3479,7 @@ export class MatchSimulation {
         if (change.kind === "broke-hex") {
           this.#logFired(breakHex(record.combatant, change, context));
         }
-        this.#loseRaisedHealth(record, change);
+        this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
       }
     }
@@ -3506,16 +3506,26 @@ export class MatchSimulation {
   }
 
   /**
-   * A status that raised its bearer's maximum ended (#1359): Endure Pain's.
-   * Health above the maximum left is lost, as in GW1; a bearer below it
-   * loses nothing, so the end never kills.
+   * A status that raised its bearer's maximum ended: Endure Pain's health
+   * (#1359), Mighty Was Vorizun's energy (#1464). What is above the maximum
+   * left is lost, as in GW1; a bearer below it loses nothing, so the end
+   * never kills.
    */
-  #loseRaisedHealth(record: ParticipantRecord, change: StatusChange): void {
-    if (change.kind !== "ended" || STATUS_DEFINITIONS[change.id].maxHealthBonus === 0) {
+  #loseRaisedMaxima(record: ParticipantRecord, change: StatusChange): void {
+    if (change.kind !== "ended") {
       return;
     }
+    const { maxHealthBonus, maxEnergyBonus } = STATUS_DEFINITIONS[change.id];
     const { combatant } = record;
-    combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
+    if (maxHealthBonus !== 0) {
+      combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
+    }
+    if (maxEnergyBonus !== 0) {
+      combatant.energy = Math.max(
+        energyFloor(combatant),
+        Math.min(combatant.energy, effectiveMaxEnergy(combatant)),
+      );
+    }
   }
 
   /**
@@ -4730,6 +4740,7 @@ export class MatchSimulation {
         );
         bearerHit(
           attacker.combatant,
+          target.combatant,
           events,
           skillHit !== undefined,
           projectile.weaponSnapshot.mainHand.weapon,
