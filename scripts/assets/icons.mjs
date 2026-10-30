@@ -1513,6 +1513,14 @@ const status = {
       `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
   ],
+  // Monk smiting staples (#1519), a stand-in until the asset-designer's.
+  // Enchantment: a blade with a holy halo, attacks are holy and pierce.
+  "judges-insight": [
+    "enchantment",
+    (c) =>
+      `<ellipse cx="12" cy="5" rx="4.5" ry="1.6" ${stroke(c, 1.5)}/>` +
+      `<path d="M12 8v9M9 14h6M12 17v3" ${stroke(c, 2)}/>`,
+  ],
   // Necromancer and Elementalist staples (#1540), stand-ins until their art card.
   // Enchantment: a drop over three regeneration arrows, energy bought with blood.
   "blood-is-power": [
@@ -1586,28 +1594,28 @@ const status = {
   ],
   // Hex: three rising bars, each second's pulse harder than the last.
   "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
-  // Dervish staples and Shadow Prison (#1551), stand-ins until their art card.
-  // Enchantment: a hooked hand over a limp line, attack skills cripple.
+  // Dervish staples and Shadow Prison (#1551, #1573): each matches its skill icon.
+  // Enchantment: a hand over a broken line, attack skills cripple.
   "grenths-grasp": [
     "enchantment",
     (c) =>
-      `<path d="M7 4v7a5 5 0 0 0 10 0V4M10 4v6M14 4v6" ${stroke(c, 1.8)}/>` +
-      `<path d="M5 20l4-3 3 2 3-3 4 2" ${stroke(c, 1.8)}/>`,
+      `<path d="M7 3.5V9M10 3V9M14 3V9M17 3.5V9" ${stroke(c, 1.8)}/>` +
+      `<path d="M5.5 8.5H18.5V10.5A6.5 6.5 0 0 1 5.5 10.5Z" fill="${c}"/>` +
+      `<path d="M4.5 20L8.5 17.5L12 19.5L15.5 17L19.5 19" ${stroke(c, 1.8)}/>`,
   ],
-  // Enchantment: a cracked plate inside a ring, knocked-down foes stripped.
+  // Enchantment: a ring broken open round a burst, cold that strips an enchantment.
   "rending-aura": [
     "enchantment",
     (c) =>
-      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.4)}/>` +
-      `<path d="M8 7h8v5c0 2.5-2 4-4 5-2-1-4-2.5-4-5z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 7l-1 3 2 2-1 3" ${stroke(c, 1.4)}/>`,
+      `<path d="M12 3.5A8.5 8.5 0 0 1 20.5 12M18 18A8.5 8.5 0 0 1 8 20M5 17A8.5 8.5 0 0 1 5 7" ${stroke(c, 1.6)}/>` +
+      `<path d="M12 7V17M7.7 9.5L16.3 14.5M7.7 14.5L16.3 9.5" ${stroke(c, 1.8)}/>`,
   ],
-  // Hex: bars round a figure, it moves 66% slower.
+  // Hex: the step arrowheads behind bars, it moves 66% slower.
   "shadow-prison": [
     "hex",
     (c) =>
-      `<path d="M6 4v16M10 4v16M14 4v16M18 4v16" ${stroke(c, 1.6)}/>` +
-      `<path d="M4 4h16M4 20h16" ${stroke(c, 2)}/>`,
+      `<path d="M3 8L6 12L3 16Z" ${stroke(c, 1.4)}/>` +
+      `<path d="M10 4V20M14 4V20M18 4V20M8 4.5H20M8 19.5H20" ${stroke(c, 1.8)}/>`,
   ],
 };
 
@@ -2191,6 +2199,34 @@ const skillGlyph = {
   // A scythe: a long haft, the blade curved over its top (#990).
   scythe: () =>
     inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
+  // A scythe with a broken ring beside its blade: it spends an enchantment (#1573).
+  "scythe-spend": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    `<path d="M17 3.2A4.2 4.2 0 0 1 21.4 7.6M21 11.2A4.2 4.2 0 0 1 16.4 11.4" ${stroke(C.ink, 1.8)}/>`,
+  // A scythe with a snowflake in the corner: cold damage from the blade (#1573).
+  "scythe-frost": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    inkLine("M19 2.5V10.5M15.5 4.5L22.5 8.5M22.5 4.5L15.5 8.5", 1.6),
+  // Rings of earth spreading from a point: the sandstorm pulses (#1573).
+  "sand-pulse": () =>
+    `<circle cx="12" cy="12" r="2.6" fill="${C.ink}"/>` +
+    `<circle cx="12" cy="12" r="6.4" ${stroke(C.ink, 2)} stroke-dasharray="4 3"/>` +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2)} stroke-dasharray="2 4.2"/>`,
+  // A hand reaching down over a broken line: it grips and cripples (#1573).
+  grasp: () =>
+    inkLine("M5.5 3V9M9.5 2.5V9M14.5 2.5V9M18.5 3V9", 2.2) +
+    inkFill("M4 8.5H20V11A8 8 0 0 1 4 11Z") +
+    inkLine("M3 21L8 18.5L12 21L16 18L21 20.5", 2),
+  // A ring broken open round a six-armed burst: cold that rends the enchantment (#1573).
+  "ring-rend": () =>
+    `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 6.5V17.5M7.2 9.2L16.8 14.8M7.2 14.8L16.8 9.2", 2.2),
+  // The step arrowheads behind bars: a shadow step into a prison (#1573).
+  "blink-bars": () =>
+    `<path d="M2.5 6L6.5 11L2.5 16Z" ${stroke(C.ink, 1.5)}/>` +
+    inkLine("M10 3V21M14 3V21M18 3V21M7.5 3.5H20.5M7.5 20.5H20.5", 2),
   // A tornado: bars narrowing to a point, a whirlwind round the caster (#990).
   twister: () => inkLine("M3.5 5H20.5M6 9.5H18M8.5 14H15.5M11 18.5H13.5", 2.4),
   axe: () =>

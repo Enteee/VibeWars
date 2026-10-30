@@ -69,7 +69,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     triggers: [
       {
         on: "bearer-uses-skill",
-        effects: [{ kind: "lengthen-recharge", seconds: { flat: 47 } }],
+        effects: [{ kind: "lengthen-recharge", of: "target-last-skill", seconds: { flat: 47 } }],
         target: "bearer",
         skillId: "mesmer.diversion",
       },
