@@ -1531,6 +1531,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
     case "target-is-summoned":
@@ -1617,6 +1618,8 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "target-not-attacking":
+      return !isAttacking(target);
     case "any-of":
       return condition.conditions.some((each) =>
         stateHolds(each, caster, target, surroundings, firing),
@@ -1846,6 +1849,7 @@ function conditionHolds(
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
     case "target-is-summoned":

@@ -992,6 +992,11 @@ export type StateCondition =
    */
   | { readonly kind: "target-attacking" }
   /**
+   * The exact negation of `target-attacking` (#1654), as `target-not-moving`
+   * is of `target-moving`: Warmonger's Weapon's "if that foe is not attacking".
+   */
+  | { readonly kind: "target-not-attacking" }
+  /**
    * One of `conditions` holds, each read as it would be alone (#1539):
    * Melandru's Shot's "if target foe is moving or knocked down". An
    * empty list never holds.

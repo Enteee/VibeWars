@@ -196,6 +196,8 @@ export interface WeaponSnapshot {
   readonly damageType: DamageType;
   /** The least armor penetration the attacker's statuses give (#1519): Judge's Insight's 0.2. */
   readonly armorPenetration: number;
+  /** Added to each blow before armor by the attacker's statuses (#1654): Nightmare Weapon's −42. */
+  readonly damageDelta: number;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -211,6 +213,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalChanceBonus: modifiers.criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
+    damageDelta: modifiers.attackDamageDelta,
   };
 }
 
@@ -497,12 +500,15 @@ export function landBlow(
       ? weapon.damageMax * weapon.criticalMultiplier
       : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   const packet: DamagePacket = {
-    armored:
+    armored: Math.max(
+      0,
       base *
-      snapshot.damageMultiplier *
-      blow.weaponDamage *
-      (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
-      (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
+        snapshot.damageMultiplier *
+        blow.weaponDamage *
+        (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
+        (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier) +
+        snapshot.damageDelta,
+    ),
     armorIgnoring: blow.bonus,
     type: blow.damageType ?? snapshot.damageType,
     source: "weapon",

@@ -285,6 +285,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
     );
   }
+  if (definition.attackDamageDelta < 0) {
+    parts.push(`attacks deal ${String(-definition.attackDamageDelta)} less damage`);
+  }
+  if (definition.attackDamageDelta > 0) {
+    parts.push(`attacks deal ${String(definition.attackDamageDelta)} more damage`);
+  }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
@@ -375,6 +381,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `your next ${String(definition.unblockableAttacks)} attack${plural} cannot be blocked`,
     );
   }
+  if (definition.attacksUnblockable) {
+    parts.push("attacks cannot be blocked");
+  }
   for (const effect of definition.onAttackHit?.effects ?? []) {
     parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
   }
@@ -463,8 +472,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   // Soldier's Fury's (#1485): "while under a shout or chant: attacks 33%
   // faster, gain adrenaline 33% faster".
   if (definition.whileUnder !== undefined) {
-    const { categories, attackDurationMultiplier, adrenalineGainFaster } = definition.whileUnder;
+    const {
+      categories,
+      attackDurationMultiplier,
+      adrenalineGainFaster,
+      healthPips,
+      armorModifier,
+    } = definition.whileUnder;
     const gains = [
+      ...(healthPips === 0 ? [] : [`${signed(healthPips)} Health regeneration`]),
+      ...(armorModifier === 0 ? [] : [`${signed(armorModifier)} armor`]),
       ...(attackDurationMultiplier === 1
         ? []
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
@@ -1233,6 +1250,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target has more Health than you";
     case "target-attacking":
       return "If target is attacking";
+    case "target-not-attacking":
+      return "If target is not attacking";
     case "target-casting-or-attacking":
       return "If target is casting a spell or attacking";
     case "target-is-summoned":
