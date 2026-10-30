@@ -394,10 +394,10 @@ export const SKILL_ICONS = {
   "dervish.avatar-of-balthazar": { glyph: "avatar-flame" },
   "dervish.avatar-of-grenth": { glyph: "avatar-scythe" },
   "dervish.avatar-of-lyssa": { glyph: "avatar-chaos" },
-  // Skill-use punishers (#1473, #1534): a hex ring round the punishment; elites wear the UI's gold frame.
+  // Skill-use punishers (#1473, #1534): the hex ring round a small picture of the punishment; elites wear the UI's gold frame.
   "mesmer.wastrels-worry": { glyph: "hex-hourglass" },
   "mesmer.overload": { glyph: "hex-overload" },
-  "mesmer.frustration": { glyph: "ring-broken-x" },
+  "mesmer.frustration": { glyph: "orb-split" },
   "mesmer.price-of-pride": { glyph: "hex-crown", modifier: "half" },
   "mesmer.signet-of-humility": { glyph: "crown-struck" },
   "mesmer.migraine": { glyph: "hex-ache", modifier: "hourglass" },
