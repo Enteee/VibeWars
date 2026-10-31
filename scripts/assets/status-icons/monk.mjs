@@ -111,4 +111,33 @@ export const MONK_STATUS_ICONS = {
       `<path d="M12 6.5V12M9.2 9.2H14.8" ${stroke(c, 2)}/>` +
       `<path d="M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21" ${stroke(c, 1.8)}/>`,
   ],
+  // Monk staples 6 (#1748), stand-ins until their art card.
+  // Enchantment: a plus fed by a blade's arc, the caster heals on hits.
+  "live-vicariously": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` +
+      `<path d="M4 20C8 15 16 15 20 20" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a veil over two drops, conditions run out faster.
+  "purifying-veil": [
+    "enchantment",
+    (c) =>
+      `<path d="M4 8C8 4 16 4 20 8" ${stroke(c, 2)}/>` +
+      `<path d="M9 11l-2 4a2 2 0 0 0 4 0zM16 11l-2 4a2 2 0 0 0 4 0z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a struck-through blade, the foe cannot attack.
+  pacifism: [
+    "hex",
+    (c) =>
+      `<path d="M6 18L16 8M14 6l4 4M6 14l4 4" ${stroke(c, 2)}/>` +
+      `<path d="M4 4L20 20" ${stroke(c, 1.6)}/>`,
+  ],
+  // Enchantment: an eye over a plus, regeneration and a heal at its end.
+  "watchful-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M3 9c3-4 6-5.5 9-5.5s6 1.5 9 5.5c-3 4-6 5.5-9 5.5s-6-1.5-9-5.5z" ${stroke(c, 1.6)}/>` +
+      `<circle cx="12" cy="9" r="2" fill="${c}"/><path d="M12 16v6M9 19h6" ${stroke(c, 2)}/>`,
+  ],
 };

@@ -19,7 +19,12 @@ export type MonkStatusId =
   // Monk smiting staples (#1519).
   | "judges-insight"
   // Monk staples 5 (#1650).
-  | "shield-of-regeneration";
+  | "shield-of-regeneration"
+  // Monk staples 6 (#1748).
+  | "live-vicariously"
+  | "purifying-veil"
+  | "pacifism"
+  | "watchful-spirit";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -173,4 +178,77 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       armorModifier: 40,
     },
   ),
+  // Monk staples 6 (#1748), at their rank-12 values.
+  // "...whenever target ally hits a foe, you gain 2...17 Health": 14, by
+  // its caster's Healing Prayers.
+  "live-vicariously": define("live-vicariously", "Live Vicariously", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.healing-prayers", atZero: 2, atTwelve: 14 },
+            },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "source",
+        skillId: "monk.live-vicariously",
+      },
+    ],
+  }),
+  // "...conditions expire 5...50% faster on target ally. When this
+  // enchantment ends, one condition is removed from that ally": 41%.
+  "purifying-veil": define("purifying-veil", "Purifying Veil", "enchantment", {
+    profession: "monk",
+    conditionsExpireFaster: 0.41,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+        target: "bearer",
+        skillId: "monk.purifying-veil",
+      },
+    ],
+  }),
+  // "...target foe cannot attack. This effect ends if the target takes
+  // damage." Only damage or life steal from a foe of the bearer's ends it:
+  // degeneration does in GW1, not here.
+  pacifism: define("pacifism", "Pacifism", "hex", {
+    profession: "monk",
+    preventsAttacks: true,
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [],
+        target: "bearer",
+        skillId: "monk.pacifism",
+      },
+    ],
+  }),
+  // "...target ally gains +2 Health regeneration. That ally is healed for
+  // 30...180 Health when Watchful Spirit ends": 150, by its caster's
+  // Divine Favor, on any end.
+  "watchful-spirit": define("watchful-spirit", "Watchful Spirit", "enchantment", {
+    profession: "monk",
+    healthPips: 2,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "monk.divine-favor", atZero: 30, atTwelve: 150 } },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.watchful-spirit",
+      },
+    ],
+  }),
 };

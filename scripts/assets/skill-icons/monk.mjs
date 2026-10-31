@@ -70,4 +70,13 @@ export const MONK_ICONS = {
   "monk.castigation-signet": { glyph: "signet-energy" },
   "monk.signet-of-judgment": { glyph: "signet-quake" },
   "monk.holy-strike": { glyph: "star-prone" },
+  // Monk staples 6 (#1748), stand-ins until their art card.
+  "monk.ethereal-light": { glyph: "heal-spark", modifier: "stun" },
+  "monk.gift-of-health": { glyph: "plus-halo", modifier: "down" },
+  "monk.live-vicariously": { glyph: "heal-spark", modifier: "upkeep" },
+  "monk.purifying-veil": { glyph: "drops-purge", modifier: "upkeep" },
+  "monk.pacifism": { glyph: "hand-star", modifier: "less" },
+  "monk.watchful-spirit": { glyph: "plus-halo", modifier: "upkeep" },
+  "monk.kirins-wrath": { glyph: "star-beam-flame", modifier: "area" },
+  "monk.signet-of-removal": { glyph: "signet-plus", modifier: "less" },
 };

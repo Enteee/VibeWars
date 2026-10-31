@@ -165,6 +165,10 @@ const NO_BOT_USE = new Set([
   "paragon.focused-anger",
   "paragon.glowing-signet",
   "paragon.signet-of-aggression",
+  // Monk staples 6 (#1748): Health on an ally's hits and conditions
+  // running out faster are no rules the bot weighs.
+  "monk.live-vicariously",
+  "monk.purifying-veil",
 ]);
 
 function skill(id: string) {

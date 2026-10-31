@@ -778,6 +778,16 @@ function describeTriggers(
       ? weaponBoundWhen(event, trigger.weapon)
       : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
   return [...groups.values()].flatMap(({ trigger, on }) => {
+    // One that does nothing but end its status (#1748): Pacifism's "ends
+    // if the target takes damage".
+    if (trigger.effects.length === 0 && nextOnly) {
+      return [
+        {
+          text: `ends if it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+          clause: true,
+        },
+      ];
+    }
     const lines = describeTrigger(
       trigger,
       on.includes("bearer-creates-creature")
@@ -1940,7 +1950,7 @@ function describeEffect(
       };
     }
     case "disable-own-skills":
-      return { text: disableOwnText(effect), magnitude: undefined };
+      return { text: disableOwnText(effect, false), magnitude: undefined };
     case "chain-mark":
       return {
         text: effect.role === "lead" ? "Counts as a lead attack" : "Counts as an off-hand attack",
@@ -2223,9 +2233,11 @@ const TYPE_TEXT: Record<SkillType, string> = {
 /**
  * A `disable-own-skills` line (#1473): "All of your skills" (#1570), "All
  * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
- * non-Mesmer skills except signets", "are disabled for 10 seconds".
+ * non-Mesmer skills except signets", "are disabled for 10 seconds". With
+ * `other`, the attribute is the using skill's own, which it spares:
+ * Gift of Health's "All of your other Healing Prayers" (#1748).
  */
-function disableOwnText(effect: DisableOwnSkillsEffect): string {
+function disableOwnText(effect: DisableOwnSkillsEffect, other: boolean): string {
   const time = `are disabled for ${String(effect.seconds)} seconds`;
   if (effect.which === "all") {
     return `All of your skills ${time}`;
@@ -2234,7 +2246,7 @@ function disableOwnText(effect: DisableOwnSkillsEffect): string {
     return `All of your spells ${time}`;
   }
   if (effect.which === "attribute") {
-    return `All of your ${getAttribute(effect.attributeId)?.name ?? effect.attributeId} ${time}`;
+    return `All of your ${other ? "other " : ""}${getAttribute(effect.attributeId)?.name ?? effect.attributeId} ${time}`;
   }
   const except = effect.exceptTypes.map(
     (type) => `${TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()}s`,
@@ -2597,7 +2609,13 @@ export function describeSkill(
     ...flightLine,
     ...arrowsLine,
     ...corpseLine,
-    ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
+    ...skill.effects.flatMap((effect) =>
+      effect.kind === "disable-own-skills" &&
+      effect.which === "attribute" &&
+      effect.attributeId === skill.attributeId
+        ? [{ text: disableOwnText(effect, true), magnitude: undefined }]
+        : describeEffects(effect, ranks),
+    ),
     ...onCritical,
     ...onBlocked,
     ...onFailedToHit,
