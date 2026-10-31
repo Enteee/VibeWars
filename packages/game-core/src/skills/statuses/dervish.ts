@@ -566,6 +566,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     moveSpeedMultiplier: 1.33,
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [
         {
           kind: "splash",
