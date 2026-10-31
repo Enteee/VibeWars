@@ -39,8 +39,8 @@ show that two browsers that share nothing find each other.
    one browser and a private window (separate storage, so separate peers).
 2. In the first, read your lobby's key in the title bar,
    `ACDE-FGHJ-KMNP`, and press the lock beside it to open the lobby.
-3. In the second, type the key and join. Both lobby screens list both
-   players within a few seconds.
+3. In the second, type that key in the title bar and pick **Join**. Both
+   lobby screens list both players within a few seconds.
 4. Each picks a team and readies; the host starts. Play for a minute:
    walk, target the other, cast, attack.
 5. The guest leaves the match, then the host does. Both are back in the

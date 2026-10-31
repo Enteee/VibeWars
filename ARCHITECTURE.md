@@ -283,8 +283,9 @@ Headless tests in five layers, plus a browser suite:
 - **Headless simulation** (`tools/headless-match.test.ts`) — whole fights,
   deterministically, with no network.
 - **Browser** (`e2e/*.spec.ts`, Playwright) — a real Chromium against the
-  built client, its peers tabs of one browser over `BroadcastChannel`: host a lobby, join it from a second browser
-  context, start a match, move, cast. Movement is asserted by comparing
+  built client, its peers tabs of one browser over `BroadcastChannel`:
+  open a tab's lobby, join it from a second tab, start a match, move,
+  cast. Movement is asserted by comparing
   rendered frames rather than through a test-only hook, so the test
   cannot pass against a code path players never run. This layer found two
   bugs that made the lobby unplayable and that nothing headless could
