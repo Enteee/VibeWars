@@ -110,6 +110,8 @@ export function keyGated(
   const peers = new Map<string, Peer>();
   /** Guest: hosts it had proven that left; one back is asked to challenge again. */
   const lapsed = new Set<string>();
+  /** Guest: hosts sent a key-ask, whose next challenge it asked for. */
+  const asking = new Set<string>();
   /** Peers in the room now, as the transport says. */
   const present = new Set<string>();
   const timers = new Map<string, unknown>();
@@ -200,15 +202,30 @@ export function keyGated(
     transport.send("key-challenge", { nonce: fresh } satisfies WireKeyChallenge, peerId);
   };
 
+  const ask = (peerId: string): void => {
+    asking.add(peerId);
+    transport.send("key-ask", {} satisfies WireKeyAsk, peerId);
+  };
+
   const offs = [
     transport.onPeerJoin((peerId) => {
       present.add(peerId);
       if (lapsed.delete(peerId)) {
         // A host that may not have seen us go still holds us proven, and
         // would never challenge again: ask it to.
-        transport.send("key-ask", {} satisfies WireKeyAsk, peerId);
-      } else if (proven(peerId)) {
+        ask(peerId);
+      } else if (proven(peerId) && !told.has(peerId)) {
+        // Proven before the transport said it joined.
         tellJoin(peerId);
+      } else if (proven(peerId)) {
+        // Joined again with no leave: an id is no credential, so it proves
+        // the key again, inside the gate as a key-ask is.
+        if (side === "host") {
+          challenge(peerId);
+        } else {
+          peers.delete(peerId);
+          ask(peerId);
+        }
       } else if (side === "host" && !peers.has(peerId)) {
         challenge(peerId);
       }
@@ -218,6 +235,7 @@ export function keyGated(
         lapsed.add(peerId);
       }
       present.delete(peerId);
+      asking.delete(peerId);
       // Forgotten, proven or not: a peer id is the peer's own choice and
       // shows on the relays, so one coming back proves the key again.
       drop(peerId);
@@ -274,8 +292,10 @@ export function keyGated(
       }
       const answered: Peer = { stage: "answered", hostNonce: asked.nonce, guestNonce: nonce() };
       peers.set(from, answered);
-      // Unheard until it proves itself again: it forgot us, so it left.
-      tellLeave(from);
+      // Unheard until it proves itself again. Unasked, it forgot us: it left.
+      if (!asking.delete(from)) {
+        tellLeave(from);
+      }
       void (async () => {
         const mac = await sign(
           macInput("guest", answered.hostNonce, answered.guestNonce, selfId, from),

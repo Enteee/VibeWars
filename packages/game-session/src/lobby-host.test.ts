@@ -1553,6 +1553,97 @@ describe("the key gate (#1681, ADR-0043)", () => {
     expect(states).toEqual([]);
   });
 
+  /** `transport`, and a way to say `peerId` joined again with no leave first. */
+  function rejoinable(transport: Transport): {
+    transport: Transport;
+    rejoin(peerId: string): void;
+  } {
+    const joins = new Set<(peerId: string) => void>();
+    return {
+      transport: {
+        ...transport,
+        onPeerJoin(handler) {
+          joins.add(handler);
+          const off = transport.onPeerJoin(handler);
+          return () => {
+            joins.delete(handler);
+            off();
+          };
+        },
+      },
+      rejoin(peerId) {
+        for (const handler of [...joins]) {
+          handler(peerId);
+        }
+      },
+    };
+  }
+
+  it("challenges a proven peer that joins again with no leave, and hears it only once it proves the key (#1681)", async () => {
+    const network = createMemoryNetwork();
+    const room = rejoinable(network.join("host"));
+    const host = keyGated(room.transport, PROOF_KEY, "host");
+    const joins: string[] = [];
+    host.onPeerJoin((peerId) => joins.push(peerId));
+    const chats: unknown[] = [];
+    host.on("chat", (data) => chats.push(data));
+    const peer = network.join();
+    const got = heard(peer);
+    await settle();
+    await prove(peer, got);
+    await until(() => proven(got));
+
+    got.length = 0;
+    room.rejoin(peer.selfId);
+    await settle();
+    expect(channels(got)).toEqual(["key-challenge"]);
+    peer.send("chat", { said: "unproven" }, "host");
+    await settle();
+    expect(chats).toEqual([]);
+    await prove(peer, got);
+    await until(() => proven(got));
+    peer.send("chat", { said: "proven" }, "host");
+    await settle();
+    expect(chats).toEqual([{ said: "proven" }]);
+    expect(joins).toEqual([peer.selfId]);
+  });
+
+  it("asks a proven host that joins again with no leave for a challenge, and hears nothing until it proves itself (#1681)", async () => {
+    const HOST_NONCE = "2b".repeat(16);
+    const network = createMemoryNetwork();
+    const host = network.join("host");
+    const room = rejoinable(network.join());
+    const guest = keyGated(room.transport, PROOF_KEY, "guest");
+    const joins: string[] = [];
+    guest.onPeerJoin((peerId) => joins.push(peerId));
+    const states: unknown[] = [];
+    guest.on("lobby-state", (data) => states.push(data));
+    const answer = (data: unknown, from: string): void => {
+      const nonce = parseWireKeyProof(data)?.nonce ?? "";
+      void mac("host", HOST_NONCE, nonce, from, "host").then((signed) => {
+        host.send("key-proven", { mac: signed }, from);
+        host.send("lobby-state", { proven: true }, from);
+      });
+    };
+    host.on("key-proof", answer);
+    host.onPeerJoin((peerId) => {
+      host.send("key-challenge", { nonce: HOST_NONCE }, peerId);
+    });
+    await until(() => states.length === 1);
+
+    const asked: string[] = [];
+    host.on("key-ask", (_data, from) => asked.push(from));
+    room.rejoin("host");
+    await until(() => asked.length === 1);
+    host.send("lobby-state", { unproven: true }, guest.selfId);
+    await cryptoTurns();
+    expect(states).toEqual([{ proven: true }]);
+    host.send("key-challenge", { nonce: HOST_NONCE }, guest.selfId);
+    await until(() => states.length === 2);
+    expect(states).toEqual([{ proven: true }, { proven: true }]);
+    expect(joins).toEqual(["host"]);
+  });
+
   it("leaves a host whose key-proven does not hold unheard: the join times out", async () => {
     const network = createMemoryNetwork();
     const impostor = network.join("impostor");
