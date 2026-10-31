@@ -246,11 +246,13 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     wake();
   });
 
-  // Enter opens the box from anywhere that has no use for Enter itself;
+  // Enter opens the box from anywhere that has no use for Enter itself,
+  // such as a bar slot that took it (#1526: chat is on every menu screen);
   // under the Options overlay, keys are its alone (#454).
   const onKeyDown = (event: KeyboardEvent): void => {
     if (
       event.key !== "Enter" ||
+      event.defaultPrevented ||
       event.repeat ||
       event.ctrlKey ||
       event.altKey ||

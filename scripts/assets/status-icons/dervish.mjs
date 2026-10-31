@@ -186,30 +186,34 @@ export const DERVISH_STATUS_ICONS = {
       `<path d="M7 12V6M10 12V4M13 12V4M16 12V6M7 12c0 4 2 6 5 6s4-2 4-6" ${stroke(c, 1.6)}/>` +
       `<path d="M4 21h16M17 18l3 3-3 3" ${stroke(c, 1.6)}/>`,
   ],
-  // Dervish staples 3 (#1667), stand-ins until their art card.
+  // Dervish staples 3 (#1707): the skills' shapes.
   // Enchantment: two fast slashes over a rising bar, attack and adrenaline faster.
   onslaught: [
     "enchantment",
     (c) =>
-      `<path d="M5 15L13 4M10 16L18 5" ${stroke(c, 2)}/>` + `<path d="M6 20h12" ${stroke(c, 2)}/>`,
+      `<path d="M10 21L21 4" ${stroke(c, 3.2)}/>` +
+      `<path d="M15 21L23 9" ${stroke(c, 1.6)}/>` +
+      `<path d="M2 7H9M2 12H7M2 17H5" ${stroke(c, 1.8)}/>`,
   ],
-  // Enchantment: a spark over two falling bars, energy per hit, less regeneration.
+  // Enchantment: a spark over two falling bars and a minus, energy per hit, less regeneration.
   "zealous-vow": [
     "enchantment",
     (c) =>
-      `<path d="M12 3l2 5h-4l2 5" ${stroke(c, 1.8)}/>` +
-      `<path d="M6 17h12M8 21h8" ${stroke(c, 2)}/>`,
+      `<path d="M12 2.5L14.5 8H9.5L12 13.5" ${stroke(c, 2)}/>` +
+      `<path d="M5 17H19M8 21H16M18.5 5H22.5" ${stroke(c, 2.2)}/>`,
   ],
-  // Enchantment: a feather, it moves faster and sheds conditions sooner.
+  // Enchantment: a feather with speed chevrons, it moves faster and sheds conditions sooner.
   "featherfoot-grace": [
     "enchantment",
     (c) =>
-      `<path d="M18 4C10 5 6 11 6 20M18 4c0 7-5 11-11 12" ${stroke(c, 1.8)}/>` +
-      `<path d="M10 11h4M8 15h4" ${stroke(c, 1.4)}/>`,
+      `<path d="M19 3C11 4 7 10 7 19M19 3c0 7-5 11-11 12" ${stroke(c, 2)}/>` +
+      `<path d="M3 9L6 12L3 15M3 17L6 20L3 23" ${stroke(c, 1.6)}/>`,
   ],
-  // Enchantment: a spiral of wind, it runs and its next hit chills the crowd.
+  // Enchantment: a spiral of wind ending in an arrowhead, it runs and its next hit chills the crowd.
   "whirling-charge": [
     "enchantment",
-    (c) => `<path d="M12 12a2 2 0 1 1 2-2a4 4 0 1 1-4-4a6 6 0 1 1-6 6" ${stroke(c, 1.8)}/>`,
+    (c) =>
+      `<path d="M12 12a2 2 0 1 1 2-2a4 4 0 1 1-4-4a6 6 0 1 1-6 6" ${stroke(c, 2)}/>` +
+      `<path d="M1.5 14L4 18L8 15.5" ${stroke(c, 2)}/>`,
   ],
 };

@@ -464,6 +464,17 @@ describe("silenced (#1234)", () => {
       false,
     ]);
   });
+
+  it("marks the shout and the chant alone in Well of Silence (#1732)", () => {
+    const silence = { ...shrouded, id: "well-of-silence" } as const;
+    const shouts = [
+      slot("warrior.charge"),
+      slot("paragon.anthem-of-flame"),
+      slot("elementalist.fireball"),
+      slot("warrior.swift-chop"),
+    ];
+    expect(silenced(shouts, self({ statuses: [silence] }))).toEqual([true, true, false, false]);
+  });
 });
 
 describe("wrongWeapon (#417)", () => {

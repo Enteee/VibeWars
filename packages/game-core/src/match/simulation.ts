@@ -832,6 +832,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "invalid-target-ally",
   "invalid-target-enemy",
   "invalid-target-untargetable",
+  "invalid-target-unenchantable",
 ]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */
@@ -2363,6 +2364,11 @@ export class MatchSimulation {
     const skill = used === undefined ? undefined : getSkill(used.skillId);
     if (used === undefined || skill === undefined) {
       return undefined;
+    }
+    // The slot being activated, pressed again, does nothing (#1733, GW1):
+    // a skill already queued stays queued, and nothing is told.
+    if (record.combatant.cast.activeCast?.key === used.key) {
+      return { skillId: skill.id, check: { ok: true } };
     }
 
     if (skill.target === "single-enemy" && record.targetId === undefined) {

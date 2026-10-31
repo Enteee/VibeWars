@@ -448,6 +448,172 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "necromancer.well-of-the-profane",
+    name: "Well of the Profane",
+    gwId: 94,
+    type: "well",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 3,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse, as Well of Suffering's (#1732).
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to create a Well of the Profane at its
+    // location. For 8...20 seconds, foes in that area are stripped of all
+    // enchantments and cannot be the target of further enchantments." Its
+    // failure chance at Death Magic 4 or less is not played.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 8, atTwelve: 17.6 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-the-profane", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-silence",
+    name: "Well of Silence",
+    gwId: 1660,
+    type: "well",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse, as Well of Suffering's (#1732). Its "target corpse" is
+    // played as the nearest.
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit target corpse to create a Well of Silence for 10...30
+    // seconds. Foes within the well cannot use shouts or chants and suffer
+    // -1...4 Health degeneration."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 10, atTwelve: 26 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-silence", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-darkness",
+    name: "Well of Darkness",
+    gwId: 1366,
+    type: "well",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse, as Well of Suffering's (#1732).
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to create a Well of Darkness for 5...50
+    // seconds. Hexed foes within the Well of Darkness miss 50% of the
+    // time."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 41 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-darkness", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-ruin",
+    name: "Well of Ruin",
+    gwId: 2236,
+    type: "well",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // The nearest fresh corpse, as Well of Suffering's (#1732).
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to create a Well of Ruin at its location.
+    // For 5...30 seconds, whenever a foe in the well takes physical
+    // damage, that foe has Cracked Armor for 5...20 seconds."
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 25 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-ruin", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
     id: "necromancer.well-of-blood",
     name: "Well of Blood",
     gwId: 92,

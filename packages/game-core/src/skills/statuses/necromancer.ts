@@ -19,6 +19,11 @@ export type NecromancerStatusId =
   | "well-of-blood"
   | "well-of-power"
   | "well-of-weariness"
+  // Wells 2 (#1732).
+  | "well-of-the-profane"
+  | "well-of-silence"
+  | "well-of-darkness"
+  | "well-of-ruin"
   // Necromancer Curses hexes (#1332).
   | "barbs"
   | "price-of-failure"
@@ -163,6 +168,45 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   "well-of-suffering": define("well-of-suffering", "Well of Suffering", "skill-effect", {
     profession: "necromancer",
     healthPips: -5,
+  }),
+  // Wells 2 (#1732), at rank 12 as Well of Suffering's: "foes in that area
+  // are stripped of all enchantments and cannot be the target of further
+  // enchantments".
+  "well-of-the-profane": define("well-of-the-profane", "Well of the Profane", "skill-effect", {
+    profession: "necromancer",
+    preventsEnchantments: true,
+  }),
+  // "Foes within the well cannot use shouts or chants and suffer -1...4
+  // Health degeneration": 3.
+  "well-of-silence": define("well-of-silence", "Well of Silence", "skill-effect", {
+    profession: "necromancer",
+    healthPips: -3,
+    preventsShoutsAndChants: true,
+  }),
+  // "Hexed foes within the Well of Darkness miss 50% of the time."
+  "well-of-darkness": define("well-of-darkness", "Well of Darkness", "skill-effect", {
+    profession: "necromancer",
+    whileUnder: {
+      categories: ["hex"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: 0,
+      armorModifier: 0,
+      attackMissChance: 0.5,
+    },
+  }),
+  // "...whenever a foe in the well takes physical damage, that foe has
+  // Cracked Armor for 5...20 seconds": 17, each hit renewing it.
+  "well-of-ruin": define("well-of-ruin", "Well of Ruin", "skill-effect", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-takes-physical-damage",
+        effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
+        target: "bearer",
+        skillId: "necromancer.well-of-ruin",
+      },
+    ],
   }),
   // "Allies in that area receive +1...6 Health regeneration" (#1730): 5
   // at rank 12.

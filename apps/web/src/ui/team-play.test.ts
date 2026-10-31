@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ARENA_MAPS } from "../net/maps.js";
+import { ARENA_MAPS, modeMapIds } from "../net/maps.js";
 import { TEAM_SCHEMA_VERSION, type StoredTeam } from "../storage/schema.js";
-import { hostMaps } from "./lobby-screen.js";
 import {
-  HOST_SCREENS,
+  HOST_GOALS,
   NO_TEAM_BUILDS,
+  OPENING_LOBBY,
   renderHostScreen,
   renderTeamBuilder,
   type HostEntry,
@@ -23,13 +23,13 @@ function team(id: string): StoredTeam {
   };
 }
 
-/** The ids of the arenas `entry`'s screen lets its host pick. */
+/** The ids of the arenas `entry`'s lobby lets its host pick (#1526), in `ARENA_MAPS`' order. */
 function hostMapIds(entry: HostEntry): string[] {
-  const maps = ARENA_MAPS.map((map) => ({ id: map.id, name: map.name, size: "", mode: map.mode }));
-  return hostMaps(maps, HOST_SCREENS[entry].modes).map((map) => map.id);
+  const ids = modeMapIds()[entry];
+  return ARENA_MAPS.map((map) => map.id).filter((id) => ids.includes(id));
 }
 
-describe("the hosting screens' maps (#1453, #1525)", () => {
+describe("the lobby screens' maps (#1453, #1525, #1526)", () => {
   it("host on every map from Hosted Game", () => {
     expect(hostMapIds("hosted-game")).toEqual(ARENA_MAPS.map((map) => map.id));
   });
@@ -108,11 +108,7 @@ class FakeElement {
 describe("the team screens' Team Builds (#1515, #1525)", () => {
   let edited: string[];
   let added: number;
-  let hosted: (readonly string[] | undefined)[];
   const callbacks: TeamPlayCallbacks = {
-    onHost: (modes) => {
-      hosted.push(modes);
-    },
     onSwitch: () => undefined,
     onNewTeam: () => {
       added += 1;
@@ -124,14 +120,21 @@ describe("the team screens' Team Builds (#1515, #1525)", () => {
   };
   const render = (teams: readonly StoredTeam[], entry: HostEntry = "team-arena"): FakeElement => {
     const root = new FakeElement();
-    renderHostScreen(root as unknown as HTMLElement, entry, teams, [], undefined, callbacks);
+    renderHostScreen(
+      root as unknown as HTMLElement,
+      entry,
+      teams,
+      [],
+      undefined,
+      callbacks,
+      undefined,
+    );
     return root;
   };
 
   beforeEach(() => {
     edited = [];
     added = 0;
-    hosted = [];
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
       addEventListener: () => undefined,
@@ -181,29 +184,17 @@ describe("the team screens' Team Builds (#1515, #1525)", () => {
     expect(root.all("team-play-hint")[0]?.textContent).toBe(NO_TEAM_BUILDS);
   });
 
-  it("hosts with its own modes, under its heading", () => {
-    for (const entry of ["team-arena", "heroes-ascent", "gvg"] as const) {
+  it("says what each is for, and has no Host button: the lobby is always there (#1526)", () => {
+    for (const entry of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
       const root = render([team("a")], entry);
-      root
-        .everything()
-        .find((node) => node.textContent === "Host a Team Lobby")
-        ?.click();
-      expect(root.all("rail-goal")[0]?.textContent).toBe(HOST_SCREENS[entry].goal);
+      expect(root.all("rail-goal")[0]?.textContent).toBe(HOST_GOALS[entry]);
+      expect(root.everything().some((node) => node.textContent.startsWith("Host a"))).toBe(false);
     }
-    expect(hosted).toEqual([
-      HOST_SCREENS["team-arena"].modes,
-      HOST_SCREENS["heroes-ascent"].modes,
-      HOST_SCREENS.gvg.modes,
-    ]);
   });
 
-  it("hosts on every map from Hosted Game, which has no cards", () => {
+  it("shows the lobby's place while it opens, and no cards on Hosted Game", () => {
     const root = render([team("a")], "hosted-game");
-    root
-      .everything()
-      .find((node) => node.textContent === "Host a game")
-      ?.click();
-    expect(hosted).toEqual([undefined]);
+    expect(root.everything().some((node) => node.textContent === OPENING_LOBBY)).toBe(true);
     expect(root.all("play-card")).toHaveLength(0);
   });
 

@@ -5,7 +5,7 @@ import { expect, test, type Page, type Locator } from "@playwright/test";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
-import { joinByCode } from "./helpers/menu.js";
+import { joinFriend } from "./helpers/menu.js";
 import {
   hostLobby,
   playHouseTeams,
@@ -106,7 +106,7 @@ async function startLobbyMatch(
   const code = await hostLobby(host);
   for (const guest of guests) {
     await guest.goto("./");
-    await joinByCode(guest, code);
+    await joinFriend(guest, code);
     await guest.getByRole("button", { name: "join team 2" }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
   }

@@ -35,10 +35,10 @@ test("#578: Esc goes back on the team editor, options and lobby screens", async 
   await page.keyboard.press("Escape");
   await expect(menuHeading(page)).toBeVisible();
 
+  // The lobby is the page's own (#1526): Esc leaves it where it is.
   await hostLobby(page);
-  await expect(page.locator("#topbar .lobby-code")).toBeVisible();
   await page.keyboard.press("Escape");
-  await expect(menuHeading(page)).toBeVisible();
+  await expect(page.locator(".screen-hosted-game .lobby-panel")).toBeVisible();
   await expect(page.locator("#status")).toBeHidden();
 
   // The main menu has no way back: Esc leaves it where it is.
@@ -94,35 +94,79 @@ test("#1272: the editor's Discard question takes the status's room: the bar stay
   await expect(status).toBeVisible();
 });
 
-test("#578: a host with others in the lobby is asked before Leave or Esc closes it", async ({
+test("#1526: a guest joins from the title bar, follows the host's mode, and leaves to a lobby of its own", async ({
   browser,
 }) => {
   const { context, pages } = await openPeers(browser, 2);
   const [host, guest] = pages as [Page, Page];
   try {
     await openMenu(host);
-    const code = await hostLobby(host);
     await openMenu(guest);
-    await joinByCode(guest, code);
-    // Both spectate until they pick a side: the guest is in once it is listed.
-    await expect(host.locator(".lobby-spectators")).toHaveText(/^Spectating: [^,]+, [^,]+$/);
+    const code = host.locator("#topbar .topbar-lobby-code");
+    await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    const hostCode = (await code.textContent()) ?? "";
+    const guestCode = guest.locator("#topbar .topbar-lobby-code");
+    await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    const ownCode = (await guestCode.textContent()) ?? "";
+    // Alone, the party strip says how to change that.
+    await expect(host.locator(".party-strip")).toContainText("Share your key to play together");
 
-    const question = host.getByText("Close the lobby for everyone?");
-    await host.keyboard.press("Escape");
-    await expect(question).toBeVisible();
-    // The lobby redraws on the guest's change; the question stays.
-    await guest.getByRole("button", { name: "Join team 2" }).click();
-    await expect(host.locator(".lobby-team").nth(1)).toContainText("player");
-    await expect(question).toBeVisible();
-    // Esc is "no", as on every screen.
-    await host.keyboard.press("Escape");
-    await expect(question).toHaveCount(0);
-    await expect(host.locator(".screen-lobby")).toBeVisible();
+    await joinByCode(guest, hostCode);
+    await expect(guestCode).toHaveText(hostCode);
+    const leave = guest.locator("#topbar").getByRole("button", { name: "Leave", exact: true });
+    await expect(leave).toBeVisible();
+    await expect(host.locator(".party-strip .party-member")).toHaveCount(2);
+    // A party queues in card 4: alone only.
+    await expect(guest.locator(".random-arena-tile").first()).toBeDisabled();
 
-    await host.getByRole("button", { name: "Leave", exact: true }).click();
-    await host.getByRole("button", { name: "Close lobby", exact: true }).click();
-    await expect(menuHeading(host)).toBeVisible();
-    await expect(menuHeading(guest)).toBeVisible();
+    // The host picks the mode; the guest's rail and screen follow, its modes locked.
+    await openRail(host, "GvG");
+    await expect(guest.locator(".screen-gvg .lobby-panel")).toBeVisible();
+    const hosted = guest.locator(".mode-rail-entry[aria-label='Hosted Game']");
+    await expect(hosted).toHaveAttribute("aria-disabled", "true");
+    await expect(hosted).toHaveAttribute("title", "The host picks the mode");
+    // The builders are everyone's, and opening one leaves no lobby.
+    await openRail(guest, "Team Builder");
+    await expect(guestCode).toHaveText(hostCode);
+
+    await leave.click();
+    await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    await expect(guestCode).not.toHaveText(hostCode);
+    await expect(guestCode).not.toHaveText(ownCode);
+    await expect(leave).toBeHidden();
+    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+  } finally {
+    await context.close();
+  }
+});
+
+test("#1526: a join that lands after the player queued seats nothing: the queue stays, the host gets no ghost", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+  try {
+    await openMenu(host);
+    await openMenu(guest);
+    const code = host.locator("#topbar .topbar-lobby-code");
+    await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    const hostCode = (await code.textContent()) ?? "";
+    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+
+    // The host's page stops answering, so the guest's join waits for it.
+    const debugger_ = await context.newCDPSession(host);
+    await debugger_.send("Debugger.enable");
+    await debugger_.send("Debugger.pause");
+    await joinByCode(guest, hostCode);
+    await guest.locator(".random-arena-tile").first().click();
+    await expect(guest.locator(".queue-count")).toBeVisible();
+
+    // The host answers: the join lands late, and is let go.
+    await debugger_.send("Debugger.resume");
+    // An absence: give the late join the time it took to land unguarded.
+    await host.waitForTimeout(3_000);
+    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+    await expect(guest.locator(".queue-count")).toContainText("searching");
   } finally {
     await context.close();
   }
@@ -282,7 +326,7 @@ test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the glo
 }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await openMenu(page);
-  await openRail(page, "Team Arena");
+  await openRail(page, "Team Builder");
   const bar = page.locator("#topbar");
   await expect(bar.locator(".topbar-more")).toBeHidden();
   await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
@@ -320,8 +364,11 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
     "true",
   );
   await openRail(page, "GvG");
-  // No Record or Music in the bar; GvG has no own buttons.
-  await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveCount(0);
+  // No Record or Music in the bar: GvG's buttons are its lobby's (#1526).
+  await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveText([
+    "Ready",
+    "Start match",
+  ]);
   await page.reload();
   await expect(page.locator(".mode-rail-entry[aria-label='GvG']")).toHaveAttribute(
     "aria-pressed",
@@ -329,14 +376,10 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   );
 
   // GvG plays one map, so its host sees it named, not picked.
-  await page.getByRole("button", { name: "Host a Team Lobby", exact: true }).click();
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
-  await page.keyboard.press("Escape");
-  await expect(page.locator(".screen-gvg")).toBeVisible();
 
   // Heroes' Ascent picks among its three.
   await openRail(page, "Heroes' Ascent");
-  await page.getByRole("button", { name: "Host a Team Lobby", exact: true }).click();
   const options = page.locator("#topbar .lobby-map select option");
   await expect(options).toHaveCount(3);
   await expect(page.locator("#topbar .lobby-map select")).toHaveValue("relic-temples");

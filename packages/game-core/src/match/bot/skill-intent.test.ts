@@ -93,6 +93,11 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-sacrifice",
   "elementalist.glyph-of-renewal",
   "elementalist.glyph-of-essence",
+  // Wells 2 (#1732): no well has a use yet, as Well of Suffering.
+  "necromancer.well-of-the-profane",
+  "necromancer.well-of-silence",
+  "necromancer.well-of-darkness",
+  "necromancer.well-of-ruin",
   // A disable of a foe's elite and nothing else: no rule for it (#1473).
   "mesmer.signet-of-humility",
   // Nor of a foe's whole bar at the price of one's own (#1570).

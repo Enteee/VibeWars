@@ -464,6 +464,7 @@ function partyOf(members: readonly string[]) {
 const lobbyState: WireLobbyState = {
   code: "ACDEFG",
   phase: "in-match",
+  mode: "gvg",
   mapId: "isle",
   hostId: "peer-1",
   matchId: "match-2",
@@ -824,6 +825,17 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
   ["ready", parseWireLobbyCommand, { kind: "ready", ready: false }],
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
+  ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
+  [
+    "set-character (#1526)",
+    parseWireLobbyCommand,
+    { kind: "set-character", character: { name: "Mhenlo", primary: "monk", secondary: null } },
+  ],
+  [
+    "set-character to a starter build (#1526)",
+    parseWireLobbyCommand,
+    { kind: "set-character", character: null },
+  ],
   ["start", parseWireLobbyCommand, { kind: "start" }],
   ["set-bots", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
@@ -1781,6 +1793,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, countdownSeconds: -1 },
   ],
   ["lobby-state of an unknown phase", parseWireLobbyState, { ...lobbyState, phase: "over" }],
+  [
+    "lobby-state of an unknown mode (#1526)",
+    parseWireLobbyState,
+    { ...lobbyState, mode: "ranked" },
+  ],
+  ["lobby-state without a mode (#1526)", parseWireLobbyState, { ...lobbyState, mode: undefined }],
   ["lobby-state without a host", parseWireLobbyState, { ...lobbyState, hostId: undefined }],
   ["lobby-state with a long code", parseWireLobbyState, { ...lobbyState, code: long }],
   [
@@ -1899,6 +1917,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["choose-team of a string", parseWireLobbyCommand, { kind: "choose-team", team: "0" }],
   ["ready of a string", parseWireLobbyCommand, { kind: "ready", ready: "true" }],
   ["select-map with a long id", parseWireLobbyCommand, { kind: "select-map", mapId: long }],
+  [
+    "select-mode of an unknown mode (#1526)",
+    parseWireLobbyCommand,
+    { kind: "select-mode", mode: "ranked" },
+  ],
+  ["set-character without one (#1526)", parseWireLobbyCommand, { kind: "set-character" }],
   [
     "add-bot, which is gone",
     parseWireLobbyCommand,

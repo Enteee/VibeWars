@@ -304,8 +304,12 @@
     "weapon-of-shadow",
     "weapon-of-warding",
     "well-of-blood",
+    "well-of-darkness",
     "well-of-power",
+    "well-of-ruin",
+    "well-of-silence",
     "well-of-suffering",
+    "well-of-the-profane",
     "well-of-weariness",
     "whirling-charge",
     "whirling-defense",
@@ -912,8 +916,12 @@
                   { "literal": "weapon-of-shadow" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-blood" },
+                  { "literal": "well-of-darkness" },
                   { "literal": "well-of-power" },
+                  { "literal": "well-of-ruin" },
+                  { "literal": "well-of-silence" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "well-of-the-profane" },
                   { "literal": "well-of-weariness" },
                   { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
@@ -1216,8 +1224,12 @@
                   { "literal": "weapon-of-shadow" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-blood" },
+                  { "literal": "well-of-darkness" },
                   { "literal": "well-of-power" },
+                  { "literal": "well-of-ruin" },
+                  { "literal": "well-of-silence" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "well-of-the-profane" },
                   { "literal": "well-of-weariness" },
                   { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
@@ -1517,8 +1529,12 @@
                   { "literal": "weapon-of-shadow" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-blood" },
+                  { "literal": "well-of-darkness" },
                   { "literal": "well-of-power" },
+                  { "literal": "well-of-ruin" },
+                  { "literal": "well-of-silence" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "well-of-the-profane" },
                   { "literal": "well-of-weariness" },
                   { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
@@ -1815,8 +1831,12 @@
                   { "literal": "weapon-of-shadow" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-blood" },
+                  { "literal": "well-of-darkness" },
                   { "literal": "well-of-power" },
+                  { "literal": "well-of-ruin" },
+                  { "literal": "well-of-silence" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "well-of-the-profane" },
                   { "literal": "well-of-weariness" },
                   { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
@@ -2220,8 +2240,12 @@
                   { "literal": "weapon-of-shadow" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-blood" },
+                  { "literal": "well-of-darkness" },
                   { "literal": "well-of-power" },
+                  { "literal": "well-of-ruin" },
+                  { "literal": "well-of-silence" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "well-of-the-profane" },
                   { "literal": "well-of-weariness" },
                   { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
@@ -2509,8 +2533,12 @@
                   { "literal": "weapon-of-shadow" },
                   { "literal": "weapon-of-warding" },
                   { "literal": "well-of-blood" },
+                  { "literal": "well-of-darkness" },
                   { "literal": "well-of-power" },
+                  { "literal": "well-of-ruin" },
+                  { "literal": "well-of-silence" },
                   { "literal": "well-of-suffering" },
+                  { "literal": "well-of-the-profane" },
                   { "literal": "well-of-weariness" },
                   { "literal": "whirling-charge" },
                   { "literal": "whirling-defense" },
@@ -2626,6 +2654,15 @@
         { "literal": false },
         { "literal": true },
         { "properties": [], "index": [{ "key": "string", "value": { "ref": "JsonValue" } }] }
+      ]
+    },
+    "LobbyMode": {
+      "union": [
+        { "literal": "gvg" },
+        { "literal": "heroes-ascent" },
+        { "literal": "hosted-game" },
+        { "literal": "random-arena" },
+        { "literal": "team-arena" }
       ]
     },
     "LobbyPhase": {
@@ -3770,6 +3807,31 @@
         },
         {
           "properties": [
+            {
+              "name": "character",
+              "optional": false,
+              "type": {
+                "union": [
+                  "null",
+                  {
+                    "properties": [
+                      { "name": "name", "optional": false, "type": "string" },
+                      { "name": "primary", "optional": false, "type": "string" },
+                      {
+                        "name": "secondary",
+                        "optional": false,
+                        "type": { "union": ["null", "string"] }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            { "name": "kind", "optional": false, "type": { "literal": "set-character" } }
+          ]
+        },
+        {
+          "properties": [
             { "name": "count", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
             {
@@ -3811,6 +3873,24 @@
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "select-map" } },
             { "name": "mapId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "select-mode" } },
+            {
+              "name": "mode",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "gvg" },
+                  { "literal": "heroes-ascent" },
+                  { "literal": "hosted-game" },
+                  { "literal": "random-arena" },
+                  { "literal": "team-arena" }
+                ]
+              }
+            }
           ]
         },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
@@ -3941,6 +4021,19 @@
         { "name": "hostId", "optional": false, "type": "string" },
         { "name": "mapId", "optional": false, "type": "string" },
         { "name": "matchId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "gvg" },
+              { "literal": "heroes-ascent" },
+              { "literal": "hosted-game" },
+              { "literal": "random-arena" },
+              { "literal": "team-arena" }
+            ]
+          }
+        },
         {
           "name": "phase",
           "optional": false,
