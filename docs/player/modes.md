@@ -192,7 +192,8 @@ illegal build) also plays the house team, and is told so as the match
 opens.
 Neither side sees the other's proposals, votes or choice.
 
-**Claim.** The chosen build's characters are seats: click a free seat
+**Claim.** The chosen build's characters are seats, each the character
+holding its weapons over its skills: click a free seat
 to take it, or your own to leave it, first come, first served, one each. Whoever claimed nothing gets the first free one, and
 bots play the rest, under their character's name. Then the match starts, or a queued party
 joins the queue.
