@@ -29,7 +29,7 @@
  */
 
 import type { ConditionalArmor } from "../equipment/armor.js";
-import type { DamageType } from "../equipment/types.js";
+import { isElementalDamage, type DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import {
@@ -208,6 +208,12 @@ export interface StatusDefinition {
   /** Movement speed multiplier while active (1 = unaffected). */
   readonly moveSpeedMultiplier: number;
   /**
+   * Every status's `moveSpeedMultiplier` above 1 counts as 1 while it
+   * holds (#1745): Muddy Terrain's "speed boosts have no effect". Slows
+   * still apply.
+   */
+  readonly preventsSpeedBoosts: boolean;
+  /**
    * Chance in [0, 1] that the bearer's *attacks* miss. Drawn from the
    * injectable simulation RNG, never Math.random (brief §35).
    */
@@ -246,6 +252,14 @@ export interface StatusDefinition {
    * attack.
    */
   readonly physicalDamageTakenBonus: number;
+  /**
+   * The type elemental damage the bearer takes becomes, before armor is
+   * read (#1745): Winter's "all elemental damage is cold damage instead".
+   * Cold, fire, lightning and earth turn; physical and the rest stay.
+   * After the attacker's `attackDamageType`, so Conflagration's fire
+   * arrows are cold under Winter. `undefined`: none.
+   */
+  readonly elementalDamageTakenAs: DamageType | undefined;
   /**
    * The type the bearer's attacks deal, the weapon's roll included
    * (#1021): Staggering Force's and Dust Cloak's "your attacks deal
@@ -322,6 +336,13 @@ export interface StatusDefinition {
    * goes off; a spell or a touch skill is left alone.
    */
   readonly preventsAttacks: boolean;
+  /**
+   * The bearer cannot start a resurrection skill (#1745): Frozen Soil's
+   * "cannot activate resurrection skills". Refused before anything is
+   * paid, as `preventsAttacks` refuses an attack skill; one already being
+   * cast goes off.
+   */
+  readonly preventsResurrection: boolean;
   /**
    * A foe of the bearer cannot start a spell with the bearer as its target
    * (#1511): Spell Breaker's "cannot be the target of enemy spells". A cast
@@ -616,6 +637,13 @@ export interface StatusDefinition {
    * `spellRechargeFaster` is; with a type's own share, the larger counts.
    */
   readonly skillRechargeFaster: number;
+  /**
+   * Multiplier on the base Energy cost of every skill the bearer uses
+   * (#1745): Quickening Zephyr's "cost 30% more of the base Energy" is
+   * 1.3. Several multiply; the base is scaled and rounded half up before
+   * Expertise, a glyph or a chant takes anything off. 1: unaffected.
+   */
+  readonly energyCostMultiplier: number;
   /**
    * The share taken off the recharge of each binding ritual the bearer
    * finishes (#1064): Weapon of Quickening's 0.33, read as
@@ -2391,6 +2419,36 @@ export function preventsAttacks(statuses: readonly Pick<ActiveStatus, "id">[]): 
 }
 
 /**
+ * Whether a bearer of `statuses` cannot start a resurrection skill
+ * (#1745, `preventsResurrection`). The refusal and the skill bar's
+ * dimming both ask this, as they do `preventsAttacks`.
+ */
+export function preventsResurrection(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).preventsResurrection);
+}
+
+/**
+ * The type a packet of `type` is when it reaches a bearer of `statuses`
+ * (#1745): elemental damage turns into a status's
+ * `elementalDamageTakenAs`, Winter's cold; anything else stays.
+ */
+export function damageTypeTaken(
+  type: DamageType,
+  statuses: readonly Pick<ActiveStatus, "id">[],
+): DamageType {
+  if (!isElementalDamage(type)) {
+    return type;
+  }
+  for (const { id } of statuses) {
+    const turned = getStatusDefinition(id).elementalDamageTakenAs;
+    if (turned !== undefined) {
+      return turned;
+    }
+  }
+  return type;
+}
+
+/**
  * Whether a bearer of `statuses` can hold no enchantment (#1732,
  * `preventsEnchantments`): the refusal of an enchantment spell at it
  * asks this, and so does every status landing on it.
@@ -2556,7 +2614,8 @@ export function isUnderAnother(
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply. Pips per enchantment
  * (#845) count every enchantment in `statuses`, the one giving them
- * included.
+ * included. Under a status that bars speed boosts (#1745), only the
+ * slows among the move speeds count.
  */
 export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]): StatusModifiers {
   let healthPips = 0;
@@ -2568,6 +2627,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let healthPerSecondNearSpirit = 0;
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
+  const speedBoostsBarred = statuses.some(({ id }) => getStatusDefinition(id).preventsSpeedBoosts);
   let attackMissChance = 0;
   let maxHealthLoss: MaxHealthLoss | undefined;
   let maxHealthBonus = 0;
@@ -2629,7 +2689,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     ) {
       armorReduction = def.armorReduction;
     }
-    moveSpeedMultiplier *= def.moveSpeedMultiplier;
+    moveSpeedMultiplier *= speedBoostsBarred
+      ? Math.min(1, def.moveSpeedMultiplier)
+      : def.moveSpeedMultiplier;
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     if (
       def.maxHealthLoss !== undefined &&

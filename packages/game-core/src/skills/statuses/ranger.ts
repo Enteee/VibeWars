@@ -30,7 +30,15 @@ export type RangerStatusId =
   | "barbed-arrows"
   | "barbed-arrows-armor"
   | "melandrus-arrows"
-  | "read-the-wind";
+  | "read-the-wind"
+  // Nature rituals 1 (#1745).
+  | "fertile-season"
+  | "quickening-zephyr"
+  | "frozen-soil"
+  | "muddy-terrain"
+  | "conflagration"
+  | "predatory-season"
+  | "winter";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -263,5 +271,56 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "read-the-wind": define("read-the-wind", "Read the Wind", "preparation", {
     profession: "ranger",
     projectileSpeedMultiplier: 2,
+  }),
+
+  // Nature rituals 1 (#1745): each spirit's aura, at its rank-12 value.
+  // Fertile Season: "Non-spirit creatures within range have +50...150
+  // maximum Health and gain +8 armor": +130.
+  "fertile-season": define("fertile-season", "Fertile Season", "skill-effect", {
+    profession: "ranger",
+    maxHealthBonus: 130,
+    armorModifier: 8,
+  }),
+  // "All skills recharge twice as fast and cost 30% more of the base
+  // Energy to cast."
+  "quickening-zephyr": define("quickening-zephyr", "Quickening Zephyr", "skill-effect", {
+    profession: "ranger",
+    skillRechargeFaster: 0.5,
+    energyCostMultiplier: 1.3,
+  }),
+  // "Non-spirit creatures within its range cannot activate resurrection
+  // skills."
+  "frozen-soil": define("frozen-soil", "Frozen Soil", "skill-effect", {
+    profession: "ranger",
+    preventsResurrection: true,
+  }),
+  // "Move 10% slower and speed boosts have no effect."
+  "muddy-terrain": define("muddy-terrain", "Muddy Terrain", "skill-effect", {
+    profession: "ranger",
+    moveSpeedMultiplier: 0.9,
+    preventsSpeedBoosts: true,
+  }),
+  // "All arrows that hit strike for fire damage."
+  conflagration: define("conflagration", "Conflagration", "skill-effect", {
+    profession: "ranger",
+    attackDamageType: "fire",
+    attackDamageTypeWeapon: "bow",
+  }),
+  // "All healing is reduced by 20%. If any of your attacks hit, you gain
+  // 5 Health": the bearer's own, so it is cut by the 20% too.
+  "predatory-season": define("predatory-season", "Predatory Season", "skill-effect", {
+    profession: "ranger",
+    healingMultiplier: 0.8,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "heal", amount: { flat: 5 }, recipient: "caster", perStatusOnTarget: [] }],
+      skillId: "ranger.predatory-season",
+    },
+  }),
+  // "All elemental damage is cold damage instead."
+  winter: define("winter", "Winter", "skill-effect", {
+    profession: "ranger",
+    elementalDamageTakenAs: "cold",
   }),
 };

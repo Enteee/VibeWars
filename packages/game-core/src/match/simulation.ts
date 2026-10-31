@@ -67,6 +67,7 @@ import { createRng, seedFromString, type SimulationRng } from "../rng.js";
 import { FLASH_LOCKOUT_SECONDS, MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import {
   canActivate,
+  isResurrectionSkill,
   hasAftercast,
   usableMidAction,
   isAllyOrSelfRule,
@@ -3228,7 +3229,7 @@ export class MatchSimulation {
     // Resurrection skills targeted on players cannot target pets (#1046,
     // fandom): told before a walk toward one starts.
     if (
-      skill.target === "single-dead-ally" &&
+      isResurrectionSkill(skill) &&
       target?.creature !== undefined &&
       (check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight")
     ) {
