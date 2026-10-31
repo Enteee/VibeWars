@@ -148,6 +148,11 @@ export function runnerJailArgs(jail) {
     ...["NO_PROXY", "no_proxy"].flatMap((name) => ["--setenv", name, "localhost,127.0.0.1,::1"]),
     ...["--setenv", "RUNNER_ROOT", WORK],
     ...["--setenv", "ACTIONS_RUNNER_HOOK_JOB_STARTED", jail.hook],
+    // nixpkgs ships the runner with Node 24 alone (Node 20 is gone from it),
+    // and the runner still asks for externals/node20 by default: for
+    // hashFiles() and for an action that says 'node20'. The spike failed so.
+    ...["--setenv", "ACTIONS_RUNNER_FORCED_INTERNAL_NODE_VERSION", "node24"],
+    ...["--setenv", "ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION", "node24"],
     ...["--setenv", "VIBEWARS_RUNNER_EVENTS", jail.events],
     ...["--setenv", "VIBEWARS_PROXY_SOCKET", `${PROXY_DIR}/${PROXY_SOCKET}`],
     ...["--setenv", "VIBEWARS_PROXY_PORT", String(PROXY_PORT)],

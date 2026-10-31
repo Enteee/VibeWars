@@ -150,6 +150,9 @@ describe("runnerJailArgs", () => {
     expect(env(args, "NO_PROXY")).toBe("localhost,127.0.0.1,::1");
     expect(env(args, "ACTIONS_RUNNER_HOOK_JOB_STARTED")).toBe(JAIL.hook);
     expect(env(args, "VIBEWARS_RUNNER_EVENTS")).toBe(JAIL.events);
+    // The only Node the nixpkgs runner has (#1889 spike: hashFiles() failed on node20).
+    expect(env(args, "ACTIONS_RUNNER_FORCED_INTERNAL_NODE_VERSION")).toBe("node24");
+    expect(env(args, "ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION")).toBe("node24");
     expect(env(args, "PATH")).toBe(`${JAIL.userland}/bin`);
     expect(env(args, "HOME")).toBe("/home/runner");
   });

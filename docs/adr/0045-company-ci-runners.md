@@ -116,9 +116,8 @@ two cannot drift apart.
   cache's accounts).
   That is true on GitHub's hosted runners too. What protects us is that
   the jail holds nothing secret: the source is public, there are no
-  secrets, and the JIT credential is good for one job (to be shown by the
-  spike before `COMPANY_RUNNERS` is set: the runner is deregistered after its job, and a
-  replayed or stolen credential takes no second one). The filter stops a
+  secrets, and the JIT credential is good for one job (shown by the
+  spike, below). The filter stops a
   hostile job scanning the LAN, attacking the host's services, or using
   the host to attack arbitrary hosts.
 - **The Actions cache is unverified input**, the restored Nix and pnpm
@@ -130,6 +129,31 @@ two cannot drift apart.
   hostile job can fill the disk that hubd, git and the jails live on.
   Part 2's supervisor (#1888) puts scratch on a filesystem of its own, or
   under a quota, before `COMPANY_RUNNERS` is set.
+
+## The spike (2026-10-31)
+
+The operator ran `scripts/bots/runner-spike.sh` once. It opened a throwaway
+pull request (#1906) whose `ci` job ran on the spike runner's label.
+
+Proven:
+
+- **One job per credential.** After its job the runner was gone from the
+  repository's runners. A replayed copy of its JIT config took no second
+  job: the next run's `ci` job stayed queued.
+- **The workflow's `env:` does not reach the hook.** The spike job set
+  `VIBEWARS_RUNNER_EVENTS` to a missing file, which the hook refuses. The
+  hook still let the job start.
+- In the jail, through the proxy: the checkout, and the Nix install from
+  GitHub's release.
+
+Not proven: **a whole `ci` job in the jail.** It failed after 19 seconds,
+evaluating `hashFiles()` in `.github/actions/devenv`. The runner looked for
+`externals/node20`, and nixpkgs' runner ships only Node 24. The jail now
+sets `ACTIONS_RUNNER_FORCED_INTERNAL_NODE_VERSION` and
+`ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION` to `node24`, which has not been
+tested on GitHub. The cache restore, the dev shell and the tests have not
+yet run in a jail. So the spike must run again, to a green `ci` job, before
+`COMPANY_RUNNERS` is set (#1891 keeps the runners off until then).
 
 ## What was rejected
 
