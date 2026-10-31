@@ -1,8 +1,9 @@
 import { AREA_ADJACENT, AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type DervishStatusId =
+  | "extend-enchantments"
   // Dervish enchantments and stances (#845).
   | "mystic-regeneration"
   | "fleeting-stability"
@@ -629,6 +630,18 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         target: "bearer",
         skillId: "dervish.faithful-intervention",
       },
+    ],
+  }),
+
+  // "Your next Dervish enchantment lasts 10...122...150% longer" (#1761),
+  // at rank 12: the first one used spends it.
+  "extend-enchantments": define("extend-enchantments", "Extend Enchantments", "skill-effect", {
+    profession: "dervish",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment", profession: "dervish" },
+        { durationMultiplier: 2.22, uses: 1 },
+      ),
     ],
   }),
   // "Whenever you cast a spell, you gain 2 Energy for each enchantment on

@@ -1,9 +1,13 @@
 import { AREA_ADJACENT } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import type { HealEffect } from "../types.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type MonkStatusId =
+  | "divine-spirit"
+  | "blessed-aura"
+  | "healers-covenant"
+  | "holy-haste"
   | "guardian"
   | "mending"
   | "patient-spirit"
@@ -347,6 +351,52 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         ],
         target: "bearer",
         skillId: "monk.dwaynas-sorrow",
+      },
+    ],
+  }),
+  // Own-skill modifiers (#1761), each at its rank-12 values.
+  // "Monk spells cost you 5 less Energy to cast. (Minimum cost: 1 Energy.)"
+  "divine-spirit": define("divine-spirit", "Divine Spirit", "enchantment", {
+    profession: "monk",
+    ownSkillModifiers: [ownSkills({ type: "spell", profession: "monk" }, { energyDiscount: 5 })],
+  }),
+  // "While you maintain this enchantment, Monk enchantments you cast last
+  // 10...30...35% longer." One maintained has no duration to lengthen.
+  "blessed-aura": define("blessed-aura", "Blessed Aura", "enchantment", {
+    profession: "monk",
+    ownSkillModifiers: [
+      ownSkills({ type: "enchantment", profession: "monk" }, { durationMultiplier: 1.3 }),
+    ],
+  }),
+  // "Your Healing Prayers spells heal for 20% less Health, but cost
+  // 1...3...4 less Energy." The 20% is the Divine Favor bonus's too.
+  "healers-covenant": define("healers-covenant", "Healer's Covenant", "enchantment", {
+    profession: "monk",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell", attributeId: "monk.healing-prayers" },
+        { energyDiscount: 3, healMultiplier: 0.8 },
+      ),
+    ],
+  }),
+  // "Your Healing Prayers spells cast 50% faster. This enchantment ends if
+  // you cast another enchantment."
+  "holy-haste": define("holy-haste", "Holy Haste", "enchantment", {
+    profession: "monk",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "spell", attributeId: "monk.healing-prayers" },
+        { activationMultiplier: 0.5 },
+      ),
+    ],
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { type: "enchantment" },
+        target: "bearer",
+        effects: [],
+        skillId: "monk.holy-haste",
       },
     ],
   }),

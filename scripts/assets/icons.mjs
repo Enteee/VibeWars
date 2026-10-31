@@ -16,7 +16,7 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { C, germ, perEach, stroke } from "./icon-kit.mjs";
+import { C, germ, perEach, stepAndReturn, stroke } from "./icon-kit.mjs";
 import { WEAPON_MARKS } from "./weapon-marks.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
@@ -2950,6 +2950,11 @@ const skillGlyph = {
   "each-channeling": () => perEach("channeling", C.ink, 1.8),
   "each-zeal": () => perEach("zeal", C.ink, 1.8),
   "each-vigor": () => perEach("vigor", C.ink, 1.8),
+  // Shadow Step and return (#1847): the mark on top, the way back under it.
+  "step-fang": () => stepAndReturn("fang", C.ink, 2),
+  "step-aura": () => stepAndReturn("aura", C.ink, 1.8),
+  "step-meld": () => stepAndReturn("meld", C.ink, 1.8),
+  "step-haste": () => stepAndReturn("haste", C.ink, 1.8),
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +

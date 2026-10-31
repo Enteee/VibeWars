@@ -117,6 +117,7 @@ import {
   isStatusId,
   isUnderAnother,
   MAX_PIPS,
+  ownSkillBoost,
   preventsAttacks,
   reducedRecharge,
   scaledStatusDuration,
@@ -793,6 +794,13 @@ const NONE_SPARED: ReadonlySet<StatusId> = new Set();
 
 /** At most this many push-out passes per move; see `advanceMovement`. */
 const MOVEMENT_RELAX_PASSES = 4;
+
+/**
+ * How many times the last settle pass (#1837) lands what its own landings
+ * owe: redirected damage on a Union bearer charges its spirit, whose
+ * death ends what it upholds. Two do for any shipped chain.
+ */
+const LAST_PASS_LANDINGS = 4;
 
 /**
  * How long a maintained enchantment's bearer may stay beyond compass
@@ -2465,9 +2473,12 @@ export class MatchSimulation {
     if (pet === undefined) {
       return;
     }
-    this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key);
     // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
-    const faster = aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster;
+    const faster = Math.max(
+      aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster,
+      rule.own.rechargeFaster,
+    );
     beginRecharge(
       record.combatant.cast,
       skill,
@@ -2533,21 +2544,26 @@ export class MatchSimulation {
 
   /**
    * A skill used, at once or as it begins: its cost, and what it uses up
-   * of a glyph or the chants on its user. Returns what they give it.
+   * of a glyph, the chants on its user, or a status counting its next
+   * skills of a kind (#1761). Returns what they give it.
    */
   #payForUse(
     record: ParticipantRecord,
     skill: Skill,
     key: string,
   ): { rule: CastRule; castsInstantly: boolean } {
+    // Read before anything is spent: Extend Enchantments lengthens the
+    // enchantment that uses it up.
+    const own = ownSkillBoost(record.combatant.statuses.active, skill);
     payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
+    this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     const { rule, castsInstantly, losesAllEnergy } = this.#useNextSkillRules(record, skill);
     // Glyph of Essence's price (#1730), once the cost is paid.
     if (losesAllEnergy) {
       record.combatant.energy = 0;
     }
-    return { rule, castsInstantly };
+    return { rule: { ...rule, own }, castsInstantly };
   }
 
   /**
@@ -2581,6 +2597,18 @@ export class MatchSimulation {
       return { skillId: skill.id, check, queued: true };
     }
 
+    // Timed before it is paid for, so a status its use spends (#1761)
+    // still hastens it.
+    const timed =
+      skill.attack === undefined
+        ? effectiveActivationSeconds(
+            skill,
+            record.combatant,
+            castTargetId === undefined
+              ? undefined
+              : this.#participants.get(castTargetId)?.combatant,
+          )
+        : undefined;
     const { rule, castsInstantly } = this.#payForUse(record, skill, key);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
@@ -2590,17 +2618,7 @@ export class MatchSimulation {
     if (skill.flash) {
       this.#lockOutFlash(record, skill.id, key);
     }
-    const activationSeconds = castsInstantly
-      ? 0
-      : skill.attack === undefined
-        ? effectiveActivationSeconds(
-            skill,
-            record.combatant,
-            castTargetId === undefined
-              ? undefined
-              : this.#participants.get(castTargetId)?.combatant,
-          )
-        : this.#attackHitSeconds(record, skill);
+    const activationSeconds = castsInstantly ? 0 : (timed ?? this.#attackHitSeconds(record, skill));
     record.combatant.cast.beginCast(
       skill.id,
       castTargetId,
@@ -2668,7 +2686,11 @@ export class MatchSimulation {
     if (!isSpell(skill.type)) {
       return;
     }
-    const ended = record.combatant.statuses.countSpellStarted();
+    this.#logSpent(record, skill, record.combatant.statuses.countSpellStarted());
+  }
+
+  /** The statuses `skill`'s use spent, each logged as ended under it. */
+  #logSpent(record: ParticipantRecord, skill: Skill, ended: readonly StatusId[]): void {
     if (ended.length > 0) {
       this.#log.push({
         tick: this.#tick,
@@ -2698,7 +2720,7 @@ export class MatchSimulation {
   #useNextSkillRules(
     record: ParticipantRecord,
     skill: Skill,
-  ): { rule: CastRule; castsInstantly: boolean; losesAllEnergy: boolean } {
+  ): { rule: Omit<CastRule, "own">; castsInstantly: boolean; losesAllEnergy: boolean } {
     const all = record.combatant.statuses.useNextSkillRules(skill);
     const used = all.filter(({ answered }) => answered);
     this.#logFired(
@@ -3458,6 +3480,7 @@ export class MatchSimulation {
             rng: this.#rng,
             rules: this.#ruleset.combat,
             surroundings: this.#participants,
+            own: cast.rule.own,
           });
     // What the skill put on its own user does not answer this use of it
     // (#999): the chanter's own Song of Restoration waits for its next skill.
@@ -3588,7 +3611,13 @@ export class MatchSimulation {
         : skill.type === "binding-ritual"
           ? modifiers.bindingRitualRechargeFaster
           : 0;
-      const faster = Math.max(modifiers.skillRechargeFaster, typeFaster);
+      // A status on the caster's skills of its kind (#1761), as Practiced
+      // Stance's preparations, as its use was paid for.
+      const faster = Math.max(
+        modifiers.skillRechargeFaster,
+        typeFaster,
+        cast.rule.own.rechargeFaster,
+      );
       // A glyph's hold on the spell (#1730): Renewal's 0 over Sacrifice's 30 more.
       beginRecharge(
         record.combatant.cast,
@@ -3880,11 +3909,22 @@ export class MatchSimulation {
    * bearer died (#1825); nothing else answers. Those fire only once every
    * participant is drained, so what they change is the next pass's,
    * whoever joined first: a death they cause never fires here. Without
-   * `ownEnds`, each is drained as it is reached, so nothing is left over.
+   * `ownEnds` it is the last pass (#1837): every participant is drained
+   * before any is settled, and what that settling changes, a hex breaker's
+   * kill among it, is drained again, every participant before any is
+   * landed. Those drains fire nothing, now or next tick, whoever joined
+   * first: what the last pass causes never settles (#1825). They land what
+   * is owed without being a trigger, redirected damage and spirits'
+   * charges, and keep the books (raised maxima, forms, returns). Landing
+   * can owe more, drained again, up to `LAST_PASS_LANDINGS` times; a last
+   * drain only keeps the books, and what is still owed then is dropped.
    */
   #settleTriggered(context: TriggerContext, ownEnds: boolean): void {
     const settle = (record: ParticipantRecord, changes: readonly StatusChange[]): void => {
       for (const change of changes) {
+        if (change.kind === "redirected-damage") {
+          this.#landRedirected(record, change.toId, change.amount);
+        }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
@@ -3900,18 +3940,34 @@ export class MatchSimulation {
         }
       }
     };
-    if (!ownEnds) {
-      for (const record of this.#participants.values()) {
-        settle(record, record.combatant.statuses.drainChanges());
-      }
-      return;
-    }
     const drained = [...this.#participants.values()].map((record) => ({
       record,
       changes: record.combatant.statuses.drainChanges(),
     }));
     for (const { record, changes } of drained) {
       settle(record, changes);
+    }
+    if (ownEnds) {
+      return;
+    }
+    for (let round = 0; round <= LAST_PASS_LANDINGS; round += 1) {
+      const left = [...this.#participants.values()].map((record) => ({
+        record,
+        changes: record.combatant.statuses.drainChanges(),
+      }));
+      for (const { record, changes } of left) {
+        for (const change of changes) {
+          if (round < LAST_PASS_LANDINGS && change.kind === "redirected-damage") {
+            this.#landRedirected(record, change.toId, change.amount);
+          }
+          if (round < LAST_PASS_LANDINGS && change.kind === "charged-source") {
+            this.#landCharge(change.toId, change.statusId, change.amount);
+          }
+          this.#loseRaisedMaxima(record, change);
+          this.#endForm(record, change);
+          this.#returnSource(change);
+        }
+      }
     }
   }
 
@@ -4909,6 +4965,7 @@ export class MatchSimulation {
       skill: resolution.skill,
       blow: skillBlow(resolution.skill, record.combatant),
       next: nextAttackSkillOf(record.combatant),
+      own: resolution.own,
     };
     const flight = resolution.skill.attack?.flightSpeed;
     const released: CombatEvent[] = [];
@@ -4951,6 +5008,7 @@ export class MatchSimulation {
             rng: this.#rng,
             rules: this.#ruleset.combat,
             surroundings: this.#participants,
+            own: skillHit.own,
           },
           earlier,
         );
@@ -4974,6 +5032,7 @@ export class MatchSimulation {
           kind: "spell",
           skill: resolution.skill,
           caster: record.combatant,
+          own: resolution.own,
         });
   }
 
@@ -5130,6 +5189,7 @@ export class MatchSimulation {
               rng: this.#rng,
               rules: this.#ruleset.combat,
               surroundings: this.#participants,
+              own: skillHit.own,
             },
             events,
           );
@@ -5323,6 +5383,7 @@ export class MatchSimulation {
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
+      own: spell.own,
     });
     this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);

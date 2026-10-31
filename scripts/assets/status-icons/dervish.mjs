@@ -235,13 +235,19 @@ export const DERVISH_STATUS_ICONS = {
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${c}"/>`,
   ],
+  // Skill effect (#1761, stand-in): a stretched bar with an arrow, the
+  // next Dervish enchantment lasts longer.
+  "extend-enchantments": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 12h14M15 9l3 3-3 3" ${stroke(c, 2)}/>` + `<path d="M4 8v8" ${stroke(c, 1.8)}/>`,
+  ],
   // "N for each X" (#1850): the skill's drawing, shrunk into the frame.
   "arcane-zeal": [
     "enchantment",
     (c) =>
       `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${perEach("zeal", c, 2.8)}</g>`,
   ],
-  // Enchantment: a cross over stacked rings, health for each enchantment.
   "mystic-vigor": [
     "enchantment",
     (c) =>
