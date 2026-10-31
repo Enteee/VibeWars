@@ -88,6 +88,4 @@ export const MONK_ICONS = {
   "monk.judges-intervention": { glyph: "halo-heart-bar" },
   // Stand-in for the death trigger of #1762, until its art.
   "monk.dwaynas-sorrow": { glyph: "heal", modifier: "finale" },
-  // Ally threshold mechanics (#1789), stand-in until its art card.
-  "monk.judges-intervention": { glyph: "plus-halo", modifier: "up" },
 };
