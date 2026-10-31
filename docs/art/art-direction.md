@@ -804,6 +804,53 @@ The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made b
   menu, the designer and the roster. B is the pick if the operator wants the
   cape to read at a glance and accepts the clump noise.
 
+#### Guild cape in motion (study, not decided)
+
+The operator asked for a cape that is nearly invisible when its wearer
+stands still, unfolds when it walks, trails opposite the movement (not the
+facing) and lags a turn. `node scripts/assets/cape-motion-study.mjs` steps the
+physics in JS and writes the clip as SMIL keyframes, so it plays when the SVG
+is opened in a browser or on GitHub (SMIL plays inside an image too).
+All three share the model the game would run per body, in the
+client, from snapshot velocity: a smoothed trail direction (opposite the
+movement), an unfold amount `u` that is itself lagged (so one step never
+unfolds it), and a chain of nodes each pulled to a point on the trail line by
+a damped spring, softer towards the free end. Folded, the cloth hides under the
+disc and only a thin border arc stays on the rim: the team colour is never
+covered and the cape's side is still told. Each clip shows standing, walking
+right, turning and walking up, stopping, one step, a strafe (facing right,
+moving down: the cape follows the movement, not the facing) and two bodies
+walking past each other, plus a standing, a knocked down and a dead body.
+
+![Cape motion study](cape-motion-study.svg)
+
+- **A, a rim band that peels into a tab.** One node. Draws the border arc (2
+  calls), the tab polygon, its trim and the emblem: 5 Painter calls; 7 floats of
+  state per body. At full unfold it is the widest of the three (about 20
+  units across at the root), and passing a neighbour it hides most of the
+  other body's rim.
+- **B, one cloth panel on a two-segment chain.** The decided tab, now
+  moving. Border arc (2), panel polygon, trim, emblem: 5 calls; 11 floats per
+  body. 17 units long at full unfold, as today, so nothing grows. The
+  panel bends round a turn and swings out behind a strafe; the emblem rides
+  the first segment and stays readable.
+- **C, a pair of streamers.** Two three-node ribbons. Border arc (2), two
+  ribbons, two trims: 6 calls; 26 floats per body. The thinnest and the
+  least in the way (a pass-by hides almost nothing) but it reads as hair
+  or tentacles at Default zoom, has no room for the emblem, and the strands
+  tangle visually in a clump.
+
+Knocked down: speed is zero, so it settles to the border. Dead: no cape.
+One step: `u` is lagged, so a 0.2 s step only reaches a third of an unfold:
+no flicker. At Default zoom a body is 28 px across and the cape at most 17 px
+past its rim; the border arc is 1.5 px.
+
+**Recommendation: B.** It is the shape the operator already picked, so the
+guild read and the emblem carry over, it moves with the most readable lag,
+and its length is unchanged so the clump noise #1410 accepted does not
+grow. A is the fallback if a bolder silhouette is wanted; C is the one to pick
+if neighbours being covered is the worry above all.
+
 ### Name labels (study, not decided)
 
 Every body carries its name, 11 px and centred, so two bodies a name's
