@@ -730,6 +730,11 @@ function describeAttackHits(
       riderDamage(effect.effects[0]) === riderDamage(before)
     ) {
       parts.push(`${String(parts.pop())}, and so do foes adjacent to them`);
+    } else if (effect.kind === "life-steal") {
+      // Said of the bearer's attacks, never "your": a spirit's aura
+      // steals for the spirit (#1777).
+      const amount = String(describeMagnitude(effect.amount, new Map()).current);
+      parts.push(`${attacks} steal up to ${amount} Health`);
     } else {
       parts.push(
         ...describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`),

@@ -7,7 +7,7 @@ import { MatchSimulation, type Participant, type ParticipantSpec } from "../matc
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
-import { describeSkill } from "./describe.js";
+import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
 
 /**
@@ -173,6 +173,19 @@ describe("own-spirits splash (#1777)", () => {
       throw new Error(`no skill ${BOON}`);
     }
     expect(JSON.stringify(describeSkill(skill, ranks))).toContain("Your spirits in earshot");
+  });
+
+  it("says Spiritleech Aura steals with the spirit's attacks, not yours", () => {
+    expect(describeStatus("spiritleech-aura")).toBe(
+      "attacks deal 17 less damage, physical attacks steal up to 17 Health",
+    );
+    const leech = getSkill(LEECH);
+    if (leech === undefined) {
+      throw new Error(`no skill ${LEECH}`);
+    }
+    const text = JSON.stringify(describeSkill(leech, new Map()));
+    expect(text).toContain("physical attacks steal up to 17 Health");
+    expect(text).not.toContain("your physical attacks");
   });
 });
 
