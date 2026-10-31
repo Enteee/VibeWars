@@ -964,9 +964,10 @@ do not set either off. Neither does damage a trigger deals, so Mark of
 Pain's splash leaves them up, and two Vengeful Weapons never echo. Two
 foes in one tick: it answers the first. The blow that kills the bearer
 steals nothing. **Splinter Weapon** (Channeling Magic, 5 energy, 1 s, 8 s
-recharge) lasts 20 s or 4 hits with any physical weapon: each hit deals
-25 armor-ignoring damage to every other foe adjacent to the foe hit. A
-miss or a block spends nothing, and a wand or a staff carries none.
+recharge) lasts 20 s or 4 hits with any weapon: each hit deals 25
+armor-ignoring damage to every other foe adjacent to the foe hit. A miss
+or a block spends nothing. A weapon spell rides every attack, a wand's
+or a staff's bolt too (#1654); a preparation rides physical attacks only.
 
 The Ritualist heals with Restoration Magic, each on an ally or yourself
 (#955). **Mend Body and Soul** (5 energy, ¾ s, 3 s recharge) heals 96.

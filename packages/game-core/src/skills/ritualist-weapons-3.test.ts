@@ -271,13 +271,15 @@ describe("Weapon of Renewal (#1654)", () => {
 });
 
 describe("in a match (#1654)", () => {
-  function body(id: string, team: number, spawn: Vec2): ParticipantSpec {
+  function body(id: string, team: number, spawn: Vec2, weapon = WEAPONS.sword): ParticipantSpec {
+    const attributeId =
+      weapon === WEAPONS.sword ? "warrior.swordsmanship" : "ritualist.channeling-magic";
     return {
       id,
       team,
       skillBar: [],
-      attributeRanks: new Map([["warrior.swordsmanship", 12]]),
-      equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
+      attributeRanks: new Map([[attributeId, 12]]),
+      equipment: wielding(weapon, attributeId),
       maxHealth: 1e4,
       maxEnergy: 100,
       spawn,
@@ -285,10 +287,11 @@ describe("in a match (#1654)", () => {
     };
   }
 
-  function match(): MatchSimulation {
+  /** `w` wielding `weapon` against `x`, a sword, 30 apart. */
+  function match(weapon = WEAPONS.sword): MatchSimulation {
     return new MatchSimulation({
       seed: "ritualist-weapons-3",
-      participants: [body("w", 0, vec2(0, 0)), body("x", 1, vec2(30, 0))],
+      participants: [body("w", 0, vec2(0, 0), weapon), body("x", 1, vec2(30, 0))],
     });
   }
 
@@ -324,6 +327,26 @@ describe("in a match (#1654)", () => {
     expect(regenerated.length).toBeGreaterThan(0);
     expect(regenerated.every((entry) => entry.sourceId === "rit")).toBe(true);
   });
+
+  it.each([
+    ["sword", WEAPONS.sword],
+    ["wand", WEAPONS.wand],
+  ] as const)(
+    "Nightmare Weapon: a %s's three hits deal no damage and steal 42 each",
+    (_name, weapon) => {
+      const sim = match(weapon);
+      const w = get(sim, "w");
+      const x = get(sim, "x");
+      w.statuses.apply("nightmare-weapon", 12, "w");
+      w.health = 5000;
+      expect(applyIntent(sim, "w", { kind: "attack", targetId: "x" })).toBeNull();
+      stepFor(sim, 10);
+      expect(w.statuses.has("nightmare-weapon")).toBe(false);
+      // Three steals of 42, then plain blows after it ended.
+      expect(w.health).toBe(5000 + 3 * 42);
+      expect(x.health).toBeLessThan(x.maxHealth - 3 * 42);
+    },
+  );
 
   it("Weapon of Shadow blinds whoever hits its bearer, and whoever it hits", () => {
     const struck = match();

@@ -537,8 +537,11 @@ export function landBlow(
  * Poison's poison, each onto `fired` under its own skill, apart from the
  * blow (#939). Read when the blow lands, so a preparation that ran out
  * mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
- * says: a wand's or a staff's bolt carries none. Then every status that
- * ends after so many hits with this weapon spends one (#939): Sand
+ * says: a wand's or a staff's bolt carries none, except a weapon
+ * spell's, which rides every attack (#1654): Nightmare Weapon steals
+ * through a wand. Then every status that
+ * ends after so many hits with this weapon spends one (#939), whatever
+ * the blow's damage type: Sand
  * Shards' fourth hit splashes, then ends it. Returns those endings,
  * after what the weapon itself does to whoever it hits (#1239). A rider
  * for attack skills only rides a blow `withAttackSkill` (#1551).
@@ -554,12 +557,15 @@ export function attackHitRiders(
   fired: FiredTrigger[],
 ): CombatEvent[] {
   const onHit = weaponOnHit(attacker, victim, mainHand.weapon, rng, rules, surroundings);
-  if (!isPhysicalDamage(mainHand.damageType)) {
-    return onHit;
-  }
+  const physical = isPhysicalDamage(mainHand.damageType);
   for (const { id } of attacker.statuses.active) {
-    const rider = getStatusDefinition(id).onAttackHit;
-    if (rider === undefined || (rider.attackSkillsOnly && !withAttackSkill)) {
+    const definition = getStatusDefinition(id);
+    const rider = definition.onAttackHit;
+    if (
+      rider === undefined ||
+      (rider.attackSkillsOnly && !withAttackSkill) ||
+      (!physical && definition.category !== "weapon-spell")
+    ) {
       continue;
     }
     const events = applyEffects(rider.effects, {
