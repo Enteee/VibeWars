@@ -69,6 +69,7 @@ describe("status definitions", () => {
         def.interruptsSpells ||
         def.untargetableByFoeSpells ||
         def.attackDurationMultiplier !== 1 ||
+        def.projectileSpeedMultiplier !== 1 ||
         def.block !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||
         def.attackDamageCapFraction !== undefined ||

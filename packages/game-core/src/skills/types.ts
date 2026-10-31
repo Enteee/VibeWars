@@ -959,6 +959,13 @@ export type StateCondition =
    * to any allies".
    */
   | { readonly kind: "target-alone"; readonly radius: number }
+  /**
+   * A living ally of the caster's, the caster itself excluded, stands
+   * within `radius` of the effect's target (#1742): Crossfire's "if that
+   * foe is near any of your allies". Allies as `target-alone` counts them,
+   * pets and spirits included.
+   */
+  | { readonly kind: "target-near-caster-ally"; readonly radius: number }
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
   | { readonly kind: "target-not-moving" }
   /**

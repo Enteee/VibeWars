@@ -321,6 +321,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
     parts.push(`attacks ${String(change)}% ${way}`);
   }
+  if (definition.projectileSpeedMultiplier !== 1) {
+    parts.push(`arrows move ${String(definition.projectileSpeedMultiplier)}× as fast`);
+  }
   if (definition.preventsSpells) {
     parts.push("cannot cast spells");
   }
@@ -581,6 +584,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.endsWhenBearerHits) {
     parts.push("ends if the bearer hits with an attack");
+  }
+  if (definition.endsWhenBearerMisses) {
+    parts.push("ends if the bearer fails to hit");
   }
   if (definition.endsWhenBearerHitsWithAttackSkill) {
     parts.push("ends if the bearer hits with an attack skill");
@@ -1317,6 +1323,10 @@ function conditionText(condition: EffectCondition): string {
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
         : `If target has no allies within ${String(condition.radius)}`;
+    case "target-near-caster-ally":
+      return condition.radius === AREA_NEARBY
+        ? "If target is near any of your allies"
+        : `If any of your allies is within ${String(condition.radius)} of target`;
     case "target-not-moving":
       return "If target is not moving";
     case "target-knocked-down":

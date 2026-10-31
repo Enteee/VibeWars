@@ -110,6 +110,9 @@ const NO_BOT_USE = new Set([
   "ritualist.weapon-of-remedy",
   "ranger.kindle-arrows",
   "ranger.ignite-arrows",
+  // Ranger staples 4 (#1742): an arrow that cannot be blocked or flies faster.
+  "ranger.seeking-arrows",
+  "ranger.read-the-wind",
   // Energy engine (#1614): energy back for spells still to be cast.
   "elementalist.fire-attunement",
   "elementalist.water-attunement",

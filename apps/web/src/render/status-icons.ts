@@ -290,6 +290,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "zealous-vow": icon("zealous-vow"),
   "featherfoot-grace": icon("featherfoot-grace"),
   "whirling-charge": icon("whirling-charge"),
+  "seeking-arrows": icon("seeking-arrows"),
+  "barbed-arrows": icon("barbed-arrows"),
+  "barbed-arrows-armor": icon("barbed-arrows-armor"),
+  "melandrus-arrows": icon("melandrus-arrows"),
+  "read-the-wind": icon("read-the-wind"),
 };
 
 const GAP = 2;
