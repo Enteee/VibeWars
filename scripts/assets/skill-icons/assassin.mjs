@@ -45,8 +45,8 @@ export const ASSASSIN_ICONS = {
   "assassin.signet-of-toxic-shock": { glyph: "drop-shock" },
   "assassin.beguiling-haze": { glyph: "blink-daze" },
   "assassin.shadow-prison": { glyph: "blink-bars" },
-  // Touch skills (#1643), a stand-in until its art card.
-  "assassin.lift-enchantment": { glyph: "ring-rend", modifier: "self" },
+  // Touch skills (#1643, #1666).
+  "assassin.lift-enchantment": { glyph: "hand-ring-rend" },
   // Placeholders until the asset-designer's (#1637).
   "assassin.black-mantis-thrust": { glyph: "dagger-crit", modifier: "down" },
   "assassin.black-spider-strike": { glyph: "dagger-lotus", modifier: "bleed" },

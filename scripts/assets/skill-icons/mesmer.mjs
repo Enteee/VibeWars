@@ -52,12 +52,12 @@ export const MESMER_ICONS = {
   "mesmer.epidemic": { glyph: "drop-spread" },
   // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
   "mesmer.spiritual-pain": { glyph: "anti-summon-pain" },
-  // Mesmer staples 3 (#1627), stand-ins until their art card.
-  "mesmer.ether-feast": { glyph: "energy", modifier: "plus" },
-  "mesmer.drain-delusions": { glyph: "cleanse", modifier: "renew" },
-  "mesmer.signet-of-disruption": { glyph: "interrupt", modifier: "bolt" },
-  "mesmer.wandering-eye": { glyph: "eye-slash", modifier: "hourglass" },
-  "mesmer.hex-eater-vortex": { glyph: "cleanse", modifier: "bolt" },
+  // Mesmer staples 3 (#1627, #1666).
+  "mesmer.ether-feast": { glyph: "energy-feast" },
+  "mesmer.drain-delusions": { glyph: "hex-energy-feast" },
+  "mesmer.signet-of-disruption": { glyph: "hex-interrupt" },
+  "mesmer.wandering-eye": { glyph: "eye-burst" },
+  "mesmer.hex-eater-vortex": { glyph: "vortex-hex" },
   // Clumsiness (#1593, #1619): the hex ring round a dropped blade.
   "mesmer.clumsiness": { glyph: "hex-sword-drop" },
 };
