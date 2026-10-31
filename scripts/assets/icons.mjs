@@ -3448,7 +3448,17 @@ const skillGlyph = {
           `<g transform="translate(${String(x)},0)">${inkFill("M5 4.5C3 7.5 1 9 1 11.5A4 4 0 0 0 9 11.5C9 9 7 7.5 5 4.5Z")}</g>`,
       )
       .join("") + inkLine("M2 21L22 3", 2.4),
-  "drop-mend": () => riderOn(skillGlyph["drop-struck"](), RIDER.plus),
+  // Mend Ailment: one drop struck off, two still standing, and a plus over them (#1703).
+  "drop-mend": () =>
+    `<path d="M6 8C4 11 2 12.5 2 15A4 4 0 0 0 10 15C10 12.5 8 11 6 8Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2 21L10 9", 2.2) +
+    inkFill(
+      "M16 11C14.5 13.2 13.5 14.4 13.5 15.8A2.5 2.5 0 0 0 18.5 15.8C18.5 14.4 17.5 13.2 16 11Z",
+    ) +
+    inkFill(
+      "M20.5 15C19.3 16.6 18.8 17.4 18.8 18.4A1.7 1.7 0 0 0 22.2 18.4C22.2 17.4 21.7 16.6 20.5 15Z",
+    ) +
+    inkLine("M16 2.5V8.5M13 5.5H19", 2.4),
   "hand-star": () =>
     `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` + holyStar(17, 7, 6),
   "shield-regen": () =>
