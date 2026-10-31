@@ -11,6 +11,11 @@ const NO_BOT_USE = new Set([
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
+  // Live Vicariously (#1748): Health to the caster when its ally hits is
+  // no heal the bot weighs.
+  "monk.live-vicariously",
+  // Nor Purifying Veil's, whose removal waits for the enchantment to end.
+  "monk.purifying-veil",
   // Companion commands and pet attacks: out of scope for a bot.
   "ranger.bestial-pounce",
   "ranger.brutal-strike",
