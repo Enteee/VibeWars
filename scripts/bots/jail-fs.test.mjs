@@ -16,12 +16,16 @@ const dirs = [];
 /** @type {import("node:child_process").ChildProcess[]} */
 const children = [];
 
-afterEach(() => {
+afterEach(async () => {
   for (const child of children.splice(0)) {
-    child.kill("SIGKILL");
+    const exited = new Promise((resolve) => child.once("exit", resolve));
+    if (child.kill("SIGKILL")) {
+      await exited;
+    }
   }
   for (const dir of dirs.splice(0)) {
-    fs.rmSync(dir, { recursive: true, force: true });
+    // A swapper's grandchild may still be writing for a moment (ENOTEMPTY).
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });
 
