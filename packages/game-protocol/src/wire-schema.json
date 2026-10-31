@@ -19,6 +19,7 @@
     "lobby-state",
     "lobby-cmd",
     "lobby-note",
+    "team-proposal-builds",
     "lobby-hello",
     "lobby-welcome",
     "lobby-leave",
@@ -63,6 +64,7 @@
     "armor-of-mist",
     "ash-blast",
     "assassins-promise",
+    "aura-of-displacement",
     "aura-of-restoration",
     "aura-of-thorns",
     "avatar-of-balthazar",
@@ -277,7 +279,10 @@
     "scourge-enchantment",
     "seeking-arrows",
     "serpents-quickness",
+    "shadow-fang",
+    "shadow-meld",
     "shadow-of-fear",
+    "shadow-of-haste",
     "shadow-prison",
     "shadow-refuge",
     "shame",
@@ -508,6 +513,7 @@
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
         { "literal": "stay-together" },
+        { "literal": "team-proposal-builds" },
         { "literal": "traps" },
         { "literal": "weapon-sets" },
         { "literal": "welcome" }
@@ -719,6 +725,7 @@
                   { "literal": "armor-of-mist" },
                   { "literal": "ash-blast" },
                   { "literal": "assassins-promise" },
+                  { "literal": "aura-of-displacement" },
                   { "literal": "aura-of-restoration" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "avatar-of-balthazar" },
@@ -933,7 +940,10 @@
                   { "literal": "scourge-enchantment" },
                   { "literal": "seeking-arrows" },
                   { "literal": "serpents-quickness" },
+                  { "literal": "shadow-fang" },
+                  { "literal": "shadow-meld" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-of-haste" },
                   { "literal": "shadow-prison" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -1086,6 +1096,7 @@
                   { "literal": "armor-of-mist" },
                   { "literal": "ash-blast" },
                   { "literal": "assassins-promise" },
+                  { "literal": "aura-of-displacement" },
                   { "literal": "aura-of-restoration" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "avatar-of-balthazar" },
@@ -1300,7 +1311,10 @@
                   { "literal": "scourge-enchantment" },
                   { "literal": "seeking-arrows" },
                   { "literal": "serpents-quickness" },
+                  { "literal": "shadow-fang" },
+                  { "literal": "shadow-meld" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-of-haste" },
                   { "literal": "shadow-prison" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -1433,6 +1447,7 @@
                   { "literal": "armor-of-mist" },
                   { "literal": "ash-blast" },
                   { "literal": "assassins-promise" },
+                  { "literal": "aura-of-displacement" },
                   { "literal": "aura-of-restoration" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "avatar-of-balthazar" },
@@ -1647,7 +1662,10 @@
                   { "literal": "scourge-enchantment" },
                   { "literal": "seeking-arrows" },
                   { "literal": "serpents-quickness" },
+                  { "literal": "shadow-fang" },
+                  { "literal": "shadow-meld" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-of-haste" },
                   { "literal": "shadow-prison" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -1777,6 +1795,7 @@
                   { "literal": "armor-of-mist" },
                   { "literal": "ash-blast" },
                   { "literal": "assassins-promise" },
+                  { "literal": "aura-of-displacement" },
                   { "literal": "aura-of-restoration" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "avatar-of-balthazar" },
@@ -1991,7 +2010,10 @@
                   { "literal": "scourge-enchantment" },
                   { "literal": "seeking-arrows" },
                   { "literal": "serpents-quickness" },
+                  { "literal": "shadow-fang" },
+                  { "literal": "shadow-meld" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-of-haste" },
                   { "literal": "shadow-prison" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -2190,6 +2212,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "shadow-stepped-back" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "skill-disabled" } },
             { "name": "seconds", "optional": false, "type": "number" },
             { "name": "skillId", "optional": false, "type": "string" },
@@ -2236,6 +2264,7 @@
                   { "literal": "armor-of-mist" },
                   { "literal": "ash-blast" },
                   { "literal": "assassins-promise" },
+                  { "literal": "aura-of-displacement" },
                   { "literal": "aura-of-restoration" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "avatar-of-balthazar" },
@@ -2450,7 +2479,10 @@
                   { "literal": "scourge-enchantment" },
                   { "literal": "seeking-arrows" },
                   { "literal": "serpents-quickness" },
+                  { "literal": "shadow-fang" },
+                  { "literal": "shadow-meld" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-of-haste" },
                   { "literal": "shadow-prison" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -2571,6 +2603,7 @@
                   { "literal": "armor-of-mist" },
                   { "literal": "ash-blast" },
                   { "literal": "assassins-promise" },
+                  { "literal": "aura-of-displacement" },
                   { "literal": "aura-of-restoration" },
                   { "literal": "aura-of-thorns" },
                   { "literal": "avatar-of-balthazar" },
@@ -2785,7 +2818,10 @@
                   { "literal": "scourge-enchantment" },
                   { "literal": "seeking-arrows" },
                   { "literal": "serpents-quickness" },
+                  { "literal": "shadow-fang" },
+                  { "literal": "shadow-meld" },
                   { "literal": "shadow-of-fear" },
+                  { "literal": "shadow-of-haste" },
                   { "literal": "shadow-prison" },
                   { "literal": "shadow-refuge" },
                   { "literal": "shame" },
@@ -5060,6 +5096,17 @@
         }
       ]
     },
+    "WireProposalBuild": {
+      "properties": [
+        { "name": "mainHand", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "offHand", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "skills",
+          "optional": false,
+          "type": { "array": { "union": ["null", "string"] } }
+        }
+      ]
+    },
     "WireRelic": {
       "properties": [
         { "name": "carrierId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -6284,6 +6331,28 @@
         },
         { "name": "proposerId", "optional": false, "type": "string" },
         { "name": "voterIds", "optional": false, "type": { "array": "string" } }
+      ]
+    },
+    "WireTeamProposalBuilds": {
+      "properties": [
+        {
+          "name": "builds",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "mainHand", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "offHand", "optional": false, "type": { "union": ["null", "string"] } },
+                {
+                  "name": "skills",
+                  "optional": false,
+                  "type": { "array": { "union": ["null", "string"] } }
+                }
+              ]
+            }
+          }
+        },
+        { "name": "proposerId", "optional": false, "type": "string" }
       ]
     },
     "WireTeamSide": {

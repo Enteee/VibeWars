@@ -255,6 +255,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.preventsSpeedBoosts) {
     parts.push("speed boosts have no effect");
   }
+  if (definition.returnsSource !== undefined) {
+    parts.push("when this ends, you return to where you cast it");
+  }
   if (definition.attackMissChance !== 0) {
     parts.push(`${String(Math.round(definition.attackMissChance * 100))}% of attacks miss`);
   }
@@ -1651,7 +1654,7 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
 
 /** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
 function upTo(splash: SplashEffect): string {
-  const who = foesWithin(splash.radius, splash.hits);
+  const who = `${foesWithin(splash.radius, splash.hits)}${splash.around === "caster" ? " around you" : ""}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
     : `Up to ${String(splash.maxTargets)} ${lowerFirst(who)}`;
@@ -2044,7 +2047,7 @@ function describeEffect(
       const what = describeStatus(effect.statusId, ranks);
       return {
         text:
-          "Maintained: −1 Energy regeneration while it lasts. " +
+          `Maintained${effect.on === "caster" ? " on you" : ""}: −1 Energy regeneration while it lasts. ` +
           `${what.charAt(0).toUpperCase()}${what.slice(1)}.`,
         magnitude: undefined,
       };

@@ -39,7 +39,7 @@ import {
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
 import { isFreshCorpse } from "../match/corpses.js";
-import { distance } from "../vec2.js";
+import { distance, type Vec2 } from "../vec2.js";
 import type { Creature } from "../match/simulation.js";
 import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
@@ -263,6 +263,11 @@ export type CombatEvent =
    * places the body.
    */
   | { readonly kind: "shadow-stepped-away"; readonly targetId: string }
+  /**
+   * Shadow Stepped back (#1826): `targetId`, a returning status's source,
+   * is back where it put it up. The simulation has placed the body.
+   */
+  | { readonly kind: "shadow-stepped-back"; readonly targetId: string }
   /**
    * Teleported (#474): `targetId` is put beside `toId`, as Rebirth brings
    * its ally to the caster. The simulation places the body.
@@ -985,6 +990,7 @@ export function applyStatus(
   statusId: StatusId,
   durationSeconds: number,
   sourceId: string,
+  returnPoint: Vec2 | null = null,
 ): number | undefined {
   const { category } = getStatusDefinition(statusId);
   if (isInvulnerable(target) && (category === "hex" || category === "condition")) {
@@ -992,7 +998,7 @@ export function applyStatus(
   }
   const lossBefore = maxHealthLossOf(target);
   const raisedBefore = raisedMaxHealth(target);
-  if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
+  if (!target.statuses.apply(statusId, durationSeconds, sourceId, returnPoint)) {
     return 0;
   }
   const raised = raisedMaxHealth(target) - raisedBefore;
@@ -1013,6 +1019,15 @@ export function applyStatus(
 }
 
 /**
+ * Where `caster` stands now, for a returning status it puts up to take it
+ * back to when it ends (#1826). The simulation moves a shadow step's caster
+ * after its effects, so this is where it stood as it cast.
+ */
+function castSpot(context: SkillContext, caster: Combatant): Vec2 | null {
+  return context.surroundings.get(caster.id)?.position ?? null;
+}
+
+/**
  * `statusId` on `target` for `durationSeconds`, from `sourceId`, as every
  * skill puts one on: what it ends (#919), the health it takes as it lands
  * (#800) and Dazed's interrupt, each reported. A refused one (#1208)
@@ -1026,6 +1041,7 @@ function landStatus(
   durationSeconds: number,
   sourceId: string,
   events: CombatEvent[],
+  returnPoint: Vec2 | null,
 ): void {
   // Immune (#1455): it does not land, and there is nothing to say.
   if (target.statuses.isImmuneTo(statusId)) {
@@ -1034,7 +1050,7 @@ function landStatus(
   const ending = endedByGaining(target, statusId);
   const breaker =
     getStatusDefinition(statusId).category === "hex" ? target.statuses.hexBreaker() : undefined;
-  const loss = applyStatus(target, statusId, durationSeconds, sourceId);
+  const loss = applyStatus(target, statusId, durationSeconds, sourceId, returnPoint);
   if (loss === undefined) {
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
@@ -1450,7 +1466,14 @@ export function applyEffect(
         effect.statusId,
         base * (context.own?.durationMultiplier ?? 1),
       );
-      landStatus(target, effect.statusId, durationSeconds, caster.id, events);
+      landStatus(
+        target,
+        effect.statusId,
+        durationSeconds,
+        caster.id,
+        events,
+        castSpot(context, caster),
+      );
       return events;
     }
 
@@ -1465,7 +1488,14 @@ export function applyEffect(
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
         const durationSeconds = remainingSeconds * effect.durationMultiplier;
-        landStatus(taker, id, scaledStatusDuration(taker, id, durationSeconds), caster.id, events);
+        landStatus(
+          taker,
+          id,
+          scaledStatusDuration(taker, id, durationSeconds),
+          caster.id,
+          events,
+          null,
+        );
       }
       if (effect.healPerCondition !== undefined && moved.length > 0) {
         applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
@@ -1497,6 +1527,7 @@ export function applyEffect(
             scaledStatusDuration(combatant, id, remainingSeconds),
             caster.id,
             events,
+            null,
           );
         }
       }
@@ -1504,21 +1535,27 @@ export function applyEffect(
     }
 
     case "maintain-status": {
+      const bearer = effect.on === "caster" ? caster : target;
       // Well of the Profane (#1732): it does not land, as `landStatus`'s immune.
-      if (target === undefined || target.dead || target.statuses.isImmuneTo(effect.statusId)) {
+      if (bearer === undefined || bearer.dead || bearer.statuses.isImmuneTo(effect.statusId)) {
         return events;
       }
       // The caster's newest; the simulation drops what it cannot pay for.
-      const ending = endedByGaining(target, effect.statusId);
-      target.statuses.maintain(effect.statusId, caster.id, caster.nextMaintainSeq);
+      const ending = endedByGaining(bearer, effect.statusId);
+      bearer.statuses.maintain(
+        effect.statusId,
+        caster.id,
+        caster.nextMaintainSeq,
+        castSpot(context, caster),
+      );
       caster.nextMaintainSeq += 1;
       events.push({
         kind: "status-applied",
-        targetId: target.id,
+        targetId: bearer.id,
         statusId: effect.statusId,
         durationSeconds: null,
       });
-      reportEnded(target, ending, events);
+      reportEnded(bearer, ending, events);
       return events;
     }
 
@@ -1683,13 +1720,21 @@ export function applyEffect(
         effect.statusId,
         effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
       );
-      landStatus(caster, effect.statusId, durationSeconds, caster.id, events);
+      landStatus(
+        caster,
+        effect.statusId,
+        durationSeconds,
+        caster.id,
+        events,
+        castSpot(context, caster),
+      );
       return events;
     }
 
     case "splash": {
-      // Your own spirits are within earshot of you, not of the target (#1777).
-      const centre = effect.hits === "own-spirits" ? caster : target;
+      // Your own spirits are within earshot of you, not of the target (#1777);
+      // Return's adjacent foes are around its caster (#1826).
+      const centre = effect.around === "caster" || effect.hits === "own-spirits" ? caster : target;
       const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
       if (target === undefined || at === undefined) {
         return events;
@@ -1703,7 +1748,7 @@ export function applyEffect(
       );
       for (const combatant of nearestFirst(reached, at).slice(0, effect.maxTargets)) {
         for (const inner of effect.effects) {
-          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, target));
+          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, centre));
         }
       }
       return events;
@@ -2313,6 +2358,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.recipient === "caster";
     case "remove-status":
       return effect.from === "caster";
+    case "maintain-status":
+      return effect.on === "caster";
     case "energy-loss":
     case "energy-steal":
     case "life-steal":
@@ -2322,7 +2369,6 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "spread-conditions":
     case "give-health":
     case "apply-status":
-    case "maintain-status":
     case "interrupt":
     case "knockdown":
     case "shadow-step":

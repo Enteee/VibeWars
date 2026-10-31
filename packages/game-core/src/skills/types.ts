@@ -374,11 +374,14 @@ export interface ApplyStatusEffect {
 
 /**
  * Maintain an enchantment on the target (#837): it lasts until something
- * ends it, and costs its caster an energy pip while it does.
+ * ends it, and costs its caster an energy pip while it does. `on` is who
+ * wears it: the target, or the caster whatever it targeted (#1826), as
+ * Aura of Displacement's caster does while it Shadow Steps to a foe.
  */
 export interface MaintainStatusEffect {
   readonly kind: "maintain-status";
   readonly statusId: StatusId;
+  readonly on: "target" | "caster";
 }
 
 /** Remove up to `count` statuses of a category from the target. */
@@ -567,11 +570,14 @@ export interface CasterGainsStatusEffect {
  * reaches the caster's own living spirits (#1777), and is the one measured
  * from the caster, not the target: GW1's "your spirits within earshot" is
  * earshot of you, even when the skill strikes a foe (Spirit Boon Strike).
+ * `around: "caster"` centres it on the caster instead, whatever it
+ * targeted (#1826): Return's "all adjacent foes", cast on an ally.
  */
 export interface SplashEffect {
   readonly kind: "splash";
   readonly hits: "foes" | "foe-creatures" | "allies" | "party" | "own-spirits";
   readonly radius: number;
+  readonly around?: "caster";
   /**
    * At most this many, the nearest to the centre first, a tie by id
    * (#1316): Explosive Growth's "up to 5 foes". `undefined`: all of them.

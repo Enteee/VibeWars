@@ -34,6 +34,14 @@ const EVENTS = {
     type: "assistant",
     message: { role: "assistant", content: [], usage: { input_tokens: 130_000 } },
   }),
+  atNearMargin: JSON.stringify({
+    type: "assistant",
+    message: { role: "assistant", content: [], usage: { input_tokens: 100_000 } },
+  }),
+  underNearMargin: JSON.stringify({
+    type: "assistant",
+    message: { role: "assistant", content: [], usage: { input_tokens: 99_999 } },
+  }),
   smallCall: JSON.stringify({
     type: "assistant",
     message: { role: "assistant", content: [], usage: { input_tokens: 1000 } },
@@ -328,6 +336,20 @@ describe("the context ceiling (#1815)", () => {
 
     expect(result.resumed).toBe(false);
     expect(result.stderr).toContain("starting a fresh session");
+  });
+
+  it("drops the session of a turn that reached ceiling minus NEAR_MARGIN (#1838)", () => {
+    expect(turn(["init", "atNearMargin", "result"], "", { session: true }).kept).toBe(false);
+  });
+
+  it("keeps the session of a turn one token short of that", () => {
+    expect(turn(["init", "underNearMargin", "result"], "", { session: true }).kept).toBe(true);
+  });
+
+  it("starts fresh after a run killed in the near zone", () => {
+    const result = turn(["init", "smallCall", "result"], "", { session: true, peak: "100000" });
+
+    expect(result.resumed).toBe(false);
   });
 
   it("resumes a session that stayed under it", () => {

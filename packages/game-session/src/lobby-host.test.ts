@@ -7,6 +7,7 @@ import {
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
   parseWireLobbyNote,
+  parseWireTeamProposalBuilds,
   MAX_LOBBY_PLAYERS,
   parseWireKeyChallenge,
   parseWireKeyProof,
@@ -1340,6 +1341,49 @@ describe("a Team Lobby (#1458)", () => {
     ann.connection.vote(null);
     await settle();
     expect(sideOf(host)?.proposals[0]?.voterIds).toEqual([idOf(host)]);
+  });
+
+  it("sends a proposal's builds once it stands, to its side alone, again on a rejoin, never for a withdrawal (#1811)", async () => {
+    const { lobby, members } = await teamLobby(["Ann", "Cy"], [0, 0, 1]);
+    const [host, ann, cy] = members;
+    if (host === undefined || ann === undefined || cy === undefined) {
+      throw new Error("three members");
+    }
+    await begin(lobby);
+    const told = members.map((member) => {
+      const got: (string | undefined)[] = [];
+      member.transport.on("team-proposal-builds", (data) => {
+        got.push(parseWireTeamProposalBuilds(data)?.proposerId);
+      });
+      return got;
+    });
+    host.connection.propose([WARRIOR, MONK]);
+    await settle();
+    // Two slots, two messages to the host: one proposal, told once.
+    expect(told).toEqual([[idOf(host)], [idOf(host)], []]);
+    const [set] = WARRIOR.equipment.weaponSets;
+    expect(ann.connection.getSnapshot().proposalBuilds.get(idOf(host))?.[0]).toEqual({
+      skills: WARRIOR.skillBar,
+      mainHand: set.mainHand.weaponId,
+      offHand: set.offHand?.offhandId ?? null,
+    });
+    expect(cy.connection.getSnapshot().proposalBuilds.size).toBe(0);
+
+    ann.connection.propose([MONK, WARRIOR]);
+    await settle();
+    ann.connection.propose(null);
+    await settle();
+    expect(told).toEqual([[idOf(host), idOf(ann)], [idOf(host), idOf(ann)], []]);
+    // Gone from the state, so gone from the cards.
+    expect([...host.connection.getSnapshot().proposalBuilds.keys()]).toEqual([idOf(host)]);
+
+    // Back from a drop, it is told of what its side lists.
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    lobby.network.heal();
+    await until(() => told[1]?.length === 3);
+    expect(told[1]).toEqual([idOf(host), idOf(ann), idOf(host)]);
+    expect(told[0]).toHaveLength(2);
   });
 
   it("shows each side only its own vote, and a spectator neither", async () => {

@@ -38,6 +38,7 @@ import {
   type WireLobbyMove,
   type WirePartySplit,
   type WireTeamChoice,
+  type WireTeamProposalBuilds,
   type WireTeamLobby,
   type WireTeamSide,
 } from "@vibewars/game-protocol";
@@ -568,6 +569,34 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     transport.send("lobby-note", message, to);
   };
 
+  /**
+   * `proposerId`'s proposal's skills and weapons (#1811), to `to`, or to
+   * every human here on `team`: a side's proposals are its own.
+   */
+  const tellProposalBuilds = (
+    team: 0 | 1,
+    proposerId: string,
+    builds: readonly PlayerBuild[],
+    to?: string,
+  ): void => {
+    const message: WireTeamProposalBuilds = {
+      proposerId,
+      builds: builds.map(({ skillBar, equipment }) => {
+        const [set] = equipment.weaponSets;
+        return {
+          skills: [...skillBar],
+          mainHand: set.mainHand.weaponId,
+          offHand: set.offHand?.offhandId ?? null,
+        };
+      }),
+    };
+    for (const member of humansOn(team)) {
+      if (!away.has(member.id) && (to === undefined || member.id === to)) {
+        transport.send("team-proposal-builds", message, member.id);
+      }
+    }
+  };
+
   const refuse = (peerId: string, reason: LobbyRefusal): void => {
     note("refused", reason, peerId);
   };
@@ -1048,6 +1077,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         side.pending.delete(member.id);
         dropProposal(side, member.id);
         side.proposals.set(member.id, builds);
+        tellProposalBuilds(member.team, member.id, builds);
         return true;
       }
       case "vote": {
@@ -1601,6 +1631,18 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       returning.guildCape = guild.guildCape;
       returning.character = lobbyCharacter(join.character);
       returning.ready = false;
+      // The proposals its side lists, and the chosen one, it was told of
+      // while here (#1811): it may have missed some.
+      if (teamLobby !== undefined && returning.team !== null) {
+        const side = teamLobby.sides[returning.team];
+        const shown = [...side.proposals];
+        if (side.chosen !== undefined && side.chosen.proposerId !== null) {
+          shown.push([side.chosen.proposerId, side.chosen.builds]);
+        }
+        for (const [proposerId, builds] of shown) {
+          tellProposalBuilds(returning.team, proposerId, builds, from);
+        }
+      }
       beginCountdown();
       broadcast();
       return;

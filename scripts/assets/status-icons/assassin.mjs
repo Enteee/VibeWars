@@ -122,4 +122,31 @@ export const ASSASSIN_STATUS_ICONS = {
       `<path d="M22.5 18a5 5 0 1 1-1.5-3.6M22.5 11.5V15H19" ${stroke(c, 3.6)}/>` +
       `</g>`,
   ],
+  // Shadow Step and return (#1826), stand-ins: a crescent with a way-back arrow.
+  "shadow-fang": [
+    "hex",
+    (c) =>
+      `<path d="M13 6a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
+      `<path d="M7 19h10M10 16.5L7 19l3 2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  "aura-of-displacement": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 1.8)} stroke-dasharray="3 2"/>` +
+      `<path d="M7 19h10M10 16.5L7 19l3 2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  "shadow-meld": [
+    "enchantment",
+    (c) =>
+      `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
+      `<path d="M15 6v8" ${stroke(c, 2)}/>` +
+      `<path d="M7 19h10M10 16.5L7 19l3 2.5" ${stroke(c, 1.8)}/>`,
+  ],
+  "shadow-of-haste": [
+    "stance",
+    (c) =>
+      `<path d="M19 11l-6-4v8z" fill="${c}"/>` +
+      `<path d="M5 9h5M5 13h5" ${stroke(c, 2)}/>` +
+      `<path d="M7 19h10M10 16.5L7 19l3 2.5" ${stroke(c, 1.8)}/>`,
+  ],
 };

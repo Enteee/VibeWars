@@ -42,6 +42,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     countdownSeconds: null,
     teamLobby: null,
     queueNonce: null,
+    proposalBuilds: new Map(),
   };
 }
 

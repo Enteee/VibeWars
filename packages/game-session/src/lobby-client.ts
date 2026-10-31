@@ -5,6 +5,7 @@ import {
   normalizeLobbyCode,
   parseWireChatLine,
   parseWireLobbyNote,
+  parseWireTeamProposalBuilds,
   parseWireLobbyState,
   parseWireLobbyWelcome,
   parseWireMatchStart,
@@ -23,6 +24,7 @@ import {
   type WireCape,
   type WireLobbyCommand,
   type WireLobbyState,
+  type WireProposalBuild,
   type WirePartyFormed,
 } from "@vibewars/game-protocol";
 
@@ -167,6 +169,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const checkedWelcomes = new Set<string>();
   const unsubscribe: (() => void)[] = [];
   let latest: WireLobbyState | undefined;
+  /** What the host sent of each proposal on this side (#1811), by proposer. */
+  const proposalBuilds = new Map<string, readonly WireProposalBuild[]>();
   /** The match whose start was already handed on, so a repeat is not. */
   let startedMatch: string | null = null;
   let closed = false;
@@ -301,8 +305,32 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
     teamLobby: state.teamLobby,
+    proposalBuilds: new Map(proposalBuilds),
     queueNonce: state.queueNonce,
   });
+
+  /**
+   * Forget the builds of a proposal `state` no longer lists (#1811). The
+   * claim lists none but the chosen one, which keeps the vote's for its
+   * faded cards; the Team Lobby over, none are kept.
+   */
+  const forgetProposals = (state: WireLobbyState): void => {
+    const team = state.players.find((player) => player.id === selfId)?.team ?? null;
+    const side = team === null ? null : (state.teamLobby?.sides[team] ?? null);
+    if (side === null) {
+      proposalBuilds.clear();
+      return;
+    }
+    if (state.teamLobby?.stage !== "vote") {
+      return;
+    }
+    const listed = new Set(side.proposals.map(({ proposerId }) => proposerId));
+    for (const proposerId of proposalBuilds.keys()) {
+      if (!listed.has(proposerId)) {
+        proposalBuilds.delete(proposerId);
+      }
+    }
+  };
 
   /** A new queueing (#1766) is a new party: its key, consent and answer start over. */
   const noteQueueing = (state: WireLobbyState): void => {
@@ -526,6 +554,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           }
           hostId = from;
           latest = state;
+          forgetProposals(state);
           noteQueueing(state);
           failJoin = undefined;
           clearTimeout(timer);
@@ -533,6 +562,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           return;
         }
         latest = state;
+        forgetProposals(state);
         noteQueueing(state);
         for (const handler of [...changeHandlers]) {
           handler();
@@ -565,6 +595,19 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
               handler(note.reason);
             }
           }
+        }
+      }),
+      transport.on("team-proposal-builds", (data, from) => {
+        if (hostId === undefined || from !== hostId) {
+          return;
+        }
+        const message = parseWireTeamProposalBuilds(data);
+        if (message === undefined) {
+          return;
+        }
+        proposalBuilds.set(message.proposerId, message.builds);
+        for (const handler of [...changeHandlers]) {
+          handler();
         }
       }),
       transport.on("chat-line", (data, from) => {
