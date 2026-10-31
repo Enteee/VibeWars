@@ -8,6 +8,8 @@ import {
   describeSkill,
   describeStatus,
   formatScalingRange,
+  secondPerson,
+  TRIGGER_WHEN,
 } from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
@@ -1072,5 +1074,27 @@ describe("Spawning Power in the tooltip (#1098)", () => {
     expect(
       describeSkill(unguent, new Map([["ritualist.spawning-power", 12]])).effects[0]?.text,
     ).toMatch(/^Applies Regeneration for 13s \(/);
+  });
+});
+
+describe("an ender said to its holder (#1841)", () => {
+  it("has a second person for every trigger phrase", () => {
+    for (const phrase of Object.values(TRIGGER_WHEN)) {
+      expect(() => secondPerson(phrase), phrase).not.toThrow();
+    }
+    expect(secondPerson("has its Health dropped below 25% by damage")).toBe(
+      "have your Health dropped below 25% by damage",
+    );
+    expect(secondPerson("has a chant or shout end on it")).toBe("have a chant or shout end on you");
+    expect(() => secondPerson("prevents a knockdown")).toThrow();
+  });
+
+  it("reads 'ends if you' on a self-buff and 'ends if it' on a hex", () => {
+    expect(describeStatus("illusion-of-weakness")).toContain(
+      "ends if you have your Health dropped below 25% by damage",
+    );
+    expect(describeStatus("pacifism")).toContain(
+      "ends if it takes damage or life steal from a foe",
+    );
   });
 });
