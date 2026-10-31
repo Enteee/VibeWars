@@ -15,6 +15,7 @@ import { addOvercast } from "./overcast.js";
 import {
   getStatusDefinition,
   nextSkillAnswers,
+  ownSkillBoost,
   preventsAttacks,
   preventsEnchantments,
   preventsResurrection,
@@ -359,11 +360,12 @@ export function isResurrectionSkill(skill: Skill): boolean {
 /**
  * The energy `skill` costs `caster` right now (#637): its base, raised
  * by Quickening Zephyr's multiplier and rounded half up (#1745), then
- * Expertise (#528) or Mysticism (#874), less what an active glyph takes
- * off a spell (#526) and what a chant takes off the next skill of its
- * kind (#1505), never below 0. The one number the check, the spend and
- * the skill bar use, so they cannot disagree. 0 for a skill with no
- * energy cost.
+ * Expertise (#528) or Mysticism (#874), less what a status takes off
+ * the caster's skills of its kind, never below 1 (#1761), less what an
+ * active glyph takes off a spell (#526) and what a chant takes off the
+ * next skill of its kind (#1505), never below 0. The one number the
+ * check, the spend and the skill bar use, so they cannot disagree. 0 for
+ * a skill with no energy cost.
  */
 export function energyCostOf(skill: Skill, caster: RankHolder): number {
   if (skill.cost?.kind !== "energy") {
@@ -371,11 +373,13 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
   }
   const expertise = rankOf(caster, EXPERTISE_ATTRIBUTE);
   // Only one primary holds a rank, so at most one of these cuts.
-  const cost = mysticismEnergyCost(
+  const attributed = mysticismEnergyCost(
     rankOf(caster, MYSTICISM_ATTRIBUTE),
     skill,
     expertiseEnergyCost(expertise, skill, raisedBaseCost(skill.cost.amount, caster)),
   );
+  const discount = ownSkillBoost(caster.statuses.active, skill).energyDiscount;
+  const cost = discount === 0 || attributed < 1 ? attributed : Math.max(1, attributed - discount);
   const reduction = caster.statuses.active.reduce((sum, { id }) => {
     const { nextSpells, nextSkillRule } = getStatusDefinition(id);
     const glyph = isSpell(skill.type) ? (nextSpells?.costReduction ?? 0) : 0;

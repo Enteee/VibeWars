@@ -86,4 +86,9 @@ export const MONK_ICONS = {
   "monk.signet-of-removal": { glyph: "signet-strip" },
   // Ally threshold mechanics (#1789), stand-in until its art card.
   "monk.judges-intervention": { glyph: "plus-halo", modifier: "up" },
+  // Own-skill modifiers (#1761), stand-ins until their art card.
+  "monk.divine-spirit": { glyph: "plus-halo", modifier: "less" },
+  "monk.blessed-aura": { glyph: "plus-halo", modifier: "hourglass" },
+  "monk.healers-covenant": { glyph: "heart-plus", modifier: "less" },
+  "monk.holy-haste": { glyph: "plus-wings", modifier: "clock" },
 };

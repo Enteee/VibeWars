@@ -10,7 +10,7 @@ import type { ProfessionId, SkillProfession } from "../professions.js";
 import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
-import type { StatusCategory, StatusId, StatusSet } from "./status.js";
+import type { OwnSkillBoost, StatusCategory, StatusId, StatusSet } from "./status.js";
 import type { HealthLossGuard } from "./loss-guard.js";
 
 /**
@@ -1705,6 +1705,11 @@ export interface SkillContext {
    * damage takes. Absent for what is no skill's.
    */
   readonly profession?: SkillProfession | undefined;
+  /**
+   * What the caster's statuses do to the skill landing (#1761):
+   * `SkillResolution.own`. Absent for a trigger, which is no use.
+   */
+  readonly own?: OwnSkillBoost | undefined;
 }
 
 /**

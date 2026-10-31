@@ -23,6 +23,7 @@ import {
   getStatusDefinition,
   type NextSkill,
   type NextSkillRule,
+  type OwnSkillModifier,
   type StatusCategory,
   type StatusTrigger,
   type StatusTriggerEvent,
@@ -606,6 +607,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const faster = String(Math.round(share * 100));
     parts.push(`${getProfession(profession).name} enchantments recharge ${faster}% faster`);
   }
+  parts.push(...definition.ownSkillModifiers.map(describeOwnSkillModifier));
   if (definition.skillArmorPenetration !== undefined) {
     const { share, profession } = definition.skillArmorPenetration;
     const pierce = String(Math.round(share * 100));
@@ -1295,6 +1297,52 @@ function describeNextSkill({ which, count, effects }: NextSkill): string[] {
       ({ text }) => `with your next ${next}: ${lowerFirst(text)}`,
     ),
   );
+}
+
+/**
+ * How a status changes its bearer's own skills of a kind (#1761): "your
+ * Monk spells cost 5 less Energy (minimum 1)", "your next Dervish
+ * enchantment lasts 122% longer".
+ */
+function describeOwnSkillModifier({
+  filter,
+  energyDiscount,
+  activationMultiplier,
+  rechargeFaster,
+  durationMultiplier,
+  healMultiplier,
+  uses,
+}: OwnSkillModifier): string {
+  const one = uses === 1;
+  const percent = (share: number): string => `${String(Math.round(Math.abs(share) * 100))}%`;
+  const verb = (plural: string, singular: string): string => (one ? singular : plural);
+  const changes = [
+    energyDiscount === 0
+      ? undefined
+      : `${verb("cost", "costs")} ${String(energyDiscount)} less Energy (minimum 1)`,
+    activationMultiplier === 1
+      ? undefined
+      : `${verb("cast", "casts")} ${percent(1 - activationMultiplier)} ${activationMultiplier < 1 ? "faster" : "slower"}`,
+    rechargeFaster === 0
+      ? undefined
+      : `${verb("recharge", "recharges")} ${percent(rechargeFaster)} faster`,
+    durationMultiplier === 1
+      ? undefined
+      : `${verb("last", "lasts")} ${percent(durationMultiplier - 1)} ${durationMultiplier > 1 ? "longer" : "shorter"}`,
+    healMultiplier === 1
+      ? undefined
+      : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
+  ].filter((change) => change !== undefined);
+  const kind = filter.type === undefined ? "skill" : filter.type.replaceAll("-", " ");
+  const named = [
+    filter.profession === undefined ? undefined : getProfession(filter.profession).name,
+    filter.attributeId === undefined
+      ? undefined
+      : (getAttribute(filter.attributeId)?.name ?? filter.attributeId),
+    one ? kind : `${kind}s`,
+  ].filter((word) => word !== undefined);
+  const which = uses === undefined ? "your" : one ? "your next" : `your next ${String(uses)}`;
+  return `${which} ${named.join(" ")} ${changes.join(" and ")}`;
 }
 
 /** How a chant's next skill of a kind goes (#1505): "your next skill cannot be interrupted". */

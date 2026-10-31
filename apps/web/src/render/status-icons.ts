@@ -328,6 +328,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "watchful-intervention": icon("watchful-intervention"),
   "faithful-intervention": icon("faithful-intervention"),
   "illusion-of-weakness": icon("illusion-of-weakness"),
+  "divine-spirit": icon("divine-spirit"),
+  "blessed-aura": icon("blessed-aura"),
+  "healers-covenant": icon("healers-covenant"),
+  "holy-haste": icon("holy-haste"),
+  "practiced-stance": icon("practiced-stance"),
+  "extend-enchantments": icon("extend-enchantments"),
 };
 
 const GAP = 2;

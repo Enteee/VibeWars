@@ -19,6 +19,7 @@ import {
   damageTypeTaken,
   getStatusDefinition,
   scaledStatusDuration,
+  type OwnSkillBoost,
   type StatusCategory,
   type StatusId,
 } from "./status.js";
@@ -1219,13 +1220,17 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
+      // Healer's Covenant's "heal 20% less" (#1761).
       applyHeal(
         healed,
-        perEnergyLost(
-          effect,
-          healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
-          lostBy,
-          earlier,
+        ownHeal(
+          perEnergyLost(
+            effect,
+            healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+            lostBy,
+            earlier,
+          ),
+          context.own,
         ),
         events,
       );
@@ -1362,7 +1367,12 @@ export function applyEffect(
           ? effect.durationSeconds *
             spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
           : effect.durationSeconds;
-      const durationSeconds = scaledStatusDuration(target, effect.statusId, base);
+      // A status the caster bears lengthens what its skills of a kind put on (#1761).
+      const durationSeconds = scaledStatusDuration(
+        target,
+        effect.statusId,
+        base * (context.own?.durationMultiplier ?? 1),
+      );
       landStatus(target, effect.statusId, durationSeconds, caster.id, events);
       return events;
     }
@@ -2238,6 +2248,11 @@ export interface SkillResolution {
   readonly rng: SimulationRng;
   readonly rules: CombatRules;
   readonly surroundings: Surroundings;
+  /**
+   * What the caster's statuses do to this use (#1761), as it was paid for;
+   * absent where no use was paid for, as in a tooltip or a test.
+   */
+  readonly own?: OwnSkillBoost | undefined;
 }
 
 /**
@@ -2305,7 +2320,7 @@ export function resolveSkillEffects(
   resolution: SkillResolution,
   earlier: readonly CombatEvent[] = [],
 ): SkillOutcome {
-  const { skill, caster, targets, rng, rules, surroundings } = resolution;
+  const { skill, caster, targets, rng, rules, surroundings, own } = resolution;
   const held = new Map(
     targets.map(
       (target) =>
@@ -2330,6 +2345,7 @@ export function resolveSkillEffects(
         surroundings,
         skillId: skill.id,
         profession: skill.profession,
+        own,
       };
       const before = [...earlier, ...events];
       const landed = landing(effect, context, before, states);
@@ -2367,12 +2383,16 @@ export function resolveSkillEffects(
   // the spell's own effects, through the same heal path.
   const primary = targets[0];
   if (primary !== undefined) {
+    // Healer's Covenant's 20% less (#1761) is the bonus's too: it is the spell's heal.
     applyHeal(
       primary,
-      divineFavorBonusHeal(
-        rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
-        skill,
-        primary.team === caster.team,
+      ownHeal(
+        divineFavorBonusHeal(
+          rankOf(caster, DIVINE_FAVOR_ATTRIBUTE),
+          skill,
+          primary.team === caster.team,
+        ),
+        own,
       ),
       events,
     );
@@ -2386,6 +2406,13 @@ export function resolveSkillEffects(
     skipped:
       skipped !== undefined && earlier.length === 0 && events.length === 0 ? skipped : undefined,
   };
+}
+
+/** `amount` healed by a use `own` touched (#1761), rounded; as it is when none did. */
+function ownHeal(amount: number, own: OwnSkillBoost | undefined): number {
+  return own === undefined || own.healMultiplier === 1
+    ? amount
+    : Math.round(amount * own.healMultiplier);
 }
 
 /**

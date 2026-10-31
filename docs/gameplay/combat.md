@@ -807,6 +807,19 @@ and never take a recharge below 1 s (#975): Mantra of Recovery with
 Weapon of Quickening is 50%, not 55%, and a spell whose recharge is
 already under 1 s keeps it.
 
+**Your skills of a kind** (#1761): some statuses change how your own
+skills of one type, attribute or profession go. Divine Spirit (Monk
+spells cost 5 less, never below 1), Blessed Aura (Monk enchantments last
+30% longer), Healer's Covenant (Healing Prayers spells cost 3 less and
+heal 20% less, the Divine Favor bonus too), Holy Haste (Healing Prayers
+spells cast 50% faster, until you cast an enchantment), Practiced Stance
+(preparations recharge 50% faster and last 246% longer) and Extend
+Enchantments (the next Dervish enchantment lasts 122% longer). Discounts
+add, multipliers multiply, and the largest recharge share counts. What a
+use gets is taken as it is paid for: a status it puts on keeps its
+longer time after the modifier ends, and a maintained enchantment has
+no time to lengthen.
+
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
 disable your other attack skills for 3 s: that waits for disabled skills

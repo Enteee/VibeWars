@@ -666,6 +666,12 @@ export interface StatusDefinition {
    */
   readonly enchantmentRechargeFaster: EnchantmentRechargeFaster | undefined;
   /**
+   * How the bearer's own skills of a kind go while it lasts (#1761):
+   * Divine Spirit's "Monk spells cost 5 less Energy", Practiced Stance's
+   * "preparations recharge 50% faster and last longer". `[]`: none.
+   */
+  readonly ownSkillModifiers: readonly OwnSkillModifier[];
+  /**
    * Armor penetration added to the damage of each of the bearer's skills
    * of `profession` (#1464): Cruel Was Daoshen's 0.1 for Ritualist skills.
    * A weapon blow, a creature's attack and degeneration are not skills.
@@ -955,6 +961,82 @@ export interface FailsNextSpell {
   readonly effects: readonly SkillEffect[];
   /** What the failure is logged as. */
   readonly skillId: string;
+}
+
+/** Which of the bearer's own skills a modifier touches (#1761). All set fields must match. */
+export interface OwnSkillFilter {
+  /** `spell` is any `isSpell` type. */
+  readonly type: SkillType | "spell" | undefined;
+  readonly attributeId: string | undefined;
+  readonly profession: ProfessionId | undefined;
+}
+
+/** `StatusDefinition.ownSkillModifiers` (#1761). */
+export interface OwnSkillModifier {
+  readonly filter: OwnSkillFilter;
+  /** Energy off the cost; a cost of 1 or more never drops below 1. 0: none. */
+  readonly energyDiscount: number;
+  /** On activation time. 1: none. */
+  readonly activationMultiplier: number;
+  /** The share taken off the recharge, as `spellRechargeFaster`. 0: none. */
+  readonly rechargeFaster: number;
+  /** On the duration of every status the skill applies, to anyone. 1: none. */
+  readonly durationMultiplier: number;
+  /** On every heal the skill does. 1: none. */
+  readonly healMultiplier: number;
+  /** Skills it answers before the status ends; `undefined`: as long as the status lasts. */
+  readonly uses: number | undefined;
+}
+
+/**
+ * What every matching `OwnSkillModifier` on a caster does to one use of a
+ * skill (#1761), taken as it is paid for and kept by the cast: discounts
+ * add, multipliers multiply, and the largest recharge share counts.
+ */
+export interface OwnSkillBoost {
+  readonly energyDiscount: number;
+  readonly activationMultiplier: number;
+  readonly rechargeFaster: number;
+  readonly durationMultiplier: number;
+  readonly healMultiplier: number;
+}
+
+/** A use no `OwnSkillModifier` touched. */
+export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
+  energyDiscount: 0,
+  activationMultiplier: 1,
+  rechargeFaster: 0,
+  durationMultiplier: 1,
+  healMultiplier: 1,
+};
+
+/** Whether `skill` is one `filter` names (#1761). */
+export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
+  const type =
+    filter.type === undefined ||
+    (filter.type === "spell" ? isSpell(skill.type) : skill.type === filter.type);
+  return (
+    type &&
+    (filter.attributeId === undefined || skill.attributeId === filter.attributeId) &&
+    (filter.profession === undefined || skill.profession === filter.profession)
+  );
+}
+
+/** What `active`'s modifiers do to a use of `skill` now (#1761). */
+export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): OwnSkillBoost {
+  return active
+    .flatMap(({ id }) => getStatusDefinition(id).ownSkillModifiers)
+    .filter(({ filter }) => ownSkillAnswers(filter, skill))
+    .reduce<OwnSkillBoost>(
+      (boost, modifier) => ({
+        energyDiscount: boost.energyDiscount + modifier.energyDiscount,
+        activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
+        rechargeFaster: Math.max(boost.rechargeFaster, modifier.rechargeFaster),
+        durationMultiplier: boost.durationMultiplier * modifier.durationMultiplier,
+        healMultiplier: boost.healMultiplier * modifier.healMultiplier,
+      }),
+      NO_OWN_SKILL_BOOST,
+    );
 }
 
 /** `StatusDefinition.enchantmentRechargeFaster` (#1455). */
@@ -1347,6 +1429,8 @@ export interface ActiveStatus {
   spellsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
   skillsLeft: number | undefined;
+  /** Own skills still to touch before it ends (`OwnSkillModifier.uses`); `undefined`: no such limit. */
+  ownSkillsLeft: number | undefined;
   /** Times its triggers may still fire before it ends (`endsAfterTriggers`); `undefined`: no such limit. */
   triggersLeft: number | undefined;
   /** Reflections before it ends (`reflectsAttackDamage`); `undefined`: no such limit. */
@@ -1783,6 +1867,7 @@ export class StatusSet {
       unblockableLeft: definition.unblockableAttacks,
       spellsLeft: definition.nextSpells?.count,
       skillsLeft: definition.nextSkill?.count,
+      ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
       sourceId,
@@ -1839,6 +1924,7 @@ export class StatusSet {
       unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
+      ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
@@ -1872,6 +1958,7 @@ export class StatusSet {
       unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
+      ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
@@ -1905,6 +1992,7 @@ export class StatusSet {
       unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
+      ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
@@ -2244,6 +2332,28 @@ export class StatusSet {
     });
     this.#end(used.map(({ statusId }) => statusId));
     return used;
+  }
+
+  /**
+   * The bearer used `skill` (#1761): one fewer for every status whose
+   * counted `ownSkillModifiers` answer it, as Extend Enchantments' "your
+   * next Dervish enchantment". Returns the ids that ended on it.
+   */
+  public useOwnSkillModifiers(skill: Skill): StatusId[] {
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      const counted = getStatusDefinition(status.id).ownSkillModifiers.some(
+        ({ uses, filter }) => uses !== undefined && ownSkillAnswers(filter, skill),
+      );
+      if (status.ownSkillsLeft !== undefined && counted) {
+        status.ownSkillsLeft -= 1;
+        if (status.ownSkillsLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    this.#end(ended);
+    return ended;
   }
 
   /**

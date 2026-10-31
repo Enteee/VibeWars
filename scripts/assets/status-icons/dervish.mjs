@@ -232,4 +232,11 @@ export const DERVISH_STATUS_ICONS = {
       `<path d="M12 15s-6-3.4-6-7.2a3.2 3.2 0 0 1 6-2A3.2 3.2 0 0 1 18 7.8c0 3.8-6 7.2-6 7.2z" ${stroke(c, 1.8)}/>` +
       `<path d="M3 19h18" ${stroke(c, 2)}/>`,
   ],
+  // Skill effect (#1761, stand-in): a stretched bar with an arrow, the
+  // next Dervish enchantment lasts longer.
+  "extend-enchantments": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 12h14M15 9l3 3-3 3" ${stroke(c, 2)}/>` + `<path d="M4 8v8" ${stroke(c, 1.8)}/>`,
+  ],
 };
