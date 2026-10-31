@@ -143,6 +143,7 @@ describe("status definitions", () => {
       "never-surrender": 4,
       "healing-breeze": 8,
       "shadow-refuge": 9,
+      "shield-of-regeneration": 9,
       "feigned-neutrality": 7,
       recuperation: 3,
       "well-of-suffering": -5,

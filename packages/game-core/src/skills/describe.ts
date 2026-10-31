@@ -50,6 +50,7 @@ import type {
   StateCondition,
   UnconditionalEffect,
   SplashEffect,
+  DamageEffect,
   TransferConditionsEffect,
 } from "./types.js";
 
@@ -376,8 +377,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `your next ${String(definition.unblockableAttacks)} attack${plural} cannot be blocked`,
     );
   }
-  for (const effect of definition.onAttackHit?.effects ?? []) {
-    parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
+  if (definition.onAttackHit !== undefined) {
+    const { effects, attackSkillsOnly, weapon } = definition.onAttackHit;
+    parts.push(...describeAttackHits(effects, attackSkillsOnly, weapon));
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -606,16 +608,55 @@ function damageTaken(multiplier: number): string {
   return `${String(multiplier)}×`;
 }
 
-/** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
-function describeAttackHit(effect: SkillEffect, attackSkillsOnly: boolean): string[] {
-  const attacks = attackSkillsOnly ? "attack skills" : "physical attacks";
-  if (effect.kind === "apply-status") {
-    return [
-      `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
-        `for ${seconds(effect.durationSeconds)}`,
-    ];
+/**
+ * A preparation's riders (#525), as its tooltip says them: "foes your
+ * physical attacks hit get Poison for 13s", "bow attacks" for a rider of
+ * one weapon class (#1629). Damage names its type, and a splash of the
+ * same damage after it is said with it: Ignite Arrows' "foes your bow
+ * attacks hit take 15 fire damage, and so do foes adjacent to them".
+ */
+function describeAttackHits(
+  effects: readonly SkillEffect[],
+  attackSkillsOnly: boolean,
+  weapon: AttackWeaponClass | undefined,
+): string[] {
+  const attacks = attackSkillsOnly
+    ? `${weapon === undefined ? "" : `${weapon} `}attack skills`
+    : `${weapon ?? "physical"} attacks`;
+  const parts: string[] = [];
+  for (const [index, effect] of effects.entries()) {
+    const before = effects[index - 1];
+    if (effect.kind === "apply-status") {
+      parts.push(
+        `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
+          `for ${seconds(effect.durationSeconds)}`,
+      );
+    } else if (effect.kind === "damage") {
+      parts.push(`foes your ${attacks} hit take ${riderDamage(effect)}`);
+    } else if (
+      effect.kind === "splash" &&
+      effect.hits === "foes" &&
+      effect.radius === AREA_ADJACENT &&
+      effect.maxTargets === undefined &&
+      before?.kind === "damage" &&
+      effect.effects.length === 1 &&
+      effect.effects[0]?.kind === "damage" &&
+      riderDamage(effect.effects[0]) === riderDamage(before)
+    ) {
+      parts.push(`${String(parts.pop())}, and so do foes adjacent to them`);
+    } else {
+      parts.push(
+        ...describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`),
+      );
+    }
   }
-  return describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`);
+  return parts;
+}
+
+/** A rider's damage: "20 fire damage", "13 damage" when it is typeless. */
+function riderDamage(effect: DamageEffect): string {
+  const amount = String(describeMagnitude(effect.amount, new Map()).current);
+  return `${amount} ${effect.type === "typeless" ? "" : `${effect.type} `}damage`;
 }
 
 /**
@@ -1590,8 +1631,12 @@ function describeEffect(
       };
     case "lose-health": {
       // "For each Monk enchantment removed, you lose 31 Health" (#944), or
-      // once, flat (#1550): "You lose 54 health".
+      // once, flat (#1550): "You lose 54 health"; the target's (#1648):
+      // "Target foe loses 53 Health".
       const magnitude = describeMagnitude(effect.amount, ranks);
+      if (effect.recipient === "target") {
+        return { text: `Target foe loses ${String(magnitude.current)} Health`, magnitude };
+      }
       const lose = `You lose ${String(magnitude.current)} health`;
       if (effect.perRemovedOfProfession === undefined) {
         return { text: lose, magnitude };
@@ -1860,7 +1905,9 @@ function describeEffect(
               ? `are knocked down for ${String(each.durationSeconds)}s`
               : each.kind === "apply-status"
                 ? suffered(each, ranks)
-                : lowerFirst(description.text),
+                : each.kind === "lose-health" && each.recipient === "target"
+                  ? `lose ${String(describeMagnitude(each.amount, ranks).current)} Health`
+                  : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
@@ -2370,6 +2417,11 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // Barrage's and Volley's (#1629), before anything else it does.
+  const preparationsLine =
+    rule?.removesPreparations === true
+      ? [{ text: "All your preparations are removed", magnitude: undefined }]
+      : [];
   // A throw faster than the weapon's (#1486): Mighty Throw's ×3.
   const flightSpeed = rule?.flightSpeed;
   const flightLine =
@@ -2410,8 +2462,9 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
-  // A trap (#1105): any attack that lands while it is being set interrupts it.
-  const easilyInterrupted = isEasilyInterrupted(skill.type)
+  // A trap (#1105), or a skill that says so (#1629): any attack that lands
+  // while it is being used interrupts it.
+  const easilyInterrupted = isEasilyInterrupted(skill)
     ? [{ text: "Easily interrupted", magnitude: undefined }]
     : [];
   // A spell that flies (#535) lands only if it reaches its target.
@@ -2462,6 +2515,7 @@ export function describeSkill(
         ];
   const effects = [
     ...lossLine,
+    ...preparationsLine,
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,
