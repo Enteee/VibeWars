@@ -761,7 +761,7 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
-### Guild cape (decided: B, the trailing tab)
+### Guild cape (decided: A of the motion study)
 
 GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
 from above, so the cape goes **behind it, opposite its facing**: the weapon
@@ -796,15 +796,16 @@ The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made b
   after it: 3 calls, no extra silhouette, no room needed. But it eats the
   disc's team colour at the back and sits next to the off-hand arc, and at
   Default it is a 4 px green smear: team colour is hurt, no emblem fits.
-- **Decided: B** (the operator's pick, #1410; implementation is #1422). The
-  tab's clump noise is accepted for the clearest guild read. My own
+- **Decided: B** (the operator's pick, #1410; implementation was #1422),
+  since replaced by A of the motion study below (#1699). The tab's clump
+  noise is accepted for the clearest guild read. My own
   recommendation was A: It adds a clear guild signal on the one side no
   mark uses, costs no more than the existing marks, never touches the
   disc, and keeps team colour the strongest read. Show the emblem only in the
   menu, the designer and the roster. B is the pick if the operator wants the
   cape to read at a glance and accepts the clump noise.
 
-#### Guild cape in motion (study, not decided)
+#### Guild cape in motion (decided: A, the rim band that peels into a tab)
 
 The operator asked for a cape that is nearly invisible when its wearer
 stands still, unfolds when it walks, trails opposite the movement (not the
@@ -841,11 +842,21 @@ walking past each other, plus a standing, a knocked down and a dead body.
   tangle visually in a clump.
 
 Knocked down: speed is zero, so it settles to the border. Dead: no cape.
-One step: `u` is lagged, so a 0.2 s step only reaches a third of an unfold:
-no flicker. At Default zoom a body is 28 px across and the cape at most 17 px
+One step: `u` is lagged, so a 0.2 s step does not fully unfold: no flicker. At Default zoom a body is 28 px across and the cape at most 17 px
 past its rim; the border arc is 1.5 px.
 
-**Recommendation: B.** It is the shape the operator already picked, so the
+**Decided: A** (the operator's pick, #1686; implementation is #1699,
+`apps/web/src/render/cape-motion.ts`). The arena steps one cape per caped
+living body every frame from its drawn movement; the menu figure stands, so
+its cape is folded. The study's springs are tuned for its clip, a body that
+runs at 40 units/s and takes 0.09 s to reach it; a game body runs at 180 and
+starts at once, so the cape sees the game's velocity scaled to the clip's
+and lagged as its body was, and a running body looks exactly like the clip.
+A jump of more than 3 radii in a frame (a shadow step, a respawn) starts the
+cape over, folded. A 0.2 s step peaks at `u` 0.61 in the study's own
+numbers, short of a walk's full unfold.
+
+My recommendation was B. It is the shape the operator already picked, so the
 guild read and the emblem carry over, it moves with the most readable lag,
 and its length is unchanged so the clump noise #1410 accepted does not
 grow. A is the fallback if a bolder silhouette is wanted; C is the one to pick
