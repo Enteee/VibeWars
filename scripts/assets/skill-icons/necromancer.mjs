@@ -21,11 +21,11 @@ export const NECROMANCER_ICONS = {
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   "necromancer.well-of-suffering": { glyph: "well-sink", modifier: "corpse" },
-  // Wells 2 (#1732), stand-ins until their art card.
-  "necromancer.well-of-the-profane": { glyph: "well-sink", modifier: "down" },
-  "necromancer.well-of-silence": { glyph: "well-sink", modifier: "stun" },
-  "necromancer.well-of-darkness": { glyph: "well-sink", modifier: "half" },
-  "necromancer.well-of-ruin": { glyph: "well-sink", modifier: "bleed" },
+  // Wells 2 (#1749).
+  "necromancer.well-of-the-profane": { glyph: "well-profane" },
+  "necromancer.well-of-silence": { glyph: "well-silence" },
+  "necromancer.well-of-darkness": { glyph: "well-darkness" },
+  "necromancer.well-of-ruin": { glyph: "well-ruin" },
   // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
   "necromancer.animate-bone-minions": { glyph: "bone-minions" },
   "necromancer.animate-bone-horror": { glyph: "bone-horror" },
