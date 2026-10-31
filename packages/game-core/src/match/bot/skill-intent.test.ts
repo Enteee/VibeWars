@@ -121,6 +121,9 @@ const NO_BOT_USE = new Set([
   "ritualist.nightmare-weapon",
   "ritualist.weapon-of-fury",
   "ritualist.weapon-of-renewal",
+  // A buff of your spirits, and a spirit pulled to you (#1777): no rule for either.
+  "ritualist.spiritleech-aura",
+  "ritualist.draw-spirit",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",
