@@ -178,6 +178,8 @@ describe("status definitions", () => {
       "life-siphon": -3,
       "life-siphon-regen": 3,
       "corrupt-enchantment": -7,
+      "reapers-mark": -4,
+      "putrid-bile": -3,
     });
   });
 
@@ -504,13 +506,25 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.endOnKnockdownPrevented();
 
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "parasitic-bond", sourceId: "expiry", expired: true },
-      { kind: "ended", id: "backfire", sourceId: "removed", expired: false },
-      { kind: "ended", id: "malaise", sourceId: "by-category", expired: false },
-      { kind: "ended", id: "watch-yourself", sourceId: "attacked", expired: false },
-      { kind: "ended", id: "glyph-of-lesser-energy", sourceId: "spells", expired: false },
-      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks", expired: false },
-      { kind: "ended", id: "fleeting-stability", sourceId: "knockdown", expired: false },
+      { kind: "ended", id: "parasitic-bond", sourceId: "expiry", expired: true, death: false },
+      { kind: "ended", id: "backfire", sourceId: "removed", expired: false, death: false },
+      { kind: "ended", id: "malaise", sourceId: "by-category", expired: false, death: false },
+      { kind: "ended", id: "watch-yourself", sourceId: "attacked", expired: false, death: false },
+      {
+        kind: "ended",
+        id: "glyph-of-lesser-energy",
+        sourceId: "spells",
+        expired: false,
+        death: false,
+      },
+      { kind: "ended", id: "weapon-of-warding", sourceId: "attacks", expired: false, death: false },
+      {
+        kind: "ended",
+        id: "fleeting-stability",
+        sourceId: "knockdown",
+        expired: false,
+        death: false,
+      },
     ]);
   });
 
@@ -528,8 +542,8 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     ]);
     expect(set.active.map(({ id }) => id)).toEqual(["bleeding", "guardian"]);
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "poison", sourceId: "a", expired: false },
-      { kind: "ended", id: "blind", sourceId: "a", expired: false },
+      { kind: "ended", id: "poison", sourceId: "a", expired: false, death: false },
+      { kind: "ended", id: "blind", sourceId: "a", expired: false, death: false },
     ]);
   });
 
@@ -581,10 +595,10 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
     expect(set.active).toEqual([]);
     expect(set.drainChanges()).toEqual([
-      { kind: "ended", id: "burning", sourceId: "a", expired: false },
-      { kind: "ended", id: "parasitic-bond", sourceId: "b", expired: false },
-      { kind: "ended", id: "regeneration", sourceId: "c", expired: false },
-      { kind: "ended", id: "sprint", sourceId: "d", expired: false },
+      { kind: "ended", id: "burning", sourceId: "a", expired: false, death: true },
+      { kind: "ended", id: "parasitic-bond", sourceId: "b", expired: false, death: true },
+      { kind: "ended", id: "regeneration", sourceId: "c", expired: false, death: true },
+      { kind: "ended", id: "sprint", sourceId: "d", expired: false, death: true },
     ]);
   });
 
@@ -665,7 +679,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
           },
         ],
       },
-      { kind: "ended", id: "mark-of-pain", sourceId: "b", expired: false },
+      { kind: "ended", id: "mark-of-pain", sourceId: "b", expired: false, death: true },
     ]);
   });
 
