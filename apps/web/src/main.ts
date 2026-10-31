@@ -1439,7 +1439,7 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot));
+    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot, null));
     topbarView.setLobby(
       snapshot === undefined
         ? undefined

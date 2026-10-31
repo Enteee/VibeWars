@@ -12,6 +12,7 @@ import {
   parseWirePartyProposal,
   parseWirePartySplit,
   parseWireLobbyMove,
+  teamQueueModeOf,
   type JsonValue,
   type LobbyRefusal,
   type PeerPartyConsent,
@@ -37,7 +38,7 @@ import type {
 } from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { sanitizeChatText, sanitizeName } from "./names.js";
-import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
+import { admissionDigest, partyGroupId, type QueuedSeat } from "./queue-admission.js";
 import type { TicketKey } from "./queue-client.js";
 
 /** Who a chat line is from when nothing of its name is left to show (#479). */
@@ -109,6 +110,12 @@ export interface JoinLobbyOptions {
   readonly timeoutMs: number;
   /** The queue's lobby, joined with this seat's ticket; not a coded one. */
   readonly queued?: QueuedSeat;
+  /**
+   * A coded lobby's derived room id (`deriveLobbyRoom`, #1766): its party
+   * group is worked out from it, so this player consents to no other.
+   * Without it, this player consents to no party of its lobby.
+   */
+  readonly roomId?: string;
 }
 
 function isRefusal(reason: string): reason is LobbyRefusal {
@@ -183,6 +190,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   let partyKey: TicketKey | undefined;
   /** It signed a proposal: one consent a vote. */
   let consented = false;
+  /**
+   * The queueing this player last saw (#1766), and the group its party
+   * makes, which it works out for itself: a proposal of any other is not
+   * consented to.
+   */
+  let queueing: { readonly nonce: string; readonly groupId: Promise<string> } | undefined;
   /** Until the join settles: how a refusal or the timeout ends it. */
   let failJoin: ((error: Error) => void) | undefined;
   /** When the host's peer went mid-match, by `Date.now`, while waiting for it back. */
@@ -288,7 +301,23 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
     teamLobby: state.teamLobby,
+    queueNonce: state.queueNonce,
   });
+
+  /** A new queueing (#1766) is a new party: its key, consent and answer start over. */
+  const noteQueueing = (state: WireLobbyState): void => {
+    const nonce = state.phase === "queued" ? state.queueNonce : null;
+    if (nonce === (queueing?.nonce ?? null)) {
+      return;
+    }
+    queueing =
+      nonce === null || options.roomId === undefined
+        ? undefined
+        : { nonce, groupId: partyGroupId(options.roomId, nonce) };
+    partyKey = undefined;
+    consented = false;
+    partyAnswered = false;
+  };
 
   return new Promise((resolve, reject) => {
     /** Until the join settles; trouble after it is the match's to handle (#596). */
@@ -328,6 +357,34 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       startMatch() {
         send({ kind: "start" });
+      },
+      findMatch() {
+        send({ kind: "find-match" });
+      },
+      leaveQueue() {
+        send({ kind: "leave-queue" });
+      },
+      playHouseTeam() {
+        send({ kind: "house-team" });
+      },
+      queueParty(key) {
+        if (hostId !== undefined && !closed && queueing !== undefined && partyKey === undefined) {
+          partyKey = key;
+          const said: PeerStayTogether = { memberKey: key.ticketId };
+          transport.send("stay-together", said, hostId);
+        }
+      },
+      sendTeamPlan(seats) {
+        // One a message, as `propose`: the match host checks each build.
+        seats.forEach(({ memberKey, build }, slot) => {
+          send({
+            kind: "team-plan",
+            slot,
+            size: seats.length,
+            memberKey,
+            build: JSON.parse(JSON.stringify(build)) as JsonValue,
+          });
+        });
       },
       setBots(team, count) {
         send({ kind: "set-bots", team, count });
@@ -469,12 +526,14 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           }
           hostId = from;
           latest = state;
+          noteQueueing(state);
           failJoin = undefined;
           clearTimeout(timer);
           resolve(connection);
           return;
         }
         latest = state;
+        noteQueueing(state);
         for (const handler of [...changeHandlers]) {
           handler();
         }
@@ -527,27 +586,48 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       transport.on("party-proposal", (data, from) => {
         const proposal = parseWirePartyProposal(data);
         const key = partyKey;
-        // Only a party with this player in it, of the group this lobby is,
-        // the one they won (#1078).
         if (
           from !== hostId ||
           proposal === undefined ||
           key === undefined ||
           consented ||
-          proposal.groupId !== queued?.group.groupId ||
           !proposal.members.includes(key.ticketId)
         ) {
           return;
         }
-        consented = true;
-        for (const handler of [...proposalHandlers]) {
-          handler();
+        const { groupId, members, mode } = proposal;
+        const consent = (): void => {
+          consented = true;
+          for (const handler of [...proposalHandlers]) {
+            handler();
+          }
+          void admissionDigest("vibewars-party", groupId, members.join(""), mode).then((digest) => {
+            if (hostId !== undefined && !closed) {
+              const said: PeerPartyConsent = { memberKey: key.ticketId, consent: key.sign(digest) };
+              transport.send("party-consent", said, hostId);
+            }
+          });
+        };
+        // A queued lobby's: the group this lobby is, the one they won (#1078).
+        if (queued !== undefined) {
+          if (groupId === queued.group.groupId && mode === queued.group.mode) {
+            consent();
+          }
+          return;
         }
-        const { groupId, members } = proposal;
-        void admissionDigest("vibewars-party", groupId, members.join(""), "").then((digest) => {
-          if (hostId !== undefined && !closed) {
-            const said: PeerPartyConsent = { memberKey: key.ticketId, consent: key.sign(digest) };
-            transport.send("party-consent", said, hostId);
+        // A party lobby's (#1766): the group this player worked out, for
+        // the lobby's own mode, and still this queueing when it is known.
+        const current = queueing;
+        if (
+          current === undefined ||
+          latest === undefined ||
+          mode !== teamQueueModeOf(latest.mode)
+        ) {
+          return;
+        }
+        void current.groupId.then((expected) => {
+          if (expected === groupId && queueing === current && partyKey === key && !consented) {
+            consent();
           }
         });
       }),

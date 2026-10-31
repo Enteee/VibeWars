@@ -43,6 +43,11 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     expect(parseQueueTicket(gvg)).toEqual(gvg);
   });
 
+  it("keeps a side led by its party host, the rest sorted (#1766)", () => {
+    const led = { ...ARENA_SIDE, ticketId: PARTY[3], members: [PARTY[3], PARTY[0], PARTY[1]] };
+    expect(parseQueueTicket(led)).toEqual(led);
+  });
+
   it.each<[string, unknown]>([
     ["not an object", "ticket"],
     ["null", null],
@@ -60,6 +65,7 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     ["no members", { ...TICKET, members: [] }],
     ["unsorted members", { ...TICKET, members: [PARTY[0], PARTY[2], PARTY[1], PARTY[3]] }],
     ["a member twice", { ...TICKET, members: [PARTY[0], PARTY[1], PARTY[1], PARTY[3]] }],
+    ["its leader twice", { ...TICKET, members: [PARTY[0], PARTY[1], PARTY[2], PARTY[0]] }],
     ["members not led by the id", { ...TICKET, members: [...PARTY.slice(1), "e".repeat(64)] }],
     ["a solo of another key", { ...TICKET, members: ["b".repeat(64)] }],
     ["a non-hex member", { ...TICKET, members: [...PARTY.slice(0, 3), "g".repeat(64)] }],

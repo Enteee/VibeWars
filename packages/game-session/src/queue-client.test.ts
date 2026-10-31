@@ -261,6 +261,19 @@ describe("createQueueClient", () => {
     expect(beats).toEqual([0, TICKET_HEARTBEAT_MS, 2 * TICKET_HEARTBEAT_MS]);
   });
 
+  it("fills a team mode's empty seats with bots, a party's and a soloist's alike", async () => {
+    const queue = new Queue("team-arena");
+    const { leader, follower } = partyOf(queue);
+    queue.join(leader);
+    queue.join(follower);
+    const solo = new Queue("heroes-ascent");
+    solo.join();
+    await deliver();
+
+    expect(queue.heard.flatMap((e) => (e.kind === "ticket" ? [e.ticket.bots] : []))).toEqual([2]);
+    expect(solo.heard.flatMap((e) => (e.kind === "ticket" ? [e.ticket.bots] : []))).toEqual([7]);
+  });
+
   it("stops counting a ticket once it is TICKET_TTL_MS old", async () => {
     const queue = new Queue("random-arena-4v4");
     const a = queue.join();

@@ -453,9 +453,9 @@ const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 /** A party's consent to its proposal (#1078). */
 const partyConsent = { memberKey: "ab".repeat(32), consent: "ef".repeat(64) };
 
-/** A party-proposal of `members`, as given (#1078). */
+/** A party-proposal of `members`, as given (#1078), for a 2v2 (#1766). */
 function proposalOf(members: readonly string[]) {
-  return { groupId: "12".repeat(32), members };
+  return { groupId: "12".repeat(32), members, mode: "random-arena-2v2" };
 }
 
 /** A party-formed of `members`, as given, each with a consent. */
@@ -510,6 +510,7 @@ const lobbyState: WireLobbyState = {
     },
   ],
   countdownSeconds: null,
+  queueNonce: null,
   teamLobby: null,
 };
 
@@ -819,6 +820,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWirePartyProposal,
     proposalOf(["ab".repeat(32), "cd".repeat(32)]),
   ],
+  [
+    "party-proposal led by its host, the rest sorted (#1766)",
+    parseWirePartyProposal,
+    proposalOf(["ef".repeat(32), "ab".repeat(32), "cd".repeat(32)]),
+  ],
   ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
   ["lobby-move (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP" }],
@@ -828,6 +834,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, phase: "starting", matchId: null, countdownSeconds: 3 },
   ],
   ["lobby-state", parseWireLobbyState, lobbyState],
+  [
+    "queued lobby-state (#1766)",
+    parseWireLobbyState,
+    { ...lobbyState, phase: "queued", matchId: null, queueNonce: "ab".repeat(32) },
+  ],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
@@ -845,6 +856,9 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { kind: "set-character", character: null },
   ],
   ["start", parseWireLobbyCommand, { kind: "start" }],
+  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match" }],
+  ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
+  ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
   ["set-bots", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
   [
@@ -1736,14 +1750,24 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-proposal of one (#1078)", parseWirePartyProposal, proposalOf(["ab".repeat(32)])],
   [
-    "party-proposal unsorted (#1078)",
+    "party-proposal unsorted after its leader (#1078, #1766)",
     parseWirePartyProposal,
-    proposalOf(["cd".repeat(32), "ab".repeat(32)]),
+    proposalOf(["ab".repeat(32), "ef".repeat(32), "cd".repeat(32)]),
   ],
   [
     "party-proposal with no group (#1078)",
     parseWirePartyProposal,
     { members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  [
+    "party-proposal with no mode (#1766)",
+    parseWirePartyProposal,
+    { groupId: "12".repeat(32), members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  [
+    "party-proposal of an unknown mode (#1766)",
+    parseWirePartyProposal,
+    { ...proposalOf(["ab".repeat(32), "cd".repeat(32)]), mode: "solo-arena" },
   ],
   ["party-consent with no consent (#1078)", parsePeerPartyConsent, { memberKey: "ab".repeat(32) }],
   [
@@ -1758,9 +1782,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-formed of one (#882)", parseWirePartyFormed, partyOf(["ab".repeat(32)])],
   [
-    "party-formed unsorted (#882)",
+    "party-formed unsorted after its leader (#882, #1766)",
     parseWirePartyFormed,
-    partyOf(["cd".repeat(32), "ab".repeat(32)]),
+    partyOf(["ab".repeat(32), "ef".repeat(32), "cd".repeat(32)]),
+  ],
+  [
+    "party-formed with its leader twice (#1766)",
+    parseWirePartyFormed,
+    partyOf(["cd".repeat(32), "ab".repeat(32), "cd".repeat(32)]),
   ],
   [
     "party-formed with a key twice (#882)",
@@ -1818,6 +1847,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, countdownSeconds: -1 },
   ],
   ["lobby-state of an unknown phase", parseWireLobbyState, { ...lobbyState, phase: "over" }],
+  [
+    "lobby-state without a queue nonce (#1766)",
+    parseWireLobbyState,
+    { ...lobbyState, queueNonce: undefined },
+  ],
+  [
+    "lobby-state of a short queue nonce (#1766)",
+    parseWireLobbyState,
+    { ...lobbyState, queueNonce: "ab" },
+  ],
   [
     "lobby-state of an unknown mode (#1526)",
     parseWireLobbyState,
