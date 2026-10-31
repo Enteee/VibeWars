@@ -2246,7 +2246,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
   {
     id: "paragon.go-for-the-eyes",
     name: '"Go for the Eyes!"',
-    gwId: 3026,
+    gwId: 1558,
     type: "shout",
     elite: false,
     flash: false,
@@ -2281,7 +2281,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
   {
     id: "paragon.never-give-up",
     name: '"Never Give Up!"',
-    gwId: 3035,
+    gwId: 1593,
     type: "shout",
     elite: false,
     flash: false,

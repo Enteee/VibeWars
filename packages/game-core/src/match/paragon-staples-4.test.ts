@@ -129,8 +129,8 @@ function applied(events: readonly CombatEvent[]): [string, StatusId, number][] {
 
 describe("the nine are GW1's (#1677)", () => {
   it.each([
-    [GO_FOR_THE_EYES, 3026, "shout", false, "paragon.command", "adrenaline", 4, 0, 4],
-    [NEVER_GIVE_UP, 3035, "shout", false, "paragon.command", "energy", 5, 0, 20],
+    [GO_FOR_THE_EYES, 1558, "shout", false, "paragon.command", "adrenaline", 4, 0, 4],
+    [NEVER_GIVE_UP, 1593, "shout", false, "paragon.command", "energy", 5, 0, 20],
     [THE_POWER, 1782, "shout", true, "paragon.motivation", "adrenaline", 4, 0, 0],
     [FLESH_WOUND, 1599, "shout", true, "paragon.motivation", "energy", 5, 0, 2],
     [FOCUSED_ANGER, 1769, "skill", true, "paragon.leadership", "energy", 10, 0, 45],
