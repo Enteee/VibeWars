@@ -1,7 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
-import { RAIL, loadRail, modeRail, saveRail, type RailEntry } from "./rail.js";
+import {
+  HOST_PICKS_MODE,
+  RAIL,
+  loadRail,
+  modeRail,
+  saveRail,
+  setRailParty,
+  type RailEntry,
+} from "./rail.js";
 
 /** Just enough DOM to render the rail; the unit tests run in Node. */
 class FakeElement {
@@ -55,6 +63,7 @@ describe("the mode rail (#1525)", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    setRailParty(undefined);
   });
 
   it("has the five modes, then Character Builder and Team Builder", () => {
@@ -100,6 +109,30 @@ describe("the mode rail (#1525)", () => {
     expect(switched).toEqual(["teams"]);
     expect(stored.get(`${STORAGE_NAMESPACE}.rail`)).toBe("teams");
     expect(loadRail()).toBe("teams");
+  });
+
+  it("locks a guest's modes but its host's, stores none of them, and leaves the builders open (#1526)", () => {
+    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: false, members: [] });
+    saveRail("hosted-game");
+    const switched: RailEntry[] = [];
+    const rail = modeRail("teams", (entry) => switched.push(entry)) as unknown as FakeElement;
+    const entry = (name: RailEntry): FakeElement | undefined =>
+      rail.children.find((child) => child.attributes.get("data-entry") === name);
+    expect(
+      RAIL.map((item) => entry(item.entry)?.attributes.get("aria-disabled") ?? "false"),
+    ).toEqual(["true", "true", "true", "false", "true", "false", "false"]);
+    expect(entry("team-arena")?.title).toBe(HOST_PICKS_MODE);
+    entry("team-arena")?.click();
+    entry("gvg")?.click();
+    entry("characters")?.click();
+    expect(switched).toEqual(["gvg", "characters"]);
+    expect(loadRail()).toBe("characters");
+  });
+
+  it("leaves a host's every mode open", () => {
+    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: true, members: [] });
+    const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
+    expect(rail.children.some((child) => child.attributes.has("aria-disabled"))).toBe(false);
   });
 
   it("opens on Random Arena first, and for anything else stored", () => {

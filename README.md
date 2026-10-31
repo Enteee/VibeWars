@@ -10,8 +10,8 @@ eight skills on the bar, and real-time fights at 20 Hz, hosted by one
 player's browser.
 
 **[▶ Play it now](https://enteee.github.io/VibeWars/next/)** — build a
-character, test it on dummies in the Training Ground, then host a lobby
-and send its code to your friends. Nothing to install; see
+character, test it on dummies in the Training Ground, then send your
+lobby key to your friends. Nothing to install; see
 [Play it](#play-it).
 
 ![A 4v4 match on Canyon: an Elementalist and three bots fight four bots, with the skill bar, the target frame, the party window and the compass on screen](docs/media/readme-match.png)
@@ -19,8 +19,8 @@ and send its code to your friends. Nothing to install; see
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
 geometric visuals, no proprietary GW1 assets or code. Peer to peer: one
-player hosts a lobby in their browser tab, which runs the match, and
-friends type its short code. No accounts, no database, no game server.
+player's browser tab hosts the lobby and runs the match, and friends
+type its lobby key. No accounts, no database, no game server.
 Peers find each other through public Nostr relays (Trystero) and then
 talk over WebRTC, so the players in a lobby can see each other's IP
 address.
@@ -37,10 +37,11 @@ does not work on a phone or a touch-only tablet.
 
 Open the GitHub Pages build:
 [the latest release](https://enteee.github.io/VibeWars/) or
-[the latest `main`](https://enteee.github.io/VibeWars/next/). One person
-picks **host a lobby** and reads out the code; the others type it
-and pick **join**. The host's tab runs the match, so it has to stay open: if
-it closes, the lobby ends for everyone. The two builds keep separate
+[the latest `main`](https://enteee.github.io/VibeWars/next/). Every
+player is always in a lobby: your own lobby key is in the title bar. A
+friend types it there and picks **Join**, and the host's mode is the
+party's. The host's tab runs the match, so it has to stay open: if it
+closes, the lobby ends for everyone. The two builds keep separate
 saved characters.
 
 In a match, the default keys are:

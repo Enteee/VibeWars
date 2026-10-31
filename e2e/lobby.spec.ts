@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { joinByCode, openRail, pickCharacter } from "./helpers/menu.js";
+import { joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
 import {
   hostLobby as hostFromMenu,
   openPeers,
@@ -46,8 +46,8 @@ async function hostLobby(page: Page, playerName: string): Promise<string> {
 /** Join `code` as `playerName` and wait for the lobby screen. */
 async function joinLobby(page: Page, playerName: string, code: string): Promise<void> {
   await openMenu(page, playerName);
-  await joinByCode(page, code);
-  await expect(page.locator(".screen-lobby")).toBeVisible();
+  await joinFriend(page, code);
+  await expect(page.locator(".lobby-panel")).toBeVisible();
 }
 
 /**
@@ -74,7 +74,7 @@ test("a host creates a lobby and is shown a joinable code", async ({ page }) => 
   const code = await hostLobby(page, "Host");
 
   // The host is in the lobby, and the code is the thing they read aloud.
-  await expect(page.locator(".screen-lobby")).toBeVisible();
+  await expect(page.locator(".lobby-panel")).toBeVisible();
   expect(code).not.toBe("");
 });
 
@@ -89,8 +89,8 @@ test("a second player joins with the code and both see each other", async ({ bro
     // The real assertion: each page sees the *other* player. That is
     // what proves state is synchronising between two peers, not just
     // that each rendered its own optimistic view.
-    await expect(host.locator(".screen-lobby")).toContainText("Guest");
-    await expect(guest.locator(".screen-lobby")).toContainText("Host");
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
+    await expect(guest.locator(".lobby-panel")).toContainText("Host");
   } finally {
     await context.close();
   }
@@ -110,6 +110,10 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
     const wrong = code === "ACDE-FGHJ-KMNP" ? "PNMK-JHGF-EDCA" : "ACDE-FGHJ-KMNP";
 
     await openMenu(guest, "Guest");
+    // Its own lobby stays open until a join is in (#1526).
+    const own = guest.locator("#topbar .topbar-lobby-code");
+    await expect(own).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    const ownCode = (await own.textContent()) ?? "";
     await joinByCode(guest, wrong);
     await expect(guest.locator("#status")).toHaveText("connecting…");
     // Not at once: only a join that is taking a while says so.
@@ -128,23 +132,24 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
     await expect(guest.getByRole("button", { name: "Join", exact: true })).toBeVisible();
     // Back on the menu, but the error must not be reset to "ready".
     await expect(guest.locator("#status")).toHaveText("could not join");
-    await expect(host.locator(".screen-lobby")).not.toContainText("Guest");
+    await expect(host.locator(".lobby-panel")).not.toContainText("Guest");
+    await expect(own).toHaveText(ownCode);
   } finally {
     await context.close();
   }
 });
 
-test("the status bar says nothing in a lobby, which shows its code, nor after leaving (#454)", async ({
+test("the status bar says nothing in a lobby, whose code the title bar shows, on any screen (#454, #1526)", async ({
   page,
 }) => {
   // The status used to keep saying "lobby CODE" on the menu (#206), and
   // then repeated the code beside the lobby's own (#1272).
   const code = await hostLobby(page, "Host");
-  await expect(page.locator(".lobby-code")).toHaveText(code);
+  await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(code);
   await expect(page.locator("#status")).toBeHidden();
 
-  await page.getByRole("button", { name: "leave" }).click();
-  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
+  await openRail(page, "Team Builder");
+  await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(code);
   await expect(page.locator("#status")).toBeHidden();
 });
 
@@ -155,11 +160,7 @@ test("the lobby's bar puts its status on a second row from 721 to 1200 px, nothi
   // More than one map, so the host's bar carries the select, its widest part.
   await expect(page.locator(".lobby-map select")).toBeVisible();
   for (const width of [700, 721, 800, 940, 1100, 1201]) {
-    await expectTopbarFits(
-      page,
-      width,
-      "#topbar > :not(.topbar-status), #topbar .lobby-header, #topbar .lobby-map",
-    );
+    await expectTopbarFits(page, width, "#topbar > :not(.topbar-status), #topbar .lobby-map");
   }
 });
 
@@ -170,7 +171,7 @@ test("the host closing its page takes the guest to the menu, and says why", asyn
   try {
     const code = await hostLobby(host, "Host");
     await joinLobby(guest, "Guest", code);
-    await expect(host.locator(".screen-lobby")).toContainText("Guest");
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
 
     // A navigation fires pagehide, as a closed tab does; page.close() does
     // not run unload handlers (#1085).
@@ -278,19 +279,18 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(running).toHaveText(
       "A match is still running. The lobby opens again when it ends.",
     );
-    await expect(host.locator(".screen-lobby")).toBeVisible();
+    await expect(host.locator(".lobby-panel")).toBeVisible();
     // Readiness is only cleared once the match is over, so it still reads "not ready".
     await expect(host.getByRole("button", { name: "not ready" })).toBeDisabled();
     await expect(host.getByRole("button", { name: "start match" })).toBeDisabled();
     await expect(host.getByRole("button", { name: "join team 2" })).toBeDisabled();
     // The host would drop a map change too, so the picker is locked as well.
     await expect(host.locator(".lobby-map select")).toBeDisabled();
-    await expect(host.getByRole("button", { name: "leave" })).toBeEnabled();
 
     // The last player leaves, the match is over, and the lobby opens.
     await leaveMatch(guest);
     await expect(running).toHaveCount(0);
-    await expect(guest.locator(".screen-lobby")).toBeVisible();
+    await expect(guest.locator(".lobby-panel")).toBeVisible();
     const ready = host.getByRole("button", { name: "Ready", exact: true });
     await expect(ready).toBeEnabled();
     await expect(host.locator(".lobby-map select")).toBeEnabled();
@@ -315,8 +315,8 @@ test("a player who quits a 1v1 forfeits it, and is back in an open lobby (#846)"
     await expect(guest.locator(".hud-leave")).toBeVisible();
 
     await leaveMatch(host);
-    await expect(host.locator(".screen-lobby")).toBeVisible();
-    await expect(host.locator(".screen-lobby")).toBeVisible();
+    await expect(host.locator(".lobby-panel")).toBeVisible();
+    await expect(host.locator(".lobby-panel")).toBeVisible();
     await expect(host.locator(".lobby-running")).toHaveCount(0);
     await expect(host.getByRole("button", { name: "Ready", exact: true })).toBeEnabled();
   } finally {
@@ -469,7 +469,7 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
 
     // Leaving is back to the lobby; the match goes on.
     await watcher.keyboard.press("Escape");
-    await expect(watcher.locator(".screen-lobby")).toBeVisible();
+    await expect(watcher.locator(".lobby-panel")).toBeVisible();
     await expect(watcher.getByRole("button", { name: "Watch", exact: true })).toBeVisible();
     await expect(host.locator(".hud-leave")).toBeVisible();
   } finally {

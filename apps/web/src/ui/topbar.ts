@@ -4,6 +4,7 @@ import { paintMuteButton } from "./hud.js";
 import { helpIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
 import { button, h, iconButton, setTopbarSlots, type ShownBar } from "./kit.js";
+import { copyCode, displayLobbyCode } from "./lobby-screen.js";
 import { loadPlayerName } from "./player-section.js";
 
 /**
@@ -40,7 +41,19 @@ export interface TopbarCallbacks {
   readonly onOptions: () => void;
   /** Join the lobby `code` as `name` (#1525): the bar's Lobby Key and Join. */
   readonly onJoin: (code: string, name: string) => void;
+  /** A guest's Leave (#1526): back to a fresh lobby of its own. */
+  readonly onLeave: () => void;
 }
+
+/** The lobby the bar names (#1526): this tab's own, or the one it joined. */
+export interface BarLobby {
+  readonly code: string;
+  readonly isHost: boolean;
+}
+
+/** Before the code: whose lobby it is. */
+export const OWN_LOBBY_LABEL = "Your key";
+export const JOINED_LOBBY_LABEL = "Lobby";
 
 /**
  * How long a join runs before the bar says it is still connecting
@@ -55,19 +68,32 @@ export interface JoinControls {
   readonly settle: () => void;
   /** Empty the code, as a place without the code field leaves it. */
   readonly clear: () => void;
+  /** Name the lobby this tab is in, with Copy, and Leave for a guest; none while there is none. */
+  readonly setLobby: (lobby: BarLobby | undefined) => void;
 }
 
 /**
- * Lobby Key, its field and Join (#1525, #1681), then "Connecting…" once a
- * join has run a while (#707). The page has one, in the title bar, so a
- * key typed in it lives through any redraw of the screen under it. `name` is
- * read at the press.
+ * The lobby this tab is in, its key and Copy, and Leave for a guest
+ * (#1526); then Lobby Key, its field and Join (#1525, #1681), then
+ * "Connecting…" once a join has run a while (#707). The page has one, in
+ * the title bar, so a key typed in it lives through any redraw of the
+ * screen under it. `name` is read at the press.
  */
 export function joinControls(
   name: () => string,
   onJoin: (code: string, name: string) => void,
+  onLeave: () => void,
 ): JoinControls {
   const group = h("div", "topbar-join");
+  const lobby = h("div", "topbar-lobby");
+  lobby.hidden = true;
+  const lobbyLabel = h("span", "lobby-code-label", OWN_LOBBY_LABEL);
+  const lobbyCode = h("span", "lobby-code topbar-lobby-code");
+  const copy = button("Copy", "lobby-copy", () => {
+    void copyCode(lobbyCode.textContent, lobbyCode);
+  });
+  const leave = button("Leave", "topbar-leave", onLeave);
+  lobby.append(lobbyLabel, lobbyCode, copy, leave);
   const codeInput = document.createElement("input");
   codeInput.className = "field-input code-input";
   codeInput.placeholder = "KEY";
@@ -101,6 +127,7 @@ export function joinControls(
     }
   });
   group.append(
+    lobby,
     h("span", "topbar-join-label", "Lobby Key:"),
     codeInput,
     button("Join", "topbar-join-button", join),
@@ -114,6 +141,17 @@ export function joinControls(
     },
     clear: () => {
       codeInput.value = "";
+    },
+    setLobby: (shown) => {
+      // In the lobby a code was typed for: the field has done its work.
+      // This tab's own one opening leaves a key typed meanwhile alone.
+      if (shown?.isHost === false && displayLobbyCode(shown.code) !== lobbyCode.textContent) {
+        codeInput.value = "";
+      }
+      lobby.hidden = shown === undefined;
+      lobbyLabel.textContent = shown?.isHost === false ? JOINED_LOBBY_LABEL : OWN_LOBBY_LABEL;
+      lobbyCode.textContent = shown === undefined ? "" : displayLobbyCode(shown.code);
+      leave.hidden = shown?.isHost !== false;
     },
   };
 }
@@ -136,6 +174,8 @@ export function putsMoreAway(
 
 /** What `mountTopbar` hands back: the bar's say in whether it shows. */
 export interface Topbar {
+  /** The lobby the bar names (#1526); none while this tab is in none. */
+  setLobby(lobby: BarLobby | undefined): void;
   /**
    * In a match the bar is hidden and the HUD has its buttons (#454), but
    * an overlay opened from the HUD still shows its place and Close in it.
@@ -187,7 +227,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   actions.append(help, options, music, mute, fullscreen);
   // Right before the global icons, on every menu screen that asks for it.
-  const join = joinControls(loadPlayerName, callbacks.onJoin);
+  const join = joinControls(loadPlayerName, callbacks.onJoin, callbacks.onLeave);
   join.element.hidden = true;
   actions.before(join.element);
   attachJukeboxPopover(music, bar);
@@ -265,6 +305,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   });
 
   return {
+    setLobby: join.setLobby,
     setInMatch(next) {
       inMatch = next;
       paintHidden();

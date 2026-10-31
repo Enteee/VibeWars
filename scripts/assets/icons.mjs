@@ -1007,6 +1007,57 @@ const skillGlyph = {
   "hand-arrow": () =>
     inkLine("M6 11V5M9.5 11V3M13 11V3M16.5 11V5M6 11c0 4 2 6 5.5 6s5-2 5-6", 2) +
     inkLine("M3 21H21M18 18.5L21 21L18 23.5", 1.8),
+  // Dervish staples 3 (#1707): scythes with a rider, and the enchantments' shapes their statuses repeat.
+  // A scythe over a drop struck through: it strips a condition.
+  "scythe-purge": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    inkFill("M19 3c1.6 2.3 2.8 3.4 2.8 5a2.8 2.8 0 0 1-5.6 0c0-1.6 1.2-2.7 2.8-5z") +
+    inkLine("M15.5 11.5L22.5 3.5", 1.6),
+  // A ring cut clean through by one long slash: the aura sliced away.
+  "ring-slice": () =>
+    `<path d="M12 3.5A8.5 8.5 0 0 1 20.5 12M18 18A8.5 8.5 0 0 1 8 20M5 17A8.5 8.5 0 0 1 5 7" ${stroke(C.ink, 2)}/>` +
+    inkLine("M3 21L21 3", 2.8),
+  // A scythe with a crack and a star: the crippling blow that finishes.
+  "scythe-limp-star": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    inkLine("M21 11L18 14L21 17L18.5 20.5", 2.2) +
+    inkFill("M18 1.5L19.2 4.3L22 5.5L19.2 6.7L18 9.5L16.8 6.7L14 5.5L16.8 4.3Z"),
+  // A scythe with a burst in the corner: the blow that interrupts.
+  "scythe-burst": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    inkLine("M19 1.5V10.5M14.5 6H23.5M15.8 2.8L22.2 9.2M22.2 2.8L15.8 9.2", 1.8),
+  // An open palm under a ring struck through: the touch that tears an enchantment off.
+  "hand-rend": () =>
+    inkLine("M5 21V15M8.5 21V13M12 21V13M15.5 21V15M5 21c0 1.5 3 1.5 5 1.5s5.5 0 5.5-1.5", 2) +
+    `<circle cx="12" cy="7" r="4.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M8 11L16 3", 2.2),
+  // Wind curls streaming under a broken ring: gusts that unravel enchantments.
+  "wind-rend": () =>
+    `<path d="M12 3.5A8.5 8.5 0 0 1 20.5 12M18 18A8.5 8.5 0 0 1 8 20" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M3 9H13a2.5 2.5 0 1 0-2.5-2.5M3 14H17a2.8 2.8 0 1 1-2.8 2.8", 2),
+  // A signet's ring and dot with a crack through the corner: the signet that cripples.
+  "signet-limp": () => ringDot(10, 14, 7) + inkLine("M20 2L16.5 6L20 9L16.5 13", 2.2),
+  // Two fast slashes over a rising bar: faster attacks and adrenaline.
+  "slash-bars": () =>
+    inkLine("M10 21L21 4", 3.2) +
+    inkLine("M15 21L23 9", 1.6) +
+    inkLine("M2 7H9M2 12H7M2 17H5", 1.8),
+  // A spark over two falling bars with a minus: energy per hit, regeneration paid.
+  "spark-vow": () =>
+    inkLine("M12 2.5L14.5 8H9.5L12 13.5", 2.2) +
+    inkLine("M5 17H19M8 21H16", 2.4) +
+    inkLine("M18.5 5H22.5", 2),
+  // A feather with speed chevrons: moves faster, sheds conditions sooner.
+  "feather-swift": () =>
+    `<path d="M19 3C11 4 7 10 7 19M19 3c0 7-5 11-11 12" ${stroke(C.ink, 2)}/>` +
+    inkLine("M3 9L6 12L3 15M3 17L6 20L3 23", 1.6),
+  // A spiral of wind ending in an arrowhead: the charge that chills the crowd.
+  "spiral-charge": () =>
+    `<path d="M12 12a2 2 0 1 1 2-2a4 4 0 1 1-4-4a6 6 0 1 1-6 6" ${stroke(C.ink, 2)}/>` +
+    inkLine("M1.5 14L4 18L8 15.5", 2),
   // A scythe with a snowflake in the corner: cold damage from the blade (#1573).
   "scythe-frost": () =>
     inkLine("M6 21L14 7", 2.4) +

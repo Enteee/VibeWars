@@ -246,6 +246,27 @@ body {
   #topbar.has-more.is-more-open .topbar-actions {
     display: flex;
   }
+
+  /* The lobby's code and Join fold into the ⋯ too (#1526). */
+  #topbar.has-more .topbar-join {
+    display: none;
+  }
+
+  #topbar.has-more.is-more-open .topbar-join:not([hidden]) {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+/* Short of room for them, the key and its field go without their labels:
+   the key is the accented one, the field says KEY (#1526). The status
+   shares the row from 75rem, so the twelve-letter key needs a wider
+   window before they come back (#1681). */
+@media (width <= 90rem) {
+  .topbar-lobby .lobby-code-label,
+  .topbar-join-label {
+    display: none;
+  }
 }
 
 .status {
@@ -288,12 +309,67 @@ body {
   white-space: nowrap;
 }
 
+/* The lobby this tab is in (#1526): its code, Copy, and a guest's Leave. */
+.topbar-lobby {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: 0.6rem;
+  white-space: nowrap;
+}
+
+.topbar-lobby[hidden],
+.topbar-lobby .topbar-leave[hidden] {
+  display: none;
+}
+
+/* Its spacing is the bar's .lobby-code's, below (#1681). */
+#topbar .topbar-lobby-code {
+  font-size: 0.95rem;
+}
+
+#topbar .topbar-lobby button {
+  padding: 0.2rem 0.6rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+#topbar .topbar-lobby button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* A key is ACDE-FGHJ-KMNP, fourteen wide (#1681). */
 #topbar .topbar-join .code-input {
   width: 18ch;
   padding: 0.15rem 0.4rem;
   font-size: 0.85rem;
   letter-spacing: 0.05em;
+}
+
+/* Between the ⋯ and a whole row the twelve-letter key, Copy and the
+   field crowd the global icons off the bar (#1526): Copy goes, as one
+   click on the key selects it all, and the field and key narrow. */
+@media (45rem < width <= 60rem) {
+  #topbar .topbar-lobby .lobby-copy {
+    display: none;
+  }
+
+  #topbar .topbar-lobby {
+    margin-right: 0.2rem;
+  }
+
+  #topbar .topbar-lobby-code {
+    font-size: 0.85rem;
+  }
+
+  #topbar .topbar-join .code-input {
+    width: 15ch;
+  }
 }
 
 #topbar .topbar-join-button {
@@ -1333,6 +1409,16 @@ body {
   color: var(--ink);
 }
 
+/* A guest's: the host picks the mode (#1526). */
+.screen .mode-rail-entry[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.screen .mode-rail-entry[aria-disabled="true"]:hover {
+  color: var(--ink-dim);
+}
+
 /* The shown one: filled, in accent, with the accent edge the study draws
    at the rail's right. */
 .screen .mode-rail-entry[aria-pressed="true"] {
@@ -1376,6 +1462,62 @@ body {
 .rail-title {
   margin: 0 0 -0.6rem;
   font-size: 1.05rem;
+}
+
+/* Who is in this lobby (#1526), on top of every mode screen. */
+.party-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.party-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.party-member {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.party-member.is-self .party-member-name {
+  color: var(--accent);
+}
+
+.party-host-mark {
+  padding: 0 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.party-alone {
+  color: var(--ink-dim);
+}
+
+.party-code {
+  margin-left: auto;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  user-select: all;
+}
+
+.lobby-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
 }
 
 .rail-goal {
@@ -1927,19 +2069,19 @@ body {
   min-width: 1.5ch;
 }
 
-/* The editors' bars (#1334, #1452) and the lobby's (#1368): the crumbs,
-   the screen's buttons and the icons fill a row up to 75rem, so the status
-   (an editor's pickers and problems, the lobby's code and map) takes the
-   second row the phone's does and never runs under the buttons or the
-   icons. */
+/* The editors' bars (#1334, #1452) and the lobby's (#1368, #1526): the
+   crumbs, the screen's buttons, the lobby's code with Join and the icons
+   fill a row up to 75rem, so the status (an editor's pickers and problems,
+   the lobby's map) takes the second row the phone's does and never runs
+   under the buttons or the icons. */
 @media (45rem < width <= 75rem) {
   #topbar:has(.problems-chip),
-  #topbar:has(.lobby-header) {
+  #topbar:has(.lobby-map) {
     flex-wrap: wrap;
   }
 
   #topbar:has(.problems-chip) .topbar-status,
-  #topbar:has(.lobby-header) .topbar-status {
+  #topbar:has(.lobby-map) .topbar-status {
     flex: 1 0 100%;
     order: 10;
     flex-wrap: wrap;
@@ -2572,14 +2714,7 @@ body {
 
 /* --- lobby -------------------------------------------------------------- */
 
-.lobby-header {
-  display: flex;
-  align-items: baseline;
-  gap: 0.8rem;
-}
-
-/* In the top bar (#1272): the code and the map on one row, neither squeezed. */
-#topbar .lobby-header,
+/* In the top bar (#1272): the map on one row, not squeezed. */
 #topbar .lobby-map {
   display: flex;
   flex: 0 0 auto;
@@ -5623,8 +5758,8 @@ body:has(#app > .chat) .now-playing {
 }
 
 /* --------------------------------------------------------------------------
-   Chat (#479): lower left, on the lobby screen and over its match, just
-   above the HUD. Lines are text; a sender's name is in their side's hue.
+   Chat (#479): lower left, on the menu's screens (#1526) and over a match,
+   just above the HUD. Lines are text; a sender's name is in their side's hue.
    -------------------------------------------------------------------------- */
 
 .chat {
@@ -5642,6 +5777,11 @@ body:has(#app > .chat) .now-playing {
 
 #viewport > .chat {
   bottom: calc(var(--hud-height, 10rem) + 0.4rem);
+}
+
+/* Beside the mode rail, never over its builders. */
+#app:has(.screen-rail) > .chat {
+  left: calc(76px + 0.9rem);
 }
 
 /* In a match the arena is under the panel: every click and wheel goes
