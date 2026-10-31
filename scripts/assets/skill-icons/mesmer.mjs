@@ -60,6 +60,6 @@ export const MESMER_ICONS = {
   "mesmer.hex-eater-vortex": { glyph: "vortex-hex" },
   // Clumsiness (#1593, #1619): the hex ring round a dropped blade.
   "mesmer.clumsiness": { glyph: "hex-sword-drop" },
-  // The not condition (#1670), a stand-in until its art card.
-  "mesmer.waste-not-want-not": { glyph: "energy-feast", modifier: "less" },
+  // The not condition (#1670, #1715): what the foe lacks, struck through.
+  "mesmer.waste-not-want-not": { glyph: "energy-quiet" },
 };
