@@ -15,7 +15,7 @@ import { fromPlayerBuild, toPlayerBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { newCharacter } from "./build-editor.js";
 import { FIGURE_SIZE, characterAppearance, figureBody, paintFigure } from "./character-figure.js";
-import { CAPE_EDGE_WIDTH, type Painter, type StandingBody } from "../render/body-painter.js";
+import { CAPE_BAND_CASING, type Painter, type StandingBody } from "../render/body-painter.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 
@@ -106,9 +106,9 @@ describe("characterAppearance (#1250)", () => {
 });
 
 describe("figureBody (#1250)", () => {
-  it("is your own body at rest, facing right, with room for its marks and a cape behind", () => {
+  it("is your own body at rest, facing right, with room for its marks", () => {
     expect(figureBody({ weaponId: "sword", offhandId: "shield" }, undefined)).toEqual({
-      x: 32,
+      x: 24,
       y: 24,
       r: RULES.collision.playerRadius,
       facing: 0,
@@ -120,7 +120,7 @@ describe("figureBody (#1250)", () => {
     });
   });
 
-  it("fits a cape's hem and the weapon's tip inside its box (#1422)", () => {
+  it("wears a cape folded, and fits its band and the weapon's tip inside its box (#1422, #1699)", () => {
     const cape = { main: 0xa078e0, trim: 0xf2f2f2, emblem: "diamond" } as const;
     const body = figureBody({ weaponId: "sword", offhandId: "shield" }, cape);
     const xs: number[] = [];
@@ -134,6 +134,11 @@ describe("figureBody (#1250)", () => {
         ...silent,
         moveTo: at,
         lineTo: at,
+        arc: (x, y, radius) => {
+          // The band's casing is stroked half its width out.
+          at(x - radius - CAPE_BAND_CASING / 2, y - radius - CAPE_BAND_CASING / 2);
+          at(x + radius + CAPE_BAND_CASING / 2, y + radius + CAPE_BAND_CASING / 2);
+        },
         fillPoints: (points) => {
           for (const point of points) {
             at(point.x, point.y);
@@ -143,8 +148,8 @@ describe("figureBody (#1250)", () => {
       body,
       () => undefined,
     );
-    // The cape's outline is drawn half its width out.
-    expect(Math.min(...xs)).toBeGreaterThan(CAPE_EDGE_WIDTH / 2);
+    expect(body.cape?.motion.unfold).toBe(0);
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(1);
     expect(Math.max(...xs)).toBeLessThanOrEqual(FIGURE_SIZE.width - 1);
     expect(Math.min(...ys)).toBeGreaterThanOrEqual(1);
     expect(Math.max(...ys)).toBeLessThanOrEqual(FIGURE_SIZE.height - 1);

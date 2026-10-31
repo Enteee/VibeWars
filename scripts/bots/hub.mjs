@@ -44,6 +44,14 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import {
+  contextFile,
+  contextState,
+  isTakingComment,
+  overLine,
+  sayAtExit,
+  startLine,
+} from "./context.mjs";
 import { HUBD_ALIVE, parseAlive } from "./hub-health.mjs";
 import { inlineBodyFile } from "./hub-body.mjs";
 import { splitFilter } from "./hub-filter.mjs";
@@ -68,6 +76,12 @@ if (argv.length === 0) {
   console.error("hub: usage: hub <gh command...> | push <branch> | approve <pr> | whoami");
   process.exit(2);
 }
+
+// The context ceiling, after the output (#1695); and near it, a `taking #N`
+// comment is told there is too little room to start the card.
+const context = contextState(contextFile());
+let starting = false;
+sayAtExit(() => [overLine(context), starting ? startLine(context) : null]);
 
 /* -------------------------------------------------------------------------- */
 
@@ -219,6 +233,7 @@ if (request.kind === "gh") {
     process.exit(2);
   }
   request = { kind: "gh", argv: inlined.argv };
+  starting = isTakingComment(request.argv);
   const split = splitFilter(request.argv);
   if ("error" in split) {
     console.error(`hub: ${split.error}`);

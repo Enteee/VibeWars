@@ -84,8 +84,9 @@ left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
 it: pick the cape colour, the trim colour and an emblem, and your body
-wears the cape behind it in every match. Your characters in the menu
-show it too. **No cape** takes it off.
+wears the cape in every match: it folds to a thin band on your rim when
+you stand and streams out behind you when you move. Your characters in
+the menu show it too. **No cape** takes it off.
 
 A change applies from the next lobby you host or join: one you are
 already in keeps what you joined with.

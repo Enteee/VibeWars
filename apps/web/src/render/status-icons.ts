@@ -1,5 +1,7 @@
 import type { StatusId, Vec2 } from "@vibewars/game-core";
 
+import { STATUS_ICON_SIZE } from "./arena-atlas.js";
+
 /**
  * Status icons under an actor (#75, docs/art/art-direction.md).
  *
@@ -278,14 +280,14 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mirage-cloak": icon("mirage-cloak"),
   "vital-boon": icon("vital-boon"),
   "guiding-hands": icon("guiding-hands"),
+  "windborne-speed": icon("windborne-speed"),
+  "ash-blast": icon("ash-blast"),
   onslaught: icon("onslaught"),
   "zealous-vow": icon("zealous-vow"),
   "featherfoot-grace": icon("featherfoot-grace"),
   "whirling-charge": icon("whirling-charge"),
 };
 
-/** Drawn size of one icon, in world pixels. */
-export const STATUS_ICON_SIZE = 16;
 const GAP = 2;
 /** Below the actor's edge, so the row clears the circle. */
 const OFFSET = 6;

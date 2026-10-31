@@ -6,7 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import { STATUS_DEFINITIONS, isStatusId } from "@vibewars/game-core";
 
-import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
+import { STATUS_ICON_SIZE } from "./arena-atlas.js";
+import { STATUS_ICON, statusRowLayout } from "./status-icons.js";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 
