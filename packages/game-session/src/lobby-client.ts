@@ -115,10 +115,13 @@ function isRefusal(reason: string): reason is LobbyRefusal {
 
 export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const { timeoutMs, queued } = options;
+  let hostId: string | undefined;
+  // Once the host is known, no other peer in the room is heard or told
+  // anything (#1682): Trystero connects every key holder to the guests too.
   const transport =
     options.proofKey === null
       ? options.transport
-      : keyGated(options.transport, options.proofKey, "guest");
+      : keyGated(options.transport, options.proofKey, "guest", () => hostId);
   const selfId = transport.selfId;
   const code = normalizeLobbyCode(options.code);
   const base = {
@@ -154,7 +157,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   /** Peers whose welcome was checked, proven or not. */
   const checkedWelcomes = new Set<string>();
   const unsubscribe: (() => void)[] = [];
-  let hostId: string | undefined;
   let latest: WireLobbyState | undefined;
   /** The match whose start was already handed on, so a repeat is not. */
   let startedMatch: string | null = null;
@@ -264,6 +266,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     phase: state.phase,
     mode: state.mode,
     mapId: state.mapId,
+    open: state.open,
     hostId: state.hostId,
     players: state.players.map((player) => ({
       sessionId: player.id,

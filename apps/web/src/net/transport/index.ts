@@ -1,9 +1,9 @@
 import type { LobbyRoom, Transport } from "@vibewars/game-session";
 
-import { joinBroadcastRoom } from "./broadcast-channel.js";
+import { BROADCAST_SELF_ID, joinBroadcastRoom } from "./broadcast-channel.js";
 import { joinBroadcastQueue } from "./broadcast-queue.js";
 import { createNostrQueue, type NostrQueue } from "./nostr-queue.js";
-import { joinTrysteroRoom } from "./trystero.js";
+import { TRYSTERO_SELF_ID, joinTrysteroRoom } from "./trystero.js";
 
 /**
  * Join `room` (#403), derived from a lobby key or a queue room's name
@@ -16,8 +16,15 @@ import { joinTrysteroRoom } from "./trystero.js";
  */
 export function joinRoom(room: LobbyRoom): Transport {
   return import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast"
-    ? joinBroadcastRoom(room)
+    ? joinBroadcastRoom(room, BROADCAST_SELF_ID)
     : joinTrysteroRoom(room);
+}
+
+/** This page's peer id in every room `joinRoom` joins (#1682), on the same switch. */
+export function roomSelfId(): string {
+  return import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast"
+    ? BROADCAST_SELF_ID
+    : TRYSTERO_SELF_ID;
 }
 
 /**

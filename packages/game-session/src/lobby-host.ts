@@ -197,9 +197,27 @@ export interface LobbyHostOptions {
   readonly random: () => number;
 }
 
+/**
+ * Whether a lobby is open and how many guests it has (#1682): what
+ * decides if its host must be in its room at all.
+ */
+export interface LobbyReach {
+  readonly open: boolean;
+  /** Peers in it other than the host's own player, away ones too; never bots. */
+  readonly guests: number;
+}
+
 export interface LobbyHost {
   /** The host's own player's side of the room: it joins the lobby, and plays, through this. */
   readonly local: Transport;
+  /**
+   * Let peers that prove the key join, or stop them (#1682). A coded
+   * lobby starts closed; closing keeps the guests already in. A queued
+   * lobby is always open, and this does nothing to it.
+   */
+  setOpen(open: boolean): void;
+  /** `handler` now, and on every change of the lobby's `LobbyReach`. */
+  onReach(handler: (reach: LobbyReach) => void): () => void;
   /** Run `seconds` of the lobby's match, if one is on, and notice when it ends. */
   advance(seconds: number): void;
   /** Send everyone off, end the match if one is on, and leave the room. */
@@ -298,6 +316,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let mapId = queued?.group.mapId ?? defaultMap;
   /** The host's pick on the rail (#1526). */
   let mode: LobbyMode = "random-arena";
+  /** Whether a peer with the key may join (#1682). */
+  let open = queued !== undefined;
+  const reachHandlers = new Set<(reach: LobbyReach) => void>();
+  /** The reach handlers were last told, to tell them only of a change. */
+  let toldReach: LobbyReach = { open, guests: 0 };
   let joined = 0;
   /** Bots ever added (#1193), for their ids. */
   let bots = 0;
@@ -400,6 +423,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     phase,
     mode,
     mapId,
+    open,
     hostId: transport.selfId,
     matchId: match?.id ?? null,
     players: [...members.values()].map((member) => ({
@@ -417,7 +441,27 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
   });
 
+  const reach = (): LobbyReach => ({
+    open,
+    guests: [...members.values()].filter(
+      (member) => member.bot === null && member.id !== local.selfId,
+    ).length,
+  });
+
+  /** Tell the reach handlers, if it changed. */
+  const tellReach = (): void => {
+    const now = reach();
+    if (toldReach.open === now.open && toldReach.guests === now.guests) {
+      return;
+    }
+    toldReach = now;
+    for (const handler of [...reachHandlers]) {
+      handler(now);
+    }
+  };
+
   const broadcast = (): void => {
+    tellReach();
     // Before the start a bot is nobody's: it follows its side (#1454).
     if (phase === "waiting") {
       figureBots();
@@ -1111,6 +1155,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       refuse(from, "not-admitted");
       return;
     }
+    // Past the key gate: only a peer with the key learns it is closed
+    // (#1682). The host's own player is no guest: it is always let in.
+    if (!open && from !== local.selfId) {
+      refuse(from, "closed");
+      return;
+    }
     admit(from, join, null, null);
   });
 
@@ -1394,6 +1444,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   const host: LobbyHost = {
     local,
+    setOpen(opened) {
+      if (closed || queued !== undefined || open === opened) {
+        return;
+      }
+      open = opened;
+      broadcast();
+    },
+    onReach(handler) {
+      reachHandlers.add(handler);
+      handler(reach());
+      return () => {
+        reachHandlers.delete(handler);
+      };
+    },
     advance(seconds) {
       if (closed) {
         return;
@@ -1490,6 +1554,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     const leaving = members.get(peerId);
     members.delete(peerId);
+    tellReach();
     // In a Team Lobby (#1458) its proposal, vote and claim go with it, and
     // a bot takes its seat, so its side stays the size it proposed for.
     if (teamLobby !== undefined && leaving !== undefined && leaving.team !== null) {

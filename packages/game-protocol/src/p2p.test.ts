@@ -466,6 +466,7 @@ const lobbyState: WireLobbyState = {
   phase: "in-match",
   mode: "gvg",
   mapId: "isle",
+  open: true,
   hostId: "peer-1",
   matchId: "match-2",
   players: [
@@ -1782,6 +1783,8 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, countdownSeconds: undefined },
   ],
+  ["lobby-state without open (#1682)", parseWireLobbyState, { ...lobbyState, open: undefined }],
+  ["lobby-state open as a string (#1682)", parseWireLobbyState, { ...lobbyState, open: "yes" }],
   [
     "lobby-state counting down a fraction (#871)",
     parseWireLobbyState,

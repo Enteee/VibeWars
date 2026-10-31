@@ -93,7 +93,11 @@ channels, as often as they like.
   invite: an invitation, not an identity. The relays see a topic, the
   WebRTC offers and answers, encrypted with a password derived from the
   key, and every peer's IP address; neither the topic nor the password
-  gives the key back (ADR-0043, gap 5).
+  gives the key back (ADR-0043, gap 5). A lobby is closed until its host
+  opens it (#1682): a closed lobby takes nobody new, key or not, and is
+  told so only after the key proof. A closed, empty lobby has no relay
+  footprint at all; an open one, or a closed one with guests, shows only
+  its derived topic.
 - **A flooded lobby topic.** The topic a lobby announces on is public, so
   anyone watching the relays can announce on it too and make the host
   start handshakes that fail. That is denial of service, not access: such

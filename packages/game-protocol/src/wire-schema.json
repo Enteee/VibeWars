@@ -2710,6 +2710,7 @@
     },
     "LobbyRefusal": {
       "union": [
+        { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
         { "literal": "invalid-bot" },
@@ -4069,6 +4070,7 @@
             ]
           }
         },
+        { "name": "open", "optional": false, "type": "boolean" },
         {
           "name": "phase",
           "optional": false,

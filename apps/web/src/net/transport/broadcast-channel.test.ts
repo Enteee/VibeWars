@@ -59,7 +59,7 @@ transportContract(
       lastFrameAt = performance.now();
     };
     return {
-      join: () => joinBroadcastRoom(roomOf(code)),
+      join: () => joinBroadcastRoom(roomOf(code), crypto.randomUUID()),
       async settle() {
         const start = performance.now();
         for (;;) {
@@ -95,7 +95,7 @@ describe("the BroadcastChannel transport (#392)", () => {
     const raw = new BroadcastChannel(`${APP_ID}:a7kq`);
     const got: unknown[] = [];
     raw.onmessage = (event: MessageEvent<unknown>) => got.push(event.data);
-    const peer = joinBroadcastRoom(roomOf("a7kq"));
+    const peer = joinBroadcastRoom(roomOf("a7kq"), crypto.randomUUID());
     await settle();
     expect(got).toEqual([{ kind: "hello", from: peer.selfId }]);
     await peer.leave();
@@ -104,7 +104,7 @@ describe("the BroadcastChannel transport (#392)", () => {
 
   it("drops a malformed frame and delivers the well-formed one after it", async () => {
     const code = freshCode();
-    const peer = joinBroadcastRoom(roomOf(code));
+    const peer = joinBroadcastRoom(roomOf(code), crypto.randomUUID());
     const got: unknown[] = [];
     peer.on("intent", (data) => got.push(data));
     const raw = new BroadcastChannel(`${APP_ID}:${code}`);
@@ -121,7 +121,7 @@ describe("the BroadcastChannel transport (#392)", () => {
   it("drops a message over MAX_MESSAGE_BYTES before anything reads it (#403)", async () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const code = freshCode();
-    const peer = joinBroadcastRoom(roomOf(code));
+    const peer = joinBroadcastRoom(roomOf(code), crypto.randomUUID());
     const got: unknown[] = [];
     peer.on("intent", (data) => got.push(data));
     const raw = new BroadcastChannel(`${APP_ID}:${code}`);
@@ -136,7 +136,7 @@ describe("the BroadcastChannel transport (#392)", () => {
 
   it("counts a message from an unknown peer as its join, first", async () => {
     const code = freshCode();
-    const peer = joinBroadcastRoom(roomOf(code));
+    const peer = joinBroadcastRoom(roomOf(code), crypto.randomUUID());
     const seen: unknown[] = [];
     peer.onPeerJoin((id) => seen.push(`+${id}`));
     peer.on("intent", (data) => seen.push(data));
@@ -150,7 +150,7 @@ describe("the BroadcastChannel transport (#392)", () => {
 
   it("ignores a message addressed to another peer", async () => {
     const code = freshCode();
-    const peer = joinBroadcastRoom(roomOf(code));
+    const peer = joinBroadcastRoom(roomOf(code), crypto.randomUUID());
     const got: unknown[] = [];
     peer.on("intent", (data) => got.push(data));
     peer.onPeerJoin((id) => got.push(`+${id}`));
@@ -165,7 +165,7 @@ describe("the BroadcastChannel transport (#392)", () => {
   it("sees a peer leave once it has been silent for 3 s, as a killed page is", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
     const code = freshCode();
-    const peer = joinBroadcastRoom(roomOf(code));
+    const peer = joinBroadcastRoom(roomOf(code), crypto.randomUUID());
     const seen: string[] = [];
     peer.onPeerJoin((id) => seen.push(`+${id}`));
     peer.onPeerLeave((id) => seen.push(`-${id}`));
@@ -185,7 +185,10 @@ describe("the BroadcastChannel transport (#392)", () => {
   it("keeps a peer that goes on saying hello", async () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
     const code = freshCode();
-    const [a, b] = [joinBroadcastRoom(roomOf(code)), joinBroadcastRoom(roomOf(code))];
+    const [a, b] = [
+      joinBroadcastRoom(roomOf(code), crypto.randomUUID()),
+      joinBroadcastRoom(roomOf(code), crypto.randomUUID()),
+    ];
     const seen: string[] = [];
     a.onPeerLeave((id) => seen.push(`-${id}`));
     for (let beat = 0; beat < 5; beat++) {

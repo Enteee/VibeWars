@@ -976,6 +976,11 @@ export interface WireLobbyState {
   /** The host's pick (#1526): every member's rail shows it. */
   readonly mode: LobbyMode;
   readonly mapId: string;
+  /**
+   * Whether a peer with the key may join (#1682): a closed lobby takes
+   * nobody new, and keeps those already in. A queued lobby is always open.
+   */
+  readonly open: boolean;
   /** The peer every lobby and match message comes from. */
   readonly hostId: string;
   /** The match being played, while `phase` is not `"waiting"`. */
@@ -1102,6 +1107,8 @@ export const LOBBY_REFUSALS = [
   "invalid-vote",
   "slot-taken",
   "invalid-slot",
+  // A coded lobby its host has closed (#1682), told only after the key proof.
+  "closed",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
@@ -2430,6 +2437,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isOneOf(raw.phase, ["waiting", "team-lobby", "starting", "in-match"] as const) ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
+    typeof raw.open !== "boolean" ||
     !isString(raw.hostId) ||
     !isNullableString(raw.matchId) ||
     !(raw.countdownSeconds === null || isCount(raw.countdownSeconds))
@@ -2444,6 +2452,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         phase: raw.phase,
         mode: raw.mode,
         mapId: raw.mapId,
+        open: raw.open,
         hostId: raw.hostId,
         matchId: raw.matchId,
         players,

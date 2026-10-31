@@ -55,8 +55,14 @@ export function parseFrame(raw: unknown): Frame | undefined {
   }
 }
 
-export function joinBroadcastRoom(room: LobbyRoom): Transport {
-  const selfId = crypto.randomUUID();
+/**
+ * This page's peer id in every room it joins, as Trystero's `selfId` is:
+ * a lobby's host leaves its room and comes back as the same peer (#1682).
+ */
+export const BROADCAST_SELF_ID = crypto.randomUUID();
+
+/** Join `room` as `selfId`: `BROADCAST_SELF_ID`, but for a test's several peers in one module. */
+export function joinBroadcastRoom(room: LobbyRoom, selfId: string): Transport {
   const channel = new BroadcastChannel(`${APP_ID}:${room.roomId}`);
   const handlers = new HandlerSets();
   /** Each peer seen, and when it was last heard from. */
