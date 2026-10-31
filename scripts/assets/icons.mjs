@@ -1562,6 +1562,14 @@ const status = {
       `<ellipse cx="12" cy="5" rx="4.5" ry="1.6" ${stroke(c, 1.5)}/>` +
       `<path d="M12 8v9M9 14h6M12 17v3" ${stroke(c, 2)}/>`,
   ],
+  // Monk staples 5 (#1650), a stand-in until its art card.
+  // Enchantment: a shield over regeneration arrows, armour and health back.
+  "shield-of-regeneration": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 4h10v5c0 3-2.5 5-5 6.5C9.5 14 7 12 7 9z" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 20l2.5-2.5L11 20M10 20l2.5-2.5L15 20M14 20l2.5-2.5L19 20" ${stroke(c, 1.6)}/>`,
+  ],
   // Necromancer and Elementalist staples (#1540), stand-ins until their art card.
   // Enchantment: a drop over three regeneration arrows, energy bought with blood.
   "blood-is-power": [
