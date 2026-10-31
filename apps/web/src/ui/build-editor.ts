@@ -67,6 +67,7 @@ import {
 } from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
+import { characterRanks } from "./character-ranks.js";
 import {
   armorTarget,
   canEquipOffhand,
@@ -1728,7 +1729,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
         section.appendChild(notice);
       }
       const available = equippableSkills(character);
-      const ranks = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
+      const ranks = characterRanks(character);
       const slots = character.skillBar.map((_, slot) => slot);
       const selected = context.selected();
       syncList(grid, slots, String, create, (cell, slot) => {
@@ -1997,9 +1998,6 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   let open: string | undefined;
   const groupHost = h("div", "skill-groups");
 
-  const ranksOf = (character: StoredCharacter): Map<string, number> =>
-    new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
-
   /**
    * A click on a library skill: to the picked slot or the first empty one,
    * as its Equip says. One already on the bar stays where it is, and a
@@ -2052,7 +2050,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     // The hover tooltip stays beside the inline details (#549 Q3), as in
     // GW1's skill window.
     box.addEventListener("mouseenter", () => {
-      tooltip.show(box, describeSkill(skill, ranksOf(context.current())));
+      tooltip.show(box, describeSkill(skill, characterRanks(context.current())));
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2085,7 +2083,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     details.hidden = true;
     box.appendChild(details);
     box.addEventListener("mouseenter", () => {
-      tooltip.show(box, describeSkill(skill, ranksOf(context.current())));
+      tooltip.show(box, describeSkill(skill, characterRanks(context.current())));
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2171,7 +2169,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
   };
 
   const render = (character: StoredCharacter): void => {
-    const ranks = ranksOf(character);
+    const ranks = characterRanks(character);
     const target = equipTarget(character.skillBar, context.selected());
     const equipText =
       target === undefined
