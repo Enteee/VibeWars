@@ -66,6 +66,35 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
+  // Wells 2 (#1732), stand-ins until their art card, each over the ground line.
+  // Skill effect: a struck-through ring, no enchantment holds.
+  "well-of-the-profane": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="9.5" r="5" ${stroke(c, 1.8)}/>` +
+      `<path d="M8 5.5l8 8" ${stroke(c, 1.8)}/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a struck-through horn, no shout or chant.
+  "well-of-silence": [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 8v4l9 3V5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 4l12 12" ${stroke(c, 1.8)}/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a half-dark eye, the hexed miss.
+  "well-of-darkness": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 10c4-5 12-5 16 0c-4 5-12 5-16 0z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 7.5a2.5 2.5 0 0 0 0 5z" fill="${c}"/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a cracked shield, armor cracking under each hit.
+  "well-of-ruin": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 3l6 2v4c0 3-2.5 5-6 6.5C8.5 14 6 12 6 9V5z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 4l-1.5 4 2.5 2-1.5 4" ${stroke(c, 1.4)}/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
   // Hex: a barbed line, physical hits hurt more (#1332).
   barbs: [
     "hex",

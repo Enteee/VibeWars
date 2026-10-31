@@ -339,6 +339,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.untargetableByFoeSpells) {
     parts.push("cannot be the target of enemy spells");
   }
+  if (definition.preventsEnchantments) {
+    parts.push("stripped of all enchantments, and cannot be enchanted");
+  }
+  if (definition.preventsShoutsAndChants) {
+    parts.push("cannot use shouts or chants");
+  }
   if (definition.unblockableBySource) {
     parts.push("cannot block its caster's attacks");
   }
@@ -498,8 +504,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       adrenalineGainFaster,
       healthPips,
       armorModifier,
+      attackMissChance,
     } = definition.whileUnder;
     const gains = [
+      ...(attackMissChance === 0
+        ? []
+        : [`${String(Math.round(attackMissChance * 100))}% of attacks miss`]),
       ...(healthPips === 0 ? [] : [`${signed(healthPips)} Health regeneration`]),
       ...(armorModifier === 0 ? [] : [`${signed(armorModifier)} armor`]),
       ...(attackDurationMultiplier === 1

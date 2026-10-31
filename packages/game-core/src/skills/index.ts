@@ -69,7 +69,9 @@ export {
   getStatusDefinition,
   isStatusId,
   preventsAttacks,
+  preventsEnchantments,
   preventsResurrection,
+  preventsShoutsAndChants,
   preventsSpells,
   scaledStatusDuration,
 } from "./status.js";

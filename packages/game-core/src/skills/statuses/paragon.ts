@@ -397,6 +397,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       adrenalineGainFaster: 0.33,
       healthPips: 0,
       armorModifier: 0,
+      attackMissChance: 0,
     },
   }),
 

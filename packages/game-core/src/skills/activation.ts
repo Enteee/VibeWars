@@ -16,7 +16,9 @@ import {
   getStatusDefinition,
   nextSkillAnswers,
   preventsAttacks,
+  preventsEnchantments,
   preventsResurrection,
+  preventsShoutsAndChants,
   preventsSpells,
   untargetableByFoeSpells,
 } from "./status.js";
@@ -77,7 +79,12 @@ export type ActivationRejection =
   | "cannot-attack"
   // A resurrection skill while a status bars them, as Frozen Soil's (#1745).
   | "cannot-resurrect"
+  // A shout or a chant while a status bars them, as Well of Silence's (#1732).
+  | "cannot-shout-or-chant"
   | "invalid-target-untargetable"
+  // An enchantment spell at a target that can hold none, as Well of the
+  // Profane's (#1732), the caster itself included.
+  | "invalid-target-unenchantable"
   // An attack or attack skill while carrying a flag (#1225): checked by
   // the simulation, which knows who carries one.
   | "hands-full"
@@ -266,6 +273,12 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   if (isResurrectionSkill(skill) && preventsResurrection(caster.statuses.active)) {
     return reject("cannot-resurrect");
   }
+  if (
+    (skill.type === "shout" || skill.type === "chant") &&
+    preventsShoutsAndChants(caster.statuses.active)
+  ) {
+    return reject("cannot-shout-or-chant");
+  }
   // An attack skill is a blow of its weapon (ADR-0029): checked before the
   // cost, so the player is told what is wrong rather than what it costs.
   if (
@@ -296,6 +309,18 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
     untargetableByFoeSpells(request.target.statuses.active)
   ) {
     return reject("invalid-target-untargetable");
+  }
+  // Well of the Profane's bearer (#1732): an enchantment at it, or a
+  // self-enchantment by it, is refused before anything is paid. An area
+  // enchantment skips it where it lands.
+  const enchanted =
+    skill.target === "self" ? (skill.area === undefined ? caster : undefined) : request.target;
+  if (
+    skill.type === "enchantment" &&
+    enchanted !== undefined &&
+    preventsEnchantments(enchanted.statuses.active)
+  ) {
+    return reject("invalid-target-unenchantable");
   }
   // A pet attack needs its pet alive and within earshot of its owner,
   // seen or not, and never walks its owner in (#1046).

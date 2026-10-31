@@ -1325,7 +1325,8 @@ export function applyEffect(
     }
 
     case "maintain-status": {
-      if (target === undefined || target.dead) {
+      // Well of the Profane (#1732): it does not land, as `landStatus`'s immune.
+      if (target === undefined || target.dead || target.statuses.isImmuneTo(effect.statusId)) {
         return events;
       }
       // The caster's newest; the simulation drops what it cannot pay for.
