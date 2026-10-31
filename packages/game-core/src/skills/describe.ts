@@ -1305,6 +1305,10 @@ function conditionText(condition: EffectCondition): string {
       return `If target is below ${String(Math.round(condition.fraction * 100))}% Health`;
     case "target-health-above":
       return `If target is above ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "caster-health-below":
+      return `If you have less than ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "target-chain-mark":
+      return `If it follows ${condition.role === "off-hand" ? "an off-hand" : `a ${condition.role}`} attack`;
     case "target-has":
       return `If target has ${aCategory(condition.category)}`;
     case "target-has-any":

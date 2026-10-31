@@ -955,6 +955,7 @@ export function resolveAttackSkillOutcome(
           ),
         ];
   const victims: Combatant[] = [];
+  const outOfSequence: Combatant[] = [];
   for (const victim of targets) {
     if (victim.dead) {
       continue;
@@ -965,6 +966,7 @@ export function resolveAttackSkillOutcome(
       (requires !== undefined && !stateHolds(requires, caster, victim, surroundings))
     ) {
       events.push({ kind: "attack-missed", targetId: victim.id, reason: "out-of-sequence" });
+      outOfSequence.push(victim);
       continue;
     }
     victims.push(victim);
@@ -975,7 +977,8 @@ export function resolveAttackSkillOutcome(
     const hit: Combatant[] = [];
     const critical: Combatant[] = [];
     const blocked: Combatant[] = [];
-    const failed: Combatant[] = [];
+    // An out-of-sequence miss fails to hit with the first strike (#1757).
+    const failed: Combatant[] = strike === 0 ? [...outOfSequence] : [];
     for (const victim of victims) {
       if (victim.dead) {
         continue;
