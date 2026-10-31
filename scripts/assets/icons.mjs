@@ -3324,6 +3324,15 @@ const skillGlyph = {
   "hand-ring-rend": () =>
     `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
     `<g transform="translate(16,8) scale(0.55) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>`,
+  // Target Health loss (#1648, #1680): a low hand, a drop lost and a weakening chevron.
+  "hand-drop-weak": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<path d="M8.5 2C8.5 2 4.8 6.2 4.8 8.2A3.7 3.7 0 0 0 12.2 8.2C12.2 6.2 8.5 2 8.5 2Z" fill="${C.ink}"/>` +
+    inkLine("M14 5.5L18.5 10L23 5.5M14 11.5L18.5 16L23 11.5", 2.2),
+  // Pain of Disenchantment: the broken enchantment ring round a burst that reaches the foes beside it.
+  "ring-rend-burst": () =>
+    `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
+    `<g transform="translate(12,12) scale(0.7) translate(-12,-12)">${inkFill(burst(8))}</g>`,
   // Warrior staples 3 (#1658, #1672): the weapon up and left, a ringed rider bottom right for the condition it reads or gives.
   "axe-weak": () => riderOn(skillGlyph.axe(), RIDER.weak),
   "axe-limp": () => riderOn(skillGlyph.axe(), RIDER.limp),
