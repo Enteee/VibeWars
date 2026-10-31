@@ -1159,6 +1159,77 @@ const status = {
       `<path d="M10 4.5h8" ${stroke(c, 2.2)}/>` +
       `<path d="M19 11c0 0-2.5 2.6-2.5 4.1a2.5 2.5 0 0 0 5 0C21.5 13.6 19 11 19 11z" fill="${c}"/>`,
   ],
+  // Ritualist weapon spells 3 (#1654), stand-ins until their art card.
+  // Weapon spell: a blade over a plus, regeneration and armour while afflicted.
+  "resilient-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M17 3v6M14 6h6" ${stroke(c, 2.2)}/>`,
+  ],
+  // Weapon spell: a blade through a broken bar, one blow past the block.
+  "ghostly-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M4 8h4M11 8h4" ${stroke(c, 2.2)}/>`,
+  ],
+  // Weapon spell: a blade through two broken bars, every blow past the block.
+  "guided-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M4 6h4M11 6h4M4 10h4M11 10h4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and a cracked plate, armour split three times.
+  "sundering-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 3h6v5h-6zM18 3l-1 2.5 1.5 1L17.5 8" ${stroke(c, 1.5)}/>`,
+  ],
+  // Weapon spell: a blade under a closed eye, its striker and its victims blinded.
+  "weapon-of-shadow": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M14 6c2-2 5-2 7 0M15 7.5l-1 1.5M17.5 8v2M20 7.5l1 1.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Weapon spell: a blade and a lightning break, a still foe interrupted.
+  "warmongers-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M18 3l-3 4h4l-3 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and two crossed strokes, an attacking foe interrupted.
+  "wailing-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 3l5 5M20 3l-5 5" ${stroke(c, 2)}/>`,
+  ],
+  // Weapon spell: a blade and a falling drop, less damage, Health stolen.
+  "nightmare-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M18 3c0 0-2.5 2.6-2.5 4.1a2.5 2.5 0 0 0 5 0C20.5 5.6 18 3 18 3z" fill="${c}"/>`,
+  ],
+  // Weapon spell: a blade and rising bars, adrenaline twice as fast.
+  "weapon-of-fury": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 9V7M18 9V5M21 9V3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and a turning arrow, Energy back on an attack skill.
+  "weapon-of-renewal": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 6a3 3 0 1 1 3 3M15 6l-1.5-1.5M15 6l1.5-1.5" ${stroke(c, 1.6)}/>`,
+  ],
   // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
   "ward-against-melee": [
     "skill-effect",

@@ -88,6 +88,12 @@ const NO_BOT_USE = new Set([
   "mesmer.blackout",
   // A heal that waits for its spirit's death (#1550): no rule for it.
   "ritualist.life",
+  // An ally's weapon spell that only bends its attacks (#1654): no rule for it.
+  "ritualist.ghostly-weapon",
+  "ritualist.guided-weapon",
+  "ritualist.nightmare-weapon",
+  "ritualist.weapon-of-fury",
+  "ritualist.weapon-of-renewal",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",

@@ -287,6 +287,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
     );
   }
+  if (definition.attackDamageDelta < 0) {
+    parts.push(`attacks deal ${String(-definition.attackDamageDelta)} less damage`);
+  }
+  if (definition.attackDamageDelta > 0) {
+    parts.push(`attacks deal ${String(definition.attackDamageDelta)} more damage`);
+  }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
@@ -377,9 +383,19 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `your next ${String(definition.unblockableAttacks)} attack${plural} cannot be blocked`,
     );
   }
+  if (definition.attacksUnblockable) {
+    parts.push("attacks cannot be blocked");
+  }
   if (definition.onAttackHit !== undefined) {
     const { effects, attackSkillsOnly, weapon } = definition.onAttackHit;
-    parts.push(...describeAttackHits(effects, attackSkillsOnly, weapon));
+    parts.push(
+      ...describeAttackHits(
+        effects,
+        attackSkillsOnly,
+        weapon,
+        definition.category !== "weapon-spell",
+      ),
+    );
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -466,8 +482,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   // Soldier's Fury's (#1485): "while under a shout or chant: attacks 33%
   // faster, gain adrenaline 33% faster".
   if (definition.whileUnder !== undefined) {
-    const { categories, attackDurationMultiplier, adrenalineGainFaster } = definition.whileUnder;
+    const {
+      categories,
+      attackDurationMultiplier,
+      adrenalineGainFaster,
+      healthPips,
+      armorModifier,
+    } = definition.whileUnder;
     const gains = [
+      ...(healthPips === 0 ? [] : [`${signed(healthPips)} Health regeneration`]),
+      ...(armorModifier === 0 ? [] : [`${signed(armorModifier)} armor`]),
       ...(attackDurationMultiplier === 1
         ? []
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
@@ -611,7 +635,8 @@ function damageTaken(multiplier: number): string {
 /**
  * A preparation's riders (#525), as its tooltip says them: "foes your
  * physical attacks hit get Poison for 13s", "bow attacks" for a rider of
- * one weapon class (#1629). Damage names its type, and a splash of the
+ * one weapon class (#1629); a weapon spell's rides every attack (#1654),
+ * so it says "attacks". Damage names its type, and a splash of the
  * same damage after it is said with it: Ignite Arrows' "foes your bow
  * attacks hit take 15 fire damage, and so do foes adjacent to them".
  */
@@ -619,10 +644,11 @@ function describeAttackHits(
   effects: readonly SkillEffect[],
   attackSkillsOnly: boolean,
   weapon: AttackWeaponClass | undefined,
+  physicalOnly: boolean,
 ): string[] {
   const attacks = attackSkillsOnly
     ? `${weapon === undefined ? "" : `${weapon} `}attack skills`
-    : `${weapon ?? "physical"} attacks`;
+    : `${weapon ?? (physicalOnly ? "physical" : "")} attacks`.trim();
   const parts: string[] = [];
   for (const [index, effect] of effects.entries()) {
     const before = effects[index - 1];
@@ -1292,6 +1318,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target has more Health than you";
     case "target-attacking":
       return "If target is attacking";
+    case "target-not-attacking":
+      return "If target is not attacking";
     case "target-casting-or-attacking":
       return "If target is casting a spell or attacking";
     case "target-is-summoned":

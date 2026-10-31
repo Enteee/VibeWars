@@ -49,6 +49,7 @@ describe("status definitions", () => {
         def.preventsBlocking ||
         def.unblockableBySource ||
         def.unblockableAttacks !== undefined ||
+        def.attacksUnblockable ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
@@ -83,6 +84,7 @@ describe("status definitions", () => {
         def.extraStrikesPerHit !== 0 ||
         def.attackDamageType !== undefined ||
         def.attackArmorPenetration !== 0 ||
+        def.attackDamageDelta !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
