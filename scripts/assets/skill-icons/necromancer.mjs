@@ -43,11 +43,11 @@ export const NECROMANCER_ICONS = {
   "necromancer.blood-is-power": { glyph: "sac-energy" },
   "necromancer.order-of-pain": { glyph: "sac-blade" },
   "necromancer.plague-signet": { glyph: "drop-to-signet" },
-  // Touch skills (#1643), stand-ins until their art card.
-  "necromancer.vile-touch": { glyph: "mark-skull", modifier: "down" },
-  "necromancer.touch-of-agony": { glyph: "drop-touch", modifier: "bleed" },
-  "necromancer.wallows-bite": { glyph: "drop-touch", modifier: "down" },
-  "necromancer.vampiric-bite": { glyph: "drop-touch", modifier: "up" },
+  // Touch skills (#1643, #1666).
+  "necromancer.vile-touch": { glyph: "hand-skull" },
+  "necromancer.touch-of-agony": { glyph: "hand-drop-bolt" },
+  "necromancer.wallows-bite": { glyph: "jaws-bolt" },
+  "necromancer.vampiric-bite": { glyph: "jaws-drop" },
   // Target Health loss (#1648), stand-ins until their art card.
   "necromancer.enfeebling-touch": { glyph: "drop-touch", modifier: "less" },
   "necromancer.pain-of-disenchantment": { glyph: "ring-rend", modifier: "area" },

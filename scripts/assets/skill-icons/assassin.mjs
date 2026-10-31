@@ -60,4 +60,19 @@ export const ASSASSIN_ICONS = {
   "assassin.vampiric-assault": { glyph: "daggers-drop" },
   "assassin.shattering-assault": { glyph: "daggers-ring" },
   "assassin.signet-of-shadows": { glyph: "signet-shadow" },
+  // Touch skills (#1643, #1666).
+  "assassin.lift-enchantment": { glyph: "hand-ring-rend" },
+  // Placeholders until the asset-designer's (#1637).
+  "assassin.black-mantis-thrust": { glyph: "dagger-crit", modifier: "down" },
+  "assassin.black-spider-strike": { glyph: "dagger-lotus", modifier: "bleed" },
+  "assassin.golden-fox-strike": { glyph: "dagger-lotus", modifier: "up" },
+  "assassin.golden-fang-strike": { glyph: "dagger-lotus", modifier: "less" },
+  "assassin.lotus-strike": { glyph: "dagger-lotus", modifier: "plus" },
+  "assassin.falling-lotus-strike": { glyph: "dagger-lotus", modifier: "down" },
+  "assassin.nine-tail-strike": { glyph: "dagger-crit", modifier: "area" },
+  "assassin.disrupting-stab": { glyph: "dagger-stop", modifier: "stun" },
+  "assassin.temple-strike": { glyph: "dagger-stop", modifier: "bolt" },
+  "assassin.vampiric-assault": { glyph: "dagger-drain", modifier: "plus" },
+  "assassin.shattering-assault": { glyph: "dagger-crit", modifier: "half" },
+  "assassin.signet-of-shadows": { glyph: "was-blind", modifier: "bolt" },
 };

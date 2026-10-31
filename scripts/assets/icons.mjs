@@ -1777,14 +1777,13 @@ const status = {
       `<path d="M16 8V4M16 12v4M12 8h-2M20 8h2M13 5l-1.5-1.5M19 5l1.5-1.5M19 11l1.5 1.5" ${stroke(c, 1.6)}/>`,
   ],
   // Dervish staples 2 (#1604).
-  // Mesmer staples 3 (#1627), a stand-in until its art card.
-  // Hex: an eye glancing aside over a burst, the next attack goes astray.
+  // Hex: an eye glancing aside over a burst, the next attack goes astray (#1666).
   "wandering-eye": [
     "hex",
     (c) =>
-      `<path d="M4 10c4-5 12-5 16 0c-4 5-12 5-16 0z" ${stroke(c, 1.8)}/>` +
-      `<circle cx="15" cy="10" r="2" fill="${c}"/>` +
-      `<path d="M12 15v5M8.5 16.5l2 2M15.5 16.5l-2 2" ${stroke(c, 1.6)}/>`,
+      `<path d="M3 9c3-4.5 6-6 9-6s6 1.5 9 6c-3 4.5-6 6-9 6s-6-1.5-9-6z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="15" cy="9" r="2" fill="${c}"/>` +
+      `<path d="M12 17.5v3M8.5 18.5l2 1.5M15.5 18.5l-2 1.5" ${stroke(c, 1.6)}/>`,
   ],
   // Dervish staples 2 (#1604), stand-ins until their art card.
   // Stance: three fast slashes, it attacks 25% faster.
@@ -3260,6 +3259,44 @@ const skillGlyph = {
       inkLine("M2.5 3H12.5", 2.4) +
         `<path d="M8 5.5C8 5.5 5 8.6 5 10.4A3 3 0 0 0 11 10.4C11 8.6 8 5.5 8 5.5Z" fill="${C.ink}"/>`,
     ),
+  // Mesmer staples 3 (#1627, #1666): the ringed plus is Health healed per Energy lost, the ringed bolt Energy gained; the hex ring is a hex taken.
+  "energy-feast": () =>
+    `<g transform="translate(10,10) scale(0.85) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    healBadge(),
+  "hex-energy-feast": () =>
+    `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 1.8)} stroke-dasharray="4 3"/>` +
+    `<g transform="translate(10.5,10.5) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    `<circle cx="18.5" cy="18" r="4.8" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.3" ${stroke(C.ink, 1.5)}/>` +
+    `<g transform="translate(18.5,18) scale(0.3) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  "hex-interrupt": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
+    `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  "eye-burst": () =>
+    `<path d="M2.5 9C5 4.5 8.5 3 12 3S19 4.5 21.5 9C19 13.5 15.5 15 12 15S5 13.5 2.5 9Z" ${stroke(C.ink, 2)}/>` +
+    `<circle cx="15" cy="9" r="2.3" fill="${C.ink}"/>` +
+    `<g transform="translate(12,18.5) scale(0.5) translate(-12,-12)">${inkFill(burst(7))}</g>`,
+  "vortex-hex": () =>
+    inkLine(
+      "M12 12a1.6 1.6 0 0 1 3.2 0a3.6 3.6 0 0 1-7.2 0a5.6 5.6 0 0 1 11.2 0a7.6 7.6 0 0 1-15.2 0",
+      2.2,
+    ) + `<g transform="translate(20,4) scale(0.4) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  // Touch skills (#1643, #1666): a hand held low and what the touch does.
+  "hand-skull": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<g transform="translate(16,8) scale(0.72) translate(-11,-11)">${skillGlyph["mark-skull"]()}</g>`,
+  "hand-drop-bolt": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<path d="M8.5 2C8.5 2 4.8 6.2 4.8 8.2A3.7 3.7 0 0 0 12.2 8.2C12.2 6.2 8.5 2 8.5 2Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M20.5 1.5L14 10H18.5L15.5 17.5L23 8.5H18.8Z"),
+  "jaws-bolt": () =>
+    `<g transform="translate(-1,2) scale(0.95)">${skillGlyph.jaws()}</g>` +
+    inkFill("M20.5 1.5L14 10H18.5L15.5 17.5L23 8.5H18.8Z"),
+  "jaws-drop": () =>
+    `<g transform="translate(-1,2) scale(0.95)">${skillGlyph.jaws()}</g>` +
+    `<path d="M18 3C18 3 13.5 8.5 13.5 11.5A4.5 4.5 0 0 0 22.5 11.5C22.5 8.5 18 3 18 3Z" fill="${C.ink}"/>`,
+  "hand-ring-rend": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<g transform="translate(16,8) scale(0.55) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>`,
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
@@ -4061,6 +4098,11 @@ const skillGlyph = {
     `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
+
+/** The ringed plus in the bottom right corner: Health healed (#1666). */
+const healBadge = () =>
+  `<circle cx="18.5" cy="18" r="4.8" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.3" ${stroke(C.ink, 1.5)}/>` +
+  inkLine("M18.5 15.7V20.3M16.2 18H20.8", 1.5);
 
 /** An element glyph with the ringed energy bolt in the corner: the Attunements' shared cue (#1646). */
 const attune = (/** @type {string} */ element) =>
