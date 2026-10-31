@@ -808,7 +808,7 @@ describe("attack skills (#417)", () => {
         "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
     ]);
     expect(lines("necromancer.rend-enchantments")).toEqual([
-      "Removes 8 enchantments",
+      "Removes up to 8 enchantments",
       "You lose 31 health for each Monk enchantment removed",
     ]);
     expect(lines("necromancer.plague-touch")).toEqual([

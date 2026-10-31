@@ -390,6 +390,8 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       categories: ["shout", "chant"],
       attackDurationMultiplier: 0.67,
       adrenalineGainFaster: 0.33,
+      healthPips: 0,
+      armorModifier: 0,
     },
   }),
 };

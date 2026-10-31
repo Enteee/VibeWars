@@ -390,6 +390,12 @@ const status = {
   ],
   // Stance: a step aside an arrow, faster and blocks projectiles.
   dodge: ["stance", (c) => `<path d="M4 8h10M11 5l3 3-3 3M8 18l4-5 4 5" ${stroke(c, 2.2)}/>`],
+  // Stance: Dodge's step aside an arrow, with a speed line under it (#1676),
+  // a stand-in until the asset-designer's.
+  "zojuns-haste": [
+    "stance",
+    (c) => `<path d="M4 7h10M11 4l3 3-3 3M8 16l4-5 4 5M5 20h14" ${stroke(c, 2.2)}/>`,
+  ],
   // Stance: a shield with a plus, Energy for each melee block (#1329).
   "bonettis-defense": [
     "stance",
@@ -1153,6 +1159,77 @@ const status = {
       `<path d="M10 4.5h8" ${stroke(c, 2.2)}/>` +
       `<path d="M19 11c0 0-2.5 2.6-2.5 4.1a2.5 2.5 0 0 0 5 0C21.5 13.6 19 11 19 11z" fill="${c}"/>`,
   ],
+  // Ritualist weapon spells 3 (#1654), stand-ins until their art card.
+  // Weapon spell: a blade over a plus, regeneration and armour while afflicted.
+  "resilient-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M17 3v6M14 6h6" ${stroke(c, 2.2)}/>`,
+  ],
+  // Weapon spell: a blade through a broken bar, one blow past the block.
+  "ghostly-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M4 8h4M11 8h4" ${stroke(c, 2.2)}/>`,
+  ],
+  // Weapon spell: a blade through two broken bars, every blow past the block.
+  "guided-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M4 6h4M11 6h4M4 10h4M11 10h4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and a cracked plate, armour split three times.
+  "sundering-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 3h6v5h-6zM18 3l-1 2.5 1.5 1L17.5 8" ${stroke(c, 1.5)}/>`,
+  ],
+  // Weapon spell: a blade under a closed eye, its striker and its victims blinded.
+  "weapon-of-shadow": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M14 6c2-2 5-2 7 0M15 7.5l-1 1.5M17.5 8v2M20 7.5l1 1.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Weapon spell: a blade and a lightning break, a still foe interrupted.
+  "warmongers-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M18 3l-3 4h4l-3 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and two crossed strokes, an attacking foe interrupted.
+  "wailing-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 3l5 5M20 3l-5 5" ${stroke(c, 2)}/>`,
+  ],
+  // Weapon spell: a blade and a falling drop, less damage, Health stolen.
+  "nightmare-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M18 3c0 0-2.5 2.6-2.5 4.1a2.5 2.5 0 0 0 5 0C20.5 5.6 18 3 18 3z" fill="${c}"/>`,
+  ],
+  // Weapon spell: a blade and rising bars, adrenaline twice as fast.
+  "weapon-of-fury": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 9V7M18 9V5M21 9V3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Weapon spell: a blade and a turning arrow, Energy back on an attack skill.
+  "weapon-of-renewal": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 6a3 3 0 1 1 3 3M15 6l-1.5-1.5M15 6l1.5-1.5" ${stroke(c, 1.6)}/>`,
+  ],
   // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
   "ward-against-melee": [
     "skill-effect",
@@ -1830,6 +1907,32 @@ const status = {
     (c) =>
       `<circle cx="12" cy="12" r="9" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
       `<path d="M8 10a2.5 2.5 0 0 1 4-2 2.5 2.5 0 0 1 4 2M8 15h8M9 13l6 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Dervish staples 3 (#1667), stand-ins until their art card.
+  // Enchantment: two fast slashes over a rising bar, attack and adrenaline faster.
+  onslaught: [
+    "enchantment",
+    (c) =>
+      `<path d="M5 15L13 4M10 16L18 5" ${stroke(c, 2)}/>` + `<path d="M6 20h12" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a spark over two falling bars, energy per hit, less regeneration.
+  "zealous-vow": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l2 5h-4l2 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 17h12M8 21h8" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a feather, it moves faster and sheds conditions sooner.
+  "featherfoot-grace": [
+    "enchantment",
+    (c) =>
+      `<path d="M18 4C10 5 6 11 6 20M18 4c0 7-5 11-11 12" ${stroke(c, 1.8)}/>` +
+      `<path d="M10 11h4M8 15h4" ${stroke(c, 1.4)}/>`,
+  ],
+  // Enchantment: a spiral of wind, it runs and its next hit chills the crowd.
+  "whirling-charge": [
+    "enchantment",
+    (c) => `<path d="M12 12a2 2 0 1 1 2-2a4 4 0 1 1-4-4a6 6 0 1 1-6 6" ${stroke(c, 1.8)}/>`,
   ],
 };
 
@@ -3262,6 +3365,15 @@ const skillGlyph = {
   "hand-ring-rend": () =>
     `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
     `<g transform="translate(16,8) scale(0.55) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>`,
+  // Target Health loss (#1648, #1680): a low hand, a drop lost and a weakening chevron.
+  "hand-drop-weak": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<path d="M8.5 2C8.5 2 4.8 6.2 4.8 8.2A3.7 3.7 0 0 0 12.2 8.2C12.2 6.2 8.5 2 8.5 2Z" fill="${C.ink}"/>` +
+    inkLine("M14 5.5L18.5 10L23 5.5M14 11.5L18.5 16L23 11.5", 2.2),
+  // Pain of Disenchantment: the broken enchantment ring round a burst that reaches the foes beside it.
+  "ring-rend-burst": () =>
+    `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
+    `<g transform="translate(12,12) scale(0.7) translate(-12,-12)">${inkFill(burst(8))}</g>`,
   // Warrior staples 3 (#1658, #1672): the weapon up and left, a ringed rider bottom right for the condition it reads or gives.
   "axe-weak": () => riderOn(skillGlyph.axe(), RIDER.weak),
   "axe-limp": () => riderOn(skillGlyph.axe(), RIDER.limp),
