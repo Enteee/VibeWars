@@ -761,7 +761,7 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
-### Guild cape (decided: B, the trailing tab)
+### Guild cape (decided: A of the motion study)
 
 GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
 from above, so the cape goes **behind it, opposite its facing**: the weapon
@@ -796,15 +796,16 @@ The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made b
   after it: 3 calls, no extra silhouette, no room needed. But it eats the
   disc's team colour at the back and sits next to the off-hand arc, and at
   Default it is a 4 px green smear: team colour is hurt, no emblem fits.
-- **Decided: B** (the operator's pick, #1410; implementation is #1422). The
-  tab's clump noise is accepted for the clearest guild read. My own
+- **Decided: B** (the operator's pick, #1410; implementation was #1422),
+  since replaced by A of the motion study below (#1699). The tab's clump
+  noise is accepted for the clearest guild read. My own
   recommendation was A: It adds a clear guild signal on the one side no
   mark uses, costs no more than the existing marks, never touches the
   disc, and keeps team colour the strongest read. Show the emblem only in the
   menu, the designer and the roster. B is the pick if the operator wants the
   cape to read at a glance and accepts the clump noise.
 
-#### Guild cape in motion (study, not decided)
+#### Guild cape in motion (decided: A, the rim band that peels into a tab)
 
 The operator asked for a cape that is nearly invisible when its wearer
 stands still, unfolds when it walks, trails opposite the movement (not the
@@ -841,11 +842,21 @@ walking past each other, plus a standing, a knocked down and a dead body.
   tangle visually in a clump.
 
 Knocked down: speed is zero, so it settles to the border. Dead: no cape.
-One step: `u` is lagged, so a 0.2 s step only reaches a third of an unfold:
-no flicker. At Default zoom a body is 28 px across and the cape at most 17 px
+One step: `u` is lagged, so a 0.2 s step does not fully unfold: no flicker. At Default zoom a body is 28 px across and the cape at most 17 px
 past its rim; the border arc is 1.5 px.
 
-**Recommendation: B.** It is the shape the operator already picked, so the
+**Decided: A** (the operator's pick, #1686; implementation is #1699,
+`apps/web/src/render/cape-motion.ts`). The arena steps one cape per caped
+living body every frame from its drawn movement; the menu figure stands, so
+its cape is folded. The study's springs are tuned for its clip, a body that
+runs at 40 units/s and takes 0.09 s to reach it; a game body runs at 180 and
+starts at once, so the cape sees the game's velocity scaled to the clip's
+and lagged as its body was, and a running body looks exactly like the clip.
+A jump of more than 3 radii in a frame (a shadow step, a respawn) starts the
+cape over, folded. A 0.2 s step peaks at `u` 0.61 in the study's own
+numbers, short of a walk's full unfold.
+
+My recommendation was B. It is the shape the operator already picked, so the
 guild read and the emblem carry over, it moves with the most readable lag,
 and its length is unchanged so the clump noise #1410 accepted does not
 grow. A is the fallback if a bolder silhouette is wanted; C is the one to pick
@@ -977,8 +988,8 @@ it, not baked in, so one file serves every screen.
   note-hold (a note under a fermata: Enduring Harmony),
   smite-attacking, spear-light, star-below-half, star-beam-flame, sword-star, signet-attacking, signet-energy, signet-quake, star-prone (the Monk smiting skills, #1584: a four-point star is holy light; a blade in the top left corner is the foe attacking; a signet is its ring and dot; a flat bar is a foe knocked down; a ring filled in its lower half is a foe below half Health),
   interrupt-energy-cut, skills-off, hex-shatter, interrupt-knockdown, hex-slow-star (the Mesmer staples, #1594: a burst over a bolt with a minus for the energy an interrupt takes; four squares struck through for every skill disabled; a broken hex ring round a burst; a burst over a figure lying flat for the knockdown; the hex ring round a four-point star over crossed bars for spells that cast slowly),
-  arrow-twin, arrow-spent-ring, arrow-fast, arrow-close, shield-whirl, snake, arrow-dodge (the Ranger staples, #1585: two parallel arrows; an arrow and a broken ring for the enchantment it spends; an arrow with speed chevrons; an arrow into a close target; a shield with a turning arc round it; an S-curved snake with chevrons; chevrons under an arrow flying past),
   arrow-aimed, arrow-lob, arrow-splinter, arrow-ring-break, paw-leap, paw-lunge, fangs-poison, nest-snake, tripwire, smoke-plume, haste-miss (Ranger staples 3, #1697: an arrow into a ticked ring; a lobbed arc falling on a ground bar; an arrow whose point throws three shards; an arrow through a dashed spell ring; a paw under a leaping arc; a paw tilted forward with three streaks; two fangs over three bubbles; a snake rising from a bowl; two posts with a sagging wire and a mark above; a cloud of three puffs on the ground; speed chevrons with an arrow's dashed trace passing behind, also the status),
+  arrow-twin, arrow-spent-ring, arrow-fast, arrow-close, shield-whirl, snake, arrow-dodge (the Ranger staples, #1585: two parallel arrows; an arrow and a broken ring for the enchantment it spends; an arrow with speed chevrons; an arrow into a close target; a shield with a turning arc round it; an S-curved snake with chevrons; chevrons under an arrow flying past), arrow-power, arrow-aim, arrow-unbound, arrow-keen, arrow-energy, arrow-kindle, arrow-ignite, arrow-poison, trap-dust, trap-spike, drop-struck (the Ranger staples 2, #1684: a thick arrow with impact ticks; an arrow into a crosshair; an arrow with a broken ring for the recharge it resets; an arrow with a star burst at its head for the critical; an arrow with a ringed bolt for the Energy back; an arrow with a ringed flame or a ringed burst, which the two preparation status icons repeat; an arrow with a ringed drop for the poison; dust over the trap's ground bar; three spikes on the bar; a drop struck through for the conditions the signet removes),
   shield-knock, shield-less, adrenal-fast, axe-sweep, axe-pierce, sword-sun-moon, hex-sword-drop (the Warrior staples 2 and Clumsiness, #1619: a shield with a burst and a fall mark for the knockdown; a shield with a down chevron for less damage; rising bars under fast chevrons; an axe with a swing arc for the sweep; an axe through a shield for armor penetration; a sun and a crescent under one slash for the unblockable double strike; the hex ring round a falling blade),
   sac-energy, sac-blade, drop-to-signet, hex-flame, lava-spouts, ward-elements, arrow-bolt, flame-rise (#1572: a drop given up at the bottom left with its payoff at the top right, a bolt or a blade; a drop leaving for a signet ring; the hex ring round a flame; a wavy ground with three tongues of fire; the ward post with a flame and a bolt above; an arrow with a bolt across its shaft; rising bars under a flame),
   stone-skin, gust-curl, chasm, ground-pulse, ward-slow, ward-block, hand-bolt, flame-splash, eye-flame (#1605: a faceted crystal cut with light lines; two wind curls streaming left; the ground split by a chasm with rocks thrown up; a pulsing ring under a cracked line; the ward post with a dragging trail of bars; the ward post with a planted block; a low hand with a bolt striking from it; a flame over a wavy pool with drops thrown to both sides; an eye whose pupil is a flame, rays above),

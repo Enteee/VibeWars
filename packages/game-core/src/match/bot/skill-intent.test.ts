@@ -44,6 +44,7 @@ const NO_BOT_USE = new Set([
   "dervish.vow-of-strength",
   "dervish.zealous-vow",
   "elementalist.glyph-of-lesser-energy",
+  "elementalist.windborne-speed",
   "mesmer.arcane-echo",
   "mesmer.echo",
   "mesmer.energy-tap",

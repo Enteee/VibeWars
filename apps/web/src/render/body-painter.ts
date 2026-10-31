@@ -5,7 +5,8 @@ import {
   teamColour,
   type RenderableActor,
 } from "./arena-snapshot.js";
-import { capeShape, type CapeLook, type EmblemPart } from "./cape-shape.js";
+import { capeMotionShape, type CapeBand, type CapeMotion, type CapeShape } from "./cape-motion.js";
+import type { CapeLook, EmblemPart } from "./cape-shape.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
@@ -49,13 +50,22 @@ export interface StandingBody {
   readonly offhandId: RenderableActor["offhandId"];
   /** The weapon mark's pose: `REST_FRAME` unless it is swinging. */
   readonly frame: AttackFrame;
-  /** The guild cape behind it (#1422); `undefined` wears none. */
-  readonly cape: CapeLook | undefined;
+  /** The guild cape behind it (#1422) and how it moves (#1699); `undefined` wears none. */
+  readonly cape: WornCape | undefined;
+}
+
+/** A cape on a body: its look and its motion, which the caller steps. */
+export interface WornCape {
+  readonly look: CapeLook;
+  readonly motion: CapeMotion;
 }
 
 /** The cape's outline, as wide as the study draws it, and its trim's. */
 export const CAPE_EDGE_WIDTH = 1.6;
 export const CAPE_TRIM_WIDTH = 1.4;
+/** The band on the rim and its casing, as the motion study draws them (#1699). */
+export const CAPE_BAND_WIDTH = 1.5;
+export const CAPE_BAND_CASING = 3;
 
 /**
  * The cape, the disc, its edge, the self rim on your own, then the
@@ -68,11 +78,16 @@ export function paintStandingBody(painter: Painter, body: StandingBody, marks = 
   paintBodyMarks(marks, body);
 }
 
-/** The cape, the disc, its edge and the self rim on your own: what lies under the body glyph. */
+/**
+ * The cape, the disc, its edge, the self rim on your own, then the cape's
+ * band on the rim: what lies under the body glyph.
+ */
 export function paintBodyDisc(painter: Painter, body: StandingBody): void {
-  const { x, y, r } = body;
-  if (body.cape !== undefined) {
-    paintCape(painter, body, body.cape);
+  const { x, y, r, cape } = body;
+  const shape =
+    cape === undefined ? undefined : capeMotionShape(cape.motion, body, cape.look.emblem);
+  if (cape !== undefined && shape !== undefined) {
+    paintCape(painter, shape, cape.look);
   }
   painter.fillStyle(teamColour(body.team), 1);
   painter.fillCircle(x, y, r);
@@ -85,21 +100,37 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
     painter.lineStyle(2, SELF_RIM, 1);
     painter.strokeCircle(x, y, r - 2);
   }
+  if (cape !== undefined && shape !== undefined) {
+    paintCapeBand(painter, shape.band, cape.look);
+  }
 }
 
 /**
- * The cape (#1422) under the disc, which covers its root: the cloth, its
+ * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
  * `edge` outline, the trim along the hem, then the emblem in the trim colour.
+ * Folded, all of it hides under the disc but the emblem's edge.
  */
-function paintCape(painter: Painter, body: StandingBody, cape: CapeLook): void {
-  const shape = capeShape(body.x, body.y, body.r, body.facing, cape.emblem);
+function paintCape(painter: Painter, shape: CapeShape, cape: CapeLook): void {
   painter.fillStyle(cape.main, 1);
-  painter.fillPoints(shape.tab);
+  painter.fillPoints(shape.cloth);
   painter.lineStyle(CAPE_EDGE_WIDTH, BODY_EDGE, 1);
-  tracePoints(painter, shape.tab, true);
+  tracePoints(painter, shape.cloth, true);
   painter.lineStyle(CAPE_TRIM_WIDTH, cape.trim, 1);
   tracePoints(painter, shape.trim, false);
   paintEmblem(painter, shape.emblem, cape.trim);
+}
+
+/** The band on the rim, over the disc's edge: an `edge` casing under the cape's colour. */
+function paintCapeBand(painter: Painter, band: CapeBand, cape: CapeLook): void {
+  for (const [width, colour] of [
+    [CAPE_BAND_CASING, BODY_EDGE],
+    [CAPE_BAND_WIDTH, cape.main],
+  ] as const) {
+    painter.lineStyle(width, colour, 1);
+    painter.beginPath();
+    painter.arc(band.x, band.y, band.radius, band.from, band.to);
+    painter.strokePath();
+  }
 }
 
 /** An emblem's parts in `colour`: on a cape, and on the designer's buttons (#1422). */

@@ -38,6 +38,14 @@ import { spawnSync } from "node:child_process";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import {
+  QUIET_ENV,
+  contextFile,
+  contextState,
+  overLine,
+  sayAtExit,
+  startLine,
+} from "./context.mjs";
 import { COLUMNS, arrivals, boardLines } from "./hub-board.mjs";
 import { parseBoardIds } from "./hub-budget.mjs";
 
@@ -53,7 +61,12 @@ const WAIT_POLL_MS = 15_000;
  * @returns {{ code: number, stdout: string, stderr: string }}
  */
 function hub(args) {
-  const result = spawnSync("hub", args, { encoding: "utf8", maxBuffer: Infinity });
+  // This board command says the context ceiling, not the hub it runs (#1695).
+  const result = spawnSync("hub", args, {
+    encoding: "utf8",
+    maxBuffer: Infinity,
+    env: { ...process.env, [QUIET_ENV]: "1" },
+  });
   return {
     code: result.status ?? 1,
     // Typed as string because `encoding` is set, but absent if the process
@@ -125,6 +138,12 @@ function statusField() {
 /* -------------------------------------------------------------------------- */
 
 const [command, ...rest] = process.argv.slice(2);
+
+// The context ceiling, after the output (#1695); and near it, a move into
+// In Progress is told there is too little room to start the card.
+const context = contextState(contextFile());
+const starting = command === "move" && rest.slice(1).join(" ").trim() === "In Progress";
+sayAtExit(() => [overLine(context), starting ? startLine(context) : null]);
 
 switch (command) {
   case "columns":

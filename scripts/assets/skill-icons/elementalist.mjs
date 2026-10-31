@@ -61,4 +61,16 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.lightning-touch": { glyph: "hand-bolt" },
   "elementalist.liquid-flame": { glyph: "flame-splash" },
   "elementalist.glowing-gaze": { glyph: "eye-flame" },
+  // Elementalist staples 3 (#1664), stand-ins until their art card.
+  "elementalist.enervating-charge": { glyph: "lightning", modifier: "hourglass" },
+  "elementalist.lightning-hammer": { glyph: "lightning", modifier: "bleed" },
+  "elementalist.lightning-javelin": { glyph: "arrow-bolt", modifier: "bolt" },
+  "elementalist.arc-lightning": { glyph: "lightning", modifier: "half" },
+  "elementalist.thunderclap": { glyph: "lightning", modifier: "area" },
+  "elementalist.windborne-speed": { glyph: "gust-curl", modifier: "up" },
+  "elementalist.glowstone": { glyph: "mountain", modifier: "bolt" },
+  "elementalist.dragons-stomp": { glyph: "chasm", modifier: "stun" },
+  "elementalist.eruption": { glyph: "lava-spouts", modifier: "clock" },
+  "elementalist.ash-blast": { glyph: "mountain", modifier: "less" },
+  "elementalist.shockwave": { glyph: "ground-pulse", modifier: "self" },
 };
