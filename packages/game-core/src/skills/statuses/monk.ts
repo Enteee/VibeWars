@@ -34,7 +34,8 @@ export type MonkStatusId =
   | "spirit-bond"
   | "holy-wrath"
   | "balthazars-aura"
-  | "judges-intervention";
+  | "judges-intervention"
+  | "dwaynas-sorrow";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -336,7 +337,28 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       },
     ],
   }),
-
+  // "...If an ally dies while under the effects of Dwayna's Sorrow, your
+  // party is healed for 5...50" (#1762): 41, at any distance, as Heal
+  // Party's `PartyArea`.
+  "dwaynas-sorrow": define("dwaynas-sorrow", "Dwayna's Sorrow", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          {
+            kind: "splash",
+            hits: "party",
+            radius: Number.POSITIVE_INFINITY,
+            maxTargets: undefined,
+            effects: [{ kind: "heal", amount: { flat: 41 }, perStatusOnTarget: [] }],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.dwaynas-sorrow",
+      },
+    ],
+  }),
   // Own-skill modifiers (#1761), each at its rank-12 values.
   // "Monk spells cost you 5 less Energy to cast. (Minimum cost: 1 Energy.)"
   "divine-spirit": define("divine-spirit", "Divine Spirit", "enchantment", {

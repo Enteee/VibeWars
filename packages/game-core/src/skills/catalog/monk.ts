@@ -2,6 +2,7 @@ import {
   AREA_ADJACENT,
   AREA_EARSHOT,
   AREA_IN_THE_AREA,
+  AREA_NEARBY,
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../../distances.js";
@@ -2699,6 +2700,46 @@ export const MONK_SKILLS: readonly Skill[] = [
     // be fatal, the damage is negated and one nearby foe takes 30...180 holy
     // damage" (#1789): the negation and the smite are the status's.
     effects: [{ kind: "apply-status", statusId: "judges-intervention", durationSeconds: 10 }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Death triggers (#1762)                                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.dwaynas-sorrow",
+    name: "Dwayna's Sorrow",
+    gwId: 838,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, target ally and all nearby allies are enchanted with
+    // Dwayna's Sorrow. If an ally dies while under the effects of Dwayna's
+    // Sorrow, your party is healed for 5...50."
+    effects: [
+      { kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: 30 },
+      {
+        kind: "splash",
+        hits: "allies",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [{ kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: 30 }],
+      },
+    ],
   },
   {
     id: "monk.divine-spirit",

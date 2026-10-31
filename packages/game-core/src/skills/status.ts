@@ -888,6 +888,13 @@ export type StatusTriggerEvent =
    * A dead bearer never answers.
    */
   | "bearer-energy-empty"
+  /**
+   * The bearer died while it was on (#1762): only what a death ends,
+   * never an expiry or a removal earlier in the same tick. GW1's "if
+   * target foe dies while hexed with this". `ends` and `ends-early`
+   * answer a death too.
+   */
+  | "bearer-dies"
   | "ends"
   /**
    * It ended before its time ran out (#1421): stripped, cut short by its
@@ -1224,6 +1231,8 @@ export type StatusChange =
       readonly id: StatusId;
       readonly sourceId: string;
       readonly expired: boolean;
+      /** Ended by its bearer's death (#1762), `endAll`. */
+      readonly death: boolean;
     }
   /** An enchantment `id` left the bearer, alive (#1437), with the triggers that answered. */
   | {
@@ -1521,7 +1530,7 @@ export class StatusSet {
       const status = this.#statuses.get(id);
       if (status !== undefined) {
         this.#statuses.delete(id);
-        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired });
+        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired, death });
         if (!death) {
           this.#lostEnchantment(id);
           this.#lostCondition(id);

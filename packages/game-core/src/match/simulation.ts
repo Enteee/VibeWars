@@ -2047,7 +2047,7 @@ export class MatchSimulation {
     if (dropped === undefined) {
       return;
     }
-    const change: StatusChange = { kind: "ended", ...dropped, expired: false };
+    const change: StatusChange = { kind: "ended", ...dropped, expired: false, death: false };
     this.#loseRaisedMaxima(record, change);
     this.#logFired(
       fireChangeTriggers(record.combatant, change, this.#spread, this.#triggerContext()),

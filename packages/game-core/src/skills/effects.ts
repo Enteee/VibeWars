@@ -58,6 +58,7 @@ import {
   type HealEffect,
   type InterruptEffect,
   type Magnitude,
+  type RechargeOthersEffect,
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
@@ -1716,8 +1717,13 @@ export function applyEffect(
       return events;
     }
 
-    case "recharge-faster":
+    // A status's trigger recharges here (#1762), there being no resolution.
     case "recharge-others":
+      if (context.firingStatusId !== undefined && !caster.dead) {
+        rechargeOthers(caster, undefined, effect.which);
+      }
+      return events;
+    case "recharge-faster":
     case "summon":
     case "create-ground-effect":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
@@ -2420,9 +2426,13 @@ function ownHeal(amount: number, own: OwnSkillBoost | undefined): number {
  * once (#885): Moebius Strike's. The recharge `skillId` starts as it
  * resolves is its own, so it is left alone.
  */
-function rechargeOthers(caster: Combatant, skillId: string, which: "attack"): void {
+function rechargeOthers(
+  caster: Combatant,
+  skillId: string | undefined,
+  which: RechargeOthersEffect["which"],
+): void {
   for (const id of [...caster.cast.rechargeRemaining.keys()]) {
-    if (id !== skillId && getSkill(skillIdOfKey(id))?.type === which) {
+    if (id !== skillId && (which === "all" || getSkill(skillIdOfKey(id))?.type === which)) {
       caster.cast.endRecharge(id);
     }
   }
