@@ -179,11 +179,11 @@ Lobby is ready.
 **Vote.** Anyone on a side may propose a Team Build of exactly that
 side's size, one proposal each, with **Propose**, and vote for one of
 their side's proposals, their own included. Each proposal is a card
-showing each member's ball, weapons and skills, with the initials of
-who voted for it: click a card to vote, and click it again to take
-your vote back. Nothing is proposed for you: the menu only makes and
-edits Team Builds. A new proposal replaces your old one, and the votes
-for it go back to none. The most votes wins. On a tie the captain's
+showing each member holding its weapons, with its skills, and the
+initials of who voted for it: click a card to vote, and click it again
+to take your vote back. Nothing is proposed for you: the menu only
+makes and edits Team Builds. A new proposal replaces your old one, and
+the votes for it go back to none. The most votes wins. On a tie the captain's
 vote decides: the host on the host's side, the earliest to
 join on the other. With proposals and no votes, one is picked at random.
 With no proposal, the side plays the house team of starter builds.

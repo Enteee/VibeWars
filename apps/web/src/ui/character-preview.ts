@@ -182,14 +182,6 @@ export function miniSkillBar(character: Pick<TeamCharacter, "skillBar">): HTMLEl
  */
 export function gearIcons(character: TeamCharacter): HTMLElement {
   const { weaponId, offhandId } = characterAppearance(character);
-  return gearIconsOf(weaponId, offhandId);
-}
-
-/** A main hand and an off-hand at the mini skill bar's size (#1811); one this client does not know shows none. */
-export function gearIconsOf(
-  weaponId: string | undefined,
-  offhandId: string | undefined,
-): HTMLElement {
   const gear = document.createElement("span");
   gear.className = "mini-gear";
   const icons = [
@@ -204,29 +196,4 @@ export function gearIconsOf(
     }
   }
   return gear;
-}
-
-/**
- * A Team Build's member on a card (#1786): its ball, its weapons and its
- * skills, left to right. The name is not drawn, as a card has no room for
- * it: it is the row's title and label, for a hover and a screen reader.
- */
-export function teamMemberRow(character: TeamCharacter): HTMLElement {
-  return memberRow(
-    `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,
-    [createCharacterDot(character), gearIcons(character), miniSkillBar(character)],
-  );
-}
-
-/** A member row of `parts` (#1786, #1811), `label` its title and label. */
-export function memberRow(label: string, parts: readonly HTMLElement[]): HTMLElement {
-  const row = document.createElement("span");
-  row.className = "team-member-row";
-  row.title = label;
-  row.setAttribute("role", "group");
-  row.setAttribute("aria-label", label);
-  for (const part of parts) {
-    row.appendChild(part);
-  }
-  return row;
 }

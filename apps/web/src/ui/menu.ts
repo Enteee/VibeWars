@@ -5,8 +5,8 @@ import type { Tally } from "../storage/match-record.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
-import { createCharacterFigure } from "./character-figure.js";
-import { equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
+import { characterFigureCard, lookOfCharacter } from "./character-card.js";
+import { equippedCount, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, playCard, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
 import { isAlone } from "./party-strip.js";
@@ -191,9 +191,10 @@ function characterCard(
       h("span", tag === "Random" ? "roster-random-tag" : "roster-invalid-tag", tag),
     ),
     content: [
-      createCharacterFigure(character, worn),
-      h("span", "play-card-line", rosterSubtitle(character, tally)),
-      miniSkillBar(character),
+      characterFigureCard(lookOfCharacter(character, worn), {
+        size: "card",
+        line: rosterSubtitle(character, tally),
+      }),
     ],
     ...options,
   });

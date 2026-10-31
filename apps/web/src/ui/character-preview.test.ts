@@ -2,7 +2,7 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { createProfessionDot, miniSkillCells, teamMemberRow } from "./character-preview.js";
+import { createProfessionDot, gearIcons, miniSkillCells } from "./character-preview.js";
 import { offhandIcon, professionIcon, weaponIcon } from "./icons.js";
 
 function character(skillBar: (string | null)[]): StoredCharacter {
@@ -127,7 +127,7 @@ describe("createProfessionDot (#1785)", () => {
   });
 });
 
-describe("teamMemberRow (#1786)", () => {
+describe("gearIcons (#1786)", () => {
   beforeEach(() => {
     vi.stubGlobal("document", { createElement: () => new FakeElement() });
   });
@@ -136,46 +136,35 @@ describe("teamMemberRow (#1786)", () => {
     vi.unstubAllGlobals();
   });
 
-  const row = (shown: StoredCharacter): FakeElement =>
-    teamMemberRow(shown) as unknown as FakeElement;
-  const gear = (shown: FakeElement): string[] =>
-    shown.all("gear-icon").map((icon) => `${icon.src} ${icon.alt}`);
+  const gear = (shown: StoredCharacter): string[] =>
+    (gearIcons(shown) as unknown as FakeElement)
+      .all("gear-icon")
+      .map((icon) => `${icon.src} ${icon.alt}`);
   const bar = ["warrior.backbreaker", null, null, null, null, null, null, null];
 
-  it("is the ball, the main hand and the off-hand, and eight skill cells, with no text", () => {
-    const shown = row({ ...character(bar), name: "Ser Bash" });
-    expect(shown.children.map((child) => child.className)).toEqual([
-      "character-dot",
-      "mini-gear",
-      "mini-skill-bar",
-    ]);
-    expect(gear(shown)).toEqual(
+  it("is the main hand, then the off-hand", () => {
+    expect(gear(character(bar))).toEqual(
       [weaponIcon("sword"), offhandIcon("shield")].map(
         (icon) => `${icon?.src ?? ""} ${icon?.name ?? ""}`,
       ),
     );
-    expect(shown.all("mini-skill").length + shown.all("mini-skill is-empty").length).toBe(8);
-    expect(shown.text()).toBe("");
-    expect(shown.title).toBe("Ser Bash, Warrior");
-    expect(shown.attributes.get("aria-label")).toBe("Ser Bash, Warrior");
   });
 
   it("shows one weapon when the hand carries no off-hand", () => {
     const base = character(bar);
     const [set] = base.equipment.weaponSets;
-    const shown = row({
+    const shown: StoredCharacter = {
       ...base,
       equipment: { ...base.equipment, weaponSets: [{ ...set, offHand: null }, null, null, null] },
-    });
+    };
     expect(gear(shown)).toEqual([`${weaponIcon("sword")?.src ?? ""} Sword`]);
   });
 
   it("shows no weapon for a build the host would refuse", () => {
-    const shown = row({
+    const shown = {
       ...character(bar),
       attributes: [{ attributeId: "warrior.strength", rank: 99 }],
-    });
+    };
     expect(gear(shown)).toEqual([]);
-    expect(shown.all("mini-skill-bar")).toHaveLength(1);
   });
 });

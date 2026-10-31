@@ -1,4 +1,4 @@
-import { getSkill, isProfessionId } from "@vibewars/game-core";
+import { isProfessionId } from "@vibewars/game-core";
 import type {
   WireProposalBuild,
   WireTeamChoice,
@@ -8,13 +8,8 @@ import type {
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
 import type { StoredTeam } from "../storage/schema.js";
-import {
-  createProfessionDot,
-  gearIconsOf,
-  memberRow,
-  miniSkillBar,
-  professionLabel,
-} from "./character-preview.js";
+import { lookOfWire, teamFigureCard, type TeamFigureMember } from "./character-card.js";
+import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
 
 /**
@@ -125,30 +120,22 @@ function professionDot(primary: string, secondary: string | null): HTMLElement {
 }
 
 /**
- * A member on a card: its ball, then, once the host has sent its build
- * (#1811), its weapons and skills as Team Builder draws them (#1786). A
- * skill or weapon this client does not know is an empty slot; a house
- * seat, a "?", is drawn alone.
+ * A proposal's members as the team card shows them (#1864): each
+ * holding what the host sent it (#1811), `names` their labels' when the
+ * chosen card has them.
  */
-function cardMember(
-  member: { readonly primary: string; readonly secondary: string | null },
-  build: WireProposalBuild | undefined,
-  name: string | undefined,
-): HTMLElement {
-  const dot = professionDot(member.primary, member.secondary);
-  if (build === undefined || !isProfessionId(member.primary)) {
-    return dot;
-  }
-  const secondary =
-    member.secondary !== null && isProfessionId(member.secondary) ? member.secondary : undefined;
-  const professions = professionLabel(member.primary, secondary);
-  return memberRow(name === undefined ? professions : `${name}, ${professions}`, [
-    dot,
-    gearIconsOf(build.mainHand ?? undefined, build.offHand ?? undefined),
-    miniSkillBar({
-      skillBar: build.skills.map((id) => (id !== null && getSkill(id) !== undefined ? id : null)),
-    }),
-  ]);
+function cardMembers(
+  members: readonly { readonly primary: string; readonly secondary: string | null }[],
+  builds: readonly WireProposalBuild[] | undefined,
+  names: readonly string[] | undefined,
+): TeamFigureMember[] {
+  return members.map((member, slot) => {
+    const look = lookOfWire(member, builds?.[slot]);
+    const professions =
+      look === undefined ? member.primary : professionLabel(look.primary, look.secondary);
+    const name = names?.[slot];
+    return { look, label: name === undefined ? professions : `${name}, ${professions}` };
+  });
 }
 
 /** A name, with the captain's crown token after it when it is theirs. */
@@ -166,7 +153,7 @@ function personName(className: string, name: string, captain: boolean): HTMLElem
   return label;
 }
 
-/** One proposal's card: proposer, professions, voter tokens and count. */
+/** One proposal's card: proposer, its members, voter tokens and count. */
 export function proposalCard(
   proposal: WireTeamProposal,
   side: WireTeamSide,
@@ -174,24 +161,7 @@ export function proposalCard(
   onVote: ((proposerId: string | null) => void) | undefined,
 ): HTMLElement {
   const mine = proposal.voterIds.includes(snapshot.selfSessionId);
-  // A click on your own vote takes it back.
-  const card = button("", "team-lobby-card", () => {
-    onVote?.(mine ? null : proposal.proposerId);
-  });
-  card.disabled = onVote === undefined;
-  card.classList.toggle("is-voted", mine);
-  card.setAttribute("aria-pressed", String(mine));
   const proposer = nameOf(snapshot.players, proposal.proposerId);
-  card.setAttribute("aria-label", `${proposer}'s team build`);
-  card.appendChild(
-    personName("team-lobby-card-name", proposer, proposal.proposerId === side.captainId),
-  );
-  const members = h("span", "team-lobby-card-members");
-  const builds = snapshot.proposalBuilds.get(proposal.proposerId);
-  for (const [slot, member] of proposal.members.entries()) {
-    members.appendChild(cardMember(member, builds?.[slot], undefined));
-  }
-  card.appendChild(members);
   const votes = h("span", "team-lobby-votes");
   const tokens = h("span", "team-lobby-tokens");
   for (const voterId of proposal.voterIds) {
@@ -202,10 +172,23 @@ export function proposalCard(
     tokens.appendChild(token);
   }
   votes.append(tokens, h("span", "team-lobby-count", String(proposal.voterIds.length)));
-  card.appendChild(votes);
-  if (mine) {
-    card.appendChild(h("span", "team-lobby-your-vote", "Your vote ✓"));
-  }
+  const card = teamFigureCard({
+    title: personName("team-lobby-card-name", proposer, proposal.proposerId === side.captainId),
+    members: cardMembers(
+      proposal.members,
+      snapshot.proposalBuilds.get(proposal.proposerId),
+      undefined,
+    ),
+    footer: mine ? [votes, h("span", "team-lobby-your-vote", "Your vote ✓")] : [votes],
+    // A click on your own vote takes it back.
+    onOpen: () => {
+      onVote?.(mine ? null : proposal.proposerId);
+    },
+    pressed: mine,
+    disabled: onVote === undefined,
+    label: `${proposer}'s team build`,
+  });
+  card.classList.toggle("is-voted", mine);
   return card;
 }
 
@@ -215,23 +198,22 @@ function chosenCard(
   side: WireTeamSide,
   snapshot: LobbySnapshot,
 ): HTMLElement {
-  const card = h("div", "team-lobby-card is-chosen");
-  card.appendChild(
-    choice.proposerId === null
-      ? personName("team-lobby-card-name", HOUSE_TEAM, false)
-      : personName(
-          "team-lobby-card-name",
-          nameOf(snapshot.players, choice.proposerId),
-          choice.proposerId === side.captainId,
-        ),
-  );
-  const members = h("span", "team-lobby-card-members");
-  const builds =
-    choice.proposerId === null ? undefined : snapshot.proposalBuilds.get(choice.proposerId);
-  for (const [slot, member] of choice.members.entries()) {
-    members.appendChild(cardMember(member, builds?.[slot], member.name));
-  }
-  card.appendChild(members);
+  const card = teamFigureCard({
+    title:
+      choice.proposerId === null
+        ? personName("team-lobby-card-name", HOUSE_TEAM, false)
+        : personName(
+            "team-lobby-card-name",
+            nameOf(snapshot.players, choice.proposerId),
+            choice.proposerId === side.captainId,
+          ),
+    members: cardMembers(
+      choice.members,
+      choice.proposerId === null ? undefined : snapshot.proposalBuilds.get(choice.proposerId),
+      choice.members.map((member) => member.name),
+    ),
+  });
+  card.classList.add("is-chosen");
   return card;
 }
 
@@ -402,9 +384,9 @@ function voteStage(
     shown.push(h("div", "screen-info team-lobby-hint", VOTE_HINT));
   }
 
-  const cards = h("div", "team-lobby-cards");
+  const cards = h("div", "play-cards");
   if (side.proposals.length === 0) {
-    cards.appendChild(h("div", "team-lobby-card is-empty", NO_PROPOSALS));
+    cards.appendChild(h("div", "team-lobby-empty", NO_PROPOSALS));
   }
   for (const proposal of side.proposals) {
     cards.appendChild(proposalCard(proposal, side, snapshot, callbacks.onVote));
@@ -420,7 +402,7 @@ function claimStage(
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
   // The chosen card lifted, the rest faded behind it.
-  const result = h("div", "team-lobby-cards team-lobby-result");
+  const result = h("div", "play-cards team-lobby-result");
   result.appendChild(chosenCard(choice, side, snapshot));
   for (const proposal of lastProposals) {
     if (proposal.proposerId !== choice.proposerId) {
