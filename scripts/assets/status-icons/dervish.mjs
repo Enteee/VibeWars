@@ -235,12 +235,16 @@ export const DERVISH_STATUS_ICONS = {
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${c}"/>`,
   ],
-  // Skill effect (#1761, stand-in): a stretched bar with an arrow, the
+  // Skill effect (#1761, #1855): a scythe in a stretched dashed ring, the
   // next Dervish enchantment lasts longer.
   "extend-enchantments": [
     "skill-effect",
     (c) =>
-      `<path d="M4 12h14M15 9l3 3-3 3" ${stroke(c, 2)}/>` + `<path d="M4 8v8" ${stroke(c, 1.8)}/>`,
+      `<g transform="translate(5,5) scale(0.58)">` +
+      `<ellipse cx="12" cy="12" rx="11" ry="6" ${stroke(c, 1.8)} stroke-dasharray="3 2.4"/>` +
+      `<path d="M7 21L14 4" ${stroke(c, 2.6)}/>` +
+      `<path d="M14 4C19 3 22 6 22 10C19 7.5 17 7 14 8Z" fill="${c}"/>` +
+      `</g>`,
   ],
   // "N for each X" (#1760), stand-ins until their art card.
   // Enchantment: a small bolt inside an enchantment ring, energy for each
