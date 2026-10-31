@@ -57,3 +57,33 @@ export const germ = (c) =>
 
 /** @typedef {(colour: string) => string} Glyph */
 /** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "echo" | "weapon-spell" | "item" | "form" | "skill-effect"} Category */
+
+/**
+ * Shadow Step and return (#1847): a figure or mark on top, and the way back
+ * under it, a U-turn arrow. One step out, one step home. `Return` itself has
+ * no way back and does not use this.
+ * @param {"fang" | "aura" | "meld" | "haste"} kind
+ * @param {string} c colour
+ * @param {number} w stroke width
+ */
+export const stepAndReturn = (kind, c, w) => {
+  const top = {
+    // Two fangs: the foe gets a Deep Wound when it ends.
+    fang: `<path d="M4.5 1.5H10.5L7.5 12.5ZM13.5 1.5H19.5L16.5 12.5Z" fill="${c}"/>`,
+    // A foe in a dashed ring: its aura pulls you to it.
+    aura:
+      `<circle cx="12" cy="7" r="5.5" ${stroke(c, w)} stroke-dasharray="3 2"/>` +
+      `<circle cx="12" cy="7" r="2.2" fill="${c}"/>`,
+    // An ally figure and its outlined ghost: you meld to them.
+    meld:
+      `<circle cx="8.5" cy="5" r="2.6" fill="${c}"/>` +
+      `<path d="M3 13C3 8.5 14 8.5 14 13Z" fill="${c}"/>` +
+      `<path d="M10.5 13C10.5 9 21.5 9 21.5 13" ${stroke(c, w)}/>` +
+      `<circle cx="16" cy="5" r="2.6" ${stroke(c, w)}/>`,
+    // An arrowhead trailing speed lines.
+    haste:
+      `<path d="M12.5 2L22 7.5L12.5 13Z" fill="${c}"/>` +
+      `<path d="M2 4H9M2 7.5H10M2 11H9" ${stroke(c, w)}/>`,
+  }[kind];
+  return top + `<path d="M21 15v1.5a4 4 0 0 1-4 4H5M8.5 17L5 20.5L8.5 24" ${stroke(c, w)}/>`;
+};
