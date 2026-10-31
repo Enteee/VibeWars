@@ -19,7 +19,9 @@ import {
   hasWaking,
   IDLE_PAUSE,
   idleWait,
+  wokeFile,
   wokeText,
+  writeWoke,
   LIMIT_MAX,
   PAUSE_MAX,
   PAUSE_MIN,
@@ -292,6 +294,18 @@ describe("idleWait (#1694)", () => {
     );
     expect(wokeText({ by: "timer" })).toBe("You were idle; woken by: the 50-minute timer.");
     expect(wokeText({ by: "reboot" })).toBeNull();
+  });
+
+  it("says it outside the bus, which the jail can write", () => {
+    const root = scratch();
+    const file = wokeFile(root, "developer@2");
+    expect(path.relative(path.join(root, "bus"), file).startsWith("..")).toBe(true);
+    expect(file).toBe(path.join(root, "agents", "developer@2", "woke"));
+    writeWoke(root, "developer@2", "You were idle; woken by: a message.");
+    expect(fs.readFileSync(file, "utf8")).toBe("You were idle; woken by: a message.\n");
+    expect(fs.readdirSync(path.dirname(file))).toEqual(["woke"]);
+    writeWoke(root, "developer@2", null);
+    expect(fs.existsSync(file)).toBe(false);
   });
 
   it("reads hubd's copy of the board, and nothing while there is none", () => {

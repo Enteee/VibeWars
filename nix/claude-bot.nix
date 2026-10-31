@@ -639,9 +639,10 @@ let
         # own or someone pressed Ctrl-C, except after an idle wait between
         # turns, which says what ended it (#1694), once.
         woke=""
-        if [ -f "$DEVENV_ROOT/.bots/bus/$employee/woke" ]; then
-          woke="$(head -n 1 "$DEVENV_ROOT/.bots/bus/$employee/woke" 2>/dev/null)" || woke=""
-          rm -f "$DEVENV_ROOT/.bots/bus/$employee/woke"
+        # In the host-only agents/ directory, never the jail-writable bus.
+        if [ -f "$DEVENV_ROOT/.bots/agents/$employee/woke" ]; then
+          woke="$(head -n 1 "$DEVENV_ROOT/.bots/agents/$employee/woke" 2>/dev/null)" || woke=""
+          rm -f "$DEVENV_ROOT/.bots/agents/$employee/woke"
         fi
         if [ -n "$resume" ] && [ -n "$woke" ]; then
           resumeFlag=(--resume "$resume")

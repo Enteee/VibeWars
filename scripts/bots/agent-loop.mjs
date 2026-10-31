@@ -10,7 +10,7 @@
  *   agent-loop.mjs idle <employee>
  *       after a turn `tg wait` called idle (#1694): return after
  *       `IDLE_PAUSE`, or sooner on mail for the employee, a card arriving
- *       in its role's column, or a reboot; say which in `bus/<employee>/woke`
+ *       in its role's column, or a reboot; say which in `agents/<employee>/woke`
  *   agent-loop.mjs gave-up <employee>
  *       tell the company the loop has stopped for good; the manager's keeps
  *       trying (#384), and the message says so
@@ -411,7 +411,7 @@ export async function idleWait({
 }
 
 /**
- * The line the next turn's prompt opens with (`bus/<employee>/woke`), or
+ * The line the next turn's prompt opens with (`agents/<employee>/woke`), or
  * `null` for a reboot, whose turn starts a fresh session anyway.
  *
  * @param {Woken} woken
@@ -428,6 +428,40 @@ export function wokeText(woken) {
     case "reboot":
       return null;
   }
+}
+
+/**
+ * Where an idle wait says what woke it: the employee's host-only state
+ * directory, never its bus directory. The jail can write there, so a
+ * symlink planted as `woke` would have the host overwrite, or the
+ * launcher read into the prompt, any file the operator can.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {string} employee
+ * @returns {string}
+ */
+export function wokeFile(root, employee) {
+  return path.join(root, "agents", employee, "woke");
+}
+
+/**
+ * Write `text` as the next turn's opening line, or remove it for `null`.
+ * A rename, so the file is whole when the launcher reads it.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {string} employee
+ * @param {string | null} text
+ */
+export function writeWoke(root, employee, text) {
+  const file = wokeFile(root, employee);
+  if (text === null) {
+    fs.rmSync(file, { force: true });
+    return;
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const temp = `${file}.${String(process.pid)}`;
+  fs.writeFileSync(temp, `${text}\n`);
+  fs.renameSync(temp, file);
 }
 
 /**
@@ -529,12 +563,7 @@ async function main() {
       rebooting: () => fs.existsSync(path.join(root, "reboot.json")),
       changes: boardChanges(root),
     });
-    const text = wokeText(woken);
-    if (text === null) {
-      fs.rmSync(path.join(dir, "woke"), { force: true });
-    } else {
-      fs.writeFileSync(path.join(dir, "woke"), `${text}\n`);
-    }
+    writeWoke(root, employee, wokeText(woken));
     return;
   }
   if (command === "disk") {
