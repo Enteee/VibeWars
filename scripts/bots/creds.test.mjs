@@ -13,6 +13,7 @@ import {
   githubIdentity,
   githubVerdict,
   isOperators,
+  missingGithubScopes,
   modeOk,
   paths,
   projectAccess,
@@ -466,5 +467,27 @@ describe("projectAccess (#866)", () => {
 
   it("is a no when GitHub refuses", () => {
     expect(projectAccess(home(), "Enteee", 2, () => ({ code: 1, stdout: "" }))).toBe(false);
+  });
+});
+
+describe("missingGithubScopes", () => {
+  it("is empty for a token holding the board and workflow scopes", () => {
+    expect(missingGithubScopes("gist, project, read:org, read:project, repo, workflow")).toEqual(
+      [],
+    );
+  });
+
+  it("names workflow when the token was signed in without it (#1897)", () => {
+    expect(missingGithubScopes("gist, project, read:org, read:project, repo")).toEqual([
+      "workflow",
+    ]);
+  });
+
+  it("does not take read:project for project", () => {
+    expect(missingGithubScopes("read:project, workflow")).toEqual(["project"]);
+  });
+
+  it("names both for a token whose scopes could not be read", () => {
+    expect(missingGithubScopes(null)).toEqual(["project", "workflow"]);
   });
 });

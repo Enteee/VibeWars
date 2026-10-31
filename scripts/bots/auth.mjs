@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   CLAUDE_TOKEN_VARS,
+  COMPANY_GITHUB_SCOPES,
   GITHUB_TOKEN_VARS,
   claudeIdentity,
   ensureHome,
@@ -269,7 +270,7 @@ async function signIn(deps, step, githubLogin) {
         "ssh",
         "--insecure-storage",
         "--scopes",
-        "project,read:project",
+        COMPANY_GITHUB_SCOPES.join(","),
         "--skip-ssh-key",
       ],
       { GH_CONFIG_DIR: p.gh },
