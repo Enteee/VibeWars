@@ -2009,9 +2009,8 @@ const skillGlyph = {
     `<path d="M2.5 14C5 9.5 8.5 7.5 12 7.5S19 9.5 21.5 14C19 18.5 15.5 20.5 12 20.5S5 18.5 2.5 14Z" ${stroke(C.ink, 2.2)}/>` +
     `<circle cx="12" cy="14" r="3" fill="${C.ink}"/>` +
     inkFill("M18 1.5L19.2 4.3L22 5.5L19.2 6.7L18 9.5L16.8 6.7L14 5.5L16.8 4.3Z"),
-  // A bolt with a plus: Energy and Health given back.
-  "bolt-plus": () =>
-    inkFill("M13 2.5L5.5 13H11L9.5 21.5L17 11H11.5Z") + inkLine("M19 3V9M16 6H22", 2),
+  // A bolt over a low health gauge: Energy for the allies who are hurt.
+  "bolt-plus": () => inkFill("M13 1.5L6 11H11L9.5 16L17 7H12Z") + healthGauge(0.3),
   // A bolt over two rising pips: Energy that keeps coming.
   "bolt-pips": () =>
     inkFill("M13.5 2.5L6.5 12H11.5L10.5 17.5L17.5 8H12.5Z") +
@@ -2029,10 +2028,13 @@ const skillGlyph = {
     `<path d="M2.5 15C5 11 8.5 9 12 9S19 11 21.5 15C19 19 15.5 21 12 21S5 19 2.5 15Z" ${stroke(C.ink, 2.2)}/>` +
     `<circle cx="12" cy="15" r="3" fill="${C.ink}"/>` +
     inkLine("M12 2V6M5 4L7.5 7M19 4L16.5 7", 2),
-  // A signet ring and dot with rays round its top: a signet that glows.
+  // A signet ring round a bolt with a small flame in the corner: Energy from a burning foe.
   "signet-glow": () =>
-    ringDot(12, 14, 6.5) +
-    inkLine("M12 1.5V3.5M4.5 4L6 5.5M19.5 4L18 5.5M2 11H3.5M22 11H20.5", 1.8),
+    `<circle cx="10" cy="14" r="7.5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M11.5 8.5L7 15H10.5L9 19.5L13.5 13H10Z") +
+    inkFill(
+      "M19.5 1.5C21.5 3.5 22.5 5 22.5 6.8a3 3 0 0 1-6 0C16.5 5.5 17.3 4.5 18.2 3.7C18.4 4.8 18.9 5.3 19.2 5.3C19.8 4.2 19.8 3 19.5 1.5Z",
+    ),
   // A signet ring and dot with a blade in the corner: a signet for the attacks.
   "signet-blade": () =>
     ringDot(10, 14, 7) + inkLine("M14 10L22 2", 2.2) + inkLine("M14.5 5.5L18.5 9.5", 2),
