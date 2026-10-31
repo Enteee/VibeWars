@@ -2074,11 +2074,12 @@ const skillGlyph = {
   // Rising adrenaline bars under a chevron: adrenaline gained faster.
   "bars-rise": () =>
     inkLine("M5 21V16M11 21V11M17 21V6", 3.2) + inkLine("M14 3.5L18 1.5L22 3.5", 1.8),
-  // A wide eye with rays above it: the awe that dazes foes.
-  "eye-awe": () =>
-    `<path d="M2.5 15C5 11 8.5 9 12 9S19 11 21.5 15C19 19 15.5 21 12 21S5 19 2.5 15Z" ${stroke(C.ink, 2.2)}/>` +
-    `<circle cx="12" cy="15" r="3" fill="${C.ink}"/>` +
-    inkLine("M12 2V6M5 4L7.5 7M19 4L16.5 7", 2),
+  // A foe laid flat under a dizzy spiral and stars: Awe knocks down and dazes.
+  "bar-daze": () =>
+    inkLine("M2.5 20H21.5", 3.2) +
+    `<path d="M12 11a1.6 1.6 0 1 1 1.6-1.6 3.4 3.4 0 1 1-3.4-3.4 5.2 5.2 0 1 1 5.2 5.2" ${stroke(C.ink, 2)}/>` +
+    inkFill("M4.5 3L5.4 5.1L7.5 6L5.4 6.9L4.5 9L3.6 6.9L1.5 6L3.6 5.1Z") +
+    inkFill("M19.5 3L20.4 5.1L22.5 6L20.4 6.9L19.5 9L18.6 6.9L16.5 6L18.6 5.1Z"),
   // A signet ring round a bolt with a small flame in the corner: Energy from a burning foe.
   "signet-glow": () =>
     `<circle cx="10" cy="14" r="7.5" ${stroke(C.ink, 2.2)}/>` +

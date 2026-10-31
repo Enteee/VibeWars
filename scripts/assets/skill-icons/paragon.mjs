@@ -75,7 +75,7 @@ export const PARAGON_ICONS = {
   "paragon.the-power-is-yours": { glyph: "bolt-pips" },
   "paragon.its-just-a-flesh-wound": { glyph: "drop-cure-run" },
   "paragon.focused-anger": { glyph: "bars-rise" },
-  "paragon.awe": { glyph: "eye-awe" },
+  "paragon.awe": { glyph: "bar-daze" },
   "paragon.glowing-signet": { glyph: "signet-glow" },
   "paragon.signet-of-aggression": { glyph: "signet-blade" },
   "paragon.remedy-signet": { glyph: "signet-cure" },
