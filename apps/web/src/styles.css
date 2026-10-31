@@ -1619,10 +1619,15 @@ body {
   flex-direction: column;
   gap: 0.6rem;
   min-width: 0;
-  padding: 0.8rem 0.9rem 2.6rem;
   background: var(--panel);
   border: 1px solid var(--line);
   text-align: left;
+}
+
+/* The bottom padding keeps the content clear of the corner's buttons
+   (#1786); .screen so .screen button's padding does not win. */
+.screen .play-card-open {
+  padding: 0.8rem 0.9rem 2.6rem;
 }
 
 .screen .play-card-open[aria-pressed="true"] {
