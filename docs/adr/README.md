@@ -50,3 +50,4 @@ rewriting history.
 | [0042](0042-team-matchmaking.md)              | Team modes queue whole teams; each side's host plans its seats  |
 | [0043](0043-secret-lobby-key.md)              | The lobby key is a secret; relays see only a slow derivation    |
 | [0044](0044-lock-decides-what-runs.md)        | The lock decides what runs; the checkout is the operator's      |
+| [0046](0046-qa-merges-workflow-prs.md)        | qa-tester merges workflow PRs that cicd-engineer pushed         |

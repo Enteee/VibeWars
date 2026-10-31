@@ -182,6 +182,27 @@ export function claudeIdentity(dir, run = runCommand) {
 }
 
 /**
+ * The scopes the company's GitHub account is signed in with (`claude-llc
+ * auth github`): the board, and `workflow`, without which GitHub refuses
+ * to merge a pull request that changes a workflow file (#1897). gh adds its
+ * defaults (`repo`, `read:org`, `gist`).
+ */
+export const COMPANY_GITHUB_SCOPES = ["project", "read:project", "workflow"];
+
+/**
+ * Which of the scopes the company cannot work without are missing from a
+ * token's `x-oauth-scopes`: `project` for the board, `workflow` for
+ * merging workflow changes (#1897).
+ *
+ * @param {string | null} scopes comma-separated, as GitHub sends them
+ * @returns {string[]}
+ */
+export function missingGithubScopes(scopes) {
+  const held = new Set((scopes ?? "").split(/[\s,]+/));
+  return ["project", "workflow"].filter((scope) => !held.has(scope));
+}
+
+/**
  * The GitHub login behind a `gh` config directory (`null`: the operator's).
  * `gh api -i` prints the response headers, which carry the scopes and the
  * token's expiry, then the body.

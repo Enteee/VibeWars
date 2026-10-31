@@ -75,6 +75,7 @@ import {
   explainGuard,
   pathsOutside,
   pathsWithin,
+  workflowAuthorAllowed,
 } from "./hub-guards.mjs";
 import {
   jobsFromRest,
@@ -1032,9 +1033,80 @@ async function evaluateGuards(guards, argv) {
       continue;
     }
 
+    if (guard.startsWith("workflow-author:")) {
+      const refused = await refuseWorkflowMerge(
+        merge.pr,
+        sha,
+        guard.slice("workflow-author:".length).split(","),
+        cfg,
+      );
+      if (refused !== null) {
+        return { ok: false, reason: refused };
+      }
+      continue;
+    }
+
     return { ok: false, reason: `unknown guard "${guard}"; refusing rather than guessing` };
   }
   return { ok: true, pr: merge.pr, flags: merge.flags, sha };
+}
+
+/**
+ * Why pull request `pr` must not be merged under a `workflow-author:` guard
+ * (#1897), or null if it may: its head is fetched into the mirror at `sha`,
+ * the commit every other guard validated, and its changes are judged by
+ * `workflowAuthorAllowed`.
+ *
+ * It fails closed: a pull request it cannot read, a head it cannot fetch, or
+ * a diff it cannot take, is a refusal.
+ *
+ * @param {number} pr
+ * @param {string} sha
+ * @param {string[]} authors the roles the guard names
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseWorkflowMerge(pr, sha, authors, cfg) {
+  const unlisted = "could not list this pull request's changes; try again";
+  const pull = obj(await rest(`pulls/${String(pr)}`, cfg));
+  const head = obj(pull.head);
+  const headRepo = obj(head.repo).full_name;
+  const baseRepo = obj(obj(pull.base).repo).full_name;
+  if (typeof head.ref !== "string" || typeof baseRepo !== "string") {
+    return unlisted;
+  }
+  if (head.sha !== sha) {
+    return `#${String(pr)} moved to a new head while it was being checked; try again`;
+  }
+  const ref = `refs/hub/merge/${String(pr)}`;
+  const fetched = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    `+refs/pull/${String(pr)}/head:${ref}`,
+  ]);
+  if (fetched.code !== 0) {
+    return unlisted;
+  }
+  const at = await git(["rev-parse", ref]);
+  if (at.code !== 0 || at.stdout.trim() !== sha) {
+    return unlisted;
+  }
+  const paths = await changedPaths(sha, cfg);
+  if (paths === null) {
+    return unlisted;
+  }
+  const verdict = workflowAuthorAllowed({
+    pr,
+    paths,
+    headRefName: head.ref,
+    crossRepository: headRepo !== baseRepo,
+    authors,
+    restricted: RESTRICTED_PATHS,
+    roleOf: (employee) => staffed.get(employee),
+  });
+  return verdict.ok ? null : verdict.reason;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1054,14 +1126,16 @@ function audit(entry) {
 /**
  * Which files would this push change, relative to main? Both sides of a
  * rename (--no-renames), so a file moved out of a directory is a change
- * to it. The push guards refuse on it (`refusePush`), and the audit log
+ * to it. The push guards refuse on it (`refusePush`), as does the
+ * workflow merge guard (`refuseWorkflowMerge`), and the audit log
  * is tagged with it, so that a change to the definition of a quality gate
  * is findable afterwards with one `grep`.
  *
  * Compared in the mirror, against `main` as GitHub has it: not against
  * whatever an agent's repository calls `origin/main`.
  *
- * @param {string} ref the pushed branch, as it is in the mirror
+ * @param {string} ref the pushed branch, as it is in the mirror, or a pull
+ *   request's head commit fetched into it (#1897)
  * @param {ReturnType<typeof company>} cfg
  * @returns {Promise<string[] | null>} `null` when they could not be worked out
  */

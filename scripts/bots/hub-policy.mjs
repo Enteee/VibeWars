@@ -289,7 +289,14 @@ const RULES = [
   {
     argv: ["pr", "merge"],
     roles: ["qa-tester"],
-    guards: ["checks-green", "approved-by:lead-dev", "approved-by:perf-sec-qa"],
+    // workflow-author: a pull request that changes a workflow or an action
+    // merges only from the branch of a role that owns it (#1897).
+    guards: [
+      "checks-green",
+      "approved-by:lead-dev",
+      "approved-by:perf-sec-qa",
+      "workflow-author:cicd-engineer",
+    ],
   },
 
   /* ---- pipeline and delivery. ------------------------------------------ */

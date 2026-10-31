@@ -30,6 +30,7 @@ import {
   claudeVerdict,
   ensureHome,
   githubIdentity,
+  missingGithubScopes,
   paths,
   projectAccess,
   pushIdentity,
@@ -162,12 +163,21 @@ if (github.state !== "ok" || github.who === null) {
 }
 const companyLogin = github.who;
 say("github", `${companyLogin} (the company's own)`);
-if (!/\bproject\b/.test(github.scopes ?? "")) {
+const missingScopes = missingGithubScopes(github.scopes);
+if (missingScopes.includes("project")) {
   say("github project scope", "MISSING");
   console.error("  The board cannot be worked without it. Sign in again: claude-llc auth github");
   process.exit(1);
 }
 say("github project scope", "present");
+if (missingScopes.includes("workflow")) {
+  say("github workflow scope", "MISSING");
+  console.error(
+    "  A pull request that changes a workflow cannot be merged without it. Sign in again: claude-llc auth github",
+  );
+  process.exit(1);
+}
+say("github workflow scope", "present");
 
 // The key is made, and added to GitHub, by `claude-llc auth push`, which
 // waits until GitHub greets it as the company's login.
