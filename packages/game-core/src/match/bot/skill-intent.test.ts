@@ -178,6 +178,9 @@ const NO_BOT_USE = new Set([
   "paragon.focused-anger",
   "paragon.glowing-signet",
   "paragon.signet-of-aggression",
+  // Assassin staples 5 (#1757): unblockable next attacks are no rule the
+  // bot weighs.
+  "assassin.way-of-the-fox",
 ]);
 
 function skill(id: string) {

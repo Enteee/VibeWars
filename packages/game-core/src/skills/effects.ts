@@ -1631,6 +1631,8 @@ export function isStateCondition(condition: EffectCondition): condition is State
       return false;
     case "target-health-below":
     case "target-health-above":
+    case "caster-health-below":
+    case "target-chain-mark":
     case "target-has":
     case "target-has-any":
     case "target-casting":
@@ -1683,6 +1685,10 @@ export function stateHolds(
       return target.health < effectiveMaxHealth(target) * condition.fraction;
     case "target-health-above":
       return target.health > effectiveMaxHealth(target) * condition.fraction;
+    case "caster-health-below":
+      return caster.health < effectiveMaxHealth(caster) * condition.fraction;
+    case "target-chain-mark":
+      return caster.chainMarks.get(target.id)?.role === condition.role;
     case "target-has":
       return target.statuses.countByCategory(condition.category) > 0;
     case "target-has-any":
@@ -1970,6 +1976,8 @@ function conditionHolds(
       return earlier.some((event) => event.kind === "resurrected" && event.targetId === target.id);
     case "target-health-below":
     case "target-health-above":
+    case "caster-health-below":
+    case "target-chain-mark":
     case "target-has":
     case "target-has-any":
     case "target-casting":
