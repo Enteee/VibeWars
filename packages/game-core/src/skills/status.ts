@@ -151,6 +151,12 @@ export interface StatusDefinition {
    */
   readonly profession: ProfessionId | undefined;
   /**
+   * The attribute of the skill that applies it (#1765), as `profession`:
+   * "if target foe is suffering from a Water Magic hex" asks this.
+   * `undefined`: not tagged, which only Elementalist hexes are so far.
+   */
+  readonly attribute: string | undefined;
+  /**
    * Health regeneration while active, in GW1 pips (`HEALTH_PER_PIP`):
    * negative degenerates. Every status's pips sum, clamped to
    * `MAX_PIPS` either way, and apply continuously, not in lumps.
@@ -495,6 +501,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesAdrenalSkill: boolean;
   /**
+   * It ends, unspent, the moment the bearer starts a skill its
+   * `nextSkillRule` does not answer (#1730): Glyph of Sacrifice's "ends
+   * prematurely if you use a non-spell skill".
+   */
+  readonly endsWhenBearerUsesOtherSkill: boolean;
+  /**
    * It ends once one of its triggers has fired (#1022): Vengeful Weapon's
    * and Weapon of Remedy's "the next time". Ended where the trigger fires,
    * after its effects, logged as its expiry.
@@ -578,6 +590,11 @@ export interface StatusDefinition {
    */
   readonly reversesNextDamage: number | undefined;
   /**
+   * A share of each attack's damage that hits the bearer goes back to the
+   * attacker (#1754): Holy Wrath's. `undefined`: none.
+   */
+  readonly reflectsAttackDamage: ReflectsAttackDamage | undefined;
+  /**
    * Strikes of adrenaline the bearer gains on top of each hit it lands
    * (#936): "For Great Justice!"'s 1. Taking damage is not a hit.
    */
@@ -658,8 +675,9 @@ export interface StatusDefinition {
   readonly failsNextSpell: FailsNextSpell | undefined;
   /**
    * Every whole second it has been on the bearer, a pulse of growing
-   * typeless damage from its source hits the bearer and the source's
-   * foes near it (#1501): Wastrel's Demise's. `undefined`: none.
+   * damage from its source hits the source's foes near it, and the bearer
+   * if it says so (#1501): Wastrel's Demise's, or Balthazar's Aura's on an
+   * ally (#1754). `undefined`: none.
    */
   readonly damagePulse: DamagePulse | undefined;
   /**
@@ -827,12 +845,15 @@ export type StatusTriggerEvent =
  * starts the count again at 1.
  */
 export interface DamagePulse {
-  /** The first pulse's damage, typeless. */
+  /** The first pulse's damage. */
   readonly damage: number;
   /** Added to each pulse after the first. */
   readonly growth: number;
-  /** The bearer and the source's foes within this of the bearer are hit. */
+  readonly type: DamageType;
+  /** The source's foes within this of the bearer are hit. */
   readonly radius: number;
+  /** Whether the bearer is hit too (#1754): a hex's is, an ally's enchantment's is not. */
+  readonly hitsBearer: boolean;
   readonly skillId: string;
 }
 
@@ -845,6 +866,22 @@ export interface StatusPulse {
 
 /** Within a hair, as a swing is: twenty additions of 0.05 fall just short of 1. */
 const PULSE_EPSILON = 1e-6;
+
+/**
+ * `StatusDefinition.reflectsAttackDamage` (#1754). Each foe's attack that
+ * hits the bearer costs that attacker `min(share × damage the bearer
+ * took, max)` damage of `type`, from the status's source, logged as
+ * `skillId`; a blow that took nothing reflects nothing. After `times`
+ * reflections the status ends. A reflection is no attack, so it is never
+ * reflected again, and one at an attacker dead or gone does not count.
+ */
+export interface ReflectsAttackDamage {
+  readonly share: number;
+  readonly max: number;
+  readonly type: DamageType;
+  readonly times: number;
+  readonly skillId: string;
+}
 
 /** `StatusDefinition.skillArmorPenetration` (#1464). */
 export interface SkillArmorPenetration {
@@ -918,6 +955,13 @@ export interface StatusTrigger {
    * steal.
    */
   readonly damageType?: DamageType;
+  /**
+   * On `bearer-takes-damage-from-foe` only (#1754): it fires only for one
+   * packet of damage that took more than this much health, never for a
+   * life steal, as Spirit Bond's "whenever target ally takes more than 50
+   * damage". Absent: any damage or steal.
+   */
+  readonly minDamage?: number;
   /**
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
@@ -1061,6 +1105,14 @@ export type StatusChange =
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /** Status `statusId` from `sourceId` sends `damage` back to `toId`, who hit the bearer (#1754). */
+  | {
+      readonly kind: "reflected";
+      readonly statusId: StatusId;
+      readonly sourceId: string;
+      readonly toId: string;
+      readonly damage: number;
+    }
   | {
       readonly kind: "blocked";
       readonly offenderId: string;
@@ -1145,6 +1197,14 @@ export interface NextSkillRule {
   readonly unblockable: boolean;
   /** Energy off that skill's cost, never below 0. */
   readonly energyDiscount: number;
+  /** That skill's activation is 0 s (#1730): Glyph of Sacrifice's. */
+  readonly castsInstantly: boolean;
+  /** Seconds added to that skill's recharge (#1730): Glyph of Sacrifice's 30. */
+  readonly extraRechargeSeconds: number;
+  /** That skill recharges at once (#1730), over any `extraRechargeSeconds`. */
+  readonly rechargesInstantly: boolean;
+  /** The bearer's Energy goes to 0 once that skill is paid for (#1730). */
+  readonly losesAllEnergy: boolean;
   /** The skill the log names it after: "paragon.song-of-concentration". */
   readonly skillId: string;
 }
@@ -1216,6 +1276,8 @@ export interface ActiveStatus {
   skillsLeft: number | undefined;
   /** Times its triggers may still fire before it ends (`endsAfterTriggers`); `undefined`: no such limit. */
   triggersLeft: number | undefined;
+  /** Reflections before it ends (`reflectsAttackDamage`); `undefined`: no such limit. */
+  reflectionsLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
@@ -1400,14 +1462,19 @@ export class StatusSet {
   }
 
   /**
-   * The bearer lost health to damage of `type` or, `undefined`, life
-   * steal from `offenderId`, a foe (#1022), recorded only if a status on
-   * it answers that, with the triggers that do: one with a `damageType`
-   * answers only that type (#1540). A status already waiting to answer
+   * The bearer lost `amount` health to damage of `type` or, `undefined`,
+   * life steal from `offenderId`, a foe (#1022), recorded only if a status
+   * on it answers that, with the triggers that do: one with a `damageType`
+   * answers only that type (#1540), one with a `minDamage` only damage
+   * above it (#1754). A status already waiting to answer
    * one, undrained, does not answer another: it fires once, at the first
    * foe.
    */
-  public recordDamageFromFoe(offenderId: string, type: DamageType | undefined): void {
+  public recordDamageFromFoe(
+    offenderId: string,
+    type: DamageType | undefined,
+    amount: number,
+  ): void {
     const pending = new Set(
       this.#changes.flatMap((change) =>
         change.kind === "took-damage-from-foe" ? change.fired.map(({ statusId }) => statusId) : [],
@@ -1415,7 +1482,9 @@ export class StatusSet {
     );
     const fired = this.#answering("bearer-takes-damage-from-foe").filter(
       ({ statusId, trigger }) =>
-        !pending.has(statusId) && (trigger.damageType === undefined || trigger.damageType === type),
+        !pending.has(statusId) &&
+        (trigger.damageType === undefined || trigger.damageType === type) &&
+        (trigger.minDamage === undefined || (type !== undefined && amount > trigger.minDamage)),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });
@@ -1435,14 +1504,30 @@ export class StatusSet {
   }
 
   /**
-   * An attack by `offenderId`, a foe, hit the bearer (#1464), recorded only
-   * if a status on it answers that, with the triggers that do. Every hit
-   * counts: two foes in one tick are two.
+   * An attack by `offenderId`, a foe, hit the bearer (#1464) and took
+   * `took` health, recorded only if a status on it answers that, with the
+   * triggers that do. Every hit counts: two foes in one tick are two. Each
+   * status that reflects attack damage (#1754) sends its share back.
    */
-  public recordHitByAttack(offenderId: string): void {
+  public recordHitByAttack(offenderId: string, took: number): void {
     const fired = this.#answering("bearer-hit-by-attack");
     if (fired.length > 0) {
       this.#changes.push({ kind: "hit-by-attack", offenderId, fired });
+    }
+    if (took <= 0) {
+      return;
+    }
+    for (const { id, sourceId } of this.active) {
+      const reflects = getStatusDefinition(id).reflectsAttackDamage;
+      if (reflects !== undefined) {
+        this.#changes.push({
+          kind: "reflected",
+          statusId: id,
+          sourceId,
+          toId: offenderId,
+          damage: Math.min(Math.round(reflects.share * took), reflects.max),
+        });
+      }
     }
   }
 
@@ -1577,6 +1662,7 @@ export class StatusSet {
       spellsLeft: definition.nextSpells?.count,
       skillsLeft: definition.nextSkill?.count,
       triggersLeft: definition.endsAfterTriggers,
+      reflectionsLeft: definition.reflectsAttackDamage?.times,
       sourceId,
       outbreak,
       maintained: null,
@@ -1632,6 +1718,7 @@ export class StatusSet {
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
+      reflectionsLeft: undefined,
       sourceId,
       outbreak,
       maintained: null,
@@ -1664,6 +1751,7 @@ export class StatusSet {
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
+      reflectionsLeft: undefined,
       sourceId,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
@@ -1696,6 +1784,7 @@ export class StatusSet {
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
+      reflectionsLeft: undefined,
       sourceId,
       outbreak: null,
       maintained: null,
@@ -1750,6 +1839,23 @@ export class StatusSet {
     }
     status.triggersLeft -= 1;
     if (status.triggersLeft > 0) {
+      return false;
+    }
+    this.#end([id]);
+    return true;
+  }
+
+  /**
+   * `id` reflected a blow (#1754): one fewer before it ends. Returns
+   * whether that ended it, recorded as ended.
+   */
+  public spendReflection(id: StatusId): boolean {
+    const status = this.#statuses.get(id);
+    if (status?.reflectionsLeft === undefined) {
+      return false;
+    }
+    status.reflectionsLeft -= 1;
+    if (status.reflectionsLeft > 0) {
       return false;
     }
     this.#end([id]);
@@ -1994,16 +2100,24 @@ export class StatusSet {
 
   /**
    * The bearer started `skill` (#1505): every status whose
-   * `nextSkillRule` answers its kind ends. Returns each, in `active`
-   * order, with its rule.
+   * `nextSkillRule` answers its kind ends, and so does every one that
+   * ends on any other kind (#1730), unanswered. Returns each, in
+   * `active` order, with its rule and whether it answered.
    */
-  public useNextSkillRules(
-    skill: Skill,
-  ): readonly { readonly statusId: StatusId; readonly rule: NextSkillRule }[] {
+  public useNextSkillRules(skill: Skill): readonly {
+    readonly statusId: StatusId;
+    readonly rule: NextSkillRule;
+    readonly answered: boolean;
+  }[] {
     const used = this.active.flatMap(({ id }) => {
-      const rule = getStatusDefinition(id).nextSkillRule;
-      return rule !== undefined && nextSkillAnswers(rule.which, skill)
-        ? [{ statusId: id, rule }]
+      const definition = getStatusDefinition(id);
+      const rule = definition.nextSkillRule;
+      if (rule === undefined) {
+        return [];
+      }
+      const answered = nextSkillAnswers(rule.which, skill);
+      return answered || definition.endsWhenBearerUsesOtherSkill
+        ? [{ statusId: id, rule, answered }]
         : [];
     });
     this.#end(used.map(({ statusId }) => statusId));
@@ -2174,14 +2288,22 @@ export class StatusSet {
     );
   }
 
-  /** How many are up of a category; with a `profession`, only that profession's (#1021). */
-  public countByCategory(category: StatusCategory, profession?: ProfessionId): number {
+  /**
+   * How many are up of a category; with a `profession`, only that
+   * profession's (#1021); with an `attribute`, only that attribute's (#1765).
+   */
+  public countByCategory(
+    category: StatusCategory,
+    profession?: ProfessionId,
+    attribute?: string,
+  ): number {
     let count = 0;
     for (const status of this.#statuses.values()) {
       const definition = getStatusDefinition(status.id);
       if (
         definition.category === category &&
-        (profession === undefined || definition.profession === profession)
+        (profession === undefined || definition.profession === profession) &&
+        (attribute === undefined || definition.attribute === attribute)
       ) {
         count += 1;
       }

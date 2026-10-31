@@ -1499,7 +1499,8 @@ export class MatchSimulation {
       case "caster":
         return owner.position;
       case "corpse":
-        // A corpse skill with no corpse never resolves, so this is a bug.
+        // A corpse skill with neither a corpse nor a well's sacrifice
+        // (#1730) never resolves, so this is a bug.
         if (corpse === undefined) {
           throw new Error(`${owner.id}: a corpse-anchored ground effect with no corpse`);
         }
@@ -1629,9 +1630,9 @@ export class MatchSimulation {
 
   /**
    * Every status damage pulse that came due this step (#1501), in
-   * participant order: typeless damage from the status's source to the
-   * bearer and to the source's foes within its radius of the bearer,
-   * logged as the status's skill. A bearer that died since takes none,
+   * participant order: damage of its type from the status's source to the
+   * source's foes within its radius of the bearer, and to the bearer if
+   * it `hitsBearer` (#1754), logged as the status's skill. A bearer that died since takes none,
    * and a source that has left the match deals none.
    */
   #pulseStatuses(): void {
@@ -1645,11 +1646,11 @@ export class MatchSimulation {
         const hit: SkillEffect = {
           kind: "damage",
           amount: { flat: damage },
-          type: "typeless",
+          type: pulse.type,
           armorPenetration: 0,
         };
         const effects: readonly SkillEffect[] = [
-          hit,
+          ...(pulse.hitsBearer ? [hit] : []),
           {
             kind: "splash",
             hits: "foes",
@@ -2501,7 +2502,7 @@ export class MatchSimulation {
     key: string,
     castTargetId: string | undefined,
   ): void {
-    const rule = this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key);
     this.#castBegun(record, skill, castTargetId);
     // An instant flies nowhere, so no time passes for it.
     this.resolveCast(
@@ -2523,10 +2524,19 @@ export class MatchSimulation {
    * A skill used, at once or as it begins: its cost, and what it uses up
    * of a glyph or the chants on its user. Returns what they give it.
    */
-  #payForUse(record: ParticipantRecord, skill: Skill, key: string): CastRule {
+  #payForUse(
+    record: ParticipantRecord,
+    skill: Skill,
+    key: string,
+  ): { rule: CastRule; castsInstantly: boolean } {
     payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
-    return this.#useNextSkillRules(record, skill);
+    const { rule, castsInstantly, losesAllEnergy } = this.#useNextSkillRules(record, skill);
+    // Glyph of Essence's price (#1730), once the cost is paid.
+    if (losesAllEnergy) {
+      record.combatant.energy = 0;
+    }
+    return { rule, castsInstantly };
   }
 
   /**
@@ -2560,7 +2570,7 @@ export class MatchSimulation {
       return { skillId: skill.id, check, queued: true };
     }
 
-    const rule = this.#payForUse(record, skill, key);
+    const { rule, castsInstantly } = this.#payForUse(record, skill, key);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -2569,8 +2579,9 @@ export class MatchSimulation {
     if (skill.flash) {
       this.#lockOutFlash(record, skill.id, key);
     }
-    const activationSeconds =
-      skill.attack === undefined
+    const activationSeconds = castsInstantly
+      ? 0
+      : skill.attack === undefined
         ? effectiveActivationSeconds(
             skill,
             record.combatant,
@@ -2673,18 +2684,28 @@ export class MatchSimulation {
    * cancel after this does not give it back. Returns what they give the
    * cast; each spent logs its end under its chant.
    */
-  #useNextSkillRules(record: ParticipantRecord, skill: Skill): CastRule {
-    const used = record.combatant.statuses.useNextSkillRules(skill);
+  #useNextSkillRules(
+    record: ParticipantRecord,
+    skill: Skill,
+  ): { rule: CastRule; castsInstantly: boolean; losesAllEnergy: boolean } {
+    const all = record.combatant.statuses.useNextSkillRules(skill);
+    const used = all.filter(({ answered }) => answered);
     this.#logFired(
-      used.map(({ statusId, rule }) => ({
+      all.map(({ statusId, rule }) => ({
         sourceId: record.id,
         skillId: rule.skillId,
         events: [{ kind: "status-expired" as const, targetId: record.id, statusId }],
       })),
     );
     return {
-      uninterruptible: used.some(({ rule }) => rule.uninterruptible),
-      unblockable: used.some(({ rule }) => rule.unblockable),
+      rule: {
+        uninterruptible: used.some(({ rule }) => rule.uninterruptible),
+        unblockable: used.some(({ rule }) => rule.unblockable),
+        rechargesInstantly: used.some(({ rule }) => rule.rechargesInstantly),
+        extraRechargeSeconds: used.reduce((sum, { rule }) => sum + rule.extraRechargeSeconds, 0),
+      },
+      castsInstantly: used.some(({ rule }) => rule.castsInstantly),
+      losesAllEnergy: used.some(({ rule }) => rule.losesAllEnergy),
     };
   }
 
@@ -3194,10 +3215,12 @@ export class MatchSimulation {
       return { ok: false, reason: "hands-full" };
     }
     // Any other refusal first; then a corpse skill needs a fresh corpse in
-    // reach (#466), or nothing is paid.
+    // reach (#466), or nothing is paid. A well does without, at a price
+    // paid as it resolves (#1730).
     if (
       check.ok &&
       skill.corpse !== undefined &&
+      skill.corpse.elseSacrificePercent === undefined &&
       this.#freshCorpse(record, skill.corpse, target) === undefined
     ) {
       return { ok: false, reason: "no-corpse" };
@@ -3395,16 +3418,29 @@ export class MatchSimulation {
       this.#dropAshes(record);
     }
     // A corpse skill takes its corpse as it lands, not as it began (#466):
-    // one used up during the cast leaves it with no effect, paid for.
+    // one used up during the cast leaves it with no effect, paid for. A
+    // well finding none sacrifices instead and goes off where its caster
+    // stands (#1730), as though on a corpse there.
     const corpse =
       skill.corpse === undefined
         ? undefined
         : this.#exploitCorpse(record, skill.corpse, targetRecord);
+    const sacrifice = corpse === undefined ? skill.corpse?.elseSacrificePercent : undefined;
+    const site = corpse ?? (sacrifice === undefined ? undefined : record);
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds } =
-      skill.corpse !== undefined && corpse === undefined
+      skill.corpse !== undefined && site === undefined
         ? only([])
         : resolve({
-            skill,
+            skill:
+              sacrifice === undefined
+                ? skill
+                : {
+                    ...skill,
+                    effects: [
+                      { kind: "sacrifice-health", percentOfMax: sacrifice },
+                      ...skill.effects,
+                    ],
+                  },
             caster: record.combatant,
             targets,
             rng: this.#rng,
@@ -3489,7 +3525,7 @@ export class MatchSimulation {
       );
     }
     for (const ground of grounds) {
-      const position = this.#groundAnchor(record, ground, corpse, primary);
+      const position = this.#groundAnchor(record, ground, site, primary);
       if (position !== undefined) {
         this.#placeGroundEffect(record, skill.id, ground, position);
       }
@@ -3541,11 +3577,15 @@ export class MatchSimulation {
           ? modifiers.bindingRitualRechargeFaster
           : 0;
       const faster = Math.max(modifiers.skillRechargeFaster, typeFaster);
+      // A glyph's hold on the spell (#1730): Renewal's 0 over Sacrifice's 30 more.
       beginRecharge(
         record.combatant.cast,
         skill,
-        reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) +
-          rechargeLongerSeconds,
+        cast.rule.rechargesInstantly
+          ? 0
+          : reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) +
+              rechargeLongerSeconds +
+              cast.rule.extraRechargeSeconds,
         cast.key,
       );
       // A form's "disabled for 45 seconds" (#1437), beside its recharge.
@@ -5117,6 +5157,7 @@ export class MatchSimulation {
       attacker?.creature?.kind === "spirit"
         ? aggregateModifiers(target.combatant.statuses.active).damageFromSpiritAttacks
         : 0;
+    const before = target.combatant.health;
     const critical = landBlow(
       projectile.weaponSnapshot,
       attacker?.combatant,
@@ -5150,6 +5191,7 @@ export class MatchSimulation {
         events,
         skillHit !== undefined,
         projectile.weaponSnapshot.mainHand.weapon,
+        Math.max(0, before - target.combatant.health),
       );
     }
     if (skillHit !== undefined && attacker !== undefined) {

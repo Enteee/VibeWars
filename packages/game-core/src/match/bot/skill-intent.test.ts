@@ -91,6 +91,13 @@ const NO_BOT_USE = new Set([
   // An enchantment strip only on a knocked-down foe (#1643).
   "assassin.lift-enchantment",
   "necromancer.well-of-suffering",
+  // A foe's Energy drained in an area (#1730): no rule for it.
+  "necromancer.well-of-weariness",
+  // Glyphs on the next spell (#1730): no rule times them.
+  "elementalist.glyph-of-concentration",
+  "elementalist.glyph-of-sacrifice",
+  "elementalist.glyph-of-renewal",
+  "elementalist.glyph-of-essence",
   // Wells 2 (#1732): no well has a use yet, as Well of Suffering.
   "necromancer.well-of-the-profane",
   "necromancer.well-of-silence",
@@ -178,6 +185,9 @@ const NO_BOT_USE = new Set([
   "paragon.focused-anger",
   "paragon.glowing-signet",
   "paragon.signet-of-aggression",
+  // Monk mechanics (#1754): a holy aura round an ally is no rule the bot
+  // weighs.
+  "monk.balthazars-aura",
   // Assassin staples 5 (#1757): unblockable next attacks are no rule the
   // bot weighs.
   "assassin.way-of-the-fox",

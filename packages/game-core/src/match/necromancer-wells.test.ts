@@ -144,7 +144,7 @@ describe("the four wells (#1732)", () => {
       activationSeconds: activation,
       rechargeSeconds: recharge,
       target: "self",
-      corpse: { radius: expect.any(Number) },
+      corpse: { radius: expect.any(Number), elseSacrificePercent: 66 },
     });
     const sim = match();
     well(sim, [PROFANE, SILENCE, DARKNESS, RUIN].indexOf(id));
@@ -162,22 +162,22 @@ describe("the four wells (#1732)", () => {
     );
     expect(texts).toEqual([
       [
-        "Exploits the nearest corpse",
+        "Exploits the nearest corpse, or sacrifices 66% Health if none is near",
         "Creates a well at its location for 18 seconds",
         "Non-spirit foes in the area: stripped of all enchantments, and cannot be enchanted",
       ],
       [
-        "Exploits the nearest corpse",
+        "Exploits the nearest corpse, or sacrifices 66% Health if none is near",
         "Creates a well at its location for 26 seconds",
         "Non-spirit foes in the area: −3 Health degeneration, cannot use shouts or chants",
       ],
       [
-        "Exploits the nearest corpse",
+        "Exploits the nearest corpse, or sacrifices 66% Health if none is near",
         "Creates a well at its location for 41 seconds",
         "Non-spirit foes in the area: while under a hex: 50% of attacks miss",
       ],
       [
-        "Exploits the nearest corpse",
+        "Exploits the nearest corpse, or sacrifices 66% Health if none is near",
         "Creates a well at its location for 25 seconds",
         "Non-spirit foes in the area: whenever it takes physical damage: applies Cracked Armor for 17s (−20 armor (not below 60))",
       ],

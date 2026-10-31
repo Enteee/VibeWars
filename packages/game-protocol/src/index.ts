@@ -211,6 +211,7 @@ export {
   QUEUE_MODES,
   TICKET_HEARTBEAT_MS,
   TICKET_TTL_MS,
+  isTeamQueueMode,
   parseQueueTicket,
   teamSizeOf,
 } from "./queue.js";

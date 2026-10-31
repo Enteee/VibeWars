@@ -46,6 +46,15 @@ shout ends on that ally. A chant or shout reapplied before it ends has not
 ended. Nothing removes an echo: it ends when it runs out or its bearer
 dies. Most cannot target a spirit.
 
+## Wells and glyphs
+
+A Necromancer's **wells** exploit the nearest corpse. With none near, a
+well sacrifices 66% of your Health instead and appears where you stand.
+
+An Elementalist's **glyphs** change your next spell: it cannot be
+interrupted, casts instantly, recharges at once, or costs less. A new
+glyph replaces the one you had.
+
 ## The library
 
 The skill library lists every skill your two professions can use,

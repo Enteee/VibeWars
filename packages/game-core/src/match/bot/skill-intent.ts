@@ -3,6 +3,14 @@ import { interruptLands, isStateCondition, stateHolds } from "../../skills/effec
 import { skillRoles } from "../../skills/roles.js";
 import type { StatusCategory } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
+import type { Vec2 } from "../../vec2.js";
+import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
+
+/**
+ * Below this share of its Health a bot uses no well by its sacrifice
+ * (#1730): 66% more off would leave it all but dead.
+ */
+export const WELL_SACRIFICE_FLOOR = 0.5;
 
 /**
  * What a bot may use a skill for (#1189), in the order `play-build`
@@ -98,6 +106,25 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
     }
   }
   return [...found];
+}
+
+/**
+ * Whether `skill`, used now by a bot at `position` with `healthFraction`
+ * of its Health, would be a well's sacrifice it should not make (#1730):
+ * no fresh corpse in reach, and too little Health. On a corpse it may.
+ */
+export function sacrificesTooMuch(
+  skill: Skill,
+  position: Vec2,
+  healthFraction: number,
+  bodies: Iterable<CorpseCandidate>,
+): boolean {
+  const rule = skill.corpse;
+  return (
+    rule?.elseSacrificePercent !== undefined &&
+    healthFraction < WELL_SACRIFICE_FLOOR &&
+    nearestFreshCorpse(position, rule.radius, bodies) === undefined
+  );
 }
 
 /**

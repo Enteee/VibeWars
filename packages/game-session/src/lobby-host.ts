@@ -12,12 +12,14 @@ import {
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
   helloProtocolVersion,
+  isTeamQueueMode,
   parsePeerChat,
   parsePeerLobbyHello,
   parsePeerLobbyJoin,
   parsePeerPartyConsent,
   parsePeerStayTogether,
   parseWireLobbyCommand,
+  teamSizeOf,
   type LobbyMode,
   type LobbyPhase,
   type PeerLobbyJoin,
@@ -120,6 +122,22 @@ interface TeamSide {
   claims: (string | null)[];
 }
 
+/**
+ * One seat of a team mode's side, as its party host plans it (ADR-0042):
+ * the human `memberKey` or, `null`, a bot, and the build it plays,
+ * `null` for one that is not legal here.
+ */
+interface TeamPlanSeat {
+  readonly memberKey: string | null;
+  readonly build: PlayerBuild | null;
+}
+
+/** A side's seat plan, its seats as they arrive, one a message. */
+interface TeamPlan {
+  readonly size: number;
+  readonly seats: Map<number, TeamPlanSeat>;
+}
+
 /** A Team Lobby (#1458): both sides vote, then claim, on one clock. */
 interface TeamLobby {
   stage: "vote" | "claim";
@@ -141,9 +159,10 @@ export interface MatchPlan {
 }
 
 /**
- * A lobby the Random Arena queue started (#871, #854 C5-C7): the group's
- * teams and map are fixed, only its tickets get in, each on its planned
- * team, and nobody picks or readies. Once all are seated a countdown
+ * A lobby the queue started (#871, #854 C5-C7): the group's teams and map
+ * are fixed, only its tickets get in, each on its planned team, and
+ * nobody picks or readies. In a team mode (ADR-0042), each side's party
+ * host sends its seat plan, and the side plays it, bots and all. Once all are seated a countdown
  * runs, then the match; not all seated by the timeout, and everyone is
  * sent off. `key` is the host's own ticket key, the group's host ticket.
  */
@@ -363,6 +382,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let queuedDone = false;
   /** While `phase` is `"team-lobby"`. */
   let teamLobby: TeamLobby | undefined;
+  /** A team mode's queued lobby: each side's seat plan so far (ADR-0042). */
+  const teamPlans: [TeamPlan | undefined, TeamPlan | undefined] = [undefined, undefined];
 
   const nowMs = (): number => elapsed * 1000;
   /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
@@ -927,11 +948,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       case "claim":
         // A Team Lobby's, and this is not one yet.
         return false;
+      case "team-plan":
+        // A queued team mode's alone (ADR-0042).
+        return false;
     }
   };
 
-  /** Seat a bot on `team` (#1193), under an id no member has; `figureBots` makes it someone. */
-  const addBot = (team: 0 | 1): void => {
+  /**
+   * Seat a bot on `team` (#1193), under an id no member has, and say
+   * which; `figureBots` makes it someone.
+   */
+  const addBot = (team: 0 | 1): string => {
     let id: string;
     do {
       bots += 1;
@@ -952,6 +979,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       seatKey: null,
       bot: build,
     });
+    return id;
   };
 
   /**
@@ -980,6 +1008,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           }
         });
     }
+    nameBots(builds);
+  };
+
+  /**
+   * Give each bot in `builds` its build, and its name from it: each is
+   * `"<Profession> Bot"`, numbered from 2 when the name is taken, in the
+   * order the bots were added.
+   */
+  const nameBots = (builds: ReadonlyMap<string, PlayerBuild>): void => {
     const names = new Set(
       [...members.values()].flatMap((member) => (member.bot === null ? [member.name] : [])),
     );
@@ -1029,6 +1066,105 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     });
     beginCountdown();
     broadcast();
+  };
+
+  /**
+   * Take one seat of a team mode's side plan (ADR-0042) from `member`, if
+   * it is that side's party host, the ticket's own key, and the match has
+   * not started. A plan of another size starts over; a build that is not
+   * legal here, whatever the reason, spoils the plan.
+   */
+  const takeTeamPlan = (
+    plan: QueuedPlan,
+    member: Member,
+    command: Extract<WireLobbyCommand, { kind: "team-plan" }>,
+  ): void => {
+    const { group } = plan;
+    if (
+      !isTeamQueueMode(group.mode) ||
+      queuedStarted ||
+      member.team === null ||
+      member.seatKey === null ||
+      member.seatKey !== group.teams[member.team][0]
+    ) {
+      return;
+    }
+    const held = teamPlans[member.team];
+    const side = held?.size === command.size ? held : { size: command.size, seats: new Map() };
+    const build = parsePlayerBuild(command.build);
+    side.seats.set(command.slot, {
+      memberKey: command.memberKey,
+      build:
+        build !== undefined && validatePlayerBuild(build, RULESET.attributes).length === 0
+          ? build
+          : null,
+    });
+    teamPlans[member.team] = side;
+  };
+
+  /**
+   * `plan`'s seats in slot order, if it is a whole side of `size` whose
+   * humans are exactly `keys` and whose every build is legal.
+   */
+  const wholePlan = (
+    plan: TeamPlan | undefined,
+    keys: readonly string[],
+    size: number,
+  ): { readonly memberKey: string | null; readonly build: PlayerBuild }[] | undefined => {
+    if (plan?.size !== size) {
+      return undefined;
+    }
+    const seats: { readonly memberKey: string | null; readonly build: PlayerBuild }[] = [];
+    for (let slot = 0; slot < size; slot += 1) {
+      const seat = plan.seats.get(slot);
+      if (seat?.build === undefined || seat.build === null) {
+        return undefined;
+      }
+      seats.push({ memberKey: seat.memberKey, build: seat.build });
+    }
+    const humans = seats.flatMap(({ memberKey }) => (memberKey === null ? [] : [memberKey]));
+    return humans.sort().join() === [...keys].sort().join() ? seats : undefined;
+  };
+
+  /**
+   * Seat each side of a team mode's queued match by its plan (ADR-0042),
+   * its bots added to the lobby, and say what each member plays. A side
+   * with no whole plan plays the house team: its humans, then its bots,
+   * the starter builds in order, round and round. A human's own hello
+   * build is never read: every seat has one here.
+   */
+  const seatTeamPlans = (plan: QueuedPlan): Map<string, PlayerBuild> => {
+    const size = teamSizeOf(plan.group.mode);
+    const assigned = new Map<string, PlayerBuild>();
+    const botBuilds = new Map<string, PlayerBuild>();
+    for (const team of [0, 1] as const) {
+      const keys = plan.group.teams[team];
+      const seats =
+        wholePlan(teamPlans[team], keys, size) ??
+        [...keys, ...Array.from({ length: size - keys.length }, () => null)].map(
+          (memberKey, slot) => {
+            const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
+            if (build === undefined) {
+              throw new Error("there are no starter builds for a house team");
+            }
+            return { memberKey, build };
+          },
+        );
+      for (const { memberKey, build } of seats) {
+        if (memberKey === null) {
+          const id = addBot(team);
+          assigned.set(id, build);
+          botBuilds.set(id, build);
+          continue;
+        }
+        const human = [...members.values()].find((member) => member.seatKey === memberKey);
+        if (human !== undefined) {
+          assigned.set(human.id, build);
+        }
+      }
+    }
+    nameBots(botBuilds);
+    return assigned;
   };
 
   /** The group's seat keys no member holds. */
@@ -1173,19 +1309,23 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   transport.on("lobby-cmd", (data, from) => {
     const member = peerMember(from);
     // Nothing a peer says before its lobby-join counts.
-    if (
-      closed ||
-      member === undefined ||
-      !budget.take(from, nowMs()) ||
-      (phase !== "waiting" && phase !== "team-lobby")
-    ) {
+    if (closed || member === undefined || !budget.take(from, nowMs())) {
       return;
     }
     const command = parseWireLobbyCommand(data);
     if (command === undefined) {
       return;
     }
-    // In a queued lobby nothing is chosen, and bots are a coded lobby's (#1193).
+    // A side's seat plan counts until the match starts, through the countdown.
+    if (queued !== undefined && command.kind === "team-plan") {
+      takeTeamPlan(queued, member, command);
+      return;
+    }
+    if (phase !== "waiting" && phase !== "team-lobby") {
+      return;
+    }
+    // In a queued lobby nothing else is chosen, and bots are a coded lobby's
+    // (#1193), or a team mode's side's own, by its plan.
     if (queued !== undefined) {
       if (command.kind === "set-bots") {
         refuse(from, "invalid-bot");
@@ -1277,7 +1417,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     if (clockMs() >= countdownEndsAt) {
-      start();
+      start(isTeamQueueMode(plan.group.mode) ? seatTeamPlans(plan) : undefined);
     } else if (countdownLeft(countdownEndsAt) !== shown) {
       broadcast();
     }
@@ -1289,7 +1429,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * a team: everyone on `winningTeam` still here, who has `stayTogetherSeconds`.
    */
   const beginVote = (plan: QueuedPlan, winningTeam: 0 | 1 | null): void => {
-    const teamSize = winningTeam === null ? 0 : plan.group.teams[winningTeam].length;
+    // A team mode's side is a party already (ADR-0042): nothing to vote on.
+    const teamSize =
+      winningTeam === null || isTeamQueueMode(plan.group.mode)
+        ? 0
+        : plan.group.teams[winningTeam].length;
     vote = {
       teamSize,
       winners:

@@ -16,6 +16,9 @@ export type NecromancerStatusId =
   | "blood-ritual"
   // Wells' auras (#1104), worn while inside a well.
   | "well-of-suffering"
+  | "well-of-blood"
+  | "well-of-power"
+  | "well-of-weariness"
   // Wells 2 (#1732).
   | "well-of-the-profane"
   | "well-of-silence"
@@ -204,6 +207,23 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.well-of-ruin",
       },
     ],
+  }),
+  // "Allies in that area receive +1...6 Health regeneration" (#1730): 5
+  // at rank 12.
+  "well-of-blood": define("well-of-blood", "Well of Blood", "skill-effect", {
+    profession: "necromancer",
+    healthPips: 5,
+  }),
+  // "...+1...6 Health regeneration and +2 Energy regeneration" (#1730).
+  "well-of-power": define("well-of-power", "Well of Power", "skill-effect", {
+    profession: "necromancer",
+    healthPips: 5,
+    energyPips: 2,
+  }),
+  // "Enemies within the Well of Weariness suffer -1 Energy degeneration" (#1730).
+  "well-of-weariness": define("well-of-weariness", "Well of Weariness", "skill-effect", {
+    profession: "necromancer",
+    energyPips: -1,
   }),
   // "...takes 4...16 more damage when hit by physical damage" (#1332): 14,
   // its rank-12 value.

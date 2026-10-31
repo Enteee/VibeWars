@@ -923,8 +923,18 @@ export type StateCondition =
    * attack".
    */
   | { readonly kind: "target-chain-mark"; readonly role: ChainRole }
-  /** The effect's target has at least one status of this category. */
-  | { readonly kind: "target-has"; readonly category: StatusCategory }
+  /**
+   * The effect's target has at least one status of this category; with a
+   * `profession` or an `attribute`, one carrying it (#1765): Icy Prism's
+   * "if target foe is suffering from a Water Magic hex". Whose skill
+   * applied it does not matter. `not` asks for none.
+   */
+  | {
+      readonly kind: "target-has";
+      readonly category: StatusCategory;
+      readonly profession?: ProfessionId;
+      readonly attribute?: string;
+    }
   /**
    * The effect's target has at least one status of any of these categories
    * (#1234): Iron Palm's "suffering from a hex or condition".
@@ -1446,6 +1456,11 @@ export interface Skill {
    * Absent: only what interrupts any skill does.
    */
   readonly easilyInterrupted?: true;
+  /**
+   * GW1's "Health gain from Divine Favor is doubled for this spell"
+   * (#1754): Healing Touch's. Absent: the normal bonus.
+   */
+  readonly divineFavorDoubled?: true;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */
@@ -1488,6 +1503,13 @@ export interface CorpseRule {
    * nearest the caster.
    */
   readonly near?: "target";
+  /**
+   * A well's "or sacrifice 66% health" (#1730): with no fresh corpse in
+   * reach as it resolves, the caster sacrifices this % of its max Health
+   * and the skill goes off where it stands. `undefined`: no corpse, no
+   * use.
+   */
+  readonly elseSacrificePercent: number | undefined;
 }
 
 /** How a flying spell flies (#535). */

@@ -111,6 +111,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "song-of-restoration": icon("song-of-restoration"),
   "apply-poison": icon("apply-poison"),
   "glyph-of-lesser-energy": icon("glyph-of-lesser-energy"),
+  "glyph-of-concentration": icon("glyph-of-concentration"),
+  "glyph-of-sacrifice": icon("glyph-of-sacrifice"),
+  "glyph-of-renewal": icon("glyph-of-renewal"),
+  "glyph-of-essence": icon("glyph-of-essence"),
   "anthem-of-flame": icon("anthem-of-flame"),
   "zealous-anthem": icon("zealous-anthem"),
   "aria-of-zeal": icon("aria-of-zeal"),
@@ -185,6 +189,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "weapon-of-renewal": icon("weapon-of-renewal"),
   "ward-against-melee": icon("ward-against-melee"),
   "well-of-suffering": icon("well-of-suffering"),
+  "well-of-blood": icon("well-of-blood"),
+  "well-of-power": icon("well-of-power"),
+  "well-of-weariness": icon("well-of-weariness"),
   "well-of-the-profane": icon("well-of-the-profane"),
   "well-of-silence": icon("well-of-silence"),
   "well-of-darkness": icon("well-of-darkness"),
@@ -254,6 +261,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   fragility: icon("fragility"),
   "judges-insight": icon("judges-insight"),
   "shield-of-regeneration": icon("shield-of-regeneration"),
+  "spirit-bond": icon("spirit-bond"),
+  "holy-wrath": icon("holy-wrath"),
+  "balthazars-aura": icon("balthazars-aura"),
   "live-vicariously": icon("live-vicariously"),
   "purifying-veil": icon("purifying-veil"),
   pacifism: icon("pacifism"),
@@ -306,6 +316,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "barbed-arrows-armor": icon("barbed-arrows-armor"),
   "melandrus-arrows": icon("melandrus-arrows"),
   "read-the-wind": icon("read-the-wind"),
+  "freezing-gust": icon("freezing-gust"),
 };
 
 const GAP = 2;
