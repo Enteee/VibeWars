@@ -507,7 +507,11 @@ describe("the texts (#1629)", () => {
   it("say what each does", () => {
     expect(text(PRECISION_SHOT)).toContain("Easily interrupted");
     expect(text(VOLLEY)[0]).toBe("All your preparations are removed");
-    expect(describeStatus("kindle-arrows", ranks)).toContain("with a bow");
-    expect(describeStatus("ignite-arrows", ranks)).toContain("with a bow");
+    expect(describeStatus("kindle-arrows", ranks)).toBe(
+      "bow attacks deal fire damage, foes your bow attacks hit take 20 fire damage",
+    );
+    expect(describeStatus("ignite-arrows", ranks)).toBe(
+      "foes your bow attacks hit take 15 fire damage, and so do foes adjacent to them",
+    );
   });
 });
