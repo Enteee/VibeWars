@@ -7,6 +7,7 @@ import {
   unmaintainedUpkeepSkills,
 } from "@vibewars/game-core";
 
+import { corpusSkills } from "./corpus.js";
 import { generateSkillBundle } from "./generate.js";
 import { gwSkillDataDir, readGwSkillData } from "./sources/gw-skilldata.js";
 
@@ -92,5 +93,114 @@ describe("every catalog skill against gw-skilldata (#1207)", () => {
     expect(
       IMPLEMENTED_SKILLS.filter((skill) => skill.gwId === undefined).map((skill) => skill.id),
     ).toEqual(["necromancer.blood-renewal-lite"]);
+  });
+});
+
+/** A scaled number: its value at ranks 0 and 12 of its attribute. */
+interface Ends {
+  readonly atZero: number;
+  readonly atTwelve: number;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
+}
+
+function isEnds(value: unknown): value is Ends {
+  return isRecord(value) && typeof value.atZero === "number" && typeof value.atTwelve === "number";
+}
+
+/** Every object reachable from `root`, once each: summoned creatures and their replacements included. */
+function reachable(root: unknown): readonly Readonly<Record<string, unknown>>[] {
+  const seen = new Set<unknown>();
+  const found: Readonly<Record<string, unknown>>[] = [];
+  const visit = (value: unknown): void => {
+    if (!isRecord(value) || seen.has(value)) {
+      return;
+    }
+    seen.add(value);
+    found.push(value);
+    for (const child of Object.values(value)) {
+      visit(child);
+    }
+  };
+  visit(root);
+  return found;
+}
+
+/** GW1's `a...b`: a scaled number at ranks 0 and 15. */
+function corpusPairs(description: string): readonly (readonly [number, number])[] {
+  return [...description.matchAll(/(\d+)\.\.\.(\d+)/g)].map(
+    (match) => [Number(match[1]), Number(match[2])] as const,
+  );
+}
+
+/** The line through ranks 0 and 15, at 12: never the wiki's rounded table. */
+function exactAtTwelve([atZero, atFifteen]: readonly [number, number]): number {
+  return atZero + 0.8 * (atFifteen - atZero);
+}
+
+describe("scaled numbers at rank 12 against gw-skilldata (#1899)", () => {
+  const descriptions = new Map(corpusSkills().map((skill) => [skill.gwId, skill.description]));
+  const described = IMPLEMENTED_SKILLS.flatMap((skill) => {
+    const description = skill.gwId === undefined ? undefined : descriptions.get(skill.gwId);
+    return description === undefined ? [] : [{ skill, description }];
+  });
+
+  it("gives every summoned creature its corpus level line, and 80 + 20 Health a level", () => {
+    let creatures = 0;
+    for (const { skill, description } of described) {
+      for (const node of reachable(skill)) {
+        const attack = node.attack;
+        const health = node.maxHealth;
+        if (!isRecord(attack) || !isRecord(attack.scaling) || attack.scaling.kind !== "level") {
+          continue;
+        }
+        const level = attack.scaling.level;
+        const healthEnds = isRecord(health) ? health.scaling : undefined;
+        if (!isEnds(level) || !isEnds(healthEnds)) {
+          throw new Error(`${skill.id}: a creature without a level or Health line`);
+        }
+        const name = String(node.name);
+        const pair = new RegExp(`level (\\d+)\\.\\.\\.(\\d+) ${name}`, "i").exec(description);
+        expect(pair, `${skill.id} names no "level a...b ${name}"`).not.toBeNull();
+        const corpus = [Number(pair?.[1]), Number(pair?.[2])] as const;
+        creatures += 1;
+        expect(level.atZero, `${skill.id} level at 0`).toBe(corpus[0]);
+        expect(level.atTwelve, `${skill.id} level at 12`).toBeCloseTo(exactAtTwelve(corpus), 3);
+        expect(healthEnds.atZero, `${skill.id} Health at 0`).toBeCloseTo(80 + 20 * level.atZero, 3);
+        expect(healthEnds.atTwelve, `${skill.id} Health at 12`).toBeCloseTo(
+          80 + 20 * level.atTwelve,
+          3,
+        );
+      }
+    }
+    // Not vacuous: Animate Bone Minions, Animate Flesh Golem and the rest.
+    expect(creatures).toBeGreaterThanOrEqual(6);
+  });
+
+  it("never stores the wiki's rounded rank-12 value for a corpus a...b", () => {
+    const hits: string[] = [];
+    for (const { skill, description } of described) {
+      const pairs = corpusPairs(description);
+      for (const node of reachable(skill)) {
+        if (!isEnds(node)) {
+          continue;
+        }
+        for (const pair of pairs) {
+          const exact = exactAtTwelve(pair);
+          if (
+            !Number.isInteger(exact) &&
+            node.atZero === pair[0] &&
+            node.atTwelve === Math.round(exact)
+          ) {
+            hits.push(
+              `${skill.id}: ${String(pair[0])}...${String(pair[1])} is ${String(exact)} at 12`,
+            );
+          }
+        }
+      }
+    }
+    expect(hits).toEqual([]);
   });
 });

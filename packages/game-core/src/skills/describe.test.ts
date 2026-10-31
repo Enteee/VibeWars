@@ -936,11 +936,11 @@ describe("describeStatus", () => {
     const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
     expect(texts("necromancer.animate-bone-minions")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 2 Bone Minion (280 Health)",
+      "Summons 2 Bone Minion (272 Health)",
     ]);
     expect(texts("necromancer.animate-bone-horror")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Bone Horror (360 Health)",
+      "Summons 1 Bone Horror (356 Health)",
     ]);
   });
 
@@ -949,13 +949,13 @@ describe("describeStatus", () => {
     const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
     expect(texts("necromancer.animate-flesh-golem")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Flesh Golem (500 Health)",
+      "Summons 1 Flesh Golem (492 Health)",
       "Only one at a time: a new one kills the old",
       "Leaves 3 corpses when it dies",
     ]);
     expect(texts("necromancer.animate-shambling-horror")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Shambling Horror (360 Health)",
+      "Summons 1 Shambling Horror (356 Health)",
       "When it dies, 1 Jagged Horror (320 Health) stands up in its place; its attacks: applies Bleeding for 25s (−3 Health degeneration)",
     ]);
     // The corpse count scales with Death Magic, 1 at 0.
