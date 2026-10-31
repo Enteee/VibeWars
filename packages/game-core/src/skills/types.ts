@@ -1446,6 +1446,11 @@ export interface Skill {
    * Absent: only what interrupts any skill does.
    */
   readonly easilyInterrupted?: true;
+  /**
+   * GW1's "Health gain from Divine Favor is doubled for this spell"
+   * (#1754): Healing Touch's. Absent: the normal bonus.
+   */
+  readonly divineFavorDoubled?: true;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */

@@ -60,6 +60,11 @@ export const MONK_ICONS = {
   "monk.mend-ailment": { glyph: "drop-mend" },
   "monk.stonesoul-strike": { glyph: "hand-star" },
   "monk.shield-of-regeneration": { glyph: "shield-regen" },
+  // Monk mechanics (#1754), stand-ins until their art card.
+  "monk.spirit-bond": { glyph: "plus-halo", modifier: "renew" },
+  "monk.holy-wrath": { glyph: "smite-attacking", modifier: "up" },
+  "monk.balthazars-aura": { glyph: "star-beam-flame", modifier: "area" },
+  "monk.healing-touch": { glyph: "hand-star", modifier: "plus" },
   // Monk smiting staples (#1519, #1584): holy star, signet ring, the foe attacking or knocked down.
   "monk.smite": { glyph: "smite-attacking" },
   "monk.spear-of-light": { glyph: "spear-light" },

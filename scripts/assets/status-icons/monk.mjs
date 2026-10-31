@@ -140,4 +140,26 @@ export const MONK_STATUS_ICONS = {
       `<circle cx="12" cy="9" r="1.8" ${stroke(c, 1.6)}/>` +
       `<path d="M12 14v7M8.5 17.5h7" ${stroke(c, 2.2)}/>`,
   ],
+  // Monk mechanics (#1754), stand-ins until their art card.
+  // Enchantment: a plus inside a ring, healed when a big hit lands.
+  "spirit-bond": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8.5v7M8.5 12h7" ${stroke(c, 2.2)}/>`,
+  ],
+  // Enchantment: a star with an arrow turned back, blows go back to the attacker.
+  "holy-wrath": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l1.8 3.7 4 .6-2.9 2.8.7 4L12 12.2 8.4 14.1l.7-4L6.2 7.3l4-.6z" ${stroke(c, 1.6)}/>` +
+      `<path d="M18 20H8M11 17l-3 3 3 3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a ring of rays round a body, adjacent foes burn holy.
+  "balthazars-aura": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="3.5" ${stroke(c, 2)}/>` +
+      `<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" ${stroke(c, 1.6)}/>`,
+  ],
 };
