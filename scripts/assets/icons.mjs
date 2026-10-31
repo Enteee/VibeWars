@@ -3102,14 +3102,15 @@ const skillGlyph = {
       inkLine("M2.5 3H12.5", 2.4) +
         `<path d="M8 5.5C8 5.5 5 8.6 5 10.4A3 3 0 0 0 11 10.4C11 8.6 8 5.5 8 5.5Z" fill="${C.ink}"/>`,
     ),
-  // Mesmer staples 3 (#1627, #1666): the ringed plus is "healed per Energy lost"; the hex ring is a hex taken.
+  // Mesmer staples 3 (#1627, #1666): the ringed plus is Health healed per Energy lost, the ringed bolt Energy gained; the hex ring is a hex taken.
   "energy-feast": () =>
     `<g transform="translate(10,10) scale(0.85) translate(-12,-12)">${skillGlyph.energy()}</g>` +
     healBadge(),
   "hex-energy-feast": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 1.8)} stroke-dasharray="4 3"/>` +
     `<g transform="translate(10.5,10.5) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
-    healBadge(),
+    `<circle cx="18.5" cy="18" r="4.8" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.3" ${stroke(C.ink, 1.5)}/>` +
+    `<g transform="translate(18.5,18) scale(0.3) translate(-12,-12)">${skillGlyph.energy()}</g>`,
   "hex-interrupt": () =>
     `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
     `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${inkFill(burst(6))}</g>`,
