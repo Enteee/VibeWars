@@ -2321,6 +2321,531 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist staples 3 (#1664): Air and Earth, at rank 12              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "elementalist.enervating-charge",
+    name: "Enervating Charge",
+    gwId: 224,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 25...50 lightning damage and suffers from
+    // Weakness for 5...20 seconds": 45 and 17 s.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.air-magic", atZero: 25, atTwelve: 45 } },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      { kind: "apply-status", statusId: "weakness", durationSeconds: 17 },
+    ],
+  },
+  {
+    id: "elementalist.lightning-hammer",
+    name: "Lightning Hammer",
+    gwId: 865,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "Target foe is struck for 10...100 lightning damage", without
+    // the PvE split's Cracked Armor.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 82 } },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+    ],
+  },
+  {
+    id: "elementalist.lightning-javelin",
+    name: "Lightning Javelin",
+    gwId: 230,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Send out a Lightning Javelin": it flies as Fireball does. GW1's
+    // "strikes all foes between you and your target" is left out: there
+    // is no line to pierce along yet.
+    projectile: { speed: RANGE_SPELL },
+    // "...strikes for 15...50 lightning damage if it hits. Lightning
+    // Javelin interrupts attacking foes": 43. An attack skill is
+    // interrupted; a plain swing is not, as no `interrupt` cancels one.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.air-magic", atZero: 15, atTwelve: 43 } },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      { kind: "if", condition: { kind: "target-attacking" }, effects: [{ kind: "interrupt" }] },
+    ],
+  },
+  {
+    id: "elementalist.arc-lightning",
+    name: "Arc Lightning",
+    gwId: 842,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 5...40 lightning damage. If you are
+    // Overcast, two foes near your target are struck for 15...85 lightning
+    // damage": 33, and 71 on the nearest two.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 33 } },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: 2,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.air-magic", atZero: 15, atTwelve: 71 },
+                },
+                type: "lightning",
+                armorPenetration: 0.25,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.thunderclap",
+    name: "Thunderclap",
+    gwId: 228,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Create a massive shockwave at target foe's location. Deals 10...50
+    // lightning damage to target and all nearby foes."
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Struck foes are interrupted and suffer from Cracked Armor and
+    // Weakness for 5...20 seconds": 42 and 17 s.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 42 } },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      { kind: "interrupt" },
+      { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 },
+      { kind: "apply-status", statusId: "weakness", durationSeconds: 17 },
+    ],
+  },
+  {
+    id: "elementalist.windborne-speed",
+    name: "Windborne Speed",
+    gwId: 160,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...13 seconds, target ally moves 33% faster": 11 s.
+    effects: [{ kind: "apply-status", statusId: "windborne-speed", durationSeconds: 11 }],
+  },
+  {
+    id: "elementalist.glowstone",
+    name: "Glowstone",
+    gwId: 1661,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: { speed: RANGE_SPELL },
+    // "Send a projectile that strikes for 5...50 earth damage if it hits.
+    // If this spell hits a weakened foe, you gain 5 Energy plus 1 Energy
+    // for every 2 ranks of Energy Storage", as Glowing Gaze's.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 41 } },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "weakness" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 5, atTwelve: 11 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.dragons-stomp",
+    name: "Dragon's Stomp",
+    gwId: 1086,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 25 },
+    // Exhaustion, at the corpus's 10 (the card left it out).
+    overcast: 10,
+    activationSeconds: 3,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "You invoke a Dragon's Stomp at target foe's location. All foes near
+    // this location...", as Earthquake's.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "...are knocked down and are struck for 26...100 earth damage."
+    effects: [
+      { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+    ],
+  },
+  {
+    id: "elementalist.eruption",
+    name: "Eruption",
+    gwId: 167,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Cause an Eruption at target foe's location. Each second for 5
+    // seconds, foes near this location are struck for 10...40 earth damage
+    // and are Blinded for 10 seconds": 34. It stays where they stood as
+    // the cast ended, as Maelstrom's.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_NEARBY,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 34 },
+                },
+                type: "earth",
+                armorPenetration: 0,
+              },
+              { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.ash-blast",
+    name: "Ash Blast",
+    gwId: 1085,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target and adjacent foes are struck for 35...65 earth damage": 59.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Burning foes struck by Ash Blast are hexed for 5 seconds...": each
+    // struck foe on its own, so only the burning ones.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 35, atTwelve: 59 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "burning" },
+        effects: [{ kind: "apply-status", statusId: "ash-blast", durationSeconds: 5 }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.shockwave",
+    name: "Shockwave",
+    gwId: 937,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    // "All foes in the area": the area around you, so it needs no target.
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "All foes in the area take 15...60 earth damage and are Weakened for
+    // 1...10 seconds. Nearby foes also take +15...60 earth damage and have
+    // Cracked Armor for 1...10 seconds. Adjacent foes suffer the previous
+    // effects, take +15...60 earth damage, and are Blinded for 1...10
+    // seconds": 51 and 8 s per ring. Each ring is its own packet of 51, not
+    // one summed hit; armor is linear, so the total is the same.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_IN_THE_AREA,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 15, atTwelve: 51 },
+            },
+            type: "earth",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "weakness", durationSeconds: 8 },
+        ],
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 15, atTwelve: 51 },
+            },
+            type: "earth",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 },
+        ],
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 15, atTwelve: 51 },
+            },
+            type: "earth",
+            armorPenetration: 0,
+          },
+          { kind: "apply-status", statusId: "blind", durationSeconds: 8 },
+        ],
+      },
+    ],
+  },
 ];
 
 /**
