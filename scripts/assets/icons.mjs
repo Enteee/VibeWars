@@ -2328,6 +2328,19 @@ const healthGauge = (/** @type {number} */ fill) =>
   `<rect x="3.5" y="19.5" width="${(17 * fill).toFixed(1)}" height="1.5" fill="${C.ink}"/>` +
   inkLine("M12 17.5V23", 1.2);
 
+/**
+ * A dagger (or a pair) up and to the left with a rider glyph in the bottom right corner on a plate of its own (#1653).
+ * @param {string} rider A glyph body, drawn in the 24 box and shrunk here.
+ * @param {boolean} [pair] Two blades instead of one.
+ */
+const strikeWith = (rider, pair = false) =>
+  (pair
+    ? `<g transform="translate(6.5,8) scale(0.62) translate(-12,-12)">${skillGlyph.dagger()}</g>` +
+      `<g transform="translate(11,5) scale(0.62) translate(-12,-12)">${skillGlyph.dagger()}</g>`
+    : `<g transform="translate(9,9) scale(0.74) translate(-12,-12)">${skillGlyph.dagger()}</g>`) +
+  `<circle cx="17.5" cy="17.5" r="6" fill="${C.bg}"/>` +
+  `<g transform="translate(17.5,17.5) scale(0.5) translate(-12,-12)">${rider}</g>`;
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   // Payoffs of the chants of #1558: a burst struck through (cannot be interrupted), a bolt with a minus
@@ -2522,6 +2535,39 @@ const skillGlyph = {
   "ring-rip-bleed": () =>
     `<g transform="translate(10,10) scale(0.8) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>` +
     inkFill("M18.5 13.500c1.6 2.3 2.8 3.6 2.8 5.200a2.8 2.8 0 0 1-5.6 0c0-1.6 1.2-2.9 2.8-5.200z"),
+  // Assassin staples 3 (#1653): the blade, with its rider on a plate in the corner.
+  // Black Mantis Thrust: cripples a hexed foe.
+  "dagger-limp-rider": () => strikeWith(inkLine("M16 1L9 10.5L15 15L7 23", 4)),
+  // Black Spider Strike: poisons a hexed foe.
+  "dagger-germ": () => strikeWith(skillGlyph.germ()),
+  // Golden Fox Strike: unblockable while enchanted, the cracked shield of Guiding Hands.
+  "dagger-unblock": () => strikeWith(skillGlyph["armor-crack"]()),
+  // Golden Fang Strike: Deep Wound while enchanted, the cross of the status.
+  "dagger-wound": () => strikeWith(inkLine("M5 5L19 19M19 5L5 19", 4)),
+  // Lotus Strike: gives Energy.
+  "dagger-energy": () => strikeWith(skillGlyph.energy()),
+  // Falling Lotus Strike: Energy from a foe on the ground.
+  "dagger-energy-ground": () => strikeWith(skillGlyph.energy() + inkLine("M1 22H23", 3)),
+  // Nine Tail Strike: two blows, neither can be blocked.
+  "daggers-unblock": () => strikeWith(skillGlyph["armor-crack"](), true),
+  // Disrupting Stab: interrupts, the spell disabled behind it.
+  "dagger-interrupt-down": () =>
+    strikeWith(skillGlyph.interrupt() + inkLine("M12 15V23M8 20L12 23.5L16 20", 3)),
+  // Temple Strike: interrupts, and blinds.
+  "dagger-interrupt-blind": () =>
+    strikeWith(
+      `<g transform="translate(11,13) scale(0.8) translate(-12,-12)">${skillGlyph["eye-slash"]()}</g>` +
+        `<g transform="translate(19,5) scale(0.42) translate(-12,-12)">${skillGlyph.interrupt()}</g>`,
+    ),
+  // Vampiric Assault: two blows that drink.
+  "daggers-drop": () =>
+    strikeWith(inkFill("M12 2C9 7 6 10 6 15a6 6 0 0 0 12 0C18 10 15 7 12 2Z"), true),
+  // Shattering Assault: two blows that break an enchantment.
+  "daggers-ring": () => strikeWith(skillGlyph["ring-rend"](), true),
+  // Signet of Shadows: a signet ring with an eye shut in it, blindness raises the damage.
+  "signet-shadow": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 2.2)}/>` +
+    `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${skillGlyph["eye-slash"]()}</g>`,
   // A scythe: a long haft, the blade curved over its top (#990).
   scythe: () =>
     inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
