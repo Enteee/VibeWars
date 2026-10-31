@@ -1639,13 +1639,13 @@ const status = {
       `<ellipse cx="12" cy="5" rx="4.5" ry="1.6" ${stroke(c, 1.5)}/>` +
       `<path d="M12 8v9M9 14h6M12 17v3" ${stroke(c, 2)}/>`,
   ],
-  // Monk staples 5 (#1650), a stand-in until its art card.
-  // Enchantment: a shield over regeneration arrows, armour and health back.
+  // Enchantment: a shield with a plus over regeneration chevrons, as the skill's icon.
   "shield-of-regeneration": [
     "enchantment",
     (c) =>
-      `<path d="M7 4h10v5c0 3-2.5 5-5 6.5C9.5 14 7 12 7 9z" ${stroke(c, 1.8)}/>` +
-      `<path d="M6 20l2.5-2.5L11 20M10 20l2.5-2.5L15 20M14 20l2.5-2.5L19 20" ${stroke(c, 1.6)}/>`,
+      `<path d="M12 2.5L19 5V10.5C19 14 16 16 12 17.5C8 16 5 14 5 10.5V5Z" ${stroke(c, 2)}/>` +
+      `<path d="M12 6.5V12M9.2 9.2H14.8" ${stroke(c, 2)}/>` +
+      `<path d="M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21" ${stroke(c, 1.8)}/>`,
   ],
   // Necromancer and Elementalist staples (#1540), stand-ins until their art card.
   // Enchantment: a drop over three regeneration arrows, energy bought with blood.
@@ -3413,6 +3413,48 @@ const skillGlyph = {
     inkFill("M12 2.5C12 2.5 4.5 12 4.5 16A7.5 7.5 0 0 0 19.5 16C19.5 12 12 2.5 12 2.5Z") +
     `<path d="M3.5 21.5L20.5 6" ${stroke(C.bg, 5.4)}/>` +
     inkLine("M3.5 21.5L20.5 6", 2.4),
+  // Monk staples 3 (#1650, #1703): a plus and what it brings, the family of the heals.
+  "plus-whisper": () =>
+    `<g transform="translate(9,12) scale(0.7) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkLine("M17.5 8.5C19.5 10.5 19.5 13.5 17.5 15.5M21 6C24 9.5 24 14.5 21 18", 1.8),
+  "eye-heal": () => riderOn(skillGlyph.eye(), RIDER.plus),
+  "heal-spark": () =>
+    `<g transform="translate(9,14) scale(0.75) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkFill("M18 1.5L19.7 6.3L24.5 8L19.7 9.7L18 14.5L16.3 9.7L11.5 8L16.3 6.3Z"),
+  "plus-rays": () =>
+    `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkLine(
+      "M12 1.5V4M12 20V22.5M1.5 12H4M20 12H22.5M4.5 4.5L6.3 6.3M17.7 17.7L19.5 19.5M19.5 4.5L17.7 6.3M6.3 17.7L4.5 19.5",
+      2,
+    ),
+  "signet-plus": () =>
+    riderOn(
+      `<circle cx="12" cy="14" r="6" ${stroke(C.ink, 2.5)}/><path d="M12 2.5l3.5 3.5-3.5 3.5-3.5-3.5z" fill="${C.ink}"/>`,
+      RIDER.plus,
+    ),
+  "plus-halo": () =>
+    `<g transform="translate(12,12) scale(0.55) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2)}/>`,
+  "plus-wings": () =>
+    `<g transform="translate(12,13) scale(0.5) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkFill("M8 12C5 12 3 9.5 1.5 5.5C5 5.5 7.5 7.5 9.5 10Z") +
+    inkFill("M16 12C19 12 21 9.5 22.5 5.5C19 5.5 16.5 7.5 14.5 10Z") +
+    inkFill("M9.5 14C7 14 4.5 16 3 19.5C6.5 19.5 9 18 11 16Z") +
+    inkFill("M14.5 14C17 14 19.5 16 21 19.5C17.5 19.5 15 18 13 16Z"),
+  "drops-purge": () =>
+    [0, 7, 14]
+      .map(
+        (x) =>
+          `<g transform="translate(${String(x)},0)">${inkFill("M5 4.5C3 7.5 1 9 1 11.5A4 4 0 0 0 9 11.5C9 9 7 7.5 5 4.5Z")}</g>`,
+      )
+      .join("") + inkLine("M2 21L22 3", 2.4),
+  "drop-mend": () => riderOn(skillGlyph["drop-struck"](), RIDER.plus),
+  "hand-star": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` + holyStar(17, 7, 6),
+  "shield-regen": () =>
+    `<path d="M12 2.5L19 5V10.5C19 14 16 16 12 17.5C8 16 5 14 5 10.5V5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 6.5V12M9.2 9.2H14.8", 2) +
+    inkLine("M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21", 1.8),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
