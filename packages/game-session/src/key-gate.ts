@@ -179,12 +179,13 @@ export function keyGated(
     transport.onPeerLeave((peerId) => {
       const was = proven(peerId);
       present.delete(peerId);
+      // Forgotten, proven or not: a peer id is the peer's own choice and
+      // shows on the relays, so one coming back proves the key again.
+      drop(peerId);
       if (was) {
         for (const handler of [...leaves]) {
           handler(peerId);
         }
-      } else {
-        drop(peerId);
       }
     }),
     transport.on("key-proof", (data, from) => {
@@ -224,7 +225,9 @@ export function keyGated(
     }),
     transport.on("key-challenge", (data, from) => {
       const asked = parseWireKeyChallenge(data);
-      if (side !== "guest" || asked === undefined || peers.has(from)) {
+      // A host that challenges again has forgotten this guest, as one that
+      // saw it leave does: it proves the key again, and so must the host.
+      if (side !== "guest" || asked === undefined || (peers.has(from) && !proven(from))) {
         return;
       }
       const answered: Peer = { stage: "answered", hostNonce: asked.nonce, guestNonce: nonce() };

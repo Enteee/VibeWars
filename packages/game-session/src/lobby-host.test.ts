@@ -1346,6 +1346,41 @@ describe("the key gate (#1681, ADR-0043)", () => {
     expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Proven"]);
   });
 
+  it("forgets a proven peer that leaves: the same id back hears only a fresh challenge (#1681)", async () => {
+    const lobby = await openLobby();
+    const peer = lobby.network.join();
+    const got = heard(peer);
+    await settle();
+    await prove(peer, got);
+    await until(() => proven(got));
+    peer.send("lobby-join", joinAs("Proven"), "host");
+    await until(() => playersOf(lobby.host).length === 2);
+
+    got.length = 0;
+    lobby.network.blip("host", peer.selfId);
+    await settle();
+    peer.send("lobby-join", joinAs("Again"), "host");
+    lobby.host.connection.sendChat("all", "hi");
+    await settle();
+    expect(channels(got)).toEqual(["key-challenge"]);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+
+    await prove(peer, got);
+    await until(() => proven(got));
+    peer.send("lobby-join", joinAs("Again"), "host");
+    await until(() => playersOf(lobby.host).length === 2);
+  });
+
+  it("a guest whose host forgot it proves the key again, and checks the host again", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join("Guest");
+    lobby.network.blip("host", guest.transport.selfId);
+    await settle();
+    await cryptoTurns();
+    guest.connection.chooseTeam(0);
+    await until(() => playersOf(lobby.host).find(({ name }) => name === "Guest")?.team === 0);
+  });
+
   it("drops a peer on a wrong proof: the nonce is spent, so a right one after it is not heard", async () => {
     const lobby = await openLobby();
     const peer = lobby.network.join();
