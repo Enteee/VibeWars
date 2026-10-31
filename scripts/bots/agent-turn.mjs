@@ -246,6 +246,24 @@ for (const file of [CONTEXT_FILE, LIMIT_FILE]) {
 }
 // So a file left from the last session never turns this one away.
 saveContext(0);
+// A run killed after its context crossed the ceiling never reached the check
+// at its end; the peak it left behind is read here (#1815). A missing or
+// unreadable file is a first start, so 0.
+const PEAK = path.join(state, "context-peak");
+/** @returns {number} */
+function savedPeak() {
+  try {
+    const peak = Number(fs.readFileSync(PEAK, "utf8").trim());
+    return Number.isFinite(peak) ? peak : 0;
+  } catch {
+    return 0;
+  }
+}
+if (savedPeak() >= CONTEXT_CEILING) {
+  fs.rmSync(SESSION, { force: true });
+  show("agent-turn: the last run ended over the context ceiling; starting a fresh session", "err");
+}
+writeAtomically(PEAK, "0\n");
 const resume = savedSession();
 peek?.state("turn");
 const child = spawn(command, [...(resume === null ? [] : ["--resume", resume]), ...args], {
@@ -253,8 +271,8 @@ const child = spawn(command, [...(resume === null ? [] : ["--resume", resume]), 
 });
 
 /** What the run got as far as; set from the stream as it arrives. */
-/** @type {{ init: boolean, result: boolean, limit: { until: number | null } | null, limitLine: string, context: number }} */
-const seen = { init: false, result: false, limit: null, limitLine: "", context: 0 };
+/** @type {{ init: boolean, result: boolean, limit: { until: number | null } | null, limitLine: string, context: number, peak: number }} */
+const seen = { init: false, result: false, limit: null, limitLine: "", context: 0, peak: 0 };
 /** @type {string[]} */
 const recent = [];
 /** The `tg wait` and `board wait` calls of this turn, by tool call id (#325). */
@@ -339,6 +357,12 @@ lines.on("line", (line) => {
   if (context !== null) {
     seen.context = context;
     saveContext(context);
+    // The peak, not the last call, says whether the session is over: a
+    // compaction or a short last call must not hide it.
+    if (context > seen.peak) {
+      seen.peak = context;
+      writeAtomically(PEAK, `${String(context)}\n`);
+    }
   }
   for (const out of formatLine(line)) {
     show(out);
@@ -363,6 +387,14 @@ if (rewind.to !== null) {
   restoreCursor(rewind.to);
 }
 
+if (seen.peak >= CONTEXT_CEILING) {
+  fs.rmSync(SESSION, { force: true });
+  show(
+    `agent-turn: context ${kilo(seen.peak)} >= ${kilo(CONTEXT_CEILING)}; next turn starts a fresh session`,
+    "err",
+  );
+}
+
 // A limit outranks the exit code and the result: the run that hit it may
 // well have ended "normally", and it must not count as a failure either.
 if (seen.limit !== null) {
@@ -371,13 +403,6 @@ if (seen.limit !== null) {
   writeAtomically(path.join(state, "usage-limit-sample.json"), `${seen.limitLine}\n`);
   show(`agent-turn: Claude usage limit reached; ${resetText(until)}`, "err");
   quit(3, "limited");
-}
-if (seen.context >= CONTEXT_CEILING) {
-  fs.rmSync(SESSION, { force: true });
-  show(
-    `agent-turn: context ${kilo(seen.context)} >= ${kilo(CONTEXT_CEILING)}; next turn starts a fresh session`,
-    "err",
-  );
 }
 if (!runFailed({ code, sawResult: seen.result })) {
   quit(0, "between");
