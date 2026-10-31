@@ -4,6 +4,7 @@ import { RANGE_SPELL } from "../distances.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, weaponDamageType, type Weapon } from "../equipment/weapons.js";
 import { applyIntent } from "../match/apply-intent.js";
+import type { CombatLogEntry } from "../match/combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "../match/simulation.js";
 import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
@@ -304,6 +305,25 @@ describe("in a match (#1654)", () => {
       sim.step(DT);
     }
   }
+
+  it("Resilient Weapon's regeneration is credited to its caster", () => {
+    const sim = match();
+    const w = get(sim, "w");
+    w.health = 5000;
+    w.statuses.apply("bleeding", 10, "x");
+    w.statuses.apply("resilient-weapon", 10, "rit");
+    const log: CombatLogEntry[] = [];
+    for (let tick = 0; tick < Math.round(1 / DT); tick += 1) {
+      log.push(...sim.step(DT).log);
+    }
+    const regenerated = log.filter(
+      (entry) =>
+        entry.cause === "degeneration" &&
+        entry.events.some((event) => event.kind === "heal" && event.targetId === "w"),
+    );
+    expect(regenerated.length).toBeGreaterThan(0);
+    expect(regenerated.every((entry) => entry.sourceId === "rit")).toBe(true);
+  });
 
   it("Weapon of Shadow blinds whoever hits its bearer, and whoever it hits", () => {
     const struck = match();

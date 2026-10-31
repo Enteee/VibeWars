@@ -1894,7 +1894,9 @@ export class StatusSet {
   /**
    * The bearer attacked (#1604): whether a status of its own makes this
    * attack unblockable, each such status one attack fewer, and the ids
-   * that ended on it.
+   * that ended on it. A counted status, as Guiding Hands, counts every
+   * attack, even one another status, as Guided Weapon, already made
+   * unblockable: GW1's "next N attacks" counts attacks, not saves.
    */
   public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
     let unblockable = false;
@@ -2324,6 +2326,17 @@ export function reducedRecharge(seconds: number, faster: number): number {
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
 export const HEALING_MULTIPLIER_FLOOR = 0.6;
 
+/** Whether a status in `statuses` other than `self` is of one of `categories` (#1485). */
+export function isUnderAnother(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+  self: Pick<ActiveStatus, "id">,
+  categories: readonly StatusCategory[],
+): boolean {
+  return statuses.some(
+    (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
+  );
+}
+
 /**
  * Collapse every active status into one set of modifiers.
  *
@@ -2387,11 +2400,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
-  /** Whether a status other than `self` is of one of `categories` (#1485). */
   const underAnother = (self: Pick<ActiveStatus, "id">, categories: readonly StatusCategory[]) =>
-    statuses.some(
-      (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
-    );
+    isUnderAnother(statuses, self, categories);
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
