@@ -954,7 +954,7 @@ it, not baked in, so one file serves every screen.
   in an arrow ring), hex-bolt (dashed ring, bolt), blade-cleanse, blade-hook,
   blade-shards, hilt, banner-note, mountain-crack, dust, thorns, limp,
   dagger-burst, ox-horns, spider, resurrect-seal, resurrect-arrive,
-  resurrect-return, resurrect-blood, bone-minions, bone-horror, vampire-horror, golem, bleed-horror, rot-flesh, feast-jaw, jaws, paw,
+  resurrect-return, resurrect-blood, bone-minions, bone-horror, vampire-horror, golem, jagged-horror, bleed-horror, rot-flesh, feast-jaw, jaws, paw,
   paw-heart, claw, bond, paw-speed, paw-shield, hex-cut, drop-bolt, drop-ward,
   drop-pair, plus-sparks, plus-gusts, party-heal, plus-ripple, meteor-trio,
   ring-heal, hammer-slam, hex-burst, drop-arrow, pain-cross, eye-drop, blink,

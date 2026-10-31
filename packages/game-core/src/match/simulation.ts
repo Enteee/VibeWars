@@ -336,6 +336,7 @@ export const CREATURE_LOOKS = [
   "vampiric-horror",
   "flesh-golem",
   "shambling-horror",
+  "jagged-horror",
   "spirit",
   "priest",
   "guild-lord",

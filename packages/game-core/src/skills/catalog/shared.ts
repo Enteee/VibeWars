@@ -178,7 +178,7 @@ export const FLESH_GOLEM: CreatureTemplate = {
 
 /** Each blow makes its foe bleed for 25 seconds (#1836); it is no one's replacement's. */
 export const JAGGED_HORROR: CreatureTemplate = {
-  ...deathMinion("bone-horror", "Jagged Horror", [80, 320], [5, 50], [0, 12], [8, 16], "blunt", [
+  ...deathMinion("jagged-horror", "Jagged Horror", [80, 320], [5, 50], [0, 12], [8, 16], "blunt", [
     { kind: "apply-status", statusId: "bleeding", durationSeconds: 25 },
   ]),
   replacedBy: undefined,

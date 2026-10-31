@@ -261,6 +261,7 @@ describe("Shambling Horror (#1836)", () => {
     kill(sim, shambling.id);
     stepFor(sim, DT);
     const jagged = only(sim, "Jagged Horror");
+    expect(jagged.creature?.look).toBe("jagged-horror");
     expect(distance(jagged.position, fell)).toBeLessThanOrEqual(
       RULES.movement.maxSpeedUnitsPerSecond * 2 * DT + 2 * RULES.collision.creatureRadius,
     );

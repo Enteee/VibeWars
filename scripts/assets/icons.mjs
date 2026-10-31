@@ -535,6 +535,12 @@ const creature = {
       `<path fill-rule="evenodd" d="M-3.2-6H3.2V0.4H-3.2ZM-7 1.6H7V6.4H-7Z` +
         `M-2.1-3.6H-0.7V-2.2H-2.1ZM0.7-3.6H2.1V-2.2H0.7ZM-3.2-1.2H3.2V-0.6H-3.2Z" fill="${C.ink}"/>`,
     ),
+  // The skull bristling with spikes: the Jagged Horror a Shambling Horror leaves (#1860).
+  "jagged-horror": () =>
+    creatureGlyph(
+      SKULL +
+        `<path d="M-1.6-4.3L-2.6-7L-0.4-4.9L0-7.4L0.4-4.9L2.6-7L1.6-4.3ZM-3.4-3L-6.4-4.4L-3.9-1.8ZM3.4-3L6.4-4.4L3.9-1.8ZM-3.9 0.6L-6.8 1.4L-3.9 2.4ZM3.9 0.6L6.8 1.4L3.9 2.4Z" fill="${C.ink}"/>`,
+    ),
   // The skull, bleeding from below: the shambling horror (#1860).
   "shambling-horror": () =>
     creatureGlyph(
