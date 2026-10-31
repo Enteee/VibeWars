@@ -8,7 +8,12 @@ import type {
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
 import type { StoredTeam } from "../storage/schema.js";
-import { lookOfWire, teamFigureCard, type TeamFigureMember } from "./character-card.js";
+import {
+  lookOfCharacter,
+  lookOfWire,
+  teamFigureCard,
+  type TeamFigureMember,
+} from "./character-card.js";
 import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
 
@@ -36,6 +41,7 @@ export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: the house team plays";
+export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Play.";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
 export const HOUSE_TEAM = "House team";
@@ -82,12 +88,13 @@ export function initial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?";
 }
 
-/** A saved Team Build as the Propose picker lists it. */
+/** A saved Team Build as the propose cards show it (#1862). */
 export interface ProposableTeam {
-  readonly id: string;
-  readonly label: string;
+  readonly team: StoredTeam;
   /** Not the side's size, so the host would refuse it (Q182). */
   readonly disabled: boolean;
+  /** Why it is disabled, as a line on its card: "needs 4 characters". */
+  readonly reason: string | undefined;
 }
 
 /** `teams` for a side of `size`: only those of exactly `size` members can be proposed. */
@@ -98,7 +105,7 @@ export function proposableTeams(
   const needs = `needs ${String(size)} ${size === 1 ? "character" : "characters"}`;
   return teams.map((team) => {
     const disabled = team.members.length !== size;
-    return { id: team.id, label: disabled ? `${team.name} (${needs})` : team.name, disabled };
+    return { team, disabled, reason: disabled ? needs : undefined };
   });
 }
 
@@ -351,6 +358,44 @@ function humansOnSide(snapshot: LobbySnapshot): number {
   return snapshot.players.filter((p) => !p.bot && p.team !== null && p.team === self?.team).length;
 }
 
+/**
+ * One of your saved Team Builds, to propose by a click (#1862), and to
+ * withdraw by a click on the one you proposed. It is Team Play's card
+ * for the team, without Edit.
+ */
+function ownCard(
+  { team, disabled, reason }: ProposableTeam,
+  proposedTeamId: string | undefined,
+  onPropose: (teamId: string | undefined) => void,
+): HTMLElement {
+  const proposed = team.id === proposedTeamId;
+  const footer: HTMLElement[] = [];
+  if (reason !== undefined) {
+    footer.push(h("span", "team-lobby-needs", reason));
+  }
+  if (proposed) {
+    footer.push(h("span", "team-lobby-proposed", "Proposed ✓"));
+  }
+  const card = teamFigureCard({
+    title: team.name,
+    // No cape: a team's members wear none, as on Team Play.
+    members: team.members.map(({ character }) => ({
+      look: lookOfCharacter(character, undefined),
+      label: `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,
+    })),
+    footer,
+    onOpen: () => {
+      onPropose(proposed ? undefined : team.id);
+    },
+    pressed: proposed,
+    disabled,
+    label: `Propose ${team.name}`,
+  });
+  card.classList.toggle("is-proposed", proposed);
+  card.classList.toggle("is-faded", disabled);
+  return card;
+}
+
 function voteStage(
   side: WireTeamSide,
   snapshot: LobbySnapshot,
@@ -358,33 +403,23 @@ function voteStage(
   proposedTeamId: string | undefined,
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
-  const shown: HTMLElement[] = [];
-  const propose = h("label", "team-lobby-propose");
-  propose.appendChild(h("span", "field-label", "Propose"));
-  const select = document.createElement("select");
-  const none = document.createElement("option");
-  none.value = "";
-  none.textContent = "None";
-  select.appendChild(none);
-  for (const team of proposableTeams(teams, side.size)) {
-    const option = document.createElement("option");
-    option.value = team.id;
-    option.textContent = team.label;
-    option.disabled = team.disabled;
-    select.appendChild(option);
+  const shown: HTMLElement[] = [h("h3", "menu-column-title", "Your Team Builds")];
+  if (teams.length === 0) {
+    shown.push(h("div", "screen-info team-lobby-no-teams", NO_TEAM_BUILDS));
+  } else {
+    const own = h("div", "play-cards team-lobby-own-cards");
+    for (const proposable of proposableTeams(teams, side.size)) {
+      own.appendChild(ownCard(proposable, proposedTeamId, callbacks.onPropose));
+    }
+    shown.push(own);
   }
-  select.value = proposedTeamId ?? "";
-  select.addEventListener("change", () => {
-    callbacks.onPropose(select.value === "" ? undefined : select.value);
-  });
-  propose.appendChild(select);
-  shown.push(propose);
 
+  shown.push(h("h3", "menu-column-title", "Proposals"));
   if (humansOnSide(snapshot) > 1) {
     shown.push(h("div", "screen-info team-lobby-hint", VOTE_HINT));
   }
 
-  const cards = h("div", "play-cards");
+  const cards = h("div", "play-cards team-lobby-proposals");
   if (side.proposals.length === 0) {
     cards.appendChild(h("div", "team-lobby-empty", NO_PROPOSALS));
   }
