@@ -2539,7 +2539,11 @@ const skillGlyph = {
   // Black Mantis Thrust: cripples a hexed foe.
   "dagger-limp-rider": () => strikeWith(inkLine("M16 1L9 10.5L15 15L7 23", 4)),
   // Black Spider Strike: poisons a hexed foe.
-  "dagger-germ": () => strikeWith(skillGlyph.germ()),
+  "dagger-germ": () =>
+    strikeWith(
+      `<circle cx="12" cy="12" r="5" fill="${C.ink}"/>` +
+        inkLine("M12 2V6M12 18V22M2 12H6M18 12H22M5 5L8 8M16 16L19 19M19 5L16 8M8 16L5 19", 2.6),
+    ),
   // Golden Fox Strike: unblockable while enchanted, the cracked shield of Guiding Hands.
   "dagger-unblock": () => strikeWith(skillGlyph["armor-crack"]()),
   // Golden Fang Strike: Deep Wound while enchanted, the cross of the status.
