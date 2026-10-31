@@ -139,15 +139,20 @@ describe("every training map", () => {
   // RANGE_SPELL in game-core's skill catalog.
   const RANGE_SPELL = 420;
 
-  it("ships the open hall and the pillared one", () => {
-    expect(maps.map(({ map }) => map.id).sort()).toEqual(["training-hall", "training-pillars"]);
+  it("ships the open hall, the pillared one and the open field", () => {
+    expect(maps.map(({ map }) => map.id).sort()).toEqual([
+      "training-field",
+      "training-hall",
+      "training-pillars",
+    ]);
   });
 
   it("is named for its directory, compact, and spawns one player against dummy slots", () => {
     for (const { dir, map } of maps) {
       expect(map.id).toBe(dir);
-      expect(map.width, map.id).toBeLessThanOrEqual(600);
-      expect(map.height, map.id).toBeLessThanOrEqual(450);
+      // The field (#497) is the one big enough to run in: 1400 by 900.
+      expect(map.width, map.id).toBeLessThanOrEqual(map.id === "training-field" ? 1400 : 600);
+      expect(map.height, map.id).toBeLessThanOrEqual(map.id === "training-field" ? 900 : 450);
       expect(
         map.spawnPoints.filter((s) => s.team === 0),
         map.id,

@@ -1031,6 +1031,16 @@ export function createTrainingPanel(): TrainingPanel {
       if (stage.dataset.names !== names) {
         stage.dataset.names = names;
       }
+      // And where everyone stands, to the unit (#497): that a dummy walks.
+      const positions = latestArena.actors
+        .map(
+          ({ id, position }) =>
+            `${id}:${Math.round(position.x).toString()},${Math.round(position.y).toString()}`,
+        )
+        .join(";");
+      if (stage.dataset.positions !== positions) {
+        stage.dataset.positions = positions;
+      }
       paintVitals(latestMatch);
       sinceMeterPaint += deltaSeconds;
       if (sinceMeterPaint >= METER_PAINT_SECONDS) {
@@ -1122,6 +1132,7 @@ export function createTrainingPanel(): TrainingPanel {
       partyWindow.dispose();
       delete stage.dataset.called;
       delete stage.dataset.names;
+      delete stage.dataset.positions;
       nameReveal.detach();
       detachMovement();
       stage.removeEventListener("keydown", onStageKeyDown);
