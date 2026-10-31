@@ -346,7 +346,7 @@ describe("Earth (#1664)", () => {
   it("Dragon's Stomp knocks down and strikes for 85 the target and all foes near it", () => {
     expect(skill(DRAGONS_STOMP).effects[1]).toMatchObject({
       type: "earth",
-      amount: { scaling: { atTwelve: 85 } },
+      amount: { scaling: { atTwelve: 85.2 } },
     });
     const sim = match();
     const events = cast(sim, DRAGONS_STOMP);

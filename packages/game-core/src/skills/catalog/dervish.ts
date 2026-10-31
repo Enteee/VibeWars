@@ -153,10 +153,10 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "melee",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10 } },
+      bonusDamage: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10.2 } },
       conditionalBonus: {
         condition: { kind: "caster-has", category: "enchantment" },
-        amount: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10 } },
+        amount: { scaling: { attributeId: "dervish.mysticism", atZero: 3, atTwelve: 10.2 } },
       },
       strikes: 1,
       unblockable: false,
@@ -677,10 +677,10 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "scythe",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+      bonusDamage: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8.2 } },
       conditionalBonus: {
         condition: { kind: "caster-has", category: "enchantment", profession: "dervish" },
-        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8.2 } },
       },
       cleavesAllWhen: { kind: "caster-has", category: "enchantment", profession: "dervish" },
       strikes: 1,
@@ -1309,7 +1309,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     target: "single-enemy",
     area: undefined,
     attack: scytheAttack(
-      { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 13 } },
+      { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 12.6 } },
       [],
     ),
     whileActivating: undefined,
@@ -1445,7 +1445,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // enchantment it will take decides it; a hit strips the stance.
     attack: {
       ...scytheAttack(
-        { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 13 } },
+        { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 12.6 } },
         [LOSE_DERVISH_ENCHANTMENT],
       ),
       unblockable: { kind: "caster-has", category: "enchantment", profession: "dervish" },
@@ -1488,7 +1488,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       ...scytheAttack(undefined, []),
       conditionalBonus: {
         condition: { kind: "target-moving" },
-        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 13 } },
+        amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 12.6 } },
       },
     },
     whileActivating: undefined,
@@ -1742,7 +1742,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: {
       ...scytheAttack(
-        { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 13 } },
+        { scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 12.6 } },
         [],
       ),
       weapon: "melee",
@@ -1905,7 +1905,9 @@ export const DERVISH_SKILLS: readonly Skill[] = [
           {
             kind: "disable-skill",
             which: "interrupted",
-            seconds: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8 } },
+            seconds: {
+              scaling: { attributeId: "dervish.scythe-mastery", atZero: 1, atTwelve: 8.2 },
+            },
           },
         ],
       },

@@ -1854,7 +1854,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "create-ground-effect",
         anchor: "caster",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 17.6 },
         },
         act: {
           kind: "aura",
@@ -2011,7 +2011,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85.2 },
         },
         type: "earth",
         armorPenetration: 0,
@@ -2113,7 +2113,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "create-ground-effect",
         anchor: "caster",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 17.6 },
         },
         act: {
           kind: "aura",
@@ -2753,7 +2753,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85.2 },
         },
         type: "earth",
         armorPenetration: 0,

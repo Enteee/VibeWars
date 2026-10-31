@@ -22,7 +22,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "axe",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
+      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16.2 } },
       // "If Swift Chop is blocked, target foe takes 1...16 damage and
       // suffers a Deep Wound for 20 seconds."
       conditionalBonus: undefined,
@@ -38,7 +38,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       onBlocked: [
         {
           kind: "damage",
-          amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16 } },
+          amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 1, atTwelve: 16.2 } },
           type: "typeless",
           armorPenetration: 0,
         },
@@ -75,7 +75,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       weapon: "hammer",
       weaponDamage: 1,
       bonusDamage: {
-        scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
+        scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16.2 },
       },
       conditionalBonus: undefined,
       strikes: 1,
@@ -661,7 +661,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "axe",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10 } },
+      bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10.4 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -774,7 +774,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "sword",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 24 } },
+      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 24.2 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: { kind: "caster-lacks", category: "stance" },
@@ -915,7 +915,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "sword",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 32 } },
+      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 32.2 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -960,7 +960,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       bonusDamage: undefined,
       conditionalBonus: {
         condition: { kind: "target-casting", spell: true },
-        amount: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 32 } },
+        amount: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 32.2 } },
       },
       strikes: 1,
       unblockable: false,
@@ -1123,7 +1123,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       weapon: "hammer",
       weaponDamage: 1,
       bonusDamage: {
-        scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 },
+        scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16.2 },
       },
       conditionalBonus: undefined,
       strikes: 1,
@@ -1277,7 +1277,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       bonusDamage: undefined,
       conditionalBonus: {
         condition: { kind: "target-has-status", statusId: "weakness" },
-        amount: { scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 24 } },
+        amount: { scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 24.2 } },
       },
       strikes: 1,
       unblockable: false,
@@ -1620,7 +1620,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
         { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
         {
           kind: "damage",
-          amount: { scaling: { attributeId: "warrior.strength", atZero: 10, atTwelve: 29 } },
+          amount: { scaling: { attributeId: "warrior.strength", atZero: 10, atTwelve: 29.2 } },
           type: "typeless",
           armorPenetration: 0,
         },
@@ -1863,7 +1863,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "sword",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 24 } },
+      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 24.2 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: { kind: "caster-lacks", category: "stance" },
@@ -2335,7 +2335,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       bonusDamage: undefined,
       conditionalBonus: {
         condition: { kind: "target-has-status", statusId: "deep-wound" },
-        amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 14 } },
+        amount: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 13.6 } },
       },
       strikes: 1,
       unblockable: false,
@@ -2529,7 +2529,9 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "hammer",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16 } },
+      bonusDamage: {
+        scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 16.2 },
+      },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -2731,7 +2733,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "sword",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 16 } },
+      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 16.2 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -2745,7 +2747,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       onBlocked: [
         {
           kind: "damage",
-          amount: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 16 } },
+          amount: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 16.2 } },
           type: "typeless",
           armorPenetration: 0,
         },
@@ -2780,7 +2782,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "sword",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 32 } },
+      bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 32.2 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -2919,7 +2921,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "melee",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "warrior.strength", atZero: 7, atTwelve: 21 } },
+      bonusDamage: { scaling: { attributeId: "warrior.strength", atZero: 7, atTwelve: 21.4 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: { kind: "target-has", category: "enchantment" },
@@ -3058,7 +3060,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
         amount: { flat: 0 },
         per: {
           count: { kind: "statuses", on: "target", categories: ["condition"] },
-          amount: { scaling: { attributeId: "warrior.tactics", atZero: 10, atTwelve: 56 } },
+          amount: { scaling: { attributeId: "warrior.tactics", atZero: 10, atTwelve: 56.4 } },
           max: undefined,
         },
       },
@@ -3067,7 +3069,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
         amount: { flat: 0 },
         per: {
           count: { kind: "statuses", on: "target", categories: ["condition"] },
-          amount: { scaling: { attributeId: "warrior.tactics", atZero: 3, atTwelve: 6 } },
+          amount: { scaling: { attributeId: "warrior.tactics", atZero: 3, atTwelve: 6.2 } },
           max: undefined,
         },
       },

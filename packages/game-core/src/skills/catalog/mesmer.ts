@@ -131,7 +131,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 13 },
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 12.6 },
             },
           },
         ],
@@ -172,7 +172,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "damage",
             amount: {
-              scaling: { attributeId: "mesmer.domination-magic", atZero: 14, atTwelve: 83 },
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 14, atTwelve: 82.8 },
             },
             type: "typeless",
             armorPenetration: 0,
@@ -215,7 +215,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 15 },
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 15.2 },
             },
           },
           {
@@ -262,7 +262,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-loss",
-        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8.2 } },
       },
       {
         kind: "damage",
@@ -301,7 +301,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-loss",
-        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 6 } },
+        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 6.4 } },
       },
       { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
     ],
@@ -336,7 +336,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-loss",
-        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8.2 } },
       },
       {
         kind: "damage",
@@ -538,7 +538,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "disable-skill",
         which: "interrupted-and-attribute",
-        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 10 } },
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 9.8 } },
       },
     ],
   },
@@ -1509,7 +1509,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-loss",
             amount: {
-              scaling: { attributeId: "mesmer.domination-magic", atZero: 3, atTwelve: 14 },
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 3, atTwelve: 14.2 },
             },
           },
         ],
@@ -1547,7 +1547,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "disable-skill",
         which: "all",
-        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 2, atTwelve: 7 } },
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 2, atTwelve: 6.8 } },
       },
       { kind: "disable-own-skills", which: "all", seconds: 5 },
     ],
@@ -1759,7 +1759,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-loss",
             amount: {
-              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 4 },
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 4.2 },
             },
           },
           { kind: "energy-gain", amount: { flat: 4 }, perEnergyLost: true },
@@ -1809,7 +1809,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "damage",
             amount: {
-              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 43 },
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 42.8 },
             },
             type: "typeless",
             armorPenetration: 0,

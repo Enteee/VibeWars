@@ -401,7 +401,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-loss",
-        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 8 } },
+        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 8.2 } },
       },
     ],
   },
@@ -816,7 +816,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         health: {
           kind: "percent",
           percent: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 48 },
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 48.4 },
           },
         },
         energyPercent: { flat: 0 },
@@ -939,7 +939,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // +1...10...12 damage."
     petAttack: {
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "ranger.beast-mastery", atZero: 1, atTwelve: 10 } },
+      bonusDamage: { scaling: { attributeId: "ranger.beast-mastery", atZero: 1, atTwelve: 9.8 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -1080,7 +1080,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         kind: "resurrect-companions",
         radius: AREA_NEARBY,
         healthPercent: {
-          scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 77 },
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 77.2 },
         },
       },
     ],
@@ -1196,7 +1196,11 @@ export const RANGER_SKILLS: readonly Skill[] = [
                 {
                   kind: "damage",
                   amount: {
-                    scaling: { attributeId: "ranger.wilderness-survival", atZero: 7, atTwelve: 20 },
+                    scaling: {
+                      attributeId: "ranger.wilderness-survival",
+                      atZero: 7,
+                      atTwelve: 19.8,
+                    },
                   },
                   type: "piercing",
                   armorPenetration: 0,
@@ -1579,7 +1583,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "bow",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 9 } },
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 8.6 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: true,
@@ -1742,7 +1746,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "energy-gain",
-            amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 7 } },
+            amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 7.4 } },
           },
         ],
       },
@@ -1816,7 +1820,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "bow",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 8 } },
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 1, atTwelve: 8.2 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -2177,7 +2181,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "bow",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 13 } },
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 12.6 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
