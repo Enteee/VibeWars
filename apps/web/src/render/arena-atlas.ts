@@ -61,6 +61,10 @@ export const CREATURE_GLYPH: Readonly<
   beast: { family: "creature", name: "beast" },
   "bone-minion": { family: "creature", name: "bone-minion" },
   "bone-horror": { family: "creature", name: "bone-horror" },
+  "vampiric-horror": { family: "creature", name: "vampiric-horror" },
+  "flesh-golem": { family: "creature", name: "flesh-golem" },
+  "shambling-horror": { family: "creature", name: "shambling-horror" },
+  "jagged-horror": { family: "creature", name: "jagged-horror" },
   spirit: { family: "creature", name: "spirit" },
   // Until the priest's own glyph is drawn (#1186): a spirit's.
   priest: { family: "creature", name: "spirit" },

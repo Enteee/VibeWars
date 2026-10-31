@@ -133,6 +133,17 @@ describe("the three new minions (#1836)", () => {
       expect(get(sim, "x").corpseExploited).toBe(true);
     },
   );
+
+  it.each([
+    [VAMPIRIC, "Vampiric Horror", "vampiric-horror"],
+    [GOLEM, "Flesh Golem", "flesh-golem"],
+    [SHAMBLING, "Shambling Horror", "shambling-horror"],
+  ])("%s raises a %s that wears its own look, %s (#1860)", (skill, name, look) => {
+    const sim = match(0);
+    kill(sim, "x");
+    cast(sim, skill);
+    expect(only(sim, name).creature?.look).toBe(look);
+  });
 });
 
 describe("Vampiric Horror (#1836)", () => {
@@ -250,6 +261,7 @@ describe("Shambling Horror (#1836)", () => {
     kill(sim, shambling.id);
     stepFor(sim, DT);
     const jagged = only(sim, "Jagged Horror");
+    expect(jagged.creature?.look).toBe("jagged-horror");
     expect(distance(jagged.position, fell)).toBeLessThanOrEqual(
       RULES.movement.maxSpeedUnitsPerSecond * 2 * DT + 2 * RULES.collision.creatureRadius,
     );
