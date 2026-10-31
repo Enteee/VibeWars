@@ -140,7 +140,7 @@ describe("the four are the corpus's (#1789)", () => {
   });
 });
 
-describe("a Health line crossed (#1789)", () => {
+describe("Health left under a line (#1789, #1818)", () => {
   it("fires once as one packet crosses it, and not again below it", () => {
     const combatants = party();
     const a = member(combatants, "a");
@@ -155,12 +155,24 @@ describe("a Health line crossed (#1789)", () => {
     expect(a.statuses.has("watchful-intervention")).toBe(false);
   });
 
-  it("never fires for a bearer already below the line", () => {
+  it("fires for a bearer already below the line at its next hit, no crossing asked", () => {
     const combatants = party();
     const a = member(combatants, "a");
     a.health = 100;
     a.statuses.apply("watchful-intervention", 60, "m");
-    applyDamage(a, 50, "slashing", false, [], member(combatants, "w"));
+    applyDamage(a, 10, "slashing", false, [], member(combatants, "w"));
+    expect(a.health).toBe(90);
+    expect(healed(drain(a, combatants), "a")).toBe(170);
+    expect(a.statuses.has("watchful-intervention")).toBe(false);
+  });
+
+  it("does not fire for a packet that takes nothing, below the line", () => {
+    const combatants = party();
+    const a = member(combatants, "a");
+    a.health = 100;
+    a.statuses.apply("watchful-intervention", 60, "m");
+    applyDamage(a, 0, "slashing", false, [], member(combatants, "w"));
+    expect(a.health).toBe(100);
     expect(drain(a, combatants)).toEqual([]);
     expect(a.statuses.has("watchful-intervention")).toBe(true);
   });
@@ -214,14 +226,21 @@ describe("a Health line crossed (#1789)", () => {
     );
   });
 
-  it("a killing blow fires it too late: the dead are not healed", () => {
+  it("a killing blow does not fire it, crossing or not: the dead are not healed", () => {
     const combatants = party();
     const a = member(combatants, "a");
     a.statuses.apply("watchful-intervention", 60, "m");
     applyDamage(a, 600, "slashing", false, [], member(combatants, "w"));
     expect(a.dead).toBe(true);
-    expect(healed(drain(a, combatants), "a")).toBe(0);
+    expect(drain(a, combatants)).toEqual([]);
     expect(a.health).toBe(0);
+
+    const b = makeCombatant({ id: "b", team: 0, health: 30, maxHealth: 500 });
+    combatants.set("b", b);
+    b.statuses.apply("watchful-intervention", 60, "m");
+    applyDamage(b, 100, "slashing", false, [], member(combatants, "w"));
+    expect(b.dead).toBe(true);
+    expect(drain(b, combatants)).toEqual([]);
   });
 });
 
