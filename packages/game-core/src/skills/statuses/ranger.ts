@@ -315,7 +315,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
-      effects: [{ kind: "heal", amount: { flat: 5 }, recipient: "caster", perStatusOnTarget: [] }],
+      effects: [{ kind: "heal", amount: { flat: 5 }, recipient: "caster" }],
       skillId: "ranger.predatory-season",
     },
   }),

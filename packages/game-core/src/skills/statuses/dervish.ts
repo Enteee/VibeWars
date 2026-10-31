@@ -41,7 +41,10 @@ export type DervishStatusId =
   | "featherfoot-grace"
   | "whirling-charge"
   | "watchful-intervention"
-  | "faithful-intervention";
+  | "faithful-intervention"
+  // "N for each X" (#1760).
+  | "arcane-zeal"
+  | "mystic-vigor";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -324,7 +327,6 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           {
             kind: "heal",
             amount: { scaling: { attributeId: "dervish.mysticism", atZero: 5, atTwelve: 41 } },
-            perStatusOnTarget: [],
           },
         ],
         skillId: "dervish.avatar-of-dwayna",
@@ -520,7 +522,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 175 }, perStatusOnTarget: [] }],
+        effects: [{ kind: "heal", amount: { flat: 175 } }],
         target: "bearer",
         skillId: "dervish.vital-boon",
       },
@@ -596,7 +598,6 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           {
             kind: "heal",
             amount: { scaling: { attributeId: "dervish.mysticism", atZero: 50, atTwelve: 170 } },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",
@@ -624,7 +625,6 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           {
             kind: "heal",
             amount: { scaling: { attributeId: "dervish.mysticism", atZero: 30, atTwelve: 126 } },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",
@@ -642,6 +642,54 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         { type: "enchantment", profession: "dervish" },
         { durationMultiplier: 2.22, uses: 1 },
       ),
+    ],
+  }),
+  // "Whenever you cast a spell, you gain 2 Energy for each enchantment on
+  // you (maximum 2...7 Energy)" (#1760): 6, its rank-12 cap. It counts
+  // itself.
+  "arcane-zeal": define("arcane-zeal", "Arcane Zeal", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: { flat: 0 },
+            per: {
+              count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+              amount: { flat: 2 },
+              max: { flat: 6 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "dervish.arcane-zeal",
+      },
+    ],
+  }),
+  // "Every time you successfully hit with an attack, you gain 3...15
+  // Health for each enchantment on you (maximum 25 Health)" (#1760): 13,
+  // its rank-12 value. It counts itself.
+  "mystic-vigor": define("mystic-vigor", "Mystic Vigor", "enchantment", {
+    profession: "dervish",
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [
+          {
+            kind: "heal",
+            amount: { flat: 0 },
+            per: {
+              count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+              amount: { flat: 13 },
+              max: { flat: 25 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "dervish.mystic-vigor",
+      },
     ],
   }),
 };

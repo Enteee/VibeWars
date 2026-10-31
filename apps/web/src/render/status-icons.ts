@@ -339,6 +339,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "holy-haste": icon("holy-haste"),
   "practiced-stance": icon("practiced-stance"),
   "extend-enchantments": icon("extend-enchantments"),
+  channeling: icon("channeling"),
+  "arcane-zeal": icon("arcane-zeal"),
+  "mystic-vigor": icon("mystic-vigor"),
 };
 
 const GAP = 2;

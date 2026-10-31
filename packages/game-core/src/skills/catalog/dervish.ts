@@ -351,7 +351,6 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 30, atTwelve: 126 } },
       },
       {
@@ -390,7 +389,6 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         recipient: "caster",
         amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 80, atTwelve: 136 } },
       },
@@ -553,7 +551,6 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             recipient: "caster",
             amount: {
               scaling: { attributeId: "dervish.scythe-mastery", atZero: 30, atTwelve: 70 },
@@ -2263,6 +2260,66 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         durationSeconds: Number.POSITIVE_INFINITY,
       },
     ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* 'N for each X' (#1760)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "dervish.arcane-zeal",
+    name: "Arcane Zeal",
+    gwId: 1502,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, whenever you cast a spell, you gain 2 Energy for each
+    // enchantment on you (maximum 2...7 Energy)". The status gains.
+    effects: [{ kind: "apply-status", statusId: "arcane-zeal", durationSeconds: 10 }],
+  },
+  {
+    id: "dervish.mystic-vigor",
+    name: "Mystic Vigor",
+    gwId: 1503,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, every time you successfully hit with an attack, you
+    // gain 3...15 Health for each enchantment on you (maximum 25 Health)".
+    // The status heals.
+    effects: [{ kind: "apply-status", statusId: "mystic-vigor", durationSeconds: 20 }],
   },
   {
     id: "dervish.extend-enchantments",

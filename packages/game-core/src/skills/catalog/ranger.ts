@@ -807,7 +807,6 @@ export const RANGER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "ranger.beast-mastery", atZero: 20, atTwelve: 87 },
         },

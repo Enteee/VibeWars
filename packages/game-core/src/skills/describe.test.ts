@@ -420,8 +420,7 @@ describe("describeSkill", () => {
       "If that action was a spell: gain 13 energy",
     ]);
     expect(lines("monk.dwaynas-kiss")).toEqual([
-      "Heals for 51",
-      "+30 Health for each enchantment or hex on target ally",
+      "Heals for 51, +30 Health for each enchantment or hex on them",
     ]);
   });
 
