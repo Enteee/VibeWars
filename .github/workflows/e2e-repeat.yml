@@ -3,10 +3,10 @@ name: e2e repeat
 # Repeats the e2e specs a pull request adds or changes, ten times, and fails
 # on any failure (#216). A `plan` job packs whole specs into jobs (#1566),
 # so every spec gets exactly ten runs across the jobs and a job holds about
-# 160 test runs: PR 1542's old jobs ran 187 tests in 29 min (~9.7 s a test), so
-# 160 is ~26 min plus setup, inside the 45-minute cap. Few full jobs wait on
-# fewer runners than many small ones did (#1884). A PR too big for 6
-# jobs fails `plan` with a refusal instead of timing out. Playwright's own
+# 1500 s of runs (#1884): the plan weighs each spec by its seconds in
+# scripts/ci/e2e-durations.json, so a job runs ~25 min plus setup, inside the
+# 40-minute cap, and at most 4 jobs wait on runners. A PR too big for 4
+# jobs (a spec over ~500 s cannot repeat ten times in 4) fails `plan` with a refusal instead of timing out. Playwright's own
 # --shard is not used: it splits by test count and can leave a shard empty.
 # A 1-in-10 flake survives ten runs 35% of the time, so qa-tester's
 # flake-check skill stays: this is the floor, not a replacement.
@@ -17,11 +17,14 @@ name: e2e repeat
 # pull_request run succeeded (EVERY_JOB_WORKFLOWS in hubd.mjs), so a red run
 # here blocks a merge until the flake is fixed. That is the point.
 #
-# Pull requests only. With no spec changed it passes rather than skips, so
-# it never sits pending.
+# Pull requests that touch a spec only: a PR with no spec change starts no
+# run, and hubd counts a head with no run of this workflow as satisfied
+# (judgingRuns `optional`, #1884). If every spec it touched was deleted, the
+# plan is empty and the job is skipped, which hubd also accepts.
 
 on:
   pull_request:
+    paths: ["e2e/**/*.spec.ts"]
 
 permissions:
   contents: read
@@ -78,6 +81,7 @@ jobs:
   e2e-repeat:
     name: e2e-repeat (${{ matrix.job }})
     needs: plan
+    if: needs.plan.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     strategy:
       # One failing job is the answer; the others add nothing but cost.
@@ -87,24 +91,20 @@ jobs:
         include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     # Two runs of a few specs take minutes. Without a cap, a hang would sit
     # pending for six hours, and hubd blocks the merge while it does.
-    timeout-minutes: 45
+    timeout-minutes: 40
     env:
       SPECS: ${{ matrix.specs }}
       REPEAT: ${{ matrix.repeat }}
     steps:
-      - if: env.SPECS != ''
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - if: env.SPECS != ''
-        uses: ./.github/actions/devenv
+      - uses: ./.github/actions/devenv
 
       # e2e serves the built client, as in ci.yml's e2e job.
-      - if: env.SPECS != ''
-        name: Build
+      - name: Build
         run: devenv shell -- pnpm run build
 
-      - if: env.SPECS != ''
-        name: Repeat specs
+      - name: Repeat specs
         # SPECS is split on spaces on purpose: one argument per spec.
         run: |
           # shellcheck disable=SC2086
