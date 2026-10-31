@@ -71,6 +71,7 @@ import {
   paintAdrenalineFill,
   paintCastFill,
   paintKnockdown,
+  midAction,
   slotAffordable,
   silenced,
   wrongWeapon,
@@ -1882,6 +1883,7 @@ export function updateHud(
   const far = outOfRange(skillBar, self, target, companion, walls);
   const unwielded = wrongWeapon(skillBar, self);
   const barred = silenced(skillBar, self);
+  const lit = midAction(skillBar);
   hud.slotTips.casting(fill?.slot);
   paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
@@ -1904,6 +1906,7 @@ export function updateHud(
     );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
     button.classList.toggle("is-silenced", barred[index] === true);
+    button.classList.toggle("is-mid-action", lit[index] === true);
     // An echo's copy drains its strip as its time runs out (#1154).
     if (now !== undefined) {
       paintEchoStrip(button, slot, now, reducedMotion);
