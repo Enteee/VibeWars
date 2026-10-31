@@ -276,7 +276,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         target: "bearer",
         effects: [
           { kind: "energy-gain", amount: { flat: 1 } },
-          { kind: "heal", amount: { flat: 3.6 }, perStatusOnTarget: [], perUsedSkillEnergy: true },
+          { kind: "heal", amount: { flat: 3.6 }, perUsedSkillEnergy: true },
         ],
         skillId: "elementalist.aura-of-restoration",
       },

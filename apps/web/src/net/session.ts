@@ -5,6 +5,7 @@ import {
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
   isLobbyCode,
+  isTeamQueueMode,
   normalizeLobbyCode,
   type JsonValue,
   type LobbyRefusal,
@@ -34,6 +35,7 @@ import {
   type MatchStarting,
   type MatchToWatch,
   type ObserverConnection,
+  type PartyPlanSeat,
   type PeerMatchConnection,
   type QueueParty,
   type QueueState,
@@ -44,7 +46,7 @@ import {
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
 import { linkLobbyRoom } from "./lobby-room.js";
-import { arenaIds, hostMap, modeMapIds, randomArenaMapPool } from "./maps.js";
+import { arenaIds, hostMap, modeMapIds, queueMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import { joinQueueBoard, joinRoom, roomSelfId } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
@@ -104,6 +106,9 @@ export const TICKET_USED_MESSAGE = "This ticket is already in the match, in anot
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
 /** A joined player's ask the host turned down (#1194): a bot it had no seat for, or could not add. */
 export const NO_SEAT_FOR_BOT_MESSAGE = "The lobby is full: there is no seat for a bot.";
+/** A queued party's team plan (ADR-0042) was not whole at the start (#1822). */
+export const TEAM_PLAN_REJECTED_NOTICE =
+  "Your party's team plan was not accepted; the house team plays for you.";
 export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
 export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
 /** A Team Lobby's refusals (#1460). */
@@ -132,11 +137,21 @@ export interface HostedLobby {
    * just joined, its guests follow there (#1553).
    */
   close(moveTo?: string): Promise<void>;
+  /**
+   * A queued team mode's party (#1766): its side's seats, in order, the
+   * host's own under `selfKey`; `undefined` while not queued.
+   */
+  teamPlan(selfKey: string): readonly PartyPlanSeat[] | undefined;
 }
 
 /** `n` bytes from `crypto`: a lobby key is only as good as its randomness (#1681). */
 function secureBytes(n: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(n));
+}
+
+/** A queue nonce (#1766): 32 bytes from `crypto`, as 64 lowercase hex digits. */
+function newQueueNonce(): string {
+  return [...secureBytes(32)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /** In [0, 1), from `crypto`: a rejoin token is only as good as its randomness. */
@@ -218,7 +233,8 @@ export async function hostLobby(
     teamLobby,
     random: secureRandom,
     ...(queued === undefined
-      ? {}
+      ? // Its party queues for a team mode under a group its room id names (#1766).
+        { matchmaking: { roomId: lobbyRoom.roomId, verifyTicketSig, newNonce: newQueueNonce } }
       : {
           queued: {
             ...queued,
@@ -259,7 +275,7 @@ export async function hostLobby(
       character,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
-      ...(queued === undefined ? {} : { queued }),
+      ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
     return {
       lobby,
@@ -268,6 +284,7 @@ export async function hostLobby(
       setOpen: (open) => {
         host.setOpen(open);
       },
+      teamPlan: (selfKey) => host.teamPlan(selfKey),
     };
   } catch (error) {
     await close();
@@ -311,7 +328,7 @@ export async function joinLobbyByCode(
       ...guild,
       character,
       timeoutMs: JOIN_TIMEOUT_MS,
-      ...(queued === undefined ? {} : { queued }),
+      ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
     joined.onClosed(() => {
       window.removeEventListener("pagehide", onPageHide);
@@ -398,7 +415,9 @@ export interface RandomArenaQueue {
  * with their place. The board closes when the player leaves or the match
  * starts, not on entering the lobby, since a lobby that falls through
  * queues again on it. With `party`, it queues as a member of a team that
- * stayed together.
+ * stayed together, or of a team mode's party (#1766); with `teamPlan`,
+ * as that party's host, which sends the match's host its side's seats
+ * once in the match's lobby (ADR-0042).
  */
 export function enterQueue(
   mode: QueueMode,
@@ -407,6 +426,7 @@ export function enterQueue(
   character: LobbyCharacter | null,
   events: RandomArenaEvents,
   party?: PartyPlace,
+  teamPlan?: HostedLobby["teamPlan"],
 ): RandomArenaQueue {
   const queue = party?.board ?? joinQueueBoard();
   const client = createQueueClient({
@@ -415,7 +435,7 @@ export function enterQueue(
     ...(party === undefined ? {} : { party: party.party }),
     now: () => Date.now(),
     newTicketKey: () => queue.newTicketKey(),
-    mapPool: randomArenaMapPool(mode),
+    mapPool: queueMapPool(mode),
   });
   let done = false;
   let sinceTick = 0;
@@ -487,6 +507,12 @@ export function enterQueue(
       await lobby.disconnect();
       await hosted?.close();
       return;
+    }
+    if (isTeamQueueMode(mode)) {
+      const seats = teamPlan?.(key.ticketId);
+      if (seats !== undefined) {
+        lobby.sendTeamPlan(seats);
+      }
     }
     lobby.onMatchStarting(() => {
       finish();

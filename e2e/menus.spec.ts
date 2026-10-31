@@ -366,10 +366,9 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
     "true",
   );
   await openRail(page, "GvG");
-  // No Record or Music in the bar: GvG's buttons are its lobby's (#1526).
+  // No Record or Music in the bar: GvG's button is its party's (#1526, #1766).
   await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveText([
-    "Ready",
-    "Start match",
+    "Find a match",
   ]);
   await page.reload();
   await expect(page.locator(".mode-rail-entry[aria-label='GvG']")).toHaveAttribute(

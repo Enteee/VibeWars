@@ -220,7 +220,6 @@ export const MESMER_SKILLS: readonly Skill[] = [
           },
           {
             kind: "heal",
-            perStatusOnTarget: [],
             recipient: "caster",
             amount: {
               scaling: { attributeId: "mesmer.inspiration-magic", atZero: 40, atTwelve: 104 },
@@ -1721,7 +1720,6 @@ export const MESMER_SKILLS: readonly Skill[] = [
         kind: "heal",
         amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 20, atTwelve: 56 } },
         recipient: "caster",
-        perStatusOnTarget: [],
         perEnergyLost: true,
       },
     ],
@@ -2045,5 +2043,37 @@ export const MESMER_SKILLS: readonly Skill[] = [
         durationSeconds: Number.POSITIVE_INFINITY,
       },
     ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* 'N for each X' (#1760)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.channeling",
+    name: "Channeling",
+    gwId: 38,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 8...56 seconds, whenever you cast a spell, you gain 1 Energy for
+    // each foe in the area": 46 s, its rank-12 value. The status gains.
+    effects: [{ kind: "apply-status", statusId: "channeling", durationSeconds: 46 }],
   },
 ];

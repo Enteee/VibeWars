@@ -580,7 +580,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * Start the match. `assigned` is each member's build, a Team Lobby's
    * (#1458); without one a bot plays its own and a human its hello's.
    */
-  const start = (assigned: ReadonlyMap<string, PlayerBuild> = new Map()): void => {
+  const start = (
+    assigned: ReadonlyMap<string, PlayerBuild> = new Map(),
+    rejected: ReadonlySet<0 | 1> = new Set(),
+  ): void => {
     countdownEndsAt = undefined;
     phase = "starting";
     matches += 1;
@@ -643,9 +646,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     // The state first: a peer takes a match-start only for the match the
     // lobby says is on, and each peer's messages arrive in order.
     broadcast();
-    const message: WireMatchStart = { mapId, matchId: id };
     for (const [peerId, seat] of seats) {
       if (!seat.bot) {
+        const message: WireMatchStart = {
+          mapId,
+          matchId: id,
+          teamPlanRejected: rejected.has(seat.team),
+        };
         transport.send("match-start", message, peerId);
       }
     }
@@ -1429,16 +1436,27 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * its bots added to the lobby, and say what each member plays. A side
    * with no whole plan plays the house team: its humans, then its bots,
    * the starter builds in order, round and round. A human's own hello
-   * build is never read: every seat has one here.
+   * build is never read: every seat has one here. `rejected` holds the
+   * sides that sent a plan which was not whole.
    */
-  const seatTeamPlans = (plan: QueuedPlan): Map<string, PlayerBuild> => {
+  const seatTeamPlans = (
+    plan: QueuedPlan,
+  ): {
+    readonly assigned: Map<string, PlayerBuild>;
+    readonly rejected: ReadonlySet<0 | 1>;
+  } => {
     const size = teamSizeOf(plan.group.mode);
     const assigned = new Map<string, PlayerBuild>();
+    const rejected = new Set<0 | 1>();
     const botBuilds = new Map<string, PlayerBuild>();
     for (const team of [0, 1] as const) {
       const keys = plan.group.teams[team];
+      const whole = wholePlan(teamPlans[team], keys, size);
+      if (teamPlans[team] !== undefined && whole === undefined) {
+        rejected.add(team);
+      }
       const seats =
-        wholePlan(teamPlans[team], keys, size) ??
+        whole ??
         [...keys, ...Array.from({ length: size - keys.length }, () => null)].map(
           (memberKey, slot) => {
             const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
@@ -1462,7 +1480,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       }
     }
     nameBots(botBuilds);
-    return assigned;
+    return { assigned, rejected };
   };
 
   /** The group's seat keys no member holds; one away (#1764) holds none until it is back. */
@@ -1781,7 +1799,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     if (clockMs() >= countdownEndsAt) {
-      start(isTeamQueueMode(plan.group.mode) ? seatTeamPlans(plan) : undefined);
+      if (isTeamQueueMode(plan.group.mode)) {
+        const { assigned, rejected } = seatTeamPlans(plan);
+        start(assigned, rejected);
+      } else {
+        start();
+      }
     } else if (countdownLeft(countdownEndsAt) !== shown) {
       broadcast();
     }

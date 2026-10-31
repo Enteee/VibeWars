@@ -66,7 +66,7 @@ export type QueueState =
 
 /** A party's place, as each of its members brings it (#882). */
 export interface QueueParty {
-  /** Every member's public key, sorted; `members[0]` leads and is the ticket's id. */
+  /** Every member's public key, the leader's first and the rest sorted; `members[0]` is the ticket's id. */
   readonly members: readonly string[];
   /** This member's own key, one of `members`, kept for as long as the party queues. */
   readonly key: TicketKey;

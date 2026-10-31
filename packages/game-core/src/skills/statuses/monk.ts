@@ -41,7 +41,6 @@ export type MonkStatusId =
 const VIGOROUS_SPIRIT_HEAL: HealEffect = {
   kind: "heal",
   amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 17 } },
-  perStatusOnTarget: [],
 };
 
 export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
@@ -65,7 +64,6 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
             amount: {
               scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 102 },
             },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",
@@ -111,7 +109,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 41 }, perStatusOnTarget: [] }],
+        effects: [{ kind: "heal", amount: { flat: 41 } }],
         target: "bearer",
         skillId: "monk.shielding-hands",
       },
@@ -197,7 +195,6 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
           {
             kind: "heal",
             amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 2, atTwelve: 14 } },
-            perStatusOnTarget: [],
           },
         ],
         target: "source",
@@ -249,7 +246,6 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
           {
             kind: "heal",
             amount: { scaling: { attributeId: "monk.divine-favor", atZero: 30, atTwelve: 150 } },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",
@@ -274,7 +270,6 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
             amount: {
               scaling: { attributeId: "monk.protection-prayers", atZero: 30, atTwelve: 78 },
             },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",
@@ -347,7 +342,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
             hits: "party",
             radius: Number.POSITIVE_INFINITY,
             maxTargets: undefined,
-            effects: [{ kind: "heal", amount: { flat: 41 }, perStatusOnTarget: [] }],
+            effects: [{ kind: "heal", amount: { flat: 41 } }],
           },
         ],
         target: "bearer",
