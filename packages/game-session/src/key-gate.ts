@@ -34,6 +34,11 @@ import type { Json, Transport } from "./transport.js";
  * a host that still holds it proven challenges it again. That stays
  * inside the gate: above it, the peer neither leaves nor joins, so a
  * `key-ask` is no way to the fresh rate-limit budgets a leave brings.
+ *
+ * Trystero is a mesh (#1682): a key holder who comes into a lobby's room
+ * connects to its guests too, not only to its host. A guest that knows
+ * its host answers no other peer's challenge, hears nothing from one it
+ * proved before and sends nothing to it.
  */
 
 /** How long a challenged peer has to prove the key. */
@@ -89,12 +94,14 @@ type Peer =
 /**
  * `transport`, gated on the key `proofKey` stands for, as `side` sees
  * it: a host challenges whoever arrives, a guest answers and hears only
- * a host that proved itself. The gate owns the `key-*` channels.
+ * a host that proved itself, and only `hostId()` once that says one.
+ * The gate owns the `key-*` channels.
  */
 export function keyGated(
   transport: Transport,
   proofKey: Uint8Array,
   side: "host" | "guest",
+  hostId: () => string | undefined = () => undefined,
 ): Transport {
   const selfId = transport.selfId;
   const key = crypto.subtle.importKey("raw", proofKey, { name: "HMAC", hash: "SHA-256" }, false, [
@@ -128,8 +135,14 @@ export function keyGated(
   let order = 0;
   let left = false;
 
+  /** Whether `peerId` may be this guest's host: any, until it knows its own. */
+  const mayHost = (peerId: string): boolean => {
+    const host = hostId();
+    return host === undefined || host === peerId;
+  };
+
   const proven = (peerId: string): boolean =>
-    present.has(peerId) && peers.get(peerId)?.stage === "proven";
+    present.has(peerId) && peers.get(peerId)?.stage === "proven" && mayHost(peerId);
 
   const deliver = (channel: Channel, data: unknown, from: string): void => {
     for (const handler of [...(handlers.get(channel) ?? [])]) {
@@ -210,7 +223,7 @@ export function keyGated(
   const offs = [
     transport.onPeerJoin((peerId) => {
       present.add(peerId);
-      if (lapsed.delete(peerId)) {
+      if (lapsed.delete(peerId) && mayHost(peerId)) {
         // A host that may not have seen us go still holds us proven, and
         // would never challenge again: ask it to.
         ask(peerId);
@@ -287,7 +300,12 @@ export function keyGated(
       const asked = parseWireKeyChallenge(data);
       // A host that challenges again has forgotten this guest, as one that
       // saw it leave does: it proves the key again, and so must the host.
-      if (side !== "guest" || asked === undefined || (peers.has(from) && !proven(from))) {
+      if (
+        side !== "guest" ||
+        asked === undefined ||
+        !mayHost(from) ||
+        (peers.has(from) && !proven(from))
+      ) {
         return;
       }
       const answered: Peer = { stage: "answered", hostNonce: asked.nonce, guestNonce: nonce() };

@@ -29,6 +29,7 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     protocol: PROTOCOL_VERSION,
     mode: "random-arena-4v4",
     members: [ticketId],
+    bots: 0,
     enteredAt: 1_700_000_000_000 + n * 1_000,
     heartbeatAt: NOW,
     party: null,
@@ -313,5 +314,65 @@ describe("formGroups (#869)", () => {
     await expect(
       formGroups({ ...empty, tickets: solos(1, 2, { mode: "random-arena-1v1" }) }),
     ).rejects.toThrow();
+  });
+});
+
+describe("team modes (ADR-0042)", () => {
+  /**
+   * Ticket `n` as a side of `mode`: `humans` keys led by its id, as
+   * `party` makes them, and bots for the rest.
+   */
+  function side(n: number, mode: QueueMode, humans: number): QueueTicket {
+    const whole = party(n, mode);
+    const members = whole.members.slice(0, humans);
+    return {
+      ...whole,
+      members,
+      bots: teamSizeOf(mode) - humans,
+      party:
+        humans === 1
+          ? null
+          : { groupId: "f".repeat(64), consents: members.map(() => "e".repeat(128)) },
+    };
+  }
+
+  it("two team tickets of one mode form a match, each a side, bots and all", async () => {
+    const tickets = [side(1, "team-arena", 3), side(2, "team-arena", 1)];
+    const [group, ...more] = await form(tickets, "team-arena");
+    expect(more).toEqual([]);
+    expect(group?.mode).toBe("team-arena");
+    expect(group?.teams.map((seats) => [...seats])).toEqual(
+      expect.arrayContaining([tickets[0]?.members, tickets[1]?.members]),
+    );
+    expect(group?.parties).toEqual(
+      expect.arrayContaining([tickets[0]?.members, tickets[1]?.members]),
+    );
+    expect(tickets.map((t) => t.ticketId)).toContain(group?.hostTicketId);
+    expect(group?.groupId).toBe(await sha256Hex(tickets.map((t) => t.ticketId).join("\n")));
+  });
+
+  it("one team ticket alone forms nothing", async () => {
+    expect(await form([side(1, "gvg", 8)], "gvg")).toEqual([]);
+    expect(await form([side(1, "heroes-ascent", 1)], "heroes-ascent")).toEqual([]);
+  });
+
+  it("modes never mix", async () => {
+    const tickets = [side(1, "heroes-ascent", 8), side(2, "gvg", 8)];
+    expect(await form(tickets, "heroes-ascent")).toEqual([]);
+    expect(await form(tickets, "gvg")).toEqual([]);
+  });
+
+  it("the earliest two are picked, and the third waits", async () => {
+    const first = side(1, "team-arena", 2);
+    const second = side(2, "team-arena", 1);
+    const groups = await form([side(3, "team-arena", 4), first, second], "team-arena");
+    expect(groups.map(members)).toEqual([ids([first, second])]);
+  });
+
+  it("a one-human side finds its group by its own key", async () => {
+    const tickets = [side(1, "team-arena", 1), side(2, "team-arena", 4)];
+    const groups = await form(tickets, "team-arena");
+    const lone = tickets[0];
+    expect(lone && groupOf(groups, lone.ticketId, lone.members)).toBe(groups[0]);
   });
 });

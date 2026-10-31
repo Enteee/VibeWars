@@ -34,7 +34,7 @@ for rationale and trade-offs.
 There is no game server ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md)).
 The page is a static site (GitHub Pages); one player's browser hosts the
 lobby and its match, and public Nostr relays only introduce the peers:
-by a lobby code, or, for Random Arena, by tickets every queued client
+by a lobby key, or, for Random Arena, by tickets every queued client
 reads to work out the same match ([ADR-0032](docs/adr/0032-random-arena-queue.md)).
 
 Dependencies point one way only (ADR-0001). `game-core` depends on nothing
@@ -283,8 +283,9 @@ Headless tests in five layers, plus a browser suite:
 - **Headless simulation** (`tools/headless-match.test.ts`) — whole fights,
   deterministically, with no network.
 - **Browser** (`e2e/*.spec.ts`, Playwright) — a real Chromium against the
-  built client, its peers tabs of one browser over `BroadcastChannel`: host a lobby, join it from a second browser
-  context, start a match, move, cast. Movement is asserted by comparing
+  built client, its peers tabs of one browser over `BroadcastChannel`:
+  open a tab's lobby, join it from a second tab, start a match, move,
+  cast. Movement is asserted by comparing
   rendered frames rather than through a test-only hook, so the test
   cannot pass against a code path players never run. This layer found two
   bugs that made the lobby unplayable and that nothing headless could

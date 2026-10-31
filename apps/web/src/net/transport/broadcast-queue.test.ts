@@ -17,6 +17,7 @@ function ticket(ticketId: string, mode: QueueTicket["mode"] = "random-arena-1v1"
     protocol: PROTOCOL_VERSION,
     mode,
     members: [ticketId],
+    bots: 0,
     enteredAt: at,
     heartbeatAt: at,
     party: null,

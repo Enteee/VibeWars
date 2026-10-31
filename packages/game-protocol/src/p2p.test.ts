@@ -466,6 +466,7 @@ const lobbyState: WireLobbyState = {
   phase: "in-match",
   mode: "gvg",
   mapId: "isle",
+  open: true,
   hostId: "peer-1",
   matchId: "match-2",
   players: [
@@ -868,6 +869,21 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["withdraw a vote (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: null }],
   ["claim (#1458)", parseWireLobbyCommand, { kind: "claim", slot: 1 }],
   ["let a claim go (#1458)", parseWireLobbyCommand, { kind: "claim", slot: null }],
+  [
+    "a team plan's human seat (ADR-0042)",
+    parseWireLobbyCommand,
+    { kind: "team-plan", slot: 0, size: 4, memberKey: "ab".repeat(32), build: { name: "Devona" } },
+  ],
+  [
+    "a team plan's bot seat (ADR-0042)",
+    parseWireLobbyCommand,
+    { kind: "team-plan", slot: 7, size: 8, memberKey: null, build: { name: "Mhenlo" } },
+  ],
+  [
+    "a party of eight, an 8v8 side (ADR-0042)",
+    parseWirePartyFormed,
+    partyOf(["1", "2", "3", "4", "5", "6", "7", "8"].map((digit) => digit.repeat(64))),
+  ],
   ["Team Lobby refusal (#1458)", parseWireLobbyNote, { kind: "refused", reason: "slot-taken" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
@@ -1734,11 +1750,6 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-formed of one (#882)", parseWirePartyFormed, partyOf(["ab".repeat(32)])],
   [
-    "party-formed of five (#882)",
-    parseWirePartyFormed,
-    partyOf(["1", "2", "3", "4", "5"].map((digit) => digit.repeat(64))),
-  ],
-  [
     "party-formed unsorted (#882)",
     parseWirePartyFormed,
     partyOf(["cd".repeat(32), "ab".repeat(32)]),
@@ -1782,6 +1793,8 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, countdownSeconds: undefined },
   ],
+  ["lobby-state without open (#1682)", parseWireLobbyState, { ...lobbyState, open: undefined }],
+  ["lobby-state open as a string (#1682)", parseWireLobbyState, { ...lobbyState, open: "yes" }],
   [
     "lobby-state counting down a fraction (#871)",
     parseWireLobbyState,
@@ -1909,6 +1922,36 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { kind: "propose", slot: 0, size: 1, build: Number.NaN },
   ],
   ["propose without a slot (#1458)", parseWireLobbyCommand, { kind: "propose" }],
+  [
+    "a team plan past MAX_TEAM_LOBBY_SIDE (ADR-0042)",
+    parseWireLobbyCommand,
+    { kind: "team-plan", slot: 0, size: MAX_TEAM_LOBBY_SIDE + 1, memberKey: null, build: {} },
+  ],
+  [
+    "a team plan's slot past its size (ADR-0042)",
+    parseWireLobbyCommand,
+    { kind: "team-plan", slot: 4, size: 4, memberKey: null, build: {} },
+  ],
+  [
+    "a team plan's member that is no key (ADR-0042)",
+    parseWireLobbyCommand,
+    { kind: "team-plan", slot: 0, size: 4, memberKey: "peer-2", build: {} },
+  ],
+  [
+    "a team plan with no member (ADR-0042)",
+    parseWireLobbyCommand,
+    { kind: "team-plan", slot: 0, size: 4, build: {} },
+  ],
+  [
+    "a team plan of a non-JSON build (ADR-0042)",
+    parseWireLobbyCommand,
+    { kind: "team-plan", slot: 0, size: 4, memberKey: null, build: Number.NaN },
+  ],
+  [
+    "a party of nine (ADR-0042)",
+    parseWirePartyFormed,
+    partyOf(["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => digit.repeat(64))),
+  ],
   ["propose without a build (#1458)", parseWireLobbyCommand, { kind: "propose", slot: 0, size: 1 }],
   ["vote of a number (#1458)", parseWireLobbyCommand, { kind: "vote", proposerId: 2 }],
   ["claim of a string (#1458)", parseWireLobbyCommand, { kind: "claim", slot: "1" }],

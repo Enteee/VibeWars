@@ -26,11 +26,15 @@ export interface RailParty {
   readonly mode: LobbyMode;
   /** Whether this player hosts it: only the host picks the mode. */
   readonly isHost: boolean;
+  /** Whether friends with the key may join (#1682). */
+  readonly open: boolean;
   readonly members: readonly PartyMember[];
 }
 
 /** Shown while nobody else is here. */
 export const PARTY_ALONE = "Share your key to play together";
+/** A guest's word that its host has the lobby closed (#1682). */
+export const PARTY_CLOSED = "Lobby closed";
 
 /** `snapshot`'s party: its people, in lobby order. */
 export function partyOf(snapshot: LobbySnapshot): RailParty {
@@ -38,6 +42,7 @@ export function partyOf(snapshot: LobbySnapshot): RailParty {
     code: snapshot.code,
     mode: snapshot.mode,
     isHost: snapshot.isHost,
+    open: snapshot.open,
     members: snapshot.players
       .filter((player) => !player.bot)
       .map((player) => ({
@@ -47,6 +52,14 @@ export function partyOf(snapshot: LobbySnapshot): RailParty {
         self: player.sessionId === snapshot.selfSessionId,
       })),
   };
+}
+
+/**
+ * Whether the strip says the lobby is closed (#1682): to a guest, while
+ * its host has it so. The host has the title bar's toggle instead.
+ */
+export function showsClosed(party: RailParty): boolean {
+  return !party.isHost && !party.open;
 }
 
 /** Whether nobody but this player is in the party. */
@@ -74,6 +87,9 @@ export function partyStrip(party: RailParty): HTMLElement {
   strip.appendChild(list);
   if (isAlone(party)) {
     strip.appendChild(h("span", "party-alone", PARTY_ALONE));
+  }
+  if (showsClosed(party)) {
+    strip.appendChild(h("span", "party-closed", PARTY_CLOSED));
   }
   strip.appendChild(h("span", "party-code", displayLobbyCode(party.code)));
   return strip;

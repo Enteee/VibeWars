@@ -163,6 +163,8 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       protocol: PROTOCOL_VERSION,
       mode,
       members: party === undefined ? [key.ticketId] : members,
+      // Random Arena's: no bots. A team mode's side is #1766's to queue.
+      bots: 0,
       enteredAt,
       heartbeatAt: now(),
       // Kept across fall-throughs: the consents sign the group won, not the current one.

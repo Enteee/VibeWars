@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { PROTOCOL_VERSION } from "./protocol-version.js";
-import { parseQueueTicket, teamSizeOf, type QueueTicket } from "./queue.js";
+import { isTeamQueueMode, parseQueueTicket, teamSizeOf, type QueueTicket } from "./queue.js";
 
 const TICKET: QueueTicket = {
   ticketId: "a".repeat(64),
   protocol: PROTOCOL_VERSION,
   mode: "random-arena-4v4",
   members: ["a".repeat(64)],
+  bots: 0,
   enteredAt: 1_700_000_000_000,
   heartbeatAt: 1_700_000_005_000,
   party: null,
@@ -18,11 +19,28 @@ const PARTY = ["a", "b", "c", "d"].map((digit) => digit.repeat(64));
 /** Its proof, in shape: parsing checks no signature. */
 const PROOF = { groupId: "f".repeat(64), consents: PARTY.map(() => "e".repeat(128)) };
 const TEAM: QueueTicket = { ...TICKET, members: PARTY, party: PROOF };
+/** A Team Arena side of three humans and a bot (ADR-0042). */
+const ARENA_SIDE: QueueTicket = {
+  ...TICKET,
+  mode: "team-arena",
+  members: PARTY.slice(0, 3),
+  bots: 1,
+  party: { ...PROOF, consents: PROOF.consents.slice(1) },
+};
+/** One human and seven bots in Heroes' Ascent. */
+const LONE_HERO: QueueTicket = { ...TICKET, mode: "heroes-ascent", bots: 7 };
 
 describe("parseQueueTicket (#869, #882, #1078)", () => {
   it("keeps a well-formed ticket, a solo or a whole team", () => {
     expect(parseQueueTicket({ ...TICKET })).toEqual(TICKET);
     expect(parseQueueTicket({ ...TEAM })).toEqual(TEAM);
+  });
+
+  it("keeps a team mode's side: its humans and its bots, one human's too (ADR-0042)", () => {
+    expect(parseQueueTicket({ ...ARENA_SIDE })).toEqual(ARENA_SIDE);
+    expect(parseQueueTicket({ ...LONE_HERO })).toEqual(LONE_HERO);
+    const gvg = { ...TEAM, mode: "gvg", bots: 4 };
+    expect(parseQueueTicket(gvg)).toEqual(gvg);
   });
 
   it.each<[string, unknown]>([
@@ -53,7 +71,19 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     ["a missing field", { ...TICKET, heartbeatAt: undefined }],
     ["an oversize ticket, padded with a field", { ...TICKET, padding: "x".repeat(10_000) }],
     ["an undefined party", { ...TICKET, party: undefined }],
-    ["six fields: no party at all", (({ party: _, ...six }) => six)(TICKET)],
+    ["seven fields: no party at all", (({ party: _, ...seven }) => seven)(TICKET)],
+    ["seven fields: no bots at all", (({ bots: _, ...seven }) => seven)(TICKET)],
+    ["bots in Random Arena", { ...TICKET, bots: 1 }],
+    ["bots in a Random Arena party", { ...TEAM, mode: "random-arena-2v2", bots: 2 }],
+    ["a solo in a team mode", { ...TICKET, mode: "team-arena" }],
+    ["a side short of a bot", { ...ARENA_SIDE, bots: 0 }],
+    ["a side a bot over", { ...ARENA_SIDE, bots: 2 }],
+    ["a side of bots alone", { ...ARENA_SIDE, members: [], bots: 4, party: null }],
+    ["negative bots", { ...LONE_HERO, bots: -1 }],
+    ["fractional bots", { ...LONE_HERO, bots: 6.5 }],
+    ["bots that are not a number", { ...LONE_HERO, bots: "7" }],
+    ["a one-human side with a party", { ...LONE_HERO, party: PROOF }],
+    ["a team-mode party with none", { ...ARENA_SIDE, party: null }],
     ["a solo with a party", { ...TICKET, party: PROOF }],
     ["a party with none", { ...TEAM, party: null }],
     [
@@ -82,11 +112,23 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
 });
 
 describe("teamSizeOf", () => {
-  it("is 1, 2 and 4 for the three modes", () => {
+  it("is 1, 2 and 4 for Random Arena, 4, 8 and 8 for the team modes", () => {
     expect([
       teamSizeOf("random-arena-1v1"),
       teamSizeOf("random-arena-2v2"),
       teamSizeOf("random-arena-4v4"),
-    ]).toEqual([1, 2, 4]);
+      teamSizeOf("team-arena"),
+      teamSizeOf("heroes-ascent"),
+      teamSizeOf("gvg"),
+    ]).toEqual([1, 2, 4, 4, 8, 8]);
+  });
+});
+
+describe("isTeamQueueMode (ADR-0042)", () => {
+  it("is Team Arena, Heroes' Ascent and GvG, never Random Arena", () => {
+    expect(isTeamQueueMode("team-arena")).toBe(true);
+    expect(isTeamQueueMode("heroes-ascent")).toBe(true);
+    expect(isTeamQueueMode("gvg")).toBe(true);
+    expect(isTeamQueueMode("random-arena-4v4")).toBe(false);
   });
 });

@@ -45,6 +45,8 @@ export interface LobbySnapshot {
   /** The host's mode (#1526): every member's rail follows it. */
   readonly mode: LobbyMode;
   readonly mapId: string;
+  /** Whether a peer with the key may join (#1682): a guest's party strip says when not. */
+  readonly open: boolean;
   /** The peer the lobby and its match are hosted on. */
   readonly hostId: string;
   readonly players: readonly LobbyPlayerSnapshot[];

@@ -43,9 +43,10 @@ import {
 } from "@vibewars/game-session";
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
+import { linkLobbyRoom } from "./lobby-room.js";
 import { arenaIds, hostMap, modeMapIds, randomArenaMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
-import { joinQueueBoard, joinRoom } from "./transport/index.js";
+import { joinQueueBoard, joinRoom, roomSelfId } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadTurnConfig } from "./transport/turn-config.js";
@@ -66,9 +67,12 @@ export const JOIN_TIMEOUT_MS = 20_000;
 /** How long a seated player waits for the match host to let them in. */
 const MATCH_TIMEOUT_MS = 10_000;
 
-/** #15's wording: a wrong key and an unreachable host cannot be told apart. */
+/**
+ * #15's wording: a wrong key, an unreachable host and a closed, empty
+ * lobby, whose host is in no room (#1682), cannot be told apart.
+ */
 export const NO_ANSWER_MESSAGE =
-  "No lobby answered that key. Check it; if it is right, your network may be blocking peer-to-peer connections.";
+  "Couldn't reach that lobby. Check the key, and ask the host to open it.";
 /** Typed wrong: not 12 symbols of the key alphabet (#1681). Nothing was sent anywhere. */
 export const NOT_A_KEY_MESSAGE = "That is not a lobby key.";
 
@@ -88,6 +92,8 @@ export const PEER_UNREACHABLE_MESSAGE =
 export const TURN_RELAY_HINT =
   "A TURN relay link from a friend can fix this: open it, or enter the relay in Options.";
 export const LOBBY_FULL_MESSAGE = "That lobby is full.";
+/** Told only after the key proof (#1682): a closed lobby with guests is still in its room. */
+export const LOBBY_CLOSED_MESSAGE = "That lobby is closed. Ask the host to open it.";
 export const HOST_CLOSED_MESSAGE = "The host closed the lobby.";
 /** True whichever side dropped: a guest cannot tell its own drop from the host's. */
 export const CONNECTION_LOST_MESSAGE = "Lost the connection to the host.";
@@ -110,6 +116,11 @@ export const SEAT_REFUSED_MESSAGE = "That seat is not one of the chosen team bui
 /** A lobby hosted in this tab, and how to end it for everyone. */
 export interface HostedLobby {
   readonly lobby: LobbyConnection;
+  /**
+   * Let friends with the key join, or stop them (#1682): a coded lobby
+   * starts closed. Closing keeps the guests already in.
+   */
+  setOpen(open: boolean): void;
   /**
    * A queued lobby's match is over and nobody waits on it (#882): its
    * winners have their Stay together answer, or its window ran out. A
@@ -154,7 +165,9 @@ function startMatch(plan: MatchPlan) {
 /**
  * Host a lobby in this tab: a fresh key, the room derived from it, the
  * lobby host on it, and this player joined to it as one more peer,
- * bringing `character`.
+ * bringing `character`. A coded lobby starts closed, and its host is in
+ * its room only while it is open or has guests (#1682); its room is
+ * derived once, here, for the lobby's life.
  *
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
@@ -186,8 +199,13 @@ export async function hostLobby(
     void close();
   };
   window.addEventListener("pagehide", onPageHide);
+  // A queued lobby is open from the start, and its group is on its way.
+  const link =
+    queued === undefined
+      ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinRoom(lobbyRoom) })
+      : undefined;
   const host = createLobbyHost({
-    transport: joinRoom(lobbyRoom),
+    transport: link ?? joinRoom(lobbyRoom),
     code,
     proofKey: lobbyRoom.proofKey,
     mapIds: arenaIds(),
@@ -206,6 +224,12 @@ export async function hostLobby(
           },
         }),
   });
+  const stopFollowing =
+    link === undefined
+      ? () => undefined
+      : host.onReach((reach) => {
+          link.follow(reach);
+        });
   const stopClock = startHostClock((seconds) => {
     host.advance(seconds);
   });
@@ -216,6 +240,7 @@ export async function hostLobby(
     }
     closed = true;
     window.removeEventListener("pagehide", onPageHide);
+    stopFollowing();
     stopClock();
     await host.close();
   };
@@ -232,7 +257,14 @@ export async function hostLobby(
       // The host is one of its own group: it proves its ticket like the rest.
       ...(queued === undefined ? {} : { queued }),
     });
-    return { lobby, done, close };
+    return {
+      lobby,
+      done,
+      close,
+      setOpen: (open) => {
+        host.setOpen(open);
+      },
+    };
   } catch (error) {
     await close();
     throw error;
@@ -529,6 +561,8 @@ export function joinFailureNotice(
         return PROTOCOL_MISMATCH_MESSAGE;
       case "lobby-full":
         return LOBBY_FULL_MESSAGE;
+      case "closed":
+        return LOBBY_CLOSED_MESSAGE;
       case "host-left":
         return HOST_CLOSED_MESSAGE;
       case "not-admitted":

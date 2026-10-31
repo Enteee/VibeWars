@@ -27,6 +27,7 @@ const GROUP: FormedGroup = {
   teams: [["a"], ["b"]],
   parties: [],
   mapId: "arena-alpha",
+  mode: "random-arena-1v1",
 };
 
 function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapshot {
@@ -36,6 +37,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     phase: countdownSeconds === null ? "waiting" : "starting",
     mode: "random-arena",
     mapId: "arena-open",
+    open: true,
     hostId: "host",
     players: [
       {
