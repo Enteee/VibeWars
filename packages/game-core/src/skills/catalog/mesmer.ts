@@ -574,7 +574,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // are interrupted and suffer 15...63...75 damage and foes in the area
     // take 75% of that damage." Not using one: nothing, to anyone.
     effects: [
-      { kind: "interrupt" },
+      { kind: "interrupt", only: "skill" },
       {
         kind: "if",
         condition: { kind: "interrupted" },
@@ -1629,7 +1629,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Interrupts the target foe's action. If that action is a skill, that
     // foe and all adjacent foes are knocked down for 2...3 seconds" (PvP):
-    // 3. Only a skill is ever interrupted; a swing is a miss. Its "50%
+    // 3. A swing is interrupted (#1709) but knocks no one down. Its "50%
     // failure chance with Fast Casting 4 or less" is out of reach at 12.
     effects: [
       { kind: "interrupt" },
@@ -1801,7 +1801,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has", category: "hex" },
-        effects: [{ kind: "interrupt" }],
+        effects: [{ kind: "interrupt", only: "skill" }],
       },
       { kind: "interrupt", only: "spell" },
       {

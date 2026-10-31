@@ -597,8 +597,8 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     },
   }),
   // "Whenever the Wailing Weapon strikes an attacking foe, that foe is
-  // interrupted": an attack skill being used. A plain swing is no action
-  // VibeWars interrupts, so it is `interrupt-missed`.
+  // interrupted": an attack skill being used, or a plain swing under way
+  // (#1709).
   "wailing-weapon": define("wailing-weapon", "Wailing Weapon", "weapon-spell", {
     profession: "ritualist",
     onAttackHit: {

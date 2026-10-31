@@ -961,7 +961,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // interrupted and is disabled for an additional 20 seconds", as
     // Distracting Shot's.
     effects: [
-      { kind: "interrupt" },
+      { kind: "interrupt", only: "skill" },
       { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
     ],
   },

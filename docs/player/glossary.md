@@ -12,7 +12,7 @@
 | Energy            | What most skills cost; it comes back by itself                            |
 | Hex               | A bad effect cast on you by a foe                                         |
 | Insignia          | An armor upgrade: a little extra on one piece, often more armor           |
-| Interrupt         | Stopping a foe's skill while they cast it                                 |
+| Interrupt         | Stopping a foe's skill while they cast it, or their attack mid-swing      |
 | Knockdown         | Being thrown to the ground: no moving, attacking or casting               |
 | Maintained        | An enchantment that lasts until you end it, costing Energy while it runs  |
 | Morale            | -15% per death, down to -60%; it shrinks your Health and Energy           |
