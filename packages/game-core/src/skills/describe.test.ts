@@ -11,6 +11,7 @@ import {
   secondPerson,
   TRIGGER_WHEN,
 } from "./describe.js";
+import { creatureDamageMultiplier } from "./damage.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
@@ -510,7 +511,7 @@ describe("describeSkill", () => {
     // faster flight one, and one per on-crit or failed-to-hit rider
     // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
     // are a line each, and its death burst one more (#1550); a blow that
-    // deals damage one more (#1631).
+    // deals damage one more (#1631), and a minion's blows one (#1900).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
@@ -533,6 +534,7 @@ describe("describeSkill", () => {
           1 +
           (aura === undefined ? 0 : 1) +
           (kind === "spirit" && (attack?.damageMax ?? 0) > 0 ? 1 : 0) +
+          (kind !== "spirit" && attack?.scaling.kind === "level" ? 1 : 0) +
           (attack?.onHit ?? []).length +
           (deathBurst === undefined ? 0 : 1) +
           (onePerOwner ? 1 : 0) +
@@ -936,11 +938,13 @@ describe("describeStatus", () => {
     const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
     expect(texts("necromancer.animate-bone-minions")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 2 Bone Minion (280 Health)",
+      "Summons 2 Bone Minion (level 10, 280 Health)",
+      "Its attacks deal 6–11 damage",
     ]);
     expect(texts("necromancer.animate-bone-horror")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Bone Horror (360 Health)",
+      "Summons 1 Bone Horror (level 14, 360 Health)",
+      "Its attacks deal 12–24 damage",
     ]);
   });
 
@@ -949,19 +953,61 @@ describe("describeStatus", () => {
     const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
     expect(texts("necromancer.animate-flesh-golem")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Flesh Golem (500 Health)",
+      "Summons 1 Flesh Golem (level 21, 500 Health)",
+      "Its attacks deal 50–74 damage",
       "Only one at a time: a new one kills the old",
       "Leaves 3 corpses when it dies",
     ]);
     expect(texts("necromancer.animate-shambling-horror")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Shambling Horror (360 Health)",
-      "When it dies, 1 Jagged Horror (320 Health) stands up in its place; its attacks: applies Bleeding for 25s (−3 Health degeneration)",
+      "Summons 1 Shambling Horror (level 14, 360 Health)",
+      "Its attacks deal 11–21 damage",
+      "When it dies, 1 Jagged Horror (level 12, 320 Health) stands up in its place; its attacks: applies Bleeding for 25s (−3 Health degeneration)",
     ]);
     // The corpse count scales with Death Magic, 1 at 0.
     expect(
       describeSkill(skill("necromancer.animate-flesh-golem"), new Map()).effects.at(-1)?.text,
     ).toBe("Leaves 1 corpse when it dies");
+  });
+
+  it("says a minion's level, health and damage at the live rank (#1900)", () => {
+    const golem = skill("necromancer.animate-flesh-golem");
+    const summon = golem.effects.find((effect) => effect.kind === "summon");
+    const attack = summon?.creature.attack;
+    if (summon === undefined || attack?.scaling.kind !== "level") {
+      throw new Error("Flesh Golem summons a minion whose blows scale by level");
+    }
+    const { level } = attack.scaling;
+    const expected = (rank: number): string[] => {
+      const levelAt = level.atZero + ((level.atTwelve - level.atZero) * rank) / 12;
+      const health = resolveMagnitudeAtRanks(
+        summon.creature.maxHealth,
+        new Map([["necromancer.death-magic", rank]]),
+      );
+      const scale = creatureDamageMultiplier(rank, level);
+      return [
+        `Summons 1 Flesh Golem (level ${String(Math.round(levelAt))}, ${String(health)} Health)`,
+        `Its attacks deal ${String(Math.round(attack.damageMin * scale))}–${String(Math.round(attack.damageMax * scale))} damage`,
+      ];
+    };
+    const texts = (rank: number) =>
+      describeSkill(golem, new Map([["necromancer.death-magic", rank]]))
+        .effects.map(({ text }) => text)
+        .slice(1, 3);
+    expect(texts(12)).toEqual(expected(12));
+    expect(texts(16)).toEqual(expected(16));
+    expect(texts(16)).not.toEqual(texts(12));
+    expect(
+      resolveMagnitudeAtRanks(
+        summon.creature.maxHealth,
+        new Map([["necromancer.death-magic", 16]]),
+      ),
+    ).toBeGreaterThan(
+      resolveMagnitudeAtRanks(
+        summon.creature.maxHealth,
+        new Map([["necromancer.death-magic", 12]]),
+      ),
+    );
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

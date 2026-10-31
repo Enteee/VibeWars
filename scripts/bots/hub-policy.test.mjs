@@ -49,7 +49,7 @@ describe("the roster", () => {
 });
 
 describe("merging", () => {
-  it("is allowed for qa-tester, behind three guards", () => {
+  it("is allowed for qa-tester, behind four guards", () => {
     const verdict = gh("qa-tester", ["pr", "merge", "22", "--squash"]);
 
     expect(verdict.allow).toBe(true);
@@ -57,6 +57,7 @@ describe("merging", () => {
       "checks-green",
       "approved-by:lead-dev",
       "approved-by:perf-sec-qa",
+      "workflow-author:cicd-engineer",
     ]);
   });
 
@@ -625,6 +626,7 @@ describe("borrowed hats", () => {
       "checks-green",
       "approved-by:lead-dev",
       "approved-by:perf-sec-qa",
+      "workflow-author:cicd-engineer",
     ]);
   });
 

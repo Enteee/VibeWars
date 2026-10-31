@@ -44,7 +44,9 @@ export type RangerStatusId =
   | "otyughs-cry"
   | "predatory-bond"
   | "rampage-as-one"
-  | "run-as-one";
+  | "run-as-one"
+  // Staples (#1869).
+  | "hekets-rampage";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -369,5 +371,12 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "run-as-one": define("run-as-one", "Run as One", "stance", {
     profession: "ranger",
     moveSpeedMultiplier: 1.25,
+  }),
+  // Staples (#1869). "For 5...11 seconds, you attack 33% faster. This
+  // stance ends if you use an attack skill": not that attack's speed.
+  "hekets-rampage": define("hekets-rampage", "Heket's Rampage", "stance", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.67,
+    endsWhenBearerUsesAttackSkill: true,
   }),
 };

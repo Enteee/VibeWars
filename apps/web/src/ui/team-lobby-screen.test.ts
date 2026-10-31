@@ -1,4 +1,3 @@
-import { PROFESSIONS } from "@vibewars/game-core";
 import type {
   WireProposalBuild,
   WireTeamLobby,
@@ -9,8 +8,11 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { StoredTeam } from "../storage/schema.js";
+import type { FigureLook } from "./character-card.js";
+import type * as Figure from "./character-figure.js";
 import {
   NO_PROPOSALS,
+  NO_TEAM_BUILDS,
   SEATS_LINE,
   SPECTATING_LINE,
   VOTE_HINT,
@@ -22,8 +24,23 @@ import {
   type TeamLobbyCallbacks,
 } from "./team-lobby-screen.js";
 
+// The figure draws on a canvas, which Node has none of: a bare one,
+// naming what it holds as the real one does.
+vi.mock("./character-figure.js", async (original) => ({
+  ...(await original<typeof Figure>()),
+  createCharacterFigure: (look: FigureLook) => {
+    const canvas = document.createElement("canvas");
+    canvas.className = "character-figure";
+    if (look.appearance.weaponId !== undefined) {
+      canvas.setAttribute("data-weapon-id", look.appearance.weaponId);
+    }
+    return canvas;
+  },
+}));
+
 /** Just enough DOM for the Team Lobby's body; the unit tests run in Node. */
 class FakeElement {
+  tagName = "";
   className = "";
   textContent = "";
   title = "";
@@ -83,11 +100,11 @@ class FakeElement {
   click(): void {
     this.listeners.get("click")?.();
   }
+}
 
-  change(value: string): void {
-    this.value = value;
-    this.listeners.get("change")?.();
-  }
+/** A card's own press, which votes and carries its state. */
+function press(card: FakeElement | undefined): FakeElement | undefined {
+  return card?.all("play-card-open")[0];
 }
 
 function player(
@@ -221,11 +238,13 @@ describe("the Team Lobby's words (#1460)", () => {
   });
 
   it("offers only the Team Builds of the side's exact size", () => {
-    expect(proposableTeams([team("a", "Duo", 2), team("b", "Four", 4)], 4)).toEqual([
-      { id: "a", label: "Duo (needs 4 characters)", disabled: true },
-      { id: "b", label: "Four", disabled: false },
+    const duo = team("a", "Duo", 2);
+    const four = team("b", "Four", 4);
+    expect(proposableTeams([duo, four], 4)).toEqual([
+      { team: duo, disabled: true, reason: "needs 4 characters" },
+      { team: four, disabled: false, reason: undefined },
     ]);
-    expect(proposableTeams([team("a", "Duo", 2)], 1)[0]?.label).toBe("Duo (needs 1 character)");
+    expect(proposableTeams([duo], 1)[0]?.reason).toBe("needs 1 character");
   });
 });
 
@@ -250,7 +269,10 @@ describe("the Team Lobby's body (#1460)", () => {
 
   beforeEach(() => {
     sent = [];
-    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+    vi.stubGlobal("document", {
+      createElement: (tag: string) =>
+        Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
+    });
   });
 
   afterEach(() => {
@@ -265,7 +287,7 @@ describe("the Team Lobby's body (#1460)", () => {
         voteSide([proposal("aria", ["aria", "cass"]), proposal("brann", ["brann"])]),
       ),
     );
-    const cards = shown.all("team-lobby-card");
+    const cards = shown.all("play-card");
     expect(cards.map((card) => card.all("team-lobby-name-text")[0]?.textContent)).toEqual([
       "Aria",
       "Brann",
@@ -273,18 +295,14 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(cards.map((card) => card.all("team-lobby-captain").length)).toEqual([1, 0]);
     expect(cards[0]?.all("team-lobby-token").map((token) => token.textContent)).toEqual(["A", "C"]);
     expect(cards.map((card) => card.all("team-lobby-count")[0]?.textContent)).toEqual(["2", "1"]);
-    expect(cards[0]?.all("character-dot")).toHaveLength(4);
-    // A circle shows its professions' icons, never their letters (#1785).
-    const letters = new RegExp(
-      `\\b(${Object.values(PROFESSIONS)
-        .map((profession) => profession.abbreviation)
-        .join("|")})\\b`,
-    );
-    for (const dot of shown.all("character-dot")) {
-      expect(dot.text()).not.toMatch(letters);
-    }
+    expect(cards[0]?.all("character-figure")).toHaveLength(4);
     // Brann's own vote is marked, and only it.
-    expect(cards.map((card) => card.attributes.get("aria-pressed"))).toEqual(["false", "true"]);
+    expect(cards.map((card) => press(card)?.attributes.get("aria-pressed"))).toEqual([
+      "false",
+      "true",
+    ]);
+    expect(cards.map((card) => card.has("is-voted"))).toEqual([false, true]);
+    expect(press(cards[0])?.attributes.get("aria-label")).toBe("Aria's team build");
     expect(cards[1]?.text()).toContain("Your vote ✓");
     expect(shown.all("team-lobby-hint").map((hint) => hint.textContent)).toEqual([VOTE_HINT]);
   });
@@ -292,47 +310,79 @@ describe("the Team Lobby's body (#1460)", () => {
   it("votes for a card on a click, and withdraws on a click on its own vote", () => {
     const cards = body(
       lobby("brann", "vote", voteSide([proposal("aria", []), proposal("brann", ["brann"])])),
-    ).all("team-lobby-card");
-    cards[0]?.click();
-    cards[1]?.click();
+    ).all("play-card");
+    press(cards[0])?.click();
+    press(cards[1])?.click();
     expect(sent).toEqual([
       { kind: "vote", value: "aria" },
       { kind: "vote", value: null },
     ]);
   });
 
-  it("proposes only a Team Build of the side's size, and None withdraws", () => {
+  it("shows each saved Team Build as a card to propose, and a click on yours withdraws it (#1862)", () => {
     const shown = body(
       lobby("aria", "vote", voteSide([])),
-      [team("duo", "Duo", 2), team("four", "Four", 4)],
+      [team("duo", "Duo", 2), team("four", "Four", 4), team("quad", "Quad", 4)],
       "four",
     );
-    const [select] = shown.all("team-lobby-propose").flatMap((label) => label.children.slice(1));
-    expect(select?.children.map((option) => [option.textContent, option.disabled])).toEqual([
-      ["None", false],
-      ["Duo (needs 4 characters)", true],
-      ["Four", false],
+    const own = shown.all("team-lobby-own-cards")[0]?.all("play-card") ?? [];
+    expect(own.map((card) => card.all("play-card-name")[0]?.textContent)).toEqual([
+      "Duo",
+      "Four",
+      "Quad",
     ]);
-    expect(select?.value).toBe("four");
-    select?.change("");
-    select?.change("four");
+    expect(own[1]?.all("character-figure")).toHaveLength(4);
+    // The one proposed is marked, and only it.
+    expect(own.map((card) => press(card)?.attributes.get("aria-pressed"))).toEqual([
+      "false",
+      "true",
+      "false",
+    ]);
+    expect(own.map((card) => card.has("is-proposed"))).toEqual([false, true, false]);
+    expect(own[1]?.text()).toContain("Proposed ✓");
+    press(own[2])?.click();
+    press(own[1])?.click();
     expect(sent).toEqual([
+      { kind: "propose", value: "quad" },
       { kind: "propose", value: undefined },
-      { kind: "propose", value: "four" },
     ]);
   });
 
-  it("shows one dashed card when nobody proposed", () => {
-    const cards = body(lobby("aria", "vote", voteSide([]))).all("team-lobby-card");
-    expect(cards.map((card) => [card.textContent, card.has("is-empty")])).toEqual([
-      [NO_PROPOSALS, true],
+  it("shows a Team Build of the wrong size faded, its press disabled, and says why", () => {
+    const [duo] =
+      body(lobby("aria", "vote", voteSide([])), [team("duo", "Duo", 2)])
+        .all("team-lobby-own-cards")[0]
+        ?.all("play-card") ?? [];
+    expect(press(duo)?.disabled).toBe(true);
+    expect(duo?.has("is-faded")).toBe(true);
+    expect(duo?.all("team-lobby-needs").map((line) => line.textContent)).toEqual([
+      "needs 4 characters",
     ]);
+  });
+
+  it("says where to make a Team Build when you have none, with no cards and no dropdown", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])));
+    expect(shown.all("team-lobby-own-cards")).toEqual([]);
+    expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
+      NO_TEAM_BUILDS,
+    ]);
+    const tags = (element: FakeElement): string[] => [
+      element.tagName,
+      ...element.children.flatMap(tags),
+    ];
+    expect(tags(shown)).not.toContain("SELECT");
+  });
+
+  it("shows one dashed box where the cards would be when nobody proposed", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])));
+    expect(shown.all("play-card")).toEqual([]);
+    expect(shown.all("team-lobby-empty").map((box) => box.textContent)).toEqual([NO_PROPOSALS]);
   });
 
   it("gives a side of one player no vote hint", () => {
     const shown = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 }));
     expect(shown.all("team-lobby-hint")).toEqual([]);
-    expect(shown.all("team-lobby-card")).toHaveLength(1);
+    expect(shown.all("play-card")).toHaveLength(1);
   });
 
   it("shows a spectator one line and nothing of either side", () => {
@@ -346,7 +396,7 @@ describe("the Team Lobby's body (#1460)", () => {
       lobby("brann", "vote", voteSide([proposal("aria", ["aria"]), proposal("brann", ["brann"])])),
     );
     const shown = body(lobby("brann", "claim", claimSide([null, null, null, null])));
-    const cards = shown.all("team-lobby-result")[0]?.all("team-lobby-card") ?? [];
+    const cards = shown.all("team-lobby-result")[0]?.all("play-card") ?? [];
     expect(
       cards.map((card) => [
         card.all("team-lobby-name-text")[0]?.textContent,
@@ -357,7 +407,7 @@ describe("the Team Lobby's body (#1460)", () => {
       ["Aria", true, false],
       ["Brann", false, true],
     ]);
-    expect(cards[1]?.disabled).toBe(true);
+    expect(press(cards[1])?.disabled).toBe(true);
     expect(shown.all("team-lobby-reason").map((line) => line.textContent)).toEqual([
       "Tie: captain's pick",
     ]);
@@ -400,7 +450,7 @@ describe("the Team Lobby's body (#1460)", () => {
     };
     const ARIAS = new Map([["aria", [BUILD, BUILD, BUILD, BUILD]]]);
 
-    it("draws them on a proposal once the host sent its builds, and balls before", () => {
+    it("draws them held on a proposal once the host sent its builds, the bare body before (#1864)", () => {
       const cards = body(
         lobby(
           "brann",
@@ -409,11 +459,13 @@ describe("the Team Lobby's body (#1460)", () => {
           PLAYERS,
           ARIAS,
         ),
-      ).all("team-lobby-card");
+      ).all("play-card");
       const [sent, waiting] = cards;
-      expect(sent?.all("team-member-row")).toHaveLength(4);
-      expect(sent?.all("character-dot")).toHaveLength(4);
-      const row = sent?.all("team-member-row")[0];
+      expect(sent?.all("character-card-row")).toHaveLength(4);
+      expect(
+        sent?.all("character-figure").map((figure) => figure.attributes.get("data-weapon-id")),
+      ).toEqual(["sword", "sword", "sword", "sword"]);
+      const row = sent?.all("character-card-row")[0];
       expect(row?.attributes.get("aria-label")).toBe("Warrior / Monk");
       // A skill or off-hand this client does not know is an empty slot.
       const cells = row?.all("mini-skill") ?? [];
@@ -427,9 +479,12 @@ describe("the Team Lobby's body (#1460)", () => {
         true,
         true,
       ]);
-      expect(row?.all("mini-gear")[0]?.children).toHaveLength(1);
-      expect(waiting?.all("team-member-row")).toHaveLength(0);
-      expect(waiting?.all("character-dot")).toHaveLength(4);
+      expect(waiting?.all("character-card-row")).toHaveLength(4);
+      expect(
+        waiting?.all("character-figure").map((figure) => figure.attributes.get("data-weapon-id")),
+      ).toEqual([undefined, undefined, undefined, undefined]);
+      // No build yet: four empty bars.
+      expect(waiting?.all("is-empty")).toHaveLength(32);
     });
 
     it("draws them on the chosen card, its members by name; a house seat stays a '?'", () => {
@@ -453,7 +508,7 @@ describe("the Team Lobby's body (#1460)", () => {
         ),
       );
       const chosen = shown.all("is-chosen")[0];
-      const rows = chosen?.all("team-member-row") ?? [];
+      const rows = chosen?.all("character-card-row") ?? [];
       expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual([
         "Bram, Warrior",
         "Mira, Monk",
@@ -471,7 +526,7 @@ describe("the Team Lobby's body (#1460)", () => {
         chosen: { ...SUNRISE, proposerId: null, reason: "house" },
       }),
     );
-    const cards = shown.all("team-lobby-card");
+    const cards = shown.all("play-card");
     expect(cards.map((card) => card.all("team-lobby-name-text")[0]?.textContent)).toEqual([
       "House team",
     ]);

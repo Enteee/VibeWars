@@ -1,4 +1,4 @@
-import { getSkill, isProfessionId } from "@vibewars/game-core";
+import { isProfessionId } from "@vibewars/game-core";
 import type {
   WireProposalBuild,
   WireTeamChoice,
@@ -9,12 +9,12 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 
 import type { StoredTeam } from "../storage/schema.js";
 import {
-  createProfessionDot,
-  gearIconsOf,
-  memberRow,
-  miniSkillBar,
-  professionLabel,
-} from "./character-preview.js";
+  lookOfCharacter,
+  lookOfWire,
+  teamFigureCard,
+  type TeamFigureMember,
+} from "./character-card.js";
+import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
 
 /**
@@ -41,6 +41,7 @@ export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: the house team plays";
+export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Play.";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
 export const HOUSE_TEAM = "House team";
@@ -87,12 +88,13 @@ export function initial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?";
 }
 
-/** A saved Team Build as the Propose picker lists it. */
+/** A saved Team Build as the propose cards show it (#1862). */
 export interface ProposableTeam {
-  readonly id: string;
-  readonly label: string;
+  readonly team: StoredTeam;
   /** Not the side's size, so the host would refuse it (Q182). */
   readonly disabled: boolean;
+  /** Why it is disabled, as a line on its card: "needs 4 characters". */
+  readonly reason: string | undefined;
 }
 
 /** `teams` for a side of `size`: only those of exactly `size` members can be proposed. */
@@ -103,7 +105,7 @@ export function proposableTeams(
   const needs = `needs ${String(size)} ${size === 1 ? "character" : "characters"}`;
   return teams.map((team) => {
     const disabled = team.members.length !== size;
-    return { id: team.id, label: disabled ? `${team.name} (${needs})` : team.name, disabled };
+    return { team, disabled, reason: disabled ? needs : undefined };
   });
 }
 
@@ -125,30 +127,22 @@ function professionDot(primary: string, secondary: string | null): HTMLElement {
 }
 
 /**
- * A member on a card: its ball, then, once the host has sent its build
- * (#1811), its weapons and skills as Team Builder draws them (#1786). A
- * skill or weapon this client does not know is an empty slot; a house
- * seat, a "?", is drawn alone.
+ * A proposal's members as the team card shows them (#1864): each
+ * holding what the host sent it (#1811), `names` their labels' when the
+ * chosen card has them.
  */
-function cardMember(
-  member: { readonly primary: string; readonly secondary: string | null },
-  build: WireProposalBuild | undefined,
-  name: string | undefined,
-): HTMLElement {
-  const dot = professionDot(member.primary, member.secondary);
-  if (build === undefined || !isProfessionId(member.primary)) {
-    return dot;
-  }
-  const secondary =
-    member.secondary !== null && isProfessionId(member.secondary) ? member.secondary : undefined;
-  const professions = professionLabel(member.primary, secondary);
-  return memberRow(name === undefined ? professions : `${name}, ${professions}`, [
-    dot,
-    gearIconsOf(build.mainHand ?? undefined, build.offHand ?? undefined),
-    miniSkillBar({
-      skillBar: build.skills.map((id) => (id !== null && getSkill(id) !== undefined ? id : null)),
-    }),
-  ]);
+function cardMembers(
+  members: readonly { readonly primary: string; readonly secondary: string | null }[],
+  builds: readonly WireProposalBuild[] | undefined,
+  names: readonly string[] | undefined,
+): TeamFigureMember[] {
+  return members.map((member, slot) => {
+    const look = lookOfWire(member, builds?.[slot]);
+    const professions =
+      look === undefined ? member.primary : professionLabel(look.primary, look.secondary);
+    const name = names?.[slot];
+    return { look, label: name === undefined ? professions : `${name}, ${professions}` };
+  });
 }
 
 /** A name, with the captain's crown token after it when it is theirs. */
@@ -166,7 +160,7 @@ function personName(className: string, name: string, captain: boolean): HTMLElem
   return label;
 }
 
-/** One proposal's card: proposer, professions, voter tokens and count. */
+/** One proposal's card: proposer, its members, voter tokens and count. */
 export function proposalCard(
   proposal: WireTeamProposal,
   side: WireTeamSide,
@@ -174,24 +168,7 @@ export function proposalCard(
   onVote: ((proposerId: string | null) => void) | undefined,
 ): HTMLElement {
   const mine = proposal.voterIds.includes(snapshot.selfSessionId);
-  // A click on your own vote takes it back.
-  const card = button("", "team-lobby-card", () => {
-    onVote?.(mine ? null : proposal.proposerId);
-  });
-  card.disabled = onVote === undefined;
-  card.classList.toggle("is-voted", mine);
-  card.setAttribute("aria-pressed", String(mine));
   const proposer = nameOf(snapshot.players, proposal.proposerId);
-  card.setAttribute("aria-label", `${proposer}'s team build`);
-  card.appendChild(
-    personName("team-lobby-card-name", proposer, proposal.proposerId === side.captainId),
-  );
-  const members = h("span", "team-lobby-card-members");
-  const builds = snapshot.proposalBuilds.get(proposal.proposerId);
-  for (const [slot, member] of proposal.members.entries()) {
-    members.appendChild(cardMember(member, builds?.[slot], undefined));
-  }
-  card.appendChild(members);
   const votes = h("span", "team-lobby-votes");
   const tokens = h("span", "team-lobby-tokens");
   for (const voterId of proposal.voterIds) {
@@ -202,10 +179,23 @@ export function proposalCard(
     tokens.appendChild(token);
   }
   votes.append(tokens, h("span", "team-lobby-count", String(proposal.voterIds.length)));
-  card.appendChild(votes);
-  if (mine) {
-    card.appendChild(h("span", "team-lobby-your-vote", "Your vote ✓"));
-  }
+  const card = teamFigureCard({
+    title: personName("team-lobby-card-name", proposer, proposal.proposerId === side.captainId),
+    members: cardMembers(
+      proposal.members,
+      snapshot.proposalBuilds.get(proposal.proposerId),
+      undefined,
+    ),
+    footer: mine ? [votes, h("span", "team-lobby-your-vote", "Your vote ✓")] : [votes],
+    // A click on your own vote takes it back.
+    onOpen: () => {
+      onVote?.(mine ? null : proposal.proposerId);
+    },
+    pressed: mine,
+    disabled: onVote === undefined,
+    label: `${proposer}'s team build`,
+  });
+  card.classList.toggle("is-voted", mine);
   return card;
 }
 
@@ -215,23 +205,22 @@ function chosenCard(
   side: WireTeamSide,
   snapshot: LobbySnapshot,
 ): HTMLElement {
-  const card = h("div", "team-lobby-card is-chosen");
-  card.appendChild(
-    choice.proposerId === null
-      ? personName("team-lobby-card-name", HOUSE_TEAM, false)
-      : personName(
-          "team-lobby-card-name",
-          nameOf(snapshot.players, choice.proposerId),
-          choice.proposerId === side.captainId,
-        ),
-  );
-  const members = h("span", "team-lobby-card-members");
-  const builds =
-    choice.proposerId === null ? undefined : snapshot.proposalBuilds.get(choice.proposerId);
-  for (const [slot, member] of choice.members.entries()) {
-    members.appendChild(cardMember(member, builds?.[slot], member.name));
-  }
-  card.appendChild(members);
+  const card = teamFigureCard({
+    title:
+      choice.proposerId === null
+        ? personName("team-lobby-card-name", HOUSE_TEAM, false)
+        : personName(
+            "team-lobby-card-name",
+            nameOf(snapshot.players, choice.proposerId),
+            choice.proposerId === side.captainId,
+          ),
+    members: cardMembers(
+      choice.members,
+      choice.proposerId === null ? undefined : snapshot.proposalBuilds.get(choice.proposerId),
+      choice.members.map((member) => member.name),
+    ),
+  });
+  card.classList.add("is-chosen");
   return card;
 }
 
@@ -369,6 +358,44 @@ function humansOnSide(snapshot: LobbySnapshot): number {
   return snapshot.players.filter((p) => !p.bot && p.team !== null && p.team === self?.team).length;
 }
 
+/**
+ * One of your saved Team Builds, to propose by a click (#1862), and to
+ * withdraw by a click on the one you proposed. It is Team Play's card
+ * for the team, without Edit.
+ */
+function ownCard(
+  { team, disabled, reason }: ProposableTeam,
+  proposedTeamId: string | undefined,
+  onPropose: (teamId: string | undefined) => void,
+): HTMLElement {
+  const proposed = team.id === proposedTeamId;
+  const footer: HTMLElement[] = [];
+  if (reason !== undefined) {
+    footer.push(h("span", "team-lobby-needs", reason));
+  }
+  if (proposed) {
+    footer.push(h("span", "team-lobby-proposed", "Proposed ✓"));
+  }
+  const card = teamFigureCard({
+    title: team.name,
+    // No cape: a team's members wear none, as on Team Play.
+    members: team.members.map(({ character }) => ({
+      look: lookOfCharacter(character, undefined),
+      label: `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,
+    })),
+    footer,
+    onOpen: () => {
+      onPropose(proposed ? undefined : team.id);
+    },
+    pressed: proposed,
+    disabled,
+    label: `Propose ${team.name}`,
+  });
+  card.classList.toggle("is-proposed", proposed);
+  card.classList.toggle("is-faded", disabled);
+  return card;
+}
+
 function voteStage(
   side: WireTeamSide,
   snapshot: LobbySnapshot,
@@ -376,35 +403,25 @@ function voteStage(
   proposedTeamId: string | undefined,
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
-  const shown: HTMLElement[] = [];
-  const propose = h("label", "team-lobby-propose");
-  propose.appendChild(h("span", "field-label", "Propose"));
-  const select = document.createElement("select");
-  const none = document.createElement("option");
-  none.value = "";
-  none.textContent = "None";
-  select.appendChild(none);
-  for (const team of proposableTeams(teams, side.size)) {
-    const option = document.createElement("option");
-    option.value = team.id;
-    option.textContent = team.label;
-    option.disabled = team.disabled;
-    select.appendChild(option);
+  const shown: HTMLElement[] = [h("h3", "menu-column-title", "Your Team Builds")];
+  if (teams.length === 0) {
+    shown.push(h("div", "screen-info team-lobby-no-teams", NO_TEAM_BUILDS));
+  } else {
+    const own = h("div", "play-cards team-lobby-own-cards");
+    for (const proposable of proposableTeams(teams, side.size)) {
+      own.appendChild(ownCard(proposable, proposedTeamId, callbacks.onPropose));
+    }
+    shown.push(own);
   }
-  select.value = proposedTeamId ?? "";
-  select.addEventListener("change", () => {
-    callbacks.onPropose(select.value === "" ? undefined : select.value);
-  });
-  propose.appendChild(select);
-  shown.push(propose);
 
+  shown.push(h("h3", "menu-column-title", "Proposals"));
   if (humansOnSide(snapshot) > 1) {
     shown.push(h("div", "screen-info team-lobby-hint", VOTE_HINT));
   }
 
-  const cards = h("div", "team-lobby-cards");
+  const cards = h("div", "play-cards team-lobby-proposals");
   if (side.proposals.length === 0) {
-    cards.appendChild(h("div", "team-lobby-card is-empty", NO_PROPOSALS));
+    cards.appendChild(h("div", "team-lobby-empty", NO_PROPOSALS));
   }
   for (const proposal of side.proposals) {
     cards.appendChild(proposalCard(proposal, side, snapshot, callbacks.onVote));
@@ -420,7 +437,7 @@ function claimStage(
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
   // The chosen card lifted, the rest faded behind it.
-  const result = h("div", "team-lobby-cards team-lobby-result");
+  const result = h("div", "play-cards team-lobby-result");
   result.appendChild(chosenCard(choice, side, snapshot));
   for (const proposal of lastProposals) {
     if (proposal.proposerId !== choice.proposerId) {
