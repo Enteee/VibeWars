@@ -144,10 +144,10 @@ describe("Searing Flames twice (#997)", () => {
     for (let tick = 0; tick < 2 / DT && first === undefined; tick += 1) {
       first = sim.step(DT).log.find((logged) => logged.skillId === SEARING_FLAMES);
     }
-    expect(first === undefined ? [] : kinds(first)).toEqual(["status-applied"]);
+    expect(first === undefined ? [] : kinds(first)).toEqual(["skill-used", "status-applied"]);
     expect(combatant(sim, "t").statuses.has("burning")).toBe(true);
     wait(sim, 2);
     const second = use(sim, 3, SEARING_FLAMES);
-    expect(kinds(second)).toEqual(["damage"]);
+    expect(kinds(second)).toEqual(["skill-used", "damage"]);
   });
 });

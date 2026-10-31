@@ -88,8 +88,9 @@ describe("createLocalConnection", () => {
     let steps = 0;
     connection.onCombat((message) => {
       combat.push(...message.events.map((event) => event.kind));
-      // The Fireball also turns the player on the dummy with their weapon.
-      if (message.cause === "skill") {
+      // The Fireball also turns the player on the dummy with their weapon;
+      // its release carries only its use (#1735), its landing the hit.
+      if (message.cause === "skill" && message.events.some(({ kind }) => kind === "damage")) {
         areas.push(message.area);
       }
     });

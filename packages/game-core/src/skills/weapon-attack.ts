@@ -1078,5 +1078,12 @@ export function resolveAttackSkillOutcome(
       ...riders(rule?.onFailedToHit ?? [], failed),
     );
   }
-  return { events, rechargeFraction, rechargeLongerSeconds, summons: [], grounds: [] };
+  return {
+    events,
+    rechargeFraction,
+    rechargeLongerSeconds,
+    summons: [],
+    grounds: [],
+    skipped: undefined,
+  };
 }

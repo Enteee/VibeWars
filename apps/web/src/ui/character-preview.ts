@@ -5,10 +5,16 @@ import {
   type ProfessionId,
 } from "@vibewars/game-core";
 
-import { teamColour, type RenderableActor } from "../render/arena-snapshot.js";
+import {
+  BODY_EDGE,
+  BODY_GLYPH_ALPHA,
+  BODY_GLYPH_SIZE,
+  teamColour,
+  type RenderableActor,
+} from "../render/arena-snapshot.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
-import { skillIcon } from "./icons.js";
+import { professionIcon, skillIcon } from "./icons.js";
 
 /**
  * The little circle that stands for a character in a list.
@@ -20,21 +26,10 @@ import { skillIcon } from "./icons.js";
  * It deliberately does *not* colour-code by profession. Arena colour
  * means team, not class, and inventing a per-profession palette here
  * would teach players something the match then contradicts. The
- * profession is shown as text inside the circle instead, which
- * identifies the character without implying anything false.
+ * primary profession's glyph sits inside it as the arena draws it on
+ * your body (#1785), tinted rather than coloured, and the secondary's
+ * on a small dark disc at its lower right.
  */
-
-/** "E/Mo", or just "E" when there is no secondary. */
-export function professionBadge(
-  primary: ProfessionId,
-  secondary: ProfessionId | undefined,
-): string {
-  const first = PROFESSIONS[primary].abbreviation;
-  if (secondary === undefined) {
-    return first;
-  }
-  return `${first}/${PROFESSIONS[secondary].abbreviation}`;
-}
 
 /** "Elementalist / Monk", for the line under the name. */
 export function professionLabel(
@@ -65,9 +60,34 @@ export function createCharacterDot(character: TeamCharacter): HTMLElement {
   return createProfessionDot(character.primaryProfession, character.secondaryProfession);
 }
 
+/** The secondary's disc, as a share of the circle's diameter (#1785). */
+export const SECONDARY_BADGE_SHARE = 0.45;
+/** Below this, px, the secondary's disc is unreadable and left out. */
+export const SECONDARY_BADGE_MIN_PX = 8;
+/** The secondary's glyph, as a share of its disc. */
+const SECONDARY_GLYPH_SHARE = 0.75;
+
+/** A profession glyph, its SVG as a mask over `tint`: the SVGs carry their own fill. */
+function professionGlyph(profession: ProfessionId, sizePx: number, tint: string): HTMLElement {
+  const glyph = document.createElement("span");
+  glyph.className = "character-dot-glyph";
+  glyph.style.setProperty("mask-image", `url("${professionIcon(profession)}")`);
+  glyph.style.setProperty("background-color", tint);
+  glyph.style.width = `${String(sizePx)}px`;
+  glyph.style.height = `${String(sizePx)}px`;
+  return glyph;
+}
+
+/** `BODY_EDGE` at `alpha`, as CSS. */
+function bodyEdge(alpha: number): string {
+  const channel = (shift: number): string => String((BODY_EDGE >> shift) & 0xff);
+  return `rgba(${channel(16)}, ${channel(8)}, ${channel(0)}, ${String(alpha)})`;
+}
+
 /**
  * The same circle for any professions, in the colour the arena paints
  * `team` (#580): a lobby shows who will be your ally and who your foe.
+ * It holds no text; its label is the professions' names.
  */
 export function createProfessionDot(
   primary: ProfessionId,
@@ -77,10 +97,27 @@ export function createProfessionDot(
   const dot = document.createElement("span");
   dot.className = "character-dot";
   dot.style.setProperty("--dot-colour", cssColour(teamColour(team)));
-  dot.style.width = `${String(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius * 2)}px`;
-  dot.style.height = `${String(MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius * 2)}px`;
-  dot.textContent = professionBadge(primary, secondary);
-  dot.title = professionLabel(primary, secondary);
+  const diameter = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius * 2;
+  dot.style.width = `${String(diameter)}px`;
+  dot.style.height = `${String(diameter)}px`;
+  const label = professionLabel(primary, secondary);
+  dot.title = label;
+  dot.setAttribute("role", "img");
+  dot.setAttribute("aria-label", label);
+  // The arena's glyph is BODY_GLYPH_SIZE across a body of the same diameter.
+  dot.appendChild(professionGlyph(primary, BODY_GLYPH_SIZE, bodyEdge(BODY_GLYPH_ALPHA)));
+  const badgePx = Math.round(diameter * SECONDARY_BADGE_SHARE);
+  if (secondary !== undefined && badgePx >= SECONDARY_BADGE_MIN_PX) {
+    const badge = document.createElement("span");
+    badge.className = "character-dot-secondary";
+    badge.style.width = `${String(badgePx)}px`;
+    badge.style.height = `${String(badgePx)}px`;
+    badge.style.setProperty("background-color", bodyEdge(1));
+    badge.appendChild(
+      professionGlyph(secondary, Math.round(badgePx * SECONDARY_GLYPH_SHARE), "var(--ink)"),
+    );
+    dot.appendChild(badge);
+  }
   return dot;
 }
 

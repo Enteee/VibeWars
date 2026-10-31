@@ -1,8 +1,13 @@
-import { SKILL_ROLES, getSkill, skillRoles, type SkillRole } from "@vibewars/game-core";
+import {
+  SKILL_ROLES,
+  getSkill,
+  skillRoles,
+  type ProfessionId,
+  type SkillRole,
+} from "@vibewars/game-core";
 
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import { TEAM_SCHEMA_VERSION, type StoredTeam, type TeamCharacter } from "../storage/schema.js";
-import { professionBadge } from "./character-preview.js";
 
 /**
  * The team builder (brief §18, §4).
@@ -224,15 +229,21 @@ export function teamCounters(members: StoredTeam["members"]): TeamCounter[] {
   ];
 }
 
-/** The team's professions as badges, most common first: "2 W/Mo · R". */
-export function professionMix(members: StoredTeam["members"]): string {
-  const counts = new Map<string, number>();
+/** How many of a team's characters share one pair of professions (#1785). */
+export interface ProfessionMixEntry {
+  readonly count: number;
+  readonly primary: ProfessionId;
+  readonly secondary: ProfessionId | undefined;
+}
+
+/** The team's professions, one entry per pair, most common first. */
+export function professionMix(members: StoredTeam["members"]): ProfessionMixEntry[] {
+  const entries = new Map<string, ProfessionMixEntry>();
   for (const { character } of members) {
-    const badge = professionBadge(character.primaryProfession, character.secondaryProfession);
-    counts.set(badge, (counts.get(badge) ?? 0) + 1);
+    const { primaryProfession: primary, secondaryProfession: secondary } = character;
+    const key = `${primary}/${secondary ?? ""}`;
+    const count = (entries.get(key)?.count ?? 0) + 1;
+    entries.set(key, { count, primary, secondary });
   }
-  return [...counts]
-    .sort((a, b) => b[1] - a[1])
-    .map(([badge, n]) => (n === 1 ? badge : `${String(n)} ${badge}`))
-    .join(" · ");
+  return [...entries.values()].sort((a, b) => b.count - a.count);
 }

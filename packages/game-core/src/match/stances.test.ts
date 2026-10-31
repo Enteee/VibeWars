@@ -167,7 +167,11 @@ describe("stances (#523)", () => {
     match.setTarget("a", "d");
     match.requestSkill("a", 0);
     const thrown = stepFor(match, 2).filter((entry) => entry.skillId === WILD_THROW);
-    expect(thrown.flatMap((entry) => entry.events.map((event) => event.kind))).toEqual(["damage"]);
+    expect(thrown.flatMap((entry) => entry.events.map((event) => event.kind))).toEqual([
+      "skill-used",
+      "damage",
+      "adrenaline-gained",
+    ]);
   });
 
   it("describes a stance as one, and Wild Throw's removal", () => {

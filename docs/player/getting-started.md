@@ -72,7 +72,8 @@ and the strip on top of every mode screen lists who is in it.
   bar and press **Join**, or Enter. Dashes and lower case are fine. Your
   own lobby stays open until the join is in. Once in, the top bar shows
   your friend's key, and **Leave** takes you back to a fresh lobby of
-  your own, with a new key.
+  your own, with a new key. If your connection drops, your seat is held
+  for 30 seconds.
 - **Your party comes along:** if you had friends in your lobby, the top
   bar asks first (**Join** again to go, Esc to stay), and once you are
   in, they follow you into your friend's lobby. Anyone who cannot get in,
