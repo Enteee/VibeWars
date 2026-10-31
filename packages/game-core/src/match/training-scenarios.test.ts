@@ -49,6 +49,7 @@ function fireballRadius(): number {
 const MAPS: Readonly<Record<string, { width: number; height: number; playerSpawn: Vec2 }>> = {
   "training-hall": { width: 560, height: 420, playerSpawn: vec2(100, 210) },
   "training-pillars": { width: 560, height: 420, playerSpawn: vec2(90, 210) },
+  "training-field": { width: 1400, height: 900, playerSpawn: vec2(200, 450) },
 };
 
 describe("every training scenario", () => {
@@ -924,5 +925,77 @@ describe("the area scenarios, headless (#111)", () => {
     const { bySkill } = hits(sim, "ranger.barrage", 4);
     expect(bySkill.size).toBe(6);
     expect(bySkill.has("centre")).toBe(true);
+  });
+});
+
+describe("moving-targets, headless (#497)", () => {
+  /** Where `id` is now. */
+  function at(sim: MatchSimulation, id: string): Vec2 {
+    const found = sim.get(id);
+    if (found === undefined) {
+      throw new Error(`no ${id}`);
+    }
+    return found.position;
+  }
+
+  it("walks the patroller round its loop, corner by corner, in order", () => {
+    const sim = arena(scenario("moving-targets"), "patrol");
+    const corners = [vec2(1000, 250), vec2(1000, 650), vec2(400, 650), vec2(400, 250)];
+    const reached: number[] = [];
+    // 2000 round the loop at 180 a second: back where it began after 11.1 s.
+    for (let i = 0; i < Math.round(12 / DT); i += 1) {
+      sim.step(DT);
+      const next = corners[reached.length];
+      if (next !== undefined && distance(at(sim, "patroller"), next) < 20) {
+        reached.push(i * DT);
+      }
+    }
+    // It turns each corner a step early: within 20 is reaching it.
+    expect(reached).toHaveLength(4);
+    expect(reached[2]).toBeLessThan(10);
+  });
+
+  it("a still player: the runner stays put, and the chaser walks in and lands a sword hit within 7 s", () => {
+    const sim = arena(scenario("moving-targets"), "still");
+    const runner = at(sim, "runner");
+    let hitAt: number | undefined;
+    for (let i = 0; i < Math.round(7 / DT) && hitAt === undefined; i += 1) {
+      for (const entry of sim.step(DT).log) {
+        if (entry.sourceId !== "chaser" || entry.cause !== "weapon") {
+          continue;
+        }
+        if (entry.events.some((event) => event.kind === "damage" && event.targetId === "player")) {
+          hitAt = i * DT;
+        }
+      }
+    }
+    // About 1000 to walk at 180 a second, then the sword's first swing.
+    expect(hitAt).toBeDefined();
+    expect(distance(at(sim, "runner"), runner)).toBe(0);
+  });
+
+  it("the runner backs off from a player who walks at it, never inside 400, and stops 450 away when they stop", () => {
+    const sim = arena(scenario("moving-targets"), "flee");
+    let closest = Infinity;
+    // 3 s at 180 a second: the player closes 540 of the 900, and the
+    // runner, from 450 on, backs off toward the east wall at 1400.
+    for (let i = 0; i < Math.round(3 / DT); i += 1) {
+      sim.walkTo("player", at(sim, "runner"));
+      sim.step(DT);
+      closest = Math.min(closest, distance(at(sim, "player"), at(sim, "runner")));
+    }
+    expect(at(sim, "runner").x).toBeGreaterThan(1100);
+    expect(closest).toBeGreaterThanOrEqual(400);
+    sim.walkTo("player", at(sim, "player"));
+    for (let i = 0; i < Math.round(1 / DT); i += 1) {
+      sim.step(DT);
+    }
+    const settled = at(sim, "runner");
+    expect(distance(at(sim, "player"), settled)).toBeGreaterThan(420);
+    expect(distance(at(sim, "player"), settled)).toBeLessThan(480);
+    for (let i = 0; i < Math.round(1 / DT); i += 1) {
+      sim.step(DT);
+    }
+    expect(distance(at(sim, "runner"), settled)).toBeLessThan(1);
   });
 });

@@ -1,0 +1,15 @@
+{
+  "id": "training-field",
+  "name": "Training Field",
+  "mode": "annihilation",
+  "width": 1400,
+  "height": 900,
+  "walls": [],
+  "objectives": [],
+  "spawnPoints": [
+    { "team": 0, "position": { "x": 200, "y": 450 } },
+    { "team": 1, "position": { "x": 400, "y": 250 } },
+    { "team": 1, "position": { "x": 1100, "y": 450 } },
+    { "team": 1, "position": { "x": 1200, "y": 700 } }
+  ]
+}

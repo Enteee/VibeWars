@@ -740,6 +740,39 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
       target("behind-south", "Behind, south (60 armor)", vec2(305, 230), 60),
     ],
   },
+  {
+    id: "moving-targets",
+    label: "Moving targets",
+    teaches:
+      "Hitting what moves: lead a runner, catch one that flees, and turn on one that chases you.",
+    mapId: "training-field",
+    // Range too: catching the runner, out past spell range, is the lesson.
+    exercises: ["movement", "auto-attacks", "range"],
+    knobs: [],
+    // From the spawn at (200, 450): one walks a 600 by 400 loop in the
+    // middle of the field, one flees to stay 450 away, and one walks in
+    // with a sword.
+    dummies: [
+      {
+        ...target("patroller", "Patroller (60 armor)", vec2(400, 250), 60),
+        behaviour: {
+          kind: "patrol",
+          waypoints: [vec2(400, 250), vec2(1000, 250), vec2(1000, 650), vec2(400, 650)],
+          loop: true,
+        },
+      },
+      {
+        ...target("runner", "Runner (60 armor)", vec2(1100, 450), 60),
+        behaviour: { kind: "keep-away", targeting: { kind: "nearest-enemy" }, distanceUnits: 450 },
+      },
+      {
+        ...target("chaser", "Chaser (60 armor)", vec2(1200, 700), 60),
+        attributeRanks: { "warrior.swordsmanship": 4 },
+        behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
+        weapon: "sword",
+      },
+    ],
+  },
 ];
 
 export function getTrainingScenario(id: string): TrainingScenario | undefined {
