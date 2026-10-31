@@ -70,7 +70,9 @@ jobs:
   # reported as skipped, and a skipped required check counts as passing.
   ci:
     name: format + lint + typecheck + test + build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, vibewars-spike-1793487722]
+    env:
+      VIBEWARS_RUNNER_EVENTS: /nonexistent
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: ./.github/actions/devenv
