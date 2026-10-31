@@ -230,7 +230,8 @@ export const DERVISH_STATUS_ICONS = {
   "faithful-intervention": [
     "enchantment",
     (c) =>
-      `<path d="M12 16s-5.5-3.4-5.5-7a3 3 0 0 1 5.5-1.7A3 3 0 0 1 17.5 9c0 3.6-5.5 7-5.5 7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 16s-5.5-3.4-5.5-7a3 3 0 0 1 5.5-1.7A3 3 0 0 1 17.5 9c0 3.6-5.5 7-5.5 7z" transform="translate(-3,0)" ${stroke(c, 1.8)}/>` +
+      `<circle cx="19.5" cy="5.5" r="3.2" ${stroke(c, 1.5)}/><circle cx="19.5" cy="5.5" r="1.1" fill="${c}"/>` +
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${c}"/>`,
   ],

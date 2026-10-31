@@ -164,13 +164,13 @@ export const MONK_STATUS_ICONS = {
       `<circle cx="12" cy="12" r="10" ${stroke(c, 2)} stroke-dasharray="3 3"/>`,
   ],
   // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
-  // Enchantment: a gavel over a heart, the killing blow is judged away.
+  // Enchantment: a haloed heart over an emptied bar, a star strikes back at the killing blow.
   "judges-intervention": [
     "enchantment",
     (c) =>
       `<ellipse cx="12" cy="3.6" rx="5" ry="1.8" ${stroke(c, 1.8)}/>` +
       `<path d="M12 16s-5.5-3.4-5.5-7a3 3 0 0 1 5.5-1.7A3 3 0 0 1 17.5 9c0 3.6-5.5 7-5.5 7z" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
-      `<rect x="3" y="18.5" width="4.5" height="3.5" rx="0.8" fill="${c}"/>`,
+      `<path d="M20 1.7L21.06 4.44L23.8 5.5L21.06 6.56L20 9.3L18.94 6.56L16.2 5.5L18.94 4.44Z" fill="${c}"/>`,
   ],
 };

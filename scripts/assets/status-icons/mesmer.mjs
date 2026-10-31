@@ -188,7 +188,7 @@ export const MESMER_STATUS_ICONS = {
       `<path d="M12 17.5v3M8.5 18.5l2 1.5M15.5 18.5l-2 1.5" ${stroke(c, 1.6)}/>`,
   ],
   // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
-  // Enchantment: a cracked heart, it looks weaker than it is.
+  // Enchantment: a dashed, hazy heart over a bar at a quarter, it looks weaker than it is.
   "illusion-of-weakness": [
     "enchantment",
     (c) =>
