@@ -257,6 +257,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "spirit-bond": icon("spirit-bond"),
   "holy-wrath": icon("holy-wrath"),
   "balthazars-aura": icon("balthazars-aura"),
+  "live-vicariously": icon("live-vicariously"),
+  "purifying-veil": icon("purifying-veil"),
+  pacifism: icon("pacifism"),
+  "watchful-spirit": icon("watchful-spirit"),
   "blood-is-power": icon("blood-is-power"),
   "order-of-pain": icon("order-of-pain"),
   "mark-of-rodgort": icon("mark-of-rodgort"),
@@ -278,6 +282,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "grenths-grasp": icon("grenths-grasp"),
   "rending-aura": icon("rending-aura"),
   "shadow-prison": icon("shadow-prison"),
+  "siphon-speed": icon("siphon-speed"),
+  "siphon-speed-haste": icon("siphon-speed-haste"),
+  "way-of-the-fox": icon("way-of-the-fox"),
   wither: icon("wither"),
   "kindle-arrows": icon("kindle-arrows"),
   "ignite-arrows": icon("ignite-arrows"),
@@ -297,6 +304,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "zealous-vow": icon("zealous-vow"),
   "featherfoot-grace": icon("featherfoot-grace"),
   "whirling-charge": icon("whirling-charge"),
+  "seeking-arrows": icon("seeking-arrows"),
+  "barbed-arrows": icon("barbed-arrows"),
+  "barbed-arrows-armor": icon("barbed-arrows-armor"),
+  "melandrus-arrows": icon("melandrus-arrows"),
+  "read-the-wind": icon("read-the-wind"),
 };
 
 const GAP = 2;

@@ -7,7 +7,7 @@ import {
   type ResolvedWeaponSet,
   type ResolvedWeaponSets,
 } from "../equipment/resolve.js";
-import type { WeaponId } from "../equipment/weapons.js";
+import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
 import {
   distanceWithinRange,
   firstHit,
@@ -169,6 +169,7 @@ import {
   attackReached,
   bearerAttacked,
   bearerFailedToHit,
+  bearerMissed,
   bearerHit,
   blindMisses,
   blocks,
@@ -3513,10 +3514,15 @@ export class MatchSimulation {
     }
 
     // An off-hand attack out of sequence, or whose chain requirement did
-    // not hold, recharges at once (#831, #1041).
+    // not hold, recharges at once (#831, #1041), but for what its failure
+    // adds, as Repeating Strike's 15 s (#1757).
     if (
-      !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
+      events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
+      if (rechargeLongerSeconds > 0) {
+        beginRecharge(record.combatant.cast, skill, rechargeLongerSeconds, cast.key);
+      }
+    } else {
       // A spell recharges faster under Mantra of Recovery (#938) or Weapon
       // of Quickening (#975), and a binding ritual under Weapon of
       // Quickening (#1064), read now: one that ends later leaves this
@@ -4857,15 +4863,22 @@ export class MatchSimulation {
    * Releasing an attack, flying or not, ends the attacker's weapon spell
    * (#758). Returns that, and the miss or the obstruction, for the caller
    * to log, with what an attack skill's `onFailedToHit` did (#1486).
+   * An arrow flies as fast as its archer's statuses say as it leaves
+   * (`projectileSpeedMultiplier`, #1742), and keeps that speed.
    */
   #release(
     record: ParticipantRecord,
     target: ParticipantRecord,
-    speed: number,
+    weaponSpeed: number,
     dt: number,
     skillHit: SkillHit | SpellHit | undefined,
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
+    const speed =
+      skillHit?.kind !== "spell" && wieldsFor(record.combatant.equipment.mainHand.weapon.id, "bow")
+        ? weaponSpeed *
+          aggregateModifiers(record.combatant.statuses.active).projectileSpeedMultiplier
+        : weaponSpeed;
     let attacked: ReturnType<typeof bearerAttacked> = {
       unblockable: false,
       criticalChanceBonus: 0,
@@ -4874,13 +4887,16 @@ export class MatchSimulation {
       // Only a flying attack is released here.
       attacked = bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
-        bearerFailedToHit(record.combatant);
+        bearerFailedToHit(record.combatant, events);
         events.push({ kind: "attack-missed", targetId: target.id });
         return [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
       }
     }
     if (!hasLineOfSight(record.position, target.position, this.#walls)) {
       events.push({ kind: "attack-obstructed", targetId: target.id });
+      if (skillHit?.kind !== "spell") {
+        bearerMissed(record.combatant, events);
+      }
       return skillHit?.kind === "spell"
         ? events
         : [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
@@ -4960,6 +4976,9 @@ export class MatchSimulation {
     if (projectile.obstructed) {
       // It hit the wall; where the target is now has nothing to do with it.
       const events: CombatEvent[] = [{ kind: "attack-obstructed", targetId: projectile.targetId }];
+      if (skillHit?.kind !== "spell" && attacker !== undefined) {
+        bearerMissed(attacker.combatant, events);
+      }
       if (skillHit?.kind !== "spell" && target !== undefined && !target.combatant.dead) {
         events.push(...this.#failedToHit(attacker?.combatant, target, skillHit, events));
         this.#recordDeaths(events);
@@ -4994,6 +5013,9 @@ export class MatchSimulation {
     let blocked = false;
     if (!this.#reaches(projectile, target)) {
       events.push({ kind: "attack-dodged", targetId: target.id });
+      if (attacker !== undefined) {
+        bearerMissed(attacker.combatant, events);
+      }
       events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
     } else {
       blocked = this.#landBlows(projectile, skillHit, target, attacker, events, fired, riders);
@@ -5037,7 +5059,7 @@ export class MatchSimulation {
     for (let strike = 0; strike < strikes && !target.combatant.dead; strike += 1) {
       if (strike > 0 && attacker !== undefined && blindMisses(attacker.combatant, this.#rng)) {
         events.push({ kind: "attack-missed", targetId: target.id });
-        bearerFailedToHit(attacker.combatant);
+        bearerFailedToHit(attacker.combatant, events);
         continue;
       }
       if (this.#landBlow(projectile, skillHit, target, attacker, events, fired, riders)) {
@@ -5075,7 +5097,7 @@ export class MatchSimulation {
     ) {
       events.push({ kind: "attack-blocked", targetId: target.id });
       if (attacker !== undefined) {
-        bearerFailedToHit(attacker.combatant);
+        bearerFailedToHit(attacker.combatant, events);
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));

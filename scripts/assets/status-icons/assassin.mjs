@@ -93,4 +93,24 @@ export const ASSASSIN_STATUS_ICONS = {
       `<path d="M3 8L6 12L3 16Z" ${stroke(c, 1.4)}/>` +
       `<path d="M10 4V20M14 4V20M18 4V20M8 4.5H20M8 19.5H20" ${stroke(c, 1.8)}/>`,
   ],
+  // Assassin staples 5 (#1757), stand-ins until their art card.
+  // Hex: the step arrowheads dragged back by a bar, it moves 33% slower.
+  "siphon-speed": [
+    "hex",
+    (c) =>
+      `<path d="M5 8L9 12L5 16M11 8L15 12L11 16" ${stroke(c, 1.8)}/>` +
+      `<path d="M19 5V19" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: the step arrowheads pulled forward, you move 33% faster.
+  "siphon-speed-haste": [
+    "skill-effect",
+    (c) => `<path d="M4 8L8 12L4 16M10 8L14 12L10 16M16 8L20 12L16 16" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a blade past a broken shield, the next attacks can't be blocked.
+  "way-of-the-fox": [
+    "enchantment",
+    (c) =>
+      `<path d="M5 6L10 4V10L5 12ZM19 6L14 4V10L19 12Z" ${stroke(c, 1.5)}/>` +
+      `<path d="M12 3V18M9.5 18H14.5M12 18V21" ${stroke(c, 2)}/>`,
+  ],
 };

@@ -1632,6 +1632,8 @@ export function isStateCondition(condition: EffectCondition): condition is State
       return false;
     case "target-health-below":
     case "target-health-above":
+    case "caster-health-below":
+    case "target-chain-mark":
     case "target-has":
     case "target-has-any":
     case "target-casting":
@@ -1640,6 +1642,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-has":
     case "caster-lacks":
     case "target-alone":
+    case "target-near-caster-ally":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
@@ -1683,6 +1686,10 @@ export function stateHolds(
       return target.health < effectiveMaxHealth(target) * condition.fraction;
     case "target-health-above":
       return target.health > effectiveMaxHealth(target) * condition.fraction;
+    case "caster-health-below":
+      return caster.health < effectiveMaxHealth(caster) * condition.fraction;
+    case "target-chain-mark":
+      return caster.chainMarks.get(target.id)?.role === condition.role;
     case "target-has":
       return target.statuses.countByCategory(condition.category) > 0;
     case "target-has-any":
@@ -1712,6 +1719,19 @@ export function stateHolds(
             !combatant.dead &&
             combatant.id !== target.id &&
             combatant.team === target.team &&
+            distance(position, at) <= condition.radius,
+        )
+      );
+    }
+    case "target-near-caster-ally": {
+      const at = surroundings.get(target.id)?.position;
+      return (
+        at !== undefined &&
+        [...surroundings.values()].some(
+          ({ combatant, position }) =>
+            !combatant.dead &&
+            combatant.id !== caster.id &&
+            combatant.team === caster.team &&
             distance(position, at) <= condition.radius,
         )
       );
@@ -1957,6 +1977,8 @@ function conditionHolds(
       return earlier.some((event) => event.kind === "resurrected" && event.targetId === target.id);
     case "target-health-below":
     case "target-health-above":
+    case "caster-health-below":
+    case "target-chain-mark":
     case "target-has":
     case "target-has-any":
     case "target-casting":
@@ -1965,6 +1987,7 @@ function conditionHolds(
     case "caster-has":
     case "caster-lacks":
     case "target-alone":
+    case "target-near-caster-ally":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":

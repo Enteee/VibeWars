@@ -71,6 +71,7 @@ describe("status definitions", () => {
         def.preventsEnchantments ||
         def.preventsShoutsAndChants ||
         def.attackDurationMultiplier !== 1 ||
+        def.projectileSpeedMultiplier !== 1 ||
         def.block !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||
         def.attackDamageCapFraction !== undefined ||
@@ -149,6 +150,7 @@ describe("status definitions", () => {
       "healing-breeze": 8,
       "shadow-refuge": 9,
       "shield-of-regeneration": 9,
+      "watchful-spirit": 2,
       "feigned-neutrality": 7,
       recuperation: 3,
       "well-of-suffering": -5,

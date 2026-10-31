@@ -66,34 +66,36 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
-  // Wells 2 (#1732), stand-ins until their art card, each over the ground line.
+  // Wells 2 (#1749): the skills' shapes.
   // Skill effect: a struck-through ring, no enchantment holds.
   "well-of-the-profane": [
     "skill-effect",
     (c) =>
-      `<circle cx="12" cy="9.5" r="5" ${stroke(c, 1.8)}/>` +
-      `<path d="M8 5.5l8 8" ${stroke(c, 1.8)}/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
+      `<circle cx="12" cy="9" r="5.5" ${stroke(c, 2)}/><path d="M7 15L16.5 5.5" ${stroke(c, 2.2)}/>`,
   ],
   // Skill effect: a struck-through horn, no shout or chant.
   "well-of-silence": [
     "skill-effect",
     (c) =>
-      `<path d="M6 8v4l9 3V5z" ${stroke(c, 1.8)}/>` +
-      `<path d="M5 4l12 12" ${stroke(c, 1.8)}/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
+      `<path d="M9 6C13 9.5 13 12.5 9 16" ${stroke(c, 2.6)}/><path d="M6.5 15L16 5.5" ${stroke(c, 2.6)}/>`,
   ],
-  // Skill effect: a half-dark eye, the hexed miss.
+  // Skill effect: a pupil in a dark eye, the hexed miss.
   "well-of-darkness": [
     "skill-effect",
     (c) =>
-      `<path d="M4 10c4-5 12-5 16 0c-4 5-12 5-16 0z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 7.5a2.5 2.5 0 0 0 0 5z" fill="${c}"/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
+      `<path d="M3.5 9.5C6 5 9 3.5 12 3.5S18 5 20.5 9.5C18 14 15 15.5 12 15.5S6 14 3.5 9.5Z" ${stroke(c, 2)}/>` +
+      `<circle cx="9.5" cy="9.5" r="2.4" fill="${c}"/><path d="M15 7v5M18 8v3" ${stroke(c, 1.8)}/>`,
   ],
   // Skill effect: a cracked shield, armor cracking under each hit.
   "well-of-ruin": [
     "skill-effect",
     (c) =>
-      `<path d="M12 3l6 2v4c0 3-2.5 5-6 6.5C8.5 14 6 12 6 9V5z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 4l-1.5 4 2.5 2-1.5 4" ${stroke(c, 1.4)}/><path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
+      `<path d="M12 2.5L19 5V10C19 13 16 15 12 16.5C8 15 5 13 5 10V5Z" ${stroke(c, 2)}/>` +
+      `<path d="M12 3L10 7.5L13.5 10L11 15" ${stroke(c, 1.6)}/>`,
   ],
   // Hex: a barbed line, physical hits hurt more (#1332).
   barbs: [
