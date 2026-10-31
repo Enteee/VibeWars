@@ -26,7 +26,6 @@ import {
   GHOST_GLYPH_TINT,
   DEAD_COLOUR,
   EXPLOITED_CORPSE_COLOUR,
-  PROFESSION_GLYPH_SIZE,
   withNames,
   placeFloatingText,
   teamColour,
@@ -35,6 +34,7 @@ import {
   type FloatingText,
   type RenderableActor,
 } from "./arena-snapshot.js";
+import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 
 describe("teamColour", () => {

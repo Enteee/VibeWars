@@ -1295,9 +1295,12 @@ generator. Never hand-edit an output file; change the script and re-run.
 
 Each file is a flat SVG of 150–1,200 bytes with colours baked in, because Phaser
 rasterises SVG textures without CSS. Projectiles are the one exception: white,
-for the scene to tint. Load it in Phaser with
-`this.load.svg(key, url, { width, height })` at the size you draw it (24×24
-for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
+for the scene to tint. In HTML, show one with a plain `<img>`.
+
+The arena does not load the files one by one: it draws frames of one sheet,
+`icons/atlas/arena.svg` with its frame map, which Vite composes from these
+files at build and dev time (`apps/web/plugins/arena-atlas.ts`, #1671), each
+at its texture size from `apps/web/src/render/arena-atlas.ts`. It is not in git.
 
 Adding a skill: add its row to `scripts/assets/skill-icons/<profession>.mjs` and re-run.
 Adding a status, profession, skill type or UI control: add one entry to the
