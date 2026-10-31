@@ -7,6 +7,34 @@ export const ELEMENTALIST_STATUS_ICONS = {
     "glyph",
     (c) => `<path d="M13.5 4.5L8.5 11h3.5l-1.5 5 5-6.5H12z" fill="${c}"/>`,
   ],
+  // Glyphs on the next spell (#1730), stand-ins: a still bolt in a ring,
+  // a bolt and an hourglass, a bolt and a turning arrow, a bolt and a
+  // drained bar.
+  "glyph-of-concentration": [
+    "glyph",
+    (c) =>
+      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.6)}/>` +
+      `<path d="M13 7.5L10 12h2.5l-1 4.5 3.5-5h-2.5z" fill="${c}"/>`,
+  ],
+  "glyph-of-sacrifice": [
+    "glyph",
+    (c) =>
+      `<path d="M10 5L6 11h3l-1.5 5 5-7h-3z" fill="${c}"/>` +
+      `<path d="M14 8h5l-5 8h5" ${stroke(c, 1.6)}/>`,
+  ],
+  "glyph-of-renewal": [
+    "glyph",
+    (c) =>
+      `<path d="M11 6L7.5 11.5h3l-1 4.5 4-6h-3z" fill="${c}"/>` +
+      `<path d="M17.5 8a6.5 6.5 0 1 1-3-2" ${stroke(c, 1.6)}/>`,
+  ],
+  "glyph-of-essence": [
+    "glyph",
+    (c) =>
+      `<path d="M12.5 4.5L8.5 10h3l-1 4 4-5.5h-3z" fill="${c}"/>` +
+      `<path d="M6 18.5h12" ${stroke(c, 2.2)}/>` +
+      `<path d="M6 16h3" ${stroke(c, 1.6)}/>`,
+  ],
   // Enchantment: a small shield.
   "armor-boost": [
     "enchantment",

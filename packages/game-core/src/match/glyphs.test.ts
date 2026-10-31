@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { defaultBuildEquipment, validatePlayerBuild, type PlayerBuild } from "../build.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { energyCostOf, payCost } from "../skills/activation.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
+import { applyEffects } from "../skills/effects.js";
 import { EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import type { Skill } from "../skills/types.js";
@@ -227,5 +229,179 @@ describe("Glyph of Lesser Energy (#526)", () => {
       equipment: defaultBuildEquipment("elementalist"),
     };
     expect(validatePlayerBuild(build, RULES.attributes)).toEqual([]);
+  });
+});
+
+/**
+ * Glyphs that change how the next spell goes (#1730): its cast, its
+ * recharge, the caster's Energy; spent as the spell starts.
+ */
+const CONCENTRATION = "elementalist.glyph-of-concentration";
+const SACRIFICE = "elementalist.glyph-of-sacrifice";
+const RENEWAL = "elementalist.glyph-of-renewal";
+const ESSENCE = "elementalist.glyph-of-essence";
+
+/** An elementalist with two glyphs, Fireball and a signet, facing the dummy, Energy full. */
+function glyphMatch(first: string, second = RENEWAL): MatchSimulation {
+  const match = new MatchSimulation({
+    seed: "glyphs-1730",
+    participants: [
+      {
+        ...elementalist("e", vec2(0, 0)),
+        skillBar: [first, FIREBALL, HEALING_SIGNET, second],
+        maxEnergy: 100,
+      },
+      dummy("d", vec2(300, 0)),
+    ],
+  });
+  match.setTarget("e", "d");
+  return match;
+}
+
+/** `slot` used, through its 1 s cast and aftercast. */
+function cast(match: MatchSimulation, slot: number): CombatLogEntry[] {
+  expect(match.requestSkill("e", slot)?.check).toEqual({ ok: true });
+  return stepFor(match, 2);
+}
+
+/** Fireball started: the log of the step it started in. */
+function fireball(match: MatchSimulation): CombatLogEntry[] {
+  expect(match.requestSkill("e", 1)?.check).toEqual({ ok: true });
+  return [...match.step(DT).log];
+}
+
+describe("glyphs on the next spell (#1730)", () => {
+  it.each([
+    [CONCENTRATION, 201, false, 10],
+    [SACRIFICE, 202, false, 15],
+    [RENEWAL, 203, true, 10],
+    [ESSENCE, 1096, false, 20],
+  ] as const)(
+    "%s is GW1's: gwId %i, elite %s, 5 energy, 1 s, %i s recharge",
+    (id, gwId, elite, recharge) => {
+      expect(skill(id)).toMatchObject({
+        gwId,
+        type: "glyph",
+        elite,
+        profession: "elementalist",
+        attributeId: undefined,
+        cost: { kind: "energy", amount: 5 },
+        activationSeconds: 1,
+        rechargeSeconds: recharge,
+        effects: [{ kind: "apply-status", durationSeconds: 15 }],
+      });
+    },
+  );
+
+  it("Concentration: the next spell cannot be interrupted, and is spent as it starts", () => {
+    const match = glyphMatch(CONCENTRATION);
+    cast(match, 0);
+    fireball(match);
+    const e = get(match, "e").combatant;
+    expect(e.statuses.has("glyph-of-concentration")).toBe(false);
+    const events = applyEffects([{ kind: "interrupt" }], {
+      surroundings: new Map(),
+      caster: get(match, "d").combatant,
+      target: e,
+      rng: createRng(1730),
+      rules: RULES.combat,
+    });
+    expect(events.some(({ kind }) => kind === "interrupted")).toBe(false);
+    expect(e.cast.activeCast?.skillId).toBe(FIREBALL);
+  });
+
+  it("Sacrifice: the next spell casts instantly and recharges 30 s longer", () => {
+    const match = glyphMatch(SACRIFICE);
+    cast(match, 0);
+    fireball(match);
+    const e = get(match, "e").combatant;
+    expect(e.cast.activeCast).toBeUndefined();
+    expect(e.cast.rechargeTotal.get(FIREBALL)).toBe(7 + 30);
+    expect(e.statuses.has("glyph-of-sacrifice")).toBe(false);
+  });
+
+  it("Sacrifice ends, unspent, on a skill that is no spell; the signet goes as ever", () => {
+    const match = glyphMatch(SACRIFICE);
+    cast(match, 0);
+    const e = get(match, "e").combatant;
+    e.health = e.maxHealth / 2;
+    const log = cast(match, 2);
+    expect(e.statuses.has("glyph-of-sacrifice")).toBe(false);
+    expect(
+      log.some(
+        (entry) =>
+          entry.skillId === SACRIFICE && entry.events.some(({ kind }) => kind === "status-expired"),
+      ),
+    ).toBe(true);
+    // The signet's 2 s cast and its aftercast.
+    stepFor(match, 1);
+    expect(e.health).toBeGreaterThan(e.maxHealth / 2);
+    expect(e.cast.rechargeTotal.get(HEALING_SIGNET)).toBe(skill(HEALING_SIGNET).rechargeSeconds);
+    // The next spell is a plain one again.
+    fireball(match);
+    expect(e.cast.activeCast?.skillId).toBe(FIREBALL);
+  });
+
+  it("Concentration stays on a skill that is no spell", () => {
+    const match = glyphMatch(CONCENTRATION);
+    cast(match, 0);
+    cast(match, 2);
+    expect(get(match, "e").combatant.statuses.has("glyph-of-concentration")).toBe(true);
+  });
+
+  it("Renewal: the next spell recharges at once", () => {
+    const match = glyphMatch(RENEWAL);
+    cast(match, 0);
+    fireball(match);
+    stepFor(match, 2);
+    const e = get(match, "e").combatant;
+    expect(e.cast.rechargeRemaining.has(FIREBALL)).toBe(false);
+    expect(match.requestSkill("e", 1)?.check).toEqual({ ok: true });
+  });
+
+  it("Renewal then Sacrifice: the new glyph replaces the old, so the spell gets only Sacrifice's", () => {
+    // GW1: "If a glyph is cast while another glyph is already active, the
+    // new one replaces the old one." The two never meet on one spell.
+    const match = glyphMatch(RENEWAL, SACRIFICE);
+    cast(match, 0);
+    cast(match, 3);
+    const e = get(match, "e").combatant;
+    expect(e.statuses.has("glyph-of-renewal")).toBe(false);
+    fireball(match);
+    expect(e.cast.activeCast).toBeUndefined();
+    expect(e.cast.rechargeTotal.get(FIREBALL)).toBe(7 + 30);
+    expect(e.statuses.has("glyph-of-sacrifice")).toBe(false);
+  });
+
+  it("Essence: the next spell casts instantly and takes all the caster's Energy", () => {
+    const match = glyphMatch(ESSENCE);
+    cast(match, 0);
+    const e = get(match, "e").combatant;
+    expect(e.energy).toBeGreaterThan(10);
+    fireball(match);
+    expect(e.cast.activeCast).toBeUndefined();
+    expect(e.energy).toBeLessThan(1);
+    expect(e.statuses.has("glyph-of-essence")).toBe(false);
+  });
+
+  it("Essence: a spell the caster cannot pay for is refused, and the glyph stays", () => {
+    const match = glyphMatch(ESSENCE);
+    cast(match, 0);
+    const e = get(match, "e").combatant;
+    e.energy = 5;
+    expect(match.requestSkill("e", 1)?.check).toMatchObject({ ok: false });
+    expect(e.statuses.has("glyph-of-essence")).toBe(true);
+  });
+
+  it("says what each does", () => {
+    const text = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(text(CONCENTRATION)).toEqual(["For 15s, your next spell cannot be interrupted"]);
+    expect(text(SACRIFICE)).toEqual([
+      "For 15s, your next spell casts instantly and takes 30s longer to recharge, ends if you use a skill that is not a spell",
+    ]);
+    expect(text(RENEWAL)).toEqual(["For 15s, your next spell recharges instantly"]);
+    expect(text(ESSENCE)).toEqual([
+      "For 15s, your next spell casts instantly, you lose all energy as it is cast",
+    ]);
   });
 });

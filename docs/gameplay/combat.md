@@ -862,6 +862,14 @@ its rank-12 number; Energy Storage scaling comes with #532. While it is
 up, a skill bar slot's tooltip shows each spell at its discounted cost,
 and the bar lights the ones it makes affordable (#637, #719).
 
+The other glyphs (#1730; Elementalist, no attribute, 5 energy, 1 s cast)
+last 15 s and change only your next spell. A new glyph replaces the one
+up. Glyph of Concentration (10 s recharge): it cannot be interrupted.
+Glyph of Renewal (10 s): it recharges instantly. Glyph of Sacrifice
+(15 s): it casts instantly, then takes 30 s longer to recharge; using a
+skill that is not a spell first ends the glyph unused. Glyph of Essence
+(20 s): it casts instantly, and you lose all your energy as it is cast.
+
 **Signets** usually cost nothing, so they work at 0 energy. Healing
 Signet (Warrior, Tactics) heals you after a 2 s cast, and for those 2 s
 you have −40 armor: the penalty ends with the cast, whether it goes off,
@@ -1814,8 +1822,10 @@ A **well** (#1104) is a ward's kin left on a corpse, not on its caster:
 the well spell exploits the nearest fresh corpse as it lands, as Soul
 Feast does (see Corpses), and the well lies where that body did, for its
 whole time, whether the body later stands up, respawns or not. With no
-corpse in reach the cast is refused and nothing is paid. A well acts on
-foes: your side standing in it gets nothing. Otherwise it is a ward:
+corpse in reach (#1730) the caster sacrifices 66% of their maximum Health
+instead, and the well lies where they stand. Most wells act on foes, and
+your side standing in them gets nothing; Well of Blood and Well of Power
+act on your side, and foes in them get nothing. Otherwise it is a ward:
 drawn the same, one status from two of a skill, at most 32 on the
 ground counting wards, traps and pulses.
 
@@ -1823,6 +1833,25 @@ ground counting wards, traps and pulses.
 1 s, 10 s recharge) leaves a well of radius 109 on the nearest corpse
 within cast range for 10...26 seconds: foes inside it suffer −5 Health
 degeneration.
+
+The other wells, each of radius 109, at their rank-12 numbers:
+
+- **Well of Blood** (Blood Magic, 10 energy, 1 s, 2 s recharge, 18 s):
+  your side inside gets +5 Health regeneration (#1730).
+- **Well of Power** (Blood Magic, 5 energy, 1 s, 10 s recharge, 26 s):
+  your side inside gets +5 Health and +2 Energy regeneration (#1730).
+- **Well of Weariness** (Curses, 5 energy, 1 s, 5 s recharge, 46 s): foes
+  inside suffer −1 Energy degeneration (#1730).
+- **Well of the Profane** (Death Magic, 25 energy, 3 s, 10 s recharge,
+  18 s): foes inside lose all enchantments and cannot be enchanted (#1732).
+- **Well of Silence** (Curses, 10 energy, 1 s, 20 s recharge, 26 s): foes
+  inside suffer −3 Health degeneration and cannot use shouts or chants
+  (#1732).
+- **Well of Darkness** (Curses, 10 energy, 1 s, 20 s recharge, 41 s):
+  hexed foes inside miss 50% of their attacks (#1732).
+- **Well of Ruin** (Curses, 10 energy, 1 s, 20 s recharge, 25 s): a foe
+  inside that takes physical damage suffers Cracked Armor for 17 s
+  (#1732).
 
 ## Traps
 

@@ -611,6 +611,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsWhenBearerUsesAdrenalSkill) {
     parts.push("ends if you use an adrenal skill");
   }
+  if (definition.endsWhenBearerUsesOtherSkill && definition.nextSkillRule !== undefined) {
+    parts.push(
+      `ends if you use a skill that is not a ${NEXT_SKILL_KIND[definition.nextSkillRule.which][0]}`,
+    );
+  }
   if (definition.endsWhenBearerGains.length > 0) {
     const gained = definition.endsWhenBearerGains.map((category) =>
       category === "hex" ? "hexed" : "enchanted",
@@ -1246,12 +1251,27 @@ function describeNextSkillRule({
   uninterruptible,
   unblockable,
   energyDiscount,
+  castsInstantly,
+  extraRechargeSeconds,
+  rechargesInstantly,
+  losesAllEnergy,
 }: NextSkillRule): string[] {
-  const next = `your next ${NEXT_SKILL_KIND[which][0]}`;
+  // One clause for all a rule does to the skill (#1730): "your next
+  // spell casts instantly and takes 30s longer to recharge".
+  const does = [
+    ...(uninterruptible ? ["cannot be interrupted"] : []),
+    ...(unblockable ? ["cannot be blocked"] : []),
+    ...(energyDiscount > 0 ? [`costs ${String(energyDiscount)} less energy`] : []),
+    ...(castsInstantly ? ["casts instantly"] : []),
+    ...(rechargesInstantly
+      ? ["recharges instantly"]
+      : extraRechargeSeconds > 0
+        ? [`takes ${String(extraRechargeSeconds)}s longer to recharge`]
+        : []),
+  ];
   return [
-    ...(uninterruptible ? [`${next} cannot be interrupted`] : []),
-    ...(unblockable ? [`${next} cannot be blocked`] : []),
-    ...(energyDiscount > 0 ? [`${next} costs ${String(energyDiscount)} less energy`] : []),
+    ...(does.length > 0 ? [`your next ${NEXT_SKILL_KIND[which][0]} ${does.join(" and ")}`] : []),
+    ...(losesAllEnergy ? ["you lose all energy as it is cast"] : []),
   ];
 }
 
@@ -2591,9 +2611,13 @@ export function describeSkill(
       : [
           {
             text:
-              skill.corpse.near === "target"
+              (skill.corpse.near === "target"
                 ? "Exploits the corpse nearest your target"
-                : "Exploits the nearest corpse",
+                : "Exploits the nearest corpse") +
+              // A well's price for none (#1730).
+              (skill.corpse.elseSacrificePercent === undefined
+                ? ""
+                : `, or sacrifices ${String(skill.corpse.elseSacrificePercent)}% Health if none is near`),
             magnitude: undefined,
           },
         ];

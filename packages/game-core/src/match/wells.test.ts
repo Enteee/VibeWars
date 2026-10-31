@@ -13,7 +13,9 @@ import { MatchSimulation, type Participant, type ParticipantSpec } from "./simul
 /**
  * Wells (#1104): a ground effect anchored on the corpse its skill
  * exploited, projecting a status on whoever its aura reaches. Well of
- * Suffering is the first, and the first aura on foes.
+ * Suffering is the first, and the first aura on foes. With no corpse, a
+ * well sacrifices 66% of its caster's Health and sits where it stands
+ * (#1730).
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -113,16 +115,45 @@ describe("Well of Suffering (#1104)", () => {
     });
   });
 
-  it("is refused with no corpse in range, and nothing is paid", () => {
+  it("with no corpse in range, sacrifices 66% of its caster's max Health and sits on it (#1730)", () => {
     const sim = match();
     kill(sim, "far");
+    const n = get(sim, "n").combatant;
+    const before = n.health;
+    well(sim);
+    expect(before - n.health).toBe(Math.round(n.maxHealth * 0.66));
+    expect(get(sim, "far").corpseExploited).toBe(false);
+    // Where it stood as the well went off: `o` beside it nudges it off the origin.
+    expect(sim.groundEffects.map(({ position }) => position)).toEqual([get(sim, "n").position]);
+  });
+
+  it("with a corpse in range, sacrifices nothing (#1730)", () => {
+    const sim = match();
+    kill(sim, "x");
+    const n = get(sim, "n").combatant;
+    const before = n.health;
+    well(sim);
+    expect(n.health).toBeGreaterThanOrEqual(before);
+  });
+
+  it("is still made by a caster its sacrifice kills (#1730)", () => {
+    const sim = match();
+    const n = get(sim, "n").combatant;
+    n.health = n.maxHealth * 0.3;
+    well(sim);
+    expect(n.dead).toBe(true);
+    // Where it stood as the well went off: `o` beside it nudges it off the origin.
+    expect(sim.groundEffects.map(({ position }) => position)).toEqual([get(sim, "n").position]);
+  });
+
+  it("leaves a corpse skill that is no well refused with no corpse, and unpaid (#1730)", () => {
+    const sim = match();
     const n = get(sim, "n");
     const energy = n.combatant.energy;
-    expect(sim.requestSkill("n", 0)?.check).toEqual({ ok: false, reason: "no-corpse" });
+    expect(sim.requestSkill("n", 1)?.check).toEqual({ ok: false, reason: "no-corpse" });
     stepFor(sim, DT);
     expect(n.combatant.energy).toBeGreaterThanOrEqual(energy);
     expect(n.combatant.cast.activeCast).toBeUndefined();
-    expect(sim.groundEffects).toEqual([]);
   });
 
   it("sits on the corpse it exploits, not on its caster, for 26 seconds at rank 12", () => {
@@ -227,18 +258,18 @@ describe("Well of Suffering (#1104)", () => {
     expect(suffers(sim, "x")).toBe(true);
   });
 
-  it("lands with no well, paid for, when the corpse was used up during the cast", () => {
+  it("sacrifices, and sits on its caster, when the corpse was used up during the cast (#1730)", () => {
     const sim = match();
     kill(sim, "x");
-    const o = get(sim, "o");
-    const energy = o.combatant.energy;
+    const o = get(sim, "o").combatant;
+    const before = o.health;
     // Both cast at once; `n`'s Soul Feast resolves first, in participant order.
     expect(sim.requestSkill("n", 1)?.check).toEqual({ ok: true });
     expect(sim.requestSkill("o", 0)?.check).toEqual({ ok: true });
     stepFor(sim, CAST_SECONDS);
     expect(get(sim, "x").corpseExploited).toBe(true);
-    expect(sim.groundEffects).toEqual([]);
-    expect(o.combatant.energy).toBeLessThan(energy);
+    expect(before - o.health).toBe(Math.round(o.maxHealth * 0.66));
+    expect(sim.groundEffects.map(({ position }) => position)).toEqual([vec2(0, -10)]);
   });
 
   it("says what it does, and to whom", () => {
@@ -248,9 +279,131 @@ describe("Well of Suffering (#1104)", () => {
     }
     const lines = describeSkill(skill, new Map([[DEATH, 12]]));
     expect(lines.effects.map(({ text }) => text)).toEqual([
-      "Exploits the nearest corpse",
+      "Exploits the nearest corpse, or sacrifices 66% Health if none is near",
       "Creates a well at its location for 26 seconds",
       "Non-spirit foes in the area: −5 Health degeneration",
     ]);
+  });
+});
+
+describe("Wells of Blood, Power and Weariness (#1730)", () => {
+  it.each([
+    [
+      "necromancer.well-of-blood",
+      92,
+      false,
+      "necromancer.blood-magic",
+      10,
+      2,
+      "well-of-blood",
+      "allies",
+      18,
+    ],
+    [
+      "necromancer.well-of-power",
+      91,
+      true,
+      "necromancer.blood-magic",
+      5,
+      10,
+      "well-of-power",
+      "allies",
+      26,
+    ],
+    [
+      "necromancer.well-of-weariness",
+      818,
+      false,
+      "necromancer.curses",
+      5,
+      5,
+      "well-of-weariness",
+      "foes",
+      46,
+    ],
+  ] as const)(
+    "%s is GW1's: gwId %i, elite %s, %s, %i energy, 1 s, %i s recharge, %s on %s for %i s at 12",
+    (id, gwId, elite, attributeId, energy, recharge, statusId, affects, seconds) => {
+      const skill = getSkill(id);
+      expect(skill).toMatchObject({
+        gwId,
+        type: "well",
+        elite,
+        attributeId,
+        cost: { kind: "energy", amount: energy },
+        activationSeconds: 1,
+        rechargeSeconds: recharge,
+        target: "self",
+        corpse: { elseSacrificePercent: 66 },
+      });
+      expect(skill?.effects).toMatchObject([
+        {
+          kind: "create-ground-effect",
+          anchor: "corpse",
+          act: { kind: "aura", aura: { statusId, affects, radius: AREA_IN_THE_AREA } },
+        },
+      ]);
+      const sim = new MatchSimulation({
+        seed: "wells-1730",
+        participants: [
+          {
+            ...spec("n", 0, vec2(0, 0)),
+            skillBar: [id],
+            attributeRanks: new Map([[attributeId, 12]]),
+          },
+          spec("x", 1, vec2(100, 0)),
+        ],
+      });
+      kill(sim, "x");
+      expect(sim.requestSkill("n", 0)?.check).toEqual({ ok: true });
+      stepFor(sim, CAST_SECONDS);
+      expect(sim.groundEffects[0]?.durationSeconds).toBe(seconds);
+    },
+  );
+
+  it("Well of Blood with no corpse sits on its caster, who regenerates in it", () => {
+    const sim = new MatchSimulation({
+      seed: "wells-1730",
+      participants: [
+        {
+          ...spec("n", 0, vec2(0, 0)),
+          skillBar: ["necromancer.well-of-blood"],
+          attributeRanks: new Map([["necromancer.blood-magic", 12]]),
+        },
+      ],
+    });
+    expect(sim.requestSkill("n", 0)?.check).toEqual({ ok: true });
+    stepFor(sim, CAST_SECONDS);
+    const n = get(sim, "n").combatant;
+    expect(n.statuses.has("well-of-blood")).toBe(true);
+    expect(lostOverASecond(sim, "n")).toBeCloseTo(-5 * HEALTH_PER_PIP, 5);
+  });
+
+  it("Well of Power is worn by allies in it, Weariness by foes", () => {
+    const sim = new MatchSimulation({
+      seed: "wells-1730",
+      participants: [
+        {
+          ...spec("n", 0, vec2(0, 0)),
+          skillBar: ["necromancer.well-of-power", "necromancer.well-of-weariness"],
+          attributeRanks: new Map([
+            ["necromancer.blood-magic", 12],
+            ["necromancer.curses", 12],
+          ]),
+        },
+        spec("f", 1, vec2(30, 0)),
+      ],
+    });
+    expect(sim.requestSkill("n", 0)?.check).toEqual({ ok: true });
+    stepFor(sim, CAST_SECONDS);
+    // Healed again, or the second sacrifice would kill it.
+    const n = get(sim, "n").combatant;
+    n.health = n.maxHealth;
+    expect(sim.requestSkill("n", 1)?.check).toEqual({ ok: true });
+    stepFor(sim, CAST_SECONDS);
+    expect(get(sim, "n").combatant.statuses.has("well-of-power")).toBe(true);
+    expect(get(sim, "f").combatant.statuses.has("well-of-weariness")).toBe(true);
+    expect(get(sim, "f").combatant.statuses.has("well-of-power")).toBe(false);
+    expect(get(sim, "n").combatant.statuses.has("well-of-weariness")).toBe(false);
   });
 });

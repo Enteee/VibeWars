@@ -20,10 +20,19 @@ export interface CastRule {
   readonly uninterruptible: boolean;
   /** Its blows, if it is an attack skill, cannot be blocked. */
   readonly unblockable: boolean;
+  /** It recharges at once as it ends (#1730): Glyph of Renewal's. */
+  readonly rechargesInstantly: boolean;
+  /** Seconds on its recharge as it ends (#1730): Glyph of Sacrifice's. */
+  readonly extraRechargeSeconds: number;
 }
 
-/** A cast no chant's rule touched. */
-export const NO_CAST_RULE: CastRule = { uninterruptible: false, unblockable: false };
+/** A cast no chant's or glyph's rule touched. */
+export const NO_CAST_RULE: CastRule = {
+  uninterruptible: false,
+  unblockable: false,
+  rechargesInstantly: false,
+  extraRechargeSeconds: 0,
+};
 
 export interface ActiveCast {
   readonly skillId: string;
