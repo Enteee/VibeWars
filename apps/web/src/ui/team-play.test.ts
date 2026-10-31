@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ARENA_MAPS, modeMapIds } from "../net/maps.js";
 import { TEAM_SCHEMA_VERSION, type StoredTeam, type TeamCharacter } from "../storage/schema.js";
+import type { FigureLook } from "./character-card.js";
+import type * as Figure from "./character-figure.js";
 import {
   HOST_GOALS,
   NO_TEAM_BUILDS,
@@ -12,6 +14,20 @@ import {
   type HostEntry,
   type TeamPlayCallbacks,
 } from "./team-play.js";
+
+// The figure draws on a canvas, which Node has none of: a bare one,
+// naming what it holds as the real one does.
+vi.mock("./character-figure.js", async (original) => ({
+  ...(await original<typeof Figure>()),
+  createCharacterFigure: (look: FigureLook) => {
+    const canvas = document.createElement("canvas");
+    canvas.className = "character-figure";
+    if (look.appearance.weaponId !== undefined) {
+      canvas.setAttribute("data-weapon-id", look.appearance.weaponId);
+    }
+    return canvas;
+  },
+}));
 
 function team(id: string): StoredTeam {
   return {
@@ -197,7 +213,7 @@ describe("the team screens' Team Builds (#1515, #1525)", () => {
     expect(added).toBe(1);
   });
 
-  it("shows each member as a row of ball, weapons and skills, and no name (#1786)", () => {
+  it("shows each member as a row holding its weapons, with its skills, and no name (#1864)", () => {
     const root = render([
       {
         ...team("a"),
@@ -206,19 +222,20 @@ describe("the team screens' Team Builds (#1515, #1525)", () => {
     ]);
     const rows = root.all("play-card-member");
     expect(rows.map((row) => row.className)).toEqual([
-      "team-member-row play-card-member",
-      "team-member-row play-card-member",
+      "character-card-row play-card-member",
+      "character-card-row play-card-member",
     ]);
     expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual([
       "Ser Bash, Warrior",
       "Ser Clang, Warrior",
     ]);
     for (const row of rows) {
-      expect(row.all("character-dot")).toHaveLength(1);
-      expect(row.all("gear-icon")).toHaveLength(2);
+      const figures = row.all("character-figure");
+      expect(figures.map((figure) => figure.attributes.get("data-weapon-id"))).toEqual(["sword"]);
+      expect(row.all("character-dot")).toEqual([]);
+      expect(row.all("gear-icon")).toEqual([]);
       expect(row.all("mini-skill-bar")).toHaveLength(1);
     }
-    expect(root.all("play-card-member-name")).toEqual([]);
     expect(root.everything().some((node) => node.textContent.startsWith("Ser "))).toBe(false);
   });
 

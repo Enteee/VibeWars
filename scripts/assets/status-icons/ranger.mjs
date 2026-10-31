@@ -220,4 +220,12 @@ export const RANGER_STATUS_ICONS = {
     "stance",
     (c) => `<path d="M7 7.5l4.5 4.5L7 16.5M12.5 7.5l4.5 4.5-4.5 4.5" ${stroke(c, 2.2)}/>`,
   ],
+  // Staples (#1869), stand-in until its art card.
+  // Stance: a leaping frog's two chevrons over three slashes, faster until an attack skill.
+  "hekets-rampage": [
+    "stance",
+    (c) =>
+      `<path d="M5 9l4-4 4 4M11 9l4-4 4 4" ${stroke(c, 2.2)}/>` +
+      `<path d="M6.5 19l3-7M10.5 19l3-7M14.5 19l3-7" ${stroke(c, 2)}/>`,
+  ],
 };

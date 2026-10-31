@@ -10,6 +10,7 @@ import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
 import { characterAppearance } from "./character-figure.js";
+import { characterRanks } from "./character-ranks.js";
 import {
   createCharacterDot,
   equippedCount,
@@ -208,7 +209,7 @@ export function professionMixNodes(mix: readonly ProfessionMixEntry[]): (HTMLEle
  * An illegal build still shows what it holds; `validateTeam` decides.
  */
 export function memberSkillCells(character: TeamCharacter): (TeamSkillCell | null)[] {
-  const ranks = new Map(character.attributes.map((a) => [a.attributeId, a.rank]));
+  const ranks = characterRanks(character);
   return Array.from({ length: SKILL_BAR_SLOTS }, (_, slot) => {
     const skillId = character.skillBar[slot] ?? null;
     if (skillId === null) {

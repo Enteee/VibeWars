@@ -28,7 +28,12 @@ import {
 } from "./weapons.js";
 import { ALL_INSIGNIAS, type InsigniaId } from "./insignias.js";
 import { ALL_OFFHANDS, SHIELD_REQUIREMENT_ATTRIBUTES } from "./offhands.js";
-import { creatureResolvedEquipment, resolveLoadout, unarmedResolvedEquipment } from "./resolve.js";
+import {
+  creatureResolvedEquipment,
+  effectiveRanks,
+  resolveLoadout,
+  unarmedResolvedEquipment,
+} from "./resolve.js";
 import {
   ATTRIBUTE_RUNE_TIERS,
   UNIVERSAL_RUNES,
@@ -1129,6 +1134,32 @@ describe("attribute headgear (#1140)", () => {
     expect(HEADGEAR_BONUS).toBe(1);
     expect(loadout.attributeRanks.get("warrior.strength")).toBe(16);
     expect(loadout.weaponSets[0].equipment.attributeBonuses.get("warrior.strength")).toBe(4);
+  });
+
+  it("gives skill text the ranks the resolver fights at (#1900)", () => {
+    const equipmentWith = (allocated: readonly [string, number][]) => {
+      const loadout = resolveWith(allocated, "warrior.strength", { head: superior });
+      const ranks = effectiveRanks(
+        new Map(allocated),
+        {
+          ...defaultEquipmentFor("warrior"),
+          armor: {
+            ...bareArmorSet(),
+            head: { insigniaId: null, rune: superior, headgearAttributeId: "warrior.strength" },
+          },
+        },
+        "warrior",
+        "monk",
+      );
+      return { loadout, ranks };
+    };
+    const twelve = equipmentWith([["warrior.strength", 12]]);
+    expect(twelve.ranks.get("warrior.strength")).toBe(12 + 3 + 1);
+    expect(twelve.ranks).toEqual(twelve.loadout.attributeRanks);
+    // Capped as the resolver caps it.
+    const fifteen = equipmentWith([["warrior.strength", 15]]);
+    expect(fifteen.ranks.get("warrior.strength")).toBe(16);
+    expect(fifteen.ranks).toEqual(fifteen.loadout.attributeRanks);
   });
 
   it("never lifts a rank past 16, whatever was bought", () => {

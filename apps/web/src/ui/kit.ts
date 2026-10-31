@@ -447,7 +447,8 @@ export function selectableRow(options: SelectableRowOptions): HTMLElement {
 
 /** A card of the menu's screens (#1525): a character or a Team Build. */
 export interface PlayCardOptions {
-  readonly name: string;
+  /** A name, or an element of its own: a lobby's proposer and crown. */
+  readonly name: string | HTMLElement;
   /** After the name, on its line: "Random", "Invalid". */
   readonly tags?: readonly HTMLElement[];
   /** Under the name: a figure, a line, a team's members. */
@@ -456,8 +457,19 @@ export interface PlayCardOptions {
   readonly onOpen?: () => void;
   /** A card that is a choice, such as who you queue as: whether it is the chosen one. */
   readonly pressed?: boolean;
+  /** A press that cannot be pressed now: a vote that is over. */
+  readonly disabled?: boolean;
+  /** The press's own name, when the card's text does not say what it does: "Ann's team build". */
+  readonly label?: string;
   /** Beside the card's press, at its foot: Edit, Clone. */
   readonly actions?: readonly HTMLElement[];
+}
+
+/** The card's press: `disabled`, a vote that is over. */
+function cardPress(onOpen: () => void, disabled: boolean): HTMLElement {
+  const press = button("", "play-card-open", onOpen);
+  press.disabled = disabled;
+  return press;
 }
 
 /**
@@ -469,15 +481,23 @@ export function playCard(options: PlayCardOptions): HTMLElement {
   const open =
     options.onOpen === undefined
       ? h("div", "play-card-open")
-      : button("", "play-card-open", options.onOpen);
+      : cardPress(options.onOpen, options.disabled === true);
+  if (options.label !== undefined) {
+    open.setAttribute("aria-label", options.label);
+  }
   if (options.pressed !== undefined) {
     open.setAttribute("aria-pressed", String(options.pressed));
     card.classList.toggle("is-selected", options.pressed);
   }
   const head = h("span", "play-card-head");
-  const name = h("span", "play-card-name", options.name);
-  name.title = options.name;
-  head.append(name, ...(options.tags ?? []));
+  if (typeof options.name === "string") {
+    const name = h("span", "play-card-name", options.name);
+    name.title = options.name;
+    head.appendChild(name);
+  } else {
+    head.appendChild(options.name);
+  }
+  head.append(...(options.tags ?? []));
   open.append(head, ...options.content);
   card.appendChild(open);
   if (options.actions !== undefined && options.actions.length > 0) {

@@ -530,6 +530,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesAdrenalSkill: boolean;
   /**
+   * It ends the moment the bearer starts an attack skill (#1869), before
+   * that attack is timed, so the attack does not get its speed: Heket's
+   * Rampage's "ends if you use an attack skill". A plain swing keeps it.
+   */
+  readonly endsWhenBearerUsesAttackSkill: boolean;
+  /**
    * It ends, unspent, the moment the bearer starts a skill its
    * `nextSkillRule` does not answer (#1730): Glyph of Sacrifice's "ends
    * prematurely if you use a non-spell skill".
@@ -2413,6 +2419,18 @@ export class StatusSet {
     });
     this.#end(used.map(({ statusId }) => statusId));
     return used;
+  }
+
+  /**
+   * The bearer started an attack skill (#1869): every status that ends
+   * when it does is gone. Returns the ids that ended on it.
+   */
+  public endOnBearerStartAttackSkill(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerUsesAttackSkill)
+      .map(({ id }) => id);
+    this.#end(ended);
+    return ended;
   }
 
   /**
