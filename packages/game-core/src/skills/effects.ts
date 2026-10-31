@@ -38,7 +38,7 @@ import {
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
 import { isFreshCorpse } from "../match/corpses.js";
-import { distance } from "../vec2.js";
+import { distance, type Vec2 } from "../vec2.js";
 import type { Creature } from "../match/simulation.js";
 import type { ProfessionId } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
@@ -988,6 +988,7 @@ export function applyStatus(
   statusId: StatusId,
   durationSeconds: number,
   sourceId: string,
+  returnPoint: Vec2 | null = null,
 ): number | undefined {
   const { category } = getStatusDefinition(statusId);
   if (isInvulnerable(target) && (category === "hex" || category === "condition")) {
@@ -995,7 +996,7 @@ export function applyStatus(
   }
   const lossBefore = maxHealthLossOf(target);
   const raisedBefore = raisedMaxHealth(target);
-  if (!target.statuses.apply(statusId, durationSeconds, sourceId)) {
+  if (!target.statuses.apply(statusId, durationSeconds, sourceId, returnPoint)) {
     return 0;
   }
   const raised = raisedMaxHealth(target) - raisedBefore;
@@ -1016,21 +1017,12 @@ export function applyStatus(
 }
 
 /**
- * `statusId`, just put on `target` by `caster`, takes `caster` back to
- * where it stands now when it ends, if it is a returning one (#1826). The
- * simulation moves a shadow step's caster after its effects, so this is
- * where it stood as it cast.
+ * Where `caster` stands now, for a returning status it puts up to take it
+ * back to when it ends (#1826). The simulation moves a shadow step's caster
+ * after its effects, so this is where it stood as it cast.
  */
-function holdReturn(
-  context: SkillContext,
-  caster: Combatant,
-  target: Combatant,
-  statusId: StatusId,
-): void {
-  const at = context.surroundings.get(caster.id)?.position;
-  if (at !== undefined) {
-    target.statuses.returnFrom(statusId, at);
-  }
+function castSpot(context: SkillContext, caster: Combatant): Vec2 | null {
+  return context.surroundings.get(caster.id)?.position ?? null;
 }
 
 /**
@@ -1047,6 +1039,7 @@ function landStatus(
   durationSeconds: number,
   sourceId: string,
   events: CombatEvent[],
+  returnPoint: Vec2 | null,
 ): void {
   // Immune (#1455): it does not land, and there is nothing to say.
   if (target.statuses.isImmuneTo(statusId)) {
@@ -1055,7 +1048,7 @@ function landStatus(
   const ending = endedByGaining(target, statusId);
   const breaker =
     getStatusDefinition(statusId).category === "hex" ? target.statuses.hexBreaker() : undefined;
-  const loss = applyStatus(target, statusId, durationSeconds, sourceId);
+  const loss = applyStatus(target, statusId, durationSeconds, sourceId, returnPoint);
   if (loss === undefined) {
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
@@ -1438,8 +1431,14 @@ export function applyEffect(
             spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
           : effect.durationSeconds;
       const durationSeconds = scaledStatusDuration(target, effect.statusId, base);
-      landStatus(target, effect.statusId, durationSeconds, caster.id, events);
-      holdReturn(context, caster, target, effect.statusId);
+      landStatus(
+        target,
+        effect.statusId,
+        durationSeconds,
+        caster.id,
+        events,
+        castSpot(context, caster),
+      );
       return events;
     }
 
@@ -1454,7 +1453,14 @@ export function applyEffect(
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
         const durationSeconds = remainingSeconds * effect.durationMultiplier;
-        landStatus(taker, id, scaledStatusDuration(taker, id, durationSeconds), caster.id, events);
+        landStatus(
+          taker,
+          id,
+          scaledStatusDuration(taker, id, durationSeconds),
+          caster.id,
+          events,
+          null,
+        );
       }
       if (effect.healPerCondition !== undefined && moved.length > 0) {
         applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
@@ -1486,6 +1492,7 @@ export function applyEffect(
             scaledStatusDuration(combatant, id, remainingSeconds),
             caster.id,
             events,
+            null,
           );
         }
       }
@@ -1500,9 +1507,13 @@ export function applyEffect(
       }
       // The caster's newest; the simulation drops what it cannot pay for.
       const ending = endedByGaining(bearer, effect.statusId);
-      bearer.statuses.maintain(effect.statusId, caster.id, caster.nextMaintainSeq);
+      bearer.statuses.maintain(
+        effect.statusId,
+        caster.id,
+        caster.nextMaintainSeq,
+        castSpot(context, caster),
+      );
       caster.nextMaintainSeq += 1;
-      holdReturn(context, caster, bearer, effect.statusId);
       events.push({
         kind: "status-applied",
         targetId: bearer.id,
@@ -1669,8 +1680,14 @@ export function applyEffect(
         return events;
       }
       const durationSeconds = scaledStatusDuration(caster, effect.statusId, effect.durationSeconds);
-      landStatus(caster, effect.statusId, durationSeconds, caster.id, events);
-      holdReturn(context, caster, caster, effect.statusId);
+      landStatus(
+        caster,
+        effect.statusId,
+        durationSeconds,
+        caster.id,
+        events,
+        castSpot(context, caster),
+      );
       return events;
     }
 

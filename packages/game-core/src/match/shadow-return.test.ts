@@ -27,9 +27,9 @@ const RETURN = 4;
 const HOME = vec2(0, 0);
 
 /** A rank-12 assassin with the five, at the origin. */
-function assassin(): ParticipantSpec {
+function assassin(id = "sin", spawn = HOME): ParticipantSpec {
   return {
-    id: "sin",
+    id,
     team: 0,
     skillBar: [
       "assassin.shadow-fang",
@@ -44,7 +44,7 @@ function assassin(): ParticipantSpec {
     ]),
     equipment: unarmedResolvedEquipment(60),
     maxEnergy: 60,
-    spawn: HOME,
+    spawn,
     facing: 0,
   };
 }
@@ -91,11 +91,11 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
   return log;
 }
 
-/** `slot` used on `targetId`, stepped until it resolves. */
-function use(match: MatchSimulation, slot: number, targetId: string): void {
-  const skillId = get(match, "sin").skillBar[slot] ?? "";
-  match.setTarget("sin", targetId);
-  expect(match.requestSkill("sin", slot)?.check).toEqual({ ok: true });
+/** `casterId`'s `slot` used on `targetId`, stepped until it resolves. */
+function use(match: MatchSimulation, slot: number, targetId: string, casterId = "sin"): void {
+  const skillId = get(match, casterId).skillBar[slot] ?? "";
+  match.setTarget(casterId, targetId);
+  expect(match.requestSkill(casterId, slot)?.check).toEqual({ ok: true });
   for (let i = 0; i < 100; i += 1) {
     if (match.step(DT).log.some((logged) => logged.skillId === skillId)) {
       return;
@@ -135,6 +135,22 @@ describe("Shadow Fang (#1826)", () => {
     stepFor(match, DT);
     expect(fromHome(match)).toBeCloseTo(0, 6);
     expect(get(match, "foe").combatant.statuses.has("deep-wound")).toBe(true);
+  });
+
+  it("takes back only the caster whose hex it is, when another's fails on Hex Breaker", () => {
+    const yonder = vec2(0, -300);
+    const match = new MatchSimulation({
+      seed: "return",
+      participants: [assassin(), assassin("other", yonder), body("foe", vec2(300, 0))],
+    });
+    use(match, SHADOW_FANG, "foe");
+    get(match, "foe").combatant.statuses.apply("hex-breaker", 30, "foe");
+    use(match, SHADOW_FANG, "foe", "other");
+    expect(get(match, "foe").combatant.statuses.get("shadow-fang")?.sourceId).toBe("sin");
+    const log = stepFor(match, 10.5);
+    expect(stepsBack(log)).toEqual([["sin", "assassin.shadow-fang"]]);
+    expect(fromHome(match)).toBeCloseTo(0, 6);
+    expect(distance(get(match, "other").position, yonder)).toBeGreaterThan(100);
   });
 
   it("leaves a caster who is dead as the hex ends where it fell", () => {
@@ -226,11 +242,9 @@ describe("Return (#1826)", () => {
 describe("a returning status's end (#1826)", () => {
   it("carries where its source cast it; a recast replaces it, and the replaced one has none", () => {
     const sin = makeCombatant({ id: "sin" });
-    sin.statuses.apply("shadow-of-haste", 34, "sin");
-    sin.statuses.returnFrom("shadow-of-haste", vec2(1, 2));
+    sin.statuses.apply("shadow-of-haste", 34, "sin", vec2(1, 2));
     sin.statuses.drainChanges();
-    sin.statuses.apply("shadow-of-haste", 34, "sin");
-    sin.statuses.returnFrom("shadow-of-haste", vec2(5, 6));
+    sin.statuses.apply("shadow-of-haste", 34, "sin", vec2(5, 6));
     const replaced = sin.statuses.drainChanges().filter((change) => change.kind === "ended");
     expect(replaced).toEqual([
       expect.objectContaining({ id: "shadow-of-haste", returnPoint: null }),
@@ -241,10 +255,24 @@ describe("a returning status's end (#1826)", () => {
     );
   });
 
+  it("keeps its own point when a shorter recast leaves it on; a longer one replaces it unended", () => {
+    const foe = makeCombatant({ id: "foe" });
+    foe.statuses.apply("shadow-fang", 10, "sin", vec2(1, 2));
+    foe.statuses.apply("shadow-fang", 5, "other", vec2(5, 6));
+    expect(foe.statuses.get("shadow-fang")).toEqual(
+      expect.objectContaining({ sourceId: "sin", returnPoint: vec2(1, 2) }),
+    );
+    foe.statuses.drainChanges();
+    foe.statuses.apply("shadow-fang", 15, "other", vec2(5, 6));
+    expect(foe.statuses.drainChanges().filter((change) => change.kind === "ended")).toEqual([]);
+    expect(foe.statuses.get("shadow-fang")).toEqual(
+      expect.objectContaining({ sourceId: "other", returnPoint: vec2(5, 6) }),
+    );
+  });
+
   it("carries no point for a status that does not return", () => {
     const sin = makeCombatant({ id: "sin" });
-    sin.statuses.apply("dash", 3, "sin");
-    sin.statuses.returnFrom("dash", vec2(1, 2));
+    sin.statuses.apply("dash", 3, "sin", vec2(1, 2));
     sin.statuses.remove("dash");
     expect(sin.statuses.drainChanges()).toContainEqual(
       expect.objectContaining({ kind: "ended", id: "dash", returnPoint: null }),
