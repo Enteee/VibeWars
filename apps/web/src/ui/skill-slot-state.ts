@@ -12,6 +12,7 @@ import {
   preventsSpells,
   targetLivenessAllows,
   targetRuleAllows,
+  usableMidAction,
   wieldsFor,
   type Segment,
 } from "@vibewars/game-core";
@@ -225,6 +226,17 @@ export function silenced(skillBar: readonly (SkillSlot | null)[], self: PlayerSn
       skill !== undefined &&
       ((noSpells && isSpell(skill.type)) || (noAttacks && skill.type === "attack"))
     );
+  });
+}
+
+/**
+ * Which slots hold a shout or a stance (#1725): lit through a knockdown,
+ * which greys the rest of the bar, since they still go off.
+ */
+export function midAction(skillBar: readonly (SkillSlot | null)[]): boolean[] {
+  return skillBar.map((slot) => {
+    const skill = slot === null ? undefined : getSkill(slot.id);
+    return skill !== undefined && usableMidAction(skill);
   });
 }
 

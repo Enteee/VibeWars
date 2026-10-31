@@ -431,30 +431,30 @@ describe("Water Magic texts (#1367)", () => {
           "Applies Blurred Vision for 9s (50% of attacks miss)",
         ],
         "frozenBurst": [
-          "Deals 70 damage",
+          "Deals 70 cold damage",
           "Applies Frozen Burst for 7s (moves at 34% speed)",
         ],
         "icePrison": [
           "Applies Ice Prison for 18s (moves at 34% speed)",
         ],
         "iceSpear": [
-          "Deals 50 damage",
+          "Deals 50 cold damage",
           "If you are Overcast: you gain Ice Spear for 5s (+3 Health regeneration)",
           "Projectile: can be dodged",
         ],
         "maelstrom": [
           "Creates a symbol at your target's location for 10 seconds",
-          "Every 1s for 10s, foes adjacent: deals 22 damage",
+          "Every 1s for 10s, foes adjacent: deals 22 cold damage",
           "Every 1s for 10s, foes adjacent: interrupts the target's spell, if they are casting one",
         ],
         "mindFreeze": [
-          "Deals 50 damage",
-          "If you have more Energy than target: deals 50 damage",
+          "Deals 50 cold damage",
+          "If you have more Energy than target: deals 50 cold damage",
           "If you have more Energy than target: applies Mind Freeze for 4s (moves at 10% speed)",
         ],
         "shatterstone": [
-          "Deals 85 damage",
-          "Applies Shatterstone for 3s (moves at 34% speed, takes 85 damage when it ends, its allies nearby take 85 damage when it ends)",
+          "Deals 85 cold damage",
+          "Applies Shatterstone for 3s (moves at 34% speed, takes 85 cold damage when it ends, its allies nearby take 85 cold damage when it ends)",
         ],
       }
     `);

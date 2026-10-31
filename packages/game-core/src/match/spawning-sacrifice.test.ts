@@ -296,7 +296,7 @@ describe("the skill texts (#1309)", () => {
   it("says what each does", () => {
     expect(text(RUPTURE)).toEqual([
       "An allied spirit",
-      "Nearby foes take 122 damage and suffer Blind for 10s (90% of attacks miss)",
+      "Nearby foes take 122 lightning damage and suffer Blind for 10s (90% of attacks miss)",
       "Destroys target allied spirit",
     ]);
     expect(text(FLESH)).toEqual([

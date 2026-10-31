@@ -516,8 +516,8 @@ describe("Spiteful Spirit (#935)", () => {
     expect(damageTo(entries, "far")).toEqual([]);
     expect(damageTo(entries, "m2")).toEqual([]);
     expect(describeStatus("spiteful-spirit")).toBe(
-      "takes 39 damage whenever it uses a skill or attacks, " +
-        "its adjacent allies take 39 damage whenever it uses a skill or attacks",
+      "takes 39 shadow damage whenever it uses a skill or attacks, " +
+        "its adjacent allies take 39 shadow damage whenever it uses a skill or attacks",
     );
   });
 
@@ -582,7 +582,7 @@ describe("Mark of Pain (#935)", () => {
     expect(damageTo(entries, "m")).toEqual([]);
     expect(damageTo(entries, "m3")).toEqual([]);
     expect(describeStatus("mark-of-pain")).toBe(
-      "its adjacent allies take 34 damage whenever it takes physical damage",
+      "its adjacent allies take 34 shadow damage whenever it takes physical damage",
     );
   });
 

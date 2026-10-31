@@ -1161,14 +1161,25 @@ describe("the skill queue during an activation (#1722)", () => {
     expect(get(match, "a").combatant.energy).toBeLessThan(energy);
   });
 
-  it("a later press replaces it, and the casting slot's own press is dropped as it recharges", () => {
+  it("the casting slot pressed again leaves the queue alone, however often (#1733)", () => {
     const match = casting(0.5);
     match.requestSkill("a", 1);
-    expect(match.requestSkill("a", 0)?.queued).toBe(true);
-    expect(get(match, "a").combatant.cast.queuedSlot).toBe(0);
+    for (let i = 0; i < 5; i += 1) {
+      expect(match.requestSkill("a", 0)).toEqual({ skillId: FIREBALL, check: { ok: true } });
+    }
+    expect(get(match, "a").combatant.cast.queuedSlot).toBe(1);
     untilTaken(match);
-    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(ARMOR_OF_EARTH);
+  });
+
+  it("the casting slot pressed again with nothing queued queues nothing (#1733)", () => {
+    const match = casting(0.5);
+    expect(match.requestSkill("a", 0)).toEqual({ skillId: FIREBALL, check: { ok: true } });
     expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+    // Once the cast is over, a press is used as any other: still recharging.
+    stepFor(match, 0.5);
+    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+    expect(match.requestSkill("a", 0)?.check).toEqual({ ok: false, reason: "still-recharging" });
   });
 
   it("a press refused for anything but range or sight is refused now, not queued", () => {

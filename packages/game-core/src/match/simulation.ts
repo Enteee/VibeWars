@@ -68,6 +68,7 @@ import { FLASH_LOCKOUT_SECONDS, MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from 
 import {
   canActivate,
   hasAftercast,
+  usableMidAction,
   isAllyOrSelfRule,
   isCompanionRule,
   payCost,
@@ -2362,6 +2363,11 @@ export class MatchSimulation {
     if (used === undefined || skill === undefined) {
       return undefined;
     }
+    // The slot being activated, pressed again, does nothing (#1733, GW1):
+    // a skill already queued stays queued, and nothing is told.
+    if (record.combatant.cast.activeCast?.key === used.key) {
+      return { skillId: skill.id, check: { ok: true } };
+    }
 
     if (skill.target === "single-enemy" && record.targetId === undefined) {
       const team = record.combatant.team;
@@ -2379,6 +2385,19 @@ export class MatchSimulation {
     if (skill.type === "pet-attack") {
       if (check.ok) {
         this.#armPetAttack(record, skill, used.key);
+      }
+      return { skillId: skill.id, check };
+    }
+    // A shout or a stance goes off at once in the middle of an activation,
+    // an aftercast or a knockdown (#1725, GW1), and touches none of them.
+    // Out of range or sight, it is refused: nothing walks in mid-action.
+    const { cast } = record.combatant;
+    if (
+      usableMidAction(skill) &&
+      (cast.isCasting || cast.inAftercast || record.combatant.knockdownRemaining > 0)
+    ) {
+      if (check.ok) {
+        this.#useMidAction(record, skill, used.key, castTargetId);
       }
       return { skillId: skill.id, check };
     }
@@ -2432,8 +2451,7 @@ export class MatchSimulation {
     if (pet === undefined) {
       return;
     }
-    payCost(skill, record.combatant, key);
-    this.#useNextSkillRules(record, skill);
+    this.#payForUse(record, skill, key);
     // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
     const faster = aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster;
     beginRecharge(
@@ -2469,6 +2487,47 @@ export class MatchSimulation {
   }
 
   /**
+   * A shout or a stance used mid-action (#1725): paid, and resolved now
+   * as an instant that finished its activation, by the one path every
+   * cast resolves by, which starts its recharge and answers its use. The
+   * cast in progress, the aftercast, the queue, the swing and the
+   * knockdown are left as they were.
+   */
+  #useMidAction(
+    record: ParticipantRecord,
+    skill: Skill,
+    key: string,
+    castTargetId: string | undefined,
+  ): void {
+    const rule = this.#payForUse(record, skill, key);
+    this.#castBegun(record, skill, castTargetId);
+    // An instant flies nowhere, so no time passes for it.
+    this.resolveCast(
+      record,
+      {
+        skillId: skill.id,
+        key,
+        targetId: castTargetId,
+        totalSeconds: 0,
+        remainingSeconds: 0,
+        whileActivating: undefined,
+        rule,
+      },
+      0,
+    );
+  }
+
+  /**
+   * A skill used, at once or as it begins: its cost, and what it uses up
+   * of a glyph or the chants on its user. Returns what they give it.
+   */
+  #payForUse(record: ParticipantRecord, skill: Skill, key: string): CastRule {
+    payCost(skill, record.combatant, key);
+    this.#useGlyph(record, skill);
+    return this.#useNextSkillRules(record, skill);
+  }
+
+  /**
    * The rest of `requestSkill`, once its target is known and `check`
    * made: queue it behind an aftercast, or pay for it and begin it. Also
    * how a skill walking in goes off on arrival (#415, #499).
@@ -2499,9 +2558,7 @@ export class MatchSimulation {
       return { skillId: skill.id, check, queued: true };
     }
 
-    payCost(skill, record.combatant, key);
-    this.#useGlyph(record, skill);
-    const rule = this.#useNextSkillRules(record, skill);
+    const rule = this.#payForUse(record, skill, key);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
