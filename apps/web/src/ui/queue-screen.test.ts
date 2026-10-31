@@ -78,6 +78,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     countdownSeconds,
     teamLobby: null,
     queueNonce: null,
+    proposalBuilds: new Map(),
   };
 }
 

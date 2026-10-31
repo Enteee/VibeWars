@@ -5,6 +5,7 @@ import type {
   LobbyPhase,
   LobbyRefusal,
   WirePartyFormed,
+  WireProposalBuild,
   WireTeamLobby,
 } from "@vibewars/game-protocol";
 
@@ -61,6 +62,12 @@ export interface LobbySnapshot {
    * this player's side only, the other side `null`.
    */
   readonly teamLobby: WireTeamLobby | null;
+  /**
+   * The skills and weapons of each proposal of this player's side the
+   * host has sent (#1811), by proposer: the vote's, and the chosen one's
+   * in the claim. A proposal not here yet shows its balls only.
+   */
+  readonly proposalBuilds: ReadonlyMap<string, readonly WireProposalBuild[]>;
   /** While `phase` is `"queued"` (#1766), this queueing's nonce; `null` otherwise. */
   readonly queueNonce: string | null;
 }

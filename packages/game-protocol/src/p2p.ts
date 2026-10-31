@@ -58,6 +58,7 @@ export const CHANNELS = [
   "lobby-state",
   "lobby-cmd",
   "lobby-note",
+  "team-proposal-builds",
   "lobby-hello",
   "lobby-welcome",
   "lobby-leave",
@@ -1069,6 +1070,26 @@ export interface WireTeamChoice {
   readonly proposerId: string | null;
   readonly reason: "votes" | "captain" | "random" | "house";
   readonly members: readonly WireLobbyCharacter[];
+}
+
+/**
+ * Lobby host to a side's members (#1811): each member's skills and
+ * weapons of `proposerId`'s proposal, once it stands, so its card can
+ * show them. Sent once per proposal, as `lobby-state` goes out on every
+ * change and would not hold eight of them.
+ */
+export interface WireTeamProposalBuilds {
+  readonly proposerId: string;
+  /** By slot, as the proposal's `members`. */
+  readonly builds: readonly WireProposalBuild[];
+}
+
+/** A proposed member's bar and set 1 (#1811): ids only, no name or attributes. */
+export interface WireProposalBuild {
+  /** Exactly `MAX_WIRE_SLOTS`, `null` an empty slot. */
+  readonly skills: readonly (string | null)[];
+  readonly mainHand: string | null;
+  readonly offHand: string | null;
 }
 
 /** Peer to lobby host: what the member asks for. The host decides. */
@@ -2614,6 +2635,28 @@ export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
     isOneOf(raw.kind, ["start-rejected", "refused", "chat-throttled"] as const) &&
     isString(raw.reason, MAX_WIRE_TEXT)
     ? { kind: raw.kind, reason: raw.reason }
+    : undefined;
+}
+
+function parseProposalBuild(value: unknown): WireProposalBuild | undefined {
+  const raw = fields(value);
+  const skills = parseArray(raw?.skills, MAX_WIRE_SLOTS, (item) =>
+    item === null ? null : parseString(item),
+  );
+  return raw !== undefined &&
+    skills?.length === MAX_WIRE_SLOTS &&
+    isNullableString(raw.mainHand) &&
+    isNullableString(raw.offHand)
+    ? { skills, mainHand: raw.mainHand, offHand: raw.offHand }
+    : undefined;
+}
+
+/** The `"team-proposal-builds"` channel. */
+export function parseWireTeamProposalBuilds(value: unknown): WireTeamProposalBuilds | undefined {
+  const raw = fields(value);
+  const builds = parseArray(raw?.builds, MAX_TEAM_LOBBY_SIDE, parseProposalBuild);
+  return raw !== undefined && isString(raw.proposerId) && builds !== undefined
+    ? { proposerId: raw.proposerId, builds }
     : undefined;
 }
 
