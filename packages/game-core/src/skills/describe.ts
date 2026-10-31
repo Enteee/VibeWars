@@ -321,6 +321,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
     parts.push(`attacks ${String(change)}% ${way}`);
   }
+  if (definition.projectileSpeedMultiplier !== 1) {
+    parts.push(`arrows move ${String(definition.projectileSpeedMultiplier)}× as fast`);
+  }
   if (definition.preventsSpells) {
     parts.push("cannot cast spells");
   }
@@ -592,6 +595,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsWhenBearerHits) {
     parts.push("ends if the bearer hits with an attack");
   }
+  if (definition.endsWhenBearerMisses) {
+    parts.push("ends if the bearer fails to hit");
+  }
   if (definition.endsWhenBearerHitsWithAttackSkill) {
     parts.push("ends if the bearer hits with an attack skill");
   }
@@ -616,11 +622,19 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     );
     parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
   }
+  // A trigger that does nothing but end it (#1748): Pacifism's "ends if
+  // the target takes damage".
+  const enders = definition.endsWhenTriggered
+    ? definition.triggers.filter((trigger) => trigger.effects.length === 0)
+    : [];
+  for (const trigger of enders) {
+    parts.push(`ends if it ${TRIGGER_WHEN[trigger.on]}`);
+  }
   // A trigger that reads "when it ends: removes 1 hex" is a sentence of
   // its own (#944), not one more clause after a comma.
   const sentences: string[] = [];
   for (const { text, clause } of describeTriggers(
-    definition.triggers,
+    definition.triggers.filter((trigger) => !enders.includes(trigger)),
     ranks,
     definition.endsWhenBearerUsesSkill,
     definition.endsWhenTriggered,
@@ -1325,6 +1339,10 @@ function conditionText(condition: EffectCondition): string {
       return `If target is below ${String(Math.round(condition.fraction * 100))}% Health`;
     case "target-health-above":
       return `If target is above ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "caster-health-below":
+      return `If you have less than ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "target-chain-mark":
+      return `If it follows ${condition.role === "off-hand" ? "an off-hand" : `a ${condition.role}`} attack`;
     case "target-has":
       return `If target has ${aCategory(condition.category)}`;
     case "target-has-any":
@@ -1347,6 +1365,10 @@ function conditionText(condition: EffectCondition): string {
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
         : `If target has no allies within ${String(condition.radius)}`;
+    case "target-near-caster-ally":
+      return condition.radius === AREA_NEARBY
+        ? "If target is near any of your allies"
+        : `If any of your allies is within ${String(condition.radius)} of target`;
     case "target-not-moving":
       return "If target is not moving";
     case "target-knocked-down":
@@ -1970,7 +1992,7 @@ function describeEffect(
       };
     }
     case "disable-own-skills":
-      return { text: disableOwnText(effect), magnitude: undefined };
+      return { text: disableOwnText(effect, false), magnitude: undefined };
     case "chain-mark":
       return {
         text: effect.role === "lead" ? "Counts as a lead attack" : "Counts as an off-hand attack",
@@ -2253,9 +2275,11 @@ const TYPE_TEXT: Record<SkillType, string> = {
 /**
  * A `disable-own-skills` line (#1473): "All of your skills" (#1570), "All
  * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
- * non-Mesmer skills except signets", "are disabled for 10 seconds".
+ * non-Mesmer skills except signets", "are disabled for 10 seconds". A
+ * skill of the attribute it disables spares itself: "All of your other
+ * Healing Prayers" (#1748).
  */
-function disableOwnText(effect: DisableOwnSkillsEffect): string {
+function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean): string {
   const time = `are disabled for ${String(effect.seconds)} seconds`;
   if (effect.which === "all") {
     return `All of your skills ${time}`;
@@ -2264,7 +2288,8 @@ function disableOwnText(effect: DisableOwnSkillsEffect): string {
     return `All of your spells ${time}`;
   }
   if (effect.which === "attribute") {
-    return `All of your ${getAttribute(effect.attributeId)?.name ?? effect.attributeId} ${time}`;
+    const name = getAttribute(effect.attributeId)?.name ?? effect.attributeId;
+    return `All of your ${others ? "other " : ""}${name} ${time}`;
   }
   const except = effect.exceptTypes.map(
     (type) => `${TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()}s`,
@@ -2631,7 +2656,13 @@ export function describeSkill(
     ...flightLine,
     ...arrowsLine,
     ...corpseLine,
-    ...skill.effects.flatMap((effect) => describeEffects(effect, ranks)),
+    ...skill.effects.flatMap((effect) =>
+      effect.kind === "disable-own-skills" &&
+      effect.which === "attribute" &&
+      effect.attributeId === skill.attributeId
+        ? [{ text: disableOwnText(effect, true), magnitude: undefined }]
+        : describeEffects(effect, ranks),
+    ),
     ...onCritical,
     ...onBlocked,
     ...onFailedToHit,

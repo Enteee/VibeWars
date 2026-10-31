@@ -682,10 +682,23 @@ export function bearerHit(
 /**
  * One of the attacker's blows failed to hit (#1332): swing, attack skill
  * or arrow alike, it missed on a roll or was blocked. Recorded for what
- * answers one, as Price of Failure.
+ * answers one, as Price of Failure, and it ends what a miss ends
+ * (`bearerMissed`).
  */
-export function bearerFailedToHit(attacker: Combatant): void {
+export function bearerFailedToHit(attacker: Combatant, events: CombatEvent[]): void {
   attacker.statuses.recordFailedHit();
+  bearerMissed(attacker, events);
+}
+
+/**
+ * One of the attacker's blows or arrows failed to hit (#1742): missed,
+ * blocked, dodged or stopped by a wall. Every status of its own that ends
+ * when its bearer fails to hit ends now, as Seeking Arrows.
+ */
+export function bearerMissed(attacker: Combatant, events: CombatEvent[]): void {
+  for (const statusId of attacker.statuses.endOnBearerMiss()) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
 }
 
 /**
@@ -775,12 +788,12 @@ function strike(
   }
   if (blindMisses(attacker, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
-    bearerFailedToHit(attacker);
+    bearerFailedToHit(attacker, events);
     return;
   }
   if (!unblockable && blocks(victim, attacker.id, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
-    bearerFailedToHit(attacker);
+    bearerFailedToHit(attacker, events);
     attackReached(victim, events);
     return;
   }
@@ -955,6 +968,7 @@ export function resolveAttackSkillOutcome(
           ),
         ];
   const victims: Combatant[] = [];
+  const outOfSequence: Combatant[] = [];
   for (const victim of targets) {
     if (victim.dead) {
       continue;
@@ -965,6 +979,7 @@ export function resolveAttackSkillOutcome(
       (requires !== undefined && !stateHolds(requires, caster, victim, surroundings))
     ) {
       events.push({ kind: "attack-missed", targetId: victim.id, reason: "out-of-sequence" });
+      outOfSequence.push(victim);
       continue;
     }
     victims.push(victim);
@@ -975,14 +990,15 @@ export function resolveAttackSkillOutcome(
     const hit: Combatant[] = [];
     const critical: Combatant[] = [];
     const blocked: Combatant[] = [];
-    const failed: Combatant[] = [];
+    // An out-of-sequence miss fails to hit with the first strike (#1757).
+    const failed: Combatant[] = strike === 0 ? [...outOfSequence] : [];
     for (const victim of victims) {
       if (victim.dead) {
         continue;
       }
       if (blindMisses(caster, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
-        bearerFailedToHit(caster);
+        bearerFailedToHit(caster, events);
         failed.push(victim);
         continue;
       }
@@ -992,7 +1008,7 @@ export function resolveAttackSkillOutcome(
         blocks(victim, caster.id, kind, rng)
       ) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
-        bearerFailedToHit(caster);
+        bearerFailedToHit(caster, events);
         attackReached(victim, events);
         blocked.push(victim);
         failed.push(victim);

@@ -911,6 +911,18 @@ export type StateCondition =
   | { readonly kind: "target-health-below"; readonly fraction: number }
   /** The effect's target is above this fraction of its maximum health (#1315); equal is not above. */
   | { readonly kind: "target-health-above"; readonly fraction: number }
+  /**
+   * The caster is below this fraction of its maximum health (#1757):
+   * Desperate Strike's "if you have less than 74% Health". Equal is not
+   * below.
+   */
+  | { readonly kind: "caster-health-below"; readonly fraction: number }
+  /**
+   * The effect's target bears the caster's chain mark of this role
+   * (#1757), read and left as it is: Impale's "must follow a dual
+   * attack".
+   */
+  | { readonly kind: "target-chain-mark"; readonly role: ChainRole }
   /** The effect's target has at least one status of this category. */
   | { readonly kind: "target-has"; readonly category: StatusCategory }
   /**
@@ -959,6 +971,13 @@ export type StateCondition =
    * to any allies".
    */
   | { readonly kind: "target-alone"; readonly radius: number }
+  /**
+   * A living ally of the caster's, the caster itself excluded, stands
+   * within `radius` of the effect's target (#1742): Crossfire's "if that
+   * foe is near any of your allies". Allies as `target-alone` counts them,
+   * pets and spirits included.
+   */
+  | { readonly kind: "target-near-caster-ally"; readonly radius: number }
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
   | { readonly kind: "target-not-moving" }
   /**
@@ -1305,7 +1324,9 @@ export interface AttackSkillRule {
    * What a blow of it that fails to hit does, its intended victim the
    * target (#1486): a blind miss, a block (after `onBlocked`), a dodge
    * or an obstruction. Spear of Redemption's "if it fails to hit, you
-   * lose one condition". A victim that died in flight is neither.
+   * lose one condition". A melee chain attack out of sequence fails too,
+   * once for the use (#1757): Repeating Strike's "if it misses". A victim
+   * that died in flight is neither.
    */
   readonly onFailedToHit: readonly SkillEffect[];
   /** Its place in a dagger chain (#831); `undefined`: not a chain attack. */

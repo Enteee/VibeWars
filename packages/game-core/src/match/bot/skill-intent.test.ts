@@ -11,6 +11,11 @@ const NO_BOT_USE = new Set([
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
+  // Live Vicariously (#1748): Health to the caster when its ally hits is
+  // no heal the bot weighs.
+  "monk.live-vicariously",
+  // Nor Purifying Veil's, whose removal waits for the enchantment to end.
+  "monk.purifying-veil",
   // Companion commands and pet attacks: out of scope for a bot.
   "ranger.bestial-pounce",
   "ranger.brutal-strike",
@@ -122,6 +127,9 @@ const NO_BOT_USE = new Set([
   "ritualist.weapon-of-remedy",
   "ranger.kindle-arrows",
   "ranger.ignite-arrows",
+  // Ranger staples 4 (#1742): an arrow that cannot be blocked or flies faster.
+  "ranger.seeking-arrows",
+  "ranger.read-the-wind",
   // Energy engine (#1614): energy back for spells still to be cast.
   "elementalist.fire-attunement",
   "elementalist.water-attunement",
@@ -177,6 +185,9 @@ const NO_BOT_USE = new Set([
   "paragon.focused-anger",
   "paragon.glowing-signet",
   "paragon.signet-of-aggression",
+  // Assassin staples 5 (#1757): unblockable next attacks are no rule the
+  // bot weighs.
+  "assassin.way-of-the-fox",
 ]);
 
 function skill(id: string) {

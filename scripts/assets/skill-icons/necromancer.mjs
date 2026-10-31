@@ -30,6 +30,11 @@ export const NECROMANCER_ICONS = {
   "necromancer.well-of-silence": { glyph: "well-sink", modifier: "stun" },
   "necromancer.well-of-darkness": { glyph: "well-sink", modifier: "half" },
   "necromancer.well-of-ruin": { glyph: "well-sink", modifier: "bleed" },
+  // Wells 2 (#1749).
+  "necromancer.well-of-the-profane": { glyph: "well-profane" },
+  "necromancer.well-of-silence": { glyph: "well-silence" },
+  "necromancer.well-of-darkness": { glyph: "well-darkness" },
+  "necromancer.well-of-ruin": { glyph: "well-ruin" },
   // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
   "necromancer.animate-bone-minions": { glyph: "bone-minions" },
   "necromancer.animate-bone-horror": { glyph: "bone-horror" },
