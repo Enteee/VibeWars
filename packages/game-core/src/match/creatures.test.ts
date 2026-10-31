@@ -237,6 +237,21 @@ describe("summon (#1052)", () => {
     expect(creatures(sim)).toHaveLength(MAX_CREATURES);
   });
 
+  it("counts no body lying as corpses against MAX_CREATURES (#1836)", () => {
+    const sim = match();
+    summon(sim, SPIRIT);
+    const body = get(sim, "n/c1");
+    if (body.creature === undefined) {
+      throw new Error("no creature");
+    }
+    body.creature.corpsesLeft = 3;
+    kill(sim, body.id);
+    summon(sim, MANY);
+    summon(sim, TWO);
+    expect(sim.get(body.id)?.combatant.dead).toBe(true);
+    expect(summoned(sim).filter((p) => !p.combatant.dead)).toHaveLength(MAX_CREATURES);
+  });
+
   it("counts no map creature against MAX_CREATURES (#1281)", () => {
     const sim = guarded(16);
     expect(creatures(sim)).toHaveLength(18);

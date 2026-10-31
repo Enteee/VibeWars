@@ -1340,9 +1340,14 @@ export class MatchSimulation {
     if (template.kind === "minion" && !replacement) {
       this.#cullMinions(owner, skillId, count);
     }
+    // A body lying as corpses (#1836) takes no room.
     let creatures = 0;
     for (const record of this.#participants.values()) {
-      if (record.creature?.ownerId !== undefined && !this.#leaving.has(record.id)) {
+      if (
+        record.creature?.ownerId !== undefined &&
+        !record.combatant.dead &&
+        !this.#leaving.has(record.id)
+      ) {
         creatures += 1;
       }
     }
@@ -1442,17 +1447,22 @@ export class MatchSimulation {
   /**
    * Kills `owner`'s living creatures of `skillId` (#1836): Flesh Golem's
    * one at a time, the old one dying as the new one comes. Each is a
-   * death, logged as the skill, as a culled minion's.
+   * death, logged as the skill, as a culled minion's. A body an older one
+   * left lying goes now, so each owner has at most one lying.
    */
   #killOlder(owner: ParticipantRecord, skillId: string): void {
     const events: CombatEvent[] = [];
     for (const record of this.#participants.values()) {
       if (
-        record.creature?.ownerId === owner.id &&
-        record.creature.skillId === skillId &&
-        !record.combatant.dead &&
-        !this.#leaving.has(record.id)
+        record.creature?.ownerId !== owner.id ||
+        record.creature.skillId !== skillId ||
+        this.#leaving.has(record.id)
       ) {
+        continue;
+      }
+      if (record.combatant.dead) {
+        this.#leaving.add(record.id);
+      } else {
         record.combatant.health = 0;
         record.combatant.dead = true;
         events.push({ kind: "death", targetId: record.id });

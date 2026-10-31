@@ -222,6 +222,22 @@ describe("Flesh Golem (#1836)", () => {
     expect(second.id).not.toBe(first.id);
     expect(get(sim, first.id).combatant.dead).toBe(true);
   });
+
+  it("leaves at most one body lying: a second takes the first's away", () => {
+    const sim = match();
+    kill(sim, "x");
+    kill(sim, "z");
+    cast(sim, GOLEM);
+    const first = only(sim, "Flesh Golem");
+    kill(sim, first.id);
+    cast(sim, GOLEM);
+    const second = only(sim, "Flesh Golem");
+    kill(sim, second.id);
+    const bodies = [...sim.participants()].filter(
+      (participant) => participant.creature?.name === "Flesh Golem" && participant.combatant.dead,
+    );
+    expect(bodies.map((body) => body.id)).toEqual([second.id]);
+  });
 });
 
 describe("Shambling Horror (#1836)", () => {
