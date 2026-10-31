@@ -84,6 +84,6 @@ export const MONK_ICONS = {
   "monk.watchful-spirit": { glyph: "eye-plus", modifier: "upkeep" },
   "monk.kirins-wrath": { glyph: "horn-ring" },
   "monk.signet-of-removal": { glyph: "signet-strip" },
-  // Ally threshold mechanics (#1789), stand-in until its art card.
-  "monk.judges-intervention": { glyph: "plus-halo", modifier: "up" },
+  // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
+  "monk.judges-intervention": { glyph: "halo-heart-bar" },
 };
