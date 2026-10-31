@@ -6,9 +6,10 @@
  * BroadcastChannel (ADR-0022), so this is the only run of the real path.
  *
  * Builds the static client with the Trystero transport, serves it on
- * 127.0.0.1 (or measures `--url`), and for each pair hosts a lobby in one
- * browser context and joins its code from another, as a second window or a
- * private window does. Prints, for each side of each pair:
+ * 127.0.0.1 (or measures `--url`), and for each pair opens its lobby in one
+ * browser context and reads the key in the title bar, then joins that key
+ * from another, as a second window or a private window does. Prints, for
+ * each side of each pair:
  *
  *   relays   the relay sockets the page opened, and how many were open
  *            when the join ended
@@ -17,7 +18,8 @@
  *            gathered (`host`, `host(mdns)` for a `.local` name, `srflx`)
  *   error    what the page logged: Trystero's onJoinError text, and the
  *            notice the joiner was shown
- *   joined   the seconds to the lobby screen, or "no"
+ *   joined   the seconds until the joiner's title bar shows the host's
+ *            key, or "no"
  *
  * Exit code 0 only if every pair joined.
  *
@@ -55,7 +57,7 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { parseArgs } from "node:util";
 
-import { chromium, firefox } from "@playwright/test";
+import { chromium, expect, firefox } from "@playwright/test";
 
 const PORT = 4320;
 /** @typedef {"chromium" | "firefox" | "firefox-private"} Kind */
@@ -310,8 +312,55 @@ async function openSide(kind, url) {
       .getByRole("button", { name: "Use" })
       .click();
   }
-  await page.locator(".screen-menu").waitFor();
+  await page.locator(".mode-rail").waitFor();
   return { page, watch, close: () => context.close() };
+}
+
+/** A lobby key as the title bar shows it (#1526). */
+const KEY_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+
+/**
+ * Play as `name`: typed into Options' Player section, as `namePlayer` in
+ * e2e/helpers/player.ts does.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} name
+ */
+async function namePlayer(page, name) {
+  await page.locator(".topbar-options").click();
+  await page
+    .locator(".player-section")
+    .getByRole("textbox", { name: "Name", exact: true })
+    .fill(name);
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.locator(".options-screen")).toHaveCount(0);
+}
+
+/**
+ * The rail entry `label`, chosen, as `openRail` in e2e/helpers/menu.ts.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} label
+ */
+async function openRail(page, label) {
+  const entry = page.locator(".mode-rail").getByRole("button", { name: label, exact: true });
+  await entry.click();
+  await expect(entry).toHaveAttribute("aria-pressed", "true");
+}
+
+/**
+ * Open this page's lobby to friends (#1682), through ⋯ when the title bar
+ * folds the toggle there, as `openToFriends` in e2e/helpers/peers.ts.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function openToFriends(page) {
+  const more = page.locator("#topbar .topbar-more");
+  if (await more.isVisible()) {
+    await more.click();
+  }
+  await page.locator("#topbar .topbar-lobby-open").click();
+  await expect(page.locator("#topbar .topbar-lobby-open")).toHaveAttribute("aria-pressed", "true");
 }
 
 /**
@@ -361,11 +410,13 @@ async function runPair(pair, url) {
   const host = await openSide(hostKind, url);
   const joiner = await openSide(joinerKind, url);
   try {
-    await host.page.locator(".screen-menu input.field-input").first().fill("Host");
-    await host.page.getByRole("button", { name: "host a lobby" }).click();
-    const codeText = host.page.locator(".lobby-code");
+    await namePlayer(host.page, "Host");
+    // Every page hosts its own lobby from load (#1526): on Hosted Game,
+    // as `hostLobby` in e2e/helpers/peers.ts does, its key in the title bar.
+    await openRail(host.page, "Hosted Game");
+    const codeText = host.page.locator("#topbar .topbar-lobby-code");
     try {
-      await codeText.waitFor({ timeout: TIMEOUT_MS });
+      await expect(codeText).toHaveText(KEY_PATTERN, { timeout: TIMEOUT_MS });
     } catch {
       await report("host", host.page, host.watch);
       const shown = host.page.locator(".screen-connection-problem");
@@ -375,20 +426,26 @@ async function runPair(pair, url) {
       console.log("  joined  no: the host never reached its own lobby");
       return false;
     }
+    // Closed until its host opens it (#1682).
+    await openToFriends(host.page);
     const code = (await codeText.textContent())?.trim() ?? "";
 
-    await joiner.page.locator(".screen-menu input.field-input").first().fill("Joiner");
+    await namePlayer(joiner.page, "Joiner");
+    // As `joinByCode` in e2e/helpers/menu.ts.
     await joiner.page.locator("input.code-input").fill(code);
     const started = Date.now();
     await joiner.page.getByRole("button", { name: "Join", exact: true }).click();
-    // The lobby, or the menu back with a notice: whichever comes first.
-    const lobby = joiner.page.locator(".screen-lobby");
+    // The title bar naming the host's key, as `joinFriend` in
+    // e2e/helpers/menu.ts checks: the joiner's own lobby panel shows all
+    // along, so a panel is no sign the join is in. Or a notice, whichever
+    // comes first.
     const notice = joiner.page.locator(".screen-connection-problem");
+    const joinerCode = joiner.page.locator("#topbar .topbar-lobby-code");
     await Promise.race([
-      lobby.waitFor({ timeout: TIMEOUT_MS }),
+      expect(joinerCode).toHaveText(code, { timeout: TIMEOUT_MS }),
       notice.first().waitFor({ timeout: TIMEOUT_MS }),
     ]).catch(() => undefined);
-    const joined = await lobby.isVisible();
+    const joined = ((await joinerCode.textContent())?.trim() ?? "") === code;
     const seconds = ((Date.now() - started) / 1000).toFixed(1);
     await report("host", host.page, host.watch);
     await report("joiner", joiner.page, joiner.watch);

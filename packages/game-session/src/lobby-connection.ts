@@ -132,6 +132,11 @@ export interface LobbyConnection {
   /** The lobby is over for this player, and why. */
   onClosed(handler: (reason: LobbyClosedReason) => void): void;
   /**
+   * The host left for the lobby `code` (#1553): follow it there. Its
+   * `onClosed` comes next, as for any host leaving.
+   */
+  onMove(handler: (code: string) => void): void;
+  /**
    * After a queued match this player's side won (#882): stay together as
    * a party with `key`, fresh, which signs its consent to the party
    * (#1078), or `null` for no.

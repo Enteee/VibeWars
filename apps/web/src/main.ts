@@ -14,6 +14,7 @@ import {
   connectMatchFor,
   observeMatchFor,
   enterQueue,
+  followHost,
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
@@ -26,6 +27,8 @@ import {
   STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
   TEAM_SPLIT_MESSAGE,
+  watchHostMove,
+  type HostMove,
   type HostedLobby,
   type PartyPlace,
   type RandomArenaQueue,
@@ -109,7 +112,15 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/party-strip.js";
-import { isModeEntry, loadRail, railParty, setRailParty, type RailEntry } from "./ui/rail.js";
+import {
+  isModeEntry,
+  loadRail,
+  railParty,
+  redrawModeRail,
+  redrawsOnLobbyChange,
+  setRailParty,
+  type RailEntry,
+} from "./ui/rail.js";
 import {
   isHostEntry,
   renderHostScreen,
@@ -323,6 +334,11 @@ async function main(): Promise<void> {
   /** While this tab's own lobby is being opened. */
   let opening = false;
   /**
+   * The key this tab is following its host to (#1553), between lobbies:
+   * no own lobby opens until the join ends.
+   */
+  let following: string | undefined;
+  /**
    * The rail entry this player last chose (#1525): a host's mode is its
    * lobby's; a guest's modes show its host's instead (#1526).
    */
@@ -334,8 +350,10 @@ async function main(): Promise<void> {
   let followsLobby = false;
   /** Whether the Team Lobby screen is up (#1460). */
   let teamLobbyShown = false;
-  /** The party the rail was last drawn for: a builder redraws only when its locks change. */
+  /** The party the rail was last drawn for: a builder's rail redraws only when its locks change. */
   let drawnParty = "";
+  /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
+  let drawnEntry: RailEntry = "random-arena";
   let match: MatchView | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
@@ -639,6 +657,7 @@ async function main(): Promise<void> {
     const party = railParty();
     drawnParty = party === undefined ? "" : `${party.mode}:${String(party.isHost)}`;
     const entry = railEntry();
+    drawnEntry = entry;
     if (entry !== "random-arena" && entry !== "characters") {
       void showTeamScreen(entry, turn);
       return;
@@ -818,7 +837,7 @@ async function main(): Promise<void> {
   const openOwnLobby = (): void => {
     /** In a lobby, or on the way to a queue: no own one now. */
     const elsewhere = (): boolean => lobby !== undefined || queue !== undefined || joiningQueue;
-    if (elsewhere() || opening || stay !== undefined) {
+    if (elsewhere() || opening || stay !== undefined || following !== undefined) {
       return;
     }
     opening = true;
@@ -869,8 +888,11 @@ async function main(): Promise<void> {
     (lobbyName !== loadPlayerName() ||
       JSON.stringify(lobbyEntrant?.guild) !== JSON.stringify(playerGuild()));
 
-  /** Out of the lobby this tab is in, ending it for everyone if it is this tab's own. */
-  const closeLobby = async (): Promise<void> => {
+  /**
+   * Out of the lobby this tab is in, ending it for everyone if it is this
+   * tab's own; with `moveTo`, its guests follow to that key (#1553).
+   */
+  const closeLobby = async (moveTo?: string): Promise<void> => {
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
@@ -879,24 +901,78 @@ async function main(): Promise<void> {
     lobbyName = undefined;
     closeChat();
     syncParty(undefined);
+    // The host first: its own player going would end it without the move.
+    await ending?.close(moveTo);
     await leaving?.disconnect();
-    await ending?.close();
+  };
+
+  /** Whether the tab moved on since `turn`: a newer join, a queue, a stay or a match. */
+  const movedOnSince = (turn: () => boolean): boolean =>
+    !turn() ||
+    queue !== undefined ||
+    joiningQueue ||
+    stay !== undefined ||
+    match !== undefined ||
+    enteringMatch;
+
+  /**
+   * Follow this tab's host to the lobby it moved to (#1553). The tab has
+   * no lobby meanwhile, so a failure opens a fresh own one and says whom
+   * it could not follow. It takes a newer turn than any join of the
+   * player's own still in flight, so the host's move overrides that one.
+   */
+  const followTo = (move: HostMove, name: string): void => {
+    const turn = joinTurns.take();
+    following = move.code;
+    setRailParty(undefined);
+    topbarView.setLobby({ code: move.code, isHost: false, open: false, party: 0, joining: true });
+    setStatus("connecting…", "offline");
+    menuNotice = undefined;
+    void followHost(
+      move,
+      {
+        join: async (code) => {
+          const entrant = await readEntrant();
+          const joined = await joinLobbyByCode(code, name, entrant.guild, entrant.character);
+          return { joined, entrant };
+        },
+        movedOn: () => movedOnSince(turn),
+        seat: ({ joined, entrant }) => {
+          following = undefined;
+          setStatus("", "online");
+          seatLobby(name, joined, entrant);
+        },
+        drop: async ({ joined }) => {
+          following = undefined;
+          await joined.disconnect();
+        },
+        fallBack: (notice) => {
+          following = undefined;
+          syncParty(lobby?.getSnapshot());
+          if (notice !== undefined) {
+            menuNotice = notice;
+            redrawRail();
+            setStatus("could not join", "error");
+            if (!followsLobby) {
+              toast(notice);
+            }
+          }
+          openOwnLobby();
+        },
+      },
+      location,
+      loadTurnConfig() !== undefined,
+    );
   };
 
   /**
    * Join the lobby `code` from the title bar (#1526): this tab's own stays
-   * open until the join is in, so a failed one keeps its code and guests.
+   * open until the join is in, so a failed one keeps its code and guests,
+   * and only then sends them after it (#1553).
    */
   const joinWith = (code: string, name: string): void => {
     const turn = joinTurns.take();
-    /** Whether the tab moved on while the join waited: a newer join, a queue, a stay or a match. */
-    const movedOn = (): boolean =>
-      !turn() ||
-      queue !== undefined ||
-      joiningQueue ||
-      stay !== undefined ||
-      match !== undefined ||
-      enteringMatch;
+    const movedOn = (): boolean => movedOnSince(turn);
     void (async () => {
       const current = lobby?.getSnapshot().code;
       if (current !== undefined && normalizeLobbyCode(code) === current) {
@@ -928,8 +1004,8 @@ async function main(): Promise<void> {
         return;
       }
       // In: only now does this tab's own lobby close, sending its guests
-      // to fresh lobbies of their own.
-      await closeLobby();
+      // after it (#1553).
+      await closeLobby(normalizeLobbyCode(code));
       if (movedOn()) {
         await joined.disconnect();
         return;
@@ -1365,7 +1441,13 @@ async function main(): Promise<void> {
     topbarView.setLobby(
       snapshot === undefined
         ? undefined
-        : { code: snapshot.code, isHost: snapshot.isHost, open: snapshot.open },
+        : {
+            code: snapshot.code,
+            isHost: snapshot.isHost,
+            open: snapshot.open,
+            party: snapshot.players.filter((p) => !p.bot).length,
+            joining: false,
+          },
     );
   };
 
@@ -1419,8 +1501,15 @@ async function main(): Promise<void> {
       return;
     }
     const party = `${snapshot.mode}:${String(snapshot.isHost)}`;
-    if (followsLobby && (isModeEntry(railEntry()) || party !== drawnParty)) {
+    if (!followsLobby) {
+      return;
+    }
+    // A builder keeps its screen, and a team code pasted into it (#1790).
+    if (redrawsOnLobbyChange(railEntry(), drawnEntry)) {
       drawRail(screenTurns.take());
+    } else if (party !== drawnParty) {
+      drawnParty = party;
+      redrawModeRail(screenRoot, drawnEntry, switchTo);
     }
   };
 
@@ -1559,6 +1648,7 @@ async function main(): Promise<void> {
         void enterMatch(name, start, lobbyEntrant ?? entrant);
       }
     });
+    const hostMove = watchHostMove(joined);
     joined.onClosed((reason) => {
       if (lobby !== joined) {
         return;
@@ -1568,6 +1658,12 @@ async function main(): Promise<void> {
       hosted = undefined;
       lobbyEntrant = undefined;
       closeChat();
+      const move = hostMove();
+      if (move !== undefined) {
+        // Its host went on to another lobby (#1553): after it, quietly.
+        followTo(move, name);
+        return;
+      }
       if (queue !== undefined && match === undefined && !enteringMatch) {
         // Before its match, a queued lobby closing puts the player back
         // in the queue, which says so on its screen.
