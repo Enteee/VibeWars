@@ -195,6 +195,31 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M17.5 6.5L20.5 9.3L17 11" ${stroke(c, 2.4)}/>` +
       `</g>`,
   ],
+  // Pets 2 (#1865), stand-ins until their art card. Shout: a shield with a plus, the pet armoured.
+  "otyughs-cry": [
+    "shout",
+    (c) =>
+      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 11h5M12 8.5v5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Shout: a plus beside a fang, the pet's bites heal you.
+  "predatory-bond": [
+    "shout",
+    (c) =>
+      `<path d="M8 7v8M4 11h8" ${stroke(c, 2.4)}/>` +
+      `<path d="M15 6l4 0-2 12z" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect: three chevrons, attacking and running faster together.
+  "rampage-as-one": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4.5 7.5L9 12l-4.5 4.5M10 7.5l4.5 4.5L10 16.5M15.5 7.5L20 12l-4.5 4.5" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: two chevrons, running faster together.
+  "run-as-one": [
+    "stance",
+    (c) => `<path d="M7 7.5l4.5 4.5L7 16.5M12.5 7.5l4.5 4.5-4.5 4.5" ${stroke(c, 2.2)}/>`,
+  ],
   // Staples (#1869), stand-in until its art card.
   // Stance: a leaping frog's two chevrons over three slashes, faster until an attack skill.
   "hekets-rampage": [

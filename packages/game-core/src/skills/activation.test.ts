@@ -50,6 +50,7 @@ function request(overrides: Partial<ActivationRequest> = {}): ActivationRequest 
     target: makeCombatant({ id: "target", team: 1 }),
     targetPosition: vec2(100, 0),
     targetCreatureKind: undefined,
+    targetCreatureOwnerId: undefined,
     rechargeRemaining: new Map(),
     spent: new Set(),
     isCasting: false,
@@ -289,9 +290,9 @@ describe("canActivate", () => {
 describe("targetRuleAllows (#599)", () => {
   const caster = { id: "me", team: 0 };
   const targets = [
-    { id: "me", team: 0, creatureKind: undefined },
-    { id: "ally", team: 0, creatureKind: undefined },
-    { id: "foe", team: 1, creatureKind: undefined },
+    { id: "me", team: 0, creatureKind: undefined, creatureOwnerId: undefined },
+    { id: "ally", team: 0, creatureKind: undefined, creatureOwnerId: undefined },
+    { id: "foe", team: 1, creatureKind: undefined, creatureOwnerId: undefined },
   ];
   const verdicts = (rule: Parameters<typeof targetRuleAllows>[0]) =>
     targets.map((target) => targetRuleAllows(rule, caster, target));
@@ -320,12 +321,41 @@ describe("targetRuleAllows (#599)", () => {
   it("allows an allied spirit only, whoever summoned it (#1309)", () => {
     const refused = "invalid-target-not-allied-spirit";
     expect(verdicts("allied-spirit")).toEqual([refused, refused, refused]);
-    const spirit = (team: number) => ({ id: "spirit", team, creatureKind: "spirit" as const });
+    const spirit = (team: number) => ({
+      id: "spirit",
+      team,
+      creatureKind: "spirit" as const,
+      creatureOwnerId: undefined,
+    });
     expect(targetRuleAllows("allied-spirit", caster, spirit(0))).toBeUndefined();
     expect(targetRuleAllows("allied-spirit", caster, spirit(1))).toBe(refused);
     expect(
-      targetRuleAllows("allied-spirit", caster, { id: "pet", team: 0, creatureKind: "pet" }),
+      targetRuleAllows("allied-spirit", caster, {
+        id: "pet",
+        team: 0,
+        creatureKind: "pet",
+        creatureOwnerId: undefined,
+      }),
     ).toBe(refused);
+  });
+
+  it("allows a minion the caster made, or any allied minion (#1836)", () => {
+    const minion = (team: number, ownerId: string) => ({
+      id: "minion",
+      team,
+      creatureKind: "minion" as const,
+      creatureOwnerId: ownerId,
+    });
+    const own = "invalid-target-not-own-minion";
+    const allied = "invalid-target-not-allied-minion";
+    expect(verdicts("own-minion")).toEqual([own, own, own]);
+    expect(verdicts("allied-minion")).toEqual([allied, allied, allied]);
+    expect(targetRuleAllows("own-minion", caster, minion(0, "me"))).toBeUndefined();
+    expect(targetRuleAllows("own-minion", caster, minion(0, "ally"))).toBe(own);
+    expect(targetRuleAllows("allied-minion", caster, minion(0, "ally"))).toBeUndefined();
+    expect(targetRuleAllows("allied-minion", caster, minion(1, "foe"))).toBe(allied);
+    const spirit = { id: "s", team: 0, creatureKind: "spirit" as const, creatureOwnerId: "me" };
+    expect(targetRuleAllows("own-minion", caster, spirit)).toBe(own);
   });
 });
 

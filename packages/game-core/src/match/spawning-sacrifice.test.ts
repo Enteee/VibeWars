@@ -66,6 +66,8 @@ function creature(
       onDeath: kind === "pet" ? "lie" : "vanish",
       ownerDisableSeconds: 0,
       deathBurst: undefined,
+      replacedBy: undefined,
+      corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard",
@@ -122,7 +124,7 @@ function amountsTo(
 }
 
 function destroyed(events: readonly CombatEvent[]): string[] {
-  return events.flatMap((event) => (event.kind === "spirit-destroyed" ? [event.targetId] : []));
+  return events.flatMap((event) => (event.kind === "creature-destroyed" ? [event.targetId] : []));
 }
 
 describe("an allied spirit as the target (#1309)", () => {

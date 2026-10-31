@@ -241,6 +241,7 @@ describe("an echo (#1423)", () => {
       id,
       team,
       creatureKind,
+      creatureOwnerId: undefined,
     });
     const rule = "single-ally-not-spirit";
     expect(targetRuleAllows(rule, caster, target("s", 0, "spirit"))).toBe("invalid-target-spirit");

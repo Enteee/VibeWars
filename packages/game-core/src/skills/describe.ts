@@ -36,6 +36,7 @@ import type {
   RadiusArea,
   AttackWeaponClass,
   Aura,
+  CreatureTemplate,
   DeathBurst,
   ChainRole,
   ChainStep,
@@ -755,6 +756,11 @@ function describeAttackHits(
       // steals for the spirit (#1777).
       const amount = String(describeMagnitude(effect.amount, new Map()).current);
       parts.push(`${attacks} steal up to ${amount} Health`);
+    } else if (effect.kind === "heal" && effect.recipient === "owner") {
+      // Only a pet bears it (Predatory Bond, #1865), cast from its
+      // Ranger's bar: the pet's attacks heal whoever reads this.
+      const amount = String(describeMagnitude(effect.amount, new Map()).current);
+      parts.push(`your pet's attacks heal you for ${amount}`);
     } else {
       parts.push(
         ...describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`),
@@ -1565,6 +1571,10 @@ function conditionText(condition: EffectCondition): string {
       return `If target is above ${String(Math.round(condition.fraction * 100))}% Health`;
     case "caster-health-below":
       return `If you have less than ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "caster-health-below-companion":
+      return "If you have less Health than your pet";
+    case "companion-health-below-caster":
+      return "If your pet has less Health than you";
     case "target-chain-mark":
       return `If it follows ${condition.role === "off-hand" ? "an off-hand" : `a ${condition.role}`} attack`;
     case "target-has":
@@ -1673,6 +1683,7 @@ const SPLASH_SIDE: Readonly<Record<SplashEffect["hits"], string>> = {
   allies: "allies",
   party: "party members",
   "own-spirits": "your spirits",
+  "own-minions": "your other minions",
 };
 
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
@@ -1680,6 +1691,10 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   // Protective Was Kaolai's reaches the whole party, at any distance (#1434).
   if (hits === "party") {
     return "All party members";
+  }
+  // Feast for the Dead's, wherever they are (#1836).
+  if (hits === "own-minions" && radius === Number.POSITIVE_INFINITY) {
+    return "Your other minions";
   }
   const area = AREA_TEXT.get(radius);
   // Consume Soul's splash reaches only summoned creatures (#1309);
@@ -1730,6 +1745,7 @@ function describeEffects(
         : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
+      ...describeMinionDeath(effect.creature, ranks),
     ];
   }
   if (effect.kind === "create-ground-effect") {
@@ -1821,6 +1837,74 @@ function describeSpiritBlow(
   const what = parts.map(({ text }) => lowerFirst(text)).join(", ");
   const scaled = parts.find(({ magnitude }) => magnitude?.atZero !== undefined);
   return { text: `Its attacks: ${when}${what}`, magnitude: (scaled ?? parts[0])?.magnitude };
+}
+
+/**
+ * "2 Bone Minion (60 Health, lasts 30 seconds)": who a summon or a
+ * replacement makes, with Spawning Power's health and the base in
+ * brackets (#1098).
+ */
+function describeCreature(
+  creature: CreatureTemplate,
+  count: number,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const health = describeMagnitude(creature.maxHealth, ranks);
+  const spawned = spawningPowerHealth(spawningPowerOf(ranks), health.current);
+  const healthText =
+    spawned === health.current
+      ? `${String(health.current)} Health`
+      : `${String(spawned)} Health (${String(health.current)})`;
+  const lasts =
+    creature.durationSeconds === undefined
+      ? ""
+      : `, lasts ${String(describeMagnitude(creature.durationSeconds, ranks).current)} seconds`;
+  return {
+    text: `${String(count)} ${creature.name} (${healthText}${lasts})`,
+    magnitude: health,
+  };
+}
+
+/**
+ * What a minion's death leaves (#1836): Flesh Golem's one at a time and
+ * its corpses, Shambling Horror's Jagged Horror and what its blows do.
+ */
+function describeMinionDeath(
+  creature: CreatureTemplate,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription[] {
+  const { onePerOwner, leavesCorpses, replacedBy } = creature;
+  const corpses = leavesCorpses === undefined ? undefined : describeMagnitude(leavesCorpses, ranks);
+  const replacement =
+    replacedBy === undefined
+      ? undefined
+      : describeCreature(replacedBy.creature, replacedBy.count, ranks);
+  return [
+    ...(onePerOwner
+      ? [{ text: "Only one at a time: a new one kills the old", magnitude: undefined }]
+      : []),
+    ...(corpses === undefined
+      ? []
+      : [
+          {
+            text: `Leaves ${String(corpses.current)} ${corpses.current === 1 ? "corpse" : "corpses"} when it dies`,
+            magnitude: corpses,
+          },
+        ]),
+    ...(replacedBy === undefined || replacement === undefined
+      ? []
+      : [
+          {
+            text: [
+              `When it dies, ${replacement.text} stands up in its place`,
+              ...(replacedBy.creature.attack?.onHit ?? []).map((onHit) =>
+                lowerFirst(describeSpiritBlow(onHit, ranks).text),
+              ),
+            ].join("; "),
+            magnitude: replacement.magnitude,
+          },
+        ]),
+  ];
 }
 
 /**
@@ -1982,7 +2066,11 @@ function describeEffect(
                 ? `Heals for ${percentOf(magnitude.current)} of the spell's energy cost`
                 : effect.recipient === "caster"
                   ? `You gain ${amount} health`
-                  : `Heals for ${amount}`;
+                  : effect.recipient === "companion"
+                    ? `Your pet gains ${amount} health`
+                    : effect.recipient === "owner"
+                      ? `Heals its owner for ${amount}`
+                      : `Heals for ${amount}`;
       const counted = withPerText(text, effect.amount, effect.per, ranks, {
         alone: effect.recipient === "caster" ? "You gain" : "Heals",
         unit: " Health",
@@ -2215,10 +2303,22 @@ function describeEffect(
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
+    // Run as One's "you and your pet run 25% faster" (#1865).
+    case "companion-gains-status":
+      return {
+        text:
+          `Your pet gains ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+          `(${describeStatus(effect.statusId, ranks)})`,
+        magnitude: undefined,
+      };
     case "pull-to-caster":
       return { text: "Teleports target to you", magnitude: undefined };
     case "destroy-target-spirit":
       return { text: "Destroys target allied spirit", magnitude: undefined };
+    case "destroy-target-minion":
+      return { text: "Destroys target minion", magnitude: undefined };
+    case "owner-gains-damage-dealt":
+      return { text: "Its owner gains Health equal to the damage it deals", magnitude: undefined };
     case "destroy-allied-spirits":
       return {
         text: `Destroys every allied spirit ${AREA_TEXT.get(effect.radius) ?? `within ${String(effect.radius)}`}`,
@@ -2244,20 +2344,8 @@ function describeEffect(
     case "summon": {
       // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052), with
       // Spawning Power's health and the base in brackets (#1098).
-      const health = describeMagnitude(effect.creature.maxHealth, ranks);
-      const spawned = spawningPowerHealth(spawningPowerOf(ranks), health.current);
-      const healthText =
-        spawned === health.current
-          ? `${String(health.current)} Health`
-          : `${String(spawned)} Health (${String(health.current)})`;
-      const lasts =
-        effect.creature.durationSeconds === undefined
-          ? ""
-          : `, lasts ${String(describeMagnitude(effect.creature.durationSeconds, ranks).current)} seconds`;
-      return {
-        text: `Summons ${String(effect.count)} ${effect.creature.name} (${healthText}${lasts})`,
-        magnitude: health,
-      };
+      const { text, magnitude } = describeCreature(effect.creature, effect.count, ranks);
+      return { text: `Summons ${text}`, magnitude };
     }
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
@@ -2641,6 +2729,8 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
+  "own-minion": "One of your minions",
+  "allied-minion": "An allied minion",
   "allied-summoned-creature": "An allied summoned creature",
   "single-ally-not-spirit": "One ally, not a spirit",
   companion: "Your pet",

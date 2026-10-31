@@ -305,6 +305,7 @@ async function startHubd(remaining, before, extra) {
     PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
     VIBEWARS_BOT_ROOT: root,
     DEVENV_ROOT: repo,
+    VIBEWARS_CODE: repo,
     VIBEWARS_GIT_REMOTE: path.join(dir, "remote.git"),
     FAKE_GH_STATE: state,
     // The company's credential home (#866), and the operator's tokens,

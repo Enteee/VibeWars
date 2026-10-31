@@ -245,6 +245,7 @@
     "obsidian-flesh",
     "onslaught",
     "order-of-pain",
+    "otyughs-cry",
     "overload",
     "pacifism",
     "painful-bond",
@@ -257,6 +258,7 @@
     "pious-haste-run",
     "poison",
     "practiced-stance",
+    "predatory-bond",
     "predatory-season",
     "price-of-failure",
     "price-of-pride",
@@ -268,6 +270,7 @@
     "putrid-bile",
     "quickening-zephyr",
     "rage-of-the-ntouka",
+    "rampage-as-one",
     "read-the-wind",
     "reapers-mark",
     "reckless-haste",
@@ -278,6 +281,7 @@
     "reversal-of-fortune",
     "rigor-mortis",
     "riposte",
+    "run-as-one",
     "rush",
     "sand-shards",
     "scourge-enchantment",
@@ -911,6 +915,7 @@
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
+                  { "literal": "otyughs-cry" },
                   { "literal": "overload" },
                   { "literal": "pacifism" },
                   { "literal": "painful-bond" },
@@ -923,6 +928,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "practiced-stance" },
+                  { "literal": "predatory-bond" },
                   { "literal": "predatory-season" },
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
@@ -934,6 +940,7 @@
                   { "literal": "putrid-bile" },
                   { "literal": "quickening-zephyr" },
                   { "literal": "rage-of-the-ntouka" },
+                  { "literal": "rampage-as-one" },
                   { "literal": "read-the-wind" },
                   { "literal": "reapers-mark" },
                   { "literal": "reckless-haste" },
@@ -944,6 +951,7 @@
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
+                  { "literal": "run-as-one" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
@@ -1287,6 +1295,7 @@
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
+                  { "literal": "otyughs-cry" },
                   { "literal": "overload" },
                   { "literal": "pacifism" },
                   { "literal": "painful-bond" },
@@ -1299,6 +1308,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "practiced-stance" },
+                  { "literal": "predatory-bond" },
                   { "literal": "predatory-season" },
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
@@ -1310,6 +1320,7 @@
                   { "literal": "putrid-bile" },
                   { "literal": "quickening-zephyr" },
                   { "literal": "rage-of-the-ntouka" },
+                  { "literal": "rampage-as-one" },
                   { "literal": "read-the-wind" },
                   { "literal": "reapers-mark" },
                   { "literal": "reckless-haste" },
@@ -1320,6 +1331,7 @@
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
+                  { "literal": "run-as-one" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
@@ -1643,6 +1655,7 @@
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
+                  { "literal": "otyughs-cry" },
                   { "literal": "overload" },
                   { "literal": "pacifism" },
                   { "literal": "painful-bond" },
@@ -1655,6 +1668,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "practiced-stance" },
+                  { "literal": "predatory-bond" },
                   { "literal": "predatory-season" },
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
@@ -1666,6 +1680,7 @@
                   { "literal": "putrid-bile" },
                   { "literal": "quickening-zephyr" },
                   { "literal": "rage-of-the-ntouka" },
+                  { "literal": "rampage-as-one" },
                   { "literal": "read-the-wind" },
                   { "literal": "reapers-mark" },
                   { "literal": "reckless-haste" },
@@ -1676,6 +1691,7 @@
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
+                  { "literal": "run-as-one" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
@@ -1996,6 +2012,7 @@
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
+                  { "literal": "otyughs-cry" },
                   { "literal": "overload" },
                   { "literal": "pacifism" },
                   { "literal": "painful-bond" },
@@ -2008,6 +2025,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "practiced-stance" },
+                  { "literal": "predatory-bond" },
                   { "literal": "predatory-season" },
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
@@ -2019,6 +2037,7 @@
                   { "literal": "putrid-bile" },
                   { "literal": "quickening-zephyr" },
                   { "literal": "rage-of-the-ntouka" },
+                  { "literal": "rampage-as-one" },
                   { "literal": "read-the-wind" },
                   { "literal": "reapers-mark" },
                   { "literal": "reckless-haste" },
@@ -2029,6 +2048,7 @@
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
+                  { "literal": "run-as-one" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
@@ -2186,6 +2206,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "creature-destroyed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "death" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
@@ -2253,12 +2279,6 @@
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "spell-failed" } },
             { "name": "skillId", "optional": false, "type": "string" },
-            { "name": "targetId", "optional": false, "type": "string" }
-          ]
-        },
-        {
-          "properties": [
-            { "name": "kind", "optional": false, "type": { "literal": "spirit-destroyed" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -2470,6 +2490,7 @@
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
+                  { "literal": "otyughs-cry" },
                   { "literal": "overload" },
                   { "literal": "pacifism" },
                   { "literal": "painful-bond" },
@@ -2482,6 +2503,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "practiced-stance" },
+                  { "literal": "predatory-bond" },
                   { "literal": "predatory-season" },
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
@@ -2493,6 +2515,7 @@
                   { "literal": "putrid-bile" },
                   { "literal": "quickening-zephyr" },
                   { "literal": "rage-of-the-ntouka" },
+                  { "literal": "rampage-as-one" },
                   { "literal": "read-the-wind" },
                   { "literal": "reapers-mark" },
                   { "literal": "reckless-haste" },
@@ -2503,6 +2526,7 @@
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
+                  { "literal": "run-as-one" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
@@ -2814,6 +2838,7 @@
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
                   { "literal": "order-of-pain" },
+                  { "literal": "otyughs-cry" },
                   { "literal": "overload" },
                   { "literal": "pacifism" },
                   { "literal": "painful-bond" },
@@ -2826,6 +2851,7 @@
                   { "literal": "pious-haste-run" },
                   { "literal": "poison" },
                   { "literal": "practiced-stance" },
+                  { "literal": "predatory-bond" },
                   { "literal": "predatory-season" },
                   { "literal": "price-of-failure" },
                   { "literal": "price-of-pride" },
@@ -2837,6 +2863,7 @@
                   { "literal": "putrid-bile" },
                   { "literal": "quickening-zephyr" },
                   { "literal": "rage-of-the-ntouka" },
+                  { "literal": "rampage-as-one" },
                   { "literal": "read-the-wind" },
                   { "literal": "reapers-mark" },
                   { "literal": "reckless-haste" },
@@ -2847,6 +2874,7 @@
                   { "literal": "reversal-of-fortune" },
                   { "literal": "rigor-mortis" },
                   { "literal": "riposte" },
+                  { "literal": "run-as-one" },
                   { "literal": "rush" },
                   { "literal": "sand-shards" },
                   { "literal": "scourge-enchantment" },
@@ -4058,11 +4086,15 @@
               { "literal": "beast" },
               { "literal": "bone-horror" },
               { "literal": "bone-minion" },
+              { "literal": "flesh-golem" },
               { "literal": "ghostly-hero" },
               { "literal": "guard" },
               { "literal": "guild-lord" },
+              { "literal": "jagged-horror" },
               { "literal": "priest" },
-              { "literal": "spirit" }
+              { "literal": "shambling-horror" },
+              { "literal": "spirit" },
+              { "literal": "vampiric-horror" }
             ]
           }
         },
@@ -4961,11 +4993,15 @@
                         { "literal": "beast" },
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
+                        { "literal": "flesh-golem" },
                         { "literal": "ghostly-hero" },
                         { "literal": "guard" },
                         { "literal": "guild-lord" },
+                        { "literal": "jagged-horror" },
                         { "literal": "priest" },
-                        { "literal": "spirit" }
+                        { "literal": "shambling-horror" },
+                        { "literal": "spirit" },
+                        { "literal": "vampiric-horror" }
                       ]
                     }
                   },
@@ -5388,11 +5424,15 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "flesh-golem" },
                                 { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
+                                { "literal": "jagged-horror" },
                                 { "literal": "priest" },
-                                { "literal": "spirit" }
+                                { "literal": "shambling-horror" },
+                                { "literal": "spirit" },
+                                { "literal": "vampiric-horror" }
                               ]
                             }
                           },
@@ -5829,11 +5869,15 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "flesh-golem" },
                                 { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
+                                { "literal": "jagged-horror" },
                                 { "literal": "priest" },
-                                { "literal": "spirit" }
+                                { "literal": "shambling-horror" },
+                                { "literal": "spirit" },
+                                { "literal": "vampiric-horror" }
                               ]
                             }
                           },

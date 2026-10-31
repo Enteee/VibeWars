@@ -11,6 +11,7 @@ const MOODS: ReadonlyMap<string, readonly Mood[]> = new Map<string, readonly Moo
   ["result-defeat", ["melancholy"]],
   ["training-hall", ["adventurous", "atmospheric"]],
   ["training-pillars", ["adventurous", "atmospheric"]],
+  ["training-field", ["adventurous", "atmospheric"]],
   ["arena-alpha", ["epic"]],
   ["arena-open", ["action", "adventurous"]],
   ["arena-pillars", ["dark"]],

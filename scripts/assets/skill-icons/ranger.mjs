@@ -90,4 +90,12 @@ export const RANGER_ICONS = {
   // Staples (#1869), stand-ins until their art card.
   "ranger.hekets-rampage": { glyph: "shield-bolt", modifier: "clock" },
   "ranger.sundering-attack": { glyph: "arrow-pierce", modifier: "plus" },
+  // Pets 2 (#1865), stand-ins until their art card.
+  "ranger.otyughs-cry": { glyph: "paw-shield", modifier: "up" },
+  "ranger.predatory-bond": { glyph: "paw-heart", modifier: "plus" },
+  "ranger.companionship": { glyph: "heal-other", modifier: "paw" },
+  "ranger.rampage-as-one": { glyph: "paw-speed", modifier: "up" },
+  "ranger.run-as-one": { glyph: "paw-speed", modifier: "self" },
+  "ranger.savage-pounce": { glyph: "paw-leap", modifier: "up" },
+  "ranger.bestial-mauling": { glyph: "blink-daze", modifier: "stun" },
 };

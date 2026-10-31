@@ -40,6 +40,11 @@ export type RangerStatusId =
   | "conflagration"
   | "predatory-season"
   | "winter"
+  // Pets 2 (#1865).
+  | "otyughs-cry"
+  | "predatory-bond"
+  | "rampage-as-one"
+  | "run-as-one"
   // Staples (#1869).
   | "hekets-rampage";
 
@@ -334,6 +339,38 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     ownSkillModifiers: [
       ownSkills({ type: "preparation" }, { rechargeFaster: 0.5, durationMultiplier: 3.46 }),
     ],
+  }),
+
+  // Pets 2 (#1865), on the pet. Otyugh's Cry (PvP): "your animal
+  // companion gains +24 armor and cannot be blocked".
+  "otyughs-cry": define("otyughs-cry", "Otyugh's Cry", "shout", {
+    profession: "ranger",
+    armorModifier: 24,
+    attacksUnblockable: true,
+  }),
+  // Predatory Bond (PvP): "successful attacks by your animal companion
+  // heal you for 1...25...31 Health", at rank 12: the pet's attribute is
+  // not the Ranger's.
+  "predatory-bond": define("predatory-bond", "Predatory Bond", "shout", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "heal", amount: { flat: 25 }, recipient: "owner" }],
+      skillId: "ranger.predatory-bond",
+    },
+  }),
+  // "Both you and your animal companion attack 33% faster and run 25%
+  // faster", on each of you.
+  "rampage-as-one": define("rampage-as-one", "Rampage as One", "skill-effect", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.67,
+    moveSpeedMultiplier: 1.25,
+  }),
+  // "You and your pet run 25% faster", on each of you.
+  "run-as-one": define("run-as-one", "Run as One", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.25,
   }),
   // Staples (#1869). "For 5...11 seconds, you attack 33% faster. This
   // stance ends if you use an attack skill": not that attack's speed.

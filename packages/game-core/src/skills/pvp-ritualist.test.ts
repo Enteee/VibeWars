@@ -75,6 +75,8 @@ function creature(
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard",
+      replacedBy: undefined,
+      corpsesLeft: 0,
     },
   };
 }
@@ -258,15 +260,15 @@ describe("Signet of Ghostly Might (#1827)", () => {
     expect(sim.get("s")).toBeDefined();
     const log = [...early, ...run(sim, 9)];
     const all = events(log);
-    expect(all.filter((event) => event.kind === "spirit-destroyed").map((e) => e.targetId)).toEqual(
-      ["s", "m"],
-    );
+    expect(
+      all.filter((event) => event.kind === "creature-destroyed").map((e) => e.targetId),
+    ).toEqual(["s", "m"]);
     expect(all.some((event) => event.kind === "death")).toBe(false);
     expect(sim.get("s")).toBeUndefined();
     expect(sim.get("m")).toBeUndefined();
     // Blamed on whoever used the signet.
     expect(
-      log.filter((entry) => entry.events.some((event) => event.kind === "spirit-destroyed")),
+      log.filter((entry) => entry.events.some((event) => event.kind === "creature-destroyed")),
     ).toEqual([
       expect.objectContaining({ sourceId: "r" }),
       expect.objectContaining({ sourceId: "r" }),
@@ -282,7 +284,7 @@ describe("Signet of Ghostly Might (#1827)", () => {
     run(sim, 5);
     expect(get(sim, "s").combatant.statuses.remove("signet-of-ghostly-might")).toBe(true);
     const all = events(run(sim, 7));
-    expect(all.some((event) => event.kind === "spirit-destroyed")).toBe(false);
+    expect(all.some((event) => event.kind === "creature-destroyed")).toBe(false);
     expect(get(sim, "s").combatant.dead).toBe(false);
   });
 

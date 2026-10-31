@@ -115,7 +115,7 @@ export type CombatEvent =
    * A spirit destroyed by a skill (#1309): gone at once, as an expired one
    * goes, with no corpse, no killer and no morale. Not a death.
    */
-  | { readonly kind: "spirit-destroyed"; readonly targetId: string }
+  | { readonly kind: "creature-destroyed"; readonly targetId: string }
   /** Back from the dead (#812), with these shares of maximum health and energy, 0..1. */
   | {
       readonly kind: "resurrected";
@@ -452,7 +452,7 @@ function healAmount(
     perUsedSkillEnergy(effect, caster, usedSkill) *
       perRemoved(effect.perRemoved, target, earlier) *
       (effect.perDestroyedSpirit === true
-        ? earlier.filter((event) => event.kind === "spirit-destroyed").length
+        ? earlier.filter((event) => event.kind === "creature-destroyed").length
         : 1),
     effect.per,
     caster,
@@ -1094,7 +1094,8 @@ function isSummoned(creature: Creature | undefined): boolean {
 
 /**
  * Whether a splash that `hits` reaches `combatant` (#885), its distance
- * aside: `own-spirits` only the caster's own spirits (#1777).
+ * aside: `own-spirits` only the caster's own spirits (#1777), `own-minions`
+ * its own minions (#1836).
  */
 function splashReaches(
   hits: SplashEffect["hits"],
@@ -1113,24 +1114,31 @@ function splashReaches(
       return combatant.team !== caster.team && isSummoned(creature);
     case "own-spirits":
       return creature?.kind === "spirit" && creature.ownerId === caster.id;
+    case "own-minions":
+      return creature?.kind === "minion" && creature.ownerId === caster.id;
   }
 }
 
 /**
- * Destroy `candidate` when it is a living spirit on `caster`'s side
- * (#1309): dead at once, so nothing later in the step acts on it or
- * through it, and `spirit-destroyed` tells the simulation to take it off
- * the field as an expired spirit leaves. Not damage, so Shelter and Union
- * do not soften it, and not a death: no killer and no morale.
+ * Destroy `candidate` when it is a living `kind` on `caster`'s side
+ * (#1309, #1836): dead at once, so nothing later in the step acts on it
+ * or through it, and `creature-destroyed` tells the simulation to take
+ * it off the field as an expired spirit leaves. Not damage, so Shelter
+ * and Union do not soften it, and not a death: no killer and no morale.
  */
-function destroySpirit(candidate: TargetCandidate, caster: Combatant, events: CombatEvent[]): void {
+function destroyCreature(
+  candidate: TargetCandidate,
+  kind: "spirit" | "minion",
+  caster: Combatant,
+  events: CombatEvent[],
+): void {
   const { combatant, creature } = candidate;
-  if (creature?.kind !== "spirit" || combatant.dead || combatant.team !== caster.team) {
+  if (creature?.kind !== kind || combatant.dead || combatant.team !== caster.team) {
     return;
   }
   combatant.health = 0;
   combatant.dead = true;
-  events.push({ kind: "spirit-destroyed", targetId: combatant.id });
+  events.push({ kind: "creature-destroyed", targetId: combatant.id });
 }
 
 /**
@@ -1303,7 +1311,7 @@ export function applyEffect(
     }
 
     case "heal": {
-      const healed = effect.recipient === "caster" ? caster : target;
+      const healed = healRecipient(effect.recipient, caster, target, context.surroundings);
       if (healed === undefined) {
         return events;
       }
@@ -1731,10 +1739,33 @@ export function applyEffect(
       return events;
     }
 
+    case "companion-gains-status": {
+      const pet = livingCompanionOf(caster, context.surroundings);
+      if (caster.dead || pet === undefined) {
+        return events;
+      }
+      landStatus(
+        pet,
+        effect.statusId,
+        scaledStatusDuration(
+          pet,
+          effect.statusId,
+          effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        ),
+        caster.id,
+        events,
+        castSpot(context, caster),
+      );
+      return events;
+    }
+
     case "splash": {
       // Your own spirits are within earshot of you, not of the target (#1777);
       // Return's adjacent foes are around its caster (#1826).
-      const centre = effect.around === "caster" || effect.hits === "own-spirits" ? caster : target;
+      const centre =
+        effect.around === "caster" || effect.hits === "own-spirits" || effect.hits === "own-minions"
+          ? caster
+          : target;
       const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
       if (target === undefined || at === undefined) {
         return events;
@@ -1763,10 +1794,23 @@ export function applyEffect(
     case "destroy-target-spirit": {
       const spirit = target === undefined ? undefined : context.surroundings.get(target.id);
       if (spirit !== undefined) {
-        destroySpirit(spirit, caster, events);
+        destroyCreature(spirit, "spirit", caster, events);
       }
       return events;
     }
+
+    case "destroy-target-minion": {
+      const minion = target === undefined ? undefined : context.surroundings.get(target.id);
+      if (minion !== undefined) {
+        destroyCreature(minion, "minion", caster, events);
+      }
+      return events;
+    }
+
+    // A creature's blow gives it to its owner (#1836), in `weaponOnHit`,
+    // which knows the blow's damage: here it has none to give.
+    case "owner-gains-damage-dealt":
+      return events;
 
     case "destroy-allied-spirits": {
       const at = context.surroundings.get(caster.id)?.position;
@@ -1777,7 +1821,7 @@ export function applyEffect(
         ({ position }) => distance(position, at) <= effect.radius,
       );
       for (const spirit of near) {
-        destroySpirit(spirit, caster, events);
+        destroyCreature(spirit, "spirit", caster, events);
       }
       return events;
     }
@@ -1863,6 +1907,49 @@ export function applyEffect(
   }
 }
 
+/**
+ * `caster`'s living pet (#1865), as the simulation's companion lookup
+ * finds it: the first of its companions. Dead or none: `undefined`.
+ */
+function livingCompanionOf(caster: Combatant, surroundings: Surroundings): Combatant | undefined {
+  for (const { combatant, creature } of surroundings.values()) {
+    if (
+      creature?.ownerId === caster.id &&
+      creature.companionSkillId !== undefined &&
+      !combatant.dead
+    ) {
+      return combatant;
+    }
+  }
+  return undefined;
+}
+
+/** The living owner of `caster`, when it is a creature (#1865); else `undefined`. */
+function livingOwnerOf(caster: Combatant, surroundings: Surroundings): Combatant | undefined {
+  const ownerId = surroundings.get(caster.id)?.creature?.ownerId;
+  const owner = ownerId === undefined ? undefined : surroundings.get(ownerId)?.combatant;
+  return owner === undefined || owner.dead ? undefined : owner;
+}
+
+/** Whom a `heal` heals (#1865): `undefined` is nobody. */
+function healRecipient(
+  recipient: HealEffect["recipient"],
+  caster: Combatant,
+  target: Combatant | undefined,
+  surroundings: Surroundings,
+): Combatant | undefined {
+  switch (recipient) {
+    case undefined:
+      return target;
+    case "caster":
+      return caster;
+    case "companion":
+      return livingCompanionOf(caster, surroundings);
+    case "owner":
+      return livingOwnerOf(caster, surroundings);
+  }
+}
+
 /** Whether `condition` is read from how things stand rather than from what came before (#794). */
 export function isStateCondition(condition: EffectCondition): condition is StateCondition {
   switch (condition.kind) {
@@ -1874,6 +1961,8 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-health-below":
     case "target-health-above":
     case "caster-health-below":
+    case "caster-health-below-companion":
+    case "companion-health-below-caster":
     case "target-chain-mark":
     case "target-has":
     case "target-has-any":
@@ -1929,6 +2018,14 @@ export function stateHolds(
       return target.health > effectiveMaxHealth(target) * condition.fraction;
     case "caster-health-below":
       return caster.health < effectiveMaxHealth(caster) * condition.fraction;
+    case "caster-health-below-companion": {
+      const pet = livingCompanionOf(caster, surroundings);
+      return pet !== undefined && caster.health < pet.health;
+    }
+    case "companion-health-below-caster": {
+      const pet = livingCompanionOf(caster, surroundings);
+      return pet !== undefined && pet.health < caster.health;
+    }
     case "target-chain-mark":
       return caster.chainMarks.get(target.id)?.role === condition.role;
     case "target-has":
@@ -2225,6 +2322,8 @@ function conditionHolds(
     case "target-health-below":
     case "target-health-above":
     case "caster-health-below":
+    case "caster-health-below-companion":
+    case "companion-health-below-caster":
     case "target-chain-mark":
     case "target-has":
     case "target-has-any":
@@ -2341,21 +2440,23 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "create-ground-effect":
     case "drain-own-energy":
     case "caster-gains-status":
+    case "companion-gains-status":
     case "destroy-allied-spirits":
     case "resurrect-companions":
     case "disable-own-skills":
       return true;
     // Measured from the caster, so once (#1777), not once a target.
     case "splash":
-      return effect.hits === "own-spirits";
+      return effect.hits === "own-spirits" || effect.hits === "own-minions";
     case "lengthen-recharge":
       return effect.of === "this-skill";
     // Once, on the primary target, the spirit cast on (#1309), however
     // many allies the skill's area also caught.
     case "destroy-target-spirit":
+    case "destroy-target-minion":
       return true;
     case "heal":
-      return effect.recipient === "caster";
+      return effect.recipient !== undefined;
     case "remove-status":
       return effect.from === "caster";
     case "maintain-status":
@@ -2375,6 +2476,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect":
     case "pull-to-caster":
     case "disable-skill":
+    case "owner-gains-damage-dealt":
     case "chain-mark":
     case "overcast":
     case "if":

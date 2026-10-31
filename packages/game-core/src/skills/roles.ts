@@ -38,6 +38,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["knockdown"];
     case "maintain-status":
     case "apply-status":
+    case "companion-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
     // Wearying Spear's own Weakness (#1486) is its price, not a role.
     case "caster-gains-status": {
@@ -72,6 +73,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "recharge-others":
     case "pull-to-caster":
     case "destroy-target-spirit":
+    case "destroy-target-minion":
+    case "owner-gains-damage-dealt":
     case "destroy-allied-spirits":
     case "disable-skill":
     case "lengthen-recharge":

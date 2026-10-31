@@ -207,6 +207,8 @@ function required(name) {
 
 const ROOT = required("VIBEWARS_BOT_ROOT");
 const REPO_DIR = required("DEVENV_ROOT");
+/** The code the company runs: the locked tree (#1861), not the checkout. */
+const CODE_DIR = required("VIBEWARS_CODE");
 const HUB = path.join(ROOT, "hub");
 const AUDIT = path.join(HUB, "audit.jsonl");
 const APPROVALS = path.join(HUB, "approvals.jsonl");
@@ -3448,9 +3450,9 @@ function readStaffed() {
   staffed = readStaff();
 }
 
-/** `schedule.json` in the checkout hubd serves, read the way `scheduleReader` reads it. */
+/** `schedule.json` in the locked tree, read the way `scheduleReader` reads it. */
 const readSchedule = scheduleReader(
-  path.join(REPO_DIR, "scripts", "bots", "schedule.json"),
+  path.join(CODE_DIR, "scripts", "bots", "schedule.json"),
   (problem) => {
     console.error(`hubd: schedule.json: ${problem}; still on the last good schedule`);
   },
