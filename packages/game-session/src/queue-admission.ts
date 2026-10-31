@@ -75,3 +75,17 @@ export async function admissionDigest(
   const bytes = admissionBytes(tag, groupId, hostTicketId, peerId);
   return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
 }
+
+/**
+ * A lobby party's group (#1766, ADR-0042): `sha256(roomId ‖ queueNonce)`,
+ * as hex. Both are 64 hex digits, so the concatenation is unambiguous.
+ * The room id is the lobby's derived one, never its key (ADR-0043): the
+ * group is public on the relays, the key never is.
+ */
+export async function partyGroupId(roomId: string, queueNonce: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(`${roomId}${queueNonce}`),
+  );
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}

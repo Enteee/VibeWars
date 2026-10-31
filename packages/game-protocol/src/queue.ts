@@ -7,6 +7,8 @@
  * them, so these are the numbers they must agree on.
  */
 
+import type { LobbyMode } from "./protocol.js";
+
 /**
  * What a player can queue for. Which of these the menu offers is Q97's
  * decision; formation takes any of them.
@@ -62,6 +64,11 @@ export function inPartyOrder(members: readonly string[]): boolean {
     previous = member;
   }
   return true;
+}
+
+/** A lobby's `mode` as the queue mode its party queues for (#1766), if it is a team mode. */
+export function teamQueueModeOf(mode: LobbyMode): QueueMode | undefined {
+  return mode === "team-arena" || mode === "heroes-ascent" || mode === "gvg" ? mode : undefined;
 }
 
 /** A queued client re-publishes its ticket this often. */

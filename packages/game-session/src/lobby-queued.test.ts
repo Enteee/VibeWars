@@ -487,6 +487,7 @@ describe("a queued lobby", () => {
           hostId: "impostor",
           matchId: null,
           teamLobby: null,
+          queueNonce: null,
           players: [
             {
               id: from,

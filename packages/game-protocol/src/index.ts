@@ -214,6 +214,7 @@ export {
   isTeamQueueMode,
   inPartyOrder,
   parseQueueTicket,
+  teamQueueModeOf,
   teamSizeOf,
 } from "./queue.js";
 export type { QueueMode, QueueTicket, TicketParty } from "./queue.js";

@@ -74,6 +74,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     isHost: false,
     countdownSeconds,
     teamLobby: null,
+    queueNonce: null,
   };
 }
 

@@ -506,6 +506,7 @@ const lobbyState: WireLobbyState = {
     },
   ],
   countdownSeconds: null,
+  queueNonce: null,
   teamLobby: null,
 };
 
@@ -828,6 +829,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, phase: "starting", matchId: null, countdownSeconds: 3 },
   ],
   ["lobby-state", parseWireLobbyState, lobbyState],
+  [
+    "queued lobby-state (#1766)",
+    parseWireLobbyState,
+    { ...lobbyState, phase: "queued", matchId: null, queueNonce: "ab".repeat(32) },
+  ],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
@@ -845,6 +851,9 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { kind: "set-character", character: null },
   ],
   ["start", parseWireLobbyCommand, { kind: "start" }],
+  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match" }],
+  ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
+  ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
   ["set-bots", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
   [
@@ -1832,6 +1841,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, countdownSeconds: -1 },
   ],
   ["lobby-state of an unknown phase", parseWireLobbyState, { ...lobbyState, phase: "over" }],
+  [
+    "lobby-state without a queue nonce (#1766)",
+    parseWireLobbyState,
+    { ...lobbyState, queueNonce: undefined },
+  ],
+  [
+    "lobby-state of a short queue nonce (#1766)",
+    parseWireLobbyState,
+    { ...lobbyState, queueNonce: "ab" },
+  ],
   [
     "lobby-state of an unknown mode (#1526)",
     parseWireLobbyState,

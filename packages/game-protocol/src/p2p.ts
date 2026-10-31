@@ -1009,6 +1009,13 @@ export interface WireLobbyState {
   readonly countdownSeconds: number | null;
   /** The Team Lobby (#1458), while `phase` is `"team-lobby"`; `null` otherwise. */
   readonly teamLobby: WireTeamLobby | null;
+  /**
+   * While `phase` is `"queued"` (#1766), the nonce of this queueing, 64
+   * hex digits; `null` otherwise. The party's group is
+   * `sha256(roomId ‖ queueNonce)`, which each member works out for itself
+   * before it consents. Public: the room id never is.
+   */
+  readonly queueNonce: string | null;
 }
 
 /**
@@ -1068,6 +1075,14 @@ export type WireLobbyCommand =
    */
   | { readonly kind: "set-character"; readonly character: WireLobbyCharacter | null }
   | { readonly kind: "start" }
+  /**
+   * Host only, in a team mode (#1766): the party's Team Lobby, then the
+   * queue; `leave-queue` takes it out again, `house-team` plays the house
+   * team instead, in this lobby.
+   */
+  | { readonly kind: "find-match" }
+  | { readonly kind: "leave-queue" }
+  | { readonly kind: "house-team" }
   /**
    * Host only (#1454): `team` has `count` bots, an integer from 0; the
    * host picks what they play.
@@ -2476,7 +2491,8 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     raw === undefined ||
     teamLobby === undefined ||
     !isString(raw.code) ||
-    !isOneOf(raw.phase, ["waiting", "team-lobby", "starting", "in-match"] as const) ||
+    !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
+    !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
     typeof raw.open !== "boolean" ||
@@ -2500,6 +2516,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         players,
         countdownSeconds: raw.countdownSeconds,
         teamLobby,
+        queueNonce: raw.queueNonce,
       };
 }
 
@@ -2522,7 +2539,10 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return character === undefined ? undefined : { kind: "set-character", character };
     }
     case "start":
-      return { kind: "start" };
+    case "find-match":
+    case "leave-queue":
+    case "house-team":
+      return { kind: raw.kind };
     case "set-bots":
       return isTeam(raw.team) && isNumber(raw.count)
         ? { kind: "set-bots", team: raw.team, count: raw.count }

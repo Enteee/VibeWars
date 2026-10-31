@@ -159,6 +159,7 @@ function lobby(
     players,
     isHost: self === "aria",
     countdownSeconds: null,
+    queueNonce: null,
     teamLobby: {
       stage,
       secondsLeft: 38,

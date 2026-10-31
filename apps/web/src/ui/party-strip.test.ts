@@ -33,6 +33,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     isHost: false,
     countdownSeconds: null,
     teamLobby: null,
+    queueNonce: null,
   };
 }
 

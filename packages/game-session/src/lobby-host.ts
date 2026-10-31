@@ -19,6 +19,7 @@ import {
   parsePeerPartyConsent,
   parsePeerStayTogether,
   parseWireLobbyCommand,
+  teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
   type LobbyPhase,
@@ -42,7 +43,7 @@ import {
 
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { lobbyCharacter } from "./lobby-character.js";
-import type { LobbyCharacter } from "./lobby-connection.js";
+import type { LobbyCharacter, PartyPlanSeat } from "./lobby-connection.js";
 import { keyGated } from "./key-gate.js";
 import { createLocalPeer } from "./local-peer.js";
 import {
@@ -52,7 +53,12 @@ import {
   type PlannedSeats,
 } from "./match-host.js";
 import { sanitizeCharacterName, sanitizeChatText, sanitizeGuild, sanitizeName } from "./names.js";
-import { admissionDigest, type QueuedSeat } from "./queue-admission.js";
+import {
+  admissionDigest,
+  partyGroupId,
+  type QueuedSeat,
+  type VerifyTicketSig,
+} from "./queue-admission.js";
 import { ticketsOf } from "./queue-formation.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { decideStayTogether } from "./stay-together.js";
@@ -84,7 +90,7 @@ export const PARTY_CONSENT_MS = 5000;
 
 /** A party every winner said yes to, waiting for each one's consent (#1078). */
 interface PartyProposal {
-  /** Their keys, sorted. */
+  /** Their keys in party order (`inPartyOrder`). */
   readonly members: readonly string[];
   /** Each yes-voter's peer to its key. */
   readonly keys: ReadonlyMap<string, string>;
@@ -144,6 +150,26 @@ interface TeamLobby {
   /** In whole ms, on the lobby's clock. */
   endsAt: number;
   readonly sides: readonly [TeamSide, TeamSide];
+  /** A team mode's (#1766): side 0 alone, the party, which queues once it ends. */
+  readonly forQueue: boolean;
+}
+
+/** One seat of a queueing party's side (#1766): its human's peer, `null` for a bot, and its build. */
+export interface PartySeat {
+  readonly holder: string | null;
+  readonly build: PlayerBuild;
+}
+
+/**
+ * A coded lobby's team-mode matchmaking (#1766): what its party's group
+ * and consents are worked out with.
+ */
+export interface LobbyMatchmakingOptions {
+  /** The lobby's derived room id (`deriveLobbyRoom`), never its key (ADR-0043). */
+  readonly roomId: string;
+  readonly verifyTicketSig: VerifyTicketSig;
+  /** A fresh queue nonce: 64 lowercase hex digits, from a CSPRNG. */
+  readonly newNonce: () => string;
 }
 
 /** A lobby's match, as the lobby hands it to whoever builds the `MatchHost`. */
@@ -213,6 +239,8 @@ export interface LobbyHostOptions {
    * before the match. Never a queued lobby.
    */
   readonly teamLobby: boolean;
+  /** A coded lobby's party may queue in a team mode (#1766); never a queued lobby's. */
+  readonly matchmaking?: LobbyMatchmakingOptions;
   /** In [0, 1): what a Team Lobby picks at random. Injected, so a test can seed it. */
   readonly random: () => number;
 }
@@ -230,6 +258,11 @@ export interface LobbyReach {
 export interface LobbyHost {
   /** The host's own player's side of the room: it joins the lobby, and plays, through this. */
   readonly local: Transport;
+  /**
+   * A queued party's team plan (#1766, ADR-0042), seat by seat, its host's
+   * own seat under `selfKey`; `undefined` while it is not queued.
+   */
+  teamPlan(selfKey: string): readonly PartyPlanSeat[] | undefined;
   /**
    * Let peers that prove the key join, or stop them (#1682). A coded
    * lobby starts closed; closing keeps the guests already in. A queued
@@ -304,6 +337,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   }
   if (queued !== undefined && options.teamLobby) {
     throw new Error("a queued lobby has no Team Lobby");
+  }
+  const { matchmaking } = options;
+  if (queued !== undefined && matchmaking !== undefined) {
+    throw new Error("a queued lobby's party does not queue again");
   }
   if ((queued === undefined) !== (options.proofKey !== null)) {
     throw new Error("a lobby is gated on its key unless it is queued");
@@ -382,6 +419,24 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let queuedDone = false;
   /** While `phase` is `"team-lobby"`. */
   let teamLobby: TeamLobby | undefined;
+  /**
+   * A team mode's party, from its Team Lobby's end until it leaves the
+   * queue or plays the house team (#1766), while `phase` is `"queued"`.
+   */
+  let queueing:
+    | {
+        readonly nonce: string;
+        readonly seats: readonly PartySeat[];
+        /** On the lobby's clock: by then a party of more than one has every key, or leaves the queue. */
+        readonly endsAt: number;
+        /** `partyGroupId(roomId, nonce)`, once worked out. */
+        groupId: string | undefined;
+        /** Each party member's key, by peer, as it sent it. */
+        readonly keys: Map<string, string>;
+        /** Once every member sent its key: the party each must consent to. */
+        proposal: PartyProposal | undefined;
+      }
+    | undefined;
   /** A team mode's queued lobby: each side's seat plan so far (ADR-0042). */
   const teamPlans: [TeamPlan | undefined, TeamPlan | undefined] = [undefined, undefined];
 
@@ -465,6 +520,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       bot: member.bot !== null,
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
+    queueNonce: queueing?.nonce ?? null,
     teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
   });
 
@@ -589,10 +645,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * size is frozen, and its vote begins. A side over a GW1 team is turned
    * down, since its proposals would not fit on the wire.
    */
-  const beginTeamLobby = (): boolean => {
-    const sizes = ([0, 1] as const).map(
+  const beginTeamLobby = (
+    sizes: readonly number[] = ([0, 1] as const).map(
       (team) => [...members.values()].filter((member) => member.team === team).length,
-    );
+    ),
+    forQueue = false,
+  ): boolean => {
     if (sizes.some((size) => size > MAX_TEAM_LOBBY_SIDE)) {
       note(
         "start-rejected",
@@ -614,6 +672,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       stage: "vote",
       endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
       sides: [side(sizes[0] ?? 0), side(sizes[1] ?? 0)],
+      forQueue,
     };
     clearReady();
     return true;
@@ -684,19 +743,23 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       broadcast();
       return;
     }
+    if (lobby.forQueue) {
+      // The party's side alone: every seat nobody holds is a bot (#1766).
+      const claims = claimsOf(0, lobby.sides[0]);
+      const seats = (lobby.sides[0].chosen?.builds ?? []).map((build, slot) => ({
+        holder: claims[slot] ?? null,
+        build,
+      }));
+      teamLobby = undefined;
+      beginQueueing(seats);
+      return;
+    }
     const assigned = new Map<string, PlayerBuild>();
     for (const team of [0, 1] as const) {
       const side = lobby.sides[team];
       const builds = side.chosen?.builds ?? [];
-      const claims = [...side.claims];
-      // A human who claimed nothing takes the lowest free slot, in join
-      // order; the side's bots, in their order, play every slot left.
-      for (const human of humansOn(team)) {
-        const free = claims.indexOf(null);
-        if (!claims.includes(human.id) && free >= 0) {
-          claims[free] = human.id;
-        }
-      }
+      // The side's bots, in their order, play every slot nobody holds.
+      const claims = claimsOf(team, side);
       const bots = [...members.values()].filter(
         (member) => member.bot !== null && member.team === team,
       );
@@ -708,7 +771,25 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
       }
     }
-    // A bot plays under its slot character's name.
+    nameSlotBots(assigned);
+    teamLobby = undefined;
+    start(assigned);
+  };
+
+  /** `side`'s claims, and a human on `team` who claimed nothing in the lowest free slot, in join order. */
+  const claimsOf = (team: 0 | 1, side: TeamSide): (string | null)[] => {
+    const claims = [...side.claims];
+    for (const human of humansOn(team)) {
+      const free = claims.indexOf(null);
+      if (!claims.includes(human.id) && free >= 0) {
+        claims[free] = human.id;
+      }
+    }
+    return claims;
+  };
+
+  /** A bot plays under its slot character's name. */
+  const nameSlotBots = (assigned: ReadonlyMap<string, PlayerBuild>): void => {
     for (const member of members.values()) {
       const build = assigned.get(member.id);
       if (member.bot !== null && build !== undefined) {
@@ -718,8 +799,161 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         member.character = character;
       }
     }
-    teamLobby = undefined;
+  };
+
+  /**
+   * The party's Team Lobby is over (#1766): it is queued, under a fresh
+   * nonce, and once it is known which group that makes, a party of more
+   * than one gathers its members' keys and consents.
+   */
+  const beginQueueing = (seats: readonly PartySeat[]): void => {
+    if (matchmaking === undefined) {
+      return;
+    }
+    const nonce = matchmaking.newNonce();
+    const current: NonNullable<typeof queueing> = {
+      nonce,
+      seats,
+      endsAt: clockMs() + PARTY_CONSENT_MS,
+      groupId: undefined,
+      keys: new Map(),
+      proposal: undefined,
+    };
+    queueing = current;
+    phase = "queued";
+    clearReady();
+    void partyGroupId(matchmaking.roomId, nonce).then((groupId) => {
+      current.groupId = groupId;
+      gatherParty();
+    });
+    broadcast();
+  };
+
+  /**
+   * A party of more than one, once every member sent its key: propose it,
+   * the host's own key first; once each consented, tell each it formed.
+   * A key, or then a consent, still missing `PARTY_CONSENT_MS` on, and
+   * it leaves the queue.
+   */
+  const gatherParty = (): void => {
+    const current = queueing;
+    const queueMode = teamQueueModeOf(mode);
+    if (current?.groupId === undefined || queueMode === undefined) {
+      return;
+    }
+    const { groupId, proposal } = current;
+    if (proposal === undefined) {
+      const leader = current.keys.get(local.selfId);
+      const party = humansOn(0);
+      if (party.length < 2) {
+        return;
+      }
+      if (leader === undefined || current.keys.size < party.length) {
+        if (clockMs() >= current.endsAt) {
+          leaveQueue();
+        }
+        return;
+      }
+      const rest = [...current.keys]
+        .filter(([peerId]) => peerId !== local.selfId)
+        .map(([, memberKey]) => memberKey)
+        .sort();
+      const partyMembers = [leader, ...rest];
+      current.proposal = {
+        members: partyMembers,
+        keys: new Map(current.keys),
+        digest: admissionDigest("vibewars-party", groupId, partyMembers.join(""), queueMode),
+        consents: new Map(),
+        checking: new Set(),
+        endsAt: clockMs() + PARTY_CONSENT_MS,
+        settled: false,
+      };
+      const proposed: WirePartyProposal = { groupId, members: partyMembers, mode: queueMode };
+      for (const to of current.keys.keys()) {
+        transport.send("party-proposal", proposed, to);
+      }
+      return;
+    }
+    if (proposal.settled) {
+      return;
+    }
+    const consents = proposal.members.flatMap((memberKey) => {
+      const consent = proposal.consents.get(memberKey);
+      return consent === undefined ? [] : [consent];
+    });
+    if (consents.length === proposal.members.length) {
+      proposal.settled = true;
+      const formed: WirePartyFormed = { groupId, members: proposal.members, consents };
+      for (const to of proposal.keys.keys()) {
+        transport.send("party-formed", formed, to);
+      }
+    } else if (clockMs() >= proposal.endsAt) {
+      leaveQueue();
+    }
+  };
+
+  /** Out of the queue (#1766): the party is back in its lobby, and no party to any of it. */
+  const leaveQueue = (): void => {
+    const current = queueing;
+    if (current === undefined) {
+      return;
+    }
+    queueing = undefined;
+    phase = "waiting";
+    for (const to of current.keys.keys()) {
+      if (members.has(to)) {
+        transport.send("party-split", {} satisfies WirePartySplit, to);
+      }
+    }
+    broadcast();
+  };
+
+  /**
+   * No other team came (#1766, Q191): the party plays its own seats here,
+   * a bot in each seat nobody holds, against a house team of bots.
+   */
+  const playHouseTeam = (): void => {
+    const current = queueing;
+    if (current === undefined) {
+      return;
+    }
+    queueing = undefined;
+    for (const to of current.keys.keys()) {
+      if (members.has(to)) {
+        transport.send("party-split", {} satisfies WirePartySplit, to);
+      }
+    }
+    const assigned = new Map<string, PlayerBuild>();
+    for (const seat of current.seats) {
+      const holder = seat.holder === null ? undefined : peerMember(seat.holder);
+      assigned.set(holder?.team === 0 ? holder.id : addBot(0), seat.build);
+    }
+    for (const slot of current.seats.keys()) {
+      const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
+      if (build !== undefined) {
+        assigned.set(addBot(1), build);
+      }
+    }
+    nameSlotBots(assigned);
     start(assigned);
+  };
+
+  /** A party member's key for its consent (#1766): once each, and no key twice. */
+  const takePartyKey = (from: string, memberKey: string | null): void => {
+    const current = queueing;
+    const member = peerMember(from);
+    if (
+      current === undefined ||
+      current.proposal !== undefined ||
+      member?.team !== 0 ||
+      memberKey === null ||
+      current.keys.has(from) ||
+      [...current.keys.values()].includes(memberKey)
+    ) {
+      return;
+    }
+    current.keys.set(from, memberKey);
+    gatherParty();
   };
 
   /** Whether every human on a side is ready, which ends a Team Lobby's stage early. */
@@ -910,12 +1144,46 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           note("start-rejected", check.reason, member.id);
           return false;
         }
+        if (matchmaking !== undefined && teamQueueModeOf(mode) !== undefined) {
+          note("start-rejected", "a team mode finds a match instead", member.id);
+          return false;
+        }
         if (options.teamLobby) {
           return beginTeamLobby();
         }
         start();
         return false;
       }
+      case "find-match": {
+        if (member.id !== local.selfId) {
+          refuse(member.id, "not-host");
+          return false;
+        }
+        const queueMode = teamQueueModeOf(mode);
+        if (matchmaking === undefined || queueMode === undefined) {
+          return false;
+        }
+        // The party is every human here, on the one side; its seats
+        // nobody claims are bots, so a lobby's own bots go.
+        const size = teamSizeOf(queueMode);
+        const party = [...members.values()].filter((other) => other.bot === null);
+        if (party.length > size) {
+          note("start-rejected", `a side plays ${String(size)}`, member.id);
+          return false;
+        }
+        for (const other of [...members.values()]) {
+          if (other.bot === null) {
+            other.team = 0;
+          } else {
+            members.delete(other.id);
+          }
+        }
+        return beginTeamLobby([size, 0], true);
+      }
+      case "leave-queue":
+      case "house-team":
+        // A queued party's, and this one is not.
+        return false;
       case "set-bots": {
         if (member.id !== local.selfId) {
           refuse(member.id, "not-host");
@@ -1321,6 +1589,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       takeTeamPlan(queued, member, command);
       return;
     }
+    // Queued, the host may only take its party out, or play the house team (#1766).
+    if (phase === "queued") {
+      if (member.id === local.selfId && command.kind === "leave-queue") {
+        leaveQueue();
+      } else if (member.id === local.selfId && command.kind === "house-team") {
+        playHouseTeam();
+      }
+      return;
+    }
     if (phase !== "waiting" && phase !== "team-lobby") {
       return;
     }
@@ -1536,8 +1813,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   };
 
-  // A winner's vote, once, while the vote is open.
+  // A winner's vote, once, while the vote is open; or a queueing party
+  // member's key (#1766).
   transport.on("stay-together", (data, from) => {
+    if (queueing !== undefined && !closed && budget.take(from, nowMs())) {
+      takePartyKey(from, parsePeerStayTogether(data)?.memberKey ?? null);
+      return;
+    }
     if (
       queued === undefined ||
       closed ||
@@ -1559,9 +1841,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   // A yes-voter's consent to the proposed party, once, while it is open (#1078).
   transport.on("party-consent", (data, from) => {
-    const proposal = vote?.proposal;
+    const proposal = vote?.proposal ?? queueing?.proposal;
+    const verify = queued?.verifyTicketSig ?? matchmaking?.verifyTicketSig;
     if (
-      queued === undefined ||
+      verify === undefined ||
       closed ||
       proposal === undefined ||
       proposal.settled ||
@@ -1584,16 +1867,35 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       proposal.checking.delete(from);
       // One that does not verify is no consent: the party waits for a
       // good one until `PARTY_CONSENT_MS`, then splits.
-      if (closed || proposal.settled || !queued.verifyTicketSig(memberKey, digest, said.consent)) {
+      if (closed || proposal.settled || !verify(memberKey, digest, said.consent)) {
         return;
       }
       proposal.consents.set(memberKey, said.consent);
-      runVote(queued);
+      if (queued === undefined) {
+        gatherParty();
+      } else {
+        runVote(queued);
+      }
     });
   });
 
   const host: LobbyHost = {
     local,
+    teamPlan(selfKey) {
+      const current = queueing;
+      if (current === undefined) {
+        return undefined;
+      }
+      return current.seats.map(({ holder, build }) => ({
+        memberKey:
+          holder === null
+            ? null
+            : holder === local.selfId
+              ? selfKey
+              : (current.keys.get(holder) ?? null),
+        build,
+      }));
+    },
     setOpen(opened) {
       if (closed || queued !== undefined || open === opened) {
         return;
@@ -1615,6 +1917,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const shown = countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt);
       const shownStage = teamLobby === undefined ? null : countdownLeft(teamLobby.endsAt);
       elapsed += seconds;
+      if (queueing !== undefined) {
+        gatherParty();
+      }
       if (teamLobby !== undefined) {
         if (clockMs() >= teamLobby.endsAt) {
           endStage(teamLobby);
@@ -1659,6 +1964,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         phase = "waiting";
         if (queued !== undefined) {
           beginVote(queued, winningTeam);
+        }
+        // A party lobby's bots were its house match's alone (#1766).
+        if (matchmaking !== undefined && teamQueueModeOf(mode) !== undefined) {
+          for (const member of [...members.values()]) {
+            if (member.bot !== null) {
+              members.delete(member.id);
+            }
+          }
         }
         // Whoever is still away is not coming back to this lobby.
         dropAway(() => true);
@@ -1713,6 +2026,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const leaving = members.get(peerId);
     members.delete(peerId);
     tellReach();
+    // A party member gone takes the party out of the queue (#1766).
+    if (queueing !== undefined && leaving?.team === 0) {
+      leaveQueue();
+      return;
+    }
     // In a Team Lobby (#1458) its proposal, vote and claim go with it, and
     // a bot takes its seat, so its side stays the size it proposed for.
     if (teamLobby !== undefined && leaving !== undefined && leaving.team !== null) {
@@ -1721,8 +2039,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       dropProposal(side, peerId);
       side.votes.delete(peerId);
       side.claims = side.claims.map((holder) => (holder === peerId ? null : holder));
-      addBot(leaving.team);
-      figureBots();
+      // A party's free seats are bots already (#1766).
+      if (!teamLobby.forQueue) {
+        addBot(leaving.team);
+        figureBots();
+      }
       if (everyoneReady()) {
         endStage(teamLobby);
         return;
