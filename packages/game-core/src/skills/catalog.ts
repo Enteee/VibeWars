@@ -10,6 +10,7 @@ import { PARAGON_SKILLS } from "./catalog/paragon.js";
 import { DERVISH_SKILLS } from "./catalog/dervish.js";
 import { COMMON_SKILLS } from "./catalog/common.js";
 import { RANGE_SPELL } from "../distances.js";
+import type { StatusId } from "./status.js";
 import type { Skill } from "./types.js";
 
 /**
@@ -91,3 +92,14 @@ export const SKILLS_BY_ID: ReadonlyMap<string, Skill> = new Map(
 export function getSkill(id: string): Skill | undefined {
   return SKILLS_BY_ID.get(id);
 }
+
+/**
+ * Every status a skill maintains (#837). Another status with no end of
+ * its own, as Faithful Intervention (#1789), lasts until something ends
+ * it but costs no upkeep, and its caster cannot drop it.
+ */
+export const MAINTAINED_STATUSES: ReadonlySet<StatusId> = new Set(
+  IMPLEMENTED_SKILLS.flatMap((skill) =>
+    skill.effects.flatMap((effect) => (effect.kind === "maintain-status" ? [effect.statusId] : [])),
+  ),
+);

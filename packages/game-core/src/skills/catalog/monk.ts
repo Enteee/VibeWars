@@ -2672,4 +2672,32 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "monk.judges-intervention",
+    name: "Judge's Intervention",
+    gwId: 1390,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.smiting-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, the next time target ally receives damage that would
+    // be fatal, the damage is negated and one nearby foe takes 30...180 holy
+    // damage" (#1789): the negation and the smite are the status's.
+    effects: [{ kind: "apply-status", statusId: "judges-intervention", durationSeconds: 10 }],
+  },
 ];

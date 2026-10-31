@@ -61,4 +61,7 @@ export const DERVISH_ICONS = {
   "dervish.guiding-hands": { glyph: "hand-arrow" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "dervish.test-of-faith": { glyph: "hand-bare" },
+  // Ally threshold mechanics (#1789), stand-ins until their art card.
+  "dervish.watchful-intervention": { glyph: "heart-roof", modifier: "half" },
+  "dervish.faithful-intervention": { glyph: "heart-roof", modifier: "self" },
 };

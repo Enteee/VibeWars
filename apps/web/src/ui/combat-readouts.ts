@@ -1,4 +1,5 @@
 import {
+  MAINTAINED_STATUSES,
   STATUS_DEFINITIONS,
   chainRequirementText,
   getAttribute,
@@ -207,7 +208,14 @@ export function describeCombatEvent(
     case "resurrected":
       return `${by} resurrects ${target} (${percent(event.healthFraction)} health, ${percent(event.energyFraction)} energy)`;
     case "status-applied":
-      return `${target} gains ${STATUS_DEFINITIONS[event.statusId].name} (${event.durationSeconds === null ? "maintained" : `${formatAmount(event.durationSeconds)} s`})`;
+      return `${target} gains ${STATUS_DEFINITIONS[event.statusId].name} (${
+        event.durationSeconds !== null
+          ? `${formatAmount(event.durationSeconds)} s`
+          : // No end of its own, and no upkeep either (#1789).
+            MAINTAINED_STATUSES.has(event.statusId)
+            ? "maintained"
+            : "until it ends"
+      })`;
     case "status-removed":
       return `${by} removes ${STATUS_DEFINITIONS[event.statusId].name} from ${target}`;
     case "status-expired":
