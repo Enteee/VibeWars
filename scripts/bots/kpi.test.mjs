@@ -321,6 +321,32 @@ describe("stage waits and idle (#1615)", () => {
     ).toBe(0.5 * H);
   });
 
+  it("overlaps interleaved Ready stays and waits, clipped to the day", () => {
+    const moves = [
+      // In Ready from before the window to 20 h ago, and 10 h to 6 h ago.
+      move(1, "Backlog", "Ready", 30 * H),
+      move(1, "Ready", "In Progress", 20 * H),
+      move(2, "Backlog", "Ready", 10 * H),
+      move(2, "Ready", "In Progress", 6 * H),
+    ];
+    const waits = new Map([
+      [
+        "developer",
+        [waited(25 * H, 22 * H), waited(21 * H, 9 * H), waited(8 * H, 7 * H), waited(5 * H, 0)],
+      ],
+    ]);
+    // 24..22 h, 21..20 h, 10..9 h and 8..7 h ago.
+    expect(idleWhileReady(NOW, moves, waits, staff)).toBe(5 * H);
+  });
+
+  it("takes a log far longer than a spread could, without throwing", () => {
+    // 5 ms waited of every 10 ms, over the last 50 minutes.
+    const lines = Array.from({ length: 300_000 }, (_, at) =>
+      waited(3_000_000 - at * 10, 3_000_000 - at * 10 - 5),
+    );
+    expect(idleShare(NOW, new Map([["developer", lines]]), staff).developer).toBeCloseTo(0.5, 3);
+  });
+
   it("runs a card still in Ready to now", () => {
     expect(
       idleWhileReady(

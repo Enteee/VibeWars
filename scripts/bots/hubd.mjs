@@ -3740,8 +3740,11 @@ async function recordCiRuns(now, cfg) {
   return kept;
 }
 
-/** The most of one employee's wait log hubd reads: 8 days of waits fit in far less. */
-const MAX_WAITS_BYTES = 4 * 1024 * 1024;
+/**
+ * The most of one employee's wait log hubd reads: 8 days of a busy agent's
+ * waits are some 200 KiB. A bigger one is forged, and is left out.
+ */
+const MAX_WAITS_BYTES = 1024 * 1024;
 
 /**
  * Every employee's wait logs (#1615): `tg` and `board` waits from its bus,

@@ -195,7 +195,12 @@ function waitsInDay(now, waits) {
     if (inDay.length === 0) {
       continue;
     }
-    const from = Math.max(now - DAY_MS, Math.min(...inDay.map((line) => line.start)));
+    // A loop, not Math.min(...): a log can be long enough to overflow a spread.
+    let first = now;
+    for (const line of inDay) {
+      first = Math.min(first, line.start);
+    }
+    const from = Math.max(now - DAY_MS, first);
     const waited = union(
       inDay.map(
         (line) =>
@@ -263,11 +268,11 @@ export function idleWhileReady(now, moves, waits, staff) {
       .filter(([employee]) => READY_ROLES.has(staff.employees[employee]?.role ?? ""))
       .flatMap(([, { waited }]) => waited),
   );
-  return union(ready).reduce(
-    (sum, [start, end]) =>
-      sum + overlap(Math.max(start, now - DAY_MS), Math.min(end, now), waiting),
-    0,
+  const inDay = ready.map(
+    ([start, end]) =>
+      /** @type {[number, number]} */ ([Math.max(start, now - DAY_MS), Math.min(end, now)]),
   );
+  return covered(union(inDay), waiting);
 }
 
 /**
@@ -628,6 +633,32 @@ function overlap(start, end, intervals) {
     (sum, [from, to]) => sum + Math.max(0, Math.min(end, to) - Math.max(start, from)),
     0,
   );
+}
+
+/**
+ * How much two sorted, disjoint interval lists, as `union` makes them,
+ * overlap: one sweep over both, so a long list costs its length, not its
+ * length times the other's (#1615).
+ *
+ * @param {readonly (readonly [number, number])[]} a
+ * @param {readonly (readonly [number, number])[]} b
+ * @returns {number}
+ */
+function covered(a, b) {
+  let sum = 0;
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    const [aStart, aEnd] = /** @type {readonly [number, number]} */ (a[i]);
+    const [bStart, bEnd] = /** @type {readonly [number, number]} */ (b[j]);
+    sum += Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart));
+    if (aEnd < bEnd) {
+      i += 1;
+    } else {
+      j += 1;
+    }
+  }
+  return sum;
 }
 
 /** The columns `cycleShare` splits a card's time between, besides CI. */
