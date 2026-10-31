@@ -88,11 +88,11 @@ export const RANGER_ICONS = {
   // Own-skill modifiers (#1761), stand-in until its art card.
   "ranger.practiced-stance": { glyph: "bow-recharge" },
   // Pets 2 (#1865), stand-ins until their art card.
-  "ranger.otyughs-cry": { glyph: "paw-shield" },
-  "ranger.predatory-bond": { glyph: "paw-heart" },
-  "ranger.companionship": { glyph: "heal-other" },
+  "ranger.otyughs-cry": { glyph: "paw-shield", modifier: "up" },
+  "ranger.predatory-bond": { glyph: "paw-heart", modifier: "plus" },
+  "ranger.companionship": { glyph: "heal-other", modifier: "paw" },
   "ranger.rampage-as-one": { glyph: "paw-speed", modifier: "up" },
-  "ranger.run-as-one": { glyph: "paw-speed" },
-  "ranger.savage-pounce": { glyph: "paw-leap" },
-  "ranger.bestial-mauling": { glyph: "blink-daze" },
+  "ranger.run-as-one": { glyph: "paw-speed", modifier: "self" },
+  "ranger.savage-pounce": { glyph: "paw-leap", modifier: "up" },
+  "ranger.bestial-mauling": { glyph: "blink-daze", modifier: "stun" },
 };
