@@ -2385,9 +2385,12 @@ export class MatchSimulation {
     // A shout or a stance goes off at once in the middle of an activation,
     // an aftercast or a knockdown (#1725, GW1), and touches none of them.
     // Out of range or sight, it is refused: nothing walks in mid-action.
+    // Pressed again the tick it was used standing, it is the cast still
+    // to resolve, not another use.
     const { cast } = record.combatant;
     if (
       usableMidAction(skill) &&
+      cast.activeCast?.key !== used.key &&
       (cast.isCasting || cast.inAftercast || record.combatant.knockdownRemaining > 0)
     ) {
       if (check.ok) {
