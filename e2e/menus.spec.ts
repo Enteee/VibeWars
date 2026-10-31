@@ -109,8 +109,8 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     const guestCode = guest.locator("#topbar .topbar-lobby-code");
     await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const ownCode = (await guestCode.textContent()) ?? "";
-    // Alone, the party strip says how to change that.
-    await expect(host.locator(".party-strip")).toContainText("Share your key to play together");
+    // Alone, the host has no party strip (#1782).
+    await expect(host.locator(".party-strip")).toHaveCount(0);
 
     await joinByCode(guest, hostCode);
     await expect(guestCode).toHaveText(hostCode);
@@ -135,7 +135,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(guestCode).not.toHaveText(hostCode);
     await expect(guestCode).not.toHaveText(ownCode);
     await expect(leave).toBeHidden();
-    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+    await expect(host.locator(".party-strip")).toHaveCount(0);
   } finally {
     await context.close();
   }
@@ -153,7 +153,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const hostCode = (await code.textContent()) ?? "";
     await openToFriends(host);
-    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+    await expect(host.locator(".party-strip")).toHaveCount(0);
 
     // The host's page stops answering, so the guest's join waits for it.
     const debugger_ = await context.newCDPSession(host);
@@ -167,7 +167,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await debugger_.send("Debugger.resume");
     // An absence: give the late join the time it took to land unguarded.
     await host.waitForTimeout(3_000);
-    await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
+    await expect(host.locator(".party-strip")).toHaveCount(0);
     await expect(guest.locator(".queue-count")).toContainText("searching");
   } finally {
     await context.close();
