@@ -178,7 +178,14 @@ describe("the mode rail (#1525)", () => {
         replacement = next;
       },
     });
-    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: false, open: false, members: [] });
+    setRailParty({
+      code: "ACDEFG",
+      mode: "gvg",
+      isHost: false,
+      open: false,
+      members: [],
+      queuedMs: null,
+    });
     redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
     const locked = replacement?.children.filter((child) => child.attributes.has("aria-disabled"));
     expect(locked?.map((child) => child.attributes.get("data-entry"))).toEqual([
