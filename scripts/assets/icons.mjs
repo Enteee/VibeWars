@@ -1838,20 +1838,21 @@ const status = {
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
   ],
-  // Ranger staples 2 (#1629), stand-ins until their art card.
   // Preparation: an arrow with a flame at its head, your arrows burn.
   "kindle-arrows": [
     "preparation",
     (c) =>
-      `<path d="M4 20L13 11" ${stroke(c, 2)}/>` +
-      `<path d="M16 4c2 2.5 3.5 4 3.5 6a3.5 3.5 0 0 1-7 0c0-2 1.5-3.5 3.5-6z" fill="${c}"/>`,
+      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<path d="M16 11c.6 3 3.5 4 3.5 7a3.5 3.5 0 0 1-7 0c0-1.5.6-2.6 1.5-3.2 0 1.2.4 1.8 1 2.1-.3-1.8.5-3.7 1-5.9z" fill="${c}"/>`,
   ],
-  // Preparation: an arrow into a burst, your arrows explode on contact.
+  // Preparation: an arrow with a burst beside it, as the skill's icon (Ignite Arrows).
   "ignite-arrows": [
     "preparation",
     (c) =>
-      `<path d="M4 20L12 12" ${stroke(c, 2)}/>` +
-      `<path d="M16 8V4M16 12v4M12 8h-2M20 8h2M13 5l-1.5-1.5M19 5l1.5-1.5M19 11l1.5 1.5" ${stroke(c, 1.6)}/>`,
+      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<path d="M16 11.5V20M12 15.8H20.5M13.2 13L18.8 18.6M18.8 13L13.2 18.6" ${stroke(c, 1.8)}/>`,
   ],
   // Dervish staples 2 (#1604).
   // Hex: an eye glancing aside over a burst, the next attack goes astray (#1666).
@@ -3384,6 +3385,34 @@ const skillGlyph = {
     inkLine("M9 3.5L14 8.5L9 13.5M14.5 3.5L19.5 8.5L14.5 13.5", 2.4) +
     `<circle cx="5.5" cy="19" r="2.6" fill="${C.ink}"/>` +
     inkLine("M10 19H22M14 19L12 15.5M18 19L20 15.5", 2.4),
+  // Ranger staples 2 (#1629, #1684): the arrow family, each with its rider or its own shaft.
+  "arrow-power": () =>
+    inkLine("M3.5 20.5L14 10", 4) +
+    inkFill("M23 1.5L10 6L18.5 14.5Z") +
+    inkLine("M3 14L6 17M7 10L10 13", 1.8),
+  "arrow-aim": () =>
+    `<circle cx="16" cy="8" r="5.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M16 0.8V3.6M16 12.4V15.2M8.8 8H11.6M20.4 8H23.2", 1.8) +
+    inkLine("M3 21L12.5 11.5", 2.4) +
+    inkFill("M16.5 7.5L10 9.5L14.5 14Z"),
+  "arrow-unbound": () => riderOn(skillGlyph.arrow(), RIDER.ring),
+  "arrow-keen": () =>
+    inkLine("M3.5 20.5L13 11", 2.2) +
+    inkFill("M12 11L10 1.5L13.5 7L21.5 3L17 9.5L22.5 14.5L15 13.5Z"),
+  "arrow-energy": () => riderOn(skillGlyph.arrow(), skillGlyph.energy()),
+  "arrow-kindle": () => riderOn(skillGlyph.arrow(), skillGlyph.flame()),
+  "arrow-ignite": () => riderOn(skillGlyph.arrow(), RIDER.burst),
+  "arrow-poison": () => riderOn(skillGlyph.arrow(), RIDER.drop),
+  "trap-dust": () =>
+    `<g transform="translate(12,9) scale(0.7) translate(-12,-12)">${skillGlyph.dust()}</g>` +
+    inkLine("M3 20H21", 2.5) +
+    inkLine("M5 20L7 16L9 20M10 20L12 16L14 20M15 20L17 16L19 20", 2),
+  "trap-spike": () =>
+    inkLine("M3 21H21", 2.5) + inkFill("M4 20L7 4L10 20ZM10 20L12 8L14 20ZM14 20L17 4L20 20Z"),
+  "drop-struck": () =>
+    inkFill("M12 2.5C12 2.5 4.5 12 4.5 16A7.5 7.5 0 0 0 19.5 16C19.5 12 12 2.5 12 2.5Z") +
+    `<path d="M3.5 21.5L20.5 6" ${stroke(C.bg, 5.4)}/>` +
+    inkLine("M3.5 21.5L20.5 6", 2.4),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
