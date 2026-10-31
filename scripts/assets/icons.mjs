@@ -1828,9 +1828,9 @@ const skillGlyph = {
     inkLine("M17.5 6.5L20.5 9.3L17 11", 2),
   // Extend Enchantments: a scythe whose aura is drawn out into a long dashed ellipse.
   "scythe-stretch": () =>
-    `<ellipse cx="12" cy="12" rx="11" ry="6" ${stroke(C.ink, 1.6)} stroke-dasharray="3 2.4"/>` +
-    inkLine("M7 21L14 4", 2.2) +
-    inkFill("M14 4C19 3 22 6 22 10C19 7.5 17 7 14 8Z"),
+    inkLine("M6 17L9.5 2.5", 2.4) +
+    inkFill("M9.5 2.5C17 1.5 22.5 5.5 22.5 11C18.5 8 14.5 7.5 9 9Z") +
+    inkLine("M5 21.5H22.5M19.5 18.8L22.5 21.5L19.5 24.2", 2),
   // Soothing slows adrenaline: a wave pressed flat above a bar.
   "spirit-calm": () =>
     spiritPost() +
