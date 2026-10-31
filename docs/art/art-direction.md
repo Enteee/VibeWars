@@ -1303,7 +1303,9 @@ files at build and dev time (`apps/web/plugins/arena-atlas.ts`, #1671), each
 at its texture size from `apps/web/src/render/arena-atlas.ts`. It is not in git.
 
 Adding a skill: add its row to `scripts/assets/skill-icons/<profession>.mjs` and re-run.
-Adding a status, profession, skill type or UI control: add one entry to the
+Adding a status: add its row to `scripts/assets/status-icons/<profession>.mjs`, by the
+game-core file that declares its id (`common.mjs` for `common.ts`), and re-run.
+Adding a profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
 
 ## Sound
