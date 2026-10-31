@@ -156,18 +156,24 @@ jobs:
           fi
           echo "needed=$needed" >> "$GITHUB_OUTPUT"
 
+      # Each step below has its own timeout: a job-level timeout concludes
+      # cancelled, which a main push reads as a coalesced shard (#1620), so a
+      # hang must fail a step instead.
       - uses: ./.github/actions/devenv
         if: steps.needed.outputs.needed != 'false'
+        timeout-minutes: 15
 
       # e2e serves the built client.
       - name: Build
         if: steps.needed.outputs.needed != 'false'
+        timeout-minutes: 10
         run: devenv shell -- pnpm run build
 
       # Drives the Chromium the shell pins (VIBEWARS_CHROMIUM), so there is
       # no `playwright install`.
       - name: End-to-end tests
         if: steps.needed.outputs.needed != 'false'
+        timeout-minutes: 45
         run: devenv shell -- pnpm run test:e2e --shard=${{ matrix.shard }}/4
 
       - name: Upload Playwright output
