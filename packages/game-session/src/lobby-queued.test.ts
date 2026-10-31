@@ -876,7 +876,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     members: readonly string[] = PARTY,
     groupId = GROUP_ID,
   ): Promise<string> =>
-    key.sign(await admissionDigest("vibewars-party", groupId, members.join(""), ""));
+    key.sign(await admissionDigest("vibewars-party", groupId, members.join(""), GROUP.mode));
   /**
    * Until each of `names` has its answer: a consent is signed and checked
    * on `crypto.subtle`, which `settle` cannot wait for.
@@ -1078,9 +1078,10 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     expect(queued.done()).toBe(1);
   });
 
-  it("signs no proposal without this player's key, or of another group (#1078)", async () => {
+  it("signs no proposal without this player's key, of another group, or for another mode (#1078, #1766)", async () => {
     const rewrites: ((proposal: WirePartyProposal) => WirePartyProposal)[] = [
       (proposal) => ({ ...proposal, groupId: "b".repeat(64) }),
+      (proposal) => ({ ...proposal, mode: "team-arena" }),
       (proposal) => ({ ...proposal, members: [KEY_H.ticketId, "f".repeat(64)] }),
     ];
     for (const rewrite of rewrites) {

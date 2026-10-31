@@ -1464,7 +1464,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // To each yes alone: the losers share these channels.
         if (decision.kind === "formed") {
           const { votes } = vote;
-          const { groupId } = plan.group;
+          const { groupId, mode } = plan.group;
           const party = decision.members;
           vote.proposal = {
             members: party,
@@ -1474,13 +1474,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
                 return typeof memberKey === "string" ? [[peerId, memberKey] as const] : [];
               }),
             ),
-            digest: admissionDigest("vibewars-party", groupId, party.join(""), ""),
+            digest: admissionDigest("vibewars-party", groupId, party.join(""), mode),
             consents: new Map(),
             checking: new Set(),
             endsAt: clockMs() + PARTY_CONSENT_MS,
             settled: false,
           };
-          const proposed: WirePartyProposal = { groupId, members: party };
+          const proposed: WirePartyProposal = { groupId, members: party, mode };
           for (const to of decision.to) {
             transport.send("party-proposal", proposed, to);
           }

@@ -121,7 +121,8 @@ const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
 
-function isQueueMode(value: unknown): value is QueueMode {
+/** Whether `value` is one of `QUEUE_MODES`. */
+export function isQueueMode(value: unknown): value is QueueMode {
   return QUEUE_MODES.some((known) => known === value);
 }
 

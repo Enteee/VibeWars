@@ -451,9 +451,9 @@ const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 /** A party's consent to its proposal (#1078). */
 const partyConsent = { memberKey: "ab".repeat(32), consent: "ef".repeat(64) };
 
-/** A party-proposal of `members`, as given (#1078). */
+/** A party-proposal of `members`, as given (#1078), for a 2v2 (#1766). */
 function proposalOf(members: readonly string[]) {
-  return { groupId: "12".repeat(32), members };
+  return { groupId: "12".repeat(32), members, mode: "random-arena-2v2" };
 }
 
 /** A party-formed of `members`, as given, each with a consent. */
@@ -1736,6 +1736,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "party-proposal with no group (#1078)",
     parseWirePartyProposal,
     { members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  [
+    "party-proposal with no mode (#1766)",
+    parseWirePartyProposal,
+    { groupId: "12".repeat(32), members: ["ab".repeat(32), "cd".repeat(32)] },
+  ],
+  [
+    "party-proposal of an unknown mode (#1766)",
+    parseWirePartyProposal,
+    { ...proposalOf(["ab".repeat(32), "cd".repeat(32)]), mode: "solo-arena" },
   ],
   ["party-consent with no consent (#1078)", parsePeerPartyConsent, { memberKey: "ab".repeat(32) }],
   [

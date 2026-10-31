@@ -4573,7 +4573,21 @@
     "WirePartyProposal": {
       "properties": [
         { "name": "groupId", "optional": false, "type": "string" },
-        { "name": "members", "optional": false, "type": { "array": "string" } }
+        { "name": "members", "optional": false, "type": { "array": "string" } },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "gvg" },
+              { "literal": "heroes-ascent" },
+              { "literal": "random-arena-1v1" },
+              { "literal": "random-arena-2v2" },
+              { "literal": "random-arena-4v4" },
+              { "literal": "team-arena" }
+            ]
+          }
+        }
       ]
     },
     "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },

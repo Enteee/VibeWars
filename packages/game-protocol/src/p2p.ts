@@ -32,6 +32,7 @@ import {
   type LobbyPhase,
   type WireChainMark,
 } from "./protocol.js";
+import { isQueueMode, type QueueMode } from "./queue.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -903,18 +904,21 @@ export interface PeerStayTogether {
 
 /**
  * The host to each winner who said yes, and only to it, once every winner
- * did (#1078): the group they won and their keys, sorted. Each signs its
- * consent to exactly this party, or the party does not form.
+ * did (#1078): the group they won, their keys, sorted, and the mode the
+ * party queues for (#1766). Each signs its consent to exactly this party,
+ * or the party does not form.
  */
 export interface WirePartyProposal {
   readonly groupId: string;
   readonly members: readonly string[];
+  readonly mode: QueueMode;
 }
 
 /**
  * A yes-voter to its host (#1078): `consent`, 128 hex digits, is
  * `memberKey`'s signature over `admissionDigest("vibewars-party",
- * groupId, members.join(""), "")` for the proposal it answers. The
+ * groupId, members.join(""), mode)` for the proposal it answers: a
+ * consent to one mode's party is none to another's (#1766). The
  * party's ticket publishes every consent, so nobody can name a member who
  * did not agree to that very party.
  */
@@ -2280,12 +2284,15 @@ function parsePartyMembers(value: unknown): string[] | undefined {
   return keys;
 }
 
-/** The `"party-proposal"` channel: a group id and the party's members. */
+/** The `"party-proposal"` channel: a group id, the party's members and its mode. */
 export function parseWirePartyProposal(value: unknown): WirePartyProposal | undefined {
   const raw = fields(value);
   const groupId: unknown = raw?.groupId;
+  const mode: unknown = raw?.mode;
   const members = parsePartyMembers(raw?.members);
-  return isTicketId(groupId) && members !== undefined ? { groupId, members } : undefined;
+  return isTicketId(groupId) && members !== undefined && isQueueMode(mode)
+    ? { groupId, members, mode }
+    : undefined;
 }
 
 /** The `"party-consent"` channel. */

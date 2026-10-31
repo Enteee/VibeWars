@@ -517,6 +517,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           key === undefined ||
           consented ||
           proposal.groupId !== queued?.group.groupId ||
+          proposal.mode !== queued.group.mode ||
           !proposal.members.includes(key.ticketId)
         ) {
           return;
@@ -525,8 +526,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         for (const handler of [...proposalHandlers]) {
           handler();
         }
-        const { groupId, members } = proposal;
-        void admissionDigest("vibewars-party", groupId, members.join(""), "").then((digest) => {
+        const { groupId, members, mode } = proposal;
+        void admissionDigest("vibewars-party", groupId, members.join(""), mode).then((digest) => {
           if (hostId !== undefined && !closed) {
             const said: PeerPartyConsent = { memberKey: key.ticketId, consent: key.sign(digest) };
             transport.send("party-consent", said, hostId);
