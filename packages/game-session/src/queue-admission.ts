@@ -14,9 +14,9 @@ import type { TicketKey } from "./queue-client.js";
 /**
  * Whose proof a digest is for: a joiner's, the host's welcome to one, or a
  * party member's consent to the party (#1078), which signs
- * `("vibewars-party", groupId, members.join(""), "")`: the group it won
- * and its members, sorted 64-hex keys, so the concatenation is
- * unambiguous.
+ * `("vibewars-party", groupId, members.join(""), mode)`: the group it
+ * won, its members, 64-hex keys in party order, so the concatenation is
+ * unambiguous, and the mode it queues for (#1766).
  */
 export type AdmissionTag = "vibewars-admit" | "vibewars-host" | "vibewars-party";
 
@@ -74,4 +74,18 @@ export async function admissionDigest(
 ): Promise<Uint8Array> {
   const bytes = admissionBytes(tag, groupId, hostTicketId, peerId);
   return new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+}
+
+/**
+ * A lobby party's group (#1766, ADR-0042): `sha256(roomId ‖ queueNonce)`,
+ * as hex. Both are 64 hex digits, so the concatenation is unambiguous.
+ * The room id is the lobby's derived one, never its key (ADR-0043): the
+ * group is public on the relays, the key never is.
+ */
+export async function partyGroupId(roomId: string, queueNonce: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(`${roomId}${queueNonce}`),
+  );
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }

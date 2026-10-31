@@ -1,7 +1,8 @@
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ARENA_MAPS, modeMapIds } from "../net/maps.js";
-import { TEAM_SCHEMA_VERSION, type StoredTeam } from "../storage/schema.js";
+import { TEAM_SCHEMA_VERSION, type StoredTeam, type TeamCharacter } from "../storage/schema.js";
 import {
   HOST_GOALS,
   NO_TEAM_BUILDS,
@@ -20,6 +21,19 @@ function team(id: string): StoredTeam {
     members: [],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: 1,
+  };
+}
+
+/** A Warrior named `name`, a sword and a shield in hand. */
+function warrior(name: string): TeamCharacter {
+  return {
+    id: name,
+    name,
+    primaryProfession: "warrior",
+    secondaryProfession: undefined,
+    attributes: [],
+    skillBar: ["warrior.backbreaker", null, null, null, null, null, null, null],
+    equipment: defaultBuildEquipment("warrior"),
   };
 }
 
@@ -56,6 +70,10 @@ class FakeElement {
   value = "";
   placeholder = "";
   title = "";
+  src = "";
+  alt = "";
+  width = 0;
+  height = 0;
   maxLength = -1;
   hidden = false;
   type = "";
@@ -63,6 +81,7 @@ class FakeElement {
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, () => void>();
   readonly classList = { add: () => undefined, toggle: () => undefined };
+  readonly style = { width: "", height: "", setProperty: () => undefined };
 
   readonly setAttribute = (name: string, value: string): void => {
     this.attributes.set(name, value);
@@ -176,6 +195,31 @@ describe("the team screens' Team Builds (#1515, #1525)", () => {
     root.all("play-card-new")[0]?.click();
     expect(edited).toEqual(["b", "a"]);
     expect(added).toBe(1);
+  });
+
+  it("shows each member as a row of ball, weapons and skills, and no name (#1786)", () => {
+    const root = render([
+      {
+        ...team("a"),
+        members: [{ character: warrior("Ser Bash") }, { character: warrior("Ser Clang") }],
+      },
+    ]);
+    const rows = root.all("play-card-member");
+    expect(rows.map((row) => row.className)).toEqual([
+      "team-member-row play-card-member",
+      "team-member-row play-card-member",
+    ]);
+    expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual([
+      "Ser Bash, Warrior",
+      "Ser Clang, Warrior",
+    ]);
+    for (const row of rows) {
+      expect(row.all("character-dot")).toHaveLength(1);
+      expect(row.all("gear-icon")).toHaveLength(2);
+      expect(row.all("mini-skill-bar")).toHaveLength(1);
+    }
+    expect(root.all("play-card-member-name")).toEqual([]);
+    expect(root.everything().some((node) => node.textContent.startsWith("Ser "))).toBe(false);
   });
 
   it("with no Team Builds, shows the hint and New team build", () => {

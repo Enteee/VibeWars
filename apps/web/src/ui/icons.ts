@@ -120,6 +120,19 @@ export function offhandIcon(offhandId: string): GearIcon | undefined {
   return offhand === undefined ? undefined : { src: OFFHAND_ICON[offhand.id], name: offhand.name };
 }
 
+/** A weapon or off-hand icon (#419), named for a screen reader and a hover. */
+export function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | undefined {
+  if (icon === undefined) {
+    return undefined;
+  }
+  const img = document.createElement("img");
+  img.className = "gear-icon";
+  img.src = icon.src;
+  img.alt = icon.name;
+  img.title = icon.name;
+  return img;
+}
+
 /**
  * A skill's type badge, as markup. Named in `alt` and `title`, so a screen
  * reader and a hover both say what the shape means.

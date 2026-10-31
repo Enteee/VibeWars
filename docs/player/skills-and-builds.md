@@ -58,9 +58,9 @@ glyph replaces the one you had.
 ## Interventions
 
 A skill that answers "the next time damage drops Health below N%"
-answers one blow or life steal that crosses the line, never one that
-lands when you are already below it, and never health you sacrifice or
-lose to degeneration. Fatal-damage protection, as Judge's Intervention,
+answers any blow or life steal that leaves you alive and below the
+line, even when you were already below it before the hit, and never
+health you sacrifice or lose to degeneration. Fatal-damage protection, as Judge's Intervention,
 drops the whole killing blow: no damage, no death. Faithful Intervention
 and Illusion of Weakness have no duration: they last until damage, a
 strip or death ends them, and heal you as they go.
