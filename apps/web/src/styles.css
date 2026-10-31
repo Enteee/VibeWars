@@ -2588,8 +2588,10 @@ body {
   white-space: nowrap;
 }
 
+/* The dashes group the key's twelve letters (#1681): wide spacing would
+   push the map under the bar's buttons. */
 #topbar .lobby-code {
-  letter-spacing: 0.2em;
+  letter-spacing: 0.05em;
 }
 
 .lobby-code-label {

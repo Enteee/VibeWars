@@ -104,7 +104,8 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
     const code = await hostLobby(host);
     await openMenu(guest);
     await joinByCode(guest, code);
-    await expect(host.locator(".lobby-spectators")).toContainText("player");
+    // Both spectate until they pick a side: the guest is in once it is listed.
+    await expect(host.locator(".lobby-spectators")).toHaveText(/^Spectating: [^,]+, [^,]+$/);
 
     const question = host.getByText("Close the lobby for everyone?");
     await host.keyboard.press("Escape");
