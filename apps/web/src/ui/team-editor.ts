@@ -9,13 +9,8 @@ import {
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
-import {
-  createCharacterDot,
-  equippedCount,
-  professionBadge,
-  professionLabel,
-} from "./character-preview.js";
-import { skillTypeBadgeHtml } from "./icons.js";
+import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
+import { professionIcon, skillTypeBadgeHtml } from "./icons.js";
 import {
   button,
   h,
@@ -38,6 +33,7 @@ import {
   teamCounters,
   validateTeam,
   type TeamCounter,
+  type ProfessionMixEntry,
   type TeamCounterId,
 } from "./team-builder.js";
 
@@ -176,6 +172,29 @@ export interface TeamSkillCell {
   /** As the HUD prints it: "5e", "8a", or empty for a free skill. */
   readonly cost: string;
   readonly elite: boolean;
+}
+
+/**
+ * The team's professions as icons (#1785): per pair, its count when more
+ * than one, then the primary's and the secondary's icons, their names on
+ * hover; " · " between pairs.
+ */
+export function professionMixNodes(mix: readonly ProfessionMixEntry[]): (HTMLElement | string)[] {
+  return mix.flatMap(({ count, primary, secondary }, index) => {
+    const entry = h("span", "team-mix-entry");
+    entry.title = professionLabel(primary, secondary);
+    if (count > 1) {
+      entry.appendChild(h("span", "team-mix-count", String(count)));
+    }
+    for (const profession of secondary === undefined ? [primary] : [primary, secondary]) {
+      const icon = document.createElement("img");
+      icon.className = "team-mix-icon";
+      icon.src = professionIcon(profession);
+      icon.alt = "";
+      entry.appendChild(icon);
+    }
+    return index === 0 ? [entry] : [" · ", entry];
+  });
 }
 
 /**
@@ -605,7 +624,7 @@ export function mountTeamEditor(
     if (!(holder instanceof HTMLElement)) {
       return;
     }
-    const badge = professionBadge(character.primaryProfession, character.secondaryProfession);
+    const badge = `${character.primaryProfession}/${character.secondaryProfession ?? ""}`;
     if (holder.dataset.badge !== badge) {
       holder.dataset.badge = badge;
       holder.replaceChildren(createCharacterDot(character));
@@ -693,7 +712,7 @@ export function mountTeamEditor(
         String(highlight?.kind === "counter" && highlight.id === counter.id),
       );
     }
-    mix.textContent = professionMix(team.members);
+    mix.replaceChildren(...professionMixNodes(professionMix(team.members)));
     const marked = highlight === undefined ? undefined : markedCells(highlight, counters, team);
     list.classList.toggle("is-highlighting", marked !== undefined);
     for (const row of Array.from(list.children)) {
