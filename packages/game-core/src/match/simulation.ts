@@ -186,6 +186,7 @@ import {
   swingIntervalSeconds,
   unblockableNow,
   weaponSnapshotOf,
+  withEndedCritical,
 } from "../skills/weapon-attack.js";
 import {
   breakHex,
@@ -4807,10 +4808,13 @@ export class MatchSimulation {
     skillHit: SkillHit | SpellHit | undefined,
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
-    let unblockable = false;
+    let attacked: ReturnType<typeof bearerAttacked> = {
+      unblockable: false,
+      criticalChanceBonus: 0,
+    };
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
-      unblockable = bearerAttacked(record.combatant, events, "projectile");
+      attacked = bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant);
         events.push({ kind: "attack-missed", targetId: target.id });
@@ -4846,9 +4850,9 @@ export class MatchSimulation {
       speed,
       flightSeconds: distance(from, aimPoint) / speed,
       elapsed: 0,
-      weaponSnapshot: weaponSnapshotOf(record.combatant),
+      weaponSnapshot: withEndedCritical(weaponSnapshotOf(record.combatant), attacked),
       skillHit,
-      unblockable,
+      unblockable: attacked.unblockable,
     });
     this.#nextProjectileId += 1;
     return events;

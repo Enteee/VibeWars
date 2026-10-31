@@ -43,7 +43,12 @@ export type ParagonStatusId =
   | "purifying-finale"
   | "bladeturn-refrain"
   | "energizing-finale"
-  | "soldiers-fury";
+  | "soldiers-fury"
+  // Paragon staples 4 (#1677).
+  | "go-for-the-eyes"
+  | "the-power-is-yours"
+  | "its-just-a-flesh-wound"
+  | "focused-anger";
 
 export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition>> = {
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
@@ -393,5 +398,28 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       healthPips: 0,
       armorModifier: 0,
     },
+  }),
+
+  // "Go for the Eyes!" at Command 12 (PvP): +66% chance to crit on the
+  // bearer's next attack, a swing or an attack skill, which ends it.
+  "go-for-the-eyes": define("go-for-the-eyes", "Go for the Eyes!", "shout", {
+    profession: "paragon",
+    criticalChanceBonus: 0.66,
+    endsWhenBearerAttacks: true,
+  }),
+  // "The Power Is Yours!" at Motivation 12: +2 Energy regeneration.
+  "the-power-is-yours": define("the-power-is-yours", "The Power Is Yours!", "shout", {
+    profession: "paragon",
+    energyPips: 2,
+  }),
+  // "It's Just a Flesh Wound.": moves 25% faster.
+  "its-just-a-flesh-wound": define("its-just-a-flesh-wound", "It's Just a Flesh Wound.", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.25,
+  }),
+  // Focused Anger at Leadership 12: 120% more adrenaline.
+  "focused-anger": define("focused-anger", "Focused Anger", "skill-effect", {
+    profession: "paragon",
+    adrenalineGainFaster: 1.2,
   }),
 };

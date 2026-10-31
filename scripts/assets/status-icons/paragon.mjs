@@ -209,4 +209,33 @@ export const PARAGON_STATUS_ICONS = {
       `<path d="M12 3.5c2.5 3.5 5 6 5 9a5 5 0 0 1-10 0c0-3 2.5-5.5 5-9z" ${stroke(c, 1.8)}/>` +
       `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
   ],
+  // Paragon staples 4 (#1677).
+  // Shout: an eye with a spark at its corner, the next attack's critical.
+  "go-for-the-eyes": [
+    "shout",
+    (c) =>
+      `<path d="M3 12c3-4.5 6-6.5 9-6.5s6 2 9 6.5c-3 4.5-6 6.5-9 6.5s-6-2-9-6.5z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="12" cy="12" r="2.6" fill="${c}"/><path d="M18 3v3.5M16.25 4.75h3.5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Shout: a bolt over two pips, energy regeneration.
+  "the-power-is-yours": [
+    "shout",
+    (c) =>
+      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/>` +
+      `<path d="M8 19l2-2 2 2M12 19l2-2 2 2" ${stroke(c, 1.8)}/>`,
+  ],
+  // Shout: a running chevron over a crossed drop, faster once cleansed.
+  "its-just-a-flesh-wound": [
+    "shout",
+    (c) =>
+      `<path d="M10 3.5c2 3 4 5 4 7.5a4 4 0 0 1-8 0c0-2.5 2-4.5 4-7.5z" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 15L15 5" ${stroke(c, 1.6)}/><path d="M14 14l4 3.5-4 3.5" ${stroke(c, 2)}/>`,
+  ],
+  // Skill: three rising bars with a chevron, adrenaline gained faster.
+  "focused-anger": [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 19v-4M11 19v-7M16 19v-10" ${stroke(c, 2.4)}/>` +
+      `<path d="M14 5.5l3-3 3 3" ${stroke(c, 1.8)}/>`,
+  ],
 };
