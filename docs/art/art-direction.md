@@ -1242,7 +1242,9 @@ for the scene to tint. Load it in Phaser with
 for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
 
 Adding a skill: add its row to `scripts/assets/skill-icons/<profession>.mjs` and re-run.
-Adding a status, profession, skill type or UI control: add one entry to the
+Adding a status: add its row to `scripts/assets/status-icons/<profession>.mjs`, by the
+game-core file that declares its id (`common.mjs` for `common.ts`), and re-run.
+Adding a profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
 
 ## Sound
