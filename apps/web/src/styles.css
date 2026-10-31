@@ -3803,6 +3803,32 @@ body.has-expanded-training #screens {
   }
 }
 
+/* The skill queued to go next (#1722): a slow breathing ring outside the
+   slot, so it never hides the cast ring or the wipe inside. Still lit,
+   without the breath, under reduced motion. */
+.hud-skill.is-queued,
+.training-skill.is-queued {
+  box-shadow: 0 0 0 2px var(--ink);
+  animation: slot-queued 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes slot-queued {
+  from {
+    box-shadow: 0 0 0 1px var(--ink-dim);
+  }
+
+  to {
+    box-shadow: 0 0 0 3px var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-skill.is-queued,
+  .training-skill.is-queued {
+    animation: none;
+  }
+}
+
 .training-meter {
   display: grid;
   grid-template-columns: repeat(3, auto 1fr);

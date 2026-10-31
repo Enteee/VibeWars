@@ -11,11 +11,15 @@ export const RECHARGE_TOLERANCE_SECONDS = 0.05;
 /**
  * A player's running recharges, by slot, and the slots spent until a
  * morale boost (#474), as a `RechargeMessage` lists them; an empty slot
- * has neither. A copy standing in a slot (#469) is that slot's.
+ * has neither. A copy standing in a slot (#469) is that slot's. With
+ * them, the slot queued to go next (#1722).
  */
 export function rechargeState(
   skillBar: SkillBar,
-  cast: Pick<CastState, "rechargeRemaining" | "rechargeTotal" | "spent" | "overrides">,
+  cast: Pick<
+    CastState,
+    "rechargeRemaining" | "rechargeTotal" | "spent" | "overrides" | "queuedSlot"
+  >,
 ): RechargeMessage {
   const bar = resolvedBar(skillBar, cast);
   const slots = bar.flatMap((held, slot) => {
@@ -31,14 +35,15 @@ export function rechargeState(
   const spent = bar.flatMap((held, slot) =>
     held !== null && cast.spent.has(held.key) ? [slot] : [],
   );
-  return { slots, spent };
+  return { slots, spent, queued: cast.queuedSlot ?? null };
 }
 
 /**
  * Whether a client that was sent `sent`, `elapsedSeconds` ago, and has
  * counted down since, already shows `now`. Anything else is news: a
  * recharge started, ended early, was reset, or moved by more than the
- * tolerance, or a skill was spent or readied by a morale boost (#474).
+ * tolerance, a skill was spent or readied by a morale boost (#474), or
+ * one was queued or left the queue (#1722).
  */
 export function rechargePredicted(
   sent: RechargeMessage,
@@ -46,6 +51,7 @@ export function rechargePredicted(
   now: RechargeMessage,
 ): boolean {
   if (
+    sent.queued !== now.queued ||
     sent.spent.length !== now.spent.length ||
     sent.spent.some((slot, index) => now.spent[index] !== slot)
   ) {

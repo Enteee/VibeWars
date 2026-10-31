@@ -157,6 +157,14 @@ const NO_BOT_USE = new Set([
   // The not condition (#1670): energy from a foe doing nothing is no rule
   // the bot weighs.
   "mesmer.waste-not-want-not",
+  // Paragon staples 4 (#1677): a next attack's crit, energy and adrenaline
+  // on a condition are no rules the bot weighs.
+  "paragon.go-for-the-eyes",
+  "paragon.never-give-up",
+  "paragon.the-power-is-yours",
+  "paragon.focused-anger",
+  "paragon.glowing-signet",
+  "paragon.signet-of-aggression",
 ]);
 
 function skill(id: string) {

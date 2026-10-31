@@ -270,30 +270,30 @@ describe("Fire Magic texts (#1366)", () => {
       {
         "fireStorm": [
           "Creates a symbol at your target's location for 10 seconds",
-          "Every 1s for 10s, foes adjacent: deals 29 damage",
+          "Every 1s for 10s, foes adjacent: deals 29 fire damage",
         ],
         "flameBurst": [
-          "Deals 99 damage",
+          "Deals 99 fire damage",
         ],
         "flare": [
-          "Deals 56 damage",
-          "If you are Overcast: adjacent foes take 56 damage",
+          "Deals 56 fire damage",
+          "If you are Overcast: adjacent foes take 56 fire damage",
           "Projectile: can be dodged",
         ],
         "immolate": [
-          "Deals 64 damage",
+          "Deals 64 fire damage",
           "Applies Burning for 3s (−7 Health degeneration)",
         ],
         "inferno": [
-          "Deals 114 damage",
+          "Deals 114 fire damage",
         ],
         "mindBurn": [
-          "Deals 51 damage",
-          "If you have more Energy than target: deals 51 damage",
+          "Deals 51 fire damage",
+          "If you have more Energy than target: deals 51 fire damage",
           "If you have more Energy than target: applies Burning for 8s (−7 Health degeneration)",
         ],
         "rodgorts": [
-          "Deals 99 damage",
+          "Deals 99 fire damage",
           "Applies Burning for 3s (−7 Health degeneration)",
         ],
       }
