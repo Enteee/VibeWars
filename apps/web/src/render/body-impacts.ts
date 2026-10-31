@@ -53,6 +53,7 @@ function effectOf(event: CombatEvent): "harm" | "condition" | "help" | undefined
     case "life-stolen":
     case "energy-loss":
     case "health-lost":
+    case "health-loss":
     case "knocked-down":
     case "interrupted":
     case "attack-interrupted":
