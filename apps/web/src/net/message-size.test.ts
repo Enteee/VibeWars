@@ -430,6 +430,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       // A queued lobby's code is its group id, 64 hex digits (#871).
       code: "f".repeat(64),
       phase: "in-match",
+      // The longest mode.
+      mode: "heroes-ascent",
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       hostId: PEER_ID,
       matchId: "match-1000000",
@@ -490,6 +492,8 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     const state: WireLobbyState = {
       code: "ACDEFGHJKMNP",
       phase: "team-lobby",
+      // The longest mode.
+      mode: "heroes-ascent",
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       hostId: PEER_ID,
       matchId: null,

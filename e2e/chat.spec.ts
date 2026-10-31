@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { joinByCode } from "./helpers/menu.js";
+import { joinFriend } from "./helpers/menu.js";
 import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
@@ -30,7 +30,7 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
   await openMenu(host, "Ann");
   const code = await hostLobby(host);
   await openMenu(guest, "Bob");
-  await joinByCode(guest, code);
+  await joinFriend(guest, code);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: "join team 2" }).click();
 

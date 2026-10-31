@@ -38,3 +38,12 @@ export async function joinByCode(page: Page, code: string): Promise<void> {
   await page.locator("input.code-input").fill(code);
   await page.getByRole("button", { name: "Join", exact: true }).click();
 }
+
+/**
+ * Join `code` and wait until the title bar names it (#1526): the page's
+ * own lobby shows its panel too, so a seen panel is no sign the join is in.
+ */
+export async function joinFriend(page: Page, code: string): Promise<void> {
+  await joinByCode(page, code);
+  await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(code);
+}

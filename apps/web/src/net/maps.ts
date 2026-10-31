@@ -22,7 +22,7 @@ import type {
   RelicField,
   Vec2,
 } from "@vibewars/game-core";
-import { teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
+import { teamSizeOf, type LobbyMode, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
 
@@ -63,6 +63,35 @@ export function arenaIds(): string[] {
     DEFAULT_ARENA_ID,
     ...ARENA_MAPS.map((map) => map.id).filter((id) => id !== DEFAULT_ARENA_ID),
   ];
+}
+
+/**
+ * The match modes a lobby of each mode plays (#1453, #1526); `undefined`
+ * for every map. Random Arena's lobby never starts a coded match, so its
+ * maps do not matter.
+ */
+export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMode[] | undefined>> =
+  {
+    "random-arena": undefined,
+    "team-arena": ["annihilation", "kill-count", "priest-annihilation"],
+    "heroes-ascent": ["relic-run", "king-of-the-hill", "capture-points"],
+    gvg: ["guild-battle"],
+    "hosted-game": undefined,
+  };
+
+/** Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them. */
+export function modeMapIds(): Record<LobbyMode, string[]> {
+  const of = (mode: LobbyMode): string[] => {
+    const modes = LOBBY_MODE_MATCH_MODES[mode];
+    return arenaIds().filter((id) => modes === undefined || modes.includes(mapMode(id)));
+  };
+  return {
+    "random-arena": of("random-arena"),
+    "team-arena": of("team-arena"),
+    "heroes-ascent": of("heroes-ascent"),
+    gvg: of("gvg"),
+    "hosted-game": of("hosted-game"),
+  };
 }
 
 /**

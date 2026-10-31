@@ -22,12 +22,15 @@ export async function openPeers(
   return { context, pages };
 }
 
-/** Host a game from Hosted Game (#1525); its code, as the lobby screen shows it. */
+/**
+ * The lobby every page hosts from load (#1526), on Hosted Game (#1525);
+ * its code, as the title bar shows it.
+ */
 export async function hostLobby(page: Page): Promise<string> {
   await openRail(page, "Hosted Game");
-  await page.getByRole("button", { name: "Host a game", exact: true }).click();
-  const code = page.locator(".lobby-code");
+  const code = page.locator("#topbar .topbar-lobby-code");
   await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+  await expect(page.locator(".lobby-panel")).toBeVisible();
   return (await code.textContent())?.trim() ?? "";
 }
 

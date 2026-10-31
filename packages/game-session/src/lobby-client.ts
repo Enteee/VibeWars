@@ -262,6 +262,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     selfSessionId: selfId,
     code: state.code,
     phase: state.phase,
+    mode: state.mode,
     mapId: state.mapId,
     hostId: state.hostId,
     players: state.players.map((player) => ({
@@ -308,6 +309,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       selectMap(mapId) {
         send({ kind: "select-map", mapId });
+      },
+      setCharacter(character) {
+        send({ kind: "set-character", character });
+      },
+      selectMode(mode) {
+        send({ kind: "select-mode", mode });
       },
       startMatch() {
         send({ kind: "start" });

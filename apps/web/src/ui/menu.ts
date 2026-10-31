@@ -9,7 +9,8 @@ import { createCharacterFigure } from "./character-figure.js";
 import { equippedCount, miniSkillBar, professionLabel } from "./character-preview.js";
 import { button, emptyState, h, playCard, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
-import { railScreen, type RailEntry } from "./rail.js";
+import { isAlone } from "./party-strip.js";
+import { railParty, railScreen, type RailEntry } from "./rail.js";
 
 /**
  * The menu's character screens (brief §21, #1525): Random Arena, where
@@ -46,6 +47,8 @@ export const RANDOM_ARENA_MODES: readonly { readonly mode: QueueMode; readonly l
 
 /** Why the Random Arena tiles are greyed out: a queue needs a character to show strangers. */
 export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
+/** Under the tiles while anyone else is in the lobby (#1526): a party queues in card 4. */
+export const PARTY_CANNOT_QUEUE = "Leave the party, or play a Hosted Game";
 
 /** What Random Arena is for, under its heading. */
 export const RANDOM_ARENA_GOAL =
@@ -286,16 +289,20 @@ export function renderRandomArena(
   const tiles = h("div", "random-arena-tiles");
   tiles.setAttribute("role", "group");
   tiles.setAttribute("aria-label", "Find a match");
+  // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
+  const alone = isAlone(railParty());
   for (const { mode, label } of RANDOM_ARENA_MODES) {
     const tile = button(label, "random-arena-tile", () => {
       callbacks.onRandomArena(mode, loadPlayerName());
     });
-    tile.disabled = !activeExists;
+    tile.disabled = !activeExists || !alone;
     tiles.appendChild(tile);
   }
   body.appendChild(tiles);
   if (!activeExists) {
     body.appendChild(h("p", "random-arena-hint", NO_CHARACTER_FOR_QUEUE));
+  } else if (!alone) {
+    body.appendChild(h("p", "random-arena-hint", PARTY_CANNOT_QUEUE));
   }
 }
 

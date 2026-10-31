@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { key } from "./keys.js";
-import { joinByCode, openRail, pickCharacter } from "./helpers/menu.js";
+import { joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
 import { hostLobby, playOwnTeams, saveSoloTeam, startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
@@ -162,7 +162,7 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   const team = await saveSoloTeam(page);
   const code = await hostLobby(page);
   await foe.goto("./");
-  await joinByCode(foe, code);
+  await joinFriend(foe, code);
   await foe.getByRole("button", { name: "join team 2" }).click();
   await foe.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "join team 1" }).click();
