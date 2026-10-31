@@ -172,11 +172,13 @@ describe("bearer-dies (#1762)", () => {
     const sim = arena();
     put(sim, "f", "reapers-mark");
     put(sim, "g", "putrid-bile");
+    // h near g, out of f's reach: a foe of n's alive for g's burst to strike.
+    get(sim, "h").position = vec2(300, -AREA_NEARBY * 1.2);
     kill(sim, "n", "f");
     expect(get(sim, "f").combatant.statuses.has("reapers-mark")).toBe(true);
     const log = [...kill(sim, "f"), ...kill(sim, "g")];
     expect(amounts(log, "necromancer.reapers-mark", "energy-gain", "n")).toEqual([]);
-    expect(amounts(log, "necromancer.putrid-bile", "damage", "h")).toEqual([]);
+    expect(amounts(log, "necromancer.putrid-bile", "damage", "h")).toEqual([73]);
     expect(amounts(log, "necromancer.putrid-bile", "damage", "a")).toEqual([]);
   });
 
