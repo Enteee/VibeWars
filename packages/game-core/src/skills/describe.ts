@@ -14,7 +14,7 @@ import {
   spawningPowerHealth,
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
-import { getAttribute, getProfession } from "../professions.js";
+import { getAttribute, getProfession, type ProfessionId } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
@@ -535,12 +535,26 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   // Wastrel's Demise's (#1501): "each second, it and adjacent foes take 8
   // damage, 8 more each second".
+  // Balthazar's Aura's (#1754): "each second, adjacent foes take 26 holy
+  // damage".
   if (definition.damagePulse !== undefined) {
-    const { damage, growth, radius } = definition.damagePulse;
+    const { damage, growth, type, radius, hitsBearer } = definition.damagePulse;
     const area = AREA_TEXT.get(radius);
     const foes = area === undefined ? `foes within ${String(radius)}` : `${area} foes`;
+    const kind = type === "typeless" ? "" : ` ${type}`;
+    const more = growth === 0 ? "" : `, ${String(growth)} more each second`;
     parts.push(
-      `each second, it and ${foes} take ${String(damage)} damage, ${String(growth)} more each second`,
+      `each second, ${hitsBearer ? "it and " : ""}${foes} take ${String(damage)}${kind} damage${more}`,
+    );
+  }
+  // Holy Wrath's (#1754): "66% of the damage of the next 8 attacks that
+  // hit it goes back to the attacker as holy damage, up to 41".
+  if (definition.reflectsAttackDamage !== undefined) {
+    const { share, max, type, times } = definition.reflectsAttackDamage;
+    const attacks = times === 1 ? "attack" : `${String(times)} attacks`;
+    const kind = type === "typeless" ? "" : ` as ${type} damage`;
+    parts.push(
+      `${String(Math.round(share * 100))}% of the damage of the next ${attacks} that hit it goes back to the attacker${kind}, up to ${String(max)}`,
     );
   }
   if (definition.reversesNextDamage !== undefined) {
@@ -795,6 +809,7 @@ function describeTriggers(
       trigger.profession,
       trigger.usedSkill,
       trigger.damageType,
+      trigger.minDamage,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -944,6 +959,10 @@ const DROPPED = "drop effect";
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
   if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
     return `takes ${trigger.damageType} damage from a foe`;
+  }
+  // Spirit Bond's (#1754).
+  if (event === "bearer-takes-damage-from-foe" && trigger.minDamage !== undefined) {
+    return `takes more than ${String(trigger.minDamage)} damage from a foe`;
   }
   if (event === "bearer-blocks" && trigger.blocked !== undefined) {
     return `blocks a ${trigger.blocked} attack`;
@@ -1342,6 +1361,27 @@ function aCategory(category: StatusCategory): string {
 }
 
 /**
+ * "a hex", "a Mesmer hex", "a Water Magic hex" (#1765): a `target-has`'s
+ * category, named by its filters.
+ */
+function filteredCategory(condition: {
+  readonly category: StatusCategory;
+  readonly profession?: ProfessionId;
+  readonly attribute?: string;
+}): string {
+  const owners = [
+    ...(condition.profession === undefined ? [] : [getProfession(condition.profession).name]),
+    ...(condition.attribute === undefined
+      ? []
+      : [getAttribute(condition.attribute)?.name ?? condition.attribute]),
+  ];
+  if (owners.length === 0) {
+    return aCategory(condition.category);
+  }
+  return `a ${owners.join(" ")} ${condition.category.replace("-", " ")}`;
+}
+
+/**
  * An `if`'s line said the other way round (#1670), from the line itself:
  * "If target has an enchantment" becomes "If target has no enchantment",
  * "If target is using a skill" "If target is not using a skill".
@@ -1389,7 +1429,7 @@ function conditionText(condition: EffectCondition): string {
     case "target-chain-mark":
       return `If it follows ${condition.role === "off-hand" ? "an off-hand" : `a ${condition.role}`} attack`;
     case "target-has":
-      return `If target has ${aCategory(condition.category)}`;
+      return `If target has ${filteredCategory(condition)}`;
     case "target-has-any":
       return `If target has ${condition.categories.map(aCategory).join(" or ")}`;
     case "caster-has":
@@ -1891,8 +1931,11 @@ function describeEffect(
           : ` for each spirit ${AREA_AROUND_TARGET.get(near) ?? `within ${String(near)} of it`}`;
       // A target with fewer loses what it has (#1678): "up to 3".
       const upTo = typeof effect.count === "number" && effect.count > 1 ? "up to " : "";
+      // Shatter Delusions' "remove one Mesmer hex" (#1765).
+      const whose =
+        effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
       return {
-        text: `Removes ${upTo}${String(effect.count)} ${effect.category}${plural}${perSpirit}`,
+        text: `Removes ${upTo}${String(effect.count)} ${whose}${effect.category}${plural}${perSpirit}`,
         magnitude: undefined,
       };
     }
@@ -2644,6 +2687,11 @@ export function describeSkill(
   const easilyInterrupted = isEasilyInterrupted(skill)
     ? [{ text: "Easily interrupted", magnitude: undefined }]
     : [];
+  // Healing Touch's (#1754).
+  const divineFavorLine =
+    skill.divineFavorDoubled === true
+      ? [{ text: "Health gain from Divine Favor is doubled", magnitude: undefined }]
+      : [];
   // A spell that flies (#535) lands only if it reaches its target.
   const projectile =
     skill.projectile === undefined
@@ -2718,6 +2766,7 @@ export function describeSkill(
     ...onBlocked,
     ...onFailedToHit,
     ...whileActivating,
+    ...divineFavorLine,
     ...easilyInterrupted,
     ...projectile,
     ...halfRange,

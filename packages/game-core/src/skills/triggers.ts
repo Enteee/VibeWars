@@ -229,6 +229,8 @@ export function fireChangeTriggers(
       );
     case "broke-hex":
       return breakHex(bearer, change, context);
+    case "reflected":
+      return reflect(bearer, change, context);
     // Not a trigger: the simulation lands it on its own (#1108, #1265).
     case "redirected-damage":
     case "charged-source":
@@ -283,6 +285,38 @@ export function breakHex(
     { caster: bearer, target: caster, rng, rules, surroundings, usedSkill: undefined },
   );
   return [{ sourceId: bearer.id, skillId: change.skillId, events }];
+}
+
+/**
+ * A blow on the bearer its status reflects (#1754): the attacker takes
+ * that share, of the status's type, from the status's source, and the
+ * status spends a reflection. An attacker dead or gone takes nothing and
+ * costs none, as does a source that has left the match. Changes drain
+ * once a tick, so a blow recorded after the last reflection was spent,
+ * or after the status was stripped, in that same tick reflects nothing.
+ */
+function reflect(
+  bearer: Combatant,
+  change: Extract<StatusChange, { kind: "reflected" }>,
+  { sourceOf, rng, rules, surroundings }: TriggerContext,
+): FiredTrigger[] {
+  if (!bearer.statuses.has(change.statusId)) {
+    return [];
+  }
+  const attacker = sourceOf(change.toId);
+  const source = sourceOf(change.sourceId);
+  const reflects = getStatusDefinition(change.statusId).reflectsAttackDamage;
+  if (attacker === undefined || attacker.dead || source === undefined || reflects === undefined) {
+    return [];
+  }
+  const events = applyEffects(
+    [{ kind: "damage", amount: { flat: change.damage }, type: reflects.type, armorPenetration: 0 }],
+    { caster: source, target: attacker, rng, rules, surroundings, usedSkill: undefined },
+  );
+  if (bearer.statuses.spendReflection(change.statusId)) {
+    events.push({ kind: "status-expired", targetId: bearer.id, statusId: change.statusId });
+  }
+  return [{ sourceId: source.id, skillId: reflects.skillId, events }];
 }
 
 /**

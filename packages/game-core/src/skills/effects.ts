@@ -306,7 +306,7 @@ export function applyDamage(
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   }
-  recordFromFoe(target, dealer, type);
+  recordFromFoe(target, dealer, type, applied);
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
@@ -316,16 +316,17 @@ export function applyDamage(
 }
 
 /**
- * `target` lost health to `dealer`, by damage of `type` or, `undefined`,
- * a life steal; recorded if that was a foe (#1022).
+ * `target` lost `amount` health to `dealer`, by damage of `type` or,
+ * `undefined`, a life steal; recorded if that was a foe (#1022).
  */
 function recordFromFoe(
   target: Combatant,
   dealer: Combatant | undefined,
   type: DamageType | undefined,
+  amount: number,
 ): void {
   if (dealer !== undefined && dealer.team !== target.team) {
-    target.statuses.recordDamageFromFoe(dealer.id, type);
+    target.statuses.recordDamageFromFoe(dealer.id, type, amount);
   }
 }
 
@@ -444,7 +445,7 @@ function stealLife(
   }
   target.health -= taken;
   events.push({ kind: "life-stolen", targetId: target.id, amount: taken });
-  recordFromFoe(target, caster, undefined);
+  recordFromFoe(target, caster, undefined, taken);
   gainHealth(caster, taken, events);
   if (target.health <= 0) {
     target.dead = true;
@@ -1696,7 +1697,13 @@ export function stateHolds(
     case "target-chain-mark":
       return caster.chainMarks.get(target.id)?.role === condition.role;
     case "target-has":
-      return target.statuses.countByCategory(condition.category) > 0;
+      return (
+        target.statuses.countByCategory(
+          condition.category,
+          condition.profession,
+          condition.attribute,
+        ) > 0
+      );
     case "target-has-any":
       return condition.categories.some((category) => target.statuses.countByCategory(category) > 0);
     case "caster-has":

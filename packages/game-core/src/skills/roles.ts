@@ -131,6 +131,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.lifeStealReduction > 0 ||
     status.reversesNextDamage !== undefined ||
     status.breaksNextHex !== undefined ||
+    status.reflectsAttackDamage !== undefined ||
     status.incomingHexCastTimeMultiplier > 1
   ) {
     roles.push("defence");
@@ -156,6 +157,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
                 on === "bearer-uses-skill" ||
                 on === "bearer-attacks" ||
                 on === "bearer-casts-spell" ||
+                on === "bearer-takes-damage-from-foe" ||
                 on === "bearer-creates-creature") &&
                 target === "bearer") ||
               target === "offender" ||

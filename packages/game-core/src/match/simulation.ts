@@ -1630,9 +1630,9 @@ export class MatchSimulation {
 
   /**
    * Every status damage pulse that came due this step (#1501), in
-   * participant order: typeless damage from the status's source to the
-   * bearer and to the source's foes within its radius of the bearer,
-   * logged as the status's skill. A bearer that died since takes none,
+   * participant order: damage of its type from the status's source to the
+   * source's foes within its radius of the bearer, and to the bearer if
+   * it `hitsBearer` (#1754), logged as the status's skill. A bearer that died since takes none,
    * and a source that has left the match deals none.
    */
   #pulseStatuses(): void {
@@ -1646,11 +1646,11 @@ export class MatchSimulation {
         const hit: SkillEffect = {
           kind: "damage",
           amount: { flat: damage },
-          type: "typeless",
+          type: pulse.type,
           armorPenetration: 0,
         };
         const effects: readonly SkillEffect[] = [
-          hit,
+          ...(pulse.hitsBearer ? [hit] : []),
           {
             kind: "splash",
             hits: "foes",
@@ -5157,6 +5157,7 @@ export class MatchSimulation {
       attacker?.creature?.kind === "spirit"
         ? aggregateModifiers(target.combatant.statuses.active).damageFromSpiritAttacks
         : 0;
+    const before = target.combatant.health;
     const critical = landBlow(
       projectile.weaponSnapshot,
       attacker?.combatant,
@@ -5190,6 +5191,7 @@ export class MatchSimulation {
         events,
         skillHit !== undefined,
         projectile.weaponSnapshot.mainHand.weapon,
+        Math.max(0, before - target.combatant.health),
       );
     }
     if (skillHit !== undefined && attacker !== undefined) {
