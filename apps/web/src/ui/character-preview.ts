@@ -14,7 +14,8 @@ import {
 } from "../render/arena-snapshot.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
-import { professionIcon, skillIcon } from "./icons.js";
+import { characterAppearance } from "./character-figure.js";
+import { gearIconImg, offhandIcon, professionIcon, skillIcon, weaponIcon } from "./icons.js";
 
 /**
  * The little circle that stands for a character in a list.
@@ -170,4 +171,45 @@ export function miniSkillBar(character: TeamCharacter): HTMLElement {
     bar.appendChild(node);
   }
   return bar;
+}
+
+/**
+ * The weapons `character` enters a match with (#1786): its main hand,
+ * then its off-hand if it carries one, at the mini skill bar's size. An
+ * invalid build, or a weapon this client does not know, shows none.
+ */
+export function gearIcons(character: TeamCharacter): HTMLElement {
+  const gear = document.createElement("span");
+  gear.className = "mini-gear";
+  const { weaponId, offhandId } = characterAppearance(character);
+  const icons = [
+    weaponId === undefined ? undefined : gearIconImg(weaponIcon(weaponId)),
+    offhandId === undefined ? undefined : gearIconImg(offhandIcon(offhandId)),
+  ];
+  for (const icon of icons) {
+    if (icon !== undefined) {
+      icon.width = MINI_SKILL_ICON_PX;
+      icon.height = MINI_SKILL_ICON_PX;
+      gear.appendChild(icon);
+    }
+  }
+  return gear;
+}
+
+/**
+ * A Team Build's member on a card (#1786): its ball, its weapons and its
+ * skills, left to right. The name is not drawn, as a card has no room for
+ * it: it is the row's title and label, for a hover and a screen reader.
+ */
+export function teamMemberRow(character: TeamCharacter): HTMLElement {
+  const row = document.createElement("span");
+  row.className = "team-member-row";
+  const label = `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`;
+  row.title = label;
+  row.setAttribute("role", "group");
+  row.setAttribute("aria-label", label);
+  row.appendChild(createCharacterDot(character));
+  row.appendChild(gearIcons(character));
+  row.appendChild(miniSkillBar(character));
+  return row;
 }

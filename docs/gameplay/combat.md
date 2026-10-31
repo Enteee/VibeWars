@@ -1412,10 +1412,11 @@ as a hit for the attacker's adrenaline. Degeneration and sacrifice pass
 under it and do not spend it.
 
 **Health lines and fatal damage** (#1789). A trigger on
-`bearer-health-drops-below` fires when one packet of damage or one life
-steal, from anyone, takes its bearer from at least its line (a share of
-effective maximum Health) to below it; health loss, sacrifice and
-degeneration never do. One packet may cross two lines. A status that
+`bearer-health-drops-below` fires on any packet of damage or life steal,
+from anyone, that leaves its bearer alive and below its line (a share
+of effective maximum Health), already below before the hit or not, as
+GW1 does; health loss, sacrifice and degeneration never do. One packet
+may fire two lines. A status that
 negates fatal damage comes after invulnerability, Reversal of Fortune, a
 bond and a guard: what would kill is dropped whole, as a reversal is,
 the oldest such status ends, and its `bearer-fatal-damage-negated`

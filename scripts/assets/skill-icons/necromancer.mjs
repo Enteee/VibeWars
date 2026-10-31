@@ -21,10 +21,10 @@ export const NECROMANCER_ICONS = {
   // Health taken from a corpse: the heal glyph with the corpse mark (#1075).
   "necromancer.soul-feast": { glyph: "heal", modifier: "corpse" },
   "necromancer.well-of-suffering": { glyph: "well-sink", modifier: "corpse" },
-  // Stand-ins for the wells of #1730, until their art.
-  "necromancer.well-of-blood": { glyph: "well-sink", modifier: "up" },
-  "necromancer.well-of-power": { glyph: "well-sink", modifier: "plus" },
-  "necromancer.well-of-weariness": { glyph: "well-sink", modifier: "less" },
+  // Wells (#1730).
+  "necromancer.well-of-blood": { glyph: "well-regen" },
+  "necromancer.well-of-power": { glyph: "well-regen-energy" },
+  "necromancer.well-of-weariness": { glyph: "well-drain" },
   // Wells 2 (#1749).
   "necromancer.well-of-the-profane": { glyph: "well-profane" },
   "necromancer.well-of-silence": { glyph: "well-silence" },
@@ -79,4 +79,11 @@ export const NECROMANCER_ICONS = {
   "necromancer.bitter-chill": { glyph: "snowflake-recharge" },
   "necromancer.rip-enchantment": { glyph: "ring-rip-bleed" },
   "necromancer.gaze-of-contempt": { glyph: "eye-high" },
+  // "N for each X" (#1760), stand-ins until their art card.
+  "necromancer.desecrate-enchantments": { glyph: "ring-rend", modifier: "area" },
+  "necromancer.defile-enchantments": { glyph: "ring-rend-burst", modifier: "area" },
+  // Stand-ins for the death triggers of #1762, until their art.
+  "necromancer.reapers-mark": { glyph: "energy", modifier: "corpse" },
+  "necromancer.putrid-bile": { glyph: "germ", modifier: "corpse" },
+  "necromancer.icy-veins": { glyph: "snowflake", modifier: "corpse" },
 };

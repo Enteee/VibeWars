@@ -8,6 +8,8 @@ import {
   mapMode,
   mapRelicField,
   mapShrines,
+  modeMapIds,
+  queueMapPool,
   randomArenaMapPool,
 } from "./maps.js";
 
@@ -52,6 +54,16 @@ describe("randomArenaMapPool", () => {
         )
         .sort(),
     );
+  });
+});
+
+describe("queueMapPool (#1766)", () => {
+  it("draws a team mode's match from its own maps, and a Random Arena's from its pool", () => {
+    for (const mode of ["team-arena", "heroes-ascent", "gvg"] as const) {
+      expect(queueMapPool(mode)).toEqual(modeMapIds()[mode]);
+      expect(queueMapPool(mode)).not.toHaveLength(0);
+    }
+    expect(queueMapPool("random-arena-2v2")).toEqual(randomArenaMapPool("random-arena-2v2"));
   });
 });
 

@@ -11,6 +11,9 @@ const NO_BOT_USE = new Set([
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
+  // Dwayna's Sorrow (#1762): a heal that waits on an ally's death is
+  // nothing the bot plans for.
+  "monk.dwaynas-sorrow",
   // Live Vicariously (#1748): Health to the caster when its ally hits is
   // no heal the bot weighs.
   "monk.live-vicariously",
@@ -33,6 +36,7 @@ const NO_BOT_USE = new Set([
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.critical-eye",
   "assassin.dash",
+  "dervish.arcane-zeal",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
   "dervish.avatar-of-grenth",
@@ -43,6 +47,7 @@ const NO_BOT_USE = new Set([
   "dervish.fleeting-stability",
   "dervish.harriers-haste",
   "dervish.heart-of-fury",
+  "dervish.mystic-vigor",
   "dervish.onslaught",
   "dervish.pious-fury",
   "dervish.pious-haste",
@@ -51,6 +56,7 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-lesser-energy",
   "elementalist.windborne-speed",
   "mesmer.arcane-echo",
+  "mesmer.channeling",
   "mesmer.echo",
   "mesmer.energy-tap",
   "mesmer.illusion-of-haste",

@@ -96,6 +96,33 @@ export interface DamageEffect {
    * mitigated, and capped, once.
    */
   readonly conditionalBonus?: ConditionalBonus;
+  /**
+   * More for each of a count, in the same packet (#1760), as Desecrate
+   * Enchantments' "6...60 damage and 4...20 for each enchantment".
+   */
+  readonly per?: PerCount;
+}
+
+/** What a `per` counts, as its effect lands (#1760). */
+export type CountRule =
+  | {
+      readonly kind: "statuses";
+      /** Whose: the effect's target, or its caster (a trigger's bearer). */
+      readonly on: "target" | "caster";
+      readonly categories: readonly StatusCategory[];
+    }
+  /** Living foes of the caster within `radius` of the caster. */
+  | { readonly kind: "foes-within"; readonly radius: number };
+
+/**
+ * "+`amount` for each" (#1760): the effect's own amount plus `amount`
+ * for each of what `count` counts, the total capped at `max` when set.
+ * One packet, one heal or one gain, never one a count.
+ */
+export interface PerCount {
+  readonly count: CountRule;
+  readonly amount: Magnitude;
+  readonly max: Magnitude | undefined;
 }
 
 export interface HealEffect {
@@ -106,12 +133,8 @@ export interface HealEffect {
    * Health" (#521). Absent: the target.
    */
   readonly recipient?: "caster";
-  /**
-   * With categories, the amount is per status of those categories the
-   * target bears as the heal lands, as Dwayna's Kiss's "10...30 Health
-   * for each enchantment or hex on that ally" (#920). Empty: once.
-   */
-  readonly perStatusOnTarget: readonly StatusCategory[];
+  /** More for each of a count, in the same heal (#1760): Dwayna's Kiss's. */
+  readonly per?: PerCount;
   /**
    * More for each living ally of the caster within `radius` of it, the
    * caster included, as Leader's Comfort's "+18 Health for each ally
@@ -197,6 +220,8 @@ export interface EnergyGainToCaster {
    * cost of the skill". No energy cost, or no such skill: no gain.
    */
   readonly perUsedSkillEnergy?: true;
+  /** More for each of a count, in the same gain (#1760): Channeling's. */
+  readonly per?: PerCount;
   readonly toTarget?: never;
 }
 
@@ -588,11 +613,13 @@ export interface DestroyAlliedSpiritsEffect {
 /**
  * Every other skill of the caster of this type recharges at once (#885),
  * as Moebius Strike's "all your other attack skills are recharged". Acts
- * on the caster, once.
+ * on the caster, once. `all` (#1762), from a status's trigger, recharges
+ * every skill on the bar, the status's own included: Assassin's Promise.
+ * A dead caster recharges nothing.
  */
 export interface RechargeOthersEffect {
   readonly kind: "recharge-others";
-  readonly which: "attack";
+  readonly which: "attack" | "all";
 }
 
 /**

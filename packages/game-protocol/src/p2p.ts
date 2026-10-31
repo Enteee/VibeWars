@@ -33,6 +33,7 @@ import {
   type LobbyPhase,
   type WireChainMark,
 } from "./protocol.js";
+import { inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -912,18 +913,21 @@ export interface PeerStayTogether {
 
 /**
  * The host to each winner who said yes, and only to it, once every winner
- * did (#1078): the group they won and their keys, sorted. Each signs its
- * consent to exactly this party, or the party does not form.
+ * did (#1078): the group they won, their keys in party order, and the mode the
+ * party queues for (#1766). Each signs its consent to exactly this party,
+ * or the party does not form.
  */
 export interface WirePartyProposal {
   readonly groupId: string;
   readonly members: readonly string[];
+  readonly mode: QueueMode;
 }
 
 /**
  * A yes-voter to its host (#1078): `consent`, 128 hex digits, is
  * `memberKey`'s signature over `admissionDigest("vibewars-party",
- * groupId, members.join(""), "")` for the proposal it answers. The
+ * groupId, members.join(""), mode)` for the proposal it answers: a
+ * consent to one mode's party is none to another's (#1766). The
  * party's ticket publishes every consent, so nobody can name a member who
  * did not agree to that very party.
  */
@@ -934,7 +938,7 @@ export interface PeerPartyConsent {
 
 /**
  * The host to each winner who said yes, and only to it (#882): every
- * winner consented, and these are their keys, sorted, with each one's
+ * winner consented, and these are their keys in party order, with each one's
  * consent, `consents[i]` by `members[i]` (#1078). They queue as one party.
  */
 export interface WirePartyFormed {
@@ -1014,6 +1018,13 @@ export interface WireLobbyState {
   readonly countdownSeconds: number | null;
   /** The Team Lobby (#1458), while `phase` is `"team-lobby"`; `null` otherwise. */
   readonly teamLobby: WireTeamLobby | null;
+  /**
+   * While `phase` is `"queued"` (#1766), the nonce of this queueing, 64
+   * hex digits; `null` otherwise. The party's group is
+   * `sha256(roomId ‖ queueNonce)`, which each member works out for itself
+   * before it consents. Public: the room id never is.
+   */
+  readonly queueNonce: string | null;
 }
 
 /**
@@ -1073,6 +1084,14 @@ export type WireLobbyCommand =
    */
   | { readonly kind: "set-character"; readonly character: WireLobbyCharacter | null }
   | { readonly kind: "start" }
+  /**
+   * Host only, in a team mode (#1766): the party's Team Lobby, then the
+   * queue; `leave-queue` takes it out again, `house-team` plays the house
+   * team instead, in this lobby.
+   */
+  | { readonly kind: "find-match" }
+  | { readonly kind: "leave-queue" }
+  | { readonly kind: "house-team" }
   /**
    * Host only (#1454): `team` has `count` bots, an integer from 0; the
    * host picks what they play.
@@ -1150,10 +1169,13 @@ export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
 /**
  * Lobby host to each seated peer, and only to them: the match is on, on
  * `mapId`. The peer then says `hello` to the host on the same transport.
+ * `teamPlanRejected`: the peer's party sent a team plan (ADR-0042) that
+ * was not whole, so the house team plays for its side.
  */
 export interface WireMatchStart {
   readonly mapId: string;
   readonly matchId: string;
+  readonly teamPlanRejected: boolean;
 }
 
 type Fields = Record<string, unknown>;
@@ -2291,28 +2313,30 @@ export function parsePeerStayTogether(value: unknown): PeerStayTogether | undefi
 /** The longest party there is: an 8v8 side (`teamSizeOf`). */
 const MAX_PARTY_MEMBERS = 8;
 
-/** A party's members: two or more keys, sorted, each once. */
+/** A party's members: two or more keys, each once, in party order (`inPartyOrder`). */
 function parsePartyMembers(value: unknown): string[] | undefined {
   if (!Array.isArray(value) || value.length < 2 || value.length > MAX_PARTY_MEMBERS) {
     return undefined;
   }
   const keys: string[] = [];
   for (const member of value as readonly unknown[]) {
-    const previous = keys.at(-1);
-    if (!isTicketId(member) || (previous !== undefined && previous >= member)) {
+    if (!isTicketId(member)) {
       return undefined;
     }
     keys.push(member);
   }
-  return keys;
+  return inPartyOrder(keys) ? keys : undefined;
 }
 
-/** The `"party-proposal"` channel: a group id and the party's members. */
+/** The `"party-proposal"` channel: a group id, the party's members and its mode. */
 export function parseWirePartyProposal(value: unknown): WirePartyProposal | undefined {
   const raw = fields(value);
   const groupId: unknown = raw?.groupId;
+  const mode: unknown = raw?.mode;
   const members = parsePartyMembers(raw?.members);
-  return isTicketId(groupId) && members !== undefined ? { groupId, members } : undefined;
+  return isTicketId(groupId) && members !== undefined && isQueueMode(mode)
+    ? { groupId, members, mode }
+    : undefined;
 }
 
 /** The `"party-consent"` channel. */
@@ -2487,7 +2511,8 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     raw === undefined ||
     teamLobby === undefined ||
     !isString(raw.code) ||
-    !isOneOf(raw.phase, ["waiting", "team-lobby", "starting", "in-match"] as const) ||
+    !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
+    !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
     typeof raw.open !== "boolean" ||
@@ -2511,6 +2536,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         players,
         countdownSeconds: raw.countdownSeconds,
         teamLobby,
+        queueNonce: raw.queueNonce,
       };
 }
 
@@ -2533,7 +2559,10 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return character === undefined ? undefined : { kind: "set-character", character };
     }
     case "start":
-      return { kind: "start" };
+    case "find-match":
+    case "leave-queue":
+    case "house-team":
+      return { kind: raw.kind };
     case "set-bots":
       return isTeam(raw.team) && isNumber(raw.count)
         ? { kind: "set-bots", team: raw.team, count: raw.count }
@@ -2594,7 +2623,10 @@ export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
 /** The `"match-start"` channel. */
 export function parseWireMatchStart(value: unknown): WireMatchStart | undefined {
   const raw = fields(value);
-  return raw !== undefined && isString(raw.mapId) && isString(raw.matchId)
-    ? { mapId: raw.mapId, matchId: raw.matchId }
+  return raw !== undefined &&
+    isString(raw.mapId) &&
+    isString(raw.matchId) &&
+    typeof raw.teamPlanRejected === "boolean"
+    ? { mapId: raw.mapId, matchId: raw.matchId, teamPlanRejected: raw.teamPlanRejected }
     : undefined;
 }

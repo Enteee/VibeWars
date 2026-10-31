@@ -42,7 +42,6 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "necromancer.blood-magic", atZero: 30, atTwelve: 90 },
         },
@@ -1962,7 +1961,6 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
               scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 126 },
             },
             recipient: "caster",
-            perStatusOnTarget: [],
           },
         ],
       },
@@ -2004,7 +2002,6 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
               scaling: { attributeId: "necromancer.soul-reaping", atZero: 10, atTwelve: 82 },
             },
             recipient: "caster",
-            perStatusOnTarget: [],
           },
           {
             kind: "energy-gain",
@@ -2437,6 +2434,199 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
             ],
           },
         ],
+      },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Death triggers (#1762)                                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.reapers-mark",
+    name: "Reaper's Mark",
+    gwId: 808,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, target foe suffers -1...5 Health degeneration. If
+    // that foe dies while hexed with Reaper's Mark, you gain 5...15 Energy."
+    effects: [{ kind: "apply-status", statusId: "reapers-mark", durationSeconds: 30 }],
+  },
+  {
+    id: "necromancer.putrid-bile",
+    name: "Putrid Bile",
+    gwId: 2058,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...25 seconds, target foe suffers -1...3 Health degeneration. If
+    // that foe dies while under the effects of this hex, all nearby foes
+    // take 25...85 damage": 21 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "putrid-bile", durationSeconds: 21 }],
+  },
+  {
+    id: "necromancer.icy-veins",
+    name: "Icy Veins",
+    gwId: 821,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 10...90 cold damage. For 10...35 seconds, if
+    // target foe dies all nearby foes are struck for 20...110 cold
+    // damage": 30 s, its rank-12 value.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "necromancer.soul-reaping", atZero: 10, atTwelve: 74 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "apply-status", statusId: "icy-veins", durationSeconds: 30 },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* 'N for each X' (#1760)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "necromancer.desecrate-enchantments",
+    name: "Desecrate Enchantments",
+    gwId: 112,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and all nearby foes take 6...60 shadow damage and 4...20
+    // shadow damage for each enchantment on them": one packet each, counted
+    // on each foe as it lands (#1760).
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49 } },
+        type: "shadow",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["enchantment"] },
+          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 17 } },
+          max: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.defile-enchantments",
+    name: "Defile Enchantments",
+    gwId: 1070,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and all nearby foes take 6...60 shadow damage and 4...20
+    // shadow damage for each enchantment on them": one packet each, counted
+    // on each foe as it lands (#1760).
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49 } },
+        type: "shadow",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["enchantment"] },
+          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 17 } },
+          max: undefined,
+        },
       },
     ],
   },

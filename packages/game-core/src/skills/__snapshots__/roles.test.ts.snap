@@ -2,6 +2,7 @@
 
 exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
 {
+  "assassin.assassins-promise": "hex",
   "assassin.beguiling-haze": "interrupt condition",
   "assassin.black-lotus-strike": "",
   "assassin.black-mantis-thrust": "condition",
@@ -46,6 +47,7 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.nine-tail-strike": "",
   "assassin.palm-strike": "condition",
   "assassin.repeating-strike": "",
+  "assassin.sadists-signet": "healing",
   "assassin.shadow-prison": "hex",
   "assassin.shadow-refuge": "healing",
   "assassin.shattering-assault": "",
@@ -74,6 +76,7 @@ exports[`skillRoles > tags every common skill the same way every time 1`] = `
 
 exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
 {
+  "dervish.arcane-zeal": "",
   "dervish.aura-of-thorns": "condition",
   "dervish.aura-slicer": "condition",
   "dervish.avatar-of-balthazar": "",
@@ -104,6 +107,7 @@ exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
   "dervish.mystic-sandstorm": "",
   "dervish.mystic-sweep": "",
   "dervish.mystic-twister": "",
+  "dervish.mystic-vigor": "",
   "dervish.onslaught": "",
   "dervish.pious-assault": "",
   "dervish.pious-fury": "",
@@ -218,6 +222,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.arcane-echo": "",
   "mesmer.backfire": "hex",
   "mesmer.blackout": "",
+  "mesmer.channeling": "",
   "mesmer.clumsiness": "hex",
   "mesmer.conjure-phantasm": "hex",
   "mesmer.crippling-anguish": "hex",
@@ -285,6 +290,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.divine-healing": "healing",
   "monk.draw-conditions": "removal",
   "monk.dwaynas-kiss": "healing",
+  "monk.dwaynas-sorrow": "",
   "monk.ethereal-light": "healing",
   "monk.gift-of-health": "healing",
   "monk.glimmer-of-light": "healing",
@@ -364,13 +370,16 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.dark-pact": "",
   "necromancer.deathly-chill": "",
   "necromancer.defile-defenses": "hex",
+  "necromancer.defile-enchantments": "",
   "necromancer.defile-flesh": "hex",
+  "necromancer.desecrate-enchantments": "",
   "necromancer.enfeeble": "condition",
   "necromancer.enfeebling-blood": "condition",
   "necromancer.enfeebling-touch": "condition",
   "necromancer.faintheartedness": "hex",
   "necromancer.fetid-ground": "condition",
   "necromancer.gaze-of-contempt": "",
+  "necromancer.icy-veins": "hex",
   "necromancer.insidious-parasite": "hex",
   "necromancer.life-siphon": "healing hex",
   "necromancer.lifebane-strike": "",
@@ -384,7 +393,9 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.plague-signet": "removal condition",
   "necromancer.plague-touch": "removal condition",
   "necromancer.price-of-failure": "hex",
+  "necromancer.putrid-bile": "hex",
   "necromancer.putrid-explosion": "",
+  "necromancer.reapers-mark": "hex",
   "necromancer.reckless-haste": "hex",
   "necromancer.rend-enchantments": "",
   "necromancer.rigor-mortis": "hex",
@@ -718,6 +729,7 @@ exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
   "warrior.sun-and-moon-slash": "",
   "warrior.swift-chop": "condition",
   "warrior.triple-chop": "",
+  "warrior.victory-is-mine": "healing",
   "warrior.warriors-endurance": "",
   "warrior.watch-yourself": "defence",
 }

@@ -21,7 +21,8 @@ export type AssassinStatusId =
   // Assassin staples 5 (#1757).
   | "siphon-speed"
   | "siphon-speed-haste"
-  | "way-of-the-fox";
+  | "way-of-the-fox"
+  | "assassins-promise";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -37,7 +38,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
           {
             kind: "if",
             condition: { kind: "target-attacking" },
-            effects: [{ kind: "heal", amount: { flat: 88 }, perStatusOnTarget: [] }],
+            effects: [{ kind: "heal", amount: { flat: 88 } }],
           },
         ],
         target: "bearer",
@@ -140,5 +141,21 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   "way-of-the-fox": define("way-of-the-fox", "Way of the Fox", "enchantment", {
     profession: "assassin",
     unblockableAttacks: 5,
+  }),
+  // "...if target foe dies, you gain 5...20 Energy and all your skills are
+  // recharged" (#1762): 17, this one included, as the wiki notes.
+  "assassins-promise": define("assassins-promise", "Assassin's Promise", "hex", {
+    profession: "assassin",
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          { kind: "energy-gain", amount: { flat: 17 } },
+          { kind: "recharge-others", which: "all" },
+        ],
+        target: "source",
+        skillId: "assassin.assassins-promise",
+      },
+    ],
   }),
 };

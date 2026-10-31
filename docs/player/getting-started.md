@@ -96,9 +96,22 @@ maps, **Heroes' Ascent** the Relic Run, King of the Hill and Capture
 Points maps, and **GvG** the Guild Battle's. **Hosted Game** offers every
 map. Below the lobby are your **Team Builds**: click one, or its
 **Edit**, to change it, or make another with **New team build**. You
-pick none there. When the host starts, the lobby opens the
-[Team Lobby](modes.md#team-lobby): propose a Team Build there, click a
-card to vote for one, then click a seat to take one of its characters.
+pick none there. On **Hosted Game**, when the host starts, the lobby
+opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
+click a card to vote for one, then click a seat to take one of its
+characters.
+
+On **Team Arena** (4 a side), **Heroes' Ascent** and **GvG** (8 a side)
+your lobby is one side, your party, and there is no Start or bot count:
+the host presses **Find a match**. The Team Lobby comes first, with only
+Team Builds of exactly that size; every seat nobody claims is a bot.
+Then the party is queued, and the party strip says **Looking for a
+team…** with the time waited. When another queued team of the same mode
+turns up, you play them on one of the mode's maps, each side with its
+own builds, and come back to your lobby afterwards. The host can press
+**Leave the queue** at any time; a guest who leaves takes the whole
+party out of it. With no other team after a minute, the host can also
+press **Play the house team**: a match in your own lobby against bots.
 
 ## Your name, guild tag and cape
 

@@ -300,6 +300,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "siphon-speed": icon("siphon-speed"),
   "siphon-speed-haste": icon("siphon-speed-haste"),
   "way-of-the-fox": icon("way-of-the-fox"),
+  "reapers-mark": icon("reapers-mark"),
+  "putrid-bile": icon("putrid-bile"),
+  "icy-veins": icon("icy-veins"),
+  "assassins-promise": icon("assassins-promise"),
+  "dwaynas-sorrow": icon("dwaynas-sorrow"),
   wither: icon("wither"),
   "kindle-arrows": icon("kindle-arrows"),
   "ignite-arrows": icon("ignite-arrows"),
@@ -329,6 +334,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "watchful-intervention": icon("watchful-intervention"),
   "faithful-intervention": icon("faithful-intervention"),
   "illusion-of-weakness": icon("illusion-of-weakness"),
+  channeling: icon("channeling"),
+  "arcane-zeal": icon("arcane-zeal"),
+  "mystic-vigor": icon("mystic-vigor"),
 };
 
 const GAP = 2;

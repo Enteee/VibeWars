@@ -21,6 +21,7 @@ import {
   PROTOCOL_VERSION,
   TICKET_HEARTBEAT_MS,
   TICKET_TTL_MS,
+  isTeamQueueMode,
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
@@ -65,7 +66,7 @@ export type QueueState =
 
 /** A party's place, as each of its members brings it (#882). */
 export interface QueueParty {
-  /** Every member's public key, sorted; `members[0]` leads and is the ticket's id. */
+  /** Every member's public key, the leader's first and the rest sorted; `members[0]` is the ticket's id. */
   readonly members: readonly string[];
   /** This member's own key, one of `members`, kept for as long as the party queues. */
   readonly key: TicketKey;
@@ -120,6 +121,8 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
   const members = party?.members ?? [];
+  /** A team mode's side is a whole team: its empty seats are bots (ADR-0042). */
+  const bots = isTeamQueueMode(mode) ? teamSizeOf(mode) - Math.max(members.length, 1) : 0;
   /** A party's leader publishes its ticket; a follower only reads the board. */
   const leader = members[0];
   const follower = party !== undefined && leader !== party.key.ticketId;
@@ -163,8 +166,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       protocol: PROTOCOL_VERSION,
       mode,
       members: party === undefined ? [key.ticketId] : members,
-      // Random Arena's: no bots. A team mode's side is #1766's to queue.
-      bots: 0,
+      bots,
       enteredAt,
       heartbeatAt: now(),
       // Kept across fall-throughs: the consents sign the group won, not the current one.

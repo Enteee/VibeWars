@@ -51,6 +51,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-fatal-damage-negated"
   | "bearer-creates-creature"
   | "bearer-chant-or-shout-ends"
+  | "bearer-dies"
   | "ends"
   | "ends-early"
   | "expires"
@@ -147,7 +148,9 @@ export function fireCreationTriggers(
  * What `change` to the bearer's statuses sets off (#887): a condition
  * gained fires every status on it that answers one, in `active` order; a
  * status ended fires its own `ends` triggers, though it is no longer on
- * the bearer, and its `expires` ones too if its duration ran out (#944).
+ * the bearer, and its `expires` ones too if its duration ran out (#944);
+ * its `bearer-dies` ones are `fireDeathTriggers`'s, which the simulation
+ * fires apart (#1825).
  * A chant or a shout ended (#1423) renews what renews on that and fires
  * every status still on a living bearer that answers it, after its own.
  * A hit the bearer landed or failed to land (#1332), or physical damage
@@ -250,6 +253,28 @@ export function fireEndTriggers(
         (trigger.on === "expires" && change.expired) ||
         (trigger.on === "ends-early" && !change.expired),
     )
+    .flatMap((trigger) =>
+      fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
+    );
+}
+
+/**
+ * A status that `change` ended by its bearer's death fires its
+ * `bearer-dies` triggers (#1762); none for any other end. The simulation
+ * fires these for every death, a triggered effect's too (#1825), and
+ * discards what they change, so a death one causes fires nothing: one
+ * level, as end triggers.
+ */
+export function fireDeathTriggers(
+  bearer: Combatant,
+  change: Extract<StatusChange, { kind: "ended" }>,
+  context: TriggerContext,
+): FiredTrigger[] {
+  if (!change.death) {
+    return [];
+  }
+  return getStatusDefinition(change.id)
+    .triggers.filter((trigger) => trigger.on === "bearer-dies")
     .flatMap((trigger) =>
       fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
     );

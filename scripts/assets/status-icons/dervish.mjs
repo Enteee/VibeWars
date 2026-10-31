@@ -216,20 +216,39 @@ export const DERVISH_STATUS_ICONS = {
       `<path d="M12 12a2 2 0 1 1 2-2a4 4 0 1 1-4-4a6 6 0 1 1-6 6" ${stroke(c, 2)}/>` +
       `<path d="M1.5 14L4 18L8 15.5" ${stroke(c, 2)}/>`,
   ],
-  // Ally threshold mechanics (#1789), stand-ins until their art card.
+  // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
   // Enchantment: an eye over a line a quarter up, it heals at the drop.
   "watchful-intervention": [
     "enchantment",
     (c) =>
-      `<path d="M3 9c4-5 14-5 18 0c-4 5-14 5-18 0z" ${stroke(c, 1.8)}/>` +
-      `<circle cx="12" cy="9" r="2" ${stroke(c, 1.8)}/>` +
-      `<path d="M3 18h18" ${stroke(c, 2)}/>`,
+      `<path d="M3.5 9C7 4.5 17 4.5 20.5 9C17 13.5 7 13.5 3.5 9z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="12" cy="9" r="2" fill="${c}"/>` +
+      `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
+      `<rect x="3" y="18.5" width="4.5" height="3.5" rx="0.8" fill="${c}"/>`,
   ],
   // Enchantment: a heart above a line at half, it ends there and heals.
   "faithful-intervention": [
     "enchantment",
     (c) =>
-      `<path d="M12 15s-6-3.4-6-7.2a3.2 3.2 0 0 1 6-2A3.2 3.2 0 0 1 18 7.8c0 3.8-6 7.2-6 7.2z" ${stroke(c, 1.8)}/>` +
-      `<path d="M3 19h18" ${stroke(c, 2)}/>`,
+      `<path d="M12 16s-5.5-3.4-5.5-7a3 3 0 0 1 5.5-1.7A3 3 0 0 1 17.5 9c0 3.6-5.5 7-5.5 7z" transform="translate(-3,0)" ${stroke(c, 1.8)}/>` +
+      `<circle cx="19.5" cy="5.5" r="3.2" ${stroke(c, 1.5)}/><circle cx="19.5" cy="5.5" r="1.1" fill="${c}"/>` +
+      `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
+      `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${c}"/>`,
+  ],
+  // "N for each X" (#1760), stand-ins until their art card.
+  // Enchantment: a small bolt inside an enchantment ring, energy for each
+  // enchantment; Channeling is the bolt among foe dots.
+  "arcane-zeal": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 7l-3 5h3l-1.5 5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a cross over stacked rings, health for each enchantment.
+  "mystic-vigor": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3v11M6.5 8.5h11" ${stroke(c, 2.4)}/>` +
+      `<path d="M5 18h14M7 21h10" ${stroke(c, 2)}/>`,
   ],
 };

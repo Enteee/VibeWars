@@ -2,6 +2,7 @@ import {
   AREA_ADJACENT,
   AREA_EARSHOT,
   AREA_IN_THE_AREA,
+  AREA_NEARBY,
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../../distances.js";
@@ -34,7 +35,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 60 },
         },
@@ -74,7 +74,6 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 57 },
             },
@@ -169,7 +168,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 81 } },
       },
       {
@@ -178,7 +176,6 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 98 },
             },
@@ -211,17 +208,17 @@ export const MONK_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Heal target other ally for 15...51...60 Health and an additional
-    // 10...30...35 Health for each enchantment or hex on that ally" (#920).
+    // 10...30...35 Health for each enchantment or hex on that ally" (#920):
+    // one heal (#1760).
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 51 } },
-      },
-      {
-        kind: "heal",
-        perStatusOnTarget: ["enchantment", "hex"],
-        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 30 } },
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["enchantment", "hex"] },
+          amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 30 } },
+          max: undefined,
+        },
       },
     ],
   },
@@ -259,7 +256,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 150 } },
       },
     ],
@@ -516,7 +512,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 35, atTwelve: 151 },
         },
@@ -631,7 +626,6 @@ export const MONK_SKILLS: readonly Skill[] = [
       { kind: "remove-status", category: "condition", count: "all" },
       {
         kind: "heal",
-        perStatusOnTarget: [],
         perRemoved: "condition",
         amount: {
           scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 58 },
@@ -677,7 +671,6 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 86 },
             },
@@ -768,7 +761,6 @@ export const MONK_SKILLS: readonly Skill[] = [
       { kind: "remove-status", category: "condition", count: 2 },
       {
         kind: "heal",
-        perStatusOnTarget: [],
         perRemoved: "condition",
         amount: {
           scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 51 },
@@ -926,7 +918,6 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 63 },
             },
@@ -993,7 +984,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 66 },
         },
@@ -1032,7 +1022,6 @@ export const MONK_SKILLS: readonly Skill[] = [
       { kind: "remove-status", category: "enchantment", count: "all", from: "caster" },
       {
         kind: "heal",
-        perStatusOnTarget: [],
         perRemoved: "enchantment",
         amount: { scaling: { attributeId: "monk.divine-favor", atZero: 0, atTwelve: 64 } },
       },
@@ -1201,7 +1190,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.protection-prayers", atZero: 30, atTwelve: 150 } },
       },
       {
@@ -1302,7 +1290,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.divine-favor", atZero: 10, atTwelve: 98 } },
       },
       { kind: "remove-status", category: "condition", count: 1 },
@@ -1337,7 +1324,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 56 } },
       },
       {
@@ -1346,7 +1332,6 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 44 } },
           },
         ],
@@ -1381,7 +1366,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 57 } },
       },
       {
@@ -1420,7 +1404,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 63 } },
       },
       {
@@ -1429,7 +1412,6 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 63 } },
           },
         ],
@@ -1912,7 +1894,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 40, atTwelve: 88 } },
       },
     ],
@@ -1944,7 +1925,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 35, atTwelve: 151 } },
       },
     ],
@@ -1976,7 +1956,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 10, atTwelve: 94 } },
       },
     ],
@@ -2009,7 +1988,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 40, atTwelve: 104 } },
       },
       {
@@ -2051,7 +2029,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.divine-favor", atZero: 20, atTwelve: 100 } },
       },
     ],
@@ -2090,7 +2067,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.divine-favor", atZero: 15, atTwelve: 51 } },
       },
     ],
@@ -2129,7 +2105,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.divine-favor", atZero: 15, atTwelve: 51 } },
       },
     ],
@@ -2194,9 +2169,13 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: ["condition"],
-            amount: {
-              scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 57 },
+            amount: { flat: 0 },
+            per: {
+              count: { kind: "statuses", on: "target", categories: ["condition"] },
+              amount: {
+                scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 57 },
+              },
+              max: undefined,
             },
           },
         ],
@@ -2302,7 +2281,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 25, atTwelve: 85 } },
       },
     ],
@@ -2336,7 +2314,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 15, atTwelve: 123 } },
       },
       {
@@ -2665,7 +2642,6 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "monk.healing-prayers", atZero: 20, atTwelve: 68 },
         },
@@ -2699,5 +2675,45 @@ export const MONK_SKILLS: readonly Skill[] = [
     // be fatal, the damage is negated and one nearby foe takes 30...180 holy
     // damage" (#1789): the negation and the smite are the status's.
     effects: [{ kind: "apply-status", statusId: "judges-intervention", durationSeconds: 10 }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Death triggers (#1762)                                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.dwaynas-sorrow",
+    name: "Dwayna's Sorrow",
+    gwId: 838,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, target ally and all nearby allies are enchanted with
+    // Dwayna's Sorrow. If an ally dies while under the effects of Dwayna's
+    // Sorrow, your party is healed for 5...50."
+    effects: [
+      { kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: 30 },
+      {
+        kind: "splash",
+        hits: "allies",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [{ kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: 30 }],
+      },
+    ],
   },
 ];

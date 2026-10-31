@@ -487,6 +487,7 @@ describe("a queued lobby", () => {
           hostId: "impostor",
           matchId: null,
           teamLobby: null,
+          queueNonce: null,
           players: [
             {
               id: from,
@@ -667,24 +668,37 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
   const FOE_BOTS = [6, 7, 8].map((index) => ({ memberKey: null, build: planned(index) }));
   const FOE_PLAN = [FOE_SEAT, ...FOE_BOTS];
 
-  /** Open ARENA_GROUP, seat everyone, let `plan` act, and run the countdown out. */
+  /**
+   * Open ARENA_GROUP, seat everyone, let `plan` act, and run the countdown
+   * out. `rejected`: what each human's match-start said of its side's plan.
+   */
   async function play(
     plan: (queued: QueuedLobby, foe: Transport, ally: Transport) => void,
-  ): Promise<{ readonly queued: QueuedLobby; readonly seats: MatchPlan["seats"] }> {
+  ): Promise<{
+    readonly queued: QueuedLobby;
+    readonly seats: MatchPlan["seats"];
+    readonly rejected: ReadonlyMap<string, boolean>;
+  }> {
     const queued = await openQueued({ group: ARENA_GROUP, match: fakeMatch() });
+    const rejected = new Map<string, boolean>();
+    const watch = (who: string, connection: LobbyConnection): void => {
+      connection.onMatchStarting((start) => rejected.set(who, start.teamPlanRejected));
+    };
+    watch(HOST, queued.host);
     const ally = queued.network.join();
-    await queued.join(ALLY, ally);
+    watch(ALLY, await queued.join(ALLY, ally));
     const foe = queued.network.join();
-    await queued.join(FOE, foe);
+    watch(FOE, await queued.join(FOE, foe));
     await settle();
     plan(queued, foe, ally);
     await settle();
     await queued.step(COUNTDOWN_SECONDS);
+    await settle();
     const [started] = queued.plans;
     if (started === undefined) {
       throw new Error("the match never started");
     }
-    return { queued, seats: started.seats };
+    return { queued, seats: started.seats, rejected };
   }
 
   /** Each seat on `team`: a bot, or a human by name, and its build's primary. */
@@ -790,6 +804,36 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
     expect(sideOf(seats, 1)).toEqual(HOUSE_FOE);
   });
 
+  /** Each human's `teamPlanRejected`, HOST and ALLY on side 0, FOE on side 1. */
+  const told = (host: boolean, ally: boolean, foe: boolean): Map<string, boolean> =>
+    new Map([
+      [HOST, host],
+      [ALLY, ally],
+      [FOE, foe],
+    ]);
+
+  it("tells every human of a side its plan was not accepted, and nobody else (#1822)", async () => {
+    const { rejected } = await play((queued) =>
+      sendPlan(queued.lobby.local, [
+        { memberKey: null, build: planned(1) },
+        { memberKey: ALLY, build: "a build" },
+        { memberKey: HOST, build: planned(3) },
+        { memberKey: null, build: planned(4) },
+      ]),
+    );
+    expect(rejected).toEqual(told(true, true, false));
+  });
+
+  it("tells nobody of a whole plan, nor of a side that sent none (#1822)", async () => {
+    const { rejected } = await play((_, foe) => sendPlan(foe, FOE_PLAN));
+    expect(rejected).toEqual(told(false, false, false));
+  });
+
+  it("tells the side whose plan is a seat short (#1822)", async () => {
+    const { rejected } = await play((_, foe) => sendPlan(foe, FOE_PLAN.slice(0, 3)));
+    expect(rejected).toEqual(told(false, false, true));
+  });
+
   it("ignores a plan from a member that is not its side's ticket host", async () => {
     const { seats } = await play((_, __, ally) =>
       sendPlan(ally, [
@@ -877,7 +921,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     members: readonly string[] = PARTY,
     groupId = GROUP_ID,
   ): Promise<string> =>
-    key.sign(await admissionDigest("vibewars-party", groupId, members.join(""), ""));
+    key.sign(await admissionDigest("vibewars-party", groupId, members.join(""), GROUP.mode));
   /**
    * Until each of `names` has its answer: a consent is signed and checked
    * on `crypto.subtle`, which `settle` cannot wait for.
@@ -1079,9 +1123,10 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     expect(queued.done()).toBe(1);
   });
 
-  it("signs no proposal without this player's key, or of another group (#1078)", async () => {
+  it("signs no proposal without this player's key, of another group, or for another mode (#1078, #1766)", async () => {
     const rewrites: ((proposal: WirePartyProposal) => WirePartyProposal)[] = [
       (proposal) => ({ ...proposal, groupId: "b".repeat(64) }),
+      (proposal) => ({ ...proposal, mode: "team-arena" }),
       (proposal) => ({ ...proposal, members: [KEY_H.ticketId, "f".repeat(64)] }),
     ];
     for (const rewrite of rewrites) {

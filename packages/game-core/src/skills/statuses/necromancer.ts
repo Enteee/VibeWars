@@ -1,4 +1,4 @@
-import { AREA_ADJACENT, AREA_IN_THE_AREA } from "../../distances.js";
+import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import type { DamageEffect } from "../types.js";
 import { define } from "./define.js";
@@ -42,7 +42,10 @@ export type NecromancerStatusId =
   | "life-siphon"
   | "life-siphon-regen"
   | "reckless-haste"
-  | "corrupt-enchantment";
+  | "corrupt-enchantment"
+  | "reapers-mark"
+  | "putrid-bile"
+  | "icy-veins";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -72,7 +75,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 102 }, perStatusOnTarget: [] }],
+        effects: [{ kind: "heal", amount: { flat: 102 } }],
         target: "source",
         skillId: "necromancer.parasitic-bond",
       },
@@ -351,5 +354,66 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   "corrupt-enchantment": define("corrupt-enchantment", "Corrupt Enchantment", "hex", {
     profession: "necromancer",
     healthPips: -7,
+  }),
+  // Death triggers (#1762), at their rank-12 values.
+  // "...target foe suffers -1...5 Health degeneration. If that foe dies
+  // while hexed with Reaper's Mark, you gain 5...15 Energy": 4 and 13.
+  "reapers-mark": define("reapers-mark", "Reaper's Mark", "hex", {
+    profession: "necromancer",
+    healthPips: -4,
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [{ kind: "energy-gain", amount: { flat: 13 } }],
+        target: "source",
+        skillId: "necromancer.reapers-mark",
+      },
+    ],
+  }),
+  // "...target foe suffers -1...3 Health degeneration. If that foe dies
+  // while under the effects of this hex, all nearby foes take 25...85
+  // damage": 3 and 73, to the caster's foes near the corpse.
+  "putrid-bile": define("putrid-bile", "Putrid Bile", "hex", {
+    profession: "necromancer",
+    healthPips: -3,
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", amount: { flat: 73 }, type: "typeless", armorPenetration: 0 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.putrid-bile",
+      },
+    ],
+  }),
+  // "...if target foe dies all nearby foes are struck for 20...110 cold
+  // damage": 92.
+  "icy-veins": define("icy-veins", "Icy Veins", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [{ kind: "damage", amount: { flat: 92 }, type: "cold", armorPenetration: 0 }],
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.icy-veins",
+      },
+    ],
   }),
 };
