@@ -589,6 +589,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         const starting: MatchStarting = {
           mapId: start.mapId,
           matchId: start.matchId,
+          teamPlanRejected: start.teamPlanRejected,
           transport: scopeTransport(transport),
         };
         for (const handler of [...startingHandlers]) {

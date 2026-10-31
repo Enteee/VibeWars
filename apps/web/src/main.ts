@@ -26,6 +26,7 @@ import {
   QUEUED_RESULT_SECONDS,
   STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
+  TEAM_PLAN_REJECTED_NOTICE,
   TEAM_SPLIT_MESSAGE,
   watchHostMove,
   type HostMove,
@@ -1909,6 +1910,10 @@ async function main(): Promise<void> {
       );
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
+      // Said once, on the match screen: the lobby's went with it.
+      if (start.teamPlanRejected) {
+        toast(TEAM_PLAN_REJECTED_NOTICE);
+      }
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;

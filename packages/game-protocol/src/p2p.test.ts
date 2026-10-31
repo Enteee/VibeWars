@@ -895,7 +895,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
   ["fell-through (#871)", parseWireLobbyNote, { kind: "refused", reason: "fell-through" }],
-  ["match-start", parseWireMatchStart, { mapId: "isle", matchId: "match-2" }],
+  [
+    "match-start",
+    parseWireMatchStart,
+    { mapId: "isle", matchId: "match-2", teamPlanRejected: false },
+  ],
 ];
 
 const long = "x".repeat(MAX_WIRE_STRING + 1);
@@ -1998,6 +2002,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { kind: "start-rejected", reason: "x".repeat(MAX_WIRE_TEXT + 1) },
   ],
   ["match-start without a match", parseWireMatchStart, { mapId: "isle" }],
+  [
+    "match-start without teamPlanRejected",
+    parseWireMatchStart,
+    { mapId: "isle", matchId: "match-2" },
+  ],
   [
     "an attribute combat with no attribute",
     parseWireCombatBatch,
