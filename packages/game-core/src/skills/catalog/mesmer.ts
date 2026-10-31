@@ -2008,4 +2008,42 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "mesmer.illusion-of-weakness",
+    name: "Illusion of Weakness",
+    gwId: 32,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You lose 50...240 Health" (#1789): health loss, not damage, so it
+    // never ends the enchantment it comes with, which has no duration.
+    effects: [
+      {
+        kind: "lose-health",
+        amount: { scaling: { attributeId: "mesmer.illusion-magic", atZero: 50, atTwelve: 202 } },
+        perRemovedOfProfession: undefined,
+      },
+      {
+        kind: "apply-status",
+        statusId: "illusion-of-weakness",
+        durationSeconds: Number.POSITIVE_INFINITY,
+      },
+    ],
+  },
 ];

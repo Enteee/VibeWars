@@ -38,7 +38,9 @@ export type DervishStatusId =
   | "onslaught"
   | "zealous-vow"
   | "featherfoot-grace"
-  | "whirling-charge";
+  | "whirling-charge"
+  | "watchful-intervention"
+  | "faithful-intervention";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -579,5 +581,54 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
       skillId: "dervish.whirling-charge",
     },
     endsAfterHits: { count: 1, weapon: undefined },
+  }),
+  // "...the next time damage drops target ally's Health below 25%, that
+  // ally is healed for 50...200 Health" (#1789).
+  "watchful-intervention": define("watchful-intervention", "Watchful Intervention", "enchantment", {
+    profession: "dervish",
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-health-drops-below",
+        healthBelow: 0.25,
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 50, atTwelve: 170 } },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "dervish.watchful-intervention",
+      },
+    ],
+  }),
+  // "If damage drops your Health below 50%, Faithful Intervention ends.
+  // When Faithful Intervention ends, you are healed for 30...150 Health"
+  // (#1789): any end, a strip too.
+  "faithful-intervention": define("faithful-intervention", "Faithful Intervention", "enchantment", {
+    profession: "dervish",
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-health-drops-below",
+        healthBelow: 0.5,
+        effects: [],
+        target: "bearer",
+        skillId: "dervish.faithful-intervention",
+      },
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "dervish.mysticism", atZero: 30, atTwelve: 126 } },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "dervish.faithful-intervention",
+      },
+    ],
   }),
 };

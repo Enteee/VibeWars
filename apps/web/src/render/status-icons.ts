@@ -324,6 +324,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "melandrus-arrows": icon("melandrus-arrows"),
   "read-the-wind": icon("read-the-wind"),
   "freezing-gust": icon("freezing-gust"),
+  "judges-intervention": icon("judges-intervention"),
+  "watchful-intervention": icon("watchful-intervention"),
+  "faithful-intervention": icon("faithful-intervention"),
+  "illusion-of-weakness": icon("illusion-of-weakness"),
 };
 
 const GAP = 2;

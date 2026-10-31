@@ -16,7 +16,13 @@ import {
 } from "@vibewars/game-protocol";
 
 import type { CombatMessage, ObservedSnapshot, PlayerSnapshot } from "./match-connection.js";
-import { HostLeftError, MatchRefusedError, MatchTimeoutError, onFromHost } from "./match-client.js";
+import {
+  HELLO_RESEND_MS,
+  HostLeftError,
+  MatchRefusedError,
+  MatchTimeoutError,
+  onFromHost,
+} from "./match-client.js";
 import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
 import { combatMessage, observedSnapshot, playerSnapshots } from "./wire.js";
@@ -60,6 +66,8 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   let lost = false;
   /** Set once `connectObserver` has resolved or rejected. */
   let settled = false;
+  /** Says the observe again until the host answers it (#1805). */
+  let observeTimer: unknown;
   let onLostWhileJoining: () => void = () => undefined;
   const combatHandlers: ((message: CombatMessage) => void)[] = [];
   const lostHandlers: (() => void)[] = [];
@@ -132,6 +140,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   );
 
   const stop = (): void => {
+    clearInterval(observeTimer);
     for (const off of unsubscribe.splice(0)) {
       off();
     }
@@ -209,6 +218,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       }
       settled = true;
       clearTimeout(timer);
+      clearInterval(observeTimer);
       resolve(connection(message));
     });
     fromHost("refuse", parsePeerRefuse, (refusal) => {
@@ -217,5 +227,8 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
 
     const observe: PeerObserve = { protocolVersion: PROTOCOL_VERSION, matchId };
     transport.send("observe", observe, hostId);
+    observeTimer = setInterval(() => {
+      transport.send("observe", observe, hostId);
+    }, HELLO_RESEND_MS);
   });
 }

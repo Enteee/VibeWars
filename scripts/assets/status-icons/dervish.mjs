@@ -216,4 +216,20 @@ export const DERVISH_STATUS_ICONS = {
       `<path d="M12 12a2 2 0 1 1 2-2a4 4 0 1 1-4-4a6 6 0 1 1-6 6" ${stroke(c, 2)}/>` +
       `<path d="M1.5 14L4 18L8 15.5" ${stroke(c, 2)}/>`,
   ],
+  // Ally threshold mechanics (#1789), stand-ins until their art card.
+  // Enchantment: an eye over a line a quarter up, it heals at the drop.
+  "watchful-intervention": [
+    "enchantment",
+    (c) =>
+      `<path d="M3 9c4-5 14-5 18 0c-4 5-14 5-18 0z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="12" cy="9" r="2" ${stroke(c, 1.8)}/>` +
+      `<path d="M3 18h18" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a heart above a line at half, it ends there and heals.
+  "faithful-intervention": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 15s-6-3.4-6-7.2a3.2 3.2 0 0 1 6-2A3.2 3.2 0 0 1 18 7.8c0 3.8-6 7.2-6 7.2z" ${stroke(c, 1.8)}/>` +
+      `<path d="M3 19h18" ${stroke(c, 2)}/>`,
+  ],
 };

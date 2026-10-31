@@ -90,6 +90,13 @@ export class MatchTimeoutError extends Error {
   }
 }
 
+/**
+ * How often a peer says its hello or observe again until the host answers
+ * (#1805): one that arrives before the host's match listens is lost, and
+ * nothing buffers it.
+ */
+export const HELLO_RESEND_MS = 1_000;
+
 /** A P2P match: a `MatchConnection`, plus what it takes to come back after a drop. */
 export interface PeerMatchConnection extends MatchConnection {
   /**
@@ -168,6 +175,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
   let reconnectTimer: unknown;
+  /** Says the hello again until the host answers it (#1805). */
+  let helloTimer: unknown;
   /** Set once `connectMatch` has resolved or rejected. */
   let settled = false;
   let onLostWhileJoining: () => void = () => undefined;
@@ -330,6 +339,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
 
   const stop = (): void => {
     clearTimeout(reconnectTimer);
+    clearInterval(helloTimer);
     for (const off of unsubscribe.splice(0)) {
       off();
     }
@@ -514,6 +524,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return;
       }
       welcomed = message;
+      clearInterval(helloTimer);
       ready();
     });
     fromHost("skill-bar", parseWireSkillBar, (message) => {
@@ -533,5 +544,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
     });
 
     transport.send("hello", hello, hostId);
+    helloTimer = setInterval(() => {
+      transport.send("hello", hello, hostId);
+    }, HELLO_RESEND_MS);
   });
 }
