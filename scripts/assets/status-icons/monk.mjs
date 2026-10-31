@@ -103,12 +103,12 @@ export const MONK_STATUS_ICONS = {
       `<ellipse cx="12" cy="5" rx="4.5" ry="1.6" ${stroke(c, 1.5)}/>` +
       `<path d="M12 8v9M9 14h6M12 17v3" ${stroke(c, 2)}/>`,
   ],
-  // Monk staples 5 (#1650), a stand-in until its art card.
-  // Enchantment: a shield over regeneration arrows, armour and health back.
+  // Enchantment: a shield with a plus over regeneration chevrons, as the skill's icon.
   "shield-of-regeneration": [
     "enchantment",
     (c) =>
-      `<path d="M7 4h10v5c0 3-2.5 5-5 6.5C9.5 14 7 12 7 9z" ${stroke(c, 1.8)}/>` +
-      `<path d="M6 20l2.5-2.5L11 20M10 20l2.5-2.5L15 20M14 20l2.5-2.5L19 20" ${stroke(c, 1.6)}/>`,
+      `<path d="M12 2.5L19 5V10.5C19 14 16 16 12 17.5C8 16 5 14 5 10.5V5Z" ${stroke(c, 2)}/>` +
+      `<path d="M12 6.5V12M9.2 9.2H14.8" ${stroke(c, 2)}/>` +
+      `<path d="M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21" ${stroke(c, 1.8)}/>`,
   ],
 };
