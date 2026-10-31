@@ -1329,11 +1329,12 @@ test("(41) a well with no corpse near sacrifices Health and goes off anyway (#11
     .locator(".skill-box", { hasText: "Well of Suffering" })
     .locator(".skill-box-equip")
     .click();
-  await page.locator("select.training-scenario").selectOption("healing-throughput");
-  await expect(page.locator(".training-log")).toContainText("── Healing throughput ──");
+  // Target dummy, the default: one immortal dummy, so no body ever lies
+  // in the well's reach.
+  await expect(page.locator(".training-log")).toContainText("── Target dummy ──");
   await takeControl(page);
 
-  // Nobody has died yet: not refused. The well costs 66% of your Health
+  // No corpse: not refused. The well costs 66% of your Health
   // instead, and lands where you stand. Game time runs slower than wall
   // time under load (#327).
   const slot = page.locator(FILLED_SLOTS).first();
