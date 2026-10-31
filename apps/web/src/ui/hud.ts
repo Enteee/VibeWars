@@ -455,6 +455,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "invalid-target-creature": "That cannot be revived that way.",
   "cannot-cast-spells": "You cannot cast spells.",
   "cannot-attack": "You cannot attack.",
+  "cannot-resurrect": "You cannot resurrect here.",
   "invalid-target-untargetable": "Your spells cannot target that foe.",
   "hands-full": "Your hands are full: drop what you carry first.",
   "not-your-flag": "That is not your flag.",

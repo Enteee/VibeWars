@@ -4,6 +4,7 @@ export {
   energyCostOf,
   isAllyOrSelfRule,
   isCompanionRule,
+  isResurrectionSkill,
   payCost,
   targetLivenessAllows,
   targetRuleAllows,
@@ -68,6 +69,7 @@ export {
   getStatusDefinition,
   isStatusId,
   preventsAttacks,
+  preventsResurrection,
   preventsSpells,
   scaledStatusDuration,
 } from "./status.js";

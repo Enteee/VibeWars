@@ -95,4 +95,52 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
       `<path d="M16 11.5V20M12 15.8H20.5M13.2 13L18.8 18.6M18.8 13L13.2 18.6" ${stroke(c, 1.8)}/>`,
   ],
+  // Nature rituals 1 (#1745): what each spirit does to whoever is near it.
+  // Skill effect: a heart with a plus, more health near the spirit.
+  "fertile-season": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 19s-6.5-4-6.5-8.5A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 6.5 2c0 4.5-6.5 8.5-6.5 8.5z" ${stroke(c, 2)}/>` +
+      `<path d="M12 10.5v5M9.5 13h5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect: a circular arrow, skills come back faster.
+  "quickening-zephyr": [
+    "skill-effect",
+    (c) => `<path d="M18 12a6 6 0 1 1-2-4.5M18 5v3h-3" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a snowflake over the ground, no one rises here.
+  "frozen-soil": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4v10M7.7 6.5l8.6 5M16.3 6.5l-8.6 5" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a foot over wavy mud, slower and no running.
+  "muddy-terrain": [
+    "skill-effect",
+    (c) =>
+      `<path d="M10 5c2 0 3 2 3 4.5S12 14 10 14s-3-2-3-4.5S8 5 10 5z" fill="${c}"/>` +
+      `<path d="M4 18c2-1.5 4-1.5 6 0s4 1.5 6 0 3-1 4-.5" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: an arrow in a flame, arrows burn near the spirit.
+  conflagration: [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4c.6 3 4.5 4.8 4.5 9a4.5 4.5 0 0 1-9 0c0-2 .9-3.6 2.2-4.4 0 1.6.5 2.4 1.3 2.8-.4-2.5-.4-5.1 1-7.4z" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 19L12 12" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: fangs over a minus, heals weaker, hits feed you.
+  "predatory-season": [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 6h12M8 6l1.5 6L11 6M13 6l1.5 6L16 6" ${stroke(c, 1.8)}/>` +
+      `<path d="M8.5 17.5h7" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a snowflake, elemental damage turns cold.
+  winter: [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4v16M5 8l14 8M19 8L5 16" ${stroke(c, 1.8)}/>` +
+      `<path d="M10 5.5l2 2 2-2M10 18.5l2-2 2 2" ${stroke(c, 1.6)}/>`,
+  ],
 };

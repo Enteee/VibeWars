@@ -16,6 +16,7 @@ import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
 import {
   aggregateModifiers,
+  damageTypeTaken,
   getStatusDefinition,
   scaledStatusDuration,
   type StatusCategory,
@@ -1111,9 +1112,10 @@ export function applyEffect(
       if (amount <= 0) {
         return events;
       }
+      // Winter's (#1745): elemental damage reaches its bearer as cold.
       const packet = skillDamage(
         amount,
-        effect.type,
+        damageTypeTaken(effect.type, target.statuses.active),
         withSkillArmorPenetration(effect.armorPenetration, caster, context.profession),
       );
       applyDamage(

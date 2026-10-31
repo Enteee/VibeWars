@@ -250,6 +250,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.moveSpeedMultiplier !== 1) {
     parts.push(`moves at ${String(Math.round(definition.moveSpeedMultiplier * 100))}% speed`);
   }
+  if (definition.preventsSpeedBoosts) {
+    parts.push("speed boosts have no effect");
+  }
   if (definition.attackMissChance !== 0) {
     parts.push(`${String(Math.round(definition.attackMissChance * 100))}% of attacks miss`);
   }
@@ -273,6 +276,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.physicalDamageTakenBonus !== 0) {
     parts.push(`take ${signed(definition.physicalDamageTakenBonus)} from physical damage`);
+  }
+  if (definition.elementalDamageTakenAs !== undefined) {
+    parts.push(`elemental damage taken is ${definition.elementalDamageTakenAs} damage`);
   }
   if (definition.damageFromSpiritAttacks !== 0) {
     parts.push(`take ${signed(definition.damageFromSpiritAttacks)} from spirits' attacks`);
@@ -326,6 +332,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.preventsAttacks) {
     parts.push("cannot attack");
+  }
+  if (definition.preventsResurrection) {
+    parts.push("cannot use resurrection skills");
   }
   if (definition.untargetableByFoeSpells) {
     parts.push("cannot be the target of enemy spells");
@@ -544,6 +553,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(
       `skills recharge ${String(Math.round(definition.skillRechargeFaster * 100))}% faster`,
     );
+  }
+  if (definition.energyCostMultiplier !== 1) {
+    const change = Math.round((definition.energyCostMultiplier - 1) * 100);
+    parts.push(`skills cost ${String(Math.abs(change))}% ${change > 0 ? "more" : "less"} Energy`);
   }
   const { spellRechargeFaster, bindingRitualRechargeFaster } = definition;
   if (spellRechargeFaster !== 0 && spellRechargeFaster === bindingRitualRechargeFaster) {

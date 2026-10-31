@@ -464,6 +464,16 @@ describe("silenced (#1234)", () => {
       false,
     ]);
   });
+
+  it("marks a resurrection alone under Frozen Soil, which bars them (#1745)", () => {
+    const frozen = { ...shrouded, id: "frozen-soil", casterId: "spirit" } as const;
+    expect(
+      silenced(
+        [slot("common.resurrection-signet"), ...bar.slice(0, 4)],
+        self({ statuses: [frozen] }),
+      ),
+    ).toEqual([true, false, false, false, false]);
+  });
 });
 
 describe("wrongWeapon (#417)", () => {

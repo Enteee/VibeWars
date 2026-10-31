@@ -101,7 +101,11 @@ describe("status definitions", () => {
         def.damageReduction !== 0 ||
         def.redirectsPhysicalDamage !== 0 ||
         def.damageFromSpiritAttacks !== 0 ||
-        def.adrenalineGainFaster !== 0;
+        def.adrenalineGainFaster !== 0 ||
+        def.energyCostMultiplier !== 1 ||
+        def.preventsResurrection ||
+        def.preventsSpeedBoosts ||
+        def.elementalDamageTakenAs !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });

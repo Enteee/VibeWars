@@ -16,6 +16,7 @@ import {
   getStatusDefinition,
   nextSkillAnswers,
   preventsAttacks,
+  preventsResurrection,
   preventsSpells,
   untargetableByFoeSpells,
 } from "./status.js";
@@ -74,6 +75,8 @@ export type ActivationRejection =
   // An attack or an attack skill while a status bars them, as Obsidian
   // Flesh's (#1575).
   | "cannot-attack"
+  // A resurrection skill while a status bars them, as Frozen Soil's (#1745).
+  | "cannot-resurrect"
   | "invalid-target-untargetable"
   // An attack or attack skill while carrying a flag (#1225): checked by
   // the simulation, which knows who carries one.
@@ -260,6 +263,9 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   if (skill.type === "attack" && preventsAttacks(caster.statuses.active)) {
     return reject("cannot-attack");
   }
+  if (isResurrectionSkill(skill) && preventsResurrection(caster.statuses.active)) {
+    return reject("cannot-resurrect");
+  }
   // An attack skill is a blow of its weapon (ADR-0029): checked before the
   // cost, so the player is told what is wrong rather than what it costs.
   if (
@@ -318,11 +324,21 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
 }
 
 /**
- * The energy `skill` costs `caster` right now (#637): Expertise (#528)
- * or Mysticism (#874), less what an active glyph takes off a spell
- * (#526) and what a chant takes off the next skill of its kind (#1505),
- * never below 0. The one number the check, the spend and the
- * skill bar use, so they cannot disagree. 0 for a skill with no energy cost.
+ * Whether `skill` is a resurrection skill (#1745): one cast on a dead
+ * ally, as the pet-target rule reads it (#1046). Frozen Soil refuses it.
+ */
+export function isResurrectionSkill(skill: Skill): boolean {
+  return skill.target === "single-dead-ally";
+}
+
+/**
+ * The energy `skill` costs `caster` right now (#637): its base, raised
+ * by Quickening Zephyr's multiplier and rounded half up (#1745), then
+ * Expertise (#528) or Mysticism (#874), less what an active glyph takes
+ * off a spell (#526) and what a chant takes off the next skill of its
+ * kind (#1505), never below 0. The one number the check, the spend and
+ * the skill bar use, so they cannot disagree. 0 for a skill with no
+ * energy cost.
  */
 export function energyCostOf(skill: Skill, caster: RankHolder): number {
   if (skill.cost?.kind !== "energy") {
@@ -333,7 +349,7 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
   const cost = mysticismEnergyCost(
     rankOf(caster, MYSTICISM_ATTRIBUTE),
     skill,
-    expertiseEnergyCost(expertise, skill, skill.cost.amount),
+    expertiseEnergyCost(expertise, skill, raisedBaseCost(skill.cost.amount, caster)),
   );
   const reduction = caster.statuses.active.reduce((sum, { id }) => {
     const { nextSpells, nextSkillRule } = getStatusDefinition(id);
@@ -345,6 +361,15 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
     return sum + glyph + chant;
   }, 0);
   return Math.max(0, cost - reduction);
+}
+
+/** `base` times every `energyCostMultiplier` the caster bears, rounded half up (#1745). */
+function raisedBaseCost(base: number, caster: RankHolder): number {
+  const multiplier = caster.statuses.active.reduce(
+    (product, { id }) => product * getStatusDefinition(id).energyCostMultiplier,
+    1,
+  );
+  return multiplier === 1 ? base : Math.floor(base * multiplier + 0.5);
 }
 
 /**

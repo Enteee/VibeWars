@@ -145,6 +145,13 @@ const NO_BOT_USE = new Set([
   "necromancer.order-of-pain",
   "elementalist.ward-against-elements",
   "ranger.infuriating-heat",
+  // Nature rituals 1 (#1745): auras on both teams the bot does not weigh,
+  // as Winnowing's.
+  "ranger.quickening-zephyr",
+  "ranger.frozen-soil",
+  "ranger.muddy-terrain",
+  "ranger.conflagration",
+  "ranger.winter",
   // Chants (#1505) on how the next skill goes: nothing the bot weighs.
   "paragon.song-of-concentration",
   "paragon.anthem-of-guidance",

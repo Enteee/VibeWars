@@ -27,7 +27,12 @@ import {
   type SkillResolution,
 } from "./effects.js";
 import { resolveMagnitude } from "./scaling.js";
-import { aggregateModifiers, getStatusDefinition, type StatusId } from "./status.js";
+import {
+  aggregateModifiers,
+  damageTypeTaken,
+  getStatusDefinition,
+  type StatusId,
+} from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import {
   attackDamageTypeOf,
@@ -510,7 +515,8 @@ export function landBlow(
         snapshot.damageDelta,
     ),
     armorIgnoring: blow.bonus,
-    type: blow.damageType ?? snapshot.damageType,
+    // The attacker's type first, then Winter's on the victim (#1745).
+    type: damageTypeTaken(blow.damageType ?? snapshot.damageType, victim.statuses.active),
     source: "weapon",
     armorPenetration: Math.max(
       blow.armorPenetration,
