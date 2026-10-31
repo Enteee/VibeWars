@@ -1,3 +1,4 @@
+import { PROFESSIONS } from "@vibewars/game-core";
 import type { WireTeamLobby, WireTeamProposal, WireTeamSide } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -264,6 +265,15 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(cards[0]?.all("team-lobby-token").map((token) => token.textContent)).toEqual(["A", "C"]);
     expect(cards.map((card) => card.all("team-lobby-count")[0]?.textContent)).toEqual(["2", "1"]);
     expect(cards[0]?.all("character-dot")).toHaveLength(4);
+    // A circle shows its professions' icons, never their letters (#1785).
+    const letters = new RegExp(
+      `\\b(${Object.values(PROFESSIONS)
+        .map((profession) => profession.abbreviation)
+        .join("|")})\\b`,
+    );
+    for (const dot of shown.all("character-dot")) {
+      expect(dot.text()).not.toMatch(letters);
+    }
     // Brann's own vote is marked, and only it.
     expect(cards.map((card) => card.attributes.get("aria-pressed"))).toEqual(["false", "true"]);
     expect(cards[1]?.text()).toContain("Your vote ✓");
