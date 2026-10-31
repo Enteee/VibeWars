@@ -170,6 +170,9 @@ const NO_BOT_USE = new Set([
   "paragon.focused-anger",
   "paragon.glowing-signet",
   "paragon.signet-of-aggression",
+  // Monk mechanics (#1754): a holy aura round an ally is no rule the bot
+  // weighs.
+  "monk.balthazars-aura",
 ]);
 
 function skill(id: string) {

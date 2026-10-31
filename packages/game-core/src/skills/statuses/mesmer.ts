@@ -477,7 +477,14 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   // a skill": 8 and 8, so 8, 16, 24, 32, 40.
   "wastrels-demise": define("wastrels-demise", "Wastrel's Demise", "hex", {
     profession: "mesmer",
-    damagePulse: { damage: 8, growth: 8, radius: AREA_ADJACENT, skillId: "mesmer.wastrels-demise" },
+    damagePulse: {
+      damage: 8,
+      growth: 8,
+      type: "typeless",
+      radius: AREA_ADJACENT,
+      hitsBearer: true,
+      skillId: "mesmer.wastrels-demise",
+    },
     endsWhenBearerUsesSkill: true,
   }),
   // "For 5...15 seconds, spells cast by target foe and all adjacent foes

@@ -258,6 +258,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
 exports[`skillRoles > tags every monk skill the same way every time 1`] = `
 {
   "monk.aegis": "defence",
+  "monk.balthazars-aura": "",
   "monk.bane-signet": "knockdown",
   "monk.banish": "",
   "monk.blessed-light": "healing removal",
@@ -275,10 +276,12 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.heal-party": "healing",
   "monk.healing-breeze": "healing",
   "monk.healing-light": "healing",
+  "monk.healing-touch": "healing",
   "monk.healing-whisper": "healing",
   "monk.heavens-delight": "healing",
   "monk.holy-strike": "",
   "monk.holy-veil": "removal defence",
+  "monk.holy-wrath": "defence",
   "monk.infuse-health": "healing",
   "monk.jameis-gaze": "healing",
   "monk.judges-insight": "",
@@ -309,6 +312,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.smite-hex": "removal",
   "monk.spear-of-light": "",
   "monk.spell-breaker": "",
+  "monk.spirit-bond": "healing",
   "monk.stonesoul-strike": "",
   "monk.symbol-of-wrath": "",
   "monk.vigorous-spirit": "healing",

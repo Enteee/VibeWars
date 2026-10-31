@@ -49,6 +49,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     spellsLeft: undefined,
     skillsLeft: undefined,
     triggersLeft: undefined,
+    reflectionsLeft: undefined,
     hitsLeft: undefined,
     unblockableLeft: undefined,
     sourceId: "caster",

@@ -63,7 +63,7 @@ describe("an offender trigger (#1022)", () => {
     self.statuses.apply("poison", 10, "war");
     self.statuses.apply("weapon-of-remedy", 8, "rit");
     self.statuses.drainChanges();
-    self.statuses.recordDamageFromFoe("war", "slashing");
+    self.statuses.recordDamageFromFoe("war", "slashing", 10);
     return { bearer: self, sources };
   }
 

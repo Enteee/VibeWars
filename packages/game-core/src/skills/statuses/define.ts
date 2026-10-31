@@ -85,6 +85,7 @@ export function define(
     knockdownMinSeconds: undefined,
     sourceLosesHealth: undefined,
     reversesNextDamage: undefined,
+    reflectsAttackDamage: undefined,
     extraStrikesPerHit: 0,
     adrenalineGainFaster: 0,
     spellRechargeFaster: 0,

@@ -1,3 +1,4 @@
+import { AREA_ADJACENT } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import type { HealEffect } from "../types.js";
 import { define } from "./define.js";
@@ -19,7 +20,11 @@ export type MonkStatusId =
   // Monk smiting staples (#1519).
   | "judges-insight"
   // Monk staples 5 (#1650).
-  | "shield-of-regeneration";
+  | "shield-of-regeneration"
+  // Monk mechanics (#1754).
+  | "spirit-bond"
+  | "holy-wrath"
+  | "balthazars-aura";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -173,4 +178,55 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       armorModifier: 40,
     },
   ),
+  // "For 8 seconds, whenever target ally takes more than 50 damage from
+  // the next 10 attacks or spells, that ally is healed for 30...90
+  // Health", by its caster's Protection Prayers (#1754). It counts 10
+  // heals, not 10 attacks or spells; in 8 s the two rarely differ.
+  "spirit-bond": define("spirit-bond", "Spirit Bond", "enchantment", {
+    profession: "monk",
+    endsAfterTriggers: 10,
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        minDamage: 50,
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "monk.protection-prayers", atZero: 30, atTwelve: 78 },
+            },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.spirit-bond",
+      },
+    ],
+  }),
+  // "...the next 1...10 times target other ally takes attack damage, this
+  // spell deals 66% of the damage back to the source (maximum 5...50
+  // damage)" (#1754): 8 times and 41, their rank-12 values.
+  "holy-wrath": define("holy-wrath", "Holy Wrath", "enchantment", {
+    profession: "monk",
+    reflectsAttackDamage: {
+      share: 0.66,
+      max: 41,
+      type: "holy",
+      times: 8,
+      skillId: "monk.holy-wrath",
+    },
+  }),
+  // "For 8 seconds, foes adjacent to target ally take 10...30 holy damage
+  // each second" (#1754): 26, its rank-12 value.
+  "balthazars-aura": define("balthazars-aura", "Balthazar's Aura", "enchantment", {
+    profession: "monk",
+    damagePulse: {
+      damage: 26,
+      growth: 0,
+      type: "holy",
+      radius: AREA_ADJACENT,
+      hitsBearer: false,
+      skillId: "monk.balthazars-aura",
+    },
+  }),
 };

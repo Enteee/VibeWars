@@ -661,7 +661,8 @@ export function withEndedCritical(
  * one that ends when an attack skill hits, as Defensive Anthem (#956). The
  * hit is recorded for what answers one, as Insidious Parasite (#935), with
  * the `weapon` it struck with (#1359), and, on a foe's `victim`, for what
- * answers being hit there (#1464), as Vengeful Was Khanhei.
+ * answers being hit there (#1464), as Vengeful Was Khanhei, with the
+ * health the blow took from it (#1754), as Holy Wrath reflects.
  */
 export function bearerHit(
   attacker: Combatant,
@@ -669,10 +670,11 @@ export function bearerHit(
   events: CombatEvent[],
   withAttackSkill: boolean,
   weapon: Weapon,
+  took: number,
 ): void {
   attacker.statuses.recordHit(weapon);
   if (victim.team !== attacker.team) {
-    victim.statuses.recordHitByAttack(attacker.id);
+    victim.statuses.recordHitByAttack(attacker.id, took);
   }
   for (const statusId of attacker.statuses.endOnBearerHit(withAttackSkill)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
@@ -785,6 +787,7 @@ function strike(
     return;
   }
   const snapshot = withEndedCritical(weaponSnapshotOf(attacker), attacked);
+  const before = victim.health;
   if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
   }
@@ -800,7 +803,14 @@ function strike(
       fired,
     ),
   );
-  bearerHit(attacker, victim, events, false, snapshot.mainHand.weapon);
+  bearerHit(
+    attacker,
+    victim,
+    events,
+    false,
+    snapshot.mainHand.weapon,
+    Math.max(0, before - victim.health),
+  );
   attackReached(victim, events);
 }
 
@@ -998,6 +1008,7 @@ export function resolveAttackSkillOutcome(
         failed.push(victim);
         continue;
       }
+      const before = victim.health;
       if (
         landBlow(
           snapshot,
@@ -1026,7 +1037,7 @@ export function resolveAttackSkillOutcome(
         ),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
-      bearerHit(caster, victim, events, true, weapon);
+      bearerHit(caster, victim, events, true, weapon, Math.max(0, before - victim.health));
       attackReached(victim, events);
       markChain(caster, skill, victim.id);
       hit.push(victim);
