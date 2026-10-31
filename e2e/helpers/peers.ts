@@ -24,11 +24,16 @@ export async function openPeers(
 
 /**
  * Open this page's own lobby to friends with its key (#1682): every
- * lobby starts closed, and a closed one takes nobody new.
+ * lobby starts closed, and a closed one takes nobody new. On a phone it
+ * is in the ⋯, which the press puts away again.
  */
 export async function openToFriends(page: Page): Promise<void> {
   const toggle = page.locator("#topbar .topbar-lobby-open");
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  const more = page.locator("#topbar .topbar-more");
+  if (await more.isVisible()) {
+    await more.click();
+  }
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
 }
