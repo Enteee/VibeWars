@@ -3,18 +3,18 @@ import {
   type CreatureLook,
   type ProfessionId,
   type Skill,
-  type SkillType,
 } from "@vibewars/game-core";
 
 /**
  * The arena's icon sheet (#1671): every icon the scene draws, packed into
- * one SVG that `scripts/assets/icons.mjs` writes with the icons, so a match
- * starts by rasterising one texture, not hundreds.
+ * one SVG that Vite composes from the committed icons at build and dev
+ * time (`plugins/arena-atlas.ts`), so a match starts by rasterising one
+ * texture, not hundreds.
  *
- * The sizes and frame names live here, and the generator imports this file
- * as it is, so the sheet and the scene cannot disagree on a size or on
- * which skills leave a ward. Only game-core and erasable TypeScript, so
- * Node can load it from a script.
+ * The sizes and frame names live here, and the plugin imports this file,
+ * so the sheet and the scene cannot disagree on a size or on which skills
+ * leave a ward. No Phaser and no `import.meta.env`, so the Vite config can
+ * load it.
  */
 
 /** Where the sheet and its frame map are, under the public dir. */
@@ -29,7 +29,7 @@ export interface AtlasFrame {
   readonly h: number;
 }
 
-/** The frame map `icons.mjs` writes next to the sheet. */
+/** The frame map served next to the sheet. */
 export interface AtlasMap {
   readonly frames: Readonly<Record<string, AtlasFrame>>;
 }
@@ -101,7 +101,8 @@ export function creatureFrame(look: CreatureLook): string {
   return `creature/${look}`;
 }
 
-export function skillTypeFrame(type: SkillType): string {
+/** Every file in `icons/skill-type/` is one, so the sheet takes the name as a string. */
+export function skillTypeFrame(type: string): string {
   return `skill-type/${type}`;
 }
 

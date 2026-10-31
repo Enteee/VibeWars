@@ -2,11 +2,10 @@
 //
 //   node scripts/assets/icons.mjs
 //
-// Writes apps/web/public/icons/<family>/<name>.svg, and the arena's sheet of
-// them in icons/atlas/ (#1671). The output is committed; re-run this after
-// changing anything here, or adding a status or a ward, and commit both. The
-// palette and the shape rules are written down in docs/art/art-direction.md.
-// Change them there first, then here.
+// Writes apps/web/public/icons/<family>/<name>.svg. The output is committed;
+// re-run this after changing anything here and commit both. The palette and
+// the shape rules are written down in docs/art/art-direction.md. Change them
+// there first, then here.
 //
 // Every icon is drawn on a 24x24 grid with whole-pixel strokes so it stays
 // sharp at 16, 24 and 48 px. Colours are baked in rather than left to
@@ -18,7 +17,6 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
-import * as atlas from "../../apps/web/src/render/arena-atlas.ts";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -4446,106 +4444,3 @@ for (const [family, icons] of Object.entries(families)) {
   console.log(`${family}: ${String(readdirSync(dir).length)} icons`);
 }
 console.log(`total: ${String(total)} bytes`);
-
-// ---------------------------------------------------------------------------
-// The arena's icon sheet (#1671): every icon the scene draws, each a nested
-// <svg> at its texture size, packed in rows with a 1 px gap, plus the frame
-// map the scene cuts it with. Sizes, frame names and the ground skills come
-// from apps/web/src/render/arena-atlas.ts, as the scene's do. Committed with
-// the icons; the stale-output test compares it byte for byte.
-// ---------------------------------------------------------------------------
-
-/** @type {{ frame: string, icon: string, w: number, h: number }[]} */
-const atlasIcons = [
-  ...Object.entries(families.status).map(([id, icon]) => ({
-    frame: atlas.statusFrame(id),
-    icon,
-    w: atlas.STATUS_ICON_SIZE,
-    h: atlas.STATUS_ICON_SIZE,
-  })),
-  ...Object.entries(families.profession).flatMap(([id, icon]) => [
-    {
-      frame: atlas.professionFrame(id),
-      icon,
-      w: atlas.PROFESSION_GLYPH_SIZE,
-      h: atlas.PROFESSION_GLYPH_SIZE,
-    },
-    {
-      frame: atlas.bodyProfessionFrame(id),
-      icon,
-      w: atlas.BODY_GLYPH_TEXTURE_SIZE,
-      h: atlas.BODY_GLYPH_TEXTURE_SIZE,
-    },
-  ]),
-  ...Object.entries(atlas.CREATURE_GLYPH).map(([look, { family, name }]) => ({
-    frame: atlas.creatureFrame(look),
-    icon: families[family][name],
-    w: atlas.BODY_GLYPH_TEXTURE_SIZE,
-    h: atlas.BODY_GLYPH_TEXTURE_SIZE,
-  })),
-  ...Object.entries(families["skill-type"]).map(([type, icon]) => ({
-    frame: atlas.skillTypeFrame(type),
-    icon,
-    w: atlas.CAST_BADGE_TEXTURE_SIZE,
-    h: atlas.CAST_BADGE_TEXTURE_SIZE,
-  })),
-  ...Object.entries(families.projectile).map(([sprite, icon]) => ({
-    frame: atlas.projectileFrame(sprite),
-    icon,
-    w: atlas.PROJECTILE_WIDTH,
-    h: atlas.PROJECTILE_HEIGHT,
-  })),
-  ...atlas.GROUND_EFFECT_SKILLS.map((id) => ({
-    frame: atlas.groundFrame(id),
-    icon: families.skill[id] ?? families.skill.unknown,
-    w: atlas.GROUND_ICON_TEXTURE_SIZE,
-    h: atlas.GROUND_ICON_TEXTURE_SIZE,
-  })),
-];
-
-const ATLAS_WIDTH = 512;
-const ATLAS_GAP = 1;
-/** @type {Record<string, { x: number, y: number, w: number, h: number }>} */
-const atlasFrames = {};
-let atlasBody = "";
-let atlasHeight = 0;
-{
-  // Tallest first, so each row wastes little under its shorter icons.
-  const sorted = [...atlasIcons].sort((a, b) => b.h - a.h || b.w - a.w);
-  let x = 0;
-  let y = 0;
-  let rowHeight = 0;
-  for (const { frame, icon, w, h } of sorted) {
-    if (x + w > ATLAS_WIDTH) {
-      x = 0;
-      y += rowHeight + ATLAS_GAP;
-      rowHeight = 0;
-    }
-    const open = /^<svg ([^>]*)>/.exec(icon);
-    const viewBox = open && /viewBox="([^"]+)"/.exec(open[1] ?? "");
-    if (!open || !viewBox?.[1] || !icon.trimEnd().endsWith("</svg>")) {
-      throw new Error(`${frame}: not a single root <svg> with a viewBox`);
-    }
-    const inner = icon.trimEnd().slice(open[0].length, -"</svg>".length);
-    const at = { x, y, w, h };
-    atlasBody += `<svg x="${String(x)}" y="${String(y)}" width="${String(w)}" height="${String(h)}" viewBox="${viewBox[1]}">${inner}</svg>`;
-    atlasFrames[frame] = at;
-    x += w + ATLAS_GAP;
-    rowHeight = Math.max(rowHeight, h);
-    atlasHeight = Math.max(atlasHeight, y + h);
-  }
-}
-{
-  const dir = join(outDir, "atlas");
-  rmSync(dir, { recursive: true, force: true });
-  mkdirSync(dir, { recursive: true });
-  const sheet = `<svg xmlns="http://www.w3.org/2000/svg" width="${String(ATLAS_WIDTH)}" height="${String(atlasHeight)}">${atlasBody}</svg>\n`;
-  writeFileSync(join(outDir, atlas.ARENA_ATLAS_SVG.replace(/^icons\//, "")), sheet);
-  writeFileSync(
-    join(outDir, atlas.ARENA_ATLAS_JSON.replace(/^icons\//, "")),
-    `${JSON.stringify({ frames: atlasFrames }, null, 2)}\n`,
-  );
-  console.log(
-    `atlas: ${String(atlasIcons.length)} frames, ${String(ATLAS_WIDTH)}x${String(atlasHeight)}, ${String(Buffer.byteLength(sheet))} bytes`,
-  );
-}

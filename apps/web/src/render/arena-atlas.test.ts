@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,9 +13,8 @@ import {
 } from "@vibewars/game-core";
 
 import { SKILL_TYPE_NAME } from "../ui/icons.js";
+import { composeArenaAtlas, packAtlas } from "../../plugins/arena-atlas.js";
 import {
-  ARENA_ATLAS_JSON,
-  ARENA_ATLAS_SVG,
   BODY_GLYPH_TEXTURE_SIZE,
   CAST_BADGE_TEXTURE_SIZE,
   GROUND_EFFECT_SKILLS,
@@ -33,15 +31,13 @@ import {
   skillTypeFrame,
   statusFrame,
   type AtlasFrame,
-  type AtlasMap,
 } from "./arena-atlas.js";
 import { NAME_LABEL_HEIGHT } from "./arena-snapshot.js";
 import { PROJECTILE_SPRITES } from "./projectiles.js";
 import { STATUS_ICON } from "./status-icons.js";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
-const map = JSON.parse(fs.readFileSync(path.join(PUBLIC, ARENA_ATLAS_JSON), "utf8")) as AtlasMap;
-const sheet = fs.readFileSync(path.join(PUBLIC, ARENA_ATLAS_SVG), "utf8");
+const { map, sheet } = composeArenaAtlas(PUBLIC);
 
 function expectFrame(name: string, w: number, h: number): void {
   expect(map.frames[name], name).toMatchObject({ w, h });
@@ -95,6 +91,33 @@ describe("the arena atlas (#1671)", () => {
         expect(overlaps(frame, then), `${name} and ${other}`).toBe(false);
       }
     });
+  });
+
+  it("nests each icon at its frame, in its own viewBox", () => {
+    const packed = packAtlas([
+      {
+        frame: "a",
+        svg: '<svg xmlns="x" viewBox="0 0 24 24"><path d="M1 1"/></svg>\n',
+        w: 16,
+        h: 16,
+      },
+      { frame: "b", svg: '<svg viewBox="0 0 32 12"><rect/></svg>', w: 32, h: 12 },
+    ]);
+    expect(packed.map.frames).toEqual({
+      a: { x: 0, y: 0, w: 16, h: 16 },
+      b: { x: 17, y: 0, w: 32, h: 12 },
+    });
+    expect(packed.sheet).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="16">' +
+        '<svg x="0" y="0" width="16" height="16" viewBox="0 0 24 24"><path d="M1 1"/></svg>' +
+        '<svg x="17" y="0" width="32" height="12" viewBox="0 0 32 12"><rect/></svg></svg>\n',
+    );
+  });
+
+  it("refuses an icon without a viewBox", () => {
+    expect(() => packAtlas([{ frame: "a", svg: "<svg><rect/></svg>", w: 16, h: 16 }])).toThrow(
+      "a: not a single root <svg> with a viewBox",
+    );
   });
 
   it("sizes the name glyph as the name label", () => {

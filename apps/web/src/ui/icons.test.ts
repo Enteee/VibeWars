@@ -168,13 +168,6 @@ describe("skill icons (#719)", () => {
           fs.readFileSync(path.join(out, "skill", file), "utf8"),
         );
       }
-      // The arena's sheet (#1671): a skill PR that adds a status or a ward
-      // without regenerating would leave the scene a frame short.
-      for (const file of ["arena.svg", "arena.json"]) {
-        expect(fs.readFileSync(path.join(PUBLIC, "icons", "atlas", file), "utf8"), file).toBe(
-          fs.readFileSync(path.join(out, "atlas", file), "utf8"),
-        );
-      }
     } finally {
       fs.rmSync(out, { recursive: true, force: true });
     }
