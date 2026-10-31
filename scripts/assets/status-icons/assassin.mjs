@@ -113,4 +113,12 @@ export const ASSASSIN_STATUS_ICONS = {
       `<path d="M5 6L10 4V10L5 12ZM19 6L14 4V10L19 12Z" ${stroke(c, 1.5)}/>` +
       `<path d="M12 3V18M9.5 18H14.5M12 18V21" ${stroke(c, 2)}/>`,
   ],
+  // Death trigger of #1762, stand-in: a skull with a promise's dash.
+  "assassins-promise": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
+      `<path d="M10 10.5h4" ${stroke(c, 1.6)}/>`,
+  ],
 };

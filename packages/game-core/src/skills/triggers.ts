@@ -49,6 +49,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-interrupted"
   | "bearer-creates-creature"
   | "bearer-chant-or-shout-ends"
+  | "bearer-dies"
   | "ends"
   | "ends-early"
   | "expires"
@@ -188,6 +189,7 @@ export function fireChangeTriggers(
         .filter(
           (trigger) =>
             trigger.on === "ends" ||
+            (trigger.on === "bearer-dies" && change.death) ||
             (trigger.on === "expires" && change.expired) ||
             (trigger.on === "ends-early" && !change.expired),
         )

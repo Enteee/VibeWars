@@ -79,4 +79,6 @@ export const MONK_ICONS = {
   "monk.watchful-spirit": { glyph: "eye-plus", modifier: "upkeep" },
   "monk.kirins-wrath": { glyph: "horn-ring" },
   "monk.signet-of-removal": { glyph: "signet-strip" },
+  // Stand-in for the death trigger of #1762, until its art.
+  "monk.dwaynas-sorrow": { glyph: "heal", modifier: "finale" },
 };

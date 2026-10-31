@@ -24,7 +24,8 @@ export type MonkStatusId =
   | "live-vicariously"
   | "purifying-veil"
   | "pacifism"
-  | "watchful-spirit";
+  | "watchful-spirit"
+  | "dwaynas-sorrow";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -247,6 +248,28 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         ],
         target: "bearer",
         skillId: "monk.watchful-spirit",
+      },
+    ],
+  }),
+  // "...If an ally dies while under the effects of Dwayna's Sorrow, your
+  // party is healed for 5...50" (#1762): 41, at any distance, as Heal
+  // Party's `PartyArea`.
+  "dwaynas-sorrow": define("dwaynas-sorrow", "Dwayna's Sorrow", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          {
+            kind: "splash",
+            hits: "party",
+            radius: Number.POSITIVE_INFINITY,
+            maxTargets: undefined,
+            effects: [{ kind: "heal", amount: { flat: 41 }, perStatusOnTarget: [] }],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.dwaynas-sorrow",
       },
     ],
   }),

@@ -2,6 +2,7 @@
 
 exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
 {
+  "assassin.assassins-promise": "hex",
   "assassin.beguiling-haze": "interrupt condition",
   "assassin.black-lotus-strike": "",
   "assassin.black-mantis-thrust": "condition",
@@ -277,6 +278,7 @@ exports[`skillRoles > tags every monk skill the same way every time 1`] = `
   "monk.divine-healing": "healing",
   "monk.draw-conditions": "removal",
   "monk.dwaynas-kiss": "healing",
+  "monk.dwaynas-sorrow": "",
   "monk.ethereal-light": "healing",
   "monk.gift-of-health": "healing",
   "monk.glimmer-of-light": "healing",
@@ -359,6 +361,7 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.faintheartedness": "hex",
   "necromancer.fetid-ground": "condition",
   "necromancer.gaze-of-contempt": "",
+  "necromancer.icy-veins": "hex",
   "necromancer.insidious-parasite": "hex",
   "necromancer.life-siphon": "healing hex",
   "necromancer.lifebane-strike": "",
@@ -372,7 +375,9 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.plague-signet": "removal condition",
   "necromancer.plague-touch": "removal condition",
   "necromancer.price-of-failure": "hex",
+  "necromancer.putrid-bile": "hex",
   "necromancer.putrid-explosion": "",
+  "necromancer.reapers-mark": "hex",
   "necromancer.reckless-haste": "hex",
   "necromancer.rend-enchantments": "",
   "necromancer.rigor-mortis": "hex",

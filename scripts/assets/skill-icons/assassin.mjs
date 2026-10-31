@@ -66,4 +66,6 @@ export const ASSASSIN_ICONS = {
   "assassin.impale": { glyph: "dagger-wound", modifier: "down" },
   "assassin.siphon-speed": { glyph: "blink-bars", modifier: "up" },
   "assassin.way-of-the-fox": { glyph: "dagger-unblock", modifier: "clock" },
+  // Stand-in for the death trigger of #1762, until its art.
+  "assassin.assassins-promise": { glyph: "dagger", modifier: "corpse" },
 };

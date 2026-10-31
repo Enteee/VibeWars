@@ -140,4 +140,12 @@ export const MONK_STATUS_ICONS = {
       `<circle cx="12" cy="9" r="1.8" ${stroke(c, 1.6)}/>` +
       `<path d="M12 14v7M8.5 17.5h7" ${stroke(c, 2.2)}/>`,
   ],
+  // Death trigger of #1762, stand-in: a skull with a tear.
+  "dwaynas-sorrow": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8.5l-1.3 2.2a1.3 1.3 0 1 0 2.6 0z" fill="${c}"/>`,
+  ],
 };
