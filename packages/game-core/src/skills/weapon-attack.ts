@@ -551,19 +551,21 @@ export function landBlow(
  * Shards' fourth hit splashes, then ends it. Returns those endings,
  * after what the weapon itself does to whoever it hits (#1239). A rider
  * for attack skills only rides a blow `withAttackSkill` (#1551), and one
- * for a weapon class only a blow of that weapon (#1629).
+ * for a weapon class only a blow of that weapon (#1629). `dealt`: the
+ * Health the blow took, what a Vampiric Horror's owner gains (#1836).
  */
 export function attackHitRiders(
   attacker: Combatant,
   victim: Combatant,
   mainHand: ResolvedWeapon,
   withAttackSkill: boolean,
+  dealt: number,
   rng: SimulationRng,
   rules: CombatRules,
   surroundings: Surroundings,
   fired: FiredTrigger[],
 ): CombatEvent[] {
-  const onHit = weaponOnHit(attacker, victim, mainHand.weapon, rng, rules, surroundings);
+  const onHit = weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings);
   const physical = isPhysicalDamage(mainHand.damageType);
   for (const { id } of attacker.statuses.active) {
     const definition = getStatusDefinition(id);
@@ -604,6 +606,7 @@ function weaponOnHit(
   attacker: Combatant,
   victim: Combatant,
   weapon: Weapon,
+  dealt: number,
   rng: SimulationRng,
   rules: CombatRules,
   surroundings: Surroundings,
@@ -611,13 +614,20 @@ function weaponOnHit(
   if (weapon.onHit.length === 0) {
     return [];
   }
-  return applyEffects(weapon.onHit, {
+  const events = applyEffects(weapon.onHit, {
     caster: attacker,
     target: victim,
     rng,
     rules,
     surroundings,
   }).filter((event) => event.kind !== "interrupt-missed");
+  // Vampiric Horror's owner gains what its blow took (#1836): a gain, not a heal.
+  const ownerId = surroundings.get(attacker.id)?.creature?.ownerId;
+  const owner = ownerId === undefined ? undefined : surroundings.get(ownerId)?.combatant;
+  if (owner !== undefined && weapon.onHit.some(({ kind }) => kind === "owner-gains-damage-dealt")) {
+    gainHealth(owner, dealt, events);
+  }
+  return events;
 }
 
 /**
@@ -816,6 +826,7 @@ function strike(
       victim,
       snapshot.mainHand,
       false,
+      Math.max(0, before - victim.health),
       rng,
       rules,
       swing.surroundings,
@@ -1052,6 +1063,7 @@ export function resolveAttackSkillOutcome(
           victim,
           snapshot.mainHand,
           true,
+          Math.max(0, before - victim.health),
           rng,
           rules,
           surroundings,

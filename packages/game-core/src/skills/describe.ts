@@ -1663,6 +1663,7 @@ const SPLASH_SIDE: Readonly<Record<SplashEffect["hits"], string>> = {
   allies: "allies",
   party: "party members",
   "own-spirits": "your spirits",
+  "own-minions": "your other minions",
 };
 
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
@@ -1670,6 +1671,10 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   // Protective Was Kaolai's reaches the whole party, at any distance (#1434).
   if (hits === "party") {
     return "All party members";
+  }
+  // Feast for the Dead's, wherever they are (#1836).
+  if (hits === "own-minions" && radius === Number.POSITIVE_INFINITY) {
+    return "Your other minions";
   }
   const area = AREA_TEXT.get(radius);
   // Consume Soul's splash reaches only summoned creatures (#1309);
@@ -2209,6 +2214,10 @@ function describeEffect(
       return { text: "Teleports target to you", magnitude: undefined };
     case "destroy-target-spirit":
       return { text: "Destroys target allied spirit", magnitude: undefined };
+    case "destroy-target-minion":
+      return { text: "Destroys target minion", magnitude: undefined };
+    case "owner-gains-damage-dealt":
+      return { text: "Its owner gains Health equal to the damage it deals", magnitude: undefined };
     case "destroy-allied-spirits":
       return {
         text: `Destroys every allied spirit ${AREA_TEXT.get(effect.radius) ?? `within ${String(effect.radius)}`}`,
@@ -2631,6 +2640,8 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
+  "own-minion": "One of your minions",
+  "allied-minion": "An allied minion",
   "single-ally-not-spirit": "One ally, not a spirit",
   companion: "Your pet",
   "living-companion": "Your living pet",

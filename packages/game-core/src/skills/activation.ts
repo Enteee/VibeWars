@@ -55,6 +55,8 @@ export type ActivationRejection =
   | "invalid-target-enemy"
   // A spirit skill on anything but a living spirit of your team (#1309).
   | "invalid-target-not-allied-spirit"
+  | "invalid-target-not-own-minion"
+  | "invalid-target-not-allied-minion"
   // An echo on a spirit (#1423): GW1's "Cannot target spirits".
   | "invalid-target-spirit"
   | "out-of-range"
@@ -114,6 +116,8 @@ export interface ActivationRequest {
   readonly targetPosition: Vec2 | undefined;
   /** What kind of creature the target is (#1309); `undefined` for a player or a dummy. */
   readonly targetCreatureKind: CreatureKind | undefined;
+  /** Who made the target, when it is a creature (#1836): `undefined` for anyone else. */
+  readonly targetCreatureOwnerId: string | undefined;
   /**
    * The key the slot used waits under (#469): a copy's, or the skill's
    * own id, which it is when left out.
@@ -142,7 +146,10 @@ export interface ActivationRequest {
 export function targetRuleAllows(
   rule: TargetRule,
   caster: Pick<Combatant, "id" | "team">,
-  target: Pick<Combatant, "id" | "team"> & { readonly creatureKind: CreatureKind | undefined },
+  target: Pick<Combatant, "id" | "team"> & {
+    readonly creatureKind: CreatureKind | undefined;
+    readonly creatureOwnerId: string | undefined;
+  },
 ): ActivationRejection | undefined {
   const isSelf = target.id === caster.id;
   const isAlly = !isSelf && target.team === caster.team;
@@ -175,6 +182,14 @@ export function targetRuleAllows(
       return isAlly && target.creatureKind === "spirit"
         ? undefined
         : "invalid-target-not-allied-spirit";
+    case "own-minion":
+      return target.creatureKind === "minion" && target.creatureOwnerId === caster.id
+        ? undefined
+        : "invalid-target-not-own-minion";
+    case "allied-minion":
+      return target.team === caster.team && target.creatureKind === "minion"
+        ? undefined
+        : "invalid-target-not-allied-minion";
   }
 }
 
@@ -228,6 +243,7 @@ function checkTarget(request: ActivationRequest): ActivationCheck {
     id: target.id,
     team: target.team,
     creatureKind: request.targetCreatureKind,
+    creatureOwnerId: request.targetCreatureOwnerId,
   });
   const byLife = targetLivenessAllows(skill.target, target);
   // A resurrection on yourself or a foe is refused for who, not for being

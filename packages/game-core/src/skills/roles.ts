@@ -72,6 +72,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "recharge-others":
     case "pull-to-caster":
     case "destroy-target-spirit":
+    case "destroy-target-minion":
+    case "owner-gains-damage-dealt":
     case "destroy-allied-spirits":
     case "disable-skill":
     case "lengthen-recharge":

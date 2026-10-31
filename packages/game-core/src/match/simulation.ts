@@ -383,6 +383,13 @@ export interface Creature {
    * read on its owner's rank at arrival (#1603).
    */
   readonly deathBurst: ArrivedDeathBurst | undefined;
+  /** From the template (#1836): who stands up where it falls, its owner's. */
+  readonly replacedBy: CreatureTemplate["replacedBy"];
+  /**
+   * The exploitable corpses it leaves when it dies (#1836), read at
+   * summoning; each exploit spends one, and it goes with the last.
+   */
+  corpsesLeft: number;
   /**
    * The skill on its owner's bar it travels with (#1046): a companion.
    * `undefined`: summoned by a cast.
@@ -936,6 +943,14 @@ export class MatchSimulation {
    * removed once, at its end, never mid-loop.
    */
   readonly #leaving = new Set<string>();
+  /** Who stands up where a minion fell this step (#1836), after the fallen leave. */
+  readonly #replacements: {
+    readonly ownerId: string;
+    readonly skillId: string;
+    readonly creature: CreatureTemplate;
+    readonly count: number;
+    readonly at: Vec2;
+  }[] = [];
   /** Priest Annihilation's shrines (#1186), one a team; `[]` for every other match. */
   readonly #shrines: readonly Shrine[];
   /** Priest waves gone by (#1186): the next is at `PRIEST_WAVE_SECONDS` times one more. */
@@ -1316,8 +1331,13 @@ export class MatchSimulation {
     count: number,
     at: Vec2,
     companion: boolean,
+    replacement = false,
   ): void {
-    if (template.kind === "minion") {
+    if (template.onePerOwner) {
+      this.#killOlder(owner, skillId);
+    }
+    // A replacement takes the fallen one's place, one for one (#1836).
+    if (template.kind === "minion" && !replacement) {
       this.#cullMinions(owner, skillId, count);
     }
     let creatures = 0;
@@ -1403,6 +1423,11 @@ export class MatchSimulation {
                     owner.combatant,
                   ),
                 },
+          replacedBy: template.replacedBy,
+          corpsesLeft:
+            template.leavesCorpses === undefined
+              ? 0
+              : Math.round(resolveMagnitude(template.leavesCorpses, owner.combatant)),
           companionSkillId: companion ? skillId : undefined,
           leaderId: undefined,
           mode: "guard",
@@ -1412,6 +1437,43 @@ export class MatchSimulation {
         this.#logFired(fireCreationTriggers(owner.combatant, id, this.#triggerContext()));
       }
     }
+  }
+
+  /**
+   * Kills `owner`'s living creatures of `skillId` (#1836): Flesh Golem's
+   * one at a time, the old one dying as the new one comes. Each is a
+   * death, logged as the skill, as a culled minion's.
+   */
+  #killOlder(owner: ParticipantRecord, skillId: string): void {
+    const events: CombatEvent[] = [];
+    for (const record of this.#participants.values()) {
+      if (
+        record.creature?.ownerId === owner.id &&
+        record.creature.skillId === skillId &&
+        !record.combatant.dead &&
+        !this.#leaving.has(record.id)
+      ) {
+        record.combatant.health = 0;
+        record.combatant.dead = true;
+        events.push({ kind: "death", targetId: record.id });
+      }
+    }
+    if (events.length === 0) {
+      return;
+    }
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: owner.id,
+      skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events,
+    });
+    this.#recordDeaths(events);
   }
 
   /**
@@ -2971,6 +3033,7 @@ export class MatchSimulation {
     this.#tallyAggression();
     this.#burstLeaving();
     this.#removeLeaving();
+    this.#replaceFallen();
     this.#priestWave();
     // After every death, before the match end: a point on the last tick counts.
     this.#advanceRelics();
@@ -3232,6 +3295,8 @@ export class MatchSimulation {
       target: skill.target === "self" ? record.combatant : target?.combatant,
       targetPosition: skill.target === "self" ? record.position : target?.position,
       targetCreatureKind: skill.target === "self" ? record.creature?.kind : target?.creature?.kind,
+      targetCreatureOwnerId:
+        skill.target === "self" ? record.creature?.ownerId : target?.creature?.ownerId,
       key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
       spent: record.combatant.cast.spent,
@@ -5322,6 +5387,7 @@ export class MatchSimulation {
           target.combatant,
           projectile.weaponSnapshot.mainHand,
           skillHit !== undefined,
+          Math.max(0, before - target.combatant.health),
           this.#rng,
           this.#ruleset.combat,
           this.#participants,
@@ -5562,11 +5628,13 @@ export class MatchSimulation {
     for (const event of events) {
       // A destroyed spirit (#1309) is no death: it leaves as an expired
       // one does, at the end of the step, and nothing answers it.
-      if (event.kind === "spirit-destroyed") {
-        const spirit = this.#participants.get(event.targetId);
-        if (spirit !== undefined) {
-          spirit.respawnInSeconds = Number.POSITIVE_INFINITY;
-          this.#leaving.add(spirit.id);
+      // A destroyed minion (#1836) still leaves its corpses and its
+      // replacement.
+      if (event.kind === "creature-destroyed") {
+        const destroyed = this.#participants.get(event.targetId);
+        if (destroyed !== undefined) {
+          destroyed.respawnInSeconds = Number.POSITIVE_INFINITY;
+          this.#creatureFell(destroyed);
         }
         continue;
       }
@@ -5603,7 +5671,7 @@ export class MatchSimulation {
               ? this.#respawnSeconds(victim)
               : Number.POSITIVE_INFINITY;
           if (victim.creature.onDeath === "vanish") {
-            this.#leaving.add(victim.id);
+            this.#creatureFell(victim);
           } else if (victim.creature.onDeath === "lie") {
             this.#deathPenalty(victim);
           }
@@ -5617,6 +5685,44 @@ export class MatchSimulation {
         this.#deathPenalty(victim);
         this.#reapSoul(victim);
         this.recordDeath(victim.combatant.team);
+      }
+    }
+  }
+
+  /**
+   * A spirit or minion that died or was destroyed: it leaves at the end of
+   * the step, unless it lies as corpses to exploit (#1836), and its
+   * replacement, if it has one, stands up there after it.
+   */
+  #creatureFell(record: ParticipantRecord): void {
+    const creature = record.creature;
+    if (creature === undefined) {
+      return;
+    }
+    if (creature.corpsesLeft <= 0) {
+      this.#leaving.add(record.id);
+    }
+    if (creature.replacedBy !== undefined && creature.ownerId !== undefined) {
+      this.#replacements.push({
+        ownerId: creature.ownerId,
+        skillId: creature.skillId ?? "",
+        ...creature.replacedBy,
+        at: record.position,
+      });
+    }
+  }
+
+  /**
+   * Who stands up where a minion fell this step (#1836), once the fallen
+   * have left, so there is room: its owner's, unless its owner is dead or
+   * gone. As many as `MAX_CREATURES` leaves room for, past no cap.
+   */
+  #replaceFallen(): void {
+    const replacements = this.#replacements.splice(0);
+    for (const { ownerId, skillId, creature, count, at } of replacements) {
+      const owner = this.#participants.get(ownerId);
+      if (owner !== undefined && !owner.combatant.dead) {
+        this.#summon(owner, skillId, creature, count, at, false, true);
       }
     }
   }
@@ -5903,7 +6009,13 @@ export class MatchSimulation {
     target: ParticipantRecord | undefined,
   ): ParticipantRecord | undefined {
     const corpse = this.#freshCorpse(record, rule, target);
-    if (corpse !== undefined) {
+    if (corpse?.creature !== undefined) {
+      // A Flesh Golem's (#1836) is several, and it goes with the last.
+      corpse.creature.corpsesLeft -= 1;
+      if (corpse.creature.corpsesLeft <= 0) {
+        this.#leaving.add(corpse.id);
+      }
+    } else if (corpse !== undefined) {
       corpse.corpseExploited = true;
     }
     return corpse;

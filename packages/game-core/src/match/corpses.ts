@@ -17,11 +17,18 @@ export interface CorpseCandidate {
   readonly corpseExploited: boolean;
 }
 
-/** Dead, not a creature (it leaves none, ADR-0035), not yet exploited. */
+/**
+ * Dead and not yet exploited; a creature only while it has corpses left,
+ * a Flesh Golem's (#1836): any other leaves none (ADR-0035).
+ */
 export function isFreshCorpse(
   body: Pick<CorpseCandidate, "combatant" | "creature" | "corpseExploited">,
 ): boolean {
-  return body.combatant.dead && body.creature === undefined && !body.corpseExploited;
+  return (
+    body.combatant.dead &&
+    !body.corpseExploited &&
+    (body.creature === undefined || body.creature.corpsesLeft > 0)
+  );
 }
 
 /**

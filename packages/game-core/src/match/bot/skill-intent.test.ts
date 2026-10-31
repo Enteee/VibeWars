@@ -103,6 +103,9 @@ const NO_BOT_USE = new Set([
   // Minions, wells and enchantment strips: no rule for them yet.
   "necromancer.animate-bone-horror",
   "necromancer.animate-bone-minions",
+  "necromancer.animate-vampiric-horror",
+  "necromancer.animate-flesh-golem",
+  "necromancer.animate-shambling-horror",
   "necromancer.gaze-of-contempt",
   "necromancer.rend-enchantments",
   // An enchantment strip whose payoff is Health loss, not damage (#1648).
