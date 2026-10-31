@@ -184,10 +184,15 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M12 4v16M5 8l14 8M19 8L5 16" ${stroke(c, 1.8)}/>` +
       `<path d="M10 5.5l2 2 2-2M10 18.5l2-2 2 2" ${stroke(c, 1.6)}/>`,
   ],
-  // Stance (#1761, stand-in): a looped arrow, preparations come back sooner.
+  // Stance (#1761, #1855): a bow and a recharge arrow, preparations come back sooner.
   "practiced-stance": [
     "stance",
     (c) =>
-      `<path d="M17 8a6 6 0 1 0 1 6" ${stroke(c, 2)}/>` + `<path d="M14 7h4V3" ${stroke(c, 2)}/>`,
+      `<g transform="translate(5,5) scale(0.58)">` +
+      `<path d="M7 2.5C0 8 0 16 7 21.5" ${stroke(c, 3)}/>` +
+      `<path d="M7 2.5V21.5" ${stroke(c, 1.6)}/>` +
+      `<path d="M20 9a5.2 5.2 0 1 0 1.2 4.4" ${stroke(c, 2.6)}/>` +
+      `<path d="M17.5 6.5L20.5 9.3L17 11" ${stroke(c, 2.4)}/>` +
+      `</g>`,
   ],
 };

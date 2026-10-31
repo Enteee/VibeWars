@@ -140,6 +140,10 @@ const NO_BOT_USE = new Set([
   // A buff of your spirits, and a spirit pulled to you (#1777): no rule for either.
   "ritualist.spiritleech-aura",
   "ritualist.draw-spirit",
+  // A buff only while casting a binding ritual, and a buff of an allied
+  // summoned creature that destroys it (#1827): no rule for either.
+  "ritualist.armor-of-unfeeling",
+  "ritualist.signet-of-ghostly-might",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",

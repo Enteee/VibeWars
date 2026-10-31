@@ -2285,6 +2285,63 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // spirit; it keeps its owner and its timer.
     effects: [{ kind: "pull-to-caster" }],
   },
+  // The PvP Communing pair (#1827), each under its base record's gwId.
+  {
+    id: "ritualist.armor-of-unfeeling",
+    name: "Armor of Unfeeling",
+    gwId: 1232,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 10...35 seconds, you have 10 base damage reduction while
+    // casting binding rituals": 30 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "armor-of-unfeeling", durationSeconds: 30 }],
+  },
+  {
+    id: "ritualist.signet-of-ghostly-might",
+    name: "Signet of Ghostly Might",
+    gwId: 1742,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "allied-summoned-creature",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "Target allied summoned creature's attacks deal 5...35 more
+    // damage. After 10 seconds, that creature is destroyed": the +29 and
+    // the destroying are the status's.
+    effects: [{ kind: "apply-status", statusId: "signet-of-ghostly-might", durationSeconds: 10 }],
+  },
 ];
 
 /**

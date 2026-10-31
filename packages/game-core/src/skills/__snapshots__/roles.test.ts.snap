@@ -603,6 +603,7 @@ exports[`skillRoles > tags every ranger skill the same way every time 1`] = `
 exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
 {
   "ritualist.anguish": "",
+  "ritualist.armor-of-unfeeling": "",
   "ritualist.blind-was-mingson": "condition",
   "ritualist.bloodsong": "",
   "ritualist.boon-of-creation": "healing",
@@ -641,6 +642,7 @@ exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
   "ritualist.shadowsong": "",
   "ritualist.shelter": "defence",
   "ritualist.signet-of-creation": "",
+  "ritualist.signet-of-ghostly-might": "",
   "ritualist.signet-of-spirits": "",
   "ritualist.soothing": "",
   "ritualist.spirit-boon-strike": "healing",

@@ -188,6 +188,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "weapon-of-fury": icon("weapon-of-fury"),
   "weapon-of-renewal": icon("weapon-of-renewal"),
   "spiritleech-aura": icon("spiritleech-aura"),
+  "armor-of-unfeeling": icon("armor-of-unfeeling"),
+  "signet-of-ghostly-might": icon("signet-of-ghostly-might"),
   "ward-against-melee": icon("ward-against-melee"),
   "well-of-suffering": icon("well-of-suffering"),
   "well-of-blood": icon("well-of-blood"),

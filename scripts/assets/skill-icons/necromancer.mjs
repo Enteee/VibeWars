@@ -89,7 +89,7 @@ export const NECROMANCER_ICONS = {
   "necromancer.reapers-mark": { glyph: "death-bolt" },
   "necromancer.putrid-bile": { glyph: "death-bile" },
   "necromancer.icy-veins": { glyph: "death-frost" },
-  // "N for each X" (#1760), stand-ins until their art card.
-  "necromancer.desecrate-enchantments": { glyph: "ring-rend", modifier: "area" },
-  "necromancer.defile-enchantments": { glyph: "ring-rend-burst", modifier: "area" },
+  // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
+  "necromancer.desecrate-enchantments": { glyph: "each-desecrate" },
+  "necromancer.defile-enchantments": { glyph: "each-defile" },
 };

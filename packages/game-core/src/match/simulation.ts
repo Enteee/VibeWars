@@ -72,6 +72,7 @@ import {
   usableMidAction,
   isAllyOrSelfRule,
   isCompanionRule,
+  isSummonedCreature,
   payCost,
   type ActivationCheck,
   type ActivationRejection,
@@ -114,6 +115,7 @@ import {
   aggregateModifiers,
   clampPips,
   ENERGY_PER_PIP,
+  getStatusDefinition,
   isStatusId,
   isUnderAnother,
   MAX_PIPS,
@@ -2962,14 +2964,37 @@ export class MatchSimulation {
       const nearSpirit =
         modifiers.healthPerSecondNearSpirit !== 0 &&
         spiritsWithin(this.#participants.values(), record.position, AREA_EARSHOT) > 0;
+      // Signet of Ghostly Might's (#1827): who put each status on a
+      // summoned creature that destroys it as it runs out.
+      const destroyers = new Map(
+        isSummonedCreature(record.creature?.kind)
+          ? record.combatant.statuses.active
+              .filter(({ id }) => getStatusDefinition(id).destroysBearerOnExpiry)
+              .map(({ id, sourceId }) => [id, sourceId] as const)
+          : [],
+      );
       const statusEvents = advanceStatuses(record.combatant, dt, natural + rot, nearSpirit);
+      // One ran out on a creature still standing: it is destroyed as
+      // Rupture Soul destroys a spirit, no corpse, no killer, no morale.
+      const ranOut = statusEvents.find(
+        (event) => event.kind === "status-expired" && destroyers.has(event.statusId),
+      );
+      const destroyedBy =
+        ranOut?.kind === "status-expired" && !statusEvents.some((event) => event.kind === "death")
+          ? destroyers.get(ranOut.statusId)
+          : undefined;
+      if (destroyedBy !== undefined) {
+        record.combatant.health = 0;
+        record.combatant.dead = true;
+        statusEvents.push({ kind: "creature-destroyed", targetId: record.id });
+      }
       if (statusEvents.length > 0) {
         const drained = statusEvents.some((event) => event.kind === "damage");
         this.#log.push({
           tick: this.#tick,
           atSeconds: this.#elapsedSeconds,
           cause: "degeneration",
-          sourceId: drained ? sources.draining : sources.healing,
+          sourceId: destroyedBy ?? (drained ? sources.draining : sources.healing),
           skillId: undefined,
           weaponId: undefined,
           attributeId: undefined,
@@ -2984,7 +3009,9 @@ export class MatchSimulation {
       // `combatant.dead`: the flag was checked above, so narrowing would
       // claim this is unreachable, and losing this branch would leave a
       // corpse mid-cast that never respawns.
-      if (statusEvents.some((event) => event.kind === "death")) {
+      if (
+        statusEvents.some((event) => event.kind === "death" || event.kind === "creature-destroyed")
+      ) {
         this.#recordDeaths(statusEvents);
         continue;
       }

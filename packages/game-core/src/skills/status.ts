@@ -579,6 +579,22 @@ export interface StatusDefinition {
   readonly damageReductionPerRank:
     { readonly attributeId: string; readonly perRank: number; readonly max: number } | undefined;
   /**
+   * As `damageReduction`, but only while the bearer is activating a skill
+   * of `skillType` (#1827): Armor of Unfeeling's "10 base damage reduction
+   * while casting binding rituals". Read as each packet lands, so it ends
+   * the moment the activation finishes or is interrupted. `undefined`: none.
+   */
+  readonly damageReductionWhileCasting:
+    { readonly skillType: SkillType; readonly amount: number } | undefined;
+  /**
+   * The bearer is destroyed when this runs its time (#1827), as
+   * `destroy-target-spirit` destroys: no corpse, no killer, no morale.
+   * Signet of Ghostly Might's "After 10 seconds, that creature is
+   * destroyed". Only a summoned creature is; a removal before its time,
+   * or the bearer dying first, destroys nothing.
+   */
+  readonly destroysBearerOnExpiry: boolean;
+  /**
    * The share of each physical hit on the bearer that its source takes
    * instead (#1108): Symbiotic Bond's 0.5, rounded down. 0: none.
    */

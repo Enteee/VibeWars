@@ -68,12 +68,12 @@ export const ASSASSIN_ICONS = {
   "assassin.impale": { glyph: "dagger-spikes" },
   "assassin.siphon-speed": { glyph: "chevrons-siphon", modifier: "up" },
   "assassin.way-of-the-fox": { glyph: "fox-head", modifier: "clock" },
+  // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
+  "assassin.sadists-signet": { glyph: "each-sadist" },
   // Shadow Step and return (#1847): the mark on top, the way back under it; Return only steps one way.
   "assassin.shadow-fang": { glyph: "step-fang" },
   "assassin.aura-of-displacement": { glyph: "step-aura" },
   "assassin.shadow-meld": { glyph: "step-meld" },
   "assassin.shadow-of-haste": { glyph: "step-haste" },
   "assassin.return": { glyph: "blink-ally", modifier: "area" },
-  // "N for each X" (#1760), stand-ins until their art card.
-  "assassin.sadists-signet": { glyph: "signet-plus", modifier: "bleed" },
 };

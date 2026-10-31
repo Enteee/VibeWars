@@ -1,4 +1,4 @@
-import { C, stroke } from "../icon-kit.mjs";
+import { C, perEach, stroke } from "../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, [import("../icon-kit.mjs").Category, import("../icon-kit.mjs").Glyph]>>} */
 export const DERVISH_STATUS_ICONS = {
@@ -235,27 +235,26 @@ export const DERVISH_STATUS_ICONS = {
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${c}"/>`,
   ],
-  // Skill effect (#1761, stand-in): a stretched bar with an arrow, the
+  // Skill effect (#1761, #1855): a scythe over a long drawn-out arrow, the
   // next Dervish enchantment lasts longer.
   "extend-enchantments": [
     "skill-effect",
     (c) =>
-      `<path d="M4 12h14M15 9l3 3-3 3" ${stroke(c, 2)}/>` + `<path d="M4 8v8" ${stroke(c, 1.8)}/>`,
+      `<g transform="translate(5,5) scale(0.58)">` +
+      `<path d="M6 17L9.5 2.5" ${stroke(c, 2.8)}/>` +
+      `<path d="M9.5 2.5C17 1.5 22.5 5.5 22.5 11C18.5 8 14.5 7.5 9 9Z" fill="${c}"/>` +
+      `<path d="M5 21.5H22.5M19.5 18.8L22.5 21.5L19.5 24.2" ${stroke(c, 2.4)}/>` +
+      `</g>`,
   ],
-  // "N for each X" (#1760), stand-ins until their art card.
-  // Enchantment: a small bolt inside an enchantment ring, energy for each
-  // enchantment; Channeling is the bolt among foe dots.
+  // "N for each X" (#1850): the skill's drawing, shrunk into the frame.
   "arcane-zeal": [
     "enchantment",
     (c) =>
-      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 1.8)}/>` +
-      `<path d="M13 7l-3 5h3l-1.5 5" ${stroke(c, 2)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${perEach("zeal", c, 2.8)}</g>`,
   ],
-  // Enchantment: a cross over stacked rings, health for each enchantment.
   "mystic-vigor": [
     "enchantment",
     (c) =>
-      `<path d="M12 3v11M6.5 8.5h11" ${stroke(c, 2.4)}/>` +
-      `<path d="M5 18h14M7 21h10" ${stroke(c, 2)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${perEach("vigor", c, 2.8)}</g>`,
   ],
 };

@@ -16,7 +16,7 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { C, germ, stepAndReturn, stroke } from "./icon-kit.mjs";
+import { C, germ, perEach, stepAndReturn, stroke } from "./icon-kit.mjs";
 import { WEAPON_MARKS } from "./weapon-marks.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
@@ -1800,6 +1800,37 @@ const skillGlyph = {
     `<g transform="translate(13,0)">${spiritPost()}</g>` +
     inkLine("M9 4.5L5.5 8L9 11.5M5 4.5L1.5 8L5 11.5", 2) +
     inkLine("M1.5 15.5H22.5", 2.4),
+  // Own-skill modifiers (#1761, #1855): each its own dominant shape.
+  // Divine Spirit: a halo over the energy bolt.
+  "halo-bolt": () =>
+    `<ellipse cx="12" cy="3.8" rx="6" ry="2.2" ${stroke(C.ink, 1.9)}/>` +
+    inkFill("M13.5 7L6.5 15H11L10 22L18 12.5H13Z"),
+  // Blessed Aura: a figure inside a ring, with the ring's open end drawn out as an arrow.
+  "ring-figure-arrow": () =>
+    `<path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5" ${stroke(C.ink, 2)}/>` +
+    `<circle cx="12" cy="9" r="2.4" fill="${C.ink}"/>` +
+    inkFill("M8.5 18V13.5Q12 11.2 15.5 13.5V18Z") +
+    inkLine("M17.5 8.5H23M20.5 5.7L23.3 8.5L20.5 11.3", 1.8),
+  // Healer's Covenant: two hands clasped over a small plus.
+  "hands-plus": () =>
+    inkLine("M2 20L8 12H13", 3.6) +
+    inkLine("M22 20L16 12H11", 3.6) +
+    `<circle cx="12" cy="12" r="2.6" fill="${C.ink}"/>` +
+    inkLine("M12 2.5V8.5M9 5.5H15", 2),
+  // Holy Haste: a heavy plus with three speed streaks behind it.
+  "plus-streaks": () =>
+    inkLine("M15 4V20M7.5 12H22.5", 4.4) + inkLine("M1.5 7H6.5M0.5 12H4M1.5 17H6.5", 2),
+  // Practiced Stance: a drawn bow and the recharge arrow beside it.
+  "bow-recharge": () =>
+    inkLine("M7 2.5C0 8 0 16 7 21.5", 2.8) +
+    inkLine("M7 2.5V21.5", 1.2) +
+    inkLine("M20 9a5.2 5.2 0 1 0 1.2 4.4", 2.2) +
+    inkLine("M17.5 6.5L20.5 9.3L17 11", 2),
+  // Extend Enchantments: a scythe whose aura is drawn out into a long dashed ellipse.
+  "scythe-stretch": () =>
+    inkLine("M6 17L9.5 2.5", 2.4) +
+    inkFill("M9.5 2.5C17 1.5 22.5 5.5 22.5 11C18.5 8 14.5 7.5 9 9Z") +
+    inkLine("M5 21.5H22.5M19.5 18.8L22.5 21.5L19.5 24.2", 2),
   // Soothing slows adrenaline: a wave pressed flat above a bar.
   "spirit-calm": () =>
     spiritPost() +
@@ -2959,6 +2990,14 @@ const skillGlyph = {
     `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(C.ink, 1.8)}/>` +
     `<circle cx="6.2" cy="8" r="1.1" fill="${C.ink}"/><circle cx="9.8" cy="8" r="1.1" fill="${C.ink}"/>` +
     `<path d="M17.5 12v10M12.5 17h10" ${stroke(C.ink, 2.4)}/>`,
+  // "N for each X" (#1850): the counted thing and its gift on top, three pips under.
+  "each-desecrate": () => perEach("desecrate", C.ink, 1.8),
+  "each-defile": () => perEach("defile", C.ink, 1.8),
+  "each-victory": () => perEach("victory", C.ink, 1.8),
+  "each-sadist": () => perEach("sadist", C.ink, 1.8),
+  "each-channeling": () => perEach("channeling", C.ink, 1.8),
+  "each-zeal": () => perEach("zeal", C.ink, 1.8),
+  "each-vigor": () => perEach("vigor", C.ink, 1.8),
   // Shadow Step and return (#1847): the mark on top, the way back under it.
   "step-fang": () => stepAndReturn("fang", C.ink, 2),
   "step-aura": () => stepAndReturn("aura", C.ink, 1.8),

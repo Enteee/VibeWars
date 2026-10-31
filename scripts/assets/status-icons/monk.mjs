@@ -181,32 +181,45 @@ export const MONK_STATUS_ICONS = {
       `<circle cx="6.2" cy="8" r="1.1" fill="${c}"/><circle cx="9.8" cy="8" r="1.1" fill="${c}"/>` +
       `<path d="M17.5 12v10M12.5 17h10" ${stroke(c, 2.4)}/>`,
   ],
-  // Own-skill modifiers (#1761), stand-ins until their art card.
-  // Enchantment: a plus over a falling bar, Monk spells cost less.
+  // Own-skill modifiers (#1761, #1855).
+  // Enchantment: a halo over the energy bolt, Monk spells cost less.
   "divine-spirit": [
     "enchantment",
     (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` + `<path d="M6 16l12 3" ${stroke(c, 1.8)}/>`,
+      `<g transform="translate(5,5) scale(0.58)">` +
+      `<ellipse cx="12" cy="3.8" rx="6" ry="2.2" ${stroke(c, 2.4)}/>` +
+      `<path d="M13.5 7L6.5 15H11L10 22L18 12.5H13Z" fill="${c}"/>` +
+      `</g>`,
   ],
-  // Enchantment: a ring round a long bar, Monk enchantments last longer.
+  // Enchantment: a figure in a ring drawn out into an arrow, enchantments last longer.
   "blessed-aura": [
     "enchantment",
     (c) =>
-      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.6)}/>` +
-      `<path d="M7 12h10M15 10l2 2-2 2" ${stroke(c, 2)}/>`,
+      `<g transform="translate(5,5) scale(0.58)">` +
+      `<path d="M12 3.5a8.5 8.5 0 1 0 8.5 8.5" ${stroke(c, 2.6)}/>` +
+      `<circle cx="12" cy="9" r="2.4" fill="${c}"/>` +
+      `<path d="M8.5 18V13.5Q12 11.2 15.5 13.5V18Z" fill="${c}"/>` +
+      `<path d="M17.5 8.5H23M20.5 5.7L23.3 8.5L20.5 11.3" ${stroke(c, 2.4)}/>` +
+      `</g>`,
   ],
-  // Enchantment: two hands joined over a small plus, cheaper, lesser heals.
+  // Enchantment: two hands clasped under a small plus, cheaper, lesser heals.
   "healers-covenant": [
     "enchantment",
     (c) =>
-      `<path d="M4 14l5-4 3 3 3-3 5 4" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 2)}/>`,
+      `<g transform="translate(5,5) scale(0.58)">` +
+      `<path d="M2 20L8 12H13" ${stroke(c, 4)}/>` +
+      `<path d="M22 20L16 12H11" ${stroke(c, 4)}/>` +
+      `<circle cx="12" cy="12" r="2.6" fill="${c}"/>` +
+      `<path d="M12 2.5V8.5M9 5.5H15" ${stroke(c, 2.4)}/>` +
+      `</g>`,
   ],
-  // Enchantment: a plus with speed lines, Healing Prayers cast faster.
+  // Enchantment: a heavy plus with speed streaks, Healing Prayers cast faster.
   "holy-haste": [
     "enchantment",
     (c) =>
-      `<path d="M14 6v12M8 12h12" ${stroke(c, 2.4)}/>` +
-      `<path d="M3 9h3M3 15h3" ${stroke(c, 1.6)}/>`,
+      `<g transform="translate(5,5) scale(0.58)">` +
+      `<path d="M15 4V20M7.5 12H22.5" ${stroke(c, 4.6)}/>` +
+      `<path d="M1.5 7H6.5M0.5 12H4M1.5 17H6.5" ${stroke(c, 2.4)}/>` +
+      `</g>`,
   ],
 };

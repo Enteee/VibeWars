@@ -446,6 +446,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "invalid-target-not-allied-spirit": "Target an allied spirit.",
   "invalid-target-not-own-minion": "Target one of your minions.",
   "invalid-target-not-allied-minion": "Target an allied minion.",
+  "invalid-target-not-allied-summoned-creature": "Target an allied summoned creature.",
   "invalid-target-spirit": "Cannot target a spirit.",
   "out-of-range": "Target is out of range.",
   "no-line-of-sight": "Target is not in line of sight.",
