@@ -191,6 +191,22 @@ describe("a party lobby's matchmaking (#1766)", () => {
     expect(phaseOf(host)).toBe("waiting");
   });
 
+  it("takes the party out of the queue when a member's peer drops, its seat held (#1764)", async () => {
+    const { lobby, party } = await partyLobby(["Ann"]);
+    const [host, ann] = party as [Member, Member];
+    await queue(lobby);
+    expect(phaseOf(host)).toBe("queued");
+    // Away, it can neither consent nor play: the party is not queued without it.
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    expect(phaseOf(host)).toBe("waiting");
+    expect(host.connection.getSnapshot().queueNonce).toBeNull();
+    expect(host.connection.getSnapshot().players.map(({ name, away }) => [name, away])).toEqual([
+      ["Host", false],
+      ["Ann", true],
+    ]);
+  });
+
   it("consents to no group but the one a member works out itself, nor to another mode", async () => {
     const { lobby, party } = await partyLobby(["Ann"]);
     const [, ann] = party as [Member, Member];
