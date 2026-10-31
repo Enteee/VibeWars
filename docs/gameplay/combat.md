@@ -1722,7 +1722,7 @@ and blows are set by their Necromancer's Death Magic as they rise and
 never change after. A minion rots: it loses 1 pip of Health at once and
 1 more every 20 s it lives, summed with its statuses before the −10
 cap, and it never regenerates naturally; healing fights it as usual. A
-rank-12 Bone Minion nobody touches lives 65 s. It stays by its master
+rank-12 Bone Minion nobody touches lives 64 s. It stays by its master
 and assists it (#1118): with no fight going, it attacks the foe its
 master is attacking with a weapon or an attack skill, if within cast
 range of the master, else the nearest foe within earshot of itself; a
@@ -1739,10 +1739,10 @@ bodies, as a click-to-walk does; with no way there at all, it stands
 where it is until there is one.
 
 **Animate Bone Minions** (Necromancer, Death Magic, spell, 10 energy,
-1 s, 5 s recharge) raises two Bone Minions of 280 Health and armor 30,
+1 s, 5 s recharge) raises two Bone Minions of 272 Health and armor 29,
 each a 6–11 blunt blow every 3.10 s. **Animate Bone Horror** (5
-energy, 1 s, 5 s recharge) raises one Bone Horror of 360 Health and
-armor 56, 12–24 blunt every 3.10 s. Numbers at Death Magic 12, from
+energy, 1 s, 5 s recharge) raises one Bone Horror of 356 Health and
+armor 55, 12–24 blunt every 3.10 s. Numbers at Death Magic 12, from
 GWW's damage tables, criticals taken out. A minion's blows scale with
 its level, which its Necromancer's Death Magic sets as it rises: ×(level
 ÷ its level at 12)^1.5, a fit to GWW's tables. A Bone Minion raised at
