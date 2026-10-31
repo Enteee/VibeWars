@@ -41,29 +41,53 @@ function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+/** Every box of one frame: the toast's and each part's, null where hidden. */
+type Frame = Record<string, Box | null>;
+
 /**
- * A match against a bot from the menu on show, the bot targeted, the toast
+ * A match against a bot from the menu on show, the bot targeted, the HUD
  * noted; on `map` when given, else the lobby's default.
  */
 async function phoneMatch(page: Page, phone: Phone, map?: string): Promise<void> {
   await page.setViewportSize(phone);
   await page.goto("./");
   // The toast hides after a few seconds: note where it is, every frame it
-  // shows in the match, as music.spec.ts does (#372).
-  await page.evaluate(() => {
+  // shows in the match, as music.spec.ts does (#372). Every other part is
+  // noted in that same frame (#1793): the build banner still grows early
+  // in a match, so boxes read in different frames come from different
+  // layouts.
+  await page.evaluate((parts) => {
     const toast = document.querySelector<HTMLElement>(".now-playing");
     const screens = document.querySelector<HTMLElement>("#screens");
     if (toast === null || screens === null) {
       throw new Error("no now-playing toast or #screens");
     }
+    /** Its box, or null where it is not shown, as Playwright's `isVisible` judges. */
+    const boxOf = (element: Element | null): DOMRectReadOnly | null => {
+      if (element === null || getComputedStyle(element).visibility === "hidden") {
+        return null;
+      }
+      const box = element.getBoundingClientRect();
+      return box.width > 0 && box.height > 0 ? box : null;
+    };
     const note = (): void => {
       if (!toast.hidden && screens.style.display === "none") {
-        Object.assign(window, { toastBox: toast.getBoundingClientRect().toJSON() as unknown });
+        const frame: Record<string, unknown> = {
+          ".now-playing": toast.getBoundingClientRect().toJSON() as unknown,
+        };
+        for (const part of parts) {
+          frame[part] = boxOf(document.querySelector(part))?.toJSON() ?? null;
+        }
+        // Only once the bot is targeted, which also means the HUD is up.
+        const target = document.querySelector(".hud-target-text")?.textContent ?? "";
+        if (target !== "" && target !== "no target") {
+          Object.assign(window, { hudFrame: frame });
+        }
       }
       requestAnimationFrame(note);
     };
     note();
-  });
+  }, PARTS);
   await hostLobby(page);
   if (map !== undefined) {
     await page.locator(".lobby-map select").selectOption(map);
@@ -79,26 +103,20 @@ async function phoneMatch(page: Page, phone: Phone, map?: string): Promise<void>
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
 }
 
+/** The last frame noted with the toast up and a target: every box in it misses every other. */
 async function expectApart(page: Page): Promise<void> {
+  const hudFrame = (): Promise<Frame | null> =>
+    page.evaluate(() => (window as { hudFrame?: Frame }).hudFrame ?? null);
+  await expect.poll(hudFrame, { timeout: 5_000 }).not.toBeNull();
+  const frame = (await hudFrame()) ?? {};
   const boxes = new Map<string, Box>();
-  for (const part of PARTS) {
+  for (const [part, box] of Object.entries(frame)) {
     // Fullscreen shows only where the browser offers it.
-    if (!(await page.locator(part).isVisible())) {
+    if (box === null) {
       expect(part, "only fullscreen may be missing").toBe(".hud-fullscreen");
       continue;
     }
-    const found = await page.locator(part).boundingBox();
-    expect(found, part).not.toBeNull();
-    if (found !== null) {
-      boxes.set(part, found);
-    }
-  }
-  const toastBox = (): Promise<Box | null> =>
-    page.evaluate(() => (window as { toastBox?: Box }).toastBox ?? null);
-  await expect.poll(toastBox, { timeout: 5_000 }).not.toBeNull();
-  const toast = await toastBox();
-  if (toast !== null) {
-    boxes.set(".now-playing", toast);
+    boxes.set(part, box);
   }
   const named = [...boxes];
   for (const [i, [name, box]] of named.entries()) {

@@ -939,6 +939,28 @@ const skillGlyph = {
     ),
   // Golden Fox Strike: unblockable while enchanted, the cracked shield of Guiding Hands.
   "dagger-unblock": () => strikeWith(skillGlyph["armor-crack"]()),
+  // Assassin staples 5 (#1775).
+  // The blade with a nearly empty gauge: the bonus comes when you are hurt.
+  "dagger-low": () =>
+    strikeWith(
+      `<rect x="6.500" y="3" width="11" height="18" rx="2" ${stroke(C.ink, 2.6)}/>` +
+        inkFill("M8 16.500H16V20H8Z"),
+    ),
+  // The blade with a circling arrow: the off-hand strike that comes round again.
+  "dagger-repeat": () =>
+    strikeWith(`<path d="M19 9A8 8 0 1 0 20 13" ${stroke(C.ink, 3)}/>` + inkFill("M22 2V10H14Z")),
+  // The blade with spikes rising out of the ground: earth damage and a wound.
+  "dagger-spikes": () => strikeWith(inkLine("M1 21L6 5L11 21L16 5L21 21", 3.4), true),
+  // Chevrons forward over chevrons dragged against a bar: slow them, speed yourself.
+  "chevrons-siphon": () =>
+    inkLine("M3 4L7 8L3 12M9 4L13 8L9 12M15 4L19 8L15 12", 2.2) +
+    inkLine("M3 15L7 19L3 23M9 15L13 19L9 23", 2.2) +
+    inkLine("M20 15V23", 2.6),
+  // A fox's head, ears up: the strikes it lends cannot be blocked.
+  "fox-head": () =>
+    `<path d="M3.5 2.5L9 8H15L20.5 2.5V12L12 21.5L3.5 12Z" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="8.8" cy="12" r="1.3" fill="${C.ink}"/><circle cx="15.2" cy="12" r="1.3" fill="${C.ink}"/>` +
+    inkFill("M10.5 17.5H13.5L12 20Z"),
   // Golden Fang Strike: Deep Wound while enchanted, the cross of the status.
   "dagger-wound": () => strikeWith(inkLine("M5 5L19 19M19 5L5 19", 4)),
   // Lotus Strike: gives Energy.

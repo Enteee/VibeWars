@@ -26,6 +26,7 @@ import {
   COMPANION_MODES,
   LOBBY_MODES,
   MAX_LOBBY_PLAYERS,
+  isLobbyCode,
   MAX_TEAM_LOBBY_SIDE,
   type CompanionMode,
   type LobbyMode,
@@ -64,6 +65,7 @@ export const CHANNELS = [
   "party-consent",
   "party-formed",
   "party-split",
+  "lobby-move",
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
@@ -940,6 +942,16 @@ export interface WirePartyFormed {
 
 /** The host to each winner who said yes (#882): someone did not; queue alone. */
 export type WirePartySplit = Readonly<Record<string, never>>;
+
+/**
+ * The host to each of its guests, as it leaves for another lobby
+ * (#1553): follow it there. `code` is that lobby's key, normalised
+ * (#1681), which a guest, a proven peer of this lobby, may be told
+ * (ADR-0043); it is never logged or stored.
+ */
+export interface WireLobbyMove {
+  readonly code: string;
+}
 
 /**
  * The character a lobby member brings (#580), for the others to see:
@@ -2334,6 +2346,17 @@ export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefine
 export function parseWirePartySplit(value: unknown): WirePartySplit | undefined {
   const raw = fields(value);
   return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
+}
+
+/** The `"lobby-move"` channel: a well-formed key, or nothing. */
+export function parseWireLobbyMove(value: unknown): WireLobbyMove | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    Object.keys(raw).length === 1 &&
+    isString(raw.code) &&
+    isLobbyCode(raw.code)
+    ? { code: raw.code }
+    : undefined;
 }
 
 function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {

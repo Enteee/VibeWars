@@ -127,7 +127,11 @@ export interface HostedLobby {
    * coded lobby's never settles.
    */
   readonly done: Promise<void>;
-  close(): Promise<void>;
+  /**
+   * End it for everyone. With `moveTo`, the key of the lobby this tab
+   * just joined, its guests follow there (#1553).
+   */
+  close(moveTo?: string): Promise<void>;
 }
 
 /** `n` bytes from `crypto`: a lobby key is only as good as its randomness (#1681). */
@@ -234,7 +238,7 @@ export async function hostLobby(
     host.advance(seconds);
   });
   let closed = false;
-  const close = async (): Promise<void> => {
+  const close = async (moveTo?: string): Promise<void> => {
     if (closed) {
       return;
     }
@@ -242,7 +246,7 @@ export async function hostLobby(
     window.removeEventListener("pagehide", onPageHide);
     stopFollowing();
     stopClock();
-    await host.close();
+    await host.close(moveTo);
   };
   try {
     const lobby = await joinLobby({
@@ -574,6 +578,84 @@ export function joinFailureNotice(
     }
   }
   return "Could not join the lobby.";
+}
+
+/** Where a guest's host went (#1553): the key it left for, and who it is. */
+export interface HostMove {
+  readonly code: string;
+  readonly host: string;
+}
+
+/**
+ * Note where `lobby`'s host goes if it moves on (#1553). The returned
+ * function, called once the lobby has closed, says where to follow and
+ * forgets it: a lobby that closed after a move gets no host-left notice,
+ * since its guests are already on their way.
+ */
+export function watchHostMove(lobby: {
+  onMove(handler: (code: string) => void): void;
+  getSnapshot(): {
+    readonly players: readonly { readonly name: string; readonly isHost: boolean }[];
+  };
+}): () => HostMove | undefined {
+  let moved: HostMove | undefined;
+  lobby.onMove((code) => {
+    const host = lobby.getSnapshot().players.find((p) => p.isHost)?.name ?? "";
+    moved = { code, host };
+  });
+  return () => {
+    const taken = moved;
+    moved = undefined;
+    return taken;
+  };
+}
+
+/** What following a host takes from the shell (#1553); `T` is a joined lobby. */
+export interface FollowSteps<T> {
+  /** Join the lobby `code`; rejects when it cannot. */
+  readonly join: (code: string) => Promise<T>;
+  /** Whether the tab moved on while the join waited. */
+  readonly movedOn: () => boolean;
+  /** In: the tab sits in it. */
+  readonly seat: (joined: T) => void;
+  /** In, but the tab moved on meanwhile: leave it again. */
+  readonly drop: (joined: T) => Promise<void>;
+  /**
+   * Not in: the tab opens a fresh own lobby, Closed as every new one is,
+   * and shows `notice`, unless it moved on and there is none to show.
+   */
+  readonly fallBack: (notice: string | undefined) => void;
+}
+
+/**
+ * Follow a guest's host to the lobby it moved to (#1553). A join that
+ * fails, or is refused because that lobby is closed, falls back to a
+ * fresh own lobby and says whom it could not follow; `where` and
+ * `relayed` are as for `joinFailureNotice`.
+ */
+export async function followHost<T>(
+  move: HostMove,
+  steps: FollowSteps<T>,
+  where: { readonly hostname: string; readonly port: string },
+  relayed: boolean,
+): Promise<void> {
+  let joined: T;
+  try {
+    joined = await steps.join(move.code);
+  } catch (error) {
+    console.warn("[web] could not follow the host", error);
+    steps.fallBack(
+      steps.movedOn()
+        ? undefined
+        : `Could not follow ${move.host}: ${joinFailureNotice(error, where, relayed)}`,
+    );
+    return;
+  }
+  if (steps.movedOn()) {
+    await steps.drop(joined);
+    return;
+  }
+  steps.seat(joined);
 }
 
 /** What the lobby says when the host refused something this player asked for, once joined (#1194). */
