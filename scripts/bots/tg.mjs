@@ -55,7 +55,7 @@ import {
   wakes,
 } from "./protocol.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
-import { roleOf } from "./staff.mjs";
+import { roleOf, WORK_COLUMN } from "./staff.mjs";
 
 // Who this agent is (#62): the bus directory is the employee's, and what it
 // may do is its role's.
@@ -76,6 +76,8 @@ const CURSOR = path.join(DIR, "cursor");
 const ROSTER = path.join(BUS, "roster");
 /** The context of this agent's last call, written by agent-turn.mjs (#321). */
 const CONTEXT = contextFile();
+/** Left by a wait that found nothing: the loop sleeps the agent's next pause (#1694). */
+const IDLE = path.join(DIR, "idle");
 
 /* -------------------------------------------------------------------------- */
 
@@ -256,6 +258,8 @@ async function wait(timeoutSeconds, all) {
     // after what arrived too (#1695): that may be work to hand on first.
     const over = ceilingLine();
     if (printed > 0) {
+      // Something to do after all: an earlier wait's idle no longer holds.
+      fs.rmSync(IDLE, { force: true });
       if (over !== null) {
         console.log(over);
       }
@@ -278,10 +282,17 @@ async function wait(timeoutSeconds, all) {
         process.exit(2);
       }
       const queued = pending();
+      // Another empty wait would be another call that re-reads the whole
+      // context (#1694): the loop between turns waits for nothing instead.
+      fs.writeFileSync(IDLE, "");
+      const column = WORK_COLUMN[ROLE ?? ""] ?? null;
+      const woken = column === null ? "A message" : `A message, or a card arriving in ${column},`;
       console.log(
-        queued === 0
-          ? `(nothing new in ${String(timeoutSeconds)}s)`
-          : `(nothing for you in ${String(timeoutSeconds)}s; ${String(queued)} General messages queued, tg inbox shows them)`,
+        `${
+          queued === 0
+            ? `(nothing new in ${String(timeoutSeconds)}s)`
+            : `(nothing for you in ${String(timeoutSeconds)}s; ${String(queued)} General messages queued, tg inbox shows them)`
+        } You are idle: END YOUR TURN now. ${woken} starts your next turn.`,
       );
       return 0;
     }

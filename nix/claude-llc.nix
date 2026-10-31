@@ -654,6 +654,8 @@ in
           state="$root/agents/$employee"
           mkdir -p "$state"
           between="$state/between-turns"
+          # Left by a `tg wait` that found nothing (#1694): the turn ended idle.
+          idle="$root/bus/$employee/idle"
           # The context of the turn's last call (#321), in the employee's bus
           # directory, which its jail sees: `tg wait` reads it there.
           export VIBEWARS_CONTEXT_FILE="$root/bus/$employee/context.json"
@@ -675,7 +677,7 @@ in
           pause=0
           limitPause=0
           while true; do
-            rm -f "$between"
+            rm -f "$between" "$idle"
             # A nearly full disk holds the next turn (#358); a turn already
             # running is not stopped.
             ${node} ${llcScripts}/agent-loop.mjs disk || true
@@ -722,9 +724,18 @@ in
                 exit 1
               fi
 
-              echo "claude-llc-agent: next turn for $employee in ''${pause}s, or when a message arrives."
-              echo "claude-llc-agent: Ctrl-C now to stop for good."
-              ${node} ${llcScripts}/agent-loop.mjs wait "$employee" "$pause" || stopped
+              if [ "$failed" -eq 0 ] && [ -e "$idle" ]; then
+                # Idle (#1694): asleep here, not in `tg wait`, which costs a
+                # call per return; agent-loop writes what woke it.
+                rm -f "$idle"
+                echo "claude-llc-agent: $employee is idle; next turn in 50 min, or when a message or a card for it arrives."
+                echo "claude-llc-agent: Ctrl-C now to stop for good."
+                ${node} ${llcScripts}/agent-loop.mjs idle "$employee" || stopped
+              else
+                echo "claude-llc-agent: next turn for $employee in ''${pause}s, or when a message arrives."
+                echo "claude-llc-agent: Ctrl-C now to stop for good."
+                ${node} ${llcScripts}/agent-loop.mjs wait "$employee" "$pause" || stopped
+              fi
             fi
             # The marker goes before the reboot check, not after: a reboot
             # requested between the two would otherwise see this agent
