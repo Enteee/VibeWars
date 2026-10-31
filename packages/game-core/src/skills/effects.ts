@@ -375,8 +375,8 @@ function recordFromFoe(
 
 /**
  * `target`'s Health just fell from `before` to where it is, by damage or
- * a steal `dealer` dealt, if anyone: recorded for what answers a line
- * crossed (#1789).
+ * a steal `dealer` dealt, if anyone: recorded for what answers Health
+ * left under a line (#1789, #1818).
  */
 function recordHealthDrop(target: Combatant, dealer: Combatant | undefined, before: number): void {
   target.statuses.recordHealthDrop(dealer?.id, before, target.health, effectiveMaxHealth(target));
