@@ -122,6 +122,14 @@ describe("a target's health loss (#1648)", () => {
     expect(losses(events, "f")).toEqual([]);
   });
 
+  it("a Guild Lord loses no more than this second's cap lets through, and spends it", () => {
+    const lord = foe("f", { lossGuard: { bodyguard: undefined, remaining: 30 } });
+    const events = use(user(), "necromancer.enfeebling-touch", [[lord, RANGE_MELEE / 2]]);
+    expect(losses(events, "f")).toEqual([30]);
+    expect(lord.health).toBe(470);
+    expect(lord.lossGuard?.remaining).toBe(0);
+  });
+
   it("kills at 0", () => {
     const f = foe("f", { health: 40 });
     const events = use(user(), "necromancer.enfeebling-touch", [[f, RANGE_MELEE / 2]]);

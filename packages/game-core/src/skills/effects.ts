@@ -914,13 +914,17 @@ function destroySpirit(candidate: TargetCandidate, caster: Combatant, events: Co
 /**
  * `loser` loses `amount` health: the caster's sacrifice, or a target's
  * health loss (#1648). Not damage, so nothing mitigates it; only
- * invulnerability stops it, and it can kill.
+ * invulnerability and a Guild Lord's cap stop it, and it can kill.
  */
 function sacrifice(loser: Combatant, amount: number, events: CombatEvent[]): void {
   if (amount <= 0 || loser.dead || isInvulnerable(loser)) {
     return;
   }
-  const applied = Math.min(amount, loser.health);
+  // A Guild Lord loses no more than its Amulet lets through (#1223).
+  const applied = guardedLoss(loser, Math.min(amount, loser.health));
+  if (applied <= 0) {
+    return;
+  }
   loser.health -= applied;
   events.push({ kind: "sacrifice", targetId: loser.id, amount: applied });
   if (loser.health <= 0) {
