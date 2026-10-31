@@ -652,6 +652,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsWhenBearerUsesAdrenalSkill) {
     parts.push("ends if you use an adrenal skill");
   }
+  if (definition.endsWhenBearerUsesAttackSkill) {
+    parts.push("ends if you use an attack skill");
+  }
   if (definition.endsWhenBearerUsesOtherSkill && definition.nextSkillRule !== undefined) {
     parts.push(
       `ends if you use a skill that is not a ${NEXT_SKILL_KIND[definition.nextSkillRule.which][0]}`,
