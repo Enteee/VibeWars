@@ -254,7 +254,7 @@ describe("describeSkill", () => {
     const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
     expect(lines("mesmer.power-spike")).toEqual([
       "Interrupts the target's spell or chant, if they are casting one",
-      "If it interrupts: deals 102 damage",
+      "If it interrupts a skill: deals 102 damage",
     ]);
     expect(lines("mesmer.drain-enchantment")).toEqual([
       "Removes 1 enchantment",
@@ -287,7 +287,7 @@ describe("describeSkill", () => {
     ]);
     expect(lines("ranger.distracting-shot")).toEqual([
       "Deals only 13 damage",
-      "Interrupts the target's current cast, if they are casting",
+      "Interrupts the target's action: a skill or an attack",
       "The interrupted skill is disabled for 20 seconds",
     ]);
   });
@@ -310,7 +310,7 @@ describe("describeSkill", () => {
     ]);
     expect(lines("ranger.savage-shot")).toEqual([
       "If target is casting a spell: +25 damage",
-      "Interrupts the target's current cast, if they are casting",
+      "Interrupts the target's action: a skill or an attack",
     ]);
     expect(lines("ritualist.wielders-boon")).toEqual([
       "Heals for 51",
@@ -402,7 +402,7 @@ describe("describeSkill", () => {
       "Nearby foes take 5.25 damage for each point of energy lost",
     ]);
     expect(lines("mesmer.leech-signet")).toEqual([
-      "Interrupts the target's current cast, if they are casting",
+      "Interrupts the target's action: a skill or an attack",
       "If that action was a spell: gain 13 energy",
     ]);
     expect(lines("monk.dwaynas-kiss")).toEqual([
@@ -716,7 +716,7 @@ describe("attack skills (#417)", () => {
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
     expect(
       describeSkill(skill("mesmer.cry-of-frustration")).effects.map(({ text }) => text),
-    ).toContain("If it interrupts: foes in the area are interrupted if casting and take 11 damage");
+    ).toContain("If it interrupts a skill: foes in the area are interrupted and take 11 damage");
     expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
   });
 
@@ -808,7 +808,7 @@ describe("attack skills (#417)", () => {
         "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
     ]);
     expect(lines("necromancer.rend-enchantments")).toEqual([
-      "Removes 8 enchantments",
+      "Removes up to 8 enchantments",
       "You lose 31 health for each Monk enchantment removed",
     ]);
     expect(lines("necromancer.plague-touch")).toEqual([

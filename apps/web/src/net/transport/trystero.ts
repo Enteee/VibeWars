@@ -13,10 +13,13 @@
  * relay socket is open.
  *
  * A TURN relay the player saved (#972) goes to Trystero as `turnConfig`.
+ *
+ * It never sees a lobby key (#1681, ADR-0043): only the room and the
+ * password derived from it, which is all the relays may learn.
  */
-import { CHANNELS, normalizeLobbyCode } from "@vibewars/game-protocol";
+import { CHANNELS } from "@vibewars/game-protocol";
 import type { Channel } from "@vibewars/game-protocol";
-import type { Transport } from "@vibewars/game-session";
+import type { LobbyRoom, Transport } from "@vibewars/game-session";
 import { getRelaySockets, joinRoom, selfId } from "trystero/nostr";
 import type { DataPayload, MessageAction } from "trystero/nostr";
 
@@ -55,17 +58,16 @@ const SDP_EXCHANGED = "after exchanging SDP";
 /** `WebSocket.OPEN`, which a fake socket in the unit test does not carry. */
 const SOCKET_OPEN = 1;
 
-/** Join the room for lobby code `code`. `deps` is for the unit test; the app passes nothing. */
-export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): Transport {
-  const roomId = normalizeLobbyCode(code);
+/** Join `room`. `deps` is for the unit test; the app passes nothing. */
+export function joinTrysteroRoom(room: LobbyRoom, deps: TrysteroDeps = TRYSTERO): Transport {
   const handlers = new HandlerSets();
   // Read at join, so a relay saved in Options counts from the next lobby.
   // Added to Trystero's STUN, not instead: ICE still prefers a direct path.
   const turn = deps.turnConfig();
-  const room = deps.joinRoom(
+  const trystero = deps.joinRoom(
     {
       appId: APP_ID,
-      password: roomId,
+      password: room.password,
       relayConfig: { urls: [...NOSTR_RELAYS], redundancy: RELAY_REDUNDANCY },
       maxReceiveBytes: MAX_RECEIVE_BYTES,
       ...(turn === undefined
@@ -76,14 +78,14 @@ export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): T
             ],
           }),
     },
-    roomId,
+    room.roomId,
     {
       // No retry: a joiner that reaches nobody is caught by its own
       // connect timeout, and told it couldn't reach the host (#15).
       onJoinError: (details) => {
         console.warn("trystero transport: could not join", details.error);
         // Only this one: a wrong password cannot come from a typo, since
-        // the code is the room and the password both.
+        // the key names the room and the password both.
         if (details.error.includes(SDP_EXCHANGED)) {
           handlers.trouble("peer-unreachable");
         }
@@ -104,7 +106,7 @@ export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): T
   // Every action up front: one made lazily would miss what arrived first.
   const actions = new Map<Channel, MessageAction>();
   for (const channel of CHANNELS) {
-    const action = room.makeAction(channel);
+    const action = trystero.makeAction(channel);
     action.onMessage = (data, context) => {
       if (!oversized(data, context.peerId)) {
         handlers.message(channel, data, context.peerId);
@@ -112,11 +114,11 @@ export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): T
     };
     actions.set(channel, action);
   }
-  room.onPeerJoin = (peerId) => {
+  trystero.onPeerJoin = (peerId) => {
     met = true;
     handlers.joined(peerId);
   };
-  room.onPeerLeave = (peerId) => {
+  trystero.onPeerLeave = (peerId) => {
     handlers.left(peerId);
   };
 
@@ -149,7 +151,7 @@ export function joinTrysteroRoom(code: string, deps: TrysteroDeps = TRYSTERO): T
     async leave() {
       clearTimeout(relayCheck);
       handlers.clear();
-      await room.leave();
+      await trystero.leave();
     },
   };
 }

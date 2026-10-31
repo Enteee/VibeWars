@@ -19,6 +19,10 @@ declare const console: { error(...data: unknown[]): void };
 interface SubtleHmacKey {
   readonly type: string;
 }
+/** A lobby key is stretched with PBKDF2 before anything is derived from it (#1681). */
+interface SubtlePbkdf2Key {
+  readonly type: string;
+}
 declare const crypto: {
   readonly subtle: {
     importKey(
@@ -26,10 +30,36 @@ declare const crypto: {
       keyData: Uint8Array,
       algorithm: { readonly name: "HMAC"; readonly hash: "SHA-256" },
       extractable: false,
-      keyUsages: readonly "sign"[],
+      keyUsages: readonly ("sign" | "verify")[],
     ): Promise<SubtleHmacKey>;
+    importKey(
+      format: "raw",
+      keyData: Uint8Array,
+      algorithm: "PBKDF2",
+      extractable: false,
+      keyUsages: readonly "deriveBits"[],
+    ): Promise<SubtlePbkdf2Key>;
+    deriveBits(
+      algorithm: {
+        readonly name: "PBKDF2";
+        readonly hash: "SHA-256";
+        readonly salt: Uint8Array;
+        readonly iterations: number;
+      },
+      baseKey: SubtlePbkdf2Key,
+      length: number,
+    ): Promise<ArrayBuffer>;
     sign(algorithm: "HMAC", key: SubtleHmacKey, data: Uint8Array): Promise<ArrayBuffer>;
+    /** A key proof is checked in constant time (#1681), never by comparing strings. */
+    verify(
+      algorithm: "HMAC",
+      key: SubtleHmacKey,
+      signature: Uint8Array,
+      data: Uint8Array,
+    ): Promise<boolean>;
     /** A queue group's id is a sha256 every member computes alike (#869). */
     digest(algorithm: "SHA-256", data: Uint8Array): Promise<ArrayBuffer>;
   };
+  /** A key challenge's nonce is fresh random bits (#1681). */
+  getRandomValues<T extends Uint8Array>(array: T): T;
 };

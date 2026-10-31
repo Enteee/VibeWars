@@ -57,4 +57,15 @@ export const RITUALIST_ICONS = {
   "ritualist.destruction": { glyph: "spirit-last-burn" },
   "ritualist.life": { glyph: "spirit-last-heal" },
   "ritualist.xinraes-weapon": { glyph: "blade-cap-drop" },
+  // Ritualist weapon spells 3 (#1654, #1706).
+  "ritualist.resilient-weapon": { glyph: "blade-resilient" },
+  "ritualist.ghostly-weapon": { glyph: "blade-ghostly" },
+  "ritualist.guided-weapon": { glyph: "blade-ghostly", modifier: "clock" },
+  "ritualist.sundering-weapon": { glyph: "blade-sundering" },
+  "ritualist.weapon-of-shadow": { glyph: "blade-shadow" },
+  "ritualist.warmongers-weapon": { glyph: "blade-warmongers" },
+  "ritualist.wailing-weapon": { glyph: "blade-wailing" },
+  "ritualist.nightmare-weapon": { glyph: "blade-nightmare" },
+  "ritualist.weapon-of-fury": { glyph: "blade-fury-bolt" },
+  "ritualist.weapon-of-renewal": { glyph: "blade-renewal" },
 };

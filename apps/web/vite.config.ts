@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 
 import { defineConfig, type Plugin } from "vite";
 
+import { arenaAtlasPlugin } from "./plugins/arena-atlas.js";
 import { licencesPlugin } from "./plugins/licences.js";
 
 // The transport the client plays over (#403): see `src/net/transport/index.ts`.
@@ -47,8 +48,9 @@ export default defineConfig({
   // `VITE_` variable. Dev and the server-served build stay at the root.
   base: process.env.VIBEWARS_BASE ?? "/",
   define: { __VIBEWARS_BUILD__: JSON.stringify(BUILD) },
-  // Every bundled npm package's licence, for Options (#1242, ADR-0039).
-  plugins: [licencesPlugin(), buildFile()],
+  // Every bundled npm package's licence, for Options (#1242, ADR-0039), and
+  // the arena's icon sheet (#1671).
+  plugins: [licencesPlugin(), arenaAtlasPlugin(), buildFile()],
   build: {
     outDir: "dist",
     emptyOutDir: true,

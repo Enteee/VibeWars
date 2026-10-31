@@ -106,6 +106,10 @@ export interface WhileUnder {
   readonly categories: readonly StatusCategory[];
   readonly attackDurationMultiplier: number;
   readonly adrenalineGainFaster: number;
+  /** Summed into the bearer's pips as the status's own (#1654): Resilient Weapon's. */
+  readonly healthPips: number;
+  /** Summed into the bearer's armor against every type, as the status's own (#1654). */
+  readonly armorModifier: number;
 }
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
@@ -250,6 +254,13 @@ export interface StatusDefinition {
    */
   readonly attackArmorPenetration: number;
   /**
+   * Added to each of the bearer's weapon blows before armor (#1654), a
+   * plain swing's or an attack skill's, each blow of a dual attack:
+   * Nightmare Weapon's "-10...50 damage". A blow never goes below 0.
+   * Summed over statuses. 0: none.
+   */
+  readonly attackDamageDelta: number;
+  /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
    */
@@ -362,6 +373,11 @@ export interface StatusDefinition {
    * keeps what it was released with. `undefined`: blocks as ever.
    */
   readonly unblockableAttacks: number | undefined;
+  /**
+   * Every attack of the bearer's cannot be blocked while it lasts, and
+   * nothing is spent (#1654): Guided Weapon's. false: blocks as ever.
+   */
+  readonly attacksUnblockable: boolean;
   /**
    * Effects on whoever the bearer's physical attacks hit while it lasts
    * (#525): a preparation's rider, as Apply Poison's poison. Applied
@@ -1373,9 +1389,9 @@ export class StatusSet {
   }
 
   /**
-   * `offenderId` interrupted the bearer's skill (#1473), recorded only if
-   * a status on it answers that, with the triggers that do: once for each
-   * interrupt.
+   * `offenderId` interrupted the bearer's skill (#1473) or swing (#1709),
+   * recorded only if a status on it answers that, with the triggers that
+   * do: once for each interrupt.
    */
   public recordInterrupt(offenderId: string | undefined): void {
     const fired = this.#answering("bearer-interrupted");
@@ -1880,12 +1896,15 @@ export class StatusSet {
   /**
    * The bearer attacked (#1604): whether a status of its own makes this
    * attack unblockable, each such status one attack fewer, and the ids
-   * that ended on it.
+   * that ended on it. A counted status, as Guiding Hands, counts every
+   * attack, even one another status, as Guided Weapon, already made
+   * unblockable: GW1's "next N attacks" counts attacks, not saves.
    */
   public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
     let unblockable = false;
     const ended: StatusId[] = [];
     for (const status of this.#statuses.values()) {
+      unblockable ||= getStatusDefinition(status.id).attacksUnblockable;
       if (status.unblockableLeft !== undefined && status.unblockableLeft > 0) {
         unblockable = true;
         status.unblockableLeft -= 1;
@@ -2279,6 +2298,8 @@ export interface StatusModifiers {
   readonly criticalChanceBonus: number;
   /** The largest status's (#1519). */
   readonly attackArmorPenetration: number;
+  /** Every status's, summed (#1654). */
+  readonly attackDamageDelta: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -2306,6 +2327,17 @@ export function reducedRecharge(seconds: number, faster: number): number {
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
 export const HEALING_MULTIPLIER_FLOOR = 0.6;
+
+/** Whether a status in `statuses` other than `self` is of one of `categories` (#1485). */
+export function isUnderAnother(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+  self: Pick<ActiveStatus, "id">,
+  categories: readonly StatusCategory[],
+): boolean {
+  return statuses.some(
+    (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
+  );
+}
 
 /**
  * Collapse every active status into one set of modifiers.
@@ -2363,17 +2395,15 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let attackArmorPenetration = 0;
+  let attackDamageDelta = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
-  /** Whether a status other than `self` is of one of `categories` (#1485). */
   const underAnother = (self: Pick<ActiveStatus, "id">, categories: readonly StatusCategory[]) =>
-    statuses.some(
-      (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
-    );
+    isUnderAnother(statuses, self, categories);
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
@@ -2441,6 +2471,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
+      healthPips += def.whileUnder.healthPips;
+      armorModifier += def.whileUnder.armorModifier;
     }
     if (def.enchantmentRechargeFaster !== undefined) {
       enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);
@@ -2457,6 +2489,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
+    attackDamageDelta += def.attackDamageDelta;
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -2501,6 +2534,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     attackArmorPenetration,
+    attackDamageDelta,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,

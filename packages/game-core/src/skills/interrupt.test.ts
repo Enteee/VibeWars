@@ -8,7 +8,7 @@ import { getSkill } from "./catalog.js";
 import { applyEffects } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses } from "./tick.js";
-import type { Combatant } from "./types.js";
+import type { Combatant, SkillEffect } from "./types.js";
 
 /**
  * Interrupts (brief §14 — "a critical GW1-inspired mechanic").
@@ -345,5 +345,90 @@ describe("applying Dazed (#546)", () => {
   it("dazes a target that is not casting, with no wasted interrupt", () => {
     const victim = makeCombatant({ id: "victim", team: 1 });
     expect(daze(victim).map((event) => event.kind)).toEqual(["status-applied"]);
+  });
+});
+
+describe("interrupting a plain swing (#1709)", () => {
+  /** A foe `swingElapsed` seconds into a swing at `x`. */
+  const swinging = (swingElapsed = 0.8): Combatant => {
+    const victim = makeCombatant({ id: "victim", team: 1 });
+    victim.attack = { targetId: "x", swingElapsed, unreachableSeconds: 0 };
+    return victim;
+  };
+  const hit = (effects: readonly SkillEffect[], victim: Combatant) =>
+    applyEffects(effects, {
+      surroundings: new Map(),
+      caster: makeCombatant({ id: "caster", team: 0 }),
+      target: victim,
+      rng: createRng(1),
+      rules: MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    });
+  const effectsOf = (skillId: string): readonly SkillEffect[] => getSkill(skillId)?.effects ?? [];
+  const missed = { kind: "interrupt-missed", targetId: "victim", refusedSkillId: null };
+
+  it("drops the blow under way and starts the swing over, at the same foe", () => {
+    const victim = swinging();
+    const events = hit(effectsOf("warrior.distracting-blow"), victim);
+    expect(events).toContainEqual({ kind: "attack-interrupted", targetId: "victim" });
+    expect(events).not.toContainEqual(missed);
+    expect(victim.attack).toEqual({ targetId: "x", swingElapsed: 0, unreachableSeconds: 0 });
+  });
+
+  it("Lightning Javelin interrupts an auto-attacking foe (#1664)", () => {
+    const victim = swinging();
+    const events = hit(effectsOf("elementalist.lightning-javelin"), victim);
+    expect(events).toContainEqual({ kind: "attack-interrupted", targetId: "victim" });
+    expect(victim.attack?.swingElapsed).toBe(0);
+  });
+
+  it("is a miss for one that interrupts only a skill or a spell", () => {
+    for (const only of ["skill", "spell", "spell-or-chant"] as const) {
+      const victim = swinging();
+      const events = hit([{ kind: "interrupt", only }], victim);
+      expect(events).toEqual([missed]);
+      expect(victim.attack?.swingElapsed).toBe(0.8);
+    }
+  });
+
+  it("is a miss on a foe walking to its target, or between swings", () => {
+    const approaching = swinging();
+    approaching.moving = true;
+    expect(hit([{ kind: "interrupt" }], approaching)).toEqual([missed]);
+    expect(hit([{ kind: "interrupt" }], swinging(0))).toEqual([missed]);
+  });
+
+  it("is a miss on an uninterruptible foe", () => {
+    const victim = swinging();
+    victim.statuses.apply("tranquil-was-tanasen", 30, "victim");
+    expect(hit([{ kind: "interrupt" }], victim)).toEqual([missed]);
+    expect(victim.attack?.swingElapsed).toBe(0.8);
+  });
+
+  it("disables nothing, as a swing is no skill: Distracting Shot", () => {
+    const events = hit(effectsOf("ranger.distracting-shot"), swinging());
+    expect(events).toContainEqual({ kind: "attack-interrupted", targetId: "victim" });
+    expect(events.some((event) => event.kind === "skill-disabled")).toBe(false);
+  });
+
+  it("knocks no one down, as that action was no skill: Psychic Instability", () => {
+    const events = hit(effectsOf("mesmer.psychic-instability"), swinging());
+    expect(events).toContainEqual({ kind: "attack-interrupted", targetId: "victim" });
+    expect(events.some((event) => event.kind === "knocked-down")).toBe(false);
+  });
+
+  it("is told once when one resolution interrupts the same swing twice", () => {
+    const events = hit([{ kind: "interrupt" }, { kind: "interrupt" }], swinging());
+    expect(events).toEqual([{ kind: "attack-interrupted", targetId: "victim" }]);
+  });
+
+  it("leaves a swing alone while a cast is under way, and interrupts the cast", () => {
+    const victim = swinging();
+    cast(victim, "ranger.troll-unguent", victim);
+    victim.attack = { targetId: "x", swingElapsed: 0.8, unreachableSeconds: 0 };
+    const events = hit([{ kind: "interrupt" }], victim);
+    expect(events).toEqual([
+      { kind: "interrupted", targetId: "victim", skillId: "ranger.troll-unguent" },
+    ]);
+    expect(victim.attack.swingElapsed).toBe(0.8);
   });
 });

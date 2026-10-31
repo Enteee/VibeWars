@@ -65,6 +65,7 @@ describe("logToneOf", () => {
       "energy-gain",
       "energy-loss",
       "sacrifice",
+      "health-loss",
       "death",
       "status-applied",
       "status-removed",
@@ -84,6 +85,7 @@ describe("logToneOf", () => {
       "heal",
       "resource",
       "resource",
+      "damage",
       "damage",
       "death",
       "status",
@@ -518,6 +520,30 @@ describe("describeCombatEvent", () => {
       weaponDamage: 0,
       healing: 0,
       taken: 39,
+      seconds: 0.05,
+    });
+  });
+
+  it("says a target lost health to the skill, not that it sacrificed it (#1678)", () => {
+    const lost: CombatEvent = { kind: "health-loss", targetId: "you", amount: 53 };
+    const touch = entry([lost], {
+      sourceId: "dummy",
+      skillId: "necromancer.enfeebling-touch",
+    });
+    expect(describeCombatEvent(touch, lost, nameOf, isCreature)).toBe(
+      "Pyro loses 53 Health to Enfeebling Touch (Caster dummy)",
+    );
+    expect(logToneOf("health-loss")).toBe("damage");
+    expect(floatingCueFor("health-loss", 53, false)).toEqual({
+      text: "−53",
+      tone: "damage",
+      critical: false,
+    });
+    expect(accumulate(EMPTY_TOTALS, [touch], "you", 0.05)).toEqual({
+      damage: 0,
+      weaponDamage: 0,
+      healing: 0,
+      taken: 53,
       seconds: 0.05,
     });
   });

@@ -58,12 +58,13 @@ the team you just played with.
 
 To play with friends:
 
-- **Host:** on **Hosted Game**, press **Host a game**. The lobby shows a
-  code; press **Copy** and send it to your friends. Press **+** under a
-  team's **Bots:** to fill an empty place. When everyone is in, press
-  **Start match**.
-- **Join:** paste the code you were sent into **Lobby Code** in the top
-  bar and press **Join**, or Enter.
+- **Host:** on **Hosted Game**, press **Host a game**. The lobby shows
+  its key, 12 characters such as `ACDE-FGHJ-KMNP`; press **Copy** and
+  send it to your friends. Anyone with the key can join, so share it only
+  with people you want in. Press **+** under a team's **Bots:** to fill
+  an empty place. When everyone is in, press **Start match**.
+- **Join:** paste the key you were sent into **Lobby Key** in the top
+  bar and press **Join**, or Enter. Dashes and lower case are fine.
 
 **Team Arena**, **Heroes' Ascent** and **GvG** each host a lobby too,
 with **Host a Team Lobby**, and its host picks among that mode's maps
@@ -84,8 +85,9 @@ left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
 it: pick the cape colour, the trim colour and an emblem, and your body
-wears the cape behind it in every match. Your characters in the menu
-show it too. **No cape** takes it off.
+wears the cape in every match: it folds to a thin band on your rim when
+you stand and streams out behind you when you move. Your characters in
+the menu show it too. **No cape** takes it off.
 
 A change applies from the next lobby you host or join: one you are
 already in keeps what you joined with.

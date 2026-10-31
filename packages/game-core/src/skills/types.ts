@@ -412,13 +412,16 @@ export interface RechargeFasterEffect {
 export interface InterruptEffect {
   readonly kind: "interrupt";
   /**
-   * `spell`: only a spell (`isSpell`) is interrupted, as Concussion
-   * Shot's "while target foe is casting a spell" (#1008); a chant is
-   * not one. `spell-or-chant`: a spell or a chant, as Power Spike's
-   * "If target foe is casting a Spell or Chant" (#521). Anything else
-   * is left alone, as if the target were not casting.
+   * None: an action, a skill being used or a plain swing under way
+   * (#1709), as GW1 interrupts "all attacks". `skill`: a skill being
+   * used, never a plain swing, as Cry of Frustration's "if target foe is
+   * using a skill". `spell`: only a spell (`isSpell`) is interrupted, as
+   * Concussion Shot's "while target foe is casting a spell" (#1008); a
+   * chant is not one. `spell-or-chant`: a spell or a chant, as Power
+   * Spike's "If target foe is casting a Spell or Chant" (#521). Anything
+   * else is left alone, as if the target were not casting.
    */
-  readonly only?: "spell" | "spell-or-chant";
+  readonly only?: "skill" | "spell" | "spell-or-chant";
 }
 
 /**
@@ -876,7 +879,10 @@ export const KNOCKDOWN_SECONDS = 2;
 
 /** What an earlier effect of the same skill did to the same target (#521). */
 export type EventCondition =
-  /** An `interrupt` earlier in the list cancelled an action. */
+  /**
+   * An `interrupt` earlier in the list cancelled a skill, never a plain
+   * swing (#1709): Psychic Instability's "if that action is a skill".
+   */
   | { readonly kind: "interrupted" }
   /**
    * An `interrupt` earlier in the list cancelled a spell (`isSpell`; a
@@ -1015,11 +1021,22 @@ export type StateCondition =
    */
   | { readonly kind: "target-attacking" }
   /**
+   * The exact negation of `target-attacking` (#1654), as `target-not-moving`
+   * is of `target-moving`: Warmonger's Weapon's "if that foe is not attacking".
+   */
+  | { readonly kind: "target-not-attacking" }
+  /**
    * One of `conditions` holds, each read as it would be alone (#1539):
    * Melandru's Shot's "if target foe is moving or knocked down". An
    * empty list never holds.
    */
   | { readonly kind: "any-of"; readonly conditions: readonly StateCondition[] }
+  /**
+   * `condition` does not hold, read at the same moment it would be (#1670):
+   * Test of Faith's "if target foe is not enchanted". New negations use
+   * this rather than a kind of their own.
+   */
+  | { readonly kind: "not"; readonly condition: StateCondition }
   /**
    * The effect's target is a summoned creature (#1528): a minion or a
    * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double

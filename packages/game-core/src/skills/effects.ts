@@ -91,7 +91,13 @@ export type CombatEvent =
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
   /** Energy the target actually lost (#793): never more than it had, never 0. */
   | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
+  /** Health the caster gave up for their own skill. */
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
+  /**
+   * Health a skill made its target lose (#1678): not damage and not a
+   * sacrifice, so nothing that answers either sees it.
+   */
+  | { readonly kind: "health-loss"; readonly targetId: string; readonly amount: number }
   /**
    * Health stolen from the target (#935): never more than it had, never 0.
    * Not damage: nothing that reacts to damage sees it. What the caster
@@ -703,7 +709,7 @@ function knockDown(target: Combatant, durationSeconds: number): void {
 }
 
 /**
- * Interrupt the cast `target` has in progress: the one path every
+ * Interrupt the cast `target` has in progress: the one path every cast's
  * interrupt takes, an interrupt effect's and daze's (#546). As in GW1,
  * the interrupted skill recharges as if it had been used: its cost is
  * spent and its recharge starts (ADR-0029). `byId` did it, and a status
@@ -717,10 +723,7 @@ function interruptCast(
   byId: string | undefined,
   events: CombatEvent[],
 ): boolean {
-  if (
-    aggregateModifiers(target.statuses.active).uninterruptible ||
-    target.cast.activeCast?.rule.uninterruptible === true
-  ) {
+  if (!castInterruptible(target)) {
     return false;
   }
   const cancelled = target.cast.cancelCast();
@@ -732,6 +735,56 @@ function interruptCast(
     beginRecharge(target.cast, skill, skill.rechargeSeconds, cancelled.key);
   }
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
+  target.statuses.recordInterrupt(byId);
+  return true;
+}
+
+/**
+ * Whether `target`'s cast in progress, if any, may be interrupted: not
+ * by an uninterruptible bearer (#1464), nor one that consumed Song of
+ * Concentration (#1505).
+ */
+function castInterruptible(target: Combatant): boolean {
+  return (
+    !aggregateModifiers(target.statuses.active).uninterruptible &&
+    target.cast.activeCast?.rule.uninterruptible !== true
+  );
+}
+
+/**
+ * Whether `target` has a plain swing under way that may be interrupted
+ * (#1709): an attacker walking to its foe or between swings has none, nor
+ * has one knocked down, and an uninterruptible bearer (#1464) never is.
+ */
+function swingInterruptible(target: Combatant): boolean {
+  const { attack } = target;
+  return (
+    attack !== undefined &&
+    !target.moving &&
+    attack.swingElapsed > 0 &&
+    target.knockdownRemaining <= 0 &&
+    !aggregateModifiers(target.statuses.active).uninterruptible
+  );
+}
+
+/**
+ * Interrupt the plain swing `target` has under way (#1709): GW1
+ * interrupts "all attacks", not only skills. Its blow never lands and its
+ * swing starts over; the auto-attack goes on, at the same foe, as after
+ * Clumsiness (#1593). `byId` did it, heard as a cast's interrupt is
+ * (#1473). Returns whether there was a swing to interrupt.
+ */
+function interruptSwing(
+  target: Combatant,
+  byId: string | undefined,
+  events: CombatEvent[],
+): boolean {
+  const { attack } = target;
+  if (attack === undefined || !swingInterruptible(target)) {
+    return false;
+  }
+  attack.swingElapsed = 0;
+  events.push({ kind: "attack-interrupted", targetId: target.id });
   target.statuses.recordInterrupt(byId);
   return true;
 }
@@ -912,11 +965,16 @@ function destroySpirit(candidate: TargetCandidate, caster: Combatant, events: Co
 }
 
 /**
- * `loser` loses `amount` health: the caster's sacrifice, or a target's
- * health loss (#1648). Not damage, so nothing mitigates it; only
+ * `loser` loses `amount` health: the caster's `sacrifice`, or a target's
+ * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
  * invulnerability and a Guild Lord's cap stop it, and it can kill.
  */
-function sacrifice(loser: Combatant, amount: number, events: CombatEvent[]): void {
+function loseHealth(
+  loser: Combatant,
+  amount: number,
+  kind: "sacrifice" | "health-loss",
+  events: CombatEvent[],
+): void {
   if (amount <= 0 || loser.dead || isInvulnerable(loser)) {
     return;
   }
@@ -926,7 +984,7 @@ function sacrifice(loser: Combatant, amount: number, events: CombatEvent[]): voi
     return;
   }
   loser.health -= applied;
-  events.push({ kind: "sacrifice", targetId: loser.id, amount: applied });
+  events.push({ kind, targetId: loser.id, amount: applied });
   if (loser.health <= 0) {
     loser.dead = true;
     events.push({ kind: "death", targetId: loser.id });
@@ -976,21 +1034,42 @@ function reportEnded(target: Combatant, ending: readonly StatusId[], events: Com
 }
 
 /**
- * The skill `target` is activating that `effect` may not interrupt (#521,
- * #796), or `null`: with no `only`, any cast is fair game; with `only:
- * "spell"`, anything but a spell is refused (#1008), and with
- * `"spell-or-chant"`, anything but a spell or a chant.
+ * The skill `target` is activating that an interrupt filtered by `only`
+ * may not interrupt (#521, #796), or `null`: with no `only` or `only:
+ * "skill"` (#1709), any cast is fair game; with `only: "spell"`, anything
+ * but a spell is refused (#1008), and with `"spell-or-chant"`, anything
+ * but a spell or a chant.
  */
-function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
+function refusedSkill(only: InterruptEffect["only"], target: Combatant): string | null {
   const cast = target.cast.activeCast;
-  if (effect.only === undefined || cast === undefined) {
+  if (only === undefined || only === "skill" || cast === undefined) {
     return null;
   }
   const skill = getSkill(cast.skillId);
   const allowed =
     skill !== undefined &&
-    (isSpell(skill.type) || (effect.only === "spell-or-chant" && skill.type === "chant"));
+    (isSpell(skill.type) || (only === "spell-or-chant" && skill.type === "chant"));
   return allowed ? null : cast.skillId;
+}
+
+/**
+ * What an interrupt filtered by `only` would cut short on `target` right
+ * now, landing nothing (#1713): its cast, which comes first, or with none
+ * its plain swing under way, which only an unfiltered one, "an action",
+ * stops (#1709); `null` for a miss. The `interrupt` effect and a bot
+ * aiming one both ask it, so they cannot drift apart.
+ */
+export function interruptLands(
+  only: InterruptEffect["only"],
+  target: Combatant,
+): "cast" | "swing" | null {
+  if (target.dead) {
+    return null;
+  }
+  if (target.cast.activeCast !== undefined) {
+    return refusedSkill(only, target) === null && castInterruptible(target) ? "cast" : null;
+  }
+  return only === undefined && swingInterruptible(target) ? "swing" : null;
 }
 
 /**
@@ -1131,7 +1210,12 @@ export function applyEffect(
     }
 
     case "sacrifice-health": {
-      sacrifice(caster, Math.round((caster.maxHealth * effect.percentOfMax) / 100), events);
+      loseHealth(
+        caster,
+        Math.round((caster.maxHealth * effect.percentOfMax) / 100),
+        "sacrifice",
+        events,
+      );
       return events;
     }
 
@@ -1140,14 +1224,14 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        sacrifice(target, resolveMagnitude(effect.amount, caster), events);
+        loseHealth(target, resolveMagnitude(effect.amount, caster), "health-loss", events);
         return events;
       }
       const removed =
         effect.perRemovedOfProfession === undefined
           ? 1
           : removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
-      sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
+      loseHealth(caster, resolveMagnitude(effect.amount, caster) * removed, "sacrifice", events);
       return events;
     }
 
@@ -1275,8 +1359,12 @@ export function applyEffect(
       if (target === undefined || target.dead) {
         return events;
       }
-      const refusedSkillId = refusedSkill(effect, target);
-      if (refusedSkillId !== null || !interruptCast(target, caster.id, events)) {
+      const lands = interruptLands(effect.only, target);
+      const landed =
+        lands === "cast"
+          ? interruptCast(target, caster.id, events)
+          : lands === "swing" && interruptSwing(target, caster.id, events);
+      if (!landed) {
         // Already interrupted by this resolution, as by the daze its own
         // blow brought down (#817): the player's interrupt landed, so it
         // is no miss.
@@ -1294,7 +1382,11 @@ export function applyEffect(
         // explicitly so a combat log can show the miss, and why — landing an
         // interrupt is a timing skill, and silently swallowing failures
         // would hide exactly the feedback that teaches it.
-        events.push({ kind: "interrupt-missed", targetId: target.id, refusedSkillId });
+        events.push({
+          kind: "interrupt-missed",
+          targetId: target.id,
+          refusedSkillId: refusedSkill(effect.only, target),
+        });
       }
       return events;
     }
@@ -1527,7 +1619,7 @@ export function applyEffect(
 }
 
 /** Whether `condition` is read from how things stand rather than from what came before (#794). */
-function isStateCondition(condition: EffectCondition): condition is StateCondition {
+export function isStateCondition(condition: EffectCondition): condition is StateCondition {
   switch (condition.kind) {
     case "interrupted":
     case "interrupted-spell":
@@ -1556,8 +1648,10 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
+    case "not":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
@@ -1642,10 +1736,14 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "target-not-attacking":
+      return !isAttacking(target);
     case "any-of":
       return condition.conditions.some((each) =>
         stateHolds(each, caster, target, surroundings, firing),
       );
+    case "not":
+      return !stateHolds(condition.condition, caster, target, surroundings, firing);
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
@@ -1736,9 +1834,13 @@ function statesBefore(
   return held;
 }
 
-/** Whether `earlier`, this resolution's events so far, interrupted `targetId`. */
+/** Whether `earlier`, this resolution's events so far, interrupted `targetId`'s cast or swing. */
 function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): boolean {
-  return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+  return earlier.some(
+    (event) =>
+      (event.kind === "interrupted" || event.kind === "attack-interrupted") &&
+      event.targetId === targetId,
+  );
 }
 
 /** The skill `earlier`, this resolution's events so far, interrupted on `targetId`, if any. */
@@ -1832,7 +1934,7 @@ function conditionHolds(
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
-      return wasInterrupted(target.id, earlier);
+      return interruptedSkill(target.id, earlier) !== undefined;
     case "interrupted-spell":
       return earlier.some(
         (event) =>
@@ -1871,8 +1973,10 @@ function conditionHolds(
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
+    case "not":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":

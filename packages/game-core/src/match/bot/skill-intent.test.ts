@@ -12,13 +12,17 @@ const NO_BOT_USE = new Set([
   // bot weighs.
   "monk.spell-breaker",
   // Companion commands and pet attacks: out of scope for a bot.
+  "ranger.bestial-pounce",
   "ranger.brutal-strike",
   "ranger.call-of-haste",
   "ranger.call-of-protection",
   "ranger.charm-animal",
   "ranger.comfort-animal",
   "ranger.disrupting-lunge",
+  "ranger.feral-lunge",
   "ranger.maiming-strike",
+  "ranger.poisonous-bite",
+  "ranger.pounce",
   "ranger.revive-animal",
   "ranger.symbiotic-bond",
   // Speed, energy, attack speed and other self-help no rule reaches for.
@@ -30,13 +34,17 @@ const NO_BOT_USE = new Set([
   "dervish.avatar-of-lyssa",
   "dervish.avatar-of-melandru",
   "dervish.enchanted-haste",
+  "dervish.featherfoot-grace",
   "dervish.fleeting-stability",
   "dervish.harriers-haste",
   "dervish.heart-of-fury",
+  "dervish.onslaught",
   "dervish.pious-fury",
   "dervish.pious-haste",
   "dervish.vow-of-strength",
+  "dervish.zealous-vow",
   "elementalist.glyph-of-lesser-energy",
+  "elementalist.windborne-speed",
   "mesmer.arcane-echo",
   "mesmer.echo",
   "mesmer.energy-tap",
@@ -84,11 +92,18 @@ const NO_BOT_USE = new Set([
   "mesmer.blackout",
   // A heal that waits for its spirit's death (#1550): no rule for it.
   "ritualist.life",
+  // An ally's weapon spell that only bends its attacks (#1654): no rule for it.
+  "ritualist.ghostly-weapon",
+  "ritualist.guided-weapon",
+  "ritualist.nightmare-weapon",
+  "ritualist.weapon-of-fury",
+  "ritualist.weapon-of-renewal",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
   "warrior.hundred-blades",
   "warrior.warriors-endurance",
   "dervish.sand-shards",
+  "dervish.whirling-charge",
   "ritualist.explosive-growth",
   "ritualist.splinter-weapon",
   "ritualist.vengeful-weapon",
@@ -139,6 +154,9 @@ const NO_BOT_USE = new Set([
   // standing is no rule the bot weighs.
   "elementalist.ward-against-foes",
   "elementalist.ward-of-stability",
+  // The not condition (#1670): energy from a foe doing nothing is no rule
+  // the bot weighs.
+  "mesmer.waste-not-want-not",
 ]);
 
 function skill(id: string) {

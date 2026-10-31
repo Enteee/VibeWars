@@ -120,6 +120,15 @@ jobs:
   e2e-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    # Full e2e on every main push is what catches two pull requests that are
+    # green alone and red together (#1571), but it need not run for every
+    # merge: at most one run per shard and one pending, always the newest main.
+    # A pending run replaced by a newer push concludes cancelled, so a red main
+    # e2e covers the merges since the last green one (#1620). A pull request
+    # gets a group of its own and is never coalesced.
+    concurrency:
+      group: ${{ github.event_name == 'push' && format('e2e-main-{0}', matrix.shard) || format('e2e-{0}-{1}', github.run_id, matrix.shard) }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
@@ -147,18 +156,24 @@ jobs:
           fi
           echo "needed=$needed" >> "$GITHUB_OUTPUT"
 
+      # Each step below has its own timeout: a job-level timeout concludes
+      # cancelled, which a main push reads as a coalesced shard (#1620), so a
+      # hang must fail a step instead.
       - uses: ./.github/actions/devenv
         if: steps.needed.outputs.needed != 'false'
+        timeout-minutes: 15
 
       # e2e serves the built client.
       - name: Build
         if: steps.needed.outputs.needed != 'false'
+        timeout-minutes: 10
         run: devenv shell -- pnpm run build
 
       # Drives the Chromium the shell pins (VIBEWARS_CHROMIUM), so there is
       # no `playwright install`.
       - name: End-to-end tests
         if: steps.needed.outputs.needed != 'false'
+        timeout-minutes: 45
         run: devenv shell -- pnpm run test:e2e --shard=${{ matrix.shard }}/4
 
       - name: Upload Playwright output
@@ -172,7 +187,10 @@ jobs:
           if-no-files-found: ignore
 
   # Green only if every shard succeeded. A cancelled or skipped shard is a
-  # failure here (an asset-only skip still runs the shards, which succeed).
+  # failure here (an asset-only skip still runs the shards, which succeed),
+  # except on a main push: there a cancelled shard is one a newer push
+  # replaced while pending (#1620), not a failure; the newer commit's e2e
+  # covers it.
   e2e:
     name: e2e
     needs: e2e-shard
@@ -182,6 +200,7 @@ jobs:
       - name: Every shard succeeded
         env:
           RESULT: ${{ needs.e2e-shard.result }}
+          EVENT: ${{ github.event_name }}
         run: |
           echo "e2e-shard: $RESULT"
-          [ "$RESULT" = success ]
+          [ "$RESULT" = success ] || { [ "$EVENT" = push ] && [ "$RESULT" = cancelled ]; }

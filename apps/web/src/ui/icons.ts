@@ -10,6 +10,8 @@ import {
   type WeaponId,
 } from "@vibewars/game-core";
 
+import { CREATURE_GLYPH } from "../render/arena-atlas.js";
+
 /**
  * Icon URLs for menus and the HUD (#75, docs/art/art-direction.md).
  *
@@ -69,24 +71,10 @@ export function professionIcon(profession: ProfessionId): string {
   return PROFESSION_ICON[profession];
 }
 
-const CREATURE_ICON: Readonly<Record<CreatureLook, string>> = {
-  beast: iconUrl("creature", "beast"),
-  "bone-minion": iconUrl("creature", "bone-minion"),
-  "bone-horror": iconUrl("creature", "bone-horror"),
-  spirit: iconUrl("creature", "spirit"),
-  // Until the priest's own glyph is drawn (#1186): a spirit's.
-  priest: iconUrl("creature", "spirit"),
-  // Until the Guild Lord's own glyph is drawn (#1222): a Ranger's, for its bow.
-  "guild-lord": iconUrl("profession", "ranger"),
-  // Until the guards' own glyph is drawn (#1223): a Warrior's, for their plate.
-  guard: iconUrl("profession", "warrior"),
-  // Until the Ghostly Hero's own glyph is drawn (#1377): the priest's, tinted pale in the arena.
-  "ghostly-hero": iconUrl("creature", "spirit"),
-};
-
 /** The kind glyph on a creature's plate in the arena (#1162), drawn in ink and tinted there. */
 export function creatureIcon(look: CreatureLook): string {
-  return CREATURE_ICON[look];
+  const { family, name } = CREATURE_GLYPH[look];
+  return iconUrl(family, name);
 }
 
 const WEAPON_ICON: Readonly<Record<WeaponId, string>> = {

@@ -149,8 +149,8 @@ describe("lobbyControls", () => {
 });
 
 describe("displayLobbyCode", () => {
-  it("reads a six-letter code as two halves, the way it is read aloud", () => {
-    expect(displayLobbyCode("ACDEFG")).toBe("ACD-EFG");
+  it("reads a twelve-symbol key as three fours, the way it is read aloud (#1681)", () => {
+    expect(displayLobbyCode("ACDEFGHJKMNP")).toBe("ACDE-FGHJ-KMNP");
   });
 });
 

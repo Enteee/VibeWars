@@ -4,15 +4,26 @@ import { describe, expect, it } from "vitest";
 
 import { generateLobbyCode } from "./lobby-codes.js";
 
-/** A seeded `random`, as a test wants it. */
-function seeded(seed: number): () => number {
+/** Seeded random bytes, as a test wants them. */
+function seeded(seed: number): (n: number) => Uint8Array {
   const rng = createRng(seed);
-  return () => rng.nextFloat();
+  return (n) => Uint8Array.from({ length: n }, () => Math.floor(rng.nextFloat() * 256));
 }
 
-describe("generateLobbyCode", () => {
-  it("produces a code of the expected length from the code alphabet", () => {
+/** These bytes, in order, then the test fails: no more were asked for. */
+function bytes(...values: number[]): (n: number) => Uint8Array {
+  return (n) => {
+    if (values.length < n) {
+      throw new Error(`asked for ${String(n)} bytes, ${String(values.length)} left`);
+    }
+    return Uint8Array.from(values.splice(0, n));
+  };
+}
+
+describe("generateLobbyCode (#1681)", () => {
+  it("is a 12-symbol key from the code alphabet", () => {
     const code = generateLobbyCode(seeded(seedFromString("seed")));
+    expect(LOBBY_CODE_LENGTH).toBe(12);
     expect(code).toHaveLength(LOBBY_CODE_LENGTH);
     expect(isLobbyCode(code)).toBe(true);
   });
@@ -26,19 +37,22 @@ describe("generateLobbyCode", () => {
     }
   });
 
-  it("is deterministic for a given seed, so a match can be reproduced", () => {
-    expect(generateLobbyCode(seeded(42))).toBe(generateLobbyCode(seeded(42)));
-  });
-
   it("produces varied codes across draws rather than repeating one", () => {
     const random = seeded(seedFromString("variety"));
     const codes = new Set(Array.from({ length: 50 }, () => generateLobbyCode(random)));
-    expect(codes.size).toBeGreaterThan(40);
+    expect(codes.size).toBe(50);
   });
 
-  it("uses the last letter of the alphabet too, for a draw just under 1", () => {
-    expect(generateLobbyCode(() => 0.999999)).toBe(
-      LOBBY_CODE_ALPHABET.at(-1)?.repeat(LOBBY_CODE_LENGTH),
+  it("is byte % 23, and draws a byte of 230 or more again", () => {
+    const last = LOBBY_CODE_ALPHABET.length - 1;
+    // 229 = 9 × 23 + 22 is the last symbol; 230 and 255 are drawn again.
+    const code = generateLobbyCode(
+      bytes(0, 1, 22, 23, 229, 230, 255, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
+    );
+    expect(code).toBe(
+      [0, 1, 22, 0, last, 2, 3, 4, 5, 6, 7, 8]
+        .map((index) => LOBBY_CODE_ALPHABET[index] ?? "?")
+        .join(""),
     );
   });
 });

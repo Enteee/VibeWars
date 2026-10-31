@@ -2188,4 +2188,55 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* The not condition (#1670), at rank 12                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "paragon.signet-of-synergy",
+    name: "Signet of Synergy",
+    gwId: 1585,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.motivation",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target other ally is healed for 40...88...100 Health. If you are not
+    // under the effects of an enchantment, you are also healed for
+    // 40...88...100 Health."
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "paragon.motivation", atZero: 40, atTwelve: 88 } },
+        perStatusOnTarget: [],
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-lacks", category: "enchantment" },
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "paragon.motivation", atZero: 40, atTwelve: 88 } },
+            perStatusOnTarget: [],
+            recipient: "caster",
+          },
+        ],
+      },
+    ],
+  },
 ];

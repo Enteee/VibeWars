@@ -14,7 +14,14 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  boardChanges,
   gaveUpText,
+  hasWaking,
+  IDLE_PAUSE,
+  idleWait,
+  wokeFile,
+  wokeText,
+  writeWoke,
   LIMIT_MAX,
   PAUSE_MAX,
   PAUSE_MIN,
@@ -25,6 +32,7 @@ import {
   nextPause,
   releaseNotice,
 } from "./agent-loop.mjs";
+import { answerBoard, sweep } from "./hub-board.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -146,6 +154,175 @@ describe("hasUnread", () => {
     expect(hasUnread(dir)).toBe(true);
     fs.writeFileSync(path.join(dir, "cursor"), "0\n");
     expect(hasUnread(dir)).toBe(true);
+  });
+});
+
+describe("hasWaking (#1694)", () => {
+  /**
+   * @param {string} text
+   * @param {boolean} broadcast
+   */
+  const line = (text, broadcast) =>
+    `${JSON.stringify({ ts: 1, from: "manager", kind: "peer", text, broadcast })}\n`;
+
+  it("is woken as tg wait is: not by a plain broadcast, by one that names the role", () => {
+    const dir = scratch();
+    fs.writeFileSync(path.join(dir, "inbox.jsonl"), line("FYI #9 merged", true));
+    expect(hasWaking(dir, "developer@2")).toBe(false);
+    fs.appendFileSync(path.join(dir, "inbox.jsonl"), line("developer: take #12", true));
+    expect(hasWaking(dir, "developer@2")).toBe(true);
+  });
+});
+
+describe("idleWait (#1694)", () => {
+  const REPO = "Enteee/VibeWars";
+
+  /**
+   * @param {number} number
+   * @param {string} status
+   * @returns {import("./hub-board.mjs").Item}
+   */
+  const item = (number, status) => ({
+    id: `PVTI_${String(number)}`,
+    title: `item ${String(number)}`,
+    status,
+    content: {
+      type: "Issue",
+      number,
+      title: `item ${String(number)}`,
+      url: `https://github.com/${REPO}/issues/${String(number)}`,
+      repository: REPO,
+    },
+  });
+
+  /**
+   * A board that is `items` until the clock reaches `at`, then `later`;
+   * a clock that each pause moves on; and the wait over both.
+   *
+   * @param {{
+   *   items?: import("./hub-board.mjs").Item[],
+   *   later?: import("./hub-board.mjs").Item[],
+   *   at?: number,
+   *   column?: string | null,
+   *   mail?: (t: number) => boolean,
+   *   rebooting?: (t: number) => boolean,
+   *   board?: boolean,
+   * }} options
+   */
+  async function idle({
+    items = [item(8, "Ready")],
+    later = items,
+    at = Infinity,
+    column = "Ready",
+    mail = () => false,
+    rebooting = () => false,
+    board = true,
+  }) {
+    let t = 0;
+    const first = sweep(null, items, 0, "e1", REPO);
+    const second = sweep(first, later, 1, "e1", REPO);
+    /** @type {number[]} */
+    const polls = [];
+    const woken = await idleWait({
+      seconds: IDLE_PAUSE,
+      column,
+      mail: () => mail(t),
+      rebooting: () => rebooting(t),
+      changes: (since) => {
+        polls.push(t);
+        return board
+          ? answerBoard(t >= at ? second : first, { verb: "changes", since }, REPO)
+          : null;
+      },
+      now: () => t,
+      pause: (ms) => {
+        t += ms;
+        return Promise.resolve();
+      },
+    });
+    return { woken, t, polls };
+  }
+
+  it("sleeps the whole IDLE_PAUSE, 50 min, when nothing comes", async () => {
+    const { woken, t } = await idle({});
+    expect(IDLE_PAUSE).toBe(50 * 60);
+    expect(woken).toEqual({ by: "timer" });
+    expect(t).toBe(IDLE_PAUSE * 1000);
+  });
+
+  it("wakes on mail", async () => {
+    const { woken, t } = await idle({ mail: (now) => now >= 60_000 });
+    expect(woken).toEqual({ by: "message" });
+    expect(t).toBe(60_000);
+  });
+
+  it("wakes on a card arriving in the column", async () => {
+    const { woken, t } = await idle({
+      later: [item(8, "Ready"), item(9, "Ready")],
+      at: 120_000,
+    });
+    expect(woken).toEqual({ by: "card", number: 9, column: "Ready" });
+    expect(t).toBe(120_000);
+  });
+
+  it("does not wake on a card already there, nor one arriving in another column", async () => {
+    const { woken } = await idle({
+      items: [item(8, "Ready"), item(9, "In Review")],
+      later: [item(8, "Ready"), item(9, "QA"), item(10, "Backlog")],
+      at: 1,
+    });
+    expect(woken).toEqual({ by: "timer" });
+  });
+
+  it("ends on a pending reboot", async () => {
+    expect((await idle({ rebooting: (now) => now >= 4000 })).woken).toEqual({ by: "reboot" });
+  });
+
+  it("waits on mail alone with no board, and for a role with no column, without asking it", async () => {
+    const unreadable = await idle({ board: false, mail: (now) => now >= 10_000 });
+    expect(unreadable.woken).toEqual({ by: "message" });
+    expect(unreadable.polls).toEqual([0]);
+    const manager = await idle({ column: null });
+    expect(manager.woken).toEqual({ by: "timer" });
+    expect(manager.polls).toEqual([]);
+  });
+
+  it("says what woke it, and nothing for a reboot", () => {
+    expect(wokeText({ by: "message" })).toBe("You were idle; woken by: a message.");
+    expect(wokeText({ by: "card", number: 9, column: "Ready" })).toBe(
+      "You were idle; woken by: card #9 in Ready.",
+    );
+    expect(wokeText({ by: "timer" })).toBe("You were idle; woken by: the 50-minute timer.");
+    expect(wokeText({ by: "reboot" })).toBeNull();
+  });
+
+  it("says it outside the bus, which the jail can write", () => {
+    const root = scratch();
+    const file = wokeFile(root, "developer@2");
+    expect(path.relative(path.join(root, "bus"), file).startsWith("..")).toBe(true);
+    expect(file).toBe(path.join(root, "agents", "developer@2", "woke"));
+    writeWoke(root, "developer@2", "You were idle; woken by: a message.");
+    expect(fs.readFileSync(file, "utf8")).toBe("You were idle; woken by: a message.\n");
+    expect(fs.readdirSync(path.dirname(file))).toEqual(["woke"]);
+    writeWoke(root, "developer@2", null);
+    expect(fs.existsSync(file)).toBe(false);
+  });
+
+  it("reads hubd's copy of the board, and nothing while there is none", () => {
+    const root = scratch();
+    const changes = boardChanges(root);
+    expect(changes(null)).toBeNull();
+    fs.mkdirSync(path.join(root, "hub"));
+    fs.writeFileSync(path.join(root, "company.json"), JSON.stringify({ repo: REPO }));
+    fs.writeFileSync(path.join(root, "hub", "board.json"), "{");
+    expect(changes(null)).toBeNull();
+    fs.writeFileSync(
+      path.join(root, "hub", "board.json"),
+      JSON.stringify(sweep(null, [item(8, "Ready")], 0, "e1", REPO)),
+    );
+    expect(changes(null)?.cards).toEqual([
+      { id: "PVTI_8", number: 8, title: "item 8", status: "Ready", type: "Issue" },
+    ]);
   });
 });
 
@@ -287,6 +464,8 @@ describe("claude-llc-agent", () => {
     ok: `echo '{"type":"result","subtype":"success","is_error":false}'`,
     fail: "exit 1",
     limit: `echo '{"type":"rate_limit_event","rate_limit_info":{"status":"rejected"}}'`,
+    // A turn whose last `tg wait` found nothing (#1694).
+    idle: `touch "$DEVENV_ROOT/.bots/bus/$1/idle"; echo '{"type":"result","subtype":"success","is_error":false}'`,
   };
 
   /**
@@ -441,6 +620,21 @@ describe("claude-llc-agent", () => {
     expect(result.contextFile).toBe(".bots/bus/developer@2/context.json");
     expect(result.stdout).toContain("next turn for developer@2 in 0s");
     expect(result.calls).toContain("wait developer@2 0");
+  });
+
+  it("sleeps an idle turn in agent-loop idle, and the next turn as before (#1694)", () => {
+    const result = run(["idle", "ok", "fail", "fail", "fail", "fail", "fail"]);
+
+    expect(result.calls.filter((call) => /^(idle|wait) /.test(call))).toEqual([
+      "idle developer",
+      "wait developer 0",
+      "wait developer 0",
+      "wait developer 0",
+      "wait developer 0",
+      "wait developer 0",
+    ]);
+    expect(result.stdout).toContain("developer is idle; next turn in 50 min");
+    expect(fs.existsSync(path.join(result.dir, ".bots", "bus", "developer", "idle"))).toBe(false);
   });
 
   it("neither counts a limit as a failure nor lets it reset the count", () => {

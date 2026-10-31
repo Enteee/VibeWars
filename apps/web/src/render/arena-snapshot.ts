@@ -9,6 +9,7 @@ import {
 
 import type { CallsSnapshot, GroundEffectSnapshot } from "@vibewars/game-session";
 
+import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import type { AttackCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import type { CapeLook } from "./cape-shape.js";
@@ -552,8 +553,6 @@ export function offhandMarkLayout(
   }
 }
 
-/** The profession glyph before a name, screen px: the name's own 11 px (#281, #456). */
-export const PROFESSION_GLYPH_SIZE = NAME_LABEL_HEIGHT;
 /** Between the glyph and the name. */
 const PROFESSION_GLYPH_GAP = 2;
 

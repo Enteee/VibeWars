@@ -1049,6 +1049,20 @@ describe("wireCombat and combatMessage (#288, #375)", () => {
     expect(received?.map(combatMessage).map((message) => message.events)).toEqual([events]);
   });
 
+  it("carries a target's health loss, apart from a sacrifice (#1678)", () => {
+    const events = [{ kind: "health-loss", targetId: "b", amount: 53 }] as const;
+    const sent = wireCombat([
+      entry({
+        cause: "skill",
+        skillId: "necromancer.enfeebling-touch",
+        weaponId: undefined,
+        events: [...events],
+      }),
+    ]);
+    const received = parseWireCombatBatch(JSON.parse(JSON.stringify(sent)));
+    expect(received?.map(combatMessage).map((message) => message.events)).toEqual([events]);
+  });
+
   it("carries a resurrection and the shares it brought back (#812)", () => {
     const back = {
       kind: "resurrected",

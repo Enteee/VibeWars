@@ -106,6 +106,16 @@ describe("impactsFor (#1139)", () => {
     ]);
   });
 
+  it("bursts a body a skill made lose health, not its caster (#1678)", () => {
+    expect(
+      shapes(
+        message("necromancer.enfeebling-touch", [
+          { kind: "health-loss", targetId: "foe", amount: 53 },
+        ]),
+      ),
+    ).toEqual([["foe", "burst", DAMAGE]]);
+  });
+
   it("lets harm beat help on one body, and flashes every body an area touched", () => {
     expect(
       shapes(

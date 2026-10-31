@@ -135,7 +135,7 @@ export interface ScreenBarOptions {
    */
   readonly overlay?: boolean;
   readonly own?: OwnIcon;
-  /** The bar's Lobby Code and Join (#1525): on the menu's screens, not a lobby's or a match's. */
+  /** The bar's Lobby Key and Join (#1525): on the menu's screens, not a lobby's or a match's. */
   readonly join?: boolean;
 }
 
@@ -147,7 +147,7 @@ export interface ShownBar {
   readonly place: string;
   readonly own: OwnIcon | undefined;
   readonly overlay: boolean;
-  /** Whether it has the Lobby Code and Join. */
+  /** Whether it has the Lobby Key and Join. */
   readonly join: boolean;
 }
 

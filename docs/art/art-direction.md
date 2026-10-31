@@ -761,7 +761,7 @@ a fixed 11 screen px, which crosses every weapon at Wide.
 
 ![Profession body study](profession-body-study.svg)
 
-### Guild cape (decided: B, the trailing tab)
+### Guild cape (decided: A of the motion study)
 
 GW1 guilds wear a cape (#481, #1410). A body is a team-coloured disc seen
 from above, so the cape goes **behind it, opposite its facing**: the weapon
@@ -796,13 +796,71 @@ The same three in a 4v4 mid-fight frame at 2x zoom, with the menu figure (made b
   after it: 3 calls, no extra silhouette, no room needed. But it eats the
   disc's team colour at the back and sits next to the off-hand arc, and at
   Default it is a 4 px green smear: team colour is hurt, no emblem fits.
-- **Decided: B** (the operator's pick, #1410; implementation is #1422). The
-  tab's clump noise is accepted for the clearest guild read. My own
+- **Decided: B** (the operator's pick, #1410; implementation was #1422),
+  since replaced by A of the motion study below (#1699). The tab's clump
+  noise is accepted for the clearest guild read. My own
   recommendation was A: It adds a clear guild signal on the one side no
   mark uses, costs no more than the existing marks, never touches the
   disc, and keeps team colour the strongest read. Show the emblem only in the
   menu, the designer and the roster. B is the pick if the operator wants the
   cape to read at a glance and accepts the clump noise.
+
+#### Guild cape in motion (decided: A, the rim band that peels into a tab)
+
+The operator asked for a cape that is nearly invisible when its wearer
+stands still, unfolds when it walks, trails opposite the movement (not the
+facing) and lags a turn. `node scripts/assets/cape-motion-study.mjs` steps the
+physics in JS and writes the clip as SMIL keyframes, so it plays when the SVG
+is opened in a browser or on GitHub (SMIL plays inside an image too).
+All three share the model the game would run per body, in the
+client, from snapshot velocity: a smoothed trail direction (opposite the
+movement), an unfold amount `u` that is itself lagged (so one step never
+unfolds it), and a chain of nodes each pulled to a point on the trail line by
+a damped spring, softer towards the free end. Folded, the cloth hides under the
+disc and only a thin border arc stays on the rim: the team colour is never
+covered and the cape's side is still told. Each clip shows standing, walking
+right, turning and walking up, stopping, one step, a strafe (facing right,
+moving down: the cape follows the movement, not the facing) and two bodies
+walking past each other, plus a standing, a knocked down and a dead body.
+
+![Cape motion study](cape-motion-study.svg)
+
+- **A, a rim band that peels into a tab.** One node. Draws the border arc (2
+  calls), the tab polygon, its trim and the emblem: 5 Painter calls; 7 floats of
+  state per body. At full unfold it is the widest of the three (about 20
+  units across at the root), and passing a neighbour it hides most of the
+  other body's rim.
+- **B, one cloth panel on a two-segment chain.** The decided tab, now
+  moving. Border arc (2), panel polygon, trim, emblem: 5 calls; 11 floats per
+  body. 17 units long at full unfold, as today, so nothing grows. The
+  panel bends round a turn and swings out behind a strafe; the emblem rides
+  the first segment and stays readable.
+- **C, a pair of streamers.** Two three-node ribbons. Border arc (2), two
+  ribbons, two trims: 6 calls; 26 floats per body. The thinnest and the
+  least in the way (a pass-by hides almost nothing) but it reads as hair
+  or tentacles at Default zoom, has no room for the emblem, and the strands
+  tangle visually in a clump.
+
+Knocked down: speed is zero, so it settles to the border. Dead: no cape.
+One step: `u` is lagged, so a 0.2 s step does not fully unfold: no flicker. At Default zoom a body is 28 px across and the cape at most 17 px
+past its rim; the border arc is 1.5 px.
+
+**Decided: A** (the operator's pick, #1686; implementation is #1699,
+`apps/web/src/render/cape-motion.ts`). The arena steps one cape per caped
+living body every frame from its drawn movement; the menu figure stands, so
+its cape is folded. The study's springs are tuned for its clip, a body that
+runs at 40 units/s and takes 0.09 s to reach it; a game body runs at 180 and
+starts at once, so the cape sees the game's velocity scaled to the clip's
+and lagged as its body was, and a running body looks exactly like the clip.
+A jump of more than 3 radii in a frame (a shadow step, a respawn) starts the
+cape over, folded. A 0.2 s step peaks at `u` 0.61 in the study's own
+numbers, short of a walk's full unfold.
+
+My recommendation was B. It is the shape the operator already picked, so the
+guild read and the emblem carry over, it moves with the most readable lag,
+and its length is unchanged so the clump noise #1410 accepted does not
+grow. A is the fallback if a bolder silhouette is wanted; C is the one to pick
+if neighbours being covered is the worry above all.
 
 ### Name labels (study, not decided)
 
@@ -901,7 +959,7 @@ it, not baked in, so one file serves every screen.
   drop-pair, plus-sparks, plus-gusts, party-heal, plus-ripple, meteor-trio,
   ring-heal, hammer-slam, hex-burst, drop-arrow, pain-cross, eye-drop, blink,
   totem, spirit-pain, spirit-blind, spirit-quiet, spirit-strip, spirit-cap, spirit-share, spirit-rupture (a cracked post and the jagged mark), spirit-break, spirit-feast (two cracked posts),
-  spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, energy-feast, hex-energy-feast, hex-interrupt, eye-burst, vortex-hex (the Mesmer staples 3, #1666: a bolt, or a hex-ringed bolt, with a ringed plus for Health healed per Energy lost (Drain Delusions: a ringed bolt, Energy gained); the hex ring round a burst; an eye over a burst; a spiral and a burst), hand-skull, hand-drop-bolt, jaws-bolt, jaws-drop, hand-ring-rend (the touch skills, #1666: a low hand or a row of teeth, and what the touch does), spirit-blood, spirit-hexed, spirit-run, spirit-calm, spirit-last-burn, spirit-last-heal (the two death-burst spirits share a cracked post), blade-cap-drop, attune-fire/-water/-air/-earth (an element and a ringed bolt in the corner), ring-spell-heal, armor-spin, vapour-flame, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
+  spirit-block, spirit-ground, rift-strike, spirit-burn, spirit-energy, bond-spike, tear-fall, spirit-trio, hand-drop-weak, ring-rend-burst (#1680: a low hand with a drop and two down chevrons; the broken enchantment ring round a burst), axe-weak/-limp/-burst, axe-trio, hammer-drop/-daze/-blind/-unbound/-run, sword-bleed/-heavy/-daze/-adrenal, blow-unbound/-crack, shout-fall (the Warrior staples 3, #1672: the weapon up and left and a ringed rider at the bottom right for what it reads or gives: down chevrons, a broken leg line, a burst, a drop, three dots, a struck eye, a broken ring, forward chevrons, a plus, rising bars, a crack; three axes for the chop that hits adjacent foes; the shout with a body down), energy-feast, hex-energy-feast, hex-interrupt, eye-burst, vortex-hex (the Mesmer staples 3, #1666: a bolt, or a hex-ringed bolt, with a ringed plus for Health healed per Energy lost (Drain Delusions: a ringed bolt, Energy gained); the hex ring round a burst; an eye over a burst; a spiral and a burst), hand-skull, hand-drop-bolt, jaws-bolt, jaws-drop, hand-ring-rend (the touch skills, #1666: a low hand or a row of teeth, and what the touch does), spirit-blood, spirit-hexed, spirit-run, spirit-calm, spirit-last-burn, spirit-last-heal (the two death-burst spirits share a cracked post), blade-cap-drop, attune-fire/-water/-air/-earth (an element and a ringed bolt in the corner), ring-spell-heal, armor-spin, vapour-flame, ward-blade, trap-flame, ring-rays, well-sink, echo-spell, echo-skill, hex-mute,
   armor-crack, drop-run, mark-skull, dagger-stop, dagger-limp, palm,
   shield-stance (solid), shield-bar, shield-arrow, shield-blade, born-plus, born-burst, born-ring, born-energy (the spirit post in a halo, and its payout),
   blade-limp, blade-pierce, blade-drop, blade-half, blade-burst, blade-adrenal (a blade with its payoff in the corner above), blades-fan,
@@ -931,7 +989,9 @@ it, not baked in, so one file serves every screen.
   note-hold (a note under a fermata: Enduring Harmony),
   smite-attacking, spear-light, star-below-half, star-beam-flame, sword-star, signet-attacking, signet-energy, signet-quake, star-prone (the Monk smiting skills, #1584: a four-point star is holy light; a blade in the top left corner is the foe attacking; a signet is its ring and dot; a flat bar is a foe knocked down; a ring filled in its lower half is a foe below half Health),
   interrupt-energy-cut, skills-off, hex-shatter, interrupt-knockdown, hex-slow-star (the Mesmer staples, #1594: a burst over a bolt with a minus for the energy an interrupt takes; four squares struck through for every skill disabled; a broken hex ring round a burst; a burst over a figure lying flat for the knockdown; the hex ring round a four-point star over crossed bars for spells that cast slowly),
-  arrow-twin, arrow-spent-ring, arrow-fast, arrow-close, shield-whirl, snake, arrow-dodge (the Ranger staples, #1585: two parallel arrows; an arrow and a broken ring for the enchantment it spends; an arrow with speed chevrons; an arrow into a close target; a shield with a turning arc round it; an S-curved snake with chevrons; chevrons under an arrow flying past),
+  arrow-aimed, arrow-lob, arrow-splinter, arrow-ring-break, paw-leap, paw-lunge, fangs-poison, nest-snake, tripwire, smoke-plume, haste-miss (Ranger staples 3, #1697: a level arrow with speed streaks through a shield; a lobbed arc falling on a ground bar; an arrow whose point throws three shards; an arrow through a dashed spell ring; a paw under a leaping arc; a paw tilted forward with three streaks; two fangs over three bubbles; a snake rising from a bowl; two posts with a sagging wire and a mark above; a cloud of three puffs on the ground; speed chevrons with an arrow's dashed trace passing behind, also the status),
+  arrow-twin, arrow-spent-ring, arrow-fast, arrow-close, shield-whirl, snake, arrow-dodge (the Ranger staples, #1585: two parallel arrows; an arrow and a broken ring for the enchantment it spends; an arrow with speed chevrons; an arrow into a close target; a shield with a turning arc round it; an S-curved snake with chevrons; chevrons under an arrow flying past), arrow-power, arrow-aim, arrow-unbound, arrow-keen, arrow-energy, arrow-kindle, arrow-ignite, arrow-poison, trap-dust, trap-spike, drop-struck (the Ranger staples 2, #1684: a thick arrow with impact ticks; an arrow into a crosshair; an arrow with a broken ring for the recharge it resets; an arrow with a star burst at its head for the critical; an arrow with a ringed bolt for the Energy back; an arrow with a ringed flame or a ringed burst, which the two preparation status icons repeat; an arrow with a ringed drop for the poison; dust over the trap's ground bar; three spikes on the bar; a drop struck through for the conditions the signet removes), plus-whisper, eye-heal, heal-spark, plus-rays, signet-plus, plus-halo, plus-wings, drops-purge, drop-mend, hand-star, shield-regen (the Monk staples 3, #1703: a small plus with sound arcs; an eye with a ringed plus; a plus and a sparkle; a plus with rays; a signet with a ringed plus; a plus in a halo; a plus with four wings; three drops struck through; one drop struck off, two standing and a plus over them; an open hand and a holy star; a shield with a plus over regeneration chevrons, which the status icon repeats),
+  blade-resilient, blade-ghostly, blade-sundering, blade-shadow, blade-warmongers, blade-wailing, blade-nightmare, blade-fury-bolt, blade-renewal (the Ritualist weapon spells 3, #1706; riders drawn once in `scripts/assets/weapon-marks.mjs` for skill and status: a shield with a plus; a dashed shield, with a clock for Guided; a cracked shield; a struck-through eye; a burst over a flat bar for a foe at rest, a burst behind a swing arc for a foe attacking; a hollow drop with a down chevron; two bars and a bolt; a bolt in a ring),
   shield-knock, shield-less, adrenal-fast, axe-sweep, axe-pierce, sword-sun-moon, hex-sword-drop (the Warrior staples 2 and Clumsiness, #1619: a shield with a burst and a fall mark for the knockdown; a shield with a down chevron for less damage; rising bars under fast chevrons; an axe with a swing arc for the sweep; an axe through a shield for armor penetration; a sun and a crescent under one slash for the unblockable double strike; the hex ring round a falling blade),
   sac-energy, sac-blade, drop-to-signet, hex-flame, lava-spouts, ward-elements, arrow-bolt, flame-rise (#1572: a drop given up at the bottom left with its payoff at the top right, a bolt or a blade; a drop leaving for a signet ring; the hex ring round a flame; a wavy ground with three tongues of fire; the ward post with a flame and a bolt above; an arrow with a bolt across its shaft; rising bars under a flame),
   stone-skin, gust-curl, chasm, ground-pulse, ward-slow, ward-block, hand-bolt, flame-splash, eye-flame (#1605: a faceted crystal cut with light lines; two wind curls streaming left; the ground split by a chasm with rocks thrown up; a pulsing ring under a cracked line; the ward post with a dragging trail of bars; the ward post with a planted block; a low hand with a bolt striking from it; a flame over a wavy pool with drops thrown to both sides; an eye whose pupil is a flame, rays above),
@@ -1130,7 +1190,7 @@ implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
 
 The operator picked **C** (2026-10-30), with Character Builder and Team
 Builder at the rail's bottom, below a divider. Card 1 of the split (#1525)
-builds the rail, a screen per entry and the title bar's Lobby Code and Join;
+builds the rail, a screen per entry and the title bar's Lobby Key and Join;
 the rail's icons live in `apps/web/public/icons/mode/`, drawn by the
 `mode` family of `scripts/assets/icons.mjs` (#1554).
 
@@ -1238,12 +1298,17 @@ generator. Never hand-edit an output file; change the script and re-run.
 
 Each file is a flat SVG of 150–1,200 bytes with colours baked in, because Phaser
 rasterises SVG textures without CSS. Projectiles are the one exception: white,
-for the scene to tint. Load it in Phaser with
-`this.load.svg(key, url, { width, height })` at the size you draw it (24×24
-for icons, 32×12 for projectiles), and in HTML with a plain `<img>`.
+for the scene to tint. In HTML, show one with a plain `<img>`.
+
+The arena does not load the files one by one: it draws frames of one sheet,
+`icons/atlas/arena.svg` with its frame map, which Vite composes from these
+files at build and dev time (`apps/web/plugins/arena-atlas.ts`, #1671), each
+at its texture size from `apps/web/src/render/arena-atlas.ts`. It is not in git.
 
 Adding a skill: add its row to `scripts/assets/skill-icons/<profession>.mjs` and re-run.
-Adding a status, profession, skill type or UI control: add one entry to the
+Adding a status: add its row to `scripts/assets/status-icons/<profession>.mjs`, by the
+game-core file that declares its id (`common.mjs` for `common.ts`), and re-run.
+Adding a profession, skill type or UI control: add one entry to the
 matching table in the generator, re-run it, and add a row to this page.
 
 ## Sound

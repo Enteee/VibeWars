@@ -39,6 +39,7 @@ import {
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import { lobbyCharacter } from "./lobby-character.js";
 import type { LobbyCharacter } from "./lobby-connection.js";
+import { keyGated } from "./key-gate.js";
 import { createLocalPeer } from "./local-peer.js";
 import {
   RECONNECT_WINDOW_SECONDS,
@@ -168,6 +169,12 @@ export interface LobbyHostOptions {
   /** The room named by the code. */
   readonly transport: Transport;
   readonly code: string;
+  /**
+   * What a peer proves the lobby key with (#1681, `LobbyRoom`): nobody
+   * is in the room for this lobby until they have. `null` exactly for
+   * a queued lobby, whose room is public and whose tickets gate it.
+   */
+  readonly proofKey: Uint8Array | null;
   /** The playable maps, from game-maps by the caller. The first is the default. */
   readonly mapIds: readonly string[];
   /** Build the match for `plan`. Injected, so a test can play a fake one. */
@@ -244,9 +251,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   if (queued !== undefined && options.teamLobby) {
     throw new Error("a queued lobby has no Team Lobby");
   }
+  if ((queued === undefined) !== (options.proofKey !== null)) {
+    throw new Error("a lobby is gated on its key unless it is queued");
+  }
   // Its match is on a scope of this room, so this checks every message the
-  // host sends, the match's too.
-  const { host: transport, local } = createLocalPeer(sizeChecked(options.transport));
+  // host sends, the match's too, and the key gate keeps both from anyone
+  // who has not proven the key.
+  const gated =
+    options.proofKey === null
+      ? options.transport
+      : keyGated(options.transport, options.proofKey, "host");
+  const { host: transport, local } = createLocalPeer(sizeChecked(gated));
   /** In the order they joined, which is the order they are listed in. */
   const members = new Map<string, Member>();
   /** The member peer `peerId` is: never a bot, whatever a peer calls itself (#1193). */

@@ -3,10 +3,8 @@ import type { CAPE_COLOURS, CAPE_EMBLEMS, WireCape } from "@vibewars/game-protoc
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
- * The guild cape (#1422), variant B of the study (#1410,
- * `scripts/assets/cape-study.mjs`): a short tab trailing behind the body,
- * opposite its facing, with a swallowtail hem in the trim colour and the
- * emblem on it. Pure geometry; `body-painter.ts` draws it.
+ * The guild cape's look (#1422): its palette and the emblems on it. How
+ * it moves and the shape it takes are `cape-motion.ts` (#1699).
  */
 
 export type CapeColour = (typeof CAPE_COLOURS)[number];
@@ -35,30 +33,13 @@ export function capeLook(cape: WireCape): CapeLook {
   return { main: CAPE_PALETTE[cape.main], trim: CAPE_PALETTE[cape.trim], emblem: cape.emblem };
 }
 
-/** The tab's root sits 2 inside the rim, behind the centre: under the disc, which covers it. */
-const ROOT_BACK = -2;
-/** The tab's half width at the root and at the hem's points. */
-const ROOT_HALF = 6.5;
-const HEM_HALF = 4.5;
-/** How far past the rim the hem's points and its notch reach. */
-export const CAPE_LENGTH = 17;
-const NOTCH_BACK = 12.5;
-/** The emblem's centre past the rim, and how wide it is. */
-const EMBLEM_BACK = 5.5;
+/** How wide an emblem is on a cape. */
 export const EMBLEM_SIZE = 5;
 
 /** An emblem part: a filled polygon, or a closed line stroked `width` wide. */
 export type EmblemPart =
   | { readonly kind: "fill"; readonly points: readonly Point[] }
   | { readonly kind: "stroke"; readonly points: readonly Point[]; readonly width: number };
-
-export interface CapeShape {
-  /** The cloth: one closed polygon, root to hem and back. */
-  readonly tab: readonly Point[];
-  /** The hem, point to notch to point: the trim. */
-  readonly trim: readonly Point[];
-  readonly emblem: readonly EmblemPart[];
-}
 
 /** Sides of the polygon a round emblem is drawn as. */
 const ROUND_SIDES = 16;
@@ -101,36 +82,6 @@ const EMBLEMS: Readonly<Record<CapeEmblem, readonly EmblemPart[]>> = {
   ring: [{ kind: "stroke", points: circlePoints(3.4), width: 2 }],
   "half-disc": [{ kind: "fill", points: arcPoints(4.6, -Math.PI / 2, Math.PI / 2, 8) }],
 };
-
-/**
- * The cape on a body at (x, y) of radius `r` facing `facing`: the tab
- * points the other way, `CAPE_LENGTH` past the rim, and turns with it.
- */
-export function capeShape(
-  x: number,
-  y: number,
-  r: number,
-  facing: number,
-  emblem: CapeEmblem,
-): CapeShape {
-  const back = facing + Math.PI;
-  const along = { x: Math.cos(back), y: Math.sin(back) };
-  const side = { x: -along.y, y: along.x };
-  /** `behind` past the centre, `aside` to the side. */
-  const at = (behind: number, aside: number): Point => ({
-    x: x + along.x * behind + side.x * aside,
-    y: y + along.y * behind + side.y * aside,
-  });
-  const hemLeft = at(r + CAPE_LENGTH, -HEM_HALF);
-  const notch = at(r + NOTCH_BACK, 0);
-  const hemRight = at(r + CAPE_LENGTH, HEM_HALF);
-  return {
-    tab: [at(r + ROOT_BACK, -ROOT_HALF), hemLeft, notch, hemRight, at(r + ROOT_BACK, ROOT_HALF)],
-    trim: [hemLeft, notch, hemRight],
-    // Its up is the tab's left side, as the study turns it.
-    emblem: emblemShape(emblem, at(r + EMBLEM_BACK, 0), back + Math.PI / 2, EMBLEM_SIZE),
-  };
-}
 
 /** `emblem` centred on `centre`, `size` across, its up turned by `turn` radians from -y. */
 export function emblemShape(
