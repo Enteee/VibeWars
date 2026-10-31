@@ -842,9 +842,14 @@ does not add: the blow takes the larger (#923).
 **Preparations** change your attacks while they last, and only one is up
 at a time, as with stances (#525). Apply Poison (Ranger, 15 energy, 2 s
 cast, 24 s) poisons for 13 s every foe your physical attacks hit:
-swings, arrows and attack skills, each victim of Barrage. A miss or a
-block poisons nobody, nor does a wand's or staff's bolt. An arrow
-poisons if the preparation is still up when it lands.
+swings, arrows and attack skills, each victim of one with an area. A
+miss or a block poisons nobody, nor does a wand's or staff's bolt. An
+arrow poisons if the preparation is still up when it lands. Kindle
+Arrows and Ignite Arrows (#1629) ride a bow's blows only, a sword's get
+nothing: Kindle turns the arrow's damage to fire and adds 20 fire,
+Ignite deals 15 fire to the struck foe and each foe adjacent to it.
+Barrage and Volley remove all your preparations as they are released,
+so none of their arrows carries one.
 
 **Glyphs** change your next spells, then are gone, and only one is up at
 a time (#526). Glyph of Lesser Energy (Elementalist, 5 energy, 1 s cast,
@@ -1824,7 +1829,8 @@ A **trap** (#1105) is a ground effect, as a ward is, set where its setter
 stands as the trap skill ends. A trap is not a spell, so Dazed does not
 slow it, but setting one is easily interrupted: any attack that lands on
 the setter during it interrupts it, a swing, an arrow or an attack skill;
-a miss, a block or a spell's damage does not. Interrupted or moved, there
+a miss, a block or a spell's damage does not. Precision Shot (#1629) is
+easily interrupted the same way. Interrupted or moved, there
 is no trap, the energy is spent and the skill recharges. Set, it waits for
 up to its duration, then ends with no effect, unless it springs by
 itself as its time runs out, as Flame Trap does. The first step a living foe

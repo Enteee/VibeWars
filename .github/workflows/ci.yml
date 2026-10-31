@@ -109,33 +109,79 @@ jobs:
           git show "origin/$BASE_REF:pnpm-lock.yaml" > "$RUNNER_TEMP/base-lock.yaml"
           devenv shell -- node scripts/ci/lockfile-age.mjs "$RUNNER_TEMP/base-lock.yaml" pnpm-lock.yaml
 
-  # Its own required check (EXPECTED_CHECKS, #132), so an e2e failure is
-  # reported under its own name and e2e runs alongside `ci` rather than after
-  # it. No `needs:` and no path filter, for the reason given on `ci`: a
-  # required check that is skipped, or never reports, must not count as green.
-  e2e:
-    name: e2e
+  # The `e2e` check (EXPECTED_CHECKS, #132) is the aggregate below; the work
+  # is spread over four shards (#1610) so a pull request waits one quarter of
+  # the suite. Each shard builds for itself: the build is a small part of the
+  # run, and sharing it would add an artifact round trip and a `needs:`.
+  # The shard has no `name:` on purpose: hub-guards.test.mjs ties every named
+  # job to EXPECTED_CHECKS, and only the aggregate is a required check.
+  # No path filter, for the reason given on `ci`: a required check that is
+  # skipped, or never reports, must not count as green.
+  e2e-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      # An asset-only pull request skips the work below, but the job still
+      # reports (#1609). main always runs everything, and so does a diff that
+      # fails: scripts/ci/e2e-needed.mjs fails closed, and only an explicit
+      # "false" skips. The checkout is the
+      # merge commit, so its diff against the base tip is the pull request.
+      - name: Is e2e needed
+        id: needed
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          needed=true
+          if [ "$EVENT" = pull_request ] && git fetch --no-tags --depth=1 origin "$BASE_REF"; then
+            # The base's copy of the matcher, not the pull request's own: a PR
+            # must not be able to edit its way out of its e2e.
+            git show FETCH_HEAD:scripts/ci/e2e-needed.mjs > "$RUNNER_TEMP/e2e-needed.mjs" 2>/dev/null &&
+              needed=$(node "$RUNNER_TEMP/e2e-needed.mjs" FETCH_HEAD HEAD 2>/dev/null) || needed=true
+          fi
+          echo "needed=$needed" >> "$GITHUB_OUTPUT"
+
       - uses: ./.github/actions/devenv
+        if: steps.needed.outputs.needed != 'false'
 
       # e2e serves the built client.
       - name: Build
+        if: steps.needed.outputs.needed != 'false'
         run: devenv shell -- pnpm run build
 
       # Drives the Chromium the shell pins (VIBEWARS_CHROMIUM), so there is
       # no `playwright install`.
       - name: End-to-end tests
-        run: devenv shell -- pnpm run test:e2e
+        if: steps.needed.outputs.needed != 'false'
+        run: devenv shell -- pnpm run test:e2e --shard=${{ matrix.shard }}/4
 
       - name: Upload Playwright output
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: playwright-output
+          name: playwright-output-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
           if-no-files-found: ignore
+
+  # Green only if every shard succeeded. A cancelled or skipped shard is a
+  # failure here (an asset-only skip still runs the shards, which succeed).
+  e2e:
+    name: e2e
+    needs: e2e-shard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every shard succeeded
+        env:
+          RESULT: ${{ needs.e2e-shard.result }}
+        run: |
+          echo "e2e-shard: $RESULT"
+          [ "$RESULT" = success ]

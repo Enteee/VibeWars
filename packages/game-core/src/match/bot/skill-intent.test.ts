@@ -97,6 +97,8 @@ const NO_BOT_USE = new Set([
   "ritualist.splinter-weapon",
   "ritualist.vengeful-weapon",
   "ritualist.weapon-of-remedy",
+  "ranger.kindle-arrows",
+  "ranger.ignite-arrows",
   // Energy engine (#1614): energy back for spells still to be cast.
   "elementalist.fire-attunement",
   "elementalist.water-attunement",
