@@ -219,9 +219,9 @@ describe("Psychic Instability (#1570)", () => {
 
   it("says so", () => {
     expect(described("mesmer.psychic-instability")).toEqual([
-      "Interrupts the target's current cast, if they are casting",
-      "If it interrupts: knocks down for 3s",
-      "If it interrupts: adjacent foes are knocked down for 3s",
+      "Interrupts the target's action: a skill or an attack",
+      "If it interrupts a skill: knocks down for 3s",
+      "If it interrupts a skill: adjacent foes are knocked down for 3s",
     ]);
   });
 });

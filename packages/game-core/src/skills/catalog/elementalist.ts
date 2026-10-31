@@ -2421,8 +2421,8 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // is no line to pierce along yet.
     projectile: { speed: RANGE_SPELL },
     // "...strikes for 15...50 lightning damage if it hits. Lightning
-    // Javelin interrupts attacking foes": 43. An attack skill is
-    // interrupted; a plain swing is not, as no `interrupt` cancels one.
+    // Javelin interrupts attacking foes": 43. An attack skill, or a plain
+    // swing under way (#1709).
     effects: [
       {
         kind: "damage",

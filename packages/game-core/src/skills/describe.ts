@@ -1255,7 +1255,7 @@ function aCategory(category: StatusCategory): string {
 function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
-      return "If it interrupts";
+      return "If it interrupts a skill";
     case "interrupted-spell":
       return "If that action was a spell";
     case "resurrected":
@@ -1769,7 +1769,9 @@ function describeEffect(
             ? "Interrupts the target's spell, if they are casting one"
             : effect.only === "spell-or-chant"
               ? "Interrupts the target's spell or chant, if they are casting one"
-              : "Interrupts the target's current cast, if they are casting",
+              : effect.only === "skill"
+                ? "Interrupts the target's skill, if they are using one"
+                : "Interrupts the target's action: a skill or an attack",
         magnitude: undefined,
       };
     case "knockdown":
@@ -1930,7 +1932,9 @@ function describeEffect(
           ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
-            ? "are interrupted if casting"
+            ? each.only === undefined
+              ? "are interrupted"
+              : "are interrupted if casting"
             : each.kind === "knockdown"
               ? `are knocked down for ${String(each.durationSeconds)}s`
               : each.kind === "apply-status"

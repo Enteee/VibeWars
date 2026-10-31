@@ -967,7 +967,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         type: "earth",
         armorPenetration: 0,
       },
-      { kind: "interrupt" },
+      { kind: "interrupt", only: "skill" },
     ],
   },
   {

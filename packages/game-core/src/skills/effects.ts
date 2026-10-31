@@ -709,7 +709,7 @@ function knockDown(target: Combatant, durationSeconds: number): void {
 }
 
 /**
- * Interrupt the cast `target` has in progress: the one path every
+ * Interrupt the cast `target` has in progress: the one path every cast's
  * interrupt takes, an interrupt effect's and daze's (#546). As in GW1,
  * the interrupted skill recharges as if it had been used: its cost is
  * spent and its recharge starts (ADR-0029). `byId` did it, and a status
@@ -738,6 +738,36 @@ function interruptCast(
     beginRecharge(target.cast, skill, skill.rechargeSeconds, cancelled.key);
   }
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
+  target.statuses.recordInterrupt(byId);
+  return true;
+}
+
+/**
+ * Interrupt the plain swing `target` has under way (#1709): GW1
+ * interrupts "all attacks", not only skills. Its blow never lands and its
+ * swing starts over; the auto-attack goes on, at the same foe, as after
+ * Clumsiness (#1593). An attacker walking to its foe or between swings
+ * has nothing under way, nor has one knocked down, and an uninterruptible
+ * bearer (#1464) never is. `byId` did it, heard as a cast's interrupt is
+ * (#1473). Returns whether there was a swing to interrupt.
+ */
+function interruptSwing(
+  target: Combatant,
+  byId: string | undefined,
+  events: CombatEvent[],
+): boolean {
+  const attack = target.attack;
+  if (
+    attack === undefined ||
+    target.moving ||
+    attack.swingElapsed <= 0 ||
+    target.knockdownRemaining > 0 ||
+    aggregateModifiers(target.statuses.active).uninterruptible
+  ) {
+    return false;
+  }
+  attack.swingElapsed = 0;
+  events.push({ kind: "attack-interrupted", targetId: target.id });
   target.statuses.recordInterrupt(byId);
   return true;
 }
@@ -988,13 +1018,13 @@ function reportEnded(target: Combatant, ending: readonly StatusId[], events: Com
 
 /**
  * The skill `target` is activating that `effect` may not interrupt (#521,
- * #796), or `null`: with no `only`, any cast is fair game; with `only:
- * "spell"`, anything but a spell is refused (#1008), and with
- * `"spell-or-chant"`, anything but a spell or a chant.
+ * #796), or `null`: with no `only` or `only: "skill"` (#1709), any cast
+ * is fair game; with `only: "spell"`, anything but a spell is refused
+ * (#1008), and with `"spell-or-chant"`, anything but a spell or a chant.
  */
 function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
   const cast = target.cast.activeCast;
-  if (effect.only === undefined || cast === undefined) {
+  if (effect.only === undefined || effect.only === "skill" || cast === undefined) {
     return null;
   }
   const skill = getSkill(cast.skillId);
@@ -1292,7 +1322,15 @@ export function applyEffect(
         return events;
       }
       const refusedSkillId = refusedSkill(effect, target);
-      if (refusedSkillId !== null || !interruptCast(target, caster.id, events)) {
+      // A cast first; with none, an action is also a plain swing (#1709),
+      // which "a skill" or "a spell" never is.
+      const landed =
+        refusedSkillId === null &&
+        (interruptCast(target, caster.id, events) ||
+          (effect.only === undefined &&
+            target.cast.activeCast === undefined &&
+            interruptSwing(target, caster.id, events)));
+      if (!landed) {
         // Already interrupted by this resolution, as by the daze its own
         // blow brought down (#817): the player's interrupt landed, so it
         // is no miss.
@@ -1755,9 +1793,13 @@ function statesBefore(
   return held;
 }
 
-/** Whether `earlier`, this resolution's events so far, interrupted `targetId`. */
+/** Whether `earlier`, this resolution's events so far, interrupted `targetId`'s cast or swing. */
 function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): boolean {
-  return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+  return earlier.some(
+    (event) =>
+      (event.kind === "interrupted" || event.kind === "attack-interrupted") &&
+      event.targetId === targetId,
+  );
 }
 
 /** The skill `earlier`, this resolution's events so far, interrupted on `targetId`, if any. */
@@ -1851,7 +1893,7 @@ function conditionHolds(
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
-      return wasInterrupted(target.id, earlier);
+      return interruptedSkill(target.id, earlier) !== undefined;
     case "interrupted-spell":
       return earlier.some(
         (event) =>
