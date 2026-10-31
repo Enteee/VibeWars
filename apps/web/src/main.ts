@@ -26,6 +26,7 @@ import {
   QUEUED_RESULT_SECONDS,
   STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
+  TEAM_PLAN_REJECTED_NOTICE,
   TEAM_SPLIT_MESSAGE,
   watchHostMove,
   type HostMove,
@@ -96,7 +97,13 @@ import {
   type QueueScreen,
   type StayOffer,
 } from "./ui/queue-screen.js";
-import { hostMaps, lobbyPanel, type LobbyPanel } from "./ui/lobby-screen.js";
+import {
+  HOUSE_TEAM_AFTER_MS,
+  hostMaps,
+  lobbyPanel,
+  type LobbyMatchmaking,
+  type LobbyPanel,
+} from "./ui/lobby-screen.js";
 import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
 import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
@@ -112,7 +119,7 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
-import { isAlone, partyOf } from "./ui/party-strip.js";
+import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
 import {
   isModeEntry,
   loadRail,
@@ -147,7 +154,12 @@ import {
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
-import { normalizeLobbyCode, teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
+import {
+  normalizeLobbyCode,
+  teamQueueModeOf,
+  teamSizeOf,
+  type QueueMode,
+} from "@vibewars/game-protocol";
 import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   resolveJoinLoadout,
@@ -387,6 +399,36 @@ async function main(): Promise<void> {
         readonly screen: QueueScreen;
         readonly mode: QueueMode;
         readonly name: string;
+      }
+    | undefined;
+  /**
+   * A team mode's party in the queue (#1766), from its lobby queueing
+   * until it is back in it: the party board and key while its members
+   * consent, the queue's place once it formed, and, while its match's
+   * lobby is up, the party lobby out of sight and still live (ADR-0041).
+   */
+  let teamQueue:
+    | {
+        readonly party: LobbyConnection;
+        readonly nonce: string;
+        /** By `Date.now`. */
+        readonly since: number;
+        readonly timer: number;
+        pressed: ReturnType<typeof openPartyBoard> | undefined;
+        place: RandomArenaQueue | undefined;
+        parked:
+          | {
+              readonly hosted: HostedLobby | undefined;
+              readonly entrant: Entrant;
+              readonly name: string;
+            }
+          | undefined;
+        /** The party lobby closed while out of sight: what to say back on the menu. */
+        partyClosed: string | undefined;
+        /** Whether the screen offers *Play the house team* yet. */
+        houseTeamShown: boolean;
+        /** Its match is over: whoever leaves it first is no news. */
+        finished: boolean;
       }
     | undefined;
   /** Set while *Random Arena* is reading the character, so a second press makes no second ticket. */
@@ -896,6 +938,7 @@ async function main(): Promise<void> {
    * tab's own; with `moveTo`, its guests follow to that key (#1553).
    */
   const closeLobby = async (moveTo?: string): Promise<void> => {
+    endTeamQueue();
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
@@ -1050,7 +1093,27 @@ async function main(): Promise<void> {
       },
       lobbyNotice,
       hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]),
+      matchmakingFor(entry),
     );
+  };
+
+  /** A team mode's Find a match, Leave the queue and Play the house team (#1766). */
+  const matchmakingFor = (entry: HostEntry): LobbyMatchmaking | undefined => {
+    if (lobby === undefined || teamQueueModeOf(entry) === undefined) {
+      return undefined;
+    }
+    return {
+      queuedMs: queuedMsOf(lobby.getSnapshot()),
+      onFindMatch: () => {
+        lobby?.findMatch();
+      },
+      onLeaveQueue: () => {
+        lobby?.leaveQueue();
+      },
+      onPlayHouseTeam: () => {
+        lobby?.playHouseTeam();
+      },
+    };
   };
 
   /**
@@ -1437,9 +1500,203 @@ async function main(): Promise<void> {
     }
   };
 
+  /** How long the party in sight has looked for a team (#1766), or `null`. */
+  const queuedMsOf = (snapshot: LobbySnapshot): number | null =>
+    teamQueue !== undefined &&
+    teamQueue.parked === undefined &&
+    lobby === teamQueue.party &&
+    snapshot.phase === "queued"
+      ? Date.now() - teamQueue.since
+      : null;
+
+  /** The queue strip's wait, each second; the screen again once the house team is offered. */
+  const tickTeamQueue = (): void => {
+    const current = teamQueue;
+    if (current === undefined || current.parked !== undefined || lobby !== current.party) {
+      return;
+    }
+    const snapshot = current.party.getSnapshot();
+    const queuedMs = queuedMsOf(snapshot);
+    if (queuedMs === null) {
+      return;
+    }
+    syncParty(snapshot);
+    for (const label of document.querySelectorAll(".party-queued")) {
+      label.textContent = lookingLabel(queuedMs);
+    }
+    if (!current.houseTeamShown && queuedMs >= HOUSE_TEAM_AFTER_MS) {
+      current.houseTeamShown = true;
+      redrawRail();
+    }
+  };
+
+  /**
+   * Follow `party`'s queueing (#1766): queued under a new nonce, this
+   * member of its team brings a fresh key to it, or a one-human team's
+   * host queues alone; out of the queue, so is this tab. A newcomer
+   * outside the team is in no ticket.
+   */
+  const syncTeamQueue = (party: LobbyConnection): void => {
+    const snapshot = party.getSnapshot();
+    const nonce = snapshot.phase === "queued" ? snapshot.queueNonce : null;
+    const current = teamQueue;
+    if (current !== undefined) {
+      // In its match, the party lobby is its host's to put back.
+      if (current.party !== party || current.nonce === nonce || current.parked !== undefined) {
+        return;
+      }
+      endTeamQueue();
+    }
+    const mode = teamQueueModeOf(snapshot.mode);
+    const self = snapshot.players.find((p) => p.sessionId === party.selfSessionId);
+    if (nonce === null || mode === undefined || self?.team !== 0 || lobby !== party) {
+      return;
+    }
+    const started: NonNullable<typeof teamQueue> = {
+      party,
+      nonce,
+      since: Date.now(),
+      timer: window.setInterval(tickTeamQueue, 1000),
+      pressed: undefined,
+      place: undefined,
+      parked: undefined,
+      partyClosed: undefined,
+      houseTeamShown: false,
+      finished: false,
+    };
+    teamQueue = started;
+    if (snapshot.players.filter((p) => !p.bot && p.team === 0).length < 2) {
+      if (snapshot.isHost) {
+        queueTeam(started, mode, undefined);
+      }
+      return;
+    }
+    started.pressed = openPartyBoard();
+    party.queueParty(started.pressed.key);
+  };
+
+  /**
+   * `current`'s party into the queue of `mode` (#1766), as `party` when
+   * it has more than one human. Its host sends the match its side's
+   * seats. The match's lobby, once met, is the one in sight, the party's
+   * kept out of sight until it is over.
+   */
+  const queueTeam = (
+    current: NonNullable<typeof teamQueue>,
+    mode: QueueMode,
+    party: PartyPlace | undefined,
+  ): void => {
+    const entrant = lobbyEntrant;
+    const name = lobbyName;
+    if (entrant === undefined || name === undefined) {
+      party?.board.close();
+      return;
+    }
+    const own = hosted?.lobby === current.party ? hosted : undefined;
+    current.place = enterQueue(
+      mode,
+      name,
+      entrant.guild,
+      entrant.character,
+      {
+        // The queue strip says the wait; the queue's states are its own.
+        onState: () => undefined,
+        onLobby: (joined, host) => {
+          if (teamQueue !== current || current.parked !== undefined || lobby !== current.party) {
+            void host?.close();
+            void joined.disconnect();
+            return;
+          }
+          current.parked = { hosted, entrant, name };
+          lobby = undefined;
+          closeChat();
+          hosted = host;
+          seatLobby(name, joined, entrant);
+          // Its match is the queue's end: the party lobby waits again,
+          // as each member finds it back from the match.
+          joined.onMatchStarting(() => {
+            if (current.party.getSnapshot().isHost) {
+              current.party.leaveQueue();
+            }
+          });
+        },
+        onRefused: (notice) => {
+          if (teamQueue !== current) {
+            return;
+          }
+          if (current.party.getSnapshot().isHost) {
+            current.party.leaveQueue();
+          }
+          endTeamQueue();
+          lobbyNotice = notice;
+          redrawRail();
+        },
+        onPartyGone: () => {
+          // Its host is gone from the queue: the party lobby says the rest.
+          if (teamQueue === current) {
+            endTeamQueue();
+          }
+        },
+      },
+      party,
+      own === undefined ? undefined : (selfKey) => own.teamPlan(selfKey),
+    );
+  };
+
+  /** The party lobby back in sight (#1766), its match's lobby left; or the menu, if it closed. */
+  const unpark = (current: NonNullable<typeof teamQueue>): void => {
+    const { parked } = current;
+    if (parked === undefined) {
+      return;
+    }
+    current.parked = undefined;
+    const matchRoom = lobby;
+    const matchHost = hosted;
+    lobby = undefined;
+    hosted = undefined;
+    closeChat();
+    void (async () => {
+      await matchHost?.close();
+      await matchRoom?.disconnect();
+    })();
+    if (current.partyClosed !== undefined) {
+      menuNotice = current.partyClosed;
+      lobbyEntrant = undefined;
+      lobbyName = undefined;
+      endTeamQueue();
+      syncParty(undefined);
+      return;
+    }
+    lobby = current.party;
+    hosted = parked.hosted;
+    lobbyEntrant = parked.entrant;
+    lobbyName = parked.name;
+    mountLobbyChat(current.party);
+    syncParty(current.party.getSnapshot());
+  };
+
+  /**
+   * Out of the team queue (#1766): its place and board closed, the party
+   * lobby back in sight, and, by its host, back to waiting.
+   */
+  const endTeamQueue = (): void => {
+    const ending = teamQueue;
+    if (ending === undefined) {
+      return;
+    }
+    teamQueue = undefined;
+    clearInterval(ending.timer);
+    ending.place?.leave();
+    ending.pressed?.board.close();
+    unpark(ending);
+    if (lobby === ending.party && ending.party.getSnapshot().isHost) {
+      ending.party.leaveQueue();
+    }
+  };
+
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot, null));
+    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot, queuedMsOf(snapshot)));
     topbarView.setLobby(
       snapshot === undefined
         ? undefined
@@ -1470,6 +1727,11 @@ async function main(): Promise<void> {
     if (lobby === undefined) {
       syncParty(undefined);
       redrawRail();
+      return;
+    }
+    if (teamQueue?.parked !== undefined) {
+      // A team's match's lobby counts down under the party's screen (#1766).
+      setStatus("match found", "online");
       return;
     }
     const snapshot = lobby.getSnapshot();
@@ -1601,15 +1863,8 @@ async function main(): Promise<void> {
     showMenu();
   };
 
-  /**
-   * Show `joined`, coded or queued, and play its matches as `name` with
-   * `entrant`'s build, every one of them (#1070).
-   */
-  const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
-    lobby = joined;
-    lobbyEntrant = entrant;
-    lobbyName = name;
-    lobbyNotice = undefined;
+  /** The chat of `joined`, the lobby in sight. */
+  const mountLobbyChat = (joined: LobbyConnection): void => {
     chat = mountChat({
       selfId: joined.selfSessionId,
       selfTeam: () =>
@@ -1620,17 +1875,54 @@ async function main(): Promise<void> {
       },
     });
     app.append(chat.root);
+  };
+
+  /**
+   * Show `joined`, coded or queued, and play its matches as `name` with
+   * `entrant`'s build, every one of them (#1070).
+   */
+  const seatLobby = (name: string, joined: LobbyConnection, entrant: Entrant): void => {
+    lobby = joined;
+    lobbyEntrant = entrant;
+    lobbyName = name;
+    lobbyNotice = undefined;
+    mountLobbyChat(joined);
+    // A lobby out of sight says nothing to the chat.
     joined.onChat((line) => {
-      chat?.add(line);
+      if (lobby === joined) {
+        chat?.add(line);
+      }
     });
     joined.onChatThrottled(() => {
-      chat?.notice("Slow down: your last lines were not sent.");
+      if (lobby === joined) {
+        chat?.notice("Slow down: your last lines were not sent.");
+      }
     });
-    // A lobby this tab has left says nothing more to it.
+    // A lobby this tab has left says nothing more to it; a party lobby
+    // out of sight while its match is up still queues (#1766).
     joined.onChange(() => {
+      if (lobby === joined || teamQueue?.party === joined) {
+        syncTeamQueue(joined);
+      }
       if (lobby === joined) {
         lobbyChanged();
       }
+    });
+    joined.onParty((formed) => {
+      const current = teamQueue;
+      if (current?.party !== joined || current.pressed === undefined) {
+        return;
+      }
+      const { board, key } = current.pressed;
+      current.pressed = undefined;
+      const mode = teamQueueModeOf(joined.getSnapshot().mode);
+      if (formed === null || mode === undefined) {
+        // No party this time: its lobby goes back to waiting.
+        board.close();
+        return;
+      }
+      const { groupId, members, consents } = formed;
+      queueTeam(current, mode, { party: { members, key, groupId, consents }, board });
     });
     joined.onStartRejected((reason) => {
       if (lobby === joined) {
@@ -1652,6 +1944,14 @@ async function main(): Promise<void> {
     });
     const hostMove = watchHostMove(joined);
     joined.onClosed((reason) => {
+      const team = teamQueue;
+      if (team?.party === joined) {
+        if (team.parked !== undefined) {
+          team.partyClosed = lobbyClosedNotice(reason);
+          return;
+        }
+        endTeamQueue();
+      }
       if (lobby !== joined) {
         return;
       }
@@ -1660,6 +1960,12 @@ async function main(): Promise<void> {
       hosted = undefined;
       lobbyEntrant = undefined;
       closeChat();
+      if (teamQueue?.parked !== undefined && match === undefined && !enteringMatch) {
+        // A team's match's lobby fell through (#1766): the party lobby, still queued.
+        unpark(teamQueue);
+        showMenu();
+        return;
+      }
       const move = hostMove();
       if (move !== undefined) {
         // Its host went on to another lobby (#1553): after it, quietly.
@@ -1765,6 +2071,13 @@ async function main(): Promise<void> {
     await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
+    // A team's match (#1766): back in the party's own lobby, the match's
+    // end no news.
+    const team = teamQueue?.parked === undefined ? undefined : teamQueue;
+    const said = team?.finished === true ? undefined : notice;
+    if (team !== undefined) {
+      endTeamQueue();
+    }
     if (queue !== undefined) {
       // Before the end, the player's own leave forfeits; a host or a
       // connection lost counts for nothing. Either way, the menu.
@@ -1776,9 +2089,9 @@ async function main(): Promise<void> {
     // (#44), so another can start straight away (brief §46): the party,
     // on its host's mode (#1526).
     if (lobby !== undefined) {
-      lobbyNotice = notice ?? lobbyNotice;
+      lobbyNotice = said ?? lobbyNotice;
     } else {
-      menuNotice = notice ?? menuNotice;
+      menuNotice = said ?? menuNotice;
     }
     showMenu();
   };
@@ -1886,6 +2199,9 @@ async function main(): Promise<void> {
           // Every lobby match, coded or queued, goes on the record (#1404).
           onFinished: (finished) => {
             recordMatch(finished, start.mapId, entrant);
+            if (teamQueue?.parked !== undefined) {
+              teamQueue.finished = true;
+            }
             if (queue === undefined) {
               return;
             }
@@ -1909,6 +2225,10 @@ async function main(): Promise<void> {
       );
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
+      // Said once, on the match screen: the lobby's went with it.
+      if (start.teamPlanRejected) {
+        toast(TEAM_PLAN_REJECTED_NOTICE);
+      }
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;
@@ -1919,6 +2239,9 @@ async function main(): Promise<void> {
       // Back to the lobby. If it closed while this was joining, closing it
       // already took the player to the menu, and said why. A queued
       // lobby has no screen of its own to go back to.
+      if (teamQueue?.parked !== undefined) {
+        endTeamQueue();
+      }
       if (queue !== undefined) {
         await leaveLobby(notice);
       } else if (lobby !== undefined) {

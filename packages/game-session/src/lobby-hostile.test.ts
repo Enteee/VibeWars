@@ -111,7 +111,11 @@ describe("lobby host against hostile peers", () => {
     peer.send("lobby-state", forged, guest.transport.selfId);
     // Claiming to be the host does not make it so either.
     peer.send("lobby-state", { ...forged, hostId: "host" }, guest.transport.selfId);
-    peer.send("match-start", { mapId: "test-arena", matchId: "match-1" }, guest.transport.selfId);
+    peer.send(
+      "match-start",
+      { mapId: "test-arena", matchId: "match-1", teamPlanRejected: false },
+      guest.transport.selfId,
+    );
     peer.send("lobby-note", { kind: "refused", reason: "host-left" }, guest.transport.selfId);
     await settle();
     expect(guest.connection.getSnapshot().phase).toBe("waiting");

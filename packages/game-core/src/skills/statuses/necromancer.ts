@@ -75,7 +75,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 102 }, perStatusOnTarget: [] }],
+        effects: [{ kind: "heal", amount: { flat: 102 } }],
         target: "source",
         skillId: "necromancer.parasitic-bond",
       },

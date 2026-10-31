@@ -404,7 +404,6 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: { scaling: { attributeId: "warrior.tactics", atZero: 82, atTwelve: 154 } },
       },
     ],
@@ -3019,6 +3018,58 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
         kind: "if",
         condition: { kind: "target-moving" },
         effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* 'N for each X' (#1760)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "warrior.victory-is-mine",
+    name: '"Victory Is Mine!"',
+    gwId: 365,
+    type: "shout",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.tactics",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You gain 10...68 Health and 3...7 Energy for each condition suffered
+    // by target foe" (#1760): none, nothing, and the shout is still used.
+    effects: [
+      {
+        kind: "heal",
+        recipient: "caster",
+        amount: { flat: 0 },
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["condition"] },
+          amount: { scaling: { attributeId: "warrior.tactics", atZero: 10, atTwelve: 56 } },
+          max: undefined,
+        },
+      },
+      {
+        kind: "energy-gain",
+        amount: { flat: 0 },
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["condition"] },
+          amount: { scaling: { attributeId: "warrior.tactics", atZero: 3, atTwelve: 6 } },
+          max: undefined,
+        },
       },
     ],
   },
