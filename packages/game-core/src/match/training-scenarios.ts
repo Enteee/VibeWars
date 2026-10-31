@@ -750,8 +750,8 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     exercises: ["movement", "auto-attacks", "range"],
     knobs: [],
     // From the spawn at (200, 450): one walks a 600 by 400 loop in the
-    // middle of the field, one flees to stay 450 away, and one walks in
-    // with a sword.
+    // middle of the field, one starts 450 away and flees to stay so, and
+    // one walks in with a sword.
     dummies: [
       {
         ...target("patroller", "Patroller (60 armor)", vec2(400, 250), 60),
@@ -762,7 +762,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
         },
       },
       {
-        ...target("runner", "Runner (60 armor)", vec2(1100, 450), 60),
+        ...target("runner", "Runner (60 armor)", vec2(650, 450), 60),
         behaviour: { kind: "keep-away", targeting: { kind: "nearest-enemy" }, distanceUnits: 450 },
       },
       {

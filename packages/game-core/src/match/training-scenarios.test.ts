@@ -955,7 +955,7 @@ describe("moving-targets, headless (#497)", () => {
     expect(reached[2]).toBeLessThan(10);
   });
 
-  it("a still player: the runner stays put, and the chaser walks in and lands a sword hit within 7 s", () => {
+  it("a still player: the runner holds 450 away, and the chaser walks in and lands a sword hit within 7 s", () => {
     const sim = arena(scenario("moving-targets"), "still");
     const runner = at(sim, "runner");
     let hitAt: number | undefined;
@@ -971,14 +971,17 @@ describe("moving-targets, headless (#497)", () => {
     }
     // About 1000 to walk at 180 a second, then the sword's first swing.
     expect(hitAt).toBeDefined();
-    expect(distance(at(sim, "runner"), runner)).toBe(0);
+    const apart = distance(at(sim, "runner"), at(sim, "player"));
+    expect(apart).toBeGreaterThan(420);
+    expect(apart).toBeLessThan(480);
+    expect(distance(at(sim, "runner"), runner)).toBeLessThan(30);
   });
 
   it("the runner backs off from a player who walks at it, never inside 400, and stops 450 away when they stop", () => {
     const sim = arena(scenario("moving-targets"), "flee");
     let closest = Infinity;
-    // 3 s at 180 a second: the player closes 540 of the 900, and the
-    // runner, from 450 on, backs off toward the east wall at 1400.
+    // 3 s at 180 a second: the runner, 450 away from the start, backs
+    // off as fast toward the east wall at 1400, 750 away.
     for (let i = 0; i < Math.round(3 / DT); i += 1) {
       sim.walkTo("player", at(sim, "runner"));
       sim.step(DT);
