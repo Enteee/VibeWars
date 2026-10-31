@@ -34,8 +34,6 @@ export interface RailParty {
   readonly queuedMs: number | null;
 }
 
-/** Shown while nobody else is here. */
-export const PARTY_ALONE = "Share your key to play together";
 /** A guest's word that its host has the lobby closed (#1682). */
 export const PARTY_CLOSED = "Lobby closed";
 
@@ -96,8 +94,6 @@ export function partyStrip(party: RailParty): HTMLElement {
   strip.appendChild(list);
   if (party.queuedMs !== null) {
     strip.appendChild(h("span", "party-queued", lookingLabel(party.queuedMs)));
-  } else if (isAlone(party)) {
-    strip.appendChild(h("span", "party-alone", PARTY_ALONE));
   }
   if (showsClosed(party)) {
     strip.appendChild(h("span", "party-closed", PARTY_CLOSED));

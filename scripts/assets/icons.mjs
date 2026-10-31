@@ -2780,6 +2780,25 @@ const skillGlyph = {
     inkFill("M22 2.5L13.5 4.5L19.5 10.5Z") +
     `<path d="M2 10H8.5a2.5 2.5 0 1 0-2.5-2.5" ${stroke(C.ink, 1.8)}/>` +
     `<path d="M2 14H7M2 18.5H9.5a2.2 2.2 0 1 1-2.2 2.2" ${stroke(C.ink, 1.8)}/>`,
+  // Monk mechanics (#1754, #1784): two linked rings, a plus in one, a heavy blow's chevrons below.
+  "bond-plus-hit": () =>
+    `<circle cx="8" cy="9" r="5" ${stroke(C.ink, 2)}/><circle cx="16" cy="9" r="5" ${stroke(C.ink, 2)}/>` +
+    inkLine("M8 6.5V11.5M5.5 9H10.5", 1.8) +
+    inkLine("M4 18L8 21.5L12 18M12.5 18L16.5 21.5L20.5 18", 1.8),
+  // A holy star and an arrow turned back on itself: the blow returns (#1754, #1784).
+  "star-return": () =>
+    holyStar(16, 7.5, 6.5) +
+    inkLine("M13 14.5H7.5a3.2 3.2 0 0 0 0 6.4H18", 2) +
+    inkFill("M22 21L17.5 18.2V23.8Z"),
+  // A holy star inside a dashed ring: the aura that burns adjacent foes (#1754, #1784).
+  "star-aura": () =>
+    holyStar(12, 12, 6) +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2)} stroke-dasharray="3 3"/>`,
+  // A hand held low with a big plus and a small one: the touch heals, and Divine Favor doubles (#1754, #1784).
+  "hand-plus-double": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    inkLine("M15 2.5V11.5M10.5 7H19.5", 2.4) +
+    inkLine("M21 13V18M18.5 15.5H23.5", 1.6),
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +
