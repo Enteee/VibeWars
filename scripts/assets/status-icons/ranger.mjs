@@ -78,19 +78,20 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M8 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1C7.2 9.8 6.8 7.6 8 6zM16 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1-.3-1.9-.7-4.1.5-5.7z" fill="${c}"/>` +
       `<path d="M6 19.5h12" ${stroke(c, 1.8)}/>`,
   ],
-  // Ranger staples 2 (#1629), stand-ins until their art card.
   // Preparation: an arrow with a flame at its head, your arrows burn.
   "kindle-arrows": [
     "preparation",
     (c) =>
-      `<path d="M4 20L13 11" ${stroke(c, 2)}/>` +
-      `<path d="M16 4c2 2.5 3.5 4 3.5 6a3.5 3.5 0 0 1-7 0c0-2 1.5-3.5 3.5-6z" fill="${c}"/>`,
+      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<path d="M16 11c.6 3 3.5 4 3.5 7a3.5 3.5 0 0 1-7 0c0-1.5.6-2.6 1.5-3.2 0 1.2.4 1.8 1 2.1-.3-1.8.5-3.7 1-5.9z" fill="${c}"/>`,
   ],
-  // Preparation: an arrow into a burst, your arrows explode on contact.
+  // Preparation: an arrow with a burst beside it, as the skill's icon (Ignite Arrows).
   "ignite-arrows": [
     "preparation",
     (c) =>
-      `<path d="M4 20L12 12" ${stroke(c, 2)}/>` +
-      `<path d="M16 8V4M16 12v4M12 8h-2M20 8h2M13 5l-1.5-1.5M19 5l1.5-1.5M19 11l1.5 1.5" ${stroke(c, 1.6)}/>`,
+      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<path d="M16 11.5V20M12 15.8H20.5M13.2 13L18.8 18.6M18.8 13L13.2 18.6" ${stroke(c, 1.8)}/>`,
   ],
 };

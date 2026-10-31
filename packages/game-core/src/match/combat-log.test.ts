@@ -209,10 +209,11 @@ describe("MatchTally (#1057)", () => {
       entry("cat", [
         { kind: "health-lost", targetId: "ann", amount: 12, statusId: "deep-wound" },
         { kind: "life-stolen", targetId: "ann", amount: 5 },
+        { kind: "health-loss", targetId: "ann", amount: 53 },
       ]),
       entry("ann", [{ kind: "sacrifice", targetId: "ann", amount: 50 }]),
     ]);
-    expect(t.row("ann").taken).toBe(17);
+    expect(t.row("ann").taken).toBe(70);
   });
 
   it("credits a kill to a foe source only; every death counts", () => {

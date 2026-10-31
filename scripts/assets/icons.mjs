@@ -1630,6 +1630,15 @@ const skillGlyph = {
   "hand-ring-rend": () =>
     `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
     `<g transform="translate(16,8) scale(0.55) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>`,
+  // Target Health loss (#1648, #1680): a low hand, a drop lost and a weakening chevron.
+  "hand-drop-weak": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<path d="M8.5 2C8.5 2 4.8 6.2 4.8 8.2A3.7 3.7 0 0 0 12.2 8.2C12.2 6.2 8.5 2 8.5 2Z" fill="${C.ink}"/>` +
+    inkLine("M14 5.5L18.5 10L23 5.5M14 11.5L18.5 16L23 11.5", 2.2),
+  // Pain of Disenchantment: the broken enchantment ring round a burst that reaches the foes beside it.
+  "ring-rend-burst": () =>
+    `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
+    `<g transform="translate(12,12) scale(0.7) translate(-12,-12)">${inkFill(burst(8))}</g>`,
   // Warrior staples 3 (#1658, #1672): the weapon up and left, a ringed rider bottom right for the condition it reads or gives.
   "axe-weak": () => riderOn(skillGlyph.axe(), RIDER.weak),
   "axe-limp": () => riderOn(skillGlyph.axe(), RIDER.limp),
@@ -1655,6 +1664,34 @@ const skillGlyph = {
     inkLine("M9 3.5L14 8.5L9 13.5M14.5 3.5L19.5 8.5L14.5 13.5", 2.4) +
     `<circle cx="5.5" cy="19" r="2.6" fill="${C.ink}"/>` +
     inkLine("M10 19H22M14 19L12 15.5M18 19L20 15.5", 2.4),
+  // Ranger staples 2 (#1629, #1684): the arrow family, each with its rider or its own shaft.
+  "arrow-power": () =>
+    inkLine("M3.5 20.5L14 10", 4) +
+    inkFill("M23 1.5L10 6L18.5 14.5Z") +
+    inkLine("M3 14L6 17M7 10L10 13", 1.8),
+  "arrow-aim": () =>
+    `<circle cx="16" cy="8" r="5.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M16 0.8V3.6M16 12.4V15.2M8.8 8H11.6M20.4 8H23.2", 1.8) +
+    inkLine("M3 21L12.5 11.5", 2.4) +
+    inkFill("M16.5 7.5L10 9.5L14.5 14Z"),
+  "arrow-unbound": () => riderOn(skillGlyph.arrow(), RIDER.ring),
+  "arrow-keen": () =>
+    inkLine("M3.5 20.5L13 11", 2.2) +
+    inkFill("M12 11L10 1.5L13.5 7L21.5 3L17 9.5L22.5 14.5L15 13.5Z"),
+  "arrow-energy": () => riderOn(skillGlyph.arrow(), skillGlyph.energy()),
+  "arrow-kindle": () => riderOn(skillGlyph.arrow(), skillGlyph.flame()),
+  "arrow-ignite": () => riderOn(skillGlyph.arrow(), RIDER.burst),
+  "arrow-poison": () => riderOn(skillGlyph.arrow(), RIDER.drop),
+  "trap-dust": () =>
+    `<g transform="translate(12,9) scale(0.7) translate(-12,-12)">${skillGlyph.dust()}</g>` +
+    inkLine("M3 20H21", 2.5) +
+    inkLine("M5 20L7 16L9 20M10 20L12 16L14 20M15 20L17 16L19 20", 2),
+  "trap-spike": () =>
+    inkLine("M3 21H21", 2.5) + inkFill("M4 20L7 4L10 20ZM10 20L12 8L14 20ZM14 20L17 4L20 20Z"),
+  "drop-struck": () =>
+    inkFill("M12 2.5C12 2.5 4.5 12 4.5 16A7.5 7.5 0 0 0 19.5 16C19.5 12 12 2.5 12 2.5Z") +
+    `<path d="M3.5 21.5L20.5 6" ${stroke(C.bg, 5.4)}/>` +
+    inkLine("M3.5 21.5L20.5 6", 2.4),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +

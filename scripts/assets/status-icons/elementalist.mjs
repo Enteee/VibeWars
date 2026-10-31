@@ -164,4 +164,19 @@ export const ELEMENTALIST_STATUS_ICONS = {
       `<path d="M7 4h10v6c0 4-2.5 6-5 8-2.5-2-5-4-5-8z" ${stroke(c, 1.8)}/>` +
       `<path d="M9.5 10.5a2.5 2.5 0 1 1 2.5 2.5" ${stroke(c, 1.6)}/>`,
   ],
+  // Elementalist staples 3 (#1664), stand-ins until the asset-designer's.
+  // Enchantment: three wind lines trailing a forward arrow, moving faster.
+  "windborne-speed": [
+    "enchantment",
+    (c) =>
+      `<path d="M4 8h9M3 12h11M4 16h9" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 8l4 4-4 4" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: the hex ring round an ash cloud over a crossed eye, attacks miss.
+  "ash-blast": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
+      `<path d="M8 10a2.5 2.5 0 0 1 4-2 2.5 2.5 0 0 1 4 2M8 15h8M9 13l6 4" ${stroke(c, 1.8)}/>`,
+  ],
 };

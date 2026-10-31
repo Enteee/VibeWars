@@ -111,6 +111,7 @@ import {
   clampPips,
   ENERGY_PER_PIP,
   isStatusId,
+  isUnderAnother,
   MAX_PIPS,
   preventsAttacks,
   reducedRecharge,
@@ -760,7 +761,10 @@ function degenerationSources(combatant: Combatant): {
       definition.healthPips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
       definition.healthPerSecondWhileMoving > 0 ||
-      definition.healthPerSecond > 0
+      definition.healthPerSecond > 0 ||
+      (definition.whileUnder !== undefined &&
+        definition.whileUnder.healthPips > 0 &&
+        isUnderAnother(combatant.statuses.active, status, definition.whileUnder.categories))
     ) {
       healing.add(status.sourceId);
     }
@@ -3047,6 +3051,7 @@ export class MatchSimulation {
         if (
           (event.kind === "damage" ||
             event.kind === "sacrifice" ||
+            event.kind === "health-loss" ||
             event.kind === "health-lost" ||
             event.kind === "life-stolen") &&
           event.amount > 0

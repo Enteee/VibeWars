@@ -32,7 +32,10 @@ export type ElementalistStatusId =
   | "air-attunement"
   | "earth-attunement"
   | "aura-of-restoration"
-  | "kinetic-armor";
+  | "kinetic-armor"
+  // Elementalist staples 3 (#1664).
+  | "windborne-speed"
+  | "ash-blast";
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -206,6 +209,18 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     armorModifier: 68,
     renewsOnBearerSpell: true,
+  }),
+  // Elementalist staples 3 (#1664), at their rank-12 values.
+  // "For 5...13 seconds, target ally moves 33% faster."
+  "windborne-speed": define("windborne-speed", "Windborne Speed", "enchantment", {
+    profession: "elementalist",
+    moveSpeedMultiplier: 1.33,
+  }),
+  // "Burning foes struck by Ash Blast are hexed for 5 seconds and have a
+  // 20...75% chance to miss with attacks": 64%.
+  "ash-blast": define("ash-blast", "Ash Blast", "hex", {
+    profession: "elementalist",
+    attackMissChance: 0.64,
   }),
 };
 
