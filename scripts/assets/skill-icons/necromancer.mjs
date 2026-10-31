@@ -24,7 +24,7 @@ export const NECROMANCER_ICONS = {
   // Stand-ins for the wells of #1730, until their art.
   "necromancer.well-of-blood": { glyph: "well-sink", modifier: "up" },
   "necromancer.well-of-power": { glyph: "well-sink", modifier: "plus" },
-  "necromancer.well-of-weariness": { glyph: "well-sink", modifier: "down" },
+  "necromancer.well-of-weariness": { glyph: "well-sink", modifier: "less" },
   // Wells 2 (#1732), stand-ins until their art card.
   "necromancer.well-of-the-profane": { glyph: "well-sink", modifier: "down" },
   "necromancer.well-of-silence": { glyph: "well-sink", modifier: "stun" },
