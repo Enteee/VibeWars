@@ -752,6 +752,11 @@ function describeAttackHits(
       // steals for the spirit (#1777).
       const amount = String(describeMagnitude(effect.amount, new Map()).current);
       parts.push(`${attacks} steal up to ${amount} Health`);
+    } else if (effect.kind === "heal" && effect.recipient === "owner") {
+      // Only a pet bears it (Predatory Bond, #1865), cast from its
+      // Ranger's bar: the pet's attacks heal whoever reads this.
+      const amount = String(describeMagnitude(effect.amount, new Map()).current);
+      parts.push(`your pet's attacks heal you for ${amount}`);
     } else {
       parts.push(
         ...describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`),
