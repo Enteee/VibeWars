@@ -41,6 +41,7 @@ const NO_BOT_USE = new Set([
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.critical-eye",
   "assassin.dash",
+  "dervish.arcane-zeal",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
   "dervish.avatar-of-grenth",
@@ -51,6 +52,7 @@ const NO_BOT_USE = new Set([
   "dervish.fleeting-stability",
   "dervish.harriers-haste",
   "dervish.heart-of-fury",
+  "dervish.mystic-vigor",
   "dervish.onslaught",
   "dervish.pious-fury",
   "dervish.pious-haste",
@@ -59,6 +61,7 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-lesser-energy",
   "elementalist.windborne-speed",
   "mesmer.arcane-echo",
+  "mesmer.channeling",
   "mesmer.echo",
   "mesmer.energy-tap",
   "mesmer.illusion-of-haste",

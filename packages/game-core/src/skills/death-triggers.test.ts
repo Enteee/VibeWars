@@ -9,6 +9,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
+import { applyDamage } from "./effects.js";
 import type { StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers } from "./triggers.js";
@@ -27,6 +28,7 @@ const RANKS = new Map([
   ["necromancer.soul-reaping", 12],
   ["assassin.deadly-arts", 12],
   ["monk.healing-prayers", 12],
+  ["monk.smiting-prayers", 12],
 ]);
 
 function spec(id: string, team: number, spawn: Vec2, skillBar: readonly string[] = []) {
@@ -200,6 +202,74 @@ describe("bearer-dies (#1762)", () => {
     expect(get(sim, "g").combatant.dead).toBe(true);
     expect(amounts(log, "necromancer.putrid-bile", "damage", "g")).toHaveLength(1);
     expect(amounts(log, "necromancer.putrid-bile", "damage", "h")).toEqual([]);
+  });
+});
+
+describe("bearer-dies from a triggered effect (#1825)", () => {
+  /** `f`, Reaper's Mark on it, swings a killing blow at `a` under Judge's Intervention. */
+  function judged(fHealth: number): { sim: MatchSimulation; log: CombatLogEntry[] } {
+    const sim = arena();
+    put(sim, "f", "reapers-mark");
+    put(sim, "a", "judges-intervention");
+    const f = get(sim, "f").combatant;
+    f.health = fHealth;
+    get(sim, "n").combatant.energy = 0;
+    applyDamage(get(sim, "a").combatant, 1000, "slashing", false, [], f);
+    return { sim, log: stepFor(sim, 4 * DT) };
+  }
+
+  it("fires for a foe a triggered smite kills: Reaper's Mark pays for Judge's Intervention", () => {
+    const { sim, log } = judged(100);
+    expect(get(sim, "f").combatant.dead).toBe(true);
+    expect(amounts(log, "necromancer.reapers-mark", "energy-gain", "n")).toEqual([13]);
+  });
+
+  it("fires nothing for a smite that leaves its foe alive", () => {
+    const { sim, log } = judged(500);
+    expect(get(sim, "f").combatant.dead).toBe(false);
+    expect(events(log, "necromancer.reapers-mark")).toEqual([]);
+  });
+
+  // f joined before g: one order chained, the other did not, before the
+  // settle pass drained everyone first.
+  it.each<[string, "f" | "g", "f" | "g", Vec2]>([
+    ["a later joiner", "f", "g", vec2(300, -AREA_NEARBY * 1.2)],
+    ["an earlier joiner", "g", "f", vec2(300, AREA_NEARBY * 0.7)],
+  ])(
+    "never chains from a triggered kill: a burst that kills %s sets nothing off",
+    (_, smitten, second, past) => {
+      const sim = arena();
+      put(sim, "f", "putrid-bile");
+      put(sim, "g", "putrid-bile");
+      put(sim, "a", "judges-intervention");
+      get(sim, smitten).combatant.health = 100;
+      get(sim, second).combatant.health = 1;
+      // h in reach of the second bearer's burst only.
+      get(sim, "h").position = past;
+      applyDamage(
+        get(sim, "a").combatant,
+        1000,
+        "slashing",
+        false,
+        [],
+        get(sim, smitten).combatant,
+      );
+      const log = stepFor(sim, 1);
+      expect(get(sim, smitten).combatant.dead).toBe(true);
+      expect(get(sim, second).combatant.dead).toBe(true);
+      expect(amounts(log, "necromancer.putrid-bile", "damage", second)).toHaveLength(1);
+      expect(amounts(log, "necromancer.putrid-bile", "damage", "h")).toEqual([]);
+    },
+  );
+
+  it("fires once for a plain death, not again as it settles", () => {
+    const sim = arena();
+    put(sim, "f", "reapers-mark");
+    put(sim, "f", "putrid-bile");
+    get(sim, "n").combatant.energy = 0;
+    const log = [...kill(sim, "f"), ...stepFor(sim, 1)];
+    expect(amounts(log, "necromancer.reapers-mark", "energy-gain", "n")).toEqual([13]);
+    expect(amounts(log, "necromancer.putrid-bile", "damage", "g")).toHaveLength(1);
   });
 });
 

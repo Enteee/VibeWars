@@ -305,15 +305,14 @@ describe("Leech Signet (#920)", () => {
 });
 
 describe("Dwayna's Kiss (#920)", () => {
-  it("heals 51, and 30 more for each enchantment and hex on the ally", () => {
+  it("heals 51, and 30 more for each enchantment and hex on the ally, as one heal (#1760)", () => {
     const ally = makeCombatant({ id: "ally", health: 100 });
     ally.statuses.apply("guardian", 10, "ally");
     ally.statuses.apply("regeneration", 10, "ally");
     ally.statuses.apply("malaise", 10, "foe");
     ally.statuses.apply("bleeding", 10, "foe");
     expect(use(caster(), "monk.dwaynas-kiss", ally)).toEqual([
-      { kind: "heal", targetId: "ally", amount: 51 },
-      { kind: "heal", targetId: "ally", amount: 90 },
+      { kind: "heal", targetId: "ally", amount: 51 + 90 },
     ]);
     expect(ally.health).toBe(100 + 51 + 90);
   });

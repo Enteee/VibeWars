@@ -66,7 +66,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 20, atTwelve: 96 },
         },
@@ -107,7 +106,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 60, atTwelve: 156 },
         },
@@ -142,7 +140,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
         },
@@ -153,7 +150,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 63 },
             },
@@ -366,7 +362,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 68 },
         },
@@ -883,7 +878,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
-        perStatusOnTarget: [],
         amount: {
           scaling: { attributeId: "ritualist.spawning-power", atZero: 30, atTwelve: 198 },
         },
@@ -921,7 +915,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       { kind: "destroy-allied-spirits", radius: AREA_NEARBY },
       {
         kind: "heal",
-        perStatusOnTarget: [],
         perDestroyedSpirit: true,
         amount: {
           scaling: { attributeId: "ritualist.spawning-power", atZero: 50, atTwelve: 90 },

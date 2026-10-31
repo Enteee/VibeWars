@@ -321,12 +321,12 @@ describe("a lobby's own match", () => {
     // Forged as the host: the same match again, and one the lobby never ran.
     lobby.room.send(
       "match-start",
-      { mapId: "test-arena", matchId: "match-1" },
+      { mapId: "test-arena", matchId: "match-1", teamPlanRejected: false },
       guest.transport.selfId,
     );
     lobby.room.send(
       "match-start",
-      { mapId: "test-arena", matchId: "match-9" },
+      { mapId: "test-arena", matchId: "match-9", teamPlanRejected: false },
       guest.transport.selfId,
     );
     await settle();
@@ -344,7 +344,7 @@ describe("a lobby's own match", () => {
     expect(guest.connection.getSnapshot().phase).toBe("waiting");
     lobby.room.send(
       "match-start",
-      { mapId: "test-arena", matchId: "match-1" },
+      { mapId: "test-arena", matchId: "match-1", teamPlanRejected: false },
       guest.transport.selfId,
     );
     await settle();
