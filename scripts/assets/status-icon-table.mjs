@@ -8,6 +8,7 @@
 // (packages/game-core/src/skills/statuses/<profession>.ts; common.ts goes in
 // common.mjs), and runs `node scripts/assets/icons.mjs`.
 
+import { mergeRows } from "./merge-rows.mjs";
 import { WARRIOR_STATUS_ICONS } from "./status-icons/warrior.mjs";
 import { RANGER_STATUS_ICONS } from "./status-icons/ranger.mjs";
 import { MONK_STATUS_ICONS } from "./status-icons/monk.mjs";
@@ -36,16 +37,4 @@ export const STATUS_ICON_TABLES = {
 };
 
 /** @type {Readonly<Record<string, [import("./icon-kit.mjs").Category, import("./icon-kit.mjs").Glyph]>>} */
-export const STATUS_ICONS = {
-  ...WARRIOR_STATUS_ICONS,
-  ...RANGER_STATUS_ICONS,
-  ...MONK_STATUS_ICONS,
-  ...NECROMANCER_STATUS_ICONS,
-  ...MESMER_STATUS_ICONS,
-  ...ELEMENTALIST_STATUS_ICONS,
-  ...ASSASSIN_STATUS_ICONS,
-  ...RITUALIST_STATUS_ICONS,
-  ...PARAGON_STATUS_ICONS,
-  ...DERVISH_STATUS_ICONS,
-  ...COMMON_STATUS_ICONS,
-};
+export const STATUS_ICONS = mergeRows(STATUS_ICON_TABLES, { prefixed: false });

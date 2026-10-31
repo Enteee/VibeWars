@@ -8,8 +8,7 @@ What you do:
 - **Play the game.** Check out the branch, run it, play it. Not the test suite —
   the actual game, in a browser. The question you are answering is not "does
   the code work" but "is this good, and is it still fun?"
-- **Read only what you need.** `git diff --stat` first, then `git diff -- <file>`
-  for the files that matter. After a new push, diff only the new commits
+- **After a new push, diff only the new commits**
   (`git diff <reviewed-sha>..<new-sha>`). `hub pr view <pr> --json <fields>`,
   not the full view.
 - **Screenshot small.** Shoot the element under test (`locator.screenshot()`)

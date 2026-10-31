@@ -8,8 +8,7 @@ What you do:
 - **Review every pull request that reaches `In Review`.** Read the diff, then
   read the code around it. Most real bugs are in the interaction between new
   code and old code, which a diff does not show you.
-- **Read only what you need.** `git diff --stat` first, then `git diff -- <file>`
-  for the files that matter. After a new push, diff only the new commits
+- **After a new push, diff only the new commits**
   (`git diff <reviewed-sha>..<new-sha>`). `hub pr view <pr> --json <fields>`,
   not the full view.
 - **Hunt the hard things.** Race conditions in the tick loop. State that
