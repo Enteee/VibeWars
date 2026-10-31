@@ -261,11 +261,18 @@ body {
 /* Short of room for them, the key and its field go without their labels:
    the key is the accented one, the field says KEY (#1526). The status
    shares the row from 75rem, so the twelve-letter key needs a wider
-   window before they come back (#1681). */
+   window before they come back (#1681). The host's Closed/Open stays
+   until the bar runs out: it decides whether friends get in at all
+   (#1682). */
 @media (width <= 90rem) {
   .topbar-lobby .lobby-code-label,
-  .topbar-lobby .topbar-lobby-open-label,
   .topbar-join-label {
+    display: none;
+  }
+}
+
+@media (width <= 48rem) {
+  .topbar-lobby .topbar-lobby-open-label {
     display: none;
   }
 }
