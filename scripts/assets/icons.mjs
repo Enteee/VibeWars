@@ -1628,8 +1628,8 @@ const status = {
   "water-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M10 3l3.6 5.4a3.6 3.6 0 1 1-7.2 0z" ${stroke(c, 1.8)}/>` +
-      `<path d="M16 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M10 3v10M5.7 5.5l8.6 5M5.7 10.5l8.6-5" ${stroke(c, 1.8)}/>` +
+      `<path d="M18.5 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
       `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
   "air-attunement": [
