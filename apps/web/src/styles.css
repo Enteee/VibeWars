@@ -3084,6 +3084,13 @@ button.team-lobby-card:not(:disabled):hover,
   gap: 0.35rem;
 }
 
+/* Member rows (#1811) are wider than a narrow card: one per line, scrolled as Team Builder's. */
+.team-lobby-card-members:has(> .team-member-row) {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
 .team-lobby-votes {
   display: flex;
   align-items: center;
