@@ -7,7 +7,7 @@ export const ELEMENTALIST_STATUS_ICONS = {
     "glyph",
     (c) => `<path d="M13.5 4.5L8.5 11h3.5l-1.5 5 5-6.5H12z" fill="${c}"/>`,
   ],
-  // Glyphs on the next spell (#1730), stand-ins: a still bolt in a ring,
+  // Glyphs on the next spell (#1730): a still bolt in a ring,
   // a bolt and an hourglass, a bolt and a turning arrow, a bolt and a
   // drained bar.
   "glyph-of-concentration": [

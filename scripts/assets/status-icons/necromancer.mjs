@@ -97,7 +97,7 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M12 2.5L19 5V10C19 13 16 15 12 16.5C8 15 5 13 5 10V5Z" ${stroke(c, 2)}/>` +
       `<path d="M12 3L10 7.5L13.5 10L11 15" ${stroke(c, 1.6)}/>`,
   ],
-  // Skill effects inside the wells of #1730, stand-ins: a regeneration
+  // Skill effects inside the wells of #1730: a regeneration
   // arrow, an arrow and a bolt, a degeneration bolt, each over the ground.
   "well-of-blood": [
     "skill-effect",
