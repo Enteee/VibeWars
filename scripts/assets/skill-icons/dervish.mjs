@@ -38,13 +38,13 @@ export const DERVISH_ICONS = {
   "dervish.pious-assault": { glyph: "scythe-spend", modifier: "clock" },
   "dervish.chilling-victory": { glyph: "scythe-frost" },
   "dervish.wearying-strike": { glyph: "scythe-spend", modifier: "bleed" },
-  // Placeholders until the asset-designer's (#1604).
-  "dervish.irresistible-sweep": { glyph: "scythe-spend", modifier: "up" },
-  "dervish.crippling-sweep": { glyph: "blade-limp", modifier: "area" },
-  "dervish.rending-sweep": { glyph: "scythe-spend", modifier: "less" },
-  "dervish.pious-fury": { glyph: "blade-fury", modifier: "renew" },
-  "dervish.zealous-renewal": { glyph: "energy", modifier: "renew" },
-  "dervish.mirage-cloak": { glyph: "shield-veil", modifier: "area" },
-  "dervish.vital-boon": { glyph: "heart-plus", modifier: "hourglass" },
-  "dervish.guiding-hands": { glyph: "next-attack-unblockable", modifier: "plus" },
+  // Dervish staples 2 (#1604, #1645): three scythe riders; the rest take their statuses' shapes.
+  "dervish.irresistible-sweep": { glyph: "scythe-unblock" },
+  "dervish.crippling-sweep": { glyph: "scythe-limp" },
+  "dervish.rending-sweep": { glyph: "scythe-rend" },
+  "dervish.pious-fury": { glyph: "slash-trio" },
+  "dervish.zealous-renewal": { glyph: "spark-bars" },
+  "dervish.mirage-cloak": { glyph: "shield-haze" },
+  "dervish.vital-boon": { glyph: "heart-roof" },
+  "dervish.guiding-hands": { glyph: "hand-arrow" },
 };
