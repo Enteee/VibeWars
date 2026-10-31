@@ -16,6 +16,9 @@ const NO_BOT_USE = new Set([
   "monk.holy-haste",
   "ranger.practiced-stance",
   "dervish.extend-enchantments",
+  // Aura of Stability (#1870): knockdown kept off an ally is no defence
+  // the bot weighs, as Balanced Stance on itself.
+  "monk.aura-of-stability",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
