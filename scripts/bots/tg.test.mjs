@@ -11,6 +11,8 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
+import { WAITS_FILE, parseWaits } from "./waits.mjs";
+
 const TG = path.join(path.dirname(fileURLToPath(import.meta.url)), "tg.mjs");
 
 /** @type {string[]} */
@@ -282,6 +284,23 @@ describe("tg wait, and General broadcasts (#323)", () => {
 
     fs.appendFileSync(inbox, line("developer@2: take #12", true));
     expect(tg(env, ["wait", "--timeout", "1"])).toContain("developer@2: take #12");
+  });
+
+  it("logs each wait as it ends, and what ended it (#1615)", () => {
+    const { dir, env } = bus();
+    const before = Date.now();
+    tg(env, ["wait", "--timeout", "1"]);
+    fs.appendFileSync(path.join(dir, "inbox.jsonl"), line("direct", false));
+    tg(env, ["wait", "--timeout", "1"]);
+
+    const logged = parseWaits(fs.readFileSync(path.join(dir, WAITS_FILE), "utf8"));
+    expect(logged.map(({ cmd, woke }) => [cmd, woke])).toEqual([
+      ["tg", "timeout"],
+      ["tg", "message"],
+    ]);
+    const [timedOut] = logged;
+    expect(timedOut?.start).toBeGreaterThanOrEqual(before);
+    expect((timedOut?.end ?? 0) - (timedOut?.start ?? 0)).toBeGreaterThanOrEqual(1000);
   });
 
   it("--all wakes on a plain broadcast", () => {

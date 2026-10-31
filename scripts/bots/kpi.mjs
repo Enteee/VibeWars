@@ -6,10 +6,22 @@
  */
 
 /** A reader of `kpis.json` that finds another value treats the file as absent. */
-export const KPI_SCHEMA_VERSION = 5;
+export const KPI_SCHEMA_VERSION = 6;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
+
+/** The columns `stageWaits` measures, and their keys (#1615). */
+/** @type {ReadonlyMap<string, "ready" | "inProgress" | "inReview" | "qa">} */
+const STAGE_COLUMNS = new Map([
+  ["Ready", "ready"],
+  ["In Progress", "inProgress"],
+  ["In Review", "inReview"],
+  ["QA", "qa"],
+]);
+
+/** The roles that take their work from Ready (#1615). */
+const READY_ROLES = new Set(["developer", "asset-designer", "cicd-engineer"]);
 
 /** A bounce is work sent back: from one of these to In Progress. */
 const SENT_BACK_FROM = new Set(["In Review", "QA"]);
@@ -45,17 +57,14 @@ export function p90(values) {
  * The flow numbers. Windows are `(now - w, now]`.
  *
  * @param {{ now: number, moves: readonly import("./board-history.mjs").Move[],
- *   cards: readonly { issue: number, status: string }[] }} facts
+ *   cards: readonly { issue: number, status: string }[],
+ *   waits: ReadonlyMap<string, readonly import("./waits.mjs").WaitLine[]>,
+ *   staff: { employees: Record<string, { role: string }> } }} facts
  * @returns {NonNullable<Kpis["flow"]>}
  */
-export function flowKpis({ now, moves, cards }) {
+export function flowKpis({ now, moves, cards, waits, staff }) {
   const week = now - 7 * DAY_MS;
-  const ordered = [...moves].sort((a, b) => a.ts - b.ts);
-  /** @type {Map<number, import("./board-history.mjs").Move[]>} */
-  const byIssue = new Map();
-  for (const move of ordered) {
-    byIssue.set(move.issue, [...(byIssue.get(move.issue) ?? []), move]);
-  }
+  const histories = byIssue(moves);
 
   /** @type {Record<string, number>} */
   const columns = {};
@@ -76,7 +85,7 @@ export function flowKpis({ now, moves, cards }) {
   const reviewWaits = [];
   /** @type {number[]} */
   const qaWaits = [];
-  for (const history of byIssue.values()) {
+  for (const history of histories.values()) {
     const firstReady = history.find((move) => move.to === "Ready")?.ts ?? null;
     /** @type {number | null} */
     let lastDone = null;
@@ -109,7 +118,7 @@ export function flowKpis({ now, moves, cards }) {
   const blockedSince = cards
     .filter((card) => card.status === "Blocked")
     .map((card) => {
-      const arrivals = (byIssue.get(card.issue) ?? []).filter((move) => move.to === "Blocked");
+      const arrivals = (histories.get(card.issue) ?? []).filter((move) => move.to === "Blocked");
       return arrivals.at(-1)?.ts ?? null;
     })
     .filter((ts) => ts !== null);
@@ -118,7 +127,10 @@ export function flowKpis({ now, moves, cards }) {
     .sort((a, b) => b.bounces - a.bounces || a.issue - b.issue)
     .slice(0, 3);
   return {
-    historySince: ordered[0]?.ts ?? null,
+    historySince: moves.reduce(
+      (first, move) => (first === null || move.ts < first ? move.ts : first),
+      /** @type {number | null} */ (null),
+    ),
     columns,
     done24h,
     done7d,
@@ -131,7 +143,149 @@ export function flowKpis({ now, moves, cards }) {
     topBounced,
     blocked: columns.Blocked ?? 0,
     oldestBlockedMs: blockedSince.length === 0 ? null : now - Math.min(...blockedSince),
+    stageWait: stageWaits(now, moves),
+    idleWhileReadyMs24h: idleWhileReady(now, moves, waits, staff),
   };
+}
+
+/**
+ * How long cards sat in each column (#1615): every stay that ended, by
+ * the card's next move, in `(now - 24 h, now]`, however long ago it began.
+ *
+ * @param {number} now
+ * @param {readonly import("./board-history.mjs").Move[]} moves
+ * @returns {Record<"ready" | "inProgress" | "inReview" | "qa", StageWait>}
+ */
+export function stageWaits(now, moves) {
+  /** @type {Record<"ready" | "inProgress" | "inReview" | "qa", number[]>} */
+  const stays = { ready: [], inProgress: [], inReview: [], qa: [] };
+  for (const history of byIssue(moves).values()) {
+    for (const [at, move] of history.entries()) {
+      const key = STAGE_COLUMNS.get(move.to ?? "");
+      const left = history[at + 1];
+      if (key !== undefined && left !== undefined && left.ts > now - DAY_MS && left.ts <= now) {
+        stays[key].push(left.ts - move.ts);
+      }
+    }
+  }
+  /** @param {number[]} values */
+  const summary = (values) => ({ medianMs: median(values), p90Ms: p90(values), n: values.length });
+  return {
+    ready: summary(stays.ready),
+    inProgress: summary(stays.inProgress),
+    inReview: summary(stays.inReview),
+    qa: summary(stays.qa),
+  };
+}
+
+/**
+ * Each employee's waits as a union, clipped to `(now - 24 h, now]` and to
+ * start at its first wait in it (#1615): one hired or rebooted mid-day
+ * was not idle before it existed. An employee with none in it is absent.
+ *
+ * @param {number} now
+ * @param {ReadonlyMap<string, readonly import("./waits.mjs").WaitLine[]>} waits
+ * @returns {Map<string, { from: number, waited: [number, number][] }>}
+ */
+function waitsInDay(now, waits) {
+  /** @type {Map<string, { from: number, waited: [number, number][] }>} */
+  const clipped = new Map();
+  for (const [employee, lines] of waits) {
+    const inDay = lines.filter((line) => line.end > now - DAY_MS && line.start <= now);
+    if (inDay.length === 0) {
+      continue;
+    }
+    // A loop, not Math.min(...): a log can be long enough to overflow a spread.
+    let first = now;
+    for (const line of inDay) {
+      first = Math.min(first, line.start);
+    }
+    const from = Math.max(now - DAY_MS, first);
+    const waited = union(
+      inDay.map(
+        (line) =>
+          /** @type {[number, number]} */ ([Math.max(from, line.start), Math.min(now, line.end)]),
+      ),
+    );
+    clipped.set(employee, { from, waited });
+  }
+  return clipped;
+}
+
+/**
+ * Per role, the share of the last 24 h its employees spent in a wait
+ * (#1615): waited ÷ observed, summed over the role's employees. A role
+ * with no wait in the window is absent.
+ *
+ * @param {number} now
+ * @param {ReadonlyMap<string, readonly import("./waits.mjs").WaitLine[]>} waits
+ * @param {{ employees: Record<string, { role: string }> }} staff
+ * @returns {Record<string, number>}
+ */
+export function idleShare(now, waits, staff) {
+  /** @type {Map<string, { waited: number, observed: number }>} */
+  const byRole = new Map();
+  for (const [employee, { from, waited }] of waitsInDay(now, waits)) {
+    const role = staff.employees[employee]?.role;
+    if (role === undefined) {
+      continue;
+    }
+    const row = byRole.get(role) ?? { waited: 0, observed: 0 };
+    row.waited += overlap(from, now, waited);
+    row.observed += now - from;
+    byRole.set(role, row);
+  }
+  return Object.fromEntries(
+    [...byRole]
+      .filter(([, { observed }]) => observed > 0)
+      .map(([role, { waited, observed }]) => [role, waited / observed]),
+  );
+}
+
+/**
+ * Ms of the last 24 h with a card in Ready while an employee of a role that
+ * works from Ready was in a wait (#1615). A card still in Ready is there
+ * until `now`.
+ *
+ * @param {number} now
+ * @param {readonly import("./board-history.mjs").Move[]} moves
+ * @param {ReadonlyMap<string, readonly import("./waits.mjs").WaitLine[]>} waits
+ * @param {{ employees: Record<string, { role: string }> }} staff
+ * @returns {number}
+ */
+export function idleWhileReady(now, moves, waits, staff) {
+  /** @type {[number, number][]} */
+  const ready = [];
+  for (const history of byIssue(moves).values()) {
+    for (const [at, move] of history.entries()) {
+      if (move.to === "Ready") {
+        ready.push([move.ts, history[at + 1]?.ts ?? now]);
+      }
+    }
+  }
+  const waiting = union(
+    [...waitsInDay(now, waits)]
+      .filter(([employee]) => READY_ROLES.has(staff.employees[employee]?.role ?? ""))
+      .flatMap(([, { waited }]) => waited),
+  );
+  const inDay = ready.map(
+    ([start, end]) =>
+      /** @type {[number, number]} */ ([Math.max(start, now - DAY_MS), Math.min(end, now)]),
+  );
+  return covered(union(inDay), waiting);
+}
+
+/**
+ * @param {readonly import("./board-history.mjs").Move[]} moves
+ * @returns {Map<number, import("./board-history.mjs").Move[]>} each issue's, oldest first
+ */
+function byIssue(moves) {
+  /** @type {Map<number, import("./board-history.mjs").Move[]>} */
+  const grouped = new Map();
+  for (const move of [...moves].sort((a, b) => a.ts - b.ts)) {
+    grouped.set(move.issue, [...(grouped.get(move.issue) ?? []), move]);
+  }
+  return grouped;
 }
 
 /**
@@ -210,9 +364,11 @@ export function tokensByRole(roles) {
  * @param {{ employees: Record<string, { role: string }> }} staff
  * @param {ReadonlySet<string>} live
  * @param {number} maxAgents
+ * @param {number} now
+ * @param {ReadonlyMap<string, readonly import("./waits.mjs").WaitLine[]>} waits
  * @returns {NonNullable<Kpis["staff"]>}
  */
-export function staffKpis(staff, live, maxAgents) {
+export function staffKpis(staff, live, maxAgents, now, waits) {
   /** @type {Record<string, { employed: number, live: number }>} */
   const byRole = {};
   for (const [id, { role }] of Object.entries(staff.employees)) {
@@ -220,7 +376,7 @@ export function staffKpis(staff, live, maxAgents) {
     row.employed += 1;
     row.live += live.has(id) ? 1 : 0;
   }
-  return { byRole, maxAgents };
+  return { byRole, maxAgents, idleShare24h: idleShare(now, waits, staff) };
 }
 
 /** How far back the 7-day projection keeps its step edges (#1313), in s. */
@@ -479,6 +635,32 @@ function overlap(start, end, intervals) {
   );
 }
 
+/**
+ * How much two sorted, disjoint interval lists, as `union` makes them,
+ * overlap: one sweep over both, so a long list costs its length, not its
+ * length times the other's (#1615).
+ *
+ * @param {readonly (readonly [number, number])[]} a
+ * @param {readonly (readonly [number, number])[]} b
+ * @returns {number}
+ */
+function covered(a, b) {
+  let sum = 0;
+  let i = 0;
+  let j = 0;
+  while (i < a.length && j < b.length) {
+    const [aStart, aEnd] = /** @type {readonly [number, number]} */ (a[i]);
+    const [bStart, bEnd] = /** @type {readonly [number, number]} */ (b[j]);
+    sum += Math.max(0, Math.min(aEnd, bEnd) - Math.max(aStart, bStart));
+    if (aEnd < bEnd) {
+      i += 1;
+    } else {
+      j += 1;
+    }
+  }
+  return sum;
+}
+
 /** The columns `cycleShare` splits a card's time between, besides CI. */
 /** @type {ReadonlyMap<string, "inProgress" | "review" | "qa">} */
 const SHARE_COLUMNS = new Map([
@@ -632,6 +814,10 @@ function cycleShare({ now, gated, moves }) {
 }
 
 /**
+ * @typedef {{ medianMs: number | null, p90Ms: number | null, n: number }} StageWait
+ */
+
+/**
  * @typedef {object} Kpis
  * @property {number} schemaVersion
  * @property {number} at
@@ -639,7 +825,9 @@ function cycleShare({ now, gated, moves }) {
  *   done7d: number, cycleMedianMs: number | null, cycleP90Ms: number | null,
  *   reviewWaitMedianMs: number | null, qaWaitMedianMs: number | null, bounces24h: number,
  *   bounces7d: number, topBounced: { issue: number, bounces: number }[],
- *   blocked: number, oldestBlockedMs: number | null } | null} flow
+ *   blocked: number, oldestBlockedMs: number | null,
+ *   stageWait: Record<"ready" | "inProgress" | "inReview" | "qa", StageWait>,
+ *   idleWhileReadyMs24h: number } | null} flow
  * @property {{ fiveHour: import("./stream-format.mjs").LimitWindow | null,
  *   sevenDay: (import("./stream-format.mjs").LimitWindow & { projectedAt: number | null }) | null,
  *   tokens5hByRole: Record<string, number> } | null} claude
@@ -649,7 +837,7 @@ function cycleShare({ now, gated, moves }) {
  *   slice: { memoryBytes: number, cpuShare: number | null }, diskFreeBytes: number,
  *   diskHoldBelow: number } | null} host
  * @property {{ byRole: Record<string, { employed: number, live: number }>,
- *   maxAgents: number } | null} staff
+ *   maxAgents: number, idleShare24h: Record<string, number> } | null} staff
  * @property {import("./web-cache.mjs").WebCacheStats | null} webCache `hub wiki`'s (#1381)
  * @property {{ historySince: number | null, runs24h: number, superseded24h: number,
  *   waitMedianMs: number | null, waitP90Ms: number | null, runsPerDone: number | null,
