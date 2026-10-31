@@ -961,7 +961,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // interrupted and is disabled for an additional 20 seconds", as
     // Distracting Shot's.
     effects: [
-      { kind: "interrupt" },
+      { kind: "interrupt", only: "skill" },
       { kind: "disable-skill", which: "interrupted", seconds: { flat: 20 } },
     ],
   },
@@ -2668,5 +2668,57 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // to block incoming projectiles. Zojun's Haste ends if you attack":
     // 10 s, as Dodge's.
     effects: [{ kind: "apply-status", statusId: "zojuns-haste", durationSeconds: 10 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* The not condition (#1670), at rank 12                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ranger.sloth-hunters-shot",
+    name: "Sloth Hunter's Shot",
+    // The PvP version's numbers (2925), under the skill's own id.
+    gwId: 2069,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_LONG,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, target foe takes +5...17...20 damage. If that
+    // foe is not using a skill, Sloth Hunter's Shot does an additional
+    // +5...13...15 damage" (the wiki's PvP numbers; the corpus has the two
+    // ranges the other way round).
+    attack: {
+      weapon: "bow",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 17 } },
+      conditionalBonus: {
+        condition: { kind: "not", condition: { kind: "target-using-skill" } },
+        amount: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 13 } },
+      },
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      criticalWhen: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      flightSpeed: undefined,
+      onCritical: [],
+      onFailedToHit: [],
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [],
   },
 ];

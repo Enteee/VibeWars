@@ -68,4 +68,19 @@ export const RANGER_ICONS = {
   "ranger.dust-trap": { glyph: "trap-dust" },
   "ranger.spike-trap": { glyph: "trap-spike" },
   "ranger.antidote-signet": { glyph: "drop-struck" },
+  // Ranger staples 3 (#1676), stand-ins until their art card.
+  "ranger.called-shot": { glyph: "arrow-fast", modifier: "bolt" },
+  "ranger.arcing-shot": { glyph: "arrow", modifier: "half" },
+  "ranger.splinter-shot": { glyph: "arrow-burst", modifier: "area" },
+  "ranger.magebane-shot": { glyph: "arrow-pierce", modifier: "stun" },
+  "ranger.pounce": { glyph: "paw", modifier: "stun" },
+  "ranger.bestial-pounce": { glyph: "paw", modifier: "bolt" },
+  "ranger.feral-lunge": { glyph: "paw", modifier: "bleed" },
+  "ranger.poisonous-bite": { glyph: "jaws", modifier: "less" },
+  "ranger.vipers-nest": { glyph: "snake", modifier: "area" },
+  "ranger.tripwire": { glyph: "jaws", modifier: "half" },
+  "ranger.smoke-trap": { glyph: "dust", modifier: "half" },
+  "ranger.zojuns-haste": { glyph: "arrow-dodge", modifier: "up" },
+  // The not condition (#1670), a stand-in until its art card.
+  "ranger.sloth-hunters-shot": { glyph: "arrow", modifier: "hourglass" },
 };

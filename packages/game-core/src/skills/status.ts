@@ -1389,9 +1389,9 @@ export class StatusSet {
   }
 
   /**
-   * `offenderId` interrupted the bearer's skill (#1473), recorded only if
-   * a status on it answers that, with the triggers that do: once for each
-   * interrupt.
+   * `offenderId` interrupted the bearer's skill (#1473) or swing (#1709),
+   * recorded only if a status on it answers that, with the triggers that
+   * do: once for each interrupt.
    */
   public recordInterrupt(offenderId: string | undefined): void {
     const fired = this.#answering("bearer-interrupted");

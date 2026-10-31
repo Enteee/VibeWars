@@ -29,6 +29,10 @@
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
+    "key-challenge",
+    "key-proof",
+    "key-proven",
+    "key-ask",
     "observe",
     "observing",
     "call",
@@ -307,7 +311,9 @@
     "FORMATION_SETTLE_MS": { "literal": 3000 },
     "FORMATION_TIMEOUT_MS": { "literal": 20000 },
     "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
-    "LOBBY_CODE_LENGTH": { "literal": 6 },
+    "LOBBY_CODE_LENGTH": { "literal": 12 },
+    "LOBBY_KEY_ITERATIONS": { "literal": 600000 },
+    "LOBBY_KEY_SALT": { "literal": "vibewars-lobby-key" },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
@@ -416,6 +422,10 @@
         { "literal": "ended" },
         { "literal": "hello" },
         { "literal": "intent" },
+        { "literal": "key-ask" },
+        { "literal": "key-challenge" },
+        { "literal": "key-proof" },
+        { "literal": "key-proven" },
         { "literal": "lobby-cmd" },
         { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
@@ -3635,6 +3645,17 @@
         { "name": "y", "optional": false, "type": "number" }
       ]
     },
+    "WireKeyAsk": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
+    "WireKeyChallenge": {
+      "properties": [{ "name": "nonce", "optional": false, "type": "string" }]
+    },
+    "WireKeyProof": {
+      "properties": [
+        { "name": "mac", "optional": false, "type": "string" },
+        { "name": "nonce", "optional": false, "type": "string" }
+      ]
+    },
+    "WireKeyProven": { "properties": [{ "name": "mac", "optional": false, "type": "string" }] },
     "WireLobbyCharacter": {
       "properties": [
         { "name": "name", "optional": false, "type": "string" },

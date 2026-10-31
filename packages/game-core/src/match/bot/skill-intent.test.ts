@@ -154,6 +154,9 @@ const NO_BOT_USE = new Set([
   // standing is no rule the bot weighs.
   "elementalist.ward-against-foes",
   "elementalist.ward-of-stability",
+  // The not condition (#1670): energy from a foe doing nothing is no rule
+  // the bot weighs.
+  "mesmer.waste-not-want-not",
 ]);
 
 function skill(id: string) {

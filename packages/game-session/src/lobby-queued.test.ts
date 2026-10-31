@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
 
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
-import { openLobby } from "./lobby-harness.test-support.js";
+import { openLobby, provenPeer } from "./lobby-harness.test-support.js";
 import { PARTY_CONSENT_MS, createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
 import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
@@ -187,6 +187,8 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
   return joinLobby({
     transport,
     code: GROUP_ID,
+    // A queue room is public: its tickets are its gate (#1681).
+    proofKey: null,
     name: `ticket-${ticketId.slice(0, 1)}`,
     guildTag: null,
     guildCape: null,
@@ -207,6 +209,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
   const lobby = createLobbyHost({
     transport: spied(network.join("host"), sent, proposals),
     code: GROUP_ID,
+    proofKey: null,
     mapIds: ["test-arena", "other-arena"],
     teamLobby: false,
     random: () => 0.5,
@@ -420,18 +423,20 @@ describe("a queued lobby", () => {
 
   it("is refused by a coded lobby, which takes no proof", async () => {
     const coded = await openLobby();
-    const peer = rawPeer(coded.network);
-    await settle();
-    peer.transport.send(
+    // It holds the coded lobby's key (#1681): only the ticket is wrong.
+    const transport = await provenPeer(coded);
+    const notes: unknown[] = [];
+    transport.on("lobby-note", (data) => notes.push(parseWireLobbyNote(data)));
+    transport.send(
       "lobby-join",
       await forgedJoin(ALLY, ALLY, {
         groupId: GROUP_ID,
         hostTicketId: HOST,
-        peerId: peer.transport.selfId,
+        peerId: transport.selfId,
       }),
     );
     await settle();
-    expect(peer.notes).toEqual([{ kind: "refused", reason: "not-admitted" }]);
+    expect(notes).toEqual([{ kind: "refused", reason: "not-admitted" }]);
   });
 
   it("sends its join to the proven host alone, and only a hello to the room", async () => {

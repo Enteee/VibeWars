@@ -58,12 +58,13 @@ the team you just played with.
 
 To play with friends:
 
-- **Host:** on **Hosted Game**, press **Host a game**. The lobby shows a
-  code; press **Copy** and send it to your friends. Press **+** under a
-  team's **Bots:** to fill an empty place. When everyone is in, press
-  **Start match**.
-- **Join:** paste the code you were sent into **Lobby Code** in the top
-  bar and press **Join**, or Enter.
+- **Host:** on **Hosted Game**, press **Host a game**. The lobby shows
+  its key, 12 characters such as `ACDE-FGHJ-KMNP`; press **Copy** and
+  send it to your friends. Anyone with the key can join, so share it only
+  with people you want in. Press **+** under a team's **Bots:** to fill
+  an empty place. When everyone is in, press **Start match**.
+- **Join:** paste the key you were sent into **Lobby Key** in the top
+  bar and press **Join**, or Enter. Dashes and lower case are fine.
 
 **Team Arena**, **Heroes' Ascent** and **GvG** each host a lobby too,
 with **Host a Team Lobby**, and its host picks among that mode's maps

@@ -1251,11 +1251,37 @@ function aCategory(category: StatusCategory): string {
   return `${category === "enchantment" ? "an" : "a"} ${category.replace("-", " ")}`;
 }
 
+/**
+ * An `if`'s line said the other way round (#1670), from the line itself:
+ * "If target has an enchantment" becomes "If target has no enchantment",
+ * "If target is using a skill" "If target is not using a skill".
+ */
+function negatedText(text: string): string {
+  const rules: readonly (readonly [RegExp, (...match: string[]) => string])[] = [
+    [/^If (target|you) (is|are) not /, (_, who, verb) => `If ${who} ${verb} `],
+    [/^If (target|you) (is|are) /, (_, who, verb) => `If ${who} ${verb} not `],
+    [
+      /^If (target|you) (has|have) no (\w)/,
+      (_, who, verb, initial = "") =>
+        `If ${who} ${verb} ${/[aeiou]/i.test(initial) ? "an" : "a"} ${initial}`,
+    ],
+    [/^If (target|you) (has|have) an? /, (_, who, verb) => `If ${who} ${verb} no `],
+    [/^If target has /, () => "If target does not have "],
+    [/^If you (\w+) /, (_, verb) => `If you do not ${verb} `],
+  ];
+  for (const [pattern, replacement] of rules) {
+    if (pattern.test(text)) {
+      return text.replace(pattern, replacement);
+    }
+  }
+  return `Unless ${text.replace(/^If /, "")}`;
+}
+
 /** What an `if` waits for, as the line it leads says it (#521, #794). */
 function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
-      return "If it interrupts";
+      return "If it interrupts a skill";
     case "interrupted-spell":
       return "If that action was a spell";
     case "resurrected":
@@ -1300,6 +1326,8 @@ function conditionText(condition: EffectCondition): string {
       const [first, ...rest] = condition.conditions.map(conditionText);
       return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
     }
+    case "not":
+      return negatedText(conditionText(condition.condition));
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
@@ -1769,7 +1797,9 @@ function describeEffect(
             ? "Interrupts the target's spell, if they are casting one"
             : effect.only === "spell-or-chant"
               ? "Interrupts the target's spell or chant, if they are casting one"
-              : "Interrupts the target's current cast, if they are casting",
+              : effect.only === "skill"
+                ? "Interrupts the target's skill, if they are using one"
+                : "Interrupts the target's action: a skill or an attack",
         magnitude: undefined,
       };
     case "knockdown":
@@ -1930,7 +1960,9 @@ function describeEffect(
           ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
-            ? "are interrupted if casting"
+            ? each.only === undefined
+              ? "are interrupted"
+              : "are interrupted if casting"
             : each.kind === "knockdown"
               ? `are knocked down for ${String(each.durationSeconds)}s`
               : each.kind === "apply-status"

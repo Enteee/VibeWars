@@ -67,4 +67,6 @@ export const PARAGON_ICONS = {
   "paragon.spear-swipe": { glyph: "spear-swipe", modifier: "stun" },
   // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
   "paragon.holy-spear": { glyph: "anti-summon-spear" },
+  // The not condition (#1670), a stand-in until its art card.
+  "paragon.signet-of-synergy": { glyph: "heart-roof", modifier: "self" },
 };
