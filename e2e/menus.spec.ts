@@ -284,7 +284,7 @@ test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the glo
   await openRail(page, "Team Arena");
   const bar = page.locator("#topbar");
   await expect(bar.locator(".topbar-more")).toBeHidden();
-  await expect(bar.getByRole("textbox", { name: "Lobby code", exact: true })).toBeVisible();
+  await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
   await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
   // The rightmost icon still inside the bar, and nothing scrolls sideways.
   const right = await bar.locator(".topbar-fullscreen").evaluate((node) => {

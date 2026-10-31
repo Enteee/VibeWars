@@ -2,7 +2,14 @@ import type { JsonValue } from "@vibewars/game-protocol";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND } from "./intent-budget.js";
 import { describe, expect, it } from "vitest";
 
-import { openLobby, playersOf, seat, start, type TestLobby } from "./lobby-harness.test-support.js";
+import {
+  openLobby,
+  playersOf,
+  provenPeer,
+  seat,
+  start,
+  type TestLobby,
+} from "./lobby-harness.test-support.js";
 import { settle } from "./match-harness.test-support.js";
 import type { Transport } from "./transport.js";
 
@@ -44,9 +51,12 @@ const HOSTILE: JsonValue[] = [
   { protocolVersion: "x".repeat(500), name: "x" },
 ];
 
-/** A peer in the room that has not joined the lobby, and speaks the wire by hand. */
+/**
+ * A peer in the room that holds the key (#1681) but has not joined the
+ * lobby, and speaks the wire by hand.
+ */
 async function stranger(lobby: TestLobby): Promise<Transport> {
-  const transport = lobby.network.join();
+  const transport = await provenPeer(lobby);
   await settle();
   return transport;
 }
@@ -128,8 +138,10 @@ describe("lobby host against hostile peers", () => {
       flooder.connection.chooseTeam(i % 2 === 0 ? 0 : 1);
     }
     await settle();
-    // The burst was spent on the first MESSAGE_BURST; the rest were dropped.
-    expect(playersOf(lobby.host)[1]?.team).toBe(MESSAGE_BURST % 2 === 0 ? 1 : 0);
+    // The burst was spent on its join, which goes once, to the host alone
+    // once it proved the key (#1681), and the first MESSAGE_BURST - 1; the
+    // rest were dropped.
+    expect(playersOf(lobby.host)[1]?.team).toBe(MESSAGE_BURST % 2 === 0 ? 0 : 1);
     flooder.connection.chooseTeam(null);
     await settle();
     expect(playersOf(lobby.host)[1]?.team).not.toBeNull();

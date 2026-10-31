@@ -1,0 +1,39 @@
+# ADR-0043: The lobby key is a secret; relays see only a slow derivation of it
+
+## Status
+
+Accepted (2026-10-31). Issue #1681, operator ruling on PR 1591.
+
+## Context
+
+Since #15 a lobby code is both the Trystero room and its password. Trystero publishes `sha1("Trystero@" + APP_ID + "@" + room)` in clear on public Nostr relays, `APP_ID` ships in the client, and there were 23⁶ ≈ 148 M codes: hashing them all takes minutes, so anyone watching the relays could recover every live code and join (SECURITY.md, gap 5). ADR-0041 makes every player always host a lobby, which would put every open page on the relays. The operator ruled that strangers must not be able to join without a secret key, that the key must have 11+ characters, and that it must not be recoverable from what relays or ledgers see.
+
+## Decision
+
+**The key is 12 symbols of the 23-symbol alphabet** (≈ 2⁵⁴), generated with `crypto.getRandomValues`, readable aloud, shown in groups of four.
+
+**Relays see a slow derivation, never the key.** `seed = PBKDF2-HMAC-SHA256(key, fixed salt, 600 000 iterations)`; the Trystero room is `HMAC(seed, "room")` and its password `HMAC(seed, "password")`. Trystero's topic is a hash of the room; its SDP encryption key and handshake are keyed on the password. Recovering a key from a topic costs 2⁵⁴ × 600 000 PBKDF2 rounds, out of reach; a peer pays it once per open or join (~0.3 s).
+
+**Our own proof gates the lobby.** Before any lobby message, guest and host prove the key to each other with an HMAC over both nonces and both peer ids, keyed on a third derivation. Trystero's password already blocks the offers; the proof does not rely on Trystero internals and is unit-tested in game-session.
+
+**Only peers in the room learn the key**, because they already hold it. It is not put in URLs, logs, storage, queue tickets or any Nostr event of ours.
+
+**Random Arena queue rooms stay public** (`ra-` + group id, room = password): they exist to put strangers together (ADR-0032). They have no key to prove: their signed tickets admit a peer.
+
+## Consequences
+
+- A relay observer still sees that rooms exist, their peers' IPs and encrypted offers; not who is in which lobby by key, and cannot join.
+- **The salt is fixed on purpose.** One search hits every live lobby at once, but even at 1,000 live topics that is 2⁴⁴ × 600 000 PBKDF2 rounds ≈ 10¹⁹ operations. A per-lobby salt would have to be shared with the key; do not add one.
+- **Admission also rests on Trystero's password semantics**: it encrypts offers with the password and drops what fails to decrypt. A Trystero bump or a transport swap re-checks this (perf-sec-qa does on every trystero version change).
+- **Residual, accepted: a topic can be flooded.** The topic is public, so an observer can announce on it and make the host start doomed handshakes. That is denial of service, not access; SECURITY.md lists it under what we do not defend against.
+- A key holder learns every member's IP address (WebRTC), as before. Accepted: the key is shared only with people you play with.
+- Anyone the key is shared with can join and share it further: a key is an invitation, not an identity. Part 2 (open / close) limits when a lobby can be joined at all.
+- The derivation constants are part of the protocol: changing one moves every room, as a `PROTOCOL_VERSION` bump does, so they live in `game-protocol` next to the alphabet.
+
+## Alternatives Considered
+
+- **Longer code, still room = password** (the #379 approach): a fast hash of 2⁵⁴ keys is weeks on one GPU and less against many live lobbies at once. Rejected: entropy alone is not enough when the hash is fast and public.
+- **Room from the key, password = key**: the topic stretches, but Trystero's AES key is `sha256(password…)`, fast, and an attacker who sees offers could attack it instead. Rejected: both derived from the slow seed.
+- **Trystero's password alone as the gate**: it works today, but it is a library detail we do not test and its own challenge checks one direction only. Rejected as the only gate; kept as the first one.
+- **≥ 80 bits of key with fast hashes**: about 16 characters to read aloud. Rejected for the slow KDF, which keeps 12.
+- **A random room id shared alongside the key**: two things to share instead of one. Rejected.

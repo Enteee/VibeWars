@@ -488,7 +488,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       claims: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, i) => id(i)),
     };
     const state: WireLobbyState = {
-      code: "ACDEFG",
+      code: "ACDEFGHJKMNP",
       phase: "team-lobby",
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       hostId: PEER_ID,

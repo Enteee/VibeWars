@@ -57,22 +57,27 @@ describe("isLobbyCode", () => {
     expect(isLobbyCode(code)).toBe(true);
   });
 
+  it("is 12 symbols, 23¹² ≈ 2⁵⁴ keys (#1681)", () => {
+    expect(LOBBY_CODE_LENGTH).toBe(12);
+    expect(LOBBY_CODE_ALPHABET.length ** LOBBY_CODE_LENGTH).toBeGreaterThan(2 ** 54);
+  });
+
   it("rejects wrong lengths", () => {
-    expect(isLobbyCode("ACDE")).toBe(false);
-    expect(isLobbyCode("ACDEF")).toBe(false);
-    expect(isLobbyCode("ACDEFGH")).toBe(false);
+    expect(isLobbyCode("ACDEFG")).toBe(false);
+    expect(isLobbyCode("ACDEFGHJKMN")).toBe(false);
+    expect(isLobbyCode("ACDEFGHJKMNPQ")).toBe(false);
     expect(isLobbyCode("")).toBe(false);
   });
 
   it("rejects characters outside the alphabet", () => {
-    expect(isLobbyCode("ACDEF0")).toBe(false);
-    expect(isLobbyCode("ACDEFO")).toBe(false);
-    expect(isLobbyCode("acdefg")).toBe(false);
+    expect(isLobbyCode("ACDEFGHJKMN0")).toBe(false);
+    expect(isLobbyCode("ACDEFGHJKMNO")).toBe(false);
+    expect(isLobbyCode("acdefghjkmnp")).toBe(false);
   });
 
-  it("rejects codes with separators before normalisation", () => {
-    expect(isLobbyCode("ACD-EFG")).toBe(false);
-    expect(isLobbyCode(normalizeLobbyCode("acd-efg"))).toBe(true);
+  it("rejects keys with separators before normalisation", () => {
+    expect(isLobbyCode("ACDE-FGHJ-KMNP")).toBe(false);
+    expect(isLobbyCode(normalizeLobbyCode("acde-fghj-kmnp"))).toBe(true);
   });
 
   it("is not fooled by regex metacharacters or newlines", () => {

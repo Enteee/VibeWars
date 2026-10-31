@@ -88,6 +88,20 @@ declare const performance: { now(): number };
 declare function setImmediate(callback: () => void): unknown;
 
 /**
+ * Long enough for an HMAC on `crypto.subtle` to resolve, which it does
+ * on the event loop, not on a microtask: what a test that expects nothing
+ * back waits for (#1681). One that expects an answer waits `until` it.
+ */
+export async function cryptoTurns(): Promise<void> {
+  for (let i = 0; i < 10; i += 1) {
+    await settle();
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
+  }
+}
+
+/**
  * Wait until `condition` holds, for at most a second of real time. A
  * rejoin proof is an HMAC on `crypto.subtle`, which resolves on the event
  * loop rather than on a microtask, so `settle` alone cannot wait for it.

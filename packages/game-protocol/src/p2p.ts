@@ -64,6 +64,9 @@ export const CHANNELS = [
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
+  "key-challenge",
+  "key-proof",
+  "key-proven",
   "observe",
   "observing",
   "call",
@@ -287,6 +290,32 @@ export interface PeerRejoinProof {
    * 64 lowercase hex digits.
    */
   readonly proof: string;
+}
+
+/**
+ * Host to a peer that just arrived (#1681): prove you hold the lobby key,
+ * over this nonce. The host sends that peer nothing else until it has.
+ */
+export interface WireKeyChallenge {
+  /** 128 fresh random bits, as 32 lowercase hex digits. */
+  readonly nonce: string;
+}
+
+/** Peer to host: the answer to a `WireKeyChallenge`. */
+export interface WireKeyProof {
+  /** The peer's own 128 fresh random bits, as 32 lowercase hex digits. */
+  readonly nonce: string;
+  /**
+   * HMAC-SHA-256 keyed by the key's proof key over both nonces and both
+   * peer ids (`keyProofMac` in game-session), as 64 lowercase hex digits.
+   */
+  readonly mac: string;
+}
+
+/** Host to a peer whose `WireKeyProof` held: the host holds the key too. */
+export interface WireKeyProven {
+  /** As the proof's, with the host's side named in it. */
+  readonly mac: string;
 }
 
 /** Host to one client: it is in, as `playerId`, on `map`. */
@@ -1313,6 +1342,28 @@ export function parsePeerRejoinProof(value: unknown): PeerRejoinProof | undefine
     typeof raw.proof === "string" &&
     REJOIN_PROOF.test(raw.proof)
     ? { playerId: raw.playerId, proof: raw.proof }
+    : undefined;
+}
+
+export function parseWireKeyChallenge(value: unknown): WireKeyChallenge | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isRejoinToken(raw.nonce) ? { nonce: raw.nonce } : undefined;
+}
+
+export function parseWireKeyProof(value: unknown): WireKeyProof | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isRejoinToken(raw.nonce) &&
+    typeof raw.mac === "string" &&
+    REJOIN_PROOF.test(raw.mac)
+    ? { nonce: raw.nonce, mac: raw.mac }
+    : undefined;
+}
+
+export function parseWireKeyProven(value: unknown): WireKeyProven | undefined {
+  const raw = fields(value);
+  return raw !== undefined && typeof raw.mac === "string" && REJOIN_PROOF.test(raw.mac)
+    ? { mac: raw.mac }
     : undefined;
 }
 

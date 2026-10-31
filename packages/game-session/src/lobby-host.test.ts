@@ -1,32 +1,39 @@
 import { ANNIHILATION_MATCH_RULES, STARTER_BUILDS } from "@vibewars/game-core";
 import {
+  CHANNELS,
+  type Channel,
   type JsonValue,
   MAX_TEAM_LOBBY_SIDE,
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
   parseWireLobbyNote,
   MAX_LOBBY_PLAYERS,
+  parseWireKeyChallenge,
+  parseWireKeyProven,
   parseWireLobbyState,
   type WireLobbyNote,
   type WireLobbyCommand,
   type WireLobbyState,
 } from "@vibewars/game-protocol";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { KEY_PROOF_TIMEOUT_MS } from "./key-gate.js";
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import {
   CODE,
   MAP_IDS,
+  PROOF_KEY,
   openLobby,
   play,
   playersOf,
+  provenPeer,
   seat,
   start,
   type Member,
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { canStart } from "./lobby-host.js";
-import { settle } from "./match-harness.test-support.js";
+import { cryptoTurns, settle, until } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import type { Transport, TransportTrouble } from "./transport.js";
@@ -61,7 +68,7 @@ async function rawPeer(lobby: TestLobby): Promise<{
   states: WireLobbyState[];
   notes: WireLobbyNote[];
 }> {
-  const transport = lobby.network.join();
+  const transport = await provenPeer(lobby);
   const states = collect(transport, "lobby-state", parseWireLobbyState);
   const notes = collect(transport, "lobby-note", parseWireLobbyNote);
   await settle();
@@ -337,6 +344,7 @@ describe("lobby host", () => {
       joinLobby({
         transport: lobby.network.join(),
         code: CODE,
+        proofKey: PROOF_KEY,
         name: "Late",
         guildTag: null,
         guildCape: null,
@@ -555,7 +563,8 @@ describe("joining by code", () => {
     await expect(
       joinLobby({
         transport,
-        code: "WXYKMN",
+        code: "WXYKMNPQRT34",
+        proofKey: PROOF_KEY,
         name: "Lost",
         guildTag: null,
         guildCape: null,
@@ -570,7 +579,8 @@ describe("joining by code", () => {
     const failure = (peerId: string, troubles: readonly TransportTrouble[]): Promise<unknown> => {
       const joining = joinLobby({
         transport: lobby.network.join(peerId),
-        code: "WXYKMN",
+        code: "WXYKMNPQRT34",
+        proofKey: PROOF_KEY,
         name: peerId,
         guildTag: null,
         guildCape: null,
@@ -594,7 +604,8 @@ describe("joining by code", () => {
     const lobby = await openLobby();
     const connection = await joinLobby({
       transport: lobby.network.join(),
-      code: " acd-efg ",
+      code: " acde-fghj-kmnp ",
+      proofKey: PROOF_KEY,
       name: "Typist",
       guildTag: null,
       guildCape: null,
@@ -610,6 +621,7 @@ describe("joining by code", () => {
       joinLobby({
         transport: lonely,
         code: CODE,
+        proofKey: PROOF_KEY,
         name: "Alone",
         guildTag: null,
         guildCape: null,
@@ -1232,5 +1244,192 @@ describe("a Team Lobby (#1458)", () => {
     await settle();
     expect(sideOf(host)?.chosen?.reason).toBe("house");
     expect(sideOf(host)?.proposals).toEqual([]);
+  });
+});
+
+describe("the key gate (#1681, ADR-0043)", () => {
+  /** Every message `transport` is sent, by channel, in order. */
+  function heard(transport: Transport): [Channel, unknown][] {
+    const got: [Channel, unknown][] = [];
+    for (const channel of CHANNELS) {
+      transport.on(channel, (data) => got.push([channel, data]));
+    }
+    return got;
+  }
+
+  /** `side`'s MAC, as a peer holding `PROOF_KEY` makes it. */
+  async function mac(
+    side: "guest" | "host",
+    hostNonce: string,
+    guestNonce: string,
+    guestId: string,
+    hostId: string,
+  ): Promise<string> {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      PROOF_KEY,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const input = `vibewars-key\n${side}\n${hostNonce}\n${guestNonce}\n${guestId}\n${hostId}`;
+    const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(input));
+    return Array.from(new Uint8Array(signed), (byte) => byte.toString(16).padStart(2, "0")).join(
+      "",
+    );
+  }
+
+  const GUEST_NONCE = "1a".repeat(16);
+
+  /** A well-formed coded join, as `name`. */
+  const joinAs = (name: string) => ({
+    protocolVersion: PROTOCOL_VERSION,
+    name,
+    guildTag: null,
+    guildCape: null,
+    character: null,
+    admission: null,
+  });
+
+  /** The nonce `got` was challenged with. */
+  function challengeIn(got: readonly [Channel, unknown][]): string {
+    const challenge = got.find(([channel]) => channel === "key-challenge");
+    const nonce = parseWireKeyChallenge(challenge?.[1])?.nonce;
+    if (nonce === undefined) {
+      throw new Error("no key challenge");
+    }
+    return nonce;
+  }
+
+  /** Answer the host's challenge in `got` from `peer`, right or with junk. */
+  async function prove(peer: Transport, got: readonly [Channel, unknown][], right = true) {
+    const proof = right
+      ? await mac("guest", challengeIn(got), GUEST_NONCE, peer.selfId, "host")
+      : "00".repeat(32);
+    peer.send("key-proof", { nonce: GUEST_NONCE, mac: proof }, "host");
+    await cryptoTurns();
+  }
+
+  const channels = (got: readonly [Channel, unknown][]): Channel[] =>
+    got.map(([channel]) => channel);
+
+  const proven = (got: readonly [Channel, unknown][]): boolean =>
+    channels(got).includes("key-proven");
+
+  it("tells a peer that has not proven the key only its challenge, whatever happens", async () => {
+    const lobby = await openLobby();
+    const stranger = lobby.network.join();
+    const got = heard(stranger);
+    await settle();
+    stranger.send("lobby-join", joinAs("Sneak"), "host");
+    const guest = await lobby.join("Guest");
+    guest.connection.chooseTeam(0);
+    lobby.host.connection.sendChat("all", "hi");
+    await settle();
+    expect(channels(got)).toEqual(["key-challenge"]);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Guest"]);
+  });
+
+  it("lets a peer in on a right proof, and proves itself back", async () => {
+    const lobby = await openLobby();
+    const peer = lobby.network.join();
+    const got = heard(peer);
+    await settle();
+    await prove(peer, got);
+    await until(() => proven(got));
+    const [, said] = got.find(([channel]) => channel === "key-proven") ?? [];
+    expect(parseWireKeyProven(said)?.mac).toBe(
+      await mac("host", challengeIn(got), GUEST_NONCE, peer.selfId, "host"),
+    );
+    peer.send("lobby-join", joinAs("Proven"), "host");
+    await until(() => playersOf(lobby.host).length === 2);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Proven"]);
+  });
+
+  it("drops a peer on a wrong proof: the nonce is spent, so a right one after it is not heard", async () => {
+    const lobby = await openLobby();
+    const peer = lobby.network.join();
+    const got = heard(peer);
+    await settle();
+    await prove(peer, got, false);
+    await prove(peer, got);
+    peer.send("lobby-join", joinAs("Wrong"), "host");
+    await settle();
+    expect(channels(got)).toEqual(["key-challenge"]);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+  });
+
+  it("drops a peer on a malformed proof, and on one over another nonce", async () => {
+    const lobby = await openLobby();
+    const malformed = lobby.network.join();
+    const other = lobby.network.join();
+    const [gotMalformed, gotOther] = [heard(malformed), heard(other)];
+    await settle();
+    malformed.send("key-proof", { nonce: GUEST_NONCE }, "host");
+    await settle();
+    await prove(malformed, gotMalformed);
+    // `other` answers with the MAC over the nonce `malformed` was sent.
+    other.send(
+      "key-proof",
+      {
+        nonce: GUEST_NONCE,
+        mac: await mac("guest", challengeIn(gotMalformed), GUEST_NONCE, other.selfId, "host"),
+      },
+      "host",
+    );
+    await settle();
+    await prove(other, gotOther);
+    expect(channels(gotMalformed)).toEqual(["key-challenge"]);
+    expect(channels(gotOther)).toEqual(["key-challenge"]);
+  });
+
+  it("drops a peer with no proof in KEY_PROOF_TIMEOUT_MS", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const lobby = await openLobby();
+      const late = lobby.network.join();
+      const got = heard(late);
+      await settle();
+      vi.advanceTimersByTime(KEY_PROOF_TIMEOUT_MS);
+      await prove(late, got);
+      expect(channels(got)).toEqual(["key-challenge"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps at most MAX_LOBBY_PLAYERS peers unproven, dropping the oldest", async () => {
+    const lobby = await openLobby();
+    const waiting = Array.from({ length: MAX_LOBBY_PLAYERS + 1 }, () => lobby.network.join());
+    const got = waiting.map(heard);
+    await settle();
+    for (const [i, peer] of waiting.entries()) {
+      await prove(peer, got[i] ?? []);
+    }
+    await until(() => got.slice(1).every(proven));
+    expect(got.map(proven)).toEqual([false, ...waiting.slice(1).map(() => true)]);
+  });
+
+  it("leaves a host whose key-proven does not hold unheard: the join times out", async () => {
+    const network = createMemoryNetwork();
+    const impostor = network.join("impostor");
+    impostor.on("key-proof", (_data, from) => {
+      impostor.send("key-proven", { mac: "00".repeat(32) }, from);
+      impostor.send("lobby-state", { forged: true }, from);
+    });
+    impostor.onPeerJoin((peerId) => {
+      impostor.send("key-challenge", { nonce: "2b".repeat(16) }, peerId);
+    });
+    const joining = joinLobby({
+      transport: network.join(),
+      code: CODE,
+      proofKey: PROOF_KEY,
+      name: "Fooled",
+      guildTag: null,
+      guildCape: null,
+      character: null,
+      timeoutMs: 50,
+    });
+    await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });
 });
