@@ -34,6 +34,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
         isHost: true,
         character: null,
         bot: false,
+        away: false,
       },
       {
         sessionId: "guest",
@@ -44,6 +45,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
         isHost: false,
         character: null,
         bot: false,
+        away: false,
       },
     ],
     isHost: true,
@@ -103,6 +105,7 @@ describe("lobbyControls", () => {
           isHost: true,
           character: null,
           bot: false,
+          away: false,
         },
         {
           sessionId: "guest",
@@ -113,6 +116,7 @@ describe("lobbyControls", () => {
           isHost: false,
           character: null,
           bot: false,
+          away: false,
         },
       ],
     });
@@ -138,6 +142,7 @@ describe("lobbyControls", () => {
             isHost: false,
             character: null,
             bot: false,
+            away: false,
           },
         ],
       };
@@ -209,6 +214,7 @@ describe("waitingFor (#580)", () => {
     isHost: false,
     character: null,
     bot: false,
+    away: false,
   });
 
   it("names everyone on a team who is not ready, in lobby order", () => {
@@ -295,6 +301,7 @@ describe("lobbyControls: the bot count's + (#1194, #1454)", () => {
       isHost: false,
       character: { name: "Monk Bot", primary: "monk", secondary: "warrior" },
       bot: true,
+      away: false,
     };
     expect(lobbyControls({ ...waiting, players: [host, bot] }).startDisabled).toBe(false);
   });
@@ -370,6 +377,7 @@ describe("teamColumn: bots (#1194, #1454)", () => {
     isHost: false,
     character: null,
     bot: true,
+    away: false,
   };
   const lobby = (isHost: boolean): LobbySnapshot => {
     const waiting = snapshot("waiting");

@@ -59,6 +59,7 @@ export const CHANNELS = [
   "lobby-note",
   "lobby-hello",
   "lobby-welcome",
+  "lobby-leave",
   "stay-together",
   "party-proposal",
   "party-consent",
@@ -885,6 +886,12 @@ export interface WireAdmission {
 export type PeerLobbyHello = Readonly<Record<string, never>>;
 
 /**
+ * A guest to its lobby's host, as it leaves on purpose (#1764): free my
+ * seat now. A peer that only drops sends nothing, and its seat is held.
+ */
+export type PeerLobbyLeave = Readonly<Record<string, never>>;
+
+/**
  * Queued lobby host to one joiner, and only to it (#871): `hostSig` is
  * the host ticket's signature of the `vibewars-host` digest for that
  * joiner. A queued joiner takes lobby messages only from a peer whose
@@ -979,6 +986,8 @@ export interface WireLobbyPlayer {
   readonly character: WireLobbyCharacter | null;
   /** A bot the host added (#1193): no peer, always ready, never the host. */
   readonly bot: boolean;
+  /** Its peer dropped (#1764): its seat is held while it may come back. */
+  readonly away: boolean;
 }
 
 /** Lobby host to every peer, on every change: the whole lobby, not a delta. */
@@ -2259,6 +2268,12 @@ export function parsePeerLobbyHello(value: unknown): PeerLobbyHello | undefined 
   return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
 }
 
+/** The `"lobby-leave"` channel. */
+export function parsePeerLobbyLeave(value: unknown): PeerLobbyLeave | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
+}
+
 /** The `"lobby-welcome"` channel. */
 export function parseWireLobbyWelcome(value: unknown): WireLobbyWelcome | undefined {
   const raw = fields(value);
@@ -2370,7 +2385,8 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
     character !== undefined &&
-    typeof raw.bot === "boolean"
+    typeof raw.bot === "boolean" &&
+    typeof raw.away === "boolean"
     ? {
         id: raw.id,
         name: raw.name,
@@ -2381,6 +2397,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         isHost: raw.isHost,
         character,
         bot: raw.bot,
+        away: raw.away,
       }
     : undefined;
 }

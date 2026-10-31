@@ -49,6 +49,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         isHost: false,
         character: null,
         bot: false,
+        away: false,
       },
       {
         sessionId: "mate",
@@ -59,6 +60,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         isHost: false,
         character: { name: "Mhenlo", primary: "monk", secondary: null },
         bot: false,
+        away: false,
       },
       {
         sessionId: "foe",
@@ -69,6 +71,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         isHost: true,
         character: null,
         bot: false,
+        away: false,
       },
     ],
     isHost: false,

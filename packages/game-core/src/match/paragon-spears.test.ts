@@ -285,7 +285,7 @@ describe("riders on a blow that fails to hit (#1486)", () => {
 
   it("Spear of Redemption costs its thrower nothing when it hits", () => {
     const match = redeemer("hit");
-    expect(kinds(thrown(match, 0))).toEqual(["damage"]);
+    expect(kinds(thrown(match, 0))).toEqual(["damage", "adrenaline-gained"]);
     expect(conditions(match)).toBe(2);
   });
 
@@ -318,7 +318,7 @@ describe("riders on a blow that fails to hit (#1486)", () => {
       expect(conditions(match)).toBe(kinds(log).includes("attack-missed") ? 2 : 3);
       return log;
     });
-    expect(kinds(events)).toEqual(["attack-missed", "status-removed"]);
+    expect(kinds(events)).toEqual(["skill-used", "attack-missed", "status-removed"]);
   });
 
   it("loses one condition when its foe sidesteps it", () => {

@@ -21,6 +21,7 @@
     "lobby-note",
     "lobby-hello",
     "lobby-welcome",
+    "lobby-leave",
     "stay-together",
     "party-proposal",
     "party-consent",
@@ -468,6 +469,7 @@
         { "literal": "lobby-cmd" },
         { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
+        { "literal": "lobby-leave" },
         { "literal": "lobby-move" },
         { "literal": "lobby-note" },
         { "literal": "lobby-state" },
@@ -998,6 +1000,23 @@
           "properties": [
             { "name": "amount", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "sacrifice" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "casterId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "effect-skipped" } },
+            { "name": "requirement", "optional": false, "type": "string" },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "casterId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "skill-used" } },
+            { "name": "skillId", "optional": false, "type": "string" },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -1968,6 +1987,14 @@
                 ]
               }
             },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "adrenaline-gained" } },
+            { "name": "skillId", "optional": false, "type": { "union": ["string", "undefined"] } },
+            { "name": "strikes", "optional": false, "type": "number" },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },
@@ -3129,6 +3156,7 @@
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
+    "PeerLobbyLeave": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerObserve": {
       "properties": [
         { "name": "matchId", "optional": false, "type": "string" },
@@ -4118,6 +4146,7 @@
     },
     "WireLobbyPlayer": {
       "properties": [
+        { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
         {
           "name": "character",
@@ -4251,6 +4280,7 @@
           "type": {
             "array": {
               "properties": [
+                { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
                 {
                   "name": "character",
