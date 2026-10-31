@@ -7,6 +7,10 @@
  *       print the next pause in seconds (`nextPause`)
  *   agent-loop.mjs wait <employee> <seconds>
  *       return after `seconds`, or sooner once the employee has unread mail
+ *   agent-loop.mjs idle <employee>
+ *       after a turn `tg wait` called idle (#1694): return after
+ *       `IDLE_PAUSE`, or sooner on mail for the employee, a card arriving
+ *       in its role's column, or a reboot; say which in `agents/<employee>/woke`
  *   agent-loop.mjs gave-up <employee>
  *       tell the company the loop has stopped for good; the manager's keeps
  *       trying (#384), and the message says so
@@ -24,6 +28,10 @@
  * would have an idle agent spend more than a working one. So the pause
  * doubles while turns stay short, and the wait ends early when someone
  * writes to the agent, which is what an idle agent is waiting for anyway.
+ *
+ * An agent `tg wait` found idle sleeps here, not in `tg wait` (#1694):
+ * every `tg wait` that returns empty is a call that re-reads the whole
+ * context, and a wait between turns costs nothing.
  */
 
 import fs from "node:fs";
@@ -32,14 +40,21 @@ import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 import { RELEASE_AT, diskHold, freeBytes, gib } from "./disk.mjs";
-import { obj, readInbox, SYSTEM } from "./protocol.mjs";
-import { roleOf } from "./staff.mjs";
+import { answerBoard, arrivals, readBoardState } from "./hub-board.mjs";
+import { obj, readInbox, SYSTEM, wakes } from "./protocol.mjs";
+import { roleOf, WORK_COLUMN } from "./staff.mjs";
 
 /** Never less: an agent that ends turns instead of waiting cannot spin. */
 export const PAUSE_MIN = 10;
 
 /** Never more: board changes do not wake an agent, so it looks at least this often. */
 export const PAUSE_MAX = 300;
+
+/**
+ * An idle agent's wait (#1694): 50 minutes, inside the prompt cache's
+ * hour, so the turn it wakes into still reads its context from the cache.
+ */
+export const IDLE_PAUSE = 3000;
 
 /** A turn shorter than this did nothing much, most likely an empty inbox. */
 export const SHORT_TURN = 60;
@@ -282,17 +297,17 @@ async function holdForDisk(root, dir) {
 }
 
 /**
- * Has `dir`, an employee's bus directory, mail its `tg` has not read yet?
+ * The lines in `dir`, an employee's bus directory, its `tg` has not read yet.
  *
  * @param {string} dir
- * @returns {boolean}
+ * @returns {import("./protocol.mjs").InboxLine[]}
  */
-export function hasUnread(dir) {
+function unread(dir) {
   let contents;
   try {
     contents = fs.readFileSync(path.join(dir, "inbox.jsonl"), "utf8");
   } catch {
-    return false;
+    return [];
   }
   let cursor = 0;
   try {
@@ -301,7 +316,181 @@ export function hasUnread(dir) {
   } catch {
     // Never read: everything is unread.
   }
-  return readInbox(contents, cursor).lines.length > 0;
+  return readInbox(contents, cursor).lines;
+}
+
+/**
+ * Has `dir`, an employee's bus directory, mail its `tg` has not read yet?
+ *
+ * @param {string} dir
+ * @returns {boolean}
+ */
+export function hasUnread(dir) {
+  return unread(dir).length > 0;
+}
+
+/**
+ * Has `dir`, an employee's bus directory, unread mail that would end its
+ * `tg wait` (`wakes`)? A plain General broadcast, which `tg wait` leaves
+ * unread, does not count, or it would wake an idle agent at once.
+ *
+ * @param {string} dir
+ * @param {string} employee
+ * @returns {boolean}
+ */
+export function hasWaking(dir, employee) {
+  return unread(dir).some((line) => wakes(line, employee));
+}
+
+/**
+ * Why an idle wait ended.
+ *
+ * @typedef {{ by: "message" } | { by: "card", number: number | null, column: string }
+ *   | { by: "timer" } | { by: "reboot" }} Woken
+ */
+
+/**
+ * Wait, idle, for what an idle agent has work in (#1694): mail, a card
+ * arriving in `column`, or a reboot, for at most `seconds`. A card already
+ * in the column when the wait starts wakes nobody, as in `board wait`.
+ * `changes` answers `board changes --since <token>` (null: the whole
+ * board), or `null` while there is no board to read; with none at the
+ * start, the wait is on mail alone.
+ *
+ * @param {{
+ *   seconds: number,
+ *   column: string | null,
+ *   mail: () => boolean,
+ *   rebooting: () => boolean,
+ *   changes: (since: string | null) => Record<string, unknown> | null,
+ *   now?: () => number,
+ *   pause?: (ms: number) => Promise<unknown>,
+ * }} options
+ * @returns {Promise<Woken>}
+ */
+export async function idleWait({
+  seconds: limit,
+  column,
+  mail,
+  rebooting,
+  changes,
+  now = Date.now,
+  pause = sleep,
+}) {
+  const until = now() + limit * 1000;
+  const start = column === null ? null : changes(null);
+  let watch =
+    column === null || start === null
+      ? null
+      : { column, token: String(start.token), known: arrivals(new Set(), start, column).known };
+  for (;;) {
+    if (mail()) {
+      return { by: "message" };
+    }
+    if (rebooting()) {
+      return { by: "reboot" };
+    }
+    if (watch !== null) {
+      const next = changes(watch.token);
+      // Unreadable for a moment: try again next time round.
+      if (next !== null) {
+        const seen = arrivals(watch.known, next, watch.column);
+        const [card] = seen.arrived;
+        if (card !== undefined) {
+          return { by: "card", number: card.number, column: watch.column };
+        }
+        watch = { ...watch, token: String(next.token), known: seen.known };
+      }
+    }
+    const left = until - now();
+    if (left <= 0) {
+      return { by: "timer" };
+    }
+    await pause(Math.min(POLL_MS, left));
+  }
+}
+
+/**
+ * The line the next turn's prompt opens with (`agents/<employee>/woke`), or
+ * `null` for a reboot, whose turn starts a fresh session anyway.
+ *
+ * @param {Woken} woken
+ * @returns {string | null}
+ */
+export function wokeText(woken) {
+  switch (woken.by) {
+    case "message":
+      return "You were idle; woken by: a message.";
+    case "card":
+      return `You were idle; woken by: card #${String(woken.number ?? "-")} in ${woken.column}.`;
+    case "timer":
+      return `You were idle; woken by: the ${String(IDLE_PAUSE / 60)}-minute timer.`;
+    case "reboot":
+      return null;
+  }
+}
+
+/**
+ * Where an idle wait says what woke it: the employee's host-only state
+ * directory, never its bus directory. The jail can write there, so a
+ * symlink planted as `woke` would have the host overwrite, or the
+ * launcher read into the prompt, any file the operator can.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {string} employee
+ * @returns {string}
+ */
+export function wokeFile(root, employee) {
+  return path.join(root, "agents", employee, "woke");
+}
+
+/**
+ * Write `text` as the next turn's opening line, or remove it for `null`.
+ * A rename, so the file is whole when the launcher reads it.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {string} employee
+ * @param {string | null} text
+ */
+export function writeWoke(root, employee, text) {
+  const file = wokeFile(root, employee);
+  if (text === null) {
+    fs.rmSync(file, { force: true });
+    return;
+  }
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const temp = `${file}.${String(process.pid)}`;
+  fs.writeFileSync(temp, `${text}\n`);
+  fs.renameSync(temp, file);
+}
+
+/**
+ * `board changes` for the loop, which runs outside the jail and has no
+ * `hub`: answered from hubd's copy of the board, `hub/board.json`, as hubd
+ * answers it. `null` while there is no copy, or none in the current shape.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @returns {(since: string | null) => Record<string, unknown> | null}
+ */
+export function boardChanges(root) {
+  return (since) => {
+    /** @type {unknown} */
+    let raw;
+    /** @type {unknown} */
+    let cfg;
+    try {
+      raw = JSON.parse(fs.readFileSync(path.join(root, "hub", "board.json"), "utf8"));
+      cfg = JSON.parse(fs.readFileSync(path.join(root, "company.json"), "utf8"));
+    } catch {
+      return null;
+    }
+    const state = readBoardState(raw);
+    const { repo } = obj(cfg);
+    if (state === null || typeof repo !== "string") {
+      return null;
+    }
+    return answerBoard(state, { verb: "changes", since }, repo);
+  };
 }
 
 /**
@@ -363,6 +552,20 @@ async function main() {
     }
     return;
   }
+  if (command === "idle") {
+    const employee = employeeName(args[0]);
+    const root = env("VIBEWARS_BOT_ROOT");
+    const dir = path.join(root, "bus", employee);
+    const woken = await idleWait({
+      seconds: IDLE_PAUSE,
+      column: WORK_COLUMN[roleOf(employee) ?? ""] ?? null,
+      mail: () => hasWaking(dir, employee),
+      rebooting: () => fs.existsSync(path.join(root, "reboot.json")),
+      changes: boardChanges(root),
+    });
+    writeWoke(root, employee, wokeText(woken));
+    return;
+  }
   if (command === "disk") {
     await holdForDisk(env("VIBEWARS_BOT_ROOT"), env("DEVENV_ROOT"));
     return;
@@ -413,6 +616,7 @@ async function main() {
   }
   console.error(
     "usage: agent-loop.mjs pause <previous> <ran> <failed> | wait <employee> <seconds> | " +
+      "idle <employee> | " +
       "sleep <seconds> | disk | gave-up <employee> | " +
       "limited <employee> <state-dir> <previous> | resumed <employee>",
   );
