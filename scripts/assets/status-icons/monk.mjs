@@ -111,7 +111,6 @@ export const MONK_STATUS_ICONS = {
       `<path d="M12 6.5V12M9.2 9.2H14.8" ${stroke(c, 2)}/>` +
       `<path d="M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21" ${stroke(c, 1.8)}/>`,
   ],
-  // Monk staples 6 (#1748), stand-ins until their art card.
   // Enchantment: a blow struck, a plus coming back to the Monk.
   "live-vicariously": [
     "enchantment",
