@@ -527,13 +527,17 @@ describe("describeSkill", () => {
         }
       }
       if (effect.kind === "summon") {
-        const { kind, aura, attack, deathBurst } = effect.creature;
+        const { kind, aura, attack, deathBurst, onePerOwner, leavesCorpses, replacedBy } =
+          effect.creature;
         return (
           1 +
           (aura === undefined ? 0 : 1) +
           (kind === "spirit" && (attack?.damageMax ?? 0) > 0 ? 1 : 0) +
           (attack?.onHit ?? []).length +
-          (deathBurst === undefined ? 0 : 1)
+          (deathBurst === undefined ? 0 : 1) +
+          (onePerOwner ? 1 : 0) +
+          (leavesCorpses === undefined ? 0 : 1) +
+          (replacedBy === undefined ? 0 : 1)
         );
       }
       return 1;
@@ -938,6 +942,26 @@ describe("describeStatus", () => {
       "Exploits the nearest corpse",
       "Summons 1 Bone Horror (360 Health)",
     ]);
+  });
+
+  it("says what a minion's death leaves and that a golem stands alone (#1836)", () => {
+    const ranks = new Map([["necromancer.death-magic", 12]]);
+    const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("necromancer.animate-flesh-golem")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 1 Flesh Golem (500 Health)",
+      "Only one at a time: a new one kills the old",
+      "Leaves 3 corpses when it dies",
+    ]);
+    expect(texts("necromancer.animate-shambling-horror")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 1 Shambling Horror (360 Health)",
+      "When it dies, 1 Jagged Horror (320 Health) stands up in its place; its attacks: applies Bleeding for 25s (−3 Health degeneration)",
+    ]);
+    // The corpse count scales with Death Magic, 1 at 0.
+    expect(
+      describeSkill(skill("necromancer.animate-flesh-golem"), new Map()).effects.at(-1)?.text,
+    ).toBe("Leaves 1 corpse when it dies");
   });
 
   it("returns the id for an unknown status rather than throwing", () => {

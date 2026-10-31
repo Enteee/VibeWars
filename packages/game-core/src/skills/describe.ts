@@ -36,6 +36,7 @@ import type {
   RadiusArea,
   AttackWeaponClass,
   Aura,
+  CreatureTemplate,
   DeathBurst,
   ChainRole,
   ChainStep,
@@ -1732,6 +1733,7 @@ function describeEffects(
         : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
+      ...describeMinionDeath(effect.creature, ranks),
     ];
   }
   if (effect.kind === "create-ground-effect") {
@@ -1823,6 +1825,74 @@ function describeSpiritBlow(
   const what = parts.map(({ text }) => lowerFirst(text)).join(", ");
   const scaled = parts.find(({ magnitude }) => magnitude?.atZero !== undefined);
   return { text: `Its attacks: ${when}${what}`, magnitude: (scaled ?? parts[0])?.magnitude };
+}
+
+/**
+ * "2 Bone Minion (60 Health, lasts 30 seconds)": who a summon or a
+ * replacement makes, with Spawning Power's health and the base in
+ * brackets (#1098).
+ */
+function describeCreature(
+  creature: CreatureTemplate,
+  count: number,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const health = describeMagnitude(creature.maxHealth, ranks);
+  const spawned = spawningPowerHealth(spawningPowerOf(ranks), health.current);
+  const healthText =
+    spawned === health.current
+      ? `${String(health.current)} Health`
+      : `${String(spawned)} Health (${String(health.current)})`;
+  const lasts =
+    creature.durationSeconds === undefined
+      ? ""
+      : `, lasts ${String(describeMagnitude(creature.durationSeconds, ranks).current)} seconds`;
+  return {
+    text: `${String(count)} ${creature.name} (${healthText}${lasts})`,
+    magnitude: health,
+  };
+}
+
+/**
+ * What a minion's death leaves (#1836): Flesh Golem's one at a time and
+ * its corpses, Shambling Horror's Jagged Horror and what its blows do.
+ */
+function describeMinionDeath(
+  creature: CreatureTemplate,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription[] {
+  const { onePerOwner, leavesCorpses, replacedBy } = creature;
+  const corpses = leavesCorpses === undefined ? undefined : describeMagnitude(leavesCorpses, ranks);
+  const replacement =
+    replacedBy === undefined
+      ? undefined
+      : describeCreature(replacedBy.creature, replacedBy.count, ranks);
+  return [
+    ...(onePerOwner
+      ? [{ text: "Only one at a time: a new one kills the old", magnitude: undefined }]
+      : []),
+    ...(corpses === undefined
+      ? []
+      : [
+          {
+            text: `Leaves ${String(corpses.current)} ${corpses.current === 1 ? "corpse" : "corpses"} when it dies`,
+            magnitude: corpses,
+          },
+        ]),
+    ...(replacedBy === undefined || replacement === undefined
+      ? []
+      : [
+          {
+            text: [
+              `When it dies, ${replacement.text} stands up in its place`,
+              ...(replacedBy.creature.attack?.onHit ?? []).map((onHit) =>
+                lowerFirst(describeSpiritBlow(onHit, ranks).text),
+              ),
+            ].join("; "),
+            magnitude: replacement.magnitude,
+          },
+        ]),
+  ];
 }
 
 /**
@@ -2250,20 +2320,8 @@ function describeEffect(
     case "summon": {
       // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052), with
       // Spawning Power's health and the base in brackets (#1098).
-      const health = describeMagnitude(effect.creature.maxHealth, ranks);
-      const spawned = spawningPowerHealth(spawningPowerOf(ranks), health.current);
-      const healthText =
-        spawned === health.current
-          ? `${String(health.current)} Health`
-          : `${String(spawned)} Health (${String(health.current)})`;
-      const lasts =
-        effect.creature.durationSeconds === undefined
-          ? ""
-          : `, lasts ${String(describeMagnitude(effect.creature.durationSeconds, ranks).current)} seconds`;
-      return {
-        text: `Summons ${String(effect.count)} ${effect.creature.name} (${healthText}${lasts})`,
-        magnitude: health,
-      };
+      const { text, magnitude } = describeCreature(effect.creature, effect.count, ranks);
+      return { text: `Summons ${text}`, magnitude };
     }
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
