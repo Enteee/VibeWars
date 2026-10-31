@@ -223,6 +223,7 @@ describe("ranged weapons fire projectiles", () => {
       expect(land(match).events).toMatchObject([
         { kind: "damage", critical: true },
         { kind: "energy-gain", targetId: "archer", amount: 3 },
+        { kind: "adrenaline-gained", targetId: "archer", strikes: 1 },
       ]);
     });
 
@@ -558,7 +559,7 @@ describe("ranged attack skills fly (#416)", () => {
   it("Broad Head Arrow flies: nothing lands at the release, the blow and Daze land with the arrow", () => {
     const match = skillSim(target(vec2(300, 0)));
     const released = shoot(match, 0);
-    expect(released.events).toEqual([]);
+    expect(kinds(released)).toEqual(["skill-used"]);
     expect(match.projectiles).toHaveLength(1);
     expect(match.projectiles[0]?.skillHit?.skill.id).toBe(BROAD_HEAD);
     expect(get(match, "archer").combatant.cast.rechargeRemaining.has(BROAD_HEAD)).toBe(true);
@@ -566,7 +567,7 @@ describe("ranged attack skills fly (#416)", () => {
 
     const landed = landSkill(match);
     expect(landed).toMatchObject({ cause: "skill", skillId: BROAD_HEAD, sourceId: "archer" });
-    expect(kinds(landed)).toEqual(["damage", "status-applied"]);
+    expect(kinds(landed)).toEqual(["damage", "status-applied", "adrenaline-gained"]);
     expect(get(match, "target").combatant.statuses.has("dazed")).toBe(true);
   });
 
@@ -636,7 +637,11 @@ describe("ranged attack skills fly (#416)", () => {
       landed.push(...match.step(DT).log.filter((entry) => entry.skillId === BARRAGE));
     }
     const outcome = Object.fromEntries(
-      landed.flatMap((entry) => entry.events.map((event) => [event.targetId, event.kind])),
+      landed.flatMap((entry) =>
+        entry.events
+          .filter(({ kind }) => kind !== "adrenaline-gained")
+          .map((event) => [event.targetId, event.kind]),
+      ),
     );
     expect(outcome).toEqual({ north: "attack-dodged", south: "damage", target: "damage" });
   });
@@ -725,7 +730,7 @@ describe("Fireball flies (#535)", () => {
   it("lands its damage and splash when it arrives, not at cast completion", () => {
     const match = fireSim([target(vec2(300, 0)), { ...target(vec2(330, 0)), id: "beside" }]);
     const completed = cast(match);
-    expect(completed.events).toEqual([]);
+    expect(completed.events.map((event) => event.kind)).toEqual(["skill-used"]);
     expect(completed.area).toBeUndefined();
     expect(match.projectiles).toHaveLength(1);
     expect(match.projectiles[0]?.skillHit).toMatchObject({
@@ -867,7 +872,7 @@ describe("Lightning Orb flies (#761)", () => {
     expect(ORB_SPEED).toBe(1.5 * fireballSpeed);
     const match = orbSim();
     const { completed, landed } = castAndLand(match);
-    expect(completed.events).toEqual([]);
+    expect(completed.events.map((event) => event.kind)).toEqual(["skill-used"]);
     expect(landed.atSeconds - completed.atSeconds).toBeGreaterThanOrEqual(300 / ORB_SPEED - DT);
     const victim = get(match, "target").combatant;
     const expected = mitigate(skillDamage(82, "lightning", 0.25), victim, RULES.combat, "chest");

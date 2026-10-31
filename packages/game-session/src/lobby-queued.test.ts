@@ -499,6 +499,7 @@ describe("a queued lobby", () => {
               guildCape: null,
               character: null,
               bot: false,
+              away: false,
             },
           ],
           countdownSeconds: null,
@@ -891,7 +892,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
   };
 
   it("proposes the party once every winner sends a key, forms it once each consents, and tells only them", async () => {
-    const { queued, ally, allyRoom, answers, parties } = await afterMatch();
+    const { queued, ally, answers, parties } = await afterMatch();
     // What the shell extends its own deadline on (PR 1092).
     let signed = 0;
     ally.onPartyProposal(() => {
@@ -923,7 +924,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     }
     // Done once the remote winner has its answer and has gone.
     expect(queued.done()).toBe(0);
-    await allyRoom.leave();
+    await ally.disconnect();
     await settle();
     expect(queued.done()).toBe(1);
   });
@@ -1004,9 +1005,9 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
   });
 
   it("splits when a winner leaves before voting", async () => {
-    const { queued, allyRoom, answers } = await afterMatch();
+    const { queued, ally, answers } = await afterMatch();
     queued.host.stayTogether(KEY_H);
-    await allyRoom.leave();
+    await ally.disconnect();
     await settle();
     expect(answers.get("host")).toEqual([null]);
     expect(queued.done()).toBe(1);
@@ -1063,7 +1064,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
   });
 
   it("splits when a member leaves after the proposal, with every other consent in (PR 1092)", async () => {
-    const { queued, allyRoom, answers } = await afterMatch();
+    const { queued, ally, allyRoom, answers } = await afterMatch();
     const before = verifications;
     queued.host.stayTogether(KEY_H);
     // By hand, so the ally's connection holds no key to consent with.
@@ -1072,7 +1073,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     await until(() => verifications > before);
     await settle();
     expect(answers.get("host")).toEqual([]);
-    await allyRoom.leave();
+    await ally.disconnect();
     await settle();
     expect(answers.get("host")).toEqual([null]);
     expect(queued.sent.filter((message) => message.channel === "party-formed")).toEqual([]);

@@ -19,6 +19,8 @@ export interface PartyMember {
   readonly primary: ProfessionId | null;
   readonly isHost: boolean;
   readonly self: boolean;
+  /** Dropped, its seat held while it may come back (#1764). */
+  readonly away: boolean;
 }
 
 /** The lobby as the rail screens show it. */
@@ -34,6 +36,8 @@ export interface RailParty {
   readonly queuedMs: number | null;
 }
 
+/** Beside a member whose connection dropped, while its seat is held (#1764). */
+export const PARTY_RECONNECTING = "Reconnecting…";
 /** A guest's word that its host has the lobby closed (#1682). */
 export const PARTY_CLOSED = "Lobby closed";
 
@@ -57,6 +61,7 @@ export function partyOf(snapshot: LobbySnapshot, queuedMs: number | null): RailP
         primary: player.character?.primary ?? null,
         isHost: player.isHost,
         self: player.sessionId === snapshot.selfSessionId,
+        away: player.away,
       })),
   };
 }
@@ -69,6 +74,15 @@ export function showsClosed(party: RailParty): boolean {
   return !party.isHost && !party.open;
 }
 
+/** `member`'s row's classes: greyed while it is away (#1764). */
+export function memberClass(member: PartyMember): string {
+  return [
+    "party-member",
+    ...(member.self ? ["is-self"] : []),
+    ...(member.away ? ["is-away"] : []),
+  ].join(" ");
+}
+
 /** Whether nobody but this player is in the party. */
 export function isAlone(party: RailParty | undefined): boolean {
   return party === undefined || party.members.length <= 1;
@@ -79,7 +93,7 @@ export function partyStrip(party: RailParty): HTMLElement {
   strip.setAttribute("aria-label", "Party");
   const list = h("ul", "party-members");
   for (const member of party.members) {
-    const row = h("li", member.self ? "party-member is-self" : "party-member");
+    const row = h("li", memberClass(member));
     if (member.primary !== null) {
       const dot = createProfessionDot(member.primary, undefined);
       dot.title = professionLabel(member.primary, undefined);
@@ -88,6 +102,9 @@ export function partyStrip(party: RailParty): HTMLElement {
     row.appendChild(h("span", "party-member-name", member.name));
     if (member.isHost) {
       row.appendChild(h("span", "party-host-mark", "Host"));
+    }
+    if (member.away) {
+      row.appendChild(h("span", "party-member-away", PARTY_RECONNECTING));
     }
     list.appendChild(row);
   }

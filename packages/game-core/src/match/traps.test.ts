@@ -87,7 +87,10 @@ function setTrap(sim: MatchSimulation, slot = 0): CombatLogEntry[] {
 
 /** The log rows of Barbed Trap's spring. */
 function springs(log: readonly CombatLogEntry[]): CombatLogEntry[] {
-  return log.filter((entry) => entry.skillId === BARBED && entry.events.length > 0);
+  // Setting it logs only its use (#1735).
+  return log.filter(
+    (entry) => entry.skillId === BARBED && entry.events.some(({ kind }) => kind !== "skill-used"),
+  );
 }
 
 /** Who `log`'s spring damaged, in order. */

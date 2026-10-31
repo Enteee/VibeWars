@@ -2243,6 +2243,16 @@ function chainText(chain: ChainStep): string {
 }
 
 /**
+ * What an `if` waited for, lower case for the middle of a log line
+ * (#1735), the tooltip's own words: "only if target has Burning", "unless
+ * target is moving".
+ */
+export function conditionRequirementText(condition: EffectCondition): string {
+  const text = conditionText(condition);
+  return text.startsWith("If ") ? `only ${lowerFirst(text)}` : lowerFirst(text);
+}
+
+/**
  * What a chain attack needs to hit, lower case for the middle of a line
  * (#1041): "must follow a lead attack", "only if target is knocked
  * down", both joined by "; "; `undefined` for neither, or no chain.

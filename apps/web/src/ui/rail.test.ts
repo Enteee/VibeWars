@@ -202,6 +202,7 @@ describe("the mode rail (#1525)", () => {
       primary: null,
       isHost,
       self: isHost,
+      away: false,
     });
     const party = {
       code: "ACDEFGHJKLMN",

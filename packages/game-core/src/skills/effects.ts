@@ -262,7 +262,43 @@ export type CombatEvent =
    * Teleported (#474): `targetId` is put beside `toId`, as Rebirth brings
    * its ally to the caster. The simulation places the body.
    */
-  | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string };
+  | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string }
+  /**
+   * `casterId` used `skillId` (#1735): paid for and gone off, at
+   * `targetId`, which is `casterId` itself when nobody else was chosen.
+   * A press refused, queued or interrupted is no use.
+   */
+  | {
+      readonly kind: "skill-used";
+      readonly casterId: string;
+      readonly skillId: string;
+      readonly targetId: string;
+    }
+  /**
+   * `targetId` gained `strikes` of adrenaline (#1735): from `skillId`'s
+   * `adrenaline-gain`, or from a blow when `undefined`. Only when one of
+   * its adrenaline skills filled.
+   */
+  | {
+      readonly kind: "adrenaline-gained";
+      readonly targetId: string;
+      readonly strikes: number;
+      readonly skillId: string | undefined;
+    }
+  /**
+   * `casterId`'s use of `skillId` did nothing (#1735): an effect it has
+   * only under a condition, the first that did not hold, was skipped on
+   * `targetId` (`casterId` when it had none), and nothing else of it
+   * happened. `requirement` is that condition in the tooltip's words,
+   * "only if target has Burning": text, as a condition can nest.
+   */
+  | {
+      readonly kind: "effect-skipped";
+      readonly casterId: string;
+      readonly targetId: string;
+      readonly skillId: string;
+      readonly requirement: string;
+    };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -1175,7 +1211,14 @@ export function applyEffect(
     }
 
     case "adrenaline-gain": {
-      fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE);
+      if (fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE)) {
+        events.push({
+          kind: "adrenaline-gained",
+          targetId: caster.id,
+          strikes: effect.strikes,
+          skillId: context.skillId,
+        });
+      }
       return events;
     }
 
@@ -2193,6 +2236,17 @@ export interface SkillOutcome {
    * simulation places them, which only it can add to the match.
    */
   readonly grounds: readonly CreateGroundEffect[];
+  /**
+   * The first `if` that did not hold (#1735), when nothing of the skill
+   * happened, before or after it; else `undefined`. Its use is told so.
+   */
+  readonly skipped: SkippedEffect | undefined;
+}
+
+/** An `if` that did not hold on `targetId`, the caster's when it had none (#1735). */
+export interface SkippedEffect {
+  readonly condition: EffectCondition;
+  readonly targetId: string;
 }
 
 /**
@@ -2215,6 +2269,7 @@ export function resolveSkillEffects(
   let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
+  let skipped: SkippedEffect | undefined;
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
@@ -2229,7 +2284,11 @@ export function resolveSkillEffects(
         profession: skill.profession,
       };
       const before = [...earlier, ...events];
-      for (const inner of landing(effect, context, before, states)) {
+      const landed = landing(effect, context, before, states);
+      if (effect.kind === "if" && landed.length === 0) {
+        skipped ??= { condition: effect.condition, targetId: target?.id ?? caster.id };
+      }
+      for (const inner of landed) {
         if (inner.kind === "recharge-faster") {
           rechargeFraction = Math.max(rechargeFraction, inner.fraction);
         }
@@ -2270,7 +2329,15 @@ export function resolveSkillEffects(
       events,
     );
   }
-  return { events, rechargeFraction, rechargeLongerSeconds, summons, grounds };
+  return {
+    events,
+    rechargeFraction,
+    rechargeLongerSeconds,
+    summons,
+    grounds,
+    skipped:
+      skipped !== undefined && earlier.length === 0 && events.length === 0 ? skipped : undefined,
+  };
 }
 
 /**

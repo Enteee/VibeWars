@@ -742,6 +742,7 @@ describe("Vampiric Gaze (#935)", () => {
     const log = stepFor(match, 2);
     const gaze = log.filter((entry) => entry.skillId === VAMPIRIC_GAZE);
     expect(gaze.flatMap((entry) => entry.events)).toEqual([
+      { kind: "skill-used", casterId: "n", skillId: VAMPIRIC_GAZE, targetId: "a" },
       { kind: "life-stolen", targetId: "a", amount: 52 },
       { kind: "heal", targetId: "n", amount: 52 },
     ]);

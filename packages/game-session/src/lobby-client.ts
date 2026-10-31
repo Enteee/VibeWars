@@ -18,6 +18,7 @@ import {
   type PeerPartyConsent,
   type PeerStayTogether,
   type PeerLobbyHello,
+  type PeerLobbyLeave,
   type PeerLobbyJoin,
   type WireCape,
   type WireLobbyCommand,
@@ -169,6 +170,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   /** The match whose start was already handed on, so a repeat is not. */
   let startedMatch: string | null = null;
   let closed = false;
+  /** `disconnect` ran: a second, as a page going away after a Leave, does nothing. */
+  let left = false;
   const changeHandlers: (() => void)[] = [];
   const startingHandlers: ((start: MatchStarting) => void)[] = [];
   const rejectedHandlers: ((reason: string) => void)[] = [];
@@ -293,6 +296,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       isHost: player.isHost,
       character: lobbyCharacter(player.character),
       bot: player.bot,
+      away: player.away,
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
@@ -459,6 +463,14 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         proposalHandlers.push(handler);
       },
       async disconnect() {
+        if (left) {
+          return;
+        }
+        left = true;
+        // Its seat is freed now, not held as for a drop (#1764).
+        if (!closed && hostId !== undefined) {
+          transport.send("lobby-leave", {} satisfies PeerLobbyLeave, hostId);
+        }
         closed = true;
         stop();
         await transport.leave();
@@ -683,11 +695,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         sendJoin(hostId);
       }),
       transport.onPeerLeave((peerId) => {
+        // A blip, in the lobby or a match (#1764): a host that goes on
+        // purpose says `host-left` first, and that closes at once.
         if (peerId !== hostId || droppedAt !== undefined) {
-          return;
-        }
-        if (latest?.phase !== "in-match") {
-          close("host-left");
           return;
         }
         droppedAt = Date.now();

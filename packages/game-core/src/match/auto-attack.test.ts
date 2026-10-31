@@ -143,7 +143,8 @@ describe("the swing", () => {
 
     for (const entry of hits) {
       expect(entry).toMatchObject({ sourceId: "a", skillId: undefined, area: undefined });
-      for (const event of entry.events) {
+      // Each blow, then the strike it filled until the bar is full (#1735).
+      for (const event of entry.events.filter(({ kind }) => kind !== "adrenaline-gained")) {
         expect(event.kind).toBe("damage");
         if (event.kind === "damage" && event.critical) {
           // A crit (#533): the maximum × √2.
@@ -201,7 +202,11 @@ describe("the swing", () => {
     get(match, "d").combatant.health = 1;
     const log = stepFor(match, 3);
     expect(swings(log)).toHaveLength(1);
-    expect(swings(log)[0]?.events.map((event) => event.kind)).toEqual(["damage", "death"]);
+    expect(swings(log)[0]?.events.map((event) => event.kind)).toEqual([
+      "damage",
+      "death",
+      "adrenaline-gained",
+    ]);
     expect(get(match, "a").combatant.attack).toBeUndefined();
 
     const again = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
@@ -265,9 +270,9 @@ describe("skills and the swing", () => {
     match.requestSkill("a", 0);
     const log = stepFor(match, 1 + RULES.combat.aftercastSeconds + 1.5);
 
-    // The Fireball's release carries nothing; its landing hits e (#535).
+    // The Fireball's release carries only the use; its landing hits e (#535).
     const [released, landed] = log.filter((entry) => entry.cause === "skill");
-    expect(released?.events).toEqual([]);
+    expect(released?.events.map((event) => event.kind)).toEqual(["skill-used"]);
     expect(landed?.events[0]?.targetId).toBe("e");
     expect(swings(log)[0]?.events[0]?.targetId).toBe("d");
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
@@ -570,8 +575,11 @@ describe("block (#534)", () => {
     get(match, defender).combatant.statuses.apply("guardian", 1e6, "monk");
   }
 
+  /** What landed, less the adrenaline it filled (#1735): these read the bar itself. */
   function kinds(entries: readonly CombatLogEntry[]): string[] {
-    return entries.flatMap((entry) => entry.events.map((event) => event.kind));
+    return entries
+      .flatMap((entry) => entry.events.map((event) => event.kind))
+      .filter((kind) => kind !== "adrenaline-gained");
   }
 
   it("a blocked swing deals nothing and earns no adrenaline; a landed one still earns a strike", () => {
@@ -647,7 +655,13 @@ describe("block (#534)", () => {
         continue;
       }
       // Then the health deep wound takes as it lands (#764, #800).
-      expect(kinds(chop)).toEqual(["attack-blocked", "damage", "status-applied", "health-lost"]);
+      expect(kinds(chop)).toEqual([
+        "skill-used",
+        "attack-blocked",
+        "damage",
+        "status-applied",
+        "health-lost",
+      ]);
       expect(get(match, "d").combatant.statuses.has("deep-wound")).toBe(true);
       const caster = get(match, "a").combatant;
       expect(caster.energy).toBeLessThan(energy);
@@ -686,7 +700,12 @@ describe("the log", () => {
     );
     match.requestAttack("a", "d");
     const [entry] = swings(stepFor(match, 1.4));
-    expect(entry?.events.map((event) => event.kind)).toEqual(["damage", "damage"]);
+    // Two blows, then the two strikes they filled (#1735).
+    expect(entry?.events.map((event) => event.kind)).toEqual([
+      "damage",
+      "damage",
+      "adrenaline-gained",
+    ]);
     expect(entry?.doubleStrike).toBe(true);
     const total = (entry?.events ?? []).reduce(
       (sum, event) => sum + (event.kind === "damage" ? event.amount : 0),
@@ -1273,7 +1292,11 @@ describe("attack skills ride the weapon (ADR-0029)", () => {
     const chop = skillHits(log, SWIFT_CHOP);
     expect(chop).toHaveLength(1);
     expect(chop[0]?.atSeconds).toBeCloseTo(ticksFor(half) * DT, 6);
-    expect(chop[0]?.events.map((event) => event.kind)).toEqual(["damage"]);
+    expect(chop[0]?.events.map((event) => event.kind)).toEqual([
+      "skill-used",
+      "damage",
+      "adrenaline-gained",
+    ]);
 
     const ends = (chop[0]?.atSeconds ?? 0) + half;
     const next = swings(log)[0]?.atSeconds ?? 0;
