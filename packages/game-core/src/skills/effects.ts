@@ -1311,7 +1311,7 @@ export function applyEffect(
     }
 
     case "heal": {
-      const healed = effect.recipient === "caster" ? caster : target;
+      const healed = healRecipient(effect.recipient, caster, target, context.surroundings);
       if (healed === undefined) {
         return events;
       }
@@ -1739,6 +1739,26 @@ export function applyEffect(
       return events;
     }
 
+    case "companion-gains-status": {
+      const pet = livingCompanionOf(caster, context.surroundings);
+      if (caster.dead || pet === undefined) {
+        return events;
+      }
+      landStatus(
+        pet,
+        effect.statusId,
+        scaledStatusDuration(
+          pet,
+          effect.statusId,
+          effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        ),
+        caster.id,
+        events,
+        castSpot(context, caster),
+      );
+      return events;
+    }
+
     case "splash": {
       // Your own spirits are within earshot of you, not of the target (#1777);
       // Return's adjacent foes are around its caster (#1826).
@@ -1887,6 +1907,49 @@ export function applyEffect(
   }
 }
 
+/**
+ * `caster`'s living pet (#1865), as the simulation's companion lookup
+ * finds it: the first of its companions. Dead or none: `undefined`.
+ */
+function livingCompanionOf(caster: Combatant, surroundings: Surroundings): Combatant | undefined {
+  for (const { combatant, creature } of surroundings.values()) {
+    if (
+      creature?.ownerId === caster.id &&
+      creature.companionSkillId !== undefined &&
+      !combatant.dead
+    ) {
+      return combatant;
+    }
+  }
+  return undefined;
+}
+
+/** The living owner of `caster`, when it is a creature (#1865); else `undefined`. */
+function livingOwnerOf(caster: Combatant, surroundings: Surroundings): Combatant | undefined {
+  const ownerId = surroundings.get(caster.id)?.creature?.ownerId;
+  const owner = ownerId === undefined ? undefined : surroundings.get(ownerId)?.combatant;
+  return owner === undefined || owner.dead ? undefined : owner;
+}
+
+/** Whom a `heal` heals (#1865): `undefined` is nobody. */
+function healRecipient(
+  recipient: HealEffect["recipient"],
+  caster: Combatant,
+  target: Combatant | undefined,
+  surroundings: Surroundings,
+): Combatant | undefined {
+  switch (recipient) {
+    case undefined:
+      return target;
+    case "caster":
+      return caster;
+    case "companion":
+      return livingCompanionOf(caster, surroundings);
+    case "owner":
+      return livingOwnerOf(caster, surroundings);
+  }
+}
+
 /** Whether `condition` is read from how things stand rather than from what came before (#794). */
 export function isStateCondition(condition: EffectCondition): condition is StateCondition {
   switch (condition.kind) {
@@ -1898,6 +1961,8 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-health-below":
     case "target-health-above":
     case "caster-health-below":
+    case "caster-health-below-companion":
+    case "companion-health-below-caster":
     case "target-chain-mark":
     case "target-has":
     case "target-has-any":
@@ -1953,6 +2018,14 @@ export function stateHolds(
       return target.health > effectiveMaxHealth(target) * condition.fraction;
     case "caster-health-below":
       return caster.health < effectiveMaxHealth(caster) * condition.fraction;
+    case "caster-health-below-companion": {
+      const pet = livingCompanionOf(caster, surroundings);
+      return pet !== undefined && caster.health < pet.health;
+    }
+    case "companion-health-below-caster": {
+      const pet = livingCompanionOf(caster, surroundings);
+      return pet !== undefined && pet.health < caster.health;
+    }
     case "target-chain-mark":
       return caster.chainMarks.get(target.id)?.role === condition.role;
     case "target-has":
@@ -2249,6 +2322,8 @@ function conditionHolds(
     case "target-health-below":
     case "target-health-above":
     case "caster-health-below":
+    case "caster-health-below-companion":
+    case "companion-health-below-caster":
     case "target-chain-mark":
     case "target-has":
     case "target-has-any":
@@ -2365,6 +2440,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "create-ground-effect":
     case "drain-own-energy":
     case "caster-gains-status":
+    case "companion-gains-status":
     case "destroy-allied-spirits":
     case "resurrect-companions":
     case "disable-own-skills":
@@ -2380,7 +2456,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "destroy-target-minion":
       return true;
     case "heal":
-      return effect.recipient === "caster";
+      return effect.recipient !== undefined;
     case "remove-status":
       return effect.from === "caster";
     case "maintain-status":

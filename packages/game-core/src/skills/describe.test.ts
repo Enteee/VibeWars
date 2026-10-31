@@ -1125,3 +1125,19 @@ describe("an ender said to its holder (#1841)", () => {
     );
   });
 });
+
+describe("Predatory Bond, said to the Ranger who casts it (#1865)", () => {
+  it("heals you when your pet hits, not when you do", () => {
+    const skill = getSkill("ranger.predatory-bond");
+    expect(skill).toBeDefined();
+    const text =
+      skill === undefined
+        ? ""
+        : describeSkill(skill)
+            .effects.map((effect) => effect.text)
+            .join(" ");
+    expect(text).toContain("your pet's attacks heal you for 25");
+    expect(text).not.toContain("your physical attacks");
+    expect(text).not.toContain("Heals its owner");
+  });
+});

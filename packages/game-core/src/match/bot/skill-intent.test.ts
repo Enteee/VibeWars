@@ -33,6 +33,7 @@ const NO_BOT_USE = new Set([
   // Nor Purifying Veil's, whose removal waits for the enchantment to end.
   "monk.purifying-veil",
   // Companion commands and pet attacks: out of scope for a bot.
+  "ranger.bestial-mauling",
   "ranger.bestial-pounce",
   "ranger.brutal-strike",
   "ranger.call-of-haste",
@@ -42,9 +43,14 @@ const NO_BOT_USE = new Set([
   "ranger.disrupting-lunge",
   "ranger.feral-lunge",
   "ranger.maiming-strike",
+  "ranger.otyughs-cry",
   "ranger.poisonous-bite",
   "ranger.pounce",
+  "ranger.predatory-bond",
+  "ranger.rampage-as-one",
   "ranger.revive-animal",
+  "ranger.run-as-one",
+  "ranger.savage-pounce",
   "ranger.symbiotic-bond",
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.critical-eye",

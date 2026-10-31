@@ -140,9 +140,12 @@ export interface HealEffect {
   readonly amount: Magnitude;
   /**
    * `caster`: the caster is healed, as Drain Enchantment's "you gain N
-   * Health" (#521). Absent: the target.
+   * Health" (#521). `companion`: the caster's living pet, Companionship's
+   * (#1865); `owner`: the living owner of the caster, a pet, as Predatory
+   * Bond's "successful attacks by your animal companion heal you". Neither
+   * there: nobody. Absent: the target.
    */
-  readonly recipient?: "caster";
+  readonly recipient?: "caster" | "companion" | "owner";
   /** More for each of a count, in the same heal (#1760): Dwayna's Kiss's. */
   readonly per?: PerCount;
   /**
@@ -561,6 +564,17 @@ export interface OvercastEffect {
  */
 export interface CasterGainsStatusEffect {
   readonly kind: "caster-gains-status";
+  readonly statusId: StatusId;
+  readonly durationSeconds: number;
+}
+
+/**
+ * The caster's living pet gains a status, with the caster as source
+ * (#1865): Run as One's "you and your pet run 25% faster". Once however
+ * many targets; no pet, or a dead one: nothing, and nothing refused.
+ */
+export interface CompanionGainsStatusEffect {
+  readonly kind: "companion-gains-status";
   readonly statusId: StatusId;
   readonly durationSeconds: number;
 }
@@ -1008,6 +1022,13 @@ export type StateCondition =
    */
   | { readonly kind: "caster-health-below"; readonly fraction: number }
   /**
+   * The caster has less Health than its living pet, or the pet less than
+   * the caster (#1865), absolute Health: Companionship's. Equal is
+   * neither; no living pet: false.
+   */
+  | { readonly kind: "caster-health-below-companion" }
+  | { readonly kind: "companion-health-below-caster" }
+  /**
    * The effect's target bears the caster's chain mark of this role
    * (#1757), read and left as it is: Impale's "must follow a dual
    * attack".
@@ -1228,6 +1249,7 @@ export type UnconditionalEffect =
   | DrainOwnEnergyEffect
   | OvercastEffect
   | CasterGainsStatusEffect
+  | CompanionGainsStatusEffect
   | RechargeFasterEffect
   | SplashEffect
   | PullToCasterEffect
