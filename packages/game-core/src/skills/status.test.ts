@@ -68,6 +68,8 @@ describe("status definitions", () => {
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
         def.untargetableByFoeSpells ||
+        def.preventsEnchantments ||
+        def.preventsShoutsAndChants ||
         def.attackDurationMultiplier !== 1 ||
         def.block !== undefined ||
         def.maxDamageFractionPerHit !== undefined ||
@@ -150,6 +152,7 @@ describe("status definitions", () => {
       "feigned-neutrality": 7,
       recuperation: 3,
       "well-of-suffering": -5,
+      "well-of-silence": -3,
       "symbiotic-bond": 3,
       "conjure-phantasm": -5,
       "phantom-pain": -3,

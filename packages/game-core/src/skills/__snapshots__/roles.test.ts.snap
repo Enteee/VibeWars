@@ -388,7 +388,11 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.vile-touch": "",
   "necromancer.wallows-bite": "",
   "necromancer.weaken-armor": "condition",
+  "necromancer.well-of-darkness": "",
+  "necromancer.well-of-ruin": "",
+  "necromancer.well-of-silence": "",
   "necromancer.well-of-suffering": "",
+  "necromancer.well-of-the-profane": "",
   "necromancer.wither": "hex",
 }
 `;
