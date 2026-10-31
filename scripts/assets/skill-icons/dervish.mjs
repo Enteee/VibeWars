@@ -66,4 +66,7 @@ export const DERVISH_ICONS = {
   "dervish.faithful-intervention": { glyph: "heart-roof", modifier: "self" },
   // Own-skill modifiers (#1761), stand-in until its art card.
   "dervish.extend-enchantments": { glyph: "star-aura", modifier: "hourglass" },
+  // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
+  "dervish.watchful-intervention": { glyph: "eye-bar" },
+  "dervish.faithful-intervention": { glyph: "heart-bar" },
 };

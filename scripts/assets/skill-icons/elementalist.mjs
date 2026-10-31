@@ -4,11 +4,11 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.chain-lightning": { glyph: "chain" },
   "elementalist.armor-of-earth": { glyph: "mountain" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
-  // Stand-ins for the glyphs of #1730, until their art.
-  "elementalist.glyph-of-concentration": { glyph: "spark", modifier: "stun" },
-  "elementalist.glyph-of-sacrifice": { glyph: "spark", modifier: "hourglass" },
-  "elementalist.glyph-of-renewal": { glyph: "spark", modifier: "renew" },
-  "elementalist.glyph-of-essence": { glyph: "spark", modifier: "down" },
+  // Glyphs (#1730).
+  "elementalist.glyph-of-concentration": { glyph: "glyph-sealed" },
+  "elementalist.glyph-of-sacrifice": { glyph: "glyph-slow" },
+  "elementalist.glyph-of-renewal": { glyph: "glyph-renew" },
+  "elementalist.glyph-of-essence": { glyph: "glyph-drain" },
   "elementalist.lightning-orb": { glyph: "lightning-orb" },
   "elementalist.lightning-strike": { glyph: "lightning" },
   "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },
@@ -78,8 +78,8 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.eruption": { glyph: "volcano" },
   "elementalist.ash-blast": { glyph: "ash-cloud" },
   "elementalist.shockwave": { glyph: "ring-shock" },
-  // Attribute hexes (#1765): stand-ins until their own art.
-  "elementalist.icy-prism": { glyph: "crystal-glow", modifier: "area" },
-  "elementalist.teinais-crystals": { glyph: "crystal-glow", modifier: "down" },
-  "elementalist.freezing-gust": { glyph: "gust-fast", modifier: "down" },
+  // Attribute hexes (#1765).
+  "elementalist.icy-prism": { glyph: "prism-fan" },
+  "elementalist.teinais-crystals": { glyph: "crystals-crack" },
+  "elementalist.freezing-gust": { glyph: "gust-bar" },
 };

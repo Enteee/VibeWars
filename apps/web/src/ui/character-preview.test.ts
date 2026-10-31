@@ -2,8 +2,8 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { createProfessionDot, miniSkillCells } from "./character-preview.js";
-import { professionIcon } from "./icons.js";
+import { createProfessionDot, miniSkillCells, teamMemberRow } from "./character-preview.js";
+import { offhandIcon, professionIcon, weaponIcon } from "./icons.js";
 
 function character(skillBar: (string | null)[]): StoredCharacter {
   return {
@@ -55,6 +55,8 @@ class FakeElement {
   className = "";
   textContent = "";
   title = "";
+  src = "";
+  alt = "";
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly properties = new Map<string, string>();
@@ -122,5 +124,58 @@ describe("createProfessionDot (#1785)", () => {
     expect(shown.all("character-dot-secondary")).toHaveLength(1);
     expect(shown.title).toBe("Elementalist / Monk");
     expect(shown.attributes.get("aria-label")).toBe("Elementalist / Monk");
+  });
+});
+
+describe("teamMemberRow (#1786)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const row = (shown: StoredCharacter): FakeElement =>
+    teamMemberRow(shown) as unknown as FakeElement;
+  const gear = (shown: FakeElement): string[] =>
+    shown.all("gear-icon").map((icon) => `${icon.src} ${icon.alt}`);
+  const bar = ["warrior.backbreaker", null, null, null, null, null, null, null];
+
+  it("is the ball, the main hand and the off-hand, and eight skill cells, with no text", () => {
+    const shown = row({ ...character(bar), name: "Ser Bash" });
+    expect(shown.children.map((child) => child.className)).toEqual([
+      "character-dot",
+      "mini-gear",
+      "mini-skill-bar",
+    ]);
+    expect(gear(shown)).toEqual(
+      [weaponIcon("sword"), offhandIcon("shield")].map(
+        (icon) => `${icon?.src ?? ""} ${icon?.name ?? ""}`,
+      ),
+    );
+    expect(shown.all("mini-skill").length + shown.all("mini-skill is-empty").length).toBe(8);
+    expect(shown.text()).toBe("");
+    expect(shown.title).toBe("Ser Bash, Warrior");
+    expect(shown.attributes.get("aria-label")).toBe("Ser Bash, Warrior");
+  });
+
+  it("shows one weapon when the hand carries no off-hand", () => {
+    const base = character(bar);
+    const [set] = base.equipment.weaponSets;
+    const shown = row({
+      ...base,
+      equipment: { ...base.equipment, weaponSets: [{ ...set, offHand: null }, null, null, null] },
+    });
+    expect(gear(shown)).toEqual([`${weaponIcon("sword")?.src ?? ""} Sword`]);
+  });
+
+  it("shows no weapon for a build the host would refuse", () => {
+    const shown = row({
+      ...character(bar),
+      attributes: [{ attributeId: "warrior.strength", rank: 99 }],
+    });
+    expect(gear(shown)).toEqual([]);
+    expect(shown.all("mini-skill-bar")).toHaveLength(1);
   });
 });

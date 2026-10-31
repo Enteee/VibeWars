@@ -7,6 +7,8 @@
  * them, so these are the numbers they must agree on.
  */
 
+import type { LobbyMode } from "./protocol.js";
+
 /**
  * What a player can queue for. Which of these the menu offers is Q97's
  * decision; formation takes any of them.
@@ -46,6 +48,29 @@ export function isTeamQueueMode(mode: QueueMode): boolean {
   return TEAM_QUEUE_MODES.has(mode);
 }
 
+/**
+ * Whether `members` is in a party's one order (#1766): its leader, who
+ * publishes its ticket and sends its team plan, first, then the rest
+ * sorted, no key twice. Any other order is malformed, never reordered,
+ * so every peer hashes and signs the same list. A sorted list is one.
+ */
+export function inPartyOrder(members: readonly string[]): boolean {
+  const [leader, ...rest] = members;
+  let previous: string | undefined;
+  for (const member of rest) {
+    if (member === leader || (previous !== undefined && previous >= member)) {
+      return false;
+    }
+    previous = member;
+  }
+  return true;
+}
+
+/** A lobby's `mode` as the queue mode its party queues for (#1766), if it is a team mode. */
+export function teamQueueModeOf(mode: LobbyMode): QueueMode | undefined {
+  return mode === "team-arena" || mode === "heroes-ascent" || mode === "gvg" ? mode : undefined;
+}
+
 /** A queued client re-publishes its ticket this often. */
 export const TICKET_HEARTBEAT_MS = 5_000;
 /** A ticket not re-published for this long is dead to everyone. */
@@ -71,7 +96,7 @@ export interface QueueTicket {
   readonly protocol: string;
   readonly mode: QueueMode;
   /**
-   * The public key of every player it queues, sorted, `ticketId` first.
+   * The public key of every player it queues, `ticketId` first, then sorted (`inPartyOrder`).
    * In Random Arena: `[ticketId]` alone, or `teamSizeOf(mode)` of them
    * for a team that stayed together (#882). In a team mode: the side's
    * humans, at least one, with `bots` making up the rest. Each member
@@ -121,7 +146,8 @@ const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
 
-function isQueueMode(value: unknown): value is QueueMode {
+/** Whether `value` is one of `QUEUE_MODES`. */
+export function isQueueMode(value: unknown): value is QueueMode {
   return QUEUE_MODES.some((known) => known === value);
 }
 
@@ -154,17 +180,12 @@ function parseMembers(
   }
   const members: string[] = [];
   for (const member of value as readonly unknown[]) {
-    const previous = members.at(-1);
-    if (
-      typeof member !== "string" ||
-      !TICKET_ID.test(member) ||
-      (previous !== undefined && previous >= member)
-    ) {
+    if (typeof member !== "string" || !TICKET_ID.test(member)) {
       return undefined;
     }
     members.push(member);
   }
-  return members[0] === ticketId ? members : undefined;
+  return members[0] === ticketId && inPartyOrder(members) ? members : undefined;
 }
 
 /**
@@ -207,7 +228,7 @@ function parseParty(value: unknown, members: readonly string[]): TicketParty | n
  * A ticket as a peer published it, or `undefined` if it is not one: a bad
  * id, an unknown mode, members and bots that are not a solo or a whole
  * team in Random Arena or not a whole side in a team mode, members
- * unsorted, repeated or not led by its id, a party that does not match
+ * out of party order or not led by its id, a party that does not match
  * them, a time that is not a whole number of ms, or any field more than a
  * ticket has, so a flood of padded events costs a client nothing to
  * refuse.

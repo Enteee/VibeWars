@@ -1619,10 +1619,15 @@ body {
   flex-direction: column;
   gap: 0.6rem;
   min-width: 0;
-  padding: 0.8rem 0.9rem 2.6rem;
   background: var(--panel);
   border: 1px solid var(--line);
   text-align: left;
+}
+
+/* The bottom padding keeps the content clear of the corner's buttons
+   (#1786); .screen so .screen button's padding does not win. */
+.screen .play-card-open {
+  padding: 0.8rem 0.9rem 2.6rem;
 }
 
 .screen .play-card-open[aria-pressed="true"] {
@@ -1660,23 +1665,35 @@ body {
   font-size: 0.8rem;
 }
 
+/* One row a member (#1786); a card narrower than a row scrolls sideways
+   rather than squeezing its icons. */
 .play-card-members {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  overflow-x: auto;
 }
 
-.play-card-member {
+/* A Team Build's member on a card (#1786): ball, weapons, skills. */
+.team-member-row {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   gap: 0.35rem;
-  min-width: 0;
 }
 
-.play-card-member-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* A character's weapons at the mini skill bar's 16 px (#1786). */
+.mini-gear {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+}
+
+.mini-gear .gear-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 0;
 }
 
 .play-card-actions {
@@ -1773,7 +1790,7 @@ body {
 
 .team-row-character {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto auto 1fr;
   column-gap: 0.4rem;
   align-items: center;
   min-width: 0;
@@ -1782,6 +1799,17 @@ body {
 .team-row-dot {
   grid-row: span 3;
   display: inline-flex;
+}
+
+/* The member's weapons, after its dot (#1786). */
+.team-row-gear {
+  grid-row: span 3;
+  display: inline-flex;
+}
+
+/* Stacked, so the name keeps its width. */
+.team-row-gear .mini-gear {
+  flex-direction: column;
 }
 
 .team-row-name,

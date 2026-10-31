@@ -939,6 +939,60 @@ const skillGlyph = {
     ),
   // Golden Fox Strike: unblockable while enchanted, the cracked shield of Guiding Hands.
   "dagger-unblock": () => strikeWith(skillGlyph["armor-crack"]()),
+  // Wells, glyphs and attribute hexes (#1783).
+  // A bolt sealed in a ring: the next spell cannot be interrupted.
+  "glyph-sealed": () =>
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M14 4.5L8 12.5h4l-2 7 6.5-9h-4z"),
+  // A bolt and an hourglass: cast now, recharge later.
+  "glyph-slow": () =>
+    inkFill("M10 2.5L3.5 12.5h4.5l-2 8.500 7-11h-4.500z") +
+    inkLine("M15.5 3.5H22M15.5 20.5H22M16.5 3.5L21 12L16.5 20.5M21 3.5L16.5 12L21 20.5", 2),
+  // A bolt inside a circling arrow: the spell comes back at once.
+  "glyph-renew": () =>
+    `<path d="M20 7.500A9.500 9.500 0 1 0 21.500 13" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M23 1.500V9H15.500Z") +
+    inkFill("M13 6L8.500 12.500H12l-1.500 5.500 5-7h-3.500Z"),
+  // A bolt over a drained bar: cast now, all Energy gone.
+  "glyph-drain": () =>
+    inkFill("M13.500 2L7 12h4.500L9.500 17l7-9.500h-4.500Z") +
+    `<rect x="2.500" y="18.500" width="19" height="3.500" rx="1" ${stroke(C.ink, 1.8)}/>` +
+    inkFill("M3.500 19.500H6.500V21H3.500Z"),
+  // The well's ring under a plus: allies regenerate Health.
+  "well-regen": () =>
+    `<ellipse cx="12" cy="18" rx="9" ry="3.600" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 3V13M7 8H17", 3),
+  // A plus and a bolt over the ring: Health and Energy.
+  "well-regen-energy": () =>
+    `<ellipse cx="12" cy="18" rx="9" ry="3.600" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M7 4V12M3 8H11", 2.8) +
+    inkFill("M18 2.500L13.500 9.500h3l-1.500 5 5-7h-3z"),
+  // A bolt sinking over the ring: foes lose Energy.
+  "well-drain": () =>
+    `<ellipse cx="12" cy="18" rx="9" ry="3.600" ${stroke(C.ink, 2.4)}/>` +
+    inkFill("M10 2L4.500 10h3.500L6.500 15l5.500-8h-3.500Z") +
+    inkLine("M17 5V12M14 9.500L17 13L20 9.500", 2.4),
+  // A prism with its light fanned out: cold that reaches the neighbours.
+  "prism-fan": () =>
+    inkFill("M3 20L9 5L15 20Z") +
+    `<path d="M9 5V20" ${stroke(C.bg, 1)}/>` +
+    inkLine("M16 9L22 5M17 13H22.500M16 17L22 21", 2),
+  // Two crystals over a crack: damage that breaks armor.
+  "crystals-crack": () =>
+    inkFill("M7 3L12 9L7 17L2 9Z") +
+    inkFill("M17 5L21.500 10L17 17L12.500 10Z") +
+    inkLine("M2 21L7 18.500L11 21L15 18.500L22 21", 2),
+  // A gust held back by a bar: the hexed foe slows.
+  "gust-bar": () =>
+    inkLine("M2.500 7.500H11A2.800 2.800 0 1 0 8.200 4.700", 2.2) +
+    inkLine("M2.500 13H14M2.500 18.500H10", 2.2) +
+    inkLine("M19.500 4V20", 2.8),
+  // Shards flying from a broken hex: a Mesmer hex shattered.
+  "hex-shards": () =>
+    inkFill("M12 1.500L16 7L10 8Z") +
+    inkFill("M22 11L16.500 16L15.500 9.500Z") +
+    inkFill("M3 14L9 12L8.500 19Z") +
+    `<circle cx="12.500" cy="14" r="2.200" fill="${C.ink}"/>`,
   // Assassin staples 5 (#1775).
   // The blade with a nearly empty gauge: the bonus comes when you are hurt.
   "dagger-low": () =>
@@ -2845,6 +2899,27 @@ const skillGlyph = {
     `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
     inkLine("M15 2.5V11.5M10.5 7H19.5", 2.4) +
     inkLine("M21 13V18M18.5 15.5H23.5", 1.6),
+  // Ally threshold mechanics (#1789, #1817): a Health bar with the line that, once crossed, answers.
+  "halo-heart-bar": () =>
+    `<ellipse cx="12" cy="3.6" rx="5" ry="1.8" ${stroke(C.ink, 1.8)}/>` +
+    `<path d="M12 16s-5.5-3.4-5.5-7a3 3 0 0 1 5.5-1.7A3 3 0 0 1 17.5 9c0 3.6-5.5 7-5.5 7z" ${stroke(C.ink, 1.8)}/>` +
+    `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(C.ink, 1.8)}/>` +
+    `<path d="M20 1.7L21.06 4.44L23.8 5.5L21.06 6.56L20 9.3L18.94 6.56L16.2 5.5L18.94 4.44Z" fill="${C.ink}"/>`,
+  "eye-bar": () =>
+    `<path d="M3.5 9C7 4.5 17 4.5 20.5 9C17 13.5 7 13.5 3.5 9z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="12" cy="9" r="2" fill="${C.ink}"/>` +
+    `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(C.ink, 1.8)}/>` +
+    `<rect x="3" y="18.5" width="4.5" height="3.5" rx="0.8" fill="${C.ink}"/>`,
+  "heart-bar": () =>
+    `<path d="M12 16s-5.5-3.4-5.5-7a3 3 0 0 1 5.5-1.7A3 3 0 0 1 17.5 9c0 3.6-5.5 7-5.5 7z" transform="translate(-3,0)" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="19.5" cy="5.5" r="3.2" ${stroke(C.ink, 1.5)}/><circle cx="19.5" cy="5.5" r="1.1" fill="${C.ink}"/>` +
+    `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(C.ink, 1.8)}/>` +
+    `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${C.ink}"/>`,
+  "haze-heart-bar": () =>
+    `<path d="M12 16s-5.5-3.4-5.5-7a3 3 0 0 1 5.5-1.7A3 3 0 0 1 17.5 9c0 3.6-5.5 7-5.5 7z" ${stroke(C.ink, 1.8)} stroke-dasharray="2.4 2"/>` +
+    `<path d="M8 10h8M9 13h6" ${stroke(C.ink, 1.4)}/>` +
+    `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(C.ink, 1.8)}/>` +
+    `<rect x="3" y="18.5" width="4.5" height="3.5" rx="0.8" fill="${C.ink}"/>`,
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +

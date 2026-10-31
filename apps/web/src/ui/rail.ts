@@ -180,7 +180,12 @@ export function railScreen(
 ): HTMLElement {
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
-  if (isModeEntry(active) && shownParty !== undefined && !isAlone(shownParty)) {
+  // Alone, the strip has nothing to say, unless the party is queued (#1766).
+  if (
+    isModeEntry(active) &&
+    shownParty !== undefined &&
+    (!isAlone(shownParty) || shownParty.queuedMs !== null)
+  ) {
     body.appendChild(partyStrip(shownParty));
   }
   body.append(h("h2", "rail-title", railLabel(active)), h("p", "rail-goal", goal));

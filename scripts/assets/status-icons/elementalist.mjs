@@ -7,33 +7,42 @@ export const ELEMENTALIST_STATUS_ICONS = {
     "glyph",
     (c) => `<path d="M13.5 4.5L8.5 11h3.5l-1.5 5 5-6.5H12z" fill="${c}"/>`,
   ],
-  // Glyphs on the next spell (#1730), stand-ins: a still bolt in a ring,
-  // a bolt and an hourglass, a bolt and a turning arrow, a bolt and a
-  // drained bar.
+  // Glyphs on the next spell (#1730), the skills' shapes: a bolt sealed in
+  // a ring, a bolt and an hourglass, a bolt in a circling arrow, a bolt
+  // over a drained bar.
   "glyph-of-concentration": [
     "glyph",
     (c) =>
-      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.6)}/>` +
-      `<path d="M13 7.5L10 12h2.5l-1 4.5 3.5-5h-2.5z" fill="${c}"/>`,
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
+      `<circle cx="12" cy="12" r="9" ${stroke(c, 3.1)}/>` +
+      `<path d="M13.5 5.5L8.5 12.5h3.5l-1.5 6 5.5-8h-3.5z" fill="${c}"/>` +
+      `</g>`,
   ],
   "glyph-of-sacrifice": [
     "glyph",
     (c) =>
-      `<path d="M10 5L6 11h3l-1.5 5 5-7h-3z" fill="${c}"/>` +
-      `<path d="M14 8h5l-5 8h5" ${stroke(c, 1.6)}/>`,
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
+      `<path d="M9.5 3.5L4 12.5h4l-1.5 8 6-9.5h-4z" fill="${c}"/>` +
+      `<path d="M14.5 5h5M14.5 18h5M15.5 5l3 6.5-3 6.5M18.5 5l-3 6.5 3 6.5" ${stroke(c, 2.2)}/>` +
+      `</g>`,
   ],
   "glyph-of-renewal": [
     "glyph",
     (c) =>
-      `<path d="M11 6L7.5 11.5h3l-1 4.5 4-6h-3z" fill="${c}"/>` +
-      `<path d="M17.5 8a6.5 6.5 0 1 1-3-2" ${stroke(c, 1.6)}/>`,
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
+      `<path d="M19 7.5A8.5 8.5 0 1 0 20.5 13" ${stroke(c, 3.1)}/>` +
+      `<path d="M22 2.5V9H15.5z" fill="${c}"/>` +
+      `<path d="M13 6.5L9 12.5h3l-1 5 4.5-6.5h-3z" fill="${c}"/>` +
+      `</g>`,
   ],
   "glyph-of-essence": [
     "glyph",
     (c) =>
-      `<path d="M12.5 4.5L8.5 10h3l-1 4 4-5.5h-3z" fill="${c}"/>` +
-      `<path d="M6 18.5h12" ${stroke(c, 2.2)}/>` +
-      `<path d="M6 16h3" ${stroke(c, 1.6)}/>`,
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
+      `<path d="M13 3L7.5 12h4l-1.5 5 6-8h-4z" fill="${c}"/>` +
+      `<rect x="7.5" y="18" width="9" height="3" rx="1" ${stroke(c, 2.5)}/>` +
+      `<path d="M8.5 19h2.5v1H8.5z" fill="${c}"/>` +
+      `</g>`,
   ],
   // Enchantment: a small shield.
   "armor-boost": [

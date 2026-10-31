@@ -449,6 +449,30 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
 });
 
+test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await saveCharacters(page, ["Alpha"]);
+  await openTeamBuilder(page);
+  await page.getByRole("button", { name: "new team" }).click();
+  await page.getByLabel("team name").fill("Quad");
+  for (let i = 0; i < 4; i++) {
+    await page.getByRole("button", { name: "add Alpha" }).click();
+  }
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("button", { name: "back" }).click();
+  await expect.poll(() => teamList(page)).toEqual(["Quad · 4 members"]);
+
+  const card = teamRows(page).first();
+  const members = await card
+    .locator(".play-card-member")
+    .evaluateAll((rows) => Math.max(...rows.map((row) => row.getBoundingClientRect().bottom)));
+  const edit = await card.getByRole("button", { name: "Edit" }).boundingBox();
+  expect(edit).not.toBeNull();
+  expect(members).toBeLessThanOrEqual(edit?.y ?? 0);
+});
+
 test("team edits stay on screen until Save; Back and Delete ask first (#573)", async ({ page }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamBuilder(page);
