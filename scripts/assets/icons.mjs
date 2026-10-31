@@ -2029,6 +2029,16 @@ const skillGlyph = {
           ) + `<circle cx="${String(x)}" cy="7" r="3" fill="${C.ink}"/>`,
       )
       .join(""),
+  // Armor of Unfeeling (#1874): an armour plate with a binding post cut out of it.
+  "plate-post": () =>
+    `<path fill-rule="evenodd" fill="${C.ink}" d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5ZM9.6 8.6a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0-4.8 0ZM10 12.2H14L14.7 17H9.3Z"/>`,
+  // Signet of Ghostly Might (#1874): a fist, and the dashed edge it swells to before it fades.
+  "fist-fade": () =>
+    `<rect x="2.5" y="2.5" width="19" height="19" rx="4" ${stroke(C.ink, 1.6)} stroke-dasharray="3 2.6"/>` +
+    inkFill("M7 11.5H17V16.5Q17 18 15.5 18H8.5Q7 18 7 16.5Z") +
+    [8.5, 11, 13.5, 16]
+      .map((x) => `<circle cx="${String(x)}" cy="10.8" r="1.5" fill="${C.ink}"/>`)
+      .join(""),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +

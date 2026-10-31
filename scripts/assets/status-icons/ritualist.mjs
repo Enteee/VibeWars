@@ -168,20 +168,22 @@ export const RITUALIST_STATUS_ICONS = {
       `<path d="M12 14c-1.6 2-2.6 3.3-2.6 4.4a2.6 2.6 0 0 0 5.2 0C14.6 17.3 13.6 16 12 14z" fill="${c}"/>` +
       `<path d="M17.5 19h5" ${stroke(c, 3)}/></g>`,
   ],
-  // The PvP Communing pair (#1827), stand-ins until their art card.
-  // Enchantment: a shield over a totem's base, less damage while binding a spirit.
+  // The PvP Communing pair (#1827, #1874), echoing their skill icons.
+  // Enchantment: an armour plate with a binding post cut out of it.
   "armor-of-unfeeling": [
     "enchantment",
     (c) =>
-      `<path d="M12 4l6 2.5v4.5c0 3.5-2.6 6-6 7.5c-3.4-1.5-6-4-6-7.5V6.5z" ${stroke(c, 2)}/>` +
-      `<path d="M8 21h8M12 18v3" ${stroke(c, 1.8)}/>`,
+      `<path fill-rule="evenodd" fill="${c}" d="M12 3L19 6V12C19 16 16 18.8 12 20.5C8 18.8 5 16 5 12V6ZM9.8 9a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0-4.4 0ZM10.3 12.2H13.7L14.3 16.5H9.7Z"/>`,
   ],
-  // Skill effect: a fist over an hourglass, more damage and then gone.
+  // Skill effect: a fist inside the dashed edge it fades to.
   "signet-of-ghostly-might": [
     "skill-effect",
     (c) =>
-      `<rect x="7" y="4" width="10" height="7" rx="2" fill="${c}"/>` +
-      `<path d="M8 14h8l-4 3.5zM8 21h8l-4-3.5z" ${stroke(c, 1.6)}/>`,
+      `<rect x="3" y="3" width="18" height="18" rx="4" ${stroke(c, 1.6)} stroke-dasharray="3 2.6"/>` +
+      `<path d="M7.5 11.5H16.5V16Q16.5 17.5 15 17.5H9Q7.5 17.5 7.5 16Z" fill="${c}"/>` +
+      [9, 11.2, 13.4, 15.6]
+        .map((x) => `<circle cx="${String(x)}" cy="10.8" r="1.4" fill="${c}"/>`)
+        .join(""),
   ],
   // Hex: two links and a spike, spirits' attacks hurt more (#1270).
   "painful-bond": [
