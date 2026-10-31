@@ -1488,7 +1488,7 @@ describe("a Team Lobby (#1458)", () => {
       throw new Error("two members");
     }
     await begin(lobby);
-    const size = teamOf(host)?.sides[0].size;
+    const size = teamOf(host)?.sides[0]?.size;
     await timeOut(lobby);
     expect(teamOf(host)?.stage).toBe("claim");
     // Late in the claim stage: its window outlasts the stage.
