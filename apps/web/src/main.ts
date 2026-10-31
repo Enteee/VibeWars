@@ -95,6 +95,7 @@ import {
   nextStreak,
   type QueueScreen,
   type StayOffer,
+  TEAM_PLAN_REJECTED_NOTICE,
 } from "./ui/queue-screen.js";
 import { hostMaps, lobbyPanel, type LobbyPanel } from "./ui/lobby-screen.js";
 import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
@@ -1909,6 +1910,9 @@ async function main(): Promise<void> {
       );
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
+      if (start.teamPlanRejected) {
+        toast(TEAM_PLAN_REJECTED_NOTICE);
+      }
     } catch (error) {
       console.error("[web] could not enter match", error);
       enteringMatch = false;

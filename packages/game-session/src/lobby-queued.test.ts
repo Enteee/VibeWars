@@ -3,6 +3,7 @@ import {
   PROTOCOL_VERSION,
   parseWireLobbyNote,
   parseWireLobbyState,
+  parseWireMatchStart,
   parseWirePartyProposal,
   type Channel,
   type JsonValue,
@@ -667,16 +668,49 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
   const FOE_BOTS = [6, 7, 8].map((index) => ({ memberKey: null, build: planned(index) }));
   const FOE_PLAN = [FOE_SEAT, ...FOE_BOTS];
 
-  /** Open ARENA_GROUP, seat everyone, let `plan` act, and run the countdown out. */
+  /** Each `match-start`'s `teamPlanRejected` that `transport` is sent (#1822). */
+  function rejections(transport: Transport): boolean[] {
+    const got: boolean[] = [];
+    transport.on("match-start", (data) => {
+      const start = parseWireMatchStart(data);
+      if (start !== undefined) {
+        got.push(start.teamPlanRejected);
+      }
+    });
+    return got;
+  }
+
+  /** Each `teamPlanRejected` `lobby`'s client hands its match on with (#1822). */
+  function starts(lobby: LobbyConnection): boolean[] {
+    const got: boolean[] = [];
+    lobby.onMatchStarting((start) => got.push(start.teamPlanRejected));
+    return got;
+  }
+
+  /**
+   * Open ARENA_GROUP, seat everyone, let `plan` act, and run the countdown
+   * out. `told` is whether each human's side's plan was rejected: the
+   * host's own player as its `match-start` says, each guest as its client
+   * hands the match on.
+   */
   async function play(
     plan: (queued: QueuedLobby, foe: Transport, ally: Transport) => void,
-  ): Promise<{ readonly queued: QueuedLobby; readonly seats: MatchPlan["seats"] }> {
+  ): Promise<{
+    readonly queued: QueuedLobby;
+    readonly seats: MatchPlan["seats"];
+    readonly told: { readonly host: boolean[]; readonly ally: boolean[]; readonly foe: boolean[] };
+  }> {
     const queued = await openQueued({ group: ARENA_GROUP, match: fakeMatch() });
     const ally = queued.network.join();
-    await queued.join(ALLY, ally);
+    const allyLobby = await queued.join(ALLY, ally);
     const foe = queued.network.join();
-    await queued.join(FOE, foe);
+    const foeLobby = await queued.join(FOE, foe);
     await settle();
+    const told = {
+      host: rejections(queued.lobby.local),
+      ally: starts(allyLobby),
+      foe: starts(foeLobby),
+    };
     plan(queued, foe, ally);
     await settle();
     await queued.step(COUNTDOWN_SECONDS);
@@ -684,7 +718,7 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
     if (started === undefined) {
       throw new Error("the match never started");
     }
-    return { queued, seats: started.seats };
+    return { queued, seats: started.seats, told };
   }
 
   /** Each seat on `team`: a bot, or a human by name, and its build's primary. */
@@ -706,7 +740,7 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
   }
 
   it("seats a side by its plan, bots and builds, the host's own side by its own", async () => {
-    const { seats } = await play((queued, foe) => {
+    const { seats, told } = await play((queued, foe) => {
       sendPlan(foe, FOE_PLAN);
       sendPlan(queued.lobby.local, [
         { memberKey: null, build: planned(1) },
@@ -732,10 +766,14 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
         ["bot", 4, "plan"],
       ]),
     );
+    // Both plans taken: nobody is told otherwise (#1822).
+    expect(told).toEqual({ host: [false], ally: [false], foe: [false] });
   });
 
   it("gives a side with no plan the house team, its humans first", async () => {
-    const { seats } = await play((_, foe) => sendPlan(foe, FOE_PLAN));
+    const { seats, told } = await play((_, foe) => sendPlan(foe, FOE_PLAN));
+    // No plan is the house team as usual, not a rejected one (#1822).
+    expect(told).toEqual({ host: [false], ally: [false], foe: [false] });
     expect(sideOf(seats, 0)).toEqual(
       side([
         ["ticket-1", 0, "house"],
@@ -785,9 +823,11 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
       "sends something that is no build",
       (_, foe) => sendPlan(foe, [{ ...FOE_SEAT, build: "a build" }, ...FOE_BOTS]),
     ],
-  ])("gives the house team to a side whose plan %s", async (_, plan) => {
-    const { seats } = await play(plan);
+  ])("gives the house team to a side whose plan %s, and tells that side", async (_, plan) => {
+    const { seats, told } = await play(plan);
     expect(sideOf(seats, 1)).toEqual(HOUSE_FOE);
+    // Its humans alone are told; the other side hears nothing of it (#1822).
+    expect(told).toEqual({ host: [false], ally: [false], foe: [true] });
   });
 
   it("ignores a plan from a member that is not its side's ticket host", async () => {

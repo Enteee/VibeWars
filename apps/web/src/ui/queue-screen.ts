@@ -25,6 +25,9 @@ export const TEAM_SPLIT = "The team split up";
 export const HOST_LEFT = "The host left";
 /** #707's wording, as the menu says it for a join. */
 export const UNREACHABLE = "Couldn't reach the lobby servers";
+/** As a queued match opens, to a side whose party plan was not taken (#1822). */
+export const TEAM_PLAN_REJECTED_NOTICE =
+  "Your party's team plan was not accepted; the house team plays for you.";
 /** How long "fell through" stays up before the searching view returns. */
 export const FELL_THROUGH_SHOWN_MS = 3000;
 /** The tab title while a match found in a background tab is unseen. */

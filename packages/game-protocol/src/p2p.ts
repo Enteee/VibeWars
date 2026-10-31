@@ -1150,10 +1150,13 @@ export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
 /**
  * Lobby host to each seated peer, and only to them: the match is on, on
  * `mapId`. The peer then says `hello` to the host on the same transport.
+ * `teamPlanRejected`: its side's party sent a team plan that was not
+ * whole, so the house team plays for it (#1822).
  */
 export interface WireMatchStart {
   readonly mapId: string;
   readonly matchId: string;
+  readonly teamPlanRejected: boolean;
 }
 
 type Fields = Record<string, unknown>;
@@ -2594,7 +2597,10 @@ export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
 /** The `"match-start"` channel. */
 export function parseWireMatchStart(value: unknown): WireMatchStart | undefined {
   const raw = fields(value);
-  return raw !== undefined && isString(raw.mapId) && isString(raw.matchId)
-    ? { mapId: raw.mapId, matchId: raw.matchId }
+  return raw !== undefined &&
+    isString(raw.mapId) &&
+    isString(raw.matchId) &&
+    typeof raw.teamPlanRejected === "boolean"
+    ? { mapId: raw.mapId, matchId: raw.matchId, teamPlanRejected: raw.teamPlanRejected }
     : undefined;
 }

@@ -84,6 +84,8 @@ export interface ChatLine {
 export interface MatchStarting {
   readonly mapId: string;
   readonly matchId: string;
+  /** The party's team plan was not taken: the house team plays for it (#1822). */
+  readonly teamPlanRejected: boolean;
   /**
    * The room, for this match alone: hand it to `connectMatch`. Leaving it
    * leaves the match, not the lobby.

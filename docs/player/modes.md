@@ -182,6 +182,8 @@ and the votes for it go back to none. The most votes wins. On a tie the
 captain's vote decides: the host on the host's side, the earliest to
 join on the other. With proposals and no votes, one is picked at random.
 With no proposal, the side plays the house team of starter builds.
+In a queued match, a party whose plan is not accepted plays the house
+team too, and each of its players is told so as the match opens.
 Neither side sees the other's proposals, votes or choice.
 
 **Claim.** The chosen build's characters are seats: click a free seat

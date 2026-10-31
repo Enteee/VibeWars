@@ -4670,7 +4670,8 @@
     "WireMatchStart": {
       "properties": [
         { "name": "mapId", "optional": false, "type": "string" },
-        { "name": "matchId", "optional": false, "type": "string" }
+        { "name": "matchId", "optional": false, "type": "string" },
+        { "name": "teamPlanRejected", "optional": false, "type": "boolean" }
       ]
     },
     "WirePartyFormed": {
