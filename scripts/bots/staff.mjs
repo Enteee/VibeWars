@@ -470,7 +470,8 @@ export const WORK_COLUMN = Object.freeze(
     "asset-designer": "Ready",
     "cicd-engineer": "Ready",
     "lead-dev": "In Review",
-    "perf-sec-qa": "In Review",
+    // Reviews in QA, after lead-dev has moved the card on (perf-sec-qa.md).
+    "perf-sec-qa": "QA",
     "qa-tester": "QA",
     "business-analyst": null,
   }),

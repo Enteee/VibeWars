@@ -98,6 +98,12 @@ describe("WORK_COLUMN (#1694)", () => {
       expect(column === null || COLUMNS.includes(column)).toBe(true);
     }
   });
+
+  it("wakes each reviewer at its own stage, as its briefing says", () => {
+    expect(WORK_COLUMN["lead-dev"]).toBe("In Review");
+    expect(WORK_COLUMN["perf-sec-qa"]).toBe("QA");
+    expect(WORK_COLUMN["qa-tester"]).toBe("QA");
+  });
 });
 
 describe("roleOf", () => {
