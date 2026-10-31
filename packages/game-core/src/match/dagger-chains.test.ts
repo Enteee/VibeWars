@@ -153,6 +153,23 @@ describe("dagger chains (#831)", () => {
     expect(outOfSequence(use(match, "a", WILD_STRIKE))).toBe(true);
   });
 
+  it("Repeating Strike out of sequence misses and takes its 15 s to recharge (#1757)", () => {
+    const match = new MatchSimulation({
+      seed: "chain",
+      participants: [
+        { ...assassin("a", vec2(0, 0)), skillBar: ["assassin.repeating-strike"] },
+        dummy("foe", NEAR),
+      ],
+    });
+    expect(outOfSequence(use(match, "a", 0))).toBe(true);
+    const recharge = () =>
+      get(match, "a").combatant.cast.rechargeRemaining.get("assassin.repeating-strike");
+    expect(recharge()).toBeGreaterThan(13);
+    stepFor(match, 12);
+    expect(recharge()).toBeGreaterThan(1);
+    expect(match.requestSkill("a", 0)?.check.ok).toBe(false);
+  });
+
   it("auto-attacks between the lead and the off-hand do not break the chain", () => {
     const match = fight();
     use(match, "a", JAGGED_STRIKE);

@@ -515,6 +515,9 @@ async function main(): Promise<void> {
     onLeave: () => {
       void leaveLobby();
     },
+    onSetOpen: (open) => {
+      hosted?.setOpen(open);
+    },
   });
 
   const showViewport = (visible: boolean): void => {
@@ -1360,7 +1363,9 @@ async function main(): Promise<void> {
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
     setRailParty(snapshot === undefined ? undefined : partyOf(snapshot));
     topbarView.setLobby(
-      snapshot === undefined ? undefined : { code: snapshot.code, isHost: snapshot.isHost },
+      snapshot === undefined
+        ? undefined
+        : { code: snapshot.code, isHost: snapshot.isHost, open: snapshot.open },
     );
   };
 

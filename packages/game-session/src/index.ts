@@ -85,7 +85,13 @@ export type {
 } from "./lobby-connection.js";
 export { UNNAMED_CHARACTER, lobbyCharacter } from "./lobby-character.js";
 export { PARTY_CONSENT_MS, canStart, createLobbyHost } from "./lobby-host.js";
-export type { LobbyHost, LobbyHostOptions, MatchPlan, QueuedPlan } from "./lobby-host.js";
+export type {
+  LobbyHost,
+  LobbyHostOptions,
+  LobbyReach,
+  MatchPlan,
+  QueuedPlan,
+} from "./lobby-host.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 export type { JoinLobbyOptions } from "./lobby-client.js";
 export { scopeTransport } from "./scoped-transport.js";

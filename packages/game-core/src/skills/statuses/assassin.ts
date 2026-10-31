@@ -17,7 +17,11 @@ export type AssassinStatusId =
   | "enduring-toxin"
   | "mark-of-death"
   // Shadow Prison (#1551).
-  | "shadow-prison";
+  | "shadow-prison"
+  // Assassin staples 5 (#1757).
+  | "siphon-speed"
+  | "siphon-speed-haste"
+  | "way-of-the-fox";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -118,5 +122,23 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   "shadow-prison": define("shadow-prison", "Shadow Prison", "hex", {
     profession: "assassin",
     moveSpeedMultiplier: 0.34,
+  }),
+  // "For 5...15 seconds, target foe moves 33% slower and you move 33%
+  // faster" (#1757): the foe's half; the 13 s are the skill's.
+  "siphon-speed": define("siphon-speed", "Siphon Speed", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.67,
+  }),
+  // Siphon Speed's caster half (#1757), its own status: it stays when the
+  // hex is removed.
+  "siphon-speed-haste": define("siphon-speed-haste", "Siphon Speed", "skill-effect", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.33,
+  }),
+  // "For 10...35 seconds, your next 1...6 attacks cannot be blocked"
+  // (#1757): 5, its rank-12 value; the 30 s are the skill's.
+  "way-of-the-fox": define("way-of-the-fox", "Way of the Fox", "enchantment", {
+    profession: "assassin",
+    unblockableAttacks: 5,
   }),
 };

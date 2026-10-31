@@ -1899,6 +1899,27 @@ const skillGlyph = {
   "well-sink": () =>
     `<ellipse cx="8.5" cy="17" rx="6" ry="3.4" ${stroke(C.ink, 2.5)}/>` +
     inkLine("M8.5 3.5V12.5M5 9.5L8.5 13L12 9.5", 2.5),
+  // Wells 2 (#1749): the well's ring under the effect it lays on foes.
+  // A ring struck through: no enchantment holds.
+  "well-profane": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="12" cy="9" r="5.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M6 15L18 3", 2.4),
+  // Sound arcs struck through: no shout or chant.
+  "well-silence": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M7 6.5C10.5 9.5 10.5 12.5 7 15.5M12 4C17.5 8.5 17.5 13.5 12 18", 2.2) +
+    inkLine("M4 14L20 2", 2.4),
+  // An eye with its far half dark: hexed foes miss.
+  "well-darkness": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    `<path d="M3 9.5C6 4.5 9 3 12 3S18 4.5 21 9.5C18 14.5 15 16 12 16S6 14.5 3 9.5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M12 3C15 3 18 4.5 21 9.5C18 14.5 15 16 12 16Z"),
+  // A cracked shield: armor breaks under physical hits.
+  "well-ruin": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    `<path d="M12 2.5L19 5V10C19 13 16 15 12 16.5C8 15 5 13 5 10V5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 3L10 7.5L13.5 10L11 15", 1.8),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
@@ -2701,6 +2722,28 @@ const skillGlyph = {
     inkLine("M2 12H17", 2.4) +
     inkFill("M23 12L16.5 8V16Z") +
     inkLine("M2 6.5H7M2 17.5H7", 2),
+  // An arrow arcing over a small shield and landing behind it: no block stops it (#1768).
+  "arrow-over-shield": () =>
+    `<path d="M10 11L15 13V16C15 18.4 13 19.8 10 21C7 19.8 5 18.4 5 16V13Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2 11C3 5.5 9 2.5 17.5 4.4", 2.2) +
+    inkFill("M22.5 6L16.3 7.5L18.1 1.4Z"),
+  // A shaft with hooked barbs trailing behind its head (#1768).
+  "arrow-barbed": () =>
+    inkLine("M3 21L14.5 9.5", 2.2) +
+    inkLine("M7 17L3.5 16.5M10 14L6.5 13.5M7 17L7.5 20.5M10 14L10.5 17.5", 1.8) +
+    inkFill("M21.5 2.5L11.5 5.5L18.5 12.5Z"),
+  // An arrow whose fletching is a leaf: the elite Melandru's arrows (#1768).
+  "arrow-leaf": () =>
+    inkLine("M5.5 18.5L14 10", 2.2) +
+    `<path d="M2 11C2 6 5 3 10 3C10 8 7 11 2 11Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M3.5 9.5L8 5", 1.5) +
+    inkFill("M21.5 2.5L11.5 5.5L18.5 12.5Z"),
+  // A short arrow with a wind curl streaming behind it: it flies twice as fast (#1768).
+  "arrow-wind": () =>
+    inkLine("M10 14L17 7", 2.2) +
+    inkFill("M22 2.5L13.5 4.5L19.5 10.5Z") +
+    `<path d="M2 10H8.5a2.5 2.5 0 1 0-2.5-2.5" ${stroke(C.ink, 1.8)}/>` +
+    `<path d="M2 14H7M2 18.5H9.5a2.2 2.2 0 1 1-2.2 2.2" ${stroke(C.ink, 1.8)}/>`,
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +

@@ -22,6 +22,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     phase,
     mode: "hosted-game",
     mapId: "arena",
+    open: true,
     hostId: "host-peer",
     players: [
       {

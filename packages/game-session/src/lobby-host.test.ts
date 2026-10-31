@@ -425,6 +425,66 @@ describe("lobby host", () => {
   });
 });
 
+describe("an open or closed lobby (#1682)", () => {
+  /** Join `lobby` as `name` with the key, and how it went. */
+  const tryJoin = (lobby: TestLobby, name: string): Promise<unknown> =>
+    joinLobby({
+      transport: lobby.network.join(),
+      code: CODE,
+      proofKey: PROOF_KEY,
+      name,
+      guildTag: null,
+      guildCape: null,
+      character: null,
+      timeoutMs: 1000,
+    }).catch((error: unknown) => error);
+
+  it("starts closed, and refuses a peer with the key as closed", async () => {
+    const lobby = await openLobby({ open: false });
+    expect(lobby.host.connection.getSnapshot().open).toBe(false);
+    expect(await tryJoin(lobby, "Early")).toEqual(new LobbyRefusedError("closed"));
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+  });
+
+  it("takes a peer with the key once opened, and says it is open", async () => {
+    const lobby = await openLobby({ open: false });
+    lobby.lobby.setOpen(true);
+    const guest = await lobby.join();
+    expect(guest.connection.getSnapshot().open).toBe(true);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Guest"]);
+  });
+
+  it("keeps its guests when closed, tells them, and refuses the next", async () => {
+    const lobby = await openLobby();
+    const guest = await lobby.join();
+    lobby.lobby.setOpen(false);
+    await settle();
+    expect(guest.connection.getSnapshot().open).toBe(false);
+    expect(await tryJoin(lobby, "Late")).toEqual(new LobbyRefusedError("closed"));
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Guest"]);
+  });
+
+  it("tells its reach on every change: open, and guests other than the host and bots", async () => {
+    const lobby = await openLobby({ open: false });
+    const reaches: { open: boolean; guests: number }[] = [];
+    lobby.lobby.onReach((reach) => reaches.push({ ...reach }));
+    lobby.lobby.setOpen(true);
+    const guest = await lobby.join();
+    lobby.host.connection.setBots(0, 1);
+    await settle();
+    lobby.lobby.setOpen(false);
+    await guest.connection.disconnect();
+    await settle();
+    expect(reaches).toEqual([
+      { open: false, guests: 0 },
+      { open: true, guests: 0 },
+      { open: true, guests: 1 },
+      { open: false, guests: 1 },
+      { open: false, guests: 0 },
+    ]);
+  });
+});
+
 describe("canStart", () => {
   it("wants somebody on a team, and everyone on a team ready; spectators do not count", () => {
     expect(canStart([])).toEqual({ ok: false, reason: "nobody has joined a team" });

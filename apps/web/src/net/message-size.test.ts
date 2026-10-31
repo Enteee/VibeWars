@@ -433,6 +433,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       // The longest mode.
       mode: "heroes-ascent",
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
+      open: true,
       hostId: PEER_ID,
       matchId: "match-1000000",
       players: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({
@@ -495,6 +496,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       // The longest mode.
       mode: "heroes-ascent",
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
+      open: true,
       hostId: PEER_ID,
       matchId: null,
       players: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, i) => ({

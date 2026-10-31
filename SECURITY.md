@@ -88,12 +88,19 @@ channels, as often as they like.
   from its own peer id. The peer id itself is whatever the transport
   reports, which a peer chooses; a peer that also claims a joiner's id
   could at most race that joiner for its one seat.
-- **Knowing the key means being invited.** Anyone with the lobby key can
-  join and see the lobby, and share it on. A key is shared like a party
+- **Knowing the key means being invited, while the lobby is open.**
+  Anyone with the lobby key can join an open lobby and see it, and share
+  the key on. Closing the lobby is the host's defence against a key that
+  went further than meant: it keeps the guests already in and takes
+  nobody new. A key is shared like a party
   invite: an invitation, not an identity. The relays see a topic, the
   WebRTC offers and answers, encrypted with a password derived from the
   key, and every peer's IP address; neither the topic nor the password
-  gives the key back (ADR-0043, gap 5).
+  gives the key back (ADR-0043, gap 5). A lobby is closed until its host
+  opens it (#1682): a closed lobby takes nobody new, key or not, and is
+  told so only after the key proof. A closed, empty lobby has no relay
+  footprint at all; an open one, or a closed one with guests, shows only
+  its derived topic.
 - **A flooded lobby topic.** The topic a lobby announces on is public, so
   anyone watching the relays can announce on it too and make the host
   start handshakes that fail. That is denial of service, not access: such

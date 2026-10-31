@@ -154,6 +154,7 @@ function lobby(
     phase: "team-lobby",
     mode: "hosted-game",
     mapId: "arena",
+    open: true,
     hostId: "aria",
     players,
     isHost: self === "aria",

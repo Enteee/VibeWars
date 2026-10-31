@@ -976,6 +976,11 @@ export interface WireLobbyState {
   /** The host's pick (#1526): every member's rail shows it. */
   readonly mode: LobbyMode;
   readonly mapId: string;
+  /**
+   * Whether a peer with the key may join (#1682): a closed lobby takes
+   * nobody new, and keeps those already in. A queued lobby is always open.
+   */
+  readonly open: boolean;
   /** The peer every lobby and match message comes from. */
   readonly hostId: string;
   /** The match being played, while `phase` is not `"waiting"`. */
@@ -1068,7 +1073,20 @@ export type WireLobbyCommand =
   /** In a Team Lobby's vote: vote for a proposal on one's own side; `null` withdraws. */
   | { readonly kind: "vote"; readonly proposerId: string | null }
   /** In a Team Lobby's claim: take that slot of the chosen build; `null` lets it go. */
-  | { readonly kind: "claim"; readonly slot: number | null };
+  | { readonly kind: "claim"; readonly slot: number | null }
+  /**
+   * A team mode's party host to its match host (ADR-0042): seat `slot` of
+   * its side of `size`, played by the human `memberKey` or, `null`, a
+   * bot, with `build`, opaque here. One seat a message, as `propose`,
+   * so a whole side of large builds still fits.
+   */
+  | {
+      readonly kind: "team-plan";
+      readonly slot: number;
+      readonly size: number;
+      readonly memberKey: string | null;
+      readonly build: JsonValue;
+    };
 
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
@@ -1102,6 +1120,8 @@ export const LOBBY_REFUSALS = [
   "invalid-vote",
   "slot-taken",
   "invalid-slot",
+  // A coded lobby its host has closed (#1682), told only after the key proof.
+  "closed",
 ] as const;
 
 export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
@@ -2241,8 +2261,8 @@ export function parsePeerStayTogether(value: unknown): PeerStayTogether | undefi
     : undefined;
 }
 
-/** The longest party there is: a 4v4 side (`teamSizeOf`). */
-const MAX_PARTY_MEMBERS = 4;
+/** The longest party there is: an 8v8 side (`teamSizeOf`). */
+const MAX_PARTY_MEMBERS = 8;
 
 /** A party's members: two or more keys, sorted, each once. */
 function parsePartyMembers(value: unknown): string[] | undefined {
@@ -2430,6 +2450,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isOneOf(raw.phase, ["waiting", "team-lobby", "starting", "in-match"] as const) ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
+    typeof raw.open !== "boolean" ||
     !isString(raw.hostId) ||
     !isNullableString(raw.matchId) ||
     !(raw.countdownSeconds === null || isCount(raw.countdownSeconds))
@@ -2444,6 +2465,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         phase: raw.phase,
         mode: raw.mode,
         mapId: raw.mapId,
+        open: raw.open,
         hostId: raw.hostId,
         matchId: raw.matchId,
         players,
@@ -2497,6 +2519,23 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return raw.slot === null || isNumber(raw.slot)
         ? { kind: "claim", slot: raw.slot }
         : undefined;
+    case "team-plan": {
+      const build = parseJson(raw.build);
+      return isCount(raw.slot) &&
+        isCount(raw.size) &&
+        raw.size <= MAX_TEAM_LOBBY_SIDE &&
+        raw.slot < raw.size &&
+        (raw.memberKey === null || isTicketId(raw.memberKey)) &&
+        build !== undefined
+        ? {
+            kind: "team-plan",
+            slot: raw.slot,
+            size: raw.size,
+            memberKey: raw.memberKey,
+            build,
+          }
+        : undefined;
+    }
     default:
       return undefined;
   }
