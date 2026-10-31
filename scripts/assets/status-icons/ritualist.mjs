@@ -158,13 +158,15 @@ export const RITUALIST_STATUS_ICONS = {
       `<path d="M6 19L16 9M7.5 13.5l4 4" ${stroke(c, 2.4)}/>` +
       `<g transform="translate(9.5,0.5) scale(0.8)">${WEAPON_MARKS.renewal(c)}</g>`,
   ],
-  // Your spirits within earshot (#1777), stand-in until its art card.
-  // Skill effect: a falling drop over a low line, less damage, Health stolen.
+  // Your spirits within earshot (#1777, #1848).
+  // Skill effect: a fang with a drained drop under it and a minus bar: less damage, Health stolen.
   "spiritleech-aura": [
     "skill-effect",
     (c) =>
-      `<path d="M12 4c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C15.5 8.6 14 6.8 12 4z" fill="${c}"/>` +
-      `<path d="M6 18.5h12M9 15.5l3 3l3-3" ${stroke(c, 2)}/>`,
+      `<g transform="translate(5.5,6) scale(0.52)">` +
+      `<path d="M6 3h12l-6 9z" fill="${c}"/>` +
+      `<path d="M12 14c-1.6 2-2.6 3.3-2.6 4.4a2.6 2.6 0 0 0 5.2 0C14.6 17.3 13.6 16 12 14z" fill="${c}"/>` +
+      `<path d="M17.5 19h5" ${stroke(c, 3)}/></g>`,
   ],
   // Hex: two links and a spike, spirits' attacks hurt more (#1270).
   "painful-bond": [

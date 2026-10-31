@@ -1783,6 +1783,23 @@ const skillGlyph = {
     spiritPost() +
     inkLine("M12 4.5L15.5 8L12 11.5M17.5 4.5L21 8L17.5 11.5", 2) +
     inkLine("M11.5 14.5H22.5", 2.4),
+  // Your spirits within earshot (#1777, #1848): the spirit post and a cue each.
+  // Spirit Boon Strike: a bolt strikes, a ringed plus is the Health the post gains.
+  "spirit-bolt-heal": () =>
+    spiritPost() +
+    inkFill("M18.5 1.5L12.5 9H16.5L13.5 15L21.5 7H17.5Z") +
+    `<circle cx="19" cy="18" r="4.2" ${stroke(C.ink, 1.6)}/>` +
+    inkLine("M19 15.8V20.2M16.8 18H21.2", 1.6),
+  // Spiritleech Aura: a fang with a drained drop under it.
+  "spirit-fang": () =>
+    spiritPost() +
+    inkFill("M12.5 2.5H22L17.2 12Z") +
+    `<path d="M17.2 14.6C17.2 14.6 14.8 17.4 14.8 18.9A2.4 2.4 0 0 0 19.6 18.9C19.6 17.4 17.2 14.6 17.2 14.6Z" fill="${C.ink}"/>`,
+  // Draw Spirit: the post is hauled left along a line, towards you, by pull chevrons.
+  "spirit-pull": () =>
+    `<g transform="translate(13,0)">${spiritPost()}</g>` +
+    inkLine("M9 4.5L5.5 8L9 11.5M5 4.5L1.5 8L5 11.5", 2) +
+    inkLine("M1.5 15.5H22.5", 2.4),
   // Soothing slows adrenaline: a wave pressed flat above a bar.
   "spirit-calm": () =>
     spiritPost() +
