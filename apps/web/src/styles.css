@@ -1843,6 +1843,18 @@ body {
   font-size: 0.75rem;
 }
 
+/* A pair of professions in the mix (#1785): its count, then its icons. */
+.team-mix-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+}
+
+.team-mix-icon {
+  width: 1.2em;
+  height: 1.2em;
+}
+
 /* A counter or a found skill marks its cells and dims the rest. */
 .team-skill[role="button"] {
   cursor: pointer;
@@ -4617,6 +4629,7 @@ body.has-expanded-training #screens {
 
 /* The preview circle: the same shape and colour the arena draws for you. */
 .character-dot {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4624,9 +4637,26 @@ body.has-expanded-training #screens {
   border-radius: 50%;
   background: var(--dot-colour, var(--accent));
   color: #07111c;
-  /* Small enough that a two-profession badge, "Mo/E", fits the dot. */
-  font-size: 0.6rem;
   user-select: none;
+}
+
+/* A profession glyph (#1785): its SVG masks a tint, as the arena tints it. */
+.character-dot-glyph {
+  display: block;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+/* The secondary's glyph on a dark disc over the lower right rim. */
+.character-dot-secondary {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 /* A random starter build is not a character, so it reads as a placeholder
