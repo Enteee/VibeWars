@@ -39,7 +39,7 @@ export const HOST_SCREENS: Readonly<Record<HostEntry, HostScreen>> = {
     modes: ["guild-battle"],
   },
   "hosted-game": {
-    goal: "Any map, any rules: a lobby for friends with its code.",
+    goal: "Any map, any rules: a lobby for friends with its key.",
     modes: undefined,
   },
 };

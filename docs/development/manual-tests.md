@@ -75,7 +75,7 @@ the relay, and `peers` shows `relay` candidates alone.
 When a join fails, the joiner is told how far it got (#707): "Couldn't
 reach the lobby servers" when no relay socket opened, "Found the lobby, but
 couldn't connect to its host" when Trystero exchanged SDP and nothing
-connected, and the old "No lobby answered that code" otherwise.
+connected, and the old "No lobby answered that key" otherwise.
 
 ## Phase 5 of P2P: across networks and browsers (Q46)
 

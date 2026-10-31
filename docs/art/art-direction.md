@@ -1187,7 +1187,7 @@ implementation card. The cost of "every player always hosts a lobby" (`main.ts`,
 
 The operator picked **C** (2026-10-30), with Character Builder and Team
 Builder at the rail's bottom, below a divider. Card 1 of the split (#1525)
-builds the rail, a screen per entry and the title bar's Lobby Code and Join;
+builds the rail, a screen per entry and the title bar's Lobby Key and Join;
 the rail's icons live in `apps/web/public/icons/mode/`, drawn by the
 `mode` family of `scripts/assets/icons.mjs` (#1554).
 

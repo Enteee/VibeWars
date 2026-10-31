@@ -1,5 +1,5 @@
 import { CHANNELS, type Channel } from "@vibewars/game-protocol";
-import { MAX_MESSAGE_BYTES } from "@vibewars/game-session";
+import { MAX_MESSAGE_BYTES, deriveLobbyRoom, type LobbyRoom } from "@vibewars/game-session";
 import type {
   DataPayload,
   JoinRoomCallbacks,
@@ -18,6 +18,9 @@ import {
 } from "./relays.js";
 import { joinTrysteroRoom, type TrysteroDeps } from "./trystero.js";
 import type { TurnConfig } from "./turn-config.js";
+
+/** A room as a lobby key's derivation names it; the transport reads only these two. */
+const ROOM: LobbyRoom = { roomId: "a7", password: "kq", proofKey: null };
 
 /** A Trystero room with no network: the test plays the remote peers. */
 function fakeRoom(options: { sendFails?: boolean; turn?: TurnConfig } = {}) {
@@ -82,6 +85,36 @@ function fakeRoom(options: { sendFails?: boolean; turn?: TurnConfig } = {}) {
   };
 }
 
+describe("what the relays see of a lobby key (#1681, ADR-0043)", () => {
+  const KEY = "ACDE-FGHJ-KMNP";
+
+  async function digests(text: string): Promise<string[]> {
+    const bytes = new TextEncoder().encode(text);
+    return Promise.all(
+      (["SHA-1", "SHA-256"] as const).map(async (algorithm) =>
+        Array.from(new Uint8Array(await crypto.subtle.digest(algorithm, bytes)), (byte) =>
+          byte.toString(16).padStart(2, "0"),
+        ).join(""),
+      ),
+    );
+  }
+
+  it("is nothing of the key: not it, not normalised, not its sha1 or sha256", async () => {
+    const fake = fakeRoom();
+    joinTrysteroRoom(await deriveLobbyRoom(KEY), fake.deps);
+    const [join] = fake.joins;
+    // Every argument Trystero was given, the config's password included.
+    const seen = JSON.stringify(join).toLowerCase();
+    const forms = [KEY, "ACDEFGHJKMNP"];
+    const secrets = [...forms, ...(await Promise.all(forms.map(digests))).flat()];
+    for (const secret of secrets) {
+      expect(seen).not.toContain(secret.toLowerCase());
+    }
+    expect(join?.roomId).toMatch(/^[0-9a-f]{64}$/);
+    expect(join?.config.password).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
 describe("the Trystero transport (#392)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -89,20 +122,20 @@ describe("the Trystero transport (#392)", () => {
 
   it("makes an action for every channel up front", () => {
     const fake = fakeRoom();
-    joinTrysteroRoom("A7KQ", fake.deps);
+    joinTrysteroRoom(ROOM, fake.deps);
     expect([...fake.actions.keys()]).toEqual([...CHANNELS]);
   });
 
-  it("joins the normalised code's room with the app id, password, size cap and relays", () => {
+  it("joins the room with the app id, its password, size cap and relays", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom(" a7-kq ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     expect(transport.selfId).toBe("me");
     expect(fake.joins).toHaveLength(1);
     const [join] = fake.joins;
-    expect(join?.roomId).toBe("A7KQ");
+    expect(join?.roomId).toBe("a7");
     expect(join?.config).toMatchObject({
       appId: APP_ID,
-      password: "A7KQ",
+      password: "kq",
       maxReceiveBytes: MAX_RECEIVE_BYTES,
       relayConfig: { urls: [...NOSTR_RELAYS], redundancy: RELAY_REDUNDANCY },
     });
@@ -115,7 +148,7 @@ describe("the Trystero transport (#392)", () => {
       credential: "s3cret",
     };
     const relayed = fakeRoom({ turn });
-    joinTrysteroRoom("A7KQ", relayed.deps);
+    joinTrysteroRoom(ROOM, relayed.deps);
     expect(relayed.joins[0]?.config.turnConfig).toEqual([
       { urls: [...turn.urls], username: "ana", credential: "s3cret" },
     ]);
@@ -123,13 +156,13 @@ describe("the Trystero transport (#392)", () => {
     expect(relayed.joins[0]?.config.rtcConfig).toBeUndefined();
 
     const direct = fakeRoom();
-    joinTrysteroRoom("A7KQ", direct.deps);
+    joinTrysteroRoom(ROOM, direct.deps);
     expect(direct.joins[0]?.config).not.toHaveProperty("turnConfig");
   });
 
   it("fans one channel out to every handler, and stops calling a removed one", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     const got: string[] = [];
     transport.on("intent", (data, from) => got.push(`first ${String(data)} ${from}`));
     const off = transport.on("intent", (data, from) => got.push(`second ${String(data)} ${from}`));
@@ -143,7 +176,7 @@ describe("the Trystero transport (#392)", () => {
   it("drops a message over MAX_MESSAGE_BYTES before any handler sees it (#403)", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     const got: unknown[] = [];
     transport.on("intent", (data) => got.push(data));
     fake.receive("intent", "x".repeat(MAX_MESSAGE_BYTES), "peer");
@@ -153,7 +186,7 @@ describe("the Trystero transport (#392)", () => {
 
   it("fans joins and leaves out to every handler", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     const seen: string[] = [];
     transport.onPeerJoin((id) => seen.push(`+${id}`));
     const off = transport.onPeerJoin((id) => seen.push(`again +${id}`));
@@ -167,7 +200,7 @@ describe("the Trystero transport (#392)", () => {
 
   it("sends to one peer with `to`, and to all without", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     transport.send("intent", { kind: "stop" }, "peer");
     transport.send("snapshot", { tick: 1 });
     expect(fake.sent).toEqual([
@@ -178,7 +211,7 @@ describe("the Trystero transport (#392)", () => {
 
   it("sends a list in one send, and an empty list not at all", () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     transport.send("snapshot", { tick: 1 }, ["a", "b"]);
     transport.send("snapshot", { tick: 2 }, []);
     expect(fake.sent).toEqual([{ channel: "snapshot", data: { tick: 1 }, target: ["a", "b"] }]);
@@ -187,7 +220,7 @@ describe("the Trystero transport (#392)", () => {
   it("swallows a send that fails, with a warning naming the channel and target", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom({ sendFails: true });
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     expect(() => transport.send("intent", 1, "peer")).not.toThrow();
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     expect(warn).toHaveBeenCalledTimes(1);
@@ -197,11 +230,11 @@ describe("the Trystero transport (#392)", () => {
   it("warns on a join error and does not retry", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom();
-    joinTrysteroRoom("A7KQ", fake.deps);
+    joinTrysteroRoom(ROOM, fake.deps);
     fake.joins[0]?.callbacks?.onJoinError?.({
       error: "incorrect password",
       appId: APP_ID,
-      roomId: "A7KQ",
+      roomId: ROOM.roomId,
       peerId: "peer",
     });
     expect(warn).toHaveBeenCalledTimes(1);
@@ -211,14 +244,14 @@ describe("the Trystero transport (#392)", () => {
   it("says peer-unreachable when SDP was exchanged and nothing connected, not for a password (#707)", () => {
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     const troubles: string[] = [];
     transport.onTrouble((trouble) => troubles.push(trouble));
     const joinError = (error: string) => {
       fake.joins[0]?.callbacks?.onJoinError?.({
         error,
         appId: APP_ID,
-        roomId: "A7KQ",
+        roomId: ROOM.roomId,
         peerId: "p",
       });
     };
@@ -236,7 +269,7 @@ describe("the Trystero transport (#392)", () => {
       /** What a transport says by the check, its fake set up by `setUp`. */
       const said = (setUp: (fake: ReturnType<typeof fakeRoom>) => void): string[] => {
         const fake = fakeRoom();
-        const transport = joinTrysteroRoom("A7KQ", fake.deps);
+        const transport = joinTrysteroRoom(ROOM, fake.deps);
         const troubles: string[] = [];
         transport.onTrouble((trouble) => troubles.push(trouble));
         setUp(fake);
@@ -264,7 +297,7 @@ describe("the Trystero transport (#392)", () => {
 
       // Left before the check: nothing is said.
       const fake = fakeRoom();
-      const transport = joinTrysteroRoom("A7KQ", fake.deps);
+      const transport = joinTrysteroRoom(ROOM, fake.deps);
       const troubles: string[] = [];
       transport.onTrouble((trouble) => troubles.push(trouble));
       await transport.leave();
@@ -277,7 +310,7 @@ describe("the Trystero transport (#392)", () => {
 
   it("leaves the room and delivers nothing after leave()", async () => {
     const fake = fakeRoom();
-    const transport = joinTrysteroRoom("A7KQ", fake.deps);
+    const transport = joinTrysteroRoom(ROOM, fake.deps);
     const got: unknown[] = [];
     transport.on("intent", (data) => got.push(data));
     transport.onPeerJoin((id) => got.push(`+${id}`));

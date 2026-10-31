@@ -39,7 +39,7 @@ async function leaveMatch(page: Page): Promise<void> {
 /** Host a lobby and return the code the host is told to read out. */
 async function hostLobby(page: Page, playerName: string): Promise<string> {
   await openMenu(page, playerName);
-  // Six letters, read aloud in two halves (#379).
+  // Twelve symbols, read aloud in three fours (#1681).
   return hostFromMenu(page);
 }
 
@@ -68,7 +68,7 @@ async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Prom
 }
 
 const NO_ANSWER =
-  "No lobby answered that code. Check it; if it is right, your network may be blocking peer-to-peer connections.";
+  "No lobby answered that key. Check it; if it is right, your network may be blocking peer-to-peer connections.";
 
 test("a host creates a lobby and is shown a joinable code", async ({ page }) => {
   const code = await hostLobby(page, "Host");
@@ -99,7 +99,7 @@ test("a second player joins with the code and both see each other", async ({ bro
 test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and says so once (#707)", async ({
   browser,
 }) => {
-  // A code is its own room: a wrong one must never land the guest in the
+  // A key is its own room: a wrong one must never land the guest in the
   // host's lobby, even with a lobby open next door.
   test.setTimeout(60_000);
   const { context, pages } = await openPeers(browser, 2);
@@ -107,7 +107,7 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
 
   try {
     const code = await hostLobby(host, "Host");
-    const wrong = code === "ACD-EFG" ? "GFE-DCA" : "ACD-EFG";
+    const wrong = code === "ACDE-FGHJ-KMNP" ? "PNMK-JHGF-EDCA" : "ACDE-FGHJ-KMNP";
 
     await openMenu(guest, "Guest");
     await joinByCode(guest, wrong);

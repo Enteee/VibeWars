@@ -9,9 +9,9 @@
  * One silent for `PEER_TIMEOUT_MS` counts as gone, so a killed page is
  * noticed even though it never said `bye`.
  */
-import { CHANNELS, normalizeLobbyCode } from "@vibewars/game-protocol";
+import { CHANNELS } from "@vibewars/game-protocol";
 import type { Channel } from "@vibewars/game-protocol";
-import type { Transport } from "@vibewars/game-session";
+import type { LobbyRoom, Transport } from "@vibewars/game-session";
 
 import { HandlerSets } from "./handler-sets.js";
 import { oversizedCheck } from "./oversized.js";
@@ -55,9 +55,9 @@ export function parseFrame(raw: unknown): Frame | undefined {
   }
 }
 
-export function joinBroadcastRoom(code: string): Transport {
+export function joinBroadcastRoom(room: LobbyRoom): Transport {
   const selfId = crypto.randomUUID();
-  const channel = new BroadcastChannel(`${APP_ID}:${normalizeLobbyCode(code)}`);
+  const channel = new BroadcastChannel(`${APP_ID}:${room.roomId}`);
   const handlers = new HandlerSets();
   /** Each peer seen, and when it was last heard from. */
   const peers = new Map<string, number>();

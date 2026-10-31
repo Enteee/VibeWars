@@ -71,6 +71,8 @@ export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js
 export { connectObserver } from "./match-observer.js";
 export type { ConnectObserverOptions, ObserverConnection } from "./match-observer.js";
 export { generateLobbyCode } from "./lobby-codes.js";
+export { KEY_PROOF_TIMEOUT_MS, keyGated } from "./key-gate.js";
+export { deriveLobbyRoom, publicRoom, type LobbyRoom } from "./lobby-key.js";
 export type {
   ChatLine,
   LobbyCharacter,

@@ -94,7 +94,7 @@ class FakeElement {
   }
 }
 
-describe("the title bar's Lobby Code and Join (#1525)", () => {
+describe("the title bar's Lobby Key and Join (#1525)", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -114,19 +114,19 @@ describe("the title bar's Lobby Code and Join (#1525)", () => {
     return { joined, join, parts: (join.element as unknown as FakeElement).children };
   };
 
-  it("joins with the code upper-cased as typed, on Enter and on Join", () => {
+  it("joins with the key upper-cased as typed, on Enter and on Join", () => {
     const { joined, parts } = mount();
     const [label, input, button] = parts;
-    expect(label?.textContent).toBe("Lobby Code:");
+    expect(label?.textContent).toBe("Lobby Key:");
     if (input === undefined || button === undefined) {
       throw new Error("no field or button");
     }
-    input.value = "abc-def";
+    input.value = "acde-fghj-kmnp";
     input.fire("input");
     input.fire("keydown", { key: "a" });
     input.fire("keydown", { key: "Enter" });
     button.fire("click");
-    expect(joined).toEqual(["ABC-DEF Rurik", "ABC-DEF Rurik"]);
+    expect(joined).toEqual(["ACDE-FGHJ-KMNP Rurik", "ACDE-FGHJ-KMNP Rurik"]);
   });
 
   it("says Connecting… once a join runs a while, until the next bar shows", () => {

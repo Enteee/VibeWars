@@ -104,7 +104,8 @@ test("#578: a host with others in the lobby is asked before Leave or Esc closes 
     const code = await hostLobby(host);
     await openMenu(guest);
     await joinByCode(guest, code);
-    await expect(host.locator(".lobby-spectators")).toContainText("player");
+    // Both spectate until they pick a side: the guest is in once it is listed.
+    await expect(host.locator(".lobby-spectators")).toHaveText(/^Spectating: [^,]+, [^,]+$/);
 
     const question = host.getByText("Close the lobby for everyone?");
     await host.keyboard.press("Escape");
@@ -284,7 +285,7 @@ test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the glo
   await openRail(page, "Team Arena");
   const bar = page.locator("#topbar");
   await expect(bar.locator(".topbar-more")).toBeHidden();
-  await expect(bar.getByRole("textbox", { name: "Lobby code", exact: true })).toBeVisible();
+  await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
   await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
   // The rightmost icon still inside the bar, and nothing scrolls sideways.
   const right = await bar.locator(".topbar-fullscreen").evaluate((node) => {
