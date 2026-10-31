@@ -3256,6 +3256,31 @@ const skillGlyph = {
   "ring-rend-burst": () =>
     `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
     `<g transform="translate(12,12) scale(0.7) translate(-12,-12)">${inkFill(burst(8))}</g>`,
+  // Warrior staples 3 (#1658, #1672): the weapon up and left, a ringed rider bottom right for the condition it reads or gives.
+  "axe-weak": () => riderOn(skillGlyph.axe(), RIDER.weak),
+  "axe-limp": () => riderOn(skillGlyph.axe(), RIDER.limp),
+  "axe-burst": () => riderOn(skillGlyph.axe(), RIDER.burst),
+  "axe-trio": () =>
+    ["0,6", "6,3", "12,0"]
+      .map((at) => `<g transform="translate(${at}) scale(0.62)">${skillGlyph.axe()}</g>`)
+      .join(""),
+  "hammer-drop": () => riderOn(skillGlyph.hammer(), RIDER.drop),
+  "hammer-daze": () => riderOn(skillGlyph.hammer(), RIDER.daze),
+  "hammer-blind": () => riderOn(skillGlyph.hammer(), RIDER.blind),
+  "hammer-unbound": () => riderOn(skillGlyph.hammer(), RIDER.ring),
+  "hammer-run": () => riderOn(skillGlyph.hammer(), RIDER.run),
+  "sword-bleed": () => riderOn(skillGlyph.sword(), RIDER.drop),
+  "sword-heavy": () => riderOn(skillGlyph.sword(), RIDER.plus),
+  "sword-daze": () => riderOn(skillGlyph.sword(), RIDER.daze),
+  "sword-adrenal": () => riderOn(skillGlyph.sword(), RIDER.bars),
+  "blow-unbound": () => riderOn(skillGlyph.blow(), RIDER.ring),
+  "blow-crack": () => riderOn(skillGlyph.blow(), RIDER.crack),
+  // "Coward!": the shout's arcs and chevrons, a body down on the ground under them.
+  "shout-fall": () =>
+    inkLine("M3.5 5.5C6 7 6 10 3.5 11.5", 1.8) +
+    inkLine("M9 3.5L14 8.5L9 13.5M14.5 3.5L19.5 8.5L14.5 13.5", 2.4) +
+    `<circle cx="5.5" cy="19" r="2.6" fill="${C.ink}"/>` +
+    inkLine("M10 19H22M14 19L12 15.5M18 19L20 15.5", 2.4),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
@@ -4068,6 +4093,35 @@ const attune = (/** @type {string} */ element) =>
   `<g transform="translate(10.5,10) scale(0.78) translate(-12,-12)">${element}</g>` +
   `<circle cx="18.5" cy="18" r="4.6" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.2" ${stroke(C.ink, 1.5)}/>` +
   `<g transform="translate(18.5,18) scale(0.3) translate(-12,-12)">${skillGlyph.energy()}</g>`;
+
+/** Small marks drawn in a 24-box, for the ringed corner of a weapon icon (#1672). */
+const RIDER = {
+  weak: inkLine("M4 5L12 13L20 5M4 13L12 21L20 13", 4),
+  limp: inkLine("M15 2L8 10L16 14L9 22", 4),
+  burst: inkFill(burst(6)),
+  drop: inkFill("M12 2C12 2 4 12 4 16A8 8 0 0 0 20 16C20 12 12 2 12 2Z"),
+  daze: [
+    [4, 17],
+    [12, 6],
+    [20, 17],
+  ]
+    .map(([x, y]) => `<circle cx="${String(x)}" cy="${String(y)}" r="3.4" fill="${C.ink}"/>`)
+    .join(""),
+  blind:
+    inkLine("M2 12C5 6 8 5 12 5S19 6 22 12C19 18 16 19 12 19S5 18 2 12Z", 3.4) +
+    inkLine("M4 21L20 3", 3.4),
+  ring: `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 3.6)}/>`,
+  run: inkLine("M3 4L11 12L3 20M12 4L20 12L12 20", 4),
+  plus: inkLine("M12 3V21M3 12H21", 5),
+  bars: inkLine("M5 22V16M12 22V10M19 22V4", 5),
+  crack: inkLine("M4 3L11 10L6 14L15 21", 4),
+};
+
+/** A weapon up and left, a rider in a ring at the bottom right (#1672). */
+const riderOn = (/** @type {string} */ weapon, /** @type {string} */ rider) =>
+  `<g transform="translate(10,10) scale(0.84) translate(-12,-12)">${weapon}</g>` +
+  `<circle cx="18" cy="18" r="5.6" fill="${C.bg}"/>` +
+  `<g transform="translate(18,18) scale(0.38) translate(-12,-12)">${rider}</g>`;
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
