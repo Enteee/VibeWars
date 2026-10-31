@@ -239,7 +239,8 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   if (caster.dead) {
     return reject("caster-dead");
   }
-  if (caster.knockdownRemaining > 0) {
+  // A shout or a stance goes off while knocked down (#1725, GW1).
+  if (caster.knockdownRemaining > 0 && !usableMidAction(skill)) {
     return reject("caster-knocked-down");
   }
   if (!request.skillBar.includes(key)) {
@@ -249,8 +250,8 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
     return reject("no-animal-to-charm");
   }
   // A pet attack has no activation: it is used mid-cast, mid-aftercast
-  // and mid-swing (#1046).
-  if (request.isCasting && skill.type !== "pet-attack") {
+  // and mid-swing (#1046). So are a shout and a stance (#1725).
+  if (request.isCasting && skill.type !== "pet-attack" && !usableMidAction(skill)) {
     return reject("already-casting");
   }
   if ((request.rechargeRemaining.get(key) ?? 0) > 0) {
@@ -388,6 +389,15 @@ export function payCost(skill: Skill, caster: Combatant, key: string = skill.id)
   // cost still goes off; at activation start, so an interrupted or
   // cancelled cast stays overcast (#461).
   addOvercast(caster, skill.overcast);
+}
+
+/**
+ * Whether `skill` goes off in the middle of another action (#1725, GW1):
+ * a shout or a stance, used during an activation, an aftercast or a
+ * knockdown, at once and outside the skill queue.
+ */
+export function usableMidAction(skill: Skill): boolean {
+  return skill.type === "shout" || skill.type === "stance";
 }
 
 /**

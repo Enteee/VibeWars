@@ -7,6 +7,7 @@ export {
   payCost,
   targetLivenessAllows,
   targetRuleAllows,
+  usableMidAction,
 } from "./activation.js";
 
 export type { ActiveCast, SlotSkill } from "./cast-state.js";
