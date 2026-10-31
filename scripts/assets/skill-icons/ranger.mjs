@@ -68,8 +68,6 @@ export const RANGER_ICONS = {
   "ranger.dust-trap": { glyph: "trap-dust" },
   "ranger.spike-trap": { glyph: "trap-spike" },
   "ranger.antidote-signet": { glyph: "drop-struck" },
-  // The not condition (#1670), a stand-in until its art card.
-  "ranger.sloth-hunters-shot": { glyph: "arrow", modifier: "hourglass" },
   // Nature rituals 1 (#1745): Winnowing's totem, stand-ins until their art card.
   "ranger.fertile-season": { glyph: "totem", modifier: "renew" },
   "ranger.quickening-zephyr": { glyph: "totem", modifier: "clock" },
