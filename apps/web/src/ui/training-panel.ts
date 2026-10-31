@@ -95,6 +95,7 @@ import {
   paintAdrenalineFill,
   paintCastFill,
   paintKnockdown,
+  midAction,
   slotAffordable,
   slotFlashes,
   silenced,
@@ -586,6 +587,7 @@ export function createTrainingPanel(): TrainingPanel {
     );
     const unwielded = wrongWeapon(slots, self);
     const barred = silenced(slots, self);
+    const lit = midAction(slots);
     slotTips.casting(fill?.slot);
     // Greyed while you lie knocked down, as on the match HUD (#545).
     paintKnockdown(skills, self.knockdownRemaining);
@@ -613,6 +615,7 @@ export function createTrainingPanel(): TrainingPanel {
       );
       button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
       button.classList.toggle("is-silenced", barred[index] === true);
+      button.classList.toggle("is-mid-action", lit[index] === true);
       // The same wipe as the match HUD (#152).
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
       paintEchoStrip(button, slot, now, reducedMotion);
