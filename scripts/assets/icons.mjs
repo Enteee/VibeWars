@@ -1617,41 +1617,42 @@ const status = {
       `<path d="M12 18v-7" ${stroke(c, 2)}/>` +
       `<path d="M6 4h12v6H6z" fill="${c}"/>`,
   ],
-  // Elementalist energy engine (#1614), stand-ins until the asset-designer's.
-  // Enchantment: a flame over a rising energy bar, attuned to Fire.
+  // Elementalist energy engine (#1614, #1646). Attunements: the element over a ground bar, a bolt beside it.
   "fire-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M12 3c3 3.5 4 6 2.5 9-1 2-4 2-5 0-1.5-3 0-5.5 2.5-9z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M10 3c2.5 3 3.5 5.5 2.2 8.2-1 1.8-3.8 1.8-4.6 0C6.3 8.5 8 6 10 3z" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a drop over a rising energy bar, attuned to Water.
   "water-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M12 3l4 6a4 4 0 1 1-8 0z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M10 3v10M5.7 5.5l8.6 5M5.7 10.5l8.6-5" ${stroke(c, 1.8)}/>` +
+      `<path d="M18.5 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a bolt over a rising energy bar, attuned to Air.
   "air-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M13 3l-4 7h4l-2 5" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M11 3l-3.6 6.5h3.6L9 15" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a rock over a rising energy bar, attuned to Earth.
   "earth-attunement": [
     "enchantment",
     (c) =>
-      `<path d="M6 13l3-8h6l3 8z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 20h10M12 15v5" ${stroke(c, 2)}/>`,
+      `<path d="M4.5 15l3-8h5l3 8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M17 5l-2.5 3.5h2.5l-1.5 3" ${stroke(c, 1.6)}/>` +
+      `<path d="M5 20h14" ${stroke(c, 2)}/>`,
   ],
-  // Enchantment: a ring with a plus, healed and fed by each spell.
+  // Enchantment: a ring with a plus, a spark above it.
   "aura-of-restoration": [
     "enchantment",
     (c) =>
-      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 8v8M8 12h8" ${stroke(c, 2.2)}/>`,
+      `<circle cx="12" cy="13" r="7" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 9.5v7M8.5 13h7" ${stroke(c, 2.2)}/>` +
+      `<path d="M13 1.5l-2 3h2l-1 2.5" ${stroke(c, 1.5)}/>`,
   ],
   // Enchantment: a shield with a circling arrow, renewed by each spell.
   "kinetic-armor": [
@@ -2278,6 +2279,21 @@ const DROP = inkFill("M12 2.5C16 8.5 19 12 19 15.5A7 7 0 0 1 5 15.5C5 12 8 8.5 1
 const sacrifice = (payoff) =>
   `<g transform="translate(7.5,16) scale(0.66) translate(-12,-12)">${DROP}</g>` +
   `<g transform="translate(15,9) scale(0.7) translate(-12,-12)">${payoff}</g>`;
+
+/** A four-point star, the holy mark of the Monk's smiting skills (#1584). */
+const holyStar = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) => {
+  const k = r * 0.28;
+  const p = (/** @type {number} */ x, /** @type {number} */ y) =>
+    `${(cx + x).toFixed(1)} ${(cy + y).toFixed(1)}`;
+  return inkFill(
+    `M${p(0, -r)}L${p(k, -k)}L${p(r, 0)}L${p(k, k)}L${p(0, r)}L${p(-k, k)}L${p(-r, 0)}L${p(-k, -k)}Z`,
+  );
+};
+
+/** A signet ring and its dot at `cx,cy`, radius `r` (#1584). */
+const ringDot = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) =>
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r)}" ${stroke(C.ink, 2.2)}/>` +
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r / 3)}" fill="${C.ink}"/>`;
 
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
@@ -3066,6 +3082,28 @@ const skillGlyph = {
     spiritPost() +
     `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)}/>` +
     `<g transform="translate(17,8.5) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // The Elementalist's energy engine (#1614, #1646): the Attunements share one cue, a ringed bolt in the corner.
+  "attune-fire": () => attune(skillGlyph.flame()),
+  "attune-water": () => attune(skillGlyph.snowflake()),
+  "attune-air": () => attune(skillGlyph.lightning()),
+  "attune-earth": () => attune(skillGlyph.mountain()),
+  // Aura of Restoration: a plus in a ring, a spark above it for each spell.
+  "ring-spell-heal": () =>
+    `<circle cx="12" cy="14" r="7.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 10.5V17.5M8.5 14H15.5", 2.2) +
+    `<g transform="translate(12,3.8) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // Kinetic Armor: a shield and a circling arrow, renewed by each spell.
+  "armor-spin": () =>
+    skillGlyph.armor() +
+    `<path d="M8.2 11.5A4 4 0 1 1 12 16" fill="none" stroke="${C.bg}" stroke-width="2" stroke-linecap="round"/>` +
+    `<path d="M5.8 11.5L8.2 8.8L10.6 11.8Z" fill="${C.bg}"/>`,
+  // Steam: rising vapour curls over a small flame.
+  "vapour-flame": () =>
+    `<g transform="translate(12,16.5) scale(0.55) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine(
+      "M6 11C4.5 8.5 8 7.5 6.5 4.5M12 10C10.5 7.5 14 6.5 12.5 3.5M18 11C16.5 8.5 20 7.5 18.5 4.5",
+      2,
+    ),
   // The Ritualist's binding spirits 2 (#1550, #1622): the post and what its blows or its death bring.
   // Bloodsong steals Health: a drop.
   "spirit-blood": () =>
@@ -3758,6 +3796,35 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The Monk's smiting skills (#1519, #1584): a four-point star is holy light; a blade in the top left corner
+  // is the foe attacking; a signet is its ring and dot; a flat bar is a foe knocked down.
+  "smite-attacking": () => holyStar(15, 14, 9) + `<g>${nextTrigger.attack()}</g>`,
+  "spear-light": () =>
+    inkLine("M3.5 21L15 9.5", 2.4) +
+    inkFill("M22 2L20.5 10L14 3.5Z") +
+    holyStar(18, 18, 4.5) +
+    `<g transform="translate(0,0)">${nextTrigger.attack()}</g>`,
+  "star-below-half": () =>
+    `<circle cx="12" cy="14" r="8" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M4 14A8 8 0 0 0 20 14Z") +
+    holyStar(6, 5, 4.5),
+  "star-beam-flame": () =>
+    holyStar(12, 6, 6) +
+    inkLine("M12 12.5V14M6.5 11L8 13.5M17.5 11L16 13.5", 2) +
+    `<g transform="translate(12,18) scale(0.55) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  "sword-star": () =>
+    `<g transform="translate(-1,2) scale(0.85)">${skillGlyph.sword()}</g>` + holyStar(18, 6, 5),
+  "signet-attacking": () =>
+    ringDot(15, 9, 6.5) + inkLine("M4 21H20", 2.8) + `<g>${nextTrigger.attack()}</g>`,
+  "signet-energy": () =>
+    ringDot(15, 9, 6.5) +
+    `<g transform="translate(14,18) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    `<g>${nextTrigger.attack()}</g>`,
+  "signet-quake": () => ringDot(12, 9, 6.5) + inkLine("M2 9H3.5M20.5 9H22M4 21H20", 2.4),
+  "star-prone": () =>
+    holyStar(13, 8, 7.5) +
+    `<circle cx="5.5" cy="18.5" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 18.5H20.5", 3),
   // Obsidian Flesh: a faceted black crystal, cut with light lines (#1605).
   "stone-skin": () =>
     inkFill("M12 2.5L19.5 7V15L12 21.5L4.5 15V7Z") +
@@ -3917,6 +3984,12 @@ const skillGlyph = {
 const healBadge = () =>
   `<circle cx="18.5" cy="18" r="4.8" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.3" ${stroke(C.ink, 1.5)}/>` +
   inkLine("M18.5 15.7V20.3M16.2 18H20.8", 1.5);
+
+/** An element glyph with the ringed energy bolt in the corner: the Attunements' shared cue (#1646). */
+const attune = (/** @type {string} */ element) =>
+  `<g transform="translate(10.5,10) scale(0.78) translate(-12,-12)">${element}</g>` +
+  `<circle cx="18.5" cy="18" r="4.6" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.2" ${stroke(C.ink, 1.5)}/>` +
+  `<g transform="translate(18.5,18) scale(0.3) translate(-12,-12)">${skillGlyph.energy()}</g>`;
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>

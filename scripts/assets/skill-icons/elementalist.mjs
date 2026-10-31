@@ -43,6 +43,14 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.ward-against-elements": { glyph: "ward-elements" },
   "elementalist.shock-arrow": { glyph: "arrow-bolt" },
   "elementalist.mind-blast": { glyph: "fireball-mind", modifier: "up" },
+  // Energy engine (#1614, #1646): the Attunements share a corner bolt; the rest say what they pay.
+  "elementalist.fire-attunement": { glyph: "attune-fire" },
+  "elementalist.water-attunement": { glyph: "attune-water" },
+  "elementalist.air-attunement": { glyph: "attune-air" },
+  "elementalist.earth-attunement": { glyph: "attune-earth" },
+  "elementalist.aura-of-restoration": { glyph: "ring-spell-heal" },
+  "elementalist.kinetic-armor": { glyph: "armor-spin" },
+  "elementalist.steam": { glyph: "vapour-flame" },
   // Elementalist staples 2 (#1575, #1605).
   "elementalist.obsidian-flesh": { glyph: "stone-skin" },
   "elementalist.gale": { glyph: "gust-curl" },
@@ -53,12 +61,4 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.lightning-touch": { glyph: "hand-bolt" },
   "elementalist.liquid-flame": { glyph: "flame-splash" },
   "elementalist.glowing-gaze": { glyph: "eye-flame" },
-  // Placeholders until the asset-designer's (#1614): the energy engine.
-  "elementalist.fire-attunement": { glyph: "flame", modifier: "renew" },
-  "elementalist.water-attunement": { glyph: "snowflake", modifier: "renew" },
-  "elementalist.air-attunement": { glyph: "lightning", modifier: "renew" },
-  "elementalist.earth-attunement": { glyph: "mountain", modifier: "renew" },
-  "elementalist.aura-of-restoration": { glyph: "spark", modifier: "renew" },
-  "elementalist.kinetic-armor": { glyph: "mist-shield", modifier: "renew" },
-  "elementalist.steam": { glyph: "snowflake", modifier: "bleed" },
 };

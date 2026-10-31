@@ -2060,4 +2060,97 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "necromancer.enfeebling-touch",
+    name: "Enfeebling Touch",
+    gwId: 1079,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 3,
+    // "Target touched foe", as Plague Touch's.
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target touched foe loses 5...53...65 Health and suffers from
+    // Weakness for 5...17...20 seconds": the corpus's 5...65 over the
+    // wiki's 5...50 (ADR-0038). Health loss, not damage.
+    effects: [
+      {
+        kind: "lose-health",
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 53 } },
+        recipient: "target",
+      },
+      { kind: "apply-status", statusId: "weakness", durationSeconds: 17 },
+    ],
+  },
+  {
+    id: "necromancer.pain-of-disenchantment",
+    name: "Pain of Disenchantment",
+    gwId: 1359,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses 1...3...3 enchantments. If an enchantment was lost
+    // in this way, that foe and all adjacent foes lose 10...82...100
+    // Health": once, however many came off. A splash leaves out its
+    // centre, so the target's loss is its own.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 3 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment" },
+        effects: [
+          {
+            kind: "lose-health",
+            amount: { scaling: { attributeId: "necromancer.curses", atZero: 10, atTwelve: 82 } },
+            recipient: "target",
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "lose-health",
+                amount: {
+                  scaling: { attributeId: "necromancer.curses", atZero: 10, atTwelve: 82 },
+                },
+                recipient: "target",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];

@@ -122,6 +122,12 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
     .locator(".skill-box", { hasText: "Ward Against Melee" })
     .locator(".skill-box-equip")
     .click();
+  // Earth Magic 12: the ward lasts 17 s, not rank 0's 5 s, which a hover
+  // on a loaded CI runner could outlast before its tooltip opened (#1659).
+  await page
+    .locator(".editor-attribute", { hasText: "Earth Magic" })
+    .locator('.attribute-pip[data-pip="12"]')
+    .click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await pickCharacter(page, "Warder");
   await startSoloMatch(page);
@@ -133,12 +139,15 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
     .getByRole("listitem")
     .filter({ has: page.getByAltText("Ward Against Melee") });
   await expect(icon).toBeVisible({ timeout: 10_000 });
-  await expect(icon.locator(".effect-bar")).toBeHidden();
 
+  // Hover first, while the ward still stands: each check on the loaded
+  // match page can take seconds (#1659). The tooltip stays open for the
+  // bar check after it.
   await icon.hover();
   const tip = page.getByRole("tooltip");
   await expect(tip).toContainText("50% chance to block melee attacks");
   await expect(tip).toContainText("while in its range");
+  await expect(icon.locator(".effect-bar")).toBeHidden();
 });
 
 test("the target frame shows a foe's enchantment, at 16 px and not marked yours (#835)", async ({

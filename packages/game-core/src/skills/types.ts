@@ -277,10 +277,26 @@ export interface SacrificeHealthEffect {
  * a sacrifice. `perRemovedOfProfession` `undefined`: `amount` once,
  * flat (#1550), as Wanderlust's spirit's "loses 70...50 Health".
  */
-export interface LoseHealthEffect {
+export type LoseHealthEffect = LoseHealthByCaster | LoseHealthByTarget;
+
+export interface LoseHealthByCaster {
   readonly kind: "lose-health";
   readonly amount: Magnitude;
   readonly perRemovedOfProfession: ProfessionId | undefined;
+  readonly recipient?: never;
+}
+
+/**
+ * The effect's target loses `amount` health, not the caster (#1648), as
+ * Enfeebling Touch's "target foe loses 5...53...65 Health". Not damage:
+ * no armor, no damage modifiers and nothing that answers damage; only
+ * invulnerability stops it, and it can kill.
+ */
+export interface LoseHealthByTarget {
+  readonly kind: "lose-health";
+  readonly amount: Magnitude;
+  readonly recipient: "target";
+  readonly perRemovedOfProfession?: never;
 }
 
 /**
