@@ -352,10 +352,10 @@ let
       exit 1
     }
     exec 3<&-
-    export ACTIONS_RUNNER_INPUT_JITCONFIG
     ${pkgs.socat}/bin/socat \
       "TCP-LISTEN:$VIBEWARS_PROXY_PORT,bind=127.0.0.1,fork,reuseaddr" \
       "UNIX-CONNECT:$VIBEWARS_PROXY_SOCKET" &
+    export ACTIONS_RUNNER_INPUT_JITCONFIG
     for _ in $(${pkgs.coreutils}/bin/seq 50); do
       (exec 3<>"/dev/tcp/127.0.0.1/$VIBEWARS_PROXY_PORT") 2>/dev/null && break
       ${pkgs.coreutils}/bin/sleep 0.1

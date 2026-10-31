@@ -117,7 +117,7 @@ two cannot drift apart.
   That is true on GitHub's hosted runners too. What protects us is that
   the jail holds nothing secret: the source is public, there are no
   secrets, and the JIT credential is good for one job (to be shown by the
-  spike before merge: the runner is deregistered after its job, and a
+  spike before `COMPANY_RUNNERS` is set: the runner is deregistered after its job, and a
   replayed or stolen credential takes no second one). The filter stops a
   hostile job scanning the LAN, attacking the host's services, or using
   the host to attack arbitrary hosts.
@@ -126,7 +126,10 @@ two cannot drift apart.
   only its branch's scope, so it cannot poison `main`'s; only a run on
   `main` writes there.
 - **Residual.** A kernel bug in user namespaces or overlayfs is a
-  host escape.
+  host escape. The scratch directory has no size cap: a runaway or
+  hostile job can fill the disk that hubd, git and the jails live on.
+  Part 2's supervisor (#1888) puts scratch on a filesystem of its own, or
+  under a quota, before `COMPANY_RUNNERS` is set.
 
 ## What was rejected
 

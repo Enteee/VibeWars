@@ -134,6 +134,13 @@ export function isInternal(address) {
   if (mapped !== null) {
     return list.check(/** @type {string} */ (mapped[1]), "ipv4");
   }
+  const hexMapped = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i.exec(address);
+  if (hexMapped !== null) {
+    const high = Number.parseInt(/** @type {string} */ (hexMapped[1]), 16);
+    const low = Number.parseInt(/** @type {string} */ (hexMapped[2]), 16);
+    const quad = [high >> 8, high & 255, low >> 8, low & 255].join(".");
+    return list.check(quad, "ipv4");
+  }
   return list.check(address, net.isIPv6(address) ? "ipv6" : "ipv4");
 }
 
@@ -173,7 +180,9 @@ export function refusalLog(log, now) {
  * @typedef {object} RunnerProxyOptions
  * @property {readonly string[]} allow
  * @property {(host: string) => Promise<string>} resolve one address for a host name
- * @property {(host: string, address: string) => net.Socket} connect opens port 443 of an address
+ * @property {(address: string) => net.Socket} connect opens port 443 of the
+ *   address `resolve` gave, never of the name: a second lookup could
+ *   answer differently (DNS rebinding)
  * @property {(line: string) => void} log
  */
 
@@ -212,7 +221,7 @@ export function createRunnerProxy({ allow, resolve, connect, log }) {
           refuse(`internal address refused: ${target.host} is ${address}`);
           return;
         }
-        const upstream = connect(target.host, address);
+        const upstream = connect(address);
         upstream.setTimeout(TUNNEL_IDLE_MS, () => {
           upstream.destroy();
           client.destroy();
@@ -248,6 +257,16 @@ export function createRunnerProxy({ allow, resolve, connect, log }) {
   return server;
 }
 
+/** @param {string} host */
+export async function lookupAddress(host) {
+  return (await dns.lookup(host)).address;
+}
+
+/** @param {string} address */
+export function connectUpstream(address) {
+  return net.connect(HTTPS_PORT, address);
+}
+
 /**
  * The proxy, listening on a unix socket only its owner may connect to.
  *
@@ -260,8 +279,8 @@ export function listenRunnerProxy(socket, allow, log) {
   fs.rmSync(socket, { force: true });
   const server = createRunnerProxy({
     allow,
-    resolve: async (host) => (await dns.lookup(host)).address,
-    connect: (_host, address) => net.connect(HTTPS_PORT, address),
+    resolve: lookupAddress,
+    connect: connectUpstream,
     log: refusalLog(log, Date.now),
   });
   return new Promise((resolve, reject) => {

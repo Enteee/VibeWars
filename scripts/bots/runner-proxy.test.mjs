@@ -13,6 +13,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   MAX_TUNNELS,
   REFUSALS_LOGGED_A_MINUTE,
+  HTTPS_PORT,
+  connectUpstream,
   createRunnerProxy,
   isInternal,
   parseAllowlist,
@@ -113,7 +115,7 @@ describe("isInternal", () => {
     for (const address of ["127.0.0.1", "10.1.2.3", "192.168.1.1", "172.20.0.1", "169.254.1.1"]) {
       expect(isInternal(address), address).toBe(true);
     }
-    for (const address of ["::1", "fd00::1", "fe80::1", "::ffff:127.0.0.1"]) {
+    for (const address of ["::1", "fd00::1", "fe80::1", "::ffff:127.0.0.1", "::ffff:7f00:1"]) {
       expect(isInternal(address), address).toBe(true);
     }
     for (const address of [
@@ -128,7 +130,12 @@ describe("isInternal", () => {
     ]) {
       expect(isInternal(address), address).toBe(true);
     }
-    for (const address of ["140.82.121.4", "2606:50c0:8000::153", "::ffff:140.82.121.4"]) {
+    for (const address of [
+      "140.82.121.4",
+      "2606:50c0:8000::153",
+      "::ffff:140.82.121.4",
+      "::ffff:8c52:7904",
+    ]) {
       expect(isInternal(address), address).toBe(false);
     }
   });
@@ -179,11 +186,16 @@ describe("createRunnerProxy", () => {
     const echoPort = /** @type {net.AddressInfo} */ (echo.address()).port;
     /** @type {string[]} */
     const logs = [];
+    /** @type {string[]} */
+    const connected = [];
     const server = createRunnerProxy({
       allow: ALLOW,
       resolve: async (host) =>
         host === "nowhere.githubusercontent.com" ? Promise.reject(new Error("ENOTFOUND")) : address,
-      connect: () => net.connect(echoPort, "127.0.0.1"),
+      connect: (to) => {
+        connected.push(to);
+        return net.connect(echoPort, "127.0.0.1");
+      },
       log: (line) => logs.push(line),
     });
     const socket = path.join(dir, "proxy.sock");
@@ -197,7 +209,7 @@ describe("createRunnerProxy", () => {
       echo.close();
       fs.rmSync(dir, { recursive: true, force: true });
     });
-    return { socket, logs };
+    return { socket, logs, connected };
   }
 
   /**
@@ -239,11 +251,32 @@ describe("createRunnerProxy", () => {
   });
 
   it("tunnels to an allowed host", async () => {
-    const { socket, logs } = await proxy("140.82.121.4");
+    const { socket, logs, connected } = await proxy("140.82.121.4");
     expect(await tunnel(socket, "github.com:443")).toBe(
       "HTTP/1.1 200 Connection Established\r\n\r\nping",
     );
     expect(logs).toEqual([]);
+    // The address it checked, never the name again (DNS rebinding).
+    expect(connected).toEqual(["140.82.121.4"]);
+  });
+
+  it("connects upstream to port 443 of the address it is given", async () => {
+    const upstream = connectUpstream("127.0.0.1");
+    const reached = await new Promise(
+      /** @param {(to: string) => void} resolve */ (resolve) => {
+        upstream.once("connect", () => {
+          resolve(`${String(upstream.remoteAddress)}:${String(upstream.remotePort)}`);
+          upstream.destroy();
+        });
+        upstream.once(
+          "error",
+          (/** @type {NodeJS.ErrnoException & { address?: string, port?: number }} */ error) => {
+            resolve(`${String(error.address)}:${String(error.port)}`);
+          },
+        );
+      },
+    );
+    expect(reached).toBe(`127.0.0.1:${String(HTTPS_PORT)}`);
   });
 
   it("refuses and logs a host off the list, a non-443 port and an IP literal", async () => {
