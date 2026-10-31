@@ -245,16 +245,31 @@ describe("Well of the Profane (#1732)", () => {
 });
 
 describe("Well of Silence (#1732)", () => {
-  it("refuses a shout and a chant inside it, not a spell, and degenerates 3 pips", () => {
+  it("refuses a shout and a chant inside it, not a spell, and nothing is paid", () => {
     const sim = match();
     well(sim, 1);
     const f = get(sim, "f").combatant;
     expect(f.statuses.has("well-of-silence")).toBe(true);
+    const energy = f.energy;
     expect(sim.requestSkill("f", 3)?.check).toEqual({ ok: false, reason: "cannot-shout-or-chant" });
     expect(sim.requestSkill("f", 4)?.check).toEqual({ ok: false, reason: "cannot-shout-or-chant" });
+    expect(f.energy).toBe(energy);
     expect(sim.requestSkill("f", 2)?.check).toEqual({ ok: true });
     // Outside it, its ally shouts.
     expect(sim.requestSkill("h", 3)?.check).toEqual({ ok: true });
+  });
+
+  it("refuses a shout mid-cast too, where one would otherwise go off (#1725)", () => {
+    const sim = match();
+    well(sim, 1);
+    expect(sim.requestSkill("f", 2)?.check).toEqual({ ok: true });
+    sim.step(DT);
+    expect(get(sim, "f").combatant.cast.activeCast).toBeDefined();
+    expect(sim.requestSkill("f", 3)?.check).toEqual({ ok: false, reason: "cannot-shout-or-chant" });
+    get(sim, "f").position = OUTSIDE;
+    sim.step(DT);
+    expect(get(sim, "f").combatant.statuses.has("well-of-silence")).toBe(false);
+    expect(sim.requestSkill("f", 3)?.check).toEqual({ ok: true });
   });
 });
 
