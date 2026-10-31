@@ -58,6 +58,52 @@ export const germ = (c) =>
 /** @typedef {(colour: string) => string} Glyph */
 /** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "echo" | "weapon-spell" | "item" | "form" | "skill-effect"} Category */
 
+const BOLT = "M0 0L-4.5 7H-1L-2.5 13L4 4.5H0.5L2.5 0Z";
+
+/**
+ * "N for each X" (#1850): the counted thing and what it gives on top, three
+ * pips under them, the count. An enchantment is a dashed ring, a condition a
+ * drop, a foe a figure.
+ * @param {"desecrate" | "defile" | "victory" | "sadist" | "channeling" | "zeal" | "vigor"} kind
+ * @param {string} c colour
+ * @param {number} w stroke width
+ */
+export const perEach = (kind, c, w) => {
+  const ring = (/** @type {number} */ x, /** @type {number} */ r) =>
+    `<circle cx="${String(x)}" cy="8" r="${String(r)}" ${stroke(c, w)} stroke-dasharray="3 2"/>`;
+  const bolt = (/** @type {number} */ x, /** @type {number} */ y) =>
+    `<path transform="translate(${String(x)},${String(y)})" d="${BOLT}" fill="${c}"/>`;
+  const plus = (/** @type {number} */ x, /** @type {number} */ y) =>
+    `<path d="M${String(x)} ${String(y - 3)}v6M${String(x - 3)} ${String(y)}h6" ${stroke(c, w + 0.6)}/>`;
+  const drop = (/** @type {number} */ x) =>
+    `<path transform="translate(${String(x)},0)" d="M0 2.5C0 2.5 -4.5 8 -4.5 11A4.5 4.5 0 0 0 4.5 11C4.5 8 0 2.5 0 2.5Z" fill="${c}"/>`;
+  const top = {
+    // A ring and a spark: each enchantment on the foes adds damage.
+    desecrate:
+      ring(7, 5) +
+      `<path d="M18 2L19.8 6.2L24 8L19.8 9.8L18 14L16.2 9.8L12 8L16.2 6.2Z" fill="${c}"/>`,
+    // The same ring with a cross: the other campaign version.
+    defile: ring(7, 5) + `<path d="M15.5 3.5L22.5 12.5M22.5 3.5L15.5 12.5" ${stroke(c, w + 0.4)}/>`,
+    // A drop, a plus and a bolt: each condition on a foe gives Health and Energy.
+    victory: drop(5.5) + plus(13.5, 8) + bolt(20, 2.5),
+    // A drop and a plus: each condition gives Health.
+    sadist: drop(8) + plus(18, 8),
+    // A foe figure and a bolt: each foe near gives Energy.
+    channeling:
+      `<circle cx="6.5" cy="5" r="2.6" ${stroke(c, w)}/>` +
+      `<path d="M2 14C2 9 11 9 11 14" ${stroke(c, w)}/>` +
+      bolt(18, 2),
+    // A ring round a bolt: each enchantment gives Energy.
+    zeal: ring(12, 6.5) + bolt(12.4, 3.3),
+    // A ring round a plus: each enchantment gives Health.
+    vigor: ring(12, 6.5) + plus(12, 8),
+  }[kind];
+  return (
+    top +
+    `<circle cx="6" cy="21" r="1.7" fill="${c}"/><circle cx="12" cy="21" r="1.7" fill="${c}"/><circle cx="18" cy="21" r="1.7" fill="${c}"/>`
+  );
+};
+
 /**
  * Shadow Step and return (#1847): a figure or mark on top, and the way back
  * under it, a U-turn arrow. One step out, one step home. `Return` itself has

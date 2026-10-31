@@ -1,4 +1,4 @@
-import { stroke } from "../icon-kit.mjs";
+import { perEach, stroke } from "../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, [import("../icon-kit.mjs").Category, import("../icon-kit.mjs").Glyph]>>} */
 export const MESMER_STATUS_ICONS = {
@@ -197,15 +197,10 @@ export const MESMER_STATUS_ICONS = {
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="4.5" height="3.5" rx="0.8" fill="${c}"/>`,
   ],
-  // "N for each X" (#1760), stand-in until its art card.
-  // Enchantment: a bolt in a ring of foe dots, energy for each foe near.
+  // "N for each X" (#1850): the skill's drawing, shrunk into the frame.
   channeling: [
     "enchantment",
     (c) =>
-      `<path d="M13 5l-4 7h4l-2 7" ${stroke(c, 2)}/>` +
-      `<circle cx="4" cy="6" r="1.6" fill="${c}"/>` +
-      `<circle cx="20" cy="6" r="1.6" fill="${c}"/>` +
-      `<circle cx="4" cy="18" r="1.6" fill="${c}"/>` +
-      `<circle cx="20" cy="18" r="1.6" fill="${c}"/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${perEach("channeling", c, 2.8)}</g>`,
   ],
 };
