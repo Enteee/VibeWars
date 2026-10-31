@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { joinByCode, openRail } from "./helpers/menu.js";
-import { hostLobby, openPeers } from "./helpers/peers.js";
+import { hostLobby, openPeers, openToFriends } from "./helpers/peers.js";
 
 /**
  * The screen bar every menu screen shares (#578), in the top bar (#1272):
@@ -105,6 +105,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     const code = host.locator("#topbar .topbar-lobby-code");
     await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const hostCode = (await code.textContent()) ?? "";
+    await openToFriends(host);
     const guestCode = guest.locator("#topbar .topbar-lobby-code");
     await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const ownCode = (await guestCode.textContent()) ?? "";
@@ -151,6 +152,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     const code = host.locator("#topbar .topbar-lobby-code");
     await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const hostCode = (await code.textContent()) ?? "";
+    await openToFriends(host);
     await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
 
     // The host's page stops answering, so the guest's join waits for it.

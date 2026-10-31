@@ -36,6 +36,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     phase: countdownSeconds === null ? "waiting" : "starting",
     mode: "random-arena",
     mapId: "arena-open",
+    open: true,
     hostId: "host",
     players: [
       {

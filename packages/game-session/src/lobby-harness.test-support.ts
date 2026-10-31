@@ -83,6 +83,8 @@ export async function openLobby(
     teamLobby?: boolean;
     /** The lobby's RNG: a fixed sequence by default. */
     random?: () => number;
+    /** Opened for joins (#1682), as most tests want; a lobby starts closed. */
+    open?: boolean;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -140,6 +142,7 @@ export async function openLobby(
       transport,
     );
   const host = await join(lobby.local, null, "Host", null, null, null);
+  lobby.setOpen(options.open ?? true);
   return {
     network,
     lobby,

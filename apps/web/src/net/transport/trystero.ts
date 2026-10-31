@@ -44,6 +44,9 @@ export interface TrysteroDeps {
   readonly turnConfig: () => TurnConfig | undefined;
 }
 
+/** This page's peer id in every Trystero room: Trystero picks it once a page. */
+export const TRYSTERO_SELF_ID = selfId;
+
 /** Trystero itself. `getRelaySockets` is untyped there; this is its shape. */
 const TRYSTERO: TrysteroDeps = {
   joinRoom,

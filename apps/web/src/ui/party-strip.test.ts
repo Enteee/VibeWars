@@ -1,7 +1,7 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
-import { isAlone, partyOf } from "./party-strip.js";
+import { isAlone, partyOf, showsClosed } from "./party-strip.js";
 
 function player(
   sessionId: string,
@@ -27,6 +27,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     phase: "waiting",
     mode: "team-arena",
     mapId: "arena-alpha",
+    open: true,
     hostId: "host",
     players,
     isHost: false,
@@ -51,6 +52,7 @@ describe("the party strip's party (#1526)", () => {
       code: "ACDEFG",
       mode: "team-arena",
       isHost: false,
+      open: true,
       members: [
         { name: "host", primary: "monk", isHost: true, self: false },
         { name: "me", primary: null, isHost: false, self: true },
@@ -62,5 +64,13 @@ describe("the party strip's party (#1526)", () => {
   it("is alone with only bots for company, and with no lobby at all", () => {
     expect(isAlone(partyOf(lobby([player("me"), player("Bot", { bot: true })])))).toBe(true);
     expect(isAlone(undefined)).toBe(true);
+  });
+
+  it("tells a guest its host has the lobby closed, and nothing while open; the host never (#1682)", () => {
+    const party = (isHost: boolean, open: boolean) =>
+      showsClosed({ ...partyOf(lobby([player("me")])), isHost, open });
+    expect(party(false, false)).toBe(true);
+    expect(party(false, true)).toBe(false);
+    expect(party(true, false)).toBe(false);
   });
 });

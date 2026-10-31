@@ -4,6 +4,7 @@ import { joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.
 import {
   hostLobby as hostFromMenu,
   openPeers,
+  openToFriends,
   playHouseTeams,
   saveSoloTeam,
 } from "./helpers/peers.js";
@@ -67,8 +68,8 @@ async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Prom
   return code;
 }
 
-const NO_ANSWER =
-  "No lobby answered that key. Check it; if it is right, your network may be blocking peer-to-peer connections.";
+const NO_ANSWER = "Couldn't reach that lobby. Check the key, and ask the host to open it.";
+const CLOSED = "That lobby is closed. Ask the host to open it.";
 
 test("a host creates a lobby and is shown a joinable code", async ({ page }) => {
   const code = await hostLobby(page, "Host");
@@ -91,6 +92,57 @@ test("a second player joins with the code and both see each other", async ({ bro
     // that each rendered its own optimistic view.
     await expect(host.locator(".lobby-panel")).toContainText("Guest");
     await expect(guest.locator(".lobby-panel")).toContainText("Host");
+  } finally {
+    await context.close();
+  }
+});
+
+test("a closed lobby takes nobody with its key; opened it does, and closed again it keeps its guest (#1682)", async ({
+  browser,
+}) => {
+  // The first join waits out the 20 s no-answer: a closed, empty lobby's
+  // host is in no room at all.
+  test.setTimeout(90_000);
+  const { context, pages } = await openPeers(browser, 3);
+  const [host, guest, late] = pages as [Page, Page, Page];
+
+  try {
+    await openMenu(host, "Host");
+    await openRail(host, "Hosted Game");
+    const shown = host.locator("#topbar .topbar-lobby-code");
+    await expect(shown).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    const code = (await shown.textContent()) ?? "";
+    const toggle = host.locator("#topbar .topbar-lobby-open");
+    await expect(toggle).toHaveAccessibleName("Lobby closed");
+    await expect(toggle).toHaveAttribute(
+      "title",
+      "Friends with your key can't join until you open the lobby.",
+    );
+
+    await openMenu(guest, "Guest");
+    await joinByCode(guest, code);
+    await expect(guest.locator(".screen-connection-problem")).toHaveText(NO_ANSWER, {
+      timeout: 30_000,
+    });
+
+    await openToFriends(host);
+    await expect(toggle).toHaveAccessibleName("Lobby open");
+    await expect(toggle).toHaveAttribute("title", "Anyone with your key can join.");
+    await joinFriend(guest, code);
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
+    // Only the host has the toggle; a guest's strip says when it is closed.
+    await expect(guest.locator("#topbar .topbar-lobby-open")).toBeHidden();
+    await expect(guest.locator(".party-closed")).toHaveCount(0);
+
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+    await expect(guest.locator(".party-closed")).toHaveText("Lobby closed");
+
+    await openMenu(late, "Late");
+    await joinByCode(late, code);
+    await expect(late.locator(".screen-connection-problem")).toHaveText(CLOSED);
+    await expect(host.locator(".lobby-panel")).not.toContainText("Late");
+    await expect(guest.locator("#topbar .topbar-lobby-code")).toHaveText(code);
   } finally {
     await context.close();
   }

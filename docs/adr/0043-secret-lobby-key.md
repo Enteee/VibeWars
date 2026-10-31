@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-10-31). Issue #1681, operator ruling on PR 1591.
+Accepted (2026-10-31). Issue #1681, operator ruling on PR 1591. "Open and closed" added by #1682 (operator, Q196).
 
 ## Context
 
@@ -27,8 +27,16 @@ Since #15 a lobby code is both the Trystero room and its password. Trystero publ
 - **Admission also rests on Trystero's password semantics**: it encrypts offers with the password and drops what fails to decrypt. A Trystero bump or a transport swap re-checks this (perf-sec-qa does on every trystero version change).
 - **Residual, accepted: a topic can be flooded.** The topic is public, so an observer can announce on it and make the host start doomed handshakes. That is denial of service, not access; SECURITY.md lists it under what we do not defend against.
 - A key holder learns every member's IP address (WebRTC), as before. Accepted: the key is shared only with people you play with.
-- Anyone the key is shared with can join and share it further: a key is an invitation, not an identity. Part 2 (open / close) limits when a lobby can be joined at all.
+- Anyone the key is shared with can join and share it further: a key is an invitation, not an identity. A closed lobby (below) takes nobody new, key or not.
 - The derivation constants are part of the protocol: changing one moves every room, as a `PROTOCOL_VERSION` bump does, so they live in `game-protocol` next to the alphabet.
+
+## Open and closed
+
+A lobby is **closed** unless its host opens it, and every new lobby starts closed. Closed and empty, the host is in no Trystero room, so the relays see nothing of it at all. Open, the host is in the derived room and any peer that proves the key may join. Closing keeps the guests already in (operator, Q196), so a closed lobby with guests stays in its room and refuses new joins after the key proof; when its last guest leaves, the host leaves the room.
+
+The room is derived once per lobby and kept for its life, so opening it again costs no second derivation. Going into the room waits a 500 ms settle window and follows the last state, so a burst of toggles makes at most one join on the relays; leaving is at once. Trystero is a mesh, so a key holder who comes into a closed lobby's room reaches its guests too: a guest that knows its host answers no other peer's key challenge, hears nothing from any other peer and sends it nothing.
+
+Alternatives: listing open lobbies publicly (rejected by the operator, Q196); closing kicks everyone (rejected, Q196); leaving the room on close even with guests (Trystero drops every peer connection on leave, so it would kick them).
 
 ## Alternatives Considered
 

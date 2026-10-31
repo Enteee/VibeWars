@@ -23,14 +23,26 @@ export async function openPeers(
 }
 
 /**
- * The lobby every page hosts from load (#1526), on Hosted Game (#1525);
- * its code, as the title bar shows it.
+ * Open this page's own lobby to friends with its key (#1682): every
+ * lobby starts closed, and a closed one takes nobody new.
+ */
+export async function openToFriends(page: Page): Promise<void> {
+  const toggle = page.locator("#topbar .topbar-lobby-open");
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+}
+
+/**
+ * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
+ * opened to friends (#1682); its code, as the title bar shows it.
  */
 export async function hostLobby(page: Page): Promise<string> {
   await openRail(page, "Hosted Game");
   const code = page.locator("#topbar .topbar-lobby-code");
   await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
   await expect(page.locator(".lobby-panel")).toBeVisible();
+  await openToFriends(page);
   return (await code.textContent())?.trim() ?? "";
 }
 

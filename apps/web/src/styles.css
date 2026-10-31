@@ -264,6 +264,7 @@ body {
    window before they come back (#1681). */
 @media (width <= 90rem) {
   .topbar-lobby .lobby-code-label,
+  .topbar-lobby .topbar-lobby-open-label,
   .topbar-join-label {
     display: none;
   }
@@ -319,6 +320,7 @@ body {
 }
 
 .topbar-lobby[hidden],
+.topbar-lobby .topbar-lobby-open[hidden],
 .topbar-lobby .topbar-leave[hidden] {
   display: none;
 }
@@ -343,6 +345,15 @@ body {
   color: var(--accent);
 }
 
+.topbar-lobby-open-label {
+  margin-left: 0.3rem;
+}
+
+/* The host's Open (#1682) stands out: friends can come in. */
+#topbar .topbar-lobby .topbar-lobby-open[aria-pressed="true"] {
+  border-color: var(--accent);
+}
+
 /* A key is ACDE-FGHJ-KMNP, fourteen wide (#1681). */
 #topbar .topbar-join .code-input {
   width: 18ch;
@@ -359,8 +370,14 @@ body {
     display: none;
   }
 
+  /* The host's lock (#1682) takes its room from the gaps and the field. */
   #topbar .topbar-lobby {
+    gap: 0.25rem;
     margin-right: 0.2rem;
+  }
+
+  #topbar .topbar-lobby .topbar-lobby-open {
+    padding: 0.2rem 0.35rem;
   }
 
   #topbar .topbar-lobby-code {
@@ -368,7 +385,7 @@ body {
   }
 
   #topbar .topbar-join .code-input {
-    width: 15ch;
+    width: 12ch;
   }
 }
 
@@ -1505,6 +1522,12 @@ body {
 
 .party-alone {
   color: var(--ink-dim);
+}
+
+/* A guest's word that the host has it closed (#1682). */
+.party-closed {
+  color: var(--ink-dim);
+  font-style: italic;
 }
 
 .party-code {
