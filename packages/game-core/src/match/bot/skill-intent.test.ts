@@ -76,6 +76,8 @@ const NO_BOT_USE = new Set([
   "necromancer.animate-bone-minions",
   "necromancer.gaze-of-contempt",
   "necromancer.rend-enchantments",
+  // An enchantment strip whose payoff is Health loss, not damage (#1648).
+  "necromancer.pain-of-disenchantment",
   // An enchantment strip only on a knocked-down foe (#1643).
   "assassin.lift-enchantment",
   "necromancer.well-of-suffering",

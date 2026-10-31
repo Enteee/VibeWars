@@ -1590,8 +1590,12 @@ function describeEffect(
       };
     case "lose-health": {
       // "For each Monk enchantment removed, you lose 31 Health" (#944), or
-      // once, flat (#1550): "You lose 54 health".
+      // once, flat (#1550): "You lose 54 health"; the target's (#1648):
+      // "Target foe loses 53 Health".
       const magnitude = describeMagnitude(effect.amount, ranks);
+      if (effect.recipient === "target") {
+        return { text: `Target foe loses ${String(magnitude.current)} Health`, magnitude };
+      }
       const lose = `You lose ${String(magnitude.current)} health`;
       if (effect.perRemovedOfProfession === undefined) {
         return { text: lose, magnitude };
@@ -1860,7 +1864,9 @@ function describeEffect(
               ? `are knocked down for ${String(each.durationSeconds)}s`
               : each.kind === "apply-status"
                 ? suffered(each, ranks)
-                : lowerFirst(description.text),
+                : each.kind === "lose-health" && each.recipient === "target"
+                  ? `lose ${String(describeMagnitude(each.amount, ranks).current)} Health`
+                  : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
