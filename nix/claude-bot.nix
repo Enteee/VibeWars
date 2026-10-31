@@ -343,8 +343,16 @@ let
     printf '%s\n' 'passwd: files' 'group: files' 'hosts: files' > $out/nsswitch.conf
   '';
 
-  # The runner jail's entrypoint: the forwarder to its proxy, as support's.
+  # The runner jail's entrypoint: the forwarder to its proxy, as support's,
+  # and the JIT config from fd 3 into the runner's environment, so it is in
+  # no argv and no file (runner-jail.mjs).
   runnerInit = pkgs.writeShellScript "vibewars-runner-init" ''
+    IFS= read -r ACTIONS_RUNNER_INPUT_JITCONFIG <&3 || {
+      echo "vibewars-runner-init: no JIT config on fd 3" >&2
+      exit 1
+    }
+    exec 3<&-
+    export ACTIONS_RUNNER_INPUT_JITCONFIG
     ${pkgs.socat}/bin/socat \
       "TCP-LISTEN:$VIBEWARS_PROXY_PORT,bind=127.0.0.1,fork,reuseaddr" \
       "UNIX-CONNECT:$VIBEWARS_PROXY_SOCKET" &

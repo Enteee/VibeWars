@@ -32,6 +32,15 @@ import { pathToFileURL } from "node:url";
 /** The one port a tunnel may open. */
 export const HTTPS_PORT = 443;
 
+/** The most tunnels one jail may hold open at once. */
+export const MAX_TUNNELS = 256;
+
+/** A tunnel with no traffic either way for this long is closed. */
+export const TUNNEL_IDLE_MS = 10 * 60 * 1000;
+
+/** At most this many refusals are logged a minute; the rest are counted. */
+export const REFUSALS_LOGGED_A_MINUTE = 30;
+
 /**
  * The allowlist from its JSON: an array of lower-case host names, each
  * optionally starting with a dot.
@@ -109,9 +118,16 @@ export function isInternal(address) {
   list.addSubnet("127.0.0.0", 8, "ipv4");
   list.addSubnet("169.254.0.0", 16, "ipv4");
   list.addSubnet("172.16.0.0", 12, "ipv4");
+  list.addSubnet("192.0.0.0", 24, "ipv4");
   list.addSubnet("192.168.0.0", 16, "ipv4");
+  list.addSubnet("198.18.0.0", 15, "ipv4");
+  list.addSubnet("224.0.0.0", 4, "ipv4");
+  list.addSubnet("240.0.0.0", 4, "ipv4");
   list.addAddress("::", "ipv6");
   list.addAddress("::1", "ipv6");
+  // NAT64 and 6to4 both lead to an IPv4 address, internal ones included.
+  list.addSubnet("64:ff9b::", 96, "ipv6");
+  list.addSubnet("2002::", 16, "ipv6");
   list.addSubnet("fc00::", 7, "ipv6");
   list.addSubnet("fe80::", 10, "ipv6");
   const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address);
@@ -119,6 +135,38 @@ export function isInternal(address) {
     return list.check(/** @type {string} */ (mapped[1]), "ipv4");
   }
   return list.check(address, net.isIPv6(address) ? "ipv6" : "ipv4");
+}
+
+/**
+ * A log for refusals that a job cannot flood: the first
+ * `REFUSALS_LOGGED_A_MINUTE` of each minute are logged, and the next one
+ * logged says how many were dropped before it.
+ *
+ * @param {(line: string) => void} log
+ * @param {() => number} now milliseconds
+ * @returns {(line: string) => void}
+ */
+export function refusalLog(log, now) {
+  let minute = -1;
+  let logged = 0;
+  let dropped = 0;
+  return (line) => {
+    const current = Math.floor(now() / 60_000);
+    if (current !== minute) {
+      minute = current;
+      logged = 0;
+    }
+    if (logged >= REFUSALS_LOGGED_A_MINUTE) {
+      dropped += 1;
+      return;
+    }
+    logged += 1;
+    if (dropped > 0) {
+      log(`runner-proxy: ${String(dropped)} refusals not logged`);
+      dropped = 0;
+    }
+    log(line);
+  };
 }
 
 /**
@@ -130,14 +178,16 @@ export function isInternal(address) {
  */
 
 /**
- * The proxy's server; the caller makes it listen.
+ * The proxy's server; the caller makes it listen. It holds at most
+ * `MAX_TUNNELS` connections, and closes a tunnel idle for
+ * `TUNNEL_IDLE_MS`.
  *
  * @param {RunnerProxyOptions} options
  * @returns {http.Server}
  */
 export function createRunnerProxy({ allow, resolve, connect, log }) {
   const server = http.createServer((req, res) => {
-    log(`runner-proxy: refused ${String(req.method)} ${String(req.url)}: CONNECT only`);
+    log(`runner-proxy: refused ${String(req.method)} ${printable(String(req.url))}: CONNECT only`);
     res.writeHead(405, { "content-type": "text/plain" }).end("CONNECT only\n");
     req.resume();
   });
@@ -163,6 +213,10 @@ export function createRunnerProxy({ allow, resolve, connect, log }) {
           return;
         }
         const upstream = connect(target.host, address);
+        upstream.setTimeout(TUNNEL_IDLE_MS, () => {
+          upstream.destroy();
+          client.destroy();
+        });
         let established = false;
         upstream.on("connect", () => {
           established = true;
@@ -190,6 +244,7 @@ export function createRunnerProxy({ allow, resolve, connect, log }) {
     );
   });
 
+  server.maxConnections = MAX_TUNNELS;
   return server;
 }
 
@@ -207,7 +262,7 @@ export function listenRunnerProxy(socket, allow, log) {
     allow,
     resolve: async (host) => (await dns.lookup(host)).address,
     connect: (_host, address) => net.connect(HTTPS_PORT, address),
-    log,
+    log: refusalLog(log, Date.now),
   });
   return new Promise((resolve, reject) => {
     server.once("error", reject);

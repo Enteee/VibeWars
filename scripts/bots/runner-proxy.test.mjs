@@ -10,7 +10,15 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createRunnerProxy, isInternal, parseAllowlist, tunnelTarget } from "./runner-proxy.mjs";
+import {
+  MAX_TUNNELS,
+  REFUSALS_LOGGED_A_MINUTE,
+  createRunnerProxy,
+  isInternal,
+  parseAllowlist,
+  refusalLog,
+  tunnelTarget,
+} from "./runner-proxy.mjs";
 
 const ALLOW = parseAllowlist(
   fs.readFileSync(
@@ -108,9 +116,40 @@ describe("isInternal", () => {
     for (const address of ["::1", "fd00::1", "fe80::1", "::ffff:127.0.0.1"]) {
       expect(isInternal(address), address).toBe(true);
     }
+    for (const address of [
+      "192.0.0.8",
+      "198.18.0.1",
+      "198.19.255.1",
+      "224.0.0.251",
+      "240.0.0.1",
+      "255.255.255.255",
+      "64:ff9b::a00:1",
+      "2002:a00:1::1",
+    ]) {
+      expect(isInternal(address), address).toBe(true);
+    }
     for (const address of ["140.82.121.4", "2606:50c0:8000::153", "::ffff:140.82.121.4"]) {
       expect(isInternal(address), address).toBe(false);
     }
+  });
+});
+
+describe("refusalLog", () => {
+  it("logs so many refusals a minute, then says how many it dropped", () => {
+    /** @type {string[]} */
+    const lines = [];
+    let now = 0;
+    const log = refusalLog(
+      (line) => lines.push(line),
+      () => now,
+    );
+    for (let i = 0; i < REFUSALS_LOGGED_A_MINUTE + 5; i++) {
+      log(`refused ${String(i)}`);
+    }
+    expect(lines).toHaveLength(REFUSALS_LOGGED_A_MINUTE);
+    now = 60_000;
+    log("next minute");
+    expect(lines.slice(-2)).toEqual(["runner-proxy: 5 refusals not logged", "next minute"]);
   });
 });
 
@@ -188,6 +227,16 @@ describe("createRunnerProxy", () => {
       client.write(`CONNECT ${target} HTTP/1.1\r\nHost: ${target}\r\n\r\n`);
     });
   }
+
+  it("holds at most MAX_TUNNELS connections", () => {
+    const server = createRunnerProxy({
+      allow: ALLOW,
+      resolve: () => Promise.reject(new Error("unused")),
+      connect: () => new net.Socket(),
+      log: () => undefined,
+    });
+    expect(server.maxConnections).toBe(MAX_TUNNELS);
+  });
 
   it("tunnels to an allowed host", async () => {
     const { socket, logs } = await proxy("140.82.121.4");

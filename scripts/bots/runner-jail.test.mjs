@@ -165,7 +165,6 @@ describe("runnerCommand", () => {
     tasksMax: 2048,
     init: "/nix/store/ddd-vibewars-runner-init",
     runner: "/nix/store/aaa-github-runner",
-    jitconfig: "ZXhhbXBsZQ==",
   });
 
   it("caps the jail's scope at its CPUs, memory and tasks", () => {
@@ -177,6 +176,7 @@ describe("runnerCommand", () => {
       "--quiet",
       "--collect",
       "--unit=vibewars-runner-0a1b2c3d",
+      "--description=vibewars-runner-0a1b2c3d",
       "-p",
       "CPUQuota=200%",
       "-p",
@@ -186,15 +186,16 @@ describe("runnerCommand", () => {
     ]);
   });
 
-  it("hands the JIT config to the runner as its argument, for one job", () => {
-    expect(command.slice(-6)).toEqual([
+  it("runs the runner through the init, with no JIT config in any argument", () => {
+    expect(command.slice(-4)).toEqual([
       "--",
       "/nix/store/ddd-vibewars-runner-init",
       "/nix/store/aaa-github-runner/bin/Runner.Listener",
       "run",
-      "--jitconfig",
-      "ZXhhbXBsZQ==",
     ]);
+    for (const arg of command) {
+      expect(arg).not.toMatch(/jitconfig|ZXhhbXBsZQ/i);
+    }
   });
 });
 

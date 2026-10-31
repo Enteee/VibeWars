@@ -56,9 +56,12 @@ paths. A supervisor that keeps runners going is part 2 (#1888).
   read-only bind, the restore fails.
 - Never bound in: the operator's home, the hub, the company's credentials,
   the SSH key, `/run/user`, or any socket but the proxy's.
-- The JIT config is read by the launcher and passed to the runner as its
-  argument. The host's file is deleted as soon as the runner starts, and
-  the jail never has it as a file.
+- The JIT config is read by the launcher and written to the jail's init on
+  fd 3, which hands it to the runner as `ACTIONS_RUNNER_INPUT_JITCONFIG`.
+  It is in no argument, which any host process could read and systemd
+  would journal as the scope's description (the scope has its own
+  `--description`). The host's file is deleted as soon as the runner
+  starts, and the jail never has it as a file.
 
 **Egress.** `scripts/bots/runner-proxy.mjs`, an HTTP CONNECT proxy on a unix
 socket, one per jail, run by the launcher. Inside, socat serves it on
@@ -108,10 +111,14 @@ two cannot drift apart.
   loopback services, any other host on the internet.
 - **Egress filtering is not exfiltration-proof.** A job can send what it
   can read (its checkout, its token) to an allowlisted host it controls
-  content on: a gist, a GitHub repository, an npm package, an Azure blob.
+  content on: a gist, a GitHub repository, an npm package, an Azure blob
+  of any account (`.blob.core.windows.net` is not narrowed to the Actions
+  cache's accounts).
   That is true on GitHub's hosted runners too. What protects us is that
   the jail holds nothing secret: the source is public, there are no
-  secrets, and the JIT credential is good for one job. The filter stops a
+  secrets, and the JIT credential is good for one job (to be shown by the
+  spike before merge: the runner is deregistered after its job, and a
+  replayed or stolen credential takes no second one). The filter stops a
   hostile job scanning the LAN, attacking the host's services, or using
   the host to attack arbitrary hosts.
 - **The Actions cache is unverified input**, the restored Nix and pnpm

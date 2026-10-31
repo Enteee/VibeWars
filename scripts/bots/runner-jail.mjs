@@ -27,8 +27,11 @@
  *   whose event is not on `runner-events.json`, or is a fork's pull request.
  *
  * The JIT config, the runner's one-job registration, is read by this
- * launcher and handed to the runner as an argument, never as a file in the
- * jail; the host's copy is deleted as soon as the runner has started.
+ * launcher and written to the jail's init on fd 3, which hands it to the
+ * runner as `ACTIONS_RUNNER_INPUT_JITCONFIG`: never an argument, which any
+ * host process could read and systemd would log as the scope's
+ * description, and never a file in the jail. The host's copy is deleted as
+ * soon as the runner has started.
  *
  *     node runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
  *
@@ -153,7 +156,8 @@ export function runnerJailArgs(jail) {
 
 /**
  * The whole command line: the jail in its own capped scope, the
- * forwarder, and the runner with its JIT config as its argument.
+ * forwarder, and the runner. The JIT config is not in it: the init reads
+ * it from fd 3.
  *
  * @param {object} launch
  * @param {RunnerJail} launch.jail
@@ -164,23 +168,12 @@ export function runnerJailArgs(jail) {
  * @param {number} launch.tasksMax
  * @param {string} launch.init
  * @param {string} launch.runner
- * @param {string} launch.jitconfig
  * @returns {string[]}
  */
-export function runnerCommand({
-  jail,
-  unit,
-  bwrap,
-  cpus,
-  memoryGib,
-  tasksMax,
-  init,
-  runner,
-  jitconfig,
-}) {
+export function runnerCommand({ jail, unit, bwrap, cpus, memoryGib, tasksMax, init, runner }) {
   return [
     "systemd-run",
-    ...["--user", "--scope", "--quiet", "--collect", `--unit=${unit}`],
+    ...["--user", "--scope", "--quiet", "--collect", `--unit=${unit}`, `--description=${unit}`],
     ...["-p", `CPUQuota=${String(cpus * 100)}%`],
     ...["-p", `MemoryMax=${String(memoryGib)}G`],
     ...["-p", `TasksMax=${String(tasksMax)}`],
@@ -191,8 +184,6 @@ export function runnerCommand({
     init,
     `${runner}/bin/Runner.Listener`,
     "run",
-    "--jitconfig",
-    jitconfig,
   ];
 }
 
@@ -326,10 +317,12 @@ export async function runRunner({ store, jitconfigFile, cpus, memoryGib, tasksMa
       tasksMax,
       init: store.init,
       runner: store.runner,
-      jitconfig,
     });
-    const child = spawn(/** @type {string} */ (command), args, { stdio: "inherit" });
+    const child = spawn(/** @type {string} */ (command), args, {
+      stdio: ["inherit", "inherit", "inherit", "pipe"],
+    });
     child.once("spawn", () => {
+      /** @type {import("node:stream").Writable} */ (child.stdio[3]).end(`${jitconfig}\n`);
       fs.rmSync(jitconfigFile, { force: true });
     });
     const stop = () => {
