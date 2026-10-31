@@ -2348,4 +2348,42 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Assassin touch skills (#1643)                                          */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.lift-enchantment",
+    name: "Lift Enchantment",
+    gwId: 1645,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    // GW1's "No Attribute": any assassin can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    // "Touch target foe", as Plague Touch's.
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target touched foe is knocked down, that foe loses one
+    // enchantment." Standing: nothing, the cost and recharge spent.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-knocked-down" },
+        effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      },
+    ],
+  },
 ];
