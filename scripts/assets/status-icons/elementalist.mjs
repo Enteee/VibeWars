@@ -23,7 +23,7 @@ export const ELEMENTALIST_STATUS_ICONS = {
     (c) =>
       `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
       `<path d="M9.5 3.5L4 12.5h4l-1.5 8 6-9.5h-4z" fill="${c}"/>` +
-      `<path d="M15 4h6M15 20h6M16 4l4 8-4 8M20 4l-4 8 4 8" ${stroke(c, 2.7)}/>` +
+      `<path d="M14.5 5h5M14.5 18h5M15.5 5l3 6.5-3 6.5M18.5 5l-3 6.5 3 6.5" ${stroke(c, 2.2)}/>` +
       `</g>`,
   ],
   "glyph-of-renewal": [
@@ -40,8 +40,8 @@ export const ELEMENTALIST_STATUS_ICONS = {
     (c) =>
       `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
       `<path d="M13 3L7.5 12h4l-1.5 5 6-8h-4z" fill="${c}"/>` +
-      `<rect x="3" y="18.5" width="18" height="3" rx="1" ${stroke(c, 2.5)}/>` +
-      `<path d="M4 19.5h3v1H4z" fill="${c}"/>` +
+      `<rect x="7.5" y="18" width="9" height="3" rx="1" ${stroke(c, 2.5)}/>` +
+      `<path d="M8.5 19h2.5v1H8.5z" fill="${c}"/>` +
       `</g>`,
   ],
   // Enchantment: a small shield.
