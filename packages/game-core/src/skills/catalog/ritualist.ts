@@ -2211,7 +2211,6 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
-            perStatusOnTarget: [],
             amount: {
               scaling: { attributeId: "ritualist.channeling-magic", atZero: 20, atTwelve: 56 },
             },
