@@ -2167,6 +2167,121 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // skill, that ally gains 1...7 Energy": the 6 is the status's.
     effects: [{ kind: "apply-status", statusId: "weapon-of-renewal", durationSeconds: 17 }],
   },
+  // Your spirits within earshot (#1777): measured from you, whoever the
+  // skill strikes.
+  {
+    id: "ritualist.spirit-boon-strike",
+    name: "Spirit Boon Strike",
+    gwId: 1226,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 20...65 lightning damage, and all spirits
+    // you control within earshot gain 20...65 Health": 56 each.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 20, atTwelve: 56 },
+        },
+        type: "lightning",
+        armorPenetration: 0,
+      },
+      {
+        kind: "splash",
+        hits: "own-spirits",
+        radius: AREA_EARSHOT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 20, atTwelve: 56 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ritualist.spiritleech-aura",
+    name: "Spiritleech Aura",
+    gwId: 2203,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, all of your spirits within earshot deal 5...20
+    // less damage and steal 5...20 Health when they attack": 17 s; the
+    // 17s are the status's. No spirit near: spent, and nothing happens.
+    effects: [
+      {
+        kind: "splash",
+        hits: "own-spirits",
+        radius: AREA_EARSHOT,
+        maxTargets: undefined,
+        effects: [{ kind: "apply-status", statusId: "spiritleech-aura", durationSeconds: 17 }],
+      },
+    ],
+  },
+  {
+    id: "ritualist.draw-spirit",
+    name: "Draw Spirit",
+    gwId: 1224,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "allied-spirit",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Teleport target allied spirit to your location": any ally's
+    // spirit; it keeps its owner and its timer.
+    effects: [{ kind: "pull-to-caster" }],
+  },
 ];
 
 /**

@@ -64,6 +64,7 @@ import {
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
+  type SplashEffect,
   type StateCondition,
   type Surroundings,
   type SummonEffect,
@@ -1076,6 +1077,30 @@ function isSummoned(creature: Creature | undefined): boolean {
 }
 
 /**
+ * Whether a splash that `hits` reaches `combatant` (#885), its distance
+ * aside: `own-spirits` only the caster's own spirits (#1777).
+ */
+function splashReaches(
+  hits: SplashEffect["hits"],
+  caster: Combatant,
+  combatant: Combatant,
+  creature: Creature | undefined,
+): boolean {
+  switch (hits) {
+    case "allies":
+      return combatant.team === caster.team;
+    case "party":
+      return combatant.team === caster.team && creature === undefined;
+    case "foes":
+      return combatant.team !== caster.team;
+    case "foe-creatures":
+      return combatant.team !== caster.team && isSummoned(creature);
+    case "own-spirits":
+      return creature?.kind === "spirit" && creature.ownerId === caster.id;
+  }
+}
+
+/**
  * Destroy `candidate` when it is a living spirit on `caster`'s side
  * (#1309): dead at once, so nothing later in the step acts on it or
  * through it, and `spirit-destroyed` tells the simulation to take it off
@@ -1663,7 +1688,9 @@ export function applyEffect(
     }
 
     case "splash": {
-      const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
+      // Your own spirits are within earshot of you, not of the target (#1777).
+      const centre = effect.hits === "own-spirits" ? caster : target;
+      const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
       if (target === undefined || at === undefined) {
         return events;
       }
@@ -1671,9 +1698,7 @@ export function applyEffect(
         ({ combatant, position, creature }) =>
           !combatant.dead &&
           combatant.id !== target.id &&
-          (effect.hits === "allies" || effect.hits === "party"
-            ? combatant.team === caster.team && (effect.hits === "allies" || creature === undefined)
-            : combatant.team !== caster.team && (effect.hits === "foes" || isSummoned(creature))) &&
+          splashReaches(effect.hits, caster, combatant, creature) &&
           distance(position, at) <= effect.radius,
       );
       for (const combatant of nearestFirst(reached, at).slice(0, effect.maxTargets)) {
@@ -1683,6 +1708,12 @@ export function applyEffect(
       }
       return events;
     }
+
+    case "pull-to-caster":
+      if (target !== undefined && !target.dead && target.id !== caster.id) {
+        events.push({ kind: "teleported", targetId: target.id, toId: caster.id });
+      }
+      return events;
 
     case "destroy-target-spirit": {
       const spirit = target === undefined ? undefined : context.surroundings.get(target.id);
@@ -2269,6 +2300,9 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect-companions":
     case "disable-own-skills":
       return true;
+    // Measured from the caster, so once (#1777), not once a target.
+    case "splash":
+      return effect.hits === "own-spirits";
     case "lengthen-recharge":
       return effect.of === "this-skill";
     // Once, on the primary target, the spirit cast on (#1309), however
@@ -2293,7 +2327,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "knockdown":
     case "shadow-step":
     case "resurrect":
-    case "splash":
+    case "pull-to-caster":
     case "disable-skill":
     case "chain-mark":
     case "overcast":

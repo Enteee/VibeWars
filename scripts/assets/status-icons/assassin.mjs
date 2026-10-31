@@ -112,12 +112,14 @@ export const ASSASSIN_STATUS_ICONS = {
       `<path d="M3.5 3L9 8.5H15L20.5 3V12L12 21L3.5 12Z" ${stroke(c, 1.8)}/>` +
       `<path d="M9 12.5h.1M15 12.5h.1" ${stroke(c, 2.6)}/>`,
   ],
-  // Death trigger of #1762, stand-in: a skull with a promise's dash.
+  // Death trigger (#1762, #1832): a skull and a recharge arrow.
   "assassins-promise": [
     "hex",
     (c) =>
-      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
-      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
-      `<path d="M10 10.5h4" ${stroke(c, 1.6)}/>`,
+      `<g transform="translate(12,12) scale(0.55) translate(-13,-13)">` +
+      `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(c, 3.2)}/>` +
+      `<circle cx="6.2" cy="8" r="1.1" fill="${c}"/><circle cx="9.8" cy="8" r="1.1" fill="${c}"/>` +
+      `<path d="M22.5 18a5 5 0 1 1-1.5-3.6M22.5 11.5V15H19" ${stroke(c, 3.6)}/>` +
+      `</g>`,
   ],
 };

@@ -93,4 +93,6 @@ export const MONK_ICONS = {
   "monk.blessed-aura": { glyph: "plus-halo", modifier: "hourglass" },
   "monk.healers-covenant": { glyph: "heart-plus", modifier: "less" },
   "monk.holy-haste": { glyph: "plus-wings", modifier: "clock" },
+  // Death trigger (#1762, #1832): a skull and a plus.
+  "monk.dwaynas-sorrow": { glyph: "death-heal" },
 };
