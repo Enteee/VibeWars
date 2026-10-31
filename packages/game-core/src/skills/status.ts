@@ -32,6 +32,7 @@ import type { ConditionalArmor } from "../equipment/armor.js";
 import { isElementalDamage, type DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
+import type { Vec2 } from "../vec2.js";
 import {
   isSpell,
   type AttackWeaponClass,
@@ -213,6 +214,13 @@ export interface StatusDefinition {
    * still apply.
    */
   readonly preventsSpeedBoosts: boolean;
+  /**
+   * When it ends, for any reason, its caster Shadow Steps back to where it
+   * stood when it put it up (#1826): GW1's "you return to your original
+   * location". Not when it is replaced by a recast of itself. `skillId`
+   * is the skill the step back is logged as. `undefined`: no return.
+   */
+  readonly returnsSource: { readonly skillId: string } | undefined;
   /**
    * Chance in [0, 1] that the bearer's *attacks* miss. Drawn from the
    * injectable simulation RNG, never Math.random (brief §35).
@@ -1151,6 +1159,8 @@ export type StatusChange =
       readonly expired: boolean;
       /** Ended by its bearer's death (#1762), `endAll`. */
       readonly death: boolean;
+      /** Where its source returns to (`returnsSource`, #1826); `null` for no return. */
+      readonly returnPoint: Vec2 | null;
     }
   /** An enchantment `id` left the bearer, alive (#1437), with the triggers that answered. */
   | {
@@ -1378,6 +1388,11 @@ export interface ActiveStatus {
    * own, and it leaves when its bearer does. `false` for every other.
    */
   readonly projected: boolean;
+  /**
+   * Where its source stood as it put it up, for a `returnsSource` status
+   * (#1826), as `apply` or `maintain` put it up; `null` for every other, and for one replaced.
+   */
+  returnPoint: Vec2 | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -1446,7 +1461,14 @@ export class StatusSet {
       const status = this.#statuses.get(id);
       if (status !== undefined) {
         this.#statuses.delete(id);
-        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired, death });
+        this.#changes.push({
+          kind: "ended",
+          id,
+          sourceId: status.sourceId,
+          expired,
+          death,
+          returnPoint: status.returnPoint,
+        });
         if (!death) {
           this.#lostEnchantment(id);
           this.#lostCondition(id);
@@ -1766,8 +1788,17 @@ export class StatusSet {
    * (deep wound's health), hangs on this. A status newly on it ends every
    * one that ends when its bearer gains that category (#919). A hex a
    * status breaks never lands (#1403): `false`, and nothing else changes.
+   *
+   * `returnPoint` is where its source stands as it casts, for a
+   * `returnsSource` status (#1826): only the instance this call puts up
+   * carries it. One kept for its longer duration keeps its own.
    */
-  public apply(id: StatusId, appliedSeconds: number, sourceId: string): boolean {
+  public apply(
+    id: StatusId,
+    appliedSeconds: number,
+    sourceId: string,
+    returnPoint: Vec2 | null = null,
+  ): boolean {
     if (appliedSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return false;
     }
@@ -1777,7 +1808,13 @@ export class StatusSet {
       definition.category === "chant" || definition.category === "shout"
         ? appliedSeconds * this.#chantShoutDurationMultiplier()
         : appliedSeconds;
-    if (EXCLUSIVE_CATEGORIES.has(definition.category)) {
+    const exclusive = EXCLUSIVE_CATEGORIES.has(definition.category);
+    // A recast that replaces it: its source does not return (#1826).
+    const replaced = this.#statuses.get(id);
+    if (replaced !== undefined && (exclusive || replaced.remainingSeconds < durationSeconds)) {
+      replaced.returnPoint = null;
+    }
+    if (exclusive) {
       this.removeByCategory(definition.category);
     }
     const existing = this.#statuses.get(id);
@@ -1807,6 +1844,7 @@ export class StatusSet {
       outbreak,
       maintained: null,
       projected: false,
+      returnPoint: definition.returnsSource === undefined ? null : returnPoint,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -1863,6 +1901,7 @@ export class StatusSet {
       outbreak,
       maintained: null,
       projected: false,
+      returnPoint: null,
     });
     this.#gained(id, durationSeconds);
     this.#gainedHexOrEnchantment(id, sourceId);
@@ -1876,8 +1915,14 @@ export class StatusSet {
    * bearer; one that is ends what `apply` would end. Throws for a status that is not an enchantment: a catalog bug,
    * not data.
    */
-  public maintain(id: StatusId, sourceId: string, seq: number): boolean {
-    if (getStatusDefinition(id).category !== "enchantment") {
+  public maintain(
+    id: StatusId,
+    sourceId: string,
+    seq: number,
+    returnPoint: Vec2 | null = null,
+  ): boolean {
+    const definition = getStatusDefinition(id);
+    if (definition.category !== "enchantment") {
       throw new Error(`only an enchantment can be maintained, not ${id}`);
     }
     const wasActive = this.#statuses.delete(id);
@@ -1896,6 +1941,7 @@ export class StatusSet {
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
+      returnPoint: definition.returnsSource === undefined ? null : returnPoint,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -1929,6 +1975,7 @@ export class StatusSet {
       outbreak: null,
       maintained: null,
       projected: true,
+      returnPoint: null,
     });
     const definition = getStatusDefinition(id);
     this.#endOnGaining(definition.category);
