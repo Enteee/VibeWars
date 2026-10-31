@@ -178,7 +178,7 @@ describe("MatchSimulation step", () => {
     expect(sim.requestSkill("a", 0)).toEqual({ skillId: FIREBALL, check: { ok: true } });
 
     const log = stepFor(sim, 1);
-    // The cast resolves and the Fireball leaves the hand: nothing yet.
+    // The cast resolves and the Fireball leaves the hand: only the use (#1735).
     expect(log).toEqual([
       {
         tick: 20,
@@ -189,7 +189,7 @@ describe("MatchSimulation step", () => {
         weaponId: undefined,
         area: undefined,
         doubleStrike: false,
-        events: [],
+        events: [{ kind: "skill-used", casterId: "a", skillId: FIREBALL, targetId: "b" }],
       },
     ]);
     expect(stepFor(sim, FIREBALL_FLIGHT)).toEqual([
@@ -961,7 +961,10 @@ describe("moving cancels a cast (#279)", () => {
     log.push(...stepFor(sim, DT + FIREBALL_FLIGHT));
 
     // Its release, then the Fireball landing.
-    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([[], ["damage"]]);
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([
+      ["skill-used"],
+      ["damage"],
+    ]);
     expect(a.combatant.cast.rechargeRemaining.has(FIREBALL)).toBe(true);
   });
 
@@ -1015,7 +1018,10 @@ describe("moving cancels a cast (#279)", () => {
     sim.setInputDirection("a", vec2(0, 0));
     const log = stepFor(sim, 0.5 + FIREBALL_FLIGHT);
 
-    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([[], ["damage"]]);
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([
+      ["skill-used"],
+      ["damage"],
+    ]);
   });
 
   it("being pushed out of another body mid-cast cancels nothing", () => {
@@ -1037,7 +1043,10 @@ describe("moving cancels a cast (#279)", () => {
     log.push(...stepFor(sim, fireballFlight(distance(a.position, b.position))));
 
     expect(a.position).not.toEqual(vec2(0, 0));
-    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([[], ["damage"]]);
+    expect(log.map((entry) => entry.events.map((event) => event.kind))).toEqual([
+      ["skill-used"],
+      ["damage"],
+    ]);
   });
 });
 

@@ -1004,6 +1004,23 @@
         {
           "properties": [
             { "name": "casterId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "effect-skipped" } },
+            { "name": "requirement", "optional": false, "type": "string" },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "casterId", "optional": false, "type": "string" },
+            { "name": "kind", "optional": false, "type": { "literal": "skill-used" } },
+            { "name": "skillId", "optional": false, "type": "string" },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "casterId", "optional": false, "type": "string" },
             { "name": "kind", "optional": false, "type": { "literal": "upkeep-lost" } },
             {
               "name": "statusId",
@@ -1968,6 +1985,14 @@
                 ]
               }
             },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "adrenaline-gained" } },
+            { "name": "skillId", "optional": false, "type": { "union": ["string", "undefined"] } },
+            { "name": "strikes", "optional": false, "type": "number" },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },

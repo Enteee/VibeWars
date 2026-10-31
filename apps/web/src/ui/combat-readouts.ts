@@ -61,12 +61,15 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
       return "heal";
     case "energy-gain":
     case "energy-loss":
+    case "adrenaline-gained":
       return "resource";
     case "status-applied":
     case "status-removed":
     case "status-expired":
     case "status-spread":
     case "upkeep-lost":
+    case "skill-used":
+    case "effect-skipped":
       return "status";
     case "interrupted":
     case "attack-interrupted":
@@ -255,7 +258,31 @@ export function describeCombatEvent(
       return `${target} shadow steps away`;
     case "teleported":
       return `${target} is teleported to ${nameOf(event.toId)}`;
+    case "skill-used":
+      return `${nameOf(event.casterId)} uses ${skillName(event.skillId) ?? event.skillId}${event.targetId === event.casterId ? "" : ` on ${target}`}`;
+    case "adrenaline-gained": {
+      const from = skillName(event.skillId ?? entry.skillId);
+      return `${target} gains ${strikesOf(event.strikes)} of adrenaline${from === undefined ? "" : ` from ${from}`}`;
+    }
+    case "effect-skipped":
+      return `${by}: no effect, ${event.requirement}`;
   }
+}
+
+/** "1 strike", "3 strikes". */
+function strikesOf(strikes: number): string {
+  return `${String(strikes)} ${strikes === 1 ? "strike" : "strikes"}`;
+}
+
+/**
+ * A blow's adrenaline (#1735) ends its hit's row, ", +1 adrenaline", so a
+ * run of hits stays one row each; `undefined` for adrenaline a skill gave,
+ * which is a row of its own.
+ */
+function hitAdrenaline(event: CombatEvent, hit: LogRow | undefined): LogRow | undefined {
+  return event.kind === "adrenaline-gained" && event.skillId === undefined && hit !== undefined
+    ? { ...hit, text: `${hit.text}, +${String(event.strikes)} adrenaline` }
+    : undefined;
 }
 
 export function combatEventToRow(
@@ -307,8 +334,15 @@ export class StatusTickBatcher {
     isCreature: (id: string) => boolean,
   ): LogRow[] {
     const rows = this.advance(entry.atSeconds, nameOf, isCreature);
+    // This entry's last hit row, which its blow's adrenaline ends (#1735).
+    let hit: number | undefined;
     for (const event of entry.events) {
       if (entry.cause !== "degeneration") {
+        const withAdrenaline = hitAdrenaline(event, hit === undefined ? undefined : rows[hit]);
+        if (withAdrenaline !== undefined && hit !== undefined) {
+          rows[hit] = withAdrenaline;
+          continue;
+        }
         // A skill or a swing can finish off someone still ticking too.
         if (event.kind === "death") {
           rows.push(
@@ -321,6 +355,7 @@ export class StatusTickBatcher {
           );
         }
         rows.push(combatEventToRow(entry, event, nameOf, isCreature));
+        hit = event.kind === "damage" ? rows.length - 1 : hit;
         continue;
       }
       if (event.kind === "damage" || event.kind === "heal") {

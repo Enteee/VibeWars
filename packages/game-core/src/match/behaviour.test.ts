@@ -80,10 +80,11 @@ describe("cast-loop", () => {
     // Fireball recharges in 7 s: one cast at t=0, released at 1 s, and the
     // next at 7 s, released at 8 s. Each lands 150 units on, 0.4 s after
     // its release (#535), and only the landing does damage.
+    const used = { kind: "skill-used", casterId: "dummy", skillId: FIREBALL, targetId: "near" };
     expect(casts.map((entry) => [entry.sourceId, entry.events[0]])).toEqual([
-      ["dummy", undefined],
+      ["dummy", used],
       ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
-      ["dummy", undefined],
+      ["dummy", used],
       ["dummy", { kind: "damage", targetId: "near", amount: 91, critical: false }],
     ]);
   });

@@ -95,6 +95,7 @@ import {
   type SlotSkill,
 } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
+import { conditionRequirementText } from "../skills/describe.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
   applyDamage,
@@ -106,6 +107,7 @@ import {
   stateHolds,
   type CombatEvent,
   type SkillOutcome,
+  type SkippedEffect,
   type SkillResolution,
 } from "../skills/effects.js";
 import {
@@ -3386,6 +3388,7 @@ export class MatchSimulation {
       rechargeLongerSeconds: 0,
       summons: [],
       grounds: [],
+      skipped: undefined,
     });
     // What the caster's statuses add to its hits, each logged apart (#939).
     const riders: FiredTrigger[] = [];
@@ -3428,7 +3431,7 @@ export class MatchSimulation {
         : this.#exploitCorpse(record, skill.corpse, targetRecord);
     const sacrifice = corpse === undefined ? skill.corpse?.elseSacrificePercent : undefined;
     const site = corpse ?? (sacrifice === undefined ? undefined : record);
-    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds } =
+    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
         : resolve({
@@ -3504,7 +3507,7 @@ export class MatchSimulation {
             : [];
         }),
       );
-      this.#gainAdrenaline(record, landed, foesHit.size);
+      this.#gainAdrenaline(record, landed, events, foesHit.size);
     }
     if (skill.type === "shout" || skill.type === "chant") {
       this.#gainLeadershipEnergy(record, events);
@@ -3594,6 +3597,12 @@ export class MatchSimulation {
         record.combatant.cast.disable(cast.key, skill.disabledAfterUseSeconds);
       }
     }
+    // The use itself leads its entry (#1735), and one that did nothing says
+    // why. A cast whose target is gone went off at nothing: no use to tell.
+    const usedEvents: CombatEvent[] =
+      primary === undefined
+        ? []
+        : [{ kind: "skill-used", casterId: record.id, skillId: skill.id, targetId: primary.id }];
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
@@ -3604,7 +3613,7 @@ export class MatchSimulation {
       attributeId: undefined,
       area,
       doubleStrike: false,
-      events,
+      events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped)],
     });
     this.#logFired(riders);
     // After the skill's own effects, as their own entries (#469): a spell
@@ -3628,6 +3637,25 @@ export class MatchSimulation {
     if (skill.attack !== undefined) {
       this.#fireTriggers(record, "bearer-attacks", spared);
     }
+  }
+
+  /** What `record`'s use of `skill` that did nothing says (#1735): why, if an `if` did not hold. */
+  #skippedEvent(
+    record: ParticipantRecord,
+    skill: Skill,
+    skipped: SkippedEffect | undefined,
+  ): CombatEvent[] {
+    return skipped === undefined
+      ? []
+      : [
+          {
+            kind: "effect-skipped",
+            casterId: record.id,
+            targetId: skipped.targetId,
+            skillId: skill.id,
+            requirement: conditionRequirementText(skipped.condition),
+          },
+        ];
   }
 
   /**
@@ -4730,7 +4758,7 @@ export class MatchSimulation {
       rules: this.#ruleset.combat,
       exposed: this.#exposedTo(record),
     });
-    this.#gainAdrenaline(record, events, landed);
+    this.#gainAdrenaline(record, events, events, landed);
     this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
@@ -5067,7 +5095,7 @@ export class MatchSimulation {
       !blocked &&
       (skillHit === undefined || !losesAllAdrenaline(skillHit.skill))
     ) {
-      this.#gainAdrenaline(attacker, events);
+      this.#gainAdrenaline(attacker, events, events);
     }
     this.#chargeFromDamage(attacker?.combatant, events);
     this.#recordDeaths(events);
@@ -5227,7 +5255,7 @@ export class MatchSimulation {
       return;
     }
     const { skill, caster } = spell;
-    const events = applySkillEffects({
+    const { events, skipped } = resolveSkillEffects({
       skill,
       caster,
       targets: resolveTargets({
@@ -5249,7 +5277,14 @@ export class MatchSimulation {
       skill.area === undefined || skill.area.origin === "party"
         ? undefined
         : { x: target.position.x, y: target.position.y, radius: skill.area.radius };
-    this.#logShot(projectile, events, area);
+    const casterRecord = this.#participants.get(projectile.attackerId);
+    this.#logShot(
+      projectile,
+      casterRecord === undefined
+        ? events
+        : [...events, ...this.#skippedEvent(casterRecord, skill, skipped)],
+      area,
+    );
   }
 
   /** Whether a shot landing now finds its target where it was aimed: their body plus the tolerance. */
@@ -5348,16 +5383,25 @@ export class MatchSimulation {
    * of a swing, so
    * a double strike earns two. A blocked blow deals no damage, so it earns
    * nothing (#534). "For Great Justice!" (#936) adds its extra strikes
-   * to each.
+   * to each. What filled is told in `log` (#1735), the events logged
+   * for the blow.
    */
-  #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[], blows = 1): void {
+  #gainAdrenaline(
+    record: ParticipantRecord,
+    events: readonly CombatEvent[],
+    log: CombatEvent[],
+    blows = 1,
+  ): void {
     const damagedFoe = events.some((event) => {
       const victim = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
       return victim !== undefined && victim.combatant.team !== record.combatant.team;
     });
     if (damagedFoe) {
       const { extraStrikesPerHit } = aggregateModifiers(record.combatant.statuses.active);
-      gainStrikes(record.combatant, blows * (1 + extraStrikesPerHit), this.#elapsedSeconds);
+      const strikes = blows * (1 + extraStrikesPerHit);
+      if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds)) {
+        log.push({ kind: "adrenaline-gained", targetId: record.id, strikes, skillId: undefined });
+      }
     }
   }
 
