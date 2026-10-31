@@ -34,6 +34,8 @@ export interface RailParty {
   readonly members: readonly PartyMember[];
   /** How long the party has looked for a team (#1766); `null` while not queued. */
   readonly queuedMs: number | null;
+  /** Teams its queue hears searching, its own included (#1881); `undefined` until it says. */
+  readonly teams: number | undefined;
 }
 
 /** Beside a member whose connection dropped, while its seat is held (#1764). */
@@ -41,15 +43,33 @@ export const PARTY_RECONNECTING = "Reconnecting…";
 /** A guest's word that its host has the lobby closed (#1682). */
 export const PARTY_CLOSED = "Lobby closed";
 
-/** The strip's line while the party is queued (#1766): "Looking for a team… 1:05". */
-export function lookingLabel(queuedMs: number): string {
-  return `Looking for a team… ${waitedLabel(queuedMs)}`;
+/**
+ * The strip's line while the party is queued (#1766): "Looking for a
+ * team… 1:05 · 2 teams searching", the time alone until the queue says
+ * how many (#1881). Its own team always counts, so none means none heard
+ * yet: a leader before its first tick, or a follower before it hears its
+ * leader's ticket.
+ */
+export function lookingLabel(queuedMs: number, teams: number | undefined): string {
+  const looking = `Looking for a team… ${waitedLabel(queuedMs)}`;
+  if (teams === undefined || teams === 0) {
+    return looking;
+  }
+  return `${looking} · ${String(teams)} ${teams === 1 ? "team" : "teams"} searching`;
 }
 
-/** `snapshot`'s party, queued for `queuedMs` or not: its people, in lobby order. */
-export function partyOf(snapshot: LobbySnapshot, queuedMs: number | null): RailParty {
+/**
+ * `snapshot`'s party, queued for `queuedMs` among `teams` or not: its
+ * people, in lobby order.
+ */
+export function partyOf(
+  snapshot: LobbySnapshot,
+  queuedMs: number | null,
+  teams: number | undefined,
+): RailParty {
   return {
     queuedMs,
+    teams,
     code: snapshot.code,
     mode: snapshot.mode,
     isHost: snapshot.isHost,
@@ -110,7 +130,7 @@ export function partyStrip(party: RailParty): HTMLElement {
   }
   strip.appendChild(list);
   if (party.queuedMs !== null) {
-    strip.appendChild(h("span", "party-queued", lookingLabel(party.queuedMs)));
+    strip.appendChild(h("span", "party-queued", lookingLabel(party.queuedMs, party.teams)));
   }
   if (showsClosed(party)) {
     strip.appendChild(h("span", "party-closed", PARTY_CLOSED));

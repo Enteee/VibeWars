@@ -407,6 +407,21 @@ export interface RandomArenaQueue {
 }
 
 /**
+ * Call `leave` when `target`'s page goes away (#1881), so a closed tab
+ * withdraws its ticket rather than leaving others to match it until it
+ * expires. Best effort; the returned call stops listening.
+ */
+export function leaveOnPageHide(target: EventTarget, leave: () => void): () => void {
+  const onPageHide = (): void => {
+    leave();
+  };
+  target.addEventListener("pagehide", onPageHide);
+  return () => {
+    target.removeEventListener("pagehide", onPageHide);
+  };
+}
+
+/**
  * Queue for a Random Arena of `mode` as `name` of `guild`, bringing `character`
  * (#854 C1–C7): a ticket on the board `joinQueueBoard` picks, ticked from
  * the host clock so a background tab keeps its place. When a group
@@ -446,6 +461,9 @@ export function enterQueue(
       void client.tick();
     }
   });
+  const stopPageHide = leaveOnPageHide(window, () => {
+    finish();
+  });
 
   /** Stop queueing for good; whether this call was the one that stopped it. */
   const finish = (): boolean => {
@@ -454,6 +472,7 @@ export function enterQueue(
     }
     done = true;
     stopClock();
+    stopPageHide();
     client.leave();
     queue.close();
     return true;
