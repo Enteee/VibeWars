@@ -92,9 +92,9 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   return jobs.map(({ specs, repeat }) => ({ specs, repeat }));
 };
 
-/** Test runs per job: PR 1542's repeat jobs ran 187 tests in 29 min (~9.7 s each, 177 timed), so 80 is ~13 min, leaving the 30 min cap its margin for setup, build and a slow runner. */
-export const RUNS_PER_JOB = 80;
-export const MAX_JOBS = 40;
+/** Test runs per job: PR 1542's repeat jobs ran 187 tests in 29 min (~9.7 s each, 177 timed), so 160 is ~26 min, leaving the 45 min cap its margin for setup, build and a slow runner. Fewer, fuller jobs queue for fewer runners (#1884). */
+export const RUNS_PER_JOB = 160;
+export const MAX_JOBS = 6;
 export const REPEATS = 10;
 /**
  * Throws unless the Playwright JSON report ran at least one test. Skipped

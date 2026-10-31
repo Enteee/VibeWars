@@ -3,8 +3,9 @@ name: e2e repeat
 # Repeats the e2e specs a pull request adds or changes, ten times, and fails
 # on any failure (#216). A `plan` job packs whole specs into jobs (#1566),
 # so every spec gets exactly ten runs across the jobs and a job holds about
-# 80 test runs: PR 1542's old jobs ran 187 tests in 29 min (~9.7 s a test), so
-# 80 is ~13 min plus setup, well inside the 30-minute cap. A PR too big for 40
+# 160 test runs: PR 1542's old jobs ran 187 tests in 29 min (~9.7 s a test), so
+# 160 is ~26 min plus setup, inside the 45-minute cap. Few full jobs wait on
+# fewer runners than many small ones did (#1884). A PR too big for 6
 # jobs fails `plan` with a refusal instead of timing out. Playwright's own
 # --shard is not used: it splits by test count and can leave a shard empty.
 # A 1-in-10 flake survives ten runs 35% of the time, so qa-tester's
@@ -86,7 +87,7 @@ jobs:
         include: ${{ fromJSON(needs.plan.outputs.matrix) }}
     # Two runs of a few specs take minutes. Without a cap, a hang would sit
     # pending for six hours, and hubd blocks the merge while it does.
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       SPECS: ${{ matrix.specs }}
       REPEAT: ${{ matrix.repeat }}
