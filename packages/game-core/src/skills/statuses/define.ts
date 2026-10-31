@@ -41,6 +41,8 @@ export function define(
     preventsSpells: false,
     preventsAttacks: false,
     untargetableByFoeSpells: false,
+    preventsEnchantments: false,
+    preventsShoutsAndChants: false,
     unblockableBySource: false,
     preventsBlocking: false,
     renewsWhileMoving: undefined,
