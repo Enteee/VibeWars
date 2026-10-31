@@ -33,7 +33,7 @@ import {
   type LobbyPhase,
   type WireChainMark,
 } from "./protocol.js";
-import { isQueueMode, type QueueMode } from "./queue.js";
+import { inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -906,7 +906,7 @@ export interface PeerStayTogether {
 
 /**
  * The host to each winner who said yes, and only to it, once every winner
- * did (#1078): the group they won, their keys, sorted, and the mode the
+ * did (#1078): the group they won, their keys in party order, and the mode the
  * party queues for (#1766). Each signs its consent to exactly this party,
  * or the party does not form.
  */
@@ -931,7 +931,7 @@ export interface PeerPartyConsent {
 
 /**
  * The host to each winner who said yes, and only to it (#882): every
- * winner consented, and these are their keys, sorted, with each one's
+ * winner consented, and these are their keys in party order, with each one's
  * consent, `consents[i]` by `members[i]` (#1078). They queue as one party.
  */
 export interface WirePartyFormed {
@@ -2280,20 +2280,19 @@ export function parsePeerStayTogether(value: unknown): PeerStayTogether | undefi
 /** The longest party there is: an 8v8 side (`teamSizeOf`). */
 const MAX_PARTY_MEMBERS = 8;
 
-/** A party's members: two or more keys, sorted, each once. */
+/** A party's members: two or more keys, each once, in party order (`inPartyOrder`). */
 function parsePartyMembers(value: unknown): string[] | undefined {
   if (!Array.isArray(value) || value.length < 2 || value.length > MAX_PARTY_MEMBERS) {
     return undefined;
   }
   const keys: string[] = [];
   for (const member of value as readonly unknown[]) {
-    const previous = keys.at(-1);
-    if (!isTicketId(member) || (previous !== undefined && previous >= member)) {
+    if (!isTicketId(member)) {
       return undefined;
     }
     keys.push(member);
   }
-  return keys;
+  return inPartyOrder(keys) ? keys : undefined;
 }
 
 /** The `"party-proposal"` channel: a group id, the party's members and its mode. */

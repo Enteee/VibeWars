@@ -814,6 +814,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWirePartyProposal,
     proposalOf(["ab".repeat(32), "cd".repeat(32)]),
   ],
+  [
+    "party-proposal led by its host, the rest sorted (#1766)",
+    parseWirePartyProposal,
+    proposalOf(["ef".repeat(32), "ab".repeat(32), "cd".repeat(32)]),
+  ],
   ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
   ["lobby-move (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP" }],
@@ -1730,9 +1735,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-proposal of one (#1078)", parseWirePartyProposal, proposalOf(["ab".repeat(32)])],
   [
-    "party-proposal unsorted (#1078)",
+    "party-proposal unsorted after its leader (#1078, #1766)",
     parseWirePartyProposal,
-    proposalOf(["cd".repeat(32), "ab".repeat(32)]),
+    proposalOf(["ab".repeat(32), "ef".repeat(32), "cd".repeat(32)]),
   ],
   [
     "party-proposal with no group (#1078)",
@@ -1762,9 +1767,14 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-formed of one (#882)", parseWirePartyFormed, partyOf(["ab".repeat(32)])],
   [
-    "party-formed unsorted (#882)",
+    "party-formed unsorted after its leader (#882, #1766)",
     parseWirePartyFormed,
-    partyOf(["cd".repeat(32), "ab".repeat(32)]),
+    partyOf(["ab".repeat(32), "ef".repeat(32), "cd".repeat(32)]),
+  ],
+  [
+    "party-formed with its leader twice (#1766)",
+    parseWirePartyFormed,
+    partyOf(["cd".repeat(32), "ab".repeat(32), "cd".repeat(32)]),
   ],
   [
     "party-formed with a key twice (#882)",

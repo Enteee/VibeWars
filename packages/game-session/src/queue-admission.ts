@@ -15,7 +15,7 @@ import type { TicketKey } from "./queue-client.js";
  * Whose proof a digest is for: a joiner's, the host's welcome to one, or a
  * party member's consent to the party (#1078), which signs
  * `("vibewars-party", groupId, members.join(""), mode)`: the group it
- * won, its members, sorted 64-hex keys, so the concatenation is
+ * won, its members, 64-hex keys in party order, so the concatenation is
  * unambiguous, and the mode it queues for (#1766).
  */
 export type AdmissionTag = "vibewars-admit" | "vibewars-host" | "vibewars-party";
