@@ -21,7 +21,8 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 
-import { buildLine, head, manifest, readManifest } from "./fingerprint.mjs";
+import { readLock } from "./company-lock.mjs";
+import { buildLine, manifest, readManifest } from "./fingerprint.mjs";
 import { readBoardState } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { readSpend } from "./hub-spend.mjs";
@@ -109,7 +110,8 @@ function reboot(live) {
 
 /**
  * The build this dashboard runs, which is the company's (claude-llc starts
- * it from the same store copy), against the checkout (#557). `null` when it
+ * it from the same store copy), against the tree it was built from: the
+ * locked tree (#557, #1861). `null` when it
  * runs from the checkout itself, which has no build manifest.
  *
  * @returns {import("./dashboard-view.mjs").CompanyFacts["build"]}
@@ -122,8 +124,13 @@ function build() {
   } catch {
     return null;
   }
-  const repo = process.env.DEVENV_ROOT ?? path.dirname(ROOT);
-  return buildLine({ build: built, checkout: manifest(repo), head: head(repo) });
+  const code = process.env.VIBEWARS_CODE ?? path.dirname(ROOT);
+  const lock = readLock(ROOT);
+  return buildLine({
+    build: built,
+    checkout: manifest(code),
+    sha: typeof lock === "string" ? "?" : lock.sha,
+  });
 }
 
 /** @returns {{ project: number, owner: string, columns: string[], maxAgents: number | null } | null} */
@@ -229,12 +236,12 @@ function nudges(staff, now) {
   let schedule;
   try {
     schedule = [
-      // The checkout's copy, as hubd reads it: the staged scripts (nix store)
-      // hold only the .mjs files, so nothing sits beside this one.
+      // The locked tree's copy, as hubd reads it: the staged scripts (nix
+      // store) hold only the .mjs files, so nothing sits beside this one.
       ...parseSchedule(
         fs.readFileSync(
           path.join(
-            process.env.DEVENV_ROOT ?? path.dirname(ROOT),
+            process.env.VIBEWARS_CODE ?? path.dirname(ROOT),
             "scripts",
             "bots",
             "schedule.json",

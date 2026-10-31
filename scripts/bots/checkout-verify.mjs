@@ -19,6 +19,27 @@ import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
  * @returns {string[]} paths whose content is not the mirror's or that the commit lacks, empty when the checkout is `sha`
  */
 export function tamperedPaths({ mirror, repoDir, sha }) {
+  return compare({ mirror, repoDir, sha }, true);
+}
+
+/**
+ * The same check for a tree written from the mirror alone, the locked tree
+ * (#1861): its git repository is its own and holds no commit, so there is
+ * no second store to list the commit through.
+ *
+ * @param {{ mirror: string, dir: string, sha: string }} where
+ * @returns {string[]} paths whose content is not the mirror's or that the commit lacks, empty when `dir` is `sha`
+ */
+export function treeMismatches({ mirror, dir, sha }) {
+  return compare({ mirror, repoDir: dir, sha }, false);
+}
+
+/**
+ * @param {{ mirror: string, repoDir: string, sha: string }} where
+ * @param {boolean} bothStores whether `repoDir`'s own store must list the commit as the mirror does
+ * @returns {string[]}
+ */
+function compare({ mirror, repoDir, sha }, bothStores) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "checkout-verify-"));
   try {
     const env = {
@@ -49,6 +70,9 @@ export function tamperedPaths({ mirror, repoDir, sha }) {
     // What the merge wrote follows the trees in the shared store. Ignored paths
     // hide from the checks above, so list the commit through both stores.
     const lines = (/** @type {string} */ text) => text.split("\n").filter((line) => line !== "");
+    if (!bothStores) {
+      return [...new Set([...lines(diff.stdout), ...lines(others.stdout)])];
+    }
     const theirs = new Set(lines(git(["ls-tree", "-r", sha]).stdout));
     const viaCheckout = spawnSync("git", [...GIT_HARDENING, "-C", repoDir, "ls-tree", "-r", sha], {
       env: { ...process.env, ...GIT_ENV },
@@ -97,5 +121,32 @@ export function updateFilesFromMirror({ mirror, repoDir, from, to }) {
     return git(["read-tree", "-m", "-u", from, to]).status === 0;
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Write `sha`'s files into the empty directory `dir`, reading them from the
+ * mirror alone: `GIT_DIR` is the mirror and the index a scratch one, so no
+ * object in the checkout's shared store can write a file.
+ *
+ * @param {{ mirror: string, dir: string, sha: string }} where
+ * @returns {boolean} false when git refused
+ */
+export function writeTreeFromMirror({ mirror, dir, sha }) {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "checkout-write-"));
+  try {
+    const env = {
+      ...process.env,
+      ...GIT_ENV,
+      GIT_DIR: mirror,
+      GIT_WORK_TREE: dir,
+      GIT_INDEX_FILE: path.join(scratch, "index"),
+    };
+    /** @param {string[]} args */
+    const git = (args) =>
+      spawnSync("git", [...GIT_HARDENING, ...args], { env, cwd: dir, encoding: "utf8" });
+    return git(["read-tree", sha]).status === 0 && git(["checkout-index", "-a"]).status === 0;
+  } finally {
+    fs.rmSync(scratch, { recursive: true, force: true });
   }
 }

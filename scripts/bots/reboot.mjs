@@ -214,33 +214,6 @@ export function drainStep({ now, reboot, running, between, inflight, drainedAt }
 }
 
 /**
- * Whether the operator's checkout may be moved to the new `main`.
- *
- * Only a fast-forward of a clean `main`. Anything else, and the company
- * restarts on the code it has, and the operator is told why: their checkout
- * is never stashed, reset or switched.
- *
- * @param {{ branch: string | null, dirty: boolean, fastForward: boolean }} checkout
- *   `branch` is `null` when detached
- * @returns {{ update: true } | { update: false, reason: string }}
- */
-export function fastForwardDecision({ branch, dirty, fastForward }) {
-  if (branch !== "main") {
-    return {
-      update: false,
-      reason: `checkout is on ${branch === null ? "a detached HEAD" : `branch ${branch}`}`,
-    };
-  }
-  if (dirty) {
-    return { update: false, reason: "checkout has local changes" };
-  }
-  if (!fastForward) {
-    return { update: false, reason: "checkout's main has commits GitHub's main does not" };
-  }
-  return { update: true };
-}
-
-/**
  * What hubd broadcasts to everyone, operator included, once the operator
  * approved the manager's reboot.
  *

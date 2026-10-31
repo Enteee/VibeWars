@@ -13,7 +13,6 @@ import {
   bootNote,
   decideProposal,
   drainStep,
-  fastForwardDecision,
   parseDecision,
   parseProposal,
   parseReboot,
@@ -235,32 +234,6 @@ describe("drainStep", () => {
       drainStep({ ...drained, drainedAt: base.now, now: base.now + INFLIGHT_GRACE_MS }).stop,
     ).toBe(true);
     expect(drainStep({ ...drained, drainedAt: base.now, inflight: 0 }).stop).toBe(true);
-  });
-});
-
-describe("fastForwardDecision", () => {
-  it("updates only a clean main that fast-forwards", () => {
-    expect(fastForwardDecision({ branch: "main", dirty: false, fastForward: true })).toEqual({
-      update: true,
-    });
-  });
-
-  it("never touches a checkout on another branch, with changes, or diverged", () => {
-    expect(fastForwardDecision({ branch: "feature", dirty: false, fastForward: true })).toEqual({
-      update: false,
-      reason: "checkout is on branch feature",
-    });
-    expect(fastForwardDecision({ branch: null, dirty: false, fastForward: true })).toEqual({
-      update: false,
-      reason: "checkout is on a detached HEAD",
-    });
-    expect(fastForwardDecision({ branch: "main", dirty: true, fastForward: true })).toEqual({
-      update: false,
-      reason: "checkout has local changes",
-    });
-    expect(fastForwardDecision({ branch: "main", dirty: false, fastForward: false })).toMatchObject(
-      { update: false },
-    );
   });
 });
 
