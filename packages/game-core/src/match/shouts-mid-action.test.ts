@@ -181,6 +181,16 @@ describe("shouts and stances mid-action (#1725)", () => {
     expect(match.requestSkill("w", 1)?.check).toEqual({ ok: false, reason: "still-recharging" });
   });
 
+  it("pressed twice in one tick standing, a shout goes off once", () => {
+    const match = sim();
+    const energy = get(match, "w").combatant.energy;
+    expect(match.requestSkill("w", 2)?.check).toEqual({ ok: true });
+    match.requestSkill("w", 2);
+    const log = stepFor(match, 0.5);
+    expect(usedTicks(log, FOR_GREAT_JUSTICE)).toHaveLength(1);
+    expect(get(match, "w").combatant.energy).toBeGreaterThanOrEqual(energy - 5);
+  });
+
   it("dead, a shout is still refused", () => {
     const match = sim();
     const w = get(match, "w").combatant;
