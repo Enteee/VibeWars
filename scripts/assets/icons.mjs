@@ -950,7 +950,7 @@ const skillGlyph = {
   "dagger-repeat": () =>
     strikeWith(`<path d="M19 9A8 8 0 1 0 20 13" ${stroke(C.ink, 3)}/>` + inkFill("M22 2V10H14Z")),
   // The blade with spikes rising out of the ground: earth damage and a wound.
-  "dagger-spikes": () => strikeWith(inkLine("M1 21L6 5L11 21L16 5L21 21", 3.4)),
+  "dagger-spikes": () => strikeWith(inkLine("M1 21L6 5L11 21L16 5L21 21", 3.4), true),
   // Chevrons forward over chevrons dragged against a bar: slow them, speed yourself.
   "chevrons-siphon": () =>
     inkLine("M3 4L7 8L3 12M9 4L13 8L9 12M15 4L19 8L15 12", 2.2) +
