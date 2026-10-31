@@ -18,6 +18,7 @@ import {
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
+import { MESSAGE_BURST, MESSAGES_PER_SECOND } from "./intent-budget.js";
 import { KEY_PROOF_TIMEOUT_MS, keyGated } from "./key-gate.js";
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import {
@@ -1413,6 +1414,39 @@ describe("the key gate (#1681, ADR-0043)", () => {
     await until(() => proven(got));
     peer.send("lobby-join", joinAs("Again"), "host");
     await until(() => playersOf(lobby.host).length === 2);
+  });
+
+  it("challenges a proven peer that asks again inside the gate: it keeps its seat and its spent budget (#1681)", async () => {
+    const lobby = await openLobby();
+    const peer = lobby.network.join();
+    const got = heard(peer);
+    await settle();
+    await prove(peer, got);
+    await until(() => proven(got));
+    peer.send("lobby-join", joinAs("Flooder"), "host");
+    await until(() => playersOf(lobby.host).length === 2);
+    for (let i = 0; i < MESSAGE_BURST; i += 1) {
+      peer.send("lobby-cmd", { kind: "ready", ready: false }, "host");
+    }
+    await settle();
+
+    got.length = 0;
+    peer.send("key-ask", {}, "host");
+    await until(() => channels(got).includes("key-challenge"));
+    // Unheard while it proves the key again, though still listed.
+    peer.send("lobby-cmd", { kind: "choose-team", team: 1 }, "host");
+    await settle();
+    expect(playersOf(lobby.host)[1]).toEqual({ name: "Flooder", team: null, ready: false });
+    await prove(peer, got);
+    await until(() => proven(got));
+    // A leave would have refilled its budget: there was none.
+    peer.send("lobby-cmd", { kind: "choose-team", team: 0 }, "host");
+    await settle();
+    expect(playersOf(lobby.host)[1]).toEqual({ name: "Flooder", team: null, ready: false });
+    await lobby.step(2 / MESSAGES_PER_SECOND);
+    peer.send("lobby-cmd", { kind: "choose-team", team: 0 }, "host");
+    await settle();
+    expect(playersOf(lobby.host)[1]?.team).toBe(0);
   });
 
   it("drops a peer on a wrong proof: the nonce is spent, so a right one after it is not heard", async () => {

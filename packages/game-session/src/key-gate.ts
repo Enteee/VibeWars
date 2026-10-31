@@ -31,7 +31,9 @@ import type { Json, Transport } from "./transport.js";
  * one coming back proves the key again, and so does the host. A guest
  * challenged again by a host it had proven sees that host leave first;
  * one back from a drop the host may not have seen sends `key-ask`, and
- * a host that still holds it proven forgets it and challenges it again.
+ * a host that still holds it proven challenges it again. That stays
+ * inside the gate: above it, the peer neither leaves nor joins, so a
+ * `key-ask` is no way to the fresh rate-limit budgets a leave brings.
  */
 
 /** How long a challenged peer has to prove the key. */
@@ -114,6 +116,13 @@ export function keyGated(
   const handlers = new Map<Channel, Set<Handler>>();
   const joins = new Set<(peerId: string) => void>();
   const leaves = new Set<(peerId: string) => void>();
+  /**
+   * Peers the layers above were told joined and not yet told left. A
+   * peer proving the key again stays in it: what is above never sees a
+   * key-ask, so a leave cannot be had for one message (a leave refills
+   * the rate-limit budgets).
+   */
+  const told = new Set<string>();
   let order = 0;
   let left = false;
 
@@ -126,10 +135,31 @@ export function keyGated(
     }
   };
 
+  const tellJoin = (peerId: string): void => {
+    if (told.has(peerId)) {
+      return;
+    }
+    told.add(peerId);
+    for (const handler of [...joins]) {
+      handler(peerId);
+    }
+  };
+
+  const tellLeave = (peerId: string): void => {
+    if (!told.delete(peerId)) {
+      return;
+    }
+    for (const handler of [...leaves]) {
+      handler(peerId);
+    }
+  };
+
+  /** Forgotten, and gone as far as the layers above know. */
   const drop = (peerId: string): void => {
     peers.delete(peerId);
     clearTimeout(timers.get(peerId));
     timers.delete(peerId);
+    tellLeave(peerId);
   };
 
   /** `peerId` proved the key: it joins, and hears what was held for it. */
@@ -140,9 +170,7 @@ export function keyGated(
     if (!present.has(peerId)) {
       return;
     }
-    for (const handler of [...joins]) {
-      handler(peerId);
-    }
+    tellJoin(peerId);
     for (const [channel, data] of held) {
       if (proven(peerId)) {
         deliver(channel, data, peerId);
@@ -159,6 +187,7 @@ export function keyGated(
       }
     }
     const fresh = nonce();
+    clearTimeout(timers.get(peerId));
     peers.set(peerId, { stage: "challenged", nonce: fresh, since: (order += 1) });
     timers.set(
       peerId,
@@ -179,27 +208,19 @@ export function keyGated(
         // would never challenge again: ask it to.
         transport.send("key-ask", {} satisfies WireKeyAsk, peerId);
       } else if (proven(peerId)) {
-        for (const handler of [...joins]) {
-          handler(peerId);
-        }
+        tellJoin(peerId);
       } else if (side === "host" && !peers.has(peerId)) {
         challenge(peerId);
       }
     }),
     transport.onPeerLeave((peerId) => {
-      const was = proven(peerId);
+      if (side === "guest" && proven(peerId)) {
+        lapsed.add(peerId);
+      }
       present.delete(peerId);
       // Forgotten, proven or not: a peer id is the peer's own choice and
       // shows on the relays, so one coming back proves the key again.
       drop(peerId);
-      if (was) {
-        if (side === "guest") {
-          lapsed.add(peerId);
-        }
-        for (const handler of [...leaves]) {
-          handler(peerId);
-        }
-      }
     }),
     transport.on("key-proof", (data, from) => {
       const peer = peers.get(from);
@@ -240,11 +261,8 @@ export function keyGated(
       if (side !== "host" || !proven(from)) {
         return;
       }
-      // It saw us drop and forgot us: it is unheard until it proves the key again.
-      drop(from);
-      for (const handler of [...leaves]) {
-        handler(from);
-      }
+      // It saw us drop and forgot us: unheard until it proves the key
+      // again, though still here for what is above; failing, it is dropped.
       challenge(from);
     }),
     transport.on("key-challenge", (data, from) => {
@@ -254,15 +272,10 @@ export function keyGated(
       if (side !== "guest" || asked === undefined || (peers.has(from) && !proven(from))) {
         return;
       }
-      const was = proven(from);
       const answered: Peer = { stage: "answered", hostNonce: asked.nonce, guestNonce: nonce() };
       peers.set(from, answered);
-      if (was) {
-        // Unheard until it proves itself again: it left, as far as we know.
-        for (const handler of [...leaves]) {
-          handler(from);
-        }
-      }
+      // Unheard until it proves itself again: it forgot us, so it left.
+      tellLeave(from);
       void (async () => {
         const mac = await sign(
           macInput("guest", answered.hostNonce, answered.guestNonce, selfId, from),
