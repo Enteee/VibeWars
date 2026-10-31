@@ -109,8 +109,8 @@ jobs:
           git show "origin/$BASE_REF:pnpm-lock.yaml" > "$RUNNER_TEMP/base-lock.yaml"
           devenv shell -- node scripts/ci/lockfile-age.mjs "$RUNNER_TEMP/base-lock.yaml" pnpm-lock.yaml
 
-  # is spread over six shards (#1610, #1797), split by test, so a pull request waits one sixth of
-  # is spread over four shards (#1610) so a pull request waits one quarter of
+  # The `e2e` check (EXPECTED_CHECKS, #132) is the aggregate below; the work
+  # is spread over six shards (#1610, #1797) so a pull request waits one sixth of
   # the suite. Each shard builds for itself: the build is a small part of the
   # run, and sharing it would add an artifact round trip and a `needs:`.
   # The shard has no `name:` on purpose: hub-guards.test.mjs ties every named
