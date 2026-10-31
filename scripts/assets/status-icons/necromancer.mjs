@@ -97,24 +97,27 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M12 2.5L19 5V10C19 13 16 15 12 16.5C8 15 5 13 5 10V5Z" ${stroke(c, 2)}/>` +
       `<path d="M12 3L10 7.5L13.5 10L11 15" ${stroke(c, 1.6)}/>`,
   ],
-  // Skill effects inside the wells of #1730, stand-ins: a regeneration
-  // arrow, an arrow and a bolt, a degeneration bolt, each over the ground.
+  // Skill effects inside the wells of #1730, the skills' shapes: the
+  // ring under a plus, a plus and a bolt, a sinking bolt.
   "well-of-blood": [
     "skill-effect",
-    (c) => `<path d="M8 13l4-4 4 4" ${stroke(c, 2)}/>` + `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+    (c) =>
+      `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
+      `<path d="M12 3v10M7 8h10" ${stroke(c, 2.6)}/>`,
   ],
   "well-of-power": [
     "skill-effect",
     (c) =>
-      `<path d="M6 13l3-3 3 3" ${stroke(c, 2)}/>` +
-      `<path d="M16 6.5l-2.5 4h2l-1 3.5 3-4.5h-2z" fill="${c}"/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
+      `<path d="M7 4v8M3 8h8" ${stroke(c, 2.4)}/>` +
+      `<path d="M18 2.5l-4.5 7h3l-1.5 5 5-7h-3z" fill="${c}"/>`,
   ],
   "well-of-weariness": [
     "skill-effect",
     (c) =>
-      `<path d="M13 5.5l-3 5h2.5l-1.5 4 4-5.5h-2.5z" fill="${c}"/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+      `<ellipse cx="12" cy="18" rx="9" ry="3.5" ${stroke(c, 2)}/>` +
+      `<path d="M10 2L4.5 10h3.5L6.5 15l5.5-8h-3.5z" fill="${c}"/>` +
+      `<path d="M17 5v7M14 9.5l3 3.5 3-3.5" ${stroke(c, 2.2)}/>`,
   ],
   // Hex: a barbed line, physical hits hurt more (#1332).
   barbs: [
