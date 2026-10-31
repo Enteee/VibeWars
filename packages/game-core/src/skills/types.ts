@@ -566,13 +566,16 @@ export interface CasterGainsStatusEffect {
  * caster's side instead, the caster included (#1316): Spirit's Gift's "all
  * allies near that creature". `party` reaches the caster's side's players,
  * never a creature (#1434): Protective Was Kaolai's "all party members",
- * at a radius of `Infinity`, as `PartyArea` reaches them. `around`:
- * `"caster"` centres it on the caster instead, whatever it targeted
- * (#1826): Return's "all adjacent foes", cast on an ally.
+ * at a radius of `Infinity`, as `PartyArea` reaches them. `own-spirits`
+ * reaches the caster's own living spirits (#1777), and is the one measured
+ * from the caster, not the target: GW1's "your spirits within earshot" is
+ * earshot of you, even when the skill strikes a foe (Spirit Boon Strike).
+ * `around: "caster"` centres it on the caster instead, whatever it
+ * targeted (#1826): Return's "all adjacent foes", cast on an ally.
  */
 export interface SplashEffect {
   readonly kind: "splash";
-  readonly hits: "foes" | "foe-creatures" | "allies" | "party";
+  readonly hits: "foes" | "foe-creatures" | "allies" | "party" | "own-spirits";
   readonly radius: number;
   readonly around?: "caster";
   /**
@@ -581,6 +584,15 @@ export interface SplashEffect {
    */
   readonly maxTargets: number | undefined;
   readonly effects: readonly UnconditionalEffect[];
+}
+
+/**
+ * The skill's target is put beside the caster (#1777): Draw Spirit's
+ * "teleport target allied spirit to your location". A spirit never walks,
+ * so it stays there; it keeps its owner and its timer.
+ */
+export interface PullToCasterEffect {
+  readonly kind: "pull-to-caster";
 }
 
 /**
@@ -1173,6 +1185,7 @@ export type UnconditionalEffect =
   | CasterGainsStatusEffect
   | RechargeFasterEffect
   | SplashEffect
+  | PullToCasterEffect
   | DestroyTargetSpiritEffect
   | DestroyAlliedSpiritsEffect
   | RechargeOthersEffect
