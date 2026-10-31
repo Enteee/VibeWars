@@ -61,7 +61,10 @@ export default defineConfig({
   // flaky test that CI hides is worse than no test. Retries stay at zero
   // so flakiness has to be fixed rather than absorbed.
   retries: 0,
-  fullyParallel: false,
+  // Playwright shards by test only when tests may run in parallel, else by
+  // file, and training.spec.ts alone is 11 minutes (#1797). One worker still
+  // runs a shard's tests one after another.
+  fullyParallel: true,
   workers: 1,
   timeout: 60_000,
   expect: { timeout: 15_000 },
