@@ -535,14 +535,27 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ? { ...seat, bot: false, build }
         : { ...seat, bot: true, build: build ?? member.bot };
     };
-    // One away (#1764) is not seated: its window runs on through the match.
-    const seats: PlannedSeats = new Map(
-      [...members.values()].flatMap((member) =>
-        member.team === null || away.has(member.id)
-          ? []
-          : [[member.id, seatOf(member, member.team)] as const],
-      ),
-    );
+    // One away (#1764) is not seated: a bot plays its slot, as `remove`
+    // fills a seat, and its window runs on through the match.
+    const seats = new Map<string, PlannedSeat>();
+    for (const member of members.values()) {
+      if (member.team === null) {
+        continue;
+      }
+      if (!away.has(member.id)) {
+        seats.set(member.id, seatOf(member, member.team));
+        continue;
+      }
+      const build = assigned.get(member.id) ?? starterBuild();
+      seats.set(freeBotId(), {
+        team: member.team,
+        name: characterOf(build).name,
+        guildTag: null,
+        guildCape: null,
+        bot: true,
+        build,
+      });
+    }
     const room = scopeTransport(transport);
     try {
       match = {
@@ -953,20 +966,32 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   };
 
-  /**
-   * Seat a bot on `team` (#1193), under an id no member has, and say
-   * which; `figureBots` makes it someone.
-   */
-  const addBot = (team: 0 | 1): string => {
+  /** A bot's id that no member has. */
+  const freeBotId = (): string => {
     let id: string;
     do {
       bots += 1;
       id = `bot-${String(bots)}`;
     } while (members.has(id));
+    return id;
+  };
+
+  /** The build a bot plays until it is given one. */
+  const starterBuild = (): PlayerBuild => {
     const [build] = STARTER_BUILDS;
     if (build === undefined) {
       throw new Error("there are no starter builds for a bot to play");
     }
+    return build;
+  };
+
+  /**
+   * Seat a bot on `team` (#1193), under an id no member has, and say
+   * which; `figureBots` makes it someone.
+   */
+  const addBot = (team: 0 | 1): string => {
+    const id = freeBotId();
+    const build = starterBuild();
     members.set(id, {
       id,
       name: id,

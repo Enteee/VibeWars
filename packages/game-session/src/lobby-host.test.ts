@@ -1481,13 +1481,14 @@ describe("a Team Lobby (#1458)", () => {
     expect(sideOf(host)?.chosen?.reason).toBe("house");
   });
 
-  it("seats no guest that is away when its stage runs out, and holds its seat on (#1764)", async () => {
+  it("plays a bot in the slot of a guest away when its stage runs out, and holds its seat on (#1764)", async () => {
     const { lobby, members } = await teamLobby(["Ann"], [0, 0]);
     const [host, ann] = members;
     if (host === undefined || ann === undefined) {
       throw new Error("two members");
     }
     await begin(lobby);
+    const size = teamOf(host)?.sides[0].size;
     await timeOut(lobby);
     expect(teamOf(host)?.stage).toBe("claim");
     // Late in the claim stage: its window outlasts the stage.
@@ -1497,10 +1498,29 @@ describe("a Team Lobby (#1458)", () => {
     lobby.lobby.advance(10);
     await settle();
     expect(lobby.matches).toHaveLength(1);
-    expect(lobby.matches[0]?.plan.seats.has(idOf(ann))).toBe(false);
+    const seats = lobby.matches[0]?.plan.seats;
+    expect(seats?.has(idOf(ann))).toBe(false);
+    // Its side is never a body short: a bot plays the slot it would have.
+    const side = [...(seats?.values() ?? [])].filter((seat) => seat.team === 0);
+    expect(side).toHaveLength(size ?? 0);
+    expect(side.map(({ name, bot }) => [name, bot])).toEqual([
+      ["Host", false],
+      [expect.any(String), true],
+    ]);
     expect(host.connection.getSnapshot().players.find(({ name }) => name === "Ann")?.away).toBe(
       true,
     );
+    // Back within its window, it is still the lobby's once the match is over.
+    lobby.network.heal();
+    await until(() =>
+      host.connection.getSnapshot().players.some(({ name, away }) => name === "Ann" && !away),
+    );
+    await lobby.matches[0]?.host.close("host-left");
+    await lobby.step(0.1);
+    expect(host.connection.getSnapshot().phase).toBe("waiting");
+    expect(
+      host.connection.getSnapshot().players.map(({ name, team, away }) => [name, team, away]),
+    ).toEqual(expect.arrayContaining([["Ann", 0, false]]));
   });
 
   it("lets a joiner in only to watch, and ignores what a spectator or a command out of its stage asks", async () => {
