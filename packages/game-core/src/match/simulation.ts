@@ -197,6 +197,7 @@ import {
   breakHex,
   fireChangeTriggers,
   fireCreationTriggers,
+  fireDeathTriggers,
   fireEndTriggers,
   fireTriggers,
   isEchoSkill,
@@ -3822,8 +3823,12 @@ export class MatchSimulation {
    * nobody's. Hits and physical damage are drained here too (#935), so
    * two Mark of Pain bearers side by side never chain. A status the
    * firing ended still fires its own end (#1789), as Faithful
-   * Intervention heals when damage below half ends it; what that end
-   * changes is discarded in turn.
+   * Intervention heals when damage below half ends it, and a bearer the
+   * firing killed fires its `bearer-dies` triggers (#1825), as Reaper's
+   * Mark pays for a Judge's Intervention kill. Only then do this tick's
+   * own deaths fire theirs: what all of those change is discarded in
+   * turn, so a death one of them causes, Putrid Bile's burst killing
+   * a second bearer, fires nothing.
    */
   #fireStatusChanges(): void {
     const changes = [...this.#participants.values()].map((record) => ({
@@ -3849,6 +3854,13 @@ export class MatchSimulation {
       }
     }
     this.#settleTriggered(context, true);
+    for (const { record, changes: recorded } of changes) {
+      for (const change of recorded) {
+        if (change.kind === "ended") {
+          this.#logFired(fireDeathTriggers(record.combatant, change, context));
+        }
+      }
+    }
     this.#settleTriggered(context, false);
   }
 
@@ -3857,7 +3869,8 @@ export class MatchSimulation {
    * pays for what it did against a triggered effect (#1265): a payment is
    * not a trigger, so it cannot echo. Nor is a broken hex's damage (#1403),
    * owed for a hex a trigger cast. With `ownEnds`, a status that ended
-   * fires its own end triggers (#1789); nothing else answers.
+   * fires its own end triggers (#1789), and its `bearer-dies` ones if its
+   * bearer died (#1825); nothing else answers.
    */
   #settleTriggered(context: TriggerContext, ownEnds: boolean): void {
     for (const record of this.#participants.values()) {
@@ -3872,6 +3885,7 @@ export class MatchSimulation {
         this.#endForm(record, change);
         if (ownEnds && change.kind === "ended") {
           this.#logFired(fireEndTriggers(record.combatant, change, context));
+          this.#logFired(fireDeathTriggers(record.combatant, change, context));
         }
       }
     }
