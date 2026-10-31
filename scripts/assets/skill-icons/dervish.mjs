@@ -38,6 +38,18 @@ export const DERVISH_ICONS = {
   "dervish.pious-assault": { glyph: "scythe-spend", modifier: "clock" },
   "dervish.chilling-victory": { glyph: "scythe-frost" },
   "dervish.wearying-strike": { glyph: "scythe-spend", modifier: "bleed" },
+  // Placeholders until the asset-designer's (#1667).
+  "dervish.reap-impurities": { glyph: "scythe-spend", modifier: "renew" },
+  "dervish.aura-slicer": { glyph: "ring-rend", modifier: "bleed" },
+  "dervish.crippling-victory": { glyph: "blade-limp", modifier: "down" },
+  "dervish.lyssas-assault": { glyph: "interrupt", modifier: "half" },
+  "dervish.rending-touch": { glyph: "ring-rend", modifier: "bolt" },
+  "dervish.winds-of-disenchantment": { glyph: "ring-rend", modifier: "half" },
+  "dervish.signet-of-pious-restraint": { glyph: "blade-limp", modifier: "clock" },
+  "dervish.onslaught": { glyph: "blade-fury", modifier: "up" },
+  "dervish.zealous-vow": { glyph: "energy", modifier: "hourglass" },
+  "dervish.featherfoot-grace": { glyph: "haste-clean", modifier: "plus" },
+  "dervish.whirling-charge": { glyph: "dash", modifier: "bolt" },
   // Dervish staples 2 (#1604, #1645): three scythe riders; the rest take their statuses' shapes.
   "dervish.irresistible-sweep": { glyph: "scythe-unblock" },
   "dervish.crippling-sweep": { glyph: "scythe-limp" },

@@ -79,9 +79,13 @@ class TallyBuilder {
         }
       } else if (event.kind === "heal" && entry.sourceId !== undefined) {
         bump(this.healingByActor, entry.sourceId, event.amount);
-      } else if (event.kind === "health-lost" || event.kind === "life-stolen") {
-        // Deep wound's health as it lands (#800), or health stolen (#935):
-        // lost, but not damage dealt.
+      } else if (
+        event.kind === "health-lost" ||
+        event.kind === "health-loss" ||
+        event.kind === "life-stolen"
+      ) {
+        // Deep wound's health as it lands (#800), health a foe's skill made
+        // it lose (#1678), or health stolen (#935): lost, not damage dealt.
         bump(this.damageTakenByActor, event.targetId, event.amount);
       }
     }

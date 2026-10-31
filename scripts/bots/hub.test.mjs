@@ -134,9 +134,10 @@ function hubIntoHead(spool, args) {
 /**
  * @param {string} spool
  * @param {string[]} args
+ * @param {Record<string, string>} [env] more of hub's environment
  * @returns {Promise<{ code: number | null, stderr: string }>}
  */
-function hubStderr(spool, args) {
+function hubStderr(spool, args, env = {}) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [HUB, ...args], {
       env: {
@@ -144,6 +145,7 @@ function hubStderr(spool, args) {
         VIBEWARS_BOT_EMPLOYEE: "developer",
         VIBEWARS_BOT_ROLE: "developer",
         VIBEWARS_HUB: spool,
+        ...env,
       },
       stdio: ["ignore", "ignore", "pipe"],
     });
@@ -312,5 +314,67 @@ describe("hub alerts (#184)", () => {
 
     expect(code).toBe(0);
     expect(seen).toEqual([expect.objectContaining({ kind: "alerts", argv: ["--pr", "3"] })]);
+  });
+});
+
+describe("hub and the context ceiling (#1695)", () => {
+  /**
+   * A bus whose context.json for `developer` is `context`.
+   *
+   * @param {unknown} context
+   * @returns {Record<string, string>} hub's environment for it
+   */
+  function bus(context) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "hub-test-bus-"));
+    fs.mkdirSync(path.join(root, "developer"));
+    fs.writeFileSync(path.join(root, "developer", "context.json"), JSON.stringify(context));
+    cleanups.push(() => {
+      fs.rmSync(root, { recursive: true, force: true });
+    });
+    return { VIBEWARS_BOT_BUS: root };
+  }
+
+  const TAKING = ["issue", "comment", "12", "--body", "taking #12 (developer)"];
+
+  it("posts a `taking #N` near the ceiling, and advises against starting the card", async () => {
+    /** @type {unknown[]} */
+    const seen = [];
+    const spool = stubHubd({ code: 0, stdout: "" }, seen);
+
+    const { code, stderr } = await hubStderr(
+      spool,
+      TAKING,
+      bus({ tokens: 104_000, ceiling: 120_000 }),
+    );
+
+    expect(code).toBe(0);
+    expect(seen).toHaveLength(1);
+    expect(stderr).toBe(
+      "context 104k of 120k: too little room to start a card; end your turn and start it fresh.\n",
+    );
+  });
+
+  it("says the ceiling once past it, and keeps quiet when board runs it", async () => {
+    const spool = stubHubd({ code: 0, stdout: "[]\n" });
+    const over = bus({ tokens: 128_000, ceiling: 120_000 });
+
+    expect((await hubStderr(spool, ["issue", "list"], over)).stderr).toBe(
+      "context 128k of 120k: finish this step, commit and push, then end your turn.\n",
+    );
+    expect(
+      (await hubStderr(spool, ["issue", "list"], { ...over, VIBEWARS_CONTEXT_QUIET: "1" })).stderr,
+    ).toBe("");
+  });
+
+  it("says nothing on any other comment near it", async () => {
+    const spool = stubHubd({ code: 0, stdout: "" });
+
+    const { stderr } = await hubStderr(
+      spool,
+      ["issue", "comment", "12", "--body", "done"],
+      bus({ tokens: 104_000, ceiling: 120_000 }),
+    );
+
+    expect(stderr).toBe("");
   });
 });

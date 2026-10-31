@@ -9,7 +9,8 @@ import {
 
 import { BODY_EDGE, BODY_GLYPH_ALPHA, BODY_GLYPH_SIZE } from "../render/arena-snapshot.js";
 import { REST_FRAME } from "../render/attack-clock.js";
-import { CAPE_LENGTH, type CapeLook } from "../render/cape-shape.js";
+import { newCapeMotion } from "../render/cape-motion.js";
+import type { CapeLook } from "../render/cape-shape.js";
 import {
   paintBodyDisc,
   paintBodyMarks,
@@ -32,12 +33,6 @@ const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const BODY_RADIUS = RULES.collision.playerRadius;
 /** Room round the body for its marks: the weapon reaches r + 7.5, its 4 px casing 2 px more. */
 const MARK_ROOM = 10;
-/**
- * More room behind it, on the left, for a cape (#1422): its hem reaches
- * r + `CAPE_LENGTH`, its outline 1 px more. Kept with no cape too, so
- * putting one on moves nothing in the list.
- */
-const CAPE_ROOM = CAPE_LENGTH + 1 - MARK_ROOM;
 /** Facing right, as the player-mark reference sheet draws a body. */
 const FIGURE_FACING = 0;
 
@@ -81,19 +76,22 @@ export function characterAppearance(character: TeamCharacter): CharacterAppearan
   return { weaponId: equipment.mainHand.weapon.id, offhandId: equipment.offhandId };
 }
 
-/** The figure's box: `MARK_ROOM` round the body, and `CAPE_ROOM` more behind it. */
+/** The figure's box: `MARK_ROOM` round the body, which a folded cape's band fits in (#1699). */
 export const FIGURE_SIZE = {
-  width: (BODY_RADIUS + MARK_ROOM) * 2 + CAPE_ROOM,
+  width: (BODY_RADIUS + MARK_ROOM) * 2,
   height: (BODY_RADIUS + MARK_ROOM) * 2,
 } as const;
 
-/** The figure's body: your own, standing still, wearing `cape`, its marks clear of the box's edges. */
+/**
+ * The figure's body: your own, standing still, wearing `cape` folded,
+ * its marks clear of the box's edges.
+ */
 export function figureBody(
   appearance: CharacterAppearance,
   cape: CapeLook | undefined,
 ): StandingBody {
   return {
-    x: CAPE_ROOM + BODY_RADIUS + MARK_ROOM,
+    x: BODY_RADIUS + MARK_ROOM,
     y: BODY_RADIUS + MARK_ROOM,
     r: BODY_RADIUS,
     facing: FIGURE_FACING,
@@ -101,7 +99,7 @@ export function figureBody(
     weaponId: appearance.weaponId,
     offhandId: appearance.offhandId,
     frame: REST_FRAME,
-    cape,
+    cape: cape === undefined ? undefined : { look: cape, motion: newCapeMotion() },
   };
 }
 

@@ -69,7 +69,7 @@ function use(
 
 function losses(events: readonly CombatEvent[], id: string): number[] {
   return events.flatMap((event) =>
-    event.kind === "sacrifice" && event.targetId === id ? [event.amount] : [],
+    event.kind === "health-loss" && event.targetId === id ? [event.amount] : [],
   );
 }
 
@@ -102,6 +102,8 @@ describe("a target's health loss (#1648)", () => {
     const events = use(u, "necromancer.enfeebling-touch", [[f, RANGE_MELEE / 2]]);
     expect(losses(events, "f")).toEqual([53]);
     expect(losses(events, "u")).toEqual([]);
+    // The foe's loss, not a sacrifice (#1678): nobody paid for it.
+    expect(events.some(({ kind }) => kind === "sacrifice")).toBe(false);
     expect(f.health).toBe(447);
     expect(u.health).toBe(u.maxHealth);
     expect(f.statuses.get("weakness")?.remainingSeconds).toBe(17);
@@ -151,7 +153,7 @@ describe("Pain of Disenchantment (#1648)", () => {
     ]);
     expect(f.health).toBe(500);
     expect(near.health).toBe(500);
-    expect(events.some(({ kind }) => kind === "sacrifice")).toBe(false);
+    expect(events.some(({ kind }) => kind === "health-loss")).toBe(false);
   });
 
   it("strips up to 3; 82 to the target and each adjacent foe, once, not per enchantment", () => {
@@ -198,7 +200,7 @@ describe("described (#1648)", () => {
 
   it("Pain of Disenchantment: the target and adjacent foes lose 82 Health", () => {
     expect(lines("necromancer.pain-of-disenchantment")).toEqual([
-      "Removes 3 enchantments",
+      "Removes up to 3 enchantments",
       "If it removes an enchantment: target foe loses 82 Health",
       "If it removes an enchantment: adjacent foes lose 82 Health",
     ]);

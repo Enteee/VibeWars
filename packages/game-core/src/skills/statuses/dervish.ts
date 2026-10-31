@@ -33,7 +33,12 @@ export type DervishStatusId =
   | "zealous-renewal"
   | "mirage-cloak"
   | "vital-boon"
-  | "guiding-hands";
+  | "guiding-hands"
+  // Dervish staples 3 (#1667).
+  | "onslaught"
+  | "zealous-vow"
+  | "featherfoot-grace"
+  | "whirling-charge";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -523,5 +528,56 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
   "guiding-hands": define("guiding-hands", "Guiding Hands", "enchantment", {
     profession: "dervish",
     unblockableAttacks: 2,
+  }),
+  // "You attack and gain adrenaline 25% faster" (#1667): GW1 counts
+  // faster as 1 − x (ADR-0029). PvP: no movement bonus.
+  onslaught: define("onslaught", "Onslaught", "enchantment", {
+    profession: "dervish",
+    attackDurationMultiplier: 0.75,
+    adrenalineGainFaster: 0.25,
+  }),
+  // "You have -3 Energy regeneration, and you gain 1...5...6 Energy every
+  // time you hit with an attack" (#1667): 5, its rank-12 value, on any
+  // hit, a plain swing's too, as Zealous Renewal's.
+  "zealous-vow": define("zealous-vow", "Zealous Vow", "enchantment", {
+    profession: "dervish",
+    energyPips: -3,
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [{ kind: "energy-gain", amount: { flat: 5 } }],
+        target: "bearer",
+        skillId: "dervish.zealous-vow",
+      },
+    ],
+  }),
+  // "You move 25% faster, and conditions expire 50% faster" (#1667).
+  "featherfoot-grace": define("featherfoot-grace", "Featherfoot Grace", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.25,
+    conditionsExpireFaster: 0.5,
+  }),
+  // "You move 33% faster than normal. The next time you strike a foe, all
+  // other nearby foes take 10...50 cold damage and this enchantment ends"
+  // (#1667): 42, the PvP rank-12 value. Nearby the foe struck, which the
+  // splash spares.
+  "whirling-charge": define("whirling-charge", "Whirling Charge", "enchantment", {
+    profession: "dervish",
+    moveSpeedMultiplier: 1.33,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_NEARBY,
+          maxTargets: undefined,
+          effects: [{ kind: "damage", amount: { flat: 42 }, type: "cold", armorPenetration: 0 }],
+        },
+      ],
+      skillId: "dervish.whirling-charge",
+    },
+    endsAfterHits: { count: 1, weapon: undefined },
   }),
 };

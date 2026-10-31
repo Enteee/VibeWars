@@ -3,25 +3,12 @@ import Phaser from "phaser";
 import {
   ALTAR_REACH_UNITS,
   CAPTURE_REACH_UNITS,
-  CREATURE_LOOKS,
-  IMPLEMENTED_SKILLS,
-  PROFESSIONS,
   isStatusId,
   isWeaponId,
-  type CreatureLook,
-  type ProfessionId,
-  type SkillType,
   type StatusId,
   type Vec2,
 } from "@vibewars/game-core";
 
-import {
-  SKILL_TYPE_NAME,
-  creatureIcon,
-  professionIcon,
-  skillIcon,
-  skillTypeIcon,
-} from "../ui/icons.js";
 import { taggedName } from "../ui/bot-tag.js";
 import { playerLabelText } from "../ui/player-label.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
@@ -30,7 +17,6 @@ import {
   DEAD_COLOUR,
   EMPTY_SNAPSHOT,
   EXPLOITED_CORPSE_COLOUR,
-  PROFESSION_GLYPH_SIZE,
   SHRINE_RADIUS,
   areaFlashAlpha,
   bodyGlyphLayout,
@@ -48,18 +34,21 @@ import {
   type SwingFlash,
 } from "./arena-snapshot.js";
 import {
-  MatchClock,
-  PROJECTILE_HEIGHT,
-  PROJECTILE_SPRITES,
-  PROJECTILE_WIDTH,
-  projectileHeading,
-  projectilePosition,
-  projectileSpriteUrl,
-  shotFadeAlpha,
-} from "./projectiles.js";
+  ARENA_ATLAS_JSON,
+  ARENA_ATLAS_SVG,
+  bodyProfessionFrame,
+  creatureFrame,
+  groundFrame,
+  professionFrame,
+  projectileFrame,
+  skillTypeFrame,
+  statusFrame,
+  type AtlasMap,
+} from "./arena-atlas.js";
+import { MatchClock, projectileHeading, projectilePosition, shotFadeAlpha } from "./projectiles.js";
 import { NO_COVER, type CameraView, type Cover } from "./camera-rig.js";
 import { edgeMarkers, type EdgeMarker, type EdgeThing } from "./edge-markers.js";
-import { STATUS_ICON, STATUS_ICON_SIZE, statusRowLayout } from "./status-icons.js";
+import { statusRowLayout } from "./status-icons.js";
 import {
   decayWalkMarker,
   walkMarkerAlpha,
@@ -71,6 +60,13 @@ import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import { bodyRings, invulnerableAlpha, invulnerableRing } from "./body-rings.js";
+import {
+  capeJumped,
+  newCapeMotion,
+  reprimeCapeMotion,
+  stepCapeMotion,
+  type CapeMotion,
+} from "./cape-motion.js";
 import { DEAD_DASH, DEAD_GAP, creatureOutline, dashes } from "./creature-shape.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
 import {
@@ -95,6 +91,7 @@ import {
   paintStandingBody,
   paintWeaponMark,
   type Painter,
+  type WornCape,
 } from "./body-painter.js";
 import type { Point } from "./weapon-mark-geometry.js";
 import type {
@@ -192,17 +189,12 @@ const CAST_BADGE_DEPTH = 2.5;
 const OVERLAY_DEPTH = 3;
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = 10;
-/**
- * The body glyph's texture size, px: 13 world units at the Close zoom
- * (1080 / 640) on a 2x display is about 44 px, so it stays crisp there.
- */
-const BODY_GLYPH_TEXTURE_SIZE = 48;
-/** The cast badge's texture size, px: 8 world units at the Close zoom on a 2x display, and then some. */
-const CAST_BADGE_TEXTURE_SIZE = 32;
+/** The arena's icon sheet (#1671) and its frame map, as Phaser keys them. */
+const ATLAS = "arena-atlas";
+const ATLAS_MAP = "arena-atlas-map";
 
-/** A ward's icon at its centre (#1087), world units, and its texture size, px, as the body glyph's. */
+/** A ward's icon at its centre (#1087), world units. */
 const GROUND_ICON_SIZE = 22;
-const GROUND_ICON_TEXTURE_SIZE = 48;
 const GROUND_ICON_ALPHA = 0.55;
 
 const HEALTH_BAR_WIDTH = 34;
@@ -238,6 +230,8 @@ export class ArenaScene extends Phaser.Scene {
   private impacts: Impact[] = [];
   private addedImpacts: Impact[] = [];
   private walkMarker: WalkMarker | undefined;
+  /** Every caped body's cape (#1699), and where the body was drawn last frame. */
+  private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
    * One sprite per shot, by projectile id: in flight, or ended and fading
    * at its end point since `endedAt` (scene seconds).
@@ -335,52 +329,23 @@ export class ArenaScene extends Phaser.Scene {
     this.addedImpacts.push(...impacts);
   }
 
+  /**
+   * Every icon the arena draws comes from one sheet (#1671), loaded at its
+   * own size: one raster at match start, however many skills there are.
+   * Name glyphs are drawn in ink, never the profession colour: in the
+   * arena, colour is team.
+   */
   public preload(): void {
-    for (const [id, url] of Object.entries(STATUS_ICON)) {
-      this.load.svg(statusTexture(id), url, {
-        width: STATUS_ICON_SIZE,
-        height: STATUS_ICON_SIZE,
-      });
-    }
-    // Drawn in ink, never the profession colour: in the arena, colour is team.
-    for (const profession of Object.keys(PROFESSIONS) as ProfessionId[]) {
-      this.load.svg(professionTexture(profession), professionIcon(profession), {
-        width: PROFESSION_GLYPH_SIZE,
-        height: PROFESSION_GLYPH_SIZE,
-      });
-      this.load.svg(bodyProfessionTexture(profession), professionIcon(profession), {
-        width: BODY_GLYPH_TEXTURE_SIZE,
-        height: BODY_GLYPH_TEXTURE_SIZE,
-      });
-    }
-    for (const look of CREATURE_LOOKS) {
-      this.load.svg(bodyCreatureTexture(look), creatureIcon(look), {
-        width: BODY_GLYPH_TEXTURE_SIZE,
-        height: BODY_GLYPH_TEXTURE_SIZE,
-      });
-    }
-    // The slot's badges as they are: hex and enchantment baked in colour, the rest in ink.
-    for (const type of Object.keys(SKILL_TYPE_NAME) as SkillType[]) {
-      this.load.svg(skillTypeTexture(type), skillTypeIcon(type), {
-        width: CAST_BADGE_TEXTURE_SIZE,
-        height: CAST_BADGE_TEXTURE_SIZE,
-      });
-    }
-    for (const sprite of PROJECTILE_SPRITES) {
-      this.load.svg(projectileTexture(sprite), projectileSpriteUrl(sprite), {
-        width: PROJECTILE_WIDTH,
-        height: PROJECTILE_HEIGHT,
-      });
-    }
-    for (const skillId of GROUND_EFFECT_SKILLS) {
-      this.load.svg(groundIconTexture(skillId), skillIcon(skillId), {
-        width: GROUND_ICON_TEXTURE_SIZE,
-        height: GROUND_ICON_TEXTURE_SIZE,
-      });
-    }
+    this.load.svg(ATLAS, `${import.meta.env.BASE_URL}${ARENA_ATLAS_SVG}`);
+    this.load.json(ATLAS_MAP, `${import.meta.env.BASE_URL}${ARENA_ATLAS_JSON}`);
   }
 
   public create(): void {
+    const sheet = this.textures.get(ATLAS);
+    const map = this.cache.json.get(ATLAS_MAP) as AtlasMap;
+    for (const [frame, { x, y, w, h }] of Object.entries(map.frames)) {
+      sheet.add(frame, 0, x, y, w, h);
+    }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.graphics = this.add.graphics().setDepth(BODY_DEPTH);
@@ -424,6 +389,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const point of this.snapshot.capturePoints) {
       this.drawCapturePoint(g, point);
     }
+    this.stepCapes(deltaMs / 1000);
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, marks, actor);
     }
@@ -447,6 +413,51 @@ export class ArenaScene extends Phaser.Scene {
     this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
     this.updateEdgeMarkers();
+  }
+
+  /**
+   * Step the cape of every living caped body (#1699) by its drawn
+   * movement since last frame: knocked down it stands still, so it
+   * folds. A body that jumped (a shadow step, a respawn) starts over;
+   * one gone, dead or without a cape keeps none.
+   */
+  private stepCapes(dt: number): void {
+    const seen = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      if (actor.cape === undefined || actor.dead) {
+        continue;
+      }
+      seen.add(actor.id);
+      const { x, y } = actor.position;
+      const last = this.capes.get(actor.id);
+      if (last === undefined) {
+        this.capes.set(actor.id, { motion: newCapeMotion(), x, y });
+        continue;
+      }
+      const jumped = capeJumped(Math.hypot(x - last.x, y - last.y), actor.radius);
+      if (jumped) {
+        reprimeCapeMotion(last.motion);
+      }
+      const still = jumped || dt <= 0;
+      const vx = still ? 0 : (x - last.x) / dt;
+      const vy = still ? 0 : (y - last.y) / dt;
+      stepCapeMotion(last.motion, dt, { x, y, r: actor.radius, vx, vy });
+      last.x = x;
+      last.y = y;
+    }
+    for (const id of this.capes.keys()) {
+      if (!seen.has(id)) {
+        this.capes.delete(id);
+      }
+    }
+  }
+
+  /** The cape `actor` wears, with its motion; `undefined` for none. */
+  private wornCape(actor: RenderableActor): WornCape | undefined {
+    const motion = this.capes.get(actor.id)?.motion;
+    return actor.cape === undefined || motion === undefined
+      ? undefined
+      : { look: actor.cape, motion };
   }
 
   /**
@@ -849,7 +860,7 @@ export class ArenaScene extends Phaser.Scene {
       flying.add(shot.id);
       if (shown === undefined) {
         const image = this.add
-          .image(position.x, position.y, projectileTexture(shot.sprite))
+          .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
           .setDepth(OVERLAY_DEPTH);
         image.setRotation(projectileHeading(shot));
         image.setTint(shot.colour);
@@ -931,7 +942,7 @@ export class ArenaScene extends Phaser.Scene {
           weaponId: actor.weaponId,
           offhandId: actor.offhandId,
           frame: this.weaponFrame(actor),
-          cape: actor.cape,
+          cape: this.wornCape(actor),
         },
         phaserPainter(marks),
       );
@@ -1025,13 +1036,13 @@ export class ArenaScene extends Phaser.Scene {
       const pool = this.statusIcons.get(actor.id) ?? [];
       this.statusIcons.set(actor.id, pool);
       row.icons.forEach((position, index) => {
-        const texture = statusTexture(statuses[index] ?? "");
+        const frame = statusFrame(statuses[index] ?? "");
         let image = pool[index];
         if (image === undefined) {
-          image = this.add.image(position.x, position.y, texture).setDepth(OVERLAY_DEPTH);
+          image = this.add.image(position.x, position.y, ATLAS, frame).setDepth(OVERLAY_DEPTH);
           pool.push(image);
         }
-        image.setTexture(texture).setPosition(position.x, position.y).setVisible(true);
+        image.setFrame(frame).setPosition(position.x, position.y).setVisible(true);
       });
       for (const unused of pool.slice(row.icons.length)) {
         unused.setVisible(false);
@@ -1117,7 +1128,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * The glyph before `actor`'s name (#281): shown with the name, greyed with
-   * a corpse's. Its texture and tint are set only when they change, as the
+   * a corpse's. Its frame and tint are set only when they change, as the
    * label's colour is, so a steady frame re-uploads nothing.
    */
   private updateNameGlyph(actor: RenderableActor, layout: NameplateLayout, shown: boolean): void {
@@ -1126,17 +1137,17 @@ export class ArenaScene extends Phaser.Scene {
       glyph?.setVisible(false);
       return;
     }
-    const texture = professionTexture(actor.profession);
+    const frame = professionFrame(actor.profession);
     if (glyph === undefined) {
       glyph = this.add
-        .image(0, 0, texture)
+        .image(0, 0, ATLAS, frame)
         .setOrigin(0.5, 1)
         .setTintMode(Phaser.TintModes.FILL)
         .setDepth(OVERLAY_DEPTH);
       this.nameGlyphs.set(actor.id, glyph);
     }
-    if (glyph.texture.key !== texture) {
-      glyph.setTexture(texture);
+    if (glyph.frame.name !== frame) {
+      glyph.setFrame(frame);
     }
     const tint = actor.dead ? DEAD_INK_TINT : INK_TINT;
     if (glyph.tint !== tint) {
@@ -1174,14 +1185,14 @@ export class ArenaScene extends Phaser.Scene {
       }
       g.lineStyle(1.5, effect.colour, 0.6);
       g.strokeCircle(x, y, effect.radius);
-      const texture = groundIconTexture(effect.skillId);
-      if (!this.textures.exists(texture)) {
+      const frame = groundFrame(effect.skillId);
+      if (!this.textures.get(ATLAS).has(frame)) {
         continue;
       }
       let icon = this.groundIcons.get(effect.id);
       if (icon === undefined) {
         icon = this.add
-          .image(x, y, texture)
+          .image(x, y, ATLAS, frame)
           .setDisplaySize(GROUND_ICON_SIZE, GROUND_ICON_SIZE)
           .setAlpha(GROUND_ICON_ALPHA)
           .setDepth(GROUND_DEPTH);
@@ -1198,7 +1209,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * The primary profession's glyph inside every body (#1037): upright,
-   * world sized, between the bodies and their marks. Texture, tint and
+   * world sized, between the bodies and their marks. Frame, tint and
    * alpha are set only when they change, as the name glyph's are; an actor
    * that left takes its glyph with it.
    */
@@ -1212,19 +1223,19 @@ export class ArenaScene extends Phaser.Scene {
         glyph?.setVisible(false);
         continue;
       }
-      const texture =
+      const frame =
         layout.glyph.kind === "creature"
-          ? bodyCreatureTexture(layout.glyph.look)
-          : bodyProfessionTexture(layout.glyph.profession);
+          ? creatureFrame(layout.glyph.look)
+          : bodyProfessionFrame(layout.glyph.profession);
       if (glyph === undefined) {
         glyph = this.add
-          .image(0, 0, texture)
+          .image(0, 0, ATLAS, frame)
           .setTintMode(Phaser.TintModes.FILL)
           .setDepth(BODY_GLYPH_DEPTH);
         this.bodyGlyphs.set(actor.id, glyph);
       }
-      if (glyph.texture.key !== texture) {
-        glyph.setTexture(texture);
+      if (glyph.frame.name !== frame) {
+        glyph.setFrame(frame);
       }
       if (glyph.tint !== layout.tint) {
         glyph.setTint(layout.tint);
@@ -1248,7 +1259,7 @@ export class ArenaScene extends Phaser.Scene {
   /**
    * The casting skill's type badge left of every cast bar (#1125): shown
    * and gone with the bar, none for a skill this client does not know. The
-   * texture is set only when it changes; an actor that left takes its
+   * frame is set only when it changes; an actor that left takes its
    * badge with it.
    */
   private updateCastBadges(): void {
@@ -1260,13 +1271,13 @@ export class ArenaScene extends Phaser.Scene {
         badge?.setVisible(false);
         continue;
       }
-      const texture = skillTypeTexture(actor.castType);
+      const frame = skillTypeFrame(actor.castType);
       if (badge === undefined) {
-        badge = this.add.image(0, 0, texture).setDepth(CAST_BADGE_DEPTH);
+        badge = this.add.image(0, 0, ATLAS, frame).setDepth(CAST_BADGE_DEPTH);
         this.castBadges.set(actor.id, badge);
       }
-      if (badge.texture.key !== texture) {
-        badge.setTexture(texture);
+      if (badge.frame.name !== frame) {
+        badge.setFrame(frame);
       }
       const centre = castBadgeLayout(actor.position.x, actor.position.y, actor.radius);
       badge
@@ -1416,28 +1427,6 @@ export class ArenaScene extends Phaser.Scene {
   }
 }
 
-/** Every skill that leaves a ground effect (#1087): its icon is loaded for the ward's centre. */
-const GROUND_EFFECT_SKILLS: readonly string[] = IMPLEMENTED_SKILLS.filter((skill) =>
-  skill.effects.some((effect) => effect.kind === "create-ground-effect"),
-).map((skill) => skill.id);
-
-function groundIconTexture(skillId: string): string {
-  return `ground-icon:${skillId}`;
-}
-
-function projectileTexture(sprite: string): string {
-  return `projectile:${sprite}`;
-}
-
-function professionTexture(profession: ProfessionId): string {
-  return `profession:${profession}`;
-}
-
-/** The glyph inside the body (#1037), loaded larger than the name's: it is world sized. */
-function bodyProfessionTexture(profession: ProfessionId): string {
-  return `body-profession:${profession}`;
-}
-
 /** Each layer's painter, made once: a body is painted every frame. */
 const painters = new WeakMap<Phaser.GameObjects.Graphics, Painter>();
 
@@ -1477,19 +1466,6 @@ function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[]): vo
     }
   }
   g.closePath();
-}
-
-/** A creature's kind glyph on its plate (#1162), loaded as the body glyph is. */
-function bodyCreatureTexture(look: CreatureLook): string {
-  return `body-creature:${look}`;
-}
-
-function skillTypeTexture(type: SkillType): string {
-  return `skill-type:${type}`;
-}
-
-function statusTexture(id: string): string {
-  return `status:${id}`;
 }
 
 export type {

@@ -251,7 +251,7 @@ describe("Mending Touch (#1039)", () => {
 
   it("says so", () => {
     expect(described("monk.mending-touch")).toEqual([
-      "Removes 2 conditions",
+      "Removes up to 2 conditions",
       "Heals 51 for each condition removed",
     ]);
   });

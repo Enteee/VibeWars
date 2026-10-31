@@ -48,9 +48,9 @@ export const NECROMANCER_ICONS = {
   "necromancer.touch-of-agony": { glyph: "hand-drop-bolt" },
   "necromancer.wallows-bite": { glyph: "jaws-bolt" },
   "necromancer.vampiric-bite": { glyph: "jaws-drop" },
-  // Target Health loss (#1648), stand-ins until their art card.
-  "necromancer.enfeebling-touch": { glyph: "drop-touch", modifier: "less" },
-  "necromancer.pain-of-disenchantment": { glyph: "ring-rend", modifier: "area" },
+  // Target Health loss (#1648, #1680).
+  "necromancer.enfeebling-touch": { glyph: "hand-drop-weak" },
+  "necromancer.pain-of-disenchantment": { glyph: "ring-rend-burst" },
   // Necromancer staples 2 (#1583): the shapes of their statuses where they have one.
   "necromancer.wither": { glyph: "hex-wither" },
   "necromancer.life-siphon": { glyph: "drop-siphon" },

@@ -157,7 +157,10 @@ or stops the employee. The company must be up: hubd answers the request.
 ## Picking the context ceiling
 
 An agent whose context passes `CONTEXT_CEILING` (`scripts/bots/agent-turn.mjs`)
-starts its next turn in a fresh session. Too high, and every call re-reads a
+starts its next turn in a fresh session. Past it, every `tg`, `board` and
+`hub` command tells the agent to end its turn; within `NEAR_MARGIN` of it, a
+`taking #N` comment or a move into In Progress advises against starting the
+card (`scripts/bots/context.mjs`). Too high, and every call re-reads a
 long conversation; too low, and agents re-orient (briefing, inbox, board) more
 often. `node scripts/bots/context-report.mjs [--since 48h]` works out the
 best ceiling, C\*, from the session logs in `$VIBEWARS_CLAUDE_BOXES` (or

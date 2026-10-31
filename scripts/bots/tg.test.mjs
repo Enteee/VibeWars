@@ -97,14 +97,26 @@ describe("tg wait, past the context ceiling", () => {
     );
   });
 
-  it("prints the messages already waiting, and nothing else", () => {
+  it("prints the messages already waiting, then the ceiling line (#1695)", () => {
     const { env } = bus({ context: OVER, messages: ["review #12"] });
 
     const result = wait(env, 20);
 
     expect(result.code).toBe(0);
-    expect(result.stdout).toMatch(/manager: review #12\n$/);
-    expect(result.stdout).not.toMatch(/ceiling/);
+    expect(result.stdout).toMatch(
+      /manager: review #12\nYour context is over the ceiling \(134k of 120k\)\. .*END YOUR TURN.*\n$/,
+    );
+  });
+
+  it("says its own line only, not the one every other command says (#1695)", () => {
+    const { env } = bus({ context: OVER, messages: ["review #12"] });
+
+    const result = spawnSync(process.execPath, [TG, "wait", "--timeout", "20"], {
+      env,
+      encoding: "utf8",
+    });
+
+    expect(result.stderr).toBe("");
   });
 
   it("stops waiting when the context passes the ceiling mid-wait", async () => {
@@ -122,6 +134,44 @@ describe("tg wait, past the context ceiling", () => {
     expect(child.exitCode).toBe(0);
     expect(stdout).toMatch(/^Your context is over the ceiling \(134k of 120k\)/);
   }, 15_000);
+});
+
+describe("every other tg command, past the context ceiling (#1695)", () => {
+  /**
+   * @param {Record<string, string | undefined>} env
+   * @param {string[]} args
+   */
+  function tg(env, args) {
+    return spawnSync(process.execPath, [TG, ...args], { env, encoding: "utf8" });
+  }
+
+  it("says the ceiling on stderr, once, after its output", () => {
+    const { env } = bus({ context: OVER, messages: ["review #12"] });
+
+    const result = tg(env, ["inbox"]);
+
+    expect(result.stdout).toMatch(/manager: review #12\n$/);
+    expect(result.stderr).toBe(
+      "context 134k of 120k: finish this step, commit and push, then end your turn.\n",
+    );
+  });
+
+  it("says it on a command that fails too", () => {
+    const { env } = bus({ context: OVER });
+
+    const result = tg(env, ["send"]);
+
+    expect(result.status).toBe(2);
+    expect(result.stderr).toMatch(/\ncontext 134k of 120k: finish this step/);
+  });
+
+  it("says nothing under the ceiling, or without a file", () => {
+    for (const context of [{ tokens: 119_999, ceiling: 120_000 }, undefined]) {
+      const { env } = bus({ context });
+
+      expect(tg(env, ["inbox"]).stderr).toBe("");
+    }
+  });
 });
 
 describe("tg wait, under the ceiling or without a context file", () => {
