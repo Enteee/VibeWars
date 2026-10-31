@@ -78,4 +78,8 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.eruption": { glyph: "volcano" },
   "elementalist.ash-blast": { glyph: "ash-cloud" },
   "elementalist.shockwave": { glyph: "ring-shock" },
+  // Attribute hexes (#1765): stand-ins until their own art.
+  "elementalist.icy-prism": { glyph: "crystal-glow", modifier: "area" },
+  "elementalist.teinais-crystals": { glyph: "crystal-glow", modifier: "down" },
+  "elementalist.freezing-gust": { glyph: "gust-fast", modifier: "down" },
 };

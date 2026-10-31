@@ -2953,6 +2953,188 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Attribute hexes (#1765): a Water Magic hex on the foe is what these ask.
+  {
+    id: "elementalist.icy-prism",
+    name: "Icy Prism",
+    gwId: 903,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 5,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 15...75 cold damage. If that foe has a Water
+    // Magic hex, Icy Prism deals +15...75 cold damage to all other nearby
+    // foes": 63, once however many Water Magic hexes it has.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 15, atTwelve: 63 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.water-magic", atZero: 15, atTwelve: 63 },
+                },
+                type: "cold",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.teinais-crystals",
+    name: "Teinai's Crystals",
+    gwId: 1099,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 20...40 damage. If target foe has a Water Magic hex,
+    // this spell strikes target and nearby foes for an additional 20...40
+    // damage, and nearby foes also suffer Cracked Armor for 5...15
+    // seconds": 36, and 13 s. The plain "damage" ignores armor (wiki).
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
+        },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+              { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 13 },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.freezing-gust",
+    name: "Freezing Gust",
+    gwId: 1382,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is under the effect of a Water Magic hex, that foe is
+    // struck for 20...80 cold damage. Otherwise, that foe moves 66% slower
+    // for 1...5 seconds": 68, and 4 s. Both read before either lands, so
+    // one cast never does both; the damage applies no hex (GW1's does,
+    // with no effect).
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 20, atTwelve: 68 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: {
+          kind: "not",
+          condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
+        },
+        effects: [{ kind: "apply-status", statusId: "freezing-gust", durationSeconds: 4 }],
+      },
+    ],
+  },
 ];
 
 /**

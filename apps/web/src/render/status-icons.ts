@@ -316,6 +316,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "barbed-arrows-armor": icon("barbed-arrows-armor"),
   "melandrus-arrows": icon("melandrus-arrows"),
   "read-the-wind": icon("read-the-wind"),
+  "freezing-gust": icon("freezing-gust"),
 };
 
 const GAP = 2;

@@ -151,6 +151,12 @@ export interface StatusDefinition {
    */
   readonly profession: ProfessionId | undefined;
   /**
+   * The attribute of the skill that applies it (#1765), as `profession`:
+   * "if target foe is suffering from a Water Magic hex" asks this.
+   * `undefined`: not tagged, which only Elementalist hexes are so far.
+   */
+  readonly attribute: string | undefined;
+  /**
    * Health regeneration while active, in GW1 pips (`HEALTH_PER_PIP`):
    * negative degenerates. Every status's pips sum, clamped to
    * `MAX_PIPS` either way, and apply continuously, not in lumps.
@@ -2282,14 +2288,22 @@ export class StatusSet {
     );
   }
 
-  /** How many are up of a category; with a `profession`, only that profession's (#1021). */
-  public countByCategory(category: StatusCategory, profession?: ProfessionId): number {
+  /**
+   * How many are up of a category; with a `profession`, only that
+   * profession's (#1021); with an `attribute`, only that attribute's (#1765).
+   */
+  public countByCategory(
+    category: StatusCategory,
+    profession?: ProfessionId,
+    attribute?: string,
+  ): number {
     let count = 0;
     for (const status of this.#statuses.values()) {
       const definition = getStatusDefinition(status.id);
       if (
         definition.category === category &&
-        (profession === undefined || definition.profession === profession)
+        (profession === undefined || definition.profession === profession) &&
+        (attribute === undefined || definition.attribute === attribute)
       ) {
         count += 1;
       }
