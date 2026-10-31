@@ -61,16 +61,8 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.lightning-touch": { glyph: "hand-bolt" },
   "elementalist.liquid-flame": { glyph: "flame-splash" },
   "elementalist.glowing-gaze": { glyph: "eye-flame" },
-  // Placeholders until the asset-designer's (#1614): the energy engine.
-  "elementalist.fire-attunement": { glyph: "flame", modifier: "renew" },
-  "elementalist.water-attunement": { glyph: "snowflake", modifier: "renew" },
-  "elementalist.air-attunement": { glyph: "lightning", modifier: "renew" },
-  "elementalist.earth-attunement": { glyph: "mountain", modifier: "renew" },
-  "elementalist.aura-of-restoration": { glyph: "spark", modifier: "renew" },
-  "elementalist.kinetic-armor": { glyph: "mist-shield", modifier: "renew" },
-  "elementalist.steam": { glyph: "snowflake", modifier: "bleed" },
   // Elementalist staples 3 (#1664), stand-ins until their art card.
-  "elementalist.enervating-charge": { glyph: "lightning", modifier: "less" },
+  "elementalist.enervating-charge": { glyph: "lightning", modifier: "hourglass" },
   "elementalist.lightning-hammer": { glyph: "lightning", modifier: "bleed" },
   "elementalist.lightning-javelin": { glyph: "arrow-bolt", modifier: "bolt" },
   "elementalist.arc-lightning": { glyph: "lightning", modifier: "half" },
