@@ -362,6 +362,11 @@ let
     executable = true;
   };
 
+  # The hook's event allowlist, which #1891's test reads beside runs-on.
+  runnerEvents = pkgs.writeText "vibewars-runner-events.json" (
+    builtins.readFile ../scripts/bots/runner-events.json
+  );
+
   runnerClosure = pkgs.closureInfo {
     rootPaths = [
       pkgs.github-runner
@@ -369,15 +374,16 @@ let
       runnerEtc
       runnerInit
       runnerHook
+      runnerEvents
     ];
   };
 
   # `vibewars-runner-jail --jitconfig <file>`: one runner, one job (#1889).
-  # The scratch directories live in the operator's cache, never under the
-  # hub, a worktree or the credentials.
+  # The scratch directories live in the operator's state dir, never under
+  # the hub, a worktree or the credentials.
   runnerJail = pkgs.writeShellScriptBin "vibewars-runner-jail" ''
     VIBEWARS_RUNNER_JAIL="$(${pkgs.jq}/bin/jq -nc \
-      --arg scratch "''${XDG_CACHE_HOME:-$HOME/.cache}/vibewars-runners" \
+      --arg scratch "''${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runners" \
       --argjson store ${
         lib.escapeShellArg (
           builtins.toJSON {
@@ -388,6 +394,7 @@ let
             etc = runnerEtc;
             init = runnerInit;
             hook = runnerHook;
+            events = runnerEvents;
             allow = "${botScripts}/runner-proxy-allow.json";
           }
         )

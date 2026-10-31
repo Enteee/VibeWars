@@ -12,8 +12,10 @@
  * The allowlist (`runner-proxy-allow.json`) is a list of host names. An
  * entry matches its host exactly; one that starts with a dot matches any
  * host below it, never by substring, so `.github.com` matches
- * `api.github.com` and not `github.com.evil.io`. IP literals are refused,
- * and so is an allowed name that resolves to a loopback, private or
+ * `api.github.com` and not `github.com.evil.io`. A host is matched
+ * lower-cased and without its trailing dot; one with anything but letters,
+ * digits, dots and hyphens in it (userinfo, a raw IDN) is refused. So are
+ * IP literals, and an allowed name that resolves to a loopback, private or
  * link-local address, so a name cannot lead the tunnel back into the host.
  *
  *     node runner-proxy.mjs <socket> <allow.json>
@@ -52,6 +54,17 @@ export function parseAllowlist(json) {
 }
 
 /**
+ * Text from a request, safe to log on one line: control characters become
+ * `?`, so a host name cannot forge a log line.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+function printable(text) {
+  return text.replace(/[\p{Cc}\u2028\u2029]/gu, "?");
+}
+
+/**
  * Where a CONNECT asks to go, or why it may not: port 443 of a host on the
  * allowlist.
  *
@@ -62,15 +75,18 @@ export function parseAllowlist(json) {
 export function tunnelTarget(target, allow) {
   const match = /^([^:/\s]+|\[[0-9a-fA-F:.]+\]):(\d+)$/.exec(String(target));
   if (match === null) {
-    return { refused: `not host:port: ${String(target)}` };
+    return { refused: `not host:port: ${printable(String(target))}` };
   }
   const [, rawHost, port] = /** @type {[string, string, string]} */ (match);
-  const host = rawHost.toLowerCase();
-  if (Number(port) !== HTTPS_PORT) {
-    return { refused: `port ${port} refused: ${host}` };
-  }
+  const host = rawHost.toLowerCase().replace(/\.$/, "");
   if (host.startsWith("[") || net.isIP(host) !== 0) {
     return { refused: `IP literal refused: ${host}` };
+  }
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)*$/.test(host)) {
+    return { refused: `not a host name: ${printable(host)}` };
+  }
+  if (Number(port) !== HTTPS_PORT) {
+    return { refused: `port ${port} refused: ${host}` };
   }
   const allowed = allow.some((entry) =>
     entry.startsWith(".") ? host.endsWith(entry) : host === entry,

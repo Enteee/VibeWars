@@ -23,6 +23,7 @@ describe("tunnelTarget", () => {
   it("allows an allowlisted host, exactly or below a dotted entry", () => {
     expect(tunnelTarget("github.com:443", ALLOW)).toEqual({ host: "github.com" });
     expect(tunnelTarget("API.GitHub.com:443", ALLOW)).toEqual({ host: "api.github.com" });
+    expect(tunnelTarget("github.com.:443", ALLOW)).toEqual({ host: "github.com" });
     expect(tunnelTarget("objects.githubusercontent.com:443", ALLOW)).toEqual({
       host: "objects.githubusercontent.com",
     });
@@ -39,12 +40,26 @@ describe("tunnelTarget", () => {
       "githubusercontent.com.evil.io",
       "evilgithubusercontent.com",
       "sub.github.com",
-      "github.com.",
+      "github.com.evil.io.",
     ]) {
       expect(tunnelTarget(`${host}:443`, ALLOW), host).toEqual({
-        refused: `host refused: ${host}`,
+        refused: `host refused: ${host.replace(/\.$/, "")}`,
       });
     }
+  });
+
+  it("refuses userinfo and a raw IDN, and logs no control character", () => {
+    for (const host of ["user@objects.githubusercontent.com", "gіthub.com", "github..com"]) {
+      expect(tunnelTarget(`${host}:443`, ALLOW), host).toEqual({
+        refused: `not a host name: ${host}`,
+      });
+    }
+    expect(tunnelTarget("github.com\u001b[2K:443", ALLOW)).toEqual({
+      refused: "not a host name: github.com?[2k",
+    });
+    expect(tunnelTarget("github.com:443\nrefused: x", ALLOW)).toEqual({
+      refused: "not host:port: github.com:443?refused: x",
+    });
   });
 
   it("refuses IP literals", () => {

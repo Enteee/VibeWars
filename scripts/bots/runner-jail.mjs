@@ -1,7 +1,7 @@
 /**
  * One company CI runner in a jail (#1889, ADR-0045): an ephemeral GitHub
  * Actions runner that takes one job and exits, inside bubblewrap, under a
- * CPU and memory cap, with no network but the egress proxy.
+ * CPU, memory and task cap, with no network but the egress proxy.
  *
  * A job runs whatever the workflow on its branch says, so it is treated as
  * hostile. Its jail holds nothing of the host's:
@@ -9,6 +9,10 @@
  * - `--unshare-all` without `--share-net`: its only way out is a
  *   `runner-proxy.mjs` this launcher runs for it alone, on a unix socket
  *   bound in, which the jail's forwarder serves on 127.0.0.1:3128;
+ * - no capabilities and no nested user namespaces (`--cap-drop ALL`,
+ *   `--disable-userns`), the usual way from a sandbox into the kernel.
+ *   Chromium's own sandbox needs one, so the e2e runs it with
+ *   `--no-sandbox`: the jail is the sandbox;
  * - `/`, `/etc` and `/tmp` are tmpfs. `/nix`, `HOME` and the work dir are a
  *   fresh scratch directory on disk, so a Nix store restored from the
  *   Actions cache is not charged to the memory cap, and it is deleted when
@@ -20,13 +24,13 @@
  * - never the operator's home, the hub, the company's credentials, the SSH
  *   key, `/run/user`, or any socket but the proxy's;
  * - a job-started hook, shipped here and not by the workflow, fails any job
- *   that is not a push or a same-repository pull request.
+ *   whose event is not on `runner-events.json`, or is a fork's pull request.
  *
  * The JIT config, the runner's one-job registration, is read by this
  * launcher and handed to the runner as an argument, never as a file in the
  * jail; the host's copy is deleted as soon as the runner has started.
  *
- *     node runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6]
+ *     node runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
  *
  * `VIBEWARS_RUNNER_JAIL` holds the jail's store paths as JSON, which the
  * `vibewars-runner-jail` wrapper in `nix/claude-bot.nix` sets.
@@ -60,6 +64,7 @@ export const WORK = "/work";
 /** The cap on each runner when the supervisor names none. */
 export const DEFAULT_CPUS = 2;
 export const DEFAULT_MEMORY_GIB = 6;
+export const DEFAULT_TASKS_MAX = 2048;
 
 /**
  * @typedef {object} RunnerStore
@@ -70,6 +75,7 @@ export const DEFAULT_MEMORY_GIB = 6;
  * @property {string} etc `passwd`, `group`, `hosts` and `nsswitch.conf`
  * @property {string} init the jail's entrypoint: starts the forwarder, then execs its arguments
  * @property {string} hook the job-started hook
+ * @property {string} events the hook's event allowlist
  * @property {string} allow the proxy's allowlist
  * @property {string} scratch where each jail's scratch directory is made
  */
@@ -82,6 +88,7 @@ export const DEFAULT_MEMORY_GIB = 6;
  * @property {string} userland
  * @property {string} etc
  * @property {string} hook
+ * @property {string} events
  * @property {string} proxyDir the host directory holding the proxy's socket
  * @property {string} scratch this jail's scratch directory: `nix`, `home` and `work`
  */
@@ -98,6 +105,8 @@ export function runnerJailArgs(jail) {
     "--new-session",
     "--unshare-all",
     "--unshare-user",
+    "--disable-userns",
+    ...["--cap-drop", "ALL"],
     ...["--uid", String(RUNNER_UID), "--gid", String(RUNNER_UID)],
     "--clearenv",
     ...["--bind", `${jail.scratch}/nix`, "/nix"],
@@ -136,6 +145,7 @@ export function runnerJailArgs(jail) {
     ...["NO_PROXY", "no_proxy"].flatMap((name) => ["--setenv", name, "localhost,127.0.0.1,::1"]),
     ...["--setenv", "RUNNER_ROOT", WORK],
     ...["--setenv", "ACTIONS_RUNNER_HOOK_JOB_STARTED", jail.hook],
+    ...["--setenv", "VIBEWARS_RUNNER_EVENTS", jail.events],
     ...["--setenv", "VIBEWARS_PROXY_SOCKET", `${PROXY_DIR}/${PROXY_SOCKET}`],
     ...["--setenv", "VIBEWARS_PROXY_PORT", String(PROXY_PORT)],
   ];
@@ -151,17 +161,29 @@ export function runnerJailArgs(jail) {
  * @param {string} launch.bwrap
  * @param {number} launch.cpus
  * @param {number} launch.memoryGib
+ * @param {number} launch.tasksMax
  * @param {string} launch.init
  * @param {string} launch.runner
  * @param {string} launch.jitconfig
  * @returns {string[]}
  */
-export function runnerCommand({ jail, unit, bwrap, cpus, memoryGib, init, runner, jitconfig }) {
+export function runnerCommand({
+  jail,
+  unit,
+  bwrap,
+  cpus,
+  memoryGib,
+  tasksMax,
+  init,
+  runner,
+  jitconfig,
+}) {
   return [
     "systemd-run",
     ...["--user", "--scope", "--quiet", "--collect", `--unit=${unit}`],
     ...["-p", `CPUQuota=${String(cpus * 100)}%`],
     ...["-p", `MemoryMax=${String(memoryGib)}G`],
+    ...["-p", `TasksMax=${String(tasksMax)}`],
     "--",
     bwrap,
     ...runnerJailArgs(jail),
@@ -209,6 +231,7 @@ export function parseRunnerStore(json) {
     etc: get("etc"),
     init: get("init"),
     hook: get("hook"),
+    events: get("events"),
     allow: get("allow"),
     scratch: get("scratch"),
   };
@@ -259,9 +282,10 @@ export function removeScratch(dir) {
  * @param {string} options.jitconfigFile
  * @param {number} options.cpus
  * @param {number} options.memoryGib
+ * @param {number} options.tasksMax
  * @returns {Promise<number>} the runner's exit code
  */
-export async function runRunner({ store, jitconfigFile, cpus, memoryGib }) {
+export async function runRunner({ store, jitconfigFile, cpus, memoryGib, tasksMax }) {
   const jitconfig = parseJitconfig(fs.readFileSync(jitconfigFile, "utf8"));
   const id = crypto.randomBytes(4).toString("hex");
   fs.mkdirSync(store.scratch, { recursive: true, mode: 0o700 });
@@ -291,6 +315,7 @@ export async function runRunner({ store, jitconfigFile, cpus, memoryGib }) {
         userland: store.userland,
         etc: store.etc,
         hook: store.hook,
+        events: store.events,
         proxyDir,
         scratch,
       },
@@ -298,6 +323,7 @@ export async function runRunner({ store, jitconfigFile, cpus, memoryGib }) {
       bwrap: store.bwrap,
       cpus,
       memoryGib,
+      tasksMax,
       init: store.init,
       runner: store.runner,
       jitconfig,
@@ -351,11 +377,14 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
       jitconfig: { type: "string" },
       cpus: { type: "string" },
       "memory-gib": { type: "string" },
+      "tasks-max": { type: "string" },
     },
   });
   const storeJson = process.env.VIBEWARS_RUNNER_JAIL;
   if (values.jitconfig === undefined || storeJson === undefined) {
-    console.error("usage: runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6]");
+    console.error(
+      "usage: runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
+    );
     console.error("       (VIBEWARS_RUNNER_JAIL is set by the vibewars-runner-jail wrapper)");
     process.exit(2);
   }
@@ -364,5 +393,6 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
     jitconfigFile: values.jitconfig,
     cpus: positive(values.cpus, "cpus", DEFAULT_CPUS),
     memoryGib: positive(values["memory-gib"], "memory-gib", DEFAULT_MEMORY_GIB),
+    tasksMax: positive(values["tasks-max"], "tasks-max", DEFAULT_TASKS_MAX),
   });
 }

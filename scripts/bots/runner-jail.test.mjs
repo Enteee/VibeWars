@@ -23,7 +23,7 @@ import {
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
 const HOST_HOME = "/home/op";
-const SCRATCH = `${HOST_HOME}/.cache/vibewars-runners/0a1b2c3d`;
+const SCRATCH = `${HOST_HOME}/.local/state/vibewars/runners/0a1b2c3d`;
 
 const JAIL = {
   storeDirs: ["/nix/store/aaa-github-runner", "/nix/store/bbb-userland", "/nix/store/ccc-glibc"],
@@ -31,6 +31,7 @@ const JAIL = {
   userland: "/nix/store/bbb-userland",
   etc: "/nix/store/eee-runner-etc",
   hook: "/nix/store/fff-vibewars-runner-hook",
+  events: "/nix/store/ggg-vibewars-runner-events.json",
   proxyDir: `${SCRATCH}/proxy`,
   scratch: SCRATCH,
 };
@@ -73,6 +74,11 @@ describe("runnerJailArgs", () => {
     expect(args).toContain("--die-with-parent");
     expect(args).toContain("--new-session");
     expect(args).toContain("--clearenv");
+  });
+
+  it("has no capabilities and cannot make a user namespace of its own", () => {
+    expect(args).toContain("--disable-userns");
+    expect(args[args.indexOf("--cap-drop") + 1]).toBe("ALL");
   });
 
   it("is never root", () => {
@@ -143,6 +149,7 @@ describe("runnerJailArgs", () => {
     }
     expect(env(args, "NO_PROXY")).toBe("localhost,127.0.0.1,::1");
     expect(env(args, "ACTIONS_RUNNER_HOOK_JOB_STARTED")).toBe(JAIL.hook);
+    expect(env(args, "VIBEWARS_RUNNER_EVENTS")).toBe(JAIL.events);
     expect(env(args, "PATH")).toBe(`${JAIL.userland}/bin`);
     expect(env(args, "HOME")).toBe("/home/runner");
   });
@@ -155,12 +162,13 @@ describe("runnerCommand", () => {
     bwrap: "/nix/store/ggg-bubblewrap/bin/bwrap",
     cpus: 2,
     memoryGib: 6,
+    tasksMax: 2048,
     init: "/nix/store/ddd-vibewars-runner-init",
     runner: "/nix/store/aaa-github-runner",
     jitconfig: "ZXhhbXBsZQ==",
   });
 
-  it("caps the jail's scope at its CPUs and memory", () => {
+  it("caps the jail's scope at its CPUs, memory and tasks", () => {
     const scope = command.slice(0, command.indexOf("--"));
     expect(scope).toEqual([
       "systemd-run",
@@ -173,6 +181,8 @@ describe("runnerCommand", () => {
       "CPUQuota=200%",
       "-p",
       "MemoryMax=6G",
+      "-p",
+      "TasksMax=2048",
     ]);
   });
 
@@ -197,8 +207,9 @@ describe("parseRunnerStore and parseJitconfig", () => {
     etc: "/nix/store/eee-runner-etc",
     init: "/nix/store/ddd-vibewars-runner-init",
     hook: "/nix/store/fff-vibewars-runner-hook",
+    events: "/nix/store/ggg-vibewars-runner-events.json",
     allow: "/nix/store/x-scripts/runner-proxy-allow.json",
-    scratch: `${HOST_HOME}/.cache/vibewars-runners`,
+    scratch: `${HOST_HOME}/.local/state/vibewars/runners`,
   };
 
   it("takes every path, and refuses one missing or relative", () => {
@@ -232,19 +243,27 @@ describe("the job-started hook", () => {
    * Runs the hook on an event, as the runner would.
    *
    * @param {string} name GITHUB_EVENT_NAME
-   * @param {object} event the event payload
+   * @param {object | string} event the event payload, or its file's text
+   * @param {string} [events] the event allowlist's text
    */
-  function hook(name, event) {
+  function hook(
+    name,
+    event,
+    events = fs.readFileSync(path.join(HERE, "runner-events.json"), "utf8"),
+  ) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-hook-"));
     dirs.push(dir);
     const file = path.join(dir, "event.json");
-    fs.writeFileSync(file, JSON.stringify(event));
+    fs.writeFileSync(file, typeof event === "string" ? event : JSON.stringify(event));
+    const allow = path.join(dir, "events.json");
+    fs.writeFileSync(allow, events);
     return spawnSync("bash", [path.join(HERE, "runner-hook-job-started.sh")], {
       env: {
         PATH: String(process.env.PATH),
         GITHUB_REPOSITORY: "Enteee/VibeWars",
         GITHUB_EVENT_NAME: name,
         GITHUB_EVENT_PATH: file,
+        VIBEWARS_RUNNER_EVENTS: allow,
       },
       encoding: "utf8",
     });
@@ -252,8 +271,13 @@ describe("the job-started hook", () => {
 
   const repository = { full_name: "Enteee/VibeWars" };
 
-  it("lets a push to this repository run", () => {
+  it("lets a push, a schedule and a dispatch run", () => {
     expect(hook("push", { ref: "refs/heads/main", repository }).status).toBe(0);
+    // A schedule's payload names no repository.
+    expect(hook("schedule", { schedule: "17 3 * * *" }).status).toBe(0);
+    expect(
+      hook("workflow_dispatch", { ref: "refs/heads/main", inputs: {}, repository }).status,
+    ).toBe(0);
   });
 
   it("lets a pull request from a branch of this repository run", () => {
@@ -272,9 +296,27 @@ describe("the job-started hook", () => {
     expect(
       hook("pull_request", { pull_request: { head: { repo: null } }, repository }).status,
     ).toBe(1);
-    expect(hook("pull_request_target", { repository }).status).toBe(1);
-    expect(hook("workflow_dispatch", { repository }).status).toBe(1);
-    expect(hook("push", { repository: { full_name: "mallory/VibeWars" } }).status).toBe(1);
+    for (const name of [
+      "pull_request_target",
+      "workflow_run",
+      "issue_comment",
+      "merge_group",
+      "",
+    ]) {
+      const result = hook(name, { repository });
+      expect(result.status, name).toBe(1);
+      expect(result.stderr, name).toContain(`event '${name}'`);
+    }
+  });
+
+  it("fails closed on a malformed event file or allowlist", () => {
+    expect(hook("push", "{ not json").stderr).toContain("unreadable event file");
+    expect(hook("push", "[]").status).toBe(1);
+    for (const events of ["{ not json", "{}", '{"any": "push", "sameRepository": []}']) {
+      const result = hook("push", { repository }, events);
+      expect(result.status, events).toBe(1);
+      expect(result.stderr, events).toContain("unreadable event allowlist");
+    }
   });
 });
 
