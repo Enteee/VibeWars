@@ -95,12 +95,15 @@ Concretely:
 
 Generated files: `packages/game-protocol/src/wire-schema.json`, the roles
 snapshot (`packages/game-core/src/skills/__snapshots__/roles.test.ts.snap`),
-the skill icon rows (`scripts/assets/skill-icon-table.mjs`,
-`scripts/assets/skill-icons/*.mjs`) and the SVGs in
+the skill icon rows (`scripts/assets/skill-icons/*.mjs`) and the SVGs in
 `apps/web/public/icons/skill/`. Never hand-merge them.
+`scripts/assets/skill-icon-table.mjs` is not one of them: it is
+hand-written glue that merges the row files, and a conflict in it is
+resolved by hand.
 
-`.gitattributes` makes git keep both sides of the icon rows and the roles
-snapshot (`merge=union`). For any conflict left in a generated file:
+`.gitattributes` makes git keep both sides of the per-profession icon row
+files and the roles snapshot (`merge=union`). For any conflict left in a
+generated file:
 
 ```sh
 git checkout --theirs <file>   # your side in a rebase; --ours in a merge

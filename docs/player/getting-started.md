@@ -62,7 +62,12 @@ and the strip on top of every mode screen lists who is in it.
 
 - **Invite:** press **Copy** beside your key in the top bar and send it
   to your friends. The key is 12 characters, such as `ACDE-FGHJ-KMNP`.
-  Anyone with the key can join, so share it only with people you want in.
+  Share it only with people you want in.
+- **Open your lobby** before friends join: your lobby starts **Closed**
+  (🔒), and nobody can join it, even with the key. Press the lock beside
+  your key to open it; anyone with the key can then join. Press it again
+  to close it: friends already in stay, and nobody new gets in. A guest
+  sees "Lobby closed" in the party strip while it is closed.
 - **Join:** paste the key you were sent into **Lobby Key** in the top
   bar and press **Join**, or Enter. Dashes and lower case are fine. Your
   own lobby stays open until the join is in. Once in, the top bar shows

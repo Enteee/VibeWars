@@ -10,9 +10,9 @@ eight skills on the bar, and real-time fights at 20 Hz, hosted by one
 player's browser.
 
 **[▶ Play it now](https://enteee.github.io/VibeWars/next/)** — build a
-character, test it on dummies in the Training Ground, then send your
-lobby key to your friends. Nothing to install; see
-[Play it](#play-it).
+character, test it on dummies in the Training Ground, then open your
+lobby (the lock by your key) and send the key to your friends. Nothing
+to install; see [Play it](#play-it).
 
 ![A 4v4 match on Canyon: an Elementalist and three bots fight four bots, with the skill bar, the target frame, the party window and the compass on screen](docs/media/readme-match.png)
 
@@ -38,9 +38,9 @@ does not work on a phone or a touch-only tablet.
 Open the GitHub Pages build:
 [the latest release](https://enteee.github.io/VibeWars/) or
 [the latest `main`](https://enteee.github.io/VibeWars/next/). Every
-player is always in a lobby: your own lobby key is in the title bar. A
-friend types it there and picks **Join**, and the host's mode is the
-party's. The host's tab runs the match, so it has to stay open: if it
+player is always in a lobby: your own lobby key is in the title bar. Open
+it (the lock by your key), then a friend types the key there and picks
+**Join**, and the host's mode is the party's. The host's tab runs the match, so it has to stay open: if it
 closes, the lobby ends for everyone. The two builds keep separate
 saved characters.
 

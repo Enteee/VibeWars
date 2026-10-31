@@ -3515,10 +3515,15 @@ export class MatchSimulation {
     }
 
     // An off-hand attack out of sequence, or whose chain requirement did
-    // not hold, recharges at once (#831, #1041).
+    // not hold, recharges at once (#831, #1041), but for what its failure
+    // adds, as Repeating Strike's 15 s (#1757).
     if (
-      !events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
+      events.some((event) => event.kind === "attack-missed" && event.reason === "out-of-sequence")
     ) {
+      if (rechargeLongerSeconds > 0) {
+        beginRecharge(record.combatant.cast, skill, rechargeLongerSeconds, cast.key);
+      }
+    } else {
       // A spell recharges faster under Mantra of Recovery (#938) or Weapon
       // of Quickening (#975), and a binding ritual under Weapon of
       // Quickening (#1064), read now: one that ends later leaves this

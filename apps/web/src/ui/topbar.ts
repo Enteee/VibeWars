@@ -43,17 +43,34 @@ export interface TopbarCallbacks {
   readonly onJoin: (code: string, name: string) => void;
   /** A guest's Leave (#1526): back to a fresh lobby of its own. */
   readonly onLeave: () => void;
+  /** The host's Closed / Open toggle (#1682): let friends with the key join, or stop them. */
+  readonly onSetOpen: (open: boolean) => void;
 }
 
 /** The lobby the bar names (#1526): this tab's own, or the one it joined. */
 export interface BarLobby {
   readonly code: string;
   readonly isHost: boolean;
+  /** Whether friends with the key may join (#1682). */
+  readonly open: boolean;
 }
 
 /** Before the code: whose lobby it is. */
 export const OWN_LOBBY_LABEL = "Your key";
 export const JOINED_LOBBY_LABEL = "Lobby";
+
+/**
+ * The host's toggle (#1682): its lock, what it says beside it while the
+ * bar has the room, its name, and its tooltip, each way.
+ */
+export const CLOSED_GLYPH = "🔒";
+export const OPEN_GLYPH = "🔓";
+export const CLOSED_LABEL = "Closed";
+export const OPEN_LABEL = "Open";
+export const CLOSED_NAME = "Lobby closed";
+export const OPEN_NAME = "Lobby open";
+export const CLOSED_TOOLTIP = "Friends with your key can't join until you open the lobby.";
+export const OPEN_TOOLTIP = "Anyone with your key can join.";
 
 /**
  * How long a join runs before the bar says it is still connecting
@@ -68,13 +85,16 @@ export interface JoinControls {
   readonly settle: () => void;
   /** Empty the code, as a place without the code field leaves it. */
   readonly clear: () => void;
-  /** Name the lobby this tab is in, with Copy, and Leave for a guest; none while there is none. */
+  /**
+   * Name the lobby this tab is in, with Copy, the Closed / Open toggle
+   * for its host and Leave for a guest; none while there is none.
+   */
   readonly setLobby: (lobby: BarLobby | undefined) => void;
 }
 
 /**
- * The lobby this tab is in, its key and Copy, and Leave for a guest
- * (#1526); then Lobby Key, its field and Join (#1525, #1681), then
+ * The lobby this tab is in, its key and Copy, its host's Closed / Open
+ * (#1682) and a guest's Leave (#1526); then Lobby Key, its field and Join (#1525, #1681), then
  * "Connecting…" once a join has run a while (#707). The page has one, in
  * the title bar, so a key typed in it lives through any redraw of the
  * screen under it. `name` is read at the press.
@@ -83,6 +103,7 @@ export function joinControls(
   name: () => string,
   onJoin: (code: string, name: string) => void,
   onLeave: () => void,
+  onSetOpen: (open: boolean) => void,
 ): JoinControls {
   const group = h("div", "topbar-join");
   const lobby = h("div", "topbar-lobby");
@@ -92,8 +113,14 @@ export function joinControls(
   const copy = button("Copy", "lobby-copy", () => {
     void copyCode(lobbyCode.textContent, lobbyCode);
   });
+  const toggle = button("", "topbar-lobby-open", () => {
+    onSetOpen(toggle.getAttribute("aria-pressed") !== "true");
+  });
+  const toggleGlyph = h("span", "topbar-lobby-open-glyph", CLOSED_GLYPH);
+  const toggleLabel = h("span", "topbar-lobby-open-label", CLOSED_LABEL);
+  toggle.append(toggleGlyph, toggleLabel);
   const leave = button("Leave", "topbar-leave", onLeave);
-  lobby.append(lobbyLabel, lobbyCode, copy, leave);
+  lobby.append(lobbyLabel, lobbyCode, copy, toggle, leave);
   const codeInput = document.createElement("input");
   codeInput.className = "field-input code-input";
   codeInput.placeholder = "KEY";
@@ -152,6 +179,14 @@ export function joinControls(
       lobbyLabel.textContent = shown?.isHost === false ? JOINED_LOBBY_LABEL : OWN_LOBBY_LABEL;
       lobbyCode.textContent = shown === undefined ? "" : displayLobbyCode(shown.code);
       leave.hidden = shown?.isHost !== false;
+      toggle.hidden = shown?.isHost !== true;
+      const open = shown?.open === true;
+      toggleGlyph.textContent = open ? OPEN_GLYPH : CLOSED_GLYPH;
+      toggleLabel.textContent = open ? OPEN_LABEL : CLOSED_LABEL;
+      // Its name whether or not the bar has room for the word (#1682).
+      toggle.setAttribute("aria-label", open ? OPEN_NAME : CLOSED_NAME);
+      toggle.title = open ? OPEN_TOOLTIP : CLOSED_TOOLTIP;
+      toggle.setAttribute("aria-pressed", String(open));
     },
   };
 }
@@ -227,7 +262,12 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   actions.append(help, options, music, mute, fullscreen);
   // Right before the global icons, on every menu screen that asks for it.
-  const join = joinControls(loadPlayerName, callbacks.onJoin, callbacks.onLeave);
+  const join = joinControls(
+    loadPlayerName,
+    callbacks.onJoin,
+    callbacks.onLeave,
+    callbacks.onSetOpen,
+  );
   join.element.hidden = true;
   actions.before(join.element);
   attachJukeboxPopover(music, bar);

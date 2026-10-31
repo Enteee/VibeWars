@@ -2,8 +2,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ShownBar } from "./kit.js";
 import {
+  CLOSED_GLYPH,
+  CLOSED_LABEL,
+  CLOSED_NAME,
+  CLOSED_TOOLTIP,
   CONNECTING_NOTICE_MS,
   JOINED_LOBBY_LABEL,
+  OPEN_GLYPH,
+  OPEN_LABEL,
+  OPEN_NAME,
+  OPEN_TOOLTIP,
   OWN_LOBBY_LABEL,
   joinControls,
   paintStatus,
@@ -65,6 +73,7 @@ class FakeElement {
   placeholder = "";
   maxLength = -1;
   hidden = false;
+  title = "";
   readonly tagName: string;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -77,6 +86,8 @@ class FakeElement {
   readonly setAttribute = (name: string, value: string): void => {
     this.attributes.set(name, value);
   };
+
+  readonly getAttribute = (name: string): string | null => this.attributes.get(name) ?? null;
 
   readonly addEventListener = (type: string, listener: (event: { key?: string }) => void): void => {
     this.listeners.set(type, listener);
@@ -105,28 +116,31 @@ describe("the title bar's Lobby Key and Join (#1525, #1526)", () => {
   const mount = (): {
     joined: string[];
     left: number[];
+    opened: boolean[];
     join: ReturnType<typeof joinControls>;
     parts: FakeElement[];
   } => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
     const joined: string[] = [];
     const left: number[] = [];
+    const opened: boolean[] = [];
     const join = joinControls(
       () => "Rurik",
       (code, name) => joined.push(`${code} ${name}`),
       () => left.push(1),
+      (open) => opened.push(open),
     );
     // The lobby this tab is in comes first, then the join.
     const [, ...parts] = (join.element as unknown as FakeElement).children;
-    return { joined, left, join, parts };
+    return { joined, left, opened, join, parts };
   };
 
   it("names this tab's own lobby without Leave, and a joined one with it", () => {
     const { join, left } = mount();
     const [lobby] = (join.element as unknown as FakeElement).children;
-    const [label, code, copy, leave] = lobby?.children ?? [];
+    const [label, code, copy, , leave] = lobby?.children ?? [];
     expect(lobby?.hidden).toBe(true);
-    join.setLobby({ code: "ACDEFGHJKMNP", isHost: true });
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: true, open: false });
     expect([lobby?.hidden, label?.textContent, code?.textContent, copy?.textContent]).toEqual([
       false,
       OWN_LOBBY_LABEL,
@@ -134,7 +148,7 @@ describe("the title bar's Lobby Key and Join (#1525, #1526)", () => {
       "Copy",
     ]);
     expect(leave?.hidden).toBe(true);
-    join.setLobby({ code: "HJKMNPQRTWXY", isHost: false });
+    join.setLobby({ code: "HJKMNPQRTWXY", isHost: false, open: true });
     expect([label?.textContent, code?.textContent, leave?.hidden]).toEqual([
       JOINED_LOBBY_LABEL,
       "HJKM-NPQR-TWXY",
@@ -146,6 +160,43 @@ describe("the title bar's Lobby Key and Join (#1525, #1526)", () => {
     expect(lobby?.hidden).toBe(true);
   });
 
+  it("gives the host a toggle, Closed first, that asks for the other state; a guest none (#1682)", () => {
+    const { join, opened } = mount();
+    const [lobby] = (join.element as unknown as FakeElement).children;
+    const toggle = lobby?.children[3];
+    if (toggle === undefined) {
+      throw new Error("no toggle");
+    }
+    const looks = () => [
+      toggle.hidden,
+      toggle.children.map((part) => part.textContent).join(" "),
+      toggle.getAttribute("aria-label"),
+      toggle.title,
+      toggle.getAttribute("aria-pressed"),
+    ];
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: true, open: false });
+    expect(looks()).toEqual([
+      false,
+      `${CLOSED_GLYPH} ${CLOSED_LABEL}`,
+      CLOSED_NAME,
+      CLOSED_TOOLTIP,
+      "false",
+    ]);
+    toggle.fire("click");
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: true, open: true });
+    expect(looks()).toEqual([
+      false,
+      `${OPEN_GLYPH} ${OPEN_LABEL}`,
+      OPEN_NAME,
+      OPEN_TOOLTIP,
+      "true",
+    ]);
+    toggle.fire("click");
+    expect(opened).toEqual([true, false]);
+    join.setLobby({ code: "HJKMNPQRTWXY", isHost: false, open: false });
+    expect(toggle.hidden).toBe(true);
+  });
+
   it("keeps a key typed while its own lobby opens, and empties it once joined (#1526)", () => {
     const { join, parts } = mount();
     const input = parts[1];
@@ -153,9 +204,9 @@ describe("the title bar's Lobby Key and Join (#1525, #1526)", () => {
       throw new Error("no field");
     }
     input.value = "ACDE-FGHJ-KMNP";
-    join.setLobby({ code: "HJKMNPQRTWXY", isHost: true });
+    join.setLobby({ code: "HJKMNPQRTWXY", isHost: true, open: false });
     expect(input.value).toBe("ACDE-FGHJ-KMNP");
-    join.setLobby({ code: "ACDEFGHJKMNP", isHost: false });
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: false, open: false });
     expect(input.value).toBe("");
   });
 
