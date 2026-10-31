@@ -4168,10 +4168,10 @@ const skillGlyph = {
     inkFill("M22 5L16 2V8Z"),
   // Ranger staples 3 (#1697): the shot, the pet, the trap and the stance.
   "arrow-aimed": () =>
-    inkLine("M3 21L12 12", 2.4) +
-    inkFill("M13.5 10.5L9.5 11.5L12.5 14.5Z") +
-    `<circle cx="16.5" cy="7.5" r="4.6" ${stroke(C.ink, 2)}/>` +
-    inkLine("M16.5 1.5V3.8M16.5 11.2V13.5M10.5 7.5H12.8M20.2 7.5H22.5", 1.8),
+    `<path d="M14 3L20.5 5.5V11C20.5 15 17.5 18 14 20C10.5 18 7.5 15 7.5 11V5.5Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2 12H17", 2.4) +
+    inkFill("M23 12L16.5 8V16Z") +
+    inkLine("M2 6.5H7M2 17.5H7", 2),
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +
