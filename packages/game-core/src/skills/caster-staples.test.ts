@@ -135,6 +135,16 @@ describe("Blood Renewal (#1870)", () => {
     return match;
   }
 
+  it("costs 15% of maximum Health up front", () => {
+    const match = new MatchSimulation({
+      seed: "blood-renewal-sacrifice",
+      participants: [spec("n", 0, vec2(0, 0), ["necromancer.blood-renewal"])],
+    });
+    expect(eventsOf(cast(match, "n", "n"), "necromancer.blood-renewal", "sacrifice")).toEqual([
+      { kind: "sacrifice", targetId: "n", amount: 75 },
+    ]);
+  });
+
   it("gives +5 regeneration", () => {
     expect(aggregateModifiers([{ id: "blood-renewal" }]).healthPips).toBe(5);
   });
@@ -157,7 +167,7 @@ describe("Blood Renewal (#1870)", () => {
 });
 
 describe("Meekness (#1870)", () => {
-  it("hexes the target and a foe in the area for 25 s, not one far away", () => {
+  it("hexes the target and a foe in the area for 25 s, not one far away, for 17% Health", () => {
     const match = new MatchSimulation({
       seed: "meekness",
       participants: [
@@ -167,7 +177,10 @@ describe("Meekness (#1870)", () => {
         spec("c", 1, vec2(300 + AREA_IN_THE_AREA + 50, 0)),
       ],
     });
-    cast(match, "n", "a");
+    // 17% of 500, once however many foes it reaches.
+    expect(eventsOf(cast(match, "n", "a"), "necromancer.meekness", "sacrifice")).toEqual([
+      { kind: "sacrifice", targetId: "n", amount: 85 },
+    ]);
     expect(get(match, "a").combatant.statuses.get("meekness")?.durationSeconds).toBe(25);
     expect(get(match, "b").combatant.statuses.has("meekness")).toBe(true);
     expect(get(match, "c").combatant.statuses.has("meekness")).toBe(false);

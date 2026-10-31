@@ -2828,8 +2828,12 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 7 seconds, you gain +3...5...6 Health regeneration. When Blood
-    // Renewal ends, you gain 40...160...190 Health." The status heals.
-    effects: [{ kind: "apply-status", statusId: "blood-renewal", durationSeconds: 7 }],
+    // Renewal ends, you gain 40...160...190 Health." The status heals;
+    // the 15% sacrifice is paid up front.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 15 },
+      { kind: "apply-status", statusId: "blood-renewal", durationSeconds: 7 },
+    ],
   },
   {
     id: "necromancer.meekness",
@@ -2862,7 +2866,11 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
+    // The 17% sacrifice is paid once a cast, however many foes it reaches;
     // "For 5...25...30 seconds, ... attack 50% slower": 25 s.
-    effects: [{ kind: "apply-status", statusId: "meekness", durationSeconds: 25 }],
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "meekness", durationSeconds: 25 },
+    ],
   },
 ];
