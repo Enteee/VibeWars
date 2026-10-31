@@ -134,6 +134,7 @@ export {
   parsePeerPartyConsent,
   parseWirePartyFormed,
   parseWirePartySplit,
+  parseWireLobbyMove,
   parseWireMatchStart,
   parseWireCape,
 } from "./p2p.js";
@@ -199,6 +200,7 @@ export type {
   PeerPartyConsent,
   WirePartyFormed,
   WirePartySplit,
+  WireLobbyMove,
   WireAdmission,
   LobbyRefusal,
   WireMatchStart,

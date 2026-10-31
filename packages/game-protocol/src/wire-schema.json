@@ -27,6 +27,7 @@
     "party-consent",
     "party-formed",
     "party-split",
+    "lobby-move",
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
@@ -469,6 +470,7 @@
         { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
         { "literal": "lobby-leave" },
+        { "literal": "lobby-move" },
         { "literal": "lobby-note" },
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
@@ -4100,6 +4102,7 @@
         }
       ]
     },
+    "WireLobbyMove": { "properties": [{ "name": "code", "optional": false, "type": "string" }] },
     "WireLobbyNote": {
       "properties": [
         {

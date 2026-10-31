@@ -34,6 +34,7 @@ import {
   type WireMatchStart,
   type WirePartyFormed,
   type WirePartyProposal,
+  type WireLobbyMove,
   type WirePartySplit,
   type WireTeamChoice,
   type WireTeamLobby,
@@ -240,8 +241,13 @@ export interface LobbyHost {
   onReach(handler: (reach: LobbyReach) => void): () => void;
   /** Run `seconds` of the lobby's match, if one is on, and notice when it ends. */
   advance(seconds: number): void;
-  /** Send everyone off, end the match if one is on, and leave the room. */
-  close(): Promise<void>;
+  /**
+   * Send everyone off, end the match if one is on, and leave the room.
+   * With `moveTo`, the key of the lobby its host has just joined
+   * (#1553), each guest is told to follow it there first; bots belong to
+   * this lobby and go with it.
+   */
+  close(moveTo?: string): Promise<void>;
 }
 
 interface Member {
@@ -1739,11 +1745,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         broadcast();
       }
     },
-    async close() {
+    async close(moveTo) {
       if (closed) {
         return;
       }
       closed = true;
+      if (moveTo !== undefined) {
+        const move: WireLobbyMove = { code: moveTo };
+        for (const member of members.values()) {
+          if (member.bot === null && member.id !== local.selfId) {
+            transport.send("lobby-move", move, member.id);
+          }
+        }
+      }
       const ending = [...(match === undefined ? [] : [match]), ...draining.splice(0)];
       match = undefined;
       await Promise.all(ending.map(({ host: over }) => over.close("host-left")));

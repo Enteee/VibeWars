@@ -309,6 +309,41 @@ describe("lobby host", () => {
     expect(closed).toEqual(["host-left", "host-left", "host-left"]);
   });
 
+  it("tells each guest, and only them, the lobby its host left for, before it closes (#1553)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const other = await lobby.join("Other");
+    // A bot belongs to this lobby: it is nobody to tell.
+    lobby.host.connection.setBots(1, 1);
+    await settle();
+    const heard: string[] = [];
+    for (const who of [lobby.host, guest, other]) {
+      const name = who === lobby.host ? "Host" : who === guest ? "Guest" : "Other";
+      who.connection.onMove((code) => heard.push(`${name} move ${code}`));
+      who.connection.onClosed((reason) => heard.push(`${name} ${reason}`));
+    }
+    await lobby.lobby.close("ACDEFGHJKMNP");
+    await settle();
+    expect(heard.filter((line) => line.startsWith("Guest"))).toEqual([
+      "Guest move ACDEFGHJKMNP",
+      "Guest host-left",
+    ]);
+    expect(heard.filter((line) => line.startsWith("Other"))).toEqual([
+      "Other move ACDEFGHJKMNP",
+      "Other host-left",
+    ]);
+    expect(heard.filter((line) => line.startsWith("Host"))).toEqual(["Host host-left"]);
+  });
+
+  it("follows a move from the host alone (#1553)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const moves: string[] = [];
+    guest.connection.onMove((code) => moves.push(code));
+    const peer = await rawPeer(lobby);
+    peer.transport.send("lobby-move", { code: "ACDEFGHJKMNP" }, guest.transport.selfId);
+    await settle();
+    expect(moves).toEqual([]);
+  });
+
   it("waits for a host whose peer drops in the lobby, and is in again when it is back (#1764)", async () => {
     const { lobby, guest } = await hostAndGuest();
     const closed: string[] = [];

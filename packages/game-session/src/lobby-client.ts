@@ -11,6 +11,7 @@ import {
   parseWirePartyFormed,
   parseWirePartyProposal,
   parseWirePartySplit,
+  parseWireLobbyMove,
   type JsonValue,
   type LobbyRefusal,
   type PeerPartyConsent,
@@ -169,6 +170,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const rejectedHandlers: ((reason: string) => void)[] = [];
   const refusedHandlers: ((reason: LobbyRefusal) => void)[] = [];
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
+  const moveHandlers: ((code: string) => void)[] = [];
   const chatHandlers: ((line: ChatLine) => void)[] = [];
   const throttledHandlers: (() => void)[] = [];
   const partyHandlers: ((party: WirePartyFormed | null) => void)[] = [];
@@ -199,6 +201,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     rejectedHandlers.length = 0;
     refusedHandlers.length = 0;
     closedHandlers.length = 0;
+    moveHandlers.length = 0;
     chatHandlers.length = 0;
     throttledHandlers.length = 0;
     partyHandlers.length = 0;
@@ -377,6 +380,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       onClosed(handler) {
         closedHandlers.push(handler);
       },
+      onMove(handler) {
+        moveHandlers.push(handler);
+      },
       onChat(handler) {
         chatHandlers.push(handler);
       },
@@ -554,6 +560,16 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       transport.on("party-split", (data, from) => {
         if (from === hostId && parseWirePartySplit(data) !== undefined) {
           answerParty(null);
+        }
+      }),
+      // The host leaving for another lobby, its guests to follow (#1553):
+      // from anyone else in the room, it is nothing.
+      transport.on("lobby-move", (data, from) => {
+        const move = parseWireLobbyMove(data);
+        if (from === hostId && move !== undefined && !closed) {
+          for (const handler of [...moveHandlers]) {
+            handler(move.code);
+          }
         }
       }),
       transport.on("match-start", (data, from) => {

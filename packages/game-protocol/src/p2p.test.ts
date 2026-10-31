@@ -59,6 +59,7 @@ import {
   parsePeerPartyConsent,
   parseWirePartyFormed,
   parseWirePartySplit,
+  parseWireLobbyMove,
   parseWireLobbyState,
   parseWireMatchStart,
 } from "./p2p.js";
@@ -820,6 +821,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
+  ["lobby-move (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP" }],
   [
     "counting-down lobby-state (#871)",
     parseWireLobbyState,
@@ -1789,6 +1791,10 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { members: ["ab".repeat(32), "cd".repeat(32)], consents: ["ef".repeat(64), "ef".repeat(64)] },
   ],
   ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
+  ["lobby-move with a dashed key (#1553)", parseWireLobbyMove, { code: "ACDE-FGHJ-KMNP" }],
+  ["lobby-move with a short key (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMN" }],
+  ["lobby-move with a number (#1553)", parseWireLobbyMove, { code: 7 }],
+  ["lobby-move with a field more (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP", to: "x" }],
   [
     "lobby-welcome of a non-hex signature (#871)",
     parseWireLobbyWelcome,

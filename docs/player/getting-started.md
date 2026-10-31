@@ -72,9 +72,13 @@ and the strip on top of every mode screen lists who is in it.
   bar and press **Join**, or Enter. Dashes and lower case are fine. Your
   own lobby stays open until the join is in. Once in, the top bar shows
   your friend's key, and **Leave** takes you back to a fresh lobby of
-  your own, with a new key. If you had friends in your lobby, they go
-  back to lobbies of their own. If your connection drops, your seat is
-  held for 30 seconds.
+  your own, with a new key. If your connection drops, your seat is held
+  for 30 seconds.
+- **Your party comes along:** if you had friends in your lobby, the top
+  bar asks first (**Join** again to go, Esc to stay), and once you are
+  in, they follow you into your friend's lobby. Anyone who cannot get in,
+  because it is full or was closed meanwhile, gets a fresh lobby of their
+  own and is told why.
 
 **The host picks the mode** on the rail, and everyone's screen follows;
 a guest's modes are locked. **Character Builder** and **Team Builder**
