@@ -3034,7 +3034,9 @@ body {
   opacity: 0.4;
 }
 
+/* The card fades once: its disabled press does not fade it again. */
 .screen .play-card.is-faded .play-card-open {
+  opacity: 1;
   cursor: default;
 }
 
