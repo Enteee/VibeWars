@@ -38,7 +38,7 @@ rewriting history.
 | [0030](0030-screens-mount-once.md)            | Screens mount once and update in place                          |
 | [0031](0031-company-credentials.md)           | The company authenticates as itself                             |
 | [0032](0032-random-arena-queue.md)            | Strangers meet in unranked play through a ticket queue on Nostr |
-| [0033](0033-company-commit-lock.md)           | A host-only lock pins the commit the company runs               |
+| [0033](0033-company-commit-lock.md)           | A host-only lock pins the commit the company runs; superseded   |
 | [0034](0034-operator-approves-reboots.md)     | The operator approves every reboot                              |
 | [0035](0035-non-player-combatants.md)         | A creature is a participant with a creature record              |
 | [0036](0036-weapon-sets.md)                   | Weapon sets are resolved at join and swapped by index           |
@@ -49,3 +49,4 @@ rewriting history.
 | [0041](0041-always-in-a-lobby.md)             | Every player is always in a lobby, and the lobby is the party   |
 | [0042](0042-team-matchmaking.md)              | Team modes queue whole teams; each side's host plans its seats  |
 | [0043](0043-secret-lobby-key.md)              | The lobby key is a secret; relays see only a slow derivation    |
+| [0044](0044-lock-decides-what-runs.md)        | The lock decides what runs; the checkout is the operator's      |

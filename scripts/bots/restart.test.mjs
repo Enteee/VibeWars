@@ -14,7 +14,7 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { readLock } from "./company-lock.mjs";
+import { readLock, writeLock } from "./company-lock.mjs";
 import { obj } from "./protocol.mjs";
 
 const RESTART = path.join(path.dirname(fileURLToPath(import.meta.url)), "restart.mjs");
@@ -115,6 +115,8 @@ function setup(options = {}) {
 
   fs.mkdirSync(root, { recursive: true });
   fs.writeFileSync(path.join(root, "company.json"), JSON.stringify({ repo: "o/r" }));
+  // The company was running the boot commit.
+  writeLock(root, boot, "operator", 1);
   fs.writeFileSync(
     path.join(root, "rebooting.json"),
     JSON.stringify({
@@ -147,6 +149,7 @@ function setup(options = {}) {
       `[ -e ${path.join(root, "rebooting.json")} ] && echo "rebooting.json is there for: $*" >>${calls}`,
       options.failBuild === true ? 'case "$*" in *--help*) exit 1 ;; esac' : "",
       'case "$*" in *" up") ;; *) exit 0 ;; esac',
+      `echo "up in $PWD locked=$VIBEWARS_LOCKED_SHA repo=$VIBEWARS_REPO" >>${calls}`,
       `[ -e ${alive} ] && exit 1`,
       `n=$(($(cat ${ups} 2>/dev/null || echo 0) + 1)); echo $n >${ups}`,
       `[ $n -le ${String(options.failUp ?? 0)} ] && exit 1`,
@@ -210,17 +213,32 @@ function setup(options = {}) {
     return outcome(child.exitCode);
   };
 
-  return { dir, bin, repo, remote, root, boot, target, restart, restartAsync };
+  /** @param {string} sha */
+  const tree = (sha) => path.join(root, "company", sha);
+  /**
+   * What the restarter's claude-llc up is, in the locked tree of `sha`.
+   *
+   * @param {string} sha
+   */
+  const up = (sha) => [
+    `devenv ${tree(sha)} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
+    `up in ${tree(sha)} locked=${sha} repo=${repo}`,
+  ];
+  return { dir, bin, repo, remote, root, boot, target, tree, up, restart, restartAsync };
 }
 
 describe("the restarter", () => {
-  it("stops the company, moves a clean main to the new main, and starts it", () => {
+  it("stops the company, locks the new main, and starts it from its tree", () => {
     const company = setup();
 
     const result = company.restart();
 
     expect(result.code).toBe(0);
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
+    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
+    expect(
+      fs.existsSync(path.join(company.tree(company.target), "scripts", "bots", "new.mjs")),
+    ).toBe(true);
+    expect(fs.readdirSync(path.join(company.root, "company"))).toEqual([company.target]);
     expect(result.calls).toContain("tmux kill-session -t =restart-test");
     expect(result.calls).toContain("pkill -f claude-llc-agent");
     expect(result.calls).toContain("pkill -f hubd.mjs");
@@ -229,9 +247,7 @@ describe("the restarter", () => {
         c.endsWith("reboot-check shell --refresh-eval-cache -- claude-llc --help rebooted=1"),
       ),
     ).toBe(true);
-    expect(result.calls).toContain(
-      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
-    );
+    expect(result.calls).toEqual(expect.arrayContaining(company.up(company.target)));
     expect(result.boot).toMatchObject({
       sha: company.target,
       previousSha: company.boot,
@@ -252,9 +268,7 @@ describe("the restarter", () => {
     });
 
     expect(result.code).toBe(0);
-    expect(result.calls).toContain(
-      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
-    );
+    expect(result.calls).toEqual(expect.arrayContaining(company.up(company.target)));
     expect(result.calls).not.toContain("devenv saw a store PATH");
   });
 
@@ -297,45 +311,48 @@ describe("the restarter", () => {
     expect(fs.existsSync(path.join(company.root, "agents"))).toBe(false);
   });
 
-  it("never moves a checkout on another branch, and restarts on what it has", () => {
+  it("leaves the checkout alone, on any branch and with any changes (#1861)", () => {
     const company = setup();
     sh(["checkout", "-q", "-b", "mine"], company.repo);
-
-    const result = company.restart();
-
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(String(result.boot.note)).toMatch(/NOT updated: checkout is on branch mine/);
-    expect(readLock(company.root)).toBe("missing");
-    expect(result.calls).toContain(
-      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
-    );
-  });
-
-  it("never moves a checkout with local changes", () => {
-    const company = setup();
     fs.writeFileSync(path.join(company.repo, ".gitignore"), "changed\n");
 
     const result = company.restart();
 
+    expect(result.code).toBe(0);
     expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(String(result.boot.note)).toMatch(/NOT updated: checkout has local changes/);
+    expect(sh(["symbolic-ref", "--short", "HEAD"], company.repo)).toBe("mine");
+    expect(fs.readFileSync(path.join(company.repo, ".gitignore"), "utf8")).toBe("changed\n");
+    expect(readLock(company.root)).toMatchObject({ sha: company.target, by: "reboot" });
+    expect(result.boot).toMatchObject({ sha: company.target, updated: true });
+    expect(result.calls).toEqual(expect.arrayContaining(company.up(company.target)));
   });
+
+  it("fails, and says so, when there is no lock to run", async () => {
+    const telegram = await fakeTelegram();
+    const company = setup({ failBuild: true });
+    fs.rmSync(path.join(company.root, "company.lock"));
+
+    const result = await company.restartAsync(telegram.env);
+
+    expect(result.code).toBe(1);
+    expect(String(result.boot.note)).toMatch(/^Reboot FAILED: company.lock is missing\./);
+    expect(result.calls.some((c) => c.includes("claude-llc up"))).toBe(false);
+    expect(String(obj(telegram.sent[0]?.body).text)).toMatch(/company.lock is missing/);
+  }, 30_000);
 
   it("keeps the old code when the new main does not build", () => {
     const company = setup({ failBuild: true });
 
     const result = company.restart();
 
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(readLock(company.root)).toBe("missing");
+    expect(readLock(company.root)).toMatchObject({ sha: company.boot });
     expect(String(result.boot.note)).toMatch(
       new RegExp(
         `the approved ${company.target.slice(0, 8)} failed to build; running ${company.boot.slice(0, 8)}`,
       ),
     );
-    expect(result.calls).toContain(
-      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
-    );
+    expect(result.boot).toMatchObject({ sha: company.boot, updated: false });
+    expect(result.calls).toEqual(expect.arrayContaining(company.up(company.boot)));
   });
 
   it("boots and locks the approved commit, not what main has gained since (#960)", () => {
@@ -344,7 +361,9 @@ describe("the restarter", () => {
     const result = company.restart();
 
     expect(result.code).toBe(0);
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
+    expect(
+      fs.existsSync(path.join(company.tree(company.target), "scripts", "bots", "later.mjs")),
+    ).toBe(false);
     expect(readLock(company.root)).toMatchObject({ sha: company.target, by: "reboot" });
     expect(result.boot).toMatchObject({
       sha: company.target,
@@ -359,15 +378,12 @@ describe("the restarter", () => {
 
     const result = company.restart();
 
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(readLock(company.root)).toBe("missing");
+    expect(readLock(company.root)).toMatchObject({ sha: company.boot });
     expect(String(result.boot.note)).toBe(
       `Rebooted, but NOT updated: the approved dddddddd is not on GitHub's main ` +
         `(${company.target.slice(0, 8)}); running ${company.boot.slice(0, 8)}.`,
     );
-    expect(result.calls).toContain(
-      `devenv ${company.repo} shell --refresh-eval-cache -- claude-llc up rebooted=1`,
-    );
+    expect(result.calls).toEqual(expect.arrayContaining(company.up(company.boot)));
   });
 });
 
@@ -520,25 +536,9 @@ describe("the restarter, against a checkout an agent has tampered with", () => {
 
     const result = company.restart();
 
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
-    expect(fs.existsSync(path.join(company.repo, "evil.txt"))).toBe(false);
+    expect(readLock(company.root)).toMatchObject({ sha: company.target });
+    expect(fs.existsSync(path.join(company.tree(company.target), "evil.txt"))).toBe(false);
     expect(result.boot).toMatchObject({ updated: true });
-  });
-
-  it("refuses a commit that is not the mirror's, whatever the checkout fetched", () => {
-    const company = setup();
-    const evil = path.join(company.dir, "evil.git");
-    sh(["init", "--bare", "-q", "-b", "main", evil], company.dir);
-    sh(["push", "-q", evil, "HEAD:refs/heads/main"], company.repo);
-    sh(
-      ["config", `url.${evil}.insteadOf`, path.join(company.root, "hub", ".git-mirror")],
-      company.repo,
-    );
-
-    const result = company.restart();
-
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.boot);
-    expect(String(result.boot.note)).toMatch(/NOT updated: fetching main from hubd's mirror gave/);
   });
 
   it("runs no filter driver the checkout's config names", () => {
@@ -553,10 +553,12 @@ describe("the restarter, against a checkout an agent has tampered with", () => {
     const result = company.restart();
 
     expect(fs.existsSync(marker)).toBe(false);
-    expect(sh(["rev-parse", "HEAD"], company.repo)).toBe(company.target);
-    expect(fs.readFileSync(path.join(company.repo, "scripts", "bots", "new.mjs"), "utf8")).toBe(
-      "x\n",
-    );
+    expect(
+      fs.readFileSync(
+        path.join(company.tree(company.target), "scripts", "bots", "new.mjs"),
+        "utf8",
+      ),
+    ).toBe("x\n");
     expect(result.boot).toMatchObject({ updated: true });
   });
 
@@ -585,7 +587,7 @@ describe("the restarter, against a checkout an agent has tampered with", () => {
 });
 
 describe("the restarter, against replace refs in the checkout", () => {
-  it("checks out main's own tree, not one a replace ref swaps in under its sha", () => {
+  it("writes main's own tree, not one a replace ref swaps in under its sha", () => {
     const company = setup();
     // An agent's commit, and a replace ref claiming it is main.
     sh(["checkout", "-q", "-b", "agent"], company.repo);
@@ -604,7 +606,9 @@ describe("the restarter, against replace refs in the checkout", () => {
     const result = company.restart();
 
     expect(result.boot).toMatchObject({ updated: true });
-    expect(fs.existsSync(path.join(company.repo, "evil.txt"))).toBe(false);
-    expect(fs.existsSync(path.join(company.repo, "scripts", "bots", "new.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(company.tree(company.target), "evil.txt"))).toBe(false);
+    expect(
+      fs.existsSync(path.join(company.tree(company.target), "scripts", "bots", "new.mjs")),
+    ).toBe(true);
   });
 });

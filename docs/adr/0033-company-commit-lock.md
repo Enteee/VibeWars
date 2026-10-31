@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted (2026-10-27). Issue #897, requested by the operator.
+Superseded by [ADR-0044](0044-lock-decides-what-runs.md) (2026-10-31): #1861
+runs the company from a tree written from the lock, and the checkout's HEAD
+no longer has to equal it. Accepted (2026-10-27). Issue #897, requested by
+the operator.
 
 ## Context
 

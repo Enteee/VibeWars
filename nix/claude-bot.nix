@@ -404,11 +404,15 @@ let
         # below either must succeed or handles failure itself.
         set -euo pipefail
 
+        # Where the briefings are: the company's locked tree (#1861), which
+        # claude-llc names; run on its own, this shell's tree.
+        code="''${VIBEWARS_CODE:-$DEVENV_ROOT}"
+
         # Files starting with "_" are shared fragments, not roles. _protocol.md is
         # the coordination contract every agent gets; the per-role file is what
         # distinguishes them.
         listRoles() {
-          for f in "$DEVENV_ROOT"/.claude/bots/*.md; do
+          for f in "$code"/.claude/bots/*.md; do
             [ -e "$f" ] || continue
             b="''${f##*/}"
             case "$b" in _*) continue ;; esac
@@ -421,8 +425,8 @@ let
         # running the previous copy until the cache is cleared. That is a
         # genuinely confusing hour to lose, so say it out loud.
         for f in protocol.mjs tg.mjs link.mjs; do
-          if [ -e "$DEVENV_ROOT/scripts/bots/$f" ] &&
-             ! ${pkgs.diffutils}/bin/cmp -s "$DEVENV_ROOT/scripts/bots/$f" "${botScripts}/$f"; then
+          if [ -e "$code/scripts/bots/$f" ] &&
+             ! ${pkgs.diffutils}/bin/cmp -s "$code/scripts/bots/$f" "${botScripts}/$f"; then
             echo "claude-bot: warning: scripts/bots/$f differs from the staged copy being run." >&2
             echo "claude-bot: warning: re-enter the shell with devenv shell --refresh-eval-cache to pick it up." >&2
             break
@@ -548,7 +552,7 @@ let
             ;;
         esac
 
-        brief="$DEVENV_ROOT/.claude/bots/$role.md"
+        brief="$code/.claude/bots/$role.md"
         if [ ! -e "$brief" ]; then
           echo "claude-bot: no briefing at $brief" >&2
           echo "claude-bot: write that file to define the role, or pick one of:" >&2
@@ -599,7 +603,7 @@ let
 
         # Every agent gets the shared coordination contract plus its own
         # charter, without the charter's frontmatter.
-        briefing="$(cat "$DEVENV_ROOT/.claude/bots/_protocol.md"; ${node} ${botScripts}/briefing.mjs body "$brief")"
+        briefing="$(cat "$code/.claude/bots/_protocol.md"; ${node} ${botScripts}/briefing.mjs body "$brief")"
 
         # A system prompt gives an agent a role; it does not give it a turn.
         # The positional prompt argument is the turn: claude -p runs it and
