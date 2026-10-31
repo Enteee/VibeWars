@@ -11,6 +11,7 @@ export type RangerStatusId =
   | "whirling-defense"
   | "serpents-quickness"
   | "dodge"
+  | "zojuns-haste"
   // Preparations.
   | "apply-poison"
   // Ranger staples 2 (#1629).
@@ -108,6 +109,15 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   // block incoming projectiles. Dodge ends if you attack" (#1539): 65%,
   // its rank-12 value.
   dodge: define("dodge", "Dodge", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.33,
+    block: { chance: 0.65, against: "projectile" },
+    endsWhenBearerAttacks: true,
+  }),
+  // "For 5...11 seconds, you move 33% faster and have a 27...75% chance to
+  // block incoming projectiles. Zojun's Haste ends if you attack" (#1676),
+  // Dodge's twin: 65%.
+  "zojuns-haste": define("zojuns-haste", "Zojun's Haste", "stance", {
     profession: "ranger",
     moveSpeedMultiplier: 1.33,
     block: { chance: 0.65, against: "projectile" },
