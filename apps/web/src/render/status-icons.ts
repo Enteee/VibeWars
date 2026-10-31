@@ -278,6 +278,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mirage-cloak": icon("mirage-cloak"),
   "vital-boon": icon("vital-boon"),
   "guiding-hands": icon("guiding-hands"),
+  "windborne-speed": icon("windborne-speed"),
+  "ash-blast": icon("ash-blast"),
   onslaught: icon("onslaught"),
   "zealous-vow": icon("zealous-vow"),
   "featherfoot-grace": icon("featherfoot-grace"),

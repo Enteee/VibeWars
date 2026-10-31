@@ -1894,6 +1894,21 @@ const status = {
       `<path d="M7 12V6M10 12V4M13 12V4M16 12V6M7 12c0 4 2 6 5 6s4-2 4-6" ${stroke(c, 1.6)}/>` +
       `<path d="M4 21h16M17 18l3 3-3 3" ${stroke(c, 1.6)}/>`,
   ],
+  // Elementalist staples 3 (#1664), stand-ins until the asset-designer's.
+  // Enchantment: three wind lines trailing a forward arrow, moving faster.
+  "windborne-speed": [
+    "enchantment",
+    (c) =>
+      `<path d="M4 8h9M3 12h11M4 16h9" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 8l4 4-4 4" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: the hex ring round an ash cloud over a crossed eye, attacks miss.
+  "ash-blast": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
+      `<path d="M8 10a2.5 2.5 0 0 1 4-2 2.5 2.5 0 0 1 4 2M8 15h8M9 13l6 4" ${stroke(c, 1.8)}/>`,
+  ],
   // Dervish staples 3 (#1667), stand-ins until their art card.
   // Enchantment: two fast slashes over a rising bar, attack and adrenaline faster.
   onslaught: [
