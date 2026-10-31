@@ -68,6 +68,7 @@ export function define(
     endsWhenBearerAttacksInMelee: false,
     endsWhenBearerHits: false,
     endsWhenBearerUsesSkill: false,
+    endsWhenBearerUsesOtherSkill: false,
     endsWhenBearerUsesAdrenalSkill: false,
     endsWhenTriggered: false,
     endsWhenBearerHitsWithAttackSkill: false,

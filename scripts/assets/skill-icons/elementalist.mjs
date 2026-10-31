@@ -4,6 +4,11 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.chain-lightning": { glyph: "chain" },
   "elementalist.armor-of-earth": { glyph: "mountain" },
   "elementalist.glyph-of-lesser-energy": { glyph: "energy", modifier: "less" },
+  // Stand-ins for the glyphs of #1730, until their art.
+  "elementalist.glyph-of-concentration": { glyph: "spark", modifier: "stun" },
+  "elementalist.glyph-of-sacrifice": { glyph: "spark", modifier: "hourglass" },
+  "elementalist.glyph-of-renewal": { glyph: "spark", modifier: "renew" },
+  "elementalist.glyph-of-essence": { glyph: "spark", modifier: "down" },
   "elementalist.lightning-orb": { glyph: "lightning-orb" },
   "elementalist.lightning-strike": { glyph: "lightning" },
   "elementalist.mind-shock": { glyph: "lightning", modifier: "down" },

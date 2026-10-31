@@ -337,7 +337,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     // The nearest fresh corpse within cast range, as Soul Feast's (#467).
-    corpse: { radius: RANGE_SPELL },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -364,7 +364,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     // The nearest fresh corpse within cast range, as Soul Feast's (#467).
-    corpse: { radius: RANGE_SPELL },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -392,7 +392,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     whileActivating: undefined,
     // The nearest fresh corpse of either team within cast range of the
     // caster, no line of sight (#466, Q2).
-    corpse: { radius: RANGE_SPELL },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -426,7 +426,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     attack: undefined,
     whileActivating: undefined,
     // The nearest fresh corpse, as Soul Feast's (#1104).
-    corpse: { radius: RANGE_SPELL },
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
@@ -443,6 +443,127 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         act: {
           kind: "aura",
           aura: { statusId: "well-of-suffering", affects: "foes", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-blood",
+    name: "Well of Blood",
+    gwId: 92,
+    type: "well",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse or sacrifice 66% health to create a Well of
+    // Blood at its location. For 8...20 seconds, allies in that area
+    // receive +1...6 Health regeneration" (#1730).
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 18 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-blood", affects: "allies", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-power",
+    name: "Well of Power",
+    gwId: 91,
+    type: "well",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse or sacrifice 66% health to create a Well of
+    // Power at that location. For 10...30 seconds, allies within the area
+    // gain +1...6 Health regeneration and +2 Energy regeneration" (#1730).
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 10, atTwelve: 26 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-power", affects: "allies", radius: AREA_IN_THE_AREA },
+        },
+      },
+    ],
+  },
+  {
+    id: "necromancer.well-of-weariness",
+    name: "Well of Weariness",
+    gwId: 818,
+    type: "well",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: 66 },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit target corpse or sacrifice 66% health to create a Well of
+    // Weariness for 10...55 seconds. Enemies within the Well of Weariness
+    // suffer -1 Energy degeneration" (#1730): the nearest corpse, as the
+    // other wells'.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "corpse",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.curses", atZero: 10, atTwelve: 46 },
+        },
+        act: {
+          kind: "aura",
+          aura: { statusId: "well-of-weariness", affects: "foes", radius: AREA_IN_THE_AREA },
         },
       },
     ],
@@ -1470,7 +1591,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     area: undefined,
     attack: undefined,
     whileActivating: undefined,
-    corpse: { radius: RANGE_SPELL, near: "target" },
+    corpse: { radius: RANGE_SPELL, near: "target", elseSacrificePercent: undefined },
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,

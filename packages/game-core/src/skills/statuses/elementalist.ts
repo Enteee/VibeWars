@@ -9,6 +9,11 @@ export type ElementalistStatusId =
   | "armor-boost"
   // Glyphs.
   | "glyph-of-lesser-energy"
+  // Glyphs that change how the next spell goes (#1730).
+  | "glyph-of-concentration"
+  | "glyph-of-sacrifice"
+  | "glyph-of-renewal"
+  | "glyph-of-essence"
   // Wards' auras (#1087), worn while inside a ward.
   | "ward-against-melee"
   // Elementalist Water Magic staples (#1367).
@@ -72,6 +77,69 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   "glyph-of-lesser-energy": define("glyph-of-lesser-energy", "Glyph of Lesser Energy", "glyph", {
     profession: "elementalist",
     nextSpells: { count: 2, costReduction: 16 },
+  }),
+  // "Your next 1 spells cannot be interrupted" (#1730); "and ignore the
+  // effects of being Dazed" waits for Dazed's casting to come.
+  "glyph-of-concentration": define("glyph-of-concentration", "Glyph of Concentration", "glyph", {
+    profession: "elementalist",
+    nextSkillRule: {
+      which: "spell",
+      uninterruptible: true,
+      unblockable: false,
+      energyDiscount: 0,
+      castsInstantly: false,
+      extraRechargeSeconds: 0,
+      rechargesInstantly: false,
+      losesAllEnergy: false,
+      skillId: "elementalist.glyph-of-concentration",
+    },
+  }),
+  // "Your next spell casts instantly, but it takes an additional 30
+  // seconds to recharge. Ends prematurely if you use a non-spell skill."
+  "glyph-of-sacrifice": define("glyph-of-sacrifice", "Glyph of Sacrifice", "glyph", {
+    profession: "elementalist",
+    nextSkillRule: {
+      which: "spell",
+      uninterruptible: false,
+      unblockable: false,
+      energyDiscount: 0,
+      castsInstantly: true,
+      extraRechargeSeconds: 30,
+      rechargesInstantly: false,
+      losesAllEnergy: false,
+      skillId: "elementalist.glyph-of-sacrifice",
+    },
+    endsWhenBearerUsesOtherSkill: true,
+  }),
+  // "Your next spell instantly recharges" (#1730).
+  "glyph-of-renewal": define("glyph-of-renewal", "Glyph of Renewal", "glyph", {
+    profession: "elementalist",
+    nextSkillRule: {
+      which: "spell",
+      uninterruptible: false,
+      unblockable: false,
+      energyDiscount: 0,
+      castsInstantly: false,
+      extraRechargeSeconds: 0,
+      rechargesInstantly: true,
+      losesAllEnergy: false,
+      skillId: "elementalist.glyph-of-renewal",
+    },
+  }),
+  // "Your next spell casts instantly but causes you to lose all Energy" (#1730).
+  "glyph-of-essence": define("glyph-of-essence", "Glyph of Essence", "glyph", {
+    profession: "elementalist",
+    nextSkillRule: {
+      which: "spell",
+      uninterruptible: false,
+      unblockable: false,
+      energyDiscount: 0,
+      castsInstantly: true,
+      extraRechargeSeconds: 0,
+      rechargesInstantly: false,
+      losesAllEnergy: true,
+      skillId: "elementalist.glyph-of-essence",
+    },
   }),
   // "For 8...20 seconds, target foe's legs are encased in ice, causing the
   // foe to move 66% slower" (#1367).

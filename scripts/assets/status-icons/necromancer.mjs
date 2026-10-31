@@ -66,6 +66,25 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
       `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
   ],
+  // Skill effects inside the wells of #1730, stand-ins: a regeneration
+  // arrow, an arrow and a bolt, a degeneration bolt, each over the ground.
+  "well-of-blood": [
+    "skill-effect",
+    (c) => `<path d="M8 13l4-4 4 4" ${stroke(c, 2)}/>` + `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  "well-of-power": [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 13l3-3 3 3" ${stroke(c, 2)}/>` +
+      `<path d="M16 6.5l-2.5 4h2l-1 3.5 3-4.5h-2z" fill="${c}"/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
+  "well-of-weariness": [
+    "skill-effect",
+    (c) =>
+      `<path d="M13 5.5l-3 5h2.5l-1.5 4 4-5.5h-2.5z" fill="${c}"/>` +
+      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
+  ],
   // Hex: a barbed line, physical hits hurt more (#1332).
   barbs: [
     "hex",

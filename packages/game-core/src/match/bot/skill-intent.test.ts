@@ -86,6 +86,13 @@ const NO_BOT_USE = new Set([
   // An enchantment strip only on a knocked-down foe (#1643).
   "assassin.lift-enchantment",
   "necromancer.well-of-suffering",
+  // A foe's Energy drained in an area (#1730): no rule for it.
+  "necromancer.well-of-weariness",
+  // Glyphs on the next spell (#1730): no rule times them.
+  "elementalist.glyph-of-concentration",
+  "elementalist.glyph-of-sacrifice",
+  "elementalist.glyph-of-renewal",
+  "elementalist.glyph-of-essence",
   // A disable of a foe's elite and nothing else: no rule for it (#1473).
   "mesmer.signet-of-humility",
   // Nor of a foe's whole bar at the price of one's own (#1570).

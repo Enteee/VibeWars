@@ -149,6 +149,8 @@ describe("status definitions", () => {
       "feigned-neutrality": 7,
       recuperation: 3,
       "well-of-suffering": -5,
+      "well-of-blood": 5,
+      "well-of-power": 5,
       "symbiotic-bond": 3,
       "conjure-phantasm": -5,
       "phantom-pain": -3,
@@ -187,6 +189,8 @@ describe("status definitions", () => {
       "zealous-renewal": -1,
       "zealous-vow": -3,
       "the-power-is-yours": 2,
+      "well-of-power": 2,
+      "well-of-weariness": -1,
     });
   });
 
