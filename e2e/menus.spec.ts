@@ -21,7 +21,7 @@ test("#578: Esc goes back on the team editor, options and lobby screens", async 
 
   await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
+  await expect(page.locator(".team-editor")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.locator(".screen-teams")).toBeVisible();
   // Team Builder has no way back either.
@@ -51,8 +51,8 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
   await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
 
-  // Esc from the name field is Back too, which asks first: the name changed.
-  const name = page.getByLabel("Team name");
+  // Esc from the name field leaves too, which asks first: the name changed.
+  const name = page.getByLabel("team name");
   await name.fill("Duo");
   await page.keyboard.press("Escape");
   const discard = page.getByRole("button", { name: "Discard", exact: true });
@@ -60,10 +60,10 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
 
   await page.keyboard.press("Escape");
   await expect(discard).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
+  await expect(page.locator(".team-editor")).toBeVisible();
   await expect(name).toHaveValue("Duo");
-  // Cancel hands the focus back to the bar's Back.
-  await expect(page.getByRole("button", { name: "Back", exact: true })).toBeFocused();
+  // The question stood in for Save, which is back; Save itself waits for a member.
+  await expect(page.getByRole("button", { name: "Save", exact: true })).toBeVisible();
 
   await page.keyboard.press("Escape");
   await expect(discard).toBeVisible();

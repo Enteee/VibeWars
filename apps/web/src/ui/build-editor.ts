@@ -121,6 +121,7 @@ import {
   h,
   inlineConfirm,
   listenForPaste,
+  moreMenu,
   problemsChip,
   screenBar,
   shareLine,
@@ -139,7 +140,8 @@ import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
  */
 
 export interface BuildEditorCallbacks {
-  readonly onSave: (character: StoredCharacter) => void;
+  /** Store it; the editor then says so and leaves through `onClose` (#1902). */
+  readonly onSave: (character: StoredCharacter) => Promise<void>;
   readonly onDelete: (id: string) => void;
   readonly onDuplicate: (character: StoredCharacter) => void;
   readonly onClose: () => void;
@@ -840,7 +842,7 @@ interface Region {
 }
 
 export interface BuildEditorView {
-  /** Leave for `then`, as Close does: unsaved edits ask first (#1268). */
+  /** Leave for `then`, as Esc does: unsaved edits ask first (#1268). */
   leave(then: () => void): void;
   /** Tear down the tooltip and the Training Ground; call when leaving the editor. */
   dispose(): void;
@@ -1102,10 +1104,10 @@ interface CommandBar extends Region {
 }
 
 /**
- * The command bar (#566): Close, the name and professions, the point
- * budget, the problems chip, an unsaved marker, Save, and ⋯ with
- * Share (#572), Duplicate and Delete. Close with unsaved edits, and Delete always, ask
- * in the bar first.
+ * The command bar (#566, #1902): the name and professions, the point
+ * budget, the problems chip, an unsaved marker, Save, which stores and
+ * leaves, and ⋯ with Share (#572), Duplicate and Delete. Esc with unsaved
+ * edits, and Delete always, ask in the bar first.
  */
 function mountCommandBar(
   context: EditorContext,
@@ -1130,10 +1132,7 @@ function mountCommandBar(
       then();
       return;
     }
-    ask(back, "Discard changes?", "Discard", then, "Keep editing");
-  };
-  const close = (): void => {
-    leave(callbacks.onClose);
+    ask(save, "Discard changes?", "Discard", then, "Keep editing");
   };
 
   const nameInput = document.createElement("input");
@@ -1170,67 +1169,70 @@ function mountCommandBar(
   const chip = problemsChip([]);
   const unsaved = h("span", "editor-unsaved", "● unsaved");
 
+  let disposed = false;
+  // Save is the way out (#1902): it stores, then leaves as Esc would.
   const save = button("Save", "primary", () => {
-    callbacks.onSave({ ...context.current(), updatedAt: Date.now() });
+    save.disabled = true;
+    callbacks.onSave({ ...context.current(), updatedAt: Date.now() }).then(
+      () => {
+        if (disposed) {
+          return;
+        }
+        // After leaving, which puts the last screen's toast away.
+        callbacks.onClose();
+        toast("Saved");
+      },
+      (error: unknown) => {
+        if (disposed) {
+          return;
+        }
+        toast(`Not saved: ${error instanceof Error ? error.message : String(error)}`);
+        save.disabled = editorProblems(context.current()).some((problem) => problem.blocking);
+      },
+    );
   });
-
-  const more = button("⋯", "editor-more-toggle", () => {
-    menu.hidden = !menu.hidden;
-    more.setAttribute("aria-expanded", String(!menu.hidden));
-  });
-  more.setAttribute("aria-label", "more actions");
-  more.setAttribute("aria-expanded", "false");
-  const menu = h("div", "editor-more");
-  menu.hidden = true;
-  const closeMenu = (): void => {
-    menu.hidden = true;
-    more.setAttribute("aria-expanded", "false");
-  };
 
   // Share (#572): the build as one line, selected, with Copy.
   const share = shareLine("build to share");
-  menu.append(
-    button("Share", "", () => {
-      closeMenu();
-      share.show(exportBuild(context.current()));
-    }),
-    // The same build as a GW1 template code (#494), for GW1's build sites.
-    button("Share as GW1 code", "", () => {
-      closeMenu();
-      const encoded = encodeTemplate(context.current());
-      if (encoded.ok) {
-        share.show(encoded.code);
-      } else {
-        toast(encoded.problem);
-      }
-    }),
-    // An edited character duplicates as edited, as it always has.
-    button("Duplicate", "", () => {
-      closeMenu();
-      callbacks.onDuplicate(context.current());
-    }),
-    button("Delete", "", () => {
-      closeMenu();
-      const { id, name } = context.current();
-      ask(
-        more,
-        `Delete ${name}?`,
-        "Delete",
-        () => {
-          callbacks.onDelete(id);
-        },
-        "Cancel",
-      );
-    }),
+  const more = moreMenu(
+    [
+      button("Share", "", () => {
+        share.show(exportBuild(context.current()));
+      }),
+      // The same build as a GW1 template code (#494), for GW1's build sites.
+      button("Share as GW1 code", "", () => {
+        const encoded = encodeTemplate(context.current());
+        if (encoded.ok) {
+          share.show(encoded.code);
+        } else {
+          toast(encoded.problem);
+        }
+      }),
+      // An edited character duplicates as edited, as it always has.
+      button("Duplicate", "", () => {
+        callbacks.onDuplicate(context.current());
+      }),
+      button("Delete", "", () => {
+        const { id, name } = context.current();
+        ask(
+          more.toggle,
+          `Delete ${name}?`,
+          "Delete",
+          () => {
+            callbacks.onDelete(id);
+          },
+          "Cancel",
+        );
+      }),
+    ],
+    [share.element],
   );
-  const moreWrap = h("span", "editor-more-wrap");
-  moreWrap.append(more, menu, share.element);
 
   // Esc puts away the ⋯ menu, Share, the problem list and then the pick
-  // (#564) before it is Close.
+  // (#564) before it leaves.
   const putAway = (): boolean => {
-    if (!menu.hidden) {
-      closeMenu();
+    if (more.isOpen()) {
+      more.close();
       return true;
     }
     if (share.isOpen()) {
@@ -1252,11 +1254,13 @@ function mountCommandBar(
     return false;
   };
   // The name is the last crumb: the place is the character (#1272).
-  const { back } = screenBar({
+  screenBar({
     crumbs: ["VibeWars", nameInput],
-    back: { label: "Close", onBack: close },
+    escape: () => {
+      leave(callbacks.onClose);
+    },
     status: [professions, budget, chip.element, unsaved],
-    actions: [save, moreWrap],
+    actions: [save, more.element],
     putAway,
   });
 
@@ -1266,8 +1270,8 @@ function mountCommandBar(
     if (!(target instanceof Node)) {
       return;
     }
-    if (!moreWrap.contains(target)) {
-      closeMenu();
+    if (!more.element.contains(target)) {
+      more.close();
       share.hide();
     }
     if (!chip.element.contains(target)) {
@@ -1305,10 +1309,11 @@ function mountCommandBar(
       save.title = firstBlocking?.text ?? "Save this character";
     },
     isOpen() {
-      return asking?.isOpen() === true || !menu.hidden || share.isOpen() || chip.isOpen();
+      return asking?.isOpen() === true || more.isOpen() || share.isOpen() || chip.isOpen();
     },
     leave,
     dispose() {
+      disposed = true;
       document.removeEventListener("pointerdown", onPointerDown);
     },
   };
