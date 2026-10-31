@@ -32,6 +32,7 @@ import type { ConditionalArmor } from "../equipment/armor.js";
 import { isElementalDamage, type DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
+import type { Vec2 } from "../vec2.js";
 import {
   isSpell,
   type AttackWeaponClass,
@@ -213,6 +214,13 @@ export interface StatusDefinition {
    * still apply.
    */
   readonly preventsSpeedBoosts: boolean;
+  /**
+   * When it ends, for any reason, its caster Shadow Steps back to where it
+   * stood when it put it up (#1826): GW1's "you return to your original
+   * location". Not when it is replaced by a recast of itself. `skillId`
+   * is the skill the step back is logged as. `undefined`: no return.
+   */
+  readonly returnsSource: { readonly skillId: string } | undefined;
   /**
    * Chance in [0, 1] that the bearer's *attacks* miss. Drawn from the
    * injectable simulation RNG, never Math.random (brief §35).
@@ -1151,6 +1159,8 @@ export type StatusChange =
       readonly expired: boolean;
       /** Ended by its bearer's death (#1762), `endAll`. */
       readonly death: boolean;
+      /** Where its source returns to (`returnsSource`, #1826); `null` for no return. */
+      readonly returnPoint: Vec2 | null;
     }
   /** An enchantment `id` left the bearer, alive (#1437), with the triggers that answered. */
   | {
@@ -1378,6 +1388,11 @@ export interface ActiveStatus {
    * own, and it leaves when its bearer does. `false` for every other.
    */
   readonly projected: boolean;
+  /**
+   * Where its source stood as it put it up, for a `returnsSource` status
+   * (#1826), `returnFrom`; `null` for every other, and for one replaced.
+   */
+  returnPoint: Vec2 | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -1446,7 +1461,14 @@ export class StatusSet {
       const status = this.#statuses.get(id);
       if (status !== undefined) {
         this.#statuses.delete(id);
-        this.#changes.push({ kind: "ended", id, sourceId: status.sourceId, expired, death });
+        this.#changes.push({
+          kind: "ended",
+          id,
+          sourceId: status.sourceId,
+          expired,
+          death,
+          returnPoint: status.returnPoint,
+        });
         if (!death) {
           this.#lostEnchantment(id);
           this.#lostCondition(id);
@@ -1768,6 +1790,11 @@ export class StatusSet {
       definition.category === "chant" || definition.category === "shout"
         ? appliedSeconds * this.#chantShoutDurationMultiplier()
         : appliedSeconds;
+    // A recast replaces it: its source does not return (#1826).
+    const replaced = this.#statuses.get(id);
+    if (replaced !== undefined) {
+      replaced.returnPoint = null;
+    }
     if (EXCLUSIVE_CATEGORIES.has(definition.category)) {
       this.removeByCategory(definition.category);
     }
@@ -1798,6 +1825,7 @@ export class StatusSet {
       outbreak,
       maintained: null,
       projected: false,
+      returnPoint: null,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -1854,6 +1882,7 @@ export class StatusSet {
       outbreak,
       maintained: null,
       projected: false,
+      returnPoint: null,
     });
     this.#gained(id, durationSeconds);
     this.#gainedHexOrEnchantment(id, sourceId);
@@ -1887,6 +1916,7 @@ export class StatusSet {
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
+      returnPoint: null,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -1920,6 +1950,7 @@ export class StatusSet {
       outbreak: null,
       maintained: null,
       projected: true,
+      returnPoint: null,
     });
     const definition = getStatusDefinition(id);
     this.#endOnGaining(definition.category);
@@ -2047,6 +2078,17 @@ export class StatusSet {
       }
     }
     return undefined;
+  }
+
+  /**
+   * `id`, just put up, takes its source back to `point` when it ends
+   * (#1826): only a `returnsSource` status, and only if it is on.
+   */
+  public returnFrom(id: StatusId, point: Vec2): void {
+    const status = this.#statuses.get(id);
+    if (status !== undefined && getStatusDefinition(id).returnsSource !== undefined) {
+      status.returnPoint = point;
+    }
   }
 
   /** Remove one status by id. Returns whether anything was removed. */

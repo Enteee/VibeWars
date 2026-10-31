@@ -135,7 +135,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // The first maintained enchantment (#837): +3 Health regeneration, its
     // rank-12 value, for −1 energy pip on its caster while it lasts.
-    effects: [{ kind: "maintain-status", statusId: "mending" }],
+    effects: [{ kind: "maintain-status", on: "target", statusId: "mending" }],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -483,7 +483,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "While you maintain this enchantment, any hex cast on target ally
     // take twice as long to cast. When Holy Veil ends, one hex is removed."
-    effects: [{ kind: "maintain-status", statusId: "holy-veil" }],
+    effects: [{ kind: "maintain-status", on: "target", statusId: "holy-veil" }],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2373,7 +2373,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "While you maintain this enchantment, whenever target ally hits a
     // foe, you gain 2...17 Health": the 14 is the status's.
-    effects: [{ kind: "maintain-status", statusId: "live-vicariously" }],
+    effects: [{ kind: "maintain-status", on: "target", statusId: "live-vicariously" }],
   },
   {
     id: "monk.purifying-veil",
@@ -2401,7 +2401,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "While you maintain this enchantment, conditions expire 5...50%
     // faster on target ally. When this enchantment ends, one condition is
     // removed from that ally": the status's.
-    effects: [{ kind: "maintain-status", statusId: "purifying-veil" }],
+    effects: [{ kind: "maintain-status", on: "target", statusId: "purifying-veil" }],
   },
   {
     id: "monk.pacifism",
@@ -2456,7 +2456,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "While you maintain this enchantment, target ally gains +2 Health
     // regeneration. That ally is healed for 30...180 Health when Watchful
     // Spirit ends": the status's, its heal on every end, a drop included.
-    effects: [{ kind: "maintain-status", statusId: "watchful-spirit" }],
+    effects: [{ kind: "maintain-status", on: "target", statusId: "watchful-spirit" }],
   },
   {
     id: "monk.kirins-wrath",

@@ -144,7 +144,14 @@ describe("bearer-dies (#1762)", () => {
     bearer.statuses.drainChanges();
     const fired = fireChangeTriggers(
       bearer,
-      { kind: "ended", id: "enchanted-haste", sourceId: "d", expired: false, death: true },
+      {
+        kind: "ended",
+        id: "enchanted-haste",
+        sourceId: "d",
+        expired: false,
+        death: true,
+        returnPoint: null,
+      },
       () => [],
       {
         sourceOf: (id) => (id === "d" ? bearer : undefined),

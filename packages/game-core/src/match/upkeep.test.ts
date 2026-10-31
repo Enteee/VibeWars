@@ -48,7 +48,7 @@ function get(sim: MatchSimulation, id: string): Participant {
 /** `caster` maintains Mending on `bearer`, as the skill's effect does. */
 function mend(sim: MatchSimulation, casterId: string, bearerId: string): CombatEvent[] {
   return applyEffect(
-    { kind: "maintain-status", statusId: "mending" },
+    { kind: "maintain-status", on: "target", statusId: "mending" },
     {
       surroundings: new Map(),
       caster: get(sim, casterId).combatant,

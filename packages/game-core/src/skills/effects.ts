@@ -260,6 +260,11 @@ export type CombatEvent =
    */
   | { readonly kind: "shadow-stepped-away"; readonly targetId: string }
   /**
+   * Shadow Stepped back (#1826): `targetId`, a returning status's source,
+   * is back where it put it up. The simulation has placed the body.
+   */
+  | { readonly kind: "shadow-stepped-back"; readonly targetId: string }
+  /**
    * Teleported (#474): `targetId` is put beside `toId`, as Rebirth brings
    * its ally to the caster. The simulation places the body.
    */
@@ -973,6 +978,24 @@ export function applyStatus(
 }
 
 /**
+ * `statusId`, just put on `target` by `caster`, takes `caster` back to
+ * where it stands now when it ends, if it is a returning one (#1826). The
+ * simulation moves a shadow step's caster after its effects, so this is
+ * where it stood as it cast.
+ */
+function holdReturn(
+  context: SkillContext,
+  caster: Combatant,
+  target: Combatant,
+  statusId: StatusId,
+): void {
+  const at = context.surroundings.get(caster.id)?.position;
+  if (at !== undefined) {
+    target.statuses.returnFrom(statusId, at);
+  }
+}
+
+/**
  * `statusId` on `target` for `durationSeconds`, from `sourceId`, as every
  * skill puts one on: what it ends (#919), the health it takes as it lands
  * (#800) and Dazed's interrupt, each reported. A refused one (#1208)
@@ -1365,6 +1388,7 @@ export function applyEffect(
           : effect.durationSeconds;
       const durationSeconds = scaledStatusDuration(target, effect.statusId, base);
       landStatus(target, effect.statusId, durationSeconds, caster.id, events);
+      holdReturn(context, caster, target, effect.statusId);
       return events;
     }
 
@@ -1418,21 +1442,23 @@ export function applyEffect(
     }
 
     case "maintain-status": {
+      const bearer = effect.on === "caster" ? caster : target;
       // Well of the Profane (#1732): it does not land, as `landStatus`'s immune.
-      if (target === undefined || target.dead || target.statuses.isImmuneTo(effect.statusId)) {
+      if (bearer === undefined || bearer.dead || bearer.statuses.isImmuneTo(effect.statusId)) {
         return events;
       }
       // The caster's newest; the simulation drops what it cannot pay for.
-      const ending = endedByGaining(target, effect.statusId);
-      target.statuses.maintain(effect.statusId, caster.id, caster.nextMaintainSeq);
+      const ending = endedByGaining(bearer, effect.statusId);
+      bearer.statuses.maintain(effect.statusId, caster.id, caster.nextMaintainSeq);
       caster.nextMaintainSeq += 1;
+      holdReturn(context, caster, bearer, effect.statusId);
       events.push({
         kind: "status-applied",
-        targetId: target.id,
+        targetId: bearer.id,
         statusId: effect.statusId,
         durationSeconds: null,
       });
-      reportEnded(target, ending, events);
+      reportEnded(bearer, ending, events);
       return events;
     }
 
@@ -1593,18 +1619,20 @@ export function applyEffect(
       }
       const durationSeconds = scaledStatusDuration(caster, effect.statusId, effect.durationSeconds);
       landStatus(caster, effect.statusId, durationSeconds, caster.id, events);
+      holdReturn(context, caster, caster, effect.statusId);
       return events;
     }
 
     case "splash": {
-      const at = target === undefined ? undefined : context.surroundings.get(target.id)?.position;
-      if (target === undefined || at === undefined) {
+      const centre = effect.around === "caster" ? caster : target;
+      const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
+      if (centre === undefined || at === undefined) {
         return events;
       }
       const reached = [...context.surroundings.values()].filter(
         ({ combatant, position, creature }) =>
           !combatant.dead &&
-          combatant.id !== target.id &&
+          combatant.id !== centre.id &&
           (effect.hits === "allies" || effect.hits === "party"
             ? combatant.team === caster.team && (effect.hits === "allies" || creature === undefined)
             : combatant.team !== caster.team && (effect.hits === "foes" || isSummoned(creature))) &&
@@ -1612,7 +1640,7 @@ export function applyEffect(
       );
       for (const combatant of nearestFirst(reached, at).slice(0, effect.maxTargets)) {
         for (const inner of effect.effects) {
-          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, target));
+          events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, centre));
         }
       }
       return events;
@@ -2213,6 +2241,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.recipient === "caster";
     case "remove-status":
       return effect.from === "caster";
+    case "maintain-status":
+      return effect.on === "caster";
     case "energy-loss":
     case "energy-steal":
     case "life-steal":
@@ -2222,7 +2252,6 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "spread-conditions":
     case "give-health":
     case "apply-status":
-    case "maintain-status":
     case "interrupt":
     case "knockdown":
     case "shadow-step":

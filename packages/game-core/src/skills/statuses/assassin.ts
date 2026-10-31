@@ -22,7 +22,12 @@ export type AssassinStatusId =
   | "siphon-speed"
   | "siphon-speed-haste"
   | "way-of-the-fox"
-  | "assassins-promise";
+  | "assassins-promise"
+  // Shadow Step and return (#1826).
+  | "shadow-fang"
+  | "aura-of-displacement"
+  | "shadow-meld"
+  | "shadow-of-haste";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -157,5 +162,39 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.assassins-promise",
       },
     ],
+  }),
+  // "For 10 seconds, this hex does nothing. When this hex ends, you return
+  // to your original location and that foe suffers from a Deep Wound for
+  // 5...17...20 seconds" (#1826). Any end, a removal included.
+  "shadow-fang": define("shadow-fang", "Shadow Fang", "hex", {
+    profession: "assassin",
+    returnsSource: { skillId: "assassin.shadow-fang" },
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        skillId: "assassin.shadow-fang",
+      },
+    ],
+  }),
+  // "When you stop maintaining Aura of Displacement you return to your
+  // original location" (#1826): worn by its caster.
+  "aura-of-displacement": define("aura-of-displacement", "Aura of Displacement", "enchantment", {
+    profession: "assassin",
+    returnsSource: { skillId: "assassin.aura-of-displacement" },
+  }),
+  // "When you stop maintaining this enchantment, you return to your
+  // original location" (#1826): worn by its caster.
+  "shadow-meld": define("shadow-meld", "Shadow Meld", "enchantment", {
+    profession: "assassin",
+    returnsSource: { skillId: "assassin.shadow-meld" },
+  }),
+  // "You move 15% faster than normal. When Shadow of Haste ends, you
+  // Shadow Step to your original location" (#1826).
+  "shadow-of-haste": define("shadow-of-haste", "Shadow of Haste", "stance", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.15,
+    returnsSource: { skillId: "assassin.shadow-of-haste" },
   }),
 };
