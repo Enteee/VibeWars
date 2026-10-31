@@ -68,4 +68,8 @@ export const RITUALIST_ICONS = {
   "ritualist.nightmare-weapon": { glyph: "blade-nightmare" },
   "ritualist.weapon-of-fury": { glyph: "blade-fury-bolt" },
   "ritualist.weapon-of-renewal": { glyph: "blade-renewal" },
+  // Your spirits within earshot (#1777), stand-ins until their art card.
+  "ritualist.spirit-boon-strike": { glyph: "spirit-share", modifier: "bolt" },
+  "ritualist.spiritleech-aura": { glyph: "spirit-blood", modifier: "less" },
+  "ritualist.draw-spirit": { glyph: "spirit-run", modifier: "self" },
 };
