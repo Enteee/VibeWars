@@ -47,8 +47,11 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-loses-condition"
   | "bearer-blocks"
   | "bearer-interrupted"
+  | "bearer-health-drops-below"
+  | "bearer-fatal-damage-negated"
   | "bearer-creates-creature"
   | "bearer-chant-or-shout-ends"
+  | "bearer-dies"
   | "ends"
   | "ends-early"
   | "expires"
@@ -183,17 +186,19 @@ export function fireChangeTriggers(
           ),
         );
     case "ended": {
-      const { category, triggers } = getStatusDefinition(change.id);
-      const own = triggers
-        .filter(
-          (trigger) =>
-            trigger.on === "ends" ||
-            (trigger.on === "expires" && change.expired) ||
-            (trigger.on === "ends-early" && !change.expired),
-        )
-        .flatMap((trigger) =>
-          fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
-        );
+      const { category } = getStatusDefinition(change.id);
+      // A death fires `bearer-dies` here only (#1762): a death inside a
+      // trigger's own effects is drained, not settled, so it never chains.
+      const own = [
+        ...fireEndTriggers(bearer, change, context),
+        ...(change.death
+          ? getStatusDefinition(change.id)
+              .triggers.filter((trigger) => trigger.on === "bearer-dies")
+              .flatMap((trigger) =>
+                fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
+              )
+          : []),
+      ];
       if ((category !== "chant" && category !== "shout") || bearer.dead) {
         return own;
       }
@@ -218,6 +223,8 @@ export function fireChangeTriggers(
     case "hit-by-attack":
     case "blocked":
     case "interrupted":
+    case "health-dropped":
+    case "fatal-negated":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.offenderId, undefined, context),
       );
@@ -237,10 +244,35 @@ export function fireChangeTriggers(
 }
 
 /**
+ * A status that `change` ended fires its own `ends` triggers, though it is
+ * no longer on the bearer, and its `expires` ones if its duration ran out,
+ * else its `ends-early` ones (#944, #1421). Nothing else on the bearer
+ * answers here. The simulation calls this alone for a status a trigger
+ * ended (#1789), as Faithful Intervention heals when damage ends it.
+ */
+export function fireEndTriggers(
+  bearer: Combatant,
+  change: Extract<StatusChange, { kind: "ended" }>,
+  context: TriggerContext,
+): FiredTrigger[] {
+  return getStatusDefinition(change.id)
+    .triggers.filter(
+      (trigger) =>
+        trigger.on === "ends" ||
+        (trigger.on === "expires" && change.expired) ||
+        (trigger.on === "ends-early" && !change.expired),
+    )
+    .flatMap((trigger) =>
+      fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
+    );
+}
+
+/**
  * Who a trigger's effects come from and land on: the source on the bearer
  * or on itself, or (#1022) the bearer on `otherId`, the foe that set it
  * off, or (#1316) the creature it created, or (#1403) the source on
- * `otherId`, who put the gained hex or enchantment on the bearer. `undefined` when one of them is
+ * `otherId`, who put the gained hex or enchantment on the bearer, or (#1789)
+ * the source on `otherId`, the offender. `undefined` when one of them is
  * gone, or an offender's bearer is dead: then it fires nothing.
  */
 function parties(
@@ -261,6 +293,7 @@ function parties(
     case "created":
       return other === undefined ? undefined : { caster: bearer, target: other };
     case "gained-source":
+    case "source-on-offender":
       return other === undefined || other.dead ? undefined : { caster: source, target: other };
   }
 }

@@ -335,7 +335,9 @@ export function createNostrQueue(deps: NostrQueueDeps = BROWSER): NostrQueue {
       return "unpaid";
     }
     const { members } = ticket;
-    const digest = sha256(admissionBytes("vibewars-party", party.groupId, members.join(""), ""));
+    const digest = sha256(
+      admissionBytes("vibewars-party", party.groupId, members.join(""), ticket.mode),
+    );
     const holds = members.every((member, i) => {
       const consent = party.consents[i];
       return consent !== undefined && deps.verifyTicketSig(member, digest, consent);

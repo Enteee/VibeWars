@@ -72,6 +72,12 @@ describe("effectRows (#834)", () => {
     expect(row?.secondsLeft).toBeUndefined();
   });
 
+  it("never lets you end one of yours with no end that is not maintained (#1789)", () => {
+    const [row] = ownRows([status("faithful-intervention", null, null, ME)], ME, NAMES, 10);
+    expect(row?.secondsLeft).toBeUndefined();
+    expect(row?.endable).toBe(false);
+  });
+
   it("counts whole seconds left, rounded up, never below 0", () => {
     const left = (now: number) =>
       ownRows([status("bleeding", 20, 10)], ME, NAMES, now)[0]?.secondsLeft;
@@ -401,6 +407,17 @@ describe("createEffectsMonitor (#834)", () => {
         }),
       ]);
       expect(hover(root, 0).slice(-2)).toEqual(["from Winnowing", "while in its range"]);
+    });
+
+    it("says one with no end and no upkeep lasts until it ends (#1789)", () => {
+      const { monitor, root } = mount(24, () => undefined);
+      monitor.update([
+        row("faithful-intervention", undefined, true, {
+          category: "enchantment",
+          secondsLeft: undefined,
+        }),
+      ]);
+      expect(hover(root, 0).slice(-1)).toEqual(["until it ends"]);
     });
 
     it("not in a monitor that cannot end it: the target frame's", () => {

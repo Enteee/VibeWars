@@ -61,6 +61,14 @@ export interface LobbySnapshot {
    * this player's side only, the other side `null`.
    */
   readonly teamLobby: WireTeamLobby | null;
+  /** While `phase` is `"queued"` (#1766), this queueing's nonce; `null` otherwise. */
+  readonly queueNonce: string | null;
+}
+
+/** A seat of a party's team plan as its host sends it (ADR-0042): its human's member key, `null` for a bot. */
+export interface PartyPlanSeat {
+  readonly memberKey: string | null;
+  readonly build: PlayerBuild;
 }
 
 /**
@@ -109,6 +117,20 @@ export interface LobbyConnection {
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;
+  /** Host only, in a team mode (#1766): the party's Team Lobby, then the queue. */
+  findMatch(): void;
+  /** Host only (#1766): the queued party back in its lobby. */
+  leaveQueue(): void;
+  /** Host only (#1766): the queued party plays the house team, here. */
+  playHouseTeam(): void;
+  /**
+   * The party is queued (#1766): this member's `key`, fresh, which signs
+   * its consent to the party, once per queueing. The answer comes through
+   * `onParty`, unless the party leaves the queue first.
+   */
+  queueParty(key: TicketKey): void;
+  /** A team mode's party host, in its match's lobby (ADR-0042): its side's seats, in order. */
+  sendTeamPlan(seats: readonly PartyPlanSeat[]): void;
   /** Host only (#1454): `team` has `count` bots, playing what the host picks. */
   setBots(team: 0 | 1, count: number): void;
   /** In a Team Lobby's vote (#1458): propose `members` for this side, or withdraw with `null`. */

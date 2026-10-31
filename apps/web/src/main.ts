@@ -109,6 +109,7 @@ import {
   saveStarterCharacterId,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/party-strip.js";
@@ -272,21 +273,21 @@ async function main(): Promise<void> {
 
   const { store, persistent } = await openStore();
   // Before any music: a stale edit is gone before it could play (#373).
-  // Its notice goes on the first menu, once.
-  let editNotices = await beatEdits.load(TRACKS);
+  // Its notice goes on the first menu, until the player leaves it (#1807).
+  const notices = createScreenNotices(await beatEdits.load(TRACKS));
   // An edit that stopped the music, on the next menu (#878).
   music().onNotice((notice) => {
-    editNotices = [...editNotices, notice];
+    notices.add(notice);
   });
   // A saved relay of the wrong shape goes now, and the first menu says so.
   const savedRelay = loadTurnConfig(() => {
-    editNotices = [...editNotices, UNREADABLE_RELAY_NOTICE];
+    notices.add(UNREADABLE_RELAY_NOTICE);
   });
   const framed = window.top !== window.self;
   if (relayLink.kind === "malformed") {
-    editNotices = [...editNotices, MALFORMED_RELAY_LINK_NOTICE];
+    notices.add(MALFORMED_RELAY_LINK_NOTICE);
   } else if (relayLink.kind === "config" && framed) {
-    editNotices = [...editNotices, FRAMED_RELAY_LINK_NOTICE];
+    notices.add(FRAMED_RELAY_LINK_NOTICE);
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
@@ -297,7 +298,9 @@ async function main(): Promise<void> {
     // Its name is none of the roster's (#1149). The list's notices go on
     // the first menu: the stale records they report are gone after this.
     const { characters: roster, problems } = await characters.list();
-    editNotices = [...problems, ...editNotices];
+    for (const problem of problems) {
+      notices.add(problem);
+    }
     const rolled = await rollStarterCharacter({
       characters,
       key: { load: loadStarterCharacterId, save: saveStarterCharacterId },
@@ -493,6 +496,7 @@ async function main(): Promise<void> {
     teamLobbyShown = false;
     dismissToast();
     closeBeatEditor();
+    notices.leave();
     return screenTurns.take();
   };
 
@@ -679,10 +683,9 @@ async function main(): Promise<void> {
       renderMenuWith(
         entry,
         list,
-        [...problems, ...played.problems, ...editNotices],
+        [...problems, ...played.problems, ...notices.draw(entry)],
         tally(played.records),
       );
-      editNotices = [];
       if (focused !== -1) {
         screenRoot.querySelectorAll<HTMLElement>(".play-card-open")[focused]?.focus();
       }
@@ -1087,7 +1090,7 @@ async function main(): Promise<void> {
         openPastedTeam(result.team, characterList.characters);
       },
     };
-    const problems = [...teamList.problems, ...editNotices];
+    const problems = [...teamList.problems, ...notices.draw(entry)];
     if (isHostEntry(entry)) {
       renderHostScreen(
         screenRoot,
@@ -1101,7 +1104,6 @@ async function main(): Promise<void> {
     } else {
       renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
     }
-    editNotices = [];
   };
 
   /** A pasted team (#577) opens unsaved; its members are its own (#1452). */
@@ -1437,7 +1439,7 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot));
+    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot, null));
     topbarView.setLobby(
       snapshot === undefined
         ? undefined

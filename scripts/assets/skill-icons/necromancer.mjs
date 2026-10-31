@@ -79,4 +79,8 @@ export const NECROMANCER_ICONS = {
   "necromancer.bitter-chill": { glyph: "snowflake-recharge" },
   "necromancer.rip-enchantment": { glyph: "ring-rip-bleed" },
   "necromancer.gaze-of-contempt": { glyph: "eye-high" },
+  // Stand-ins for the death triggers of #1762, until their art.
+  "necromancer.reapers-mark": { glyph: "energy", modifier: "corpse" },
+  "necromancer.putrid-bile": { glyph: "germ", modifier: "corpse" },
+  "necromancer.icy-veins": { glyph: "snowflake", modifier: "corpse" },
 };

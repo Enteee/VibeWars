@@ -61,4 +61,7 @@ export const DERVISH_ICONS = {
   "dervish.guiding-hands": { glyph: "hand-arrow" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "dervish.test-of-faith": { glyph: "hand-bare" },
+  // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
+  "dervish.watchful-intervention": { glyph: "eye-bar" },
+  "dervish.faithful-intervention": { glyph: "heart-bar" },
 };

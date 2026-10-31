@@ -226,4 +226,26 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
   ],
+  // Death triggers of #1762, stand-ins: a skull, and what the death gives.
+  "reapers-mark": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8.5v4M10 10.5h4" ${stroke(c, 1.6)}/>`,
+  ],
+  "putrid-bile": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
+      `<circle cx="12" cy="10.5" r="1.6" fill="${c}"/>`,
+  ],
+  "icy-veins": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
+      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
+      `<path d="M10 9l4 3M14 9l-4 3" ${stroke(c, 1.6)}/>`,
+  ],
 };

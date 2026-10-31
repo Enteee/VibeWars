@@ -93,6 +93,7 @@ import {
   type GearDropTarget,
 } from "./gear-editor.js";
 import {
+  gearIconImg,
   offhandIcon,
   professionIcon,
   SKILL_TYPE_NAME,
@@ -2335,19 +2336,6 @@ function mountSelectRow(onChange: (value: string) => void): {
       select.value = selected;
     },
   };
-}
-
-/** A weapon or off-hand icon (#419), named for a screen reader and a hover. */
-function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | undefined {
-  if (icon === undefined) {
-    return undefined;
-  }
-  const img = document.createElement("img");
-  img.className = "gear-icon";
-  img.src = icon.src;
-  img.alt = icon.name;
-  img.title = icon.name;
-  return img;
 }
 
 /** What a gear slot shows; see `mountGearSlot`. */

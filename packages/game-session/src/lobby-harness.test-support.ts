@@ -14,7 +14,12 @@ import type { LobbyMode, WireCape } from "@vibewars/game-protocol";
 import { keyGated } from "./key-gate.js";
 import { joinLobby } from "./lobby-client.js";
 import type { LobbyCharacter, LobbyConnection, MatchStarting } from "./lobby-connection.js";
-import { createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
+import {
+  createLobbyHost,
+  type LobbyHost,
+  type LobbyMatchmakingOptions,
+  type MatchPlan,
+} from "./lobby-host.js";
 import { connectMatch, type PeerMatchConnection } from "./match-client.js";
 import { ARENA, TICK_SECONDS, hello, settle } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
@@ -85,6 +90,8 @@ export async function openLobby(
     random?: () => number;
     /** Opened for joins (#1682), as most tests want; a lobby starts closed. */
     open?: boolean;
+    /** A party that may queue in a team mode (#1766); every member is told its room id. */
+    matchmaking?: LobbyMatchmakingOptions;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -98,6 +105,7 @@ export async function openLobby(
     mapIds: MAP_IDS,
     modeMaps: MODE_MAPS,
     teamLobby: options.teamLobby ?? false,
+    ...(options.matchmaking === undefined ? {} : { matchmaking: options.matchmaking }),
     random: options.random ?? (() => 0.5),
     startMatch(plan) {
       const host =
@@ -138,6 +146,7 @@ export async function openLobby(
         guildCape,
         character,
         timeoutMs: 1000,
+        ...(options.matchmaking === undefined ? {} : { roomId: options.matchmaking.roomId }),
       }),
       transport,
     );

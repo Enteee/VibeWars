@@ -197,6 +197,7 @@ import {
   breakHex,
   fireChangeTriggers,
   fireCreationTriggers,
+  fireEndTriggers,
   fireTriggers,
   isEchoSkill,
   isEchoStatus,
@@ -2045,7 +2046,7 @@ export class MatchSimulation {
     if (dropped === undefined) {
       return;
     }
-    const change: StatusChange = { kind: "ended", ...dropped, expired: false };
+    const change: StatusChange = { kind: "ended", ...dropped, expired: false, death: false };
     this.#loseRaisedMaxima(record, change);
     this.#logFired(
       fireChangeTriggers(record.combatant, change, this.#spread, this.#triggerContext()),
@@ -3819,7 +3820,10 @@ export class MatchSimulation {
    * discarded: a triggered effect never sets off a trigger, so two
    * Contagions never echo, and a condition Contagion hands out sets off
    * nobody's. Hits and physical damage are drained here too (#935), so
-   * two Mark of Pain bearers side by side never chain.
+   * two Mark of Pain bearers side by side never chain. A status the
+   * firing ended still fires its own end (#1789), as Faithful
+   * Intervention heals when damage below half ends it; what that end
+   * changes is discarded in turn.
    */
   #fireStatusChanges(): void {
     const changes = [...this.#participants.values()].map((record) => ({
@@ -3844,9 +3848,18 @@ export class MatchSimulation {
         this.#logFired(fireChangeTriggers(record.combatant, change, this.#spread, context));
       }
     }
-    // A protective spirit still pays for what it did against a triggered
-    // effect (#1265): a payment is not a trigger, so it cannot echo. Nor
-    // is a broken hex's damage (#1403), owed for a hex a trigger cast.
+    this.#settleTriggered(context, true);
+    this.#settleTriggered(context, false);
+  }
+
+  /**
+   * What firing triggers changed, drained (#887). A protective spirit still
+   * pays for what it did against a triggered effect (#1265): a payment is
+   * not a trigger, so it cannot echo. Nor is a broken hex's damage (#1403),
+   * owed for a hex a trigger cast. With `ownEnds`, a status that ended
+   * fires its own end triggers (#1789); nothing else answers.
+   */
+  #settleTriggered(context: TriggerContext, ownEnds: boolean): void {
     for (const record of this.#participants.values()) {
       for (const change of record.combatant.statuses.drainChanges()) {
         if (change.kind === "charged-source") {
@@ -3857,6 +3870,9 @@ export class MatchSimulation {
         }
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
+        if (ownEnds && change.kind === "ended") {
+          this.#logFired(fireEndTriggers(record.combatant, change, context));
+        }
       }
     }
   }

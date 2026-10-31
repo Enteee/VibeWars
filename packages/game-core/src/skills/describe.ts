@@ -571,6 +571,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `the next damage or life steal heals for that much instead, up to ${String(definition.reversesNextDamage)}`,
     );
   }
+  if (definition.negatesFatalDamage) {
+    parts.push("the next damage or life steal that would kill it is negated");
+  }
   if (definition.extraStrikesPerHit > 0) {
     parts.push(
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
@@ -655,7 +658,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     ? definition.triggers.filter((trigger) => trigger.effects.length === 0)
     : [];
   for (const trigger of enders) {
-    parts.push(`ends if it ${TRIGGER_WHEN[trigger.on]}`);
+    parts.push(`ends if it ${kindBoundWhen(trigger.on, trigger) ?? TRIGGER_WHEN[trigger.on]}`);
   }
   // A trigger that reads "when it ends: removes 1 hex" is a sentence of
   // its own (#944), not one more clause after a comma.
@@ -773,6 +776,8 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
   "bearer-takes-damage-from-foe": "takes damage or life steal from a foe",
+  "bearer-health-drops-below": "has its Health dropped below a line by damage",
+  "bearer-fatal-damage-negated": "has fatal damage negated",
   "bearer-hit-by-attack": "is hit by a foe's attack",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
@@ -786,6 +791,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
   "bearer-energy-empty": "has no energy left",
+  "bearer-dies": "dies",
   ends: "ends",
   "ends-early": "ends prematurely",
   expires: "expires",
@@ -822,6 +828,7 @@ function describeTriggers(
       trigger.usedSkill,
       trigger.damageType,
       trigger.minDamage,
+      trigger.healthBelow,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -835,6 +842,9 @@ function describeTriggers(
       ? weaponBoundWhen(event, trigger.weapon)
       : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
   return [...groups.values()].flatMap(({ trigger, on }) => {
+    if (on.includes("bearer-dies")) {
+      return [{ text: describeDeath(trigger, ranks, bearerIsFoe), clause: false }];
+    }
     const lines = describeTrigger(
       trigger,
       on.includes("bearer-creates-creature")
@@ -879,6 +889,47 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
     return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
   }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
+}
+
+/**
+ * A death trigger's (#1762), one sentence in the corpus's words: "if
+ * target foe dies while hexed with this, you gain 13 Energy and all your
+ * skills are recharged", "if an ally dies while enchanted with this, your
+ * party is healed for 41".
+ */
+function describeDeath(
+  trigger: StatusTrigger,
+  ranks: ReadonlyMap<string, number>,
+  bearerIsFoe: boolean,
+): string {
+  const amount = (magnitude: Magnitude): string =>
+    String(describeMagnitude(magnitude, ranks).current);
+  const answer = (effect: TriggerEffect): string[] => {
+    if (effect.kind === "energy-gain") {
+      return [`you gain ${amount(effect.amount)} Energy`];
+    }
+    if (effect.kind === "recharge-others" && effect.which === "all") {
+      return ["all your skills are recharged"];
+    }
+    if (effect.kind === "splash") {
+      return effect.effects.map((inner) =>
+        effect.hits === "party" && inner.kind === "heal"
+          ? `your party is healed for ${amount(inner.amount)}`
+          : inner.kind === "damage"
+            ? `${lowerFirst(foesWithin(effect.radius, effect.hits))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
+            : `${lowerFirst(foesWithin(effect.radius, effect.hits))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
+      );
+    }
+    return effect.kind === "spread-gained-condition" ||
+      effect.kind === "echo" ||
+      effect.kind === "cancel-attack"
+      ? []
+      : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
+  };
+  const who = bearerIsFoe
+    ? "if target foe dies while hexed with this"
+    : "if an ally dies while enchanted with this";
+  return `${who}, ${trigger.effects.flatMap(answer).join(" and ")}`;
 }
 
 /** An echo's (#1423), in the corpus's words. */
@@ -931,6 +982,10 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
   // Spirit Bond's (#1754).
   if (event === "bearer-takes-damage-from-foe" && trigger.minDamage !== undefined) {
     return `takes more than ${String(trigger.minDamage)} damage from a foe`;
+  }
+  // Watchful Intervention's (#1789).
+  if (event === "bearer-health-drops-below" && trigger.healthBelow !== undefined) {
+    return `has its Health dropped below ${String(Math.round(trigger.healthBelow * 100))}% by damage`;
   }
   if (event === "bearer-blocks" && trigger.blocked !== undefined) {
     return `blocks a ${trigger.blocked} attack`;
@@ -1184,6 +1239,16 @@ function describeTrigger(
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
       return [clause(`takes ${amount(effect.amount)}${typeWord(effect.type)} damage ${when}`)];
+    }
+    // Judge's Intervention's (#1789): "... that would kill it is negated,
+    // and the foe who dealt it takes 150 holy damage".
+    if (effect.kind === "damage" && trigger.target === "source-on-offender") {
+      const then = trigger.on === "bearer-fatal-damage-negated" ? "and" : `${when},`;
+      return [
+        clause(
+          `${then} the foe who dealt it takes ${amount(effect.amount)}${typeWord(effect.type)} damage`,
+        ),
+      ];
     }
     // Scourge Enchantment's (#1403): "whenever it gains an enchantment,
     // its caster takes 63 holy damage".
@@ -1847,7 +1912,11 @@ function describeEffect(
       }
       return {
         text:
-          `Applies ${statusName(effect.statusId)} for ${statusDuration(effect, ranks)} ` +
+          `Applies ${statusName(effect.statusId)} ` +
+          // No end of its own (#1789): Faithful Intervention's.
+          (Number.isFinite(effect.durationSeconds)
+            ? `for ${statusDuration(effect, ranks)} `
+            : "until it ends ") +
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
@@ -1991,7 +2060,13 @@ function describeEffect(
         magnitude: undefined,
       };
     case "recharge-others":
-      return { text: "Recharges all your other attack skills", magnitude: undefined };
+      return {
+        text:
+          effect.which === "all"
+            ? "Recharges all your skills"
+            : "Recharges all your other attack skills",
+        magnitude: undefined,
+      };
     case "summon": {
       // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052), with
       // Spawning Power's health and the base in brackets (#1098).

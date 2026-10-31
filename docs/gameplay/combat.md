@@ -1411,6 +1411,24 @@ stealer gains nothing. A deep wound cuts the heal. The hit still counts
 as a hit for the attacker's adrenaline. Degeneration and sacrifice pass
 under it and do not spend it.
 
+**Health lines and fatal damage** (#1789). A trigger on
+`bearer-health-drops-below` fires on any packet of damage or life steal,
+from anyone, that leaves its bearer alive and below its line (a share
+of effective maximum Health), already below before the hit or not, as
+GW1 does; health loss, sacrifice and degeneration never do. One packet
+may fire two lines. A status that
+negates fatal damage comes after invulnerability, Reversal of Fortune, a
+bond and a guard: what would kill is dropped whole, as a reversal is,
+the oldest such status ends, and its `bearer-fatal-damage-negated`
+triggers fire at the dealer. A status a trigger ends still fires its own
+`ends` triggers. Judge's Intervention (Monk, Smiting, 5 e, ¼ s, 8 s;
+10 s on an ally) smites the dealer of the negated blow for 150 holy from
+the Monk. Watchful Intervention (Dervish, Mysticism, 10 e, 1 s, 15 s;
+60 s on an ally) heals 170 when damage drops it below 25%. Faithful
+Intervention (5 e, 2 s, 20 s, self) and Illusion of Weakness (Mesmer,
+Illusion, 10 e, 2 s, 30 s, self; you lose 202 first) have no duration,
+end below 50% and 25%, and heal 126 and 202 as they end, by any means.
+
 Some damage ignores armor altogether (#760): holy, shadow and typeless
 skill damage, an attack skill's "+N damage" bonus, degeneration and
 life steal. Swift Chop's +16 lands as 16 on a Warrior and on a Monk
