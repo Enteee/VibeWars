@@ -12,13 +12,17 @@ const NO_BOT_USE = new Set([
   // bot weighs.
   "monk.spell-breaker",
   // Companion commands and pet attacks: out of scope for a bot.
+  "ranger.bestial-pounce",
   "ranger.brutal-strike",
   "ranger.call-of-haste",
   "ranger.call-of-protection",
   "ranger.charm-animal",
   "ranger.comfort-animal",
   "ranger.disrupting-lunge",
+  "ranger.feral-lunge",
   "ranger.maiming-strike",
+  "ranger.poisonous-bite",
+  "ranger.pounce",
   "ranger.revive-animal",
   "ranger.symbiotic-bond",
   // Speed, energy, attack speed and other self-help no rule reaches for.

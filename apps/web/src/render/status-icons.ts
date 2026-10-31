@@ -73,6 +73,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "whirling-defense": icon("whirling-defense"),
   "serpents-quickness": icon("serpents-quickness"),
   dodge: icon("dodge"),
+  "zojuns-haste": icon("zojuns-haste"),
   "bonettis-defense": icon("bonettis-defense"),
   "deflect-arrows": icon("deflect-arrows"),
   "gladiators-defense": icon("gladiators-defense"),

@@ -288,7 +288,8 @@
     "xinraes-weapon",
     "zealous-anthem",
     "zealous-renewal",
-    "zealous-vow"
+    "zealous-vow",
+    "zojuns-haste"
   ],
   "constants": {
     "FORMATION_SETTLE_MS": { "literal": 3000 },
@@ -859,7 +860,8 @@
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
                   { "literal": "zealous-renewal" },
-                  { "literal": "zealous-vow" }
+                  { "literal": "zealous-vow" },
+                  { "literal": "zojuns-haste" }
                 ]
               }
             },
@@ -1139,7 +1141,8 @@
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
                   { "literal": "zealous-renewal" },
-                  { "literal": "zealous-vow" }
+                  { "literal": "zealous-vow" },
+                  { "literal": "zojuns-haste" }
                 ]
               }
             },
@@ -1416,7 +1419,8 @@
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
                   { "literal": "zealous-renewal" },
-                  { "literal": "zealous-vow" }
+                  { "literal": "zealous-vow" },
+                  { "literal": "zojuns-haste" }
                 ]
               }
             },
@@ -1690,7 +1694,8 @@
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
                   { "literal": "zealous-renewal" },
-                  { "literal": "zealous-vow" }
+                  { "literal": "zealous-vow" },
+                  { "literal": "zojuns-haste" }
                 ]
               }
             },
@@ -2071,7 +2076,8 @@
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
                   { "literal": "zealous-renewal" },
-                  { "literal": "zealous-vow" }
+                  { "literal": "zealous-vow" },
+                  { "literal": "zojuns-haste" }
                 ]
               }
             },
@@ -2336,7 +2342,8 @@
                   { "literal": "xinraes-weapon" },
                   { "literal": "zealous-anthem" },
                   { "literal": "zealous-renewal" },
-                  { "literal": "zealous-vow" }
+                  { "literal": "zealous-vow" },
+                  { "literal": "zojuns-haste" }
                 ]
               }
             },
