@@ -226,6 +226,11 @@ export interface RechargeMessage {
    * disabled too, and waits for both.
    */
   readonly spent: readonly number[];
+  /**
+   * The slot pressed during an activation or an aftercast and waiting to
+   * go next (#1722), `null` for none: what the bar pulses.
+   */
+  readonly queued: number | null;
 }
 
 /**

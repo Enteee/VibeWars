@@ -130,7 +130,7 @@ export class CastState {
     return this.#aftercastRemaining > 0;
   }
 
-  /** The slot to use when the aftercast ends, if one was pressed during it. */
+  /** The slot to use when the cast and aftercast end, if one was pressed during them (#1722). */
   public get queuedSlot(): number | undefined {
     return this.#queuedSlot;
   }
@@ -256,7 +256,7 @@ export class CastState {
     this.#queuedSlot = undefined;
   }
 
-  /** Use `slot` once the aftercast ends; a later press replaces it. */
+  /** Use `slot` once the cast and aftercast end; a later press replaces it. */
   public queue(slot: number): void {
     this.#queuedSlot = slot;
   }

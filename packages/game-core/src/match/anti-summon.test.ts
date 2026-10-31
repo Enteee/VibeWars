@@ -247,7 +247,7 @@ describe("the skill texts (#1528)", () => {
   };
 
   it("says what each does", () => {
-    expect(text(BANISH)).toEqual(["Deals 56 damage; if target is a summoned creature: +56"]);
+    expect(text(BANISH)).toEqual(["Deals 56 holy damage; if target is a summoned creature: +56"]);
     expect(text(BANISHING_STRIKE)).toEqual([
       "Deals only 50 holy damage",
       "If target is a summoned creature: +50 damage",
@@ -255,7 +255,7 @@ describe("the skill texts (#1528)", () => {
     ]);
     expect(text(HOLY_SPEAR)).toEqual([
       "+17 damage",
-      "If target is a summoned creature: nearby foes take 75 damage and suffer Burning for 3s (−7 Health degeneration)",
+      "If target is a summoned creature: nearby foes take 75 holy damage and suffer Burning for 3s (−7 Health degeneration)",
     ]);
     expect(text(SPIRITUAL_PAIN)).toEqual([
       "Deals 33 damage",

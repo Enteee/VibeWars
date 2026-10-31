@@ -379,7 +379,7 @@ describe("Mystic Twister (#977)", () => {
 
   it("reads its bonus on its card", () => {
     expect(describeSkill(skill("dervish.mystic-twister"), RANKS).effects[0]?.text).toBe(
-      "Deals 50 damage; if you have an enchantment: +50",
+      "Deals 50 cold damage; if you have an enchantment: +50",
     );
   });
 });

@@ -1072,7 +1072,7 @@ test("hovering a skill shows a tooltip whose numbers follow the attribute", asyn
   await expect(tip).toContainText("damage");
   await expect(tip).toContainText("10 energy");
 
-  const atZero = /Deals (\d+) damage/.exec(await tip.innerText())?.[1];
+  const atZero = /Deals (\d+) fire damage/.exec(await tip.innerText())?.[1];
   expect(atZero).toBeDefined();
 
   // Spend points, and the same tooltip must report a bigger number —
@@ -1082,7 +1082,7 @@ test("hovering a skill shows a tooltip whose numbers follow the attribute", asyn
   await pip(fireRow, 8).click();
   await page.locator(".skill-box", { hasText: "Fireball" }).hover();
   await expect(tip).toBeVisible();
-  const atRank = /Deals (\d+) damage/.exec(await tip.innerText())?.[1];
+  const atRank = /Deals (\d+) fire damage/.exec(await tip.innerText())?.[1];
 
   expect(Number(atRank)).toBeGreaterThan(Number(atZero));
 });
@@ -1879,7 +1879,7 @@ test("a library card opens its details inline with Enter, one at a time, its ran
   await pip(page.locator(".editor-attribute", { hasText: "Fire Magic" }), 3).click();
   const fireball = page.locator('.skill-box[data-skill-id="elementalist.fireball"]');
   // The number that matters at this rank, on the card itself.
-  await expect(fireball.locator(".skill-box-headline")).toHaveText(/^\d+ damage$/);
+  await expect(fireball.locator(".skill-box-headline")).toHaveText(/^\d+ fire damage$/);
 
   const card = fireball.locator(".skill-box-card");
   await card.focus();

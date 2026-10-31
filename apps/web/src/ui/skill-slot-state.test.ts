@@ -18,6 +18,7 @@ import {
   SLOT_FLASH_MS,
   slotAffordable,
   slotFlashes,
+  midAction,
   silenced,
   wrongWeapon,
 } from "./skill-slot-state.js";
@@ -407,6 +408,19 @@ describe("slotAffordable (#637)", () => {
     const rush = { ...slot("rush"), energyCost: 0, adrenalineCost: 4 };
     expect(slotAffordable(rush, self({ energy: 0 }), 4 * 25 - 1)).toBe(false);
     expect(slotAffordable(rush, self({ energy: 0 }), 4 * 25)).toBe(true);
+  });
+});
+
+describe("midAction (#1725)", () => {
+  it("marks a shout and a stance, lit through a knockdown, and nothing else", () => {
+    const bar = [
+      slot("warrior.for-great-justice"),
+      slot("warrior.balanced-stance"),
+      slot("warrior.dolyak-signet"),
+      slot("elementalist.fireball"),
+      null,
+    ];
+    expect(midAction(bar)).toEqual([true, true, false, false, false]);
   });
 });
 

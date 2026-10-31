@@ -68,6 +68,7 @@ import { FLASH_LOCKOUT_SECONDS, MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from 
 import {
   canActivate,
   hasAftercast,
+  usableMidAction,
   isAllyOrSelfRule,
   isCompanionRule,
   payCost,
@@ -186,6 +187,7 @@ import {
   swingIntervalSeconds,
   unblockableNow,
   weaponSnapshotOf,
+  withEndedCritical,
 } from "../skills/weapon-attack.js";
 import {
   breakHex,
@@ -683,9 +685,9 @@ export interface SkillRequest {
   readonly skillId: string;
   readonly check: ActivationCheck;
   /**
-   * Pressed during an aftercast, it goes off when the aftercast ends
-   * (#317); a targeted skill pressed out of range or out of sight, when
-   * it is walked into range (#415, #499).
+   * Pressed during an activation or an aftercast, it goes off when they
+   * end (#317, #1722); a targeted skill pressed out of range or out of
+   * sight, when it is walked into range (#415, #499).
    */
   readonly queued?: true;
 }
@@ -2372,12 +2374,38 @@ export class MatchSimulation {
     }
 
     const castTargetId = skill.target === "self" ? id : this.#castTarget(record, skill);
-    const check = this.#check(record, skill, castTargetId, used.key);
+    // Checked as if nothing were casting: a press during an activation
+    // queues (#1722).
+    const check = this.#check(record, skill, castTargetId, used.key, false);
     if (skill.type === "pet-attack") {
       if (check.ok) {
         this.#armPetAttack(record, skill, used.key);
       }
       return { skillId: skill.id, check };
+    }
+    // A shout or a stance goes off at once in the middle of an activation,
+    // an aftercast or a knockdown (#1725, GW1), and touches none of them.
+    // Out of range or sight, it is refused: nothing walks in mid-action.
+    const { cast } = record.combatant;
+    if (
+      usableMidAction(skill) &&
+      (cast.isCasting || cast.inAftercast || record.combatant.knockdownRemaining > 0)
+    ) {
+      if (check.ok) {
+        this.#useMidAction(record, skill, used.key, castTargetId);
+      }
+      return { skillId: skill.id, check };
+    }
+    // Pressed during an activation, a skill goes next, as in GW1 (#1722):
+    // queued, replacing one already waiting, and paid for nothing yet. It
+    // is requested again when the activation, or the aftercast after it,
+    // ends; out of range or sight then, it walks in as any press does.
+    if (record.combatant.cast.isCasting) {
+      if (!check.ok && check.reason !== "out-of-range" && check.reason !== "no-line-of-sight") {
+        return { skillId: skill.id, check };
+      }
+      record.combatant.cast.queue(slot);
+      return { skillId: skill.id, check: { ok: true }, queued: true };
     }
     // Out of range or out of sight, a skill walks in and goes off there,
     // as Space does (#415, operator Q61). Range and line of sight are
@@ -2418,8 +2446,7 @@ export class MatchSimulation {
     if (pet === undefined) {
       return;
     }
-    payCost(skill, record.combatant, key);
-    this.#useNextSkillRules(record, skill);
+    this.#payForUse(record, skill, key);
     // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
     const faster = aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster;
     beginRecharge(
@@ -2455,6 +2482,47 @@ export class MatchSimulation {
   }
 
   /**
+   * A shout or a stance used mid-action (#1725): paid, and resolved now
+   * as an instant that finished its activation, by the one path every
+   * cast resolves by, which starts its recharge and answers its use. The
+   * cast in progress, the aftercast, the queue, the swing and the
+   * knockdown are left as they were.
+   */
+  #useMidAction(
+    record: ParticipantRecord,
+    skill: Skill,
+    key: string,
+    castTargetId: string | undefined,
+  ): void {
+    const rule = this.#payForUse(record, skill, key);
+    this.#castBegun(record, skill, castTargetId);
+    // An instant flies nowhere, so no time passes for it.
+    this.resolveCast(
+      record,
+      {
+        skillId: skill.id,
+        key,
+        targetId: castTargetId,
+        totalSeconds: 0,
+        remainingSeconds: 0,
+        whileActivating: undefined,
+        rule,
+      },
+      0,
+    );
+  }
+
+  /**
+   * A skill used, at once or as it begins: its cost, and what it uses up
+   * of a glyph or the chants on its user. Returns what they give it.
+   */
+  #payForUse(record: ParticipantRecord, skill: Skill, key: string): CastRule {
+    payCost(skill, record.combatant, key);
+    this.#useGlyph(record, skill);
+    return this.#useNextSkillRules(record, skill);
+  }
+
+  /**
    * The rest of `requestSkill`, once its target is known and `check`
    * made: queue it behind an aftercast, or pay for it and begin it. Also
    * how a skill walking in goes off on arrival (#415, #499).
@@ -2485,9 +2553,7 @@ export class MatchSimulation {
       return { skillId: skill.id, check, queued: true };
     }
 
-    payCost(skill, record.combatant, key);
-    this.#useGlyph(record, skill);
-    const rule = this.#useNextSkillRules(record, skill);
+    const rule = this.#payForUse(record, skill, key);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -2790,7 +2856,6 @@ export class MatchSimulation {
         continue;
       }
 
-      const wasInAftercast = record.combatant.cast.inAftercast;
       const completed = record.combatant.cast.advance(dt);
       dropEndedCopyPools(record.combatant);
       if (completed !== undefined) {
@@ -2801,9 +2866,10 @@ export class MatchSimulation {
           this.#claims.push(record.combatant.team);
         }
       }
-      // A skill pressed during the aftercast goes off the tick it ends. A
-      // refusal now is dropped: nobody is pressing a key at this moment.
-      if (wasInAftercast && !record.combatant.cast.inAftercast) {
+      // A skill pressed during an activation or the aftercast goes off the
+      // tick both are over (#317, #1722). A refusal now is dropped: nobody
+      // is pressing a key at this moment.
+      if (!record.combatant.cast.isCasting && !record.combatant.cast.inAftercast) {
         const queued = record.combatant.cast.takeQueued();
         if (queued !== undefined) {
           this.requestSkill(record.id, queued);
@@ -3085,13 +3151,15 @@ export class MatchSimulation {
   /**
    * The one activation check, for a cast and for a behaviour asking
    * whether it could. `key` is what the slot used waits under (#469): a
-   * copy's, or the skill's own id.
+   * copy's, or the skill's own id. A press checks as if nothing were
+   * casting, `isCasting` false, as it may queue (#1722).
    */
   #check(
     record: ParticipantRecord,
     skill: Skill,
     targetId: string | undefined,
     key: string = skill.id,
+    isCasting: boolean = record.combatant.cast.isCasting,
   ): ActivationCheck {
     // A pet skill acts on the pet, whatever was asked (#1046).
     const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
@@ -3106,7 +3174,7 @@ export class MatchSimulation {
       key,
       rechargeRemaining: record.combatant.cast.rechargeRemaining,
       spent: record.combatant.cast.spent,
-      isCasting: record.combatant.cast.isCasting,
+      isCasting,
       skillBar: resolvedBar(record.skillBar, record.combatant.cast).map(
         (slot) => slot?.key ?? null,
       ),
@@ -4792,10 +4860,13 @@ export class MatchSimulation {
     skillHit: SkillHit | SpellHit | undefined,
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
-    let unblockable = false;
+    let attacked: ReturnType<typeof bearerAttacked> = {
+      unblockable: false,
+      criticalChanceBonus: 0,
+    };
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
-      unblockable = bearerAttacked(record.combatant, events, "projectile");
+      attacked = bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant);
         events.push({ kind: "attack-missed", targetId: target.id });
@@ -4831,9 +4902,9 @@ export class MatchSimulation {
       speed,
       flightSeconds: distance(from, aimPoint) / speed,
       elapsed: 0,
-      weaponSnapshot: weaponSnapshotOf(record.combatant),
+      weaponSnapshot: withEndedCritical(weaponSnapshotOf(record.combatant), attacked),
       skillHit,
-      unblockable,
+      unblockable: attacked.unblockable,
     });
     this.#nextProjectileId += 1;
     return events;

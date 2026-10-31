@@ -200,7 +200,7 @@ test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485
   // The Elementalist/Mesmer's Fire Magic 12, its minor rune and its
   // headgear, 14, as the host resolved it; a client describing the skill
   // without its ranks would say 7.
-  await expect(tip).toContainText("Deals 105 damage");
+  await expect(tip).toContainText("Deals 105 fire damage");
   const tipBox = await tip.boundingBox();
   const slotBox = await slot.boundingBox();
   expect((tipBox?.y ?? Infinity) + (tipBox?.height ?? 0)).toBeLessThanOrEqual(slotBox?.y ?? 0);

@@ -17,6 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { C, germ, stroke } from "./icon-kit.mjs";
+import { WEAPON_MARKS } from "./weapon-marks.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
@@ -710,6 +711,19 @@ const healthGauge = (/** @type {number} */ fill) =>
   `<rect x="3.5" y="19.5" width="${(17 * fill).toFixed(1)}" height="1.5" fill="${C.ink}"/>` +
   inkLine("M12 17.5V23", 1.2);
 
+/**
+ * A dagger (or a pair) up and to the left with a rider glyph in the bottom right corner on a plate of its own (#1653).
+ * @param {string} rider A glyph body, drawn in the 24 box and shrunk here.
+ * @param {boolean} [pair] Two blades instead of one.
+ */
+const strikeWith = (rider, pair = false) =>
+  (pair
+    ? `<g transform="translate(6.5,8) scale(0.62) translate(-12,-12)">${skillGlyph.dagger()}</g>` +
+      `<g transform="translate(11,5) scale(0.62) translate(-12,-12)">${skillGlyph.dagger()}</g>`
+    : `<g transform="translate(9,9) scale(0.74) translate(-12,-12)">${skillGlyph.dagger()}</g>`) +
+  `<circle cx="17.5" cy="17.5" r="6" fill="${C.bg}"/>` +
+  `<g transform="translate(17.5,17.5) scale(0.5) translate(-12,-12)">${rider}</g>`;
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   // Payoffs of the chants of #1558: a burst struck through (cannot be interrupted), a bolt with a minus
@@ -788,6 +802,16 @@ const skillGlyph = {
     ),
   "blade-turn": () =>
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
+  // The Ritualist's weapon spells 3 (#1706): the blade and the rider its status repeats.
+  "blade-resilient": () => bladeMark(WEAPON_MARKS.resilient(C.ink)),
+  "blade-ghostly": () => bladeMark(WEAPON_MARKS.ghostly(C.ink)),
+  "blade-sundering": () => bladeMark(WEAPON_MARKS.sundering(C.ink)),
+  "blade-shadow": () => bladeMark(WEAPON_MARKS.shadow(C.ink)),
+  "blade-warmongers": () => bladeMark(WEAPON_MARKS.warmongers(C.ink)),
+  "blade-wailing": () => bladeMark(WEAPON_MARKS.wailing(C.ink)),
+  "blade-nightmare": () => bladeMark(WEAPON_MARKS.nightmare(C.ink)),
+  "blade-fury-bolt": () => bladeMark(WEAPON_MARKS.fury(C.ink)),
+  "blade-renewal": () => bladeMark(WEAPON_MARKS.renewal(C.ink)),
   // A shield with a slash glancing off it: Bladeturn Refrain (#1524).
   "shield-glance": () =>
     `<path d="M9.5 6h11v7c0 4-3 6.5-5.5 8-2.5-1.5-5.5-4-5.5-8z" ${stroke(C.ink, 2)}/>` +
@@ -904,6 +928,43 @@ const skillGlyph = {
   "ring-rip-bleed": () =>
     `<g transform="translate(10,10) scale(0.8) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>` +
     inkFill("M18.5 13.500c1.6 2.3 2.8 3.6 2.8 5.200a2.8 2.8 0 0 1-5.6 0c0-1.6 1.2-2.9 2.8-5.200z"),
+  // Assassin staples 3 (#1653): the blade, with its rider on a plate in the corner.
+  // Black Mantis Thrust: cripples a hexed foe.
+  "dagger-limp-rider": () => strikeWith(inkLine("M16 1L9 10.5L15 15L7 23", 4)),
+  // Black Spider Strike: poisons a hexed foe.
+  "dagger-germ": () =>
+    strikeWith(
+      `<circle cx="12" cy="12" r="5" fill="${C.ink}"/>` +
+        inkLine("M12 2V6M12 18V22M2 12H6M18 12H22M5 5L8 8M16 16L19 19M19 5L16 8M8 16L5 19", 2.6),
+    ),
+  // Golden Fox Strike: unblockable while enchanted, the cracked shield of Guiding Hands.
+  "dagger-unblock": () => strikeWith(skillGlyph["armor-crack"]()),
+  // Golden Fang Strike: Deep Wound while enchanted, the cross of the status.
+  "dagger-wound": () => strikeWith(inkLine("M5 5L19 19M19 5L5 19", 4)),
+  // Lotus Strike: gives Energy.
+  "dagger-energy": () => strikeWith(skillGlyph.energy()),
+  // Falling Lotus Strike: Energy from a foe on the ground.
+  "dagger-energy-ground": () => strikeWith(skillGlyph.energy() + inkLine("M1 22H23", 3)),
+  // Nine Tail Strike: two blows, neither can be blocked.
+  "daggers-unblock": () => strikeWith(skillGlyph["armor-crack"](), true),
+  // Disrupting Stab: interrupts, the spell disabled behind it.
+  "dagger-interrupt-down": () =>
+    strikeWith(skillGlyph.interrupt() + inkLine("M12 15V23M8 20L12 23.5L16 20", 3)),
+  // Temple Strike: interrupts, and blinds.
+  "dagger-interrupt-blind": () =>
+    strikeWith(
+      `<g transform="translate(11,13) scale(0.8) translate(-12,-12)">${skillGlyph["eye-slash"]()}</g>` +
+        `<g transform="translate(19,5) scale(0.42) translate(-12,-12)">${skillGlyph.interrupt()}</g>`,
+    ),
+  // Vampiric Assault: two blows that drink.
+  "daggers-drop": () =>
+    strikeWith(inkFill("M12 2C9 7 6 10 6 15a6 6 0 0 0 12 0C18 10 15 7 12 2Z"), true),
+  // Shattering Assault: two blows that break an enchantment.
+  "daggers-ring": () => strikeWith(skillGlyph["ring-rend"](), true),
+  // Signet of Shadows: a signet ring with an eye shut in it, blindness raises the damage.
+  "signet-shadow": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 2.2)}/>` +
+    `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${skillGlyph["eye-slash"]()}</g>`,
   // A scythe: a long haft, the blade curved over its top (#990).
   scythe: () =>
     inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
@@ -2406,6 +2467,61 @@ const skillGlyph = {
     inkFill("M10.2 3.5H13.8V7H10.2Z") +
     inkFill("M5 7.5H8.4V10.8H5Z") +
     inkFill("M15.6 7.5H19V10.8H15.6Z"),
+  // Elementalist staples 3 (#1710).
+  // A bolt with a minus in a ring: lightning that drains Energy.
+  "bolt-drain": () =>
+    inkLine("M12 2.5L5.5 12.5H12L6.5 21.5", 2.6) +
+    `<circle cx="18" cy="16" r="4.2" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M15.8 16H20.2", 2),
+  // A hammer with a bolt across its head: a crushing bolt.
+  "hammer-bolt": () =>
+    inkLine("M12 10V22", 2.8) +
+    inkFill("M3 3H21V10H3Z") +
+    `<path d="M13 3.5L8.5 7H13L9.5 9.5" ${stroke(C.bg, 1.6)}/>`,
+  // A thrown spear whose shaft is a zigzag bolt.
+  "javelin-bolt": () =>
+    inkFill("M21.5 2.5L22 10L14.5 6.5Z") + inkLine("M18 6L12 10L15 12L8 16L10.5 17.5L3.5 21", 2.4),
+  // A bolt that arcs on to a second dot: lightning that jumps.
+  "bolt-arc": () =>
+    inkLine("M5 2.5L2.5 9.5H8L5.5 15.5", 2.2) +
+    inkLine("M8 8L14 7L12 13L19 11", 2) +
+    `<circle cx="20" cy="17" r="2.6" fill="${C.ink}"/>` +
+    inkLine("M19 11L20 14", 2),
+  // A cloud with a bolt falling out of it.
+  "cloud-bolt": () =>
+    `<path d="M6.5 14.5a4 4 0 0 1 .5-7.9 5 5 0 0 1 9.6-.6 3.8 3.8 0 0 1 .9 8.5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M13 13L9.5 17.5H14L10.5 22", 2.2),
+  // Gale lines streaming under forward chevrons: speed.
+  "gust-fast": () =>
+    inkLine("M2.5 8H12A2.8 2.8 0 1 0 9.2 5.2", 2.2) +
+    inkLine("M2.5 14.5H14", 2.2) +
+    inkLine("M2.5 20H10", 2.2) +
+    inkLine("M15 6.5L19 12L15 17.5M19 6.5L23 12L19 17.5", 1.8),
+  // A faceted crystal with rays: a stone that glows.
+  "crystal-glow": () =>
+    inkFill("M12 7L18 13L12 22L6 13Z") +
+    `<path d="M6 13H18M12 7L9.5 13L12 22L14.5 13Z" ${stroke(C.bg, 1)}/>` +
+    inkLine("M12 1.5V4M4.5 4.5L6.5 6.5M19.5 4.5L17.5 6.5M2 11H4M22 11H20", 1.8),
+  // A three-toed print over a crack: the dragon's stomp.
+  "claw-crack": () =>
+    `<ellipse cx="6" cy="6.5" rx="2" ry="3" fill="${C.ink}"/><ellipse cx="12" cy="5" rx="2" ry="3.2" fill="${C.ink}"/><ellipse cx="18" cy="6.5" rx="2" ry="3" fill="${C.ink}"/>` +
+    inkLine("M2 15H8L10 21M22 15H16L14 21", 2.4) +
+    inkLine("M12 10V15", 2.4),
+  // A volcano with fire thrown from its top.
+  volcano: () =>
+    inkFill("M2 21L8.5 10H15.5L22 21Z") +
+    inkLine("M12 7V2M8 8L5.5 4M16 8L18.5 4", 2.2) +
+    `<circle cx="3.5" cy="8" r="1.2" fill="${C.ink}"/><circle cx="20.5" cy="8" r="1.2" fill="${C.ink}"/>`,
+  // An ash cloud with a slash through it and flakes falling: it blinds.
+  "ash-cloud": () =>
+    `<path d="M6.5 12.5a4 4 0 0 1 .5-7.9 5 5 0 0 1 9.6-.6 3.8 3.8 0 0 1 .9 8.5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M4 20L20 4", 2.2) +
+    `<circle cx="8" cy="19" r="1.2" fill="${C.ink}"/><circle cx="13" cy="21" r="1.2" fill="${C.ink}"/><circle cx="18" cy="19" r="1.2" fill="${C.ink}"/>`,
+  // Rings spreading from the caster with ticks leaping off them.
+  "ring-shock": () =>
+    `<ellipse cx="12" cy="15" rx="4" ry="1.8" fill="${C.ink}"/>` +
+    `<ellipse cx="12" cy="15" rx="9" ry="4.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 2.5V8M4 6L6.5 9.5M20 6L17.5 9.5", 2.2),
   // Unsteady Ground: a pulsing ring with a crack through the earth above it (#1605).
   "ground-pulse": () =>
     `<ellipse cx="12" cy="17" rx="9.5" ry="4" ${stroke(C.ink, 2.2)}/>` +

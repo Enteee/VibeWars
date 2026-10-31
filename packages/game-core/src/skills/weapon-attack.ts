@@ -620,18 +620,38 @@ function weaponOnHit(
  * ends when its bearer attacks ends now, as Weapon of Warding, and, if
  * the attack was `melee`, every one that ends on a melee attack, as
  * Escape (#976). Returns whether a status of its own makes the attack
- * unblockable (#1604), as Guiding Hands, spending one of its attacks.
+ * unblockable (#1604), as Guiding Hands, spending one of its attacks, and
+ * the critical chance the statuses that ended still give this attack
+ * (#1677): "Go for the Eyes!" ends on the attack it sharpens.
  */
 export function bearerAttacked(
   attacker: Combatant,
   events: CombatEvent[],
   kind: "melee" | "projectile",
-): boolean {
+): { readonly unblockable: boolean; readonly criticalChanceBonus: number } {
   const spent = attacker.statuses.spendUnblockableAttack();
+  let criticalChanceBonus = 0;
   for (const statusId of [...spent.ended, ...attacker.statuses.endOnBearerAttack(kind)]) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+    criticalChanceBonus += getStatusDefinition(statusId).criticalChanceBonus;
   }
-  return spent.unblockable;
+  return { unblockable: spent.unblockable, criticalChanceBonus };
+}
+
+/**
+ * `snapshot`, read after the attack ended its statuses, with the critical
+ * chance those statuses still give it (#1677).
+ */
+export function withEndedCritical(
+  snapshot: WeaponSnapshot,
+  attacked: ReturnType<typeof bearerAttacked>,
+): WeaponSnapshot {
+  return attacked.criticalChanceBonus === 0
+    ? snapshot
+    : {
+        ...snapshot,
+        criticalChanceBonus: snapshot.criticalChanceBonus + attacked.criticalChanceBonus,
+      };
 }
 
 /**
@@ -744,11 +764,12 @@ export function removePreparations(attacker: Combatant, skill: Skill, events: Co
 function strike(
   swing: Swing,
   victim: Combatant,
-  unblockable: boolean,
+  attacked: ReturnType<typeof bearerAttacked>,
   events: CombatEvent[],
   fired: FiredTrigger[],
 ): void {
   const { attacker, rng, rules } = swing;
+  const { unblockable } = attacked;
   if (victim.dead) {
     return;
   }
@@ -763,7 +784,7 @@ function strike(
     attackReached(victim, events);
     return;
   }
-  const snapshot = weaponSnapshotOf(attacker);
+  const snapshot = withEndedCritical(weaponSnapshotOf(attacker), attacked);
   if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
   }
@@ -809,12 +830,12 @@ export function resolveSwing(swing: Swing): {
 
   const events: CombatEvent[] = [];
   const fired: FiredTrigger[] = [];
-  const unblockable = bearerAttacked(swing.attacker, events, blowKind(weapon));
+  const attacked = bearerAttacked(swing.attacker, events, blowKind(weapon));
   let landed = 0;
   for (let blow = 0; blow < strikes; blow += 1) {
     const from = events.length;
     for (const victim of victims) {
-      strike(swing, victim, unblockable, events, fired);
+      strike(swing, victim, attacked, events, fired);
     }
     if (
       events
@@ -904,7 +925,8 @@ export function resolveAttackSkillOutcome(
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
-  const unblockable = bearerAttacked(caster, events, kind);
+  // The snapshot, read first, still has what the attack ends.
+  const { unblockable } = bearerAttacked(caster, events, kind);
   removePreparations(caster, skill, events);
   const next = nextAttackSkillOf(caster);
   const primary = resolution.targets[0];

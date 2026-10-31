@@ -120,7 +120,7 @@ describe("Barbed Trap (#1105)", () => {
     const lines = describeSkill(skill, new Map([[WILDERNESS, 12]])).effects.map(({ text }) => text);
     expect(lines).toEqual([
       "Sets a trap at your location for 90 seconds",
-      "When sprung, foes nearby: deals 20 damage",
+      "When sprung, foes nearby: deals 20 piercing damage",
       "When sprung, foes nearby: applies Crippled for 21s (moves at 50% speed)",
       "When sprung, foes nearby: applies Bleeding for 21s (−3 Health degeneration)",
       "Easily interrupted",
@@ -322,7 +322,7 @@ describe("Flame Trap (#1113)", () => {
     expect(lines).toEqual([
       "Sets a trap at your location for 90 seconds",
       "Springs by itself as its time runs out",
-      "When sprung, every 1s for 3s, foes nearby: deals 17 damage",
+      "When sprung, every 1s for 3s, foes nearby: deals 17 fire damage",
       "When sprung, every 1s for 3s, foes nearby: applies Burning for 3s (−7 Health degeneration)",
       "Easily interrupted",
     ]);

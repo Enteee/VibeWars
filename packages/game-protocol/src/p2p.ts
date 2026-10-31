@@ -2116,7 +2116,10 @@ export function parseRecharge(value: unknown): RechargeMessage | undefined {
   const raw = fields(value);
   const slots = parseArray(raw?.slots, MAX_WIRE_SLOTS, parseRechargeSlot);
   const spent = parseArray(raw?.spent, MAX_WIRE_SLOTS, (slot) => (isSlot(slot) ? slot : undefined));
-  return slots === undefined || spent === undefined ? undefined : { slots, spent };
+  const queued = raw?.queued;
+  return slots === undefined || spent === undefined || !(queued === null || isSlot(queued))
+    ? undefined
+    : { slots, spent, queued };
 }
 
 /** The `"adrenaline"` channel: an `AdrenalineMessage`, to one player alone (#463). */

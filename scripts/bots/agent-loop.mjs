@@ -43,6 +43,7 @@ import { RELEASE_AT, diskHold, freeBytes, gib } from "./disk.mjs";
 import { answerBoard, arrivals, readBoardState } from "./hub-board.mjs";
 import { obj, readInbox, SYSTEM, wakes } from "./protocol.mjs";
 import { roleOf, WORK_COLUMN } from "./staff.mjs";
+import { appendWait, idleWaitsDir } from "./waits.mjs";
 
 /** Never less: an agent that ends turns instead of waiting cannot spin. */
 export const PAUSE_MIN = 10;
@@ -431,6 +432,25 @@ export function wokeText(woken) {
 }
 
 /**
+ * What woke an idle wait, as the wait log (#1615) says it.
+ *
+ * @param {Woken} woken
+ * @returns {import("./waits.mjs").WaitLine["woke"]}
+ */
+export function idleWoke(woken) {
+  switch (woken.by) {
+    case "message":
+      return "message";
+    case "card":
+      return "card";
+    case "timer":
+      return "timeout";
+    case "reboot":
+      return "reboot";
+  }
+}
+
+/**
  * Where an idle wait says what woke it: the employee's host-only state
  * directory, never its bus directory. The jail can write there, so a
  * symlink planted as `woke` would have the host overwrite, or the
@@ -556,6 +576,7 @@ async function main() {
     const employee = employeeName(args[0]);
     const root = env("VIBEWARS_BOT_ROOT");
     const dir = path.join(root, "bus", employee);
+    const start = Date.now();
     const woken = await idleWait({
       seconds: IDLE_PAUSE,
       column: WORK_COLUMN[roleOf(employee) ?? ""] ?? null,
@@ -564,6 +585,13 @@ async function main() {
       changes: boardChanges(root),
     });
     writeWoke(root, employee, wokeText(woken));
+    fs.mkdirSync(idleWaitsDir(root, employee), { recursive: true });
+    appendWait(idleWaitsDir(root, employee), {
+      start,
+      end: Date.now(),
+      cmd: "idle",
+      woke: idleWoke(woken),
+    });
     return;
   }
   if (command === "disk") {

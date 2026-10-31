@@ -350,7 +350,7 @@ describe("in a match (#1575)", () => {
     it("says so", () => {
       expect(described("elementalist.unsteady-ground")).toEqual([
         "Creates a symbol at your target's location for 5 seconds",
-        "Every 1s for 5s, foes nearby: deals 34 damage",
+        "Every 1s for 5s, foes nearby: deals 34 earth damage",
         "Every 1s for 5s, foes nearby: if target is attacking: knocks down for 2s",
       ]);
     });

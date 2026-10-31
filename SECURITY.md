@@ -483,9 +483,12 @@ from the logs raw, and was fixed before merge.
 dashboard's CLAUDE pane and the manager's `company load` (#747), its
 staffing input, both count tokens from each agent's own Claude logs.
 The pane's usage-left bars also come from `bus/<employee>/limit.json`
-(#452), where the newest file wins. All of it is read through
+(#452), where the newest file wins, and `kpis.json`'s idle numbers
+from `bus/<employee>/waits.jsonl` (#1615). All of it is read through
 `jail-fs.mjs`, size-capped and shape-checked, so a jail cannot reach
-the host through it. A jail can still make its own role look busier or
+the host through it. The idle sleeps agent-loop logs on the host go to
+`agents/<employee>/waits.jsonl`, never the bus, so its write cannot
+follow a planted symlink. A jail can still make its own role look busier or
 idler than it is, which skews staffing, and can make the pane show any
 percentage. These numbers inform, they do not gate. Before acting on
 usage left, read `/usage`.

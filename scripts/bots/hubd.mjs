@@ -152,6 +152,7 @@ import {
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
+import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
 import {
@@ -3740,6 +3741,51 @@ async function recordCiRuns(now, cfg) {
 }
 
 /**
+ * The most of one employee's wait log hubd reads: 8 days of a busy agent's
+ * waits are some 200 KiB. A bigger one is forged, and is left out.
+ */
+const MAX_WAITS_BYTES = 1024 * 1024;
+
+/**
+ * Every employee's wait logs (#1615): `tg` and `board` waits from its bus,
+ * read through jail-fs, as the bus is the jail's to write and a plain read
+ * could follow a planted symlink; and its idle sleeps from its host-only
+ * `agents/<employee>/`, which only the host writes. One missing or
+ * unreadable is left out, never an error for the rest.
+ *
+ * @param {{ employees: Record<string, unknown> } | null} staff
+ * @returns {Map<string, import("./waits.mjs").WaitLine[]>}
+ */
+function readWaits(staff) {
+  /** @type {Map<string, import("./waits.mjs").WaitLine[]>} */
+  const waits = new Map();
+  for (const employee of Object.keys(staff?.employees ?? {})) {
+    /** @type {import("./waits.mjs").WaitLine[]} */
+    const lines = [];
+    try {
+      const text = withJailDir(path.join(ROOT, "bus", employee), "", {}, (dir) =>
+        dir.readSmall(WAITS_FILE, MAX_WAITS_BYTES),
+      );
+      lines.push(...parseWaits(text));
+    } catch {
+      // No waits yet, or a file that is not one: nothing from the bus.
+    }
+    try {
+      const file = path.join(idleWaitsDir(ROOT, employee), WAITS_FILE);
+      if (fs.statSync(file).size <= MAX_WAITS_BYTES) {
+        lines.push(...parseWaits(fs.readFileSync(file, "utf8")));
+      }
+    } catch {
+      // Never idle yet: nothing from the loop.
+    }
+    if (lines.length > 0) {
+      waits.set(employee, lines);
+    }
+  }
+  return waits;
+}
+
+/**
  * Write `kpis.json` (#891). A section that cannot be read is `null` with its
  * reason in `errors`; hubd never dies of a KPI.
  *
@@ -3765,6 +3811,8 @@ async function writeKpis(cfg) {
     } catch (error) {
       ciRuns = error instanceof Error ? error : new Error("CI history unreadable");
     }
+    const waits = readWaits(staff);
+    const roles = { employees: staff?.employees ?? {} };
     const moves = () =>
       fs.existsSync(BOARD_HISTORY) ? parseHistory(fs.readFileSync(BOARD_HISTORY, "utf8")) : [];
     const kpis = buildKpis(now, {
@@ -3779,7 +3827,7 @@ async function writeKpis(cfg) {
             ? []
             : [{ issue, status: typeof item.status === "string" ? item.status : "" }];
         });
-        return flowKpis({ now, moves: history, cards });
+        return flowKpis({ now, moves: history, cards, waits, staff: roles });
       },
       claude: () => {
         const limit = readLimit(ROOT, staff, now);
@@ -3823,7 +3871,7 @@ async function writeKpis(cfg) {
         if (staff === null || cfg.maxAgents === null) {
           throw new Error("no staff.json or maxAgents");
         }
-        return staffKpis(staff, live, cfg.maxAgents);
+        return staffKpis(staff, live, cfg.maxAgents, now, waits);
       },
       webCache: () => openWebCache().stats(),
       ci: () => {
@@ -3834,7 +3882,7 @@ async function writeKpis(cfg) {
           throw new Error("no CI history yet");
         }
         const history = moves();
-        const { done7d } = flowKpis({ now, moves: history, cards: [] });
+        const { done7d } = flowKpis({ now, moves: history, cards: [], waits, staff: roles });
         return ciKpis({ now, runs: ciRuns, moves: history, done7d, gate: GATE_WORKFLOWS });
       },
     });

@@ -71,6 +71,7 @@ import {
   paintAdrenalineFill,
   paintCastFill,
   paintKnockdown,
+  midAction,
   slotAffordable,
   silenced,
   wrongWeapon,
@@ -630,11 +631,15 @@ export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | nul
   }
 }
 
-/** Paint each slot's recharge wipe, from the render loop (#152). */
+/**
+ * Paint each slot's recharge wipe (#152), and ring the one queued to go
+ * next (#1722), from the render loop.
+ */
 export function updateRecharges(
   hud: HudElements,
   skillBar: readonly (SkillSlot | null)[],
   recharges: readonly SlotRecharge[],
+  queued: number | undefined,
 ): void {
   const buttons = hud.skillBar.querySelectorAll("button");
   const reducedMotion = prefersReducedMotion();
@@ -642,6 +647,7 @@ export function updateRecharges(
     const button = buttons[index];
     if (button !== undefined && slot !== null) {
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
+      button.classList.toggle("is-queued", index === queued);
     }
   });
 }
@@ -1877,6 +1883,7 @@ export function updateHud(
   const far = outOfRange(skillBar, self, target, companion, walls);
   const unwielded = wrongWeapon(skillBar, self);
   const barred = silenced(skillBar, self);
+  const lit = midAction(skillBar);
   hud.slotTips.casting(fill?.slot);
   paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
@@ -1899,6 +1906,7 @@ export function updateHud(
     );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
     button.classList.toggle("is-silenced", barred[index] === true);
+    button.classList.toggle("is-mid-action", lit[index] === true);
     // An echo's copy drains its strip as its time runs out (#1154).
     if (now !== undefined) {
       paintEchoStrip(button, slot, now, reducedMotion);

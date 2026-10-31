@@ -19,6 +19,7 @@ import {
   hasWaking,
   IDLE_PAUSE,
   idleWait,
+  idleWoke,
   wokeFile,
   wokeText,
   writeWoke,
@@ -33,6 +34,7 @@ import {
   releaseNotice,
 } from "./agent-loop.mjs";
 import { answerBoard, sweep } from "./hub-board.mjs";
+import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { SYSTEM, obj } from "./protocol.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -296,6 +298,13 @@ describe("idleWait (#1694)", () => {
     expect(wokeText({ by: "reboot" })).toBeNull();
   });
 
+  it("says it in the wait log's words (#1615)", () => {
+    expect(idleWoke({ by: "message" })).toBe("message");
+    expect(idleWoke({ by: "card", number: 9, column: "Ready" })).toBe("card");
+    expect(idleWoke({ by: "timer" })).toBe("timeout");
+    expect(idleWoke({ by: "reboot" })).toBe("reboot");
+  });
+
   it("says it outside the bus, which the jail can write", () => {
     const root = scratch();
     const file = wokeFile(root, "developer@2");
@@ -334,6 +343,23 @@ describe("gaveUpText (#384)", () => {
 });
 
 describe("agent-loop.mjs", () => {
+  it("logs an idle sleep outside the bus, with what woke it (#1615)", () => {
+    const root = scratch();
+    fs.writeFileSync(path.join(root, "reboot.json"), "{}");
+    const before = Date.now();
+    const result = spawnSync(process.execPath, [AGENT_LOOP, "idle", "developer@2"], {
+      encoding: "utf8",
+      env: { ...process.env, VIBEWARS_BOT_ROOT: root },
+    });
+    expect(result.status).toBe(0);
+    const file = path.join(idleWaitsDir(root, "developer@2"), WAITS_FILE);
+    expect(path.relative(path.join(root, "bus"), file).startsWith("..")).toBe(true);
+    const [line, ...rest] = parseWaits(fs.readFileSync(file, "utf8"));
+    expect(rest).toEqual([]);
+    expect(line).toMatchObject({ cmd: "idle", woke: "reboot" });
+    expect(line?.start).toBeGreaterThanOrEqual(before);
+  });
+
   it("prints the next pause", () => {
     const result = spawnSync(process.execPath, [AGENT_LOOP, "pause", "20", "3", "0"], {
       encoding: "utf8",

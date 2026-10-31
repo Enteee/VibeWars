@@ -3837,15 +3837,15 @@ body.has-expanded-training #screens {
 
 /* Knocked down (#545): the whole bar greys out, and the time left drains
    from right to left across it as one fill, the cast fill's shade. Lit
-   again the moment the body rises. Information, so it moves under reduced
-   motion too. */
+   again the moment the body rises. A shout or a stance stays lit: it still
+   goes off (#1725). Information, so it moves under reduced motion too. */
 .hud-skills.is-knocked-down,
 .training-skills.is-knocked-down {
   position: relative;
 }
 
-.hud-skills.is-knocked-down > *,
-.training-skills.is-knocked-down > * {
+.hud-skills.is-knocked-down > :not(.is-mid-action),
+.training-skills.is-knocked-down > :not(.is-mid-action) {
   opacity: 0.45;
   filter: grayscale(1);
 }
@@ -3934,6 +3934,32 @@ body.has-expanded-training #screens {
 @media (prefers-reduced-motion: reduce) {
   .hud-skill.is-casting::after,
   .training-skill.is-casting::after {
+    animation: none;
+  }
+}
+
+/* The skill queued to go next (#1722): a slow breathing ring outside the
+   slot, so it never hides the cast ring or the wipe inside. Still lit,
+   without the breath, under reduced motion. */
+.hud-skill.is-queued,
+.training-skill.is-queued {
+  box-shadow: 0 0 0 2px var(--ink);
+  animation: slot-queued 1100ms ease-in-out infinite alternate;
+}
+
+@keyframes slot-queued {
+  from {
+    box-shadow: 0 0 0 1px var(--ink-dim);
+  }
+
+  to {
+    box-shadow: 0 0 0 3px var(--ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-skill.is-queued,
+  .training-skill.is-queued {
     animation: none;
   }
 }
