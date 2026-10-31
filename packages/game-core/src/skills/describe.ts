@@ -658,8 +658,13 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   const enders = definition.endsWhenTriggered
     ? definition.triggers.filter((trigger) => trigger.effects.length === 0)
     : [];
+  // A hex or condition is said of "it", the foe that has it; anything
+  // else of "you", who reads it (#1841): Holy Haste's "ends if you use an
+  // enchantment spell".
+  const onFoe = definition.category === "hex" || definition.category === "condition";
   for (const trigger of enders) {
-    parts.push(`ends if it ${kindBoundWhen(trigger.on, trigger) ?? TRIGGER_WHEN[trigger.on]}`);
+    const when = kindBoundWhen(trigger.on, trigger) ?? TRIGGER_WHEN[trigger.on];
+    parts.push(onFoe ? `ends if it ${when}` : `ends if you ${secondPerson(when)}`);
   }
   // A trigger that reads "when it ends: removes 1 hex" is a sentence of
   // its own (#944), not one more clause after a comma.
@@ -773,7 +778,7 @@ function statusArmorText(bonus: ConditionalArmor): string {
 }
 
 /** What the bearer does that a trigger answers, as its tooltip says it. */
-const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
+export const TRIGGER_WHEN: Readonly<Record<StatusTriggerEvent, string>> = {
   "bearer-casts-spell": "casts a spell",
   "bearer-attacks": "attacks",
   "bearer-attack-begins": "attacks",
@@ -802,6 +807,42 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "ends-early": "ends prematurely",
   expires: "expires",
 };
+
+/** Each leading verb a trigger's phrase starts with, said of "you" (#1841). */
+const SECOND_PERSON: ReadonlyMap<string, string> = new Map([
+  ["attacks", "attack"],
+  ["blocks", "block"],
+  ["casts", "cast"],
+  ["creates", "create"],
+  ["dies", "die"],
+  ["ends", "end"],
+  ["expires", "expire"],
+  ["fails", "fail"],
+  ["gains", "gain"],
+  ["has", "have"],
+  ["hits", "hit"],
+  ["is", "are"],
+  ["loses", "lose"],
+  ["takes", "take"],
+  ["uses", "use"],
+]);
+
+/**
+ * A trigger's phrase said of "you" (#1841): "has its Health dropped" is
+ * "have your Health dropped", "has a chant or shout end on it" is "have a
+ * chant or shout end on you". A verb it does not know is a bug: it throws.
+ */
+export function secondPerson(phrase: string): string {
+  const [verb = "", ...rest] = phrase.split(" ");
+  const base = SECOND_PERSON.get(verb);
+  if (base === undefined) {
+    throw new Error(`no second person for "${verb}" in "${phrase}"`);
+  }
+  return [base, ...rest]
+    .join(" ")
+    .replace(/ its /g, " your ")
+    .replace(/ on it$/, " on you");
+}
 
 /** A trigger's line, and whether it follows a comma or stands alone. */
 interface TriggerLine {

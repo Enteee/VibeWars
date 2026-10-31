@@ -8,6 +8,8 @@ import {
   describeSkill,
   describeStatus,
   formatScalingRange,
+  secondPerson,
+  TRIGGER_WHEN,
 } from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
@@ -1072,5 +1074,31 @@ describe("Spawning Power in the tooltip (#1098)", () => {
     expect(
       describeSkill(unguent, new Map([["ritualist.spawning-power", 12]])).effects[0]?.text,
     ).toMatch(/^Applies Regeneration for 13s \(/);
+  });
+});
+
+describe("an ending trigger's subject (#1841)", () => {
+  it("says an enchantment's of you", () => {
+    expect(describeStatus("illusion-of-weakness")).toContain(
+      "ends if you have your Health dropped below 25% by damage",
+    );
+  });
+
+  it("says a hex's of it, the foe", () => {
+    expect(describeStatus("pacifism")).toContain(
+      "ends if it takes damage or life steal from a foe",
+    );
+  });
+
+  it("says every trigger phrase of you", () => {
+    for (const phrase of Object.values(TRIGGER_WHEN)) {
+      expect(secondPerson(phrase)).not.toMatch(/\b(its|it)\b/);
+    }
+    expect(secondPerson("has a chant or shout end on it")).toBe("have a chant or shout end on you");
+    expect(secondPerson("uses an enchantment spell")).toBe("use an enchantment spell");
+  });
+
+  it("throws on a verb it does not know", () => {
+    expect(() => secondPerson("jumps")).toThrow(/jumps/);
   });
 });
