@@ -95,22 +95,22 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
       `<path d="M16 11.5V20M12 15.8H20.5M13.2 13L18.8 18.6M18.8 13L13.2 18.6" ${stroke(c, 1.8)}/>`,
   ],
-  // Ranger staples 4 (#1742), stand-ins until their art card.
+  // Ranger staples 4 (#1742, #1768): the preparation icons repeat their skill's glyph.
   // Preparation: an arrow and a ring it passes through, no block stops it.
   "seeking-arrows": [
     "preparation",
     (c) =>
-      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
-      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
-      `<circle cx="16.5" cy="16.5" r="3.5" ${stroke(c, 1.8)}/>`,
+      `<path d="M10 11L15 13V16C15 18.4 13 19.8 10 21C7 19.8 5 18.4 5 16V13Z" ${stroke(c, 1.8)}/>` +
+      `<path d="M2 11C3 5.5 9 2.5 17.5 4.4" ${stroke(c, 2.2)}/>` +
+      `<path d="M22.5 6L16.3 7.5L18.1 1.4Z" fill="${c}"/>`,
   ],
   // Preparation: an arrow with barbs and a drop, your arrows bleed.
   "barbed-arrows": [
     "preparation",
     (c) =>
-      `<path d="M3.5 15L13 5.5M8 10.5l-2.5-1M10.5 8l-2.5-1" ${stroke(c, 2)}/>` +
-      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
-      `<path d="M16.5 13c1.8 2.2 2.8 3.6 2.8 4.8a2.8 2.8 0 0 1-5.6 0c0-1.2 1-2.6 2.8-4.8z" fill="${c}"/>`,
+      `<path d="M3 21L14.5 9.5M7 17L3.5 16.5M10 14L6.5 13.5M7 17L7.5 20.5M10 14L10.5 17.5" ${stroke(c, 2)}/>` +
+      `<path d="M21.5 2.5L11.5 5.5L18.5 12.5Z" fill="${c}"/>` +
+      `<path d="M19 14c1.6 2 2.6 3.2 2.6 4.4a2.6 2.6 0 0 1-5.2 0c0-1.2 1-2.4 2.6-4.4z" fill="${c}"/>`,
   ],
   // Skill effect: a struck-through shield, -40 armor while it is activated.
   "barbed-arrows-armor": [
@@ -123,17 +123,18 @@ export const RANGER_STATUS_ICONS = {
   "melandrus-arrows": [
     "preparation",
     (c) =>
-      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
-      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
-      `<path d="M13 20c0-4 2.5-7 7-7 0 4-2.5 7-7 7z" ${stroke(c, 1.6)}/>`,
+      `<path d="M5.5 18.5L14 10" ${stroke(c, 2.2)}/>` +
+      `<path d="M2 11C2 6 5 3 10 3C10 8 7 11 2 11Z" ${stroke(c, 1.8)}/>` +
+      `<path d="M21.5 2.5L11.5 5.5L18.5 12.5Z" fill="${c}"/>` +
+      `<path d="M19 14c1.6 2 2.6 3.2 2.6 4.4a2.6 2.6 0 0 1-5.2 0c0-1.2 1-2.4 2.6-4.4z" fill="${c}"/>`,
   ],
   // Preparation: an arrow and two wind lines, your arrows fly twice as fast.
   "read-the-wind": [
     "preparation",
     (c) =>
-      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
-      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
-      `<path d="M12 16h6a2 2 0 1 0-2-2M11 19.5h8" ${stroke(c, 1.6)}/>`,
+      `<path d="M10 14L17 7" ${stroke(c, 2.2)}/>` +
+      `<path d="M22 2.5L13.5 4.5L19.5 10.5Z" fill="${c}"/>` +
+      `<path d="M2 10H8.5a2.5 2.5 0 1 0-2.5-2.5M2 14H7M2 18.5H9.5a2.2 2.2 0 1 1-2.2 2.2" ${stroke(c, 1.8)}/>`,
   ],
   // Nature rituals 1 (#1745): what each spirit does to whoever is near it.
   // Skill effect: a heart with a plus, more health near the spirit.

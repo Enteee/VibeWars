@@ -17,6 +17,7 @@ import {
   onlyInterrupts,
   removedCategories,
   removesFromCaster,
+  sacrificesTooMuch,
 } from "./skill-intent.js";
 
 /**
@@ -187,8 +188,12 @@ function think(
     [...bodies].sort(
       (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
     );
-  // Out of range or out of sight, the simulation walks it in (#499).
+  // Out of range or out of sight, the simulation walks it in (#499). Never
+  // a well by a sacrifice it cannot afford (#1730).
   const mayUse = (skill: Skill, targetId: string | undefined): boolean => {
+    if (sacrificesTooMuch(skill, self.position, healthFraction(self), context.participants)) {
+      return false;
+    }
     const check = context.check(skill.id, targetId);
     return check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight";
   };

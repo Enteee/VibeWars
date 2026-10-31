@@ -1,5 +1,5 @@
 /**
- * Random Arena queue formation (#869, #854 C4): from the tickets a client
+ * Queue formation (#869, #854 C4; team modes ADR-0042): from the tickets a client
  * sees, which matches they make. There is no server to decide it, so it
  * is a pure function of its input: every client that sees the same live
  * tickets forms the same groups, with the same room, host, teams and map,
@@ -11,6 +11,7 @@ import { createRng, seedFromString } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   TICKET_TTL_MS,
+  isTeamQueueMode,
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
@@ -29,10 +30,15 @@ export interface FormedGroup {
    * or every member key of a party, which is its whole side.
    */
   readonly teams: readonly [readonly string[], readonly string[]];
-  /** Each party's members, sorted, `members[0]` its ticket id. */
+  /** Each party's members, sorted, `members[0]` its ticket id: in a team mode, every ticket's. */
   readonly parties: readonly (readonly string[])[];
   /** Picked from the pool by `groupId`. */
   readonly mapId: string;
+  /**
+   * What it queued for. In a team mode (ADR-0042) each side is one
+   * ticket's humans, and the side's bots make up `teamSizeOf(mode)`.
+   */
+  readonly mode: QueueMode;
 }
 
 export interface FormGroupsInput {
@@ -147,20 +153,30 @@ function earlier(a: readonly Queued[], b: readonly Queued[]): boolean {
 }
 
 /**
+ * Whether `ticket` of `mode` is a whole side by itself: a party in Random
+ * Arena, any ticket in a team mode, even one human's with its bots.
+ */
+function isSide(ticket: QueueTicket, mode: QueueMode): boolean {
+  return isTeamQueueMode(mode) || ticket.members.length > 1;
+}
+
+/**
  * The groups `queue` fills, in one pass, front first. Each ticket joins
  * the waiting solos or parties; as soon as they can fill a match, two
  * parties, a party and a side of solos, or two sides of solos, the one
  * of those that takes the earliest queued forms, and the rest wait for
  * the next. A party is never split, and one that cannot be matched yet
- * keeps its place.
+ * keeps its place. In a team mode there are no solos: the two earliest
+ * tickets form.
  */
-function takeGroups(queue: readonly QueueTicket[], teamSize: number): QueueTicket[][] {
+function takeGroups(queue: readonly QueueTicket[], mode: QueueMode): QueueTicket[][] {
+  const teamSize = teamSizeOf(mode);
   const groups: QueueTicket[][] = [];
   let solos: Queued[] = [];
   let parties: Queued[] = [];
   queue.forEach((ticket, place) => {
-    // At a team size of 1, every ticket is a solo.
-    (ticket.members.length > 1 ? parties : solos).push({ ticket, place });
+    // At a team size of 1, every Random Arena ticket is a solo.
+    (isSide(ticket, mode) ? parties : solos).push({ ticket, place });
     const candidates: Queued[][] = [];
     if (parties.length >= 2) {
       candidates.push(parties.slice(0, 2));
@@ -218,17 +234,17 @@ async function hostOf(groupId: string, ids: readonly string[]): Promise<string |
  */
 function sides(
   group: readonly QueueTicket[],
-  teamSize: number,
+  mode: QueueMode,
   groupId: string,
 ): readonly [readonly string[], readonly string[]] {
   const rng = createRng(seedFromString(groupId));
   const parties = group
-    .filter((ticket) => ticket.members.length > 1)
+    .filter((ticket) => isSide(ticket, mode))
     .sort((a, b) => compare(a.ticketId, b.ticketId))
     .map((ticket) => ticket.members);
   // Each solo drawn a key in id order, so every client draws the same.
   const solos = group
-    .filter((ticket) => ticket.members.length === 1)
+    .filter((ticket) => !isSide(ticket, mode))
     .map((ticket) => ticket.ticketId)
     .sort(compare)
     .map((ticketId) => ({ ticketId, key: rng.nextUint32() }))
@@ -236,7 +252,7 @@ function sides(
     .map(({ ticketId }) => ticketId);
   const filled = parties.map((members) => [...members]);
   while (filled.length < 2) {
-    filled.push(solos.splice(0, teamSize));
+    filled.push(solos.splice(0, teamSizeOf(mode)));
   }
   const [first = [], second = []] = filled;
   return rng.nextInt(0, 2) === 0 ? [first, second] : [second, first];
@@ -245,13 +261,13 @@ function sides(
 /**
  * Every group the live tickets make for `input.mode`, earliest queued
  * first, never sharing a ticket: `[]` when there are not enough. Each
- * fills two sides of `teamSizeOf(mode)`; a party ticket fills one side
- * by itself. Throws on an empty `mapPool` once a group forms.
+ * fills two sides of `teamSizeOf(mode)`; a party ticket, or in a team
+ * mode any ticket with its bots, fills one side by itself. Throws on an
+ * empty `mapPool` once a group forms.
  */
 export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]> {
-  const teamSize = teamSizeOf(input.mode);
   const groups: FormedGroup[] = [];
-  for (const group of takeGroups(liveQueue(input), teamSize)) {
+  for (const group of takeGroups(liveQueue(input), input.mode)) {
     const ids = group.map((ticket) => ticket.ticketId).sort(compare);
     const groupId = await sha256Hex(ids.join("\n"));
     const hostTicketId = await hostOf(groupId, ids);
@@ -264,12 +280,13 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
       groupId,
       room: `${ROOM_PREFIX}${groupId}`,
       hostTicketId,
-      teams: sides(group, teamSize, groupId),
+      teams: sides(group, input.mode, groupId),
       parties: group
-        .filter((ticket) => ticket.members.length > 1)
+        .filter((ticket) => isSide(ticket, input.mode))
         .map((ticket) => ticket.members)
         .sort((a, b) => compare(a.join(), b.join())),
       mapId,
+      mode: input.mode,
     });
   }
   return groups;

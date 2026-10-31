@@ -1488,6 +1488,13 @@ export interface CorpseRule {
    * nearest the caster.
    */
   readonly near?: "target";
+  /**
+   * A well's "or sacrifice 66% health" (#1730): with no fresh corpse in
+   * reach as it resolves, the caster sacrifices this % of its max Health
+   * and the skill goes off where it stands. `undefined`: no corpse, no
+   * use.
+   */
+  readonly elseSacrificePercent: number | undefined;
 }
 
 /** How a flying spell flies (#535). */

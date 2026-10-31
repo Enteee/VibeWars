@@ -516,6 +516,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesAdrenalSkill: boolean;
   /**
+   * It ends, unspent, the moment the bearer starts a skill its
+   * `nextSkillRule` does not answer (#1730): Glyph of Sacrifice's "ends
+   * prematurely if you use a non-spell skill".
+   */
+  readonly endsWhenBearerUsesOtherSkill: boolean;
+  /**
    * It ends once one of its triggers has fired (#1022): Vengeful Weapon's
    * and Weapon of Remedy's "the next time". Ended where the trigger fires,
    * after its effects, logged as its expiry.
@@ -1173,6 +1179,14 @@ export interface NextSkillRule {
   readonly unblockable: boolean;
   /** Energy off that skill's cost, never below 0. */
   readonly energyDiscount: number;
+  /** That skill's activation is 0 s (#1730): Glyph of Sacrifice's. */
+  readonly castsInstantly: boolean;
+  /** Seconds added to that skill's recharge (#1730): Glyph of Sacrifice's 30. */
+  readonly extraRechargeSeconds: number;
+  /** That skill recharges at once (#1730), over any `extraRechargeSeconds`. */
+  readonly rechargesInstantly: boolean;
+  /** The bearer's Energy goes to 0 once that skill is paid for (#1730). */
+  readonly losesAllEnergy: boolean;
   /** The skill the log names it after: "paragon.song-of-concentration". */
   readonly skillId: string;
 }
@@ -2022,16 +2036,24 @@ export class StatusSet {
 
   /**
    * The bearer started `skill` (#1505): every status whose
-   * `nextSkillRule` answers its kind ends. Returns each, in `active`
-   * order, with its rule.
+   * `nextSkillRule` answers its kind ends, and so does every one that
+   * ends on any other kind (#1730), unanswered. Returns each, in
+   * `active` order, with its rule and whether it answered.
    */
-  public useNextSkillRules(
-    skill: Skill,
-  ): readonly { readonly statusId: StatusId; readonly rule: NextSkillRule }[] {
+  public useNextSkillRules(skill: Skill): readonly {
+    readonly statusId: StatusId;
+    readonly rule: NextSkillRule;
+    readonly answered: boolean;
+  }[] {
     const used = this.active.flatMap(({ id }) => {
-      const rule = getStatusDefinition(id).nextSkillRule;
-      return rule !== undefined && nextSkillAnswers(rule.which, skill)
-        ? [{ statusId: id, rule }]
+      const definition = getStatusDefinition(id);
+      const rule = definition.nextSkillRule;
+      if (rule === undefined) {
+        return [];
+      }
+      const answered = nextSkillAnswers(rule.which, skill);
+      return answered || definition.endsWhenBearerUsesOtherSkill
+        ? [{ statusId: id, rule, answered }]
         : [];
     });
     this.#end(used.map(({ statusId }) => statusId));

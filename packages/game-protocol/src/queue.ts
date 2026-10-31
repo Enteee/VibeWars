@@ -1,6 +1,8 @@
 /**
- * The Random Arena queue's vocabulary (#854): the ticket a queued client
- * publishes, and the times every client applies to it. There is no server:
+ * The queue's vocabulary (#854): the ticket a queued client publishes,
+ * and the times every client applies to it. Random Arena queues players
+ * and parties; Team Arena, Heroes' Ascent and GvG queue whole teams
+ * (ADR-0042). There is no server:
  * every client reads the same tickets and forms the same matches from
  * them, so these are the numbers they must agree on.
  */
@@ -9,7 +11,14 @@
  * What a player can queue for. Which of these the menu offers is Q97's
  * decision; formation takes any of them.
  */
-export const QUEUE_MODES = ["random-arena-1v1", "random-arena-2v2", "random-arena-4v4"] as const;
+export const QUEUE_MODES = [
+  "random-arena-1v1",
+  "random-arena-2v2",
+  "random-arena-4v4",
+  "team-arena",
+  "heroes-ascent",
+  "gvg",
+] as const;
 
 export type QueueMode = (typeof QUEUE_MODES)[number];
 
@@ -17,11 +26,24 @@ const TEAM_SIZES: Readonly<Record<QueueMode, number>> = {
   "random-arena-1v1": 1,
   "random-arena-2v2": 2,
   "random-arena-4v4": 4,
+  "team-arena": 4,
+  "heroes-ascent": 8,
+  gvg: 8,
 };
+
+const TEAM_QUEUE_MODES: ReadonlySet<QueueMode> = new Set(["team-arena", "heroes-ascent", "gvg"]);
 
 /** Players a side in `mode`; a match is twice this. */
 export function teamSizeOf(mode: QueueMode): number {
   return TEAM_SIZES[mode];
+}
+
+/**
+ * Whether `mode` queues whole teams (ADR-0042): each ticket is one side,
+ * its humans and the bots it brings, and two of them make a match.
+ */
+export function isTeamQueueMode(mode: QueueMode): boolean {
+  return TEAM_QUEUE_MODES.has(mode);
 }
 
 /** A queued client re-publishes its ticket this often. */
@@ -35,7 +57,10 @@ export const FORMATION_TIMEOUT_MS = 20_000;
 /** A ticket that never showed up for its group is skipped for this long. */
 export const NO_SHOW_IGNORE_MS = 120_000;
 
-/** One queued player, or a whole team queueing together. */
+/**
+ * One queued player, a Random Arena team that stayed together, or a team
+ * mode's whole side (ADR-0042).
+ */
 export interface QueueTicket {
   /**
    * The x-only public key of the throwaway Nostr key only its owner
@@ -46,18 +71,25 @@ export interface QueueTicket {
   readonly protocol: string;
   readonly mode: QueueMode;
   /**
-   * The public key of every player it queues, sorted, `ticketId` first:
-   * `[ticketId]` alone, or `teamSizeOf(mode)` of them for a team that
-   * stayed together (#882). Each member holds its own key; the party's
-   * leader, the lowest, publishes with it.
+   * The public key of every player it queues, sorted, `ticketId` first.
+   * In Random Arena: `[ticketId]` alone, or `teamSizeOf(mode)` of them
+   * for a team that stayed together (#882). In a team mode: the side's
+   * humans, at least one, with `bots` making up the rest. Each member
+   * holds its own key; the party's leader, the lowest, publishes with it.
    */
   readonly members: readonly string[];
+  /**
+   * The seats of its side it fills with bots: 0 in Random Arena, and in a
+   * team mode `teamSizeOf(mode) - members.length`. Bots only ever fill
+   * their own team's seats (ADR-0042).
+   */
+  readonly bots: number;
   /** When it entered the queue, ms since the epoch, as its owner claims. */
   readonly enteredAt: number;
   /** When this copy of it was published, ms since the epoch. */
   readonly heartbeatAt: number;
   /**
-   * `null` for a solo. For a party: the group it won together, and each
+   * `null` for one human. For a party: the group it is, and each
    * member's consent signature over it, `consents[i]` by `members[i]`
    * (#1078). Only the leader publishes, so this is how the others say
    * they are in.
@@ -67,7 +99,14 @@ export interface QueueTicket {
 
 /** How a party ticket proves every member is in it (#1078). */
 export interface TicketParty {
-  /** The group its members won together, 64 lowercase hex digits. */
+  /**
+   * The group, 64 lowercase hex digits: in Random Arena the one its
+   * members won together; for a lobby's party (ADR-0042),
+   * `sha256(roomId ‖ queueNonce)`, `roomId` the lobby's derived room
+   * (`deriveLobbyRoom`), never its key, as tickets are public
+   * (ADR-0043), and `queueNonce` a fresh one its host draws on Find a
+   * match and sends each guest.
+   */
   readonly groupId: string;
   /** 128 lowercase hex digits each, in `members` order. */
   readonly consents: readonly string[];
@@ -77,7 +116,7 @@ const TICKET_ID = /^[0-9a-f]{64}$/;
 /** A group id is a sha256, as hex. */
 const GROUP_ID = TICKET_ID;
 const CONSENT = /^[0-9a-f]{128}$/;
-const TICKET_FIELDS = 7;
+const TICKET_FIELDS = 8;
 const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
@@ -91,15 +130,26 @@ function isTime(value: unknown): value is number {
 }
 
 /**
- * `value` as the members of a ticket `ticketId` of `mode`: one key or a
- * whole team of them, sorted, each once, `ticketId` first.
+ * `value` as the members of a ticket `ticketId` of `mode` that brings
+ * `bots`: in Random Arena, no bots and one key or a whole team of them;
+ * in a team mode, at least one key and with the bots exactly a side.
+ * Sorted, each once, `ticketId` first.
  */
 function parseMembers(
   value: unknown,
   ticketId: string,
   mode: QueueMode,
+  bots: number,
 ): readonly string[] | undefined {
-  if (!Array.isArray(value) || (value.length !== 1 && value.length !== teamSizeOf(mode))) {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const size = teamSizeOf(mode);
+  if (
+    isTeamQueueMode(mode)
+      ? value.length < 1 || value.length + bots !== size
+      : bots !== 0 || (value.length !== 1 && value.length !== size)
+  ) {
     return undefined;
   }
   const members: string[] = [];
@@ -118,8 +168,8 @@ function parseMembers(
 }
 
 /**
- * `value` as the party of a ticket with `members`: `null` exactly for a
- * solo, and for a party a group id and one consent a member. Shape only:
+ * `value` as the party of a ticket with `members`: `null` exactly for
+ * one human, and for a party a group id and one consent a member. Shape only:
  * the board checks the signatures.
  */
 function parseParty(value: unknown, members: readonly string[]): TicketParty | null | undefined {
@@ -155,7 +205,8 @@ function parseParty(value: unknown, members: readonly string[]): TicketParty | n
 
 /**
  * A ticket as a peer published it, or `undefined` if it is not one: a bad
- * id, an unknown mode, members that are neither alone nor a whole team,
+ * id, an unknown mode, members and bots that are not a solo or a whole
+ * team in Random Arena or not a whole side in a team mode, members
  * unsorted, repeated or not led by its id, a party that does not match
  * them, a time that is not a whole number of ms, or any field more than a
  * ticket has, so a flood of padded events costs a client nothing to
@@ -168,7 +219,7 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
   if (Object.keys(raw).length !== TICKET_FIELDS) {
     return undefined;
   }
-  const { ticketId, protocol, mode, members, enteredAt, heartbeatAt, party } = raw as Record<
+  const { ticketId, protocol, mode, members, bots, enteredAt, heartbeatAt, party } = raw as Record<
     string,
     unknown
   >;
@@ -179,14 +230,17 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     protocol.length === 0 ||
     protocol.length > MAX_PROTOCOL_LENGTH ||
     !isQueueMode(mode) ||
+    typeof bots !== "number" ||
+    !Number.isSafeInteger(bots) ||
+    bots < 0 ||
     !isTime(enteredAt) ||
     !isTime(heartbeatAt)
   ) {
     return undefined;
   }
-  const parsed = parseMembers(members, ticketId, mode);
+  const parsed = parseMembers(members, ticketId, mode, bots);
   const proof = parsed === undefined ? undefined : parseParty(party, parsed);
   return parsed === undefined || proof === undefined
     ? undefined
-    : { ticketId, protocol, mode, members: parsed, enteredAt, heartbeatAt, party: proof };
+    : { ticketId, protocol, mode, members: parsed, bots, enteredAt, heartbeatAt, party: proof };
 }

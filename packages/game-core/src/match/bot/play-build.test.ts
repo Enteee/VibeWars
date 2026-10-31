@@ -357,6 +357,42 @@ describe("play-build (#1189)", () => {
   });
 });
 
+describe("play-build and a well's sacrifice (#1730)", () => {
+  const WELL_OF_BLOOD = "necromancer.well-of-blood";
+
+  /** A bot whose only skill is Well of Blood, at `fraction` of its Health, a foe far off. */
+  function wellBot(fraction: number, corpse: boolean): MatchSimulation {
+    const sim = match([
+      fighter("n", 0, MONK, vec2(400, 400), {
+        skillBar: [WELL_OF_BLOOD],
+        startHealthFraction: fraction,
+      }),
+      fighter("foe", 1, WARRIOR, vec2(1400, 400), { behaviour: undefined }),
+      fighter("fallen", 1, WARRIOR, vec2(450, 400), { behaviour: undefined }),
+    ]);
+    if (corpse) {
+      const fallen = sim.get("fallen")?.combatant;
+      if (fallen === undefined) throw new Error("no fallen");
+      fallen.statuses.apply("burning", 10, "foe");
+      fallen.health = 0.2;
+      sim.step(DT);
+      expect(fallen.dead).toBe(true);
+    } else {
+      sim.remove("fallen");
+    }
+    return sim;
+  }
+
+  it.each([
+    [0.55, false, true],
+    [0.4, false, false],
+    [0.4, true, true],
+  ])("at %d of its Health, a corpse near: %s, uses the well: %s", (fraction, corpse, used) => {
+    const sim = wellBot(fraction, corpse);
+    expect(askBot(sim, "n").useSkillId === WELL_OF_BLOOD).toBe(used);
+  });
+});
+
 describe("play-build in a whole match (#1189)", () => {
   /** Every log entry of a 1v1 of two bots, to its end or `seconds`. */
   function duel(seed: string, seconds: number): { log: CombatLogEntry[]; sim: MatchSimulation } {
