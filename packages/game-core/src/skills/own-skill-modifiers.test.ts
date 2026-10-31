@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import type { CombatLogEntry } from "../match/combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "../match/simulation.js";
 import { createRng } from "../rng.js";
@@ -10,8 +11,8 @@ import { energyCostOf } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { resolveSkillEffects, type CombatEvent } from "./effects.js";
-import { ownSkillBoost, type StatusId } from "./status.js";
-import { makeCombatant } from "./testing.js";
+import { NO_OWN_SKILL_BOOST, ownSkillBoost, type StatusId } from "./status.js";
+import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -248,6 +249,109 @@ describe("in a match (#1761)", () => {
     // A status put on under it keeps its time once it has ended.
     step(sim, 20);
     expect(me(sim).statuses.has("vow-of-strength")).toBe(true);
+  });
+});
+
+describe("in flight, and on its caster (#1761)", () => {
+  /**
+   * How long `statusId` has left on the foe once `id`, flying from 300
+   * units, puts it on: the caster bearing Blessed Aura lent a modifier
+   * that doubles what its `profession`'s skills put on, or not.
+   */
+  function flown(
+    id: string,
+    profession: "elementalist" | "ranger",
+    statusId: StatusId,
+    boosted: boolean,
+  ): number {
+    const doubles = {
+      filter: { type: undefined, attributeId: undefined, profession },
+      energyDiscount: 0,
+      activationMultiplier: 1,
+      rechargeFaster: 0,
+      durationMultiplier: 2,
+      healMultiplier: 1,
+      uses: undefined,
+    };
+    return withStatusDefinitions({ "blessed-aura": { ownSkillModifiers: [doubles] } }, () => {
+      const unarmed = unarmedResolvedEquipment(RULES.combat.armorReferenceLevel);
+      const sim = new MatchSimulation({
+        seed: "own-skill-in-flight",
+        participants: [
+          {
+            id: "m",
+            team: 0,
+            skillBar: [id],
+            attributeRanks: new Map(),
+            equipment: {
+              ...unarmed,
+              mainHand: {
+                weapon: WEAPONS.longbow,
+                attributeId: "ranger.marksmanship",
+                damageType: WEAPONS.longbow.damageType,
+                requirementMet: true,
+                creatureDamageScale: undefined,
+              },
+            },
+            maxEnergy: 1000,
+            spawn: vec2(0, 0),
+            facing: 0,
+          },
+          {
+            id: "w",
+            team: 1,
+            skillBar: [],
+            attributeRanks: new Map(),
+            equipment: unarmed,
+            spawn: vec2(300, 0),
+            facing: 0,
+          },
+        ],
+      });
+      if (boosted) {
+        sim.get("m")?.combatant.statuses.apply("blessed-aura", 60, "m");
+      }
+      sim.setTarget("m", "w");
+      expect(sim.requestSkill("m", 0)?.check).toEqual({ ok: true });
+      for (let i = 0; i < 5 / DT; i += 1) {
+        sim.step(DT);
+        const landed = sim.get("w")?.combatant.statuses.get(statusId);
+        if (landed !== undefined) {
+          return landed.remainingSeconds;
+        }
+      }
+      throw new Error(`${statusId} never landed`);
+    });
+  }
+
+  it.each([
+    ["a spell", "elementalist.shard-storm", "elementalist", "shard-storm", 5],
+    ["an attack skill", "ranger.crippling-shot", "ranger", "crippled", 10],
+  ] as const)(
+    "%s that flies lands with the boost it was cast with",
+    (_, id, profession, status, base) => {
+      expect(
+        flown(id, profession, status, true) - flown(id, profession, status, false),
+      ).toBeCloseTo(base);
+    },
+  );
+
+  it("lengthens a status the skill puts on its caster", () => {
+    const lasts = (durationMultiplier: number): number | undefined => {
+      const caster = makeCombatant({ id: "m", team: 0 });
+      resolveSkillEffects({
+        skill: skill("assassin.siphon-speed"),
+        caster,
+        targets: [makeCombatant({ id: "w", team: 1 })],
+        rng: createRng(1),
+        rules: RULES.combat,
+        surroundings: new Map(),
+        own: { ...NO_OWN_SKILL_BOOST, durationMultiplier },
+      });
+      return caster.statuses.get("siphon-speed-haste")?.remainingSeconds;
+    };
+    expect(lasts(1)).toBe(13);
+    expect(lasts(2)).toBe(26);
   });
 });
 

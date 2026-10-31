@@ -4893,6 +4893,7 @@ export class MatchSimulation {
       skill: resolution.skill,
       blow: skillBlow(resolution.skill, record.combatant),
       next: nextAttackSkillOf(record.combatant),
+      own: resolution.own,
     };
     const flight = resolution.skill.attack?.flightSpeed;
     const released: CombatEvent[] = [];
@@ -4935,6 +4936,7 @@ export class MatchSimulation {
             rng: this.#rng,
             rules: this.#ruleset.combat,
             surroundings: this.#participants,
+            own: skillHit.own,
           },
           earlier,
         );
@@ -4958,6 +4960,7 @@ export class MatchSimulation {
           kind: "spell",
           skill: resolution.skill,
           caster: record.combatant,
+          own: resolution.own,
         });
   }
 
@@ -5114,6 +5117,7 @@ export class MatchSimulation {
               rng: this.#rng,
               rules: this.#ruleset.combat,
               surroundings: this.#participants,
+              own: skillHit.own,
             },
             events,
           );
@@ -5307,6 +5311,7 @@ export class MatchSimulation {
       rng: this.#rng,
       rules: this.#ruleset.combat,
       surroundings: this.#participants,
+      own: spell.own,
     });
     this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);

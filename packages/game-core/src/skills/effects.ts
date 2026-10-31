@@ -1601,7 +1601,12 @@ export function applyEffect(
       if (caster.dead) {
         return events;
       }
-      const durationSeconds = scaledStatusDuration(caster, effect.statusId, effect.durationSeconds);
+      // A status the skill puts on its caster is one it applies (#1761).
+      const durationSeconds = scaledStatusDuration(
+        caster,
+        effect.statusId,
+        effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+      );
       landStatus(caster, effect.statusId, durationSeconds, caster.id, events);
       return events;
     }

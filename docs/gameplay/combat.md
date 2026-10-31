@@ -817,8 +817,9 @@ spells cast 50% faster, until you cast an enchantment), Practiced Stance
 Enchantments (the next Dervish enchantment lasts 122% longer). Discounts
 add, multipliers multiply, and the largest recharge share counts. What a
 use gets is taken as it is paid for: a status it puts on keeps its
-longer time after the modifier ends, and a maintained enchantment has
-no time to lengthen.
+longer time after the modifier ends, a spell or arrow lands with what
+it left with, a status the skill puts on you lengthens too, and a
+maintained enchantment has no time to lengthen.
 
 Wild Throw (Paragon spear attack, 7 adrenaline) deals +17 damage, cannot
 be blocked, and ends the stance of the foe it hits. It does not yet
