@@ -152,7 +152,8 @@ if it is bad.
   a setting git adds in future that runs a command and is not pinned; the
   read-only masks above close that class instead of chasing it key by key.
   The commit it loads is then pinned in the host-only `.bots/company.lock`,
-  which `claude-llc up` checks against the checkout's HEAD (ADR-0033).
+  and `claude-llc up` runs a tree written from the mirror at that commit,
+  not the checkout (ADR-0044).
 - hubd no longer sets an upstream in the agent's repository on push, and the
   agent's `origin/<branch>` does not move. Agents compare against the branch
   on GitHub when they need to.

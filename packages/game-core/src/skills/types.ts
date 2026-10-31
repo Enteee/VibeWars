@@ -64,6 +64,10 @@ export type TargetRule =
   | "single-dead-ally"
   /** A living spirit on the caster's team, whoever made it (#1309): GW1's "allied spirit". */
   | "allied-spirit"
+  /** A living minion the caster made (#1836): Putrid Flesh's "target minion". */
+  | "own-minion"
+  /** A living minion on the caster's team, whoever made it (#1836): Feast for the Dead's. */
+  | "allied-minion"
   /**
    * A living spirit or minion on the caster's team, whoever made it
    * (#1827): GW1's "allied summoned creature". Never a pet, which is
@@ -136,9 +140,12 @@ export interface HealEffect {
   readonly amount: Magnitude;
   /**
    * `caster`: the caster is healed, as Drain Enchantment's "you gain N
-   * Health" (#521). Absent: the target.
+   * Health" (#521). `companion`: the caster's living pet, Companionship's
+   * (#1865); `owner`: the living owner of the caster, a pet, as Predatory
+   * Bond's "successful attacks by your animal companion heal you". Neither
+   * there: nobody. Absent: the target.
    */
-  readonly recipient?: "caster";
+  readonly recipient?: "caster" | "companion" | "owner";
   /** More for each of a count, in the same heal (#1760): Dwayna's Kiss's. */
   readonly per?: PerCount;
   /**
@@ -562,6 +569,17 @@ export interface CasterGainsStatusEffect {
 }
 
 /**
+ * The caster's living pet gains a status, with the caster as source
+ * (#1865): Run as One's "you and your pet run 25% faster". Once however
+ * many targets; no pet, or a dead one: nothing, and nothing refused.
+ */
+export interface CompanionGainsStatusEffect {
+  readonly kind: "companion-gains-status";
+  readonly statusId: StatusId;
+  readonly durationSeconds: number;
+}
+
+/**
  * Apply `effects` to every foe of the caster within `radius` of the
  * effect's target, the target itself excluded (#885), as Death Blossom's
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
@@ -581,7 +599,7 @@ export interface CasterGainsStatusEffect {
  */
 export interface SplashEffect {
   readonly kind: "splash";
-  readonly hits: "foes" | "foe-creatures" | "allies" | "party" | "own-spirits";
+  readonly hits: "foes" | "foe-creatures" | "allies" | "party" | "own-spirits" | "own-minions";
   readonly radius: number;
   readonly around?: "caster";
   /**
@@ -609,6 +627,26 @@ export interface PullToCasterEffect {
  */
 export interface DestroyTargetSpiritEffect {
   readonly kind: "destroy-target-spirit";
+}
+
+/**
+ * The skill's target, a living allied minion, is destroyed (#1836), as
+ * `destroy-target-spirit` a spirit: Putrid Flesh's and Feast for the
+ * Dead's "it is destroyed". No killer and no morale, but what its death
+ * leaves, a corpse or its replacement, it still leaves.
+ */
+export interface DestroyTargetMinionEffect {
+  readonly kind: "destroy-target-minion";
+}
+
+/**
+ * A minion's blow gives its owner the Health it took (#1836): Vampiric
+ * Horror's "you gain the same amount of Health". Not a heal, so nothing
+ * that changes heals changes it, and not a steal. A dead or gone owner
+ * gains nothing.
+ */
+export interface OwnerGainsDamageDealtEffect {
+  readonly kind: "owner-gains-damage-dealt";
 }
 
 /**
@@ -754,6 +792,20 @@ export interface CreatureTemplate {
   readonly ownerDisableOnDeath: Magnitude | undefined;
   /** What its death does round it (#1550); `undefined`: nothing. */
   readonly deathBurst: DeathBurst | undefined;
+  /**
+   * Who stands up where it fell, its owner's, when it dies or is destroyed
+   * (#1836): Shambling Horror's Jagged Horror. Not when its owner is dead
+   * or gone; `undefined`: nobody.
+   */
+  readonly replacedBy: { readonly creature: CreatureTemplate; readonly count: number } | undefined;
+  /**
+   * The exploitable corpses its death leaves (#1836), read on its owner
+   * at summoning, rounded: Flesh Golem's "1...4". It lies until the last
+   * is exploited. `undefined`: none, as any creature (ADR-0035).
+   */
+  readonly leavesCorpses: Magnitude | undefined;
+  /** A new one from the same skill and owner kills the old one first (#1836): Flesh Golem. */
+  readonly onePerOwner: boolean;
 }
 
 /**
@@ -823,7 +875,8 @@ export type UnconditionalOnHitEffect =
   | DamageEffect
   | LifeStealEffect
   | KnockdownEffect
-  | LoseHealthEffect;
+  | LoseHealthEffect
+  | OwnerGainsDamageDealtEffect;
 
 /** An `if` (#1550) holding only on-hit effects. */
 export interface ConditionalOnHitEffect {
@@ -968,6 +1021,13 @@ export type StateCondition =
    * below.
    */
   | { readonly kind: "caster-health-below"; readonly fraction: number }
+  /**
+   * The caster has less Health than its living pet, or the pet less than
+   * the caster (#1865), absolute Health: Companionship's. Equal is
+   * neither; no living pet: false.
+   */
+  | { readonly kind: "caster-health-below-companion" }
+  | { readonly kind: "companion-health-below-caster" }
   /**
    * The effect's target bears the caster's chain mark of this role
    * (#1757), read and left as it is: Impale's "must follow a dual
@@ -1189,10 +1249,13 @@ export type UnconditionalEffect =
   | DrainOwnEnergyEffect
   | OvercastEffect
   | CasterGainsStatusEffect
+  | CompanionGainsStatusEffect
   | RechargeFasterEffect
   | SplashEffect
   | PullToCasterEffect
   | DestroyTargetSpiritEffect
+  | DestroyTargetMinionEffect
+  | OwnerGainsDamageDealtEffect
   | DestroyAlliedSpiritsEffect
   | RechargeOthersEffect
   | DisableSkillEffect

@@ -152,6 +152,8 @@ export function guardSpec(guard: BaseGuard, index: number, facing: number): Part
       onDeath: "vanish",
       ownerDisableSeconds: 0,
       deathBurst: undefined,
+      replacedBy: undefined,
+      corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
       mode: "guard",

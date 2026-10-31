@@ -244,6 +244,7 @@ describe("status-driven combat scenarios", () => {
       target: undefined,
       targetPosition: undefined,
       targetCreatureKind: undefined,
+      targetCreatureOwnerId: undefined,
       rechargeRemaining: new Map(),
       spent: new Set(),
       isCasting: false,

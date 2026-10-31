@@ -102,7 +102,13 @@ describe("the queue screen's words (#880)", () => {
 });
 
 describe("queueLines (#880)", () => {
-  const searching: QueueState = { kind: "searching", searching: 3, needed: 8, waitedMs: 65_000 };
+  const searching: QueueState = {
+    kind: "searching",
+    searching: 3,
+    teams: 3,
+    needed: 8,
+    waitedMs: 65_000,
+  };
 
   it("searching: the wait, the count and Leave queue", () => {
     expect(queueLines(searching, false)).toEqual({

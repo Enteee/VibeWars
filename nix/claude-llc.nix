@@ -105,7 +105,8 @@ let
     changed in Telegram, with Approve and Reject buttons, and nothing happens
     until you approve. Then everyone is told, gets up to ten minutes to
     commit and run `company ready`, and the company comes back on the commit
-    you approved, if your checkout is a clean main that fast-forwards to it.
+    you approved, once it builds. Your checkout is never touched: the company
+    runs the locked commit (claude-llc lock), whatever the checkout holds.
     `claude-llc reboot --abort` cancels it while it drains.
 
     Employees coordinate over the Telegram group and take their work from the
@@ -165,6 +166,19 @@ let
 
         SESSION="${session}"
         export VIBEWARS_LLC_SESSION="$SESSION"
+        # The tree this claude-llc's shell was built from. A claude-llc up
+        # re-executed in the locked tree (#1861, ADR-0044) is told which lock
+        # it was started for, and where the company's state is: the
+        # operator's checkout, DEVENV_ROOT again from here on. The company
+        # it starts reads its code from VIBEWARS_CODE, the locked tree. Both
+        # are unset here so they never reach the session.
+        code="$DEVENV_ROOT"
+        locked_sha="''${VIBEWARS_LOCKED_SHA-}"
+        if [ -n "$locked_sha" ]; then
+          export VIBEWARS_CODE="$code"
+          export DEVENV_ROOT="''${VIBEWARS_REPO:?VIBEWARS_LOCKED_SHA comes with VIBEWARS_REPO}"
+        fi
+        unset VIBEWARS_LOCKED_SHA VIBEWARS_REPO
         export VIBEWARS_BOT_ROOT="$DEVENV_ROOT/.bots"
         # The company's credential home (#864).
         export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
@@ -202,30 +216,40 @@ let
         }
 
         # The build the running company was started from, against the
-        # checkout: one `build: ...` line, and exit 3 if it is stale (#557).
+        # locked tree: one `build: ...` line, and exit 3 if it is stale
+        # (#557, #1861).
         running_build() {
-          local build
+          local build sha
           build="$(${tmux} show-environment -t "=$SESSION" VIBEWARS_LLC_BUILD 2>/dev/null)" || {
             echo "build: unknown (the session does not say)"
             return 0
           }
-          ${node} ${llcScripts}/fingerprint.mjs status "''${build#*=}" "$DEVENV_ROOT"
+          sha="$(${node} ${llcScripts}/company-lock.mjs sha 2>/dev/null)" || {
+            echo "build: unknown (company.lock is not readable)"
+            return 0
+          }
+          if [ ! -d "$VIBEWARS_BOT_ROOT/company/$sha" ]; then
+            echo "build: unknown (no locked tree for $sha)"
+            return 0
+          fi
+          ${node} ${llcScripts}/fingerprint.mjs status "''${build#*=}" "$VIBEWARS_BOT_ROOT/company/$sha" "$sha"
         }
 
         # A shell keeps the store paths it was entered with, so a claude-llc
-        # typed after a `git pull` or a merged reboot builds the company from
-        # old code (#557). If this build is not the checkout's, rebuild from
-        # the checkout and run that instead, once: the guard survives `devenv
-        # shell`, and is unset here so it never reaches the session, where a
-        # reboot's restarter must be free to rebuild too.
+        # typed after a `git pull` builds from old code (#557). If this
+        # build is not its tree's, rebuild from that tree and run that
+        # instead, once: the guard survives `devenv shell`, and is unset here
+        # so it never reaches the session, where a reboot's restarter must be
+        # free to rebuild too. The locked tree's own claude-llc was entered
+        # with a fresh evaluation already, and never re-executes.
         reexec="''${VIBEWARS_LLC_REEXEC-}"
         unset VIBEWARS_LLC_REEXEC
         case "''${1-}" in
           -h | --help | start-employee) ;;
           *)
             stale=0
-            differ="$(${node} ${llcScripts}/fingerprint.mjs check ${llcScripts} "$DEVENV_ROOT" 2>&1)" || stale=$?
-            if [ "$stale" = 3 ] && [ -z "$reexec" ]; then
+            differ="$(${node} ${llcScripts}/fingerprint.mjs check ${llcScripts} "$code" 2>&1)" || stale=$?
+            if [ "$stale" = 3 ] && [ -z "$reexec" ] && [ -z "$locked_sha" ]; then
               count="$(printf '%s\n' "$differ" | wc -l)"
               if [ "$count" = 1 ]; then files="1 file differs"; else files="$count files differ"; fi
               echo "claude-llc: this build is stale ($files), rebuilding from the checkout" >&2
@@ -243,7 +267,7 @@ let
             elif [ "$stale" = 3 ]; then
               echo "claude-llc: still stale after a rebuild: $(printf '%s\n' "$differ" | paste -sd ' '); running anyway" >&2
             elif [ "$stale" != 0 ]; then
-              echo "claude-llc: warning: could not compare this build with the checkout: $differ" >&2
+              echo "claude-llc: warning: could not compare this build with its tree: $differ" >&2
             fi
             ;;
         esac
@@ -327,7 +351,8 @@ let
             exit 0
             ;;
           lock)
-            # The operator's pin (#897): the same checks as `up`, and a build.
+            # The operator's pin (#897): the checkout's HEAD, clean, on main,
+            # and built.
             exec ${node} ${llcScripts}/company-lock.mjs lock
             ;;
           stop)
@@ -419,10 +444,31 @@ let
         # from then on the company starts who staff.json employs, and the
         # manager hires and fires.
         # ------------------------------------------------------------------------
-        # The company runs one pinned commit (#897, ADR-0033): refuse to start
-        # on anything else. A running session was joined above; nothing is
-        # started past this point without the lock holding.
-        ${node} ${llcScripts}/company-lock.mjs check || exit 1
+        # The company runs one pinned commit, whatever the checkout holds
+        # (#897, #1861, ADR-0044). A running session was joined above.
+        # Here, write and check the locked tree from hubd's mirror, then run
+        # that tree's own claude-llc, built from it, once. A checkout that is
+        # not the lock is a warning, not a refusal: it is the operator's.
+        if [ -z "$locked_sha" ]; then
+          locked_sha="$(${node} ${llcScripts}/company-lock.mjs check)" || exit 1
+          repo="$DEVENV_ROOT"
+          cd "$VIBEWARS_BOT_ROOT/company/$locked_sha"
+          # As the stale-build re-exec above: a shell built from that tree
+          # and nothing else, on the host's PATH.
+          for name in $(compgen -e); do
+            case "$name" in DEVENV_* | IN_NIX_SHELL) unset "$name" ;; esac
+          done
+          PATH="$(${node} ${llcScripts}/host-path.mjs)"
+          export VIBEWARS_LOCKED_SHA="$locked_sha" VIBEWARS_REPO="$repo"
+          exec devenv shell --refresh-eval-cache -- claude-llc "$@"
+        fi
+        # The locked tree's claude-llc: nothing past this point starts unless
+        # the lock is still the one this tree was written for.
+        if [ "$(${node} ${llcScripts}/company-lock.mjs sha)" != "$locked_sha" ] ||
+          [ ! "$VIBEWARS_CODE" -ef "$VIBEWARS_BOT_ROOT/company/$locked_sha" ]; then
+          echo "claude-llc: started for the lock $locked_sha in $VIBEWARS_CODE, which is no longer the lock's tree; run claude-llc again" >&2
+          exit 1
+        fi
 
         seed="''${CLAUDE_LLC_ROLES:-${lib.concatStringsSep " " roles}}"
         for role in $seed; do
@@ -471,13 +517,13 @@ let
         # already written it, with a note on what it loaded.
         if [ -z "''${VIBEWARS_REBOOTED-}" ]; then
           printf '{"sha":"%s","at":%s,"previousSha":null,"updated":false,"note":null}\n' \
-            "$(git -C "$DEVENV_ROOT" rev-parse HEAD)" "$(date +%s%3N)" \
+            "$locked_sha" "$(date +%s%3N)" \
             >"$VIBEWARS_BOT_ROOT/boot.json"
         fi
         # devenv's evaluation cache does not track scripts/bots (ADR-0014), so
-        # this shell may run an older checkout's scripts than the one it is
-        # in. If so, boot.json's note says it, loudly, instead of what the
-        # boot claims to have loaded.
+        # this shell may run older scripts than the locked tree it is in. If
+        # so, boot.json's note says it, loudly, instead of what the boot
+        # claims to have loaded.
         if ! ${node} ${llcScripts}/boot-check.mjs ${llcScripts}; then
           echo "claude-llc: warning: could not compare the running scripts with scripts/bots" >&2
         fi
@@ -507,19 +553,20 @@ let
         # by side, the TELEGRAM feed full width along the bottom. Each runs
         # dashboard.mjs with its section and redraws when its pane resizes.
         rm -f "$VIBEWARS_BOT_ROOT/stopping"
-        ${tmux} new-session -d -s "$SESSION" -n dashboard -c "$DEVENV_ROOT" \
+        ${tmux} new-session -d -s "$SESSION" -n dashboard -c "$VIBEWARS_CODE" \
           "${node} ${llcScripts}/dashboard.mjs board"
         # Which build this company runs, for `claude-llc status` and an
-        # attach from a newer checkout (#557).
+        # attach after the lock moved (#557).
         ${tmux} set-environment -t "$SESSION" VIBEWARS_LLC_BUILD ${llcScripts}
         # A tmux server that was already running, byobu's say, gives new
         # windows its own environment, not ours: claude-llc-agent needs this.
         ${tmux} set-environment -t "$SESSION" DEVENV_ROOT "$DEVENV_ROOT"
+        ${tmux} set-environment -t "$SESSION" VIBEWARS_CODE "$VIBEWARS_CODE"
         board_pane="$(${tmux} display-message -p -t "$SESSION:dashboard" '#{pane_id}')"
         feed_pane="$(${tmux} split-window -v -l 30% -t "$board_pane" -P -F '#{pane_id}' \
-          -c "$DEVENV_ROOT" "${node} ${llcScripts}/dashboard.mjs feed")"
+          -c "$VIBEWARS_CODE" "${node} ${llcScripts}/dashboard.mjs feed")"
         company_pane="$(${tmux} split-window -h -l 40% -t "$board_pane" -P -F '#{pane_id}' \
-          -c "$DEVENV_ROOT" -e "VIBEWARS_CLAUDE_BOXES=$VIBEWARS_CLAUDE_BOXES" \
+          -c "$VIBEWARS_CODE" -e "VIBEWARS_CLAUDE_BOXES=$VIBEWARS_CLAUDE_BOXES" \
           "${node} ${llcScripts}/dashboard.mjs company")"
         ${tmux} select-pane -t "$feed_pane" -T TELEGRAM
         ${tmux} select-pane -t "$company_pane" -T COMPANY

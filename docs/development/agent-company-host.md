@@ -127,11 +127,21 @@ it brings the company up and tells you to attach with `claude-llc`.
 
 ## Pinning the commit the company runs
 
-`claude-llc up` starts only the commit in `.bots/company.lock` (ADR-0033):
-the checkout's HEAD must equal it, be clean, and be on GitHub's `main`. Run
-`claude-llc lock` once to pin the current HEAD, and again after you move the
-checkout yourself. A reboot moves the lock on its own, onto the commit you
-approved, once it built. Until the first lock exists, `up` refuses and says so.
+`claude-llc up` runs the commit in `.bots/company.lock` (ADR-0044), whatever
+your checkout holds. It writes that commit's files from hubd's mirror into
+`.bots/company/<sha>/`, checks them, and starts the company from a shell
+built there; your `devenv.local.nix` is copied in. Pull, branch and edit in
+the checkout as you like: if its HEAD is not the lock, `up` prints one
+warning, such as `checkout HEAD fb15a33 is 63 commits ahead of the locked
+c9f0b10; the company runs c9f0b10`, and carries on.
+
+Run `claude-llc lock` once to pin the current HEAD (clean, on GitHub's
+`main`, and built), and again whenever you want the company on what you
+checked out. A reboot moves the lock on its own, onto the commit you
+approved, once it built, and never touches your checkout. Until the first
+lock exists, `up` refuses and says so. It also refuses when GitHub cannot
+be reached, when the lock is not on `main`, and when the locked tree
+still differs from the mirror after being written again.
 
 ## Approving reboots
 

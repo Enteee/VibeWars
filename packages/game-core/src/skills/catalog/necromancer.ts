@@ -6,7 +6,13 @@ import {
   RANGE_SPELL,
 } from "../../distances.js";
 import type { Skill } from "../types.js";
-import { BONE_MINION, BONE_HORROR } from "./shared.js";
+import {
+  BONE_HORROR,
+  BONE_MINION,
+  FLESH_GOLEM,
+  SHAMBLING_HORROR,
+  VAMPIRIC_HORROR,
+} from "./shared.js";
 
 export const NECROMANCER_SKILLS: readonly Skill[] = [
   {
@@ -369,6 +375,170 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Exploit nearest corpse to animate two level 0...10...12 Bone Minions."
     effects: [{ kind: "summon", creature: BONE_MINION, count: 2 }],
+  },
+  {
+    id: "necromancer.animate-vampiric-horror",
+    name: "Animate Vampiric Horror",
+    gwId: 805,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to animate a level 1...17 Vampiric Horror.
+    // Whenever a Vampiric Horror you control deals damage, you gain the
+    // same amount of Health" (#1836).
+    effects: [{ kind: "summon", creature: VAMPIRIC_HORROR, count: 1 }],
+  },
+  {
+    id: "necromancer.animate-flesh-golem",
+    name: "Animate Flesh Golem",
+    gwId: 832,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to animate a level 3...25 Flesh Golem. The
+    // Flesh Golem leaves 1...4 exploitable corpses. You can have only one
+    // Flesh Golem at a time" (#1836).
+    effects: [{ kind: "summon", creature: FLESH_GOLEM, count: 1 }],
+  },
+  {
+    id: "necromancer.animate-shambling-horror",
+    name: "Animate Shambling Horror",
+    gwId: 1351,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: { radius: RANGE_SPELL, elseSacrificePercent: undefined },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit nearest corpse to create a level 1...17 shambling horror.
+    // When the shambling horror dies, it is replaced by a level 0...15
+    // jagged horror that causes Bleeding with each of its attacks" (#1836).
+    effects: [{ kind: "summon", creature: SHAMBLING_HORROR, count: 1 }],
+  },
+  {
+    id: "necromancer.putrid-flesh",
+    name: "Putrid Flesh",
+    gwId: 1353,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "own-minion",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Destroy one of your target animated undead minions. All foes near
+    // that creature are Diseased for 5...15 seconds" (#1836): 13 at 12.
+    effects: [
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [{ kind: "apply-status", statusId: "disease", durationSeconds: 13 }],
+      },
+      { kind: "destroy-target-minion" },
+    ],
+  },
+  {
+    id: "necromancer.feast-for-the-dead",
+    name: "Feast for the Dead",
+    gwId: 1354,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "allied-minion",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Destroy target animated undead ally. All of your other animated
+    // undead allies are healed for 10...100 Health" (#1836), wherever
+    // they are.
+    effects: [
+      {
+        kind: "splash",
+        hits: "own-minions",
+        radius: Number.POSITIVE_INFINITY,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 10, atTwelve: 82 },
+            },
+          },
+        ],
+      },
+      { kind: "destroy-target-minion" },
+    ],
   },
   {
     id: "necromancer.soul-feast",

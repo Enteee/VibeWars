@@ -11,29 +11,27 @@
  *   2. fetches GitHub's `main` into hubd's mirror, checks that the commit the
  *      operator approved (#960) is on it, and that that commit builds, from
  *      an archive of it, never a checkout;
- *   3. fast-forwards the operator's checkout to exactly that commit, only if
- *      that is safe (reboot.mjs, `fastForwardDecision`) and it built: main
- *      may have moved on since the approval, and what it gained waits for
- *      the next one;
- *   4. records what it loaded, or plainly why it did not, in
+ *   3. if it built, pins exactly that commit in `.bots/company.lock` (#897):
+ *      main may have moved on since the approval, and what it gained waits
+ *      for the next one;
+ *   4. writes the locked commit's tree, `.bots/company/<sha>/`, from the
+ *      mirror and checks it (company-lock.mjs, `lockedTree`);
+ *   5. records what it loaded, or plainly why it did not, in
  *      `.bots/boot.json`, whose note claude-llc puts in the manager's first
- *      prompt so the manager can tell everyone, and, if it moved the checkout,
- *      pins that commit in `.bots/company.lock` (#897);
- *   5. starts the company again with
- *      `devenv shell --refresh-eval-cache -- claude-llc up`, so nix rebuilds
- *      every script and briefing from the code now checked out.
+ *      prompt so the manager can tell everyone;
+ *   6. starts the company again with
+ *      `devenv shell --refresh-eval-cache -- claude-llc up` in the locked
+ *      tree, so nix rebuilds every script and briefing from the locked code.
  *
- * A main that does not build is never checked out: the company comes back on
- * the code it had, and the operator is told. The company must not stay down
+ * A main that does not build is never locked: the company comes back on the
+ * commit it had, and the operator is told. The company must not stay down
  * because of a bad merge.
  *
- * The operator's checkout shares its `.git` with every agent's worktree, so
- * nothing about where `main` comes from is taken from it: the fetch and the
- * build happen in hubd's mirror, which no jail can write, and the commit
- * fetched into the checkout must be the mirror's, or it is not used. Every
- * git run in the checkout is hardened (git-hardening.mjs), including against
- * the filter drivers its config names. The agents are all stopped first, so
- * that config cannot change while this runs.
+ * The operator's checkout is the operator's (#1861, ADR-0044): nothing here
+ * moves it, reads code from it or runs git in it. It shares its `.git` with
+ * every agent's worktree, so nothing about where `main` comes from is taken
+ * from it either: the fetch, the build and the locked tree all come from
+ * hubd's mirror, which no jail can write.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -41,21 +39,13 @@ import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { tamperedPaths, updateFilesFromMirror } from "./checkout-verify.mjs";
 import { paths } from "./creds.mjs";
-import {
-  FILTER_KEYS,
-  GIT_ENV,
-  GIT_HARDENING,
-  GIT_SSH_VARS,
-  filterPins,
-  remoteHardening,
-} from "./git-hardening.mjs";
+import { GIT_ENV, GIT_SSH_VARS, remoteHardening } from "./git-hardening.mjs";
 import { builds as buildsCommit, devenvShell } from "./company-build.mjs";
-import { writeLock } from "./company-lock.mjs";
+import { lockedTree, readLock, writeLock } from "./company-lock.mjs";
 import { api } from "./link.mjs";
 import { obj, parseRegistry } from "./protocol.mjs";
-import { COMPANY_PATHSPECS, fastForwardDecision, parseReboot } from "./reboot.mjs";
+import { COMPANY_PATHSPECS, parseReboot } from "./reboot.mjs";
 
 /**
  * @param {string} name
@@ -136,10 +126,11 @@ function run(file, args, options = {}) {
 /**
  * @param {string[]} args
  * @param {string} cwd
+ * @param {Record<string, string>} env
  * @returns {number} its exit code
  */
-function devenv(args, cwd) {
-  return devenvShell(args, cwd, LOG, log);
+function devenv(args, cwd, env) {
+  return devenvShell(args, cwd, LOG, log, env);
 }
 
 /**
@@ -152,20 +143,6 @@ function mirror(args) {
   return run("git", [...remoteHardening(PUSH_KEY), `--git-dir=${MIRROR}`, ...args], {
     env: GIT_ENV,
   });
-}
-
-/**
- * git in the operator's checkout: hardened, and with every filter driver its
- * config names pinned empty. Read once, after the agents have stopped.
- *
- * @returns {(args: string[]) => { code: number, stdout: string }}
- */
-function checkoutGit() {
-  const base = [...GIT_HARDENING, "-C", REPO];
-  const pins = filterPins(
-    run("git", [...base, "config", "--get-regexp", FILTER_KEYS], { env: GIT_ENV }).stdout,
-  );
-  return (args) => run("git", [...base, ...pins, ...args], { env: GIT_ENV });
 }
 
 /**
@@ -264,58 +241,6 @@ function short(sha) {
   return sha.slice(0, 8);
 }
 
-/**
- * Move the operator's checkout to `target`, if that is safe.
- *
- * @param {(args: string[]) => { code: number, stdout: string }} git
- * @param {string} target the approved commit, on the mirror's main, built
- * @param {string} tip the mirror's main, which `target` is on
- * @returns {{ updated: boolean, why: string, tampered?: string[] }} `tampered`: the paths the checkout holds differently from the mirror's commit
- */
-function update(git, target, tip) {
-  // From the mirror, and then checked: a URL rewrite in the checkout's
-  // config could hand back any commit, and only the mirror's is reviewed.
-  if (git(["fetch", "-q", "--no-tags", MIRROR, "refs/heads/main"]).code !== 0) {
-    return { updated: false, why: "could not fetch main from hubd's mirror" };
-  }
-  const fetched = git(["rev-parse", "FETCH_HEAD"]).stdout.trim();
-  if (fetched !== tip) {
-    return {
-      updated: false,
-      why: `fetching main from hubd's mirror gave ${short(fetched)}, not ${short(tip)}`,
-    };
-  }
-  const branch = git(["symbolic-ref", "--short", "-q", "HEAD"]);
-  const decision = fastForwardDecision({
-    branch: branch.code === 0 ? branch.stdout.trim() : null,
-    dirty: git(["status", "--porcelain", "--untracked-files=no"]).stdout.trim() !== "",
-    fastForward: git(["merge-base", "--is-ancestor", "HEAD", target]).code === 0,
-  });
-  if (!decision.update) {
-    return { updated: false, why: decision.reason };
-  }
-  // The files come from the mirror's objects, never the shared store's, so a
-  // forged tree cannot write one; the checkout's ref and index follow, and a
-  // forged object there can only make the index look dirty.
-  const from = git(["rev-parse", "HEAD"]).stdout.trim();
-  if (
-    !updateFilesFromMirror({ mirror: MIRROR, repoDir: REPO, from, to: target }) ||
-    git(["reset", "-q", "--mixed", target]).code !== 0
-  ) {
-    return { updated: false, why: `the fast-forward to ${short(target)} failed` };
-  }
-  // A jail can swap an object in the shared store; the mirror's are the truth.
-  const tampered = tamperedPaths({ mirror: MIRROR, repoDir: REPO, sha: target });
-  if (tampered.length > 0) {
-    return {
-      updated: false,
-      why: `the checkout's files are not ${short(target)}'s`,
-      tampered: tampered.slice(0, 10),
-    };
-  }
-  return { updated: true, why: "" };
-}
-
 async function main() {
   if (TMUX === "") {
     throw new Error("VIBEWARS_TMUX is not set; claude-llc starts this");
@@ -340,7 +265,6 @@ async function main() {
   // A reboot starts every agent on a fresh conversation, with the kickoff
   // prompt: the sessions to resume go with the restart loops' state.
   fs.rmSync(path.join(ROOT, "agents"), { recursive: true, force: true });
-  const git = checkoutGit();
 
   // GitHub's main, by URL, into the mirror. VIBEWARS_GIT_REMOTE is the
   // host's to set, as for hubd: a test points it at a local bare repository.
@@ -367,38 +291,28 @@ async function main() {
   } else if (!builds(target)) {
     outcome = `Rebooted, but NOT updated: the approved ${short(target)} failed to build; running ${short(bootSha)}. Log: ${LOG}`;
   } else {
-    const result = update(git, target, tip);
-    updated = result.updated;
-    if (result.tampered !== undefined) {
-      // An intrusion, not a build failure: the checkout holds bytes nobody merged,
-      // so nothing runs in it: no devenv shell, no claude-llc up, no lock.
-      await tellOperator(
-        `SECURITY: after the reboot fast-forward the checkout differs from the merged commit ${short(target)} in hubd's mirror: ${result.tampered.join(", ")}. A jail may have altered .git/objects. The company stays down, nothing was run in the checkout, no lock. Run git fsck and re-clone.`,
-      );
-      process.exitCode = 1;
-      return;
-    }
-    if (!updated) {
-      outcome = `Rebooted, but NOT updated: ${result.why}.`;
-    } else {
-      const subjects = mirror([
-        "log",
-        "--format=%s",
-        `${bootSha}..${target}`,
-        "--",
-        ...COMPANY_PATHSPECS,
-      ])
-        .stdout.trim()
-        .split("\n")
-        .filter((line) => line !== "");
-      outcome = `Rebooted onto ${short(target)}: ${subjects.join("; ") || "no company commits"}.`;
-    }
+    // The lock moves only here, onto a commit that built; claude-llc up runs
+    // no other (#897).
+    writeLock(ROOT, target, "reboot", Date.now());
+    updated = true;
+    const subjects = mirror([
+      "log",
+      "--format=%s",
+      `${bootSha}..${target}`,
+      "--",
+      ...COMPANY_PATHSPECS,
+    ])
+      .stdout.trim()
+      .split("\n")
+      .filter((line) => line !== "");
+    outcome = `Rebooted onto ${short(target)}: ${subjects.join("; ") || "no company commits"}.`;
   }
 
   // What this boot loaded. claude-llc puts the note in the manager's first
   // prompt, and the manager tells everyone; hubd reads sha and at for the
   // next reboot.
-  const sha = git(["rev-parse", "HEAD"]).stdout.trim();
+  const lock = readLock(ROOT);
+  const sha = typeof lock === "string" ? bootSha : lock.sha;
   /** @param {string} note */
   const record = (note) => {
     log(note);
@@ -407,16 +321,34 @@ async function main() {
       `${JSON.stringify({ sha, at: Date.now(), previousSha: bootSha, updated, note })}\n`,
     );
   };
-  record(outcome);
-  if (updated) {
-    // The lock moves only here, onto a commit that built and that the
-    // checkout now holds; claude-llc up refuses any other (#897).
-    writeLock(ROOT, sha, "reboot", Date.now());
+  if (typeof lock === "string") {
+    record(`Reboot FAILED: company.lock is ${lock}. ${outcome}`);
+    await tellOperator(
+      `Reboot FAILED: company.lock is ${lock}; the company was not restarted. Run claude-llc lock, then claude-llc.`,
+    );
+    process.exitCode = 1;
+    return;
   }
+  const tree = lockedTree({ root: ROOT, mirror: MIRROR, sha, repoDir: REPO });
+  if (tree.tampered.length > 0) {
+    // An intrusion, not a build failure: the tree holds bytes nobody merged,
+    // even written again from the mirror, so nothing runs in it.
+    record(`Reboot FAILED: the locked tree is not ${short(sha)}'s. ${outcome}`);
+    await tellOperator(
+      `SECURITY: the locked tree .bots/company/${short(sha)} differs from ${short(sha)} in hubd's mirror even written again from it: ${tree.tampered.slice(0, 10).join(", ")}. The company stays down; nothing was run in it.`,
+    );
+    process.exitCode = 1;
+    return;
+  }
+  record(outcome);
 
+  // The locked tree's own claude-llc, told which lock it was started for
+  // and where the company's state is: the checkout (claude-llc.nix).
+  const up = () =>
+    devenv(["claude-llc", "up"], tree.dir, { VIBEWARS_LOCKED_SHA: sha, VIBEWARS_REPO: REPO });
   // Once more if it fails, from a stopped company again: whatever made it
   // fail may have left half a company running (#315).
-  let started = devenv(["claude-llc", "up"], REPO);
+  let started = up();
   /** @type {string | null} */
   let failure = null;
   if (started !== 0) {
@@ -428,7 +360,7 @@ async function main() {
       record(
         `${outcome} It came up on the second try: the first claude-llc up exited ${String(started)}.`,
       );
-      started = devenv(["claude-llc", "up"], REPO);
+      started = up();
       if (started !== 0) {
         failure = `claude-llc up exited ${String(started)}, twice`;
       }

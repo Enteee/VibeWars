@@ -6,7 +6,7 @@ import { isFreshCorpse, nearestFreshCorpse, type CorpseCandidate } from "./corps
 function body(
   id: string,
   position: Vec2,
-  extra: { dead?: boolean; creature?: boolean; exploited?: boolean } = {},
+  extra: { dead?: boolean; creature?: boolean; corpses?: number; exploited?: boolean } = {},
 ): CorpseCandidate {
   return {
     id,
@@ -27,6 +27,8 @@ function body(
             onDeath: "vanish",
             ownerDisableSeconds: 0,
             deathBurst: undefined,
+            replacedBy: undefined,
+            corpsesLeft: extra.corpses ?? 0,
             companionSkillId: undefined,
             leaderId: undefined,
             mode: "guard",
@@ -44,6 +46,14 @@ describe("isFreshCorpse (#466)", () => {
     expect(isFreshCorpse(body("a", ORIGIN, { dead: false }))).toBe(false);
     expect(isFreshCorpse(body("a", ORIGIN, { exploited: true }))).toBe(false);
     expect(isFreshCorpse(body("a", ORIGIN, { creature: true }))).toBe(false);
+  });
+
+  it("is a dead creature only while it has corpses left (#1836)", () => {
+    expect(isFreshCorpse(body("golem", ORIGIN, { creature: true, corpses: 2 }))).toBe(true);
+    expect(isFreshCorpse(body("golem", ORIGIN, { creature: true, corpses: 0 }))).toBe(false);
+    expect(isFreshCorpse(body("golem", ORIGIN, { creature: true, corpses: 2, dead: false }))).toBe(
+      false,
+    );
   });
 });
 

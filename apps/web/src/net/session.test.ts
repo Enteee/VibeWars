@@ -1,4 +1,10 @@
-import { LobbyNoAnswerError, LobbyRefusedError } from "@vibewars/game-session";
+import {
+  LobbyNoAnswerError,
+  LobbyRefusedError,
+  createMemoryBoard,
+  createQueueClient,
+  type QueueBoardEvent,
+} from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -18,6 +24,7 @@ import {
   TURN_RELAY_HINT,
   followHost,
   joinFailureNotice,
+  leaveOnPageHide,
   lobbyClosedNotice,
   lobbyRefusalNotice,
   loopbackHint,
@@ -203,5 +210,39 @@ describe("following the host to its next lobby (#1553)", () => {
     expect(hostMove()).toEqual(move);
     // Taken once: a later close of the same lobby is an ordinary one.
     expect(hostMove()).toBeUndefined();
+  });
+});
+
+describe("closing the tab while queued (#1881)", () => {
+  it("withdraws the ticket once on pagehide, and nothing after leaving", async () => {
+    const memory = createMemoryBoard();
+    const heard: QueueBoardEvent[] = [];
+    memory.board().subscribe("random-arena-4v4", (event) => heard.push(event));
+    const ticketId = "a".repeat(64);
+    const client = createQueueClient({
+      board: memory.board(),
+      mode: "random-arena-4v4",
+      now: () => 1_700_000_000_000,
+      newTicketKey: () => ({ ticketId, sign: () => "b".repeat(128) }),
+      mapPool: ["arena-a"],
+    });
+    await client.tick();
+    const page = new EventTarget();
+    let leaves = 0;
+    // As `enterQueue`'s `finish`: leaving, by the tab or by Leave queue, stops listening.
+    const stop = leaveOnPageHide(page, () => {
+      leaves += 1;
+      stop();
+      client.leave();
+    });
+    const withdrawals = (): number => heard.filter((event) => event.kind === "withdrawn").length;
+
+    page.dispatchEvent(new Event("pagehide"));
+    await Promise.resolve();
+    expect([leaves, withdrawals()]).toEqual([1, 1]);
+
+    page.dispatchEvent(new Event("pagehide"));
+    await Promise.resolve();
+    expect([leaves, withdrawals()]).toEqual([1, 1]);
   });
 });

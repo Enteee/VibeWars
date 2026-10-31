@@ -29,9 +29,10 @@ import { hostPath } from "./host-path.mjs";
  * @param {string} cwd
  * @param {string} logFile
  * @param {(line: string) => void} log
+ * @param {Record<string, string>} env set on top
  * @returns {number} its exit code
  */
-export function devenvShell(args, cwd, logFile, log) {
+export function devenvShell(args, cwd, logFile, log, env) {
   log(`devenv shell --refresh-eval-cache -- ${args.join(" ")}`);
   const out = fs.openSync(logFile, "a");
   try {
@@ -51,6 +52,7 @@ export function devenvShell(args, cwd, logFile, log) {
         PATH: hostPath(process.env.PATH ?? ""),
         // The boot record is already written; claude-llc must not replace it.
         VIBEWARS_REBOOTED: "1",
+        ...env,
       },
       stdio: ["ignore", out, out],
     });
@@ -102,7 +104,7 @@ export function builds({ mirror, scratch, logFile, log }, sha) {
         return false;
       }
     }
-    return devenvShell(["claude-llc", "--help"], scratch, logFile, log) === 0;
+    return devenvShell(["claude-llc", "--help"], scratch, logFile, log, {}) === 0;
   } finally {
     fs.rmSync(scratch, { recursive: true, force: true });
   }

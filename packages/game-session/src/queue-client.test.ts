@@ -286,6 +286,17 @@ describe("createQueueClient", () => {
     expect(a.state).toMatchObject({ kind: "searching", searching: 1 });
   });
 
+  it("counts the live tickets of its mode as teams, not another mode's or an expired one (#1881)", async () => {
+    const queue = new Queue("random-arena-4v4");
+    const a = queue.join();
+    await queue.publish({ ticketId: EARLY });
+    await queue.publish({ ticketId: "0".repeat(63) + "2", mode: "random-arena-2v2" });
+    await queue.publish({ ticketId: "0".repeat(63) + "3", heartbeatAt: START - TICKET_TTL_MS });
+    await queue.advance();
+
+    expect(a.state).toMatchObject({ kind: "searching", searching: 2, teams: 2 });
+  });
+
   it("says unreachable when the board has no relay, and searches when it talks again", async () => {
     const queue = new Queue("random-arena-4v4");
     const a = queue.join();

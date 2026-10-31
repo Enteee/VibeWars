@@ -9,24 +9,23 @@
  *
  * nix/claude-llc.nix runs `manifest` over a copy of the files it built from
  * and stores the result as `build-manifest.json` next to the staged scripts.
- * Every claude-llc then runs `check` against the checkout, and rebuilds
- * itself when the two differ. One function, over one layout, at both ends.
+ * Every claude-llc then runs `check` against the tree it was built from
+ * (the checkout, or the locked tree, #1861), and rebuilds itself when the
+ * two differ. One function, over one layout, at both ends.
  *
  *   fingerprint.mjs manifest <root>          the manifest, as JSON on stdout
  *   fingerprint.mjs check <build> <root>     exit 0 if current, 3 if stale;
  *                                            the differing paths on stderr
- *   fingerprint.mjs status <build> <root>    one `build: ...` line; exit 3 if stale
+ *   fingerprint.mjs status <build> <root> <sha>
+ *                                            one `build: ...` line; exit 3 if stale
  *
  * `<build>` is a directory holding `build-manifest.json`, the store copy;
- * `<root>` is a checkout.
+ * `<root>` is a checkout or the locked tree, and `<sha>` the commit it holds.
  */
-import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-
-import { GIT_ENV, GIT_HARDENING } from "./git-hardening.mjs";
 
 /** The exit code of `check` for a stale build. */
 export const STALE = 3;
@@ -120,18 +119,18 @@ export function named(paths) {
 /**
  * What `claude-llc status` and the dashboard say about the running build.
  *
- * @param {{ build: Manifest, checkout: Manifest, head: string }} input
- *   `head` is the checkout's HEAD
+ * @param {{ build: Manifest, checkout: Manifest, sha: string }} input
+ *   `sha` is the commit `checkout` holds: the company's lock
  * @returns {{ line: string, stale: boolean }}
  */
-export function buildLine({ build, checkout, head }) {
+export function buildLine({ build, checkout, sha }) {
   const id = fingerprint(build).slice(0, 8);
   const differ = diff(build, checkout);
   if (differ.length === 0) {
     return { line: `build: ${id} (current)`, stale: false };
   }
   return {
-    line: `build: ${id} STALE: differs in ${named(differ)} (HEAD ${head.slice(0, 8)})`,
+    line: `build: ${id} STALE: differs in ${named(differ)} (locked ${sha.slice(0, 8)})`,
     stale: true,
   };
 }
@@ -157,21 +156,9 @@ export function readManifest(build) {
   return out;
 }
 
-/**
- * @param {string} root
- * @returns {string} the checkout's HEAD, or `?`
- */
-export function head(root) {
-  const result = spawnSync("git", [...GIT_HARDENING, "-C", root, "rev-parse", "HEAD"], {
-    encoding: "utf8",
-    env: { ...process.env, ...GIT_ENV },
-  });
-  return result.status === 0 ? result.stdout.trim() : "?";
-}
-
 // Only run when invoked directly.
 if (process.argv[1]?.endsWith("fingerprint.mjs") === true) {
-  const [command, a, b] = process.argv.slice(2);
+  const [command, a, b, c] = process.argv.slice(2);
   if (command === "manifest" && a !== undefined) {
     process.stdout.write(`${JSON.stringify(manifest(a), null, 2)}\n`);
   } else if (command === "check" && a !== undefined && b !== undefined) {
@@ -180,11 +167,11 @@ if (process.argv[1]?.endsWith("fingerprint.mjs") === true) {
       process.stderr.write(differ.map((file) => `${file}\n`).join(""));
       process.exitCode = STALE;
     }
-  } else if (command === "status" && a !== undefined && b !== undefined) {
+  } else if (command === "status" && a !== undefined && b !== undefined && c !== undefined) {
     const { line, stale } = buildLine({
       build: readManifest(a),
       checkout: manifest(b),
-      head: head(b),
+      sha: c,
     });
     process.stdout.write(`${line}\n`);
     if (stale) {
@@ -192,7 +179,7 @@ if (process.argv[1]?.endsWith("fingerprint.mjs") === true) {
     }
   } else {
     process.stderr.write(
-      "usage: fingerprint.mjs manifest <root> | check <build> <root> | status <build> <root>\n",
+      "usage: fingerprint.mjs manifest <root> | check <build> <root> | status <build> <root> <sha>\n",
     );
     process.exitCode = 2;
   }

@@ -52,6 +52,7 @@ function hubWindow(command, windows, options = {}) {
       VIBEWARS_TMUX: tmux,
       VIBEWARS_LLC_SESSION: "hub-test",
       DEVENV_ROOT: dir,
+      VIBEWARS_CODE: dir,
       VIBEWARS_BOT_ROOT: path.join(dir, ".bots"),
       VIBEWARS_LLC_RESTART: "/restarter",
       VIBEWARS_CLAUDE_BOXES: "/boxes",

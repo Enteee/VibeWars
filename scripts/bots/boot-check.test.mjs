@@ -54,7 +54,7 @@ function setup() {
   /** @returns {{ code: number | null, stderr: string, boot: Record<string, unknown> }} */
   const check = () => {
     const result = spawnSync(process.execPath, [CHECK, running], {
-      env: { ...process.env, DEVENV_ROOT: repo, VIBEWARS_BOT_ROOT: root },
+      env: { ...process.env, VIBEWARS_CODE: repo, VIBEWARS_BOT_ROOT: root },
       encoding: "utf8",
     });
     /** @type {unknown} */
