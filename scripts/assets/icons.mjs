@@ -1755,6 +1755,11 @@ const skillGlyph = {
     `<path d="M12 2.5L19 5V10.5C19 14 16 16 12 17.5C8 16 5 14 5 10.5V5Z" ${stroke(C.ink, 2)}/>` +
     inkLine("M12 6.5V12M9.2 9.2H14.8", 2) +
     inkLine("M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21", 1.8),
+  // The "not" condition (#1670, #1715): the skill's own picture, and what the foe lacks, struck through.
+  "scythe-bare": () => riderOn(skillGlyph.scythe(), NOT.ring),
+  "energy-quiet": () => riderOn(skillGlyph.energy(), NOT.chant),
+  "arrow-idle": () => riderOn(skillGlyph.arrow(), NOT.skill),
+  "heart-bare": () => riderOn(skillGlyph["heart-roof"](), NOT.ring),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
@@ -2633,6 +2638,15 @@ const RIDER = {
   plus: inkLine("M12 3V21M3 12H21", 5),
   bars: inkLine("M5 22V16M12 22V10M19 22V4", 5),
   crack: inkLine("M4 3L11 10L6 14L15 21", 4),
+};
+
+/** The riders of the "not" condition (#1715): what the foe lacks, struck through. */
+const NOT = {
+  ring: `<circle cx="12" cy="12" r="8" ${stroke(C.ink, 3.4)}/>` + inkLine("M3 21L21 3", 3.4),
+  chant: inkLine("M5 5C9 8 9 16 5 19M12 3C19 8 19 16 12 21M3 21L21 3", 3.2),
+  skill:
+    `<rect x="4" y="4" width="16" height="16" rx="2" ${stroke(C.ink, 3.4)}/>` +
+    inkLine("M3 21L21 3", 3.4),
 };
 
 /** A weapon up and left, a rider in a ring at the bottom right (#1672). */

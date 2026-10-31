@@ -59,6 +59,6 @@ export const DERVISH_ICONS = {
   "dervish.mirage-cloak": { glyph: "shield-haze" },
   "dervish.vital-boon": { glyph: "heart-roof" },
   "dervish.guiding-hands": { glyph: "hand-arrow" },
-  // The not condition (#1670), a stand-in until its art card.
-  "dervish.test-of-faith": { glyph: "hand-arrow", modifier: "stun" },
+  // The not condition (#1670, #1715): what the foe lacks, struck through.
+  "dervish.test-of-faith": { glyph: "scythe-bare" },
 };
