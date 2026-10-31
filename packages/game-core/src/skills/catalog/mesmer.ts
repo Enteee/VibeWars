@@ -1899,4 +1899,48 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* The not condition (#1670), at rank 12                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.waste-not-want-not",
+    name: "Waste Not, Want Not",
+    gwId: 1995,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is not casting a spell or attacking, you gain
+    // 8...12...13 Energy."
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "target-casting-or-attacking" } },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 12 },
+            },
+          },
+        ],
+      },
+    ],
+  },
 ];

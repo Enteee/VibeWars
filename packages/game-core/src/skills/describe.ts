@@ -1251,6 +1251,32 @@ function aCategory(category: StatusCategory): string {
   return `${category === "enchantment" ? "an" : "a"} ${category.replace("-", " ")}`;
 }
 
+/**
+ * An `if`'s line said the other way round (#1670), from the line itself:
+ * "If target has an enchantment" becomes "If target has no enchantment",
+ * "If target is using a skill" "If target is not using a skill".
+ */
+function negatedText(text: string): string {
+  const rules: readonly (readonly [RegExp, (...match: string[]) => string])[] = [
+    [/^If (target|you) (is|are) not /, (_, who, verb) => `If ${who} ${verb} `],
+    [/^If (target|you) (is|are) /, (_, who, verb) => `If ${who} ${verb} not `],
+    [
+      /^If (target|you) (has|have) no (\w)/,
+      (_, who, verb, initial = "") =>
+        `If ${who} ${verb} ${/[aeiou]/i.test(initial) ? "an" : "a"} ${initial}`,
+    ],
+    [/^If (target|you) (has|have) an? /, (_, who, verb) => `If ${who} ${verb} no `],
+    [/^If target has /, () => "If target does not have "],
+    [/^If you (\w+) /, (_, verb) => `If you do not ${verb} `],
+  ];
+  for (const [pattern, replacement] of rules) {
+    if (pattern.test(text)) {
+      return text.replace(pattern, replacement);
+    }
+  }
+  return `Unless ${text.replace(/^If /, "")}`;
+}
+
 /** What an `if` waits for, as the line it leads says it (#521, #794). */
 function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
@@ -1300,6 +1326,8 @@ function conditionText(condition: EffectCondition): string {
       const [first, ...rest] = condition.conditions.map(conditionText);
       return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
     }
+    case "not":
+      return negatedText(conditionText(condition.condition));
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
