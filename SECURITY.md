@@ -88,8 +88,11 @@ channels, as often as they like.
   from its own peer id. The peer id itself is whatever the transport
   reports, which a peer chooses; a peer that also claims a joiner's id
   could at most race that joiner for its one seat.
-- **Knowing the key means being invited.** Anyone with the lobby key can
-  join and see the lobby, and share it on. A key is shared like a party
+- **Knowing the key means being invited, while the lobby is open.**
+  Anyone with the lobby key can join an open lobby and see it, and share
+  the key on. Closing the lobby is the host's defence against a key that
+  went further than meant: it keeps the guests already in and takes
+  nobody new. A key is shared like a party
   invite: an invitation, not an identity. The relays see a topic, the
   WebRTC offers and answers, encrypted with a password derived from the
   key, and every peer's IP address; neither the topic nor the password
