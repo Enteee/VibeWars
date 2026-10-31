@@ -1610,6 +1610,30 @@ const skillGlyph = {
   // A post with a bright head: a spirit planted where it was called (#1217).
   totem: () =>
     inkFill("M9 11H14L14.2 20H8.8Z") + `<circle cx="12" cy="6.5" r="3.8" fill="${C.ink}"/>`,
+  // Nature rituals 1 (#1745, #1802): the spirit post and what it does to everyone near it.
+  "ritual-heart": () =>
+    spiritPost() +
+    `<path d="M17.5 15C12 11.5 11.5 8.5 11.5 7.2A3 3 0 0 1 17.5 6.4A3 3 0 0 1 23.5 7.2C23.5 8.5 23 11.5 17.5 15Z" ${stroke(C.ink, 1.8)}/>`,
+  "ritual-cycle": () => spiritPost() + inkLine("M22.5 9a5.2 5.2 0 1 1-1.6-3.8M22.5 3V6.5H19", 2),
+  "ritual-icicles": () =>
+    spiritPost() +
+    inkLine("M11 3H23", 2) +
+    inkFill("M12 3.5H15L13.5 12ZM16 3.5H19L17.5 15ZM20 3.5H23L21.5 10Z"),
+  "ritual-mud": () =>
+    spiritPost() +
+    inkLine(
+      "M11 5C12.5 3.5 14 3.5 15.5 5S18.5 6.5 20 5S22 4.2 23.5 4.7M11 10C12.5 8.5 14 8.5 15.5 10S18.5 11.5 20 10S22 9.2 23.5 9.7M11 15C12.5 13.5 14 13.5 15.5 15S18.5 16.5 20 15S22 14.2 23.5 14.7",
+      1.8,
+    ),
+  "ritual-flame": () =>
+    spiritPost() +
+    `<path d="M17.5 1.5C18.2 5 22.5 6.8 22.5 11.2A5 5 0 0 1 12.5 11.2C12.5 9 13.5 7.3 15 6.5C15 8.3 15.6 9.2 16.6 9.6C16 6.5 16.2 4 17.5 1.5Z" ${stroke(C.ink, 1.8)}/>`,
+  "ritual-heart-slash": () =>
+    spiritPost() +
+    `<path d="M17.5 15C12 11.5 11.5 8.5 11.5 7.2A3 3 0 0 1 17.5 6.4A3 3 0 0 1 23.5 7.2C23.5 8.5 23 11.5 17.5 15Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M11 17L24 3", 2.2),
+  "ritual-snowflake": () =>
+    spiritPost() + inkLine("M17.5 2.5V14.5M12.3 5.5L22.7 11.5M22.7 5.5L12.3 11.5", 1.8),
   // The spirit post, low on the left, shooting a mark up and right: what the
   // mark is says what the spirit does (#1271). Pain only hurts.
   "spirit-pain": () => spiritPost() + inkLine("M19.5 2.5L14 9.5H19L14.5 15.5", 2.4),
