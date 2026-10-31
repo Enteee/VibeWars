@@ -469,6 +469,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
     );
   }
+  if (definition.damageReductionWhileCasting !== undefined) {
+    const { skillType, amount } = definition.damageReductionWhileCasting;
+    parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
+  }
   if (definition.redirectsPhysicalDamage > 0) {
     parts.push(
       `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
@@ -657,6 +661,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       category === "hex" ? "hexed" : "enchanted",
     );
     parts.push(`ends if the bearer becomes ${gained.join(" or ")}`);
+  }
+  if (definition.destroysBearerOnExpiry) {
+    parts.push("the bearer is destroyed when it expires");
   }
   // A trigger that does nothing but end it (#1748): Pacifism's "ends if
   // the target takes damage".
@@ -2631,6 +2638,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
+  "allied-summoned-creature": "An allied summoned creature",
   "single-ally-not-spirit": "One ally, not a spirit",
   companion: "Your pet",
   "living-companion": "Your living pet",

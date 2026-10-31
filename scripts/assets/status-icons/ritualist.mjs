@@ -168,6 +168,21 @@ export const RITUALIST_STATUS_ICONS = {
       `<path d="M12 14c-1.6 2-2.6 3.3-2.6 4.4a2.6 2.6 0 0 0 5.2 0C14.6 17.3 13.6 16 12 14z" fill="${c}"/>` +
       `<path d="M17.5 19h5" ${stroke(c, 3)}/></g>`,
   ],
+  // The PvP Communing pair (#1827), stand-ins until their art card.
+  // Enchantment: a shield over a totem's base, less damage while binding a spirit.
+  "armor-of-unfeeling": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 4l6 2.5v4.5c0 3.5-2.6 6-6 7.5c-3.4-1.5-6-4-6-7.5V6.5z" ${stroke(c, 2)}/>` +
+      `<path d="M8 21h8M12 18v3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect: a fist over an hourglass, more damage and then gone.
+  "signet-of-ghostly-might": [
+    "skill-effect",
+    (c) =>
+      `<rect x="7" y="4" width="10" height="7" rx="2" fill="${c}"/>` +
+      `<path d="M8 14h8l-4 3.5zM8 21h8l-4-3.5z" ${stroke(c, 1.6)}/>`,
+  ],
   // Hex: two links and a spike, spirits' attacks hurt more (#1270).
   "painful-bond": [
     "hex",
