@@ -69,8 +69,6 @@ export const PARAGON_ICONS = {
   "paragon.holy-spear": { glyph: "anti-summon-spear" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "paragon.signet-of-synergy": { glyph: "heart-bare" },
-  // The not condition (#1670), a stand-in until its art card.
-  "paragon.signet-of-synergy": { glyph: "heart-roof", modifier: "self" },
   // Paragon staples 4 (#1677), stand-ins until their art card.
   "paragon.go-for-the-eyes": { glyph: "eye", modifier: "area" },
   "paragon.never-give-up": { glyph: "energy", modifier: "plus" },
