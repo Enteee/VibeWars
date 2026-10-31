@@ -938,6 +938,15 @@ describe("questions for the operator", () => {
     expect(posted.replyMarkup?.inline_keyboard[0]?.[0]?.text).toBe("a�b⏎c");
   });
 
+  it("filters the answer shown on an answered question (#93)", () => {
+    const answered = formatQuestion(
+      3,
+      { from: "architect", text: "q", options: [] },
+      "go\u202e\u200bnow",
+    );
+    expect(answered.text).toContain("✅ Answered: go��now");
+  });
+
   it("posts a question with one button per row, data within Telegram's 64 bytes", () => {
     const question = {
       from: "architect",

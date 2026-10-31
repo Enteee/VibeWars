@@ -993,7 +993,7 @@ export function formatQuestion(n, question, answer = null) {
 
   let footer;
   if (answer !== null) {
-    footer = `✅ Answered: ${excerpt(answer, ANSWER_EXCERPT_CHARS)}`;
+    footer = `✅ Answered: ${excerpt(visibleLines(answer), ANSWER_EXCERPT_CHARS)}`;
   } else if (question.options.length > 0) {
     footer = "Tap an option, or reply to this message to answer in your own words.";
   } else {
