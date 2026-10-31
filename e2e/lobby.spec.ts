@@ -214,6 +214,10 @@ test("the lobby's bar puts its status on a second row from 721 to 1200 px, nothi
   for (const width of [700, 721, 800, 940, 1100, 1201]) {
     await expectTopbarFits(page, width, "#topbar > :not(.topbar-status), #topbar .lobby-map");
   }
+  // Closed is the longer word of the host's toggle (#1682).
+  await page.locator("#topbar .topbar-lobby-open").click();
+  await expect(page.locator("#topbar .topbar-lobby-open")).toContainText("Closed");
+  await expectTopbarFits(page, 1201, "#topbar > :not(.topbar-status), #topbar .lobby-map");
 });
 
 test("the host closing its page takes the guest to the menu, and says why", async ({ browser }) => {

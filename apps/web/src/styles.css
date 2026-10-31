@@ -277,6 +277,19 @@ body {
   }
 }
 
+/* Just above 75rem the host's map shares the row with all of that: its
+   select says which map, and the word Map stays only for a reader. */
+@media (75rem < width <= 80rem) {
+  #topbar .lobby-map .field-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 .status {
   min-width: 0;
   overflow: hidden;
