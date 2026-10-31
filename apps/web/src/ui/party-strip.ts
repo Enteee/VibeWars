@@ -46,11 +46,13 @@ export const PARTY_CLOSED = "Lobby closed";
 /**
  * The strip's line while the party is queued (#1766): "Looking for a
  * team… 1:05 · 2 teams searching", the time alone until the queue says
- * how many (#1881).
+ * how many (#1881). Its own team always counts, so none means none heard
+ * yet: a leader before its first tick, or a follower before it hears its
+ * leader's ticket.
  */
 export function lookingLabel(queuedMs: number, teams: number | undefined): string {
   const looking = `Looking for a team… ${waitedLabel(queuedMs)}`;
-  if (teams === undefined) {
+  if (teams === undefined || teams === 0) {
     return looking;
   }
   return `${looking} · ${String(teams)} ${teams === 1 ? "team" : "teams"} searching`;

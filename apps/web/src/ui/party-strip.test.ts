@@ -117,4 +117,8 @@ describe("the party strip's party (#1526)", () => {
     expect(lookingLabel(65_000, 1)).toBe("Looking for a team… 1:05 · 1 team searching");
     expect(lookingLabel(65_000, 2)).toBe("Looking for a team… 1:05 · 2 teams searching");
   });
+
+  it("says the time alone before the queue has heard a team, a follower's own leader included (#1881)", () => {
+    expect(lookingLabel(65_000, 0)).toBe("Looking for a team… 1:05");
+  });
 });
