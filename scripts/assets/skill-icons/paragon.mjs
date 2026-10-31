@@ -67,16 +67,16 @@ export const PARAGON_ICONS = {
   "paragon.spear-swipe": { glyph: "spear-swipe", modifier: "stun" },
   // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
   "paragon.holy-spear": { glyph: "anti-summon-spear" },
+  // Paragon staples 4 (#1737).
+  "paragon.go-for-the-eyes": { glyph: "eye-crit" },
+  "paragon.never-give-up": { glyph: "bolt-plus" },
+  "paragon.the-power-is-yours": { glyph: "bolt-pips" },
+  "paragon.its-just-a-flesh-wound": { glyph: "drop-cure-run" },
+  "paragon.focused-anger": { glyph: "bars-rise" },
+  "paragon.awe": { glyph: "bar-daze" },
+  "paragon.glowing-signet": { glyph: "signet-glow" },
+  "paragon.signet-of-aggression": { glyph: "signet-blade" },
+  "paragon.remedy-signet": { glyph: "signet-cure" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "paragon.signet-of-synergy": { glyph: "signet-plus-bare" },
-  // Paragon staples 4 (#1677), stand-ins until their art card.
-  "paragon.go-for-the-eyes": { glyph: "eye", modifier: "area" },
-  "paragon.never-give-up": { glyph: "energy", modifier: "plus" },
-  "paragon.the-power-is-yours": { glyph: "energy-ring", modifier: "area" },
-  "paragon.its-just-a-flesh-wound": { glyph: "cleanse", modifier: "area" },
-  "paragon.focused-anger": { glyph: "adrenal-fast", modifier: "self" },
-  "paragon.awe": { glyph: "hammer-daze", modifier: "bolt" },
-  "paragon.glowing-signet": { glyph: "flame-target", modifier: "up" },
-  "paragon.signet-of-aggression": { glyph: "adrenal-fast", modifier: "up" },
-  "paragon.remedy-signet": { glyph: "cleanse", modifier: "less" },
 };

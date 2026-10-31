@@ -95,6 +95,46 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
       `<path d="M16 11.5V20M12 15.8H20.5M13.2 13L18.8 18.6M18.8 13L13.2 18.6" ${stroke(c, 1.8)}/>`,
   ],
+  // Ranger staples 4 (#1742), stand-ins until their art card.
+  // Preparation: an arrow and a ring it passes through, no block stops it.
+  "seeking-arrows": [
+    "preparation",
+    (c) =>
+      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<circle cx="16.5" cy="16.5" r="3.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Preparation: an arrow with barbs and a drop, your arrows bleed.
+  "barbed-arrows": [
+    "preparation",
+    (c) =>
+      `<path d="M3.5 15L13 5.5M8 10.5l-2.5-1M10.5 8l-2.5-1" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<path d="M16.5 13c1.8 2.2 2.8 3.6 2.8 4.8a2.8 2.8 0 0 1-5.6 0c0-1.2 1-2.6 2.8-4.8z" fill="${c}"/>`,
+  ],
+  // Skill effect: a struck-through shield, -40 armor while it is activated.
+  "barbed-arrows-armor": [
+    "skill-effect",
+    (c) =>
+      `<path d="M8.5 6.5h7v4c0 2.2-1.8 3.7-3.5 4.8-1.7-1.1-3.5-2.6-3.5-4.8z" ${stroke(c, 1.8)}/>` +
+      `<path d="M6.5 17.5l11-11" ${stroke(c, 2)}/><path d="M5 19.5h4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Preparation: an arrow with a leaf beside it, bleeding and more on the enchanted.
+  "melandrus-arrows": [
+    "preparation",
+    (c) =>
+      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<path d="M13 20c0-4 2.5-7 7-7 0 4-2.5 7-7 7z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Preparation: an arrow and two wind lines, your arrows fly twice as fast.
+  "read-the-wind": [
+    "preparation",
+    (c) =>
+      `<path d="M3.5 15L13 5.5" ${stroke(c, 2)}/>` +
+      `<path d="M19 2.5L9.5 5.5L16 12Z" fill="${c}"/>` +
+      `<path d="M12 16h6a2 2 0 1 0-2-2M11 19.5h8" ${stroke(c, 1.6)}/>`,
+  ],
   // Nature rituals 1 (#1745): what each spirit does to whoever is near it.
   // Skill effect: a heart with a plus, more health near the spirit.
   "fertile-season": [

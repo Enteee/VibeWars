@@ -311,6 +311,13 @@ export interface StatusDefinition {
    */
   readonly attackDurationMultiplier: number;
   /**
+   * Multiplier on how fast the bearer's shots fly (#1742): Read the
+   * Wind's "your arrows move twice as fast" is 2. Read as each shot is
+   * released, so one in flight keeps its speed; a melee blow and a spell
+   * ignore it. 1: the weapon's speed.
+   */
+  readonly projectileSpeedMultiplier: number;
+  /**
    * The bearer cannot start a spell (#1234): Shroud of Silence's "cannot
    * cast spells". A spell already being cast goes off; anything that is
    * not a spell is left alone.
@@ -490,6 +497,12 @@ export interface StatusDefinition {
    * it. Dark Escape's price.
    */
   readonly endsWhenBearerHits: boolean;
+  /**
+   * It ends the moment one of the bearer's attacks fails to hit (#1742):
+   * a blow or arrow missed, was blocked, was dodged or struck a wall.
+   * Seeking Arrows' "ends if you fail to hit".
+   */
+  readonly endsWhenBearerMisses: boolean;
   /**
    * It ends the moment the bearer uses a skill (#949), after its own
    * triggers have answered that use: Diversion's "the next time target
@@ -2139,6 +2152,18 @@ export class StatusSet {
   }
 
   /**
+   * One of the bearer's attacks failed to hit (#1742): every status that
+   * ends when it does is gone. Returns the ids that ended on it.
+   */
+  public endOnBearerMiss(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).endsWhenBearerMisses)
+      .map(({ id }) => id);
+    this.#end(ended);
+    return ended;
+  }
+
+  /**
    * The bearer landed a critical hit (#1315): every status that refreshes
    * on one has its remaining time put back to the duration it was
    * applied with.
@@ -2372,6 +2397,8 @@ export interface StatusModifiers {
   /** Every status's, multiplied (#1473). */
   readonly skillActivationMultiplier: number;
   readonly attackDurationMultiplier: number;
+  /** Every status's, multiplied (#1742). */
+  readonly projectileSpeedMultiplier: number;
   /** Every status's, multiplied (#919). */
   readonly damageTakenMultiplier: number;
   /** Every status's, summed (#1108). */
@@ -2490,6 +2517,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let castTimeMultiplier = 1;
   let skillActivationMultiplier = 1;
   let attackFaster = 1;
+  let projectileSpeedMultiplier = 1;
   let attackSlower = 1;
   let damageTakenMultiplier = 1;
   let damageReduction = 0;
@@ -2559,6 +2587,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     skillActivationMultiplier *= def.skillActivationMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
     attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
+    projectileSpeedMultiplier *= def.projectileSpeedMultiplier;
     damageTakenMultiplier *= def.damageTakenMultiplier;
     damageReduction += def.damageReduction;
     if (
@@ -2634,6 +2663,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     castTimeMultiplier,
     skillActivationMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,
+    projectileSpeedMultiplier,
     damageTakenMultiplier,
     damageReduction,
     maxDamageFractionPerHit,

@@ -25,6 +25,12 @@ export type RangerStatusId =
   | "symbiotic-bond"
   // Infuriating Heat (#1540).
   | "infuriating-heat"
+  // Ranger staples 4 (#1742).
+  | "seeking-arrows"
+  | "barbed-arrows"
+  | "barbed-arrows-armor"
+  | "melandrus-arrows"
+  | "read-the-wind"
   // Nature rituals 1 (#1745).
   | "fertile-season"
   | "quickening-zephyr"
@@ -217,6 +223,54 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   "infuriating-heat": define("infuriating-heat", "Infuriating Heat", "skill-effect", {
     profession: "ranger",
     adrenalineGainFaster: 0.59,
+  }),
+  // Ranger staples 4 (#1742), at rank 12. "For 3...14 seconds, your
+  // arrows cannot be blocked. Seeking Arrows ends if you fail to hit."
+  "seeking-arrows": define("seeking-arrows", "Seeking Arrows", "preparation", {
+    profession: "ranger",
+    attacksUnblockable: true,
+    endsWhenBearerMisses: true,
+  }),
+  // "For 24 seconds, your arrows cause Bleeding for 3...15 seconds": 13 s.
+  "barbed-arrows": define("barbed-arrows", "Barbed Arrows", "preparation", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+      skillId: "ranger.barbed-arrows",
+    },
+  }),
+  // "You have -40 armor while activating this skill", as Healing Signet's.
+  "barbed-arrows-armor": define("barbed-arrows-armor", "Barbed Arrows", "skill-effect", {
+    profession: "ranger",
+    armorModifier: -40,
+  }),
+  // "For 18 seconds, whenever your arrows hit, they cause Bleeding for
+  // 3...25 seconds, and if they hit a target who is under an enchantment,
+  // they do +8...28 damage": 21 s, and +24 piercing, an arrow's own type.
+  "melandrus-arrows": define("melandrus-arrows", "Melandru's Arrows", "preparation", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [
+        { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+        {
+          kind: "if",
+          condition: { kind: "target-has", category: "enchantment" },
+          effects: [
+            { kind: "damage", amount: { flat: 24 }, type: "piercing", armorPenetration: 0 },
+          ],
+        },
+      ],
+      skillId: "ranger.melandrus-arrows",
+    },
+  }),
+  // PvP: "For 24 seconds, your arrows move twice as fast."
+  "read-the-wind": define("read-the-wind", "Read the Wind", "preparation", {
+    profession: "ranger",
+    projectileSpeedMultiplier: 2,
   }),
 
   // Nature rituals 1 (#1745): each spirit's aura, at its rank-12 value.
