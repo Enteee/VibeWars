@@ -83,7 +83,9 @@ export async function playOwnTeams(
 ): Promise<void> {
   for (const { page, team } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    const propose = page.getByRole("button", { name: `Propose ${team}`, exact: true });
+    // A page that brought its starter twice has two Team Builds of that
+    // name, which propose the same: the first is as good as any.
+    const propose = page.getByRole("button", { name: `Propose ${team}`, exact: true }).first();
     await propose.click();
     await expect(propose).toHaveAttribute("aria-pressed", "true");
   }
