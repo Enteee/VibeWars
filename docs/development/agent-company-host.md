@@ -156,8 +156,9 @@ or stops the employee. The company must be up: hubd answers the request.
 
 ## Picking the context ceiling
 
-An agent whose context passes `CONTEXT_CEILING` (`scripts/bots/agent-turn.mjs`)
-starts its next turn in a fresh session. Past it, every `tg`, `board` and
+An agent whose context comes within `NEAR_MARGIN` of `CONTEXT_CEILING`
+(`scripts/bots/agent-turn.mjs`) starts its next turn in a fresh session, so
+it has room to start a card. Past the ceiling, every `tg`, `board` and
 `hub` command tells the agent to end its turn; within `NEAR_MARGIN` of it, a
 `taking #N` comment or a move into In Progress advises against starting the
 card (`scripts/bots/context.mjs`). Too high, and every call re-reads a

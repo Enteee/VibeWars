@@ -469,7 +469,7 @@ describe("agent-turn.mjs and the context ceiling (#321)", () => {
     expect(run.code).toBe(0);
     expect(run.session).toBeNull();
     expect(run.stderr).toContain(
-      "agent-turn: context 134k >= 120k; next turn starts a fresh session",
+      "agent-turn: context 134k is near the context ceiling (>= 100k); next turn starts a fresh session",
     );
     expect(run.context).toEqual({ tokens: 134_000, ceiling: 120_000 });
   });

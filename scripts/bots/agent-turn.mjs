@@ -25,8 +25,9 @@
  * Every call re-reads the whole conversation, so a long one is paid for on
  * every call (#321). The context of each call goes to
  * `$VIBEWARS_CONTEXT_FILE`, where `tg wait` reads it and tells an agent
- * past CONTEXT_CEILING to end its turn. A turn that ends past it forgets
- * the session, so the next one starts fresh from the kickoff prompt.
+ * past CONTEXT_CEILING to end its turn. A turn that ends within NEAR_MARGIN
+ * of it forgets the session, so the next one starts fresh from the kickoff
+ * prompt: one that near has too little room to start a card (#1838).
  *
  * How much of Claude's usage is left (#452): every `rate_limit_event`
  * goes to `$VIBEWARS_LIMIT_FILE`, whitelisted and dated, for the
@@ -39,6 +40,7 @@ import path from "node:path";
 import process from "node:process";
 import readline from "node:readline";
 
+import { isNear, NEAR_MARGIN } from "./context.mjs";
 import { withJailDir } from "./jail-fs.mjs";
 import { peekWriter } from "./peek.mjs";
 import {
@@ -110,7 +112,10 @@ function quit(code, state) {
 /** How many raw lines of a failed run `last-failure.jsonl` keeps. */
 const FAILURE_LINES = 20;
 
-/** Past this many tokens of context, the next turn starts a new session (#321). */
+/**
+ * The context ceiling (#321). Within NEAR_MARGIN of it, the next turn
+ * starts a new session (#1838).
+ */
 const CONTEXT_CEILING = 120_000;
 const CONTEXT_FILE = process.env.VIBEWARS_CONTEXT_FILE ?? "";
 /** Where the last `rate_limit_event` goes, for the dashboard (#452). */
@@ -259,9 +264,12 @@ function savedPeak() {
     return 0;
   }
 }
-if (savedPeak() >= CONTEXT_CEILING) {
+if (isNear({ tokens: savedPeak(), ceiling: CONTEXT_CEILING })) {
   fs.rmSync(SESSION, { force: true });
-  show("agent-turn: the last run ended over the context ceiling; starting a fresh session", "err");
+  show(
+    `agent-turn: the last run ended near the context ceiling (>= ${kilo(CONTEXT_CEILING - NEAR_MARGIN)}); starting a fresh session`,
+    "err",
+  );
 }
 writeAtomically(PEAK, "0\n");
 const resume = savedSession();
@@ -387,10 +395,10 @@ if (rewind.to !== null) {
   restoreCursor(rewind.to);
 }
 
-if (seen.peak >= CONTEXT_CEILING) {
+if (isNear({ tokens: seen.peak, ceiling: CONTEXT_CEILING })) {
   fs.rmSync(SESSION, { force: true });
   show(
-    `agent-turn: context ${kilo(seen.peak)} >= ${kilo(CONTEXT_CEILING)}; next turn starts a fresh session`,
+    `agent-turn: context ${kilo(seen.peak)} is near the context ceiling (>= ${kilo(CONTEXT_CEILING - NEAR_MARGIN)}); next turn starts a fresh session`,
     "err",
   );
 }

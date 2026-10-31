@@ -34,6 +34,14 @@ const EVENTS = {
     type: "assistant",
     message: { role: "assistant", content: [], usage: { input_tokens: 130_000 } },
   }),
+  nearCall: JSON.stringify({
+    type: "assistant",
+    message: { role: "assistant", content: [], usage: { input_tokens: 100_000 } },
+  }),
+  justUnderCall: JSON.stringify({
+    type: "assistant",
+    message: { role: "assistant", content: [], usage: { input_tokens: 99_999 } },
+  }),
   smallCall: JSON.stringify({
     type: "assistant",
     message: { role: "assistant", content: [], usage: { input_tokens: 1000 } },
@@ -335,5 +343,35 @@ describe("the context ceiling (#1815)", () => {
 
     expect(result.resumed).toBe(true);
     expect(result.kept).toBe(true);
+  });
+});
+
+// Within NEAR_MARGIN of the 120k ceiling, from 100k, an agent is told it
+// has too little room to start a card; the next turn must give it some.
+describe("near the context ceiling (#1838)", () => {
+  it("drops the session of a turn whose peak reached ceiling minus NEAR_MARGIN", () => {
+    const result = turn(["init", "nearCall", "result"], "", { session: true });
+
+    expect(result.kept).toBe(false);
+    expect(result.stderr).toContain(
+      "agent-turn: context 100k is near the context ceiling (>= 100k); next turn starts a fresh session",
+    );
+  });
+
+  it("keeps the session of a turn one token under it", () => {
+    expect(turn(["init", "justUnderCall", "result"], "", { session: true }).kept).toBe(true);
+  });
+
+  it("starts fresh after a run killed in the near zone left its peak", () => {
+    const result = turn(["init", "smallCall", "result"], "", { session: true, peak: "105000" });
+
+    expect(result.resumed).toBe(false);
+    expect(result.stderr).toContain("starting a fresh session");
+  });
+
+  it("resumes after a killed run whose peak stayed one token under it", () => {
+    const result = turn(["init", "smallCall", "result"], "", { session: true, peak: "99999" });
+
+    expect(result.resumed).toBe(true);
   });
 });
