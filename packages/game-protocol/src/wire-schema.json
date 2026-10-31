@@ -4037,11 +4037,14 @@
               { "literal": "beast" },
               { "literal": "bone-horror" },
               { "literal": "bone-minion" },
+              { "literal": "flesh-golem" },
               { "literal": "ghostly-hero" },
               { "literal": "guard" },
               { "literal": "guild-lord" },
               { "literal": "priest" },
-              { "literal": "spirit" }
+              { "literal": "shambling-horror" },
+              { "literal": "spirit" },
+              { "literal": "vampiric-horror" }
             ]
           }
         },
@@ -4940,11 +4943,14 @@
                         { "literal": "beast" },
                         { "literal": "bone-horror" },
                         { "literal": "bone-minion" },
+                        { "literal": "flesh-golem" },
                         { "literal": "ghostly-hero" },
                         { "literal": "guard" },
                         { "literal": "guild-lord" },
                         { "literal": "priest" },
-                        { "literal": "spirit" }
+                        { "literal": "shambling-horror" },
+                        { "literal": "spirit" },
+                        { "literal": "vampiric-horror" }
                       ]
                     }
                   },
@@ -5367,11 +5373,14 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "flesh-golem" },
                                 { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },
-                                { "literal": "spirit" }
+                                { "literal": "shambling-horror" },
+                                { "literal": "spirit" },
+                                { "literal": "vampiric-horror" }
                               ]
                             }
                           },
@@ -5808,11 +5817,14 @@
                                 { "literal": "beast" },
                                 { "literal": "bone-horror" },
                                 { "literal": "bone-minion" },
+                                { "literal": "flesh-golem" },
                                 { "literal": "ghostly-hero" },
                                 { "literal": "guard" },
                                 { "literal": "guild-lord" },
                                 { "literal": "priest" },
-                                { "literal": "spirit" }
+                                { "literal": "shambling-horror" },
+                                { "literal": "spirit" },
+                                { "literal": "vampiric-horror" }
                               ]
                             }
                           },

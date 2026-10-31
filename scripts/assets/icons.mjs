@@ -522,6 +522,25 @@ const creature = {
       SKULL +
         `<path d="M-3.2-2.8C-5.4-3.4-5.8-5-5.4-6.4M3.2-2.8C5.4-3.4 5.8-5 5.4-6.4" fill="none" stroke="${C.ink}" stroke-width="1.5" stroke-linecap="round"/>`,
     ),
+  // Bat wings and fangs on the skull: the vampiric horror (#1860).
+  "vampiric-horror": () =>
+    creatureGlyph(
+      SKULL +
+        `<path d="M-3.4-1.5L-7-4.4L-6.6-0.6L-5.4 0.6L-5.6 3.6L-3.4 2ZM3.4-1.5L7-4.4L6.6-0.6L5.4 0.6L5.6 3.6L3.4 2Z" fill="${C.ink}"/>` +
+        `<path d="M-1.9 4.6L-1.2 7L-0.5 4.6ZM0.5 4.6L1.2 7L1.9 4.6Z" fill="${C.ink}"/>`,
+    ),
+  // A square head on wide shoulders, stitched across the brow: the flesh golem (#1860).
+  "flesh-golem": () =>
+    creatureGlyph(
+      `<path fill-rule="evenodd" d="M-3.2-6H3.2V0.4H-3.2ZM-7 1.6H7V6.4H-7Z` +
+        `M-2.1-3.6H-0.7V-2.2H-2.1ZM0.7-3.6H2.1V-2.2H0.7ZM-3.2-1.2H3.2V-0.6H-3.2Z" fill="${C.ink}"/>`,
+    ),
+  // The skull, bleeding from below: the shambling horror (#1860).
+  "shambling-horror": () =>
+    creatureGlyph(
+      `<g transform="translate(0 -1.8)">${SKULL}</g>` +
+        `<path d="M-2.4 2.8C-1.29 4.39 -1.29 5.6 -2.4 5.6C-3.5 5.6 -3.5 4.39 -2.4 2.8ZM0.2 4.2C1.3 5.8 1.3 7 0.2 7C-0.90 7 -0.90 5.8 0.2 4.2ZM2.6 2.40C3.7 4 3.7 5.2 2.6 5.2C1.5 5.2 1.5 4 2.6 2.40Z" fill="${C.ink}"/>`,
+    ),
   spirit: () =>
     creatureGlyph(
       `<path d="M0-5.6C3-2.4 4.2 0 4.2 2.2A4.2 4.2 0 0 1-4.2 2.2C-4.2 0-2.2-1.2 0-5.6Z" fill="${C.ink}"/>`,
@@ -1315,6 +1334,36 @@ const skillGlyph = {
   dash: () => inkLine("M3 7H11M2 12H9M3 17H11", 2) + inkLine("M13 4L21 12L13 20", 2.6),
   // Two small skulls, one raised: a pack of minions (#1112).
   "bone-minions": () => smallSkull(8.5, 14, 0.62) + smallSkull(15.5, 9.5, 0.62),
+  // A skull between bat wings, fangs down: the vampiric horror (#1860).
+  "vampire-horror": () =>
+    smallSkull(12, 12, 0.7) +
+    inkFill("M7 9L2 5L2.8 11L5 14L5.5 17L8 14ZM17 9L22 5L21.2 11L19 14L18.5 17L16 14Z") +
+    inkFill("M10 19L10.8 22.5L11.6 19ZM12.4 19L13.2 22.5L14 19Z"),
+  // A square head on wide shoulders, stitched: the flesh golem (#1860).
+  golem: () =>
+    inkFill("M8 2.5H16V12H8Z") +
+    inkFill("M3 13.5H21V21.5H3Z") +
+    `<rect x="9.7" y="5.2" width="1.8" height="1.8" fill="${C.bg}"/><rect x="12.5" y="5.2" width="1.8" height="1.8" fill="${C.bg}"/>` +
+    `<path d="M8 9.6H16M12 13.5V21.5M7 13.5V17.5M17 13.5V17.5" stroke="${C.bg}" stroke-width="1.1"/>`,
+  // A skull over three drops: the shambling horror bleeds what it hits (#1860).
+  "bleed-horror": () =>
+    smallSkull(12, 9, 0.8) +
+    inkFill("M6.5 17.5C8 19.5 8 21 6.5 21.8C5 21 5 19.5 6.5 17.5Z") +
+    inkFill("M12 18C13.6 20.2 13.6 22 12 22.8C10.4 22 10.4 20.2 12 18Z") +
+    inkFill("M17.5 17.5C19 19.5 19 21 17.5 21.8C16 21 16 19.5 17.5 17.5Z"),
+  // A slab of flesh, stitched, with fumes rising: Putrid Flesh (#1860).
+  "rot-flesh": () =>
+    inkFill("M4 11C4 9 8 8.5 12 8.5S20 9 20 11V19C20 20.5 16 21 12 21S4 20.5 4 19Z") +
+    `<path d="M8 13.5L10 16M10 13.5L8 16M14 13.5L16 16M16 13.5L14 16" stroke="${C.bg}" stroke-width="1.2"/>` +
+    inkLine(
+      "M8 6C6.5 4.7 9.5 3.8 8 2M12.5 6C11 4.7 14 3.8 12.5 2M17 6C15.5 4.7 18.5 3.8 17 2",
+      1.6,
+    ),
+  // A jaw open on a heart: Feast for the Dead (#1860).
+  "feast-jaw": () =>
+    inkFill("M3 3.5L5.3 9L7.6 3.5L10 9L12 3.5L14 9L16.4 3.5L18.7 9L21 3.5V10H3Z") +
+    inkFill("M3 21L5.3 15.5L7.6 21L10 15.5L12 21L14 15.5L16.4 21L18.7 15.5L21 21V14H3Z") +
+    `<path d="M12 13.5C9 11.5 9 9 10.6 9C11.3 9 11.8 9.4 12 10C12.2 9.4 12.7 9 13.4 9C15 9 15 11.5 12 13.5Z" fill="${C.bg}"/>`,
   // One big horned skull: the horror (#1112).
   "bone-horror": () =>
     smallSkull(12, 13, 0.85) + inkLine("M6.5 8.5C4 7.5 3.5 5 4 3M17.5 8.5C20 7.5 20.5 5 20 3", 2.2),

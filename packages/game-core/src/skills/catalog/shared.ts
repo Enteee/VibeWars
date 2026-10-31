@@ -145,7 +145,7 @@ function deathMinion(
 /** Its owner gains the Health its blows take (#1836). */
 export const VAMPIRIC_HORROR: CreatureTemplate = {
   ...deathMinion(
-    "bone-horror",
+    "vampiric-horror",
     "Vampiric Horror",
     [100, 360],
     [9, 58],
@@ -162,7 +162,7 @@ export const VAMPIRIC_HORROR: CreatureTemplate = {
 /** One at a time; it leaves 1...4 corpses, 3 at Death Magic 12 (#1836). */
 export const FLESH_GOLEM: CreatureTemplate = {
   ...deathMinion(
-    "bone-horror",
+    "flesh-golem",
     "Flesh Golem",
     [140, 500],
     [16, 84],
@@ -189,7 +189,7 @@ export const JAGGED_HORROR: CreatureTemplate = {
 /** Its death stands a Jagged Horror up where it fell (#1836). */
 export const SHAMBLING_HORROR: CreatureTemplate = {
   ...deathMinion(
-    "bone-horror",
+    "shambling-horror",
     "Shambling Horror",
     [100, 360],
     [9, 58],
