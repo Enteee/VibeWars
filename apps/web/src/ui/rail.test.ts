@@ -112,7 +112,14 @@ describe("the mode rail (#1525)", () => {
   });
 
   it("locks a guest's modes but its host's, stores none of them, and leaves the builders open (#1526)", () => {
-    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: false, open: false, members: [] });
+    setRailParty({
+      code: "ACDEFG",
+      mode: "gvg",
+      isHost: false,
+      open: false,
+      members: [],
+      queuedMs: null,
+    });
     saveRail("hosted-game");
     const switched: RailEntry[] = [];
     const rail = modeRail("teams", (entry) => switched.push(entry)) as unknown as FakeElement;
@@ -130,7 +137,14 @@ describe("the mode rail (#1525)", () => {
   });
 
   it("leaves a host's every mode open", () => {
-    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: true, open: false, members: [] });
+    setRailParty({
+      code: "ACDEFG",
+      mode: "gvg",
+      isHost: true,
+      open: false,
+      members: [],
+      queuedMs: null,
+    });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
     expect(rail.children.some((child) => child.attributes.has("aria-disabled"))).toBe(false);
   });

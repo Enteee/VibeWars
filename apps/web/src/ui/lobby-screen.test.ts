@@ -3,6 +3,7 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  HOUSE_TEAM_AFTER_MS,
   RANDOM_STARTER,
   MATCH_RUNNING_NOTICE,
   characterLine,
@@ -10,6 +11,7 @@ import {
   hostMaps,
   lobbyControls,
   mapLabel,
+  matchmakingButtons,
   modeLine,
   teamColumn,
   waitingFor,
@@ -445,5 +447,64 @@ describe("teamColumn: bots (#1194, #1454)", () => {
     expect(team.all("bot-tag").map((tag) => tag.textContent)).toEqual(["BOT"]);
     // The guest's row keeps its pill; the bot's is the tag.
     expect(team.all("lobby-ready").map((pill) => pill.textContent)).toEqual(["Ready", "BOT"]);
+  });
+
+  it("has no bot count on a team mode's one side: its empty seats are bots (#1766)", () => {
+    const shown = lobby(true);
+    const side = teamColumn(
+      0,
+      shown,
+      lobbyControls(shown),
+      callbacks,
+      false,
+    ) as unknown as FakeElement;
+    expect(side.all("lobby-bots")).toEqual([]);
+  });
+});
+
+describe("matchmakingButtons (#1766)", () => {
+  const pressed: string[] = [];
+  const matchmaking = (queuedMs: number | null) => ({
+    queuedMs,
+    onFindMatch: () => pressed.push("find"),
+    onLeaveQueue: () => pressed.push("leave"),
+    onPlayHouseTeam: () => pressed.push("house"),
+  });
+  const labels = (queuedMs: number | null, phase: LobbySnapshot["phase"] = "waiting") =>
+    (
+      matchmakingButtons(
+        matchmaking(queuedMs),
+        lobbyControls(snapshot(phase)),
+      ) as unknown as FakeElement[]
+    ).map((shown) => [shown.textContent, shown.disabled]);
+
+  beforeEach(() => {
+    pressed.length = 0;
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("offers Find a match until queued, and only while the lobby waits", () => {
+    expect(labels(null)).toEqual([["Find a match", false]]);
+    expect(labels(null, "team-lobby")).toEqual([["Find a match", true]]);
+  });
+
+  it("offers Leave the queue once queued, and the house team only after a minute alone (Q191)", () => {
+    expect(labels(0)).toEqual([["Leave the queue", false]]);
+    expect(labels(HOUSE_TEAM_AFTER_MS - 1)).toEqual([["Leave the queue", false]]);
+    expect(labels(HOUSE_TEAM_AFTER_MS)).toEqual([
+      ["Play the house team", false],
+      ["Leave the queue", false],
+    ]);
+    const [house, leave] = matchmakingButtons(
+      matchmaking(HOUSE_TEAM_AFTER_MS),
+      lobbyControls(snapshot("waiting")),
+    ) as unknown as FakeElement[];
+    house?.click();
+    leave?.click();
+    expect(pressed).toEqual(["house", "leave"]);
   });
 });

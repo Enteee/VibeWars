@@ -5,6 +5,7 @@ import type { LobbySnapshot } from "@vibewars/game-session";
 import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { h } from "./kit.js";
 import { displayLobbyCode } from "./lobby-screen.js";
+import { waitedLabel } from "./queue-screen.js";
 
 /**
  * The party strip (#1526, ADR-0041): on top of every mode screen, who is
@@ -29,6 +30,8 @@ export interface RailParty {
   /** Whether friends with the key may join (#1682). */
   readonly open: boolean;
   readonly members: readonly PartyMember[];
+  /** How long the party has looked for a team (#1766); `null` while not queued. */
+  readonly queuedMs: number | null;
 }
 
 /** Shown while nobody else is here. */
@@ -36,9 +39,15 @@ export const PARTY_ALONE = "Share your key to play together";
 /** A guest's word that its host has the lobby closed (#1682). */
 export const PARTY_CLOSED = "Lobby closed";
 
-/** `snapshot`'s party: its people, in lobby order. */
-export function partyOf(snapshot: LobbySnapshot): RailParty {
+/** The strip's line while the party is queued (#1766): "Looking for a team… 1:05". */
+export function lookingLabel(queuedMs: number): string {
+  return `Looking for a team… ${waitedLabel(queuedMs)}`;
+}
+
+/** `snapshot`'s party, queued for `queuedMs` or not: its people, in lobby order. */
+export function partyOf(snapshot: LobbySnapshot, queuedMs: number | null): RailParty {
   return {
+    queuedMs,
     code: snapshot.code,
     mode: snapshot.mode,
     isHost: snapshot.isHost,
@@ -85,7 +94,9 @@ export function partyStrip(party: RailParty): HTMLElement {
     list.appendChild(row);
   }
   strip.appendChild(list);
-  if (isAlone(party)) {
+  if (party.queuedMs !== null) {
+    strip.appendChild(h("span", "party-queued", lookingLabel(party.queuedMs)));
+  } else if (isAlone(party)) {
     strip.appendChild(h("span", "party-alone", PARTY_ALONE));
   }
   if (showsClosed(party)) {
