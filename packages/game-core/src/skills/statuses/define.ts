@@ -92,6 +92,7 @@ export function define(
     knockdownMinSeconds: undefined,
     sourceLosesHealth: undefined,
     reversesNextDamage: undefined,
+    negatesFatalDamage: false,
     reflectsAttackDamage: undefined,
     extraStrikesPerHit: 0,
     adrenalineGainFaster: 0,

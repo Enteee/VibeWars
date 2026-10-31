@@ -611,6 +611,14 @@ export interface StatusDefinition {
    */
   readonly reversesNextDamage: number | undefined;
   /**
+   * The next damage or life steal that would kill the bearer is dropped
+   * whole, and the status ends (#1789): Judge's Intervention's. After
+   * invulnerability, a reversal, a bond's share and a guard; damage that
+   * leaves the bearer alive passes and does not spend it. Its
+   * `bearer-fatal-damage-negated` triggers fire at the dealer.
+   */
+  readonly negatesFatalDamage: boolean;
+  /**
    * A share of each attack's damage that hits the bearer goes back to the
    * attacker (#1754): Holy Wrath's. `undefined`: none.
    */
@@ -783,6 +791,23 @@ export type StatusTriggerEvent =
    * neither. Recorded with the dealer, and fired at the drain, as hits are.
    */
   | "bearer-takes-damage-from-foe"
+  /**
+   * One packet of damage or one life steal, from anyone, took the bearer
+   * from at least `StatusTrigger.healthBelow` of its effective maximum
+   * Health to below it (#1789): Watchful Intervention's "the next time
+   * damage drops target ally's Health below 25%". Health loss and
+   * degeneration are not damage. Recorded with the dealer, the offender
+   * when there is one, and fired at the drain; a status waiting to answer
+   * one does not answer another.
+   */
+  | "bearer-health-drops-below"
+  /**
+   * The bearer's status that negates fatal damage (#1789) dropped a
+   * killing packet and ended: only that status's triggers fire, at the
+   * dealer, the offender when there is one. Recorded, and fired at the
+   * drain.
+   */
+  | "bearer-fatal-damage-negated"
   /**
    * An attack by a foe hit the bearer (#1464): a swing, an attack skill or
    * an arrow that landed, never a miss or a block. Recorded with the
@@ -959,9 +984,13 @@ export interface StatusTrigger {
    * Or `gained-source` (#1403): the status's source turns on whoever put
    * the gained hex or enchantment on the bearer, as Scourge Enchantment
    * hurts the enchanter.
+   * Or `source-on-offender` (#1789): the status's source turns on the
+   * offender, with its own ranks, as Judge's Intervention smites whoever
+   * struck the killing blow.
    */
   readonly effects: readonly TriggerEffect[];
-  readonly target: "bearer" | "source" | "offender" | "created" | "gained-source";
+  readonly target:
+    "bearer" | "source" | "offender" | "created" | "gained-source" | "source-on-offender";
   /**
    * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
    * only for an attack made with a weapon of this class in the bearer's
@@ -997,6 +1026,12 @@ export interface StatusTrigger {
    * damage". Absent: any damage or steal.
    */
   readonly minDamage?: number;
+  /**
+   * On `bearer-health-drops-below`, and only there (#1789): the share of
+   * the bearer's effective maximum Health, in (0, 1), the packet must take
+   * it below, from at least that.
+   */
+  readonly healthBelow?: number;
   /**
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
@@ -1140,6 +1175,16 @@ export type StatusChange =
   | {
       readonly kind: "hit-by-attack";
       readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  /**
+   * Damage or a steal took the bearer's Health below a line (#1789), or
+   * a status dropped a killing packet; `offenderId` dealt it, `undefined`
+   * when nobody did.
+   */
+  | {
+      readonly kind: "health-dropped" | "fatal-negated";
+      readonly offenderId: string | undefined;
       readonly fired: readonly AnsweringTrigger[];
     }
   /** Status `statusId` from `sourceId` sends `damage` back to `toId`, who hit the bearer (#1754). */
@@ -1566,6 +1611,55 @@ export class StatusSet {
         });
       }
     }
+  }
+
+  /**
+   * One packet took the bearer's Health from `from` to `to`, of `maxHealth`,
+   * dealt by `offenderId` if anyone (#1789): recorded only if a status on
+   * it answers a line crossed, with the triggers that do. One packet may
+   * cross two lines. A status already waiting to answer one, undrained,
+   * does not answer another.
+   */
+  public recordHealthDrop(
+    offenderId: string | undefined,
+    from: number,
+    to: number,
+    maxHealth: number,
+  ): void {
+    const pending = new Set(
+      this.#changes.flatMap((change) =>
+        change.kind === "health-dropped" ? change.fired.map(({ statusId }) => statusId) : [],
+      ),
+    );
+    const fired = this.#answering("bearer-health-drops-below").filter(({ statusId, trigger }) => {
+      const line = (trigger.healthBelow ?? 0) * maxHealth;
+      return !pending.has(statusId) && from >= line && to < line;
+    });
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "health-dropped", offenderId, fired });
+    }
+  }
+
+  /**
+   * Spend the oldest status that negates fatal damage (#1789), recorded as
+   * ended, with its `bearer-fatal-damage-negated` triggers aimed at
+   * `offenderId`; `undefined` if none is up.
+   */
+  public takeFatalNegation(offenderId: string | undefined): StatusId | undefined {
+    for (const status of this.#statuses.values()) {
+      const definition = getStatusDefinition(status.id);
+      if (definition.negatesFatalDamage) {
+        this.#end([status.id]);
+        const fired = definition.triggers
+          .filter((trigger) => trigger.on === "bearer-fatal-damage-negated")
+          .map((trigger) => ({ statusId: status.id, sourceId: status.sourceId, trigger }));
+        if (fired.length > 0) {
+          this.#changes.push({ kind: "fatal-negated", offenderId, fired });
+        }
+        return status.id;
+      }
+    }
+    return undefined;
   }
 
   #answering(event: StatusTriggerEvent): AnsweringTrigger[] {

@@ -153,7 +153,11 @@ describe("statusSnapshot (#803)", () => {
   });
 
   it("ends one borne while activating with its cast", () => {
-    const cast = { remainingSeconds: 1.5, totalSeconds: 2 };
+    const cast = {
+      remainingSeconds: 1.5,
+      totalSeconds: 2,
+      whileActivating: "healing-signet-armor",
+    } as const;
     const borne = { ...status("healing-signet-armor", Infinity), durationSeconds: Infinity };
     expect(statusSnapshot(borne, 4, cast)).toMatchObject({ endsAt: 5.5, durationSeconds: 2 });
   });
@@ -168,8 +172,17 @@ describe("statusSnapshot (#803)", () => {
     });
   });
 
+  it("sends a status with no end with no times, while its bearer casts another (#1789)", () => {
+    const cast = { remainingSeconds: 1.5, totalSeconds: 2, whileActivating: undefined };
+    const faithful = { ...status("faithful-intervention", Infinity), durationSeconds: Infinity };
+    expect(statusSnapshot(faithful, 4, cast)).toMatchObject({
+      endsAt: null,
+      durationSeconds: null,
+    });
+  });
+
   it("sends a spirit's aura with no times either, while its bearer casts (#1064)", () => {
-    const cast = { remainingSeconds: 1.5, totalSeconds: 2 };
+    const cast = { remainingSeconds: 1.5, totalSeconds: 2, whileActivating: undefined };
     const aura = {
       ...status("winnowing", Infinity),
       durationSeconds: Infinity,

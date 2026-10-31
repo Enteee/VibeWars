@@ -184,7 +184,7 @@ describe("an attack skill pressed out of reach", () => {
     const log = stepFor(match, 6);
     // One Fireball: its release, then its landing (#535).
     expect(uses(log, FIREBALL).map((entry) => entry.events.map((event) => event.kind))).toEqual([
-      [],
+      ["skill-used"],
       ["damage"],
     ]);
     expect(uses(log, SWIFT_CHOP)).toEqual([]);

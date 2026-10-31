@@ -978,7 +978,7 @@ describe("spear attacks (#1030)", () => {
 
   it("Barbed Spear bleeds for 17 s when it hits", () => {
     const match = arena();
-    expect(kinds(thrown(match, 0))).toEqual(["damage", "status-applied"]);
+    expect(kinds(thrown(match, 0))).toEqual(["damage", "status-applied", "adrenaline-gained"]);
     expect(durationOn(match, "bleeding")).toBe(17);
   });
 
@@ -1004,7 +1004,7 @@ describe("spear attacks (#1030)", () => {
 
     const barbed = arena();
     thrown(barbed, 0);
-    expect(kinds(thrown(barbed, 1))).toEqual(["damage", "status-applied"]);
+    expect(kinds(thrown(barbed, 1))).toEqual(["damage", "status-applied", "adrenaline-gained"]);
     expect(durationOn(barbed, "crippled")).toBe(17);
   });
 

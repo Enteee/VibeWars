@@ -145,15 +145,16 @@ describe("runHeadlessMatch", () => {
       });
     const first = run();
     expect(run()).toEqual(first);
-    // The first cast: one Fireball, the cluster, never the straggler.
-    expect(first.events.slice(0, 3)).toEqual(
-      ["near", "left", "right"].map((targetId) => ({
+    // The first cast: its use, then one Fireball, the cluster, never the straggler.
+    expect(first.events.slice(0, 4)).toEqual([
+      { kind: "skill-used", casterId: "dps", skillId: "elementalist.fireball", targetId: "near" },
+      ...["near", "left", "right"].map((targetId) => ({
         kind: "damage",
         targetId,
         amount: 91,
         critical: false,
       })),
-    );
+    ]);
     expect(first.events.some((event) => event.targetId === "far")).toBe(false);
   });
 });

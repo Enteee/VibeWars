@@ -181,6 +181,7 @@ describe("the mode rail (#1525)", () => {
       primary: null,
       isHost,
       self: isHost,
+      away: false,
     });
     const party = { code: "ACDEFGHJKLMN", mode: "gvg", isHost: true, open: true } as const;
     const strip = (): FakeElement | undefined => {

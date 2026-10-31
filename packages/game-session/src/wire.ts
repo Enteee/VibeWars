@@ -141,25 +141,35 @@ function tenths(seconds: number): number {
 
 /**
  * One status as a snapshot carries it (#803): when it runs out on the
- * match clock, how long it was applied for, and who applied it. One with
- * no end of its own is what its bearer bears while activating
- * (`whileActivating`): it ends with `cast`, so it takes the cast's times.
- * A maintained enchantment (#837) and a spirit's aura (#1064) have no end
- * at all: both times `null`.
+ * match clock, how long it was applied for, and who applied it. One its
+ * bearer bears while activating (`whileActivating`) ends with `cast`, so
+ * it takes the cast's times.
+ * A maintained enchantment (#837), a spirit's aura (#1064) and any other
+ * status with no end, as Faithful Intervention (#1789), have no end at
+ * all: both times `null`.
  * A duration under 0.05 s still goes as 0.1, as the wire refuses one of
  * nothing.
  */
 export function statusSnapshot(
   status: ActiveStatus,
   elapsedSeconds: number,
-  cast: { readonly remainingSeconds: number; readonly totalSeconds: number } | undefined,
+  cast:
+    | {
+        readonly remainingSeconds: number;
+        readonly totalSeconds: number;
+        readonly whileActivating: StatusId | undefined;
+      }
+    | undefined,
 ): StatusSnapshot {
-  if (status.maintained !== null || status.projected) {
+  const endless = !Number.isFinite(status.remainingSeconds);
+  const borne = endless && cast?.whileActivating === status.id ? cast : undefined;
+  if (status.maintained !== null || status.projected || (endless && borne === undefined)) {
     return { id: status.id, endsAt: null, durationSeconds: null, casterId: status.sourceId };
   }
-  const [remaining, duration] = Number.isFinite(status.remainingSeconds)
-    ? [status.remainingSeconds, status.durationSeconds]
-    : [cast?.remainingSeconds ?? 0, cast?.totalSeconds ?? 0];
+  const [remaining, duration] =
+    borne !== undefined
+      ? [borne.remainingSeconds, borne.totalSeconds]
+      : [status.remainingSeconds, status.durationSeconds];
   return {
     id: status.id,
     endsAt: tenths(elapsedSeconds + remaining),
@@ -299,7 +309,11 @@ export function sameSkillBar(
   );
 }
 
-function wireEvent(event: CombatEvent): WireCombatEvent {
+/**
+ * `event` as the wire carries it, or `undefined` for what only the
+ * Training Ground log reads (#1735): a use, adrenaline, a skipped effect.
+ */
+function wireEvent(event: CombatEvent): WireCombatEvent | undefined {
   const none = {
     amount: null,
     skillId: null,
@@ -418,6 +432,10 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "attack-interrupted":
     case "shadow-stepped-away":
       return { ...none, kind: event.kind, targetId: event.targetId };
+    case "skill-used":
+    case "adrenaline-gained":
+    case "effect-skipped":
+      return undefined;
   }
 }
 
@@ -429,7 +447,8 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
 export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
   return log.flatMap((entry) => {
     const first = entry.events[0];
-    if (first === undefined) {
+    const events = entry.events.flatMap((event) => wireEvent(event) ?? []);
+    if (first === undefined || events.length === 0) {
       return [];
     }
     return [
@@ -441,7 +460,7 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
         attributeId: entry.attributeId ?? "",
         area: entry.area ?? null,
         doubleStrike: entry.doubleStrike,
-        events: entry.events.map(wireEvent),
+        events,
       },
     ];
   });

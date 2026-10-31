@@ -37,7 +37,8 @@ export type MesmerStatusId =
   | "wastrels-demise"
   | "arcane-conundrum"
   // Mesmer staples 3 (#1627).
-  | "wandering-eye";
+  | "wandering-eye"
+  | "illusion-of-weakness";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -527,5 +528,35 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       },
     ],
     endsWhenTriggered: true,
+  }),
+  // "Illusion of Weakness ends if damage drops your Health below 25% of
+  // your maximum. When Illusion of Weakness ends, you gain 50...240
+  // Health" (#1789): any end, a strip too.
+  "illusion-of-weakness": define("illusion-of-weakness", "Illusion of Weakness", "enchantment", {
+    profession: "mesmer",
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-health-drops-below",
+        healthBelow: 0.25,
+        effects: [],
+        target: "bearer",
+        skillId: "mesmer.illusion-of-weakness",
+      },
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 50, atTwelve: 202 },
+            },
+            perStatusOnTarget: [],
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.illusion-of-weakness",
+      },
+    ],
   }),
 };

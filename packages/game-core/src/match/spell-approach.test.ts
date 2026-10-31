@@ -137,10 +137,10 @@ describe("a spell pressed out of range", () => {
     expect(a.pendingSkill).toBeUndefined();
 
     // Its 1 s cast, then about a second's flight across a spell's range
-    // (#535): the release carries nothing, the landing the damage.
+    // (#535): the release carries only the use, the landing the damage.
     const fireballs = uses(stepFor(match, 2.5), FIREBALL);
     expect(fireballs).toHaveLength(2);
-    expect(fireballs[0]?.events).toEqual([]);
+    expect(fireballs[0]?.events.map((event) => event.kind)).toEqual(["skill-used"]);
     expect(fireballs[1]?.events.some((event) => event.kind === "damage")).toBe(true);
   });
 
@@ -199,7 +199,7 @@ describe("a spell pressed out of range", () => {
     // One Fireball: its release, then its landing (#535).
     expect(
       uses(stepFor(twice, 5), FIREBALL).map((entry) => entry.events.map((event) => event.kind)),
-    ).toEqual([[], ["damage"]]);
+    ).toEqual([["skill-used"], ["damage"]]);
   });
 
   it("is dropped when its target dies", () => {
@@ -267,7 +267,7 @@ describe("a spell pressed out of range", () => {
     const log = stepFor(match, 6);
     // One Fireball: its release, then its landing (#535).
     expect(uses(log, FIREBALL).map((entry) => entry.events.map((event) => event.kind))).toEqual([
-      [],
+      ["skill-used"],
       ["damage"],
     ]);
     const hitsOnNear = log.filter(

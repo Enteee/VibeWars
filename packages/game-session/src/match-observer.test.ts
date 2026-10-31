@@ -6,18 +6,20 @@ import {
   type PeerObserve,
   type WireEnded,
 } from "@vibewars/game-protocol";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MatchRefusedError } from "./match-client.js";
+import { HELLO_RESEND_MS, MatchRefusedError } from "./match-client.js";
 import { NO_CALLS } from "./match-connection.js";
-import { OBSERVER_DELAY_SECONDS } from "./match-host.js";
+import { OBSERVER_DELAY_SECONDS, createMatchHost } from "./match-host.js";
 import {
+  ARENA,
   TEST_MATCH_ID,
   TICK_SECONDS,
   settle,
   startMatch,
   type TestMatch,
 } from "./match-harness.test-support.js";
+import { createMemoryNetwork } from "./memory-transport.js";
 import { connectObserver, type ObserverConnection } from "./match-observer.js";
 import type { Transport } from "./transport.js";
 
@@ -294,5 +296,64 @@ describe("a match's observers (#480)", () => {
     expect(again.viewer.getSnapshot()).toBeUndefined();
     await match.step(TICK_SECONDS);
     expect(again.viewer.getSnapshot()).toBeDefined();
+  });
+});
+
+describe("an observe said again (#1805)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("is answered by a host whose match listens 3 s after it, and said no more", async () => {
+    const network = createMemoryNetwork();
+    const hostTransport = network.join("host");
+    const transport = network.join("viewer");
+    await settle();
+    const sent = vi.spyOn(transport, "send");
+    const observes = (): number => sent.mock.calls.filter(([type]) => type === "observe").length;
+    const viewing = connectObserver({
+      transport,
+      hostId: "host",
+      matchId: TEST_MATCH_ID,
+      timeoutMs: 10_000,
+    });
+    await vi.advanceTimersByTimeAsync(3000);
+    createMatchHost({
+      transport: hostTransport,
+      map: ARENA,
+      seed: "test",
+      matchRules: ANNIHILATION_MATCH_RULES,
+      random: () => 0.5,
+      maxPlayers: 8,
+      seats: null,
+      matchId: TEST_MATCH_ID,
+      isSpectator: (peerId) => peerId === "viewer",
+    });
+    await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);
+    await viewing;
+    const said = observes();
+    expect(said).toBe(5);
+    await vi.advanceTimersByTimeAsync(5 * HELLO_RESEND_MS);
+    expect(observes()).toBe(said);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("is told it observes each time, as one observer", async () => {
+    const { match } = await twoPlayers();
+    const transport = match.network.join("viewer");
+    await settle();
+    const heard = record(transport, ["observing"]);
+    for (let i = 0; i < 3; i += 1) {
+      transport.send(
+        "observe",
+        { protocolVersion: PROTOCOL_VERSION, matchId: TEST_MATCH_ID },
+        "host",
+      );
+      await settle();
+    }
+    expect(heard).toHaveLength(3);
   });
 });

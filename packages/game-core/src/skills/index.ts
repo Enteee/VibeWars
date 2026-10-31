@@ -14,7 +14,7 @@ export {
 export type { ActiveCast, SlotSkill } from "./cast-state.js";
 export { CastState, resolvedBar } from "./cast-state.js";
 
-export { IMPLEMENTED_SKILLS, SKILLS_BY_ID, getSkill } from "./catalog.js";
+export { IMPLEMENTED_SKILLS, MAINTAINED_STATUSES, SKILLS_BY_ID, getSkill } from "./catalog.js";
 
 export type { EffectDescription, MagnitudeDescription, SkillDescription } from "./describe.js";
 export {

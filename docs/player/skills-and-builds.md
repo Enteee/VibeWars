@@ -55,6 +55,16 @@ An Elementalist's **glyphs** change your next spell: it cannot be
 interrupted, casts instantly, recharges at once, or costs less. A new
 glyph replaces the one you had.
 
+## Interventions
+
+A skill that answers "the next time damage drops Health below N%"
+answers one blow or life steal that crosses the line, never one that
+lands when you are already below it, and never health you sacrifice or
+lose to degeneration. Fatal-damage protection, as Judge's Intervention,
+drops the whole killing blow: no damage, no death. Faithful Intervention
+and Illusion of Weakness have no duration: they last until damage, a
+strip or death ends them, and heal you as they go.
+
 ## The library
 
 The skill library lists every skill your two professions can use,
@@ -66,7 +76,9 @@ skill types to narrow it. Skills of other professions wait, folded, under
 have yet, greyed out. You can read them, not equip them.
 
 Beside the editor, the **Training Ground** lets you try your bar on
-practice targets before a match.
+practice targets before a match. Its log shows every skill you or a bot
+use, the adrenaline you gain, and a skill that had no effect, with what
+it was waiting for.
 
 ## Item spells
 

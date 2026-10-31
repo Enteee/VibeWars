@@ -293,9 +293,17 @@ export async function joinLobbyByCode(
   }
   const lobbyRoom =
     queued === undefined ? await deriveLobbyRoom(code) : publicRoom(queued.group.room);
+  // Best effort, as a host's: a page going away frees its seat now, rather
+  // than having it held as for a drop (#1764). Added before the room
+  // exists, so it runs before the transport's own pagehide leave.
+  let joined: LobbyConnection | undefined;
+  const onPageHide = (): void => {
+    void joined?.disconnect();
+  };
+  window.addEventListener("pagehide", onPageHide);
   const room = joinRoom(lobbyRoom);
   try {
-    return await joinLobby({
+    joined = await joinLobby({
       transport: room,
       code,
       proofKey: lobbyRoom.proofKey,
@@ -305,7 +313,12 @@ export async function joinLobbyByCode(
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? {} : { queued }),
     });
+    joined.onClosed(() => {
+      window.removeEventListener("pagehide", onPageHide);
+    });
+    return joined;
   } catch (error) {
+    window.removeEventListener("pagehide", onPageHide);
     await room.leave();
     throw error;
   }

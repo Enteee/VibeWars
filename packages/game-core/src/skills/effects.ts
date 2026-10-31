@@ -123,7 +123,7 @@ export type CombatEvent =
       readonly kind: "status-applied";
       readonly targetId: string;
       readonly statusId: StatusId;
-      /** `null` for a maintained enchantment (#837), which lasts until ended. */
+      /** `null` for a status with no end, maintained (#837) or not (#1789): it lasts until ended. */
       readonly durationSeconds: number | null;
     }
   /**
@@ -263,7 +263,43 @@ export type CombatEvent =
    * Teleported (#474): `targetId` is put beside `toId`, as Rebirth brings
    * its ally to the caster. The simulation places the body.
    */
-  | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string };
+  | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string }
+  /**
+   * `casterId` used `skillId` (#1735): paid for and gone off, at
+   * `targetId`, which is `casterId` itself when nobody else was chosen.
+   * A press refused, queued or interrupted is no use.
+   */
+  | {
+      readonly kind: "skill-used";
+      readonly casterId: string;
+      readonly skillId: string;
+      readonly targetId: string;
+    }
+  /**
+   * `targetId` gained `strikes` of adrenaline (#1735): from `skillId`'s
+   * `adrenaline-gain`, or from a blow when `undefined`. Only when one of
+   * its adrenaline skills filled.
+   */
+  | {
+      readonly kind: "adrenaline-gained";
+      readonly targetId: string;
+      readonly strikes: number;
+      readonly skillId: string | undefined;
+    }
+  /**
+   * `casterId`'s use of `skillId` did nothing (#1735): an effect it has
+   * only under a condition, the first that did not hold, was skipped on
+   * `targetId` (`casterId` when it had none), and nothing else of it
+   * happened. `requirement` is that condition in the tooltip's words,
+   * "only if target has Burning": text, as a condition can nest.
+   */
+  | {
+      readonly kind: "effect-skipped";
+      readonly casterId: string;
+      readonly targetId: string;
+      readonly skillId: string;
+      readonly requirement: string;
+    };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -279,6 +315,8 @@ export type CombatEvent =
  * a physical hit, after Reversal of Fortune. An invulnerable target
  * (#1208) takes none of it, and says so (#1233). A Guild Lord's guard
  * (#1223) cuts and caps what is left, to 0 once its second's cap is spent.
+ * A status that negates fatal damage (#1789) drops what would kill; what
+ * crosses a Health line is recorded for what answers it.
  */
 export function applyDamage(
   target: Combatant,
@@ -302,12 +340,17 @@ export function applyDamage(
   // source when the tick drains; the bearer takes the rest.
   const kept = isPhysicalDamage(type) ? target.statuses.redirect(amount) : amount;
   const applied = Math.min(guardedDamage(target, kept), target.health);
+  if (negateFatal(target, applied, dealer, events)) {
+    return;
+  }
+  const before = target.health;
   target.health -= applied;
   events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   }
   recordFromFoe(target, dealer, type, applied);
+  recordHealthDrop(target, dealer, before);
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
@@ -329,6 +372,38 @@ function recordFromFoe(
   if (dealer !== undefined && dealer.team !== target.team) {
     target.statuses.recordDamageFromFoe(dealer.id, type, amount);
   }
+}
+
+/**
+ * `target`'s Health just fell from `before` to where it is, by damage or
+ * a steal `dealer` dealt, if anyone: recorded for what answers a line
+ * crossed (#1789).
+ */
+function recordHealthDrop(target: Combatant, dealer: Combatant | undefined, before: number): void {
+  target.statuses.recordHealthDrop(dealer?.id, before, target.health, effectiveMaxHealth(target));
+}
+
+/**
+ * Judge's Intervention (#1789): if `loss` would kill `target` and it bears
+ * a status that negates fatal damage, spend it. Returns whether it did,
+ * and then the caller drops the whole packet: no damage, no death,
+ * nothing that answers damage, nothing stolen.
+ */
+function negateFatal(
+  target: Combatant,
+  loss: number,
+  dealer: Combatant | undefined,
+  events: CombatEvent[],
+): boolean {
+  if (loss < target.health) {
+    return false;
+  }
+  const negated = target.statuses.takeFatalNegation(dealer?.id);
+  if (negated === undefined) {
+    return false;
+  }
+  events.push({ kind: "status-expired", targetId: target.id, statusId: negated });
+  return true;
 }
 
 /**
@@ -415,7 +490,8 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
  * a heal either, so the caster's healing modifiers do not touch it. It
  * can kill, with one `death`, as `applyDamage` does. Nothing is stolen
  * from an invulnerable target (#1208), which says so (#1233). A Guild
- * Lord's per-second cap (#1223) holds it too.
+ * Lord's per-second cap (#1223) holds it too, and a status that negates
+ * fatal damage (#1789) drops a steal that would kill.
  */
 function stealLife(
   caster: Combatant,
@@ -441,12 +517,14 @@ function stealLife(
     return;
   }
   const taken = guardedLoss(target, stolen);
-  if (taken <= 0) {
+  if (taken <= 0 || negateFatal(target, taken, caster, events)) {
     return;
   }
+  const before = target.health;
   target.health -= taken;
   events.push({ kind: "life-stolen", targetId: target.id, amount: taken });
   recordFromFoe(target, caster, undefined, taken);
+  recordHealthDrop(target, caster, before);
   gainHealth(caster, taken, events);
   if (target.health <= 0) {
     target.dead = true;
@@ -926,7 +1004,13 @@ function landStatus(
     reportEnded(target, [breaker], events);
     return;
   }
-  events.push({ kind: "status-applied", targetId: target.id, statusId, durationSeconds });
+  events.push({
+    kind: "status-applied",
+    targetId: target.id,
+    statusId,
+    // No end of its own (#1789): as a maintained one, no duration.
+    durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : null,
+  });
   reportEnded(target, ending, events);
   if (loss > 0) {
     events.push({ kind: "health-lost", targetId: target.id, amount: loss, statusId });
@@ -1176,7 +1260,14 @@ export function applyEffect(
     }
 
     case "adrenaline-gain": {
-      fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE);
+      if (fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE)) {
+        events.push({
+          kind: "adrenaline-gained",
+          targetId: caster.id,
+          strikes: effect.strikes,
+          skillId: context.skillId,
+        });
+      }
       return events;
     }
 
@@ -2199,6 +2290,17 @@ export interface SkillOutcome {
    * simulation places them, which only it can add to the match.
    */
   readonly grounds: readonly CreateGroundEffect[];
+  /**
+   * The first `if` that did not hold (#1735), when nothing of the skill
+   * happened, before or after it; else `undefined`. Its use is told so.
+   */
+  readonly skipped: SkippedEffect | undefined;
+}
+
+/** An `if` that did not hold on `targetId`, the caster's when it had none (#1735). */
+export interface SkippedEffect {
+  readonly condition: EffectCondition;
+  readonly targetId: string;
 }
 
 /**
@@ -2221,6 +2323,7 @@ export function resolveSkillEffects(
   let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
+  let skipped: SkippedEffect | undefined;
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
@@ -2235,7 +2338,11 @@ export function resolveSkillEffects(
         profession: skill.profession,
       };
       const before = [...earlier, ...events];
-      for (const inner of landing(effect, context, before, states)) {
+      const landed = landing(effect, context, before, states);
+      if (effect.kind === "if" && landed.length === 0) {
+        skipped ??= { condition: effect.condition, targetId: target?.id ?? caster.id };
+      }
+      for (const inner of landed) {
         if (inner.kind === "recharge-faster") {
           rechargeFraction = Math.max(rechargeFraction, inner.fraction);
         }
@@ -2276,7 +2383,15 @@ export function resolveSkillEffects(
       events,
     );
   }
-  return { events, rechargeFraction, rechargeLongerSeconds, summons, grounds };
+  return {
+    events,
+    rechargeFraction,
+    rechargeLongerSeconds,
+    summons,
+    grounds,
+    skipped:
+      skipped !== undefined && earlier.length === 0 && events.length === 0 ? skipped : undefined,
+  };
 }
 
 /**
