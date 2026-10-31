@@ -80,4 +80,6 @@ export const WARRIOR_ICONS = {
   "warrior.magehunter-strike": { glyph: "blow-unbound" },
   "warrior.body-blow": { glyph: "blow-crack" },
   "warrior.coward": { glyph: "shout-fall" },
+  // "N for each X" (#1760), stand-ins until their art card.
+  "warrior.victory-is-mine": { glyph: "shout-fall", modifier: "bleed" },
 };

@@ -97,7 +97,6 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
           {
             kind: "heal",
             amount: { scaling: { attributeId: "paragon.motivation", atZero: 45, atTwelve: 97 } },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",
@@ -151,7 +150,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     nextSkill: {
       which: "spell",
       count: 1,
-      effects: [{ kind: "heal", amount: { flat: 78 }, perStatusOnTarget: [] }],
+      effects: [{ kind: "heal", amount: { flat: 78 } }],
       skillId: "paragon.aria-of-restoration",
     },
   }),
@@ -162,7 +161,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     nextSkill: {
       which: "shout-or-chant",
       count: 1,
-      effects: [{ kind: "heal", amount: { flat: 78 }, perStatusOnTarget: [] }],
+      effects: [{ kind: "heal", amount: { flat: 78 } }],
       skillId: "paragon.chorus-of-restoration",
     },
   }),
@@ -348,7 +347,6 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
           {
             kind: "heal",
             amount: { scaling: { attributeId: "paragon.motivation", atZero: 15, atTwelve: 63 } },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",

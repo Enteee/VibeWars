@@ -1,4 +1,4 @@
-import { AREA_ADJACENT, AREA_NEARBY } from "../../distances.js";
+import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import type { DamageEffect } from "../types.js";
 import { define } from "./define.js";
@@ -38,7 +38,9 @@ export type MesmerStatusId =
   | "arcane-conundrum"
   // Mesmer staples 3 (#1627).
   | "wandering-eye"
-  | "illusion-of-weakness";
+  | "illusion-of-weakness"
+  // "N for each X" (#1760).
+  | "channeling";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -551,11 +553,33 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
             amount: {
               scaling: { attributeId: "mesmer.illusion-magic", atZero: 50, atTwelve: 202 },
             },
-            perStatusOnTarget: [],
           },
         ],
         target: "bearer",
         skillId: "mesmer.illusion-of-weakness",
+      },
+    ],
+  }),
+  // "Whenever you cast a spell, you gain 1 Energy for each foe in the
+  // area" (#1760): counted as the spell is cast.
+  channeling: define("channeling", "Channeling", "enchantment", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: { flat: 0 },
+            per: {
+              count: { kind: "foes-within", radius: AREA_IN_THE_AREA },
+              amount: { flat: 1 },
+              max: undefined,
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "mesmer.channeling",
       },
     ],
   }),

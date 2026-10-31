@@ -79,4 +79,7 @@ export const NECROMANCER_ICONS = {
   "necromancer.bitter-chill": { glyph: "snowflake-recharge" },
   "necromancer.rip-enchantment": { glyph: "ring-rip-bleed" },
   "necromancer.gaze-of-contempt": { glyph: "eye-high" },
+  // "N for each X" (#1760), stand-ins until their art card.
+  "necromancer.desecrate-enchantments": { glyph: "ring-rend", modifier: "area" },
+  "necromancer.defile-enchantments": { glyph: "ring-rend-burst", modifier: "area" },
 };

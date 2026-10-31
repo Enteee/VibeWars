@@ -48,6 +48,7 @@ import {
   isInvulnerable,
   isSpell,
   type Combatant,
+  type CountRule,
   type DisableOwnSkillsEffect,
   type DisableSkillEffect,
   type EnergyGainEffect,
@@ -57,6 +58,7 @@ import {
   type HealEffect,
   type InterruptEffect,
   type Magnitude,
+  type PerCount,
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
@@ -423,7 +425,7 @@ function reverse(target: Combatant, amount: number, events: CombatEvent[]): bool
 
 /**
  * What `effect` heals, at the caster's ranks, before healing modifiers:
- * per status on the target with `perStatusOnTarget` (#920); with
+ * plus its `per` count (#1760); with
  * `perAlly`, more for each living ally of the caster within the radius,
  * the caster included, and the whole capped at `max` (#923); with
  * `perRemoved`, per status of that category `earlier` took off the
@@ -438,13 +440,17 @@ function healAmount(
   earlier: readonly CombatEvent[],
   usedSkill: SlotSkill | undefined,
 ): number {
-  const base =
+  const base = withPerCount(
     perUsedSkillEnergy(effect, caster, usedSkill) *
-    perStatus(effect.perStatusOnTarget, target) *
-    perRemoved(effect.perRemoved, target, earlier) *
-    (effect.perDestroyedSpirit === true
-      ? earlier.filter((event) => event.kind === "spirit-destroyed").length
-      : 1);
+      perRemoved(effect.perRemoved, target, earlier) *
+      (effect.perDestroyedSpirit === true
+        ? earlier.filter((event) => event.kind === "spirit-destroyed").length
+        : 1),
+    effect.per,
+    caster,
+    target,
+    surroundings,
+  );
   const { perAlly } = effect;
   if (perAlly === undefined) {
     return base;
@@ -716,21 +722,53 @@ function perOwnCreature(
 }
 
 /**
- * How many times a heal with `perStatusOnTarget` lands (#920): once with
- * no categories, else once per status of those categories on `target`,
- * as it stands now; 0 with no target.
+ * `base` plus `per`'s amount for each of what it counts as the effect
+ * lands on `target` (#1760), capped at its `max`. Without `per`, `base`.
  */
-function perStatus(categories: readonly StatusCategory[], target: Combatant | undefined): number {
-  if (categories.length === 0) {
-    return 1;
+function withPerCount(
+  base: number,
+  per: PerCount | undefined,
+  caster: Combatant,
+  target: Combatant | undefined,
+  surroundings: Surroundings,
+): number {
+  if (per === undefined) {
+    return base;
   }
-  if (target === undefined) {
-    return 0;
+  const total =
+    base + resolveMagnitude(per.amount, caster) * countOf(per.count, caster, target, surroundings);
+  return per.max === undefined ? total : Math.min(total, resolveMagnitude(per.max, caster));
+}
+
+/** What `rule` counts as an effect of `caster`'s lands on `target` (#1760). */
+function countOf(
+  rule: CountRule,
+  caster: Combatant,
+  target: Combatant | undefined,
+  surroundings: Surroundings,
+): number {
+  switch (rule.kind) {
+    case "statuses": {
+      const bearer = rule.on === "caster" ? caster : target;
+      return bearer === undefined
+        ? 0
+        : rule.categories.reduce(
+            (count, category) => count + bearer.statuses.countByCategory(category),
+            0,
+          );
+    }
+    case "foes-within": {
+      const at = surroundings.get(caster.id)?.position;
+      return at === undefined
+        ? 0
+        : [...surroundings.values()].filter(
+            ({ combatant, position }) =>
+              !combatant.dead &&
+              combatant.team !== caster.team &&
+              distance(position, at) <= rule.radius,
+          ).length;
+    }
   }
-  return categories.reduce(
-    (count, category) => count + target.statuses.countByCategory(category),
-    0,
-  );
 }
 
 /**
@@ -1182,15 +1220,22 @@ export function applyEffect(
         return events;
       }
       // Physical and elemental skill damage respects armor; holy, shadow and
-      // typeless damage ignores it (#760). A conditional bonus joins the
-      // same packet, read as it lands (#977).
+      // typeless damage ignores it (#760). A conditional bonus (#977) and
+      // a count (#1760) join the same packet, read as it lands.
       const bonus = effect.conditionalBonus;
       const amount = perEnergyLost(
         effect,
-        resolveMagnitude(effect.amount, caster) +
-          (bonus !== undefined && stateHolds(bonus.condition, caster, target, context.surroundings)
-            ? resolveMagnitude(bonus.amount, caster)
-            : 0),
+        withPerCount(
+          resolveMagnitude(effect.amount, caster) +
+            (bonus !== undefined &&
+            stateHolds(bonus.condition, caster, target, context.surroundings)
+              ? resolveMagnitude(bonus.amount, caster)
+              : 0),
+          effect.per,
+          caster,
+          target,
+          context.surroundings,
+        ),
         lostBy,
         earlier,
       );
@@ -1245,7 +1290,13 @@ export function applyEffect(
           effect,
           perEnergyLost(
             effect,
-            perUsedSkillEnergy(effect, caster, context.usedSkill),
+            withPerCount(
+              perUsedSkillEnergy(effect, caster, context.usedSkill),
+              effect.per,
+              caster,
+              target,
+              context.surroundings,
+            ),
             lostBy,
             earlier,
           ),

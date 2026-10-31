@@ -260,31 +260,27 @@ describe("heal effect", () => {
   it("restores health", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 300 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
+    applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(400);
   });
 
   it("never exceeds maximum health", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 480 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
+    const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(500);
     expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 20 });
   });
 
   it("emits nothing when already at full health", () => {
     const ctx = context();
-    expect(
-      applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx),
-    ).toEqual([]);
+    expect(applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
   });
 
   it("cannot resurrect a dead target", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 0, dead: true });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    expect(
-      applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx),
-    ).toEqual([]);
+    expect(applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
     expect(target.health).toBe(0);
     expect(target.dead).toBe(true);
   });
@@ -347,11 +343,11 @@ describe("deep wound (#764)", () => {
     const target = woundedAt(200);
     target.statuses.apply("deep-wound", 20, "caster");
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
+    const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(280);
     expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 80 });
     target.health = 350;
-    applyEffect({ kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] }, ctx);
+    applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(384);
   });
 
@@ -528,7 +524,6 @@ describe("energy-loss effect (#793)", () => {
       kind: "heal",
       amount: { flat: 56 },
       recipient: "caster",
-      perStatusOnTarget: [],
       perEnergyLost: true,
     };
     const caster = makeCombatant({ id: "caster", health: 100 });
@@ -653,7 +648,7 @@ describe("applyEffects", () => {
     const events = applyEffects(
       [
         { kind: "sacrifice-health", percentOfMax: 10 },
-        { kind: "heal", amount: { flat: 100 }, perStatusOnTarget: [] },
+        { kind: "heal", amount: { flat: 100 } },
       ],
       ctx,
     );
@@ -996,7 +991,7 @@ describe("if effects (#521)", () => {
     const caster = makeCombatant({ id: "caster", health: 100 });
     const target = makeCombatant({ id: "target", team: 1, health: 100 });
     const events = applyEffect(
-      { kind: "heal", recipient: "caster", amount: { flat: 40 }, perStatusOnTarget: [] },
+      { kind: "heal", recipient: "caster", amount: { flat: 40 } },
       { surroundings: new Map(), caster, target, rng: createRng(1), rules },
     );
     expect(events).toEqual([{ kind: "heal", targetId: "caster", amount: 40 }]);
@@ -1009,7 +1004,6 @@ describe("state conditions (#794)", () => {
   const heal = (flat: number): UnconditionalEffect => ({
     kind: "heal",
     amount: { flat },
-    perStatusOnTarget: [],
   });
   /** Heals 10, and 100 more if `condition` holds. */
   const healIf = (condition: EffectCondition): SkillEffect[] => [
@@ -1561,7 +1555,7 @@ describe("an invulnerable target (#1208)", () => {
   it("is healed by an ally as ever, and says nothing of invulnerability (#1233)", () => {
     const ally = makeCombatant({ id: "target", team: 0, health: 100, invulnerableRemaining: 3 });
     const events = applyEffect(
-      { kind: "heal", amount: { flat: 50 }, perStatusOnTarget: [] },
+      { kind: "heal", amount: { flat: 50 } },
       context(makeCombatant({ id: "caster" }), ally),
     );
     expect(events.some(({ kind }) => kind === "invulnerable")).toBe(false);
@@ -1587,7 +1581,6 @@ describe("removing by what an earlier removal took (#1205)", () => {
   const healPerEnchantment = {
     kind: "heal",
     amount: { flat: 50 },
-    perStatusOnTarget: [],
     perRemoved: "enchantment",
   } as const;
 
@@ -1803,7 +1796,6 @@ describe("perUsedSkillEnergy (#1614)", () => {
         {
           kind: "heal",
           amount: { flat: 3.6 },
-          perStatusOnTarget: [],
           recipient: "caster",
           perUsedSkillEnergy: true,
         },

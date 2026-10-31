@@ -64,4 +64,7 @@ export const DERVISH_ICONS = {
   // Ally threshold mechanics (#1789), stand-ins until their art card.
   "dervish.watchful-intervention": { glyph: "heart-roof", modifier: "half" },
   "dervish.faithful-intervention": { glyph: "heart-roof", modifier: "self" },
+  // "N for each X" (#1760), stand-ins until their art card.
+  "dervish.arcane-zeal": { glyph: "energy-ring", modifier: "plus" },
+  "dervish.mystic-vigor": { glyph: "ring-heal", modifier: "up" },
 };

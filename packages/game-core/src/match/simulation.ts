@@ -1848,7 +1848,7 @@ export class MatchSimulation {
       const effect: SkillEffect =
         burst.effect === "damage"
           ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
-          : { kind: "heal", amount: { flat: amount }, perStatusOnTarget: [] };
+          : { kind: "heal", amount: { flat: amount } };
       const events: CombatEvent[] = [];
       for (const other of this.#participants.values()) {
         const ally = other.combatant.team === spirit.combatant.team;

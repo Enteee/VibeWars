@@ -66,4 +66,6 @@ export const MESMER_ICONS = {
   "mesmer.shatter-delusions": { glyph: "hex-shatter", modifier: "area" },
   // Ally threshold mechanics (#1789), stand-in until its art card.
   "mesmer.illusion-of-weakness": { glyph: "shield-haze", modifier: "down" },
+  // "N for each X" (#1760), stand-ins until their art card.
+  "mesmer.channeling": { glyph: "spark", modifier: "area" },
 };

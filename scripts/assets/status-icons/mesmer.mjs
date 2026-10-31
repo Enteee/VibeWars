@@ -195,4 +195,15 @@ export const MESMER_STATUS_ICONS = {
       `<path d="M12 21s-7-4.2-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 12c0 4.8-7 9-7 9z" ${stroke(c, 1.8)}/>` +
       `<path d="M12 9.5l-1.5 3 3 2-1.5 3" ${stroke(c, 1.6)}/>`,
   ],
+  // "N for each X" (#1760), stand-in until its art card.
+  // Enchantment: a bolt in a ring of foe dots, energy for each foe near.
+  channeling: [
+    "enchantment",
+    (c) =>
+      `<path d="M13 5l-4 7h4l-2 7" ${stroke(c, 2)}/>` +
+      `<circle cx="4" cy="6" r="1.6" fill="${c}"/>` +
+      `<circle cx="20" cy="6" r="1.6" fill="${c}"/>` +
+      `<circle cx="4" cy="18" r="1.6" fill="${c}"/>` +
+      `<circle cx="20" cy="18" r="1.6" fill="${c}"/>`,
+  ],
 };

@@ -45,6 +45,7 @@ import type {
   EnergyGainEffect,
   HealEffect,
   Magnitude,
+  PerCount,
   Skill,
   SkillEffect,
   SkillType,
@@ -1722,6 +1723,46 @@ function perOwnCreatureText(effect: EnergyGainEffect, ranks: ReadonlyMap<string,
   return ` for every summoned creature you control ${where} (maximum ${String(max)} Energy)`;
 }
 
+/** The line's scaled number: a zero base's `per` amount (#1760), else the base. */
+function countedMagnitude(
+  base: Magnitude,
+  per: PerCount | undefined,
+  ranks: ReadonlyMap<string, number>,
+): MagnitudeDescription {
+  return describeMagnitude(
+    per !== undefined && "flat" in base && base.flat === 0 ? per.amount : base,
+    ranks,
+  );
+}
+
+/**
+ * `text`, the effect's own amount, with its `per` (#1760) in the
+ * corpus's words: "Deals 60 shadow damage, +20 shadow damage for each
+ * enchantment on them". With a zero base, the count alone: `alone` and
+ * `unit` round the per amount, as "You gain 68 Health" and " Health".
+ */
+function withPerText(
+  text: string,
+  base: Magnitude,
+  per: PerCount | undefined,
+  ranks: ReadonlyMap<string, number>,
+  words: { readonly alone: string; readonly unit: string; readonly onTarget: string },
+): string {
+  if (per === undefined) {
+    return text;
+  }
+  const amount = String(describeMagnitude(per.amount, ranks).current);
+  const { count } = per;
+  const what =
+    count.kind === "statuses"
+      ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : words.onTarget}`
+      : `foe ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+  const max =
+    per.max === undefined ? "" : ` (maximum ${String(describeMagnitude(per.max, ranks).current)})`;
+  const each = `${amount}${words.unit} for each ${what}${max}`;
+  return "flat" in base && base.flat === 0 ? `${words.alone} ${each}` : `${text}, +${each}`;
+}
+
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
 function upToText(effect: EnergyGainEffect): string {
   return effect.upTo === undefined ? "" : `, never above ${String(effect.upTo)}`;
@@ -1743,7 +1784,7 @@ function describeEffect(
 ): EffectDescription {
   switch (effect.kind) {
     case "damage": {
-      const magnitude = describeMagnitude(effect.amount, ranks);
+      const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       const penetration =
         effect.armorPenetration > 0
           ? ` (${String(Math.round(effect.armorPenetration * 100))}% armor penetration)`
@@ -1751,43 +1792,56 @@ function describeEffect(
       const text = `Deals ${String(magnitude.current)}${typeWord(effect.type)} damage${perPointLost(effect)}${penetration}`;
       // Mystic Twister's "if you are enchanted, 50 more" (#977).
       const bonus = effect.conditionalBonus;
+      const counted = withPerText(text, effect.amount, effect.per, ranks, {
+        alone: "Deals",
+        unit: `${typeWord(effect.type)} damage`,
+        onTarget: "on them",
+      });
       return {
         text:
           bonus === undefined
-            ? text
-            : `${text}; ${lowerFirst(conditionText(bonus.condition))}: +${String(describeMagnitude(bonus.amount, ranks).current)}`,
+            ? counted
+            : `${counted}; ${lowerFirst(conditionText(bonus.condition))}: +${String(describeMagnitude(bonus.amount, ranks).current)}`,
         magnitude,
       };
     }
     case "heal": {
-      const magnitude = describeMagnitude(effect.amount, ranks);
+      const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       const amount = String(magnitude.current);
       const text =
-        effect.perStatusOnTarget.length > 0
-          ? `+${amount} Health for each ${effect.perStatusOnTarget.join(" or ")} on target ally`
-          : effect.perRemoved !== undefined
-            ? `Heals ${amount} for each ${effect.perRemoved} removed`
-            : effect.perDestroyedSpirit === true
-              ? `Heals ${amount} for each spirit destroyed`
-              : effect.perEnergyLost === true
-                ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
-                : effect.perUsedSkillEnergy === true
-                  ? `Heals for ${percentOf(magnitude.current)} of the spell's energy cost`
-                  : effect.recipient === "caster"
-                    ? `You gain ${amount} health`
-                    : `Heals for ${amount}`;
-      return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
+        effect.perRemoved !== undefined
+          ? `Heals ${amount} for each ${effect.perRemoved} removed`
+          : effect.perDestroyedSpirit === true
+            ? `Heals ${amount} for each spirit destroyed`
+            : effect.perEnergyLost === true
+              ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
+              : effect.perUsedSkillEnergy === true
+                ? `Heals for ${percentOf(magnitude.current)} of the spell's energy cost`
+                : effect.recipient === "caster"
+                  ? `You gain ${amount} health`
+                  : `Heals for ${amount}`;
+      const counted = withPerText(text, effect.amount, effect.per, ranks, {
+        alone: effect.recipient === "caster" ? "You gain" : "Heals",
+        unit: " Health",
+        onTarget: effect.recipient === "caster" ? "on target foe" : "on them",
+      });
+      return { text: `${counted}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
-      const magnitude = describeMagnitude(effect.amount, ranks);
+      const magnitude = countedMagnitude(
+        effect.amount,
+        effect.toTarget === true ? undefined : effect.per,
+        ranks,
+      );
       if (effect.toTarget !== true && effect.perUsedSkillEnergy === true) {
         return {
           text: `Gain ${percentOf(magnitude.current)} of the skill's base energy cost`,
           magnitude,
         };
       }
+      const text = `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}`;
       return {
-        text: `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
+        text: `${effect.toTarget === true ? text : withPerText(text, effect.amount, effect.per, ranks, { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
         magnitude,
       };
     }

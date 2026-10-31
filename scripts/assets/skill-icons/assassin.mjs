@@ -66,4 +66,6 @@ export const ASSASSIN_ICONS = {
   "assassin.impale": { glyph: "dagger-spikes" },
   "assassin.siphon-speed": { glyph: "chevrons-siphon", modifier: "up" },
   "assassin.way-of-the-fox": { glyph: "fox-head", modifier: "clock" },
+  // "N for each X" (#1760), stand-ins until their art card.
+  "assassin.sadists-signet": { glyph: "signet-plus", modifier: "bleed" },
 };

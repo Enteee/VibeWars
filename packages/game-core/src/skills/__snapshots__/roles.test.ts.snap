@@ -46,6 +46,7 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.nine-tail-strike": "",
   "assassin.palm-strike": "condition",
   "assassin.repeating-strike": "",
+  "assassin.sadists-signet": "healing",
   "assassin.shadow-prison": "hex",
   "assassin.shadow-refuge": "healing",
   "assassin.shattering-assault": "",
@@ -74,6 +75,7 @@ exports[`skillRoles > tags every common skill the same way every time 1`] = `
 
 exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
 {
+  "dervish.arcane-zeal": "",
   "dervish.aura-of-thorns": "condition",
   "dervish.aura-slicer": "condition",
   "dervish.avatar-of-balthazar": "",
@@ -104,6 +106,7 @@ exports[`skillRoles > tags every dervish skill the same way every time 1`] = `
   "dervish.mystic-sandstorm": "",
   "dervish.mystic-sweep": "",
   "dervish.mystic-twister": "",
+  "dervish.mystic-vigor": "",
   "dervish.onslaught": "",
   "dervish.pious-assault": "",
   "dervish.pious-fury": "",
@@ -218,6 +221,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.arcane-echo": "",
   "mesmer.backfire": "hex",
   "mesmer.blackout": "",
+  "mesmer.channeling": "",
   "mesmer.clumsiness": "hex",
   "mesmer.conjure-phantasm": "hex",
   "mesmer.crippling-anguish": "hex",
@@ -364,7 +368,9 @@ exports[`skillRoles > tags every necromancer skill the same way every time 1`] =
   "necromancer.dark-pact": "",
   "necromancer.deathly-chill": "",
   "necromancer.defile-defenses": "hex",
+  "necromancer.defile-enchantments": "",
   "necromancer.defile-flesh": "hex",
+  "necromancer.desecrate-enchantments": "",
   "necromancer.enfeeble": "condition",
   "necromancer.enfeebling-blood": "condition",
   "necromancer.enfeebling-touch": "condition",
@@ -715,6 +721,7 @@ exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
   "warrior.sun-and-moon-slash": "",
   "warrior.swift-chop": "condition",
   "warrior.triple-chop": "",
+  "warrior.victory-is-mine": "healing",
   "warrior.warriors-endurance": "",
   "warrior.watch-yourself": "defence",
 }
