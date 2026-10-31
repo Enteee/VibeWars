@@ -7,6 +7,7 @@ import {
   type CombatEvent,
   type CombatLogEntry,
   type SkillEffect,
+  unmetConditionText,
 } from "@vibewars/game-core";
 
 /**
@@ -61,12 +62,15 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
       return "heal";
     case "energy-gain":
     case "energy-loss":
+    case "adrenaline-gained":
       return "resource";
     case "status-applied":
     case "status-removed":
     case "status-expired":
     case "status-spread":
     case "upkeep-lost":
+    case "skill-used":
+    case "effect-skipped":
       return "status";
     case "interrupted":
     case "attack-interrupted":
@@ -147,6 +151,9 @@ export function describeCombatEvent(
   nameOf: (id: string) => string,
   isCreature: (id: string) => boolean,
 ): string {
+  if (event.kind === "skill-used" || event.kind === "effect-skipped") {
+    return describeUse(event, nameOf);
+  }
   const target = nameOf(event.targetId);
   const skill = skillName(entry.skillId);
   const source = entry.sourceId === undefined ? undefined : nameOf(entry.sourceId);
@@ -255,7 +262,31 @@ export function describeCombatEvent(
       return `${target} shadow steps away`;
     case "teleported":
       return `${target} is teleported to ${nameOf(event.toId)}`;
+    case "adrenaline-gained":
+      return `${target} gains ${strikesText(event.strikes)} of adrenaline${event.skillId === undefined ? "" : ` (${skillName(event.skillId) ?? event.skillId})`}`;
   }
+}
+
+/**
+ * A skill's use (#1735): who used it, at whom unless themselves; or that
+ * it did nothing, and why, in the tooltip's words for its `if` the other
+ * way round.
+ */
+function describeUse(
+  event: Extract<CombatEvent, { kind: "skill-used" | "effect-skipped" }>,
+  nameOf: (id: string) => string,
+): string {
+  const skill = skillName(event.skillId) ?? event.skillId;
+  if (event.kind === "effect-skipped") {
+    return `${skill}: no effect, ${unmetConditionText(event.condition)}`;
+  }
+  const at = event.targetId === undefined ? "" : ` on ${nameOf(event.targetId)}`;
+  return `${nameOf(event.casterId)} uses ${skill}${at}`;
+}
+
+/** "1 strike", "2 strikes". */
+function strikesText(strikes: number): string {
+  return `${String(strikes)} ${strikes === 1 ? "strike" : "strikes"}`;
 }
 
 export function combatEventToRow(
@@ -307,7 +338,23 @@ export class StatusTickBatcher {
     isCreature: (id: string) => boolean,
   ): LogRow[] {
     const rows = this.advance(entry.atSeconds, nameOf, isCreature);
+    const ownFrom = rows.length;
     for (const event of entry.events) {
+      // A blow's strikes end its own row (#1735), ", +1 adrenaline", so
+      // a fight's every swing does not add one of its own.
+      const last = rows.at(-1);
+      if (
+        event.kind === "adrenaline-gained" &&
+        event.skillId === undefined &&
+        rows.length > ownFrom &&
+        last !== undefined
+      ) {
+        rows[rows.length - 1] = {
+          ...last,
+          text: `${last.text}, +${String(event.strikes)} adrenaline`,
+        };
+        continue;
+      }
       if (entry.cause !== "degeneration") {
         // A skill or a swing can finish off someone still ticking too.
         if (event.kind === "death") {

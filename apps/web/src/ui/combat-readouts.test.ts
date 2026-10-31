@@ -988,3 +988,83 @@ describe("StatusTickBatcher (#151)", () => {
     ]);
   });
 });
+
+describe("a skill's use in the log (#1735)", () => {
+  const texts = (rows: readonly LogRow[]) => rows.map((row) => row.text);
+  const glowing = entry([], { skillId: "paragon.glowing-signet" });
+
+  it("a use, at a target or at nobody", () => {
+    const at: CombatEvent = {
+      kind: "skill-used",
+      casterId: "you",
+      skillId: "paragon.glowing-signet",
+      targetId: "dummy",
+    };
+    const own: CombatEvent = {
+      kind: "skill-used",
+      casterId: "priest/0",
+      skillId: "monk.healing-breeze",
+      targetId: undefined,
+    };
+    expect(describeCombatEvent(glowing, at, nameOf, isCreature)).toBe(
+      "Pyro uses Glowing Signet on Caster dummy",
+    );
+    expect(describeCombatEvent(glowing, own, nameOf, isCreature)).toBe(
+      "Priest uses Healing Breeze",
+    );
+    expect(logToneOf("skill-used")).toBe("status");
+  });
+
+  it("strikes a skill gave, named for it", () => {
+    const gained: CombatEvent = {
+      kind: "adrenaline-gained",
+      targetId: "you",
+      strikes: 2,
+      skillId: "paragon.signet-of-aggression",
+    };
+    expect(describeCombatEvent(glowing, gained, nameOf, isCreature)).toBe(
+      "Pyro gains 2 strikes of adrenaline (Signet of Aggression)",
+    );
+    expect(logToneOf("adrenaline-gained")).toBe("resource");
+  });
+
+  it("a use that did nothing says why, in the tooltip's words turned round", () => {
+    const skipped = (condition: Extract<CombatEvent, { kind: "effect-skipped" }>["condition"]) =>
+      describeCombatEvent(
+        glowing,
+        {
+          kind: "effect-skipped",
+          casterId: "you",
+          skillId: "paragon.glowing-signet",
+          targetId: "dummy",
+          condition,
+        },
+        nameOf,
+        isCreature,
+      );
+    expect(skipped({ kind: "target-has-status", statusId: "burning" })).toBe(
+      "Glowing Signet: no effect, the target does not have Burning",
+    );
+    expect(skipped({ kind: "caster-has", category: "stance" })).toBe(
+      "Glowing Signet: no effect, you have no stance",
+    );
+    expect(skipped({ kind: "target-moving" })).toBe(
+      "Glowing Signet: no effect, the target is not moving",
+    );
+    expect(logToneOf("effect-skipped")).toBe("status");
+  });
+
+  it("a weapon's strikes end its hit's row, so a swing adds no row of its own", () => {
+    const batcher = new StatusTickBatcher();
+    const swing = entry(
+      [
+        { kind: "damage", targetId: "dummy", amount: 12, critical: false },
+        { kind: "adrenaline-gained", targetId: "you", strikes: 1, skillId: undefined },
+      ],
+      { cause: "weapon", skillId: undefined, weaponId: "sword" },
+    );
+    expect(texts(batcher.push(swing, nameOf, isCreature))).toEqual([
+      "Sword (Pyro) hits Caster dummy for 12, +1 adrenaline",
+    ]);
+  });
+});

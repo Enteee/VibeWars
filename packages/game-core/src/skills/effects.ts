@@ -5,7 +5,7 @@ import {
   SPAWNING_POWER_ATTRIBUTE,
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
-import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
+import { emptyAdrenaline, emptyPool, fillPools, pushAdrenalineGained } from "./adrenaline.js";
 import { isAttacking } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
@@ -261,7 +261,41 @@ export type CombatEvent =
    * Teleported (#474): `targetId` is put beside `toId`, as Rebirth brings
    * its ally to the caster. The simulation places the body.
    */
-  | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string };
+  | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string }
+  /**
+   * A skill `casterId` used that went off (#1735): paid for and resolved,
+   * at `targetId` if it had one. Not for a press refused, queued,
+   * interrupted or failed.
+   */
+  | {
+      readonly kind: "skill-used";
+      readonly casterId: string;
+      readonly skillId: string;
+      readonly targetId: string | undefined;
+    }
+  /**
+   * Strikes of adrenaline `targetId` gained (#1735): from `skillId`'s
+   * effect, or from a weapon hit when `undefined`. Only for someone with
+   * an adrenaline skill to fill.
+   */
+  | {
+      readonly kind: "adrenaline-gained";
+      readonly targetId: string;
+      readonly strikes: number;
+      readonly skillId: string | undefined;
+    }
+  /**
+   * A use of `skillId` by `casterId` that did nothing because `condition`,
+   * the first of its effects' that did not hold, did not (#1735).
+   */
+  | {
+      readonly kind: "effect-skipped";
+      readonly casterId: string;
+      readonly skillId: string;
+      /** The use's primary target, if it had one. */
+      readonly targetId: string | undefined;
+      readonly condition: EffectCondition;
+    };
 
 /**
  * Apply an already-mitigated amount, clamping at 0 and flagging death
@@ -1173,6 +1207,7 @@ export function applyEffect(
 
     case "adrenaline-gain": {
       fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE);
+      pushAdrenalineGained(caster, effect.strikes, context.skillId, events);
       return events;
     }
 
@@ -2183,6 +2218,7 @@ export function resolveSkillEffects(
   let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
+  let skipped: EffectCondition | undefined;
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
     for (const target of on) {
@@ -2197,7 +2233,11 @@ export function resolveSkillEffects(
         profession: skill.profession,
       };
       const before = [...earlier, ...events];
-      for (const inner of landing(effect, context, before, states)) {
+      const landed = landing(effect, context, before, states);
+      if (effect.kind === "if" && landed.length === 0) {
+        skipped ??= effect.condition;
+      }
+      for (const inner of landed) {
         if (inner.kind === "recharge-faster") {
           rechargeFraction = Math.max(rechargeFraction, inner.fraction);
         }
@@ -2224,9 +2264,20 @@ export function resolveSkillEffects(
       }
     }
   }
+  const primary = targets[0];
+  // A use that did nothing because an `if` did not hold says which
+  // (#1735); one that did anything, its blow included, says nothing.
+  if (skipped !== undefined && earlier.length === 0 && events.length === 0) {
+    events.push({
+      kind: "effect-skipped",
+      casterId: caster.id,
+      skillId: skill.id,
+      targetId: primary === undefined || primary === caster ? undefined : primary.id,
+      condition: skipped,
+    });
+  }
   // Divine Favor (#529): once a cast, on the primary target only, after
   // the spell's own effects, through the same heal path.
-  const primary = targets[0];
   if (primary !== undefined) {
     applyHeal(
       primary,

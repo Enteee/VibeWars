@@ -23,6 +23,7 @@ export {
   chainRequirementText,
   neededWeaponText,
   overcastText,
+  unmetConditionText,
 } from "./describe.js";
 
 export type { MissingMechanic, SkillCoverage, UnimplementedSkill } from "./coverage.js";

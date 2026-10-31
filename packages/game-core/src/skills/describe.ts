@@ -2158,6 +2158,20 @@ export function chainRequirementText(skill: Skill): string | undefined {
   return parts.length === 0 ? undefined : parts.join("; ");
 }
 
+/**
+ * Why a use whose `if` did not hold did nothing (#1735), lower case for
+ * the middle of a line, from the same words as the tooltip's: "the
+ * target does not have Burning", "you have no stance".
+ */
+export function unmetConditionText(condition: EffectCondition): string {
+  const negated = negatedText(conditionText(condition));
+  return negated.startsWith("If ")
+    ? negated.replace(/^If (target )?/, (_, target?: string) =>
+        target === undefined ? "" : "the target ",
+      )
+    : `not met: ${lowerFirst(conditionText(condition).replace(/^If /, ""))}`;
+}
+
 const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {
   axe: "an axe",
   sword: "a sword",

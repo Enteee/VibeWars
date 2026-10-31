@@ -299,7 +299,11 @@ export function sameSkillBar(
   );
 }
 
-function wireEvent(event: CombatEvent): WireCombatEvent {
+/**
+ * An event as the wire carries it, or `undefined` for one only the
+ * Training Ground's log reads (#1735), which a match never shows.
+ */
+function wireEvent(event: CombatEvent): WireCombatEvent | undefined {
   const none = {
     amount: null,
     skillId: null,
@@ -418,6 +422,10 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
     case "attack-interrupted":
     case "shadow-stepped-away":
       return { ...none, kind: event.kind, targetId: event.targetId };
+    case "skill-used":
+    case "adrenaline-gained":
+    case "effect-skipped":
+      return undefined;
   }
 }
 
@@ -429,7 +437,8 @@ function wireEvent(event: CombatEvent): WireCombatEvent {
 export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
   return log.flatMap((entry) => {
     const first = entry.events[0];
-    if (first === undefined) {
+    const events = entry.events.flatMap((event) => wireEvent(event) ?? []);
+    if (first === undefined || events.length === 0) {
       return [];
     }
     return [
@@ -441,7 +450,7 @@ export function wireCombat(log: readonly CombatLogEntry[]): WireCombat[] {
         attributeId: entry.attributeId ?? "",
         area: entry.area ?? null,
         doubleStrike: entry.doubleStrike,
-        events: entry.events.map(wireEvent),
+        events,
       },
     ];
   });

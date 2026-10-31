@@ -83,6 +83,7 @@ import {
   dropEndedCopyPools,
   gainUnits,
   losesAllAdrenaline,
+  pushAdrenalineGained,
 } from "../skills/adrenaline.js";
 import {
   CastState,
@@ -2483,7 +2484,7 @@ export class MatchSimulation {
       attributeId: undefined,
       area: undefined,
       doubleStrike: false,
-      events: [],
+      events: [{ kind: "skill-used", casterId: record.id, skillId: skill.id, targetId: undefined }],
     });
   }
 
@@ -3323,7 +3324,10 @@ export class MatchSimulation {
     const team = record.combatant.team;
     const affected = new Set(
       events
-        .map((event) => event.targetId)
+        // What it was used at is not what it reached (#1735).
+        .flatMap((event) =>
+          event.kind === "skill-used" || event.kind === "effect-skipped" ? [] : [event.targetId],
+        )
         .filter((id) => this.#participants.get(id)?.combatant.team === team),
     );
     const rank = rankOf(record.combatant, LEADERSHIP_ATTRIBUTE);
@@ -3466,7 +3470,7 @@ export class MatchSimulation {
             : [];
         }),
       );
-      this.#gainAdrenaline(record, landed, foesHit.size);
+      this.#gainAdrenaline(record, landed, events, skill.id, foesHit.size);
     }
     if (skill.type === "shout" || skill.type === "chant") {
       this.#gainLeadershipEnergy(record, events);
@@ -3547,6 +3551,13 @@ export class MatchSimulation {
         record.combatant.cast.disable(cast.key, skill.disabledAfterUseSeconds);
       }
     }
+    // Its use first (#1735): at whom, unless that is its user.
+    const use: CombatEvent = {
+      kind: "skill-used",
+      casterId: record.id,
+      skillId: skill.id,
+      targetId: primary === undefined || primary === record ? undefined : primary.id,
+    };
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
@@ -3557,7 +3568,7 @@ export class MatchSimulation {
       attributeId: undefined,
       area,
       doubleStrike: false,
-      events,
+      events: [use, ...events],
     });
     this.#logFired(riders);
     // After the skill's own effects, as their own entries (#469): a spell
@@ -4683,7 +4694,7 @@ export class MatchSimulation {
       rules: this.#ruleset.combat,
       exposed: this.#exposedTo(record),
     });
-    this.#gainAdrenaline(record, events, landed);
+    this.#gainAdrenaline(record, events, events, undefined, landed);
     this.#chargeFromDamage(record.combatant, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
@@ -5004,7 +5015,7 @@ export class MatchSimulation {
       !blocked &&
       (skillHit === undefined || !losesAllAdrenaline(skillHit.skill))
     ) {
-      this.#gainAdrenaline(attacker, events);
+      this.#gainAdrenaline(attacker, events, events, skillHit?.skill.id);
     }
     this.#chargeFromDamage(attacker?.combatant, events);
     this.#recordDeaths(events);
@@ -5283,16 +5294,25 @@ export class MatchSimulation {
    * of a swing, so
    * a double strike earns two. A blocked blow deals no damage, so it earns
    * nothing (#534). "For Great Justice!" (#936) adds its extra strikes
-   * to each.
+   * to each. What it gained goes onto `into`, from `skillId`, or a
+   * weapon's blow when `undefined` (#1735).
    */
-  #gainAdrenaline(record: ParticipantRecord, events: readonly CombatEvent[], blows = 1): void {
+  #gainAdrenaline(
+    record: ParticipantRecord,
+    events: readonly CombatEvent[],
+    into: CombatEvent[],
+    skillId: string | undefined,
+    blows = 1,
+  ): void {
     const damagedFoe = events.some((event) => {
       const victim = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
       return victim !== undefined && victim.combatant.team !== record.combatant.team;
     });
     if (damagedFoe) {
       const { extraStrikesPerHit } = aggregateModifiers(record.combatant.statuses.active);
-      gainStrikes(record.combatant, blows * (1 + extraStrikesPerHit), this.#elapsedSeconds);
+      const strikes = blows * (1 + extraStrikesPerHit);
+      gainStrikes(record.combatant, strikes, this.#elapsedSeconds);
+      pushAdrenalineGained(record.combatant, strikes, skillId, into);
     }
   }
 
@@ -5955,7 +5975,7 @@ export class MatchSimulation {
         continue;
       }
       for (const event of entry.events) {
-        const lord = this.#participants.get(event.targetId);
+        const lord = event.kind === "damage" ? this.#participants.get(event.targetId) : undefined;
         if (
           event.kind === "damage" &&
           lord?.creature?.kind === "guild-lord" &&

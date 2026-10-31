@@ -57,7 +57,9 @@ skill types to narrow it. Skills of other professions wait, folded, under
 have yet, greyed out. You can read them, not equip them.
 
 Beside the editor, the **Training Ground** lets you try your bar on
-practice targets before a match.
+practice targets before a match. Its log shows every skill used, the
+adrenaline you gain, and a skill that had no effect, with why: "Glowing
+Signet: no effect, the target does not have Burning".
 
 ## Item spells
 

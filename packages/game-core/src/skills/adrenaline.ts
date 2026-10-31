@@ -10,6 +10,7 @@ import { ADRENALINE_PER_STRIKE } from "../ruleset.js";
 import { isCopyKey, skillIdOfKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { aggregateModifiers } from "./status.js";
+import type { CombatEvent } from "./effects.js";
 import type { Combatant, Skill } from "./types.js";
 
 /** The units `skill` needs, and the most its pool holds: 0 for any other cost. */
@@ -47,6 +48,22 @@ export function fillPools(combatant: Combatant, units: number): void {
 /** Give `strikes` strikes to every adrenaline skill of `combatant`, as `gainUnits`. */
 export function gainStrikes(combatant: Combatant, strikes: number, atSeconds: number): void {
   gainUnits(combatant, strikes * ADRENALINE_PER_STRIKE, atSeconds);
+}
+
+/**
+ * Log `strikes` gained by `combatant` from `skillId`, or a weapon's blow
+ * when `undefined` (#1735), onto `events`: only when it has an adrenaline
+ * skill to fill, so nobody else's log fills with strikes they cannot use.
+ */
+export function pushAdrenalineGained(
+  combatant: Combatant,
+  strikes: number,
+  skillId: string | undefined,
+  events: CombatEvent[],
+): void {
+  if (strikes > 0 && combatant.adrenaline.size > 0) {
+    events.push({ kind: "adrenaline-gained", targetId: combatant.id, strikes, skillId });
+  }
 }
 
 /** Whether using `skill` loses all adrenaline (#1097), GW1's Hammer Bash. */

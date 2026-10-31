@@ -88,7 +88,7 @@ export function impactsFor(message: CombatMessage): readonly Impact[] {
   const effects = new Map<string, Set<"harm" | "condition" | "help">>();
   for (const event of message.events) {
     const effect = effectOf(event);
-    if (effect === undefined) {
+    if (effect === undefined || event.targetId === undefined) {
       continue;
     }
     const seen = effects.get(event.targetId) ?? new Set();
