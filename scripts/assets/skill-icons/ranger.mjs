@@ -78,4 +78,6 @@ export const RANGER_ICONS = {
   "ranger.conflagration": { glyph: "totem", modifier: "area" },
   "ranger.predatory-season": { glyph: "totem", modifier: "bleed" },
   "ranger.winter": { glyph: "totem", modifier: "hourglass" },
+  // The not condition (#1670, #1715): what the foe lacks, struck through.
+  "ranger.sloth-hunters-shot": { glyph: "arrow-idle" },
 };
