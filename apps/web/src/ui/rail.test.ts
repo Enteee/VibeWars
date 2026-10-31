@@ -6,6 +6,8 @@ import {
   RAIL,
   loadRail,
   modeRail,
+  redrawModeRail,
+  redrawsOnLobbyChange,
   railScreen,
   saveRail,
   setRailParty,
@@ -153,6 +155,38 @@ describe("the mode rail (#1525)", () => {
     });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
     expect(rail.children.some((child) => child.attributes.has("aria-disabled"))).toBe(false);
+  });
+
+  it("draws a mode's screen again on a lobby change, and a builder's only when another entry is due (#1790)", () => {
+    expect(redrawsOnLobbyChange("gvg", "gvg")).toBe(true);
+    expect(redrawsOnLobbyChange("team-arena", "gvg")).toBe(true);
+    expect(redrawsOnLobbyChange("random-arena", "random-arena")).toBe(true);
+    expect(redrawsOnLobbyChange("teams", "teams")).toBe(false);
+    expect(redrawsOnLobbyChange("characters", "characters")).toBe(false);
+    expect(redrawsOnLobbyChange("teams", "gvg")).toBe(true);
+  });
+
+  it("swaps a builder's rail alone for the party's locks (#1790)", () => {
+    const old = new FakeElement("nav");
+    let replacement: FakeElement | undefined;
+    const root = {
+      querySelector: (selector: string) => (selector === ".mode-rail" ? old : null),
+    };
+    Object.assign(old, {
+      contains: () => false,
+      replaceWith: (next: FakeElement) => {
+        replacement = next;
+      },
+    });
+    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: false, open: false, members: [] });
+    redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
+    const locked = replacement?.children.filter((child) => child.attributes.has("aria-disabled"));
+    expect(locked?.map((child) => child.attributes.get("data-entry"))).toEqual([
+      "random-arena",
+      "team-arena",
+      "heroes-ascent",
+      "hosted-game",
+    ]);
   });
 
   it("shows no party strip while the player is alone, and the strip once someone joins (#1782)", () => {
