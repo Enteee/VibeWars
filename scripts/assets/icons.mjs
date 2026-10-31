@@ -2743,7 +2743,7 @@ const skillGlyph = {
     inkLine("M10 14L17 7", 2.2) +
     inkFill("M22 2.5L13.5 4.5L19.5 10.5Z") +
     `<path d="M2 10H8.5a2.5 2.5 0 1 0-2.5-2.5" ${stroke(C.ink, 1.8)}/>` +
-    `<path d="M2 15.5H7M2 20H10a2.3 2.3 0 1 1-2.3 2.3" ${stroke(C.ink, 1.8)}/>`,
+    `<path d="M2 14H7M2 18.5H9.5a2.2 2.2 0 1 1-2.2 2.2" ${stroke(C.ink, 1.8)}/>`,
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +
