@@ -449,7 +449,8 @@ describe("a lobby, when the host's peer drops during its match", () => {
 
     vi.setSystemTime(Date.now() + WINDOW_MS + 1000);
     lobby.network.heal();
-    await settle();
+    // Heard once it has proven the key again (#1681): an HMAC, on the event loop.
+    await until(() => closed.length > 0);
 
     expect(closed).toEqual(["connection-lost"]);
   });
