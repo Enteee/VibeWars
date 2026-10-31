@@ -33,6 +33,10 @@ A skill you press while using another, or in that pause, is **queued**:
 it goes next, and its slot pulses until it does. Only one waits; pressing
 another replaces it. Moving, Esc, an interrupt or a knockdown drops it.
 
+**Shouts and stances** are never queued: they go off at once, even while
+you cast another skill, in that pause, or knocked down. The cast keeps
+going. Used so, they do not walk you in: out of range, they are refused.
+
 ## Interrupts and knockdown
 
 An **interrupt** stops a foe's skill while they are casting it. Their
@@ -44,8 +48,8 @@ lands and the swing starts over. A foe still walking up to its target
 has nothing to interrupt. An interrupt whose card says "a skill" or "a
 spell" leaves a plain attack alone.
 
-**Knocked down**, you cannot move, attack or cast for a moment, and a
-cast in progress fails.
+**Knocked down**, you cannot move, attack or use a skill for a moment,
+except a shout or a stance, and a cast in progress fails.
 
 ## Conditions, hexes and enchantments
 

@@ -116,6 +116,25 @@ describe("canActivate", () => {
     });
   });
 
+  it("accepts a shout or a stance mid-cast or knocked down, never dead (#1725)", () => {
+    const down = makeCombatant({ id: "caster", knockdownRemaining: 2 });
+    const dead = makeCombatant({ id: "caster", dead: true });
+    for (const type of ["shout", "stance"] as const) {
+      const skill: Skill = { ...SPELL, type, activationSeconds: 0 };
+      expect(canActivate(request({ skill, isCasting: true }))).toEqual({ ok: true });
+      expect(canActivate(request({ skill, caster: down }))).toEqual({ ok: true });
+      expect(canActivate(request({ skill, caster: dead }))).toEqual({
+        ok: false,
+        reason: "caster-dead",
+      });
+    }
+    const signet: Skill = { ...SPELL, type: "signet", activationSeconds: 0 };
+    expect(canActivate(request({ skill: signet, isCasting: true }))).toEqual({
+      ok: false,
+      reason: "already-casting",
+    });
+  });
+
   it("rejects insufficient energy", () => {
     const caster = makeCombatant({ id: "caster", energy: 9 });
     expect(canActivate(request({ caster }))).toEqual({
