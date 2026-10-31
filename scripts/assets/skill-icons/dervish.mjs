@@ -59,4 +59,13 @@ export const DERVISH_ICONS = {
   "dervish.zealous-vow": { glyph: "energy", modifier: "hourglass" },
   "dervish.featherfoot-grace": { glyph: "haste-clean", modifier: "plus" },
   "dervish.whirling-charge": { glyph: "dash", modifier: "bolt" },
+  // Dervish staples 2 (#1604, #1645): three scythe riders; the rest take their statuses' shapes.
+  "dervish.irresistible-sweep": { glyph: "scythe-unblock" },
+  "dervish.crippling-sweep": { glyph: "scythe-limp" },
+  "dervish.rending-sweep": { glyph: "scythe-rend" },
+  "dervish.pious-fury": { glyph: "slash-trio" },
+  "dervish.zealous-renewal": { glyph: "spark-bars" },
+  "dervish.mirage-cloak": { glyph: "shield-haze" },
+  "dervish.vital-boon": { glyph: "heart-roof" },
+  "dervish.guiding-hands": { glyph: "hand-arrow" },
 };
