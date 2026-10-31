@@ -629,6 +629,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seat.droppedAt = undefined;
     seat.token = newToken();
     seatOfPeer.set(peerId, seat);
+    tellSeat(seat, peerId);
+  };
+
+  /** `seat`'s welcome, and all a player needs to play it, to `peerId`. */
+  const tellSeat = (seat: Seat, peerId: string): void => {
     const message: PeerWelcome = {
       protocolVersion: PROTOCOL_VERSION,
       playerId: seat.playerId,
@@ -815,7 +820,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   const join = (hello: PeerHello, from: string): void => {
     const current = seatOfPeer.get(from);
     if (current !== undefined) {
-      // Already seated, and not asking for its own seat back.
+      // Already seated, and not asking for its own seat back: its hello
+      // said again (#1805), so the welcome it got may be lost. The same
+      // seat and token again, never a second body.
+      tellSeat(current, from);
       return;
     }
     // A wrong or expired token is a fresh join, and only for a peer the

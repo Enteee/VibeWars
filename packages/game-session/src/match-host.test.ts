@@ -7,6 +7,7 @@ import {
 import {
   MAX_LOBBY_PLAYERS,
   MAX_WIRE_STATUSES,
+  parsePeerWelcome,
   parseWireEnded,
   type PeerHello,
   type WireCape,
@@ -520,5 +521,27 @@ describe("a lobby's bots (#1193)", () => {
       await match.step(0.1);
     }
     expect(targetOf()).toBe(monk);
+  });
+});
+
+describe("a hello said again (#1805)", () => {
+  it("seats its peer once, and welcomes it to the same seat, token and all, each time", async () => {
+    const match = startMatch();
+    const local = await match.joinLocal();
+    const transport = match.network.join();
+    await settle();
+    const welcomes: string[] = [];
+    transport.on("welcome", (data) => {
+      const welcome = parsePeerWelcome(data);
+      welcomes.push(`${welcome?.playerId ?? ""} ${welcome?.rejoinToken ?? ""}`);
+    });
+    for (let i = 0; i < 3; i += 1) {
+      transport.send("hello", hello(), "host");
+      await settle();
+    }
+    await match.step(0.05);
+    expect(welcomes).toHaveLength(3);
+    expect(new Set(welcomes).size).toBe(1);
+    expect(local.getSnapshot().players).toHaveLength(2);
   });
 });
