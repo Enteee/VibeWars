@@ -2,8 +2,9 @@ import type { LobbyMode } from "@vibewars/game-protocol";
 
 import type { StoredTeam } from "../storage/schema.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
-import { teamMemberRow } from "./character-preview.js";
-import { button, h, listenForPaste, playCard, screenBar } from "./kit.js";
+import { lookOfCharacter, teamFigureCard } from "./character-card.js";
+import { professionLabel } from "./character-preview.js";
+import { button, h, listenForPaste, screenBar } from "./kit.js";
 import type { LobbyPanel } from "./lobby-screen.js";
 import { railScreen, type RailEntry } from "./rail.js";
 
@@ -49,17 +50,6 @@ export interface TeamPlayCallbacks {
   readonly onPasteTeam: (text: string) => void;
 }
 
-/** A Team Build's characters, a row each: ball, weapons and skills (#1786). */
-function members(team: StoredTeam): HTMLElement {
-  const list = h("span", "play-card-members");
-  for (const { character } of team.members) {
-    const member = teamMemberRow(character);
-    member.className += " play-card-member";
-    list.appendChild(member);
-  }
-  return list;
-}
-
 /** The Team Build cards, each opening in the editor as its Edit does, then New team build. */
 function teamCards(
   body: HTMLElement,
@@ -73,9 +63,13 @@ function teamCards(
       callbacks.onEditTeam(team.id);
     };
     cards.appendChild(
-      playCard({
-        name: team.name,
-        content: [members(team)],
+      teamFigureCard({
+        title: team.name,
+        // No cape: a team's members wear none, as in the lobby.
+        members: team.members.map(({ character }) => ({
+          look: lookOfCharacter(character, undefined),
+          label: `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,
+        })),
         onOpen: edit,
         actions: [button("Edit", "play-card-edit", edit)],
       }),

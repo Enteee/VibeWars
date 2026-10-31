@@ -90,19 +90,21 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       await expect(page.locator(".screen-team-lobby")).toBeVisible();
       await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
     }
-    await expect(host.locator(".team-lobby-card.is-empty")).toBeVisible();
+    await expect(host.locator(".team-lobby-empty")).toBeVisible();
     await expect(host.locator(".team-lobby-propose select option:checked")).toHaveText("None");
     for (const page of [host, guest]) {
       await page.locator(".team-lobby-propose select").selectOption({ label: "Trio" });
     }
     for (const page of [host, guest]) {
-      await expect(page.locator(".team-lobby-card")).toHaveCount(2);
+      await expect(page.locator(".screen-team-lobby .play-card")).toHaveCount(2);
     }
-    // Each card shows its members' weapons and skills, sent once it stands (#1811).
+    // Each card shows its members holding their weapons, with their
+    // skills, sent once it stands (#1811, #1864).
     const guestsCard = host.getByRole("button", { name: "Guest's team build" });
-    await expect(guestsCard.locator(".team-member-row")).toHaveCount(3);
+    await expect(guestsCard.locator(".play-card-member")).toHaveCount(3);
+    await expect(guestsCard.locator("canvas.character-figure[data-weapon-id]")).toHaveCount(3);
     await expect(
-      guestsCard.locator(".team-member-row").first().locator(".mini-skill:not(.is-empty)"),
+      guestsCard.locator(".play-card-member").first().locator(".mini-skill:not(.is-empty)"),
     ).toHaveCount(TRIO[0]?.skillBar.filter((id) => id !== null).length ?? 0);
     const hostsCard = guest.getByRole("button", { name: "Host's team build" });
     await hostsCard.click();
@@ -118,7 +120,7 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
       await expect(page.locator(".screen-team-lobby")).toContainText("Most votes");
       await expect(page.locator(".team-lobby-seat")).toHaveCount(3);
-      await expect(page.locator(".team-lobby-card.is-chosen .team-member-row")).toHaveCount(3);
+      await expect(page.locator(".play-card.is-chosen .play-card-member")).toHaveCount(3);
     }
 
     // Seats: the host the Warrior, the guest the Ranger; the bot gets the Monk.
