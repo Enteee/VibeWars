@@ -266,6 +266,35 @@ describe("a share of a blow reflected (#1754)", () => {
     expect(a.statuses.has("holy-wrath")).toBe(false);
   });
 
+  it("reflects one of two blows in a tick when one reflection is left", () => {
+    const combatants = wrathful();
+    combatants.set("v", makeCombatant({ id: "v", team: 1, health: 400, maxHealth: 500 }));
+    const a = member(combatants, "a");
+    const wrath = a.statuses.get("holy-wrath");
+    if (wrath === undefined) {
+      throw new Error("no Holy Wrath");
+    }
+    wrath.reflectionsLeft = 1;
+    a.statuses.recordHitByAttack("w", 30);
+    a.statuses.recordHitByAttack("v", 30);
+    const events = drain(a, combatants).flatMap((fired) => fired.events);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "w", amount: 20, critical: false },
+      { kind: "status-expired", targetId: "a", statusId: "holy-wrath" },
+    ]);
+    expect(member(combatants, "v").health).toBe(400);
+  });
+
+  it("reflects nothing once stripped in the tick the blow landed", () => {
+    const combatants = wrathful();
+    const a = member(combatants, "a");
+    a.statuses.recordHitByAttack("w", 30);
+    a.statuses.end("holy-wrath");
+    const fired = drain(a, combatants).filter(({ skillId }) => skillId === HOLY_WRATH);
+    expect(fired).toEqual([]);
+    expect(member(combatants, "w").health).toBe(400);
+  });
+
   it("reflects nothing at a dead attacker, and does not count it", () => {
     const combatants = wrathful();
     const a = member(combatants, "a");
@@ -387,6 +416,44 @@ describe("in a match (#1754)", () => {
     expect(log.some(({ skillId }) => skillId === HOLY_WRATH)).toBe(true);
     expect(a.statuses.get("holy-wrath")?.reflectionsLeft).toBe(7);
     expect(w.statuses.get("holy-wrath")?.reflectionsLeft).toBe(8);
+  });
+
+  it("Holy Wrath with one reflection left reflects one of two blows landing in a step", () => {
+    const sim = new MatchSimulation({
+      seed: "monk-mechanics",
+      participants: [
+        spec("m", 0, vec2(-300, 0)),
+        spec("a", 0, vec2(0, 0)),
+        spec("w", 1, vec2(30, 0), sword()),
+        spec("v", 1, vec2(-30, 0), sword()),
+      ],
+    });
+    const a = get(sim, "a").combatant;
+    const w = get(sim, "w").combatant;
+    const v = get(sim, "v").combatant;
+    a.statuses.apply("holy-wrath", 26, "m");
+    const wrath = a.statuses.get("holy-wrath");
+    if (wrath === undefined) {
+      throw new Error("no Holy Wrath");
+    }
+    wrath.reflectionsLeft = 1;
+    a.health = a.maxHealth;
+    expect(sim.requestAttack("w", "a")).toEqual({ ok: true });
+    expect(sim.requestAttack("v", "a")).toEqual({ ok: true });
+    const log: CombatLogEntry[] = [];
+    for (let i = 0; i < 5 / DT && packets(log, "a").length === 0; i += 1) {
+      log.push(...sim.step(DT).log);
+    }
+    // Both blows land in the same step, the one that spends the last reflection.
+    expect(packets(log, "a")).toHaveLength(2);
+    log.push(...stepUntil(sim, DT, () => false));
+    expect(packets(log, "w").length + packets(log, "v").length).toBe(1);
+    const expired = log.flatMap(({ events }) =>
+      events.filter((event) => event.kind === "status-expired" && event.statusId === "holy-wrath"),
+    );
+    expect(expired).toHaveLength(1);
+    expect(a.statuses.has("holy-wrath")).toBe(false);
+    expect(w.health + v.health).toBeLessThan(2 * w.maxHealth);
   });
 
   it("Balthazar's Aura hits an adjacent foe for 26 holy each second, never its bearer", () => {

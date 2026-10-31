@@ -289,13 +289,18 @@ export function breakHex(
  * A blow on the bearer its status reflects (#1754): the attacker takes
  * that share, of the status's type, from the status's source, and the
  * status spends a reflection. An attacker dead or gone takes nothing and
- * costs none, as does a source that has left the match.
+ * costs none, as does a source that has left the match. Changes drain
+ * once a tick, so a blow recorded after the last reflection was spent,
+ * or after the status was stripped, in that same tick reflects nothing.
  */
 function reflect(
   bearer: Combatant,
   change: Extract<StatusChange, { kind: "reflected" }>,
   { sourceOf, rng, rules, surroundings }: TriggerContext,
 ): FiredTrigger[] {
+  if (!bearer.statuses.has(change.statusId)) {
+    return [];
+  }
   const attacker = sourceOf(change.toId);
   const source = sourceOf(change.sourceId);
   const reflects = getStatusDefinition(change.statusId).reflectsAttackDamage;
