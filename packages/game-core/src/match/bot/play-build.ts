@@ -2,6 +2,7 @@ import { RANGE_SPELL } from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
+import { swingProgress } from "../../skills/weapon-attack.js";
 import { distance, ZERO } from "../../vec2.js";
 import type {
   Behaviour,
@@ -10,20 +11,26 @@ import type {
   BehaviourIntent,
 } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
-import { botUses, onlyInterrupts, removedCategories, removesFromCaster } from "./skill-intent.js";
+import {
+  botUses,
+  interruptAimed,
+  onlyInterrupts,
+  removedCategories,
+  removesFromCaster,
+} from "./skill-intent.js";
 
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a
  * sensible GW1 hero does. Each think it does the first of: interrupt a
- * foe's cast, heal or protect the most hurt ally, take a hex or condition
- * off an ally, raise a dead one, use an offensive skill on the team
- * target, attack it with the weapon, and otherwise walk to the nearest
- * foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
+ * foe's cast or else its swing, heal or protect the most hurt ally, take
+ * a hex or condition off an ally, raise a dead one, use an offensive
+ * skill on the team target, attack it with the weapon, and otherwise walk
+ * to the nearest foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
  * backing off would never end.
  *
  * It reads only what a player reads off the screen: positions, teams,
- * health fractions, the statuses on a body and a foe's cast bar. Never a
- * foe's energy, recharges or bar. Its own state, in full.
+ * health fractions, the statuses on a body, a foe's cast bar and its
+ * swing. Never a foe's energy, recharges or bar. Its own state, in full.
  */
 
 type PlayBuild = Extract<Behaviour, { kind: "play-build" }>;
@@ -41,7 +48,7 @@ const NOTHING: BehaviourIntent = {
 /** Below this share of its health, an ally is worth a heal. */
 const HURT_FRACTION = 0.6;
 
-/** How much longer than the interrupt itself a cast must have left. */
+/** How much longer than the interrupt itself a cast or a swing must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
 
 /**
@@ -190,18 +197,28 @@ function think(
     targetId,
     useSkillId: skill.id,
   });
-  // 1. Interrupt a cast it can still beat.
+  // 1. Interrupt a cast it can still beat; with none worth it, a plain
+  // swing (#1713). Only what the interrupt would land on, filter and
+  // condition read (`interruptAimed`): never a spell interrupt at a signet.
   const interrupts = bar.filter((skill) => botUses(skill).includes("interrupt"));
-  for (const foe of foes) {
-    const activeCast = foe.combatant.cast.activeCast;
-    if (activeCast === undefined) {
-      continue;
-    }
-    const skill = interrupts.find(
+  const interrupting = (lands: "cast" | "swing", foe: Participant, leftSeconds: number) =>
+    interrupts.find(
       (held) =>
-        activeCast.remainingSeconds > windUpSeconds(self, held) + INTERRUPT_MARGIN_SECONDS &&
+        leftSeconds > windUpSeconds(self, held) + INTERRUPT_MARGIN_SECONDS &&
+        interruptAimed(held, self.combatant, foe.combatant) === lands &&
         mayUse(held, foe.id),
     );
+  for (const foe of foes) {
+    const activeCast = foe.combatant.cast.activeCast;
+    const skill =
+      activeCast === undefined ? undefined : interrupting("cast", foe, activeCast.remainingSeconds);
+    if (skill !== undefined) {
+      return use(skill, foe.id);
+    }
+  }
+  for (const foe of foes) {
+    const swing = swingProgress(foe.combatant);
+    const skill = interrupting("swing", foe, swing.total - swing.elapsed);
     if (skill !== undefined) {
       return use(skill, foe.id);
     }

@@ -1,7 +1,8 @@
 import { isCompanionRule } from "../../skills/activation.js";
+import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import type { StatusCategory } from "../../skills/status.js";
-import type { Skill, SkillEffect } from "../../skills/types.js";
+import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 
 /**
  * What a bot may use a skill for (#1189), in the order `play-build`
@@ -40,11 +41,44 @@ export function botUses(skill: Skill): readonly BotUse[] {
 
 /**
  * The only role `skill` has is `interrupt`: Distracting Blow's, Power
- * Drain's. Held for a foe's cast, never spent on anything else.
+ * Drain's. Held for a foe's cast or swing, never spent on anything else.
  */
 export function onlyInterrupts(skill: Skill): boolean {
   const roles = skillRoles(skill);
   return roles.length === 1 && roles[0] === "interrupt";
+}
+
+/**
+ * What `skill`, used by `caster` on `foe` now, would interrupt (#1713):
+ * its cast, its plain swing, or nothing, as the `interrupt` effect would
+ * find it (`interruptLands`). Signet of Disruption's two land if either
+ * does. One in an `if` counts only where the condition holds now, as
+ * Lightning Javelin's "attacking foes": one that waits on an earlier
+ * effect counts as unmet, and one read off the bodies around is read
+ * with none. A splash's interrupt is the foes around's, not `foe`'s.
+ */
+export function interruptAimed(
+  skill: Skill,
+  caster: Combatant,
+  foe: Combatant,
+): "cast" | "swing" | null {
+  const aimed = (effects: readonly SkillEffect[]): "cast" | "swing" | null => {
+    for (const effect of effects) {
+      const lands =
+        effect.kind === "interrupt"
+          ? interruptLands(effect.only, foe)
+          : effect.kind === "if" &&
+              isStateCondition(effect.condition) &&
+              stateHolds(effect.condition, caster, foe, new Map())
+            ? aimed(effect.effects)
+            : null;
+      if (lands !== null) {
+        return lands;
+      }
+    }
+    return null;
+  };
+  return aimed(skill.effects);
 }
 
 /**
