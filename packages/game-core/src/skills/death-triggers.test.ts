@@ -223,6 +223,38 @@ describe("bearer-dies from a triggered effect (#1825)", () => {
     expect(events(log, "necromancer.reapers-mark")).toEqual([]);
   });
 
+  // f joined before g: one order chained, the other did not, before the
+  // settle pass drained everyone first.
+  it.each<[string, "f" | "g", "f" | "g", Vec2]>([
+    ["a later joiner", "f", "g", vec2(300, -AREA_NEARBY * 1.2)],
+    ["an earlier joiner", "g", "f", vec2(300, AREA_NEARBY * 0.7)],
+  ])(
+    "never chains from a triggered kill: a burst that kills %s sets nothing off",
+    (_, smitten, second, past) => {
+      const sim = arena();
+      put(sim, "f", "putrid-bile");
+      put(sim, "g", "putrid-bile");
+      put(sim, "a", "judges-intervention");
+      get(sim, smitten).combatant.health = 100;
+      get(sim, second).combatant.health = 1;
+      // h in reach of the second bearer's burst only.
+      get(sim, "h").position = past;
+      applyDamage(
+        get(sim, "a").combatant,
+        1000,
+        "slashing",
+        false,
+        [],
+        get(sim, smitten).combatant,
+      );
+      const log = stepFor(sim, 1);
+      expect(get(sim, smitten).combatant.dead).toBe(true);
+      expect(get(sim, second).combatant.dead).toBe(true);
+      expect(amounts(log, "necromancer.putrid-bile", "damage", second)).toHaveLength(1);
+      expect(amounts(log, "necromancer.putrid-bile", "damage", "h")).toEqual([]);
+    },
+  );
+
   it("fires once for a plain death, not again as it settles", () => {
     const sim = arena();
     put(sim, "f", "reapers-mark");

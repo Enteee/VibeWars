@@ -3870,11 +3870,14 @@ export class MatchSimulation {
    * not a trigger, so it cannot echo. Nor is a broken hex's damage (#1403),
    * owed for a hex a trigger cast. With `ownEnds`, a status that ended
    * fires its own end triggers (#1789), and its `bearer-dies` ones if its
-   * bearer died (#1825); nothing else answers.
+   * bearer died (#1825); nothing else answers. Those fire only once every
+   * participant is drained, so what they change is the next pass's,
+   * whoever joined first: a death they cause never fires here. Without
+   * `ownEnds`, each is drained as it is reached, so nothing is left over.
    */
   #settleTriggered(context: TriggerContext, ownEnds: boolean): void {
-    for (const record of this.#participants.values()) {
-      for (const change of record.combatant.statuses.drainChanges()) {
+    const settle = (record: ParticipantRecord, changes: readonly StatusChange[]): void => {
+      for (const change of changes) {
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
@@ -3888,6 +3891,19 @@ export class MatchSimulation {
           this.#logFired(fireDeathTriggers(record.combatant, change, context));
         }
       }
+    };
+    if (!ownEnds) {
+      for (const record of this.#participants.values()) {
+        settle(record, record.combatant.statuses.drainChanges());
+      }
+      return;
+    }
+    const drained = [...this.#participants.values()].map((record) => ({
+      record,
+      changes: record.combatant.statuses.drainChanges(),
+    }));
+    for (const { record, changes } of drained) {
+      settle(record, changes);
     }
   }
 
