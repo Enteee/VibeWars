@@ -2,7 +2,7 @@ import type { LobbyMode } from "@vibewars/game-protocol";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { button, h } from "./kit.js";
-import { partyStrip, type RailParty } from "./party-strip.js";
+import { isAlone, partyStrip, type RailParty } from "./party-strip.js";
 
 /**
  * The mode rail on the left of the menu (#1525, #1522 variant C): the
@@ -169,7 +169,8 @@ export function redrawModeRail(
 /**
  * A rail screen (#1525): the rail on the left, and `body` beside it, the
  * screen's own, under its heading and one line saying what it is for. A
- * mode's has the party strip on top (#1526).
+ * mode's has the party strip on top (#1526), once someone else is in it
+ * (#1782): alone, the title bar already shows all it would.
  */
 export function railScreen(
   root: HTMLElement,
@@ -179,7 +180,7 @@ export function railScreen(
 ): HTMLElement {
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
-  if (isModeEntry(active) && shownParty !== undefined) {
+  if (isModeEntry(active) && shownParty !== undefined && !isAlone(shownParty)) {
     body.appendChild(partyStrip(shownParty));
   }
   body.append(h("h2", "rail-title", railLabel(active)), h("p", "rail-goal", goal));

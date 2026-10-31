@@ -8,6 +8,7 @@ import {
   modeRail,
   redrawModeRail,
   redrawsOnLobbyChange,
+  railScreen,
   saveRail,
   setRailParty,
   type RailEntry,
@@ -44,6 +45,11 @@ class FakeElement {
     for (const child of children) {
       this.appendChild(child);
     }
+  }
+
+  replaceChildren(...children: FakeElement[]): void {
+    this.children.length = 0;
+    this.append(...children);
   }
 
   click(): void {
@@ -166,6 +172,30 @@ describe("the mode rail (#1525)", () => {
       "team-arena",
       "heroes-ascent",
       "hosted-game",
+    ]);
+  });
+
+  it("shows no party strip while the player is alone, and the strip once someone joins (#1782)", () => {
+    const member = (name: string, isHost: boolean) => ({
+      name,
+      primary: null,
+      isHost,
+      self: isHost,
+    });
+    const party = { code: "ACDEFGHJKLMN", mode: "gvg", isHost: true, open: true } as const;
+    const strip = (): FakeElement | undefined => {
+      const root = new FakeElement("div");
+      const body = railScreen(root as unknown as HTMLElement, "gvg", "", () => undefined);
+      return (body as unknown as FakeElement).children.find(
+        (child) => child.className === "party-strip",
+      );
+    };
+    setRailParty({ ...party, members: [member("me", true)] });
+    expect(strip()).toBeUndefined();
+    setRailParty({ ...party, members: [member("me", true), member("Friend", false)] });
+    expect(strip()?.children[0]?.children.map((row) => row.children[0]?.textContent)).toEqual([
+      "me",
+      "Friend",
     ]);
   });
 
