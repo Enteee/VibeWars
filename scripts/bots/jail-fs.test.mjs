@@ -22,8 +22,15 @@ afterEach(async () => {
     if (child.exitCode === null && child.signalCode === null && child.pid !== undefined) {
       const exited = new Promise((resolve) => child.once("exit", resolve));
       // The group, so the loop's rm and ln children die with it.
-      process.kill(-child.pid, "SIGKILL");
-      await exited;
+      try {
+        process.kill(-child.pid, "SIGKILL");
+        await exited;
+      } catch (error) {
+        // Already gone: nothing to wait for.
+        if (/** @type {NodeJS.ErrnoException} */ (error).code !== "ESRCH") {
+          throw error;
+        }
+      }
     }
   }
   for (const dir of dirs.splice(0)) {
@@ -232,7 +239,6 @@ describe("a JailDir", () => {
         // Refused, or the directory went from under it: either is fine.
       }
     }
-    process.kill(-(swapper.pid ?? 0), "SIGKILL");
 
     expect(snapshot(outside)).toEqual({ victim: "the operator's\n" });
     // The race ran: some writes went through to a real directory.
