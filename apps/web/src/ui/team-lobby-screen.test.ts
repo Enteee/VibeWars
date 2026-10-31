@@ -1,5 +1,10 @@
 import { PROFESSIONS } from "@vibewars/game-core";
-import type { WireTeamLobby, WireTeamProposal, WireTeamSide } from "@vibewars/game-protocol";
+import type {
+  WireProposalBuild,
+  WireTeamLobby,
+  WireTeamProposal,
+  WireTeamSide,
+} from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -148,6 +153,7 @@ function lobby(
   stage: WireTeamLobby["stage"],
   side: WireTeamSide,
   players: readonly LobbyPlayerSnapshot[] = PLAYERS,
+  proposalBuilds: LobbySnapshot["proposalBuilds"] = new Map(),
 ): LobbySnapshot {
   const team = players.find((p) => p.sessionId === self)?.team ?? null;
   return {
@@ -162,6 +168,7 @@ function lobby(
     isHost: self === "aria",
     countdownSeconds: null,
     queueNonce: null,
+    proposalBuilds,
     teamLobby: {
       stage,
       secondsLeft: 38,
@@ -383,6 +390,77 @@ describe("the Team Lobby's body (#1460)", () => {
       { kind: "claim", value: null },
       { kind: "claim", value: 2 },
     ]);
+  });
+
+  describe("each member's weapons and skills (#1811)", () => {
+    const BUILD: WireProposalBuild = {
+      skills: ["warrior.backbreaker", "gone.skill", null, null, null, null, null, null],
+      mainHand: "sword",
+      offHand: "gone.offhand",
+    };
+    const ARIAS = new Map([["aria", [BUILD, BUILD, BUILD, BUILD]]]);
+
+    it("draws them on a proposal once the host sent its builds, and balls before", () => {
+      const cards = body(
+        lobby(
+          "brann",
+          "vote",
+          voteSide([proposal("aria", []), proposal("brann", [])]),
+          PLAYERS,
+          ARIAS,
+        ),
+      ).all("team-lobby-card");
+      const [sent, waiting] = cards;
+      expect(sent?.all("team-member-row")).toHaveLength(4);
+      expect(sent?.all("character-dot")).toHaveLength(4);
+      const row = sent?.all("team-member-row")[0];
+      expect(row?.attributes.get("aria-label")).toBe("Warrior / Monk");
+      // A skill or off-hand this client does not know is an empty slot.
+      const cells = row?.all("mini-skill") ?? [];
+      expect(cells.map((cell) => cell.has("is-empty"))).toEqual([
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+      ]);
+      expect(row?.all("mini-gear")[0]?.children).toHaveLength(1);
+      expect(waiting?.all("team-member-row")).toHaveLength(0);
+      expect(waiting?.all("character-dot")).toHaveLength(4);
+    });
+
+    it("draws them on the chosen card, its members by name; a house seat stays a '?'", () => {
+      body(lobby("brann", "vote", voteSide([proposal("aria", [])])));
+      const shown = body(
+        lobby(
+          "brann",
+          "claim",
+          {
+            ...claimSide([null, null, null, null]),
+            chosen: {
+              ...SUNRISE,
+              members: [
+                ...SUNRISE.members.slice(0, 3),
+                { name: "Bot", primary: "?", secondary: null },
+              ],
+            },
+          },
+          PLAYERS,
+          ARIAS,
+        ),
+      );
+      const chosen = shown.all("is-chosen")[0];
+      const rows = chosen?.all("team-member-row") ?? [];
+      expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual([
+        "Bram, Warrior",
+        "Mira, Monk",
+        "Ash, Elementalist",
+      ]);
+      expect(chosen?.all("is-house")).toHaveLength(1);
+    });
   });
 
   it("names the house team when nobody proposed", () => {

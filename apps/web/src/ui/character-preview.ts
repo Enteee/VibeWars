@@ -130,7 +130,9 @@ export interface MiniSkillCell {
 }
 
 /** A character's eight slots as stored (#578); an illegal build still shows what it holds. */
-export function miniSkillCells(character: TeamCharacter): (MiniSkillCell | null)[] {
+export function miniSkillCells(
+  character: Pick<TeamCharacter, "skillBar">,
+): (MiniSkillCell | null)[] {
   return Array.from({ length: SKILL_BAR_SLOTS }, (_, slot) => {
     const skillId = character.skillBar[slot] ?? null;
     if (skillId === null) {
@@ -149,7 +151,7 @@ const MINI_SKILL_ICON_PX = 16;
  * says what a character plays without opening it. The names are in the
  * cells' titles and the bar's label.
  */
-export function miniSkillBar(character: TeamCharacter): HTMLElement {
+export function miniSkillBar(character: Pick<TeamCharacter, "skillBar">): HTMLElement {
   const bar = document.createElement("span");
   bar.className = "mini-skill-bar";
   bar.setAttribute("role", "img");
@@ -179,9 +181,17 @@ export function miniSkillBar(character: TeamCharacter): HTMLElement {
  * invalid build, or a weapon this client does not know, shows none.
  */
 export function gearIcons(character: TeamCharacter): HTMLElement {
+  const { weaponId, offhandId } = characterAppearance(character);
+  return gearIconsOf(weaponId, offhandId);
+}
+
+/** A main hand and an off-hand at the mini skill bar's size (#1811); one this client does not know shows none. */
+export function gearIconsOf(
+  weaponId: string | undefined,
+  offhandId: string | undefined,
+): HTMLElement {
   const gear = document.createElement("span");
   gear.className = "mini-gear";
-  const { weaponId, offhandId } = characterAppearance(character);
   const icons = [
     weaponId === undefined ? undefined : gearIconImg(weaponIcon(weaponId)),
     offhandId === undefined ? undefined : gearIconImg(offhandIcon(offhandId)),
@@ -202,14 +212,21 @@ export function gearIcons(character: TeamCharacter): HTMLElement {
  * it: it is the row's title and label, for a hover and a screen reader.
  */
 export function teamMemberRow(character: TeamCharacter): HTMLElement {
+  return memberRow(
+    `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,
+    [createCharacterDot(character), gearIcons(character), miniSkillBar(character)],
+  );
+}
+
+/** A member row of `parts` (#1786, #1811), `label` its title and label. */
+export function memberRow(label: string, parts: readonly HTMLElement[]): HTMLElement {
   const row = document.createElement("span");
   row.className = "team-member-row";
-  const label = `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`;
   row.title = label;
   row.setAttribute("role", "group");
   row.setAttribute("aria-label", label);
-  row.appendChild(createCharacterDot(character));
-  row.appendChild(gearIcons(character));
-  row.appendChild(miniSkillBar(character));
+  for (const part of parts) {
+    row.appendChild(part);
+  }
   return row;
 }

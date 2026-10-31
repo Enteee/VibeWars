@@ -1,9 +1,20 @@
-import { isProfessionId } from "@vibewars/game-core";
-import type { WireTeamChoice, WireTeamProposal, WireTeamSide } from "@vibewars/game-protocol";
+import { getSkill, isProfessionId } from "@vibewars/game-core";
+import type {
+  WireProposalBuild,
+  WireTeamChoice,
+  WireTeamProposal,
+  WireTeamSide,
+} from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
 import type { StoredTeam } from "../storage/schema.js";
-import { createProfessionDot } from "./character-preview.js";
+import {
+  createProfessionDot,
+  gearIconsOf,
+  memberRow,
+  miniSkillBar,
+  professionLabel,
+} from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
 
 /**
@@ -113,6 +124,33 @@ function professionDot(primary: string, secondary: string | null): HTMLElement {
   );
 }
 
+/**
+ * A member on a card: its ball, then, once the host has sent its build
+ * (#1811), its weapons and skills as Team Builder draws them (#1786). A
+ * skill or weapon this client does not know is an empty slot; a house
+ * seat, a "?", is drawn alone.
+ */
+function cardMember(
+  member: { readonly primary: string; readonly secondary: string | null },
+  build: WireProposalBuild | undefined,
+  name: string | undefined,
+): HTMLElement {
+  const dot = professionDot(member.primary, member.secondary);
+  if (build === undefined || !isProfessionId(member.primary)) {
+    return dot;
+  }
+  const secondary =
+    member.secondary !== null && isProfessionId(member.secondary) ? member.secondary : undefined;
+  const professions = professionLabel(member.primary, secondary);
+  return memberRow(name === undefined ? professions : `${name}, ${professions}`, [
+    dot,
+    gearIconsOf(build.mainHand ?? undefined, build.offHand ?? undefined),
+    miniSkillBar({
+      skillBar: build.skills.map((id) => (id !== null && getSkill(id) !== undefined ? id : null)),
+    }),
+  ]);
+}
+
 /** A name, with the captain's crown token after it when it is theirs. */
 function personName(className: string, name: string, captain: boolean): HTMLElement {
   const label = h("span", className);
@@ -149,8 +187,9 @@ export function proposalCard(
     personName("team-lobby-card-name", proposer, proposal.proposerId === side.captainId),
   );
   const members = h("span", "team-lobby-card-members");
-  for (const member of proposal.members) {
-    members.appendChild(professionDot(member.primary, member.secondary));
+  const builds = snapshot.proposalBuilds.get(proposal.proposerId);
+  for (const [slot, member] of proposal.members.entries()) {
+    members.appendChild(cardMember(member, builds?.[slot], undefined));
   }
   card.appendChild(members);
   const votes = h("span", "team-lobby-votes");
@@ -187,8 +226,10 @@ function chosenCard(
         ),
   );
   const members = h("span", "team-lobby-card-members");
-  for (const member of choice.members) {
-    members.appendChild(professionDot(member.primary, member.secondary));
+  const builds =
+    choice.proposerId === null ? undefined : snapshot.proposalBuilds.get(choice.proposerId);
+  for (const [slot, member] of choice.members.entries()) {
+    members.appendChild(cardMember(member, builds?.[slot], member.name));
   }
   card.appendChild(members);
   return card;

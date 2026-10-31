@@ -44,7 +44,9 @@ votes, choice and claims, the other side `null`.
 **Everything fits one message** (`MAX_MESSAGE_BYTES`). A proposal is sent
 one build a message, `propose {slot, size, build}`, and stands once all
 its slots are in. In the state, proposals carry professions only and are
-`[]` during the claim; the chosen build carries names.
+`[]` during the claim; the chosen build carries names. Each member's
+skills and weapons go once per standing proposal, to its side alone, in
+their own `team-proposal-builds` message (#1811), never in the state.
 
 ## Consequences
 

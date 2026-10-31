@@ -33,6 +33,7 @@ import {
   type WireLobbyCommand,
   type WireLobbyState,
   type WireTeamSide,
+  type WireTeamProposalBuilds,
   type WireCape,
   type WirePlayer,
   type WireProjectile,
@@ -415,6 +416,19 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       rejoin: { playerId: `${PEER_ID}0` },
     };
     expect(messageBytes(hello)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a proposal's builds: a whole side of the longest skill ids and gear (#1811)", () => {
+    const skills = [...SKILL_IDS].sort((a, b) => b.length - a.length).slice(0, 8);
+    const builds: WireTeamProposalBuilds = {
+      proposerId: `${PEER_ID}0`,
+      builds: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, () => ({
+        skills,
+        mainHand: WEAPON_ID,
+        offHand: OFFHAND_ID,
+      })),
+    };
+    expect(messageBytes(builds)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
   it("a rejoin's challenge and proof (#593)", () => {
