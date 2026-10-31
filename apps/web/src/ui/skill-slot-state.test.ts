@@ -465,6 +465,16 @@ describe("silenced (#1234)", () => {
     ]);
   });
 
+  it("marks a resurrection alone under Frozen Soil, which bars them (#1745)", () => {
+    const frozen = { ...shrouded, id: "frozen-soil", casterId: "spirit" } as const;
+    expect(
+      silenced(
+        [slot("common.resurrection-signet"), ...bar.slice(0, 4)],
+        self({ statuses: [frozen] }),
+      ),
+    ).toEqual([true, false, false, false, false]);
+  });
+
   it("marks the shout and the chant alone in Well of Silence (#1732)", () => {
     const silence = { ...shrouded, id: "well-of-silence" } as const;
     const shouts = [

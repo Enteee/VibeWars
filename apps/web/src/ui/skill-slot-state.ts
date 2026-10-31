@@ -6,9 +6,11 @@ import {
   hasLineOfSight,
   isAllyOrSelfRule,
   isCompanionRule,
+  isResurrectionSkill,
   isSpell,
   isWeaponId,
   preventsAttacks,
+  preventsResurrection,
   preventsShoutsAndChants,
   preventsSpells,
   targetLivenessAllows,
@@ -214,14 +216,16 @@ export function wrongWeapon(
 /**
  * Which slots hold a skill `self` cannot start: a spell while a hex such
  * as Shroud of Silence bars them (#1234), an attack skill while Obsidian
- * Flesh does (#1575), a shout or a chant in Well of Silence (#1732). The
- * same checks activation makes (`preventsSpells`, `preventsAttacks`,
- * `preventsShoutsAndChants`), so the dimmed slot and the refusal agree. A
+ * Flesh does (#1575), a shout or a chant in Well of Silence (#1732), a
+ * resurrection while Frozen Soil does (#1745). The same checks activation
+ * makes (`preventsSpells`, `preventsAttacks`, `preventsShoutsAndChants`,
+ * `preventsResurrection`), so the dimmed slot and the refusal agree. A
  * hint, not a gate.
  */
 export function silenced(skillBar: readonly (SkillSlot | null)[], self: PlayerSnapshot): boolean[] {
   const noSpells = preventsSpells(self.statuses);
   const noAttacks = preventsAttacks(self.statuses);
+  const noResurrection = preventsResurrection(self.statuses);
   const noShouts = preventsShoutsAndChants(self.statuses);
   return skillBar.map((slot) => {
     const skill = slot === null ? undefined : getSkill(slot.id);
@@ -229,6 +233,7 @@ export function silenced(skillBar: readonly (SkillSlot | null)[], self: PlayerSn
       skill !== undefined &&
       ((noSpells && isSpell(skill.type)) ||
         (noAttacks && skill.type === "attack") ||
+        (noResurrection && isResurrectionSkill(skill)) ||
         (noShouts && (skill.type === "shout" || skill.type === "chant")))
     );
   });

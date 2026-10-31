@@ -1,10 +1,11 @@
-import { LobbyNoAnswerError } from "@vibewars/game-session";
+import { LobbyNoAnswerError, LobbyRefusedError } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import {
   BOT_REFUSED_MESSAGE,
   CONNECTION_LOST_MESSAGE,
   HOST_CLOSED_MESSAGE,
+  LOBBY_CLOSED_MESSAGE,
   NO_ANSWER_MESSAGE,
   NO_RELAY_MESSAGE,
   NOT_HOST_MESSAGE,
@@ -15,11 +16,14 @@ import {
   NO_SEAT_FOR_BOT_MESSAGE,
   PEER_UNREACHABLE_MESSAGE,
   TURN_RELAY_HINT,
+  followHost,
   joinFailureNotice,
   lobbyClosedNotice,
   lobbyRefusalNotice,
   loopbackHint,
   matchFailureNotice,
+  watchHostMove,
+  type FollowSteps,
 } from "./session.js";
 import { NEW_VERSION_NOTICE } from "../build-check.js";
 
@@ -106,5 +110,98 @@ describe("the notice for a join nobody answered (#707)", () => {
     expect(loopbackHint("")).toBe(
       "Firefox can't connect over IPv6 loopback (::1). Open http://127.0.0.1 instead.",
     );
+  });
+});
+
+describe("following the host to its next lobby (#1553)", () => {
+  const where = { hostname: "example.org", port: "" };
+  const move = { code: "ABCD-EFGH", host: "Mira" };
+
+  /** The steps `followHost` takes, recording which ran. */
+  const steps = (
+    join: (code: string) => Promise<string>,
+    movedOn = (): boolean => false,
+  ): { calls: string[]; follow: FollowSteps<string> } => {
+    const calls: string[] = [];
+    return {
+      calls,
+      follow: {
+        join: (code) => {
+          calls.push(`join ${code}`);
+          return join(code);
+        },
+        movedOn,
+        seat: (joined) => {
+          calls.push(`seat ${joined}`);
+        },
+        drop: (joined) => {
+          calls.push(`drop ${joined}`);
+          return Promise.resolve();
+        },
+        fallBack: (notice) => {
+          calls.push(`fall back: ${notice ?? "quietly"}`);
+        },
+      },
+    };
+  };
+
+  it("joins the key the host moved to and sits in it", async () => {
+    const { calls, follow } = steps((code) => Promise.resolve(`lobby ${code}`));
+    await followHost(move, follow, where, false);
+    expect(calls).toEqual(["join ABCD-EFGH", "seat lobby ABCD-EFGH"]);
+  });
+
+  it("falls back to a fresh own lobby, naming the host, when the join fails", async () => {
+    const { calls, follow } = steps(() => Promise.reject(new LobbyNoAnswerError(20_000, null)));
+    await followHost(move, follow, where, false);
+    expect(calls).toEqual([
+      "join ABCD-EFGH",
+      `fall back: Could not follow Mira: ${NO_ANSWER_MESSAGE}`,
+    ]);
+  });
+
+  it("falls back the same way when that lobby is closed", async () => {
+    const { calls, follow } = steps(() => Promise.reject(new LobbyRefusedError("closed")));
+    await followHost(move, follow, where, false);
+    expect(calls).toEqual([
+      "join ABCD-EFGH",
+      `fall back: Could not follow Mira: ${LOBBY_CLOSED_MESSAGE}`,
+    ]);
+  });
+
+  it("falls back quietly once the tab moved on, and leaves a join that came in too late", async () => {
+    const failed = steps(
+      () => Promise.reject(new LobbyRefusedError("closed")),
+      () => true,
+    );
+    await followHost(move, failed.follow, where, false);
+    expect(failed.calls).toEqual(["join ABCD-EFGH", "fall back: quietly"]);
+    const late = steps(
+      (code) => Promise.resolve(`lobby ${code}`),
+      () => true,
+    );
+    await followHost(move, late.follow, where, false);
+    expect(late.calls).toEqual(["join ABCD-EFGH", "drop lobby ABCD-EFGH"]);
+  });
+
+  it("knows where the host went once its lobby closes, so that close is no host-left", () => {
+    let onMove: ((code: string) => void) | undefined;
+    const lobby = {
+      onMove: (handler: (code: string) => void): void => {
+        onMove = handler;
+      },
+      getSnapshot: () => ({
+        players: [
+          { name: "Aren", isHost: false },
+          { name: "Mira", isHost: true },
+        ],
+      }),
+    };
+    const hostMove = watchHostMove(lobby);
+    expect(hostMove()).toBeUndefined();
+    onMove?.("ABCD-EFGH");
+    expect(hostMove()).toEqual(move);
+    // Taken once: a later close of the same lobby is an ordinary one.
+    expect(hostMove()).toBeUndefined();
   });
 });

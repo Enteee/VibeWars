@@ -53,11 +53,21 @@ export interface BarLobby {
   readonly isHost: boolean;
   /** Whether friends with the key may join (#1682). */
   readonly open: boolean;
+  /** The players in it, this one too; never bots. A host's guests follow it (#1553). */
+  readonly party: number;
+  /** On the way there behind its host (#1553): the key, greyed, and "Joining…". */
+  readonly joining: boolean;
 }
 
 /** Before the code: whose lobby it is. */
 export const OWN_LOBBY_LABEL = "Your key";
 export const JOINED_LOBBY_LABEL = "Lobby";
+export const JOINING_LOBBY_LABEL = "Joining…";
+
+/** A host's first Join (#1553): its guests come too; Join again goes, Esc does not. */
+export function partyJoinsNotice(party: number): string {
+  return `Your party of ${String(party)} joins with you.`;
+}
 
 /**
  * The host's toggle (#1682): its lock, what it says beside it while the
@@ -137,9 +147,21 @@ export function joinControls(
   const connecting = h("span", "topbar-connecting", "Connecting…");
   connecting.setAttribute("role", "status");
   connecting.hidden = true;
+  // A host with guests is asked once (#1553): they follow it.
+  const confirm = h("span", "topbar-join-confirm");
+  confirm.setAttribute("role", "status");
+  confirm.hidden = true;
+  /** The host's party, when this tab hosts one; 0 for a guest. */
+  let party = 0;
   /** Bumped by every new bar, so a join's timer knows it has ended. */
   let shown = 0;
   const join = (): void => {
+    if (party > 1 && confirm.hidden) {
+      confirm.textContent = partyJoinsNotice(party);
+      confirm.hidden = false;
+      return;
+    }
+    confirm.hidden = true;
     onJoin(codeInput.value, name());
     const pressed = shown;
     setTimeout(() => {
@@ -153,12 +175,18 @@ export function joinControls(
       join();
     }
   });
+  group.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      confirm.hidden = true;
+    }
+  });
   group.append(
     lobby,
     h("span", "topbar-join-label", "Lobby Key:"),
     codeInput,
     button("Join", "topbar-join-button", join),
     connecting,
+    confirm,
   );
   return {
     element: group,
@@ -176,9 +204,20 @@ export function joinControls(
         codeInput.value = "";
       }
       lobby.hidden = shown === undefined;
-      lobbyLabel.textContent = shown?.isHost === false ? JOINED_LOBBY_LABEL : OWN_LOBBY_LABEL;
+      const joining = shown?.joining === true;
+      lobbyLabel.textContent = joining
+        ? JOINING_LOBBY_LABEL
+        : shown?.isHost === false
+          ? JOINED_LOBBY_LABEL
+          : OWN_LOBBY_LABEL;
+      lobby.classList.toggle("is-joining", joining);
       lobbyCode.textContent = shown === undefined ? "" : displayLobbyCode(shown.code);
-      leave.hidden = shown?.isHost !== false;
+      copy.hidden = joining;
+      party = shown?.isHost === true ? shown.party : 0;
+      if (party <= 1) {
+        confirm.hidden = true;
+      }
+      leave.hidden = shown?.isHost !== false || joining;
       toggle.hidden = shown?.isHost !== true;
       const open = shown?.open === true;
       toggleGlyph.textContent = open ? OPEN_GLYPH : CLOSED_GLYPH;
