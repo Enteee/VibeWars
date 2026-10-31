@@ -70,4 +70,14 @@ export const MONK_ICONS = {
   "monk.mend-ailment": { glyph: "draw-drops", modifier: "clock" },
   "monk.stonesoul-strike": { glyph: "lightning", modifier: "less" },
   "monk.shield-of-regeneration": { glyph: "block-most", modifier: "plus" },
+  // Monk smiting staples (#1519, #1584): holy star, signet ring, the foe attacking or knocked down.
+  "monk.smite": { glyph: "smite-attacking" },
+  "monk.spear-of-light": { glyph: "spear-light" },
+  "monk.word-of-censure": { glyph: "star-below-half" },
+  "monk.ray-of-judgment": { glyph: "star-beam-flame" },
+  "monk.judges-insight": { glyph: "sword-star" },
+  "monk.bane-signet": { glyph: "signet-attacking" },
+  "monk.castigation-signet": { glyph: "signet-energy" },
+  "monk.signet-of-judgment": { glyph: "signet-quake" },
+  "monk.holy-strike": { glyph: "star-prone" },
 };

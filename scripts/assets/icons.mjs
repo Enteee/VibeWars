@@ -1760,6 +1760,7 @@ const status = {
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
   ],
+  // Dervish staples 2 (#1604).
   // Mesmer staples 3 (#1627), a stand-in until its art card.
   // Hex: an eye glancing aside over a burst, the next attack goes astray.
   "wandering-eye": [
@@ -2287,6 +2288,21 @@ const sacrifice = (payoff) =>
   `<g transform="translate(7.5,16) scale(0.66) translate(-12,-12)">${DROP}</g>` +
   `<g transform="translate(15,9) scale(0.7) translate(-12,-12)">${payoff}</g>`;
 
+/** A four-point star, the holy mark of the Monk's smiting skills (#1584). */
+const holyStar = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) => {
+  const k = r * 0.28;
+  const p = (/** @type {number} */ x, /** @type {number} */ y) =>
+    `${(cx + x).toFixed(1)} ${(cy + y).toFixed(1)}`;
+  return inkFill(
+    `M${p(0, -r)}L${p(k, -k)}L${p(r, 0)}L${p(k, k)}L${p(0, r)}L${p(-k, k)}L${p(-r, 0)}L${p(-k, -k)}Z`,
+  );
+};
+
+/** A signet ring and its dot at `cx,cy`, radius `r` (#1584). */
+const ringDot = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) =>
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r)}" ${stroke(C.ink, 2.2)}/>` +
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r / 3)}" fill="${C.ink}"/>`;
+
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
@@ -2452,6 +2468,40 @@ const skillGlyph = {
     inkLine("M6 21L14 7", 2.4) +
     inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
     `<path d="M17 3.2A4.2 4.2 0 0 1 21.4 7.6M21 11.2A4.2 4.2 0 0 1 16.4 11.4" ${stroke(C.ink, 1.8)}/>`,
+  // Dervish staples 2 (#1604): the sweeps are one scythe with three riders; the rest take their statuses' shapes.
+  // A scythe over an arrow: the blow cannot be blocked, as Guiding Hands' arrow says (#1645).
+  "scythe-unblock": () =>
+    inkLine("M6 20L13 7", 2.4) +
+    inkFill("M13 7C9.5 3.5 5 4 1.5 7.5C5.5 6.5 9 7.5 11.5 10Z") +
+    inkLine("M14 19.5H22M19.5 17L22 19.5L19.5 22", 2),
+  // A scythe with a crack in the corner: the foes it hits are crippled (#1645).
+  "scythe-limp": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    inkLine("M20 2L16.5 6L20 9L17 13", 2.2),
+  // A scythe with a ring struck through: the enchantment torn off the foe (#1645).
+  "scythe-rend": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    `<circle cx="18.5" cy="7" r="3.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M15 11L22 3", 2),
+  // Three fast slashes: attack faster (#1645).
+  "slash-trio": () => inkLine("M4 19L12 5M9 20L17 6M14 21L21 9", 2.6),
+  // A spark over a falling bar: energy for every hit (#1645).
+  "spark-bars": () => inkLine("M12 2.5L14.5 8H9.5L12 13.5", 2.2) + inkLine("M5 17H19M8 21H16", 2.4),
+  // A shield seen through a heat haze: a block chance (#1645).
+  "shield-haze": () =>
+    `<path d="M12 3L19 5.5V11C19 15.5 15.5 19 12 21C8.5 19 5 15.5 5 11V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M8.5 9.5Q10.2 8 12 9.5T15.5 9.5M8.5 14Q10.2 12.5 12 14T15.5 14", 1.8),
+  // A heart with a plus under a bar: more maximum Health, paid back when it ends (#1645).
+  "heart-roof": () =>
+    inkLine("M12 21L5 14a4 4 0 0 1 7-4.7 4 4 0 0 1 7 4.7z", 2) +
+    inkLine("M12 11.5V17M9.2 14.2H14.8", 2) +
+    inkLine("M5 3.5H19", 2.4),
+  // An open hand over an arrow: the next attacks cannot be blocked (#1645).
+  "hand-arrow": () =>
+    inkLine("M6 11V5M9.5 11V3M13 11V3M16.5 11V5M6 11c0 4 2 6 5.5 6s5-2 5-6", 2) +
+    inkLine("M3 21H21M18 18.5L21 21L18 23.5", 1.8),
   // A scythe with a snowflake in the corner: cold damage from the blade (#1573).
   "scythe-frost": () =>
     inkLine("M6 21L14 7", 2.4) +
@@ -3694,6 +3744,35 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The Monk's smiting skills (#1519, #1584): a four-point star is holy light; a blade in the top left corner
+  // is the foe attacking; a signet is its ring and dot; a flat bar is a foe knocked down.
+  "smite-attacking": () => holyStar(15, 14, 9) + `<g>${nextTrigger.attack()}</g>`,
+  "spear-light": () =>
+    inkLine("M3.5 21L15 9.5", 2.4) +
+    inkFill("M22 2L20.5 10L14 3.5Z") +
+    holyStar(18, 18, 4.5) +
+    `<g transform="translate(0,0)">${nextTrigger.attack()}</g>`,
+  "star-below-half": () =>
+    `<circle cx="12" cy="14" r="8" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M4 14A8 8 0 0 0 20 14Z") +
+    holyStar(6, 5, 4.5),
+  "star-beam-flame": () =>
+    holyStar(12, 6, 6) +
+    inkLine("M12 12.5V14M6.5 11L8 13.5M17.5 11L16 13.5", 2) +
+    `<g transform="translate(12,18) scale(0.55) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  "sword-star": () =>
+    `<g transform="translate(-1,2) scale(0.85)">${skillGlyph.sword()}</g>` + holyStar(18, 6, 5),
+  "signet-attacking": () =>
+    ringDot(15, 9, 6.5) + inkLine("M4 21H20", 2.8) + `<g>${nextTrigger.attack()}</g>`,
+  "signet-energy": () =>
+    ringDot(15, 9, 6.5) +
+    `<g transform="translate(14,18) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    `<g>${nextTrigger.attack()}</g>`,
+  "signet-quake": () => ringDot(12, 9, 6.5) + inkLine("M2 9H3.5M20.5 9H22M4 21H20", 2.4),
+  "star-prone": () =>
+    holyStar(13, 8, 7.5) +
+    `<circle cx="5.5" cy="18.5" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 18.5H20.5", 3),
   // Obsidian Flesh: a faceted black crystal, cut with light lines (#1605).
   "stone-skin": () =>
     inkFill("M12 2.5L19.5 7V15L12 21.5L4.5 15V7Z") +
