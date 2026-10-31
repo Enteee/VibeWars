@@ -74,6 +74,6 @@ export const ASSASSIN_ICONS = {
   "assassin.shadow-meld": { glyph: "blink", modifier: "renew" },
   "assassin.shadow-of-haste": { glyph: "blink", modifier: "up" },
   "assassin.return": { glyph: "blink", modifier: "area" },
-  // "N for each X" (#1760), stand-ins until their art card.
-  "assassin.sadists-signet": { glyph: "signet-plus", modifier: "bleed" },
+  // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
+  "assassin.sadists-signet": { glyph: "each-sadist" },
 };
