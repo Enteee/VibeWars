@@ -1692,6 +1692,58 @@ const skillGlyph = {
     inkFill("M12 2.5C12 2.5 4.5 12 4.5 16A7.5 7.5 0 0 0 19.5 16C19.5 12 12 2.5 12 2.5Z") +
     `<path d="M3.5 21.5L20.5 6" ${stroke(C.bg, 5.4)}/>` +
     inkLine("M3.5 21.5L20.5 6", 2.4),
+  // Monk staples 3 (#1650, #1703): a plus and what it brings, the family of the heals.
+  "plus-whisper": () =>
+    `<g transform="translate(9,12) scale(0.7) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkLine("M17.5 8.5C19.5 10.5 19.5 13.5 17.5 15.5M21 6C24 9.5 24 14.5 21 18", 1.8),
+  "eye-heal": () => riderOn(skillGlyph.eye(), RIDER.plus),
+  "heal-spark": () =>
+    `<g transform="translate(9,14) scale(0.75) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkFill("M18 1.5L19.7 6.3L24.5 8L19.7 9.7L18 14.5L16.3 9.7L11.5 8L16.3 6.3Z"),
+  "plus-rays": () =>
+    `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkLine(
+      "M12 1.5V4M12 20V22.5M1.5 12H4M20 12H22.5M4.5 4.5L6.3 6.3M17.7 17.7L19.5 19.5M19.5 4.5L17.7 6.3M6.3 17.7L4.5 19.5",
+      2,
+    ),
+  "signet-plus": () =>
+    riderOn(
+      `<circle cx="12" cy="14" r="6" ${stroke(C.ink, 2.5)}/><path d="M12 2.5l3.5 3.5-3.5 3.5-3.5-3.5z" fill="${C.ink}"/>`,
+      RIDER.plus,
+    ),
+  "plus-halo": () =>
+    `<g transform="translate(12,12) scale(0.55) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2)}/>`,
+  "plus-wings": () =>
+    `<g transform="translate(12,13) scale(0.5) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkFill("M8 12C5 12 3 9.5 1.5 5.5C5 5.5 7.5 7.5 9.5 10Z") +
+    inkFill("M16 12C19 12 21 9.5 22.5 5.5C19 5.5 16.5 7.5 14.5 10Z") +
+    inkFill("M9.5 14C7 14 4.5 16 3 19.5C6.5 19.5 9 18 11 16Z") +
+    inkFill("M14.5 14C17 14 19.5 16 21 19.5C17.5 19.5 15 18 13 16Z"),
+  "drops-purge": () =>
+    [0, 7, 14]
+      .map(
+        (x) =>
+          `<g transform="translate(${String(x)},0)">${inkFill("M5 4.5C3 7.5 1 9 1 11.5A4 4 0 0 0 9 11.5C9 9 7 7.5 5 4.5Z")}</g>`,
+      )
+      .join("") + inkLine("M2 21L22 3", 2.4),
+  // Mend Ailment: one drop struck off, two still standing, and a plus over them (#1703).
+  "drop-mend": () =>
+    `<path d="M6 8C4 11 2 12.5 2 15A4 4 0 0 0 10 15C10 12.5 8 11 6 8Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2 21L10 9", 2.2) +
+    inkFill(
+      "M16 11C14.5 13.2 13.5 14.4 13.5 15.8A2.5 2.5 0 0 0 18.5 15.8C18.5 14.4 17.5 13.2 16 11Z",
+    ) +
+    inkFill(
+      "M20.5 15C19.3 16.6 18.8 17.4 18.8 18.4A1.7 1.7 0 0 0 22.2 18.4C22.2 17.4 21.7 16.6 20.5 15Z",
+    ) +
+    inkLine("M16 2.5V8.5M13 5.5H19", 2.4),
+  "hand-star": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` + holyStar(17, 7, 6),
+  "shield-regen": () =>
+    `<path d="M12 2.5L19 5V10.5C19 14 16 16 12 17.5C8 16 5 14 5 10.5V5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 6.5V12M9.2 9.2H14.8", 2) +
+    inkLine("M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21", 1.8),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
@@ -2429,6 +2481,50 @@ const skillGlyph = {
     `<g transform="translate(12,15.5) scale(0.8) translate(-12,-12)">${skillGlyph.speed()}</g>` +
     inkLine("M3 5H16", 2.2) +
     inkFill("M22 5L16 2V8Z"),
+  // Ranger staples 3 (#1697): the shot, the pet, the trap and the stance.
+  "arrow-aimed": () =>
+    `<path d="M14 3L20.5 5.5V11C20.5 15 17.5 18 14 20C10.5 18 7.5 15 7.5 11V5.5Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2 12H17", 2.4) +
+    inkFill("M23 12L16.5 8V16Z") +
+    inkLine("M2 6.5H7M2 17.5H7", 2),
+  "arrow-lob": () =>
+    `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
+    inkFill("M19.5 21L15 13.5L23 14Z") +
+    inkLine("M2.5 22H12", 2),
+  "arrow-splinter": () =>
+    inkLine("M3 21L12 12", 2.4) +
+    inkFill("M13 11L8.5 11.8L12.2 15.5Z") +
+    inkLine("M14 9L15 2.5M15.5 10.5L21.5 6M16 12.5L22 13", 2.4),
+  "arrow-ring-break": () =>
+    `<circle cx="15" cy="9" r="7" ${stroke(C.ink, 2)} stroke-dasharray="4.4 3.2"/>` +
+    inkLine("M2.5 21.5L14 10", 2.4) +
+    inkFill("M21 3L10.5 6L18 13.5Z"),
+  "paw-leap": () =>
+    `<g transform="translate(12,16.5) scale(0.62) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    `<path d="M3.5 10C6 2.5 15 1.5 19.5 6.5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M22 10L16 8L20.8 3.5Z"),
+  "paw-lunge": () =>
+    `<g transform="translate(15.5,12) rotate(35) scale(0.7) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M2.5 7H8M2.5 12H6M2.5 17H8", 2.2),
+  "fangs-poison": () =>
+    inkFill("M4 3H10L7 13Z") +
+    inkFill("M14 3H20L17 13Z") +
+    `<circle cx="7" cy="18" r="2.3" fill="${C.ink}"/><circle cx="12.5" cy="20" r="1.8" fill="${C.ink}"/><circle cx="17.5" cy="18" r="2.3" fill="${C.ink}"/>`,
+  "nest-snake": () =>
+    `<path d="M2.5 15C3.5 21 20.5 21 21.5 15" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 15C6.5 12.5 16.5 9.5 11.5 5", 2.8) +
+    `<circle cx="11" cy="3.8" r="2.2" fill="${C.ink}"/>`,
+  tripwire: () =>
+    inkLine("M4 6V21M20 6V21", 2.6) +
+    `<path d="M4 15Q12 20 20 15" ${stroke(C.ink, 1.6)} stroke-dasharray="2.2 2.2"/>` +
+    inkLine("M2 21.5H6M18 21.5H22", 2.2) +
+    inkFill("M12 3L14.5 8H9.5Z"),
+  "smoke-plume": () =>
+    `<circle cx="8" cy="14" r="4.5" fill="${C.ink}"/><circle cx="14" cy="10.5" r="5.5" fill="${C.ink}"/><circle cx="18" cy="15" r="3.8" fill="${C.ink}"/>` +
+    inkLine("M3 20.5H21", 2.4),
+  "haste-miss": () =>
+    `<path d="M3 21L21 3" ${stroke(C.ink, 1.4)} stroke-dasharray="2.4 2.4"/>` +
+    inkLine("M7 7L13 13L7 19M13 7L19 13L13 19", 2.6),
   // Warrior staples 2 and Clumsiness (#1592, #1593, #1619).
   "shield-knock": () =>
     `<g transform="translate(9,12) scale(0.8) translate(-12,-12)"><path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/></g>` +

@@ -36,11 +36,12 @@ export const RANGER_STATUS_ICONS = {
   ],
   // Stance: a step aside an arrow, faster and blocks projectiles.
   dodge: ["stance", (c) => `<path d="M4 8h10M11 5l3 3-3 3M8 18l4-5 4 5" ${stroke(c, 2.2)}/>`],
-  // Stance: Dodge's step aside an arrow, with a speed line under it (#1676),
-  // a stand-in until the asset-designer's.
+  // Stance: speed chevrons with an arrow's dashed trace passing behind (#1697).
   "zojuns-haste": [
     "stance",
-    (c) => `<path d="M4 7h10M11 4l3 3-3 3M8 16l4-5 4 5M5 20h14" ${stroke(c, 2.2)}/>`,
+    (c) =>
+      `<path d="M4 20L20 4" ${stroke(c, 1.4)} stroke-dasharray="2.4 2.4"/>` +
+      `<path d="M7 7l5 5-5 5M13 7l5 5-5 5" ${stroke(c, 2.4)}/>`,
   ],
   // Preparation: one drop, your attacks poison (#525).
   "apply-poison": [
