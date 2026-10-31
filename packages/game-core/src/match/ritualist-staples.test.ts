@@ -348,7 +348,7 @@ describe("the texts (#1550)", () => {
 
   it("names the on-hit effects and the bursts", () => {
     expect(lines(BLOODSONG)).toContain("Its attacks: steals up to 21 Health");
-    expect(lines(ANGUISH)).toContain("Its attacks: if target has a hex: deals 17 damage");
+    expect(lines(ANGUISH)).toContain("Its attacks: if target has a hex: deals 17 piercing damage");
     // One line, and the spirit pays (QA on PR 1582).
     expect(lines(WANDERLUST)).toContain(
       "Its attacks: if target is not moving: knocks down for 2s, this spirit loses 54 Health",
@@ -368,7 +368,7 @@ describe("the texts (#1550)", () => {
     expect(lines("ritualist.pain")).toContain("Its attacks deal 25 damage");
     const anguish = lines(ANGUISH);
     expect(anguish.indexOf("Its attacks deal 17 damage")).toBeLessThan(
-      anguish.indexOf("Its attacks: if target has a hex: deals 17 damage"),
+      anguish.indexOf("Its attacks: if target has a hex: deals 17 piercing damage"),
     );
   });
 

@@ -115,9 +115,9 @@ describe("Symbol of Wrath (#1113)", () => {
     const described = describeSkill(skill, new Map([[SMITING, 12]]));
     expect(described.effects.map(({ text }) => text)).toEqual([
       "Creates a symbol at your target's location for 5 seconds",
-      "Every 1s for 5s, foes adjacent: deals 34 damage",
+      "Every 1s for 5s, foes adjacent: deals 34 holy damage",
     ]);
-    expect(described.headline).toBe("34 damage");
+    expect(described.headline).toBe("34 holy damage");
   });
 });
 

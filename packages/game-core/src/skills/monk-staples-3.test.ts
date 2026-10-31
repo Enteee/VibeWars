@@ -194,7 +194,7 @@ describe("Smite Condition (#1039)", () => {
   it("says so", () => {
     expect(described("monk.smite-condition")).toEqual([
       "Removes 1 condition",
-      "If it removes a condition: foes in the area take 50 damage",
+      "If it removes a condition: foes in the area take 50 holy damage",
     ]);
   });
 });

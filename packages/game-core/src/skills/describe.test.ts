@@ -76,8 +76,22 @@ describe("describeSkill", () => {
       skill("elementalist.lightning-orb"),
       new Map([["elementalist.air-magic", 12]]),
     );
-    expect(orb.effects[0]?.text).toBe("Deals 82 damage (25% armor penetration)");
+    expect(orb.effects[0]?.text).toBe("Deals 82 lightning damage (25% armor penetration)");
     expect(describeSkill(skill("elementalist.fireball")).effects[0]?.text).not.toContain("armor");
+  });
+
+  it("names a damage type in the line and the headline, and leaves typeless unnamed (#1724)", () => {
+    const fireball = describeSkill(
+      skill("elementalist.fireball"),
+      new Map([["elementalist.fire-magic", 12]]),
+    );
+    expect(fireball.effects[0]?.text).toBe("Deals 91 fire damage");
+    expect(fireball.headline).toBe("91 fire damage");
+    const shadow = describeSkill(skill("necromancer.shadow-strike"));
+    expect(shadow.effects.map(({ text }) => text)).toContain("Deals 12 shadow damage");
+    const vile = describeSkill(skill("necromancer.vile-touch"));
+    expect(vile.effects[0]?.text).toMatch(/^Deals \d+ damage$/);
+    expect(vile.headline).toMatch(/^\d+ damage$/);
   });
 
   it("names the attribute in readable form", () => {
@@ -477,7 +491,7 @@ describe("describeSkill", () => {
     expect(describeSkill(healing, new Map([["monk.healing-prayers", 12]])).headline).toBe(
       "heals 60",
     );
-    expect(describeSkill(skill("elementalist.fireball")).headline).toMatch(/^\d+ damage$/);
+    expect(describeSkill(skill("elementalist.fireball")).headline).toMatch(/^\d+ fire damage$/);
     // Nothing to count: no headline rather than a made-up one.
     expect(describeSkill(skill("ranger.broad-head-arrow")).headline).toBeUndefined();
   });
@@ -632,7 +646,7 @@ describe("attack skills (#417)", () => {
 
   it("words a splash, a lone target and a recharge of the others as GW1 does (#885)", () => {
     const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
-    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
+    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 piercing damage");
     expect(texts("assassin.horns-of-the-ox")).toContain(
       "If target is not adjacent to any allies: knocks down for 2s",
     );
@@ -650,7 +664,7 @@ describe("attack skills (#417)", () => {
     expect(texts("warrior.cleave").some((text) => text.startsWith("Up to 2 adjacent foes"))).toBe(
       true,
     );
-    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
+    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 piercing damage");
   });
 
   it("words the crippling knockdown chain, and a state its attack requires (#1041)", () => {
@@ -700,7 +714,7 @@ describe("attack skills (#417)", () => {
     );
     expect(texts("elementalist.stoning")).toContain("If target has Weakness: knocks down for 2s");
     expect(texts("elementalist.searing-flames")).toEqual([
-      "If target has Burning: deals 82 damage",
+      "If target has Burning: deals 82 fire damage",
       "If target does not have Burning: applies Burning for 6s (−7 Health degeneration)",
     ]);
   });
@@ -710,7 +724,7 @@ describe("attack skills (#417)", () => {
     const texts = describeSkill(skill("elementalist.aftershock"), ranks).effects.map(
       ({ text }) => text,
     );
-    expect(texts.at(-1)).toBe("If target is knocked down: deals 56 damage");
+    expect(texts.at(-1)).toBe("If target is knocked down: deals 56 earth damage");
   });
 
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
@@ -741,7 +755,9 @@ describe("attack skills (#417)", () => {
     expect(lines("ritualist.lamentation")).toContain(
       "If a spirit or a corpse is in earshot of you: deals 42 damage",
     );
-    expect(lines("ritualist.spirit-rift")).toContain("After 3s, foes adjacent: deals 105 damage");
+    expect(lines("ritualist.spirit-rift")).toContain(
+      "After 3s, foes adjacent: deals 105 lightning damage",
+    );
     expect(describeStatus("painful-bond")).toBe("take +18 from spirits' attacks");
   });
 
@@ -771,7 +787,7 @@ describe("attack skills (#417)", () => {
       "whenever it hits with a melee attack: gain 3 energy, never above 55",
     );
     expect(describeStatus("hundred-blades")).toBe(
-      "adjacent foes take 26 damage whenever it attacks with a sword",
+      "adjacent foes take 26 slashing damage whenever it attacks with a sword",
     );
   });
 
@@ -877,11 +893,11 @@ describe("describeStatus", () => {
 
   it("says the curses' triggers from the bearer's side, two alike once (#935)", () => {
     expect(describeStatus("spiteful-spirit")).toBe(
-      "takes 39 damage whenever it uses a skill or attacks, " +
-        "its adjacent allies take 39 damage whenever it uses a skill or attacks",
+      "takes 39 shadow damage whenever it uses a skill or attacks, " +
+        "its adjacent allies take 39 shadow damage whenever it uses a skill or attacks",
     );
     expect(describeStatus("mark-of-pain")).toBe(
-      "its adjacent allies take 34 damage whenever it takes physical damage",
+      "its adjacent allies take 34 shadow damage whenever it takes physical damage",
     );
     expect(describeStatus("insidious-parasite")).toBe(
       "its caster steals 39 Health whenever it hits with an attack",

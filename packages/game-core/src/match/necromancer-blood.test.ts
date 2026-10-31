@@ -254,7 +254,7 @@ describe("Blood Magic texts (#1338)", () => {
         ],
         "strike": [
           "If target is above 50% Health: steals up to 41 Health",
-          "Deals 41 damage",
+          "Deals 41 shadow damage",
         ],
         "swarm": [
           "Steals up to 51 Health",

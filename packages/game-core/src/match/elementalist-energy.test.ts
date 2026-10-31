@@ -200,9 +200,9 @@ describe("Steam (#1614)", () => {
         ({ text }) => text,
       ),
     ).toEqual([
-      "Deals 52 damage",
+      "Deals 52 cold damage",
       "If target has Burning: applies Blind for 9s (90% of attacks miss)",
-      "If target has Burning: deals 52 damage",
+      "If target has Burning: deals 52 fire damage",
     ]);
   });
 });
