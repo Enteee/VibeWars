@@ -67,6 +67,7 @@ export const CHANNELS = [
   "key-challenge",
   "key-proof",
   "key-proven",
+  "key-ask",
   "observe",
   "observing",
   "call",
@@ -317,6 +318,13 @@ export interface WireKeyProven {
   /** As the proof's, with the host's side named in it. */
   readonly mac: string;
 }
+
+/**
+ * Guest to a host it had proven, back after a drop only the guest saw
+ * (#1681): forget me and challenge me again. Its payload is `{}` and
+ * not read; only a peer the host holds proven is heard.
+ */
+export type WireKeyAsk = Record<string, never>;
 
 /** Host to one client: it is in, as `playerId`, on `map`. */
 export interface PeerWelcome {

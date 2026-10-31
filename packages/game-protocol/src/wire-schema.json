@@ -32,6 +32,7 @@
     "key-challenge",
     "key-proof",
     "key-proven",
+    "key-ask",
     "observe",
     "observing",
     "call",
@@ -405,6 +406,7 @@
         { "literal": "ended" },
         { "literal": "hello" },
         { "literal": "intent" },
+        { "literal": "key-ask" },
         { "literal": "key-challenge" },
         { "literal": "key-proof" },
         { "literal": "key-proven" },
@@ -3524,6 +3526,7 @@
         { "name": "y", "optional": false, "type": "number" }
       ]
     },
+    "WireKeyAsk": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "WireKeyChallenge": {
       "properties": [{ "name": "nonce", "optional": false, "type": "string" }]
     },

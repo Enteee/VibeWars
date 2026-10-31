@@ -14,7 +14,7 @@ Since #15 a lobby code is both the Trystero room and its password. Trystero publ
 
 **Relays see a slow derivation, never the key.** `seed = PBKDF2-HMAC-SHA256(key, fixed salt, 600 000 iterations)`; the Trystero room is `HMAC(seed, "room")` and its password `HMAC(seed, "password")`. Trystero's topic is a hash of the room; its SDP encryption key and handshake are keyed on the password. Recovering a key from a topic costs 2⁵⁴ × 600 000 PBKDF2 rounds, out of reach; a peer pays it once per open or join (~0.3 s).
 
-**Our own proof gates the lobby.** Before any lobby message, guest and host prove the key to each other with an HMAC over both nonces and both peer ids, keyed on a third derivation. Trystero's password already blocks the offers; the proof does not rely on Trystero internals and is unit-tested in game-session.
+**Our own proof gates the lobby.** Before any lobby message, guest and host prove the key to each other with an HMAC over both nonces and both peer ids, keyed on a third derivation. A peer id is no credential: a peer back from a drop proves the key again, both ways, and a guest that saw the drop alone asks the host to challenge it (`key-ask`). Trystero's password already blocks the offers; the proof does not rely on Trystero internals and is unit-tested in game-session.
 
 **Only peers in the room learn the key**, because they already hold it. It is not put in URLs, logs, storage, queue tickets or any Nostr event of ours.
 

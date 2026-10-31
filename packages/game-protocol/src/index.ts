@@ -151,6 +151,7 @@ export type {
   PeerRejoinProof,
   WireKeyChallenge,
   WireKeyProof,
+  WireKeyAsk,
   WireKeyProven,
   PeerWelcome,
   PeerObserve,

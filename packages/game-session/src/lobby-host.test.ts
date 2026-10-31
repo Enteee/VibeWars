@@ -9,6 +9,7 @@ import {
   parseWireLobbyNote,
   MAX_LOBBY_PLAYERS,
   parseWireKeyChallenge,
+  parseWireKeyProof,
   parseWireKeyProven,
   parseWireLobbyState,
   type WireLobbyNote,
@@ -17,7 +18,7 @@ import {
 } from "@vibewars/game-protocol";
 import { describe, expect, it, vi } from "vitest";
 
-import { KEY_PROOF_TIMEOUT_MS } from "./key-gate.js";
+import { KEY_PROOF_TIMEOUT_MS, keyGated } from "./key-gate.js";
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import {
   CODE,
@@ -547,6 +548,25 @@ describe("playing more than one match in a lobby", () => {
     lobby.network.blip("host", guest.transport.selfId);
     // The host challenges it as a stranger; the guest stops hearing the
     // host until it has proven itself again, and then comes back.
+    await until(() => states.length === 2);
+    expect(states).toEqual(["reconnecting", "online"]);
+    await settle();
+    await lobby.step(16);
+    for (const who of [lobby.host, guest]) {
+      expect(who.connection.getSnapshot().phase).toBe("waiting");
+      expect(playersOf(who)).toEqual([
+        { name: "Host", team: 0, ready: false },
+        { name: "Guest", team: 1, ready: false },
+      ]);
+    }
+  });
+
+  it("keeps the seat of a guest only it saw drop: it asks the host to challenge it again (#1681)", async () => {
+    const { lobby, guest, matches } = await startAMatch({ timeLimitSeconds: 15 });
+    const states: string[] = [];
+    matches[1]?.onConnectionChange((state) => states.push(state));
+    // The host never sees it go, and still holds it proven.
+    lobby.network.blip(guest.transport.selfId, "host");
     await until(() => states.length === 2);
     expect(states).toEqual(["reconnecting", "online"]);
     await settle();
@@ -1457,6 +1477,46 @@ describe("the key gate (#1681, ADR-0043)", () => {
     }
     await until(() => got.slice(1).every(proven));
     expect(got.map(proven)).toEqual([false, ...waiting.slice(1).map(() => true)]);
+  });
+
+  it("hears nothing from a stranger back on the id of a host it had proven, which it asks for a challenge", async () => {
+    const HOST_NONCE = "2b".repeat(16);
+    const network = createMemoryNetwork();
+    const host = network.join("host");
+    const guest = keyGated(network.join(), PROOF_KEY, "guest");
+    const joins: string[] = [];
+    guest.onPeerJoin((peerId) => joins.push(peerId));
+    const states: unknown[] = [];
+    guest.on("lobby-state", (data) => states.push(data));
+    // A host that proves itself, then is gone.
+    host.on("key-proof", (data, from) => {
+      const nonce = parseWireKeyProof(data)?.nonce ?? "";
+      void mac("host", HOST_NONCE, nonce, from, "host").then((signed) => {
+        host.send("key-proven", { mac: signed }, from);
+      });
+    });
+    host.onPeerJoin((peerId) => {
+      host.send("key-challenge", { nonce: HOST_NONCE }, peerId);
+    });
+    await until(() => joins.length === 1);
+    await host.leave();
+    await settle();
+
+    const stranger = network.join("host");
+    const asked: string[] = [];
+    stranger.on("key-ask", (_data, from) => asked.push(from));
+    stranger.on("key-proof", (_data, from) => {
+      stranger.send("key-proven", { mac: "00".repeat(32) }, from);
+      stranger.send("lobby-state", { forged: true }, from);
+    });
+    stranger.onPeerJoin((peerId) => {
+      stranger.send("key-challenge", { nonce: HOST_NONCE }, peerId);
+    });
+    await until(() => asked.length === 1);
+    await cryptoTurns();
+    expect(asked).toEqual([guest.selfId]);
+    expect(joins).toEqual(["host"]);
+    expect(states).toEqual([]);
   });
 
   it("leaves a host whose key-proven does not hold unheard: the join times out", async () => {

@@ -4,6 +4,7 @@ import {
   parseWireKeyProof,
   parseWireKeyProven,
   type Channel,
+  type WireKeyAsk,
   type WireKeyChallenge,
   type WireKeyProof,
   type WireKeyProven,
@@ -27,14 +28,16 @@ import type { Json, Transport } from "./transport.js";
  * `KEY_PROOF_TIMEOUT_MS`, drops the peer for good; a guest drops a host
  * whose `key-proven` fails. A peer that leaves is forgotten, proven or
  * not: a peer id is the peer's own to choose and shows on the relays, so
- * one coming back proves the key again, and a guest challenged again by
- * a host it had proven sees that host leave and checks it again.
+ * one coming back proves the key again, and so does the host. A guest
+ * challenged again by a host it had proven sees that host leave first;
+ * one back from a drop the host may not have seen sends `key-ask`, and
+ * a host that still holds it proven forgets it and challenges it again.
  */
 
 /** How long a challenged peer has to prove the key. */
 export const KEY_PROOF_TIMEOUT_MS = 5000;
 
-const KEY_CHANNELS: readonly Channel[] = ["key-challenge", "key-proof", "key-proven"];
+const KEY_CHANNELS: readonly Channel[] = ["key-challenge", "key-proof", "key-proven", "key-ask"];
 
 const encoder = new TextEncoder();
 
@@ -103,6 +106,8 @@ export function keyGated(
 
   /** Every peer met, in the order met; a dropped one is gone from it. */
   const peers = new Map<string, Peer>();
+  /** Guest: hosts it had proven that left; one back is asked to challenge again. */
+  const lapsed = new Set<string>();
   /** Peers in the room now, as the transport says. */
   const present = new Set<string>();
   const timers = new Map<string, unknown>();
@@ -169,7 +174,11 @@ export function keyGated(
   const offs = [
     transport.onPeerJoin((peerId) => {
       present.add(peerId);
-      if (proven(peerId)) {
+      if (lapsed.delete(peerId)) {
+        // A host that may not have seen us go still holds us proven, and
+        // would never challenge again: ask it to.
+        transport.send("key-ask", {} satisfies WireKeyAsk, peerId);
+      } else if (proven(peerId)) {
         for (const handler of [...joins]) {
           handler(peerId);
         }
@@ -184,6 +193,9 @@ export function keyGated(
       // shows on the relays, so one coming back proves the key again.
       drop(peerId);
       if (was) {
+        if (side === "guest") {
+          lapsed.add(peerId);
+        }
         for (const handler of [...leaves]) {
           handler(peerId);
         }
@@ -223,6 +235,17 @@ export function keyGated(
         transport.send("key-proven", { mac } satisfies WireKeyProven, from);
         admit(from, []);
       })();
+    }),
+    transport.on("key-ask", (_data, from) => {
+      if (side !== "host" || !proven(from)) {
+        return;
+      }
+      // It saw us drop and forgot us: it is unheard until it proves the key again.
+      drop(from);
+      for (const handler of [...leaves]) {
+        handler(from);
+      }
+      challenge(from);
     }),
     transport.on("key-challenge", (data, from) => {
       const asked = parseWireKeyChallenge(data);
