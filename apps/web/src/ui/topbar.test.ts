@@ -146,6 +146,19 @@ describe("the title bar's Lobby Key and Join (#1525, #1526)", () => {
     expect(lobby?.hidden).toBe(true);
   });
 
+  it("keeps a key typed while its own lobby opens, and empties it once joined (#1526)", () => {
+    const { join, parts } = mount();
+    const input = parts[1];
+    if (input === undefined) {
+      throw new Error("no field");
+    }
+    input.value = "ACDE-FGHJ-KMNP";
+    join.setLobby({ code: "HJKMNPQRTWXY", isHost: true });
+    expect(input.value).toBe("ACDE-FGHJ-KMNP");
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: false });
+    expect(input.value).toBe("");
+  });
+
   it("joins with the key upper-cased as typed, on Enter and on Join", () => {
     const { joined, parts } = mount();
     const [label, input, button] = parts;

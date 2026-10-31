@@ -839,6 +839,17 @@ async function main(): Promise<void> {
         await own.close();
         return;
       }
+      // Renamed while the key was derived: nobody can be in it yet, so it
+      // opens again under the new name and tag.
+      if (
+        name !== loadPlayerName() ||
+        JSON.stringify(entrant.guild) !== JSON.stringify(playerGuild())
+      ) {
+        await own.lobby.disconnect();
+        await own.close();
+        openOwnLobby();
+        return;
+      }
       hosted = own;
       if (isModeEntry(shownEntry) && shownEntry !== own.lobby.getSnapshot().mode) {
         own.lobby.selectMode(shownEntry);

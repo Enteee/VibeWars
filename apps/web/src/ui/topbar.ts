@@ -144,7 +144,8 @@ export function joinControls(
     },
     setLobby: (shown) => {
       // In the lobby a code was typed for: the field has done its work.
-      if (shown !== undefined && displayLobbyCode(shown.code) !== lobbyCode.textContent) {
+      // This tab's own one opening leaves a key typed meanwhile alone.
+      if (shown?.isHost === false && displayLobbyCode(shown.code) !== lobbyCode.textContent) {
         codeInput.value = "";
       }
       lobby.hidden = shown === undefined;

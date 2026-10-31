@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
-import { joinByCode, openRail } from "./helpers/menu.js";
+import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
@@ -72,7 +72,7 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     const code = await hostLobby(host);
 
     await nameOnMenu(guest, "Guest");
-    await joinByCode(guest, code);
+    await joinFriend(guest, code);
     await expect(guest.locator(".lobby-panel")).toBeVisible();
 
     // One side of two players and a bot.

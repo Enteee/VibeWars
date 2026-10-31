@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { joinByCode, openRail, pickCharacter } from "./helpers/menu.js";
+import { joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
 import {
   hostLobby as hostFromMenu,
   openPeers,
@@ -46,7 +46,7 @@ async function hostLobby(page: Page, playerName: string): Promise<string> {
 /** Join `code` as `playerName` and wait for the lobby screen. */
 async function joinLobby(page: Page, playerName: string, code: string): Promise<void> {
   await openMenu(page, playerName);
-  await joinByCode(page, code);
+  await joinFriend(page, code);
   await expect(page.locator(".lobby-panel")).toBeVisible();
 }
 

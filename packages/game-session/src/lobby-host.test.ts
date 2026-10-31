@@ -329,12 +329,15 @@ describe("lobby host", () => {
     expect(guest.connection.getSnapshot().mapId).toBe(MAP_IDS[1]);
   });
 
-  it("turns a join away while it closes, as for a queue (#1526)", async () => {
+  it("seats no join that arrives while it closes (#1526)", async () => {
     const lobby = await openLobby();
     const joining = lobby.join();
     const closing = lobby.lobby.close();
-    await expect(joining).rejects.toMatchObject({ reason: "host-left" });
+    // Not yet key-proven, it hears nothing from the host (#1681), not even
+    // that it left: its join runs out unanswered.
+    await expect(joining).rejects.toBeInstanceOf(LobbyNoAnswerError);
     await closing;
+    expect(lobby.host.connection.getSnapshot().players).toHaveLength(1);
   });
 
   it("lists the character a member picks after joining, checked as a join's (#1526)", async () => {
