@@ -27,6 +27,10 @@ What you do:
   employee's first wait of the day. `flow.idleWhileReadyMs24h` is the time
   some card sat in Ready while a developer, asset-designer or cicd-engineer
   was waiting.
+  `company load`'s `CI` block is each workflow's job wait for a runner and
+  run time (p50/p90, 24 h) per runner kind, then the host's load and free
+  memory; per job, the 7 d window and `ci.yml`'s wall time per event are in
+  `kpis.json`'s `ciJobs`, the host's instant numbers in `machine`.
 - **Check before you claim.** When a cause is not obvious, ask the role
   concerned (`tg send <role>`). `hub/board-history.jsonl`, `hub/audit.jsonl`,
   `hub/hubd.log`, every `bus/<role>/inbox.jsonl`, `board ls|show`,

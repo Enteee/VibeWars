@@ -5,8 +5,10 @@ import {
   KPI_SCHEMA_VERSION,
   addEdge,
   buildKpis,
+  ciJobKpis,
   ciKpis,
   ciRunFromRest,
+  ciRunJobsFromRest,
   cpuShare,
   employeeOfUnit,
   flowKpis,
@@ -16,6 +18,7 @@ import {
   p90,
   parseCiHistory,
   parseEdges,
+  parseMeminfo,
   parseUnits,
   projectSevenDay,
   stageWaits,
@@ -673,6 +676,161 @@ describe("ciKpis", () => {
   });
 });
 
+describe("CI jobs (#1892)", () => {
+  /** @param {Partial<import("./kpi.mjs").CiRun>} change */
+  const run = (change = {}) => ({
+    id: 1,
+    workflow: "ci.yml",
+    event: "pull_request",
+    onMain: false,
+    sha: "a".repeat(40),
+    issue: null,
+    createdAt: NOW - H,
+    completedAt: NOW - H,
+    conclusion: "success",
+    ...change,
+  });
+  const iso = (/** @type {number} */ ms) => new Date(ms).toISOString();
+  /**
+   * A REST job created at `NOW - 2 h + at` s, waiting `wait` s and running `ran` s.
+   *
+   * @param {string} name
+   * @param {number} at
+   * @param {number} wait
+   * @param {number} ran
+   * @param {Record<string, unknown>} [change]
+   */
+  const job = (name, at, wait, ran, change = {}) => {
+    const created = NOW - 2 * H + at * 1000;
+    return {
+      name,
+      status: "completed",
+      conclusion: "success",
+      labels: ["ubuntu-latest"],
+      created_at: iso(created),
+      started_at: iso(created + wait * 1000),
+      completed_at: iso(created + (wait + ran) * 1000),
+      ...change,
+    };
+  };
+
+  it("reads a run's completed jobs, drops the matrix suffix, and splits company from hosted runners", () => {
+    const read = ciRunJobsFromRest(run(), {
+      jobs: [
+        job("e2e-shard (1)", 0, 10, 100),
+        job("e2e-shard (2)", 0, 20, 200, { labels: ["self-hosted", "vibewars-company"] }),
+        job("plan", 0, 1, 1, { conclusion: "skipped" }),
+        job("build", 0, 1, 1, { status: "in_progress" }),
+        job("lint‮", 0, 1, 1),
+      ],
+    });
+    expect(read?.malformed).toBe(0);
+    expect(read?.jobs.map(({ name, runner }) => [name, runner])).toEqual([
+      ["e2e-shard", "hosted"],
+      ["e2e-shard", "company"],
+      ["other", "hosted"],
+    ]);
+    expect(ciRunJobsFromRest(run(), { message: "Not Found" })).toBeNull();
+  });
+
+  it("counts a job that started before it was created, or has no start, as malformed", () => {
+    const read = ciRunJobsFromRest(run(), {
+      jobs: [
+        job("a", 0, -5, 10),
+        job("b", 0, 1, 1, { started_at: null }),
+        job("c", 0, 1, 1, { completed_at: iso(NOW - 3 * H) }),
+        "junk",
+        job("d", 0, 0, 1),
+      ],
+    });
+    expect(read?.malformed).toBe(4);
+    expect(read?.jobs.map((one) => one.name)).toEqual(["d"]);
+  });
+
+  it("takes p50 and p90 of wait and duration per workflow and per job, in seconds", () => {
+    const read = ciRunJobsFromRest(run(), {
+      jobs: [
+        ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) =>
+          job(`e2e-shard (${String(n)})`, 0, n, 10 * n),
+        ),
+        job("lint", 0, 100, 60, { labels: ["vibewars-company"] }),
+      ],
+    });
+    const runs = read === null ? [] : [read];
+    const day = ciJobKpis(NOW, runs)["24h"];
+    expect(day.workflows).toEqual([
+      {
+        workflow: "ci.yml",
+        runner: "company",
+        count: 1,
+        waitP50S: 100,
+        waitP90S: 100,
+        durationP50S: 60,
+        durationP90S: 60,
+      },
+      {
+        workflow: "ci.yml",
+        runner: "hosted",
+        count: 10,
+        waitP50S: 6,
+        waitP90S: 9,
+        durationP50S: 55,
+        durationP90S: 90,
+      },
+    ]);
+    expect(day.jobs.map(({ job: name, runner, count }) => [name, runner, count])).toEqual([
+      ["e2e-shard", "hosted", 10],
+      ["lint", "company", 1],
+    ]);
+  });
+
+  it("records ci.yml's wall time, first job created to last completed, per event", () => {
+    const of = (
+      /** @type {Partial<import("./kpi.mjs").CiRun>} */ change,
+      /** @type {unknown[]} */ jobs,
+    ) => ciRunJobsFromRest(run(change), { jobs }) ?? undefined;
+    const runs = [
+      of({ id: 1, event: "push" }, [job("a", 0, 10, 50), job("b", 30, 10, 100)]),
+      of({ id: 2 }, [job("a", 0, 0, 300)]),
+      of({ id: 3 }, [job("a", 0, 0, 600)]),
+      of({ id: 4, workflow: "codeql.yml" }, [job("a", 0, 0, 900)]),
+      of({ id: 5, event: "push" }, []),
+    ].flatMap((one) => (one === undefined ? [] : [one]));
+    const { wall } = ciJobKpis(NOW, runs)["24h"];
+    expect(wall).toEqual({
+      push: { count: 1, p50S: 140, p90S: 140 },
+      pull_request: { count: 2, p50S: 450, p90S: 600 },
+    });
+  });
+
+  it("windows by the run's completion, and is present with zero counts when nothing ran", () => {
+    const old = ciRunJobsFromRest(run({ completedAt: NOW - 3 * D }), {
+      jobs: [job("a", 0, 1, 1), job("b", 0, -1, 1)],
+    });
+    const kpis = ciJobKpis(NOW, old === null ? [] : [old]);
+    expect(kpis["24h"]).toEqual({
+      malformed: 0,
+      workflows: [],
+      jobs: [],
+      wall: {
+        push: { count: 0, p50S: null, p90S: null },
+        pull_request: { count: 0, p50S: null, p90S: null },
+      },
+    });
+    expect(kpis["7d"].workflows[0]?.count).toBe(1);
+    expect(kpis["7d"].malformed).toBe(1);
+  });
+
+  it("reads MemTotal and MemAvailable from /proc/meminfo", () => {
+    const text = "MemTotal:       32000 kB\nMemFree:  100 kB\nMemAvailable:   12000 kB\n";
+    expect(parseMeminfo(text)).toEqual({
+      memTotalBytes: 32000 * 1024,
+      memAvailableBytes: 12000 * 1024,
+    });
+    expect(parseMeminfo("MemTotal: 1 kB\n")).toBeNull();
+  });
+});
+
 describe("buildKpis", () => {
   it("writes the snapshot with a failed reader's section null and its error kept", () => {
     const kpis = buildKpis(NOW, {
@@ -687,8 +845,10 @@ describe("buildKpis", () => {
       staff: () => ({ byRole: {}, maxAgents: 1 }),
       webCache: () => null,
       ci: () => ciKpis({ now: NOW, runs: [], moves: [], done7d: 0, gate: GATE }),
+      ciJobs: () => ciJobKpis(NOW, []),
+      machine: () => null,
     });
-    expect(kpis.schemaVersion).toBe(6);
+    expect(kpis.schemaVersion).toBe(7);
     expect(kpis.schemaVersion).toBe(KPI_SCHEMA_VERSION);
     expect(kpis.ci).toEqual({
       historySince: null,
@@ -718,6 +878,8 @@ describe("buildKpis", () => {
       ci: () => {
         throw new Error("no CI history yet");
       },
+      ciJobs: () => null,
+      machine: () => null,
     });
     expect(kpis.ci).toBeNull();
     expect(kpis.errors).toEqual({ ci: "no CI history yet" });
@@ -742,6 +904,8 @@ describe("buildKpis", () => {
       staff: () => null,
       webCache: () => stats,
       ci: () => null,
+      ciJobs: () => null,
+      machine: () => null,
     };
     expect(buildKpis(NOW, readers).webCache).toEqual(stats);
     const failed = buildKpis(NOW, {

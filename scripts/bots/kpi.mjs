@@ -6,7 +6,7 @@
  */
 
 /** A reader of `kpis.json` that finds another value treats the file as absent. */
-export const KPI_SCHEMA_VERSION = 6;
+export const KPI_SCHEMA_VERSION = 7;
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
@@ -813,6 +813,218 @@ function cycleShare({ now, gated, moves }) {
       };
 }
 
+/** The runner label of the company's own runners (#1888); any other job ran on a hosted one. */
+export const COMPANY_RUNNER_LABEL = "vibewars-company";
+
+/** What a job name may be once its matrix suffix is dropped; anything else is `"other"`. */
+const JOB_NAME = /^[\w .+-]{1,64}$/;
+
+/**
+ * One job of a run, as `ciJobKpis` reads it. Times in epoch ms.
+ *
+ * @typedef {{ name: string, runner: "company" | "hosted", createdAt: number,
+ *   startedAt: number, completedAt: number }} CiJob
+ */
+
+/**
+ * The jobs of one completed run (#1892), the latest attempt's.
+ *
+ * @typedef {{ runId: number, workflow: string, event: string, completedAt: number,
+ *   jobs: CiJob[], malformed: number }} CiRunJobs
+ */
+
+/**
+ * The jobs of a run from the REST `actions/runs/{id}/jobs?filter=latest`
+ * answer. Jobs not completed, and skipped ones, are left out; one without
+ * a `started_at` at or after its `created_at`, or a `completed_at` at or
+ * after that, is counted in `malformed`. A matrix job's ` (…)` suffix is
+ * dropped, so `e2e-shard (3)` is `e2e-shard`.
+ *
+ * @param {CiRun} run
+ * @param {unknown} answer
+ * @returns {CiRunJobs | null} null when the answer is not a jobs list
+ */
+export function ciRunJobsFromRest(run, answer) {
+  const rows =
+    typeof answer === "object" && answer !== null && "jobs" in answer ? answer.jobs : undefined;
+  if (!Array.isArray(rows)) {
+    return null;
+  }
+  /** @type {CiJob[]} */
+  const jobs = [];
+  let malformed = 0;
+  for (const row of /** @type {unknown[]} */ (rows)) {
+    if (typeof row !== "object" || row === null) {
+      malformed += 1;
+      continue;
+    }
+    const job = /** @type {Record<string, unknown>} */ (row);
+    if (job.status !== "completed" || job.conclusion === "skipped") {
+      continue;
+    }
+    /** @param {unknown} at */
+    const time = (at) => (typeof at === "string" ? Date.parse(at) : NaN);
+    const createdAt = time(job.created_at);
+    const startedAt = time(job.started_at);
+    const completedAt = time(job.completed_at);
+    if (!(startedAt >= createdAt && completedAt >= startedAt)) {
+      malformed += 1;
+      continue;
+    }
+    const name = typeof job.name === "string" ? job.name.replace(/ \(.*\)$/, "") : "";
+    const labels = Array.isArray(job.labels) ? /** @type {unknown[]} */ (job.labels) : [];
+    jobs.push({
+      name: JOB_NAME.test(name) ? name : "other",
+      runner: labels.includes(COMPANY_RUNNER_LABEL) ? "company" : "hosted",
+      createdAt,
+      startedAt,
+      completedAt,
+    });
+  }
+  return {
+    runId: run.id,
+    workflow: run.workflow,
+    event: run.event,
+    completedAt: run.completedAt,
+    jobs,
+    malformed,
+  };
+}
+
+/**
+ * @typedef {{ count: number, waitP50S: number | null, waitP90S: number | null,
+ *   durationP50S: number | null, durationP90S: number | null }} JobStats
+ */
+
+/**
+ * @typedef {{ malformed: number,
+ *   workflows: ({ workflow: string, runner: "company" | "hosted" } & JobStats)[],
+ *   jobs: ({ workflow: string, job: string, runner: "company" | "hosted" } & JobStats)[],
+ *   wall: Record<"push" | "pull_request", { count: number, p50S: number | null,
+ *     p90S: number | null }> }} CiJobWindow
+ */
+
+/** The workflow whose run-level wall time is recorded. */
+const WALL_WORKFLOW = "ci.yml";
+
+/**
+ * @param {number | null} ms
+ * @returns {number | null} whole seconds
+ */
+const seconds = (ms) => (ms === null ? null : Math.round(ms / 1000));
+
+/**
+ * @param {readonly CiJob[]} jobs
+ * @returns {JobStats}
+ */
+function jobStats(jobs) {
+  const waits = jobs.map((job) => job.startedAt - job.createdAt);
+  const durations = jobs.map((job) => job.completedAt - job.startedAt);
+  return {
+    count: jobs.length,
+    waitP50S: seconds(median(waits)),
+    waitP90S: seconds(p90(waits)),
+    durationP50S: seconds(median(durations)),
+    durationP90S: seconds(p90(durations)),
+  };
+}
+
+/**
+ * @template T
+ * @param {readonly T[]} items
+ * @param {(item: T) => string} key
+ * @returns {Map<string, T[]>} in key order
+ */
+function groupBy(items, key) {
+  /** @type {Map<string, T[]>} */
+  const groups = new Map();
+  for (const item of items) {
+    const k = key(item);
+    groups.set(k, [...(groups.get(k) ?? []), item]);
+  }
+  return new Map([...groups].sort(([a], [b]) => a.localeCompare(b)));
+}
+
+/**
+ * One window of the job numbers: runs completed in `(since, now]`.
+ *
+ * @param {number} since
+ * @param {number} now
+ * @param {readonly CiRunJobs[]} runs
+ * @returns {CiJobWindow}
+ */
+function jobWindow(since, now, runs) {
+  const inside = runs.filter((run) => run.completedAt > since && run.completedAt <= now);
+  const jobs = inside.flatMap((run) => run.jobs.map((job) => ({ ...job, workflow: run.workflow })));
+  /** @type {CiJobWindow["wall"]} */
+  const wall = {
+    push: { count: 0, p50S: null, p90S: null },
+    pull_request: { count: 0, p50S: null, p90S: null },
+  };
+  for (const event of /** @type {const} */ (["push", "pull_request"])) {
+    const walls = inside
+      .filter((run) => run.workflow === WALL_WORKFLOW && run.event === event && run.jobs.length > 0)
+      .map(
+        (run) =>
+          Math.max(...run.jobs.map((job) => job.completedAt)) -
+          Math.min(...run.jobs.map((job) => job.createdAt)),
+      );
+    wall[event] = { count: walls.length, p50S: seconds(median(walls)), p90S: seconds(p90(walls)) };
+  }
+  return {
+    malformed: inside.reduce((sum, run) => sum + run.malformed, 0),
+    workflows: [...groupBy(jobs, (job) => `${job.workflow}\n${job.runner}`)].map(([, group]) => ({
+      workflow: group[0]?.workflow ?? "",
+      runner: group[0]?.runner ?? "hosted",
+      ...jobStats(group),
+    })),
+    jobs: [...groupBy(jobs, (job) => `${job.workflow}\n${job.name}\n${job.runner}`)].map(
+      ([, group]) => ({
+        workflow: group[0]?.workflow ?? "",
+        job: group[0]?.name ?? "",
+        runner: group[0]?.runner ?? "hosted",
+        ...jobStats(group),
+      }),
+    ),
+    wall,
+  };
+}
+
+/**
+ * The CI job numbers (#1892): how long jobs waited for a runner and ran,
+ * per workflow and per job, split by company and hosted runners; and the
+ * wall time of a `ci.yml` run per event. Windows by a run's completion.
+ *
+ * @param {number} now
+ * @param {readonly CiRunJobs[]} runs
+ * @returns {NonNullable<Kpis["ciJobs"]>}
+ */
+export function ciJobKpis(now, runs) {
+  return {
+    "24h": jobWindow(now - DAY_MS, now, runs),
+    "7d": jobWindow(now - 7 * DAY_MS, now, runs),
+  };
+}
+
+/**
+ * MemTotal and MemAvailable from `/proc/meminfo`, in bytes.
+ *
+ * @param {string} text
+ * @returns {{ memTotalBytes: number, memAvailableBytes: number } | null} null when either is missing
+ */
+export function parseMeminfo(text) {
+  /** @param {string} key */
+  const kib = (key) => {
+    const found = new RegExp(`^${key}:\\s+(\\d+) kB$`, "m").exec(text)?.[1];
+    return found === undefined ? null : Number(found) * 1024;
+  };
+  const memTotalBytes = kib("MemTotal");
+  const memAvailableBytes = kib("MemAvailable");
+  return memTotalBytes === null || memAvailableBytes === null
+    ? null
+    : { memTotalBytes, memAvailableBytes };
+}
+
 /**
  * @typedef {{ medianMs: number | null, p90Ms: number | null, n: number }} StageWait
  */
@@ -843,6 +1055,10 @@ function cycleShare({ now, gated, moves }) {
  *   waitMedianMs: number | null, waitP90Ms: number | null, runsPerDone: number | null,
  *   mainRedMinutes24h: number, cycleShare: { inProgress: number, ci: number, review: number,
  *   qa: number } | null } | null} ci the merge gate's runs (#1612)
+ * @property {{ "24h": CiJobWindow, "7d": CiJobWindow } | null} ciJobs every workflow's jobs (#1892)
+ * @property {{ cpus: number, load1: number, load5: number, load15: number,
+ *   memTotalBytes: number, memAvailableBytes: number, hubDiskFreeBytes: number } | null} machine
+ *   the host's instant load (#1892)
  * @property {Record<string, string>} errors section → one line
  */
 
@@ -851,7 +1067,7 @@ function cycleShare({ now, gated, moves }) {
  * `errors`; the rest is still written.
  *
  * @param {number} now
- * @param {{ [K in "flow" | "claude" | "github" | "host" | "staff" | "webCache" | "ci"]: () => Kpis[K] }} readers
+ * @param {{ [K in "flow" | "claude" | "github" | "host" | "staff" | "webCache" | "ci" | "ciJobs" | "machine"]: () => Kpis[K] }} readers
  * @returns {Kpis}
  */
 export function buildKpis(now, readers) {
@@ -881,6 +1097,8 @@ export function buildKpis(now, readers) {
     staff: section("staff", readers.staff),
     webCache: section("webCache", readers.webCache),
     ci: section("ci", readers.ci),
+    ciJobs: section("ciJobs", readers.ciJobs),
+    machine: section("machine", readers.machine),
     errors,
   };
 }

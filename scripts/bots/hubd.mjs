@@ -16,6 +16,7 @@
 import { execFile, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -140,13 +141,16 @@ import {
   addEdge,
   buildKpis,
   ciKpis,
+  ciJobKpis,
   ciRunFromRest,
+  ciRunJobsFromRest,
   cpuShare,
   employeeOfUnit,
   EDGES_SCHEMA_VERSION,
   flowKpis,
   parseCiHistory,
   parseEdges,
+  parseMeminfo,
   parseUnits,
   projectSevenDay,
   staffKpis,
@@ -1792,6 +1796,7 @@ function serveLoad(cfg) {
     stale,
     peek,
     usage: readUsage(usage, now, null)?.summary ?? null,
+    kpis: lastSnapshot,
   });
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
 }
@@ -3742,6 +3747,68 @@ async function recordCiRuns(now, cfg) {
   return kept;
 }
 
+/** The most runs whose jobs one KPI tick reads; a backfill after a reboot takes a few ticks. */
+const JOBS_PER_TICK = 40;
+/** Each run's jobs, by run id, read once (#1892). In memory: rebuilt after a reboot. */
+const ciJobsCache = /** @type {Map<number, import("./kpi.mjs").CiRunJobs>} */ (new Map());
+
+/**
+ * Read the jobs of the history's runs of the last 7 days not yet read, the
+ * newest first and at most `JOBS_PER_TICK`, and forget runs older than
+ * that. A run whose jobs cannot be read is tried again on a later tick.
+ *
+ * @param {number} now
+ * @param {readonly import("./kpi.mjs").CiRun[]} runs `ci-history.jsonl`'s
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<import("./kpi.mjs").CiRunJobs[]>} every cached run's jobs
+ */
+async function recordCiJobs(now, runs, cfg) {
+  const week = runs.filter((run) => run.createdAt >= now - CI_FIRST_LOOKBACK_MS);
+  const ids = new Set(week.map((run) => run.id));
+  for (const id of ciJobsCache.keys()) {
+    if (!ids.has(id)) {
+      ciJobsCache.delete(id);
+    }
+  }
+  const unread = week
+    .filter((run) => !ciJobsCache.has(run.id))
+    .sort((a, b) => b.completedAt - a.completedAt)
+    .slice(0, JOBS_PER_TICK);
+  for (const run of unread) {
+    const answer = await rest(
+      `actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`,
+      cfg,
+    );
+    const read = ciRunJobsFromRest(run, answer);
+    if (read !== null) {
+      ciJobsCache.set(run.id, read);
+    }
+  }
+  return [...ciJobsCache.values()];
+}
+
+/**
+ * The host's instant load (#1892): CPUs, load averages, memory, and the free
+ * disk under the hub's directory.
+ *
+ * @returns {NonNullable<import("./kpi.mjs").Kpis["machine"]>}
+ */
+function sampleMachine() {
+  const memory = parseMeminfo(fs.readFileSync("/proc/meminfo", "utf8"));
+  if (memory === null) {
+    throw new Error("/proc/meminfo has no MemTotal or MemAvailable");
+  }
+  const [load1 = 0, load5 = 0, load15 = 0] = os.loadavg();
+  return {
+    cpus: os.availableParallelism(),
+    load1,
+    load5,
+    load15,
+    ...memory,
+    hubDiskFreeBytes: freeBytes(HUB),
+  };
+}
+
 /**
  * The most of one employee's wait log hubd reads: 8 days of a busy agent's
  * waits are some 200 KiB. A bigger one is forged, and is left out.
@@ -3787,6 +3854,9 @@ function readWaits(staff) {
   return waits;
 }
 
+/** The last snapshot written, for `company load`; null before the first. */
+let lastSnapshot = /** @type {import("./kpi.mjs").Kpis | null} */ (null);
+
 /**
  * Write `kpis.json` (#891). A section that cannot be read is `null` with its
  * reason in `errors`; hubd never dies of a KPI.
@@ -3812,6 +3882,13 @@ async function writeKpis(cfg) {
       ciRuns = await recordCiRuns(now, cfg);
     } catch (error) {
       ciRuns = error instanceof Error ? error : new Error("CI history unreadable");
+    }
+    /** @type {import("./kpi.mjs").CiRunJobs[] | Error} */
+    let ciJobs;
+    try {
+      ciJobs = ciRuns instanceof Error ? ciRuns : await recordCiJobs(now, ciRuns, cfg);
+    } catch (error) {
+      ciJobs = error instanceof Error ? error : new Error("CI jobs unreadable");
     }
     const waits = readWaits(staff);
     const roles = { employees: staff?.employees ?? {} };
@@ -3887,8 +3964,16 @@ async function writeKpis(cfg) {
         const { done7d } = flowKpis({ now, moves: history, cards: [], waits, staff: roles });
         return ciKpis({ now, runs: ciRuns, moves: history, done7d, gate: GATE_WORKFLOWS });
       },
+      ciJobs: () => {
+        if (ciJobs instanceof Error) {
+          throw ciJobs;
+        }
+        return ciJobKpis(now, ciJobs);
+      },
+      machine: sampleMachine,
     });
     writeAtomic(KPIS, JSON.stringify(kpis));
+    lastSnapshot = kpis;
   } catch (error) {
     console.error(`hubd: kpis.json: ${error instanceof Error ? error.message : "failed"}`);
   }

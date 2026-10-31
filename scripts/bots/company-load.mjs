@@ -26,6 +26,7 @@ const STATE_TEXT = { turn: "in turn", between: "between", limited: "usage limit"
  * @property {ReadonlyMap<string, number>} stale employees whose roster entry went stale, last seen
  * @property {readonly import("./peek.mjs").PeekRow[]} peek every employee's last turn state
  * @property {import("./claude-usage.mjs").UsageSummary | null} usage null with no usage logs
+ * @property {import("./kpi.mjs").Kpis | null} kpis hubd's last KPI snapshot, null before its first
  */
 
 /**
@@ -40,6 +41,66 @@ function since(ms) {
     return `${String(minutes)}m`;
   }
   return `${String(Math.floor(minutes / 60))}h${String(minutes % 60).padStart(2, "0")}m`;
+}
+
+/**
+ * Seconds as `45s`, `4m05s` or `1h20m`; `-` for none.
+ *
+ * @param {number | null} s
+ * @returns {string}
+ */
+function secs(s) {
+  if (s === null) {
+    return "-";
+  }
+  if (s < 60) {
+    return `${String(s)}s`;
+  }
+  if (s < 3600) {
+    return `${String(Math.floor(s / 60))}m${String(s % 60).padStart(2, "0")}s`;
+  }
+  return since(s * 1000);
+}
+
+/**
+ * The CI block (#1892): per workflow and runner kind, the jobs' wait for a
+ * runner and their duration over 24 h; then the host's load and free memory.
+ *
+ * @param {import("./kpi.mjs").Kpis | null} kpis
+ * @returns {string[]}
+ */
+function ciLines(kpis) {
+  if (kpis === null) {
+    return ["CI      unknown (no KPI snapshot yet)"];
+  }
+  const jobs = kpis.ciJobs?.["24h"];
+  const rows =
+    jobs === undefined
+      ? [`CI      unknown (${kpis.errors.ciJobs ?? "no jobs read"})`]
+      : [
+          `CI 24h  ${"workflow".padEnd(28)} ${"wait p50/p90".padStart(13)}  ${"run p50/p90".padStart(13)}  jobs`,
+          ...jobs.workflows.map((row) =>
+            [
+              "        ",
+              `${row.workflow} (${row.runner})`.padEnd(28),
+              " ",
+              `${secs(row.waitP50S)}/${secs(row.waitP90S)}`.padStart(13),
+              "  ",
+              `${secs(row.durationP50S)}/${secs(row.durationP90S)}`.padStart(13),
+              "  ",
+              String(row.count).padStart(4),
+            ].join(""),
+          ),
+          ...(jobs.workflows.length === 0 ? ["        no completed jobs"] : []),
+        ];
+  const { machine } = kpis;
+  const gib = (/** @type {number} */ bytes) => (bytes / 2 ** 30).toFixed(1);
+  return [
+    ...rows,
+    machine === null
+      ? `host    unknown (${kpis.errors.machine ?? "not read"})`
+      : `host    ${String(machine.cpus)} CPUs  load ${[machine.load1, machine.load5, machine.load15].map((n) => n.toFixed(2)).join(" ")}  mem free ${gib(machine.memAvailableBytes)}/${gib(machine.memTotalBytes)} GiB`,
+  ];
 }
 
 /**
@@ -127,5 +188,6 @@ export function loadLines(facts) {
       `${role.padEnd(16)}${n.padStart(2)}  ${employees.padEnd(width)}  ${tokens.padStart(5)}`.trimEnd(),
     ),
     ...(usage === null ? ["tokens  unknown (no usage logs)"] : []),
+    ...ciLines(facts.kpis),
   ].map(visible);
 }
