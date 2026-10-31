@@ -1857,10 +1857,11 @@ const skillGlyph = {
     inkLine("M12 6.5V12M9.2 9.2H14.8", 2) +
     inkLine("M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21", 1.8),
   // The "not" condition (#1670, #1715): the skill's own picture, and what the foe lacks, struck through.
-  "scythe-bare": () => riderOn(skillGlyph.scythe(), NOT.ring),
+  "hand-bare": () => riderOn(skillGlyph.palm(), NOT.ring),
   "energy-quiet": () => riderOn(skillGlyph.energy(), NOT.chant),
   "arrow-idle": () => riderOn(skillGlyph.arrow(), NOT.skill),
-  "heart-bare": () => riderOn(skillGlyph["heart-roof"](), NOT.ring),
+  "signet-plus-bare": () =>
+    riderOn(ringDot(10, 11, 7) + inkLine("M19.5 2V8M16.5 5H22.5", 2.2), NOT.ring),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +

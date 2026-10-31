@@ -68,7 +68,7 @@ export const PARAGON_ICONS = {
   // Anti-summon (#1528, #1568): the skill's mark, a struck ghost below it.
   "paragon.holy-spear": { glyph: "anti-summon-spear" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
-  "paragon.signet-of-synergy": { glyph: "heart-bare" },
+  "paragon.signet-of-synergy": { glyph: "signet-plus-bare" },
   // Paragon staples 4 (#1677), stand-ins until their art card.
   "paragon.go-for-the-eyes": { glyph: "eye", modifier: "area" },
   "paragon.never-give-up": { glyph: "energy", modifier: "plus" },

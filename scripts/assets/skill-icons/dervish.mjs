@@ -60,5 +60,5 @@ export const DERVISH_ICONS = {
   "dervish.vital-boon": { glyph: "heart-roof" },
   "dervish.guiding-hands": { glyph: "hand-arrow" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
-  "dervish.test-of-faith": { glyph: "scythe-bare" },
+  "dervish.test-of-faith": { glyph: "hand-bare" },
 };
