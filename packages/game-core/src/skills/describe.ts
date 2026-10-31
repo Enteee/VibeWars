@@ -7,6 +7,7 @@ import {
   RANGE_SPELL,
 } from "../distances.js";
 import type { ConditionalArmor } from "../equipment/armor.js";
+import type { DamageType } from "../equipment/types.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import {
   SPAWNING_POWER_ATTRIBUTE,
@@ -682,7 +683,7 @@ function describeAttackHits(
 /** A rider's damage: "20 fire damage", "13 damage" when it is typeless. */
 function riderDamage(effect: DamageEffect): string {
   const amount = String(describeMagnitude(effect.amount, new Map()).current);
-  return `${amount} ${effect.type === "typeless" ? "" : `${effect.type} `}damage`;
+  return `${amount}${typeWord(effect.type)} damage`;
 }
 
 /**
@@ -927,7 +928,7 @@ function describeCreation(
       case "energy-gain":
         return `${amount(effect.amount)} Energy`;
       case "damage":
-        return `take ${amount(effect.amount)} ${effect.type} damage`;
+        return `take ${amount(effect.amount)}${typeWord(effect.type)} damage`;
       case "remove-status":
         return `lose ${String(effect.count)} ${effect.category}${effect.count === 1 ? "" : "s"}`;
       case "splash": {
@@ -1002,7 +1003,7 @@ function describeTrigger(
       if (effect.kind === "damage" && trigger.target === "offender") {
         return [
           sentence(
-            `whenever you block a ${kind} attack this way, the attacker suffers ${amount(effect.amount)} damage`,
+            `whenever you block a ${kind} attack this way, the attacker suffers ${amount(effect.amount)}${typeWord(effect.type)} damage`,
           ),
         ];
       }
@@ -1059,12 +1060,12 @@ function describeTrigger(
   ) {
     const hurt = after.map((effect) =>
       effect.kind === "damage"
-        ? `it takes ${amount(effect.amount)} damage`
+        ? `it takes ${amount(effect.amount)}${typeWord(effect.type)} damage`
         : effect.kind === "splash"
           ? effect.effects
               .map((inner) =>
                 inner.kind === "damage"
-                  ? `${splashed(effect)} take ${amount(inner.amount)} damage`
+                  ? `${splashed(effect)} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
                   : "",
               )
               .join(" and ")
@@ -1121,7 +1122,7 @@ function describeTrigger(
       return [sentence(`${when}, that attack is interrupted`)];
     }
     if (effect.kind === "damage" && trigger.target === "bearer") {
-      return [clause(`takes ${amount(effect.amount)} damage ${when}`)];
+      return [clause(`takes ${amount(effect.amount)}${typeWord(effect.type)} damage ${when}`)];
     }
     // Scourge Enchantment's (#1403): "whenever it gains an enchantment,
     // its caster takes 63 holy damage".
@@ -1130,7 +1131,7 @@ function describeTrigger(
         trigger.on === "bearer-gains-enchantment" ? "enchantment" : "hex or enchantment";
       return [
         clause(
-          `${when}, the caster of that ${gained} takes ${amount(effect.amount)} ${effect.type} damage`,
+          `${when}, the caster of that ${gained} takes ${amount(effect.amount)}${typeWord(effect.type)} damage`,
         ),
       ];
     }
@@ -1164,7 +1165,7 @@ function describeTrigger(
       }
       return effect.effects.map((inner) =>
         inner.kind === "damage" && when !== DROPPED
-          ? clause(`${allies} take ${amount(inner.amount)} damage ${when}`)
+          ? clause(`${allies} take ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`)
           : inner.kind === "apply-status"
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
@@ -1361,10 +1362,18 @@ function conditionText(condition: EffectCondition): string {
   }
 }
 
+/**
+ * A damage type as the word before "damage" (#1724): " fire" in "Deals 112
+ * fire damage"; typeless damage is not named.
+ */
+function typeWord(type: DamageType): string {
+  return type === "typeless" ? "" : ` ${type}`;
+}
+
 /** An attack skill's damage type (#923), as " lightning" in "+18 lightning damage". */
 function damageTypeText(skill: Skill): string {
   const type = blowRuleOf(skill)?.damageType;
-  return type === undefined ? "" : ` ${type}`;
+  return type === undefined ? "" : typeWord(type);
 }
 
 /**
@@ -1614,7 +1623,7 @@ function describeEffect(
         effect.armorPenetration > 0
           ? ` (${String(Math.round(effect.armorPenetration * 100))}% armor penetration)`
           : "";
-      const text = `Deals ${String(magnitude.current)} damage${perPointLost(effect)}${penetration}`;
+      const text = `Deals ${String(magnitude.current)}${typeWord(effect.type)} damage${perPointLost(effect)}${penetration}`;
       // Mystic Twister's "if you are enchanted, 50 more" (#977).
       const bonus = effect.conditionalBonus;
       return {
@@ -1957,7 +1966,7 @@ function describeEffect(
       }));
       const parts = inner.map(({ each, description }) =>
         each.kind === "damage"
-          ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
+          ? `take ${String(describeMagnitude(each.amount, ranks).current)}${typeWord(each.type)} damage` +
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
             ? each.only === undefined
@@ -1995,7 +2004,7 @@ function headlineOf(
       const amount = String(magnitude.current);
       const text =
         effect.kind === "damage"
-          ? `${amount} damage${perPointLost(effect)}`
+          ? `${amount}${typeWord(effect.type)} damage${perPointLost(effect)}`
           : effect.kind === "heal"
             ? `heals ${amount}`
             : `+${amount} energy${perPointLost(effect)}`;
