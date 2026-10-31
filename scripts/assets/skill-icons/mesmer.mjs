@@ -66,4 +66,6 @@ export const MESMER_ICONS = {
   "mesmer.shatter-delusions": { glyph: "hex-shards" },
   // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
   "mesmer.illusion-of-weakness": { glyph: "haze-heart-bar" },
+  // "N for each X" (#1760), stand-ins until their art card.
+  "mesmer.channeling": { glyph: "spark", modifier: "area" },
 };

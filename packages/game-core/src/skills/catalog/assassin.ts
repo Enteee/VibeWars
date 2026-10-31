@@ -497,7 +497,6 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
             kind: "heal",
             recipient: "caster",
             amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 65, atTwelve: 173 } },
-            perStatusOnTarget: [],
           },
         ],
       },
@@ -1266,7 +1265,6 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         kind: "heal",
         recipient: "caster",
         amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 30, atTwelve: 126 } },
-        perStatusOnTarget: [],
       },
       { kind: "shadow-step", to: "away-from-selection" },
     ],
@@ -1344,7 +1342,6 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
             kind: "heal",
             recipient: "caster",
             amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 40, atTwelve: 112 } },
-            perStatusOnTarget: [],
           },
         ],
       },
@@ -2613,5 +2610,48 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "For 5...15 seconds, if target foe dies, you gain 5...20 Energy and
     // all your skills are recharged": 13 s, its rank-12 value.
     effects: [{ kind: "apply-status", statusId: "assassins-promise", durationSeconds: 13 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* 'N for each X' (#1760)                                                 */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "assassin.sadists-signet",
+    name: "Sadist's Signet",
+    gwId: 1991,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You gain 10...34...40 Health for each condition on target foe" (#1760):
+    // the wiki's current range; the corpus' 10...45 is pre-update.
+    effects: [
+      {
+        kind: "heal",
+        recipient: "caster",
+        amount: { flat: 0 },
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["condition"] },
+          amount: { scaling: { attributeId: "assassin.deadly-arts", atZero: 10, atTwelve: 34 } },
+          max: undefined,
+        },
+      },
+    ],
   },
 ];
