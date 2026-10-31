@@ -791,6 +791,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
   "bearer-energy-empty": "has no energy left",
+  "bearer-dies": "dies",
   ends: "ends",
   "ends-early": "ends prematurely",
   expires: "expires",
@@ -841,6 +842,9 @@ function describeTriggers(
       ? weaponBoundWhen(event, trigger.weapon)
       : (kindBoundWhen(event, trigger) ?? TRIGGER_WHEN[event]);
   return [...groups.values()].flatMap(({ trigger, on }) => {
+    if (on.includes("bearer-dies")) {
+      return [{ text: describeDeath(trigger, ranks, bearerIsFoe), clause: false }];
+    }
     const lines = describeTrigger(
       trigger,
       on.includes("bearer-creates-creature")
@@ -885,6 +889,47 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
     return weapon === "melee" ? "hits with a melee attack" : `hits with ${NEEDED_WEAPON[weapon]}`;
   }
   return `${TRIGGER_WHEN[event]} with ${NEEDED_WEAPON[weapon]}`;
+}
+
+/**
+ * A death trigger's (#1762), one sentence in the corpus's words: "if
+ * target foe dies while hexed with this, you gain 13 Energy and all your
+ * skills are recharged", "if an ally dies while enchanted with this, your
+ * party is healed for 41".
+ */
+function describeDeath(
+  trigger: StatusTrigger,
+  ranks: ReadonlyMap<string, number>,
+  bearerIsFoe: boolean,
+): string {
+  const amount = (magnitude: Magnitude): string =>
+    String(describeMagnitude(magnitude, ranks).current);
+  const answer = (effect: TriggerEffect): string[] => {
+    if (effect.kind === "energy-gain") {
+      return [`you gain ${amount(effect.amount)} Energy`];
+    }
+    if (effect.kind === "recharge-others" && effect.which === "all") {
+      return ["all your skills are recharged"];
+    }
+    if (effect.kind === "splash") {
+      return effect.effects.map((inner) =>
+        effect.hits === "party" && inner.kind === "heal"
+          ? `your party is healed for ${amount(inner.amount)}`
+          : inner.kind === "damage"
+            ? `${lowerFirst(foesWithin(effect.radius, effect.hits))} take ${amount(inner.amount)}${typeWord(inner.type)} damage`
+            : `${lowerFirst(foesWithin(effect.radius, effect.hits))}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
+      );
+    }
+    return effect.kind === "spread-gained-condition" ||
+      effect.kind === "echo" ||
+      effect.kind === "cancel-attack"
+      ? []
+      : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
+  };
+  const who = bearerIsFoe
+    ? "if target foe dies while hexed with this"
+    : "if an ally dies while enchanted with this";
+  return `${who}, ${trigger.effects.flatMap(answer).join(" and ")}`;
 }
 
 /** An echo's (#1423), in the corpus's words. */
@@ -2015,7 +2060,13 @@ function describeEffect(
         magnitude: undefined,
       };
     case "recharge-others":
-      return { text: "Recharges all your other attack skills", magnitude: undefined };
+      return {
+        text:
+          effect.which === "all"
+            ? "Recharges all your skills"
+            : "Recharges all your other attack skills",
+        magnitude: undefined,
+      };
     case "summon": {
       // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052), with
       // Spawning Power's health and the base in brackets (#1098).

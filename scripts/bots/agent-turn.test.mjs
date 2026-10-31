@@ -30,6 +30,14 @@ const SESSION_ID = "11111111-2222-3333-4444-555555555555";
 
 /** @type {Record<string, string>} */
 const EVENTS = {
+  bigCall: JSON.stringify({
+    type: "assistant",
+    message: { role: "assistant", content: [], usage: { input_tokens: 130_000 } },
+  }),
+  smallCall: JSON.stringify({
+    type: "assistant",
+    message: { role: "assistant", content: [], usage: { input_tokens: 1000 } },
+  }),
   init: JSON.stringify({ type: "system", subtype: "init", session_id: SESSION_ID }),
   initWithMcp: JSON.stringify({
     type: "system",
@@ -111,11 +119,12 @@ const EVENTS = {
  *
  * @param {string[]} events keys of EVENTS
  * @param {string} [peekDir] where `peek` is recorded, if anywhere
- * @param {{ limitUnwritable?: boolean }} [options] make the limit file a
- *   directory, so writing it fails
- * @returns {{ code: number | null, stdout: string, stderr: string, cursor: string, log: string, limit: string }}
+ * @param {{ limitUnwritable?: boolean, session?: boolean, peak?: string }} [options]
+ *   make the limit file a directory, so writing it fails; leave a saved
+ *   session (and the context peak a killed run left) for the turn to find
+ * @returns {{ resumed: boolean, kept: boolean, code: number | null, stdout: string, stderr: string, cursor: string, log: string, limit: string }}
  */
-function turn(events, peekDir = "", { limitUnwritable = false } = {}) {
+function turn(events, peekDir = "", { limitUnwritable = false, session = false, peak = "" } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "agent-turn-test-"));
   dirs.push(dir);
   const bus = path.join(dir, "bus");
@@ -126,11 +135,21 @@ function turn(events, peekDir = "", { limitUnwritable = false } = {}) {
   if (limitUnwritable) {
     fs.mkdirSync(limitFile);
   }
+  fs.mkdirSync(state);
+  if (session) {
+    fs.writeFileSync(path.join(state, "session-id"), `${SESSION_ID}\n`);
+  }
+  if (peak !== "") {
+    fs.writeFileSync(path.join(state, "context-peak"), `${peak}\n`);
+  }
+  const argvFile = path.join(dir, "argv");
   const script = path.join(dir, "claude.mjs");
   fs.writeFileSync(
     script,
     [
+      `#!${process.execPath}`,
       'import fs from "node:fs";',
+      `fs.writeFileSync(${JSON.stringify(argvFile)}, process.argv.slice(2).join(" "));`,
       ...events.map((key) =>
         key === "swallow"
           ? `await new Promise((r) => setTimeout(r, 300)); fs.writeFileSync(${JSON.stringify(path.join(bus, "cursor"))}, "500\\n");`
@@ -138,7 +157,8 @@ function turn(events, peekDir = "", { limitUnwritable = false } = {}) {
       ),
     ].join("\n"),
   );
-  const result = spawnSync(process.execPath, [AGENT_TURN, state, "--", process.execPath, script], {
+  fs.chmodSync(script, 0o755);
+  const result = spawnSync(process.execPath, [AGENT_TURN, state, "--", script], {
     encoding: "utf8",
     env: {
       ...process.env,
@@ -150,6 +170,8 @@ function turn(events, peekDir = "", { limitUnwritable = false } = {}) {
   });
   const logFile = path.join(state, "backgrounded-waits.jsonl");
   return {
+    resumed: fs.readFileSync(argvFile, "utf8").includes("--resume"),
+    kept: fs.existsSync(path.join(state, "session-id")),
     code: result.status,
     stdout: result.stdout,
     stderr: result.stderr,
@@ -284,5 +306,34 @@ describe("an MCP server in the jail (#753)", () => {
     const result = turn(["initNoMcp", "result"]);
 
     expect(result.code).toBe(0);
+  });
+});
+
+describe("the context ceiling (#1815)", () => {
+  it("drops the session when the peak was over it though the last call was under", () => {
+    expect(turn(["init", "bigCall", "smallCall", "result"], "", { session: true }).kept).toBe(
+      false,
+    );
+  });
+
+  it("drops the session of a usage-limited turn over the ceiling, and still exits 3", () => {
+    const result = turn(["init", "bigCall", "limited"], "", { session: true });
+
+    expect(result.code).toBe(3);
+    expect(result.kept).toBe(false);
+  });
+
+  it("starts fresh after a run killed over the ceiling left its peak", () => {
+    const result = turn(["init", "smallCall", "result"], "", { session: true, peak: "130000" });
+
+    expect(result.resumed).toBe(false);
+    expect(result.stderr).toContain("starting a fresh session");
+  });
+
+  it("resumes a session that stayed under it", () => {
+    const result = turn(["init", "smallCall", "result"], "", { session: true, peak: "5000" });
+
+    expect(result.resumed).toBe(true);
+    expect(result.kept).toBe(true);
   });
 });

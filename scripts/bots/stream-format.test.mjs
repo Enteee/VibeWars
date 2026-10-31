@@ -474,11 +474,11 @@ describe("agent-turn.mjs and the context ceiling (#321)", () => {
     expect(run.context).toEqual({ tokens: 134_000, ceiling: 120_000 });
   });
 
-  it("keeps the session when the last call was under it, whatever came before", () => {
+  it("forgets the session when an earlier call was past it, though the last was under (#1815)", () => {
     const run = turn({ lines: [JSON.stringify(INIT), over, under, JSON.stringify(RESULT)] });
 
     expect(run.code).toBe(0);
-    expect(run.session).toBe(SESSION_ID);
+    expect(run.session).toBeNull();
     expect(run.context).toEqual({ tokens: 50_004, ceiling: 120_000 });
   });
 
@@ -497,14 +497,14 @@ describe("agent-turn.mjs and the context ceiling (#321)", () => {
     expect(run.session).toBeNull();
   });
 
-  it("keeps it over a usage limit, however big the context", () => {
+  it("forgets it over a usage limit too, and still exits 3 (#1815)", () => {
     const run = turn({
       lines: [JSON.stringify(INIT), over, JSON.stringify(REJECTED)],
       session: SESSION_ID,
     });
 
     expect(run.code).toBe(3);
-    expect(run.session).toBe(SESSION_ID);
+    expect(run.session).toBeNull();
   });
 
   it("replaces a symlink the agent planted at the context file, never writing through it", () => {
