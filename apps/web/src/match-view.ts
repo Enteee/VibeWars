@@ -928,7 +928,7 @@ export async function startMatchView(
       mode,
       match,
     );
-    updateRecharges(hud, seat.skillBar, seat.getRecharges());
+    updateRecharges(hud, seat.skillBar, seat.getRecharges(), seat.getQueuedSlot());
     renderWeaponSets(weaponSets, seat.weaponSets);
   };
   const offFrame = viewport?.onFrame(onFrame) ?? animationFrames(onFrame);

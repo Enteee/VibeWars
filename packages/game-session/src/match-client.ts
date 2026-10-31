@@ -146,7 +146,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let ended: WireEnded | undefined;
   /** The host's summary from any `ended`, a host leaving's included (#1057). */
   let summary: WireEnded["summary"] | undefined;
-  let recharges: Recharges = { message: { slots: [], spent: [] }, at: 0 };
+  let recharges: Recharges = { message: { slots: [], spent: [], queued: null }, at: 0 };
   /**
    * Your own adrenaline per slot as last sent (#463), with when its loss
    * was due, and the match time it came at (#828).
@@ -451,6 +451,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 spent,
               };
         });
+      },
+      getQueuedSlot(): number | undefined {
+        return recharges.message.queued ?? undefined;
       },
       sendCall(call: PeerCall) {
         if (!lost && droppedAt === undefined) {

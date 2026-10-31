@@ -3,7 +3,7 @@
 | Word              | Meaning                                                                   |
 | ----------------- | ------------------------------------------------------------------------- |
 | Adrenaline        | What some skills cost instead of Energy, won by landing hits              |
-| Aftercast         | The short pause after a cast, in which you cannot act                     |
+| Aftercast         | The short pause after a cast; a skill pressed in it goes next             |
 | Build             | A character's professions, eight skills, attributes and equipment         |
 | Called foe        | The foe your team was told to attack; **T** targets it                    |
 | Condition         | A harmful effect such as Bleeding or Crippled; it wears off or is removed |

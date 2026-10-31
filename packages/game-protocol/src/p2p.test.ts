@@ -432,6 +432,7 @@ const refused: CastRefusedMessage = {
 const recharge: RechargeMessage = {
   slots: [{ slot: 0, remainingSeconds: 3.5, totalSeconds: 5 }],
   spent: [2],
+  queued: 1,
 };
 
 /** Each parser, with the one fixture it must round-trip. */
@@ -1605,7 +1606,9 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["recharge spent past the last slot", parseRecharge, { ...recharge, spent: [MAX_WIRE_SLOTS] }],
   ["recharge spent not a slot", parseRecharge, { ...recharge, spent: ["0"] }],
-  ["recharge with no spent list", parseRecharge, { slots: recharge.slots }],
+  ["recharge with no spent list", parseRecharge, { slots: recharge.slots, queued: null }],
+  ["recharge with no queued slot", parseRecharge, { slots: recharge.slots, spent: [] }],
+  ["recharge queued past the last slot", parseRecharge, { ...recharge, queued: MAX_WIRE_SLOTS }],
   ["refused of an unknown kind", parseCastRefused, { kind: "move", reason: "stuck" }],
   ["adrenaline below 0", parseAdrenaline, { slots: [0, -25], lossInSeconds: null }],
   ["adrenaline lost in less than no time", parseAdrenaline, { slots: [25], lossInSeconds: -1 }],

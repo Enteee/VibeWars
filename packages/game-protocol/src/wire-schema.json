@@ -3073,6 +3073,7 @@
     },
     "RechargeMessage": {
       "properties": [
+        { "name": "queued", "optional": false, "type": { "union": ["null", "number"] } },
         {
           "name": "slots",
           "optional": false,
