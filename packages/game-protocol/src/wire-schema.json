@@ -3181,13 +3181,17 @@
     },
     "QueueMode": {
       "union": [
+        { "literal": "gvg" },
+        { "literal": "heroes-ascent" },
         { "literal": "random-arena-1v1" },
         { "literal": "random-arena-2v2" },
-        { "literal": "random-arena-4v4" }
+        { "literal": "random-arena-4v4" },
+        { "literal": "team-arena" }
       ]
     },
     "QueueTicket": {
       "properties": [
+        { "name": "bots", "optional": false, "type": "number" },
         { "name": "enteredAt", "optional": false, "type": "number" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
         { "name": "members", "optional": false, "type": { "array": "string" } },
@@ -3196,9 +3200,12 @@
           "optional": false,
           "type": {
             "union": [
+              { "literal": "gvg" },
+              { "literal": "heroes-ascent" },
               { "literal": "random-arena-1v1" },
               { "literal": "random-arena-2v2" },
-              { "literal": "random-arena-4v4" }
+              { "literal": "random-arena-4v4" },
+              { "literal": "team-arena" }
             ]
           }
         },
@@ -3837,6 +3844,32 @@
               }
             },
             { "name": "kind", "optional": false, "type": { "literal": "propose" } },
+            { "name": "size", "optional": false, "type": "number" },
+            { "name": "slot", "optional": false, "type": "number" }
+          ]
+        },
+        {
+          "properties": [
+            {
+              "name": "build",
+              "optional": false,
+              "type": {
+                "union": [
+                  "null",
+                  "number",
+                  "string",
+                  { "array": { "ref": "JsonValue" } },
+                  { "literal": false },
+                  { "literal": true },
+                  {
+                    "properties": [],
+                    "index": [{ "key": "string", "value": { "ref": "JsonValue" } }]
+                  }
+                ]
+              }
+            },
+            { "name": "kind", "optional": false, "type": { "literal": "team-plan" } },
+            { "name": "memberKey", "optional": false, "type": { "union": ["null", "string"] } },
             { "name": "size", "optional": false, "type": "number" },
             { "name": "slot", "optional": false, "type": "number" }
           ]

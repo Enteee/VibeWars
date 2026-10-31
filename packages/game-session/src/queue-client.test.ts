@@ -76,6 +76,7 @@ class Queue {
       protocol: PROTOCOL_VERSION,
       mode: this.mode,
       members: [ticket.ticketId],
+      bots: 0,
       enteredAt: START,
       heartbeatAt: this.now,
       party: null,

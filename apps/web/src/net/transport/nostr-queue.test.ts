@@ -70,6 +70,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     protocol: PROTOCOL_VERSION,
     mode: "random-arena-2v2",
     members: [key.ticketId],
+    bots: 0,
     enteredAt: NOW - 1_000,
     heartbeatAt: NOW,
     party: null,
