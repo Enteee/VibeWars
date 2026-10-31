@@ -21,6 +21,7 @@
     "lobby-note",
     "lobby-hello",
     "lobby-welcome",
+    "lobby-leave",
     "stay-together",
     "party-proposal",
     "party-consent",
@@ -460,6 +461,7 @@
         { "literal": "lobby-cmd" },
         { "literal": "lobby-hello" },
         { "literal": "lobby-join" },
+        { "literal": "lobby-leave" },
         { "literal": "lobby-note" },
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
@@ -3078,6 +3080,7 @@
         { "name": "protocolVersion", "optional": false, "type": "string" }
       ]
     },
+    "PeerLobbyLeave": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerObserve": {
       "properties": [
         { "name": "matchId", "optional": false, "type": "string" },
@@ -4066,6 +4069,7 @@
     },
     "WireLobbyPlayer": {
       "properties": [
+        { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
         {
           "name": "character",
@@ -4199,6 +4203,7 @@
           "type": {
             "array": {
               "properties": [
+                { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
                 {
                   "name": "character",

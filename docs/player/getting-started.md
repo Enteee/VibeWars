@@ -73,7 +73,8 @@ and the strip on top of every mode screen lists who is in it.
   own lobby stays open until the join is in. Once in, the top bar shows
   your friend's key, and **Leave** takes you back to a fresh lobby of
   your own, with a new key. If you had friends in your lobby, they go
-  back to lobbies of their own.
+  back to lobbies of their own. If your connection drops, your seat is
+  held for 30 seconds.
 
 **The host picks the mode** on the rail, and everyone's screen follows;
 a guest's modes are locked. **Character Builder** and **Team Builder**

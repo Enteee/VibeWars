@@ -15,6 +15,7 @@ import {
   isTeamQueueMode,
   parsePeerChat,
   parsePeerLobbyHello,
+  parsePeerLobbyLeave,
   parsePeerLobbyJoin,
   parsePeerPartyConsent,
   parsePeerStayTogether,
@@ -318,9 +319,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return member?.bot === null ? member : undefined;
   };
   /**
-   * Members whose peer left during a match (#596), and when, on the
-   * lobby's clock: their seat is held, team and all, for the match's
-   * reconnect window or until the match ends, whichever is first.
+   * Members whose peer dropped (#596, #1764), and when, on the lobby's
+   * clock: their seat is held, team and all, for the reconnect window,
+   * or until the match it dropped from ends, whichever is first.
    */
   const away = new Map<string, number>();
   const budget = new MessageBudget(MESSAGES_PER_SECOND, MESSAGE_BURST, () => undefined);
@@ -457,6 +458,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       isHost: member.id === local.selfId,
       character: member.character,
       bot: member.bot !== null,
+      away: away.has(member.id),
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
@@ -533,9 +535,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         ? { ...seat, bot: false, build }
         : { ...seat, bot: true, build: build ?? member.bot };
     };
+    // One away (#1764) is not seated: its window runs on through the match.
     const seats: PlannedSeats = new Map(
       [...members.values()].flatMap((member) =>
-        member.team === null ? [] : [[member.id, seatOf(member, member.team)] as const],
+        member.team === null || away.has(member.id)
+          ? []
+          : [[member.id, seatOf(member, member.team)] as const],
       ),
     );
     const room = scopeTransport(transport);
@@ -1161,9 +1166,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return assigned;
   };
 
-  /** The group's seat keys no member holds. */
+  /** The group's seat keys no member holds; one away (#1764) holds none until it is back. */
   const unseated = (plan: QueuedPlan): string[] => {
-    const seated = new Set([...members.values()].map((member) => member.seatKey));
+    const seated = new Set(
+      [...members.values()]
+        .filter((member) => !away.has(member.id))
+        .map((member) => member.seatKey),
+    );
     return plan.group.teams.flat().filter((seatKey) => !seated.has(seatKey));
   };
 
@@ -1275,6 +1284,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       returning.guildCape = guild.guildCape;
       returning.character = lobbyCharacter(join.character);
       returning.ready = false;
+      beginCountdown();
       broadcast();
       return;
     }
@@ -1331,6 +1341,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   });
 
+  // Said on purpose (#1764), unlike a drop: its seat is freed now.
+  transport.on("lobby-leave", (data, from) => {
+    if (
+      closed ||
+      from === local.selfId ||
+      peerMember(from) === undefined ||
+      parsePeerLobbyLeave(data) === undefined
+    ) {
+      return;
+    }
+    remove(from);
+  });
+
   // Chat (#479), in the lobby and through its match, whose teams are the
   // lobby's: all chat reaches every member, spectators too; team chat
   // only the sender's team, and a spectator has none.
@@ -1373,17 +1396,48 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   });
 
-  /** Forget the away members `gone` picks; whether there were any. */
-  const dropAway = (gone: (leftAt: number) => boolean): boolean => {
-    let dropped = false;
-    for (const [peerId, leftAt] of away) {
-      if (gone(leftAt)) {
-        away.delete(peerId);
-        members.delete(peerId);
-        dropped = true;
+  /**
+   * `peerId` gone for good: it left, or did not come back in time. In a
+   * Team Lobby (#1458) its proposal, vote and claim go with it, and a bot
+   * takes its seat, so its side stays the size it proposed for.
+   */
+  const remove = (peerId: string): void => {
+    const leaving = members.get(peerId);
+    away.delete(peerId);
+    members.delete(peerId);
+    tellReach();
+    if (teamLobby !== undefined && leaving !== undefined && leaving.team !== null) {
+      const side = teamLobby.sides[leaving.team];
+      side.pending.delete(peerId);
+      dropProposal(side, peerId);
+      side.votes.delete(peerId);
+      side.claims = side.claims.map((holder) => (holder === peerId ? null : holder));
+      addBot(leaving.team);
+      figureBots();
+      if (everyoneReady()) {
+        endStage(teamLobby);
+        return;
       }
     }
-    return dropped;
+    if (queued !== undefined) {
+      // A winner gone is a no; the last of them gone, and the lobby is done.
+      runVote(queued);
+    }
+    // A queued lobby one short waits for it again, on the clock it started with.
+    if (countdownEndsAt !== undefined) {
+      countdownEndsAt = undefined;
+      phase = "waiting";
+    }
+    broadcast();
+  };
+
+  /** Remove the away members `gone` picks. */
+  const dropAway = (gone: (leftAt: number) => boolean): void => {
+    for (const [peerId, leftAt] of [...away]) {
+      if (gone(leftAt)) {
+        remove(peerId);
+      }
+    }
   };
 
   /** Not all seated in time: everyone is sent off, and the queue told who never came. */
@@ -1622,10 +1676,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       if (queued !== undefined) {
         runVote(queued);
       }
-      // Not back within the match's own window: its seat there is gone too.
-      if (dropAway((leftAt) => nowMs() - leftAt >= RECONNECT_WINDOW_SECONDS * 1000)) {
-        broadcast();
-      }
+      // Not back within the window: its seat is gone, in a match too.
+      dropAway((leftAt) => nowMs() - leftAt >= RECONNECT_WINDOW_SECONDS * 1000);
       for (const ending of [...draining]) {
         ending.host.advance(seconds);
         if (!ending.host.draining) {
@@ -1689,34 +1741,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (closed || peerMember(peerId) === undefined) {
       return;
     }
-    // During a match a drop may be a blip (#515, #596): the entry stays,
-    // still listed, until the peer is back, the window runs out or the
-    // match ends. Outside one, it goes now.
+    // A drop may be a blip (#515, #596, #1764): the entry stays, still
+    // listed, until the peer is back, the window runs out or the match it
+    // dropped from ends. A peer that means to go says `lobby-leave` first.
+    away.set(peerId, nowMs());
     if (match !== undefined) {
-      away.set(peerId, nowMs());
       return;
     }
-    const leaving = members.get(peerId);
-    members.delete(peerId);
-    tellReach();
-    // In a Team Lobby (#1458) its proposal, vote and claim go with it, and
-    // a bot takes its seat, so its side stays the size it proposed for.
-    if (teamLobby !== undefined && leaving !== undefined && leaving.team !== null) {
-      const side = teamLobby.sides[leaving.team];
-      side.pending.delete(peerId);
-      dropProposal(side, peerId);
-      side.votes.delete(peerId);
-      side.claims = side.claims.map((holder) => (holder === peerId ? null : holder));
-      addBot(leaving.team);
-      figureBots();
-      if (everyoneReady()) {
-        endStage(teamLobby);
-        return;
-      }
-    }
-    if (queued !== undefined) {
-      // A winner gone is a no; the last of them gone, and the lobby is done.
-      runVote(queued);
+    // Not ready while it is away, so nothing starts without it.
+    const dropped = members.get(peerId);
+    if (dropped !== undefined) {
+      dropped.ready = false;
     }
     // A queued lobby one short waits for it again, on the clock it started with.
     if (countdownEndsAt !== undefined) {

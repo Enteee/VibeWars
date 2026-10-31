@@ -36,6 +36,8 @@ export interface LobbyPlayerSnapshot {
   readonly character: LobbyCharacter | null;
   /** A bot the host added (#1193): no peer behind it. */
   readonly bot: boolean;
+  /** Dropped, its seat held while it may come back (#1764). */
+  readonly away: boolean;
 }
 
 export interface LobbySnapshot {

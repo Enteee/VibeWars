@@ -1531,6 +1531,16 @@ body {
   color: var(--accent);
 }
 
+/* Dropped, its seat held while it may come back (#1764). */
+.party-member.is-away {
+  opacity: 0.5;
+}
+
+.party-member-away {
+  color: var(--ink-dim);
+  font-style: italic;
+}
+
 .party-host-mark {
   padding: 0 0.3rem;
   border: 1px solid var(--line);

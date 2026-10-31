@@ -99,6 +99,7 @@ function player(
     isHost: sessionId === "aria",
     character: null,
     bot,
+    away: false,
   };
 }
 
