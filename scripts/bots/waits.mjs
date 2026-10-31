@@ -2,6 +2,12 @@
  * The wait log (#1615): `tg wait` and `board wait` each append one line to
  * `bus/<employee>/waits.jsonl` when a wait returns, and hubd reads every
  * employee's for the idle KPIs. A wait killed mid-way writes nothing.
+ *
+ * An agent `tg wait` found idle ends its turn and sleeps in agent-loop's
+ * `idle` (#1694), for far longer than the `tg wait` before it. That sleep is
+ * logged as `cmd: "idle"` in `agents/<employee>/waits.jsonl`: the loop runs
+ * on the host, and the bus is the jail's to write, so a host write there
+ * would follow a planted symlink.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -9,17 +15,29 @@ import path from "node:path";
 /** The log's name in an employee's bus directory. */
 export const WAITS_FILE = "waits.jsonl";
 
+/**
+ * Where agent-loop logs an employee's idle sleeps: its host-only state
+ * directory, beside `woke`.
+ *
+ * @param {string} root VIBEWARS_BOT_ROOT
+ * @param {string} employee
+ * @returns {string}
+ */
+export function idleWaitsDir(root, employee) {
+  return path.join(root, "agents", employee);
+}
+
 /** How far back the log keeps its lines, in ms: its writer trims it. */
 export const WAITS_KEEP_MS = 8 * 24 * 3_600_000;
 
 /**
- * @typedef {{ start: number, end: number, cmd: "tg" | "board",
- *   woke: "message" | "card" | "timeout" | "ceiling" | "down" }} WaitLine
+ * @typedef {{ start: number, end: number, cmd: "tg" | "board" | "idle",
+ *   woke: "message" | "card" | "timeout" | "ceiling" | "down" | "reboot" }} WaitLine
  * ms timestamps; `woke` is what ended it
  */
 
-const CMDS = new Set(["tg", "board"]);
-const WOKE = new Set(["message", "card", "timeout", "ceiling", "down"]);
+const CMDS = new Set(["tg", "board", "idle"]);
+const WOKE = new Set(["message", "card", "timeout", "ceiling", "down", "reboot"]);
 
 /**
  * @param {unknown} value
@@ -70,7 +88,7 @@ export function parseWaits(text) {
  * `WAITS_KEEP_MS` before `line`, the log is rewritten first with only the
  * lines since. A failure is ignored: it never fails the wait.
  *
- * @param {string} dir the employee's bus directory
+ * @param {string} dir the employee's bus directory, or for `idle` its host-only one
  * @param {WaitLine} line
  * @returns {void}
  */

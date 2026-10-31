@@ -22,7 +22,8 @@ What you do:
   Review and QA minus the time their PR's CI ran, which is `ci`.
   `flow.stageWait` is, per column, the stays that ended in the last 24 h
   (arrival to the card's next move). `staff.idleShare24h` is each role's time
-  in `tg wait`/`board wait` over its time observed, counted from each
+  in `tg wait`/`board wait`, and asleep idle in its loop after one, over its
+  time observed, counted from each
   employee's first wait of the day. `flow.idleWhileReadyMs24h` is the time
   some card sat in Ready while a developer, asset-designer or cicd-engineer
   was waiting.

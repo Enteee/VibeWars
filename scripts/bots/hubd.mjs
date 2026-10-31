@@ -152,7 +152,7 @@ import {
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
-import { parseWaits, WAITS_FILE } from "./waits.mjs";
+import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
 import {
@@ -3744,9 +3744,11 @@ async function recordCiRuns(now, cfg) {
 const MAX_WAITS_BYTES = 4 * 1024 * 1024;
 
 /**
- * Every employee's wait log (#1615), read through jail-fs: the bus is the
- * jail's to write, so a plain read could follow a planted symlink. One
- * missing or unreadable is left out, never an error for the rest.
+ * Every employee's wait logs (#1615): `tg` and `board` waits from its bus,
+ * read through jail-fs, as the bus is the jail's to write and a plain read
+ * could follow a planted symlink; and its idle sleeps from its host-only
+ * `agents/<employee>/`, which only the host writes. One missing or
+ * unreadable is left out, never an error for the rest.
  *
  * @param {{ employees: Record<string, unknown> } | null} staff
  * @returns {Map<string, import("./waits.mjs").WaitLine[]>}
@@ -3755,13 +3757,26 @@ function readWaits(staff) {
   /** @type {Map<string, import("./waits.mjs").WaitLine[]>} */
   const waits = new Map();
   for (const employee of Object.keys(staff?.employees ?? {})) {
+    /** @type {import("./waits.mjs").WaitLine[]} */
+    const lines = [];
     try {
       const text = withJailDir(path.join(ROOT, "bus", employee), "", {}, (dir) =>
         dir.readSmall(WAITS_FILE, MAX_WAITS_BYTES),
       );
-      waits.set(employee, parseWaits(text));
+      lines.push(...parseWaits(text));
     } catch {
-      // No waits yet, or a file that is not one: this employee says nothing.
+      // No waits yet, or a file that is not one: nothing from the bus.
+    }
+    try {
+      const file = path.join(idleWaitsDir(ROOT, employee), WAITS_FILE);
+      if (fs.statSync(file).size <= MAX_WAITS_BYTES) {
+        lines.push(...parseWaits(fs.readFileSync(file, "utf8")));
+      }
+    } catch {
+      // Never idle yet: nothing from the loop.
+    }
+    if (lines.length > 0) {
+      waits.set(employee, lines);
     }
   }
   return waits;

@@ -25,6 +25,7 @@ import {
 
 const NOW = 1_800_000_000_000;
 const H = 3_600_000;
+const M = 60_000;
 const D = 24 * H;
 
 /**
@@ -284,6 +285,25 @@ describe("stage waits and idle (#1615)", () => {
       staff,
     );
     expect(share).toEqual({ developer: (5 * H + 4 * H) / (10 * H + 24 * H) });
+  });
+
+  it("counts the idle sleep after a tg wait that timed out, not only the tg wait", () => {
+    const share = idleShare(
+      NOW,
+      new Map([
+        [
+          "developer",
+          [
+            // 9 min in tg wait, then 50 min asleep in agent-loop's idle, of a 2 h day.
+            waited(2 * H, 2 * H - 9 * M),
+            { start: NOW - 2 * H + 9 * M, end: NOW - H - M, cmd: "idle", woke: "timeout" },
+            waited(H, H - M),
+          ],
+        ],
+      ]),
+      staff,
+    );
+    expect(share).toEqual({ developer: (9 * M + 50 * M + M) / (2 * H) });
   });
 
   it("counts Ready occupied while a developer waits, not while a qa-tester does", () => {
