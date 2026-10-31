@@ -78,16 +78,16 @@ export const NECROMANCER_STATUS_ICONS = {
   "well-of-silence": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<path d="M7 6.5C10.5 9.5 10.5 12.5 7 15.5M12 4C17.5 8.5 17.5 13.5 12 18M4 14L20 2" ${stroke(c, 2)}/>`,
+      `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
+      `<path d="M9 6C13 9.5 13 12.5 9 16" ${stroke(c, 2.6)}/><path d="M5 15L17 3" ${stroke(c, 2.6)}/>`,
   ],
   // Skill effect: a half-dark eye, the hexed miss.
   "well-of-darkness": [
     "skill-effect",
     (c) =>
-      `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<path d="M3 9.5C6 4.5 9 3 12 3S18 4.5 21 9.5C18 14.5 15 16 12 16S6 14.5 3 9.5Z" ${stroke(c, 2)}/>` +
-      `<path d="M12 3C15 3 18 4.5 21 9.5C18 14.5 15 16 12 16Z" fill="${c}"/>`,
+      `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
+      `<path d="M3.5 9.5C6 5 9 3.5 12 3.5S18 5 20.5 9.5C18 14 15 15.5 12 15.5S6 14 3.5 9.5Z" ${stroke(c, 2)}/>` +
+      `<circle cx="9.5" cy="9.5" r="2.4" fill="${c}"/><path d="M15 7v5M18 8v3" ${stroke(c, 1.8)}/>`,
   ],
   // Skill effect: a cracked shield, armor cracking under each hit.
   "well-of-ruin": [
