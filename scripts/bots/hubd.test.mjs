@@ -51,7 +51,7 @@ if (group === "api" && sub === "rate_limit") {
 }
 const REPO = "repos/Enteee/VibeWars/";
 const issue7 = { number: 7, title: "seven", body: "the body", state: "open", html_url: "https://github.com/Enteee/VibeWars/issues/7", user: { login: "Enteee" }, labels: [{ node_id: "LA_bug", name: "bug" }], assignees: [], created_at: "2026-10-24T10:00:00Z", updated_at: "2026-10-24T11:00:00Z", closed_at: null };
-const pull9 = { number: 9, title: "nine", body: "", state: "open", html_url: "https://github.com/Enteee/VibeWars/pull/9", user: { login: "Enteee" }, labels: [], assignees: [], created_at: "x", updated_at: "y", closed_at: null, merged_at: null, draft: false, head: { ref: "bot/x", sha: "abc1234def" }, base: { ref: "main" }, additions: 1, deletions: 2, changed_files: 3, mergeable: true, mergeable_state: "clean" };
+const pull9 = { number: 9, title: "nine", body: "", state: "open", html_url: "https://github.com/Enteee/VibeWars/pull/9", user: { login: "Enteee" }, labels: [], assignees: [], created_at: "x", updated_at: "y", closed_at: null, merged_at: null, draft: false, head: { ref: "bot/x", sha: "abc1234def", repo: { full_name: "Enteee/VibeWars" } }, base: { ref: "main", repo: { full_name: "Enteee/VibeWars" } }, additions: 1, deletions: 2, changed_files: 3, mergeable: true, mergeable_state: "clean" };
 // Three comments: ours, a collaborator's, and one by someone with no role.
 const restComments = [
   { user: { login: "Enteee" }, author_association: "OWNER", body: "first comment", created_at: "2026-10-24T12:00:00Z", html_url: "u" },
@@ -2018,6 +2018,62 @@ describe("hubd and the company's skills (#27)", () => {
   }, 30_000);
 });
 
+/**
+ * Pull request #9 as it is on the remote (#1897): main with one file, and a
+ * head on `branch` that writes `files`, as GitHub serves it under
+ * `refs/pull/9/head`, with both sign-offs and green CI on that head.
+ *
+ * @param {Awaited<ReturnType<typeof startHubd>>} hubd
+ * @param {string} branch
+ * @param {string[]} files
+ * @param {{ crossRepository?: boolean }} [options]
+ * @returns {string} the head commit
+ */
+const greenPull = (hubd, branch, files, { crossRepository = false } = {}) => {
+  const { repo, remote } = hubd;
+  sh(["init", "--bare", "-q", remote], hubd.root);
+  sh(["init", "-q", "-b", "main", repo], hubd.root);
+  fs.writeFileSync(path.join(repo, "README.md"), "x\n");
+  sh(["add", "."], repo);
+  commit("main", repo);
+  sh(["push", "-q", remote, "main"], repo);
+  sh(["checkout", "-q", "-b", branch], repo);
+  for (const file of files) {
+    fs.mkdirSync(path.dirname(path.join(repo, file)), { recursive: true });
+    fs.writeFileSync(path.join(repo, file), "name: x\n");
+  }
+  sh(["add", "."], repo);
+  commit("head", repo);
+  sh(["push", "-q", remote, `${branch}:refs/pull/9/head`], repo);
+  const sha = sh(["rev-parse", "HEAD"], repo).trim();
+  fs.writeFileSync(
+    path.join(hubd.state, "pull-9.json"),
+    JSON.stringify({
+      head: {
+        ref: branch,
+        sha,
+        repo: { full_name: crossRepository ? "stranger/VibeWars" : "Enteee/VibeWars" },
+      },
+    }),
+  );
+  for (const [file, id, name] of [
+    ["ci.yml", 100, "ci"],
+    ["dependency-review.yml", 200, "other"],
+    ["e2e-repeat.yml", 400, "e2e-repeat (1)"],
+    ["codeql.yml", 500, "analyze"],
+  ]) {
+    hubd.setCi(sha, file, { id, jobs: [{ name, status: "completed", conclusion: "success" }] });
+  }
+  hubd.expectChecks(["ci"]);
+  for (const role of ["lead-dev", "perf-sec-qa"]) {
+    fs.appendFileSync(
+      path.join(hubd.hub, "approvals.jsonl"),
+      `${JSON.stringify({ pr: 9, role, verdict: "approve", sha, ts: 1 })}\n`,
+    );
+  }
+  return sha;
+};
+
 describe("hubd recording verdicts and merging", () => {
   it("records a verdict only for the commit that was reviewed, if it is still the head", async () => {
     const hubd = await startHubd(5000);
@@ -2047,29 +2103,54 @@ describe("hubd recording verdicts and merging", () => {
   it("merges exactly the pull request the guards checked, squashed, pinned to its head", async () => {
     const hubd = await startHubd(5000);
     // Both sign-offs on the current head and CI green on it, so the gate is open.
-    for (const [file, id, name] of [
-      ["ci.yml", 100, "ci"],
-      ["dependency-review.yml", 200, "other"],
-      ["e2e-repeat.yml", 400, "e2e-repeat (1)"],
-      ["codeql.yml", 500, "analyze"],
-    ]) {
-      hubd.setCi("abc1234def", file, {
-        id,
-        jobs: [{ name, status: "completed", conclusion: "success" }],
-      });
-    }
-    hubd.expectChecks(["ci"]);
-    for (const role of ["lead-dev", "perf-sec-qa"]) {
-      fs.appendFileSync(
-        path.join(hubd.hub, "approvals.jsonl"),
-        `${JSON.stringify({ pr: 9, role, verdict: "approve", sha: "abc1234def", ts: 1 })}\n`,
-      );
-    }
+    const sha = greenPull(hubd, "bot/developer/x", ["src/a.ts"]);
 
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
-    expect(answer.code).toBe(0);
-    expect(hubd.calls("pr merge 9 --squash --match-head-commit abc1234def")).toBe(1);
+    expect(answer.code, String(answer.reason)).toBe(0);
+    expect(hubd.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(1);
+  }, 20_000);
+
+  it("merges a workflow change only from a cicd-engineer branch of this repository (#1897)", async () => {
+    const owned = await startHubd(5000);
+    const sha = greenPull(owned, "bot/cicd-engineer@2/ci", [".github/workflows/ci.yml"]);
+    await owned.employ("cicd-engineer@2");
+
+    const merged = await owned.request("qa-tester", "gh", ["pr", "merge", "9"]);
+    expect(merged.code, String(merged.reason)).toBe(0);
+    expect(owned.calls(`pr merge 9 --squash --match-head-commit ${sha}`)).toBe(1);
+
+    const developer = await startHubd(5000);
+    greenPull(developer, "bot/developer/x", ["src/a.ts", ".github/actions/devenv/action.yml"]);
+
+    const refused = await developer.request("qa-tester", "gh", ["pr", "merge", "9"]);
+    expect(refused.allow).toBe(false);
+    expect(String(refused.reason)).toBe(
+      "#9 changes .github/actions/devenv/action.yml, pushed from bot/developer/x; only the operator merges workflow changes not pushed by cicd-engineer",
+    );
+    expect(developer.calls("pr merge")).toBe(0);
+
+    const fork = await startHubd(5000);
+    greenPull(fork, "bot/cicd-engineer/ci", [".github/workflows/ci.yml"], {
+      crossRepository: true,
+    });
+
+    const stranger = await fork.request("qa-tester", "gh", ["pr", "merge", "9"]);
+    expect(stranger.allow).toBe(false);
+    expect(String(stranger.reason)).toContain("pushed from another repository");
+    expect(fork.calls("pr merge")).toBe(0);
+  }, 40_000);
+
+  it("refuses a merge whose changes it cannot list (#1897)", async () => {
+    const hubd = await startHubd(5000);
+    greenPull(hubd, "bot/developer/x", ["src/a.ts"]);
+    fs.rmSync(hubd.remote, { recursive: true });
+
+    const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
+
+    expect(answer.allow).toBe(false);
+    expect(String(answer.reason)).toBe("could not list this pull request's changes; try again");
+    expect(hubd.calls("pr merge")).toBe(0);
   }, 20_000);
 
   /**
@@ -2112,8 +2193,8 @@ describe("hubd recording verdicts and merging", () => {
   };
 
   it("reads the jobs of the commit it pinned, from REST, never gh pr checks", async () => {
-    const hubd = await approved(5000);
-    ran(hubd, "abc1234def");
+    const hubd = await startHubd(5000);
+    greenPull(hubd, "bot/developer/x", ["src/a.ts"]);
     // Whatever a newer head says must not matter: only the pinned SHA is read.
     hubd.setCi("fffffff000", "ci.yml", { id: 300, jobs: [job("ci", "failure")] });
 
@@ -2188,9 +2269,9 @@ describe("hubd recording verdicts and merging", () => {
   }, 20_000);
 
   it("merges after a close and reopen made a second green run of the commit", async () => {
-    const hubd = await approved(5000);
-    ran(hubd, "abc1234def");
-    hubd.addRun("abc1234def", "ci.yml", { id: 101, jobs: [job("ci")] });
+    const hubd = await startHubd(5000);
+    const sha = greenPull(hubd, "bot/developer/x", ["src/a.ts"]);
+    hubd.addRun(sha, "ci.yml", { id: 101, jobs: [job("ci")] });
 
     const answer = await hubd.request("qa-tester", "gh", ["pr", "merge", "9"]);
 
