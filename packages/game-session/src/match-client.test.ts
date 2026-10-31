@@ -17,15 +17,22 @@ import {
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import {
+  HELLO_RESEND_MS,
   HostLeftError,
   MatchRefusedError,
   MatchTimeoutError,
   connectMatch,
 } from "./match-client.js";
 import type { PlayerSnapshot } from "./match-connection.js";
-import { MATCH_FULL_MESSAGE, MATCH_OVER_MESSAGE, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import {
+  MATCH_FULL_MESSAGE,
+  MATCH_OVER_MESSAGE,
+  RECONNECT_WINDOW_SECONDS,
+  createMatchHost,
+} from "./match-host.js";
 import {
   ARENA,
+  TEST_MATCH_ID,
   hello,
   helloAs,
   self,
@@ -34,6 +41,7 @@ import {
   until,
 } from "./match-harness.test-support.js";
 import { createMemoryNetwork } from "./memory-transport.js";
+import type { Transport } from "./transport.js";
 import { WIRE_STATUS_IDS, playerSnapshot, statusFromWire, statusWireIndex } from "./wire.js";
 
 /**
@@ -638,5 +646,81 @@ describe("connectMatch, when the host's peer drops", () => {
     vi.advanceTimersByTime(WINDOW_MS);
 
     expect(states).toEqual(["reconnecting"]);
+  });
+});
+
+describe("connectMatch, before the host's match listens (#1805)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** A guest saying hello to the host's peer, whose match is not up yet, and how often it has. */
+  async function early() {
+    const network = createMemoryNetwork();
+    const hostTransport = network.join("host");
+    const transport = network.join();
+    await settle();
+    const sent = vi.spyOn(transport, "send");
+    const joining = connectMatch({ transport, hostId: "host", hello: hello(), timeoutMs: 10_000 });
+    const hellos = (): number => sent.mock.calls.filter(([type]) => type === "hello").length;
+    return { hostTransport, joining, hellos };
+  }
+
+  /** The host's match, up on `transport` at last. */
+  function listen(transport: Transport, timeLimitSeconds = 300) {
+    return createMatchHost({
+      transport,
+      map: ARENA,
+      seed: "test",
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds },
+      random: () => 0.5,
+      maxPlayers: 8,
+      seats: null,
+      matchId: TEST_MATCH_ID,
+      isSpectator: () => false,
+    });
+  }
+
+  it("is seated by a host that listens 3 s after its hello, and says it no more", async () => {
+    const { hostTransport, joining, hellos } = await early();
+    await vi.advanceTimersByTimeAsync(3000);
+    listen(hostTransport);
+    await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);
+    const connection = await joining;
+    expect(connection.selfSessionId).not.toBe("");
+    const said = hellos();
+    expect(said).toBe(5);
+    await vi.advanceTimersByTimeAsync(5 * HELLO_RESEND_MS);
+    expect(hellos()).toBe(said);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("says it no more once refused", async () => {
+    const { hostTransport, joining, hellos } = await early();
+    const host = listen(hostTransport, 0.1);
+    host.advance(0.2);
+    expect(host.phase).toBe("finished");
+    const refused = expect(joining).rejects.toThrow(MATCH_OVER_MESSAGE);
+    await vi.advanceTimersByTimeAsync(HELLO_RESEND_MS);
+    await refused;
+    const said = hellos();
+    await vi.advanceTimersByTimeAsync(5 * HELLO_RESEND_MS);
+    expect(hellos()).toBe(said);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("says it until the timeout, and no more after", async () => {
+    const { joining, hellos } = await early();
+    const timedOut = expect(joining).rejects.toThrow(MatchTimeoutError);
+    await vi.advanceTimersByTimeAsync(10_000);
+    await timedOut;
+    const said = hellos();
+    expect(said).toBeGreaterThanOrEqual(10);
+    await vi.advanceTimersByTimeAsync(5 * HELLO_RESEND_MS);
+    expect(hellos()).toBe(said);
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

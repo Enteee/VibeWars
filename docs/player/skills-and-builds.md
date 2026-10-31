@@ -55,6 +55,16 @@ An Elementalist's **glyphs** change your next spell: it cannot be
 interrupted, casts instantly, recharges at once, or costs less. A new
 glyph replaces the one you had.
 
+## Interventions
+
+A skill that answers "the next time damage drops Health below N%"
+answers any blow or life steal that leaves you alive and below the
+line, even when you were already below it before the hit, and never
+health you sacrifice or lose to degeneration. Fatal-damage protection, as Judge's Intervention,
+drops the whole killing blow: no damage, no death. Faithful Intervention
+and Illusion of Weakness have no duration: they last until damage, a
+strip or death ends them, and heal you as they go.
+
 ## The library
 
 The skill library lists every skill your two professions can use,

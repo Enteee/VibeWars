@@ -29,7 +29,9 @@ export type MonkStatusId =
   // Monk mechanics (#1754).
   | "spirit-bond"
   | "holy-wrath"
-  | "balthazars-aura";
+  | "balthazars-aura"
+  | "judges-intervention"
+  | "dwaynas-sorrow";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -305,5 +307,52 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       hitsBearer: false,
       skillId: "monk.balthazars-aura",
     },
+  }),
+  // "...the next time target ally receives damage that would be fatal, the
+  // damage is negated and one nearby foe takes 30...180 holy damage"
+  // (#1789): the foe whose blow it was, from the Monk; nobody when no foe
+  // dealt it.
+  "judges-intervention": define("judges-intervention", "Judge's Intervention", "enchantment", {
+    profession: "monk",
+    negatesFatalDamage: true,
+    triggers: [
+      {
+        on: "bearer-fatal-damage-negated",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "monk.smiting-prayers", atZero: 30, atTwelve: 150 },
+            },
+            type: "holy",
+            armorPenetration: 0,
+          },
+        ],
+        target: "source-on-offender",
+        skillId: "monk.judges-intervention",
+      },
+    ],
+  }),
+  // "...If an ally dies while under the effects of Dwayna's Sorrow, your
+  // party is healed for 5...50" (#1762): 41, at any distance, as Heal
+  // Party's `PartyArea`.
+  "dwaynas-sorrow": define("dwaynas-sorrow", "Dwayna's Sorrow", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          {
+            kind: "splash",
+            hits: "party",
+            radius: Number.POSITIVE_INFINITY,
+            maxTargets: undefined,
+            effects: [{ kind: "heal", amount: { flat: 41 }, perStatusOnTarget: [] }],
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.dwaynas-sorrow",
+      },
+    ],
   }),
 };

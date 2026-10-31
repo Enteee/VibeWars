@@ -1,4 +1,5 @@
 import {
+  MAINTAINED_STATUSES,
   STATUS_DEFINITIONS,
   describeStatus,
   type StatusCategory,
@@ -91,7 +92,7 @@ export function effectRows(
       secondsLeft: timed === undefined ? undefined : Math.max(0, Math.ceil(timed.left)),
       yours: mine && definition.category === "enchantment",
       casterName: mine ? "you" : (names.get(status.casterId) ?? "someone"),
-      endable: mine && timed === undefined,
+      endable: mine && timed === undefined && MAINTAINED_STATUSES.has(status.id),
     };
   });
 }
@@ -107,7 +108,12 @@ export function maintainedRows(players: readonly PlayerSnapshot[], selfId: strin
     player.sessionId === selfId
       ? []
       : player.statuses
-          .filter((status) => status.casterId === selfId && status.durationSeconds === null)
+          .filter(
+            (status) =>
+              status.casterId === selfId &&
+              status.durationSeconds === null &&
+              MAINTAINED_STATUSES.has(status.id),
+          )
           .map((status) => {
             const definition = STATUS_DEFINITIONS[status.id];
             return {
@@ -163,15 +169,18 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
   if (row.secondsLeft === undefined || row.fraction !== undefined) {
     const left = document.createElement("div");
     left.className = "tip-effect";
-    // No end of its own: a maintained enchantment, or, of any other
-    // category, a spirit's aura (#1064), worn while in its range.
+    // No end of its own: a maintained enchantment, one that lasts until
+    // something ends it (#1789), or, of any other category, a spirit's
+    // aura (#1064), worn while in its range.
     left.textContent =
       row.secondsLeft === undefined
         ? row.category !== "enchantment"
           ? "while in its range"
-          : row.endable
-            ? "maintained, −1 energy"
-            : "maintained"
+          : !MAINTAINED_STATUSES.has(row.id)
+            ? "until it ends"
+            : row.endable
+              ? "maintained, −1 energy"
+              : "maintained"
         : `${String(row.secondsLeft)} s left`;
     node.appendChild(left);
   }
