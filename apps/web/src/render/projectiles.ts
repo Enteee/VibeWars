@@ -77,14 +77,6 @@ export const PROJECTILE_SPRITES: readonly ProjectileSprite[] = [
   ...Object.values(SKILL_SPRITE),
 ];
 
-export function projectileSpriteUrl(sprite: ProjectileSprite): string {
-  return `${import.meta.env.BASE_URL}icons/projectile/${sprite}.svg`;
-}
-
-/** The sprites' grid, pointing along +x. */
-export const PROJECTILE_WIDTH = 32;
-export const PROJECTILE_HEIGHT = 12;
-
 /** A shot as the scene draws it. */
 export interface RenderableProjectile {
   readonly id: number;

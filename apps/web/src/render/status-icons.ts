@@ -1,5 +1,7 @@
 import type { StatusId, Vec2 } from "@vibewars/game-core";
 
+import { STATUS_ICON_SIZE } from "./arena-atlas.js";
+
 /**
  * Status icons under an actor (#75, docs/art/art-direction.md).
  *
@@ -266,8 +268,6 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "guiding-hands": icon("guiding-hands"),
 };
 
-/** Drawn size of one icon, in world pixels. */
-export const STATUS_ICON_SIZE = 16;
 const GAP = 2;
 /** Below the actor's edge, so the row clears the circle. */
 const OFFSET = 6;
