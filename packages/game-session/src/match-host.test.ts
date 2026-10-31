@@ -93,6 +93,7 @@ describe("a P2P match (#375)", () => {
       outbreak: null,
       maintained: null,
       projected: false,
+      returnPoint: null,
     }));
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue(many);
     const before = remote.getSnapshot().elapsedSeconds;
@@ -123,6 +124,7 @@ describe("a P2P match (#375)", () => {
       outbreak: null,
       maintained: null,
       projected: false,
+      returnPoint: null,
     };
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue([bleeding]);
 
