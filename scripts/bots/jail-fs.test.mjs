@@ -6,6 +6,7 @@ import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import process from "node:process";
 
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -18,13 +19,15 @@ const children = [];
 
 afterEach(async () => {
   for (const child of children.splice(0)) {
-    const exited = new Promise((resolve) => child.once("exit", resolve));
-    if (child.kill("SIGKILL")) {
+    if (child.exitCode === null && child.signalCode === null && child.pid !== undefined) {
+      const exited = new Promise((resolve) => child.once("exit", resolve));
+      // The group, so the loop's rm and ln children die with it.
+      process.kill(-child.pid, "SIGKILL");
       await exited;
     }
   }
   for (const dir of dirs.splice(0)) {
-    // A swapper's grandchild may still be writing for a moment (ENOTEMPTY).
+    // A backstop only: the swapper's group is dead and awaited above.
     fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
   }
 });
@@ -207,10 +210,14 @@ describe("a JailDir", () => {
   it("never writes outside while the jail swaps a directory for a symlink", async () => {
     const { role, outside } = tree();
     const res = path.join(role, "res");
-    const swapper = spawn("sh", [
-      "-c",
-      `while :; do rm -rf "${res}"; mkdir "${res}" 2>/dev/null; rm -rf "${res}"; ln -s "${outside}" "${res}" 2>/dev/null; done`,
-    ]);
+    const swapper = spawn(
+      "sh",
+      [
+        "-c",
+        `while :; do rm -rf "${res}"; mkdir "${res}" 2>/dev/null; rm -rf "${res}"; ln -s "${outside}" "${res}" 2>/dev/null; done`,
+      ],
+      { detached: true },
+    );
     children.push(swapper);
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -225,7 +232,7 @@ describe("a JailDir", () => {
         // Refused, or the directory went from under it: either is fine.
       }
     }
-    swapper.kill("SIGKILL");
+    process.kill(-(swapper.pid ?? 0), "SIGKILL");
 
     expect(snapshot(outside)).toEqual({ victim: "the operator's\n" });
     // The race ran: some writes went through to a real directory.
