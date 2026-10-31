@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import type * as Figure from "./character-figure.js";
 import {
   NO_CHARACTER_FOR_QUEUE,
   isPlayable,
@@ -16,7 +17,8 @@ import {
 } from "./menu.js";
 
 // The figure draws on a canvas, which Node has none of.
-vi.mock("./character-figure.js", () => ({
+vi.mock("./character-figure.js", async (original) => ({
+  ...(await original<typeof Figure>()),
   createCharacterFigure: () => document.createElement("canvas"),
 }));
 

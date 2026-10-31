@@ -427,6 +427,8 @@ async function main(): Promise<void> {
         partyClosed: string | undefined;
         /** Whether the screen offers *Play the house team* yet. */
         houseTeamShown: boolean;
+        /** Teams its queue last heard searching (#1881); `undefined` until it says, or while it can't. */
+        teams: number | undefined;
         /** Its match is over: whoever leaves it first is no news. */
         finished: boolean;
       }
@@ -1522,7 +1524,7 @@ async function main(): Promise<void> {
     }
     syncParty(snapshot);
     for (const label of document.querySelectorAll(".party-queued")) {
-      label.textContent = lookingLabel(queuedMs);
+      label.textContent = lookingLabel(queuedMs, current.teams);
     }
     if (!current.houseTeamShown && queuedMs >= HOUSE_TEAM_AFTER_MS) {
       current.houseTeamShown = true;
@@ -1562,6 +1564,7 @@ async function main(): Promise<void> {
       parked: undefined,
       partyClosed: undefined,
       houseTeamShown: false,
+      teams: undefined,
       finished: false,
     };
     teamQueue = started;
@@ -1599,8 +1602,16 @@ async function main(): Promise<void> {
       entrant.guild,
       entrant.character,
       {
-        // The queue strip says the wait; the queue's states are its own.
-        onState: () => undefined,
+        // The queue strip says the wait and how many teams it last heard
+        // searching (#1881), none while the relays are down; the queue's
+        // other states are its own.
+        onState: (state) => {
+          if (state.kind === "searching") {
+            current.teams = state.teams;
+          } else if (state.kind === "unreachable") {
+            current.teams = undefined;
+          }
+        },
         onLobby: (joined, host) => {
           if (teamQueue !== current || current.parked !== undefined || lobby !== current.party) {
             void host?.close();
@@ -1696,7 +1707,11 @@ async function main(): Promise<void> {
 
   /** The rail and the title bar name `snapshot`'s party, or none (#1526). */
   const syncParty = (snapshot: LobbySnapshot | undefined): void => {
-    setRailParty(snapshot === undefined ? undefined : partyOf(snapshot, queuedMsOf(snapshot)));
+    setRailParty(
+      snapshot === undefined
+        ? undefined
+        : partyOf(snapshot, queuedMsOf(snapshot), teamQueue?.teams),
+    );
     topbarView.setLobby(
       snapshot === undefined
         ? undefined

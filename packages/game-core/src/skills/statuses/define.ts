@@ -85,6 +85,7 @@ export function define(
     endsWhenBearerUsesSkill: false,
     endsWhenBearerUsesOtherSkill: false,
     endsWhenBearerUsesAdrenalSkill: false,
+    endsWhenBearerUsesAttackSkill: false,
     endsWhenTriggered: false,
     endsWhenBearerHitsWithAttackSkill: false,
     endsWhenBearerGains: [],

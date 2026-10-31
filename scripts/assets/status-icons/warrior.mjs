@@ -148,4 +148,17 @@ export const WARRIOR_STATUS_ICONS = {
       `<path d="M8.5 6.5h7v4c0 2.2-1.8 3.7-3.5 4.8-1.7-1.1-3.5-2.6-3.5-4.8z" ${stroke(c, 1.8)}/>` +
       `<path d="M6.5 16.5l11-11" ${stroke(c, 2)}/>`,
   ],
+  // Staples (#1869), stand-ins until their art card.
+  // Stance: a shield over three slashes, blocks but takes double damage.
+  "frenzied-defense": [
+    "stance",
+    (c) =>
+      `<path d="M7 4h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M6 21l2-4M11 21l2-4M16 21l2-4" ${stroke(c, 2)}/>`,
+  ],
+  // Stance: five quick slashes, small: faster, each one weaker.
+  flurry: [
+    "stance",
+    (c) => `<path d="M4 17l2-6M8 17l2-6M12 17l2-6M16 17l2-6M20 17l2-6" ${stroke(c, 1.6)}/>`,
+  ],
 };
