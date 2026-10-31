@@ -64,6 +64,6 @@ export const MESMER_ICONS = {
   "mesmer.waste-not-want-not": { glyph: "energy-quiet" },
   // Attribute hexes (#1765): a stand-in until its own art.
   "mesmer.shatter-delusions": { glyph: "hex-shatter", modifier: "area" },
-  // Ally threshold mechanics (#1789), stand-in until its art card.
-  "mesmer.illusion-of-weakness": { glyph: "shield-haze", modifier: "down" },
+  // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
+  "mesmer.illusion-of-weakness": { glyph: "haze-heart-bar" },
 };
