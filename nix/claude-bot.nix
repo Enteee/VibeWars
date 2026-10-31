@@ -622,7 +622,8 @@ let
 
         When you genuinely have nothing to do, run \`tg wait --timeout 540\` (Bash timeout 600000) to
         block until a colleague or the operator says something, then continue.
-        Do not stop and wait for a prompt; nobody is going to send you one."
+        If it says you are idle, end your turn: a message or a card for you
+        starts the next one. Otherwise do not stop and wait for a prompt."
 
         # After a company reboot, claude-llc hands the manager what it loaded
         # (scripts/bots/restart.mjs), for the manager to pass on.
@@ -635,8 +636,20 @@ let
 
         # A resumed conversation needs a turn too, or claude -p has nothing
         # to run. It is the same prompt whether the last turn ended on its
-        # own or someone pressed Ctrl-C.
-        if [ -n "$resume" ]; then
+        # own or someone pressed Ctrl-C, except after an idle wait between
+        # turns, which says what ended it (#1694), once.
+        woke=""
+        if [ -f "$DEVENV_ROOT/.bots/bus/$employee/woke" ]; then
+          woke="$(head -n 1 "$DEVENV_ROOT/.bots/bus/$employee/woke" 2>/dev/null)" || woke=""
+          rm -f "$DEVENV_ROOT/.bots/bus/$employee/woke"
+        fi
+        if [ -n "$resume" ] && [ -n "$woke" ]; then
+          resumeFlag=(--resume "$resume")
+          prompt="$woke Check \`tg inbox\` and \`board ls <your column>\`, then carry on
+        with the most valuable thing you can finish.
+        Do not end your turn while waiting on background work or a colleague:
+        block on it, or on \`tg wait --timeout 540\` (Bash timeout 600000), instead."
+        elif [ -n "$resume" ]; then
           resumeFlag=(--resume "$resume")
           prompt="Your last turn ended and this is the next one. Check \`tg inbox\`
         and \`board ls <your column>\` in case something changed, then carry on

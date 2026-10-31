@@ -458,6 +458,24 @@ function deadHolder(lock, youngMs) {
   }
 }
 
+/**
+ * The board column each role takes its work from (#1694): a card arriving
+ * there wakes an idle employee of the role. `null`: mail only.
+ */
+export const WORK_COLUMN = Object.freeze(
+  /** @type {Record<string, string | null>} */ ({
+    manager: null,
+    architect: "Backlog",
+    developer: "Ready",
+    "asset-designer": "Ready",
+    "cicd-engineer": "Ready",
+    "lead-dev": "In Review",
+    "perf-sec-qa": "In Review",
+    "qa-tester": "QA",
+    "business-analyst": null,
+  }),
+);
+
 /** How many employees a role starts with, where that is not one (#749). */
 export const DEFAULT_HEADCOUNT = Object.freeze(
   /** @type {Record<string, number>} */ ({ developer: 2 }),

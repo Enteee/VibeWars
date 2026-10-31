@@ -80,6 +80,10 @@ describe("tg wait --timeout (#325)", () => {
 
 const OVER = { tokens: 134_000, ceiling: 120_000 };
 
+/** What an empty wait adds for a developer, whose work arrives in Ready (#1694). */
+const IDLE =
+  " You are idle: END YOUR TURN now. A message, or a card arriving in Ready, starts your next turn.";
+
 describe("tg wait, past the context ceiling", () => {
   it("returns at once with an empty inbox, and says to end the turn", () => {
     const { env } = bus({ context: OVER });
@@ -126,7 +130,7 @@ describe("tg wait, under the ceiling or without a context file", () => {
 
     const result = wait(env, 1);
 
-    expect(result.stdout).toBe("(nothing new in 1s)\n");
+    expect(result.stdout).toBe(`(nothing new in 1s)${IDLE}\n`);
     expect(result.ms).toBeGreaterThanOrEqual(1000);
   });
 
@@ -134,13 +138,46 @@ describe("tg wait, under the ceiling or without a context file", () => {
     const { dir, env } = bus();
     fs.writeFileSync(path.join(dir, "context.json"), "{");
 
-    expect(wait(env, 1).stdout).toBe("(nothing new in 1s)\n");
+    expect(wait(env, 1).stdout).toBe(`(nothing new in 1s)${IDLE}\n`);
   });
 
   it("waits as before under the ceiling", () => {
     const { env } = bus({ context: { tokens: 119_999, ceiling: 120_000 } });
 
-    expect(wait(env, 1).stdout).toBe("(nothing new in 1s)\n");
+    expect(wait(env, 1).stdout).toBe(`(nothing new in 1s)${IDLE}\n`);
+  });
+});
+
+describe("tg wait, and an idle agent (#1694)", () => {
+  it("leaves the idle marker when it finds nothing", () => {
+    const { dir, env } = bus();
+
+    wait(env, 1);
+
+    expect(fs.existsSync(path.join(dir, "idle"))).toBe(true);
+  });
+
+  it("tells a role with no column that only a message wakes it", () => {
+    const { env } = bus({ employee: "manager" });
+
+    expect(wait(env, 1).stdout).toBe(
+      "(nothing new in 1s) You are idle: END YOUR TURN now. A message starts your next turn.\n",
+    );
+  });
+
+  it("says the ceiling, not idle, past it, and leaves no marker", () => {
+    const { dir, env } = bus({ context: OVER });
+
+    expect(wait(env, 1).stdout).toMatch(/^Your context is over the ceiling/);
+    expect(fs.existsSync(path.join(dir, "idle"))).toBe(false);
+  });
+
+  it("takes an earlier idle back when a message ends the wait", () => {
+    const { dir, env } = bus({ messages: ["review #12"] });
+    fs.writeFileSync(path.join(dir, "idle"), "");
+
+    expect(wait(env, 1).stdout).toMatch(/manager: review #12\n$/);
+    expect(fs.existsSync(path.join(dir, "idle"))).toBe(false);
   });
 });
 
@@ -165,7 +202,7 @@ describe("tg wait, and General broadcasts (#323)", () => {
     fs.appendFileSync(path.join(dir, "inbox.jsonl"), line("FYI #9 merged", true));
 
     expect(tg(env, ["wait", "--timeout", "1"])).toBe(
-      "(nothing for you in 1s; 1 General messages queued, tg inbox shows them)\n",
+      `(nothing for you in 1s; 1 General messages queued, tg inbox shows them)${IDLE}\n`,
     );
     expect(tg(env, ["inbox"])).toContain("FYI #9 merged");
   });

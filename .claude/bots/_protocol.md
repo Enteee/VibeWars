@@ -79,7 +79,9 @@ Blocked: outside the flow, the manager's alone.
 2. `board ls <your column>` — is there work for you?
 3. Do the single most valuable thing you can finish, end to end.
 4. Move the card, and `tg send` whoever is next in the chain.
-5. Nothing to do? `tg wait --timeout 540`. Then start again at 1.
+5. Nothing to do? `tg wait --timeout 540`. If it says you are idle, end your
+   turn: you are woken when there is something for you. Otherwise start again
+   at 1.
 
 Finish things. One issue carried all the way to `Done` is worth more than four
 left half-done.
