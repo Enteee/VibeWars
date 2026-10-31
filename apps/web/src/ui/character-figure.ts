@@ -19,6 +19,7 @@ import {
 } from "../render/body-painter.js";
 import { toPlayerBuild } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
+import type { FigureLook } from "./character-card.js";
 import { cssColour, professionLabel } from "./character-preview.js";
 import { professionIcon } from "./icons.js";
 
@@ -200,29 +201,33 @@ function paintBodyGlyph(
 }
 
 /**
- * The figure for `character` wearing `cape`, as a canvas sharp at the device's pixel
- * ratio: drawn at once without its glyph, then again with it once the
- * profession icon has loaded, with `data-glyph` naming it, and
- * `data-weapon-id` naming what it holds. An invalid build keeps its
- * glyph: its profession is known. A browser that gives no 2D context
- * leaves the box empty.
+ * The figure `look` describes, `scale` times `FIGURE_SIZE`, as a
+ * canvas sharp at the device's pixel ratio: drawn at once without its
+ * glyph, then again with it once the profession icon has loaded, with
+ * `data-glyph` naming it, and `data-weapon-id` naming what it holds.
+ * The bare body keeps its glyph: its profession is known. A browser
+ * that gives no 2D context leaves the box empty.
  */
 export function createCharacterFigure(
-  character: TeamCharacter,
-  cape: CapeLook | undefined,
+  look: Pick<FigureLook, "primary" | "secondary" | "appearance" | "cape">,
+  scale = 1,
 ): HTMLCanvasElement {
   const { width, height } = FIGURE_SIZE;
-  const ratio = window.devicePixelRatio;
+  const ratio = window.devicePixelRatio * scale;
   const canvas = document.createElement("canvas");
   canvas.className = "character-figure";
   canvas.width = Math.round(width * ratio);
   canvas.height = Math.round(height * ratio);
-  canvas.style.width = `${String(width)}px`;
-  canvas.style.height = `${String(height)}px`;
-  const label = professionLabel(character.primaryProfession, character.secondaryProfession);
+  canvas.style.width = `${String(width * scale)}px`;
+  canvas.style.height = `${String(height * scale)}px`;
+  const label = professionLabel(look.primary, look.secondary);
   canvas.title = label;
   canvas.setAttribute("role", "img");
   canvas.setAttribute("aria-label", label);
+  const { appearance } = look;
+  if (appearance.weaponId !== undefined) {
+    canvas.dataset.weaponId = appearance.weaponId;
+  }
   const context = canvas.getContext("2d");
   if (context === null) {
     return canvas;
@@ -231,11 +236,7 @@ export function createCharacterFigure(
   // Phaser joins its strokes round; a canvas's default miter would
   // spike the weapon casing's points past the mark.
   context.lineJoin = "round";
-  const appearance = characterAppearance(character);
-  if (appearance.weaponId !== undefined) {
-    canvas.dataset.weaponId = appearance.weaponId;
-  }
-  const body = figureBody(appearance, cape);
+  const body = figureBody(appearance, look.cape);
   const painter = canvasPainter(context);
   const paint = (glyph: HTMLImageElement | undefined): void => {
     context.clearRect(0, 0, width, height);
@@ -246,10 +247,10 @@ export function createCharacterFigure(
     });
   };
   paint(undefined);
-  void loadGlyph(character.primaryProfession).then((glyph) => {
+  void loadGlyph(look.primary).then((glyph) => {
     if (glyph !== undefined) {
       paint(glyph);
-      canvas.dataset.glyph = character.primaryProfession;
+      canvas.dataset.glyph = look.primary;
     }
   });
   return canvas;

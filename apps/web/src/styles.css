@@ -1674,8 +1674,13 @@ body {
   overflow-x: auto;
 }
 
-/* A Team Build's member on a card (#1786): ball, weapons, skills. */
-.team-member-row {
+/* The character card (#1864): a roster card's figure, line and bar sit
+   in the card itself; a team's member is one row, figure then bar. */
+.character-card-body {
+  display: contents;
+}
+
+.character-card-row {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -3002,53 +3007,34 @@ body {
   max-width: 24rem;
 }
 
-/* At 800 px the cards wrap to two rows. */
-.team-lobby-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.8rem;
-}
-
-.team-lobby-card {
+/* No proposal yet: where the cards would be. */
+.team-lobby-empty {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.5rem;
-  min-width: 0;
-  padding: 0.7rem;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  text-align: left;
-  font: inherit;
-}
-
-button.team-lobby-card:not(:disabled) {
-  cursor: pointer;
-}
-
-button.team-lobby-card:not(:disabled):hover,
-.team-lobby-card.is-voted {
-  border-color: var(--accent);
-}
-
-.team-lobby-card.is-empty {
+  align-items: center;
   justify-content: center;
   min-height: 6rem;
-  border-style: dashed;
+  border: 1px dashed var(--line);
   color: var(--ink-dim);
   text-align: center;
 }
 
-/* The result: the chosen card lifted, the rest faded behind it. */
-.team-lobby-card.is-chosen {
+/* A vote's state on the shared team card (#1864): yours, then the
+   result's chosen card lifted, the rest faded behind it. */
+.screen .play-card.is-voted .play-card-open {
+  border-color: var(--accent);
+}
+
+.screen .play-card.is-chosen .play-card-open {
   border: 2px solid var(--accent);
   transform: translateY(-4px);
   box-shadow: 0 6px 14px rgb(0 0 0 / 45%);
 }
 
-.screen .team-lobby-card.is-faded {
+.screen .play-card.is-faded {
   opacity: 0.4;
+}
+
+.screen .play-card.is-faded .play-card-open {
   cursor: default;
 }
 
@@ -3076,19 +3062,6 @@ button.team-lobby-card:not(:disabled):hover,
   border-radius: 999px;
   color: var(--elite);
   font-size: 0.7rem;
-}
-
-.team-lobby-card-members {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-/* Member rows (#1811) are wider than a narrow card: one per line, scrolled as Team Builder's. */
-.team-lobby-card-members:has(> .team-member-row) {
-  flex-direction: column;
-  flex-wrap: nowrap;
-  overflow-x: auto;
 }
 
 .team-lobby-votes {

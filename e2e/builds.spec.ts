@@ -436,7 +436,8 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await page.getByRole("button", { name: "back" }).click();
 
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
-  await expect(teamRows(page).locator(".character-dot")).toHaveCount(2);
+  // Each member holds its weapons, as the roster's cards do (#1864).
+  await expect(teamRows(page).locator("canvas.character-figure[data-weapon-id]")).toHaveCount(2);
   await expect(page.locator(".team-play-hint")).toHaveCount(0);
   // A card is no pick: Enter on it opens it in the editor, as Edit does.
   const duo = teamRows(page).first().locator(".play-card-open");
