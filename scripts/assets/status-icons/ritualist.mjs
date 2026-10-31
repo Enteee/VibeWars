@@ -163,9 +163,10 @@ export const RITUALIST_STATUS_ICONS = {
   "spiritleech-aura": [
     "skill-effect",
     (c) =>
+      `<g transform="translate(5.5,6) scale(0.52)">` +
       `<path d="M6 3h12l-6 9z" fill="${c}"/>` +
       `<path d="M12 14c-1.6 2-2.6 3.3-2.6 4.4a2.6 2.6 0 0 0 5.2 0C14.6 17.3 13.6 16 12 14z" fill="${c}"/>` +
-      `<path d="M17.5 19h5" ${stroke(c, 2.2)}/>`,
+      `<path d="M17.5 19h5" ${stroke(c, 3)}/></g>`,
   ],
   // Hex: two links and a spike, spirits' attacks hurt more (#1270).
   "painful-bond": [
