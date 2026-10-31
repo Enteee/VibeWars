@@ -1748,6 +1748,24 @@ its level, which its Necromancer's Death Magic sets as it rises: ×(level
 ÷ its level at 12)^1.5, a fit to GWW's tables. A Bone Minion raised at
 Death Magic 0 is level 0 and deals nothing; at 6 it hits for 2–4.
 
+Three more minions rise from a corpse (#1836), each a blow every
+3.10 s. **Animate Vampiric Horror** (10 energy, 1 s, 15 s) raises one of
+360 Health and armor 58, 12–22 blunt; whenever it deals damage its
+master gains that much Health, not a heal, and nothing while its master
+is dead. **Animate Flesh Golem** (elite, 10 energy, 1 s, 30 s) raises one
+of 500 Health and armor 84, 50–74 slashing; a master has one at a time,
+a new one killing the old, and a dead golem lies as 3 corpses (1 at
+Death Magic 0) until the last is exploited. **Animate Shambling Horror**
+(10 energy, 1 s, 25 s) raises one of 360 Health and armor 58, 11–21
+slashing; when it dies or is destroyed, a Jagged Horror (320 Health,
+armor 50, 8–16 blunt, each blow Bleeding for 25 s) stands up where it
+fell, unless its master is dead. Two spells spend a minion: no death,
+no corpse, but a golem's corpses and a Shambling Horror's replacement
+still come. **Putrid Flesh** (10 energy, ¼ s, no recharge) destroys one
+of your own minions and diseases foes nearby it for 13 s. **Feast for the
+Dead** (5 energy, ¼ s, 10 s) destroys an allied minion and heals your
+other minions 82, wherever they are.
+
 **Pets** (#1046). A Ranger with **Charm Animal** (Beast Mastery, 10
 energy, 10 s) on the bar brings a level-20 wolf from the moment it
 joins: 480 Health and armor 80 whatever its owner's attributes, a

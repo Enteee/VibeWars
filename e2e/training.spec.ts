@@ -1526,3 +1526,21 @@ test("(45) your wolf's row in the party window takes Heel, and lights it (#1110)
   }).toPass();
   await expect(guard).toHaveAttribute("aria-pressed", "false");
 });
+
+/** Where the arena draws `id`, from the stage's `data-positions` hook (#497). */
+async function shownAt(page: Page, id: string): Promise<string | undefined> {
+  const value = (await page.locator(".training-stage").getAttribute("data-positions")) ?? "";
+  const entry = value.split(";").find((each) => each.startsWith(`${id}:`));
+  return entry?.slice(id.length + 1);
+}
+
+test("(46) in Moving targets, the patroller walks on its own (#497)", async ({ page }) => {
+  await openTraining(page);
+  await page.locator("select.training-scenario").selectOption("moving-targets");
+  await expect(page.locator(".training-log")).toContainText("── Moving targets ──");
+  await expect.poll(() => shownAt(page, "patroller")).toBeDefined();
+  const start = await shownAt(page, "patroller");
+  // Nobody touches the keyboard: 2 s of its loop, 360 at full speed.
+  await page.waitForTimeout(2000);
+  await expect.poll(() => shownAt(page, "patroller")).not.toBe(start);
+});

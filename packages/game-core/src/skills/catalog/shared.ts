@@ -52,6 +52,9 @@ export const BONE_MINION: CreatureTemplate = {
   },
   behaviour: MINION_BEHAVIOUR,
   aura: undefined,
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
   onDeath: "vanish",
   ownerDisableOnDeath: undefined,
   deathBurst: undefined,
@@ -82,9 +85,122 @@ export const BONE_HORROR: CreatureTemplate = {
   },
   behaviour: MINION_BEHAVIOUR,
   aura: undefined,
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
   onDeath: "vanish",
   ownerDisableOnDeath: undefined,
   deathBurst: undefined,
+};
+
+/** A minion of Death Magic (#1836): its level, Health and armor from 0 to 12 ranks. */
+function deathMinion(
+  look: CreatureTemplate["look"],
+  name: string,
+  health: readonly [number, number],
+  armor: readonly [number, number],
+  level: readonly [number, number],
+  damage: readonly [number, number],
+  damageType: "blunt" | "slashing",
+  onHit: readonly OnHitEffect[],
+): Omit<CreatureTemplate, "replacedBy" | "leavesCorpses" | "onePerOwner"> {
+  return {
+    kind: "minion",
+    look,
+    name,
+    maxHealth: {
+      scaling: { attributeId: "necromancer.death-magic", atZero: health[0], atTwelve: health[1] },
+    },
+    armor: {
+      scaling: { attributeId: "necromancer.death-magic", atZero: armor[0], atTwelve: armor[1] },
+    },
+    attack: {
+      attributeId: "necromancer.death-magic",
+      damageMin: damage[0],
+      damageMax: damage[1],
+      scaling: { kind: "level", level: { atZero: level[0], atTwelve: level[1] } },
+      damageType,
+      attackIntervalSeconds: 3.1,
+      range: RANGE_MELEE,
+      projectileSpeed: undefined,
+      onHit,
+    },
+    behaviour: MINION_BEHAVIOUR,
+    aura: undefined,
+    onDeath: "vanish",
+    ownerDisableOnDeath: undefined,
+    deathBurst: undefined,
+  };
+}
+
+/*
+ * Blood and Death Magic's other minions (#1836), from the wiki: level 1
+ * to 14 (Flesh Golem 3 to 21, Jagged Horror 0 to 12) at Death Magic 0 to
+ * 12, Health 80 + 20 per level, armor per the wiki's tables, a blow every
+ * 3.10 s. Damage is the wiki's "vs. AR 60" at Death Magic 12, its maximum
+ * a critical's, so ÷√2 (#1131). They wear the Bone Horror's look until
+ * their art.
+ */
+
+/** Its owner gains the Health its blows take (#1836). */
+export const VAMPIRIC_HORROR: CreatureTemplate = {
+  ...deathMinion(
+    "vampiric-horror",
+    "Vampiric Horror",
+    [100, 360],
+    [9, 58],
+    [1, 14],
+    [12, 22],
+    "blunt",
+    [{ kind: "owner-gains-damage-dealt" }],
+  ),
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
+};
+
+/** One at a time; it leaves 1...4 corpses, 3 at Death Magic 12 (#1836). */
+export const FLESH_GOLEM: CreatureTemplate = {
+  ...deathMinion(
+    "flesh-golem",
+    "Flesh Golem",
+    [140, 500],
+    [16, 84],
+    [3, 21],
+    [50, 74],
+    "slashing",
+    [],
+  ),
+  replacedBy: undefined,
+  leavesCorpses: { scaling: { attributeId: "necromancer.death-magic", atZero: 1, atTwelve: 3.4 } },
+  onePerOwner: true,
+};
+
+/** Each blow makes its foe bleed for 25 seconds (#1836); it is no one's replacement's. */
+export const JAGGED_HORROR: CreatureTemplate = {
+  ...deathMinion("jagged-horror", "Jagged Horror", [80, 320], [5, 50], [0, 12], [8, 16], "blunt", [
+    { kind: "apply-status", statusId: "bleeding", durationSeconds: 25 },
+  ]),
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
+};
+
+/** Its death stands a Jagged Horror up where it fell (#1836). */
+export const SHAMBLING_HORROR: CreatureTemplate = {
+  ...deathMinion(
+    "shambling-horror",
+    "Shambling Horror",
+    [100, 360],
+    [9, 58],
+    [1, 14],
+    [11, 21],
+    "slashing",
+    [],
+  ),
+  replacedBy: { creature: JAGGED_HORROR, count: 1 },
+  leavesCorpses: undefined,
+  onePerOwner: false,
 };
 
 /**
@@ -128,6 +244,9 @@ export const WOLF: CreatureTemplate = {
   },
   behaviour: PET_BEHAVIOUR,
   aura: undefined,
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
   onDeath: "lie",
   ownerDisableOnDeath: {
     scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 4 },
@@ -174,6 +293,9 @@ export function attackingSpirit(
     durationSeconds,
     behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: RANGE_SPIRIT },
     aura: undefined,
+    replacedBy: undefined,
+    leavesCorpses: undefined,
+    onePerOwner: false,
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
     deathBurst: undefined,
@@ -204,6 +326,9 @@ export function protectiveSpirit(
     durationSeconds: { scaling: { attributeId, ...duration } },
     behaviour: { kind: "idle" },
     aura: { statusId, affects, radius: RANGE_SPIRIT },
+    replacedBy: undefined,
+    leavesCorpses: undefined,
+    onePerOwner: false,
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
     deathBurst: undefined,

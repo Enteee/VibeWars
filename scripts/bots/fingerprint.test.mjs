@@ -123,25 +123,25 @@ describe("diff", () => {
 });
 
 describe("buildLine", () => {
-  const head = "0123456789abcdef0123456789abcdef01234567";
+  const sha = "0123456789abcdef0123456789abcdef01234567";
 
   it("says current when the build is the checkout's", () => {
     const build = { "devenv.nix": "a" };
-    expect(buildLine({ build, checkout: { ...build }, head })).toEqual({
+    expect(buildLine({ build, checkout: { ...build }, sha })).toEqual({
       line: `build: ${fingerprint(build).slice(0, 8)} (current)`,
       stale: false,
     });
   });
 
-  it("says STALE, where, and the checkout's HEAD when it is not", () => {
+  it("says STALE, where, and the locked commit when it is not", () => {
     const result = buildLine({
       build: { "devenv.nix": "a" },
       checkout: { "devenv.nix": "b", "scripts/bots/unread.mjs": "c" },
-      head,
+      sha,
     });
     expect(result.stale).toBe(true);
     expect(result.line).toMatch(
-      /^build: [0-9a-f]{8} STALE: differs in devenv\.nix, scripts\/bots\/unread\.mjs \(HEAD 01234567\)$/,
+      /^build: [0-9a-f]{8} STALE: differs in devenv\.nix, scripts\/bots\/unread\.mjs \(locked 01234567\)$/,
     );
   });
 });

@@ -321,7 +321,12 @@ export function outOfRange(
     const refused = targetRuleAllows(
       skill.target,
       { id: self.sessionId, team: self.team },
-      { id: target.sessionId, team: target.team, creatureKind: target.creature?.kind },
+      {
+        id: target.sessionId,
+        team: target.team,
+        creatureKind: target.creature?.kind,
+        creatureOwnerId: target.creature?.ownerId ?? undefined,
+      },
     );
     if (refused !== undefined) {
       return false;

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * `boot-check.mjs <running>` — does the company about to start run the
- * checkout's code?
+ * locked tree's code (#1861)?
  *
  * claude-llc runs this at every boot with `<running>`, the store copy of
  * `scripts/bots` its own evaluation staged, which holds the build's
@@ -25,7 +25,7 @@ import { obj } from "./protocol.mjs";
 import { bootNote } from "./reboot.mjs";
 
 const running = process.argv[2];
-const repo = process.env.DEVENV_ROOT;
+const repo = process.env.VIBEWARS_CODE;
 const root = process.env.VIBEWARS_BOT_ROOT;
 if (running === undefined || repo === undefined || root === undefined) {
   throw new Error("usage: boot-check.mjs <running scripts dir>; claude-llc starts this");

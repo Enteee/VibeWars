@@ -26,6 +26,7 @@ describe("listMapIds", () => {
   it("never lists a training map: they live in training/, outside maps/", () => {
     expect(listMapIds()).not.toContain("training-hall");
     expect(listMapIds()).not.toContain("training-pillars");
+    expect(listMapIds()).not.toContain("training-field");
   });
 });
 

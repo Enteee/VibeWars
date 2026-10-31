@@ -206,6 +206,9 @@ describe("describeSkill", () => {
         ...(durationSeconds === undefined ? {} : { durationSeconds: { flat: durationSeconds } }),
         behaviour: { kind: "idle" },
         aura: undefined,
+        replacedBy: undefined,
+        leavesCorpses: undefined,
+        onePerOwner: false,
         onDeath: "vanish",
         ownerDisableOnDeath: undefined,
         deathBurst: undefined,
@@ -524,13 +527,17 @@ describe("describeSkill", () => {
         }
       }
       if (effect.kind === "summon") {
-        const { kind, aura, attack, deathBurst } = effect.creature;
+        const { kind, aura, attack, deathBurst, onePerOwner, leavesCorpses, replacedBy } =
+          effect.creature;
         return (
           1 +
           (aura === undefined ? 0 : 1) +
           (kind === "spirit" && (attack?.damageMax ?? 0) > 0 ? 1 : 0) +
           (attack?.onHit ?? []).length +
-          (deathBurst === undefined ? 0 : 1)
+          (deathBurst === undefined ? 0 : 1) +
+          (onePerOwner ? 1 : 0) +
+          (leavesCorpses === undefined ? 0 : 1) +
+          (replacedBy === undefined ? 0 : 1)
         );
       }
       return 1;
@@ -937,6 +944,26 @@ describe("describeStatus", () => {
     ]);
   });
 
+  it("says what a minion's death leaves and that a golem stands alone (#1836)", () => {
+    const ranks = new Map([["necromancer.death-magic", 12]]);
+    const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+    expect(texts("necromancer.animate-flesh-golem")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 1 Flesh Golem (500 Health)",
+      "Only one at a time: a new one kills the old",
+      "Leaves 3 corpses when it dies",
+    ]);
+    expect(texts("necromancer.animate-shambling-horror")).toEqual([
+      "Exploits the nearest corpse",
+      "Summons 1 Shambling Horror (360 Health)",
+      "When it dies, 1 Jagged Horror (320 Health) stands up in its place; its attacks: applies Bleeding for 25s (−3 Health degeneration)",
+    ]);
+    // The corpse count scales with Death Magic, 1 at 0.
+    expect(
+      describeSkill(skill("necromancer.animate-flesh-golem"), new Map()).effects.at(-1)?.text,
+    ).toBe("Leaves 1 corpse when it dies");
+  });
+
   it("returns the id for an unknown status rather than throwing", () => {
     expect(describeStatus("not-a-status")).toBe("not-a-status");
   });
@@ -1096,5 +1123,21 @@ describe("an ender said to its holder (#1841)", () => {
     expect(describeStatus("pacifism")).toContain(
       "ends if it takes damage or life steal from a foe",
     );
+  });
+});
+
+describe("Predatory Bond, said to the Ranger who casts it (#1865)", () => {
+  it("heals you when your pet hits, not when you do", () => {
+    const skill = getSkill("ranger.predatory-bond");
+    expect(skill).toBeDefined();
+    const text =
+      skill === undefined
+        ? ""
+        : describeSkill(skill)
+            .effects.map((effect) => effect.text)
+            .join(" ");
+    expect(text).toContain("your pet's attacks heal you for 25");
+    expect(text).not.toContain("your physical attacks");
+    expect(text).not.toContain("Heals its owner");
   });
 });

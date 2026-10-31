@@ -349,6 +349,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   channeling: icon("channeling"),
   "arcane-zeal": icon("arcane-zeal"),
   "mystic-vigor": icon("mystic-vigor"),
+  // Pets 2 (#1865).
+  "otyughs-cry": icon("otyughs-cry"),
+  "predatory-bond": icon("predatory-bond"),
+  "rampage-as-one": icon("rampage-as-one"),
+  "run-as-one": icon("run-as-one"),
 };
 
 const GAP = 2;

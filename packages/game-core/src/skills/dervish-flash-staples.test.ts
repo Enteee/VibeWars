@@ -185,6 +185,7 @@ describe("Harrier's Haste (#1421)", () => {
       victim,
       SCYTHE.mainHand,
       false,
+      0,
       createRng(1),
       RULES.combat,
       new Map(),
