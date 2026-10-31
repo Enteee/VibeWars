@@ -139,17 +139,25 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # An asset-only pull request skips the work below, but the job still
-      # reports (#1609). main always runs everything, and so does a diff that
-      # fails: scripts/ci/e2e-needed.mjs fails closed, and only an explicit
-      # "false" skips. The checkout is the
-      # merge commit, so its diff against the base tip is the pull request.
+      # reports (#1609). A diff that fails to classify runs everything:
+      # scripts/ci/e2e-needed.mjs fails closed, and only an explicit "false"
+      # skips. The checkout is the merge commit, so its diff against the base
+      # tip is the pull request. A main push runs one third of the shards,
+      # rotating with the run number (shards n and n+3), so every shard runs
+      # within three pushes; the pull request already ran the full suite on
+      # this code, and e2e-soak runs it all nightly (#1885).
       - name: Is e2e needed
         id: needed
         env:
           EVENT: ${{ github.event_name }}
           BASE_REF: ${{ github.base_ref }}
+          SHARD: ${{ matrix.shard }}
+          RUN_NUMBER: ${{ github.run_number }}
         run: |
           needed=true
+          if [ "$EVENT" = push ] && [ $(( (SHARD - 1) % 3 )) -ne $(( RUN_NUMBER % 3 )) ]; then
+            needed=false
+          fi
           if [ "$EVENT" = pull_request ] && git fetch --no-tags --depth=1 origin "$BASE_REF"; then
             # The base's copy of the matcher, not the pull request's own: a PR
             # must not be able to edit its way out of its e2e.
