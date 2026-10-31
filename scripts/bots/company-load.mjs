@@ -64,7 +64,8 @@ function secs(s) {
 
 /**
  * The CI block (#1892): per workflow and runner kind, the jobs' wait for a
- * runner and their duration over 24 h; then the host's load and free memory.
+ * runner and their duration over 24 h, and whether every run's jobs were
+ * read; then the host's load and free memory.
  *
  * @param {import("./kpi.mjs").Kpis | null} kpis
  * @returns {string[]}
@@ -92,6 +93,11 @@ function ciLines(kpis) {
             ].join(""),
           ),
           ...(jobs.workflows.length === 0 ? ["        no completed jobs"] : []),
+          ...(jobs.coverage.read < jobs.coverage.runs || jobs.coverage.partial > 0
+            ? [
+                `        a sample: jobs of ${String(jobs.coverage.read)}/${String(jobs.coverage.runs)} runs read, ${String(jobs.coverage.partial)} in part`,
+              ]
+            : []),
         ];
   const { machine } = kpis;
   const gib = (/** @type {number} */ bytes) => (bytes / 2 ** 30).toFixed(1);

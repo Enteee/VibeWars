@@ -827,18 +827,112 @@ const JOB_NAME = /^[\w .+-]{1,64}$/;
  */
 
 /**
- * The jobs of one completed run (#1892), the latest attempt's.
+ * The jobs of one completed run (#1892), the latest attempt's: a line of
+ * `ci-jobs.jsonl`. `whole` is false when the run has more jobs than one
+ * page held, or its jobs could not be read at all (then `jobs` is empty).
  *
  * @typedef {{ runId: number, workflow: string, event: string, completedAt: number,
- *   jobs: CiJob[], malformed: number }} CiRunJobs
+ *   jobs: CiJob[], malformed: number, whole: boolean }} CiRunJobs
  */
+
+/**
+ * @param {unknown} value
+ * @returns {value is CiJob}
+ */
+function isCiJob(value) {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const job = /** @type {Record<string, unknown>} */ (value);
+  return (
+    typeof job.name === "string" &&
+    JOB_NAME.test(job.name) &&
+    (job.runner === "company" || job.runner === "hosted") &&
+    typeof job.createdAt === "number" &&
+    typeof job.startedAt === "number" &&
+    typeof job.completedAt === "number" &&
+    job.startedAt >= job.createdAt &&
+    job.completedAt >= job.startedAt
+  );
+}
+
+/**
+ * The runs' jobs in `ci-jobs.jsonl`. A line that is not one is skipped.
+ *
+ * @param {string} text
+ * @returns {CiRunJobs[]}
+ */
+export function parseCiJobs(text) {
+  /** @type {CiRunJobs[]} */
+  const runs = [];
+  for (const line of text.split("\n")) {
+    if (line === "") {
+      continue;
+    }
+    try {
+      /** @type {unknown} */
+      const parsed = JSON.parse(line);
+      if (typeof parsed !== "object" || parsed === null) {
+        continue;
+      }
+      const run = /** @type {Record<string, unknown>} */ (parsed);
+      const { runId, workflow, event, completedAt, jobs, malformed, whole } = run;
+      if (
+        Number.isInteger(runId) &&
+        typeof workflow === "string" &&
+        /^[\w.-]{1,64}$/.test(workflow) &&
+        typeof event === "string" &&
+        ENUM.test(event) &&
+        Number.isFinite(completedAt) &&
+        Array.isArray(jobs) &&
+        jobs.every(isCiJob) &&
+        Number.isInteger(malformed) &&
+        typeof whole === "boolean"
+      ) {
+        runs.push(
+          /** @type {CiRunJobs} */ ({
+            runId,
+            workflow,
+            event,
+            completedAt,
+            jobs,
+            malformed,
+            whole,
+          }),
+        );
+      }
+    } catch {
+      // A torn or foreign line: skipped.
+    }
+  }
+  return runs;
+}
+
+/**
+ * A run whose jobs could not be read, recorded so it is not asked for again.
+ *
+ * @param {CiRun} run
+ * @returns {CiRunJobs}
+ */
+export function unreadCiRunJobs(run) {
+  return {
+    runId: run.id,
+    workflow: run.workflow,
+    event: run.event,
+    completedAt: run.completedAt,
+    jobs: [],
+    malformed: 0,
+    whole: false,
+  };
+}
 
 /**
  * The jobs of a run from the REST `actions/runs/{id}/jobs?filter=latest`
  * answer. Jobs not completed, and skipped ones, are left out; one without
  * a `started_at` at or after its `created_at`, or a `completed_at` at or
  * after that, is counted in `malformed`. A matrix job's ` (…)` suffix is
- * dropped, so `e2e-shard (3)` is `e2e-shard`.
+ * dropped, so `e2e-shard (3)` is `e2e-shard`. A `total_count` above the
+ * jobs answered makes the run not `whole`.
  *
  * @param {CiRun} run
  * @param {unknown} answer
@@ -888,6 +982,11 @@ export function ciRunJobsFromRest(run, answer) {
     completedAt: run.completedAt,
     jobs,
     malformed,
+    whole: !(
+      "total_count" in answer &&
+      typeof answer.total_count === "number" &&
+      answer.total_count > rows.length
+    ),
   };
 }
 
@@ -897,7 +996,7 @@ export function ciRunJobsFromRest(run, answer) {
  */
 
 /**
- * @typedef {{ malformed: number,
+ * @typedef {{ coverage: { runs: number, read: number, partial: number }, malformed: number,
  *   workflows: ({ workflow: string, runner: "company" | "hosted" } & JobStats)[],
  *   jobs: ({ workflow: string, job: string, runner: "company" | "hosted" } & JobStats)[],
  *   wall: Record<"push" | "pull_request", { count: number, p50S: number | null,
@@ -947,14 +1046,20 @@ function groupBy(items, key) {
 
 /**
  * One window of the job numbers: runs completed in `(since, now]`.
+ * `coverage` says how many of the history's runs in it have their jobs
+ * read, and how many of those only in part: below `runs`, the numbers are
+ * a sample.
  *
  * @param {number} since
  * @param {number} now
- * @param {readonly CiRunJobs[]} runs
+ * @param {readonly CiRunJobs[]} read
+ * @param {readonly CiRun[]} history
  * @returns {CiJobWindow}
  */
-function jobWindow(since, now, runs) {
-  const inside = runs.filter((run) => run.completedAt > since && run.completedAt <= now);
+function jobWindow(since, now, read, history) {
+  /** @param {{ completedAt: number }} run */
+  const within = (run) => run.completedAt > since && run.completedAt <= now;
+  const inside = read.filter(within);
   const jobs = inside.flatMap((run) => run.jobs.map((job) => ({ ...job, workflow: run.workflow })));
   /** @type {CiJobWindow["wall"]} */
   const wall = {
@@ -963,7 +1068,10 @@ function jobWindow(since, now, runs) {
   };
   for (const event of /** @type {const} */ (["push", "pull_request"])) {
     const walls = inside
-      .filter((run) => run.workflow === WALL_WORKFLOW && run.event === event && run.jobs.length > 0)
+      .filter(
+        (run) =>
+          run.workflow === WALL_WORKFLOW && run.event === event && run.whole && run.jobs.length > 0,
+      )
       .map(
         (run) =>
           Math.max(...run.jobs.map((job) => job.completedAt)) -
@@ -972,6 +1080,11 @@ function jobWindow(since, now, runs) {
     wall[event] = { count: walls.length, p50S: seconds(median(walls)), p90S: seconds(p90(walls)) };
   }
   return {
+    coverage: {
+      runs: history.filter(within).length,
+      read: inside.length,
+      partial: inside.filter((run) => !run.whole).length,
+    },
     malformed: inside.reduce((sum, run) => sum + run.malformed, 0),
     workflows: [...groupBy(jobs, (job) => `${job.workflow}\n${job.runner}`)].map(([, group]) => ({
       workflow: group[0]?.workflow ?? "",
@@ -993,16 +1106,18 @@ function jobWindow(since, now, runs) {
 /**
  * The CI job numbers (#1892): how long jobs waited for a runner and ran,
  * per workflow and per job, split by company and hosted runners; and the
- * wall time of a `ci.yml` run per event. Windows by a run's completion.
+ * wall time of a `ci.yml` run per event, from whole runs. Windows by a
+ * run's completion.
  *
  * @param {number} now
- * @param {readonly CiRunJobs[]} runs
+ * @param {readonly CiRunJobs[]} read the runs whose jobs were read
+ * @param {readonly CiRun[]} history every run, `ci-history.jsonl`'s
  * @returns {NonNullable<Kpis["ciJobs"]>}
  */
-export function ciJobKpis(now, runs) {
+export function ciJobKpis(now, read, history) {
   return {
-    "24h": jobWindow(now - DAY_MS, now, runs),
-    "7d": jobWindow(now - 7 * DAY_MS, now, runs),
+    "24h": jobWindow(now - DAY_MS, now, read, history),
+    "7d": jobWindow(now - 7 * DAY_MS, now, read, history),
   };
 }
 

@@ -17,6 +17,7 @@ import {
   median,
   p90,
   parseCiHistory,
+  parseCiJobs,
   parseEdges,
   parseMeminfo,
   parseUnits,
@@ -24,6 +25,7 @@ import {
   stageWaits,
   staffKpis,
   tokensByRole,
+  unreadCiRunJobs,
 } from "./kpi.mjs";
 
 const NOW = 1_800_000_000_000;
@@ -757,7 +759,7 @@ describe("CI jobs (#1892)", () => {
       ],
     });
     const runs = read === null ? [] : [read];
-    const day = ciJobKpis(NOW, runs)["24h"];
+    const day = ciJobKpis(NOW, runs, [run()])["24h"];
     expect(day.workflows).toEqual([
       {
         workflow: "ci.yml",
@@ -795,8 +797,10 @@ describe("CI jobs (#1892)", () => {
       of({ id: 3 }, [job("a", 0, 0, 600)]),
       of({ id: 4, workflow: "codeql.yml" }, [job("a", 0, 0, 900)]),
       of({ id: 5, event: "push" }, []),
+      ciRunJobsFromRest(run({ id: 6 }), { total_count: 120, jobs: [job("a", 0, 0, 5000)] }) ??
+        undefined,
     ].flatMap((one) => (one === undefined ? [] : [one]));
-    const { wall } = ciJobKpis(NOW, runs)["24h"];
+    const { wall } = ciJobKpis(NOW, runs, [])["24h"];
     expect(wall).toEqual({
       push: { count: 1, p50S: 140, p90S: 140 },
       pull_request: { count: 2, p50S: 450, p90S: 600 },
@@ -807,8 +811,9 @@ describe("CI jobs (#1892)", () => {
     const old = ciRunJobsFromRest(run({ completedAt: NOW - 3 * D }), {
       jobs: [job("a", 0, 1, 1), job("b", 0, -1, 1)],
     });
-    const kpis = ciJobKpis(NOW, old === null ? [] : [old]);
+    const kpis = ciJobKpis(NOW, old === null ? [] : [old], [run({ completedAt: NOW - 3 * D })]);
     expect(kpis["24h"]).toEqual({
+      coverage: { runs: 0, read: 0, partial: 0 },
       malformed: 0,
       workflows: [],
       jobs: [],
@@ -819,6 +824,39 @@ describe("CI jobs (#1892)", () => {
     });
     expect(kpis["7d"].workflows[0]?.count).toBe(1);
     expect(kpis["7d"].malformed).toBe(1);
+    expect(kpis["7d"].coverage).toEqual({ runs: 1, read: 1, partial: 0 });
+  });
+
+  it("reports coverage: runs read of the history's, and those read only in part", () => {
+    const history = [run({ id: 1 }), run({ id: 2 }), run({ id: 3 }), run({ id: 4 })];
+    const paged = ciRunJobsFromRest(run({ id: 1 }), {
+      total_count: 101,
+      jobs: [job("a", 0, 1, 1)],
+    });
+    const whole = ciRunJobsFromRest(run({ id: 2 }), { total_count: 1, jobs: [job("a", 0, 1, 1)] });
+    expect(paged?.whole).toBe(false);
+    expect(whole?.whole).toBe(true);
+    const read = [paged, whole, unreadCiRunJobs(run({ id: 3 }))].flatMap((one) =>
+      one === null ? [] : [one],
+    );
+    expect(ciJobKpis(NOW, read, history)["24h"].coverage).toEqual({
+      runs: 4,
+      read: 3,
+      partial: 2,
+    });
+  });
+
+  it("parses ci-jobs.jsonl back to what was written, and skips a line that is not one", () => {
+    const read = ciRunJobsFromRest(run(), { jobs: [job("e2e-shard (1)", 0, 1, 2)] });
+    const lines = [
+      JSON.stringify(read),
+      JSON.stringify(unreadCiRunJobs(run({ id: 9 }))),
+      "{torn",
+      JSON.stringify({ ...read, whole: undefined }),
+      JSON.stringify({ ...read, jobs: [{ ...read?.jobs[0], name: "x\u202e" }] }),
+      JSON.stringify({ ...read, jobs: [{ ...read?.jobs[0], startedAt: 0 }] }),
+    ];
+    expect(parseCiJobs(`${lines.join("\n")}\n`)).toEqual([read, unreadCiRunJobs(run({ id: 9 }))]);
   });
 
   it("reads MemTotal and MemAvailable from /proc/meminfo", () => {
@@ -845,7 +883,7 @@ describe("buildKpis", () => {
       staff: () => ({ byRole: {}, maxAgents: 1 }),
       webCache: () => null,
       ci: () => ciKpis({ now: NOW, runs: [], moves: [], done7d: 0, gate: GATE }),
-      ciJobs: () => ciJobKpis(NOW, []),
+      ciJobs: () => ciJobKpis(NOW, [], []),
       machine: () => null,
     });
     expect(kpis.schemaVersion).toBe(7);

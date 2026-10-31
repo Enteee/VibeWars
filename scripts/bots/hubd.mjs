@@ -149,12 +149,14 @@ import {
   EDGES_SCHEMA_VERSION,
   flowKpis,
   parseCiHistory,
+  parseCiJobs,
   parseEdges,
   parseMeminfo,
   parseUnits,
   projectSevenDay,
   staffKpis,
   tokensByRole,
+  unreadCiRunJobs,
 } from "./kpi.mjs";
 import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
@@ -266,6 +268,8 @@ const NUDGES = path.join(HUB, "nudges.json");
 const BOARD_HISTORY = path.join(HUB, "board-history.jsonl");
 /** Every completed Actions run of the last 8 days, one JSON line each (#1612). */
 const CI_HISTORY = path.join(HUB, "ci-history.jsonl");
+/** Each run's jobs, a line per run (#1892), kept for 7 days. */
+const CI_JOBS = path.join(HUB, "ci-jobs.jsonl");
 /** The KPI snapshot (kpi.mjs), written every `KPI_EVERY_MS`; every jail reads it. */
 const KPIS = path.join(HUB, "kpis.json");
 /**
@@ -3747,44 +3751,69 @@ async function recordCiRuns(now, cfg) {
   return kept;
 }
 
-/** The most runs whose jobs one KPI tick reads; a backfill after a reboot takes a few ticks. */
-const JOBS_PER_TICK = 40;
-/** Each run's jobs, by run id, read once (#1892). In memory: rebuilt after a reboot. */
-const ciJobsCache = /** @type {Map<number, import("./kpi.mjs").CiRunJobs>} */ (new Map());
+/**
+ * The most runs whose jobs one KPI tick reads (#1892). Each is a `gh api`
+ * call in hubd's loop, ahead of every hub command waiting; a backfill past
+ * this is reported as `coverage` until it catches up.
+ */
+const JOBS_PER_TICK = 10;
+/** A run whose jobs fail this many reads is recorded as unread, never asked for again. */
+const JOBS_MAX_FAILURES = 3;
+/** Failed jobs reads per run id, since hubd started. */
+const jobsFailures = /** @type {Map<number, number>} */ (new Map());
 
 /**
- * Read the jobs of the history's runs of the last 7 days not yet read, the
- * newest first and at most `JOBS_PER_TICK`, and forget runs older than
- * that. A run whose jobs cannot be read is tried again on a later tick.
+ * Append the jobs of the history's runs of the last 7 days not yet in
+ * `ci-jobs.jsonl`, newest first and at most `JOBS_PER_TICK`, then drop
+ * runs older than that. The batch stops at the first failed read: a rate
+ * limit fails the rest too. A run that failed `JOBS_MAX_FAILURES` times is
+ * recorded with no jobs, as not whole.
  *
  * @param {number} now
  * @param {readonly import("./kpi.mjs").CiRun[]} runs `ci-history.jsonl`'s
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<import("./kpi.mjs").CiRunJobs[]>} every cached run's jobs
+ * @returns {Promise<import("./kpi.mjs").CiRunJobs[]>} the runs' jobs, after
  */
 async function recordCiJobs(now, runs, cfg) {
+  const stored = fs.existsSync(CI_JOBS) ? parseCiJobs(fs.readFileSync(CI_JOBS, "utf8")) : [];
+  const read = new Set(stored.map((run) => run.runId));
   const week = runs.filter((run) => run.createdAt >= now - CI_FIRST_LOOKBACK_MS);
-  const ids = new Set(week.map((run) => run.id));
-  for (const id of ciJobsCache.keys()) {
-    if (!ids.has(id)) {
-      ciJobsCache.delete(id);
-    }
-  }
   const unread = week
-    .filter((run) => !ciJobsCache.has(run.id))
+    .filter((run) => !read.has(run.id))
     .sort((a, b) => b.completedAt - a.completedAt)
     .slice(0, JOBS_PER_TICK);
+  /** @type {import("./kpi.mjs").CiRunJobs[]} */
+  const fresh = [];
   for (const run of unread) {
     const answer = await rest(
       `actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`,
       cfg,
     );
-    const read = ciRunJobsFromRest(run, answer);
-    if (read !== null) {
-      ciJobsCache.set(run.id, read);
+    const jobs = ciRunJobsFromRest(run, answer);
+    if (jobs !== null) {
+      fresh.push(jobs);
+      jobsFailures.delete(run.id);
+      continue;
     }
+    const failures = (jobsFailures.get(run.id) ?? 0) + 1;
+    if (failures >= JOBS_MAX_FAILURES) {
+      fresh.push(unreadCiRunJobs(run));
+      jobsFailures.delete(run.id);
+    } else {
+      jobsFailures.set(run.id, failures);
+    }
+    break;
   }
-  return [...ciJobsCache.values()];
+  if (fresh.length > 0) {
+    fs.appendFileSync(CI_JOBS, fresh.map((run) => `${JSON.stringify(run)}\n`).join(""));
+  }
+  const all = [...stored, ...fresh];
+  const ids = new Set(week.map((run) => run.id));
+  const kept = all.filter((run) => ids.has(run.runId));
+  if (kept.length < all.length) {
+    writeAtomic(CI_JOBS, kept.map((run) => `${JSON.stringify(run)}\n`).join(""));
+  }
+  return kept;
 }
 
 /**
@@ -3968,7 +3997,7 @@ async function writeKpis(cfg) {
         if (ciJobs instanceof Error) {
           throw ciJobs;
         }
-        return ciJobKpis(now, ciJobs);
+        return ciJobKpis(now, ciJobs, ciRuns instanceof Error ? [] : ciRuns);
       },
       machine: sampleMachine,
     });

@@ -110,6 +110,7 @@ describe("loadLines (#747)", () => {
   it("prints the CI block: each workflow's wait and run over 24 h, then the host (#1892)", () => {
     const wall = { count: 0, p50S: null, p90S: null };
     const window = {
+      coverage: { runs: 20, read: 15, partial: 1 },
       malformed: 0,
       workflows: [
         {
@@ -152,10 +153,11 @@ describe("loadLines (#747)", () => {
         errors: {},
       },
     });
-    expect(lines.slice(-4)).toEqual([
+    expect(lines.slice(-5)).toEqual([
       "CI 24h  workflow                      wait p50/p90    run p50/p90  jobs",
       "        ci.yml (company)                  4s/1m15s    4m10s/1h06m    12",
       "        e2e-repeat.yml (hosted)                -/-            -/-     3",
+      "        a sample: jobs of 15/20 runs read, 1 in part",
       "host    16 CPUs  load 3.50 2.00 1.25  mem free 12.5/32.0 GiB",
     ]);
   });
