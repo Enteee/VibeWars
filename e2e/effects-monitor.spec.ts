@@ -139,12 +139,15 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
     .getByRole("listitem")
     .filter({ has: page.getByAltText("Ward Against Melee") });
   await expect(icon).toBeVisible({ timeout: 10_000 });
-  await expect(icon.locator(".effect-bar")).toBeHidden();
 
+  // Hover first, while the ward still stands: each check on the loaded
+  // match page can take seconds (#1659). The tooltip stays open for the
+  // bar check after it.
   await icon.hover();
   const tip = page.getByRole("tooltip");
   await expect(tip).toContainText("50% chance to block melee attacks");
   await expect(tip).toContainText("while in its range");
+  await expect(icon.locator(".effect-bar")).toBeHidden();
 });
 
 test("the target frame shows a foe's enchantment, at 16 px and not marked yours (#835)", async ({
