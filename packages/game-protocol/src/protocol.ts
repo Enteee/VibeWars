@@ -7,7 +7,7 @@ export const PROTOCOL_MISMATCH_MESSAGE =
   "This tab is running an outdated version of VibeWars. Reload the page.";
 
 /** Lobby phases, in order. A lobby only ever moves forward through these. */
-export type LobbyPhase = "waiting" | "team-lobby" | "starting" | "in-match";
+export type LobbyPhase = "waiting" | "team-lobby" | "queued" | "starting" | "in-match";
 
 /**
  * What a lobby is for (#1526, ADR-0041): the mode its host picked on the

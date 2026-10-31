@@ -214,7 +214,9 @@ export {
   TICKET_HEARTBEAT_MS,
   TICKET_TTL_MS,
   isTeamQueueMode,
+  inPartyOrder,
   parseQueueTicket,
+  teamQueueModeOf,
   teamSizeOf,
 } from "./queue.js";
 export type { QueueMode, QueueTicket, TicketParty } from "./queue.js";

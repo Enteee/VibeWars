@@ -2955,6 +2955,7 @@
     "LobbyPhase": {
       "union": [
         { "literal": "in-match" },
+        { "literal": "queued" },
         { "literal": "starting" },
         { "literal": "team-lobby" },
         { "literal": "waiting" }
@@ -4180,6 +4181,17 @@
           ]
         },
         {
+          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "find-match" } }]
+        },
+        {
+          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "house-team" } }]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "leave-queue" } }
+          ]
+        },
+        {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "propose" } },
             { "name": "slot", "optional": false, "type": "null" }
@@ -4365,6 +4377,7 @@
           "type": {
             "union": [
               { "literal": "in-match" },
+              { "literal": "queued" },
               { "literal": "starting" },
               { "literal": "team-lobby" },
               { "literal": "waiting" }
@@ -4474,6 +4487,7 @@
             }
           }
         },
+        { "name": "queueNonce", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "teamLobby",
           "optional": false,
@@ -4752,7 +4766,21 @@
     "WirePartyProposal": {
       "properties": [
         { "name": "groupId", "optional": false, "type": "string" },
-        { "name": "members", "optional": false, "type": { "array": "string" } }
+        { "name": "members", "optional": false, "type": { "array": "string" } },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "gvg" },
+              { "literal": "heroes-ascent" },
+              { "literal": "random-arena-1v1" },
+              { "literal": "random-arena-2v2" },
+              { "literal": "random-arena-4v4" },
+              { "literal": "team-arena" }
+            ]
+          }
+        }
       ]
     },
     "WirePartySplit": { "properties": [], "index": [{ "key": "string", "value": "never" }] },

@@ -939,6 +939,60 @@ const skillGlyph = {
     ),
   // Golden Fox Strike: unblockable while enchanted, the cracked shield of Guiding Hands.
   "dagger-unblock": () => strikeWith(skillGlyph["armor-crack"]()),
+  // Wells, glyphs and attribute hexes (#1783).
+  // A bolt sealed in a ring: the next spell cannot be interrupted.
+  "glyph-sealed": () =>
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M14 4.5L8 12.5h4l-2 7 6.5-9h-4z"),
+  // A bolt and an hourglass: cast now, recharge later.
+  "glyph-slow": () =>
+    inkFill("M10 2.5L3.5 12.5h4.5l-2 8.500 7-11h-4.500z") +
+    inkLine("M15.5 3.5H22M15.5 20.5H22M16.5 3.5L21 12L16.5 20.5M21 3.5L16.5 12L21 20.5", 2),
+  // A bolt inside a circling arrow: the spell comes back at once.
+  "glyph-renew": () =>
+    `<path d="M20 7.500A9.500 9.500 0 1 0 21.500 13" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M23 1.500V9H15.500Z") +
+    inkFill("M13 6L8.500 12.500H12l-1.500 5.500 5-7h-3.500Z"),
+  // A bolt over a drained bar: cast now, all Energy gone.
+  "glyph-drain": () =>
+    inkFill("M13.500 2L7 12h4.500L9.500 17l7-9.500h-4.500Z") +
+    `<rect x="2.500" y="18.500" width="19" height="3.500" rx="1" ${stroke(C.ink, 1.8)}/>` +
+    inkFill("M3.500 19.500H6.500V21H3.500Z"),
+  // The well's ring under a plus: allies regenerate Health.
+  "well-regen": () =>
+    `<ellipse cx="12" cy="18" rx="9" ry="3.600" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 3V13M7 8H17", 3),
+  // A plus and a bolt over the ring: Health and Energy.
+  "well-regen-energy": () =>
+    `<ellipse cx="12" cy="18" rx="9" ry="3.600" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M7 4V12M3 8H11", 2.8) +
+    inkFill("M18 2.500L13.500 9.500h3l-1.500 5 5-7h-3z"),
+  // A bolt sinking over the ring: foes lose Energy.
+  "well-drain": () =>
+    `<ellipse cx="12" cy="18" rx="9" ry="3.600" ${stroke(C.ink, 2.4)}/>` +
+    inkFill("M10 2L4.500 10h3.500L6.500 15l5.500-8h-3.500Z") +
+    inkLine("M17 5V12M14 9.500L17 13L20 9.500", 2.4),
+  // A prism with its light fanned out: cold that reaches the neighbours.
+  "prism-fan": () =>
+    inkFill("M3 20L9 5L15 20Z") +
+    `<path d="M9 5V20" ${stroke(C.bg, 1)}/>` +
+    inkLine("M16 9L22 5M17 13H22.500M16 17L22 21", 2),
+  // Two crystals over a crack: damage that breaks armor.
+  "crystals-crack": () =>
+    inkFill("M7 3L12 9L7 17L2 9Z") +
+    inkFill("M17 5L21.500 10L17 17L12.500 10Z") +
+    inkLine("M2 21L7 18.500L11 21L15 18.500L22 21", 2),
+  // A gust held back by a bar: the hexed foe slows.
+  "gust-bar": () =>
+    inkLine("M2.500 7.500H11A2.800 2.800 0 1 0 8.200 4.700", 2.2) +
+    inkLine("M2.500 13H14M2.500 18.500H10", 2.2) +
+    inkLine("M19.500 4V20", 2.8),
+  // Shards flying from a broken hex: a Mesmer hex shattered.
+  "hex-shards": () =>
+    inkFill("M12 1.500L16 7L10 8Z") +
+    inkFill("M22 11L16.500 16L15.500 9.500Z") +
+    inkFill("M3 14L9 12L8.500 19Z") +
+    `<circle cx="12.500" cy="14" r="2.200" fill="${C.ink}"/>`,
   // Assassin staples 5 (#1775).
   // The blade with a nearly empty gauge: the bonus comes when you are hurt.
   "dagger-low": () =>

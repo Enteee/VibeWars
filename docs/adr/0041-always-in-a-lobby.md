@@ -58,6 +58,11 @@ party are over.
   `RELAY_REDUNDANCY` (4) relays every 60 s once warmed up, after a few
   quicker ones at the start: about 4 announcements a minute per idle tab,
   400 a minute for 100 idle tabs, spread over our 8 relays.
+- A team mode's queued match (#1766, ADR-0042) holds two rooms in each
+  of its players' tabs: the party lobby stays, so the party comes back
+  to the same one, same key, Open or Closed, same guests, and an open
+  one takes a newcomer while the party plays; the match room is the
+  second. It is left when the match ends.
 - Every open tab is on the relays, so its room must not lead back to its
   key: ADR-0043's secret key and slow derivation are what make this safe.
   Without them, a relay observer could list and join every player's lobby.

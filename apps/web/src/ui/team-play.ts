@@ -2,7 +2,7 @@ import type { LobbyMode } from "@vibewars/game-protocol";
 
 import type { StoredTeam } from "../storage/schema.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
-import { createCharacterDot } from "./character-preview.js";
+import { teamMemberRow } from "./character-preview.js";
 import { button, h, listenForPaste, playCard, screenBar } from "./kit.js";
 import type { LobbyPanel } from "./lobby-screen.js";
 import { railScreen, type RailEntry } from "./rail.js";
@@ -49,15 +49,12 @@ export interface TeamPlayCallbacks {
   readonly onPasteTeam: (text: string) => void;
 }
 
-/** A Team Build's characters, a badge and a name each. */
+/** A Team Build's characters, a row each: ball, weapons and skills (#1786). */
 function members(team: StoredTeam): HTMLElement {
   const list = h("span", "play-card-members");
   for (const { character } of team.members) {
-    const member = h("span", "play-card-member");
-    member.append(
-      createCharacterDot(character),
-      h("span", "play-card-member-name", character.name),
-    );
+    const member = teamMemberRow(character);
+    member.className += " play-card-member";
     list.appendChild(member);
   }
   return list;

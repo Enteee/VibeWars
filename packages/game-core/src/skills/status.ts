@@ -1638,8 +1638,10 @@ export class StatusSet {
   /**
    * One packet took the bearer's Health from `from` to `to`, of `maxHealth`,
    * dealt by `offenderId` if anyone (#1789): recorded only if a status on
-   * it answers a line crossed, with the triggers that do. One packet may
-   * cross two lines. A status already waiting to answer one, undrained,
+   * it answers a line the packet left Health under, with the triggers that
+   * do. GW1 asks no crossing, only a real loss that does not kill (#1818):
+   * a bearer already under the line answers its next hit. One packet may
+   * answer two lines. A status already waiting to answer one, undrained,
    * does not answer another.
    */
   public recordHealthDrop(
@@ -1648,15 +1650,22 @@ export class StatusSet {
     to: number,
     maxHealth: number,
   ): void {
+    if (to <= 0 || to >= from) {
+      return;
+    }
+    const answering = this.#answering("bearer-health-drops-below");
+    if (answering.length === 0) {
+      return;
+    }
     const pending = new Set(
       this.#changes.flatMap((change) =>
         change.kind === "health-dropped" ? change.fired.map(({ statusId }) => statusId) : [],
       ),
     );
-    const fired = this.#answering("bearer-health-drops-below").filter(({ statusId, trigger }) => {
-      const line = (trigger.healthBelow ?? 0) * maxHealth;
-      return !pending.has(statusId) && from >= line && to < line;
-    });
+    const fired = answering.filter(
+      ({ statusId, trigger }) =>
+        !pending.has(statusId) && to < (trigger.healthBelow ?? 0) * maxHealth,
+    );
     if (fired.length > 0) {
       this.#changes.push({ kind: "health-dropped", offenderId, fired });
     }

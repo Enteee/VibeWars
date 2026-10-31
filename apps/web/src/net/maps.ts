@@ -121,6 +121,21 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
   }).map((map) => map.id);
 }
 
+/**
+ * The arenas a queued match of `mode` is drawn from: a team mode's are
+ * its lobby mode's (#1766), a Random Arena's its own pool.
+ */
+export function queueMapPool(mode: QueueMode): string[] {
+  switch (mode) {
+    case "team-arena":
+    case "heroes-ascent":
+    case "gvg":
+      return modeMapIds()[mode];
+    default:
+      return randomArenaMapPool(mode);
+  }
+}
+
 /** The modes a Random Arena never plays. */
 const NOT_RANDOM: readonly MatchMode[] = [
   "guild-battle",

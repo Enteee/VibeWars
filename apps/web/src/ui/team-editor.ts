@@ -9,7 +9,13 @@ import {
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
 import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
-import { createCharacterDot, equippedCount, professionLabel } from "./character-preview.js";
+import { characterAppearance } from "./character-figure.js";
+import {
+  createCharacterDot,
+  equippedCount,
+  gearIcons,
+  professionLabel,
+} from "./character-preview.js";
 import { professionIcon, skillTypeBadgeHtml } from "./icons.js";
 import {
   button,
@@ -486,6 +492,7 @@ export function mountTeamEditor(
     const who = h("span", "team-row-character");
     who.append(
       h("span", "team-row-dot"),
+      h("span", "team-row-gear"),
       button("", "team-row-name", () => {
         asking?.dismiss();
         callbacks.onOpenMember(characterId, { opened, team, stored: isStored });
@@ -630,6 +637,18 @@ export function mountTeamEditor(
       holder.replaceChildren(createCharacterDot(character));
     }
   };
+  /** Put `character`'s weapon icons in `holder` (#1786), unless it already shows these. */
+  const fillGear = (holder: Element | null, character: TeamCharacter): void => {
+    if (!(holder instanceof HTMLElement)) {
+      return;
+    }
+    const { weaponId, offhandId } = characterAppearance(character);
+    const gear = `${weaponId ?? ""}/${offhandId ?? ""}`;
+    if (holder.dataset.gear !== gear) {
+      holder.dataset.gear = gear;
+      holder.replaceChildren(gearIcons(character));
+    }
+  };
   root.appendChild(panel);
 
   function update(): void {
@@ -676,6 +695,7 @@ export function mountTeamEditor(
         }
         row.draggable = true;
         fillDot(row.querySelector(".team-row-dot"), character);
+        fillGear(row.querySelector(".team-row-gear"), character);
         setText(
           ".team-row-professions",
           professionLabel(character.primaryProfession, character.secondaryProfession),

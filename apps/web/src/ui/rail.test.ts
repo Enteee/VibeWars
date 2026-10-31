@@ -120,7 +120,14 @@ describe("the mode rail (#1525)", () => {
   });
 
   it("locks a guest's modes but its host's, stores none of them, and leaves the builders open (#1526)", () => {
-    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: false, open: false, members: [] });
+    setRailParty({
+      code: "ACDEFG",
+      mode: "gvg",
+      isHost: false,
+      open: false,
+      members: [],
+      queuedMs: null,
+    });
     saveRail("hosted-game");
     const switched: RailEntry[] = [];
     const rail = modeRail("teams", (entry) => switched.push(entry)) as unknown as FakeElement;
@@ -138,7 +145,14 @@ describe("the mode rail (#1525)", () => {
   });
 
   it("leaves a host's every mode open", () => {
-    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: true, open: false, members: [] });
+    setRailParty({
+      code: "ACDEFG",
+      mode: "gvg",
+      isHost: true,
+      open: false,
+      members: [],
+      queuedMs: null,
+    });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
     expect(rail.children.some((child) => child.attributes.has("aria-disabled"))).toBe(false);
   });
@@ -164,7 +178,14 @@ describe("the mode rail (#1525)", () => {
         replacement = next;
       },
     });
-    setRailParty({ code: "ACDEFG", mode: "gvg", isHost: false, open: false, members: [] });
+    setRailParty({
+      code: "ACDEFG",
+      mode: "gvg",
+      isHost: false,
+      open: false,
+      members: [],
+      queuedMs: null,
+    });
     redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
     const locked = replacement?.children.filter((child) => child.attributes.has("aria-disabled"));
     expect(locked?.map((child) => child.attributes.get("data-entry"))).toEqual([
@@ -183,7 +204,13 @@ describe("the mode rail (#1525)", () => {
       self: isHost,
       away: false,
     });
-    const party = { code: "ACDEFGHJKLMN", mode: "gvg", isHost: true, open: true } as const;
+    const party = {
+      code: "ACDEFGHJKLMN",
+      mode: "gvg",
+      isHost: true,
+      open: true,
+      queuedMs: null,
+    } as const;
     const strip = (): FakeElement | undefined => {
       const root = new FakeElement("div");
       const body = railScreen(root as unknown as HTMLElement, "gvg", "", () => undefined);
@@ -193,6 +220,9 @@ describe("the mode rail (#1525)", () => {
     };
     setRailParty({ ...party, members: [member("me", true)] });
     expect(strip()).toBeUndefined();
+    // Queued alone, the strip still says so (#1766).
+    setRailParty({ ...party, members: [member("me", true)], queuedMs: 5_000 });
+    expect(strip()).toBeDefined();
     setRailParty({ ...party, members: [member("me", true), member("Friend", false)] });
     expect(strip()?.children[0]?.children.map((row) => row.children[0]?.textContent)).toEqual([
       "me",

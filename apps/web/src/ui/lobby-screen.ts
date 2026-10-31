@@ -25,6 +25,23 @@ export interface LobbyScreenCallbacks {
   readonly onSetBots: (team: 0 | 1, count: number) => void;
 }
 
+/**
+ * A team mode's matchmaking (#1766, ADR-0042): the party is one side,
+ * and its host queues it for another instead of starting.
+ */
+export interface LobbyMatchmaking {
+  /** How long the party has looked for a team; `null` while it is not queued. */
+  readonly queuedMs: number | null;
+  readonly onFindMatch: () => void;
+  readonly onLeaveQueue: () => void;
+  readonly onPlayHouseTeam: () => void;
+}
+
+/** The host may play the house team after this long with no other team (Q191). */
+export const HOUSE_TEAM_AFTER_MS = 60_000;
+/** A guest's word on a team-mode screen: matchmaking is the host's. */
+export const HOST_STARTS_MATCHMAKING = "The host starts matchmaking";
+
 /** The teams a player can pick. Two for now; the map decides capacity. */
 export const SELECTABLE_TEAMS = [0, 1] as const;
 
@@ -195,6 +212,7 @@ export function lobbyPanel(
   callbacks: LobbyScreenCallbacks,
   notice: string | undefined,
   availableMaps: readonly LobbyMap[] = [],
+  matchmaking?: LobbyMatchmaking,
 ): LobbyPanel {
   const panel = h("div", "lobby-panel");
   const controls = lobbyControls(snapshot);
@@ -242,8 +260,14 @@ export function lobbyPanel(
   // can watch it (#480).
   const actions: HTMLElement[] = controls.canWatch
     ? [button("Watch", "primary lobby-watch", callbacks.onWatch)]
-    : [readyButton];
-  if (snapshot.isHost) {
+    : matchmaking === undefined
+      ? [readyButton]
+      : [];
+  if (matchmaking !== undefined) {
+    if (snapshot.isHost) {
+      actions.push(...matchmakingButtons(matchmaking, controls));
+    }
+  } else if (snapshot.isHost) {
     const start = button("Start match", ready ? "primary" : "", callbacks.onStart);
     start.disabled = controls.startDisabled;
     actions.push(start);
@@ -265,16 +289,21 @@ export function lobbyPanel(
     panel.appendChild(relay);
   }
 
+  if (matchmaking !== undefined && !snapshot.isHost && matchmaking.queuedMs === null) {
+    panel.appendChild(h("div", "screen-info lobby-waiting", HOST_STARTS_MATCHMAKING));
+  }
+
   // Everyone sees it, not only the host: a guest who is the one being
-  // waited for should know.
-  const waiting = waitingFor(snapshot);
+  // waited for should know. Nobody waits on Ready for matchmaking.
+  const waiting = matchmaking === undefined ? waitingFor(snapshot) : undefined;
   if (waiting !== undefined) {
     panel.appendChild(h("div", "screen-info lobby-waiting", waiting));
   }
 
   const teams = h("div", "lobby-teams");
-  for (const team of SELECTABLE_TEAMS) {
-    teams.appendChild(teamColumn(team, snapshot, controls, callbacks));
+  // A team mode's lobby is one side, the party; its empty seats are bots.
+  for (const team of matchmaking === undefined ? SELECTABLE_TEAMS : ([0] as const)) {
+    teams.appendChild(teamColumn(team, snapshot, controls, callbacks, matchmaking === undefined));
   }
   panel.appendChild(teams);
 
@@ -294,14 +323,37 @@ export function lobbyPanel(
 }
 
 /**
+ * The host's matchmaking buttons (#1766): Find a match, and once queued,
+ * Leave the queue, and after a minute alone also Play the house team.
+ */
+export function matchmakingButtons(
+  matchmaking: LobbyMatchmaking,
+  controls: LobbyControls,
+): HTMLElement[] {
+  if (matchmaking.queuedMs === null) {
+    const find = button("Find a match", "primary lobby-find", matchmaking.onFindMatch);
+    find.disabled = controls.mapDisabled;
+    return [find];
+  }
+  const leave = button("Leave the queue", "lobby-leave-queue", matchmaking.onLeaveQueue);
+  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS
+    ? [leave]
+    : [
+        button("Play the house team", "primary lobby-house-team", matchmaking.onPlayHouseTeam),
+        leave,
+      ];
+}
+
+/**
  * One team's column: its name and Join, its bot count (#1454), which the
- * host steps, and its members, bots among them.
+ * host steps, unless `withBots` is off, and its members, bots among them.
  */
 export function teamColumn(
   team: 0 | 1,
   snapshot: LobbySnapshot,
   controls: LobbyControls,
   callbacks: LobbyScreenCallbacks,
+  withBots = true,
 ): HTMLElement {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const column = h("div", "lobby-team");
@@ -315,15 +367,17 @@ export function teamColumn(
   title.appendChild(join);
   column.appendChild(title);
   const members = snapshot.players.filter((p) => p.team === team);
-  column.appendChild(
-    botCount(
-      team,
-      members.filter((member) => member.bot).length,
-      snapshot.isHost,
-      controls,
-      callbacks,
-    ),
-  );
+  if (withBots) {
+    column.appendChild(
+      botCount(
+        team,
+        members.filter((member) => member.bot).length,
+        snapshot.isHost,
+        controls,
+        callbacks,
+      ),
+    );
+  }
   if (members.length === 0) {
     column.appendChild(h("div", "lobby-slot-empty", "Empty"));
   }
