@@ -42,4 +42,17 @@ export const RANGER_ICONS = {
   "ranger.whirling-defense": { glyph: "shield-whirl" },
   "ranger.serpents-quickness": { glyph: "snake" },
   "ranger.dodge": { glyph: "arrow-dodge" },
+  // Ranger staples 2 (#1629), stand-ins until their art card.
+  "ranger.power-shot": { glyph: "arrow-pierce", modifier: "up" },
+  "ranger.precision-shot": { glyph: "arrow", modifier: "clock" },
+  "ranger.determined-shot": { glyph: "arrow", modifier: "renew" },
+  "ranger.keen-arrow": { glyph: "arrow-burst", modifier: "plus" },
+  "ranger.prepared-shot": { glyph: "arrow", modifier: "plus" },
+  "ranger.poison-arrow": { glyph: "drop-arrow", modifier: "up" },
+  "ranger.volley": { glyph: "volley", modifier: "less" },
+  "ranger.kindle-arrows": { glyph: "arrow-flame", modifier: "up" },
+  "ranger.ignite-arrows": { glyph: "arrow-flame", modifier: "area" },
+  "ranger.dust-trap": { glyph: "dust", modifier: "stun" },
+  "ranger.spike-trap": { glyph: "jaws", modifier: "stun" },
+  "ranger.antidote-signet": { glyph: "flask", modifier: "less" },
 };

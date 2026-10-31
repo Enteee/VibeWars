@@ -1761,6 +1761,21 @@ const status = {
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
   ],
+  // Ranger staples 2 (#1629), stand-ins until their art card.
+  // Preparation: an arrow with a flame at its head, your arrows burn.
+  "kindle-arrows": [
+    "preparation",
+    (c) =>
+      `<path d="M4 20L13 11" ${stroke(c, 2)}/>` +
+      `<path d="M16 4c2 2.5 3.5 4 3.5 6a3.5 3.5 0 0 1-7 0c0-2 1.5-3.5 3.5-6z" fill="${c}"/>`,
+  ],
+  // Preparation: an arrow into a burst, your arrows explode on contact.
+  "ignite-arrows": [
+    "preparation",
+    (c) =>
+      `<path d="M4 20L12 12" ${stroke(c, 2)}/>` +
+      `<path d="M16 8V4M16 12v4M12 8h-2M20 8h2M13 5l-1.5-1.5M19 5l1.5-1.5M19 11l1.5 1.5" ${stroke(c, 1.6)}/>`,
+  ],
   // Dervish staples 2 (#1604).
   // Mesmer staples 3 (#1627), a stand-in until its art card.
   // Hex: an eye glancing aside over a burst, the next attack goes astray.
