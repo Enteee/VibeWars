@@ -910,12 +910,14 @@ export interface StatusTrigger {
  * Shards hits", not "Scythe hits". `attackSkillsOnly` (#1551): only a blow
  * of an attack skill carries it, on each victim, before that skill's own
  * effects, as Grenth's Grasp's "your attack skills also"; a plain swing
- * carries none.
+ * carries none. `weapon` (#1629): only a blow of that weapon class
+ * carries it, as Kindle Arrows' "your arrows"; `undefined`: any.
  */
 export interface AttackHitRider {
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
   readonly attackSkillsOnly: boolean;
+  readonly weapon: AttackWeaponClass | undefined;
 }
 
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */

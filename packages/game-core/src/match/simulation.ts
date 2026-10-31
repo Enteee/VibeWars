@@ -176,6 +176,7 @@ import {
   nextAttackSkillOf,
   nextAttackSkillRiders,
   PLAIN_BLOW,
+  removePreparations,
   resolveAttackSkill,
   resolveAttackSkillOutcome,
   resolveSwing,
@@ -4706,6 +4707,8 @@ export class MatchSimulation {
       next: nextAttackSkillOf(record.combatant),
     };
     const flight = resolution.skill.attack?.flightSpeed;
+    const released: CombatEvent[] = [];
+    removePreparations(record.combatant, resolution.skill, released);
     const events = resolution.targets.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
       const multiplier =
@@ -4719,7 +4722,7 @@ export class MatchSimulation {
         : this.#release(record, target, speed * multiplier, dt, skillHit);
     });
     useNextAttackSkill(record.combatant, skillHit.next, events);
-    return events;
+    return [...released, ...events];
   }
 
   /**

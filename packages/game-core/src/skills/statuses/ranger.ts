@@ -13,6 +13,9 @@ export type RangerStatusId =
   | "dodge"
   // Preparations.
   | "apply-poison"
+  // Ranger staples 2 (#1629).
+  | "kindle-arrows"
+  | "ignite-arrows"
   // Spirits' auras (#1064), worn while in a spirit's range.
   | "winnowing"
   // Ranger calls and bonds on a pet (#1108).
@@ -143,8 +146,51 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
       skillId: "ranger.apply-poison",
+    },
+  }),
+  // "For 24 seconds, your arrows deal fire damage and hit for an
+  // additional 3...24 fire damage" (#1629): 20, its rank-12 value. Only a
+  // bow's blows: a sword's stay physical and get nothing.
+  "kindle-arrows": define("kindle-arrows", "Kindle Arrows", "preparation", {
+    profession: "ranger",
+    attackDamageType: "fire",
+    attackDamageTypeWeapon: "bow",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [
+        {
+          kind: "damage",
+          amount: { flat: 20 },
+          type: "fire",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "ranger.kindle-arrows",
+    },
+  }),
+  // "For 24 seconds, your arrows explode on contact, dealing 3...18 fire
+  // damage to target and all adjacent foes" (#1629): 15, its rank-12
+  // value. The splash skips its centre, so the struck foe's comes first.
+  "ignite-arrows": define("ignite-arrows", "Ignite Arrows", "preparation", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [
+        { kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          effects: [{ kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 }],
+        },
+      ],
+      skillId: "ranger.ignite-arrows",
     },
   }),
   // Infuriating Heat (#1540), at its rank-12 value.

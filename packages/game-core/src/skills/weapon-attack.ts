@@ -1,7 +1,7 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon } from "../equipment/resolve.js";
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
-import type { Weapon } from "../equipment/weapons.js";
+import { wieldsFor, type Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
@@ -544,7 +544,8 @@ export function landBlow(
  * the blow's damage type: Sand
  * Shards' fourth hit splashes, then ends it. Returns those endings,
  * after what the weapon itself does to whoever it hits (#1239). A rider
- * for attack skills only rides a blow `withAttackSkill` (#1551).
+ * for attack skills only rides a blow `withAttackSkill` (#1551), and one
+ * for a weapon class only a blow of that weapon (#1629).
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -564,7 +565,8 @@ export function attackHitRiders(
     if (
       rider === undefined ||
       (rider.attackSkillsOnly && !withAttackSkill) ||
-      (!physical && definition.category !== "weapon-spell")
+      (!physical && definition.category !== "weapon-spell") ||
+      (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
     ) {
       continue;
     }
@@ -715,6 +717,22 @@ export function useNextAttackSkill(
   for (const statusId of next.statusIds) {
     if (attacker.statuses.remove(statusId)) {
       events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+    }
+  }
+}
+
+/**
+ * An attack skill that removes its user's preparations (#1629) was
+ * released: they end before its blows land or its shots fly, so none
+ * rides them. Barrage's and Volley's "all your preparations are removed".
+ */
+export function removePreparations(attacker: Combatant, skill: Skill, events: CombatEvent[]): void {
+  if (skill.attack?.removesPreparations !== true) {
+    return;
+  }
+  for (const { id } of [...attacker.statuses.active]) {
+    if (getStatusDefinition(id).category === "preparation" && attacker.statuses.remove(id)) {
+      events.push({ kind: "status-removed", targetId: attacker.id, statusId: id });
     }
   }
 }
@@ -887,6 +905,7 @@ export function resolveAttackSkillOutcome(
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
   const unblockable = bearerAttacked(caster, events, kind);
+  removePreparations(caster, skill, events);
   const next = nextAttackSkillOf(caster);
   const primary = resolution.targets[0];
   const around =
