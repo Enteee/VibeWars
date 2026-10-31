@@ -186,6 +186,7 @@ describe("status definitions", () => {
       "obsidian-flesh": -2,
       "zealous-renewal": -1,
       "zealous-vow": -3,
+      "the-power-is-yours": 2,
     });
   });
 
