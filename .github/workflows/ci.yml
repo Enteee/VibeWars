@@ -181,7 +181,10 @@ jobs:
           if-no-files-found: ignore
 
   # Green only if every shard succeeded. A cancelled or skipped shard is a
-  # failure here (an asset-only skip still runs the shards, which succeed).
+  # failure here (an asset-only skip still runs the shards, which succeed),
+  # except on a main push: there a cancelled shard is one a newer push
+  # replaced while pending (#1620), not a failure; the newer commit's e2e
+  # covers it.
   e2e:
     name: e2e
     needs: e2e-shard
@@ -191,6 +194,7 @@ jobs:
       - name: Every shard succeeded
         env:
           RESULT: ${{ needs.e2e-shard.result }}
+          EVENT: ${{ github.event_name }}
         run: |
           echo "e2e-shard: $RESULT"
-          [ "$RESULT" = success ]
+          [ "$RESULT" = success ] || { [ "$EVENT" = push ] && [ "$RESULT" = cancelled ]; }
