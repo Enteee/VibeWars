@@ -2581,6 +2581,36 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // (#1757): 30 s, its rank-12 value; the count is the status's.
     effects: [{ kind: "apply-status", statusId: "way-of-the-fox", durationSeconds: 30 }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Death triggers (#1762)                                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.assassins-promise",
+    name: "Assassin's Promise",
+    gwId: 1035,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...15 seconds, if target foe dies, you gain 5...20 Energy and
+    // all your skills are recharged": 13 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "assassins-promise", durationSeconds: 13 }],
+  },
 
   /* ---------------------------------------------------------------------- */
   /* 'N for each X' (#1760)                                                 */

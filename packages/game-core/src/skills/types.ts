@@ -601,11 +601,13 @@ export interface DestroyAlliedSpiritsEffect {
 /**
  * Every other skill of the caster of this type recharges at once (#885),
  * as Moebius Strike's "all your other attack skills are recharged". Acts
- * on the caster, once.
+ * on the caster, once. `all` (#1762), from a status's trigger, recharges
+ * every skill on the bar, the status's own included: Assassin's Promise.
+ * A dead caster recharges nothing.
  */
 export interface RechargeOthersEffect {
   readonly kind: "recharge-others";
-  readonly which: "attack";
+  readonly which: "attack" | "all";
 }
 
 /**

@@ -172,7 +172,7 @@ describe("Reversal of Fortune (#987)", () => {
     const target = reversed(ally());
     applyDamage(target, 50, "slashing", false, [], undefined);
     expect(target.statuses.drainChanges()).toEqual([
-      { kind: "ended", id: "reversal-of-fortune", sourceId: "monk", expired: false },
+      { kind: "ended", id: "reversal-of-fortune", sourceId: "monk", expired: false, death: false },
     ]);
   });
 

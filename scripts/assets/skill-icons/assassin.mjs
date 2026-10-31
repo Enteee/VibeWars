@@ -60,6 +60,8 @@ export const ASSASSIN_ICONS = {
   "assassin.signet-of-shadows": { glyph: "signet-shadow" },
   // Touch skills (#1643, #1666).
   "assassin.lift-enchantment": { glyph: "hand-ring-rend" },
+  // Stand-in for the death trigger of #1762, until its art.
+  "assassin.assassins-promise": { glyph: "dagger", modifier: "corpse" },
   // Assassin staples 5 (#1775).
   "assassin.desperate-strike": { glyph: "dagger-low" },
   "assassin.repeating-strike": { glyph: "dagger-repeat" },

@@ -51,6 +51,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-fatal-damage-negated"
   | "bearer-creates-creature"
   | "bearer-chant-or-shout-ends"
+  | "bearer-dies"
   | "ends"
   | "ends-early"
   | "expires"
@@ -186,7 +187,18 @@ export function fireChangeTriggers(
         );
     case "ended": {
       const { category } = getStatusDefinition(change.id);
-      const own = fireEndTriggers(bearer, change, context);
+      // A death fires `bearer-dies` here only (#1762): a death inside a
+      // trigger's own effects is drained, not settled, so it never chains.
+      const own = [
+        ...fireEndTriggers(bearer, change, context),
+        ...(change.death
+          ? getStatusDefinition(change.id)
+              .triggers.filter((trigger) => trigger.on === "bearer-dies")
+              .flatMap((trigger) =>
+                fire(trigger, change.id, change.sourceId, bearer, undefined, undefined, context),
+              )
+          : []),
+      ];
       if ((category !== "chant" && category !== "shout") || bearer.dead) {
         return own;
       }

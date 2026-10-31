@@ -82,4 +82,8 @@ export const NECROMANCER_ICONS = {
   // "N for each X" (#1760), stand-ins until their art card.
   "necromancer.desecrate-enchantments": { glyph: "ring-rend", modifier: "area" },
   "necromancer.defile-enchantments": { glyph: "ring-rend-burst", modifier: "area" },
+  // Stand-ins for the death triggers of #1762, until their art.
+  "necromancer.reapers-mark": { glyph: "energy", modifier: "corpse" },
+  "necromancer.putrid-bile": { glyph: "germ", modifier: "corpse" },
+  "necromancer.icy-veins": { glyph: "snowflake", modifier: "corpse" },
 };
