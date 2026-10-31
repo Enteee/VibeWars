@@ -1,10 +1,11 @@
-import { ANNIHILATION_MATCH_RULES } from "@vibewars/game-core";
+import { ANNIHILATION_MATCH_RULES, STARTER_BUILDS, type PlayerBuild } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parseWireLobbyNote,
   parseWireLobbyState,
   parseWirePartyProposal,
   type Channel,
+  type JsonValue,
   type PeerLobbyJoin,
   type WireLobbyNote,
   type WireLobbyState,
@@ -81,6 +82,7 @@ const GROUP: FormedGroup = {
   ],
   parties: [],
   mapId: "other-arena",
+  mode: "random-arena-2v2",
 };
 
 /** The same seats, as a party of HOST and ALLY against two solos (#882). */
@@ -623,6 +625,211 @@ describe("a queued lobby with parties (#882)", () => {
     await queued.join(FOE_2);
     await queued.step(TIMEOUT_SECONDS);
     expect(queued.fellThrough).toEqual([[HOST]]);
+  });
+});
+
+describe("a queued team mode's seat plans (ADR-0042)", () => {
+  /** Team Arena: HOST and ALLY, and two bots, against FOE and three bots. */
+  const ARENA_GROUP: FormedGroup = {
+    ...GROUP,
+    teams: [[HOST, ALLY], [FOE]],
+    parties: [[FOE], [HOST, ALLY]],
+    mode: "team-arena",
+  };
+
+  function starter(index: number): PlayerBuild {
+    const build = STARTER_BUILDS[index % STARTER_BUILDS.length];
+    if (build === undefined) {
+      throw new Error("no starter builds");
+    }
+    return build;
+  }
+
+  /** `seats`, one `team-plan` a seat, from `transport` to the host. */
+  function sendPlan(
+    transport: Transport,
+    seats: readonly { readonly memberKey: string | null; readonly build: JsonValue }[],
+    size = seats.length,
+  ): void {
+    seats.forEach(({ memberKey, build }, slot) => {
+      transport.send("lobby-cmd", { kind: "team-plan", slot, size, memberKey, build }, "host");
+    });
+  }
+
+  /** Starter build `index`, renamed `"plan <index>"`, so it is told from the house team's. */
+  const planned = (index: number): JsonValue =>
+    JSON.parse(JSON.stringify({ ...starter(index), name: `plan ${String(index)}` })) as JsonValue;
+
+  /** A whole Team Arena side for FOE: FOE on starter 5, bots on 6, 7 and 8. */
+  const FOE_SEAT = { memberKey: FOE, build: planned(5) };
+  const FOE_BOTS = [6, 7, 8].map((index) => ({ memberKey: null, build: planned(index) }));
+  const FOE_PLAN = [FOE_SEAT, ...FOE_BOTS];
+
+  /** Open ARENA_GROUP, seat everyone, let `plan` act, and run the countdown out. */
+  async function play(
+    plan: (queued: QueuedLobby, foe: Transport, ally: Transport) => void,
+  ): Promise<{ readonly queued: QueuedLobby; readonly seats: MatchPlan["seats"] }> {
+    const queued = await openQueued({ group: ARENA_GROUP, match: fakeMatch() });
+    const ally = queued.network.join();
+    await queued.join(ALLY, ally);
+    const foe = queued.network.join();
+    await queued.join(FOE, foe);
+    await settle();
+    plan(queued, foe, ally);
+    await settle();
+    await queued.step(COUNTDOWN_SECONDS);
+    const [started] = queued.plans;
+    if (started === undefined) {
+      throw new Error("the match never started");
+    }
+    return { queued, seats: started.seats };
+  }
+
+  /** Each seat on `team`: a bot, or a human by name, and its build's primary. */
+  function sideOf(seats: MatchPlan["seats"], team: 0 | 1): string[] {
+    return [...seats.values()]
+      .filter((seat) => seat.team === team)
+      .map((seat) => `${seat.bot ? "bot" : seat.name}:${seat.build?.name ?? "own"}`)
+      .sort();
+  }
+
+  /** Seats as `sideOf` says them: who, and a plan's build or a house one. */
+  function side(builds: readonly (readonly [string, number, "plan" | "house"])[]): string[] {
+    return builds
+      .map(
+        ([who, index, from]) =>
+          `${who}:${from === "plan" ? `plan ${String(index)}` : starter(index).name}`,
+      )
+      .sort();
+  }
+
+  it("seats a side by its plan, bots and builds, the host's own side by its own", async () => {
+    const { seats } = await play((queued, foe) => {
+      sendPlan(foe, FOE_PLAN);
+      sendPlan(queued.lobby.local, [
+        { memberKey: null, build: planned(1) },
+        { memberKey: ALLY, build: planned(2) },
+        { memberKey: HOST, build: planned(3) },
+        { memberKey: null, build: planned(4) },
+      ]);
+    });
+    expect(seats.size).toBe(8);
+    expect(sideOf(seats, 1)).toEqual(
+      side([
+        ["ticket-3", 5, "plan"],
+        ["bot", 6, "plan"],
+        ["bot", 7, "plan"],
+        ["bot", 8, "plan"],
+      ]),
+    );
+    expect(sideOf(seats, 0)).toEqual(
+      side([
+        ["bot", 1, "plan"],
+        ["ticket-2", 2, "plan"],
+        ["ticket-1", 3, "plan"],
+        ["bot", 4, "plan"],
+      ]),
+    );
+  });
+
+  it("gives a side with no plan the house team, its humans first", async () => {
+    const { seats } = await play((_, foe) => sendPlan(foe, FOE_PLAN));
+    expect(sideOf(seats, 0)).toEqual(
+      side([
+        ["ticket-1", 0, "house"],
+        ["ticket-2", 1, "house"],
+        ["bot", 2, "house"],
+        ["bot", 3, "house"],
+      ]),
+    );
+  });
+
+  const HOUSE_FOE = side([
+    ["ticket-3", 0, "house"],
+    ["bot", 1, "house"],
+    ["bot", 2, "house"],
+    ["bot", 3, "house"],
+  ]);
+
+  it.each<[string, (queued: QueuedLobby, foe: Transport) => void]>([
+    [
+      "names a key not on its ticket",
+      (_, foe) => sendPlan(foe, [{ ...FOE_SEAT, memberKey: ALLY }, ...FOE_BOTS]),
+    ],
+    [
+      "leaves its human out",
+      (_, foe) => sendPlan(foe, [{ memberKey: null, build: planned(5) }, ...FOE_BOTS]),
+    ],
+    ["is a seat short", (_, foe) => sendPlan(foe, FOE_PLAN.slice(0, 3))],
+    [
+      "is of another length",
+      (_, foe) => sendPlan(foe, [...FOE_PLAN, { memberKey: null, build: planned(1) }]),
+    ],
+    [
+      "plays a skill nobody knows",
+      (_, foe) =>
+        sendPlan(foe, [
+          {
+            ...FOE_SEAT,
+            build: {
+              ...(planned(5) as Record<string, JsonValue>),
+              skillBar: ["warrior.no-such-skill", ...starter(5).skillBar.slice(1)],
+            },
+          },
+          ...FOE_BOTS,
+        ]),
+    ],
+    [
+      "sends something that is no build",
+      (_, foe) => sendPlan(foe, [{ ...FOE_SEAT, build: "a build" }, ...FOE_BOTS]),
+    ],
+  ])("gives the house team to a side whose plan %s", async (_, plan) => {
+    const { seats } = await play(plan);
+    expect(sideOf(seats, 1)).toEqual(HOUSE_FOE);
+  });
+
+  it("ignores a plan from a member that is not its side's ticket host", async () => {
+    const { seats } = await play((_, __, ally) =>
+      sendPlan(ally, [
+        { memberKey: HOST, build: planned(5) },
+        { memberKey: ALLY, build: planned(6) },
+        { memberKey: null, build: planned(7) },
+        { memberKey: null, build: planned(8) },
+      ]),
+    );
+    expect(sideOf(seats, 0)).toEqual(
+      side([
+        ["ticket-1", 0, "house"],
+        ["ticket-2", 1, "house"],
+        ["bot", 2, "house"],
+        ["bot", 3, "house"],
+      ]),
+    );
+  });
+
+  it("ignores each human's own hello build: every seat plays the plan's", async () => {
+    const { seats } = await play((_, foe) => sendPlan(foe, FOE_PLAN));
+    expect([...seats.values()].every((seat) => seat.build !== null)).toBe(true);
+  });
+
+  it("takes no plan in a Random Arena lobby", async () => {
+    const queued = await openQueued({ match: fakeMatch() });
+    await queued.join(ALLY);
+    const foe = queued.network.join();
+    await queued.join(FOE, foe);
+    await queued.join(FOE_2);
+    sendPlan(foe, [
+      { memberKey: FOE, build: planned(5) },
+      { memberKey: FOE_2, build: planned(6) },
+    ]);
+    await settle();
+    await queued.step(COUNTDOWN_SECONDS);
+    expect([...(queued.plans[0]?.seats.values() ?? [])].map((seat) => seat.build)).toEqual([
+      null,
+      null,
+      null,
+      null,
+    ]);
   });
 });
 
