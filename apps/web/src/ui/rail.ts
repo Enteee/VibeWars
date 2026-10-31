@@ -133,6 +133,40 @@ export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void
 }
 
 /**
+ * Whether a lobby change draws the rail screen for `entry` again, last
+ * drawn for `drawnEntry` (#1790): a mode's screen shows the party, and
+ * a guest's mode follows its host's (#1526). A builder shows the party
+ * only in its rail's locks, so it keeps its screen, and what is pasted
+ * into it.
+ */
+export function redrawsOnLobbyChange(entry: RailEntry, drawnEntry: RailEntry): boolean {
+  return isModeEntry(entry) || entry !== drawnEntry;
+}
+
+/**
+ * The rail of the screen in `root` drawn again for `active`, under a
+ * party that changed (#1790): its locks are the party's. The entry that
+ * had the focus keeps it.
+ */
+export function redrawModeRail(
+  root: HTMLElement,
+  active: RailEntry,
+  onSwitch: (entry: RailEntry) => void,
+): void {
+  const old = root.querySelector(".mode-rail");
+  if (old === null) {
+    return;
+  }
+  const focused = document.activeElement;
+  const focusedEntry =
+    focused !== null && old.contains(focused) ? focused.getAttribute("data-entry") : null;
+  const rail = modeRail(active, onSwitch);
+  old.replaceWith(rail);
+  if (focusedEntry !== null) {
+    rail.querySelector<HTMLElement>(`[data-entry="${focusedEntry}"]`)?.focus();
+  }
+}
+/**
  * A rail screen (#1525): the rail on the left, and `body` beside it, the
  * screen's own, under its heading and one line saying what it is for. A
  * mode's has the party strip on top (#1526).

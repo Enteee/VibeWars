@@ -109,7 +109,15 @@ import { dismissToast, toast } from "./ui/kit.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/party-strip.js";
-import { isModeEntry, loadRail, railParty, setRailParty, type RailEntry } from "./ui/rail.js";
+import {
+  isModeEntry,
+  loadRail,
+  railParty,
+  redrawModeRail,
+  redrawsOnLobbyChange,
+  setRailParty,
+  type RailEntry,
+} from "./ui/rail.js";
 import {
   isHostEntry,
   renderHostScreen,
@@ -334,8 +342,10 @@ async function main(): Promise<void> {
   let followsLobby = false;
   /** Whether the Team Lobby screen is up (#1460). */
   let teamLobbyShown = false;
-  /** The party the rail was last drawn for: a builder redraws only when its locks change. */
+  /** The party the rail was last drawn for: a builder's rail redraws only when its locks change. */
   let drawnParty = "";
+  /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
+  let drawnEntry: RailEntry = "random-arena";
   let match: MatchView | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
@@ -639,6 +649,7 @@ async function main(): Promise<void> {
     const party = railParty();
     drawnParty = party === undefined ? "" : `${party.mode}:${String(party.isHost)}`;
     const entry = railEntry();
+    drawnEntry = entry;
     if (entry !== "random-arena" && entry !== "characters") {
       void showTeamScreen(entry, turn);
       return;
@@ -1419,8 +1430,15 @@ async function main(): Promise<void> {
       return;
     }
     const party = `${snapshot.mode}:${String(snapshot.isHost)}`;
-    if (followsLobby && (isModeEntry(railEntry()) || party !== drawnParty)) {
+    if (!followsLobby) {
+      return;
+    }
+    // A builder keeps its screen, and a team code pasted into it (#1790).
+    if (redrawsOnLobbyChange(railEntry(), drawnEntry)) {
       drawRail(screenTurns.take());
+    } else if (party !== drawnParty) {
+      drawnParty = party;
+      redrawModeRail(screenRoot, drawnEntry, switchTo);
     }
   };
 
