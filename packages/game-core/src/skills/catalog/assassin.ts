@@ -2639,7 +2639,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "You gain 10...45 Health for each condition on target foe" (#1760).
+    // "You gain 10...34...40 Health for each condition on target foe" (#1760):
+    // the wiki's current range; the corpus' 10...45 is pre-update.
     effects: [
       {
         kind: "heal",
@@ -2647,7 +2648,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         amount: { flat: 0 },
         per: {
           count: { kind: "statuses", on: "target", categories: ["condition"] },
-          amount: { scaling: { attributeId: "assassin.deadly-arts", atZero: 10, atTwelve: 38 } },
+          amount: { scaling: { attributeId: "assassin.deadly-arts", atZero: 10, atTwelve: 34 } },
           max: undefined,
         },
       },

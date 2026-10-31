@@ -247,13 +247,13 @@ describe('"Victory Is Mine!" (#1760)', () => {
 });
 
 describe("Sadist's Signet (#1760)", () => {
-  it("gains 38 Health for each condition on the foe", () => {
+  it("gains 34 Health for each condition on the foe", () => {
     const assassin = caster({ health: 100 });
     expect(use(assassin, "assassin.sadists-signet", [foe("f", CONDITIONS.slice(0, 2))])).toEqual([
-      { kind: "heal", targetId: "caster", amount: 2 * 38 },
+      { kind: "heal", targetId: "caster", amount: 2 * 34 },
     ]);
     expect(lines("assassin.sadists-signet")).toEqual([
-      "You gain 38 Health for each condition on target foe",
+      "You gain 34 Health for each condition on target foe",
     ]);
     expect(getSkill("assassin.sadists-signet")).toMatchObject({
       gwId: 1991,

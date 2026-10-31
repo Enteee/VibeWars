@@ -233,12 +233,13 @@ export const DERVISH_STATUS_ICONS = {
       `<path d="M3 19h18" ${stroke(c, 2)}/>`,
   ],
   // "N for each X" (#1760), stand-ins until their art card.
-  // Enchantment: a bolt over stacked rings, energy for each enchantment.
+  // Enchantment: a small bolt inside an enchantment ring, energy for each
+  // enchantment; Channeling is the bolt among foe dots.
   "arcane-zeal": [
     "enchantment",
     (c) =>
-      `<path d="M13 3l-4 6h4l-2 6" ${stroke(c, 2)}/>` +
-      `<path d="M5 18h14M7 21h10" ${stroke(c, 2)}/>`,
+      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 7l-3 5h3l-1.5 5" ${stroke(c, 2)}/>`,
   ],
   // Enchantment: a cross over stacked rings, health for each enchantment.
   "mystic-vigor": [
