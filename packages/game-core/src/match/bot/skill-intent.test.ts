@@ -14,6 +14,11 @@ const NO_BOT_USE = new Set([
   // Dwayna's Sorrow (#1762): a heal that waits on an ally's death is
   // nothing the bot plans for.
   "monk.dwaynas-sorrow",
+  // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
+  // there and back is nothing the bot plans for yet.
+  "assassin.aura-of-displacement",
+  "assassin.shadow-meld",
+  "assassin.shadow-of-haste",
   // Live Vicariously (#1748): Health to the caster when its ally hits is
   // no heal the bot weighs.
   "monk.live-vicariously",

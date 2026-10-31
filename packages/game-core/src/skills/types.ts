@@ -374,11 +374,14 @@ export interface ApplyStatusEffect {
 
 /**
  * Maintain an enchantment on the target (#837): it lasts until something
- * ends it, and costs its caster an energy pip while it does.
+ * ends it, and costs its caster an energy pip while it does. `on` is who
+ * wears it: the target, or the caster whatever it targeted (#1826), as
+ * Aura of Displacement's caster does while it Shadow Steps to a foe.
  */
 export interface MaintainStatusEffect {
   readonly kind: "maintain-status";
   readonly statusId: StatusId;
+  readonly on: "target" | "caster";
 }
 
 /** Remove up to `count` statuses of a category from the target. */
@@ -563,12 +566,15 @@ export interface CasterGainsStatusEffect {
  * caster's side instead, the caster included (#1316): Spirit's Gift's "all
  * allies near that creature". `party` reaches the caster's side's players,
  * never a creature (#1434): Protective Was Kaolai's "all party members",
- * at a radius of `Infinity`, as `PartyArea` reaches them.
+ * at a radius of `Infinity`, as `PartyArea` reaches them. `around`:
+ * `"caster"` centres it on the caster instead, whatever it targeted
+ * (#1826): Return's "all adjacent foes", cast on an ally.
  */
 export interface SplashEffect {
   readonly kind: "splash";
   readonly hits: "foes" | "foe-creatures" | "allies" | "party";
   readonly radius: number;
+  readonly around?: "caster";
   /**
    * At most this many, the nearest to the centre first, a tie by id
    * (#1316): Explosive Growth's "up to 5 foes". `undefined`: all of them.

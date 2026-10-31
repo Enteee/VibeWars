@@ -2047,7 +2047,13 @@ export class MatchSimulation {
     if (dropped === undefined) {
       return;
     }
-    const change: StatusChange = { kind: "ended", ...dropped, expired: false, death: false };
+    const change: StatusChange = {
+      kind: "ended",
+      ...dropped,
+      expired: false,
+      death: false,
+      returnPoint: null,
+    };
     this.#loseRaisedMaxima(record, change);
     this.#logFired(
       fireChangeTriggers(record.combatant, change, this.#spread, this.#triggerContext()),
@@ -3845,6 +3851,7 @@ export class MatchSimulation {
         }
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
+        this.#returnSource(change);
       }
     }
     const context = this.#triggerContext();
@@ -3886,6 +3893,7 @@ export class MatchSimulation {
         }
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
+        this.#returnSource(change);
         if (ownEnds && change.kind === "ended") {
           this.#logFired(fireEndTriggers(record.combatant, change, context));
           this.#logFired(fireDeathTriggers(record.combatant, change, context));
@@ -5714,24 +5722,65 @@ export class MatchSimulation {
           ? normalize(sub(record.position, target.position))
           : vec2(-Math.cos(target.facing), -Math.sin(target.facing));
       const beside = add(target.position, scale(away, 2 * radius));
-      let position = hasLineOfSight(target.position, beside, this.#walls)
-        ? beside
-        : target.position;
-      for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-        const relaxed = this.#pushOut(record, position, radius, NOBODY);
-        const settled = relaxed.x === position.x && relaxed.y === position.y;
-        position = relaxed;
-        if (settled) {
-          break;
-        }
-      }
-      record.position = position;
+      this.#placeAt(
+        record,
+        hasLineOfSight(target.position, beside, this.#walls) ? beside : target.position,
+      );
       faceToward(record, target.position);
-      record.walkGoal = undefined;
-      record.route = undefined;
-      record.history.clear();
-      this.#stepStart.set(record.id, position);
     }
+  }
+
+  /**
+   * Put `record` at `point`, as a step does: the push-outs settle it off
+   * any body or wall, and its track starts over. Its facing is the
+   * caller's.
+   */
+  #placeAt(record: ParticipantRecord, point: Vec2): void {
+    const radius = this.#ruleset.collision.playerRadius;
+    let position = point;
+    for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
+      const relaxed = this.#pushOut(record, position, radius, NOBODY);
+      const settled = relaxed.x === position.x && relaxed.y === position.y;
+      position = relaxed;
+      if (settled) {
+        break;
+      }
+    }
+    record.position = position;
+    record.walkGoal = undefined;
+    record.route = undefined;
+    record.history.clear();
+    this.#stepStart.set(record.id, position);
+  }
+
+  /**
+   * A returning status ended (#1826): its source, alive, Shadow Steps back
+   * to where it put it up, ashes dropped first, facing kept, and the step
+   * logged as that status's skill.
+   */
+  #returnSource(change: StatusChange): void {
+    if (change.kind !== "ended" || change.returnPoint === null) {
+      return;
+    }
+    const source = this.#participants.get(change.sourceId);
+    const returns = STATUS_DEFINITIONS[change.id].returnsSource;
+    if (source === undefined || source.combatant.dead || returns === undefined) {
+      return;
+    }
+    this.#dropAshes(source);
+    this.#placeAt(source, change.returnPoint);
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: source.id,
+      skillId: returns.skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events: [{ kind: "shadow-stepped-back", targetId: source.id }],
+    });
   }
 
   /**
@@ -5757,26 +5806,13 @@ export class MatchSimulation {
     const away = normalize(sub(from, selection.position));
     const goal = add(from, scale(away, SHADOW_STEP_AWAY_DISTANCE));
     const impact = firstHit(from, goal, this.#walls);
-    let position =
+    const position =
       impact === undefined
         ? goal
         : distance(from, impact) <= 1
           ? from
           : add(impact, scale(normalize(sub(from, impact)), 1));
-    const radius = this.#ruleset.collision.playerRadius;
-    for (let pass = 0; pass < MOVEMENT_RELAX_PASSES; pass += 1) {
-      const relaxed = this.#pushOut(record, position, radius, NOBODY);
-      const settled = relaxed.x === position.x && relaxed.y === position.y;
-      position = relaxed;
-      if (settled) {
-        break;
-      }
-    }
-    record.position = position;
-    record.walkGoal = undefined;
-    record.route = undefined;
-    record.history.clear();
-    this.#stepStart.set(record.id, position);
+    this.#placeAt(record, position);
   }
 
   /**

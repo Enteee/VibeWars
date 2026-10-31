@@ -3,6 +3,7 @@
 exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
 {
   "assassin.assassins-promise": "hex",
+  "assassin.aura-of-displacement": "",
   "assassin.beguiling-haze": "interrupt condition",
   "assassin.black-lotus-strike": "",
   "assassin.black-mantis-thrust": "condition",
@@ -47,7 +48,11 @@ exports[`skillRoles > tags every assassin skill the same way every time 1`] = `
   "assassin.nine-tail-strike": "",
   "assassin.palm-strike": "condition",
   "assassin.repeating-strike": "",
+  "assassin.return": "condition",
   "assassin.sadists-signet": "healing",
+  "assassin.shadow-fang": "hex",
+  "assassin.shadow-meld": "",
+  "assassin.shadow-of-haste": "",
   "assassin.shadow-prison": "hex",
   "assassin.shadow-refuge": "healing",
   "assassin.shattering-assault": "",

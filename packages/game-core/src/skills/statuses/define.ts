@@ -24,6 +24,7 @@ export function define(
     armorReduction: undefined,
     moveSpeedMultiplier: 1,
     preventsSpeedBoosts: false,
+    returnsSource: undefined,
     attackMissChance: 0,
     maxHealthLoss: undefined,
     maxHealthBonus: 0,

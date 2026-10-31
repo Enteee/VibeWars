@@ -68,6 +68,12 @@ export const ASSASSIN_ICONS = {
   "assassin.impale": { glyph: "dagger-spikes" },
   "assassin.siphon-speed": { glyph: "chevrons-siphon", modifier: "up" },
   "assassin.way-of-the-fox": { glyph: "fox-head", modifier: "clock" },
+  // Stand-ins for Shadow Step and return (#1826), until their art.
+  "assassin.shadow-fang": { glyph: "blink-fang", modifier: "bleed" },
+  "assassin.aura-of-displacement": { glyph: "blink", modifier: "upkeep" },
+  "assassin.shadow-meld": { glyph: "blink", modifier: "renew" },
+  "assassin.shadow-of-haste": { glyph: "blink", modifier: "up" },
+  "assassin.return": { glyph: "blink", modifier: "area" },
   // "N for each X" (#1760), stand-ins until their art card.
   "assassin.sadists-signet": { glyph: "signet-plus", modifier: "bleed" },
 };
