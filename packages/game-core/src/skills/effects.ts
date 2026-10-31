@@ -737,6 +737,8 @@ function interruptCast(
   if (skill !== undefined) {
     beginRecharge(target.cast, skill, skill.rechargeSeconds, cancelled.key);
   }
+  // A skill queued behind the cast goes with it, as in GW1 (#1722).
+  target.cast.clearQueue();
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
   target.statuses.recordInterrupt(byId);
   return true;

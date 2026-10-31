@@ -306,6 +306,11 @@ export interface MatchConnection {
   /** This player's recharges right now, one entry per skill-bar slot (#152). */
   getRecharges(): readonly SlotRecharge[];
   /**
+   * The slot this player pressed during an activation or an aftercast,
+   * waiting to go next (#1722); `undefined` for none.
+   */
+  getQueuedSlot(): number | undefined;
+  /**
    * This player's adrenaline right now, one entry per skill-bar slot
    * (#463): the units its skill holds, 0 for one that costs none.
    */

@@ -570,6 +570,7 @@ export function createTrainingPanel(): TrainingPanel {
       paintSkills(slots);
     }
     const recharges = session?.connection.getRecharges() ?? [];
+    const queued = session?.connection.getQueuedSlot();
     const adrenaline = session?.connection.getAdrenaline() ?? [];
     const adrenalineLossIn = session?.connection.getAdrenalineLossIn() ?? null;
     const reducedMotion = prefersReducedMotion();
@@ -596,6 +597,8 @@ export function createTrainingPanel(): TrainingPanel {
       // The casting slot is lit and fills, as on the match HUD (#300, #485).
       button.classList.toggle("is-casting", index === fill?.slot);
       paintCastFill(button, index === fill?.slot ? fill.fraction : undefined);
+      // Queued to go next, as on the match HUD (#1722).
+      button.classList.toggle("is-queued", index === queued);
       button.classList.toggle("is-out-of-range", far[index] === true);
       // A hint, not a gate: the simulation still decides.
       button.classList.toggle(

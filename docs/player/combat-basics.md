@@ -29,6 +29,10 @@ you walk to it first. Moving, or Esc, cancels a cast: the Energy is gone,
 but the skill does not recharge. After any skill with a cast time, except
 an attack skill, there is a short pause in which you cannot act.
 
+A skill you press while using another, or in that pause, is **queued**:
+it goes next, and its slot pulses until it does. Only one waits; pressing
+another replaces it. Moving, Esc, an interrupt or a knockdown drops it.
+
 ## Interrupts and knockdown
 
 An **interrupt** stops a foe's skill while they are casting it. Their

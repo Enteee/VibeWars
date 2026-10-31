@@ -243,8 +243,24 @@ describe("createLocalConnection", () => {
       reasons.push(message.reason);
     });
     connection.sendIntent({ kind: "use-skill", slot: 0 });
+    for (let i = 0; i < 60; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
     connection.sendIntent({ kind: "use-skill", slot: 0 });
-    expect(reasons).toEqual(["already-casting"]);
+    expect(reasons).toEqual(["still-recharging"]);
+  });
+
+  it("names the slot pressed during a cast as queued, until it goes (#1722)", () => {
+    const { connection } = targetDummy(setSkill(pyro(), 1, "elementalist.armor-of-earth"));
+    connection.sendIntent({ kind: "use-skill", slot: 0 });
+    connection.advance(TICK_SECONDS);
+    expect(connection.getQueuedSlot()).toBeUndefined();
+    connection.sendIntent({ kind: "use-skill", slot: 1 });
+    expect(connection.getQueuedSlot()).toBe(1);
+    for (let i = 0; i < 80; i += 1) {
+      connection.advance(TICK_SECONDS);
+    }
+    expect(connection.getQueuedSlot()).toBeUndefined();
   });
 
   it("moves on a move intent and stops on stop", () => {
