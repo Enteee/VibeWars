@@ -109,7 +109,7 @@ jobs:
           git show "origin/$BASE_REF:pnpm-lock.yaml" > "$RUNNER_TEMP/base-lock.yaml"
           devenv shell -- node scripts/ci/lockfile-age.mjs "$RUNNER_TEMP/base-lock.yaml" pnpm-lock.yaml
 
-  # The `e2e` check (EXPECTED_CHECKS, #132) is the aggregate below; the work
+  # is spread over six shards (#1610, #1797), split by test, so a pull request waits one sixth of
   # is spread over four shards (#1610) so a pull request waits one quarter of
   # the suite. Each shard builds for itself: the build is a small part of the
   # run, and sharing it would add an artifact round trip and a `needs:`.
@@ -132,7 +132,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -174,7 +174,7 @@ jobs:
       - name: End-to-end tests
         if: steps.needed.outputs.needed != 'false'
         timeout-minutes: 45
-        run: devenv shell -- pnpm run test:e2e --shard=${{ matrix.shard }}/4
+        run: devenv shell -- pnpm run test:e2e --shard=${{ matrix.shard }}/6
 
       - name: Upload Playwright output
         if: failure()
