@@ -2518,6 +2518,61 @@ const skillGlyph = {
     inkFill("M10.2 3.5H13.8V7H10.2Z") +
     inkFill("M5 7.5H8.4V10.8H5Z") +
     inkFill("M15.6 7.5H19V10.8H15.6Z"),
+  // Elementalist staples 3 (#1710).
+  // A bolt with a minus in a ring: lightning that drains Energy.
+  "bolt-drain": () =>
+    inkLine("M12 2.5L5.5 12.5H12L6.5 21.5", 2.6) +
+    `<circle cx="18" cy="16" r="4.2" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M15.8 16H20.2", 2),
+  // A hammer with a bolt across its head: a crushing bolt.
+  "hammer-bolt": () =>
+    inkLine("M12 10V22", 2.8) +
+    inkFill("M3 3H21V10H3Z") +
+    `<path d="M13 3.5L8.5 7H13L9.5 9.5" ${stroke(C.bg, 1.6)}/>`,
+  // A thrown spear whose shaft is a zigzag bolt.
+  "javelin-bolt": () =>
+    inkFill("M21.5 2.5L22 10L14.5 6.5Z") + inkLine("M18 6L12 10L15 12L8 16L10.5 17.5L3.5 21", 2.4),
+  // A bolt that arcs on to a second dot: lightning that jumps.
+  "bolt-arc": () =>
+    inkLine("M5 2.5L2.5 9.5H8L5.5 15.5", 2.2) +
+    inkLine("M8 8L14 7L12 13L19 11", 2) +
+    `<circle cx="20" cy="17" r="2.6" fill="${C.ink}"/>` +
+    inkLine("M19 11L20 14", 2),
+  // A cloud with a bolt falling out of it.
+  "cloud-bolt": () =>
+    `<path d="M6.5 14.5a4 4 0 0 1 .5-7.9 5 5 0 0 1 9.6-.6 3.8 3.8 0 0 1 .9 8.5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M13 13L9.5 17.5H14L10.5 22", 2.2),
+  // Gale lines streaming under forward chevrons: speed.
+  "gust-fast": () =>
+    inkLine("M2.5 8H12A2.8 2.8 0 1 0 9.2 5.2", 2.2) +
+    inkLine("M2.5 14.5H14", 2.2) +
+    inkLine("M2.5 20H10", 2.2) +
+    inkLine("M15 6.5L19 12L15 17.5M19 6.5L23 12L19 17.5", 1.8),
+  // A faceted crystal with rays: a stone that glows.
+  "crystal-glow": () =>
+    inkFill("M12 7L18 13L12 22L6 13Z") +
+    `<path d="M6 13H18M12 7L9.5 13L12 22L14.5 13Z" ${stroke(C.bg, 1)}/>` +
+    inkLine("M12 1.5V4M4.5 4.5L6.5 6.5M19.5 4.5L17.5 6.5M2 11H4M22 11H20", 1.8),
+  // A three-toed print over a crack: the dragon's stomp.
+  "claw-crack": () =>
+    `<ellipse cx="6" cy="6.5" rx="2" ry="3" fill="${C.ink}"/><ellipse cx="12" cy="5" rx="2" ry="3.2" fill="${C.ink}"/><ellipse cx="18" cy="6.5" rx="2" ry="3" fill="${C.ink}"/>` +
+    inkLine("M2 15H8L10 21M22 15H16L14 21", 2.4) +
+    inkLine("M12 10V15", 2.4),
+  // A volcano with fire thrown from its top.
+  volcano: () =>
+    inkFill("M2 21L8.5 10H15.5L22 21Z") +
+    inkLine("M12 7V2M8 8L5.5 4M16 8L18.5 4", 2.2) +
+    `<circle cx="3.5" cy="8" r="1.2" fill="${C.ink}"/><circle cx="20.5" cy="8" r="1.2" fill="${C.ink}"/>`,
+  // An ash cloud with a slash through it and flakes falling: it blinds.
+  "ash-cloud": () =>
+    `<path d="M6.5 12.5a4 4 0 0 1 .5-7.9 5 5 0 0 1 9.6-.6 3.8 3.8 0 0 1 .9 8.5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M4 20L20 4", 2.2) +
+    `<circle cx="8" cy="19" r="1.2" fill="${C.ink}"/><circle cx="13" cy="21" r="1.2" fill="${C.ink}"/><circle cx="18" cy="19" r="1.2" fill="${C.ink}"/>`,
+  // Rings spreading from the caster with ticks leaping off them.
+  "ring-shock": () =>
+    `<ellipse cx="12" cy="15" rx="4" ry="1.8" fill="${C.ink}"/>` +
+    `<ellipse cx="12" cy="15" rx="9" ry="4.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 2.5V8M4 6L6.5 9.5M20 6L17.5 9.5", 2.2),
   // Unsteady Ground: a pulsing ring with a crack through the earth above it (#1605).
   "ground-pulse": () =>
     `<ellipse cx="12" cy="17" rx="9.5" ry="4" ${stroke(C.ink, 2.2)}/>` +
