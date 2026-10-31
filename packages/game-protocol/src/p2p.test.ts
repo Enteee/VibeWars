@@ -51,6 +51,7 @@ import {
   parsePeerLobbyJoin,
   parseWireLobbyCommand,
   parseWireLobbyNote,
+  parseWireTeamProposalBuilds,
   parsePeerLobbyHello,
   parsePeerLobbyLeave,
   parseWireLobbyWelcome,
@@ -563,6 +564,13 @@ const calls = { target: { targetId: "peer-2", callerId: "peer-1" }, pings: [ping
 
 const chatLine = { channel: "all", fromId: "peer-2", name: "Ann", team: 0, text: "gg" };
 
+/** A proposed member's build (#1811): ids only. */
+const proposalBuild = {
+  skills: ["warrior.backbreaker", null, null, null, null, null, null, "warrior.frenzy"],
+  mainHand: "sword",
+  offHand: null,
+};
+
 const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["hello", parsePeerHello, hello],
   ["rejoining hello", parsePeerHello, { ...hello, rejoin: { playerId: "peer-2" } }],
@@ -914,12 +922,33 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireMatchStart,
     { mapId: "isle", matchId: "match-2", teamPlanRejected: false },
   ],
+  [
+    "a proposal's builds, a whole side (#1811)",
+    parseWireTeamProposalBuilds,
+    { proposerId: "peer-1", builds: Array.from({ length: 8 }, () => proposalBuild) },
+  ],
 ];
 
 const long = "x".repeat(MAX_WIRE_STRING + 1);
 
 /** One malformed message per rule. */
 const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
+  [
+    "a proposal's builds past a side (#1811)",
+    parseWireTeamProposalBuilds,
+    { proposerId: "peer-1", builds: Array.from({ length: 9 }, () => proposalBuild) },
+  ],
+  [
+    "a proposal's build of seven skills (#1811)",
+    parseWireTeamProposalBuilds,
+    { proposerId: "peer-1", builds: [{ ...proposalBuild, skills: proposalBuild.skills.slice(1) }] },
+  ],
+  [
+    "a proposal's build with a number for a weapon (#1811)",
+    parseWireTeamProposalBuilds,
+    { proposerId: "peer-1", builds: [{ ...proposalBuild, mainHand: 1 }] },
+  ],
+  ["a proposal's builds with no proposer (#1811)", parseWireTeamProposalBuilds, { builds: [] }],
   ["a call of an unknown kind (#443)", parsePeerCall, { kind: "focus", targetId: "peer-2" }],
   ["a call with no target (#443)", parsePeerCall, { kind: "target" }],
   ["a ping at NaN (#443)", parsePeerCall, { kind: "ping", x: Number.NaN, y: 0 }],

@@ -99,8 +99,10 @@ describe("lobby host against hostile peers", () => {
     const lobby = await openLobby();
     const guest = await lobby.join();
     const peer = await stranger(lobby);
+    // A state on the wire, so without what only a connection keeps (#1811).
+    const { proposalBuilds: _kept, ...state } = guest.connection.getSnapshot();
     const forged = {
-      ...structuredClone(guest.connection.getSnapshot()),
+      ...structuredClone(state),
       hostId: peer.selfId,
       phase: "in-match",
       players: [{ id: guest.transport.selfId, name: "Owned", team: 0, ready: true, isHost: true }],

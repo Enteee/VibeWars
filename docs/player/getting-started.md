@@ -98,8 +98,8 @@ map. Below the lobby are your **Team Builds**: click one, or its
 **Edit**, to change it, or make another with **New team build**. You
 pick none there. On **Hosted Game**, when the host starts, the lobby
 opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
-click a card to vote for one, then click a seat to take one of its
-characters.
+click a card, which shows each member's weapons and skills, to vote
+for one, then click a seat to take one of its characters.
 
 On **Team Arena** (4 a side), **Heroes' Ascent** and **GvG** (8 a side)
 your lobby is one side, your party, and there is no Start or bot count:
