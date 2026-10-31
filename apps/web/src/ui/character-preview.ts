@@ -225,6 +225,8 @@ export function memberRow(label: string, parts: readonly HTMLElement[]): HTMLEle
   row.title = label;
   row.setAttribute("role", "group");
   row.setAttribute("aria-label", label);
-  row.append(...parts);
+  for (const part of parts) {
+    row.appendChild(part);
+  }
   return row;
 }
