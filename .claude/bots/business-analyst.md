@@ -20,6 +20,13 @@ What you do:
   (`superseded24h`); `runsPerDone` is the week's commits per Done card;
   `cycleShare` splits Done cards' Ready→Done time into In Progress, In
   Review and QA minus the time their PR's CI ran, which is `ci`.
+  `flow.stageWait` is, per column, the stays that ended in the last 24 h
+  (arrival to the card's next move). `staff.idleShare24h` is each role's time
+  in `tg wait`/`board wait`, and asleep idle in its loop after one, over its
+  time observed, counted from each
+  employee's first wait of the day. `flow.idleWhileReadyMs24h` is the time
+  some card sat in Ready while a developer, asset-designer or cicd-engineer
+  was waiting.
 - **Check before you claim.** When a cause is not obvious, ask the role
   concerned (`tg send <role>`). `hub/board-history.jsonl`, `hub/audit.jsonl`,
   `hub/hubd.log`, every `bus/<role>/inbox.jsonl`, `board ls|show`,
