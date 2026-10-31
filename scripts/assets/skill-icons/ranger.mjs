@@ -68,4 +68,6 @@ export const RANGER_ICONS = {
   "ranger.tripwire": { glyph: "jaws", modifier: "half" },
   "ranger.smoke-trap": { glyph: "dust", modifier: "half" },
   "ranger.zojuns-haste": { glyph: "arrow-dodge", modifier: "up" },
+  // The not condition (#1670), a stand-in until its art card.
+  "ranger.sloth-hunters-shot": { glyph: "arrow", modifier: "hourglass" },
 };

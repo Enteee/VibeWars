@@ -1026,6 +1026,12 @@ export type StateCondition =
    */
   | { readonly kind: "any-of"; readonly conditions: readonly StateCondition[] }
   /**
+   * `condition` does not hold, read at the same moment it would be (#1670):
+   * Test of Faith's "if target foe is not enchanted". New negations use
+   * this rather than a kind of their own.
+   */
+  | { readonly kind: "not"; readonly condition: StateCondition }
+  /**
    * The effect's target is a summoned creature (#1528): a minion or a
    * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double
    * damage if target foe is a summoned creature".

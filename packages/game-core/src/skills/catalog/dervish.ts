@@ -2157,4 +2157,51 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // damage and this enchantment ends": 5 s and 42, the rank-12 values.
     effects: [{ kind: "apply-status", statusId: "whirling-charge", durationSeconds: 5 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* The not condition (#1670), at rank 12                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "dervish.test-of-faith",
+    name: "Test of Faith",
+    gwId: 1545,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "adrenaline", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.5,
+    rechargeSeconds: 5,
+    // A touch spell, as Vile Touch.
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Deals 15...63...75 cold damage and takes 1 enchantment from target
+    // foe. If that foe was not enchanted, that foe is Dazed for 2...5...6
+    // seconds." The `if` reads the foe as it stood before the spell, so
+    // the enchantment it takes does not count.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 15, atTwelve: 63 } },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "target-has", category: "enchantment" } },
+        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 5 }],
+      },
+      { kind: "remove-status", category: "enchantment", count: 1 },
+    ],
+  },
 ];
