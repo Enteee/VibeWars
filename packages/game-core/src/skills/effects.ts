@@ -91,7 +91,13 @@ export type CombatEvent =
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
   /** Energy the target actually lost (#793): never more than it had, never 0. */
   | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
+  /** Health the caster gave up for their own skill. */
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
+  /**
+   * Health a skill made its target lose (#1678): not damage and not a
+   * sacrifice, so nothing that answers either sees it.
+   */
+  | { readonly kind: "health-loss"; readonly targetId: string; readonly amount: number }
   /**
    * Health stolen from the target (#935): never more than it had, never 0.
    * Not damage: nothing that reacts to damage sees it. What the caster
@@ -912,11 +918,16 @@ function destroySpirit(candidate: TargetCandidate, caster: Combatant, events: Co
 }
 
 /**
- * `loser` loses `amount` health: the caster's sacrifice, or a target's
- * health loss (#1648). Not damage, so nothing mitigates it; only
+ * `loser` loses `amount` health: the caster's `sacrifice`, or a target's
+ * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
  * invulnerability and a Guild Lord's cap stop it, and it can kill.
  */
-function sacrifice(loser: Combatant, amount: number, events: CombatEvent[]): void {
+function loseHealth(
+  loser: Combatant,
+  amount: number,
+  kind: "sacrifice" | "health-loss",
+  events: CombatEvent[],
+): void {
   if (amount <= 0 || loser.dead || isInvulnerable(loser)) {
     return;
   }
@@ -926,7 +937,7 @@ function sacrifice(loser: Combatant, amount: number, events: CombatEvent[]): voi
     return;
   }
   loser.health -= applied;
-  events.push({ kind: "sacrifice", targetId: loser.id, amount: applied });
+  events.push({ kind, targetId: loser.id, amount: applied });
   if (loser.health <= 0) {
     loser.dead = true;
     events.push({ kind: "death", targetId: loser.id });
@@ -1131,7 +1142,12 @@ export function applyEffect(
     }
 
     case "sacrifice-health": {
-      sacrifice(caster, Math.round((caster.maxHealth * effect.percentOfMax) / 100), events);
+      loseHealth(
+        caster,
+        Math.round((caster.maxHealth * effect.percentOfMax) / 100),
+        "sacrifice",
+        events,
+      );
       return events;
     }
 
@@ -1140,14 +1156,14 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        sacrifice(target, resolveMagnitude(effect.amount, caster), events);
+        loseHealth(target, resolveMagnitude(effect.amount, caster), "health-loss", events);
         return events;
       }
       const removed =
         effect.perRemovedOfProfession === undefined
           ? 1
           : removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
-      sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
+      loseHealth(caster, resolveMagnitude(effect.amount, caster) * removed, "sacrifice", events);
       return events;
     }
 

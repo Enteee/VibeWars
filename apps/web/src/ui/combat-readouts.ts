@@ -53,6 +53,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "damage":
     case "health-lost":
     case "sacrifice":
+    case "health-loss":
     case "life-stolen":
       return "damage";
     case "heal":
@@ -195,6 +196,8 @@ export function describeCombatEvent(
       return `${STATUS_DEFINITIONS[event.statusId].name}${source === undefined ? "" : ` (${source})`} takes ${formatAmount(event.amount)} health from ${target}`;
     case "sacrifice":
       return `${target} sacrifices ${formatAmount(event.amount)} health`;
+    case "health-loss":
+      return `${target} loses ${formatAmount(event.amount)} Health to ${by}`;
     case "life-stolen":
       return `${by} steals ${formatAmount(event.amount)} health from ${target}`;
     case "death":
@@ -523,7 +526,8 @@ export const EMPTY_TOTALS: MeterTotals = {
 /**
  * Add one step's entries to the player's totals. Damage to yourself is
  * not damage dealt, as `tallyCombat` counts it; healing yourself is
- * healing done. Health a status takes as it lands is taken, never dealt.
+ * healing done. Health a status takes as it lands, or a foe's skill makes
+ * you lose (#1678), is taken, never dealt.
  */
 export function accumulate(
   totals: MeterTotals,
@@ -546,7 +550,9 @@ export function accumulate(
       } else if (event.kind === "heal" && entry.sourceId === selfId) {
         healing += event.amount;
       } else if (
-        (event.kind === "health-lost" || event.kind === "life-stolen") &&
+        (event.kind === "health-lost" ||
+          event.kind === "health-loss" ||
+          event.kind === "life-stolen") &&
         event.targetId === selfId
       ) {
         taken += event.amount;
@@ -613,6 +619,7 @@ export function floatingCueFor(
   switch (kind) {
     case "damage":
     case "health-lost":
+    case "health-loss":
     case "life-stolen":
       // The sign says damage or heal; the colour only backs it up, so a
       // player who cannot tell the two colours apart loses nothing.
