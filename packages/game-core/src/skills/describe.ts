@@ -1003,8 +1003,7 @@ function describeCreation(
       case "remove-status":
         return `lose ${String(effect.count)} ${effect.category}${effect.count === 1 ? "" : "s"}`;
       case "splash": {
-        const side =
-          effect.hits === "allies" ? "allies" : effect.hits === "party" ? "party members" : "foes";
+        const side = SPLASH_SIDE[effect.hits];
         const who =
           effect.maxTargets === undefined
             ? `all ${side}`
@@ -1515,6 +1514,15 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
   return `, +${String(amount)} Health for each ally ${area} (max ${String(perAlly.max)})`;
 }
 
+/** Who a splash reaches, in the plural (#885, #1777). */
+const SPLASH_SIDE: Readonly<Record<SplashEffect["hits"], string>> = {
+  foes: "foes",
+  "foe-creatures": "foe creatures",
+  allies: "allies",
+  party: "party members",
+  "own-spirits": "your spirits",
+};
+
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
 function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   // Protective Was Kaolai's reaches the whole party, at any distance (#1434).
@@ -1523,9 +1531,13 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   }
   const area = AREA_TEXT.get(radius);
   // Consume Soul's splash reaches only summoned creatures (#1309);
-  // Spirit's Gift's, allies (#1316).
-  const who = hits === "foes" ? "foes" : hits === "allies" ? "allies" : "foe creatures";
-  const Who = hits === "foes" ? "Foes" : hits === "allies" ? "Allies" : "Foe creatures";
+  // Spirit's Gift's, allies (#1316); Spirit Boon Strike's, your spirits (#1777).
+  const who = SPLASH_SIDE[hits];
+  const Who = `${who.charAt(0).toUpperCase()}${who.slice(1)}`;
+  // "Your spirits in earshot": round you, wherever the target stands.
+  if (hits === "own-spirits") {
+    return `${Who} ${area ?? `within ${String(radius)}`}`;
+  }
   switch (area) {
     case "adjacent":
       return `Adjacent ${who}`;
@@ -1998,6 +2010,8 @@ function describeEffect(
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
+    case "pull-to-caster":
+      return { text: "Teleports target to you", magnitude: undefined };
     case "destroy-target-spirit":
       return { text: "Destroys target allied spirit", magnitude: undefined };
     case "destroy-allied-spirits":
@@ -2107,10 +2121,14 @@ function describeEffect(
             : each.kind === "knockdown"
               ? `are knocked down for ${String(each.durationSeconds)}s`
               : each.kind === "apply-status"
-                ? suffered(each, ranks)
-                : each.kind === "lose-health" && each.recipient === "target"
-                  ? `lose ${String(describeMagnitude(each.amount, ranks).current)} Health`
-                  : lowerFirst(description.text),
+                ? effect.hits === "foes" || effect.hits === "foe-creatures"
+                  ? suffered(each, ranks)
+                  : `gain ${suffered(each, ranks).slice("suffer ".length)}`
+                : each.kind === "heal" && each.recipient === undefined
+                  ? `gain ${String(describeMagnitude(each.amount, ranks).current)} Health`
+                  : each.kind === "lose-health" && each.recipient === "target"
+                    ? `lose ${String(describeMagnitude(each.amount, ranks).current)} Health`
+                    : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;

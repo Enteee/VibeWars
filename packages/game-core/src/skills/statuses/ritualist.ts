@@ -53,7 +53,9 @@ export type RitualistStatusId =
   | "wailing-weapon"
   | "nightmare-weapon"
   | "weapon-of-fury"
-  | "weapon-of-renewal";
+  | "weapon-of-renewal"
+  // Your spirits within earshot (#1777).
+  | "spiritleech-aura";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -649,5 +651,18 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       skillId: "ritualist.weapon-of-renewal",
     },
     endsWhenBearerHitsWithAttackSkill: true,
+  }),
+  // On a spirit (#1777): "...deal 5...20 less damage and steal 5...20
+  // Health when they attack": 17 each. The steal lands on a hit however
+  // little the blow dealt, and heals the spirit.
+  "spiritleech-aura": define("spiritleech-aura", "Spiritleech Aura", "skill-effect", {
+    profession: "ritualist",
+    attackDamageDelta: -17,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "life-steal", amount: { flat: 17 } }],
+      skillId: "ritualist.spiritleech-aura",
+    },
   }),
 };

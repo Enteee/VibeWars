@@ -1674,6 +1674,18 @@ used. **Consume Soul** (elite, 5 energy, 1 s, 5 s) steals 57 Health
 from a foe, and deals 105 typeless damage to every foe minion, spirit
 and pet in earshot of it, never a player, the foe itself excluded.
 
+**Your spirits** (#1777, Ritualist) are the living spirits you made,
+never an ally's or a foe's, in earshot of you, wherever the skill's
+target stands. **Spirit Boon Strike** (Channeling Magic, 5 energy, 1 s,
+3 s) strikes a foe for 56 lightning damage and heals each of your
+spirits 56; with none near, it still strikes. **Spiritleech Aura**
+(Restoration Magic, 5 energy, ¼ s, 20 s) gives each of your spirits 17 s
+in which its attacks deal 17 less damage, never below 0, and steal 17
+Health for the spirit on every hit; with none near, it is still used.
+**Draw Spirit** (no attribute, 5 energy, ¼ s, 5 s) puts an allied
+spirit, whoever made it, beside you; it keeps its owner and its time
+left, and stays there.
+
 **Creation** (#1316, Ritualist, Spawning Power) pays for each creature
 you create: a spirit or a minion, once each as it appears, so Animate
 Bone Minions pays twice; a charmed pet is not created, and a summon the
