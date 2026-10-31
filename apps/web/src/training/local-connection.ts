@@ -346,6 +346,9 @@ export function createLocalConnection(options: {
         spent: slot !== null && cast?.spent.has(slot.key) === true,
       }));
     },
+    getQueuedSlot() {
+      return simulation.get(selfId)?.combatant.cast.queuedSlot;
+    },
     onStep(handler) {
       stepHandlers.push(handler);
     },

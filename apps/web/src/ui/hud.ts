@@ -630,11 +630,15 @@ export function refreshSkillBar(hud: HudElements, bar: readonly (SkillSlot | nul
   }
 }
 
-/** Paint each slot's recharge wipe, from the render loop (#152). */
+/**
+ * Paint each slot's recharge wipe (#152), and ring the one queued to go
+ * next (#1722), from the render loop.
+ */
 export function updateRecharges(
   hud: HudElements,
   skillBar: readonly (SkillSlot | null)[],
   recharges: readonly SlotRecharge[],
+  queued: number | undefined,
 ): void {
   const buttons = hud.skillBar.querySelectorAll("button");
   const reducedMotion = prefersReducedMotion();
@@ -642,6 +646,7 @@ export function updateRecharges(
     const button = buttons[index];
     if (button !== undefined && slot !== null) {
       paintRecharge(button, recharges[index], slot.name, reducedMotion);
+      button.classList.toggle("is-queued", index === queued);
     }
   });
 }

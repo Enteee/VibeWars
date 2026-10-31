@@ -56,6 +56,7 @@ import {
 } from "./protocol.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
 import { roleOf, WORK_COLUMN } from "./staff.mjs";
+import { appendWait } from "./waits.mjs";
 
 // Who this agent is (#62): the bus directory is the employee's, and what it
 // may do is its role's.
@@ -248,7 +249,16 @@ function ceilingLine() {
  * @returns {Promise<number>}
  */
 async function wait(timeoutSeconds, all) {
-  const deadline = Date.now() + timeoutSeconds * 1000;
+  const start = Date.now();
+  const deadline = start + timeoutSeconds * 1000;
+  /**
+   * The wait log's line (#1615), as it ends.
+   *
+   * @param {import("./waits.mjs").WaitLine["woke"]} woke
+   */
+  const logged = (woke) => {
+    appendWait(DIR, { start, end: Date.now(), cmd: "tg", woke });
+  };
   /** Whether this wait has said the sidecar is down, since it last was up. */
   let warned = false;
   for (;;) {
@@ -263,10 +273,12 @@ async function wait(timeoutSeconds, all) {
       if (over !== null) {
         console.log(over);
       }
+      logged("message");
       return printed;
     }
     if (over !== null) {
       console.log(over);
+      logged("ceiling");
       return 0;
     }
     // Said once, and the wait goes on (#583): returning at once would
@@ -279,8 +291,10 @@ async function wait(timeoutSeconds, all) {
     if (Date.now() >= deadline) {
       if (down !== null) {
         console.log(`(nothing for you in ${String(timeoutSeconds)}s; the sidecar is still down)`);
+        logged("down");
         process.exit(2);
       }
+      logged("timeout");
       const queued = pending();
       // Another empty wait would be another call that re-reads the whole
       // context (#1694): the loop between turns waits for nothing instead.

@@ -1119,6 +1119,113 @@ describe("aftercast (#317)", () => {
   });
 });
 
+describe("the skill queue during an activation (#1722)", () => {
+  const AFTERCAST = RULES.combat.aftercastSeconds;
+
+  /** `a` casting Fireball at `d`, `seconds` into its 1 s activation. */
+  function casting(seconds: number, foe: Vec2 = vec2(300, 0)): MatchSimulation {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", foe));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    stepFor(match, seconds);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(FIREBALL);
+    return match;
+  }
+
+  /** Step until `a`'s queued skill is requested; the seconds it took. */
+  function untilTaken(match: MatchSimulation): number {
+    let ticks = 0;
+    while (get(match, "a").combatant.cast.queuedSlot !== undefined) {
+      match.step(DT);
+      ticks += 1;
+    }
+    return ticks * DT;
+  }
+
+  it("a press is queued, paid for nothing, and goes off when the cast and its aftercast end", () => {
+    const match = casting(0.5);
+    const energy = get(match, "a").combatant.energy;
+    expect(match.requestSkill("a", 1)).toEqual({
+      skillId: ARMOR_OF_EARTH,
+      check: { ok: true },
+      queued: true,
+    });
+    expect(get(match, "a").combatant.energy).toBe(energy);
+    expect(get(match, "a").combatant.cast.queuedSlot).toBe(1);
+
+    // Fireball's last half second, then its aftercast; the tick it ends,
+    // Armor of Earth begins.
+    expect(untilTaken(match)).toBeCloseTo(0.5 + AFTERCAST, 6);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(ARMOR_OF_EARTH);
+    expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+    expect(get(match, "a").combatant.energy).toBeLessThan(energy);
+  });
+
+  it("a later press replaces it, and the casting slot's own press is dropped as it recharges", () => {
+    const match = casting(0.5);
+    match.requestSkill("a", 1);
+    expect(match.requestSkill("a", 0)?.queued).toBe(true);
+    expect(get(match, "a").combatant.cast.queuedSlot).toBe(0);
+    untilTaken(match);
+    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+    expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+  });
+
+  it("a press refused for anything but range or sight is refused now, not queued", () => {
+    const match = casting(0.5);
+    get(match, "a").combatant.cast.startRecharge(ARMOR_OF_EARTH, 10);
+    expect(match.requestSkill("a", 1)?.check).toEqual({ ok: false, reason: "still-recharging" });
+    expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+  });
+
+  it("an interrupt un-queues it", () => {
+    const match = casting(0.5);
+    match.requestSkill("a", 1);
+    applyEffects([{ kind: "interrupt" }], {
+      surroundings: new Map(),
+      caster: get(match, "d").combatant,
+      target: get(match, "a").combatant,
+      rng: createRng(1),
+      rules: RULES.combat,
+    });
+    expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+    stepFor(match, 2);
+    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+  });
+
+  it("a knockdown un-queues it", () => {
+    const match = casting(0.5);
+    match.requestSkill("a", 1);
+    applyEffects([{ kind: "knockdown", durationSeconds: 2 }], {
+      surroundings: new Map(),
+      caster: get(match, "d").combatant,
+      target: get(match, "a").combatant,
+      rng: createRng(1),
+      rules: RULES.combat,
+    });
+    expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
+    stepFor(match, 3);
+    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+  });
+
+  it("queued out of range, it walks in once the cast and aftercast are over", () => {
+    const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(3000, 0)));
+    match.setTarget("a", "d");
+    match.requestSkill("a", 1);
+    expect(get(match, "a").combatant.cast.activeCast?.skillId).toBe(ARMOR_OF_EARTH);
+    expect(match.requestSkill("a", 0)).toEqual({
+      skillId: FIREBALL,
+      check: { ok: true },
+      queued: true,
+    });
+    const activation = getSkill(ARMOR_OF_EARTH)?.activationSeconds ?? 0;
+    expect(untilTaken(match)).toBeCloseTo(activation + AFTERCAST, 6);
+    stepFor(match, 0.5);
+    expect(get(match, "a").position.x).toBeGreaterThan(0);
+    expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+  });
+});
+
 describe("attack skills ride the weapon (ADR-0029)", () => {
   const SWIFT_CHOP = "warrior.swift-chop";
   const BACKBREAKER = "warrior.backbreaker";

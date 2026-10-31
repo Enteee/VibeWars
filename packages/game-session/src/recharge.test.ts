@@ -10,8 +10,12 @@ const recharging = (slot: number, remainingSeconds: number, totalSeconds = 10) =
   totalSeconds,
 });
 
-/** A message of these running recharges, and these slots spent (#474). */
-const told = (slots: RechargeSlot[], spent: number[] = []): RechargeMessage => ({ slots, spent });
+/** A message of these running recharges, these slots spent (#474), and this one queued (#1722). */
+const told = (
+  slots: RechargeSlot[],
+  spent: number[] = [],
+  queued: number | null = null,
+): RechargeMessage => ({ slots, spent, queued });
 
 describe("rechargeState", () => {
   it("lists running recharges by bar slot, with the duration each started with", () => {
@@ -37,6 +41,12 @@ describe("rechargeState", () => {
     expect(rechargeState(["a", null, "c"], cast)).toEqual(told([], [2]));
   });
 
+  it("names the slot queued to go next (#1722)", () => {
+    const cast = new CastState("p", new StatusSet());
+    cast.queue(2);
+    expect(rechargeState(["a", null, "c"], cast)).toEqual(told([], [], 2));
+  });
+
   it("a copy standing in a slot (#469) shows its own recharge there, not the original's", () => {
     const cast = new CastState("p", new StatusSet());
     cast.override(0, {
@@ -54,6 +64,12 @@ describe("rechargeState", () => {
 });
 
 describe("rechargePredicted", () => {
+  it("tells a slot queued or leaving the queue (#1722)", () => {
+    expect(rechargePredicted(told([]), 0, told([], [], 1))).toBe(false);
+    expect(rechargePredicted(told([], [], 1), 0, told([]))).toBe(false);
+    expect(rechargePredicted(told([], [], 1), 1, told([], [], 1))).toBe(true);
+  });
+
   it("leaves a plain countdown to the client", () => {
     expect(rechargePredicted(told([recharging(0, 10)]), 3, told([recharging(0, 7)]))).toBe(true);
   });
