@@ -390,6 +390,12 @@ const status = {
   ],
   // Stance: a step aside an arrow, faster and blocks projectiles.
   dodge: ["stance", (c) => `<path d="M4 8h10M11 5l3 3-3 3M8 18l4-5 4 5" ${stroke(c, 2.2)}/>`],
+  // Stance: Dodge's step aside an arrow, with a speed line under it (#1676),
+  // a stand-in until the asset-designer's.
+  "zojuns-haste": [
+    "stance",
+    (c) => `<path d="M4 7h10M11 4l3 3-3 3M8 16l4-5 4 5M5 20h14" ${stroke(c, 2.2)}/>`,
+  ],
   // Stance: a shield with a plus, Energy for each melee block (#1329).
   "bonettis-defense": [
     "stance",
