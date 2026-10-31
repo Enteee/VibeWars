@@ -1,7 +1,7 @@
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
-import { isAlone, partyOf, showsClosed } from "./party-strip.js";
+import { PARTY_RECONNECTING, isAlone, memberClass, partyOf, showsClosed } from "./party-strip.js";
 
 function player(
   sessionId: string,
@@ -16,6 +16,7 @@ function player(
     isHost: false,
     character: null,
     bot: false,
+    away: false,
     ...overrides,
   };
 }
@@ -54,10 +55,24 @@ describe("the party strip's party (#1526)", () => {
       isHost: false,
       open: true,
       members: [
-        { name: "host", primary: "monk", isHost: true, self: false },
-        { name: "me", primary: null, isHost: false, self: true },
+        { name: "host", primary: "monk", isHost: true, self: false, away: false },
+        { name: "me", primary: null, isHost: false, self: true, away: false },
       ],
     });
+    expect(isAlone(party)).toBe(false);
+  });
+
+  it("greys a member whose connection dropped, and says it is reconnecting (#1764)", () => {
+    const party = partyOf(lobby([player("me"), player("friend", { away: true, team: 1 })]));
+    const [me, friend] = party.members;
+    if (me === undefined || friend === undefined) {
+      throw new Error("two members");
+    }
+    expect(friend.away).toBe(true);
+    expect(memberClass(friend)).toBe("party-member is-away");
+    expect(memberClass(me)).toBe("party-member is-self");
+    expect(PARTY_RECONNECTING).toBe("Reconnecting…");
+    // Still in the party: it may yet come back.
     expect(isAlone(party)).toBe(false);
   });
 

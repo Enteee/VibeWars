@@ -344,13 +344,36 @@ describe("lobby host", () => {
     expect(moves).toEqual([]);
   });
 
-  it("ends the lobby for everyone when the host's tab goes without a word", async () => {
+  it("waits for a host whose peer drops in the lobby, and is in again when it is back (#1764)", async () => {
     const { lobby, guest } = await hostAndGuest();
     const closed: string[] = [];
     guest.connection.onClosed((reason) => closed.push(reason));
     lobby.network.partition("host", guest.transport.selfId);
     await settle();
-    expect(closed).toEqual(["host-left"]);
+    expect(closed).toEqual([]);
+    lobby.network.heal();
+    // Back, it proves the key again (#1681): an HMAC, on the event loop.
+    await until(() => lobby.host.connection.getSnapshot().players[1]?.away === false);
+    guest.connection.chooseTeam(1);
+    await until(() => playersOf(lobby.host)[1]?.team === 1);
+    expect(closed).toEqual([]);
+  });
+
+  it("ends the lobby once the window runs out for a host whose peer dropped (#1764)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const closed: string[] = [];
+    guest.connection.onClosed((reason) => closed.push(reason));
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      lobby.network.partition("host", guest.transport.selfId);
+      await settle();
+      vi.advanceTimersByTime(RECONNECT_WINDOW_SECONDS * 1000 - 1);
+      expect(closed).toEqual([]);
+      vi.advanceTimersByTime(1);
+      expect(closed).toEqual(["connection-lost"]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("ignores a map selection from a non-host, and an unknown map from the host", async () => {
@@ -454,6 +477,78 @@ describe("lobby host", () => {
 
   it("drops a member who leaves the room from the lobby", async () => {
     const { lobby, guest } = await hostAndGuest();
+    await guest.connection.disconnect();
+    await settle();
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+  });
+});
+
+describe("a guest whose peer drops while the lobby waits (#1764)", () => {
+  /** A host and a ready guest on team 1, whose peer has just dropped. */
+  async function dropped(): Promise<{ lobby: TestLobby; guest: Member }> {
+    const { lobby, guest } = await hostAndGuest();
+    guest.connection.chooseTeam(1);
+    guest.connection.setReady(true);
+    await settle();
+    lobby.network.partition("host", guest.transport.selfId);
+    await settle();
+    return { lobby, guest };
+  }
+
+  it("is still listed, away and not ready, on its team, and keeps the host in the room", async () => {
+    const reaches: number[] = [];
+    const { lobby } = await dropped();
+    lobby.lobby.onReach((reach) => reaches.push(reach.guests));
+    await settle();
+    expect(
+      lobby.host.connection
+        .getSnapshot()
+        .players.map(({ name, team, ready, away }) => [name, team, ready, away]),
+    ).toEqual([
+      ["Host", null, false, false],
+      ["Guest", 1, false, true],
+    ]);
+    // Told once, as it was: the guest still counts.
+    expect(reaches).toEqual([1]);
+    lobby.host.connection.chooseTeam(0);
+    lobby.host.connection.setReady(true);
+    lobby.host.connection.startMatch();
+    await settle();
+    expect(lobby.matches).toHaveLength(0);
+  });
+
+  it("is in its seat again when it is back in the window, though the lobby is closed now", async () => {
+    const { lobby, guest } = await dropped();
+    lobby.lobby.setOpen(false);
+    await lobby.step(10);
+    lobby.network.heal();
+    // Back, it proves the key again (#1681): an HMAC, on the event loop.
+    await until(() => lobby.host.connection.getSnapshot().players[1]?.away === false);
+    expect(playersOf(lobby.host)).toEqual([
+      { name: "Host", team: null, ready: false },
+      { name: "Guest", team: 1, ready: false },
+    ]);
+    expect(guest.connection.getSnapshot().players.map(({ name }) => name)).toEqual([
+      "Host",
+      "Guest",
+    ]);
+  });
+
+  it("is gone once the window runs out, and the reach says so", async () => {
+    const { lobby } = await dropped();
+    const reaches: number[] = [];
+    lobby.lobby.onReach((reach) => reaches.push(reach.guests));
+    await lobby.step(RECONNECT_WINDOW_SECONDS - 1);
+    expect(playersOf(lobby.host)).toHaveLength(2);
+    await lobby.step(1);
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+    expect(reaches).toEqual([1, 0]);
+  });
+
+  it("is gone at once when, back, it says it leaves", async () => {
+    const { lobby, guest } = await dropped();
+    lobby.network.heal();
+    await until(() => lobby.host.connection.getSnapshot().players[1]?.away === false);
     await guest.connection.disconnect();
     await settle();
     expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
@@ -1421,6 +1516,48 @@ describe("a Team Lobby (#1458)", () => {
     expect(sideOf(host)?.chosen?.reason).toBe("house");
   });
 
+  it("plays a bot in the slot of a guest away when its stage runs out, and holds its seat on (#1764)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 0]);
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    await begin(lobby);
+    const size = teamOf(host)?.sides[0]?.size;
+    await timeOut(lobby);
+    expect(teamOf(host)?.stage).toBe("claim");
+    // Late in the claim stage: its window outlasts the stage.
+    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS - 10);
+    lobby.network.partition("host", idOf(ann));
+    await settle();
+    lobby.lobby.advance(10);
+    await settle();
+    expect(lobby.matches).toHaveLength(1);
+    const seats = lobby.matches[0]?.plan.seats;
+    expect(seats?.has(idOf(ann))).toBe(false);
+    // Its side is never a body short: a bot plays the slot it would have.
+    const side = [...(seats?.values() ?? [])].filter((seat) => seat.team === 0);
+    expect(side).toHaveLength(size ?? 0);
+    expect(side.map(({ name, bot }) => [name, bot])).toEqual([
+      ["Host", false],
+      [expect.any(String), true],
+    ]);
+    expect(host.connection.getSnapshot().players.find(({ name }) => name === "Ann")?.away).toBe(
+      true,
+    );
+    // Back within its window, it is still the lobby's once the match is over.
+    lobby.network.heal();
+    await until(() =>
+      host.connection.getSnapshot().players.some(({ name, away }) => name === "Ann" && !away),
+    );
+    await lobby.matches[0]?.host.close("host-left");
+    await lobby.step(0.1);
+    expect(host.connection.getSnapshot().phase).toBe("waiting");
+    expect(
+      host.connection.getSnapshot().players.map(({ name, team, away }) => [name, team, away]),
+    ).toEqual(expect.arrayContaining([["Ann", 0, false]]));
+  });
+
   it("lets a joiner in only to watch, and ignores what a spectator or a command out of its stage asks", async () => {
     const { lobby, members } = await teamLobby(["Ann"], [0, 0]);
     const [host, ann] = members;
@@ -1563,12 +1700,13 @@ describe("the key gate (#1681, ADR-0043)", () => {
     lobby.host.connection.sendChat("all", "hi");
     await settle();
     expect(channels(got)).toEqual(["key-challenge"]);
-    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host"]);
+    // Its seat is held for the window (#1764), but nothing it says counts yet.
+    expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Proven"]);
 
     await prove(peer, got);
     await until(() => proven(got));
     peer.send("lobby-join", joinAs("Again"), "host");
-    await until(() => playersOf(lobby.host).length === 2);
+    await until(() => playersOf(lobby.host)[1]?.name === "Again");
   });
 
   it("challenges a proven peer that asks again inside the gate: it keeps its seat and its spent budget (#1681)", async () => {
