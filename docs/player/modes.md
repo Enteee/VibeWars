@@ -169,8 +169,12 @@ Forgotten Shrines plays it.
 A hosted lobby does not start the match when everyone is ready. It opens the Team Lobby first, where each side picks one Team
 Build together and then splits its characters. Each side is as big as
 it was when the Team Lobby opened, its bots included, and at most 8.
-Each stage lasts 60 seconds and ends early once everyone on both sides
-is ready.
+A queued party ([Find a match](getting-started.md#host-or-join-a-match)
+on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
+only, as big as the mode's team (4 for Team Arena, 8 for the others)
+however many are in the party; bots play the seats nobody claims.
+Each stage lasts 60 seconds and ends early once everyone in the Team
+Lobby is ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
 side's size, one proposal each, with **Propose**, and vote for one of
@@ -190,7 +194,8 @@ Neither side sees the other's proposals, votes or choice.
 
 **Claim.** The chosen build's characters are seats: click a free seat
 to take it, or your own to leave it, first come, first served, one each. Whoever claimed nothing gets the first free one, and
-bots play the rest, under their character's name. Then the match starts.
+bots play the rest, under their character's name. Then the match starts, or a queued party
+joins the queue.
 
 Anyone who leaves during the Team Lobby is replaced by a bot, so the
 side keeps its size. Someone joining then only watches.

@@ -661,8 +661,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   const enders = definition.endsWhenTriggered
     ? definition.triggers.filter((trigger) => trigger.effects.length === 0)
     : [];
+  // Its holder reads it (#1841): "ends if you cast…" on a self-buff, "it"
+  // on a hex or condition.
+  const onFoe = definition.category === "hex" || definition.category === "condition";
   for (const trigger of enders) {
-    parts.push(`ends if it ${kindBoundWhen(trigger.on, trigger) ?? TRIGGER_WHEN[trigger.on]}`);
+    const when = kindBoundWhen(trigger.on, trigger) ?? TRIGGER_WHEN[trigger.on];
+    parts.push(onFoe ? `ends if it ${when}` : `ends if you ${secondPerson(when)}`);
   }
   // A trigger that reads "when it ends: removes 1 hex" is a sentence of
   // its own (#944), not one more clause after a comma.
@@ -776,7 +780,7 @@ function statusArmorText(bonus: ConditionalArmor): string {
 }
 
 /** What the bearer does that a trigger answers, as its tooltip says it. */
-const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
+export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-casts-spell": "casts a spell",
   "bearer-attacks": "attacks",
   "bearer-attack-begins": "attacks",
@@ -805,6 +809,42 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "ends-early": "ends prematurely",
   expires: "expires",
 };
+
+/** A third-person leading verb (#1841), in the second person. */
+const SECOND_PERSON: Readonly<Record<string, string>> = {
+  attacks: "attack",
+  blocks: "block",
+  casts: "cast",
+  creates: "create",
+  dies: "die",
+  ends: "end",
+  expires: "expire",
+  fails: "fail",
+  gains: "gain",
+  has: "have",
+  hits: "hit",
+  is: "are",
+  loses: "lose",
+  takes: "take",
+  uses: "use",
+};
+
+/**
+ * A `TRIGGER_WHEN` or `kindBoundWhen` phrase said to its holder (#1841):
+ * "casts a spell" -> "cast a spell", "has its Health dropped" -> "have
+ * your Health dropped". A leading word it does not know throws.
+ */
+export function secondPerson(phrase: string): string {
+  const [verb = "", ...rest] = phrase.split(" ");
+  const base = SECOND_PERSON[verb];
+  if (base === undefined) {
+    throw new Error(`no second person for "${phrase}"`);
+  }
+  return [base, ...rest]
+    .join(" ")
+    .replace(/^have its /, "have your ")
+    .replace(/ on it$/, " on you");
+}
 
 /** A trigger's line, and whether it follows a comma or stands alone. */
 interface TriggerLine {
