@@ -1042,7 +1042,9 @@ const skillGlyph = {
   "signet-limp": () => ringDot(10, 14, 7) + inkLine("M20 2L16.5 6L20 9L16.5 13", 2.2),
   // Two fast slashes over a rising bar: faster attacks and adrenaline.
   "slash-bars": () =>
-    inkLine("M4 15L12 3M9.5 16L17.5 4M15 17L21.5 7", 2.4) + inkLine("M4 21.5H20", 2.4),
+    inkLine("M10 21L21 4", 3.2) +
+    inkLine("M15 21L23 9", 1.6) +
+    inkLine("M2 7H9M2 12H7M2 17H5", 1.8),
   // A spark over two falling bars with a minus: energy per hit, regeneration paid.
   "spark-vow": () =>
     inkLine("M12 2.5L14.5 8H9.5L12 13.5", 2.2) +

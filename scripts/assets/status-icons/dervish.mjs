@@ -191,8 +191,9 @@ export const DERVISH_STATUS_ICONS = {
   onslaught: [
     "enchantment",
     (c) =>
-      `<path d="M4 15L12 3M9.5 16L17.5 4M15 17L21.5 7" ${stroke(c, 2.2)}/>` +
-      `<path d="M4 21.5H20" ${stroke(c, 2.2)}/>`,
+      `<path d="M10 21L21 4" ${stroke(c, 3.2)}/>` +
+      `<path d="M15 21L23 9" ${stroke(c, 1.6)}/>` +
+      `<path d="M2 7H9M2 12H7M2 17H5" ${stroke(c, 1.8)}/>`,
   ],
   // Enchantment: a spark over two falling bars and a minus, energy per hit, less regeneration.
   "zealous-vow": [
