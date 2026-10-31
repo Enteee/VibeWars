@@ -70,13 +70,13 @@ export const MONK_ICONS = {
   "monk.castigation-signet": { glyph: "signet-energy" },
   "monk.signet-of-judgment": { glyph: "signet-quake" },
   "monk.holy-strike": { glyph: "star-prone" },
-  // Monk staples 6 (#1748), stand-ins until their art card.
-  "monk.ethereal-light": { glyph: "heal-other", modifier: "stun" },
-  "monk.gift-of-health": { glyph: "heal-other", modifier: "down" },
-  "monk.live-vicariously": { glyph: "heal-turn", modifier: "upkeep" },
-  "monk.purifying-veil": { glyph: "cleanse", modifier: "upkeep" },
-  "monk.pacifism": { glyph: "hex-sword-drop", modifier: "less" },
-  "monk.watchful-spirit": { glyph: "plus-sparks", modifier: "upkeep" },
-  "monk.kirins-wrath": { glyph: "ring-rays", modifier: "self" },
-  "monk.signet-of-removal": { glyph: "next-signet-cleanse", modifier: "plus" },
+  // Monk staples 6 (#1767).
+  "monk.ethereal-light": { glyph: "plus-fragile" },
+  "monk.gift-of-health": { glyph: "gift-plus", modifier: "down" },
+  "monk.live-vicariously": { glyph: "blow-plus", modifier: "upkeep" },
+  "monk.purifying-veil": { glyph: "veil-drop", modifier: "upkeep" },
+  "monk.pacifism": { glyph: "blade-struck" },
+  "monk.watchful-spirit": { glyph: "eye-plus", modifier: "upkeep" },
+  "monk.kirins-wrath": { glyph: "horn-ring" },
+  "monk.signet-of-removal": { glyph: "signet-strip" },
 };

@@ -2589,6 +2589,42 @@ const skillGlyph = {
     `<g transform="translate(14,18) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
     `<g>${nextTrigger.attack()}</g>`,
   "signet-quake": () => ringDot(12, 9, 6.5) + inkLine("M2 9H3.5M20.5 9H22M4 21H20", 2.4),
+  // Monk staples 6 (#1767).
+  // A plus in a broken ring: a heal that a blow stops (#1748).
+  "plus-fragile": () =>
+    `<path d="M12 3.5A8.5 8.5 0 0 1 20.5 12M18 18A8.5 8.5 0 0 1 6 18M3.5 12A8.5 8.5 0 0 1 8 4.6" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 7.5V16.5M7.5 12H16.5", 3),
+  // A wrapped gift topped with a plus: a great heal given away (#1748).
+  "gift-plus": () =>
+    `<rect x="4" y="12" width="16" height="9" rx="1" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 12V21M4 16H20", 2) +
+    inkLine("M12 2.5V8.5M9 5.5H15", 2.4),
+  // A blow arriving, a plus leaving: health taken from an ally's strike (#1748).
+  "blow-plus": () =>
+    inkLine("M3.5 20.5L12 12M7.5 11.5L12 12L12.5 16.5", 2.4) +
+    inkLine("M17.5 3.5V10.5M14 7H21", 2.8),
+  // A veil over a falling drop: conditions wear off (#1748).
+  "veil-drop": () =>
+    inkLine("M3 8C6.5 2.5 17.5 2.5 21 8", 2.2) +
+    inkFill("M12 10.5C10 14 9 15.5 9 17.5A3 3 0 0 0 15 17.5C15 15.5 14 14 12 10.5Z"),
+  // A blade struck through: the foe cannot attack (#1748).
+  "blade-struck": () =>
+    inkLine("M6 18L16 8M14 6L18 10M8 20L4 16", 2.4) + inkLine("M4.5 4.5L19.5 19.5", 2.2),
+  // An eye over a plus: watched over, healed at the end (#1748).
+  "eye-plus": () =>
+    inkLine("M3 8C7 3 17 3 21 8C17 13 7 13 3 8Z", 2) +
+    `<circle cx="12" cy="8" r="2.2" fill="${C.ink}"/>` +
+    inkLine("M12 15V22M8.5 18.5H15.5", 2.4),
+  // A single horn over a ring and rays: the kirin's holy ground (#1748).
+  "horn-ring": () =>
+    `<ellipse cx="12" cy="18" rx="9" ry="3.6" ${stroke(C.ink, 2.4)}/>` +
+    inkFill("M12 2.5L15 12.5H9Z") +
+    inkLine("M5 6L7.5 10M19 6L16.5 10", 2.2),
+  // A signet seal crossed out beside a hex ring: one hex and one condition removed (#1748).
+  "signet-strip": () =>
+    ringDot(9, 14, 6) +
+    `<circle cx="17" cy="7" r="4.5" ${stroke(C.ink, 2)} stroke-dasharray="3 2.4"/>` +
+    inkLine("M13.5 3.5L20.5 10.5", 2.2),
   "star-prone": () =>
     holyStar(13, 8, 7.5) +
     `<circle cx="5.5" cy="18.5" r="2.4" fill="${C.ink}"/>` +
