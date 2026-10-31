@@ -9,6 +9,7 @@
 // `node scripts/assets/icons.mjs`. Start from the glyph for the skill's
 // primary effect; the modifier tells apart skills that share one.
 
+import { mergeRows } from "./merge-rows.mjs";
 import { WARRIOR_ICONS } from "./skill-icons/warrior.mjs";
 import { RANGER_ICONS } from "./skill-icons/ranger.mjs";
 import { MONK_ICONS } from "./skill-icons/monk.mjs";
@@ -27,17 +28,20 @@ import { COMMON_ICONS } from "./skill-icons/common.mjs";
  * @property {string} [modifier] The small mark at the bottom right.
  */
 
-/** @type {Readonly<Record<string, SkillIconRow>>} */
-export const SKILL_ICONS = {
-  ...WARRIOR_ICONS,
-  ...RANGER_ICONS,
-  ...MONK_ICONS,
-  ...NECROMANCER_ICONS,
-  ...MESMER_ICONS,
-  ...ELEMENTALIST_ICONS,
-  ...ASSASSIN_ICONS,
-  ...RITUALIST_ICONS,
-  ...PARAGON_ICONS,
-  ...DERVISH_ICONS,
-  ...COMMON_ICONS,
+/** The tables by file name, so a test can check no id is in two. */
+export const SKILL_ICON_TABLES = {
+  warrior: WARRIOR_ICONS,
+  ranger: RANGER_ICONS,
+  monk: MONK_ICONS,
+  necromancer: NECROMANCER_ICONS,
+  mesmer: MESMER_ICONS,
+  elementalist: ELEMENTALIST_ICONS,
+  assassin: ASSASSIN_ICONS,
+  ritualist: RITUALIST_ICONS,
+  paragon: PARAGON_ICONS,
+  dervish: DERVISH_ICONS,
+  common: COMMON_ICONS,
 };
+
+/** @type {Readonly<Record<string, SkillIconRow>>} */
+export const SKILL_ICONS = mergeRows(SKILL_ICON_TABLES, { prefixed: true });
