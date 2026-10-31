@@ -1488,8 +1488,9 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
 - **Divine Favor** (Monk). A Monk spell cast on an ally, yourself
   included, heals that ally another floor(3.2 × rank) when it lands: +38
   at rank 12. Once a cast and on the target only, even for a spell that
-  also reaches others. An interrupted spell, a dead target or a Monk
-  spell at a foe gets nothing.
+  also reaches others. A spell that doubles Divine Favor, such as
+  Healing Touch, adds twice that: +76 at rank 12. An interrupted spell, a
+  dead target or a Monk spell at a foe gets nothing.
 - **Critical Strikes** (Assassin). +1% critical chance a rank on weapon
   blows, and every crit gives the striker energy: none at ranks 1–2, 1 at
   3–7, 2 at 8–12, 3 at 13 and above (#1100).
