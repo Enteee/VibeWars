@@ -1,4 +1,4 @@
-import { stroke } from "../icon-kit.mjs";
+import { ownSkill, stroke } from "../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, [import("../icon-kit.mjs").Category, import("../icon-kit.mjs").Glyph]>>} */
 export const RANGER_STATUS_ICONS = {
@@ -184,10 +184,10 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M12 4v16M5 8l14 8M19 8L5 16" ${stroke(c, 1.8)}/>` +
       `<path d="M10 5.5l2 2 2-2M10 18.5l2-2 2 2" ${stroke(c, 1.6)}/>`,
   ],
-  // Stance (#1761, stand-in): a looped arrow, preparations come back sooner.
+  // Own-skill modifier (#1855): the skill's drawing, shrunk into the frame.
   "practiced-stance": [
     "stance",
     (c) =>
-      `<path d="M17 8a6 6 0 1 0 1 6" ${stroke(c, 2)}/>` + `<path d="M14 7h4V3" ${stroke(c, 2)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${ownSkill("stance", c, 2.8)}</g>`,
   ],
 };

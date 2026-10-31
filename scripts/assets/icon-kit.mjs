@@ -87,3 +87,41 @@ export const stepAndReturn = (kind, c, w) => {
   }[kind];
   return top + `<path d="M21 15v1.5a4 4 0 0 1-4 4H5M8.5 17L5 20.5L8.5 24" ${stroke(c, w)}/>`;
 };
+
+/**
+ * Own-skill modifiers (#1855): the skill that changes how other skills work.
+ * Each has its own dominant shape, so the four Monk ones read apart: a halo,
+ * a ring round a figure, two hands, a plus trailing streaks.
+ * @param {"spirit" | "aura" | "covenant" | "haste" | "stance" | "extend"} kind
+ * @param {string} c colour
+ * @param {number} w stroke width
+ */
+export const ownSkill = (kind, c, w) =>
+  ({
+    // A halo over an energy orb: Monk spells cost less.
+    spirit:
+      `<ellipse cx="12" cy="4.5" rx="6.5" ry="2.2" ${stroke(c, w)}/>` +
+      `<circle cx="12" cy="15" r="6.5" ${stroke(c, w)}/>` +
+      `<path d="M13 10.5L10 15.5H14L11 19.5" ${stroke(c, w)}/>`,
+    // A figure in a ring that runs on past its start: enchantments last longer.
+    aura:
+      `<circle cx="12" cy="9.5" r="2.6" fill="${c}"/>` +
+      `<path d="M7.5 18C7.5 13 16.5 13 16.5 18Z" fill="${c}"/>` +
+      `<path d="M12 2.5A9.5 9.5 0 1 1 2.8 9.5M2.8 4.5V9.5H7.8" ${stroke(c, w)}/>`,
+    // Two hands clasped under a small plus: cheaper, lesser heals.
+    covenant:
+      `<path d="M12 2V8M9 5H15" ${stroke(c, w)}/>` +
+      `<path d="M2 20L8 13L12 17L16 13L22 20" ${stroke(c, w + 1.2)}/>`,
+    // A big plus trailing three streaks: healing cast faster.
+    haste:
+      `<path d="M16 4V20M8.5 12H23.5" ${stroke(c, w + 0.6)}/>` +
+      `<path d="M1.5 6.5H8M1.5 12H5M1.5 17.5H8" ${stroke(c, w)}/>`,
+    // A bow beside a circular arrow: preparations recharge sooner.
+    stance:
+      `<path d="M3.5 3Q11 12 3.5 21V3" ${stroke(c, w)}/>` +
+      `<path d="M21.5 15.5A6 6 0 1 1 19.8 7M20.3 3.2V7.2H16.3" ${stroke(c, w)}/>`,
+    // A dashed enchantment ring drawn out long: the next one lasts longer.
+    extend:
+      `<ellipse cx="12" cy="9" rx="10" ry="5.5" ${stroke(c, w)} stroke-dasharray="3 2"/>` +
+      `<path d="M5 19H19M16 16L19 19L16 22" ${stroke(c, w)}/>`,
+  })[kind];

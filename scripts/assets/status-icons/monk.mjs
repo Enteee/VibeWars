@@ -1,4 +1,4 @@
-import { stroke } from "../icon-kit.mjs";
+import { ownSkill, stroke } from "../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, [import("../icon-kit.mjs").Category, import("../icon-kit.mjs").Glyph]>>} */
 export const MONK_STATUS_ICONS = {
@@ -181,32 +181,28 @@ export const MONK_STATUS_ICONS = {
       `<circle cx="6.2" cy="8" r="1.1" fill="${c}"/><circle cx="9.8" cy="8" r="1.1" fill="${c}"/>` +
       `<path d="M17.5 12v10M12.5 17h10" ${stroke(c, 2.4)}/>`,
   ],
-  // Own-skill modifiers (#1761), stand-ins until their art card.
-  // Enchantment: a plus over a falling bar, Monk spells cost less.
+  // Own-skill modifier (#1855): the skill's drawing, shrunk into the frame.
   "divine-spirit": [
     "enchantment",
     (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` + `<path d="M6 16l12 3" ${stroke(c, 1.8)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${ownSkill("spirit", c, 2.8)}</g>`,
   ],
-  // Enchantment: a ring round a long bar, Monk enchantments last longer.
+  // Own-skill modifier (#1855): the skill's drawing, shrunk into the frame.
   "blessed-aura": [
     "enchantment",
     (c) =>
-      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.6)}/>` +
-      `<path d="M7 12h10M15 10l2 2-2 2" ${stroke(c, 2)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${ownSkill("aura", c, 2.8)}</g>`,
   ],
-  // Enchantment: two hands joined over a small plus, cheaper, lesser heals.
+  // Own-skill modifier (#1855): the skill's drawing, shrunk into the frame.
   "healers-covenant": [
     "enchantment",
     (c) =>
-      `<path d="M4 14l5-4 3 3 3-3 5 4" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 2)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${ownSkill("covenant", c, 2.8)}</g>`,
   ],
-  // Enchantment: a plus with speed lines, Healing Prayers cast faster.
+  // Own-skill modifier (#1855): the skill's drawing, shrunk into the frame.
   "holy-haste": [
     "enchantment",
     (c) =>
-      `<path d="M14 6v12M8 12h12" ${stroke(c, 2.4)}/>` +
-      `<path d="M3 9h3M3 15h3" ${stroke(c, 1.6)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${ownSkill("haste", c, 2.8)}</g>`,
   ],
 };

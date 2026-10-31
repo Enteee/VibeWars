@@ -16,7 +16,7 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { C, germ, stepAndReturn, stroke } from "./icon-kit.mjs";
+import { C, germ, ownSkill, stepAndReturn, stroke } from "./icon-kit.mjs";
 import { WEAPON_MARKS } from "./weapon-marks.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
@@ -2964,6 +2964,13 @@ const skillGlyph = {
   "step-aura": () => stepAndReturn("aura", C.ink, 1.8),
   "step-meld": () => stepAndReturn("meld", C.ink, 1.8),
   "step-haste": () => stepAndReturn("haste", C.ink, 1.8),
+  // Own-skill modifiers (#1855).
+  "own-spirit": () => ownSkill("spirit", C.ink, 1.8),
+  "own-aura": () => ownSkill("aura", C.ink, 1.8),
+  "own-covenant": () => ownSkill("covenant", C.ink, 1.8),
+  "own-haste": () => ownSkill("haste", C.ink, 1.8),
+  "own-stance": () => ownSkill("stance", C.ink, 1.8),
+  "own-extend": () => ownSkill("extend", C.ink, 1.8),
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +

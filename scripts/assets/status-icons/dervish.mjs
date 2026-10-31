@@ -1,4 +1,4 @@
-import { C, stroke } from "../icon-kit.mjs";
+import { C, ownSkill, stroke } from "../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, [import("../icon-kit.mjs").Category, import("../icon-kit.mjs").Glyph]>>} */
 export const DERVISH_STATUS_ICONS = {
@@ -235,12 +235,11 @@ export const DERVISH_STATUS_ICONS = {
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${c}"/>`,
   ],
-  // Skill effect (#1761, stand-in): a stretched bar with an arrow, the
-  // next Dervish enchantment lasts longer.
+  // Own-skill modifier (#1855): the skill's drawing, shrunk into the frame.
   "extend-enchantments": [
     "skill-effect",
     (c) =>
-      `<path d="M4 12h14M15 9l3 3-3 3" ${stroke(c, 2)}/>` + `<path d="M4 8v8" ${stroke(c, 1.8)}/>`,
+      `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${ownSkill("extend", c, 2.8)}</g>`,
   ],
   // "N for each X" (#1760), stand-ins until their art card.
   // Enchantment: a small bolt inside an enchantment ring, energy for each
