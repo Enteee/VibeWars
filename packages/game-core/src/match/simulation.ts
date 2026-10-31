@@ -796,6 +796,13 @@ const NONE_SPARED: ReadonlySet<StatusId> = new Set();
 const MOVEMENT_RELAX_PASSES = 4;
 
 /**
+ * How many times the last settle pass (#1837) lands what its own landings
+ * owe: redirected damage on a Union bearer charges its spirit, whose
+ * death ends what it upholds. Two do for any shipped chain.
+ */
+const LAST_PASS_LANDINGS = 4;
+
+/**
  * How long a maintained enchantment's bearer may stay beyond compass
  * range of its caster before it ends, s (#839). GW1 says "a short grace
  * period"; this is our tuning.
@@ -3902,11 +3909,22 @@ export class MatchSimulation {
    * bearer died (#1825); nothing else answers. Those fire only once every
    * participant is drained, so what they change is the next pass's,
    * whoever joined first: a death they cause never fires here. Without
-   * `ownEnds`, each is drained as it is reached, so nothing is left over.
+   * `ownEnds` it is the last pass (#1837): every participant is drained
+   * before any is settled, and what that settling changes, a hex breaker's
+   * kill among it, is drained again, every participant before any is
+   * landed. Those drains fire nothing, now or next tick, whoever joined
+   * first: what the last pass causes never settles (#1825). They land what
+   * is owed without being a trigger, redirected damage and spirits'
+   * charges, and keep the books (raised maxima, forms, returns). Landing
+   * can owe more, drained again, up to `LAST_PASS_LANDINGS` times; a last
+   * drain only keeps the books, and what is still owed then is dropped.
    */
   #settleTriggered(context: TriggerContext, ownEnds: boolean): void {
     const settle = (record: ParticipantRecord, changes: readonly StatusChange[]): void => {
       for (const change of changes) {
+        if (change.kind === "redirected-damage") {
+          this.#landRedirected(record, change.toId, change.amount);
+        }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
         }
@@ -3922,18 +3940,34 @@ export class MatchSimulation {
         }
       }
     };
-    if (!ownEnds) {
-      for (const record of this.#participants.values()) {
-        settle(record, record.combatant.statuses.drainChanges());
-      }
-      return;
-    }
     const drained = [...this.#participants.values()].map((record) => ({
       record,
       changes: record.combatant.statuses.drainChanges(),
     }));
     for (const { record, changes } of drained) {
       settle(record, changes);
+    }
+    if (ownEnds) {
+      return;
+    }
+    for (let round = 0; round <= LAST_PASS_LANDINGS; round += 1) {
+      const left = [...this.#participants.values()].map((record) => ({
+        record,
+        changes: record.combatant.statuses.drainChanges(),
+      }));
+      for (const { record, changes } of left) {
+        for (const change of changes) {
+          if (round < LAST_PASS_LANDINGS && change.kind === "redirected-damage") {
+            this.#landRedirected(record, change.toId, change.amount);
+          }
+          if (round < LAST_PASS_LANDINGS && change.kind === "charged-source") {
+            this.#landCharge(change.toId, change.statusId, change.amount);
+          }
+          this.#loseRaisedMaxima(record, change);
+          this.#endForm(record, change);
+          this.#returnSource(change);
+        }
+      }
     }
   }
 
