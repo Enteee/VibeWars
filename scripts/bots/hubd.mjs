@@ -150,6 +150,7 @@ import {
   flowKpis,
   parseCiHistory,
   parseCiJobs,
+  planCiJobs,
   parseEdges,
   parseMeminfo,
   parseUnits,
@@ -3727,7 +3728,7 @@ async function recordCiRuns(now, cfg) {
     }
     /** @type {unknown[]} */
     const got = rows;
-    read.push(...got.flatMap((row) => ciRunFromRest(row, GATE_WORKFLOWS) ?? []));
+    read.push(...got.flatMap((row) => ciRunFromRest(row, NAMED_RUN_WORKFLOWS) ?? []));
     if (got.length < 100) {
       break;
     }
@@ -3752,68 +3753,104 @@ async function recordCiRuns(now, cfg) {
 }
 
 /**
- * The most runs whose jobs one KPI tick reads (#1892). Each is a `gh api`
- * call in hubd's loop, ahead of every hub command waiting; a backfill past
- * this is reported as `coverage` until it catches up.
+ * The workflows that can run on company runners (#1891), the only ones whose
+ * job waits say anything about runners (#1892). CodeQL, dependency review,
+ * audit and Pages stay hosted, so their jobs are never read.
+ */
+const RUNNER_WORKFLOWS = ["ci.yml", "e2e-repeat.yml", "e2e-soak.yml", "music-measure.yml"];
+/** The workflows `ci-history.jsonl` names; every other one is `"other"`. */
+const NAMED_RUN_WORKFLOWS = [...new Set([...GATE_WORKFLOWS, ...RUNNER_WORKFLOWS])];
+/**
+ * The most runs whose jobs one KPI tick reads (#1892); a backfill past this
+ * is reported as `coverage` until it catches up.
  */
 const JOBS_PER_TICK = 10;
 /** A run whose jobs fail this many reads is recorded as unread, never asked for again. */
 const JOBS_MAX_FAILURES = 3;
 /** Failed jobs reads per run id, since hubd started. */
 const jobsFailures = /** @type {Map<number, number>} */ (new Map());
+/** `ci-jobs.jsonl` as read once at the first tick, and kept since; null before. */
+let ciJobsRead = /** @type {import("./kpi.mjs").CiRunJobs[] | null} */ (null);
+/** Whether a `readCiJobs` is under way. */
+let ciJobsReading = false;
 
 /**
- * Append the jobs of the history's runs of the last 7 days not yet in
- * `ci-jobs.jsonl`, newest first and at most `JOBS_PER_TICK`, then drop
- * runs older than that. The batch stops at the first failed read: a rate
- * limit fails the rest too. A run that failed `JOBS_MAX_FAILURES` times is
- * recorded with no jobs, as not whole.
+ * The runs' jobs read so far: `ci-jobs.jsonl`, parsed on the first call.
+ *
+ * @returns {import("./kpi.mjs").CiRunJobs[]}
+ */
+function ciJobsSoFar() {
+  ciJobsRead ??= fs.existsSync(CI_JOBS) ? parseCiJobs(fs.readFileSync(CI_JOBS, "utf8")) : [];
+  return ciJobsRead;
+}
+
+/**
+ * Start reading the jobs `planCiJobs` names next, unless a read is still
+ * under way. Never awaited: each read is a `gh api` call, and hubd's loop
+ * serves every hub command. The next tick's snapshot uses what has landed.
  *
  * @param {number} now
  * @param {readonly import("./kpi.mjs").CiRun[]} runs `ci-history.jsonl`'s
  * @param {ReturnType<typeof company>} cfg
- * @returns {Promise<import("./kpi.mjs").CiRunJobs[]>} the runs' jobs, after
+ * @returns {void}
  */
-async function recordCiJobs(now, runs, cfg) {
-  const stored = fs.existsSync(CI_JOBS) ? parseCiJobs(fs.readFileSync(CI_JOBS, "utf8")) : [];
-  const read = new Set(stored.map((run) => run.runId));
-  const week = runs.filter((run) => run.createdAt >= now - CI_FIRST_LOOKBACK_MS);
-  const unread = week
-    .filter((run) => !read.has(run.id))
-    .sort((a, b) => b.completedAt - a.completedAt)
-    .slice(0, JOBS_PER_TICK);
-  /** @type {import("./kpi.mjs").CiRunJobs[]} */
-  const fresh = [];
-  for (const run of unread) {
+function startCiJobs(now, runs, cfg) {
+  if (ciJobsReading) {
+    return;
+  }
+  ciJobsReading = true;
+  readCiJobs(now, runs, cfg)
+    .catch((/** @type {unknown} */ error) => {
+      console.error(`hubd: ci-jobs.jsonl: ${error instanceof Error ? error.message : "failed"}`);
+    })
+    .finally(() => {
+      ciJobsReading = false;
+    });
+}
+
+/**
+ * Drop from `ci-jobs.jsonl` the runs past 7 days, then append the jobs of
+ * the next runs, one at a time. The batch stops at the first failed read:
+ * a rate limit fails the rest too. A run that failed `JOBS_MAX_FAILURES`
+ * times is recorded with no jobs, as not whole.
+ *
+ * @param {number} now
+ * @param {readonly import("./kpi.mjs").CiRun[]} runs
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function readCiJobs(now, runs, cfg) {
+  const read = ciJobsSoFar();
+  const { keep, next } = planCiJobs({
+    now,
+    history: runs,
+    read,
+    workflows: RUNNER_WORKFLOWS,
+    cap: JOBS_PER_TICK,
+  });
+  if (keep.length < read.length) {
+    writeAtomic(CI_JOBS, keep.map((run) => `${JSON.stringify(run)}\n`).join(""));
+    ciJobsRead = keep;
+  }
+  for (const run of next) {
     const answer = await rest(
       `actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`,
       cfg,
     );
     const jobs = ciRunJobsFromRest(run, answer);
-    if (jobs !== null) {
-      fresh.push(jobs);
-      jobsFailures.delete(run.id);
-      continue;
-    }
-    const failures = (jobsFailures.get(run.id) ?? 0) + 1;
-    if (failures >= JOBS_MAX_FAILURES) {
-      fresh.push(unreadCiRunJobs(run));
-      jobsFailures.delete(run.id);
-    } else {
+    const failures = jobs === null ? (jobsFailures.get(run.id) ?? 0) + 1 : 0;
+    const line = jobs ?? (failures >= JOBS_MAX_FAILURES ? unreadCiRunJobs(run) : null);
+    if (line === null) {
       jobsFailures.set(run.id, failures);
+      return;
     }
-    break;
+    jobsFailures.delete(run.id);
+    fs.appendFileSync(CI_JOBS, `${JSON.stringify(line)}\n`);
+    ciJobsRead = [...ciJobsSoFar(), line];
+    if (jobs === null) {
+      return;
+    }
   }
-  if (fresh.length > 0) {
-    fs.appendFileSync(CI_JOBS, fresh.map((run) => `${JSON.stringify(run)}\n`).join(""));
-  }
-  const all = [...stored, ...fresh];
-  const ids = new Set(week.map((run) => run.id));
-  const kept = all.filter((run) => ids.has(run.runId));
-  if (kept.length < all.length) {
-    writeAtomic(CI_JOBS, kept.map((run) => `${JSON.stringify(run)}\n`).join(""));
-  }
-  return kept;
 }
 
 /**
@@ -3912,13 +3949,6 @@ async function writeKpis(cfg) {
     } catch (error) {
       ciRuns = error instanceof Error ? error : new Error("CI history unreadable");
     }
-    /** @type {import("./kpi.mjs").CiRunJobs[] | Error} */
-    let ciJobs;
-    try {
-      ciJobs = ciRuns instanceof Error ? ciRuns : await recordCiJobs(now, ciRuns, cfg);
-    } catch (error) {
-      ciJobs = error instanceof Error ? error : new Error("CI jobs unreadable");
-    }
     const waits = readWaits(staff);
     const roles = { employees: staff?.employees ?? {} };
     const moves = () =>
@@ -3994,15 +4024,19 @@ async function writeKpis(cfg) {
         return ciKpis({ now, runs: ciRuns, moves: history, done7d, gate: GATE_WORKFLOWS });
       },
       ciJobs: () => {
-        if (ciJobs instanceof Error) {
-          throw ciJobs;
+        if (ciRuns instanceof Error) {
+          throw ciRuns;
         }
-        return ciJobKpis(now, ciJobs, ciRuns instanceof Error ? [] : ciRuns);
+        const wanted = ciRuns.filter((run) => RUNNER_WORKFLOWS.includes(run.workflow));
+        return ciJobKpis(now, ciJobsSoFar(), wanted);
       },
       machine: sampleMachine,
     });
     writeAtomic(KPIS, JSON.stringify(kpis));
     lastSnapshot = kpis;
+    if (!(ciRuns instanceof Error)) {
+      startCiJobs(now, ciRuns, cfg);
+    }
   } catch (error) {
     console.error(`hubd: kpis.json: ${error instanceof Error ? error.message : "failed"}`);
   }

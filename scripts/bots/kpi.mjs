@@ -500,7 +500,8 @@ function isEdge(value) {
  * epoch ms. Every jail reads the file, and a fork's pull request names its
  * own title, branch and workflow files: so no free text is kept. `issue`
  * is the `#N` a run's title starts with, `onMain` whether it ran on main,
- * and `workflow` a gate workflow's file name or `"other"`.
+ * and `workflow` a named workflow's file name (the gate's and the runner
+ * ones, #1892) or `"other"`.
  *
  * @typedef {{ id: number, workflow: string, event: string, onMain: boolean,
  *   sha: string, issue: number | null, createdAt: number, completedAt: number,
@@ -570,10 +571,10 @@ export function parseCiHistory(text) {
  * attempts are never seen: close enough for KPIs.
  *
  * @param {unknown} value
- * @param {readonly string[]} gate the merge gate's workflow files
+ * @param {readonly string[]} named the workflow files a run keeps its file name for
  * @returns {CiRun | null} null for a run not yet completed, or malformed
  */
-export function ciRunFromRest(value, gate) {
+export function ciRunFromRest(value, named) {
   if (typeof value !== "object" || value === null) {
     return null;
   }
@@ -586,7 +587,7 @@ export function ciRunFromRest(value, gate) {
     typeof run.display_title === "string" ? /^#(\d+)\b/.exec(run.display_title)?.[1] : undefined;
   const line = {
     id: run.id,
-    workflow: gate.includes(file) ? file : "other",
+    workflow: named.includes(file) ? file : "other",
     event: run.event,
     onMain: run.head_branch === "main",
     sha: run.head_sha,
@@ -988,6 +989,30 @@ export function ciRunJobsFromRest(run, answer) {
       answer.total_count > rows.length
     ),
   };
+}
+
+/**
+ * Which runs' jobs to read next (#1892): the history's runs of the given
+ * workflows created in the last 7 days whose jobs are not read yet, the
+ * latest completed first, at most `cap`; and the read runs to keep, those
+ * still among them.
+ *
+ * @param {{ now: number, history: readonly CiRun[], read: readonly CiRunJobs[],
+ *   workflows: readonly string[], cap: number }} facts
+ * @returns {{ keep: CiRunJobs[], next: CiRun[] }}
+ */
+export function planCiJobs({ now, history, read, workflows, cap }) {
+  const wanted = history.filter(
+    (run) => run.createdAt >= now - 7 * DAY_MS && workflows.includes(run.workflow),
+  );
+  const ids = new Set(wanted.map((run) => run.id));
+  const keep = read.filter((run) => ids.has(run.runId));
+  const done = new Set(keep.map((run) => run.runId));
+  const next = wanted
+    .filter((run) => !done.has(run.id))
+    .sort((a, b) => b.completedAt - a.completedAt)
+    .slice(0, cap);
+  return { keep, next };
 }
 
 /**

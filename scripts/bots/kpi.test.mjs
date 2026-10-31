@@ -21,6 +21,7 @@ import {
   parseEdges,
   parseMeminfo,
   parseUnits,
+  planCiJobs,
   projectSevenDay,
   stageWaits,
   staffKpis,
@@ -844,6 +845,27 @@ describe("CI jobs (#1892)", () => {
       read: 3,
       partial: 2,
     });
+  });
+
+  it("plans the next reads: runner workflows of the last 7 days not read, latest first, capped", () => {
+    const history = [
+      run({ id: 1, completedAt: NOW - 3 * H }),
+      run({ id: 2, completedAt: NOW - H }),
+      run({ id: 3, completedAt: NOW - 2 * H }),
+      run({ id: 4, completedAt: NOW - 30 * 60_000, workflow: "codeql.yml" }),
+      run({ id: 5, createdAt: NOW - 8 * D, completedAt: NOW - 8 * D }),
+      run({ id: 6, completedAt: NOW - 4 * H }),
+    ];
+    const read = [run({ id: 6 }), run({ id: 5 }), run({ id: 99 })].map(unreadCiRunJobs);
+    const { keep, next } = planCiJobs({
+      now: NOW,
+      history,
+      read,
+      workflows: ["ci.yml"],
+      cap: 2,
+    });
+    expect(next.map((one) => one.id)).toEqual([2, 3]);
+    expect(keep.map((one) => one.runId)).toEqual([6]);
   });
 
   it("parses ci-jobs.jsonl back to what was written, and skips a line that is not one", () => {
