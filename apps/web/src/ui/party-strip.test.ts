@@ -58,6 +58,7 @@ describe("the party strip's party (#1526)", () => {
         player("me"),
       ]),
       null,
+      undefined,
     );
     expect(party).toEqual({
       code: "ACDEFG",
@@ -69,12 +70,17 @@ describe("the party strip's party (#1526)", () => {
         { name: "me", primary: null, isHost: false, self: true, away: false },
       ],
       queuedMs: null,
+      teams: undefined,
     });
     expect(isAlone(party)).toBe(false);
   });
 
   it("greys a member whose connection dropped, and says it is reconnecting (#1764)", () => {
-    const party = partyOf(lobby([player("me"), player("friend", { away: true, team: 1 })]), null);
+    const party = partyOf(
+      lobby([player("me"), player("friend", { away: true, team: 1 })]),
+      null,
+      undefined,
+    );
     const [me, friend] = party.members;
     if (me === undefined || friend === undefined) {
       throw new Error("two members");
@@ -88,20 +94,27 @@ describe("the party strip's party (#1526)", () => {
   });
 
   it("is alone with only bots for company, and with no lobby at all", () => {
-    expect(isAlone(partyOf(lobby([player("me"), player("Bot", { bot: true })]), null))).toBe(true);
+    expect(
+      isAlone(partyOf(lobby([player("me"), player("Bot", { bot: true })]), null, undefined)),
+    ).toBe(true);
     expect(isAlone(undefined)).toBe(true);
   });
 
   it("tells a guest its host has the lobby closed, and nothing while open; the host never (#1682)", () => {
     const party = (isHost: boolean, open: boolean) =>
-      showsClosed({ ...partyOf(lobby([player("me")]), null), isHost, open });
+      showsClosed({ ...partyOf(lobby([player("me")]), null, undefined), isHost, open });
     expect(party(false, false)).toBe(true);
     expect(party(false, true)).toBe(false);
     expect(party(true, false)).toBe(false);
   });
 
   it("says how long a queued party has looked for a team (#1766)", () => {
-    expect(partyOf(lobby([player("me")]), 65_000).queuedMs).toBe(65_000);
-    expect(lookingLabel(65_000)).toBe("Looking for a team… 1:05");
+    expect(partyOf(lobby([player("me")]), 65_000, 2)).toMatchObject({ queuedMs: 65_000, teams: 2 });
+    expect(lookingLabel(65_000, undefined)).toBe("Looking for a team… 1:05");
+  });
+
+  it("says how many teams are searching, its own included (#1881)", () => {
+    expect(lookingLabel(65_000, 1)).toBe("Looking for a team… 1:05 · 1 team searching");
+    expect(lookingLabel(65_000, 2)).toBe("Looking for a team… 1:05 · 2 teams searching");
   });
 });

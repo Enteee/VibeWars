@@ -43,10 +43,14 @@ export interface TicketKey {
 }
 
 export type QueueState =
-  /** `searching` players are queued, own included, of the `needed` a match takes. */
+  /**
+   * `searching` players are queued, own included, of the `needed` a match
+   * takes, in `teams` tickets: a party is one (#1881).
+   */
   | {
       readonly kind: "searching";
       readonly searching: number;
+      readonly teams: number;
       readonly needed: number;
       readonly waitedMs: number;
     }
@@ -132,7 +136,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   const ignored = new Map<string, number>();
   const handlers = new Set<(state: QueueState) => void>();
 
-  let state: QueueState = { kind: "searching", searching: 0, needed, waitedMs: 0 };
+  let state: QueueState = { kind: "searching", searching: 0, teams: 0, needed, waitedMs: 0 };
   /**
    * Replaced on every requeue, so every ticket has a key of its own; a
    * party keeps its member key, since its followers find it by its id.
@@ -188,10 +192,11 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     return new Set(ignored.keys());
   }
 
-  /** Players in live tickets of this mode at `at`, own included. */
+  /** Players and tickets live in this mode at `at`, own included. */
   function searching(at: number): QueueState {
     const skip = stillIgnored(at);
     let players = 0;
+    let teams = 0;
     for (const ticket of tickets.values()) {
       if (
         ticket.protocol === PROTOCOL_VERSION &&
@@ -199,9 +204,10 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
         !skip.has(ticket.ticketId)
       ) {
         players += ticket.members.length;
+        teams += 1;
       }
     }
-    return { kind: "searching", searching: players, needed, waitedMs: at - enteredAt };
+    return { kind: "searching", searching: players, teams, needed, waitedMs: at - enteredAt };
   }
 
   /** Where `groups`, formed at `at`, leave this client. */
