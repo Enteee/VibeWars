@@ -56,8 +56,12 @@ describe("tunnelTarget", () => {
   });
 
   it("refuses any port but 443, and a target that is not host:port", () => {
-    expect(tunnelTarget("github.com:22", ALLOW)).toEqual({ refused: "port 22 refused: github.com" });
-    expect(tunnelTarget("github.com:80", ALLOW)).toEqual({ refused: "port 80 refused: github.com" });
+    expect(tunnelTarget("github.com:22", ALLOW)).toEqual({
+      refused: "port 22 refused: github.com",
+    });
+    expect(tunnelTarget("github.com:80", ALLOW)).toEqual({
+      refused: "port 80 refused: github.com",
+    });
     for (const target of ["github.com", "/path", "http://github.com:443", undefined]) {
       expect(tunnelTarget(target, ALLOW), String(target)).toEqual({
         refused: `not host:port: ${String(target)}`,
@@ -68,7 +72,14 @@ describe("tunnelTarget", () => {
 
 describe("parseAllowlist", () => {
   it("refuses anything but a non-empty list of host names", () => {
-    for (const json of ["[]", "{}", '["*.github.com"]', '["github.com/x"]', '["Github.com"]', "[1]"]) {
+    for (const json of [
+      "[]",
+      "{}",
+      '["*.github.com"]',
+      '["github.com/x"]',
+      '["Github.com"]',
+      "[1]",
+    ]) {
       expect(() => parseAllowlist(json), json).toThrow(/runner-proxy/);
     }
   });
@@ -106,18 +117,27 @@ describe("createRunnerProxy", () => {
   async function proxy(address) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "runner-proxy-"));
     const echo = net.createServer((socket) => socket.pipe(socket));
-    await new Promise((resolve) => echo.listen(0, "127.0.0.1", () => resolve(undefined)));
+    await new Promise((resolve) =>
+      echo.listen(0, "127.0.0.1", () => {
+        resolve(undefined);
+      }),
+    );
     const echoPort = /** @type {net.AddressInfo} */ (echo.address()).port;
     /** @type {string[]} */
     const logs = [];
     const server = createRunnerProxy({
       allow: ALLOW,
-      resolve: async (host) => (host === "nowhere.githubusercontent.com" ? Promise.reject(new Error("ENOTFOUND")) : address),
+      resolve: async (host) =>
+        host === "nowhere.githubusercontent.com" ? Promise.reject(new Error("ENOTFOUND")) : address,
       connect: () => net.connect(echoPort, "127.0.0.1"),
       log: (line) => logs.push(line),
     });
     const socket = path.join(dir, "proxy.sock");
-    await new Promise((resolve) => server.listen(socket, () => resolve(undefined)));
+    await new Promise((resolve) =>
+      server.listen(socket, () => {
+        resolve(undefined);
+      }),
+    );
     cleanups.push(() => {
       server.close();
       echo.close();
@@ -147,7 +167,9 @@ describe("createRunnerProxy", () => {
           client.end();
         }
       });
-      client.on("close", () => resolve(got));
+      client.on("close", () => {
+        resolve(got);
+      });
       client.write(`CONNECT ${target} HTTP/1.1\r\nHost: ${target}\r\n\r\n`);
     });
   }
@@ -188,16 +210,22 @@ describe("createRunnerProxy", () => {
 
   it("answers a plain HTTP request with 405, never forwarding it", async () => {
     const { socket, logs } = await proxy("140.82.121.4");
-    const got = await new Promise((resolve) => {
-      const client = net.connect(socket);
-      let text = "";
-      client.on("data", (chunk) => {
-        text += chunk.toString();
-      });
-      client.on("close", () => resolve(text));
-      client.write("GET http://github.com/ HTTP/1.1\r\nHost: github.com\r\nConnection: close\r\n\r\n");
-    });
-    expect(String(got)).toMatch(/^HTTP\/1\.1 405/);
+    const got = await new Promise(
+      /** @param {(text: string) => void} resolve */ (resolve) => {
+        const client = net.connect(socket);
+        let text = "";
+        client.on("data", (chunk) => {
+          text += chunk.toString();
+        });
+        client.on("close", () => {
+          resolve(text);
+        });
+        client.write(
+          "GET http://github.com/ HTTP/1.1\r\nHost: github.com\r\nConnection: close\r\n\r\n",
+        );
+      },
+    );
+    expect(got).toMatch(/^HTTP\/1\.1 405/);
     expect(logs).toEqual(["runner-proxy: refused GET http://github.com/: CONNECT only"]);
   });
 });
