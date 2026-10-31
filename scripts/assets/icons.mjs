@@ -2481,6 +2481,50 @@ const skillGlyph = {
     `<g transform="translate(12,15.5) scale(0.8) translate(-12,-12)">${skillGlyph.speed()}</g>` +
     inkLine("M3 5H16", 2.2) +
     inkFill("M22 5L16 2V8Z"),
+  // Ranger staples 3 (#1697): the shot, the pet, the trap and the stance.
+  "arrow-aimed": () =>
+    `<path d="M14 3L20.5 5.5V11C20.5 15 17.5 18 14 20C10.5 18 7.5 15 7.5 11V5.5Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2 12H17", 2.4) +
+    inkFill("M23 12L16.5 8V16Z") +
+    inkLine("M2 6.5H7M2 17.5H7", 2),
+  "arrow-lob": () =>
+    `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
+    inkFill("M19.5 21L15 13.5L23 14Z") +
+    inkLine("M2.5 22H12", 2),
+  "arrow-splinter": () =>
+    inkLine("M3 21L12 12", 2.4) +
+    inkFill("M13 11L8.5 11.8L12.2 15.5Z") +
+    inkLine("M14 9L15 2.5M15.5 10.5L21.5 6M16 12.5L22 13", 2.4),
+  "arrow-ring-break": () =>
+    `<circle cx="15" cy="9" r="7" ${stroke(C.ink, 2)} stroke-dasharray="4.4 3.2"/>` +
+    inkLine("M2.5 21.5L14 10", 2.4) +
+    inkFill("M21 3L10.5 6L18 13.5Z"),
+  "paw-leap": () =>
+    `<g transform="translate(12,16.5) scale(0.62) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    `<path d="M3.5 10C6 2.5 15 1.5 19.5 6.5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M22 10L16 8L20.8 3.5Z"),
+  "paw-lunge": () =>
+    `<g transform="translate(15.5,12) rotate(35) scale(0.7) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M2.5 7H8M2.5 12H6M2.5 17H8", 2.2),
+  "fangs-poison": () =>
+    inkFill("M4 3H10L7 13Z") +
+    inkFill("M14 3H20L17 13Z") +
+    `<circle cx="7" cy="18" r="2.3" fill="${C.ink}"/><circle cx="12.5" cy="20" r="1.8" fill="${C.ink}"/><circle cx="17.5" cy="18" r="2.3" fill="${C.ink}"/>`,
+  "nest-snake": () =>
+    `<path d="M2.5 15C3.5 21 20.5 21 21.5 15" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 15C6.5 12.5 16.5 9.5 11.5 5", 2.8) +
+    `<circle cx="11" cy="3.8" r="2.2" fill="${C.ink}"/>`,
+  tripwire: () =>
+    inkLine("M4 6V21M20 6V21", 2.6) +
+    `<path d="M4 15Q12 20 20 15" ${stroke(C.ink, 1.6)} stroke-dasharray="2.2 2.2"/>` +
+    inkLine("M2 21.5H6M18 21.5H22", 2.2) +
+    inkFill("M12 3L14.5 8H9.5Z"),
+  "smoke-plume": () =>
+    `<circle cx="8" cy="14" r="4.5" fill="${C.ink}"/><circle cx="14" cy="10.5" r="5.5" fill="${C.ink}"/><circle cx="18" cy="15" r="3.8" fill="${C.ink}"/>` +
+    inkLine("M3 20.5H21", 2.4),
+  "haste-miss": () =>
+    `<path d="M3 21L21 3" ${stroke(C.ink, 1.4)} stroke-dasharray="2.4 2.4"/>` +
+    inkLine("M7 7L13 13L7 19M13 7L19 13L13 19", 2.6),
   // Warrior staples 2 and Clumsiness (#1592, #1593, #1619).
   "shield-knock": () =>
     `<g transform="translate(9,12) scale(0.8) translate(-12,-12)"><path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/></g>` +
