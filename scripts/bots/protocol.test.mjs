@@ -825,6 +825,32 @@ describe("formatMirror", () => {
     expect(message.entities.some((e) => e.type === "text_link")).toBe(false);
   });
 
+  it("filters bidi, zero-width and tag characters, and keeps link offsets true (#93)", () => {
+    const text = "a\u202eb\u200bc\u{e0041}d #12";
+    const message = formatMirror({ from: "manager", to: "architect", text }, REPO);
+    expect(message.text).toBe("📋 Manager → 🧭 Architect\na�b�c�d #12");
+    expect(covered(message)).toContain(`text_link:#12=>${ISSUES}/12`);
+  });
+
+  it("keeps line breaks as \\n inside the quote (#93)", () => {
+    const message = formatMirror(
+      { from: "manager", to: "architect", text: "one\r\ntwo\u2028three\u2029four\rfive" },
+      REPO,
+    );
+    expect(message.text).toBe("📋 Manager → 🧭 Architect\none\ntwo\nthree\nfour\nfive");
+    const quote = message.entities.find((e) => e.type === "expandable_blockquote");
+    expect((quote?.offset ?? 0) + (quote?.length ?? 0)).toBe(message.text.length);
+  });
+
+  it("measures the cut after filtering (#93)", () => {
+    const room = MAX_MESSAGE_CHARS - "📋 Manager → 🧭 Architect\n".length;
+    // Each tag character is two UTF-16 units raw, one `�` once filtered.
+    const text = "\u{e0041}".repeat(room);
+    const message = formatMirror({ from: "manager", to: "architect", text }, REPO);
+    expect(message.text.length).toBe(MAX_MESSAGE_CHARS);
+    expect(message.text.endsWith("�")).toBe(true);
+  });
+
   it("refuses a role it has no style for", () => {
     expect(() => formatMirror({ from: "gameplay", to: "all", text: "x" }, REPO)).toThrow(
       /no ROLE_STYLE/,
@@ -900,6 +926,25 @@ describe("questions for the operator", () => {
     const delivered = ask("manager", entry);
     expect(delivered.question).toBeNull();
     expect(delivered.notice?.text).toMatch(reason);
+  });
+
+  it("filters a question and its option labels like a mirrored body (#93)", () => {
+    const posted = formatQuestion(3, {
+      from: "architect",
+      text: "ok\u202e?\r\nsecond",
+      options: ["a\u200bb\nc"],
+    });
+    expect(posted.text).toContain("\nok�?\nsecond\n");
+    expect(posted.replyMarkup?.inline_keyboard[0]?.[0]?.text).toBe("a�b⏎c");
+  });
+
+  it("filters the answer shown on an answered question (#93)", () => {
+    const answered = formatQuestion(
+      3,
+      { from: "architect", text: "q", options: [] },
+      "go\u202e\u200bnow",
+    );
+    expect(answered.text).toContain("✅ Answered: go��now");
   });
 
   it("posts a question with one button per row, data within Telegram's 64 bytes", () => {

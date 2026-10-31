@@ -463,10 +463,12 @@ resolves through `refs/heads/<branch>`, which a jail can still move. Treat
 `HEAD` like any other local ref: host code that starts from it starts from
 an agent-chosen commit.
 
-**Open: #93.** Peer text mirrored to Telegram keeps its line breaks and
-bidi characters, so an agent can type a line that looks like another
-sender's header, such as `📋 Manager → 👤 Operator`. Until #93 lands,
-trust the topic a message is in, not a header inside its text.
+**Peer text in Telegram (#93).** The mirror body sits in a blockquote entity,
+so a peer's fake `📋 Manager → 👤 Operator` line shows inside the quote, not as
+a header. Mirrored text and `tg ask` questions and option labels also go
+through `visibleLines` / `visible` (`scripts/bots/protocol.mjs`): bidi
+overrides, zero-width and tag characters become `�`; line breaks stay as
+`\n` inside the quote.
 
 **Strangers' text (#394).** The repository is public, so anyone can
 write text that agents read. Agents never see a comment by someone with
