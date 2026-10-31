@@ -42,7 +42,18 @@ export type RitualistStatusId =
   | "pure-was-li-ming"
   // Ritualist spirits (#1550).
   | "soothing"
-  | "xinraes-weapon";
+  | "xinraes-weapon"
+  // Ritualist weapon spells 3 (#1654).
+  | "resilient-weapon"
+  | "ghostly-weapon"
+  | "guided-weapon"
+  | "sundering-weapon"
+  | "weapon-of-shadow"
+  | "warmongers-weapon"
+  | "wailing-weapon"
+  | "nightmare-weapon"
+  | "weapon-of-fury"
+  | "weapon-of-renewal";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -153,6 +164,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     profession: "ritualist",
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [
         {
           kind: "splash",
@@ -508,5 +520,133 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       },
     ],
     endsWhenTriggered: true,
+  }),
+  // Ritualist weapon spells 3 (#1654), rank-12 values.
+  // "While suffering from a hex or condition, that ally gains +1...6
+  // Health regeneration and +24 armor": 5.
+  "resilient-weapon": define("resilient-weapon", "Resilient Weapon", "weapon-spell", {
+    profession: "ritualist",
+    whileUnder: {
+      categories: ["condition", "hex"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: 5,
+      armorModifier: 24,
+    },
+  }),
+  // "...target other ally's next attack cannot be blocked": Guiding
+  // Hands' single attack, hit or miss.
+  "ghostly-weapon": define("ghostly-weapon", "Ghostly Weapon", "weapon-spell", {
+    profession: "ritualist",
+    unblockableAttacks: 1,
+  }),
+  // "...target ally's attacks cannot be blocked": every one, nothing spent.
+  "guided-weapon": define("guided-weapon", "Guided Weapon", "weapon-spell", {
+    profession: "ritualist",
+    attacksUnblockable: true,
+  }),
+  // "...next 3 attacks have 10% armor penetration and cause Cracked Armor
+  // for 5...20 seconds": 17. Three hits, not swings: a miss spends none.
+  "sundering-weapon": define("sundering-weapon", "Sundering Weapon", "weapon-spell", {
+    profession: "ritualist",
+    attackArmorPenetration: 0.1,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
+      skillId: "ritualist.sundering-weapon",
+    },
+    endsAfterHits: { count: 3, weapon: undefined },
+  }),
+  // "Whenever that ally is struck by an attack, that ally's attacker
+  // becomes Blinded for 5 seconds. The next 1...3 times that ally hits
+  // with an attack, his target is Blinded for 5 seconds": every hit for
+  // its 6 s, not only the next 3, a simplification.
+  "weapon-of-shadow": define("weapon-of-shadow", "Weapon of Shadow", "weapon-spell", {
+    profession: "ritualist",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
+      skillId: "ritualist.weapon-of-shadow",
+    },
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        target: "offender",
+        effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
+        skillId: "ritualist.weapon-of-shadow",
+      },
+    ],
+  }),
+  // "...if target ally attacks a foe who is not attacking, that foe is
+  // interrupted."
+  "warmongers-weapon": define("warmongers-weapon", "Warmonger's Weapon", "weapon-spell", {
+    profession: "ritualist",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-not-attacking" },
+          effects: [{ kind: "interrupt" }],
+        },
+      ],
+      skillId: "ritualist.warmongers-weapon",
+    },
+  }),
+  // "Whenever the Wailing Weapon strikes an attacking foe, that foe is
+  // interrupted": an attack skill being used. A plain swing is no action
+  // VibeWars interrupts, so it is `interrupt-missed`.
+  "wailing-weapon": define("wailing-weapon", "Wailing Weapon", "weapon-spell", {
+    profession: "ritualist",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [
+        { kind: "if", condition: { kind: "target-attacking" }, effects: [{ kind: "interrupt" }] },
+      ],
+      skillId: "ritualist.wailing-weapon",
+    },
+  }),
+  // "...next 3 attacks are reduced by 10...50 damage and steal up to
+  // 10...50 Health": 42. Three hits, not swings: a miss spends none.
+  "nightmare-weapon": define("nightmare-weapon", "Nightmare Weapon", "weapon-spell", {
+    profession: "ritualist",
+    attackDamageDelta: -42,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "life-steal", amount: { flat: 42 } }],
+      skillId: "ritualist.nightmare-weapon",
+    },
+    endsAfterHits: { count: 3, weapon: undefined },
+  }),
+  // "...target ally gains 100% more adrenaline and 1 Energy whenever that
+  // ally successfully hits with an attack."
+  "weapon-of-fury": define("weapon-of-fury", "Weapon of Fury", "weapon-spell", {
+    profession: "ritualist",
+    adrenalineGainFaster: 1,
+    triggers: [
+      {
+        on: "bearer-hits",
+        effects: [{ kind: "energy-gain", amount: { flat: 1 } }],
+        target: "bearer",
+        skillId: "ritualist.weapon-of-fury",
+      },
+    ],
+  }),
+  // "...the next time target ally hits with an attack skill, that ally
+  // gains 1...7 Energy": 6. A plain swing neither gives nor spends it.
+  "weapon-of-renewal": define("weapon-of-renewal", "Weapon of Renewal", "weapon-spell", {
+    profession: "ritualist",
+    onAttackHit: {
+      attackSkillsOnly: true,
+      weapon: undefined,
+      effects: [{ kind: "energy-gain", amount: { flat: 6 } }],
+      skillId: "ritualist.weapon-of-renewal",
+    },
+    endsWhenBearerHitsWithAttackSkill: true,
   }),
 };

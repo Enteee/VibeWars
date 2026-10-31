@@ -91,7 +91,13 @@ export type CombatEvent =
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
   /** Energy the target actually lost (#793): never more than it had, never 0. */
   | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
+  /** Health the caster gave up for their own skill. */
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
+  /**
+   * Health a skill made its target lose (#1678): not damage and not a
+   * sacrifice, so nothing that answers either sees it.
+   */
+  | { readonly kind: "health-loss"; readonly targetId: string; readonly amount: number }
   /**
    * Health stolen from the target (#935): never more than it had, never 0.
    * Not damage: nothing that reacts to damage sees it. What the caster
@@ -787,7 +793,7 @@ export function interruptOnHit(
     return;
   }
   const dazed = victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells);
-  if (isEasilyInterrupted(skill.type) || (dazed && isSpell(skill.type))) {
+  if (isEasilyInterrupted(skill) || (dazed && isSpell(skill.type))) {
     interruptCast(victim, byId, events);
   }
 }
@@ -911,16 +917,30 @@ function destroySpirit(candidate: TargetCandidate, caster: Combatant, events: Co
   events.push({ kind: "spirit-destroyed", targetId: combatant.id });
 }
 
-function sacrifice(caster: Combatant, amount: number, events: CombatEvent[]): void {
-  if (amount <= 0 || isInvulnerable(caster)) {
+/**
+ * `loser` loses `amount` health: the caster's `sacrifice`, or a target's
+ * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
+ * invulnerability and a Guild Lord's cap stop it, and it can kill.
+ */
+function loseHealth(
+  loser: Combatant,
+  amount: number,
+  kind: "sacrifice" | "health-loss",
+  events: CombatEvent[],
+): void {
+  if (amount <= 0 || loser.dead || isInvulnerable(loser)) {
     return;
   }
-  const applied = Math.min(amount, caster.health);
-  caster.health -= applied;
-  events.push({ kind: "sacrifice", targetId: caster.id, amount: applied });
-  if (caster.health <= 0 && !caster.dead) {
-    caster.dead = true;
-    events.push({ kind: "death", targetId: caster.id });
+  // A Guild Lord loses no more than its Amulet lets through (#1223).
+  const applied = guardedLoss(loser, Math.min(amount, loser.health));
+  if (applied <= 0) {
+    return;
+  }
+  loser.health -= applied;
+  events.push({ kind, targetId: loser.id, amount: applied });
+  if (loser.health <= 0) {
+    loser.dead = true;
+    events.push({ kind: "death", targetId: loser.id });
   }
 }
 
@@ -1122,7 +1142,12 @@ export function applyEffect(
     }
 
     case "sacrifice-health": {
-      sacrifice(caster, Math.round((caster.maxHealth * effect.percentOfMax) / 100), events);
+      loseHealth(
+        caster,
+        Math.round((caster.maxHealth * effect.percentOfMax) / 100),
+        "sacrifice",
+        events,
+      );
       return events;
     }
 
@@ -1130,11 +1155,15 @@ export function applyEffect(
       if (target === undefined) {
         return events;
       }
+      if (effect.recipient === "target") {
+        loseHealth(target, resolveMagnitude(effect.amount, caster), "health-loss", events);
+        return events;
+      }
       const removed =
         effect.perRemovedOfProfession === undefined
           ? 1
           : removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
-      sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
+      loseHealth(caster, resolveMagnitude(effect.amount, caster) * removed, "sacrifice", events);
       return events;
     }
 
@@ -1543,6 +1572,7 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
     case "target-is-summoned":
@@ -1629,6 +1659,8 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "target-not-attacking":
+      return !isAttacking(target);
     case "any-of":
       return condition.conditions.some((each) =>
         stateHolds(each, caster, target, surroundings, firing),
@@ -1858,6 +1890,7 @@ function conditionHolds(
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
     case "target-is-summoned":

@@ -111,6 +111,7 @@ import {
   clampPips,
   ENERGY_PER_PIP,
   isStatusId,
+  isUnderAnother,
   MAX_PIPS,
   preventsAttacks,
   reducedRecharge,
@@ -175,6 +176,7 @@ import {
   nextAttackSkillOf,
   nextAttackSkillRiders,
   PLAIN_BLOW,
+  removePreparations,
   resolveAttackSkill,
   resolveAttackSkillOutcome,
   resolveSwing,
@@ -759,7 +761,10 @@ function degenerationSources(combatant: Combatant): {
       definition.healthPips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
       definition.healthPerSecondWhileMoving > 0 ||
-      definition.healthPerSecond > 0
+      definition.healthPerSecond > 0 ||
+      (definition.whileUnder !== undefined &&
+        definition.whileUnder.healthPips > 0 &&
+        isUnderAnother(combatant.statuses.active, status, definition.whileUnder.categories))
     ) {
       healing.add(status.sourceId);
     }
@@ -3046,6 +3051,7 @@ export class MatchSimulation {
         if (
           (event.kind === "damage" ||
             event.kind === "sacrifice" ||
+            event.kind === "health-loss" ||
             event.kind === "health-lost" ||
             event.kind === "life-stolen") &&
           event.amount > 0
@@ -4702,6 +4708,8 @@ export class MatchSimulation {
       next: nextAttackSkillOf(record.combatant),
     };
     const flight = resolution.skill.attack?.flightSpeed;
+    const released: CombatEvent[] = [];
+    removePreparations(record.combatant, resolution.skill, released);
     const events = resolution.targets.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
       const multiplier =
@@ -4715,7 +4723,7 @@ export class MatchSimulation {
         : this.#release(record, target, speed * multiplier, dt, skillHit);
     });
     useNextAttackSkill(record.combatant, skillHit.next, events);
-    return events;
+    return [...released, ...events];
   }
 
   /**

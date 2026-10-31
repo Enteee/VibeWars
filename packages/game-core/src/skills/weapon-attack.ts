@@ -1,7 +1,7 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon } from "../equipment/resolve.js";
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
-import type { Weapon } from "../equipment/weapons.js";
+import { wieldsFor, type Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
@@ -196,6 +196,8 @@ export interface WeaponSnapshot {
   readonly damageType: DamageType;
   /** The least armor penetration the attacker's statuses give (#1519): Judge's Insight's 0.2. */
   readonly armorPenetration: number;
+  /** Added to each blow before armor by the attacker's statuses (#1654): Nightmare Weapon's −42. */
+  readonly damageDelta: number;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -211,6 +213,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalChanceBonus: modifiers.criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
+    damageDelta: modifiers.attackDamageDelta,
   };
 }
 
@@ -497,12 +500,15 @@ export function landBlow(
       ? weapon.damageMax * weapon.criticalMultiplier
       : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
   const packet: DamagePacket = {
-    armored:
+    armored: Math.max(
+      0,
       base *
-      snapshot.damageMultiplier *
-      blow.weaponDamage *
-      (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
-      (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier),
+        snapshot.damageMultiplier *
+        blow.weaponDamage *
+        (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
+        (snapshot.requirementMet ? 1 : rules.unmetRequirementMultiplier) +
+        snapshot.damageDelta,
+    ),
     armorIgnoring: blow.bonus,
     type: blow.damageType ?? snapshot.damageType,
     source: "weapon",
@@ -531,11 +537,15 @@ export function landBlow(
  * Poison's poison, each onto `fired` under its own skill, apart from the
  * blow (#939). Read when the blow lands, so a preparation that ran out
  * mid-swing or mid-flight adds nothing. Physical attacks only, as GW1
- * says: a wand's or a staff's bolt carries none. Then every status that
- * ends after so many hits with this weapon spends one (#939): Sand
+ * says: a wand's or a staff's bolt carries none, except a weapon
+ * spell's, which rides every attack (#1654): Nightmare Weapon steals
+ * through a wand. Then every status that
+ * ends after so many hits with this weapon spends one (#939), whatever
+ * the blow's damage type: Sand
  * Shards' fourth hit splashes, then ends it. Returns those endings,
  * after what the weapon itself does to whoever it hits (#1239). A rider
- * for attack skills only rides a blow `withAttackSkill` (#1551).
+ * for attack skills only rides a blow `withAttackSkill` (#1551), and one
+ * for a weapon class only a blow of that weapon (#1629).
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -548,12 +558,16 @@ export function attackHitRiders(
   fired: FiredTrigger[],
 ): CombatEvent[] {
   const onHit = weaponOnHit(attacker, victim, mainHand.weapon, rng, rules, surroundings);
-  if (!isPhysicalDamage(mainHand.damageType)) {
-    return onHit;
-  }
+  const physical = isPhysicalDamage(mainHand.damageType);
   for (const { id } of attacker.statuses.active) {
-    const rider = getStatusDefinition(id).onAttackHit;
-    if (rider === undefined || (rider.attackSkillsOnly && !withAttackSkill)) {
+    const definition = getStatusDefinition(id);
+    const rider = definition.onAttackHit;
+    if (
+      rider === undefined ||
+      (rider.attackSkillsOnly && !withAttackSkill) ||
+      (!physical && definition.category !== "weapon-spell") ||
+      (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
+    ) {
       continue;
     }
     const events = applyEffects(rider.effects, {
@@ -703,6 +717,22 @@ export function useNextAttackSkill(
   for (const statusId of next.statusIds) {
     if (attacker.statuses.remove(statusId)) {
       events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+    }
+  }
+}
+
+/**
+ * An attack skill that removes its user's preparations (#1629) was
+ * released: they end before its blows land or its shots fly, so none
+ * rides them. Barrage's and Volley's "all your preparations are removed".
+ */
+export function removePreparations(attacker: Combatant, skill: Skill, events: CombatEvent[]): void {
+  if (skill.attack?.removesPreparations !== true) {
+    return;
+  }
+  for (const { id } of [...attacker.statuses.active]) {
+    if (getStatusDefinition(id).category === "preparation" && attacker.statuses.remove(id)) {
+      events.push({ kind: "status-removed", targetId: attacker.id, statusId: id });
     }
   }
 }
@@ -875,6 +905,7 @@ export function resolveAttackSkillOutcome(
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
   const unblockable = bearerAttacked(caster, events, kind);
+  removePreparations(caster, skill, events);
   const next = nextAttackSkillOf(caster);
   const primary = resolution.targets[0];
   const around =

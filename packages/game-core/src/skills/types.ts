@@ -277,10 +277,26 @@ export interface SacrificeHealthEffect {
  * a sacrifice. `perRemovedOfProfession` `undefined`: `amount` once,
  * flat (#1550), as Wanderlust's spirit's "loses 70...50 Health".
  */
-export interface LoseHealthEffect {
+export type LoseHealthEffect = LoseHealthByCaster | LoseHealthByTarget;
+
+export interface LoseHealthByCaster {
   readonly kind: "lose-health";
   readonly amount: Magnitude;
   readonly perRemovedOfProfession: ProfessionId | undefined;
+  readonly recipient?: never;
+}
+
+/**
+ * The effect's target loses `amount` health, not the caster (#1648), as
+ * Enfeebling Touch's "target foe loses 5...53...65 Health". Not damage:
+ * no armor, no damage modifiers and nothing that answers damage; only
+ * invulnerability stops it, and it can kill.
+ */
+export interface LoseHealthByTarget {
+  readonly kind: "lose-health";
+  readonly amount: Magnitude;
+  readonly recipient: "target";
+  readonly perRemovedOfProfession?: never;
 }
 
 /**
@@ -999,6 +1015,11 @@ export type StateCondition =
    */
   | { readonly kind: "target-attacking" }
   /**
+   * The exact negation of `target-attacking` (#1654), as `target-not-moving`
+   * is of `target-moving`: Warmonger's Weapon's "if that foe is not attacking".
+   */
+  | { readonly kind: "target-not-attacking" }
+  /**
    * One of `conditions` holds, each read as it would be alone (#1539):
    * Melandru's Shot's "if target foe is moving or knocked down". An
    * empty list never holds.
@@ -1159,12 +1180,12 @@ export function isInvulnerable(combatant: Combatant): boolean {
 }
 
 /**
- * Whether a skill of this type is interrupted by any attack that lands
- * on its user while it is being used (#1105, GW1's "easily
- * interrupted"): a trap is.
+ * Whether a skill is interrupted by any attack that lands on its user
+ * while it is being used (#1105, GW1's "easily interrupted"): a trap is,
+ * and a skill that says so (#1629), as Precision Shot.
  */
-export function isEasilyInterrupted(type: SkillType): boolean {
-  return type === "trap";
+export function isEasilyInterrupted(skill: Skill): boolean {
+  return skill.type === "trap" || skill.easilyInterrupted === true;
 }
 
 /**
@@ -1250,6 +1271,12 @@ export interface AttackSkillRule {
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.
    */
   readonly onBlocked: readonly SkillEffect[];
+  /**
+   * GW1's "all your preparations are removed" (#1629): Barrage's and
+   * Volley's. Its user's preparations end as it is released, before its
+   * blows or shots, so none rides them. Absent: they stay.
+   */
+  readonly removesPreparations?: true;
   /**
    * How much faster than its weapon's shot it flies (#1486): Mighty
    * Throw's "three times faster". Read at release; a melee blow ignores
@@ -1380,6 +1407,12 @@ export interface Skill {
    * Absent: a player's skill.
    */
   readonly npcOnly?: true;
+  /**
+   * GW1's "this action is easily interrupted" (#1629): any attack that
+   * lands on its user while it is being used interrupts it, as a trap's.
+   * Absent: only what interrupts any skill does.
+   */
+  readonly easilyInterrupted?: true;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */

@@ -415,6 +415,15 @@ describe("describeSkill", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
 
+  it("says a bow-only rider's damage once, with its type and its splash (#1629)", () => {
+    expect(describeStatus("kindle-arrows")).toBe(
+      "bow attacks deal fire damage, foes your bow attacks hit take 20 fire damage",
+    );
+    expect(describeStatus("ignite-arrows")).toBe(
+      "foes your bow attacks hit take 15 fire damage, and so do foes adjacent to them",
+    );
+  });
+
   it("says what the calls and the bond do to a pet (#1108)", () => {
     expect(describeStatus("call-of-protection")).toBe("−17 damage taken");
     expect(describeStatus("symbiotic-bond")).toContain(
@@ -531,10 +540,11 @@ describe("describeSkill", () => {
           lines(rule?.onCritical ?? []) +
           lines(rule?.onFailedToHit ?? []) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
+          (rule?.removesPreparations === true ? 1 : 0) +
           (rule !== undefined && rule.strikes > 1 ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
-          (isEasilyInterrupted(entry.type) ? 1 : 0) +
+          (isEasilyInterrupted(entry) ? 1 : 0) +
           (entry.corpse === undefined ? 0 : 1) +
           (entry.target !== "self" && entry.range === RANGE_SPELL / 2 ? 1 : 0) +
           (entry.companion === undefined ? 0 : 1) +
@@ -798,7 +808,7 @@ describe("attack skills (#417)", () => {
         "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
     ]);
     expect(lines("necromancer.rend-enchantments")).toEqual([
-      "Removes 8 enchantments",
+      "Removes up to 8 enchantments",
       "You lose 31 health for each Monk enchantment removed",
     ]);
     expect(lines("necromancer.plague-touch")).toEqual([

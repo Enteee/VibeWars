@@ -159,7 +159,7 @@ describe("the three weapon spells' tooltips (#1022)", () => {
       "the next time it takes damage or life steal from a foe: steals 51 Health from that foe",
     );
     expect(describeStatus("splinter-weapon")).toBe(
-      "your physical attacks: Adjacent foes take 25 damage, ends after 4 hits",
+      "your attacks: Adjacent foes take 25 damage, ends after 4 hits",
     );
   });
 });

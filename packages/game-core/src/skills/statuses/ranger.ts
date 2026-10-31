@@ -11,8 +11,12 @@ export type RangerStatusId =
   | "whirling-defense"
   | "serpents-quickness"
   | "dodge"
+  | "zojuns-haste"
   // Preparations.
   | "apply-poison"
+  // Ranger staples 2 (#1629).
+  | "kindle-arrows"
+  | "ignite-arrows"
   // Spirits' auras (#1064), worn while in a spirit's range.
   | "winnowing"
   // Ranger calls and bonds on a pet (#1108).
@@ -110,6 +114,15 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     block: { chance: 0.65, against: "projectile" },
     endsWhenBearerAttacks: true,
   }),
+  // "For 5...11 seconds, you move 33% faster and have a 27...75% chance to
+  // block incoming projectiles. Zojun's Haste ends if you attack" (#1676),
+  // Dodge's twin: 65%.
+  "zojuns-haste": define("zojuns-haste", "Zojun's Haste", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.33,
+    block: { chance: 0.65, against: "projectile" },
+    endsWhenBearerAttacks: true,
+  }),
   // What a spirit projects on whoever is in its range (#1064): worn while
   // there, never stripped, only escaped. "Non-spirit creatures within
   // range take 4 additional damage whenever they take physical damage."
@@ -143,8 +156,51 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     onAttackHit: {
       attackSkillsOnly: false,
+      weapon: undefined,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
       skillId: "ranger.apply-poison",
+    },
+  }),
+  // "For 24 seconds, your arrows deal fire damage and hit for an
+  // additional 3...24 fire damage" (#1629): 20, its rank-12 value. Only a
+  // bow's blows: a sword's stay physical and get nothing.
+  "kindle-arrows": define("kindle-arrows", "Kindle Arrows", "preparation", {
+    profession: "ranger",
+    attackDamageType: "fire",
+    attackDamageTypeWeapon: "bow",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [
+        {
+          kind: "damage",
+          amount: { flat: 20 },
+          type: "fire",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "ranger.kindle-arrows",
+    },
+  }),
+  // "For 24 seconds, your arrows explode on contact, dealing 3...18 fire
+  // damage to target and all adjacent foes" (#1629): 15, its rank-12
+  // value. The splash skips its centre, so the struck foe's comes first.
+  "ignite-arrows": define("ignite-arrows", "Ignite Arrows", "preparation", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [
+        { kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 },
+        {
+          kind: "splash",
+          hits: "foes",
+          radius: AREA_ADJACENT,
+          maxTargets: undefined,
+          effects: [{ kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 }],
+        },
+      ],
+      skillId: "ranger.ignite-arrows",
     },
   }),
   // Infuriating Heat (#1540), at its rank-12 value.
