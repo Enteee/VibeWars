@@ -13,6 +13,7 @@ import {
   HEALTH_PER_PIP,
   StatusSet,
   isStatusId,
+  ownSkillBoost,
   type ArmorReduction,
   type BlockRule,
   type MaxHealthLoss,
@@ -319,7 +320,8 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * A hex cast on a `target` under Holy Veil takes twice as long (#944);
  * with no target, as in a tooltip, nothing on one counts. Migraine's
  * longer activation (#1473) slows every skill but an attack skill, and
- * multiplies with Dazed's.
+ * multiplies with Dazed's. A status that hastens the caster's own skills
+ * of a kind (#1761), as Holy Haste's Healing Prayers, multiplies in too.
  */
 export function effectiveActivationSeconds(
   skill: Skill,
@@ -329,9 +331,10 @@ export function effectiveActivationSeconds(
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   const modifiers = aggregateModifiers(caster.statuses.active);
   const slowed =
-    skill.type === "attack" || skill.type === "pet-attack"
+    (skill.type === "attack" || skill.type === "pet-attack"
       ? 1
-      : modifiers.skillActivationMultiplier;
+      : modifiers.skillActivationMultiplier) *
+    ownSkillBoost(caster.statuses.active, skill).activationMultiplier;
   if (!isSpell(skill.type)) {
     return skill.activationSeconds * fastCasting * slowed;
   }

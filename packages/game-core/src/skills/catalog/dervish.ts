@@ -2321,4 +2321,31 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // The status heals.
     effects: [{ kind: "apply-status", statusId: "mystic-vigor", durationSeconds: 20 }],
   },
+  {
+    id: "dervish.extend-enchantments",
+    name: "Extend Enchantments",
+    gwId: 1508,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.mysticism",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, your next Dervish enchantment lasts 10...122...150%
+    // longer" (#1761).
+    effects: [{ kind: "apply-status", statusId: "extend-enchantments", durationSeconds: 10 }],
+  },
 ];

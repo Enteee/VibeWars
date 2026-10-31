@@ -235,6 +235,13 @@ export const DERVISH_STATUS_ICONS = {
       `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(c, 1.8)}/>` +
       `<rect x="3" y="18.5" width="9" height="3.5" rx="0.8" fill="${c}"/>`,
   ],
+  // Skill effect (#1761, stand-in): a stretched bar with an arrow, the
+  // next Dervish enchantment lasts longer.
+  "extend-enchantments": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 12h14M15 9l3 3-3 3" ${stroke(c, 2)}/>` + `<path d="M4 8v8" ${stroke(c, 1.8)}/>`,
+  ],
   // "N for each X" (#1760), stand-ins until their art card.
   // Enchantment: a small bolt inside an enchantment ring, energy for each
   // enchantment; Channeling is the bolt among foe dots.

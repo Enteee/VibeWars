@@ -8,7 +8,7 @@
  */
 
 import type { SkillBar } from "../build.js";
-import type { StatusId, StatusSet } from "./status.js";
+import { NO_OWN_SKILL_BOOST, type OwnSkillBoost, type StatusId, type StatusSet } from "./status.js";
 import type { Skill } from "./types.js";
 
 /**
@@ -24,6 +24,12 @@ export interface CastRule {
   readonly rechargesInstantly: boolean;
   /** Seconds on its recharge as it ends (#1730): Glyph of Sacrifice's. */
   readonly extraRechargeSeconds: number;
+  /**
+   * What its caster's statuses do to skills of its kind (#1761), taken as
+   * it was paid for: a status spent on it, or one that ends during the
+   * cast, still lengthens what it puts on and lessens what it heals.
+   */
+  readonly own: OwnSkillBoost;
 }
 
 /** A cast no chant's or glyph's rule touched. */
@@ -32,6 +38,7 @@ export const NO_CAST_RULE: CastRule = {
   unblockable: false,
   rechargesInstantly: false,
   extraRechargeSeconds: 0,
+  own: NO_OWN_SKILL_BOOST,
 };
 
 export interface ActiveCast {

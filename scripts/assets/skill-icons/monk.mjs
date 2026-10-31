@@ -88,4 +88,9 @@ export const MONK_ICONS = {
   "monk.judges-intervention": { glyph: "halo-heart-bar" },
   // Stand-in for the death trigger of #1762, until its art.
   "monk.dwaynas-sorrow": { glyph: "heal", modifier: "finale" },
+  // Own-skill modifiers (#1761), stand-ins until their art card.
+  "monk.divine-spirit": { glyph: "plus-halo", modifier: "less" },
+  "monk.blessed-aura": { glyph: "plus-halo", modifier: "hourglass" },
+  "monk.healers-covenant": { glyph: "heart-plus", modifier: "less" },
+  "monk.holy-haste": { glyph: "plus-wings", modifier: "clock" },
 };

@@ -181,4 +181,32 @@ export const MONK_STATUS_ICONS = {
       `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
       `<path d="M12 8.5l-1.3 2.2a1.3 1.3 0 1 0 2.6 0z" fill="${c}"/>`,
   ],
+  // Own-skill modifiers (#1761), stand-ins until their art card.
+  // Enchantment: a plus over a falling bar, Monk spells cost less.
+  "divine-spirit": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.4)}/>` + `<path d="M6 16l12 3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Enchantment: a ring round a long bar, Monk enchantments last longer.
+  "blessed-aura": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 1.6)}/>` +
+      `<path d="M7 12h10M15 10l2 2-2 2" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: two hands joined over a small plus, cheaper, lesser heals.
+  "healers-covenant": [
+    "enchantment",
+    (c) =>
+      `<path d="M4 14l5-4 3 3 3-3 5 4" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a plus with speed lines, Healing Prayers cast faster.
+  "holy-haste": [
+    "enchantment",
+    (c) =>
+      `<path d="M14 6v12M8 12h12" ${stroke(c, 2.4)}/>` +
+      `<path d="M3 9h3M3 15h3" ${stroke(c, 1.6)}/>`,
+  ],
 };
