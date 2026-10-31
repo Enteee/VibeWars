@@ -5,8 +5,8 @@ name: e2e repeat
 # so every spec gets exactly ten runs across the jobs and a job holds about
 # 1500 s of runs (#1884): the plan weighs each spec by its seconds in
 # scripts/ci/e2e-durations.json, so a job runs ~25 min plus setup, inside the
-# 40-minute cap, and at most 4 jobs wait on runners. A PR too big for 4
-# jobs (a spec over ~500 s cannot repeat ten times in 4) fails `plan` with a refusal instead of timing out. Playwright's own
+# 40-minute cap, and at most 6 jobs wait on runners. A PR too big for 6
+# jobs (a spec over ~750 s cannot repeat ten times in 6) fails `plan` with a refusal instead of timing out. Playwright's own
 # --shard is not used: it splits by test count and can leave a shard empty.
 # A 1-in-10 flake survives ten runs 35% of the time, so qa-tester's
 # flake-check skill stays: this is the floor, not a replacement.

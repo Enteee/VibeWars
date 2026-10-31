@@ -155,10 +155,10 @@ describe("specSeconds", () => {
 });
 
 describe("the plan under the real budget", () => {
-  it("never exceeds 4 jobs and refuses past 4 x the budget", () => {
-    const fits = { "a.spec.ts": 500 };
-    expect(planJobs(fits, 10, SECONDS_PER_JOB, MAX_JOBS).length).toBeLessThanOrEqual(4);
-    expect(() => planJobs({ "big.spec.ts": 700 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
+  it("never exceeds 6 jobs (builds.spec.ts fits) and refuses a spec over 750 s", () => {
+    const fits = { "builds.spec.ts": 720 };
+    expect(planJobs(fits, 10, SECONDS_PER_JOB, MAX_JOBS).length).toBeLessThanOrEqual(6);
+    expect(() => planJobs({ "big.spec.ts": 800 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
       /split the PR/,
     );
   });
