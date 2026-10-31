@@ -3047,6 +3047,7 @@ export class MatchSimulation {
         if (
           (event.kind === "damage" ||
             event.kind === "sacrifice" ||
+            event.kind === "health-loss" ||
             event.kind === "health-lost" ||
             event.kind === "life-stolen") &&
           event.amount > 0

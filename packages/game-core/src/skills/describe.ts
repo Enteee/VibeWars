@@ -1727,8 +1727,10 @@ function describeEffect(
         near === undefined
           ? ""
           : ` for each spirit ${AREA_AROUND_TARGET.get(near) ?? `within ${String(near)} of it`}`;
+      // A target with fewer loses what it has (#1678): "up to 3".
+      const upTo = typeof effect.count === "number" && effect.count > 1 ? "up to " : "";
       return {
-        text: `Removes ${String(effect.count)} ${effect.category}${plural}${perSpirit}`,
+        text: `Removes ${upTo}${String(effect.count)} ${effect.category}${plural}${perSpirit}`,
         magnitude: undefined,
       };
     }
