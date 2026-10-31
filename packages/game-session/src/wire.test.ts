@@ -56,6 +56,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     outbreak: null,
     maintained: null,
     projected: false,
+    returnPoint: null,
   };
 }
 

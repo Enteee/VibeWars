@@ -431,6 +431,7 @@ function wireEvent(event: CombatEvent): WireCombatEvent | undefined {
     case "attack-unreachable":
     case "attack-interrupted":
     case "shadow-stepped-away":
+    case "shadow-stepped-back":
       return { ...none, kind: event.kind, targetId: event.targetId };
     case "skill-used":
     case "adrenaline-gained":
@@ -535,6 +536,7 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "attack-unreachable":
     case "attack-interrupted":
     case "shadow-stepped-away":
+    case "shadow-stepped-back":
       return { kind: event.kind, targetId };
     default:
       return undefined;

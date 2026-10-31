@@ -293,7 +293,7 @@ describe("Natural Stride (#919)", () => {
 
     const maintained = striding();
     const events = applyEffect(
-      { kind: "maintain-status", statusId: "mending" },
+      { kind: "maintain-status", on: "target", statusId: "mending" },
       {
         caster: makeCombatant({ id: "m", team: 0 }),
         target: maintained,
