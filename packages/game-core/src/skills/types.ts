@@ -64,6 +64,12 @@ export type TargetRule =
   | "single-dead-ally"
   /** A living spirit on the caster's team, whoever made it (#1309): GW1's "allied spirit". */
   | "allied-spirit"
+  /**
+   * A living spirit or minion on the caster's team, whoever made it
+   * (#1827): GW1's "allied summoned creature". Never a pet, which is
+   * charmed rather than summoned, nor a player.
+   */
+  | "allied-summoned-creature"
   /** As `"single-ally"`, yourself included, but never a spirit (#1423): GW1's "Cannot target spirits". */
   | "single-ally-not-spirit"
   /** The caster's own companion, alive or dead, whatever is selected (#1046). */

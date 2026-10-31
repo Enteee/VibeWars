@@ -11,6 +11,7 @@ import type { SkillProfession } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { isAttacking, signetsOnBar } from "./attacking.js";
+import { getSkill } from "./catalog.js";
 import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel } from "./types.js";
@@ -229,6 +230,27 @@ export function rankedDamageReduction(target: Combatant): number {
 }
 
 /**
+ * What `target`'s statuses take off each packet while it activates a
+ * skill of their type (#1827): Armor of Unfeeling's 10 while casting a
+ * binding ritual. Nothing once the activation is over.
+ */
+export function castingDamageReduction(target: Combatant): number {
+  const cast = target.cast.activeCast;
+  const type = cast === undefined ? undefined : getSkill(cast.skillId)?.type;
+  if (type === undefined) {
+    return 0;
+  }
+  let reduction = 0;
+  for (const { id } of target.statuses.active) {
+    const whileCasting = getStatusDefinition(id).damageReductionWhileCasting;
+    if (whileCasting?.skillType === type) {
+      reduction += whileCasting.amount;
+    }
+  }
+  return reduction;
+}
+
+/**
  * How much damage a packet actually does to this target.
  *
  * Rounded once, at the end. Rounding earlier would make a long fight
@@ -261,11 +283,13 @@ export function mitigate(
   // Call of Protection (#1108): a flat cut off every packet, after
   // armor and the multiplier, before Rune of Absorption. Union's spirit
   // pays for every cut that took something (#1265). Shield Stance's
-  // (#1592) is by the bearer's rank, beside it.
+  // (#1592) is by the bearer's rank, beside it, and Armor of Unfeeling's
+  // (#1827) only while it activates a binding ritual.
   if (modifiers.damageReduction > 0 && dealt > 0) {
     target.statuses.chargeSources((definition) => definition.damageReduction > 0);
   }
-  dealt -= modifiers.damageReduction + rankedDamageReduction(target);
+  dealt -=
+    modifiers.damageReduction + rankedDamageReduction(target) + castingDamageReduction(target);
 
   // Rune of Absorption, last and only against physical hits. After
   // mitigation on purpose: it is a flat shield against each blow, so it

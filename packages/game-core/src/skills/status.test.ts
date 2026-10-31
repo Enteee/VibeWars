@@ -89,6 +89,7 @@ describe("status definitions", () => {
         def.attackDamageType !== undefined ||
         def.attackArmorPenetration !== 0 ||
         def.attackDamageDelta !== 0 ||
+        def.damageReductionWhileCasting !== undefined ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||

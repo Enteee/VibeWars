@@ -55,6 +55,9 @@ export type ActivationRejection =
   | "invalid-target-enemy"
   // A spirit skill on anything but a living spirit of your team (#1309).
   | "invalid-target-not-allied-spirit"
+  // A summoned-creature skill on anything but a living spirit or minion of
+  // your team (#1827).
+  | "invalid-target-not-allied-summoned-creature"
   // An echo on a spirit (#1423): GW1's "Cannot target spirits".
   | "invalid-target-spirit"
   | "out-of-range"
@@ -175,6 +178,11 @@ export function targetRuleAllows(
       return isAlly && target.creatureKind === "spirit"
         ? undefined
         : "invalid-target-not-allied-spirit";
+    case "allied-summoned-creature":
+      // A pet is charmed, not summoned; a player is no creature.
+      return isAlly && isSummonedCreature(target.creatureKind)
+        ? undefined
+        : "invalid-target-not-allied-summoned-creature";
   }
 }
 
@@ -202,6 +210,14 @@ export function targetLivenessAllows(
 /** Whether `rule` acts on the caster's own companion, whatever is selected (#1046, #1108). */
 export function isCompanionRule(rule: TargetRule): boolean {
   return rule === "companion" || rule === "living-companion";
+}
+
+/**
+ * Whether a body of `kind` is a summoned creature (#1827): a spirit or a
+ * minion. A pet is charmed, a map's creatures are placed, a player is none.
+ */
+export function isSummonedCreature(kind: CreatureKind | undefined): boolean {
+  return kind === "spirit" || kind === "minion";
 }
 
 /**

@@ -92,6 +92,8 @@ export function define(
     damageTakenMultiplier: 1,
     damageReduction: 0,
     damageReductionPerRank: undefined,
+    damageReductionWhileCasting: undefined,
+    destroysBearerOnExpiry: false,
     redirectsPhysicalDamage: 0,
     maxDamageFractionPerHit: undefined,
     attackDamageCapFraction: undefined,

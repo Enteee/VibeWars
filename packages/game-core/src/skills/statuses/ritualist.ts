@@ -55,7 +55,10 @@ export type RitualistStatusId =
   | "weapon-of-fury"
   | "weapon-of-renewal"
   // Your spirits within earshot (#1777).
-  | "spiritleech-aura";
+  | "spiritleech-aura"
+  // The PvP Communing pair (#1827).
+  | "armor-of-unfeeling"
+  | "signet-of-ghostly-might";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -663,4 +666,23 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       skillId: "ritualist.spiritleech-aura",
     },
   }),
+  // PvP (#1827): "you have 10 base damage reduction while casting binding
+  // rituals". Off each packet, and only mid-activation.
+  "armor-of-unfeeling": define("armor-of-unfeeling", "Armor of Unfeeling", "enchantment", {
+    profession: "ritualist",
+    damageReductionWhileCasting: { skillType: "binding-ritual", amount: 10 },
+  }),
+  // PvP (#1827): "Target allied summoned creature's attacks deal 5...35
+  // more damage. After 10 seconds, that creature is destroyed": +29, its
+  // rank-12 value. A removal before its time destroys nothing.
+  "signet-of-ghostly-might": define(
+    "signet-of-ghostly-might",
+    "Signet of Ghostly Might",
+    "skill-effect",
+    {
+      profession: "ritualist",
+      attackDamageDelta: 29,
+      destroysBearerOnExpiry: true,
+    },
+  ),
 };

@@ -72,4 +72,7 @@ export const RITUALIST_ICONS = {
   "ritualist.spirit-boon-strike": { glyph: "spirit-bolt-heal" },
   "ritualist.spiritleech-aura": { glyph: "spirit-fang", modifier: "less" },
   "ritualist.draw-spirit": { glyph: "spirit-pull" },
+  // The PvP Communing pair (#1827), stand-ins until their art card.
+  "ritualist.armor-of-unfeeling": { glyph: "armor", modifier: "hourglass" },
+  "ritualist.signet-of-ghostly-might": { glyph: "spirit-trio", modifier: "up" },
 };
