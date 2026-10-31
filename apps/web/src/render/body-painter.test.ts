@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { REST_FRAME } from "./attack-clock.js";
 import { paintStandingBody, type Painter, type StandingBody } from "./body-painter.js";
+import { newCapeMotion, stepCapeMotion } from "./cape-motion.js";
+import type { CapeLook } from "./cape-shape.js";
 
 /** A painter that writes down every call, rounded so the record is stable. */
 function recorder(): { readonly painter: Painter; readonly calls: string[] } {
@@ -43,6 +45,8 @@ const BODY: StandingBody = {
   cape: undefined,
 };
 
+const LOOK: CapeLook = { main: 0xa078e0, trim: 0xf2f2f2, emblem: "diamond" };
+
 function paint(body: StandingBody): string[] {
   const { painter, calls } = recorder();
   paintStandingBody(painter, body);
@@ -77,11 +81,30 @@ describe("paintStandingBody (#1250)", () => {
     ]);
   });
 
-  it("draws a cape first, under the disc, and the body as without one (#1422)", () => {
-    const calls = paint({ ...BODY, cape: { main: 0xa078e0, trim: 0xf2f2f2, emblem: "diamond" } });
+  it("draws a cape's cloth first, under the disc, its band over the rim (#1422, #1699)", () => {
+    const calls = paint({ ...BODY, cape: { look: LOOK, motion: newCapeMotion() } });
     expect(calls[0]).toBe(`fillStyle(${String(0xa078e0)}, 1)`);
     expect(calls[1]).toMatch(/^fillPoints\(/);
-    expect(calls.slice(calls.indexOf("fillStyle(5882623, 1)"))).toEqual(paint(BODY));
+    const disc = calls.indexOf("fillStyle(5882623, 1)");
+    const band = calls.indexOf("lineStyle(3, 724756, 1)");
+    expect(band).toBeGreaterThan(disc);
+    // The body as without one, the band between the self rim and the marks.
+    expect([...calls.slice(disc, band), ...calls.slice(band + 8)]).toEqual(paint(BODY));
+  });
+
+  it("draws a folded cape as pinned", () => {
+    expect(paint({ ...BODY, cape: { look: LOOK, motion: newCapeMotion() } })).toMatchSnapshot();
+  });
+
+  it("draws a cape unfolded by a walk to +x as pinned, trailing to -x", () => {
+    const motion = newCapeMotion();
+    for (let i = 0; i < 60; i++) {
+      stepCapeMotion(motion, 1 / 60, { x: 100, y: 50, r: 14, vx: 180, vy: 0 });
+    }
+    const calls = paint({ ...BODY, cape: { look: LOOK, motion } });
+    // Root, then the left hem point, about 32 units behind the centre.
+    expect(calls[1]).toMatch(/^fillPoints\([\d.]+ [\d.]+, 6\d/);
+    expect(calls).toMatchSnapshot();
   });
 
   it("puts the marks on their own layer when given one", () => {

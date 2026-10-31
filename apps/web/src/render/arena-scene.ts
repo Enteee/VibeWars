@@ -71,6 +71,13 @@ import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-
 import { impactMarks, mergeImpacts, type Impact } from "./body-impacts.js";
 import { conditionMarks, cuePhase } from "./body-conditions.js";
 import { bodyRings, invulnerableAlpha, invulnerableRing } from "./body-rings.js";
+import {
+  capeJumped,
+  newCapeMotion,
+  reprimeCapeMotion,
+  stepCapeMotion,
+  type CapeMotion,
+} from "./cape-motion.js";
 import { DEAD_DASH, DEAD_GAP, creatureOutline, dashes } from "./creature-shape.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
 import {
@@ -95,6 +102,7 @@ import {
   paintStandingBody,
   paintWeaponMark,
   type Painter,
+  type WornCape,
 } from "./body-painter.js";
 import type { Point } from "./weapon-mark-geometry.js";
 import type {
@@ -238,6 +246,8 @@ export class ArenaScene extends Phaser.Scene {
   private impacts: Impact[] = [];
   private addedImpacts: Impact[] = [];
   private walkMarker: WalkMarker | undefined;
+  /** Every caped body's cape (#1699), and where the body was drawn last frame. */
+  private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
    * One sprite per shot, by projectile id: in flight, or ended and fading
    * at its end point since `endedAt` (scene seconds).
@@ -424,6 +434,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const point of this.snapshot.capturePoints) {
       this.drawCapturePoint(g, point);
     }
+    this.stepCapes(deltaMs / 1000);
     for (const actor of this.snapshot.actors) {
       this.drawActor(g, marks, actor);
     }
@@ -447,6 +458,51 @@ export class ArenaScene extends Phaser.Scene {
     this.updateNameLabels();
     this.updateFloatingTexts(deltaMs / 1000);
     this.updateEdgeMarkers();
+  }
+
+  /**
+   * Step the cape of every living caped body (#1699) by its drawn
+   * movement since last frame: knocked down it stands still, so it
+   * folds. A body that jumped (a shadow step, a respawn) starts over;
+   * one gone, dead or without a cape keeps none.
+   */
+  private stepCapes(dt: number): void {
+    const seen = new Set<string>();
+    for (const actor of this.snapshot.actors) {
+      if (actor.cape === undefined || actor.dead) {
+        continue;
+      }
+      seen.add(actor.id);
+      const { x, y } = actor.position;
+      const last = this.capes.get(actor.id);
+      if (last === undefined) {
+        this.capes.set(actor.id, { motion: newCapeMotion(), x, y });
+        continue;
+      }
+      const jumped = capeJumped(Math.hypot(x - last.x, y - last.y), actor.radius);
+      if (jumped) {
+        reprimeCapeMotion(last.motion);
+      }
+      const still = jumped || dt <= 0;
+      const vx = still ? 0 : (x - last.x) / dt;
+      const vy = still ? 0 : (y - last.y) / dt;
+      stepCapeMotion(last.motion, dt, { x, y, r: actor.radius, vx, vy });
+      last.x = x;
+      last.y = y;
+    }
+    for (const id of this.capes.keys()) {
+      if (!seen.has(id)) {
+        this.capes.delete(id);
+      }
+    }
+  }
+
+  /** The cape `actor` wears, with its motion; `undefined` for none. */
+  private wornCape(actor: RenderableActor): WornCape | undefined {
+    const motion = this.capes.get(actor.id)?.motion;
+    return actor.cape === undefined || motion === undefined
+      ? undefined
+      : { look: actor.cape, motion };
   }
 
   /**
@@ -931,7 +987,7 @@ export class ArenaScene extends Phaser.Scene {
           weaponId: actor.weaponId,
           offhandId: actor.offhandId,
           frame: this.weaponFrame(actor),
-          cape: actor.cape,
+          cape: this.wornCape(actor),
         },
         phaserPainter(marks),
       );
