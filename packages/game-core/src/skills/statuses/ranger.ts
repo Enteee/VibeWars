@@ -39,7 +39,9 @@ export type RangerStatusId =
   | "muddy-terrain"
   | "conflagration"
   | "predatory-season"
-  | "winter";
+  | "winter"
+  // Staples (#1869).
+  | "hekets-rampage";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -332,5 +334,12 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     ownSkillModifiers: [
       ownSkills({ type: "preparation" }, { rechargeFaster: 0.5, durationMultiplier: 3.46 }),
     ],
+  }),
+  // Staples (#1869). "For 5...11 seconds, you attack 33% faster. This
+  // stance ends if you use an attack skill": not that attack's speed.
+  "hekets-rampage": define("hekets-rampage", "Heket's Rampage", "stance", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.67,
+    endsWhenBearerUsesAttackSkill: true,
   }),
 };

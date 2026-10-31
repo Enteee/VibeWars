@@ -2560,6 +2560,10 @@ export class MatchSimulation {
     payCost(skill, record.combatant, key);
     this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
+    // Heket's Rampage (#1869) ends before the attack skill is timed.
+    if (skill.type === "attack") {
+      this.#logSpent(record, skill, record.combatant.statuses.endOnBearerStartAttackSkill());
+    }
     const { rule, castsInstantly, losesAllEnergy } = this.#useNextSkillRules(record, skill);
     // Glyph of Essence's price (#1730), once the cost is paid.
     if (losesAllEnergy) {

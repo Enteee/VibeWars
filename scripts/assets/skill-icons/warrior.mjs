@@ -82,4 +82,10 @@ export const WARRIOR_ICONS = {
   "warrior.coward": { glyph: "shout-fall" },
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "warrior.victory-is-mine": { glyph: "each-victory" },
+  // Staples (#1869), stand-ins until their art card.
+  "warrior.keen-chop": { glyph: "axe", modifier: "bolt" },
+  "warrior.penetrating-chop": { glyph: "axe", modifier: "down" },
+  "warrior.lacerating-chop": { glyph: "axe", modifier: "bleed" },
+  "warrior.frenzied-defense": { glyph: "shield-stance", modifier: "up" },
+  "warrior.flurry": { glyph: "sword", modifier: "less" },
 };
