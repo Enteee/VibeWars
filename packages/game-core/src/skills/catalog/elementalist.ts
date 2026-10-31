@@ -2932,15 +2932,14 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // "Target foe takes 20...40 damage. If target foe has a Water Magic hex,
     // this spell strikes target and nearby foes for an additional 20...40
     // damage, and nearby foes also suffer Cracked Armor for 5...15
-    // seconds": 36, and 13 s. The plain "damage" is earth, as every other
-    // Earth Magic spell's.
+    // seconds": 36, and 13 s. The plain "damage" ignores armor (wiki).
     effects: [
       {
         kind: "damage",
         amount: {
           scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
         },
-        type: "earth",
+        type: "typeless",
         armorPenetration: 0,
       },
       {
@@ -2952,7 +2951,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
             amount: {
               scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
             },
-            type: "earth",
+            type: "typeless",
             armorPenetration: 0,
           },
           {
@@ -2966,7 +2965,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
                 amount: {
                   scaling: { attributeId: "elementalist.earth-magic", atZero: 20, atTwelve: 36 },
                 },
-                type: "earth",
+                type: "typeless",
                 armorPenetration: 0,
               },
               { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 13 },
