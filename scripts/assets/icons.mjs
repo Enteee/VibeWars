@@ -1899,6 +1899,27 @@ const skillGlyph = {
   "well-sink": () =>
     `<ellipse cx="8.5" cy="17" rx="6" ry="3.4" ${stroke(C.ink, 2.5)}/>` +
     inkLine("M8.5 3.5V12.5M5 9.5L8.5 13L12 9.5", 2.5),
+  // Wells 2 (#1749): the well's ring under the effect it lays on foes.
+  // A ring struck through: no enchantment holds.
+  "well-profane": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="12" cy="9" r="5.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M6 15L18 3", 2.4),
+  // Sound arcs struck through: no shout or chant.
+  "well-silence": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M7 6.5C10.5 9.5 10.5 12.5 7 15.5M12 4C17.5 8.5 17.5 13.5 12 18", 2.2) +
+    inkLine("M4 14L20 2", 2.4),
+  // An eye with its far half dark: hexed foes miss.
+  "well-darkness": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    `<path d="M3 9.5C6 4.5 9 3 12 3S18 4.5 21 9.5C18 14.5 15 16 12 16S6 14.5 3 9.5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M12 3C15 3 18 4.5 21 9.5C18 14.5 15 16 12 16Z"),
+  // A cracked shield: armor breaks under physical hits.
+  "well-ruin": () =>
+    `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(C.ink, 2.2)}/>` +
+    `<path d="M12 2.5L19 5V10C19 13 16 15 12 16.5C8 15 5 13 5 10V5Z" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 3L10 7.5L13.5 10L11 15", 1.8),
   // The resurrect figure in a ring: a signet's seal, one use (#1081).
   "resurrect-seal": () =>
     `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 2)}/>` + smallFigure(10.5, 10.5, 0.55),
