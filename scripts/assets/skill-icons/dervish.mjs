@@ -44,7 +44,7 @@ export const DERVISH_ICONS = {
   "dervish.crippling-victory": { glyph: "blade-limp", modifier: "down" },
   "dervish.lyssas-assault": { glyph: "interrupt", modifier: "half" },
   "dervish.rending-touch": { glyph: "ring-rend", modifier: "bolt" },
-  "dervish.winds-of-disenchantment": { glyph: "ring-rend", modifier: "area" },
+  "dervish.winds-of-disenchantment": { glyph: "ring-rend", modifier: "half" },
   "dervish.signet-of-pious-restraint": { glyph: "blade-limp", modifier: "clock" },
   "dervish.onslaught": { glyph: "blade-fury", modifier: "up" },
   "dervish.zealous-vow": { glyph: "energy", modifier: "hourglass" },
