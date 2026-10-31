@@ -2171,6 +2171,12 @@
         },
         {
           "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "creature-destroyed" } },
+            { "name": "targetId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "death" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
@@ -2238,12 +2244,6 @@
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "spell-failed" } },
             { "name": "skillId", "optional": false, "type": "string" },
-            { "name": "targetId", "optional": false, "type": "string" }
-          ]
-        },
-        {
-          "properties": [
-            { "name": "kind", "optional": false, "type": { "literal": "spirit-destroyed" } },
             { "name": "targetId", "optional": false, "type": "string" }
           ]
         },

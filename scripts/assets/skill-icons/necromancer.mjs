@@ -33,6 +33,12 @@ export const NECROMANCER_ICONS = {
   // Bodies raised from a corpse: a skull pack, and one horned skull (#1112).
   "necromancer.animate-bone-minions": { glyph: "bone-minions" },
   "necromancer.animate-bone-horror": { glyph: "bone-horror" },
+  // Minions 2 (#1836), stand-ins until their art card.
+  "necromancer.animate-vampiric-horror": { glyph: "bone-horror", modifier: "plus" },
+  "necromancer.animate-flesh-golem": { glyph: "bone-horror", modifier: "corpse" },
+  "necromancer.animate-shambling-horror": { glyph: "bone-horror", modifier: "bleed" },
+  "necromancer.putrid-flesh": { glyph: "bone-minions", modifier: "area" },
+  "necromancer.feast-for-the-dead": { glyph: "bone-minions", modifier: "plus" },
   "necromancer.barbs": { glyph: "hex-barbs" },
   "necromancer.price-of-failure": { glyph: "hex-miss" },
   "necromancer.suffering": { glyph: "hex-drain" },
