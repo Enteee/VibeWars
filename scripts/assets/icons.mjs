@@ -2920,6 +2920,28 @@ const skillGlyph = {
     `<path d="M8 10h8M9 13h6" ${stroke(C.ink, 1.4)}/>` +
     `<rect x="3" y="18.5" width="18" height="3.5" rx="0.8" ${stroke(C.ink, 1.8)}/>` +
     `<rect x="3" y="18.5" width="4.5" height="3.5" rx="0.8" fill="${C.ink}"/>`,
+  // Death triggers (#1762, #1832): a skull, and what its death gives.
+  "death-bolt": () =>
+    `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="6.2" cy="8" r="1.1" fill="${C.ink}"/><circle cx="9.8" cy="8" r="1.1" fill="${C.ink}"/>` +
+    `<path d="M18 9L12.5 17H17L15.5 23L22 14H17.5Z" fill="${C.ink}"/>`,
+  "death-bile": () =>
+    `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="6.2" cy="8" r="1.1" fill="${C.ink}"/><circle cx="9.8" cy="8" r="1.1" fill="${C.ink}"/>` +
+    `<path d="M17 11c2.2 2.8 3.6 4.6 3.6 6.4a3.6 3.6 0 0 1-7.2 0c0-1.8 1.4-3.6 3.6-6.4z" fill="${C.ink}"/>` +
+    `<circle cx="13" cy="22" r="1.3" fill="${C.ink}"/><circle cx="21.5" cy="22.3" r="1.3" fill="${C.ink}"/>`,
+  "death-frost": () =>
+    `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="6.2" cy="8" r="1.1" fill="${C.ink}"/><circle cx="9.8" cy="8" r="1.1" fill="${C.ink}"/>` +
+    `<path d="M17.5 11V23M12.3 14L22.7 20M12.3 20L22.7 14" ${stroke(C.ink, 1.8)}/>`,
+  "death-recharge": () =>
+    `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="6.2" cy="8" r="1.1" fill="${C.ink}"/><circle cx="9.8" cy="8" r="1.1" fill="${C.ink}"/>` +
+    `<path d="M22.5 18a5 5 0 1 1-1.5-3.6M22.5 11.5V15H19" ${stroke(C.ink, 2)}/>`,
+  "death-heal": () =>
+    `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(C.ink, 1.8)}/>` +
+    `<circle cx="6.2" cy="8" r="1.1" fill="${C.ink}"/><circle cx="9.8" cy="8" r="1.1" fill="${C.ink}"/>` +
+    `<path d="M17.5 12v10M12.5 17h10" ${stroke(C.ink, 2.4)}/>`,
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +
