@@ -25,9 +25,10 @@ import type { Json, Transport } from "./transport.js";
  * Until then neither side sees the other join, hears what it sends or
  * sends it anything. A wrong or malformed proof, or none in
  * `KEY_PROOF_TIMEOUT_MS`, drops the peer for good; a guest drops a host
- * whose `key-proven` fails. A peer id lasts one page load, so a proven
- * peer that drops and comes back is the same page: it is not asked
- * again.
+ * whose `key-proven` fails. A peer that leaves is forgotten, proven or
+ * not: a peer id is the peer's own to choose and shows on the relays, so
+ * one coming back proves the key again, and a guest challenged again by
+ * a host it had proven sees that host leave and checks it again.
  */
 
 /** How long a challenged peer has to prove the key. */
@@ -230,8 +231,15 @@ export function keyGated(
       if (side !== "guest" || asked === undefined || (peers.has(from) && !proven(from))) {
         return;
       }
+      const was = proven(from);
       const answered: Peer = { stage: "answered", hostNonce: asked.nonce, guestNonce: nonce() };
       peers.set(from, answered);
+      if (was) {
+        // Unheard until it proves itself again: it left, as far as we know.
+        for (const handler of [...leaves]) {
+          handler(from);
+        }
+      }
       void (async () => {
         const mac = await sign(
           macInput("guest", answered.hostNonce, answered.guestNonce, selfId, from),

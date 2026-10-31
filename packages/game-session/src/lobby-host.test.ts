@@ -516,8 +516,10 @@ describe("playing more than one match in a lobby", () => {
   }
 
   it("keeps the team of a guest who drops during the match and comes back (#596)", async () => {
-    const { lobby, guest } = await startAMatch({ timeLimitSeconds: 15 });
+    const { lobby, guest, matches } = await startAMatch({ timeLimitSeconds: 15 });
     await drop(lobby, guest);
+    const states: string[] = [];
+    matches[1]?.onConnectionChange((state) => states.push(state));
     // Still listed while away: the seat is held.
     expect(playersOf(lobby.host)).toEqual([
       { name: "Host", team: 0, ready: true },
@@ -525,8 +527,30 @@ describe("playing more than one match in a lobby", () => {
     ]);
     await lobby.step(10);
     lobby.network.heal();
+    // Back, it proves the key again (#1681): an HMAC, on the event loop.
+    await until(() => states.includes("online"));
     await settle();
     await lobby.step(6);
+    for (const who of [lobby.host, guest]) {
+      expect(who.connection.getSnapshot().phase).toBe("waiting");
+      expect(playersOf(who)).toEqual([
+        { name: "Host", team: 0, ready: false },
+        { name: "Guest", team: 1, ready: false },
+      ]);
+    }
+  });
+
+  it("keeps the seat of a guest only the host saw drop: it proves the key again, and the host does (#1681)", async () => {
+    const { lobby, guest, matches } = await startAMatch({ timeLimitSeconds: 15 });
+    const states: string[] = [];
+    matches[1]?.onConnectionChange((state) => states.push(state));
+    lobby.network.blip("host", guest.transport.selfId);
+    // The host challenges it as a stranger; the guest stops hearing the
+    // host until it has proven itself again, and then comes back.
+    await until(() => states.length === 2);
+    expect(states).toEqual(["reconnecting", "online"]);
+    await settle();
+    await lobby.step(16);
     for (const who of [lobby.host, guest]) {
       expect(who.connection.getSnapshot().phase).toBe("waiting");
       expect(playersOf(who)).toEqual([
@@ -1369,16 +1393,6 @@ describe("the key gate (#1681, ADR-0043)", () => {
     await until(() => proven(got));
     peer.send("lobby-join", joinAs("Again"), "host");
     await until(() => playersOf(lobby.host).length === 2);
-  });
-
-  it("a guest whose host forgot it proves the key again, and checks the host again", async () => {
-    const lobby = await openLobby();
-    const guest = await lobby.join("Guest");
-    lobby.network.blip("host", guest.transport.selfId);
-    await settle();
-    await cryptoTurns();
-    guest.connection.chooseTeam(0);
-    await until(() => playersOf(lobby.host).find(({ name }) => name === "Guest")?.team === 0);
   });
 
   it("drops a peer on a wrong proof: the nonce is spent, so a right one after it is not heard", async () => {
