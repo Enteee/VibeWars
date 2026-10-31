@@ -1467,4 +1467,4 @@ A track declares `layers` = its highest level plus one. Continuous moves use
    prints `[tonal] error` or `unknown chord`: the track loses a voice and
    still "passes".
 7. Quotes in `.strudel.js` are deliberate: double quotes are mini-notation.
-   Prettier does not touch these files.
+   Prettier does not touch these files. scythe-purge, ring-slice, scythe-limp-star, scythe-burst, hand-rend, wind-rend, signet-limp, slash-bars, spark-vow, feather-swift, spiral-charge (the Dervish staples 3, #1707: a scythe over a struck-through drop; a ring cut by one long slash; a scythe with a crack and a star; a scythe with a burst; a palm under a struck-through ring; wind curls under a broken ring; a signet ring with a crack; two slashes over a rising bar; a spark over two falling bars with a minus; a feather with speed chevrons; a wind spiral ending in an arrowhead, the last four repeated by their status icons),
