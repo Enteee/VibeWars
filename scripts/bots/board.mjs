@@ -35,6 +35,7 @@
  * there is no credential in here.
  */
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
 
@@ -48,6 +49,7 @@ import {
 } from "./context.mjs";
 import { COLUMNS, arrivals, boardLines } from "./hub-board.mjs";
 import { parseBoardIds } from "./hub-budget.mjs";
+import { appendWait } from "./waits.mjs";
 
 /** How often `board wait` asks hubd. Free: hubd answers from its copy. */
 const WAIT_POLL_MS = 15_000;
@@ -256,13 +258,27 @@ switch (command) {
       process.exit(2);
     }
     checkColumn(column);
-    const deadline = Date.now() + timeout * 1000;
+    const begun = Date.now();
+    const deadline = begun + timeout * 1000;
+    /**
+     * The wait log's line (#1615), in the bus directory tg's is in.
+     *
+     * @param {"card" | "timeout"} woke
+     */
+    const logged = (woke) => {
+      const bus = process.env.VIBEWARS_BOT_BUS;
+      const employee = process.env.VIBEWARS_BOT_EMPLOYEE;
+      if (bus !== undefined && employee !== undefined) {
+        appendWait(path.join(bus, employee), { start: begun, end: Date.now(), cmd: "board", woke });
+      }
+    };
     const start = ask(["ls", column]);
     let token = String(start.token);
     let known = new Set(cardsOf(start).map((card) => card.id));
     for (;;) {
       if (Date.now() >= deadline) {
         console.log(`(nothing new in ${column} in ${String(timeout)}s)`);
+        logged("timeout");
         break;
       }
       await sleep(Math.min(WAIT_POLL_MS, Math.max(0, deadline - Date.now())));
@@ -272,6 +288,7 @@ switch (command) {
       known = seen.known;
       if (seen.arrived.length > 0) {
         console.log(boardLines(seen.arrived, false).join("\n"));
+        logged("card");
         break;
       }
     }

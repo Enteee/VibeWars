@@ -10,18 +10,22 @@ import {
   cpuShare,
   employeeOfUnit,
   flowKpis,
+  idleShare,
+  idleWhileReady,
   median,
   p90,
   parseCiHistory,
   parseEdges,
   parseUnits,
   projectSevenDay,
+  stageWaits,
   staffKpis,
   tokensByRole,
 } from "./kpi.mjs";
 
 const NOW = 1_800_000_000_000;
 const H = 3_600_000;
+const M = 60_000;
 const D = 24 * H;
 
 /**
@@ -34,10 +38,25 @@ function move(issue, from, to, agoMs) {
   return { ts: NOW - agoMs, issue, from, to, by: "x" };
 }
 
+/** No wait logs, and nobody employed. */
+const NO_WAITS = { waits: new Map(), staff: { employees: {} } };
+
+/**
+ * A wait from `startAgoMs` to `endAgoMs` before now.
+ *
+ * @param {number} startAgoMs
+ * @param {number} endAgoMs
+ * @returns {import("./waits.mjs").WaitLine}
+ */
+function waited(startAgoMs, endAgoMs) {
+  return { start: NOW - startAgoMs, end: NOW - endAgoMs, cmd: "tg", woke: "timeout" };
+}
+
 describe("flowKpis", () => {
   it("counts Done in 24 h and 7 d, with the window edges excluded at the far end", () => {
     const flow = flowKpis({
       now: NOW,
+      ...NO_WAITS,
       cards: [],
       moves: [
         move(1, "QA", "Done", H),
@@ -52,6 +71,7 @@ describe("flowKpis", () => {
   it("measures the cycle from the first Ready to the last Done", () => {
     const flow = flowKpis({
       now: NOW,
+      ...NO_WAITS,
       cards: [],
       moves: [
         move(1, "Backlog", "Ready", 5 * H),
@@ -70,7 +90,7 @@ describe("flowKpis", () => {
   });
 
   it("leaves a card without a Ready in history out of the cycle, and says null when empty", () => {
-    const flow = flowKpis({ now: NOW, cards: [], moves: [move(1, "QA", "Done", H)] });
+    const flow = flowKpis({ now: NOW, ...NO_WAITS, cards: [], moves: [move(1, "QA", "Done", H)] });
     expect(flow.done7d).toBe(1);
     expect(flow.cycleMedianMs).toBeNull();
     expect(flow.cycleP90Ms).toBeNull();
@@ -81,6 +101,7 @@ describe("flowKpis", () => {
   it("waits in review and QA from arrival to leaving", () => {
     const flow = flowKpis({
       now: NOW,
+      ...NO_WAITS,
       cards: [],
       moves: [
         move(1, "In Progress", "In Review", 10 * H),
@@ -97,6 +118,7 @@ describe("flowKpis", () => {
   it("counts only work sent back from review or QA as a bounce, over 24 h and 7 d", () => {
     const flow = flowKpis({
       now: NOW,
+      ...NO_WAITS,
       cards: [],
       moves: [
         move(1, "QA", "In Progress", 2 * H),
@@ -116,6 +138,7 @@ describe("flowKpis", () => {
   it("names up to three most-bounced cards, ties by the lower issue", () => {
     const flow = flowKpis({
       now: NOW,
+      ...NO_WAITS,
       cards: [],
       moves: [
         move(9, "QA", "In Progress", 5 * H),
@@ -132,12 +155,13 @@ describe("flowKpis", () => {
       { issue: 2, bounces: 1 },
       { issue: 4, bounces: 1 },
     ]);
-    expect(flowKpis({ now: NOW, cards: [], moves: [] }).topBounced).toEqual([]);
+    expect(flowKpis({ now: NOW, ...NO_WAITS, cards: [], moves: [] }).topBounced).toEqual([]);
   });
 
   it("counts cards per column and ages the oldest Blocked from its last arrival", () => {
     const flow = flowKpis({
       now: NOW,
+      ...NO_WAITS,
       cards: [
         { issue: 1, status: "Blocked" },
         { issue: 2, status: "Blocked" },
@@ -156,7 +180,7 @@ describe("flowKpis", () => {
   });
 
   it("is all null and zero before any history", () => {
-    const flow = flowKpis({ now: NOW, cards: [], moves: [] });
+    const flow = flowKpis({ now: NOW, ...NO_WAITS, cards: [], moves: [] });
     expect(flow).toMatchObject({
       historySince: null,
       done7d: 0,
@@ -211,10 +235,127 @@ describe("claude and staff", () => {
 
   it("counts employed and live per role", () => {
     const staff = { employees: { "dev@1": { role: "dev" }, "dev@2": { role: "dev" } } };
-    expect(staffKpis(staff, new Set(["dev@1"]), 9)).toEqual({
+    expect(staffKpis(staff, new Set(["dev@1"]), 9, NOW, new Map())).toEqual({
       byRole: { dev: { employed: 2, live: 1 } },
       maxAgents: 9,
+      idleShare24h: {},
     });
+  });
+});
+
+describe("stage waits and idle (#1615)", () => {
+  const staff = {
+    employees: {
+      developer: { role: "developer" },
+      "developer@2": { role: "developer" },
+      "qa-tester": { role: "qa-tester" },
+    },
+  };
+
+  it("measures each column's stays that ended in 24 h, a bounce twice, however long ago they began", () => {
+    const wait = stageWaits(NOW, [
+      move(1, "Backlog", "Ready", 30 * H),
+      move(1, "Ready", "In Progress", 20 * H),
+      move(1, "In Progress", "In Review", 10 * H),
+      move(1, "In Review", "In Progress", 9 * H),
+      move(1, "In Progress", "In Review", 8 * H),
+      move(1, "In Review", "QA", 6 * H),
+      // Ended before the window: not counted.
+      move(2, "Backlog", "Ready", 40 * H),
+      move(2, "Ready", "In Progress", 25 * H),
+    ]);
+    expect(wait.ready).toEqual({ medianMs: 10 * H, p90Ms: 10 * H, n: 1 });
+    expect(wait.inProgress).toEqual({ medianMs: 5.5 * H, p90Ms: 10 * H, n: 2 });
+    expect(wait.inReview).toEqual({ medianMs: 1.5 * H, p90Ms: 2 * H, n: 2 });
+    // Still in QA: no stay has ended.
+    expect(wait.qa).toEqual({ medianMs: null, p90Ms: null, n: 0 });
+  });
+
+  it("shares a role's waits over the time each employee was there, from its first wait in the day", () => {
+    const share = idleShare(
+      NOW,
+      new Map([
+        // There for 10 h, of which 5 h waiting.
+        ["developer", [waited(10 * H, 8 * H), waited(4 * H, H)]],
+        // From before the window: all 24 h observed, 4 h of them waiting, the overlap once.
+        ["developer@2", [waited(26 * H, 20 * H), waited(21 * H, 20 * H)]],
+        // Ended before the window: absent.
+        ["qa-tester", [waited(30 * H, 25 * H)]],
+      ]),
+      staff,
+    );
+    expect(share).toEqual({ developer: (5 * H + 4 * H) / (10 * H + 24 * H) });
+  });
+
+  it("counts the idle sleep after a tg wait that timed out, not only the tg wait", () => {
+    const share = idleShare(
+      NOW,
+      new Map([
+        [
+          "developer",
+          [
+            // 9 min in tg wait, then 50 min asleep in agent-loop's idle, of a 2 h day.
+            waited(2 * H, 2 * H - 9 * M),
+            { start: NOW - 2 * H + 9 * M, end: NOW - H - M, cmd: "idle", woke: "timeout" },
+            waited(H, H - M),
+          ],
+        ],
+      ]),
+      staff,
+    );
+    expect(share).toEqual({ developer: (9 * M + 50 * M + M) / (2 * H) });
+  });
+
+  it("counts Ready occupied while a developer waits, not while a qa-tester does", () => {
+    const moves = [move(1, "Backlog", "Ready", 3 * H), move(1, "Ready", "In Progress", 2 * H)];
+    expect(
+      idleWhileReady(
+        NOW,
+        moves,
+        new Map([
+          ["developer", [waited(2.5 * H, H)]],
+          ["qa-tester", [waited(3 * H, 0)]],
+        ]),
+        staff,
+      ),
+    ).toBe(0.5 * H);
+  });
+
+  it("overlaps interleaved Ready stays and waits, clipped to the day", () => {
+    const moves = [
+      // In Ready from before the window to 20 h ago, and 10 h to 6 h ago.
+      move(1, "Backlog", "Ready", 30 * H),
+      move(1, "Ready", "In Progress", 20 * H),
+      move(2, "Backlog", "Ready", 10 * H),
+      move(2, "Ready", "In Progress", 6 * H),
+    ];
+    const waits = new Map([
+      [
+        "developer",
+        [waited(25 * H, 22 * H), waited(21 * H, 9 * H), waited(8 * H, 7 * H), waited(5 * H, 0)],
+      ],
+    ]);
+    // 24..22 h, 21..20 h, 10..9 h and 8..7 h ago.
+    expect(idleWhileReady(NOW, moves, waits, staff)).toBe(5 * H);
+  });
+
+  it("takes a log far longer than a spread could, without throwing", () => {
+    // 5 ms waited of every 10 ms, over the last 50 minutes.
+    const lines = Array.from({ length: 300_000 }, (_, at) =>
+      waited(3_000_000 - at * 10, 3_000_000 - at * 10 - 5),
+    );
+    expect(idleShare(NOW, new Map([["developer", lines]]), staff).developer).toBeCloseTo(0.5, 3);
+  });
+
+  it("runs a card still in Ready to now", () => {
+    expect(
+      idleWhileReady(
+        NOW,
+        [move(1, "Backlog", "Ready", 30 * H)],
+        new Map([["developer", [waited(2 * H, H), waited(1.5 * H, 0.5 * H)]]]),
+        staff,
+      ),
+    ).toBe(1.5 * H);
   });
 });
 
@@ -535,7 +676,7 @@ describe("ciKpis", () => {
 describe("buildKpis", () => {
   it("writes the snapshot with a failed reader's section null and its error kept", () => {
     const kpis = buildKpis(NOW, {
-      flow: () => flowKpis({ now: NOW, cards: [], moves: [] }),
+      flow: () => flowKpis({ now: NOW, ...NO_WAITS, cards: [], moves: [] }),
       claude: () => {
         throw new Error("no logs\nmore");
       },
@@ -547,7 +688,7 @@ describe("buildKpis", () => {
       webCache: () => null,
       ci: () => ciKpis({ now: NOW, runs: [], moves: [], done7d: 0, gate: GATE }),
     });
-    expect(kpis.schemaVersion).toBe(5);
+    expect(kpis.schemaVersion).toBe(6);
     expect(kpis.schemaVersion).toBe(KPI_SCHEMA_VERSION);
     expect(kpis.ci).toEqual({
       historySince: null,

@@ -177,9 +177,6 @@ export const ELEMENTALIST_STATUS_ICONS = {
     "hex",
     (c) =>
       `<circle cx="12" cy="12" r="9.5" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
-      `<path d="M6.5 14.5a3 3 0 0 1 .5-6 4 4 0 0 1 7.5-.5 3 3 0 0 1 .8 6.500ZM6 19L18 5" ${stroke(c, 1.8)}/>`.replace(
-        ".500Z",
-        ".5Z",
-      ),
+      `<path d="M6.5 14.5a3 3 0 0 1 .5-6 4 4 0 0 1 7.5-.5 3 3 0 0 1 .8 6.5ZM6 19L18 5" ${stroke(c, 1.8)}/>`,
   ],
 };

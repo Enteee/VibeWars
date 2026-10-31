@@ -723,10 +723,7 @@ function interruptCast(
   byId: string | undefined,
   events: CombatEvent[],
 ): boolean {
-  if (
-    aggregateModifiers(target.statuses.active).uninterruptible ||
-    target.cast.activeCast?.rule.uninterruptible === true
-  ) {
+  if (!castInterruptible(target)) {
     return false;
   }
   const cancelled = target.cast.cancelCast();
@@ -743,12 +740,38 @@ function interruptCast(
 }
 
 /**
+ * Whether `target`'s cast in progress, if any, may be interrupted: not
+ * by an uninterruptible bearer (#1464), nor one that consumed Song of
+ * Concentration (#1505).
+ */
+function castInterruptible(target: Combatant): boolean {
+  return (
+    !aggregateModifiers(target.statuses.active).uninterruptible &&
+    target.cast.activeCast?.rule.uninterruptible !== true
+  );
+}
+
+/**
+ * Whether `target` has a plain swing under way that may be interrupted
+ * (#1709): an attacker walking to its foe or between swings has none, nor
+ * has one knocked down, and an uninterruptible bearer (#1464) never is.
+ */
+function swingInterruptible(target: Combatant): boolean {
+  const { attack } = target;
+  return (
+    attack !== undefined &&
+    !target.moving &&
+    attack.swingElapsed > 0 &&
+    target.knockdownRemaining <= 0 &&
+    !aggregateModifiers(target.statuses.active).uninterruptible
+  );
+}
+
+/**
  * Interrupt the plain swing `target` has under way (#1709): GW1
  * interrupts "all attacks", not only skills. Its blow never lands and its
  * swing starts over; the auto-attack goes on, at the same foe, as after
- * Clumsiness (#1593). An attacker walking to its foe or between swings
- * has nothing under way, nor has one knocked down, and an uninterruptible
- * bearer (#1464) never is. `byId` did it, heard as a cast's interrupt is
+ * Clumsiness (#1593). `byId` did it, heard as a cast's interrupt is
  * (#1473). Returns whether there was a swing to interrupt.
  */
 function interruptSwing(
@@ -756,14 +779,8 @@ function interruptSwing(
   byId: string | undefined,
   events: CombatEvent[],
 ): boolean {
-  const attack = target.attack;
-  if (
-    attack === undefined ||
-    target.moving ||
-    attack.swingElapsed <= 0 ||
-    target.knockdownRemaining > 0 ||
-    aggregateModifiers(target.statuses.active).uninterruptible
-  ) {
+  const { attack } = target;
+  if (attack === undefined || !swingInterruptible(target)) {
     return false;
   }
   attack.swingElapsed = 0;
@@ -1017,21 +1034,42 @@ function reportEnded(target: Combatant, ending: readonly StatusId[], events: Com
 }
 
 /**
- * The skill `target` is activating that `effect` may not interrupt (#521,
- * #796), or `null`: with no `only` or `only: "skill"` (#1709), any cast
- * is fair game; with `only: "spell"`, anything but a spell is refused
- * (#1008), and with `"spell-or-chant"`, anything but a spell or a chant.
+ * The skill `target` is activating that an interrupt filtered by `only`
+ * may not interrupt (#521, #796), or `null`: with no `only` or `only:
+ * "skill"` (#1709), any cast is fair game; with `only: "spell"`, anything
+ * but a spell is refused (#1008), and with `"spell-or-chant"`, anything
+ * but a spell or a chant.
  */
-function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
+function refusedSkill(only: InterruptEffect["only"], target: Combatant): string | null {
   const cast = target.cast.activeCast;
-  if (effect.only === undefined || effect.only === "skill" || cast === undefined) {
+  if (only === undefined || only === "skill" || cast === undefined) {
     return null;
   }
   const skill = getSkill(cast.skillId);
   const allowed =
     skill !== undefined &&
-    (isSpell(skill.type) || (effect.only === "spell-or-chant" && skill.type === "chant"));
+    (isSpell(skill.type) || (only === "spell-or-chant" && skill.type === "chant"));
   return allowed ? null : cast.skillId;
+}
+
+/**
+ * What an interrupt filtered by `only` would cut short on `target` right
+ * now, landing nothing (#1713): its cast, which comes first, or with none
+ * its plain swing under way, which only an unfiltered one, "an action",
+ * stops (#1709); `null` for a miss. The `interrupt` effect and a bot
+ * aiming one both ask it, so they cannot drift apart.
+ */
+export function interruptLands(
+  only: InterruptEffect["only"],
+  target: Combatant,
+): "cast" | "swing" | null {
+  if (target.dead) {
+    return null;
+  }
+  if (target.cast.activeCast !== undefined) {
+    return refusedSkill(only, target) === null && castInterruptible(target) ? "cast" : null;
+  }
+  return only === undefined && swingInterruptible(target) ? "swing" : null;
 }
 
 /**
@@ -1321,15 +1359,11 @@ export function applyEffect(
       if (target === undefined || target.dead) {
         return events;
       }
-      const refusedSkillId = refusedSkill(effect, target);
-      // A cast first; with none, an action is also a plain swing (#1709),
-      // which "a skill" or "a spell" never is.
+      const lands = interruptLands(effect.only, target);
       const landed =
-        refusedSkillId === null &&
-        (interruptCast(target, caster.id, events) ||
-          (effect.only === undefined &&
-            target.cast.activeCast === undefined &&
-            interruptSwing(target, caster.id, events)));
+        lands === "cast"
+          ? interruptCast(target, caster.id, events)
+          : lands === "swing" && interruptSwing(target, caster.id, events);
       if (!landed) {
         // Already interrupted by this resolution, as by the daze its own
         // blow brought down (#817): the player's interrupt landed, so it
@@ -1348,7 +1382,11 @@ export function applyEffect(
         // explicitly so a combat log can show the miss, and why — landing an
         // interrupt is a timing skill, and silently swallowing failures
         // would hide exactly the feedback that teaches it.
-        events.push({ kind: "interrupt-missed", targetId: target.id, refusedSkillId });
+        events.push({
+          kind: "interrupt-missed",
+          targetId: target.id,
+          refusedSkillId: refusedSkill(effect.only, target),
+        });
       }
       return events;
     }
@@ -1581,7 +1619,7 @@ export function applyEffect(
 }
 
 /** Whether `condition` is read from how things stand rather than from what came before (#794). */
-function isStateCondition(condition: EffectCondition): condition is StateCondition {
+export function isStateCondition(condition: EffectCondition): condition is StateCondition {
   switch (condition.kind) {
     case "interrupted":
     case "interrupted-spell":

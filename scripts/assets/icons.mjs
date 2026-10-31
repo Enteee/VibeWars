@@ -17,6 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { C, germ, stroke } from "./icon-kit.mjs";
+import { WEAPON_MARKS } from "./weapon-marks.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
@@ -788,6 +789,16 @@ const skillGlyph = {
     ),
   "blade-turn": () =>
     bladeMark(inkLine("M11 6.5A3.5 3.5 0 1 0 8.5 11.5M8.5 11.5L10.5 12M8.5 11.5L9 9.5", 1.8)),
+  // The Ritualist's weapon spells 3 (#1706): the blade and the rider its status repeats.
+  "blade-resilient": () => bladeMark(WEAPON_MARKS.resilient(C.ink)),
+  "blade-ghostly": () => bladeMark(WEAPON_MARKS.ghostly(C.ink)),
+  "blade-sundering": () => bladeMark(WEAPON_MARKS.sundering(C.ink)),
+  "blade-shadow": () => bladeMark(WEAPON_MARKS.shadow(C.ink)),
+  "blade-warmongers": () => bladeMark(WEAPON_MARKS.warmongers(C.ink)),
+  "blade-wailing": () => bladeMark(WEAPON_MARKS.wailing(C.ink)),
+  "blade-nightmare": () => bladeMark(WEAPON_MARKS.nightmare(C.ink)),
+  "blade-fury-bolt": () => bladeMark(WEAPON_MARKS.fury(C.ink)),
+  "blade-renewal": () => bladeMark(WEAPON_MARKS.renewal(C.ink)),
   // A shield with a slash glancing off it: Bladeturn Refrain (#1524).
   "shield-glance": () =>
     `<path d="M9.5 6h11v7c0 4-3 6.5-5.5 8-2.5-1.5-5.5-4-5.5-8z" ${stroke(C.ink, 2)}/>` +
@@ -2426,7 +2437,7 @@ const skillGlyph = {
     inkLine("M8 8L14 7L12 13L19 11", 2) +
     `<circle cx="20" cy="17" r="2.6" fill="${C.ink}"/>` +
     inkLine("M19 11L20 14", 2),
-  // A cloud with a bolt falling out of it and a burst at the ground.
+  // A cloud with a bolt falling out of it.
   "cloud-bolt": () =>
     `<path d="M6.5 14.5a4 4 0 0 1 .5-7.9 5 5 0 0 1 9.6-.6 3.8 3.8 0 0 1 .9 8.5Z" ${stroke(C.ink, 2)}/>` +
     inkLine("M13 13L9.5 17.5H14L10.5 22", 2.2),
