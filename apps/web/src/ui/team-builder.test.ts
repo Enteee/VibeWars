@@ -231,6 +231,9 @@ describe("teamCounters (#575)", () => {
       primaryProfession: "monk",
       secondaryProfession: "ranger",
     };
-    expect(professionMix([...members, { character: monk }])).toBe("2 W · Mo/R");
+    expect(professionMix([...members, { character: monk }])).toEqual([
+      { count: 2, primary: "warrior", secondary: undefined },
+      { count: 1, primary: "monk", secondary: "ranger" },
+    ]);
   });
 });
