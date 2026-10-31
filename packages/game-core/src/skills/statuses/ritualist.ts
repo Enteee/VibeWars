@@ -532,6 +532,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       adrenalineGainFaster: 0,
       healthPips: 5,
       armorModifier: 24,
+      attackMissChance: 0,
     },
   }),
   // "...target other ally's next attack cannot be blocked": Guiding

@@ -110,6 +110,12 @@ export interface WhileUnder {
   readonly healthPips: number;
   /** Summed into the bearer's armor against every type, as the status's own (#1654). */
   readonly armorModifier: number;
+  /**
+   * The bearer's chance to miss with attacks, joined with its other
+   * `attackMissChance`s as they join each other (#1732): Well of
+   * Darkness's "hexed foes miss 50% of the time".
+   */
+  readonly attackMissChance: number;
 }
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
@@ -317,6 +323,21 @@ export interface StatusDefinition {
    * bearer, and an ally's spell or a foe's non-spell is left alone.
    */
   readonly untargetableByFoeSpells: boolean;
+  /**
+   * The bearer can hold no enchantment (#1732): Well of the Profane's
+   * "stripped of all enchantments and cannot be the target of further
+   * enchantments". Gaining it ends every enchantment on the bearer, its
+   * triggers answering as for any removal; one applied later does not
+   * land, and an enchantment spell is refused at it before anything is
+   * paid, the bearer's own on itself included.
+   */
+  readonly preventsEnchantments: boolean;
+  /**
+   * The bearer cannot use a shout or a chant (#1732): Well of Silence's.
+   * Refused before anything is paid, as `preventsAttacks` refuses an
+   * attack skill; one already used is not undone.
+   */
+  readonly preventsShoutsAndChants: boolean;
   /**
    * The bearer cannot block an attack of the status's source (#1234):
    * Expose Defenses' "cannot block your attacks". Anyone else's still
@@ -1566,12 +1587,19 @@ export class StatusSet {
       this.#gained(id, durationSeconds);
       this.#endOnGaining(definition.category);
       this.#end(definition.immuneTo.filter((immune) => this.#statuses.has(immune)));
+      this.#stripEnchantments(definition);
     }
     return !wasActive;
   }
 
-  /** Whether a status on the bearer keeps `id` off it (#1455): Avatar of Grenth's Disease. */
+  /**
+   * Whether a status on the bearer keeps `id` off it (#1455): Avatar of
+   * Grenth's Disease, or any enchantment under Well of the Profane (#1732).
+   */
   public isImmuneTo(id: StatusId): boolean {
+    if (getStatusDefinition(id).category === "enchantment" && preventsEnchantments(this.active)) {
+      return true;
+    }
     return this.active.some((status) => getStatusDefinition(status.id).immuneTo.includes(id));
   }
 
@@ -1655,7 +1683,7 @@ export class StatusSet {
    * worn: nothing. Returns whether it is newly on the bearer.
    */
   public project(id: StatusId, sourceId: string): boolean {
-    if (this.#statuses.has(id)) {
+    if (this.#statuses.has(id) || this.isImmuneTo(id)) {
       return false;
     }
     this.#statuses.set(id, {
@@ -1673,7 +1701,9 @@ export class StatusSet {
       maintained: null,
       projected: true,
     });
-    this.#endOnGaining(getStatusDefinition(id).category);
+    const definition = getStatusDefinition(id);
+    this.#endOnGaining(definition.category);
+    this.#stripEnchantments(definition);
     return true;
   }
 
@@ -1724,6 +1754,13 @@ export class StatusSet {
     }
     this.#end([id]);
     return true;
+  }
+
+  /** Gaining `definition`, end every enchantment on the bearer if it holds none (#1732). */
+  #stripEnchantments(definition: StatusDefinition): void {
+    if (definition.preventsEnchantments) {
+      this.removeByCategory("enchantment");
+    }
   }
 
   /** A status of `category` is newly on the bearer (#919): Natural Stride ends on a hex. */
@@ -2232,6 +2269,24 @@ export function preventsAttacks(statuses: readonly Pick<ActiveStatus, "id">[]): 
 }
 
 /**
+ * Whether a bearer of `statuses` can hold no enchantment (#1732,
+ * `preventsEnchantments`): the refusal of an enchantment spell at it
+ * asks this, and so does every status landing on it.
+ */
+export function preventsEnchantments(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).preventsEnchantments);
+}
+
+/**
+ * Whether a bearer of `statuses` cannot use a shout or a chant (#1732,
+ * `preventsShoutsAndChants`). The server's refusal and the skill bar's
+ * dimming both ask this.
+ */
+export function preventsShoutsAndChants(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).preventsShoutsAndChants);
+}
+
+/**
  * How long a status lasts on `target`: its nominal duration, shortened
  * by the target's condition-duration runes (a Rune of Restoration takes
  * bleeding to 80%). Every path that puts a status on a combatant asks
@@ -2502,6 +2557,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
       healthPips += def.whileUnder.healthPips;
       armorModifier += def.whileUnder.armorModifier;
+      attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);
     }
     if (def.enchantmentRechargeFaster !== undefined) {
       enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);

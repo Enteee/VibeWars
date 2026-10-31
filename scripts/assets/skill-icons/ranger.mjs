@@ -68,8 +68,6 @@ export const RANGER_ICONS = {
   "ranger.dust-trap": { glyph: "trap-dust" },
   "ranger.spike-trap": { glyph: "trap-spike" },
   "ranger.antidote-signet": { glyph: "drop-struck" },
-  // The not condition (#1670), a stand-in until its art card.
-  "ranger.sloth-hunters-shot": { glyph: "arrow", modifier: "hourglass" },
   // Ranger staples 4 (#1742), stand-ins until their art card.
   "ranger.seeking-arrows": { glyph: "arrow-aimed", modifier: "up" },
   "ranger.barbed-arrows": { glyph: "arrow-pierce", modifier: "bleed" },
@@ -77,4 +75,6 @@ export const RANGER_ICONS = {
   "ranger.read-the-wind": { glyph: "arrow-aim", modifier: "bolt" },
   "ranger.crossfire": { glyph: "arrow-unbound", modifier: "area" },
   "ranger.penetrating-attack": { glyph: "arrow-pierce", modifier: "up" },
+  // The not condition (#1670, #1715): what the foe lacks, struck through.
+  "ranger.sloth-hunters-shot": { glyph: "arrow-idle" },
 };
