@@ -17,7 +17,9 @@ export type MonkStatusId =
   | "vigorous-spirit"
   | "scourge-enchantment"
   // Monk smiting staples (#1519).
-  | "judges-insight";
+  | "judges-insight"
+  // Monk staples 5 (#1650).
+  | "shield-of-regeneration";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -159,4 +161,16 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     attackDamageType: "holy",
     attackArmorPenetration: 0.2,
   }),
+  // "For 5...13 seconds, target ally gains +3...10 Health regeneration and
+  // 20...45 armor": +9 and +40, its rank-12 values (#1650).
+  "shield-of-regeneration": define(
+    "shield-of-regeneration",
+    "Shield of Regeneration",
+    "enchantment",
+    {
+      profession: "monk",
+      healthPips: 9,
+      armorModifier: 40,
+    },
+  ),
 };

@@ -132,6 +132,20 @@ export interface HealEffect {
    * in this way". None destroyed: no heal.
    */
   readonly perDestroyedSpirit?: true;
+  /**
+   * The amount is per point of energy the target lost to an earlier
+   * `energy-loss` of this skill, as Ether Feast's "You are healed 20...65
+   * for each point of Energy lost" (#1627), `DamageEffect.perEnergyLost`'s
+   * twin. None lost: no heal.
+   */
+  readonly perEnergyLost?: true;
+  /**
+   * The amount is per point of the base energy cost of the skill the
+   * trigger answers, rounded half up (#1614): Aura of Restoration's
+   * "healed for 200...400% of the Energy cost each time you cast a spell".
+   * No energy cost, or no such skill: no heal.
+   */
+  readonly perUsedSkillEnergy?: true;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -177,6 +191,12 @@ export interface EnergyGainToCaster {
    * already above gains nothing and loses nothing. Absent: its maximum.
    */
   readonly upTo?: number;
+  /**
+   * Per point of the base energy cost of the skill the trigger answers,
+   * rounded half up (#1614): Fire Attunement's "30% of the base Energy
+   * cost of the skill". No energy cost, or no such skill: no gain.
+   */
+  readonly perUsedSkillEnergy?: true;
   readonly toTarget?: never;
 }
 
@@ -257,10 +277,26 @@ export interface SacrificeHealthEffect {
  * a sacrifice. `perRemovedOfProfession` `undefined`: `amount` once,
  * flat (#1550), as Wanderlust's spirit's "loses 70...50 Health".
  */
-export interface LoseHealthEffect {
+export type LoseHealthEffect = LoseHealthByCaster | LoseHealthByTarget;
+
+export interface LoseHealthByCaster {
   readonly kind: "lose-health";
   readonly amount: Magnitude;
   readonly perRemovedOfProfession: ProfessionId | undefined;
+  readonly recipient?: never;
+}
+
+/**
+ * The effect's target loses `amount` health, not the caster (#1648), as
+ * Enfeebling Touch's "target foe loses 5...53...65 Health". Not damage:
+ * no armor, no damage modifiers and nothing that answers damage; only
+ * invulnerability stops it, and it can kill.
+ */
+export interface LoseHealthByTarget {
+  readonly kind: "lose-health";
+  readonly amount: Magnitude;
+  readonly recipient: "target";
+  readonly perRemovedOfProfession?: never;
 }
 
 /**
@@ -376,13 +412,16 @@ export interface RechargeFasterEffect {
 export interface InterruptEffect {
   readonly kind: "interrupt";
   /**
-   * `spell`: only a spell (`isSpell`) is interrupted, as Concussion
-   * Shot's "while target foe is casting a spell" (#1008); a chant is
-   * not one. `spell-or-chant`: a spell or a chant, as Power Spike's
-   * "If target foe is casting a Spell or Chant" (#521). Anything else
-   * is left alone, as if the target were not casting.
+   * None: an action, a skill being used or a plain swing under way
+   * (#1709), as GW1 interrupts "all attacks". `skill`: a skill being
+   * used, never a plain swing, as Cry of Frustration's "if target foe is
+   * using a skill". `spell`: only a spell (`isSpell`) is interrupted, as
+   * Concussion Shot's "while target foe is casting a spell" (#1008); a
+   * chant is not one. `spell-or-chant`: a spell or a chant, as Power
+   * Spike's "If target foe is casting a Spell or Chant" (#521). Anything
+   * else is left alone, as if the target were not casting.
    */
-  readonly only?: "spell" | "spell-or-chant";
+  readonly only?: "skill" | "spell" | "spell-or-chant";
 }
 
 /**
@@ -676,7 +715,8 @@ export interface CreatureTemplate {
  */
 export interface DeathBurst {
   readonly effect: "damage" | "heal";
-  readonly perSecondAlive: number;
+  /** Scaled by its owner, read once at summoning (#1603). */
+  readonly perSecondAlive: Magnitude;
   /** `undefined`: no cap. */
   readonly max: number | undefined;
   readonly affects: "allies" | "foes";
@@ -839,7 +879,10 @@ export const KNOCKDOWN_SECONDS = 2;
 
 /** What an earlier effect of the same skill did to the same target (#521). */
 export type EventCondition =
-  /** An `interrupt` earlier in the list cancelled an action. */
+  /**
+   * An `interrupt` earlier in the list cancelled a skill, never a plain
+   * swing (#1709): Psychic Instability's "if that action is a skill".
+   */
   | { readonly kind: "interrupted" }
   /**
    * An `interrupt` earlier in the list cancelled a spell (`isSpell`; a
@@ -978,11 +1021,22 @@ export type StateCondition =
    */
   | { readonly kind: "target-attacking" }
   /**
+   * The exact negation of `target-attacking` (#1654), as `target-not-moving`
+   * is of `target-moving`: Warmonger's Weapon's "if that foe is not attacking".
+   */
+  | { readonly kind: "target-not-attacking" }
+  /**
    * One of `conditions` holds, each read as it would be alone (#1539):
    * Melandru's Shot's "if target foe is moving or knocked down". An
    * empty list never holds.
    */
   | { readonly kind: "any-of"; readonly conditions: readonly StateCondition[] }
+  /**
+   * `condition` does not hold, read at the same moment it would be (#1670):
+   * Test of Faith's "if target foe is not enchanted". New negations use
+   * this rather than a kind of their own.
+   */
+  | { readonly kind: "not"; readonly condition: StateCondition }
   /**
    * The effect's target is a summoned creature (#1528): a minion or a
    * spirit, never a pet or a map NPC (`isSummoned`). Banish's "double
@@ -1138,12 +1192,12 @@ export function isInvulnerable(combatant: Combatant): boolean {
 }
 
 /**
- * Whether a skill of this type is interrupted by any attack that lands
- * on its user while it is being used (#1105, GW1's "easily
- * interrupted"): a trap is.
+ * Whether a skill is interrupted by any attack that lands on its user
+ * while it is being used (#1105, GW1's "easily interrupted"): a trap is,
+ * and a skill that says so (#1629), as Precision Shot.
  */
-export function isEasilyInterrupted(type: SkillType): boolean {
-  return type === "trap";
+export function isEasilyInterrupted(skill: Skill): boolean {
+  return skill.type === "trap" || skill.easilyInterrupted === true;
 }
 
 /**
@@ -1229,6 +1283,12 @@ export interface AttackSkillRule {
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.
    */
   readonly onBlocked: readonly SkillEffect[];
+  /**
+   * GW1's "all your preparations are removed" (#1629): Barrage's and
+   * Volley's. Its user's preparations end as it is released, before its
+   * blows or shots, so none rides them. Absent: they stay.
+   */
+  readonly removesPreparations?: true;
   /**
    * How much faster than its weapon's shot it flies (#1486): Mighty
    * Throw's "three times faster". Read at release; a melee blow ignores
@@ -1359,6 +1419,12 @@ export interface Skill {
    * Absent: a player's skill.
    */
   readonly npcOnly?: true;
+  /**
+   * GW1's "this action is easily interrupted" (#1629): any attack that
+   * lands on its user while it is being used interrupts it, as a trap's.
+   * Absent: only what interrupts any skill does.
+   */
+  readonly easilyInterrupted?: true;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */
@@ -1395,6 +1461,12 @@ export interface Skill {
 export interface CorpseRule {
   /** The nearest fresh corpse within this of the caster, world units. */
   readonly radius: number;
+  /**
+   * `target`: nearest the cast's target instead, within `radius` of it
+   * (#1583): Putrid Explosion's "the corpse nearest your target". Absent:
+   * nearest the caster.
+   */
+  readonly near?: "target";
 }
 
 /** How a flying spell flies (#535). */

@@ -69,8 +69,9 @@ Concretely:
   Both bugs ADR-0011 describes lived there, were invisible to every
   headless test, and made the game unplayable through its main flow.
 - A new skill goes in `packages/game-core/src/skills/catalog/<profession>.ts`,
-  its status in `skills/statuses/<profession>.ts` and its icon row in
-  `scripts/assets/skill-icons/<profession>.mjs`, so two cards for two
+  its status in `skills/statuses/<profession>.ts` and its icon rows in
+  `scripts/assets/skill-icons/<profession>.mjs` (skill) and
+  `scripts/assets/status-icons/<profession>.mjs` (status), so two cards for two
   professions do not touch the same file. It then re-runs
   `node scripts/assets/icons.mjs`; `apps/web/src/ui/icons.test.ts` fails
   until it does.

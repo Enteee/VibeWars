@@ -33,6 +33,7 @@ import {
 } from "./icons.js";
 
 import { SKILL_ICONS } from "../../../../scripts/assets/skill-icon-table.mjs";
+import { STATUS_ICON_TABLES, STATUS_ICONS } from "../../../../scripts/assets/status-icon-table.mjs";
 
 const PUBLIC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../public");
 
@@ -119,6 +120,11 @@ describe("skill icons (#719)", () => {
 
   it("has a row in the generator table for every implemented skill, and none for another", () => {
     expect(Object.keys(SKILL_ICONS).sort()).toEqual([...ids].sort());
+  });
+
+  it("has each status row in exactly one per-profession table", () => {
+    const rows = Object.values(STATUS_ICON_TABLES).flatMap((table) => Object.keys(table));
+    expect(rows.length).toBe(Object.keys(STATUS_ICONS).length);
   });
 
   it("has no file for a skill that is not implemented", () => {

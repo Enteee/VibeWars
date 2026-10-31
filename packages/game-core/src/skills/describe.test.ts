@@ -10,7 +10,7 @@ import {
   formatScalingRange,
 } from "./describe.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
-import { resolveMagnitude } from "./scaling.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
 import { STATUS_DEFINITIONS } from "./status.js";
 import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
 
@@ -254,7 +254,7 @@ describe("describeSkill", () => {
     const lines = (id: string) => describeSkill(skill(id), ranks).effects.map((e) => e.text);
     expect(lines("mesmer.power-spike")).toEqual([
       "Interrupts the target's spell or chant, if they are casting one",
-      "If it interrupts: deals 102 damage",
+      "If it interrupts a skill: deals 102 damage",
     ]);
     expect(lines("mesmer.drain-enchantment")).toEqual([
       "Removes 1 enchantment",
@@ -287,7 +287,7 @@ describe("describeSkill", () => {
     ]);
     expect(lines("ranger.distracting-shot")).toEqual([
       "Deals only 13 damage",
-      "Interrupts the target's current cast, if they are casting",
+      "Interrupts the target's action: a skill or an attack",
       "The interrupted skill is disabled for 20 seconds",
     ]);
   });
@@ -310,7 +310,7 @@ describe("describeSkill", () => {
     ]);
     expect(lines("ranger.savage-shot")).toEqual([
       "If target is casting a spell: +25 damage",
-      "Interrupts the target's current cast, if they are casting",
+      "Interrupts the target's action: a skill or an attack",
     ]);
     expect(lines("ritualist.wielders-boon")).toEqual([
       "Heals for 51",
@@ -402,7 +402,7 @@ describe("describeSkill", () => {
       "Nearby foes take 5.25 damage for each point of energy lost",
     ]);
     expect(lines("mesmer.leech-signet")).toEqual([
-      "Interrupts the target's current cast, if they are casting",
+      "Interrupts the target's action: a skill or an attack",
       "If that action was a spell: gain 13 energy",
     ]);
     expect(lines("monk.dwaynas-kiss")).toEqual([
@@ -413,6 +413,15 @@ describe("describeSkill", () => {
 
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
+  });
+
+  it("says a bow-only rider's damage once, with its type and its splash (#1629)", () => {
+    expect(describeStatus("kindle-arrows")).toBe(
+      "bow attacks deal fire damage, foes your bow attacks hit take 20 fire damage",
+    );
+    expect(describeStatus("ignite-arrows")).toBe(
+      "foes your bow attacks hit take 15 fire damage, and so do foes adjacent to them",
+    );
   });
 
   it("says what the calls and the bond do to a pet (#1108)", () => {
@@ -482,7 +491,8 @@ describe("describeSkill", () => {
     // springs by itself; a pulse one, then one per effect (#1113); a
     // faster flight one, and one per on-crit or failed-to-hit rider
     // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
-    // are a line each, and its death burst one more (#1550).
+    // are a line each, and its death burst one more (#1550); a blow that
+    // deals damage one more (#1631).
     const linesOf = (effect: SkillEffect): number => {
       if (effect.kind === "if") {
         return effect.effects.length;
@@ -499,10 +509,11 @@ describe("describeSkill", () => {
         }
       }
       if (effect.kind === "summon") {
-        const { aura, attack, deathBurst } = effect.creature;
+        const { kind, aura, attack, deathBurst } = effect.creature;
         return (
           1 +
           (aura === undefined ? 0 : 1) +
+          (kind === "spirit" && (attack?.damageMax ?? 0) > 0 ? 1 : 0) +
           (attack?.onHit ?? []).length +
           (deathBurst === undefined ? 0 : 1)
         );
@@ -529,10 +540,11 @@ describe("describeSkill", () => {
           lines(rule?.onCritical ?? []) +
           lines(rule?.onFailedToHit ?? []) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
-          (rule !== undefined && rule.strikes > 1 && entry.attack?.weapon === "bow" ? 1 : 0) +
+          (rule?.removesPreparations === true ? 1 : 0) +
+          (rule !== undefined && rule.strikes > 1 ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.projectile === undefined ? 0 : 1) +
-          (isEasilyInterrupted(entry.type) ? 1 : 0) +
+          (isEasilyInterrupted(entry) ? 1 : 0) +
           (entry.corpse === undefined ? 0 : 1) +
           (entry.target !== "self" && entry.range === RANGE_SPELL / 2 ? 1 : 0) +
           (entry.companion === undefined ? 0 : 1) +
@@ -630,6 +642,17 @@ describe("attack skills (#417)", () => {
     expect(texts("assassin.moebius-strike")[0]).toBe("Off-hand attack. Must follow a dual attack.");
   });
 
+  it("says how often a melee attack strikes and how many a capped splash hits (#1618)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("warrior.sun-and-moon-slash")).toContain("Strikes twice");
+    expect(texts("ranger.dual-shot").join("\n")).toContain("Shoots 2 arrows at once");
+    expect(texts("ranger.dual-shot").join("\n")).not.toContain("Strikes");
+    expect(texts("warrior.cleave").some((text) => text.startsWith("Up to 2 adjacent foes"))).toBe(
+      true,
+    );
+    expect(texts("assassin.death-blossom")).toContain("Adjacent foes take 20 damage");
+  });
+
   it("words the crippling knockdown chain, and a state its attack requires (#1041)", () => {
     const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
     expect(texts("assassin.falling-spider")[0]).toBe(
@@ -693,7 +716,7 @@ describe("attack skills (#417)", () => {
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
     expect(
       describeSkill(skill("mesmer.cry-of-frustration")).effects.map(({ text }) => text),
-    ).toContain("If it interrupts: foes in the area are interrupted if casting and take 11 damage");
+    ).toContain("If it interrupts a skill: foes in the area are interrupted and take 11 damage");
     expect(describeStatus("mantra-of-recovery")).toBe("spells recharge 33% faster");
   });
 
@@ -785,7 +808,7 @@ describe("attack skills (#417)", () => {
         "Hexes cast on the bearer take 2× as long to cast. When it ends: removes 1 hex.",
     ]);
     expect(lines("necromancer.rend-enchantments")).toEqual([
-      "Removes 8 enchantments",
+      "Removes up to 8 enchantments",
       "You lose 31 health for each Monk enchantment removed",
     ]);
     expect(lines("necromancer.plague-touch")).toEqual([
@@ -910,6 +933,20 @@ describe("formatScalingRange", () => {
       return;
     }
     expect(formatScalingRange(magnitude)).toBe("7…91 at 12");
+  });
+
+  it("rounds the ends as the live value does, so rank 12 reads what it gives", () => {
+    const scaling = { attributeId: "test", atZero: 1, atTwelve: 8.2 };
+    const atTwelve = resolveMagnitudeAtRanks({ scaling }, new Map([["test", 12]]));
+    expect(atTwelve).toBe(8);
+    expect(
+      formatScalingRange({
+        current: atTwelve,
+        atZero: scaling.atZero,
+        atTwelve: scaling.atTwelve,
+        attributeId: scaling.attributeId,
+      }),
+    ).toBe("1…8 at 12");
   });
 
   it("returns nothing for a flat magnitude, rather than a fake range", () => {

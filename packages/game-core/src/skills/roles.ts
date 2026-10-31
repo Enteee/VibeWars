@@ -122,6 +122,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     roles.push(status.category);
   } else if (
     status.armorModifier > 0 ||
+    (status.whileUnder !== undefined && status.whileUnder.armorModifier > 0) ||
     status.armorWhileStill > 0 ||
     status.block !== undefined ||
     status.damageTakenMultiplier < 1 ||
@@ -138,6 +139,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   if (
     status.healthPerSecond > 0 ||
     status.healthPips > 0 ||
+    (status.whileUnder !== undefined && status.whileUnder.healthPips > 0) ||
     status.healthPipsPerEnchantment !== undefined
   ) {
     roles.push("healing");

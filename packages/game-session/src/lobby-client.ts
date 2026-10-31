@@ -23,6 +23,7 @@ import {
   type WirePartyFormed,
 } from "@vibewars/game-protocol";
 
+import { keyGated } from "./key-gate.js";
 import { lobbyCharacter } from "./lobby-character.js";
 import type {
   ChatLine,
@@ -89,6 +90,12 @@ export interface JoinLobbyOptions {
   /** The room named by the code. */
   readonly transport: Transport;
   readonly code: string;
+  /**
+   * What this peer proves the lobby key with (#1681, `LobbyRoom`), and
+   * what the host must prove it with back. `null` for the host's own
+   * player, on its local link, and for a queued lobby.
+   */
+  readonly proofKey: Uint8Array | null;
   readonly name: string;
   /** The guild tag the player set (#1406); `null` for none. */
   readonly guildTag: string | null;
@@ -107,7 +114,11 @@ function isRefusal(reason: string): reason is LobbyRefusal {
 }
 
 export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
-  const { transport, timeoutMs, queued } = options;
+  const { timeoutMs, queued } = options;
+  const transport =
+    options.proofKey === null
+      ? options.transport
+      : keyGated(options.transport, options.proofKey, "guest");
   const selfId = transport.selfId;
   const code = normalizeLobbyCode(options.code);
   const base = {

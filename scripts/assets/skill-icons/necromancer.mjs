@@ -43,4 +43,31 @@ export const NECROMANCER_ICONS = {
   "necromancer.blood-is-power": { glyph: "sac-energy" },
   "necromancer.order-of-pain": { glyph: "sac-blade" },
   "necromancer.plague-signet": { glyph: "drop-to-signet" },
+  // Touch skills (#1643, #1666).
+  "necromancer.vile-touch": { glyph: "hand-skull" },
+  "necromancer.touch-of-agony": { glyph: "hand-drop-bolt" },
+  "necromancer.wallows-bite": { glyph: "jaws-bolt" },
+  "necromancer.vampiric-bite": { glyph: "jaws-drop" },
+  // Target Health loss (#1648, #1680).
+  "necromancer.enfeebling-touch": { glyph: "hand-drop-weak" },
+  "necromancer.pain-of-disenchantment": { glyph: "ring-rend-burst" },
+  // Necromancer staples 2 (#1583): the shapes of their statuses where they have one.
+  "necromancer.wither": { glyph: "hex-wither" },
+  "necromancer.life-siphon": { glyph: "drop-siphon" },
+  "necromancer.reckless-haste": { glyph: "hex-haste-miss" },
+  "necromancer.corrupt-enchantment": { glyph: "ring-rot" },
+  "necromancer.strip-enchantment": { glyph: "ring-steal" },
+  "necromancer.deathly-chill": { glyph: "chill-skull" },
+  "necromancer.putrid-explosion": { glyph: "burst-skull" },
+  "necromancer.signet-of-agony": { glyph: "signet-agony" },
+  // Necromancer staples 3 (#1640, #1651): a gauge under or over half for the Health riders; the cold spells share the snowflake.
+  "necromancer.dark-pact": { glyph: "drop-sac-bolt" },
+  "necromancer.lifebane-strike": { glyph: "drop-arrow-high" },
+  "necromancer.taste-of-pain": { glyph: "heal-drop-low" },
+  "necromancer.signet-of-lost-souls": { glyph: "signet-low" },
+  "necromancer.fetid-ground": { glyph: "snowflake-ground" },
+  "necromancer.toxic-chill": { glyph: "snowflake-hexed" },
+  "necromancer.bitter-chill": { glyph: "snowflake-recharge" },
+  "necromancer.rip-enchantment": { glyph: "ring-rip-bleed" },
+  "necromancer.gaze-of-contempt": { glyph: "eye-high" },
 };

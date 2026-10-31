@@ -7,13 +7,13 @@ import {
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { isAttacking } from "./attacking.js";
-import { beginRecharge, resolvedBar, skillIdOfKey } from "./cast-state.js";
+import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
 import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from "./damage.js";
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
-import { resolveMagnitude } from "./scaling.js";
+import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
 import {
   aggregateModifiers,
   getStatusDefinition,
@@ -55,6 +55,7 @@ import {
   type EffectCondition,
   type HealEffect,
   type InterruptEffect,
+  type Magnitude,
   type RemoveStatusEffect,
   type ResurrectEffect,
   type SkillEffect,
@@ -90,7 +91,13 @@ export type CombatEvent =
   | { readonly kind: "energy-gain"; readonly targetId: string; readonly amount: number }
   /** Energy the target actually lost (#793): never more than it had, never 0. */
   | { readonly kind: "energy-loss"; readonly targetId: string; readonly amount: number }
+  /** Health the caster gave up for their own skill. */
   | { readonly kind: "sacrifice"; readonly targetId: string; readonly amount: number }
+  /**
+   * Health a skill made its target lose (#1678): not damage and not a
+   * sacrifice, so nothing that answers either sees it.
+   */
+  | { readonly kind: "health-loss"; readonly targetId: string; readonly amount: number }
   /**
    * Health stolen from the target (#935): never more than it had, never 0.
    * Not damage: nothing that reacts to damage sees it. What the caster
@@ -352,9 +359,10 @@ function healAmount(
   target: Combatant | undefined,
   surroundings: Surroundings,
   earlier: readonly CombatEvent[],
+  usedSkill: SlotSkill | undefined,
 ): number {
   const base =
-    resolveMagnitude(effect.amount, caster) *
+    perUsedSkillEnergy(effect, caster, usedSkill) *
     perStatus(effect.perStatusOnTarget, target) *
     perRemoved(effect.perRemoved, target, earlier) *
     (effect.perDestroyedSpirit === true
@@ -589,6 +597,24 @@ function perEnergyLost(
 }
 
 /**
+ * `amount` at the caster's ranks, or with `perUsedSkillEnergy`, per point
+ * of the base energy cost of the skill the trigger answers, rounded half
+ * up (#1614): Fire Attunement's 30% of a 15-energy spell is 5. No energy
+ * cost, or no skill: 0.
+ */
+function perUsedSkillEnergy(
+  effect: { readonly amount: Magnitude; readonly perUsedSkillEnergy?: true },
+  caster: Combatant,
+  used: SlotSkill | undefined,
+): number {
+  if (effect.perUsedSkillEnergy === undefined) {
+    return resolveMagnitude(effect.amount, caster);
+  }
+  const cost = used === undefined ? undefined : getSkill(used.skillId)?.cost;
+  return cost?.kind === "energy" ? resolveMagnitudeTimes(effect.amount, caster, cost.amount) : 0;
+}
+
+/**
  * Signet of Creation's gain (#1316): `amount` for each of the caster's
  * spirits and minions in reach, at most the cap. Without
  * `perOwnCreatureWithin`, `amount` as it is.
@@ -683,7 +709,7 @@ function knockDown(target: Combatant, durationSeconds: number): void {
 }
 
 /**
- * Interrupt the cast `target` has in progress: the one path every
+ * Interrupt the cast `target` has in progress: the one path every cast's
  * interrupt takes, an interrupt effect's and daze's (#546). As in GW1,
  * the interrupted skill recharges as if it had been used: its cost is
  * spent and its recharge starts (ADR-0029). `byId` did it, and a status
@@ -712,6 +738,36 @@ function interruptCast(
     beginRecharge(target.cast, skill, skill.rechargeSeconds, cancelled.key);
   }
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
+  target.statuses.recordInterrupt(byId);
+  return true;
+}
+
+/**
+ * Interrupt the plain swing `target` has under way (#1709): GW1
+ * interrupts "all attacks", not only skills. Its blow never lands and its
+ * swing starts over; the auto-attack goes on, at the same foe, as after
+ * Clumsiness (#1593). An attacker walking to its foe or between swings
+ * has nothing under way, nor has one knocked down, and an uninterruptible
+ * bearer (#1464) never is. `byId` did it, heard as a cast's interrupt is
+ * (#1473). Returns whether there was a swing to interrupt.
+ */
+function interruptSwing(
+  target: Combatant,
+  byId: string | undefined,
+  events: CombatEvent[],
+): boolean {
+  const attack = target.attack;
+  if (
+    attack === undefined ||
+    target.moving ||
+    attack.swingElapsed <= 0 ||
+    target.knockdownRemaining > 0 ||
+    aggregateModifiers(target.statuses.active).uninterruptible
+  ) {
+    return false;
+  }
+  attack.swingElapsed = 0;
+  events.push({ kind: "attack-interrupted", targetId: target.id });
   target.statuses.recordInterrupt(byId);
   return true;
 }
@@ -767,7 +823,7 @@ export function interruptOnHit(
     return;
   }
   const dazed = victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells);
-  if (isEasilyInterrupted(skill.type) || (dazed && isSpell(skill.type))) {
+  if (isEasilyInterrupted(skill) || (dazed && isSpell(skill.type))) {
     interruptCast(victim, byId, events);
   }
 }
@@ -891,16 +947,30 @@ function destroySpirit(candidate: TargetCandidate, caster: Combatant, events: Co
   events.push({ kind: "spirit-destroyed", targetId: combatant.id });
 }
 
-function sacrifice(caster: Combatant, amount: number, events: CombatEvent[]): void {
-  if (amount <= 0 || isInvulnerable(caster)) {
+/**
+ * `loser` loses `amount` health: the caster's `sacrifice`, or a target's
+ * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
+ * invulnerability and a Guild Lord's cap stop it, and it can kill.
+ */
+function loseHealth(
+  loser: Combatant,
+  amount: number,
+  kind: "sacrifice" | "health-loss",
+  events: CombatEvent[],
+): void {
+  if (amount <= 0 || loser.dead || isInvulnerable(loser)) {
     return;
   }
-  const applied = Math.min(amount, caster.health);
-  caster.health -= applied;
-  events.push({ kind: "sacrifice", targetId: caster.id, amount: applied });
-  if (caster.health <= 0 && !caster.dead) {
-    caster.dead = true;
-    events.push({ kind: "death", targetId: caster.id });
+  // A Guild Lord loses no more than its Amulet lets through (#1223).
+  const applied = guardedLoss(loser, Math.min(amount, loser.health));
+  if (applied <= 0) {
+    return;
+  }
+  loser.health -= applied;
+  events.push({ kind, targetId: loser.id, amount: applied });
+  if (loser.health <= 0) {
+    loser.dead = true;
+    events.push({ kind: "death", targetId: loser.id });
   }
 }
 
@@ -948,13 +1018,13 @@ function reportEnded(target: Combatant, ending: readonly StatusId[], events: Com
 
 /**
  * The skill `target` is activating that `effect` may not interrupt (#521,
- * #796), or `null`: with no `only`, any cast is fair game; with `only:
- * "spell"`, anything but a spell is refused (#1008), and with
- * `"spell-or-chant"`, anything but a spell or a chant.
+ * #796), or `null`: with no `only` or `only: "skill"` (#1709), any cast
+ * is fair game; with `only: "spell"`, anything but a spell is refused
+ * (#1008), and with `"spell-or-chant"`, anything but a spell or a chant.
  */
 function refusedSkill(effect: InterruptEffect, target: Combatant): string | null {
   const cast = target.cast.activeCast;
-  if (effect.only === undefined || cast === undefined) {
+  if (effect.only === undefined || effect.only === "skill" || cast === undefined) {
     return null;
   }
   const skill = getSkill(cast.skillId);
@@ -1022,7 +1092,16 @@ export function applyEffect(
       if (healed === undefined) {
         return events;
       }
-      applyHeal(healed, healAmount(effect, caster, target, context.surroundings, earlier), events);
+      applyHeal(
+        healed,
+        perEnergyLost(
+          effect,
+          healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+          lostBy,
+          earlier,
+        ),
+        events,
+      );
       return events;
     }
 
@@ -1037,7 +1116,12 @@ export function applyEffect(
         caster,
         perOwnCreature(
           effect,
-          perEnergyLost(effect, resolveMagnitude(effect.amount, caster), lostBy, earlier),
+          perEnergyLost(
+            effect,
+            perUsedSkillEnergy(effect, caster, context.usedSkill),
+            lostBy,
+            earlier,
+          ),
           caster,
           context.surroundings,
         ),
@@ -1088,7 +1172,12 @@ export function applyEffect(
     }
 
     case "sacrifice-health": {
-      sacrifice(caster, Math.round((caster.maxHealth * effect.percentOfMax) / 100), events);
+      loseHealth(
+        caster,
+        Math.round((caster.maxHealth * effect.percentOfMax) / 100),
+        "sacrifice",
+        events,
+      );
       return events;
     }
 
@@ -1096,11 +1185,15 @@ export function applyEffect(
       if (target === undefined) {
         return events;
       }
+      if (effect.recipient === "target") {
+        loseHealth(target, resolveMagnitude(effect.amount, caster), "health-loss", events);
+        return events;
+      }
       const removed =
         effect.perRemovedOfProfession === undefined
           ? 1
           : removedOfProfession(target.id, effect.perRemovedOfProfession, earlier);
-      sacrifice(caster, resolveMagnitude(effect.amount, caster) * removed, events);
+      loseHealth(caster, resolveMagnitude(effect.amount, caster) * removed, "sacrifice", events);
       return events;
     }
 
@@ -1229,11 +1322,26 @@ export function applyEffect(
         return events;
       }
       const refusedSkillId = refusedSkill(effect, target);
-      if (refusedSkillId !== null || !interruptCast(target, caster.id, events)) {
+      // A cast first; with none, an action is also a plain swing (#1709),
+      // which "a skill" or "a spell" never is.
+      const landed =
+        refusedSkillId === null &&
+        (interruptCast(target, caster.id, events) ||
+          (effect.only === undefined &&
+            target.cast.activeCast === undefined &&
+            interruptSwing(target, caster.id, events)));
+      if (!landed) {
         // Already interrupted by this resolution, as by the daze its own
         // blow brought down (#817): the player's interrupt landed, so it
         // is no miss.
         if (wasInterrupted(target.id, earlier)) {
+          return events;
+        }
+        // Already missed by this resolution, as by Signet of Disruption's
+        // hexed-foe interrupt before its spell one (#1627): one miss is told.
+        if (
+          earlier.some((event) => event.kind === "interrupt-missed" && event.targetId === target.id)
+        ) {
           return events;
         }
         // Nothing it may interrupt was being cast: the interrupt is wasted. Emitted
@@ -1502,8 +1610,10 @@ function isStateCondition(condition: EffectCondition): condition is StateConditi
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
+    case "not":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
@@ -1588,10 +1698,14 @@ export function stateHolds(
       return target.health > caster.health;
     case "target-attacking":
       return isAttacking(target);
+    case "target-not-attacking":
+      return !isAttacking(target);
     case "any-of":
       return condition.conditions.some((each) =>
         stateHolds(each, caster, target, surroundings, firing),
       );
+    case "not":
+      return !stateHolds(condition.condition, caster, target, surroundings, firing);
     case "target-casting-or-attacking": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
@@ -1682,9 +1796,13 @@ function statesBefore(
   return held;
 }
 
-/** Whether `earlier`, this resolution's events so far, interrupted `targetId`. */
+/** Whether `earlier`, this resolution's events so far, interrupted `targetId`'s cast or swing. */
 function wasInterrupted(targetId: string, earlier: readonly CombatEvent[]): boolean {
-  return earlier.some((event) => event.kind === "interrupted" && event.targetId === targetId);
+  return earlier.some(
+    (event) =>
+      (event.kind === "interrupted" || event.kind === "attack-interrupted") &&
+      event.targetId === targetId,
+  );
 }
 
 /** The skill `earlier`, this resolution's events so far, interrupted on `targetId`, if any. */
@@ -1778,7 +1896,7 @@ function conditionHolds(
 ): boolean {
   switch (condition.kind) {
     case "interrupted":
-      return wasInterrupted(target.id, earlier);
+      return interruptedSkill(target.id, earlier) !== undefined;
     case "interrupted-spell":
       return earlier.some(
         (event) =>
@@ -1817,8 +1935,10 @@ function conditionHolds(
     case "target-less-health":
     case "target-more-health":
     case "target-attacking":
+    case "target-not-attacking":
     case "target-casting-or-attacking":
     case "any-of":
+    case "not":
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
@@ -1848,16 +1968,22 @@ function landing(
     : [];
 }
 
-/** Apply one effect to `context.target`, an `if` included (`landing`). */
+/**
+ * Apply one effect to `context.target`, an `if` included (`landing`).
+ * Each effect inside an `if` reads what the ones before it did, as
+ * Drain Delusions' gain reads the energy its loss took (#1627).
+ */
 function applyInOrder(
   effect: SkillEffect,
   context: SkillContext,
   earlier: readonly CombatEvent[],
   held: ReadonlySet<EffectCondition>,
 ): CombatEvent[] {
-  return landing(effect, context, earlier, held).flatMap((inner) =>
-    applyEffect(inner, context, earlier),
-  );
+  const events: CombatEvent[] = [];
+  for (const inner of landing(effect, context, earlier, held)) {
+    events.push(...applyEffect(inner, context, [...earlier, ...events]));
+  }
+  return events;
 }
 
 /** Apply `effects` in order to one target; an `if` reads what came before it. */
@@ -2053,7 +2179,7 @@ export function resolveSkillEffects(
         if (inner.kind === "create-ground-effect") {
           grounds.push(inner);
         }
-        events.push(...applyEffect(inner, context, before));
+        events.push(...applyEffect(inner, context, [...earlier, ...events]));
       }
     }
   }

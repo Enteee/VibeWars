@@ -57,16 +57,18 @@ the team you just played with.
 ## Host or join a match
 
 You are always in a lobby: from the moment the page opens it hosts one
-of your own, and the top bar shows its code. The lobby is your party,
+of your own, and the top bar shows its key. The lobby is your party,
 and the strip on top of every mode screen lists who is in it.
 
-- **Invite:** press **Copy** beside your code in the top bar and send it
-  to your friends.
-- **Join:** paste the code you were sent into **Lobby Code** in the top
-  bar and press **Join**, or Enter. Your own lobby stays open until the
-  join is in. Once in, the top bar shows your friend's code, and
-  **Leave** takes you back to a fresh lobby of your own, with a new code.
-  If you had friends in your lobby, they go back to lobbies of their own.
+- **Invite:** press **Copy** beside your key in the top bar and send it
+  to your friends. The key is 12 characters, such as `ACDE-FGHJ-KMNP`.
+  Anyone with the key can join, so share it only with people you want in.
+- **Join:** paste the key you were sent into **Lobby Key** in the top
+  bar and press **Join**, or Enter. Dashes and lower case are fine. Your
+  own lobby stays open until the join is in. Once in, the top bar shows
+  your friend's key, and **Leave** takes you back to a fresh lobby of
+  your own, with a new key. If you had friends in your lobby, they go
+  back to lobbies of their own.
 
 **The host picks the mode** on the rail, and everyone's screen follows;
 a guest's modes are locked. **Character Builder** and **Team Builder**
@@ -96,8 +98,9 @@ left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
 it: pick the cape colour, the trim colour and an emblem, and your body
-wears the cape behind it in every match. Your characters in the menu
-show it too. **No cape** takes it off.
+wears the cape in every match: it folds to a thin band on your rim when
+you stand and streams out behind you when you move. Your characters in
+the menu show it too. **No cape** takes it off.
 
 A change applies from the next lobby you join, or your next fresh one:
 one you are already in keeps what you joined with.

@@ -30,7 +30,7 @@ export interface RailParty {
 }
 
 /** Shown while nobody else is here. */
-export const PARTY_ALONE = "Share your code to play together";
+export const PARTY_ALONE = "Share your key to play together";
 
 /** `snapshot`'s party: its people, in lobby order. */
 export function partyOf(snapshot: LobbySnapshot): RailParty {

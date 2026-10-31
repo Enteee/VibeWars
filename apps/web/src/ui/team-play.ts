@@ -23,7 +23,7 @@ export const HOST_GOALS: Readonly<Record<HostEntry, string>> = {
   "team-arena": "Two teams, one arena: wipe the other side out, or outscore it.",
   "heroes-ascent": "Carry the relic, hold the altar, take the points.",
   gvg: "Storm the other guild's hall and kill its Guild Lord.",
-  "hosted-game": "Any map, any rules: a lobby for friends with its code.",
+  "hosted-game": "Any map, any rules: a lobby for friends with its key.",
 };
 
 /** Whether `entry` is a screen that shows the lobby. */

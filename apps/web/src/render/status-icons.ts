@@ -1,5 +1,7 @@
 import type { StatusId, Vec2 } from "@vibewars/game-core";
 
+import { STATUS_ICON_SIZE } from "./arena-atlas.js";
+
 /**
  * Status icons under an actor (#75, docs/art/art-direction.md).
  *
@@ -73,6 +75,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "whirling-defense": icon("whirling-defense"),
   "serpents-quickness": icon("serpents-quickness"),
   dodge: icon("dodge"),
+  "zojuns-haste": icon("zojuns-haste"),
   "bonettis-defense": icon("bonettis-defense"),
   "deflect-arrows": icon("deflect-arrows"),
   "gladiators-defense": icon("gladiators-defense"),
@@ -166,6 +169,16 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   earthbind: icon("earthbind"),
   soothing: icon("soothing"),
   "xinraes-weapon": icon("xinraes-weapon"),
+  "resilient-weapon": icon("resilient-weapon"),
+  "ghostly-weapon": icon("ghostly-weapon"),
+  "guided-weapon": icon("guided-weapon"),
+  "sundering-weapon": icon("sundering-weapon"),
+  "weapon-of-shadow": icon("weapon-of-shadow"),
+  "warmongers-weapon": icon("warmongers-weapon"),
+  "wailing-weapon": icon("wailing-weapon"),
+  "nightmare-weapon": icon("nightmare-weapon"),
+  "weapon-of-fury": icon("weapon-of-fury"),
+  "weapon-of-renewal": icon("weapon-of-renewal"),
   "ward-against-melee": icon("ward-against-melee"),
   "well-of-suffering": icon("well-of-suffering"),
   "call-of-haste": icon("call-of-haste"),
@@ -232,6 +245,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   mistrust: icon("mistrust"),
   fragility: icon("fragility"),
   "judges-insight": icon("judges-insight"),
+  "shield-of-regeneration": icon("shield-of-regeneration"),
   "blood-is-power": icon("blood-is-power"),
   "order-of-pain": icon("order-of-pain"),
   "mark-of-rodgort": icon("mark-of-rodgort"),
@@ -239,6 +253,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "obsidian-flesh": icon("obsidian-flesh"),
   "ward-against-foes": icon("ward-against-foes"),
   "ward-of-stability": icon("ward-of-stability"),
+  "fire-attunement": icon("fire-attunement"),
+  "water-attunement": icon("water-attunement"),
+  "air-attunement": icon("air-attunement"),
+  "earth-attunement": icon("earth-attunement"),
+  "aura-of-restoration": icon("aura-of-restoration"),
+  "kinetic-armor": icon("kinetic-armor"),
   "infuriating-heat": icon("infuriating-heat"),
   panic: icon("panic"),
   "wastrels-demise": icon("wastrels-demise"),
@@ -247,10 +267,27 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "grenths-grasp": icon("grenths-grasp"),
   "rending-aura": icon("rending-aura"),
   "shadow-prison": icon("shadow-prison"),
+  wither: icon("wither"),
+  "kindle-arrows": icon("kindle-arrows"),
+  "ignite-arrows": icon("ignite-arrows"),
+  "life-siphon": icon("life-siphon"),
+  "life-siphon-regen": icon("life-siphon-regen"),
+  "reckless-haste": icon("reckless-haste"),
+  "corrupt-enchantment": icon("corrupt-enchantment"),
+  "wandering-eye": icon("wandering-eye"),
+  "pious-fury": icon("pious-fury"),
+  "zealous-renewal": icon("zealous-renewal"),
+  "mirage-cloak": icon("mirage-cloak"),
+  "vital-boon": icon("vital-boon"),
+  "guiding-hands": icon("guiding-hands"),
+  "windborne-speed": icon("windborne-speed"),
+  "ash-blast": icon("ash-blast"),
+  onslaught: icon("onslaught"),
+  "zealous-vow": icon("zealous-vow"),
+  "featherfoot-grace": icon("featherfoot-grace"),
+  "whirling-charge": icon("whirling-charge"),
 };
 
-/** Drawn size of one icon, in world pixels. */
-export const STATUS_ICON_SIZE = 16;
 const GAP = 2;
 /** Below the actor's edge, so the row clears the circle. */
 const OFFSET = 6;

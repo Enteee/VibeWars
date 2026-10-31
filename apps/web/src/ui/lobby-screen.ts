@@ -30,10 +30,9 @@ export const SELECTABLE_TEAMS = [0, 1] as const;
 
 export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens again when it ends.";
 
-/** A lobby code as it is read aloud: `ABCDEF` as `ABC-DEF` (#379). */
+/** A lobby key as it is read aloud: `ACDEFGHJKMNP` as `ACDE-FGHJ-KMNP` (#379, #1681). */
 export function displayLobbyCode(code: string): string {
-  const half = LOBBY_CODE_LENGTH / 2;
-  return code.length === LOBBY_CODE_LENGTH ? `${code.slice(0, half)}-${code.slice(half)}` : code;
+  return code.length === LOBBY_CODE_LENGTH ? (code.match(/.{4}/g) ?? []).join("-") : code;
 }
 
 /**
@@ -106,7 +105,7 @@ export function characterLine(character: LobbyCharacter | null, bot: boolean): s
 
 export const RANDOM_STARTER = "Random starter build";
 export const COPIED = "Copied";
-export const COPY_BY_HAND = "Could not copy: the code is selected, copy it by hand";
+export const COPY_BY_HAND = "Could not copy: the key is selected, copy it by hand";
 
 /**
  * Copy the code to the clipboard, and say so. A browser may refuse the

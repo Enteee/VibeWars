@@ -10,6 +10,7 @@ import {
   describeCombatEvent,
   dividerRow,
   floatingCueFor,
+  foldedText,
   formatAmount,
   formatRate,
   formatSimClock,
@@ -64,6 +65,7 @@ describe("logToneOf", () => {
       "energy-gain",
       "energy-loss",
       "sacrifice",
+      "health-loss",
       "death",
       "status-applied",
       "status-removed",
@@ -83,6 +85,7 @@ describe("logToneOf", () => {
       "heal",
       "resource",
       "resource",
+      "damage",
       "damage",
       "death",
       "status",
@@ -521,6 +524,30 @@ describe("describeCombatEvent", () => {
     });
   });
 
+  it("says a target lost health to the skill, not that it sacrificed it (#1678)", () => {
+    const lost: CombatEvent = { kind: "health-loss", targetId: "you", amount: 53 };
+    const touch = entry([lost], {
+      sourceId: "dummy",
+      skillId: "necromancer.enfeebling-touch",
+    });
+    expect(describeCombatEvent(touch, lost, nameOf, isCreature)).toBe(
+      "Pyro loses 53 Health to Enfeebling Touch (Caster dummy)",
+    );
+    expect(logToneOf("health-loss")).toBe("damage");
+    expect(floatingCueFor("health-loss", 53, false)).toEqual({
+      text: "−53",
+      tone: "damage",
+      critical: false,
+    });
+    expect(accumulate(EMPTY_TOTALS, [touch], "you", 0.05)).toEqual({
+      damage: 0,
+      weaponDamage: 0,
+      healing: 0,
+      taken: 53,
+      seconds: 0.05,
+    });
+  });
+
   it("says a caster who moved cancels their own cast (#279)", () => {
     const cancelled: CombatEvent = {
       kind: "cancelled",
@@ -631,6 +658,15 @@ describe("appendRows", () => {
         ["0:12.0", "regeneration heals Pyro for 60 over 19 s"],
       ]);
       expect(replacedLast).toBe(false);
+    });
+
+    it("says no span for a fold of rows closed at the same time (#1618)", () => {
+      expect(appendRows([], [regen(12, 3), regen(12, 3)], 100).rows.map((r) => r.text)).toEqual([
+        "regeneration heals Pyro for 6",
+      ]);
+      const fold = { key: "k", amount: 3, startedAt: 12, endedAt: 12, label: "heals" };
+      expect(foldedText(fold)).toBe("heals for 3");
+      expect(foldedText({ ...fold, amount: 57, endedAt: 31 })).toBe("heals for 57 over 19 s");
     });
 
     it("lets a hit or a divider end the run", () => {

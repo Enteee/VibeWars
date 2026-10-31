@@ -40,6 +40,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 // The full roster, so an absent colleague can be reported as "not hired
 // yet" rather than silently omitted.
+import { contextFile, contextState, isOver, kilo, overLine, sayAtExit } from "./context.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import { readRoster } from "./presence.mjs";
 import {
@@ -50,12 +51,11 @@ import {
   SUPPORT,
   TO_OPERATOR,
   formatLine,
-  obj,
   readInbox,
   wakes,
 } from "./protocol.mjs";
 import { readSidecar, sidecarDown } from "./sidecar.mjs";
-import { roleOf } from "./staff.mjs";
+import { roleOf, WORK_COLUMN } from "./staff.mjs";
 
 // Who this agent is (#62): the bus directory is the employee's, and what it
 // may do is its role's.
@@ -75,7 +75,9 @@ const RECEIPTS = path.join(DIR, "receipts");
 const CURSOR = path.join(DIR, "cursor");
 const ROSTER = path.join(BUS, "roster");
 /** The context of this agent's last call, written by agent-turn.mjs (#321). */
-const CONTEXT = path.join(DIR, "context.json");
+const CONTEXT = contextFile();
+/** Left by a wait that found nothing: the loop sleeps the agent's next pause (#1694). */
+const IDLE = path.join(DIR, "idle");
 
 /* -------------------------------------------------------------------------- */
 
@@ -229,31 +231,15 @@ function drain(fromStart, advance, ends = () => true) {
 }
 
 /**
- * Is this agent's context past the ceiling? A missing or unreadable file
- * means no ceiling.
+ * The ceiling line `tg wait` ends on (#321), when the context is past it.
  *
- * @returns {{ tokens: number, ceiling: number } | null} the two, when it is
+ * @returns {string | null}
  */
-function overCeiling() {
-  /** @type {unknown} */
-  let parsed;
-  try {
-    parsed = JSON.parse(fs.readFileSync(CONTEXT, "utf8"));
-  } catch {
-    return null;
-  }
-  const { tokens, ceiling } = obj(parsed);
-  return typeof tokens === "number" && typeof ceiling === "number" && tokens >= ceiling
-    ? { tokens, ceiling }
+function ceilingLine() {
+  const state = contextState(CONTEXT);
+  return state !== null && isOver(state)
+    ? `Your context is over the ceiling (${kilo(state.tokens)} of ${kilo(state.ceiling)}). Commit and push any WIP, put anything that lives only in this conversation on the card or in a memory, then END YOUR TURN. The next turn starts fresh; your inbox is kept.`
     : null;
-}
-
-/**
- * @param {number} tokens
- * @returns {string}
- */
-function kilo(tokens) {
-  return `${String(Math.round(tokens / 1000))}k`;
 }
 
 /**
@@ -267,16 +253,20 @@ async function wait(timeoutSeconds, all) {
   let warned = false;
   for (;;) {
     const printed = drain(false, true, all ? () => true : (line) => wakes(line, EMPLOYEE ?? ""));
+    // Waiting on would make every call of the next task re-read all of
+    // this one (#321): end the turn here, and the next starts fresh. Said
+    // after what arrived too (#1695): that may be work to hand on first.
+    const over = ceilingLine();
     if (printed > 0) {
+      // Something to do after all: an earlier wait's idle no longer holds.
+      fs.rmSync(IDLE, { force: true });
+      if (over !== null) {
+        console.log(over);
+      }
       return printed;
     }
-    // Waiting on would make every call of the next task re-read all of
-    // this one (#321): end the turn here, and the next starts fresh.
-    const over = overCeiling();
     if (over !== null) {
-      console.log(
-        `Your context is over the ceiling (${kilo(over.tokens)} of ${kilo(over.ceiling)}). Commit and push any WIP, put anything that lives only in this conversation on the card or in a memory, then END YOUR TURN. The next turn starts fresh; your inbox is kept.`,
-      );
+      console.log(over);
       return 0;
     }
     // Said once, and the wait goes on (#583): returning at once would
@@ -292,10 +282,17 @@ async function wait(timeoutSeconds, all) {
         process.exit(2);
       }
       const queued = pending();
+      // Another empty wait would be another call that re-reads the whole
+      // context (#1694): the loop between turns waits for nothing instead.
+      fs.writeFileSync(IDLE, "");
+      const column = WORK_COLUMN[ROLE ?? ""] ?? null;
+      const woken = column === null ? "A message" : `A message, or a card arriving in ${column},`;
       console.log(
-        queued === 0
-          ? `(nothing new in ${String(timeoutSeconds)}s)`
-          : `(nothing for you in ${String(timeoutSeconds)}s; ${String(queued)} General messages queued, tg inbox shows them)`,
+        `${
+          queued === 0
+            ? `(nothing new in ${String(timeoutSeconds)}s)`
+            : `(nothing for you in ${String(timeoutSeconds)}s; ${String(queued)} General messages queued, tg inbox shows them)`
+        } You are idle: END YOUR TURN now. ${woken} starts your next turn.`,
       );
       return 0;
     }
@@ -371,6 +368,11 @@ function roster() {
 /* -------------------------------------------------------------------------- */
 
 const [command, ...rest] = process.argv.slice(2);
+
+// Every command but `wait`, which says its own line (#1695).
+if (command !== "wait") {
+  sayAtExit(() => [overLine(contextState(CONTEXT))]);
+}
 
 switch (command) {
   case "send": {

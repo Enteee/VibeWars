@@ -59,11 +59,11 @@ function spec(id: string, team: number, spawn: Vec2, extra?: Partial<Participant
   return result;
 }
 
-/** Ritualist `r` at the origin, and `more`. */
-function match(more: readonly ParticipantSpec[] = []): MatchSimulation {
+/** Ritualist `r` at the origin, at `ranks`, and `more`. */
+function match(more: readonly ParticipantSpec[] = [], ranks = RANKS): MatchSimulation {
   return new MatchSimulation({
     seed: "ritualist-staples",
-    participants: [spec("r", 0, vec2(0, 0)), ...more],
+    participants: [spec("r", 0, vec2(0, 0), { attributeRanks: ranks }), ...more],
   });
 }
 
@@ -225,9 +225,9 @@ describe("death bursts (#1550)", () => {
     expect(sum(events, "damage", "a")).toBe(0);
   });
 
-  it("Destruction gone after 10 whole seconds deals 82; one under a second, nothing", () => {
+  it("Destruction gone after 10 whole seconds deals 80; one under a second, nothing", () => {
     for (const [lived, dealt] of [
-      [10.5, 82],
+      [10.5, 80],
       [0.9, 0],
     ] as const) {
       const sim = match([spec("f", 1, vec2(100, 0), { skillBar: [] })]);
@@ -240,6 +240,23 @@ describe("death bursts (#1550)", () => {
       const events = eventsOf(stepFor(sim, lived + 1), "r");
       expect(sum(events, "damage", "f")).toBe(dealt);
     }
+  });
+
+  it("scales with its caster's rank at summoning: 1 a second at rank 0 (#1603)", () => {
+    const sim = match([spec("f", 1, vec2(100, 0), { skillBar: [] })], new Map());
+    const spirit = ritual(sim, DESTRUCTION);
+    const creature = spirit.creature;
+    if (creature === undefined) {
+      throw new Error("not a creature");
+    }
+    expect(creature.deathBurst?.perSecondAlive).toBe(1);
+    creature.expiresInSeconds = 10.5 - creature.ageSeconds;
+    expect(sum(eventsOf(stepFor(sim, 11.5), "r"), "damage", "f")).toBe(10);
+    expect(
+      describeSkill(skillOf(DESTRUCTION), new Map()).effects.map((each) => each.text),
+    ).toContain(
+      "When it dies, non-spirit foes in the area take 1 damage per second it lived (max 150)",
+    );
   });
 
   it("Destruction killed bursts as it dies", () => {
@@ -261,10 +278,10 @@ describe("death bursts (#1550)", () => {
       events = events.concat(eventsOf(sim.step(DT).log, "r"));
     }
     expect(sim.get(spirit.id)).toBeUndefined();
-    expect(sum(events, "damage", "f")).toBe(Math.round(8.2 * Math.floor(lived)));
+    expect(sum(events, "damage", "f")).toBe(8 * Math.floor(lived));
   });
 
-  it("Life living its 20 s heals each non-spirit ally in range 116, and no spirit", () => {
+  it("Life living its 20 s heals each non-spirit ally in range 120, and no spirit", () => {
     const sim = match([
       spec("a", 0, vec2(RANGE_SPIRIT - 10, 0), { skillBar: [] }),
       spec("f", 1, vec2(0, 100), { skillBar: [] }),
@@ -280,8 +297,8 @@ describe("death bursts (#1550)", () => {
     bloodsong.combatant.health -= 100;
     const events = eventsOf(stepFor(sim, 1.5), "r");
     expect(sim.get(life.id)).toBeUndefined();
-    expect(sum(events, "heal", "a")).toBe(116);
-    expect(sum(events, "heal", "r")).toBe(116);
+    expect(sum(events, "heal", "a")).toBe(120);
+    expect(sum(events, "heal", "r")).toBe(120);
     expect(sum(events, "heal", "f")).toBe(0);
     expect(sum(events, "heal", bloodsong.id)).toBe(0);
   });
@@ -339,10 +356,36 @@ describe("the texts (#1550)", () => {
     expect(lines(WANDERLUST).filter((line) => line.startsWith("Its attacks"))).toHaveLength(1);
     expect(lines(SOOTHING).join(" ")).toContain("gain adrenaline 50% slower");
     expect(lines(DESTRUCTION)).toContain(
-      "When it dies, non-spirit foes in the area take 8.2 damage per second it lived (max 150)",
+      "When it dies, non-spirit foes in the area take 8 damage per second it lived (max 150)",
     );
     expect(lines(LIFE)).toContain(
-      "When it dies, non-spirit allies in its range are healed for 5.8 Health per second it lived",
+      "When it dies, non-spirit allies in its range are healed for 6 Health per second it lived",
     );
+  });
+
+  it("says what an attacking spirit's blow deals, before its rider (#1631)", () => {
+    expect(lines(ANGUISH)).toContain("Its attacks deal 17 damage");
+    expect(lines("ritualist.pain")).toContain("Its attacks deal 25 damage");
+    const anguish = lines(ANGUISH);
+    expect(anguish.indexOf("Its attacks deal 17 damage")).toBeLessThan(
+      anguish.indexOf("Its attacks: if target has a hex: deals 17 damage"),
+    );
+  });
+
+  it("says it scaled, at rank 0 too (#1631)", () => {
+    const line = describeSkill(skillOf(ANGUISH), new Map()).effects.find(({ text }) =>
+      text.startsWith("Its attacks deal"),
+    );
+    expect(line?.text).toBe("Its attacks deal 5 damage");
+    expect(line?.magnitude?.atZero).toBe(5);
+  });
+
+  it("gives a blow that is only its rider no damage line (#1631)", () => {
+    for (const id of [BLOODSONG, WANDERLUST]) {
+      expect(
+        lines(id).some((line) => line.startsWith("Its attacks deal")),
+        id,
+      ).toBe(false);
+    }
   });
 });

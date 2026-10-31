@@ -103,13 +103,13 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await openMenu(host);
     await openMenu(guest);
     const code = host.locator("#topbar .topbar-lobby-code");
-    await expect(code).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+    await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const hostCode = (await code.textContent()) ?? "";
     const guestCode = guest.locator("#topbar .topbar-lobby-code");
-    await expect(guestCode).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+    await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const ownCode = (await guestCode.textContent()) ?? "";
     // Alone, the party strip says how to change that.
-    await expect(host.locator(".party-strip")).toContainText("Share your code to play together");
+    await expect(host.locator(".party-strip")).toContainText("Share your key to play together");
 
     await joinByCode(guest, hostCode);
     await expect(guestCode).toHaveText(hostCode);
@@ -130,7 +130,7 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(guestCode).toHaveText(hostCode);
 
     await leave.click();
-    await expect(guestCode).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+    await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     await expect(guestCode).not.toHaveText(hostCode);
     await expect(guestCode).not.toHaveText(ownCode);
     await expect(leave).toBeHidden();
@@ -149,7 +149,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await openMenu(host);
     await openMenu(guest);
     const code = host.locator("#topbar .topbar-lobby-code");
-    await expect(code).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+    await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
     const hostCode = (await code.textContent()) ?? "";
     await expect(host.locator(".party-strip .party-member")).toHaveCount(1);
 
@@ -329,7 +329,7 @@ test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the glo
   await openRail(page, "Team Builder");
   const bar = page.locator("#topbar");
   await expect(bar.locator(".topbar-more")).toBeHidden();
-  await expect(bar.getByRole("textbox", { name: "Lobby code", exact: true })).toBeVisible();
+  await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
   await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
   // The rightmost icon still inside the bar, and nothing scrolls sideways.
   const right = await bar.locator(".topbar-fullscreen").evaluate((node) => {

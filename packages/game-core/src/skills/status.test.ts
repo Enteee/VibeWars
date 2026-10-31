@@ -48,6 +48,8 @@ describe("status definitions", () => {
         def.preventsSpells ||
         def.preventsBlocking ||
         def.unblockableBySource ||
+        def.unblockableAttacks !== undefined ||
+        def.attacksUnblockable ||
         def.energyPips !== 0 ||
         def.armorModifier !== 0 ||
         def.armorWhileStill !== 0 ||
@@ -82,6 +84,7 @@ describe("status definitions", () => {
         def.extraStrikesPerHit !== 0 ||
         def.attackDamageType !== undefined ||
         def.attackArmorPenetration !== 0 ||
+        def.attackDamageDelta !== 0 ||
         def.onAttackHit !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
@@ -142,6 +145,7 @@ describe("status definitions", () => {
       "never-surrender": 4,
       "healing-breeze": 8,
       "shadow-refuge": 9,
+      "shield-of-regeneration": 9,
       "feigned-neutrality": 7,
       recuperation: 3,
       "well-of-suffering": -5,
@@ -158,6 +162,10 @@ describe("status definitions", () => {
       "ice-spear": 3,
       overload: -3,
       migraine: -7,
+      wither: -4,
+      "life-siphon": -3,
+      "life-siphon-regen": 3,
+      "corrupt-enchantment": -7,
     });
   });
 
@@ -174,7 +182,10 @@ describe("status definitions", () => {
       "blood-ritual": 3,
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
+      wither: -1,
       "obsidian-flesh": -2,
+      "zealous-renewal": -1,
+      "zealous-vow": -3,
     });
   });
 
@@ -805,7 +816,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -817,6 +828,9 @@ describe("attack duration (ADR-0029)", () => {
       "call-of-haste": 0.75,
       "aggressive-refrain": 0.75,
       flail: 0.67,
+      "reckless-haste": 0.75,
+      "pious-fury": 0.75,
+      onslaught: 0.75,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

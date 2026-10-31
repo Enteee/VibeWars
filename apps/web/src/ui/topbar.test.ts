@@ -96,7 +96,7 @@ class FakeElement {
   }
 }
 
-describe("the title bar's Lobby Code and Join (#1525, #1526)", () => {
+describe("the title bar's Lobby Key and Join (#1525, #1526)", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -126,18 +126,18 @@ describe("the title bar's Lobby Code and Join (#1525, #1526)", () => {
     const [lobby] = (join.element as unknown as FakeElement).children;
     const [label, code, copy, leave] = lobby?.children ?? [];
     expect(lobby?.hidden).toBe(true);
-    join.setLobby({ code: "ACDEFG", isHost: true });
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: true });
     expect([lobby?.hidden, label?.textContent, code?.textContent, copy?.textContent]).toEqual([
       false,
       OWN_LOBBY_LABEL,
-      "ACD-EFG",
+      "ACDE-FGHJ-KMNP",
       "Copy",
     ]);
     expect(leave?.hidden).toBe(true);
-    join.setLobby({ code: "HJKMNP", isHost: false });
+    join.setLobby({ code: "HJKMNPQRTWXY", isHost: false });
     expect([label?.textContent, code?.textContent, leave?.hidden]).toEqual([
       JOINED_LOBBY_LABEL,
-      "HJK-MNP",
+      "HJKM-NPQR-TWXY",
       false,
     ]);
     leave?.fire("click");
@@ -146,19 +146,19 @@ describe("the title bar's Lobby Code and Join (#1525, #1526)", () => {
     expect(lobby?.hidden).toBe(true);
   });
 
-  it("joins with the code upper-cased as typed, on Enter and on Join", () => {
+  it("joins with the key upper-cased as typed, on Enter and on Join", () => {
     const { joined, parts } = mount();
     const [label, input, button] = parts;
-    expect(label?.textContent).toBe("Lobby Code:");
+    expect(label?.textContent).toBe("Lobby Key:");
     if (input === undefined || button === undefined) {
       throw new Error("no field or button");
     }
-    input.value = "abc-def";
+    input.value = "acde-fghj-kmnp";
     input.fire("input");
     input.fire("keydown", { key: "a" });
     input.fire("keydown", { key: "Enter" });
     button.fire("click");
-    expect(joined).toEqual(["ABC-DEF Rurik", "ABC-DEF Rurik"]);
+    expect(joined).toEqual(["ACDE-FGHJ-KMNP Rurik", "ACDE-FGHJ-KMNP Rurik"]);
   });
 
   it("says Connecting… once a join runs a while, until the next bar shows", () => {

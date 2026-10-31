@@ -2,7 +2,7 @@
 
 VibeWars is a browser PvP game with **no server**. The client is a static
 site (GitHub Pages). One player's browser, the **host**, runs a lobby and
-its match; the others are **peers** that join it by code over WebRTC
+its match; the others are **peers** that join it by its key over WebRTC
 (ADR-0022). This file says what we defend against, what we deliberately do
 not, how to report a problem, and which weaknesses are known and still
 open.
@@ -30,8 +30,10 @@ within a week. There is no bounty.
 The host runs the simulation in a `MatchHost` (game-session) and sends
 snapshots. Every peer sends intents and draws what the host says. Peers
 find each other through Trystero over public Nostr relays, then talk over
-WebRTC data channels, with public STUN and no TURN. The lobby code is both
-the Trystero room and its password. There are **no accounts**: players' own
+WebRTC data channels, with public STUN and no TURN. The lobby key is a
+secret that never reaches Trystero: the room and its password are derived
+from it by a slow function, and peers prove the key to each other before
+the lobby says anything (ADR-0043). There are **no accounts**: players' own
 data (characters, builds) lives in their browser's IndexedDB and reaches
 the host only as the build in a join.
 
@@ -86,9 +88,17 @@ channels, as often as they like.
   from its own peer id. The peer id itself is whatever the transport
   reports, which a peer chooses; a peer that also claims a joiner's id
   could at most race that joiner for its one seat.
-- **Knowing the code means being invited.** Anyone with the lobby code can
-  join and see the lobby. A code is shared like a party invite; it is not a
-  credential.
+- **Knowing the key means being invited.** Anyone with the lobby key can
+  join and see the lobby, and share it on. A key is shared like a party
+  invite: an invitation, not an identity. The relays see a topic, the
+  WebRTC offers and answers, encrypted with a password derived from the
+  key, and every peer's IP address; neither the topic nor the password
+  gives the key back (ADR-0043, gap 5).
+- **A flooded lobby topic.** The topic a lobby announces on is public, so
+  anyone watching the relays can announce on it too and make the host
+  start handshakes that fail. That is denial of service, not access: such
+  a peer cannot decrypt the offers, and gets nothing from the host but a
+  key challenge.
 - **Identity.** There are no accounts, passwords or tokens. A player is a
   peer in one room. Anyone can pick any name, and two players can share
   one. Do not build anything that relies on a name meaning a person.
@@ -135,7 +145,7 @@ channels, as often as they like.
   screen says so (Getting started).
 - **The relays see who meets whom.** Each public Nostr relay sees the IP
   address of every browser in a room, the room's name, which is derived
-  from the lobby code, and the WebRTC offers and answers (SDP) that pass
+  from the lobby key by ADR-0043's slow function, and the WebRTC offers and answers (SDP) that pass
   through it. The relays are third parties we do not run; the list lives
   in `apps/web/src/net/transport/relays.ts` (#392).
 - **Everything in a snapshot.** A peer receives every snapshot field the
@@ -173,7 +183,7 @@ channels, as often as they like.
   cannot take the guest's seat. What remains is a live relay: a peer that
   poses as the host's id to the guest and as the guest's id to the real
   host, both at once, while both are up. That needs two spoofed ids, the
-  lobby code and a real drop, and we accept it. Authenticating the host to
+  lobby key and a real drop, and we accept it. Authenticating the host to
   its guests is out of scope.
 - `MatchHost` (#375) parses every intent with `parseClientIntent` and
   counts a message budget (gap 3) per peer. The budget covers every
@@ -181,6 +191,16 @@ channels, as often as they like.
   resets it, so a peer cannot refill it by quitting and saying hello
   again. A peer that said `bye` is not seated again until it leaves the
   room.
+- The key gate (#1681, ADR-0043, `keyGated`) runs under `LobbyHost` and
+  `joinLobby` on every transport. The host sends a new peer a
+  `key-challenge` nonce and nothing else, and ignores everything but its
+  `key-proof`: an HMAC keyed by a derivation of the key over both nonces
+  and both peer ids, checked in constant time. A wrong or malformed proof,
+  or none in 5 s, drops the peer; each nonce is answered once; at most
+  `MAX_LOBBY_PLAYERS` peers wait unproven, the oldest dropped first. The
+  host's `key-proven`, the same with its side named, is checked before the
+  guest hears anything from it. Until both hold, neither sees the other in
+  the room. A queued lobby has no key: its tickets are its gate.
 - `LobbyHost` (#379) acts on nothing a peer sends before its `lobby-join`,
   charges `lobby-join` and `lobby-cmd` to the same per-peer budget, and
   lets only its own player pick the map and start. A command names no
@@ -210,7 +230,7 @@ channels, as often as they like.
   for its code that names that peer as host and lists the player, then
   drops every lobby and match message from anyone else. Before that first
   state, a peer in the room can answer faster than the host and pose as
-  it. That peer had to know the code, so it is someone invited (see
+  it. That peer had to know the key, so it is someone invited (see
   above), and the lobby it fakes holds nothing but names. In the same
   window it can also fail the join with a `lobby-note` refusal.
 - A queued lobby (#871) closes that window: the room's name is public, so
@@ -263,10 +283,12 @@ saying so in the same PR. Keep the numbers: issues cite them.
    now has 60 messages a second handled, with bursts of up to 300, and the
    rest are ignored.
 4. **Fixed by #44:** any lobby member could send `return-to-lobby`.
-5. **Lobby codes can be guessed, slowly.** There are 23⁶ ≈ 148 million
-   codes (#379), and nothing limits how many rooms a browser tries. It is
-   an invitation, not access control, and it must not be described as
-   access control.
+5. **Fixed by #1681:** a live lobby's code could be read off the relays.
+   Trystero announces a room on the topic
+   `sha1("Trystero@" + APP_ID + "@" + room)` in clear, and the room was
+   the code: hashing all 23⁶ ≈ 148 million codes took minutes on one core,
+   and the password was the code too. The key is now 23¹² ≈ 2⁵⁴, and room
+   and password come from 600 000 rounds of PBKDF2 over it (ADR-0043).
 6. **Gone with the server (#404):** there was no cap on rooms or players on
    the shared server (#114, #265).
 7. **Gone with the server (#404):** client strings reached the server log
@@ -568,6 +590,13 @@ employee names and numbers. `kpis.json` carries a `schemaVersion`; a reader
 that finds another value treats the file as absent. `kpi-edges.json` (#1313)
 holds the 7-day utilization's 1% steps of the last 24 h, times and
 fractions only; hubd discards one of another `schemaVersion` on start.
+`ci-history.jsonl` (#1612) keeps a line per completed Actions run, eight
+days of them: run id, event, conclusion, sha, times, whether it ran on
+main, the `#N` its title starts with, and the workflow's file name only if
+it is a merge gate (else `"other"`). A fork's pull request names its own
+title, branch and workflow files, so **no GitHub free text goes into a
+file in `hub/`**: hubd keeps numbers, hashes and values checked against a
+closed set, and the reader drops a line that fails that check.
 
 **A manager is always running (#384).** The supervisor starts a missing
 manager pane within one sample, backing off to once every five minutes

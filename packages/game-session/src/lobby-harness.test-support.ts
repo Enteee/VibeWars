@@ -11,6 +11,7 @@
 import { ANNIHILATION_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
 import type { LobbyMode, WireCape } from "@vibewars/game-protocol";
 
+import { keyGated } from "./key-gate.js";
 import { joinLobby } from "./lobby-client.js";
 import type { LobbyCharacter, LobbyConnection, MatchStarting } from "./lobby-connection.js";
 import { createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
@@ -20,7 +21,13 @@ import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { Transport } from "./transport.js";
 
-export const CODE = "ACDEFG";
+export const CODE = "ACDEFGHJKMNP";
+
+/**
+ * What the test lobby's peers prove its key with (#1681): any bytes do,
+ * so the 600 000-round derivation stays out of every lobby test.
+ */
+export const PROOF_KEY = new TextEncoder().encode("the test lobby's proof key");
 
 /** The maps the test lobby offers; the first is its default. */
 export const MAP_IDS = ["test-arena", "other-arena"] as const;
@@ -85,6 +92,7 @@ export async function openLobby(
   const lobby = createLobbyHost({
     transport: room,
     code: CODE,
+    proofKey: PROOF_KEY,
     mapIds: MAP_IDS,
     modeMaps: MODE_MAPS,
     teamLobby: options.teamLobby ?? false,
@@ -112,6 +120,7 @@ export async function openLobby(
   });
   const join = async (
     transport: Transport,
+    proofKey: Uint8Array | null,
     name: string,
     character: LobbyCharacter | null,
     guildTag: string | null,
@@ -121,6 +130,7 @@ export async function openLobby(
       await joinLobby({
         transport,
         code: CODE,
+        proofKey,
         name,
         guildTag,
         guildCape,
@@ -129,7 +139,7 @@ export async function openLobby(
       }),
       transport,
     );
-  const host = await join(lobby.local, "Host", null, null, null);
+  const host = await join(lobby.local, null, "Host", null, null, null);
   return {
     network,
     lobby,
@@ -137,7 +147,7 @@ export async function openLobby(
     host,
     matches,
     join: (name = "Guest", character = null, guildTag = null, guildCape = null) =>
-      join(network.join(), name, character, guildTag, guildCape),
+      join(network.join(), PROOF_KEY, name, character, guildTag, guildCape),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {
@@ -146,6 +156,24 @@ export async function openLobby(
       }
     },
   };
+}
+
+/**
+ * A peer in the room that holds the key (#1681) and has proven it to the
+ * host, but has not joined the lobby: a test speaks the wire through it
+ * by hand. Resolves once the host is proven to it.
+ */
+export async function provenPeer(lobby: TestLobby, peerId?: string): Promise<Transport> {
+  const transport = keyGated(lobby.network.join(peerId), PROOF_KEY, "guest");
+  await new Promise<void>((resolve) => {
+    const off = transport.onPeerJoin((joined) => {
+      if (joined === lobby.room.selfId) {
+        off();
+        resolve();
+      }
+    });
+  });
+  return transport;
 }
 
 /** The lobby as `who` sees it now. */

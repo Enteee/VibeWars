@@ -12,7 +12,7 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   page,
 }) => {
   await page.goto("./");
-  const code = page.getByRole("textbox", { name: "Lobby code", exact: true });
+  const code = page.getByRole("textbox", { name: "Lobby key", exact: true });
   await code.fill("ABCD");
 
   await page.locator(".topbar-help").click();

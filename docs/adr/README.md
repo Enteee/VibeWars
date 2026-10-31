@@ -47,3 +47,4 @@ rewriting history.
 | [0039](0039-third-party-licences-page.md)     | Third-party credits and licences live on one Options page       |
 | [0040](0040-team-lobby.md)                    | Team Lobby: the host runs a vote and claims before the match    |
 | [0041](0041-always-in-a-lobby.md)             | Every player is always in a lobby, and the lobby is the party   |
+| [0043](0043-secret-lobby-key.md)              | The lobby key is a secret; relays see only a slow derivation    |

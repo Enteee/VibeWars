@@ -50,6 +50,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     skillsLeft: undefined,
     triggersLeft: undefined,
     hitsLeft: undefined,
+    unblockableLeft: undefined,
     sourceId: "caster",
     outbreak: null,
     maintained: null,

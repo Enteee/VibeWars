@@ -16,6 +16,8 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { C, germ, stroke } from "./icon-kit.mjs";
+import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
@@ -23,42 +25,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 // The stale-output test in apps/web runs this into a scratch directory.
 const outDir = process.env.VIBEWARS_ICONS_OUT ?? join(root, "apps", "web", "public", "icons");
 
-/** The palette. Mirrors the tokens table in docs/art/art-direction.md. */
-const C = {
-  bg: "#0e1116",
-  plate: "#161b22",
-  line: "#2b3440",
-  ink: "#d7dee8",
-  inkDim: "#7d8899",
-  condition: "#ffa657",
-  hex: "#d2a8ff",
-  enchantment: "#56d4dd",
-  stance: "#f778ba",
-  preparation: "#e3b341",
-  glyph: "#c3e88d",
-  weaponSpell: "#8b9cff",
-  warrior: "#e3b341",
-  ranger: "#8fd36b",
-  monk: "#9ecbff",
-  necromancer: "#3fb68b",
-  mesmer: "#e87fd0",
-  elementalist: "#ff6e5a",
-  assassin: "#c0405e",
-  ritualist: "#a9e5e0",
-  paragon: "#f0883e",
-  dervish: "#c9a27e",
-};
-
 /** @param {string} body */
 const svg = (body) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">${body}</svg>\n`;
-
-/**
- * @param {string} colour
- * @param {number} [width]
- */
-const stroke = (colour, width = 2) =>
-  `fill="none" stroke="${colour}" stroke-width="${String(width)}" stroke-linecap="round" stroke-linejoin="round"`;
 
 // ---------------------------------------------------------------------------
 // Professions: one silhouette each, distinct with the colour removed.
@@ -196,8 +165,8 @@ const skillType = {
 // the status.
 // ---------------------------------------------------------------------------
 
-/** @typedef {(colour: string) => string} Glyph */
-/** @typedef {"condition" | "hex" | "enchantment" | "stance" | "preparation" | "glyph" | "shout" | "chant" | "echo" | "weapon-spell" | "item" | "form" | "skill-effect"} Category */
+/** @typedef {import("./icon-kit.mjs").Glyph} Glyph */
+/** @typedef {import("./icon-kit.mjs").Category} Category */
 
 /** @type {Record<Category, (glyph: Glyph) => string>} */
 const plates = {
@@ -230,1448 +199,6 @@ const plates = {
     `<path d="M7.5 1h9L23 7.5v9L16.5 23h-9L1 16.5v-9z" fill="${C.dervish}"/>` + glyph(C.plate),
   "skill-effect": (glyph) =>
     `<rect x="0.5" y="4" width="23" height="16" rx="8" fill="${C.inkDim}"/>` + glyph(C.plate),
-};
-
-/**
- * A germ (#765): a body and six knobbed spikes, so it never reads as a sun.
- * @param {string} c
- */
-const germ = (c) =>
-  `<circle cx="12" cy="12" r="4.2" fill="${c}"/>` +
-  [-90, -30, 30, 90, 150, 210]
-    .map((deg) => {
-      const a = (deg * Math.PI) / 180;
-      /** @param {number} r */
-      const x = (r) => (12 + r * Math.cos(a)).toFixed(2);
-      /** @param {number} r */
-      const y = (r) => (12 + r * Math.sin(a)).toFixed(2);
-      return (
-        `<path d="M${x(4)} ${y(4)}L${x(7)} ${y(7)}" ${stroke(c, 1.8)}/>` +
-        `<circle cx="${x(8.3)}" cy="${y(8.3)}" r="1.7" fill="${c}"/>`
-      );
-    })
-    .join("");
-
-/** @type {Record<string, [Category, Glyph]>} */
-const status = {
-  // Drop.
-  bleeding: [
-    "condition",
-    (c) => `<path d="M12 4c3 4.5 5 7 5 9.5a5 5 0 0 1-10 0C7 11 9 8.5 12 4z" fill="${c}"/>`,
-  ],
-  // Flame: one tall tip leaning right and a side tongue, so it never reads
-  // as the symmetric bleeding drop.
-  burning: [
-    "condition",
-    (c) =>
-      `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${c}"/>`,
-  ],
-  // Three bubbles.
-  poison: [
-    "condition",
-    (c) =>
-      `<circle cx="9" cy="14.5" r="3" fill="${c}"/>` +
-      `<circle cx="15.5" cy="13" r="2.2" fill="${c}"/>` +
-      `<circle cx="12" cy="7.5" r="1.8" fill="${c}"/>`,
-  ],
-  // Broken step: a line that kinks and drops.
-  crippled: ["condition", (c) => `<path d="M5 9h6l2 6h6" ${stroke(c, 2.5)}/>`],
-  // Eye, struck through.
-  blind: [
-    "condition",
-    (c) =>
-      `<path d="M4.5 12c2-3.5 4.5-5 7.5-5s5.5 1.5 7.5 5c-2 3.5-4.5 5-7.5 5s-5.5-1.5-7.5-5z" ${stroke(c, 2)}/>` +
-      `<path d="M6 18L18 6" ${stroke(c, 2.5)}/>`,
-  ],
-  // Arrow down: you hit softer.
-  weakness: ["condition", (c) => `<path d="M12 5v13M7 13l5 5 5-5" ${stroke(c, 2.5)}/>`],
-  // A shield split by a crack: your armor gives (#763).
-  "cracked-armor": [
-    "condition",
-    (c) =>
-      `<path d="M6.5 5.5h11v5.5c0 3.5-2.5 5.5-5.5 7.5-3-2-5.5-4-5.5-7.5z" fill="${c}"/>` +
-      `<path d="M12.5 5.5l-2 4 3 2-2.5 4" ${stroke(C.condition, 1.6)}/>`,
-  ],
-  // Cross cut.
-  "deep-wound": ["condition", (c) => `<path d="M7 7l10 10M17 7L7 17" ${stroke(c, 3)}/>`],
-  // Five-point star: seeing stars.
-  dazed: [
-    "condition",
-    (c) =>
-      `<path d="M12 4.5l2.2 4.6 5 .6-3.7 3.5 1 5L12 15.8l-4.5 2.4 1-5-3.7-3.5 5-.6z" fill="${c}"/>`,
-  ],
-  // A germ: it catches.
-  disease: ["condition", germ],
-  // Hex: a heart, because the hex is on your life and your nerve.
-  faintheartedness: [
-    "hex",
-    (c) => `<path d="M12 16l-3.6-3.6a2.1 2.1 0 0 1 3.6-3 2.1 2.1 0 0 1 3.6 3z" fill="${c}"/>`,
-  ],
-  // Enchantment: plus, health coming back.
-  regeneration: ["enchantment", (c) => `<path d="M12 6v12M6 12h12" ${stroke(c, 3)}/>`],
-  // Enchantment: the same plus inside a ring, health kept coming back for
-  // as long as its caster maintains it (#837).
-  mending: [
-    "enchantment",
-    (c) =>
-      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 8.5v7M8.5 12h7" ${stroke(c, 2.5)}/>`,
-  ],
-  // Enchantment: an hourglass run out into a plus, the heal waiting at
-  // the end of its time (#944).
-  "patient-spirit": [
-    "enchantment",
-    (c) =>
-      `<path d="M7 5h10L7 15h10z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 15.5v4M10 17.5h4" ${stroke(c, 2)}/>`,
-  ],
-  // Enchantment: a veil drawn over its bearer, hexes held back (#944).
-  "holy-veil": [
-    "enchantment",
-    (c) =>
-      `<path d="M5 18c0-7 3-12 7-12s7 5 7 12" ${stroke(c, 2)}/>` +
-      `<path d="M9 18c0-4 1.3-7 3-7s3 3 3 7" ${stroke(c, 1.6)}/>`,
-  ],
-  // Enchantment: a plus carried on two gusts, health on the wind (#1013).
-  "healing-breeze": [
-    "enchantment",
-    (c) =>
-      `<path d="M15 4v7M11.5 7.5h7" ${stroke(c, 2.5)}/>` +
-      `<path d="M4 15.5h9a2 2 0 1 0-2-2M4 18.5h7a2 2 0 1 1-2 2" ${stroke(c, 1.6)}/>`,
-  ],
-  // Stance: two chevrons, forward: move 25% faster.
-  sprint: ["stance", (c) => `<path d="M7 9l4.5 5L7 19M12.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
-  // Stance: an arrowhead trailing speed lines: run 50% faster.
-  dash: [
-    "stance",
-    (c) =>
-      `<path d="M20 14l-7-5v10z" fill="${c}"/>` +
-      `<path d="M5 11h5M5 17h5M3.5 14h7" ${stroke(c, 2)}/>`,
-  ],
-  // Stance: three quick slashes: attack faster, take double damage (#919).
-  frenzy: [
-    "stance",
-    (c) => `<path d="M6.5 18l3-8.5M10.5 18l3-8.5M14.5 18l3-8.5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Stance: a crescent moon, into the shadows: faster, half damage (#919).
-  "dark-escape": [
-    "stance",
-    (c) => `<path d="M14.5 8a6 6 0 1 0 0 11a4.8 4.8 0 0 1 0-11z" fill="${c}"/>`,
-  ],
-  // Stance: a leaf, the wild's stride: faster, blocks (#919).
-  "natural-stride": [
-    "stance",
-    (c) =>
-      `<path d="M7 19c0-6 4-10.5 10-10.5 0 6-4 10.5-10 10.5z" ${stroke(c, 1.8)}/>` +
-      `<path d="M7 19l6.5-6.5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Stance: a bolt, blocks and attacks faster (#976).
-  "lightning-reflexes": [
-    "stance",
-    (c) => `<path d="M13.5 5L8 13h4l-1.5 6L16 11h-4z" ${stroke(c, 2)}/>`,
-  ],
-  // Stance: two chevrons and a bar, away and blocking (#976).
-  escape: [
-    "stance",
-    (c) =>
-      `<path d="M6 8.5l4 3.5-4 3.5M11 8.5l4 3.5-4 3.5" ${stroke(c, 2.2)}/>` +
-      `<path d="M18 7.5v9" ${stroke(c, 2.2)}/>`,
-  ],
-  // Ranger staples (#1539), stand-ins until the asset-designer's.
-  // Stance: a circling arc, blocks and hurts who is adjacent.
-  "whirling-defense": [
-    "stance",
-    (c) => `<path d="M17 8a6 6 0 1 0 1 6M18 5v4h-4" ${stroke(c, 2.2)}/>`,
-  ],
-  // Stance: a wavy serpent, skills recharge faster.
-  "serpents-quickness": [
-    "stance",
-    (c) => `<path d="M5 16c3 0 3-8 6-8s3 8 6 8M17 16l2-2" ${stroke(c, 2.2)}/>`,
-  ],
-  // Stance: a step aside an arrow, faster and blocks projectiles.
-  dodge: ["stance", (c) => `<path d="M4 8h10M11 5l3 3-3 3M8 18l4-5 4 5" ${stroke(c, 2.2)}/>`],
-  // Stance: a shield with a plus, Energy for each melee block (#1329).
-  "bonettis-defense": [
-    "stance",
-    (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M12 9v6M9 12h6" ${stroke(c, 2)}/>`,
-  ],
-  // Stance: an arrow glancing off a shield (#1329).
-  "deflect-arrows": [
-    "stance",
-    (c) =>
-      `<path d="M9 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M3 15l5-4-3-5" ${stroke(c, 2)}/>`,
-  ],
-  // Stance: a shield with a blade through it, blocks that cut back (#1329).
-  "gladiators-defense": [
-    "stance",
-    (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
-  ],
-  // Paragon echoes 2 (#1485, #1524): each pairs with its skill icon.
-  // Echo: a blade glancing off a shield, slashing damage turned.
-  "bladeturn-refrain": [
-    "echo",
-    (c) =>
-      `<path d="M9 5h10v6c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 1.8)}/>` +
-      `<path d="M2.5 4.5L7 9M7 9l-.3-2.8M7 9l2.8.3" ${stroke(c, 1.8)}/>`,
-  ],
-  // Echo: a bolt inside a ring, energy at the end of each chant.
-  "energizing-finale": [
-    "echo",
-    (c) =>
-      `<circle cx="12" cy="11.5" r="8" ${stroke(c, 1.6)}/>` +
-      `<path d="M13 5.5L8.5 12h3.5l-1 5.5 4.5-6.5h-3.5z" fill="${c}"/>`,
-  ],
-  // Echo: three rising bars topped by a spike over a slanted blade, adrenaline and haste under a chant.
-  "soldiers-fury": [
-    "echo",
-    (c) =>
-      `<path d="M5 12V9M10 12V6" ${stroke(c, 2.4)}/>` +
-      `<path d="M14 12V7l2.5-5L19 7v5z" fill="${c}"/>` +
-      `<path d="M5 21L17 13M8 15.5l4 4" ${stroke(c, 2)}/>`,
-  ],
-  // Stance: a shield, filled, armor and blocks (#1329).
-  "disciplined-stance": [
-    "stance",
-    (c) => `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" fill="${c}"/>`,
-  ],
-  // Stance: a figure standing firm on a wide base, never knocked down (#1329).
-  "balanced-stance": ["stance", (c) => `<path d="M12 5v9M6 19l6-5 6 5" ${stroke(c, 2.6)}/>`],
-  // Stance: an arrow come round, spells back sooner (#938).
-  "mantra-of-recovery": [
-    "stance",
-    (c) =>
-      `<path d="M16.5 10.5A5 5 0 1 0 17 15" ${stroke(c, 2)}/>` +
-      `<path d="M14 9.5l3.5-1 .5 3.5z" fill="${c}"/>`,
-  ],
-  // Preparation: one drop, your attacks poison (#525).
-  "apply-poison": [
-    "preparation",
-    (c) => `<path d="M12 8.5c-2 3-3 4.6-3 6.2a3 3 0 0 0 6 0c0-1.6-1-3.2-3-6.2z" fill="${c}"/>`,
-  ],
-  // Glyph: a bolt, your next spells cost less energy (#526).
-  "glyph-of-lesser-energy": [
-    "glyph",
-    (c) => `<path d="M13.5 4.5L8.5 11h3.5l-1.5 5 5-6.5H12z" fill="${c}"/>`,
-  ],
-  // Enchantment: a dot spreading to three, a condition handed on (#887).
-  contagion: [
-    "enchantment",
-    (c) =>
-      `<circle cx="12" cy="13" r="2.5" fill="${c}"/>` +
-      `<circle cx="12" cy="6" r="1.6" fill="${c}"/>` +
-      `<circle cx="6" cy="17" r="1.6" fill="${c}"/>` +
-      `<circle cx="18" cy="17" r="1.6" fill="${c}"/>`,
-  ],
-  // Enchantment: a small shield.
-  "armor-boost": [
-    "enchantment",
-    (c) => `<path d="M7 6h10v5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" fill="${c}"/>`,
-  ],
-  // Enchantment: a drop with a plus cut out, blood paying for energy (#503).
-  "blood-ritual": [
-    "enchantment",
-    (c) =>
-      `<path fill-rule="evenodd" d="M12 4.5C14.5 8 17 10.5 17 14a5 5 0 0 1-10 0c0-3.5 2.5-6 5-9.5zM11 11.5h2v2.5h2.5v2H13v2.5h-2V16H8.5v-2H11z" fill="${c}"/>`,
-  ],
-  // Hex: a bolt in outline, the energy draining out (#503).
-  malaise: ["hex", (c) => `<path d="M13 4.5L7.5 13h4l-1 6.5L16.5 11h-4z" ${stroke(c, 2)}/>`],
-  // Hex: an arrow turning back on itself, a spell that hurts its caster (#469).
-  backfire: [
-    "hex",
-    (c) =>
-      `<path d="M15.5 8.5A4.5 4.5 0 1 0 16.5 13" ${stroke(c, 2.2)}/>` +
-      `<path d="M13 6.5l3.5 2-2 3.5z" fill="${c}"/>`,
-  ],
-  // Hex: a sword point down, an attack that hurts its attacker (#469).
-  empathy: ["hex", (c) => `<path d="M12 18.5v-10M8.5 8.5h7M12 8.5v-4" ${stroke(c, 2.5)}/>`],
-  // Hex: an hourglass, the next skill's recharge drawn out (#949).
-  diversion: [
-    "hex",
-    (c) =>
-      `<path d="M8 6h8M8 18h8" ${stroke(c, 2)}/>` +
-      `<path d="M9 6.5c0 3 6 3.5 6 5.5s-6 2.5-6 5.5M15 6.5c0 3-6 3.5-6 5.5s6 2.5 6 5.5" ${stroke(c, 1.6)}/>`,
-  ],
-  // Enchantment: a dot and two waves, the next spell sounding again (#469).
-  "arcane-echo": [
-    "enchantment",
-    (c) =>
-      `<circle cx="8" cy="12" r="2.2" fill="${c}"/>` +
-      `<path d="M12 8a5 5 0 0 1 0 8M15.5 5.5a8.5 8.5 0 0 1 0 13" ${stroke(c, 2)}/>`,
-  ],
-  // Enchantment: a bar and two waves, the next skill sounding again (#469).
-  echo: [
-    "enchantment",
-    (c) =>
-      `<path d="M7.5 8v8" ${stroke(c, 2.5)}/>` +
-      `<path d="M12 8a5 5 0 0 1 0 8M15.5 5.5a8.5 8.5 0 0 1 0 13" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: two links of a chain, the bond that heals its caster when it ends (#887).
-  "parasitic-bond": [
-    "hex",
-    (c) =>
-      `<rect x="5" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>` +
-      `<rect x="11" y="9.5" width="8" height="5" rx="2.5" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: an ice shard, the cold slowing you (#918).
-  "shard-storm": ["hex", (c) => `<path d="M12 5.5L15 12L12 18.5L9 12z" fill="${c}"/>`],
-  // Hex: two chevrons pointing back, attacks slowed (#918).
-  "shadow-of-fear": [
-    "hex",
-    (c) => `<path d="M14.5 8L11 12l3.5 4M11 8L7.5 12l3.5 4" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: a burst with a dot at its heart, the spirit striking out (#935).
-  "spiteful-spirit": [
-    "hex",
-    (c) =>
-      `<circle cx="12" cy="12.5" r="2" fill="${c}"/>` +
-      `<path d="M12 5.5v2.5M12 17v2.5M5 12.5h2.5M16.5 12.5H19M7 7.5l1.8 1.8M15.2 15.7L17 17.5M17 7.5l-1.8 1.8M8.8 15.7L7 17.5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: a drop drawn off by an arrow, health stolen on each hit (#935).
-  "insidious-parasite": [
-    "hex",
-    (c) =>
-      `<path d="M10 6c2 3 3.5 4.8 3.5 7a3.5 3.5 0 0 1-7 0c0-2.2 1.5-4 3.5-7z" fill="${c}"/>` +
-      `<path d="M14.5 10.5h4M16.5 8.5l2 2-2 2" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: a cross with two rings beside it, pain passed to who stands near (#935).
-  "mark-of-pain": [
-    "hex",
-    (c) =>
-      `<path d="M10 9.5l4 4M14 9.5l-4 4" ${stroke(c, 2.2)}/>` +
-      `<circle cx="6.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>` +
-      `<circle cx="17.5" cy="15.5" r="1.5" ${stroke(c, 1.5)}/>`,
-  ],
-  // Hex: three ice spikes falling, the cold slowing you (#938).
-  "ice-spikes": [
-    "hex",
-    (c) =>
-      `<path d="M7.5 7l1.5 10 1.5-10zM10.5 7l1.5 11 1.5-11zM13.5 7l1.5 10 1.5-10z" fill="${c}"/>`,
-  ],
-  // Monk staples (#1511), stand-ins until their art card.
-  // Enchantment: three small shields, a block for everyone in earshot.
-  aegis: [
-    "enchantment",
-    (c) =>
-      `<path d="M4 6h5v3c0 2-1.2 3-2.5 4C5.2 12 4 11 4 9zM15 6h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>` +
-      `<path d="M9.5 12h5v3c0 2-1.2 3-2.5 4-1.3-1-2.5-2-2.5-4z" ${stroke(c, 1.6)}/>`,
-  ],
-  // Enchantment: a filled shield, a blow glancing off it.
-  "shield-of-deflection": [
-    "enchantment",
-    (c) =>
-      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" fill="${c}"/>` +
-      `<path d="M4 20L9 15" ${stroke(c, 2.2)}/>`,
-  ],
-  // Enchantment: two cupped hands under a drop, damage taken softened.
-  "shielding-hands": [
-    "enchantment",
-    (c) =>
-      `<path d="M4 12c0 4 3.5 7 8 7s8-3 8-7" ${stroke(c, 2)}/>` +
-      `<path d="M12 4c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" fill="${c}"/>`,
-  ],
-  // Enchantment: a ring with a broken spell bolt, foes' spells turned away.
-  "spell-breaker": [
-    "enchantment",
-    (c) =>
-      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/>` +
-      `<path d="M13 5l-3 6h4l-3 6" ${stroke(c, 1.8)}/><path d="M6 18L18 6" ${stroke(c, 2.2)}/>`,
-  ],
-  // Hex: a snowflake, the ground frozen under you (#938).
-  "deep-freeze": ["hex", (c) => `<path d="M12 6v12M6.8 9l10.4 6M6.8 15l10.4-6" ${stroke(c, 2)}/>`],
-  // Enchantment: a shield in outline with a blow glancing off it, block (#534).
-  guardian: [
-    "enchantment",
-    (c) =>
-      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
-      `<path d="M9.5 14L15 8.5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Shout: a shield with a warning mark, armor called for (#524).
-  "watch-yourself": [
-    "shout",
-    (c) =>
-      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
-      `<path d="M12 8.5v3.5" ${stroke(c, 2.2)}/><circle cx="12" cy="14.6" r="1.1" fill="${c}"/>`,
-  ],
-  // Shout: two chevrons up, a strike and one more per hit (#936).
-  "for-great-justice": [
-    "shout",
-    (c) => `<path d="M7.5 12l4.5-4.5 4.5 4.5M7.5 16.5l4.5-4.5 4.5 4.5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Enchantment: a shield under a line, no hit past 10% (#936).
-  "protective-spirit": [
-    "enchantment",
-    (c) =>
-      `<path d="M7 7.5h10v4c0 3-2.5 5-5 6.5C9.5 16.5 7 14.5 7 11.5z" ${stroke(c, 2)}/>` +
-      `<path d="M6 4.5h12" ${stroke(c, 2)}/>`,
-  ],
-  // Enchantment: a crescent over a plus, healed in the shadows (#988).
-  "shadow-refuge": [
-    "enchantment",
-    (c) =>
-      `<path d="M11 5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
-      `<path d="M16.5 13v6M13.5 16h6" ${stroke(c, 2)}/>`,
-  ],
-  // Enchantment: a crescent inside a broken shield outline, armored while it holds back (#1349).
-  "feigned-neutrality": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 3L19 5.8V11.5C19 15.8 16 18.8 12 20.8" ${stroke(c, 2)}/>` +
-      `<path d="M12 3L5 5.8V11.5C5 15.8 8 18.8 12 20.8" ${stroke(c, 2)} stroke-dasharray="3 3"/>` +
-      `<path d="M13 8a4 4 0 1 0 0 7a3.2 3.2 0 0 1 0-7z" fill="${c}"/>`,
-  ],
-  // Enchantment: a crescent beside a four-point spark and a plus, health from each critical hit (#1349).
-  "way-of-perfection": [
-    "enchantment",
-    (c) =>
-      `<path d="M9.5 3.5a5 5 0 1 0 0 9a4 4 0 0 1 0-9z" fill="${c}"/>` +
-      `<path d="M16.5 8l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="${c}"/>` +
-      `<path d="M7 17v5M4.5 19.5h5" ${stroke(c, 2)}/>`,
-  ],
-  // Enchantment: a shield, half filled, blocks below half Health (#988).
-  "shroud-of-distress": [
-    "enchantment",
-    (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M7 12h10c-.5 3-2.6 4.8-5 6-2.4-1.2-4.5-3-5-6z" fill="${c}"/>`,
-  ],
-  // Skill: an eye, more critical hits (#988).
-  "critical-eye": [
-    "skill-effect",
-    (c) =>
-      `<path d="M4 12.5c2-3.5 5-5.5 8-5.5s6 2 8 5.5c-2 3.5-5 5.5-8 5.5s-6-2-8-5.5z" ${stroke(c, 2)}/>` +
-      `<circle cx="12" cy="12.5" r="2.5" fill="${c}"/>`,
-  ],
-  // Skill: two crossed blades, every sword attack cuts all round (#1354).
-  "hundred-blades": [
-    "skill-effect",
-    (c) =>
-      `<path d="M6 6l12 12M18 6L6 18" ${stroke(c, 2)}/>` +
-      `<path d="M5 15l4 4M15 19l4-4" ${stroke(c, 2)}/>`,
-  ],
-  // Stance: three chevrons, a charge at 25% faster (#1359).
-  rush: ["stance", (c) => `<path d="M4 9l4 5-4 5M10 9l4 5-4 5M16 9l4 5-4 5" ${stroke(c, 2)}/>`],
-  // Skill effect: a heavy block on four short legs, armored and slow (#1359).
-  "dolyak-signet": [
-    "skill-effect",
-    (c) =>
-      `<rect x="5" y="7" width="14" height="7" rx="1.5" fill="${c}"/>` +
-      `<path d="M7 14v5M10.5 14v5M13.5 14v5M17 14v5" ${stroke(c, 2)}/>`,
-  ],
-  // Skill effect: a heart with a plus, more maximum Health (#1359).
-  "endure-pain": [
-    "skill-effect",
-    (c) =>
-      `<path d="M12 19.5l-6.5-6.5a3.8 3.8 0 0 1 6.5-4.5 3.8 3.8 0 0 1 6.5 4.5z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 10.5v5.5M9.2 13.2h5.6" ${stroke(c, 1.8)}/>`,
-  ],
-  // Stance: a bolt under a ceiling, energy per hit up to a cap (#1359).
-  "warriors-endurance": [
-    "stance",
-    (c) =>
-      `<path d="M13.5 7l-5 7h3.5l-1 6 5-7.5h-3.5z" fill="${c}"/>` +
-      `<path d="M5 4.5h14" ${stroke(c, 2)}/>`,
-  ],
-  // Warrior staples (#1549, #1586): each matches its skill icon.
-  // Stance: a flail, faster attacks, slower feet.
-  flail: [
-    "stance",
-    (c) =>
-      `<g transform="translate(4.8,5) scale(0.6)"><path d="M4 21L11 13M11 13C10.5 8 14 5.5 16.5 6" ${stroke(c, 2.6)}/><circle cx="18.5" cy="7.5" r="3.4" fill="${c}"/></g>`,
-  ],
-  // Stance: a heart held in a shield, more Health and armor.
-  "defy-pain": [
-    "stance",
-    (c) =>
-      `<g transform="translate(4.8,4.8) scale(0.6)"><path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(c, 2.8)}/><path d="M12 17L8 12.8a2.4 2.4 0 0 1 4-2.6 2.4 2.4 0 0 1 4 2.6z" fill="${c}"/></g>`,
-  ],
-  // Skill effect: a shield with a blade leaving it, the next melee attack blocked and answered.
-  riposte: [
-    "skill-effect",
-    (c) =>
-      `<g transform="translate(3.6,3.6) scale(0.7)"><path d="M2.5 9L8 7L13.5 9V14.5C13.5 18.4 10.8 20 8 21.8C5.2 20 2.5 18.4 2.5 14.5Z" fill="${c}"/><path d="M14 10.5L21.5 3M13.5 5.5L18.5 10.5" ${stroke(c, 2.8)}/></g>`,
-  ],
-  // Skill effect: as Riposte, with a drop, the attacker bleeds.
-  "deadly-riposte": [
-    "skill-effect",
-    (c) =>
-      `<g transform="translate(3,3) scale(0.65)"><path d="M2.5 9L8 7L13.5 9V14.5C13.5 18.4 10.8 20 8 21.8C5.2 20 2.5 18.4 2.5 14.5Z" fill="${c}"/><path d="M14 10.5L21.5 3" ${stroke(c, 3)}/></g>` +
-      `<path d="M17.5 13.5C17.5 13.5 14.5 17 14.5 18.8A3 3 0 0 0 20.5 18.8C20.5 17 17.5 13.5 17.5 13.5Z" fill="${c}"/>`,
-  ],
-  // Shout: sound arcs behind two chevrons, allies run faster.
-  charge: [
-    "shout",
-    (c) =>
-      `<path d="M5 9.5C6.5 10.8 6.5 13.2 5 14.5" ${stroke(c, 1.6)}/><path d="M10 7L14 12L10 17M14.5 7L18.5 12L14.5 17" ${stroke(c, 2)}/>`,
-  ],
-  // Stance: a chevron and rising bars, faster until the hit that gives adrenaline.
-  "enraging-charge": [
-    "stance",
-    (c) =>
-      `<g transform="translate(4.8,4.8) scale(0.6)"><path d="M8.5 5L14 12L8.5 19" ${stroke(c, 2.8)}/><path d="M16.5 19V15M19 19V11M21.5 19V7" ${stroke(c, 2.6)}/></g>`,
-  ],
-  // Warrior staples 2 (#1592), stand-ins until the asset-designer's.
-  // Skill effect: a shield over a falling bar, the next melee attacker knocked down.
-  "shield-bash": [
-    "skill-effect",
-    (c) =>
-      `<path d="M7 4h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M5 20h14" ${stroke(c, 2.2)}/>`,
-  ],
-  // Stance: a shield with a minus in it, blocks and less damage.
-  "shield-stance": [
-    "stance",
-    (c) =>
-      `<path d="M6 4h12v6c0 4.5-3 7-6 9-3-2-6-4.5-6-9z" ${stroke(c, 2)}/>` +
-      `<path d="M9 10h6" ${stroke(c, 2.2)}/>`,
-  ],
-  // Skill effect: a bolt over a clock hand, adrenal skills recharge.
-  "rage-of-the-ntouka": [
-    "skill-effect",
-    (c) =>
-      `<circle cx="12" cy="12" r="8" ${stroke(c, 2)}/>` +
-      `<path d="M13 6l-3.5 6.5h3l-1 5.5 4-7h-3z" fill="${c}"/>`,
-  ],
-  // Enchantment: a shield with a spark, blocks renewed by critical hits (#1315).
-  "critical-defenses": [
-    "enchantment",
-    (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M12 8.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z" fill="${c}"/>`,
-  ],
-  // Enchantment: an arrow turning back up, the next hit heals (#987).
-  "reversal-of-fortune": [
-    "enchantment",
-    (c) => `<path d="M8 6v7a4 4 0 0 0 8 0V8M13 11l3-3 3 3" ${stroke(c, 2.2)}/>`,
-  ],
-  // Enchantment: a plus thrown up by two strokes, healed on each attack
-  // or spell (#1039).
-  "vigorous-spirit": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 5v8M8 9h8" ${stroke(c, 2.5)}/>` +
-      `<path d="M6.5 18.5l3-3M17.5 18.5l-3-3" ${stroke(c, 2)}/>`,
-  ],
-  // Shout: an arrow turning back, run and be healed for it (#921).
-  "fall-back": ["shout", (c) => `<path d="M17 12H7.5M11 8l-4 4 4 4" ${stroke(c, 2.5)}/>`],
-  // Shout: a shield planted on the ground, armor while you stand (#921).
-  "stand-your-ground": [
-    "shout",
-    (c) =>
-      `<path d="M8 5h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
-      `<path d="M6.5 18.5h11" ${stroke(c, 2.5)}/>`,
-  ],
-  // Shout: an arrow forward with a plus behind it, run and be healed (#956).
-  incoming: [
-    "shout",
-    (c) =>
-      `<path d="M11 12h7M15 8.5l3.5 3.5-3.5 3.5" ${stroke(c, 2.5)}/>` +
-      `<path d="M7 9.5v5M4.5 12h5" ${stroke(c, 2)}/>`,
-  ],
-  // Shout: a double chevron, one ally hurried along (#956).
-  "make-haste": ["shout", (c) => `<path d="M7 8l4 4-4 4M12.5 8l4 4-4 4" ${stroke(c, 2.5)}/>`],
-  // Chant: a shield with a bar across it, blocks for the party (#956).
-  "defensive-anthem": [
-    "chant",
-    (c) =>
-      `<path d="M8 6h8v4.5c0 2.5-2 4-4 5.2-2-1.2-4-2.7-4-5.2z" ${stroke(c, 2)}/>` +
-      `<path d="M9.5 10h5" ${stroke(c, 2)}/>`,
-  ],
-  // Chant: a banner with a note, healed on your next skill (#1012).
-  "song-of-restoration": [
-    "chant",
-    (c) =>
-      `<path d="M7 4V19.5" ${stroke(c, 2)}/>` +
-      `<path d="M7 5H18.5L15 9.5L18.5 14H7Z" ${stroke(c, 1.6)}/>` +
-      `<ellipse cx="10.8" cy="11" rx="1.6" ry="1.2" fill="${c}"/>` +
-      `<path d="M12.3 11V7.5L14.5 8.4" ${stroke(c, 1.3)}/>`,
-  ],
-  // Chant: a flame, your next attack skill burns (#758). Burning's flame,
-  // smaller and higher, clear of the banner's notch.
-  "anthem-of-flame": [
-    "chant",
-    (c) =>
-      `<path d="M14 3.5c.5 3.5 4 5.5 4 10a6 6 0 0 1-12 0c0-2.5 1-4.5 2.5-5.5 0 2 .5 3 1.5 3.5-.5-3 1-6 4-8z" fill="${c}" transform="translate(12 10) scale(0.7) translate(-12 -11.5)"/>`,
-  ],
-  // Paragon chants 2 (#1483), stand-ins until the asset-designer's.
-  // Chant: a bolt, energy with your next attack skill.
-  "zealous-anthem": ["chant", (c) => `<path d="M13 3L7 12h4l-1 7 6-9h-4z" fill="${c}"/>`],
-  // Chant: a bolt over a bar, energy with your next spell.
-  "aria-of-zeal": [
-    "chant",
-    (c) =>
-      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/>` +
-      `<path d="M6 18h12" ${stroke(c, 2)}/>`,
-  ],
-  // Chant: a bolt in a ring, energy with your next signet.
-  "lyric-of-zeal": [
-    "chant",
-    (c) =>
-      `<circle cx="12" cy="11" r="7" ${stroke(c, 1.6)}/>` +
-      `<path d="M13 6l-3.5 5h2.5l-1 4 3.5-5H12z" fill="${c}"/>`,
-  ],
-  // Chant: a plus over a bar, a heal with your next spell.
-  "aria-of-restoration": [
-    "chant",
-    (c) => `<path d="M12 4v10M7 9h10" ${stroke(c, 2.6)}/>` + `<path d="M6 18h12" ${stroke(c, 2)}/>`,
-  ],
-  // Chant: a plus between two bars, a heal with your next shout or chant.
-  "chorus-of-restoration": [
-    "chant",
-    (c) =>
-      `<path d="M12 7v10M7 12h10" ${stroke(c, 2.4)}/>` +
-      `<path d="M5 4h14M5 20h14" ${stroke(c, 1.8)}/>`,
-  ],
-  // Chant: a drop in a ring, a condition lost with your next signet.
-  "lyric-of-purification": [
-    "chant",
-    (c) =>
-      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 6.5c1.5 2.2 3 3.8 3 5.5a3 3 0 0 1-6 0c0-1.7 1.5-3.3 3-5.5z" fill="${c}"/>`,
-  ],
-  // Chant: a drop crossed out over a bar, conditions lost with your next skills.
-  "song-of-purification": [
-    "chant",
-    (c) =>
-      `<path d="M12 3c2 3 4 5 4 7.5a4 4 0 0 1-8 0C8 8 10 6 12 3z" ${stroke(c, 1.8)}/>` +
-      `<path d="M6 15L18 3M6 19h12" ${stroke(c, 1.8)}/>`,
-  ],
-  // Chant: a broken ring, a hex lost with your next spell.
-  "hexbreaker-aria": [
-    "chant",
-    (c) => `<path d="M10 5.3A7 7 0 1 0 18.7 12M14 5.3A7 7 0 0 1 18.7 9" ${stroke(c, 2.2)}/>`,
-  ],
-  // Chant: three rising strokes, adrenaline with your next attack skill.
-  "anthem-of-fury": ["chant", (c) => `<path d="M6 18V13M12 18V9M18 18V5" ${stroke(c, 2.6)}/>`],
-  // Chant: an arrow down, your next attack skill weakens.
-  "anthem-of-weariness": ["chant", (c) => `<path d="M12 4v13M7 12l5 5 5-5" ${stroke(c, 2.4)}/>`],
-  // Chant: a bent leg, your next attack skill cripples.
-  "crippling-anthem": ["chant", (c) => `<path d="M9 4v7l6 3v6" ${stroke(c, 2.4)}/>`],
-  // Chant: a zigzag struck through, your next attack skill interrupts.
-  "anthem-of-disruption": [
-    "chant",
-    (c) =>
-      `<path d="M5 12l3-4 3 8 3-8 3 8 2-4" ${stroke(c, 2)}/>` +
-      `<path d="M4 19L20 5" ${stroke(c, 1.6)}/>`,
-  ],
-  // Paragon chants 3 (#1505), stand-ins until the asset-designer's.
-  // Chant: a bar held level, your next skill cannot be interrupted.
-  "song-of-concentration": ["chant", (c) => `<path d="M5 12h14M5 8v8M19 8v8" ${stroke(c, 2.2)}/>`],
-  // Chant: an arrow through a gap, your next attack skill cannot be blocked.
-  "anthem-of-guidance": [
-    "chant",
-    (c) =>
-      `<path d="M4 12h14M14 8l4 4-4 4" ${stroke(c, 2.2)}/><path d="M10 4v4M10 16v4" ${stroke(c, 1.6)}/>`,
-  ],
-  // Chant: a bolt over a minus, your next shout or chant costs less.
-  "energizing-chorus": [
-    "chant",
-    (c) =>
-      `<path d="M13 3L8 10h3.5l-1 5 5-7H12z" fill="${c}"/><path d="M7 19h10" ${stroke(c, 2.2)}/>`,
-  ],
-  // Chant: a plus over a half bar, more damage to a foe above half Health.
-  "anthem-of-envy": [
-    "chant",
-    (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2.2)}/><path d="M5 18h7" ${stroke(c, 2.6)}/><path d="M12 18h7" ${stroke(c, 1)}/>`,
-  ],
-  // Weapon spell: a sword, held up, warded (#758).
-  "weapon-of-warding": [
-    "weapon-spell",
-    (c) => `<path d="M12 4.5v10M8.5 14.5h7M12 14.5v4" ${stroke(c, 2.5)}/>`,
-  ],
-  // Weapon spell: Warding's blade with a plus beside it, health every second (#975).
-  "spirit-light-weapon": [
-    "weapon-spell",
-    (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M17 5v6M14 8h6" ${stroke(c, 2)}/>`,
-  ],
-  // Weapon spell: the blade with a turning arrow, spells back sooner (#975).
-  "weapon-of-quickening": [
-    "weapon-spell",
-    (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M15 6.5a3.5 3.5 0 1 1 0 5M15 6.5l-1.5-1.5M15 6.5l-1.5 1.5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Weapon spell: the blade with two chevrons, attacks faster (#975).
-  "weapon-of-aggression": [
-    "weapon-spell",
-    (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M14.5 6l3 3-3 3M17 6l3 3-3 3" ${stroke(c, 1.8)}/>`,
-  ],
-  // Weapon spell: a blade and a drop drawn back, steals and cleanses (#1022).
-  "weapon-of-remedy": [
-    "weapon-spell",
-    (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M17 4.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" ${stroke(c, 1.5)}/>` +
-      `<path d="M13.5 4L20.5 11.5" ${stroke(c, 1.6)}/>`,
-  ],
-  // Weapon spell: a blade and a hook turning back, steals from who hurt it (#1022).
-  "vengeful-weapon": [
-    "weapon-spell",
-    (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M20 6h-3.5a2.5 2.5 0 0 0 0 5H19M15 4.5L13.5 6 15 7.5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Weapon spell: a blade and splinters flying off, splashes the adjacent (#1022).
-  "splinter-weapon": [
-    "weapon-spell",
-    (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M14 4.5l3.5-1-.5 3zM18 7.5l3.5-1-1 3.5zM14.5 10.5l3.5-.5-1 3z" fill="${c}"/>`,
-  ],
-  // Shout: a plus with a chevron rising over it, regeneration called for (#923).
-  "never-surrender": [
-    "shout",
-    (c) =>
-      `<path d="M12 10v8M8 14h8" ${stroke(c, 2.5)}/>` +
-      `<path d="M8.5 8.5L12 5l3.5 3.5" ${stroke(c, 2)}/>`,
-  ],
-  // Enchantment: a plus in a ring, health for every enchantment around it (#845).
-  "mystic-regeneration": [
-    "enchantment",
-    (c) =>
-      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 8.5v7M8.5 12h7" ${stroke(c, 2.5)}/>`,
-  ],
-  // Enchantment: a post on firm ground, you cannot be knocked down (#845).
-  "fleeting-stability": [
-    "enchantment",
-    (c) => `<path d="M12 5v11M6.5 18.5h11" ${stroke(c, 2.8)}/>`,
-  ],
-  // Stance: a heart, filled, you attack faster (#845).
-  "heart-of-fury": [
-    "stance",
-    (c) => `<path d="M12 18l-4.8-4.8a2.8 2.8 0 0 1 4.8-4 2.8 2.8 0 0 1 4.8 4z" fill="${c}"/>`,
-  ],
-  // Enchantment: a blade with a ring round it, slashing all adjacent foes
-  // whenever you attack (#939).
-  "vow-of-strength": [
-    "enchantment",
-    (c) =>
-      `<circle cx="12" cy="12" r="7.5" ${stroke(c, 1.6)}/>` +
-      `<path d="M8.5 15.5l7-7M9 12.5l2.5 2.5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Enchantment: three grains of sand, flung at the foes beside your hit (#939).
-  "sand-shards": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 5.5l2 3.5h-4z" fill="${c}"/>` +
-      `<path d="M7.5 13l2 3.5h-4z" fill="${c}"/>` +
-      `<path d="M16.5 13l2 3.5h-4z" fill="${c}"/>`,
-  ],
-  // Stance: one chevron, forward: move 25% faster (#939).
-  "pious-haste": ["stance", (c) => `<path d="M9.5 9l4.5 5-4.5 5" ${stroke(c, 2.5)}/>`],
-  // Stance: three chevrons, forward: run 50% faster, an enchantment paid (#939).
-  "pious-haste-run": [
-    "stance",
-    (c) => `<path d="M5 9l4 5-4 5M9.5 9l4 5-4 5M14 9l4 5-4 5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Enchantment: a peak split down the middle, your attacks are earth and
-  // crack the armor round you when it ends (#1021).
-  "staggering-force": [
-    "enchantment",
-    (c) =>
-      `<path d="M5 18l7-11 7 11z" fill="${c}"/>` +
-      `<path d="M12 9l-1.5 4 2 2-1 3" ${stroke(C.enchantment, 1.6)}/>`,
-  ],
-  // Enchantment: a cloud of grains, your attacks are earth and blind the
-  // foes round you when it ends (#1021).
-  "dust-cloak": [
-    "enchantment",
-    (c) =>
-      `<circle cx="9" cy="10" r="1.6" fill="${c}"/><circle cx="14" cy="8.5" r="1.6" fill="${c}"/>` +
-      `<circle cx="12" cy="13" r="1.6" fill="${c}"/><circle cx="7.5" cy="15" r="1.6" fill="${c}"/>` +
-      `<circle cx="16.5" cy="14" r="1.6" fill="${c}"/><circle cx="12" cy="17.5" r="1.6" fill="${c}"/>`,
-  ],
-  // Enchantment: a ring of thorns, bleeding as it lands and crippling when
-  // it ends (#1021).
-  "aura-of-thorns": [
-    "enchantment",
-    (c) =>
-      `<path d="M4.5 19.5C8 17 14 12 19.5 5" ${stroke(c, 2)}/>` +
-      `<path d="M7.5 16L6 11.5M11 13.5L9.5 9M15 10L14.5 5.5M9 17.5L11.5 20M13 14.5L16 17" ${stroke(c, 1.8)}/>`,
-  ],
-  // Enchantment: two speed chevrons and a drop, faster until it ends, and a condition goes (#1421).
-  "enchanted-haste": [
-    "enchantment",
-    (c) =>
-      `<path d="M4 7l4.5 5L4 17M9.5 7l4.5 5-4.5 5" ${stroke(c, 2)}/>` +
-      `<path d="M18.5 8c1.5 2.2 2.5 3.4 2.5 4.8a2.5 2.5 0 0 1-5 0c0-1.4 1-2.6 2.5-4.8z" ${stroke(c, 1.6)}/>` +
-      `<path d="M15 6.5l7 13" ${stroke(c, 1.8)}/>`,
-  ],
-  // Enchantment: a flame under a halo, holy attacks, burning when it ends (#1421).
-  "heart-of-holy-flame": [
-    "enchantment",
-    (c) =>
-      `<ellipse cx="12" cy="5.5" rx="5" ry="1.8" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 9c2.2 2.2 2.8 4 2.8 5.6a2.8 2.8 0 0 1-5.6 0c0-1.3.7-2.2 1.4-2.9.2 1 .8 1.5 1.4 1.9 0-1.7 0-3 0-4.6z" fill="${c}"/>`,
-  ],
-  // Enchantment: a flame beside rising bars, adrenaline when it ends (#1421).
-  "balthazars-rage": [
-    "enchantment",
-    (c) =>
-      `<path d="M8.5 5c2.5 2.5 3 4.5 3 6.5a3 3 0 0 1-6 0c0-1.7.8-2.7 1.7-3.6.2 1.2.8 1.7 1.3 2.1 0-1.8 0-3.2 0-5z" fill="${c}"/>` +
-      `<path d="M15 18v-3M18 18v-6M21 18V9M4 19.5h18" ${stroke(c, 1.8)}/>`,
-  ],
-  // Form: a leaf, Melandru's earth (#1437).
-  "avatar-of-melandru": [
-    "form",
-    (c) =>
-      `<circle cx="12" cy="13" r="2.5" fill="${c}"/>` +
-      `<path d="M6 20c0-3.5 2.5-5 6-5s6 1.5 6 5" ${stroke(c, 2.2)}/>` +
-      `<path d="M12 10.5V8" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 8.5C12 6 10 4.5 6.5 5c0 2.5 1.5 3.7 5.5 3.5zM12 8.5C12 6 14 4.5 17.5 5c0 2.5-1.5 3.7-5.5 3.5z" fill="${c}"/>`,
-  ],
-  // Form: wings spread, Dwayna's (#1437).
-  "avatar-of-dwayna": [
-    "form",
-    (c) =>
-      `<path d="M10 14C8 9.5 5.5 8 3 8c0 4.5 2 7 7 7zM14 14c2-4.5 4.5-6 7-6 0 4.5-2 7-7 7z" fill="${c}"/>` +
-      `<circle cx="12" cy="10" r="2.3" fill="${c}"/>` +
-      `<path d="M7.5 21c0-3.5 2-5.5 4.5-5.5s4.5 2 4.5 5.5" ${stroke(c, 2)}/>`,
-  ],
-  // Form: a flame over a head, Balthazar's fire (#1471).
-  "avatar-of-balthazar": [
-    "form",
-    (c) =>
-      `<path d="M12 3c2.5 2.5 3.2 4.2 3.2 6a3.2 3.2 0 0 1-6.4 0c0-1.5.8-2.7 1.8-3.5.2 1.2.7 1.7 1.4 2 0-1.8-.1-3 0-4.5z" fill="${c}"/>` +
-      `<circle cx="12" cy="13.5" r="2.2" fill="${c}"/>` +
-      `<path d="M7 21c0-3 2-4.5 5-4.5s5 1.5 5 4.5" ${stroke(c, 2)}/>`,
-  ],
-  // Form: a scythe behind a figure, Grenth's death (#1471).
-  "avatar-of-grenth": [
-    "form",
-    (c) =>
-      `<path d="M16 21L11 6" ${stroke(c, 1.8)}/>` +
-      `<path d="M11 6C8.5 4.5 5.5 5 4 7.5c2.5-.5 4.5.2 6.5 2.5z" fill="${c}"/>` +
-      `<circle cx="9.5" cy="12" r="2.2" fill="${c}"/>` +
-      `<path d="M5 21c0-3 1.8-4.5 4.5-4.5S14 18 14 21" ${stroke(c, 2)}/>`,
-  ],
-  // Form: a figure between two zigzags, Lyssa's chaos (#1471).
-  "avatar-of-lyssa": [
-    "form",
-    (c) =>
-      `<path d="M6.5 5L4.5 9L7.5 11.5L5 16L7 19M17.5 5L19.5 9L16.5 11.5L19 16L17 19" ${stroke(c, 1.6)}/>` +
-      `<circle cx="12" cy="10" r="2.2" fill="${c}"/>` +
-      `<path d="M8.5 21c0-3 1.5-5 3.5-5s3.5 2 3.5 5" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: an hourglass about to burst, damage when it runs out (#1473).
-  "wastrels-worry": [
-    "hex",
-    (c) =>
-      `<path d="M7 4h10M7 20h10M8 4c0 5 8 5 8 8s-8 3-8 8M16 4c0 5-8 5-8 8s8 3 8 8" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: a bolt through a bar, damage on a foe mid-skill (#1473).
-  overload: ["hex", (c) => `<path d="M13 3l-6 10h5l-1 8 6-10h-5z" fill="${c}"/>`],
-  // Hex: a broken circle, hurt whenever interrupted (#1473).
-  frustration: [
-    "hex",
-    (c) =>
-      `<path d="M15 5.5A7 7 0 1 0 18.5 12" ${stroke(c, 2.2)}/>` +
-      `<path d="M17 4l3 3M20 4l-3 3" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: a crown tipped over, an elite skill's price (#1473).
-  "price-of-pride": ["hex", (c) => `<path d="M4 16l2-9 4 4 2-6 2 6 4-4 2 9z" fill="${c}"/>`],
-  // Hex: a head with a jagged ache, every skill slower (#1473).
-  migraine: [
-    "hex",
-    (c) =>
-      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.8)}/>` +
-      `<path d="M8 11l2-2 2 3 2-3 2 2" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: an eye with a tear, hurt for every skill used (#1473).
-  "visions-of-regret": [
-    "hex",
-    (c) =>
-      `<path d="M3 11c4-5 14-5 18 0-4 5-14 5-18 0z" ${stroke(c, 1.8)}/>` +
-      `<circle cx="12" cy="11" r="2" fill="${c}"/>` +
-      `<path d="M12 15.5c-1 1.5-1.5 2.3-1.5 3a1.5 1.5 0 0 0 3 0c0-.7-.5-1.5-1.5-3z" fill="${c}"/>`,
-  ],
-  // Enchantment: a chevron chasing a dot with a spark, faster and harder on runners (#1421).
-  "harriers-haste": [
-    "enchantment",
-    (c) =>
-      `<path d="M5 7l5 5-5 5" ${stroke(c, 2.2)}/>` +
-      `<circle cx="15" cy="12" r="2.2" fill="${c}"/>` +
-      `<path d="M19 8l2-2M19 16l2 2M20 12h2" ${stroke(c, 1.6)}/>`,
-  ],
-  // Skill effect: a shield struck through, armor lost while the signet is
-  // activated (#524).
-  "healing-signet-armor": [
-    "skill-effect",
-    (c) =>
-      `<path d="M8.5 6.5h7v4c0 2.2-1.8 3.7-3.5 4.8-1.7-1.1-3.5-2.6-3.5-4.8z" ${stroke(c, 1.8)}/>` +
-      `<path d="M6.5 16.5l11-11" ${stroke(c, 2)}/>`,
-  ],
-  // Skill effect: a blade and a plus, hits land harder near Winnowing (#1064).
-  winnowing: [
-    "skill-effect",
-    (c) =>
-      `<path d="M5 17L13 9" ${stroke(c, 2.2)}/>` + `<path d="M17 6v6M14 9h6" ${stroke(c, 2)}/>`,
-  ],
-  // Skill effect: two regeneration arrows, Recuperation's +2 (#1064).
-  recuperation: ["skill-effect", (c) => `<path d="M7 13l3-3 3 3M11 13l3-3 3 3" ${stroke(c, 2)}/>`],
-  // Skill effect: a roof over a bar, no blow takes more than 10% (#1265).
-  shelter: [
-    "skill-effect",
-    (c) => `<path d="M6 12l6-5 6 5" ${stroke(c, 2.2)}/>` + `<path d="M8 16h8" ${stroke(c, 2)}/>`,
-  ],
-  // Skill effect: two links, damage taken shared with the spirit (#1265).
-  union: [
-    "skill-effect",
-    (c) =>
-      `<circle cx="9.5" cy="12" r="3" ${stroke(c, 2)}/><circle cx="14.5" cy="12" r="3" ${stroke(c, 2)}/>`,
-  ],
-  // Skill effect: an arrow turned aside, a blocked attack (#1265).
-  displacement: ["skill-effect", (c) => `<path d="M5 12h6l3-4M14 8h3M14 8v3" ${stroke(c, 2)}/>`],
-  // Skill effect: a body flat on a ground line, held down longer (#1265).
-  earthbind: [
-    "skill-effect",
-    (c) => `<path d="M6 13h12" ${stroke(c, 2.2)}/>` + `<path d="M6 17h12" ${stroke(c, 2)}/>`,
-  ],
-  // Ritualist spirits (#1550), stand-ins until the asset-designer's.
-  // Skill effect: a wave flattened, adrenaline built half as fast.
-  soothing: [
-    "skill-effect",
-    (c) =>
-      `<path d="M5 10c2-3 4-3 7 0s5 3 7 0" ${stroke(c, 2)}/><path d="M5 16h14" ${stroke(c, 2.2)}/>`,
-  ],
-  // Weapon spell: a blade over a bar, one hit capped, Health stolen back.
-  "xinraes-weapon": [
-    "weapon-spell",
-    (c) =>
-      `<path d="M10 4.5v10M6.5 14.5h7M10 14.5v4" ${stroke(c, 2.5)}/>` +
-      `<path d="M15 8h5M15 12h5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Skill effect: a shield on a ground line, melee blocked inside a ward (#1087).
-  "ward-against-melee": [
-    "skill-effect",
-    (c) =>
-      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
-  ],
-  // Skill effect: two degeneration arrows over a ground line, Well of
-  // Suffering's -5 to the foes inside it (#1104).
-  "well-of-suffering": [
-    "skill-effect",
-    (c) =>
-      `<path d="M7 8l3 3 3-3M11 8l3 3 3-3" ${stroke(c, 2)}/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
-  ],
-  // Shout: two chevrons right, the pet bites and runs faster (#1108).
-  "call-of-haste": [
-    "shout",
-    (c) => `<path d="M7 7.5l4.5 4.5L7 16.5M12.5 7.5l4.5 4.5-4.5 4.5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Shout: a shield with a minus, less damage to the pet (#1108).
-  "call-of-protection": [
-    "shout",
-    (c) =>
-      `<path d="M7 5.5h10v5.5c0 3-2.5 5-5 6.5C9.5 16 7 14 7 11z" ${stroke(c, 2)}/>` +
-      `<path d="M9.5 11h5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Shout: two linked rings, half the pet's hurt shared with you (#1108).
-  "symbiotic-bond": [
-    "shout",
-    (c) =>
-      `<circle cx="9.5" cy="12" r="3.5" ${stroke(c, 2)}/><circle cx="14.5" cy="12" r="3.5" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: three degeneration arrows, a phantasm's -5 (#1228).
-  "conjure-phantasm": [
-    "hex",
-    (c) => `<path d="M5 9l2.5 3L10 9M9.5 9l2.5 3 2.5-3M14 9l2.5 3L19 9" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: a weight hung on a foot, moving 50% slower (#1228).
-  "imagined-burden": [
-    "hex",
-    (c) => `<path d="M12 5v4" ${stroke(c, 2)}/>` + `<path d="M8.5 9h7l2 9h-11z" fill="${c}"/>`,
-  ],
-  // Hex: a jagged ache over a drop, a deep wound when it ends (#1228).
-  "phantom-pain": [
-    "hex",
-    (c) =>
-      `<path d="M5 9l3-3 3 3 3-3 3 3" ${stroke(c, 2)}/>` +
-      `<path d="M12 11.5c-1.8 2.4-2.5 3.6-2.5 4.6a2.5 2.5 0 0 0 5 0c0-1-.7-2.2-2.5-4.6z" fill="${c}"/>`,
-  ],
-  // Hex: a shield closing in on itself, cracked armor when it ends (#1228).
-  "shrinking-armor": [
-    "hex",
-    (c) =>
-      `<path d="M8.5 7h7v4.5c0 2.4-1.8 4-3.5 5-1.7-1-3.5-2.6-3.5-5z" ${stroke(c, 2)}/>` +
-      `<path d="M12 8.5l-1 3 1.5 1.5-.5 2.5" ${stroke(c, 1.4)}/>`,
-  ],
-  // Enchantment: a chevron and a broken one, faster now and crippled after (#1228).
-  "illusion-of-haste": [
-    "enchantment",
-    (c) =>
-      `<path d="M6 7.5l4.5 4.5L6 16.5" ${stroke(c, 2.4)}/>` +
-      `<path d="M13 7.5l3 3M16 13.5l-3 3" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: a blade crossed out, the next attack hurts and blinds (#1228).
-  ineptitude: [
-    "hex",
-    (c) =>
-      `<path d="M12 18.5v-10M8.5 8.5h7M12 8.5v-4" ${stroke(c, 2.2)}/>` +
-      `<path d="M6 6l12 12" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: a limping foot and a degeneration arrow, slowed and draining (#1228).
-  "crippling-anguish": [
-    "hex",
-    (c) =>
-      `<path d="M6 17.5h5l2-4" ${stroke(c, 2.2)}/>` +
-      `<path d="M14 7l2.5 3L19 7" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: a dashed ring with a gag bar, the foe cannot cast spells (#1234, #1262).
-  "shroud-of-silence": [
-    "hex",
-    (c) =>
-      `<circle cx="12" cy="12" r="6.5" ${stroke(c, 1.8)} stroke-dasharray="3.4 2.6"/>` +
-      `<path d="M7.5 12h9" ${stroke(c, 2.6)}/>`,
-  ],
-  // Hex: a shield cracked open, blows of its caster cannot be blocked (#1234, #1262).
-  "expose-defenses": [
-    "hex",
-    (c) =>
-      `<path d="M12 5.5L18 7.8V12c0 3-2.5 5-6 6.5C8.5 17 6 15 6 12V7.8Z" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 7.5L10.5 11.5L13.5 13L11.5 16.5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: a drop and a chevron, a poison that renews while its foe moves (#1234, #1262).
-  "enduring-toxin": [
-    "hex",
-    (c) =>
-      `<path d="M10 6c-2 2.6-3.5 4.4-3.5 6.2a3.5 3.5 0 0 0 7 0C13.5 10.4 12 8.6 10 6z" fill="${c}"/>` +
-      `<path d="M15.5 8.5l3 3.5l-3 3.5" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: a skull, healing on the foe is cut (#1234, #1262).
-  "mark-of-death": [
-    "hex",
-    (c) =>
-      `<path d="M12 5.5c-3 0-5 2-5 4.7c0 1.8 1 2.9 2.5 3.6V17h5v-3.2c1.5-.7 2.5-1.8 2.5-3.6c0-2.7-2-4.7-5-4.7z" fill="${c}"/>` +
-      `<circle cx="10" cy="10.2" r="1.3" fill="${C.hex}"/><circle cx="14" cy="10.2" r="1.3" fill="${C.hex}"/>`,
-  ],
-  // Hex: two links and a spike, spirits' attacks hurt more (#1270).
-  "painful-bond": [
-    "hex",
-    (c) =>
-      `<circle cx="9.5" cy="13" r="3" ${stroke(c, 2)}/><circle cx="14.5" cy="13" r="3" ${stroke(c, 2)}/>` +
-      `<path d="M12 4.5v4" ${stroke(c, 2.2)}/>`,
-  ],
-  // Hex: a falling tear over a low line, degeneration (#1270).
-  lamentation: [
-    "hex",
-    (c) =>
-      `<path d="M12 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C15.5 9.6 14 7.8 12 5z" fill="${c}"/>` +
-      `<path d="M7 18.5l5-1.5l5 1.5" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: a barbed line, physical hits hurt more (#1332).
-  barbs: [
-    "hex",
-    (c) =>
-      `<path d="M4 12h16" ${stroke(c, 2)}/>` +
-      `<path d="M7 12l2-4M11 12l2-4M15 12l2-4M9 12l-2 4M13 12l-2 4M17 12l-2 4" ${stroke(c, 1.6)}/>`,
-  ],
-  // Hex: a cross over a falling line, a miss that hurts (#1332).
-  "price-of-failure": [
-    "hex",
-    (c) =>
-      `<path d="M8 5l8 8M16 5l-8 8" ${stroke(c, 2.2)}/>` + `<path d="M12 15v4.5" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: three falling drops, degeneration on a crowd (#1332).
-  suffering: [
-    "hex",
-    (c) =>
-      `<path d="M7 6c-1.2 1.8-2 2.9-2 4a2 2 0 0 0 4 0c0-1.1-.8-2.2-2-4z" fill="${c}"/>` +
-      `<path d="M17 6c-1.2 1.8-2 2.9-2 4a2 2 0 0 0 4 0c0-1.1-.8-2.2-2-4z" fill="${c}"/>` +
-      `<path d="M12 11c-1.2 1.8-2 2.9-2 4a2 2 0 0 0 4 0c0-1.1-.8-2.2-2-4z" fill="${c}"/>`,
-  ],
-  // Hex: a plus with a third cut away, less healing (#1332).
-  "defile-flesh": [
-    "hex",
-    (c) =>
-      `<path d="M12 5v14M5 12h9" ${stroke(c, 2.6)}/>` + `<path d="M16 12h3" ${stroke(c, 1.4)}/>`,
-  ],
-  // Hex: a shield struck through, cannot block (#1332).
-  "rigor-mortis": [
-    "hex",
-    (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M5 19L19 5" ${stroke(c, 2.2)}/>`,
-  ],
-  // Hex: a drop beside a small plus, degeneration and less healing (#1332).
-  "lingering-curse": [
-    "hex",
-    (c) =>
-      `<path d="M9 5c-2 2.8-3.5 4.6-3.5 6.4a3.5 3.5 0 0 0 7 0C12.5 9.6 11 7.8 9 5z" fill="${c}"/>` +
-      `<path d="M17 13v6M14 16h6" ${stroke(c, 1.8)}/>`,
-  ],
-  // Enchantment: a sprout and a plus, each creature made heals you (#1316).
-  "boon-of-creation": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 19v-7M12 12c-3 0-5-2-5-5c3 0 5 2 5 5zM12 12c3 0 5-2 5-5c-3 0-5 2-5 5z" ${stroke(c, 2)}/>`,
-  ],
-  // Enchantment: a sprout bursting into rays, lightning round each new creature (#1316).
-  "explosive-growth": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 19v-6" ${stroke(c, 2.2)}/><circle cx="12" cy="10" r="2.5" fill="${c}"/>` +
-      `<path d="M12 4v2M6.5 6.5l1.5 1.5M17.5 6.5L16 8M5 11h2M17 11h2" ${stroke(c, 1.8)}/>`,
-  ],
-  // Enchantment: an open hand holding a plus, allies near each new creature healed (#1316).
-  "spirits-gift": [
-    "enchantment",
-    (c) =>
-      `<path d="M5 14c2 0 3 1 4 2h5c1 0 1.5-1.5 0-1.5h-3M5 18h9l5-4" ${stroke(c, 1.8)}/>` +
-      `<path d="M13 5v6M10 8h6" ${stroke(c, 2.2)}/>`,
-  ],
-  // Hex: a barbed line under a spark, any hex or enchantment hurts (#1403).
-  "soul-barbs": [
-    "hex",
-    (c) =>
-      `<path d="M4 15h16" ${stroke(c, 2)}/>` +
-      `<path d="M7 15l2-3M11 15l2-3M15 15l2-3" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 4v5M9.5 6.5h5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: a shield with a bolt, the next block hurts (#1403).
-  "defile-defenses": [
-    "hex",
-    (c) =>
-      `<path d="M7 6h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
-      `<path d="M13 7l-3 4h4l-3 4" ${stroke(c, 1.6)}/>`,
-  ],
-  // Hex: a plus with rays thrown back, the enchanter is smitten (#1403).
-  "scourge-enchantment": [
-    "hex",
-    (c) =>
-      `<path d="M12 8v8M8 12h8" ${stroke(c, 2.4)}/>` +
-      `<path d="M5 5l2.5 2.5M19 5l-2.5 2.5M5 19l2.5-2.5M19 19l-2.5-2.5" ${stroke(c, 1.6)}/>`,
-  ],
-  // Stance: a broken ring, the next hex fails (#1403).
-  "hex-breaker": [
-    "stance",
-    (c) =>
-      `<path d="M10 5.3A7 7 0 1 0 18.7 10M14 5.3A7 7 0 0 1 18.7 10" ${stroke(c, 2.2)}/>` +
-      `<path d="M11 4l2 3-2 1 2 3" ${stroke(c, 1.6)}/>`,
-  ],
-  // Paragon echoes (#1423, #1482). Refrains renew and last, finales fire once: the glyph is the payoff.
-  // Echo: two chevrons over a minus, attacks faster, armor lost.
-  "aggressive-refrain": [
-    "echo",
-    (c) =>
-      `<path d="M7 4l5 4 5-4M7 9l5 4 5-4" ${stroke(c, 2.2)}/>` +
-      `<path d="M7.5 18h9" ${stroke(c, 2.2)}/>`,
-  ],
-  // Echo: a flame ringed by a burst, foes beside the bearer burn.
-  "blazing-finale": [
-    "echo",
-    (c) =>
-      `<path d="M12 6c.8 2.2 3 3.2 3 5.5a3 3 0 0 1-6 0c0-1.2.6-2 1.4-2.7 0 1 .3 1.4.9 1.6-.2-1.5 0-2.8.7-4.4z" fill="${c}"/>` +
-      `<path d="M12 2.5v1.5M12 18.5V20M4 11h1.5M18.5 11H20M6.3 5.3l1 1M16.7 5.3l-1 1M6.3 16.7l1-1M16.7 16.7l-1-1" ${stroke(c, 1.5)}/>`,
-  ],
-  // Echo: a flame inside a target ring, the bigger foe burns.
-  "burning-refrain": [
-    "echo",
-    (c) =>
-      `<circle cx="12" cy="11.5" r="7" ${stroke(c, 1.8)}/>` +
-      `<path d="M12.3 6.5c.5 1.8 2.5 2.6 2.5 4.6a2.8 2.8 0 0 1-5.6 0c0-1.3.5-2 1.3-2.6 0 1 .3 1.5.9 1.7-.2-1.6 0-2.7.9-3.7z" fill="${c}"/>`,
-  ],
-  // Echo: a note held under a fermata, chants and shouts last longer.
-  "enduring-harmony": [
-    "echo",
-    (c) =>
-      `<circle cx="9" cy="16.5" r="2.6" fill="${c}"/>` +
-      `<path d="M11.4 16.5V9" ${stroke(c, 1.8)}/>` +
-      `<path d="M4 8a8 6 0 0 1 16 0" ${stroke(c, 1.8)}/>` +
-      `<circle cx="12" cy="6" r="1.1" fill="${c}"/>`,
-  ],
-  // Echo: a heart with a plus, one heal at the end of each chant.
-  "finale-of-restoration": [
-    "echo",
-    (c) =>
-      `<path d="M12 19l-6-6a3.5 3.5 0 0 1 6-4 3.5 3.5 0 0 1 6 4z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 10.5v4.5M9.8 12.8h4.4" ${stroke(c, 1.8)}/>`,
-  ],
-  // Echo: two chevrons, a faster pace.
-  "hasty-refrain": ["echo", (c) => `<path d="M5 5l5 6-5 6M12 5l5 6-5 6" ${stroke(c, 2.2)}/>`],
-  // Echo: a ring with a plus, health coming back.
-  "mending-refrain": [
-    "echo",
-    (c) =>
-      `<circle cx="12" cy="11.5" r="7" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 8v7M8.5 11.5h7" ${stroke(c, 2)}/>`,
-  ],
-  // Echo: a drop crossed out, a condition lost.
-  "purifying-finale": [
-    "echo",
-    (c) =>
-      `<path d="M12 3.5c2.5 3.5 5 6 5 9a5 5 0 0 1-10 0c0-3 2.5-5.5 5-9z" ${stroke(c, 1.8)}/>` +
-      `<path d="M5 19L19 5" ${stroke(c, 2)}/>`,
-  ],
-  // Hex: icicles under a bar, the cage that slows 66% (#1367, #1440).
-  "ice-prison": [
-    "hex",
-    (c) =>
-      `<path d="M4 5h16" ${stroke(c, 2)}/>` +
-      `<path d="M5.5 6.5h4L7.5 18zM10 6.5h4L12 19zM14.5 6.5h4L16.5 18z" fill="${c}"/>`,
-  ],
-  // Hex: a snowflake with ice thrown out round it, the burst round the caster (#1367, #1440).
-  "frozen-burst": [
-    "hex",
-    (c) =>
-      `<path d="M12 8v8M8.5 10l7 4M8.5 14l7-4" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" ${stroke(c, 1.6)}/>`,
-  ],
-  // Skill effect: a spear point over a plus, regeneration while Overcast (#1367).
-  "ice-spear": [
-    "skill-effect",
-    (c) =>
-      `<path d="M12 4l2.5 5h-5z" fill="${c}"/>` +
-      `<path d="M12 9v5M12 15v5M9.5 17.5h5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: an eye and its ghost, half the attacks miss (#1367, #1440).
-  "blurred-vision": [
-    "hex",
-    (c) =>
-      `<path d="M3 12c2-3.5 4.5-5 7.5-5s5.5 1.5 7.5 5c-2 3.5-4.5 5-7.5 5S5 15.5 3 12z" ${stroke(c, 1.8)}/>` +
-      `<circle cx="10.5" cy="12" r="2" fill="${c}"/>` +
-      `<path d="M21 12c-1.4-2.4-2.8-3.8-4.4-4.6" ${stroke(c, 1.4)} stroke-dasharray="1.6 1.8"/>`,
-  ],
-  // Enchantment: a shield with mist lines across it, armor and speed (#1367, #1440).
-  "armor-of-mist": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 3.5l6.5 2.5v5.5c0 3.8-2.8 6.2-6.5 8-3.7-1.8-6.5-4.2-6.5-8V6z" ${stroke(c, 1.8)}/>` +
-      `<path d="M8.5 10c1.2-1.4 2.3-1.4 3.5 0s2.3 1.4 3.5 0M8.5 14c1.2-1.4 2.3-1.4 3.5 0s2.3 1.4 3.5 0" ${stroke(c, 1.5)}/>`,
-  ],
-  // Hex: a stone split in two, it bursts when it ends (#1367, #1440).
-  shatterstone: [
-    "hex",
-    (c) =>
-      `<path d="M3.5 10L9 5l2.5 3.5L10 12l1.5 3L5.5 19 3 14z" fill="${c}"/>` +
-      `<path d="M14.5 7l6 3.5-1 4.5-5 .5V12l-1-2.5z" fill="${c}"/>`,
-  ],
-  // Hex: a snowflake in a head with shoulders, 90% slower (#1367, #1440).
-  "mind-freeze": [
-    "hex",
-    (c) =>
-      `<circle cx="12" cy="9" r="6" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 5.8v6.4M9.2 7.4l5.6 3.2M9.2 10.6l5.6-3.2" ${stroke(c, 1.4)}/>` +
-      `<path d="M4.5 21c0-3.5 3-5 7.5-5s7.5 1.5 7.5 5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Ritualist item spells (#1434), stand-ins until the asset-designer's.
-  // Ashes: a shield, more armor.
-  "protective-was-kaolai": [
-    "item",
-    (c) => `<path d="M8 7h8v4c0 2.5-2 4-4 5-2-1-4-2.5-4-5z" ${stroke(c, 1.8)}/>`,
-  ],
-  // Ashes: a heart, more maximum Health.
-  "generous-was-tsungrai": [
-    "item",
-    (c) => `<path d="M12 16l-4-4a2.3 2.3 0 0 1 4-3 2.3 2.3 0 0 1 4 3z" fill="${c}"/>`,
-  ],
-  // Ashes: a bar capping a hit.
-  "defiant-was-xinrae": [
-    "item",
-    (c) => `<path d="M7 8h10M12 9v7M9.5 13.5L12 16l2.5-2.5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Ashes: an eye struck out, foes blinded on the drop.
-  "blind-was-mingson": [
-    "item",
-    (c) =>
-      `<path d="M6 12c3-4 9-4 12 0-3 4-9 4-12 0z" ${stroke(c, 1.6)}/>` +
-      `<path d="M7 16L17 8" ${stroke(c, 1.8)}/>`,
-  ],
-  // Ashes: a hand closing, foes knocked down on the drop.
-  "grasping-was-kuurong": [
-    "item",
-    (c) => `<path d="M8 15V9M11 15V8M14 15V9M17 15v-4M7 15h11" ${stroke(c, 1.8)}/>`,
-  ],
-  // Ashes: a bolt, energy back.
-  "energetic-was-lee-sa": ["item", (c) => `<path d="M13 6l-4 6h4l-2 5 5-7h-4z" fill="${c}"/>`],
-  // Ritualist item spells 2 (#1464), stand-ins until the asset-designer's.
-  // Ashes: a bar raised, more maximum Energy.
-  "mighty-was-vorizun": [
-    "item",
-    (c) => `<path d="M9 16V9M15 16V9M7 11l5-4 5 4" ${stroke(c, 1.8)}/>`,
-  ],
-  // Ashes: a spike through a plate, armor pierced.
-  "cruel-was-daoshen": [
-    "item",
-    (c) => `<path d="M7 13h10M12 6v11M10 8l2-2 2 2" ${stroke(c, 1.8)}/>`,
-  ],
-  // Ashes: a bolt in a ring, lightning on all in the area.
-  "destructive-was-glaive": [
-    "item",
-    (c) =>
-      `<circle cx="12" cy="12" r="5" ${stroke(c, 1.4)}/>` +
-      `<path d="M13 8l-3 4h3l-2 4" ${stroke(c, 1.6)}/>`,
-  ],
-  // Ashes: a level line, a cast nothing breaks.
-  "tranquil-was-tanasen": ["item", (c) => `<path d="M7 10h10M7 14h10" ${stroke(c, 1.8)}/>`],
-  // Ashes: a hook turned back on the striker.
-  "vengeful-was-khanhei": ["item", (c) => `<path d="M8 8l8 8M16 8v4h-4" ${stroke(c, 1.8)}/>`],
-  // Ashes: a drop running clear, conditions sooner gone.
-  "pure-was-li-ming": [
-    "item",
-    (c) => `<path d="M12 7c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" ${stroke(c, 1.6)}/>`,
-  ],
-  // "The next spell fails" hexes (#1475), stand-ins until the asset-designer's.
-  // Hex: a struck-through spark with an arrow down, a spell at a foe fails.
-  guilt: [
-    "hex",
-    (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2)}/><path d="M5 5l14 14" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 15v5M9.5 17.5L12 20l2.5-2.5" ${stroke(c, 1.6)}/>`,
-  ],
-  // Hex: a struck-through spark with an arrow up, a spell at an ally fails.
-  shame: [
-    "hex",
-    (c) =>
-      `<path d="M12 4v8M8 8h8" ${stroke(c, 2)}/><path d="M5 5l14 14" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 20v-5M9.5 17.5L12 15l2.5 2.5" ${stroke(c, 1.6)}/>`,
-  ],
-  // Hex: a struck-through spark bursting, the failed spell hurts around.
-  mistrust: [
-    "hex",
-    (c) =>
-      `<path d="M12 8v8M8 12h8" ${stroke(c, 2)}/><path d="M6 6l12 12" ${stroke(c, 1.8)}/>` +
-      `<path d="M3 12h2M19 12h2M12 3v2M12 19v2" ${stroke(c, 1.6)}/>`,
-  ],
-  // Hex: a cracked drop, conditions coming and going hurt.
-  fragility: [
-    "hex",
-    (c) =>
-      `<path d="M12 3c3 4.5 5.5 7.5 5.5 11a5.5 5.5 0 0 1-11 0C6.5 10.5 9 7.5 12 3z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 9l-1.5 3 2.5 1.5-1.5 3" ${stroke(c, 1.5)}/>`,
-  ],
-  // Monk smiting staples (#1519), a stand-in until the asset-designer's.
-  // Enchantment: a blade with a holy halo, attacks are holy and pierce.
-  "judges-insight": [
-    "enchantment",
-    (c) =>
-      `<ellipse cx="12" cy="5" rx="4.5" ry="1.6" ${stroke(c, 1.5)}/>` +
-      `<path d="M12 8v9M9 14h6M12 17v3" ${stroke(c, 2)}/>`,
-  ],
-  // Necromancer and Elementalist staples (#1540), stand-ins until their art card.
-  // Enchantment: a drop over three regeneration arrows, energy bought with blood.
-  "blood-is-power": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 3c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 7.5 10 6 12 3z" fill="${c}"/>` +
-      `<path d="M6 19l2.5-2.5L11 19M10 19l2.5-2.5L15 19M14 19l2.5-2.5L19 19" ${stroke(c, 1.6)}/>`,
-  ],
-  // Enchantment: a blade over a drop, every party blow cuts deeper.
-  "order-of-pain": [
-    "enchantment",
-    (c) =>
-      `<path d="M5 13L14 4" ${stroke(c, 2.2)}/>` +
-      `<path d="M15 11c2 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0c0-2 1.5-3.5 3.5-6.5z" fill="${c}"/>`,
-  ],
-  // Hex: a ringed flame, fire sets the marked foe alight.
-  "mark-of-rodgort": [
-    "hex",
-    (c) =>
-      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 1.6)}/>` +
-      `<path d="M13 6.5c.4 2.2 2.5 3.5 2.5 6.2a3.5 3.5 0 0 1-7 0c0-1.5.6-2.7 1.5-3.3 0 1.2.3 1.8.9 2.1-.3-1.8.6-3.6 2.1-5z" fill="${c}"/>`,
-  ],
-  // Skill effect: a shield with a spark on a ground line, elemental damage
-  // turned aside inside a ward.
-  "ward-against-elements": [
-    "skill-effect",
-    (c) =>
-      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
-      `<path d="M12.8 7.5l-2 3h2.4l-2 3" ${stroke(c, 1.4)}/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
-  ],
-  // Elementalist staples 2 (#1575), stand-ins until their art card.
-  // Enchantment: a faceted stone body with a crossed-out blade, armored
-  // and unable to attack.
-  "obsidian-flesh": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 3l6 4v7l-6 7-6-7V7z" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 3v18M6 7l6 4 6-4" ${stroke(c, 1.2)}/>`,
-  ],
-  // Skill effect: a ward's ground line under a slowed, dragging foot.
-  "ward-against-foes": [
-    "skill-effect",
-    (c) =>
-      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
-      `<path d="M10 9.5h4" ${stroke(c, 1.6)}/>` +
-      `<path d="M5 18.5h14" ${stroke(c, 2.2)}/>`,
-  ],
-  // Skill effect: a ward over a planted stance, no knockdown inside it.
-  "ward-of-stability": [
-    "skill-effect",
-    (c) =>
-      `<path d="M8 5.5h8v4.5c0 2.5-2 4.2-4 5.5-2-1.3-4-3-4-5.5z" ${stroke(c, 2)}/>` +
-      `<path d="M12 7.5v5" ${stroke(c, 1.6)}/>` +
-      `<path d="M5 18.5h14M8 21h8" ${stroke(c, 2)}/>`,
-  ],
-  // Skill effect: two rising flames, adrenaline comes faster near the spirit.
-  "infuriating-heat": [
-    "skill-effect",
-    (c) =>
-      `<path d="M8 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1C7.2 9.8 6.8 7.6 8 6zM16 6c.4 2.5 3 4 3 7a3 3 0 0 1-6 0c0-1.6.7-2.8 1.6-3.4 0 1.2.3 1.8.9 2.1-.3-1.9-.7-4.1.5-5.7z" fill="${c}"/>` +
-      `<path d="M6 19.5h12" ${stroke(c, 1.8)}/>`,
-  ],
-  // Crowd punishers (#1501), stand-ins until the asset-designer's.
-  // Hex: a broken ring round a burst, a skill used interrupts those near.
-  panic: [
-    "hex",
-    (c) =>
-      `<circle cx="12" cy="12" r="7" ${stroke(c, 1.6)} stroke-dasharray="3 2.5"/>` +
-      `<path d="M12 8v8M8 12h8M9.2 9.2l5.6 5.6M14.8 9.2l-5.6 5.6" ${stroke(c, 1.6)}/>`,
-  ],
-  // Hex: three rising bars, each second's pulse harder than the last.
-  "wastrels-demise": ["hex", (c) => `<path d="M7 17v-3M12 17v-6M17 17v-9" ${stroke(c, 2.4)}/>`],
-  // Mesmer staples (#1570), a stand-in until its art card.
-  // Hex: a question mark in a doubled hourglass, spells take twice as long.
-  "arcane-conundrum": [
-    "hex",
-    (c) =>
-      `<path d="M7 5h10M7 19h10M8 5c0 4 8 4 8 7s-8 3-8 7M16 5c0 4-8 4-8 7" ${stroke(c, 1.6)}/>` +
-      `<circle cx="12" cy="16.5" r="1" fill="${c}"/>`,
-  ],
-  // Clumsiness (#1593), a stand-in until its art card.
-  // Hex: a blade dropped from a hand, the next attack is interrupted.
-  clumsiness: [
-    "hex",
-    (c) =>
-      `<path d="M9 5l6 6M8 12l3-3" ${stroke(c, 2.2)}/>` +
-      `<path d="M13 15l3 4M6 18h12" ${stroke(c, 1.8)}/>`,
-  ],
-  // Dervish staples and Shadow Prison (#1551, #1573): each matches its skill icon.
-  // Enchantment: a hand over a broken line, attack skills cripple.
-  "grenths-grasp": [
-    "enchantment",
-    (c) =>
-      `<path d="M7 3.5V9M10 3V9M14 3V9M17 3.5V9" ${stroke(c, 1.8)}/>` +
-      `<path d="M5.5 8.5H18.5V10.5A6.5 6.5 0 0 1 5.5 10.5Z" fill="${c}"/>` +
-      `<path d="M4.5 20L8.5 17.5L12 19.5L15.5 17L19.5 19" ${stroke(c, 1.8)}/>`,
-  ],
-  // Enchantment: a ring broken open round a burst, cold that strips an enchantment.
-  "rending-aura": [
-    "enchantment",
-    (c) =>
-      `<path d="M12 3.5A8.5 8.5 0 0 1 20.5 12M18 18A8.5 8.5 0 0 1 8 20M5 17A8.5 8.5 0 0 1 5 7" ${stroke(c, 1.6)}/>` +
-      `<path d="M12 7V17M7.7 9.5L16.3 14.5M7.7 14.5L16.3 9.5" ${stroke(c, 1.8)}/>`,
-  ],
-  // Hex: the step arrowheads behind bars, it moves 66% slower.
-  "shadow-prison": [
-    "hex",
-    (c) =>
-      `<path d="M3 8L6 12L3 16Z" ${stroke(c, 1.4)}/>` +
-      `<path d="M10 4V20M14 4V20M18 4V20M8 4.5H20M8 19.5H20" ${stroke(c, 1.8)}/>`,
-  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -2159,8 +686,29 @@ const sacrifice = (payoff) =>
   `<g transform="translate(7.5,16) scale(0.66) translate(-12,-12)">${DROP}</g>` +
   `<g transform="translate(15,9) scale(0.7) translate(-12,-12)">${payoff}</g>`;
 
+/** A four-point star, the holy mark of the Monk's smiting skills (#1584). */
+const holyStar = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) => {
+  const k = r * 0.28;
+  const p = (/** @type {number} */ x, /** @type {number} */ y) =>
+    `${(cx + x).toFixed(1)} ${(cy + y).toFixed(1)}`;
+  return inkFill(
+    `M${p(0, -r)}L${p(k, -k)}L${p(r, 0)}L${p(k, k)}L${p(0, r)}L${p(-k, k)}L${p(-r, 0)}L${p(-k, -k)}Z`,
+  );
+};
+
+/** A signet ring and its dot at `cx,cy`, radius `r` (#1584). */
+const ringDot = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ r) =>
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r)}" ${stroke(C.ink, 2.2)}/>` +
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r / 3)}" fill="${C.ink}"/>`;
+
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
+
+/** A health bar along the bottom edge, filled to `fill`: the cue for "above" or "below half". */
+const healthGauge = (/** @type {number} */ fill) =>
+  `<rect x="2.5" y="18.5" width="19" height="3.5" rx="1" ${stroke(C.ink, 1.4)}/>` +
+  `<rect x="3.5" y="19.5" width="${(17 * fill).toFixed(1)}" height="1.5" fill="${C.ink}"/>` +
+  inkLine("M12 17.5V23", 1.2);
 
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -2185,6 +733,51 @@ const skillGlyph = {
   lightning: () => inkLine("M15 2.5L8.5 12.5H15.5L9 21.5", 2.6),
   // An ice shard in flight, with its trail (#918).
   shard: () => inkFill("M21 3L18 13L11 6Z") + inkLine("M12.5 11.5L4 20M9 9L5 13M15 15L11 19", 2),
+  // Necromancer staples 2 (#1583): the shapes of their statuses, so skill and status read as one.
+  // A dashed ring (a hex) round a hollow drop over two falling arrows: health and energy wither.
+  "hex-wither": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
+    inkLine("M12 5.5c1.8 2.5 3 4 3 5.8a3 3 0 0 1-6 0c0-1.8 1.2-3.3 3-5.8z", 1.6) +
+    inkLine("M8.5 15v3.5M7 17l1.5 1.5L10 17M15.5 15v3.5M14 17l1.5 1.5L17 17", 1.5),
+  // A hollow drop drained into a filled one: health siphoned to the caster.
+  "drop-siphon": () =>
+    inkLine("M8 3.5c2.2 3.2 3.6 5 3.6 7.3a3.6 3.6 0 0 1-7.2 0c0-2.3 1.4-4.1 3.6-7.3z", 2) +
+    inkFill("M16.5 12c1.8 2.6 3 4.1 3 6a3 3 0 0 1-6 0c0-1.9 1.2-3.4 3-6z") +
+    inkLine("M11.5 15L13 16.5", 2),
+  // A dashed ring (a hex) round a struck-through blade trailing speed lines: fast swings that miss.
+  "hex-haste-miss": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
+    inkLine("M5.5 9.5h3M5.5 12.5h3M5.5 15.5h3", 1.6) +
+    inkLine("M10.5 15.5L16.5 8.5M10.5 8.5l6 7", 2),
+  // A ring broken open round a falling arrow: the enchantment turned to rot.
+  "ring-rot": () =>
+    `<path d="M7.5 5A8 8 0 1 0 16.5 5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 3V13M8.5 10L12 13.5L15.5 10", 2.4),
+  // A ring broken open round a drop: the enchantment stripped, health taken.
+  "ring-steal": () =>
+    `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
+    inkFill("M12 6.5c2 2.8 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0c0-2 1.5-3.7 3.5-6.5z"),
+  // A snowflake with a skull at its heart: cold that kills.
+  "chill-skull": () =>
+    inkLine("M12 2V22M3.4 7L20.6 17M3.4 17L20.6 7", 2) +
+    `<circle cx="12" cy="12" r="5.2" fill="${C.ink}" stroke="${C.bg}" stroke-width="1.2"/>` +
+    `<circle cx="10.2" cy="11.2" r="1.3" fill="${C.bg}"/><circle cx="13.8" cy="11.2" r="1.3" fill="${C.bg}"/>` +
+    `<path d="M10.5 14.8h3" ${stroke(C.bg, 1.2)}/>`,
+  // A burst round a skull: a corpse blown apart.
+  "burst-skull": () =>
+    inkFill(burst(8)) +
+    `<circle cx="12" cy="12" r="5.6" fill="${C.bg}"/>` +
+    `<circle cx="12" cy="11.5" r="4" fill="${C.ink}"/>` +
+    `<circle cx="10.4" cy="11" r="1.1" fill="${C.bg}"/><circle cx="13.6" cy="11" r="1.1" fill="${C.bg}"/>` +
+    `<path d="M10.5 14.2v1.4M12 14.2v1.4M13.5 14.2v1.4" ${stroke(C.bg, 0.9)}/>`,
+  // A ring ticked outward round a drop: the signet's pain reaches those near, the caster bleeds.
+  "signet-agony": () =>
+    `<circle cx="12" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkLine(
+      "M12 2V4.5M12 19.5V22M2 12H4.5M19.5 12H22M5 5L6.8 6.8M17.2 17.2L19 19M19 5L17.2 6.8M6.8 17.2L5 19",
+      2,
+    ) +
+    inkFill("M12 7.8c1.5 2.2 2.6 3.5 2.6 5a2.6 2.6 0 0 1-5.2 0c0-1.5 1.1-2.8 2.6-5z"),
   // A snowflake (#938): the area frozen, not a shard flying.
   snowflake: () => inkLine("M12 3V21M4.2 7.5L19.8 16.5M4.2 16.5L19.8 7.5", 2.4),
   // A blade with a mark in the empty corner above it: a weapon spell, and what it does (#984).
@@ -2271,6 +864,46 @@ const skillGlyph = {
     inkFill("M6 10L10 6.5L15.5 8L17 13L13.5 17L8 16Z") +
     inkLine("M8 3V5M12.5 1.5V4.5M16.5 3V6M3 11V13", 2) +
     inkLine("M2.5 20.5H14M4.5 18.5L6 19.5", 2.2),
+  // Necromancer staples 3 (#1651): a base glyph over a health gauge (full past half: above half; under it: below half), or a snowflake with its rider.
+  // A drop given up with a bolt leaving it: Health spent for shadow damage.
+  "drop-sac-bolt": () =>
+    inkFill("M8 9C6 12 5 13.5 5 15.5a3.2 3.2 0 0 0 6.4 0C11.4 13.5 10 12 8 9Z") +
+    inkLine("M13 4L16.5 4L14 9.5L20 8.5L11.5 18", 2),
+  // A drop drawn off sideways over a gauge past half: Health stolen from a healthy foe.
+  "drop-arrow-high": () =>
+    `<g transform="translate(12,9) scale(0.7) translate(-12,-12)">${skillGlyph["drop-arrow"]()}</g>` +
+    healthGauge(0.7),
+  // A heal cross over a gauge under half: healed when the foe is low.
+  "heal-drop-low": () =>
+    `<g transform="translate(12,9) scale(0.72) translate(-12,-12)">${skillGlyph["heal-drop"]()}</g>` +
+    healthGauge(0.3),
+  // A signet ring over a gauge under half: Health and Energy from a low foe.
+  "signet-low": () =>
+    `<g transform="translate(12,9) scale(0.7) translate(-12,-12)">${skillGlyph["drop-to-signet"]()}</g>` +
+    healthGauge(0.3),
+  // An eye over a gauge past half: every enchantment stripped from a healthy foe.
+  "eye-high": () =>
+    `<g transform="translate(12,8.5) scale(0.8) translate(-12,-12)">${skillGlyph.eye()}</g>` +
+    healthGauge(0.7),
+  // A snowflake over a fouled ground: cold, and poison on a foe that is down.
+  "snowflake-ground": () =>
+    `<g transform="translate(10,9) scale(0.7) translate(-12,-12)">${skillGlyph.snowflake()}</g>` +
+    `<g transform="translate(18,13) scale(0.5) translate(-12,-12)">${skillGlyph.germ()}</g>` +
+    inkLine("M2 21.5H22", 2.4),
+  // A snowflake in a dashed ring with a germ: cold, and poison on a hexed or enchanted foe.
+  "snowflake-hexed": () =>
+    `<circle cx="10" cy="10" r="8" ${stroke(C.ink, 1.6)} stroke-dasharray="3.6 2.8"/>` +
+    `<g transform="translate(10,10) scale(0.55) translate(-12,-12)">${skillGlyph.snowflake()}</g>` +
+    `<g transform="translate(18.5,18.5) scale(0.6) translate(-12,-12)">${skillGlyph.germ()}</g>`,
+  // A snowflake with a circling arrow: cold that recharges at once.
+  "snowflake-recharge": () =>
+    `<g transform="translate(10,10) scale(0.7) translate(-12,-12)">${skillGlyph.snowflake()}</g>` +
+    `<path d="M14 21A5.5 5.5 0 1 0 14.5 14" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 12L15 14.5L12 17", 1.8),
+  // A broken ring with a bleeding drop: the enchantment ripped out, the foe bleeds.
+  "ring-rip-bleed": () =>
+    `<g transform="translate(10,10) scale(0.8) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>` +
+    inkFill("M18.5 13.500c1.6 2.3 2.8 3.6 2.8 5.200a2.8 2.8 0 0 1-5.6 0c0-1.6 1.2-2.9 2.8-5.200z"),
   // A scythe: a long haft, the blade curved over its top (#990).
   scythe: () =>
     inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
@@ -2279,6 +912,40 @@ const skillGlyph = {
     inkLine("M6 21L14 7", 2.4) +
     inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
     `<path d="M17 3.2A4.2 4.2 0 0 1 21.4 7.6M21 11.2A4.2 4.2 0 0 1 16.4 11.4" ${stroke(C.ink, 1.8)}/>`,
+  // Dervish staples 2 (#1604): the sweeps are one scythe with three riders; the rest take their statuses' shapes.
+  // A scythe over an arrow: the blow cannot be blocked, as Guiding Hands' arrow says (#1645).
+  "scythe-unblock": () =>
+    inkLine("M6 20L13 7", 2.4) +
+    inkFill("M13 7C9.5 3.5 5 4 1.5 7.5C5.5 6.5 9 7.5 11.5 10Z") +
+    inkLine("M14 19.5H22M19.5 17L22 19.5L19.5 22", 2),
+  // A scythe with a crack in the corner: the foes it hits are crippled (#1645).
+  "scythe-limp": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    inkLine("M20 2L16.5 6L20 9L17 13", 2.2),
+  // A scythe with a ring struck through: the enchantment torn off the foe (#1645).
+  "scythe-rend": () =>
+    inkLine("M6 21L14 7", 2.4) +
+    inkFill("M14 7C10.5 3.5 6 4 2.5 7.5C6.5 6.5 10 7.5 12.5 10Z") +
+    `<circle cx="18.5" cy="7" r="3.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M15 11L22 3", 2),
+  // Three fast slashes: attack faster (#1645).
+  "slash-trio": () => inkLine("M4 19L12 5M9 20L17 6M14 21L21 9", 2.6),
+  // A spark over a falling bar: energy for every hit (#1645).
+  "spark-bars": () => inkLine("M12 2.5L14.5 8H9.5L12 13.5", 2.2) + inkLine("M5 17H19M8 21H16", 2.4),
+  // A shield seen through a heat haze: a block chance (#1645).
+  "shield-haze": () =>
+    `<path d="M12 3L19 5.5V11C19 15.5 15.5 19 12 21C8.5 19 5 15.5 5 11V5.5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M8.5 9.5Q10.2 8 12 9.5T15.5 9.5M8.5 14Q10.2 12.5 12 14T15.5 14", 1.8),
+  // A heart with a plus under a bar: more maximum Health, paid back when it ends (#1645).
+  "heart-roof": () =>
+    inkLine("M12 21L5 14a4 4 0 0 1 7-4.7 4 4 0 0 1 7 4.7z", 2) +
+    inkLine("M12 11.5V17M9.2 14.2H14.8", 2) +
+    inkLine("M5 3.5H19", 2.4),
+  // An open hand over an arrow: the next attacks cannot be blocked (#1645).
+  "hand-arrow": () =>
+    inkLine("M6 11V5M9.5 11V3M13 11V3M16.5 11V5M6 11c0 4 2 6 5.5 6s5-2 5-6", 2) +
+    inkLine("M3 21H21M18 18.5L21 21L18 23.5", 1.8),
   // A scythe with a snowflake in the corner: cold damage from the blade (#1573).
   "scythe-frost": () =>
     inkLine("M6 21L14 7", 2.4) +
@@ -2867,6 +1534,216 @@ const skillGlyph = {
     spiritPost() +
     `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)}/>` +
     `<g transform="translate(17,8.5) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // The Elementalist's energy engine (#1614, #1646): the Attunements share one cue, a ringed bolt in the corner.
+  "attune-fire": () => attune(skillGlyph.flame()),
+  "attune-water": () => attune(skillGlyph.snowflake()),
+  "attune-air": () => attune(skillGlyph.lightning()),
+  "attune-earth": () => attune(skillGlyph.mountain()),
+  // Aura of Restoration: a plus in a ring, a spark above it for each spell.
+  "ring-spell-heal": () =>
+    `<circle cx="12" cy="14" r="7.5" ${stroke(C.ink, 2.2)}/>` +
+    inkLine("M12 10.5V17.5M8.5 14H15.5", 2.2) +
+    `<g transform="translate(12,3.8) scale(0.4) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // Kinetic Armor: a shield and a circling arrow, renewed by each spell.
+  "armor-spin": () =>
+    skillGlyph.armor() +
+    `<path d="M8.2 11.5A4 4 0 1 1 12 16" fill="none" stroke="${C.bg}" stroke-width="2" stroke-linecap="round"/>` +
+    `<path d="M5.8 11.5L8.2 8.8L10.6 11.8Z" fill="${C.bg}"/>`,
+  // Steam: rising vapour curls over a small flame.
+  "vapour-flame": () =>
+    `<g transform="translate(12,16.5) scale(0.55) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine(
+      "M6 11C4.5 8.5 8 7.5 6.5 4.5M12 10C10.5 7.5 14 6.5 12.5 3.5M18 11C16.5 8.5 20 7.5 18.5 4.5",
+      2,
+    ),
+  // The Ritualist's binding spirits 2 (#1550, #1622): the post and what its blows or its death bring.
+  // Bloodsong steals Health: a drop.
+  "spirit-blood": () =>
+    spiritPost() +
+    `<path d="M17 2.5C17 2.5 12.5 7.5 12.5 10.2A4.5 4.5 0 0 0 21.5 10.2C21.5 7.5 17 2.5 17 2.5Z" fill="${C.ink}"/>`,
+  // Anguish hurts the hexed: a bolt through a dashed ring.
+  "spirit-hexed": () =>
+    spiritPost() +
+    `<circle cx="17" cy="8.5" r="5.6" ${stroke(C.ink, 1.8)} stroke-dasharray="3.4 2.6"/>` +
+    `<g transform="translate(17,8.5) scale(0.42) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  // Wanderlust drops the moving: running chevrons over a flat ground line.
+  "spirit-run": () =>
+    spiritPost() +
+    inkLine("M12 4.5L15.5 8L12 11.5M17.5 4.5L21 8L17.5 11.5", 2) +
+    inkLine("M11.5 14.5H22.5", 2.4),
+  // Soothing slows adrenaline: a wave pressed flat above a bar.
+  "spirit-calm": () =>
+    spiritPost() +
+    inkLine("M11 7.5C12.5 4.5 14 4.5 15.5 7.5S18.5 10.5 22 7.5", 2) +
+    inkLine("M11 14H22", 2.4),
+  // The two death-burst spirits share a cracked post; the mark is what comes out (#1622).
+  // Destruction: a burst.
+  "spirit-last-burn": () =>
+    brokenPost(7) +
+    `<g transform="translate(17.5,7.5) scale(0.6) translate(-12,-12)">${inkFill(burst(8))}</g>`,
+  // Life: a plus in a ring.
+  "spirit-last-heal": () =>
+    brokenPost(7) +
+    `<circle cx="17.5" cy="8" r="5.2" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M17.5 5.2V10.8M14.7 8H20.3", 1.9),
+  // Xinrae's Weapon: a blade, a bar capping the blow, a drop lost by the attacker.
+  "blade-cap-drop": () =>
+    bladeMark(
+      inkLine("M2.5 3H12.5", 2.4) +
+        `<path d="M8 5.5C8 5.5 5 8.6 5 10.4A3 3 0 0 0 11 10.4C11 8.6 8 5.5 8 5.5Z" fill="${C.ink}"/>`,
+    ),
+  // Mesmer staples 3 (#1627, #1666): the ringed plus is Health healed per Energy lost, the ringed bolt Energy gained; the hex ring is a hex taken.
+  "energy-feast": () =>
+    `<g transform="translate(10,10) scale(0.85) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    healBadge(),
+  "hex-energy-feast": () =>
+    `<circle cx="10.5" cy="10.5" r="8" ${stroke(C.ink, 1.8)} stroke-dasharray="4 3"/>` +
+    `<g transform="translate(10.5,10.5) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    `<circle cx="18.5" cy="18" r="4.8" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.3" ${stroke(C.ink, 1.5)}/>` +
+    `<g transform="translate(18.5,18) scale(0.3) translate(-12,-12)">${skillGlyph.energy()}</g>`,
+  "hex-interrupt": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)} stroke-dasharray="4.4 3.4"/>` +
+    `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  "eye-burst": () =>
+    `<path d="M2.5 9C5 4.5 8.5 3 12 3S19 4.5 21.5 9C19 13.5 15.5 15 12 15S5 13.5 2.5 9Z" ${stroke(C.ink, 2)}/>` +
+    `<circle cx="15" cy="9" r="2.3" fill="${C.ink}"/>` +
+    `<g transform="translate(12,18.5) scale(0.5) translate(-12,-12)">${inkFill(burst(7))}</g>`,
+  "vortex-hex": () =>
+    inkLine(
+      "M12 12a1.6 1.6 0 0 1 3.2 0a3.6 3.6 0 0 1-7.2 0a5.6 5.6 0 0 1 11.2 0a7.6 7.6 0 0 1-15.2 0",
+      2.2,
+    ) + `<g transform="translate(20,4) scale(0.4) translate(-12,-12)">${inkFill(burst(6))}</g>`,
+  // Touch skills (#1643, #1666): a hand held low and what the touch does.
+  "hand-skull": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<g transform="translate(16,8) scale(0.72) translate(-11,-11)">${skillGlyph["mark-skull"]()}</g>`,
+  "hand-drop-bolt": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<path d="M8.5 2C8.5 2 4.8 6.2 4.8 8.2A3.7 3.7 0 0 0 12.2 8.2C12.2 6.2 8.5 2 8.5 2Z" ${stroke(C.ink, 1.6)}/>` +
+    inkFill("M20.5 1.5L14 10H18.5L15.5 17.5L23 8.5H18.8Z"),
+  "jaws-bolt": () =>
+    `<g transform="translate(-1,2) scale(0.95)">${skillGlyph.jaws()}</g>` +
+    inkFill("M20.5 1.5L14 10H18.5L15.5 17.5L23 8.5H18.8Z"),
+  "jaws-drop": () =>
+    `<g transform="translate(-1,2) scale(0.95)">${skillGlyph.jaws()}</g>` +
+    `<path d="M18 3C18 3 13.5 8.5 13.5 11.5A4.5 4.5 0 0 0 22.5 11.5C22.5 8.5 18 3 18 3Z" fill="${C.ink}"/>`,
+  "hand-ring-rend": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<g transform="translate(16,8) scale(0.55) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>`,
+  // Target Health loss (#1648, #1680): a low hand, a drop lost and a weakening chevron.
+  "hand-drop-weak": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<path d="M8.5 2C8.5 2 4.8 6.2 4.8 8.2A3.7 3.7 0 0 0 12.2 8.2C12.2 6.2 8.5 2 8.5 2Z" fill="${C.ink}"/>` +
+    inkLine("M14 5.5L18.5 10L23 5.5M14 11.5L18.5 16L23 11.5", 2.2),
+  // Pain of Disenchantment: the broken enchantment ring round a burst that reaches the foes beside it.
+  "ring-rend-burst": () =>
+    `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 2)}/>` +
+    `<g transform="translate(12,12) scale(0.7) translate(-12,-12)">${inkFill(burst(8))}</g>`,
+  // Warrior staples 3 (#1658, #1672): the weapon up and left, a ringed rider bottom right for the condition it reads or gives.
+  "axe-weak": () => riderOn(skillGlyph.axe(), RIDER.weak),
+  "axe-limp": () => riderOn(skillGlyph.axe(), RIDER.limp),
+  "axe-burst": () => riderOn(skillGlyph.axe(), RIDER.burst),
+  "axe-trio": () =>
+    ["0,6", "6,3", "12,0"]
+      .map((at) => `<g transform="translate(${at}) scale(0.62)">${skillGlyph.axe()}</g>`)
+      .join(""),
+  "hammer-drop": () => riderOn(skillGlyph.hammer(), RIDER.drop),
+  "hammer-daze": () => riderOn(skillGlyph.hammer(), RIDER.daze),
+  "hammer-blind": () => riderOn(skillGlyph.hammer(), RIDER.blind),
+  "hammer-unbound": () => riderOn(skillGlyph.hammer(), RIDER.ring),
+  "hammer-run": () => riderOn(skillGlyph.hammer(), RIDER.run),
+  "sword-bleed": () => riderOn(skillGlyph.sword(), RIDER.drop),
+  "sword-heavy": () => riderOn(skillGlyph.sword(), RIDER.plus),
+  "sword-daze": () => riderOn(skillGlyph.sword(), RIDER.daze),
+  "sword-adrenal": () => riderOn(skillGlyph.sword(), RIDER.bars),
+  "blow-unbound": () => riderOn(skillGlyph.blow(), RIDER.ring),
+  "blow-crack": () => riderOn(skillGlyph.blow(), RIDER.crack),
+  // "Coward!": the shout's arcs and chevrons, a body down on the ground under them.
+  "shout-fall": () =>
+    inkLine("M3.5 5.5C6 7 6 10 3.5 11.5", 1.8) +
+    inkLine("M9 3.5L14 8.5L9 13.5M14.5 3.5L19.5 8.5L14.5 13.5", 2.4) +
+    `<circle cx="5.5" cy="19" r="2.6" fill="${C.ink}"/>` +
+    inkLine("M10 19H22M14 19L12 15.5M18 19L20 15.5", 2.4),
+  // Ranger staples 2 (#1629, #1684): the arrow family, each with its rider or its own shaft.
+  "arrow-power": () =>
+    inkLine("M3.5 20.5L14 10", 4) +
+    inkFill("M23 1.5L10 6L18.5 14.5Z") +
+    inkLine("M3 14L6 17M7 10L10 13", 1.8),
+  "arrow-aim": () =>
+    `<circle cx="16" cy="8" r="5.6" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M16 0.8V3.6M16 12.4V15.2M8.8 8H11.6M20.4 8H23.2", 1.8) +
+    inkLine("M3 21L12.5 11.5", 2.4) +
+    inkFill("M16.5 7.5L10 9.5L14.5 14Z"),
+  "arrow-unbound": () => riderOn(skillGlyph.arrow(), RIDER.ring),
+  "arrow-keen": () =>
+    inkLine("M3.5 20.5L13 11", 2.2) +
+    inkFill("M12 11L10 1.5L13.5 7L21.5 3L17 9.5L22.5 14.5L15 13.5Z"),
+  "arrow-energy": () => riderOn(skillGlyph.arrow(), skillGlyph.energy()),
+  "arrow-kindle": () => riderOn(skillGlyph.arrow(), skillGlyph.flame()),
+  "arrow-ignite": () => riderOn(skillGlyph.arrow(), RIDER.burst),
+  "arrow-poison": () => riderOn(skillGlyph.arrow(), RIDER.drop),
+  "trap-dust": () =>
+    `<g transform="translate(12,9) scale(0.7) translate(-12,-12)">${skillGlyph.dust()}</g>` +
+    inkLine("M3 20H21", 2.5) +
+    inkLine("M5 20L7 16L9 20M10 20L12 16L14 20M15 20L17 16L19 20", 2),
+  "trap-spike": () =>
+    inkLine("M3 21H21", 2.5) + inkFill("M4 20L7 4L10 20ZM10 20L12 8L14 20ZM14 20L17 4L20 20Z"),
+  "drop-struck": () =>
+    inkFill("M12 2.5C12 2.5 4.5 12 4.5 16A7.5 7.5 0 0 0 19.5 16C19.5 12 12 2.5 12 2.5Z") +
+    `<path d="M3.5 21.5L20.5 6" ${stroke(C.bg, 5.4)}/>` +
+    inkLine("M3.5 21.5L20.5 6", 2.4),
+  // Monk staples 3 (#1650, #1703): a plus and what it brings, the family of the heals.
+  "plus-whisper": () =>
+    `<g transform="translate(9,12) scale(0.7) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkLine("M17.5 8.5C19.5 10.5 19.5 13.5 17.5 15.5M21 6C24 9.5 24 14.5 21 18", 1.8),
+  "eye-heal": () => riderOn(skillGlyph.eye(), RIDER.plus),
+  "heal-spark": () =>
+    `<g transform="translate(9,14) scale(0.75) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkFill("M18 1.5L19.7 6.3L24.5 8L19.7 9.7L18 14.5L16.3 9.7L11.5 8L16.3 6.3Z"),
+  "plus-rays": () =>
+    `<g transform="translate(12,12) scale(0.6) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkLine(
+      "M12 1.5V4M12 20V22.5M1.5 12H4M20 12H22.5M4.5 4.5L6.3 6.3M17.7 17.7L19.5 19.5M19.5 4.5L17.7 6.3M6.3 17.7L4.5 19.5",
+      2,
+    ),
+  "signet-plus": () =>
+    riderOn(
+      `<circle cx="12" cy="14" r="6" ${stroke(C.ink, 2.5)}/><path d="M12 2.5l3.5 3.5-3.5 3.5-3.5-3.5z" fill="${C.ink}"/>`,
+      RIDER.plus,
+    ),
+  "plus-halo": () =>
+    `<g transform="translate(12,12) scale(0.55) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2)}/>`,
+  "plus-wings": () =>
+    `<g transform="translate(12,13) scale(0.5) translate(-12,-12)">${skillGlyph.heal()}</g>` +
+    inkFill("M8 12C5 12 3 9.5 1.5 5.5C5 5.5 7.5 7.5 9.5 10Z") +
+    inkFill("M16 12C19 12 21 9.5 22.5 5.5C19 5.5 16.5 7.5 14.5 10Z") +
+    inkFill("M9.5 14C7 14 4.5 16 3 19.5C6.5 19.5 9 18 11 16Z") +
+    inkFill("M14.5 14C17 14 19.5 16 21 19.5C17.5 19.5 15 18 13 16Z"),
+  "drops-purge": () =>
+    [0, 7, 14]
+      .map(
+        (x) =>
+          `<g transform="translate(${String(x)},0)">${inkFill("M5 4.5C3 7.5 1 9 1 11.5A4 4 0 0 0 9 11.5C9 9 7 7.5 5 4.5Z")}</g>`,
+      )
+      .join("") + inkLine("M2 21L22 3", 2.4),
+  // Mend Ailment: one drop struck off, two still standing, and a plus over them (#1703).
+  "drop-mend": () =>
+    `<path d="M6 8C4 11 2 12.5 2 15A4 4 0 0 0 10 15C10 12.5 8 11 6 8Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M2 21L10 9", 2.2) +
+    inkFill(
+      "M16 11C14.5 13.2 13.5 14.4 13.5 15.8A2.5 2.5 0 0 0 18.5 15.8C18.5 14.4 17.5 13.2 16 11Z",
+    ) +
+    inkFill(
+      "M20.5 15C19.3 16.6 18.8 17.4 18.8 18.4A1.7 1.7 0 0 0 22.2 18.4C22.2 17.4 21.7 16.6 20.5 15Z",
+    ) +
+    inkLine("M16 2.5V8.5M13 5.5H19", 2.4),
+  "hand-star": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` + holyStar(17, 7, 6),
+  "shield-regen": () =>
+    `<path d="M12 2.5L19 5V10.5C19 14 16 16 12 17.5C8 16 5 14 5 10.5V5Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 6.5V12M9.2 9.2H14.8", 2) +
+    inkLine("M4 21L7 18L10 21M9 21L12 18L15 21M14 21L17 18L20 21", 1.8),
   // Two linked rings under a spike: the hex that makes spirits hit harder (#1319).
   "bond-spike": () =>
     `<circle cx="8.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/><circle cx="15.5" cy="16" r="4.6" ${stroke(C.ink, 2.2)}/>` +
@@ -3485,6 +2362,99 @@ const skillGlyph = {
   "flame-rise": () =>
     inkLine("M5 21V17M12 21V14M19 21V11", 2.6) +
     `<g transform="translate(12,7) scale(0.6) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  // The Monk's smiting skills (#1519, #1584): a four-point star is holy light; a blade in the top left corner
+  // is the foe attacking; a signet is its ring and dot; a flat bar is a foe knocked down.
+  "smite-attacking": () => holyStar(15, 14, 9) + `<g>${nextTrigger.attack()}</g>`,
+  "spear-light": () =>
+    inkLine("M3.5 21L15 9.5", 2.4) +
+    inkFill("M22 2L20.5 10L14 3.5Z") +
+    holyStar(18, 18, 4.5) +
+    `<g transform="translate(0,0)">${nextTrigger.attack()}</g>`,
+  "star-below-half": () =>
+    `<circle cx="12" cy="14" r="8" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M4 14A8 8 0 0 0 20 14Z") +
+    holyStar(6, 5, 4.5),
+  "star-beam-flame": () =>
+    holyStar(12, 6, 6) +
+    inkLine("M12 12.5V14M6.5 11L8 13.5M17.5 11L16 13.5", 2) +
+    `<g transform="translate(12,18) scale(0.55) translate(-12,-12)">${skillGlyph.flame()}</g>`,
+  "sword-star": () =>
+    `<g transform="translate(-1,2) scale(0.85)">${skillGlyph.sword()}</g>` + holyStar(18, 6, 5),
+  "signet-attacking": () =>
+    ringDot(15, 9, 6.5) + inkLine("M4 21H20", 2.8) + `<g>${nextTrigger.attack()}</g>`,
+  "signet-energy": () =>
+    ringDot(15, 9, 6.5) +
+    `<g transform="translate(14,18) scale(0.55) translate(-12,-12)">${skillGlyph.energy()}</g>` +
+    `<g>${nextTrigger.attack()}</g>`,
+  "signet-quake": () => ringDot(12, 9, 6.5) + inkLine("M2 9H3.5M20.5 9H22M4 21H20", 2.4),
+  "star-prone": () =>
+    holyStar(13, 8, 7.5) +
+    `<circle cx="5.5" cy="18.5" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 18.5H20.5", 3),
+  // Obsidian Flesh: a faceted black crystal, cut with light lines (#1605).
+  "stone-skin": () =>
+    inkFill("M12 2.5L19.5 7V15L12 21.5L4.5 15V7Z") +
+    `<path d="M12 2.5V21.5M4.5 7L12 12L19.5 7" fill="none" stroke="${C.bg}" stroke-width="1.6" stroke-linejoin="round"/>`,
+  // Gale: two wind curls streaming left, the lower one rolling over (#1605).
+  "gust-curl": () =>
+    inkLine("M2.5 8H14.5A3.2 3.2 0 1 0 11.3 4.8", 2.4) +
+    inkLine("M2.5 13.5H19A3.2 3.2 0 1 1 15.8 16.7", 2.4) +
+    inkLine("M2.5 19H9", 2.4),
+  // Earthquake: the ground split by a chasm, rocks thrown up out of it (#1605).
+  chasm: () =>
+    inkLine("M2 15H9L11 21M22 15H15L13 21", 2.4) +
+    inkFill("M10.2 3.5H13.8V7H10.2Z") +
+    inkFill("M5 7.5H8.4V10.8H5Z") +
+    inkFill("M15.6 7.5H19V10.8H15.6Z"),
+  // Unsteady Ground: a pulsing ring with a crack through the earth above it (#1605).
+  "ground-pulse": () =>
+    `<ellipse cx="12" cy="17" rx="9.5" ry="4" ${stroke(C.ink, 2.2)}/>` +
+    `<ellipse cx="12" cy="17" rx="4" ry="1.6" ${stroke(C.ink, 2)}/>` +
+    inkLine("M4 8L8 11L11 5.5L14 11L17.5 7L20 10", 2.4),
+  // Ward Against Foes: the ward's ring and pole, a dragging trail of bars (#1605).
+  "ward-slow": () =>
+    `<ellipse cx="12" cy="18" rx="8.5" ry="3.6" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 18V13", 2.4) +
+    inkLine("M12 3.5H21M7 7.5H21M3 11.5H21", 2.4),
+  // Ward of Stability: the ward's ring and pole, a planted block on top (#1605).
+  "ward-block": () =>
+    `<ellipse cx="12" cy="18" rx="8.5" ry="3.6" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M12 18V10", 2.4) +
+    inkFill("M5.5 2.5H18.5V9H5.5Z"),
+  // Lightning Touch: a hand held low, a bolt striking from it (#1605).
+  "hand-bolt": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    inkLine("M19 1.5L13.5 10.5H19.5L14 19.5", 2.6),
+  // Liquid Flame: a flame over a wavy pool, drops thrown out to both sides (#1605).
+  "flame-splash": () =>
+    `<g transform="translate(12,9) scale(0.75) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M3 20C5.5 17.5 8.5 22.5 12 20S18.5 17.5 21 20", 2.2) +
+    `<circle cx="3.8" cy="12.5" r="1.7" fill="${C.ink}"/><circle cx="20.2" cy="12.5" r="1.7" fill="${C.ink}"/>`,
+  // Glowing Gaze: an eye whose pupil is a flame, rays above it (#1605).
+  "eye-flame": () =>
+    `<path d="M2.5 14C5 9.5 8.5 7.5 12 7.5S19 9.5 21.5 14C19 18.5 15.5 20.5 12 20.5S5 18.5 2.5 14Z" ${stroke(C.ink, 2.2)}/>` +
+    `<g transform="translate(12,14) scale(0.46) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M12 1.5V4M5.5 3.5L7.3 5.5M18.5 3.5L16.7 5.5", 2),
+  // The Mesmer's staples (#1570, #1594): what the skill breaks off, and what it leaves.
+  "interrupt-energy-cut": () =>
+    `<g transform="translate(15.5,8.5) scale(0.62) translate(-12,-12)">${skillGlyph.interrupt()}</g>` +
+    `<g transform="translate(8,15.5) scale(0.7) translate(-12,-12)">${skillGlyph["energy-cut"]()}</g>`,
+  "skills-off": () =>
+    inkFill("M3 3H11V11H3ZM13 3H21V11H13ZM3 13H11V21H3ZM13 13H21V21H13Z") +
+    `<path d="M2 22L22 2" stroke="${C.bg}" stroke-width="6" stroke-linecap="round"/>` +
+    inkLine("M2 22L22 2", 2.6),
+  "hex-shatter": () =>
+    `<path d="M12 3A9 9 0 0 1 21 12M18 19.5A9 9 0 0 1 6 19.5M3 12A9 9 0 0 1 8 4" ${stroke(C.ink, 2.2)}/>` +
+    `<g transform="translate(12,12) scale(0.5) translate(-12,-12)">${skillGlyph.interrupt()}</g>`,
+  "interrupt-knockdown": () =>
+    `<g transform="translate(9,8.5) scale(0.7) translate(-12,-12)">${skillGlyph.interrupt()}</g>` +
+    `<circle cx="5.5" cy="19" r="2.4" fill="${C.ink}"/>` +
+    inkLine("M9 19H21M14 19L12 15.5M18 19L20 15.5", 2.4),
+  "hex-slow-star": () =>
+    punisher(
+      inkFill("M12 1L14 6.5L19.5 8.5L14 10.5L12 16L10 10.5L4.5 8.5L10 6.5Z") +
+        inkLine("M6 18H18M6 22H18M7 18L17 22M17 18L7 22", 2),
+    ),
   // The Ranger's staples (#1539, #1585): an arrow and what it brings.
   "arrow-twin": () =>
     `<g transform="translate(8.2,15.8) scale(0.8) translate(-12,-12)">${skillGlyph.arrow()}</g>` +
@@ -3511,8 +2481,110 @@ const skillGlyph = {
     `<g transform="translate(12,15.5) scale(0.8) translate(-12,-12)">${skillGlyph.speed()}</g>` +
     inkLine("M3 5H16", 2.2) +
     inkFill("M22 5L16 2V8Z"),
+  // Warrior staples 2 and Clumsiness (#1592, #1593, #1619).
+  "shield-knock": () =>
+    `<g transform="translate(9,12) scale(0.8) translate(-12,-12)"><path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/></g>` +
+    `<g transform="translate(18.5,6) scale(0.5) translate(-12,-12)">${skillGlyph.interrupt()}</g>` +
+    inkLine("M17 14L21 20", 2.2),
+  "shield-less": () =>
+    `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2.8)}/>` +
+    inkLine("M12 7.5V15M8.5 12L12 15.5L15.5 12", 2.8),
+  "adrenal-fast": () =>
+    inkLine("M5 21V16M10 21V12M15 21V8M20 21V4", 3) + inkLine("M3 4L6 7L3 10M7 4L10 7L7 10", 1.8),
+  "axe-sweep": () =>
+    inkLine("M8 21L16 9", 2.4) +
+    inkFill("M12 3.5C17 2.5 21 5 20.5 8.5C20 12 17 13 15 11.5Z") +
+    inkLine("M2.5 13C3.5 17 6 20 9 21.5", 2.2),
+  "axe-pierce": () =>
+    `<g transform="translate(15,15) scale(0.7) translate(-12,-12)"><path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 3)}/></g>` +
+    inkLine("M3 21L14 10", 2.4) +
+    inkFill("M9 5C14 3.5 19 5 19 8.5C17.5 11 14 11.5 12.5 9Z"),
+  "sword-sun-moon": () =>
+    `<circle cx="7" cy="7" r="3.6" fill="${C.ink}"/>` +
+    inkFill("M19 10A7 7 0 1 0 12 20A5.4 5.4 0 0 1 19 10Z") +
+    inkLine("M10 15L21 4", 2.2),
+  "hex-sword-drop": () =>
+    punisher(
+      inkLine("M4 21L17 8", 2.8) +
+        inkLine("M8 12L13 17", 2.6) +
+        `<g transform="translate(18,6) scale(0.5) translate(-12,-12)">${skillGlyph.interrupt()}</g>`,
+    ),
+  // Golden Lotus Strike: a blade over an open lotus (#1617).
+  "dagger-lotus": () =>
+    `<g transform="translate(6,-2.5) scale(0.62)">${skillGlyph.dagger()}</g>` +
+    inkFill("M12 21.5C9.5 18 9.5 13.5 12 10C14.5 13.5 14.5 18 12 21.5Z") +
+    inkFill("M10.5 21.5C6 21.5 2.5 19 2 14C6.5 14 9.6 16.5 10.5 21.5Z") +
+    inkFill("M13.5 21.5C18 21.5 21.5 19 22 14C17.5 14 14.4 16.5 13.5 21.5Z"),
+  // Golden Phoenix Strike: a flame with swept wings, a blade point under it (#1617).
+  "flame-wings": () =>
+    `<g transform="translate(12,8) scale(0.8) translate(-12,-12)">${skillGlyph.flame()}</g>` +
+    inkLine("M2.5 5C3.5 11 7 13.5 10.5 13.5M21.5 5C20.5 11 17 13.5 13.5 13.5", 2.4) +
+    inkLine("M12 14.5V18", 2.4) +
+    inkFill("M9.5 18H14.5L12 22.5Z"),
+  // Exhausting Assault: a blade striking a spell star with a down arrow in it (#1617).
+  "dagger-drain": () =>
+    inkLine("M3 21L11 13", 2.6) +
+    inkFill("M11 13L14.5 9.5L12.8 15Z") +
+    `<path d="M16.5 2L18.2 6L22 7.5L18.2 9L16.5 13L14.8 9L11 7.5L14.8 6Z" ${stroke(C.ink, 1.8)}/>` +
+    inkLine("M16.5 15.5V21M14 19L16.5 21.5L19 19", 2),
+  // Mantis Touch: a hand held low, a broken line beside it that cripples (#1617).
+  "hand-limp": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    inkLine("M19 2L14.5 8.5L18.5 12L14 19", 2.6),
+  // Palm Strike: a hand held low, a burst at its fingertips (#1617).
+  "hand-burst": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    `<g transform="translate(16.5,7.5) scale(0.85) translate(-12,-12)">${inkFill(burst(7))}</g>`,
+  // Signet of Toxic Shock: a drop with a bolt cut out of it (#1617).
+  "drop-shock": () =>
+    inkFill("M12 2.5C12 2.5 4.5 11 4.5 15.5A7.5 7.5 0 0 0 19.5 15.5C19.5 11 12 2.5 12 2.5Z") +
+    `<path d="M13.5 9.5L9.5 15H14L10.5 20.5" ${stroke(C.bg, 2.2)}/>`,
+  // Beguiling Haze: the step through the shadows, three dazed dots circling above (#1617).
+  "blink-daze": () =>
+    `<g transform="translate(0,6)">${skillGlyph.blink()}</g>` +
+    `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
 };
+
+/** The ringed plus in the bottom right corner: Health healed (#1666). */
+const healBadge = () =>
+  `<circle cx="18.5" cy="18" r="4.8" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.3" ${stroke(C.ink, 1.5)}/>` +
+  inkLine("M18.5 15.7V20.3M16.2 18H20.8", 1.5);
+
+/** An element glyph with the ringed energy bolt in the corner: the Attunements' shared cue (#1646). */
+const attune = (/** @type {string} */ element) =>
+  `<g transform="translate(10.5,10) scale(0.78) translate(-12,-12)">${element}</g>` +
+  `<circle cx="18.5" cy="18" r="4.6" fill="${C.bg}"/><circle cx="18.5" cy="18" r="4.2" ${stroke(C.ink, 1.5)}/>` +
+  `<g transform="translate(18.5,18) scale(0.3) translate(-12,-12)">${skillGlyph.energy()}</g>`;
+
+/** Small marks drawn in a 24-box, for the ringed corner of a weapon icon (#1672). */
+const RIDER = {
+  weak: inkLine("M4 5L12 13L20 5M4 13L12 21L20 13", 4),
+  limp: inkLine("M15 2L8 10L16 14L9 22", 4),
+  burst: inkFill(burst(6)),
+  drop: inkFill("M12 2C12 2 4 12 4 16A8 8 0 0 0 20 16C20 12 12 2 12 2Z"),
+  daze: [
+    [4, 17],
+    [12, 6],
+    [20, 17],
+  ]
+    .map(([x, y]) => `<circle cx="${String(x)}" cy="${String(y)}" r="3.4" fill="${C.ink}"/>`)
+    .join(""),
+  blind:
+    inkLine("M2 12C5 6 8 5 12 5S19 6 22 12C19 18 16 19 12 19S5 18 2 12Z", 3.4) +
+    inkLine("M4 21L20 3", 3.4),
+  ring: `<path d="M12 2.5A9.5 9.5 0 0 1 21.5 12M19 18A9.5 9.5 0 0 1 8 21M4.5 17A9.5 9.5 0 0 1 4.5 7" ${stroke(C.ink, 3.6)}/>`,
+  run: inkLine("M3 4L11 12L3 20M12 4L20 12L12 20", 4),
+  plus: inkLine("M12 3V21M3 12H21", 5),
+  bars: inkLine("M5 22V16M12 22V10M19 22V4", 5),
+  crack: inkLine("M4 3L11 10L6 14L15 21", 4),
+};
+
+/** A weapon up and left, a rider in a ring at the bottom right (#1672). */
+const riderOn = (/** @type {string} */ weapon, /** @type {string} */ rider) =>
+  `<g transform="translate(10,10) scale(0.84) translate(-12,-12)">${weapon}</g>` +
+  `<circle cx="18" cy="18" r="5.6" fill="${C.bg}"/>` +
+  `<g transform="translate(18,18) scale(0.38) translate(-12,-12)">${rider}</g>`;
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
@@ -3715,7 +2787,7 @@ const families = {
     Object.entries(projectile).map(([k, parts]) => [k, projectileSprite(parts)]),
   ),
   status: Object.fromEntries(
-    Object.entries(status).map(([k, [category, glyph]]) => [k, svg(plates[category](glyph))]),
+    Object.entries(STATUS_ICONS).map(([k, [category, glyph]]) => [k, svg(plates[category](glyph))]),
   ),
 };
 

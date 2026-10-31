@@ -111,6 +111,7 @@ import {
   clampPips,
   ENERGY_PER_PIP,
   isStatusId,
+  isUnderAnother,
   MAX_PIPS,
   preventsAttacks,
   reducedRecharge,
@@ -175,6 +176,7 @@ import {
   nextAttackSkillOf,
   nextAttackSkillRiders,
   PLAIN_BLOW,
+  removePreparations,
   resolveAttackSkill,
   resolveAttackSkillOutcome,
   resolveSwing,
@@ -328,6 +330,11 @@ export const CREATURE_LOOKS = [
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
+/** A spirit's death burst as it arrived: its rate on its owner's rank (#1603). */
+export type ArrivedDeathBurst = Omit<DeathBurst, "perSecondAlive"> & {
+  readonly perSecondAlive: number;
+};
+
 /**
  * A body that is not a player (#1052, ADR-0035): a participant that never
  * counts for its team and has no seat. A spirit or minion is gone once it
@@ -362,8 +369,11 @@ export interface Creature {
   readonly onDeath: "vanish" | "lie" | "rise";
   /** Its owner's bar is disabled this long on its death, read at arrival; 0: never. */
   readonly ownerDisableSeconds: number;
-  /** From the template (#1550): what its leaving does round it. */
-  readonly deathBurst: DeathBurst | undefined;
+  /**
+   * From the template (#1550): what its leaving does round it, its rate
+   * read on its owner's rank at arrival (#1603).
+   */
+  readonly deathBurst: ArrivedDeathBurst | undefined;
   /**
    * The skill on its owner's bar it travels with (#1046): a companion.
    * `undefined`: summoned by a cast.
@@ -751,7 +761,10 @@ function degenerationSources(combatant: Combatant): {
       definition.healthPips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
       definition.healthPerSecondWhileMoving > 0 ||
-      definition.healthPerSecond > 0
+      definition.healthPerSecond > 0 ||
+      (definition.whileUnder !== undefined &&
+        definition.whileUnder.healthPips > 0 &&
+        isUnderAnother(combatant.statuses.active, status, definition.whileUnder.categories))
     ) {
       healing.add(status.sourceId);
     }
@@ -1363,7 +1376,16 @@ export class MatchSimulation {
             template.ownerDisableOnDeath === undefined
               ? 0
               : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
-          deathBurst: template.deathBurst,
+          deathBurst:
+            template.deathBurst === undefined
+              ? undefined
+              : {
+                  ...template.deathBurst,
+                  perSecondAlive: resolveMagnitude(
+                    template.deathBurst.perSecondAlive,
+                    owner.combatant,
+                  ),
+                },
           companionSkillId: companion ? skillId : undefined,
           leaderId: undefined,
           mode: "guard",
@@ -1650,6 +1672,18 @@ export class MatchSimulation {
   }
 
   /**
+   * Every living bearer with no energy left answers it (#1583), in
+   * participant order, after upkeep has taken its share: Wither's damage.
+   */
+  #fireEnergyEmpty(): void {
+    for (const record of this.#participants.values()) {
+      if (!record.combatant.dead && record.combatant.energy <= 0) {
+        this.#fireTriggers(record, "bearer-energy-empty", NONE_SPARED);
+      }
+    }
+  }
+
+  /**
    * One pulse of `rule` at `position` (#1113): its effects land from
    * `owner` on whoever its area takes there, in line of sight of it, and
    * it is logged as a cast is, even when it hits nobody. A pulse's
@@ -1796,7 +1830,7 @@ export class MatchSimulation {
         continue;
       }
       const amount = Math.min(
-        Math.round(burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON)),
+        burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
         burst.max ?? Number.POSITIVE_INFINITY,
       );
       if (amount <= 0) {
@@ -2802,6 +2836,7 @@ export class MatchSimulation {
     this.#pulseGroundEffects();
     this.#pulseStatuses();
     this.#settleUpkeep(dt);
+    this.#fireEnergyEmpty();
     this.#spreadStatuses();
     this.#fireStatusChanges();
     this.#awardKillMorale();
@@ -3016,6 +3051,7 @@ export class MatchSimulation {
         if (
           (event.kind === "damage" ||
             event.kind === "sacrifice" ||
+            event.kind === "health-loss" ||
             event.kind === "health-lost" ||
             event.kind === "life-stolen") &&
           event.amount > 0
@@ -3087,8 +3123,7 @@ export class MatchSimulation {
     if (
       check.ok &&
       skill.corpse !== undefined &&
-      nearestFreshCorpse(record.position, skill.corpse.radius, this.#participants.values()) ===
-        undefined
+      this.#freshCorpse(record, skill.corpse, target) === undefined
     ) {
       return { ok: false, reason: "no-corpse" };
     }
@@ -3287,7 +3322,9 @@ export class MatchSimulation {
     // A corpse skill takes its corpse as it lands, not as it began (#466):
     // one used up during the cast leaves it with no effect, paid for.
     const corpse =
-      skill.corpse === undefined ? undefined : this.#exploitCorpse(record, skill.corpse);
+      skill.corpse === undefined
+        ? undefined
+        : this.#exploitCorpse(record, skill.corpse, targetRecord);
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds } =
       skill.corpse !== undefined && corpse === undefined
         ? only([])
@@ -3459,7 +3496,13 @@ export class MatchSimulation {
     this.#useNextSkill(record, skill, spared);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
-      this.#fireTriggers(record, "bearer-casts-spell", spared);
+      // Kinetic Armor's renewal (#1614); Aura of Restoration's gain reads
+      // the spell's cost.
+      record.combatant.statuses.castSpell();
+      this.#fireTriggers(record, "bearer-casts-spell", spared, {
+        skillId: skill.id,
+        key: cast.key,
+      });
     }
     if (skill.attack !== undefined) {
       this.#fireTriggers(record, "bearer-attacks", spared);
@@ -3514,7 +3557,8 @@ export class MatchSimulation {
 
   /**
    * The bearer did `event` (#469): each status on it that answers fires.
-   * `usedSkill` is the skill it used, on `bearer-uses-skill` (#949).
+   * `usedSkill` is the skill it used, on `bearer-uses-skill` (#949) and
+   * `bearer-casts-spell` (#1614).
    * A status in `spared` does not answer (#999), as `fireTriggers`.
    */
   #fireTriggers(
@@ -4664,6 +4708,8 @@ export class MatchSimulation {
       next: nextAttackSkillOf(record.combatant),
     };
     const flight = resolution.skill.attack?.flightSpeed;
+    const released: CombatEvent[] = [];
+    removePreparations(record.combatant, resolution.skill, released);
     const events = resolution.targets.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
       const multiplier =
@@ -4677,7 +4723,7 @@ export class MatchSimulation {
         : this.#release(record, target, speed * multiplier, dt, skillHit);
     });
     useNextAttackSkill(record.combatant, skillHit.next, events);
-    return events;
+    return [...released, ...events];
   }
 
   /**
@@ -4746,9 +4792,10 @@ export class MatchSimulation {
     skillHit: SkillHit | SpellHit | undefined,
   ): CombatEvent[] {
     const events: CombatEvent[] = [];
+    let unblockable = false;
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
-      bearerAttacked(record.combatant, events, "projectile");
+      unblockable = bearerAttacked(record.combatant, events, "projectile");
       if (blindMisses(record.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant);
         events.push({ kind: "attack-missed", targetId: target.id });
@@ -4786,6 +4833,7 @@ export class MatchSimulation {
       elapsed: 0,
       weaponSnapshot: weaponSnapshotOf(record.combatant),
       skillHit,
+      unblockable,
     });
     this.#nextProjectileId += 1;
     return events;
@@ -4939,6 +4987,7 @@ export class MatchSimulation {
     riders: (effects: Skill["effects"]) => CombatEvent[],
   ): boolean {
     if (
+      !projectile.unblockable &&
       !unblockableNow(
         skillHit?.skill.attack?.unblockable ?? false,
         attacker?.combatant,
@@ -5499,12 +5548,32 @@ export class MatchSimulation {
   }
 
   /**
-   * Marks the fresh corpse nearest `record` within the rule's radius as
-   * exploited (#466) and returns it; `undefined` for none. Wells and
-   * minions (#466, #467) will want its position.
+   * The fresh corpse nearest `record`, or its `target` under a rule that
+   * names it (#1583), within the rule's radius; `undefined` for none, or
+   * for no target to look round.
    */
-  #exploitCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord | undefined {
-    const corpse = nearestFreshCorpse(record.position, rule.radius, this.#participants.values());
+  #freshCorpse(
+    record: ParticipantRecord,
+    rule: CorpseRule,
+    target: ParticipantRecord | undefined,
+  ): ParticipantRecord | undefined {
+    const centre = rule.near === "target" ? target?.position : record.position;
+    return centre === undefined
+      ? undefined
+      : nearestFreshCorpse(centre, rule.radius, this.#participants.values());
+  }
+
+  /**
+   * Marks the corpse `#freshCorpse` finds as exploited (#466) and returns
+   * it; `undefined` for none. Wells and minions (#466, #467) will want
+   * its position.
+   */
+  #exploitCorpse(
+    record: ParticipantRecord,
+    rule: CorpseRule,
+    target: ParticipantRecord | undefined,
+  ): ParticipantRecord | undefined {
+    const corpse = this.#freshCorpse(record, rule, target);
     if (corpse !== undefined) {
       corpse.corpseExploited = true;
     }

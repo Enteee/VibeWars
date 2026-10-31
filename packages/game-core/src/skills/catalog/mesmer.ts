@@ -574,7 +574,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // are interrupted and suffer 15...63...75 damage and foes in the area
     // take 75% of that damage." Not using one: nothing, to anyone.
     effects: [
-      { kind: "interrupt" },
+      { kind: "interrupt", only: "skill" },
       {
         kind: "if",
         condition: { kind: "interrupted" },
@@ -1629,7 +1629,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Interrupts the target foe's action. If that action is a skill, that
     // foe and all adjacent foes are knocked down for 2...3 seconds" (PvP):
-    // 3. Only a skill is ever interrupted; a swing is a miss. Its "50%
+    // 3. A swing is interrupted (#1709) but knocks no one down. Its "50%
     // failure chance with Fast Casting 4 or less" is out of reach at 12.
     effects: [
       { kind: "interrupt" },
@@ -1683,6 +1683,263 @@ export const MESMER_SKILLS: readonly Skill[] = [
         radius: AREA_ADJACENT,
         maxTargets: undefined,
         effects: [{ kind: "apply-status", statusId: "arcane-conundrum", durationSeconds: 13 }],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Mesmer staples 3 (#1627)                                               */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.ether-feast",
+    name: "Ether Feast",
+    gwId: 40,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe loses 3 Energy. You are healed 20...65 for each point of
+    // Energy lost": 56 a point.
+    effects: [
+      { kind: "energy-loss", amount: { flat: 3 } },
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 20, atTwelve: 56 } },
+        recipient: "caster",
+        perStatusOnTarget: [],
+        perEnergyLost: true,
+      },
+    ],
+  },
+  {
+    id: "mesmer.drain-delusions",
+    name: "Drain Delusions",
+    gwId: 1337,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one Mesmer hex from target foe. If a hex was removed in this
+    // way, that foe loses 1...5 Energy and you gain 4 Energy for each point
+    // lost": 4, so 16.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1, profession: "mesmer" },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "energy-loss",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 4 },
+            },
+          },
+          { kind: "energy-gain", amount: { flat: 4 }, perEnergyLost: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-disruption",
+    name: "Signet of Disruption",
+    gwId: 860,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a spell, the spell is interrupted and that
+    // foe suffers 10...51 damage. If that foe is hexed, Signet of
+    // Disruption can interrupt any non-spell skills": 43, for a spell
+    // only, hexed or not.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "hex" },
+        effects: [{ kind: "interrupt", only: "skill" }],
+      },
+      { kind: "interrupt", only: "spell" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted-spell" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 43 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    // The PvP split's numbers (gwId 3195): 10 energy, 10...92 damage.
+    id: "mesmer.wandering-eye",
+    name: "Wandering Eye",
+    gwId: 2056,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [{ kind: "apply-status", statusId: "wandering-eye", durationSeconds: 4 }],
+  },
+  {
+    id: "mesmer.hex-eater-vortex",
+    name: "Hex Eater Vortex",
+    gwId: 1348,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally. If a hex is removed in this way, foes
+    // in the area of that ally take 30...90 damage and lose one
+    // enchantment": 78.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "mesmer.domination-magic", atZero: 30, atTwelve: 78 },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+              { kind: "remove-status", category: "enchantment", count: 1 },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* The not condition (#1670), at rank 12                                  */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.waste-not-want-not",
+    name: "Waste Not, Want Not",
+    gwId: 1995,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is not casting a spell or attacking, you gain
+    // 8...12...13 Energy."
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "target-casting-or-attacking" } },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 12 },
+            },
+          },
+        ],
       },
     ],
   },

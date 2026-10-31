@@ -79,7 +79,9 @@ Blocked: outside the flow, the manager's alone.
 2. `board ls <your column>` — is there work for you?
 3. Do the single most valuable thing you can finish, end to end.
 4. Move the card, and `tg send` whoever is next in the chain.
-5. Nothing to do? `tg wait --timeout 540`. Then start again at 1.
+5. Nothing to do? `tg wait --timeout 540`. If it says you are idle, end your
+   turn: you are woken when there is something for you. Otherwise start again
+   at 1.
 
 Finish things. One issue carried all the way to `Done` is worth more than four
 left half-done.
@@ -127,7 +129,7 @@ left half-done.
 - **Don't end your turn while waiting on background work.** Ending a turn
   ends the process, and nothing re-invokes you when a background command or
   task finishes. Block on it, or on `tg wait`, instead.
-- **When `tg wait` says your context is over the ceiling, do what it says.**
+- **When any command says your context is over the ceiling, do what it says.**
   Ending your turn there is required, not a failure.
 - **On a company reboot announcement**, WIP-commit your work, push it, then
   run `company ready` and end your turn. You come back in a fresh session; your work

@@ -39,7 +39,7 @@ export interface TopbarCallbacks {
   readonly onHelp: () => void;
   /** ⚙: Options, over whatever screen shows. */
   readonly onOptions: () => void;
-  /** Join the lobby `code` as `name` (#1525): the bar's Lobby Code and Join. */
+  /** Join the lobby `code` as `name` (#1525): the bar's Lobby Key and Join. */
   readonly onJoin: (code: string, name: string) => void;
   /** A guest's Leave (#1526): back to a fresh lobby of its own. */
   readonly onLeave: () => void;
@@ -52,7 +52,7 @@ export interface BarLobby {
 }
 
 /** Before the code: whose lobby it is. */
-export const OWN_LOBBY_LABEL = "Your code";
+export const OWN_LOBBY_LABEL = "Your key";
 export const JOINED_LOBBY_LABEL = "Lobby";
 
 /**
@@ -61,7 +61,7 @@ export const JOINED_LOBBY_LABEL = "Lobby";
  */
 export const CONNECTING_NOTICE_MS = 3000;
 
-/** The bar's Lobby Code and Join, and what the bar does with them. */
+/** The bar's Lobby Key and Join, and what the bar does with them. */
 export interface JoinControls {
   readonly element: HTMLElement;
   /** A new bar shows: a join it was waiting on has ended, either way. */
@@ -73,10 +73,10 @@ export interface JoinControls {
 }
 
 /**
- * The lobby this tab is in, its code and Copy, and Leave for a guest
- * (#1526); then Lobby Code, its field and Join (#1525), then
+ * The lobby this tab is in, its key and Copy, and Leave for a guest
+ * (#1526); then Lobby Key, its field and Join (#1525, #1681), then
  * "Connecting…" once a join has run a while (#707). The page has one, in
- * the title bar, so a code typed in it lives through any redraw of the
+ * the title bar, so a key typed in it lives through any redraw of the
  * screen under it. `name` is read at the press.
  */
 export function joinControls(
@@ -96,12 +96,13 @@ export function joinControls(
   lobby.append(lobbyLabel, lobbyCode, copy, leave);
   const codeInput = document.createElement("input");
   codeInput.className = "field-input code-input";
-  codeInput.placeholder = "CODE";
-  codeInput.maxLength = 8;
-  codeInput.setAttribute("aria-label", "Lobby code");
+  codeInput.placeholder = "KEY";
+  // `ACDE-FGHJ-KMNP` and a stray space or two around it (#1681).
+  codeInput.maxLength = 16;
+  codeInput.setAttribute("aria-label", "Lobby key");
   codeInput.addEventListener("input", () => {
-    // Codes are always upper case; doing it as they type avoids a
-    // "why didn't my code work" moment.
+    // Keys are always upper case; doing it as they type avoids a
+    // "why didn't my key work" moment.
     codeInput.value = codeInput.value.toUpperCase();
   });
   // Shown once a join has run a while; the lobby, or the menu again with
@@ -127,7 +128,7 @@ export function joinControls(
   });
   group.append(
     lobby,
-    h("span", "topbar-join-label", "Lobby Code:"),
+    h("span", "topbar-join-label", "Lobby Key:"),
     codeInput,
     button("Join", "topbar-join-button", join),
     connecting,

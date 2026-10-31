@@ -167,7 +167,7 @@ body {
     flex: 0 1 auto;
   }
 
-  /* Lobby Code's field says CODE: the label is the room the global
+  /* Lobby Key's field says KEY: the label is the room the global
      icons need on screens with no ⋯, and on the narrowest phones they
      wrap under Join rather than off the screen (#1525). */
   .topbar-join-label {
@@ -285,7 +285,7 @@ body {
   margin-left: auto;
 }
 
-/* Lobby Code and Join (#1525), right before the global icons, on the
+/* Lobby Key and Join (#1525), right before the global icons, on the
    menu's screens. */
 .topbar-join {
   display: flex;
@@ -321,9 +321,9 @@ body {
   display: none;
 }
 
+/* Its spacing is the bar's .lobby-code's, below (#1681). */
 #topbar .topbar-lobby-code {
   font-size: 0.95rem;
-  letter-spacing: 0.15em;
 }
 
 #topbar .topbar-lobby button {
@@ -341,11 +341,12 @@ body {
   color: var(--accent);
 }
 
+/* A key is ACDE-FGHJ-KMNP, fourteen wide (#1681). */
 #topbar .topbar-join .code-input {
-  width: 11ch;
+  width: 18ch;
   padding: 0.15rem 0.4rem;
   font-size: 0.85rem;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.05em;
 }
 
 #topbar .topbar-join-button {
@@ -2697,6 +2698,12 @@ body {
   align-items: center;
   gap: 0.6rem;
   white-space: nowrap;
+}
+
+/* The dashes group the key's twelve letters (#1681): wide spacing would
+   push the map under the bar's buttons. */
+#topbar .lobby-code {
+  letter-spacing: 0.05em;
 }
 
 .lobby-code-label {

@@ -29,7 +29,7 @@ export async function openPeers(
 export async function hostLobby(page: Page): Promise<string> {
   await openRail(page, "Hosted Game");
   const code = page.locator("#topbar .topbar-lobby-code");
-  await expect(code).toHaveText(/^[A-Z0-9]{3}-[A-Z0-9]{3}$/);
+  await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
   await expect(page.locator(".lobby-panel")).toBeVisible();
   return (await code.textContent())?.trim() ?? "";
 }

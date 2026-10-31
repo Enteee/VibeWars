@@ -115,7 +115,11 @@ describe("skill catalog integrity", () => {
       for (const effect of skill.effects) {
         if (effect.kind === "create-ground-effect") {
           expect(effect.anchor === "corpse", skill.id).toBe(skill.corpse !== undefined);
-          expect(effect.anchor === "corpse", skill.id).toBe(skill.type === "well");
+          // A well stands on its corpse; a spell may burst there too, as
+          // Putrid Explosion's (#1583).
+          if (skill.type === "well") {
+            expect(effect.anchor, skill.id).toBe("corpse");
+          }
           // A symbol pulses at its target (#1113); a pulse may also stay
           // where the caster stood, as Lava Font's (#1540).
           if (effect.anchor === "target") {

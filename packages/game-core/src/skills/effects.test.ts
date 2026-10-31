@@ -522,6 +522,38 @@ describe("energy-loss effect (#793)", () => {
     expect(target.health).toBe(500);
     expect(caster.energy).toBe(0);
   });
+
+  it("heals perEnergyLost: 3 lost, 3 times the amount; none lost, no heal (#1627)", () => {
+    const heal: SkillEffect = {
+      kind: "heal",
+      amount: { flat: 56 },
+      recipient: "caster",
+      perStatusOnTarget: [],
+      perEnergyLost: true,
+    };
+    const caster = makeCombatant({ id: "caster", health: 100 });
+    applyEffects([loss, heal], context(caster, makeCombatant({ id: "t", team: 1, energy: 3 })));
+    expect(caster.health).toBe(100 + 3 * 56);
+    const dry = makeCombatant({ id: "dry", health: 100 });
+    applyEffects([loss, heal], context(dry, makeCombatant({ id: "t", team: 1, energy: 0 })));
+    expect(dry.health).toBe(100);
+  });
+
+  it("an effect inside an `if` reads the ones before it there (#1627)", () => {
+    const caster = makeCombatant({ id: "caster", energy: 0 });
+    const target = makeCombatant({ id: "target", team: 1, energy: 3 });
+    const events = applyEffects(
+      [
+        {
+          kind: "if",
+          condition: { kind: "target-health-above", fraction: 0 },
+          effects: [loss, { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true }],
+        },
+      ],
+      context(caster, target),
+    );
+    expect(events).toContainEqual({ kind: "energy-gain", targetId: "caster", amount: 6 });
+  });
 });
 
 describe("sacrifice-health effect", () => {
@@ -1757,5 +1789,42 @@ describe("off-hand chain-mark and overcast (#1580)", () => {
     expect(effectiveMaxEnergy(target)).toBe(40);
     expect(target.energy).toBe(40);
     expect(ctx.caster.overcast).toBe(0);
+  });
+});
+
+describe("perUsedSkillEnergy (#1614)", () => {
+  const share = (usedSkill: SkillContext["usedSkill"]): CombatEvent[] => {
+    const caster = makeCombatant({ id: "caster" });
+    caster.energy = 0;
+    caster.health = 1;
+    return applyEffects(
+      [
+        { kind: "energy-gain", amount: { flat: 0.3 }, perUsedSkillEnergy: true },
+        {
+          kind: "heal",
+          amount: { flat: 3.6 },
+          perStatusOnTarget: [],
+          recipient: "caster",
+          perUsedSkillEnergy: true,
+        },
+      ],
+      { ...context(caster), usedSkill },
+    );
+  };
+
+  it("is the share of the used skill's base energy cost, rounded half up", () => {
+    // Flare's 5: 1.5 is 2 energy, 18 Health; Searing Flames' 15: 4.5 is 5.
+    expect(share({ skillId: "elementalist.flare", key: "elementalist.flare" })).toEqual([
+      { kind: "energy-gain", targetId: "caster", amount: 2 },
+      { kind: "heal", targetId: "caster", amount: 18 },
+    ]);
+    expect(
+      share({ skillId: "elementalist.searing-flames", key: "elementalist.searing-flames" })[0],
+    ).toEqual({ kind: "energy-gain", targetId: "caster", amount: 5 });
+  });
+
+  it("gives nothing without a used skill, or for one with no energy cost", () => {
+    expect(share(undefined)).toEqual([]);
+    expect(share({ skillId: "warrior.cleave", key: "warrior.cleave" })).toEqual([]);
   });
 });

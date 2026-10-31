@@ -53,3 +53,6 @@ packages/game-data/generated/
 /.claude/settings.local.json
 /.claude/worktrees/
 /CLAUDE.local.md
+
+# The arena icon sheet, composed by Vite at build and dev time (#1671).
+apps/web/public/icons/atlas/

@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { COLUMNS } from "./hub-board.mjs";
 import { ROLES } from "./hub-policy.mjs";
 import {
   COOLDOWN_MS,
@@ -22,6 +23,7 @@ import {
   strangers,
   withStaffLock,
   withoutEmployees,
+  WORK_COLUMN,
 } from "./staff.mjs";
 
 const STAFF = path.join(path.dirname(fileURLToPath(import.meta.url)), "staff.mjs");
@@ -88,6 +90,21 @@ const hire = (role) => /** @type {const} */ ({ verb: "hire", role, reason: "r", 
 /** @param {string} employee */
 const fire = (employee) =>
   /** @type {const} */ ({ verb: "fire", employee, reason: "r", by: "manager" });
+
+describe("WORK_COLUMN (#1694)", () => {
+  it("names a column, or none, for every role and no other", () => {
+    expect(Object.keys(WORK_COLUMN).sort()).toEqual([...ROLES].sort());
+    for (const column of Object.values(WORK_COLUMN)) {
+      expect(column === null || COLUMNS.includes(column)).toBe(true);
+    }
+  });
+
+  it("wakes each reviewer at its own stage, as its briefing says", () => {
+    expect(WORK_COLUMN["lead-dev"]).toBe("In Review");
+    expect(WORK_COLUMN["perf-sec-qa"]).toBe("QA");
+    expect(WORK_COLUMN["qa-tester"]).toBe("QA");
+  });
+});
 
 describe("roleOf", () => {
   it("is the role of a bare seat and of a numbered one", () => {

@@ -106,6 +106,10 @@ export interface WhileUnder {
   readonly categories: readonly StatusCategory[];
   readonly attackDurationMultiplier: number;
   readonly adrenalineGainFaster: number;
+  /** Summed into the bearer's pips as the status's own (#1654): Resilient Weapon's. */
+  readonly healthPips: number;
+  /** Summed into the bearer's armor against every type, as the status's own (#1654). */
+  readonly armorModifier: number;
 }
 
 /** Health one pip of regeneration or degeneration is worth, per second (GW1). */
@@ -250,6 +254,13 @@ export interface StatusDefinition {
    */
   readonly attackArmorPenetration: number;
   /**
+   * Added to each of the bearer's weapon blows before armor (#1654), a
+   * plain swing's or an attack skill's, each blow of a dual attack:
+   * Nightmare Weapon's "-10...50 damage". A blow never goes below 0.
+   * Summed over statuses. 0: none.
+   */
+  readonly attackDamageDelta: number;
+  /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
    */
@@ -355,6 +366,18 @@ export interface StatusDefinition {
    * bearer's own status, so allies sharing a shout wear theirs out apart.
    */
   readonly endsAfterAttacks: number | undefined;
+  /**
+   * The bearer's next this many attacks cannot be blocked, and then it
+   * ends (#1604): Guiding Hands'. One swing or one attack skill spends 1,
+   * hit or miss, a cleave's and a double strike's blows included; a shot
+   * keeps what it was released with. `undefined`: blocks as ever.
+   */
+  readonly unblockableAttacks: number | undefined;
+  /**
+   * Every attack of the bearer's cannot be blocked while it lasts, and
+   * nothing is spent (#1654): Guided Weapon's. false: blocks as ever.
+   */
+  readonly attacksUnblockable: boolean;
   /**
    * Effects on whoever the bearer's physical attacks hit while it lasts
    * (#525): a preparation's rider, as Apply Poison's poison. Applied
@@ -612,6 +635,12 @@ export interface StatusDefinition {
    */
   readonly renewsOnChantOrShoutEnd: boolean;
   /**
+   * Whenever the bearer casts a spell, its remaining time is back to the
+   * duration it was applied with (#1614): Kinetic Armor's "whenever you
+   * cast a spell, Kinetic Armor is renewed for 12 seconds".
+   */
+  readonly renewsOnBearerSpell: boolean;
+  /**
    * It ends once its triggers have fired this many times (#1423): Finale
    * of Restoration's "the next 5 times". `undefined`: no such limit.
    */
@@ -741,6 +770,13 @@ export type StatusTriggerEvent =
    * bearer's have ended with it. An echo's.
    */
   | "bearer-chant-or-shout-ends"
+  /**
+   * The bearer has no energy left (#1583): checked each step, after
+   * upkeep, so it fires every step it stays at 0 until the status ends.
+   * Wither's "if target foe's Energy reaches 0", which ends when triggered.
+   * A dead bearer never answers.
+   */
+  | "bearer-energy-empty"
   | "ends"
   /**
    * It ended before its time ran out (#1421): stripped, cut short by its
@@ -853,10 +889,13 @@ export interface StatusTrigger {
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
    * Pride's. With `adrenal`, only one paid for in adrenaline (#1592): Rage of
-   * the Ntouka's "whenever you use an adrenal skill". Absent: any skill.
+   * the Ntouka's "whenever you use an adrenal skill". With `attribute`, only
+   * a skill of that attribute (#1614): Fire Attunement's "each time you use
+   * Fire Magic". Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
+    readonly attribute?: string;
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
@@ -871,12 +910,14 @@ export interface StatusTrigger {
  * Shards hits", not "Scythe hits". `attackSkillsOnly` (#1551): only a blow
  * of an attack skill carries it, on each victim, before that skill's own
  * effects, as Grenth's Grasp's "your attack skills also"; a plain swing
- * carries none.
+ * carries none. `weapon` (#1629): only a blow of that weapon class
+ * carries it, as Kindle Arrows' "your arrows"; `undefined`: any.
  */
 export interface AttackHitRider {
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
   readonly attackSkillsOnly: boolean;
+  readonly weapon: AttackWeaponClass | undefined;
 }
 
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */
@@ -1133,6 +1174,8 @@ export interface ActiveStatus {
   attacksLeft: number | undefined;
   /** The bearer's hits before it ends (`endsAfterHits`); `undefined`: no such limit. */
   hitsLeft: number | undefined;
+  /** The bearer's unblockable attacks before it ends (`unblockableAttacks`); `undefined`: none. */
+  unblockableLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
@@ -1346,9 +1389,9 @@ export class StatusSet {
   }
 
   /**
-   * `offenderId` interrupted the bearer's skill (#1473), recorded only if
-   * a status on it answers that, with the triggers that do: once for each
-   * interrupt.
+   * `offenderId` interrupted the bearer's skill (#1473) or swing (#1709),
+   * recorded only if a status on it answers that, with the triggers that
+   * do: once for each interrupt.
    */
   public recordInterrupt(offenderId: string | undefined): void {
     const fired = this.#answering("bearer-interrupted");
@@ -1496,6 +1539,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
+      unblockableLeft: definition.unblockableAttacks,
       spellsLeft: definition.nextSpells?.count,
       skillsLeft: definition.nextSkill?.count,
       triggersLeft: definition.endsAfterTriggers,
@@ -1543,6 +1587,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1574,6 +1619,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1605,6 +1651,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      unblockableLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       triggersLeft: undefined,
@@ -1624,6 +1671,15 @@ export class StatusSet {
       multiplier *= getStatusDefinition(id).chantShoutDurationMultiplier;
     }
     return multiplier;
+  }
+
+  /** The bearer cast a spell (#1614): every status that renews on that is renewed. */
+  public castSpell(): void {
+    for (const status of this.#statuses.values()) {
+      if (getStatusDefinition(status.id).renewsOnBearerSpell) {
+        status.remainingSeconds = status.durationSeconds;
+      }
+    }
   }
 
   /**
@@ -1835,6 +1891,30 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer attacked (#1604): whether a status of its own makes this
+   * attack unblockable, each such status one attack fewer, and the ids
+   * that ended on it. A counted status, as Guiding Hands, counts every
+   * attack, even one another status, as Guided Weapon, already made
+   * unblockable: GW1's "next N attacks" counts attacks, not saves.
+   */
+  public spendUnblockableAttack(): { readonly unblockable: boolean; readonly ended: StatusId[] } {
+    let unblockable = false;
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      unblockable ||= getStatusDefinition(status.id).attacksUnblockable;
+      if (status.unblockableLeft !== undefined && status.unblockableLeft > 0) {
+        unblockable = true;
+        status.unblockableLeft -= 1;
+        if (status.unblockableLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    this.#end(ended);
+    return { unblockable, ended };
   }
 
   /**
@@ -2218,6 +2298,8 @@ export interface StatusModifiers {
   readonly criticalChanceBonus: number;
   /** The largest status's (#1519). */
   readonly attackArmorPenetration: number;
+  /** Every status's, summed (#1654). */
+  readonly attackDamageDelta: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -2245,6 +2327,17 @@ export function reducedRecharge(seconds: number, faster: number): number {
 
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
 export const HEALING_MULTIPLIER_FLOOR = 0.6;
+
+/** Whether a status in `statuses` other than `self` is of one of `categories` (#1485). */
+export function isUnderAnother(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+  self: Pick<ActiveStatus, "id">,
+  categories: readonly StatusCategory[],
+): boolean {
+  return statuses.some(
+    (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
+  );
+}
 
 /**
  * Collapse every active status into one set of modifiers.
@@ -2302,17 +2395,15 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let attackArmorPenetration = 0;
+  let attackDamageDelta = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
-  /** Whether a status other than `self` is of one of `categories` (#1485). */
   const underAnother = (self: Pick<ActiveStatus, "id">, categories: readonly StatusCategory[]) =>
-    statuses.some(
-      (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
-    );
+    isUnderAnother(statuses, self, categories);
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
@@ -2380,6 +2471,8 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
+      healthPips += def.whileUnder.healthPips;
+      armorModifier += def.whileUnder.armorModifier;
     }
     if (def.enchantmentRechargeFaster !== undefined) {
       enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);
@@ -2396,6 +2489,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
+    attackDamageDelta += def.attackDamageDelta;
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -2440,6 +2534,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     attackArmorPenetration,
+    attackDamageDelta,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,

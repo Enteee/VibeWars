@@ -16,7 +16,7 @@ import {
 import { getAttribute, getProfession } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
-import { resolveMagnitudeAtRanks } from "./scaling.js";
+import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
@@ -38,6 +38,7 @@ import type {
   ChainRole,
   ChainStep,
   CreateGroundEffect,
+  CreatureAttack,
   DisableOwnSkillsEffect,
   EffectCondition,
   EnergyGainEffect,
@@ -49,6 +50,7 @@ import type {
   StateCondition,
   UnconditionalEffect,
   SplashEffect,
+  DamageEffect,
   TransferConditionsEffect,
 } from "./types.js";
 
@@ -285,6 +287,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
     );
   }
+  if (definition.attackDamageDelta < 0) {
+    parts.push(`attacks deal ${String(-definition.attackDamageDelta)} less damage`);
+  }
+  if (definition.attackDamageDelta > 0) {
+    parts.push(`attacks deal ${String(definition.attackDamageDelta)} more damage`);
+  }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
@@ -369,8 +377,25 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
-  for (const effect of definition.onAttackHit?.effects ?? []) {
-    parts.push(...describeAttackHit(effect, definition.onAttackHit?.attackSkillsOnly === true));
+  if (definition.unblockableAttacks !== undefined) {
+    const plural = definition.unblockableAttacks === 1 ? "" : "s";
+    parts.push(
+      `your next ${String(definition.unblockableAttacks)} attack${plural} cannot be blocked`,
+    );
+  }
+  if (definition.attacksUnblockable) {
+    parts.push("attacks cannot be blocked");
+  }
+  if (definition.onAttackHit !== undefined) {
+    const { effects, attackSkillsOnly, weapon } = definition.onAttackHit;
+    parts.push(
+      ...describeAttackHits(
+        effects,
+        attackSkillsOnly,
+        weapon,
+        definition.category !== "weapon-spell",
+      ),
+    );
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -447,6 +472,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.renewsOnChantOrShoutEnd) {
     parts.push("renewed whenever a chant or shout ends on it");
   }
+  if (definition.renewsOnBearerSpell) {
+    parts.push("renewed whenever it casts a spell");
+  }
   if (definition.chantShoutDurationMultiplier !== 1) {
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
     parts.push(`chants and shouts last ${String(longer)}% longer on it`);
@@ -454,8 +482,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   // Soldier's Fury's (#1485): "while under a shout or chant: attacks 33%
   // faster, gain adrenaline 33% faster".
   if (definition.whileUnder !== undefined) {
-    const { categories, attackDurationMultiplier, adrenalineGainFaster } = definition.whileUnder;
+    const {
+      categories,
+      attackDurationMultiplier,
+      adrenalineGainFaster,
+      healthPips,
+      armorModifier,
+    } = definition.whileUnder;
     const gains = [
+      ...(healthPips === 0 ? [] : [`${signed(healthPips)} Health regeneration`]),
+      ...(armorModifier === 0 ? [] : [`${signed(armorModifier)} armor`]),
       ...(attackDurationMultiplier === 1
         ? []
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
@@ -596,16 +632,57 @@ function damageTaken(multiplier: number): string {
   return `${String(multiplier)}×`;
 }
 
-/** A preparation's rider (#525), as its tooltip says it: "your attacks …". */
-function describeAttackHit(effect: SkillEffect, attackSkillsOnly: boolean): string[] {
-  const attacks = attackSkillsOnly ? "attack skills" : "physical attacks";
-  if (effect.kind === "apply-status") {
-    return [
-      `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
-        `for ${seconds(effect.durationSeconds)}`,
-    ];
+/**
+ * A preparation's riders (#525), as its tooltip says them: "foes your
+ * physical attacks hit get Poison for 13s", "bow attacks" for a rider of
+ * one weapon class (#1629); a weapon spell's rides every attack (#1654),
+ * so it says "attacks". Damage names its type, and a splash of the
+ * same damage after it is said with it: Ignite Arrows' "foes your bow
+ * attacks hit take 15 fire damage, and so do foes adjacent to them".
+ */
+function describeAttackHits(
+  effects: readonly SkillEffect[],
+  attackSkillsOnly: boolean,
+  weapon: AttackWeaponClass | undefined,
+  physicalOnly: boolean,
+): string[] {
+  const attacks = attackSkillsOnly
+    ? `${weapon === undefined ? "" : `${weapon} `}attack skills`
+    : `${weapon ?? (physicalOnly ? "physical" : "")} attacks`.trim();
+  const parts: string[] = [];
+  for (const [index, effect] of effects.entries()) {
+    const before = effects[index - 1];
+    if (effect.kind === "apply-status") {
+      parts.push(
+        `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
+          `for ${seconds(effect.durationSeconds)}`,
+      );
+    } else if (effect.kind === "damage") {
+      parts.push(`foes your ${attacks} hit take ${riderDamage(effect)}`);
+    } else if (
+      effect.kind === "splash" &&
+      effect.hits === "foes" &&
+      effect.radius === AREA_ADJACENT &&
+      effect.maxTargets === undefined &&
+      before?.kind === "damage" &&
+      effect.effects.length === 1 &&
+      effect.effects[0]?.kind === "damage" &&
+      riderDamage(effect.effects[0]) === riderDamage(before)
+    ) {
+      parts.push(`${String(parts.pop())}, and so do foes adjacent to them`);
+    } else {
+      parts.push(
+        ...describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`),
+      );
+    }
   }
-  return describeEffects(effect, new Map()).map(({ text }) => `your ${attacks}: ${text}`);
+  return parts;
+}
+
+/** A rider's damage: "20 fire damage", "13 damage" when it is typeless. */
+function riderDamage(effect: DamageEffect): string {
+  const amount = String(describeMagnitude(effect.amount, new Map()).current);
+  return `${amount} ${effect.type === "typeless" ? "" : `${effect.type} `}damage`;
 }
 
 /**
@@ -651,6 +728,7 @@ const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-creates-creature": "creates a creature",
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
+  "bearer-energy-empty": "has no energy left",
   ends: "ends",
   "ends-early": "ends prematurely",
   expires: "expires",
@@ -707,13 +785,15 @@ function describeTriggers(
           ? DROPPED
           : on.includes("bearer-chant-or-shout-ends")
             ? CHANT_OR_SHOUT_ENDS
-            : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
-              ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-              : once && on.includes("bearer-uses-skill")
-                ? NEXT_SKILL
-                : nextOnly
-                  ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-                  : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+            : on.includes("bearer-energy-empty")
+              ? ENERGY_EMPTY
+              : on.includes("ends") || on.includes("ends-early") || on.includes("expires")
+                ? `when it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                : once && on.includes("bearer-uses-skill")
+                  ? NEXT_SKILL
+                  : nextOnly
+                    ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
+                    : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
       ranks,
       bearerIsFoe,
     );
@@ -745,6 +825,9 @@ function weaponBoundWhen(event: StatusTriggerEvent, weapon: AttackWeaponClass): 
 
 /** An echo's (#1423), in the corpus's words. */
 const CHANT_OR_SHOUT_ENDS = "whenever a chant or shout ends on it";
+
+/** An energy-empty trigger's (#1583), in the corpus's words: Wither's. */
+const ENERGY_EMPTY = "if its energy reaches 0";
 
 /**
  * The heal of a drop that heals its bearer and then, the same, the rest
@@ -794,11 +877,12 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, profession, elite, adrenal } = trigger.usedSkill;
+    const { type, attribute, profession, elite, adrenal } = trigger.usedSkill;
     const words = [
       ...(elite === undefined ? [] : ["elite"]),
       ...(adrenal === undefined ? [] : ["adrenal"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
+      ...(attribute === undefined ? [] : [getAttribute(attribute)?.name ?? attribute]),
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
     ];
@@ -894,6 +978,16 @@ function describeTrigger(
     String(describeMagnitude(magnitude, ranks).current);
   const clause = (text: string): TriggerLine => ({ text, clause: true });
   const sentence = (text: string): TriggerLine => ({ text, clause: false });
+  // The caster's foes beside a hexed or conditioned bearer are the
+  // bearer's allies; beside one wearing its own enchantment, its foes (#1021).
+  const splashed = (effect: SplashEffect): string => {
+    const area = AREA_TEXT.get(effect.radius);
+    return !bearerIsFoe
+      ? lowerFirst(foesWithin(effect.radius, effect.hits))
+      : area === "adjacent"
+        ? "its adjacent allies"
+        : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+  };
   // A stance's answer to its own block (#1329), in GW1's words.
   if (trigger.on === "bearer-blocks-melee" || trigger.on === "bearer-blocks-projectile") {
     const kind = trigger.on === "bearer-blocks-melee" ? "melee" : "projectile";
@@ -951,18 +1045,64 @@ function describeTrigger(
     return [sentence(`${when}: ${answers.join(", ")}`)];
   }
   // Clumsiness's (#1593), said as one: "the next time it attacks, that
-  // attack is interrupted and it takes 66 damage".
+  // attack is interrupted and it takes 66 damage"; Wandering Eye's
+  // (#1627) "...and its allies nearby take 76 damage" after it.
   const [first, ...after] = trigger.effects;
+  const hurts = (effect: TriggerEffect): boolean =>
+    effect.kind === "damage" ||
+    (effect.kind === "splash" && effect.effects.every(({ kind }) => kind === "damage"));
   if (
     first?.kind === "cancel-attack" &&
     trigger.target === "bearer" &&
     after.length > 0 &&
-    after.every(({ kind }) => kind === "damage")
+    after.every(hurts)
   ) {
     const hurt = after.map((effect) =>
-      effect.kind === "damage" ? `it takes ${amount(effect.amount)} damage` : "",
+      effect.kind === "damage"
+        ? `it takes ${amount(effect.amount)} damage`
+        : effect.kind === "splash"
+          ? effect.effects
+              .map((inner) =>
+                inner.kind === "damage"
+                  ? `${splashed(effect)} take ${amount(inner.amount)} damage`
+                  : "",
+              )
+              .join(" and ")
+          : "",
     );
     return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
+  }
+  // An attunement's and Aura of Restoration's (#1614), said at once:
+  // "whenever it casts a spell: gains 1 energy and is healed for 360% of
+  // that skill's energy cost".
+  const perCost = trigger.effects.flatMap((effect) =>
+    (effect.kind === "energy-gain" && effect.toTarget !== true) || effect.kind === "heal"
+      ? [effect]
+      : [],
+  );
+  if (
+    trigger.target === "bearer" &&
+    perCost.length === trigger.effects.length &&
+    perCost.some((effect) => effect.perUsedSkillEnergy === true)
+  ) {
+    const share = (magnitude: Magnitude): string =>
+      percentOf(describeMagnitude(magnitude, ranks).current);
+    const gains = perCost.flatMap((effect) =>
+      effect.kind !== "energy-gain"
+        ? []
+        : effect.perUsedSkillEnergy === true
+          ? [`${share(effect.amount)} of that skill's base energy cost`]
+          : [`${amount(effect.amount)} energy`],
+    );
+    const heals = perCost.flatMap((effect) =>
+      effect.kind !== "heal"
+        ? []
+        : effect.perUsedSkillEnergy === true
+          ? [`is healed for ${share(effect.amount)} of that skill's energy cost`]
+          : [`is healed for ${amount(effect.amount)}`],
+    );
+    const what = [...(gains.length === 0 ? [] : [`gains ${gains.join(" plus ")}`]), ...heals];
+    return [sentence(`${when}: ${what.join(" and ")}`)];
   }
   return trigger.effects.flatMap((effect): TriggerLine[] => {
     if (effect.kind === "spread-gained-condition") {
@@ -1009,15 +1149,8 @@ function describeTrigger(
     if (effect.kind === "life-steal" && trigger.target === "bearer") {
       return [clause(`its caster steals ${amount(effect.amount)} Health ${when}`)];
     }
-    // The caster's foes beside a hexed or conditioned bearer are the
-    // bearer's allies; beside one wearing its own enchantment, its foes (#1021).
     if (effect.kind === "splash" && trigger.target === "bearer") {
-      const area = AREA_TEXT.get(effect.radius);
-      const allies = !bearerIsFoe
-        ? lowerFirst(foesWithin(effect.radius, effect.hits))
-        : area === "adjacent"
-          ? "its adjacent allies"
-          : `its allies ${area ?? `within ${String(effect.radius)}`}`;
+      const allies = splashed(effect);
       // A drop's splash is one clause (#1434): "foes in the area: deals 63
       // damage, knocks down for 2s".
       if (when === DROPPED) {
@@ -1118,11 +1251,37 @@ function aCategory(category: StatusCategory): string {
   return `${category === "enchantment" ? "an" : "a"} ${category.replace("-", " ")}`;
 }
 
+/**
+ * An `if`'s line said the other way round (#1670), from the line itself:
+ * "If target has an enchantment" becomes "If target has no enchantment",
+ * "If target is using a skill" "If target is not using a skill".
+ */
+function negatedText(text: string): string {
+  const rules: readonly (readonly [RegExp, (...match: string[]) => string])[] = [
+    [/^If (target|you) (is|are) not /, (_, who, verb) => `If ${who} ${verb} `],
+    [/^If (target|you) (is|are) /, (_, who, verb) => `If ${who} ${verb} not `],
+    [
+      /^If (target|you) (has|have) no (\w)/,
+      (_, who, verb, initial = "") =>
+        `If ${who} ${verb} ${/[aeiou]/i.test(initial) ? "an" : "a"} ${initial}`,
+    ],
+    [/^If (target|you) (has|have) an? /, (_, who, verb) => `If ${who} ${verb} no `],
+    [/^If target has /, () => "If target does not have "],
+    [/^If you (\w+) /, (_, verb) => `If you do not ${verb} `],
+  ];
+  for (const [pattern, replacement] of rules) {
+    if (pattern.test(text)) {
+      return text.replace(pattern, replacement);
+    }
+  }
+  return `Unless ${text.replace(/^If /, "")}`;
+}
+
 /** What an `if` waits for, as the line it leads says it (#521, #794). */
 function conditionText(condition: EffectCondition): string {
   switch (condition.kind) {
     case "interrupted":
-      return "If it interrupts";
+      return "If it interrupts a skill";
     case "interrupted-spell":
       return "If that action was a spell";
     case "resurrected":
@@ -1167,6 +1326,8 @@ function conditionText(condition: EffectCondition): string {
       const [first, ...rest] = condition.conditions.map(conditionText);
       return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
     }
+    case "not":
+      return negatedText(conditionText(condition.condition));
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
@@ -1185,6 +1346,8 @@ function conditionText(condition: EffectCondition): string {
       return "If target has more Health than you";
     case "target-attacking":
       return "If target is attacking";
+    case "target-not-attacking":
+      return "If target is not attacking";
     case "target-casting-or-attacking":
       return "If target is casting a spell or attacking";
     case "target-is-summoned":
@@ -1241,6 +1404,14 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   }
 }
 
+/** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
+function upTo(splash: SplashEffect): string {
+  const who = foesWithin(splash.radius, splash.hits);
+  return splash.maxTargets === undefined || splash.hits === "party"
+    ? who
+    : `Up to ${String(splash.maxTargets)} ${lowerFirst(who)}`;
+}
+
 /**
  * An effect's lines: one, or for an `if`, one per effect inside it, each
  * led by its condition: "If it interrupts: deals 102 damage".
@@ -1250,14 +1421,17 @@ function describeEffects(
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription[] {
   if (effect.kind === "summon") {
-    const { aura, attack, deathBurst } = effect.creature;
+    const { kind, aura, attack, deathBurst } = effect.creature;
     return [
       describeEffect(effect, ranks),
       // What the spirit projects (#1064): "Non-spirit allies in its range:
       // +3 Health regeneration".
       ...(aura === undefined ? [] : [describeAura(aura, "in its range")]),
+      ...(kind === "spirit" && attack !== undefined && attack.damageMax > 0
+        ? [describeSpiritDamage(attack, ranks)]
+        : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
-      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst)]),
+      ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
     ];
   }
   if (effect.kind === "create-ground-effect") {
@@ -1305,6 +1479,28 @@ function describeEffects(
 }
 
 /**
+ * What a spirit's blow deals (#1631): "Its attacks deal 17 damage",
+ * linear in the rank as GW1 states it when it scales by rank.
+ */
+function describeSpiritDamage(
+  attack: CreatureAttack,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const amount: Magnitude =
+    attack.scaling.kind === "rank"
+      ? {
+          scaling: {
+            attributeId: attack.attributeId,
+            atZero: attack.scaling.atZero,
+            atTwelve: attack.damageMax,
+          },
+        }
+      : { flat: attack.damageMax };
+  const magnitude = describeMagnitude(amount, ranks);
+  return { text: `Its attacks deal ${String(magnitude.current)} damage`, magnitude };
+}
+
+/**
  * What a spirit's blows land (#1550), one line an effect, an `if` said
  * once: "Its attacks: if target is not moving: knocks down for 2s, this
  * spirit loses 54 Health". Health it loses is the spirit's, not its
@@ -1333,15 +1529,19 @@ function describeSpiritBlow(
  * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
  * area take 8 damage per second it lived (max 150)".
  */
-function describeDeathBurst(burst: DeathBurst): EffectDescription {
+function describeDeathBurst(
+  burst: DeathBurst,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
   const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
-  const amount = String(burst.perSecondAlive);
+  const rate = describeMagnitude(burst.perSecondAlive, ranks);
+  const amount = String(rate.current);
   const what =
     burst.effect === "damage" ? `take ${amount} damage` : `are healed for ${amount} Health`;
   const max = burst.max === undefined ? "" : ` (max ${String(burst.max)})`;
   return {
     text: `When it dies, ${who} ${what} per second it lived${max}`,
-    magnitude: undefined,
+    magnitude: rate,
   };
 }
 
@@ -1398,6 +1598,11 @@ function perPointLost(effect: { readonly perEnergyLost?: true }): string {
   return effect.perEnergyLost === undefined ? "" : " per point lost";
 }
 
+/** A per-cost share as a percentage (#1614): 0.3 is "30%", 3.6 "360%". */
+function percentOf(share: number): string {
+  return `${String(Math.round(share * 100))}%`;
+}
+
 function describeEffect(
   effect: UnconditionalEffect,
   ranks: ReadonlyMap<string, number>,
@@ -1430,13 +1635,23 @@ function describeEffect(
             ? `Heals ${amount} for each ${effect.perRemoved} removed`
             : effect.perDestroyedSpirit === true
               ? `Heals ${amount} for each spirit destroyed`
-              : effect.recipient === "caster"
-                ? `You gain ${amount} health`
-                : `Heals for ${amount}`;
+              : effect.perEnergyLost === true
+                ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
+                : effect.perUsedSkillEnergy === true
+                  ? `Heals for ${percentOf(magnitude.current)} of the spell's energy cost`
+                  : effect.recipient === "caster"
+                    ? `You gain ${amount} health`
+                    : `Heals for ${amount}`;
       return { text: `${text}${perAllyText(effect, ranks)}`, magnitude };
     }
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
+      if (effect.toTarget !== true && effect.perUsedSkillEnergy === true) {
+        return {
+          text: `Gain ${percentOf(magnitude.current)} of the skill's base energy cost`,
+          magnitude,
+        };
+      }
       return {
         text: `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${upToText(effect)}`,
         magnitude,
@@ -1472,8 +1687,12 @@ function describeEffect(
       };
     case "lose-health": {
       // "For each Monk enchantment removed, you lose 31 Health" (#944), or
-      // once, flat (#1550): "You lose 54 health".
+      // once, flat (#1550): "You lose 54 health"; the target's (#1648):
+      // "Target foe loses 53 Health".
       const magnitude = describeMagnitude(effect.amount, ranks);
+      if (effect.recipient === "target") {
+        return { text: `Target foe loses ${String(magnitude.current)} Health`, magnitude };
+      }
       const lose = `You lose ${String(magnitude.current)} health`;
       if (effect.perRemovedOfProfession === undefined) {
         return { text: lose, magnitude };
@@ -1564,8 +1783,10 @@ function describeEffect(
         near === undefined
           ? ""
           : ` for each spirit ${AREA_AROUND_TARGET.get(near) ?? `within ${String(near)} of it`}`;
+      // A target with fewer loses what it has (#1678): "up to 3".
+      const upTo = typeof effect.count === "number" && effect.count > 1 ? "up to " : "";
       return {
-        text: `Removes ${String(effect.count)} ${effect.category}${plural}${perSpirit}`,
+        text: `Removes ${upTo}${String(effect.count)} ${effect.category}${plural}${perSpirit}`,
         magnitude: undefined,
       };
     }
@@ -1576,7 +1797,9 @@ function describeEffect(
             ? "Interrupts the target's spell, if they are casting one"
             : effect.only === "spell-or-chant"
               ? "Interrupts the target's spell or chant, if they are casting one"
-              : "Interrupts the target's current cast, if they are casting",
+              : effect.only === "skill"
+                ? "Interrupts the target's skill, if they are using one"
+                : "Interrupts the target's action: a skill or an attack",
         magnitude: undefined,
       };
     case "knockdown":
@@ -1643,7 +1866,11 @@ function describeEffect(
       };
     case "recharge-faster":
       return {
-        text: `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
+        // Bitter Chill's "recharges instantly" (#1640).
+        text:
+          effect.fraction === 1
+            ? "This skill recharges instantly"
+            : `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
         magnitude: undefined,
       };
     case "recharge-others":
@@ -1733,17 +1960,21 @@ function describeEffect(
           ? `take ${String(describeMagnitude(each.amount, ranks).current)} damage` +
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
-            ? "are interrupted if casting"
+            ? each.only === undefined
+              ? "are interrupted"
+              : "are interrupted if casting"
             : each.kind === "knockdown"
               ? `are knocked down for ${String(each.durationSeconds)}s`
               : each.kind === "apply-status"
                 ? suffered(each, ranks)
-                : lowerFirst(description.text),
+                : each.kind === "lose-health" && each.recipient === "target"
+                  ? `lose ${String(describeMagnitude(each.amount, ranks).current)} Health`
+                  : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${foesWithin(effect.radius, effect.hits)} ${what}`,
+        text: `${upTo(effect)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -2248,6 +2479,11 @@ export function describeSkill(
       magnitude,
     })),
   );
+  // Barrage's and Volley's (#1629), before anything else it does.
+  const preparationsLine =
+    rule?.removesPreparations === true
+      ? [{ text: "All your preparations are removed", magnitude: undefined }]
+      : [];
   // A throw faster than the weapon's (#1486): Mighty Throw's ×3.
   const flightSpeed = rule?.flightSpeed;
   const flightLine =
@@ -2270,10 +2506,14 @@ export function describeSkill(
     weaponDamage > 0 && weaponDamage < 1
       ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
       : "";
+  // Sun and Moon Slash's, a dual attack's (#1618): "Strikes twice".
+  const strikesText = strikes === 2 ? "Strikes twice" : `Strikes ${String(strikes)} times`;
   const arrowsLine =
-    strikes > 1 && skill.attack?.weapon === "bow"
-      ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
-      : [];
+    strikes <= 1
+      ? []
+      : skill.attack?.weapon === "bow"
+        ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
+        : [{ text: `${strikesText}${weaker}`, magnitude: undefined }];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -2284,8 +2524,9 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
-  // A trap (#1105): any attack that lands while it is being set interrupts it.
-  const easilyInterrupted = isEasilyInterrupted(skill.type)
+  // A trap (#1105), or a skill that says so (#1629): any attack that lands
+  // while it is being used interrupts it.
+  const easilyInterrupted = isEasilyInterrupted(skill)
     ? [{ text: "Easily interrupted", magnitude: undefined }]
     : [];
   // A spell that flies (#535) lands only if it reaches its target.
@@ -2298,11 +2539,20 @@ export function describeSkill(
     skill.target !== "self" && skill.range === RANGE_SPELL / 2
       ? [{ text: "Half the normal range", magnitude: undefined }]
       : [];
-  // A skill that exploits a corpse (#466) says so before what it does.
+  // A skill that exploits a corpse (#466) says so before what it does,
+  // and which: its own, or its target's (#1583).
   const corpseLine =
     skill.corpse === undefined
       ? []
-      : [{ text: "Exploits the nearest corpse", magnitude: undefined }];
+      : [
+          {
+            text:
+              skill.corpse.near === "target"
+                ? "Exploits the corpse nearest your target"
+                : "Exploits the nearest corpse",
+            magnitude: undefined,
+          },
+        ];
   // A pet that comes with the skill on the bar (#1046): Charm Animal's.
   const companionHealth =
     skill.companion === undefined ? undefined : describeMagnitude(skill.companion.maxHealth, ranks);
@@ -2327,6 +2577,7 @@ export function describeSkill(
         ];
   const effects = [
     ...lossLine,
+    ...preparationsLine,
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,
@@ -2386,10 +2637,16 @@ export function describeSkill(
  * past 12 with bonuses; ours caps at `MAX_ATTRIBUTE_RANK`, so a third
  * number would just repeat the second. Showing a redundant figure would
  * imply headroom that does not exist.
+ *
+ * Both ends are rounded as the live value is, so a curve written to end
+ * at 8.2 reads "…8", the number rank 12 actually gives.
  */
 export function formatScalingRange(magnitude: MagnitudeDescription): string | undefined {
   if (magnitude.atZero === undefined || magnitude.atTwelve === undefined) {
     return undefined;
   }
-  return `${String(magnitude.atZero)}…${String(magnitude.atTwelve)} at ${String(MAX_ATTRIBUTE_RANK)}`;
+  const scaling = { atZero: magnitude.atZero, atTwelve: magnitude.atTwelve };
+  const low = magnitudeAtRank(scaling, 0);
+  const high = magnitudeAtRank(scaling, MAX_ATTRIBUTE_RANK);
+  return `${String(low)}…${String(high)} at ${String(MAX_ATTRIBUTE_RANK)}`;
 }

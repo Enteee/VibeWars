@@ -36,6 +36,9 @@ import {
   parsePeerRefuse,
   parsePeerRejoinChallenge,
   parsePeerRejoinProof,
+  parseWireKeyChallenge,
+  parseWireKeyProof,
+  parseWireKeyProven,
   parsePeerWelcome,
   parseAdrenaline,
   parseChainMarks,
@@ -98,6 +101,7 @@ const challenge = { playerId: "peer-2", nonce: TOKEN };
 
 /** An HMAC-SHA-256 as hex, as a returning guest sends it. */
 const proof = { playerId: "peer-2", proof: "a1".repeat(32) };
+const keyProof = { nonce: TOKEN, mac: "b2".repeat(32) };
 
 const welcome: PeerWelcome = {
   protocolVersion: PROTOCOL_VERSION,
@@ -561,6 +565,9 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["caped lobby-join (#1422)", parsePeerLobbyJoin, { ...lobbyJoin, guildCape: CAPE }],
   ["rejoin-challenge", parsePeerRejoinChallenge, challenge],
   ["rejoin-proof", parsePeerRejoinProof, proof],
+  ["key-challenge (#1681)", parseWireKeyChallenge, { nonce: TOKEN }],
+  ["key-proof (#1681)", parseWireKeyProof, keyProof],
+  ["key-proven (#1681)", parseWireKeyProven, { mac: keyProof.mac }],
   ["welcome", parsePeerWelcome, welcome],
   ["refuse", parsePeerRefuse, refuse],
   ["observe (#480)", parsePeerObserve, observe],
@@ -987,6 +994,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["proof without a proof", parsePeerRejoinProof, { playerId: "peer-2" }],
   ["proof without a player", parsePeerRejoinProof, { proof: proof.proof }],
   ["proof with a numeric proof", parsePeerRejoinProof, { ...proof, proof: 7 }],
+  ["key challenge with a short nonce", parseWireKeyChallenge, { nonce: "0f" }],
+  ["key challenge with a long nonce", parseWireKeyChallenge, { nonce: `${TOKEN}0` }],
+  ["key challenge without a nonce", parseWireKeyChallenge, {}],
+  ["key proof with a short nonce", parseWireKeyProof, { ...keyProof, nonce: "0f" }],
+  [
+    "key proof with an uppercase nonce",
+    parseWireKeyProof,
+    { ...keyProof, nonce: TOKEN.toUpperCase() },
+  ],
+  ["key proof with a short mac", parseWireKeyProof, { ...keyProof, mac: TOKEN }],
+  ["key proof with a long mac", parseWireKeyProof, { ...keyProof, mac: `${keyProof.mac}b` }],
+  ["key proof without a mac", parseWireKeyProof, { nonce: TOKEN }],
+  ["key proven with a short mac", parseWireKeyProven, { mac: TOKEN }],
+  ["key proven with an uppercase mac", parseWireKeyProven, { mac: keyProof.mac.toUpperCase() }],
+  ["key proven with a numeric mac", parseWireKeyProven, { mac: 7 }],
   ["welcome without a rejoin token", parsePeerWelcome, { ...welcome, rejoinToken: undefined }],
   ["welcome with a zero tick", parsePeerWelcome, { ...welcome, tickIntervalMs: 0 }],
   ["welcome with an infinite tick", parsePeerWelcome, { ...welcome, tickIntervalMs: Infinity }],

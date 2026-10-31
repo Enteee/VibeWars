@@ -16,15 +16,15 @@ choice the party makes, not a screen each player opens on their own.
 ## Decision
 
 **Every menu screen sits in a lobby hosted by the player's own browser**
-(ADR-0022). From page load the tab hosts one under a fresh code, which
-the title bar always shows with **Copy**. The code holds for the
-lobby's life; every rehost (a reload, a guest's **Leave**, the end of a
+(ADR-0022). From page load the tab hosts one under a fresh lobby key
+(ADR-0043), which the title bar always shows with **Copy**. The key
+holds for the lobby's life; every rehost (a reload, a guest's **Leave**, the end of a
 Random Arena queue, a new name or guild tag while alone in it) mints a
 fresh one and never reuses a room name. In a party, a new name shows
 from the next lobby.
 
 **Joining another lobby closes your own**, and only once the join is in:
-a failed join keeps your lobby, its code and its guests. A host who
+a failed join keeps your lobby, its key and its guests. A host who
 joins elsewhere sends its guests back to fresh lobbies of their own.
 
 **The lobby is the party, and the host's mode is the party's.**
@@ -58,6 +58,9 @@ party are over.
   `RELAY_REDUNDANCY` (4) relays every 60 s once warmed up, after a few
   quicker ones at the start: about 4 announcements a minute per idle tab,
   400 a minute for 100 idle tabs, spread over our 8 relays.
+- Every open tab is on the relays, so its room must not lead back to its
+  key: ADR-0043's secret key and slow derivation are what make this safe.
+  Without them, a relay observer could list and join every player's lobby.
 - The host's clock runs at full rate while idle, as it did in a lobby
   before, so a join never meets an unrefilled message budget or a slow
   loop.

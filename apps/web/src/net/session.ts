@@ -4,6 +4,8 @@ import {
   MAX_LOBBY_PLAYERS,
   PROTOCOL_MISMATCH_MESSAGE,
   PROTOCOL_VERSION,
+  isLobbyCode,
+  normalizeLobbyCode,
   type JsonValue,
   type LobbyRefusal,
   type PeerHello,
@@ -19,8 +21,10 @@ import {
   createLobbyHost,
   createMatchHost,
   createQueueClient,
+  deriveLobbyRoom,
   generateLobbyCode,
   joinLobby,
+  publicRoom,
   type FormedGroup,
   type Guild,
   type LobbyCharacter,
@@ -48,7 +52,7 @@ import { loadTurnConfig } from "./transport/turn-config.js";
 
 /**
  * The glue between the app shell and a peer-to-peer lobby (#15, #403):
- * host one in this tab, join one by its code, and play its match. The
+ * host one in this tab, join one by its key, and play its match. The
  * shell sees a `LobbyConnection` either way; only `hostLobby` knows the
  * lobby is here.
  */
@@ -62,9 +66,19 @@ export const JOIN_TIMEOUT_MS = 20_000;
 /** How long a seated player waits for the match host to let them in. */
 const MATCH_TIMEOUT_MS = 10_000;
 
-/** #15's wording: a wrong code and an unreachable host cannot be told apart. */
+/** #15's wording: a wrong key and an unreachable host cannot be told apart. */
 export const NO_ANSWER_MESSAGE =
-  "No lobby answered that code. Check it; if it is right, your network may be blocking peer-to-peer connections.";
+  "No lobby answered that key. Check it; if it is right, your network may be blocking peer-to-peer connections.";
+/** Typed wrong: not 12 symbols of the key alphabet (#1681). Nothing was sent anywhere. */
+export const NOT_A_KEY_MESSAGE = "That is not a lobby key.";
+
+/** What was typed cannot be a lobby key, so it was never looked for (#1681). */
+export class NotALobbyKeyError extends Error {
+  public constructor() {
+    super("That is not a lobby key.");
+    this.name = "NotALobbyKeyError";
+  }
+}
 /** No relay socket opened: the joiner never got as far as looking (#707). */
 export const NO_RELAY_MESSAGE = "Couldn't reach the lobby servers. Check your internet connection.";
 /** A host was found and offered a connection that never came up (#707). */
@@ -105,6 +119,11 @@ export interface HostedLobby {
   close(): Promise<void>;
 }
 
+/** `n` bytes from `crypto`: a lobby key is only as good as its randomness (#1681). */
+function secureBytes(n: number): Uint8Array {
+  return crypto.getRandomValues(new Uint8Array(n));
+}
+
 /** In [0, 1), from `crypto`: a rejoin token is only as good as its randomness. */
 function secureRandom(): number {
   const [value = 0] = crypto.getRandomValues(new Uint32Array(1));
@@ -133,8 +152,9 @@ function startMatch(plan: MatchPlan) {
 }
 
 /**
- * Host a lobby in this tab: a fresh code, its room, the lobby host on it,
- * and this player joined to it as one more peer, bringing `character`.
+ * Host a lobby in this tab: a fresh key, the room derived from it, the
+ * lobby host on it, and this player joined to it as one more peer,
+ * bringing `character`.
  *
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
@@ -149,6 +169,11 @@ export async function hostLobby(
   teamLobby: boolean,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
+  // A queued lobby meets in its group's room, which no lobby key can
+  // name, and goes by the group's id, as every member of it knows it.
+  const code = queued?.group.groupId ?? generateLobbyCode(secureBytes);
+  const lobbyRoom =
+    queued === undefined ? await deriveLobbyRoom(code) : publicRoom(queued.group.room);
   let settle: () => void = () => undefined;
   const done = new Promise<void>((resolve) => {
     settle = resolve;
@@ -161,13 +186,10 @@ export async function hostLobby(
     void close();
   };
   window.addEventListener("pagehide", onPageHide);
-  // A queued lobby meets in its group's room, which no lobby code can be,
-  // and goes by the group's id, as every member of it knows it.
-  const code = queued?.group.groupId ?? generateLobbyCode(secureRandom);
-  const room = joinRoom(queued?.group.room ?? code);
   const host = createLobbyHost({
-    transport: room,
+    transport: joinRoom(lobbyRoom),
     code,
+    proofKey: lobbyRoom.proofKey,
     mapIds: arenaIds(),
     modeMaps: modeMapIds(),
     startMatch,
@@ -201,6 +223,8 @@ export async function hostLobby(
     const lobby = await joinLobby({
       transport: host.local,
       code,
+      // On its local link, inside the host's key gate.
+      proofKey: null,
       name,
       ...guild,
       character,
@@ -227,11 +251,18 @@ export async function joinLobbyByCode(
   character: LobbyCharacter | null,
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
-  const room = joinRoom(queued?.group.room ?? code);
+  // Refused before any derivation or relay traffic.
+  if (queued === undefined && !isLobbyCode(normalizeLobbyCode(code))) {
+    throw new NotALobbyKeyError();
+  }
+  const lobbyRoom =
+    queued === undefined ? await deriveLobbyRoom(code) : publicRoom(queued.group.room);
+  const room = joinRoom(lobbyRoom);
   try {
     return await joinLobby({
       transport: room,
       code,
+      proofKey: lobbyRoom.proofKey,
       name,
       ...guild,
       character,
@@ -473,8 +504,11 @@ export function joinFailureNotice(
   where: { readonly hostname: string; readonly port: string },
   relayed: boolean,
 ): string {
+  if (error instanceof NotALobbyKeyError) {
+    return NOT_A_KEY_MESSAGE;
+  }
   if (error instanceof LobbyNoAnswerError) {
-    // As far as the join got: past that, a wrong code and an unreachable
+    // As far as the join got: past that, a wrong key and an unreachable
     // host still cannot be told apart.
     switch (error.trouble) {
       case "no-relay":

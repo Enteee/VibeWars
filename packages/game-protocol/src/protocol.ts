@@ -31,12 +31,19 @@ export type LobbyMode = (typeof LOBBY_MODES)[number];
 export const LOBBY_CODE_ALPHABET = "ACDEFGHJKMNPQRTWXY34679";
 
 /**
- * In peer-to-peer play the code is both the room on public relays and its
- * password (#15, #379): 23⁴ ≈ 280 k codes can be enumerated, 23⁶ ≈ 148 M
- * are not worth the trouble. Shown as `ABC-DEF`; `normalizeLobbyCode`
- * strips the dash.
+ * A lobby key is a secret (#1681, ADR-0043): 23¹² ≈ 2⁵⁴ keys, and relays
+ * see only a slow derivation of it, never the key. Shown as
+ * `ACDE-FGHJ-KMNP`; `normalizeLobbyCode` strips the dashes.
  */
-export const LOBBY_CODE_LENGTH = 6;
+export const LOBBY_CODE_LENGTH = 12;
+
+/**
+ * The lobby key's derivation (ADR-0043): PBKDF2-HMAC-SHA-256 over the
+ * key with this fixed salt, so one key names one room for every peer.
+ * Part of the protocol: changing either moves every room.
+ */
+export const LOBBY_KEY_SALT = "vibewars-lobby-key";
+export const LOBBY_KEY_ITERATIONS = 600_000;
 
 const LOBBY_CODE_PATTERN = new RegExp(`^[${LOBBY_CODE_ALPHABET}]{${String(LOBBY_CODE_LENGTH)}}$`);
 

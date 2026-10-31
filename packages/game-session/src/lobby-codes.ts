@@ -1,14 +1,25 @@
 import { LOBBY_CODE_ALPHABET, LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 
 /**
- * A new lobby code from `random`, in [0, 1) (#379). In a page that is
- * `crypto.getRandomValues`: in peer-to-peer play the code is the room's
- * password, so a guessable one is an open door.
+ * 230, ten times the alphabet's 23 (#1681): a byte at or above it is
+ * drawn again, so every symbol is as likely.
  */
-export function generateLobbyCode(random: () => number): string {
+const UNBIASED_BYTES = 10 * LOBBY_CODE_ALPHABET.length;
+
+/**
+ * A new lobby key from `randomBytes` (#379, #1681). In a page that is
+ * `crypto.getRandomValues`: the key is the lobby's only secret, so a
+ * guessable one is an open door. Rejection sampling, never a float:
+ * `byte % 23` of every byte would favour the first symbols.
+ */
+export function generateLobbyCode(randomBytes: (n: number) => Uint8Array): string {
   let code = "";
-  for (let i = 0; i < LOBBY_CODE_LENGTH; i += 1) {
-    code += LOBBY_CODE_ALPHABET[Math.floor(random() * LOBBY_CODE_ALPHABET.length)] ?? "A";
+  while (code.length < LOBBY_CODE_LENGTH) {
+    for (const byte of randomBytes(LOBBY_CODE_LENGTH - code.length)) {
+      if (byte < UNBIASED_BYTES) {
+        code += LOBBY_CODE_ALPHABET[byte % LOBBY_CODE_ALPHABET.length] ?? "";
+      }
+    }
   }
   return code;
 }

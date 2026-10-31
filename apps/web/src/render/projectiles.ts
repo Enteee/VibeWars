@@ -28,11 +28,13 @@ export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.flare": "fireball",
   "elementalist.lightning-orb": "lightning-orb",
   "elementalist.shock-arrow": "lightning-orb",
+  "elementalist.lightning-javelin": "lightning-orb",
   "elementalist.shard-storm": "ice-shard",
   "elementalist.ice-spear": "ice-shard",
   "elementalist.water-trident": "water-trident",
   "elementalist.ebon-hawk": "ebon-hawk",
   "elementalist.stoning": "stone",
+  "elementalist.glowstone": "stone",
   "assassin.disrupting-dagger": "thrown-dagger",
   "assassin.crippling-dagger": "thrown-dagger",
   "monk.spear-of-light": "spear",
@@ -76,14 +78,6 @@ export const PROJECTILE_SPRITES: readonly ProjectileSprite[] = [
   "bolt",
   ...Object.values(SKILL_SPRITE),
 ];
-
-export function projectileSpriteUrl(sprite: ProjectileSprite): string {
-  return `${import.meta.env.BASE_URL}icons/projectile/${sprite}.svg`;
-}
-
-/** The sprites' grid, pointing along +x. */
-export const PROJECTILE_WIDTH = 32;
-export const PROJECTILE_HEIGHT = 12;
 
 /** A shot as the scene draws it. */
 export interface RenderableProjectile {
