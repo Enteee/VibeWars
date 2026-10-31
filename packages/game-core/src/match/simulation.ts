@@ -2362,6 +2362,11 @@ export class MatchSimulation {
     if (used === undefined || skill === undefined) {
       return undefined;
     }
+    // The slot being activated, pressed again, does nothing (#1733, GW1):
+    // a skill already queued stays queued, and nothing is told.
+    if (record.combatant.cast.activeCast?.key === used.key) {
+      return { skillId: skill.id, check: { ok: true } };
+    }
 
     if (skill.target === "single-enemy" && record.targetId === undefined) {
       const team = record.combatant.team;
