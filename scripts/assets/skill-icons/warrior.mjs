@@ -84,8 +84,8 @@ export const WARRIOR_ICONS = {
   "warrior.victory-is-mine": { glyph: "each-victory" },
   // Staples (#1869), stand-ins until their art card.
   "warrior.keen-chop": { glyph: "axe", modifier: "bolt" },
-  "warrior.penetrating-chop": { glyph: "axe", modifier: "down" },
-  "warrior.lacerating-chop": { glyph: "axe", modifier: "bleed" },
+  "warrior.penetrating-chop": { glyph: "axe-pierce", modifier: "plus" },
+  "warrior.lacerating-chop": { glyph: "axe-cross", modifier: "bleed" },
   "warrior.frenzied-defense": { glyph: "shield-stance", modifier: "up" },
   "warrior.flurry": { glyph: "sword", modifier: "less" },
 };

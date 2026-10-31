@@ -89,5 +89,5 @@ export const RANGER_ICONS = {
   "ranger.practiced-stance": { glyph: "bow-recharge" },
   // Staples (#1869), stand-ins until their art card.
   "ranger.hekets-rampage": { glyph: "shield-bolt", modifier: "clock" },
-  "ranger.sundering-attack": { glyph: "arrow-pierce", modifier: "down" },
+  "ranger.sundering-attack": { glyph: "arrow-pierce", modifier: "plus" },
 };
