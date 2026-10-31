@@ -86,8 +86,6 @@ export const MONK_ICONS = {
   "monk.signet-of-removal": { glyph: "signet-strip" },
   // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
   "monk.judges-intervention": { glyph: "halo-heart-bar" },
-  // Stand-in for the death trigger of #1762, until its art.
-  "monk.dwaynas-sorrow": { glyph: "heal", modifier: "finale" },
   // Own-skill modifiers (#1761), stand-ins until their art card.
   "monk.divine-spirit": { glyph: "plus-halo", modifier: "less" },
   "monk.blessed-aura": { glyph: "plus-halo", modifier: "hourglass" },
