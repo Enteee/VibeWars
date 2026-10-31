@@ -226,26 +226,27 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M8 5.5A6 6 0 1 0 16 5.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v8M9.5 8.5L12 11l2.5-2.5" ${stroke(c, 1.8)}/>`,
   ],
-  // Death triggers of #1762, stand-ins: a skull, and what the death gives.
+  // Death triggers (#1762, #1832): a skull, and what its death gives: Energy, bile, cold.
   "reapers-mark": [
     "hex",
     (c) =>
-      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
-      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
-      `<path d="M12 8.5v4M10 10.5h4" ${stroke(c, 1.6)}/>`,
+      `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="6.2" cy="8" r="1.1" fill="${c}"/><circle cx="9.8" cy="8" r="1.1" fill="${c}"/>` +
+      `<path d="M18 9L12.5 17H17L15.5 23L22 14H17.5Z" fill="${c}"/>`,
   ],
   "putrid-bile": [
     "hex",
     (c) =>
-      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
-      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
-      `<circle cx="12" cy="10.5" r="1.6" fill="${c}"/>`,
+      `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="6.2" cy="8" r="1.1" fill="${c}"/><circle cx="9.8" cy="8" r="1.1" fill="${c}"/>` +
+      `<path d="M17 11c2.2 2.8 3.6 4.6 3.6 6.4a3.6 3.6 0 0 1-7.2 0c0-1.8 1.4-3.6 3.6-6.4z" fill="${c}"/>` +
+      `<circle cx="13" cy="22" r="1.3" fill="${c}"/><circle cx="21.5" cy="22.3" r="1.3" fill="${c}"/>`,
   ],
   "icy-veins": [
     "hex",
     (c) =>
-      `<circle cx="12" cy="10.5" r="5.5" ${stroke(c, 2)}/>` +
-      `<path d="M9.5 16v3M12 16v3M14.5 16v3" ${stroke(c, 1.8)}/>` +
-      `<path d="M10 9l4 3M14 9l-4 3" ${stroke(c, 1.6)}/>`,
+      `<path d="M8 3.5a4.5 4.5 0 0 0-4.5 4.5c0 1.6.8 2.7 2 3.4V14H10.5V11.4c1.2-.7 2-1.8 2-3.4A4.5 4.5 0 0 0 8 3.5z" ${stroke(c, 1.8)}/>` +
+      `<circle cx="6.2" cy="8" r="1.1" fill="${c}"/><circle cx="9.8" cy="8" r="1.1" fill="${c}"/>` +
+      `<path d="M17.5 11V23M12.3 14L22.7 20M12.3 20L22.7 14" ${stroke(c, 1.8)}/>`,
   ],
 };
