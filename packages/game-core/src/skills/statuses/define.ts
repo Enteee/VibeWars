@@ -11,6 +11,7 @@ export function define(
     name,
     category,
     profession: undefined,
+    attribute: undefined,
     healthPips: 0,
     healthPipsPerEnchantment: undefined,
     energyPips: 0,

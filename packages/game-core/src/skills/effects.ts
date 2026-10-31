@@ -1684,7 +1684,13 @@ export function stateHolds(
     case "target-health-above":
       return target.health > effectiveMaxHealth(target) * condition.fraction;
     case "target-has":
-      return target.statuses.countByCategory(condition.category) > 0;
+      return (
+        target.statuses.countByCategory(
+          condition.category,
+          condition.profession,
+          condition.attribute,
+        ) > 0
+      );
     case "target-has-any":
       return condition.categories.some((category) => target.statuses.countByCategory(category) > 0);
     case "caster-has":

@@ -911,8 +911,18 @@ export type StateCondition =
   | { readonly kind: "target-health-below"; readonly fraction: number }
   /** The effect's target is above this fraction of its maximum health (#1315); equal is not above. */
   | { readonly kind: "target-health-above"; readonly fraction: number }
-  /** The effect's target has at least one status of this category. */
-  | { readonly kind: "target-has"; readonly category: StatusCategory }
+  /**
+   * The effect's target has at least one status of this category; with a
+   * `profession` or an `attribute`, one carrying it (#1765): Icy Prism's
+   * "if target foe is suffering from a Water Magic hex". Whose skill
+   * applied it does not matter. `not` asks for none.
+   */
+  | {
+      readonly kind: "target-has";
+      readonly category: StatusCategory;
+      readonly profession?: ProfessionId;
+      readonly attribute?: string;
+    }
   /**
    * The effect's target has at least one status of any of these categories
    * (#1234): Iron Palm's "suffering from a hex or condition".

@@ -1943,4 +1943,69 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Attribute hexes (#1765).
+  {
+    id: "mesmer.shatter-delusions",
+    name: "Shatter Delusions",
+    gwId: 27,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one Mesmer hex from target foe. If a hex is removed, that foe
+    // takes 15...75 damage and all adjacent foes take 75% of that damage":
+    // 63 and 47. PvP's 10 s recharge.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1, profession: "mesmer" },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 15, atTwelve: 63 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: {
+                    attributeId: "mesmer.domination-magic",
+                    atZero: 11.25,
+                    atTwelve: 47.25,
+                  },
+                },
+                type: "typeless",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
 ];

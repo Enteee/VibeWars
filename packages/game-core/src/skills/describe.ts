@@ -14,7 +14,7 @@ import {
   spawningPowerHealth,
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
-import { getAttribute, getProfession } from "../professions.js";
+import { getAttribute, getProfession, type ProfessionId } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
 import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
@@ -1269,6 +1269,27 @@ function aCategory(category: StatusCategory): string {
 }
 
 /**
+ * "a hex", "a Mesmer hex", "a Water Magic hex" (#1765): a `target-has`'s
+ * category, named by its filters.
+ */
+function filteredCategory(condition: {
+  readonly category: StatusCategory;
+  readonly profession?: ProfessionId;
+  readonly attribute?: string;
+}): string {
+  const owners = [
+    ...(condition.profession === undefined ? [] : [getProfession(condition.profession).name]),
+    ...(condition.attribute === undefined
+      ? []
+      : [getAttribute(condition.attribute)?.name ?? condition.attribute]),
+  ];
+  if (owners.length === 0) {
+    return aCategory(condition.category);
+  }
+  return `a ${owners.join(" ")} ${condition.category.replace("-", " ")}`;
+}
+
+/**
  * An `if`'s line said the other way round (#1670), from the line itself:
  * "If target has an enchantment" becomes "If target has no enchantment",
  * "If target is using a skill" "If target is not using a skill".
@@ -1312,7 +1333,7 @@ function conditionText(condition: EffectCondition): string {
     case "target-health-above":
       return `If target is above ${String(Math.round(condition.fraction * 100))}% Health`;
     case "target-has":
-      return `If target has ${aCategory(condition.category)}`;
+      return `If target has ${filteredCategory(condition)}`;
     case "target-has-any":
       return `If target has ${condition.categories.map(aCategory).join(" or ")}`;
     case "caster-has":
@@ -1814,8 +1835,11 @@ function describeEffect(
           : ` for each spirit ${AREA_AROUND_TARGET.get(near) ?? `within ${String(near)} of it`}`;
       // A target with fewer loses what it has (#1678): "up to 3".
       const upTo = typeof effect.count === "number" && effect.count > 1 ? "up to " : "";
+      // Shatter Delusions' "remove one Mesmer hex" (#1765).
+      const whose =
+        effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
       return {
-        text: `Removes ${upTo}${String(effect.count)} ${effect.category}${plural}${perSpirit}`,
+        text: `Removes ${upTo}${String(effect.count)} ${whose}${effect.category}${plural}${perSpirit}`,
         magnitude: undefined,
       };
     }

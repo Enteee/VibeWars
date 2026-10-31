@@ -35,22 +35,27 @@ export type ElementalistStatusId =
   | "kinetic-armor"
   // Elementalist staples 3 (#1664).
   | "windborne-speed"
-  | "ash-blast";
+  | "ash-blast"
+  // Attribute hexes (#1765).
+  | "freezing-gust";
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
   "shard-storm": define("shard-storm", "Shard Storm", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
   }),
   // "...move 66% slower for 2...5...6 seconds" (#938).
   "ice-spikes": define("ice-spikes", "Ice Spikes", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
   }),
   // "For 10 seconds, all foes move 66% slower" (#938).
   "deep-freeze": define("deep-freeze", "Deep Freeze", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
   }),
   // The slow is Armor of Earth's price: without it, +24 armor is free.
@@ -77,11 +82,13 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // foe to move 66% slower" (#1367).
   "ice-prison": define("ice-prison", "Ice Prison", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
   }),
   // "...and move 66% slower for 3...8 seconds" (#1367).
   "frozen-burst": define("frozen-burst", "Frozen Burst", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
   }),
   // "If you are Overcast, you gain +1...4 Health regeneration for 5
@@ -94,6 +101,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // "While hexed, those foes have a 50% chance to miss with attacks" (#1367).
   "blurred-vision": define("blurred-vision", "Blurred Vision", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     attackMissChance: 0.5,
   }),
   // "...you gain +10...40 armor and move 33% faster" (#1367): +34, its
@@ -110,6 +118,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // bearer out, so it is struck once.
   shatterstone: define("shatterstone", "Shatterstone", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
     triggers: [
       {
@@ -132,6 +141,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // "...and moves 90% slower for 1...5 seconds" (#1367).
   "mind-freeze": define("mind-freeze", "Mind Freeze", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.1,
   }),
   // Necromancer and Elementalist staples (#1540), at their rank-12 values.
@@ -139,6 +149,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // fire for 1...4 seconds": 3. A life steal is no strike.
   "mark-of-rodgort": define("mark-of-rodgort", "Mark of Rodgort", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.fire-magic",
     triggers: [
       {
         on: "bearer-takes-damage-from-foe",
@@ -220,7 +231,14 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // 20...75% chance to miss with attacks": 64%.
   "ash-blast": define("ash-blast", "Ash Blast", "hex", {
     profession: "elementalist",
+    attribute: "elementalist.earth-magic",
     attackMissChance: 0.64,
+  }),
+  // "...that foe moves 66% slower for 1...5 seconds" (#1765).
+  "freezing-gust": define("freezing-gust", "Freezing Gust", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.water-magic",
+    moveSpeedMultiplier: 0.34,
   }),
 };
 

@@ -179,4 +179,12 @@ export const ELEMENTALIST_STATUS_ICONS = {
       `<circle cx="12" cy="12" r="9.5" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
       `<path d="M6.5 14.5a3 3 0 0 1 .5-6 4 4 0 0 1 7.5-.5 3 3 0 0 1 .8 6.5ZM6 19L18 5" ${stroke(c, 1.8)}/>`,
   ],
+  // Attribute hexes (#1765).
+  // Hex: the hex ring round two wind lines held back by a bar, moving slower.
+  "freezing-gust": [
+    "hex",
+    (c) =>
+      `<circle cx="12" cy="12" r="9.5" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
+      `<path d="M6 9.5h7M6 14.5h9M17 7v10" ${stroke(c, 2)}/>`,
+  ],
 };
