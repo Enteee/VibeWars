@@ -1562,6 +1562,10 @@ function conditionText(condition: EffectCondition): string {
       return `If target is above ${String(Math.round(condition.fraction * 100))}% Health`;
     case "caster-health-below":
       return `If you have less than ${String(Math.round(condition.fraction * 100))}% Health`;
+    case "caster-health-below-companion":
+      return "If you have less Health than your pet";
+    case "companion-health-below-caster":
+      return "If your pet has less Health than you";
     case "target-chain-mark":
       return `If it follows ${condition.role === "off-hand" ? "an off-hand" : `a ${condition.role}`} attack`;
     case "target-has":
@@ -1979,7 +1983,11 @@ function describeEffect(
                 ? `Heals for ${percentOf(magnitude.current)} of the spell's energy cost`
                 : effect.recipient === "caster"
                   ? `You gain ${amount} health`
-                  : `Heals for ${amount}`;
+                  : effect.recipient === "companion"
+                    ? `Your pet gains ${amount} health`
+                    : effect.recipient === "owner"
+                      ? `Heals its owner for ${amount}`
+                      : `Heals for ${amount}`;
       const counted = withPerText(text, effect.amount, effect.per, ranks, {
         alone: effect.recipient === "caster" ? "You gain" : "Heals",
         unit: " Health",
@@ -2209,6 +2217,14 @@ function describeEffect(
       return {
         text:
           `You gain ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+          `(${describeStatus(effect.statusId, ranks)})`,
+        magnitude: undefined,
+      };
+    // Run as One's "you and your pet run 25% faster" (#1865).
+    case "companion-gains-status":
+      return {
+        text:
+          `Your pet gains ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };

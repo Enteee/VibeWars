@@ -38,6 +38,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
       return ["knockdown"];
     case "maintain-status":
     case "apply-status":
+    case "companion-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
     // Wearying Spear's own Weakness (#1486) is its price, not a role.
     case "caster-gains-status": {
