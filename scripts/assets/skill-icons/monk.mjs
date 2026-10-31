@@ -48,16 +48,6 @@ export const MONK_ICONS = {
   "monk.words-of-comfort": { glyph: "heal-drop" },
   "monk.light-of-deliverance": { glyph: "plus-trio" },
   "monk.signet-of-rejuvenation": { glyph: "plus-cycle" },
-  // Placeholders until the asset-designer's (#1519): Monk smiting staples.
-  "monk.smite": { glyph: "lightning", modifier: "plus" },
-  "monk.spear-of-light": { glyph: "spear-bolt", modifier: "plus" },
-  "monk.word-of-censure": { glyph: "lightning", modifier: "clock" },
-  "monk.ray-of-judgment": { glyph: "flame-target", modifier: "clock" },
-  "monk.judges-insight": { glyph: "sword", modifier: "bolt" },
-  "monk.bane-signet": { glyph: "blow", modifier: "stun" },
-  "monk.castigation-signet": { glyph: "energy", modifier: "bolt" },
-  "monk.signet-of-judgment": { glyph: "blow", modifier: "area" },
-  "monk.holy-strike": { glyph: "lightning", modifier: "up" },
   // Monk staples 5 (#1650), stand-ins until their art card.
   "monk.healing-whisper": { glyph: "heal-drop", modifier: "less" },
   "monk.jameis-gaze": { glyph: "eye", modifier: "bolt" },
