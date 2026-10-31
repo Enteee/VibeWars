@@ -13,28 +13,36 @@ export const ELEMENTALIST_STATUS_ICONS = {
   "glyph-of-concentration": [
     "glyph",
     (c) =>
-      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.8)}/>` +
-      `<path d="M13.5 5.5L8.5 12.5h3.5l-1.5 6 5.5-8h-3.5z" fill="${c}"/>`,
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
+      `<circle cx="12" cy="12" r="9" ${stroke(c, 3.1)}/>` +
+      `<path d="M13.5 5.5L8.5 12.5h3.5l-1.5 6 5.5-8h-3.5z" fill="${c}"/>` +
+      `</g>`,
   ],
   "glyph-of-sacrifice": [
     "glyph",
     (c) =>
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
       `<path d="M9.5 3.5L4 12.5h4l-1.5 8 6-9.5h-4z" fill="${c}"/>` +
-      `<path d="M15 4h6M15 20h6M16 4l4 8-4 8M20 4l-4 8 4 8" ${stroke(c, 1.6)}/>`,
+      `<path d="M15 4h6M15 20h6M16 4l4 8-4 8M20 4l-4 8 4 8" ${stroke(c, 2.7)}/>` +
+      `</g>`,
   ],
   "glyph-of-renewal": [
     "glyph",
     (c) =>
-      `<path d="M19 7.5A8.5 8.5 0 1 0 20.5 13" ${stroke(c, 1.8)}/>` +
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
+      `<path d="M19 7.5A8.5 8.5 0 1 0 20.5 13" ${stroke(c, 3.1)}/>` +
       `<path d="M22 2.5V9H15.5z" fill="${c}"/>` +
-      `<path d="M13 6.5L9 12.5h3l-1 5 4.5-6.5h-3z" fill="${c}"/>`,
+      `<path d="M13 6.5L9 12.5h3l-1 5 4.5-6.5h-3z" fill="${c}"/>` +
+      `</g>`,
   ],
   "glyph-of-essence": [
     "glyph",
     (c) =>
+      `<g transform="translate(12 9) scale(0.68) translate(-12 -12)">` +
       `<path d="M13 3L7.5 12h4l-1.5 5 6-8h-4z" fill="${c}"/>` +
-      `<rect x="3" y="18.5" width="18" height="3" rx="1" ${stroke(c, 1.5)}/>` +
-      `<path d="M4 19.5h3v1H4z" fill="${c}"/>`,
+      `<rect x="3" y="18.5" width="18" height="3" rx="1" ${stroke(c, 2.5)}/>` +
+      `<path d="M4 19.5h3v1H4z" fill="${c}"/>` +
+      `</g>`,
   ],
   // Enchantment: a small shield.
   "armor-boost": [
