@@ -939,6 +939,28 @@ const skillGlyph = {
     ),
   // Golden Fox Strike: unblockable while enchanted, the cracked shield of Guiding Hands.
   "dagger-unblock": () => strikeWith(skillGlyph["armor-crack"]()),
+  // Assassin staples 5 (#1775).
+  // The blade with a nearly empty gauge: the bonus comes when you are hurt.
+  "dagger-low": () =>
+    strikeWith(
+      `<rect x="6.500" y="3" width="11" height="18" rx="2" ${stroke(C.ink, 2.6)}/>` +
+        inkFill("M8 16.500H16V20H8Z"),
+    ),
+  // The blade with a circling arrow: the off-hand strike that comes round again.
+  "dagger-repeat": () =>
+    strikeWith(`<path d="M19 9A8 8 0 1 0 20 13" ${stroke(C.ink, 3)}/>` + inkFill("M22 2V10H14Z")),
+  // The blade with spikes rising out of the ground: earth damage and a wound.
+  "dagger-spikes": () => strikeWith(inkLine("M1 21L6 5L11 21L16 5L21 21", 3.4), true),
+  // Chevrons forward over chevrons dragged against a bar: slow them, speed yourself.
+  "chevrons-siphon": () =>
+    inkLine("M3 4L7 8L3 12M9 4L13 8L9 12M15 4L19 8L15 12", 2.2) +
+    inkLine("M3 15L7 19L3 23M9 15L13 19L9 23", 2.2) +
+    inkLine("M20 15V23", 2.6),
+  // A fox's head, ears up: the strikes it lends cannot be blocked.
+  "fox-head": () =>
+    `<path d="M3.5 2.5L9 8H15L20.5 2.5V12L12 21.5L3.5 12Z" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="8.8" cy="12" r="1.3" fill="${C.ink}"/><circle cx="15.2" cy="12" r="1.3" fill="${C.ink}"/>` +
+    inkFill("M10.5 17.5H13.5L12 20Z"),
   // Golden Fang Strike: Deep Wound while enchanted, the cross of the status.
   "dagger-wound": () => strikeWith(inkLine("M5 5L19 19M19 5L5 19", 4)),
   // Lotus Strike: gives Energy.
@@ -2780,6 +2802,25 @@ const skillGlyph = {
     inkFill("M22 2.5L13.5 4.5L19.5 10.5Z") +
     `<path d="M2 10H8.5a2.5 2.5 0 1 0-2.5-2.5" ${stroke(C.ink, 1.8)}/>` +
     `<path d="M2 14H7M2 18.5H9.5a2.2 2.2 0 1 1-2.2 2.2" ${stroke(C.ink, 1.8)}/>`,
+  // Monk mechanics (#1754, #1784): two linked rings, a plus in one, a heavy blow's chevrons below.
+  "bond-plus-hit": () =>
+    `<circle cx="8" cy="9" r="5" ${stroke(C.ink, 2)}/><circle cx="16" cy="9" r="5" ${stroke(C.ink, 2)}/>` +
+    inkLine("M8 6.5V11.5M5.5 9H10.5", 1.8) +
+    inkLine("M4 18L8 21.5L12 18M12.5 18L16.5 21.5L20.5 18", 1.8),
+  // A holy star and an arrow turned back on itself: the blow returns (#1754, #1784).
+  "star-return": () =>
+    holyStar(16, 7.5, 6.5) +
+    inkLine("M13 14.5H7.5a3.2 3.2 0 0 0 0 6.4H18", 2) +
+    inkFill("M22 21L17.5 18.2V23.8Z"),
+  // A holy star inside a dashed ring: the aura that burns adjacent foes (#1754, #1784).
+  "star-aura": () =>
+    holyStar(12, 12, 6) +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 2)} stroke-dasharray="3 3"/>`,
+  // A hand held low with a big plus and a small one: the touch heals, and Divine Favor doubles (#1754, #1784).
+  "hand-plus-double": () =>
+    `<g transform="translate(0,9) scale(0.66)">${skillGlyph.palm()}</g>` +
+    inkLine("M15 2.5V11.5M10.5 7H19.5", 2.4) +
+    inkLine("M21 13V18M18.5 15.5H23.5", 1.6),
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +

@@ -1550,10 +1550,6 @@ body {
   text-transform: uppercase;
 }
 
-.party-alone {
-  color: var(--ink-dim);
-}
-
 /* A guest's word that the host has it closed (#1682). */
 .party-closed {
   color: var(--ink-dim);

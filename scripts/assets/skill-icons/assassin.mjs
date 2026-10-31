@@ -60,10 +60,10 @@ export const ASSASSIN_ICONS = {
   "assassin.signet-of-shadows": { glyph: "signet-shadow" },
   // Touch skills (#1643, #1666).
   "assassin.lift-enchantment": { glyph: "hand-ring-rend" },
-  // Assassin staples 5 (#1757), stand-ins until their art card.
-  "assassin.desperate-strike": { glyph: "dagger", modifier: "half" },
-  "assassin.repeating-strike": { glyph: "dagger", modifier: "renew" },
-  "assassin.impale": { glyph: "dagger-wound", modifier: "down" },
-  "assassin.siphon-speed": { glyph: "blink-bars", modifier: "up" },
-  "assassin.way-of-the-fox": { glyph: "dagger-unblock", modifier: "clock" },
+  // Assassin staples 5 (#1775).
+  "assassin.desperate-strike": { glyph: "dagger-low" },
+  "assassin.repeating-strike": { glyph: "dagger-repeat" },
+  "assassin.impale": { glyph: "dagger-spikes" },
+  "assassin.siphon-speed": { glyph: "chevrons-siphon", modifier: "up" },
+  "assassin.way-of-the-fox": { glyph: "fox-head", modifier: "clock" },
 };
