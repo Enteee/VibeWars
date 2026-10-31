@@ -203,4 +203,12 @@ export const MESMER_STATUS_ICONS = {
     (c) =>
       `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${perEach("channeling", c, 2.8)}</g>`,
   ],
+  // Caster staples (#1870), stand-ins until their art card.
+  // Hex: a weight on a foot, moving slower; the energy comes back after.
+  "ethereal-burden": [
+    "hex",
+    (c) => `<path d="M8 5h8l2 7H6z" fill="${c}"/>` + `<path d="M12 12v4M7 19h10" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: three short bars, everything a third slower.
+  "sum-of-all-fears": ["hex", (c) => `<path d="M6 7h8M6 12h8M6 17h8M17 5v14" ${stroke(c, 2.2)}/>`],
 };

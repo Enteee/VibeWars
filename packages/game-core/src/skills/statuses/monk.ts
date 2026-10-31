@@ -35,7 +35,9 @@ export type MonkStatusId =
   | "holy-wrath"
   | "balthazars-aura"
   | "judges-intervention"
-  | "dwaynas-sorrow";
+  | "dwaynas-sorrow"
+  // Caster staples (#1870).
+  | "aura-of-stability";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -399,5 +401,11 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.holy-haste",
       },
     ],
+  }),
+  // "For 3...7...8 seconds, target other ally cannot be knocked down"
+  // (#1870).
+  "aura-of-stability": define("aura-of-stability", "Aura of Stability", "enchantment", {
+    profession: "monk",
+    preventsKnockdown: true,
   }),
 };

@@ -255,4 +255,14 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M17.5 11V23M12.3 14L22.7 20M12.3 20L22.7 14" ${stroke(c, 3.2)}/>` +
       `</g>`,
   ],
+  // Caster staples (#1870), stand-ins until their art card.
+  // Enchantment: a drop over a rising arrow, regeneration that pays out.
+  "blood-renewal": [
+    "enchantment",
+    (c) =>
+      `<path d="M9 4C11 7 13 9 13 11.5a4 4 0 0 1-8 0C5 9 7 7 9 4z" fill="${c}"/>` +
+      `<path d="M17 20V10M14 13l3-3 3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: a sword bent down under a bar, attacks slowed.
+  meekness: ["hex", (c) => `<path d="M5 6h14M12 9v10M9 16l3 3 3-3" ${stroke(c, 2.2)}/>`],
 };

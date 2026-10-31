@@ -40,7 +40,10 @@ export type MesmerStatusId =
   | "wandering-eye"
   | "illusion-of-weakness"
   // "N for each X" (#1760).
-  | "channeling";
+  | "channeling"
+  // Caster staples (#1870).
+  | "ethereal-burden"
+  | "sum-of-all-fears";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -582,5 +585,28 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.channeling",
       },
     ],
+  }),
+  // "For 6...11...12 seconds, target foe moves 50% slower. When Ethereal
+  // Burden ends, you gain 10...16...18 Energy" (#1870): the caster, however
+  // it ends, the target dead included.
+  "ethereal-burden": define("ethereal-burden", "Ethereal Burden", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.5,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "energy-gain", amount: { flat: 16 } }],
+        target: "source",
+        skillId: "mesmer.ethereal-burden",
+      },
+    ],
+  }),
+  // "For 4...10...12 seconds, target foe moves, attacks, and casts spells
+  // 33% slower" (#1870).
+  "sum-of-all-fears": define("sum-of-all-fears", "Sum of All Fears", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.67,
+    attackDurationMultiplier: 1.33,
+    castTimeMultiplier: 1.33,
   }),
 };
