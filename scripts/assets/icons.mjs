@@ -2081,6 +2081,47 @@ const skillGlyph = {
   "armor-half": () =>
     `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 2)}/>` +
     inkFill("M4 13H20C19 17 16 19.5 12 21.5C8 19.5 5 17 4 13Z"),
+  // Paragon staples 4 (#1737).
+  // An eye with a four-point spark at its corner: the next attack strikes the eyes, critically.
+  "eye-crit": () =>
+    `<path d="M2.5 14C5 9.5 8.5 7.5 12 7.5S19 9.5 21.5 14C19 18.5 15.5 20.5 12 20.5S5 18.5 2.5 14Z" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="12" cy="14" r="3" fill="${C.ink}"/>` +
+    inkFill("M18 1.5L19.2 4.3L22 5.5L19.2 6.7L18 9.5L16.8 6.7L14 5.5L16.8 4.3Z"),
+  // A bolt over a low health gauge: Energy for the allies who are hurt.
+  "bolt-plus": () => inkFill("M13 1.5L6 11H11L9.5 16L17 7H12Z") + healthGauge(0.3),
+  // A bolt over two rising pips: Energy that keeps coming.
+  "bolt-pips": () =>
+    inkFill("M13.5 2.5L6.5 12H11.5L10.5 17.5L17.5 8H12.5Z") +
+    inkLine("M5 21.5L8 18.5L11 21.5M13 21.5L16 18.5L19 21.5", 2),
+  // A drop struck through with a running chevron: conditions cleansed, a burst of speed.
+  "drop-cure-run": () =>
+    `<path d="M9.5 3C9.5 3 4 9.5 4 13.5A5.5 5.5 0 0 0 15 13.5C15 9.5 9.5 3 9.5 3Z" ${stroke(C.ink, 2)}/>` +
+    inkLine("M3 3L16 17", 2.2) +
+    inkLine("M15 15L19 19L15 23M19.5 15L23 19L19.5 23", 1.8),
+  // Rising adrenaline bars under a chevron: adrenaline gained faster.
+  "bars-rise": () =>
+    inkLine("M5 21V16M11 21V11M17 21V6", 3.2) + inkLine("M14 3.5L18 1.5L22 3.5", 1.8),
+  // A foe laid flat under a dizzy spiral and stars: Awe knocks down and dazes.
+  "bar-daze": () =>
+    inkLine("M2.5 20H21.5", 3.2) +
+    `<path d="M12 11a1.6 1.6 0 1 1 1.6-1.6 3.4 3.4 0 1 1-3.4-3.4 5.2 5.2 0 1 1 5.2 5.2" ${stroke(C.ink, 2)}/>` +
+    inkFill("M4.5 3L5.4 5.1L7.5 6L5.4 6.9L4.5 9L3.6 6.9L1.5 6L3.6 5.1Z") +
+    inkFill("M19.5 3L20.4 5.1L22.5 6L20.4 6.9L19.5 9L18.6 6.9L16.5 6L18.6 5.1Z"),
+  // A signet ring round a bolt with a small flame in the corner: Energy from a burning foe.
+  "signet-glow": () =>
+    `<circle cx="10" cy="14" r="7.5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M11.5 8.5L7 15H10.5L9 19.5L13.5 13H10Z") +
+    inkFill(
+      "M19.5 1.5C21.5 3.5 22.5 5 22.5 6.8a3 3 0 0 1-6 0C16.5 5.5 17.3 4.5 18.2 3.7C18.4 4.8 18.9 5.3 19.2 5.3C19.8 4.2 19.8 3 19.5 1.5Z",
+    ),
+  // A signet ring and dot with a blade in the corner: a signet for the attacks.
+  "signet-blade": () =>
+    ringDot(10, 14, 7) + inkLine("M14 10L22 2", 2.2) + inkLine("M14.5 5.5L18.5 9.5", 2),
+  // A signet ring and dot with a struck-through drop: a signet that cures.
+  "signet-cure": () =>
+    ringDot(10, 14, 7) +
+    inkFill("M19 2c1.6 2.3 2.8 3.4 2.8 5a2.8 2.8 0 0 1-5.6 0c0-1.6 1.2-2.7 2.8-5z") +
+    inkLine("M15.5 10.5L22.5 2.5", 1.6),
   // An open eye: it sees the weak spot (#1001).
   eye: () =>
     `<path d="M2.5 12C5 7.5 8.5 5.5 12 5.5S19 7.5 21.5 12C19 16.5 15.5 18.5 12 18.5S5 16.5 2.5 12Z" ${stroke(C.ink, 2.2)}/>` +

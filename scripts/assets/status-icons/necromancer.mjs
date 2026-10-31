@@ -72,16 +72,16 @@ export const NECROMANCER_STATUS_ICONS = {
     "skill-effect",
     (c) =>
       `<ellipse cx="12" cy="19" rx="8.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<circle cx="12" cy="9" r="5.5" ${stroke(c, 2)}/><path d="M6 15L18 3" ${stroke(c, 2.2)}/>`,
+      `<circle cx="12" cy="9" r="5.5" ${stroke(c, 2)}/><path d="M7 15L16.5 5.5" ${stroke(c, 2.2)}/>`,
   ],
   // Skill effect: a struck-through horn, no shout or chant.
   "well-of-silence": [
     "skill-effect",
     (c) =>
       `<ellipse cx="12" cy="19" rx="7.5" ry="3" ${stroke(c, 2.2)}/>` +
-      `<path d="M9 6C13 9.5 13 12.5 9 16" ${stroke(c, 2.6)}/><path d="M5 15L17 3" ${stroke(c, 2.6)}/>`,
+      `<path d="M9 6C13 9.5 13 12.5 9 16" ${stroke(c, 2.6)}/><path d="M6.5 15L16 5.5" ${stroke(c, 2.6)}/>`,
   ],
-  // Skill effect: a half-dark eye, the hexed miss.
+  // Skill effect: a pupil in a dark eye, the hexed miss.
   "well-of-darkness": [
     "skill-effect",
     (c) =>

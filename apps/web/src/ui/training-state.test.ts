@@ -25,6 +25,17 @@ describe("buildSignature", () => {
     expect(buildSignature(renamed)).toBe(buildSignature(elementalist));
   });
 
+  it("is equal for an equal build in a new object, as storage hands it back (#1734)", () => {
+    const built = setSkill(
+      setRank(elementalist, "elementalist.fire-magic", 3),
+      0,
+      "elementalist.fireball",
+    );
+    const stored = JSON.parse(JSON.stringify(built)) as typeof built;
+    expect(buildSignature(structuredClone(built))).toBe(buildSignature(built));
+    expect(buildSignature(stored)).toBe(buildSignature(built));
+  });
+
   it("ignores the order attributes were raised in", () => {
     const fireThenEarth = setRank(
       setRank(elementalist, "elementalist.fire-magic", 3),

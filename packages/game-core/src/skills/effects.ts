@@ -1639,6 +1639,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-has":
     case "caster-lacks":
     case "target-alone":
+    case "target-near-caster-ally":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
@@ -1711,6 +1712,19 @@ export function stateHolds(
             !combatant.dead &&
             combatant.id !== target.id &&
             combatant.team === target.team &&
+            distance(position, at) <= condition.radius,
+        )
+      );
+    }
+    case "target-near-caster-ally": {
+      const at = surroundings.get(target.id)?.position;
+      return (
+        at !== undefined &&
+        [...surroundings.values()].some(
+          ({ combatant, position }) =>
+            !combatant.dead &&
+            combatant.id !== caster.id &&
+            combatant.team === caster.team &&
             distance(position, at) <= condition.radius,
         )
       );
@@ -1964,6 +1978,7 @@ function conditionHolds(
     case "caster-has":
     case "caster-lacks":
     case "target-alone":
+    case "target-near-caster-ally":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
