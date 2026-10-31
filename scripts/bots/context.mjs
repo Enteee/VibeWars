@@ -11,7 +11,10 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 
-/** How far under the ceiling a card is too big to start (#1695). */
+/**
+ * How far under the ceiling a card is too big to start (#1695), and so where
+ * a session is reset: a turn that got this far starts the next one fresh (#1838).
+ */
 export const NEAR_MARGIN = 20_000;
 
 /**
