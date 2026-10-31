@@ -91,12 +91,15 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
     }
     await expect(host.locator(".team-lobby-empty")).toBeVisible();
-    await expect(host.locator(".team-lobby-propose select option:checked")).toHaveText("None");
+    // Proposing is a click on one of your Team Builds' cards (#1862).
+    const trio = (page: Page) => page.getByRole("button", { name: "Propose Trio", exact: true });
+    await expect(trio(host)).toHaveAttribute("aria-pressed", "false");
     for (const page of [host, guest]) {
-      await page.locator(".team-lobby-propose select").selectOption({ label: "Trio" });
+      await trio(page).click();
+      await expect(trio(page)).toHaveAttribute("aria-pressed", "true");
     }
     for (const page of [host, guest]) {
-      await expect(page.locator(".screen-team-lobby .play-card")).toHaveCount(2);
+      await expect(page.locator(".team-lobby-proposals .play-card")).toHaveCount(2);
     }
     // Each card shows its members holding their weapons, with their
     // skills, sent once it stands (#1811, #1864).

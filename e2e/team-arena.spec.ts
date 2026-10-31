@@ -130,8 +130,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
 
     const annKey = await formParty([ann, bea], ["Ann", "Bea"]);
     await runTeamLobby([ann, bea], async () => {
-      await press(ann, ann.locator(".team-lobby-propose select"));
-      await ann.locator(".team-lobby-propose select").selectOption({ label: "Quad" });
+      await press(ann, ann.getByRole("button", { name: "Propose Quad", exact: true }));
       const card = bea.getByRole("button", { name: "Ann's team build" });
       await press(bea, card);
       await expect(card).toHaveAttribute("aria-pressed", "true");

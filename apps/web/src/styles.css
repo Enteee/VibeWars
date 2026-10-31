@@ -2997,14 +2997,10 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.team-lobby-propose {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.team-lobby-propose select {
-  max-width: 24rem;
+/* A Team Build of the wrong size, on its faded card (#1862). */
+.team-lobby-needs {
+  color: var(--ink-dim);
+  text-align: center;
 }
 
 /* No proposal yet: where the cards would be. */
@@ -3018,9 +3014,11 @@ body {
   text-align: center;
 }
 
-/* A vote's state on the shared team card (#1864): yours, then the
-   result's chosen card lifted, the rest faded behind it. */
-.screen .play-card.is-voted .play-card-open {
+/* A vote's state on the shared team card (#1864): yours, and the build
+   you proposed (#1862), then the result's chosen card lifted, the rest
+   faded behind it. */
+.screen .play-card.is-voted .play-card-open,
+.screen .play-card.is-proposed .play-card-open {
   border-color: var(--accent);
 }
 
@@ -3102,7 +3100,8 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.team-lobby-your-vote {
+.team-lobby-your-vote,
+.team-lobby-proposed {
   padding: 0.2rem;
   border: 1px solid var(--accent);
   color: var(--accent);
