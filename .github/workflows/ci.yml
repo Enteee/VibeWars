@@ -120,6 +120,15 @@ jobs:
   e2e-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    # Full e2e on every main push is what catches two pull requests that are
+    # green alone and red together (#1571), but it need not run for every
+    # merge: at most one run per shard and one pending, always the newest main.
+    # A pending run replaced by a newer push concludes cancelled, so a red main
+    # e2e covers the merges since the last green one (#1620). A pull request
+    # gets a group of its own and is never coalesced.
+    concurrency:
+      group: ${{ github.event_name == 'push' && format('e2e-main-{0}', matrix.shard) || format('e2e-{0}-{1}', github.run_id, matrix.shard) }}
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
