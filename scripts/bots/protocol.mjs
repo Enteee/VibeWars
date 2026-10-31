@@ -818,12 +818,13 @@ export function formatMirror(message, context) {
   }
 
   const start = header.length + 1;
+  const shown = visibleLines(message.text);
   const room = MAX_MESSAGE_CHARS - start;
-  const body = message.text.length <= room ? message.text : `${cut(message.text, room - 1)}…`;
-  const kept = body === message.text ? body.length : body.length - 1;
+  const body = shown.length <= room ? shown : `${cut(shown, room - 1)}…`;
+  const kept = body === shown ? body.length : body.length - 1;
 
   entities.push({ type: "expandable_blockquote", offset: start, length: body.length });
-  for (const match of message.text.matchAll(ISSUE_REF)) {
+  for (const match of shown.matchAll(ISSUE_REF)) {
     if (match.index + match[0].length > kept) {
       break;
     }
@@ -1000,7 +1001,8 @@ export function formatQuestion(n, question, answer = null) {
   }
 
   const room = MAX_MESSAGE_CHARS - header.length - footer.length - 2;
-  const body = question.text.length <= room ? question.text : `${cut(question.text, room - 1)}…`;
+  const shown = visibleLines(question.text);
+  const body = shown.length <= room ? shown : `${cut(shown, room - 1)}…`;
   entities.push({ type: "blockquote", offset: header.length + 1, length: body.length });
   const text = `${header}\n${body}\n${footer}`;
 
@@ -1012,7 +1014,7 @@ export function formatQuestion(n, question, answer = null) {
     entities,
     replyMarkup: {
       inline_keyboard: question.options.map((option, i) => [
-        { text: option, callback_data: `q:${String(n)}:${String(i)}` },
+        { text: visible(option), callback_data: `q:${String(n)}:${String(i)}` },
       ]),
     },
   };
@@ -1737,11 +1739,33 @@ function isInvisible(char, code) {
  * @returns {string}
  */
 export function visible(text) {
+  return mapVisible(text, "⏎");
+}
+
+/**
+ * `visible` for text that sits inside a Telegram blockquote, where a line
+ * break cannot fake a header and a phone reader wants multi-line messages:
+ * the same mapping, except every line break (`\r\n`, `\r`, U+2028, U+2029,
+ * …) becomes a plain `\n` (#93).
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function visibleLines(text) {
+  return mapVisible(text.replace(/\r\n/g, "\n"), "\n");
+}
+
+/**
+ * @param {string} text
+ * @param {string} lineBreak what each line break becomes
+ * @returns {string}
+ */
+function mapVisible(text, lineBreak) {
   let out = "";
   for (const char of text) {
     const code = char.codePointAt(0) ?? 0;
     if (LINE_BREAKS.has(code)) {
-      out += "⏎";
+      out += lineBreak;
     } else if (code === 0x1b) {
       out += "␛";
     } else if (code === 0x09) {
