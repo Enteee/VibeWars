@@ -122,7 +122,7 @@ export type CombatEvent =
       readonly kind: "status-applied";
       readonly targetId: string;
       readonly statusId: StatusId;
-      /** `null` for a maintained enchantment (#837), which lasts until ended. */
+      /** `null` for a status with no end, maintained (#837) or not (#1789): it lasts until ended. */
       readonly durationSeconds: number | null;
     }
   /**
@@ -314,6 +314,8 @@ export type CombatEvent =
  * a physical hit, after Reversal of Fortune. An invulnerable target
  * (#1208) takes none of it, and says so (#1233). A Guild Lord's guard
  * (#1223) cuts and caps what is left, to 0 once its second's cap is spent.
+ * A status that negates fatal damage (#1789) drops what would kill; what
+ * crosses a Health line is recorded for what answers it.
  */
 export function applyDamage(
   target: Combatant,
@@ -337,12 +339,17 @@ export function applyDamage(
   // source when the tick drains; the bearer takes the rest.
   const kept = isPhysicalDamage(type) ? target.statuses.redirect(amount) : amount;
   const applied = Math.min(guardedDamage(target, kept), target.health);
+  if (negateFatal(target, applied, dealer, events)) {
+    return;
+  }
+  const before = target.health;
   target.health -= applied;
   events.push({ kind: "damage", targetId: target.id, amount: applied, critical });
   if (isPhysicalDamage(type)) {
     target.statuses.recordPhysicalDamage();
   }
   recordFromFoe(target, dealer, type, applied);
+  recordHealthDrop(target, dealer, before);
   // The guard above already returned for an already-dead target, so
   // reaching 0 here is always a *new* death — exactly one death event.
   if (target.health <= 0) {
@@ -364,6 +371,38 @@ function recordFromFoe(
   if (dealer !== undefined && dealer.team !== target.team) {
     target.statuses.recordDamageFromFoe(dealer.id, type, amount);
   }
+}
+
+/**
+ * `target`'s Health just fell from `before` to where it is, by damage or
+ * a steal `dealer` dealt, if anyone: recorded for what answers a line
+ * crossed (#1789).
+ */
+function recordHealthDrop(target: Combatant, dealer: Combatant | undefined, before: number): void {
+  target.statuses.recordHealthDrop(dealer?.id, before, target.health, effectiveMaxHealth(target));
+}
+
+/**
+ * Judge's Intervention (#1789): if `loss` would kill `target` and it bears
+ * a status that negates fatal damage, spend it. Returns whether it did,
+ * and then the caller drops the whole packet: no damage, no death,
+ * nothing that answers damage, nothing stolen.
+ */
+function negateFatal(
+  target: Combatant,
+  loss: number,
+  dealer: Combatant | undefined,
+  events: CombatEvent[],
+): boolean {
+  if (loss < target.health) {
+    return false;
+  }
+  const negated = target.statuses.takeFatalNegation(dealer?.id);
+  if (negated === undefined) {
+    return false;
+  }
+  events.push({ kind: "status-expired", targetId: target.id, statusId: negated });
+  return true;
 }
 
 /**
@@ -450,7 +489,8 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
  * a heal either, so the caster's healing modifiers do not touch it. It
  * can kill, with one `death`, as `applyDamage` does. Nothing is stolen
  * from an invulnerable target (#1208), which says so (#1233). A Guild
- * Lord's per-second cap (#1223) holds it too.
+ * Lord's per-second cap (#1223) holds it too, and a status that negates
+ * fatal damage (#1789) drops a steal that would kill.
  */
 function stealLife(
   caster: Combatant,
@@ -476,12 +516,14 @@ function stealLife(
     return;
   }
   const taken = guardedLoss(target, stolen);
-  if (taken <= 0) {
+  if (taken <= 0 || negateFatal(target, taken, caster, events)) {
     return;
   }
+  const before = target.health;
   target.health -= taken;
   events.push({ kind: "life-stolen", targetId: target.id, amount: taken });
   recordFromFoe(target, caster, undefined, taken);
+  recordHealthDrop(target, caster, before);
   gainHealth(caster, taken, events);
   if (target.health <= 0) {
     target.dead = true;
@@ -961,7 +1003,13 @@ function landStatus(
     reportEnded(target, [breaker], events);
     return;
   }
-  events.push({ kind: "status-applied", targetId: target.id, statusId, durationSeconds });
+  events.push({
+    kind: "status-applied",
+    targetId: target.id,
+    statusId,
+    // No end of its own (#1789): as a maintained one, no duration.
+    durationSeconds: Number.isFinite(durationSeconds) ? durationSeconds : null,
+  });
   reportEnded(target, ending, events);
   if (loss > 0) {
     events.push({ kind: "health-lost", targetId: target.id, amount: loss, statusId });
