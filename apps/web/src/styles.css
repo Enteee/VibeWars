@@ -265,7 +265,7 @@ body {
    until the bar runs out: it decides whether friends get in at all
    (#1682). */
 @media (width <= 90rem) {
-  .topbar-lobby .lobby-code-label,
+  .topbar-lobby:not(.is-joining) .lobby-code-label,
   .topbar-join-label {
     display: none;
   }
@@ -311,10 +311,35 @@ body {
 /* Lobby Key and Join (#1525), right before the global icons, on the
    menu's screens. */
 .topbar-join {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.4rem;
   margin-left: auto;
+}
+
+/* A host's first Join (#1553): under the key field, over the screen, so
+   the bar keeps its width. */
+.topbar-join-confirm {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  z-index: 5;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--accent);
+  background: var(--panel);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.topbar-join-confirm[hidden] {
+  display: none;
+}
+
+/* Behind its host on the way to another lobby (#1553): the key it is
+   joining, greyed, after "Joining…", which keeps its word at any width. */
+.topbar-lobby.is-joining .lobby-code {
+  color: var(--ink-dim);
 }
 
 .topbar-join[hidden] {
@@ -341,7 +366,8 @@ body {
 
 .topbar-lobby[hidden],
 .topbar-lobby .topbar-lobby-open[hidden],
-.topbar-lobby .topbar-leave[hidden] {
+.topbar-lobby .topbar-leave[hidden],
+.topbar-lobby .lobby-copy[hidden] {
   display: none;
 }
 

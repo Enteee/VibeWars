@@ -97,6 +97,38 @@ test("a second player joins with the code and both see each other", async ({ bro
   }
 });
 
+test("a host with a guest who joins another lobby is asked once, and its guest follows it there (#1553)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 3);
+  const [alpha, bravo, charlie] = pages as [Page, Page, Page];
+
+  try {
+    const alphaCode = await hostLobby(alpha, "Alpha");
+    await joinLobby(bravo, "Bravo", alphaCode);
+    const charlieCode = await hostLobby(charlie, "Charlie");
+    // Storage is shared: Alpha's name is read at the press.
+    await namePlayer(alpha, "Alpha");
+
+    await joinByCode(alpha, charlieCode);
+    await expect(alpha.locator(".topbar-join-confirm")).toHaveText(
+      "Your party of 2 joins with you.",
+    );
+    await expect(alpha.locator("#topbar .topbar-lobby-code")).toHaveText(alphaCode);
+    await alpha.getByRole("button", { name: "Join", exact: true }).click();
+
+    for (const page of [alpha, bravo]) {
+      await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(charlieCode);
+    }
+    await expect(charlie.locator(".lobby-panel")).toContainText("Alpha");
+    await expect(charlie.locator(".lobby-panel")).toContainText("Bravo");
+    // Followed quietly: no "the host closed the lobby" on the way.
+    await expect(bravo.locator(".screen-connection-problem")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
 test("a closed lobby takes nobody with its key; opened it does, and closed again it keeps its guest (#1682)", async ({
   browser,
 }) => {

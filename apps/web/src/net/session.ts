@@ -127,7 +127,11 @@ export interface HostedLobby {
    * coded lobby's never settles.
    */
   readonly done: Promise<void>;
-  close(): Promise<void>;
+  /**
+   * End it for everyone. With `moveTo`, the key of the lobby this tab
+   * just joined, its guests follow there (#1553).
+   */
+  close(moveTo?: string): Promise<void>;
 }
 
 /** `n` bytes from `crypto`: a lobby key is only as good as its randomness (#1681). */
@@ -234,7 +238,7 @@ export async function hostLobby(
     host.advance(seconds);
   });
   let closed = false;
-  const close = async (): Promise<void> => {
+  const close = async (moveTo?: string): Promise<void> => {
     if (closed) {
       return;
     }
@@ -242,7 +246,7 @@ export async function hostLobby(
     window.removeEventListener("pagehide", onPageHide);
     stopFollowing();
     stopClock();
-    await host.close();
+    await host.close(moveTo);
   };
   try {
     const lobby = await joinLobby({
