@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ShownBar } from "./kit.js";
 import {
   CONNECTING_NOTICE_MS,
+  JOINED_LOBBY_LABEL,
+  OWN_LOBBY_LABEL,
   joinControls,
   paintStatus,
   putsMoreAway,
@@ -94,7 +96,7 @@ class FakeElement {
   }
 }
 
-describe("the title bar's Lobby Key and Join (#1525)", () => {
+describe("the title bar's Lobby Key and Join (#1525, #1526)", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -102,17 +104,60 @@ describe("the title bar's Lobby Key and Join (#1525)", () => {
 
   const mount = (): {
     joined: string[];
+    left: number[];
     join: ReturnType<typeof joinControls>;
     parts: FakeElement[];
   } => {
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
     const joined: string[] = [];
+    const left: number[] = [];
     const join = joinControls(
       () => "Rurik",
       (code, name) => joined.push(`${code} ${name}`),
+      () => left.push(1),
     );
-    return { joined, join, parts: (join.element as unknown as FakeElement).children };
+    // The lobby this tab is in comes first, then the join.
+    const [, ...parts] = (join.element as unknown as FakeElement).children;
+    return { joined, left, join, parts };
   };
+
+  it("names this tab's own lobby without Leave, and a joined one with it", () => {
+    const { join, left } = mount();
+    const [lobby] = (join.element as unknown as FakeElement).children;
+    const [label, code, copy, leave] = lobby?.children ?? [];
+    expect(lobby?.hidden).toBe(true);
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: true });
+    expect([lobby?.hidden, label?.textContent, code?.textContent, copy?.textContent]).toEqual([
+      false,
+      OWN_LOBBY_LABEL,
+      "ACDE-FGHJ-KMNP",
+      "Copy",
+    ]);
+    expect(leave?.hidden).toBe(true);
+    join.setLobby({ code: "HJKMNPQRTWXY", isHost: false });
+    expect([label?.textContent, code?.textContent, leave?.hidden]).toEqual([
+      JOINED_LOBBY_LABEL,
+      "HJKM-NPQR-TWXY",
+      false,
+    ]);
+    leave?.fire("click");
+    expect(left).toEqual([1]);
+    join.setLobby(undefined);
+    expect(lobby?.hidden).toBe(true);
+  });
+
+  it("keeps a key typed while its own lobby opens, and empties it once joined (#1526)", () => {
+    const { join, parts } = mount();
+    const input = parts[1];
+    if (input === undefined) {
+      throw new Error("no field");
+    }
+    input.value = "ACDE-FGHJ-KMNP";
+    join.setLobby({ code: "HJKMNPQRTWXY", isHost: true });
+    expect(input.value).toBe("ACDE-FGHJ-KMNP");
+    join.setLobby({ code: "ACDEFGHJKMNP", isHost: false });
+    expect(input.value).toBe("");
+  });
 
   it("joins with the key upper-cased as typed, on Enter and on Join", () => {
     const { joined, parts } = mount();

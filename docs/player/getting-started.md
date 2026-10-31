@@ -56,22 +56,35 @@ the team you just played with.
 
 ## Host or join a match
 
-To play with friends:
+You are always in a lobby: from the moment the page opens it hosts one
+of your own, and the top bar shows its key. The lobby is your party,
+and the strip on top of every mode screen lists who is in it.
 
-- **Host:** on **Hosted Game**, press **Host a game**. The lobby shows
-  its key, 12 characters such as `ACDE-FGHJ-KMNP`; press **Copy** and
-  send it to your friends. Anyone with the key can join, so share it only
-  with people you want in. Press **+** under a team's **Bots:** to fill
-  an empty place. When everyone is in, press **Start match**.
+- **Invite:** press **Copy** beside your key in the top bar and send it
+  to your friends. The key is 12 characters, such as `ACDE-FGHJ-KMNP`.
+  Anyone with the key can join, so share it only with people you want in.
 - **Join:** paste the key you were sent into **Lobby Key** in the top
-  bar and press **Join**, or Enter. Dashes and lower case are fine.
+  bar and press **Join**, or Enter. Dashes and lower case are fine. Your
+  own lobby stays open until the join is in. Once in, the top bar shows
+  your friend's key, and **Leave** takes you back to a fresh lobby of
+  your own, with a new key. If you had friends in your lobby, they go
+  back to lobbies of their own.
 
-**Team Arena**, **Heroes' Ascent** and **GvG** each host a lobby too,
-with **Host a Team Lobby**, and its host picks among that mode's maps
-only: **Team Arena** the Annihilation, Kill Count and Priest Annihilation
+**The host picks the mode** on the rail, and everyone's screen follows;
+a guest's modes are locked. **Character Builder** and **Team Builder**
+are open to everyone, and opening one does not leave the lobby. On a
+mode's screen, press **+** under a team's **Bots:** to fill an empty
+place, and when everyone is in, the host presses **Start match**.
+**Random Arena** queues only while you are alone in your lobby: leave
+the party, or play a Hosted Game. The character picked there is the one
+you bring; pick another, and the lobby shows it and you play it from the
+next match.
+
+**Team Arena**, **Heroes' Ascent** and **GvG** offer only that mode's
+maps: **Team Arena** the Annihilation, Kill Count and Priest Annihilation
 maps, **Heroes' Ascent** the Relic Run, King of the Hill and Capture
 Points maps, and **GvG** the Guild Battle's. **Hosted Game** offers every
-map. Below the button are your **Team Builds**: click one, or its
+map. Below the lobby are your **Team Builds**: click one, or its
 **Edit**, to change it, or make another with **New team build**. You
 pick none there. When the host starts, the lobby opens the
 [Team Lobby](modes.md#team-lobby): propose a Team Build there, click a
@@ -89,8 +102,8 @@ wears the cape in every match: it folds to a thin band on your rim when
 you stand and streams out behind you when you move. Your characters in
 the menu show it too. **No cape** takes it off.
 
-A change applies from the next lobby you host or join: one you are
-already in keeps what you joined with.
+A change applies from the next lobby you join, or your next fresh one:
+one you are already in keeps what you joined with.
 
 ## Watching a match
 

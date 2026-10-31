@@ -2579,6 +2579,15 @@
         { "properties": [], "index": [{ "key": "string", "value": { "ref": "JsonValue" } }] }
       ]
     },
+    "LobbyMode": {
+      "union": [
+        { "literal": "gvg" },
+        { "literal": "heroes-ascent" },
+        { "literal": "hosted-game" },
+        { "literal": "random-arena" },
+        { "literal": "team-arena" }
+      ]
+    },
     "LobbyPhase": {
       "union": [
         { "literal": "in-match" },
@@ -3721,6 +3730,31 @@
         },
         {
           "properties": [
+            {
+              "name": "character",
+              "optional": false,
+              "type": {
+                "union": [
+                  "null",
+                  {
+                    "properties": [
+                      { "name": "name", "optional": false, "type": "string" },
+                      { "name": "primary", "optional": false, "type": "string" },
+                      {
+                        "name": "secondary",
+                        "optional": false,
+                        "type": { "union": ["null", "string"] }
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            { "name": "kind", "optional": false, "type": { "literal": "set-character" } }
+          ]
+        },
+        {
+          "properties": [
             { "name": "count", "optional": false, "type": "number" },
             { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
             {
@@ -3762,6 +3796,24 @@
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "select-map" } },
             { "name": "mapId", "optional": false, "type": "string" }
+          ]
+        },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "select-mode" } },
+            {
+              "name": "mode",
+              "optional": false,
+              "type": {
+                "union": [
+                  { "literal": "gvg" },
+                  { "literal": "heroes-ascent" },
+                  { "literal": "hosted-game" },
+                  { "literal": "random-arena" },
+                  { "literal": "team-arena" }
+                ]
+              }
+            }
           ]
         },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
@@ -3892,6 +3944,19 @@
         { "name": "hostId", "optional": false, "type": "string" },
         { "name": "mapId", "optional": false, "type": "string" },
         { "name": "matchId", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "mode",
+          "optional": false,
+          "type": {
+            "union": [
+              { "literal": "gvg" },
+              { "literal": "heroes-ascent" },
+              { "literal": "hosted-game" },
+              { "literal": "random-arena" },
+              { "literal": "team-arena" }
+            ]
+          }
+        },
         {
           "name": "phase",
           "optional": false,

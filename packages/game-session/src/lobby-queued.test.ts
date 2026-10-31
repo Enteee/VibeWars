@@ -16,7 +16,7 @@ import { describe, expect, it } from "vitest";
 
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
-import { openLobby, provenPeer } from "./lobby-harness.test-support.js";
+import { MAP_IDS, MODE_MAPS, openLobby, provenPeer } from "./lobby-harness.test-support.js";
 import { PARTY_CONSENT_MS, createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
 import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
@@ -210,7 +210,8 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     transport: spied(network.join("host"), sent, proposals),
     code: GROUP_ID,
     proofKey: null,
-    mapIds: ["test-arena", "other-arena"],
+    mapIds: MAP_IDS,
+    modeMaps: MODE_MAPS,
     teamLobby: false,
     random: () => 0.5,
     startMatch(plan) {
@@ -478,6 +479,7 @@ describe("a queued lobby", () => {
         const state: WireLobbyState = {
           code: GROUP_ID,
           phase: "waiting",
+          mode: "random-arena",
           mapId: "other-arena",
           hostId: "impostor",
           matchId: null,

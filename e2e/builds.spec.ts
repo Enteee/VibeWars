@@ -1258,6 +1258,9 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
     [`${STORAGE_NAMESPACE}.activeCharacterId`, OUTLAWED_CHARACTER.id] as const,
   );
   await page.reload();
+  // The page's own lobby opening redraws the roster (#1526): a click
+  // before it lands on a card the redraw takes away.
+  await expect(page.locator("#topbar .topbar-lobby-code")).not.toBeEmpty();
 
   const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);

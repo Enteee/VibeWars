@@ -329,6 +329,66 @@ describe("lobby host", () => {
     expect(guest.connection.getSnapshot().mapId).toBe(MAP_IDS[1]);
   });
 
+  it("seats no join that arrives while it closes (#1526)", async () => {
+    const lobby = await openLobby();
+    const joining = lobby.join();
+    const closing = lobby.lobby.close();
+    // Not yet key-proven, it hears nothing from the host (#1681), not even
+    // that it left: its join runs out unanswered.
+    await expect(joining).rejects.toBeInstanceOf(LobbyNoAnswerError);
+    await closing;
+    expect(lobby.host.connection.getSnapshot().players).toHaveLength(1);
+  });
+
+  it("lists the character a member picks after joining, checked as a join's (#1526)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    guest.connection.setCharacter({ name: "Mhenlo", primary: "monk", secondary: "elementalist" });
+    await settle();
+    expect(lobby.host.connection.getSnapshot().players[1]?.character).toEqual({
+      name: "Mhenlo",
+      primary: "monk",
+      secondary: "elementalist",
+    });
+    guest.connection.setCharacter({ name: "Twin", primary: "monk", secondary: "monk" });
+    await settle();
+    expect(lobby.host.connection.getSnapshot().players[1]?.character).toBeNull();
+  });
+
+  it("starts on Random Arena, and lets only the host pick the mode (#1526)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const notes: string[] = [];
+    guest.transport.on("lobby-note", (data) => {
+      notes.push(parseWireLobbyNote(data)?.reason ?? "");
+    });
+    expect(guest.connection.getSnapshot().mode).toBe("random-arena");
+    guest.connection.selectMode("hosted-game");
+    await settle();
+    expect(notes).toEqual(["not-host"]);
+    expect(guest.connection.getSnapshot().mode).toBe("random-arena");
+    lobby.host.connection.selectMode("team-arena");
+    await settle();
+    expect(guest.connection.getSnapshot().mode).toBe("team-arena");
+    expect(lobby.host.connection.getSnapshot().mode).toBe("team-arena");
+  });
+
+  it("moves the map into the mode in the mode's own broadcast (#1526)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    await seat([lobby.host, guest], [0, 1]);
+    const seen: [string, string][] = [];
+    guest.connection.onChange(() => {
+      const { mode, mapId } = guest.connection.getSnapshot();
+      seen.push([mode, mapId]);
+    });
+    lobby.host.connection.selectMode("gvg");
+    await settle();
+    expect(seen).toEqual([["gvg", MAP_IDS[1]]]);
+    expect(playersOf(guest).map(({ ready }) => ready)).toEqual([false, false]);
+    // A map the next mode plays stays.
+    lobby.host.connection.selectMode("hosted-game");
+    await settle();
+    expect(seen.at(-1)).toEqual(["hosted-game", MAP_IDS[1]]);
+  });
+
   it("clears everyone's readiness when the host picks another map", async () => {
     const { lobby, guest } = await hostAndGuest();
     await seat([lobby.host, guest], [0, 1]);

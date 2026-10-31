@@ -152,6 +152,7 @@ function lobby(
     selfSessionId: self,
     code: "ACDEFG",
     phase: "team-lobby",
+    mode: "hosted-game",
     mapId: "arena",
     hostId: "aria",
     players,
