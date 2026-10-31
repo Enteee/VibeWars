@@ -48,6 +48,10 @@ describe("shardFilters", () => {
     expect(shardFilters(tests, durations, 1, 2)).toEqual(["e2e/b.spec.ts:5"]);
   });
 
+  it("refuses an empty shard rather than run everything", () => {
+    expect(() => shardFilters(tests, durations, 4, 4)).toThrow("has no tests");
+  });
+
   it("refuses a shard outside 1..total", () => {
     expect(() => shardFilters(tests, durations, 0, 2)).toThrow("not a shard");
     expect(() => shardFilters(tests, durations, 3, 2)).toThrow("not a shard");

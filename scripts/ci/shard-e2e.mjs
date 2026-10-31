@@ -100,7 +100,12 @@ export const shardFilters = (tests, durations, shard, total) => {
     lightest.load += unit.weight;
     lightest.filters.push(unit.filter);
   }
-  return /** @type {{ load: number, filters: string[] }} */ (shards[shard - 1]).filters;
+  const { filters } = /** @type {{ load: number, filters: string[] }} */ (shards[shard - 1]);
+  // An empty list would make `playwright test` run the whole suite.
+  if (filters.length === 0) {
+    throw new Error(`shard ${String(shard)}/${String(total)} has no tests`);
+  }
+  return filters;
 };
 
 /**
