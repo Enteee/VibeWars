@@ -2299,6 +2299,12 @@ const ringDot = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
+/** A health bar along the bottom edge, filled to `fill`: the cue for "above" or "below half". */
+const healthGauge = (/** @type {number} */ fill) =>
+  `<rect x="2.5" y="18.5" width="19" height="3.5" rx="1" ${stroke(C.ink, 1.4)}/>` +
+  `<rect x="3.5" y="19.5" width="${(17 * fill).toFixed(1)}" height="1.5" fill="${C.ink}"/>` +
+  inkLine("M12 17.5V23", 1.2);
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   // Payoffs of the chants of #1558: a burst struck through (cannot be interrupted), a bolt with a minus
@@ -2453,6 +2459,46 @@ const skillGlyph = {
     inkFill("M6 10L10 6.5L15.5 8L17 13L13.5 17L8 16Z") +
     inkLine("M8 3V5M12.5 1.5V4.5M16.5 3V6M3 11V13", 2) +
     inkLine("M2.5 20.5H14M4.5 18.5L6 19.5", 2.2),
+  // Necromancer staples 3 (#1651): a base glyph over a health gauge (full past half: above half; under it: below half), or a snowflake with its rider.
+  // A drop given up with a bolt leaving it: Health spent for shadow damage.
+  "drop-sac-bolt": () =>
+    inkFill("M8 9C6 12 5 13.5 5 15.5a3.2 3.2 0 0 0 6.4 0C11.4 13.5 10 12 8 9Z") +
+    inkLine("M13 4L16.5 4L14 9.5L20 8.5L11.5 18", 2),
+  // A drop drawn off sideways over a gauge past half: Health stolen from a healthy foe.
+  "drop-arrow-high": () =>
+    `<g transform="translate(12,9) scale(0.7) translate(-12,-12)">${skillGlyph["drop-arrow"]()}</g>` +
+    healthGauge(0.7),
+  // A heal cross over a gauge under half: healed when the foe is low.
+  "heal-drop-low": () =>
+    `<g transform="translate(12,9) scale(0.72) translate(-12,-12)">${skillGlyph["heal-drop"]()}</g>` +
+    healthGauge(0.3),
+  // A signet ring over a gauge under half: Health and Energy from a low foe.
+  "signet-low": () =>
+    `<g transform="translate(12,9) scale(0.7) translate(-12,-12)">${skillGlyph["drop-to-signet"]()}</g>` +
+    healthGauge(0.3),
+  // An eye over a gauge past half: every enchantment stripped from a healthy foe.
+  "eye-high": () =>
+    `<g transform="translate(12,8.5) scale(0.8) translate(-12,-12)">${skillGlyph.eye()}</g>` +
+    healthGauge(0.7),
+  // A snowflake over a fouled ground: cold, and poison on a foe that is down.
+  "snowflake-ground": () =>
+    `<g transform="translate(10,9) scale(0.7) translate(-12,-12)">${skillGlyph.snowflake()}</g>` +
+    `<g transform="translate(18,13) scale(0.5) translate(-12,-12)">${skillGlyph.germ()}</g>` +
+    inkLine("M2 21.5H22", 2.4),
+  // A snowflake in a dashed ring with a germ: cold, and poison on a hexed or enchanted foe.
+  "snowflake-hexed": () =>
+    `<circle cx="10" cy="10" r="8" ${stroke(C.ink, 1.6)} stroke-dasharray="3.6 2.8"/>` +
+    `<g transform="translate(10,10) scale(0.55) translate(-12,-12)">${skillGlyph.snowflake()}</g>` +
+    `<g transform="translate(18.5,18.5) scale(0.6) translate(-12,-12)">${skillGlyph.germ()}</g>`,
+  // A snowflake with a circling arrow: cold that recharges at once.
+  "snowflake-recharge": () =>
+    `<g transform="translate(10,10) scale(0.7) translate(-12,-12)">${skillGlyph.snowflake()}</g>` +
+    `<path d="M14 21A5.5 5.5 0 1 0 14.5 14" ${stroke(C.ink, 2)}/>` +
+    inkLine("M12 12L15 14.5L12 17", 1.8),
+  // A broken ring with a bleeding drop: the enchantment ripped out, the foe bleeds.
+  "ring-rip-bleed": () =>
+    `<g transform="translate(10,10) scale(0.8) translate(-12,-12)">${skillGlyph["ring-rend"]()}</g>` +
+    inkFill("M18.5 13.500c1.6 2.3 2.8 3.6 2.8 5.200a2.8 2.8 0 0 1-5.6 0c0-1.6 1.2-2.9 2.8-5.200z"),
   // A scythe: a long haft, the blade curved over its top (#990).
   scythe: () =>
     inkLine("M7 21L16 6", 2.4) + inkFill("M16 6C12 2.5 7 3 3.5 6.5C8 5.5 11.5 6.5 14.5 9Z"),
