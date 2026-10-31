@@ -1,8 +1,9 @@
 import type { StatusDefinition } from "../status.js";
 import { AREA_ADJACENT } from "../../distances.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type RangerStatusId =
+  | "practiced-stance"
   | "regeneration"
   | "natural-stride"
   | "lightning-reflexes"
@@ -322,5 +323,14 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   winter: define("winter", "Winter", "skill-effect", {
     profession: "ranger",
     elementalDamageTakenAs: "cold",
+  }),
+
+  // "Your preparations recharge 50% faster and last 30...246...300%
+  // longer" (#1761), at rank 12.
+  "practiced-stance": define("practiced-stance", "Practiced Stance", "stance", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills({ type: "preparation" }, { rechargeFaster: 0.5, durationMultiplier: 3.46 }),
+    ],
   }),
 };

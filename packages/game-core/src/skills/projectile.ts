@@ -1,4 +1,5 @@
 import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
+import type { OwnSkillBoost } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
 import type { BlowRule, NextAttackSkill, WeaponSnapshot } from "./weapon-attack.js";
 
@@ -57,6 +58,8 @@ export interface SkillHit {
   readonly blow: BlowRule;
   /** The chants it took at release (#758): their riders land with it. */
   readonly next: NextAttackSkill;
+  /** What the attacker's statuses did to it at release (#1761): its riders land with it. */
+  readonly own: OwnSkillBoost | undefined;
 }
 
 /**
@@ -68,6 +71,8 @@ export interface SpellHit {
   readonly kind: "spell";
   readonly skill: Skill;
   readonly caster: Combatant;
+  /** What the caster's statuses did to it at release (#1761): its heals and statuses land with it. */
+  readonly own: OwnSkillBoost | undefined;
 }
 
 /**

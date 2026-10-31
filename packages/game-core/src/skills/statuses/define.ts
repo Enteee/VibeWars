@@ -1,4 +1,10 @@
-import type { StatusCategory, StatusDefinition, StatusId } from "../status.js";
+import type {
+  OwnSkillFilter,
+  OwnSkillModifier,
+  StatusCategory,
+  StatusDefinition,
+  StatusId,
+} from "../status.js";
 
 export function define(
   id: StatusId,
@@ -102,6 +108,7 @@ export function define(
     energyCostMultiplier: 1,
     bindingRitualRechargeFaster: 0,
     enchantmentRechargeFaster: undefined,
+    ownSkillModifiers: [],
     skillArmorPenetration: undefined,
     uninterruptible: false,
     conditionsExpireFaster: 0,
@@ -117,5 +124,25 @@ export function define(
     whileUnder: undefined,
     triggers: [],
     ...overrides,
+  };
+}
+
+/**
+ * One `OwnSkillModifier` (#1761): the skills `filter` names, and what it
+ * changes about them; every knob it leaves out changes nothing.
+ */
+export function ownSkills(
+  filter: Partial<OwnSkillFilter>,
+  change: Partial<Omit<OwnSkillModifier, "filter">>,
+): OwnSkillModifier {
+  return {
+    filter: { type: undefined, attributeId: undefined, profession: undefined, ...filter },
+    energyDiscount: 0,
+    activationMultiplier: 1,
+    rechargeFaster: 0,
+    durationMultiplier: 1,
+    healMultiplier: 1,
+    uses: undefined,
+    ...change,
   };
 }

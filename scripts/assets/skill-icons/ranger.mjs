@@ -85,4 +85,6 @@ export const RANGER_ICONS = {
   "ranger.penetrating-attack": { glyph: "arrow-pierce", modifier: "up" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "ranger.sloth-hunters-shot": { glyph: "arrow-idle" },
+  // Own-skill modifiers (#1761), stand-in until its art card.
+  "ranger.practiced-stance": { glyph: "shield-stance", modifier: "renew" },
 };
