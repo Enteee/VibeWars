@@ -71,7 +71,7 @@ test("#578: Esc with a confirmation open cancels it, and only then goes back", a
   await expect(page.locator(".screen-teams")).toBeVisible();
 });
 
-test("#1272: the editor's Discard question takes the status's room: the bar stays one row, Save in it", async ({
+test("#1272: the editor's Discard question takes the status's room: the bar stays one row, Keep editing in it", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -87,11 +87,13 @@ test("#1272: the editor's Discard question takes the status's room: the bar stay
   await page.keyboard.press("Escape");
   await expect(bar.getByRole("button", { name: "Discard", exact: true })).toBeVisible();
   await expect(status).toBeHidden();
-  await expect(bar.getByRole("button", { name: "Save", exact: true })).toBeInViewport();
+  // It stands in for Save, its anchor (#1902).
+  await expect(bar.getByRole("button", { name: "Keep editing", exact: true })).toBeInViewport();
   expect((await bar.boundingBox())?.height).toBe(height);
 
   await bar.getByRole("button", { name: "Keep editing", exact: true }).click();
   await expect(status).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Save", exact: true })).toBeInViewport();
 });
 
 test("#1526: a guest joins from the title bar, follows the host's mode, and leaves to a lobby of its own", async ({
