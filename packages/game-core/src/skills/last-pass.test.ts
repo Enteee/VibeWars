@@ -15,6 +15,7 @@ import type { StatusDefinition, StatusId } from "./status.js";
  * bearer's death hexes the foes near the corpse, a Hex Breaker there
  * fails it, and its 39 damage kills the caster in that last pass. The
  * caster wears Reaper's Mark, which would pay its source on that death.
+ * The burst also pierces, for what Symbiotic Bond redirects.
  */
 vi.mock("./status.js", async (importOriginal) => {
   const original = await importOriginal<typeof Status>();
@@ -30,7 +31,10 @@ vi.mock("./status.js", async (importOriginal) => {
             hits: "foes",
             radius: AREA_NEARBY,
             maxTargets: undefined,
-            effects: [{ kind: "apply-status", statusId: "crippling-anguish", durationSeconds: 10 }],
+            effects: [
+              { kind: "apply-status", statusId: "crippling-anguish", durationSeconds: 10 },
+              { kind: "damage", amount: { flat: 40 }, type: "piercing", armorPenetration: 1 },
+            ],
           },
         ],
         target: "bearer",
@@ -109,5 +113,55 @@ describe("the last settle pass (#1837)", () => {
     expect(
       log.filter((entry) => entry.skillId === "necromancer.reapers-mark").flatMap((e) => e.events),
     ).toEqual([]);
+  });
+});
+
+describe("what the last settle pass owes (#1837)", () => {
+  // The caster `n` wears Union from `u`: the breaker's damage on it charges
+  // `u` in the last pass. The breaker `g` wears Symbiotic Bond from `b`:
+  // the burst's pierce on it is redirected to `b` there.
+  const caster = spec("n", 0, vec2(0, 0));
+  const union = spec("u", 0, vec2(0, -200));
+  const corpse = spec("f", 1, vec2(300, 0));
+  const breaker = spec("g", 1, vec2(300, AREA_NEARBY / 2));
+  const bond = spec("b", 1, vec2(300, -600));
+  it.each<[string, readonly ParticipantSpec[]]>([
+    ["earlier joiners", [caster, union, bond, breaker, corpse]],
+    ["later joiners", [breaker, corpse, caster, union, bond]],
+  ])("lands a spirit's charge and redirected damage for %s", (_, participants) => {
+    const sim = new MatchSimulation({ seed: "last-pass", participants });
+    const n = get(sim, "n").combatant;
+    const u = get(sim, "u").combatant;
+    const f = get(sim, "f").combatant;
+    const g = get(sim, "g").combatant;
+    const b = get(sim, "b").combatant;
+    f.statuses.apply("icy-veins", 30, "n");
+    g.statuses.apply("hex-breaker", 30, "g");
+    g.statuses.apply("symbiotic-bond", 30, "b");
+    n.statuses.apply("union", 30, "u");
+    stepFor(sim, DT);
+    g.energy = 0;
+    f.statuses.apply("burning", 10, "n");
+    f.health = 0.2;
+    const log = stepFor(sim, DT * 2);
+    const events = log.flatMap((entry) => entry.events);
+    expect(f.dead).toBe(true);
+    expect(g.statuses.has("hex-breaker")).toBe(false);
+    expect(events).toContainEqual({
+      kind: "health-lost",
+      targetId: "u",
+      amount: 15,
+      statusId: "union",
+    });
+    expect(u.health).toBe(500 - 15);
+    // The 40 pierces unarmored `g` for 113: 56, half rounded down, is
+    // redirected to `b`, and `g` keeps 57.
+    expect(events.filter((event) => event.kind === "damage" && event.targetId === "g")).toEqual([
+      { kind: "damage", targetId: "g", amount: 57, critical: false },
+    ]);
+    expect(events.filter((event) => event.kind === "damage" && event.targetId === "b")).toEqual([
+      { kind: "damage", targetId: "b", amount: 56, critical: false },
+    ]);
+    expect(b.health).toBe(500 - 56);
   });
 });
