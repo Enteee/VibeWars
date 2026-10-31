@@ -1056,7 +1056,7 @@ describe("uses, adrenaline and skipped effects (#1735)", () => {
       casterId: "you",
       targetId: "dummy",
       skillId: "paragon.glowing-signet",
-      condition: { kind: "target-has-status", statusId: "burning" },
+      requirement: "only if target has Burning",
     };
     expect(describeCombatEvent(entry([skipped], signet), skipped, nameOf, isCreature)).toBe(
       "Glowing Signet (Pyro): no effect, only if target has Burning",

@@ -1,7 +1,6 @@
 import {
   STATUS_DEFINITIONS,
   chainRequirementText,
-  conditionRequirementText,
   getAttribute,
   getSkill,
   getWeapon,
@@ -266,7 +265,7 @@ export function describeCombatEvent(
       return `${target} gains ${strikesOf(event.strikes)} of adrenaline${from === undefined ? "" : ` from ${from}`}`;
     }
     case "effect-skipped":
-      return `${by}: no effect, ${conditionRequirementText(event.condition)}`;
+      return `${by}: no effect, ${event.requirement}`;
   }
 }
 

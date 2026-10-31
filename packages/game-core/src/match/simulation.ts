@@ -94,6 +94,7 @@ import {
   type SlotSkill,
 } from "../skills/cast-state.js";
 import { getSkill } from "../skills/catalog.js";
+import { conditionRequirementText } from "../skills/describe.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
   applyDamage,
@@ -3555,13 +3556,12 @@ export class MatchSimulation {
         record.combatant.cast.disable(cast.key, skill.disabledAfterUseSeconds);
       }
     }
-    // The use itself leads its entry (#1735), and one that did nothing says why.
-    const usedEvent: CombatEvent = {
-      kind: "skill-used",
-      casterId: record.id,
-      skillId: skill.id,
-      targetId: primary?.id ?? record.id,
-    };
+    // The use itself leads its entry (#1735), and one that did nothing says
+    // why. A cast whose target is gone went off at nothing: no use to tell.
+    const usedEvents: CombatEvent[] =
+      primary === undefined
+        ? []
+        : [{ kind: "skill-used", casterId: record.id, skillId: skill.id, targetId: primary.id }];
     this.#log.push({
       tick: this.#tick,
       atSeconds: this.#elapsedSeconds,
@@ -3572,7 +3572,7 @@ export class MatchSimulation {
       attributeId: undefined,
       area,
       doubleStrike: false,
-      events: [usedEvent, ...events, ...this.#skippedEvent(record, skill, skipped)],
+      events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped)],
     });
     this.#logFired(riders);
     // After the skill's own effects, as their own entries (#469): a spell
@@ -3612,7 +3612,7 @@ export class MatchSimulation {
             casterId: record.id,
             targetId: skipped.targetId,
             skillId: skill.id,
-            condition: skipped.condition,
+            requirement: conditionRequirementText(skipped.condition),
           },
         ];
   }

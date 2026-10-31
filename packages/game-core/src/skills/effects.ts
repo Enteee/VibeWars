@@ -286,16 +286,17 @@ export type CombatEvent =
     }
   /**
    * `casterId`'s use of `skillId` did nothing (#1735): an effect it has
-   * only under `condition`, the first that did not hold, was skipped on
+   * only under a condition, the first that did not hold, was skipped on
    * `targetId` (`casterId` when it had none), and nothing else of it
-   * happened.
+   * happened. `requirement` is that condition in the tooltip's words,
+   * "only if target has Burning": text, as a condition can nest.
    */
   | {
       readonly kind: "effect-skipped";
       readonly casterId: string;
       readonly targetId: string;
       readonly skillId: string;
-      readonly condition: EffectCondition;
+      readonly requirement: string;
     };
 
 /**

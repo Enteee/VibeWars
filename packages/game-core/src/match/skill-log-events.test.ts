@@ -178,7 +178,7 @@ describe("effect-skipped (#1735)", () => {
         casterId: "c",
         targetId: "f",
         skillId: GLOWING_SIGNET,
-        condition: { kind: "target-has-status", statusId: "burning" },
+        requirement: "only if target has Burning",
       },
     ]);
   });
