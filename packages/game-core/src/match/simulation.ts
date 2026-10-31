@@ -3883,7 +3883,7 @@ export class MatchSimulation {
    * `ownEnds` it is the last pass (#1837): every participant is drained
    * before any is settled, and what that settling changes, a hex breaker's
    * kill among it, is drained once more for its bookkeeping alone (raised
-   * maxima, forms). It fires nothing, now or next tick, whoever joined
+   * maxima, forms, returns). It fires nothing, now or next tick, whoever joined
    * first: what the last pass causes never settles (#1825).
    */
   #settleTriggered(context: TriggerContext, ownEnds: boolean): void {
@@ -3918,6 +3918,7 @@ export class MatchSimulation {
       for (const change of record.combatant.statuses.drainChanges()) {
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
+        this.#returnSource(change);
       }
     }
   }
