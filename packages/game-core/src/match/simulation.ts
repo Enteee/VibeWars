@@ -3873,7 +3873,11 @@ export class MatchSimulation {
    * bearer died (#1825); nothing else answers. Those fire only once every
    * participant is drained, so what they change is the next pass's,
    * whoever joined first: a death they cause never fires here. Without
-   * `ownEnds`, each is drained as it is reached, so nothing is left over.
+   * `ownEnds` it is the last pass (#1837): every participant is drained
+   * before any is settled, and what that settling changes, a hex breaker's
+   * kill among it, is drained once more for its bookkeeping alone (raised
+   * maxima, forms). It fires nothing, now or next tick, whoever joined
+   * first: what the last pass causes never settles (#1825).
    */
   #settleTriggered(context: TriggerContext, ownEnds: boolean): void {
     const settle = (record: ParticipantRecord, changes: readonly StatusChange[]): void => {
@@ -3892,18 +3896,21 @@ export class MatchSimulation {
         }
       }
     };
-    if (!ownEnds) {
-      for (const record of this.#participants.values()) {
-        settle(record, record.combatant.statuses.drainChanges());
-      }
-      return;
-    }
     const drained = [...this.#participants.values()].map((record) => ({
       record,
       changes: record.combatant.statuses.drainChanges(),
     }));
     for (const { record, changes } of drained) {
       settle(record, changes);
+    }
+    if (ownEnds) {
+      return;
+    }
+    for (const record of this.#participants.values()) {
+      for (const change of record.combatant.statuses.drainChanges()) {
+        this.#loseRaisedMaxima(record, change);
+        this.#endForm(record, change);
+      }
     }
   }
 
