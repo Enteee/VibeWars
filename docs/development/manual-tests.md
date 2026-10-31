@@ -37,9 +37,9 @@ show that two browsers that share nothing find each other.
 
 1. Open `https://enteee.github.io/VibeWars/next/` in two browsers, or in
    one browser and a private window (separate storage, so separate peers).
-2. In the first, host a lobby. Read its code, `ABC-DEF`.
-3. In the second, type the code and join. Both lobby screens list both
-   players within a few seconds.
+2. In the first, read your lobby key in the title bar.
+3. In the second, type that key in the title bar and pick **Join**. Both
+   lobby screens list both players within a few seconds.
 4. Each picks a team and readies; the host starts. Play for a minute:
    walk, target the other, cast, attack.
 5. The guest leaves the match, then the host does. Both are back in the
