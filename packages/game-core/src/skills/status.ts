@@ -222,10 +222,24 @@ export interface StatusDefinition {
   /**
    * When it ends, for any reason, its caster Shadow Steps back to where it
    * stood when it put it up (#1826): GW1's "you return to your original
-   * location". Not when it is replaced by a recast of itself. `skillId`
-   * is the skill the step back is logged as. `undefined`: no return.
+   * location". Not when it is replaced by a recast of itself: that one
+   * returns to where this one's would have with `recastKeepsPoint`
+   * (#1930), as Shadow Walk's "you will return to your original location
+   * (from the first time you used the skill)", and to its own cast spot
+   * without, as Shadow of Haste's. `skillId` is the skill the step back is
+   * logged as. `undefined`: no return.
    */
-  readonly returnsSource: { readonly skillId: string } | undefined;
+  readonly returnsSource:
+    { readonly skillId: string; readonly recastKeepsPoint: boolean } | undefined;
+  /**
+   * When it ends, for any reason, its caster Shadow Steps to the ally it
+   * was cast on, and all its skills are disabled for `disableSeconds`
+   * (#1930): Recall's "when Recall ends, you Shadow Step to that ally".
+   * Only a maintained one knows its ally (`stepTargetId`). Not when it is
+   * replaced by a recast of itself, nor with either of the two dead.
+   * `skillId` is the skill the step is logged as. `undefined`: no step.
+   */
+  readonly stepsToTarget: { readonly skillId: string; readonly disableSeconds: number } | undefined;
   /**
    * Chance in [0, 1] that the bearer's *attacks* miss. Drawn from the
    * injectable simulation RNG, never Math.random (brief §35).
@@ -255,6 +269,23 @@ export interface StatusDefinition {
    * ceiling left, as `maxHealthBonus` does health.
    */
   readonly maxEnergyBonus: number;
+  /**
+   * Damage the bearer's minions add to each hit (#1915), before armor,
+   * as Order of Undeath's "your minions deal +3...13...16 damage".
+   */
+  readonly minionDamageBonus: number;
+  /**
+   * The share of its effective maximum Health, in %, the bearer loses each
+   * time one of its minions lands a hit (#1915): Order of Undeath's 2%.
+   * Health loss, not damage or sacrifice.
+   */
+  readonly minionHitHealthLossPercent: number;
+  /**
+   * A condition the bearer would gain goes to its closest living minion
+   * instead (#1915), as Infuse Condition. None alive: it lands on the
+   * bearer.
+   */
+  readonly redirectsConditionsToMinion: boolean;
   /**
    * Multiplier on the heals the bearer receives from skills (1 = unaffected).
    * Regeneration and life steal ignore it.
@@ -321,10 +352,27 @@ export interface StatusDefinition {
    */
   readonly attackDamageDeltaWeapon: AttackWeaponClass | undefined;
   /**
-   * Added to every attribute of the bearer above rank 0 (#762): weakness's
-   * −1. Read through `rankOf` alone (ADR-0019).
+   * Added to the bearer's attributes in each scope (#762, #1941): weakness's
+   * −1 to all, Glyph of Elemental Power's +2 to the elemental ones. A
+   * negative one never lowers a rank bought at 0. Read through `rankOf`
+   * alone (ADR-0019).
    */
-  readonly attributeDelta: number;
+  readonly attributeDeltas: readonly AttributeDelta[];
+  /**
+   * The bearer's rank in a set of attributes, whatever its sheet, runes
+   * and deltas say (#1929): Wail of Doom's "all of target foe's
+   * attributes are 0", Master of Magic's "your elemental attributes are
+   * set to 13". The newest such status wins. Read through `rankOf`
+   * alone. `undefined`: none.
+   */
+  readonly attributeSet: AttributeSet | undefined;
+  /**
+   * The bearer's next `spells` spells not of `attributeId` scale with its
+   * rank in `attributeId` instead of their own attribute (#1929): Signet of
+   * Illusions' "your next 3 non-Illusion spells use your Illusion
+   * attribute". A spell spends one as it finishes. `undefined`: none.
+   */
+  readonly borrowsAttribute: BorrowedAttribute | undefined;
   /**
    * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed
    * doubles it. A signet or any other skill that is not a spell ignores
@@ -384,6 +432,20 @@ export interface StatusDefinition {
    * bearer, and an ally's spell or a foe's non-spell is left alone.
    */
   readonly untargetableByFoeSpells: boolean;
+  /**
+   * A foe's spell whose chosen target is the bearer fails as it finishes
+   * (#1951): Shadow Form's "hostile spells that target you fail". It is
+   * paid for and recharges, as an interrupted one, and does nothing else.
+   * Unlike `untargetableByFoeSpells` it may be started; an area or a
+   * splash still reaches the bearer.
+   */
+  readonly foeSpellsFail: boolean;
+  /**
+   * Every blow at the bearer misses (#1951): Shadow Form's "attacks
+   * against you miss", as a blind attacker's miss, never a block, so
+   * nothing that answers a block fires.
+   */
+  readonly attacksAgainstMiss: boolean;
   /**
    * The bearer can hold no enchantment (#1732): Well of the Profane's
    * "stripped of all enchantments and cannot be the target of further
@@ -481,6 +543,12 @@ export interface StatusDefinition {
    * miss or a block.
    */
   readonly onAttackHit: AttackHitRider | undefined;
+  /**
+   * Effects on whoever blocks one of the bearer's physical attacks while
+   * it lasts (#1974), shaped as `onAttackHit`: Glass Arrows' Bleeding on
+   * a foe that blocked an arrow. A miss is no block, so it adds nothing.
+   */
+  readonly onAttackBlocked: AttackHitRider | undefined;
   /**
    * It ends after this many of the bearer's hits with a weapon of
    * `weapon` (#939): Sand Shards' "the next 4 times you hit with a
@@ -599,7 +667,7 @@ export interface StatusDefinition {
    */
   readonly immuneTo: readonly StatusId[];
   /**
-   * Multiplier on the damage the bearer takes (#919): Frenzy's 2, Dark
+   * Multiplier on the damage the bearer takes (#919): Frenzy's 1.6, Dark
    * Escape's 0.5. Applied to every damage packet after armor; health
    * loss and degeneration never pass through it.
    */
@@ -625,6 +693,22 @@ export interface StatusDefinition {
    */
   readonly damageReductionWhileCasting:
     { readonly skillType: SkillType; readonly amount: number } | undefined;
+  /**
+   * Damage from a dealer carrying a hex of `attributeId` is cut by
+   * `fraction` (#1951): Mist Form's "33% less damage from foes under a
+   * Water Magic hex". Read as each packet lands, after every other
+   * mitigation; several multiply. `undefined`: none.
+   */
+  readonly damageReductionFromHexedSource:
+    { readonly attributeId: string; readonly fraction: number } | undefined;
+  /**
+   * Damage of `type` the bearer takes is multiplied by `multiplier` (#1964):
+   * Mantra of Flame's "fire damage you take is reduced by 45%", 0.55.
+   * Read as each packet lands, after `damageTakenMultiplier`, of the type
+   * as taken (after `elementalDamageTakenAs`). `undefined`: none.
+   */
+  readonly damageTypeTakenMultiplier:
+    { readonly type: DamageType; readonly multiplier: number } | undefined;
   /**
    * The bearer is destroyed when this runs its time (#1827), as
    * `destroy-target-spirit` destroys: no corpse, no killer, no morale.
@@ -748,6 +832,15 @@ export interface StatusDefinition {
    */
   readonly uninterruptible: boolean;
   /**
+   * Stops an interrupt of the bearer's cast or swing (#1964), checked
+   * after `uninterruptible`, which spends nothing. `once`: Mantra of
+   * Concentration's "the next time you would be interrupted, you are not",
+   * and it ends. `pay-energy`: Mantra of Resolve's, `amount` Energy a
+   * stop, and with less the status ends and the interrupt lands. A
+   * knockdown is no interrupt and goes by. `undefined`: none.
+   */
+  readonly interruptGuard: InterruptGuard | undefined;
+  /**
    * The bearer's conditions run out this much faster (#1464): Pure Was Li
    * Ming's 0.5 takes `dt × 1.5` off each a tick. Hexes and enchantments
    * keep their rate.
@@ -850,6 +943,13 @@ export type StatusTriggerEvent =
    */
   | "bearer-attack-begins"
   | "bearer-uses-skill"
+  /**
+   * A hex the bearer put on a foe landed, new or renewed (#1951): once per
+   * foe, an area hex's too, of `StatusTrigger.appliedHex`'s attributes.
+   * Elemental Flame's "whenever you apply an Elemental hex". Recorded on
+   * the hexed foe, and fired at the drain, at it.
+   */
+  | "bearer-applies-hex"
   | "bearer-hits"
   /**
    * One of the bearer's blows did not land (#1332): it missed on a roll
@@ -972,6 +1072,13 @@ export type StatusTriggerEvent =
    */
   | "bearer-energy-empty"
   /**
+   * The bearer's whole Energy dropped to 0 (#1956): checked as
+   * `bearer-energy-empty`, when it is below 1 and had at least 1 at the
+   * last check, so once per drop. Famine's "reaches 0 Energy".
+   * A dead bearer never answers.
+   */
+  | "bearer-energy-drops-empty"
+  /**
    * The bearer died while it was on (#1762): only what a death ends,
    * never an expiry or a removal earlier in the same tick. GW1's "if
    * target foe dies while hexed with this". `ends` and `ends-early`
@@ -1037,6 +1144,10 @@ export interface SkillArmorPenetration {
   readonly share: number;
   readonly profession: ProfessionId;
 }
+
+/** `StatusDefinition.interruptGuard` (#1964). */
+export type InterruptGuard =
+  { readonly kind: "once" } | { readonly kind: "pay-energy"; readonly amount: number };
 
 /** `StatusDefinition.failsNextSpell` (#1475). */
 export interface FailsNextSpell {
@@ -1188,6 +1299,8 @@ export interface StatusTrigger {
    * struck the killing blow.
    * Or `healer` (#1913): the status's source turns on whoever healed the
    * bearer, only a foe of the source's, as Soul Bind hurts the healer.
+   * Or `hexed-foe` (#1951): the bearer turns on the foe its hex just
+   * landed on, as Elemental Flame sets it on fire.
    */
   readonly effects: readonly TriggerEffect[];
   readonly target:
@@ -1197,7 +1310,8 @@ export interface StatusTrigger {
     | "created"
     | "gained-source"
     | "source-on-offender"
-    | "healer";
+    | "healer"
+    | "hexed-foe";
   /**
    * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
    * only for an attack made with a weapon of this class in the bearer's
@@ -1227,6 +1341,13 @@ export interface StatusTrigger {
    */
   readonly damageType?: DamageType;
   /**
+   * On `bearer-takes-damage-from-foe` only (#1931): it fires only while the
+   * bearer is using a skill, never mid-swing nor idle, as Spinal Shivers'
+   * "whenever target foe is struck for cold damage while using a skill".
+   * Absent: whatever the bearer is doing.
+   */
+  readonly whileUsingSkill?: true;
+  /**
    * On `bearer-takes-damage-from-foe` only (#1754): it fires only for one
    * packet of damage that took more than this much health, never for a
    * life steal, as Spirit Bond's "whenever target ally takes more than 50
@@ -1240,17 +1361,23 @@ export interface StatusTrigger {
    */
   readonly healthBelow?: number;
   /**
+   * On `bearer-applies-hex`, and only there (#1951): the hex's attribute
+   * must be in `attributes`, as Elemental Flame's "Elemental hex".
+   */
+  readonly appliedHex?: { readonly attributes: AttributeScope };
+  /**
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
    * Pride's. With `adrenal`, only one paid for in adrenaline (#1592): Rage of
-   * the Ntouka's "whenever you use an adrenal skill". With `attribute`, only
-   * a skill of that attribute (#1614): Fire Attunement's "each time you use
-   * Fire Magic". Absent: any skill.
+   * the Ntouka's "whenever you use an adrenal skill". With `attributes`,
+   * only a skill of an attribute in that scope (#1614, #1951): Fire
+   * Attunement's "each time you use Fire Magic", Mist Form's "elemental
+   * spell". On `bearer-casts-spell` too. Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
-    readonly attribute?: string;
+    readonly attributes?: AttributeScope;
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
@@ -1295,7 +1422,7 @@ export interface SpreadGainedConditionEffect {
 /**
  * An echo's copy (#469): the trigger's own skill's slot holds the skill the
  * bearer just used, for `seconds`, then gives it back. Only a spell, with
- * `spellsOnly`; never another echo skill (`isEchoSkill`). The simulation's
+ * `spellsOnly`; never another copier (`copiesSkill`). The simulation's
  * trigger context names the skill used.
  */
 export interface EchoEffect {
@@ -1315,11 +1442,25 @@ export interface CancelAttackEffect {
 }
 
 /**
- * What a trigger can do: any skill effect, Contagion's spread, an echo or
- * a cancelled attack.
+ * Spinal Shivers' price (#1931): the status's source loses `amount` Energy,
+ * or, with less than that or dead, the status ends and the trigger's
+ * remaining effects do not happen: "the hex ends if its caster dies".
+ */
+export interface PayEnergyOrEndEffect {
+  readonly kind: "pay-energy-or-end";
+  readonly amount: number;
+}
+
+/**
+ * What a trigger can do: any skill effect, Contagion's spread, an echo,
+ * a cancelled attack or a price its source pays to keep it.
  */
 export type TriggerEffect =
-  SkillEffect | SpreadGainedConditionEffect | EchoEffect | CancelAttackEffect;
+  | SkillEffect
+  | SpreadGainedConditionEffect
+  | EchoEffect
+  | CancelAttackEffect
+  | PayEnergyOrEndEffect;
 
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
@@ -1344,6 +1485,13 @@ export type StatusChange =
       readonly sourceId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /** The bearer's hex `id` landed on `hexedId`, new or renewed (#1951). */
+  | {
+      readonly kind: "applied-hex";
+      readonly id: StatusId;
+      readonly hexedId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
   | {
       readonly kind: "broke-hex";
       readonly statusId: StatusId;
@@ -1360,6 +1508,8 @@ export type StatusChange =
       readonly death: boolean;
       /** Where its source returns to (`returnsSource`, #1826); `null` for no return. */
       readonly returnPoint: Vec2 | null;
+      /** Whom its source steps to (`stepsToTarget`, #1930); `null` for no step. */
+      readonly stepTargetId: string | null;
     }
   /** An enchantment `id` left the bearer, alive (#1437), with the triggers that answered. */
   | {
@@ -1459,10 +1609,50 @@ export interface PipsPerEnchantment {
   readonly max: number;
 }
 
-/** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
+/**
+ * A glyph's hold on the next spells: how many, and how much cheaper
+ * (#526). With `noOvercast` they cause no Overcast (#1941): Glyph of
+ * Energy's.
+ */
 export interface NextSpells {
   readonly count: number;
   readonly costReduction: number;
+  readonly noOvercast: boolean;
+}
+
+/**
+ * Which attributes a set or a delta holds (#1929, #1941): `all` of them,
+ * the bearer's `primary` one, the four `elemental` ones, every one of a
+ * `profession` (whatever the bearer's own), or one `attributeId`.
+ */
+export type AttributeScope =
+  | "all"
+  | "primary"
+  | "elemental"
+  | { readonly profession: ProfessionId }
+  | { readonly attributeId: string };
+
+/** What a status adds to the bearer's attributes in `scope` (#1941). */
+export interface AttributeDelta {
+  readonly scope: AttributeScope;
+  readonly amount: number;
+}
+
+/**
+ * An `attributeSet`'s rank over its `scope` (#1929). With `plusEquipment`
+ * the runes and headgear still add theirs, as Wail of Doom leaves them;
+ * without, they are overridden too, as Master of Magic overrides them.
+ */
+export interface AttributeSet {
+  readonly scope: AttributeScope;
+  readonly rank: number;
+  readonly plusEquipment: boolean;
+}
+
+/** A borrowed attribute's hold on the bearer's next spells (#1929). */
+export interface BorrowedAttribute {
+  readonly attributeId: string;
+  readonly spells: number;
 }
 
 /**
@@ -1503,6 +1693,17 @@ export interface NextSkillRule {
   readonly rechargesInstantly: boolean;
   /** The bearer's Energy goes to 0 once that skill is paid for (#1730). */
   readonly losesAllEnergy: boolean;
+  /**
+   * That skill, if of `type`, recharges `fraction` faster (#1941): Ritual
+   * Lord's binding ritual, 50%. `undefined`: none.
+   */
+  readonly rechargeFasterIfType:
+    { readonly type: SkillType; readonly fraction: number } | undefined;
+  /**
+   * `skillId`, the skill that applied it, recharges at once when that
+   * skill is of this type (#1941): Ritual Lord's binding ritual.
+   */
+  readonly resetsOwnRechargeIfType: SkillType | undefined;
   /** The skill the log names it after: "paragon.song-of-concentration". */
   readonly skillId: string;
 }
@@ -1572,6 +1773,8 @@ export interface ActiveStatus {
   attacksMadeLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
+  /** Spells still to borrow an attribute for (`borrowsAttribute`); `undefined`: none. */
+  castsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
   skillsLeft: number | undefined;
   /** Own skills still to touch before it ends (`OwnSkillModifier.uses`); `undefined`: no such limit. */
@@ -1583,6 +1786,11 @@ export interface ActiveStatus {
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
+  /**
+   * The skill that put it on (#1928): what Inspired Hex's copy is of.
+   * `undefined` for one a trigger, a zone or a spirit put on.
+   */
+  readonly sourceSkillId: string | undefined;
   /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
   outbreak: Outbreak | null;
   /**
@@ -1603,6 +1811,17 @@ export interface ActiveStatus {
    * (#1826), as `apply` or `maintain` put it up; `null` for every other, and for one replaced.
    */
   returnPoint: Vec2 | null;
+  /**
+   * The ally its source steps to as it ends, for a `stepsToTarget` status
+   * (#1930), as `maintain` put it up; `null` for every other.
+   */
+  readonly stepTargetId: string | null;
+}
+
+/** A status `removeByCategory` took off, and the skill that put it on (#1928). */
+export interface RemovedStatus {
+  readonly id: StatusId;
+  readonly sourceSkillId: string | undefined;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -1678,6 +1897,7 @@ export class StatusSet {
           expired,
           death,
           returnPoint: status.returnPoint,
+          stepTargetId: status.stepTargetId,
         });
         if (!death) {
           this.#lostEnchantment(id);
@@ -1756,6 +1976,18 @@ export class StatusSet {
   }
 
   /**
+   * The bearer's hex `id` landed on `hexedId` (#1951), recorded only if a
+   * status on it answers that, with the triggers that do; which of them
+   * answer a hex of `id`'s attribute is the firing's to say.
+   */
+  public recordAppliedHex(id: StatusId, hexedId: string): void {
+    const fired = this.#answering("bearer-applies-hex");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "applied-hex", id, hexedId, fired });
+    }
+  }
+
+  /**
    * The bearer was knocked down (#1873), recorded only if a status on it
    * answers that, with the triggers that do.
    */
@@ -1791,14 +2023,15 @@ export class StatusSet {
    * life steal from `offenderId`, a foe (#1022), recorded only if a status
    * on it answers that, with the triggers that do: one with a `damageType`
    * answers only that type (#1540), one with a `minDamage` only damage
-   * above it (#1754). A status already waiting to answer
-   * one, undrained, does not answer another: it fires once, at the first
-   * foe.
+   * above it (#1754), one `whileUsingSkill` only while
+   * `usingSkill` (#1931). A status already waiting to answer one, undrained,
+   * does not answer another: it fires once, at the first foe.
    */
   public recordDamageFromFoe(
     offenderId: string,
     type: DamageType | undefined,
     amount: number,
+    usingSkill: boolean,
   ): void {
     const pending = new Set(
       this.#changes.flatMap((change) =>
@@ -1809,7 +2042,8 @@ export class StatusSet {
       ({ statusId, trigger }) =>
         !pending.has(statusId) &&
         (trigger.damageType === undefined || trigger.damageType === type) &&
-        (trigger.minDamage === undefined || (type !== undefined && amount > trigger.minDamage)),
+        (trigger.minDamage === undefined || (type !== undefined && amount > trigger.minDamage)) &&
+        (trigger.whileUsingSkill === undefined || usingSkill),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });
@@ -2031,6 +2265,7 @@ export class StatusSet {
     appliedSeconds: number,
     sourceId: string,
     returnPoint: Vec2 | null = null,
+    sourceSkillId?: string,
   ): boolean {
     if (appliedSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return false;
@@ -2042,9 +2277,14 @@ export class StatusSet {
         ? appliedSeconds * this.#chantShoutDurationMultiplier()
         : appliedSeconds;
     const exclusive = EXCLUSIVE_CATEGORIES.has(definition.category);
-    // A recast that replaces it: its source does not return (#1826).
+    // A recast that replaces it: its source does not return (#1826), but
+    // from where the new one does, when that one keeps its spot (#1930).
+    let returnsTo = returnPoint;
     const replaced = this.#statuses.get(id);
     if (replaced !== undefined && (exclusive || replaced.remainingSeconds < durationSeconds)) {
+      if (definition.returnsSource?.recastKeepsPoint === true && replaced.returnPoint !== null) {
+        returnsTo = replaced.returnPoint;
+      }
       replaced.returnPoint = null;
     }
     if (exclusive) {
@@ -2061,6 +2301,7 @@ export class StatusSet {
       existing.outbreak = outbreak;
       // A recast signet starts its count again (#1916), never adds to it.
       existing.attacksMadeLeft = definition.endsAfterAttackCount;
+      existing.castsLeft = definition.borrowsAttribute?.spells;
       this.#statuses.set(id, existing);
       return false;
     }
@@ -2073,15 +2314,18 @@ export class StatusSet {
       unblockableLeft: definition.unblockableAttacks,
       attacksMadeLeft: definition.endsAfterAttackCount,
       spellsLeft: definition.nextSpells?.count,
+      castsLeft: definition.borrowsAttribute?.spells,
       skillsLeft: definition.nextSkill?.count,
       ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
       sourceId,
+      sourceSkillId,
       outbreak,
       maintained: null,
       projected: false,
-      returnPoint: definition.returnsSource === undefined ? null : returnPoint,
+      returnPoint: definition.returnsSource === undefined ? null : returnsTo,
+      stepTargetId: null,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -2132,15 +2376,18 @@ export class StatusSet {
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId: undefined,
       outbreak,
       maintained: null,
       projected: false,
       returnPoint: null,
+      stepTargetId: null,
     });
     this.#gained(id, durationSeconds);
     this.#gainedHexOrEnchantment(id, sourceId);
@@ -2153,12 +2400,16 @@ export class StatusSet {
    * is the newest, as `apply` makes it. Returns whether it is newly on the
    * bearer; one that is ends what `apply` would end. Throws for a status that is not an enchantment: a catalog bug,
    * not data.
+   * `stepTargetId` is the ally a `stepsToTarget` status steps its source
+   * to (#1930).
    */
   public maintain(
     id: StatusId,
     sourceId: string,
     seq: number,
     returnPoint: Vec2 | null = null,
+    stepTargetId: string | null = null,
+    sourceSkillId?: string,
   ): boolean {
     const definition = getStatusDefinition(id);
     if (definition.category !== "enchantment") {
@@ -2174,15 +2425,18 @@ export class StatusSet {
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
       returnPoint: definition.returnsSource === undefined ? null : returnPoint,
+      stepTargetId: definition.stepsToTarget === undefined ? null : stepTargetId,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -2210,15 +2464,18 @@ export class StatusSet {
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId: undefined,
       outbreak: null,
       maintained: null,
       projected: true,
       returnPoint: null,
+      stepTargetId: null,
     });
     const definition = getStatusDefinition(id);
     this.#endOnGaining(definition.category);
@@ -2357,8 +2614,9 @@ export class StatusSet {
 
   /**
    * Remove up to `count` statuses of a category — the shape every
-   * "remove a condition"/"strip an enchantment" skill needs. Returns the
-   * ids actually removed, so a caller can report exactly what it stripped.
+   * "remove a condition"/"strip an enchantment" skill needs. Returns what
+   * it actually removed, so a caller can report exactly what it stripped,
+   * and the skill that put each on, for one that copies it (#1928).
    *
    * The newest applied goes first, as in GW1 (#521), where covering an
    * important enchantment or condition with a cheaper one is a tactic.
@@ -2371,8 +2629,8 @@ export class StatusSet {
     count = Number.POSITIVE_INFINITY,
     profession?: ProfessionId,
     statusId?: StatusId,
-  ): StatusId[] {
-    const removed: StatusId[] = [];
+  ): RemovedStatus[] {
+    const removed: RemovedStatus[] = [];
     for (const status of [...this.#statuses.values()].reverse()) {
       if (removed.length >= count) {
         break;
@@ -2383,10 +2641,10 @@ export class StatusSet {
         (profession === undefined || definition.profession === profession) &&
         (statusId === undefined || status.id === statusId)
       ) {
-        removed.push(status.id);
+        removed.push({ id: status.id, sourceSkillId: status.sourceSkillId });
       }
     }
-    this.#end(removed);
+    this.#end(removed.map(({ id }) => id));
     return removed;
   }
 
@@ -2626,6 +2884,42 @@ export class StatusSet {
   }
 
   /**
+   * What the bearer's spell `skill` scales with instead of its own
+   * attribute (#1929): the newest `borrowsAttribute` with a use left, if
+   * `skill` is a spell of another attribute. A skill of no attribute
+   * scales with nothing to borrow for.
+   */
+  public borrowedFor(skill: Skill): StatusId | undefined {
+    if (!isSpell(skill.type) || skill.attributeId === undefined) {
+      return undefined;
+    }
+    return [...this.#statuses.values()]
+      .reverse()
+      .find(
+        ({ id, castsLeft }) =>
+          castsLeft !== undefined &&
+          getStatusDefinition(id).borrowsAttribute?.attributeId !== skill.attributeId,
+      )?.id;
+  }
+
+  /**
+   * The bearer finished a spell that borrowed through `id` (#1929): one
+   * use fewer, and at none it ends. Returns the ids that ended on it.
+   */
+  public spendBorrowed(id: StatusId): StatusId[] {
+    const status = this.#statuses.get(id);
+    if (status?.castsLeft === undefined) {
+      return [];
+    }
+    status.castsLeft -= 1;
+    if (status.castsLeft > 0) {
+      return [];
+    }
+    this.#end([id]);
+    return [id];
+  }
+
+  /**
    * The bearer used `skill` (#1483): every status whose `nextSkill`
    * answers its kind counts it, but those in `spared`, which that skill
    * put on its own user (#999), so a chant never answers its own use.
@@ -2746,6 +3040,19 @@ export class StatusSet {
   }
 
   /**
+   * An interrupt was stopped (#1964): every status whose `interruptGuard`
+   * is `once`, Mantra of Concentration's, is gone. Returns the ids that
+   * ended on it.
+   */
+  public endOnInterruptGuarded(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).interruptGuard?.kind === "once")
+      .map(({ id }) => id);
+    this.#end(ended);
+    return ended;
+  }
+
+  /**
    * A knockdown was stopped (#845): every status that ends when it stops
    * one is gone. Returns the ids that ended on it.
    */
@@ -2853,6 +3160,11 @@ export class StatusSet {
  */
 export function untargetableByFoeSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
   return statuses.some(({ id }) => getStatusDefinition(id).untargetableByFoeSpells);
+}
+
+/** Whether every blow at the bearer misses (#1951, `attacksAgainstMiss`). */
+export function attacksAgainstMiss(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).attacksAgainstMiss);
 }
 
 /**
@@ -2990,12 +3302,17 @@ export interface StatusModifiers {
   readonly maxHealthBonus: number;
   /** Every status's, summed (#1464). */
   readonly maxEnergyBonus: number;
+  /** Every status's, summed (#1915). */
+  readonly minionDamageBonus: number;
   /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
   readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
   /** Every status's, summed (#1064). */
   readonly physicalDamageTakenBonus: number;
-  readonly attributeDelta: number;
+  /** Every status's `attributeDeltas`, in `active` order (#1941). */
+  readonly attributeDeltas: readonly AttributeDelta[];
+  /** Every status's `attributeSet`, oldest first (#1929). */
+  readonly attributeSets: readonly AttributeSet[];
   readonly castTimeMultiplier: number;
   /** Every status's, multiplied (#1473). */
   readonly skillActivationMultiplier: number;
@@ -3130,10 +3447,12 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let maxHealthLoss: MaxHealthLoss | undefined;
   let maxHealthBonus = 0;
   let maxEnergyBonus = 0;
+  let minionDamageBonus = 0;
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
   let physicalDamageTakenBonus = 0;
-  let attributeDelta = 0;
+  const attributeDeltas: AttributeDelta[] = [];
+  const attributeSets: AttributeSet[] = [];
   let castTimeMultiplier = 1;
   let skillActivationMultiplier = 1;
   let attackFaster = 1;
@@ -3199,10 +3518,16 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     maxHealthBonus += def.maxHealthBonus + def.maxHealthBonusPerEnchantment * enchantments;
     maxEnergyBonus += def.maxEnergyBonus;
+    minionDamageBonus += def.minionDamageBonus;
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
-    attributeDelta += def.attributeDelta;
+    for (const delta of def.attributeDeltas) {
+      attributeDeltas.push(delta);
+    }
+    if (def.attributeSet !== undefined) {
+      attributeSets.push(def.attributeSet);
+    }
     castTimeMultiplier *= def.castTimeMultiplier;
     skillActivationMultiplier *= def.skillActivationMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
@@ -3275,10 +3600,12 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     maxHealthLoss,
     maxHealthBonus,
     maxEnergyBonus,
+    minionDamageBonus,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
     physicalDamageTakenBonus,
-    attributeDelta,
+    attributeDeltas,
+    attributeSets,
     castTimeMultiplier,
     skillActivationMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,

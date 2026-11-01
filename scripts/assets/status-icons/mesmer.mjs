@@ -9,6 +9,22 @@ export const MESMER_STATUS_ICONS = {
       `<path d="M16.5 10.5A5 5 0 1 0 17 15" ${stroke(c, 2)}/>` +
       `<path d="M14 9.5l3.5-1 .5 3.5z" fill="${c}"/>`,
   ],
+  // Mantras (#1964), stand-ins until their art card.
+  // Stance: a ring unbroken, the next interrupt shrugged off.
+  "mantra-of-concentration": ["stance", (c) => `<circle cx="12" cy="13" r="5" ${stroke(c, 2.2)}/>`],
+  // Stance: a bolt through a bar, Energy paid to stay uninterrupted.
+  "mantra-of-resolve": [
+    "stance",
+    (c) => `<path d="M13 6l-4 7h5l-3 6" ${stroke(c, 2)}/><path d="M6 13h12" ${stroke(c, 1.6)}/>`,
+  ],
+  // Stance: an element's mark under a bar, its damage cut.
+  "mantra-of-earth": ["stance", (c) => `<path d="M7 17l3-7 4 2 3 5z" fill="${c}"/>`],
+  "mantra-of-flame": ["stance", (c) => `<path d="M12 7c3 3 3 6 0 10c-3-4-3-7 0-10z" fill="${c}"/>`],
+  "mantra-of-frost": [
+    "stance",
+    (c) => `<path d="M12 7v10M7.5 9.5l9 5M7.5 14.5l9-5" ${stroke(c, 1.8)}/>`,
+  ],
+  "mantra-of-lightning": ["stance", (c) => `<path d="M13 6l-4 7h5l-3 6" ${stroke(c, 2)}/>`],
   // Hex: an arrow turning back on itself, a spell that hurts its caster (#469).
   backfire: [
     "hex",
@@ -225,5 +241,36 @@ export const MESMER_STATUS_ICONS = {
     (c) =>
       `<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z" ${stroke(c, 2)}/>` +
       `<path d="M9 8l6 8M15 8l-6 8" ${stroke(c, 1.8)}/>`,
+  ],
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  // Hex: a bolt drawn out of a drop, each spell leaks Energy.
+  "power-leech": [
+    "hex",
+    (c) =>
+      `<path d="M12 3c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 9l-3 4h4l-3 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a drop over two down chevrons, Energy draining away.
+  "power-flux": [
+    "hex",
+    (c) =>
+      `<path d="M12 3c2 2.6 3.5 4.3 3.5 6a3.5 3.5 0 0 1-7 0c0-1.7 1.5-3.4 3.5-6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M8 15l4 3 4-3M8 19l4 3 4-3" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect (#1929), a stand-in until its art card: a mask over
+  // tally marks, spells counted down.
+  "signet-of-illusions": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 9q8-6 16 0q-8 7-16 0z" ${stroke(c, 2)}/>` +
+      `<path d="M8 17v4M12 17v4M16 17v4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Blocks that pay (#1974), a stand-in until its art card.
+  // Stance: a shield, its edge rippling away, Energy lost to each block.
+  distortion: [
+    "stance",
+    (c) =>
+      `<path d="M7 5h10v5c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7z" ${stroke(c, 2)}/>` +
+      `<path d="M4 20q2-2 4 0t4 0 4 0 4 0" ${stroke(c, 1.6)}/>`,
   ],
 };

@@ -16,6 +16,7 @@
 import { execFile, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -141,17 +142,23 @@ import {
   addEdge,
   buildKpis,
   ciKpis,
+  ciJobKpis,
   ciRunFromRest,
+  ciRunJobsFromRest,
   cpuShare,
   employeeOfUnit,
   EDGES_SCHEMA_VERSION,
   flowKpis,
   parseCiHistory,
+  parseCiJobs,
+  planCiJobs,
   parseEdges,
+  parseMeminfo,
   parseUnits,
   projectSevenDay,
   staffKpis,
   tokensByRole,
+  unreadCiRunJobs,
 } from "./kpi.mjs";
 import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
@@ -272,6 +279,8 @@ const NUDGES = path.join(HUB, "nudges.json");
 const BOARD_HISTORY = path.join(HUB, "board-history.jsonl");
 /** Every completed Actions run of the last 8 days, one JSON line each (#1612). */
 const CI_HISTORY = path.join(HUB, "ci-history.jsonl");
+/** Each run's jobs, a line per run (#1892), kept for 7 days. */
+const CI_JOBS = path.join(HUB, "ci-jobs.jsonl");
 /** The KPI snapshot (kpi.mjs), written every `KPI_EVERY_MS`; every jail reads it. */
 const KPIS = path.join(HUB, "kpis.json");
 /**
@@ -478,6 +487,8 @@ async function rest(rel, cfg) {
  */
 const NAMED_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
 const EVERY_JOB_WORKFLOWS = ["e2e-repeat.yml", "codeql.yml"];
+/** Workflows a path filter may leave unstarted: no run is then satisfied (#1884). */
+const OPTIONAL_WORKFLOWS = ["e2e-repeat.yml"];
 /** Every workflow the merge gate reads, the CI KPIs' "gate" (#1612). */
 const GATE_WORKFLOWS = [...NAMED_WORKFLOWS, ...EVERY_JOB_WORKFLOWS];
 
@@ -522,7 +533,12 @@ async function restJobs(sha, cfg, files) {
     if ("error" in runs) {
       return runs;
     }
-    const run = judgingRuns(runs.runs, { sha, repo: cfg.repo, file });
+    const run = judgingRuns(runs.runs, {
+      sha,
+      repo: cfg.repo,
+      file,
+      optional: OPTIONAL_WORKFLOWS.includes(file),
+    });
     if (!run.ok) {
       return { refusal: run.reason };
     }
@@ -1882,6 +1898,7 @@ function serveLoad(cfg) {
     stale,
     peek,
     usage: readUsage(usage, now, null)?.summary ?? null,
+    kpis: lastSnapshot,
   });
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
 }
@@ -3865,7 +3882,7 @@ async function recordCiRuns(now, cfg) {
     }
     /** @type {unknown[]} */
     const got = rows;
-    read.push(...got.flatMap((row) => ciRunFromRest(row, GATE_WORKFLOWS) ?? []));
+    read.push(...got.flatMap((row) => ciRunFromRest(row, NAMED_RUN_WORKFLOWS) ?? []));
     if (got.length < 100) {
       break;
     }
@@ -3887,6 +3904,129 @@ async function recordCiRuns(now, cfg) {
     writeAtomic(CI_HISTORY, kept.map((run) => `${JSON.stringify(run)}\n`).join(""));
   }
   return kept;
+}
+
+/**
+ * The workflows that can run on company runners (#1891), the only ones whose
+ * job waits say anything about runners (#1892). CodeQL, dependency review,
+ * audit and Pages stay hosted, so their jobs are never read.
+ */
+const RUNNER_WORKFLOWS = ["ci.yml", "e2e-repeat.yml", "e2e-soak.yml", "music-measure.yml"];
+/** The workflows `ci-history.jsonl` names; every other one is `"other"`. */
+const NAMED_RUN_WORKFLOWS = [...new Set([...GATE_WORKFLOWS, ...RUNNER_WORKFLOWS])];
+/**
+ * The most runs whose jobs one KPI tick reads (#1892); a backfill past this
+ * is reported as `coverage` until it catches up.
+ */
+const JOBS_PER_TICK = 10;
+/** A run whose jobs fail this many reads is recorded as unread, never asked for again. */
+const JOBS_MAX_FAILURES = 3;
+/** Failed jobs reads per run id, since hubd started. */
+const jobsFailures = /** @type {Map<number, number>} */ (new Map());
+/** `ci-jobs.jsonl` as read once at the first tick, and kept since; null before. */
+let ciJobsRead = /** @type {import("./kpi.mjs").CiRunJobs[] | null} */ (null);
+/** Whether a `readCiJobs` is under way. */
+let ciJobsReading = false;
+
+/**
+ * The runs' jobs read so far: `ci-jobs.jsonl`, parsed on the first call.
+ *
+ * @returns {import("./kpi.mjs").CiRunJobs[]}
+ */
+function ciJobsSoFar() {
+  ciJobsRead ??= fs.existsSync(CI_JOBS) ? parseCiJobs(fs.readFileSync(CI_JOBS, "utf8")) : [];
+  return ciJobsRead;
+}
+
+/**
+ * Start reading the jobs `planCiJobs` names next, unless a read is still
+ * under way. Never awaited: each read is a `gh api` call, and hubd's loop
+ * serves every hub command. The next tick's snapshot uses what has landed.
+ *
+ * @param {number} now
+ * @param {readonly import("./kpi.mjs").CiRun[]} runs `ci-history.jsonl`'s
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {void}
+ */
+function startCiJobs(now, runs, cfg) {
+  if (ciJobsReading) {
+    return;
+  }
+  ciJobsReading = true;
+  readCiJobs(now, runs, cfg)
+    .catch((/** @type {unknown} */ error) => {
+      console.error(`hubd: ci-jobs.jsonl: ${error instanceof Error ? error.message : "failed"}`);
+    })
+    .finally(() => {
+      ciJobsReading = false;
+    });
+}
+
+/**
+ * Drop from `ci-jobs.jsonl` the runs past 7 days, then append the jobs of
+ * the next runs, one at a time. The batch stops at the first failed read:
+ * a rate limit fails the rest too. A run that failed `JOBS_MAX_FAILURES`
+ * times is recorded with no jobs, as not whole.
+ *
+ * @param {number} now
+ * @param {readonly import("./kpi.mjs").CiRun[]} runs
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function readCiJobs(now, runs, cfg) {
+  const read = ciJobsSoFar();
+  const { keep, next } = planCiJobs({
+    now,
+    history: runs,
+    read,
+    workflows: RUNNER_WORKFLOWS,
+    cap: JOBS_PER_TICK,
+  });
+  if (keep.length < read.length) {
+    writeAtomic(CI_JOBS, keep.map((run) => `${JSON.stringify(run)}\n`).join(""));
+    ciJobsRead = keep;
+  }
+  for (const run of next) {
+    const answer = await rest(
+      `actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`,
+      cfg,
+    );
+    const jobs = ciRunJobsFromRest(run, answer);
+    const failures = jobs === null ? (jobsFailures.get(run.id) ?? 0) + 1 : 0;
+    const line = jobs ?? (failures >= JOBS_MAX_FAILURES ? unreadCiRunJobs(run) : null);
+    if (line === null) {
+      jobsFailures.set(run.id, failures);
+      return;
+    }
+    jobsFailures.delete(run.id);
+    fs.appendFileSync(CI_JOBS, `${JSON.stringify(line)}\n`);
+    ciJobsRead = [...ciJobsSoFar(), line];
+    if (jobs === null) {
+      return;
+    }
+  }
+}
+
+/**
+ * The host's instant load (#1892): CPUs, load averages, memory, and the free
+ * disk under the hub's directory.
+ *
+ * @returns {NonNullable<import("./kpi.mjs").Kpis["machine"]>}
+ */
+function sampleMachine() {
+  const memory = parseMeminfo(fs.readFileSync("/proc/meminfo", "utf8"));
+  if (memory === null) {
+    throw new Error("/proc/meminfo has no MemTotal or MemAvailable");
+  }
+  const [load1 = 0, load5 = 0, load15 = 0] = os.loadavg();
+  return {
+    cpus: os.availableParallelism(),
+    load1,
+    load5,
+    load15,
+    ...memory,
+    hubDiskFreeBytes: freeBytes(HUB),
+  };
 }
 
 /**
@@ -3933,6 +4073,9 @@ function readWaits(staff) {
   }
   return waits;
 }
+
+/** The last snapshot written, for `company load`; null before the first. */
+let lastSnapshot = /** @type {import("./kpi.mjs").Kpis | null} */ (null);
 
 /**
  * Write `kpis.json` (#891). A section that cannot be read is `null` with its
@@ -4034,8 +4177,20 @@ async function writeKpis(cfg) {
         const { done7d } = flowKpis({ now, moves: history, cards: [], waits, staff: roles });
         return ciKpis({ now, runs: ciRuns, moves: history, done7d, gate: GATE_WORKFLOWS });
       },
+      ciJobs: () => {
+        if (ciRuns instanceof Error) {
+          throw ciRuns;
+        }
+        const wanted = ciRuns.filter((run) => RUNNER_WORKFLOWS.includes(run.workflow));
+        return ciJobKpis(now, ciJobsSoFar(), wanted);
+      },
+      machine: sampleMachine,
     });
     writeAtomic(KPIS, JSON.stringify(kpis));
+    lastSnapshot = kpis;
+    if (!(ciRuns instanceof Error)) {
+      startCiJobs(now, ciRuns, cfg);
+    }
   } catch (error) {
     console.error(`hubd: kpis.json: ${error instanceof Error ? error.message : "failed"}`);
   }

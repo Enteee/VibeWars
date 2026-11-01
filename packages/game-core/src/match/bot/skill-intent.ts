@@ -1,7 +1,9 @@
+import type { DamageType } from "../../equipment/types.js";
 import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
-import type { StatusCategory } from "../../skills/status.js";
+import { copiesSkill } from "../../skills/stand-in.js";
+import { getStatusDefinition, type StatusCategory, type StatusId } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -16,9 +18,10 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, and raising the dead.
+ * skill, raising the dead, and a way out (#1930).
  */
-export type BotUse = "interrupt" | "healing" | "defence" | "removal" | "resurrect" | "offence";
+export type BotUse =
+  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -33,18 +36,48 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (roles.includes("interrupt")) uses.push("interrupt");
   if (roles.includes("healing")) uses.push("healing");
   if (roles.includes("defence")) uses.push("defence");
+  if (escapes(skill)) uses.push("escape");
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
+  // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
-    roles.includes("hex") ||
-    roles.includes("condition") ||
-    roles.includes("knockdown") ||
-    skill.attack !== undefined ||
-    skill.effects.some(dealsDamage)
+    skill.target !== "allied-minion" &&
+    (roles.includes("hex") ||
+      roles.includes("condition") ||
+      roles.includes("knockdown") ||
+      skill.attack !== undefined ||
+      skill.effects.some(dealsDamage) ||
+      // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
+      // a foe is the bot's to use; Mirror of Disenchantment's strip (#1954).
+      (skill.target === "single-enemy" && copiesSkill(skill.id)) ||
+      takenOffFoe(skill) !== undefined)
   ) {
     uses.push("offence");
   }
   return uses;
+}
+
+/**
+ * A way out (#1930): a Shadow Step to a creature of the caster's side, or
+ * a swap with one, as Spirit Walk's and Swap's.
+ */
+function escapes(skill: Skill): boolean {
+  return (
+    (skill.target === "allied-spirit" || skill.target === "allied-summoned-creature") &&
+    skill.effects.some((effect) => effect.kind === "shadow-step")
+  );
+}
+
+/**
+ * A spirit for a spirit (#1947): one of the caster's side destroyed and a
+ * new one in its place, as Gaze of Fury's.
+ */
+export function renewsSpirit(skill: Skill): boolean {
+  return (
+    skill.target === "allied-spirit" &&
+    skill.effects.some((effect) => effect.kind === "destroy-target-spirit") &&
+    skill.effects.some((effect) => effect.kind === "summon")
+  );
 }
 
 /**
@@ -70,6 +103,10 @@ export function interruptAimed(
   caster: Combatant,
   foe: Combatant,
 ): "cast" | "swing" | null {
+  // A guard would stop it (#1964): Mantra of Concentration's, Resolve's.
+  if (foe.statuses.active.some(({ id }) => getStatusDefinition(id).interruptGuard !== undefined)) {
+    return null;
+  }
   const aimed = (effects: readonly SkillEffect[]): "cast" | "swing" | null => {
     for (const effect of effects) {
       const lands =
@@ -109,6 +146,24 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
 }
 
 /**
+ * The category a foe must bear for `skill` to be worth casting at it:
+ * what a copier takes off it to stand in for (#1928), Inspired
+ * Enchantment's enchantments, or what a skill that does nothing else
+ * strips (#1954), Mirror of Disenchantment's. `undefined` for any other.
+ */
+export function takenOffFoe(skill: Skill): StatusCategory | undefined {
+  if (skill.target !== "single-enemy") {
+    return undefined;
+  }
+  const removal = skill.effects.find((effect) => effect.kind === "remove-status");
+  if (removal?.kind !== "remove-status") {
+    return undefined;
+  }
+  const strips = removal.category === "enchantment" && skillRoles(skill).length === 0;
+  return copiesSkill(skill.id) || strips ? removal.category : undefined;
+}
+
+/**
  * Whether `skill`, used now by a bot at `position` with `healthFraction`
  * of its Health, would be a well's sacrifice it should not make (#1730):
  * no fresh corpse in reach, and too little Health. On a corpse it may.
@@ -140,6 +195,65 @@ export function removesFromCaster(skill: Skill): boolean {
         (effect.kind === "transfer-conditions" && effect.from === "caster") ||
         (effect.kind === "remove-status" && effect.from === "caster"),
     );
+}
+
+/**
+ * The statuses `skill` puts on its user, a stance's or an enchantment's:
+ * a self-targeted skill's `apply-status`.
+ */
+export function ownStatuses(skill: Skill): readonly StatusId[] {
+  return skill.target === "self"
+    ? skill.effects.flatMap((effect) => (effect.kind === "apply-status" ? [effect.statusId] : []))
+    : [];
+}
+
+/** Whether `skill` guards its user from an interrupt (#1964): Mantra of Concentration. */
+export function guardsInterrupt(skill: Skill): boolean {
+  return ownStatuses(skill).some((id) => getStatusDefinition(id).interruptGuard !== undefined);
+}
+
+/**
+ * The damage type `skill` cuts for its user, if it cuts one (#1964):
+ * Mantra of Flame's fire.
+ */
+export function wardedDamageType(skill: Skill): DamageType | undefined {
+  for (const id of ownStatuses(skill)) {
+    const byType = getStatusDefinition(id).damageTypeTakenMultiplier;
+    if (byType !== undefined) {
+      return byType.type;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The type most of `bar`'s damage is (#1964), by how many of its skills
+ * deal it; `undefined` with no damage or a tie. A weapon's blows are not
+ * counted: a bot reads the skills it sees.
+ */
+export function mainDamageType(bar: readonly Skill[]): DamageType | undefined {
+  const counts = new Map<DamageType, number>();
+  for (const skill of bar) {
+    const types = new Set(
+      skill.effects
+        .flatMap(flatten)
+        .flatMap((effect) => (effect.kind === "damage" ? [effect.type] : [])),
+    );
+    for (const type of types) {
+      counts.set(type, (counts.get(type) ?? 0) + 1);
+    }
+  }
+  let main: DamageType | undefined;
+  let most = 0;
+  for (const [type, count] of counts) {
+    if (count > most) {
+      main = type;
+      most = count;
+    } else if (count === most) {
+      main = undefined;
+    }
+  }
+  return main;
 }
 
 /** An `if`'s and a splash's effects, as well as the effect itself. */

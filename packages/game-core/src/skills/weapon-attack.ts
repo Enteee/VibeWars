@@ -20,6 +20,7 @@ import {
   gainEnergy,
   gainHealth,
   interruptOnHit,
+  loseHealth,
   resolveSkillEffects,
   stateHolds,
   type CombatEvent,
@@ -29,6 +30,7 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import {
   aggregateModifiers,
+  attacksAgainstMiss,
   damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
@@ -43,6 +45,7 @@ import {
   attackMissChanceOf,
   blockingStatusesOf,
   combinedBlockChance,
+  effectiveMaxHealth,
   rankOf,
   weaponDamageMultiplierOf,
 } from "./tick.js";
@@ -274,12 +277,16 @@ export function landedCritical(attacker: Combatant, rank: number, events: Combat
 }
 
 /**
- * Whether a blinded attacker's blow misses.
+ * Whether a blinded attacker's blow misses, or any blow at a `victim`
+ * that attacks against miss (#1951): Shadow Form's, never rolled.
  *
  * Rolled only when there is a chance to miss, as for attack skills, so
  * an unblinded fight's random stream does not move.
  */
-export function blindMisses(attacker: Combatant, rng: SimulationRng): boolean {
+export function blindMisses(attacker: Combatant, victim: Combatant, rng: SimulationRng): boolean {
+  if (attacksAgainstMiss(victim.statuses.active)) {
+    return true;
+  }
   const chance = attackMissChanceOf(attacker);
   return chance > 0 && rng.nextFloat() < chance;
 }
@@ -606,11 +613,80 @@ export function attackHitRiders(
   spent: readonly StatusId[],
 ): CombatEvent[] {
   const onHit = weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings);
+  applyRiders(
+    "onAttackHit",
+    attacker,
+    victim,
+    mainHand,
+    withAttackSkill,
+    rng,
+    rules,
+    surroundings,
+    fired,
+    spent,
+  );
+  const events: CombatEvent[] = [...onHit];
+  for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+  events.push(...ownerPaysForMinionHit(attacker, surroundings));
+  return events;
+}
+
+/**
+ * What the attacker's statuses do to `victim` for blocking a blow of
+ * `mainHand` (#1974): every active status's `onAttackBlocked`, as Glass
+ * Arrows' Bleeding, each onto `fired` under its own skill. Filtered as
+ * `attackHitRiders` filters, `spent` included.
+ */
+export function attackBlockedRiders(
+  attacker: Combatant,
+  victim: Combatant,
+  mainHand: ResolvedWeapon,
+  withAttackSkill: boolean,
+  rng: SimulationRng,
+  rules: CombatRules,
+  surroundings: Surroundings,
+  fired: FiredTrigger[],
+  spent: readonly StatusId[],
+): void {
+  applyRiders(
+    "onAttackBlocked",
+    attacker,
+    victim,
+    mainHand,
+    withAttackSkill,
+    rng,
+    rules,
+    surroundings,
+    fired,
+    spent,
+  );
+}
+
+/**
+ * Each of the attacker's statuses' `which` rider onto `victim`, active
+ * and `spent` alike: one for attack skills only rides a blow
+ * `withAttackSkill`, one for a weapon class only a blow of that weapon,
+ * and a non-physical blow only a weapon spell's.
+ */
+function applyRiders(
+  which: "onAttackHit" | "onAttackBlocked",
+  attacker: Combatant,
+  victim: Combatant,
+  mainHand: ResolvedWeapon,
+  withAttackSkill: boolean,
+  rng: SimulationRng,
+  rules: CombatRules,
+  surroundings: Surroundings,
+  fired: FiredTrigger[],
+  spent: readonly StatusId[],
+): void {
   const physical = isPhysicalDamage(mainHand.damageType);
   const active = attacker.statuses.active;
   for (const status of [...active, ...spent.map((id) => ({ id }))]) {
     const definition = getStatusDefinition(status.id);
-    const rider = definition.onAttackHit;
+    const rider = definition[which];
     if (
       rider === undefined ||
       isSuppressed(active, status) ||
@@ -631,11 +707,6 @@ export function attackHitRiders(
       fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
     }
   }
-  const events: CombatEvent[] = [...onHit];
-  for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
-    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
-  }
-  return events;
 }
 
 /**
@@ -862,20 +933,37 @@ function strike(
   if (victim.dead) {
     return;
   }
-  if (blindMisses(attacker, rng)) {
+  if (blindMisses(attacker, victim, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
     bearerFailedToHit(attacker, events);
     return;
   }
+  const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
   if (!unblockable && blocks(victim, attacker.id, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     bearerFailedToHit(attacker, events);
     attackReached(victim, events);
+    attackBlockedRiders(
+      attacker,
+      victim,
+      snapshot.mainHand,
+      false,
+      rng,
+      rules,
+      swing.surroundings,
+      fired,
+      attacked.spent,
+    );
     return;
   }
-  const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
   const before = victim.health;
-  if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
+  // Order of Undeath's "+13 damage" on its bearer's minions (#1915).
+  const owner = minionOwner(attacker, swing.surroundings);
+  const blow =
+    owner === undefined
+      ? PLAIN_BLOW
+      : { ...PLAIN_BLOW, bonus: aggregateModifiers(owner.statuses.active).minionDamageBonus };
+  if (landBlow(snapshot, attacker, victim, blow, swing.exposed(victim), rng, rules, events)) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
@@ -1083,7 +1171,7 @@ export function resolveAttackSkillOutcome(
       if (victim.dead) {
         continue;
       }
-      if (blindMisses(caster, rng)) {
+      if (blindMisses(caster, victim, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
         bearerFailedToHit(caster, events);
         failed.push(victim);
@@ -1097,6 +1185,17 @@ export function resolveAttackSkillOutcome(
         events.push({ kind: "attack-blocked", targetId: victim.id });
         bearerFailedToHit(caster, events);
         attackReached(victim, events);
+        attackBlockedRiders(
+          caster,
+          victim,
+          snapshot.mainHand,
+          true,
+          rng,
+          rules,
+          surroundings,
+          fired,
+          attacked.spent,
+        );
         blocked.push(victim);
         failed.push(victim);
         continue;
@@ -1159,4 +1258,38 @@ export function resolveAttackSkillOutcome(
     grounds: [],
     skipped: undefined,
   };
+}
+
+/**
+ * Whoever owns `attacker`, when it is a minion (#1915), and is still in
+ * the match; `undefined` for anything else.
+ */
+function minionOwner(attacker: Combatant, surroundings: Surroundings): Combatant | undefined {
+  const creature = surroundings.get(attacker.id)?.creature;
+  return creature?.kind === "minion" && creature.ownerId !== undefined
+    ? surroundings.get(creature.ownerId)?.combatant
+    : undefined;
+}
+
+/**
+ * A minion's hit landed (#1915): its owner loses the share of its
+ * effective maximum Health its statuses say, rounded up, as Order of
+ * Undeath's "you lose 2% of your maximum Health". Health loss, not damage
+ * or sacrifice: no armor, and it can kill.
+ */
+function ownerPaysForMinionHit(attacker: Combatant, surroundings: Surroundings): CombatEvent[] {
+  const owner = minionOwner(attacker, surroundings);
+  if (owner === undefined) {
+    return [];
+  }
+  const percent = owner.statuses.active.reduce(
+    (sum, { id }) => sum + getStatusDefinition(id).minionHitHealthLossPercent,
+    0,
+  );
+  if (percent <= 0) {
+    return [];
+  }
+  const events: CombatEvent[] = [];
+  loseHealth(owner, Math.ceil((percent / 100) * effectiveMaxHealth(owner)), "health-loss", events);
+  return events;
 }

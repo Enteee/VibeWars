@@ -232,4 +232,38 @@ export const ELEMENTALIST_STATUS_ICONS = {
       `<path d="M4 19h16" ${stroke(c, 2.4)}/>` +
       `<path d="M7 19V12M10 19V9M14 19V9M17 19V12" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment (#1929), a stand-in until its art card: four elements
+  // held level, at one rank.
+  "master-of-magic": [
+    "enchantment",
+    (c) => `<path d="M12 4l8 8-8 8-8-8z" ${stroke(c, 2)}/>` + `<path d="M8 12h8" ${stroke(c, 2)}/>`,
+  ],
+  // Glyphs (#1941), stand-ins until their art card.
+  // Glyph: a diamond of the four elements with an arrow up, boosted.
+  "glyph-of-elemental-power": [
+    "glyph",
+    (c) =>
+      `<path d="M12 4l8 8-8 8-8-8z" ${stroke(c, 2)}/>` +
+      `<path d="M12 16V9M9 11.5l3-3 3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Glyph: a bolt of energy struck through, cheaper and no Overcast.
+  "glyph-of-energy": [
+    "glyph",
+    (c) =>
+      `<path d="M13 3l-6 10h5l-1 8 6-10h-5z" ${stroke(c, 2)}/>` +
+      `<path d="M4 20L20 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // PvP forms (#1951), stand-ins until their art card.
+  // Enchantment: a flame over a hex's diamond, hexed foes set on fire.
+  "elemental-flame": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 13l6 6H6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3c3 3 3 5 0 8c-3-3-3-5 0-8z" fill="${c}"/>`,
+  ],
+  // Enchantment: three wavy lines of mist, the body turned to water.
+  "mist-form": [
+    "enchantment",
+    (c) => `<path d="M4 8q4-3 8 0t8 0M4 13q4-3 8 0t8 0M4 18q4-3 8 0t8 0" ${stroke(c, 2)}/>`,
+  ],
 };

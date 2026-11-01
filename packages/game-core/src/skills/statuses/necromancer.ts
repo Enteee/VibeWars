@@ -1,5 +1,5 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
-import type { StatusDefinition } from "../status.js";
+import type { StatusDefinition, StatusTrigger } from "../status.js";
 import type { DamageEffect } from "../types.js";
 import { define } from "./define.js";
 
@@ -53,7 +53,17 @@ export type NecromancerStatusId =
   | "vocal-minority"
   // Skill-type and heal triggers (#1913).
   | "cacophony"
-  | "soul-bind";
+  | "soul-bind"
+  // Minions 3 (#1915).
+  | "order-of-undeath"
+  | "aura-of-the-lich"
+  | "infuse-condition"
+  // Casting-state hexes (#1931).
+  | "spinal-shivers"
+  | "shivers-of-dread"
+  | "death-nova"
+  | "wail-of-doom"
+  | "atrophy";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -62,6 +72,25 @@ const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
   type: "shadow",
   armorPenetration: 0,
 };
+
+/**
+ * Spinal Shivers' answer (#1931), and its Factions copy's: a cold hit
+ * while the bearer uses a skill costs the hex's caster 4 Energy, or ends
+ * the hex, and interrupts that skill.
+ */
+function shivers(skillId: string): StatusTrigger {
+  return {
+    on: "bearer-takes-damage-from-foe",
+    damageType: "cold",
+    whileUsingSkill: true,
+    effects: [
+      { kind: "pay-energy-or-end", amount: 4 },
+      { kind: "interrupt", only: "skill" },
+    ],
+    target: "bearer",
+    skillId,
+  };
+}
 
 export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDefinition>> = {
   // Faintheartedness at rank 12: attacks 50% slower, −2 pips (GW1 PvP).
@@ -477,5 +506,72 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.soul-bind",
       },
     ],
+  }),
+  // "For 5 seconds, your minions deal +3...13...16 damage. You lose 2%
+  // maximum Health each time a minion hits" (#1915).
+  "order-of-undeath": define("order-of-undeath", "Order of Undeath", "skill-effect", {
+    profession: "necromancer",
+    minionDamageBonus: 13,
+    minionHitHealthLossPercent: 2,
+  }),
+  // "For 5...37...45 seconds, you have +1 Death Magic" (#1915).
+  "aura-of-the-lich": define("aura-of-the-lich", "Aura of the Lich", "enchantment", {
+    profession: "necromancer",
+    attributeDeltas: [{ scope: { attributeId: "necromancer.death-magic" }, amount: 1 }],
+  }),
+  // "For 15...51...60 seconds, the next conditions you would receive are
+  // transferred to your closest minion instead" (#1915).
+  "infuse-condition": define("infuse-condition", "Infuse Condition", "enchantment", {
+    profession: "necromancer",
+    redirectsConditionsToMinion: true,
+  }),
+  // Casting-state hexes (#1931). "Whenever target foe is struck for cold
+  // damage while using a skill, that skill is interrupted and you lose
+  // 8...4...3 Energy or Spinal Shivers ends": 4, at rank 12. Several cold
+  // packets in one tick answer once.
+  "spinal-shivers": define("spinal-shivers", "Spinal Shivers", "hex", {
+    profession: "necromancer",
+    triggers: [shivers("necromancer.spinal-shivers")],
+  }),
+  // Factions' copy of Spinal Shivers, the same numbers.
+  "shivers-of-dread": define("shivers-of-dread", "Shivers of Dread", "hex", {
+    profession: "necromancer",
+    triggers: [shivers("necromancer.shivers-of-dread")],
+  }),
+  // "If target ally dies, all adjacent foes take 26...85...100 damage and
+  // are Poisoned for 15 seconds": 85, the caster's foes beside the corpse.
+  "death-nova": define("death-nova", "Death Nova", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", amount: { flat: 85 }, type: "typeless", armorPenetration: 0 },
+              { kind: "apply-status", statusId: "poison", durationSeconds: 15 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.death-nova",
+      },
+    ],
+  }),
+  // "For 2...5...6 seconds, all of target foe's attributes are set to 0"
+  // (#1929): runes and headgear still add theirs.
+  "wail-of-doom": define("wail-of-doom", "Wail of Doom", "hex", {
+    profession: "necromancer",
+    attributeSet: { scope: "all", rank: 0, plusEquipment: true },
+  }),
+  // "For 3...6...7 seconds, target foe's primary attribute is reduced to 0"
+  // (#1929).
+  atrophy: define("atrophy", "Atrophy", "hex", {
+    profession: "necromancer",
+    attributeSet: { scope: "primary", rank: 0, plusEquipment: false },
   }),
 };

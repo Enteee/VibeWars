@@ -304,10 +304,11 @@ describe("Roaring Winds (#1886)", () => {
 
 describe("tooltips (#1886)", () => {
   it("say what each spirit does", () => {
-    const lines = (id: string) =>
-      describeSkill(skillOf(id), new Map([["ranger.wilderness-survival", 12]])).effects.map(
-        ({ text }) => text,
-      );
+    const ranks = new Map([
+      ["ranger.beast-mastery", 12],
+      ["ranger.wilderness-survival", 12],
+    ]);
+    const lines = (id: string) => describeSkill(skillOf(id), ranks).effects.map(({ text }) => text);
     expect(lines("ranger.edge-of-extinction")).toContain(
       "When a non-spirit dies in its range, each of its type in its range below 90% Health takes 43 damage",
     );

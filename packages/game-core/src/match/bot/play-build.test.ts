@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { PlayerBuild } from "../../build.js";
 import { AREA_ADJACENT } from "../../distances.js";
-import { resolveLoadout } from "../../equipment/resolve.js";
+import { resolveLoadout, unarmedResolvedEquipment } from "../../equipment/resolve.js";
 import { loadoutOf } from "../../join-loadout.js";
 import { ANNIHILATION_MATCH_RULES } from "../../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../../ruleset.js";
@@ -467,5 +467,184 @@ describe("play-build in a whole match (#1189)", () => {
       return t;
     }
     expect(survival(true)).toBeGreaterThan(survival(false));
+  });
+});
+
+describe("play-build's way out (#1930)", () => {
+  /** A bare body, a bot unless it is a creature. */
+  const bare = (id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    ({
+      id,
+      team,
+      skillBar: [],
+      attributeRanks: new Map(),
+      equipment: unarmedResolvedEquipment(60),
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      ...extra,
+    }) satisfies ParticipantSpec;
+  const spirit = (id: string, spawn: Vec2): ParticipantSpec =>
+    bare(id, 0, spawn, {
+      creature: {
+        ownerId: "sin",
+        kind: "spirit",
+        look: "spirit",
+        name: id,
+        expiresInSeconds: Number.POSITIVE_INFINITY,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: undefined,
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        deathBurst: undefined,
+        onDeathInRange: undefined,
+        replacedBy: undefined,
+        corpsesLeft: 0,
+        companionSkillId: undefined,
+        leaderId: undefined,
+        mode: "guard",
+      },
+    });
+  /** An assassin with Spirit Walk at `health`, a foe at its elbow, a spirit by the foe and one far off. */
+  const cornered = (health: number) => {
+    const sim = match([
+      bare("sin", 0, vec2(0, 0), { skillBar: ["assassin.spirit-walk"], behaviour: BOT }),
+      bare("foe", 1, vec2(AREA_ADJACENT, 0)),
+      spirit("near", vec2(AREA_ADJACENT, 60)),
+      spirit("far", vec2(-300, 0)),
+    ]);
+    const sin = sim.get("sin")?.combatant;
+    if (sin === undefined) throw new Error("no sin");
+    sin.health = sin.maxHealth * health;
+    return sim;
+  };
+
+  it("steps to the spirit farthest from the foe when hurt", () => {
+    expect(askBot(cornered(0.4), "sin")).toMatchObject({
+      targetId: "far",
+      useSkillId: "assassin.spirit-walk",
+    });
+  });
+
+  it("stays while it is not hurt", () => {
+    expect(askBot(cornered(0.9), "sin").useSkillId).toBeUndefined();
+  });
+});
+
+describe("play-build renews a spirit near its end (#1947)", () => {
+  const ritualist = (id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    ({
+      id,
+      team,
+      skillBar: ["ritualist.gaze-of-fury"],
+      attributeRanks: new Map([["ritualist.channeling-magic", 12]]),
+      equipment: unarmedResolvedEquipment(60),
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      ...extra,
+    }) satisfies ParticipantSpec;
+  /** `r`'s spirit with `left` of its 60 s, and a foe `foeAt` away from it. */
+  const ending = (left: number, foeAt: number) =>
+    match([
+      ritualist("r", 0, vec2(0, 0), { behaviour: BOT }),
+      ritualist("foe", 1, vec2(300 + foeAt, 0), { skillBar: [] }),
+      ritualist("s", 0, vec2(300, 0), {
+        skillBar: [],
+        creature: {
+          ownerId: "r",
+          kind: "spirit",
+          look: "spirit",
+          name: "s",
+          expiresInSeconds: left,
+          ageSeconds: 60 - left,
+          summonedAtTick: 0,
+          skillId: undefined,
+          aura: undefined,
+          onDeath: "vanish",
+          ownerDisableSeconds: 0,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+          replacedBy: undefined,
+          corpsesLeft: 0,
+          companionSkillId: undefined,
+          leaderId: undefined,
+          mode: "guard",
+        },
+      }),
+    ]);
+
+  it("casts Gaze of Fury on its own spirit with under a quarter of its life left, a foe in its reach", () => {
+    expect(askBot(ending(10, 200), "r")).toMatchObject({
+      targetId: "s",
+      useSkillId: "ritualist.gaze-of-fury",
+    });
+  });
+
+  it("leaves a spirit with most of its life, or one no foe is near", () => {
+    expect(askBot(ending(30, 200), "r").useSkillId).toBeUndefined();
+    expect(askBot(ending(10, 2000), "r").useSkillId).toBeUndefined();
+  });
+});
+
+describe("play-build raises a mantra before it is needed (#1964)", () => {
+  const mesmer = (id: string, team: number, spawn: Vec2, skillBar: string[]) =>
+    ({
+      id,
+      team,
+      skillBar,
+      attributeRanks: new Map([["mesmer.inspiration-magic", 12]]),
+      equipment: unarmedResolvedEquipment(60),
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      behaviour: team === 0 ? BOT : undefined,
+    }) satisfies ParticipantSpec;
+
+  it("Mantra of Flame against a foe in reach whose skills burn, not one whose skills freeze", () => {
+    const bar = ["mesmer.mantra-of-flame"];
+    const burning = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["elementalist.fireball", "elementalist.flare"]),
+    ]);
+    expect(askBot(burning, "m")).toMatchObject({ useSkillId: "mesmer.mantra-of-flame" });
+    const freezing = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["elementalist.ice-spikes"]),
+    ]);
+    expect(askBot(freezing, "m").useSkillId).toBeUndefined();
+  });
+
+  it("Mantra of Concentration with a long cast on its bar and an interrupter in reach", () => {
+    const bar = ["mesmer.mantra-of-concentration", "elementalist.kinetic-armor"];
+    const threatened = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["mesmer.power-spike"]),
+    ]);
+    expect(askBot(threatened, "m")).toMatchObject({
+      useSkillId: "mesmer.mantra-of-concentration",
+    });
+    const safe = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["elementalist.flare"]),
+    ]);
+    expect(askBot(safe, "m").useSkillId).not.toBe("mesmer.mantra-of-concentration");
+  });
+
+  it("aims no interrupt at a foe whose guard would stop it", () => {
+    const sim = match([
+      fighter("ranger", 0, RANGER, vec2(400, 400), {
+        behaviour: undefined,
+        skillBar: ["mesmer.power-drain"],
+      }),
+      fighter("foe", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
+    ]);
+    sim.get("foe")?.combatant.statuses.apply("mantra-of-concentration", 31, "foe");
+    sim.setTarget("foe", "ranger");
+    sim.requestSkill("foe", slotOf(ELEMENTALIST, "elementalist.chain-lightning"));
+    expect(sim.get("foe")?.combatant.cast.activeCast?.remainingSeconds).toBe(2);
+    expect(askBot(sim, "ranger").useSkillId).toBeUndefined();
   });
 });

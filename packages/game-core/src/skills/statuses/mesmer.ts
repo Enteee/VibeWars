@@ -10,6 +10,13 @@ export type MesmerStatusId =
   | "arcane-echo"
   | "echo"
   | "mantra-of-recovery"
+  // Mesmer mantras (#1964).
+  | "mantra-of-concentration"
+  | "mantra-of-resolve"
+  | "mantra-of-earth"
+  | "mantra-of-flame"
+  | "mantra-of-frost"
+  | "mantra-of-lightning"
   // Mesmer Illusion Magic (#1228).
   | "conjure-phantasm"
   | "imagined-burden"
@@ -46,7 +53,13 @@ export type MesmerStatusId =
   | "sum-of-all-fears"
   // Caster staples 2 (#1872).
   | "elemental-resistance"
-  | "physical-resistance";
+  | "physical-resistance"
+  // Casting-state hexes (#1931).
+  | "power-leech"
+  | "power-flux"
+  | "signet-of-illusions"
+  // Blocks that pay (#1974).
+  | "distortion";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -55,6 +68,30 @@ const WANDERING_EYE_DAMAGE: DamageEffect = {
   type: "typeless",
   armorPenetration: 0,
 };
+
+/**
+ * Mantra of Earth, Flame, Frost or Lightning (#1964), at rank 12: 45% less
+ * damage of `type` taken, and 2 Energy each time a foe deals it.
+ */
+function elementMantra(
+  id: MesmerStatusId,
+  name: string,
+  type: "earth" | "fire" | "cold" | "lightning",
+): StatusDefinition {
+  return define(id, name, "stance", {
+    profession: "mesmer",
+    damageTypeTakenMultiplier: { type, multiplier: 0.55 },
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        damageType: type,
+        effects: [{ kind: "energy-gain", amount: { flat: 2 } }],
+        target: "bearer",
+        skillId: `mesmer.${id}`,
+      },
+    ],
+  });
+}
 
 export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>> = {
   // "Whenever target foe casts a spell, that foe takes 35...119...140
@@ -132,6 +169,27 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     profession: "mesmer",
     spellRechargeFaster: 0.33,
   }),
+  // "For 1...31...38 seconds, the next time you would be interrupted, you
+  // are not" (#1964).
+  "mantra-of-concentration": define(
+    "mantra-of-concentration",
+    "Mantra of Concentration",
+    "stance",
+    { profession: "mesmer", interruptGuard: { kind: "once" } },
+  ),
+  // PvP: "For 5 seconds, you cannot be interrupted. Each time you would be,
+  // lose 10...5...4 Energy or Mantra of Resolve ends" (#1964).
+  "mantra-of-resolve": define("mantra-of-resolve", "Mantra of Resolve", "stance", {
+    profession: "mesmer",
+    interruptGuard: { kind: "pay-energy", amount: 5 },
+  }),
+  // "For 30...78...90 seconds, <type> damage you take is reduced by
+  // 26...45...50%, and you gain 2 Energy whenever you take <type> damage"
+  // (#1964).
+  "mantra-of-earth": elementMantra("mantra-of-earth", "Mantra of Earth", "earth"),
+  "mantra-of-flame": elementMantra("mantra-of-flame", "Mantra of Flame", "fire"),
+  "mantra-of-frost": elementMantra("mantra-of-frost", "Mantra of Frost", "cold"),
+  "mantra-of-lightning": elementMantra("mantra-of-lightning", "Mantra of Lightning", "lightning"),
 
   // Mesmer Illusion Magic (#1228), each at its rank-12 values.
   // "...target foe experiences -5 Health degeneration."
@@ -627,6 +685,53 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     conditionalArmor: [
       { amount: 40, conditions: [{ kind: "vs-physical" }] },
       { amount: -14, conditions: [{ kind: "vs-elemental" }] },
+    ],
+  }),
+  // Casting-state hexes (#1931), put on whether or not the skill's
+  // interrupt landed. "For 10 seconds, whenever target foe casts a spell,
+  // you steal up to 5...13...15 Energy": 13, at rank 12.
+  "power-leech": define("power-leech", "Power Leech", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [{ kind: "energy-steal", amount: { flat: 13 } }],
+        target: "bearer",
+        skillId: "mesmer.power-leech",
+      },
+    ],
+  }),
+  // "...target foe suffers -2 Energy degeneration for 4...9...10 seconds."
+  "power-flux": define("power-flux", "Power Flux", "hex", {
+    profession: "mesmer",
+    energyPips: -2,
+  }),
+  // "Your next 1...3...3 non-Illusion spells use your Illusion attribute
+  // instead of its normal attribute" (#1929): no duration, it lasts
+  // until its 3 are spent.
+  "signet-of-illusions": define("signet-of-illusions", "Signet of Illusions", "skill-effect", {
+    profession: "mesmer",
+    borrowsAttribute: { attributeId: "mesmer.illusion-magic", spells: 3 },
+  }),
+  // "For 1...5 seconds, you have a 75% chance to block attacks. Whenever
+  // you block an attack this way, you lose 2 Energy or Distortion ends"
+  // (#1974). The block stands either way.
+  distortion: define("distortion", "Distortion", "stance", {
+    profession: "mesmer",
+    block: { chance: 0.75, against: "all" },
+    triggers: [
+      {
+        on: "bearer-blocks-melee",
+        target: "bearer",
+        effects: [{ kind: "pay-energy-or-end", amount: 2 }],
+        skillId: "mesmer.distortion",
+      },
+      {
+        on: "bearer-blocks-projectile",
+        target: "bearer",
+        effects: [{ kind: "pay-energy-or-end", amount: 2 }],
+        skillId: "mesmer.distortion",
+      },
     ],
   }),
 };

@@ -288,4 +288,64 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M9 9a3 3 0 1 0 0 6h2M15 15a3 3 0 1 0 0-6h-2" ${stroke(c, 2.2)}/>` +
       `<path d="M9 12h6" ${stroke(c, 2)}/>`,
   ],
+  // Minions 3 (#1915), stand-ins until their art card.
+  // Skill effect: a fist over a skull, minions that hit harder.
+  "order-of-undeath": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="10" r="5" fill="${c}"/>` +
+      `<path d="M9 18v2M12 18v2M15 18v2M5 5l3 3M19 5l-3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a crowned skull, the lich.
+  "aura-of-the-lich": [
+    "enchantment",
+    (c) =>
+      `<path d="M6 8l2-4 2 3 2-3 2 3 2-3 2 4z" fill="${c}"/>` +
+      `<circle cx="12" cy="14" r="5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a drop passed along an arrow, a condition handed on.
+  "infuse-condition": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5C9 8 10 10 10 11.5a3 3 0 0 1-6 0C4 10 5 8 7 5z" fill="${c}"/>` +
+      `<path d="M12 15h8M17 12l3 3-3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  // Hex: a spine with a snowflake, cold breaks the cast.
+  "spinal-shivers": [
+    "hex",
+    (c) =>
+      `<path d="M8 3v18M5.5 6h5M5.5 10h5M5.5 14h5M5.5 18h5" ${stroke(c, 1.8)}/>` +
+      `<path d="M17 8v8M13.5 10l7 4M20.5 10l-7 4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex: a shivering figure's lines over a snowflake, the same.
+  "shivers-of-dread": [
+    "hex",
+    (c) =>
+      `<path d="M12 6v12M7 9l10 6M17 9L7 15" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 4l2 2M20 4l-2 2M4 20l2-2M20 20l-2-2" ${stroke(c, 1.6)}/>`,
+  ],
+  // Enchantment: a burst from a skull's line, the dead ally bursts.
+  "death-nova": [
+    "enchantment",
+    (c) =>
+      `<circle cx="12" cy="12" r="3.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" ${stroke(c, 1.6)}/>`,
+  ],
+  // Hex (#1929), a stand-in until its art card: a zero struck through,
+  // every attribute gone.
+  "wail-of-doom": [
+    "hex",
+    (c) =>
+      `<ellipse cx="12" cy="12" rx="5" ry="7" ${stroke(c, 2.2)}/>` +
+      `<path d="M6 19L18 5" ${stroke(c, 2)}/>`,
+  ],
+  // Hex (#1929), a stand-in until its art card: one bar fallen to the
+  // floor, the primary attribute gone.
+  atrophy: [
+    "hex",
+    (c) =>
+      `<path d="M5 19h14" ${stroke(c, 2.2)}/>` +
+      `<path d="M8 16V8M12 16V5M16 16v-1" ${stroke(c, 2)}/>`,
+  ],
 };

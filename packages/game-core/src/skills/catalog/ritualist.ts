@@ -8,7 +8,7 @@ import {
   RANGE_SPIRIT,
 } from "../../distances.js";
 import { KNOCKDOWN_SECONDS, type CreatureTemplate, type DeathBurst, type Skill } from "../types.js";
-import { attackingSpirit, protectiveSpirit } from "./shared.js";
+import { attackingSpirit, protectiveSpirit, spiritHealth } from "./shared.js";
 
 export const RITUALIST_SKILLS: readonly Skill[] = [
   {
@@ -444,9 +444,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Recuperation",
-          maxHealth: {
-            scaling: { attributeId: "ritualist.restoration-magic", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ritualist.restoration-magic", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -498,7 +496,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: attackingSpirit(
           "Pain",
           "ritualist.communing",
-          182,
+          [1, 8],
           { scaling: { attributeId: "ritualist.communing", atZero: 30, atTwelve: 126 } },
           { atZero: 5, atTwelve: 25 },
           [],
@@ -539,7 +537,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: attackingSpirit(
           "Shadowsong",
           "ritualist.communing",
-          150,
+          [1, 6],
           { flat: 30 },
           { atZero: 5, atTwelve: 17 },
           [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
@@ -580,7 +578,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: attackingSpirit(
           "Dissonance",
           "ritualist.communing",
-          182,
+          [1, 8],
           { scaling: { attributeId: "ritualist.communing", atZero: 10, atTwelve: 22 } },
           { atZero: 5, atTwelve: 17 },
           [{ kind: "interrupt" }],
@@ -621,7 +619,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: attackingSpirit(
           "Disenchantment",
           "ritualist.communing",
-          182,
+          [1, 8],
           { scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 35 } },
           { atZero: 5, atTwelve: 17 },
           [{ kind: "remove-status", category: "enchantment", count: 1 }],
@@ -663,7 +661,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: protectiveSpirit(
           "Shelter",
           "ritualist.communing",
-          182,
+          [1, 8],
           { atZero: 30, atTwelve: 54 },
           "shelter",
           "allies",
@@ -705,7 +703,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: protectiveSpirit(
           "Union",
           "ritualist.communing",
-          182,
+          [1, 8],
           { atZero: 30, atTwelve: 54 },
           "union",
           "allies",
@@ -747,7 +745,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: protectiveSpirit(
           "Displacement",
           "ritualist.communing",
-          214,
+          [1, 10],
           { atZero: 30, atTwelve: 54 },
           "displacement",
           "allies",
@@ -789,7 +787,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         creature: protectiveSpirit(
           "Earthbind",
           "ritualist.communing",
-          214,
+          [1, 10],
           { atZero: 15, atTwelve: 39 },
           "earthbind",
           "foes",
@@ -887,6 +885,87 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         },
       },
       { kind: "destroy-target-spirit" },
+    ],
+  },
+  {
+    id: "ritualist.spirit-transfer",
+    name: "Spirit Transfer",
+    gwId: 962,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "The spirit nearest you loses 5...50 Health. Target ally is healed
+    // for 5 for each point of Health lost" (#1947): any team's spirit,
+    // within earshot; 41 at rank 12, so a 205 heal.
+    effects: [
+      {
+        kind: "drain-nearest-spirit",
+        health: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 5, atTwelve: 41 },
+        },
+        healPerPoint: 5,
+      },
+    ],
+  },
+  {
+    id: "ritualist.gaze-of-fury",
+    name: "Gaze of Fury",
+    gwId: 1734,
+    type: "binding-ritual",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "allied-spirit",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP (#1947): "Destroy target allied spirit and create a level 1...10
+    // Spirit of Fury. This spirit's attacks deal 5...20 damage. This
+    // spirit dies after 30...60 seconds." Rank 0...15, so at 12: level 8,
+    // 17 damage, 54 s; it stands where the destroyed one stood, and is
+    // the caster's whoever's that was.
+    effects: [
+      { kind: "destroy-target-spirit" },
+      {
+        kind: "summon",
+        count: 1,
+        at: "target",
+        creature: attackingSpirit(
+          "Fury",
+          "ritualist.channeling-magic",
+          [1, 10],
+          { scaling: { attributeId: "ritualist.channeling-magic", atZero: 30, atTwelve: 54 } },
+          { atZero: 5, atTwelve: 17 },
+          [],
+        ),
+      },
     ],
   },
   {
@@ -1718,7 +1797,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     creature: attackingSpirit(
       "Bloodsong",
       "ritualist.channeling-magic",
-      182,
+      [1, 8],
       { scaling: { attributeId: "ritualist.channeling-magic", atZero: 30, atTwelve: 126 } },
       { atZero: 0, atTwelve: 0 },
       [
@@ -1747,7 +1826,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     creature: attackingSpirit(
       "Anguish",
       "ritualist.communing",
-      166,
+      [1, 7],
       { scaling: { attributeId: "ritualist.communing", atZero: 15, atTwelve: 39 } },
       { atZero: 5, atTwelve: 17 },
       [
@@ -1782,7 +1861,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     creature: attackingSpirit(
       "Wanderlust",
       "ritualist.communing",
-      182,
+      [1, 8],
       { scaling: { attributeId: "ritualist.communing", atZero: 30, atTwelve: 54 } },
       { atZero: 0, atTwelve: 0 },
       [
@@ -1816,7 +1895,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     creature: protectiveSpirit(
       "Soothing",
       "ritualist.communing",
-      182,
+      [1, 8],
       { atZero: 15, atTwelve: 39 },
       "soothing",
       "foes",
@@ -2402,6 +2481,36 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // is under no enchantments": the 13 is the status's.
     effects: [{ kind: "apply-status", statusId: "brutal-weapon", durationSeconds: 34 }],
   },
+  // Attributes raised (#1941).
+  {
+    id: "ritualist.ritual-lord",
+    name: "Ritual Lord",
+    gwId: 1217,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...29...35 seconds, your Ritualist attributes are boosted by
+    // 2...4 for your next skill. If that skill is a Binding Ritual, it
+    // recharges 10...50...60% faster and Ritual Lord recharges instantly"
+    // (#1941): the status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "ritual-lord", durationSeconds: 29 }],
+  },
 ];
 
 /**
@@ -2461,7 +2570,7 @@ function burstingSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: { scaling: { attributeId, atZero: 70, atTwelve: 214 } },
+    maxHealth: spiritHealth(attributeId, [1, 10]),
     armor: { flat: 51 },
     attack: undefined,
     durationSeconds: { flat: seconds },

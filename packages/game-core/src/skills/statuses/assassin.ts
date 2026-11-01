@@ -27,7 +27,13 @@ export type AssassinStatusId =
   | "shadow-fang"
   | "aura-of-displacement"
   | "shadow-meld"
-  | "shadow-of-haste";
+  | "shadow-of-haste"
+  // Shadow step 2 (#1930).
+  | "recall"
+  | "dark-prison"
+  | "shadow-walk"
+  // PvP forms (#1951).
+  | "shadow-form";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -168,7 +174,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   // 5...17...20 seconds" (#1826). Any end, a removal included.
   "shadow-fang": define("shadow-fang", "Shadow Fang", "hex", {
     profession: "assassin",
-    returnsSource: { skillId: "assassin.shadow-fang" },
+    returnsSource: { skillId: "assassin.shadow-fang", recastKeepsPoint: false },
     triggers: [
       {
         on: "ends",
@@ -182,19 +188,55 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   // original location" (#1826): worn by its caster.
   "aura-of-displacement": define("aura-of-displacement", "Aura of Displacement", "enchantment", {
     profession: "assassin",
-    returnsSource: { skillId: "assassin.aura-of-displacement" },
+    returnsSource: { skillId: "assassin.aura-of-displacement", recastKeepsPoint: false },
   }),
   // "When you stop maintaining this enchantment, you return to your
   // original location" (#1826): worn by its caster.
   "shadow-meld": define("shadow-meld", "Shadow Meld", "enchantment", {
     profession: "assassin",
-    returnsSource: { skillId: "assassin.shadow-meld" },
+    returnsSource: { skillId: "assassin.shadow-meld", recastKeepsPoint: false },
   }),
   // "You move 15% faster than normal. When Shadow of Haste ends, you
   // Shadow Step to your original location" (#1826).
   "shadow-of-haste": define("shadow-of-haste", "Shadow of Haste", "stance", {
     profession: "assassin",
     moveSpeedMultiplier: 1.15,
-    returnsSource: { skillId: "assassin.shadow-of-haste" },
+    returnsSource: { skillId: "assassin.shadow-of-haste", recastKeepsPoint: false },
+  }),
+  // "When Recall ends, you Shadow Step to the ally you targeted when you
+  // activated this skill, and all of your skills are disabled for 3
+  // seconds" (#1930): maintained on its caster, and ended by that ally
+  // leaving compass range.
+  recall: define("recall", "Recall", "enchantment", {
+    profession: "assassin",
+    stepsToTarget: { skillId: "assassin.recall", disableSeconds: 3 },
+  }),
+  // "For 1...6 seconds, that foe moves 33% slower" (#1930): 5 s.
+  "dark-prison": define("dark-prison", "Dark Prison", "hex", {
+    profession: "assassin",
+    moveSpeedMultiplier: 0.67,
+  }),
+  // "For 15 seconds, nothing happens. When this stance ends, you return to
+  // your original location" (#1930).
+  "shadow-walk": define("shadow-walk", "Shadow Walk", "stance", {
+    profession: "assassin",
+    returnsSource: { skillId: "assassin.shadow-walk", recastKeepsPoint: true },
+  }),
+  // PvP: "For 5...15 seconds, all hostile spells that target you fail and
+  // all attacks against you miss. When Shadow Form ends, lose all but
+  // 5...50 Health" (#1951): 41. Any end, a strip included; a dead bearer
+  // loses nothing.
+  "shadow-form": define("shadow-form", "Shadow Form", "enchantment", {
+    profession: "assassin",
+    foeSpellsFail: true,
+    attacksAgainstMiss: true,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "lose-health-to", keep: { flat: 41 } }],
+        target: "bearer",
+        skillId: "assassin.shadow-form",
+      },
+    ],
   }),
 };

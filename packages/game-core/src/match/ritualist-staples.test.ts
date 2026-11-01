@@ -111,12 +111,12 @@ function sum(events: readonly CombatEvent[], kind: CombatEvent["kind"], targetId
 
 describe("the spirits' numbers at rank 12 (#1550)", () => {
   it.each([
-    [BLOODSONG, 182, 126],
-    [ANGUISH, 166, 39],
-    [WANDERLUST, 182, 54],
-    [SOOTHING, 182, 39],
-    [DESTRUCTION, 214, 30],
-    [LIFE, 214, 20],
+    [BLOODSONG, 190, 126],
+    [ANGUISH, 170, 39],
+    [WANDERLUST, 190, 54],
+    [SOOTHING, 190, 39],
+    [DESTRUCTION, 210, 30],
+    [LIFE, 210, 20],
   ])("%s: %i Health, %i s", (id, health, seconds) => {
     const planted = ritual(match(), id);
     expect(planted.combatant.maxHealth).toBe(health);
@@ -249,7 +249,7 @@ describe("death bursts (#1550)", () => {
     if (creature === undefined) {
       throw new Error("not a creature");
     }
-    expect(creature.deathBurst?.perSecondAlive).toBe(1);
+    expect(creature.deathBurst).toMatchObject({ perSecondAlive: 1 });
     creature.expiresInSeconds = 10.5 - creature.ageSeconds;
     expect(sum(eventsOf(stepFor(sim, 11.5), "r"), "damage", "f")).toBe(10);
     expect(

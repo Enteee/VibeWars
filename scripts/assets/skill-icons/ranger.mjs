@@ -83,12 +83,16 @@ export const RANGER_ICONS = {
   "ranger.tranquility": { glyph: "ritual-cycle", modifier: "less" },
   "ranger.toxicity": { glyph: "ritual-mud", modifier: "less" },
   "ranger.greater-conflagration": { glyph: "ritual-flame", modifier: "plus" },
-  // Nature rituals 3 (#1886): stand-ins on Winnowing's totem until their art card.
-  "ranger.edge-of-extinction": { glyph: "totem", modifier: "corpse" },
-  "ranger.pestilence": { glyph: "totem", modifier: "bleed" },
-  "ranger.energizing-wind": { glyph: "totem", modifier: "less" },
-  "ranger.primal-echoes": { glyph: "totem", modifier: "bolt" },
-  "ranger.roaring-winds": { glyph: "totem", modifier: "down" },
+  // Nature rituals 3 (#1886, #1939): Winnowing's post and a cue each.
+  "ranger.edge-of-extinction": { glyph: "ritual-skull-burst" },
+  "ranger.pestilence": { glyph: "ritual-drop-spread" },
+  "ranger.energizing-wind": { glyph: "ritual-wind-minus" },
+  "ranger.primal-echoes": { glyph: "ritual-echo" },
+  "ranger.roaring-winds": { glyph: "ritual-wind-plus" },
+  // Nature rituals 4 (#1956), stand-ins until their art card.
+  "ranger.quicksand": { glyph: "ritual-mud", modifier: "down" },
+  "ranger.famine": { glyph: "ritual-skull-burst", modifier: "down" },
+  "ranger.lacerate": { glyph: "ritual-drop-spread", modifier: "bleed" },
   // Ranger staples 4 (#1742, #1768): an arrow over a shield, barbs, a leaf, a wind curl; the rest keep a shared glyph.
   "ranger.seeking-arrows": { glyph: "arrow-over-shield", modifier: "up" },
   "ranger.barbed-arrows": { glyph: "arrow-barbed", modifier: "bleed" },
@@ -98,23 +102,27 @@ export const RANGER_ICONS = {
   "ranger.penetrating-attack": { glyph: "arrow-pierce", modifier: "up" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "ranger.sloth-hunters-shot": { glyph: "arrow-idle" },
-  // Own-skill modifiers (#1761), stand-in until its art card.
+  // Own-skill modifiers (#1761, #1855).
   "ranger.practiced-stance": { glyph: "bow-recharge" },
-  // Staples (#1869), stand-ins until their art card.
-  "ranger.hekets-rampage": { glyph: "shield-bolt", modifier: "clock" },
-  "ranger.sundering-attack": { glyph: "arrow-pierce", modifier: "plus" },
-  // Pets 2 (#1865), stand-ins until their art card.
-  "ranger.otyughs-cry": { glyph: "paw-shield", modifier: "up" },
-  "ranger.predatory-bond": { glyph: "paw-heart", modifier: "plus" },
-  "ranger.companionship": { glyph: "heal-other", modifier: "paw" },
-  "ranger.rampage-as-one": { glyph: "paw-speed", modifier: "up" },
-  "ranger.run-as-one": { glyph: "paw-speed", modifier: "self" },
-  "ranger.savage-pounce": { glyph: "paw-leap", modifier: "up" },
-  "ranger.bestial-mauling": { glyph: "blink-daze", modifier: "stun" },
-  // Shots that fly differently (#1914), stand-ins until their art card.
-  "ranger.focused-shot": { glyph: "arrow-pierce", modifier: "clock" },
-  "ranger.needling-shot": { glyph: "arrow", modifier: "half" },
-  "ranger.forked-arrow": { glyph: "volley", modifier: "less" },
-  // Next attack (#1916): stand-ins until their art.
-  "ranger.poison-tip-signet": { glyph: "flask", modifier: "self" },
+  // Staples (#1869).
+  "ranger.hekets-rampage": { glyph: "claws-rampage" },
+  "ranger.sundering-attack": { glyph: "arrow-sunder" },
+  // Shots that fly differently (#1914)
+  "ranger.focused-shot": { glyph: "arrow-focus" },
+  "ranger.needling-shot": { glyph: "arrow-needle" },
+  "ranger.forked-arrow": { glyph: "arrow-fork" },
+  // Next attack (#1916)
+  "ranger.poison-tip-signet": { glyph: "arrow-drip" },
+  // Pets 2 (#1865, #1939): the paw and what the pet does with you.
+  "ranger.otyughs-cry": { glyph: "paw-shield-cry" },
+  "ranger.predatory-bond": { glyph: "paw-bond-plus" },
+  "ranger.companionship": { glyph: "figure-paw-plus" },
+  "ranger.rampage-as-one": { glyph: "figure-paw-rampage" },
+  "ranger.run-as-one": { glyph: "figure-paw-run" },
+  "ranger.savage-pounce": { glyph: "paw-pounce-spell" },
+  "ranger.bestial-mauling": { glyph: "paw-maul" },
+  // Attributes raised (#1941)
+  "ranger.experts-dexterity": { glyph: "arrow-bars-up" },
+  // Blocks that pay off (#1974), a stand-in until its art card.
+  "ranger.glass-arrows": { glyph: "arrow-pierce", modifier: "bleed" },
 };

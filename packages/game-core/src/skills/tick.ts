@@ -2,6 +2,7 @@ import { effectiveRank } from "../attributes.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor } from "../equipment/weapons.js";
+import { getAttribute } from "../professions.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
@@ -16,6 +17,8 @@ import {
   isSuppressed,
   ownSkillBoost,
   type ArmorReduction,
+  type AttributeDelta,
+  type AttributeScope,
   type BlockRule,
   type MaxHealthLoss,
   type StatusId,
@@ -255,7 +258,10 @@ export function clampMoveSpeed(raw: number): number {
 }
 
 /** What `rankOf` reads of a combatant: a tooltip outside a match passes no statuses. */
-export type RankHolder = Pick<Combatant, "attributeRanks" | "statuses"> & {
+export type RankHolder = Pick<
+  Combatant,
+  "attributeRanks" | "borrowedAttribute" | "heldAttributeDeltas" | "statuses"
+> & {
   readonly equipment: Pick<ResolvedEquipment, "attributeBonuses">;
 };
 
@@ -266,6 +272,8 @@ export type RankHolder = Pick<Combatant, "attributeRanks" | "statuses"> & {
 export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
   return {
     attributeRanks: ranks,
+    borrowedAttribute: null,
+    heldAttributeDeltas: [],
     statuses: new StatusSet(),
     equipment: { attributeBonuses: new Map() },
   };
@@ -273,18 +281,110 @@ export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
 
 /**
  * The bearer's rank in `attributeId` right now (#762): its sheet's, runes
- * included, plus every status's `attributeDelta`, floored at 0. A rank
- * of 0 bought with points is never lowered, even when a rune raised it,
- * as GW1 says. The one match-time reader of `attributeRanks` (ADR-0019).
+ * included, plus every in-scope `attributeDeltas` of its statuses and of
+ * those held by the skill resolving (#1941), floored at 0 and capped. A
+ * rank of 0 bought with points is never lowered, even when a rune raised
+ * it, as GW1 says, but a boost raises it. A set rank (#1929) beats them
+ * all. The one match-time reader of `attributeRanks` (ADR-0019).
  */
-export function rankOf(holder: RankHolder, attributeId: string): number {
+export function rankOf(holder: RankHolder, asked: string): number {
+  const borrowed = holder.borrowedAttribute;
+  const attributeId = borrowed !== null && borrowed.from === asked ? borrowed.to : asked;
   const rank = holder.attributeRanks.get(attributeId) ?? 0;
-  const allocated = rank - (holder.equipment.attributeBonuses.get(attributeId) ?? 0);
-  if (allocated <= 0) {
+  const bonus = holder.equipment.attributeBonuses.get(attributeId) ?? 0;
+  const { attributeDeltas, attributeSets } = aggregateModifiers(holder.statuses.active);
+  const set = attributeSets.findLast(({ scope }) => inScope(scope, attributeId));
+  if (set !== undefined) {
+    return effectiveRank(set.rank, [{ delta: set.plusEquipment ? bonus : 0 }]);
+  }
+  // Plain loops: this runs on every rank read, so it allocates nothing.
+  let delta = 0;
+  for (const { scope, amount } of attributeDeltas) {
+    if (inScope(scope, attributeId)) {
+      delta += amount;
+    }
+  }
+  for (const { scope, amount } of holder.heldAttributeDeltas) {
+    if (inScope(scope, attributeId)) {
+      delta += amount;
+    }
+  }
+  if (delta < 0 && rank - bonus <= 0) {
     return rank;
   }
-  const { attributeDelta } = aggregateModifiers(holder.statuses.active);
-  return effectiveRank(rank, [{ delta: attributeDelta }]);
+  return effectiveRank(rank, [{ delta }]);
+}
+
+/**
+ * Whether an attribute set's or delta's `scope` holds `attributeId`
+ * (#1929, #1941). A profession's scope holds its attributes whatever the
+ * bearer's professions: a secondary Elementalist's are elemental too.
+ */
+export function inScope(scope: AttributeScope, attributeId: string): boolean {
+  if (typeof scope === "object") {
+    return "profession" in scope
+      ? getAttribute(attributeId)?.professionId === scope.profession
+      : scope.attributeId === attributeId;
+  }
+  switch (scope) {
+    case "all":
+      return true;
+    case "primary":
+      // Only a primary holds a rank, so the bearer's is whichever it has.
+      return getAttribute(attributeId)?.isPrimary === true;
+    case "elemental":
+      return ELEMENTAL_ATTRIBUTES.has(attributeId);
+  }
+}
+
+/** Master of Magic's "elemental attributes" (#1929). */
+const ELEMENTAL_ATTRIBUTES: ReadonlySet<string> = new Set([
+  "elementalist.air-magic",
+  "elementalist.earth-magic",
+  "elementalist.fire-magic",
+  "elementalist.water-magic",
+]);
+
+/**
+ * What a resolving skill lends its user's ranks (#1929, #1941): the
+ * attribute a status lends a spell, Signet of Illusions' Illusion Magic,
+ * and the deltas of the statuses its start spent, held through it.
+ */
+export interface RankLoan {
+  readonly lent: string | undefined;
+  readonly held: readonly AttributeDelta[];
+}
+
+/** A skill resolving with nothing lent. */
+export const NO_RANK_LOAN: RankLoan = { lent: undefined, held: [] };
+
+/**
+ * `resolve` with `caster`'s `skill` under `loan` (#1929, #1941): every
+ * rank read of the skill's own attribute meanwhile reads the lent one,
+ * and every rank read adds the held deltas. Nothing lent: `resolve` as
+ * it is.
+ */
+export function withRankLoan<T>(
+  caster: Combatant,
+  { lent, held }: RankLoan,
+  skill: Skill,
+  resolve: () => T,
+): T {
+  const borrowed =
+    lent === undefined || skill.attributeId === undefined
+      ? null
+      : { from: skill.attributeId, to: lent };
+  if (borrowed === null && held.length === 0) {
+    return resolve();
+  }
+  caster.borrowedAttribute = borrowed;
+  caster.heldAttributeDeltas = held;
+  try {
+    return resolve();
+  } finally {
+    caster.borrowedAttribute = null;
+    caster.heldAttributeDeltas = [];
+  }
 }
 
 /** The multiplier on the bearer's weapon roll: weakness's 0.34 (#762). */

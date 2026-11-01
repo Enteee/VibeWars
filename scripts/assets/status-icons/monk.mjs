@@ -245,4 +245,12 @@ export const MONK_STATUS_ICONS = {
     (c) =>
       `<path d="M18 3L8 13l-2 5 5-2L21 6z" fill="${c}"/>` + `<path d="M4 21h8" ${stroke(c, 2)}/>`,
   ],
+  // Blocks that pay (#1974), a stand-in until its art card.
+  // Enchantment: a shield with a cross, a heal for everyone on a block.
+  "shield-guardian": [
+    "enchantment",
+    (c) =>
+      `<path d="M6 5h12v5.5c0 4-3 6.5-6 8.5-3-2-6-4.5-6-8.5z" ${stroke(c, 2)}/>` +
+      `<path d="M12 8v7M8.5 11.5h7" ${stroke(c, 2.2)}/>`,
+  ],
 };

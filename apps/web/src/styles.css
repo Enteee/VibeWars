@@ -3044,7 +3044,6 @@ body {
 }
 
 .team-lobby-card-name,
-.team-lobby-seat-name,
 .team-lobby-seat-holder {
   display: flex;
   align-items: center;
@@ -3121,13 +3120,14 @@ body {
 
 .team-lobby-seats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.8rem;
 }
 
 .team-lobby-seat {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 0.6rem;
   min-width: 0;
   padding: 0.7rem;
@@ -3154,11 +3154,10 @@ body {
   border-color: var(--accent);
 }
 
-.team-lobby-seat-character {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
+/* A seat is its character card (#1863): figure, professions, bar. */
+.team-lobby-seat .play-card-line {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .team-lobby-seat-free {

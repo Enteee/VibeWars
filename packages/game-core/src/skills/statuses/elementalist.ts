@@ -1,8 +1,11 @@
-import { AREA_NEARBY } from "../../distances.js";
+import { AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import { define } from "./define.js";
 
 export type ElementalistStatusId =
+  // PvP forms (#1951).
+  | "elemental-flame"
+  | "mist-form"
   | "shard-storm"
   | "ice-spikes"
   | "deep-freeze"
@@ -44,7 +47,18 @@ export type ElementalistStatusId =
   // Attribute hexes (#1765).
   | "freezing-gust"
   // Caster staples (#1870).
-  | "grasping-earth";
+  | "grasping-earth"
+  | "master-of-magic"
+  | "glyph-of-elemental-power"
+  | "glyph-of-energy";
+
+/** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
+const MIST_FORM_HEAL = {
+  kind: "heal",
+  amount: { flat: 2.1 },
+  perUsedSkillEnergy: true,
+  onlyBelowHealthFraction: 0.8,
+} as const;
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -83,7 +97,28 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // rank-12 value; Energy Storage scaling waits for #532.
   "glyph-of-lesser-energy": define("glyph-of-lesser-energy", "Glyph of Lesser Energy", "glyph", {
     profession: "elementalist",
-    nextSpells: { count: 2, costReduction: 16 },
+    nextSpells: { count: 2, costReduction: 16, noOvercast: false },
+  }),
+  // "For 25 seconds, your elemental attributes are boosted by 1...2 for
+  // your next 10 spells" (#1941): 2, its rank-12 value. Spent as each
+  // spell starts, as every glyph here; GW1 keeps it on an interrupted one.
+  "glyph-of-elemental-power": define(
+    "glyph-of-elemental-power",
+    "Glyph of Elemental Power",
+    "glyph",
+    {
+      profession: "elementalist",
+      nextSpells: { count: 10, costReduction: 0, noOvercast: false },
+      attributeDeltas: [{ scope: "elemental", amount: 2 }],
+    },
+  ),
+  // "Your next 1...3 spells cost 10...25 less Energy, cause no Overcast,
+  // and your elemental attributes are boosted by 1...2 for those spells"
+  // (#1941): 3, 22 and 2 at rank 12; no duration, as Signet of Illusions.
+  "glyph-of-energy": define("glyph-of-energy", "Glyph of Energy", "glyph", {
+    profession: "elementalist",
+    nextSpells: { count: 3, costReduction: 22, noOvercast: true },
+    attributeDeltas: [{ scope: "elemental", amount: 2 }],
   }),
   // "Your next 1 spells cannot be interrupted" (#1730); "and ignore the
   // effects of being Dazed" waits for Dazed's casting to come.
@@ -98,6 +133,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 0,
       rechargesInstantly: false,
       losesAllEnergy: false,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-concentration",
     },
   }),
@@ -114,6 +151,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 30,
       rechargesInstantly: false,
       losesAllEnergy: false,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-sacrifice",
     },
     endsWhenBearerUsesOtherSkill: true,
@@ -130,6 +169,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 0,
       rechargesInstantly: true,
       losesAllEnergy: false,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-renewal",
     },
   }),
@@ -145,6 +186,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 0,
       rechargesInstantly: false,
       losesAllEnergy: true,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-essence",
     },
   }),
@@ -316,6 +359,71 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     attribute: "elementalist.earth-magic",
     moveSpeedMultiplier: 0.5,
   }),
+  // "For 1...49...61 seconds, all of your elemental attributes are set to
+  // 8...13...14 and your elemental spells return 1 Energy plus 30% of
+  // their Energy cost" (#1929): rank 13, at rank 12, over runes and
+  // Weakness alike; the return as an attunement's.
+  "master-of-magic": define("master-of-magic", "Master of Magic", "enchantment", {
+    profession: "elementalist",
+    attributeSet: { scope: "elemental", rank: 13, plusEquipment: false },
+    triggers: (["air-magic", "earth-magic", "fire-magic", "water-magic"] as const).map(
+      (attribute) => ({
+        on: "bearer-uses-skill" as const,
+        usedSkill: { attributes: { attributeId: `elementalist.${attribute}` } },
+        target: "bearer" as const,
+        effects: [
+          { kind: "energy-gain" as const, amount: { flat: 1 } },
+          {
+            kind: "energy-gain" as const,
+            amount: { flat: 0.3 },
+            perUsedSkillEnergy: true as const,
+          },
+        ],
+        skillId: "elementalist.master-of-magic",
+      }),
+    ),
+  }),
+  // PvP: "For 5...20 seconds, whenever you apply an Elemental hex to a foe,
+  // that foe is set on fire for 1...2 seconds" (#1951): 2.
+  "elemental-flame": define("elemental-flame", "Elemental Flame", "enchantment", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-applies-hex",
+        appliedHex: { attributes: "elemental" },
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 2 }],
+        target: "hexed-foe",
+        skillId: "elementalist.elemental-flame",
+      },
+    ],
+  }),
+  // PvP: "you take 33% less damage from foes under the effect of Water Magic
+  // hexes. Whenever you cast an elemental spell, all non-spirit allies in
+  // earshot are healed for 50...250% of the Energy cost of the spell. This
+  // spell does not heal allies above 80% Health" (#1951): 210%, the bearer
+  // among them.
+  "mist-form": define("mist-form", "Mist Form", "enchantment", {
+    profession: "elementalist",
+    damageReductionFromHexedSource: { attributeId: "elementalist.water-magic", fraction: 0.33 },
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        usedSkill: { attributes: "elemental" },
+        target: "bearer",
+        effects: [
+          MIST_FORM_HEAL,
+          {
+            kind: "splash",
+            hits: "non-spirit-allies",
+            radius: AREA_EARSHOT,
+            maxTargets: undefined,
+            effects: [MIST_FORM_HEAL],
+          },
+        ],
+        skillId: "elementalist.mist-form",
+      },
+    ],
+  }),
 };
 
 /**
@@ -333,7 +441,7 @@ function attunement(
     triggers: [
       {
         on: "bearer-uses-skill",
-        usedSkill: { attribute: `elementalist.${attribute}` },
+        usedSkill: { attributes: { attributeId: `elementalist.${attribute}` } },
         target: "bearer",
         effects: [
           { kind: "energy-gain", amount: { flat: 1 } },

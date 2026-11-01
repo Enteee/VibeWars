@@ -87,7 +87,7 @@ const ended = (statusId: StatusId, targetId = "a"): CombatEvent => ({
 });
 
 describe("Frenzy (#919)", () => {
-  it("attacks 33% faster for 8 s and takes double damage", () => {
+  it("attacks 33% faster for 8 s and takes 160% damage, its PvP Strength-12 value (#1958)", () => {
     const frenzy = skill("warrior.frenzy");
     expect(frenzy.type).toBe("stance");
     expect(frenzy.cost).toEqual({ kind: "energy", amount: 5 });
@@ -102,7 +102,7 @@ describe("Frenzy (#919)", () => {
     const plain = swingIntervalSeconds(warrior);
     warrior.statuses.apply("frenzy", 8, "w");
     expect(swingIntervalSeconds(warrior)).toBeCloseTo(plain * 0.67, 10);
-    expect(aggregateModifiers(warrior.statuses.active).damageTakenMultiplier).toBe(2);
+    expect(aggregateModifiers(warrior.statuses.active).damageTakenMultiplier).toBe(1.6);
   });
 
   it("is replaced by Dark Escape, a stance like it: half damage, not double times half", () => {
@@ -318,7 +318,7 @@ describe("Natural Stride (#919)", () => {
 
 describe("the three stances' tooltips (#919)", () => {
   it("say what each costs you", () => {
-    expect(describeStatus("frenzy")).toBe("attacks 33% faster, takes double damage");
+    expect(describeStatus("frenzy")).toBe("attacks 33% faster, takes 160% damage");
     expect(describeStatus("dark-escape")).toBe(
       "moves at 125% speed, takes half damage, ends if the bearer hits with an attack",
     );

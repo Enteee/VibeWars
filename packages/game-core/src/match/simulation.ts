@@ -91,6 +91,7 @@ import {
   CastState,
   beginRecharge,
   resolvedBar,
+  skillIdOfKey,
   slotSkill,
   type ActiveCast,
   type CastRule,
@@ -104,6 +105,8 @@ import {
   applyEffects,
   applySkillEffects,
   applyStatus,
+  conditionTaker,
+  disableOwnSkills,
   gainEnergy,
   landCaughtCondition,
   resolveSkillEffects,
@@ -115,6 +118,7 @@ import {
 } from "../skills/effects.js";
 import {
   aggregateModifiers,
+  attacksAgainstMiss,
   clampPips,
   ENERGY_PER_PIP,
   getStatusDefinition,
@@ -133,8 +137,8 @@ import {
   type StatusId,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
-import { resolveMagnitude } from "../skills/scaling.js";
-import { resolveTargets, spiritsWithin } from "../skills/targeting.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks } from "../skills/scaling.js";
+import { nearestSpiritWithin, resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
   clampMoveSpeed,
@@ -146,7 +150,9 @@ import {
   raisedMaxHealth,
   rankOf,
   upkeepPips,
+  withRankLoan,
   type NetPips,
+  type RankLoan,
 } from "../skills/tick.js";
 import {
   isInvulnerable,
@@ -173,6 +179,7 @@ import {
   type SpellHit,
 } from "../skills/projectile.js";
 import {
+  attackBlockedRiders,
   attackDurationSeconds,
   attackHitRiders,
   attackReached,
@@ -207,13 +214,12 @@ import {
   fireDeathTriggers,
   fireEndTriggers,
   fireTriggers,
-  isEchoSkill,
-  isEchoStatus,
   type DirectTriggerEvent,
   type FiredTrigger,
   type SpreadGainedCondition,
   type TriggerContext,
 } from "../skills/triggers.js";
+import { copiesSkill, isEchoStatus } from "../skills/stand-in.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
@@ -224,7 +230,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { nearestFreshCorpse } from "./corpses.js";
+import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
 import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
 import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
@@ -349,10 +355,17 @@ export const CREATURE_LOOKS = [
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
-/** A spirit's death burst as it arrived: its rate on its owner's rank (#1603). */
-export type ArrivedDeathBurst = Omit<DeathBurst, "perSecondAlive"> & {
-  readonly perSecondAlive: number;
-};
+/**
+ * A spirit's death burst as it arrived: its rate (#1603), or the time of
+ * the status it gives (#1956), on its owner's rank.
+ */
+export type ArrivedDeathBurst =
+  | (Omit<Extract<DeathBurst, { effect: "damage" | "heal" }>, "perSecondAlive"> & {
+      readonly perSecondAlive: number;
+    })
+  | (Omit<Extract<DeathBurst, { effect: "apply-status" }>, "durationSeconds"> & {
+      readonly durationSeconds: number;
+    });
 
 /** A spirit's answer to a death in its range as it arrived: its damage on its owner's rank (#1886). */
 export type ArrivedDeathInRange =
@@ -769,6 +782,21 @@ interface ParticipantRecord extends Participant {
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
   armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
+  /**
+   * Whether its Energy was at least 1 at the last step's check (#1956):
+   * what makes a drop to 0 Famine's, and a body that stays there not.
+   */
+  hadEnergy: boolean;
+}
+
+/**
+ * Every rank the combatant has, as `rankOf` reads it now (#1915): what
+ * a summon is made at. One it has none of is 0.
+ */
+function ranksOf(combatant: Combatant): ReadonlyMap<string, number> {
+  return new Map(
+    [...combatant.attributeRanks.keys()].map((id) => [id, rankOf(combatant, id)] as const),
+  );
 }
 
 /**
@@ -878,6 +906,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "invalid-target-enemy",
   "invalid-target-untargetable",
   "invalid-target-unenchantable",
+  "no-spells",
 ]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */
@@ -1283,6 +1312,7 @@ export class MatchSimulation {
       pendingWeaponSet: undefined,
       corpseExploited: false,
       armedAttack: undefined,
+      hadEnergy: false,
       interact: undefined,
     };
     this.#participants.set(spec.id, record);
@@ -1347,6 +1377,9 @@ export class MatchSimulation {
    *
    * `companion`: it travels with `skillId` on the owner's bar (#1046),
    * rather than coming from a cast.
+   *
+   * `ranks`: the owner's, as the skill went off (#1915), so a status the
+   * same skill gives, as Aura of the Lich's +1 Death Magic, comes after.
    */
   #summon(
     owner: ParticipantRecord,
@@ -1356,6 +1389,7 @@ export class MatchSimulation {
     at: Vec2,
     companion: boolean,
     replacement = false,
+    ranks: ReadonlyMap<string, number> = ranksOf(owner.combatant),
   ): void {
     if (template.onePerOwner) {
       this.#killOlder(owner, skillId);
@@ -1401,13 +1435,11 @@ export class MatchSimulation {
         attributeRanks:
           template.attack === undefined
             ? new Map()
-            : new Map([
-                [template.attack.attributeId, rankOf(owner.combatant, template.attack.attributeId)],
-              ]),
+            : new Map([[template.attack.attributeId, ranks.get(template.attack.attributeId) ?? 0]]),
         equipment: creatureResolvedEquipment(
-          resolveMagnitude(template.armor, owner.combatant),
+          resolveMagnitudeAtRanks(template.armor, ranks),
           template.attack,
-          template.attack === undefined ? 0 : rankOf(owner.combatant, template.attack.attributeId),
+          template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
         ),
         spawn: at,
         facing: owner.facing,
@@ -1416,10 +1448,10 @@ export class MatchSimulation {
         // list (#1144).
         maxHealth:
           template.kind === "pet"
-            ? resolveMagnitude(template.maxHealth, owner.combatant)
+            ? resolveMagnitudeAtRanks(template.maxHealth, ranks)
             : spawningPowerHealth(
-                rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
-                resolveMagnitude(template.maxHealth, owner.combatant),
+                ranks.get(SPAWNING_POWER_ATTRIBUTE) ?? 0,
+                resolveMagnitudeAtRanks(template.maxHealth, ranks),
               ),
         maxEnergy: 0,
         baseEnergyPips: 0,
@@ -1432,7 +1464,7 @@ export class MatchSimulation {
           expiresInSeconds:
             template.durationSeconds === undefined
               ? Number.POSITIVE_INFINITY
-              : resolveMagnitude(template.durationSeconds, owner.combatant),
+              : resolveMagnitudeAtRanks(template.durationSeconds, ranks),
           ageSeconds: 0,
           summonedAtTick: this.#tick,
           skillId,
@@ -1441,29 +1473,37 @@ export class MatchSimulation {
           ownerDisableSeconds:
             template.ownerDisableOnDeath === undefined
               ? 0
-              : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
+              : resolveMagnitudeAtRanks(template.ownerDisableOnDeath, ranks),
           deathBurst:
             template.deathBurst === undefined
               ? undefined
-              : {
-                  ...template.deathBurst,
-                  perSecondAlive: resolveMagnitude(
-                    template.deathBurst.perSecondAlive,
-                    owner.combatant,
-                  ),
-                },
+              : template.deathBurst.effect === "apply-status"
+                ? {
+                    ...template.deathBurst,
+                    durationSeconds: resolveMagnitudeAtRanks(
+                      template.deathBurst.durationSeconds,
+                      ranks,
+                    ),
+                  }
+                : {
+                    ...template.deathBurst,
+                    perSecondAlive: resolveMagnitudeAtRanks(
+                      template.deathBurst.perSecondAlive,
+                      ranks,
+                    ),
+                  },
           onDeathInRange:
             template.onDeathInRange?.kind === "damage-same-type"
               ? {
                   ...template.onDeathInRange,
-                  damage: resolveMagnitude(template.onDeathInRange.damage, owner.combatant),
+                  damage: resolveMagnitudeAtRanks(template.onDeathInRange.damage, ranks),
                 }
               : template.onDeathInRange,
           replacedBy: template.replacedBy,
           corpsesLeft:
             template.leavesCorpses === undefined
               ? 0
-              : Math.round(resolveMagnitude(template.leavesCorpses, owner.combatant)),
+              : Math.round(resolveMagnitudeAtRanks(template.leavesCorpses, ranks)),
           companionSkillId: companion ? skillId : undefined,
           leaderId: undefined,
           mode: "guard",
@@ -1795,11 +1835,22 @@ export class MatchSimulation {
   /**
    * Every living bearer with no energy left answers it (#1583), in
    * participant order, after upkeep has taken its share: Wither's damage.
+   * One whose whole Energy fell from at least 1 at the last check to 0
+   * answers its drop (#1956), Famine's: Energy regenerates continuously,
+   * so a 1-Energy skill paid at 1.03 leaves 0.03, which GW1 shows as 0.
    */
   #fireEnergyEmpty(): void {
     for (const record of this.#participants.values()) {
-      if (!record.combatant.dead && record.combatant.energy <= 0) {
+      const hadEnergy = record.hadEnergy;
+      record.hadEnergy = record.combatant.energy >= 1;
+      if (record.combatant.dead) {
+        continue;
+      }
+      if (record.combatant.energy <= 0) {
         this.#fireTriggers(record, "bearer-energy-empty", NONE_SPARED);
+      }
+      if (hadEnergy && !record.hadEnergy) {
+        this.#fireTriggers(record, "bearer-energy-drops-empty", NONE_SPARED);
       }
     }
   }
@@ -1933,7 +1984,8 @@ export class MatchSimulation {
    * of its `affects` within its radius takes, or is healed, its rate
    * times the whole seconds it lived, capped, from its owner, logged as
    * its skill. A creature a burst kills leaves too, and bursts nothing:
-   * only a spirit has one, and a burst passes spirits by.
+   * only a spirit has one, and a burst passes spirits by. A status burst
+   * (#1956) gives its status instead, to each one under its Health line.
    */
   #burstLeaving(): void {
     for (const id of [...this.#leaving]) {
@@ -1950,25 +2002,33 @@ export class MatchSimulation {
       ) {
         continue;
       }
-      const amount = Math.min(
-        burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
-        burst.max ?? Number.POSITIVE_INFINITY,
-      );
+      const amount =
+        burst.effect === "apply-status"
+          ? burst.durationSeconds
+          : Math.min(
+              burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
+              burst.max ?? Number.POSITIVE_INFINITY,
+            );
       if (amount <= 0) {
         continue;
       }
       const effect: SkillEffect =
-        burst.effect === "damage"
-          ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
-          : { kind: "heal", amount: { flat: amount } };
+        burst.effect === "apply-status"
+          ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: amount }
+          : burst.effect === "damage"
+            ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
+            : { kind: "heal", amount: { flat: amount } };
       const events: CombatEvent[] = [];
       for (const other of this.#participants.values()) {
         const ally = other.combatant.team === spirit.combatant.team;
         if (
           other.combatant.dead ||
           other.creature?.kind === "spirit" ||
-          ally !== (burst.affects === "allies") ||
-          distance(other.position, spirit.position) > burst.radius
+          (burst.affects !== "all" && ally !== (burst.affects === "allies")) ||
+          distance(other.position, spirit.position) > burst.radius ||
+          (burst.effect === "apply-status" &&
+            other.combatant.health >=
+              burst.belowHealthFraction * effectiveMaxHealth(other.combatant))
         ) {
           continue;
         }
@@ -2164,6 +2224,7 @@ export class MatchSimulation {
       expired: false,
       death: false,
       returnPoint: null,
+      stepTargetId: null,
     };
     this.#loseRaisedMaxima(record, change);
     this.#logFired(
@@ -2659,18 +2720,22 @@ export class MatchSimulation {
     // enchantment that uses it up.
     const own = ownSkillBoost(record.combatant.statuses.active, skill);
     payCost(skill, record.combatant, key);
-    this.#useGlyph(record, skill);
+    const glyphs = this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     // Heket's Rampage (#1869) ends before the attack skill is timed.
     if (skill.type === "attack") {
       this.#logSpent(record, skill, record.combatant.statuses.endOnBearerStartAttackSkill());
     }
-    const { rule, castsInstantly, losesAllEnergy } = this.#useNextSkillRules(record, skill);
+    const { rule, castsInstantly, losesAllEnergy, spent } = this.#useNextSkillRules(record, skill);
     // Glyph of Essence's price (#1730), once the cost is paid.
     if (losesAllEnergy) {
       record.combatant.energy = 0;
     }
-    return { rule: { ...rule, own }, castsInstantly };
+    // A glyph or a rule this start spent still boosts the skill (#1941).
+    const heldAttributeDeltas = [...glyphs, ...spent].flatMap(
+      (id) => getStatusDefinition(id).attributeDeltas,
+    );
+    return { rule: { ...rule, heldAttributeDeltas, own }, castsInstantly };
   }
 
   /**
@@ -2789,11 +2854,13 @@ export class MatchSimulation {
    * glyph holds (#526): an interrupt or a cancel after this does not give
    * it back, as in GW1. A glyph spent logs its end.
    */
-  #useGlyph(record: ParticipantRecord, skill: Skill): void {
+  #useGlyph(record: ParticipantRecord, skill: Skill): readonly StatusId[] {
     if (!isSpell(skill.type)) {
-      return;
+      return [];
     }
-    this.#logSpent(record, skill, record.combatant.statuses.countSpellStarted());
+    const ended = record.combatant.statuses.countSpellStarted();
+    this.#logSpent(record, skill, ended);
+    return ended;
   }
 
   /** The statuses `skill`'s use spent, each logged as ended under it. */
@@ -2827,7 +2894,12 @@ export class MatchSimulation {
   #useNextSkillRules(
     record: ParticipantRecord,
     skill: Skill,
-  ): { rule: Omit<CastRule, "own">; castsInstantly: boolean; losesAllEnergy: boolean } {
+  ): {
+    rule: Omit<CastRule, "own" | "heldAttributeDeltas">;
+    castsInstantly: boolean;
+    losesAllEnergy: boolean;
+    spent: readonly StatusId[];
+  } {
     const all = record.combatant.statuses.useNextSkillRules(skill);
     const used = all.filter(({ answered }) => answered);
     this.#logFired(
@@ -2843,9 +2915,20 @@ export class MatchSimulation {
         unblockable: used.some(({ rule }) => rule.unblockable),
         rechargesInstantly: used.some(({ rule }) => rule.rechargesInstantly),
         extraRechargeSeconds: used.reduce((sum, { rule }) => sum + rule.extraRechargeSeconds, 0),
+        // Ritual Lord's on a binding ritual (#1941).
+        rechargeFaster: Math.max(
+          0,
+          ...used.map(({ rule }) =>
+            rule.rechargeFasterIfType?.type === skill.type ? rule.rechargeFasterIfType.fraction : 0,
+          ),
+        ),
+        resetsRecharge: used.flatMap(({ rule }) =>
+          rule.resetsOwnRechargeIfType === skill.type ? [rule.skillId] : [],
+        ),
       },
       castsInstantly: used.some(({ rule }) => rule.castsInstantly),
       losesAllEnergy: used.some(({ rule }) => rule.losesAllEnergy),
+      spent: used.map(({ statusId }) => statusId),
     };
   }
 
@@ -3049,6 +3132,17 @@ export class MatchSimulation {
         continue;
       }
 
+      // A copy that ends this tick takes its cast with it (#1928): the
+      // skill being cast is no longer in the slot.
+      const casting = record.combatant.cast.activeCast;
+      if (
+        casting !== undefined &&
+        [...record.combatant.cast.overrides.values()].some(
+          (copy) => copy.key === casting.key && copy.remainingSeconds <= dt,
+        )
+      ) {
+        this.#cancelCast(record);
+      }
       const completed = record.combatant.cast.advance(dt);
       dropEndedCopyPools(record.combatant);
       if (completed !== undefined) {
@@ -3147,8 +3241,16 @@ export class MatchSimulation {
           bearer.statuses.remove(status.id);
           continue;
         }
+        // Recall's (#1930) holds while its ally is within compass range,
+        // as GW1 has it, and ends with the ally gone from the match.
+        const anchor =
+          status.stepTargetId === null ? caster : this.#participants.get(status.stepTargetId);
+        if (anchor === undefined) {
+          bearer.statuses.remove(status.id);
+          continue;
+        }
         status.maintained.outOfRangeSeconds =
-          distance(caster.position, record.position) > RANGE_COMPASS
+          distance(anchor.position, record.position) > RANGE_COMPASS
             ? status.maintained.outOfRangeSeconds + dt
             : 0;
         if (status.maintained.outOfRangeSeconds > UPKEEP_RANGE_GRACE_SECONDS) {
@@ -3389,9 +3491,19 @@ export class MatchSimulation {
       check.ok &&
       skill.corpse !== undefined &&
       skill.corpse.elseSacrificePercent === undefined &&
+      skill.corpse.all !== true &&
       this.#freshCorpse(record, skill.corpse, target) === undefined
     ) {
       return { ok: false, reason: "no-corpse" };
+    }
+    // Spirit Transfer drains the spirit nearest its caster (#1947): none
+    // within earshot, nothing is paid.
+    if (
+      check.ok &&
+      skill.effects.some(({ kind }) => kind === "drain-nearest-spirit") &&
+      nearestSpiritWithin(this.#participants.values(), record.position, AREA_EARSHOT) === undefined
+    ) {
+      return { ok: false, reason: "no-spirit" };
     }
     // Resurrection skills targeted on players cannot target pets (#1046,
     // fandom): told before a walk toward one starts.
@@ -3459,12 +3571,14 @@ export class MatchSimulation {
     // degeneration it causes is attributed to the dummy, and so is the
     // health a deep wound takes as it lands.
     for (const application of intent.applyStatuses) {
-      const target = this.#participants.get(application.targetId);
-      if (target !== undefined && !target.combatant.dead) {
+      const aimed = this.#participants.get(application.targetId);
+      if (aimed !== undefined && !aimed.combatant.dead) {
+        // Infuse Condition (#1915) sends a condition to a minion here too.
+        const target = conditionTaker(aimed.combatant, application.statusId, this.#participants);
         const loss = applyStatus(
-          target.combatant,
+          target,
           application.statusId,
-          scaledStatusDuration(target.combatant, application.statusId, application.durationSeconds),
+          scaledStatusDuration(target, application.statusId, application.durationSeconds),
           record.id,
         );
         if (loss !== undefined && loss > 0) {
@@ -3540,6 +3654,15 @@ export class MatchSimulation {
     if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
       return;
     }
+    // Signet of Illusions' (#1929): a finished spell spends a use and
+    // scales, where it lands and what it summons, with the lent attribute.
+    const borrowing = record.combatant.statuses.borrowedFor(skill);
+    const lent =
+      borrowing === undefined
+        ? undefined
+        : getStatusDefinition(borrowing).borrowsAttribute?.attributeId;
+    // What its start spent still boosts it (#1941): the last glyph spell's.
+    const loan = { lent, held: cast.rule.heldAttributeDeltas };
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
@@ -3560,7 +3683,7 @@ export class MatchSimulation {
     const resolve =
       flight !== undefined
         ? (resolution: SkillResolution) =>
-            only(this.#releaseSpell(record, resolution, flight.speed, dt))
+            only(this.#releaseSpell(record, resolution, flight.speed, dt, loan))
         : skill.attack === undefined
           ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined
@@ -3591,42 +3714,50 @@ export class MatchSimulation {
     // A corpse skill takes its corpse as it lands, not as it began (#466):
     // one used up during the cast leaves it with no effect, paid for. A
     // well finding none sacrifices instead and goes off where its caster
-    // stands (#1730), as though on a corpse there.
+    // stands (#1730), as though on a corpse there. One that takes every
+    // corpse (#1915) goes off where its caster stands, with none or many.
+    const every =
+      skill.corpse?.all === true ? this.#exploitEveryCorpse(record, skill.corpse) : undefined;
     const corpse =
-      skill.corpse === undefined
+      skill.corpse === undefined || every !== undefined
         ? undefined
         : this.#exploitCorpse(record, skill.corpse, targetRecord);
     const sacrifice = corpse === undefined ? skill.corpse?.elseSacrificePercent : undefined;
-    const site = corpse ?? (sacrifice === undefined ? undefined : record);
+    const site = corpse ?? (sacrifice === undefined && every === undefined ? undefined : record);
+    // What it summons is made at the ranks it went off at (#1915), before
+    // any status it gives itself, and with what it is lent and holds (#1929, #1941).
+    const ranks = withRankLoan(record.combatant, loan, skill, () => ranksOf(record.combatant));
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
-        : resolve({
-            skill:
-              sacrifice === undefined
-                ? skill
-                : {
-                    ...skill,
-                    effects: [
-                      { kind: "sacrifice-health", percentOfMax: sacrifice },
-                      ...skill.effects,
-                    ],
-                  },
-            caster: record.combatant,
-            targets,
-            rng: this.#rng,
-            rules: this.#ruleset.combat,
-            surroundings: this.#participants,
-            own: cast.rule.own,
-          });
+        : withRankLoan(record.combatant, loan, skill, () =>
+            resolve({
+              skill:
+                sacrifice === undefined
+                  ? skill
+                  : {
+                      ...skill,
+                      effects: [
+                        { kind: "sacrifice-health", percentOfMax: sacrifice },
+                        ...skill.effects,
+                      ],
+                    },
+              caster: record.combatant,
+              targets,
+              rng: this.#rng,
+              rules: this.#ruleset.combat,
+              surroundings: this.#participants,
+              own: cast.rule.own,
+            }),
+          );
     // What the skill put on its own user does not answer this use of it
     // (#999): the chanter's own Song of Restoration waits for its next skill.
-    // An echo skill does not use up an echo already up, either (#469).
+    // A copier does not use up an echo already up, either (#469, #1928).
     const spared: ReadonlySet<StatusId> = new Set([
       ...events.flatMap((event) =>
         event.kind === "status-applied" && event.targetId === record.id ? [event.statusId] : [],
       ),
-      ...(isEchoSkill(skill.id)
+      ...(copiesSkill(skill.id)
         ? record.combatant.statuses.active.map(({ id }) => id).filter(isEchoStatus)
         : []),
     ]);
@@ -3690,23 +3821,29 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#recordSteps(events);
     this.#recordResurrections(events);
-    // A raised minion rises where its corpse lay (#467).
-    for (const summon of summons) {
-      this.#summon(
-        record,
-        skill.id,
-        summon.creature,
-        summon.count,
-        corpse?.position ?? record.position,
-        false,
-      );
-    }
-    for (const ground of grounds) {
-      const position = this.#groundAnchor(record, ground, site, primary);
-      if (position !== undefined) {
-        this.#placeGroundEffect(record, skill.id, ground, position);
+    withRankLoan(record.combatant, loan, skill, () => {
+      // A raised minion rises where its corpse lay (#467).
+      for (const summon of summons) {
+        this.#summon(
+          record,
+          skill.id,
+          summon.creature,
+          summon.count + (summon.perExploitedCorpse === true ? (every?.length ?? 0) : 0),
+          summon.at === "target"
+            ? (primary?.position ?? record.position)
+            : (corpse?.position ?? record.position),
+          false,
+          false,
+          ranks,
+        );
       }
-    }
+      for (const ground of grounds) {
+        const position = this.#groundAnchor(record, ground, site, primary);
+        if (position !== undefined) {
+          this.#placeGroundEffect(record, skill.id, ground, position);
+        }
+      }
+    });
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -3759,6 +3896,7 @@ export class MatchSimulation {
         modifiers.skillRechargeFaster,
         typeFaster,
         cast.rule.own.rechargeFaster,
+        cast.rule.rechargeFaster,
       );
       // A glyph's hold on the spell (#1730): Renewal's 0 over Sacrifice's 30 more.
       beginRecharge(
@@ -3776,6 +3914,12 @@ export class MatchSimulation {
       // A form's "disabled for 45 seconds" (#1437), beside its recharge.
       if (skill.disabledAfterUseSeconds !== undefined) {
         record.combatant.cast.disable(cast.key, skill.disabledAfterUseSeconds);
+      }
+      // Ritual Lord's own recharge, over once its binding ritual is (#1941).
+      for (const key of [...record.combatant.cast.rechargeRemaining.keys()]) {
+        if (cast.rule.resetsRecharge.includes(skillIdOfKey(key))) {
+          record.combatant.cast.endRecharge(key);
+        }
       }
     }
     // The use itself leads its entry (#1735), and one that did nothing says
@@ -3797,6 +3941,9 @@ export class MatchSimulation {
       events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped)],
     });
     this.#logFired(riders);
+    if (borrowing !== undefined) {
+      this.#logSpent(record, skill, record.combatant.statuses.spendBorrowed(borrowing));
+    }
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
@@ -3844,7 +3991,9 @@ export class MatchSimulation {
    * `target` (#1475): Guilt's, on a spell at a foe. The spell is paid for
    * and recharges, as an interrupted one, and does nothing else; the
    * status ends, and its effects land on the bearer from its source,
-   * logged as its skill. A spell with no chosen target never fails so.
+   * logged as its skill. A foe's spell at a bearer of Shadow Form (#1951)
+   * fails so too, the form left on. A spell with no chosen target never
+   * fails so.
    */
   #failsSpell(
     record: ParticipantRecord,
@@ -3856,6 +4005,22 @@ export class MatchSimulation {
       return false;
     }
     const bearer = record.combatant;
+    // Shadow Form's (#1951): a foe's spell at its bearer, checked as it finishes.
+    const shield =
+      target.combatant.team === bearer.team
+        ? undefined
+        : target.combatant.statuses.active.find(({ id }) => STATUS_DEFINITIONS[id].foeSpellsFail);
+    if (shield !== undefined) {
+      beginRecharge(bearer.cast, skill, skill.rechargeSeconds, key);
+      this.#logFired([
+        {
+          sourceId: target.id,
+          skillId: shield.sourceSkillId ?? skill.id,
+          events: [{ kind: "spell-failed", targetId: bearer.id, skillId: skill.id }],
+        },
+      ]);
+      return true;
+    }
     const failer = bearer.statuses.spellFailer(
       target.combatant.team === bearer.team ? "ally-targeted" : "foe-targeted",
     );
@@ -4025,6 +4190,7 @@ export class MatchSimulation {
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
         this.#returnSource(change);
+        this.#stepToTarget(change);
       }
     }
     const context = this.#triggerContext();
@@ -4078,6 +4244,7 @@ export class MatchSimulation {
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
         this.#returnSource(change);
+        this.#stepToTarget(change);
         if (ownEnds && change.kind === "ended") {
           this.#logFired(fireEndTriggers(record.combatant, change, context));
           this.#logFired(fireDeathTriggers(record.combatant, change, context));
@@ -4110,6 +4277,7 @@ export class MatchSimulation {
           this.#loseRaisedMaxima(record, change);
           this.#endForm(record, change);
           this.#returnSource(change);
+          this.#stepToTarget(change);
         }
       }
     }
@@ -5180,6 +5348,7 @@ export class MatchSimulation {
     resolution: SkillResolution,
     speed: number,
     dt: number,
+    loan: RankLoan,
   ): CombatEvent[] {
     const { skill } = resolution;
     const spread = skill.projectile?.spread === true;
@@ -5190,6 +5359,7 @@ export class MatchSimulation {
       skill: spread ? { ...skill, area: undefined } : skill,
       caster: record.combatant,
       own: resolution.own,
+      loan,
     };
     return victims.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
@@ -5235,7 +5405,7 @@ export class MatchSimulation {
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
       attacked = bearerAttacked(record.combatant, events, "projectile");
-      if (blindMisses(record.combatant, this.#rng)) {
+      if (blindMisses(record.combatant, target.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant, events);
         events.push({ kind: "attack-missed", targetId: target.id });
         return [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
@@ -5408,9 +5578,17 @@ export class MatchSimulation {
     let hits = 0;
     let blocked = 0;
     for (let strike = 0; strike < strikes && !target.combatant.dead; strike += 1) {
-      if (strike > 0 && attacker !== undefined && blindMisses(attacker.combatant, this.#rng)) {
+      // Shadow Form's miss (#1951) is checked as each blow lands, the first too.
+      if (
+        attacksAgainstMiss(target.combatant.statuses.active) ||
+        (strike > 0 &&
+          attacker !== undefined &&
+          blindMisses(attacker.combatant, target.combatant, this.#rng))
+      ) {
         events.push({ kind: "attack-missed", targetId: target.id });
-        bearerFailedToHit(attacker.combatant, events);
+        if (attacker !== undefined) {
+          bearerFailedToHit(attacker.combatant, events);
+        }
         continue;
       }
       if (this.#landBlow(projectile, skillHit, target, attacker, events, fired, riders)) {
@@ -5452,6 +5630,19 @@ export class MatchSimulation {
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
+      if (attacker !== undefined) {
+        attackBlockedRiders(
+          attacker.combatant,
+          target.combatant,
+          projectile.weaponSnapshot.mainHand,
+          skillHit !== undefined,
+          this.#rng,
+          this.#ruleset.combat,
+          this.#participants,
+          fired,
+          projectile.spent,
+        );
+      }
       events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
       return false;
     }
@@ -5461,6 +5652,8 @@ export class MatchSimulation {
       target.combatant,
       this.#participants,
     );
+    // No Order of Undeath bonus (#1915) here: every minion fights in melee
+    // (weapon-attack.ts adds it). A ranged minion needs it added here too.
     // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
     // ignoring on the same blow. A spirit gone before its shot lands
     // is no longer anyone's, so it adds nothing.
@@ -5539,22 +5732,24 @@ export class MatchSimulation {
       return;
     }
     const { skill, caster } = spell;
-    const { events, skipped } = resolveSkillEffects({
-      skill,
-      caster,
-      targets: resolveTargets({
+    const { events, skipped } = withRankLoan(caster, spell.loan, skill, () =>
+      resolveSkillEffects({
         skill,
         caster,
-        casterPosition: projectile.from,
-        primary: target,
-        candidates: skill.area === undefined ? [] : [...this.#participants.values()],
-        losBlockers: this.#walls,
+        targets: resolveTargets({
+          skill,
+          caster,
+          casterPosition: projectile.from,
+          primary: target,
+          candidates: skill.area === undefined ? [] : [...this.#participants.values()],
+          losBlockers: this.#walls,
+        }),
+        rng: this.#rng,
+        rules: this.#ruleset.combat,
+        surroundings: this.#participants,
+        own: spell.own,
       }),
-      rng: this.#rng,
-      rules: this.#ruleset.combat,
-      surroundings: this.#participants,
-      own: spell.own,
-    });
+    );
     this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
@@ -5915,7 +6110,7 @@ export class MatchSimulation {
     );
     for (const { combatant } of reached) {
       for (const condition of conditions) {
-        landCaughtCondition(combatant, condition, events);
+        landCaughtCondition(combatant, condition, events, this.#participants);
       }
     }
     return events;
@@ -6090,7 +6285,8 @@ export class MatchSimulation {
    * clear as they do a walk; the doorway rule does not hold, since a step
    * is not a walk. It faces the target, and nothing reads the step as a
    * run: its track starts over, and it did not walk this step. An attack
-   * and a skill walking in stay. A step away (#1326) is `#stepAway`'s. A shadow
+   * and a skill walking in stay. A step away (#1326) is `#stepAway`'s. A
+   * swap (#1930) is `#swap`'s, unless its creature died since. A shadow
    * step drops its caster's ashes first, where it stood (#1434).
    */
   #recordSteps(events: readonly CombatEvent[]): void {
@@ -6100,6 +6296,15 @@ export class MatchSimulation {
         if (record !== undefined) {
           this.#dropAshes(record);
           this.#stepAway(record);
+        }
+        continue;
+      }
+      if (event.kind === "shadow-swapped") {
+        const record = this.#participants.get(event.targetId);
+        const other = this.#participants.get(event.withId);
+        if (record !== undefined && other !== undefined && !other.combatant.dead) {
+          this.#dropAshes(record);
+          this.#swap(record, other);
         }
         continue;
       }
@@ -6115,18 +6320,39 @@ export class MatchSimulation {
       if (event.kind === "shadow-stepped") {
         this.#dropAshes(record);
       }
-      const radius = this.#ruleset.collision.playerRadius;
-      const away =
-        distance(record.position, target.position) > 0
-          ? normalize(sub(record.position, target.position))
-          : vec2(-Math.cos(target.facing), -Math.sin(target.facing));
-      const beside = add(target.position, scale(away, 2 * radius));
-      this.#placeAt(
-        record,
-        hasLineOfSight(target.position, beside, this.#walls) ? beside : target.position,
-      );
-      faceToward(record, target.position);
+      this.#stepBeside(record, target);
     }
+  }
+
+  /** Put `record` beside `target`, facing it, as `#recordSteps` describes. */
+  #stepBeside(record: ParticipantRecord, target: ParticipantRecord): void {
+    const radius = this.#ruleset.collision.playerRadius;
+    const away =
+      distance(record.position, target.position) > 0
+        ? normalize(sub(record.position, target.position))
+        : vec2(-Math.cos(target.facing), -Math.sin(target.facing));
+    const beside = add(target.position, scale(away, 2 * radius));
+    this.#placeAt(
+      record,
+      hasLineOfSight(target.position, beside, this.#walls) ? beside : target.position,
+    );
+    faceToward(record, target.position);
+  }
+
+  /**
+   * Swap (#1930): `record` and `other` trade places exactly, each facing
+   * the other after. The one moved first stands on the other's old spot
+   * only for the push-outs of the second, which see the two as far apart
+   * as they were.
+   */
+  #swap(record: ParticipantRecord, other: ParticipantRecord): void {
+    const from = record.position;
+    const to = other.position;
+    other.position = from;
+    this.#placeAt(record, to);
+    this.#placeAt(other, from);
+    faceToward(record, other.position);
+    faceToward(other, record.position);
   }
 
   /**
@@ -6179,6 +6405,49 @@ export class MatchSimulation {
       area: undefined,
       doubleStrike: false,
       events: [{ kind: "shadow-stepped-back", targetId: source.id }],
+    });
+  }
+
+  /**
+   * A status that steps to its ally ended (#1930), Recall's: its source
+   * Shadow Steps beside that ally, ashes dropped first, and all its skills
+   * are disabled, logged as the status's skill. Either of the two dead, or
+   * gone: nothing.
+   */
+  #stepToTarget(change: StatusChange): void {
+    if (change.kind !== "ended" || change.stepTargetId === null) {
+      return;
+    }
+    const steps = STATUS_DEFINITIONS[change.id].stepsToTarget;
+    const source = this.#participants.get(change.sourceId);
+    const ally = this.#participants.get(change.stepTargetId);
+    if (
+      steps === undefined ||
+      source === undefined ||
+      ally === undefined ||
+      source.combatant.dead ||
+      ally.combatant.dead
+    ) {
+      return;
+    }
+    this.#dropAshes(source);
+    this.#stepBeside(source, ally);
+    const disabled = disableOwnSkills(
+      source.combatant,
+      { kind: "disable-own-skills", which: "all", seconds: { flat: steps.disableSeconds } },
+      steps.skillId,
+    );
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: source.id,
+      skillId: steps.skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events: [{ kind: "shadow-stepped", targetId: source.id, toId: ally.id }, ...disabled],
     });
   }
 
@@ -6241,16 +6510,35 @@ export class MatchSimulation {
     target: ParticipantRecord | undefined,
   ): ParticipantRecord | undefined {
     const corpse = this.#freshCorpse(record, rule, target);
-    if (corpse?.creature !== undefined) {
+    if (corpse !== undefined) {
+      this.#markExploited(corpse);
+    }
+    return corpse;
+  }
+
+  /**
+   * Marks every fresh corpse within the rule's radius of `record` as
+   * exploited (#1915), once each, and returns them, nearest first.
+   */
+  #exploitEveryCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord[] {
+    const corpses = freshCorpsesWithin(record.position, rule.radius, this.#participants.values());
+    for (const corpse of corpses) {
+      this.#markExploited(corpse);
+    }
+    return corpses;
+  }
+
+  /** One corpse of `corpse`'s used up (#466). */
+  #markExploited(corpse: ParticipantRecord): void {
+    if (corpse.creature !== undefined) {
       // A Flesh Golem's (#1836) is several, and it goes with the last.
       corpse.creature.corpsesLeft -= 1;
       if (corpse.creature.corpsesLeft <= 0) {
         this.#leaving.add(corpse.id);
       }
-    } else if (corpse !== undefined) {
+    } else {
       corpse.corpseExploited = true;
     }
-    return corpse;
   }
 
   /**
@@ -6925,6 +7213,8 @@ export class MatchSimulation {
       skillBar: spec.skillBar,
       lastCombatAt: this.#elapsedSeconds,
       attributeRanks: spec.attributeRanks,
+      borrowedAttribute: null,
+      heldAttributeDeltas: [],
       team: spec.team,
       dead: false,
       statuses,

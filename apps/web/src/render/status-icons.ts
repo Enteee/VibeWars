@@ -82,6 +82,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "disciplined-stance": icon("disciplined-stance"),
   "balanced-stance": icon("balanced-stance"),
   "mantra-of-recovery": icon("mantra-of-recovery"),
+  "mantra-of-concentration": icon("mantra-of-concentration"),
+  "mantra-of-resolve": icon("mantra-of-resolve"),
+  "mantra-of-earth": icon("mantra-of-earth"),
+  "mantra-of-flame": icon("mantra-of-flame"),
+  "mantra-of-frost": icon("mantra-of-frost"),
+  "mantra-of-lightning": icon("mantra-of-lightning"),
   "watch-yourself": icon("watch-yourself"),
   "healing-signet-armor": icon("healing-signet-armor"),
   "for-great-justice": icon("for-great-justice"),
@@ -287,6 +293,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "air-attunement": icon("air-attunement"),
   "earth-attunement": icon("earth-attunement"),
   "aura-of-restoration": icon("aura-of-restoration"),
+  "master-of-magic": icon("master-of-magic"),
   "kinetic-armor": icon("kinetic-armor"),
   "infuriating-heat": icon("infuriating-heat"),
   "fertile-season": icon("fertile-season"),
@@ -305,6 +312,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "energizing-wind": icon("energizing-wind"),
   "primal-echoes": icon("primal-echoes"),
   "roaring-winds": icon("roaring-winds"),
+  quicksand: icon("quicksand"),
+  famine: icon("famine"),
+  lacerate: icon("lacerate"),
   panic: icon("panic"),
   "wastrels-demise": icon("wastrels-demise"),
   "arcane-conundrum": icon("arcane-conundrum"),
@@ -323,6 +333,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "aura-of-displacement": icon("aura-of-displacement"),
   "shadow-meld": icon("shadow-meld"),
   "shadow-of-haste": icon("shadow-of-haste"),
+  recall: icon("recall"),
+  "dark-prison": icon("dark-prison"),
+  "shadow-walk": icon("shadow-walk"),
   "dwaynas-sorrow": icon("dwaynas-sorrow"),
   wither: icon("wither"),
   "kindle-arrows": icon("kindle-arrows"),
@@ -379,6 +392,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Caster staples 2 (#1872).
   "elemental-resistance": icon("elemental-resistance"),
   "physical-resistance": icon("physical-resistance"),
+  "signet-of-illusions": icon("signet-of-illusions"),
   "vital-blessing": icon("vital-blessing"),
   "vital-weapon": icon("vital-weapon"),
   "brutal-weapon": icon("brutal-weapon"),
@@ -386,7 +400,32 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Skill-type and heal triggers (#1913).
   cacophony: icon("cacophony"),
   "soul-bind": icon("soul-bind"),
+  "wail-of-doom": icon("wail-of-doom"),
+  atrophy: icon("atrophy"),
   "scribes-insight": icon("scribes-insight"),
+  // Minions 3 (#1915).
+  "order-of-undeath": icon("order-of-undeath"),
+  "aura-of-the-lich": icon("aura-of-the-lich"),
+  "infuse-condition": icon("infuse-condition"),
+  // Casting-state hexes (#1931).
+  "spinal-shivers": icon("spinal-shivers"),
+  "shivers-of-dread": icon("shivers-of-dread"),
+  "death-nova": icon("death-nova"),
+  "power-leech": icon("power-leech"),
+  "power-flux": icon("power-flux"),
+  // Attributes raised (#1941).
+  "glyph-of-elemental-power": icon("glyph-of-elemental-power"),
+  "glyph-of-energy": icon("glyph-of-energy"),
+  "ritual-lord": icon("ritual-lord"),
+  "experts-dexterity": icon("experts-dexterity"),
+  // PvP forms (#1951).
+  "shadow-form": icon("shadow-form"),
+  "elemental-flame": icon("elemental-flame"),
+  "mist-form": icon("mist-form"),
+  // Blocks that pay or pay off (#1974).
+  distortion: icon("distortion"),
+  "shield-guardian": icon("shield-guardian"),
+  "glass-arrows": icon("glass-arrows"),
 };
 
 const GAP = 2;
