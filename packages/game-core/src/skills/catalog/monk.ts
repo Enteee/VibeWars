@@ -2892,4 +2892,35 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples 2 (#1872), at their rank-12 values                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.vital-blessing",
+    name: "Vital Blessing",
+    gwId: 289,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Maintained, as Mending is: +168 maximum Health while it lasts, for −1
+    // energy pip on its caster.
+    effects: [{ kind: "maintain-status", on: "target", statusId: "vital-blessing" }],
+  },
 ];

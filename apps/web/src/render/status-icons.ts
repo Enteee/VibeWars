@@ -364,6 +364,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "sum-of-all-fears": icon("sum-of-all-fears"),
   "grasping-earth": icon("grasping-earth"),
   "aura-of-stability": icon("aura-of-stability"),
+  // Caster staples 2 (#1872).
+  "elemental-resistance": icon("elemental-resistance"),
+  "physical-resistance": icon("physical-resistance"),
+  "vital-blessing": icon("vital-blessing"),
+  "vital-weapon": icon("vital-weapon"),
+  "vocal-minority": icon("vocal-minority"),
 };
 
 const GAP = 2;

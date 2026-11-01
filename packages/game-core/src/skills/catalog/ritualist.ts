@@ -2342,6 +2342,36 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // the destroying are the status's.
     effects: [{ kind: "apply-status", statusId: "signet-of-ghostly-might", durationSeconds: 10 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples 2 (#1872), at their rank-12 values                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.vital-weapon",
+    name: "Vital Weapon",
+    gwId: 1267,
+    type: "weapon-spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...30 seconds": 25 s; the maximum Health is the status's.
+    effects: [{ kind: "apply-status", statusId: "vital-weapon", durationSeconds: 25 }],
+  },
 ];
 
 /**

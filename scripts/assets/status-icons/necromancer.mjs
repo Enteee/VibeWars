@@ -265,4 +265,12 @@ export const NECROMANCER_STATUS_ICONS = {
   ],
   // Hex: a sword bent down under a bar, attacks slowed.
   meekness: ["hex", (c) => `<path d="M5 6h14M12 9v10M9 16l3 3 3-3" ${stroke(c, 2.2)}/>`],
+  // Caster staples 2 (#1872), stand-ins until their art card.
+  // Hex: a mouth crossed out, no shouts or chants.
+  "vocal-minority": [
+    "hex",
+    (c) =>
+      `<path d="M6 12c2-3 10-3 12 0-2 3-10 3-12 0z" ${stroke(c, 2)}/>` +
+      `<path d="M5 19L19 5" ${stroke(c, 2.2)}/>`,
+  ],
 };

@@ -95,4 +95,6 @@ export const NECROMANCER_ICONS = {
   // Caster staples (#1870), stand-ins until their art card.
   "necromancer.blood-renewal": { glyph: "heal", modifier: "bleed" },
   "necromancer.meekness": { glyph: "slow", modifier: "down" },
+  // Caster staples 2 (#1872), stand-ins until their art card.
+  "necromancer.vocal-minority": { glyph: "hex-mute", modifier: "area" },
 };

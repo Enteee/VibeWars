@@ -1550,6 +1550,7 @@ export function applyEffect(
       }
       // The caster's newest; the simulation drops what it cannot pay for.
       const ending = endedByGaining(bearer, effect.statusId);
+      const raisedBefore = raisedMaxHealth(bearer);
       bearer.statuses.maintain(
         effect.statusId,
         caster.id,
@@ -1557,6 +1558,12 @@ export function applyEffect(
         castSpot(context, caster),
       );
       caster.nextMaintainSeq += 1;
+      // Vital Blessing (#1872): the Health comes with the maximum, as
+      // `applyStatus` gives it.
+      const raised = raisedMaxHealth(bearer) - raisedBefore;
+      if (raised > 0) {
+        bearer.health = Math.min(bearer.health + raised, effectiveMaxHealth(bearer));
+      }
       events.push({
         kind: "status-applied",
         targetId: bearer.id,
