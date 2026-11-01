@@ -13,6 +13,7 @@ import {
   HEALTH_PER_PIP,
   StatusSet,
   isStatusId,
+  isSuppressed,
   ownSkillBoost,
   type ArmorReduction,
   type BlockRule,
@@ -289,6 +290,26 @@ export function rankOf(holder: RankHolder, attributeId: string): number {
 /** The multiplier on the bearer's weapon roll: weakness's 0.34 (#762). */
 export function weaponDamageMultiplierOf(combatant: Combatant): number {
   return aggregateModifiers(combatant.statuses.active).weaponDamageMultiplier;
+}
+
+/**
+ * What the bearer's statuses add to each of its blows (#1654), summed.
+ * One that names a weapon (#1873) counts only while the bearer wields it:
+ * Favorable Winds' arrows. A suppressed one (#1916), as Brutal Weapon
+ * beside an enchantment, adds nothing.
+ */
+export function attackDamageDeltaOf(combatant: Combatant): number {
+  const wielded = combatant.equipment.mainHand.weapon.id;
+  const { active } = combatant.statuses;
+  return active.reduce((sum, status) => {
+    const { attackDamageDelta, attackDamageDeltaWeapon } = getStatusDefinition(status.id);
+    if (isSuppressed(active, status)) {
+      return sum;
+    }
+    return attackDamageDeltaWeapon === undefined || wieldsFor(wielded, attackDamageDeltaWeapon)
+      ? sum + attackDamageDelta
+      : sum;
+  }, 0);
 }
 
 /**

@@ -10,7 +10,8 @@ import {
   getStatusDefinition,
   type StatusId,
 } from "./status.js";
-import { withAttackDuration } from "./testing.js";
+import { makeCombatant, withAttackDuration } from "./testing.js";
+import { attackDamageDeltaOf } from "./tick.js";
 
 const ALL_STATUS_IDS = Object.keys(STATUS_DEFINITIONS) as StatusId[];
 
@@ -61,6 +62,7 @@ describe("status definitions", () => {
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.maxHealthBonus !== 0 ||
+        def.maxHealthBonusPerEnchantment !== 0 ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
         def.physicalDamageTakenBonus !== 0 ||
@@ -113,7 +115,8 @@ describe("status definitions", () => {
         def.preventsSpeedBoosts ||
         def.returnsSource !== undefined ||
         def.stepsToTarget !== undefined ||
-        def.elementalDamageTakenAs !== undefined;
+        def.elementalDamageTakenAs !== undefined ||
+        def.physicalDamageDealtAs !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -884,18 +887,19 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
   });
 });
 
-describe("aggregateModifiers, suppressed while enchanted (#1916)", () => {
-  it("drops Brutal Weapon's +13 beside an enchantment, keeps it beside a weapon spell, a stance or nothing", () => {
-    expect(aggregateModifiers([{ id: "brutal-weapon" }]).attackDamageDelta).toBe(13);
-    for (const beside of ["vital-weapon", "balanced-stance"] as const) {
-      expect(
-        aggregateModifiers([{ id: "brutal-weapon" }, { id: beside }]).attackDamageDelta,
-        beside,
-      ).toBe(13);
+describe("attackDamageDeltaOf, suppressed while enchanted (#1916)", () => {
+  const deltaWith = (...ids: StatusId[]): number => {
+    const bearer = makeCombatant({ id: "bearer" });
+    for (const id of ids) {
+      bearer.statuses.apply(id, 60, "bearer");
     }
-    expect(
-      aggregateModifiers([{ id: "brutal-weapon" }, { id: "guardian" }]).attackDamageDelta,
-    ).toBe(0);
+    return attackDamageDeltaOf(bearer);
+  };
+
+  it("drops Brutal Weapon's +13 beside an enchantment, keeps it beside a stance or nothing", () => {
+    expect(deltaWith("brutal-weapon")).toBe(13);
+    expect(deltaWith("brutal-weapon", "balanced-stance")).toBe(13);
+    expect(deltaWith("brutal-weapon", "guardian")).toBe(0);
   });
 });
 

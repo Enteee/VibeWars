@@ -29,7 +29,7 @@
  */
 
 import type { ConditionalArmor } from "../equipment/armor.js";
-import { isElementalDamage, type DamageType } from "../equipment/types.js";
+import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import type { Vec2 } from "../vec2.js";
@@ -103,8 +103,13 @@ export type StatusId =
 
 /** A status's modifiers that hold only while its bearer is under another (#1485). */
 export interface WhileUnder {
-  /** The bearer must have a status of one of these categories, not this one. */
+  /**
+   * The bearer must have a status, not this one, of one of these
+   * categories or one of these ids (#1873): either list matching counts,
+   * and one of the two is not empty. Toxicity's "Poisoned or Diseased".
+   */
   readonly categories: readonly StatusCategory[];
+  readonly statusIds: readonly StatusId[];
   readonly attackDurationMultiplier: number;
   readonly adrenalineGainFaster: number;
   /** Summed into the bearer's pips as the status's own (#1654): Resilient Weapon's. */
@@ -252,6 +257,13 @@ export interface StatusDefinition {
    */
   readonly maxHealthBonus: number;
   /**
+   * Maximum health added for each enchantment on the bearer, any source's,
+   * counted live (#1873): Symbiosis's "+27...150 maximum Health" for each.
+   * Summed into `maxHealthBonus`; losing an enchantment clamps health as
+   * losing that does. 0: none.
+   */
+  readonly maxHealthBonusPerEnchantment: number;
+  /**
    * Maximum energy added while it lasts (#1464): Mighty Was Vorizun's 30.
    * Gaining it raises only the ceiling; losing it clamps energy to the
    * ceiling left, as `maxHealthBonus` does health.
@@ -296,6 +308,14 @@ export interface StatusDefinition {
    */
   readonly attackDamageTypeWeapon: AttackWeaponClass | undefined;
   /**
+   * The type every physical packet the bearer deals becomes, attacks and
+   * skills alike (#1873): Greater Conflagration's "all physical damage is
+   * fire damage instead". After the bearer's `attackDamageType` and before
+   * the victim's `elementalDamageTakenAs`, so armor reads the new type.
+   * `undefined`: none.
+   */
+  readonly physicalDamageDealtAs: DamageType | undefined;
+  /**
    * The least armor penetration the bearer's weapon attacks have (#1519):
    * Judge's Insight's "+20% armor penetration". It joins the blow's and
    * Strength's: the highest counts, nothing adds. 0: none.
@@ -308,6 +328,12 @@ export interface StatusDefinition {
    * Summed over statuses. 0: none.
    */
   readonly attackDamageDelta: number;
+  /**
+   * `attackDamageDelta` holds only while the bearer wields this weapon
+   * (#1873): Favorable Winds' "arrows strike for +6 damage". `undefined`:
+   * whatever it wields.
+   */
+  readonly attackDamageDeltaWeapon: AttackWeaponClass | undefined;
   /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
@@ -909,6 +935,12 @@ export type StatusTriggerEvent =
    */
   | "bearer-interrupted"
   /**
+   * The bearer was knocked down, by any source (#1873): a new knockdown,
+   * not one stopped, and never one on a body already down. Brambles'.
+   * Recorded with the triggers that answered, and fired at the drain.
+   */
+  | "bearer-knocked-down"
+  /**
    * A hex or an enchantment landed on the bearer, new or renewed (#1403):
    * Soul Barbs'. A refresh that changes nothing is no gain, and the status
    * gained never answers its own landing. Recorded with the triggers that
@@ -1360,6 +1392,7 @@ export type StatusChange =
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
+  | { readonly kind: "knocked-down"; readonly fired: readonly AnsweringTrigger[] }
   | {
       readonly kind: "took-damage-from-foe";
       readonly offenderId: string;
@@ -1741,6 +1774,17 @@ export class StatusSet {
     const fired = this.#answering("bearer-takes-physical-damage");
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-physical-damage", fired });
+    }
+  }
+
+  /**
+   * The bearer was knocked down (#1873), recorded only if a status on it
+   * answers that, with the triggers that do.
+   */
+  public recordKnockdown(): void {
+    const fired = this.#answering("bearer-knocked-down");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "knocked-down", fired });
     }
   }
 
@@ -2873,6 +2917,32 @@ export function preventsResurrection(statuses: readonly Pick<ActiveStatus, "id">
 }
 
 /**
+ * The type a bearer of `statuses` deals its physical damage as (#1873):
+ * the first status's `physicalDamageDealtAs`, Greater Conflagration's
+ * fire. `undefined`: its own.
+ */
+export function physicalDamageDealtAsOf(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+): DamageType | undefined {
+  for (const { id } of statuses) {
+    const turned = getStatusDefinition(id).physicalDamageDealtAs;
+    if (turned !== undefined) {
+      return turned;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The type a packet of `type` is as its dealer deals it (#1873): physical
+ * damage turns into `dealtAs`, the dealer's `physicalDamageDealtAsOf`;
+ * anything else stays. Read before the victim's `damageTypeTaken`.
+ */
+export function damageTypeDealt(type: DamageType, dealtAs: DamageType | undefined): DamageType {
+  return dealtAs !== undefined && isPhysicalDamage(type) ? dealtAs : type;
+}
+
+/**
  * The type a packet of `type` is when it reaches a bearer of `statuses`
  * (#1745): elemental damage turns into a status's
  * `elementalDamageTakenAs`, Winter's cold; anything else stays.
@@ -3005,8 +3075,6 @@ export interface StatusModifiers {
   readonly criticalChanceBonus: number;
   /** The largest status's (#1519). */
   readonly attackArmorPenetration: number;
-  /** Every status's, summed (#1654). */
-  readonly attackDamageDelta: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -3035,14 +3103,20 @@ export function reducedRecharge(seconds: number, faster: number): number {
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
 export const HEALING_MULTIPLIER_FLOOR = 0.6;
 
-/** Whether a status in `statuses` other than `self` is of one of `categories` (#1485). */
+/**
+ * Whether a status in `statuses` other than `self` is of one of `under`'s
+ * categories (#1485) or one of its ids (#1873).
+ */
 export function isUnderAnother(
   statuses: readonly Pick<ActiveStatus, "id">[],
   self: Pick<ActiveStatus, "id">,
-  categories: readonly StatusCategory[],
+  under: Pick<WhileUnder, "categories" | "statusIds">,
 ): boolean {
   return statuses.some(
-    (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
+    (other) =>
+      other !== self &&
+      (under.statusIds.includes(other.id) ||
+        under.categories.includes(getStatusDefinition(other.id).category)),
   );
 }
 
@@ -3056,7 +3130,7 @@ export function isSuppressed(
   self: Pick<ActiveStatus, "id">,
 ): boolean {
   const categories = getStatusDefinition(self.id).suppressedWhileUnder;
-  return categories !== undefined && isUnderAnother(statuses, self, categories);
+  return categories !== undefined && isUnderAnother(statuses, self, { categories, statusIds: [] });
 }
 
 /**
@@ -3118,15 +3192,12 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let attackArmorPenetration = 0;
-  let attackDamageDelta = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
-  const underAnother = (self: Pick<ActiveStatus, "id">, categories: readonly StatusCategory[]) =>
-    isUnderAnother(statuses, self, categories);
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
@@ -3160,7 +3231,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     ) {
       maxHealthLoss = def.maxHealthLoss;
     }
-    maxHealthBonus += def.maxHealthBonus;
+    maxHealthBonus += def.maxHealthBonus + def.maxHealthBonusPerEnchantment * enchantments;
     maxEnergyBonus += def.maxEnergyBonus;
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
@@ -3196,7 +3267,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
     adrenalineGainFaster += def.adrenalineGainFaster;
-    if (def.whileUnder !== undefined && underAnother(status, def.whileUnder.categories)) {
+    if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
@@ -3219,7 +3290,6 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
-    attackDamageDelta += def.attackDamageDelta;
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -3265,7 +3335,6 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     attackArmorPenetration,
-    attackDamageDelta,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,

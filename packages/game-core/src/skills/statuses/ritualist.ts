@@ -535,6 +535,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     profession: "ritualist",
     whileUnder: {
       categories: ["condition", "hex"],
+      statusIds: [],
       attackDurationMultiplier: 1,
       adrenalineGainFaster: 0,
       healthPips: 5,
