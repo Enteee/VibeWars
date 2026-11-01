@@ -553,7 +553,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     ];
     // Toxicity's (#1873): "while under Poison or Disease".
     const under = [
-      ...categories.map((category) => `a ${category}`),
+      ...(categories.length === 0 ? [] : [`a ${categories.join(" or ")}`]),
       ...statusIds.map((id) => getStatusDefinition(id).name),
     ];
     parts.push(`while under ${under.join(" or ")}: ${gains.join(", ")}`);

@@ -61,6 +61,7 @@ describe("status definitions", () => {
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.maxHealthBonus !== 0 ||
+        def.maxHealthBonusPerEnchantment !== 0 ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
         def.physicalDamageTakenBonus !== 0 ||
@@ -112,7 +113,8 @@ describe("status definitions", () => {
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
         def.returnsSource !== undefined ||
-        def.elementalDamageTakenAs !== undefined;
+        def.elementalDamageTakenAs !== undefined ||
+        def.physicalDamageDealtAs !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
