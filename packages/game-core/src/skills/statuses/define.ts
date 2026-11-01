@@ -44,6 +44,8 @@ export function define(
     attackArmorPenetration: 0,
     attackDamageDelta: 0,
     attributeDelta: 0,
+    attributeSet: undefined,
+    borrowsAttribute: undefined,
     castTimeMultiplier: 1,
     skillActivationMultiplier: 1,
     interruptsSpells: false,

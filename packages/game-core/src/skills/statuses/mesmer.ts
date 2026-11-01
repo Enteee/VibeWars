@@ -46,7 +46,8 @@ export type MesmerStatusId =
   | "sum-of-all-fears"
   // Caster staples 2 (#1872).
   | "elemental-resistance"
-  | "physical-resistance";
+  | "physical-resistance"
+  | "signet-of-illusions";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -628,5 +629,12 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       { amount: 40, conditions: [{ kind: "vs-physical" }] },
       { amount: -14, conditions: [{ kind: "vs-elemental" }] },
     ],
+  }),
+  // "Your next 1...3...3 non-Illusion spells use your Illusion attribute
+  // instead of its normal attribute" (#1929): no duration, it lasts
+  // until its 3 are spent.
+  "signet-of-illusions": define("signet-of-illusions", "Signet of Illusions", "skill-effect", {
+    profession: "mesmer",
+    borrowsAttribute: { attributeId: "mesmer.illusion-magic", spells: 3 },
   }),
 };

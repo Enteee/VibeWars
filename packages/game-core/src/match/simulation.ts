@@ -146,6 +146,7 @@ import {
   raisedMaxHealth,
   rankOf,
   upkeepPips,
+  withBorrowedAttribute,
   type NetPips,
 } from "../skills/tick.js";
 import {
@@ -3535,6 +3536,13 @@ export class MatchSimulation {
     if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
       return;
     }
+    // Signet of Illusions' (#1929): a finished spell spends a use and
+    // scales, where it lands and what it summons, with the lent attribute.
+    const borrowing = record.combatant.statuses.borrowedFor(skill);
+    const lent =
+      borrowing === undefined
+        ? undefined
+        : getStatusDefinition(borrowing).borrowsAttribute?.attributeId;
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
@@ -3555,7 +3563,7 @@ export class MatchSimulation {
     const resolve =
       flight !== undefined
         ? (resolution: SkillResolution) =>
-            only(this.#releaseSpell(record, resolution, flight.speed, dt))
+            only(this.#releaseSpell(record, resolution, flight.speed, dt, lent))
         : skill.attack === undefined
           ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined
@@ -3596,24 +3604,26 @@ export class MatchSimulation {
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
-        : resolve({
-            skill:
-              sacrifice === undefined
-                ? skill
-                : {
-                    ...skill,
-                    effects: [
-                      { kind: "sacrifice-health", percentOfMax: sacrifice },
-                      ...skill.effects,
-                    ],
-                  },
-            caster: record.combatant,
-            targets,
-            rng: this.#rng,
-            rules: this.#ruleset.combat,
-            surroundings: this.#participants,
-            own: cast.rule.own,
-          });
+        : withBorrowedAttribute(record.combatant, lent, skill, () =>
+            resolve({
+              skill:
+                sacrifice === undefined
+                  ? skill
+                  : {
+                      ...skill,
+                      effects: [
+                        { kind: "sacrifice-health", percentOfMax: sacrifice },
+                        ...skill.effects,
+                      ],
+                    },
+              caster: record.combatant,
+              targets,
+              rng: this.#rng,
+              rules: this.#ruleset.combat,
+              surroundings: this.#participants,
+              own: cast.rule.own,
+            }),
+          );
     // What the skill put on its own user does not answer this use of it
     // (#999): the chanter's own Song of Restoration waits for its next skill.
     // An echo skill does not use up an echo already up, either (#469).
@@ -3685,23 +3695,25 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#recordSteps(events);
     this.#recordResurrections(events);
-    // A raised minion rises where its corpse lay (#467).
-    for (const summon of summons) {
-      this.#summon(
-        record,
-        skill.id,
-        summon.creature,
-        summon.count,
-        corpse?.position ?? record.position,
-        false,
-      );
-    }
-    for (const ground of grounds) {
-      const position = this.#groundAnchor(record, ground, site, primary);
-      if (position !== undefined) {
-        this.#placeGroundEffect(record, skill.id, ground, position);
+    withBorrowedAttribute(record.combatant, lent, skill, () => {
+      // A raised minion rises where its corpse lay (#467).
+      for (const summon of summons) {
+        this.#summon(
+          record,
+          skill.id,
+          summon.creature,
+          summon.count,
+          corpse?.position ?? record.position,
+          false,
+        );
       }
-    }
+      for (const ground of grounds) {
+        const position = this.#groundAnchor(record, ground, site, primary);
+        if (position !== undefined) {
+          this.#placeGroundEffect(record, skill.id, ground, position);
+        }
+      }
+    });
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -3792,6 +3804,9 @@ export class MatchSimulation {
       events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped)],
     });
     this.#logFired(riders);
+    if (borrowing !== undefined) {
+      this.#logSpent(record, skill, record.combatant.statuses.spendBorrowed(borrowing));
+    }
     // After the skill's own effects, as their own entries (#469): a spell
     // finished is Backfire's moment, an attack skill Empathy's. Any skill
     // used is Spiteful Spirit's (#935), and an attack skill twice over.
@@ -5173,6 +5188,7 @@ export class MatchSimulation {
     resolution: SkillResolution,
     speed: number,
     dt: number,
+    lent: string | undefined,
   ): CombatEvent[] {
     const { skill } = resolution;
     const spread = skill.projectile?.spread === true;
@@ -5183,6 +5199,7 @@ export class MatchSimulation {
       skill: spread ? { ...skill, area: undefined } : skill,
       caster: record.combatant,
       own: resolution.own,
+      lent,
     };
     return victims.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
@@ -5532,22 +5549,24 @@ export class MatchSimulation {
       return;
     }
     const { skill, caster } = spell;
-    const { events, skipped } = resolveSkillEffects({
-      skill,
-      caster,
-      targets: resolveTargets({
+    const { events, skipped } = withBorrowedAttribute(caster, spell.lent, skill, () =>
+      resolveSkillEffects({
         skill,
         caster,
-        casterPosition: projectile.from,
-        primary: target,
-        candidates: skill.area === undefined ? [] : [...this.#participants.values()],
-        losBlockers: this.#walls,
+        targets: resolveTargets({
+          skill,
+          caster,
+          casterPosition: projectile.from,
+          primary: target,
+          candidates: skill.area === undefined ? [] : [...this.#participants.values()],
+          losBlockers: this.#walls,
+        }),
+        rng: this.#rng,
+        rules: this.#ruleset.combat,
+        surroundings: this.#participants,
+        own: spell.own,
       }),
-      rng: this.#rng,
-      rules: this.#ruleset.combat,
-      surroundings: this.#participants,
-      own: spell.own,
-    });
+    );
     this.#chargeFromDamage(caster, events);
     this.#recordDeaths(events);
     this.#recordKnockdowns(events);
@@ -6918,6 +6937,7 @@ export class MatchSimulation {
       skillBar: spec.skillBar,
       lastCombatAt: this.#elapsedSeconds,
       attributeRanks: spec.attributeRanks,
+      borrowedAttribute: null,
       team: spec.team,
       dead: false,
       statuses,

@@ -287,6 +287,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "air-attunement": icon("air-attunement"),
   "earth-attunement": icon("earth-attunement"),
   "aura-of-restoration": icon("aura-of-restoration"),
+  "master-of-magic": icon("master-of-magic"),
   "kinetic-armor": icon("kinetic-armor"),
   "infuriating-heat": icon("infuriating-heat"),
   "fertile-season": icon("fertile-season"),
@@ -373,6 +374,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Caster staples 2 (#1872).
   "elemental-resistance": icon("elemental-resistance"),
   "physical-resistance": icon("physical-resistance"),
+  "signet-of-illusions": icon("signet-of-illusions"),
   "vital-blessing": icon("vital-blessing"),
   "vital-weapon": icon("vital-weapon"),
   "brutal-weapon": icon("brutal-weapon"),
@@ -380,6 +382,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Skill-type and heal triggers (#1913).
   cacophony: icon("cacophony"),
   "soul-bind": icon("soul-bind"),
+  "wail-of-doom": icon("wail-of-doom"),
+  atrophy: icon("atrophy"),
   "scribes-insight": icon("scribes-insight"),
 };
 

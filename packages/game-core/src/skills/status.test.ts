@@ -65,6 +65,8 @@ describe("status definitions", () => {
         def.weaponDamageMultiplier !== 1 ||
         def.physicalDamageTakenBonus !== 0 ||
         def.attributeDelta !== 0 ||
+        def.attributeSet !== undefined ||
+        def.borrowsAttribute !== undefined ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
         def.untargetableByFoeSpells ||

@@ -44,7 +44,8 @@ export type ElementalistStatusId =
   // Attribute hexes (#1765).
   | "freezing-gust"
   // Caster staples (#1870).
-  | "grasping-earth";
+  | "grasping-earth"
+  | "master-of-magic";
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -315,6 +316,30 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     attribute: "elementalist.earth-magic",
     moveSpeedMultiplier: 0.5,
+  }),
+  // "For 1...49...61 seconds, all of your elemental attributes are set to
+  // 8...13...14 and your elemental spells return 1 Energy plus 30% of
+  // their Energy cost" (#1929): rank 13, at rank 12, over runes and
+  // Weakness alike; the return as an attunement's.
+  "master-of-magic": define("master-of-magic", "Master of Magic", "enchantment", {
+    profession: "elementalist",
+    attributeSet: { scope: "elemental", rank: 13, plusEquipment: false },
+    triggers: (["air-magic", "earth-magic", "fire-magic", "water-magic"] as const).map(
+      (attribute) => ({
+        on: "bearer-uses-skill" as const,
+        usedSkill: { attribute: `elementalist.${attribute}` },
+        target: "bearer" as const,
+        effects: [
+          { kind: "energy-gain" as const, amount: { flat: 1 } },
+          {
+            kind: "energy-gain" as const,
+            amount: { flat: 0.3 },
+            perUsedSkillEnergy: true as const,
+          },
+        ],
+        skillId: "elementalist.master-of-magic",
+      }),
+    ),
   }),
 };
 

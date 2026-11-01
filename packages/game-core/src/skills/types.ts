@@ -1795,6 +1795,13 @@ export interface Combatant {
   readonly skillBar: SkillBar;
   /** Attribute ranks by attribute id; absent means rank 0. */
   readonly attributeRanks: ReadonlyMap<string, number>;
+  /**
+   * While a spell that borrows an attribute resolves (#1929), Signet of
+   * Illusions': its own attribute `from` reads the rank in `to`. Set and
+   * cleared around that resolution by `withBorrowedAttribute`; `null`
+   * otherwise.
+   */
+  borrowedAttribute: { readonly from: string; readonly to: string } | null;
   readonly team: number;
   /** Set once health reaches 0; a dead combatant is skipped by the simulation. */
   dead: boolean;
