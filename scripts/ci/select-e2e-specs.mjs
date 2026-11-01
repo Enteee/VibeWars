@@ -105,7 +105,7 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   return jobs.map(({ specs, repeat }) => ({ specs, repeat }));
 };
 
-/** Seconds of test runs per job: 25 min, so with setup and build the job fits the 40 min cap, and ten repeats of a spec up to 750 s fit in MAX_JOBS jobs (#1884). */
+/** Seconds of test runs per job: 1500 s, so with setup and build the job fits the 60 min cap, hosted runners taking ~1.6x the recorded seconds (#2114), and ten repeats of a spec up to 750 s fit in MAX_JOBS jobs (#1884). */
 export const SECONDS_PER_JOB = 1500;
 export const MAX_JOBS = 6;
 export const REPEATS = 10;
