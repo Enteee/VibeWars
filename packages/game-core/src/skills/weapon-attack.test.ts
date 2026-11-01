@@ -2039,6 +2039,24 @@ describe("martial weapon mods on a hit (#2009)", () => {
     );
   });
 
+  it("an Icy longbow's arrows still carry Apply Poison: cold, but no wand", () => {
+    const icy = modded("longbow", "icy", "ranger.marksmanship");
+    icy.statuses.apply("apply-poison", 24, "attacker", NO_RANKS);
+    const target = foe("dummy");
+    const { fired } = resolveSwing({
+      attacker: icy,
+      target,
+      surroundings: new Map(),
+      rng: scripted(),
+      rules: RULES,
+      exposed: NOWHERE,
+    });
+    const poisoned = fired
+      .flatMap(({ events }) => events)
+      .filter((event) => event.kind === "status-applied" && event.statusId === "poison");
+    expect(poisoned).toHaveLength(1);
+  });
+
   it("Barbed makes Sever Artery's Bleeding last 33% longer", () => {
     const bleedingFrom = (who: Combatant): number => {
       const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });

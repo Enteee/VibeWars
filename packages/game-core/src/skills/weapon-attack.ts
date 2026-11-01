@@ -1,7 +1,7 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon, WeaponHitMods } from "../equipment/resolve.js";
-import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
-import { wieldsFor, type Weapon } from "../equipment/weapons.js";
+import { type DamageType } from "../equipment/types.js";
+import { isCasterWeapon, wieldsFor, type Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
@@ -709,7 +709,8 @@ export function attackBlockedRiders(
  * Each of the attacker's statuses' `which` rider onto `victim`, active
  * and `spent` alike: one for attack skills only rides a blow
  * `withAttackSkill`, one for a weapon class only a blow of that weapon,
- * and a non-physical blow only a weapon spell's.
+ * and a wand's or staff's blow only a weapon spell's: a martial
+ * weapon's elemental prefix (#2009) changes its damage, not its riders.
  */
 function applyRiders(
   which: "onAttackHit" | "onAttackBlocked",
@@ -723,7 +724,7 @@ function applyRiders(
   fired: FiredTrigger[],
   spent: readonly StatusId[],
 ): void {
-  const physical = isPhysicalDamage(mainHand.damageType);
+  const caster = isCasterWeapon(mainHand.weapon);
   const active = attacker.statuses.active;
   for (const status of [...active, ...spent.map((id) => ({ id }))]) {
     const definition = getStatusDefinition(status.id);
@@ -732,7 +733,7 @@ function applyRiders(
       rider === undefined ||
       isSuppressed(active, status) ||
       (rider.attackSkillsOnly && !withAttackSkill) ||
-      (!physical && definition.category !== "weapon-spell") ||
+      (caster && definition.category !== "weapon-spell") ||
       (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
     ) {
       continue;
