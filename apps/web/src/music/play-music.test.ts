@@ -14,6 +14,7 @@ const tracks = [
     source: "a",
     phraseCycles: 8,
     moods: ["atmospheric" as const],
+    layers: 2,
   },
   {
     id: "clash-of-banners",
@@ -21,6 +22,7 @@ const tracks = [
     source: "b",
     phraseCycles: 4,
     moods: ["action" as const],
+    layers: 4,
   },
 ];
 
@@ -135,8 +137,28 @@ describe("createMusicFollower", () => {
       createIntensityOverride(),
       NO_EDITS,
     );
-    music.screen("menu");
+    music.menu("main");
     expect(calls.at(-1)).toEqual(["crossfadeTo", tracks[0]]);
+  });
+
+  it("keeps the menu song from menu to menu, only its intensity following the depth (#1993)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+    );
+    music.menu("main");
+    music.menu("character-builder");
+    music.menu("main");
+    expect(calls.filter(([call]) => call !== "setVolume")).toEqual([
+      ["crossfadeTo", tracks[0]],
+      ["setIntensity", 1],
+      ["setIntensity", 0],
+    ]);
   });
   it("plays at the music volume, silent under either mute, ramping to each change", () => {
     const { player, calls } = recording();
@@ -173,7 +195,7 @@ describe("createMusicFollower", () => {
       createIntensityOverride(),
       NO_EDITS,
     );
-    music.screen("menu");
+    music.menu("main");
     calls.length = 0;
     const pinned = {
       ...DEFAULT_MUSIC_PREFERENCE,
@@ -199,7 +221,7 @@ describe("createMusicFollower", () => {
       createIntensityOverride(),
       NO_EDITS,
     );
-    music.screen("menu");
+    music.menu("main");
     music.follow(state("clash-of-banners", 1));
     calls.length = 0;
     music.setPreference({ ...DEFAULT_MUSIC_PREFERENCE, mode: "off" });
@@ -216,7 +238,7 @@ describe("createMusicFollower", () => {
       createIntensityOverride(),
       NO_EDITS,
     );
-    music.screen("menu");
+    music.menu("main");
     calls.length = 0;
     music.preview("clash-of-banners");
     // The director goes on deciding, unheard.

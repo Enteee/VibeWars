@@ -47,7 +47,10 @@ function fromSnapshot(
   snapshot: MatchSnapshot,
   screen: MatchMusicOptions["screen"],
   teamSize: number | null,
-): Omit<MusicInput, "mapId" | "matchSeed" | "hitsDealtLast5s" | "hitsTakenLast5s" | "nowMs"> {
+): Omit<
+  MusicInput,
+  "mapId" | "matchSeed" | "menuDepth" | "hitsDealtLast5s" | "hitsTakenLast5s" | "nowMs"
+> {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const finished = snapshot.phase === "finished";
   const result =
@@ -147,6 +150,7 @@ export function attachMatchMusic(
         ...fromSnapshot(next, screen, teamSize),
         mapId,
         matchSeed,
+        menuDepth: null,
         hitsDealtLast5s: recent(dealt, at),
         hitsTakenLast5s: recent(taken, at),
         nowMs: at,
