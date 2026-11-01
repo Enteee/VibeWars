@@ -757,7 +757,7 @@ function perOwnCreature(
  * `base` plus `per`'s amount for each of what it counts as the effect
  * lands on `target` (#1760), capped at its `max`. Without `per`, `base`.
  */
-function withPerCount(
+export function withPerCount(
   base: number,
   per: PerCount | undefined,
   caster: Combatant,
@@ -798,6 +798,15 @@ function countOf(
               !combatant.dead &&
               combatant.team !== caster.team &&
               distance(position, at) <= rule.radius,
+          ).length;
+    }
+    case "recharging-skills": {
+      const owner = livingOwnerOf(caster, surroundings);
+      return owner === undefined
+        ? 0
+        : [...owner.cast.rechargeRemaining].filter(
+            ([key, remaining]) =>
+              remaining > 0 && getSkill(skillIdOfKey(key))?.attributeId === rule.attributeId,
           ).length;
     }
   }
@@ -1534,8 +1543,13 @@ export function applyEffect(
         }
         return events;
       }
+      const gainer =
+        effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
+      if (gainer === undefined) {
+        return events;
+      }
       gainEnergy(
-        caster,
+        gainer,
         perRemovedByAnyone(
           effect,
           perOwnCreature(
@@ -1564,10 +1578,12 @@ export function applyEffect(
     }
 
     case "adrenaline-gain": {
-      if (fillPools(caster, effect.strikes * ADRENALINE_PER_STRIKE)) {
+      const gainer =
+        effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
+      if (gainer !== undefined && fillPools(gainer, effect.strikes * ADRENALINE_PER_STRIKE)) {
         events.push({
           kind: "adrenaline-gained",
-          targetId: caster.id,
+          targetId: gainer.id,
           strikes: effect.strikes,
           skillId: context.skillId,
         });
