@@ -1653,7 +1653,12 @@ export function applyEffect(
     case "sacrifice-health": {
       loseHealth(
         caster,
-        Math.round((caster.maxHealth * effect.percentOfMax) / 100),
+        Math.round(
+          (caster.maxHealth *
+            effect.percentOfMax *
+            aggregateModifiers(caster.statuses.active).sacrificeMultiplier) /
+            100,
+        ),
         "sacrifice",
         events,
       );
@@ -2399,7 +2404,14 @@ export function stateHolds(
     case "caster-has":
       return caster.statuses.countByCategory(condition.category, condition.profession) > 0;
     case "caster-lacks":
-      return caster.statuses.countByCategory(condition.category, condition.profession) === 0;
+      return (
+        caster.statuses.countByCategory(
+          condition.category,
+          condition.profession,
+          undefined,
+          condition.excluding,
+        ) === 0
+      );
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
