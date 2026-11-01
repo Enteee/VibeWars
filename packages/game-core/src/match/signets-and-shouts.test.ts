@@ -12,6 +12,7 @@ import type { Combatant } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -146,7 +147,7 @@ describe("dazed slows spells only (#524)", () => {
       participants: [warrior("w", 0, vec2(0, 0)), warrior("foe", 1, vec2(300, 0))],
     });
     const w = get(match, "w").combatant;
-    w.statuses.apply("dazed", 60, "foe");
+    w.statuses.apply("dazed", 60, "foe", NO_RANKS);
 
     match.requestSkill("w", 0);
     expect(w.cast.activeCast?.totalSeconds).toBe(2);
@@ -228,7 +229,7 @@ describe('"Watch Yourself!" (#524)', () => {
     match.requestSkill("w", 1);
     stepFor(match, DT);
     match.setTarget("foe", "w");
-    get(match, "foe").combatant.statuses.apply("blind", 60, "w");
+    get(match, "foe").combatant.statuses.apply("blind", 60, "w", NO_RANKS);
     match.requestAttack("foe", "w");
     const log = withStatusDefinitions({ blind: { attackMissChance: 1 } }, () => stepFor(match, 5));
     expect(events(log).some((event) => event.kind === "attack-missed")).toBe(true);

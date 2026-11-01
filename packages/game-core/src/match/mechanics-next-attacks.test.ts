@@ -14,6 +14,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { resolveSwing } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -69,9 +70,9 @@ describe("Brutal Weapon (#1916)", () => {
   it("adds 13 to a blow, and nothing while its bearer is enchanted", () => {
     const plain = dealt(swordsman(), 3);
     const brutal = swordsman();
-    brutal.statuses.apply("brutal-weapon", 34, "r");
+    brutal.statuses.apply("brutal-weapon", 34, "r", NO_RANKS);
     expect(dealt(brutal, 3)).toBeGreaterThan(plain);
-    brutal.statuses.apply(ENCHANTMENT, 10, "m");
+    brutal.statuses.apply(ENCHANTMENT, 10, "m", NO_RANKS);
     expect(dealt(brutal, 3)).toBe(plain);
     // Lost, it counts again; its time ran on all along.
     brutal.statuses.remove(ENCHANTMENT);
@@ -92,7 +93,7 @@ describe("Natural Healing (#1916)", () => {
   it("activates in 0.5 s unenchanted, in its corpus 1 s enchanted", () => {
     const dervish = swordsman();
     expect(effectiveActivationSeconds(healing, dervish)).toBe(0.5);
-    dervish.statuses.apply(ENCHANTMENT, 10, "m");
+    dervish.statuses.apply(ENCHANTMENT, 10, "m", NO_RANKS);
     expect(effectiveActivationSeconds(healing, dervish)).toBe(1);
   });
 
@@ -115,7 +116,7 @@ describe("Natural Healing (#1916)", () => {
       participants: [dervish("a", vec2(0, 0))],
     });
     const self = get(match, "a").combatant;
-    self.statuses.apply(ENCHANTMENT, 10, "a");
+    self.statuses.apply(ENCHANTMENT, 10, "a", NO_RANKS);
     expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
     expect(self.cast.activeCast?.totalSeconds).toBe(1);
   });
@@ -132,9 +133,9 @@ describe("Natural Temper (#1916)", () => {
   function gained(enchanted: boolean): number {
     const paragon = swordsman();
     paragon.adrenaline.set("paragon.wild-throw", 0);
-    paragon.statuses.apply("natural-temper", 13, "a");
+    paragon.statuses.apply("natural-temper", 13, "a", NO_RANKS);
     if (enchanted) {
-      paragon.statuses.apply(ENCHANTMENT, 10, "m");
+      paragon.statuses.apply(ENCHANTMENT, 10, "m", NO_RANKS);
     }
     fillPools(paragon, 100);
     return paragon.adrenaline.get("paragon.wild-throw") ?? 0;
@@ -149,7 +150,7 @@ describe("Natural Temper (#1916)", () => {
 describe("Signet of Strength (#1916)", () => {
   it("its 13th attack still deals +5, the 14th not", () => {
     const signet = swordsman();
-    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a");
+    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a", NO_RANKS);
     for (let attack = 1; attack <= 14; attack += 1) {
       const plain = dealt(swordsman(), attack);
       if (attack <= 13) {
@@ -163,8 +164,8 @@ describe("Signet of Strength (#1916)", () => {
 
   it("a blind bearer's misses spend it", () => {
     const signet = swordsman();
-    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a");
-    signet.statuses.apply("blind", 60, "foe");
+    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a", NO_RANKS);
+    signet.statuses.apply("blind", 60, "foe", NO_RANKS);
     const events = Array.from({ length: 13 }, (_, seed) => swing(signet, victim(), seed)).flat();
     expect(events.some((event) => event.kind === "attack-missed")).toBe(true);
     expect(events).toContainEqual(
@@ -177,9 +178,9 @@ describe("Signet of Strength (#1916)", () => {
     let blocked = 0;
     for (let seed = 0; seed < 20; seed += 1) {
       const signet = swordsman();
-      signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a");
+      signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a", NO_RANKS);
       const target = victim();
-      target.statuses.apply("guardian", 10, "ally");
+      target.statuses.apply("guardian", 10, "ally", NO_RANKS);
       if (swing(signet, target, seed).some((event) => event.kind === "attack-blocked")) {
         blocked += 1;
       }
@@ -190,9 +191,9 @@ describe("Signet of Strength (#1916)", () => {
 
   it("a recast starts the count again, it does not add", () => {
     const signet = swordsman();
-    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a");
+    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a", NO_RANKS);
     swing(signet, victim(), 1);
-    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a");
+    signet.statuses.apply("signet-of-strength", Number.POSITIVE_INFINITY, "a", NO_RANKS);
     expect(signet.statuses.get("signet-of-strength")?.attacksMadeLeft).toBe(13);
   });
 
@@ -206,7 +207,7 @@ describe("Signet of Strength (#1916)", () => {
 describe("Poison Tip Signet (#1916)", () => {
   const tipped = (): Combatant => {
     const ranger = swordsman();
-    ranger.statuses.apply("poison-tip-signet", 60, "a");
+    ranger.statuses.apply("poison-tip-signet", 60, "a", NO_RANKS);
     return ranger;
   };
 
@@ -223,7 +224,7 @@ describe("Poison Tip Signet (#1916)", () => {
 
   it("a miss ends it with no poison", () => {
     const ranger = tipped();
-    ranger.statuses.apply("blind", 60, "foe");
+    ranger.statuses.apply("blind", 60, "foe", NO_RANKS);
     for (let seed = 0; seed < 50; seed += 1) {
       const target = victim();
       if (swing(ranger, target, seed).some((event) => event.kind === "attack-missed")) {
@@ -231,7 +232,7 @@ describe("Poison Tip Signet (#1916)", () => {
         expect(ranger.statuses.has("poison-tip-signet")).toBe(false);
         return;
       }
-      ranger.statuses.apply("poison-tip-signet", 60, "a");
+      ranger.statuses.apply("poison-tip-signet", 60, "a", NO_RANKS);
     }
     throw new Error("a blind ranger never missed");
   });
@@ -250,7 +251,7 @@ describe("Poison Tip Signet (#1916)", () => {
       participants: [archer("a", vec2(0, 0)), dummy("d", vec2(600, 0))],
     });
     const ranger = get(match, "a").combatant;
-    ranger.statuses.apply("poison-tip-signet", 60, "a");
+    ranger.statuses.apply("poison-tip-signet", 60, "a", NO_RANKS);
     match.requestAttack("a", "d");
     let released = false;
     for (let i = 0; i < 200 && !released; i += 1) {

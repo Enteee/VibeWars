@@ -12,6 +12,7 @@ import { describeSkill, describeStatus } from "./describe.js";
 import { effectiveMaxHealth } from "./tick.js";
 import type { Combatant } from "./types.js";
 import { weaponSnapshotOf } from "./weapon-attack.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The five Dervish Avatars at their rank-12 values: Melandru and Dwayna
@@ -119,10 +120,10 @@ describe("Avatar of Melandru (#1437)", () => {
   it("cures 2 conditions whenever the Dervish loses a Dervish enchantment", () => {
     const match = avatar(SKILL);
     const self = dervish(match);
-    self.statuses.apply("poison", 20, "f");
-    self.statuses.apply("bleeding", 20, "f");
-    self.statuses.apply("crippled", 20, "f");
-    self.statuses.apply("enchanted-haste", 0.2, "d");
+    self.statuses.apply("poison", 20, "f", NO_RANKS);
+    self.statuses.apply("bleeding", 20, "f", NO_RANKS);
+    self.statuses.apply("crippled", 20, "f", NO_RANKS);
+    self.statuses.apply("enchanted-haste", 0.2, "d", NO_RANKS);
     stepFor(match, 0.5);
     expect(self.statuses.countByCategory("condition")).toBe(1);
   });
@@ -157,8 +158,8 @@ describe("Avatar of Dwayna (#1437)", () => {
   it("loses a hex on each Dervish attack skill", () => {
     const match = avatar(SKILL);
     const self = dervish(match);
-    self.statuses.apply("faintheartedness", 20, "f");
-    self.statuses.apply("malaise", 20, "f");
+    self.statuses.apply("faintheartedness", 20, "f", NO_RANKS);
+    self.statuses.apply("malaise", 20, "f", NO_RANKS);
     expect(match.requestSkill("d", 1)?.check).toEqual({ ok: true });
     stepFor(match, 2);
     expect(self.statuses.countByCategory("hex")).toBe(1);
@@ -168,7 +169,7 @@ describe("Avatar of Dwayna (#1437)", () => {
     const match = avatar(SKILL);
     const self = dervish(match);
     self.health = 200;
-    self.statuses.apply("enchanted-haste", 0.2, "d");
+    self.statuses.apply("enchanted-haste", 0.2, "d", NO_RANKS);
     stepFor(match, 0.5);
     expect(self.health).toBeCloseTo(241, 0);
   });
@@ -190,7 +191,7 @@ describe("Avatar of Balthazar (#1455)", () => {
     const match = avatar(SKILL);
     const self = dervish(match);
     expect(weaponSnapshotOf(self).damageType).toBe("holy");
-    self.statuses.apply("enchanted-haste", 0.2, "d");
+    self.statuses.apply("enchanted-haste", 0.2, "d", NO_RANKS);
     stepFor(match, 0.5);
     expect(combatant(match, "f").statuses.get("burning")?.durationSeconds).toBe(3);
   });
@@ -208,23 +209,23 @@ describe("Avatar of Grenth (#1455)", () => {
   it("cures a Disease already on the Dervish, and no later one lands", () => {
     const match = sim([SKILL]);
     const self = dervish(match);
-    self.statuses.apply("disease", 20, "f");
+    self.statuses.apply("disease", 20, "f", NO_RANKS);
     expect(match.requestSkill("d", 0)?.check).toEqual({ ok: true });
     stepFor(match, 2.1);
     expect(self.statuses.has("avatar-of-grenth")).toBe(true);
     expect(self.statuses.has("disease")).toBe(false);
-    expect(self.statuses.apply("disease", 20, "f")).toBe(false);
+    expect(self.statuses.apply("disease", 20, "f", NO_RANKS)).toBe(false);
     expect(self.statuses.has("disease")).toBe(false);
   });
 
   it("does not catch a Disease from the foe beside it, which it would without the form", () => {
     const without = sim([SKILL]);
-    combatant(without, "f").statuses.apply("disease", 20, "f");
+    combatant(without, "f").statuses.apply("disease", 20, "f", NO_RANKS);
     stepFor(without, 0.5);
     expect(dervish(without).statuses.has("disease")).toBe(true);
 
     const match = avatar(SKILL);
-    combatant(match, "f").statuses.apply("disease", 20, "f");
+    combatant(match, "f").statuses.apply("disease", 20, "f", NO_RANKS);
     stepFor(match, 0.5);
     expect(dervish(match).statuses.has("disease")).toBe(false);
   });
@@ -247,7 +248,7 @@ describe("Avatar of Grenth (#1455)", () => {
 
   it("diseases the adjacent foes whenever it loses a Dervish enchantment", () => {
     const match = avatar(SKILL);
-    dervish(match).statuses.apply("enchanted-haste", 0.2, "d");
+    dervish(match).statuses.apply("enchanted-haste", 0.2, "d", NO_RANKS);
     stepFor(match, 0.5);
     expect(combatant(match, "f").statuses.has("disease")).toBe(true);
   });
@@ -276,11 +277,11 @@ describe("Avatar of Lyssa (#1455)", () => {
   it("with Mantra of Recovery, a Dervish enchantment takes the larger share, another the Mantra's", () => {
     const mystic = "dervish.mystic-regeneration";
     const both = avatar(SKILL, mystic);
-    dervish(both).statuses.apply("mantra-of-recovery", 30, "d");
+    dervish(both).statuses.apply("mantra-of-recovery", 30, "d", NO_RANKS);
     expect(rechargeOf(both, mystic)).toBeCloseTo(12 * 0.5, 1);
     const guardian = "monk.guardian";
     const mantra = avatar(SKILL, guardian);
-    dervish(mantra).statuses.apply("mantra-of-recovery", 30, "d");
+    dervish(mantra).statuses.apply("mantra-of-recovery", 30, "d", NO_RANKS);
     expect(rechargeOf(mantra, guardian)).toBeCloseTo(6 * 0.67, 1);
   });
 
@@ -291,7 +292,7 @@ describe("Avatar of Lyssa (#1455)", () => {
     expect(weaponSnapshotOf(self).damageType).toBe("chaos");
     foe.energy = 10;
     self.energy = 20;
-    self.statuses.apply("enchanted-haste", 0.2, "d");
+    self.statuses.apply("enchanted-haste", 0.2, "d", NO_RANKS);
     const events = eventsFor(match, 0.5);
     expect(events).toContainEqual({ kind: "energy-loss", targetId: "f", amount: 1 });
     expect(Math.floor(foe.energy)).toBe(9);
@@ -303,7 +304,7 @@ describe("Avatar of Lyssa (#1455)", () => {
     const self = dervish(match);
     combatant(match, "f").energy = 0;
     self.energy = 20;
-    self.statuses.apply("enchanted-haste", 0.2, "d");
+    self.statuses.apply("enchanted-haste", 0.2, "d", NO_RANKS);
     const events = eventsFor(match, 0.5);
     expect(events.some((event) => event.kind === "energy-loss")).toBe(false);
     expect(Math.floor(self.energy)).toBe(20);

@@ -27,6 +27,9 @@ import {
   sacrificedFraction,
   sacrificesTooMuch,
   WELL_SACRIFICE_FLOOR,
+  ownTrapBoost,
+  sendsPet,
+  wardsTouch,
   wardedDamageType,
 } from "./skill-intent.js";
 
@@ -84,6 +87,12 @@ const GUARDED_CAST_SECONDS = 2;
  * its leash if shorter: not at the leash's edge, so it does not flicker.
  */
 const GUARD_HOME_UNITS = 30;
+
+/** A foe this close with a touch skill on its bar is one to ward off (#1966). */
+const TOUCH_THREAT_UNITS = 300;
+
+/** A pet at least this far from the foe is worth sending to it (#1966): Strike as One. */
+const PET_SEND_UNITS = 300;
 
 export function playBuild(
   behaviour: PlayBuild,
@@ -316,6 +325,28 @@ function think(
     }
   }
 
+  // 2c. A foe at hand with a touch skill (#1966): ward it off first, as
+  // "Can't Touch This!", unless it already is.
+  const touching = foes.some(
+    (foe) =>
+      distance(foe.position, self.position) <= TOUCH_THREAT_UNITS &&
+      foe.skillBar.some((id) => id !== null && getSkill(id)?.touch === true),
+  );
+  if (touching) {
+    const ward = bar.find(
+      (held) =>
+        wardsTouch(held) &&
+        !held.effects.some(
+          (effect) =>
+            effect.kind === "apply-status" && self.combatant.statuses.has(effect.statusId),
+        ) &&
+        mayUse(held, self.id),
+    );
+    if (ward !== undefined) {
+      return use(ward, self.id);
+    }
+  }
+
   // 3. Take a hex or a condition off the nearest ally bearing one.
   for (const ally of nearestFirst(allies)) {
     const statuses = ally.combatant.statuses;
@@ -470,6 +501,17 @@ function think(
       const category = takenOffFoe(held);
       return category === undefined || (foe?.statuses.countByCategory(category) ?? 0) > 0;
     };
+    // Strike as One (#1966) only with a living pet far enough from the foe
+    // to be worth the leap.
+    const pet = context.participants.find(
+      ({ combatant, creature }) =>
+        creature?.ownerId === self.id && creature.companionSkillId !== undefined && !combatant.dead,
+    );
+    const target = context.participants.find((other) => other.id === targetId);
+    const petFar =
+      pet !== undefined &&
+      target !== undefined &&
+      distance(pet.position, target.position) >= PET_SEND_UNITS;
     const hasStance =
       foe?.skillBar.some((id) => id !== null && getSkill(id)?.type === "stance") ?? false;
     const skill = bar.find(
@@ -477,9 +519,23 @@ function think(
         botUses(held).includes("offence") &&
         !onlyInterrupts(held) &&
         copies(held) &&
+        (!sendsPet(held) || petFar) &&
         (hasStance || !mirrorsStance(held)) &&
         mayUse(held, targetId),
     );
+    // A trap goes down under Trapper's Focus or Speed when the bar has one
+    // not yet up (#1966).
+    if (skill?.type === "trap") {
+      const boost = bar.find((held) => {
+        const statusId = ownTrapBoost(held);
+        return (
+          statusId !== undefined && !self.combatant.statuses.has(statusId) && mayUse(held, self.id)
+        );
+      });
+      if (boost !== undefined) {
+        return use(boost, self.id);
+      }
+    }
     if (skill !== undefined) {
       return use(skill, targetId);
     }

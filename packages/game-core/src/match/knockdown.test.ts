@@ -13,6 +13,7 @@ import { chargeAdrenaline, makeCombatant, withStatusDefinitions } from "../skill
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -201,7 +202,7 @@ describe("Backbreaker knocks down (#544)", () => {
   it("on a miss (blind): nothing", () => {
     withStatusDefinitions({ blind: { attackMissChance: 1 } }, () => {
       const match = backbreakerMidCast();
-      get(match, "a").combatant.statuses.apply("blind", 10, "v");
+      get(match, "a").combatant.statuses.apply("blind", 10, "v", NO_RANKS);
       const log = stepFor(match, 1);
       expect(events(log)).toContainEqual({ kind: "attack-missed", targetId: "v" });
       expect(events(log).some((event) => event.kind === "knocked-down")).toBe(false);
@@ -268,7 +269,7 @@ describe("the knockdown effect", () => {
   it("does nothing while a status that prevents it is active", () => {
     withStatusDefinitions({ "armor-boost": { preventsKnockdown: true } }, () => {
       const ctx = context();
-      ctx.target.statuses.apply("armor-boost", 10, "t");
+      ctx.target.statuses.apply("armor-boost", 10, "t", NO_RANKS);
       expect(applyEffects(KNOCKDOWN, ctx)).toEqual([]);
       expect(ctx.target.knockdownRemaining).toBe(0);
     });
@@ -291,7 +292,7 @@ describe("a knocked-down character can't block (#610)", () => {
       participants: [hammerer("a", vec2(0, 0)), caster("v", vec2(40, 0))],
     });
     const v = get(match, "v").combatant;
-    v.statuses.apply("guardian", 60, "monk");
+    v.statuses.apply("guardian", 60, "monk", NO_RANKS);
     v.knockdownRemaining = DT;
     expect(blockChanceOf(v, "melee")).toBe(0);
     match.step(DT);

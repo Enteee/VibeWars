@@ -6,6 +6,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * What the Training Ground log reads that changes no number (#1735): a
@@ -128,7 +129,7 @@ describe("skill-used (#1735)", () => {
 describe("adrenaline-gained (#1735)", () => {
   it("a skill's, named for it", () => {
     const sim = match([SIGNET_OF_AGGRESSION, SEVER_ARTERY]);
-    get(sim, "c").combatant.statuses.apply("fall-back", 30, "c");
+    get(sim, "c").combatant.statuses.apply("fall-back", 30, "c", NO_RANKS);
     expect(sim.requestSkill("c", 0)?.check).toEqual({ ok: true });
     expect(ofKind(run(sim, 1), "adrenaline-gained")).toEqual([
       { kind: "adrenaline-gained", targetId: "c", strikes: 2, skillId: SIGNET_OF_AGGRESSION },
@@ -164,7 +165,7 @@ describe("effect-skipped (#1735)", () => {
     const sim = match([GLOWING_SIGNET]);
     get(sim, "c").combatant.energy = 100;
     if (burning) {
-      get(sim, "f").combatant.statuses.apply("burning", 10, "x");
+      get(sim, "f").combatant.statuses.apply("burning", 10, "x", NO_RANKS);
     }
     sim.setTarget("c", "f");
     expect(sim.requestSkill("c", 0)?.check).toEqual({ ok: true });

@@ -89,6 +89,7 @@ export function logToneOf(kind: CombatEvent["kind"]): Exclude<LogTone, "divider"
     case "shadow-stepped-back":
     case "shadow-swapped":
     case "teleported":
+    case "companion-stepped":
     case "skill-disabled":
     case "recharge-lengthened":
       return "control";
@@ -272,6 +273,8 @@ export function describeCombatEvent(
       return `${target} swaps places with ${nameOf(event.withId)}`;
     case "teleported":
       return `${target} is teleported to ${nameOf(event.toId)}`;
+    case "companion-stepped":
+      return `${target} leaps to ${nameOf(event.toId)}`;
     case "skill-used":
       return `${nameOf(event.casterId)} uses ${skillName(event.skillId) ?? event.skillId}${event.targetId === event.casterId ? "" : ` on ${target}`}`;
     case "adrenaline-gained": {

@@ -11,6 +11,7 @@ import { applyEffects, applySkillEffects, type CombatEvent } from "./effects.js"
 import { makeCombatant } from "./testing.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
 import type { Combatant, DisableSkillEffect, Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Disables (#914): an interrupt that also keeps the skill from being used
@@ -151,7 +152,7 @@ describe("Distracting Shot (#914)", () => {
       attributeRanks: new Map([["ranger.expertise", 12]]),
     });
     if (blind) {
-      ranger.statuses.apply("blind", 10, "foe");
+      ranger.statuses.apply("blind", 10, "foe", NO_RANKS);
     }
     payCost(skill("ranger.distracting-shot"), ranger);
     return resolveAttackSkill(

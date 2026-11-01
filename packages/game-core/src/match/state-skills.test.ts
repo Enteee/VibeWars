@@ -13,6 +13,7 @@ import { resolveAttackSkill } from "../skills/weapon-attack.js";
 import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The skills whose effects depend on how things stand (#794), each in a
@@ -102,7 +103,7 @@ describe("Mystic Sweep (#794)", () => {
       ]),
     });
     if (enchanted) {
-      dervish.statuses.apply("regeneration", 10, "dervish");
+      dervish.statuses.apply("regeneration", 10, "dervish", NO_RANKS);
     }
     const victim = makeCombatant({ id: "foe", team: 1, health: 1e6, maxHealth: 1e6 });
     return resolveAttackSkill(
@@ -222,7 +223,7 @@ describe("Savage Shot (#794)", () => {
 
   it("on a dazed foe casting a spell: the bonus, and one interrupt, not a miss too (#817)", () => {
     const dazed = shootAt("elementalist.fireball", (match) => {
-      get(match, "foe").combatant.statuses.apply("dazed", 60, "archer");
+      get(match, "foe").combatant.statuses.apply("dazed", 60, "archer", NO_RANKS);
     });
     // Daze interrupts as the blow lands; Savage Shot's own interrupt then
     // finds nothing, and says nothing of it.
@@ -232,7 +233,7 @@ describe("Savage Shot (#794)", () => {
 
   it("blocked, it gives neither the bonus nor the interrupt", () => {
     const guarded = (match: MatchSimulation): void => {
-      get(match, "foe").combatant.statuses.apply("guardian", 60, "monk");
+      get(match, "foe").combatant.statuses.apply("guardian", 60, "monk", NO_RANKS);
     };
     // The first seed whose shot is blocked.
     for (let seed = 0; seed < 20; seed += 1) {
@@ -247,7 +248,7 @@ describe("Savage Shot (#794)", () => {
 
   it("blind, it misses at the release: neither the bonus nor the interrupt", () => {
     const match = new MatchSimulation({ seed: "savage", participants: [archer(), foe()] });
-    get(match, "archer").combatant.statuses.apply("blind", 60, "foe");
+    get(match, "archer").combatant.statuses.apply("blind", 60, "foe", NO_RANKS);
     get(match, "foe").combatant.cast.beginCast("elementalist.fireball", "foe", 30, undefined);
     match.setTarget("archer", "foe");
     expect(match.requestSkill("archer", 0)?.check).toEqual({ ok: true });

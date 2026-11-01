@@ -8,7 +8,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
+import { NO_RANKS, EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import type { FiredTrigger } from "../skills/triggers.js";
 import type { Combatant } from "../skills/types.js";
@@ -41,7 +41,7 @@ function prepared(weapon: Weapon, attributeId: string): Combatant {
     equipment: wielding(weapon, attributeId),
     attributeRanks: new Map([[attributeId, 12]]),
   });
-  attacker.statuses.apply("apply-poison", 24, "a");
+  attacker.statuses.apply("apply-poison", 24, "a", NO_RANKS);
   return attacker;
 }
 
@@ -85,7 +85,7 @@ describe("Apply Poison on a blow (#525)", () => {
 
   it("a miss poisons nobody", () => {
     const attacker = prepared(WEAPONS.sword, "warrior.swordsmanship");
-    attacker.statuses.apply("blind", 10, "foe");
+    attacker.statuses.apply("blind", 10, "foe", NO_RANKS);
     for (let seed = 0; seed < 50; seed += 1) {
       const target = victim();
       const { events } = swing(attacker, target, seed);
@@ -98,7 +98,7 @@ describe("Apply Poison on a blow (#525)", () => {
     const attacker = prepared(WEAPONS.sword, "warrior.swordsmanship");
     for (let seed = 0; seed < 50; seed += 1) {
       const target = victim();
-      target.statuses.apply("guardian", 10, "ally");
+      target.statuses.apply("guardian", 10, "ally", NO_RANKS);
       const { events } = swing(attacker, target, seed);
       const blocked = events.some((event) => event.kind === "attack-blocked");
       expect(target.statuses.has("poison")).toBe(!blocked);
@@ -246,7 +246,7 @@ describe("Apply Poison in the match (#525)", () => {
       participants: [archer("a", vec2(0, 0)), dummy("d", vec2(1000, 0))],
     });
     const ranger = get(match, "a").combatant;
-    ranger.statuses.apply("apply-poison", 24, "a");
+    ranger.statuses.apply("apply-poison", 24, "a", NO_RANKS);
     match.requestAttack("a", "d");
     // Released, then the preparation ends while the arrow is in the air.
     let released = false;
@@ -276,8 +276,8 @@ describe("Apply Poison in the match (#525)", () => {
       },
     });
     const ranger = get(match, "a").combatant;
-    ranger.statuses.apply("apply-poison", 24, "a");
-    ranger.statuses.apply("burning", 10, "d");
+    ranger.statuses.apply("apply-poison", 24, "a", NO_RANKS);
+    ranger.statuses.apply("burning", 10, "d", NO_RANKS);
     ranger.health = 0.2;
     stepFor(match, DT);
     expect(ranger.dead).toBe(true);
@@ -303,9 +303,9 @@ describe("Apply Poison in the match (#525)", () => {
 
   it("a second preparation ends the first, restarting it at its full duration", () => {
     const ranger = makeCombatant({ id: "a" });
-    ranger.statuses.apply("apply-poison", 24, "a");
-    ranger.statuses.apply("sprint", 13, "a");
-    ranger.statuses.apply("apply-poison", 5, "a");
+    ranger.statuses.apply("apply-poison", 24, "a", NO_RANKS);
+    ranger.statuses.apply("sprint", 13, "a", NO_RANKS);
+    ranger.statuses.apply("apply-poison", 5, "a", NO_RANKS);
     expect(ranger.statuses.active.map((status) => [status.id, status.remainingSeconds])).toEqual([
       ["sprint", 13],
       ["apply-poison", 5],

@@ -10,7 +10,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { applyDamage, applyEffect, applySkillEffects, type CombatEvent } from "./effects.js";
-import { StatusSet } from "./status.js";
+import { NO_RANKS, StatusSet } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses } from "./tick.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
@@ -66,7 +66,7 @@ function use(
 
 /** `target` under Reversal of Fortune. */
 function reversed(target: Combatant): Combatant {
-  target.statuses.apply("reversal-of-fortune", 8, "monk");
+  target.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
   return target;
 }
 
@@ -140,7 +140,7 @@ describe("Reversal of Fortune (#987)", () => {
 
   it("a deep wound cuts the heal by 20%", () => {
     const target = reversed(ally());
-    target.statuses.apply("deep-wound", 20, "foe");
+    target.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     applyDamage(target, 200, "typeless", false, [], undefined);
     expect(target.health).toBeCloseTo(100 + 67 * 0.8);
   });
@@ -156,7 +156,7 @@ describe("Reversal of Fortune (#987)", () => {
 
   it("under Protective Spirit reverses the capped hit: 48 of 480", () => {
     const target = reversed(ally({ health: 300, maxHealth: 480 }));
-    target.statuses.apply("protective-spirit", 19, "monk");
+    target.statuses.apply("protective-spirit", 19, "monk", NO_RANKS);
     applyDamage(
       target,
       mitigate(skillDamage(200, "typeless", 0), target, RULES, null),
@@ -200,7 +200,7 @@ describe("Reversal of Fortune (#987)", () => {
 
   it("does not pass to degeneration", () => {
     const target = reversed(ally());
-    target.statuses.apply("bleeding", 10, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     advanceStatuses(target, 1, 0);
     expect(target.statuses.has("reversal-of-fortune")).toBe(true);
   });
@@ -216,7 +216,7 @@ describe("Reversal of Fortune (#987)", () => {
   it("takeReversal spends it and returns its cap; nothing without one", () => {
     const statuses = new StatusSet();
     expect(statuses.takeReversal()).toBeUndefined();
-    statuses.apply("reversal-of-fortune", 8, "monk");
+    statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
     expect(statuses.takeReversal()).toEqual({ id: "reversal-of-fortune", cap: 67 });
     expect(statuses.has("reversal-of-fortune")).toBe(false);
   });
@@ -286,7 +286,7 @@ describe("Smite Hex (#987)", () => {
 
   it("removes Empathy, and foes in the area take 70 holy through armor; the friend none", () => {
     const { target, foes, friend, surroundings } = crowd();
-    target.statuses.apply("empathy", 13, "foe-1");
+    target.statuses.apply("empathy", 13, "foe-1", NO_RANKS);
     use(monk(), "monk.smite-hex", [target], surroundings);
     expect(target.statuses.has("empathy")).toBe(false);
     expect(foes.map((foe) => foe.health)).toEqual([430, 430]);
@@ -296,8 +296,8 @@ describe("Smite Hex (#987)", () => {
 
   it("takes only one hex, the newest", () => {
     const { target, surroundings } = crowd();
-    target.statuses.apply("empathy", 13, "foe-1");
-    target.statuses.apply("parasitic-bond", 20, "foe-1");
+    target.statuses.apply("empathy", 13, "foe-1", NO_RANKS);
+    target.statuses.apply("parasitic-bond", 20, "foe-1", NO_RANKS);
     use(monk(), "monk.smite-hex", [target], surroundings);
     expect(target.statuses.has("empathy")).toBe(true);
     expect(target.statuses.has("parasitic-bond")).toBe(false);
@@ -329,9 +329,9 @@ describe("Restore Condition (#987)", () => {
 
   it("removes bleeding, poison and a deep wound, and heals 3 × 58 uncut", () => {
     const target = ally();
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("poison", 10, "foe");
-    target.statuses.apply("deep-wound", 20, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
+    target.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     use(monk(), "monk.restore-condition", [target]);
     expect(target.statuses.countByCategory("condition")).toBe(0);
     expect(target.health).toBe(100 + 174);

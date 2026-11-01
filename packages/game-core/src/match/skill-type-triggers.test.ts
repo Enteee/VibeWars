@@ -9,6 +9,7 @@ import { makeCombatant } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Triggers on a skill type used or a heal (#1913): Cacophony and Soul
@@ -117,7 +118,7 @@ describe("Cacophony (#1913)", () => {
 
   it("a shout costs the foe 90, and so does a chant, through its armor", () => {
     const match = sim();
-    get(match, "a").statuses.apply("cacophony", 15, "n");
+    get(match, "a").statuses.apply("cacophony", 15, "n", NO_RANKS);
     use(match, "a", 0, "a");
     expect(damageBy(stepFor(match, 1), CACOPHONY, "a")).toEqual([90]);
     use(match, "a", 1, "a");
@@ -126,7 +127,7 @@ describe("Cacophony (#1913)", () => {
 
   it("a spell or a signet costs nothing", () => {
     const match = sim();
-    get(match, "a").statuses.apply("cacophony", 15, "n");
+    get(match, "a").statuses.apply("cacophony", 15, "n", NO_RANKS);
     use(match, "a", 2, "n");
     expect(damageBy(stepFor(match, 3), CACOPHONY, "a")).toEqual([]);
     use(match, "a", 3, "a");
@@ -145,7 +146,7 @@ describe("Soul Bind (#1913)", () => {
 
   it("an ally's heal costs the healer 68, not the bearer, at full Health too", () => {
     const match = sim();
-    get(match, "a").statuses.apply("soul-bind", 30, "n");
+    get(match, "a").statuses.apply("soul-bind", 30, "n", NO_RANKS);
     use(match, "h", 0, "a");
     const log = stepFor(match, 1.5);
     expect(damageBy(log, SOUL_BIND, "h")).toEqual([68]);
@@ -154,7 +155,7 @@ describe("Soul Bind (#1913)", () => {
 
   it("a self-heal costs the bearer itself", () => {
     const match = sim();
-    get(match, "a").statuses.apply("soul-bind", 30, "n");
+    get(match, "a").statuses.apply("soul-bind", 30, "n", NO_RANKS);
     use(match, "a", 4, "a");
     expect(damageBy(stepFor(match, 2), SOUL_BIND, "a")).toEqual([68]);
   });
@@ -163,7 +164,7 @@ describe("Soul Bind (#1913)", () => {
     const match = sim();
     const bearer = get(match, "a");
     bearer.health = 5000;
-    bearer.statuses.apply("soul-bind", 30, "n");
+    bearer.statuses.apply("soul-bind", 30, "n", NO_RANKS);
     use(match, "h", 1, "a");
     const log = stepFor(match, 6);
     expect(bearer.health).toBeGreaterThan(5000);
@@ -172,7 +173,7 @@ describe("Soul Bind (#1913)", () => {
 
   it("a heal of the hex's own side never hurts its healer", () => {
     const match = sim();
-    get(match, "a").statuses.apply("soul-bind", 30, "h");
+    get(match, "a").statuses.apply("soul-bind", 30, "h", NO_RANKS);
     use(match, "h", 0, "a");
     const log = stepFor(match, 1.5);
     expect(
@@ -183,7 +184,7 @@ describe("Soul Bind (#1913)", () => {
   it("a heal of 0 records nothing; any heal above it does", () => {
     const bearer = makeCombatant({ id: "a", team: 0 });
     const healer = makeCombatant({ id: "h", team: 0 });
-    bearer.statuses.apply("soul-bind", 30, "n");
+    bearer.statuses.apply("soul-bind", 30, "n", NO_RANKS);
     bearer.statuses.drainChanges();
     const heal = (amount: number) =>
       applyEffects([{ kind: "heal", amount: { flat: amount } }], {
@@ -208,7 +209,7 @@ describe("Scribe's Insight (#1913)", () => {
     const a = get(match, "a");
     a.energy = energy;
     if (insight) {
-      a.statuses.apply("scribes-insight", 30, "a");
+      a.statuses.apply("scribes-insight", 30, "a", NO_RANKS);
     }
     use(match, "a", slot, slot === 2 ? "n" : "a");
     stepFor(match, 3);

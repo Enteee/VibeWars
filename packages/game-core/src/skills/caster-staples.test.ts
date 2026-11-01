@@ -9,7 +9,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 
 /**
  * Caster staples (#1870): Blood Renewal, Meekness, Ethereal Burden, Sum of
@@ -146,7 +146,7 @@ describe("Blood Renewal (#1870)", () => {
   });
 
   it("gives +5 regeneration", () => {
-    expect(aggregateModifiers([{ id: "blood-renewal" }]).healthPips).toBe(5);
+    expect(aggregateModifiers([{ id: "blood-renewal", ranks: NO_RANKS }]).healthPips).toBe(5);
   });
 
   it("heals 160 when it runs out", () => {
@@ -184,7 +184,9 @@ describe("Meekness (#1870)", () => {
     expect(get(match, "a").combatant.statuses.get("meekness")?.durationSeconds).toBe(25);
     expect(get(match, "b").combatant.statuses.has("meekness")).toBe(true);
     expect(get(match, "c").combatant.statuses.has("meekness")).toBe(false);
-    expect(aggregateModifiers([{ id: "meekness" }]).attackDurationMultiplier).toBe(1.5);
+    expect(aggregateModifiers([{ id: "meekness", ranks: NO_RANKS }]).attackDurationMultiplier).toBe(
+      1.5,
+    );
   });
 });
 
@@ -204,7 +206,9 @@ describe("Ethereal Burden (#1870)", () => {
   }
 
   it("slows its target by half for 11 s", () => {
-    expect(aggregateModifiers([{ id: "ethereal-burden" }]).moveSpeedMultiplier).toBe(0.5);
+    expect(
+      aggregateModifiers([{ id: "ethereal-burden", ranks: NO_RANKS }]).moveSpeedMultiplier,
+    ).toBe(0.5);
     const match = burdened();
     expect(get(match, "a").combatant.statuses.get("ethereal-burden")?.durationSeconds).toBe(11);
   });
@@ -228,7 +232,7 @@ describe("Ethereal Burden (#1870)", () => {
 
 describe("Sum of All Fears (#1870)", () => {
   it("makes its target move, attack and cast a third slower", () => {
-    expect(aggregateModifiers([{ id: "sum-of-all-fears" }])).toMatchObject({
+    expect(aggregateModifiers([{ id: "sum-of-all-fears", ranks: NO_RANKS }])).toMatchObject({
       moveSpeedMultiplier: 0.67,
       attackDurationMultiplier: 1.33,
       castTimeMultiplier: 1.33,
@@ -253,7 +257,9 @@ describe("Grasping Earth (#1870)", () => {
     expect(get(match, "b").combatant.statuses.has("grasping-earth")).toBe(true);
     expect(get(match, "c").combatant.statuses.has("grasping-earth")).toBe(false);
     expect(get(match, "ally").combatant.statuses.has("grasping-earth")).toBe(false);
-    expect(aggregateModifiers([{ id: "grasping-earth" }]).moveSpeedMultiplier).toBe(0.5);
+    expect(
+      aggregateModifiers([{ id: "grasping-earth", ranks: NO_RANKS }]).moveSpeedMultiplier,
+    ).toBe(0.5);
   });
 });
 
