@@ -1,4 +1,5 @@
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
+import { AREA_EARSHOT } from "../distances.js";
 import {
   DIVINE_FAVOR_ATTRIBUTE,
   divineFavorBonusHeal,
@@ -29,6 +30,7 @@ import {
 } from "./status.js";
 import {
   nearestFirst,
+  nearestSpiritWithin,
   ownCreaturesWithin,
   spiritsWithin,
   type TargetCandidate,
@@ -1906,6 +1908,25 @@ export function applyEffect(
       return events;
     }
 
+    case "drain-nearest-spirit": {
+      const at = castSpot(context, caster);
+      const spirit =
+        at === null
+          ? undefined
+          : nearestSpiritWithin(context.surroundings.values(), at, AREA_EARSHOT);
+      if (spirit === undefined || target === undefined) {
+        return events;
+      }
+      const before = spirit.health;
+      loseHealth(spirit, resolveMagnitude(effect.health, caster), "health-loss", events);
+      const heal = ownHeal((before - spirit.health) * effect.healPerPoint, context.own);
+      if (heal > 0) {
+        target.statuses.recordHealedBySkill(caster.id);
+      }
+      applyHeal(target, heal, events);
+      return events;
+    }
+
     case "destroy-target-minion": {
       const minion = target === undefined ? undefined : context.surroundings.get(target.id);
       if (minion !== undefined) {
@@ -2620,6 +2641,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     // many allies the skill's area also caught.
     case "destroy-target-spirit":
     case "destroy-target-minion":
+    case "drain-nearest-spirit":
       return true;
     case "heal":
       return effect.recipient !== undefined;
