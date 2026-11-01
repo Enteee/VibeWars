@@ -23,6 +23,8 @@ const INFUSE = "necromancer.infuse-condition";
 const TASTE = "necromancer.taste-of-death";
 const HORROR = "necromancer.animate-bone-horror";
 const HAWK = "elementalist.ebon-hawk";
+const PLAGUE_SIGNET = "necromancer.plague-signet";
+const EPIDEMIC = "mesmer.epidemic";
 const DEATH_MAGIC = "necromancer.death-magic";
 const BAR = [ORDER, AURA, INFUSE, TASTE, HORROR];
 
@@ -43,9 +45,10 @@ function spec(id: string, team: number, spawn: Vec2, extra?: Partial<Participant
 
 /**
  * `n` the necromancer (480 Health), `a` its ally; `x`, `z` and `w` foes to
- * kill for corpses, `y` a foe beside them, `e` a foe with Ebon Hawk.
+ * kill for corpses, `y` a foe beside them, `e` a foe with Ebon Hawk;
+ * `extra` beside them.
  */
-function match(): MatchSimulation {
+function match(...extra: ParticipantSpec[]): MatchSimulation {
   return new MatchSimulation({
     seed: "minions-3",
     participants: [
@@ -59,6 +62,7 @@ function match(): MatchSimulation {
         skillBar: [HAWK],
         attributeRanks: new Map([["elementalist.earth-magic", 12]]),
       }),
+      ...extra,
     ],
   });
 }
@@ -138,6 +142,24 @@ function hawk(sim: MatchSimulation, each?: () => void): CombatEvent[] {
     );
   }
   return events;
+}
+
+/** `caster` uses `skillId`, first on its bar, on `targetId`, through to its log entry. */
+function useFirst(sim: MatchSimulation, caster: string, skillId: string, targetId: string): void {
+  get(sim, caster).combatant.energy = 100;
+  sim.setTarget(caster, targetId);
+  expect(sim.requestSkill(caster, 0)?.check).toEqual({ ok: true });
+  for (
+    let i = 0;
+    !sim.step(DT).log.some((entry) => entry.sourceId === caster && entry.skillId === skillId);
+    i++
+  ) {
+    expect(i).toBeLessThan(5 * RULES.tickRateHz);
+  }
+}
+
+function conditionsOf(record: Participant): string[] {
+  return record.combatant.statuses.active.map(({ id }) => id);
 }
 
 function horrorsOf(sim: MatchSimulation, owner = "n"): Participant[] {
@@ -315,6 +337,30 @@ describe("Infuse Condition (#1915)", () => {
       first.position = vec2(-300, 0);
     });
     expect(events).toEqual([expect.objectContaining({ targetId: second.id })]);
+  });
+
+  it("hands a transferred condition to a minion: Plague Signet on its bearer", () => {
+    const sim = match(spec("c", 1, vec2(0, 200), { skillBar: [PLAGUE_SIGNET] }));
+    kill(sim, "x");
+    cast(sim, HORROR);
+    const horror = onlyHorror(sim);
+    cast(sim, INFUSE);
+    get(sim, "c").combatant.statuses.apply("bleeding", 10, "n");
+    useFirst(sim, "c", PLAGUE_SIGNET, "n");
+    expect(conditionsOf(horror)).toContain("bleeding");
+    expect(conditionsOf(get(sim, "n"))).not.toContain("bleeding");
+  });
+
+  it("hands a spread condition to a minion: Epidemic beside its bearer", () => {
+    const sim = match(spec("c", 1, vec2(0, 200), { skillBar: [EPIDEMIC] }));
+    kill(sim, "x");
+    cast(sim, HORROR);
+    const horror = onlyHorror(sim);
+    cast(sim, INFUSE);
+    get(sim, "a").combatant.statuses.apply("bleeding", 10, "c");
+    useFirst(sim, "c", EPIDEMIC, "a");
+    expect(conditionsOf(horror)).toContain("bleeding");
+    expect(conditionsOf(get(sim, "n"))).not.toContain("bleeding");
   });
 
   it("lands on its bearer with no minion alive", () => {

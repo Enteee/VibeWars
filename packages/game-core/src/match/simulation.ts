@@ -104,6 +104,7 @@ import {
   applyEffects,
   applySkillEffects,
   applyStatus,
+  conditionTaker,
   gainEnergy,
   landCaughtCondition,
   resolveSkillEffects,
@@ -3466,12 +3467,14 @@ export class MatchSimulation {
     // degeneration it causes is attributed to the dummy, and so is the
     // health a deep wound takes as it lands.
     for (const application of intent.applyStatuses) {
-      const target = this.#participants.get(application.targetId);
-      if (target !== undefined && !target.combatant.dead) {
+      const aimed = this.#participants.get(application.targetId);
+      if (aimed !== undefined && !aimed.combatant.dead) {
+        // Infuse Condition (#1915) sends a condition to a minion here too.
+        const target = conditionTaker(aimed.combatant, application.statusId, this.#participants);
         const loss = applyStatus(
-          target.combatant,
+          target,
           application.statusId,
-          scaledStatusDuration(target.combatant, application.statusId, application.durationSeconds),
+          scaledStatusDuration(target, application.statusId, application.durationSeconds),
           record.id,
         );
         if (loss !== undefined && loss > 0) {
@@ -5448,6 +5451,8 @@ export class MatchSimulation {
       target.combatant,
       this.#participants,
     );
+    // No Order of Undeath bonus (#1915) here: every minion fights in melee
+    // (weapon-attack.ts adds it). A ranged minion needs it added here too.
     // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
     // ignoring on the same blow. A spirit gone before its shot lands
     // is no longer anyone's, so it adds nothing.
@@ -5902,7 +5907,7 @@ export class MatchSimulation {
     );
     for (const { combatant } of reached) {
       for (const condition of conditions) {
-        landCaughtCondition(combatant, condition, events);
+        landCaughtCondition(combatant, condition, events, this.#participants);
       }
     }
     return events;

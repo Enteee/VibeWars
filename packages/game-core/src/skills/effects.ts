@@ -1025,7 +1025,7 @@ export function applyStatus(
  * Infuse Condition; then its closest living minion where they stand now,
  * ties by id, or `target` when it has none.
  */
-function conditionTaker(
+export function conditionTaker(
   target: Combatant,
   statusId: StatusId,
   surroundings: Surroundings,
@@ -1064,14 +1064,34 @@ export function landCaughtCondition(
   target: Combatant,
   { id, remainingSeconds, sourceId }: ActiveStatus,
   events: CombatEvent[],
+  surroundings: Surroundings,
 ): void {
+  landOnTaker(target, id, remainingSeconds, sourceId, events, surroundings, null);
+}
+
+/**
+ * `statusId` aimed at `target`, for `durationSeconds` before its taker's
+ * own lengthening, landed on whoever takes it (#1915): every status a
+ * skill aims at a combatant comes through here, so Infuse Condition sends
+ * each condition to a minion however it arrives.
+ */
+function landOnTaker(
+  target: Combatant,
+  statusId: StatusId,
+  durationSeconds: number,
+  sourceId: string,
+  events: CombatEvent[],
+  surroundings: Surroundings,
+  returnPoint: Vec2 | null,
+): void {
+  const taker = conditionTaker(target, statusId, surroundings);
   landStatus(
-    target,
-    id,
-    scaledStatusDuration(target, id, remainingSeconds),
+    taker,
+    statusId,
+    scaledStatusDuration(taker, statusId, durationSeconds),
     sourceId,
     events,
-    null,
+    returnPoint,
   );
 }
 
@@ -1521,18 +1541,13 @@ export function applyEffect(
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
       // Infuse Condition's (#1915): a condition goes to the bearer's
       // closest living minion instead, if it has one.
-      const bearer = conditionTaker(target, effect.statusId, context.surroundings);
-      const durationSeconds = scaledStatusDuration(
-        bearer,
+      landOnTaker(
+        target,
         effect.statusId,
         base * (context.own?.durationMultiplier ?? 1),
-      );
-      landStatus(
-        bearer,
-        effect.statusId,
-        durationSeconds,
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
       );
       return events;
@@ -1548,13 +1563,13 @@ export function applyEffect(
       // Conditions takes from an ally counts as the Monk's own from then on.
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
-        const durationSeconds = remainingSeconds * effect.durationMultiplier;
-        landStatus(
+        landOnTaker(
           taker,
           id,
-          scaledStatusDuration(taker, id, durationSeconds),
+          remainingSeconds * effect.durationMultiplier,
           caster.id,
           events,
+          context.surroundings,
           null,
         );
       }
@@ -1582,12 +1597,13 @@ export function applyEffect(
       );
       for (const combatant of nearestFirst(reached, at)) {
         for (const { id, remainingSeconds } of conditions) {
-          landStatus(
+          landOnTaker(
             combatant,
             id,
-            scaledStatusDuration(combatant, id, remainingSeconds),
+            remainingSeconds,
             caster.id,
             events,
+            context.surroundings,
             null,
           );
         }
@@ -1783,17 +1799,13 @@ export function applyEffect(
         return events;
       }
       // A status the skill puts on its caster is one it applies (#1761).
-      const durationSeconds = scaledStatusDuration(
+      landOnTaker(
         caster,
         effect.statusId,
         effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
-      );
-      landStatus(
-        caster,
-        effect.statusId,
-        durationSeconds,
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
       );
       return events;
@@ -1804,16 +1816,13 @@ export function applyEffect(
       if (caster.dead || pet === undefined) {
         return events;
       }
-      landStatus(
+      landOnTaker(
         pet,
         effect.statusId,
-        scaledStatusDuration(
-          pet,
-          effect.statusId,
-          effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
-        ),
+        effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
       );
       return events;
