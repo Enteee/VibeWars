@@ -971,6 +971,33 @@ test("⋯ opens above the Load field, and Share takes its place (#2004)", async 
   await expect(page.getByLabel("build to share")).toBeHidden();
 });
 
+test("⋯, Share and Load stay inside the window at 1100 px and on a phone (#2028)", async ({
+  page,
+}) => {
+  const inside = async (panel: Locator, width: number): Promise<void> => {
+    await expect(panel).toBeVisible();
+    const box = await panel.boundingBox();
+    expect(box?.x).toBeGreaterThanOrEqual(8);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width - 8);
+  };
+  for (const [width, height] of [
+    [1100, 800],
+    [360, 740],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await newCharacter(page);
+    const bar = page.locator("#topbar");
+    const more = bar.getByRole("button", { name: "more actions" });
+    await more.click();
+    await inside(bar.locator(".editor-more"), width);
+    await bar.getByRole("button", { name: "Share", exact: true }).click();
+    await inside(bar.locator(".editor-share"), width);
+    await more.click();
+    await bar.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+    await inside(bar.locator(".editor-load"), width);
+  }
+});
+
 test("Share keeps the line selected when the clipboard is refused (#572)", async ({ page }) => {
   await newCharacter(page);
   await page.evaluate(() => {
