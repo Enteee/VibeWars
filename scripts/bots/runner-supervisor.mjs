@@ -752,7 +752,9 @@ export function runnerScratchDir(env) {
 /**
  * The disk cap (ADR-0045): scratch must be a filesystem of its own, such as
  * a partition or a dataset with a quota, so a job that fills it cannot fill
- * the disk hubd, git and the jails live on.
+ * the disk hubd, git and the jails live on. It compares device numbers, so
+ * a pooled dataset without a quota, a btrfs subvolume, passes it: the
+ * quota is the operator's part.
  *
  * @param {string} scratch
  * @param {readonly string[]} shared the company's and the operator's directories

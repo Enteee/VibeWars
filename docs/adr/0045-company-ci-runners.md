@@ -129,6 +129,10 @@ two cannot drift apart.
   supervisor (below) starts no runner unless scratch is a filesystem of
   its own, such as a partition or a dataset with a quota, so a runaway or
   hostile job fills that and not the disk hubd, git and the jails live on.
+  The check compares device numbers, so it proves a filesystem of its
+  own, not a quota: a btrfs subvolume, or any pooled dataset without a
+  quota, passes it and still shares the pool. Giving such a dataset its
+  quota is the operator's part.
 - **The runners' token can change branch protection.** Minting a JIT
   config needs _Administration: write_ on the repository, which also edits
   rulesets and branch protection. Whoever holds that token can turn off

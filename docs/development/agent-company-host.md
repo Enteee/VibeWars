@@ -114,7 +114,8 @@ a whole `ci` job in the jail:
 1. In the repository's settings, set Actions to require approval for **all**
    outside collaborators.
 2. Give runner scratch a filesystem of its own: a partition, or a dataset
-   with a quota, mounted at `vibewars.runners.scratch` (by default
+   with a quota (a btrfs subvolume or ZFS dataset passes the check without
+   one, and then still shares its pool), mounted at `vibewars.runners.scratch` (by default
    `~/.local/state/vibewars/runners`). Without one the supervisor starts no
    runner and says so, because a job could fill the disk the company lives
    on.

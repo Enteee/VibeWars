@@ -408,6 +408,20 @@ function positive(value, name, fallback) {
   return number;
 }
 
+/**
+ * The lifeline's fd: never stdin, stdout or stderr, which are not one.
+ *
+ * @param {string} value
+ * @returns {number}
+ */
+export function lifelineFd(value) {
+  const fd = Number(value);
+  if (!(Number.isInteger(fd) && fd >= 3)) {
+    throw new Error("runner-jail: --lifeline must be an fd of 3 or more");
+  }
+  return fd;
+}
+
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { values } = parseArgs({
     options: {
@@ -427,7 +441,7 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
     process.exit(2);
   }
   const lifeline =
-    values.lifeline === undefined ? null : watchLifeline(positive(values.lifeline, "lifeline", 0));
+    values.lifeline === undefined ? null : watchLifeline(lifelineFd(values.lifeline));
   process.exitCode = await runRunner({
     store: parseRunnerStore(storeJson),
     jitconfigFile: values.jitconfig,
