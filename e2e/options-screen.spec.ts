@@ -179,17 +179,3 @@ test("Options lists every bundled npm package and the VCSL samples, each with it
   await phaser.locator("summary").click();
   await expect(phaser.locator(".licence-text")).toContainText("Permission is hereby granted");
 });
-
-test("a lobby code typed on Random Arena survives the redraw closing Options does (#1513)", async ({
-  page,
-}) => {
-  await page.goto("./");
-  await page.locator("input.code-input").fill("abcd");
-  const before = await page.locator(".screen-random-arena").elementHandle();
-  await page.locator(".topbar-options").click();
-  await page.getByRole("button", { name: "Close", exact: true }).click();
-  // The redraw lands after an await; waiting for the old screen to go is
-  // what makes the check below see the new one.
-  await page.waitForFunction((menu) => !menu.isConnected, before);
-  await expect(page.locator("input.code-input")).toHaveValue("ABCD");
-});

@@ -1,8 +1,8 @@
 import { createRng, seedFromString } from "@vibewars/game-core";
-import { LOBBY_CODE_ALPHABET, LOBBY_CODE_LENGTH, isLobbyCode } from "@vibewars/game-protocol";
+import { LOBBY_CODE_LENGTH, isLobbyCode } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
-import { generateLobbyCode } from "./lobby-codes.js";
+import { generateLobbyCode, lobbyKeyBytes } from "./lobby-codes.js";
 
 /** Seeded random bytes, as a test wants them. */
 function seeded(seed: number): (n: number) => Uint8Array {
@@ -20,39 +20,37 @@ function bytes(...values: number[]): (n: number) => Uint8Array {
   };
 }
 
-describe("generateLobbyCode (#1681)", () => {
-  it("is a 12-symbol key from the code alphabet", () => {
+describe("generateLobbyCode (#2100)", () => {
+  it("is a 43-character lobby key", () => {
     const code = generateLobbyCode(seeded(seedFromString("seed")));
-    expect(LOBBY_CODE_LENGTH).toBe(12);
+    expect(LOBBY_CODE_LENGTH).toBe(43);
     expect(code).toHaveLength(LOBBY_CODE_LENGTH);
     expect(isLobbyCode(code)).toBe(true);
   });
 
-  it("uses only characters from the unambiguous alphabet", () => {
-    const random = seeded(seedFromString("alphabet"));
+  it("is always a key, whatever the bytes", () => {
+    const random = seeded(seedFromString("many"));
     for (let i = 0; i < 200; i += 1) {
-      for (const char of generateLobbyCode(random)) {
-        expect(LOBBY_CODE_ALPHABET).toContain(char);
-      }
+      expect(isLobbyCode(generateLobbyCode(random))).toBe(true);
     }
   });
 
-  it("produces varied codes across draws rather than repeating one", () => {
-    const random = seeded(seedFromString("variety"));
-    const codes = new Set(Array.from({ length: 50 }, () => generateLobbyCode(random)));
-    expect(codes.size).toBe(50);
+  it("draws 32 bytes, once", () => {
+    expect(generateLobbyCode(bytes(...Array.from({ length: 32 }, () => 255)))).toBe(
+      `${"_".repeat(42)}8`,
+    );
   });
 
-  it("is byte % 23, and draws a byte of 230 or more again", () => {
-    const last = LOBBY_CODE_ALPHABET.length - 1;
-    // 229 = 9 × 23 + 22 is the last symbol; 230 and 255 are drawn again.
-    const code = generateLobbyCode(
-      bytes(0, 1, 22, 23, 229, 230, 255, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-    );
-    expect(code).toBe(
-      [0, 1, 22, 0, last, 2, 3, 4, 5, 6, 7, 8]
-        .map((index) => LOBBY_CODE_ALPHABET[index] ?? "?")
-        .join(""),
-    );
+  it("is the bytes as base64url, and they come back", () => {
+    const values = Array.from({ length: 32 }, (_, i) => i);
+    const code = generateLobbyCode(bytes(...values));
+    expect(code).toBe("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8");
+    expect(Array.from(lobbyKeyBytes(code))).toEqual(values);
+  });
+
+  it("gives a different key each time", () => {
+    const random = seeded(seedFromString("unique"));
+    const codes = new Set(Array.from({ length: 50 }, () => generateLobbyCode(random)));
+    expect(codes.size).toBe(50);
   });
 });

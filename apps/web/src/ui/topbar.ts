@@ -3,8 +3,8 @@ import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
-import { button, h, iconButton, setTopbarSlots, type ShownBar } from "./kit.js";
-import { copyCode, displayLobbyCode } from "./lobby-screen.js";
+import { button, h, iconButton, setTopbarSlots, shareLine, type ShownBar } from "./kit.js";
+import { copyInviteLink } from "./lobby-screen.js";
 import { loadPlayerName } from "./player-section.js";
 
 /**
@@ -39,11 +39,11 @@ export interface TopbarCallbacks {
   readonly onHelp: () => void;
   /** ⚙: Options, over whatever screen shows. */
   readonly onOptions: () => void;
-  /** Join the lobby `code` as `name` (#1525): the bar's Lobby Key and Join. */
+  /** Join the lobby `code` as `name` (#1525): an invite link opened (#2100). */
   readonly onJoin: (code: string, name: string) => void;
   /** A guest's Leave (#1526): back to a fresh lobby of its own. */
   readonly onLeave: () => void;
-  /** The host's Closed / Open toggle (#1682): let friends with the key join, or stop them. */
+  /** The host's Closed / Open toggle (#1682): let friends with the invite link join, or stop them. */
   readonly onSetOpen: (open: boolean) => void;
 }
 
@@ -51,20 +51,20 @@ export interface TopbarCallbacks {
 export interface BarLobby {
   readonly code: string;
   readonly isHost: boolean;
-  /** Whether friends with the key may join (#1682). */
+  /** Whether friends with the invite link may join (#1682). */
   readonly open: boolean;
   /** The players in it, this one too; never bots. A host's guests follow it (#1553). */
   readonly party: number;
-  /** On the way there behind its host (#1553): the key, greyed, and "Joining…". */
+  /** On the way there behind its host (#1553): greyed, and "Joining…". */
   readonly joining: boolean;
 }
 
-/** Before the code: whose lobby it is. */
-export const OWN_LOBBY_LABEL = "Your key";
+/** Whose lobby it is. */
+export const OWN_LOBBY_LABEL = "Your lobby";
 export const JOINED_LOBBY_LABEL = "Lobby";
 export const JOINING_LOBBY_LABEL = "Joining…";
 
-/** A host's first Join (#1553): its guests come too; Join again goes, Esc does not. */
+/** A host's invite link (#1553, #2100): its guests come too; Join goes, Esc does not. */
 export function partyJoinsNotice(party: number): string {
   return `Your party of ${String(party)} joins with you.`;
 }
@@ -79,8 +79,8 @@ export const CLOSED_LABEL = "Closed";
 export const OPEN_LABEL = "Open";
 export const CLOSED_NAME = "Lobby closed";
 export const OPEN_NAME = "Lobby open";
-export const CLOSED_TOOLTIP = "Friends with your key can't join until you open the lobby.";
-export const OPEN_TOOLTIP = "Anyone with your key can join.";
+export const CLOSED_TOOLTIP = "Friends with your invite link can't join until you open the lobby.";
+export const OPEN_TOOLTIP = "Anyone with your invite link can join.";
 
 /**
  * How long a join runs before the bar says it is still connecting
@@ -88,26 +88,29 @@ export const OPEN_TOOLTIP = "Anyone with your key can join.";
  */
 export const CONNECTING_NOTICE_MS = 3000;
 
-/** The bar's Lobby Key and Join, and what the bar does with them. */
+/** The bar's lobby, its Copy invite link, and the joins invite links ask for. */
 export interface JoinControls {
   readonly element: HTMLElement;
   /** A new bar shows: a join it was waiting on has ended, either way. */
   readonly settle: () => void;
-  /** Empty the code, as a place without the code field leaves it. */
-  readonly clear: () => void;
   /**
-   * Name the lobby this tab is in, with Copy, the Closed / Open toggle
-   * for its host and Leave for a guest; none while there is none.
+   * Join the lobby an invite link names (#2100), as `onJoin`; a host
+   * with guests is asked first (#1553). Nothing on a bar without these
+   * controls, a lobby's or a match's: `false` then.
+   */
+  readonly invite: (code: string) => boolean;
+  /**
+   * Name the lobby this tab is in, with Copy invite link, the Closed /
+   * Open toggle for its host and Leave for a guest; none while there is none.
    */
   readonly setLobby: (lobby: BarLobby | undefined) => void;
 }
 
 /**
- * The lobby this tab is in, its key and Copy, its host's Closed / Open
- * (#1682) and a guest's Leave (#1526); then Lobby Key, its field and Join (#1525, #1681), then
- * "Connecting…" once a join has run a while (#707). The page has one, in
- * the title bar, so a key typed in it lives through any redraw of the
- * screen under it. `name` is read at the press.
+ * The lobby this tab is in, its Copy invite link (#2100), its host's
+ * Closed / Open (#1682) and a guest's Leave (#1526), then "Connecting…"
+ * once a join has run a while (#707). The page has one, in the title bar.
+ * The key itself is never shown. `name` is read at the join.
  */
 export function joinControls(
   name: () => string,
@@ -119,9 +122,11 @@ export function joinControls(
   const lobby = h("div", "topbar-lobby");
   lobby.hidden = true;
   const lobbyLabel = h("span", "lobby-code-label", OWN_LOBBY_LABEL);
-  const lobbyCode = h("span", "lobby-code topbar-lobby-code");
-  const copy = button("Copy", "lobby-copy", () => {
-    void copyCode(lobbyCode.textContent, lobbyCode);
+  /** The lobby the bar names, whose invite link Copy copies. */
+  let code = "";
+  const share = shareLine("lobby invite link");
+  const copy = button("Copy invite link", "lobby-copy", () => {
+    void copyInviteLink(code, share);
   });
   const toggle = button("", "topbar-lobby-open", () => {
     onSetOpen(toggle.getAttribute("aria-pressed") !== "true");
@@ -130,18 +135,7 @@ export function joinControls(
   const toggleLabel = h("span", "topbar-lobby-open-label", CLOSED_LABEL);
   toggle.append(toggleGlyph, toggleLabel);
   const leave = button("Leave", "topbar-leave", onLeave);
-  lobby.append(lobbyLabel, lobbyCode, copy, toggle, leave);
-  const codeInput = document.createElement("input");
-  codeInput.className = "field-input code-input";
-  codeInput.placeholder = "KEY";
-  // `ACDE-FGHJ-KMNP` and a stray space or two around it (#1681).
-  codeInput.maxLength = 16;
-  codeInput.setAttribute("aria-label", "Lobby key");
-  codeInput.addEventListener("input", () => {
-    // Keys are always upper case; doing it as they type avoids a
-    // "why didn't my key work" moment.
-    codeInput.value = codeInput.value.toUpperCase();
-  });
+  lobby.append(lobbyLabel, copy, toggle, leave);
   // Shown once a join has run a while; the lobby, or the menu again with
   // why it failed, puts it away when it ends.
   const connecting = h("span", "topbar-connecting", "Connecting…");
@@ -150,19 +144,21 @@ export function joinControls(
   // A host with guests is asked once (#1553): they follow it.
   const confirm = h("span", "topbar-join-confirm");
   confirm.setAttribute("role", "status");
-  confirm.hidden = true;
+  const confirmText = h("span", "topbar-join-confirm-text");
+  /** The invite a host with guests was asked about. */
+  let pending: string | undefined;
+  const dismiss = (): void => {
+    pending = undefined;
+    confirm.hidden = true;
+  };
+  dismiss();
   /** The host's party, when this tab hosts one; 0 for a guest. */
   let party = 0;
   /** Bumped by every new bar, so a join's timer knows it has ended. */
   let shown = 0;
-  const join = (): void => {
-    if (party > 1 && confirm.hidden) {
-      confirm.textContent = partyJoinsNotice(party);
-      confirm.hidden = false;
-      return;
-    }
-    confirm.hidden = true;
-    onJoin(codeInput.value, name());
+  const join = (invited: string): void => {
+    dismiss();
+    onJoin(invited, name());
     const pressed = shown;
     setTimeout(() => {
       if (pressed === shown) {
@@ -170,40 +166,42 @@ export function joinControls(
       }
     }, CONNECTING_NOTICE_MS);
   };
-  codeInput.addEventListener("keydown", (event: KeyboardEvent) => {
-    if (event.key === "Enter") {
-      join();
-    }
-  });
+  confirm.append(
+    confirmText,
+    button("Join", "topbar-join-button", () => {
+      if (pending !== undefined) {
+        join(pending);
+      }
+    }),
+  );
   group.addEventListener("keydown", (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      confirm.hidden = true;
+      dismiss();
     }
   });
-  group.append(
-    lobby,
-    h("span", "topbar-join-label", "Lobby Key:"),
-    codeInput,
-    button("Join", "topbar-join-button", join),
-    connecting,
-    confirm,
-  );
+  group.append(lobby, share.element, connecting, confirm);
   return {
     element: group,
     settle: () => {
       shown += 1;
       connecting.hidden = true;
     },
-    clear: () => {
-      codeInput.value = "";
+    invite: (invited) => {
+      if (group.hidden) {
+        return false;
+      }
+      if (party > 1) {
+        pending = invited;
+        confirmText.textContent = partyJoinsNotice(party);
+        confirm.hidden = false;
+      } else {
+        join(invited);
+      }
+      return true;
     },
     setLobby: (shown) => {
-      // In the lobby a code was typed for: the field has done its work.
-      // This tab's own one opening leaves a key typed meanwhile alone.
-      if (shown?.isHost === false && displayLobbyCode(shown.code) !== lobbyCode.textContent) {
-        codeInput.value = "";
-      }
       lobby.hidden = shown === undefined;
+      code = shown?.code ?? "";
       const joining = shown?.joining === true;
       lobbyLabel.textContent = joining
         ? JOINING_LOBBY_LABEL
@@ -211,11 +209,11 @@ export function joinControls(
           ? JOINED_LOBBY_LABEL
           : OWN_LOBBY_LABEL;
       lobby.classList.toggle("is-joining", joining);
-      lobbyCode.textContent = shown === undefined ? "" : displayLobbyCode(shown.code);
       copy.hidden = joining;
+      share.hide();
       party = shown?.isHost === true ? shown.party : 0;
       if (party <= 1) {
-        confirm.hidden = true;
+        dismiss();
       }
       leave.hidden = shown?.isHost !== false || joining;
       toggle.hidden = shown?.isHost !== true;
@@ -259,6 +257,8 @@ export function putsMoreAway(
 export interface Topbar {
   /** The lobby the bar names (#1526); none while this tab is in none. */
   setLobby(lobby: BarLobby | undefined): void;
+  /** Join the lobby an invite link names (#2100): `false` on a bar that cannot. */
+  invite(code: string): boolean;
   /**
    * In a match the bar is hidden and the HUD has its buttons (#454), but
    * an overlay opened from the HUD still shows its place and Close in it.
@@ -366,10 +366,6 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
       music.hidden = shown.own === "music";
       join.element.hidden = !shown.join;
       join.settle();
-      // A lobby or a match, not an overlay over the menu, ends the code.
-      if (!shown.join && !shown.overlay) {
-        join.clear();
-      }
       const hasMore = barHasMore(
         Array.from(screenActions.children, (node) => node.classList.contains("primary")),
         shown.join,
@@ -394,6 +390,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   return {
     setLobby: join.setLobby,
+    invite: join.invite,
     setInMatch(next) {
       inMatch = next;
       paintHidden();

@@ -4,7 +4,7 @@ import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js"
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
-import { openPeers, openToFriends } from "./helpers/peers.js";
+import { copyInvite, openPeers, openToFriends } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -57,22 +57,19 @@ async function press(page: Page, target: Locator): Promise<void> {
 async function formParty(
   [host, guest]: readonly [Page, Page],
   [hostName, guestName]: readonly [string, string],
-): Promise<string> {
+): Promise<void> {
   await host.goto("./");
   await namePlayer(host, hostName);
   await openRail(host, "Team Arena");
-  const code = host.locator("#topbar .topbar-lobby-code");
-  await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
   await openToFriends(host);
-  const key = (await code.textContent())?.trim() ?? "";
+  const invite = await copyInvite(host);
   await guest.goto("./");
   await namePlayer(guest, guestName);
-  await joinFriend(guest, key);
+  await joinFriend(guest, invite);
   // One side only: no second team, no bots to add, no Start.
   await expect(guest.locator(".lobby-panel")).toContainText(hostName);
   await expect(host.getByRole("button", { name: "start match" })).toHaveCount(0);
   await expect(guest.locator(".lobby-panel")).toContainText("The host starts matchmaking");
-  return key;
 }
 
 /** The party's Team Lobby, both ready to end each stage; the host takes seat 0, the guest seat 1. */
@@ -129,7 +126,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await ann.getByRole("button", { name: "Save", exact: true }).click();
     await expect(ann.locator(".toast")).toHaveText("Saved");
 
-    const annKey = await formParty([ann, bea], ["Ann", "Bea"]);
+    await formParty([ann, bea], ["Ann", "Bea"]);
     await runTeamLobby([ann, bea], async () => {
       await press(ann, ann.getByRole("button", { name: "Propose Quad", exact: true }));
       const card = bea.getByRole("button", { name: "Ann's team build" });
@@ -156,7 +153,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     // Out of the match, Bea is back in Ann's lobby, out of the queue.
     await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "leave match" }));
     await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "yes" }));
-    await expect(bea.locator("#topbar .topbar-lobby-code")).toHaveText(annKey);
+    await expect(bea.locator("#topbar .topbar-leave")).toBeVisible();
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
     await expect(bea.locator(".party-queued")).toHaveCount(0);
   } finally {

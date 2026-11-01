@@ -17,7 +17,7 @@ choice the party makes, not a screen each player opens on their own.
 
 **Every menu screen sits in a lobby hosted by the player's own browser**
 (ADR-0022). From page load the tab hosts one under a fresh lobby key
-(ADR-0043), which the title bar always shows with **Copy**. The key
+(ADR-0043), which the title bar shares with **Copy invite link** and never shows (ADR-0048). The key
 holds for the lobby's life; every rehost (a reload, a guest's **Leave**, the end of a
 Random Arena queue, a new name or guild tag while alone in it) mints a
 fresh one and never reuses a room name. In a party, a new name shows

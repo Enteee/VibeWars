@@ -2,7 +2,6 @@ import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
 import { h } from "./kit.js";
-import { displayLobbyCode } from "./lobby-screen.js";
 import { waitedLabel } from "./queue-screen.js";
 
 /**
@@ -125,6 +124,5 @@ export function partyStrip(party: RailParty): HTMLElement {
   if (showsClosed(party)) {
     strip.appendChild(h("span", "party-closed", PARTY_CLOSED));
   }
-  strip.appendChild(h("span", "party-code", displayLobbyCode(party.code)));
   return strip;
 }

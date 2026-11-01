@@ -104,10 +104,10 @@ async function startLobbyMatch(
   // too: a side of one each, as a build of one needs.
   await bringStarter(host, build);
   const team = await saveSoloTeam(host);
-  const code = await hostLobby(host);
+  const invite = await hostLobby(host);
   for (const guest of guests) {
     await guest.goto("./");
-    await joinFriend(guest, code);
+    await joinFriend(guest, invite);
     await guest.getByRole("button", { name: "join team 2" }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
   }

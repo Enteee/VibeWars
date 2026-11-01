@@ -33,17 +33,24 @@ export async function pickCharacter(page: Page, name: string): Promise<void> {
   await expect(card).toHaveAttribute("aria-pressed", "true");
 }
 
-/** The lobby code field and Join in the title bar (#1525). */
-export async function joinByCode(page: Page, code: string): Promise<void> {
-  await page.locator("input.code-input").fill(code);
-  await page.getByRole("button", { name: "Join", exact: true }).click();
+/** An invite link (#2100): this page's origin and path, then `#lobby=` and a 43-character key. */
+export const INVITE_URL = /^https?:\/\/[^#]+#lobby=[A-Za-z0-9_-]{43}$/;
+
+/**
+ * Open `invite`, a lobby's invite link (#2100), in `page`: on the
+ * same page only its fragment changes, so the open tab joins from it.
+ */
+export async function joinByCode(page: Page, invite: string): Promise<void> {
+  await page.goto(invite);
 }
 
 /**
- * Join `code` and wait until the title bar names it (#1526): the page's
- * own lobby shows its panel too, so a seen panel is no sign the join is in.
+ * Join `invite` and wait until the title bar names a friend's lobby
+ * (#1526): the page's own lobby shows its panel too, so a seen panel is
+ * no sign the join is in. The invite is out of the address bar by then.
  */
-export async function joinFriend(page: Page, code: string): Promise<void> {
-  await joinByCode(page, code);
-  await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(code);
+export async function joinFriend(page: Page, invite: string): Promise<void> {
+  await joinByCode(page, invite);
+  await expect(page.locator("#topbar .topbar-leave")).toBeVisible();
+  expect(new URL(page.url()).hash).toBe("");
 }

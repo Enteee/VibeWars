@@ -2,7 +2,6 @@ import {
   LOBBY_REFUSALS,
   MAX_WIRE_CHAT_TEXT,
   PROTOCOL_VERSION,
-  normalizeLobbyCode,
   parseWireChatLine,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
@@ -130,7 +129,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       ? options.transport
       : keyGated(options.transport, options.proofKey, "guest", () => hostId);
   const selfId = transport.selfId;
-  const code = normalizeLobbyCode(options.code);
+  const code = options.code;
   const base = {
     protocolVersion: PROTOCOL_VERSION,
     name: options.name,
@@ -533,7 +532,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           return;
         }
         const state = parseWireLobbyState(data);
-        if (state?.hostId !== from || normalizeLobbyCode(state.code) !== code) {
+        if (state?.hostId !== from || state.code !== code) {
           return;
         }
         if (hostId === undefined) {

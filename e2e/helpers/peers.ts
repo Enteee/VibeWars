@@ -1,6 +1,6 @@
 import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
-import { openRail } from "./menu.js";
+import { INVITE_URL, openRail } from "./menu.js";
 
 /**
  * Pages that play with each other (#403).
@@ -39,16 +39,33 @@ export async function openToFriends(page: Page): Promise<void> {
 }
 
 /**
+ * The invite link to the lobby `page` is in (#2100), from Copy invite
+ * link and the clipboard, granted, as a player would send it.
+ */
+export async function copyInvite(page: Page): Promise<string> {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  const copy = page.locator("#topbar .lobby-copy");
+  const more = page.locator("#topbar .topbar-more");
+  if (!(await copy.isVisible()) && (await more.isVisible())) {
+    await more.click();
+  }
+  await copy.click();
+  await expect(page.locator(".toast")).toHaveText("Copied");
+  const invite = await page.evaluate(() => navigator.clipboard.readText());
+  expect(invite).toMatch(INVITE_URL);
+  return invite;
+}
+
+/**
  * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
- * opened to friends (#1682); its code, as the title bar shows it.
+ * opened to friends (#1682); its invite link (#2100).
  */
 export async function hostLobby(page: Page): Promise<string> {
   await openRail(page, "Hosted Game");
-  const code = page.locator("#topbar .topbar-lobby-code");
-  await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
   await expect(page.locator(".lobby-panel")).toBeVisible();
+  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
   await openToFriends(page);
-  return (await code.textContent())?.trim() ?? "";
+  return copyInvite(page);
 }
 
 /**
