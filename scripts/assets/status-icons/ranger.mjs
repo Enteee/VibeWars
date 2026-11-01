@@ -293,4 +293,12 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M5 9l4-4 4 4M11 9l4-4 4 4" ${stroke(c, 2.2)}/>` +
       `<path d="M6.5 19l3-7M10.5 19l3-7M14.5 19l3-7" ${stroke(c, 2)}/>`,
   ],
+  // Next attack (#1916), a stand-in until its art card.
+  // Skill: an arrowhead dripping poison.
+  "poison-tip-signet": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 20L14 10M10 6h8v8" ${stroke(c, 2)}/>` +
+      `<path d="M18 16c-1.5 2-2 3-2 4a2 2 0 0 0 4 0c0-1-.5-2-2-4z" fill="${c}"/>`,
+  ],
 };

@@ -10,7 +10,8 @@ import {
   getStatusDefinition,
   type StatusId,
 } from "./status.js";
-import { withAttackDuration } from "./testing.js";
+import { makeCombatant, withAttackDuration } from "./testing.js";
+import { attackDamageDeltaOf } from "./tick.js";
 
 const ALL_STATUS_IDS = Object.keys(STATUS_DEFINITIONS) as StatusId[];
 
@@ -868,6 +869,22 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
   it("counts neither itself nor another echo as a chant or a shout", () => {
     const echoes = aggregateModifiers([{ id: "soldiers-fury" }, { id: "mending-refrain" }]);
     expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, 0]);
+  });
+});
+
+describe("attackDamageDeltaOf, suppressed while enchanted (#1916)", () => {
+  const deltaWith = (...ids: StatusId[]): number => {
+    const bearer = makeCombatant({ id: "bearer" });
+    for (const id of ids) {
+      bearer.statuses.apply(id, 60, "bearer");
+    }
+    return attackDamageDeltaOf(bearer);
+  };
+
+  it("drops Brutal Weapon's +13 beside an enchantment, keeps it beside a stance or nothing", () => {
+    expect(deltaWith("brutal-weapon")).toBe(13);
+    expect(deltaWith("brutal-weapon", "balanced-stance")).toBe(13);
+    expect(deltaWith("brutal-weapon", "guardian")).toBe(0);
   });
 });
 

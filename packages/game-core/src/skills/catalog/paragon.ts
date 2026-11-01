@@ -2552,4 +2552,32 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "You lose 1 condition."
     effects: [{ kind: "remove-status", category: "condition", count: 1 }],
   },
+  // Not enchanted (#1916).
+  {
+    id: "paragon.natural-temper",
+    name: "Natural Temper",
+    gwId: 1770,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "adrenaline", amount: 3 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...13...15 seconds, you gain 33% more adrenaline while not
+    // under the effects of an enchantment."
+    effects: [{ kind: "apply-status", statusId: "natural-temper", durationSeconds: 13 }],
+  },
 ];

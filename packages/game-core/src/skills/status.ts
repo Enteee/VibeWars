@@ -463,6 +463,13 @@ export interface StatusDefinition {
    */
   readonly unblockableAttacks: number | undefined;
   /**
+   * It ends after this many of the bearer's attacks (#1916): Signet of
+   * Strength's "your next 13 attacks". A hit, a miss and a block each
+   * spend one, as `unblockableAttacks` does, a cleave's one swing too.
+   * `undefined`: no such limit.
+   */
+  readonly endsAfterAttackCount: number | undefined;
+  /**
    * Every attack of the bearer's cannot be blocked while it lasts, and
    * nothing is spent (#1654): Guided Weapon's. false: blocks as ever.
    */
@@ -808,6 +815,12 @@ export interface StatusDefinition {
    * effects of a chant or a shout". `undefined`: none.
    */
   readonly whileUnder: WhileUnder | undefined;
+  /**
+   * It does nothing while the bearer holds another status of one of
+   * these categories (#1916): Brutal Weapon's "as long as the bearer is
+   * under no enchantments". Its time runs on. `undefined`: always counts.
+   */
+  readonly suppressedWhileUnder: readonly StatusCategory[] | undefined;
   /**
    * What it does when its bearer does something (#469): Backfire's damage
    * on each spell the bearer finishes. Applied by whoever put it on.
@@ -1555,6 +1568,8 @@ export interface ActiveStatus {
   hitsLeft: number | undefined;
   /** The bearer's unblockable attacks before it ends (`unblockableAttacks`); `undefined`: none. */
   unblockableLeft: number | undefined;
+  /** The bearer's attacks before it ends (`endsAfterAttackCount`); `undefined`: no such limit. */
+  attacksMadeLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
@@ -2044,6 +2059,8 @@ export class StatusSet {
     this.#statuses.delete(id);
     if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
       existing.outbreak = outbreak;
+      // A recast signet starts its count again (#1916), never adds to it.
+      existing.attacksMadeLeft = definition.endsAfterAttackCount;
       this.#statuses.set(id, existing);
       return false;
     }
@@ -2054,6 +2071,7 @@ export class StatusSet {
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
       unblockableLeft: definition.unblockableAttacks,
+      attacksMadeLeft: definition.endsAfterAttackCount,
       spellsLeft: definition.nextSpells?.count,
       skillsLeft: definition.nextSkill?.count,
       ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
@@ -2112,6 +2130,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       unblockableLeft: undefined,
+      attacksMadeLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
@@ -2153,6 +2172,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       unblockableLeft: undefined,
+      attacksMadeLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
@@ -2188,6 +2208,7 @@ export class StatusSet {
       attacksLeft: undefined,
       hitsLeft: undefined,
       unblockableLeft: undefined,
+      attacksMadeLeft: undefined,
       spellsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
@@ -2480,6 +2501,25 @@ export class StatusSet {
     }
     this.#end(ended);
     return { unblockable, ended };
+  }
+
+  /**
+   * The bearer attacked (#1916): one fewer for every status that ends
+   * after so many of its attacks, hit, miss or block. Returns the ids
+   * that ended on it.
+   */
+  public spendAttack(): StatusId[] {
+    const ended: StatusId[] = [];
+    for (const status of this.#statuses.values()) {
+      if (status.attacksMadeLeft !== undefined) {
+        status.attacksMadeLeft -= 1;
+        if (status.attacksMadeLeft <= 0) {
+          ended.push(status.id);
+        }
+      }
+    }
+    this.#end(ended);
+    return ended;
   }
 
   /**
@@ -3047,6 +3087,19 @@ export function isUnderAnother(
 }
 
 /**
+ * Whether `self` does nothing now (#1916): its bearer holds another
+ * status of a category it is `suppressedWhileUnder`, as Brutal Weapon
+ * beside an enchantment.
+ */
+export function isSuppressed(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+  self: Pick<ActiveStatus, "id">,
+): boolean {
+  const categories = getStatusDefinition(self.id).suppressedWhileUnder;
+  return categories !== undefined && isUnderAnother(statuses, self, { categories, statusIds: [] });
+}
+
+/**
  * Collapse every active status into one set of modifiers.
  *
  * Additive effects (health and energy pips, armor, attributes) sum;
@@ -3114,6 +3167,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
+    if (isSuppressed(statuses, status)) {
+      continue;
+    }
     healthPips += def.healthPips;
     if (def.healthPipsPerEnchantment !== undefined) {
       const { pips, max } = def.healthPipsPerEnchantment;

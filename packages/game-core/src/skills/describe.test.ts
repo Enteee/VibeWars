@@ -577,6 +577,7 @@ describe("describeSkill", () => {
           (rule?.removesPreparations === true ? 1 : 0) +
           (rule !== undefined && rule.strikes > 1 ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
+          (entry.activationWhile === undefined ? 0 : 1) +
           (entry.divineFavorDoubled === true ? 1 : 0) +
           (entry.projectile === undefined ? 0 : 1) +
           (isEasilyInterrupted(entry) ? 1 : 0) +
