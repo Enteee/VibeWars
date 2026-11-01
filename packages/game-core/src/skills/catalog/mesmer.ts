@@ -1531,6 +1531,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     activationSeconds: 1,
     rechargeSeconds: 12,
     // "Touched target foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,

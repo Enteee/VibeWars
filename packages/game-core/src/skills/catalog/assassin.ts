@@ -836,6 +836,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 30,
     // "Target touched foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -1064,6 +1065,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 20,
     // "Target touched foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -1729,6 +1731,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 7,
     // "Target touched foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2408,6 +2411,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.25,
     rechargeSeconds: 10,
     // "Touch target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,

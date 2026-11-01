@@ -61,7 +61,12 @@ export type RangerStatusId =
   // Your next attack (#1916).
   | "poison-tip-signet"
   // Attributes raised (#1941).
-  | "experts-dexterity";
+  | "experts-dexterity"
+  // Touch and trap riders (#1966).
+  | "strike-as-one"
+  | "strike-as-one-pet"
+  | "trappers-focus"
+  | "trappers-speed";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -492,5 +497,47 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     attackDurationMultiplier: 0.85,
     attributeDeltas: [{ scope: { attributeId: "ranger.marksmanship" }, amount: 1 }],
+  }),
+
+  // Touch and trap riders (#1966), at rank 12. Strike as One: "The next
+  // time you hit with an attack, target foe is Crippled for 5...15
+  // seconds": 13. GW1 gives it no time limit; 10 s is the house's.
+  "strike-as-one": define("strike-as-one", "Strike as One", "skill-effect", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      skillId: "ranger.strike-as-one",
+    },
+    endsAfterHits: { count: 1, weapon: undefined },
+  }),
+  // On the pet: "causes Bleeding for 5...15 seconds with its next attack":
+  // 13; a miss spends it.
+  "strike-as-one-pet": define("strike-as-one-pet", "Strike as One", "skill-effect", {
+    profession: "ranger",
+    endsAfterAttackCount: 1,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+      skillId: "ranger.strike-as-one",
+    },
+  }),
+  // "Your trap skills are not easily interruptible and your Wilderness
+  // Survival attribute is increased by 0...4": +3.
+  "trappers-focus": define("trappers-focus", "Trapper's Focus", "preparation", {
+    profession: "ranger",
+    ownSkillModifiers: [ownSkills({ type: "trap" }, { notEasilyInterrupted: true })],
+    attributeDeltas: [{ scope: { attributeId: "ranger.wilderness-survival" }, amount: 3 }],
+  }),
+  // "Your Traps recharge 25% faster and activate 25% faster. This stance
+  // ends if you successfully hit with an attack."
+  "trappers-speed": define("trappers-speed", "Trapper's Speed", "stance", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills({ type: "trap" }, { activationMultiplier: 0.75, rechargeFaster: 0.25 }),
+    ],
+    endsWhenBearerHits: true,
   }),
 };

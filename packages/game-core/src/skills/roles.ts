@@ -41,6 +41,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "apply-status":
     case "companion-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
+    case "companion-steps-to-target":
+      return [];
     // Wearying Spear's own Weakness (#1486) is its price, not a role.
     case "caster-gains-status": {
       const definition = getStatusDefinition(effect.statusId);
@@ -147,6 +149,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.incomingHexCastTimeMultiplier > 1 ||
     status.redirectsConditionsToMinion ||
     status.foeSpellsFail ||
+    status.failsFoeTouchSkills !== undefined ||
     status.attacksAgainstMiss ||
     status.damageReductionFromHexedSource !== undefined
   ) {

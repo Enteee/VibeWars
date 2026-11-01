@@ -217,7 +217,8 @@ export type CombatEvent =
   /**
    * A spell `targetId` finished that a status on it failed (#1475):
    * Guilt's. Paid for and recharging, as an interrupted one; nothing of
-   * it landed.
+   * it landed. Or a touch skill its target's status failed (#1966),
+   * "Can't Touch This!"'s.
    */
   | {
       readonly kind: "spell-failed";
@@ -294,6 +295,11 @@ export type CombatEvent =
    * its ally to the caster. The simulation places the body.
    */
   | { readonly kind: "teleported"; readonly targetId: string; readonly toId: string }
+  /**
+   * A pet sent to a foe (#1966), Strike as One's: `targetId`, the pet, is
+   * put beside `toId` and attacks it. The simulation places the body.
+   */
+  | { readonly kind: "companion-stepped"; readonly targetId: string; readonly toId: string }
   /**
    * `casterId` used `skillId` (#1735): paid for and gone off, at
    * `targetId`, which is `casterId` itself when nobody else was chosen.
@@ -976,7 +982,9 @@ export function interruptAttackSkill(
 /**
  * What a landed attack interrupts (#1105): a spell its dazed victim is
  * casting (#546), or a cast its victim is easily interrupted in, such as
- * setting a trap. Anything else is left alone, and nothing is said.
+ * setting a trap, unless the cast was paid for under a rule that says it
+ * is not (#1966), Trapper's Focus's. Anything else is left alone, and
+ * nothing is said.
  * Every landed attack calls it, by `byId`, its attacker; a miss or a
  * block never does.
  */
@@ -987,11 +995,12 @@ export function interruptOnHit(
 ): void {
   const cast = victim.cast.activeCast;
   const skill = cast === undefined ? undefined : getSkill(cast.skillId);
-  if (skill === undefined) {
+  if (cast === undefined || skill === undefined) {
     return;
   }
   const dazed = victim.statuses.active.some(({ id }) => getStatusDefinition(id).interruptsSpells);
-  if (isEasilyInterrupted(skill) || (dazed && isSpell(skill.type))) {
+  const easily = isEasilyInterrupted(skill) && !cast.rule.own.notEasilyInterrupted;
+  if (easily || (dazed && isSpell(skill.type))) {
     interruptCast(victim, byId, events);
   }
 }
@@ -1907,6 +1916,15 @@ export function applyEffect(
       return events;
     }
 
+    case "companion-steps-to-target": {
+      const pet = livingCompanionOf(caster, context.surroundings);
+      if (target === undefined || target.dead || caster.dead || pet === undefined) {
+        return events;
+      }
+      events.push({ kind: "companion-stepped", targetId: pet.id, toId: target.id });
+      return events;
+    }
+
     case "companion-gains-status": {
       const pet = livingCompanionOf(caster, context.surroundings);
       if (caster.dead || pet === undefined) {
@@ -2685,6 +2703,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "drain-own-energy":
     case "caster-gains-status":
     case "companion-gains-status":
+    case "companion-steps-to-target":
     case "destroy-allied-spirits":
     case "resurrect-companions":
     case "disable-own-skills":

@@ -119,4 +119,8 @@ export const RANGER_ICONS = {
   "ranger.bestial-mauling": { glyph: "paw-maul" },
   // Attributes raised (#1941), a stand-in until its art card.
   "ranger.experts-dexterity": { glyph: "arrow", modifier: "plus" },
+  // Touch and trap riders (#1966), stand-ins until their art card.
+  "ranger.strike-as-one": { glyph: "paw-leap", modifier: "bleed" },
+  "ranger.trappers-focus": { glyph: "trap-dust", modifier: "plus" },
+  "ranger.trappers-speed": { glyph: "trap-dust", modifier: "up" },
 };

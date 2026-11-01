@@ -860,6 +860,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 15,
     // "Target touched allied spirit".
+    touch: true,
     range: RANGE_MELEE,
     target: "allied-spirit",
     area: {
