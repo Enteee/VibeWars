@@ -45,7 +45,7 @@ runs:
         rev=$(jq -r .nodes.nixpkgs.locked.rev devenv.lock)
         # Substituting into the restored store now and then dies on a chmod
         # of an existing path ("Operation not permitted"); retry rather than
-        # fail the job.
+        # fail the job (#2087).
         for attempt in 1 2 3; do
           nix profile install "github:cachix/devenv-nixpkgs/$rev#devenv" && break
           [ "$attempt" = 3 ] && exit 1
