@@ -99,6 +99,18 @@ describe("directMusic: track choice", () => {
     ]);
   });
 
+  it("keeps Shuffle's song from a menu into the Training Ground (#2020)", () => {
+    const shuffle: MusicMode = { kind: "shuffle" };
+    const states = run(
+      [
+        { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null },
+        { screen: "training", menuDepth: 1, mapId: "training-hall", matchSeed: null, ...FIGHTING },
+      ],
+      shuffle,
+    );
+    expect(states[1]?.trackId).toBe(states[0]?.trackId);
+  });
+
   it("gives every map its table's song for any seed, and an unknown map hall-of-champions", () => {
     for (const [mapId, expected] of MAP_TRACKS) {
       const picked = new Set(

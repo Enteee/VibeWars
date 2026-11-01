@@ -6,7 +6,7 @@ import type {
 } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
-import type { MusicState } from "./director.js";
+import { directMusic, type MusicMode, type MusicState, type TrackChoice } from "./director.js";
 import { DIRECT_INTERVAL_MS, ENGAGE_RANGE, attachMatchMusic } from "./match-music.js";
 
 const ME = "me";
@@ -99,8 +99,18 @@ function hit(caster: string, target: string): CombatMessage {
   };
 }
 
-function setup(screen: "training" | "match" = "match") {
-  let clock = 1_000_000;
+const TRACKS: readonly TrackChoice[] = [
+  { id: "hall-of-champions", moods: ["epic"], layers: 4 },
+  { id: "victors-hymn", moods: ["triumphant"], layers: 4 },
+  { id: "first-light", moods: ["atmospheric"], layers: 2 },
+];
+
+function setup(
+  screen: "training" | "match" = "match",
+  mode: MusicMode = { kind: "auto" },
+  start = 1_000_000,
+) {
+  let clock = start;
   let combat: (message: CombatMessage) => void = () => undefined;
   const connection = {
     selfSessionId: ME,
@@ -113,12 +123,8 @@ function setup(screen: "training" | "match" = "match") {
   const music = attachMatchMusic(connection, {
     screen,
     menuDepth: screen === "training" ? 1 : null,
-    mode: () => ({ kind: "auto" }),
-    tracks: [
-      { id: "hall-of-champions", moods: ["epic"], layers: 4 },
-      { id: "victors-hymn", moods: ["triumphant"], layers: 4 },
-      { id: "first-light", moods: ["atmospheric"], layers: 2 },
-    ],
+    mode: () => mode,
+    tracks: TRACKS,
     onChange: (state) => changes.push(state),
     now: () => clock,
   });
@@ -235,6 +241,37 @@ describe("attachMatchMusic", () => {
     expect(changes.at(-1)).toEqual(
       expect.objectContaining({ trackId: "first-light", intensity: 1, context: "menu" }),
     );
+  });
+
+  it("plays Shuffle's menu song in the Training Ground (#2020)", () => {
+    const shuffle: MusicMode = { kind: "shuffle" };
+    const menu = directMusic(
+      {
+        screen: "menu",
+        menuDepth: 1,
+        mapId: null,
+        matchSeed: null,
+        result: null,
+        self: null,
+        hitsDealtLast5s: 0,
+        hitsTakenLast5s: 0,
+        enemyInRange: false,
+        lowestAllyHealthFraction: null,
+        aliveAllies: null,
+        aliveEnemies: null,
+        teamSize: null,
+        nowMs: 0,
+      },
+      null,
+      shuffle,
+      TRACKS,
+    );
+    // Whenever it opens: a match's seed would differ with the clock.
+    for (let start = 0; start < 10; start += 1) {
+      const { changes, at } = setup("training", shuffle, start);
+      at(0);
+      expect(changes.at(-1)?.trackId).toBe(menu.trackId);
+    }
   });
 
   it("says nothing once disposed", () => {

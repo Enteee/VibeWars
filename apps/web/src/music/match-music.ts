@@ -104,7 +104,8 @@ export function attachMatchMusic(
   { screen, menuDepth, mode, tracks, onChange, now = Date.now }: MatchMusicOptions,
 ): MatchMusic {
   const mapId = connection.map.id;
-  const matchSeed = `${mapId}:${String(now())}`;
+  // The Training Ground is a menu (#2020): Shuffle seeds it as one, by context.
+  const matchSeed = screen === "training" ? null : `${mapId}:${String(now())}`;
   /** When each hit this player dealt or took landed, oldest first. */
   const dealt: number[] = [];
   const taken: number[] = [];
