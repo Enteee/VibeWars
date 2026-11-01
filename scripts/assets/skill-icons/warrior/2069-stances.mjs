@@ -4,7 +4,7 @@ const rows = {
   "warrior.wary-stance": { glyph: "shield-stance", modifier: "finale" },
   "warrior.soldiers-defense": { glyph: "shield-stance", modifier: "up" },
   "warrior.defensive-stance": { glyph: "shield-stance", modifier: "hourglass" },
-  "warrior.auspicious-parry": { glyph: "shield-stance", modifier: "bleed" },
+  "warrior.auspicious-parry": { glyph: "shield-stance", modifier: "dot" },
 };
 
 export default rows;
