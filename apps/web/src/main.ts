@@ -9,7 +9,7 @@ import type {
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, mapMode } from "./net/maps.js";
+import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, mapMode, modeMapIds } from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -1115,7 +1115,9 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
-      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]),
+      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter((map) =>
+        modeMapIds()[entry].includes(map.id),
+      ),
       matchmakingFor(entry),
     );
   };

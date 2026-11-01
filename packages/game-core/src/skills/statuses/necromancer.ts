@@ -63,7 +63,12 @@ export type NecromancerStatusId =
   | "shivers-of-dread"
   | "death-nova"
   | "wail-of-doom"
-  | "atrophy";
+  | "atrophy"
+  // Blood Magic orders and leeches (#1979).
+  | "order-of-the-vampire"
+  | "dark-fury"
+  | "awaken-the-blood"
+  | "soul-leech";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -576,5 +581,60 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   atrophy: define("atrophy", "Atrophy", "hex", {
     profession: "necromancer",
     attributeSet: { scope: "primary", rank: 0, plusEquipment: false },
+  }),
+  // Blood Magic orders and leeches (#1979), at their rank-12 values.
+  // "For 5 seconds, whenever a party member who is not under the effects
+  // of another Necromancer enchantment hits a foe with physical damage,
+  // that party member steals up to 3...13...16 Health": the rider's
+  // caster is the attacker, so the check reads the attacker's statuses.
+  "order-of-the-vampire": define("order-of-the-vampire", "Order of the Vampire", "enchantment", {
+    profession: "necromancer",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [
+        {
+          kind: "if",
+          condition: {
+            kind: "caster-lacks",
+            category: "enchantment",
+            profession: "necromancer",
+            excluding: "order-of-the-vampire",
+          },
+          effects: [{ kind: "life-steal", amount: { flat: 13 } }],
+        },
+      ],
+      skillId: "necromancer.order-of-the-vampire",
+    },
+  }),
+  // "For 5 seconds, whenever a party member hits with an attack, that
+  // party member gains one additional strike of adrenaline."
+  "dark-fury": define("dark-fury", "Dark Fury", "enchantment", {
+    profession: "necromancer",
+    extraStrikesPerHit: 1,
+  }),
+  // "For 20...39...44 seconds, you have +2 Blood Magic and +2 Curses, and
+  // any Health sacrifices you make are 50% larger."
+  "awaken-the-blood": define("awaken-the-blood", "Awaken the Blood", "enchantment", {
+    profession: "necromancer",
+    attributeDeltas: [
+      { scope: { attributeId: "necromancer.blood-magic" }, amount: 2 },
+      { scope: { attributeId: "necromancer.curses" }, amount: 2 },
+    ],
+    sacrificeMultiplier: 1.5,
+  }),
+  // "For 10 seconds, whenever target foe casts a spell, you steal up to
+  // 16...67...80 Health from that foe": the trigger's caster is the hex's
+  // source, so the Necromancer steals.
+  "soul-leech": define("soul-leech", "Soul Leech", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        target: "bearer",
+        effects: [{ kind: "life-steal", amount: { flat: 67 } }],
+        skillId: "necromancer.soul-leech",
+      },
+    ],
   }),
 };

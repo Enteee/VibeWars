@@ -27,6 +27,7 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
   ["arena-crossroads", "last-stand"],
   ["hill-courtyard", "last-stand"],
   ["arena-canyon", "glass-dunes"],
+  ["hall-of-heroes", "hall-of-champions"],
 ]);
 
 export type MenuScreen =

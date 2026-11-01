@@ -655,6 +655,11 @@ export function describeStatus(id: string, ranks?: ReadonlyMap<string, number>):
   if (definition.lifeStealReduction > 0) {
     parts.push(`−${String(definition.lifeStealReduction)} life stolen`);
   }
+  if (definition.sacrificeMultiplier !== 1) {
+    parts.push(
+      `your Health sacrifices are ${String(Math.round((definition.sacrificeMultiplier - 1) * 100))}% larger`,
+    );
+  }
   if (definition.knockdownMinSeconds !== undefined) {
     parts.push(`knockdowns last at least ${String(definition.knockdownMinSeconds)}s`);
   }
@@ -1935,10 +1940,12 @@ function conditionText(condition: EffectCondition): string {
       return condition.profession === undefined
         ? `If you have ${aCategory(condition.category)}`
         : `If you have a ${getProfession(condition.profession).name} ${condition.category}`;
-    case "caster-lacks":
+    case "caster-lacks": {
+      const other = condition.excluding === undefined ? "" : "other ";
       return condition.profession === undefined
-        ? `If you have no ${condition.category}`
-        : `If you have no ${getProfession(condition.profession).name} ${condition.category}`;
+        ? `If you have no ${other}${condition.category}`
+        : `If you have no ${other}${getProfession(condition.profession).name} ${condition.category}`;
+    }
     case "target-casting":
       return condition.orChant === true
         ? "If target is casting a spell or chant"
