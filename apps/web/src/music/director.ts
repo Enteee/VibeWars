@@ -1,5 +1,6 @@
 import { seedFromString } from "@vibewars/game-core";
 
+import { MENU_TRACK, mapTrack } from "./fixed-tracks.js";
 import { moodsFor } from "./map-moods.js";
 import type { Mood } from "./mood.js";
 
@@ -22,6 +23,9 @@ export type Intensity = 0 | 1 | 2 | 3;
 
 const ONE_LOWER: Readonly<Record<Intensity, Intensity>> = { 0: 0, 1: 0, 2: 1, 3: 2 };
 
+/** A menu depth, already clamped to its song's layers, as a level. */
+const MENU_LEVEL: readonly Intensity[] = [0, 1];
+
 export type MusicMode =
   | { readonly kind: "auto" }
   | { readonly kind: "shuffle" }
@@ -33,10 +37,14 @@ export interface TrackChoice {
   readonly id: string;
   /** The first entry is the primary mood. */
   readonly moods: readonly Mood[];
+  /** Highest intensity the track responds to, plus one. */
+  readonly layers: number;
 }
 
 export interface MusicInput {
-  readonly screen: "menu" | "lobby" | "training" | "match" | "result";
+  readonly screen: "menu" | "training" | "match" | "result";
+  /** Menu only: how deep in the menus the player is (#1993). */
+  readonly menuDepth: 0 | 1 | null;
   /** Training and match only. */
   readonly mapId: string | null;
   /** The map id and the match's start; a rematch gets a new one. */
@@ -74,26 +82,30 @@ function fighting(screen: MusicInput["screen"]): boolean {
   return screen === "training" || screen === "match";
 }
 
-/** The context, and the key `map-moods.ts` knows it by. */
-function contextOf(input: MusicInput): { context: string; moodKey: string } {
+/**
+ * The context, and for a result the key `map-moods.ts` knows it by. Every
+ * menu is one context, so moving between them keeps the song (#1993).
+ */
+function contextOf(input: MusicInput): string {
   switch (input.screen) {
     case "menu":
-    case "lobby":
-      return { context: input.screen, moodKey: input.screen };
+      return "menu";
     case "training":
-    case "match": {
-      const mapId = input.mapId ?? "";
-      return { context: `${input.screen}:${mapId}`, moodKey: mapId };
-    }
-    case "result": {
-      const key = input.result === null ? "result" : `result-${input.result}`;
-      return { context: key, moodKey: key };
-    }
+    case "match":
+      return `${input.screen}:${input.mapId ?? ""}`;
+    case "result":
+      return input.result === null ? "result" : `result-${input.result}`;
   }
 }
 
-/** The level the fight calls for right now, before any hysteresis. */
-export function targetIntensity(input: MusicInput): Intensity {
+/**
+ * The level the fight calls for right now, before any hysteresis. A menu's
+ * is its depth, up to the top of the `layers` its song has (#1993).
+ */
+export function targetIntensity(input: MusicInput, layers: number): Intensity {
+  if (input.screen === "menu") {
+    return MENU_LEVEL[Math.max(0, Math.min(input.menuDepth ?? 0, layers - 1))] ?? 0;
+  }
   const { self } = input;
   if (!fighting(input.screen) || !self?.alive) {
     return 0;
@@ -123,7 +135,20 @@ function pick(tracks: readonly TrackChoice[], seed: string): TrackChoice | undef
   return tracks.length === 0 ? undefined : tracks[seedFromString(seed) % tracks.length];
 }
 
-function autoTrack(
+/** Auto's song: fixed on a menu and a map (#1993), by mood for a result. */
+function autoTrack(input: MusicInput, seed: string, tracks: readonly TrackChoice[]): string | null {
+  switch (input.screen) {
+    case "menu":
+      return MENU_TRACK;
+    case "training":
+    case "match":
+      return mapTrack(input.mapId ?? "");
+    case "result":
+      return moodTrack(moodsFor(contextOf(input)), seed, tracks);
+  }
+}
+
+function moodTrack(
   moods: readonly Mood[],
   seed: string,
   tracks: readonly TrackChoice[],
@@ -138,7 +163,7 @@ function autoTrack(
 }
 
 function chooseTrack(
-  moods: readonly Mood[],
+  input: MusicInput,
   seed: string,
   mode: MusicMode,
   tracks: readonly TrackChoice[],
@@ -152,9 +177,9 @@ function chooseTrack(
       // A pinned id not in the manifest is wrong data: play as Auto.
       return tracks.some((track) => track.id === mode.trackId)
         ? mode.trackId
-        : autoTrack(moods, seed, tracks);
+        : autoTrack(input, seed, tracks);
     case "auto":
-      return autoTrack(moods, seed, tracks);
+      return autoTrack(input, seed, tracks);
   }
 }
 
@@ -170,11 +195,13 @@ export function directMusic(
   mode: MusicMode,
   tracks: readonly TrackChoice[],
 ): MusicState {
-  const { context, moodKey } = contextOf(input);
-  const trackId = chooseTrack(moodsFor(moodKey), input.matchSeed ?? context, mode, tracks);
-  const target = targetIntensity(input);
+  const context = contextOf(input);
+  const trackId = chooseTrack(input, input.matchSeed ?? context, mode, tracks);
+  const layers = tracks.find((track) => track.id === trackId)?.layers ?? 1;
+  const target = targetIntensity(input, layers);
   const now = input.nowMs;
-  if (prev?.context !== context || target >= prev.intensity) {
+  // A menu's level is where the player is, not a fight to calm down from.
+  if (prev?.context !== context || target >= prev.intensity || input.screen === "menu") {
     return { trackId, intensity: target, intensitySinceMs: now, context };
   }
   let { intensity, intensitySinceMs } = prev;
