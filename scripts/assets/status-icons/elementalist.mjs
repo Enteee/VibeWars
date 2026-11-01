@@ -253,4 +253,17 @@ export const ELEMENTALIST_STATUS_ICONS = {
       `<path d="M13 3l-6 10h5l-1 8 6-10h-5z" ${stroke(c, 2)}/>` +
       `<path d="M4 20L20 4" ${stroke(c, 1.6)}/>`,
   ],
+  // PvP forms (#1951), stand-ins until their art card.
+  // Enchantment: a flame over a hex's diamond, hexed foes set on fire.
+  "elemental-flame": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 13l6 6H6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 3c3 3 3 5 0 8c-3-3-3-5 0-8z" fill="${c}"/>`,
+  ],
+  // Enchantment: three wavy lines of mist, the body turned to water.
+  "mist-form": [
+    "enchantment",
+    (c) => `<path d="M4 8q4-3 8 0t8 0M4 13q4-3 8 0t8 0M4 18q4-3 8 0t8 0" ${stroke(c, 2)}/>`,
+  ],
 };

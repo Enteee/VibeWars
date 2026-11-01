@@ -501,6 +501,20 @@ describe("describeSkill", () => {
     );
   });
 
+  it("words the PvP forms (#1951)", () => {
+    expect(describeStatus("shadow-form")).toBe(
+      "hostile spells targeting you fail, attacks against you miss. " +
+        "When it ends: lose all but 41 Health",
+    );
+    expect(describeStatus("elemental-flame")).toBe(
+      "whenever it applies an elemental hex to a foe: applies Burning for 2s (−7 Health degeneration)",
+    );
+    expect(describeStatus("mist-form")).toBe(
+      "33% less damage from foes with a Water Magic hex. Whenever it casts an elemental spell: " +
+        "you and non-spirit allies in earshot: heals for 210% of the spell's energy cost, under 80% Health",
+    );
+  });
+
   it("words a status's pips as GW1 does", () => {
     expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
     expect(describeStatus("regeneration")).toContain("+4 Health regeneration");

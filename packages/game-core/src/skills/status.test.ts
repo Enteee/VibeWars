@@ -734,6 +734,46 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.drainChanges()).toEqual([]);
   });
 
+  it("records a hex it applied only while a status answers that (#1951)", () => {
+    const set = new StatusSet();
+    set.recordAppliedHex("deep-freeze", "d");
+    expect(set.drainChanges()).toEqual([]);
+
+    set.apply("elemental-flame", 17, "a");
+    set.drainChanges();
+    set.recordAppliedHex("deep-freeze", "d");
+    expect(set.drainChanges()).toEqual([
+      {
+        kind: "applied-hex",
+        id: "deep-freeze",
+        hexedId: "d",
+        fired: [
+          {
+            statusId: "elemental-flame",
+            sourceId: "a",
+            trigger: getStatusDefinition("elemental-flame").triggers[0],
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("marks Shadow Form and Mist Form with what they do (#1951)", () => {
+    expect(getStatusDefinition("shadow-form")).toMatchObject({
+      foeSpellsFail: true,
+      attacksAgainstMiss: true,
+    });
+    expect(getStatusDefinition("mist-form").damageReductionFromHexedSource).toEqual({
+      attributeId: "elementalist.water-magic",
+      fraction: 0.33,
+    });
+    expect(getStatusDefinition("blind")).toMatchObject({
+      foeSpellsFail: false,
+      attacksAgainstMiss: false,
+      damageReductionFromHexedSource: undefined,
+    });
+  });
+
   it("records a hit and physical damage only while a status answers them (#935)", () => {
     const parasite = {
       statusId: "insidious-parasite",
