@@ -8,10 +8,10 @@ import {
 import { describe, expect, it } from "vitest";
 
 import {
-  BOT_REFUSED_MESSAGE,
   CONNECTION_LOST_MESSAGE,
   HOST_CLOSED_MESSAGE,
   LOBBY_CLOSED_MESSAGE,
+  LOBBY_FULL_MESSAGE,
   NO_ANSWER_MESSAGE,
   NO_RELAY_MESSAGE,
   NOT_HOST_MESSAGE,
@@ -19,8 +19,8 @@ import {
   SEAT_REFUSED_MESSAGE,
   SEAT_TAKEN_MESSAGE,
   VOTE_REFUSED_MESSAGE,
-  NO_SEAT_FOR_BOT_MESSAGE,
   PEER_UNREACHABLE_MESSAGE,
+  REFUSED_MESSAGE,
   TURN_RELAY_HINT,
   followHost,
   joinFailureNotice,
@@ -58,11 +58,11 @@ describe("the notice for a closed lobby (#515)", () => {
   });
 });
 
-describe("the notice for a refused bot (#1194)", () => {
-  it("says there is no seat in a full lobby, who may ask, or that the bot could not be had", () => {
-    expect(lobbyRefusalNotice("lobby-full")).toBe(NO_SEAT_FOR_BOT_MESSAGE);
+describe("the notice for a refused ask (#1194)", () => {
+  it("says the lobby is full, who may ask, or that the host turned it down", () => {
+    expect(lobbyRefusalNotice("lobby-full")).toBe(LOBBY_FULL_MESSAGE);
     expect(lobbyRefusalNotice("not-host")).toBe(NOT_HOST_MESSAGE);
-    expect(lobbyRefusalNotice("invalid-bot")).toBe(BOT_REFUSED_MESSAGE);
+    expect(lobbyRefusalNotice("closed")).toBe(REFUSED_MESSAGE);
   });
 });
 

@@ -1166,10 +1166,8 @@ export const LOBBY_REFUSALS = [
   "not-admitted",
   "ticket-used",
   "fell-through",
-  // A bot command (#1193) from anyone but the host; one whose count is no
-  // integer from 0 (#1454), or sent in a queued lobby.
+  // A host's command (a mode, a match search) from anyone but the host.
   "not-host",
-  "invalid-bot",
   // A Team Lobby's (#1458): a proposal not of the side's size or with a
   // build that is not legal; a vote for no proposal of the voter's side;
   // a slot someone holds, or no slot of the chosen build.

@@ -103,13 +103,12 @@ export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
 export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
 /** #854 C7's wording. */
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
-/** A joined player's ask the host turned down (#1194): a bot it had no seat for, or could not add. */
-export const NO_SEAT_FOR_BOT_MESSAGE = "The lobby is full: there is no seat for a bot.";
 /** A queued party's team plan (ADR-0042) was not whole at the start (#1822). */
 export const TEAM_PLAN_REJECTED_NOTICE =
   "Your party's team plan was not accepted; the house team plays for you.";
-export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
-export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
+/** A joined player's ask the host turned down (#1194). */
+export const REFUSED_MESSAGE = "The host turned that down.";
+export const NOT_HOST_MESSAGE = "Only the host can do that.";
 /** A Team Lobby's refusals (#1460). */
 export const PROPOSAL_REFUSED_MESSAGE =
   "That team build cannot be proposed: it needs your side's size and legal builds.";
@@ -716,7 +715,7 @@ export async function followHost<T>(
 export function lobbyRefusalNotice(reason: LobbyRefusal): string {
   switch (reason) {
     case "lobby-full":
-      return NO_SEAT_FOR_BOT_MESSAGE;
+      return LOBBY_FULL_MESSAGE;
     case "not-host":
       return NOT_HOST_MESSAGE;
     case "invalid-proposal":
@@ -728,7 +727,7 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
     case "invalid-slot":
       return SEAT_REFUSED_MESSAGE;
     default:
-      return BOT_REFUSED_MESSAGE;
+      return REFUSED_MESSAGE;
   }
 }
 

@@ -3641,7 +3641,6 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
-        { "literal": "invalid-bot" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },
