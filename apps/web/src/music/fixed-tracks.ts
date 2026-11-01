@@ -10,11 +10,11 @@ export const MENU_TRACK = "first-light";
 /** Played on a map this table does not know: wrong data. */
 export const UNKNOWN_MAP_TRACK = "hall-of-champions";
 
-/** Each map's song, from its moods when the table was drawn up. */
+/**
+ * Each arena's song, from its moods when the table was drawn up. The
+ * builder's Training Ground keeps the menu's (#2020).
+ */
 export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
-  ["training-field", "northern-pass"],
-  ["training-hall", "northern-pass"],
-  ["training-pillars", "northern-pass"],
   ["relic-temples", "northern-pass"],
   ["arena-alpha", "hall-of-champions"],
   ["guild-hall-isle", "hall-of-champions"],
