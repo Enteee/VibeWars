@@ -33,6 +33,7 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     enteredAt: 1_700_000_000_000 + n * 1_000,
     heartbeatAt: NOW,
     party: null,
+    hardNat: false,
     ...fields,
   };
 }
@@ -374,5 +375,98 @@ describe("team modes (ADR-0042)", () => {
     const groups = await form(tickets, "team-arena");
     const lone = tickets[0];
     expect(lone && groupOf(groups, lone.ticketId, lone.members)).toBe(groups[0]);
+  });
+});
+
+describe("hard NAT (#2090)", () => {
+  const hard = { hardNat: true };
+
+  /** The groups, each as its tickets' numbers in queue order. */
+  async function formed(
+    tickets: readonly QueueTicket[],
+    mode: QueueMode = "random-arena-4v4",
+  ): Promise<number[][]> {
+    const numbers = new Map(tickets.map((t) => [t.ticketId, Number.parseInt(t.ticketId, 16)]));
+    return (await form(tickets, mode)).map((group) =>
+      [
+        ...new Set(
+          [...group.teams[0], ...group.teams[1]].map(
+            (key) => numbers.get(key) ?? numbers.get(`0${key.slice(1)}`) ?? -1,
+          ),
+        ),
+      ].sort((a, b) => a - b),
+    );
+  }
+
+  it("1v1 [A hard, B hard, C open] forms A and C, and B keeps its place", async () => {
+    const mode = "random-arena-1v1";
+    const queued = [
+      ticket(1, { mode, ...hard }),
+      ticket(2, { mode, ...hard }),
+      ticket(3, { mode }),
+    ];
+    expect(await formed(queued, mode)).toEqual([[1, 3]]);
+    expect(await formed([...queued, ticket(4, { mode })], mode)).toEqual([
+      [1, 3],
+      [2, 4],
+    ]);
+  });
+
+  it("a group of only hard tickets never forms", async () => {
+    const mode = "random-arena-2v2";
+    expect(await formed(solos(1, 4, { mode, ...hard }), mode)).toEqual([]);
+    expect(await formed(solos(1, 8, hard))).toEqual([]);
+  });
+
+  it("an all-hard front is skipped and the next candidate forms", async () => {
+    const mode = "random-arena-2v2";
+    const queued = [...solos(1, 4, { mode, ...hard }), ticket(5, { mode })];
+    expect(await formed(queued, mode)).toEqual([[1, 2, 3, 5]]);
+  });
+
+  it("two hard sides at the front of a team queue do not stop a later open one", async () => {
+    const mode = "team-arena";
+    const queued = [{ ...party(1, mode), ...hard }, { ...party(2, mode), ...hard }, party(3, mode)];
+    expect(await formed(queued, mode)).toEqual([[1, 3]]);
+  });
+
+  it("a hard party behind hard solos meets its side once an open solo queues", async () => {
+    const queued = [{ ...party(1), ...hard }, ...solos(2, 4, hard)];
+    expect(await formed(queued)).toEqual([]);
+    expect(await formed([...queued, ticket(6)])).toEqual([[1, 2, 3, 4, 6]]);
+  });
+
+  it("the host is never a hard ticket when the group has an open one", async () => {
+    for (let open = 1; open <= 8; open += 1) {
+      const queued = solos(1, 8).map((t, i) => (i + 1 === open ? t : { ...t, ...hard }));
+      const [group] = await form(queued);
+      expect(group?.hostTicketId).toBe(ticket(open).ticketId);
+    }
+    const mixed = solos(1, 8).map((t, i) => (i % 2 === 0 ? { ...t, ...hard } : t));
+    for (let from = 0; from < 4; from += 1) {
+      const queued = mixed.map((t, i) => ({
+        ...t,
+        ...ticket(i + 1 + from * 8),
+        hardNat: t.hardNat,
+      }));
+      const [group] = await form(queued);
+      const host = queued.find((t) => t.ticketId === group?.hostTicketId);
+      expect(host?.hardNat).toBe(false);
+    }
+  });
+
+  it("the same tickets make the same groups and hosts in any arrival order", async () => {
+    const mode = "random-arena-2v2";
+    const queued = [
+      ...solos(1, 3, { mode, ...hard }),
+      ticket(4, { mode }),
+      ...solos(5, 2, { mode, ...hard }),
+      ...solos(7, 3, { mode }),
+    ];
+    const expected = await form(queued, mode);
+    expect(expected.length).toBeGreaterThan(0);
+    for (const step of [2, 4, 5]) {
+      expect(await form(reordered(queued, step), mode)).toEqual(expected);
+    }
   });
 });
