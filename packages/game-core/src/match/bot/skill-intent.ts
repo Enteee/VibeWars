@@ -1,8 +1,9 @@
+import type { DamageType } from "../../equipment/types.js";
 import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
-import { getStatusDefinition, type StatusCategory } from "../../skills/status.js";
+import { getStatusDefinition, type StatusCategory, type StatusId } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -116,6 +117,10 @@ export function interruptAimed(
   caster: Combatant,
   foe: Combatant,
 ): "cast" | "swing" | null {
+  // A guard would stop it (#1964): Mantra of Concentration's, Resolve's.
+  if (foe.statuses.active.some(({ id }) => getStatusDefinition(id).interruptGuard !== undefined)) {
+    return null;
+  }
   const aimed = (effects: readonly SkillEffect[]): "cast" | "swing" | null => {
     for (const effect of effects) {
       const lands =
@@ -204,6 +209,65 @@ export function removesFromCaster(skill: Skill): boolean {
         (effect.kind === "transfer-conditions" && effect.from === "caster") ||
         (effect.kind === "remove-status" && effect.from === "caster"),
     );
+}
+
+/**
+ * The statuses `skill` puts on its user, a stance's or an enchantment's:
+ * a self-targeted skill's `apply-status`.
+ */
+export function ownStatuses(skill: Skill): readonly StatusId[] {
+  return skill.target === "self"
+    ? skill.effects.flatMap((effect) => (effect.kind === "apply-status" ? [effect.statusId] : []))
+    : [];
+}
+
+/** Whether `skill` guards its user from an interrupt (#1964): Mantra of Concentration. */
+export function guardsInterrupt(skill: Skill): boolean {
+  return ownStatuses(skill).some((id) => getStatusDefinition(id).interruptGuard !== undefined);
+}
+
+/**
+ * The damage type `skill` cuts for its user, if it cuts one (#1964):
+ * Mantra of Flame's fire.
+ */
+export function wardedDamageType(skill: Skill): DamageType | undefined {
+  for (const id of ownStatuses(skill)) {
+    const byType = getStatusDefinition(id).damageTypeTakenMultiplier;
+    if (byType !== undefined) {
+      return byType.type;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The type most of `bar`'s damage is (#1964), by how many of its skills
+ * deal it; `undefined` with no damage or a tie. A weapon's blows are not
+ * counted: a bot reads the skills it sees.
+ */
+export function mainDamageType(bar: readonly Skill[]): DamageType | undefined {
+  const counts = new Map<DamageType, number>();
+  for (const skill of bar) {
+    const types = new Set(
+      skill.effects
+        .flatMap(flatten)
+        .flatMap((effect) => (effect.kind === "damage" ? [effect.type] : [])),
+    );
+    for (const type of types) {
+      counts.set(type, (counts.get(type) ?? 0) + 1);
+    }
+  }
+  let main: DamageType | undefined;
+  let most = 0;
+  for (const [type, count] of counts) {
+    if (count > most) {
+      main = type;
+      most = count;
+    } else if (count === most) {
+      main = undefined;
+    }
+  }
+  return main;
 }
 
 /** An `if`'s and a splash's effects, as well as the effect itself. */

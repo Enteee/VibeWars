@@ -14,14 +14,18 @@ import type {
 import type { Participant } from "../simulation.js";
 import {
   botUses,
+  guardsInterrupt,
   mirrorsStance,
   takenOffFoe,
   interruptAimed,
+  mainDamageType,
   onlyInterrupts,
+  ownStatuses,
   removedCategories,
   removesFromCaster,
   renewsSpirit,
   sacrificesTooMuch,
+  wardedDamageType,
 } from "./skill-intent.js";
 
 /**
@@ -69,6 +73,9 @@ const ESCAPE_THREAT_UNITS = AREA_IN_THE_AREA;
 
 /** How much longer than the interrupt itself a cast or a swing must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
+
+/** A cast this long or longer is worth a guard against interrupts (#1964). */
+const GUARDED_CAST_SECONDS = 2;
 
 /**
  * A guard walking back acts again within this of its post (#1222), or
@@ -198,10 +205,7 @@ function think(
 ): BehaviourIntent {
   const self = context.self;
   const team = self.combatant.team;
-  const bar = self.skillBar.flatMap((id) => {
-    const skill = id === null ? undefined : getSkill(id);
-    return skill === undefined ? [] : [skill];
-  });
+  const bar = skillsOf(self);
   const nearestFirst = (bodies: readonly Participant[]): Participant[] =>
     [...bodies].sort(
       (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
@@ -273,6 +277,7 @@ function think(
       const skill = bar.find(
         (held) =>
           botUses(held).includes(role) &&
+          wardedDamageType(held) === undefined &&
           reaches(held) &&
           mayUse(held, held.target === "self" ? self.id : patient.id),
       );
@@ -374,7 +379,36 @@ function think(
     }
   }
 
-  // 4c. Take a foe's spirit in reach (#1965), as Signet of Binding, with
+  // 4c. A mantra before it is needed (#1964), never one already up: a
+  // guard against interrupts with a long cast on its bar and a foe in
+  // reach that holds an interrupt, or one damage type's cut with a foe in
+  // reach that deals mostly that type.
+  const mantras = bar.filter(
+    (held) => guardsInterrupt(held) || wardedDamageType(held) !== undefined,
+  );
+  if (mantras.length > 0) {
+    const inReach = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+    const longCast = bar.some((held) => held.activationSeconds >= GUARDED_CAST_SECONDS);
+    for (const skill of mantras) {
+      if (
+        ownStatuses(skill).some((id) => self.combatant.statuses.has(id)) ||
+        !mayUse(skill, self.id)
+      ) {
+        continue;
+      }
+      const type = wardedDamageType(skill);
+      const wanted =
+        type === undefined
+          ? longCast &&
+            inReach.some((foe) => skillsOf(foe).some((held) => botUses(held).includes("interrupt")))
+          : inReach.some((foe) => mainDamageType(skillsOf(foe)) === type);
+      if (wanted) {
+        return use(skill, self.id);
+      }
+    }
+  }
+
+  // 4d. Take a foe's spirit in reach (#1965), as Signet of Binding, with
   // Health to spare for its price.
   const binds = bar.filter((skill) => skill.target === "enemy-spirit");
   if (binds.length > 0 && self.combatant.health > BIND_HEALTH_FLOOR) {
@@ -517,6 +551,14 @@ function nearestLiving(self: Participant, foes: readonly Participant[]): Partici
     }
   }
   return best;
+}
+
+/** The skills on `participant`'s bar, its empty slots left out. */
+function skillsOf(participant: Participant): Skill[] {
+  return participant.skillBar.flatMap((id) => {
+    const skill = id === null ? undefined : getSkill(id);
+    return skill === undefined ? [] : [skill];
+  });
 }
 
 function healthFraction(participant: Participant): number {

@@ -289,6 +289,12 @@ const NO_BOT_USE = new Set([
   // spirit taken have steps of their own in `playBuild`, no use to weigh.
   "mesmer.arcane-mimicry",
   "ritualist.signet-of-binding",
+  // Nature rituals 4 (#1956): an energy toll on everyone who attacks or
+  // uses a skill, damage to whoever runs dry or a worse bleed, both sides
+  // alike, is no rule the bot weighs, as Winnowing.
+  "ranger.famine",
+  "ranger.lacerate",
+  "ranger.quicksand",
 ]);
 
 function skill(id: string) {

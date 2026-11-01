@@ -414,8 +414,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "assassin",
-    // GW1's "No Attribute": any assassin can use it.
-    attributeId: undefined,
+    // Linked to Shadow Arts, though nothing in it scales (#1958).
+    attributeId: "assassin.shadow-arts",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
