@@ -2412,12 +2412,17 @@ function describeEffect(
       switch (findStatusDefinition(effect.statusId)?.category) {
         case "stance":
         case "preparation":
-        case "glyph":
+        case "glyph": {
+          // One with no end of its own (#1941), as Glyph of Energy, lasts
+          // until what it holds is spent.
+          const what = describeStatus(effect.statusId, ranks);
           return {
-            text:
-              `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId, ranks),
+            text: Number.isFinite(effect.durationSeconds)
+              ? `For ${seconds(effect.durationSeconds)}, ${what}`
+              : `${what.charAt(0).toUpperCase()}${what.slice(1)}`,
             magnitude: undefined,
           };
+        }
         default:
           break;
       }

@@ -492,6 +492,15 @@ describe("describeSkill", () => {
     expect(describeStatus("experts-dexterity")).toBe("+1 to Marksmanship, attacks 15% faster");
   });
 
+  it("gives a glyph with no end of its own no duration (#1941)", () => {
+    expect(describeSkill(skill("elementalist.glyph-of-energy")).effects[0]?.text).toBe(
+      "+2 to elemental attributes, your next 3 spells cost 22 less energy, no Overcast",
+    );
+    expect(describeSkill(skill("elementalist.glyph-of-elemental-power")).effects[0]?.text).toMatch(
+      /^For 25s, /,
+    );
+  });
+
   it("words a status's pips as GW1 does", () => {
     expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
     expect(describeStatus("regeneration")).toContain("+4 Health regeneration");
