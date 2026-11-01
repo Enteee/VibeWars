@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { NO_RANKS } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
@@ -147,7 +148,7 @@ describe("Predator's Pounce (#1957)", () => {
 describe("Scavenger Strike (#1957)", () => {
   it("gives the Ranger 13 Energy against a foe with a condition, none against a clean one", () => {
     const bleeding = firstBlow(SCAVENGER, (sim) => {
-      get(sim, "a").combatant.statuses.apply("bleeding", 30, "x");
+      get(sim, "a").combatant.statuses.apply("bleeding", 30, "x", NO_RANKS);
     });
     expect(total(bleeding.entry, "energy-gain", "r")).toBe(13);
     const clean = firstBlow(SCAVENGER);
@@ -171,7 +172,7 @@ describe("Ferocious Strike (#1957)", () => {
       firstBlow(
         FEROCIOUS,
         (sim) => {
-          get(sim, "a").combatant.statuses.apply("bonettis-defense", 30, "x");
+          get(sim, "a").combatant.statuses.apply("bonettis-defense", 30, "x", NO_RANKS);
         },
         `blocked-${String(i)}`,
       ),
@@ -186,7 +187,7 @@ describe("Ferocious Strike (#1957)", () => {
 
 describe("Melandru's Assault (#1957)", () => {
   const enchant = (sim: MatchSimulation): void => {
-    get(sim, "a").combatant.statuses.apply("windborne-speed", 30, "x");
+    get(sim, "a").combatant.statuses.apply("windborne-speed", 30, "x", NO_RANKS);
   };
 
   it("deals +29 more to an enchanted foe, and 29 to a foe adjacent to it", () => {
@@ -255,7 +256,7 @@ describe("Heal as One (#1957)", () => {
     const sim = match();
     const owner = get(sim, "r");
     const pet = wolf(sim);
-    pet.combatant.statuses.apply("burning", 10, "x");
+    pet.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
     pet.combatant.health = 0.2;
     stepFor(sim, DT);
     expect(pet.combatant.dead).toBe(true);
