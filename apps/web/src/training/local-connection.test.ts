@@ -389,6 +389,30 @@ describe("the bar with Glyph of Lesser Energy up (#637)", () => {
   });
 });
 
+describe("the bar in Primal Echoes' range (#1920)", () => {
+  it("costs a signet the 10 Energy the spirit asks, and nothing again once it is gone", () => {
+    let character = setProfessions(newCharacter("c1"), "ranger", "mesmer");
+    character = setSkill(character, 0, "ranger.primal-echoes");
+    character = setSkill(character, 1, "mesmer.signet-of-humility");
+    const { connection } = targetDummy(character);
+    const signet = () => connection.skillBar[1];
+    const run = (seconds: number): void => {
+      for (let t = 0; t < seconds; t += TICK_SECONDS) {
+        connection.advance(TICK_SECONDS);
+      }
+    };
+    expect(signet()?.energyCost).toBe(0);
+
+    connection.sendIntent({ kind: "use-skill", slot: 0 });
+    run(2.5);
+    expect(signet()?.energyCost).toBe(10);
+
+    // At rank 0 the spirit lives 30 s.
+    run(30);
+    expect(signet()?.energyCost).toBe(0);
+  });
+});
+
 describe("calls in the Training Ground (#443)", () => {
   it("calls the dummy and pings for your team, and the ping runs out", () => {
     const { connection } = targetDummy();
