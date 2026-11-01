@@ -4,23 +4,17 @@
 // apps/web/src/ui/icons.test.ts checks every implemented skill has one and
 // that no two rows are the same picture.
 //
-// A card that adds a skill to IMPLEMENTED_SKILLS adds its row to
-// `skill-icons/<profession>.mjs`, by the id's prefix, and runs
-// `node scripts/assets/icons.mjs`. Start from the glyph for the skill's
-// primary effect; the modifier tells apart skills that share one.
+// A card that adds a skill to IMPLEMENTED_SKILLS adds a file of its own
+// (#2021): `skill-icons/<profession>/<issue>-<slug>.mjs`, by the id's
+// prefix, whose default export is its rows, and runs
+// `node scripts/assets/icons.mjs`. It edits no other card's file, so two
+// cards never conflict. A row drawn as a stand-in until its art card goes in
+// `<issue>-stand-in.mjs`; the art card deletes that file and adds its own.
+// Start from the glyph for the skill's primary effect (glyphs/, or
+// `node scripts/assets/icons.mjs --vocabulary`); the modifier tells apart
+// skills that share one.
 
-import { mergeRows } from "./merge-rows.mjs";
-import { WARRIOR_ICONS } from "./skill-icons/warrior.mjs";
-import { RANGER_ICONS } from "./skill-icons/ranger.mjs";
-import { MONK_ICONS } from "./skill-icons/monk.mjs";
-import { NECROMANCER_ICONS } from "./skill-icons/necromancer.mjs";
-import { MESMER_ICONS } from "./skill-icons/mesmer.mjs";
-import { ELEMENTALIST_ICONS } from "./skill-icons/elementalist.mjs";
-import { ASSASSIN_ICONS } from "./skill-icons/assassin.mjs";
-import { RITUALIST_ICONS } from "./skill-icons/ritualist.mjs";
-import { PARAGON_ICONS } from "./skill-icons/paragon.mjs";
-import { DERVISH_ICONS } from "./skill-icons/dervish.mjs";
-import { COMMON_ICONS } from "./skill-icons/common.mjs";
+import { loadDirectories, mergeRows } from "./merge-rows.mjs";
 
 /**
  * @typedef {object} SkillIconRow
@@ -28,20 +22,13 @@ import { COMMON_ICONS } from "./skill-icons/common.mjs";
  * @property {string} [modifier] The small mark at the bottom right.
  */
 
-/** The tables by file name, so a test can check no id is in two. */
-export const SKILL_ICON_TABLES = {
-  warrior: WARRIOR_ICONS,
-  ranger: RANGER_ICONS,
-  monk: MONK_ICONS,
-  necromancer: NECROMANCER_ICONS,
-  mesmer: MESMER_ICONS,
-  elementalist: ELEMENTALIST_ICONS,
-  assassin: ASSASSIN_ICONS,
-  ritualist: RITUALIST_ICONS,
-  paragon: PARAGON_ICONS,
-  dervish: DERVISH_ICONS,
-  common: COMMON_ICONS,
-};
+/**
+ * The tables by profession, so a test can check no id is in two.
+ * @type {Readonly<Record<string, Readonly<Record<string, SkillIconRow>>>>}
+ */
+export const SKILL_ICON_TABLES = /** @type {Record<string, Record<string, SkillIconRow>>} */ (
+  await loadDirectories(new URL("./skill-icons/", import.meta.url), "icon row")
+);
 
 /** @type {Readonly<Record<string, SkillIconRow>>} */
-export const SKILL_ICONS = mergeRows(SKILL_ICON_TABLES, { prefixed: true });
+export const SKILL_ICONS = mergeRows(SKILL_ICON_TABLES, { prefixed: true, what: "icon row" });
