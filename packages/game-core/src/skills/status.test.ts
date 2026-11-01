@@ -224,6 +224,7 @@ describe("status definitions", () => {
       "blood-ritual": 3,
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
+      "ether-prodigy": 6,
       wither: -1,
       "obsidian-flesh": -2,
       "zealous-renewal": -1,

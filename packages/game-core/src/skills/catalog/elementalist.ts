@@ -3340,7 +3340,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
   {
     id: "elementalist.ether-renewal",
     name: "Ether Renewal",
-    gwId: 2860,
+    gwId: 181,
     type: "enchantment",
     elite: true,
     flash: false,
