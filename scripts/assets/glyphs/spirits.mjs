@@ -72,8 +72,8 @@ const glyphs = {
   "spirit-bound": {
     means: "The spirit post in a chain ring: a foe's spirit taken as your own (#1999).",
     draw: () =>
-      `<g transform="translate(12,10) scale(0.7) translate(-12,-12)">${spiritPost()}</g>` +
-      `<rect x="2.5" y="12.5" width="11" height="6" rx="3" ${stroke(C.ink, 1.8)}/><rect x="10.5" y="12.5" width="11" height="6" rx="3" ${stroke(C.ink, 1.8)}/>`,
+      `<g transform="translate(9,8) scale(0.62) translate(-12,-12)">${spiritPost()}</g>` +
+      `<rect x="3" y="12" width="8" height="5.5" rx="2.7" ${stroke(C.ink, 1.8)}/><rect x="7" y="12" width="8" height="5.5" rx="2.7" ${stroke(C.ink, 1.8)}/>`,
   },
   "spirit-feast": {
     means: "Two small cracked posts: every spirit near you is spent (#1309).",
