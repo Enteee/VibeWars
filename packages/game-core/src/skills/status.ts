@@ -1049,6 +1049,13 @@ export type StatusTriggerEvent =
    */
   | "bearer-energy-empty"
   /**
+   * The bearer's whole Energy dropped to 0 (#1956): checked as
+   * `bearer-energy-empty`, when it is below 1 and had at least 1 at the
+   * last check, so once per drop. Famine's "reaches 0 Energy".
+   * A dead bearer never answers.
+   */
+  | "bearer-energy-drops-empty"
+  /**
    * The bearer died while it was on (#1762): only what a death ends,
    * never an expiry or a removal earlier in the same tick. GW1's "if
    * target foe dies while hexed with this". `ends` and `ends-early`
