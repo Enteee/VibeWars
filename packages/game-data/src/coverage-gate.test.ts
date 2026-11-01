@@ -4,9 +4,12 @@ import {
   IMPLEMENTED_SKILLS,
   computeCoverage,
   missingMechanics,
+  resolveMagnitudeAtRanks,
   unmaintainedUpkeepSkills,
+  type LevelScaling,
 } from "@vibewars/game-core";
 
+import { corpusSkills } from "./corpus.js";
 import { generateSkillBundle } from "./generate.js";
 import { gwSkillDataDir, readGwSkillData } from "./sources/gw-skilldata.js";
 
@@ -92,5 +95,135 @@ describe("every catalog skill against gw-skilldata (#1207)", () => {
     expect(
       IMPLEMENTED_SKILLS.filter((skill) => skill.gwId === undefined).map((skill) => skill.id),
     ).toEqual(["necromancer.blood-renewal-lite"]);
+  });
+});
+
+/** A scaled number: its value at ranks 0 and 12 of its attribute. */
+interface Ends {
+  readonly atZero: number;
+  readonly atTwelve: number;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
+}
+
+function isEnds(value: unknown): value is Ends {
+  return isRecord(value) && typeof value.atZero === "number" && typeof value.atTwelve === "number";
+}
+
+function isLevelLine(value: unknown): value is { readonly byLevel: LevelScaling } {
+  if (!isRecord(value) || !isRecord(value.byLevel)) {
+    return false;
+  }
+  const { level, atLevelZero, perLevel } = value.byLevel;
+  return (
+    isEnds(level) &&
+    isRecord(level) &&
+    typeof level.attributeId === "string" &&
+    typeof atLevelZero === "number" &&
+    typeof perLevel === "number"
+  );
+}
+
+/** Every object reachable from `root`, once each: summoned creatures and their replacements included. */
+function reachable(root: unknown): readonly Readonly<Record<string, unknown>>[] {
+  const seen = new Set<unknown>();
+  const found: Readonly<Record<string, unknown>>[] = [];
+  const visit = (value: unknown): void => {
+    if (!isRecord(value) || seen.has(value)) {
+      return;
+    }
+    seen.add(value);
+    found.push(value);
+    for (const child of Object.values(value)) {
+      visit(child);
+    }
+  };
+  visit(root);
+  return found;
+}
+
+/** GW1's `a...b`: a scaled number at ranks 0 and 15. */
+function corpusPairs(description: string): readonly (readonly [number, number])[] {
+  return [...description.matchAll(/(\d+)\.\.\.(\d+)/g)].map(
+    (match) => [Number(match[1]), Number(match[2])] as const,
+  );
+}
+
+/** The line through ranks 0 and 15, at 12: never the wiki's rounded table. */
+function exactAtTwelve([atZero, atFifteen]: readonly [number, number]): number {
+  return atZero + 0.8 * (atFifteen - atZero);
+}
+
+describe("scaled numbers at rank 12 against gw-skilldata (#1899)", () => {
+  const descriptions = new Map(corpusSkills().map((skill) => [skill.gwId, skill.description]));
+  const described = IMPLEMENTED_SKILLS.flatMap((skill) => {
+    const description = skill.gwId === undefined ? undefined : descriptions.get(skill.gwId);
+    return description === undefined ? [] : [{ skill, description }];
+  });
+
+  it("gives every summoned creature its corpus level line, and 80 + 20 Health a whole level", () => {
+    let creatures = 0;
+    for (const { skill, description } of described) {
+      for (const node of reachable(skill)) {
+        const attack = node.attack;
+        const health = node.maxHealth;
+        if (!isRecord(attack) || !isRecord(attack.scaling) || attack.scaling.kind !== "level") {
+          continue;
+        }
+        const level = attack.scaling.level;
+        if (!isEnds(level) || !isLevelLine(health) || !isLevelLine(node.armor)) {
+          throw new Error(`${skill.id}: a creature without a level, or Health or armor off it`);
+        }
+        const name = String(node.name);
+        const pair = new RegExp(`level (\\d+)\\.\\.\\.(\\d+) ${name}`, "i").exec(description);
+        expect(pair, `${skill.id} names no "level a...b ${name}"`).not.toBeNull();
+        const corpus = [Number(pair?.[1]), Number(pair?.[2])] as const;
+        creatures += 1;
+        expect(level.atZero, `${skill.id} level at 0`).toBe(corpus[0]);
+        expect(level.atTwelve, `${skill.id} level at 12`).toBeCloseTo(exactAtTwelve(corpus), 3);
+        // One level line for blows, Health and armor alike.
+        expect(health.byLevel.level, `${skill.id} Health's level`).toMatchObject(level);
+        expect(node.armor.byLevel.level, `${skill.id} armor's level`).toMatchObject(level);
+        // GW1's level is whole, so Health steps: 80 + 20·21 = 500 for the
+        // Flesh Golem at 12, never 80 + 20·20.6. Runes reach 15.
+        const { attributeId } = health.byLevel.level;
+        for (let rank = 0; rank <= 15; rank += 1) {
+          const whole = Math.round(corpus[0] + ((corpus[1] - corpus[0]) * rank) / 15);
+          expect(
+            resolveMagnitudeAtRanks(health, new Map([[attributeId, rank]])),
+            `${skill.id} Health at ${String(rank)}`,
+          ).toBe(80 + 20 * whole);
+        }
+      }
+    }
+    // Not vacuous: Animate Bone Minions, Animate Flesh Golem and the rest.
+    expect(creatures).toBeGreaterThanOrEqual(6);
+  });
+
+  it("never stores the wiki's rounded rank-12 value for a corpus a...b", () => {
+    const hits: string[] = [];
+    for (const { skill, description } of described) {
+      const pairs = corpusPairs(description);
+      for (const node of reachable(skill)) {
+        if (!isEnds(node)) {
+          continue;
+        }
+        for (const pair of pairs) {
+          const exact = exactAtTwelve(pair);
+          if (
+            !Number.isInteger(exact) &&
+            node.atZero === pair[0] &&
+            node.atTwelve === Math.round(exact)
+          ) {
+            hits.push(
+              `${skill.id}: ${String(pair[0])}...${String(pair[1])} is ${String(exact)} at 12`,
+            );
+          }
+        }
+      }
+    }
+    expect(hits).toEqual([]);
   });
 });

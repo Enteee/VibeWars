@@ -301,7 +301,7 @@ export const MONK_SKILLS: readonly Skill[] = [
           },
         },
         energyPercent: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 },
+          scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80.4 },
         },
         perPartyMemberWithin: undefined,
         at: "corpse",
@@ -351,7 +351,7 @@ export const MONK_SKILLS: readonly Skill[] = [
             kind: "disable-skill",
             which: "all",
             seconds: {
-              scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 4 },
+              scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 4.4 },
             },
           },
         ],
@@ -417,7 +417,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         kind: "give-health",
         fractionOfCurrent: 0.5,
         healPercent: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 100, atTwelve: 129 },
+          scaling: { attributeId: "monk.healing-prayers", atZero: 100, atTwelve: 128.8 },
         },
       },
     ],
@@ -1032,7 +1032,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         from: "caster",
         perRemoved: {
           category: "enchantment",
-          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 7 } },
+          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 6.6 } },
         },
       },
       {
@@ -1042,7 +1042,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         from: "caster",
         perRemoved: {
           category: "enchantment",
-          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 7 } },
+          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 6.6 } },
         },
       },
     ],
@@ -1996,7 +1996,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "energy-gain",
-            amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 1, atTwelve: 3 } },
+            amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 1, atTwelve: 2.6 } },
           },
         ],
       },
@@ -2482,7 +2482,7 @@ export const MONK_SKILLS: readonly Skill[] = [
               {
                 kind: "damage",
                 amount: {
-                  scaling: { attributeId: "monk.smiting-prayers", atZero: 8, atTwelve: 27 },
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 8, atTwelve: 27.2 },
                 },
                 type: "holy",
                 armorPenetration: 0,

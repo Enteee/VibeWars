@@ -249,7 +249,7 @@ describe("Jaizhenju Strike (#1549)", () => {
       rechargeSeconds: 8,
       attack: {
         weapon: "sword",
-        bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atTwelve: 24 } },
+        bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atTwelve: 24.2 } },
         unblockable: { kind: "caster-lacks", category: "stance" },
       },
     });

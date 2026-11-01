@@ -327,7 +327,7 @@ describe("in a match (#1575)", () => {
       expect(damageIn(log, "far")).toBe(0);
       expect(skill("elementalist.earthquake").effects[1]).toMatchObject({
         type: "earth",
-        amount: { scaling: { atTwelve: 85 } },
+        amount: { scaling: { atTwelve: 85.2 } },
       });
     });
   });

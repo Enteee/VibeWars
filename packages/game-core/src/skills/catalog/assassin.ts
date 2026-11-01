@@ -67,7 +67,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       weapon: "daggers",
       weaponDamage: 1,
       bonusDamage: {
-        scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 27 },
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 26.8 },
       },
       conditionalBonus: undefined,
       strikes: 1,
@@ -95,7 +95,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 11 },
+              scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 11.4 },
             },
           },
         ],
@@ -1101,7 +1101,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       {
         kind: "energy-gain",
         amount: {
-          scaling: { attributeId: "assassin.critical-strikes", atZero: 1, atTwelve: 3 },
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 1, atTwelve: 2.6 },
         },
       },
     ],
@@ -1178,7 +1178,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       weapon: "daggers",
       weaponDamage: 1,
       bonusDamage: {
-        scaling: { attributeId: "assassin.critical-strikes", atZero: 19, atTwelve: 29 },
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 19, atTwelve: 28.6 },
       },
       conditionalBonus: {
         condition: { kind: "target-health-above", fraction: 0.9 },
@@ -1519,7 +1519,9 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "energy-gain",
-            amount: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 7 } },
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 7.4 },
+            },
           },
         ],
       },
@@ -1806,7 +1808,9 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "daggers",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 8, atTwelve: 18 } },
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 8, atTwelve: 17.6 },
+      },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -2069,7 +2073,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-gain",
-        amount: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 10 } },
+        amount: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 9.8 } },
       },
     ],
   },

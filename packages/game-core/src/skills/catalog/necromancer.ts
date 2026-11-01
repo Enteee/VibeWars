@@ -813,7 +813,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         kind: "create-ground-effect",
         anchor: "corpse",
         durationSeconds: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 17.6 },
         },
         act: {
           kind: "aura",
@@ -1234,7 +1234,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       {
         kind: "life-steal",
         amount: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 18, atTwelve: 52 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 18, atTwelve: 51.6 },
         },
       },
     ],
@@ -1414,7 +1414,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "life-steal",
             amount: {
-              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 },
             },
           },
         ],
@@ -1422,7 +1422,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 },
         },
         type: "shadow",
         armorPenetration: 0,
@@ -1534,7 +1534,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       {
         kind: "energy-gain",
         amount: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 17.6 },
         },
       },
     ],
@@ -1955,7 +1955,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
               {
                 kind: "damage",
                 amount: {
-                  scaling: { attributeId: "necromancer.death-magic", atZero: 24, atTwelve: 101 },
+                  scaling: { attributeId: "necromancer.death-magic", atZero: 24, atTwelve: 100.8 },
                 },
                 type: "typeless",
                 armorPenetration: 0,
@@ -2078,7 +2078,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 } },
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 } },
         type: "shadow",
         armorPenetration: 0,
       },
@@ -2089,7 +2089,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "life-steal",
             amount: {
-              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 },
             },
           },
         ],
@@ -2176,7 +2176,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 8 },
+              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 8.2 },
             },
           },
         ],
@@ -2438,7 +2438,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50 } },
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50.4 } },
         type: "shadow",
         armorPenetration: 0,
       },
@@ -2474,7 +2474,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50 } },
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50.4 } },
         type: "shadow",
         armorPenetration: 0,
       },
@@ -2743,12 +2743,12 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49 } },
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49.2 } },
         type: "shadow",
         armorPenetration: 0,
         per: {
           count: { kind: "statuses", on: "target", categories: ["enchantment"] },
-          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 17 } },
+          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 16.8 } },
           max: undefined,
         },
       },
@@ -2789,12 +2789,12 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49 } },
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49.2 } },
         type: "shadow",
         armorPenetration: 0,
         per: {
           count: { kind: "statuses", on: "target", categories: ["enchantment"] },
-          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 17 } },
+          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 16.8 } },
           max: undefined,
         },
       },

@@ -1477,7 +1477,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
           kind: "percent",
           percent: { scaling: { attributeId: "paragon.leadership", atZero: 5, atTwelve: 13 } },
         },
-        energyPercent: { scaling: { attributeId: "paragon.leadership", atZero: 1, atTwelve: 3 } },
+        energyPercent: { scaling: { attributeId: "paragon.leadership", atZero: 1, atTwelve: 3.4 } },
         perPartyMemberWithin: AREA_EARSHOT,
         at: "corpse",
       },
@@ -2314,7 +2314,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "energy-gain",
-            amount: { scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 8 } },
+            amount: { scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 8.2 } },
             toTarget: true,
           },
         ],

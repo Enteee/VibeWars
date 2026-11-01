@@ -28,97 +28,47 @@ export const MINION_BEHAVIOUR: Behaviour = {
 };
 
 /**
- * Level 0...10 at Death Magic 0...12. Health 80 + 20 per level and armor
- * about 3 per level (fandom "Health", "Bone Minion"); a blow every 3.10 s
- * (GWW "Bone Minion"). 6-11 is GWW's 6-15 against armor 60 at Death
- * Magic 12, its maximum a critical's, so ÷√2 (#1131).
+ * A minion of Death Magic (#1836): GW1's `level a...b`, its level at ranks 0
+ * and 15, gives the level at 12 unrounded, a + 0.8 (b − a), so every rank
+ * lands on GW1's table (#1899). Health is 80 + 20 per whole level, and armor
+ * `armor.atZero` plus `armor.perLevel` for each level it gains.
+ * Its blows scale on the unrounded level.
  */
-export const BONE_MINION: CreatureTemplate = {
-  kind: "minion",
-  look: "bone-minion",
-  name: "Bone Minion",
-  maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 80, atTwelve: 280 } },
-  armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 0, atTwelve: 30 } },
-  attack: {
-    attributeId: "necromancer.death-magic",
-    damageMin: 6,
-    damageMax: 11,
-    scaling: { kind: "level", level: { atZero: 0, atTwelve: 10 } },
-    damageType: "blunt",
-    attackIntervalSeconds: 3.1,
-    range: RANGE_MELEE,
-    projectileSpeed: undefined,
-    onHit: [],
-  },
-  behaviour: MINION_BEHAVIOUR,
-  aura: undefined,
-  replacedBy: undefined,
-  leavesCorpses: undefined,
-  onePerOwner: false,
-  onDeath: "vanish",
-  ownerDisableOnDeath: undefined,
-  deathBurst: undefined,
-};
-
-/**
- * Level 1...14 at Death Magic 0...12. Health 80 + 20 per level and armor
- * 4 per level (fandom "Bone Horror"); a blow every 3.10 s (GWW "Bone
- * Horror"). 12-24 is GWW's 12-34 against armor 60 at Death Magic 12, its
- * maximum a critical's, so ÷√2 (#1131).
- */
-export const BONE_HORROR: CreatureTemplate = {
-  kind: "minion",
-  look: "bone-horror",
-  name: "Bone Horror",
-  maxHealth: { scaling: { attributeId: "necromancer.death-magic", atZero: 100, atTwelve: 360 } },
-  armor: { scaling: { attributeId: "necromancer.death-magic", atZero: 4, atTwelve: 56 } },
-  attack: {
-    attributeId: "necromancer.death-magic",
-    damageMin: 12,
-    damageMax: 24,
-    scaling: { kind: "level", level: { atZero: 1, atTwelve: 14 } },
-    damageType: "blunt",
-    attackIntervalSeconds: 3.1,
-    range: RANGE_MELEE,
-    projectileSpeed: undefined,
-    onHit: [],
-  },
-  behaviour: MINION_BEHAVIOUR,
-  aura: undefined,
-  replacedBy: undefined,
-  leavesCorpses: undefined,
-  onePerOwner: false,
-  onDeath: "vanish",
-  ownerDisableOnDeath: undefined,
-  deathBurst: undefined,
-};
-
-/** A minion of Death Magic (#1836): its level, Health and armor from 0 to 12 ranks. */
 function deathMinion(
   look: CreatureTemplate["look"],
   name: string,
-  health: readonly [number, number],
-  armor: readonly [number, number],
-  level: readonly [number, number],
+  level: readonly [atZero: number, atFifteen: number],
+  armor: { readonly atZero: number; readonly perLevel: number },
   damage: readonly [number, number],
   damageType: "blunt" | "slashing",
   onHit: readonly OnHitEffect[],
 ): Omit<CreatureTemplate, "replacedBy" | "leavesCorpses" | "onePerOwner"> {
+  const [levelAtZero, levelAtFifteen] = level;
+  const levelScaling = {
+    attributeId: "necromancer.death-magic",
+    atZero: levelAtZero,
+    atTwelve: levelAtZero + 0.8 * (levelAtFifteen - levelAtZero),
+  };
   return {
     kind: "minion",
     look,
     name,
-    maxHealth: {
-      scaling: { attributeId: "necromancer.death-magic", atZero: health[0], atTwelve: health[1] },
-    },
+    maxHealth: { byLevel: { level: levelScaling, atLevelZero: 80, perLevel: 20 } },
     armor: {
-      scaling: { attributeId: "necromancer.death-magic", atZero: armor[0], atTwelve: armor[1] },
+      byLevel: {
+        level: levelScaling,
+        atLevelZero: armor.atZero - armor.perLevel * levelAtZero,
+        perLevel: armor.perLevel,
+      },
     },
     attack: {
       attributeId: "necromancer.death-magic",
       damageMin: damage[0],
       damageMax: damage[1],
-      scaling: { kind: "level", level: { atZero: level[0], atTwelve: level[1] } },
+      scaling: {
+        kind: "level",
+        level: { atZero: levelScaling.atZero, atTwelve: levelScaling.atTwelve },
+      },
       damageType,
       attackIntervalSeconds: 3.1,
       range: RANGE_MELEE,
@@ -133,10 +83,49 @@ function deathMinion(
   };
 }
 
+/**
+ * Level 0...12. Armor about 3 per level (fandom "Health", "Bone Minion");
+ * a blow every 3.10 s (GWW "Bone Minion"). 6-11 is GWW's 6-15 against
+ * armor 60 at Death Magic 12, its maximum a critical's, so ÷√2 (#1131).
+ */
+export const BONE_MINION: CreatureTemplate = {
+  ...deathMinion(
+    "bone-minion",
+    "Bone Minion",
+    [0, 12],
+    { atZero: 0, perLevel: 3 },
+    [6, 11],
+    "blunt",
+    [],
+  ),
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
+};
+
+/**
+ * Level 1...17. Armor 4 per level (fandom "Bone Horror"); a blow every
+ * 3.10 s (GWW "Bone Horror"). 12-24 is GWW's 12-34 against armor 60 at
+ * Death Magic 12, its maximum a critical's, so ÷√2 (#1131).
+ */
+export const BONE_HORROR: CreatureTemplate = {
+  ...deathMinion(
+    "bone-horror",
+    "Bone Horror",
+    [1, 17],
+    { atZero: 4, perLevel: 4 },
+    [12, 24],
+    "blunt",
+    [],
+  ),
+  replacedBy: undefined,
+  leavesCorpses: undefined,
+  onePerOwner: false,
+};
+
 /*
- * Blood and Death Magic's other minions (#1836), from the wiki: level 1
- * to 14 (Flesh Golem 3 to 21, Jagged Horror 0 to 12) at Death Magic 0 to
- * 12, Health 80 + 20 per level, armor per the wiki's tables, a blow every
+ * Blood and Death Magic's other minions (#1836), level 1...17 (Flesh Golem 3...25,
+ * Jagged Horror 0...15), armor per the wiki's tables, a blow every
  * 3.10 s. Damage is the wiki's "vs. AR 60" at Death Magic 12, its maximum
  * a critical's, so ÷√2 (#1131). They wear the Bone Horror's look until
  * their art.
@@ -147,9 +136,8 @@ export const VAMPIRIC_HORROR: CreatureTemplate = {
   ...deathMinion(
     "vampiric-horror",
     "Vampiric Horror",
-    [100, 360],
-    [9, 58],
-    [1, 14],
+    [1, 17],
+    { atZero: 9, perLevel: 49 / 13 },
     [12, 22],
     "blunt",
     [{ kind: "owner-gains-damage-dealt" }],
@@ -164,9 +152,8 @@ export const FLESH_GOLEM: CreatureTemplate = {
   ...deathMinion(
     "flesh-golem",
     "Flesh Golem",
-    [140, 500],
-    [16, 84],
-    [3, 21],
+    [3, 25],
+    { atZero: 16, perLevel: 68 / 18 },
     [50, 74],
     "slashing",
     [],
@@ -178,9 +165,15 @@ export const FLESH_GOLEM: CreatureTemplate = {
 
 /** Each blow makes its foe bleed for 25 seconds (#1836); it is no one's replacement's. */
 export const JAGGED_HORROR: CreatureTemplate = {
-  ...deathMinion("jagged-horror", "Jagged Horror", [80, 320], [5, 50], [0, 12], [8, 16], "blunt", [
-    { kind: "apply-status", statusId: "bleeding", durationSeconds: 25 },
-  ]),
+  ...deathMinion(
+    "jagged-horror",
+    "Jagged Horror",
+    [0, 15],
+    { atZero: 5, perLevel: 3.75 },
+    [8, 16],
+    "blunt",
+    [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 25 }],
+  ),
   replacedBy: undefined,
   leavesCorpses: undefined,
   onePerOwner: false,
@@ -191,9 +184,8 @@ export const SHAMBLING_HORROR: CreatureTemplate = {
   ...deathMinion(
     "shambling-horror",
     "Shambling Horror",
-    [100, 360],
-    [9, 58],
-    [1, 14],
+    [1, 17],
+    { atZero: 9, perLevel: 49 / 13 },
     [11, 21],
     "slashing",
     [],

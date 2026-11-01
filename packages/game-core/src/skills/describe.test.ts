@@ -853,7 +853,7 @@ describe("attack skills (#417)", () => {
     const atTwelve = describeSkill(chop, new Map([["warrior.axe-mastery", 12]]));
     expect(atTwelve.effects[0]).toEqual({
       text: "+16 damage",
-      magnitude: { current: 16, atZero: 1, atTwelve: 16, attributeId: "warrior.axe-mastery" },
+      magnitude: { current: 16, atZero: 1, atTwelve: 16.2, attributeId: "warrior.axe-mastery" },
     });
     expect(atTwelve.headline).toBe("+16 damage");
     expect(describeSkill(chop).headline).toBe("+1 damage");
