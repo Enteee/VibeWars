@@ -1,0 +1,3 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/engine-DR8GEwAV.js","assets/music-urls-D4qVCPgs.js"])))=>i.map(i=>d[i]);
+import{t as e}from"./preload-helper-C0TE3cvU.js";function t(e,t,n){return e===`null`&&n!==t}t(self.origin,window,window.parent)&&e(async()=>{let{startEngine:e}=await import(`./engine-DR8GEwAV.js`);return{startEngine:e}},__vite__mapDeps([0,1])).then(({startEngine:e})=>e());
+//# sourceMappingURL=music-host-DyU9cOrS.js.map
