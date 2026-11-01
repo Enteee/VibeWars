@@ -6,6 +6,7 @@ import {
   openPeers,
   openToFriends,
   playHouseTeams,
+  playOwnTeams,
   saveSoloTeam,
 } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
@@ -53,18 +54,24 @@ async function joinLobby(page: Page, playerName: string, code: string): Promise<
 
 /**
  * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
- * the host starts; both play the house team (#1525), side by side when they
- * share one.
+ * the host starts; each side proposes a Team Build as big as its players
+ * (#1525), so no bot plays beside them (#2029). A side nobody is on plays
+ * the house team, as many as the other.
  */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
-  const code = await hostLobby(host, "Host");
+  await openMenu(host, "Host");
+  const team = await saveSoloTeam(host, guestTeam === 1 ? 2 : 1);
+  const code = await hostFromMenu(host);
   await joinLobby(guest, "Guest", code);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
-  await playHouseTeams([host, guest], guestTeam === 1 ? [0, 1] : [0, 0]);
+  await playOwnTeams([
+    { page: host, team },
+    { page: guest, team, seat: guestTeam === 1 ? 1 : 0 },
+  ]);
   return code;
 }
 
@@ -578,10 +585,10 @@ test("a bot plays every slot nobody claims, tagged BOT in the match alone (#1194
   await page.getByRole("button", { name: "start match" }).click();
   await playHouseTeams([page]);
 
-  // The only foe in the arena is the bot, playing its house team's first
-  // slot under that character's name (#1458).
+  // Every foe in the arena is a bot, playing its house team's slot under
+  // that character's name (#1458), cut short when long.
   await page.keyboard.press(key("target-closest"));
-  await expect(page.locator(".hud-target-text")).toHaveText("Warrior/Monk");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^[A-Z][a-z]+(\/[A-Z][a-z]+|…)$/);
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
 });
