@@ -73,6 +73,10 @@ allies. Each is removed by its own kind of skill. Some enchantments are
 **maintained**: they last until you end them, costing an Energy pip while
 they run. Double-click its icon to end one.
 
+A few skills stop working while you are enchanted, and start again once
+you are not. A skill that lasts for your "next N attacks" counts every
+attack, so a miss or a block uses one up as surely as a hit.
+
 ## Armor and damage
 
 Warriors and Paragons wear the most armor; Rangers, Assassins and
