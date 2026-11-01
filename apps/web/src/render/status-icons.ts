@@ -323,6 +323,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "aura-of-displacement": icon("aura-of-displacement"),
   "shadow-meld": icon("shadow-meld"),
   "shadow-of-haste": icon("shadow-of-haste"),
+  recall: icon("recall"),
+  "dark-prison": icon("dark-prison"),
+  "shadow-walk": icon("shadow-walk"),
   "dwaynas-sorrow": icon("dwaynas-sorrow"),
   wither: icon("wither"),
   "kindle-arrows": icon("kindle-arrows"),
@@ -391,6 +394,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "order-of-undeath": icon("order-of-undeath"),
   "aura-of-the-lich": icon("aura-of-the-lich"),
   "infuse-condition": icon("infuse-condition"),
+  // Casting-state hexes (#1931).
+  "spinal-shivers": icon("spinal-shivers"),
+  "shivers-of-dread": icon("shivers-of-dread"),
+  "death-nova": icon("death-nova"),
+  "power-leech": icon("power-leech"),
+  "power-flux": icon("power-flux"),
 };
 
 const GAP = 2;

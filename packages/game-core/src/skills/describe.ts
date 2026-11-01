@@ -271,6 +271,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.returnsSource !== undefined) {
     parts.push("when this ends, you return to where you cast it");
   }
+  if (definition.stepsToTarget !== undefined) {
+    const seconds = String(definition.stepsToTarget.disableSeconds);
+    parts.push(
+      `when this ends, you Shadow Step to the ally you cast it on, and all of your skills are disabled for ${seconds} seconds`,
+    );
+  }
   if (definition.attackMissChance !== 0) {
     parts.push(`${String(Math.round(definition.attackMissChance * 100))}% of attacks miss`);
   }
@@ -949,6 +955,7 @@ function describeTriggers(
       trigger.profession,
       trigger.usedSkill,
       trigger.damageType,
+      trigger.whileUsingSkill,
       trigger.minDamage,
       trigger.healthBelow,
     ]);
@@ -1044,7 +1051,8 @@ function describeDeath(
     }
     return effect.kind === "spread-gained-condition" ||
       effect.kind === "echo" ||
-      effect.kind === "cancel-attack"
+      effect.kind === "cancel-attack" ||
+      effect.kind === "pay-energy-or-end"
       ? []
       : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
   };
@@ -1098,6 +1106,14 @@ const DROPPED = "drop effect";
  * `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
+  // Spinal Shivers' (#1931).
+  if (
+    event === "bearer-takes-damage-from-foe" &&
+    trigger.damageType !== undefined &&
+    trigger.whileUsingSkill === true
+  ) {
+    return `is struck for ${trigger.damageType} damage while using a skill`;
+  }
   if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
     return `takes ${trigger.damageType} damage from a foe`;
   }
@@ -1187,6 +1203,7 @@ function describeCreation(
       case "spread-gained-condition":
       case "echo":
       case "cancel-attack":
+      case "pay-energy-or-end":
         return "";
       default:
         return describeEffects(effect, ranks)
@@ -1276,7 +1293,8 @@ function describeTrigger(
       }
       return effect.kind === "spread-gained-condition" ||
         effect.kind === "echo" ||
-        effect.kind === "cancel-attack"
+        effect.kind === "cancel-attack" ||
+        effect.kind === "pay-energy-or-end"
         ? []
         : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
     });
@@ -1309,6 +1327,21 @@ function describeTrigger(
           : "",
     );
     return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
+  }
+  // Spinal Shivers' (#1931), said as one: "whenever it is struck for cold
+  // damage while using a skill, it is interrupted and you lose 4 Energy or
+  // this ends".
+  if (
+    first?.kind === "pay-energy-or-end" &&
+    trigger.target === "bearer" &&
+    after.length > 0 &&
+    after.every(({ kind }) => kind === "interrupt")
+  ) {
+    return [
+      sentence(
+        `${when}, it is interrupted and you lose ${String(first.amount)} Energy or this ends`,
+      ),
+    ];
   }
   // An attunement's and Aura of Restoration's (#1614), said at once:
   // "whenever it casts a spell: gains 1 energy and is healed for 360% of
@@ -1353,6 +1386,9 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    if (effect.kind === "pay-energy-or-end") {
+      return [sentence(`${when}: you lose ${String(effect.amount)} Energy or this ends`)];
     }
     // A cancel with nothing to say after it (#1593).
     if (effect.kind === "cancel-attack") {
@@ -1663,7 +1699,9 @@ function conditionText(condition: EffectCondition): string {
         ? `If you have no ${condition.category}`
         : `If you have no ${getProfession(condition.profession).name} ${condition.category}`;
     case "target-casting":
-      return "If target is casting a spell";
+      return condition.orChant === true
+        ? "If target is casting a spell or chant"
+        : "If target is casting a spell";
     case "target-using-skill":
       return "If target is using a skill";
     case "target-lacks-other-hex":
@@ -2319,7 +2357,7 @@ function describeEffect(
       }
       return {
         text:
-          `Applies ${statusName(effect.statusId)} ` +
+          `Applies ${statusName(effect.statusId)}${effect.on === "caster" ? " to you" : ""} ` +
           // No end of its own (#1789): Faithful Intervention's.
           (Number.isFinite(effect.durationSeconds)
             ? `for ${statusDuration(effect, ranks)} `
@@ -2405,7 +2443,9 @@ function describeEffect(
         text:
           effect.to === "target"
             ? "Shadow steps to the target"
-            : "Shadow Step to a nearby location directly away from your target",
+            : effect.to === "swap"
+              ? "You and the target Shadow Step to each other's location"
+              : "Shadow Step to a nearby location directly away from your target",
         magnitude: undefined,
       };
     case "resurrect": {
@@ -2840,7 +2880,8 @@ const TYPE_TEXT: Record<SkillType, string> = {
  * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
  * non-Mesmer skills except signets", "are disabled for 10 seconds". A
  * skill of the attribute it disables spares itself: "All of your other
- * Healing Prayers" (#1748). "All of your other attack skills" (#1914).
+ * Healing Prayers" (#1748). "All of your other attack skills" (#1914). "Your
+ * enchantment spells and stances" (#1930).
  */
 function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: number): string {
   const time = `are disabled for ${String(seconds)} seconds`;
@@ -2849,6 +2890,12 @@ function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds
   }
   if (effect.which === "attacks") {
     return `All of your other attack skills ${time}`;
+  }
+  if (effect.which === "types") {
+    const types = effect.types.map(
+      (type) => `${TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()}s`,
+    );
+    return `Your ${types.join(" and ")} ${time}`;
   }
   if (effect.which === "spells") {
     return `All of your spells ${time}`;

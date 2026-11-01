@@ -105,4 +105,8 @@ export const NECROMANCER_ICONS = {
   "necromancer.aura-of-the-lich": { glyph: "bone-horror", modifier: "corpse" },
   "necromancer.infuse-condition": { glyph: "bone-minions", modifier: "bleed" },
   "necromancer.taste-of-death": { glyph: "feast-jaw", modifier: "bleed" },
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  "necromancer.spinal-shivers": { glyph: "interrupt", modifier: "stun" },
+  "necromancer.shivers-of-dread": { glyph: "hex-cut", modifier: "stun" },
+  "necromancer.death-nova": { glyph: "germ", modifier: "corpse" },
 };

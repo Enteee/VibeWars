@@ -32,11 +32,17 @@ const NO_BOT_USE = new Set([
   // Dwayna's Sorrow (#1762): a heal that waits on an ally's death is
   // nothing the bot plans for.
   "monk.dwaynas-sorrow",
+  // Death Nova (#1931), the same, a burst that waits on an ally's death.
+  "necromancer.death-nova",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",
   "assassin.shadow-meld",
   "assassin.shadow-of-haste",
+  // Recall and Shadow Walk (#1930): a step that waits on an end, or
+  // that disables its own attacks, is nothing the bot plans for yet.
+  "assassin.recall",
+  "assassin.shadow-walk",
   // Live Vicariously (#1748): Health to the caster when its ally hits is
   // no heal the bot weighs.
   "monk.live-vicariously",
@@ -301,6 +307,10 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("elementalist.fireball"))).toEqual(["offence"]);
     // An attack skill is offence, whatever else it does.
     expect(botUses(skill("warrior.distracting-blow"))).toEqual(["interrupt", "offence"]);
+    // A step to a creature of its side is a way out (#1930); one to a foe is not.
+    expect(botUses(skill("assassin.spirit-walk"))).toEqual(["escape"]);
+    expect(botUses(skill("assassin.swap"))).toEqual(["escape"]);
+    expect(botUses(skill("assassin.dark-prison"))).toEqual(["offence"]);
   });
 
   it("holds a skill whose only role is interrupting", () => {

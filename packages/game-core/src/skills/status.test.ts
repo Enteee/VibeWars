@@ -114,6 +114,7 @@ describe("status definitions", () => {
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
         def.returnsSource !== undefined ||
+        def.stepsToTarget !== undefined ||
         def.elementalDamageTakenAs !== undefined ||
         def.minionDamageBonus !== 0 ||
         def.minionHitHealthLossPercent !== 0 ||
@@ -211,6 +212,7 @@ describe("status definitions", () => {
       "obsidian-flesh": -2,
       "zealous-renewal": -1,
       "zealous-vow": -3,
+      "power-flux": -2,
       "the-power-is-yours": 2,
       "well-of-power": 2,
       "well-of-weariness": -1,
@@ -524,6 +526,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: true,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -532,6 +535,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -540,6 +544,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -548,6 +553,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -556,6 +562,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -564,6 +571,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -572,6 +580,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -597,6 +606,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -605,6 +615,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -664,6 +675,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -672,6 +684,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -680,6 +693,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -688,6 +702,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -776,6 +791,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -787,18 +803,18 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       trigger: getStatusDefinition("vengeful-weapon").triggers[0],
     };
     const set = new StatusSet();
-    set.recordDamageFromFoe("war", "slashing", 10);
+    set.recordDamageFromFoe("war", "slashing", 10, false);
     expect(set.drainChanges()).toEqual([]);
 
     set.apply("vengeful-weapon", 8, "rit");
     set.drainChanges();
-    set.recordDamageFromFoe("war", "slashing", 10);
-    set.recordDamageFromFoe("ele", "fire", 10);
+    set.recordDamageFromFoe("war", "slashing", 10, false);
+    set.recordDamageFromFoe("ele", "fire", 10, false);
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "war", fired: [vengeful] },
     ]);
 
-    set.recordDamageFromFoe("ele", "fire", 10);
+    set.recordDamageFromFoe("ele", "fire", 10, false);
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "ele", fired: [vengeful] },
     ]);
@@ -813,11 +829,11 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     const set = new StatusSet();
     set.apply("mark-of-rodgort", 30, "ele");
     set.drainChanges();
-    set.recordDamageFromFoe("ele", "lightning", 10);
-    set.recordDamageFromFoe("ele", undefined, 10);
+    set.recordDamageFromFoe("ele", "lightning", 10, false);
+    set.recordDamageFromFoe("ele", undefined, 10, false);
     expect(set.drainChanges()).toEqual([]);
 
-    set.recordDamageFromFoe("ele", "fire", 10);
+    set.recordDamageFromFoe("ele", "fire", 10, false);
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "ele", fired: [rodgort] },
     ]);

@@ -166,9 +166,9 @@ describe("a damage threshold on a trigger (#1754)", () => {
   it("fires for a packet of 51 and not of 50", () => {
     const combatants = bonded();
     const a = member(combatants, "a");
-    a.statuses.recordDamageFromFoe("w", "slashing", 50);
+    a.statuses.recordDamageFromFoe("w", "slashing", 50, false);
     expect(drain(a, combatants)).toEqual([]);
-    a.statuses.recordDamageFromFoe("w", "slashing", 51);
+    a.statuses.recordDamageFromFoe("w", "slashing", 51, false);
     expect(drain(a, combatants)).toEqual([
       {
         sourceId: "m",
@@ -181,7 +181,7 @@ describe("a damage threshold on a trigger (#1754)", () => {
   it("never fires for a life steal, however large", () => {
     const combatants = bonded();
     const a = member(combatants, "a");
-    a.statuses.recordDamageFromFoe("w", undefined, 200);
+    a.statuses.recordDamageFromFoe("w", undefined, 200, false);
     expect(drain(a, combatants)).toEqual([]);
   });
 
@@ -207,7 +207,7 @@ describe("a damage threshold on a trigger (#1754)", () => {
     const a = member(combatants, "a");
     for (let heal = 1; heal <= 10; heal += 1) {
       expect(a.statuses.has("spirit-bond")).toBe(true);
-      a.statuses.recordDamageFromFoe("w", "slashing", 60);
+      a.statuses.recordDamageFromFoe("w", "slashing", 60, false);
       drain(a, combatants);
     }
     expect(a.statuses.has("spirit-bond")).toBe(false);

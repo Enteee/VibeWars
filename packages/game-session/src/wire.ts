@@ -400,6 +400,8 @@ function wireEvent(event: CombatEvent): WireCombatEvent | undefined {
     case "shadow-stepped":
     case "teleported":
       return { ...none, kind: event.kind, targetId: event.targetId, fromId: event.toId };
+    case "shadow-swapped":
+      return { ...none, kind: event.kind, targetId: event.targetId, fromId: event.withId };
     case "interrupted":
     case "cancelled":
     case "spell-failed":
@@ -514,6 +516,8 @@ function combatEvent(event: WireCombatEvent): CombatEvent | undefined {
     case "shadow-stepped":
     case "teleported":
       return fromId === null ? undefined : { kind: event.kind, targetId, toId: fromId };
+    case "shadow-swapped":
+      return fromId === null ? undefined : { kind: event.kind, targetId, withId: fromId };
     case "interrupted":
     case "cancelled":
     case "spell-failed":

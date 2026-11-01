@@ -1,4 +1,4 @@
-import { RANGE_SPELL } from "../../distances.js";
+import { AREA_IN_THE_AREA, RANGE_SPELL } from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
@@ -23,7 +23,8 @@ import {
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a
  * sensible GW1 hero does. Each think it does the first of: interrupt a
- * foe's cast or else its swing, heal or protect the most hurt ally, take
+ * foe's cast or else its swing, heal or protect the most hurt ally, step
+ * away when hurt with a foe at hand, take
  * a hex or condition off an ally, raise a dead one, use an offensive
  * skill on the team target, attack it with the weapon, and otherwise walk
  * to the nearest foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
@@ -48,6 +49,12 @@ const NOTHING: BehaviourIntent = {
 
 /** Below this share of its health, an ally is worth a heal. */
 const HURT_FRACTION = 0.6;
+
+/** Below this share of its own health, a bot with a foe at hand steps away (#1930). */
+const ESCAPE_FRACTION = 0.5;
+
+/** A foe this near is at hand (#1930): GW1's "in the area". */
+const ESCAPE_THREAT_UNITS = AREA_IN_THE_AREA;
 
 /** How much longer than the interrupt itself a cast or a swing must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
@@ -260,6 +267,33 @@ function think(
       );
       if (skill !== undefined) {
         return use(skill, skill.target === "self" ? self.id : patient.id);
+      }
+    }
+  }
+
+  // 2b. Hurt with a foe at hand, and nothing to heal it (#1930): step
+  // away to the creature of its side farthest from that foe, one farther
+  // than it stands, in reach now; never a walk towards one.
+  const threat = nearestLiving(self, foes);
+  if (
+    healthFraction(self) < ESCAPE_FRACTION &&
+    threat !== undefined &&
+    distance(threat.position, self.position) <= ESCAPE_THREAT_UNITS
+  ) {
+    const fromThreat = (body: Participant): number => distance(body.position, threat.position);
+    const havens = context.participants
+      .filter(
+        (other) =>
+          !other.combatant.dead &&
+          other.combatant.team === team &&
+          other.creature !== undefined &&
+          fromThreat(other) > fromThreat(self),
+      )
+      .sort((a, b) => fromThreat(b) - fromThreat(a));
+    for (const skill of bar.filter((held) => botUses(held).includes("escape"))) {
+      const haven = havens.find((other) => context.check(skill.id, other.id).ok);
+      if (haven !== undefined) {
+        return use(skill, haven.id);
       }
     }
   }
