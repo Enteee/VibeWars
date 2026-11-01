@@ -92,6 +92,8 @@ export const MESMER_ICONS = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929).
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Take what another has (#1965), a stand-in until its art card.
+  "mesmer.arcane-mimicry": { glyph: "bars-lent", modifier: "renew" },
   // Stand-ins for the party-wide condition and hex moves (#1954).
   "mesmer.mirror-of-disenchantment": { glyph: "cleanse", modifier: "area" },
   "mesmer.extend-conditions": { glyph: "drop-spread", modifier: "plus" },

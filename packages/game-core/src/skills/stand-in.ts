@@ -2,6 +2,7 @@ import { addCopyPool } from "./adrenaline.js";
 import { copyKey } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { getStatusDefinition, type StatusId } from "./status.js";
+import type { SkillBar } from "../build.js";
 import type { Combatant, SkillEffect } from "./types.js";
 
 /** Whether status `statusId` copies its bearer's next skill (#469). */
@@ -18,6 +19,7 @@ function copies(effects: readonly SkillEffect[]): boolean {
       ? copies(effect.effects)
       : effect.kind === "copy-removed" ||
         effect.kind === "copy-disabled" ||
+        effect.kind === "copy-elite" ||
         (effect.kind === "apply-status" && isEchoStatus(effect.statusId)),
   );
 }
@@ -31,6 +33,17 @@ function copies(effects: readonly SkillEffect[]): boolean {
  */
 export function copiesSkill(skillId: string): boolean {
   return copies(getSkill(skillId)?.effects ?? []);
+}
+
+/**
+ * What Arcane Mimicry copies off `bar` (#1965): its first elite from the
+ * left that is not a form, as a Dervish's. `undefined`: none.
+ */
+export function mimickedElite(bar: SkillBar): string | undefined {
+  return bar.find((skillId): skillId is string => {
+    const skill = skillId === null ? undefined : getSkill(skillId);
+    return skill?.elite === true && skill.type !== "form";
+  });
 }
 
 /**
