@@ -1543,7 +1543,16 @@ test("the library follows your clicks; a piece's popover picks its insignia (#57
   const offhands = page.locator('.skill-group[data-group="off-hands"]');
   const top = async (locator: Locator): Promise<number> =>
     (await locator.boundingBox())?.y ?? Number.NaN;
-  await expect.poll(async () => (await top(offhands)) - (await top(library))).toBeLessThan(20);
+  // Off-hands is the tab's last group: at the top, or the list scrolled as far as it goes.
+  await expect
+    .poll(async () => {
+      const atTop = (await top(offhands)) - (await top(library)) < 20;
+      const atEnd = await library.evaluate(
+        (node) => node.scrollTop + node.clientHeight >= node.scrollHeight - 1,
+      );
+      return atTop || atEnd;
+    })
+    .toBe(true);
 
   // A bar slot clicked opens the skills tab.
   await page.locator(".skill-slot").first().click();
