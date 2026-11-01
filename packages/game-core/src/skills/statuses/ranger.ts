@@ -205,6 +205,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
       skillId: "ranger.apply-poison",
     },
@@ -219,6 +220,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [
         {
           kind: "damage",
@@ -238,6 +240,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [
         { kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 },
         {
@@ -271,6 +274,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
       skillId: "ranger.barbed-arrows",
     },
@@ -288,6 +292,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [
         { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
         {
@@ -348,6 +353,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "heal", amount: { flat: 5 }, recipient: "caster" }],
       skillId: "ranger.predatory-season",
     },
@@ -500,6 +506,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "heal", amount: { flat: 25 }, recipient: "owner" }],
       skillId: "ranger.predatory-bond",
     },
@@ -532,6 +539,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 14 }],
       skillId: "ranger.poison-tip-signet",
     },
@@ -552,6 +560,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
       skillId: "ranger.strike-as-one",
     },
@@ -565,6 +574,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
       skillId: "ranger.strike-as-one",
     },
@@ -596,6 +606,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackBlocked: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 18 }],
       skillId: "ranger.glass-arrows",
     },

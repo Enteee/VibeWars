@@ -176,6 +176,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "splash",
@@ -564,6 +565,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
       skillId: "ritualist.sundering-weapon",
     },
@@ -578,6 +580,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
       skillId: "ritualist.weapon-of-shadow",
     },
@@ -597,6 +600,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -615,6 +619,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         { kind: "if", condition: { kind: "target-attacking" }, effects: [{ kind: "interrupt" }] },
       ],
@@ -629,6 +634,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "life-steal", amount: { flat: 42 } }],
       skillId: "ritualist.nightmare-weapon",
     },
@@ -655,6 +661,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: true,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "energy-gain", amount: { flat: 6 } }],
       skillId: "ritualist.weapon-of-renewal",
     },
@@ -669,6 +676,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "life-steal", amount: { flat: 17 } }],
       skillId: "ritualist.spiritleech-aura",
     },

@@ -87,7 +87,6 @@ const NO_BOT_USE = new Set([
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.critical-eye",
   "assassin.dash",
-  "dervish.arcane-zeal",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
   "dervish.avatar-of-grenth",

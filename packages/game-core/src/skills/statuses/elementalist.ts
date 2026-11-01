@@ -1,5 +1,7 @@
 import { AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
+import type { DamageType } from "../../equipment/types.js";
 import type { StatusDefinition } from "../status.js";
+import type { PerCount } from "../types.js";
 import { define } from "./define.js";
 
 export type ElementalistStatusId =
@@ -50,7 +52,14 @@ export type ElementalistStatusId =
   | "grasping-earth"
   | "master-of-magic"
   | "glyph-of-elemental-power"
-  | "glyph-of-energy";
+  | "glyph-of-energy"
+  // Self-buffs (#1984).
+  | "conjure-flame"
+  | "conjure-frost"
+  | "conjure-lightning"
+  | "ether-prodigy"
+  | "ether-renewal"
+  | "elemental-attunement";
 
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
@@ -424,7 +433,98 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       },
     ],
   }),
+  // "For 60 seconds, if you're wielding a fire weapon, your attacks strike
+  // for an additional 5...20 fire damage" (#1984): 17, a staff's bolt
+  // included; Frost's and Lightning's the same.
+  "conjure-flame": conjure("conjure-flame", "Conjure Flame", "fire"),
+  "conjure-frost": conjure("conjure-frost", "Conjure Frost", "cold"),
+  "conjure-lightning": conjure("conjure-lightning", "Conjure Lightning", "lightning"),
+  // "For 8...20 seconds, you gain +6 Energy regeneration. When Ether
+  // Prodigy ends, you lose 2 Health for each point of Energy you have"
+  // (#1984): any end, a removal included; Health loss, not damage.
+  "ether-prodigy": define("ether-prodigy", "Ether Prodigy", "enchantment", {
+    profession: "elementalist",
+    energyPips: 6,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [
+          {
+            kind: "lose-health",
+            recipient: "target",
+            amount: { flat: 0 },
+            per: { count: { kind: "energy", on: "target" }, amount: { flat: 2 }, max: undefined },
+          },
+        ],
+        skillId: "elementalist.ether-prodigy",
+      },
+    ],
+  }),
+  // PvP: "each time you cast a spell, you gain 1...3 Energy and 5...20
+  // Health for each enchantment on you" (#1984): 3 and 17.
+  "ether-renewal": define("ether-renewal", "Ether Renewal", "enchantment", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        target: "bearer",
+        effects: [
+          { kind: "energy-gain", amount: { flat: 0 }, per: etherRenewalPer(3) },
+          { kind: "heal", amount: { flat: 0 }, per: etherRenewalPer(17) },
+        ],
+        skillId: "elementalist.ether-renewal",
+      },
+    ],
+  }),
+  // "you are attuned to Air, Fire, Water, and Earth and gain +1...2 to
+  // these attributes. You gain 1 Energy plus 50% of the base Energy cost
+  // of the skill each time you use magic associated with any of these
+  // elements" (#1984): +2.
+  "elemental-attunement": define("elemental-attunement", "Elemental Attunement", "enchantment", {
+    profession: "elementalist",
+    attributeDeltas: [{ scope: "elemental", amount: 2 }],
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { attributes: "elemental" },
+        target: "bearer",
+        effects: [
+          { kind: "energy-gain", amount: { flat: 1 } },
+          { kind: "energy-gain", amount: { flat: 0.5 }, perUsedSkillEnergy: true },
+        ],
+        skillId: "elementalist.elemental-attunement",
+      },
+    ],
+  }),
 };
+
+/** Ether Renewal's count (#1984): `amount` for each enchantment on its bearer. */
+function etherRenewalPer(amount: number): PerCount {
+  return {
+    count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
+    amount: { flat: amount },
+    max: undefined,
+  };
+}
+
+/**
+ * A conjure (#1984): every attack of the bearer's that a weapon of
+ * `element` deals, a wand's or a staff's included, strikes for 17 more
+ * of it, apart from the blow.
+ */
+function conjure(id: ElementalistStatusId, name: string, element: DamageType): StatusDefinition {
+  return define(id, name, "enchantment", {
+    profession: "elementalist",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      weaponDamage: element,
+      effects: [{ kind: "damage", amount: { flat: 17 }, type: element, armorPenetration: 0 }],
+      skillId: `elementalist.${id}`,
+    },
+  });
+}
 
 /**
  * An attunement (#1614): "you gain 1 Energy plus 30% of the base Energy

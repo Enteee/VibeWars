@@ -607,7 +607,9 @@ export function landBlow(
  * Shards' fourth hit splashes, then ends it. Returns those endings,
  * after what the weapon itself does to whoever it hits (#1239). A rider
  * for attack skills only rides a blow `withAttackSkill` (#1551), and one
- * for a weapon class only a blow of that weapon (#1629). `dealt`: the
+ * for a weapon class only a blow of that weapon (#1629), and one for a
+ * weapon element only a blow of that element, a staff's bolt included
+ * (#1984). `dealt`: the
  * Health the blow took, what a Vampiric Horror's owner gains (#1836).
  * `spent`: the statuses this attack used up (#1916), whose riders it
  * still carries, as Poison Tip Signet's poison. A status that does
@@ -704,8 +706,9 @@ function applyRiders(
       rider === undefined ||
       isSuppressed(active, status) ||
       (rider.attackSkillsOnly && !withAttackSkill) ||
-      (!physical && definition.category !== "weapon-spell") ||
-      (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
+      (!physical && definition.category !== "weapon-spell" && rider.weaponDamage === undefined) ||
+      (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon)) ||
+      (rider.weaponDamage !== undefined && mainHand.damageType !== rider.weaponDamage)
     ) {
       continue;
     }

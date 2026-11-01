@@ -154,7 +154,12 @@ export type CountRule =
    * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
    * your Beast Mastery skills that is recharging". No owner: 0.
    */
-  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string };
+  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string }
+  /**
+   * Whole points of Energy, rounded down (#1984): Ether Prodigy's "lose 2
+   * Health for each point of Energy you have".
+   */
+  | { readonly kind: "energy"; readonly on: "target" | "caster" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -392,6 +397,8 @@ export interface LoseHealthByTarget {
   readonly amount: Magnitude;
   readonly recipient: "target";
   readonly perRemovedOfProfession?: never;
+  /** More for each of a count (#1984): Ether Prodigy's 2 per point of Energy. */
+  readonly per?: PerCount;
 }
 
 /**

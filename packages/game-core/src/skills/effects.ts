@@ -817,6 +817,10 @@ function countOf(
               remaining > 0 && getSkill(skillIdOfKey(key))?.attributeId === rule.attributeId,
           ).length;
     }
+    case "energy": {
+      const bearer = rule.on === "caster" ? caster : target;
+      return bearer === undefined ? 0 : Math.floor(bearer.energy);
+    }
   }
 }
 
@@ -1676,7 +1680,13 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        loseHealth(target, resolveMagnitude(effect.amount, caster), "health-loss", events);
+        const amount = resolveMagnitude(effect.amount, caster);
+        loseHealth(
+          target,
+          withPerCount(amount, effect.per, caster, target, context.surroundings),
+          "health-loss",
+          events,
+        );
         return events;
       }
       const removed =
