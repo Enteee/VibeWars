@@ -1184,6 +1184,7 @@ function describeDeath(
     }
     return effect.kind === "spread-gained-condition" ||
       effect.kind === "echo" ||
+      effect.kind === "mirror-stance" ||
       effect.kind === "cancel-attack" ||
       effect.kind === "pay-energy-or-end"
       ? []
@@ -1345,6 +1346,7 @@ function describeCreation(
       // None answers a creation.
       case "spread-gained-condition":
       case "echo":
+      case "mirror-stance":
       case "cancel-attack":
       case "pay-energy-or-end":
         return "";
@@ -1455,6 +1457,7 @@ function describeTrigger(
       }
       return effect.kind === "spread-gained-condition" ||
         effect.kind === "echo" ||
+        effect.kind === "mirror-stance" ||
         effect.kind === "cancel-attack" ||
         effect.kind === "pay-energy-or-end"
         ? []
@@ -1548,6 +1551,10 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    // "whenever target foe enters a stance, you enter the same stance" (#1965).
+    if (effect.kind === "mirror-stance") {
+      return [sentence(`${when}: you enter the same stance`)];
     }
     if (effect.kind === "pay-energy-or-end") {
       return [sentence(`${when}: you lose ${String(effect.amount)} Energy or this ends`)];
@@ -2406,16 +2413,26 @@ function withPerText(
   if (per === undefined) {
     return text;
   }
-  const amount = String(describeMagnitude(per.amount, ranks).current);
+  const each = `${String(describeMagnitude(per.amount, ranks).current)}${words.unit} ${perCountText(per, ranks, words.onTarget)}`;
+  return "flat" in base && base.flat === 0 ? `${words.alone} ${each}` : `${text}, +${each}`;
+}
+
+/**
+ * What a `per` counts, and its cap (#1760): "for each enchantment on
+ * them (maximum 60)", "for each of your recharging Beast Mastery skills"
+ * (#1957).
+ */
+function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarget: string): string {
   const { count } = per;
   const what =
     count.kind === "statuses"
-      ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : words.onTarget}`
-      : `foe ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+      ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
+      : count.kind === "foes-within"
+        ? `foe ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`
+        : `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`;
   const max =
     per.max === undefined ? "" : ` (maximum ${String(describeMagnitude(per.max, ranks).current)})`;
-  const each = `${amount}${words.unit} for each ${what}${max}`;
-  return "flat" in base && base.flat === 0 ? `${words.alone} ${each}` : `${text}, +${each}`;
+  return `for each ${what}${max}`;
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
@@ -2526,7 +2543,13 @@ function describeEffect(
           magnitude,
         };
       }
-      const text = `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${perRemovedText(effect)}`;
+      const gains =
+        effect.toTarget === true
+          ? "Target gains"
+          : effect.recipient === "owner"
+            ? "You gain"
+            : "Gain";
+      const text = `${gains} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${perRemovedText(effect)}`;
       return {
         text: `${effect.toTarget === true ? text : withPerText(text, effect.amount, effect.per, ranks, { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
         magnitude,
@@ -2535,7 +2558,7 @@ function describeEffect(
     case "adrenaline-gain": {
       const strikes = effect.strikes === 1 ? "1 strike" : `${String(effect.strikes)} strikes`;
       return {
-        text: `Gain ${strikes} of adrenaline${perFoeHit(effect)}`,
+        text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}`,
         magnitude: undefined,
       };
     }
@@ -2870,6 +2893,14 @@ function describeEffect(
       };
     case "copy-disabled":
       return { text: "This skill becomes that spell for as long", magnitude: undefined };
+    // Arcane Mimicry's and Signet of Binding's (#1965).
+    case "copy-elite":
+      return {
+        text: `This skill becomes target ally's non-form elite skill for ${String(effect.seconds)} seconds`,
+        magnitude: undefined,
+      };
+    case "take-control":
+      return { text: "Take control of target enemy spirit", magnitude: undefined };
     case "disable-own-skills": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       return { text: disableOwnText(effect, false, magnitude.current), magnitude };
@@ -3229,6 +3260,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
+  "enemy-spirit": "An enemy spirit",
   "own-minion": "One of your minions",
   "allied-minion": "An allied minion",
   "allied-summoned-creature": "An allied summoned creature",
@@ -3315,6 +3347,16 @@ function castTimeText(skill: Skill, ranks: ReadonlyMap<string, number>): string 
 }
 
 /**
+ * `effect` as the owner reads it (#1957): a pet attack's caster is the
+ * pet, so its heal of the caster heals "your pet", Predator's Pounce's.
+ */
+function petReads(skill: Skill, effect: SkillEffect): SkillEffect {
+  return skill.petAttack !== undefined && effect.kind === "heal" && effect.recipient === "caster"
+    ? { ...effect, recipient: "companion" }
+    : effect;
+}
+
+/**
  * Describe a skill at the given attribute ranks.
  *
  * `ranks` is normally the character being edited. An empty map describes
@@ -3367,6 +3409,16 @@ export function describeSkill(
           {
             text: `${conditionText(conditionalBonus.condition)}: +${String(more.current)} damage`,
             magnitude: more,
+          },
+        ]),
+    // Enraged Lunge's "+19 damage for each of your recharging Beast
+    // Mastery skills (maximum 60)" (#1957).
+    ...(rule?.bonusPer === undefined
+      ? []
+      : [
+          {
+            text: `+${String(describeMagnitude(rule.bonusPer.amount, ranks).current)} damage ${perCountText(rule.bonusPer, ranks, "on them")}`,
+            magnitude: describeMagnitude(rule.bonusPer.amount, ranks),
           },
         ]),
   ];
@@ -3624,7 +3676,7 @@ export function describeSkill(
                 magnitude: undefined,
               },
             ]
-          : describeEffects(effect, ranks),
+          : describeEffects(petReads(skill, effect), ranks),
     ),
     ...onCritical,
     ...onBlocked,
