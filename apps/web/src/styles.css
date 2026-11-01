@@ -2483,7 +2483,8 @@ body {
 
 .editor-more {
   position: absolute;
-  z-index: 40;
+  /* Above an open Share or Load panel, so ⋯ can switch between them. */
+  z-index: 41;
   top: calc(100% + 0.3rem);
   right: 0;
   display: flex;

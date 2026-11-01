@@ -917,6 +917,25 @@ test("⋯ Load GW1 code loads a pasted code, and says plainly why it will not (#
   await expect(page.locator(".editor-unsaved")).toBeVisible();
 });
 
+test("⋯ opens above the Load field, and Share takes its place (#2004)", async ({ page }) => {
+  await newCharacter(page);
+  const more = page.getByRole("button", { name: "more actions" });
+  await more.click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  const field = page.getByLabel("GW1 code to load");
+  await expect(field).toBeVisible();
+
+  await more.click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  await expect(page.getByLabel("build to share")).toBeVisible();
+  await expect(field).toBeHidden();
+
+  await more.click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  await expect(field).toBeVisible();
+  await expect(page.getByLabel("build to share")).toBeHidden();
+});
+
 test("Share keeps the line selected when the clipboard is refused (#572)", async ({ page }) => {
   await newCharacter(page);
   await page.evaluate(() => {
