@@ -16,8 +16,10 @@ import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
 import {
   aggregateModifiers,
+  damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
+  physicalDamageDealtAsOf,
   scaledStatusDuration,
   type ActiveStatus,
   type OwnSkillBoost,
@@ -1313,10 +1315,14 @@ export function applyEffect(
       if (amount <= 0) {
         return events;
       }
-      // Winter's (#1745): elemental damage reaches its bearer as cold.
+      // Greater Conflagration's (#1873) on the caster, then Winter's (#1745)
+      // on the target: elemental damage reaches its bearer as cold.
       const packet = skillDamage(
         amount,
-        damageTypeTaken(effect.type, target.statuses.active),
+        damageTypeTaken(
+          damageTypeDealt(effect.type, physicalDamageDealtAsOf(caster.statuses.active)),
+          target.statuses.active,
+        ),
         withSkillArmorPenetration(effect.armorPenetration, caster, context.profession),
       );
       applyDamage(
@@ -1668,6 +1674,7 @@ export function applyEffect(
         target.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
       }
       knockDown(target, durationSeconds);
+      target.statuses.recordKnockdown();
       events.push({ kind: "knocked-down", targetId: target.id, durationSeconds });
       return events;
     }
