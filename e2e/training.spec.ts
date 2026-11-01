@@ -1387,6 +1387,10 @@ test("(44) a burning dummy wears flames on its top edge until the burning ends (
     .locator(".skill-box-equip")
     .click();
   await expectFilledSlots(page, ["Fireball", "Searing Flames"]);
+  // Its burning lasts 1 s at Fire Magic 0 and 6 s at 12 (#2041).
+  const fire = page.getByRole("slider", { name: "Fire Magic" });
+  await fire.locator('.attribute-pip[data-pip="12"]').click();
+  await expect(fire.locator(".editor-attribute-rank")).toHaveText("12");
   await takeControl(page);
   // The view follows you (#721): nearer the dummy, it is on the stage.
   await wholeMap(page);
