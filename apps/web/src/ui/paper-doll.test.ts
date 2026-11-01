@@ -14,6 +14,9 @@ interface FakeEvent {
   stopPropagation(): void;
 }
 
+/** The listeners on `document`, by type. */
+const documentListeners = new Map<string, Listener[]>();
+
 /** Every element focused, the last one last. */
 const focused: FakeElement[] = [];
 
@@ -55,6 +58,15 @@ class FakeElement {
 
   getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
+  }
+
+  contains(other: FakeElement): boolean {
+    for (let node: FakeElement | undefined = other; node !== undefined; node = node.parent) {
+      if (node === this) {
+        return true;
+      }
+    }
+    return false;
   }
 
   addEventListener(type: string, listener: Listener): void {
@@ -171,10 +183,19 @@ describe("the armor paper-doll (#2059)", () => {
 
   beforeEach(() => {
     focused.length = 0;
+    documentListeners.clear();
+    vi.stubGlobal("Node", FakeElement);
     vi.stubGlobal("document", {
       createElement: () => new FakeElement(),
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
+      addEventListener: (type: string, listener: Listener) => {
+        documentListeners.set(type, [...(documentListeners.get(type) ?? []), listener]);
+      },
+      removeEventListener: (type: string, listener: Listener) => {
+        documentListeners.set(
+          type,
+          (documentListeners.get(type) ?? []).filter((each) => each !== listener),
+        );
+      },
     });
     vi.stubGlobal("window", {
       innerWidth: 1366,
@@ -248,6 +269,28 @@ describe("the armor paper-doll (#2059)", () => {
     expect(hotspots().map((node) => node.all("paper-doll-hotspot-number")[0]?.textContent)).toEqual(
       ["1", "2", "3", "4", "5"],
     );
+  });
+
+  it("closes on a press outside, not inside, and stops listening once closed", () => {
+    const press = (target: FakeElement): void => {
+      const event = {
+        key: undefined,
+        target,
+        preventDefault: () => undefined,
+        stopPropagation: () => undefined,
+      };
+      for (const listener of documentListeners.get("pointerdown") ?? []) {
+        listener(event);
+      }
+    };
+    hotspot("chest").click();
+    press(choice("Survivor Insignia"));
+    expect(popover().hidden).toBe(false);
+    press(new FakeElement());
+    expect(popover().hidden).toBe(true);
+    expect(hotspot("chest").getAttribute("aria-expanded")).toBe("false");
+    expect(documentListeners.get("pointerdown")).toEqual([]);
+    expect(documentListeners.get("scroll")).toEqual([]);
   });
 
   it("opens a piece's popover on its hotspot, titled for it", () => {

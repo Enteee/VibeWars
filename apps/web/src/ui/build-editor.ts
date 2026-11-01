@@ -1111,6 +1111,7 @@ export function mountBuildEditor(
       stopPaste();
       bar.dispose();
       tooltip.dispose();
+      paperDoll.close();
       training?.dispose();
     },
   };

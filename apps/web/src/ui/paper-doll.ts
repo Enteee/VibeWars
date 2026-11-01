@@ -77,8 +77,11 @@ const PROFESSION_TINT: Readonly<Record<ProfessionId, string>> = {
 /** The figure (#2058); the stylesheet draws it, and tints it through it as a mask. */
 const FIGURE_URL = `${import.meta.env.BASE_URL}icons/paper-doll/figure.svg`;
 
-/** Under this width the popover is a sheet along the bottom, placed by the stylesheet. */
-const SHEET_BELOW = 700;
+/**
+ * At this width and under, the popover is a sheet along the bottom, placed
+ * by the stylesheet: its @media (max-width: 700px) includes 700 too.
+ */
+const SHEET_MAX = 700;
 const MARGIN = 8;
 
 /**
@@ -268,7 +271,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     if (piece === undefined) {
       return;
     }
-    if (window.innerWidth < SHEET_BELOW) {
+    if (window.innerWidth <= SHEET_MAX) {
       popover.style.left = "";
       popover.style.top = "";
       return;

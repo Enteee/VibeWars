@@ -1,7 +1,8 @@
 # Equipment
 
 The **Equipment** part of the build editor holds your weapons and armor.
-Drag gear from the library on the right, or click a piece to equip it.
+Drag weapons and off-hands from the library on the right, or click one to
+equip it. Armor is picked on the figure, below.
 
 ## Weapon sets
 
