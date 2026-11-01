@@ -320,7 +320,7 @@ let
   # root, so `sudo` has nothing to do: devenv's cache and Nix installers call it
   # (chown /nix/var/nix/db, udev rules for KVM) and fail 127 without one. A no-op,
   # not a pass-through: the pass-through would run `tee /etc/udev/...` for real.
-  runnerSudo = pkgs.writeShellScriptBin "sudo" "exit 0";
+  runnerSudo = pkgs.writeShellScriptBin "sudo" "echo \"sudo (no-op shim): skipped: \$*\" >&2; exit 0";
 
   runnerUserland = pkgs.buildEnv {
     name = "vibewars-runner-userland";
