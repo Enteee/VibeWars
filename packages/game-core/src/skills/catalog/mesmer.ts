@@ -666,7 +666,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
   {
     id: "mesmer.mantra-of-resolve",
     name: "Mantra of Resolve",
-    gwId: 3063,
+    gwId: 17,
     type: "stance",
     elite: false,
     flash: false,
