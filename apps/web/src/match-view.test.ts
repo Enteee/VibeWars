@@ -3,7 +3,7 @@ import { CREATURE_LOOKS, MINIMAL_GW_INSPIRED_PVP_V1, type StatusId } from "@vibe
 import type { MatchSnapshot, PlayerSnapshot, StatusSnapshot } from "@vibewars/game-session";
 
 import { toArenaSnapshot } from "./match-view.js";
-import { ACTOR_RADIUS, CREATURE_RADIUS } from "./render/arena-snapshot.js";
+import { ACTOR_RADIUS, CREATURE_RADIUS, actorAtPoint } from "./render/arena-snapshot.js";
 
 function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
   return {
@@ -143,6 +143,55 @@ describe("toArenaSnapshot", () => {
       undefined,
     );
     expect(arena.actors.map((actor) => actor.creatureLook)).toEqual([undefined, ...CREATURE_LOOKS]);
+  });
+
+  it("picks a creature within its drawn radius: a Guild Lord 13 away, a pet not (#2047)", () => {
+    const creature = (sessionId: string, look: "beast" | "guild-lord"): PlayerSnapshot => ({
+      ...player(sessionId, 0),
+      x: 0,
+      y: 0,
+      creature: {
+        ownerId: "me",
+        kind: look === "beast" ? "pet" : "minion",
+        look,
+        mode: null,
+        armedAttack: null,
+        leaderId: null,
+      },
+    });
+    const pick = (look: "beast" | "guild-lord"): string | undefined =>
+      actorAtPoint(toArenaSnapshot(match([creature("it", look)]), [], [], undefined, undefined), {
+        x: 13,
+        y: 0,
+      })?.id;
+    expect(pick("guild-lord")).toBe("it");
+    expect(pick("beast")).toBeUndefined();
+  });
+
+  it("arms a guard with a spear and shield, and leaves a pet unarmed (#2047)", () => {
+    const arena = toArenaSnapshot(
+      match(
+        (["guard", "beast"] as const).map((look, i): PlayerSnapshot => ({
+          ...player(`c${String(i)}`, 0),
+          creature: {
+            ownerId: "me",
+            kind: look === "beast" ? "pet" : "minion",
+            look,
+            mode: null,
+            armedAttack: null,
+            leaderId: null,
+          },
+        })),
+      ),
+      [],
+      [],
+      undefined,
+      undefined,
+    );
+    expect(arena.actors.map((actor) => [actor.weaponId, actor.offhandId])).toEqual([
+      ["spear", "shield"],
+      [undefined, undefined],
+    ]);
   });
 
   it("rings a body enchanted or hexed by its statuses, and a corpse never (#1117)", () => {
