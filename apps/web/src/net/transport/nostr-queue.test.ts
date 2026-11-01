@@ -74,6 +74,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     enteredAt: NOW - 1_000,
     heartbeatAt: NOW,
     party: null,
+    ascentRound: null,
     ...extra,
   };
 }
@@ -449,6 +450,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
       tickets: heard.flatMap((event) => (event.kind === "ticket" ? [event.ticket] : [])),
       now: NOW,
       mode: "random-arena-2v2",
+      ascentRound: null,
       ignored: new Set(),
       mapPool: ["arena"],
     });

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { PROTOCOL_VERSION } from "./protocol-version.js";
-import { isTeamQueueMode, parseQueueTicket, teamSizeOf, type QueueTicket } from "./queue.js";
+import {
+  ASCENT_ROUNDS,
+  isTeamQueueMode,
+  parseQueueTicket,
+  teamSizeOf,
+  type QueueTicket,
+} from "./queue.js";
 
 const TICKET: QueueTicket = {
   ticketId: "a".repeat(64),
@@ -12,6 +18,7 @@ const TICKET: QueueTicket = {
   enteredAt: 1_700_000_000_000,
   heartbeatAt: 1_700_000_005_000,
   party: null,
+  ascentRound: null,
 };
 
 /** A whole 4v4 team, sorted, led by `TICKET`'s id. */
@@ -27,8 +34,8 @@ const ARENA_SIDE: QueueTicket = {
   bots: 1,
   party: { ...PROOF, consents: PROOF.consents.slice(1) },
 };
-/** One human and seven bots in Heroes' Ascent. */
-const LONE_HERO: QueueTicket = { ...TICKET, mode: "heroes-ascent", bots: 7 };
+/** One human and seven bots in Heroes' Ascent, at its first round. */
+const LONE_HERO: QueueTicket = { ...TICKET, mode: "heroes-ascent", bots: 7, ascentRound: 0 };
 
 describe("parseQueueTicket (#869, #882, #1078)", () => {
   it("keeps a well-formed ticket, a solo or a whole team", () => {
@@ -46,6 +53,27 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
   it("keeps a side led by its party host, the rest sorted (#1766)", () => {
     const led = { ...ARENA_SIDE, ticketId: PARTY[3], members: [PARTY[3], PARTY[0], PARTY[1]] };
     expect(parseQueueTicket(led)).toEqual(led);
+  });
+
+  it("keeps a Heroes' Ascent side at each of its rounds (#1996)", () => {
+    for (let round = 0; round < ASCENT_ROUNDS; round += 1) {
+      const hero = { ...LONE_HERO, ascentRound: round };
+      expect(parseQueueTicket(hero)).toEqual(hero);
+    }
+  });
+
+  it.each<[string, unknown]>([
+    ["a Heroes' Ascent side with no round (#1996)", { ...LONE_HERO, ascentRound: null }],
+    ["a Heroes' Ascent side past the Hall", { ...LONE_HERO, ascentRound: ASCENT_ROUNDS }],
+    ["a Heroes' Ascent side at round 7", { ...LONE_HERO, ascentRound: 7 }],
+    ["a negative round", { ...LONE_HERO, ascentRound: -1 }],
+    ["a fractional round", { ...LONE_HERO, ascentRound: 1.5 }],
+    ["a round as text", { ...LONE_HERO, ascentRound: "1" }],
+    ["a Team Arena side with a round", { ...ARENA_SIDE, ascentRound: 0 }],
+    ["a Random Arena ticket with a round", { ...TICKET, ascentRound: 1 }],
+    ["a ticket with no round field", (({ ascentRound: _, ...rest }) => rest)(TICKET)],
+  ])("refuses %s", (_, raw) => {
+    expect(parseQueueTicket(raw)).toBeUndefined();
   });
 
   it.each<[string, unknown]>([

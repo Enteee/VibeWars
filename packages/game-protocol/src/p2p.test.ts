@@ -508,6 +508,7 @@ const lobbyState: WireLobbyState = {
   ],
   countdownSeconds: null,
   queueNonce: null,
+  ascentRound: null,
   teamLobby: null,
 };
 
@@ -842,6 +843,18 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, phase: "queued", matchId: null, queueNonce: "ab".repeat(32) },
   ],
+  [
+    "queued Heroes' Ascent lobby-state at its last round (#1996)",
+    parseWireLobbyState,
+    {
+      ...lobbyState,
+      mode: "heroes-ascent",
+      phase: "queued",
+      matchId: null,
+      queueNonce: "ab".repeat(32),
+      ascentRound: 3,
+    },
+  ],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
@@ -849,7 +862,12 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
-  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match" }],
+  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match", ascentRound: null }],
+  [
+    "find-match at a Heroes' Ascent round (#1996)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: 2 },
+  ],
   ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
   ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
@@ -1862,6 +1880,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "lobby-state without a queue nonce (#1766)",
     parseWireLobbyState,
     { ...lobbyState, queueNonce: undefined },
+  ],
+  [
+    "lobby-state without an ascent round (#1996)",
+    parseWireLobbyState,
+    { ...lobbyState, ascentRound: undefined },
+  ],
+  ["lobby-state past the Hall (#1996)", parseWireLobbyState, { ...lobbyState, ascentRound: 4 }],
+  ["find-match without a round (#1996)", parseWireLobbyCommand, { kind: "find-match" }],
+  [
+    "find-match at a negative round (#1996)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: -1 },
   ],
   [
     "lobby-state of a short queue nonce (#1766)",

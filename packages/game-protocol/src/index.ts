@@ -210,6 +210,7 @@ export type {
 } from "./p2p.js";
 
 export {
+  ASCENT_ROUNDS,
   FORMATION_SETTLE_MS,
   FORMATION_TIMEOUT_MS,
   NO_SHOW_IGNORE_MS,

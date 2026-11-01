@@ -120,7 +120,9 @@ mode's maps, each side with its own builds, and come back to your lobby
 afterwards. The host can press
 **Leave the queue** at any time; a guest who leaves takes the whole
 party out of it. With no other team after a minute, the host can also
-press **Play the house team**: a match in your own lobby against bots.
+press **Play the house team**: a match in your own lobby against bots,
+except in [Heroes' Ascent](modes.md#heroes-ascent), which waits for a
+team at your round.
 
 ## Your name, guild tag and cape
 

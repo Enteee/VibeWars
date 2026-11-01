@@ -184,6 +184,7 @@ function lobby(
     isHost: self === "aria",
     countdownSeconds: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds,
     teamLobby: {
       stage,
