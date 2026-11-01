@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Minion care (#1986), stand-ins until their art card.
+  // Minion care (#2084).
   // Skill effect: a plus over a rising line, the minion's regeneration.
   "veratas-sacrifice": [
     "skill-effect",
