@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
+import { INVITE_URL, joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
 import {
+  copyInvite,
   hostLobby as hostFromMenu,
   openPeers,
   openToFriends,
@@ -38,17 +39,16 @@ async function leaveMatch(page: Page): Promise<void> {
   await leave.getByRole("button", { name: "yes" }).click();
 }
 
-/** Host a lobby and return the code the host is told to read out. */
+/** Host a lobby and return the invite link the host sends its friends (#2100). */
 async function hostLobby(page: Page, playerName: string): Promise<string> {
   await openMenu(page, playerName);
-  // Twelve symbols, read aloud in three fours (#1681).
   return hostFromMenu(page);
 }
 
-/** Join `code` as `playerName` and wait for the lobby screen. */
-async function joinLobby(page: Page, playerName: string, code: string): Promise<void> {
+/** Open `invite` as `playerName` and wait for the lobby screen. */
+async function joinLobby(page: Page, playerName: string, invite: string): Promise<void> {
   await openMenu(page, playerName);
-  await joinFriend(page, code);
+  await joinFriend(page, invite);
   await expect(page.locator(".lobby-panel")).toBeVisible();
 }
 
@@ -61,8 +61,8 @@ async function joinLobby(page: Page, playerName: string, code: string): Promise<
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   await openMenu(host, "Host");
   const team = await saveSoloTeam(host, guestTeam === 1 ? 2 : 1);
-  const code = await hostFromMenu(host);
-  await joinLobby(guest, "Guest", code);
+  const invite = await hostFromMenu(host);
+  await joinLobby(guest, "Guest", invite);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
   await host.getByRole("button", { name: "Ready", exact: true }).click();
@@ -72,27 +72,27 @@ async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Prom
     { page: host, team },
     { page: guest, team, seat: guestTeam === 1 ? 1 : 0 },
   ]);
-  return code;
+  return invite;
 }
 
-const NO_ANSWER = "Couldn't reach that lobby. Check the key, and ask the host to open it.";
+const NO_ANSWER = "Couldn't reach that lobby. Check the invite link, and ask the host to open it.";
 const CLOSED = "That lobby is closed. Ask the host to open it.";
 
-test("a host creates a lobby and is shown a joinable code", async ({ page }) => {
-  const code = await hostLobby(page, "Host");
+test("a host creates a lobby and is given a joinable invite link (#2100)", async ({ page }) => {
+  const invite = await hostLobby(page, "Host");
 
-  // The host is in the lobby, and the code is the thing they read aloud.
+  // The host is in the lobby, and the invite link is the thing they send.
   await expect(page.locator(".lobby-panel")).toBeVisible();
-  expect(code).not.toBe("");
+  expect(invite).toMatch(INVITE_URL);
 });
 
-test("a second player joins with the code and both see each other", async ({ browser }) => {
+test("a second player joins with the invite link and both see each other", async ({ browser }) => {
   const { context, pages } = await openPeers(browser, 2);
   const [host, guest] = pages as [Page, Page];
 
   try {
-    const code = await hostLobby(host, "Host");
-    await joinLobby(guest, "Guest", code);
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
 
     // The real assertion: each page sees the *other* player. That is
     // what proves state is synchronising between two peers, not just
@@ -111,21 +111,26 @@ test("a host with a guest who joins another lobby is asked once, and its guest f
   const [alpha, bravo, charlie] = pages as [Page, Page, Page];
 
   try {
-    const alphaCode = await hostLobby(alpha, "Alpha");
-    await joinLobby(bravo, "Bravo", alphaCode);
-    const charlieCode = await hostLobby(charlie, "Charlie");
+    const alphaInvite = await hostLobby(alpha, "Alpha");
+    await joinLobby(bravo, "Bravo", alphaInvite);
+    const charlieInvite = await hostLobby(charlie, "Charlie");
     // Storage is shared: Alpha's name is read at the press.
     await namePlayer(alpha, "Alpha");
 
-    await joinByCode(alpha, charlieCode);
-    await expect(alpha.locator(".topbar-join-confirm")).toHaveText(
+    await joinByCode(alpha, charlieInvite);
+    const confirm = alpha.locator(".topbar-join-confirm");
+    await expect(confirm.locator(".topbar-join-confirm-text")).toHaveText(
       "Your party of 2 joins with you.",
     );
-    await expect(alpha.locator("#topbar .topbar-lobby-code")).toHaveText(alphaCode);
-    await alpha.getByRole("button", { name: "Join", exact: true }).click();
+    // Asked, not gone yet: still its own lobby, the invite out of the
+    // address bar all the same (#2100).
+    await expect(alpha.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
+    expect(new URL(alpha.url()).hash).toBe("");
+    await confirm.getByRole("button", { name: "Join", exact: true }).click();
 
     for (const page of [alpha, bravo]) {
-      await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(charlieCode);
+      await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Lobby");
+      await expect(page.locator("#topbar .topbar-leave")).toBeVisible();
     }
     await expect(charlie.locator(".lobby-panel")).toContainText("Alpha");
     await expect(charlie.locator(".lobby-panel")).toContainText("Bravo");
@@ -136,7 +141,7 @@ test("a host with a guest who joins another lobby is asked once, and its guest f
   }
 });
 
-test("a closed lobby takes nobody with its key; opened it does, and closed again it keeps its guest (#1682)", async ({
+test("a closed lobby takes nobody with its invite link; opened it does, and closed again it keeps its guest (#1682)", async ({
   browser,
 }) => {
   // The first join waits out the 20 s no-answer: a closed, empty lobby's
@@ -148,26 +153,25 @@ test("a closed lobby takes nobody with its key; opened it does, and closed again
   try {
     await openMenu(host, "Host");
     await openRail(host, "Hosted Game");
-    const shown = host.locator("#topbar .topbar-lobby-code");
-    await expect(shown).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-    const code = (await shown.textContent()) ?? "";
+    // A closed lobby's invite link copies all the same (#2100).
+    const invite = await copyInvite(host);
     const toggle = host.locator("#topbar .topbar-lobby-open");
     await expect(toggle).toHaveAccessibleName("Lobby closed");
     await expect(toggle).toHaveAttribute(
       "title",
-      "Friends with your key can't join until you open the lobby.",
+      "Friends with your invite link can't join until you open the lobby.",
     );
 
     await openMenu(guest, "Guest");
-    await joinByCode(guest, code);
+    await joinByCode(guest, invite);
     await expect(guest.locator(".screen-connection-problem")).toHaveText(NO_ANSWER, {
       timeout: 30_000,
     });
 
     await openToFriends(host);
     await expect(toggle).toHaveAccessibleName("Lobby open");
-    await expect(toggle).toHaveAttribute("title", "Anyone with your key can join.");
-    await joinFriend(guest, code);
+    await expect(toggle).toHaveAttribute("title", "Anyone with your invite link can join.");
+    await joinFriend(guest, invite);
     await expect(host.locator(".lobby-panel")).toContainText("Guest");
     // Only the host has the toggle; a guest's strip says when it is closed.
     await expect(guest.locator("#topbar .topbar-lobby-open")).toBeHidden();
@@ -178,16 +182,16 @@ test("a closed lobby takes nobody with its key; opened it does, and closed again
     await expect(guest.locator(".party-closed")).toHaveText("Lobby closed");
 
     await openMenu(late, "Late");
-    await joinByCode(late, code);
+    await joinByCode(late, invite);
     await expect(late.locator(".screen-connection-problem")).toHaveText(CLOSED);
     await expect(host.locator(".lobby-panel")).not.toContainText("Late");
-    await expect(guest.locator("#topbar .topbar-lobby-code")).toHaveText(code);
+    await expect(guest.locator("#topbar .topbar-leave")).toBeVisible();
   } finally {
     await context.close();
   }
 });
 
-test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and says so once (#707)", async ({
+test("a wrong invite link says Connecting…, finds no lobby after the 20 s wait, and says so once (#707)", async ({
   browser,
 }) => {
   // A key is its own room: a wrong one must never land the guest in the
@@ -197,14 +201,18 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
   const [host, guest] = pages as [Page, Page];
 
   try {
-    const code = await hostLobby(host, "Host");
-    const wrong = code === "ACDE-FGHJ-KMNP" ? "PNMK-JHGF-EDCA" : "ACDE-FGHJ-KMNP";
+    const invite = await hostLobby(host, "Host");
+    // A well-formed key, one symbol off the host's (#2100): its last
+    // symbol carries padding bits, so the first is the one changed.
+    const at = invite.indexOf("#lobby=") + "#lobby=".length;
+    const wrong = `${invite.slice(0, at)}${invite[at] === "A" ? "B" : "A"}${invite.slice(at + 1)}`;
+    expect(wrong).toMatch(INVITE_URL);
 
     await openMenu(guest, "Guest");
     // Its own lobby stays open until a join is in (#1526).
-    const own = guest.locator("#topbar .topbar-lobby-code");
-    await expect(own).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-    const ownCode = (await own.textContent()) ?? "";
+    const own = guest.locator("#topbar .lobby-code-label");
+    await expect(own).toHaveText("Your lobby");
+    const ownInvite = await copyInvite(guest);
     await joinByCode(guest, wrong);
     await expect(guest.locator("#status")).toHaveText("connecting…");
     // Not at once: only a join that is taking a while says so.
@@ -217,30 +225,65 @@ test("a wrong code says Connecting…, finds no lobby after the 20 s wait, and s
     await expect(problem).toHaveText(NO_ANSWER, { timeout: 25_000 });
     await expect(connecting).toBeHidden();
     await expect(problem).toHaveCount(1);
-    // On the screen the join was tried from, under the title bar's Join to
-    // try again with (#579, #1525).
+    // On the screen the join was tried from (#579, #1525).
     await expect(guest.locator(".rail-body .screen-connection-problem")).toBeVisible();
-    await expect(guest.getByRole("button", { name: "Join", exact: true })).toBeVisible();
     // Back on the menu, but the error must not be reset to "ready".
     await expect(guest.locator("#status")).toHaveText("could not join");
     await expect(host.locator(".lobby-panel")).not.toContainText("Guest");
-    await expect(own).toHaveText(ownCode);
+    await expect(own).toHaveText("Your lobby");
+    expect(await copyInvite(guest)).toBe(ownInvite);
   } finally {
     await context.close();
   }
 });
 
-test("the status bar says nothing in a lobby, whose code the title bar shows, on any screen (#454, #1526)", async ({
+test("a broken invite link is taken out of the address bar and says so, joining nothing (#2100)", async ({
+  page,
+}) => {
+  await openMenu(page, "Guest");
+  await page.goto("./#lobby=nope");
+  await expect(page.locator(".toast")).toHaveText("That invite link is broken.");
+  expect(new URL(page.url()).hash).toBe("");
+  await expect(page.locator("#topbar .topbar-leave")).toBeHidden();
+});
+
+test("a guest opening the host's invite link in a new tab joins from boot, and the address bar keeps no key (#2100)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 1);
+  const [host] = pages as [Page];
+
+  try {
+    const invite = await hostLobby(host, "Host");
+    const guest = await context.newPage();
+    await openMenu(guest, "Guest");
+    // A fresh load, as a link opened from a chat is: no page to hashchange.
+    await guest.goto("about:blank");
+    await guest.goto(invite);
+    await expect(guest.locator("#topbar .topbar-leave")).toBeVisible();
+    await expect(guest.locator("#topbar .lobby-code-label")).toHaveText("Lobby");
+    expect(guest.url()).not.toContain("lobby=");
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
+    await expect(guest.locator(".lobby-panel")).toContainText("Host");
+  } finally {
+    await context.close();
+  }
+});
+
+test("the status bar says nothing in a lobby, which the title bar names, on any screen (#454, #1526)", async ({
   page,
 }) => {
   // The status used to keep saying "lobby CODE" on the menu (#206), and
-  // then repeated the code beside the lobby's own (#1272).
-  const code = await hostLobby(page, "Host");
-  await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(code);
+  // then repeated the code beside the lobby's own (#1272). The key is
+  // shown nowhere now (#2100).
+  const invite = await hostLobby(page, "Host");
+  const secret = invite.slice(invite.indexOf("#lobby=") + "#lobby=".length);
+  await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
   await expect(page.locator("#status")).toBeHidden();
+  await expect(page.locator("body")).not.toContainText(secret);
 
   await openRail(page, "Team Builder");
-  await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(code);
+  await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
   await expect(page.locator("#status")).toBeHidden();
 });
 
@@ -264,8 +307,8 @@ test("the host closing its page takes the guest to the menu, and says why", asyn
   const [host, guest] = pages as [Page, Page];
 
   try {
-    const code = await hostLobby(host, "Host");
-    await joinLobby(guest, "Guest", code);
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
     await expect(host.locator(".lobby-panel")).toContainText("Guest");
 
     // A navigation fires pagehide, as a closed tab does; page.close() does
@@ -286,8 +329,8 @@ test("the host starts a match and both players enter the arena", async ({ browse
   const [host, guest] = pages as [Page, Page];
 
   try {
-    const code = await hostLobby(host, "Host");
-    await joinLobby(guest, "Guest", code);
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
 
     // Both pick a team, then ready up. Readiness is disabled without a
     // team, which is itself part of what this exercises.
@@ -426,23 +469,45 @@ test("a player who quits a 1v1 forfeits it, and is back in an open lobby; its wi
   }
 });
 
-test("Copy puts the lobby code on the clipboard and says so (#580)", async ({ page, context }) => {
+/** This page's own address and `#lobby=`, as an invite link to its lobby starts (#2100). */
+function invitePrefix(page: Page): string {
+  const { origin, pathname } = new URL(page.url());
+  return `${origin}${pathname}#lobby=`;
+}
+
+test("Copy invite link puts the lobby's invite link on the clipboard and says so (#580, #2100)", async ({
+  page,
+  context,
+}) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  const code = await hostLobby(page, "Host");
-  await page.getByRole("button", { name: "Copy", exact: true }).click();
+  await openMenu(page, "Host");
+  await openRail(page, "Hosted Game");
+  await page.getByRole("button", { name: "Copy invite link", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Copied");
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(code);
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toMatch(INVITE_URL);
+  expect(copied.startsWith(invitePrefix(page))).toBe(true);
 });
 
-test("a refused clipboard leaves the code selected, to copy by hand (#580)", async ({ page }) => {
+test("a refused clipboard shows the invite link selected, to copy by hand (#580, #2100)", async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     navigator.clipboard.writeText = () =>
       Promise.reject(new DOMException("Write permission denied.", "NotAllowedError"));
   });
-  const code = await hostLobby(page, "Host");
-  await page.getByRole("button", { name: "Copy", exact: true }).click();
-  await expect(page.locator(".toast")).toContainText("copy it by hand");
-  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(code);
+  await openMenu(page, "Host");
+  await openRail(page, "Hosted Game");
+  await page.getByRole("button", { name: "Copy invite link", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText(
+    "Could not copy: the invite link is selected, copy it by hand",
+  );
+  const line = page.getByRole("textbox", { name: "lobby invite link", exact: true });
+  await expect(line).toBeVisible();
+  const shown = await line.inputValue();
+  expect(shown).toMatch(INVITE_URL);
+  expect(shown.startsWith(invitePrefix(page))).toBe(true);
+  await expect(line).toBeFocused();
 });
 
 test("each row shows a player's name alone, and Start says who it waits for (#580, #2029)", async ({
@@ -465,10 +530,10 @@ test("each row shows a player's name alone, and Start says who it waits for (#58
     await host.locator("input.editor-name").fill("Blank");
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await pickCharacter(host, "Cynn");
-    const code = await hostLobby(host, "Host");
+    const invite = await hostLobby(host, "Host");
     await guest.goto("./");
     await pickCharacter(guest, "Blank");
-    await joinLobby(guest, "Guest", code);
+    await joinLobby(guest, "Guest", invite);
 
     await host.getByRole("button", { name: "join team 1" }).click();
     await guest.getByRole("button", { name: "join team 2" }).click();
@@ -514,10 +579,10 @@ test("a match plays the seat the host took, not a character selected after joini
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await pickCharacter(host, "Cynn");
     const cynn = await saveSoloTeam(host);
-    const code = await hostLobby(host, "Host");
+    const invite = await hostLobby(host, "Host");
     await guest.goto("./");
     await pickCharacter(guest, "Blank");
-    await joinLobby(guest, "Guest", code);
+    await joinLobby(guest, "Guest", invite);
 
     await host.getByRole("button", { name: "join team 1" }).click();
     await guest.getByRole("button", { name: "join team 2" }).click();
@@ -543,10 +608,10 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
   const [host, guest, watcher] = pages as [Page, Page, Page];
 
   try {
-    const code = await startTwoPlayerMatch(host, guest);
+    const invite = await startTwoPlayerMatch(host, guest);
     await expect(host.locator(".hud-leave")).toBeVisible();
     // Joined mid-match, on no team: Watch, not Ready.
-    await joinLobby(watcher, "Watcher", code);
+    await joinLobby(watcher, "Watcher", invite);
     await expect(watcher.getByRole("button", { name: "Ready", exact: true })).toHaveCount(0);
     await watcher.getByRole("button", { name: "Watch", exact: true }).click();
 

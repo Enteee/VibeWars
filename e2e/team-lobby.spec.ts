@@ -69,10 +69,10 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await expect(host.locator(".toast")).toHaveText("Saved");
 
-    const code = await hostLobby(host);
+    const invite = await hostLobby(host);
 
     await nameOnMenu(guest, "Guest");
-    await joinFriend(guest, code);
+    await joinFriend(guest, invite);
     await expect(guest.locator(".lobby-panel")).toBeVisible();
 
     // One side of two players; a Hosted Game's side plays the Team Build
