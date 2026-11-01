@@ -1,0 +1,359 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>#2014 mockup C: compact grid</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --line: #2b3440;
+    --ink: #d7dee8;
+    --dim: #7d8899;
+    --accent: #59c2ff;
+    --warn: #ffa657;
+    --ok: #6fd08c;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 1.2rem;
+    background: #080a0d;
+    color: var(--ink);
+    font:
+      14px system-ui,
+      sans-serif;
+  }
+  h1 {
+    font-size: 1.15rem;
+    margin: 0 0 0.3rem;
+  }
+  h2 {
+    font-size: 0.95rem;
+    color: var(--accent);
+    margin: 1.6rem 0 0.3rem;
+  }
+  p.n {
+    color: var(--dim);
+    margin: 0.2rem 0 0.6rem;
+    max-width: 62rem;
+  }
+  p.n b {
+    color: var(--ink);
+  }
+  .win {
+    width: 1366px;
+    height: 768px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ph {
+    width: 360px;
+    height: 420px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 6px;
+    font-size: 12px;
+    overflow: hidden;
+  }
+  .box {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 8px;
+    min-width: 0;
+  }
+  .box h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 600;
+  }
+  .top {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+  }
+  .top b {
+    color: var(--accent);
+  }
+  .top .sp {
+    flex: 1;
+  }
+  .tabs {
+    display: flex;
+    gap: 2px;
+  }
+  .tabs span {
+    padding: 4px 12px;
+    border: 1px solid var(--line);
+    color: var(--dim);
+  }
+  .tabs span.on {
+    color: var(--ink);
+    border-color: var(--accent);
+  }
+  .bar {
+    display: flex;
+    gap: 4px;
+  }
+  .sk {
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--line);
+    background: #0b0e13;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    color: var(--dim);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .sk.e {
+    border-color: #d9b24a;
+    color: #d9b24a;
+  }
+  .attr {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    border-bottom: 1px solid #1f2630;
+  }
+  .attr i {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border: 1px solid var(--line);
+    background: #0b0e13;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .chip.ins {
+    border-color: #59c2ff66;
+  }
+  .chip.run {
+    border-color: #ffa65766;
+  }
+  .chip.mod {
+    border-color: #6fd08c66;
+  }
+  .chip.empty {
+    color: var(--dim);
+    border-style: dashed;
+  }
+  .chip small {
+    color: var(--dim);
+  }
+  .pc {
+    font-weight: 600;
+  }
+  .pop {
+    position: absolute;
+    background: #10151c;
+    border: 1px solid var(--accent);
+    padding: 6px;
+    box-shadow: 0 4px 14px #000a;
+    z-index: 3;
+  }
+  .pop div {
+    padding: 2px 6px;
+  }
+  .pop div.on {
+    background: #59c2ff22;
+    color: var(--accent);
+  }
+  .cap {
+    margin-top: 0.5rem;
+    max-width: 62rem;
+    color: var(--dim);
+  }
+  .cap b {
+    color: var(--ink);
+  }
+  .fig {
+    position: relative;
+    width: 200px;
+    height: 360px;
+    margin: auto;
+  }
+  .fig svg {
+    position: absolute;
+    inset: 0;
+  }
+  .hot {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    background: #0e1116cc;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    color: var(--accent);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  td,
+  th {
+    padding: 4px 6px;
+    border-bottom: 1px solid #1f2630;
+    text-align: left;
+  }
+  th {
+    color: var(--dim);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+</style>
+<h1>#2014 C: a compact grid</h1>
+<p class="n">
+  One table: a row per piece, columns for insignia and rune. Weapons are rows of the same table. A
+  header cell sets a column for every row.
+</p>
+<h2>1366 × 768 (nothing scrolls)</h2>
+<div class="win" style="grid-template-columns: 1fr 300px; grid-template-rows: 42px 1fr 80px">
+  <div style="grid-column: 1/3">
+    <div class="top">
+      <b>Elementalist / Monk</b> · “Stormcaller”<span class="sp"></span
+      ><span class="chip">Share ⋯</span><span class="chip">Save</span>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Gear</h3>
+    <table>
+      <tr>
+        <th>Piece</th>
+        <th>Insignia <span class="chip" style="margin-left: 4px">same on all ▾</span></th>
+        <th>Rune</th>
+        <th>Mods</th>
+      </tr>
+      <tr>
+        <td class="pc">Headgear</td>
+        <td><span class="chip ins">Radiant ▾</span></td>
+        <td><span class="chip run">Minor Fire Magic ▾</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="pc">Chest</td>
+        <td><span class="chip ins">Blessed ▾</span></td>
+        <td><span class="chip run">Vigor ▾</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="pc">Gloves</td>
+        <td><span class="chip ins">Prodigy’s ▾</span></td>
+        <td><span class="chip run">Minor Air Magic ▾</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="pc">Leggings</td>
+        <td><span class="chip ins">Survivor’s ▾</span></td>
+        <td><span class="chip run">Minor Energy Storage ▾</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="pc">Boots</td>
+        <td><span class="chip ins">Wanderer’s ▾</span></td>
+        <td><span class="chip run">Attunement ▾</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td class="pc">Fire Staff</td>
+        <td colspan="2" style="color: var(--dim)">Weapon set 1</td>
+        <td>
+          <span class="chip mod">Vampiric</span> <span class="chip mod">of Fortitude</span>
+          <span class="chip empty">+ Inscr.</span>
+        </td>
+      </tr>
+      <tr>
+        <td class="pc">Focus</td>
+        <td colspan="2" style="color: var(--dim)"></td>
+        <td>
+          <span class="chip mod">Vampiric</span> <span class="chip empty">+ Suffix</span>
+          <span class="chip empty">+ Inscr.</span>
+        </td>
+      </tr>
+    </table>
+    <div class="pop" style="left: 300px; top: 2px">
+      <div class="on">Radiant on all 5</div>
+      <div>Blessed on all 5</div>
+      <div>Survivor’s on all 5</div>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Attributes</h3>
+    <div class="attr">Fire Magic<i>12+1+3</i></div>
+    <div class="attr">Energy Storage<i>10+1</i></div>
+    <div class="attr">Air Magic<i>8+1</i></div>
+    <div class="attr">Earth Magic<i>3</i></div>
+    <div class="attr">Water Magic<i>0</i></div>
+  </div>
+  <div class="box" style="grid-column: 1/3">
+    <h3>Skill bar</h3>
+    <div class="bar">
+      <div class="sk">Ward Against</div>
+      <div class="sk e">Meteor</div>
+      <div class="sk">Glyph of</div>
+      <div class="sk">Mind Freeze</div>
+      <div class="sk e">Fire Storm</div>
+      <div class="sk">Mantra of</div>
+      <div class="sk">Lightning Orb</div>
+      <div class="sk">Resurrect</div>
+    </div>
+  </div>
+</div>
+<p class="cap">
+  <b>Idea:</b> treat gear as a spreadsheet; the most common case (one insignia everywhere) is one
+  click. <b>Fixes:</b> 10 armor choices and 6 mod slots in one glance, no scrolling, and the least
+  change from today’s layout. <b>Costs:</b> dense and dull; twelve dropdowns to learn; no picture of
+  the character.
+</p>
+<h2>Phone (360 px)</h2>
+<div class="ph">
+  <b>Gear</b>
+  <table style="font-size: 11px">
+    <tr>
+      <td>Headgear</td>
+      <td><span class="chip ins">Radiant</span></td>
+      <td><span class="chip run">Minor Fire</span></td>
+    </tr>
+    <tr>
+      <td>Chest</td>
+      <td><span class="chip ins">Blessed</span></td>
+      <td><span class="chip run">Vigor</span></td>
+    </tr>
+    <tr>
+      <td>Gloves</td>
+      <td><span class="chip ins">Prodigy’s</span></td>
+      <td><span class="chip run">Minor Air </span></td>
+    </tr>
+    <tr>
+      <td>Leggings</td>
+      <td><span class="chip ins">Survivor’s</span></td>
+      <td><span class="chip run">Minor Ener</span></td>
+    </tr>
+    <tr>
+      <td>Boots</td>
+      <td><span class="chip ins">Wanderer’s</span></td>
+      <td><span class="chip run">Attunement</span></td>
+    </tr>
+  </table>
+</div>
