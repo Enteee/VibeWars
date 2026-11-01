@@ -47,6 +47,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-loses-condition"
   | "bearer-blocks"
   | "bearer-interrupted"
+  | "bearer-knocked-down"
   | "bearer-health-drops-below"
   | "bearer-fatal-damage-negated"
   | "bearer-creates-creature"
@@ -214,6 +215,7 @@ export function fireChangeTriggers(
     case "hit-by-attack":
     case "blocked":
     case "interrupted":
+    case "knocked-down":
     case "health-dropped":
     case "fatal-negated":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>

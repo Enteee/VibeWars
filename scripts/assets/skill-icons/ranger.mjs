@@ -76,6 +76,13 @@ export const RANGER_ICONS = {
   "ranger.conflagration": { glyph: "ritual-flame" },
   "ranger.predatory-season": { glyph: "ritual-heart-slash" },
   "ranger.winter": { glyph: "ritual-snowflake" },
+  // Nature rituals 2 (#1873), stand-ins until their art card.
+  "ranger.symbiosis": { glyph: "ritual-heart", modifier: "plus" },
+  "ranger.favorable-winds": { glyph: "ritual-cycle", modifier: "up" },
+  "ranger.brambles": { glyph: "ritual-heart-slash", modifier: "bleed" },
+  "ranger.tranquility": { glyph: "ritual-cycle", modifier: "less" },
+  "ranger.toxicity": { glyph: "ritual-heart-slash", modifier: "down" },
+  "ranger.greater-conflagration": { glyph: "ritual-flame", modifier: "plus" },
   // Ranger staples 4 (#1742, #1768): an arrow over a shield, barbs, a leaf, a wind curl; the rest keep a shared glyph.
   "ranger.seeking-arrows": { glyph: "arrow-over-shield", modifier: "up" },
   "ranger.barbed-arrows": { glyph: "arrow-barbed", modifier: "bleed" },

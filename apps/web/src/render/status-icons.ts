@@ -294,6 +294,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   conflagration: icon("conflagration"),
   "predatory-season": icon("predatory-season"),
   winter: icon("winter"),
+  // Nature rituals 2 (#1873).
+  symbiosis: icon("symbiosis"),
+  "favorable-winds": icon("favorable-winds"),
+  brambles: icon("brambles"),
+  tranquility: icon("tranquility"),
+  toxicity: icon("toxicity"),
+  "greater-conflagration": icon("greater-conflagration"),
   panic: icon("panic"),
   "wastrels-demise": icon("wastrels-demise"),
   "arcane-conundrum": icon("arcane-conundrum"),

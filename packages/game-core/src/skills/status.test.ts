@@ -61,6 +61,7 @@ describe("status definitions", () => {
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.maxHealthBonus !== 0 ||
+        def.maxHealthBonusPerEnchantment !== 0 ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
         def.physicalDamageTakenBonus !== 0 ||
@@ -87,6 +88,7 @@ describe("status definitions", () => {
         def.whileUnder !== undefined ||
         def.extraStrikesPerHit !== 0 ||
         def.attackDamageType !== undefined ||
+        def.physicalDamageDealtAs !== undefined ||
         def.attackArmorPenetration !== 0 ||
         def.attackDamageDelta !== 0 ||
         def.damageReductionWhileCasting !== undefined ||

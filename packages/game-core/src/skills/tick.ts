@@ -312,6 +312,23 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
 }
 
 /**
+ * What the bearer's statuses add to each of its weapon blows (#1654),
+ * summed: one that names a weapon (#1873, Favorable Winds' bow) counts
+ * only while the bearer wields it.
+ */
+export function attackDamageDeltaOf(combatant: Combatant): number {
+  const wielded = combatant.equipment.mainHand.weapon.id;
+  let delta = 0;
+  for (const { id } of combatant.statuses.active) {
+    const { attackDamageDelta, attackDamageDeltaWeapon } = getStatusDefinition(id);
+    if (attackDamageDeltaWeapon === undefined || wieldsFor(wielded, attackDamageDeltaWeapon)) {
+      delta += attackDamageDelta;
+    }
+  }
+  return delta;
+}
+
+/**
  * How long this caster takes to cast this skill. Dazed doubles a spell's;
  * a signet or any other skill that is not a spell casts at normal speed,
  * as in GW1 (#524). An instant skill stays instant (0 × 2 = 0). Fast

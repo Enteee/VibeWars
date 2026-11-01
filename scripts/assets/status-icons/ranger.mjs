@@ -228,4 +228,43 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M5 9l4-4 4 4M11 9l4-4 4 4" ${stroke(c, 2.2)}/>` +
       `<path d="M6.5 19l3-7M10.5 19l3-7M14.5 19l3-7" ${stroke(c, 2)}/>`,
   ],
+  // Nature rituals 2 (#1873), stand-ins until their art card.
+  // Skill effect: a heart over three small leaves, Health per enchantment.
+  symbiosis: [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 14s-4.5-3-4.5-6A2.5 2.5 0 0 1 12 6.5a2.5 2.5 0 0 1 4.5 1.5c0 3-4.5 6-4.5 6z" fill="${c}"/>` +
+      `<path d="M6 19h2M11 19h2M16 19h2" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: an arrow on two wind lines, faster arrows.
+  "favorable-winds": [
+    "skill-effect",
+    (c) => `<path d="M4 8h12M4 16h12M14 12h6M17 9l3 3-3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a thorny stem, a fall onto it bleeds.
+  brambles: [
+    "skill-effect",
+    (c) => `<path d="M5 19C9 15 13 9 19 5M9 14l-2-2M12 11l2 2M15 8l-2-2" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a calm wave under an hourglass, enchantments end sooner.
+  tranquility: [
+    "skill-effect",
+    (c) =>
+      `<path d="M8 4h8l-4 5zM8 14h8l-4-5" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 19c2-2 4-2 6 0s4 2 6 0 4-2 4-2" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a drop with a skull-dot, poison and disease hurt more.
+  toxicity: [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4c-3 4-5 7-5 10a5 5 0 0 0 10 0c0-3-2-6-5-10z" ${stroke(c, 2)}/>` +
+      `<path d="M10 14h.01M14 14h.01" ${stroke(c, 2.6)}/>`,
+  ],
+  // Skill effect: a sword in a flame, physical damage is fire.
+  "greater-conflagration": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 8v9M9.5 15h5" ${stroke(c, 2)}/>`,
+  ],
 };

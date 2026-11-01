@@ -14,7 +14,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { attackDamageDeltaOf } from "./tick.js";
 
 /**
  * The PvP Communing pair (#1827): Armor of Unfeeling's damage reduction
@@ -212,7 +212,7 @@ describe("Signet of Ghostly Might (#1827)", () => {
     }
     use(sim, SIGNET, "m");
     expect(get(sim, "m").combatant.statuses.has("signet-of-ghostly-might")).toBe(true);
-    expect(aggregateModifiers(get(sim, "m").combatant.statuses.active).attackDamageDelta).toBe(29);
+    expect(attackDamageDeltaOf(get(sim, "m").combatant)).toBe(29);
     run(sim, 6);
     use(sim, SIGNET, "s");
     expect(get(sim, "s").combatant.statuses.has("signet-of-ghostly-might")).toBe(true);

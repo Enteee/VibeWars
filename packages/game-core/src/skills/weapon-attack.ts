@@ -29,12 +29,15 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import {
   aggregateModifiers,
+  damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
+  physicalDamageDealtAsOf,
   type StatusId,
 } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import {
+  attackDamageDeltaOf,
   attackDamageTypeOf,
   attackMissChanceOf,
   blockingStatusesOf,
@@ -203,6 +206,8 @@ export interface WeaponSnapshot {
   readonly armorPenetration: number;
   /** Added to each blow before armor by the attacker's statuses (#1654): Nightmare Weapon's −42. */
   readonly damageDelta: number;
+  /** What physical damage the attacker deals turns into (#1873): Greater Conflagration's fire. */
+  readonly physicalDamageDealtAs: DamageType | undefined;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -218,7 +223,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalChanceBonus: modifiers.criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
-    damageDelta: modifiers.attackDamageDelta,
+    damageDelta: attackDamageDeltaOf(attacker),
+    physicalDamageDealtAs: physicalDamageDealtAsOf(attacker.statuses.active),
   };
 }
 
@@ -515,8 +521,12 @@ export function landBlow(
         snapshot.damageDelta,
     ),
     armorIgnoring: blow.bonus,
-    // The attacker's type first, then Winter's on the victim (#1745).
-    type: damageTypeTaken(blow.damageType ?? snapshot.damageType, victim.statuses.active),
+    // The attacker's type first, then Greater Conflagration's on it
+    // (#1873), then Winter's on the victim (#1745).
+    type: damageTypeTaken(
+      damageTypeDealt(blow.damageType ?? snapshot.damageType, snapshot.physicalDamageDealtAs),
+      victim.statuses.active,
+    ),
     source: "weapon",
     armorPenetration: Math.max(
       blow.armorPenetration,

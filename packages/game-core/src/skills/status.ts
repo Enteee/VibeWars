@@ -29,7 +29,7 @@
  */
 
 import type { ConditionalArmor } from "../equipment/armor.js";
-import { isElementalDamage, type DamageType } from "../equipment/types.js";
+import { isElementalDamage, isPhysicalDamage, type DamageType } from "../equipment/types.js";
 import { wieldsFor, type Weapon, type WeaponId } from "../equipment/weapons.js";
 import type { ProfessionId } from "../professions.js";
 import type { Vec2 } from "../vec2.js";
@@ -103,8 +103,13 @@ export type StatusId =
 
 /** A status's modifiers that hold only while its bearer is under another (#1485). */
 export interface WhileUnder {
-  /** The bearer must have a status of one of these categories, not this one. */
+  /**
+   * The bearer must have a status of one of these categories, or one of
+   * these statuses (#1873, Toxicity's poison or disease), not this one.
+   * One of the two lists is not empty.
+   */
   readonly categories: readonly StatusCategory[];
+  readonly statusIds: readonly StatusId[];
   readonly attackDurationMultiplier: number;
   readonly adrenalineGainFaster: number;
   /** Summed into the bearer's pips as the status's own (#1654): Resilient Weapon's. */
@@ -151,6 +156,13 @@ export interface StatusDefinition {
    * profession owns.
    */
   readonly profession: ProfessionId | undefined;
+  /**
+   * The type physical damage the bearer deals becomes (#1873), a weapon's
+   * blow and a skill's packet alike: Greater Conflagration's "all physical
+   * damage is fire damage instead". Before the victim's
+   * `elementalDamageTakenAs`, so it is cold under Winter. `undefined`: none.
+   */
+  readonly physicalDamageDealtAs: DamageType | undefined;
   /**
    * The attribute of the skill that applies it (#1765), as `profession`:
    * "if target foe is suffering from a Water Magic hex" asks this.
@@ -238,6 +250,13 @@ export interface StatusDefinition {
    */
   readonly maxHealthBonus: number;
   /**
+   * Maximum Health added for each enchantment on the bearer, counted live
+   * as `healthPipsPerEnchantment` is (#1873): Symbiosis's "+27...150
+   * maximum Health for each enchantment". Summed into `maxHealthBonus`, so
+   * losing an enchantment clamps health as losing the status does. 0: none.
+   */
+  readonly maxHealthBonusPerEnchantment: number;
+  /**
    * Maximum energy added while it lasts (#1464): Mighty Was Vorizun's 30.
    * Gaining it raises only the ceiling; losing it clamps energy to the
    * ceiling left, as `maxHealthBonus` does health.
@@ -294,6 +313,12 @@ export interface StatusDefinition {
    * Summed over statuses. 0: none.
    */
   readonly attackDamageDelta: number;
+  /**
+   * `attackDamageDelta` holds only while the bearer wields this weapon
+   * (#1873), as `attackDamageTypeWeapon` does: Favorable Winds' arrows
+   * "strike for +6 damage". `undefined`: whatever it wields.
+   */
+  readonly attackDamageDeltaWeapon: AttackWeaponClass | undefined;
   /**
    * Added to every attribute of the bearer above rank 0 (#762): weakness's
    * −1. Read through `rankOf` alone (ADR-0019).
@@ -866,6 +891,12 @@ export type StatusTriggerEvent =
    */
   | "bearer-blocks"
   /**
+   * The bearer was knocked down, by any source (#1873): Brambles' "knocked
+   * down in its range". A knockdown on a body already down is none, so it
+   * never fires twice for one fall. Recorded with the knockdown.
+   */
+  | "bearer-knocked-down"
+  /**
    * The bearer's skill was interrupted, by any source (#1473): an
    * interrupt effect, Dazed or a hit that breaks an easily interrupted
    * cast. A knockdown is no interrupt. Recorded with the interrupter,
@@ -1323,6 +1354,12 @@ export type StatusChange =
       readonly offenderId: string | undefined;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /** `offenderId` knocked the bearer down (#1873), with the triggers that answered. */
+  | {
+      readonly kind: "knocked-down";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
   | { readonly kind: "redirected-damage"; readonly toId: string; readonly amount: number }
   /** A status of `toId`'s changed an outcome, and `toId` pays `amount` health (#1265). */
   | {
@@ -1710,6 +1747,17 @@ export class StatusSet {
     const fired = this.#answering("bearer-interrupted");
     if (fired.length > 0) {
       this.#changes.push({ kind: "interrupted", offenderId, fired });
+    }
+  }
+
+  /**
+   * `offenderId` knocked the bearer down (#1873), recorded only if a
+   * status on it answers that, with the triggers that do.
+   */
+  public recordKnockedDown(offenderId: string): void {
+    const fired = this.#answering("bearer-knocked-down");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "knocked-down", offenderId, fired });
     }
   }
 
@@ -2731,6 +2779,28 @@ export function preventsResurrection(statuses: readonly Pick<ActiveStatus, "id">
 }
 
 /**
+ * The type physical damage a bearer of `statuses` deals turns into
+ * (#1873): the first status's `physicalDamageDealtAs`, Greater
+ * Conflagration's fire. `undefined`: none.
+ */
+export function physicalDamageDealtAsOf(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+): DamageType | undefined {
+  for (const { id } of statuses) {
+    const turned = getStatusDefinition(id).physicalDamageDealtAs;
+    if (turned !== undefined) {
+      return turned;
+    }
+  }
+  return undefined;
+}
+
+/** The type a packet of `type` is dealt as: physical turns into `dealtAs` (#1873). */
+export function damageTypeDealt(type: DamageType, dealtAs: DamageType | undefined): DamageType {
+  return dealtAs !== undefined && isPhysicalDamage(type) ? dealtAs : type;
+}
+
+/**
  * The type a packet of `type` is when it reaches a bearer of `statuses`
  * (#1745): elemental damage turns into a status's
  * `elementalDamageTakenAs`, Winter's cold; anything else stays.
@@ -2863,8 +2933,6 @@ export interface StatusModifiers {
   readonly criticalChanceBonus: number;
   /** The largest status's (#1519). */
   readonly attackArmorPenetration: number;
-  /** Every status's, summed (#1654). */
-  readonly attackDamageDelta: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -2893,14 +2961,20 @@ export function reducedRecharge(seconds: number, faster: number): number {
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
 export const HEALING_MULTIPLIER_FLOOR = 0.6;
 
-/** Whether a status in `statuses` other than `self` is of one of `categories` (#1485). */
+/**
+ * Whether a status in `statuses` other than `self` is of one of
+ * `whileUnder`'s categories (#1485) or one of its statuses (#1873).
+ */
 export function isUnderAnother(
   statuses: readonly Pick<ActiveStatus, "id">[],
   self: Pick<ActiveStatus, "id">,
-  categories: readonly StatusCategory[],
+  whileUnder: Pick<WhileUnder, "categories" | "statusIds">,
 ): boolean {
   return statuses.some(
-    (other) => other !== self && categories.includes(getStatusDefinition(other.id).category),
+    (other) =>
+      other !== self &&
+      (whileUnder.categories.includes(getStatusDefinition(other.id).category) ||
+        whileUnder.statusIds.includes(other.id)),
   );
 }
 
@@ -2963,15 +3037,14 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let attackArmorPenetration = 0;
-  let attackDamageDelta = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   const enchantments = statuses.filter(
     (status) => getStatusDefinition(status.id).category === "enchantment",
   ).length;
-  const underAnother = (self: Pick<ActiveStatus, "id">, categories: readonly StatusCategory[]) =>
-    isUnderAnother(statuses, self, categories);
+  const underAnother = (self: Pick<ActiveStatus, "id">, whileUnder: WhileUnder) =>
+    isUnderAnother(statuses, self, whileUnder);
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
@@ -3003,6 +3076,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
       maxHealthLoss = def.maxHealthLoss;
     }
     maxHealthBonus += def.maxHealthBonus;
+    maxHealthBonus += def.maxHealthBonusPerEnchantment * enchantments;
     maxEnergyBonus += def.maxEnergyBonus;
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
@@ -3038,7 +3112,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
     adrenalineGainFaster += def.adrenalineGainFaster;
-    if (def.whileUnder !== undefined && underAnother(status, def.whileUnder.categories)) {
+    if (def.whileUnder !== undefined && underAnother(status, def.whileUnder)) {
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
@@ -3061,7 +3135,6 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
-    attackDamageDelta += def.attackDamageDelta;
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -3107,7 +3180,6 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     incomingHexCastTimeMultiplier,
     criticalChanceBonus,
     attackArmorPenetration,
-    attackDamageDelta,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,
