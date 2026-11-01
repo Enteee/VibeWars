@@ -1,4 +1,5 @@
 import { effectiveRank } from "../attributes.js";
+import type { ModStatusWhile } from "../equipment/mods.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor } from "../equipment/weapons.js";
@@ -7,6 +8,7 @@ import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attrib
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
 import { guardedDegeneration } from "./loss-guard.js";
+import { effectiveMaxEnergy, energyFloor } from "./overcast.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -102,8 +104,28 @@ export function advanceStatuses(
   for (const statusId of combatant.statuses.advance(dt, combatant.moving)) {
     events.push({ kind: "status-expired", targetId: combatant.id, statusId });
   }
+  loseModMaxima(combatant);
 
   return events;
+}
+
+/**
+ * A mod's maximum whose condition no longer holds (#2010), of Devotion's
+ * once the enchantment ends or Hale and Hearty's below half Health: what
+ * is above the maximum left is lost, as when a status's bonus ends. It
+ * never kills, and takes no hidden energy deeper.
+ */
+function loseModMaxima(combatant: Combatant): void {
+  const { conditionalMaxHealth, conditionalMaxEnergy } = combatant.equipment;
+  if (conditionalMaxHealth.length > 0) {
+    combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
+  }
+  if (conditionalMaxEnergy.length > 0) {
+    combatant.energy = Math.max(
+      energyFloor(combatant),
+      Math.min(combatant.energy, effectiveMaxEnergy(combatant)),
+    );
+  }
 }
 
 /** Net regeneration (+) or degeneration (−), in pips, clamped to ±`MAX_PIPS`. */
@@ -198,9 +220,9 @@ const PIP_EPSILON = 1e-6;
  * before the cut, so the 20% is of the larger maximum, the one the wire
  * carries. The simulation clamps heals to it.
  */
-export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
+export function effectiveMaxHealth(combatant: MaxHealthHolder): number {
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  const raised = combatant.maxHealth + modifiers.maxHealthBonus;
+  const raised = combatant.maxHealth + modifiers.maxHealthBonus + modMaxHealthBonus(combatant);
   return raised - lossOf(raised, modifiers.maxHealthLoss);
 }
 
@@ -208,14 +230,45 @@ export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "sta
  * The bearer's maximum health with its statuses' bonus (#1359), before any
  * loss: what its health bar is drawn against.
  */
-export function raisedMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
-  return combatant.maxHealth + aggregateModifiers(combatant.statuses.active).maxHealthBonus;
+export function raisedMaxHealth(combatant: MaxHealthHolder): number {
+  return (
+    combatant.maxHealth +
+    aggregateModifiers(combatant.statuses.active).maxHealthBonus +
+    modMaxHealthBonus(combatant)
+  );
 }
 
 /** How much maximum health the bearer's statuses take: 0 for none. */
-export function maxHealthLossOf(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
+export function maxHealthLossOf(combatant: MaxHealthHolder): number {
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  return lossOf(combatant.maxHealth + modifiers.maxHealthBonus, modifiers.maxHealthLoss);
+  return lossOf(
+    combatant.maxHealth + modifiers.maxHealthBonus + modMaxHealthBonus(combatant),
+    modifiers.maxHealthLoss,
+  );
+}
+
+/** What a maximum Health is read from: the base, statuses and the held set's mods. */
+type MaxHealthHolder = Pick<Combatant, "maxHealth" | "statuses" | "equipment">;
+
+/** Whether an enchantment, stance or hex is on `bearer`: a mod's condition (#2010). */
+export function statusWhileHolds(
+  condition: ModStatusWhile,
+  bearer: Pick<Combatant, "statuses">,
+): boolean {
+  const category =
+    condition === "enchanted" ? "enchantment" : condition === "in-stance" ? "stance" : "hex";
+  return bearer.statuses.countByCategory(category) > 0;
+}
+
+/** The held set's maximum Health whose condition holds now (#2010): of Devotion's +45. */
+function modMaxHealthBonus(combatant: Pick<Combatant, "statuses" | "equipment">): number {
+  let bonus = 0;
+  for (const mod of combatant.equipment.conditionalMaxHealth) {
+    if (statusWhileHolds(mod.while, combatant)) {
+      bonus += mod.amount;
+    }
+  }
+  return bonus;
 }
 
 /**

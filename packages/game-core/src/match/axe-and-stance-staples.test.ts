@@ -1,3 +1,4 @@
+import { createRng } from "../rng.js";
 import { describe, expect, it } from "vitest";
 
 import { RANGE_MELEE } from "../distances.js";
@@ -265,7 +266,9 @@ describe("Frenzied Defense (#1869)", () => {
   it("doubles all damage taken, from anyone", () => {
     const bearer = makeCombatant({ id: "x", maxHealth: 480 });
     bearer.statuses.apply("frenzied-defense", 8, "x", NO_RANKS);
-    expect(mitigate(skillDamage(20, "typeless", 0), bearer, RULES.combat, "chest")).toBe(40);
+    expect(
+      mitigate(skillDamage(20, "typeless", 0), bearer, RULES.combat, "chest", createRng(1)),
+    ).toBe(40);
   });
 });
 
