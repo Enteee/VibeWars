@@ -66,6 +66,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "life-steal":
     case "sacrifice-health":
     case "lose-health":
+    case "lose-health-to":
     case "shadow-step":
     case "resurrect":
     case "resurrect-companions":
@@ -111,7 +112,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * their own roles, any other status that raises armor, blocks or cuts
  * the damage its bearer takes (Dark Escape, #919), caps it (Protective
  * Spirit, #936; Shelter, #1265), cuts its life stolen (Union, #1265), reverses it (Reversal of Fortune, #987) or slows the
- * hexes cast on it (Holy Veil, #944) is defence, and one that interrupts
+ * hexes cast on it (Holy Veil, #944), or fails a foe's spells and attacks
+ * at it or cuts a hexed foe's damage (Shadow Form, Mist Form, #1951) is
+ * defence, and one that interrupts
  * a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
@@ -142,7 +145,10 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.breaksNextHex !== undefined ||
     status.reflectsAttackDamage !== undefined ||
     status.incomingHexCastTimeMultiplier > 1 ||
-    status.redirectsConditionsToMinion
+    status.redirectsConditionsToMinion ||
+    status.foeSpellsFail ||
+    status.attacksAgainstMiss ||
+    status.damageReductionFromHexedSource !== undefined
   ) {
     roles.push("defence");
   }
@@ -172,7 +178,8 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
                 on === "bearer-creates-creature") &&
                 target === "bearer") ||
               target === "offender" ||
-              target === "created",
+              target === "created" ||
+              target === "hexed-foe",
           )
           .flatMap(({ effects, target }) =>
             effects.flatMap((effect) =>

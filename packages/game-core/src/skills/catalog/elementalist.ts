@@ -3363,6 +3363,62 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.elemental-flame",
+    name: "Elemental Flame",
+    gwId: 1663,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP (#1951): "For 5...20 seconds, whenever you apply an Elemental hex
+    // to a foe, that foe is set on fire for 1...2 seconds": 17 s.
+    effects: [{ kind: "apply-status", statusId: "elemental-flame", durationSeconds: 17 }],
+  },
+  {
+    id: "elementalist.mist-form",
+    name: "Mist Form",
+    gwId: 236,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP (#1951): "For 10...45 seconds, you take 33% less damage from foes
+    // under the effect of Water Magic hexes. Whenever you cast an elemental
+    // spell, all non-spirit allies in earshot are healed for 50...250% of
+    // the Energy cost of the spell": 38 s.
+    effects: [{ kind: "apply-status", statusId: "mist-form", durationSeconds: 38 }],
+  },
 ];
 
 /**

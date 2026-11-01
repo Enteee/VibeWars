@@ -409,6 +409,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "glyph-of-energy": icon("glyph-of-energy"),
   "ritual-lord": icon("ritual-lord"),
   "experts-dexterity": icon("experts-dexterity"),
+  // PvP forms (#1951).
+  "shadow-form": icon("shadow-form"),
+  "elemental-flame": icon("elemental-flame"),
+  "mist-form": icon("mist-form"),
 };
 
 const GAP = 2;
