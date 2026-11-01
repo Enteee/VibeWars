@@ -5217,7 +5217,7 @@ export class MatchSimulation {
     const skillHit: SkillHit = {
       kind: "attack",
       skill: resolution.skill,
-      blow: skillBlow(resolution.skill, record.combatant),
+      blow: skillBlow(resolution.skill, record.combatant, this.#participants),
       next: nextAttackSkillOf(record.combatant),
       own: resolution.own,
       strikes: 1,

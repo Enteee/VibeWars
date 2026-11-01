@@ -142,7 +142,13 @@ export type CountRule =
       readonly categories: readonly StatusCategory[];
     }
   /** Living foes of the caster within `radius` of the caster. */
-  | { readonly kind: "foes-within"; readonly radius: number };
+  | { readonly kind: "foes-within"; readonly radius: number }
+  /**
+   * The skills of `attributeId` on the bar of the caster's living owner,
+   * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
+   * your Beast Mastery skills that is recharging". No owner: 0.
+   */
+  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -255,12 +261,17 @@ export interface EnergyGainToCaster {
   readonly perUsedSkillEnergy?: true;
   /** More for each of a count, in the same gain (#1760): Channeling's. */
   readonly per?: PerCount;
+  /**
+   * `owner`: the living owner of the caster, a pet, gains it, as
+   * Scavenger Strike's "you gain 3...15 Energy" (#1957). No owner: nobody.
+   */
+  readonly recipient?: "owner";
   readonly toTarget?: never;
 }
 
 export interface EnergyGainToTarget extends Omit<
   EnergyGainToCaster,
-  "perEnergyLost" | "perOwnCreatureWithin" | "toTarget"
+  "perEnergyLost" | "perOwnCreatureWithin" | "recipient" | "toTarget"
 > {
   /**
    * The effect's target gains it, not its caster (#1485): in a status
@@ -270,6 +281,7 @@ export interface EnergyGainToTarget extends Omit<
   readonly toTarget: true;
   readonly perEnergyLost?: never;
   readonly perOwnCreatureWithin?: never;
+  readonly recipient?: never;
 }
 
 /**
@@ -277,11 +289,14 @@ export interface EnergyGainToTarget extends Omit<
  * skill that is not recharging, each capped at its cost, as a hit's
  * strike (#977). `perTarget`: once for each target the skill hit, as
  * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ * `recipient: "owner"`: the caster's living owner, a pet's, gains them
+ * instead, as Ferocious Strike's (#1957); no owner, nobody.
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
   readonly strikes: number;
   readonly perTarget?: true;
+  readonly recipient?: "owner";
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
@@ -1536,6 +1551,12 @@ export interface AttackSkillRule {
    * +10 damage". One damage number, not a second hit. `undefined`: none.
    */
   readonly conditionalBonus: ConditionalBonus | undefined;
+  /**
+   * More bonus for each of a count, read as the skill's blow is made
+   * (#1957), capped at its `max`: Enraged Lunge's "+3...23 damage for
+   * each of your Beast Mastery skills that is recharging". Absent: none.
+   */
+  readonly bonusPer?: PerCount;
   /**
    * When a blow of it is a critical hit whatever the roll (#1315):
    * `"always"`, Critical Strike's "results in a critical hit"; a
