@@ -89,6 +89,7 @@ export async function collect(root) {
   const company = {
     claude: claudeIdentity(p.claude),
     github: githubIdentity(p.gh),
+    runners: githubIdentity(p.runnersGh),
     push: pushIdentity(p.sshKey),
     telegram: await telegramIdentity(p.telegram),
     group: await telegramGroupIdentity(p.telegram, p.telegramChat),
@@ -112,6 +113,12 @@ export async function collect(root) {
       identity: company.push,
       stored: p.ssh,
       operators: isOperators(company.push.who, operatorGithub.who),
+    },
+    {
+      name: "github runners",
+      identity: company.runners,
+      stored: p.runnersGh,
+      operators: isOperators(company.runners.who, operatorGithub.who),
     },
     {
       name: "telegram",

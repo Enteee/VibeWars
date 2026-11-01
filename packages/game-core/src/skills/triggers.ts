@@ -160,7 +160,8 @@ export function fireCreationTriggers(
  * the hexes its death ended. Damage or life steal from a foe (#1022)
  * fires what answered it at that foe, and a block (#1329) what answered
  * it at the attacker, and an interrupt (#1473) what answered it at the
- * interrupter. A hex or an enchantment gained (#1403) fires what
+ * interrupter. A heal by a skill (#1913) fires what answered it at
+ * the healer. A hex or an enchantment gained (#1403) fires what
  * answered it, toward whoever put it on, and a hex a status broke costs
  * its caster that status's damage. An enchantment lost (#1437) fires what
  * answered it when it went, and a condition lost (#1475) what answered
@@ -214,6 +215,7 @@ export function fireChangeTriggers(
       );
     case "took-damage-from-foe":
     case "hit-by-attack":
+    case "healed-by-skill":
     case "blocked":
     case "interrupted":
     case "health-dropped":
@@ -287,7 +289,8 @@ export function fireDeathTriggers(
  * or on itself, or (#1022) the bearer on `otherId`, the foe that set it
  * off, or (#1316) the creature it created, or (#1403) the source on
  * `otherId`, who put the gained hex or enchantment on the bearer, or (#1789)
- * the source on `otherId`, the offender. `undefined` when one of them is
+ * the source on `otherId`, the offender, or (#1913) the source on
+ * `otherId`, the healer, only a foe of its own. `undefined` when one of them is
  * gone, or an offender's bearer is dead: then it fires nothing.
  */
 function parties(
@@ -310,6 +313,10 @@ function parties(
     case "gained-source":
     case "source-on-offender":
       return other === undefined || other.dead ? undefined : { caster: source, target: other };
+    case "healer":
+      return other === undefined || other.dead || other.team === source.team
+        ? undefined
+        : { caster: source, target: other };
   }
 }
 

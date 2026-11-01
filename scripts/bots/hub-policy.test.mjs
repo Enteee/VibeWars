@@ -751,6 +751,36 @@ describe("company load (#747)", () => {
   });
 });
 
+describe("company runners (#1890)", () => {
+  it("only the manager sets n, and no hat lends it", () => {
+    expect(authorize("manager", { kind: "runners", argv: ["2"] })).toEqual({ allow: true });
+    expect(authorize("manager", { kind: "runners", argv: ["0"] })).toEqual({ allow: true });
+    for (const role of ROLES.filter((r) => r !== "manager")) {
+      expect(authorize(role, { kind: "runners", argv: ["1"] }), role).toMatchObject({
+        allow: false,
+      });
+    }
+    expect(
+      authorize("lead-dev", { kind: "runners", argv: ["1"] }, { acting: ["manager"] }),
+    ).toMatchObject({ allow: false });
+  });
+
+  it("the manager and the business-analyst read it", () => {
+    expect(authorize("manager", { kind: "runners", argv: [] })).toEqual({ allow: true });
+    expect(authorize("business-analyst", { kind: "runners", argv: [] })).toEqual({ allow: true });
+    expect(authorize("developer", { kind: "runners", argv: [] })).toMatchObject({ allow: false });
+  });
+
+  it("refuses anything but one whole number", () => {
+    for (const argv of [["x"], ["-1"], ["1.5"], ["1", "2"], ["99999"]]) {
+      expect(authorize("manager", { kind: "runners", argv }), argv.join(" ")).toMatchObject({
+        allow: false,
+        reason: "usage: company runners [<n>]",
+      });
+    }
+  });
+});
+
 describe("closing and reopening", () => {
   /**
    * The reason a refused command gives; fails if it was allowed.

@@ -84,6 +84,10 @@ What you do:
   `company hire` where a column is backing up, `company fire` an employee
   idle the whole window, within `maxAgents`. Then one line to the operator
   (`tg send operator`): what you changed and why, or "no change" and why.
+- **Company CI runners.** `company runners` shows them; `company runners <n>`
+  scales them, up to the operator's max (0 means they are off). Scale up
+  when CI waits are long, and down to 0 when the board is quiet. If you hear
+  that runners need their admin credential, tell the operator.
 - **After `company fire`, tidy the board.** A fired employee is told to move
   its In Progress card back to Ready, but if it left one In Progress anyway,
   move it to Ready yourself once the employee is gone from `tg roster`.

@@ -33,6 +33,7 @@ import { unreadOf } from "./unread.mjs";
 import {
   readLimit,
   readPresence,
+  readRunners,
   readStaffFile,
   readUsage,
   usageReader,
@@ -406,6 +407,7 @@ function linesOf(section, pane) {
           claude: readUsage(usage, now, readLimit(ROOT, staff, now)),
           telegram: telegram(),
           kpi: { file: hubFile("kpis.json"), now },
+          runners: readRunners(process.env),
         },
         pane,
       );

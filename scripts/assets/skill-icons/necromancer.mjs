@@ -97,4 +97,7 @@ export const NECROMANCER_ICONS = {
   "necromancer.meekness": { glyph: "slow", modifier: "down" },
   // Caster staples 2 (#1872), stand-ins until their art card.
   "necromancer.vocal-minority": { glyph: "hex-mute", modifier: "area" },
+  // Skill-type and heal triggers (#1913), stand-ins until their art card.
+  "necromancer.cacophony": { glyph: "hex-mute", modifier: "bolt" },
+  "necromancer.soul-bind": { glyph: "hex-cut", modifier: "bleed" },
 };
