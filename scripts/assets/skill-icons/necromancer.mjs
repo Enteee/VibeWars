@@ -111,4 +111,7 @@ export const NECROMANCER_ICONS = {
   "necromancer.taste-of-death": { glyph: "skull-heal" },
   "necromancer.wail-of-doom": { glyph: "bars-wail" },
   "necromancer.atrophy": { glyph: "bars-wilt" },
+  // Stand-ins for the enchantment party moves (#1975).
+  "necromancer.order-of-apostasy": { glyph: "skull-order", modifier: "down" },
+  "necromancer.jaundiced-gaze": { glyph: "eye", modifier: "down" },
 };

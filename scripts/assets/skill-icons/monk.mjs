@@ -104,4 +104,6 @@ export const MONK_ICONS = {
   "monk.martyr": { glyph: "draw-drops", modifier: "area" },
   "monk.empathic-removal": { glyph: "cleanse", modifier: "half" },
   "monk.divert-hexes": { glyph: "hex-cut", modifier: "up" },
+  // Stand-ins for the enchantment party moves (#1975).
+  "monk.air-of-enchantment": { glyph: "attune-air", modifier: "less" },
 };

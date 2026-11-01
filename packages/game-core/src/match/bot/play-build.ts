@@ -1,5 +1,7 @@
 import { AREA_IN_THE_AREA, RANGE_SPELL, RANGE_SPIRIT } from "../../distances.js";
+import { energyCostOf } from "../../skills/activation.js";
 import { getSkill } from "../../skills/catalog.js";
+import type { StatusId } from "../../skills/status.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
 import { swingProgress } from "../../skills/weapon-attack.js";
@@ -20,6 +22,7 @@ import {
   removesFromCaster,
   renewsSpirit,
   sacrificesTooMuch,
+  setupOf,
 } from "./skill-intent.js";
 
 /**
@@ -28,8 +31,8 @@ import {
  * foe's cast or else its swing, heal or protect the most hurt ally, step
  * away when hurt with a foe at hand, take
  * a hex or condition off an ally, raise a dead one, renew a spirit of
- * its own about to expire, use an offensive
- * skill on the team target, attack it with the weapon, and otherwise walk
+ * its own about to expire, put on a setup the moment calls for (#1975),
+ * use an offensive skill on the team target, attack it with the weapon, and otherwise walk
  * to the nearest foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
  * backing off would never end.
  *
@@ -64,6 +67,18 @@ const ESCAPE_THREAT_UNITS = AREA_IN_THE_AREA;
 
 /** How much longer than the interrupt itself a cast or a swing must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
+
+/** An enchantment at least this dear is worth Air of Enchantment first (#1975). */
+const AIR_WORTH_ENERGY = 10;
+
+/** Party members hitting enchanted foes that make Order of Apostasy worth it (#1975). */
+const ORDER_HITTERS = 2;
+
+/** Above this share of its own Health, a bot may pay Order of Apostasy's price (#1975). */
+const ORDER_HEALTH_FRACTION = 0.5;
+
+/** Energy a bot keeps for Dark Apostasy's price before casting it (#1975). */
+const DARK_APOSTASY_ENERGY = 10;
 
 /**
  * A guard walking back acts again within this of its post (#1222), or
@@ -215,6 +230,24 @@ function think(
     targetId,
     useSkillId: skill.id,
   });
+  const setups = bar.flatMap((skill) => {
+    const found = setupOf(skill);
+    return found === undefined ? [] : [{ skill, ...found }];
+  });
+  const bears = (id: string, statusId: StatusId): boolean =>
+    context.participants.find((other) => other.id === id)?.combatant.statuses.has(statusId) ??
+    false;
+  // Air of Enchantment (#1975) on the ally a dear enchantment is for,
+  // before it, unless it already bears one.
+  const airFirst = (enchantment: Skill, castOn: string): Skill | undefined =>
+    enchantment.type === "enchantment" &&
+    enchantment.area === undefined &&
+    energyCostOf(enchantment, self.combatant) >= AIR_WORTH_ENERGY
+      ? setups.find(
+          ({ skill, setup, statusId }) =>
+            setup === "cheaper-enchantments" && !bears(castOn, statusId) && mayUse(skill, castOn),
+        )?.skill
+      : undefined;
   // 1. Interrupt a cast it can still beat; with none worth it, a plain
   // swing (#1713). Only what the interrupt would land on, filter and
   // condition read (`interruptAimed`): never a spell interrupt at a signet.
@@ -272,7 +305,8 @@ function think(
           mayUse(held, held.target === "self" ? self.id : patient.id),
       );
       if (skill !== undefined) {
-        return use(skill, skill.target === "self" ? self.id : patient.id);
+        const castOn = skill.target === "self" ? self.id : patient.id;
+        return use(airFirst(skill, castOn) ?? skill, castOn);
       }
     }
   }
@@ -374,6 +408,28 @@ function think(
     // what it takes (#1928, #1954): Inspired Enchantment and Mirror of
     // Disenchantment at an enchanted one.
     const foe = context.participants.find((other) => other.id === targetId)?.combatant;
+    // 5a. A setup on itself the fight calls for (#1975): Dark Apostasy at
+    // an enchanted foe with Energy for its price, Order of Apostasy while
+    // the party hits enchanted foes and it has Health for its price.
+    const enchanted = (id: string | undefined): boolean =>
+      foes.some(
+        (other) => other.id === id && other.combatant.statuses.countByCategory("enchantment") > 0,
+      );
+    const hitters = allies.filter((member) => enchanted(member.combatant.attack?.targetId)).length;
+    const setup = setups.find(
+      ({ skill, setup, statusId }) =>
+        !self.combatant.statuses.has(statusId) &&
+        ((setup === "critical-strips" &&
+          enchanted(targetId) &&
+          self.combatant.energy >= DARK_APOSTASY_ENERGY) ||
+          (setup === "party-strips" &&
+            hitters >= ORDER_HITTERS &&
+            healthFraction(self) > ORDER_HEALTH_FRACTION)) &&
+        mayUse(skill, self.id),
+    );
+    if (setup !== undefined) {
+      return use(setup.skill, self.id);
+    }
     const copies = (held: Skill): boolean => {
       const category = takenOffFoe(held);
       return category === undefined || (foe?.statuses.countByCategory(category) ?? 0) > 0;

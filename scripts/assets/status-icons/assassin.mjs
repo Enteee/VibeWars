@@ -168,4 +168,12 @@ export const ASSASSIN_STATUS_ICONS = {
       `<circle cx="12" cy="7" r="3" ${stroke(c, 2)} stroke-dasharray="2 2"/>` +
       `<path d="M6 20c0-5 3-8 6-8s6 3 6 8" ${stroke(c, 2)} stroke-dasharray="2 2"/>`,
   ],
+  // Enchantment party moves (#1975), a stand-in until its art card.
+  // Enchantment: a star struck through, a critical hit that strips.
+  "dark-apostasy": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.4l-5.6 4.1 2.1-6.7-5.5-4h6.8z" ${stroke(c, 1.6)}/>` +
+      `<path d="M4 20L20 4" ${stroke(c, 2)}/>`,
+  ],
 };

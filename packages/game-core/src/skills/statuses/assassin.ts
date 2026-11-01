@@ -33,7 +33,9 @@ export type AssassinStatusId =
   | "dark-prison"
   | "shadow-walk"
   // PvP forms (#1951).
-  | "shadow-form";
+  | "shadow-form"
+  // Enchantment party moves (#1975).
+  | "dark-apostasy";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -238,5 +240,17 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.shadow-form",
       },
     ],
+  }),
+  // "For 3...17 seconds, every time you successfully land a critical hit,
+  // you remove one enchantment from your target. If you remove an
+  // enchantment in this way, you lose 10...3 Energy or Dark Apostasy ends"
+  // (#1975): 4 at rank 12.
+  "dark-apostasy": define("dark-apostasy", "Dark Apostasy", "enchantment", {
+    profession: "assassin",
+    onCriticalHit: {
+      effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      energyIfRemoved: 4,
+      skillId: "assassin.dark-apostasy",
+    },
   }),
 };

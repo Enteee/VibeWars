@@ -413,6 +413,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "shadow-form": icon("shadow-form"),
   "elemental-flame": icon("elemental-flame"),
   "mist-form": icon("mist-form"),
+  // Enchantment party moves (#1975).
+  "air-of-enchantment": icon("air-of-enchantment"),
+  "order-of-apostasy": icon("order-of-apostasy"),
+  "jaundiced-gaze": icon("jaundiced-gaze"),
+  "dark-apostasy": icon("dark-apostasy"),
 };
 
 const GAP = 2;

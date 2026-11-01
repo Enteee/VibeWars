@@ -41,7 +41,9 @@ export type MonkStatusId =
   // Caster staples 2 (#1872).
   | "vital-blessing"
   // Skill-type and heal triggers (#1913).
-  | "scribes-insight";
+  | "scribes-insight"
+  // Enchantment party moves (#1975).
+  | "air-of-enchantment";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -431,5 +433,11 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.scribes-insight",
       },
     ],
+  }),
+  // "For 4...10 seconds, enchantments cast on target other ally cost 10
+  // less Energy (minimum 1 Energy)" (#1975).
+  "air-of-enchantment": define("air-of-enchantment", "Air of Enchantment", "enchantment", {
+    profession: "monk",
+    enchantmentsOnBearerCostLess: 10,
   }),
 };

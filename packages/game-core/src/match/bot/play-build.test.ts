@@ -588,3 +588,34 @@ describe("play-build renews a spirit near its end (#1947)", () => {
     expect(askBot(ending(10, 2000), "r").useSkillId).toBeUndefined();
   });
 });
+
+describe("setups (#1975)", () => {
+  const DARK = "assassin.dark-apostasy";
+  const ORDER = "necromancer.order-of-apostasy";
+  const sim = (skillBar: string[]): MatchSimulation =>
+    match([
+      fighter("a", 0, WARRIOR, vec2(400, 400), { behaviour: undefined, skillBar }),
+      fighter("b", 0, WARRIOR, vec2(400, 440), { behaviour: undefined, skillBar: [] }),
+      fighter("foe", 1, WARRIOR, vec2(480, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+  const enchant = (fight: MatchSimulation): void => {
+    fight.get("foe")?.combatant.statuses.apply("vital-blessing", 30, "x");
+  };
+
+  it("casts Dark Apostasy only at an enchanted foe", () => {
+    const bare = sim([DARK]);
+    expect(askBot(bare, "a").useSkillId).toBeUndefined();
+    const fight = sim([DARK]);
+    enchant(fight);
+    expect(askBot(fight, "a")).toMatchObject({ useSkillId: DARK, targetId: "a" });
+  });
+
+  it("casts Order of Apostasy once two of the party hit an enchanted foe", () => {
+    const fight = sim([ORDER]);
+    enchant(fight);
+    fight.requestAttack("a", "foe");
+    expect(askBot(fight, "a").useSkillId).toBeUndefined();
+    fight.requestAttack("b", "foe");
+    expect(askBot(fight, "a")).toMatchObject({ useSkillId: ORDER, targetId: "a" });
+  });
+});

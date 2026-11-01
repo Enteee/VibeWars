@@ -245,4 +245,12 @@ export const MONK_STATUS_ICONS = {
     (c) =>
       `<path d="M18 3L8 13l-2 5 5-2L21 6z" fill="${c}"/>` + `<path d="M4 21h8" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment party moves (#1975), a stand-in until its art card.
+  // Enchantment: a minus over a spark, enchantments on the bearer cheaper.
+  "air-of-enchantment": [
+    "enchantment",
+    (c) =>
+      `<path d="M6 6h12" ${stroke(c, 2.4)}/>` +
+      `<path d="M12 10l1.8 4.2L18 16l-4.2 1.8L12 22l-1.8-4.2L6 16l4.2-1.8z" fill="${c}"/>`,
+  ],
 };

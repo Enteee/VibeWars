@@ -491,6 +491,17 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.refreshesOnCritical) {
     parts.push("refreshes every time you land a critical hit");
   }
+  if (definition.onCriticalHit !== undefined) {
+    const { effects, energyIfRemoved } = definition.onCriticalHit;
+    parts.push(
+      ...effects.flatMap((effect) =>
+        describeEffects(effect, new Map()).map(
+          ({ text }) => `every time you land a critical hit: ${lowerFirst(text)} from your target`,
+        ),
+      ),
+      `if one is removed, you lose ${String(energyIfRemoved)} Energy or it ends`,
+    );
+  }
   if (definition.endsAfterAttacks !== undefined) {
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
@@ -525,6 +536,14 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
         definition.category !== "weapon-spell",
       ),
     );
+    // Order of Apostasy's price (#1975), the caster's.
+    const price = definition.onAttackHit.sourceLosesPerRemoved;
+    if (price !== undefined) {
+      const name = getProfession(price.profession).name;
+      parts.push(
+        `for each ${name} enchantment removed, its caster loses ${String(price.percentOfMax)}% maximum Health`,
+      );
+    }
   }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
@@ -758,6 +777,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const times = String(definition.incomingHexCastTimeMultiplier);
     parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
   }
+  if (definition.enchantmentsOnBearerCostLess !== 0) {
+    const less = String(definition.enchantmentsOnBearerCostLess);
+    parts.push(`enchantments cast on the bearer cost ${less} less Energy, minimum 1`);
+  }
   if (definition.endsWhenBearerHits) {
     parts.push("ends if the bearer hits with an attack");
   }
@@ -866,6 +889,18 @@ function describeAttackHits(
       );
     } else if (effect.kind === "damage") {
       parts.push(`foes your ${attacks} hit take ${riderDamage(effect)}`);
+    } else if (
+      effect.kind === "remove-status" &&
+      effect.from !== "caster" &&
+      effect.count !== "all" &&
+      effect.statusId === undefined &&
+      effect.perRemoved === undefined
+    ) {
+      // Order of Apostasy's strip (#1975).
+      const count = countAt(effect.count, new Map());
+      parts.push(
+        `foes your ${attacks} hit lose ${String(count)} ${categoryNoun(count, effect.category)}`,
+      );
     } else if (
       effect.kind === "splash" &&
       effect.hits === "foes" &&
@@ -1615,6 +1650,7 @@ function describeOwnSkillModifier({
   energyFloor,
   energySurcharge,
   activationMultiplier,
+  activationSecondsLess,
   rechargeFaster,
   rechargeSlower,
   durationMultiplier,
@@ -1635,6 +1671,9 @@ function describeOwnSkillModifier({
     activationMultiplier === 1
       ? undefined
       : `${verb("cast", "casts")} ${percent(1 - activationMultiplier)} ${activationMultiplier < 1 ? "faster" : "slower"}`,
+    activationSecondsLess === 0
+      ? undefined
+      : `${verb("cast", "casts")} ${seconds(activationSecondsLess)} faster`,
     rechargeFaster === 0
       ? undefined
       : `${verb("recharge", "recharges")} ${percent(rechargeFaster)} faster`,
