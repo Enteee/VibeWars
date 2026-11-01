@@ -16,6 +16,9 @@ import {
   searchingLabel,
   stayButton,
   streakLine,
+  requeuedSince,
+  teamEndAction,
+  teamEndLine,
   versusTeams,
   waitedLabel,
 } from "./queue-screen.js";
@@ -203,6 +206,36 @@ describe("endedLines (#881)", () => {
       status: "Defeat (morale)",
       action: "ended",
     });
+  });
+});
+
+describe("teamEndAction and teamEndLine (#1997)", () => {
+  it("queues a party's winners again and sends its losers to the menu", () => {
+    expect(teamEndAction(true, true)).toBe("requeue");
+    expect(teamEndAction(false, true)).toBe("menu");
+  });
+
+  it("takes a coded lobby's players back to it, won or lost", () => {
+    expect(teamEndAction(true, false)).toBe("lobby");
+    expect(teamEndAction(false, false)).toBe("lobby");
+  });
+
+  it("counts down to each, with its button", () => {
+    expect(teamEndLine("requeue", 20)).toEqual({ text: "Next match in 20 s", button: "Leave" });
+    expect(teamEndLine("menu", 3)).toEqual({ text: "Back to menu in 3 s", button: "Now" });
+    expect(teamEndLine("lobby", 1)).toEqual({ text: "Back to lobby in 1 s", button: "Now" });
+  });
+});
+
+describe("requeuedSince (#1997)", () => {
+  it("catches a member up on a queue its host started while it was still in the match", () => {
+    expect(requeuedSince({ phase: "queued", queueNonce: "next" }, "played")).toBe(true);
+  });
+
+  it("leaves a member out before its host to the host's own requeue", () => {
+    // Its host is still in the played match's queue, or out of it and not queued again.
+    expect(requeuedSince({ phase: "queued", queueNonce: "played" }, "played")).toBe(false);
+    expect(requeuedSince({ phase: "waiting", queueNonce: null }, "played")).toBe(false);
   });
 });
 

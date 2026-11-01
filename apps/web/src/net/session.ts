@@ -345,6 +345,8 @@ export async function joinLobbyByCode(
 export const QUEUED_COUNTDOWN_SECONDS = 5;
 /** How long a queued match's result stays on the HUD before the queue's ended view (#881). */
 export const QUEUED_RESULT_SECONDS = 4;
+/** How long a team match's result stays, counting down to its next match or the menu (#1997). */
+export const TEAM_RESULT_SECONDS = 20;
 /** How long the ended view offers *Stay together* to a winning team (#882). */
 export const STAY_TOGETHER_SECONDS = 15;
 /**

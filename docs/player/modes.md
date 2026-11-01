@@ -204,3 +204,8 @@ joins the queue.
 
 Anyone who leaves during the Team Lobby is replaced by a bot, so the
 side keeps its size. Someone joining then only watches.
+
+After a queued team match, its winners queue again on their own after
+20 seconds, and its losers (a draw too) return to the menu; a coded
+lobby's match returns everyone to the lobby. A button under the result
+skips the wait, or, for winners, leaves without queueing.

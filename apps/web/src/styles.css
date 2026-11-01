@@ -3511,6 +3511,25 @@ body {
   color: var(--ink-dim);
 }
 
+/* Over the result banner after a team match (#1997): the countdown to what
+   comes next, and its one button, which takes clicks the banner does not. */
+.hud-end-line {
+  position: absolute;
+  top: calc(38% - 3.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  pointer-events: auto;
+}
+
 /* In the match, under the result banner; it takes no clicks. */
 .hud-summary {
   position: absolute;
