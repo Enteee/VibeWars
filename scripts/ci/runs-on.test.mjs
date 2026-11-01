@@ -26,23 +26,34 @@ const HOSTED_ONLY = ["codeql.yml", "dependency-review.yml", "audit.yml", "pages.
 const files = fs.readdirSync(WORKFLOWS).filter((n) => n.endsWith(".yml") || n.endsWith(".yaml"));
 
 /** The text before `jobs:` and each job's block, keyed by job id. */
+/**
+ * @param {string} text
+ * @returns {{ head: string, jobs: Record<string, string> }}
+ */
 function split(text) {
   const at = text.search(/^jobs:\s*$/m);
   const head = text.slice(0, at);
   const body = text.slice(at).replace(/^jobs:\s*\n/, "");
+  /** @type {Record<string, string>} */
   const jobs = {};
-  const parts = body.split(/^  ([\w-]+):\s*$/m);
-  for (let i = 1; i < parts.length; i += 2) jobs[parts[i]] = parts[i + 1];
+  const parts = body.split(/^ {2}([\w-]+):\s*$/m);
+  for (let i = 1; i < parts.length; i += 2) jobs[String(parts[i])] = String(parts[i + 1]);
   return { head, jobs };
 }
 
-/** The indented lines under a top-level or job-level `permissions:` key. */
+/**
+ * The indented lines under a top-level or job-level `permissions:` key.
+ * @param {string} text
+ * @param {string} indent
+ * @returns {string | null}
+ */
 function permissionLines(text, indent) {
-  const m = text.match(new RegExp(`^${indent}permissions:(.*)\\n((?:${indent} +.*\\n?)*)`, "m"));
-  return m ? m[1] + "\n" + m[2] : null;
+  const m = new RegExp(`^${indent}permissions:(.*)\\n((?:${indent} +.*\\n?)*)`, "m").exec(text);
+  return m ? `${m[1] ?? ""}\n${m[2] ?? ""}` : null;
 }
 
 /** Every permission is read or none; anything else could write. */
+/** @param {string | null} perms */
 function readOnly(perms) {
   if (perms === null) return false;
   if (/\bwrite/.test(perms)) return false;
@@ -56,6 +67,7 @@ const workflows = Object.fromEntries(
   files.map((name) => [name, split(fs.readFileSync(path.join(WORKFLOWS, name), "utf8"))]),
 );
 
+/** @type {[string, string, string][]} */
 const eligible = [];
 for (const [name, { jobs }] of Object.entries(workflows)) {
   for (const [id, block] of Object.entries(jobs)) {
@@ -78,7 +90,7 @@ describe("company runner selection", () => {
   });
 
   it.each(eligible)("%s %s holds no secret and no write permission", (name, id, block) => {
-    const { head } = workflows[name];
+    const head = workflows[name]?.head ?? "";
     const jobPerms = permissionLines(block, "    ");
     const effective = jobPerms ?? permissionLines(head, "");
     expect(readOnly(effective), "explicit read-only permissions").toBe(true);
@@ -94,9 +106,11 @@ describe("company runner selection", () => {
   });
 
   it("names exactly the events the job-started hook allows", () => {
-    const events = JSON.parse(
+    /** @type {unknown} */
+    const raw = JSON.parse(
       fs.readFileSync(path.join(ROOT, "scripts", "bots", "runner-events.json"), "utf8"),
     );
+    const events = /** @type {{ any: string[], sameRepository: string[] }} */ (raw);
     const allowed = [...events.any, ...events.sameRepository].sort();
     const named = [
       ...new Set([...CANONICAL.matchAll(/github\.event_name == '(\w+)'/g)].map((m) => m[1])),
