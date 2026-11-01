@@ -4,9 +4,11 @@ name: e2e repeat
 # on any failure (#216). A `plan` job packs whole specs into jobs (#1566),
 # so every spec gets exactly ten runs across the jobs and a job holds about
 # 1500 s of runs (#1884): the plan weighs each spec by its seconds in
-# scripts/ci/e2e-durations.json, so a job runs ~25 min plus setup, inside the
-# 60-minute cap (hosted runners take ~1.6x the recorded seconds, #2114), and at most 6 jobs wait on runners. A PR too big for 6
-# jobs (a spec over ~750 s cannot repeat ten times in 6) fails `plan` with a refusal instead of timing out. Playwright's own
+# scripts/ci/e2e-durations.json, so a job runs ~25 min recorded, ~40 on
+# hosted runners (~1.6x, #2114), plus setup, inside the 60-minute cap, and
+# at most 6 jobs wait on runners. A PR too big for 6 jobs (a spec over
+# ~750 s cannot repeat ten times in 6) fails `plan` with a refusal instead
+# of timing out. Playwright's own
 # --shard is not used: it splits by test count and can leave a shard empty.
 # A 1-in-10 flake survives ten runs 35% of the time, so qa-tester's
 # flake-check skill stays: this is the floor, not a replacement.
@@ -97,8 +99,10 @@ jobs:
       # One entry per job: { job, specs, repeat }, from the plan job.
       matrix:
         include: ${{ fromJSON(needs.plan.outputs.matrix) }}
-    # Two runs of a few specs take minutes. Without a cap, a hang would sit
-    # pending for six hours, and hubd blocks the merge while it does.
+    # 1500 recorded seconds x ~1.6 on hosted runners is ~40 min of tests, plus
+    # ~5 min of devenv/cache setup and the build: 60 leaves margin, and a hang
+    # still ends within the hour instead of sitting pending for six, which
+    # hubd blocks the merge on (#2114).
     timeout-minutes: 60
     env:
       SPECS: ${{ matrix.specs }}
