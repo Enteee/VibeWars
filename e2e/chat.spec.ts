@@ -28,9 +28,9 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
   const { context, pages } = await openPeers(browser, 2);
   const [host, guest] = pages as [Page, Page];
   await openMenu(host, "Ann");
-  const invite = await hostLobby(host);
+  const code = await hostLobby(host);
   await openMenu(guest, "Bob");
-  await joinFriend(guest, invite);
+  await joinFriend(guest, code);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: "join team 2" }).click();
 
