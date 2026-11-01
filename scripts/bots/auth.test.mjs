@@ -99,7 +99,7 @@ function world({
 }) {
   const root = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "auth-")), "creds");
   homes.push(path.dirname(root));
-  /** @type {{ command: string, args: string[], env: Record<string, string> }[]} */
+  /** @type {{ command: string, args: string[], env: Record<string, string>, input?: string }[]} */
   const spawned = [];
   /** @type {string[]} */
   const printed = [];
@@ -116,8 +116,8 @@ function world({
     root,
     tty,
     env: { PATH: "/bin", HOME: "/home/x", GH_TOKEN: TOKEN, ANTHROPIC_API_KEY: TOKEN },
-    spawn: (command, args, env) => {
-      spawned.push({ command, args, env });
+    spawn: (command, args, env, input) => {
+      spawned.push({ command, args, env, input });
       return Promise.resolve(
         act?.(command, args, root) ?? { code: 0, signal: null, missing: false },
       );
@@ -133,6 +133,7 @@ function world({
       github: checker("github"),
       push: checker("push"),
       telegram: checker("telegram"),
+      runners: checker("runners"),
     },
     get: (url) => {
       urls.push(url);
@@ -304,6 +305,44 @@ describe("auth", () => {
     expect(screen).not.toContain("PRIVATE");
     expect(screen).toContain("ssh-ed25519 AAAAPUBLIC vibewars-company");
     expect(screen).toContain("while signed in as co");
+  });
+
+  it("signs the runners' token in only when named, into its own dir, on stdin (#1890)", async () => {
+    const signed = rows({
+      claude: ok("c"),
+      "github api": ok("co"),
+      "github push": ok("co"),
+      telegram: ok("@vw"),
+      "telegram group": ok("VW"),
+    });
+    const runnersRow = (/** @type {Identity} */ identity) => ({
+      name: "github runners",
+      identity,
+      stored: "/c/runners-gh",
+      operators: null,
+    });
+    const plain = world({ tables: [[...signed, runnersRow(NONE)]] });
+    expect(await auth([], plain.deps)).toBe(0);
+    expect(plain.spawned).toEqual([]);
+
+    const w = world({
+      tables: [
+        [...signed, runnersRow(NONE)],
+        [...signed, runnersRow(ok("co"))],
+      ],
+      checks: { runners: [ok("co")] },
+      answers: [TOKEN],
+    });
+    expect(await auth(["runners"], w.deps)).toBe(0);
+    expect(w.spawned).toHaveLength(1);
+    const [gh] = w.spawned;
+    expect(gh?.command).toBe("gh");
+    expect(gh?.args).toContain("--with-token");
+    expect(gh?.args.join(" ")).not.toContain(TOKEN);
+    expect(gh?.input).toBe(`${TOKEN}\n`);
+    expect(gh?.env.GH_CONFIG_DIR).toBe(path.join(w.root, "runners-gh"));
+    expect(gh?.env.GH_TOKEN).toBeUndefined();
+    expect(w.printed.join("\n")).not.toContain(TOKEN);
   });
 
   it("writes no telegram token that getMe refuses", async () => {

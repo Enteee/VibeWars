@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * The hub window (#23): hubd on top, the supervisor below, each under
- * run-forever, which shows its output, restarts it whenever it exits and
- * tells everyone if it crash-loops. This is the only way either daemon
- * starts.
+ * The hub window (#23): hubd on top, the supervisor below, and the runner
+ * supervisor (#1890) below that, each under run-forever, which shows its
+ * output, restarts it whenever it exits and tells everyone if it
+ * crash-loops. This is the only way any of them starts.
  *
  *   hub-window.mjs open    open it at index 99, replacing whatever is there
  *   hub-window.mjs check   exit 0 if window 99 is the hub window, 1 if not
@@ -97,6 +97,17 @@ export function openHubWindow(tmux, session) {
     `VIBEWARS_LLC_RESTART=${required("VIBEWARS_LLC_RESTART")}`,
     `VIBEWARS_CLAUDE_BOXES=${required("VIBEWARS_CLAUDE_BOXES")}`,
     `VIBEWARS_TMUX=${tmux}`,
+    // The runner supervisor's config (#1890); hubd reads the max.
+    ...[
+      "VIBEWARS_MAX_RUNNERS",
+      "VIBEWARS_RUNNER_CPUS",
+      "VIBEWARS_RUNNER_MEMORY_GIB",
+      "VIBEWARS_RUNNER_TASKS_MAX",
+      "VIBEWARS_RUNNER_SCRATCH",
+    ].flatMap((name) => {
+      const value = process.env[name];
+      return value === undefined ? [] : [`${name}=${value}`];
+    }),
     `PATH=${uniquePath(process.env.PATH ?? "")}`,
   ].flatMap((pair) => ["-e", pair]);
   const daemon = (/** @type {string} */ name) =>
@@ -122,8 +133,21 @@ export function openHubWindow(tmux, session) {
   if (supervisor.code !== 0) {
     throw new Error("could not open the supervisor's pane in the hub window");
   }
+  // Where the runners' token is: its pane alone is told, never hubd's.
+  const credentials = process.env.VIBEWARS_CREDENTIALS;
+  const runners = run(tmux, [
+    "split-window",
+    ...["-v", "-l", "25%", "-P", "-F", "#{pane_id}", "-t", supervisor.stdout.trim(), "-c", root],
+    ...env,
+    ...(credentials === undefined ? [] : ["-e", `VIBEWARS_CREDENTIALS=${credentials}`]),
+    daemon("runner-supervisor"),
+  ]);
+  if (runners.code !== 0) {
+    throw new Error("could not open the runner supervisor's pane in the hub window");
+  }
   run(tmux, ["select-pane", "-t", hubdPane, "-T", "HUBD"]);
   run(tmux, ["select-pane", "-t", supervisor.stdout.trim(), "-T", "SUPERVISOR"]);
+  run(tmux, ["select-pane", "-t", runners.stdout.trim(), "-T", "RUNNERS"]);
   // The name is how `check` finds it: nothing may rename it.
   for (const [option, value] of [
     ["automatic-rename", "off"],

@@ -25,6 +25,7 @@ const noNudges = { schedule: [], since: null, sent: new Map(), unread: new Map()
 const telegramUp = { down: false, lastSeen: 0, now: 0 };
 /** @type {import("./dashboard-view.mjs").CompanyFacts["kpi"]} */
 const noKpi = { file: null, now: 0 };
+const noRunners = { status: null, max: 0 };
 /** @typedef {{ state: "up" | "stale" | "down" | "crash-looping", line: string }} HubLine */
 
 const COLUMNS = ["Backlog", "Ready", "In Progress", "In Review", "QA", "Done"];
@@ -429,6 +430,7 @@ describe("companyLines", () => {
         claude: null,
         telegram: telegramUp,
         kpi: noKpi,
+        runners: noRunners,
       },
       { rows: 30, width: 40 },
     ).map(plain);
@@ -440,6 +442,44 @@ describe("companyLines", () => {
     for (const line of lines) {
       expect(columnsOf(line)).toBeLessThanOrEqual(40);
     }
+  });
+
+  it("shows the runners online out of the target, busy and max, and the last reason (#1890)", () => {
+    /** @param {import("./dashboard-view.mjs").CompanyFacts["runners"]} runners */
+    const linesOf = (runners) =>
+      companyLines(
+        {
+          roles,
+          live: new Set(["manager"]),
+          stale: new Map(),
+          staff: staffFacts({ manager: {} }),
+          budget,
+          hub,
+          reboot: null,
+          build: null,
+          claude: null,
+          telegram: telegramUp,
+          kpi: noKpi,
+          runners,
+        },
+        { rows: 40, width: 60 },
+      ).map(plain);
+    expect(linesOf(noRunners)).toContain("runners: not started (max 0)");
+    const lines = linesOf({
+      status: {
+        at: 1,
+        target: 2,
+        max: 3,
+        runners: [{ name: "a", started: 1, busy: true }],
+        variable: true,
+        reason: "not starting a runner: host memory is short",
+        alert: null,
+      },
+      max: 3,
+    });
+    const at = lines.indexOf("runners: 1/2 (busy 1, max 3)");
+    expect(at).toBeGreaterThan(0);
+    expect(lines[at + 1]).toBe("  not starting a runner: host memory is short");
   });
 
   it("paints the hub line red unless hubd is up (#23)", () => {
@@ -458,6 +498,7 @@ describe("companyLines", () => {
           claude: null,
           telegram: telegramUp,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows: 30, width: 80 },
       ).find((line) => plain(line).startsWith("hub "));
@@ -481,6 +522,7 @@ describe("companyLines", () => {
           claude: null,
           telegram,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows: 30, width: 80 },
       );
@@ -507,6 +549,7 @@ describe("companyLines", () => {
         claude: null,
         telegram: telegramUp,
         kpi: noKpi,
+        runners: noRunners,
       },
       { rows: 30, width: 72 },
     ).map(plain);
@@ -548,6 +591,7 @@ describe("companyLines", () => {
         claude,
         telegram: telegramUp,
         kpi: noKpi,
+        runners: noRunners,
       },
       { rows: 40, width: 72 },
     ).map(plain);
@@ -607,6 +651,7 @@ describe("companyLines", () => {
         claude,
         telegram: telegramUp,
         kpi: noKpi,
+        runners: noRunners,
       },
       { rows: 40, width: 72 },
     );
@@ -664,6 +709,7 @@ describe("companyLines", () => {
           },
           telegram: telegramUp,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows: 60, width: 120 },
       );
@@ -794,6 +840,7 @@ describe("companyLines", () => {
           claude: null,
           telegram: telegramUp,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows: 60, width: 160 },
       );
@@ -902,6 +949,7 @@ describe("companyLines", () => {
         claude: null,
         telegram: telegramUp,
         kpi: noKpi,
+        runners: noRunners,
       },
       { rows: 4, width: 40 },
     );
@@ -931,6 +979,7 @@ describe("companyLines", () => {
           claude: null,
           telegram: telegramUp,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows: 40, width },
       );
@@ -1103,6 +1152,7 @@ describe("companyLines", () => {
           claude: null,
           telegram: telegramUp,
           kpi: { file, now },
+          runners: noRunners,
         },
         { rows: 60, width },
       );
@@ -1211,6 +1261,7 @@ describe("companyLines", () => {
           claude: null,
           telegram: telegramUp,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows: 30, width: 80 },
       );
@@ -1265,6 +1316,7 @@ describe("companyLines", () => {
           claude: null,
           telegram: telegramUp,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows, width },
       ).map(plain);
@@ -1322,6 +1374,7 @@ describe("companyLines", () => {
           claude: null,
           telegram: telegramUp,
           kpi: noKpi,
+          runners: noRunners,
         },
         { rows: 30, width: 80 },
       );
@@ -1364,6 +1417,7 @@ describe("companyLines", () => {
             claude: null,
             telegram: telegramUp,
             kpi: noKpi,
+            runners: noRunners,
           },
           { rows: 30, width: 200 },
         ).map(plain);

@@ -13,6 +13,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   PROXY_DIR,
+  lifelineFd,
   parseJitconfig,
   parseRunnerStore,
   removeScratch,
@@ -230,6 +231,13 @@ describe("parseRunnerStore and parseJitconfig", () => {
     expect(parseJitconfig("ZXhhbXBsZQ==\n")).toBe("ZXhhbXBsZQ==");
     for (const text of ["", "a b", "--help", "$(id)"]) {
       expect(() => parseJitconfig(text), text).toThrow(/not base64/);
+    }
+  });
+
+  it("takes a lifeline fd above stdin, stdout and stderr only", () => {
+    expect(lifelineFd("3")).toBe(3);
+    for (const value of ["0", "1", "2", "-1", "3.5", "x"]) {
+      expect(() => lifelineFd(value), value).toThrow(/--lifeline/);
     }
   });
 });
