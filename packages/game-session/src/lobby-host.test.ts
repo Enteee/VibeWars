@@ -36,9 +36,9 @@ import {
   type Member,
   type TestLobby,
 } from "./lobby-harness.test-support.js";
-import { canStart } from "./lobby-host.js";
+import { canStart, type MatchPlan } from "./lobby-host.js";
 import { cryptoTurns, settle, until } from "./match-harness.test-support.js";
-import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -947,8 +947,13 @@ describe("a Team Lobby (#1458)", () => {
     teams: readonly (0 | 1 | null)[],
     random: () => number = draws(),
     mode?: LobbyMode,
+    startMatch?: (plan: MatchPlan) => MatchHost | undefined,
   ): Promise<{ lobby: TestLobby; members: Member[] }> {
-    const lobby = await openLobby({ teamLobby: true, random });
+    const lobby = await openLobby({
+      teamLobby: true,
+      random,
+      ...(startMatch === undefined ? {} : { startMatch }),
+    });
     const guests: Member[] = [];
     for (const name of names) {
       guests.push(await lobby.join(name));
@@ -1602,6 +1607,43 @@ describe("a Team Lobby (#1458)", () => {
       ["Host", 0, false],
       ["Ann", 1, false],
     ]);
+  });
+
+  it("drops a failed start's bots and everyone's ready, so a retry makes one set (#2086)", async () => {
+    let failures = 1;
+    const { lobby, members } = await teamLobby(["Ann"], [0, 1], draws(), undefined, () => {
+      if (failures > 0) {
+        failures -= 1;
+        throw new Error("no match today");
+      }
+      return undefined;
+    });
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    const rejected: string[] = [];
+    host.connection.onStartRejected((reason) => rejected.push(reason));
+    const toStart = async (): Promise<void> => {
+      await begin(lobby);
+      host.connection.propose([WARRIOR, RANGER]);
+      await settle();
+      await timeOut(lobby);
+      await timeOut(lobby);
+    };
+    await toStart();
+    const snapshot = host.connection.getSnapshot();
+    expect(snapshot.phase).toBe("waiting");
+    expect(rejected).toEqual(["the match could not be created"]);
+    expect(snapshot.players.map(({ name, bot, ready }) => [name, bot, ready])).toEqual([
+      ["Host", false, false],
+      ["Ann", false, false],
+    ]);
+
+    await allReady([host, ann]);
+    await toStart();
+    expect(host.connection.getSnapshot().phase).toBe("in-match");
+    expect(host.connection.getSnapshot().players.filter(({ bot }) => bot)).toHaveLength(2);
   });
 
   it("lets a joiner in only to watch, and ignores what a spectator or a command out of its stage asks", async () => {
