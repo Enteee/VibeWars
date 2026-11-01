@@ -330,7 +330,7 @@ describe("disable-skill elite and disable-own-skills other-professions (#1473)",
             which: "other-professions",
             profession: "mesmer",
             exceptTypes: except,
-            seconds: 10,
+            seconds: { flat: 10 },
           },
         ],
         {

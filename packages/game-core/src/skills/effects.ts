@@ -1882,19 +1882,29 @@ export function applyEffect(
     case "disable-own-skills": {
       const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
       const disabled = bar.filter((slot) => disabledOwn(effect, slot.skillId, context.skillId));
+      const seconds = resolveMagnitude(effect.seconds, caster);
       for (const { key, skillId } of disabled) {
         emptyPool(caster, key);
-        if (caster.cast.disable(key, effect.seconds)) {
+        if (caster.cast.disable(key, seconds)) {
           events.push({
             kind: "skill-disabled",
             targetId: caster.id,
             skillId,
-            seconds: effect.seconds,
+            seconds,
           });
         }
       }
       return events;
     }
+
+    // A shot's (#1914): its recharge began as it left, and ends here.
+    case "recharge-reset":
+      for (const key of [...caster.cast.rechargeRemaining.keys()]) {
+        if (skillIdOfKey(key) === context.skillId) {
+          caster.cast.endRecharge(key);
+        }
+      }
+      return events;
 
     case "chain-mark":
       if (target !== undefined && !target.dead) {
@@ -2304,6 +2314,9 @@ function disabledOwn(
   if (effect.which === "attribute") {
     return skillId !== usedId && skill?.attributeId === effect.attributeId;
   }
+  if (effect.which === "attacks") {
+    return skillId !== usedId && skill?.type === "attack";
+  }
   return (
     skill !== undefined &&
     skill.profession !== effect.profession &&
@@ -2463,6 +2476,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.perTarget !== true;
     case "sacrifice-health":
     case "recharge-faster":
+    case "recharge-reset":
     case "recharge-others":
     case "steal-from-corpse":
     case "summon":

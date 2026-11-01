@@ -50,6 +50,7 @@ import {
   type Skill,
   type SkillEffect,
   type StateCondition,
+  type Strikes,
   type Surroundings,
 } from "./types.js";
 
@@ -291,6 +292,23 @@ export function unblockableNow(
     return unblockable;
   }
   return attacker !== undefined && stateHolds(unblockable, attacker, victim, surroundings);
+}
+
+/**
+ * How many blows `strikes` lands on `victim` (#1914): a number as it
+ * is; Forked Arrow's two, but one while its state holds for `attacker`.
+ * None: one.
+ */
+export function strikeCount(
+  strikes: Strikes | undefined,
+  attacker: Combatant,
+  victim: Combatant,
+  surroundings: Surroundings,
+): number {
+  if (strikes === undefined || typeof strikes === "number") {
+    return strikes ?? 1;
+  }
+  return stateHolds(strikes.oneWhile, attacker, victim, surroundings) ? 1 : strikes.count;
 }
 
 /**
@@ -1036,7 +1054,7 @@ export function resolveAttackSkillOutcome(
     }
     victims.push(victim);
   }
-  const strikes = rule?.strikes ?? 1;
+  const strikes = strikeCount(rule?.strikes, caster, primary ?? caster, surroundings);
   for (let strike = 0; strike < strikes; strike += 1) {
     const since = strike === 0 ? 0 : events.length;
     const hit: Combatant[] = [];

@@ -261,6 +261,48 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "glyph-of-essence", durationSeconds: 15 }],
   },
   {
+    id: "elementalist.lava-arrows",
+    name: "Lava Arrows",
+    gwId: 824,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Lava Arrows fly toward up to 3 foes near your target": the target
+    // and two more, found as it leaves, one arrow each (#1914).
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: 3,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // Our own tuning, as GW1 publishes no speeds: Lightning Orb's.
+    projectile: { speed: 1.5 * RANGE_SPELL, spread: true },
+    // "...and strike for 20...65 fire damage if they hit": 56 each.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 56 } },
+        type: "fire",
+        armorPenetration: 0,
+      },
+    ],
+  },
+  {
     id: "elementalist.lightning-orb",
     name: "Lightning Orb",
     gwId: 229,

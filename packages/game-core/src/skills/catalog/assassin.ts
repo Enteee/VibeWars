@@ -848,7 +848,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "All of your spells are disabled for 15 seconds. For 1...6 seconds,
     // target touched foe cannot cast spells": 5 s, its rank-12 value.
     effects: [
-      { kind: "disable-own-skills", which: "spells", seconds: 15 },
+      { kind: "disable-own-skills", which: "spells", seconds: { flat: 15 } },
       { kind: "apply-status", statusId: "shroud-of-silence", durationSeconds: 5 },
     ],
   },
@@ -931,6 +931,46 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "For 4...10 seconds, target foe gains 50% less benefit from
     // healing": 8.8 s.
     effects: [{ kind: "apply-status", statusId: "mark-of-death", durationSeconds: 8.8 }],
+  },
+  {
+    id: "assassin.dancing-daggers",
+    name: "Dancing Daggers",
+    gwId: 858,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    // "Dancing Daggers has half the normal range."
+    range: RANGE_SPELL / 2,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Send out three Dancing Daggers at target foe" (#1914), each its own
+    // flight and dodge. Our own tuning, as GW1 publishes no speeds:
+    // Disrupting Dagger's.
+    projectile: { speed: 1.5 * RANGE_SPELL, shots: 3 },
+    // "...each striking for 5...35 earth damage if they hit. This skill
+    // counts as a lead attack": 29 each, and each dagger that lands
+    // leaves the mark.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 29 } },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      { kind: "chain-mark", role: "lead" },
+    ],
   },
   {
     id: "assassin.disrupting-dagger",
