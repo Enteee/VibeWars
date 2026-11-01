@@ -78,13 +78,16 @@ function spirit(
   };
 }
 
-/** `m` on team 0 at the origin, its ally `a`, the foes `f` and `g`, and `more`. */
-function match(more: readonly ParticipantSpec[] = []): MatchSimulation {
+/** `m` on team 0 at the origin, its ally `a` with `allyBar`, the foes `f` and `g`, and `more`. */
+function match(
+  more: readonly ParticipantSpec[] = [],
+  allyBar: readonly string[] = [AVATAR, WORD],
+): MatchSimulation {
   return new MatchSimulation({
     seed: "copy-skills",
     participants: [
       spec("m", 0, vec2(0, 0), [MIMICRY, MIRRORED, BINDING]),
-      spec("a", 0, vec2(0, 40), [AVATAR, WORD]),
+      spec("a", 0, vec2(0, 40), allyBar),
       spec("f", 1, vec2(200, 0), [SHADOW_WALK, DARK_ESCAPE]),
       spec("g", 1, vec2(200, 60), [DARK_ESCAPE]),
       ...more,
@@ -135,8 +138,7 @@ describe("Arcane Mimicry (#1965)", () => {
   });
 
   it("copies nothing from an ally whose only elite is a form, and recharges", () => {
-    const sim = match();
-    get(sim, "a").combatant.skillBar[1] = null;
+    const sim = match([], [AVATAR]);
     use(sim, "m", MIMICRY, "a");
     expect(held(sim, 0)).toEqual({ skillId: MIMICRY, key: MIMICRY });
     expect(get(sim, "m").combatant.cast.rechargeRemaining.get(MIMICRY)).toBeGreaterThan(55);
