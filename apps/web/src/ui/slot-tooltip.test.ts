@@ -53,6 +53,12 @@ describe("slotDescription (#719)", () => {
     );
   });
 
+  it("prices a signet the host says costs Energy, as under Primal Echoes (#1886)", () => {
+    const signet = skill("ranger.antidote-signet");
+    expect(slotDescription(signet, slot(signet.id, 0), new Map(), 0).cost).toBe("Free");
+    expect(slotDescription(signet, slot(signet.id, 10), new Map(), 0).cost).toBe("10 energy");
+  });
+
   it("ends an echo's copy with how long it has left, in whole seconds rounded up (#1154)", () => {
     const fireball = skill("elementalist.fireball");
     const copy = { ...slot(fireball.id, 10), copyEndsAt: 32.5 };

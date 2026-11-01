@@ -357,6 +357,7 @@ describe("follow-and-attack (#467)", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         deathBurst: undefined,
+        onDeathInRange: undefined,
         replacedBy: undefined,
         corpsesLeft: 0,
         companionSkillId: undefined,

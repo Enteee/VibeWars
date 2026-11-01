@@ -219,6 +219,13 @@ const NO_BOT_USE = new Set([
   "ranger.muddy-terrain",
   "ranger.conflagration",
   "ranger.winter",
+  // Nature rituals 3 (#1886): a death in range, and costs on both teams,
+  // nothing the bot weighs.
+  "ranger.edge-of-extinction",
+  "ranger.pestilence",
+  "ranger.energizing-wind",
+  "ranger.primal-echoes",
+  "ranger.roaring-winds",
   // Chants (#1505) on how the next skill goes: nothing the bot weighs.
   "paragon.song-of-concentration",
   "paragon.anthem-of-guidance",

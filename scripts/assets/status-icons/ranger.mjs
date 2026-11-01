@@ -184,6 +184,28 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M12 4v16M5 8l14 8M19 8L5 16" ${stroke(c, 1.8)}/>` +
       `<path d="M10 5.5l2 2 2-2M10 18.5l2-2 2 2" ${stroke(c, 1.6)}/>`,
   ],
+  // Nature rituals 3 (#1886), stand-ins until their art card. Skill effect:
+  // a drop with a minus, skills cost less.
+  "energizing-wind": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z" ${stroke(c, 1.8)}/>` +
+      `<path d="M9.5 14h5" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a ring with a drop, signets cost Energy.
+  "primal-echoes": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="13" r="6" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 9c1.5 2 2.2 3 2.2 4a2.2 2.2 0 0 1-4.4 0c0-1 .7-2 2.2-4z" fill="${c}"/>`,
+  ],
+  // Skill effect: a wind curl with a plus, shouts and chants cost more.
+  "roaring-winds": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 10h10a3 3 0 1 0-3-3M4 15h13a3 3 0 1 1-3 3" ${stroke(c, 1.8)}/>` +
+      `<path d="M18 5v5M15.5 7.5h5" ${stroke(c, 1.6)}/>`,
+  ],
   // Stance (#1761, #1855): a bow and a recharge arrow, preparations come back sooner.
   "practiced-stance": [
     "stance",

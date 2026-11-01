@@ -27,6 +27,7 @@ function body(
             onDeath: "vanish",
             ownerDisableSeconds: 0,
             deathBurst: undefined,
+            onDeathInRange: undefined,
             replacedBy: undefined,
             corpsesLeft: extra.corpses ?? 0,
             companionSkillId: undefined,

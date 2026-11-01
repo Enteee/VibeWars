@@ -40,6 +40,10 @@ export type RangerStatusId =
   | "conflagration"
   | "predatory-season"
   | "winter"
+  // Nature rituals 3 (#1886).
+  | "energizing-wind"
+  | "primal-echoes"
+  | "roaring-winds"
   // Pets 2 (#1865).
   | "otyughs-cry"
   | "predatory-bond"
@@ -330,6 +334,27 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   winter: define("winter", "Winter", "skill-effect", {
     profession: "ranger",
     elementalDamageTakenAs: "cold",
+  }),
+  // Nature rituals 3 (#1886). Energizing Wind: "all skills cost 15 less
+  // Energy (minimum cost 10 Energy), and skills recharge 25% slower."
+  "energizing-wind": define("energizing-wind", "Energizing Wind", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills({}, { energyDiscount: 15, energyFloor: 10, rechargeSlower: 0.25 }),
+    ],
+  }),
+  // "Signets cost 10 Energy to use."
+  "primal-echoes": define("primal-echoes", "Primal Echoes", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [ownSkills({ type: "signet" }, { energyBase: 10 })],
+  }),
+  // "Chants and shouts cost 1...5 more Energy": 4, at rank 12.
+  "roaring-winds": define("roaring-winds", "Roaring Winds", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills({ type: "chant" }, { energySurcharge: 4 }),
+      ownSkills({ type: "shout" }, { energySurcharge: 4 }),
+    ],
   }),
 
   // "Your preparations recharge 50% faster and last 30...246...300%

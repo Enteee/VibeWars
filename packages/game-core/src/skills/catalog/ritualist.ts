@@ -460,6 +460,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           onDeath: "vanish",
           ownerDisableOnDeath: undefined,
           deathBurst: undefined,
+          onDeathInRange: undefined,
         },
       },
     ],
@@ -2443,5 +2444,6 @@ function burstingSpirit(
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
     deathBurst,
+    onDeathInRange: undefined,
   };
 }

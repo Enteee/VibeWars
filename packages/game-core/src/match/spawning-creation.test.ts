@@ -72,6 +72,7 @@ function standing(id: string, spawn: Vec2, kind: "spirit" | "minion" | "pet"): P
       onDeath: "vanish",
       ownerDisableSeconds: 0,
       deathBurst: undefined,
+      onDeathInRange: undefined,
       replacedBy: undefined,
       corpsesLeft: 0,
       companionSkillId: undefined,
