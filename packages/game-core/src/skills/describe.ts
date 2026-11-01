@@ -271,6 +271,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.returnsSource !== undefined) {
     parts.push("when this ends, you return to where you cast it");
   }
+  if (definition.stepsToTarget !== undefined) {
+    const seconds = String(definition.stepsToTarget.disableSeconds);
+    parts.push(
+      `when this ends, you Shadow Step to the ally you cast it on, and all of your skills are disabled for ${seconds} seconds`,
+    );
+  }
   if (definition.attackMissChance !== 0) {
     parts.push(`${String(Math.round(definition.attackMissChance * 100))}% of attacks miss`);
   }
@@ -2288,7 +2294,7 @@ function describeEffect(
       }
       return {
         text:
-          `Applies ${statusName(effect.statusId)} ` +
+          `Applies ${statusName(effect.statusId)}${effect.on === "caster" ? " to you" : ""} ` +
           // No end of its own (#1789): Faithful Intervention's.
           (Number.isFinite(effect.durationSeconds)
             ? `for ${statusDuration(effect, ranks)} `
@@ -2374,7 +2380,9 @@ function describeEffect(
         text:
           effect.to === "target"
             ? "Shadow steps to the target"
-            : "Shadow Step to a nearby location directly away from your target",
+            : effect.to === "swap"
+              ? "You and the target Shadow Step to each other's location"
+              : "Shadow Step to a nearby location directly away from your target",
         magnitude: undefined,
       };
     case "resurrect": {
@@ -2804,7 +2812,8 @@ const TYPE_TEXT: Record<SkillType, string> = {
  * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
  * non-Mesmer skills except signets", "are disabled for 10 seconds". A
  * skill of the attribute it disables spares itself: "All of your other
- * Healing Prayers" (#1748). "All of your other attack skills" (#1914).
+ * Healing Prayers" (#1748). "All of your other attack skills" (#1914). "Your
+ * enchantment spells and stances" (#1930).
  */
 function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: number): string {
   const time = `are disabled for ${String(seconds)} seconds`;
@@ -2813,6 +2822,12 @@ function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds
   }
   if (effect.which === "attacks") {
     return `All of your other attack skills ${time}`;
+  }
+  if (effect.which === "types") {
+    const types = effect.types.map(
+      (type) => `${TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()}s`,
+    );
+    return `Your ${types.join(" and ")} ${time}`;
   }
   if (effect.which === "spells") {
     return `All of your spells ${time}`;

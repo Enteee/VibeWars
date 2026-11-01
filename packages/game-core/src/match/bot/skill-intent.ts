@@ -16,9 +16,10 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, and raising the dead.
+ * skill, raising the dead, and a way out (#1930).
  */
-export type BotUse = "interrupt" | "healing" | "defence" | "removal" | "resurrect" | "offence";
+export type BotUse =
+  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -33,6 +34,7 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (roles.includes("interrupt")) uses.push("interrupt");
   if (roles.includes("healing")) uses.push("healing");
   if (roles.includes("defence")) uses.push("defence");
+  if (escapes(skill)) uses.push("escape");
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
   if (
@@ -45,6 +47,17 @@ export function botUses(skill: Skill): readonly BotUse[] {
     uses.push("offence");
   }
   return uses;
+}
+
+/**
+ * A way out (#1930): a Shadow Step to a creature of the caster's side, or
+ * a swap with one, as Spirit Walk's and Swap's.
+ */
+function escapes(skill: Skill): boolean {
+  return (
+    (skill.target === "allied-spirit" || skill.target === "allied-summoned-creature") &&
+    skill.effects.some((effect) => effect.kind === "shadow-step")
+  );
 }
 
 /**

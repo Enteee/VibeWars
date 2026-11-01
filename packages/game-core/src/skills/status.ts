@@ -217,10 +217,24 @@ export interface StatusDefinition {
   /**
    * When it ends, for any reason, its caster Shadow Steps back to where it
    * stood when it put it up (#1826): GW1's "you return to your original
-   * location". Not when it is replaced by a recast of itself. `skillId`
-   * is the skill the step back is logged as. `undefined`: no return.
+   * location". Not when it is replaced by a recast of itself: that one
+   * returns to where this one's would have with `recastKeepsPoint`
+   * (#1930), as Shadow Walk's "you will return to your original location
+   * (from the first time you used the skill)", and to its own cast spot
+   * without, as Shadow of Haste's. `skillId` is the skill the step back is
+   * logged as. `undefined`: no return.
    */
-  readonly returnsSource: { readonly skillId: string } | undefined;
+  readonly returnsSource:
+    { readonly skillId: string; readonly recastKeepsPoint: boolean } | undefined;
+  /**
+   * When it ends, for any reason, its caster Shadow Steps to the ally it
+   * was cast on, and all its skills are disabled for `disableSeconds`
+   * (#1930): Recall's "when Recall ends, you Shadow Step to that ally".
+   * Only a maintained one knows its ally (`stepTargetId`). Not when it is
+   * replaced by a recast of itself, nor with either of the two dead.
+   * `skillId` is the skill the step is logged as. `undefined`: no step.
+   */
+  readonly stepsToTarget: { readonly skillId: string; readonly disableSeconds: number } | undefined;
   /**
    * Chance in [0, 1] that the bearer's *attacks* miss. Drawn from the
    * injectable simulation RNG, never Math.random (brief §35).
@@ -1328,6 +1342,8 @@ export type StatusChange =
       readonly death: boolean;
       /** Where its source returns to (`returnsSource`, #1826); `null` for no return. */
       readonly returnPoint: Vec2 | null;
+      /** Whom its source steps to (`stepsToTarget`, #1930); `null` for no step. */
+      readonly stepTargetId: string | null;
     }
   /** An enchantment `id` left the bearer, alive (#1437), with the triggers that answered. */
   | {
@@ -1570,6 +1586,11 @@ export interface ActiveStatus {
    * (#1826), as `apply` or `maintain` put it up; `null` for every other, and for one replaced.
    */
   returnPoint: Vec2 | null;
+  /**
+   * The ally its source steps to as it ends, for a `stepsToTarget` status
+   * (#1930), as `maintain` put it up; `null` for every other.
+   */
+  readonly stepTargetId: string | null;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -1645,6 +1666,7 @@ export class StatusSet {
           expired,
           death,
           returnPoint: status.returnPoint,
+          stepTargetId: status.stepTargetId,
         });
         if (!death) {
           this.#lostEnchantment(id);
@@ -1998,9 +2020,14 @@ export class StatusSet {
         ? appliedSeconds * this.#chantShoutDurationMultiplier()
         : appliedSeconds;
     const exclusive = EXCLUSIVE_CATEGORIES.has(definition.category);
-    // A recast that replaces it: its source does not return (#1826).
+    // A recast that replaces it: its source does not return (#1826), but
+    // from where the new one does, when that one keeps its spot (#1930).
+    let returnsTo = returnPoint;
     const replaced = this.#statuses.get(id);
     if (replaced !== undefined && (exclusive || replaced.remainingSeconds < durationSeconds)) {
+      if (definition.returnsSource?.recastKeepsPoint === true && replaced.returnPoint !== null) {
+        returnsTo = replaced.returnPoint;
+      }
       replaced.returnPoint = null;
     }
     if (exclusive) {
@@ -2037,7 +2064,8 @@ export class StatusSet {
       outbreak,
       maintained: null,
       projected: false,
-      returnPoint: definition.returnsSource === undefined ? null : returnPoint,
+      returnPoint: definition.returnsSource === undefined ? null : returnsTo,
+      stepTargetId: null,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -2097,6 +2125,7 @@ export class StatusSet {
       maintained: null,
       projected: false,
       returnPoint: null,
+      stepTargetId: null,
     });
     this.#gained(id, durationSeconds);
     this.#gainedHexOrEnchantment(id, sourceId);
@@ -2109,12 +2138,15 @@ export class StatusSet {
    * is the newest, as `apply` makes it. Returns whether it is newly on the
    * bearer; one that is ends what `apply` would end. Throws for a status that is not an enchantment: a catalog bug,
    * not data.
+   * `stepTargetId` is the ally a `stepsToTarget` status steps its source
+   * to (#1930).
    */
   public maintain(
     id: StatusId,
     sourceId: string,
     seq: number,
     returnPoint: Vec2 | null = null,
+    stepTargetId: string | null = null,
   ): boolean {
     const definition = getStatusDefinition(id);
     if (definition.category !== "enchantment") {
@@ -2139,6 +2171,7 @@ export class StatusSet {
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
       returnPoint: definition.returnsSource === undefined ? null : returnPoint,
+      stepTargetId: definition.stepsToTarget === undefined ? null : stepTargetId,
     });
     this.#gainedHexOrEnchantment(id, sourceId);
     if (!wasActive) {
@@ -2175,6 +2208,7 @@ export class StatusSet {
       maintained: null,
       projected: true,
       returnPoint: null,
+      stepTargetId: null,
     });
     const definition = getStatusDefinition(id);
     this.#endOnGaining(definition.category);

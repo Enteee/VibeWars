@@ -31,6 +31,7 @@ export function define(
     moveSpeedMultiplier: 1,
     preventsSpeedBoosts: false,
     returnsSource: undefined,
+    stepsToTarget: undefined,
     attackMissChance: 0,
     maxHealthLoss: undefined,
     maxHealthBonus: 0,
