@@ -84,6 +84,19 @@ describe("every catalog skill against gw-skilldata (#1207)", () => {
     }
   });
 
+  it("marks a touch skill exactly where its corpus text has its user touch the target (#1966)", () => {
+    const descriptions = new Map(corpusSkills().map((skill) => [skill.gwId, skill.description]));
+    const touches = /\btouched\b|\btouch (?:target|the body)\b/i;
+    const corpus = IMPLEMENTED_SKILLS.filter(
+      (skill) => skill.gwId !== undefined && touches.test(descriptions.get(skill.gwId) ?? ""),
+    ).map((skill) => skill.id);
+    const marked = IMPLEMENTED_SKILLS.filter((skill) => skill.touch === true).map(
+      (skill) => skill.id,
+    );
+    expect(corpus.length).toBeGreaterThan(0);
+    expect(marked).toEqual(corpus);
+  });
+
   it("gives no two skills one GW1 id", () => {
     const ids = IMPLEMENTED_SKILLS.flatMap((skill) =>
       skill.gwId === undefined ? [] : [skill.gwId],

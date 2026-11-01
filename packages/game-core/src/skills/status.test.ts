@@ -91,6 +91,7 @@ describe("status definitions", () => {
         def.reflectsAttackDamage !== undefined ||
         def.breaksNextHex !== undefined ||
         def.failsNextSpell !== undefined ||
+        def.failsFoeTouchSkills !== undefined ||
         def.damagePulse !== undefined ||
         def.chantShoutDurationMultiplier !== 1 ||
         def.conditionalArmor.length > 0 ||

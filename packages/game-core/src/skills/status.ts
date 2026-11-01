@@ -872,6 +872,12 @@ export interface StatusDefinition {
    */
   readonly failsNextSpell: FailsNextSpell | undefined;
   /**
+   * The next this many touch skills a foe uses on the bearer fail, and
+   * the status ends after the last (#1966): "Can't Touch This!". Each is
+   * paid for and recharges, as a failed spell. `undefined`: they land.
+   */
+  readonly failsFoeTouchSkills: number | undefined;
+  /**
    * Every whole second it has been on the bearer, a pulse of growing
    * damage from its source hits the source's foes near it, and the bearer
    * if it says so (#1501): Wastrel's Demise's, or Balthazar's Aura's on an
@@ -1203,6 +1209,8 @@ export interface OwnSkillModifier {
   readonly durationMultiplier: number;
   /** On every heal the skill does. 1: none. */
   readonly healMultiplier: number;
+  /** Its cast is not easily interrupted (#1966), as Trapper's Focus's traps. */
+  readonly notEasilyInterrupted: boolean;
   /** Skills it answers before the status ends; `undefined`: as long as the status lasts. */
   readonly uses: number | undefined;
 }
@@ -1210,8 +1218,8 @@ export interface OwnSkillModifier {
 /**
  * What every matching `OwnSkillModifier` on a caster does to one use of a
  * skill (#1761), taken as it is paid for and kept by the cast: discounts
- * and surcharges add, multipliers multiply, and the highest base, floor
- * and recharge shares count.
+ * and surcharges add, multipliers multiply, the highest base, floor
+ * and recharge shares count, and any one's "not easily interrupted".
  */
 export interface OwnSkillBoost {
   readonly energyBase: number | undefined;
@@ -1223,6 +1231,8 @@ export interface OwnSkillBoost {
   readonly rechargeSlower: number;
   readonly durationMultiplier: number;
   readonly healMultiplier: number;
+  /** Any of them says so. */
+  readonly notEasilyInterrupted: boolean;
 }
 
 /** A use no `OwnSkillModifier` touched. */
@@ -1236,6 +1246,7 @@ export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
   rechargeSlower: 0,
   durationMultiplier: 1,
   healMultiplier: 1,
+  notEasilyInterrupted: false,
 };
 
 /** Whether `skill` is one `filter` names (#1761). */
@@ -1269,6 +1280,7 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
         rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
         durationMultiplier: boost.durationMultiplier * modifier.durationMultiplier,
         healMultiplier: boost.healMultiplier * modifier.healMultiplier,
+        notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
       }),
       NO_OWN_SKILL_BOOST,
     );
@@ -1795,6 +1807,8 @@ export interface ActiveStatus {
   triggersLeft: number | undefined;
   /** Reflections before it ends (`reflectsAttackDamage`); `undefined`: no such limit. */
   reflectionsLeft: number | undefined;
+  /** Foes' touch skills still to fail before it ends (`failsFoeTouchSkills`); `undefined`: none. */
+  touchFailsLeft: number | undefined;
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
@@ -2331,6 +2345,7 @@ export class StatusSet {
       ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
+      touchFailsLeft: definition.failsFoeTouchSkills,
       sourceId,
       sourceSkillId,
       outbreak,
@@ -2393,6 +2408,7 @@ export class StatusSet {
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
+      touchFailsLeft: undefined,
       sourceId,
       sourceSkillId: undefined,
       outbreak,
@@ -2442,6 +2458,7 @@ export class StatusSet {
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
+      touchFailsLeft: undefined,
       sourceId,
       sourceSkillId,
       outbreak: null,
@@ -2481,6 +2498,7 @@ export class StatusSet {
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
+      touchFailsLeft: undefined,
       sourceId,
       sourceSkillId: undefined,
       outbreak: null,
@@ -2555,6 +2573,28 @@ export class StatusSet {
     }
     status.reflectionsLeft -= 1;
     if (status.reflectionsLeft > 0) {
+      return false;
+    }
+    this.#end([id]);
+    return true;
+  }
+
+  /** The newest status that fails a foe's touch skill on the bearer (#1966), if any. */
+  public touchFailer(): ActiveStatus | undefined {
+    return this.active.findLast(({ touchFailsLeft }) => touchFailsLeft !== undefined);
+  }
+
+  /**
+   * `id` failed a foe's touch skill (#1966): one fewer before it ends.
+   * Returns whether that ended it, recorded as ended.
+   */
+  public spendTouchFail(id: StatusId): boolean {
+    const status = this.#statuses.get(id);
+    if (status?.touchFailsLeft === undefined) {
+      return false;
+    }
+    status.touchFailsLeft -= 1;
+    if (status.touchFailsLeft > 0) {
       return false;
     }
     this.#end([id]);

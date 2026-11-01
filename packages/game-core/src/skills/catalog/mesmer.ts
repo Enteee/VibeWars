@@ -1687,6 +1687,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     activationSeconds: 1,
     rechargeSeconds: 12,
     // "Touched target foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2791,6 +2792,8 @@ export const MESMER_SKILLS: readonly Skill[] = [
     overcast: 0,
     activationSeconds: 1,
     rechargeSeconds: 15,
+    // "Remove all hexes from target touched ally."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-ally",
     area: undefined,

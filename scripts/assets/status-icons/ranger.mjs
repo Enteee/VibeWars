@@ -332,6 +332,35 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M6 3c6 4 6 14 0 18M6 3v18" ${stroke(c, 2)}/>` +
       `<path d="M17 8v8M13 12h8" ${stroke(c, 2.2)}/>`,
   ],
+  // Touch and trap riders (#1966), stand-ins until their art card.
+  // Skill effect: a claw over a limp line, your next hit Cripples.
+  "strike-as-one": [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 5l4 9M11 4l3 10M16 5l2 9" ${stroke(c, 1.8)}/>` +
+      `<path d="M5 19h14" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a drop under a paw, the pet's next attack Bleeds.
+  "strike-as-one-pet": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="8" r="3.5" fill="${c}"/>` +
+      `<path d="M12 13c-2.5 3.5-3.5 5-3.5 6.5a3.5 3.5 0 0 0 7 0c0-1.5-1-3-3.5-6.5z" ${stroke(c, 1.8)}/>`,
+  ],
+  // Preparation: jaws with a bar across, traps held steady.
+  "trappers-focus": [
+    "preparation",
+    (c) =>
+      `<path d="M4 9l4 4 4-4 4 4 4-4" ${stroke(c, 1.8)}/>` +
+      `<path d="M4 17h16" ${stroke(c, 2.2)}/>`,
+  ],
+  // Stance: jaws with a speed line, traps set sooner.
+  "trappers-speed": [
+    "stance",
+    (c) =>
+      `<path d="M4 13l4 4 4-4 4 4 4-4" ${stroke(c, 1.8)}/>` +
+      `<path d="M6 7h12M14 4l4 3-4 3" ${stroke(c, 1.8)}/>`,
+  ],
   // Blocks that pay off (#1974), a stand-in until its art card.
   // Preparation: an arrow shattering into shards against a block.
   "glass-arrows": [

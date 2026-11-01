@@ -81,4 +81,6 @@ export const PARAGON_ICONS = {
   "paragon.signet-of-synergy": { glyph: "signet-plus-bare" },
   // "Not enchanted" (#1916)
   "paragon.natural-temper": { glyph: "leaf", modifier: "up" },
+  // Touch riders (#1966), a stand-in until its art card.
+  "paragon.cant-touch-this": { glyph: "shield-glance", modifier: "up" },
 };
