@@ -2,6 +2,7 @@
   "id": "arena-crossroads",
   "name": "Crossroads",
   "mode": "annihilation",
+  "teamSizes": [4, 8],
   "width": 2600,
   "height": 2600,
   "walls": [
@@ -107,6 +108,34 @@
       }
     },
     {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 1020
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 1580
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 1160
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 1440
+      }
+    },
+    {
       "team": 1,
       "position": {
         "x": 2440,
@@ -132,6 +161,34 @@
       "position": {
         "x": 2310,
         "y": 1300
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2440,
+        "y": 1580
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2440,
+        "y": 1020
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2310,
+        "y": 1440
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2310,
+        "y": 1160
       }
     }
   ]
