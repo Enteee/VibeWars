@@ -423,6 +423,15 @@ function fire(
     } else if (effect.kind === "cancel-attack") {
       flush();
       events.push(...cancelAttack(trigger, sourceId, bearer));
+    } else if (effect.kind === "pay-energy-or-end") {
+      flush();
+      if (source.dead || source.energy < effect.amount) {
+        bearer.statuses.end(statusId);
+        events.push({ kind: "status-expired", targetId: bearer.id, statusId });
+        return [{ sourceId, skillId: trigger.skillId, events }];
+      }
+      source.energy -= effect.amount;
+      events.push({ kind: "energy-loss", targetId: source.id, amount: effect.amount });
     } else {
       pending.push(effect);
     }

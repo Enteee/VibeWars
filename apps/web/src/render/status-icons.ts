@@ -381,6 +381,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   cacophony: icon("cacophony"),
   "soul-bind": icon("soul-bind"),
   "scribes-insight": icon("scribes-insight"),
+  // Casting-state hexes (#1931).
+  "spinal-shivers": icon("spinal-shivers"),
+  "shivers-of-dread": icon("shivers-of-dread"),
+  "death-nova": icon("death-nova"),
+  "power-leech": icon("power-leech"),
+  "power-flux": icon("power-flux"),
 };
 
 const GAP = 2;
