@@ -3,7 +3,12 @@ import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
-import { getStatusDefinition, type StatusCategory, type StatusId } from "../../skills/status.js";
+import {
+  getStatusDefinition,
+  type StatusCategory,
+  type StatusDefinition,
+  type StatusId,
+} from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -18,10 +23,11 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, raising the dead, and a way out (#1930).
+ * skill, raising the dead, a way out (#1930), and a buff that only makes
+ * attacks hit harder (#2000).
  */
 export type BotUse =
-  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence";
+  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "boost" | "offence";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -54,7 +60,57 @@ export function botUses(skill: Skill): readonly BotUse[] {
   ) {
     uses.push("offence");
   }
+  if (uses.length === 0 && boosts(skill)) uses.push("boost");
   return uses;
+}
+
+/**
+ * A buff for the side's attacks and nothing else (#2000): Order of Pain's,
+ * Order of the Vampire's (#1979), "For Great Justice!"'s. Cast on the
+ * caster alone, its party, or an area round it that takes it in, with a
+ * status that acts on its bearer's attacks. A glyph, an attunement or a
+ * run is none: what it does is no blow's.
+ */
+function boosts(skill: Skill): boolean {
+  const area = skill.area;
+  const ours =
+    area === undefined ||
+    area.origin === "party" ||
+    (area.origin === "caster" && area.includesCaster && area.affects !== "enemies");
+  return (
+    skill.target === "self" &&
+    ours &&
+    skill.effects.some(
+      (effect) =>
+        effect.kind === "apply-status" && actsOnAttacks(getStatusDefinition(effect.statusId)),
+    )
+  );
+}
+
+/**
+ * Whether `status` makes its bearer's attacks worth more (#2000): more on
+ * a hit, more adrenaline, faster, more often critical or through more
+ * armor, a rider on its next attack skill, or a trigger on its attacking.
+ */
+function actsOnAttacks(status: StatusDefinition): boolean {
+  return (
+    status.onAttackHit !== undefined ||
+    status.extraStrikesPerHit > 0 ||
+    status.attackDamageDelta > 0 ||
+    status.attackDurationMultiplier < 1 ||
+    status.criticalChanceBonus > 0 ||
+    status.attackArmorPenetration > 0 ||
+    status.nextAttackSkill !== undefined ||
+    status.triggers.some(({ on }) => on === "bearer-attacks" || on === "bearer-hits")
+  );
+}
+
+/** The share of its max Health `skill` costs its caster (#2000): Order of Pain's 17%. */
+export function sacrificedFraction(skill: Skill): number {
+  return skill.effects.reduce(
+    (sum, effect) => (effect.kind === "sacrifice-health" ? sum + effect.percentOfMax / 100 : sum),
+    0,
+  );
 }
 
 /**

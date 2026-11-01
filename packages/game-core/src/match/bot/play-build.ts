@@ -24,7 +24,9 @@ import {
   removedCategories,
   removesFromCaster,
   renewsSpirit,
+  sacrificedFraction,
   sacrificesTooMuch,
+  WELL_SACRIFICE_FLOOR,
   wardedDamageType,
 } from "./skill-intent.js";
 
@@ -34,7 +36,7 @@ import {
  * foe's cast or else its swing, heal or protect the most hurt ally, step
  * away when hurt with a foe at hand, take
  * a hex or condition off an ally, raise a dead one, renew a spirit of
- * its own about to expire, use an offensive
+ * its own about to expire, boost its attacks as the fight is on, use an offensive
  * skill on the team target, attack it with the weapon, and otherwise walk
  * to the nearest foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
  * backing off would never end.
@@ -426,6 +428,36 @@ function think(
         return use(skill, spirit.id);
       }
     }
+  }
+
+  // 4e. Boost the side's attacks (#2000), never one already up, as the
+  // fight is on: a foe in the caster's weapon reach, or for a party or an
+  // area round it, in reach of a member's weapon there. Never paid for in
+  // Health the caster cannot spare.
+  const swinging = (body: Participant): boolean =>
+    foes.some(
+      (foe) =>
+        distance(foe.position, body.position) <= body.combatant.equipment.mainHand.weapon.range,
+    );
+  const boost = bar.find((held) => {
+    if (
+      !botUses(held).includes("boost") ||
+      ownStatuses(held).some((id) => self.combatant.statuses.has(id)) ||
+      healthFraction(self) - sacrificedFraction(held) < WELL_SACRIFICE_FLOOR
+    ) {
+      return false;
+    }
+    const area = held.area;
+    const members =
+      area === undefined
+        ? [self]
+        : area.origin === "party"
+          ? allies
+          : allies.filter((ally) => distance(ally.position, self.position) <= area.radius);
+    return members.some(swinging) && mayUse(held, self.id);
+  });
+  if (boost !== undefined) {
+    return use(boost, self.id);
   }
 
   if (targetId !== undefined) {
