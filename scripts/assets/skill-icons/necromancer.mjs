@@ -97,11 +97,11 @@ export const NECROMANCER_ICONS = {
   "necromancer.meekness": { glyph: "slow", modifier: "down" },
   // Caster staples 2 (#1872), stand-ins until their art card.
   "necromancer.vocal-minority": { glyph: "hex-mute", modifier: "area" },
-  // Skill-type and heal triggers (#1913), stand-ins until their art card.
-  "necromancer.cacophony": { glyph: "hex-mute", modifier: "bolt" },
-  "necromancer.soul-bind": { glyph: "hex-cut", modifier: "bleed" },
-  // Casting-state hexes (#1931), stand-ins until their art card.
-  "necromancer.spinal-shivers": { glyph: "interrupt", modifier: "stun" },
-  "necromancer.shivers-of-dread": { glyph: "hex-cut", modifier: "stun" },
-  "necromancer.death-nova": { glyph: "germ", modifier: "corpse" },
+  // Skill-type and heal triggers (#1913)
+  "necromancer.cacophony": { glyph: "horn" },
+  "necromancer.soul-bind": { glyph: "plus-ring", modifier: "down" },
+  // Casting-state hexes (#1931)
+  "necromancer.spinal-shivers": { glyph: "spine", modifier: "stun" },
+  "necromancer.shivers-of-dread": { glyph: "frost", modifier: "stun" },
+  "necromancer.death-nova": { glyph: "nova", modifier: "corpse" },
 };

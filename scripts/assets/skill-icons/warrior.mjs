@@ -88,6 +88,6 @@ export const WARRIOR_ICONS = {
   "warrior.lacerating-chop": { glyph: "axe-cross", modifier: "bleed" },
   "warrior.frenzied-defense": { glyph: "shield-stance", modifier: "up" },
   "warrior.flurry": { glyph: "sword", modifier: "less" },
-  // Next attacks (#1916): stand-ins until their art.
-  "warrior.signet-of-strength": { glyph: "sword", modifier: "plus" },
+  // Next attacks (#1916)
+  "warrior.signet-of-strength": { glyph: "sword-pips" },
 };

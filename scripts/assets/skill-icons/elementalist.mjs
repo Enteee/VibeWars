@@ -85,6 +85,6 @@ export const ELEMENTALIST_ICONS = {
   // Caster staples (#1870), stand-ins until their art card.
   "elementalist.grasping-earth": { glyph: "mountain", modifier: "down" },
   "elementalist.breath-of-fire": { glyph: "flame", modifier: "hourglass" },
-  // Shots that fly differently (#1914), a stand-in until its art card.
-  "elementalist.lava-arrows": { glyph: "fireball", modifier: "renew" },
+  // Shots that fly differently (#1914)
+  "elementalist.lava-arrows": { glyph: "arrow-lava" },
 };
