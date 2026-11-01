@@ -780,6 +780,12 @@ export interface StatusDefinition {
    */
   readonly destroysBearerOnExpiry: boolean;
   /**
+   * Creatures a `take-control` takes are held by it (#2092): Verata's
+   * Aura's foe minions, which go masterless once its bearer no longer has
+   * it. Every `bondStatusId` names one of these.
+   */
+  readonly bindsCreatures: boolean;
+  /**
    * The share of each physical hit on the bearer that its source takes
    * instead (#1108): Symbiotic Bond's 0.5, rounded down. 0: none.
    */
@@ -795,10 +801,16 @@ export interface StatusDefinition {
    * Bones's Jagged Horror, for the minion's owner, at the level the
    * status's source's rank in its `attribute` makes, kept in its `ranks`.
    * Beside the minion's own replacement. A destroyed minion did not die:
-   * none. `undefined`: none.
+   * none. `masterless`: Malign Intervention's horror (#2092), which rises
+   * masterless where any bearer dies, a player too. `undefined`: none.
    */
   readonly replacedOnDeathBy:
-    { readonly creature: CreatureTemplate; readonly count: number } | undefined;
+    | {
+        readonly creature: CreatureTemplate;
+        readonly count: number;
+        readonly masterless?: true;
+      }
+    | undefined;
   /**
    * The most of its max health the bearer can lose to one hit (#936):
    * Protective Spirit's 0.1. Applied last in `mitigate`, so it caps

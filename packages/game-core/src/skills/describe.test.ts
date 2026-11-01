@@ -1461,4 +1461,19 @@ describe("minion care (#1986)", () => {
     // Feast for the Dead's target is one of them, and left out.
     expect(texts("necromancer.feast-for-the-dead")[0]).toMatch(/^Your other minions/);
   });
+
+  it("says whose a taken minion is, and what rises from Malign Intervention (#2092)", () => {
+    expect(texts("necromancer.veratas-gaze")).toEqual([
+      "Target minion with a master becomes masterless; a masterless one becomes yours and is healed for 76 Health",
+    ]);
+    expect(texts("necromancer.veratas-aura")).toEqual([
+      "You sacrifice 33% of your maximum health",
+      "Applies Verata's Aura for 264s (the minions it took become masterless when it ends)",
+      "Foe minions in the area become your minions while you bear Verata's Aura",
+    ]);
+    expect(texts("necromancer.malign-intervention")).toEqual([
+      "Applies Malign Intervention for 17s (−20% healing, when the bearer dies, " +
+        "1 Bone Horror (level 14, 360 Health) rises where it fell, masterless)",
+    ]);
+  });
 });

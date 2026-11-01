@@ -7,6 +7,14 @@
 /** The attribute GW1 ties every minion cap to (fandom "Minion master"). */
 export const MINION_CAP_ATTRIBUTE = "necromancer.death-magic";
 
+/**
+ * The team of a masterless minion (#2092): one whose master Verata's Gaze
+ * broke off, or one that rose masterless. It answers to nobody and is a
+ * foe to everyone, since every side check is a team inequality; it is
+ * never a match team.
+ */
+export const MASTERLESS_TEAM = -1;
+
 /** How many minions one master holds: 2 + ⌊rank / 2⌋ (fandom "Minion master"). */
 export function minionCap(rank: number): number {
   return 2 + Math.floor(rank / 2);

@@ -2545,7 +2545,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         amount: { scaling: { attributeId: "ritualist.spawning-power", atZero: 200, atTwelve: 80 } },
         perRemovedOfProfession: undefined,
       },
-      { kind: "take-control" },
+      { kind: "take-control", bondStatusId: undefined },
     ],
   },
 ];

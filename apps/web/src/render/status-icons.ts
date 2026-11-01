@@ -416,6 +416,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "veratas-sacrifice": icon("veratas-sacrifice"),
   "dark-bond": icon("dark-bond"),
   "jagged-bones": icon("jagged-bones"),
+  "veratas-aura": icon("veratas-aura"),
+  "malign-intervention": icon("malign-intervention"),
   // Casting-state hexes (#1931).
   "spinal-shivers": icon("spinal-shivers"),
   "shivers-of-dread": icon("shivers-of-dread"),

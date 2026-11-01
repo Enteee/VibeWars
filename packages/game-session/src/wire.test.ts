@@ -375,6 +375,7 @@ describe("wireIdentity (#1052)", () => {
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard" as const,
     },
   });
