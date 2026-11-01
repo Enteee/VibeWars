@@ -121,7 +121,9 @@ describe("status definitions", () => {
         def.minionDamageBonus !== 0 ||
         def.minionHitHealthLossPercent !== 0 ||
         def.redirectsConditionsToMinion ||
-        def.physicalDamageDealtAs !== undefined;
+        def.physicalDamageDealtAs !== undefined ||
+        def.interruptGuard !== undefined ||
+        def.damageTypeTakenMultiplier !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -756,6 +758,34 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         ],
       },
     ]);
+  });
+
+  it("marks the mantras with what they do (#1964)", () => {
+    expect(getStatusDefinition("mantra-of-concentration").interruptGuard).toEqual({ kind: "once" });
+    expect(getStatusDefinition("mantra-of-resolve").interruptGuard).toEqual({
+      kind: "pay-energy",
+      amount: 5,
+    });
+    expect(getStatusDefinition("mantra-of-frost").damageTypeTakenMultiplier).toEqual({
+      type: "cold",
+      multiplier: 0.55,
+    });
+    expect(getStatusDefinition("blind")).toMatchObject({
+      interruptGuard: undefined,
+      damageTypeTakenMultiplier: undefined,
+    });
+  });
+
+  it("ends only a once-only interrupt guard when an interrupt is stopped (#1964)", () => {
+    const once = new StatusSet();
+    once.apply("mantra-of-concentration", 31, "m");
+    expect(once.endOnInterruptGuarded()).toEqual(["mantra-of-concentration"]);
+    expect(once.has("mantra-of-concentration")).toBe(false);
+
+    const paying = new StatusSet();
+    paying.apply("mantra-of-resolve", 5, "m");
+    expect(paying.endOnInterruptGuarded()).toEqual([]);
+    expect(paying.has("mantra-of-resolve")).toBe(true);
   });
 
   it("marks Shadow Form and Mist Form with what they do (#1951)", () => {

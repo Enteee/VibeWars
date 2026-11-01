@@ -696,6 +696,14 @@ export interface StatusDefinition {
   readonly damageReductionFromHexedSource:
     { readonly attributeId: string; readonly fraction: number } | undefined;
   /**
+   * Damage of `type` the bearer takes is multiplied by `multiplier` (#1964):
+   * Mantra of Flame's "fire damage you take is reduced by 45%", 0.55.
+   * Read as each packet lands, after `damageTakenMultiplier`, of the type
+   * as taken (after `elementalDamageTakenAs`). `undefined`: none.
+   */
+  readonly damageTypeTakenMultiplier:
+    { readonly type: DamageType; readonly multiplier: number } | undefined;
+  /**
    * The bearer is destroyed when this runs its time (#1827), as
    * `destroy-target-spirit` destroys: no corpse, no killer, no morale.
    * Signet of Ghostly Might's "After 10 seconds, that creature is
@@ -817,6 +825,15 @@ export interface StatusDefinition {
    * knockdown still cancels the cast.
    */
   readonly uninterruptible: boolean;
+  /**
+   * Stops an interrupt of the bearer's cast or swing (#1964), checked
+   * after `uninterruptible`, which spends nothing. `once`: Mantra of
+   * Concentration's "the next time you would be interrupted, you are not",
+   * and it ends. `pay-energy`: Mantra of Resolve's, `amount` Energy a
+   * stop, and with less the status ends and the interrupt lands. A
+   * knockdown is no interrupt and goes by. `undefined`: none.
+   */
+  readonly interruptGuard: InterruptGuard | undefined;
   /**
    * The bearer's conditions run out this much faster (#1464): Pure Was Li
    * Ming's 0.5 takes `dt × 1.5` off each a tick. Hexes and enchantments
@@ -1121,6 +1138,10 @@ export interface SkillArmorPenetration {
   readonly share: number;
   readonly profession: ProfessionId;
 }
+
+/** `StatusDefinition.interruptGuard` (#1964). */
+export type InterruptGuard =
+  { readonly kind: "once" } | { readonly kind: "pay-energy"; readonly amount: number };
 
 /** `StatusDefinition.failsNextSpell` (#1475). */
 export interface FailsNextSpell {
@@ -3010,6 +3031,19 @@ export class StatusSet {
         status.remainingSeconds = status.durationSeconds;
       }
     }
+  }
+
+  /**
+   * An interrupt was stopped (#1964): every status whose `interruptGuard`
+   * is `once`, Mantra of Concentration's, is gone. Returns the ids that
+   * ended on it.
+   */
+  public endOnInterruptGuarded(): StatusId[] {
+    const ended = this.active
+      .filter(({ id }) => getStatusDefinition(id).interruptGuard?.kind === "once")
+      .map(({ id }) => id);
+    this.#end(ended);
+    return ended;
   }
 
   /**
