@@ -1408,6 +1408,45 @@ const skillGlyph = {
   "paw-shield": () =>
     inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
     `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)">${pawPrint(C.bg)}</g>`,
+  // Pets 2 (#1865, #1939): the paw is the pet; what it does with you, or to whom, beside it.
+  // Bestial Mauling: the paw comes down on a foe laid flat, dazed stars either side.
+  "paw-maul": () =>
+    `<g transform="translate(12,8.5) scale(0.62) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M2.5 20H21.5", 3.2) +
+    inkFill("M4.5 11L5.4 13.1L7.5 14L5.4 14.9L4.5 17L3.6 14.9L1.5 14L3.6 13.1Z") +
+    inkFill("M19.5 11L20.4 13.1L22.5 14L20.4 14.9L19.5 17L18.6 14.9L16.5 14L18.6 13.1Z"),
+  // Savage Pounce: the paw leaps on to a spell's four-point star.
+  "paw-pounce-spell": () =>
+    `<g transform="translate(7,17) scale(0.5) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    `<path d="M3 11C4.5 4 11 1.5 15.5 5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M18 7L19.4 11.1L23.5 12.5L19.4 13.9L18 18L16.6 13.9L12.5 12.5L16.6 11.1Z"),
+  // Otyugh's Cry: the guarded paw and the shout's arcs.
+  "paw-shield-cry": () =>
+    `<g transform="translate(9,12) scale(0.78) translate(-12,-12)">` +
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)">${pawPrint(C.bg)}</g></g>` +
+    inkLine("M17.5 8A5 5 0 0 1 17.5 16M20.5 5A9 9 0 0 1 20.5 19", 2),
+  // Predatory Bond: the pet's blows send a plus back to you.
+  "paw-bond-plus": () =>
+    `<g transform="translate(7.5,15.5) scale(0.55) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M11 10.5L14.5 7.5", 2) +
+    inkLine("M18 2.5V11.5M13.5 7H22.5", 3),
+  // Companionship: you and your pet, a plus over you both for the lower.
+  "figure-paw-plus": () =>
+    smallFigure(7, 15, 0.6) +
+    `<g transform="translate(17.5,17) scale(0.45) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M12 1.5V8.5M8.5 5H15.5", 2.4),
+  // Run as One: you and your pet under speed chevrons.
+  "figure-paw-run": () =>
+    smallFigure(7, 15, 0.6) +
+    `<g transform="translate(17.5,17) scale(0.45) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M5 2L9.5 5.5L5 9M13 2L17.5 5.5L13 9", 2.2),
+  // Rampage as One: the same pair, the chevrons and the claw's gashes: faster at running and at blows.
+  "figure-paw-rampage": () =>
+    smallFigure(7, 15, 0.6) +
+    `<g transform="translate(17.5,17) scale(0.45) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M2 2L6.5 5.5L2 9M8.5 2L13 5.5L8.5 9", 2.2) +
+    inkLine("M15 1.5L16.5 9M18.5 1.5L20 9M22 1.5L23.5 9", 1.8),
   // A dashed ring (a hex) struck through: the hex is lifted (#1216).
   "hex-cut": () =>
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
@@ -1743,6 +1782,37 @@ const skillGlyph = {
     inkLine("M11 17L24 3", 2.2),
   "ritual-snowflake": () =>
     spiritPost() + inkLine("M17.5 2.5V14.5M12.3 5.5L22.7 11.5M22.7 5.5L12.3 11.5", 1.8),
+  // Nature rituals 3 (#1886, #1939). Edge of Extinction: a skull and the blows thrown from it.
+  "ritual-skull-burst": () =>
+    spiritPost() +
+    smallSkull(17.5, 9, 0.5) +
+    inkLine("M11.5 2.5L13 4.5M23.5 2.5L22 4.5M11 15.5L13 13.5M24 15.5L22 13.5", 1.8),
+  // Pestilence: a drop and the two it spreads to.
+  "ritual-drop-spread": () =>
+    spiritPost() +
+    inkFill("M17.5 1.5C15.8 4.2 14.8 5.4 14.8 7A2.7 2.7 0 0 0 20.2 7C20.2 5.4 19.2 4.2 17.5 1.5Z") +
+    inkFill(
+      "M13 10.5C11.8 12.3 11.1 13.1 11.1 14.2A1.9 1.9 0 0 0 14.9 14.2C14.9 13.1 14.2 12.3 13 10.5Z",
+    ) +
+    inkFill(
+      "M22 10.5C20.8 12.3 20.1 13.1 20.1 14.2A1.9 1.9 0 0 0 23.9 14.2C23.9 13.1 23.2 12.3 22 10.5Z",
+    ),
+  // The three windier rituals draw their status icon (#1921) small beside the post.
+  "ritual-wind-minus": () =>
+    spiritPost() +
+    `<g transform="translate(10.5,1) scale(0.58)">` +
+    `<path d="M3 7h13M3 11h18M3 15h9" ${stroke(C.ink, 3)}/>` +
+    `<path d="M14 17.5h6" ${stroke(C.ink, 4.4)}/></g>`,
+  "ritual-echo": () =>
+    spiritPost() +
+    `<g transform="translate(10.5,1.5) scale(0.58)">` +
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.8)}/>` +
+    `<circle cx="12" cy="12" r="4.5" fill="${C.ink}"/></g>`,
+  "ritual-wind-plus": () =>
+    spiritPost() +
+    `<g transform="translate(10.5,1) scale(0.58)">` +
+    `<path d="M4 10h10a3 3 0 1 0-3-3M4 15h13a3 3 0 1 1-3 3" ${stroke(C.ink, 3)}/>` +
+    `<path d="M18 5v5M15.5 7.5h5" ${stroke(C.ink, 2.8)}/></g>`,
   // The spirit post, low on the left, shooting a mark up and right: what the
   // mark is says what the spirit does (#1271). Pain only hurts.
   "spirit-pain": () => spiritPost() + inkLine("M19.5 2.5L14 9.5H19L14.5 15.5", 2.4),

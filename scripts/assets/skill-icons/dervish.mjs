@@ -61,7 +61,7 @@ export const DERVISH_ICONS = {
   "dervish.guiding-hands": { glyph: "hand-arrow" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "dervish.test-of-faith": { glyph: "hand-bare" },
-  // Own-skill modifiers (#1761), stand-in until its art card.
+  // Own-skill modifiers (#1761, #1855).
   "dervish.extend-enchantments": { glyph: "scythe-stretch" },
   // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
   "dervish.watchful-intervention": { glyph: "eye-bar" },
