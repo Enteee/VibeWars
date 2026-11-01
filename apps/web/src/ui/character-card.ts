@@ -141,6 +141,8 @@ export interface TeamFigureCardOptions {
   readonly members: readonly TeamFigureMember[];
   /** Under the members: the lobby's voter tokens and count, "Your vote ✓". */
   readonly footer?: readonly HTMLElement[];
+  /** After the title: the random starter team's Random (#2036). */
+  readonly tags?: readonly HTMLElement[];
   /** In its corner: Team Play's Edit. */
   readonly actions?: readonly HTMLElement[];
   readonly onOpen?: () => void;

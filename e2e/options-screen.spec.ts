@@ -107,7 +107,7 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
 }) => {
   await page.setViewportSize({ width: 400, height: 800 });
   await page.goto("./");
-  // On a phone the top bar's icons fold into ⋯ (#1272).
+  // On a phone the menu's join controls and the global icons fold into ⋯ (#1272, #2053).
   await page.locator("#topbar .topbar-more").click();
   await openKeys(page);
   const entry = await page.locator('.options-entry[data-section="controls"]').boundingBox();
@@ -127,19 +127,18 @@ test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves 
   page,
 }) => {
   await page.goto("./");
-  await page
-    .locator(".topbar-screen-actions")
-    .getByRole("button", { name: "Record", exact: true })
-    .click();
-  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
+  await openRail(page, "Team Builder");
+  await page.getByRole("button", { name: "new team" }).click();
+  const teamName = page.locator("#topbar").getByRole("textbox", { name: "team name", exact: true });
+  await expect(teamName).toBeVisible();
 
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();
   const options = page.getByRole("dialog", { name: "Options" });
   await expect(options).toBeVisible();
-  // Esc is the overlay's: it closes, and the Record screen does not also go back.
+  // Esc is the overlay's: it closes, and the team editor does not also go back.
   await page.keyboard.press("Escape");
   await expect(options).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
+  await expect(teamName).toBeVisible();
 
   // Close does the same; then Esc is the screen's again.
   await page.locator("#topbar").getByRole("button", { name: "Options" }).click();
@@ -147,7 +146,7 @@ test("the top bar's ⚙ opens Options over the screen; Esc closes it and leaves 
   await page.locator("#topbar").getByRole("button", { name: "Close", exact: true }).click();
   await expect(options).toHaveCount(0);
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("heading", { name: "VibeWars" })).toBeVisible();
+  await expect(teamName).toHaveCount(0);
 });
 
 test("Options lists the third-party licences, each with its full text (#1235)", async ({

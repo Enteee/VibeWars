@@ -3236,6 +3236,127 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // 0" (#1929).
     effects: [{ kind: "apply-status", statusId: "atrophy", durationSeconds: 6 }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Blood Magic orders and leeches (#1979)                                 */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.order-of-the-vampire",
+    name: "Order of the Vampire",
+    gwId: 148,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, whenever a party member who is not under another
+    // Necromancer enchantment hits a foe with physical damage, that party
+    // member steals up to 3...16 Health": the steal is the enchantment's.
+    // The 17% sacrifice is the caster's, once a use.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "order-of-the-vampire", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.dark-fury",
+    name: "Dark Fury",
+    gwId: 147,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, whenever a party member hits with an attack, that
+    // party member gains one additional strike of adrenaline", for 17% of
+    // the caster's Health. The failure chance at Blood Magic 4 or less is
+    // not modelled.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "dark-fury", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.awaken-the-blood",
+    name: "Awaken the Blood",
+    gwId: 111,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20...44 seconds, you have +2 Blood Magic and +2 Curses, and
+    // your Health sacrifices are 50% larger": 39 s, its rank-12 value.
+    effects: [{ kind: "apply-status", statusId: "awaken-the-blood", durationSeconds: 39 }],
+  },
+  {
+    id: "necromancer.soul-leech",
+    name: "Soul Leech",
+    gwId: 128,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, whenever target foe casts a spell, you steal up to
+    // 16...80 Health from that foe": 67, on the hex.
+    effects: [{ kind: "apply-status", statusId: "soul-leech", durationSeconds: 10 }],
+  },
   // Enchantment party moves (#1975).
   {
     id: "necromancer.order-of-apostasy",

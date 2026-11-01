@@ -44,6 +44,11 @@ Not sure what to take? The random starter character is marked
 **Random**, with a dashed outline. **Reroll** on it gives you a fresh
 random build to try.
 
+**Team Builder** starts with a random Team Build too, a ready-made team
+for a Team Lobby, marked the same way and always last. **Reroll** puts
+another ready-made team in its place. **Clone** saves a copy of the
+team shown as your own Team Build and opens it, to change as you like.
+
 ## Play a Random Arena
 
 The quickest way into a fight. On **Random Arena**, click the card of
@@ -146,19 +151,6 @@ match goes on without you.
 
 Online play is peer to peer: the other players in your match see your
 IP address.
-
-## Your record
-
-Every match you finish with one of your characters, hosted, joined or
-from Random Arena, goes on that character's record. The menu shows it
-after the character's professions, such as **12W 7L**, with draws only
-once there are some. Press **Record** at the top of Random Arena for your
-last 50 matches: when, who, which map and mode, and how it went.
-
-The record is kept in this browser only. Nobody else sees or checks it.
-A match you leave before it ends, a Training Ground session and a match
-played with a starter build are not recorded. Deleting a character
-deletes its record.
 
 ## In a match
 

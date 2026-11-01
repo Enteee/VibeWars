@@ -13,7 +13,9 @@ import type { ArmorPiece, ArmorSet, EquippedRune, InsigniaId } from "./equipment
  * Only skills the engine runs today. A new build is one more entry here.
  */
 
-function allocations(ranks: Readonly<Record<string, number>>): readonly AttributeAllocation[] {
+export function allocations(
+  ranks: Readonly<Record<string, number>>,
+): readonly AttributeAllocation[] {
   return Object.entries(ranks).map(([attributeId, rank]) => ({ attributeId, rank }));
 }
 
@@ -29,7 +31,11 @@ const SUPERIOR_VIGOR: EquippedRune = { kind: "universal", runeId: "vigor", tier:
  * (#1140), and a superior Vigor on the chest; `hands` takes one more
  * rune where the build has a use for it.
  */
-function armor(insigniaId: InsigniaId, mainAttributeId: string, hands?: EquippedRune): ArmorSet {
+export function armor(
+  insigniaId: InsigniaId,
+  mainAttributeId: string,
+  hands?: EquippedRune,
+): ArmorSet {
   const piece = (rune: EquippedRune | null): ArmorPiece => ({ insigniaId, rune });
   return {
     head: { ...piece(minorRune(mainAttributeId)), headgearAttributeId: mainAttributeId },

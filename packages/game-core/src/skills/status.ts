@@ -787,6 +787,11 @@ export interface StatusDefinition {
   /** Taken off every life steal on the bearer (#1265): Union's 15. Never below 0. */
   readonly lifeStealReduction: number;
   /**
+   * Every Health sacrifice the bearer makes is multiplied by this (#1979):
+   * Awaken the Blood's 1.5. Not "lose N Health", which is no sacrifice. 1: none.
+   */
+  readonly sacrificeMultiplier: number;
+  /**
    * A knockdown of the bearer lasts at least this long (#1265):
    * Earthbind's 3 s. `undefined`: as long as it says.
    */
@@ -3235,12 +3240,14 @@ export class StatusSet {
 
   /**
    * How many are up of a category; with a `profession`, only that
-   * profession's (#1021); with an `attribute`, only that attribute's (#1765).
+   * profession's (#1021); with an `attribute`, only that attribute's (#1765);
+   * `excluding` is not counted (#1979).
    */
   public countByCategory(
     category: StatusCategory,
     profession?: ProfessionId,
     attribute?: string,
+    excluding?: StatusId,
   ): number {
     let count = 0;
     for (const status of this.#statuses.values()) {
@@ -3248,7 +3255,8 @@ export class StatusSet {
       if (
         definition.category === category &&
         (profession === undefined || definition.profession === profession) &&
-        (attribute === undefined || definition.attribute === attribute)
+        (attribute === undefined || definition.attribute === attribute) &&
+        status.id !== excluding
       ) {
         count += 1;
       }
@@ -3484,6 +3492,8 @@ export interface StatusModifiers {
   readonly attackDamageCapFraction: number | undefined;
   /** Every status's, summed (#1265). */
   readonly lifeStealReduction: number;
+  /** Every status's, multiplied (#1979). */
+  readonly sacrificeMultiplier: number;
   /** The longest single status's (#1265); `undefined`: none. */
   readonly knockdownMinSeconds: number | undefined;
   /** Every status's, summed (#936). */
@@ -3620,6 +3630,7 @@ export function aggregateModifiers(
   let maxDamageFractionPerHit: number | undefined;
   let attackDamageCapFraction: number | undefined;
   let lifeStealReduction = 0;
+  let sacrificeMultiplier = 1;
   let knockdownMinSeconds: number | undefined;
   let extraStrikesPerHit = 0;
   let adrenalineGainFaster = 0;
@@ -3711,6 +3722,7 @@ export function aggregateModifiers(
       attackDamageCapFraction = def.attackDamageCapFraction;
     }
     lifeStealReduction += def.lifeStealReduction;
+    sacrificeMultiplier *= def.sacrificeMultiplier;
     if (
       def.knockdownMinSeconds !== undefined &&
       (knockdownMinSeconds === undefined || def.knockdownMinSeconds > knockdownMinSeconds)
@@ -3776,6 +3788,7 @@ export function aggregateModifiers(
     maxDamageFractionPerHit,
     attackDamageCapFraction,
     lifeStealReduction,
+    sacrificeMultiplier,
     knockdownMinSeconds,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),

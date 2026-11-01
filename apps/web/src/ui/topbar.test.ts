@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ShownBar } from "./kit.js";
 import {
+  barHasMore,
   CLOSED_GLYPH,
   CLOSED_LABEL,
   CLOSED_NAME,
@@ -64,6 +65,19 @@ describe("the top bar's ⋯ on a repaint (#1305)", () => {
   it("goes away on the first bar, and when nothing is left in it", () => {
     expect(putsMoreAway(undefined, lobby, true)).toBe(true);
     expect(putsMoreAway(lobby, { ...lobby }, false)).toBe(true);
+  });
+});
+
+describe("the top bar's ⋯ on a phone (#2053)", () => {
+  it("comes with the join controls, even beside only a primary button", () => {
+    expect(barHasMore([true], true)).toBe(true);
+    expect(barHasMore([], true)).toBe(true);
+  });
+
+  it("stays away without the join controls or extra buttons", () => {
+    expect(barHasMore([true], false)).toBe(false);
+    expect(barHasMore([], false)).toBe(false);
+    expect(barHasMore([true, false], false)).toBe(true);
   });
 });
 
