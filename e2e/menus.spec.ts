@@ -381,9 +381,9 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   // GvG plays one map, so its host sees it named, not picked.
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
 
-  // Heroes' Ascent picks among its three.
+  // Heroes' Ascent picks among its four.
   await openRail(page, "Heroes' Ascent");
   const options = page.locator("#topbar .lobby-map select option");
-  await expect(options).toHaveCount(3);
+  await expect(options).toHaveCount(4);
   await expect(page.locator("#topbar .lobby-map select")).toHaveValue("relic-temples");
 });
