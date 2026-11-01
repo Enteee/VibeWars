@@ -35,6 +35,8 @@ let
       case "$f" in *.test.mjs) continue ;; esac
       cp "$f" "$out/$(basename "$f")"
     done
+    # Data, not code: runner-jail.mjs reads it beside itself (#1889).
+    cp ${../scripts/bots/runner-proxy-allow.json} $out/runner-proxy-allow.json
   '';
 
   node = "${pkgs.nodejs_24}/bin/node";
@@ -307,6 +309,107 @@ let
       sleep 0.1
     done
     exec "$@"
+  '';
+
+  # A company CI runner's jail (#1889, ADR-0045). runner-jail.mjs builds the
+  # bwrap arguments, where CI tests them; these are the store paths it
+  # mounts. Nothing here is the host's: the userland is what a job's shell
+  # finds on PATH, the /etc is the jail's own, and the closure below is the
+  # whole of /nix/store a job can see.
+  runnerUserland = pkgs.buildEnv {
+    name = "vibewars-runner-userland";
+    paths = [
+      pkgs.bash
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnugrep
+      pkgs.gnused
+      pkgs.git
+      pkgs.gnutar
+      pkgs.zstd
+      pkgs.gzip
+      pkgs.xz
+      pkgs.curl
+      pkgs.cacert
+      pkgs.jq
+    ];
+  };
+
+  runnerEtc = pkgs.runCommand "vibewars-runner-etc" { } ''
+    mkdir $out
+    printf '%s\n' 'runner:x:1001:1001:runner:/home/runner:/bin/bash' > $out/passwd
+    printf '%s\n' 'runner:x:1001:' > $out/group
+    printf '%s\n' '127.0.0.1 localhost' '::1 localhost' > $out/hosts
+    printf '%s\n' 'passwd: files' 'group: files' 'hosts: files' > $out/nsswitch.conf
+  '';
+
+  # The runner jail's entrypoint: the forwarder to its proxy, as support's,
+  # and the JIT config from fd 3 into the runner's environment, so it is in
+  # no argv and no file (runner-jail.mjs).
+  runnerInit = pkgs.writeShellScript "vibewars-runner-init" ''
+    IFS= read -r ACTIONS_RUNNER_INPUT_JITCONFIG <&3 || {
+      echo "vibewars-runner-init: no JIT config on fd 3" >&2
+      exit 1
+    }
+    exec 3<&-
+    ${pkgs.socat}/bin/socat \
+      "TCP-LISTEN:$VIBEWARS_PROXY_PORT,bind=127.0.0.1,fork,reuseaddr" \
+      "UNIX-CONNECT:$VIBEWARS_PROXY_SOCKET" &
+    export ACTIONS_RUNNER_INPUT_JITCONFIG
+    for _ in $(${pkgs.coreutils}/bin/seq 50); do
+      (exec 3<>"/dev/tcp/127.0.0.1/$VIBEWARS_PROXY_PORT") 2>/dev/null && break
+      ${pkgs.coreutils}/bin/sleep 0.1
+    done
+    exec "$@"
+  '';
+
+  # The runner runs a hook by its extension, so it ends in .sh.
+  runnerHook = pkgs.writeTextFile {
+    name = "vibewars-runner-hook-job-started.sh";
+    text = builtins.readFile ../scripts/bots/runner-hook-job-started.sh;
+    executable = true;
+  };
+
+  # The hook's event allowlist, which #1891's test reads beside runs-on.
+  runnerEvents = pkgs.writeText "vibewars-runner-events.json" (
+    builtins.readFile ../scripts/bots/runner-events.json
+  );
+
+  runnerClosure = pkgs.closureInfo {
+    rootPaths = [
+      pkgs.github-runner
+      runnerUserland
+      runnerEtc
+      runnerInit
+      runnerHook
+      runnerEvents
+    ];
+  };
+
+  # `vibewars-runner-jail --jitconfig <file>`: one runner, one job (#1889).
+  # The scratch directories live in the operator's state dir, never under
+  # the hub, a worktree or the credentials.
+  runnerJail = pkgs.writeShellScriptBin "vibewars-runner-jail" ''
+    VIBEWARS_RUNNER_JAIL="$(${pkgs.jq}/bin/jq -nc \
+      --arg scratch "''${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runners" \
+      --argjson store ${
+        lib.escapeShellArg (
+          builtins.toJSON {
+            closure = "${runnerClosure}/store-paths";
+            runner = pkgs.github-runner;
+            inherit bwrap;
+            userland = runnerUserland;
+            etc = runnerEtc;
+            init = runnerInit;
+            hook = runnerHook;
+            events = runnerEvents;
+            allow = "${botScripts}/runner-proxy-allow.json";
+          }
+        )
+      } \
+      '$store + {scratch: $scratch}')"
+    export VIBEWARS_RUNNER_JAIL
+    exec ${node} ${botScripts}/runner-jail.mjs "$@"
   '';
 
   # `claude-bot --smoke support`: support's jail holds no secret and can
@@ -1138,6 +1241,8 @@ in
     packages = [
       pkgs.bubblewrap
       pkgs.claude-code
+      pkgs.github-runner
+      runnerJail
       # Also on the dev shell's PATH, not just the sandbox's: when an agent
       # reports that `hub` refused something, the quickest way to understand
       # why is to run the same command yourself.
