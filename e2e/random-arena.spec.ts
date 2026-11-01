@@ -48,22 +48,25 @@ async function makeCharacter(page: Page): Promise<void> {
   await bringStarter(page, BUILD);
 }
 
-/** From Random Arena, queue for a 1v1 as `name`: its tile queues at once (#1525). */
+/** From Random Arena, queue for a 1v1 as `name`: its title-bar button queues at once (#2022). */
 async function queue1v1(page: Page, name: string): Promise<void> {
   await namePlayer(page, name);
   await openRail(page, "Random Arena");
-  await page.locator(".random-arena-tile", { hasText: "1v1" }).click();
+  await page.locator("#topbar").getByRole("button", { name: "1v1", exact: true }).click();
   await expect(page.locator("#topbar .topbar-crumb.is-place")).toHaveText(
     `Random Arena 1v1 · ${BUILD}`,
   );
 }
 
-test("Random Arena's tiles are greyed out without a character to queue with (#1525)", async ({
+test("Random Arena's title-bar formats are greyed out without a character to queue with (#2022)", async ({
   page,
 }) => {
   await page.goto("./");
   const screen = page.locator(".screen-random-arena");
-  const tiles = screen.locator(".random-arena-tile");
+  const tiles = page
+    .locator("#topbar")
+    .getByRole("group", { name: "Find a match" })
+    .getByRole("button");
   // The first start's rolled character (#853) queues; gone, it does not
   // come back, and nothing is left to queue with. The menu cannot delete
   // it (#1147), so the store is emptied under the page. Source text, as
@@ -71,6 +74,7 @@ test("Random Arena's tiles are greyed out without a character to queue with (#15
   await expect(tiles).toHaveText(["1v1", "2v2", "4v4"]);
   for (const tile of await tiles.all()) {
     await expect(tile).toBeEnabled();
+    await expect(tile).not.toHaveAttribute("title");
   }
   await expect(screen.locator(".random-arena-hint")).toHaveCount(0);
   await page.evaluate(`
@@ -89,6 +93,7 @@ test("Random Arena's tiles are greyed out without a character to queue with (#15
   await expect(screen.locator(".empty-state")).toContainText("No characters yet.");
   for (const tile of await tiles.all()) {
     await expect(tile).toBeDisabled();
+    await expect(tile).toHaveAttribute("title", "Make a character first.");
   }
   await expect(screen.locator(".random-arena-hint")).toHaveText("Make a character first.");
 });

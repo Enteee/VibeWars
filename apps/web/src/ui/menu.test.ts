@@ -7,6 +7,7 @@ import type * as Figure from "./character-figure.js";
 import {
   NO_CHARACTER_FOR_QUEUE,
   isPlayable,
+  randomArenaQueue,
   renderCharacterBuilder,
   renderRandomArena,
   rosterOrder,
@@ -234,17 +235,25 @@ describe("the character screens (#1525)", () => {
     expect(stored.get(`${STORAGE_NAMESPACE}.activeCharacterId`)).toBe("rolled");
   });
 
-  it("Random Arena's tiles queue as the saved name, once a character is picked", () => {
-    let nodes = shown(renderRandomArena);
-    const tiles = nodes.filter((node) => node.className === "random-arena-tile");
-    expect(tiles.map((tile) => tile.textContent)).toEqual(["1v1", "2v2", "4v4"]);
-    expect(tiles.every((tile) => tile.disabled)).toBe(true);
-    expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(true);
+  it("Random Arena's title-bar formats queue as the saved name, once a character is picked", () => {
+    const joins = (why: string | undefined): FakeElement[] =>
+      (randomArenaQueue(callbacks, why) as unknown as FakeElement).all();
+    const greyed = joins(NO_CHARACTER_FOR_QUEUE);
+    expect(greyed.map((join) => join.textContent)).toEqual(["1v1", "2v2", "4v4"]);
+    expect(greyed.every((join) => join.disabled)).toBe(true);
+    expect(greyed.every((join) => join.title === NO_CHARACTER_FOR_QUEUE)).toBe(true);
+    // No tiles left in the body; the reason stays there.
+    expect(labels(shown(renderRandomArena))).not.toContain("1v1");
+    expect(
+      shown(renderRandomArena).some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE),
+    ).toBe(true);
 
     stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
-    nodes = shown(renderRandomArena);
+    const nodes = shown(renderRandomArena);
     expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(false);
-    press(nodes, "2v2");
+    const open = joins(undefined);
+    expect(open.some((join) => join.disabled || join.title !== "")).toBe(false);
+    press(open, "2v2");
     expect(queued).toEqual(["random-arena-2v2 Rurik"]);
   });
 

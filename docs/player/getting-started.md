@@ -52,10 +52,11 @@ team shown as your own Team Build and opens it, to change as you like.
 ## Play a Random Arena
 
 The quickest way into a fight. On **Random Arena**, click the card of
-the character you play as, then press a team size, **1v1**, **2v2** or
-**4v4**, and wait: you are put in a team with other players, against
-another team, on a random map. Closing the tab while you wait takes you
-out of the queue at once.
+the character you play as, then press a team size in the top bar,
+**1v1**, **2v2** or **4v4** (in the **⋯** menu on a phone), and wait:
+you are put in a team with other players, against another team, on a
+random map. Closing the tab while you wait takes you out of the queue
+at once.
 
 When the match ends you can **Queue again**, or **Stay together** with
 the team you just played with.
