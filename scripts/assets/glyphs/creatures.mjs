@@ -3,6 +3,14 @@
 import { C, stroke } from "../icon-kit.mjs";
 import { inkFill, inkLine, smallFigure, smallSkull, pawPrint, glyph } from "../glyph-kit.mjs";
 
+/**
+ * The pet attacks of #2003: the claw gashes low and left, a small mark in the
+ * free top right for what the strike pays off. @param {string} mark
+ */
+const clawMark = (mark) =>
+  `<g transform="translate(0.5,3) scale(0.8)">${inkLine("M5.5 4L9.5 20M10.5 4L13 15M15.5 4L18 11", 2.8)}</g>` +
+  mark;
+
 /** @type {Readonly<Record<string, import("../glyph-kit.mjs").GlyphEntry>>} */
 const glyphs = {
   "fox-head": {
@@ -284,6 +292,31 @@ const glyphs = {
       `<path d="M2.5 15C3.5 21 20.5 21 21.5 15" ${stroke(C.ink, 2.4)}/>` +
       inkLine("M12 15C6.5 12.5 16.5 9.5 11.5 5", 2.8) +
       `<circle cx="11" cy="3.8" r="2.2" fill="${C.ink}"/>`,
+  },
+  "claw-heal": {
+    means: "Claw gashes with a plus: a pet attack that heals you (#2003).",
+    draw: () => clawMark(inkLine("M18 2.5V9.5M14.5 6H21.5", 2.2)),
+  },
+  "claw-condition": {
+    means:
+      "Claw gashes under a dashed ring: a pet attack that bites harder on a foe with a condition (#2003).",
+    draw: () =>
+      clawMark(`<circle cx="18" cy="6.2" r="3.6" ${stroke(C.ink, 1.8)} stroke-dasharray="2 1.6"/>`),
+  },
+  "claw-adrenaline": {
+    means: "Claw gashes under two chevrons up: a pet attack that gives you adrenaline (#2003).",
+    draw: () => clawMark(inkLine("M15 9.5L18 6.5L21 9.5M15 5.5L18 2.5L21 5.5", 1.8)),
+  },
+  "claw-enchanted": {
+    means:
+      "Claw gashes under a hollow rounded square, the enchantment plate: a pet attack that needs an enchantment on you (#2003).",
+    draw: () =>
+      clawMark(`<rect x="14.2" y="2.8" width="7" height="7" rx="2" ${stroke(C.ink, 1.7)}/>`),
+  },
+  "claw-recharge": {
+    means:
+      "Claw gashes under an hourglass: a pet attack that counts your recharging skills (#2003).",
+    draw: () => clawMark(inkLine("M15 2.5H21L15 10H21Z", 1.6)),
   },
 };
 
