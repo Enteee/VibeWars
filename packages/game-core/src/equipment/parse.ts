@@ -9,6 +9,7 @@ import {
 } from "./loadout.js";
 import { isOffhandId } from "./offhands.js";
 import { isInsigniaId, type InsigniaId } from "./insignias.js";
+import { MOD_SLOT_KEYS, isModId, type ItemUpgrades, type ModId, type ModSlot } from "./mods.js";
 import { isRuneTier, isUniversalRuneId, type EquippedRune } from "./runes.js";
 import { ARMOR_SLOTS } from "./types.js";
 import { isWeaponId } from "./weapons.js";
@@ -125,6 +126,27 @@ function parseRequirementAttribute(value: unknown): string | null | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+/**
+ * An item's mods (#2007): all three keys, each a known id or `null`. A
+ * missing key is malformed, not "no mod" (ADR-0016).
+ */
+function parseUpgrades(value: unknown): ItemUpgrades | undefined {
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+  const record = value as Record<string, unknown>;
+  const upgrades: Partial<Record<ModSlot, ModId | null>> = {};
+  for (const slot of MOD_SLOT_KEYS) {
+    const id = record[slot];
+    if (id !== null && !isModId(id)) {
+      return undefined;
+    }
+    upgrades[slot] = id;
+  }
+  // Every slot was just assigned, so the cast is total.
+  return upgrades as ItemUpgrades;
+}
+
 function parseMainHand(value: unknown): EquippedWeapon | undefined {
   if (typeof value !== "object" || value === null) {
     return undefined;
@@ -137,7 +159,11 @@ function parseMainHand(value: unknown): EquippedWeapon | undefined {
   if (requirementAttributeId === undefined) {
     return undefined;
   }
-  return { weaponId: record.weaponId, requirementAttributeId };
+  const upgrades = parseUpgrades(record.upgrades);
+  if (upgrades === undefined) {
+    return undefined;
+  }
+  return { weaponId: record.weaponId, requirementAttributeId, upgrades };
 }
 
 function parseOffHand(value: unknown): EquippedOffhand | null | undefined {
@@ -155,7 +181,11 @@ function parseOffHand(value: unknown): EquippedOffhand | null | undefined {
   if (requirementAttributeId === undefined) {
     return undefined;
   }
-  return { offhandId: record.offhandId, requirementAttributeId };
+  const upgrades = parseUpgrades(record.upgrades);
+  if (upgrades === undefined) {
+    return undefined;
+  }
+  return { offhandId: record.offhandId, requirementAttributeId, upgrades };
 }
 
 function parseWeaponSet(value: unknown): WeaponSet | undefined {

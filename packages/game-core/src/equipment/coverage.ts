@@ -49,11 +49,12 @@ export const GEAR_OMISSIONS: readonly GearOmission[] = Object.freeze([
   },
   {
     mechanic: "weapon-upgrades",
-    description: "hafts, pommels, inscriptions and the rest of the weapon-modification system",
-    kind: "simplification",
+    description: "on-hit prefixes, damage and conditional inscriptions, and the chance mods",
+    kind: "gap",
     reason:
-      "Weapons here are classes, not items (ADR-0012). There is no inventory, no drop table " +
-      "and no vendor, so there is nothing for an upgrade component to attach to.",
+      "Mods are ids on an equipped item, always perfect (ADR-0047). The stat mods are in " +
+      "(#2007); the on-hit prefixes (#2009), conditional inscriptions (#2010) and " +
+      "caster chance mods (#2011) each need their own mechanic.",
     affects: [],
   },
   {

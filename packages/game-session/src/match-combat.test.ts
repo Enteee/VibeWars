@@ -1,4 +1,5 @@
 import {
+  NO_UPGRADES,
   ADRENALINE_PER_STRIKE,
   CHAIN_MARK_SECONDS,
   ANNIHILATION_MATCH_RULES,
@@ -82,7 +83,10 @@ const HAMMERER: PlayerBuild = {
   equipment: {
     ...defaultBuildEquipment("warrior"),
     weaponSets: [
-      { mainHand: { weaponId: "hammer", requirementAttributeId: null }, offHand: null },
+      {
+        mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+        offHand: null,
+      },
       null,
       null,
       null,

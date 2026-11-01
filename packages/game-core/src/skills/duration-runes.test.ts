@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { bareArmorSet } from "../equipment/armor.js";
+import { NO_UPGRADES } from "../equipment/mods.js";
 import { resolveLoadout } from "../equipment/resolve.js";
 import type { UniversalRuneId } from "../equipment/runes.js";
 import { ARMOR_SLOTS } from "../equipment/types.js";
@@ -34,7 +35,10 @@ function wearing(id: string, team: number, ...runeIds: UniversalRuneId[]): Comba
       allocatedRanks: new Map(),
       equipment: {
         weaponSets: [
-          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: null,
+          },
           null,
           null,
           null,

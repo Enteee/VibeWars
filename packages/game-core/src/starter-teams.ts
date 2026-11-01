@@ -1,5 +1,5 @@
 import type { PlayerBuild } from "./build.js";
-import type { WeaponSet } from "./equipment/index.js";
+import { NO_UPGRADES, type WeaponSet } from "./equipment/index.js";
 import { STARTER_BUILDS, allocations, armor } from "./starter-builds.js";
 
 /**
@@ -69,8 +69,16 @@ const INTERRUPT_MESMER: PlayerBuild = {
   ],
   equipment: {
     weaponSets: wielding({
-      mainHand: { weaponId: "wand", requirementAttributeId: "mesmer.domination-magic" },
-      offHand: { offhandId: "focus", requirementAttributeId: "mesmer.inspiration-magic" },
+      mainHand: {
+        weaponId: "wand",
+        requirementAttributeId: "mesmer.domination-magic",
+        upgrades: NO_UPGRADES,
+      },
+      offHand: {
+        offhandId: "focus",
+        requirementAttributeId: "mesmer.inspiration-magic",
+        upgrades: NO_UPGRADES,
+      },
     }),
     armor: armor("prodigys", "mesmer.domination-magic"),
   },
@@ -99,8 +107,12 @@ const AXE_WARRIOR: PlayerBuild = {
   ],
   equipment: {
     weaponSets: wielding({
-      mainHand: { weaponId: "axe", requirementAttributeId: null },
-      offHand: { offhandId: "shield", requirementAttributeId: "warrior.tactics" },
+      mainHand: { weaponId: "axe", requirementAttributeId: null, upgrades: NO_UPGRADES },
+      offHand: {
+        offhandId: "shield",
+        requirementAttributeId: "warrior.tactics",
+        upgrades: NO_UPGRADES,
+      },
     }),
     armor: armor("knights", "warrior.axe-mastery"),
   },
@@ -129,7 +141,7 @@ const HAMMER_WARRIOR: PlayerBuild = {
   ],
   equipment: {
     weaponSets: wielding({
-      mainHand: { weaponId: "hammer", requirementAttributeId: null },
+      mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
       offHand: null,
     }),
     armor: armor("stalwart", "warrior.hammer-mastery"),
@@ -159,8 +171,16 @@ const AIR_ELEMENTALIST: PlayerBuild = {
   ],
   equipment: {
     weaponSets: wielding({
-      mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.air-magic" },
-      offHand: { offhandId: "focus", requirementAttributeId: "elementalist.energy-storage" },
+      mainHand: {
+        weaponId: "wand",
+        requirementAttributeId: "elementalist.air-magic",
+        upgrades: NO_UPGRADES,
+      },
+      offHand: {
+        offhandId: "focus",
+        requirementAttributeId: "elementalist.energy-storage",
+        upgrades: NO_UPGRADES,
+      },
     }),
     armor: armor("survivor", "elementalist.air-magic"),
   },
@@ -189,7 +209,7 @@ const CONDITION_RANGER: PlayerBuild = {
   ],
   equipment: {
     weaponSets: wielding({
-      mainHand: { weaponId: "flatbow", requirementAttributeId: null },
+      mainHand: { weaponId: "flatbow", requirementAttributeId: null, upgrades: NO_UPGRADES },
       offHand: null,
     }),
     armor: armor("survivor", "ranger.marksmanship"),
@@ -219,8 +239,16 @@ const HEALING_MONK: PlayerBuild = {
   ],
   equipment: {
     weaponSets: wielding({
-      mainHand: { weaponId: "wand", requirementAttributeId: "monk.healing-prayers" },
-      offHand: { offhandId: "focus", requirementAttributeId: "monk.divine-favor" },
+      mainHand: {
+        weaponId: "wand",
+        requirementAttributeId: "monk.healing-prayers",
+        upgrades: NO_UPGRADES,
+      },
+      offHand: {
+        offhandId: "focus",
+        requirementAttributeId: "monk.divine-favor",
+        upgrades: NO_UPGRADES,
+      },
     }),
     armor: armor("radiant", "monk.healing-prayers"),
   },
@@ -249,8 +277,16 @@ const PROTECTION_MONK: PlayerBuild = {
   ],
   equipment: {
     weaponSets: wielding({
-      mainHand: { weaponId: "wand", requirementAttributeId: "monk.protection-prayers" },
-      offHand: { offhandId: "focus", requirementAttributeId: "monk.divine-favor" },
+      mainHand: {
+        weaponId: "wand",
+        requirementAttributeId: "monk.protection-prayers",
+        upgrades: NO_UPGRADES,
+      },
+      offHand: {
+        offhandId: "focus",
+        requirementAttributeId: "monk.divine-favor",
+        upgrades: NO_UPGRADES,
+      },
     }),
     armor: armor("blessed", "monk.protection-prayers"),
   },
