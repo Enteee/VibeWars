@@ -10,6 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
 import {
+  NO_RANKS,
   HEALING_MULTIPLIER_FLOOR,
   HEALTH_PER_PIP,
   aggregateModifiers,
@@ -247,7 +248,7 @@ describe("Shroud of Silence (#1234)", () => {
 describe("Expose Defenses (#1234)", () => {
   it("the caster's blows are never blocked; another attacker's still are", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("lightning-reflexes", 60, "a");
+    get(sim, "a").statuses.apply("lightning-reflexes", 60, "a", NO_RANKS);
     use(sim, "assassin.expose-defenses");
     expect(worn(sim, "a", "expose-defenses")).toEqual({ sourceId: "s", seconds: 9 });
     expect(sim.requestAttack("s", "a")).toEqual({ ok: true });
@@ -387,17 +388,17 @@ describe("Iron Palm (#1234)", () => {
     expect(knockedDown(log)).toBe(false);
 
     const hexed = match();
-    get(hexed, "a").statuses.apply("mark-of-death", 10, "s");
+    get(hexed, "a").statuses.apply("mark-of-death", 10, "s", NO_RANKS);
     expect(knockedDown(use(hexed, "assassin.iron-palm"))).toBe(true);
 
     const bleeding = match();
-    get(bleeding, "a").statuses.apply("bleeding", 10, "s");
+    get(bleeding, "a").statuses.apply("bleeding", 10, "s", NO_RANKS);
     expect(knockedDown(use(bleeding, "assassin.iron-palm"))).toBe(true);
   });
 
   it("is no attack: a blocking stance does not stop it", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("lightning-reflexes", 60, "a");
+    get(sim, "a").statuses.apply("lightning-reflexes", 60, "a", NO_RANKS);
     const log = use(sim, "assassin.iron-palm");
     expect(damageTo(log, "assassin.iron-palm", "a")).toEqual([41]);
   });

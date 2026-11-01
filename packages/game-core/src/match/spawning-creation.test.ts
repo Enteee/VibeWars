@@ -12,6 +12,7 @@ import type { Combatant, Skill, SplashEffect, Surroundings } from "../skills/typ
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Ritualist Spawning Power creation staples (#1316): Boon of Creation,
@@ -143,7 +144,7 @@ function amounts(
 /** Kill `id` as burning would: a fresh corpse. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "r");
+  victim.combatant.statuses.apply("burning", 10, "r", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -212,7 +213,7 @@ describe("Spirit's Gift (#1316)", () => {
     for (const id of ["near", "far"]) {
       const ally = get(sim, id).combatant;
       ally.health = 200;
-      ally.statuses.apply("bleeding", 30, "x");
+      ally.statuses.apply("bleeding", 30, "x", NO_RANKS);
     }
     const fired = firings(use(sim, SHELTER), GIFT);
     expect(fired).toHaveLength(1);

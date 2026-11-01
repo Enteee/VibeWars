@@ -15,7 +15,9 @@ import {
   StatusSet,
   isStatusId,
   isSuppressed,
+  NO_RANKS,
   ownSkillBoost,
+  scaledStatAttributes,
   type ArmorReduction,
   type AttributeDelta,
   type AttributeScope,
@@ -219,7 +221,8 @@ export function maxHealthLossOf(combatant: Pick<Combatant, "maxHealth" | "status
 export function maxHealthLossOfStatusIds(maxHealth: number, statusIds: readonly string[]): number {
   return lossOf(
     maxHealth,
-    aggregateModifiers(statusIds.filter(isStatusId).map((id) => ({ id }))).maxHealthLoss,
+    aggregateModifiers(statusIds.filter(isStatusId).map((id) => ({ id, ranks: NO_RANKS })))
+      .maxHealthLoss,
   );
 }
 
@@ -313,6 +316,18 @@ export function rankOf(holder: RankHolder, asked: string): number {
     return rank;
   }
   return effectiveRank(rank, [{ delta }]);
+}
+
+/**
+ * `source`'s ranks for `statusId` as it lands (#1976): `rankOf` in each
+ * attribute its scaled stats name, the `ranks` the status keeps.
+ */
+export function statusRanks(statusId: StatusId, source: RankHolder): ReadonlyMap<string, number> {
+  const attributes = scaledStatAttributes(statusId);
+  if (attributes.length === 0) {
+    return NO_RANKS;
+  }
+  return new Map(attributes.map((attributeId) => [attributeId, rankOf(source, attributeId)]));
 }
 
 /**

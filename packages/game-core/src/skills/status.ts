@@ -36,12 +36,14 @@ import type { Vec2 } from "../vec2.js";
 import {
   isSpell,
   type AttackWeaponClass,
+  type AttributeScaling,
   type Combatant,
   type ConditionalBonus,
   type Skill,
   type SkillEffect,
   type SkillType,
 } from "./types.js";
+import { statAt } from "./scaling.js";
 import { COMMON_STATUSES, type CommonStatusId } from "./statuses/common.js";
 import { WARRIOR_STATUSES, type WarriorStatusId } from "./statuses/warrior.js";
 import { RANGER_STATUSES, type RangerStatusId } from "./statuses/ranger.js";
@@ -146,6 +148,45 @@ export interface BlockRule {
   readonly against: "all" | "melee" | "projectile";
 }
 
+/**
+ * A status stat (#1976): flat, or scaled by the rank of its source in an
+ * attribute, as GW1 writes Endure Pain's "90...258 Health". The rank is
+ * the one captured as the status lands (`ActiveStatus.ranks`), and is read
+ * through `statAt`.
+ */
+export type StatusStat = number | { readonly scaling: AttributeScaling };
+
+/** The ranks of a status none of whose stats scale (#1976). */
+export const NO_RANKS: ReadonlyMap<string, number> = new Map();
+
+/** The fields of a `StatusDefinition` that are a `StatusStat`. */
+type StatusStatKey = {
+  [K in keyof StatusDefinition]: StatusStat extends StatusDefinition[K] ? K : never;
+}[keyof StatusDefinition];
+
+/** Every `StatusStatKey`: a field widened to `StatusStat` must be listed here. */
+const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
+  healthPips: true,
+  armorModifier: true,
+  maxHealthBonus: true,
+  physicalDamageTakenBonus: true,
+  attackDurationMultiplier: true,
+  damageTakenMultiplier: true,
+};
+
+/** The attributes `id`'s scaled stats name, each once: what its source's ranks are read in. */
+export function scaledStatAttributes(id: StatusId): readonly string[] {
+  const definition = getStatusDefinition(id);
+  const attributes = new Set<string>();
+  for (const key of Object.keys(STATUS_STAT_KEYS) as StatusStatKey[]) {
+    const stat = definition[key];
+    if (typeof stat !== "number") {
+      attributes.add(stat.scaling.attributeId);
+    }
+  }
+  return [...attributes];
+}
+
 export interface StatusDefinition {
   readonly id: StatusId;
   readonly name: string;
@@ -167,7 +208,7 @@ export interface StatusDefinition {
    * negative degenerates. Every status's pips sum, clamped to
    * `MAX_PIPS` either way, and apply continuously, not in lumps.
    */
-  readonly healthPips: number;
+  readonly healthPips: StatusStat;
   /**
    * Health pips for each enchantment on the bearer, itself included,
    * counting at most `max` (#845): Mystic Regeneration. Summed with
@@ -177,7 +218,7 @@ export interface StatusDefinition {
   /** Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed with the base. */
   readonly energyPips: number;
   /** Flat armor modifier while active. */
-  readonly armorModifier: number;
+  readonly armorModifier: StatusStat;
   /**
    * Armor added against a hit only when its conditions hold (#1437), as
    * an insignia's: Avatar of Melandru's "+30 elemental armor".
@@ -255,7 +296,7 @@ export interface StatusDefinition {
    * additional 90...300 Health". Gaining it raises health by as much;
    * losing it clamps health to the maximum left, so the extra is lost.
    */
-  readonly maxHealthBonus: number;
+  readonly maxHealthBonus: StatusStat;
   /**
    * Maximum health added for each enchantment on the bearer, any source's,
    * counted live (#1873): Symbiosis's "+27...150 maximum Health" for each.
@@ -302,7 +343,7 @@ export interface StatusDefinition {
    * "deals only N damage" hits included: it is on the victim, not on the
    * attack.
    */
-  readonly physicalDamageTakenBonus: number;
+  readonly physicalDamageTakenBonus: StatusStat;
   /**
    * The type elemental damage the bearer takes becomes, before armor is
    * read (#1745): Winter's "all elemental damage is cold damage instead".
@@ -397,7 +438,7 @@ export interface StatusDefinition {
    * skills alike; <1 is faster (ADR-0029). "50% slower" is 1.5, as GW1
    * counts it.
    */
-  readonly attackDurationMultiplier: number;
+  readonly attackDurationMultiplier: StatusStat;
   /**
    * Multiplier on how fast the bearer's shots fly (#1742): Read the
    * Wind's "your arrows move twice as fast" is 2. Read as each shot is
@@ -679,7 +720,7 @@ export interface StatusDefinition {
    * Escape's 0.5. Applied to every damage packet after armor; health
    * loss and degeneration never pass through it.
    */
-  readonly damageTakenMultiplier: number;
+  readonly damageTakenMultiplier: StatusStat;
   /**
    * Taken off every damage packet the bearer takes, after armor and
    * `damageTakenMultiplier` (#1108): Call of Protection's 17. Never below 0.
@@ -1858,6 +1899,12 @@ export interface ActiveStatus {
    * `undefined` for one a trigger, a zone or a spirit put on.
    */
   readonly sourceSkillId: string | undefined;
+  /**
+   * Its source's rank in each attribute its scaled stats name (#1976), as
+   * `rankOf` read it as it landed: weakness and attribute changes
+   * included, and fixed from then on, as GW1 does. Empty for one with none.
+   */
+  readonly ranks: ReadonlyMap<string, number>;
   /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
   outbreak: Outbreak | null;
   /**
@@ -2325,12 +2372,14 @@ export class StatusSet {
    *
    * `returnPoint` is where its source stands as it casts, for a
    * `returnsSource` status (#1826): only the instance this call puts up
-   * carries it. One kept for its longer duration keeps its own.
+   * carries it. One kept for its longer duration keeps its own, and its
+   * own `ranks` (#1976): whichever wins keeps the ranks it landed with.
    */
   public apply(
     id: StatusId,
     appliedSeconds: number,
     sourceId: string,
+    ranks: ReadonlyMap<string, number>,
     returnPoint: Vec2 | null = null,
     sourceSkillId?: string,
   ): boolean {
@@ -2389,6 +2438,7 @@ export class StatusSet {
       touchFailsLeft: definition.failsFoeTouchSkills,
       sourceId,
       sourceSkillId,
+      ranks,
       outbreak,
       maintained: null,
       projected: false,
@@ -2420,8 +2470,15 @@ export class StatusSet {
    * Catch a spreading status from a bearer of `outbreak` (#765). The
    * longer duration wins, as for `apply`, but a combatant already
    * carrying it keeps the outbreak it has.
+   * `ranks` are the carrier copy's (#1976): a caught one scales as the cast did.
    */
-  public catch(id: StatusId, durationSeconds: number, sourceId: string, outbreak: Outbreak): void {
+  public catch(
+    id: StatusId,
+    durationSeconds: number,
+    sourceId: string,
+    outbreak: Outbreak,
+    ranks: ReadonlyMap<string, number>,
+  ): void {
     if (durationSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return;
     }
@@ -2452,6 +2509,7 @@ export class StatusSet {
       touchFailsLeft: undefined,
       sourceId,
       sourceSkillId: undefined,
+      ranks,
       outbreak,
       maintained: null,
       projected: false,
@@ -2476,6 +2534,7 @@ export class StatusSet {
     id: StatusId,
     sourceId: string,
     seq: number,
+    ranks: ReadonlyMap<string, number>,
     returnPoint: Vec2 | null = null,
     stepTargetId: string | null = null,
     sourceSkillId?: string,
@@ -2502,6 +2561,7 @@ export class StatusSet {
       touchFailsLeft: undefined,
       sourceId,
       sourceSkillId,
+      ranks,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
@@ -2521,7 +2581,7 @@ export class StatusSet {
    * removed when its bearer leaves every such spirit's range. Already
    * worn: nothing. Returns whether it is newly on the bearer.
    */
-  public project(id: StatusId, sourceId: string): boolean {
+  public project(id: StatusId, sourceId: string, ranks: ReadonlyMap<string, number>): boolean {
     if (this.#statuses.has(id) || this.isImmuneTo(id)) {
       return false;
     }
@@ -2542,6 +2602,7 @@ export class StatusSet {
       touchFailsLeft: undefined,
       sourceId,
       sourceSkillId: undefined,
+      ranks,
       outbreak: null,
       maintained: null,
       projected: true,
@@ -2797,17 +2858,18 @@ export class StatusSet {
   /**
    * Take up to `count` statuses of a category off the bearer, newest first,
    * as `removeByCategory`, with the time each had left (#944): Plague
-   * Touch's "transfer ... with their remaining durations".
+   * Touch's "transfer ... with their remaining durations", and the ranks
+   * each landed with (#1976).
    */
   public takeNewest(
     category: StatusCategory,
     count: number,
-  ): { id: StatusId; remainingSeconds: number }[] {
+  ): Pick<ActiveStatus, "id" | "remainingSeconds" | "ranks">[] {
     const taken = [...this.#statuses.values()]
       .reverse()
       .filter(({ id }) => getStatusDefinition(id).category === category)
       .slice(0, count)
-      .map(({ id, remainingSeconds }) => ({ id, remainingSeconds }));
+      .map(({ id, remainingSeconds, ranks }) => ({ id, remainingSeconds, ranks }));
     this.#end(taken.map(({ id }) => id));
     return taken;
   }
@@ -3525,7 +3587,9 @@ export function isSuppressed(
  * included. Under a status that bars speed boosts (#1745), only the
  * slows among the move speeds count.
  */
-export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]): StatusModifiers {
+export function aggregateModifiers(
+  statuses: readonly Pick<ActiveStatus, "id" | "ranks">[],
+): StatusModifiers {
   let healthPips = 0;
   let energyPips = 0;
   let armorModifier = 0;
@@ -3582,13 +3646,14 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     if (isSuppressed(statuses, status)) {
       continue;
     }
-    healthPips += def.healthPips;
+    const { ranks } = status;
+    healthPips += Math.round(statAt(def.healthPips, ranks));
     if (def.healthPipsPerEnchantment !== undefined) {
       const { pips, max } = def.healthPipsPerEnchantment;
       healthPips += pips * Math.min(enchantments, max);
     }
     energyPips += def.energyPips;
-    armorModifier += def.armorModifier;
+    armorModifier += Math.round(statAt(def.armorModifier, ranks));
     armorWhileStill += def.armorWhileStill;
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     healthPerSecond += def.healthPerSecond;
@@ -3609,12 +3674,14 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     ) {
       maxHealthLoss = def.maxHealthLoss;
     }
-    maxHealthBonus += def.maxHealthBonus + def.maxHealthBonusPerEnchantment * enchantments;
+    maxHealthBonus +=
+      Math.round(statAt(def.maxHealthBonus, ranks)) +
+      def.maxHealthBonusPerEnchantment * enchantments;
     maxEnergyBonus += def.maxEnergyBonus;
     minionDamageBonus += def.minionDamageBonus;
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
-    physicalDamageTakenBonus += def.physicalDamageTakenBonus;
+    physicalDamageTakenBonus += Math.round(statAt(def.physicalDamageTakenBonus, ranks));
     for (const delta of def.attributeDeltas) {
       attributeDeltas.push(delta);
     }
@@ -3623,10 +3690,11 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     castTimeMultiplier *= def.castTimeMultiplier;
     skillActivationMultiplier *= def.skillActivationMultiplier;
-    attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
-    attackSlower = Math.max(attackSlower, def.attackDurationMultiplier);
+    const attackDuration = statAt(def.attackDurationMultiplier, ranks);
+    attackFaster = Math.min(attackFaster, attackDuration);
+    attackSlower = Math.max(attackSlower, attackDuration);
     projectileSpeedMultiplier *= def.projectileSpeedMultiplier;
-    damageTakenMultiplier *= def.damageTakenMultiplier;
+    damageTakenMultiplier *= statAt(def.damageTakenMultiplier, ranks);
     damageReduction += def.damageReduction;
     if (
       def.maxDamageFractionPerHit !== undefined &&

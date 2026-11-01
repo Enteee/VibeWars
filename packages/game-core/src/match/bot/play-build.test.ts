@@ -13,6 +13,7 @@ import { createCursor, decide, type Behaviour } from "../behaviour.js";
 import type { CombatLogEntry } from "../combat-log.js";
 import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../simulation.js";
 import { botUses, onlyInterrupts } from "./skill-intent.js";
+import { NO_RANKS } from "../../skills/status.js";
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULESET.tickRateHz;
@@ -394,7 +395,7 @@ describe("play-build and a well's sacrifice (#1730)", () => {
     if (corpse) {
       const fallen = sim.get("fallen")?.combatant;
       if (fallen === undefined) throw new Error("no fallen");
-      fallen.statuses.apply("burning", 10, "foe");
+      fallen.statuses.apply("burning", 10, "foe", NO_RANKS);
       fallen.health = 0.2;
       sim.step(DT);
       expect(fallen.dead).toBe(true);
@@ -766,7 +767,7 @@ describe("play-build raises a mantra before it is needed (#1964)", () => {
       }),
       fighter("foe", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
     ]);
-    sim.get("foe")?.combatant.statuses.apply("mantra-of-concentration", 31, "foe");
+    sim.get("foe")?.combatant.statuses.apply("mantra-of-concentration", 31, "foe", NO_RANKS);
     sim.setTarget("foe", "ranger");
     sim.requestSkill("foe", slotOf(ELEMENTALIST, "elementalist.chain-lightning"));
     expect(sim.get("foe")?.combatant.cast.activeCast?.remainingSeconds).toBe(2);

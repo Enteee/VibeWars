@@ -12,7 +12,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
-import { aggregateModifiers, type StatusId } from "./status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkill, resolveSwing } from "./weapon-attack.js";
@@ -61,7 +61,7 @@ function swordsman(statusId?: StatusId): Combatant {
     attributeRanks: new Map([["warrior.swordsmanship", 12]]),
   });
   if (statusId !== undefined) {
-    sword.statuses.apply(statusId, 20, "ritualist");
+    sword.statuses.apply(statusId, 20, "ritualist", NO_RANKS);
   }
   return sword;
 }
@@ -153,12 +153,12 @@ describe("the ten are the corpus's (#1654)", () => {
 describe("Resilient Weapon (#1654)", () => {
   it("gives +5 regeneration and +24 armor only while hexed or under a condition", () => {
     const ally = makeCombatant({ id: "ally" });
-    ally.statuses.apply("resilient-weapon", 10, "r");
+    ally.statuses.apply("resilient-weapon", 10, "r", NO_RANKS);
     expect(aggregateModifiers(ally.statuses.active)).toMatchObject({
       healthPips: 0,
       armorModifier: 0,
     });
-    ally.statuses.apply("bleeding", 5, "x");
+    ally.statuses.apply("bleeding", 5, "x", NO_RANKS);
     // Bleeding's own −3 plus the weapon's +5.
     expect(aggregateModifiers(ally.statuses.active)).toMatchObject({
       healthPips: 2,
@@ -169,7 +169,7 @@ describe("Resilient Weapon (#1654)", () => {
       healthPips: 0,
       armorModifier: 0,
     });
-    ally.statuses.apply("lamentation", 5, "x");
+    ally.statuses.apply("lamentation", 5, "x", NO_RANKS);
     expect(aggregateModifiers(ally.statuses.active).armorModifier).toBe(24);
   });
 });
@@ -178,7 +178,7 @@ describe("Ghostly and Guided Weapon (#1654)", () => {
   it("Ghostly Weapon: one attack past a block, then it ends", () => {
     const sword = swordsman("ghostly-weapon");
     const target = foe();
-    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy", NO_RANKS);
     const blocked = Object.assign(createRng(1654), { nextFloat: () => 0 });
     expect(kinds(swing(sword, target, blocked))).toEqual(["damage"]);
     expect(sword.statuses.has("ghostly-weapon")).toBe(false);
@@ -188,7 +188,7 @@ describe("Ghostly and Guided Weapon (#1654)", () => {
   it("Guided Weapon: every attack past a stance's block, nothing spent", () => {
     const sword = swordsman("guided-weapon");
     const target = foe();
-    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy", NO_RANKS);
     const blocked = Object.assign(createRng(1654), { nextFloat: () => 0 });
     expect(kinds(swing(sword, target, blocked))).toEqual(["damage"]);
     expect(kinds(powerAttack(sword, target.combatant, blocked))).toEqual(["damage"]);
@@ -313,8 +313,8 @@ describe("in a match (#1654)", () => {
     const sim = match();
     const w = get(sim, "w");
     w.health = 5000;
-    w.statuses.apply("bleeding", 10, "x");
-    w.statuses.apply("resilient-weapon", 10, "rit");
+    w.statuses.apply("bleeding", 10, "x", NO_RANKS);
+    w.statuses.apply("resilient-weapon", 10, "rit", NO_RANKS);
     const log: CombatLogEntry[] = [];
     for (let tick = 0; tick < Math.round(1 / DT); tick += 1) {
       log.push(...sim.step(DT).log);
@@ -337,7 +337,7 @@ describe("in a match (#1654)", () => {
       const sim = match(weapon);
       const w = get(sim, "w");
       const x = get(sim, "x");
-      w.statuses.apply("nightmare-weapon", 12, "w");
+      w.statuses.apply("nightmare-weapon", 12, "w", NO_RANKS);
       w.health = 5000;
       expect(applyIntent(sim, "w", { kind: "attack", targetId: "x" })).toBeNull();
       stepFor(sim, 10);
@@ -350,13 +350,13 @@ describe("in a match (#1654)", () => {
 
   it("Weapon of Shadow blinds whoever hits its bearer, and whoever it hits", () => {
     const struck = match();
-    get(struck, "w").statuses.apply("weapon-of-shadow", 6, "w");
+    get(struck, "w").statuses.apply("weapon-of-shadow", 6, "w", NO_RANKS);
     expect(applyIntent(struck, "x", { kind: "attack", targetId: "w" })).toBeNull();
     stepFor(struck, 3);
     expect(get(struck, "x").statuses.has("blind")).toBe(true);
 
     const striking = match();
-    get(striking, "w").statuses.apply("weapon-of-shadow", 6, "w");
+    get(striking, "w").statuses.apply("weapon-of-shadow", 6, "w", NO_RANKS);
     expect(applyIntent(striking, "w", { kind: "attack", targetId: "x" })).toBeNull();
     stepFor(striking, 3);
     expect(get(striking, "x").statuses.has("blind")).toBe(true);
@@ -368,7 +368,7 @@ describe("in a match (#1654)", () => {
       const w = get(sim, "w");
       w.energy = 0;
       if (fury) {
-        w.statuses.apply("weapon-of-fury", 17, "w");
+        w.statuses.apply("weapon-of-fury", 17, "w", NO_RANKS);
       }
       expect(applyIntent(sim, "w", { kind: "attack", targetId: "x" })).toBeNull();
       stepFor(sim, 4);
@@ -379,6 +379,8 @@ describe("in a match (#1654)", () => {
     const furious = run(true);
     expect(plain.hits).toBe(true);
     expect(furious.energy).toBeGreaterThan(plain.energy);
-    expect(aggregateModifiers([{ id: "weapon-of-fury" }]).adrenalineGainFaster).toBe(1);
+    expect(
+      aggregateModifiers([{ id: "weapon-of-fury", ranks: NO_RANKS }]).adrenalineGainFaster,
+    ).toBe(1);
   });
 });

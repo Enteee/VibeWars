@@ -9,6 +9,7 @@ import { chargeAdrenaline, strikesOf } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The Swordsmanship staples in a match (#1354): Pure Strike's block, Gash
@@ -129,7 +130,7 @@ describe("Pure Strike (#1354)", () => {
   it("is never blocked out of a stance, even by Gladiator's Defense", () => {
     for (let seed = 0; seed < 50; seed += 1) {
       const sim = arena(`pure-${String(seed)}`);
-      combatant(sim, "t").statuses.apply("gladiators-defense", 10, "t");
+      combatant(sim, "t").statuses.apply("gladiators-defense", 10, "t", NO_RANKS);
       expect(blocked(use(sim, PURE_STRIKE)), `seed ${String(seed)}`).toBe(false);
     }
   });
@@ -137,8 +138,8 @@ describe("Pure Strike (#1354)", () => {
   it("can be blocked while its user is in a stance", () => {
     const blocks = Array.from({ length: 50 }, (_, seed) => {
       const sim = arena(`pure-${String(seed)}`);
-      combatant(sim, "t").statuses.apply("gladiators-defense", 10, "t");
-      combatant(sim, "w").statuses.apply("balanced-stance", 10, "w");
+      combatant(sim, "t").statuses.apply("gladiators-defense", 10, "t", NO_RANKS);
+      combatant(sim, "w").statuses.apply("balanced-stance", 10, "w", NO_RANKS);
       return blocked(use(sim, PURE_STRIKE));
     });
     expect(blocks).toContain(true);
@@ -151,7 +152,7 @@ describe("Gash (#1354)", () => {
     chargeAdrenaline(combatant(clean, "w"), GASH);
     const plain = use(clean, GASH);
     const bleeding = arena("gash");
-    combatant(bleeding, "t").statuses.apply("bleeding", 20, "w");
+    combatant(bleeding, "t").statuses.apply("bleeding", 20, "w", NO_RANKS);
     chargeAdrenaline(combatant(bleeding, "w"), GASH);
     const wounding = use(bleeding, GASH);
     expect(damageTo(plain, "t")).toBeGreaterThan(0);
@@ -178,7 +179,7 @@ describe("Final Thrust (#1354)", () => {
     // Guardian, not Gladiator's Defense: its damage back would charge some.
     for (let seed = 0; seed < 50; seed += 1) {
       const sim = arena(`thrust-${String(seed)}`);
-      combatant(sim, "t").statuses.apply("guardian", 10, "t");
+      combatant(sim, "t").statuses.apply("guardian", 10, "t", NO_RANKS);
       const w = combatant(sim, "w");
       chargeAdrenaline(w, FINAL_THRUST, GASH, GALRATH_SLASH);
       if (blocked(use(sim, FINAL_THRUST))) {
@@ -270,7 +271,7 @@ describe("Dragon Slash (#1354)", () => {
       const w = combatant(sim, "w");
       chargeAdrenaline(w, skillId);
       if (blind) {
-        w.statuses.apply("blind", 10, "t");
+        w.statuses.apply("blind", 10, "t", NO_RANKS);
       }
       const entry = use(sim, skillId);
       const missed = entry.events.some(({ kind }) => kind === "attack-missed");

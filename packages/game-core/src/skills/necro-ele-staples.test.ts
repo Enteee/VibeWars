@@ -12,7 +12,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
+import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -112,9 +112,9 @@ describe("Plague Signet (#1540)", () => {
   it("moves every condition with 180% of the time it had left", () => {
     const necro = makeCombatant({ id: "n", attributeRanks: RANKS });
     const foe = makeCombatant({ id: "f", team: 1 });
-    necro.statuses.apply("burning", 4, "x");
-    necro.statuses.apply("bleeding", 10, "x");
-    necro.statuses.apply("crippled", 6, "x");
+    necro.statuses.apply("burning", 4, "x", NO_RANKS);
+    necro.statuses.apply("bleeding", 10, "x", NO_RANKS);
+    necro.statuses.apply("crippled", 6, "x", NO_RANKS);
     use(necro, "necromancer.plague-signet", foe);
     expect(necro.statuses.countByCategory("condition")).toBe(0);
     expect(foe.statuses.get("burning")?.remainingSeconds).toBeCloseTo(7.2, 5);
@@ -141,7 +141,7 @@ describe("Ward Against Elements (#1540)", () => {
     const ele = makeCombatant({ id: "e", attributeRanks: RANKS });
     const bare = makeCombatant({ id: "a", team: 1, health: 1000, maxHealth: 1000 });
     const warded = makeCombatant({ id: "b", team: 1, health: 1000, maxHealth: 1000 });
-    warded.statuses.apply("ward-against-elements", 10, "ward");
+    warded.statuses.apply("ward-against-elements", 10, "ward", NO_RANKS);
     const open = damageIn(use(ele, "elementalist.fireball", bare), "a");
     const shielded = damageIn(use(ele, "elementalist.fireball", warded), "b");
     expect(shielded).toBeGreaterThan(0);
@@ -159,7 +159,7 @@ describe("Shock Arrow (#1540)", () => {
     );
     const ele = makeCombatant({ id: "e", attributeRanks: RANKS, energy: 30, maxEnergy: 80 });
     const cracked = makeCombatant({ id: "f", team: 1, health: 1000, maxHealth: 1000 });
-    cracked.statuses.apply("cracked-armor", 10, "x");
+    cracked.statuses.apply("cracked-armor", 10, "x", NO_RANKS);
     const events = use(ele, "elementalist.shock-arrow", cracked);
     expect(damageIn(events, "f")).toBeGreaterThan(0);
     expect(ele.energy).toBe(30 - 5 + 11);

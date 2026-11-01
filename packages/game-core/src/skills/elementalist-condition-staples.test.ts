@@ -12,6 +12,7 @@ import type { StatusId } from "./status.js";
 import { resolveTargets, type TargetCandidate } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
 import { KNOCKDOWN_SECONDS, type Combatant, type RadiusArea, type Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The Elementalist condition staples (#997): Water Trident, Searing
@@ -144,7 +145,7 @@ describe("Water Trident (#997)", () => {
 
   it("against Fleeting Stability: no knockdown, the damage lands", () => {
     const target = foe("foe", { moving: true });
-    target.statuses.apply("fleeting-stability", 10, "foe");
+    target.statuses.apply("fleeting-stability", 10, "foe", NO_RANKS);
     use(caster(), WATER_TRIDENT, target);
     expect(target.knockdownRemaining).toBe(0);
     expect(target.health).toBe(1000 - elemental(74, "cold", target));
@@ -174,7 +175,7 @@ describe("Searing Flames (#997)", () => {
 
   it("strikes a foe already on fire for 82 fire, and leaves its Burning as it was", () => {
     const target = foe();
-    target.statuses.apply("burning", 2, "paragon");
+    target.statuses.apply("burning", 2, "paragon", NO_RANKS);
     use(caster(), SEARING_FLAMES, target);
     expect(target.health).toBe(1000 - elemental(82, "fire", target));
     expect(remaining(target, "burning")).toBe(2);
@@ -182,7 +183,7 @@ describe("Searing Flames (#997)", () => {
 
   it("gives each foe in a mixed group its own branch", () => {
     const burning = foe("burning");
-    burning.statuses.apply("burning", 3, "paragon");
+    burning.statuses.apply("burning", 3, "paragon", NO_RANKS);
     const unburnt = foe("unburnt");
     use(caster(), SEARING_FLAMES, burning, unburnt);
     expect(burning.health).toBe(1000 - elemental(82, "fire", burning));
@@ -227,7 +228,7 @@ describe("Stoning (#997)", () => {
 
   it("knocks a Weakened foe down as well", () => {
     const target = foe();
-    target.statuses.apply("weakness", 5, "necromancer");
+    target.statuses.apply("weakness", 5, "necromancer", NO_RANKS);
     use(caster(), STONING, target);
     expect(target.health).toBe(1000 - elemental(93, "earth", target));
     expect(target.knockdownRemaining).toBe(KNOCKDOWN_SECONDS);
@@ -235,7 +236,7 @@ describe("Stoning (#997)", () => {
 
   it("knocks a Weakened caster out of its cast, which recharges", () => {
     const target = foe("foe", { energy: 25 });
-    target.statuses.apply("weakness", 5, "necromancer");
+    target.statuses.apply("weakness", 5, "necromancer", NO_RANKS);
     target.cast.beginCast("elementalist.fireball", target.id, 2, undefined);
     use(caster(), STONING, target);
     expect(target.cast.activeCast).toBeUndefined();

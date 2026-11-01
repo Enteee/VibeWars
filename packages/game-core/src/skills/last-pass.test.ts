@@ -8,6 +8,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type * as Status from "./status.js";
 import type { StatusDefinition, StatusId } from "./status.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The last settle pass fires nothing (#1837), whoever joined first. No
@@ -97,13 +98,13 @@ describe("the last settle pass (#1837)", () => {
     const n = get(sim, "n").combatant;
     const f = get(sim, "f").combatant;
     const g = get(sim, "g").combatant;
-    f.statuses.apply("icy-veins", 30, "n");
-    g.statuses.apply("hex-breaker", 30, "g");
-    n.statuses.apply("reapers-mark", 30, "g");
+    f.statuses.apply("icy-veins", 30, "n", NO_RANKS);
+    g.statuses.apply("hex-breaker", 30, "g", NO_RANKS);
+    n.statuses.apply("reapers-mark", 30, "g", NO_RANKS);
     stepFor(sim, DT);
     n.health = 20;
     g.energy = 0;
-    f.statuses.apply("burning", 10, "n");
+    f.statuses.apply("burning", 10, "n", NO_RANKS);
     f.health = 0.2;
     const log = stepFor(sim, 1);
     expect(f.dead).toBe(true);
@@ -135,13 +136,13 @@ describe("what the last settle pass owes (#1837)", () => {
     const f = get(sim, "f").combatant;
     const g = get(sim, "g").combatant;
     const b = get(sim, "b").combatant;
-    f.statuses.apply("icy-veins", 30, "n");
-    g.statuses.apply("hex-breaker", 30, "g");
-    g.statuses.apply("symbiotic-bond", 30, "b");
-    n.statuses.apply("union", 30, "u");
+    f.statuses.apply("icy-veins", 30, "n", NO_RANKS);
+    g.statuses.apply("hex-breaker", 30, "g", NO_RANKS);
+    g.statuses.apply("symbiotic-bond", 30, "b", NO_RANKS);
+    n.statuses.apply("union", 30, "u", NO_RANKS);
     stepFor(sim, DT);
     g.energy = 0;
-    f.statuses.apply("burning", 10, "n");
+    f.statuses.apply("burning", 10, "n", NO_RANKS);
     f.health = 0.2;
     const log = stepFor(sim, DT * 2);
     const events = log.flatMap((entry) => entry.events);

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { HEALTH_PER_PIP } from "../skills/status.js";
+import { NO_RANKS, HEALTH_PER_PIP } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
@@ -93,7 +93,7 @@ describe("natural health regeneration (#460)", () => {
   it("adds to the statuses' pips before the ±10 clamp", () => {
     const sim = pair();
     const a = get(sim, "a");
-    a.combatant.statuses.apply("regeneration", 60, "a");
+    a.combatant.statuses.apply("regeneration", 60, "a", NO_RANKS);
     expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(4, 6);
     stepFor(sim, 20);
     // Regeneration +4 and natural +7 is 11, clamped to 10.
@@ -111,7 +111,7 @@ describe("natural health regeneration (#460)", () => {
     const full = get(sim, "full");
     const dead = get(sim, "dead");
     dead.combatant.health = 1;
-    dead.combatant.statuses.apply("burning", 1, "full");
+    dead.combatant.statuses.apply("burning", 1, "full", NO_RANKS);
     stepFor(sim, 10);
     expect(dead.combatant.dead).toBe(true);
     expect(full.combatant.health).toBe(full.combatant.maxHealth);
@@ -166,7 +166,7 @@ describe("natural health regeneration (#460)", () => {
     it("on degeneration", () => {
       const sim = pair();
       stepFor(sim, 10);
-      get(sim, "a").combatant.statuses.apply("poison", 10, "b");
+      get(sim, "a").combatant.statuses.apply("poison", 10, "b", NO_RANKS);
       expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(-4, 6);
       stepFor(sim, 6);
       expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(-4, 6);
@@ -194,8 +194,8 @@ describe("natural health regeneration (#460)", () => {
     it("through a degeneration that a regeneration cancels", () => {
       const sim = pair();
       const a = get(sim, "a");
-      a.combatant.statuses.apply("poison", 60, "b");
-      a.combatant.statuses.apply("regeneration", 60, "a");
+      a.combatant.statuses.apply("poison", 60, "b", NO_RANKS);
+      a.combatant.statuses.apply("regeneration", 60, "a", NO_RANKS);
       stepFor(sim, 10);
       // Poison −4 and Regeneration +4 lose no health, so 10 s out of combat.
       expect(pipsNextTick(sim, "a")[0]).toBeCloseTo(3, 6);
@@ -215,13 +215,13 @@ describe("net pips (#504)", () => {
   it("sum every status with natural regeneration and the base, then clamp at ±10", () => {
     const sim = pair();
     const a = get(sim, "a").combatant;
-    a.statuses.apply("regeneration", 60, "a");
-    a.statuses.apply("blood-ritual", 60, "a");
+    a.statuses.apply("regeneration", 60, "a", NO_RANKS);
+    a.statuses.apply("blood-ritual", 60, "a", NO_RANKS);
     expect(sim.pips(get(sim, "a"))).toEqual({ health: 4, energy: 7 });
-    a.statuses.apply("burning", 60, "b");
-    a.statuses.apply("bleeding", 60, "b");
-    a.statuses.apply("poison", 60, "b");
-    a.statuses.apply("faintheartedness", 60, "b");
+    a.statuses.apply("burning", 60, "b", NO_RANKS);
+    a.statuses.apply("bleeding", 60, "b", NO_RANKS);
+    a.statuses.apply("poison", 60, "b", NO_RANKS);
+    a.statuses.apply("faintheartedness", 60, "b", NO_RANKS);
     // 4 − 7 − 3 − 4 − 2 = −12: clamped.
     expect(sim.pips(get(sim, "a")).health).toBe(-10);
     const [applied] = pipsNextTick(sim, "a");
@@ -231,7 +231,7 @@ describe("net pips (#504)", () => {
   it("are none for the dead", () => {
     const sim = pair();
     const a = get(sim, "a").combatant;
-    a.statuses.apply("regeneration", 60, "a");
+    a.statuses.apply("regeneration", 60, "a", NO_RANKS);
     a.dead = true;
     expect(sim.pips(get(sim, "a"))).toEqual({ health: 0, energy: 0 });
   });

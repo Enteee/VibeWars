@@ -13,6 +13,7 @@ import { stateHolds, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, StateCondition, Surroundings } from "./types.js";
 import { landBlow, PLAIN_BLOW, resolveAttackSkill, weaponSnapshotOf } from "./weapon-attack.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The Dervish earth bar (#1021): Eremite's Attack strikes every adjacent
@@ -127,12 +128,12 @@ describe("a Dervish enchantment, read on the caster (#1021)", () => {
   it("counts only that profession's: a Monk's Guardian is not one, Sand Shards is", () => {
     const self = dervish();
     const target = foe("target");
-    self.statuses.apply("guardian", 10, "monk");
+    self.statuses.apply("guardian", 10, "monk", NO_RANKS);
     expect(stateHolds(DERVISH_ENCHANTMENT, self, target, new Map())).toBe(false);
     expect(
       stateHolds({ kind: "caster-has", category: "enchantment" }, self, target, new Map()),
     ).toBe(true);
-    self.statuses.apply("sand-shards", 30, "dervish");
+    self.statuses.apply("sand-shards", 30, "dervish", NO_RANKS);
     expect(stateHolds(DERVISH_ENCHANTMENT, self, target, new Map())).toBe(true);
     expect(self.statuses.countByCategory("enchantment", "dervish")).toBe(1);
     expect(self.statuses.countByCategory("enchantment")).toBe(2);
@@ -142,7 +143,7 @@ describe("a Dervish enchantment, read on the caster (#1021)", () => {
 describe("Eremite's Attack (#1021)", () => {
   it("without a Dervish enchantment: +8, the scythe's 2 cleave victims, nothing removed", () => {
     const self = dervish();
-    self.statuses.apply("guardian", 10, "monk");
+    self.statuses.apply("guardian", 10, "monk", NO_RANKS);
     const plain = damage(eremites(self));
     expect(plain.map(([id]) => id)).toEqual(["target", "near1", "near2"]);
     expect(self.statuses.has("guardian")).toBe(true);
@@ -154,7 +155,7 @@ describe("Eremite's Attack (#1021)", () => {
   it("with Sand Shards: every adjacent foe, +8 more until Sand Shards' 4th hit spends it", () => {
     const [[, base] = ["", 0]] = damage(eremites(dervish()));
     const self = dervish();
-    self.statuses.apply("sand-shards", 30, "dervish");
+    self.statuses.apply("sand-shards", 30, "dervish", NO_RANKS);
     const hits = damage(eremites(self));
     expect(hits.map(([id]) => id).sort()).toEqual(["near1", "near2", "near3", "near4", "target"]);
     // Every foe wears the same armor. The victims were picked wide at the
@@ -168,8 +169,8 @@ describe("Eremite's Attack (#1021)", () => {
 
   it("loses only the newest Dervish enchantment, once, however many it struck", () => {
     const self = dervish();
-    self.statuses.apply("vow-of-strength", 15, "dervish");
-    self.statuses.apply("staggering-force", 30, "dervish");
+    self.statuses.apply("vow-of-strength", 15, "dervish", NO_RANKS);
+    self.statuses.apply("staggering-force", 30, "dervish", NO_RANKS);
     const events = eremites(self);
     expect(damage(events)).toHaveLength(5);
     expect(
@@ -180,11 +181,11 @@ describe("Eremite's Attack (#1021)", () => {
 
   it("blocked by every victim: nothing hit, nothing removed", () => {
     const self = dervish();
-    self.statuses.apply("staggering-force", 30, "dervish");
+    self.statuses.apply("staggering-force", 30, "dervish", NO_RANKS);
     const { target, surroundings } = crowd(self);
     for (const { combatant } of surroundings.values()) {
       if (combatant.team === 1) {
-        combatant.statuses.apply("guardian", 10, combatant.id);
+        combatant.statuses.apply("guardian", 10, combatant.id, NO_RANKS);
       }
     }
     const events = resolveAttackSkill(
@@ -220,7 +221,7 @@ describe("earth attacks (#1021)", () => {
   it("Staggering Force turns the weapon's roll to earth; the blow's own type still wins", () => {
     const self = dervish();
     expect(weaponSnapshotOf(self).damageType).toBe("slashing");
-    self.statuses.apply("staggering-force", 30, "dervish");
+    self.statuses.apply("staggering-force", 30, "dervish", NO_RANKS);
     expect(weaponSnapshotOf(self).damageType).toBe("earth");
     // A Warrior meets an earth blow with 80 armor, not 100.
     const struck = (victim: Combatant, blow = PLAIN_BLOW): number => {
@@ -401,7 +402,7 @@ describe("the earth enchantments in a match (#1021)", () => {
     const self = foeOf(match, "d");
     self.energy = 1000;
     // Put on, not cast: its strike would set the clump moving.
-    self.statuses.apply("staggering-force", 30, "d");
+    self.statuses.apply("staggering-force", 30, "d", NO_RANKS);
     match.setTarget("d", "t");
     expect(match.requestSkill("d", 4)?.check).toEqual({ ok: true });
     const log: CombatEvent[] = [];

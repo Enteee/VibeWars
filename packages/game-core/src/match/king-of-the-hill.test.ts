@@ -15,6 +15,7 @@ import { applyIntent } from "./apply-intent.js";
 import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type HillField } from "./ghost.js";
 import { ALTAR_REACH_UNITS } from "./relics.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * King of the Hill in the simulation (#1377), on Hill Courtyard: each
@@ -117,7 +118,7 @@ function stepUntil(sim: MatchSimulation, done: () => boolean, seconds: number): 
 /** `id` dies this tick, where it stands. */
 function kill(sim: MatchSimulation, id: string): void {
   const { combatant } = get(sim, id);
-  combatant.statuses.apply("burning", 10, "nobody");
+  combatant.statuses.apply("burning", 10, "nobody", NO_RANKS);
   combatant.health = 0.2;
 }
 

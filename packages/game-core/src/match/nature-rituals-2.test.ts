@@ -9,7 +9,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import { applyEffect, type CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, ownSkillBoost, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, ownSkillBoost, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
@@ -203,8 +203,8 @@ describe("nature rituals 2 (#1873)", () => {
     const before = effectiveMaxHealth(f);
     ritual(sim, "ranger.symbiosis");
     expect(effectiveMaxHealth(f)).toBe(before);
-    f.statuses.apply("mending", 30, "f");
-    f.statuses.apply("guardian", 30, "f");
+    f.statuses.apply("mending", 30, "f", NO_RANKS);
+    f.statuses.apply("guardian", 30, "f", NO_RANKS);
     expect(effectiveMaxHealth(f)).toBe(before + 250);
     f.health = before + 250;
     f.statuses.remove("guardian");
@@ -218,8 +218,8 @@ describe("nature rituals 2 (#1873)", () => {
     const swordsman = makeCombatant({ id: "swordsman", equipment: SWORD });
     const plainArrow = struck(archer, armoredAgainst("cold"));
     const plainSword = struck(swordsman, armoredAgainst("cold"));
-    archer.statuses.project("favorable-winds", "r/c1");
-    swordsman.statuses.project("favorable-winds", "r/c1");
+    archer.statuses.project("favorable-winds", "r/c1", NO_RANKS);
+    swordsman.statuses.project("favorable-winds", "r/c1", NO_RANKS);
     expect(aggregateModifiers(archer.statuses.active).projectileSpeedMultiplier).toBe(2);
     expect(weaponSnapshotOf(archer).damageDelta).toBe(6);
     expect(weaponSnapshotOf(swordsman).damageDelta).toBe(0);
@@ -267,11 +267,11 @@ describe("nature rituals 2 (#1873)", () => {
 
   it("Toxicity: -2 Health degeneration while Poisoned or Diseased, once for both", () => {
     const bearer = makeCombatant({ id: "bearer" });
-    bearer.statuses.project("toxicity", "r/c1");
+    bearer.statuses.project("toxicity", "r/c1", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).healthPips).toBe(0);
-    bearer.statuses.apply("poison", 10, "f");
+    bearer.statuses.apply("poison", 10, "f", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).healthPips).toBe(-4 - 2);
-    bearer.statuses.apply("disease", 10, "f");
+    bearer.statuses.apply("disease", 10, "f", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).healthPips).toBe(-4 - 4 - 2);
   });
 
@@ -279,7 +279,7 @@ describe("nature rituals 2 (#1873)", () => {
     const swordsman = makeCombatant({ id: "swordsman", equipment: SWORD });
     const plain = struck(swordsman, armoredAgainst("fire"));
     expect(struck(swordsman, armoredAgainst("slashing"))).toBeLessThan(plain);
-    swordsman.statuses.project("greater-conflagration", "r/c1");
+    swordsman.statuses.project("greater-conflagration", "r/c1", NO_RANKS);
     expect(struck(swordsman, armoredAgainst("fire"))).toBeLessThan(plain);
     // Armor against slashing no longer counts: the blow is fire by then.
     expect(struck(swordsman, armoredAgainst("slashing"))).toBe(plain);
@@ -289,7 +289,7 @@ describe("nature rituals 2 (#1873)", () => {
     /** What 50 damage of `type` from a bearer of Greater Conflagration takes off `victim`. */
     const dealt = (type: DamageType, victim: Combatant): number => {
       const caster = makeCombatant({ id: "caster" });
-      caster.statuses.project("greater-conflagration", "r/c1");
+      caster.statuses.project("greater-conflagration", "r/c1", NO_RANKS);
       applyEffect(
         { kind: "damage", type, armorPenetration: 0, amount: { flat: 50 } },
         { caster, target: victim, rng: createRng(1), rules: RULES.combat, surroundings: new Map() },
