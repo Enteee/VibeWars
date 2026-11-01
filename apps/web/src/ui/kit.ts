@@ -759,6 +759,63 @@ export function shareLine(label: string): ShareLine {
   };
 }
 
+export interface LoadLine {
+  /** The field, Load and the problems, hidden until `show`. */
+  readonly element: HTMLElement;
+  show(): void;
+  hide(): void;
+  isOpen(): boolean;
+}
+
+/**
+ * A code to load, typed or pasted into one line, with Load (#2004), where
+ * a share line shows. Load or Enter hands the text to `onLoad`, which
+ * returns what is wrong with it: nothing closes the line, anything else
+ * stays under it, one problem a line, the text kept to fix.
+ */
+export function loadLine(
+  label: string,
+  placeholder: string,
+  onLoad: (text: string) => readonly string[],
+): LoadLine {
+  const element = h("div", "editor-share editor-load");
+  element.hidden = true;
+  const line = document.createElement("input");
+  line.className = "editor-share-line";
+  line.spellcheck = false;
+  line.placeholder = placeholder;
+  line.setAttribute("aria-label", label);
+  const problems = h("ul", "editor-load-problems");
+  problems.setAttribute("role", "alert");
+  const load = (): void => {
+    const found = onLoad(line.value);
+    problems.replaceChildren(...found.map((problem) => h("li", undefined, problem)));
+    if (found.length === 0) {
+      element.hidden = true;
+    }
+  };
+  line.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      load();
+    }
+  });
+  element.append(line, button("Load", "", load), problems);
+  return {
+    element,
+    show() {
+      line.value = "";
+      problems.replaceChildren();
+      element.hidden = false;
+      line.focus();
+    },
+    hide() {
+      element.hidden = true;
+    },
+    isOpen: () => !element.hidden,
+  };
+}
+
 /** A screen's ⋯ (#1902): everything it does besides Save. */
 export interface MoreMenu {
   /** The ⋯ button, which an inline confirmation from the menu hangs off. */

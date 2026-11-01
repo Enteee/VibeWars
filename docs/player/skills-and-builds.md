@@ -130,13 +130,16 @@ In the editor's **⋯** menu, **Share** gives your build as a line of
 text, and **Share as GW1 code** as a GW1 template code. Press **Copy**
 and send it.
 
-To take one in, paste it anywhere in the editor that is not a text
-field. Both kinds work. A GW1 skill VibeWars does not have yet arrives as
-an empty slot. The build is yours once you press **Save**.
+To take one in, choose **Load GW1 code** under **⋯**, paste the code
+and press **Load**. If it cannot load, it says why under the field. As a
+shortcut, you can also paste a code anywhere in the editor that is not a
+text field. Both kinds of code work either way. A GW1 skill VibeWars
+does not have yet arrives as an empty slot. The build is yours once you
+press **Save**.
 
 **Save** keeps your build and takes you back to where you came from.
 **Esc** leaves without saving, and asks first if you changed anything.
-**Share**, **Duplicate** and **Delete** are under **⋯**.
+**Share**, **Load GW1 code**, **Duplicate** and **Delete** are under **⋯**.
 
 A team code is pasted on **Team Builder** instead.
 

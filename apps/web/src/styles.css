@@ -2541,6 +2541,24 @@ body {
   font-size: 0.8rem;
 }
 
+/* Load GW1 code (#2004): the share line's place, its problems under it. */
+.editor-load {
+  flex-wrap: wrap;
+}
+
+.editor-load-problems {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #ffb3ae;
+  font-size: 0.85rem;
+}
+
+.editor-load-problems:empty {
+  display: none;
+}
+
 .editor-more[hidden],
 .editor-share[hidden],
 .problems-list[hidden] {
