@@ -5,6 +5,7 @@ import {
   CAPTURE_REACH_UNITS,
   isStatusId,
   isWeaponId,
+  type CreatureLook,
   type StatusId,
   type Vec2,
 } from "@vibewars/game-core";
@@ -67,7 +68,18 @@ import {
   stepCapeMotion,
   type CapeMotion,
 } from "./cape-motion.js";
-import { DEAD_DASH, DEAD_GAP, creatureOutline, dashes } from "./creature-shape.js";
+import { CREATURE_ARMS } from "./creature-arms.js";
+import {
+  DEAD_DASH,
+  DEAD_GAP,
+  RING_CASING,
+  TICK_EDGE,
+  creatureOrnament,
+  creatureOutline,
+  creatureTick,
+  dashes,
+  type OrnamentColour,
+} from "./creature-shape.js";
 import { CAST_BADGE_SIZE, CAST_BAR_RISE, castBadgeLayout } from "./cast-badge.js";
 import {
   PING_HEAD_RADIUS,
@@ -88,6 +100,7 @@ import { screenSized } from "./screen-text.js";
 import {
   BODY_EDGE_WIDTH,
   SELF_RIM,
+  paintBodyMarks,
   paintStandingBody,
   paintWeaponMark,
   type Painter,
@@ -922,12 +935,7 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     if (actor.creatureLook !== undefined) {
-      // Its shape, standing or knocked down, and no weapon or off-hand (#1162).
-      tracePath(g, creatureOutline(x, y, actor.radius));
-      g.fillStyle(teamColour(actor.team), 1);
-      g.fillPath();
-      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
-      g.strokePath();
+      this.drawCreature(g, marks, actor, actor.creatureLook);
     } else if (actor.knockedDown) {
       this.drawLyingBody(g, marks, actor);
     } else {
@@ -963,6 +971,77 @@ export class ArenaScene extends Phaser.Scene {
 
     if (actor.castProgress !== undefined) {
       this.drawCastBar(marks, actor, actor.castProgress);
+    }
+  }
+
+  /**
+   * A living creature (#1162, #2047): its ornament, then its hexagon plate,
+   * upright standing or knocked down; over the kind glyph, the weapon and
+   * off-hand of an armed look, posed like a player's and dropped while it
+   * lies, or else a facing tick.
+   */
+  private drawCreature(
+    g: Phaser.GameObjects.Graphics,
+    marks: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    look: CreatureLook,
+  ): void {
+    const { x, y } = actor.position;
+    const team = teamColour(actor.team);
+    const colourOf = (colour: OrnamentColour): number =>
+      colour === "team" ? team : colour === "ink" ? SELF_RIM : colour;
+    for (const ornament of creatureOrnament(look, x, y, actor.radius)) {
+      if (ornament.kind === "polygon") {
+        tracePath(g, ornament.points);
+        g.fillStyle(colourOf(ornament.colour), 1);
+        g.fillPath();
+        g.lineStyle(ornament.edge, BODY_EDGE, 1);
+        g.strokePath();
+      } else if (ornament.kind === "outline") {
+        for (const [width, colour] of [
+          [ornament.casing, BODY_EDGE],
+          [ornament.width, colourOf(ornament.colour)],
+        ] as const) {
+          tracePath(g, ornament.points);
+          g.lineStyle(width, colour, 1);
+          g.strokePath();
+        }
+      } else {
+        g.lineStyle(ornament.width + RING_CASING, BODY_EDGE, 1);
+        g.strokeCircle(ornament.x, ornament.y, ornament.radius);
+        g.lineStyle(ornament.width, colourOf(ornament.colour), 1);
+        for (const arc of ornament.arcs) {
+          g.beginPath();
+          g.arc(ornament.x, ornament.y, ornament.radius, arc.from, arc.to);
+          g.strokePath();
+        }
+      }
+    }
+
+    tracePath(g, creatureOutline(x, y, actor.radius));
+    g.fillStyle(team, 1);
+    g.fillPath();
+    g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+    g.strokePath();
+
+    if (CREATURE_ARMS[look] === undefined) {
+      const [tip, left, right] = creatureTick(x, y, actor.radius, actor.facing);
+      marks.fillStyle(SELF_RIM, 1);
+      marks.fillTriangle(tip.x, tip.y, left.x, left.y, right.x, right.y);
+      marks.lineStyle(TICK_EDGE, BODY_EDGE, 1);
+      marks.strokeTriangle(tip.x, tip.y, left.x, left.y, right.x, right.y);
+    } else if (!actor.knockedDown) {
+      paintBodyMarks(phaserPainter(marks), {
+        x,
+        y,
+        r: actor.radius,
+        facing: actor.facing,
+        team: actor.team,
+        weaponId: actor.weaponId,
+        offhandId: actor.offhandId,
+        frame: this.weaponFrame(actor),
+        cape: undefined,
+      });
     }
   }
 

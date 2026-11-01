@@ -57,11 +57,7 @@ export function resolveMagnitudeTimes(
   return Math.round(scaledAt(magnitude, (attributeId) => rankOf(caster, attributeId)) * factor);
 }
 
-/**
- * The curve itself: `scaling` at `rank`, rounded. The tooltip's scale
- * hint prints its ends through this too, so "…8 at 12" is what rank 12
- * deals rather than the raw 8.2 the curve is written with.
- */
+/** The curve itself: `scaling` at `rank`, rounded. */
 export function magnitudeAtRank(
   scaling: Pick<AttributeScaling, "atZero" | "atTwelve">,
   rank: number,

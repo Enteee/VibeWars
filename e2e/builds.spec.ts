@@ -366,8 +366,14 @@ const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
 async function openTeamBuilder(page: Page): Promise<void> {
   await openRail(page, "Team Builder");
 }
-/** Team Builder's Team Build cards (#1453, #1525), without New team build: "Duo · 2 members". */
-const teamRows = (page: Page) => page.locator(".screen-teams .play-card:not(.play-card-new)");
+/**
+ * Team Builder's Team Build cards (#1453, #1525), without New team build
+ * and the random starter team (#2036): "Duo · 2 members".
+ */
+const teamRows = (page: Page) =>
+  page.locator(".screen-teams .play-card:not(.play-card-new):not(.is-random)");
+/** The random starter team's card (#2036), which every first start rolls. */
+const starterTeamCard = (page: Page) => page.locator(".screen-teams .play-card.is-random");
 async function teamList(page: Page): Promise<string[]> {
   return teamRows(page).evaluateAll((cards) =>
     cards.map((card) => {
@@ -425,7 +431,8 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await page.keyboard.press("Escape");
   await expect(bar.locator(".editor-more")).toBeHidden();
   await page.keyboard.press("Escape");
-  await expect(page.getByText("Make a team build to propose it in the Team Lobby.")).toBeVisible();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect(teamRows(page)).toHaveCount(0);
 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
@@ -491,11 +498,12 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamBuilder(page);
-  // Empty: only New team build, with the one line under it; no None.
+  // None of your own yet: the random starter team (#2036) and New team
+  // build, and no None.
   await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
   await expect(teamRows(page)).toHaveCount(0);
+  await expect(starterTeamCard(page)).toHaveCount(1);
   await expect(page.locator(".screen-teams .play-cards")).not.toContainText("None");
-  await expect(page.locator(".team-play-hint")).toBeVisible();
   await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
@@ -516,6 +524,33 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await page.keyboard.press("Escape");
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
+});
+
+test("the random Team Build: last, Reroll changes it in place, Clone opens a copy to edit (#2036)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  const starter = starterTeamCard(page);
+  await expect(starter).toHaveCount(1);
+  await expect(starter.locator(".roster-random-tag")).toHaveText("Random");
+  await expect(starter.getByRole("button", { name: "Edit" })).toHaveCount(0);
+  // Last of the Team Builds, New team build after it.
+  await expect(page.locator(".screen-teams .play-card").nth(-2)).toHaveClass(/is-random/);
+
+  const name = starter.locator(".play-card-name");
+  const before = (await name.textContent()) ?? "";
+  await starter.getByRole("button", { name: "Reroll", exact: true }).click();
+  await expect(name).not.toHaveText(before);
+  await expect(starter).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Reroll", exact: true })).toBeFocused();
+
+  const rerolled = (await name.textContent()) ?? "";
+  await starter.getByRole("button", { name: "Clone", exact: true }).click();
+  await expect(page.getByLabel("team name")).toHaveValue(`${rerolled} (copy)`);
+  await page.keyboard.press("Escape");
+  await expect(teamRows(page).locator(".play-card-name")).toHaveText([`${rerolled} (copy)`]);
+  await expect(name).toHaveText(rerolled);
 });
 
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({

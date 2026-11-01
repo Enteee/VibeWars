@@ -7,7 +7,6 @@ import type * as Figure from "./character-figure.js";
 import {
   NO_CHARACTER_FOR_QUEUE,
   isPlayable,
-  randomArenaActions,
   renderCharacterBuilder,
   renderRandomArena,
   rosterOrder,
@@ -47,17 +46,6 @@ describe("rosterSubtitle (#579)", () => {
       skillBar: ["no.such-skill", null, null, null, null, null, null, null],
     });
     expect(rosterSubtitle(illegal)).toBe("Elementalist / Monk · 1/8 skills");
-  });
-
-  it("follows it with the character's record, draws only when there are some (#1404)", () => {
-    expect(rosterSubtitle(character(), { wins: 12, losses: 7, draws: 0 })).toBe(
-      "Elementalist / Monk · 1/8 skills · 12W 7L",
-    );
-    expect(rosterSubtitle(character(), { wins: 12, losses: 7, draws: 1 })).toBe(
-      "Elementalist / Monk · 1/8 skills · 12W 7L 1D",
-    );
-    // A character that has not played shows nothing extra.
-    expect(rosterSubtitle(character(), undefined)).toBe("Elementalist / Monk · 1/8 skills");
   });
 });
 
@@ -114,14 +102,6 @@ describe("rosterOrder (#1425)", () => {
 
   it("lists a starter alone as the only row", () => {
     expect(ids(rosterOrder([character({ id: "rolled" })], "rolled"))).toEqual(["rolled"]);
-  });
-});
-
-describe("Random Arena's bar (#1453, #1525)", () => {
-  it("keeps Record in the bar, and no Teams or Music", () => {
-    expect(randomArenaActions({ onShowRecord: () => undefined }).map(({ label }) => label)).toEqual(
-      ["Record"],
-    );
   });
 });
 
@@ -191,7 +171,6 @@ describe("the character screens (#1525)", () => {
   const callbacks: MenuCallbacks = {
     onRandomArena: (mode, name) => queued.push(`${mode} ${name}`),
     onSwitch: (entry) => switched.push(entry),
-    onShowRecord: () => undefined,
     onNewCharacter: () => {
       added += 1;
     },

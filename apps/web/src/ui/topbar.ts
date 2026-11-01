@@ -231,6 +231,15 @@ export function joinControls(
 }
 
 /**
+ * Whether the bar has a ⋯: a screen with buttons beyond its primary one, or
+ * one showing the join controls, which fold into it on a phone (#2053).
+ * `primaries` holds, per screen button, whether it is the primary one.
+ */
+export function barHasMore(primaries: readonly boolean[], join: boolean): boolean {
+  return join || primaries.some((primary) => !primary);
+}
+
+/**
  * Whether showing `next` puts the ⋯ away (#1305): going to another place,
  * or an overlay opening or closing over it, does, and so does a bar with
  * nothing left in it. A screen that repaints in place, like a lobby on every
@@ -361,9 +370,9 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
       if (!shown.join && !shown.overlay) {
         join.clear();
       }
-      // Only a screen with buttons beyond its primary one has a ⋯.
-      const hasMore = Array.from(screenActions.children).some(
-        (node) => !node.classList.contains("primary"),
+      const hasMore = barHasMore(
+        Array.from(screenActions.children, (node) => node.classList.contains("primary")),
+        shown.join,
       );
       bar.classList.toggle("has-more", hasMore);
       if (putsMoreAway(lastShown, shown, hasMore)) {
