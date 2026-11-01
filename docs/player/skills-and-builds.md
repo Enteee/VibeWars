@@ -42,6 +42,12 @@ to four more ranks on top; see [Equipment](equipment.md). Raising the
 attribute a skill uses makes it stronger, and the numbers in its
 description change as you spend.
 
+In a fight your ranks can change for a while. Weakness takes one off
+each. Some hexes set a foe's attributes to 0, and Master of Magic sets
+your elemental ones to 13: a rank set this way overrides runes and
+Weakness alike. Signet of Illusions lets your next spells of other
+attributes use your Illusion Magic rank.
+
 ## Echoes
 
 A Paragon's **echoes** are long buffs on one ally. A **refrain** renews
@@ -49,6 +55,18 @@ to its full length, and a **finale** takes effect, whenever a chant or a
 shout ends on that ally. A chant or shout reapplied before it ends has not
 ended. Nothing removes an echo: it ends when it runs out or its bearer
 dies. Most cannot target a spirit.
+
+## Skills that become another skill
+
+Some Mesmer skills put another skill in their own slot for a while.
+Arcane Echo and Echo copy the next skill you use. **Inspired
+Enchantment** and **Inspired Hex** become the skill that cast the
+enchantment or hex they removed, for 20 seconds. **Arcane Thievery**
+becomes the spell it disabled on your foe, for as long as the disable
+lasts. The copy has its own recharge. When it ends, the original skill
+comes back and starts its own recharge, and a cast of the copy still in
+progress fails. A status put on by a spirit or by another status cannot
+be copied, though removing it still gives you the Energy.
 
 ## Wells and glyphs
 

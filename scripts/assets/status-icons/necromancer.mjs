@@ -310,4 +310,20 @@ export const NECROMANCER_STATUS_ICONS = {
       `<circle cx="12" cy="12" r="3.5" ${stroke(c, 1.8)}/>` +
       `<path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" ${stroke(c, 1.6)}/>`,
   ],
+  // Hex (#1929), a stand-in until its art card: a zero struck through,
+  // every attribute gone.
+  "wail-of-doom": [
+    "hex",
+    (c) =>
+      `<ellipse cx="12" cy="12" rx="5" ry="7" ${stroke(c, 2.2)}/>` +
+      `<path d="M6 19L18 5" ${stroke(c, 2)}/>`,
+  ],
+  // Hex (#1929), a stand-in until its art card: one bar fallen to the
+  // floor, the primary attribute gone.
+  atrophy: [
+    "hex",
+    (c) =>
+      `<path d="M5 19h14" ${stroke(c, 2.2)}/>` +
+      `<path d="M8 16V8M12 16V5M16 16v-1" ${stroke(c, 2)}/>`,
+  ],
 };

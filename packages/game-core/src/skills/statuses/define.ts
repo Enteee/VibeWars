@@ -48,6 +48,8 @@ export function define(
     attackDamageDelta: 0,
     attackDamageDeltaWeapon: undefined,
     attributeDelta: 0,
+    attributeSet: undefined,
+    borrowsAttribute: undefined,
     castTimeMultiplier: 1,
     skillActivationMultiplier: 1,
     interruptsSpells: false,

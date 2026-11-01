@@ -100,4 +100,11 @@ export const MONK_ICONS = {
   "monk.vital-blessing": { glyph: "heart-plus", modifier: "upkeep" },
   // Skill-type and heal triggers (#1913)
   "monk.scribes-insight": { glyph: "scroll", modifier: "bolt" },
+  // Caster staples (#1870).
+  "monk.aura-of-stability": { glyph: "ring-mountain" },
+  "monk.healing-ring": { glyph: "ring-healers" },
+  // Caster staples 2 (#1872).
+  "monk.vital-blessing": { glyph: "ring-heart" },
+  // Skill-type and heal triggers (#1913), a stand-in until its art card.
+  "monk.scribes-insight": { glyph: "energy", modifier: "plus" },
 };

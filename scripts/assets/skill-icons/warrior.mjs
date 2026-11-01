@@ -90,4 +90,12 @@ export const WARRIOR_ICONS = {
   "warrior.flurry": { glyph: "sword", modifier: "less" },
   // Next attacks (#1916)
   "warrior.signet-of-strength": { glyph: "sword-pips" },
+  // Staples (#1869).
+  "warrior.keen-chop": { glyph: "chop-keen" },
+  "warrior.penetrating-chop": { glyph: "chop-pierce" },
+  "warrior.lacerating-chop": { glyph: "chop-bleed" },
+  "warrior.frenzied-defense": { glyph: "shield-frenzy" },
+  "warrior.flurry": { glyph: "slashes-flurry" },
+  // Next attacks (#1916): stand-ins until their art.
+  "warrior.signet-of-strength": { glyph: "sword", modifier: "plus" },
 };

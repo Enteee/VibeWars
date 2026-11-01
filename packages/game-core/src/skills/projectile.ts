@@ -77,6 +77,8 @@ export interface SpellHit {
   readonly caster: Combatant;
   /** What the caster's statuses did to it at release (#1761): its heals and statuses land with it. */
   readonly own: OwnSkillBoost | undefined;
+  /** The attribute a status lent it at release (#1929), Signet of Illusions' Illusion Magic. */
+  readonly lent: string | undefined;
 }
 
 /**

@@ -87,4 +87,11 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.breath-of-fire": { glyph: "flame", modifier: "hourglass" },
   // Shots that fly differently (#1914)
   "elementalist.lava-arrows": { glyph: "arrow-lava" },
+  // Caster staples (#1870).
+  "elementalist.grasping-earth": { glyph: "roots-grasp" },
+  "elementalist.breath-of-fire": { glyph: "breath-fire" },
+  // Shots that fly differently (#1914), a stand-in until its art card.
+  "elementalist.lava-arrows": { glyph: "fireball", modifier: "renew" },
+  // Attributes set or borrowed (#1929), stand-ins until their art card.
+  "elementalist.master-of-magic": { glyph: "energy", modifier: "renew" },
 };

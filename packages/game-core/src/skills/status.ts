@@ -340,6 +340,21 @@ export interface StatusDefinition {
    */
   readonly attributeDelta: number;
   /**
+   * The bearer's rank in a set of attributes, whatever its sheet, runes
+   * and deltas say (#1929): Wail of Doom's "all of target foe's
+   * attributes are 0", Master of Magic's "your elemental attributes are
+   * set to 13". The newest such status wins. Read through `rankOf`
+   * alone. `undefined`: none.
+   */
+  readonly attributeSet: AttributeSet | undefined;
+  /**
+   * The bearer's next `spells` spells not of `attributeId` scale with its
+   * rank in `attributeId` instead of their own attribute (#1929): Signet of
+   * Illusions' "your next 3 non-Illusion spells use your Illusion
+   * attribute". A spell spends one as it finishes. `undefined`: none.
+   */
+  readonly borrowsAttribute: BorrowedAttribute | undefined;
+  /**
    * Multiplier on the bearer's spell cast time; >1 is a penalty. Dazed
    * doubles it. A signet or any other skill that is not a spell ignores
    * it (#524).
@@ -1316,7 +1331,7 @@ export interface SpreadGainedConditionEffect {
 /**
  * An echo's copy (#469): the trigger's own skill's slot holds the skill the
  * bearer just used, for `seconds`, then gives it back. Only a spell, with
- * `spellsOnly`; never another echo skill (`isEchoSkill`). The simulation's
+ * `spellsOnly`; never another copier (`copiesSkill`). The simulation's
  * trigger context names the skill used.
  */
 export interface EchoEffect {
@@ -1503,6 +1518,25 @@ export interface NextSpells {
 }
 
 /**
+ * Which attributes an `attributeSet` holds (#1929), and at what rank:
+ * `all` of them, the bearer's `primary` one, or the four `elemental`
+ * ones. With `plusEquipment` the runes and headgear still add theirs, as
+ * Wail of Doom leaves them; without, they are overridden too, as Master
+ * of Magic overrides them.
+ */
+export interface AttributeSet {
+  readonly scope: "all" | "primary" | "elemental";
+  readonly rank: number;
+  readonly plusEquipment: boolean;
+}
+
+/** A borrowed attribute's hold on the bearer's next spells (#1929). */
+export interface BorrowedAttribute {
+  readonly attributeId: string;
+  readonly spells: number;
+}
+
+/**
  * A chant's hold on the bearer's next skills of a kind (#1483), as Aria of
  * Zeal's "the next time each ally within earshot uses a spell, that ally
  * gains 1...6 Energy".
@@ -1609,6 +1643,8 @@ export interface ActiveStatus {
   attacksMadeLeft: number | undefined;
   /** Spells still to start before it ends (`nextSpells`); `undefined`: no such limit. */
   spellsLeft: number | undefined;
+  /** Spells still to borrow an attribute for (`borrowsAttribute`); `undefined`: none. */
+  castsLeft: number | undefined;
   /** Skills still to answer before it ends (`nextSkill`); `undefined`: no such limit. */
   skillsLeft: number | undefined;
   /** Own skills still to touch before it ends (`OwnSkillModifier.uses`); `undefined`: no such limit. */
@@ -1620,6 +1656,11 @@ export interface ActiveStatus {
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
+  /**
+   * The skill that put it on (#1928): what Inspired Hex's copy is of.
+   * `undefined` for one a trigger, a zone or a spirit put on.
+   */
+  readonly sourceSkillId: string | undefined;
   /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
   outbreak: Outbreak | null;
   /**
@@ -1645,6 +1686,12 @@ export interface ActiveStatus {
    * (#1930), as `maintain` put it up; `null` for every other.
    */
   readonly stepTargetId: string | null;
+}
+
+/** A status `removeByCategory` took off, and the skill that put it on (#1928). */
+export interface RemovedStatus {
+  readonly id: StatusId;
+  readonly sourceSkillId: string | undefined;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -2076,6 +2123,7 @@ export class StatusSet {
     appliedSeconds: number,
     sourceId: string,
     returnPoint: Vec2 | null = null,
+    sourceSkillId?: string,
   ): boolean {
     if (appliedSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return false;
@@ -2111,6 +2159,7 @@ export class StatusSet {
       existing.outbreak = outbreak;
       // A recast signet starts its count again (#1916), never adds to it.
       existing.attacksMadeLeft = definition.endsAfterAttackCount;
+      existing.castsLeft = definition.borrowsAttribute?.spells;
       this.#statuses.set(id, existing);
       return false;
     }
@@ -2123,11 +2172,13 @@ export class StatusSet {
       unblockableLeft: definition.unblockableAttacks,
       attacksMadeLeft: definition.endsAfterAttackCount,
       spellsLeft: definition.nextSpells?.count,
+      castsLeft: definition.borrowsAttribute?.spells,
       skillsLeft: definition.nextSkill?.count,
       ownSkillsLeft: definition.ownSkillModifiers.find(({ uses }) => uses !== undefined)?.uses,
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
       sourceId,
+      sourceSkillId,
       outbreak,
       maintained: null,
       projected: false,
@@ -2183,11 +2234,13 @@ export class StatusSet {
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId: undefined,
       outbreak,
       maintained: null,
       projected: false,
@@ -2214,6 +2267,7 @@ export class StatusSet {
     seq: number,
     returnPoint: Vec2 | null = null,
     stepTargetId: string | null = null,
+    sourceSkillId?: string,
   ): boolean {
     const definition = getStatusDefinition(id);
     if (definition.category !== "enchantment") {
@@ -2229,11 +2283,13 @@ export class StatusSet {
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
@@ -2266,11 +2322,13 @@ export class StatusSet {
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId: undefined,
       outbreak: null,
       maintained: null,
       projected: true,
@@ -2414,8 +2472,9 @@ export class StatusSet {
 
   /**
    * Remove up to `count` statuses of a category — the shape every
-   * "remove a condition"/"strip an enchantment" skill needs. Returns the
-   * ids actually removed, so a caller can report exactly what it stripped.
+   * "remove a condition"/"strip an enchantment" skill needs. Returns what
+   * it actually removed, so a caller can report exactly what it stripped,
+   * and the skill that put each on, for one that copies it (#1928).
    *
    * The newest applied goes first, as in GW1 (#521), where covering an
    * important enchantment or condition with a cheaper one is a tactic.
@@ -2428,8 +2487,8 @@ export class StatusSet {
     count = Number.POSITIVE_INFINITY,
     profession?: ProfessionId,
     statusId?: StatusId,
-  ): StatusId[] {
-    const removed: StatusId[] = [];
+  ): RemovedStatus[] {
+    const removed: RemovedStatus[] = [];
     for (const status of [...this.#statuses.values()].reverse()) {
       if (removed.length >= count) {
         break;
@@ -2440,10 +2499,10 @@ export class StatusSet {
         (profession === undefined || definition.profession === profession) &&
         (statusId === undefined || status.id === statusId)
       ) {
-        removed.push(status.id);
+        removed.push({ id: status.id, sourceSkillId: status.sourceSkillId });
       }
     }
-    this.#end(removed);
+    this.#end(removed.map(({ id }) => id));
     return removed;
   }
 
@@ -2680,6 +2739,42 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * What the bearer's spell `skill` scales with instead of its own
+   * attribute (#1929): the newest `borrowsAttribute` with a use left, if
+   * `skill` is a spell of another attribute. A skill of no attribute
+   * scales with nothing to borrow for.
+   */
+  public borrowedFor(skill: Skill): StatusId | undefined {
+    if (!isSpell(skill.type) || skill.attributeId === undefined) {
+      return undefined;
+    }
+    return [...this.#statuses.values()]
+      .reverse()
+      .find(
+        ({ id, castsLeft }) =>
+          castsLeft !== undefined &&
+          getStatusDefinition(id).borrowsAttribute?.attributeId !== skill.attributeId,
+      )?.id;
+  }
+
+  /**
+   * The bearer finished a spell that borrowed through `id` (#1929): one
+   * use fewer, and at none it ends. Returns the ids that ended on it.
+   */
+  public spendBorrowed(id: StatusId): StatusId[] {
+    const status = this.#statuses.get(id);
+    if (status?.castsLeft === undefined) {
+      return [];
+    }
+    status.castsLeft -= 1;
+    if (status.castsLeft > 0) {
+      return [];
+    }
+    this.#end([id]);
+    return [id];
   }
 
   /**
@@ -3053,6 +3148,8 @@ export interface StatusModifiers {
   /** Every status's, summed (#1064). */
   readonly physicalDamageTakenBonus: number;
   readonly attributeDelta: number;
+  /** Every status's `attributeSet`, oldest first (#1929). */
+  readonly attributeSets: readonly AttributeSet[];
   readonly castTimeMultiplier: number;
   /** Every status's, multiplied (#1473). */
   readonly skillActivationMultiplier: number;
@@ -3191,6 +3288,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let weaponDamageMultiplier = 1;
   let physicalDamageTakenBonus = 0;
   let attributeDelta = 0;
+  const attributeSets: AttributeSet[] = [];
   let castTimeMultiplier = 1;
   let skillActivationMultiplier = 1;
   let attackFaster = 1;
@@ -3260,6 +3358,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
     attributeDelta += def.attributeDelta;
+    if (def.attributeSet !== undefined) {
+      attributeSets.push(def.attributeSet);
+    }
     castTimeMultiplier *= def.castTimeMultiplier;
     skillActivationMultiplier *= def.skillActivationMultiplier;
     attackFaster = Math.min(attackFaster, def.attackDurationMultiplier);
@@ -3336,6 +3437,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     weaponDamageMultiplier,
     physicalDamageTakenBonus,
     attributeDelta,
+    attributeSets,
     castTimeMultiplier,
     skillActivationMultiplier,
     attackDurationMultiplier: attackFaster * attackSlower,

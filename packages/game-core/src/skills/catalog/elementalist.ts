@@ -3274,6 +3274,33 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "elementalist.master-of-magic",
+    name: "Master of Magic",
+    gwId: 1378,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...49...61 seconds, all of your elemental attributes are set to
+    // 8...13...14" (#1929): the status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "master-of-magic", durationSeconds: 49 }],
+  },
 ];
 
 /**

@@ -713,12 +713,35 @@ export interface RechargeOthersEffect {
  * `all`, every skill on the target's bar, nothing interrupted needed
  * (#474): Rebirth's "all of target's skills are disabled". With `elite`,
  * the elite skill on the target's bar (#1473), Signet of Humility's; no
- * elite: nothing.
+ * elite: nothing. With `random-spell`, one spell on the target's bar,
+ * picked with the match's rng (#1928), Arcane Thievery's; no spell: nothing.
  */
 export interface DisableSkillEffect {
   readonly kind: "disable-skill";
-  readonly which: "interrupted" | "interrupted-and-attribute" | "all" | "elite";
+  readonly which: "interrupted" | "interrupted-and-attribute" | "all" | "elite" | "random-spell";
   readonly seconds: Magnitude;
+}
+
+/**
+ * The slot of the skill resolving holds, for `seconds`, a copy of the
+ * skill that put on what an earlier `remove-status` took off (#1928), as
+ * Inspired Enchantment's "this skill is replaced by the enchantment you
+ * removed"; then the original is back, and starts its recharge, as
+ * Echo's (#469). Nothing removed, or removed but put on by no skill, by
+ * another copier or by a skill not in the game: no copy.
+ */
+export interface CopyRemovedEffect {
+  readonly kind: "copy-removed";
+  readonly seconds: number;
+}
+
+/**
+ * The slot of the skill resolving holds a copy of the spell an earlier
+ * `disable-skill` `random-spell` disabled on the target (#1928), for as
+ * long as it disabled it: Arcane Thievery's. Nothing disabled: no copy.
+ */
+export interface CopyDisabledEffect {
+  readonly kind: "copy-disabled";
 }
 
 /**
@@ -1333,6 +1356,8 @@ export type UnconditionalEffect =
   | DestroyAlliedSpiritsEffect
   | RechargeOthersEffect
   | DisableSkillEffect
+  | CopyRemovedEffect
+  | CopyDisabledEffect
   | LengthenRechargeEffect
   | DisableOwnSkillsEffect
   | ChainMarkEffect
@@ -1815,6 +1840,13 @@ export interface Combatant {
   readonly skillBar: SkillBar;
   /** Attribute ranks by attribute id; absent means rank 0. */
   readonly attributeRanks: ReadonlyMap<string, number>;
+  /**
+   * While a spell that borrows an attribute resolves (#1929), Signet of
+   * Illusions': its own attribute `from` reads the rank in `to`. Set and
+   * cleared around that resolution by `withBorrowedAttribute`; `null`
+   * otherwise.
+   */
+  borrowedAttribute: { readonly from: string; readonly to: string } | null;
   readonly team: number;
   /** Set once health reaches 0; a dead combatant is skipped by the simulation. */
   dead: boolean;

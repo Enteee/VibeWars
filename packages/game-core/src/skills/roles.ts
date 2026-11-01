@@ -78,6 +78,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "owner-gains-damage-dealt":
     case "destroy-allied-spirits":
     case "disable-skill":
+    case "copy-removed":
+    case "copy-disabled":
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":

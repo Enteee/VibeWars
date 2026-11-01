@@ -2,6 +2,7 @@ import { effectiveRank } from "../attributes.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor } from "../equipment/weapons.js";
+import { getAttribute } from "../professions.js";
 import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attributes.js";
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
@@ -16,6 +17,7 @@ import {
   isSuppressed,
   ownSkillBoost,
   type ArmorReduction,
+  type AttributeSet,
   type BlockRule,
   type MaxHealthLoss,
   type StatusId,
@@ -255,7 +257,7 @@ export function clampMoveSpeed(raw: number): number {
 }
 
 /** What `rankOf` reads of a combatant: a tooltip outside a match passes no statuses. */
-export type RankHolder = Pick<Combatant, "attributeRanks" | "statuses"> & {
+export type RankHolder = Pick<Combatant, "attributeRanks" | "borrowedAttribute" | "statuses"> & {
   readonly equipment: Pick<ResolvedEquipment, "attributeBonuses">;
 };
 
@@ -266,6 +268,7 @@ export type RankHolder = Pick<Combatant, "attributeRanks" | "statuses"> & {
 export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
   return {
     attributeRanks: ranks,
+    borrowedAttribute: null,
     statuses: new StatusSet(),
     equipment: { attributeBonuses: new Map() },
   };
@@ -277,14 +280,64 @@ export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
  * of 0 bought with points is never lowered, even when a rune raised it,
  * as GW1 says. The one match-time reader of `attributeRanks` (ADR-0019).
  */
-export function rankOf(holder: RankHolder, attributeId: string): number {
+export function rankOf(holder: RankHolder, asked: string): number {
+  const borrowed = holder.borrowedAttribute;
+  const attributeId = borrowed !== null && borrowed.from === asked ? borrowed.to : asked;
   const rank = holder.attributeRanks.get(attributeId) ?? 0;
-  const allocated = rank - (holder.equipment.attributeBonuses.get(attributeId) ?? 0);
-  if (allocated <= 0) {
+  const bonus = holder.equipment.attributeBonuses.get(attributeId) ?? 0;
+  const { attributeDelta, attributeSets } = aggregateModifiers(holder.statuses.active);
+  const set = attributeSets.findLast(({ scope }) => setHolds(scope, attributeId));
+  if (set !== undefined) {
+    return effectiveRank(set.rank, [{ delta: set.plusEquipment ? bonus : 0 }]);
+  }
+  if (rank - bonus <= 0) {
     return rank;
   }
-  const { attributeDelta } = aggregateModifiers(holder.statuses.active);
   return effectiveRank(rank, [{ delta: attributeDelta }]);
+}
+
+/** Whether an `attributeSet` of `scope` holds `attributeId` (#1929). */
+function setHolds(scope: AttributeSet["scope"], attributeId: string): boolean {
+  switch (scope) {
+    case "all":
+      return true;
+    case "primary":
+      // Only a primary holds a rank, so the bearer's is whichever it has.
+      return getAttribute(attributeId)?.isPrimary === true;
+    case "elemental":
+      return ELEMENTAL_ATTRIBUTES.has(attributeId);
+  }
+}
+
+/** Master of Magic's "elemental attributes" (#1929). */
+const ELEMENTAL_ATTRIBUTES: ReadonlySet<string> = new Set([
+  "elementalist.air-magic",
+  "elementalist.earth-magic",
+  "elementalist.fire-magic",
+  "elementalist.water-magic",
+]);
+
+/**
+ * `resolve` with `caster`'s spell `skill` borrowing the attribute a status
+ * lends it (#1929), Signet of Illusions' Illusion Magic: every rank read
+ * of the skill's own attribute meanwhile reads the lent one. Nothing
+ * lent: `resolve` as it is.
+ */
+export function withBorrowedAttribute<T>(
+  caster: Combatant,
+  lent: string | undefined,
+  skill: Skill,
+  resolve: () => T,
+): T {
+  if (lent === undefined || skill.attributeId === undefined) {
+    return resolve();
+  }
+  caster.borrowedAttribute = { from: skill.attributeId, to: lent };
+  try {
+    return resolve();
+  } finally {
+    caster.borrowedAttribute = null;
+  }
 }
 
 /** The multiplier on the bearer's weapon roll: weakness's 0.34 (#762). */
