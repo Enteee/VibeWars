@@ -4130,6 +4130,7 @@ export class MatchSimulation {
         this.#endForm(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
+        this.#endEverywhere(record, change);
       }
     }
     const context = this.#triggerContext();
@@ -6294,6 +6295,28 @@ export class MatchSimulation {
     record.route = undefined;
     record.history.clear();
     this.#stepStart.set(record.id, position);
+  }
+
+  /**
+   * A status that ends everywhere when spent negated a fatal blow on
+   * `record` (#1955): every other copy its source put up ends, Angelic
+   * Bond's "then it ends on all other allies".
+   */
+  #endEverywhere(record: ParticipantRecord, change: StatusChange): void {
+    if (
+      change.kind !== "fatal-negated" ||
+      !getStatusDefinition(change.statusId).endsEverywhereWhenSpent
+    ) {
+      return;
+    }
+    for (const other of this.#participants.values()) {
+      if (
+        other !== record &&
+        other.combatant.statuses.get(change.statusId)?.sourceId === change.sourceId
+      ) {
+        other.combatant.statuses.end(change.statusId);
+      }
+    }
   }
 
   /**

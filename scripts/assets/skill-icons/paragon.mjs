@@ -81,4 +81,10 @@ export const PARAGON_ICONS = {
   "paragon.signet-of-synergy": { glyph: "signet-plus-bare" },
   // "Not enchanted" (#1916)
   "paragon.natural-temper": { glyph: "leaf", modifier: "up" },
+  // Paragon riders (#1955), stand-ins until their art card.
+  "paragon.angelic-bond": { glyph: "plus-wings", modifier: "area" },
+  "paragon.godspeed": { glyph: "speed", modifier: "up" },
+  "paragon.lead-the-way": { glyph: "dash", modifier: "clock" },
+  "paragon.help": { glyph: "heart-plus", modifier: "plus" },
+  "paragon.brace-yourself": { glyph: "shield-knock", modifier: "self" },
 };

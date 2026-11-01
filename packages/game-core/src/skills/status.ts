@@ -214,6 +214,12 @@ export interface StatusDefinition {
   /** Movement speed multiplier while active (1 = unaffected). */
   readonly moveSpeedMultiplier: number;
   /**
+   * A move speed multiplier that holds only while the bearer is enchanted
+   * (#1955): Godspeed's 1.25. A boost, so `preventsSpeedBoosts` bars it.
+   * 1: none.
+   */
+  readonly moveSpeedWhileEnchanted: number;
+  /**
    * Every status's `moveSpeedMultiplier` above 1 counts as 1 while it
    * holds (#1745): Muddy Terrain's "speed boosts have no effect". Slows
    * still apply.
@@ -730,6 +736,12 @@ export interface StatusDefinition {
    */
   readonly negatesFatalDamage: boolean;
   /**
+   * When the bearer's copy negates fatal damage, every other copy of it
+   * that the same source put up ends (#1955): Angelic Bond's "then it ends
+   * on all other allies". Ended where the negation drains.
+   */
+  readonly endsEverywhereWhenSpent: boolean;
+  /**
    * A share of each attack's damage that hits the bearer goes back to the
    * attacker (#1754): Holy Wrath's. `undefined`: none.
    */
@@ -806,6 +818,12 @@ export interface StatusDefinition {
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
    */
   readonly incomingHexCastTimeMultiplier: number;
+  /**
+   * Multiplier on how long an ally's spell takes to cast on the bearer
+   * (#1955): "Help!"'s 0.5. Not the bearer's own spell, nor a foe's. Read
+   * once, as the cast begins.
+   */
+  readonly incomingAllySpellCastTimeMultiplier: number;
   /**
    * Damage added to each spirit's attack that hits the bearer (#1270):
    * Painful Bond's 18. Armor-ignoring, on the same blow; a missed or
@@ -974,6 +992,12 @@ export type StatusTriggerEvent =
    * Recorded with the triggers that answered, and fired at the drain.
    */
   | "bearer-knocked-down"
+  /**
+   * A knockdown on the bearer was stopped by a status that ends when it
+   * stops one (#1955): "Brace Yourself!"'s. Recorded with the triggers of
+   * the statuses that ended on it, and fired at the drain.
+   */
+  | "bearer-knockdown-prevented"
   /**
    * A hex or an enchantment landed on the bearer, new or renewed (#1403):
    * Soul Barbs'. A refresh that changes nothing is no gain, and the status
@@ -1447,7 +1471,10 @@ export type StatusChange =
   | { readonly kind: "hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "failed-to-hit"; readonly fired: readonly AnsweringTrigger[] }
   | { readonly kind: "took-physical-damage"; readonly fired: readonly AnsweringTrigger[] }
-  | { readonly kind: "knocked-down"; readonly fired: readonly AnsweringTrigger[] }
+  | {
+      readonly kind: "knocked-down" | "knockdown-prevented";
+      readonly fired: readonly AnsweringTrigger[];
+    }
   | {
       readonly kind: "took-damage-from-foe";
       readonly offenderId: string;
@@ -1465,13 +1492,23 @@ export type StatusChange =
       readonly fired: readonly AnsweringTrigger[];
     }
   /**
-   * Damage or a steal took the bearer's Health below a line (#1789), or
-   * a status dropped a killing packet; `offenderId` dealt it, `undefined`
-   * when nobody did.
+   * Damage or a steal took the bearer's Health below a line (#1789);
+   * `offenderId` dealt it, `undefined` when nobody did.
    */
   | {
-      readonly kind: "health-dropped" | "fatal-negated";
+      readonly kind: "health-dropped";
       readonly offenderId: string | undefined;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  /**
+   * Status `statusId` from `sourceId` dropped a killing packet (#1789),
+   * and ended; `offenderId` dealt it, `undefined` when nobody did.
+   */
+  | {
+      readonly kind: "fatal-negated";
+      readonly offenderId: string | undefined;
+      readonly statusId: StatusId;
+      readonly sourceId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
   /** Status `statusId` from `sourceId` sends `damage` back to `toId`, who hit the bearer (#1754). */
@@ -2060,9 +2097,13 @@ export class StatusSet {
         const fired = definition.triggers
           .filter((trigger) => trigger.on === "bearer-fatal-damage-negated")
           .map((trigger) => ({ statusId: status.id, sourceId: status.sourceId, trigger }));
-        if (fired.length > 0) {
-          this.#changes.push({ kind: "fatal-negated", offenderId, fired });
-        }
+        this.#changes.push({
+          kind: "fatal-negated",
+          offenderId,
+          statusId: status.id,
+          sourceId: status.sourceId,
+          fired,
+        });
         return status.id;
       }
     }
@@ -2950,13 +2991,21 @@ export class StatusSet {
 
   /**
    * A knockdown was stopped (#845): every status that ends when it stops
-   * one is gone. Returns the ids that ended on it.
+   * one is gone, its `bearer-knockdown-prevented` triggers recorded
+   * (#1955). Returns the ids that ended on it.
    */
   public endOnKnockdownPrevented(): StatusId[] {
-    const ended = this.active
-      .filter(({ id }) => getStatusDefinition(id).endsOnKnockdownPrevented)
-      .map(({ id }) => id);
+    const ending = this.active.filter(({ id }) => getStatusDefinition(id).endsOnKnockdownPrevented);
+    const fired = ending.flatMap(({ id, sourceId }) =>
+      getStatusDefinition(id)
+        .triggers.filter((trigger) => trigger.on === "bearer-knockdown-prevented")
+        .map((trigger) => ({ statusId: id, sourceId, trigger })),
+    );
+    const ended = ending.map(({ id }) => id);
     this.#end(ended);
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "knockdown-prevented", fired });
+    }
     return ended;
   }
 
@@ -3245,6 +3294,8 @@ export interface StatusModifiers {
   readonly conditionsExpireFaster: number;
   /** Every status's, multiplied (#944). */
   readonly incomingHexCastTimeMultiplier: number;
+  /** Every status's, multiplied (#1955). */
+  readonly incomingAllySpellCastTimeMultiplier: number;
   /** Every status's, summed (#988). */
   readonly criticalChanceBonus: number;
   /** The largest status's (#1519). */
@@ -3365,6 +3416,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let skillRechargeKept = 1;
   let bindingRitualRechargeKept = 1;
   let incomingHexCastTimeMultiplier = 1;
+  let incomingAllySpellCastTimeMultiplier = 1;
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let attackArmorPenetration = 0;
@@ -3400,6 +3452,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     moveSpeedMultiplier *= speedBoostsBarred
       ? Math.min(1, def.moveSpeedMultiplier)
       : def.moveSpeedMultiplier;
+    if (enchantments > 0 && !speedBoostsBarred) {
+      moveSpeedMultiplier *= def.moveSpeedWhileEnchanted;
+    }
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     if (
       def.maxHealthLoss !== undefined &&
@@ -3469,6 +3524,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     skillRechargeKept *= 1 - def.skillRechargeFaster;
     bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
     incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
+    incomingAllySpellCastTimeMultiplier *= def.incomingAllySpellCastTimeMultiplier;
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += def.criticalChanceBonus;
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
@@ -3517,6 +3573,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     uninterruptible,
     conditionsExpireFaster,
     incomingHexCastTimeMultiplier,
+    incomingAllySpellCastTimeMultiplier,
     criticalChanceBonus,
     attackArmorPenetration,
     energyPerCritical,

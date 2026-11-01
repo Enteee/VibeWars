@@ -2,7 +2,7 @@ import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
-import type { StatusCategory } from "../../skills/status.js";
+import { getStatusDefinition, type StatusCategory } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -76,6 +76,38 @@ export function renewsSpirit(skill: Skill): boolean {
     skill.effects.some((effect) => effect.kind === "destroy-target-spirit") &&
     skill.effects.some((effect) => effect.kind === "summon")
   );
+}
+
+/**
+ * What a Paragon rider (#1955) waits for, read off the status it puts
+ * on: `last-stand`, a party's one negated death, as Angelic Bond's;
+ * `enchanted-speed`, speed for the enchanted, as Godspeed's;
+ * `speed-per-ally`, speed that lasts longer for each ally, as "Lead the
+ * Way!"'s; `brace`, an ally's next knockdown stopped, as "Brace
+ * Yourself!"'s. `undefined`: none of these.
+ */
+export type Rider = "last-stand" | "enchanted-speed" | "speed-per-ally" | "brace";
+
+export function riderOf(skill: Skill): Rider | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind !== "apply-status") {
+      continue;
+    }
+    const status = getStatusDefinition(effect.statusId);
+    if (status.negatesFatalDamage && skill.area !== undefined && skill.area.origin !== "party") {
+      return "last-stand";
+    }
+    if (status.moveSpeedWhileEnchanted > 1) {
+      return "enchanted-speed";
+    }
+    if (status.moveSpeedMultiplier > 1 && effect.per?.count.kind === "allies-within") {
+      return "speed-per-ally";
+    }
+    if (status.preventsKnockdown && skill.target === "single-other-ally") {
+      return "brace";
+    }
+  }
+  return undefined;
 }
 
 /**
