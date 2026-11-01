@@ -1,13 +1,17 @@
 import {
-  NO_UPGRADES,
   ALL_INSIGNIAS,
   ALL_OFFHANDS,
   ALL_WEAPONS,
   IMPLEMENTED_SKILLS,
+  MOD_SLOTS,
   PROFESSIONS,
   STATUS_DEFINITIONS,
+  WEAPON_MODS,
   bareArmorSet,
   type ArmorSet,
+  type ItemUpgrades,
+  type ModItem,
+  type ModSlot,
   type PlayerBuild,
 } from "@vibewars/game-core";
 import {
@@ -112,6 +116,21 @@ const FLYING_SKILL_ID = longest(
   IMPLEMENTED_SKILLS.filter((skill) => skill.projectile !== undefined).map((skill) => skill.id),
 );
 const INSIGNIA_ID = longest(ALL_INSIGNIAS.map((insignia) => insignia.id));
+
+/** The longest mod id that fits `item` in each slot it has; a slot no mod fits stays empty. */
+function fullUpgrades(item: ModItem): ItemUpgrades {
+  const fitting = (slot: ModSlot): string | null => {
+    const ids = WEAPON_MODS.filter((mod) => mod.slot === slot && mod.fits.includes(item)).map(
+      (mod) => mod.id,
+    );
+    return MOD_SLOTS[item].includes(slot) && ids.length > 0 ? longest(ids) : null;
+  };
+  return {
+    prefix: fitting("prefix"),
+    suffix: fitting("suffix"),
+    inscription: fitting("inscription"),
+  };
+}
 const bare = bareArmorSet();
 
 function player(index: number): WirePlayer {
@@ -223,12 +242,12 @@ function fullBuild(): PlayerBuild {
     mainHand: {
       weaponId: "wand",
       requirementAttributeId: "elementalist.fire-magic",
-      upgrades: NO_UPGRADES,
+      upgrades: fullUpgrades("wand"),
     },
     offHand: {
       offhandId: "focus",
       requirementAttributeId: "necromancer.soul-reaping",
-      upgrades: NO_UPGRADES,
+      upgrades: fullUpgrades("focus"),
     },
   } as const;
   return {
@@ -243,7 +262,7 @@ function fullBuild(): PlayerBuild {
           mainHand: {
             weaponId: "staff",
             requirementAttributeId: "necromancer.soul-reaping",
-            upgrades: NO_UPGRADES,
+            upgrades: fullUpgrades("staff"),
           },
           offHand: null,
         },
