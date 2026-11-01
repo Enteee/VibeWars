@@ -3564,12 +3564,12 @@ const riderOn = (/** @type {string} */ weapon, /** @type {string} */ rider) =>
   `<circle cx="18" cy="18" r="5.6" fill="${C.bg}"/>` +
   `<g transform="translate(18,18) scale(0.38) translate(-12,-12)">${rider}</g>`;
 
-/** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 /** The form mark: a figure's outline, dashed (#1968). */
 const formShell = () =>
   `<circle cx="12" cy="5.5" r="3.2" ${stroke(C.ink, 1.8)} stroke-dasharray="3 2.2"/>` +
   `<path d="M3.5 22V17Q3.5 10.5 12 10.5Q20.5 10.5 20.5 17V22Z" ${stroke(C.ink, 1.8)} stroke-dasharray="3.2 2.4"/>`;
 
+/** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
   inkFill("M4.8 11H9.2L9.4 20H4.6Z") + `<circle cx="7" cy="6.8" r="3.4" fill="${C.ink}"/>`;
 
