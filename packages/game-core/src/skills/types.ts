@@ -824,6 +824,8 @@ export interface CreatureTemplate {
   readonly ownerDisableOnDeath: Magnitude | undefined;
   /** What its death does round it (#1550); `undefined`: nothing. */
   readonly deathBurst: DeathBurst | undefined;
+  /** What another's death in its range does (#1886), a spirit's; `undefined`: nothing. */
+  readonly onDeathInRange: DeathInRange | undefined;
   /**
    * Who stands up where it fell, its owner's, when it dies or is destroyed
    * (#1836): Shambling Horror's Jagged Horror. Not when its owner is dead
@@ -857,6 +859,25 @@ export interface DeathBurst {
   readonly affects: "allies" | "foes";
   readonly radius: number;
 }
+
+/**
+ * What a spirit does when a non-spirit body dies within its
+ * `RANGE_NATURE_RITUAL` (#1886), whatever its team, cause or killer.
+ * `"damage-same-type"`, Edge of Extinction's: every living body of the
+ * dead one's type (its `CreatureKind`, or `"character"`) in the
+ * spirit's range, below `belowHealthFraction` of its maximum, takes
+ * `damage`, typeless, from the spirit; scaled by its owner, read once at
+ * summoning. `"spread-conditions"`, Pestilence's: each condition on the
+ * dead one, with the time it had left and its own source, lands on every
+ * living non-spirit within `radius` of the corpse that already has one.
+ */
+export type DeathInRange =
+  | {
+      readonly kind: "damage-same-type";
+      readonly damage: Magnitude;
+      readonly belowHealthFraction: number;
+    }
+  | { readonly kind: "spread-conditions"; readonly radius: number };
 
 /**
  * A creature's melee or ranged blow (#467 child 3), as a weapon's numbers.

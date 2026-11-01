@@ -363,6 +363,7 @@ describe("wireIdentity (#1052)", () => {
       onDeath: "vanish" as const,
       ownerDisableSeconds: 0,
       deathBurst: undefined,
+      onDeathInRange: undefined,
       replacedBy: undefined,
       corpsesLeft: 0,
       companionSkillId: undefined,

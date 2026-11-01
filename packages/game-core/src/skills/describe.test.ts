@@ -213,6 +213,7 @@ describe("describeSkill", () => {
         onDeath: "vanish",
         ownerDisableOnDeath: undefined,
         deathBurst: undefined,
+        onDeathInRange: undefined,
       },
     });
     const lines = (effect: SkillEffect) =>
@@ -528,8 +529,16 @@ describe("describeSkill", () => {
         }
       }
       if (effect.kind === "summon") {
-        const { kind, aura, attack, deathBurst, onePerOwner, leavesCorpses, replacedBy } =
-          effect.creature;
+        const {
+          kind,
+          aura,
+          attack,
+          deathBurst,
+          onDeathInRange,
+          onePerOwner,
+          leavesCorpses,
+          replacedBy,
+        } = effect.creature;
         return (
           1 +
           (aura === undefined ? 0 : 1) +
@@ -537,6 +546,7 @@ describe("describeSkill", () => {
           (kind !== "spirit" && attack?.scaling.kind === "level" ? 1 : 0) +
           (attack?.onHit ?? []).length +
           (deathBurst === undefined ? 0 : 1) +
+          (onDeathInRange === undefined ? 0 : 1) +
           (onePerOwner ? 1 : 0) +
           (leavesCorpses === undefined ? 0 : 1) +
           (replacedBy === undefined ? 0 : 1)

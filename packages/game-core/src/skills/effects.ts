@@ -19,6 +19,7 @@ import {
   damageTypeTaken,
   getStatusDefinition,
   scaledStatusDuration,
+  type ActiveStatus,
   type OwnSkillBoost,
   type StatusCategory,
   type StatusId,
@@ -1025,6 +1026,25 @@ export function applyStatus(
  */
 function castSpot(context: SkillContext, caster: Combatant): Vec2 | null {
   return context.surroundings.get(caster.id)?.position ?? null;
+}
+
+/**
+ * A condition caught from a corpse (#1886), Pestilence's: with the time
+ * it had left and its own source, landing as Epidemic's copies do.
+ */
+export function landCaughtCondition(
+  target: Combatant,
+  { id, remainingSeconds, sourceId }: ActiveStatus,
+  events: CombatEvent[],
+): void {
+  landStatus(
+    target,
+    id,
+    scaledStatusDuration(target, id, remainingSeconds),
+    sourceId,
+    events,
+    null,
+  );
 }
 
 /**

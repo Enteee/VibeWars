@@ -76,6 +76,12 @@ export const RANGER_ICONS = {
   "ranger.conflagration": { glyph: "ritual-flame" },
   "ranger.predatory-season": { glyph: "ritual-heart-slash" },
   "ranger.winter": { glyph: "ritual-snowflake" },
+  // Nature rituals 3 (#1886): stand-ins on Winnowing's totem until their art card.
+  "ranger.edge-of-extinction": { glyph: "totem", modifier: "corpse" },
+  "ranger.pestilence": { glyph: "totem", modifier: "bleed" },
+  "ranger.energizing-wind": { glyph: "totem", modifier: "less" },
+  "ranger.primal-echoes": { glyph: "totem", modifier: "bolt" },
+  "ranger.roaring-winds": { glyph: "totem", modifier: "down" },
   // Ranger staples 4 (#1742, #1768): an arrow over a shield, barbs, a leaf, a wind curl; the rest keep a shared glyph.
   "ranger.seeking-arrows": { glyph: "arrow-over-shield", modifier: "up" },
   "ranger.barbed-arrows": { glyph: "arrow-barbed", modifier: "bleed" },

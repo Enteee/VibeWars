@@ -140,9 +140,13 @@ export function ownSkills(
 ): OwnSkillModifier {
   return {
     filter: { type: undefined, attributeId: undefined, profession: undefined, ...filter },
+    energyBase: undefined,
     energyDiscount: 0,
+    energyFloor: 1,
+    energySurcharge: 0,
     activationMultiplier: 1,
     rechargeFaster: 0,
+    rechargeSlower: 0,
     durationMultiplier: 1,
     healMultiplier: 1,
     uses: undefined,
