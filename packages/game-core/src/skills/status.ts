@@ -1011,12 +1011,30 @@ export interface OwnSkillFilter {
 /** `StatusDefinition.ownSkillModifiers` (#1761). */
 export interface OwnSkillModifier {
   readonly filter: OwnSkillFilter;
-  /** Energy off the cost; a cost of 1 or more never drops below 1. 0: none. */
+  /**
+   * The Energy the skill costs as its base (#1886), even one with no cost
+   * of its own, as Primal Echoes' "signets cost 10 Energy"; then raised,
+   * cut and discounted as any. `undefined`: its own.
+   */
+  readonly energyBase: number | undefined;
+  /** Energy off the cost, never below `energyFloor`. 0: none. */
   readonly energyDiscount: number;
+  /**
+   * The least a discount leaves (#1886); a cost already below it is left
+   * alone, as Energizing Wind's "minimum cost 10 Energy". 1: never below 1.
+   */
+  readonly energyFloor: number;
+  /** Energy on the cost after the discount (#1886), as Roaring Winds'. 0: none. */
+  readonly energySurcharge: number;
   /** On activation time. 1: none. */
   readonly activationMultiplier: number;
   /** The share taken off the recharge, as `spellRechargeFaster`. 0: none. */
   readonly rechargeFaster: number;
+  /**
+   * The share the recharge grows by once `rechargeFaster` is off (#1886),
+   * as Energizing Wind's "recharge 25% slower". 0: none.
+   */
+  readonly rechargeSlower: number;
   /** On the duration of every status the skill applies, to anyone. 1: none. */
   readonly durationMultiplier: number;
   /** On every heal the skill does. 1: none. */
@@ -1028,21 +1046,30 @@ export interface OwnSkillModifier {
 /**
  * What every matching `OwnSkillModifier` on a caster does to one use of a
  * skill (#1761), taken as it is paid for and kept by the cast: discounts
- * add, multipliers multiply, and the largest recharge share counts.
+ * and surcharges add, multipliers multiply, and the highest base, floor
+ * and recharge shares count.
  */
 export interface OwnSkillBoost {
+  readonly energyBase: number | undefined;
   readonly energyDiscount: number;
+  readonly energyFloor: number;
+  readonly energySurcharge: number;
   readonly activationMultiplier: number;
   readonly rechargeFaster: number;
+  readonly rechargeSlower: number;
   readonly durationMultiplier: number;
   readonly healMultiplier: number;
 }
 
 /** A use no `OwnSkillModifier` touched. */
 export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
+  energyBase: undefined,
   energyDiscount: 0,
+  energyFloor: 1,
+  energySurcharge: 0,
   activationMultiplier: 1,
   rechargeFaster: 0,
+  rechargeSlower: 0,
   durationMultiplier: 1,
   healMultiplier: 1,
 };
@@ -1066,9 +1093,16 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
     .filter(({ filter }) => ownSkillAnswers(filter, skill))
     .reduce<OwnSkillBoost>(
       (boost, modifier) => ({
+        energyBase:
+          modifier.energyBase === undefined
+            ? boost.energyBase
+            : Math.max(boost.energyBase ?? 0, modifier.energyBase),
         energyDiscount: boost.energyDiscount + modifier.energyDiscount,
+        energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
+        energySurcharge: boost.energySurcharge + modifier.energySurcharge,
         activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
         rechargeFaster: Math.max(boost.rechargeFaster, modifier.rechargeFaster),
+        rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
         durationMultiplier: boost.durationMultiplier * modifier.durationMultiplier,
         healMultiplier: boost.healMultiplier * modifier.healMultiplier,
       }),

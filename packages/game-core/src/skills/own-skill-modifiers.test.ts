@@ -92,9 +92,13 @@ describe("the rule (#1761)", () => {
     const caster = bearer("divine-spirit", "healers-covenant");
     expect(energyCostOf(costing(ORISON, 10), caster)).toBe(2);
     expect(ownSkillBoost(caster.statuses.active, skill(ORISON))).toEqual({
+      energyBase: undefined,
       energyDiscount: 8,
+      energyFloor: 1,
+      energySurcharge: 0,
       activationMultiplier: 1,
       rechargeFaster: 0,
+      rechargeSlower: 0,
       durationMultiplier: 1,
       healMultiplier: 0.8,
     });
@@ -266,9 +270,13 @@ describe("in flight, and on its caster (#1761)", () => {
   ): number {
     const doubles = {
       filter: { type: undefined, attributeId: undefined, profession },
+      energyBase: undefined,
       energyDiscount: 0,
+      energyFloor: 1,
+      energySurcharge: 0,
       activationMultiplier: 1,
       rechargeFaster: 0,
+      rechargeSlower: 0,
       durationMultiplier: 2,
       healMultiplier: 1,
       uses: undefined,

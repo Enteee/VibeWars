@@ -321,13 +321,12 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
     return reject("wrong-weapon");
   }
 
-  if (skill.cost !== undefined) {
-    if (skill.cost.kind === "energy" && caster.energy < energyCostOf(skill, caster)) {
-      return reject("insufficient-energy");
-    }
-    if (skill.cost.kind === "adrenaline" && !canAffordAdrenaline(caster, skill, key)) {
-      return reject("insufficient-adrenaline");
-    }
+  // A signet under Primal Echoes costs Energy too (#1886).
+  if (caster.energy < energyCostOf(skill, caster)) {
+    return reject("insufficient-energy");
+  }
+  if (skill.cost?.kind === "adrenaline" && !canAffordAdrenaline(caster, skill, key)) {
+    return reject("insufficient-adrenaline");
   }
 
   const targetCheck = checkTarget(request);
@@ -393,14 +392,18 @@ export function isResurrectionSkill(skill: Skill): boolean {
  * The energy `skill` costs `caster` right now (#637): its base, raised
  * by Quickening Zephyr's multiplier and rounded half up (#1745), then
  * Expertise (#528) or Mysticism (#874), less what a status takes off
- * the caster's skills of its kind, never below 1 (#1761), less what an
+ * the caster's skills of its kind, never below its floor (#1761, #1886),
+ * plus what a status adds to them (#1886), less what an
  * active glyph takes off a spell (#526) and what a chant takes off the
- * next skill of its kind (#1505), never below 0. The one number the
- * check, the spend and the skill bar use, so they cannot disagree. 0 for
- * a skill with no energy cost.
+ * next skill of its kind (#1505), never below 0. The base is a status's
+ * when one names it (#1886). The one number the check, the spend and the
+ * skill bar use, so they cannot disagree. 0 for a skill with no energy
+ * cost.
  */
 export function energyCostOf(skill: Skill, caster: RankHolder): number {
-  if (skill.cost?.kind !== "energy") {
+  const own = ownSkillBoost(caster.statuses.active, skill);
+  const base = own.energyBase ?? (skill.cost?.kind === "energy" ? skill.cost.amount : undefined);
+  if (base === undefined) {
     return 0;
   }
   const expertise = rankOf(caster, EXPERTISE_ATTRIBUTE);
@@ -408,10 +411,12 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
   const attributed = mysticismEnergyCost(
     rankOf(caster, MYSTICISM_ATTRIBUTE),
     skill,
-    expertiseEnergyCost(expertise, skill, raisedBaseCost(skill.cost.amount, caster)),
+    expertiseEnergyCost(expertise, skill, raisedBaseCost(base, caster)),
   );
-  const discount = ownSkillBoost(caster.statuses.active, skill).energyDiscount;
-  const cost = discount === 0 || attributed < 1 ? attributed : Math.max(1, attributed - discount);
+  const { energyDiscount: discount, energyFloor: floor } = own;
+  const cost =
+    (discount === 0 || attributed < floor ? attributed : Math.max(floor, attributed - discount)) +
+    own.energySurcharge;
   const reduction = caster.statuses.active.reduce((sum, { id }) => {
     const { nextSpells, nextSkillRule } = getStatusDefinition(id);
     const glyph = isSpell(skill.type) ? (nextSpells?.costReduction ?? 0) : 0;
@@ -441,9 +446,8 @@ function raisedBaseCost(base: number, caster: RankHolder): number {
  * adrenaline skill empties: a copy's own (#469).
  */
 export function payCost(skill: Skill, caster: Combatant, key: string = skill.id): void {
-  if (skill.cost?.kind === "energy") {
-    caster.energy -= energyCostOf(skill, caster);
-  } else if (skill.cost?.kind === "adrenaline") {
+  caster.energy -= energyCostOf(skill, caster);
+  if (skill.cost?.kind === "adrenaline") {
     spendAdrenaline(caster, skill, key);
   }
   // After the energy, so a spell that lowers the ceiling below its own

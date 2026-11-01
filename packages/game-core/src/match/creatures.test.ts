@@ -70,6 +70,7 @@ function summonSkill(
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
     deathBurst: undefined,
+    onDeathInRange: undefined,
   };
   TEST_SKILLS.set(id, {
     id,
