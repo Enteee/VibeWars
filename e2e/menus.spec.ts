@@ -179,7 +179,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
 /** A rolled character's random name (#1149): "Kaelen Ashvale". */
 const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
-test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone rolls a new one", async ({
+test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
   page,
 }) => {
   await openMenu(page);
@@ -216,13 +216,13 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(name).toHaveText(ROLLED_NAME);
   await expect(card).toHaveCount(1);
 
-  // It has Clone, not Edit (#1147): Clone opens the editor on a fresh
-  // roll under another random name (#1457), one even for a double-click.
+  // It has Clone, not Edit (#1147): Clone opens the editor on a copy of
+  // the character shown (#2038), one even for a double-click.
   const rolled = await name.innerText();
+  const professions = await card.locator(".play-card-line").innerText();
   await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();
-  await expect(page.locator("input.editor-name")).toHaveValue(ROLLED_NAME);
-  await expect(page.locator("input.editor-name")).not.toHaveValue(rolled);
+  await expect(page.locator("input.editor-name")).toHaveValue(`${rolled} (copy)`);
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -232,6 +232,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const original = page.locator(".character-card", { hasText: rolled });
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
   await expect(pyro.locator(".roster-clone, .roster-reroll")).toHaveCount(0);
+  await expect(pyro.locator(".play-card-line")).toHaveText(professions);
   await expect(original.locator(".roster-reroll")).toHaveCount(1);
   // The rerolled one is still chosen.
   await openRail(page, "Random Arena");
