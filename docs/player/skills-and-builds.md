@@ -29,6 +29,10 @@ at a time. Using one disables it for 45 seconds. When a form ends, you
 stop what you were doing: your attack, your walk and any skill you were
 activating. Press a movement key again to walk on.
 
+**Some shots disable your other attacks.** Focused Shot and Needling
+Shot fly faster than an arrow should, but each one that hits turns your
+other attack skills off for a few seconds. Spells are unaffected.
+
 ## Attributes
 
 You have **200 points** to spend. Each rank of an attribute costs more

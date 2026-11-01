@@ -62,6 +62,8 @@ export interface SkillHit {
   readonly next: NextAttackSkill;
   /** What the attacker's statuses did to it at release (#1761): its riders land with it. */
   readonly own: OwnSkillBoost | undefined;
+  /** Its blows on its victim, read at release (#1914): Forked Arrow's one or two. */
+  readonly strikes: number;
 }
 
 /**
