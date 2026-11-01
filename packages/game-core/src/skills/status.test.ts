@@ -124,6 +124,8 @@ describe("status definitions", () => {
         def.enchantmentsOnBearerCostLess !== 0 ||
         def.damageReduction !== 0 ||
         def.redirectsPhysicalDamage !== 0 ||
+        def.redirectsDamageToMinion !== 0 ||
+        def.replacedOnDeathBy !== undefined ||
         def.damageFromSpiritAttacks !== 0 ||
         def.adrenalineGainFaster !== 0 ||
         def.energyCostMultiplier !== 1 ||
@@ -189,6 +191,7 @@ describe("status definitions", () => {
       "well-of-power": 5,
       "well-of-silence": -3,
       "symbiotic-bond": 3,
+      "veratas-sacrifice": 10,
       "conjure-phantasm": -5,
       "phantom-pain": -3,
       "shrinking-armor": -3,

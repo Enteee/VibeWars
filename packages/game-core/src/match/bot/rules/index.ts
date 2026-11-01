@@ -6,6 +6,7 @@ import heal from "./heal.js";
 import interrupt from "./interrupt.js";
 import mantra from "./mantra.js";
 import mimicElite from "./mimic-elite.js";
+import minionCare from "./minion-care.js";
 import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
 import type { BotRule } from "./types.js";
@@ -26,6 +27,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   interrupt,
   mantra,
   mimicElite,
+  minionCare,
   raise,
   renewSpirit,
   setup,
