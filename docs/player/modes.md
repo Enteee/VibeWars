@@ -107,7 +107,9 @@ Relic Temples plays it.
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
 **Ghostly Hero** in its base, a ghost that fights with a sword and that
 nobody plays. The **altar** is in the centre, the same walk from both
-bases, up a north or a south approach. Target your ghost with a
+bases, up a north or a south approach. The **Hall of Heroes**, the King of the
+Hill map that ends the Heroes' Ascent, is a grander hall with a colonnade on
+each approach. Target your ghost with a
 **right-click** and press **Space** to tell it to follow you: it walks
 with you and fights what you fight. Press Space on it again and it
 stays where it stands, fighting any foe who comes near. If you die or

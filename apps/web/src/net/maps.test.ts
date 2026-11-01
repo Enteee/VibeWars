@@ -48,12 +48,26 @@ describe("randomArenaMapPool", () => {
       ARENA_MAPS.map((map) => map.id)
         .filter(
           (id) =>
-            !["guild-hall-isle", "relic-temples", "hill-courtyard", "forgotten-shrines"].includes(
-              id,
-            ),
+            ![
+              "guild-hall-isle",
+              "relic-temples",
+              "hill-courtyard",
+              "hall-of-heroes",
+              "forgotten-shrines",
+            ].includes(id),
         )
         .sort(),
     );
+  });
+});
+
+describe("the Hall of Heroes (#1995)", () => {
+  it("is a Hosted Game's pick, and in no Ascent or queue pool until the progression places it", () => {
+    expect(modeMapIds()["hosted-game"]).toContain("hall-of-heroes");
+    expect(modeMapIds()["heroes-ascent"]).not.toContain("hall-of-heroes");
+    expect(queueMapPool("heroes-ascent")).not.toContain("hall-of-heroes");
+    expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
+    expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");
   });
 });
 
@@ -90,6 +104,7 @@ describe("hostMap (#476)", () => {
           "guild-hall-isle",
           "relic-temples",
           "hill-courtyard",
+          "hall-of-heroes",
           "forgotten-shrines",
         ].includes(candidate.id),
     )) {

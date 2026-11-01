@@ -184,13 +184,14 @@ describe("the arena set (#444)", () => {
         "guild-hall-isle",
         "relic-temples",
         "hill-courtyard",
+        "hall-of-heroes",
         "forgotten-shrines",
         ...NEW_ARENAS,
       ].sort(),
     );
   });
 
-  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard, Capture Points on Forgotten Shrines and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378)", () => {
+  it("plays Kill Count on Pillar Hall, Priest Annihilation on Split Paths, Guild Battle on Guild Hall Isle, Relic Run on Relic Temples, King of the Hill on Hill Courtyard and Hall of Heroes (#1995), Capture Points on Forgotten Shrines and Annihilation everywhere else (#476, #1186, #1222, #1374, #1377, #1378)", () => {
     expect(MAPS.filter((map) => map.mode === "kill-count").map((map) => map.id)).toEqual([
       "arena-pillars",
     ]);
@@ -204,12 +205,13 @@ describe("the arena set (#444)", () => {
       "relic-temples",
     ]);
     expect(MAPS.filter((map) => map.mode === "king-of-the-hill").map((map) => map.id)).toEqual([
+      "hall-of-heroes",
       "hill-courtyard",
     ]);
     expect(MAPS.filter((map) => map.mode === "capture-points").map((map) => map.id)).toEqual([
       "forgotten-shrines",
     ]);
-    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 6);
+    expect(MAPS.filter((map) => map.mode === "annihilation")).toHaveLength(MAPS.length - 7);
   });
 
   it("puts each team's shrine on Split Paths behind its spawns (#1186)", () => {
@@ -485,5 +487,40 @@ describe("Hill Courtyard (#1377)", () => {
       const path = finder.find(spawn.position, altar.position) ?? [];
       expect(path.some((point) => Math.abs(point.y - altar.position.y) > 140)).toBe(true);
     }
+  });
+});
+
+describe("Hall of Heroes (#1995)", () => {
+  const hall = MAPS.find((map) => map.id === "hall-of-heroes");
+  if (hall === undefined) throw new Error("no hall-of-heroes");
+  const walls = allWallSegments(hall.walls);
+  const bounds = { width: hall.width, height: hall.height };
+  const altar = hall.objectives.find((objective) => objective.kind === "altar");
+  const ghosts = hall.objectives.filter((objective) => objective.kind === "ghost-spawn");
+  if (altar === undefined) throw new Error("no altar");
+
+  it("seats 8 a team, and keeps every spawn 300 units from the altar", () => {
+    for (const team of [0, 1]) {
+      expect(hall.spawnPoints.filter((spawn) => spawn.team === team)).toHaveLength(8);
+    }
+    for (const spawn of hall.spawnPoints) {
+      expect(Vec.distance(spawn.position, altar.position)).toBeGreaterThan(300);
+    }
+  });
+
+  it("leads each ghost to the altar the same length, over open ground", () => {
+    const finder = createPathFinder(buildNavGraph(walls, bounds, RADIUS));
+    const lengths = ghosts.map((ghost) => {
+      const path = finder.find(ghost.position, altar.position);
+      if (path === undefined) throw new Error(`no way for team ${String(ghost.team)}`);
+      return path.reduce(
+        (sum, point, index) =>
+          sum +
+          Vec.distance(index === 0 ? ghost.position : (path[index - 1] ?? ghost.position), point),
+        0,
+      );
+    });
+    expect(ghosts.map((ghost) => ghost.team).sort()).toEqual([0, 1]);
+    expect(lengths[0]).toBeCloseTo(lengths[1] ?? 0, 3);
   });
 });

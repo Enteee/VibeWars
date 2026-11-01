@@ -27,6 +27,8 @@ const MOODS: ReadonlyMap<string, readonly Mood[]> = new Map<string, readonly Moo
   ["relic-temples", ["action", "adventurous"]],
   // King of the Hill's (#1377): a hill held against all comers.
   ["hill-courtyard", ["epic", "action"]],
+  // The Hall of Heroes (#1995): where every Ascent ends.
+  ["hall-of-heroes", ["epic", "triumphant"]],
   // Capture Points (#1378): old ground, held.
   ["forgotten-shrines", ["mysterious", "epic"]],
 ]);
