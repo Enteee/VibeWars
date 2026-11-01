@@ -491,6 +491,43 @@ describe("gh environment", () => {
   });
 });
 
+describe("gh api", () => {
+  /** Fifty mints at once against a gh that answers 403 and never reads stdin. */
+  const MINTS = `
+    import { ApiError, ghEnv, githubApi } from ${JSON.stringify(new URL("./runner-supervisor.mjs", import.meta.url).href)};
+    const [dir] = process.argv.slice(2);
+    const api = githubApi("o/r", ghEnv({ PATH: \`\${dir}:\${process.env.PATH ?? ""}\` }, dir));
+    const minted = await Promise.allSettled(Array.from({ length: 50 }, (_, i) => api.mint(\`r\${i}\`)));
+    const statuses = minted.map((m) => (m.status === "rejected" && m.reason instanceof ApiError ? m.reason.status : null));
+    process.stdout.write(JSON.stringify(statuses));
+  `;
+
+  it("a gh that exits before reading its body is an ApiError, not a crash", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fake-gh-"));
+    // An expired credential: gh answers at once and never reads stdin.
+    fs.writeFileSync(path.join(dir, "gh"), '#!/bin/sh\necho "HTTP 403" >&2\nexit 1\n', {
+      mode: 0o755,
+    });
+    // A file, not \`-e\`: the supervisor's own main checks its argv[1]. Its own
+    // process, too: inside the test worker the writes win the race.
+    const script = path.join(dir, "mints.mjs");
+    fs.writeFileSync(script, MINTS);
+    const child = spawn(process.execPath, [script, dir], { stdio: ["ignore", "pipe", "pipe"] });
+    let out = "";
+    let err = "";
+    child.stdout.on("data", (/** @type {Buffer} */ chunk) => (out += chunk.toString("utf8")));
+    child.stderr.on("data", (/** @type {Buffer} */ chunk) => (err += chunk.toString("utf8")));
+    /** @type {number | null} */
+    const code = await new Promise((resolve) => {
+      child.once("close", (/** @type {number | null} */ exit) => {
+        resolve(exit);
+      });
+    });
+    expect({ code, err }).toEqual({ code: 0, err: "" });
+    expect(/** @type {unknown} */ (JSON.parse(out))).toEqual(Array(50).fill(403));
+  });
+});
+
 describe("disk cap", () => {
   /** @param {Record<string, number>} devs */
   const stat = (devs) => (/** @type {string} */ file) => {

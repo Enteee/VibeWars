@@ -619,6 +619,10 @@ function ghApi(env, method, route, body) {
         reject(new ApiError(`${method} ${route}: not JSON`, null));
       }
     });
+    child.stdin.once("error", () => {
+      // A gh that fails fast, like on an expired credential, exits before it
+      // reads and breaks the pipe: its close reports that, not this crash.
+    });
     child.stdin.end(body === undefined ? "" : JSON.stringify(body));
   });
 }
