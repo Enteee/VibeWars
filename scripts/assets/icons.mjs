@@ -3381,6 +3381,44 @@ const skillGlyph = {
     inkFill("M11 14H15V20H11ZM17 6H21V20H17Z") +
     ringDot(5, 12, 3.4) +
     inkLine("M9 9H14.5M12.5 6.5L15 9L12.5 11.5", 1.8),
+  // Attributes raised (#1941, #1947). The mark for "raised" is three rising bars,
+  // the counterpart of the wilted bars of #1946; the glyphs ring a picture instead.
+  // Glyph of Elemental Power: a flame in the glyph ring, the rising bars beside it.
+  "glyph-power-up": () =>
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkFill(
+      "M8.5 6.5C9.7 8.5 11.5 9.7 11.5 12.5A3 3 0 0 1 5.5 12.5C5.5 11 6.7 10.5 7 8.8C7.6 9.5 7.9 10 8.1 10.5C8.5 9.5 8.6 8 8.5 6.5Z",
+    ) +
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
+  // Glyph of Energy: a bolt in the glyph ring, the rising bars beside it.
+  "glyph-energy-up": () =>
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkFill("M9.5 6.5L5.5 12.8H8.3L7.3 17.5L11.8 11H9Z") +
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
+  // Ritual Lord: the spirit totem, and three rising bars.
+  "totem-bars-up": () =>
+    inkFill("M5 11H9.5L9.7 20H4.8Z") +
+    `<circle cx="7.2" cy="6.5" r="3.6" fill="${C.ink}"/>` +
+    inkFill("M12.5 20V15H15.1V20ZM16.3 20V10.5H18.9V20ZM20.1 20V6H22.7V20Z"),
+  // Expert's Dexterity: an arrow in flight above three rising bars.
+  "arrow-bars-up": () =>
+    inkLine("M3 6.5H16", 2.4) +
+    inkFill("M23 6.5L15 2V11Z") +
+    inkLine("M3 6.5L1.5 4M5.5 6.5L4 4M3 6.5L1.5 9M5.5 6.5L4 9", 1.5) +
+    inkFill("M3 21V17H6V21ZM8.5 21V13.5H11.5V21ZM14 21V10H17V21Z"),
+  // Spirit Transfer: the spirit post sends its Health over to an ally, a ringed plus.
+  "spirit-give": () =>
+    spiritPost() +
+    inkLine("M11 8.5H15Q18 8.5 18 11.5", 2) +
+    inkLine("M15.5 10L18 12.5L20.5 10", 2) +
+    `<circle cx="18" cy="18.5" r="4.2" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M18 16.2V20.8M15.7 18.5H20.3", 1.8),
+  // Gaze of Fury: a spirit given up, an angry eye in its place.
+  "spirit-eye": () =>
+    brokenPost(7) +
+    `<path d="M11 14Q17 7.5 23 14Q17 20.5 11 14Z" ${stroke(C.ink, 1.9)}/>` +
+    `<circle cx="17" cy="14" r="2.2" fill="${C.ink}"/>` +
+    inkLine("M11.5 7L22.5 10", 2.2),
   // A skull over crossed bones: the order to rise (#1946).
   "skull-order": () => smallSkull(12, 9, 0.75) + inkLine("M5 16L19 22M19 16L5 22", 2.2),
   // A skull in a dotted ring: the lich's aura (#1946).

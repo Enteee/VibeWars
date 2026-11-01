@@ -121,6 +121,6 @@ export const RANGER_ICONS = {
   "ranger.run-as-one": { glyph: "figure-paw-run" },
   "ranger.savage-pounce": { glyph: "paw-pounce-spell" },
   "ranger.bestial-mauling": { glyph: "paw-maul" },
-  // Attributes raised (#1941), a stand-in until its art card.
-  "ranger.experts-dexterity": { glyph: "arrow", modifier: "plus" },
+  // Attributes raised (#1941)
+  "ranger.experts-dexterity": { glyph: "arrow-bars-up" },
 };

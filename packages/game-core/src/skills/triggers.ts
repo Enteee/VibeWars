@@ -14,6 +14,7 @@ import {
   type StatusTriggerEvent,
 } from "./status.js";
 import { standIn } from "./stand-in.js";
+import { inScope } from "./tick.js";
 import { isSpell, type Combatant, type SkillEffect, type Surroundings } from "./types.js";
 
 /** What one status's trigger did, credited to whoever applied the status. */
@@ -42,6 +43,7 @@ export type DirectTriggerEvent = Exclude<
   StatusTriggerEvent,
   | "bearer-gains-condition"
   | "bearer-gains-hex-or-enchantment"
+  | "bearer-applies-hex"
   | "bearer-gains-enchantment"
   | "bearer-loses-enchantment"
   | "bearer-loses-condition"
@@ -99,7 +101,8 @@ export function fireTriggers(
         !spared.has(statusId) &&
         (event !== "bearer-attacks" ||
           triggerAnswersWeapon(trigger, bearer.equipment.mainHand.weapon)) &&
-        (event !== "bearer-uses-skill" || answersUsedSkill(trigger, context.usedSkill)),
+        ((event !== "bearer-uses-skill" && event !== "bearer-casts-spell") ||
+          answersUsedSkill(trigger, context.usedSkill)),
     )
     .flatMap(({ statusId, sourceId, trigger }) =>
       fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
@@ -119,8 +122,9 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
   return (
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
-    (trigger.usedSkill.attribute === undefined ||
-      skill.attributeId === trigger.usedSkill.attribute) &&
+    (trigger.usedSkill.attributes === undefined ||
+      (skill.attributeId !== undefined &&
+        inScope(trigger.usedSkill.attributes, skill.attributeId))) &&
     (trigger.usedSkill.profession === undefined ||
       skill.profession === trigger.usedSkill.profession) &&
     (trigger.usedSkill.elite === undefined || skill.elite) &&
@@ -227,6 +231,8 @@ export function fireChangeTriggers(
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.sourceId, undefined, context),
       );
+    case "applied-hex":
+      return fireAppliedHex(bearer, change, context);
     case "broke-hex":
       return breakHex(bearer, change, context);
     case "reflected":
@@ -317,7 +323,31 @@ function parties(
       return other === undefined || other.dead || other.team === source.team
         ? undefined
         : { caster: source, target: other };
+    case "hexed-foe":
+      return other === undefined || other.dead ? undefined : { caster: bearer, target: other };
   }
+}
+
+/**
+ * The bearer's hex landed on a foe (#1951): each status that answered it
+ * and answers one of that hex's attribute fires, once each, in `active`
+ * order, at that foe.
+ */
+function fireAppliedHex(
+  hexer: Combatant,
+  change: Extract<StatusChange, { kind: "applied-hex" }>,
+  context: TriggerContext,
+): FiredTrigger[] {
+  const { attribute } = getStatusDefinition(change.id);
+  return change.fired
+    .filter(({ trigger }) =>
+      trigger.appliedHex === undefined
+        ? true
+        : attribute !== undefined && inScope(trigger.appliedHex.attributes, attribute),
+    )
+    .flatMap(({ statusId, sourceId, trigger }) =>
+      fire(trigger, statusId, sourceId, hexer, change.hexedId, undefined, context),
+    );
 }
 
 /**
