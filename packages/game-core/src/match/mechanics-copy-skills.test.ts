@@ -25,6 +25,7 @@ const AVATAR = "dervish.avatar-of-melandru";
 const WORD = "monk.word-of-healing";
 const SHADOW_WALK = "assassin.shadow-walk";
 const DARK_ESCAPE = "assassin.dark-escape";
+const SHADOW_OF_HASTE = "assassin.shadow-of-haste";
 const RECUPERATION: Aura = { statusId: "recuperation", affects: "allies", radius: RANGE_SPIRIT };
 
 function spec(id: string, team: number, spawn: Vec2, skillBar: readonly string[]): ParticipantSpec {
@@ -88,7 +89,7 @@ function match(
     participants: [
       spec("m", 0, vec2(0, 0), [MIMICRY, MIRRORED, BINDING]),
       spec("a", 0, vec2(0, 40), allyBar),
-      spec("f", 1, vec2(200, 0), [SHADOW_WALK, DARK_ESCAPE]),
+      spec("f", 1, vec2(200, 0), [SHADOW_WALK, DARK_ESCAPE, SHADOW_OF_HASTE]),
       spec("g", 1, vec2(200, 60), [DARK_ESCAPE]),
       ...more,
     ],
@@ -163,9 +164,29 @@ describe("Mirrored Stance (#1965)", () => {
     expect(get(sim, "f").combatant.statuses.has("shadow-walk")).toBe(true);
     const copy = get(sim, "m").combatant.statuses.get("shadow-walk");
     expect(copy?.remainingSeconds).toBeCloseTo(15 - 2.5, 0);
-    expect(copy?.sourceId).toBe("f");
+    expect(copy?.sourceId).toBe("m");
     expect(get(sim, "m").position).toEqual(at);
     expect(get(sim, "m").combatant.cast.rechargeRemaining.has(BINDING)).toBe(false);
+  });
+
+  it("a copied Shadow of Haste returns its caster where it stood, and leaves the foe alone", () => {
+    const sim = match();
+    use(sim, "m", MIRRORED, "f");
+    const mAt = get(sim, "m").position;
+    use(sim, "f", SHADOW_OF_HASTE, "f");
+    const fAt = get(sim, "f").position;
+    expect(get(sim, "m").combatant.statuses.get("shadow-of-haste")?.returnPoint).toEqual(mAt);
+
+    sim.setInputDirection("m", vec2(0, -1));
+    sim.setInputDirection("f", vec2(0, 1));
+    stepFor(sim, 2);
+    sim.setInputDirection("m", vec2(0, 0));
+    sim.setInputDirection("f", vec2(0, 0));
+    expect(get(sim, "m").position).not.toEqual(mAt);
+    stepFor(sim, 32);
+    expect(get(sim, "m").combatant.statuses.has("shadow-of-haste")).toBe(false);
+    expect(get(sim, "m").position).toEqual(mAt);
+    expect(get(sim, "f").position).toEqual(fAt);
   });
 
   it("a second hexed foe's stance replaces the first", () => {
