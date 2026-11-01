@@ -1484,12 +1484,17 @@ export interface StatusTrigger {
  * effects, as Grenth's Grasp's "your attack skills also"; a plain swing
  * carries none. `weapon` (#1629): only a blow of that weapon class
  * carries it, as Kindle Arrows' "your arrows"; `undefined`: any.
+ * `weaponDamage` (#1984): only a blow of a weapon whose own damage type
+ * is this carries it, elemental blows included, as Conjure Flame's "while
+ * you wield a fire weapon"; a conversion such as Greater Conflagration's
+ * does not count. `undefined`: any, physical blows only.
  */
 export interface AttackHitRider {
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
   readonly attackSkillsOnly: boolean;
   readonly weapon: AttackWeaponClass | undefined;
+  readonly weaponDamage: DamageType | undefined;
   /**
    * The status's source loses this share of its effective maximum Health,
    * rounded up, for each status of `profession` the rider removed

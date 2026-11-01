@@ -223,11 +223,21 @@ export function takenOffFoe(skill: Skill): StatusCategory | undefined {
  * the bot can see, no role of its own. Air of Enchantment's cheaper
  * enchantments on an ally, before one; Order of Apostasy's strip on the
  * party's hits, while they hit enchanted foes; Dark Apostasy's strip on
- * a critical hit, at an enchanted foe.
+ * a critical hit, at an enchanted foe. The Elementalist's self-buffs
+ * (#1984): a conjure's rider for the element it wields, Ether Prodigy's
+ * Energy for Health, Ether Renewal's gains per enchantment on the next
+ * spell, Elemental Attunement's ranks.
  */
-export type Setup = "cheaper-enchantments" | "party-strips" | "critical-strips";
+export type Setup =
+  | "cheaper-enchantments"
+  | "party-strips"
+  | "critical-strips"
+  | "weapon-element"
+  | "energy-for-health"
+  | "spell-gains"
+  | "elemental-ranks";
 
-/** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975). */
+/** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975, #1984). */
 export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | undefined {
   const applied = skill.effects.find((effect) => effect.kind === "apply-status");
   if (applied?.kind !== "apply-status") {
@@ -241,7 +251,29 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
         ? "party-strips"
         : status.onCriticalHit !== undefined
           ? "critical-strips"
-          : undefined;
+          : status.onAttackHit?.weaponDamage !== undefined
+            ? "weapon-element"
+            : status.energyPips > 0 &&
+                status.triggers.some(
+                  ({ on, effects }) =>
+                    on === "ends" && effects.some(({ kind }) => kind === "lose-health"),
+                )
+              ? "energy-for-health"
+              : status.triggers.some(
+                    ({ on, effects }) =>
+                      on === "bearer-casts-spell" &&
+                      effects.some(
+                        (effect) =>
+                          effect.kind === "energy-gain" && effect.per?.count.kind === "statuses",
+                      ),
+                  )
+                ? "spell-gains"
+                : status.category === "enchantment" &&
+                    status.attributeDeltas.some(
+                      ({ scope, amount }) => scope === "elemental" && amount > 0,
+                    )
+                  ? "elemental-ranks"
+                  : undefined;
   return setup === undefined ? undefined : { setup, statusId: applied.statusId };
 }
 

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { NO_RANKS } from "../../../skills/status.js";
 import { vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
-import { MONK, WARRIOR, askBot, fighter, match } from "./test-support.js";
+import { ELEMENTALIST, MONK, WARRIOR, askBot, fighter, match } from "./test-support.js";
 
 describe("play-build's setups (#1975)", () => {
   const DARK = "assassin.dark-apostasy";
@@ -57,5 +57,59 @@ describe("play-build puts Air of Enchantment before a dear enchantment (#1975)",
   it("casts Air on the ally first, then the enchantment once it bears Air", () => {
     expect(askBot(hurt(false), "monk")).toMatchObject({ useSkillId: AIR, targetId: "ally" });
     expect(askBot(hurt(true), "monk")).toMatchObject({ useSkillId: PROTECT, targetId: "ally" });
+  });
+});
+
+describe("play-build's Elementalist self-buffs (#1984)", () => {
+  const sim = (skillBar: string[]): MatchSimulation =>
+    match([
+      fighter("e", 0, ELEMENTALIST, vec2(400, 400), { behaviour: undefined, skillBar }),
+      fighter("foe", 1, WARRIOR, vec2(480, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+  const CONJURES = {
+    fire: "elementalist.conjure-flame",
+    cold: "elementalist.conjure-frost",
+    lightning: "elementalist.conjure-lightning",
+  } as const;
+
+  it("conjures only the element it wields", () => {
+    const fight = sim(Object.values(CONJURES));
+    const wields = fight.get("e")?.combatant.equipment.mainHand.damageType;
+    expect(wields === "fire" || wields === "cold" || wields === "lightning").toBe(true);
+    const matching = Object.entries(CONJURES).find(([type]) => type === wields)?.[1];
+    expect(askBot(fight, "e")).toMatchObject({ useSkillId: matching, targetId: "e" });
+    const others = Object.entries(CONJURES).flatMap(([type, id]) => (type === wields ? [] : [id]));
+    expect(askBot(sim(others), "e").useSkillId).toBeUndefined();
+  });
+
+  it("casts Ether Prodigy only short of Energy", () => {
+    const PRODIGY = "elementalist.ether-prodigy";
+    expect(askBot(sim([PRODIGY]), "e").useSkillId).toBeUndefined();
+    const low = sim([PRODIGY]);
+    const self = low.get("e")?.combatant;
+    if (self !== undefined) {
+      self.energy = 5;
+    }
+    expect(askBot(low, "e")).toMatchObject({ useSkillId: PRODIGY, targetId: "e" });
+  });
+
+  it("casts Ether Renewal with two enchantments up and a spell ready", () => {
+    const RENEWAL = "elementalist.ether-renewal";
+    const bar = [RENEWAL, "elementalist.flare"];
+    const one = sim(bar);
+    one.get("e")?.combatant.statuses.apply("armor-boost", 30, "e", NO_RANKS);
+    expect(askBot(one, "e").useSkillId).not.toBe(RENEWAL);
+    const two = sim(bar);
+    two.get("e")?.combatant.statuses.apply("armor-boost", 30, "e", NO_RANKS);
+    two.get("e")?.combatant.statuses.apply("armor-of-mist", 30, "e", NO_RANKS);
+    expect(askBot(two, "e")).toMatchObject({ useSkillId: RENEWAL, targetId: "e" });
+  });
+
+  it("keeps Elemental Attunement up", () => {
+    const ATTUNEMENT = "elementalist.elemental-attunement";
+    expect(askBot(sim([ATTUNEMENT]), "e")).toMatchObject({ useSkillId: ATTUNEMENT });
+    const up = sim([ATTUNEMENT]);
+    up.get("e")?.combatant.statuses.apply("elemental-attunement", 53, "e", NO_RANKS);
+    expect(askBot(up, "e").useSkillId).toBeUndefined();
   });
 });

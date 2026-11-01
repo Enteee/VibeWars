@@ -1429,3 +1429,23 @@ describe("Tactics stances that pay on a block (#1978)", () => {
     ]);
   });
 });
+
+describe("Elementalist self-buffs (#1984)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(skill(id), new Map([["elementalist.energy-storage", 12]])).effects.map(
+      ({ text }) => text,
+    );
+
+  it("says the conjure's weapon, Ether Prodigy's end and Ether Renewal's count", () => {
+    expect(texts("elementalist.conjure-flame")).toEqual([
+      "Applies Conjure Flame for 60s (while you wield a fire weapon, foes your attacks hit take 17 fire damage)",
+    ]);
+    expect(texts("elementalist.ether-prodigy")).toEqual([
+      "Removes all enchantments",
+      "Applies Ether Prodigy for 18s (+6 Energy regeneration. When it ends: lose 2 Health for each point of Energy you have)",
+    ]);
+    expect(texts("elementalist.ether-renewal")).toEqual([
+      "Applies Ether Renewal for 10s (whenever it casts a spell: gain 3 energy for each enchantment on you. Whenever it casts a spell: heals 17 Health for each enchantment on you)",
+    ]);
+  });
+});
