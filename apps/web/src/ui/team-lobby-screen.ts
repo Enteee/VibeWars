@@ -97,14 +97,22 @@ export interface ProposableTeam {
   readonly reason: string | undefined;
 }
 
-/** `teams` for a side of `size`: only those of exactly `size` members can be proposed. */
+/**
+ * `teams` for a side of `size`: only those of exactly `size` members can
+ * be proposed. A Hosted Game's side, `size` `null`, takes any with a slot
+ * for each of its `players` (#2029).
+ */
 export function proposableTeams(
   teams: readonly StoredTeam[],
-  size: number,
+  size: number | null,
+  players: number,
 ): readonly ProposableTeam[] {
-  const needs = `needs ${String(size)} ${size === 1 ? "character" : "characters"}`;
+  const least = size ?? players;
+  const characters = `${String(least)} ${least === 1 ? "character" : "characters"}`;
+  const needs = size === null ? `needs at least ${characters}` : `needs ${characters}`;
   return teams.map((team) => {
-    const disabled = team.members.length !== size;
+    const count = team.members.length;
+    const disabled = size === null ? count < players : count !== size;
     return { team, disabled, reason: disabled ? needs : undefined };
   });
 }
@@ -401,7 +409,7 @@ function voteStage(
     shown.push(h("div", "screen-info team-lobby-no-teams", NO_TEAM_BUILDS));
   } else {
     const own = h("div", "play-cards team-lobby-own-cards");
-    for (const proposable of proposableTeams(teams, side.size)) {
+    for (const proposable of proposableTeams(teams, side.size, humansOnSide(snapshot))) {
       own.appendChild(ownCard(proposable, proposedTeamId, callbacks.onPropose));
     }
     shown.push(own);

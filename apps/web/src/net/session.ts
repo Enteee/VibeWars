@@ -28,7 +28,6 @@ import {
   publicRoom,
   type FormedGroup,
   type Guild,
-  type LobbyCharacter,
   type LobbyClosedReason,
   type LobbyConnection,
   type MatchPlan,
@@ -183,10 +182,10 @@ function startMatch(plan: MatchPlan) {
 
 /**
  * Host a lobby in this tab: a fresh key, the room derived from it, the
- * lobby host on it, and this player joined to it as one more peer,
- * bringing `character`. A coded lobby starts closed, and its host is in
- * its room only while it is open or has guests (#1682); its room is
- * derived once, here, for the lobby's life.
+ * lobby host on it, and this player joined to it as one more peer. A
+ * coded lobby starts closed, and its host is in its room only while it
+ * is open or has guests (#1682); its room is derived once, here, for the
+ * lobby's life.
  *
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
@@ -197,7 +196,6 @@ function startMatch(plan: MatchPlan) {
 export async function hostLobby(
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   teamLobby: boolean,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
@@ -272,7 +270,6 @@ export async function hostLobby(
       proofKey: null,
       name,
       ...guild,
-      character,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
@@ -293,15 +290,14 @@ export async function hostLobby(
 }
 
 /**
- * Join the lobby `code` names, hosted on another peer's browser, bringing
- * `character`; with `queued`, a Random Arena group's lobby in the group's room,
- * `code` the group's id.
+ * Join the lobby `code` names, hosted on another peer's browser; with
+ * `queued`, a Random Arena group's lobby in the group's room, `code` the
+ * group's id.
  */
 export async function joinLobbyByCode(
   code: string,
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
@@ -326,7 +322,6 @@ export async function joinLobbyByCode(
       proofKey: lobbyRoom.proofKey,
       name,
       ...guild,
-      character,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
@@ -422,7 +417,7 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
 }
 
 /**
- * Queue for a Random Arena of `mode` as `name` of `guild`, bringing `character`
+ * Queue for a Random Arena of `mode` as `name` of `guild`
  * (#854 C1–C7): a ticket on the board `joinQueueBoard` picks, ticked from
  * the host clock so a background tab keeps its place. When a group
  * settles, this tab hosts its lobby or joins it; a lobby that never fills,
@@ -438,7 +433,6 @@ export function enterQueue(
   mode: QueueMode,
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   events: RandomArenaEvents,
   party?: PartyPlace,
   teamPlan?: HostedLobby["teamPlan"],
@@ -485,7 +479,7 @@ export function enterQueue(
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guild, character, false, {
+        hosted = await hostLobby(name, guild, false, {
           group,
           key,
           verifyTicketSig,
@@ -500,7 +494,7 @@ export function enterQueue(
         });
         lobby = hosted.lobby;
       } else {
-        lobby = await joinLobbyByCode(group.groupId, name, guild, character, {
+        lobby = await joinLobbyByCode(group.groupId, name, guild, {
           group,
           key,
           verifyTicketSig,

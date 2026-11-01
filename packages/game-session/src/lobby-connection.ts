@@ -33,8 +33,6 @@ export interface LobbyPlayerSnapshot {
   readonly team: 0 | 1 | null;
   readonly ready: boolean;
   readonly isHost: boolean;
-  /** `null` brings a starter build. */
-  readonly character: LobbyCharacter | null;
   /** A bot the host added (#1193): no peer behind it. */
   readonly bot: boolean;
   /** Dropped, its seat held while it may come back (#1764). */
@@ -121,8 +119,6 @@ export interface LobbyConnection {
   chooseTeam(team: 0 | 1 | null): void;
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
-  /** The character this player now brings (#1526); `null` for a starter build. */
-  setCharacter(character: LobbyCharacter | null): void;
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;
@@ -140,8 +136,6 @@ export interface LobbyConnection {
   queueParty(key: TicketKey): void;
   /** A team mode's party host, in its match's lobby (ADR-0042): its side's seats, in order. */
   sendTeamPlan(seats: readonly PartyPlanSeat[]): void;
-  /** Host only (#1454): `team` has `count` bots, playing what the host picks. */
-  setBots(team: 0 | 1, count: number): void;
   /** In a Team Lobby's vote (#1458): propose `members` for this side, or withdraw with `null`. */
   propose(members: readonly PlayerBuild[] | null): void;
   /** In a Team Lobby's vote: vote for `proposerId`'s proposal, or withdraw with `null`. */

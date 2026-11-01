@@ -1,12 +1,9 @@
 import type { MatchMode } from "@vibewars/game-core";
-import { LOBBY_CODE_LENGTH, MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
-import type { LobbyCharacter, LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
+import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
+import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import type { RenderableActor } from "../render/arena-snapshot.js";
-import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { button, h, toast } from "./kit.js";
 import { relayLine } from "./relay-section.js";
-import { botTagElement } from "./bot-tag.js";
 import { playerLabelElement } from "./player-label.js";
 
 /**
@@ -21,8 +18,6 @@ export interface LobbyScreenCallbacks {
   readonly onStart: () => void;
   /** A member on no team, while the match runs (#480): watch it, late. */
   readonly onWatch: () => void;
-  /** Host only (#1454): `team` has `count` bots. */
-  readonly onSetBots: (team: 0 | 1, count: number) => void;
 }
 
 /**
@@ -68,8 +63,6 @@ export interface LobbyControls {
   readonly teamsDisabled: boolean;
   readonly readyDisabled: boolean;
   readonly startDisabled: boolean;
-  /** The bot count's + (#1454): a bot takes a seat like anyone, so a full lobby has none for it. */
-  readonly botsDisabled: boolean;
   /** Watch (#480): only for a member on no team, and only while the match runs. */
   readonly canWatch: boolean;
 }
@@ -86,7 +79,6 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
     // rather than silently doing nothing when pressed.
     readyDisabled: !waiting || self === undefined || self.team === null,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
-    botsDisabled: !waiting || snapshot.players.length >= MAX_LOBBY_PLAYERS,
     canWatch: snapshot.phase === "in-match" && self?.team === null,
   };
 }
@@ -107,20 +99,6 @@ export function waitingFor(snapshot: LobbySnapshot): string | undefined {
   return notReady.length === 0 ? undefined : `Waiting for ${notReady.join(", ")} to ready up`;
 }
 
-/**
- * "Mhenlo · Monk / Elementalist", or "Random starter build" without a
- * usable one (#580, #853). A bot's character is named after the bot, so
- * its line is the professions alone (#1241).
- */
-export function characterLine(character: LobbyCharacter | null, bot: boolean): string {
-  if (character === null) {
-    return RANDOM_STARTER;
-  }
-  const professions = professionLabel(character.primary, character.secondary ?? undefined);
-  return bot ? professions : `${character.name} · ${professions}`;
-}
-
-export const RANDOM_STARTER = "Random starter build";
 export const COPIED = "Copied";
 export const COPY_BY_HAND = "Could not copy: the key is selected, copy it by hand";
 
@@ -138,18 +116,6 @@ export async function copyCode(code: string, shown: HTMLElement): Promise<void> 
     selection?.selectAllChildren(shown);
     toast(COPY_BY_HAND);
   }
-}
-
-/** How the arena will paint `player` for whoever is looking: you, your side, or theirs. */
-function dotTeam(
-  player: LobbyPlayerSnapshot,
-  self: LobbyPlayerSnapshot | undefined,
-): RenderableActor["team"] {
-  if (player.sessionId === self?.sessionId) {
-    return "self";
-  }
-  // A spectator watches team 1 as its own side, so the two still differ.
-  return player.team === (self?.team ?? 0) ? "ally" : "enemy";
 }
 
 /** An arena the host may pick, how big it plays (#444), and the mode it plays (#476). */
@@ -303,7 +269,7 @@ export function lobbyPanel(
   const teams = h("div", "lobby-teams");
   // A team mode's lobby is one side, the party; its empty seats are bots.
   for (const team of matchmaking === undefined ? SELECTABLE_TEAMS : ([0] as const)) {
-    teams.appendChild(teamColumn(team, snapshot, controls, callbacks, matchmaking === undefined));
+    teams.appendChild(teamColumn(team, snapshot, controls, callbacks));
   }
   panel.appendChild(teams);
 
@@ -345,15 +311,14 @@ export function matchmakingButtons(
 }
 
 /**
- * One team's column: its name and Join, its bot count (#1454), which the
- * host steps, unless `withBots` is off, and its members, bots among them.
+ * One team's column: its name and Join, and its members by name (#2029);
+ * a bot plays a slot nobody claimed, under that slot's character's name.
  */
 export function teamColumn(
   team: 0 | 1,
   snapshot: LobbySnapshot,
   controls: LobbyControls,
   callbacks: LobbyScreenCallbacks,
-  withBots = true,
 ): HTMLElement {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const column = h("div", "lobby-team");
@@ -367,94 +332,34 @@ export function teamColumn(
   title.appendChild(join);
   column.appendChild(title);
   const members = snapshot.players.filter((p) => p.team === team);
-  if (withBots) {
-    column.appendChild(
-      botCount(
-        team,
-        members.filter((member) => member.bot).length,
-        snapshot.isHost,
-        controls,
-        callbacks,
-      ),
-    );
-  }
   if (members.length === 0) {
     column.appendChild(h("div", "lobby-slot-empty", "Empty"));
   }
   for (const member of members) {
-    column.appendChild(playerRow(member, self));
+    column.appendChild(playerRow(member));
   }
   return column;
 }
 
 /**
- * `team`'s "Bots: n" (#1454): the host steps it with − and +; everyone
- * else only reads it.
+ * One player on a team: name and a ready pill (#2029). What they play is
+ * the Team Build slot they claim, so no character of their own is listed;
+ * a bot, always ready, is marked only in the match.
  */
-function botCount(
-  team: 0 | 1,
-  count: number,
-  isHost: boolean,
-  controls: LobbyControls,
-  callbacks: LobbyScreenCallbacks,
-): HTMLElement {
-  const control = h("div", "lobby-bots");
-  if (!isHost) {
-    control.textContent = `Bots: ${String(count)}`;
-    return control;
-  }
-  const fewer = button("−", "lobby-bots-fewer", () => {
-    callbacks.onSetBots(team, count - 1);
-  });
-  fewer.setAttribute("aria-label", `One bot fewer on team ${String(team + 1)}`);
-  // Locked outside "waiting", like Join.
-  fewer.disabled = controls.teamsDisabled || count === 0;
-  const more = button("+", "lobby-bots-more", () => {
-    callbacks.onSetBots(team, count + 1);
-  });
-  more.setAttribute("aria-label", `One bot more on team ${String(team + 1)}`);
-  more.disabled = controls.botsDisabled;
-  control.append(
-    h("span", "lobby-bots-label", "Bots:"),
-    fewer,
-    h("span", "lobby-bot-count", String(count)),
-    more,
-  );
-  return control;
-}
-
-/** One player on a team: dot, name, the character they bring, and a ready pill. */
-function playerRow(
-  member: LobbyPlayerSnapshot,
-  self: LobbyPlayerSnapshot | undefined,
-): HTMLElement {
+function playerRow(member: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "lobby-slot");
-  const { character } = member;
-  row.appendChild(
-    character === null
-      ? h("span", "character-dot is-house", "?")
-      : createProfessionDot(
-          character.primary,
-          character.secondary ?? undefined,
-          dotTeam(member, self),
-        ),
-  );
   const text = h("span", "lobby-slot-text");
   const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
   if (member.isHost) {
     player.appendChild(h("span", "lobby-host", " (host)"));
   }
-  text.appendChild(h("span", "lobby-character", characterLine(character, member.bot)));
   row.appendChild(text);
-  // A bot is always ready, so its pill says what it is instead (#1194).
   row.appendChild(
-    member.bot
-      ? botTagElement("lobby-ready")
-      : h(
-          "span",
-          member.ready ? "lobby-ready is-ready" : "lobby-ready",
-          member.ready ? "Ready" : "Not ready",
-        ),
+    h(
+      "span",
+      member.ready ? "lobby-ready is-ready" : "lobby-ready",
+      member.ready ? "Ready" : "Not ready",
+    ),
   );
   return row;
 }

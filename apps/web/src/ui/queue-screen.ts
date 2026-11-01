@@ -2,8 +2,7 @@ import type { QueueMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot, QueueState } from "@vibewars/game-session";
 
 import { teamColour } from "../render/arena-snapshot.js";
-import { createProfessionDot, cssColour } from "./character-preview.js";
-import { characterLine } from "./lobby-screen.js";
+import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
 import { playerLabelElement } from "./player-label.js";
@@ -221,28 +220,18 @@ export function versusTeams(snapshot: LobbySnapshot): VersusTeams {
   };
 }
 
-function splashRow(player: LobbyPlayerSnapshot, ours: boolean, self: boolean): HTMLElement {
+/** A player on the splash, by name alone (#2029): what they play is not the lobby's to say. */
+function splashRow(player: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "versus-player");
-  const { character } = player;
-  row.appendChild(
-    character === null
-      ? h("span", "character-dot is-house", "?")
-      : createProfessionDot(
-          character.primary,
-          character.secondary ?? undefined,
-          self ? "self" : ours ? "ally" : "enemy",
-        ),
-  );
   const text = h("span", "versus-player-text");
   text.appendChild(playerLabelElement("versus-player-name", player.name, player.guildTag));
-  text.appendChild(h("span", "versus-player-character", characterLine(character, player.bot)));
   row.appendChild(text);
   return row;
 }
 
 /**
  * The versus splash (GW1): the map, and both teams side by side in team
- * colours, each player's name and professions, from the queued lobby's
+ * colours, each player's name, from the queued lobby's
  * snapshot. Yours on the left.
  */
 export function renderVersusSplash(
@@ -258,7 +247,7 @@ export function renderVersusSplash(
     node.style.setProperty("--team-colour", cssColour(teamColour(isOurs ? "ally" : "enemy")));
     node.appendChild(h("h3", "versus-team-title", isOurs ? "Your team" : "Their team"));
     for (const player of players) {
-      node.appendChild(splashRow(player, isOurs, player.sessionId === snapshot.selfSessionId));
+      node.appendChild(splashRow(player));
     }
     return node;
   };

@@ -444,7 +444,6 @@ const lobbyJoin: PeerLobbyJoin = {
   name: "Mhenlo",
   guildTag: "vb",
   guildCape: null,
-  character: { name: "Mhenlo Healer", primary: "monk", secondary: "elementalist" },
   admission: null,
 };
 
@@ -481,7 +480,6 @@ const lobbyState: WireLobbyState = {
       team: 0,
       ready: true,
       isHost: true,
-      character: { name: "Cynn", primary: "elementalist", secondary: null },
       bot: false,
       away: false,
     },
@@ -493,7 +491,6 @@ const lobbyState: WireLobbyState = {
       team: null,
       ready: false,
       isHost: false,
-      character: null,
       bot: false,
       away: false,
     },
@@ -505,7 +502,6 @@ const lobbyState: WireLobbyState = {
       team: 1,
       ready: true,
       isHost: false,
-      character: { name: "Monk Bot", primary: "monk", secondary: "elementalist" },
       bot: true,
       away: false,
     },
@@ -805,7 +801,6 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["chat-line from a spectator (#479)", parseWireChatLine, { ...chatLine, team: null }],
   ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
-  ["lobby-join on a starter build", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
@@ -853,22 +848,19 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["ready", parseWireLobbyCommand, { kind: "ready", ready: false }],
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
-  [
-    "set-character (#1526)",
-    parseWireLobbyCommand,
-    { kind: "set-character", character: { name: "Mhenlo", primary: "monk", secondary: null } },
-  ],
-  [
-    "set-character to a starter build (#1526)",
-    parseWireLobbyCommand,
-    { kind: "set-character", character: null },
-  ],
   ["start", parseWireLobbyCommand, { kind: "start" }],
   ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match" }],
   ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
   ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
-  ["set-bots", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
+  [
+    "Hosted Game's Team Lobby lobby-state, a side of any size (#2029)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: { stage: "claim", secondsLeft: 41, sides: [{ ...teamSide, size: null }, null] },
+    },
+  ],
   [
     "Team Lobby lobby-state in its vote, with the house team chosen (#1458)",
     parseWireLobbyState,
@@ -1732,21 +1724,6 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["lobby-join without a name", parsePeerLobbyJoin, { protocolVersion: PROTOCOL_VERSION }],
   [
-    "lobby-join without a character",
-    parsePeerLobbyJoin,
-    { protocolVersion: PROTOCOL_VERSION, name: "Mhenlo" },
-  ],
-  [
-    "lobby-join with a character of no primary",
-    parsePeerLobbyJoin,
-    { ...lobbyJoin, character: { name: "Mhenlo Healer", secondary: null } },
-  ],
-  [
-    "lobby-state with a player of no character",
-    parseWireLobbyState,
-    { ...lobbyState, players: [{ ...lobbyState.players[1], character: undefined }] },
-  ],
-  [
     "lobby-join without an admission (#871)",
     parsePeerLobbyJoin,
     { ...lobbyJoin, admission: undefined },
@@ -2054,14 +2031,17 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyCommand,
     { kind: "select-mode", mode: "ranked" },
   ],
-  ["set-character without one (#1526)", parseWireLobbyCommand, { kind: "set-character" }],
+  [
+    "set-character, which is gone (#2029)",
+    parseWireLobbyCommand,
+    { kind: "set-character", character: { name: "Mhenlo", primary: "monk", secondary: null } },
+  ],
   [
     "add-bot, which is gone",
     parseWireLobbyCommand,
     { kind: "add-bot", team: 0, profession: "monk" },
   ],
-  ["set-bots without a team", parseWireLobbyCommand, { kind: "set-bots", count: 2 }],
-  ["set-bots of a string", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: "2" }],
+  ["set-bots, which is gone (#2029)", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
   ["a command of an unknown kind", parseWireLobbyCommand, { kind: "kick", id: "peer-2" }],
   ["a note of an unknown kind", parseWireLobbyNote, { kind: "kicked", reason: "x" }],
   [
@@ -2155,14 +2135,6 @@ describe("the P2P validators (#82)", () => {
   it("cut a hello's long name to MAX_WIRE_TEXT: shortening it is the host's job", () => {
     const named = parsePeerHello({ ...hello, name: "x".repeat(5000) });
     expect(named?.name).toBe("x".repeat(MAX_WIRE_TEXT));
-  });
-
-  it("cut a lobby-join's long character name to MAX_WIRE_TEXT, like its own (#580)", () => {
-    const named = parsePeerLobbyJoin({
-      ...lobbyJoin,
-      character: { name: "x".repeat(5000), primary: "monk", secondary: null },
-    });
-    expect(named?.character?.name).toBe("x".repeat(MAX_WIRE_TEXT));
   });
 
   it("read a hello's version even when the rest of it is malformed", () => {

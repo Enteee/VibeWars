@@ -1,7 +1,6 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
 import type {
   Guild,
-  LobbyCharacter,
   LobbyConnection,
   LobbySnapshot,
   MatchStarting,
@@ -248,8 +247,6 @@ interface TeamPicks {
 interface Entrant {
   /** Played every match of the lobby; `undefined` plays a starter build from the host. */
   readonly build: PlayerBuild | undefined;
-  /** How the lobby lists it (#580). */
-  readonly character: LobbyCharacter | null;
   /** Whose record its matches go on (#1404); `undefined` for a starter build. */
   readonly characterId: string | undefined;
   /** The menu's guild tag (#1406) if it is a valid one, and its cape (#1422). */
@@ -638,29 +635,17 @@ async function main(): Promise<void> {
 
   /**
    * The selected character, read fresh: the one read per lobby (#1070).
-   * The lobby lists it (#580) by the selected one's name and professions,
-   * or `null` for a starter build. A build the host would refuse, an
-   * illegal one, plays a starter build, so it is listed as that too.
+   * A build the host would refuse, an illegal one, plays a starter build,
+   * so it keeps no record either.
    */
   const readEntrant = async (): Promise<Entrant> => {
     const id = loadActiveCharacterId();
     const build = await activeBuild(id);
-    const character =
-      build === undefined ||
-      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
-        undefined
-        ? null
-        : {
-            name: build.name,
-            primary: build.primaryProfession,
-            secondary: build.secondaryProfession ?? null,
-          };
-    return {
-      build,
-      guild: playerGuild(),
-      character,
-      characterId: character === null ? undefined : id,
-    };
+    const legal =
+      build !== undefined &&
+      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused ===
+        undefined;
+    return { build, guild: playerGuild(), characterId: legal ? id : undefined };
   };
 
   /** The open build editor; every way out of it passes through `showMenu`. */
@@ -890,7 +875,7 @@ async function main(): Promise<void> {
       const entrant = await readEntrant();
       let own: HostedLobby;
       try {
-        own = await hostLobby(name, entrant.guild, entrant.character, true);
+        own = await hostLobby(name, entrant.guild, true);
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
@@ -978,7 +963,7 @@ async function main(): Promise<void> {
       {
         join: async (code) => {
           const entrant = await readEntrant();
-          const joined = await joinLobbyByCode(code, name, entrant.guild, entrant.character);
+          const joined = await joinLobbyByCode(code, name, entrant.guild);
           return { joined, entrant };
         },
         movedOn: () => movedOnSince(turn),
@@ -1031,7 +1016,7 @@ async function main(): Promise<void> {
       menuNotice = undefined;
       let joined: LobbyConnection;
       try {
-        joined = await joinLobbyByCode(code, name, entrant.guild, entrant.character);
+        joined = await joinLobbyByCode(code, name, entrant.guild);
       } catch (error) {
         console.warn("[web] could not join the lobby", error);
         if (movedOn()) {
@@ -1085,9 +1070,6 @@ async function main(): Promise<void> {
         },
         onWatch: () => {
           void watchMatch();
-        },
-        onSetBots: (team, count) => {
-          lobby?.setBots(team, count);
         },
       },
       lobbyNotice,
@@ -1344,7 +1326,6 @@ async function main(): Promise<void> {
       mode,
       name,
       entrant.guild,
-      entrant.character,
       {
         // Never past `in-lobby` while a lobby is up, unless it fell through.
         onState: (state) => {
@@ -1606,7 +1587,6 @@ async function main(): Promise<void> {
       mode,
       name,
       entrant.guild,
-      entrant.character,
       {
         // The queue strip says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
@@ -1799,8 +1779,8 @@ async function main(): Promise<void> {
   };
 
   /**
-   * The character this player picked now, for the lobby to list and its
-   * matches to play (#1526): the lobby outlives a pick on the menu.
+   * The character this player picked now, for its matches to play and
+   * keep a record of (#1526): the lobby outlives a pick on the menu.
    */
   const refreshEntrant = async (): Promise<void> => {
     const current = lobby;
@@ -1810,9 +1790,6 @@ async function main(): Promise<void> {
     const entrant = await readEntrant();
     if (lobby !== current || lobbyEntrant === undefined) {
       return;
-    }
-    if (JSON.stringify(entrant.character) !== JSON.stringify(lobbyEntrant.character)) {
-      current.setCharacter(entrant.character);
     }
     lobbyEntrant = entrant;
   };
@@ -2122,13 +2099,13 @@ async function main(): Promise<void> {
    * starter build has none. Saving is a convenience: a failure is only logged.
    */
   const recordMatch = (outcome: MatchOutcome, mapId: string, entrant: Entrant): void => {
-    if (entrant.characterId === undefined || entrant.character === null) {
+    if (entrant.characterId === undefined || entrant.build === undefined) {
       return;
     }
     const record = matchRecordFrom(outcome, {
       id: crypto.randomUUID(),
       characterId: entrant.characterId,
-      characterName: entrant.character.name,
+      characterName: entrant.build.name,
       mapId,
       mode: mapMode(mapId),
       finishedAt: Date.now(),
