@@ -3628,7 +3628,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         creature: {
           kind: "spirit",
           look: "spirit",
-          name: "Winter",
+          name: "Symbiosis",
           maxHealth: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 70, atTwelve: 210 },
           },
@@ -3683,7 +3683,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         creature: {
           kind: "spirit",
           look: "spirit",
-          name: "Winter",
+          name: "Favorable Winds",
           maxHealth: {
             scaling: { attributeId: "ranger.marksmanship", atZero: 70, atTwelve: 210 },
           },
@@ -3738,7 +3738,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         creature: {
           kind: "spirit",
           look: "spirit",
-          name: "Winter",
+          name: "Brambles",
           maxHealth: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
           },
@@ -3793,7 +3793,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         creature: {
           kind: "spirit",
           look: "spirit",
-          name: "Winter",
+          name: "Tranquility",
           maxHealth: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
           },
@@ -3847,7 +3847,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         creature: {
           kind: "spirit",
           look: "spirit",
-          name: "Winter",
+          name: "Toxicity",
           maxHealth: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 70, atTwelve: 210 },
           },
@@ -3902,7 +3902,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         creature: {
           kind: "spirit",
           look: "spirit",
-          name: "Winter",
+          name: "Greater Conflagration",
           maxHealth: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
           },

@@ -313,4 +313,14 @@ describe("nature rituals 2 (#1873)", () => {
       "Non-spirit creatures in its range: physical damage dealt is fire damage",
     ]);
   });
+
+  it("names each spirit after its skill", () => {
+    const spiritName = (skillId: string) =>
+      skillOf(skillId).effects.flatMap((effect) =>
+        effect.kind === "summon" ? [effect.creature.name] : [],
+      );
+    for (const [skillId] of RITUALS) {
+      expect(spiritName(skillId)).toEqual([skillOf(skillId).name]);
+    }
+  });
 });
