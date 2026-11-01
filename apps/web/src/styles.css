@@ -2483,20 +2483,23 @@ body {
 
 .editor-more {
   position: absolute;
-  z-index: 40;
+  /* Above an open Share or Load panel, so ⋯ can switch between them. */
+  z-index: 41;
   top: calc(100% + 0.3rem);
   right: 0;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
   background: var(--bg);
   border: 1px solid var(--line);
   box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
 }
 
-/* Share (#572): one line of build text and Copy, under ⋯. */
-.editor-share {
+/* Share (#572): one line of build text and Copy, under ⋯; Load (#2004) the same. */
+.editor-share,
+.editor-load {
   position: absolute;
   z-index: 40;
   top: calc(100% + 0.3rem);
@@ -2504,6 +2507,7 @@ body {
   display: flex;
   gap: 0.3rem;
   width: min(28rem, 80vw);
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
   background: var(--bg);
   border: 1px solid var(--line);
@@ -2521,8 +2525,27 @@ body {
   font-size: 0.8rem;
 }
 
+/* Load GW1 code (#2004): the share line's place, its problems under it. */
+.editor-load {
+  flex-wrap: wrap;
+}
+
+.editor-load-problems {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #ffb3ae;
+  font-size: 0.85rem;
+}
+
+.editor-load-problems:empty {
+  display: none;
+}
+
 .editor-more[hidden],
 .editor-share[hidden],
+.editor-load[hidden],
 .problems-list[hidden] {
   display: none;
 }
@@ -4852,43 +4875,281 @@ body.has-expanded-training #screens {
   gap: 0.5rem;
 }
 
-.armor-grid {
+/* The armor paper-doll (#2059): the figure on the left, a row per piece
+   on the right. */
+.paper-doll {
+  display: grid;
+  grid-template-columns: minmax(9rem, 11rem) 1fr;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.paper-doll-stage {
+  position: relative;
+  aspect-ratio: 200 / 360;
+  width: 100%;
+}
+
+.paper-doll-figure,
+.paper-doll-figure::after {
+  position: absolute;
+  inset: 0;
+  background: var(--figure) center / contain no-repeat;
+}
+
+/* The primary's colour, laid over the figure through its own shape. */
+.paper-doll-figure::after {
+  content: "";
+  background: var(--tint, var(--ink-dim));
+  mask: var(--figure) center / contain no-repeat;
+  opacity: 0.4;
+}
+
+.paper-doll-hand {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+/* The number sits on the piece; its icons run to its right. */
+.paper-doll-hotspot {
+  position: absolute;
+  transform: translate(-0.65rem, -50%);
+}
+
+.paper-doll-hotspot {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.2rem 0.1rem 0.1rem;
+  font: inherit;
+  color: var(--ink);
+  white-space: nowrap;
+  cursor: pointer;
+  background: rgb(14 17 22 / 80%);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.paper-doll-hotspot:hover,
+.paper-doll-hotspot:focus-visible,
+.paper-doll-hotspot[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+.paper-doll-hotspot-number {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  font-size: 0.7rem;
+  color: var(--bg);
+  background: var(--ink);
+  border-radius: 50%;
+}
+
+.paper-doll-hotspot-icons {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.paper-doll-hotspot .gear-icon,
+.paper-doll-empty {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.paper-doll-hotspot .gear-icon[data-tier] {
+  height: 20px;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.paper-doll-empty {
+  display: inline-block;
+  box-sizing: border-box;
+  border: 1px dashed var(--ink-dim);
+  border-radius: 3px;
+}
+
+.paper-doll-hand .gear-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+
+.paper-doll-summary {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
-/* Fixed first column so the five rows line up; the two slots share what
-   is left rather than sizing to their contents. */
-.armor-row {
-  display: grid;
-  grid-template-columns: 4rem 1fr 1fr;
+.paper-doll-row {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem 0.5rem;
 }
 
-/* The piece the next insignia or rune goes to (#570), outlined as a
-   picked bar slot is. */
-.armor-row {
-  border-radius: 4px;
+.paper-doll-row-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.35rem;
+  padding: 0.2rem 0.35rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink);
+  text-align: left;
   cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
-.armor-row.is-selected {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.paper-doll-row-pick:hover,
+.paper-doll-row-pick:focus-visible,
+.paper-doll-row.is-open .paper-doll-row-pick {
+  border-color: var(--accent);
 }
 
-.gear-box-target {
+.paper-doll-row-name {
+  color: var(--ink-dim);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paper-doll-row-dot,
+.paper-doll-none {
+  color: var(--ink-dim);
+}
+
+/* The headgear's +1 (#1140), on its own row: inline and small. */
+.paper-doll-headgear .editor-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+}
+
+.paper-doll-row-part {
+  display: inline-flex;
+  align-items: center;
+}
+
+.paper-doll-popover {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.3rem 0.6rem;
+  width: 36rem;
+  max-width: calc(100vw - 16px);
+  max-height: min(34rem, calc(100vh - 16px));
+  padding: 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+}
+
+.paper-doll-popover[hidden] {
+  display: none;
+}
+
+.paper-doll-popover-title {
+  grid-column: 1 / -1;
+  font-weight: bold;
+}
+
+.paper-doll-popover-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 0;
+}
+
+.paper-doll-popover-heading {
+  margin-top: 0.2rem;
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paper-doll-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.paper-doll-choice {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  align-items: center;
+  column-gap: 0.3rem;
+  padding: 0.15rem 0.3rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.paper-doll-choice:hover,
+.paper-doll-choice:focus-visible {
+  border-color: var(--line);
+}
+
+.paper-doll-choice.is-chosen {
+  border-color: var(--accent);
+  background: rgb(89 194 255 / 12%);
+}
+
+.paper-doll-choice .gear-icon {
+  grid-row: span 2;
+  margin: 0;
+}
+
+.paper-doll-choice-note {
+  grid-column: 2;
   color: var(--ink-dim);
   font-size: 0.72rem;
 }
 
-.armor-slot-name {
-  color: var(--ink-dim);
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.paper-doll-choice-note:empty {
+  display: none;
+}
+
+.paper-doll-apply-all {
+  align-self: flex-start;
+}
+
+/* A phone (desktop first, it just has to work): the rows under the
+   figure, and the popover a sheet along the bottom. */
+@media (max-width: 700px) {
+  .paper-doll {
+    grid-template-columns: 1fr;
+  }
+
+  .paper-doll-stage {
+    max-width: 11rem;
+    margin: 0 auto;
+  }
+
+  .paper-doll-popover {
+    inset: auto 0 0;
+    width: auto;
+    max-width: none;
+    max-height: 60vh;
+  }
 }
 
 .gear-stats {

@@ -1,7 +1,8 @@
 # Equipment
 
 The **Equipment** part of the build editor holds your weapons and armor.
-Drag gear from the library on the right, or click a piece to equip it.
+Drag weapons and off-hands from the library on the right, or click one to
+equip it. Armor is picked on the figure, below.
 
 ## Weapon sets
 
@@ -28,6 +29,12 @@ two upgrade slots:
 
 Your **headgear** adds +1 to one attribute you choose.
 
+In the editor, armor is a figure. Click a numbered piece on it, or its
+row beside it, to pick its insignia and rune; each choice says what it
+does on that piece. **Apply insignia to all 5** puts the one you picked
+on every piece. The figure shows each piece's insignia and rune, and
+holds the weapons of the set you are looking at.
+
 ## Runes
 
 | Rune                                   | What it gives                           |
@@ -40,6 +47,9 @@ Your **headgear** adds +1 to one attribute you choose.
 | Attunement                             | more Energy (+3, +6 or +9)              |
 | Clarity, Purity, Recovery, Restoration | two conditions each wear off 20% sooner |
 | Absorption (Warrior)                   | less physical damage from each hit      |
+
+You pick a piece's rune in the same place as its insignia: click the piece
+on the figure.
 
 The editor adds it all up for you: Health, Energy, armor and damage, as
 your first weapon set has them.

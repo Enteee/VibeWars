@@ -1386,6 +1386,30 @@ describe("blocks that pay or pay off (#1974)", () => {
   });
 });
 
+describe("enchantment party moves (#1975)", () => {
+  const texts = (id: string): string[] => describeSkill(skill(id)).effects.map(({ text }) => text);
+
+  it("says what each strips, cheapens or costs, at rank 12", () => {
+    expect(texts("monk.air-of-enchantment")).toEqual([
+      "Applies Air of Enchantment for 9s " +
+        "(enchantments cast on the bearer cost 10 less Energy, minimum 1)",
+    ]);
+    expect(texts("necromancer.order-of-apostasy")).toEqual([
+      "Applies Order of Apostasy for 5s (foes your physical attacks hit lose 1 enchantment, " +
+        "for each Monk enchantment removed, Order of Apostasy's caster loses 4% maximum Health)",
+    ]);
+    expect(texts("assassin.dark-apostasy")).toEqual([
+      "Applies Dark Apostasy for 14s (every time you land a critical hit: removes 1 enchantment " +
+        "from your target, if one is removed, you lose 4 Energy or it ends)",
+    ]);
+    expect(texts("necromancer.jaundiced-gaze")).toEqual([
+      "Removes 1 enchantment",
+      "If it removes an enchantment: applies Jaundiced Gaze to you for 16s " +
+        "(your next enchantment costs 8 less Energy (minimum 0) and casts 1s faster)",
+    ]);
+  });
+});
+
 describe("Tactics stances that pay on a block (#1978)", () => {
   const texts = (id: string): string[] =>
     describeSkill(skill(id), new Map([["warrior.tactics", 12]])).effects.map(({ text }) => text);

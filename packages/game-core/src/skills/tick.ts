@@ -460,7 +460,8 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * multiplies with Dazed's. A status that hastens the caster's own skills
  * of a kind (#1761), as Holy Haste's Healing Prayers, multiplies in too,
  * and so does the skill's own `activationWhile` (#1916), as Natural
- * Healing's half while the caster is not enchanted.
+ * Healing's half while the caster is not enchanted. Last, the seconds a
+ * status takes off its own skills of a kind (#1975), never below 0.
  */
 export function effectiveActivationSeconds(
   skill: Skill,
@@ -469,20 +470,25 @@ export function effectiveActivationSeconds(
 ): number {
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   const modifiers = aggregateModifiers(caster.statuses.active);
+  const own = ownSkillBoost(caster.statuses.active, skill);
   const slowed =
     (skill.type === "attack" || skill.type === "pet-attack"
       ? 1
       : modifiers.skillActivationMultiplier) *
-    ownSkillBoost(caster.statuses.active, skill).activationMultiplier *
+    own.activationMultiplier *
     activationWhileMultiplier(skill, caster);
+  // Jaundiced Gaze's second (#1975), off after every multiplier.
+  const less = (seconds: number): number => Math.max(0, seconds - own.activationSecondsLess);
   if (!isSpell(skill.type)) {
-    return skill.activationSeconds * fastCasting * slowed;
+    return less(skill.activationSeconds * fastCasting * slowed);
   }
   const onTarget =
     skill.type === "hex" && target !== undefined
       ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
       : 1;
-  return skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * onTarget;
+  return less(
+    skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * onTarget,
+  );
 }
 
 /** `skill`'s own `activationWhile` multiplier for `caster` now (#1916); 1 without one. */

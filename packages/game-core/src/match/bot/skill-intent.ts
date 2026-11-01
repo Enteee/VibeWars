@@ -18,10 +18,10 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, raising the dead, and a way out (#1930).
+ * skill, raising the dead, a way out (#1930) and a setup (#1975).
  */
 export type BotUse =
-  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence";
+  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence" | "setup";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -39,6 +39,7 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (escapes(skill)) uses.push("escape");
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
+  if (setupOf(skill) !== undefined) uses.push("setup");
   // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
     skill.target !== "allied-minion" &&
@@ -215,6 +216,33 @@ export function takenOffFoe(skill: Skill): StatusCategory | undefined {
   }
   const strips = removal.category === "enchantment" && skillRoles(skill).length === 0;
   return copiesSkill(skill.id) || strips ? removal.category : undefined;
+}
+
+/**
+ * A setup (#1975): a status that is worth putting on only at a moment
+ * the bot can see, no role of its own. Air of Enchantment's cheaper
+ * enchantments on an ally, before one; Order of Apostasy's strip on the
+ * party's hits, while they hit enchanted foes; Dark Apostasy's strip on
+ * a critical hit, at an enchanted foe.
+ */
+export type Setup = "cheaper-enchantments" | "party-strips" | "critical-strips";
+
+/** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975). */
+export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | undefined {
+  const applied = skill.effects.find((effect) => effect.kind === "apply-status");
+  if (applied?.kind !== "apply-status") {
+    return undefined;
+  }
+  const status = getStatusDefinition(applied.statusId);
+  const setup: Setup | undefined =
+    status.enchantmentsOnBearerCostLess > 0
+      ? "cheaper-enchantments"
+      : status.onAttackHit?.sourceLosesPerRemoved !== undefined
+        ? "party-strips"
+        : status.onCriticalHit !== undefined
+          ? "critical-strips"
+          : undefined;
+  return setup === undefined ? undefined : { setup, statusId: applied.statusId };
 }
 
 /**

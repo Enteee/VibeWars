@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
+import { getSkill } from "./catalog.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
@@ -13,6 +14,7 @@ import {
   aggregateModifiers,
   clampPips,
   getStatusDefinition,
+  ownSkillBoost,
   type StatusId,
 } from "./status.js";
 import { statAtTwelve } from "./scaling.js";
@@ -118,6 +120,8 @@ describe("status definitions", () => {
         def.criticalChanceBonus !== 0 ||
         def.energyPerCritical !== 0 ||
         def.healthPerCritical !== 0 ||
+        def.onCriticalHit !== undefined ||
+        def.enchantmentsOnBearerCostLess !== 0 ||
         def.damageReduction !== 0 ||
         def.redirectsPhysicalDamage !== 0 ||
         def.damageFromSpiritAttacks !== 0 ||
@@ -235,6 +239,37 @@ describe("status definitions", () => {
     expect(statAtTwelve(getStatusDefinition("regeneration").healthPips)).toBeGreaterThan(0);
     expect(statAtTwelve(getStatusDefinition("armor-boost").armorModifier)).toBeGreaterThan(0);
     expect(statAtTwelve(getStatusDefinition("faintheartedness").healthPips)).toBeLessThan(0);
+  });
+
+  it("marks the enchantment party moves with what they do (#1975)", () => {
+    expect(getStatusDefinition("air-of-enchantment").enchantmentsOnBearerCostLess).toBe(10);
+    expect(getStatusDefinition("order-of-apostasy").onAttackHit).toMatchObject({
+      effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      sourceLosesPerRemoved: { profession: "monk", percentOfMax: 4 },
+    });
+    expect(getStatusDefinition("dark-apostasy").onCriticalHit).toEqual({
+      effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      energyIfRemoved: 4,
+      skillId: "assassin.dark-apostasy",
+    });
+    expect(getStatusDefinition("jaundiced-gaze").ownSkillModifiers).toMatchObject([
+      { energyDiscount: 8, energyFloor: 0, activationSecondsLess: 1, uses: 1 },
+    ]);
+    expect(getStatusDefinition("blind")).toMatchObject({
+      enchantmentsOnBearerCostLess: 0,
+      onCriticalHit: undefined,
+    });
+    expect(getStatusDefinition("order-of-pain").onAttackHit?.sourceLosesPerRemoved).toBeUndefined();
+  });
+
+  it("sums each status's seconds off its own skills (#1975)", () => {
+    const caster = makeCombatant({ id: "c" });
+    caster.statuses.apply("jaundiced-gaze", 16, "c", NO_RANKS);
+    const enchantment = getSkill("necromancer.order-of-pain");
+    expect(enchantment && ownSkillBoost(caster.statuses.active, enchantment)).toMatchObject({
+      energyDiscount: 8,
+      activationSecondsLess: 1,
+    });
   });
 });
 

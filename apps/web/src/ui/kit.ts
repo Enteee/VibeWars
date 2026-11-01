@@ -715,6 +715,28 @@ export interface ShareLine {
   isOpen(): boolean;
 }
 
+/** What `keepInside` reads and moves of a panel. */
+export interface InsidePanel {
+  readonly style: { translate: string; maxWidth: string };
+  getBoundingClientRect(): { readonly left: number; readonly right: number };
+}
+
+/**
+ * Shift a shown `panel` sideways until it is wholly inside the window,
+ * `margin` px from each edge (#2028), as `placeTip` does a tooltip. It
+ * keeps its anchor whenever that fits, and is never wider than the window.
+ */
+export function keepInside(panel: InsidePanel, margin = 8): void {
+  panel.style.translate = "";
+  panel.style.maxWidth = `${String(window.innerWidth - 2 * margin)}px`;
+  const box = panel.getBoundingClientRect();
+  const shift =
+    box.left < margin ? margin - box.left : Math.min(0, window.innerWidth - margin - box.right);
+  if (shift !== 0) {
+    panel.style.translate = `${String(shift)}px`;
+  }
+}
+
 /**
  * A code to share as one line, selected, with Copy (#572). Copy toasts
  * "Copied"; when the clipboard is refused the line stays selected, so it
@@ -750,7 +772,66 @@ export function shareLine(label: string): ShareLine {
     show(text) {
       line.value = text;
       element.hidden = false;
+      keepInside(element);
       selectLine();
+    },
+    hide() {
+      element.hidden = true;
+    },
+    isOpen: () => !element.hidden,
+  };
+}
+
+export interface LoadLine {
+  /** The field, Load and the problems, hidden until `show`. */
+  readonly element: HTMLElement;
+  show(): void;
+  hide(): void;
+  isOpen(): boolean;
+}
+
+/**
+ * A code to load, typed or pasted into one line, with Load (#2004), where
+ * a share line shows. Load or Enter hands the text to `onLoad`, which
+ * returns what is wrong with it: nothing closes the line, anything else
+ * stays under it, one problem a line, the text kept to fix.
+ */
+export function loadLine(
+  label: string,
+  placeholder: string,
+  onLoad: (text: string) => readonly string[],
+): LoadLine {
+  const element = h("div", "editor-load");
+  element.hidden = true;
+  const line = document.createElement("input");
+  line.className = "editor-share-line";
+  line.spellcheck = false;
+  line.placeholder = placeholder;
+  line.setAttribute("aria-label", label);
+  const problems = h("ul", "editor-load-problems");
+  problems.setAttribute("role", "alert");
+  const load = (): void => {
+    const found = onLoad(line.value);
+    problems.replaceChildren(...found.map((problem) => h("li", undefined, problem)));
+    if (found.length === 0) {
+      element.hidden = true;
+    }
+  };
+  line.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      load();
+    }
+  });
+  element.append(line, button("Load", "", load), problems);
+  return {
+    element,
+    show() {
+      line.value = "";
+      problems.replaceChildren();
+      element.hidden = false;
+      keepInside(element);
+      line.focus();
     },
     hide() {
       element.hidden = true;
@@ -783,9 +864,27 @@ export function moreMenu(
     menu.hidden = true;
     toggle.setAttribute("aria-expanded", "false");
   };
+  // A resized window moves what is open back inside it, until the screen
+  // that holds the ⋯ is gone.
+  const panels = [menu, ...below];
+  const refit = (): void => {
+    if (!element.isConnected) {
+      window.removeEventListener("resize", refit);
+      return;
+    }
+    for (const panel of panels) {
+      if (!panel.hidden) {
+        keepInside(panel);
+      }
+    }
+  };
   const toggle = button("⋯", "editor-more-toggle", () => {
     menu.hidden = !menu.hidden;
     toggle.setAttribute("aria-expanded", String(!menu.hidden));
+    if (!menu.hidden) {
+      keepInside(menu);
+      window.addEventListener("resize", refit);
+    }
   });
   toggle.setAttribute("aria-label", "more actions");
   toggle.setAttribute("aria-expanded", "false");

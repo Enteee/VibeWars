@@ -432,6 +432,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "shadow-form": icon("shadow-form"),
   "elemental-flame": icon("elemental-flame"),
   "mist-form": icon("mist-form"),
+  // Enchantment party moves (#1975).
+  "air-of-enchantment": icon("air-of-enchantment"),
+  "order-of-apostasy": icon("order-of-apostasy"),
+  "jaundiced-gaze": icon("jaundiced-gaze"),
+  "dark-apostasy": icon("dark-apostasy"),
   // Take what another has (#1965).
   "mirrored-stance": icon("mirrored-stance"),
   // Blocks that pay or pay off (#1974).

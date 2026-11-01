@@ -3357,4 +3357,76 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // 16...80 Health from that foe": 67, on the hex.
     effects: [{ kind: "apply-status", statusId: "soul-leech", durationSeconds: 10 }],
   },
+  // Enchantment party moves (#1975).
+  {
+    id: "necromancer.order-of-apostasy",
+    name: "Order of Apostasy",
+    gwId: 863,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, whenever a party member hits a foe with physical
+    // damage, that foe loses one enchantment. For each Monk enchantment
+    // removed, you lose 10...3% maximum Health": the strip and its price
+    // are the enchantment's.
+    effects: [{ kind: "apply-status", statusId: "order-of-apostasy", durationSeconds: 5 }],
+  },
+  {
+    id: "necromancer.jaundiced-gaze",
+    name: "Jaundiced Gaze",
+    gwId: 763,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove an enchantment from target foe. If an enchantment is removed,
+    // for the next 1...20 seconds, your next enchantment spell casts 0...1
+    // seconds faster and costs 1...10 less Energy": 16 s.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment" },
+        effects: [
+          {
+            kind: "apply-status",
+            on: "caster",
+            statusId: "jaundiced-gaze",
+            durationSeconds: 16,
+          },
+        ],
+      },
+    ],
+  },
 ];

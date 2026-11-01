@@ -1,7 +1,7 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition, StatusTrigger } from "../status.js";
 import type { DamageEffect } from "../types.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type NecromancerStatusId =
   // Hexes / enchantments implemented so far.
@@ -68,7 +68,10 @@ export type NecromancerStatusId =
   | "order-of-the-vampire"
   | "dark-fury"
   | "awaken-the-blood"
-  | "soul-leech";
+  | "soul-leech"
+  // Enchantment party moves (#1975).
+  | "order-of-apostasy"
+  | "jaundiced-gaze";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -635,6 +638,31 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         effects: [{ kind: "life-steal", amount: { flat: 67 } }],
         skillId: "necromancer.soul-leech",
       },
+    ],
+  }),
+  // "For 5 seconds, whenever a party member hits a foe with physical
+  // damage, that foe loses one enchantment. For each Monk enchantment
+  // removed, you lose 10...3% maximum Health" (#1975): 4% at rank 12, the
+  // Necromancer's, the status's source.
+  "order-of-apostasy": define("order-of-apostasy", "Order of Apostasy", "enchantment", {
+    profession: "necromancer",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      skillId: "necromancer.order-of-apostasy",
+      sourceLosesPerRemoved: { profession: "monk", percentOfMax: 4 },
+    },
+  }),
+  // "...your next enchantment spell casts 0...1 seconds faster and costs
+  // 1...10 less Energy" (#1975): 1 s and 8 at rank 12.
+  "jaundiced-gaze": define("jaundiced-gaze", "Jaundiced Gaze", "enchantment", {
+    profession: "necromancer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        { energyDiscount: 8, energyFloor: 0, activationSecondsLess: 1, uses: 1 },
+      ),
     ],
   }),
 };

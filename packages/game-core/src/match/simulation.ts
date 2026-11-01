@@ -191,6 +191,7 @@ import {
   bearerHit,
   blindMisses,
   blocks,
+  criticalHitRiders,
   landedCritical,
   landBlow,
   nextAttackSkillOf,
@@ -2670,7 +2671,7 @@ export class MatchSimulation {
     if (pet === undefined) {
       return;
     }
-    const { rule } = this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key, undefined);
     // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
     const faster = Math.max(
       aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster,
@@ -2721,7 +2722,7 @@ export class MatchSimulation {
     key: string,
     castTargetId: string | undefined,
   ): void {
-    const { rule } = this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key, castTargetId);
     this.#castBegun(record, skill, castTargetId);
     // An instant flies nowhere, so no time passes for it.
     this.resolveCast(
@@ -2742,17 +2743,24 @@ export class MatchSimulation {
   /**
    * A skill used, at once or as it begins: its cost, and what it uses up
    * of a glyph, the chants on its user, or a status counting its next
-   * skills of a kind (#1761). Returns what they give it.
+   * skills of a kind (#1761). Returns what they give it. `castTargetId`
+   * is whose statuses may cut an enchantment's cost (#1975).
    */
   #payForUse(
     record: ParticipantRecord,
     skill: Skill,
     key: string,
+    castTargetId: string | undefined,
   ): { rule: CastRule; castsInstantly: boolean } {
     // Read before anything is spent: Extend Enchantments lengthens the
     // enchantment that uses it up.
     const own = ownSkillBoost(record.combatant.statuses.active, skill);
-    payCost(skill, record.combatant, key);
+    payCost(
+      skill,
+      record.combatant,
+      key,
+      castTargetId === undefined ? undefined : this.#participants.get(castTargetId)?.combatant,
+    );
     const glyphs = this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     // Heket's Rampage (#1869) ends before the attack skill is timed.
@@ -2814,7 +2822,7 @@ export class MatchSimulation {
               : this.#participants.get(castTargetId)?.combatant,
           )
         : undefined;
-    const { rule, castsInstantly } = this.#payForUse(record, skill, key);
+    const { rule, castsInstantly } = this.#payForUse(record, skill, key, castTargetId);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -5758,6 +5766,14 @@ export class MatchSimulation {
     );
     if (critical && attacker !== undefined) {
       landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
+      criticalHitRiders(
+        attacker.combatant,
+        target.combatant,
+        this.#rng,
+        this.#ruleset.combat,
+        this.#participants,
+        fired,
+      );
     }
     if (attacker !== undefined) {
       events.push(

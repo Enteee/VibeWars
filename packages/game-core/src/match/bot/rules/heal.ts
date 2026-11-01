@@ -2,6 +2,7 @@ import type { Participant } from "../../simulation.js";
 import type { Skill } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import { botUses, wardedDamageType } from "../skill-intent.js";
+import { airFirst } from "./setup.js";
 import { HURT_FRACTION, healthFraction } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -9,7 +10,8 @@ import type { BotRule } from "./types.js";
 const heal: BotRule = {
   order: 20,
   name: "heal",
-  decide: ({ self, bar, allies, mayUse, use }) => {
+  decide: (rule) => {
+    const { self, bar, allies, mayUse, use } = rule;
     let hurt: Participant | undefined;
     for (const ally of allies) {
       if (hurt === undefined || healthFraction(ally) < healthFraction(hurt)) {
@@ -42,7 +44,9 @@ const heal: BotRule = {
           mayUse(held, held.target === "self" ? self.id : patient.id),
       );
       if (skill !== undefined) {
-        return use(skill, skill.target === "self" ? self.id : patient.id);
+        const castOn = skill.target === "self" ? self.id : patient.id;
+        // A dear enchantment goes on cheaper with Air of Enchantment first (#1975).
+        return use(airFirst(rule, skill, castOn) ?? skill, castOn);
       }
     }
     return undefined;

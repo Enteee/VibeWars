@@ -11,6 +11,7 @@ import {
   primaryAttributeOf,
 } from "@vibewars/game-core";
 
+import { exportBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
@@ -24,6 +25,7 @@ import {
   equipTarget,
   followTip,
   isUnsaved,
+  loadCode,
   newCharacter,
   nextRankCost,
   pipTarget,
@@ -38,6 +40,7 @@ import {
   trySetRank,
   weaponWarning,
 } from "./build-editor.js";
+import { TEAM_FORMAT } from "../storage/team-transfer.js";
 import { characterRanks } from "./character-ranks.js";
 import { setHeadgearAttribute, setWeapon } from "./gear-editor.js";
 
@@ -682,6 +685,49 @@ describe("weaponWarning (#417)", () => {
     expect(weaponWarning(skill("warrior.swift-chop"), ["sword", "daggers"])?.title).toBe(
       "Needs an axe — your weapon is a sword",
     );
+  });
+});
+
+describe("loadCode (#2004)", () => {
+  const problems = (text: string) => {
+    const loaded = loadCode(text, "c1", 1);
+    return loaded.ok ? [] : loaded.problems;
+  };
+
+  it("loads a GW1 template code, trimmed, as a character of the editor's", () => {
+    // Warrior/Monk, Swift Chop and Orison of Healing (gw1-template.test.ts).
+    const loaded = loadCode("  OUwQEROqaGBAAAAAAAAA\n", "c1", 1);
+    expect(loaded).toMatchObject({
+      ok: true,
+      character: { id: "c1", name: "Warrior/Monk build", primaryProfession: "warrior" },
+      missingSkills: [],
+    });
+  });
+
+  it("loads a VibeWars build line too", () => {
+    const line = exportBuild({ ...newCharacter("other"), name: "Sent" });
+    expect(loadCode(line, "c1", 1)).toMatchObject({
+      ok: true,
+      character: { id: "c1", name: "Sent" },
+    });
+  });
+
+  it("says why it loads nothing: empty, a team code, not a code", () => {
+    expect(problems("  ")).toEqual(["Paste a code first."]);
+    expect(problems(`{"format":"${TEAM_FORMAT}"}`)).toEqual([
+      "That is a team code. Load it on Team Builder.",
+    ]);
+    expect(problems("gg, well played")).toEqual(["That is not a GW1 template code."]);
+  });
+
+  it("lists an illegal build's problems, as a paste's toast does", () => {
+    const orphaned = exportBuild({
+      ...newCharacter("other"),
+      primaryProfession: "warrior",
+      secondaryProfession: undefined,
+      skillBar: ["monk.orison-of-healing", null, null, null, null, null, null, null],
+    });
+    expect(problems(orphaned).join()).toContain("Orison of Healing is a Monk skill");
   });
 });
 

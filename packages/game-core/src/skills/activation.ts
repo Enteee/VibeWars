@@ -342,7 +342,7 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
   }
 
   // A signet under Primal Echoes costs Energy too (#1886).
-  if (caster.energy < energyCostOf(skill, caster)) {
+  if (caster.energy < energyCostOf(skill, caster, request.target)) {
     return reject("insufficient-energy");
   }
   if (skill.cost?.kind === "adrenaline" && !canAffordAdrenaline(caster, skill, key)) {
@@ -428,9 +428,15 @@ export function isResurrectionSkill(skill: Skill): boolean {
  * next skill of its kind (#1505), never below 0. The base is a status's
  * when one names it (#1886). The one number the check, the spend and the
  * skill bar use, so they cannot disagree. 0 for a skill with no energy
- * cost.
+ * cost. Last, what the chosen `target` takes off an enchantment cast on
+ * it (#1975), Air of Enchantment's, never below 1; the skill bar names
+ * none, and an area or party enchantment has none.
  */
-export function energyCostOf(skill: Skill, caster: RankHolder): number {
+export function energyCostOf(
+  skill: Skill,
+  caster: RankHolder,
+  target?: Pick<Combatant, "statuses">,
+): number {
   const own = ownSkillBoost(caster.statuses.active, skill);
   const base = own.energyBase ?? (skill.cost?.kind === "energy" ? skill.cost.amount : undefined);
   if (base === undefined) {
@@ -456,7 +462,15 @@ export function energyCostOf(skill: Skill, caster: RankHolder): number {
         : 0;
     return sum + glyph + chant;
   }, 0);
-  return Math.max(0, cost - reduction);
+  const paid = Math.max(0, cost - reduction);
+  const less =
+    skill.type === "enchantment" && skill.area === undefined && target !== undefined
+      ? target.statuses.active.reduce(
+          (sum, { id }) => sum + getStatusDefinition(id).enchantmentsOnBearerCostLess,
+          0,
+        )
+      : 0;
+  return less === 0 || paid <= 1 ? paid : Math.max(1, paid - less);
 }
 
 /** `base` times every `energyCostMultiplier` the caster bears, rounded half up (#1745). */
@@ -473,10 +487,16 @@ function raisedBaseCost(base: number, caster: RankHolder): number {
  * returned ok — this deliberately does not re-check affordability, so a
  * caller that skips validation produces an obviously-wrong negative
  * resource rather than a silently-free cast. `key` is the pool an
- * adrenaline skill empties: a copy's own (#469).
+ * adrenaline skill empties: a copy's own (#469). `target`: the one chosen,
+ * whose statuses may cut an enchantment's cost (#1975).
  */
-export function payCost(skill: Skill, caster: Combatant, key: string = skill.id): void {
-  caster.energy -= energyCostOf(skill, caster);
+export function payCost(
+  skill: Skill,
+  caster: Combatant,
+  key: string = skill.id,
+  target?: Pick<Combatant, "statuses">,
+): void {
+  caster.energy -= energyCostOf(skill, caster, target);
   if (skill.cost?.kind === "adrenaline") {
     spendAdrenaline(caster, skill, key);
   }

@@ -41,7 +41,7 @@ export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: the house team plays";
-export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Play.";
+export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
 export const HOUSE_TEAM = "House team";
@@ -361,7 +361,7 @@ function humansOnSide(snapshot: LobbySnapshot): number {
 
 /**
  * One of your saved Team Builds, to propose by a click (#1862), and to
- * withdraw by a click on the one you proposed. It is Team Play's card
+ * withdraw by a click on the one you proposed. It is Team Builder's card
  * for the team, without Edit.
  */
 function ownCard(
@@ -379,7 +379,7 @@ function ownCard(
   }
   const card = teamFigureCard({
     title: team.name,
-    // No cape: a team's members wear none, as on Team Play.
+    // No cape: a team's members wear none, as on Team Builder.
     members: team.members.map(({ character }) => ({
       look: lookOfCharacter(character, undefined),
       label: `${character.name}, ${professionLabel(character.primaryProfession, character.secondaryProfession)}`,

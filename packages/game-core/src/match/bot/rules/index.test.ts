@@ -31,6 +31,7 @@ describe("BOT_RULES (#2042)", () => {
       "renew-spirit",
       "mantra",
       "bind-spirit",
+      "setup",
       "fight",
       "mimic-elite",
       "close-in",

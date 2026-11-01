@@ -101,9 +101,8 @@ play it from the next match.
 maps: **Team Arena** the Annihilation, Kill Count and Priest Annihilation
 maps, **Heroes' Ascent** the Relic Run, King of the Hill and Capture
 Points maps, and **GvG** the Guild Battle's. **Hosted Game** offers every
-map. Below the lobby are your **Team Builds**: click one, or its
-**Edit**, to change it, or make another with **New team build**. You
-pick none there. On **Hosted Game**, when the host starts, the lobby
+map. Your **Team Builds** are on **Team Builder** alone, and you pick
+none before the lobby. On **Hosted Game**, when the host starts, the lobby
 opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
 click a card, which shows each member's weapons and skills, to vote
 for one, then click a seat to take one of its characters.

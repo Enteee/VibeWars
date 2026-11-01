@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "../../skills/catalog.js";
-import { botUses, onlyInterrupts, removedCategories, takenOffFoe } from "./skill-intent.js";
+import {
+  botUses,
+  onlyInterrupts,
+  removedCategories,
+  setupOf,
+  takenOffFoe,
+} from "./skill-intent.js";
 
 /**
  * Skills a bot never uses (#1189). A new skill is either given a use by
@@ -354,6 +360,21 @@ describe("botUses (#1189)", () => {
     expect(takenOffFoe(skill("necromancer.pain-of-disenchantment"))).toBe("enchantment");
     // Anything else is cast at any foe.
     expect(takenOffFoe(skill("elementalist.fireball"))).toBeUndefined();
+  });
+
+  it("knows each setup and the status it puts on (#1975)", () => {
+    expect(setupOf(skill("monk.air-of-enchantment"))).toEqual({
+      setup: "cheaper-enchantments",
+      statusId: "air-of-enchantment",
+    });
+    expect(setupOf(skill("necromancer.order-of-apostasy"))?.setup).toBe("party-strips");
+    expect(setupOf(skill("assassin.dark-apostasy"))?.setup).toBe("critical-strips");
+    expect(botUses(skill("assassin.dark-apostasy"))).toEqual(["setup"]);
+    // Order of Pain's rider is no setup; Jaundiced Gaze is a strip at an
+    // enchanted foe.
+    expect(setupOf(skill("necromancer.order-of-pain"))).toBeUndefined();
+    expect(botUses(skill("necromancer.jaundiced-gaze"))).toEqual(["offence"]);
+    expect(takenOffFoe(skill("necromancer.jaundiced-gaze"))).toBe("enchantment");
   });
 
   it("holds a skill whose only role is interrupting", () => {
