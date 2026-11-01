@@ -155,3 +155,5 @@ build editor; its **Save** puts it back in the team, and the team's own
 **Save** keeps it all and takes you back to Team Builder. **Esc** leaves
 without saving, and asks first. The team's **Share**, **Duplicate** and
 **Delete** are under **⋯**.
+Your first start rolls one ready-made team, marked **Random**: its
+**Reroll** swaps in another, and **Clone** gives you a copy to edit.
