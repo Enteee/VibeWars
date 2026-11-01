@@ -1008,6 +1008,11 @@ export interface SummonEffect {
   readonly kind: "summon";
   readonly creature: CreatureTemplate;
   readonly count: number;
+  /**
+   * One more for each corpse the skill exploited (#1915), as Aura of the
+   * Lich's "plus one per corpse exploited". Absent: `count` alone.
+   */
+  readonly perExploitedCorpse?: true;
 }
 
 /**
@@ -1736,6 +1741,12 @@ export interface CorpseRule {
    * nearest the caster.
    */
   readonly near?: "target";
+  /**
+   * Every fresh corpse within `radius` of the caster, not the nearest
+   * (#1915): Aura of the Lich's "exploit all fresh corpses in earshot".
+   * It needs none: with none, the skill still goes off.
+   */
+  readonly all?: true;
   /**
    * A well's "or sacrifice 66% health" (#1730): with no fresh corpse in
    * reach as it resolves, the caster sacrifices this % of its max Health

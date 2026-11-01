@@ -130,6 +130,11 @@ const NO_BOT_USE = new Set([
   "necromancer.animate-vampiric-horror",
   "necromancer.animate-flesh-golem",
   "necromancer.animate-shambling-horror",
+  // Minions 3 (#1915): no minion rule yet either. Infuse Condition is a
+  // defence.
+  "necromancer.order-of-undeath",
+  "necromancer.aura-of-the-lich",
+  "necromancer.taste-of-death",
   "necromancer.gaze-of-contempt",
   "necromancer.rend-enchantments",
   // An enchantment strip whose payoff is Health loss, not damage (#1648).

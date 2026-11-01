@@ -171,7 +171,7 @@ describe("GW1 template codes (#494)", () => {
   });
 
   it("imports skills it does not have as empty slots, and says which", () => {
-    const missing = [3000, 567, 152];
+    const missing = [3000, 567, 105];
     const known = new Set(IMPLEMENTED_SKILLS.map((skill) => skill.gwId));
     expect(missing.filter((id) => known.has(id))).toEqual([]);
     const bits = (value: number, width: number): string =>
