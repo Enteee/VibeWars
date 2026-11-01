@@ -127,4 +127,6 @@ export const RANGER_ICONS = {
   "ranger.trappers-speed": { glyph: "trap-dust", modifier: "up" },
   // Attributes raised (#1941)
   "ranger.experts-dexterity": { glyph: "arrow-bars-up" },
+  // Blocks that pay off (#1974), a stand-in until its art card.
+  "ranger.glass-arrows": { glyph: "arrow-pierce", modifier: "bleed" },
 };
