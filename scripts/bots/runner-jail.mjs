@@ -191,6 +191,13 @@ export function runnerCommand({ jail, unit, bwrap, cpus, memoryGib, tasksMax, in
     "--",
     bwrap,
     ...runnerJailArgs(jail),
+    // The runner's hashFiles() starts externals/node20/bin/node whatever the
+    // env says (#2006), and nixpkgs ships node24 alone. A symlink written into
+    // the overlay fails: its copy-up must chown to root, unmapped in the jail.
+    // So a fresh tmpfs goes over externals/, with node24 bound back in.
+    ...["--tmpfs", `${runner}/lib/externals`],
+    ...["--ro-bind", `${runner}/lib/externals/node24`, `${runner}/lib/externals/node24`],
+    ...["--symlink", "node24", `${runner}/lib/externals/node20`],
     "--",
     init,
     `${runner}/bin/Runner.Listener`,
@@ -358,7 +365,7 @@ export async function runRunner({ store, jitconfigFile, lifeline, cpus, memoryGi
       stdio: ["inherit", "inherit", "inherit", "pipe"],
     });
     child.once("spawn", () => {
-      /** @type {import("node:stream").Writable} */ (child.stdio[3]).end(`${jitconfig}\n`);
+      sendJitconfig(/** @type {import("node:stream").Writable} */ (child.stdio[3]), jitconfig, log);
       if (!fromStdin) {
         fs.rmSync(jitconfigFile, { force: true });
       }
@@ -389,6 +396,28 @@ export async function runRunner({ store, jitconfigFile, lifeline, cpus, memoryGi
     proxy.close();
     removeScratch(scratch);
   }
+}
+
+/**
+ * Write the JIT config to the runner's fd 3. A runner already dead closes
+ * the pipe under it (#1988): that is said once and otherwise ignored, so
+ * the exit path reports the runner's own code rather than a crash.
+ *
+ * @param {import("node:stream").Writable} pipe
+ * @param {string} jitconfig
+ * @param {(line: string) => void} log
+ */
+export function sendJitconfig(pipe, jitconfig, log) {
+  let said = false;
+  pipe.on("error", (error) => {
+    if (said) {
+      return;
+    }
+    said = true;
+    const code = /** @type {NodeJS.ErrnoException} */ (error).code ?? error.message;
+    log(`launcher: jitconfig pipe: ${code}`);
+  });
+  pipe.end(`${jitconfig}\n`);
 }
 
 /**

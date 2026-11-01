@@ -9,6 +9,7 @@ import type { Skill } from "../skills/types.js";
 import { attackMissChanceOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Wells 2 (#1732): Well of the Profane, Silence, Darkness and Ruin, each
@@ -92,7 +93,7 @@ function match(): MatchSimulation {
     ],
   });
   const x = get(sim, "x");
-  x.combatant.statuses.apply("burning", 10, "n");
+  x.combatant.statuses.apply("burning", 10, "n", NO_RANKS);
   x.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(x.combatant.dead).toBe(true);
@@ -189,9 +190,9 @@ describe("Well of the Profane (#1732)", () => {
   it("strips every enchantment on a foe inside it, maintained ones included, their end triggers answering", () => {
     const sim = match();
     const f = get(sim, "f").combatant;
-    f.statuses.apply("shielding-hands", 8, "g");
-    f.statuses.apply("suffering", 10, "n");
-    f.statuses.maintain("holy-veil", "g", 0);
+    f.statuses.apply("shielding-hands", 8, "g", NO_RANKS);
+    f.statuses.apply("suffering", 10, "n", NO_RANKS);
+    f.statuses.maintain("holy-veil", "g", 0, NO_RANKS);
     f.health = 100;
     well(sim, 0);
     expect(f.statuses.has("well-of-the-profane")).toBe(true);
@@ -281,12 +282,12 @@ describe("Well of Darkness (#1732)", () => {
     const h = get(sim, "h").combatant;
     expect(f.statuses.has("well-of-darkness")).toBe(true);
     expect(attackMissChanceOf(f)).toBe(0);
-    f.statuses.apply("suffering", 10, "n");
-    h.statuses.apply("suffering", 10, "n");
+    f.statuses.apply("suffering", 10, "n", NO_RANKS);
+    h.statuses.apply("suffering", 10, "n", NO_RANKS);
     expect(attackMissChanceOf(f)).toBe(0.5);
     expect(attackMissChanceOf(h)).toBe(0);
     // It joins Blind as miss chances join: the worst counts.
-    f.statuses.apply("blind", 5, "n");
+    f.statuses.apply("blind", 5, "n", NO_RANKS);
     expect(attackMissChanceOf(f)).toBe(0.9);
   });
 });

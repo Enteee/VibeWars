@@ -1,6 +1,6 @@
-import { AREA_ADJACENT } from "../../distances.js";
+import { AREA_ADJACENT, AREA_EARSHOT } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
-import type { HealEffect } from "../types.js";
+import type { HealEffect, SkillEffect } from "../types.js";
 import { define, ownSkills } from "./define.js";
 
 export type MonkStatusId =
@@ -41,7 +41,28 @@ export type MonkStatusId =
   // Caster staples 2 (#1872).
   | "vital-blessing"
   // Skill-type and heal triggers (#1913).
-  | "scribes-insight";
+  | "scribes-insight"
+  // Blocks that pay (#1974).
+  | "shield-guardian";
+
+/**
+ * Shield Guardian's heal (#1974), to the ally that blocked and, by the
+ * splash, which skips its centre, to every ally in earshot of it.
+ */
+const SHIELD_GUARDIAN_HEAL: HealEffect = {
+  kind: "heal",
+  amount: { scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 30 } },
+};
+const SHIELD_GUARDIAN_HEALS: readonly SkillEffect[] = [
+  SHIELD_GUARDIAN_HEAL,
+  {
+    kind: "splash",
+    hits: "allies",
+    radius: AREA_EARSHOT,
+    maxTargets: undefined,
+    effects: [SHIELD_GUARDIAN_HEAL],
+  },
+];
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -103,11 +124,13 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     block: { chance: 0.5, against: "all" },
   }),
   // "For 3...10 seconds, target ally has a 75% chance to block attacks and
-  // gains 15...30 armor": +27, its rank-12 value (#1511).
+  // gains 15...30 armor" (#1511), at Protection Prayers (#1976).
   "shield-of-deflection": define("shield-of-deflection", "Shield of Deflection", "enchantment", {
     profession: "monk",
     block: { chance: 0.75, against: "all" },
-    armorModifier: 27,
+    armorModifier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 27 },
+    },
   }),
   // "For 8 seconds, damage and life steal received by target ally is
   // reduced by 3...18. When Shielding Hands ends, that ally is healed for
@@ -413,10 +436,12 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     preventsKnockdown: true,
   }),
   // "While you maintain this enchantment, target ally has +40...200 maximum
-  // Health" (#1872): 168 at rank 12.
+  // Health" (#1872), at Protection Prayers (#1976).
   "vital-blessing": define("vital-blessing", "Vital Blessing", "enchantment", {
     profession: "monk",
-    maxHealthBonus: 168,
+    maxHealthBonus: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 40, atTwelve: 168 },
+    },
   }),
   // "For 10...30...35 seconds, you gain 3 Energy whenever you use a signet"
   // (#1913).
@@ -429,6 +454,30 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [{ kind: "energy-gain", amount: { flat: 3 } }],
         target: "bearer",
         skillId: "monk.scribes-insight",
+      },
+    ],
+  }),
+  // Shield Guardian (PvP): "...all party members in earshot have a 75%
+  // chance to block attacks. If an attack is blocked, all allies in
+  // earshot are healed for 10...35 Health and Shield Guardian ends"
+  // (#1974): 30 at rank 12, by its caster's Protection Prayers. It ends
+  // only on the ally that blocked.
+  "shield-guardian": define("shield-guardian", "Shield Guardian", "enchantment", {
+    profession: "monk",
+    block: { chance: 0.75, against: "all" },
+    endsAfterTriggers: 1,
+    triggers: [
+      {
+        on: "bearer-blocks-melee",
+        target: "bearer",
+        effects: SHIELD_GUARDIAN_HEALS,
+        skillId: "monk.shield-guardian",
+      },
+      {
+        on: "bearer-blocks-projectile",
+        target: "bearer",
+        effects: SHIELD_GUARDIAN_HEALS,
+        skillId: "monk.shield-guardian",
       },
     ],
   }),

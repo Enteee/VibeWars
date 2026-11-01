@@ -8,7 +8,7 @@ import { CHAIN_MARK_SECONDS } from "../skills/chain.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeStatus } from "../skills/describe.js";
 import { applyEffect, type CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { resolveAttackSkill, resolveSwing, swingIntervalSeconds } from "../skills/weapon-attack.js";
@@ -48,7 +48,7 @@ function escaping(): Combatant {
     equipment: wielding(WEAPONS.daggers, "assassin.dagger-mastery"),
     attributeRanks: new Map([["assassin.dagger-mastery", 12]]),
   });
-  assassin.statuses.apply("dark-escape", 13, "a");
+  assassin.statuses.apply("dark-escape", 13, "a", NO_RANKS);
   return assassin;
 }
 
@@ -87,7 +87,7 @@ const ended = (statusId: StatusId, targetId = "a"): CombatEvent => ({
 });
 
 describe("Frenzy (#919)", () => {
-  it("attacks 33% faster for 8 s and takes double damage", () => {
+  it("attacks 33% faster for 8 s and takes 160% damage, its PvP Strength-12 value (#1958)", () => {
     const frenzy = skill("warrior.frenzy");
     expect(frenzy.type).toBe("stance");
     expect(frenzy.cost).toEqual({ kind: "energy", amount: 5 });
@@ -100,15 +100,15 @@ describe("Frenzy (#919)", () => {
       equipment: wielding(WEAPONS.axe, "warrior.axe-mastery"),
     });
     const plain = swingIntervalSeconds(warrior);
-    warrior.statuses.apply("frenzy", 8, "w");
+    warrior.statuses.apply("frenzy", 8, "w", new Map([["warrior.strength", 12]]));
     expect(swingIntervalSeconds(warrior)).toBeCloseTo(plain * 0.67, 10);
-    expect(aggregateModifiers(warrior.statuses.active).damageTakenMultiplier).toBe(2);
+    expect(aggregateModifiers(warrior.statuses.active).damageTakenMultiplier).toBe(1.6);
   });
 
   it("is replaced by Dark Escape, a stance like it: half damage, not double times half", () => {
     const both = makeCombatant({ id: "x" });
-    both.statuses.apply("frenzy", 8, "x");
-    both.statuses.apply("dark-escape", 13, "x");
+    both.statuses.apply("frenzy", 8, "x", NO_RANKS);
+    both.statuses.apply("dark-escape", 13, "x", NO_RANKS);
     expect(both.statuses.active.map(({ id }) => id)).toEqual(["dark-escape"]);
     expect(aggregateModifiers(both.statuses.active).damageTakenMultiplier).toBe(0.5);
   });
@@ -122,7 +122,7 @@ describe("Dark Escape (#919)", () => {
     expect(darkEscape.effects).toEqual([
       { kind: "apply-status", statusId: "dark-escape", durationSeconds: 13 },
     ]);
-    const modifiers = aggregateModifiers([{ id: "dark-escape" }]);
+    const modifiers = aggregateModifiers([{ id: "dark-escape", ranks: NO_RANKS }]);
     expect(modifiers.moveSpeedMultiplier).toBe(1.25);
     expect(modifiers.damageTakenMultiplier).toBe(0.5);
   });
@@ -137,7 +137,7 @@ describe("Dark Escape (#919)", () => {
 
   it("survives a blind miss", () => {
     const assassin = escaping();
-    assassin.statuses.apply("blind", 10, "foe");
+    assassin.statuses.apply("blind", 10, "foe", NO_RANKS);
     let missed = 0;
     for (let seed = 0; seed < 20 && missed === 0; seed += 1) {
       const events = swing(assassin, victim(), seed);
@@ -154,7 +154,7 @@ describe("Dark Escape (#919)", () => {
     for (let seed = 0; seed < 20 && blocked === 0; seed += 1) {
       const assassin = escaping();
       const target = victim();
-      target.statuses.apply("guardian", 10, "monk");
+      target.statuses.apply("guardian", 10, "monk", NO_RANKS);
       const events = swing(assassin, target, seed);
       if (events.some((event) => event.kind === "attack-blocked")) {
         blocked += 1;
@@ -212,7 +212,7 @@ describe("Dark Escape (#919)", () => {
       participants: [archer, target(vec2(600, 0))],
     });
     const shooter = match.get("a")?.combatant;
-    shooter?.statuses.apply("dark-escape", 13, "a");
+    shooter?.statuses.apply("dark-escape", 13, "a", NO_RANKS);
     match.requestAttack("a", "t");
     for (let i = 0; i < 5 * RULES.tickRateHz && match.projectiles.length === 0; i += 1) {
       match.step(DT);
@@ -232,7 +232,7 @@ describe("Natural Stride (#919)", () => {
   /** A ranger in Natural Stride, and what applying `effect` to it said. */
   function striding(): Combatant {
     const ranger = makeCombatant({ id: "r" });
-    ranger.statuses.apply("natural-stride", 7, "r");
+    ranger.statuses.apply("natural-stride", 7, "r", NO_RANKS);
     return ranger;
   }
 
@@ -256,9 +256,11 @@ describe("Natural Stride (#919)", () => {
     expect(naturalStride.effects).toEqual([
       { kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 },
     ]);
-    expect(aggregateModifiers([{ id: "natural-stride" }]).moveSpeedMultiplier).toBe(1.33);
+    expect(
+      aggregateModifiers([{ id: "natural-stride", ranks: NO_RANKS }]).moveSpeedMultiplier,
+    ).toBe(1.33);
     const ranger = makeCombatant({ id: "r", health: 1e6, maxHealth: 1e6 });
-    ranger.statuses.apply("natural-stride", 1e6, "r");
+    ranger.statuses.apply("natural-stride", 1e6, "r", NO_RANKS);
     const sword = makeCombatant({
       id: "w",
       equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
@@ -308,8 +310,8 @@ describe("Natural Stride (#919)", () => {
 
   it("survives a condition, and a refresh of a hex it already bore", () => {
     const ranger = makeCombatant({ id: "r" });
-    ranger.statuses.apply("faintheartedness", 10, "c");
-    ranger.statuses.apply("natural-stride", 7, "r");
+    ranger.statuses.apply("faintheartedness", 10, "c", NO_RANKS);
+    ranger.statuses.apply("natural-stride", 7, "r", NO_RANKS);
     expect(land(ranger, "bleeding")).not.toContainEqual(ended("natural-stride", "r"));
     land(ranger, "faintheartedness");
     expect(ranger.statuses.has("natural-stride")).toBe(true);
@@ -318,7 +320,9 @@ describe("Natural Stride (#919)", () => {
 
 describe("the three stances' tooltips (#919)", () => {
   it("say what each costs you", () => {
-    expect(describeStatus("frenzy")).toBe("attacks 33% faster, takes double damage");
+    expect(describeStatus("frenzy", new Map([["warrior.strength", 12]]))).toBe(
+      "attacks 33% faster, takes 160% damage",
+    );
     expect(describeStatus("dark-escape")).toBe(
       "moves at 125% speed, takes half damage, ends if the bearer hits with an attack",
     );

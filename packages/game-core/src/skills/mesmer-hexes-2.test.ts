@@ -10,7 +10,7 @@ import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { applyEffects, stateHolds } from "./effects.js";
 import { resolveMagnitudeAtRanks } from "./scaling.js";
-import { HEALTH_PER_PIP, type StatusId } from "./status.js";
+import { NO_RANKS, HEALTH_PER_PIP, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import { fireTriggers } from "./triggers.js";
@@ -217,7 +217,7 @@ describe("skillActivationMultiplier (#1473)", () => {
   function bearer(...statuses: StatusId[]): Combatant {
     const combatant = makeCombatant({ id: "x" });
     for (const id of statuses) {
-      combatant.statuses.apply(id, 10, "m");
+      combatant.statuses.apply(id, 10, "m", NO_RANKS);
     }
     return combatant;
   }
@@ -258,17 +258,17 @@ describe("target-using-skill and target-lacks-other-hex (#1473)", () => {
     const caster = makeCombatant({ id: "m" });
     const target = makeCombatant({ id: "x", team: 1 });
     const lacks = { kind: "target-lacks-other-hex", profession: "mesmer" } as const;
-    target.statuses.apply("visions-of-regret", 10, "m");
+    target.statuses.apply("visions-of-regret", 10, "m", NO_RANKS);
     expect(stateHolds(lacks, caster, target, surroundings)).toBe(false);
     expect(stateHolds(lacks, caster, target, surroundings, "visions-of-regret")).toBe(true);
-    target.statuses.apply("conjure-phantasm", 10, "m");
+    target.statuses.apply("conjure-phantasm", 10, "m", NO_RANKS);
     expect(stateHolds(lacks, caster, target, surroundings, "visions-of-regret")).toBe(false);
   });
 
   it("a hex of another profession is no Mesmer hex", () => {
     const caster = makeCombatant({ id: "m" });
     const target = makeCombatant({ id: "x", team: 1 });
-    target.statuses.apply("mind-freeze", 10, "m");
+    target.statuses.apply("mind-freeze", 10, "m", NO_RANKS);
     expect(
       stateHolds(
         { kind: "target-lacks-other-hex", profession: "mesmer" },
@@ -383,7 +383,7 @@ describe("bearer-interrupted and usedSkill.elite (#1473)", () => {
       energy: 30,
     });
     const source = makeCombatant({ id: "m", attributeRanks: RANKS });
-    bearer.statuses.apply("price-of-pride", 5, "m");
+    bearer.statuses.apply("price-of-pride", 5, "m", NO_RANKS);
     const context = (skillId: string) => ({
       sourceOf: (id: string) => (id === "m" ? source : id === "x" ? bearer : undefined),
       rng: createRng(1),
@@ -471,7 +471,7 @@ describe("Frustration (#1473)", () => {
     });
     use(sim, 0);
     const a = get(sim, "a");
-    a.statuses.apply("dazed", 10, "m");
+    a.statuses.apply("dazed", 10, "m", NO_RANKS);
     sim.setTarget("a", "m");
     expect(sim.requestSkill("a", FIREBALL)?.check).toEqual({ ok: true });
     expect(sim.requestAttack("w", "a")).toEqual({ ok: true });
@@ -575,7 +575,7 @@ describe("Unnatural Signet (#1473)", () => {
     expect(damageTo(log, "mesmer.unnatural-signet", "a")).toEqual([50]);
     expect(damageTo(log, "mesmer.unnatural-signet", "b")).toEqual([]);
     get(sim, "m").cast.endRecharge("mesmer.unnatural-signet");
-    get(sim, "a").statuses.apply("conjure-phantasm", 10, "m");
+    get(sim, "a").statuses.apply("conjure-phantasm", 10, "m", NO_RANKS);
     log = use(sim, 0);
     expect(damageTo(log, "mesmer.unnatural-signet", "b")).toEqual([50]);
   });

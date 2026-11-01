@@ -5,7 +5,14 @@ import path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { assertRan, countTests, planJobs, selectSpecs } from "./select-e2e-specs.mjs";
+import {
+  assertRan,
+  MAX_JOBS,
+  SECONDS_PER_JOB,
+  planJobs,
+  selectSpecs,
+  specSeconds,
+} from "./select-e2e-specs.mjs";
 
 describe("selectSpecs", () => {
   /** @type {string} */
@@ -130,9 +137,33 @@ describe("planJobs", () => {
   });
 });
 
-describe("countTests", () => {
-  it("counts test( calls and never returns zero", () => {
-    expect(countTests(`test("a", ...);\ntest.describe("g", () => { test("b", ...); });`)).toBe(2);
-    expect(countTests("nothing")).toBe(1);
+describe("specSeconds", () => {
+  const table = {
+    "e2e/a.spec.ts › x": 10,
+    "e2e/a.spec.ts › g › y": 5,
+    "e2e/b.spec.ts › z": 3,
+    "e2e/c.spec.ts › z": 100,
+  };
+
+  it("sums a spec's tests from the table", () => {
+    expect(specSeconds(["e2e/a.spec.ts"], table)).toEqual({ "e2e/a.spec.ts": 15 });
+  });
+
+  it("gives a spec the table lacks the median spec", () => {
+    expect(specSeconds(["e2e/new.spec.ts"], table)).toEqual({ "e2e/new.spec.ts": 15 });
+  });
+});
+
+describe("the plan under the real budget", () => {
+  it("never exceeds 6 jobs (builds.spec.ts fits) and refuses a spec over 750 s", () => {
+    const fits = { "builds.spec.ts": 720 };
+    expect(planJobs(fits, 10, SECONDS_PER_JOB, MAX_JOBS).length).toBeLessThanOrEqual(6);
+    expect(() => planJobs({ "big.spec.ts": 800 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
+      /split the PR/,
+    );
+  });
+
+  it("is empty for no specs", () => {
+    expect(planJobs({}, 10, SECONDS_PER_JOB, MAX_JOBS)).toEqual([]);
   });
 });

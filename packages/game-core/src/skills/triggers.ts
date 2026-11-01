@@ -454,6 +454,22 @@ function fire(
     } else if (effect.kind === "echo") {
       flush();
       echo(effect, bearer, trigger.skillId, usedSkill);
+    } else if (effect.kind === "mirror-stance") {
+      flush();
+      // The copy is the hex's caster's own: its source, and where a
+      // returning stance (Shadow of Haste) brings it back to. Its numbers
+      // are the foe's, at the foe's ranks.
+      events.push(
+        ...applyEffects(stancesOf(usedSkill), {
+          caster: source,
+          target: source,
+          ranksFrom: bearer,
+          rng,
+          rules,
+          surroundings,
+          usedSkill: undefined,
+        }),
+      );
     } else if (effect.kind === "cancel-attack") {
       flush();
       events.push(...cancelAttack(trigger, sourceId, bearer));
@@ -497,6 +513,25 @@ function cancelAttack(trigger: StatusTrigger, sourceId: string, bearer: Combatan
     events.push({ kind: "attack-interrupted", targetId: bearer.id });
   }
   return events;
+}
+
+/**
+ * What of `used` a Mirrored Stance copies (#1965): each `apply-status` of
+ * a stance, onto its target, whatever the skill put it on.
+ */
+function stancesOf(used: SlotSkill | undefined): SkillEffect[] {
+  const skill = used === undefined ? undefined : getSkill(used.skillId);
+  return (skill?.effects ?? []).flatMap((effect) =>
+    effect.kind === "apply-status" && getStatusDefinition(effect.statusId).category === "stance"
+      ? [
+          {
+            kind: "apply-status",
+            statusId: effect.statusId,
+            durationSeconds: effect.durationSeconds,
+          },
+        ]
+      : [],
+  );
 }
 
 /**

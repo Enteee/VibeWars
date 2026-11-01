@@ -9,7 +9,7 @@ import { getSkill } from "../skills/catalog.js";
 import { mitigate, rankedDamageReduction } from "../skills/damage.js";
 import { describeSkill, describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { getStatusDefinition } from "../skills/status.js";
+import { NO_RANKS, getStatusDefinition } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -253,7 +253,7 @@ describe("Shield Stance (#1592)", () => {
   it("cuts 2 a Strength rank off each packet, at most 15: Tactics gives none", () => {
     const cut = (ranks: [string, number][]): number => {
       const bearer = makeCombatant({ id: "w", attributeRanks: new Map(ranks) });
-      bearer.statuses.apply("shield-stance", 5, "w");
+      bearer.statuses.apply("shield-stance", 5, "w", NO_RANKS);
       return rankedDamageReduction(bearer);
     };
     expect(cut([["warrior.strength", 4]])).toBe(8);
@@ -277,7 +277,7 @@ describe("Shield Stance (#1592)", () => {
       armorPenetration: 0,
     } as const;
     expect(mitigate(packet, bearer, RULES.combat, null)).toBe(50);
-    bearer.statuses.apply("shield-stance", 5, "w");
+    bearer.statuses.apply("shield-stance", 5, "w", NO_RANKS);
     expect(mitigate(packet, bearer, RULES.combat, null)).toBe(35);
   });
 });
@@ -356,7 +356,7 @@ describe("Cleave (#1592)", () => {
 
   it("a blocked blow splashes no one", () => {
     const sim = match(FOES, warrior({ equipment: AXE }));
-    get(sim, "f").combatant.statuses.apply("shield-bash", 10, "f");
+    get(sim, "f").combatant.statuses.apply("shield-bash", 10, "f", NO_RANKS);
     gainStrikes(get(sim, "w").combatant, 4, 0);
     const events = used(sim, CLEAVE);
     expect(events.some((event) => event.kind === "attack-blocked")).toBe(true);
@@ -387,7 +387,7 @@ describe("Sun and Moon Slash (#1592)", () => {
       attack: { weapon: "sword", bonusDamage: undefined, strikes: 2, unblockable: true },
     });
     const sim = match();
-    get(sim, "f").combatant.statuses.apply("shield-bash", 10, "f");
+    get(sim, "f").combatant.statuses.apply("shield-bash", 10, "f", NO_RANKS);
     gainStrikes(get(sim, "w").combatant, 8, 0);
     const events = used(sim, SUN_AND_MOON_SLASH);
     expect(events.some((event) => event.kind === "attack-blocked")).toBe(false);

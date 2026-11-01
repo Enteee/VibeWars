@@ -230,6 +230,21 @@ export function rankedDamageReduction(target: Combatant): number {
 }
 
 /**
+ * The product of `target`'s statuses' `damageTypeTakenMultiplier` for
+ * damage of `type` (#1964): Mantra of Flame's 0.55 on fire, 1 on the rest.
+ */
+function damageTypeTakenMultiplier(target: Combatant, type: DamageType): number {
+  let multiplier = 1;
+  for (const { id } of target.statuses.active) {
+    const byType = getStatusDefinition(id).damageTypeTakenMultiplier;
+    if (byType?.type === type) {
+      multiplier *= byType.multiplier;
+    }
+  }
+  return multiplier;
+}
+
+/**
  * What `target`'s statuses take off each packet while it activates a
  * skill of their type (#1827): Armor of Unfeeling's 10 while casting a
  * binding ritual. Nothing once the activation is over.
@@ -276,9 +291,12 @@ export function mitigate(
   const armor = effectiveArmor(target, packet, location);
   let dealt = armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
-  // Frenzy's double and Dark Escape's half (#919): every packet, armored
+  // Frenzy's 160% and Dark Escape's half (#919): every packet, armored
   // or not, after armor and before the flat shield below.
   dealt *= modifiers.damageTakenMultiplier;
+  // The mantras of Earth, Flame, Frost and Lightning (#1964): one type's
+  // cut, of the type as taken.
+  dealt *= damageTypeTakenMultiplier(target, packet.type);
 
   // Call of Protection (#1108): a flat cut off every packet, after
   // armor and the multiplier, before Rune of Absorption. Union's spirit

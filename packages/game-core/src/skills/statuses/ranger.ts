@@ -51,6 +51,10 @@ export type RangerStatusId =
   | "energizing-wind"
   | "primal-echoes"
   | "roaring-winds"
+  // Nature rituals 4 (#1956).
+  | "quicksand"
+  | "famine"
+  | "lacerate"
   // Pets 2 (#1865).
   | "otyughs-cry"
   | "predatory-bond"
@@ -61,7 +65,14 @@ export type RangerStatusId =
   // Your next attack (#1916).
   | "poison-tip-signet"
   // Attributes raised (#1941).
-  | "experts-dexterity";
+  | "experts-dexterity"
+  // Touch and trap riders (#1966).
+  | "strike-as-one"
+  | "strike-as-one-pet"
+  | "trappers-focus"
+  | "trappers-speed"
+  // Blocks that pay off (#1974).
+  | "glass-arrows";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -368,6 +379,45 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     ],
   }),
 
+  // Nature rituals 4 (#1956), at rank 12 as rituals 1's. Quicksand: "lose
+  // 1 Energy each time they attack or use a skill": an attack skill is
+  // both, so it costs 2, as in GW1.
+  quicksand: define("quicksand", "Quicksand", "skill-effect", {
+    profession: "ranger",
+    triggers: (["bearer-uses-skill", "bearer-attacks"] as const).map((on) => ({
+      on,
+      effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+      target: "bearer",
+      skillId: "ranger.quicksand",
+    })),
+  }),
+  // Famine: "Whenever a non-spirit creature in its range reaches 0
+  // Energy, that creature takes 20...70 damage": 60, once per drop.
+  famine: define("famine", "Famine", "skill-effect", {
+    profession: "ranger",
+    triggers: [
+      {
+        on: "bearer-energy-drops-empty",
+        effects: [{ kind: "damage", amount: { flat: 60 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "ranger.famine",
+      },
+    ],
+  }),
+  // Lacerate: "Bleeding creatures within its range suffer -2 Health
+  // degeneration." Its death's Bleeding is the spirit's burst.
+  lacerate: define("lacerate", "Lacerate", "skill-effect", {
+    profession: "ranger",
+    whileUnder: {
+      categories: [],
+      statusIds: ["bleeding"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: -2,
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
+  }),
   // Nature rituals 2 (#1873), at rank 12 as rituals 1's.
   // Symbiosis: "For each enchantment on a non-spirit creature within
   // range, that creature has +27...150 maximum Health": +125.
@@ -492,5 +542,62 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     attackDurationMultiplier: 0.85,
     attributeDeltas: [{ scope: { attributeId: "ranger.marksmanship" }, amount: 1 }],
+  }),
+
+  // Touch and trap riders (#1966), at rank 12. Strike as One: "The next
+  // time you hit with an attack, target foe is Crippled for 5...15
+  // seconds": 13. GW1 gives it no time limit; 10 s is the house's.
+  "strike-as-one": define("strike-as-one", "Strike as One", "skill-effect", {
+    profession: "ranger",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      skillId: "ranger.strike-as-one",
+    },
+    endsAfterHits: { count: 1, weapon: undefined },
+  }),
+  // On the pet: "causes Bleeding for 5...15 seconds with its next attack":
+  // 13; a miss spends it.
+  "strike-as-one-pet": define("strike-as-one-pet", "Strike as One", "skill-effect", {
+    profession: "ranger",
+    endsAfterAttackCount: 1,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+      skillId: "ranger.strike-as-one",
+    },
+  }),
+  // "Your trap skills are not easily interruptible and your Wilderness
+  // Survival attribute is increased by 0...4": +3.
+  "trappers-focus": define("trappers-focus", "Trapper's Focus", "preparation", {
+    profession: "ranger",
+    ownSkillModifiers: [ownSkills({ type: "trap" }, { notEasilyInterrupted: true })],
+    attributeDeltas: [{ scope: { attributeId: "ranger.wilderness-survival" }, amount: 3 }],
+  }),
+  // "Your Traps recharge 25% faster and activate 25% faster. This stance
+  // ends if you successfully hit with an attack."
+  "trappers-speed": define("trappers-speed", "Trapper's Speed", "stance", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills({ type: "trap" }, { activationMultiplier: 0.75, rechargeFaster: 0.25 }),
+    ],
+    endsWhenBearerHits: true,
+  }),
+  // Glass Arrows (PvP): "For 10...35 seconds, your arrows strike for
+  // +6...18 damage if they hit and cause Bleeding for 10...20 seconds if
+  // they are Blocked" (#1974): +16 and 18 s at rank 12. A blind miss is no
+  // block, and a sword gets neither.
+  "glass-arrows": define("glass-arrows", "Glass Arrows", "preparation", {
+    profession: "ranger",
+    attackDamageDelta: 16,
+    attackDamageDeltaWeapon: "bow",
+    onAttackBlocked: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 18 }],
+      skillId: "ranger.glass-arrows",
+    },
   }),
 };

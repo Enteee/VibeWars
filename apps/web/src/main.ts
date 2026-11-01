@@ -9,7 +9,7 @@ import type {
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, mapMode } from "./net/maps.js";
+import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, mapMode, modeMapIds } from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -679,7 +679,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     teamEditor = undefined;
     showViewport(false);
-    music().screen("menu");
+    music().menu("main");
     idleScreen = true;
     // Back from a queue, a lost lobby or a Leave: a fresh one of its own (#1526).
     openOwnLobby();
@@ -752,6 +752,7 @@ async function main(): Promise<void> {
 
   const showRecord = async (): Promise<void> => {
     leaveScreen();
+    music().menu("record");
     const { records: played, problems } = await records.list();
     renderRecordScreen(screenRoot, played, problems, { onBack: showMenu });
   };
@@ -843,6 +844,7 @@ async function main(): Promise<void> {
   /** The build editor for `character`; every way out of it goes `back`. */
   const showCharacterEditor = (character: StoredCharacter, back: () => void = showMenu): void => {
     leaveScreen();
+    music().menu("character-builder");
     const editorCallbacks = {
       onSave: (saved: StoredCharacter) => characters.save(saved),
       onDelete: (id: string) => {
@@ -1089,7 +1091,9 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
-      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]),
+      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter((map) =>
+        modeMapIds()[entry].includes(map.id),
+      ),
       matchmakingFor(entry),
     );
   };
@@ -1190,6 +1194,7 @@ async function main(): Promise<void> {
     // What the way out takes back: the team as left, or with Save's member in it.
     let team = left.team;
     leaveScreen();
+    music().menu("member-editor");
     teamEditor?.dispose();
     teamEditor = undefined;
     editor?.dispose();
@@ -1228,6 +1233,7 @@ async function main(): Promise<void> {
 
   const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
     leaveScreen();
+    music().menu("team-builder");
     editor?.dispose();
     editor = undefined;
     teamEditor?.dispose();
@@ -1364,6 +1370,7 @@ async function main(): Promise<void> {
       from.party,
     );
     queue = { place, screen, mode, name };
+    music().menu("queue");
     return true;
   };
 
@@ -1566,6 +1573,7 @@ async function main(): Promise<void> {
       finished: false,
     };
     teamQueue = started;
+    music().menu("queue");
     if (snapshot.players.filter((p) => !p.bot && p.team === 0).length < 2) {
       if (snapshot.isHost) {
         queueTeam(started, mode, undefined);
@@ -1764,7 +1772,7 @@ async function main(): Promise<void> {
         leaveScreen();
         setStatus("", "online");
         showViewport(false);
-        music().screen("lobby");
+        music().menu("team-lobby");
       }
       followsLobby = true;
       teamLobbyShown = true;
@@ -2055,7 +2063,7 @@ async function main(): Promise<void> {
     leaveScreen();
     setStatus("", "offline");
     showViewport(false);
-    music().screen("menu");
+    music().menu("main");
     endedOutcome = outcome;
     endedSummary = summary;
     idleScreen = true;

@@ -125,6 +125,7 @@ import {
   isStatusId,
   isUnderAnother,
   MAX_PIPS,
+  NO_RANKS,
   ownSkillBoost,
   preventsAttacks,
   reducedRecharge,
@@ -137,7 +138,7 @@ import {
   type StatusId,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
-import { resolveMagnitude, resolveMagnitudeAtRanks } from "../skills/scaling.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks, statAt } from "../skills/scaling.js";
 import { nearestSpiritWithin, resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
@@ -149,6 +150,7 @@ import {
   preCapEnergyPips,
   raisedMaxHealth,
   rankOf,
+  statusRanks,
   upkeepPips,
   withRankLoan,
   type NetPips,
@@ -179,6 +181,7 @@ import {
   type SpellHit,
 } from "../skills/projectile.js";
 import {
+  attackBlockedRiders,
   attackDurationSeconds,
   attackHitRiders,
   attackReached,
@@ -354,10 +357,17 @@ export const CREATURE_LOOKS = [
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
-/** A spirit's death burst as it arrived: its rate on its owner's rank (#1603). */
-export type ArrivedDeathBurst = Omit<DeathBurst, "perSecondAlive"> & {
-  readonly perSecondAlive: number;
-};
+/**
+ * A spirit's death burst as it arrived: its rate (#1603), or the time of
+ * the status it gives (#1956), on its owner's rank.
+ */
+export type ArrivedDeathBurst =
+  | (Omit<Extract<DeathBurst, { effect: "damage" | "heal" }>, "perSecondAlive"> & {
+      readonly perSecondAlive: number;
+    })
+  | (Omit<Extract<DeathBurst, { effect: "apply-status" }>, "durationSeconds"> & {
+      readonly durationSeconds: number;
+    });
 
 /** A spirit's answer to a death in its range as it arrived: its damage on its owner's rank (#1886). */
 export type ArrivedDeathInRange =
@@ -375,8 +385,9 @@ export interface Creature {
   /**
    * Whoever summoned it, and whom it answers to: it leaves with them.
    * `undefined`: a map's NPC, as a priest (#1186), which answers to nobody.
+   * A spirit someone takes control of (#1965) answers to them from then on.
    */
-  readonly ownerId: string | undefined;
+  ownerId: string | undefined;
   readonly kind: CreatureKind;
   /** From the template (#1162): how it is drawn. */
   readonly look: CreatureLook;
@@ -774,6 +785,11 @@ interface ParticipantRecord extends Participant {
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
   armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
+  /**
+   * Whether its Energy was at least 1 at the last step's check (#1956):
+   * what makes a drop to 0 Famine's, and a body that stays there not.
+   */
+  hadEnergy: boolean;
 }
 
 /**
@@ -805,15 +821,16 @@ function degenerationSources(combatant: Combatant): {
   const healing = new Set<string>();
   for (const status of combatant.statuses.active) {
     const definition = STATUS_DEFINITIONS[status.id];
+    const pips = statAt(definition.healthPips, status.ranks);
     if (
-      definition.healthPips < 0 ||
+      pips < 0 ||
       (definition.whileUnder !== undefined &&
         definition.whileUnder.healthPips < 0 &&
         isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       draining.add(status.sourceId);
     } else if (
-      definition.healthPips > 0 ||
+      pips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
       definition.healthPerSecondWhileMoving > 0 ||
       definition.healthPerSecond > 0 ||
@@ -1304,6 +1321,7 @@ export class MatchSimulation {
       pendingWeaponSet: undefined,
       corpseExploited: false,
       armedAttack: undefined,
+      hadEnergy: false,
       interact: undefined,
     };
     this.#participants.set(spec.id, record);
@@ -1468,13 +1486,21 @@ export class MatchSimulation {
           deathBurst:
             template.deathBurst === undefined
               ? undefined
-              : {
-                  ...template.deathBurst,
-                  perSecondAlive: resolveMagnitudeAtRanks(
-                    template.deathBurst.perSecondAlive,
-                    ranks,
-                  ),
-                },
+              : template.deathBurst.effect === "apply-status"
+                ? {
+                    ...template.deathBurst,
+                    durationSeconds: resolveMagnitudeAtRanks(
+                      template.deathBurst.durationSeconds,
+                      ranks,
+                    ),
+                  }
+                : {
+                    ...template.deathBurst,
+                    perSecondAlive: resolveMagnitudeAtRanks(
+                      template.deathBurst.perSecondAlive,
+                      ranks,
+                    ),
+                  },
           onDeathInRange:
             template.onDeathInRange?.kind === "damage-same-type"
               ? {
@@ -1538,6 +1564,27 @@ export class MatchSimulation {
       events,
     });
     this.#recordDeaths(events);
+  }
+
+  /**
+   * `owner` takes control of the spirit `spiritId` (#1965): Signet of
+   * Binding's. It answers to `owner` and is on its team from now on, and
+   * leaves with it; it keeps its Health, its time left and the ranks it
+   * arrived with. The aura pass reads its team each step.
+   */
+  #takeControl(owner: ParticipantRecord, spiritId: string): void {
+    const spirit = this.#participants.get(spiritId);
+    if (
+      spirit?.creature?.kind !== "spirit" ||
+      spirit.combatant.dead ||
+      this.#leaving.has(spiritId)
+    ) {
+      return;
+    }
+    spirit.creature.ownerId = owner.id;
+    spirit.combatant.team = owner.combatant.team;
+    // An attack spirit's swing was at its new side.
+    spirit.combatant.attack = undefined;
   }
 
   /**
@@ -1818,11 +1865,22 @@ export class MatchSimulation {
   /**
    * Every living bearer with no energy left answers it (#1583), in
    * participant order, after upkeep has taken its share: Wither's damage.
+   * One whose whole Energy fell from at least 1 at the last check to 0
+   * answers its drop (#1956), Famine's: Energy regenerates continuously,
+   * so a 1-Energy skill paid at 1.03 leaves 0.03, which GW1 shows as 0.
    */
   #fireEnergyEmpty(): void {
     for (const record of this.#participants.values()) {
-      if (!record.combatant.dead && record.combatant.energy <= 0) {
+      const hadEnergy = record.hadEnergy;
+      record.hadEnergy = record.combatant.energy >= 1;
+      if (record.combatant.dead) {
+        continue;
+      }
+      if (record.combatant.energy <= 0) {
         this.#fireTriggers(record, "bearer-energy-empty", NONE_SPARED);
+      }
+      if (hadEnergy && !record.hadEnergy) {
+        this.#fireTriggers(record, "bearer-energy-drops-empty", NONE_SPARED);
       }
     }
   }
@@ -1890,26 +1948,34 @@ export class MatchSimulation {
       readonly team: number;
       readonly position: Vec2;
       readonly aura: Aura;
+      /** Its owner's, as the status lands (#1976): a spirit's summoner, a ward's caster. */
+      readonly ranks: ReadonlyMap<string, number>;
     }[] = [];
     for (const record of this.#participants.values()) {
       const aura = record.creature?.aura;
       if (aura !== undefined && !record.combatant.dead) {
+        const ownerId = record.creature?.ownerId;
+        const owner = ownerId === undefined ? undefined : this.#participants.get(ownerId);
         sources.push({
           sourceId: record.id,
           team: record.combatant.team,
           position: record.position,
           aura,
+          ranks: statusRanks(aura.statusId, (owner ?? record).combatant),
         });
       }
     }
     // A ward's status names its owner: whoever cast it. A trap projects nothing.
     for (const effect of this.#groundEffects) {
       if (effect.act.kind === "aura") {
+        const owner = this.#participants.get(effect.ownerId);
         sources.push({
           sourceId: effect.ownerId,
           team: effect.team,
           position: effect.position,
           aura: effect.act.aura,
+          ranks:
+            owner === undefined ? NO_RANKS : statusRanks(effect.act.aura.statusId, owner.combatant),
         });
       }
     }
@@ -1921,14 +1987,14 @@ export class MatchSimulation {
       if (body.combatant.dead || body.creature?.kind === "spirit") {
         continue;
       }
-      const wears = new Map<StatusId, string>();
-      for (const { sourceId, team, position, aura } of sources) {
+      const wears = new Map<StatusId, { sourceId: string; ranks: ReadonlyMap<string, number> }>();
+      for (const { sourceId, team, position, aura, ranks } of sources) {
         if (
           !wears.has(aura.statusId) &&
           reaches(aura.affects, team, body.combatant.team) &&
           distance(position, body.position) <= aura.radius
         ) {
-          wears.set(aura.statusId, sourceId);
+          wears.set(aura.statusId, { sourceId, ranks });
         }
       }
       const { statuses } = body.combatant;
@@ -1937,8 +2003,8 @@ export class MatchSimulation {
           statuses.remove(status.id);
         }
       }
-      for (const [statusId, sourceId] of wears) {
-        statuses.project(statusId, sourceId);
+      for (const [statusId, { sourceId, ranks }] of wears) {
+        statuses.project(statusId, sourceId, ranks);
       }
     }
   }
@@ -1956,7 +2022,8 @@ export class MatchSimulation {
    * of its `affects` within its radius takes, or is healed, its rate
    * times the whole seconds it lived, capped, from its owner, logged as
    * its skill. A creature a burst kills leaves too, and bursts nothing:
-   * only a spirit has one, and a burst passes spirits by.
+   * only a spirit has one, and a burst passes spirits by. A status burst
+   * (#1956) gives its status instead, to each one under its Health line.
    */
   #burstLeaving(): void {
     for (const id of [...this.#leaving]) {
@@ -1973,25 +2040,33 @@ export class MatchSimulation {
       ) {
         continue;
       }
-      const amount = Math.min(
-        burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
-        burst.max ?? Number.POSITIVE_INFINITY,
-      );
+      const amount =
+        burst.effect === "apply-status"
+          ? burst.durationSeconds
+          : Math.min(
+              burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
+              burst.max ?? Number.POSITIVE_INFINITY,
+            );
       if (amount <= 0) {
         continue;
       }
       const effect: SkillEffect =
-        burst.effect === "damage"
-          ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
-          : { kind: "heal", amount: { flat: amount } };
+        burst.effect === "apply-status"
+          ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: amount }
+          : burst.effect === "damage"
+            ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
+            : { kind: "heal", amount: { flat: amount } };
       const events: CombatEvent[] = [];
       for (const other of this.#participants.values()) {
         const ally = other.combatant.team === spirit.combatant.team;
         if (
           other.combatant.dead ||
           other.creature?.kind === "spirit" ||
-          ally !== (burst.affects === "allies") ||
-          distance(other.position, spirit.position) > burst.radius
+          (burst.affects !== "all" && ally !== (burst.affects === "allies")) ||
+          distance(other.position, spirit.position) > burst.radius ||
+          (burst.effect === "apply-status" &&
+            other.combatant.health >=
+              burst.belowHealthFraction * effectiveMaxHealth(other.combatant))
         ) {
           continue;
         }
@@ -3346,6 +3421,7 @@ export class MatchSimulation {
           scaledStatusDuration(other.combatant, status.id, remainingSeconds),
           status.sourceId,
           outbreak,
+          status.ranks,
         );
         // Already carrying it, from another outbreak: nothing new to say.
         if (had) {
@@ -3543,6 +3619,7 @@ export class MatchSimulation {
           application.statusId,
           scaledStatusDuration(target, application.statusId, application.durationSeconds),
           record.id,
+          statusRanks(application.statusId, record.combatant),
         );
         if (loss !== undefined && loss > 0) {
           this.#log.push({
@@ -3614,7 +3691,10 @@ export class MatchSimulation {
         : used;
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
-    if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
+    if (
+      this.#failsSpell(record, skill, targetRecord, cast.key) ||
+      this.#failsTouch(record, skill, targetRecord, cast.key)
+    ) {
       return;
     }
     // Signet of Illusions' (#1929): a finished spell spends a use and
@@ -3639,6 +3719,7 @@ export class MatchSimulation {
       rechargeLongerSeconds: 0,
       summons: [],
       grounds: [],
+      taken: [],
       skipped: undefined,
     });
     // What the caster's statuses add to its hits, each logged apart (#939).
@@ -3690,7 +3771,7 @@ export class MatchSimulation {
     // What it summons is made at the ranks it went off at (#1915), before
     // any status it gives itself, and with what it is lent and holds (#1929, #1941).
     const ranks = withRankLoan(record.combatant, loan, skill, () => ranksOf(record.combatant));
-    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
+    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, taken, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
         : withRankLoan(record.combatant, loan, skill, () =>
@@ -3807,6 +3888,9 @@ export class MatchSimulation {
         }
       }
     });
+    for (const spiritId of taken) {
+      this.#takeControl(record, spiritId);
+    }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -4010,6 +4094,41 @@ export class MatchSimulation {
       );
     }
     this.#logFired([{ sourceId: failer.sourceId, skillId: fails.skillId, events }]);
+    return true;
+  }
+
+  /**
+   * Whether `target`'s status fails `record`'s touch skill on it (#1966):
+   * "Can't Touch This!" on a foe. It is paid for and recharges, as a
+   * failed spell, and spends one of the status's charges. An ally's
+   * touch lands.
+   */
+  #failsTouch(
+    record: ParticipantRecord,
+    skill: Skill,
+    target: ParticipantRecord | undefined,
+    key: string,
+  ): boolean {
+    if (
+      skill.touch !== true ||
+      target === undefined ||
+      target.combatant.team === record.combatant.team
+    ) {
+      return false;
+    }
+    const failer = target.combatant.statuses.touchFailer();
+    if (failer === undefined) {
+      return false;
+    }
+    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    target.combatant.statuses.spendTouchFail(failer.id);
+    this.#logFired([
+      {
+        sourceId: target.id,
+        skillId: failer.sourceSkillId ?? skill.id,
+        events: [{ kind: "spell-failed", targetId: record.id, skillId: skill.id }],
+      },
+    ]);
     return true;
   }
 
@@ -5246,7 +5365,7 @@ export class MatchSimulation {
     const skillHit: SkillHit = {
       kind: "attack",
       skill: resolution.skill,
-      blow: skillBlow(resolution.skill, record.combatant),
+      blow: skillBlow(resolution.skill, record.combatant, this.#participants),
       next: nextAttackSkillOf(record.combatant),
       own: resolution.own,
       strikes: 1,
@@ -5598,6 +5717,19 @@ export class MatchSimulation {
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
+      if (attacker !== undefined) {
+        attackBlockedRiders(
+          attacker.combatant,
+          target.combatant,
+          projectile.weaponSnapshot.mainHand,
+          skillHit !== undefined,
+          this.#rng,
+          this.#ruleset.combat,
+          this.#participants,
+          fired,
+          projectile.spent,
+        );
+      }
       events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
       return false;
     }
@@ -6260,6 +6392,18 @@ export class MatchSimulation {
         if (record !== undefined && other !== undefined && !other.combatant.dead) {
           this.#dropAshes(record);
           this.#swap(record, other);
+        }
+        continue;
+      }
+      if (event.kind === "companion-stepped") {
+        const pet = this.#participants.get(event.targetId);
+        const foe = this.#participants.get(event.toId);
+        if (pet !== undefined && foe !== undefined && !foe.combatant.dead) {
+          this.#stepBeside(pet, foe);
+          // As an armed pet attack's (#1865): a pet at heel only moves.
+          if (pet.creature?.mode !== "heel" && pet.behaviour?.kind === "follow-and-attack") {
+            this.requestAttack(pet.id, foe.id);
+          }
         }
         continue;
       }

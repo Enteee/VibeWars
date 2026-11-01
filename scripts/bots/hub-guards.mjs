@@ -61,11 +61,20 @@ export function commitRuns(runs, target) {
  * legitimate retry is unaffected.
  *
  * @param {Record<string, unknown>[]} runs `workflow_runs` rows, as GitHub sends them
- * @param {{ sha: string, repo: string, file: string }} target
+ * A target marked `optional` is a workflow that starts only when a path filter
+ * matches (e2e-repeat.yml, #1884): with no run at all there was nothing to
+ * judge, so none is satisfied. Any run that exists is judged as before. The
+ * caller reads it only after ci.yml has finished on the commit, long after
+ * GitHub would have created a triggered run.
+ *
+ * @param {{ sha: string, repo: string, file: string, optional?: boolean }} target
  * @returns {{ ok: true, ids: number[] } | { ok: false, reason: string }}
  */
 export function judgingRuns(runs, target) {
   const mine = commitRuns(runs, target);
+  if (mine.length === 0 && target.optional === true) {
+    return { ok: true, ids: [] };
+  }
   if (mine.length === 0) {
     return { ok: false, reason: `${target.file} has not run on this commit yet` };
   }

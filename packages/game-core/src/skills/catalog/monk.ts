@@ -280,6 +280,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 4,
     rechargeSeconds: 8,
     // "Touch the body of a fallen party member": at hand, as Blood Ritual.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-dead-ally",
     area: undefined,
@@ -746,6 +747,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 6,
     // "Touched ally": at hand, as Blood Ritual's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-ally",
     area: undefined,
@@ -1833,6 +1835,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 8,
     // "Touched target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2197,6 +2200,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 8,
     // "Touched target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2627,6 +2631,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 5,
     // "Touched ally": at hand, as Mending Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-ally",
     area: undefined,
@@ -2949,5 +2954,151 @@ export const MONK_SKILLS: readonly Skill[] = [
     // Maintained, as Mending is: +168 maximum Health while it lasts, for −1
     // energy pip on its caster.
     effects: [{ kind: "maintain-status", on: "target", statusId: "vital-blessing" }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Party-wide condition and hex moves (#1954)                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.martyr",
+    name: "Martyr",
+    gwId: 298,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Transfer all conditions and their remaining durations from your
+    // allies to you": the party is the team, at any distance. The caster is
+    // one of it, and keeps its own.
+    effects: [
+      { kind: "transfer-conditions", from: "target", count: Infinity, durationMultiplier: 1 },
+    ],
+  },
+  {
+    id: "monk.empathic-removal",
+    name: "Empathic Removal",
+    gwId: 1126,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You and target other ally lose 1 condition and 1 hex, and are
+    // healed for 50": both are healed, whatever was removed.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      { kind: "remove-status", category: "hex", count: 1 },
+      { kind: "heal", amount: { flat: 50 } },
+      { kind: "remove-status", category: "condition", count: 1, from: "caster" },
+      { kind: "remove-status", category: "hex", count: 1, from: "caster" },
+      { kind: "heal", amount: { flat: 50 }, recipient: "caster" },
+    ],
+  },
+  {
+    id: "monk.divert-hexes",
+    name: "Divert Hexes",
+    gwId: 1692,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove up to 1...3 hexes from target ally. For each hex removed in
+    // this way, that ally loses one condition and gains 15...75 Health."
+    effects: [
+      {
+        kind: "remove-status",
+        category: "hex",
+        count: { scaling: { attributeId: "monk.protection-prayers", atZero: 1, atTwelve: 2.6 } },
+      },
+      {
+        kind: "remove-status",
+        category: "condition",
+        count: 1,
+        perRemoved: { category: "hex", max: { flat: 3 } },
+      },
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 63 } },
+        perRemoved: "hex",
+      },
+    ],
+  },
+  {
+    id: "monk.shield-guardian",
+    name: "Shield Guardian",
+    gwId: 885,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The PvP split (3454): "For 1...4 seconds, all party members in
+    // earshot have a 75% chance to block attacks" (#1974): 3 s, its
+    // rank-12 value. The heal on a block is the status's.
+    effects: [{ kind: "apply-status", statusId: "shield-guardian", durationSeconds: 3 }],
   },
 ];

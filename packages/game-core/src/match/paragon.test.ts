@@ -15,7 +15,7 @@ import { getSkill } from "../skills/catalog.js";
 import { effectiveArmor, mitigate, skillDamage } from "../skills/damage.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { chargeAdrenaline, makeCombatant } from "../skills/testing.js";
 import { advanceStatuses } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
@@ -237,7 +237,7 @@ describe('"Fall Back!" (#921)', () => {
         participants: [spec("a", 0, vec2(0, 0))],
       });
       if (fallBack) {
-        get(match, "a").combatant.statuses.apply("fall-back", 9, "p");
+        get(match, "a").combatant.statuses.apply("fall-back", 9, "p", NO_RANKS);
       }
       match.setInputDirection("a", vec2(1, 0));
       stepFor(match, 1);
@@ -252,7 +252,7 @@ describe('"Fall Back!" (#921)', () => {
         seed: "fall-back",
         participants: [spec("a", 0, vec2(0, 0), { maxHealth: 500, startHealthFraction: 0.5 })],
       });
-      get(match, "a").combatant.statuses.apply("fall-back", 9, "p");
+      get(match, "a").combatant.statuses.apply("fall-back", 9, "p", NO_RANKS);
       match.setInputDirection("a", walking ? vec2(1, 0) : vec2(0, 0));
       // The first tick only starts it moving.
       match.step(DT);
@@ -266,22 +266,22 @@ describe('"Fall Back!" (#921)', () => {
 
   it("is a heal: Deep Wound cuts it, and it stops at full health", () => {
     const bearer = makeCombatant({ id: "a", health: 100, maxHealth: 500, moving: true });
-    bearer.statuses.apply("fall-back", 9, "p");
-    bearer.statuses.apply("deep-wound", 9, "foe");
+    bearer.statuses.apply("fall-back", 9, "p", NO_RANKS);
+    bearer.statuses.apply("deep-wound", 9, "foe", NO_RANKS);
     const reduced = 13 * aggregateModifiers(bearer.statuses.active).healingMultiplier;
     expect(reduced).toBeLessThan(13);
     advanceStatuses(bearer, 1, 0);
     expect(bearer.health).toBeCloseTo(100 + reduced);
 
     const full = makeCombatant({ id: "b", health: 495, maxHealth: 500, moving: true });
-    full.statuses.apply("fall-back", 9, "p");
+    full.statuses.apply("fall-back", 9, "p", NO_RANKS);
     expect(advanceStatuses(full, 1, 0)).toEqual([{ kind: "heal", targetId: "b", amount: 5 }]);
     expect(full.health).toBe(500);
   });
 
   it("ends on its bearer's hit, not on a miss or a block", () => {
     const hitter = axeman();
-    hitter.statuses.apply("fall-back", 9, "p");
+    hitter.statuses.apply("fall-back", 9, "p", NO_RANKS);
     expect(swing(hitter, victim())).toContainEqual({
       kind: "status-expired",
       targetId: "a",
@@ -293,10 +293,10 @@ describe('"Fall Back!" (#921)', () => {
     let seenBlock = false;
     for (let seed = 0; seed < 30; seed += 1) {
       const attacker = axeman();
-      attacker.statuses.apply("blind", 10, "foe");
-      attacker.statuses.apply("fall-back", 9, "p");
+      attacker.statuses.apply("blind", 10, "foe", NO_RANKS);
+      attacker.statuses.apply("fall-back", 9, "p", NO_RANKS);
       const target = victim();
-      target.statuses.apply("guardian", 10, "ally");
+      target.statuses.apply("guardian", 10, "ally", NO_RANKS);
       const events = swing(attacker, target, seed);
       const hit = events.some((event) => event.kind === "damage");
       seenMiss ||= events.some((event) => event.kind === "attack-missed");
@@ -330,7 +330,7 @@ describe('"Stand Your Ground!" (#921)', () => {
 
   it("+24 armor while still: a still bearer takes less than a moving one", () => {
     const bearer = makeCombatant({ id: "a" });
-    bearer.statuses.apply("stand-your-ground", 17, "p");
+    bearer.statuses.apply("stand-your-ground", 17, "p", NO_RANKS);
     const blow = skillDamage(100, "piercing", 0);
     const still = effectiveArmor(bearer, blow, "chest");
     const stillDamage = mitigate(blow, bearer, RULES.combat, "chest");
@@ -345,7 +345,7 @@ describe('"Stand Your Ground!" (#921)', () => {
       participants: [spec("a", 0, vec2(0, 0))],
     });
     const bearer = get(match, "a").combatant;
-    bearer.statuses.apply("stand-your-ground", 17, "p");
+    bearer.statuses.apply("stand-your-ground", 17, "p", NO_RANKS);
     const blow = skillDamage(100, "piercing", 0);
     const armored = (): number => effectiveArmor(bearer, blow, "chest");
     match.step(DT);
@@ -360,8 +360,8 @@ describe('"Stand Your Ground!" (#921)', () => {
 
   it("ends when its bearer attacks, hit or miss", () => {
     const attacker = axeman();
-    attacker.statuses.apply("stand-your-ground", 17, "p");
-    attacker.statuses.apply("blind", 10, "foe");
+    attacker.statuses.apply("stand-your-ground", 17, "p", NO_RANKS);
+    attacker.statuses.apply("blind", 10, "foe", NO_RANKS);
     swing(attacker, victim());
     expect(attacker.statuses.has("stand-your-ground")).toBe(false);
   });
@@ -398,7 +398,7 @@ describe("Cruel Spear (#921)", () => {
       id: "p",
       attributeRanks: new Map([["paragon.spear-mastery", 12]]),
     });
-    expect(skillBlow(spear, caster).bonus).toBe(42);
+    expect(skillBlow(spear, caster, new Map()).bonus).toBe(42);
   });
 
   it("deep wounds a still target for 17 s", () => {
@@ -525,7 +525,7 @@ describe("Leader's Comfort (#923)", () => {
     const heals = comfort([bystander("dead", 0, vec2(50, 0))], (match) => {
       // Burning at 0.2 Health kills on the first tick, as a death does.
       dead = get(match, "dead").combatant;
-      dead.statuses.apply("burning", 10, "foe");
+      dead.statuses.apply("burning", 10, "foe", NO_RANKS);
       dead.health = 0.2;
     });
     expect(dead?.dead).toBe(true);
@@ -534,7 +534,7 @@ describe("Leader's Comfort (#923)", () => {
 
   it("caps before a Deep Wound's −20% healing", () => {
     const heals = comfort(allies(5), (match) => {
-      get(match, "p").combatant.statuses.apply("deep-wound", 20, "foe");
+      get(match, "p").combatant.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     });
     expect(heals).toEqual([140 * 0.8]);
   });
@@ -567,7 +567,7 @@ describe('"Incoming!" (#956)', () => {
         participants: [spec("a", 0, vec2(0, 0), { maxHealth: 500, startHealthFraction: 0.5 })],
       });
       if (incoming) {
-        get(match, "a").combatant.statuses.apply("incoming", 9, "p");
+        get(match, "a").combatant.statuses.apply("incoming", 9, "p", NO_RANKS);
       }
       match.setInputDirection("a", walking ? vec2(1, 0) : vec2(0, 0));
       // The first tick only starts it moving.
@@ -584,7 +584,7 @@ describe('"Incoming!" (#956)', () => {
 
   it("does not end on its bearer's hit, as Fall Back! does", () => {
     const hitter = axeman();
-    hitter.statuses.apply("incoming", 9, "p");
+    hitter.statuses.apply("incoming", 9, "p", NO_RANKS);
     expect(swing(hitter, victim()).some((event) => event.kind === "damage")).toBe(true);
     expect(hitter.statuses.has("incoming")).toBe(true);
   });
@@ -609,7 +609,7 @@ describe('"Make Haste!" (#956)', () => {
 
   it("ends on its bearer's landed swing, not on a miss or a block", () => {
     const hitter = axeman();
-    hitter.statuses.apply("make-haste", 17, "p");
+    hitter.statuses.apply("make-haste", 17, "p", NO_RANKS);
     expect(swing(hitter, victim())).toContainEqual({
       kind: "status-expired",
       targetId: "a",
@@ -620,10 +620,10 @@ describe('"Make Haste!" (#956)', () => {
     let seenBlock = false;
     for (let seed = 0; seed < 30; seed += 1) {
       const attacker = axeman();
-      attacker.statuses.apply("blind", 10, "foe");
-      attacker.statuses.apply("make-haste", 17, "p");
+      attacker.statuses.apply("blind", 10, "foe", NO_RANKS);
+      attacker.statuses.apply("make-haste", 17, "p", NO_RANKS);
       const target = victim();
-      target.statuses.apply("guardian", 10, "ally");
+      target.statuses.apply("guardian", 10, "ally", NO_RANKS);
       const events = swing(attacker, target, seed);
       const hit = events.some((event) => event.kind === "damage");
       seenMiss ||= events.some((event) => event.kind === "attack-missed");
@@ -649,7 +649,7 @@ describe("Defensive Anthem (#956)", () => {
         spec("foe", 1, vec2(300, 0)),
       ],
     });
-    get(match, "p").combatant.statuses.apply("defensive-anthem", 9, "p");
+    get(match, "p").combatant.statuses.apply("defensive-anthem", 9, "p", NO_RANKS);
     return match;
   }
 
@@ -679,7 +679,7 @@ describe("Defensive Anthem (#956)", () => {
     let blocked = 0;
     for (let seed = 0; seed < 200; seed += 1) {
       const target = victim();
-      target.statuses.apply("defensive-anthem", 9, "p");
+      target.statuses.apply("defensive-anthem", 9, "p", NO_RANKS);
       if (swing(axeman(), target, seed).some((event) => event.kind === "attack-blocked")) {
         blocked += 1;
       }
@@ -690,7 +690,7 @@ describe("Defensive Anthem (#956)", () => {
 
   it("survives its bearer's landed swing", () => {
     const hitter = axeman();
-    hitter.statuses.apply("defensive-anthem", 9, "p");
+    hitter.statuses.apply("defensive-anthem", 9, "p", NO_RANKS);
     expect(swing(hitter, victim()).some((event) => event.kind === "damage")).toBe(true);
     expect(hitter.statuses.has("defensive-anthem")).toBe(true);
   });
@@ -701,9 +701,9 @@ describe("Defensive Anthem (#956)", () => {
     for (let seed = 0; seed < 30; seed += 1) {
       const attacker = axeman();
       attacker.energy = 20;
-      attacker.statuses.apply("defensive-anthem", 9, "p");
+      attacker.statuses.apply("defensive-anthem", 9, "p", NO_RANKS);
       const target = victim();
-      target.statuses.apply("guardian", 10, "ally");
+      target.statuses.apply("guardian", 10, "ally", NO_RANKS);
       const events = resolveAttackSkill(
         {
           skill: skill(SWIFT_CHOP),
@@ -857,7 +857,7 @@ describe("Song of Restoration (#999)", () => {
 
   it("is a heal, so a Deep Wound cuts it by 20%", () => {
     const match = sung(12, (m) => {
-      get(m, "near").combatant.statuses.apply("deep-wound", 20, "foe");
+      get(m, "near").combatant.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     });
     expect(uses(match, "near", 0)).toBeCloseTo(97 * 0.8);
   });
@@ -985,7 +985,7 @@ describe("spear attacks (#1030)", () => {
   it("Barbed Spear bleeds nobody when it is blocked", () => {
     for (let seed = 0; seed < 20; seed += 1) {
       const match = arena(`block-${String(seed)}`);
-      foe(match).statuses.apply("guardian", 1000, "foe");
+      foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
       const landed = thrown(match, 0);
       if (!kinds(landed).includes("attack-blocked")) {
         continue;
@@ -1036,7 +1036,7 @@ describe("spear attacks (#1030)", () => {
     expect(foe(clean).statuses.has("dazed")).toBe(false);
 
     const hexed = arena();
-    foe(hexed).statuses.apply("faintheartedness", 1000, "p");
+    foe(hexed).statuses.apply("faintheartedness", 1000, "p", NO_RANKS);
     thrown(hexed, 3);
     expect(foe(hexed).statuses.has("dazed")).toBe(false);
 

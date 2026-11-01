@@ -6,6 +6,7 @@ import {
   RANGE_SPIRIT,
 } from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
+import { mimickedElite } from "../../skills/stand-in.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
 import { swingProgress } from "../../skills/weapon-attack.js";
@@ -19,14 +20,22 @@ import type {
 import type { Participant } from "../simulation.js";
 import {
   botUses,
-  copiedOffFoe,
+  guardsInterrupt,
+  mirrorsStance,
+  takenOffFoe,
   interruptAimed,
+  mainDamageType,
   onlyInterrupts,
+  ownStatuses,
   removedCategories,
   removesFromCaster,
   renewsSpirit,
   riderOf,
   sacrificesTooMuch,
+  ownTrapBoost,
+  sendsPet,
+  wardsTouch,
+  wardedDamageType,
 } from "./skill-intent.js";
 
 /**
@@ -63,6 +72,9 @@ const HURT_FRACTION = 0.6;
 /** Below this share of its lifetime left, a spirit of a bot's own is worth renewing (#1947). */
 const RENEW_FRACTION = 0.25;
 
+/** At this Health or less, a bot takes no foe's spirit (#1965): Signet of Binding costs up to 200. */
+const BIND_HEALTH_FLOOR = 200;
+
 /** Below this share of its own health, a bot with a foe at hand steps away (#1930). */
 const ESCAPE_FRACTION = 0.5;
 
@@ -81,11 +93,20 @@ const ESCAPE_THREAT_UNITS = AREA_IN_THE_AREA;
 /** How much longer than the interrupt itself a cast or a swing must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
 
+/** A cast this long or longer is worth a guard against interrupts (#1964). */
+const GUARDED_CAST_SECONDS = 2;
+
 /**
  * A guard walking back acts again within this of its post (#1222), or
  * its leash if shorter: not at the leash's edge, so it does not flicker.
  */
 const GUARD_HOME_UNITS = 30;
+
+/** A foe this close with a touch skill on its bar is one to ward off (#1966). */
+const TOUCH_THREAT_UNITS = 300;
+
+/** A pet at least this far from the foe is worth sending to it (#1966): Strike as One. */
+const PET_SEND_UNITS = 300;
 
 export function playBuild(
   behaviour: PlayBuild,
@@ -209,10 +230,7 @@ function think(
 ): BehaviourIntent {
   const self = context.self;
   const team = self.combatant.team;
-  const bar = self.skillBar.flatMap((id) => {
-    const skill = id === null ? undefined : getSkill(id);
-    return skill === undefined ? [] : [skill];
-  });
+  const bar = skillsOf(self);
   const nearestFirst = (bodies: readonly Participant[]): Participant[] =>
     [...bodies].sort(
       (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
@@ -284,6 +302,7 @@ function think(
       const skill = bar.find(
         (held) =>
           botUses(held).includes(role) &&
+          wardedDamageType(held) === undefined &&
           reaches(held) &&
           mayUse(held, held.target === "self" ? self.id : patient.id),
       );
@@ -317,6 +336,28 @@ function think(
       if (haven !== undefined) {
         return use(skill, haven.id);
       }
+    }
+  }
+
+  // 2c. A foe at hand with a touch skill (#1966): ward it off first, as
+  // "Can't Touch This!", unless it already is.
+  const touching = foes.some(
+    (foe) =>
+      distance(foe.position, self.position) <= TOUCH_THREAT_UNITS &&
+      foe.skillBar.some((id) => id !== null && getSkill(id)?.touch === true),
+  );
+  if (touching) {
+    const ward = bar.find(
+      (held) =>
+        wardsTouch(held) &&
+        !held.effects.some(
+          (effect) =>
+            effect.kind === "apply-status" && self.combatant.statuses.has(effect.statusId),
+        ) &&
+        mayUse(held, self.id),
+    );
+    if (ward !== undefined) {
+      return use(ward, self.id);
     }
   }
 
@@ -385,7 +426,56 @@ function think(
     }
   }
 
-  // 4c. A Paragon's rider (#1955), once what it waits for is there:
+  // 4c. A mantra before it is needed (#1964), never one already up: a
+  // guard against interrupts with a long cast on its bar and a foe in
+  // reach that holds an interrupt, or one damage type's cut with a foe in
+  // reach that deals mostly that type.
+  const mantras = bar.filter(
+    (held) => guardsInterrupt(held) || wardedDamageType(held) !== undefined,
+  );
+  if (mantras.length > 0) {
+    const inReach = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+    const longCast = bar.some((held) => held.activationSeconds >= GUARDED_CAST_SECONDS);
+    for (const skill of mantras) {
+      if (
+        ownStatuses(skill).some((id) => self.combatant.statuses.has(id)) ||
+        !mayUse(skill, self.id)
+      ) {
+        continue;
+      }
+      const type = wardedDamageType(skill);
+      const wanted =
+        type === undefined
+          ? longCast &&
+            inReach.some((foe) => skillsOf(foe).some((held) => botUses(held).includes("interrupt")))
+          : inReach.some((foe) => mainDamageType(skillsOf(foe)) === type);
+      if (wanted) {
+        return use(skill, self.id);
+      }
+    }
+  }
+
+  // 4d. Take a foe's spirit in reach (#1965), as Signet of Binding, with
+  // Health to spare for its price.
+  const binds = bar.filter((skill) => skill.target === "enemy-spirit");
+  if (binds.length > 0 && self.combatant.health > BIND_HEALTH_FLOOR) {
+    const theirs = context.participants.filter(
+      ({ combatant, creature, position }) =>
+        creature?.kind === "spirit" &&
+        creature.ownerId !== undefined &&
+        combatant.team !== team &&
+        !combatant.dead &&
+        distance(position, self.position) <= RANGE_SPELL,
+    );
+    for (const spirit of nearestFirst(theirs)) {
+      const skill = binds.find((held) => mayUse(held, spirit.id));
+      if (skill !== undefined) {
+        return use(skill, spirit.id);
+      }
+    }
+  }
+
+  // 4e. A Paragon's rider (#1955), once what it waits for is there:
   // an ally in earshot near death, enchanted allies, a party on the move,
   // an ally with a foe at its elbow.
   const inEarshot = allies.filter((ally) => distance(ally.position, self.position) <= AREA_EARSHOT);
@@ -430,25 +520,75 @@ function think(
   }
 
   if (targetId !== undefined) {
-    // 5. Offence, in bar order. A copier only at a foe with what it
-    // takes (#1928): Inspired Enchantment at an enchanted one.
+    // 5. Offence, in bar order. A copier or a stripper only at a foe with
+    // what it takes (#1928, #1954): Inspired Enchantment and Mirror of
+    // Disenchantment at an enchanted one. Mirrored Stance only at a foe
+    // with a stance to use (#1965).
     const foe = context.participants.find((other) => other.id === targetId)?.combatant;
     const copies = (held: Skill): boolean => {
-      const category = copiedOffFoe(held);
+      const category = takenOffFoe(held);
       return category === undefined || (foe?.statuses.countByCategory(category) ?? 0) > 0;
     };
+    // Strike as One (#1966) only with a living pet far enough from the foe
+    // to be worth the leap.
+    const pet = context.participants.find(
+      ({ combatant, creature }) =>
+        creature?.ownerId === self.id && creature.companionSkillId !== undefined && !combatant.dead,
+    );
+    const target = context.participants.find((other) => other.id === targetId);
+    const petFar =
+      pet !== undefined &&
+      target !== undefined &&
+      distance(pet.position, target.position) >= PET_SEND_UNITS;
+    const hasStance =
+      foe?.skillBar.some((id) => id !== null && getSkill(id)?.type === "stance") ?? false;
     const skill = bar.find(
       (held) =>
         botUses(held).includes("offence") &&
         !onlyInterrupts(held) &&
         copies(held) &&
+        (!sendsPet(held) || petFar) &&
+        (hasStance || !mirrorsStance(held)) &&
         mayUse(held, targetId),
     );
+    // A trap goes down under Trapper's Focus or Speed when the bar has one
+    // not yet up (#1966).
+    if (skill?.type === "trap") {
+      const boost = bar.find((held) => {
+        const statusId = ownTrapBoost(held);
+        return (
+          statusId !== undefined && !self.combatant.statuses.has(statusId) && mayUse(held, self.id)
+        );
+      });
+      if (boost !== undefined) {
+        return use(boost, self.id);
+      }
+    }
     if (skill !== undefined) {
       return use(skill, targetId);
     }
     // 6. The weapon.
     return { ...NOTHING, targetId, attackTargetId: targetId };
+  }
+
+  // 6b. No foe in reach: borrow an ally's elite (#1965), as Arcane
+  // Mimicry, one that is no attack and not on its own bar already.
+  const mimics = bar.filter((skill) =>
+    skill.effects.some((effect) => effect.kind === "copy-elite"),
+  );
+  for (const ally of mimics.length === 0 ? [] : nearestFirst(allies)) {
+    const elite = ally.id === self.id ? undefined : mimickedElite(ally.combatant.skillBar);
+    if (
+      elite === undefined ||
+      getSkill(elite)?.type === "attack" ||
+      self.skillBar.includes(elite)
+    ) {
+      continue;
+    }
+    const skill = mimics.find((held) => mayUse(held, ally.id));
+    if (skill !== undefined) {
+      return use(skill, ally.id);
+    }
   }
 
   // 7. Nothing to fight in reach: walk to the nearest foe, whatever the
@@ -527,6 +667,14 @@ function nearestLiving(self: Participant, foes: readonly Participant[]): Partici
     }
   }
   return best;
+}
+
+/** The skills on `participant`'s bar, its empty slots left out. */
+function skillsOf(participant: Participant): Skill[] {
+  return participant.skillBar.flatMap((id) => {
+    const skill = id === null ? undefined : getSkill(id);
+    return skill === undefined ? [] : [skill];
+  });
 }
 
 function healthFraction(participant: Participant): number {

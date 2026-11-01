@@ -74,6 +74,15 @@ describe("corpusSkills (#1220)", () => {
     }
   });
 
+  it("has the catalog put every skill on the corpus's attribute (#1958)", () => {
+    for (const skill of IMPLEMENTED_SKILLS) {
+      const listed = skill.gwId === undefined ? undefined : byId.get(skill.gwId);
+      if (listed !== undefined) {
+        expect(skill.attributeId, skill.id).toBe(listed.attributeId);
+      }
+    }
+  });
+
   it("gives every entry an attribute of ours, or none", () => {
     const ours = new Set(
       Object.values(PROFESSIONS).flatMap((profession) => profession.attributes.map((a) => a.id)),

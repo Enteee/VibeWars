@@ -11,6 +11,7 @@ import type { StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { fireTriggers } from "./triggers.js";
 import type { Combatant, DamageEffect, PerCount, Surroundings } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
@@ -29,7 +30,7 @@ function caster(overrides: Partial<Combatant> = {}): Combatant {
 function foe(id: string, statuses: readonly StatusId[] = []): Combatant {
   const combatant = makeCombatant({ id, team: 1, health: 1000, maxHealth: 1000 });
   for (const status of statuses) {
-    combatant.statuses.apply(status, 30, id);
+    combatant.statuses.apply(status, 30, id, NO_RANKS);
   }
   return combatant;
 }
@@ -120,7 +121,7 @@ describe("a count's amount (#1760)", () => {
 
   it("counts the caster's statuses with on: caster", () => {
     const user = caster();
-    user.statuses.apply("guardian", 30, user.id);
+    user.statuses.apply("guardian", 30, user.id, NO_RANKS);
     expect(
       hit(applyEffect(damage(enchantmentsOn("caster")), context(foe("f", ENCHANTMENTS), user))),
     ).toEqual([15]);
@@ -316,7 +317,7 @@ describe("Arcane Zeal (#1760)", () => {
       { kind: "energy-gain", targetId: "caster", amount: 2 },
     ]);
     for (const status of ["guardian", "regeneration", "mystic-vigor"] as const) {
-      dervish.statuses.apply(status, 30, dervish.id);
+      dervish.statuses.apply(status, 30, dervish.id, NO_RANKS);
     }
     expect(castsSpell(dervish, new Map())).toEqual([
       { kind: "energy-gain", targetId: "caster", amount: 6 },
@@ -345,8 +346,8 @@ describe("Mystic Vigor (#1760)", () => {
         new Set(),
       ).flatMap(({ events }) => events);
     expect(hits()).toEqual([{ kind: "heal", targetId: "caster", amount: 13 }]);
-    dervish.statuses.apply("guardian", 30, dervish.id);
-    dervish.statuses.apply("regeneration", 30, dervish.id);
+    dervish.statuses.apply("guardian", 30, dervish.id, NO_RANKS);
+    dervish.statuses.apply("regeneration", 30, dervish.id, NO_RANKS);
     expect(hits()).toEqual([{ kind: "heal", targetId: "caster", amount: 25 }]);
     expect(describeStatus("mystic-vigor")).toMatch(
       /heals 13 Health for each enchantment on you \(maximum 25\)/,

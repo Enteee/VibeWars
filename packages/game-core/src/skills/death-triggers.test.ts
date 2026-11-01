@@ -14,6 +14,7 @@ import type { StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers } from "./triggers.js";
 import type { Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * "If the bearer dies while it has this" (#1762): Reaper's Mark,
@@ -92,7 +93,7 @@ function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
 /** `id` dies within a step, to a burn of `by`'s; the log a few steps on. */
 function kill(match: MatchSimulation, id: string, by = "n"): CombatLogEntry[] {
   const victim = get(match, id);
-  victim.combatant.statuses.apply("burning", 10, by);
+  victim.combatant.statuses.apply("burning", 10, by, NO_RANKS);
   victim.combatant.health = 0.2;
   const log = stepFor(match, 4 * DT);
   expect(victim.combatant.dead).toBe(true);
@@ -101,7 +102,7 @@ function kill(match: MatchSimulation, id: string, by = "n"): CombatLogEntry[] {
 
 /** Status `statusId` from `n` on `id`, for `seconds`. */
 function put(match: MatchSimulation, id: string, statusId: StatusId, seconds = 30): void {
-  get(match, id).combatant.statuses.apply(statusId, seconds, "n");
+  get(match, id).combatant.statuses.apply(statusId, seconds, "n", NO_RANKS);
   stepFor(match, DT);
 }
 
@@ -142,7 +143,7 @@ describe("bearer-dies (#1762)", () => {
 
   it("is no `ends-early` stand-in: a death still sets off `ends-early` too", () => {
     const bearer = makeCombatant({ id: "d", team: 0 });
-    bearer.statuses.apply("bleeding", 10, "x");
+    bearer.statuses.apply("bleeding", 10, "x", NO_RANKS);
     bearer.statuses.drainChanges();
     const fired = fireChangeTriggers(
       bearer,
@@ -427,7 +428,7 @@ describe("Dwayna's Sorrow (#1762)", () => {
     put(sim, "b", "dwaynas-sorrow");
     get(sim, "n").combatant.health = 100;
     for (const id of ["a", "b"]) {
-      get(sim, id).combatant.statuses.apply("burning", 10, "f");
+      get(sim, id).combatant.statuses.apply("burning", 10, "f", NO_RANKS);
       get(sim, id).combatant.health = 0.2;
     }
     const log = stepFor(sim, 4 * DT);

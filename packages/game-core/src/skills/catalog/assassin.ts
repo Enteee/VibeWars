@@ -414,8 +414,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "assassin",
-    // GW1's "No Attribute": any assassin can use it.
-    attributeId: undefined,
+    // Linked to Shadow Arts, though nothing in it scales (#1958).
+    attributeId: "assassin.shadow-arts",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
@@ -836,6 +836,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 30,
     // "Target touched foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -1064,6 +1065,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 20,
     // "Target touched foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -1729,6 +1731,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 7,
     // "Target touched foe."
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2408,6 +2411,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     activationSeconds: 0.25,
     rechargeSeconds: 10,
     // "Touch target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -3043,5 +3047,32 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // fail and all attacks against you miss. When Shadow Form ends, lose
     // all but 5...50 Health": 13 s.
     effects: [{ kind: "apply-status", statusId: "shadow-form", durationSeconds: 13 }],
+  },
+  {
+    id: "assassin.mirrored-stance",
+    name: "Mirrored Stance",
+    gwId: 816,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...35 seconds, whenever target foe enters a stance, you enter
+    // the same stance" (#1965): 30.
+    effects: [{ kind: "apply-status", statusId: "mirrored-stance", durationSeconds: 30 }],
   },
 ];

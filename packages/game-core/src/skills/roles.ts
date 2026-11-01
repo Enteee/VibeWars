@@ -1,4 +1,5 @@
 import { isCompanionRule } from "./activation.js";
+import { statAtTwelve } from "./scaling.js";
 import { getStatusDefinition } from "./status.js";
 import type { StatusDefinition } from "./status.js";
 import type { Skill, SkillEffect } from "./types.js";
@@ -41,6 +42,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "apply-status":
     case "companion-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
+    case "companion-steps-to-target":
+      return [];
     // Wearying Spear's own Weakness (#1486) is its price, not a role.
     case "caster-gains-status": {
       const definition = getStatusDefinition(effect.statusId);
@@ -82,6 +85,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "disable-skill":
     case "copy-removed":
     case "copy-disabled":
+    case "copy-elite":
+    case "take-control":
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
@@ -113,8 +118,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * the damage its bearer takes (Dark Escape, #919), caps it (Protective
  * Spirit, #936; Shelter, #1265), cuts its life stolen (Union, #1265), reverses it (Reversal of Fortune, #987) or slows the
  * hexes cast on it (Holy Veil, #944), or fails a foe's spells and attacks
- * at it or cuts a hexed foe's damage (Shadow Form, Mist Form, #1951) is
- * defence, and one that interrupts
+ * at it or cuts a hexed foe's damage (Shadow Form, Mist Form, #1951) or one
+ * type's (Mantra of Flame, #1964), or guards its casts from interrupts
+ * (Mantra of Resolve, #1964) is defence, and one that interrupts
  * a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
@@ -132,11 +138,11 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   if (status.category === "hex" || status.category === "condition") {
     roles.push(status.category);
   } else if (
-    status.armorModifier > 0 ||
+    statAtTwelve(status.armorModifier) > 0 ||
     (status.whileUnder !== undefined && status.whileUnder.armorModifier > 0) ||
     status.armorWhileStill > 0 ||
     status.block !== undefined ||
-    status.damageTakenMultiplier < 1 ||
+    statAtTwelve(status.damageTakenMultiplier) < 1 ||
     status.maxDamageFractionPerHit !== undefined ||
     status.attackDamageCapFraction !== undefined ||
     status.lifeStealReduction > 0 ||
@@ -147,15 +153,18 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.incomingHexCastTimeMultiplier > 1 ||
     status.redirectsConditionsToMinion ||
     status.foeSpellsFail ||
+    status.failsFoeTouchSkills !== undefined ||
     status.attacksAgainstMiss ||
-    status.damageReductionFromHexedSource !== undefined
+    status.damageReductionFromHexedSource !== undefined ||
+    status.interruptGuard !== undefined ||
+    (status.damageTypeTakenMultiplier?.multiplier ?? 1) < 1
   ) {
     roles.push("defence");
   }
   if (status.interruptsSpells) roles.push("interrupt");
   if (
     status.healthPerSecond > 0 ||
-    status.healthPips > 0 ||
+    statAtTwelve(status.healthPips) > 0 ||
     (status.whileUnder !== undefined && status.whileUnder.healthPips > 0) ||
     status.healthPipsPerEnchantment !== undefined
   ) {
@@ -185,6 +194,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
             effects.flatMap((effect) =>
               effect.kind === "spread-gained-condition" ||
               effect.kind === "echo" ||
+              effect.kind === "mirror-stance" ||
               effect.kind === "cancel-attack" ||
               effect.kind === "pay-energy-or-end" ||
               (target === "bearer" && isPrice(effect))
@@ -194,6 +204,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
           );
   const riders = [
     ...(status.onAttackHit?.effects ?? []),
+    ...(status.onAttackBlocked?.effects ?? []),
     ...(status.nextAttackSkill ?? []),
     ...(status.nextSkill?.effects ?? []),
     ...forBearer,

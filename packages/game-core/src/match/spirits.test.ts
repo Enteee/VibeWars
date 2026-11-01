@@ -16,6 +16,7 @@ import { landBlow, PLAIN_BLOW, skillBlow, weaponSnapshotOf } from "../skills/wea
 import { distance, normalize, sub, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Spirits (#1064): a ritual plants a creature that projects a status on
@@ -191,7 +192,7 @@ describe("Winnowing (#1064)", () => {
     if (spirit === undefined) {
       throw new Error("no spirit");
     }
-    spirit.combatant.statuses.apply("burning", 10, "f");
+    spirit.combatant.statuses.apply("burning", 10, "f", NO_RANKS);
     spirit.combatant.health = 0.2;
     const log = stepFor(killed, DT * 2);
     expect(log.flatMap((entry) => entry.events)).toContainEqual({
@@ -587,7 +588,7 @@ describe("what a spirit lets the Ritualist do (#1064)", () => {
   it("Weapon of Quickening shortens a binding ritual's recharge by 33%, Mantra of Recovery does not", () => {
     const recharge = (statusId: StatusId): number | undefined => {
       const sim = match();
-      get(sim, "r").combatant.statuses.apply(statusId, 60, "r");
+      get(sim, "r").combatant.statuses.apply(statusId, 60, "r", NO_RANKS);
       const slot = get(sim, "r").skillBar.indexOf(RECUPERATION);
       expect(sim.requestSkill("r", slot)?.check.ok).toBe(true);
       while (spirits(sim).length === 0) {
@@ -610,8 +611,8 @@ describe("what a spirit lets the Ritualist do (#1064)", () => {
     expect(spirit?.combatant.team).toBe(1);
     const near = get(sim, "near").combatant;
     const beyond = get(sim, "beyond").combatant;
-    near.statuses.apply("spirit-light-weapon", 10, "r");
-    beyond.statuses.apply("spirit-light-weapon", 10, "r");
+    near.statuses.apply("spirit-light-weapon", 10, "r", NO_RANKS);
+    beyond.statuses.apply("spirit-light-weapon", 10, "r", NO_RANKS);
     const [nearBefore, beyondBefore] = [near.health, beyond.health];
     stepFor(sim, 1);
     expect(near.health - nearBefore - (beyond.health - beyondBefore)).toBeCloseTo(21, 5);
@@ -627,7 +628,7 @@ describe("Winnowing's +4 (#1064)", () => {
   const struck = (attacker: Combatant, winnowed: boolean, blow = PLAIN_BLOW): number => {
     const victim = makeCombatant({ id: "victim", team: 1, maxHealth: 1000, health: 1000 });
     if (winnowed) {
-      victim.statuses.project("winnowing", "r/c1");
+      victim.statuses.project("winnowing", "r/c1", NO_RANKS);
     }
     const events: CombatEvent[] = [];
     landBlow(
@@ -651,7 +652,7 @@ describe("Winnowing's +4 (#1064)", () => {
   it("is on the attacker's own hits nothing: it is what the bearer takes", () => {
     const warrior = makeCombatant({ id: "w", equipment: AXE });
     const plain = struck(warrior, false);
-    warrior.statuses.project("winnowing", "r/c1");
+    warrior.statuses.project("winnowing", "r/c1", NO_RANKS);
     expect(struck(warrior, false)).toBe(plain);
   });
 
@@ -670,7 +671,7 @@ describe("Winnowing's +4 (#1064)", () => {
         },
       },
     });
-    const blow = skillBlow(skillOf("ranger.concussion-shot"), ranger);
+    const blow = skillBlow(skillOf("ranger.concussion-shot"), ranger, new Map());
     expect(struck(ranger, true, blow)).toBe(struck(ranger, false, blow) + 4);
   });
 

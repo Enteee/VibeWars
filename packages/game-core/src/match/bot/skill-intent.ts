@@ -1,8 +1,9 @@
+import type { DamageType } from "../../equipment/types.js";
 import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
-import { getStatusDefinition, type StatusCategory } from "../../skills/status.js";
+import { getStatusDefinition, type StatusCategory, type StatusId } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -46,13 +47,54 @@ export function botUses(skill: Skill): readonly BotUse[] {
       roles.includes("knockdown") ||
       skill.attack !== undefined ||
       skill.effects.some(dealsDamage) ||
+      // Strike as One (#1966): the pet and the Cripple are the offence.
+      sendsPet(skill) ||
       // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
-      // a foe is the bot's to use.
-      (skill.target === "single-enemy" && copiesSkill(skill.id)))
+      // a foe is the bot's to use; Mirror of Disenchantment's strip (#1954).
+      (skill.target === "single-enemy" && copiesSkill(skill.id)) ||
+      takenOffFoe(skill) !== undefined)
   ) {
     uses.push("offence");
   }
   return uses;
+}
+
+/** Whether `skill` sends its user's pet to its target (#1966), as Strike as One. */
+export function sendsPet(skill: Skill): boolean {
+  return skill.effects.some(({ kind }) => kind === "companion-steps-to-target");
+}
+
+/**
+ * The status `skill` puts on its user that only changes that user's own
+ * traps (#1966), as Trapper's Focus and Trapper's Speed; `undefined`
+ * for any other skill.
+ */
+export function ownTrapBoost(skill: Skill): StatusId | undefined {
+  if (skill.target !== "self") {
+    return undefined;
+  }
+  for (const effect of skill.effects) {
+    if (effect.kind !== "apply-status") {
+      continue;
+    }
+    const modifiers = getStatusDefinition(effect.statusId).ownSkillModifiers;
+    if (modifiers.length > 0 && modifiers.every(({ filter }) => filter.type === "trap")) {
+      return effect.statusId;
+    }
+  }
+  return undefined;
+}
+
+/** Whether `skill` puts on its user what fails foes' touch skills (#1966), "Can't Touch This!". */
+export function wardsTouch(skill: Skill): boolean {
+  return (
+    skill.target === "self" &&
+    skill.effects.some(
+      (effect) =>
+        effect.kind === "apply-status" &&
+        getStatusDefinition(effect.statusId).failsFoeTouchSkills !== undefined,
+    )
+  );
 }
 
 /**
@@ -111,6 +153,20 @@ export function riderOf(skill: Skill): Rider | undefined {
 }
 
 /**
+ * A hex that copies its bearer's stances onto its caster (#1965), as
+ * Mirrored Stance: worth a foe only while that foe has a stance to use.
+ */
+export function mirrorsStance(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) =>
+      effect.kind === "apply-status" &&
+      getStatusDefinition(effect.statusId).triggers.some(({ effects }) =>
+        effects.some(({ kind }) => kind === "mirror-stance"),
+      ),
+  );
+}
+
+/**
  * The only role `skill` has is `interrupt`: Distracting Blow's, Power
  * Drain's. Held for a foe's cast or swing, never spent on anything else.
  */
@@ -133,6 +189,10 @@ export function interruptAimed(
   caster: Combatant,
   foe: Combatant,
 ): "cast" | "swing" | null {
+  // A guard would stop it (#1964): Mantra of Concentration's, Resolve's.
+  if (foe.statuses.active.some(({ id }) => getStatusDefinition(id).interruptGuard !== undefined)) {
+    return null;
+  }
   const aimed = (effects: readonly SkillEffect[]): "cast" | "swing" | null => {
     for (const effect of effects) {
       const lands =
@@ -172,15 +232,21 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
 }
 
 /**
- * The category a copier takes off its foe to stand in for (#1928):
- * Inspired Enchantment's enchantments. `undefined` for any other skill.
+ * The category a foe must bear for `skill` to be worth casting at it:
+ * what a copier takes off it to stand in for (#1928), Inspired
+ * Enchantment's enchantments, or what a skill that does nothing else
+ * strips (#1954), Mirror of Disenchantment's. `undefined` for any other.
  */
-export function copiedOffFoe(skill: Skill): StatusCategory | undefined {
-  if (skill.target !== "single-enemy" || !copiesSkill(skill.id)) {
+export function takenOffFoe(skill: Skill): StatusCategory | undefined {
+  if (skill.target !== "single-enemy") {
     return undefined;
   }
   const removal = skill.effects.find((effect) => effect.kind === "remove-status");
-  return removal?.kind === "remove-status" ? removal.category : undefined;
+  if (removal?.kind !== "remove-status") {
+    return undefined;
+  }
+  const strips = removal.category === "enchantment" && skillRoles(skill).length === 0;
+  return copiesSkill(skill.id) || strips ? removal.category : undefined;
 }
 
 /**
@@ -215,6 +281,65 @@ export function removesFromCaster(skill: Skill): boolean {
         (effect.kind === "transfer-conditions" && effect.from === "caster") ||
         (effect.kind === "remove-status" && effect.from === "caster"),
     );
+}
+
+/**
+ * The statuses `skill` puts on its user, a stance's or an enchantment's:
+ * a self-targeted skill's `apply-status`.
+ */
+export function ownStatuses(skill: Skill): readonly StatusId[] {
+  return skill.target === "self"
+    ? skill.effects.flatMap((effect) => (effect.kind === "apply-status" ? [effect.statusId] : []))
+    : [];
+}
+
+/** Whether `skill` guards its user from an interrupt (#1964): Mantra of Concentration. */
+export function guardsInterrupt(skill: Skill): boolean {
+  return ownStatuses(skill).some((id) => getStatusDefinition(id).interruptGuard !== undefined);
+}
+
+/**
+ * The damage type `skill` cuts for its user, if it cuts one (#1964):
+ * Mantra of Flame's fire.
+ */
+export function wardedDamageType(skill: Skill): DamageType | undefined {
+  for (const id of ownStatuses(skill)) {
+    const byType = getStatusDefinition(id).damageTypeTakenMultiplier;
+    if (byType !== undefined) {
+      return byType.type;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The type most of `bar`'s damage is (#1964), by how many of its skills
+ * deal it; `undefined` with no damage or a tie. A weapon's blows are not
+ * counted: a bot reads the skills it sees.
+ */
+export function mainDamageType(bar: readonly Skill[]): DamageType | undefined {
+  const counts = new Map<DamageType, number>();
+  for (const skill of bar) {
+    const types = new Set(
+      skill.effects
+        .flatMap(flatten)
+        .flatMap((effect) => (effect.kind === "damage" ? [effect.type] : [])),
+    );
+    for (const type of types) {
+      counts.set(type, (counts.get(type) ?? 0) + 1);
+    }
+  }
+  let main: DamageType | undefined;
+  let most = 0;
+  for (const [type, count] of counts) {
+    if (count > most) {
+      main = type;
+      most = count;
+    } else if (count === most) {
+      main = undefined;
+    }
+  }
+  return main;
 }
 
 /** An `if`'s and a splash's effects, as well as the effect itself. */

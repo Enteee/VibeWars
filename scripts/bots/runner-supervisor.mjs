@@ -754,6 +754,27 @@ export function runnerScratchDir(env) {
 }
 
 /**
+ * The launcher's env: PATH, HOME and the scratch dir, and the user bus
+ * `systemd-run --user` needs, when set (#1988). Nothing else of the
+ * company's env; the jail clears even these.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @param {string} scratch
+ * @returns {Record<string, string>}
+ */
+export function launcherEnvOf(env, scratch) {
+  /** @type {Record<string, string>} */
+  const out = { PATH: env.PATH ?? "", HOME: env.HOME ?? "", VIBEWARS_RUNNER_SCRATCH: scratch };
+  for (const name of ["XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS"]) {
+    const value = env[name];
+    if (value !== undefined && value !== "") {
+      out[name] = value;
+    }
+  }
+  return out;
+}
+
+/**
  * The disk cap (ADR-0045): scratch must be a filesystem of its own, such as
  * a partition or a dataset with a quota, so a job that fills it cannot fill
  * the disk hubd, git and the jails live on. It compares device numbers, so
@@ -873,6 +894,11 @@ if (
     tasksMax: positive(env.VIBEWARS_RUNNER_TASKS_MAX, 2048),
   };
   const scratch = runnerScratchDir(env);
+  if (env.XDG_RUNTIME_DIR === undefined && env.DBUS_SESSION_BUS_ADDRESS === undefined) {
+    console.error(
+      "runner-supervisor: neither XDG_RUNTIME_DIR nor DBUS_SESSION_BUS_ADDRESS is set; systemd-run --user will fail",
+    );
+  }
   /** @type {unknown} */
   const company = JSON.parse(fs.readFileSync(path.join(root, "company.json"), "utf8"));
   const named = obj(company).repo;
@@ -882,11 +908,7 @@ if (
     process.exit(1);
   }
   const gh = ghEnv(env, path.join(credentials, "runners-gh"));
-  const launcherEnv = {
-    PATH: env.PATH ?? "",
-    HOME: env.HOME ?? "",
-    VIBEWARS_RUNNER_SCRATCH: scratch,
-  };
+  const launcherEnv = launcherEnvOf(env, scratch);
   const supervisor = new RunnerSupervisor({
     now: () => Date.now(),
     api: githubApi(repo, gh),

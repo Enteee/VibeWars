@@ -3,7 +3,7 @@
  * name, the job-started hook that turns a fork's job away, and the scratch
  * directory that leaves nothing behind.
  */
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -19,6 +19,7 @@ import {
   removeScratch,
   runnerCommand,
   runnerJailArgs,
+  sendJitconfig,
 } from "./runner-jail.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -75,6 +76,9 @@ describe("runnerJailArgs", () => {
     expect(args).toContain("--die-with-parent");
     expect(args).toContain("--new-session");
     expect(args).toContain("--clearenv");
+    // The user bus reaches systemd-run on the host, never the jail (#1988).
+    expect(args).not.toContain("XDG_RUNTIME_DIR");
+    expect(args).not.toContain("DBUS_SESSION_BUS_ADDRESS");
   });
 
   it("has no capabilities and cannot make a user namespace of its own", () => {
@@ -187,6 +191,21 @@ describe("runnerCommand", () => {
       "MemoryMax=6G",
       "-p",
       "TasksMax=2048",
+    ]);
+  });
+
+  it("remounts externals/ with node24 and a node20 link, no write into the overlay (#2006)", () => {
+    const ext = "/nix/store/aaa-github-runner/lib/externals";
+    const at = command.indexOf(ext);
+    expect(command.slice(at - 1, at + 7)).toEqual([
+      "--tmpfs",
+      ext,
+      "--ro-bind",
+      `${ext}/node24`,
+      `${ext}/node24`,
+      "--symlink",
+      "node24",
+      `${ext}/node20`,
     ]);
   });
 
@@ -343,5 +362,33 @@ describe("removeScratch", () => {
     fs.chmodSync(path.dirname(store), 0o555);
     removeScratch(dir);
     expect(fs.existsSync(dir)).toBe(false);
+  });
+});
+
+describe("sendJitconfig (#1988)", () => {
+  it("logs once, and does not throw, when the runner dies before it reads fd 3", async () => {
+    const child = spawn(process.execPath, ["-e", "process.exit(1)"], {
+      stdio: ["ignore", "ignore", "ignore", "pipe"],
+    });
+    const pipe = /** @type {import("node:stream").Writable} */ (child.stdio[3]);
+    const closed = new Promise((resolve) => pipe.once("close", resolve));
+    /** @type {string[]} */
+    const lines = [];
+    child.once("spawn", () => {
+      sendJitconfig(pipe, "x".repeat(1 << 20), (line) => lines.push(line));
+    });
+    const code = await new Promise(
+      /** @param {(code: number | null) => void} resolve */ (resolve) => {
+        child.once("exit", (exit) => {
+          resolve(exit);
+        });
+      },
+    );
+    await closed;
+    expect(code).toBe(1);
+    expect(lines.length).toBeLessThanOrEqual(1);
+    for (const line of lines) {
+      expect(line).toMatch(/^launcher: jitconfig pipe: /);
+    }
   });
 });

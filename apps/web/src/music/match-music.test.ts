@@ -114,8 +114,8 @@ function setup() {
     screen: "match",
     mode: () => ({ kind: "auto" }),
     tracks: [
-      { id: "hall-of-champions", moods: ["epic"] },
-      { id: "victors-hymn", moods: ["triumphant"] },
+      { id: "hall-of-champions", moods: ["epic"], layers: 4 },
+      { id: "victors-hymn", moods: ["triumphant"], layers: 4 },
     ],
     onChange: (state) => changes.push(state),
     now: () => clock,

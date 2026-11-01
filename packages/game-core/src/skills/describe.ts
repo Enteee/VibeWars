@@ -19,10 +19,11 @@ import { getAttribute, getProfession, type ProfessionId } from "../professions.j
 import { energyCostOf } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { creatureDamageMultiplier } from "./damage.js";
-import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
+import { magnitudeAtRank, resolveMagnitudeAtRanks, statAt, statAtTwelve } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
+  NO_RANKS,
   type AttributeDelta,
   type AttributeScope,
   type AttributeSet,
@@ -30,6 +31,7 @@ import {
   type NextSkillRule,
   type OwnSkillModifier,
   type StatusCategory,
+  type StatusStat,
   type StatusTrigger,
   type StatusTriggerEvent,
   type TriggerEffect,
@@ -55,6 +57,7 @@ import type {
   HealEffect,
   Magnitude,
   PerCount,
+  RemoveStatusEffect,
   Skill,
   SkillEffect,
   SkillType,
@@ -262,22 +265,51 @@ function adrenalineGainText(faster: number): string {
 }
 
 /**
- * What a status actually does, so a tooltip does not just name it.
- * `ranks` are its caster's, for a trigger an attribute scales (#944):
- * Patient Spirit's heal. Empty, it reads at rank 0.
+ * A status stat as its line prints it (#1976), through `format`: at
+ * `ranks`, or GW1's "90...258" across ranks 0 and 12 with none to read.
  */
-export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = new Map()): string {
+function statText(
+  stat: StatusStat,
+  ranks: ReadonlyMap<string, number> | undefined,
+  format: (value: number) => string,
+): string {
+  if (typeof stat === "number") {
+    return format(stat);
+  }
+  if (ranks === undefined) {
+    return `${format(stat.scaling.atZero)}...${format(stat.scaling.atTwelve)}`;
+  }
+  return format(statAt(stat, ranks));
+}
+
+function whole(value: number): string {
+  return String(Math.abs(Math.round(value)));
+}
+
+/**
+ * What a status actually does, so a tooltip does not just name it.
+ * `ranks` are its caster's, for a trigger an attribute scales (#944),
+ * Patient Spirit's heal, and for a stat (#1976), Endure Pain's Health.
+ * Without them, as for a status on a bearer, whose source's ranks the
+ * client does not have, a trigger reads at rank 0 and a stat as its range.
+ */
+export function describeStatus(id: string, ranks?: ReadonlyMap<string, number>): string {
   const definition = findStatusDefinition(id);
   if (definition === undefined) {
     return id;
   }
+  const triggerRanks = ranks ?? NO_RANKS;
+  const healthPips = statAtTwelve(definition.healthPips);
+  const armorModifier = statAtTwelve(definition.armorModifier);
+  const physicalDamageTakenBonus = statAtTwelve(definition.physicalDamageTakenBonus);
+  const attackDurationMultiplier = statAtTwelve(definition.attackDurationMultiplier);
   const parts: string[] = [];
   // In pips, as GW1 words it: "−3 Health degeneration".
-  if (definition.healthPips < 0) {
-    parts.push(`−${String(-definition.healthPips)} Health degeneration`);
+  if (healthPips < 0) {
+    parts.push(`−${statText(definition.healthPips, ranks, whole)} Health degeneration`);
   }
-  if (definition.healthPips > 0) {
-    parts.push(`+${String(definition.healthPips)} Health regeneration`);
+  if (healthPips > 0) {
+    parts.push(`+${statText(definition.healthPips, ranks, whole)} Health regeneration`);
   }
   if (definition.healthPipsPerEnchantment !== undefined) {
     const { pips, max } = definition.healthPipsPerEnchantment;
@@ -291,9 +323,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.energyPips > 0) {
     parts.push(`+${String(definition.energyPips)} Energy regeneration`);
   }
-  if (definition.armorModifier !== 0) {
-    const sign = definition.armorModifier > 0 ? "+" : "";
-    parts.push(`${sign}${String(definition.armorModifier)} armor`);
+  if (armorModifier !== 0) {
+    const sign = armorModifier > 0 ? "+" : "-";
+    parts.push(`${sign}${statText(definition.armorModifier, ranks, whole)} armor`);
   }
   for (const bonus of definition.conditionalArmor) {
     parts.push(statusArmorText(bonus));
@@ -342,8 +374,8 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const { fraction, cap } = definition.maxHealthLoss;
     parts.push(`−${String(Math.round(fraction * 100))}% maximum health (at most ${String(cap)})`);
   }
-  if (definition.maxHealthBonus !== 0) {
-    parts.push(`+${String(definition.maxHealthBonus)} maximum health`);
+  if (statAtTwelve(definition.maxHealthBonus) !== 0) {
+    parts.push(`+${statText(definition.maxHealthBonus, ranks, whole)} maximum health`);
   }
   if (definition.maxHealthBonusPerEnchantment !== 0) {
     parts.push(
@@ -372,8 +404,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
     parts.push(`${signed(change)}% weapon damage`);
   }
-  if (definition.physicalDamageTakenBonus !== 0) {
-    parts.push(`take ${signed(definition.physicalDamageTakenBonus)} from physical damage`);
+  if (physicalDamageTakenBonus !== 0) {
+    const sign = physicalDamageTakenBonus > 0 ? "+" : "−";
+    const amount = statText(definition.physicalDamageTakenBonus, ranks, whole);
+    parts.push(`take ${sign}${amount} from physical damage`);
   }
   if (definition.elementalDamageTakenAs !== undefined) {
     parts.push(`elemental damage taken is ${definition.elementalDamageTakenAs} damage`);
@@ -430,11 +464,13 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.interruptsSpells) {
     parts.push("spells are interrupted by attacks");
   }
-  if (definition.attackDurationMultiplier !== 1) {
+  if (attackDurationMultiplier !== 1) {
     // GW1's wording: "50% slower" is 1.5× as long, "33% faster" is 0.67×.
-    const change = Math.round(Math.abs(definition.attackDurationMultiplier - 1) * 100);
-    const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
-    parts.push(`attacks ${String(change)}% ${way}`);
+    const change = statText(definition.attackDurationMultiplier, ranks, (multiplier) =>
+      String(Math.round(Math.abs(multiplier - 1) * 100)),
+    );
+    const way = attackDurationMultiplier > 1 ? "slower" : "faster";
+    parts.push(`attacks ${change}% ${way}`);
   }
   if (definition.projectileSpeedMultiplier !== 1) {
     parts.push(`arrows move ${String(definition.projectileSpeedMultiplier)}× as fast`);
@@ -543,6 +579,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       ),
     );
   }
+  if (definition.onAttackBlocked !== undefined) {
+    const { effects, attackSkillsOnly, weapon } = definition.onAttackBlocked;
+    parts.push(...describeAttackBlocks(effects, attackSkillsOnly, weapon));
+  }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
     const plural = count === 1 ? "" : "s";
@@ -585,15 +625,15 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsWhenBearerAttacksInMelee) {
     parts.push("ends if the bearer makes a melee attack");
   }
-  if (definition.damageTakenMultiplier !== 1) {
-    parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
+  if (statAtTwelve(definition.damageTakenMultiplier) !== 1) {
+    parts.push(`takes ${statText(definition.damageTakenMultiplier, ranks, damageTaken)} damage`);
   }
   if (definition.damageReduction > 0) {
     parts.push(`−${String(definition.damageReduction)} damage taken`);
   }
   if (definition.damageReductionPerRank !== undefined) {
     const { attributeId, perRank, max } = definition.damageReductionPerRank;
-    const now = Math.min(max, perRank * (ranks.get(attributeId) ?? 0));
+    const now = Math.min(max, perRank * (triggerRanks.get(attributeId) ?? 0));
     const attribute = getAttribute(attributeId)?.name ?? attributeId;
     parts.push(
       `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
@@ -602,6 +642,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.damageReductionWhileCasting !== undefined) {
     const { skillType, amount } = definition.damageReductionWhileCasting;
     parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
+  }
+  // The elemental mantras' (#1964).
+  if (definition.damageTypeTakenMultiplier !== undefined) {
+    const { type, multiplier } = definition.damageTypeTakenMultiplier;
+    parts.push(`${String(Math.round((1 - multiplier) * 100))}% less ${type} damage`);
   }
   // Mist Form's (#1951).
   if (definition.damageReductionFromHexedSource !== undefined) {
@@ -675,8 +720,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`while under ${under.join(" or ")}: ${gains.join(", ")}`);
   }
   if (definition.endsAfterTriggers !== undefined) {
-    const plural = definition.endsAfterTriggers === 1 ? "" : "s";
-    parts.push(`ends after it takes effect ${String(definition.endsAfterTriggers)} time${plural}`);
+    // Shield Guardian's (#1974): "ends after it takes effect once".
+    const times =
+      definition.endsAfterTriggers === 1 ? "once" : `${String(definition.endsAfterTriggers)} times`;
+    parts.push(`ends after it takes effect ${times}`);
   }
   if (definition.breaksNextHex !== undefined) {
     parts.push(
@@ -688,10 +735,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.failsNextSpell !== undefined) {
     const { on, effects } = definition.failsNextSpell;
     const what = effects
-      .flatMap((effect) => describeEffects(effect, ranks))
+      .flatMap((effect) => describeEffects(effect, triggerRanks))
       .map(({ text }) => lowerFirst(text));
     parts.push(
       `the next spell it casts at ${on === "foe-targeted" ? "a foe" : "an ally"} fails: ${what.join(", ")}`,
+    );
+  }
+  // "Can't Touch This!"'s (#1966).
+  if (definition.failsFoeTouchSkills !== undefined) {
+    parts.push(
+      `the next ${String(definition.failsFoeTouchSkills)} touch skills used against you fail`,
     );
   }
   // Wastrel's Demise's (#1501): "each second, it and adjacent foes take 8
@@ -770,6 +823,15 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.uninterruptible) {
     parts.push("the bearer's skills cannot be interrupted");
   }
+  if (definition.interruptGuard?.kind === "once") {
+    parts.push("the next time you would be interrupted, you are not");
+  }
+  if (definition.interruptGuard?.kind === "pay-energy") {
+    const amount = String(definition.interruptGuard.amount);
+    parts.push(
+      `you cannot be interrupted; each time you would be, lose ${amount} Energy or this ends`,
+    );
+  }
   if (definition.conditionsExpireFaster !== 0) {
     const faster = String(Math.round(definition.conditionsExpireFaster * 100));
     parts.push(`conditions on the bearer expire ${faster}% faster`);
@@ -835,7 +897,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   const sentences: string[] = [];
   for (const { text, clause } of describeTriggers(
     definition.triggers.filter((trigger) => !enders.includes(trigger)),
-    ranks,
+    triggerRanks,
     definition.endsWhenBearerUsesSkill,
     definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
@@ -859,7 +921,8 @@ function damageTaken(multiplier: number): string {
   if (multiplier === 0.5) {
     return "half";
   }
-  return `${String(multiplier)}×`;
+  // GW1 words the rest as a percentage: Frenzy (PvP)'s "take 160% damage".
+  return `${String(Math.round(multiplier * 100))}%`;
 }
 
 /**
@@ -919,6 +982,30 @@ function describeAttackHits(
   return parts;
 }
 
+/**
+ * What a status does to foes that block the bearer's attacks (#1974):
+ * "foes that block your bow attacks get Bleeding for 18s".
+ */
+function describeAttackBlocks(
+  effects: readonly SkillEffect[],
+  attackSkillsOnly: boolean,
+  weapon: AttackWeaponClass | undefined,
+): string[] {
+  const attacks = attackSkillsOnly
+    ? `${weapon === undefined ? "" : `${weapon} `}attack skills`
+    : `${weapon ?? "physical"} attacks`;
+  return effects.flatMap((effect) =>
+    effect.kind === "apply-status"
+      ? [
+          `foes that block your ${attacks} get ${statusName(effect.statusId)} ` +
+            `for ${seconds(effect.durationSeconds)}`,
+        ]
+      : describeEffects(effect, new Map()).map(
+          ({ text }) => `foes that block your ${attacks}: ${lowerFirst(text)}`,
+        ),
+  );
+}
+
 /** A rider's damage: "20 fire damage", "13 damage" when it is typeless. */
 function riderDamage(effect: DamageEffect): string {
   const amount = String(describeMagnitude(effect.amount, new Map()).current);
@@ -975,6 +1062,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
   "bearer-energy-empty": "has no energy left",
+  "bearer-energy-drops-empty": "drops to 0 Energy",
   "bearer-dies": "dies",
   ends: "ends",
   "ends-early": "ends prematurely",
@@ -989,6 +1077,7 @@ const SECOND_PERSON: Readonly<Record<string, string>> = {
   casts: "cast",
   creates: "create",
   dies: "die",
+  drops: "drop",
   ends: "end",
   expires: "expire",
   fails: "fail",
@@ -1162,6 +1251,7 @@ function describeDeath(
     }
     return effect.kind === "spread-gained-condition" ||
       effect.kind === "echo" ||
+      effect.kind === "mirror-stance" ||
       effect.kind === "cancel-attack" ||
       effect.kind === "pay-energy-or-end"
       ? []
@@ -1305,13 +1395,13 @@ function describeCreation(
       case "damage":
         return `take ${amount(effect.amount)}${typeWord(effect.type)} damage`;
       case "remove-status":
-        return `lose ${String(effect.count)} ${effect.category}${effect.count === 1 ? "" : "s"}`;
+        return `lose ${effect.count === "all" ? "all" : String(countAt(effect.count, ranks))} ${effect.category}${effect.count === 1 ? "" : "s"}`;
       case "splash": {
         const side = SPLASH_SIDE[effect.hits];
         const who =
           effect.maxTargets === undefined
             ? `all ${side}`
-            : `up to ${String(effect.maxTargets)} ${side}`;
+            : `up to ${String(countAt(effect.maxTargets, ranks))} ${side}`;
         const where =
           AREA_AROUND_CREATED.get(effect.radius) ??
           `within ${String(effect.radius)} of that creature`;
@@ -1323,6 +1413,7 @@ function describeCreation(
       // None answers a creation.
       case "spread-gained-condition":
       case "echo":
+      case "mirror-stance":
       case "cancel-attack":
       case "pay-energy-or-end":
         return "";
@@ -1367,7 +1458,26 @@ function describeTrigger(
   // A stance's answer to its own block (#1329), in GW1's words.
   if (trigger.on === "bearer-blocks-melee" || trigger.on === "bearer-blocks-projectile") {
     const kind = trigger.on === "bearer-blocks-melee" ? "melee" : "projectile";
+    // Shield Guardian's (#1974): a heal on the blocker and, by a splash,
+    // the same on its allies around, said once.
+    const [self, splash] = trigger.effects;
+    if (
+      trigger.effects.length === 2 &&
+      self?.kind === "heal" &&
+      splash?.kind === "splash" &&
+      splash.hits === "allies" &&
+      JSON.stringify(splash.effects) === JSON.stringify([self])
+    ) {
+      const area = AREA_TEXT.get(splash.radius) ?? `within ${String(splash.radius)}`;
+      return [
+        sentence(`when you block, you and allies ${area} are healed for ${amount(self.amount)}`),
+      ];
+    }
     const answers = trigger.effects.flatMap((effect): TriggerLine[] => {
+      // Distortion's (#1974): the block stands, paid or not.
+      if (effect.kind === "pay-energy-or-end" && trigger.target === "bearer") {
+        return [sentence(`each block costs you ${String(effect.amount)} Energy or this ends`)];
+      }
       if (effect.kind === "energy-gain" && trigger.target === "bearer") {
         return [
           sentence(
@@ -1409,11 +1519,12 @@ function describeTrigger(
         return [`steals ${amount(effect.amount)} Health from that foe`];
       }
       if (effect.kind === "remove-status" && effect.from === "caster") {
-        const plural = effect.count === 1 ? "" : "s";
-        return [`loses ${String(effect.count)} ${effect.category}${plural}`];
+        const count = effect.count === "all" ? "all" : countAt(effect.count, ranks);
+        return [`loses ${String(count)} ${categoryNoun(count, effect.category)}`];
       }
       return effect.kind === "spread-gained-condition" ||
         effect.kind === "echo" ||
+        effect.kind === "mirror-stance" ||
         effect.kind === "cancel-attack" ||
         effect.kind === "pay-energy-or-end"
         ? []
@@ -1507,6 +1618,10 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    // "whenever target foe enters a stance, you enter the same stance" (#1965).
+    if (effect.kind === "mirror-stance") {
+      return [sentence(`${when}: you enter the same stance`)];
     }
     if (effect.kind === "pay-energy-or-end") {
       return [sentence(`${when}: you lose ${String(effect.amount)} Energy or this ends`)];
@@ -1643,6 +1758,7 @@ function describeOwnSkillModifier({
   rechargeSlower,
   durationMultiplier,
   healMultiplier,
+  notEasilyInterrupted,
   uses,
 }: OwnSkillModifier): string {
   const one = uses === 1;
@@ -1671,6 +1787,8 @@ function describeOwnSkillModifier({
     healMultiplier === 1
       ? undefined
       : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
+    // Trapper's Focus's (#1966).
+    notEasilyInterrupted ? `${verb("are", "is")} not easily interrupted` : undefined,
   ].filter((change) => change !== undefined);
   const kind = filter.type === undefined ? "skill" : filter.type.replaceAll("-", " ");
   const named = [
@@ -1953,6 +2071,10 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   if (hits === "party") {
     return "All party members";
   }
+  // Mirror of Disenchantment's foe's whole party (#1954).
+  if (hits === "foes" && radius === Number.POSITIVE_INFINITY) {
+    return "All its party members";
+  }
   // Feast for the Dead's, wherever they are (#1836).
   if (hits === "own-minions" && radius === Number.POSITIVE_INFINITY) {
     return "Your other minions";
@@ -1978,12 +2100,29 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   }
 }
 
+/**
+ * What each in a splash loses (#1954): Hex Eater Signet's "lose 1 hex",
+ * Mirror of Disenchantment's "lose that same enchantment".
+ */
+function lostInSplash(effect: RemoveStatusEffect, ranks: ReadonlyMap<string, number>): string {
+  if (effect.sameAsRemoved === true) {
+    return `lose that same ${effect.category}`;
+  }
+  if (effect.count === "all" || effect.perRemoved !== undefined) {
+    return `lose all ${categoryNoun("all", effect.category)}`;
+  }
+  const count = countAt(effect.count, ranks);
+  return `lose ${String(count)} ${categoryNoun(count, effect.category)}`;
+}
+
 /** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
-function upTo(splash: SplashEffect): string {
-  const who = `${foesWithin(splash.radius, splash.hits)}${splash.around === "caster" ? " around you" : ""}`;
+function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string {
+  // Hex Eater Signet's "adjacent allies with a hex" (#1954).
+  const bearing = splash.onlyBearing === undefined ? "" : ` with a ${splash.onlyBearing}`;
+  const who = `${foesWithin(splash.radius, splash.hits)}${splash.around === "caster" ? " around you" : ""}${bearing}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
-    : `Up to ${String(splash.maxTargets)} ${lowerFirst(who)}`;
+    : `Up to ${String(countAt(splash.maxTargets, ranks))} ${lowerFirst(who)}`;
 }
 
 /**
@@ -2219,13 +2358,24 @@ function describeMinionDeath(
 
 /**
  * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
- * area take 8 damage per second it lived (max 150)".
+ * area take 8 damage per second it lived (max 150)", or Lacerate's
+ * status (#1956): "When it dies, non-spirit creatures in its range under
+ * 90% Health begin Bleeding for 21 seconds".
  */
 function describeDeathBurst(
   burst: DeathBurst,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription {
-  const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
+  const where = AREA_TEXT.get(burst.radius) ?? "in its range";
+  const who = `${AURA_WHO[burst.affects].toLowerCase()} ${where}`;
+  if (burst.effect === "apply-status") {
+    const duration = describeMagnitude(burst.durationSeconds, ranks);
+    const below = `${String(Math.round(burst.belowHealthFraction * 100))}%`;
+    return {
+      text: `When it dies, ${who} under ${below} Health begin ${statusName(burst.statusId)} for ${String(duration.current)} seconds`,
+      magnitude: duration,
+    };
+  }
   const rate = describeMagnitude(burst.perSecondAlive, ranks);
   const amount = String(rate.current);
   const what =
@@ -2333,21 +2483,54 @@ function withPerText(
   if (per === undefined) {
     return text;
   }
-  const amount = String(describeMagnitude(per.amount, ranks).current);
+  const each = `${String(describeMagnitude(per.amount, ranks).current)}${words.unit} ${perCountText(per, ranks, words.onTarget)}`;
+  return "flat" in base && base.flat === 0 ? `${words.alone} ${each}` : `${text}, +${each}`;
+}
+
+/**
+ * What a `per` counts, and its cap (#1760): "for each enchantment on
+ * them (maximum 60)", "for each of your recharging Beast Mastery skills"
+ * (#1957).
+ */
+function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarget: string): string {
   const { count } = per;
   const what =
     count.kind === "statuses"
-      ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : words.onTarget}`
-      : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
+      ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
+      : count.kind === "recharging-skills"
+        ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
+        : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
   const max =
     per.max === undefined ? "" : ` (maximum ${String(describeMagnitude(per.max, ranks).current)})`;
-  const each = `${amount}${words.unit} for each ${what}${max}`;
-  return "flat" in base && base.flat === 0 ? `${words.alone} ${each}` : `${text}, +${each}`;
+  return `for each ${what}${max}`;
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
 function upToText(effect: EnergyGainEffect): string {
   return effect.upTo === undefined ? "" : `, never above ${String(effect.upTo)}`;
+}
+
+/**
+ * A count at the ranks: as it is, or a `Magnitude`'s current value, as
+ * Divert Hexes' "up to 3 hexes" (#1954).
+ */
+function countAt(count: number | Magnitude, ranks: ReadonlyMap<string, number>): number {
+  return typeof count === "number" ? count : resolveMagnitudeAtRanks(count, ranks);
+}
+
+/** `category` as a noun for `count` of it (#1954): "hex", "hexes". */
+function categoryNoun(count: number | "all", category: StatusCategory): string {
+  if (count === 1) {
+    return category;
+  }
+  return category === "hex" ? "hexes" : `${category}s`;
+}
+
+/** " for each hex removed", for a gain per status taken off (#1954). */
+function perRemovedText(effect: EnergyGainEffect): string {
+  return effect.toTarget === true || effect.perRemoved === undefined
+    ? ""
+    : ` for each ${effect.perRemoved} removed`;
 }
 
 /** " per point lost", for an amount multiplied by the energy taken before it (#793). */
@@ -2430,7 +2613,13 @@ function describeEffect(
           magnitude,
         };
       }
-      const text = `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}`;
+      const gains =
+        effect.toTarget === true
+          ? "Target gains"
+          : effect.recipient === "owner"
+            ? "You gain"
+            : "Gain";
+      const text = `${gains} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}${perRemovedText(effect)}`;
       return {
         text: `${effect.toTarget === true ? text : withPerText(text, effect.amount, effect.per, ranks, { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
         magnitude,
@@ -2439,7 +2628,7 @@ function describeEffect(
     case "adrenaline-gain": {
       const strikes = effect.strikes === 1 ? "1 strike" : `${String(effect.strikes)} strikes`;
       return {
-        text: `Gain ${strikes} of adrenaline${perFoeHit(effect)}`,
+        text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}`,
         magnitude: undefined,
       };
     }
@@ -2486,12 +2675,19 @@ function describeEffect(
     }
     case "transfer-conditions":
       return transferText(effect, ranks);
-    // Epidemic's (#1501): "Adjacent foes get the target's conditions...".
-    case "spread-conditions":
+    // Epidemic's (#1501): "Adjacent foes get the target's conditions...";
+    // Extend Conditions' "...with 81% more time (max 30 s)" (#1954).
+    case "spread-conditions": {
+      const extend =
+        effect.extendPercent === undefined
+          ? undefined
+          : describeMagnitude(effect.extendPercent, ranks);
+      const max = effect.maxSeconds === undefined ? "" : ` (max ${seconds(effect.maxSeconds)})`;
       return {
-        text: `${foesWithin(effect.radius, "foes")} get the target's conditions, with the time each has left`,
-        magnitude: undefined,
+        text: `${foesWithin(effect.radius, "foes")} get the target's conditions, ${extend === undefined ? "with the time each has left" : `with ${String(extend.current)}% more time${max}`}`,
+        magnitude: extend,
       };
+    }
     case "give-health": {
       const magnitude = describeMagnitude(effect.healPercent, ranks);
       return {
@@ -2541,6 +2737,10 @@ function describeEffect(
       };
     }
     case "remove-status": {
+      // Mirror of Disenchantment's "lose that same enchantment" (#1954).
+      if (effect.sameAsRemoved === true) {
+        return { text: `Loses that same ${effect.category}`, magnitude: undefined };
+      }
       // Contemplation of Purity's "lose one hex for each one lost" (#1205).
       const { perRemoved } = effect;
       if (perRemoved !== undefined) {
@@ -2560,16 +2760,16 @@ function describeEffect(
         // "Lose 1 Dervish enchantment" (#845), or all of them (#1205).
         const whose =
           effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
-        const plural = effect.count === 1 ? "" : "s";
+        const count = effect.count === "all" ? "all" : countAt(effect.count, ranks);
         return {
-          text: `Lose ${String(effect.count)} ${whose}${effect.category}${plural}`,
+          text: `Lose ${String(count)} ${whose}${categoryNoun(count, effect.category)}`,
           magnitude: undefined,
         };
       }
       if (effect.category === "stance") {
         return { text: "Ends the target's stance", magnitude: undefined };
       }
-      const plural = effect.count === 1 ? "" : "s";
+      const count = effect.count === "all" ? "all" : countAt(effect.count, ranks);
       // Mend Body and Soul's "for each spirit within earshot" (#1064).
       const near = effect.perSpiritNear;
       const perSpirit =
@@ -2577,12 +2777,12 @@ function describeEffect(
           ? ""
           : ` for each spirit ${AREA_AROUND_TARGET.get(near) ?? `within ${String(near)} of it`}`;
       // A target with fewer loses what it has (#1678): "up to 3".
-      const upTo = typeof effect.count === "number" && effect.count > 1 ? "up to " : "";
+      const upTo = typeof count === "number" && count > 1 ? "up to " : "";
       // Shatter Delusions' "remove one Mesmer hex" (#1765).
       const whose =
         effect.profession === undefined ? "" : `${getProfession(effect.profession).name} `;
       return {
-        text: `Removes ${upTo}${String(effect.count)} ${whose}${effect.category}${plural}${perSpirit}`,
+        text: `Removes ${upTo}${String(count)} ${whose}${categoryNoun(count, effect.category)}${perSpirit}`,
         magnitude: undefined,
       };
     }
@@ -2663,6 +2863,9 @@ function describeEffect(
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
+    // Strike as One's "your animal companion instantly moves to your target" (#1966).
+    case "companion-steps-to-target":
+      return { text: "Your pet moves to your target and attacks it", magnitude: undefined };
     case "pull-to-caster":
       return { text: "Teleports target to you", magnitude: undefined };
     case "destroy-target-spirit":
@@ -2763,6 +2966,14 @@ function describeEffect(
       };
     case "copy-disabled":
       return { text: "This skill becomes that spell for as long", magnitude: undefined };
+    // Arcane Mimicry's and Signet of Binding's (#1965).
+    case "copy-elite":
+      return {
+        text: `This skill becomes target ally's non-form elite skill for ${String(effect.seconds)} seconds`,
+        magnitude: undefined,
+      };
+    case "take-control":
+      return { text: "Take control of target enemy spirit", magnitude: undefined };
     case "disable-own-skills": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       return { text: disableOwnText(effect, false, magnitude.current), magnitude };
@@ -2808,12 +3019,14 @@ function describeEffect(
                   ? `gain ${String(describeMagnitude(each.amount, ranks).current)} Health`
                   : each.kind === "lose-health" && each.recipient === "target"
                     ? `lose ${String(describeMagnitude(each.amount, ranks).current)} Health`
-                    : lowerFirst(description.text),
+                    : each.kind === "remove-status" && each.from === undefined
+                      ? lostInSplash(each, ranks)
+                      : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${upTo(effect)} ${what}`,
+        text: `${upTo(effect, ranks)} ${what}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -3120,6 +3333,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
+  "enemy-spirit": "An enemy spirit",
   "own-minion": "One of your minions",
   "allied-minion": "An allied minion",
   "allied-summoned-creature": "An allied summoned creature",
@@ -3206,6 +3420,16 @@ function castTimeText(skill: Skill, ranks: ReadonlyMap<string, number>): string 
 }
 
 /**
+ * `effect` as the owner reads it (#1957): a pet attack's caster is the
+ * pet, so its heal of the caster heals "your pet", Predator's Pounce's.
+ */
+function petReads(skill: Skill, effect: SkillEffect): SkillEffect {
+  return skill.petAttack !== undefined && effect.kind === "heal" && effect.recipient === "caster"
+    ? { ...effect, recipient: "companion" }
+    : effect;
+}
+
+/**
  * Describe a skill at the given attribute ranks.
  *
  * `ranks` is normally the character being edited. An empty map describes
@@ -3258,6 +3482,16 @@ export function describeSkill(
           {
             text: `${conditionText(conditionalBonus.condition)}: +${String(more.current)} damage`,
             magnitude: more,
+          },
+        ]),
+    // Enraged Lunge's "+19 damage for each of your recharging Beast
+    // Mastery skills (maximum 60)" (#1957).
+    ...(rule?.bonusPer === undefined
+      ? []
+      : [
+          {
+            text: `+${String(describeMagnitude(rule.bonusPer.amount, ranks).current)} damage ${perCountText(rule.bonusPer, ranks, "on them")}`,
+            magnitude: describeMagnitude(rule.bonusPer.amount, ranks),
           },
         ]),
   ];
@@ -3505,7 +3739,17 @@ export function describeSkill(
               magnitude: describeMagnitude(effect.seconds, ranks),
             },
           ]
-        : describeEffects(effect, ranks),
+        : // Martyr's (#1954): its targets are the party it takes from.
+          effect.kind === "transfer-conditions" &&
+            effect.from === "target" &&
+            skill.area?.origin === "party"
+          ? [
+              {
+                text: "Take all conditions from your allies, with the time each has left",
+                magnitude: undefined,
+              },
+            ]
+          : describeEffects(petReads(skill, effect), ranks),
     ),
     ...onCritical,
     ...onBlocked,

@@ -12,7 +12,7 @@ const audio: AudioReadings = {
 };
 
 describe("createMeter", () => {
-  it("counts a second's ticks, late ticks, skipped music and late events", () => {
+  it("counts a second's ticks, late ticks, skipped music, events and dropped ones", () => {
     const meter = createMeter();
     for (const at of [0, 100, 200, 390, 490]) {
       meter.tick(at, 100);
@@ -21,17 +21,17 @@ describe("createMeter", () => {
     meter.worked(12);
     meter.skipped(50);
     meter.skipped(100);
-    meter.event(false);
-    meter.event(true);
-    meter.event(false);
+    meter.event();
+    meter.dropped();
+    meter.event();
     expect(meter.take(audio)).toEqual({
       ticks: 5,
       lateTicks: 1,
       maxTickGapMs: 190,
       maxTickWorkMs: 12,
       skippedMs: 150,
-      events: 3,
-      lateEvents: 1,
+      events: 2,
+      droppedEvents: 1,
       maxReductionDb: 0,
       ...audio,
     });
@@ -49,7 +49,7 @@ describe("createMeter", () => {
   it("starts each second from nothing, but times the first tick from the last", () => {
     const meter = createMeter();
     meter.tick(0, 100);
-    meter.event(true);
+    meter.dropped();
     meter.take(audio);
     meter.tick(400, 100);
     expect(meter.take(audio)).toMatchObject({
@@ -57,7 +57,7 @@ describe("createMeter", () => {
       lateTicks: 1,
       maxTickGapMs: 400,
       events: 0,
-      lateEvents: 0,
+      droppedEvents: 0,
     });
   });
 });
@@ -91,12 +91,13 @@ describe("createMeasurement", () => {
     expect(timers).toHaveLength(1);
     expect(timers[0]?.ms).toBe(STATS_INTERVAL_MS);
 
-    measurement.meter?.event(true);
+    measurement.meter?.event();
+    measurement.meter?.dropped();
     timers[0]?.callback();
     timers[0]?.callback();
     expect(reports).toEqual([
-      expect.objectContaining({ events: 1, lateEvents: 1 }),
-      expect.objectContaining({ events: 0, lateEvents: 0 }),
+      expect.objectContaining({ events: 1, droppedEvents: 1 }),
+      expect.objectContaining({ events: 0, droppedEvents: 0 }),
     ]);
   });
 });

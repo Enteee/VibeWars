@@ -13,6 +13,7 @@ import { createCursor, decide, type Behaviour } from "../behaviour.js";
 import type { CombatLogEntry } from "../combat-log.js";
 import { MatchSimulation, loadoutSpec, type ParticipantSpec } from "../simulation.js";
 import { botUses, onlyInterrupts } from "./skill-intent.js";
+import { NO_RANKS } from "../../skills/status.js";
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULESET.tickRateHz;
@@ -394,7 +395,7 @@ describe("play-build and a well's sacrifice (#1730)", () => {
     if (corpse) {
       const fallen = sim.get("fallen")?.combatant;
       if (fallen === undefined) throw new Error("no fallen");
-      fallen.statuses.apply("burning", 10, "foe");
+      fallen.statuses.apply("burning", 10, "foe", NO_RANKS);
       fallen.health = 0.2;
       sim.step(DT);
       expect(fallen.dead).toBe(true);
@@ -589,6 +590,160 @@ describe("play-build renews a spirit near its end (#1947)", () => {
   });
 });
 
+describe("play-build takes what another has (#1965)", () => {
+  const body = (id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    ({
+      id,
+      team,
+      skillBar: [],
+      attributeRanks: new Map([
+        ["assassin.shadow-arts", 12],
+        ["ritualist.spawning-power", 12],
+      ]),
+      equipment: unarmedResolvedEquipment(60),
+      maxHealth: 600,
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      ...extra,
+    }) satisfies ParticipantSpec;
+  const spirit = (id: string, ownerId: string, team: number, spawn: Vec2) =>
+    body(id, team, spawn, {
+      creature: {
+        ownerId,
+        kind: "spirit",
+        look: "spirit",
+        name: id,
+        expiresInSeconds: 60,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: undefined,
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        deathBurst: undefined,
+        onDeathInRange: undefined,
+        replacedBy: undefined,
+        corpsesLeft: 0,
+        companionSkillId: undefined,
+        leaderId: undefined,
+        mode: "guard",
+      },
+    });
+
+  it("casts Signet of Binding on a foe's spirit in reach, with Health to spare", () => {
+    const binder = () =>
+      match([
+        body("r", 0, vec2(0, 0), { behaviour: BOT, skillBar: ["ritualist.signet-of-binding"] }),
+        body("foe", 1, vec2(1500, 0)),
+        spirit("s", "foe", 1, vec2(300, 0)),
+      ]);
+    expect(askBot(binder(), "r")).toMatchObject({
+      targetId: "s",
+      useSkillId: "ritualist.signet-of-binding",
+    });
+    const hurt = binder();
+    const r = hurt.get("r");
+    if (r !== undefined) {
+      r.combatant.health = 200;
+    }
+    expect(askBot(hurt, "r").useSkillId).toBeUndefined();
+  });
+
+  it("casts Mirrored Stance only on a foe with a stance on its bar", () => {
+    const at = (foeBar: readonly string[]) =>
+      match([
+        body("a", 0, vec2(0, 0), { behaviour: BOT, skillBar: ["assassin.mirrored-stance"] }),
+        body("foe", 1, vec2(300, 0), { skillBar: foeBar }),
+      ]);
+    expect(askBot(at(["assassin.dash"]), "a")).toMatchObject({
+      targetId: "foe",
+      useSkillId: "assassin.mirrored-stance",
+    });
+    expect(askBot(at(["monk.word-of-healing"]), "a").useSkillId).toBeUndefined();
+  });
+
+  it("casts Arcane Mimicry on an ally's elite with no foe in reach, never an attack or its own", () => {
+    const at = (allyBar: readonly string[], ownBar: readonly string[] = []) =>
+      match([
+        body("m", 0, vec2(0, 0), {
+          behaviour: BOT,
+          skillBar: ["mesmer.arcane-mimicry", ...ownBar],
+        }),
+        body("ally", 0, vec2(0, 60), { skillBar: allyBar }),
+        body("foe", 1, vec2(1500, 0)),
+      ]);
+    expect(askBot(at(["monk.word-of-healing"]), "m")).toMatchObject({
+      targetId: "ally",
+      useSkillId: "mesmer.arcane-mimicry",
+    });
+    expect(askBot(at(["warrior.eviscerate"]), "m").useSkillId).toBeUndefined();
+    expect(
+      askBot(at(["monk.word-of-healing"], ["monk.word-of-healing"]), "m").useSkillId,
+    ).toBeUndefined();
+  });
+});
+
+describe("play-build raises a mantra before it is needed (#1964)", () => {
+  const mesmer = (id: string, team: number, spawn: Vec2, skillBar: string[]) =>
+    ({
+      id,
+      team,
+      skillBar,
+      attributeRanks: new Map([["mesmer.inspiration-magic", 12]]),
+      equipment: unarmedResolvedEquipment(60),
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      behaviour: team === 0 ? BOT : undefined,
+    }) satisfies ParticipantSpec;
+
+  it("Mantra of Flame against a foe in reach whose skills burn, not one whose skills freeze", () => {
+    const bar = ["mesmer.mantra-of-flame"];
+    const burning = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["elementalist.fireball", "elementalist.flare"]),
+    ]);
+    expect(askBot(burning, "m")).toMatchObject({ useSkillId: "mesmer.mantra-of-flame" });
+    const freezing = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["elementalist.ice-spikes"]),
+    ]);
+    expect(askBot(freezing, "m").useSkillId).toBeUndefined();
+  });
+
+  it("Mantra of Concentration with a long cast on its bar and an interrupter in reach", () => {
+    const bar = ["mesmer.mantra-of-concentration", "elementalist.kinetic-armor"];
+    const threatened = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["mesmer.power-spike"]),
+    ]);
+    expect(askBot(threatened, "m")).toMatchObject({
+      useSkillId: "mesmer.mantra-of-concentration",
+    });
+    const safe = match([
+      mesmer("m", 0, vec2(0, 0), bar),
+      mesmer("e", 1, vec2(300, 0), ["elementalist.flare"]),
+    ]);
+    expect(askBot(safe, "m").useSkillId).not.toBe("mesmer.mantra-of-concentration");
+  });
+
+  it("aims no interrupt at a foe whose guard would stop it", () => {
+    const sim = match([
+      fighter("ranger", 0, RANGER, vec2(400, 400), {
+        behaviour: undefined,
+        skillBar: ["mesmer.power-drain"],
+      }),
+      fighter("foe", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
+    ]);
+    sim.get("foe")?.combatant.statuses.apply("mantra-of-concentration", 31, "foe", NO_RANKS);
+    sim.setTarget("foe", "ranger");
+    sim.requestSkill("foe", slotOf(ELEMENTALIST, "elementalist.chain-lightning"));
+    expect(sim.get("foe")?.combatant.cast.activeCast?.remainingSeconds).toBe(2);
+    expect(askBot(sim, "ranger").useSkillId).toBeUndefined();
+  });
+});
+
 describe("play-build's Paragon riders (#1955)", () => {
   const BOND = "paragon.angelic-bond";
   const GODSPEED = "paragon.godspeed";
@@ -637,10 +792,10 @@ describe("play-build's Paragon riders (#1955)", () => {
 
   it("shouts Godspeed for two enchanted allies, and not again while it holds", () => {
     const sim = party(bar);
-    combatant(sim, "a").combatant.statuses.apply("guardian", 10, "a");
-    combatant(sim, "b").combatant.statuses.apply("guardian", 10, "b");
+    combatant(sim, "a").combatant.statuses.apply("guardian", 10, "a", NO_RANKS);
+    combatant(sim, "b").combatant.statuses.apply("guardian", 10, "b", NO_RANKS);
     expect(askBot(sim, "p")).toMatchObject({ targetId: "p", useSkillId: GODSPEED });
-    combatant(sim, "p").combatant.statuses.apply("godspeed", 17, "p");
+    combatant(sim, "p").combatant.statuses.apply("godspeed", 17, "p", NO_RANKS);
     expect(askBot(sim, "p").useSkillId).toBeUndefined();
   });
 

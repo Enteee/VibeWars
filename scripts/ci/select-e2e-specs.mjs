@@ -41,21 +41,34 @@ export const selectSpecs = (base, head = "HEAD", cwd = process.cwd()) =>
     .filter((path) => path !== "");
 
 /**
- * Test cost of a spec: its `test(` calls. Sharding by Playwright's own
- * `--shard` splits by test count and can leave a shard with no group at all
- * (#1566), so the planner packs whole specs itself. This overcounts a little
- * (a skipped or commented test), which only makes a job smaller.
- * @param {string} source
+ * Seconds one run of a spec takes: the sum of its tests in the table
+ * `shard-e2e.mjs` keeps (#1883). A spec the table lacks gets the median spec.
+ * Playwright's own `--shard` splits by test count and can leave a shard empty
+ * (#1566), and a test count mis-sizes a job anyway (builds.spec.ts has 67
+ * tests and takes over ten minutes), so the planner packs whole specs by time.
+ * @param {string[]} specs
+ * @param {Record<string, number>} durations seconds by "spec › test" key
+ * @returns {Record<string, number>}
  */
-export const countTests = (source) => Math.max(1, (source.match(/\btest\(/g) ?? []).length);
+export const specSeconds = (specs, durations) => {
+  /** @type {Record<string, number>} */
+  const totals = {};
+  for (const [key, seconds] of Object.entries(durations)) {
+    const spec = key.split(" › ")[0] ?? key;
+    totals[spec] = (totals[spec] ?? 0) + seconds;
+  }
+  const sorted = Object.values(totals).sort((x, y) => x - y);
+  const median = sorted[Math.floor(sorted.length / 2)] ?? 1;
+  return Object.fromEntries(specs.map((spec) => [spec, totals[spec] ?? median]));
+};
 
 /**
  * Split `repeats` runs of every spec over jobs. A job runs its specs with one
- * `--repeat-each`, and holds about `budget` test runs. Every spec gets exactly
+ * `--repeat-each`, and holds about `budget` seconds of runs. Every spec gets exactly
  * `repeats` runs in total across its jobs.
- * @param {Record<string, number>} weights spec -> tests in it
+ * @param {Record<string, number>} weights spec -> seconds one run takes
  * @param {number} repeats
- * @param {number} budget test runs per job
+ * @param {number} budget seconds of runs per job
  * @param {number} maxJobs
  * @returns {{ specs: string[], repeat: number }[]}
  */
@@ -92,9 +105,9 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   return jobs.map(({ specs, repeat }) => ({ specs, repeat }));
 };
 
-/** Test runs per job: PR 1542's repeat jobs ran 187 tests in 29 min (~9.7 s each, 177 timed), so 80 is ~13 min, leaving the 30 min cap its margin for setup, build and a slow runner. */
-export const RUNS_PER_JOB = 80;
-export const MAX_JOBS = 40;
+/** Seconds of test runs per job: 25 min, so with setup and build the job fits the 40 min cap, and ten repeats of a spec up to 750 s fit in MAX_JOBS jobs (#1884). */
+export const SECONDS_PER_JOB = 1500;
+export const MAX_JOBS = 6;
 export const REPEATS = 10;
 /**
  * Throws unless the Playwright JSON report ran at least one test. Skipped
@@ -121,14 +134,18 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
   } else if (first === "--plan") {
     try {
-      const weights = Object.fromEntries(
-        process.argv.slice(3).map((spec) => [spec, countTests(fs.readFileSync(spec, "utf8"))]),
+      /** @type {unknown} */
+      const parsed = JSON.parse(
+        fs.readFileSync(new URL("./e2e-durations.json", import.meta.url), "utf8"),
       );
-      const jobs = planJobs(weights, REPEATS, RUNS_PER_JOB, MAX_JOBS);
-      // No spec selected: one job that passes with every step skipped.
-      const matrix = (jobs.length === 0 ? [{ specs: [], repeat: REPEATS }] : jobs).map(
-        (job, i) => ({ job: i + 1, specs: job.specs.join(" "), repeat: job.repeat }),
-      );
+      const table = /** @type {Record<string, number>} */ (parsed);
+      const weights = specSeconds(process.argv.slice(3), table);
+      // No spec selected: an empty matrix, which the workflow skips.
+      const matrix = planJobs(weights, REPEATS, SECONDS_PER_JOB, MAX_JOBS).map((job, i) => ({
+        job: i + 1,
+        specs: job.specs.join(" "),
+        repeat: job.repeat,
+      }));
       console.log(JSON.stringify(matrix));
     } catch (error) {
       console.error(`::error::${error instanceof Error ? error.message : String(error)}`);

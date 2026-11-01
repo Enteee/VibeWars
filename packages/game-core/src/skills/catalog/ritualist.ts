@@ -860,6 +860,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 15,
     // "Target touched allied spirit".
+    touch: true,
     range: RANGE_MELEE,
     target: "allied-spirit",
     area: {
@@ -2510,6 +2511,42 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // recharges 10...50...60% faster and Ritual Lord recharges instantly"
     // (#1941): the status holds the rest.
     effects: [{ kind: "apply-status", statusId: "ritual-lord", durationSeconds: 29 }],
+  },
+  {
+    id: "ritualist.signet-of-binding",
+    name: "Signet of Binding",
+    gwId: 1743,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "enemy-spirit",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You lose 200...50 Health and take control of target enemy-controlled
+    // spirit" (#1965): 80, and it can kill. Its "50% failure chance with
+    // Spawning Power 4 or less" is out of reach at rank 12.
+    effects: [
+      {
+        kind: "lose-health",
+        amount: { scaling: { attributeId: "ritualist.spawning-power", atZero: 200, atTwelve: 80 } },
+        perRemovedOfProfession: undefined,
+      },
+      { kind: "take-control" },
+    ],
   },
 ];
 

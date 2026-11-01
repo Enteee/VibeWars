@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import { applyDamage, applyEffects, type CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { effectiveActivationSeconds } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
@@ -134,7 +134,7 @@ describe("Angelic Bond (#1955)", () => {
     use(sim, BOND);
     const [a1, a2] = [get(sim, "a1").combatant, get(sim, "a2").combatant];
     // Half of x's hit goes to a1, landed as x's changes are drained.
-    get(sim, "x").combatant.statuses.apply("symbiotic-bond", 10, "a1");
+    get(sim, "x").combatant.statuses.apply("symbiotic-bond", 10, "a1", NO_RANKS);
     get(sim, "x").combatant.statuses.redirect(1000);
     a1.health = 100;
     sim.step(DT);
@@ -143,7 +143,7 @@ describe("Angelic Bond (#1955)", () => {
       expect(get(sim, id).combatant.statuses.has("angelic-bond")).toBe(false);
     }
     // The next Bond from the same Paragon saves as the first did.
-    a2.statuses.apply("angelic-bond", 10, "p");
+    a2.statuses.apply("angelic-bond", 10, "p", NO_RANKS);
     a2.health = 100;
     applyDamage(a2, 500, "typeless", false, [], undefined);
     expect(a2.dead).toBe(false);
@@ -152,7 +152,7 @@ describe("Angelic Bond (#1955)", () => {
   it("after Judge's Intervention, spends only the oldest", () => {
     const sim = match([...allies(1), spec("f", 1, vec2(300, 0))]);
     const a1 = get(sim, "a1").combatant;
-    a1.statuses.apply("judges-intervention", 10, "p");
+    a1.statuses.apply("judges-intervention", 10, "p", NO_RANKS);
     use(sim, BOND);
     a1.health = 100;
     applyDamage(a1, 500, "typeless", false, [], get(sim, "f").combatant);
@@ -170,12 +170,12 @@ describe("Godspeed (#1955)", () => {
     const a1 = get(sim, "a1").combatant;
     expect(a1.statuses.get("godspeed")?.durationSeconds).toBe(17);
     expect(speedOf(sim, "a1")).toBe(1);
-    a1.statuses.apply("guardian", 10, "p");
+    a1.statuses.apply("guardian", 10, "p", NO_RANKS);
     expect(speedOf(sim, "a1")).toBeCloseTo(1.25, 9);
     a1.statuses.remove("guardian");
     expect(speedOf(sim, "a1")).toBe(1);
-    a1.statuses.apply("guardian", 10, "p");
-    a1.statuses.apply("muddy-terrain", 10, "f");
+    a1.statuses.apply("guardian", 10, "p", NO_RANKS);
+    a1.statuses.apply("muddy-terrain", 10, "f", NO_RANKS);
     expect(speedOf(sim, "a1")).toBeCloseTo(0.9, 9);
   });
 });

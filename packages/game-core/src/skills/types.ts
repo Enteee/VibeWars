@@ -84,6 +84,12 @@ export type TargetRule =
   | "single-dead-ally"
   /** A living spirit on the caster's team, whoever made it (#1309): GW1's "allied spirit". */
   | "allied-spirit"
+  /**
+   * A living spirit another team's character made (#1965): Signet of
+   * Binding's "target enemy-controlled spirit". Never a map's, which no
+   * one controls.
+   */
+  | "enemy-spirit"
   /** A living minion the caster made (#1836): Putrid Flesh's "target minion". */
   | "own-minion"
   /** A living minion on the caster's team, whoever made it (#1836): Feast for the Dead's. */
@@ -144,7 +150,13 @@ export type CountRule =
   /** Living foes of the caster within `radius` of the caster. */
   | { readonly kind: "foes-within"; readonly radius: number }
   /** Living allies of the caster within `radius` of the caster, the caster included (#1955). */
-  | { readonly kind: "allies-within"; readonly radius: number };
+  | { readonly kind: "allies-within"; readonly radius: number }
+  /**
+   * The skills of `attributeId` on the bar of the caster's living owner,
+   * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
+   * your Beast Mastery skills that is recharging". No owner: 0.
+   */
+  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -262,12 +274,23 @@ export interface EnergyGainToCaster {
   readonly perUsedSkillEnergy?: true;
   /** More for each of a count, in the same gain (#1760): Channeling's. */
   readonly per?: PerCount;
+  /**
+   * `owner`: the living owner of the caster, a pet, gains it, as
+   * Scavenger Strike's "you gain 3...15 Energy" (#1957). No owner: nobody.
+   */
+  readonly recipient?: "owner";
+  /**
+   * Per status of this category any earlier `remove-status` of this use
+   * took off anyone, a splash's included (#1954): Hex Eater Signet's "1...4
+   * Energy for each hex removed this way". None removed: no gain.
+   */
+  readonly perRemoved?: StatusCategory;
   readonly toTarget?: never;
 }
 
 export interface EnergyGainToTarget extends Omit<
   EnergyGainToCaster,
-  "perEnergyLost" | "perOwnCreatureWithin" | "toTarget"
+  "perEnergyLost" | "perOwnCreatureWithin" | "perRemoved" | "recipient" | "toTarget"
 > {
   /**
    * The effect's target gains it, not its caster (#1485): in a status
@@ -277,6 +300,8 @@ export interface EnergyGainToTarget extends Omit<
   readonly toTarget: true;
   readonly perEnergyLost?: never;
   readonly perOwnCreatureWithin?: never;
+  readonly perRemoved?: never;
+  readonly recipient?: never;
 }
 
 /**
@@ -284,11 +309,14 @@ export interface EnergyGainToTarget extends Omit<
  * skill that is not recharging, each capped at its cost, as a hit's
  * strike (#977). `perTarget`: once for each target the skill hit, as
  * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ * `recipient: "owner"`: the caster's living owner, a pet's, gains them
+ * instead, as Ferocious Strike's (#1957); no owner, nobody.
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
   readonly strikes: number;
   readonly perTarget?: true;
+  readonly recipient?: "owner";
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
@@ -382,6 +410,8 @@ export interface LoseHealthToEffect {
  * with `durationMultiplier` times the time it had left (#1540): Plague
  * Signet's "with 100...200% of their remaining durations", Plague Touch's 1.
  * `healPerCondition`: the caster is healed that much per condition moved.
+ * A `count` of `Infinity` moves them all; a giver who is the taker, as
+ * Martyr's caster among its party (#1954), keeps its own as they are.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
@@ -400,6 +430,13 @@ export interface TransferConditionsEffect {
 export interface SpreadConditionsEffect {
   readonly kind: "spread-conditions";
   readonly radius: number;
+  /**
+   * Each copy lands with this many percent more time than the target's
+   * has left, at most `maxSeconds` (#1954): Extend Conditions' "durations
+   * ... increased by 5...100% (maximum 30 seconds)". Absent: the same time.
+   */
+  readonly extendPercent?: Magnitude;
+  readonly maxSeconds?: number;
 }
 
 /**
@@ -450,9 +487,10 @@ export interface RemoveStatusEffect {
   readonly category: StatusCategory;
   /**
    * How many, newest first; `"all"` as Restore Condition's "remove all
-   * conditions". Ignored when `perRemoved` is set.
+   * conditions"; a `Magnitude` as Divert Hexes' "remove up to 1...3 hexes"
+   * (#1954). Ignored when `perRemoved` is set.
    */
-  readonly count: number | "all";
+  readonly count: number | "all" | Magnitude;
   /**
    * Only statuses of this profession (`StatusDefinition.profession`), as
    * "lose 1 Dervish enchantment" (#845). Absent: any.
@@ -481,6 +519,12 @@ export interface RemoveStatusEffect {
    * hex (maximum 1...7...8)" (#1205). Absent: `count` as it is.
    */
   readonly perRemoved?: { readonly category: StatusCategory; readonly max: Magnitude };
+  /**
+   * Only the status the newest earlier `status-removed` of `category` in
+   * this use took off, whoever bore it (#1954): Mirror of Disenchantment's
+   * "also lose that same enchantment". None removed: nothing.
+   */
+  readonly sameAsRemoved?: true;
 }
 
 /**
@@ -639,6 +683,16 @@ export interface CompanionGainsStatusEffect {
 }
 
 /**
+ * The caster's living pet moves beside the effect's target at once and
+ * attacks it (#1966): Strike as One's "your animal companion instantly
+ * moves to your target". Once however many targets; no pet, a dead one
+ * or a dead target: nothing. A pet at heel moves and does not attack.
+ */
+export interface CompanionStepsToTargetEffect {
+  readonly kind: "companion-steps-to-target";
+}
+
+/**
  * Apply `effects` to every foe of the caster within `radius` of the
  * effect's target, the target itself excluded (#885), as Death Blossom's
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
@@ -671,9 +725,17 @@ export interface SplashEffect {
   readonly around?: "caster";
   /**
    * At most this many, the nearest to the centre first, a tie by id
-   * (#1316): Explosive Growth's "up to 5 foes". `undefined`: all of them.
+   * (#1316): Explosive Growth's "up to 5 foes", or by attribute, as Hex
+   * Eater Signet's "up to 2...5 adjacent allies" (#1954). `undefined`:
+   * all of them.
    */
-  readonly maxTargets: number | undefined;
+  readonly maxTargets: number | Magnitude | undefined;
+  /**
+   * Only those bearing a status of this category, picked before
+   * `maxTargets` (#1954): Hex Eater Signet's allies "each lose one hex"
+   * spend no slot on one with none. Absent: anyone.
+   */
+  readonly onlyBearing?: StatusCategory;
   readonly effects: readonly UnconditionalEffect[];
 }
 
@@ -791,6 +853,16 @@ export interface CopyRemovedEffect {
  */
 export interface CopyDisabledEffect {
   readonly kind: "copy-disabled";
+}
+
+/**
+ * The slot of the skill resolving holds a copy of the first elite from
+ * the left on the target's bar that is not a form, for `seconds` (#1965):
+ * Arcane Mimicry's. None: no copy.
+ */
+export interface CopyEliteEffect {
+  readonly kind: "copy-elite";
+  readonly seconds: number;
 }
 
 /**
@@ -936,17 +1008,29 @@ export interface CreatureTemplate {
  * alive" or Life's heal: killed, destroyed or at the end of its lifespan,
  * every living non-spirit of `affects` within `radius` of it takes, or
  * is healed, `perSecondAlive` × its whole seconds alive, at most `max`.
- * Damage is typeless, from its owner.
+ * Damage is typeless, from its owner. `"apply-status"`, Lacerate's
+ * (#1956): every one of them strictly below `belowHealthFraction` of its
+ * maximum gets `statusId` for `durationSeconds`, from its owner.
  */
-export interface DeathBurst {
-  readonly effect: "damage" | "heal";
-  /** Scaled by its owner, read once at summoning (#1603). */
-  readonly perSecondAlive: Magnitude;
-  /** `undefined`: no cap. */
-  readonly max: number | undefined;
-  readonly affects: "allies" | "foes";
-  readonly radius: number;
-}
+export type DeathBurst =
+  | {
+      readonly effect: "damage" | "heal";
+      /** Scaled by its owner, read once at summoning (#1603). */
+      readonly perSecondAlive: Magnitude;
+      /** `undefined`: no cap. */
+      readonly max: number | undefined;
+      readonly affects: "allies" | "foes" | "all";
+      readonly radius: number;
+    }
+  | {
+      readonly effect: "apply-status";
+      readonly statusId: StatusId;
+      /** Scaled by its owner, read once at summoning. */
+      readonly durationSeconds: Magnitude;
+      readonly belowHealthFraction: number;
+      readonly affects: "allies" | "foes" | "all";
+      readonly radius: number;
+    };
 
 /**
  * What a spirit does when a non-spirit body dies within its
@@ -1046,6 +1130,16 @@ export interface Aura {
   readonly affects: "all" | "allies" | "foes";
   /** Centre to centre, world units. Walls do not block it. */
   readonly radius: number;
+}
+
+/**
+ * The caster takes control of its target, a spirit (#1965): Signet of
+ * Binding's. It is the caster's from then on, on its team, and leaves
+ * with it, keeping what it has left. Acts on each target; the simulation
+ * moves it, as it makes a `summon`'s. A dead caster takes nothing.
+ */
+export interface TakeControlEffect {
+  readonly kind: "take-control";
 }
 
 /**
@@ -1406,6 +1500,7 @@ export type UnconditionalEffect =
   | OvercastEffect
   | CasterGainsStatusEffect
   | CompanionGainsStatusEffect
+  | CompanionStepsToTargetEffect
   | RechargeFasterEffect
   | RechargeResetEffect
   | SplashEffect
@@ -1419,10 +1514,12 @@ export type UnconditionalEffect =
   | DisableSkillEffect
   | CopyRemovedEffect
   | CopyDisabledEffect
+  | CopyEliteEffect
   | LengthenRechargeEffect
   | DisableOwnSkillsEffect
   | ChainMarkEffect
   | SummonEffect
+  | TakeControlEffect
   | CreateGroundEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
@@ -1567,6 +1664,12 @@ export interface AttackSkillRule {
    * +10 damage". One damage number, not a second hit. `undefined`: none.
    */
   readonly conditionalBonus: ConditionalBonus | undefined;
+  /**
+   * More bonus for each of a count, read as the skill's blow is made
+   * (#1957), capped at its `max`: Enraged Lunge's "+3...23 damage for
+   * each of your Beast Mastery skills that is recharging". Absent: none.
+   */
+  readonly bonusPer?: PerCount;
   /**
    * When a blow of it is a critical hit whatever the roll (#1315):
    * `"always"`, Critical Strike's "results in a critical hit"; a
@@ -1745,6 +1848,11 @@ export interface Skill {
    */
   readonly easilyInterrupted?: true;
   /**
+   * A touch skill (#1966): its corpus text has its user touch the target,
+   * "target touched foe". What "Can't Touch This!" fails. Absent: not one.
+   */
+  readonly touch?: true;
+  /**
    * GW1's "Health gain from Divine Favor is doubled for this spell"
    * (#1754): Healing Touch's. Absent: the normal bonus.
    */
@@ -1920,7 +2028,8 @@ export interface Combatant {
    * cleared around it by `withRankLoan`; empty otherwise.
    */
   heldAttributeDeltas: readonly AttributeDelta[];
-  readonly team: number;
+  /** A spirit someone takes control of changes sides (#1965). */
+  team: number;
   /** Set once health reaches 0; a dead combatant is skipped by the simulation. */
   dead: boolean;
   /** Active conditions, hexes and enchantments. */
@@ -2036,6 +2145,11 @@ export interface SkillContext {
    * `SkillResolution.own`. Absent for a trigger, which is no use.
    */
   readonly own?: OwnSkillBoost | undefined;
+  /**
+   * Whose attribute ranks scale the statuses these effects put on (#1976),
+   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965).
+   */
+  readonly ranksFrom?: Combatant | undefined;
 }
 
 /**

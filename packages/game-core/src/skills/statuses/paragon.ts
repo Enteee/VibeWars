@@ -56,7 +56,9 @@ export type ParagonStatusId =
   | "godspeed"
   | "lead-the-way"
   | "help"
-  | "brace-yourself";
+  | "brace-yourself"
+  // Touch riders (#1966).
+  | "cant-touch-this";
 
 export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition>> = {
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
@@ -295,10 +297,11 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       amount: { flat: 18 },
     },
   }),
-  // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
+  // PvP "Never Surrender!": +1...4 Health regeneration (#923), at the
+  // shouter's Command (#1976).
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
     profession: "paragon",
-    healthPips: 4,
+    healthPips: { scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 4 } },
   }),
 
   // Paragon echoes (#1423): each renews, or fires, whenever a chant or a
@@ -509,5 +512,11 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
         skillId: "paragon.brace-yourself",
       },
     ],
+  }),
+  // "For 20 seconds, the next 1...5 touch skills used against you fail"
+  // (PvP, #1966): 4.
+  "cant-touch-this": define("cant-touch-this", '"Can\'t Touch This!"', "shout", {
+    profession: "paragon",
+    failsFoeTouchSkills: 4,
   }),
 };

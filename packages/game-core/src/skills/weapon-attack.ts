@@ -23,6 +23,7 @@ import {
   loseHealth,
   resolveSkillEffects,
   stateHolds,
+  withPerCount,
   type CombatEvent,
   type SkillOutcome,
   type SkillResolution,
@@ -444,8 +445,11 @@ export const PLAIN_BLOW: BlowRule = {
   criticalWhen: undefined,
 };
 
-/** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
-export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
+/**
+ * The blow `skill` makes of `caster`'s weapon, its bonus at the caster's
+ * ranks, with its `bonusPer` counted now (#1957).
+ */
+export function skillBlow(skill: Skill, caster: Combatant, surroundings: Surroundings): BlowRule {
   const rule = blowRuleOf(skill);
   const bonusDamage = rule?.bonusDamage;
   const conditionalBonus = rule?.conditionalBonus;
@@ -457,7 +461,13 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   });
   return {
     weaponDamage: rule?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
-    bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+    bonus: withPerCount(
+      bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+      rule?.bonusPer,
+      caster,
+      undefined,
+      surroundings,
+    ),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
     damageType: rule?.damageType,
     armorPenetration: rule?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
@@ -613,11 +623,80 @@ export function attackHitRiders(
   spent: readonly StatusId[],
 ): CombatEvent[] {
   const onHit = weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings);
+  applyRiders(
+    "onAttackHit",
+    attacker,
+    victim,
+    mainHand,
+    withAttackSkill,
+    rng,
+    rules,
+    surroundings,
+    fired,
+    spent,
+  );
+  const events: CombatEvent[] = [...onHit];
+  for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
+    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
+  }
+  events.push(...ownerPaysForMinionHit(attacker, surroundings));
+  return events;
+}
+
+/**
+ * What the attacker's statuses do to `victim` for blocking a blow of
+ * `mainHand` (#1974): every active status's `onAttackBlocked`, as Glass
+ * Arrows' Bleeding, each onto `fired` under its own skill. Filtered as
+ * `attackHitRiders` filters, `spent` included.
+ */
+export function attackBlockedRiders(
+  attacker: Combatant,
+  victim: Combatant,
+  mainHand: ResolvedWeapon,
+  withAttackSkill: boolean,
+  rng: SimulationRng,
+  rules: CombatRules,
+  surroundings: Surroundings,
+  fired: FiredTrigger[],
+  spent: readonly StatusId[],
+): void {
+  applyRiders(
+    "onAttackBlocked",
+    attacker,
+    victim,
+    mainHand,
+    withAttackSkill,
+    rng,
+    rules,
+    surroundings,
+    fired,
+    spent,
+  );
+}
+
+/**
+ * Each of the attacker's statuses' `which` rider onto `victim`, active
+ * and `spent` alike: one for attack skills only rides a blow
+ * `withAttackSkill`, one for a weapon class only a blow of that weapon,
+ * and a non-physical blow only a weapon spell's.
+ */
+function applyRiders(
+  which: "onAttackHit" | "onAttackBlocked",
+  attacker: Combatant,
+  victim: Combatant,
+  mainHand: ResolvedWeapon,
+  withAttackSkill: boolean,
+  rng: SimulationRng,
+  rules: CombatRules,
+  surroundings: Surroundings,
+  fired: FiredTrigger[],
+  spent: readonly StatusId[],
+): void {
   const physical = isPhysicalDamage(mainHand.damageType);
   const active = attacker.statuses.active;
   for (const status of [...active, ...spent.map((id) => ({ id }))]) {
     const definition = getStatusDefinition(status.id);
-    const rider = definition.onAttackHit;
+    const rider = definition[which];
     if (
       rider === undefined ||
       isSuppressed(active, status) ||
@@ -638,12 +717,6 @@ export function attackHitRiders(
       fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
     }
   }
-  const events: CombatEvent[] = [...onHit];
-  for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
-    events.push({ kind: "status-expired", targetId: attacker.id, statusId });
-  }
-  events.push(...ownerPaysForMinionHit(attacker, surroundings));
-  return events;
 }
 
 /**
@@ -875,13 +948,24 @@ function strike(
     bearerFailedToHit(attacker, events);
     return;
   }
+  const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
   if (!unblockable && blocks(victim, attacker.id, "melee", rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     bearerFailedToHit(attacker, events);
     attackReached(victim, events);
+    attackBlockedRiders(
+      attacker,
+      victim,
+      snapshot.mainHand,
+      false,
+      rng,
+      rules,
+      swing.surroundings,
+      fired,
+      attacked.spent,
+    );
     return;
   }
-  const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
   const before = victim.health;
   // Order of Undeath's "+13 damage" on its bearer's minions (#1915).
   const owner = minionOwner(attacker, swing.surroundings);
@@ -1033,7 +1117,7 @@ export function resolveAttackSkillOutcome(
     return outcome.events;
   };
   const { skill, caster, rng, rules, surroundings } = resolution;
-  const blow = skillBlow(skill, caster);
+  const blow = skillBlow(skill, caster, surroundings);
   const rule = blowRuleOf(skill);
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
@@ -1111,6 +1195,17 @@ export function resolveAttackSkillOutcome(
         events.push({ kind: "attack-blocked", targetId: victim.id });
         bearerFailedToHit(caster, events);
         attackReached(victim, events);
+        attackBlockedRiders(
+          caster,
+          victim,
+          snapshot.mainHand,
+          true,
+          rng,
+          rules,
+          surroundings,
+          fired,
+          attacked.spent,
+        );
         blocked.push(victim);
         failed.push(victim);
         continue;
@@ -1171,6 +1266,7 @@ export function resolveAttackSkillOutcome(
     rechargeLongerSeconds,
     summons: [],
     grounds: [],
+    taken: [],
     skipped: undefined,
   };
 }

@@ -57,6 +57,7 @@ export type ActivationRejection =
   | "invalid-target-enemy"
   // A spirit skill on anything but a living spirit of your team (#1309).
   | "invalid-target-not-allied-spirit"
+  | "invalid-target-not-enemy-spirit"
   | "invalid-target-not-own-minion"
   | "invalid-target-not-allied-minion"
   // A summoned-creature skill on anything but a living spirit or minion of
@@ -199,6 +200,11 @@ export function targetRuleAllows(
       return isAlly && target.creatureKind === "spirit"
         ? undefined
         : "invalid-target-not-allied-spirit";
+    case "enemy-spirit":
+      // A map's spirit answers to nobody (#1965): nobody's to take.
+      return isEnemy && target.creatureKind === "spirit" && target.creatureOwnerId !== undefined
+        ? undefined
+        : "invalid-target-not-enemy-spirit";
     case "own-minion":
       return target.creatureKind === "minion" && target.creatureOwnerId === caster.id
         ? undefined

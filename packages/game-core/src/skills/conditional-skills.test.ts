@@ -9,6 +9,7 @@ import { AREA_NEARBY } from "../distances.js";
 import { vec2 } from "../vec2.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Surroundings } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The skills whose effects depend on an earlier effect (#521, #793, #920), each in a
@@ -96,8 +97,8 @@ describe("Power Drain (#521)", () => {
 describe("Shatter Enchantment (#521)", () => {
   it("removes the newest enchantment and deals 83 damage", () => {
     const target = foe();
-    target.statuses.apply("guardian", 10, "ally");
-    target.statuses.apply("regeneration", 10, "ally");
+    target.statuses.apply("guardian", 10, "ally", NO_RANKS);
+    target.statuses.apply("regeneration", 10, "ally", NO_RANKS);
     use(caster(), "mesmer.shatter-enchantment", target);
     expect(target.statuses.has("regeneration")).toBe(false);
     expect(target.statuses.has("guardian")).toBe(true);
@@ -106,7 +107,7 @@ describe("Shatter Enchantment (#521)", () => {
 
   it("deals nothing to a foe with no enchantment", () => {
     const target = foe();
-    target.statuses.apply("bleeding", 10, "ally");
+    target.statuses.apply("bleeding", 10, "ally", NO_RANKS);
     use(caster(), "mesmer.shatter-enchantment", target);
     expect(target.statuses.has("bleeding")).toBe(true);
     expect(target.health).toBe(500);
@@ -117,7 +118,7 @@ describe("Drain Enchantment (#521)", () => {
   it("gives its caster 15 energy and 104 health when an enchantment goes", () => {
     const mesmer = caster({ health: 200 });
     const target = foe();
-    target.statuses.apply("guardian", 10, "ally");
+    target.statuses.apply("guardian", 10, "ally", NO_RANKS);
     use(mesmer, "mesmer.drain-enchantment", target);
     expect(target.statuses.has("guardian")).toBe(false);
     expect(mesmer.energy).toBe(15 + 15);
@@ -136,8 +137,8 @@ describe("Drain Enchantment (#521)", () => {
 describe("Mend Condition (#521)", () => {
   it("removes the newest condition and heals the ally for 57", () => {
     const ally = makeCombatant({ id: "ally", health: 300 });
-    ally.statuses.apply("poison", 10, "foe");
-    ally.statuses.apply("bleeding", 10, "foe");
+    ally.statuses.apply("poison", 10, "foe", NO_RANKS);
+    ally.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     use(caster(), "monk.mend-condition", ally);
     expect(ally.statuses.has("bleeding")).toBe(false);
     expect(ally.statuses.has("poison")).toBe(true);
@@ -307,10 +308,10 @@ describe("Leech Signet (#920)", () => {
 describe("Dwayna's Kiss (#920)", () => {
   it("heals 51, and 30 more for each enchantment and hex on the ally, as one heal (#1760)", () => {
     const ally = makeCombatant({ id: "ally", health: 100 });
-    ally.statuses.apply("guardian", 10, "ally");
-    ally.statuses.apply("regeneration", 10, "ally");
-    ally.statuses.apply("malaise", 10, "foe");
-    ally.statuses.apply("bleeding", 10, "foe");
+    ally.statuses.apply("guardian", 10, "ally", NO_RANKS);
+    ally.statuses.apply("regeneration", 10, "ally", NO_RANKS);
+    ally.statuses.apply("malaise", 10, "foe", NO_RANKS);
+    ally.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     expect(use(caster(), "monk.dwaynas-kiss", ally)).toEqual([
       { kind: "heal", targetId: "ally", amount: 51 + 90 },
     ]);

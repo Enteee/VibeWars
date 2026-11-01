@@ -501,6 +501,33 @@ describe("describeSkill", () => {
     );
   });
 
+  it("words what a pet attack gives its owner (#1957)", () => {
+    const ranks = new Map([["ranger.beast-mastery", 12]]);
+    const lines = (id: string): string[] =>
+      describeSkill(skill(id), ranks).effects.map((line) => line.text);
+    expect(lines("ranger.predators-pounce")).toEqual(["+29 damage", "Your pet gains 41 health"]);
+    expect(lines("ranger.ferocious-strike")).toEqual([
+      "+25 damage",
+      "You gain 9 energy",
+      "You gain 1 strike of adrenaline",
+    ]);
+    expect(lines("ranger.enraged-lunge")).toEqual([
+      "+19 damage for each of your recharging Beast Mastery skills (maximum 60)",
+    ]);
+  });
+
+  it("words the mantras (#1964)", () => {
+    expect(describeStatus("mantra-of-concentration")).toBe(
+      "the next time you would be interrupted, you are not",
+    );
+    expect(describeStatus("mantra-of-resolve")).toBe(
+      "you cannot be interrupted; each time you would be, lose 5 Energy or this ends",
+    );
+    expect(describeStatus("mantra-of-flame")).toBe(
+      "45% less fire damage. Whenever it takes fire damage from a foe: gain 2 energy",
+    );
+  });
+
   it("words the PvP forms (#1951)", () => {
     expect(describeStatus("shadow-form")).toBe(
       "hostile spells targeting you fail, attacks against you miss. " +
@@ -605,6 +632,7 @@ describe("describeSkill", () => {
           (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
           (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
           (rule?.conditionalBonus === undefined ? 0 : 1) +
+          (rule?.bonusPer === undefined ? 0 : 1) +
           (rule?.criticalWhen === undefined ? 0 : 1) +
           ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(rule?.onBlocked ?? []) +
@@ -841,7 +869,14 @@ describe("attack skills (#417)", () => {
   });
 
   it("words Endure Pain's maximum, Warrior's Endurance's cap and a weapon-bound trigger (#1359)", () => {
-    expect(describeStatus("endure-pain")).toBe("+258 maximum health");
+    // At the warrior's Strength (#1976); its range where that is not known.
+    expect(describeStatus("endure-pain", new Map([["warrior.strength", 12]]))).toBe(
+      "+258 maximum health",
+    );
+    expect(describeStatus("endure-pain", new Map([["warrior.strength", 0]]))).toBe(
+      "+90 maximum health",
+    );
+    expect(describeStatus("endure-pain")).toBe("+90...258 maximum health");
     expect(describeStatus("warriors-endurance")).toBe(
       "whenever it hits with a melee attack: gain 3 energy, never above 55",
     );
@@ -1140,7 +1175,10 @@ describe("signets and shouts (#524)", () => {
   });
 
   it("says a shout reaches allies in earshot, and when its effect ends", () => {
-    const description = describeSkill(skill("warrior.watch-yourself"));
+    const description = describeSkill(
+      skill("warrior.watch-yourself"),
+      new Map([["warrior.tactics", 12]]),
+    );
     expect(description.targetText).toBe("Allies in earshot");
     expect(description.rangeText).toBe("350 radius");
     expect(description.castTime).toBe("Instant");
@@ -1233,5 +1271,59 @@ describe("Predatory Bond, said to the Ranger who casts it (#1865)", () => {
     expect(text).toContain("your pet's attacks heal you for 25");
     expect(text).not.toContain("your physical attacks");
     expect(text).not.toContain("Heals its owner");
+  });
+});
+
+describe("party-wide condition and hex moves (#1954)", () => {
+  const texts = (id: string, attributeId: string): string[] =>
+    describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+
+  it("says what each moves, strips or gives, at rank 12", () => {
+    expect(texts("monk.martyr", "")).toEqual([
+      "Take all conditions from your allies, with the time each has left",
+    ]);
+    expect(texts("monk.divert-hexes", "monk.protection-prayers")).toEqual([
+      "Removes up to 3 hexes",
+      "Removes one condition for each hex removed (max 3)",
+      "Heals 63 for each hex removed",
+    ]);
+    expect(texts("mesmer.mirror-of-disenchantment", "")).toEqual([
+      "Removes 1 enchantment",
+      "All its party members lose that same enchantment",
+    ]);
+    expect(texts("mesmer.extend-conditions", "mesmer.inspiration-magic")).toEqual([
+      "Nearby foes get the target's conditions, with 81% more time (max 30s)",
+    ]);
+    expect(texts("mesmer.hex-eater-signet", "mesmer.inspiration-magic")).toEqual([
+      "Removes 1 hex",
+      "Up to 4 adjacent allies with a hex lose 1 hex",
+      "Gain 3 energy for each hex removed",
+    ]);
+  });
+});
+
+describe("blocks that pay or pay off (#1974)", () => {
+  const texts = (id: string, attributeId: string): string[] =>
+    describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+
+  it("says what each block costs or gives, at rank 12", () => {
+    expect(texts("mesmer.distortion", "mesmer.illusion-magic")).toEqual([
+      "For 4s, 75% chance to block attacks. Each block costs you 2 Energy or this ends",
+    ]);
+    expect(texts("monk.shield-guardian", "monk.protection-prayers")).toEqual([
+      "Applies Shield Guardian for 3s (75% chance to block attacks, ends after it takes effect once. When you block, you and allies in earshot are healed for 30)",
+    ]);
+    expect(texts("ranger.glass-arrows", "ranger.expertise")).toEqual([
+      "For 30s, bow attacks deal 16 more damage, foes that block your bow attacks get Bleeding for 18s",
+    ]);
+    expect(texts("warrior.furious-axe", "warrior.axe-mastery")).toEqual([
+      "+29 damage",
+      "If blocked: gain 3 strikes of adrenaline",
+    ]);
+    expect(texts("warrior.leviathans-sweep", "warrior.strength")).toEqual([
+      "+17 damage",
+      "If blocked: knocks down for 2s",
+      "If blocked: deals 29 damage",
+    ]);
   });
 });
