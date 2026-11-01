@@ -32,6 +32,8 @@ const NO_BOT_USE = new Set([
   // Dwayna's Sorrow (#1762): a heal that waits on an ally's death is
   // nothing the bot plans for.
   "monk.dwaynas-sorrow",
+  // Death Nova (#1931), the same, a burst that waits on an ally's death.
+  "necromancer.death-nova",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",

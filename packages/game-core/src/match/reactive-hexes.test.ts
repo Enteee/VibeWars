@@ -1,86 +1,86 @@
 import { describe, expect, it } from "vitest";
 
-import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
-import { WEAPONS, type Weapon } from "../equipment/weapons.js";
+import { AREA_ADJACENT } from "../distances.js";
+import type { DamageType } from "../equipment/types.js";
+import { unarmedResolvedEquipment } from "../equipment/resolve.js";
+import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { describeStatus } from "../skills/describe.js";
-import { strikesOf } from "../skills/testing.js";
+import { describeSkill, describeStatus } from "../skills/describe.js";
+import { applyEffects } from "../skills/effects.js";
+import { getSkill } from "../skills/catalog.js";
+import type { StatusId } from "../skills/status.js";
+import type { Combatant, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 
+/**
+ * Casting-state hexes and Death Nova (#1931), at rank 12: Spinal Shivers
+ * and Shivers of Dread answer a cold hit on a foe using a skill, Power
+ * Leech and Power Flux interrupt a spell or chant and hex the foe
+ * either way, Death Nova bursts from a dead ally.
+ */
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
-const BACKFIRE = "mesmer.backfire";
-const EMPATHY = "mesmer.empathy";
-const SWIFT_CHOP = "warrior.swift-chop";
-const FIREBALL = "elementalist.fireball";
-const MALAISE = "necromancer.malaise";
-const HEALING_SIGNET = "warrior.healing-signet";
-const POWER_SPIKE = "mesmer.power-spike";
-const SEVER_ARTERY = "warrior.sever-artery";
-const DIVERSION = "mesmer.diversion";
+const SHIVERS = ["spinal-shivers", "shivers-of-dread"] as const;
 
-function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
-  return {
-    ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-    mainHand: {
-      weapon,
-      attributeId,
-      damageType: weapon.damageType,
-      requirementMet: true,
-      creatureDamageScale: undefined,
-    },
-  };
-}
-
-/** A rank-12 fighter with `weapon`, Swift Chop, two spells and a signet. */
-function fighter(id: string, spawn: Vec2, weapon: Weapon = WEAPONS.axe): ParticipantSpec {
+/**
+ * `f` on team 0 casts: a 2 s spell, a 1 s chant, an instant shout, and a
+ * second spell. `n` the Necromancer and `m` the Mesmer on team 1; `b` their
+ * ally, `near` and `far` two more of team 0.
+ */
+function participant(id: string, team: number, skillBar: string[], spawn: Vec2): ParticipantSpec {
   return {
     id,
-    team: 0,
-    skillBar: [SWIFT_CHOP, FIREBALL, MALAISE, HEALING_SIGNET],
+    team,
+    skillBar,
     attributeRanks: new Map([
-      ["warrior.axe-mastery", 12],
-      ["ranger.marksmanship", 12],
       ["elementalist.fire-magic", 12],
+      ["paragon.leadership", 12],
+      ["paragon.command", 12],
       ["necromancer.curses", 12],
+      ["necromancer.death-magic", 12],
+      ["mesmer.inspiration-magic", 12],
+      ["mesmer.domination-magic", 12],
     ]),
-    equipment: wielding(
-      weapon,
-      weapon === WEAPONS.flatbow ? "ranger.marksmanship" : "warrior.axe-mastery",
-    ),
-    maxHealth: 1e4,
-    maxEnergy: 1000,
-    spawn,
-    facing: 0,
-  };
-}
-
-/** The Mesmer: Backfire, Empathy, Power Spike and Diversion, at rank 12. */
-function mesmer(id: string, spawn: Vec2): ParticipantSpec {
-  return {
-    id,
-    team: 1,
-    skillBar: [BACKFIRE, EMPATHY, POWER_SPIKE, DIVERSION],
-    attributeRanks: new Map([["mesmer.domination-magic", 12]]),
     equipment: unarmedResolvedEquipment(60),
-    maxHealth: 1e6,
-    maxEnergy: 1000,
+    maxHealth: 1e4,
+    maxEnergy: 100,
     spawn,
     facing: 0,
   };
 }
 
-/** A fighter `a` next to Mesmer `m`. */
-function sim(weapon: Weapon = WEAPONS.axe, at: Vec2 = vec2(40, 0)): MatchSimulation {
+function sim(): MatchSimulation {
   return new MatchSimulation({
     seed: "reactive-hexes",
-    participants: [fighter("a", vec2(0, 0), weapon), mesmer("m", at)],
+    participants: [
+      participant(
+        "f",
+        0,
+        [
+          "elementalist.fireball",
+          "paragon.anthem-of-flame",
+          "paragon.fall-back",
+          "elementalist.flare",
+        ],
+        vec2(0, 0),
+      ),
+      participant(
+        "n",
+        1,
+        ["necromancer.spinal-shivers", "necromancer.shivers-of-dread", "necromancer.death-nova"],
+        vec2(300, 0),
+      ),
+      participant("m", 1, ["mesmer.power-leech", "mesmer.power-flux"], vec2(300, 40)),
+      participant("b", 1, [], vec2(600, 0)),
+      participant("near", 0, [], vec2(600 + AREA_ADJACENT / 2, 0)),
+      participant("far", 0, [], vec2(600 + AREA_ADJACENT * 4, 0)),
+    ],
   });
 }
 
-function get(match: MatchSimulation, id: string) {
+function get(match: MatchSimulation, id: string): Combatant {
   const found = match.get(id);
   if (found === undefined) {
     throw new Error(`no participant ${id}`);
@@ -90,664 +90,230 @@ function get(match: MatchSimulation, id: string) {
 
 function stepFor(match: MatchSimulation, seconds: number): CombatLogEntry[] {
   const log: CombatLogEntry[] = [];
-  for (let i = 0; i < Math.round(seconds / DT); i += 1) {
+  for (let i = 0; i < Math.max(1, Math.round(seconds / DT)); i += 1) {
     log.push(...match.step(DT).log);
   }
   return log;
 }
 
-/** `a` uses its skill in `slot` on `m`. */
-function use(match: MatchSimulation, slot: number): void {
-  match.setTarget("a", "m");
-  expect(match.requestSkill("a", slot)?.check).toEqual({ ok: true });
+/** `id` uses its skill in `slot` on `target`. */
+function use(match: MatchSimulation, id: string, slot: number, target: string): void {
+  match.setTarget(id, target);
+  expect(match.requestSkill(id, slot)?.check).toEqual({ ok: true });
 }
 
-/** Every entry a hex's trigger logged. */
-function fired(log: readonly CombatLogEntry[], skillId: string): CombatLogEntry[] {
-  return log.filter((entry) => entry.skillId === skillId && entry.sourceId === "m");
+/** `n` hits `f` for 10 damage of `type`, outside any skill. */
+function hit(match: MatchSimulation, type: DamageType): void {
+  applyEffects([{ kind: "damage", amount: { flat: 10 }, type, armorPenetration: 0 }], {
+    caster: get(match, "n"),
+    target: get(match, "f"),
+    rng: createRng(1),
+    rules: RULES.combat,
+    surroundings: new Map(),
+    usedSkill: undefined,
+  });
 }
 
-function damageTo(entries: readonly CombatLogEntry[], id: string): number[] {
-  return entries.flatMap((entry) =>
-    entry.events.flatMap((event) =>
-      event.kind === "damage" && event.targetId === id ? [event.amount] : [],
-    ),
+/** `far` burns `id` to death, as the simulation sees it; what happened meanwhile. */
+function kill(match: MatchSimulation, id: string): CombatLogEntry[] {
+  const victim = get(match, id);
+  victim.statuses.apply("burning", 10, "far");
+  victim.health = 0.2;
+  const log = stepFor(match, 4 * DT);
+  expect(victim.dead).toBe(true);
+  return log;
+}
+
+function skill(id: string): Skill {
+  const found = getSkill(id);
+  if (found === undefined) {
+    throw new Error(`no skill ${id}`);
+  }
+  return found;
+}
+
+function interrupted(log: readonly CombatLogEntry[], id: string): boolean {
+  return log.some(({ events }) =>
+    events.some((event) => event.kind === "interrupted" && event.targetId === id),
   );
 }
 
-describe("Backfire (#469)", () => {
-  it("is cast as the backfire hex", () => {
-    const match = sim(WEAPONS.axe, vec2(200, 0));
-    match.setTarget("m", "a");
-    expect(match.requestSkill("m", 0)?.check).toEqual({ ok: true });
-    stepFor(match, 3.5);
-    expect(get(match, "a").statuses.get("backfire")?.sourceId).toBe("m");
-    expect(describeStatus("backfire")).toBe("takes 119 damage whenever it casts a spell");
-  });
-
-  it("a finished spell costs its caster 119, credited to the Mesmer, after the spell", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("backfire", 10, "m");
-    use(match, 2);
-    const log = stepFor(match, 2.5);
-    expect(damageTo(fired(log, BACKFIRE), "a")).toEqual([119]);
-    const spell = log.findIndex((entry) => entry.skillId === MALAISE);
-    const backfire = log.findIndex((entry) => entry.skillId === BACKFIRE);
-    expect(spell).toBeGreaterThanOrEqual(0);
-    expect(backfire).toBeGreaterThan(spell);
-    expect(get(match, "m").statuses.has("malaise")).toBe(true);
-  });
-
-  it("fires once for each of two spells", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("backfire", 10, "m");
-    use(match, 2);
-    stepFor(match, 3);
-    use(match, 1);
-    expect(damageTo(fired(stepFor(match, 3), BACKFIRE), "a")).toEqual([119]);
-  });
-
-  it("fires as a flying spell is released, not when it lands", () => {
-    const match = sim(WEAPONS.axe, vec2(400, 0));
-    get(match, "a").statuses.apply("backfire", 10, "m");
-    use(match, 1);
-    const log = stepFor(match, 1 + 2 * DT);
-    expect(damageTo(fired(log, BACKFIRE), "a")).toEqual([119]);
-    expect(damageTo(log, "m")).toEqual([]);
-  });
-
-  it("an interrupted spell does nothing", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("backfire", 10, "m");
-    use(match, 2);
-    match.setTarget("m", "a");
-    expect(match.requestSkill("m", 2)?.check).toEqual({ ok: true });
-    const log = stepFor(match, 2);
-    expect(log.some((entry) => entry.events.some((event) => event.kind === "interrupted"))).toBe(
-      true,
-    );
-    expect(fired(log, BACKFIRE)).toEqual([]);
-  });
-
-  it("a signet or an attack skill does nothing", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("backfire", 10, "m");
-    expect(match.requestSkill("a", 3)?.check).toEqual({ ok: true });
-    stepFor(match, 2.5);
-    use(match, 0);
-    expect(fired(stepFor(match, 2), BACKFIRE)).toEqual([]);
-  });
-
-  it("a kill by Backfire is the Mesmer's", () => {
-    const match = sim();
-    const bearer = get(match, "a");
-    bearer.health = 100;
-    bearer.statuses.apply("backfire", 10, "m");
-    use(match, 2);
-    const entries = fired(stepFor(match, 2.5), BACKFIRE);
-    expect(entries.flatMap((entry) => entry.events.map((event) => event.kind))).toEqual([
-      "damage",
-      "death",
-    ]);
-    expect(bearer.dead).toBe(true);
-  });
-
-  it("its damage charges the bearer's adrenaline as a foe's hit (#827)", () => {
-    const a = fighter("a", vec2(0, 0));
-    const match = new MatchSimulation({
-      seed: "reactive-hexes",
-      participants: [
-        { ...a, skillBar: [...a.skillBar, SEVER_ARTERY], maxHealth: 4 * 119 },
-        mesmer("m", vec2(40, 0)),
-      ],
-    });
-    get(match, "a").statuses.apply("backfire", 10, "m");
-    use(match, 2);
-    expect(damageTo(fired(stepFor(match, 2.5), BACKFIRE), "a")).toEqual([119]);
-    expect(strikesOf(get(match, "a"), SEVER_ARTERY)).toBe(1);
-  });
-
-  it("does nothing once the Mesmer has left the match", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("backfire", 10, "m");
-    match.remove("m");
-    expect(match.requestSkill("a", 3)?.check).toEqual({ ok: true });
-    const log = stepFor(match, 2.5);
-    expect(log.some((entry) => entry.skillId === BACKFIRE)).toBe(false);
-    expect(get(match, "a").statuses.has("backfire")).toBe(true);
-  });
-});
-
-describe("Empathy (#469)", () => {
-  it("is cast as the empathy hex", () => {
-    const match = sim(WEAPONS.axe, vec2(200, 0));
-    match.setTarget("m", "a");
-    expect(match.requestSkill("m", 1)?.check).toEqual({ ok: true });
-    stepFor(match, 2.5);
-    expect(get(match, "a").statuses.get("empathy")?.sourceId).toBe("m");
-    expect(describeStatus("empathy")).toBe("takes 39 damage whenever it attacks");
-  });
-
-  it("each melee swing costs 39, armor or not, credited to the Mesmer", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("empathy", 13, "m");
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(match, 3);
-    const swings = log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "a");
-    expect(swings.length).toBeGreaterThanOrEqual(2);
-    expect(damageTo(fired(log, EMPATHY), "a")).toEqual(swings.map(() => 39));
-  });
-
-  it("each ranged release costs 39, before the arrow lands", () => {
-    const match = sim(WEAPONS.flatbow, vec2(600, 0));
-    get(match, "a").statuses.apply("empathy", 13, "m");
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    // Up to the first release, and not a tick further.
-    const log: CombatLogEntry[] = [];
-    for (let tick = 0; tick < 100 && fired(log, EMPATHY).length === 0; tick += 1) {
-      log.push(...match.step(DT).log);
-    }
-    expect(damageTo(fired(log, EMPATHY), "a")).toEqual([39]);
-    expect(damageTo(log, "m")).toEqual([]);
-  });
-
-  it("an attack skill costs 39 once", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("empathy", 13, "m");
-    use(match, 0);
-    expect(damageTo(fired(stepFor(match, 1), EMPATHY), "a")).toEqual([39]);
-  });
-
-  it("a blinded miss and a blocked blow cost 39 all the same", () => {
-    for (const status of ["blind", "guardian"] as const) {
+describe("Spinal Shivers and Shivers of Dread (#1931)", () => {
+  it("are cast as their hexes, for 34 seconds", () => {
+    for (const [slot, id] of SHIVERS.entries()) {
       const match = sim();
-      const bearer = get(match, "a");
-      bearer.statuses.apply("empathy", 13, "m");
-      if (status === "blind") {
-        bearer.statuses.apply("blind", 13, "m");
-      } else {
-        get(match, "m").statuses.apply("guardian", 13, "m");
+      use(match, "n", slot, "f");
+      stepFor(match, 2.5);
+      expect(get(match, "f").statuses.has(id)).toBe(true);
+      expect(
+        get(match, "f").statuses.active.find((status) => status.id === id)?.durationSeconds,
+      ).toBe(34);
+    }
+  });
+
+  it("a cold hit mid-cast interrupts the skill and costs the caster 4 Energy", () => {
+    for (const id of SHIVERS) {
+      const match = sim();
+      get(match, "f").statuses.apply(id, 34, "n");
+      use(match, "f", 0, "n");
+      stepFor(match, 0.25);
+      expect(get(match, "f").cast.isCasting).toBe(true);
+      get(match, "n").energy = 50;
+      hit(match, "cold");
+      const log = stepFor(match, DT);
+      expect(interrupted(log, "f"), id).toBe(true);
+      expect(get(match, "f").cast.isCasting).toBe(false);
+      expect(get(match, "n").energy).toBeCloseTo(46, 0);
+      expect(get(match, "f").statuses.has(id)).toBe(true);
+    }
+  });
+
+  it("answers several cold packets in one tick once", () => {
+    const match = sim();
+    get(match, "f").statuses.apply("spinal-shivers", 34, "n");
+    use(match, "f", 0, "n");
+    stepFor(match, 0.25);
+    get(match, "n").energy = 50;
+    hit(match, "cold");
+    hit(match, "cold");
+    stepFor(match, DT);
+    expect(get(match, "n").energy).toBeCloseTo(46, 0);
+  });
+
+  it("leaves an idle foe alone, and a fire hit on a casting one, at no cost", () => {
+    const idle = sim();
+    get(idle, "f").statuses.apply("spinal-shivers", 34, "n");
+    get(idle, "n").energy = 50;
+    hit(idle, "cold");
+    stepFor(idle, DT);
+    expect(get(idle, "n").energy).toBeCloseTo(50, 0);
+
+    const fire = sim();
+    get(fire, "f").statuses.apply("spinal-shivers", 34, "n");
+    use(fire, "f", 0, "n");
+    stepFor(fire, 0.25);
+    get(fire, "n").energy = 50;
+    hit(fire, "fire");
+    const log = stepFor(fire, DT);
+    expect(interrupted(log, "f")).toBe(false);
+    expect(get(fire, "f").cast.isCasting).toBe(true);
+    expect(get(fire, "n").energy).toBeCloseTo(50, 0);
+  });
+
+  it("ends, and interrupts nothing, when its caster has less than 4 Energy", () => {
+    const match = sim();
+    get(match, "f").statuses.apply("spinal-shivers", 34, "n");
+    use(match, "f", 0, "n");
+    stepFor(match, 0.25);
+    get(match, "n").energy = 3;
+    hit(match, "cold");
+    const log = stepFor(match, DT);
+    expect(interrupted(log, "f")).toBe(false);
+    expect(get(match, "f").cast.isCasting).toBe(true);
+    expect(get(match, "f").statuses.has("spinal-shivers")).toBe(false);
+    expect(get(match, "n").energy).toBeGreaterThanOrEqual(3);
+  });
+
+  it("says so in its tooltip", () => {
+    expect(describeStatus("spinal-shivers")).toContain(
+      "is struck for cold damage while using a skill, it is interrupted and you lose 4 Energy or this ends",
+    );
+  });
+});
+
+describe("Power Leech and Power Flux (#1931)", () => {
+  const POWER: readonly [number, StatusId][] = [
+    [0, "power-leech"],
+    [1, "power-flux"],
+  ];
+
+  /** `m` uses its skill in `slot` as `f` begins its skill in `fSlot`. */
+  function against(
+    slot: number,
+    fSlot: number | undefined,
+  ): { match: MatchSimulation; log: CombatLogEntry[] } {
+    const match = sim();
+    if (fSlot !== undefined) {
+      use(match, "f", fSlot, fSlot === 2 ? "f" : "n");
+    }
+    use(match, "m", slot, "f");
+    return { match, log: stepFor(match, 0.5) };
+  }
+
+  it("interrupt a spell or a chant and hex the foe", () => {
+    for (const [slot, id] of POWER) {
+      for (const fSlot of [0, 1]) {
+        const { match, log } = against(slot, fSlot);
+        expect(interrupted(log, "f"), `${id} on ${String(fSlot)}`).toBe(true);
+        expect(get(match, "f").statuses.has(id), `${id} on ${String(fSlot)}`).toBe(true);
       }
-      expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-      const log = stepFor(match, 3);
-      const swings = log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "a");
-      expect(swings.length).toBeGreaterThanOrEqual(2);
-      expect(damageTo(fired(log, EMPATHY), "a")).toEqual(swings.map(() => 39));
     }
   });
 
-  it("a spell does nothing", () => {
+  it("do nothing to a foe that only shouted, or cast nothing", () => {
+    for (const [slot, id] of POWER) {
+      for (const fSlot of [2, undefined]) {
+        const { match, log } = against(slot, fSlot);
+        expect(interrupted(log, "f")).toBe(false);
+        expect(get(match, "f").statuses.has(id), `${id} on ${String(fSlot)}`).toBe(false);
+      }
+    }
+  });
+
+  it("Power Leech lasts 10 s, Power Flux 9 s", () => {
+    const remaining = (slot: number, id: StatusId): number | undefined =>
+      get(against(slot, 0).match, "f").statuses.active.find((status) => status.id === id)
+        ?.durationSeconds;
+    expect(remaining(0, "power-leech")).toBe(10);
+    expect(remaining(1, "power-flux")).toBe(9);
+  });
+
+  it("Power Leech steals 13 Energy on the foe's next spell", () => {
     const match = sim();
-    get(match, "a").statuses.apply("empathy", 13, "m");
-    use(match, 2);
-    expect(fired(stepFor(match, 2.5), EMPATHY)).toEqual([]);
+    get(match, "f").statuses.apply("power-leech", 10, "m");
+    get(match, "m").energy = 50;
+    get(match, "f").energy = 80;
+    use(match, "f", 3, "n");
+    stepFor(match, 1.5);
+    expect(get(match, "m").energy).toBeGreaterThan(62);
+    expect(get(match, "m").energy).toBeLessThan(64);
+  });
+
+  it("Power Flux drains 2 pips of Energy", () => {
+    expect(describeStatus("power-flux")).toContain("−2 Energy");
+    expect(
+      describeSkill(skill("mesmer.power-flux"), new Map())
+        .effects.map(({ text }) => text)
+        .join(" "),
+    ).toContain("If target is casting a spell or chant");
   });
 });
 
-/** Every `recharge-lengthened` event in `log` (#949). */
-function lengthened(log: readonly CombatLogEntry[]) {
-  return log.flatMap((entry) =>
-    entry.events.flatMap((event) =>
-      event.kind === "recharge-lengthened" ? [{ entry, event }] : [],
-    ),
-  );
-}
-
-/** Steps until a recharge is lengthened, at most `seconds`, and returns that tick's log. */
-function untilLengthened(match: MatchSimulation, seconds = 3): readonly CombatLogEntry[] {
-  for (let i = 0; i < Math.round(seconds / DT); i += 1) {
-    const { log } = match.step(DT);
-    if (lengthened(log).length > 0) {
-      return log;
-    }
-  }
-  throw new Error("no recharge was lengthened");
-}
-
-describe("Diversion (#949)", () => {
-  it("is cast as the diversion hex, for 6 s", () => {
-    const match = sim(WEAPONS.axe, vec2(200, 0));
-    match.setTarget("m", "a");
-    expect(match.requestSkill("m", 3)?.check).toEqual({ ok: true });
-    stepFor(match, 3 + 2 * DT);
-    const hex = get(match, "a").statuses.get("diversion");
-    expect(hex?.sourceId).toBe("m");
-    expect(hex?.remainingSeconds).toBeGreaterThan(5.8);
-    expect(describeStatus("diversion")).toBe(
-      "the next skill it uses takes 47 seconds longer to recharge",
-    );
-  });
-
-  it("the next skill used recharges 47 s longer, credited to the Mesmer, and the hex ends", () => {
+describe("Death Nova (#1931)", () => {
+  it("is cast on an ally as its enchantment, for 30 seconds", () => {
     const match = sim();
-    get(match, "a").statuses.apply("diversion", 6, "m");
-    use(match, 2);
-    const log = untilLengthened(match);
-    const [only, ...rest] = lengthened(log);
-    expect(rest).toEqual([]);
-    expect(only?.entry).toMatchObject({ sourceId: "m", skillId: DIVERSION });
-    expect(only?.event).toEqual({
-      kind: "recharge-lengthened",
-      targetId: "a",
-      skillId: MALAISE,
-      seconds: 47,
-    });
-    expect(get(match, "a").cast.rechargeRemaining.get(MALAISE)).toBeCloseTo(2 + 47, 5);
-    expect(get(match, "a").statuses.has("diversion")).toBe(false);
-    expect(log).toContainEqual(
-      expect.objectContaining({
-        sourceId: "a",
-        skillId: MALAISE,
-        events: [{ kind: "status-expired", targetId: "a", statusId: "diversion" }],
-      }),
-    );
-  });
-
-  it("leaves the skill used after it alone", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("diversion", 6, "m");
-    use(match, 2);
+    use(match, "n", 2, "b");
     stepFor(match, 2.5);
-    expect(match.requestSkill("a", 3)?.check).toEqual({ ok: true });
-    const log = stepFor(match, 2.5);
-    expect(log.some((entry) => entry.skillId === HEALING_SIGNET)).toBe(true);
-    expect(lengthened(log)).toEqual([]);
-    expect(get(match, "a").cast.rechargeRemaining.get(HEALING_SIGNET)).toBeLessThanOrEqual(4);
+    expect(get(match, "b").statuses.has("death-nova")).toBe(true);
   });
 
-  it("an interrupted skill is not used: the hex stays", () => {
+  it("a death under it costs adjacent foes 85 and poisons them, not a far one", () => {
     const match = sim();
-    get(match, "a").statuses.apply("diversion", 6, "m");
-    use(match, 2);
-    match.setTarget("m", "a");
-    expect(match.requestSkill("m", 2)?.check).toEqual({ ok: true });
-    const log = stepFor(match, 2);
-    expect(log.some((entry) => entry.events.some((event) => event.kind === "interrupted"))).toBe(
-      true,
-    );
-    expect(lengthened(log)).toEqual([]);
-    expect(get(match, "a").statuses.has("diversion")).toBe(true);
+    get(match, "b").statuses.apply("death-nova", 30, "n");
+    const log = kill(match, "b");
+    const dealt = log
+      .filter((entry) => entry.skillId === "necromancer.death-nova")
+      .flatMap(({ events }) => events.flatMap((event) => (event.kind === "damage" ? [event] : [])));
+    expect(dealt.map(({ targetId, amount }) => [targetId, amount])).toEqual([["near", 85]]);
+    expect(get(match, "near").statuses.has("poison")).toBe(true);
+    expect(get(match, "far").statuses.has("poison")).toBe(false);
   });
 
-  it("a plain attack is not a skill: the hex stays", () => {
+  it("does nothing once it is gone", () => {
     const match = sim();
-    get(match, "a").statuses.apply("diversion", 6, "m");
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(match, 3);
-    expect(log.some((entry) => entry.cause === "weapon" && entry.sourceId === "a")).toBe(true);
-    expect(lengthened(log)).toEqual([]);
-    expect(get(match, "a").statuses.has("diversion")).toBe(true);
-  });
-
-  it("an attack skill is lengthened once", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("diversion", 6, "m");
-    use(match, 0);
-    const log = untilLengthened(match);
-    expect(lengthened(log).map(({ event }) => event.skillId)).toEqual([SWIFT_CHOP]);
-    expect(get(match, "a").cast.rechargeRemaining.get(SWIFT_CHOP)).toBeCloseTo(4 + 47, 5);
-  });
-
-  it("expires unused after 6 s, changing nothing", () => {
-    const match = sim();
-    get(match, "a").statuses.apply("diversion", 6, "m");
-    stepFor(match, 6 + DT);
-    expect(get(match, "a").statuses.has("diversion")).toBe(false);
-    use(match, 2);
-    expect(lengthened(stepFor(match, 2.5))).toEqual([]);
-    expect(get(match, "a").cast.rechargeRemaining.get(MALAISE) ?? 0).toBeLessThanOrEqual(2);
-  });
-});
-
-describe("reactive hexes together (#469)", () => {
-  it("both on one bearer fire once each, and trigger damage fires neither", () => {
-    const match = sim();
-    const bearer = get(match, "a");
-    bearer.statuses.apply("empathy", 13, "m");
-    bearer.statuses.apply("backfire", 10, "m");
-    use(match, 0);
-    const log = stepFor(match, 1);
-    expect(damageTo(fired(log, EMPATHY), "a")).toEqual([39]);
-    expect(fired(log, BACKFIRE)).toEqual([]);
-  });
-});
-
-const SPITEFUL_SPIRIT = "necromancer.spiteful-spirit";
-const INSIDIOUS_PARASITE = "necromancer.insidious-parasite";
-const MARK_OF_PAIN = "necromancer.mark-of-pain";
-const VAMPIRIC_GAZE = "necromancer.vampiric-gaze";
-
-/** The Necromancer: the three curses and Vampiric Gaze, at rank 12. */
-function necro(id: string, spawn: Vec2): ParticipantSpec {
-  return {
-    id,
-    team: 1,
-    skillBar: [SPITEFUL_SPIRIT, INSIDIOUS_PARASITE, MARK_OF_PAIN, VAMPIRIC_GAZE],
-    attributeRanks: new Map([
-      ["necromancer.curses", 12],
-      ["necromancer.blood-magic", 12],
-    ]),
-    equipment: unarmedResolvedEquipment(60),
-    maxHealth: 1e4,
-    startHealthFraction: 0.5,
-    maxEnergy: 1000,
-    spawn,
-    facing: 0,
-  };
-}
-
-/** Every entry `skillId`'s trigger logged, whoever put it on. */
-function triggered(log: readonly CombatLogEntry[], skillId: string): CombatLogEntry[] {
-  return log.filter((entry) => entry.skillId === skillId && entry.cause === "skill");
-}
-
-function eventsOf<K extends CombatLogEntry["events"][number]["kind"]>(
-  entries: readonly CombatLogEntry[],
-  kind: K,
-): Extract<CombatLogEntry["events"][number], { kind: K }>[] {
-  return entries.flatMap((entry) =>
-    entry.events.filter(
-      (event): event is Extract<CombatLogEntry["events"][number], { kind: K }> =>
-        event.kind === kind,
-    ),
-  );
-}
-
-/** Each weapon blow `a` landed on `m`. */
-function weaponHits(log: readonly CombatLogEntry[]): number {
-  return damageTo(
-    log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "a"),
-    "m",
-  ).length;
-}
-
-describe("the Necromancer's curses are cast as their hexes (#935)", () => {
-  it("each lands its hex for its rank-12 duration, from range", () => {
-    const match = new MatchSimulation({
-      seed: "curses",
-      participants: [fighter("a", vec2(0, 0)), necro("n", vec2(300, 0))],
-    });
-    match.setTarget("n", "a");
-    for (const [slot, statusId, seconds] of [
-      [0, "spiteful-spirit", 22],
-      [1, "insidious-parasite", 13],
-      [2, "mark-of-pain", 30],
-    ] as const) {
-      expect(match.requestSkill("n", slot)?.check).toEqual({ ok: true });
-      const log = stepFor(match, 3);
-      expect(log.flatMap((entry) => entry.events)).toContainEqual({
-        kind: "status-applied",
-        targetId: "a",
-        statusId,
-        durationSeconds: seconds,
-      });
-      expect(get(match, "a").statuses.get(statusId)?.sourceId).toBe("n");
-    }
-  });
-});
-
-describe("Spiteful Spirit (#935)", () => {
-  /**
-   * Bearer `a` with ally `b` beside it and ally `far` at twice adjacent;
-   * the hex's source `m` and its ally `m2`, both beside `a`.
-   */
-  function spiteful(weapon: Weapon = WEAPONS.axe): MatchSimulation {
-    const match = new MatchSimulation({
-      seed: "spiteful-spirit",
-      participants: [
-        fighter("a", vec2(0, 0), weapon),
-        fighter("b", vec2(0, 35)),
-        fighter("far", vec2(0, -80)),
-        mesmer("m", vec2(40, 0)),
-        mesmer("m2", vec2(-35, 0)),
-      ],
-    });
-    get(match, "a").statuses.apply("spiteful-spirit", 22, "m");
-    return match;
-  }
-
-  it("a spell costs the bearer and each ally beside it 39 shadow, once", () => {
-    const match = spiteful();
-    use(match, 2);
-    const entries = fired(stepFor(match, 2.5), SPITEFUL_SPIRIT);
-    expect(entries).toHaveLength(1);
-    expect(damageTo(entries, "a")).toEqual([39]);
-    expect(damageTo(entries, "b")).toEqual([39]);
-    expect(damageTo(entries, "far")).toEqual([]);
-    expect(damageTo(entries, "m2")).toEqual([]);
-    expect(describeStatus("spiteful-spirit")).toBe(
-      "takes 39 shadow damage whenever it uses a skill or attacks, " +
-        "its adjacent allies take 39 shadow damage whenever it uses a skill or attacks",
-    );
-  });
-
-  it("a signet fires it once, an attack skill twice", () => {
-    const match = spiteful();
-    expect(match.requestSkill("a", 3)?.check).toEqual({ ok: true });
-    expect(damageTo(fired(stepFor(match, 2.5), SPITEFUL_SPIRIT), "a")).toEqual([39]);
-    use(match, 0);
-    expect(damageTo(fired(stepFor(match, 1), SPITEFUL_SPIRIT), "a")).toEqual([39, 39]);
-  });
-
-  it("each auto-attack swing fires it once", () => {
-    const match = spiteful();
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(match, 3);
-    const swings = log.filter((entry) => entry.cause === "weapon" && entry.sourceId === "a");
-    expect(swings.length).toBeGreaterThanOrEqual(2);
-    expect(damageTo(fired(log, SPITEFUL_SPIRIT), "a")).toEqual(swings.map(() => 39));
-  });
-
-  it("a kill by its own damage comes after the skill has landed", () => {
-    const match = spiteful();
-    get(match, "a").health = 30;
-    use(match, 2);
-    const log = stepFor(match, 2.5);
-    expect(get(match, "m").statuses.has("malaise")).toBe(true);
-    expect(eventsOf(fired(log, SPITEFUL_SPIRIT), "death")).toContainEqual({
-      kind: "death",
-      targetId: "a",
-    });
-  });
-});
-
-describe("Mark of Pain (#935)", () => {
-  /**
-   * Bearer `m`, put on by `a`, with its ally `m2` beside it and its ally
-   * `m3` at twice adjacent; `a` beside `m`.
-   */
-  function marked(): MatchSimulation {
-    const match = new MatchSimulation({
-      seed: "mark-of-pain",
-      participants: [
-        fighter("a", vec2(0, 0)),
-        mesmer("m", vec2(40, 0)),
-        mesmer("m2", vec2(75, 0)),
-        mesmer("m3", vec2(40, 80)),
-      ],
-    });
-    get(match, "m").statuses.apply("mark-of-pain", 30, "a");
-    return match;
-  }
-
-  it("each physical blow costs the allies beside the bearer 34 shadow, never the bearer", () => {
-    const match = marked();
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(match, 3);
-    const hits = weaponHits(log);
-    expect(hits).toBeGreaterThanOrEqual(2);
-    const entries = triggered(log, MARK_OF_PAIN);
-    expect(entries.map((entry) => entry.sourceId)).toEqual(entries.map(() => "a"));
-    expect(damageTo(entries, "m2")).toEqual(Array.from({ length: hits }, () => 34));
-    expect(damageTo(entries, "m")).toEqual([]);
-    expect(damageTo(entries, "m3")).toEqual([]);
-    expect(describeStatus("mark-of-pain")).toBe(
-      "its adjacent allies take 34 shadow damage whenever it takes physical damage",
-    );
-  });
-
-  it("the blow that kills the bearer still splashes, from where it fell (#953)", () => {
-    const match = marked();
-    get(match, "m").health = 1;
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(match, 3);
-    expect(get(match, "m").dead).toBe(true);
-    expect(get(match, "m").statuses.active).toEqual([]);
-    const entries = triggered(log, MARK_OF_PAIN);
-    expect(damageTo(entries, "m2")).toEqual([34]);
-    expect(damageTo(entries, "m")).toEqual([]);
-    expect(damageTo(entries, "m3")).toEqual([]);
-  });
-
-  it("two bearers side by side never chain: its damage is shadow", () => {
-    const match = marked();
-    get(match, "m2").statuses.apply("mark-of-pain", 30, "a");
-    use(match, 0);
-    const entries = triggered(stepFor(match, 1), MARK_OF_PAIN);
-    expect(entries).toHaveLength(1);
-    expect(damageTo(entries, "m2")).toEqual([34]);
-    expect(damageTo(entries, "m")).toEqual([]);
-  });
-
-  it("an attack skill's blow is one firing, though it carries its bonus", () => {
-    const match = marked();
-    use(match, 0);
-    expect(damageTo(triggered(stepFor(match, 1), MARK_OF_PAIN), "m2")).toEqual([34]);
-  });
-
-  it("an earth blow fires nothing: Staggering Force makes the axe's swing earth (#1021)", () => {
-    const match = marked();
-    get(match, "a").statuses.apply("staggering-force", 30, "a");
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(match, 3);
-    expect(weaponHits(log)).toBeGreaterThanOrEqual(2);
-    expect(triggered(log, MARK_OF_PAIN)).toEqual([]);
-  });
-
-  it("a blocked blow, a Fireball and bleeding fire nothing", () => {
-    const blocked = marked();
-    get(blocked, "m").statuses.apply("guardian", 30, "m");
-    get(blocked, "m").statuses.apply("bleeding", 30, "a");
-    expect(blocked.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(blocked, 6);
-    const blocks = log.flatMap((entry) =>
-      entry.events.filter((event) => event.kind === "attack-blocked"),
-    );
-    expect(blocks.length).toBeGreaterThan(0);
-    expect(weaponHits(log)).toBeGreaterThan(0);
-    // Only the blows that landed fire it; bleeding never does.
-    expect(triggered(log, MARK_OF_PAIN).length).toBe(weaponHits(log));
-
-    const fire = marked();
-    use(fire, 1);
-    const fireLog = stepFor(fire, 4);
-    expect(damageTo(fireLog, "m").length).toBeGreaterThan(0);
-    expect(triggered(fireLog, MARK_OF_PAIN)).toEqual([]);
-  });
-});
-
-describe("Insidious Parasite (#935)", () => {
-  /** Bearer `a`, hexed by `n`, beside its target `m`. */
-  function parasite(weapon: Weapon = WEAPONS.axe): MatchSimulation {
-    const match = new MatchSimulation({
-      seed: "insidious-parasite",
-      participants: [
-        fighter("a", vec2(0, 0), weapon),
-        mesmer("m", vec2(40, 0)),
-        necro("n", vec2(0, 300)),
-      ],
-    });
-    get(match, "a").statuses.apply("insidious-parasite", 13, "n");
-    return match;
-  }
-
-  it("each landed blow, double strikes included, steals 39 for its caster", () => {
-    for (const weapon of [WEAPONS.axe, WEAPONS.daggers]) {
-      const match = parasite(weapon);
-      expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-      const log = stepFor(match, 4);
-      const hits = weaponHits(log);
-      expect(hits).toBeGreaterThanOrEqual(2);
-      const entries = triggered(log, INSIDIOUS_PARASITE);
-      expect(entries.map((entry) => entry.sourceId)).toEqual(entries.map(() => "n"));
-      expect(eventsOf(entries, "life-stolen")).toEqual(
-        Array.from({ length: hits }, () => ({ kind: "life-stolen", targetId: "a", amount: 39 })),
-      );
-      expect(eventsOf(entries, "heal")).toEqual(
-        Array.from({ length: hits }, () => ({ kind: "heal", targetId: "n", amount: 39 })),
-      );
-      expect(get(match, "n").health).toBe(5000 + 39 * hits);
-    }
-    expect(describeStatus("insidious-parasite")).toBe(
-      "its caster steals 39 Health whenever it hits with an attack",
-    );
-  });
-
-  it("a blocked blow and a spell steal nothing", () => {
-    const blocked = parasite();
-    get(blocked, "m").statuses.apply("guardian", 30, "m");
-    expect(blocked.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(blocked, 4);
-    expect(log.some((entry) => entry.events.some((event) => event.kind === "attack-blocked"))).toBe(
-      true,
-    );
-    expect(triggered(log, INSIDIOUS_PARASITE).length).toBe(weaponHits(log));
-
-    const spell = parasite();
-    use(spell, 2);
-    expect(triggered(stepFor(spell, 2.5), INSIDIOUS_PARASITE)).toEqual([]);
-  });
-
-  it("a dead caster steals nothing", () => {
-    const match = new MatchSimulation({
-      seed: "insidious-parasite",
-      participants: [fighter("a", vec2(0, 0)), mesmer("m", vec2(40, 0)), necro("n", vec2(0, 300))],
-      matchRules: {
-        victory: "kill-count",
-        scoreToWin: 10,
-        timeLimitSeconds: 600,
-        deathRule: "respawn",
-        respawnSeconds: 100,
-        deathPenalty: false,
-      },
-    });
-    get(match, "a").statuses.apply("insidious-parasite", 13, "n");
-    const caster = get(match, "n");
-    caster.health = 1;
-    caster.statuses.apply("bleeding", 10, "a");
-    stepFor(match, 0.5);
-    expect(caster.dead).toBe(true);
-    expect(match.requestAttack("a", "m")).toEqual({ ok: true });
-    const log = stepFor(match, 3);
-    expect(weaponHits(log)).toBeGreaterThan(0);
-    expect(triggered(log, INSIDIOUS_PARASITE)).toEqual([]);
-    expect(get(match, "a").health).toBe(1e4);
-  });
-});
-
-describe("Vampiric Gaze (#935)", () => {
-  it("steals 52 at rank 12: no armor, no adrenaline for the victim, no Mark of Pain", () => {
-    const a = fighter("a", vec2(0, 0));
-    const match = new MatchSimulation({
-      seed: "vampiric-gaze",
-      participants: [
-        { ...a, skillBar: [...a.skillBar, SEVER_ARTERY], maxHealth: 4 * 52 },
-        fighter("b", vec2(0, 35)),
-        necro("n", vec2(300, 0)),
-      ],
-    });
-    get(match, "a").statuses.apply("mark-of-pain", 30, "n");
-    match.setTarget("n", "a");
-    expect(match.requestSkill("n", 3)?.check).toEqual({ ok: true });
-    const log = stepFor(match, 2);
-    const gaze = log.filter((entry) => entry.skillId === VAMPIRIC_GAZE);
-    expect(gaze.flatMap((entry) => entry.events)).toEqual([
-      { kind: "skill-used", casterId: "n", skillId: VAMPIRIC_GAZE, targetId: "a" },
-      { kind: "life-stolen", targetId: "a", amount: 52 },
-      { kind: "heal", targetId: "n", amount: 52 },
-    ]);
-    expect(get(match, "a").health).toBe(4 * 52 - 52);
-    expect(strikesOf(get(match, "a"), SEVER_ARTERY)).toBe(0);
-    expect(triggered(log, MARK_OF_PAIN)).toEqual([]);
+    get(match, "b").statuses.apply("death-nova", 30, "n");
+    get(match, "b").statuses.end("death-nova");
+    kill(match, "b");
+    expect(get(match, "near").statuses.has("poison")).toBe(false);
   });
 });
