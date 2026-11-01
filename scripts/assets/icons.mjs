@@ -21,6 +21,7 @@ import { C, stroke } from "./icon-kit.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
 import { GLYPHS, MODIFIERS } from "./glyph-table.mjs";
+import { gearIcons, paperDollFigure } from "./gear-icons.mjs";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -679,6 +680,8 @@ const mode = {
 };
 
 /** @type {Record<string, Record<string, string>>} */
+const gear = gearIcons(profession, plateTint);
+
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
   creature: Object.fromEntries(Object.entries(creature).map(([k, f]) => [k, f()])),
@@ -697,6 +700,9 @@ const families = {
     ),
     ...Object.fromEntries(Object.entries(SKILL_ICONS).map(([id, row]) => [id, skillIcon(id, row)])),
   },
+  insignia: gear.insignia,
+  rune: gear.rune,
+  "paper-doll": { figure: paperDollFigure() },
   mode: Object.fromEntries(Object.entries(mode).map(([k, f]) => [k, svg(f())])),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
