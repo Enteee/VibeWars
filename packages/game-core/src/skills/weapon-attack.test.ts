@@ -4,6 +4,7 @@ import { AREA_ADJACENT } from "../distances.js";
 import { bareArmorSet } from "../equipment/armor.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
 import { defaultEquipmentFor } from "../equipment/loadout.js";
+import { NO_UPGRADES } from "../equipment/mods.js";
 import {
   resolveLoadout,
   unarmedResolvedEquipment,
@@ -1866,5 +1867,205 @@ describe("hit by a foe's attack (#1464)", () => {
     const blind = swings(true);
     expect(blind.landed).toBeLessThan(sighted.landed);
     expect(blind.recorded).toBe(blind.landed);
+  });
+});
+
+describe("martial weapon mods on a hit (#2009)", () => {
+  /** Set 1 holding `weaponId` with `prefix` on it, as a build resolves it. */
+  function heldSet(
+    weaponId: "sword" | "axe" | "hammer" | "daggers" | "longbow",
+    prefix: string | null,
+    attributeId: string,
+  ) {
+    return resolveLoadout(
+      {
+        primaryProfession: weaponId === "longbow" ? "ranger" : "warrior",
+        secondaryProfession: undefined,
+        allocatedRanks: new Map([[attributeId, 12]]),
+        equipment: {
+          ...defaultEquipmentFor("warrior"),
+          weaponSets: [
+            {
+              mainHand: {
+                weaponId,
+                requirementAttributeId: null,
+                upgrades: { ...NO_UPGRADES, prefix },
+              },
+              offHand: null,
+            },
+            null,
+            null,
+            null,
+          ],
+        },
+      },
+      RULES,
+    ).weaponSets[0];
+  }
+
+  /** A rank-12 attacker holding `weaponId` with `prefix` on it. */
+  function modded(
+    weaponId: "sword" | "axe" | "hammer" | "daggers" | "longbow",
+    prefix: string,
+    attributeId: string,
+  ): Combatant {
+    const held = heldSet(weaponId, prefix, attributeId);
+    return makeCombatant({
+      id: "attacker",
+      team: 0,
+      equipment: held.equipment,
+      attributeRanks: new Map([[attributeId, 12]]),
+      health: 100,
+      energy: 0,
+    });
+  }
+
+  /** Floats in order, then 0.5 forever: a scripted roll for each draw. */
+  const scripted = (...floats: number[]): SimulationRng =>
+    Object.assign(createRng(1), {
+      nextInt: () => 10,
+      nextFloat: () => floats.shift() ?? 0.5,
+    });
+
+  function swing(who: Combatant, target = foe("dummy"), rng: SimulationRng = scripted()) {
+    return resolveSwing({
+      attacker: who,
+      target,
+      surroundings: new Map(),
+      rng,
+      rules: RULES,
+      exposed: NOWHERE,
+    }).events;
+  }
+
+  const stolen = (events: readonly CombatEvent[]): number[] =>
+    events.flatMap((event) => (event.kind === "life-stolen" ? [event.amount] : []));
+
+  it("Vampiric steals 3 on an axe and 5 on a hammer, past armor, each landed hit", () => {
+    for (const [weaponId, attributeId, amount] of [
+      ["axe", "warrior.axe-mastery", 3],
+      ["hammer", "warrior.hammer-mastery", 5],
+    ] as const) {
+      const vampiric = modded(weaponId, "vampiric", attributeId);
+      const target = foe("dummy");
+      const events = swing(vampiric, target);
+      const [dealt = 0] = damages(events);
+      expect(stolen(events)).toEqual([amount]);
+      expect(target.combatant.health).toBe(1e6 - dealt - amount);
+      expect(vampiric.health).toBe(100 + amount);
+      expect(vampiric.equipment.healthPips).toBe(-1);
+    }
+  });
+
+  it("gives nothing for a blocked hit", () => {
+    const vampiric = modded("axe", "vampiric", "warrior.axe-mastery");
+    const zealous = modded("axe", "zealous", "warrior.axe-mastery");
+    for (const who of [vampiric, zealous]) {
+      const target = foe("dummy");
+      target.combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
+      // The block roll comes first; 0 is under any chance.
+      expect(swing(who, target, scripted(0))).toEqual([
+        { kind: "attack-blocked", targetId: "dummy" },
+      ]);
+    }
+    expect(vampiric.health).toBe(100);
+    expect(zealous.energy).toBe(0);
+  });
+
+  it("steals from a living victim only: the killing blow gives nothing", () => {
+    const vampiric = modded("axe", "vampiric", "warrior.axe-mastery");
+    const target = foe("dummy");
+    target.combatant.health = 1;
+    expect(stolen(swing(vampiric, target))).toEqual([]);
+    expect(vampiric.health).toBe(100);
+  });
+
+  it("Zealous gains 1 Energy a hit, for a pip of regeneration", () => {
+    const zealous = modded("sword", "zealous", "warrior.swordsmanship");
+    expect(swing(zealous)).toContainEqual({ kind: "energy-gain", targetId: "attacker", amount: 1 });
+    expect(zealous.energy).toBe(1);
+    expect(heldSet("sword", "zealous", "warrior.swordsmanship").baseEnergyPips).toBe(
+      heldSet("sword", null, "warrior.swordsmanship").baseEnergyPips - 1,
+    );
+  });
+
+  it("hits each blow of a double strike: daggers steal twice", () => {
+    const vampiric = modded("daggers", "vampiric", "assassin.dagger-mastery");
+    const rng = createRng(7);
+    let events = swing(vampiric, foe("dummy"), rng);
+    while (damages(events).length < 2) {
+      events = swing(vampiric, foe("dummy"), rng);
+    }
+    expect(stolen(events)).toEqual([3, 3]);
+  });
+
+  it("Sundering adds 20% armor penetration on its roll, and draws nothing without it", () => {
+    const sundering = modded("sword", "sundering", "warrior.swordsmanship");
+    const plain = attacker(WEAPONS.sword, "warrior.swordsmanship");
+    const blow = (who: Combatant, rng: SimulationRng): number => {
+      const target = foe("dummy").combatant;
+      landBlow(weaponSnapshotOf(who), who, target, PLAIN_BLOW, false, rng, RULES, []);
+      return 1e6 - target.health;
+    };
+    // No crit, then the sunder roll: under 0.2 hits, over misses.
+    const sundered = blow(sundering, scripted(0.99, 0.1));
+    const unsundered = blow(sundering, scripted(0.99, 0.3));
+    expect(sundered).toBeGreaterThan(unsundered);
+    expect(unsundered).toBe(blow(plain, scripted(0.99)));
+    const draws: number[] = [];
+    const counting = Object.assign(createRng(1), {
+      nextInt: () => 10,
+      nextFloat: () => {
+        draws.push(0);
+        return 0.99;
+      },
+    });
+    blow(plain, counting);
+    const plainDraws = draws.length;
+    draws.length = 0;
+    blow(sundering, counting);
+    expect(draws.length).toBe(plainDraws + 1);
+  });
+
+  it("Fiery turns a sword's blows to fire", () => {
+    const fiery = modded("sword", "fiery", "warrior.swordsmanship");
+    expect(fiery.equipment.mainHand.damageType).toBe("fire");
+    expect(weaponSnapshotOf(fiery).damageType).toBe("fire");
+  });
+
+  it("Icy turns a longbow's arrows to cold", () => {
+    expect(modded("longbow", "icy", "ranger.marksmanship").equipment.mainHand.damageType).toBe(
+      "cold",
+    );
+  });
+
+  it("Barbed makes Sever Artery's Bleeding last 33% longer", () => {
+    const bleedingFrom = (who: Combatant): number => {
+      const target = makeCombatant({ id: "t", team: 1, health: 1e6, maxHealth: 1e6 });
+      const skill = getSkill("warrior.sever-artery");
+      if (skill === undefined) {
+        throw new Error("missing skill");
+      }
+      resolveAttackSkill(
+        {
+          surroundings: new Map(),
+          skill,
+          caster: who,
+          targets: [target],
+          rng: scripted(),
+          rules: RULES,
+        },
+        NOWHERE,
+        [],
+      );
+      const bleeding = target.statuses.active.find((status) => status.id === "bleeding");
+      return bleeding?.remainingSeconds ?? 0;
+    };
+    const plain = bleedingFrom(attacker(WEAPONS.sword, "warrior.swordsmanship"));
+    expect(plain).toBeGreaterThan(0);
+    expect(bleedingFrom(modded("sword", "barbed", "warrior.swordsmanship"))).toBeCloseTo(
+      plain * 1.33,
+      6,
+    );
   });
 });

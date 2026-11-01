@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
+import {
+  NO_HIT_MODS,
+  unarmedResolvedEquipment,
+  type ResolvedEquipment,
+} from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { segment, type Segment } from "../geometry.js";
 import { createRng } from "../rng.js";
@@ -1382,5 +1386,35 @@ describe("attack skills ride the weapon (ADR-0029)", () => {
       chopping.requestSkill("a", 0);
       expect(get(chopping, "a").combatant.cast.activeCast?.totalSeconds).toBeCloseTo(fast / 2, 9);
     });
+  });
+});
+
+describe("a Furious weapon (#2009)", () => {
+  /** The strikes each swing of a sword with `chance` to double earned in 6 s. */
+  function strikesPerSwing(chance: number): number[] {
+    const spec = swordsman("a", vec2(0, 0));
+    const match = sim(
+      {
+        ...spec,
+        equipment: {
+          ...spec.equipment,
+          hitMods: { ...NO_HIT_MODS, doubleAdrenalineChance: chance },
+        },
+      },
+      dummy("d", vec2(40, 0)),
+    );
+    match.requestAttack("a", "d");
+    return swings(stepFor(match, 6)).flatMap((swing) =>
+      swing.events.flatMap((event) => (event.kind === "adrenaline-gained" ? [event.strikes] : [])),
+    );
+  }
+
+  it("doubles a hit's adrenaline on its roll, and never without one", () => {
+    const always = strikesPerSwing(1);
+    expect(always.length).toBeGreaterThan(2);
+    expect(always.every((strikes) => strikes === 2)).toBe(true);
+    const never = strikesPerSwing(0);
+    expect(never.length).toBe(always.length);
+    expect(never.every((strikes) => strikes === 1)).toBe(true);
   });
 });
