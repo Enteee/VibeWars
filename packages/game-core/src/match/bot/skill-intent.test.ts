@@ -230,6 +230,11 @@ const NO_BOT_USE = new Set([
   // of damage, and a spirit's adrenaline aura are none the bot weighs.
   "necromancer.blood-is-power",
   "necromancer.order-of-pain",
+  // Blood Magic orders (#1979): party buffs, and Awaken the Blood's
+  // larger sacrifices, wait for a boost use (#2000).
+  "necromancer.order-of-the-vampire",
+  "necromancer.dark-fury",
+  "necromancer.awaken-the-blood",
   "elementalist.ward-against-elements",
   "ranger.infuriating-heat",
   // Nature rituals 1 (#1745): auras on both teams the bot does not weigh,
