@@ -385,8 +385,9 @@ export interface Creature {
   /**
    * Whoever summoned it, and whom it answers to: it leaves with them.
    * `undefined`: a map's NPC, as a priest (#1186), which answers to nobody.
+   * A spirit someone takes control of (#1965) answers to them from then on.
    */
-  readonly ownerId: string | undefined;
+  ownerId: string | undefined;
   readonly kind: CreatureKind;
   /** From the template (#1162): how it is drawn. */
   readonly look: CreatureLook;
@@ -1558,6 +1559,27 @@ export class MatchSimulation {
       events,
     });
     this.#recordDeaths(events);
+  }
+
+  /**
+   * `owner` takes control of the spirit `spiritId` (#1965): Signet of
+   * Binding's. It answers to `owner` and is on its team from now on, and
+   * leaves with it; it keeps its Health, its time left and the ranks it
+   * arrived with. The aura pass reads its team each step.
+   */
+  #takeControl(owner: ParticipantRecord, spiritId: string): void {
+    const spirit = this.#participants.get(spiritId);
+    if (
+      spirit?.creature?.kind !== "spirit" ||
+      spirit.combatant.dead ||
+      this.#leaving.has(spiritId)
+    ) {
+      return;
+    }
+    spirit.creature.ownerId = owner.id;
+    spirit.combatant.team = owner.combatant.team;
+    // An attack spirit's swing was at its new side.
+    spirit.combatant.attack = undefined;
   }
 
   /**
@@ -3689,6 +3711,7 @@ export class MatchSimulation {
       rechargeLongerSeconds: 0,
       summons: [],
       grounds: [],
+      taken: [],
       skipped: undefined,
     });
     // What the caster's statuses add to its hits, each logged apart (#939).
@@ -3740,7 +3763,7 @@ export class MatchSimulation {
     // What it summons is made at the ranks it went off at (#1915), before
     // any status it gives itself, and with what it is lent and holds (#1929, #1941).
     const ranks = withRankLoan(record.combatant, loan, skill, () => ranksOf(record.combatant));
-    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
+    const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, taken, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
         : withRankLoan(record.combatant, loan, skill, () =>
@@ -3857,6 +3880,9 @@ export class MatchSimulation {
         }
       }
     });
+    for (const spiritId of taken) {
+      this.#takeControl(record, spiritId);
+    }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
     // leaves the attack alone (#317): one in progress resumes on its own
@@ -5291,7 +5317,7 @@ export class MatchSimulation {
     const skillHit: SkillHit = {
       kind: "attack",
       skill: resolution.skill,
-      blow: skillBlow(resolution.skill, record.combatant),
+      blow: skillBlow(resolution.skill, record.combatant, this.#participants),
       next: nextAttackSkillOf(record.combatant),
       own: resolution.own,
       strikes: 1,

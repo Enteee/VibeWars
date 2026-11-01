@@ -671,7 +671,7 @@ describe("Winnowing's +4 (#1064)", () => {
         },
       },
     });
-    const blow = skillBlow(skillOf("ranger.concussion-shot"), ranger);
+    const blow = skillBlow(skillOf("ranger.concussion-shot"), ranger, new Map());
     expect(struck(ranger, true, blow)).toBe(struck(ranger, false, blow) + 4);
   });
 

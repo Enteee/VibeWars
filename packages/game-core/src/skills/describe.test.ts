@@ -501,6 +501,21 @@ describe("describeSkill", () => {
     );
   });
 
+  it("words what a pet attack gives its owner (#1957)", () => {
+    const ranks = new Map([["ranger.beast-mastery", 12]]);
+    const lines = (id: string): string[] =>
+      describeSkill(skill(id), ranks).effects.map((line) => line.text);
+    expect(lines("ranger.predators-pounce")).toEqual(["+29 damage", "Your pet gains 41 health"]);
+    expect(lines("ranger.ferocious-strike")).toEqual([
+      "+25 damage",
+      "You gain 9 energy",
+      "You gain 1 strike of adrenaline",
+    ]);
+    expect(lines("ranger.enraged-lunge")).toEqual([
+      "+19 damage for each of your recharging Beast Mastery skills (maximum 60)",
+    ]);
+  });
+
   it("words the mantras (#1964)", () => {
     expect(describeStatus("mantra-of-concentration")).toBe(
       "the next time you would be interrupted, you are not",
@@ -617,6 +632,7 @@ describe("describeSkill", () => {
           (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
           (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
           (rule?.conditionalBonus === undefined ? 0 : 1) +
+          (rule?.bonusPer === undefined ? 0 : 1) +
           (rule?.criticalWhen === undefined ? 0 : 1) +
           ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(rule?.onBlocked ?? []) +

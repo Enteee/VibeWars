@@ -398,7 +398,7 @@ describe("Cruel Spear (#921)", () => {
       id: "p",
       attributeRanks: new Map([["paragon.spear-mastery", 12]]),
     });
-    expect(skillBlow(spear, caster).bonus).toBe(42);
+    expect(skillBlow(spear, caster, new Map()).bonus).toBe(42);
   });
 
   it("deep wounds a still target for 17 s", () => {
