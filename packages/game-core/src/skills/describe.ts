@@ -585,6 +585,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const { skillType, amount } = definition.damageReductionWhileCasting;
     parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
   }
+  // The elemental mantras' (#1964).
+  if (definition.damageTypeTakenMultiplier !== undefined) {
+    const { type, multiplier } = definition.damageTypeTakenMultiplier;
+    parts.push(`${String(Math.round((1 - multiplier) * 100))}% less ${type} damage`);
+  }
   // Mist Form's (#1951).
   if (definition.damageReductionFromHexedSource !== undefined) {
     const { attributeId, fraction } = definition.damageReductionFromHexedSource;
@@ -748,6 +753,15 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.uninterruptible) {
     parts.push("the bearer's skills cannot be interrupted");
+  }
+  if (definition.interruptGuard?.kind === "once") {
+    parts.push("the next time you would be interrupted, you are not");
+  }
+  if (definition.interruptGuard?.kind === "pay-energy") {
+    const amount = String(definition.interruptGuard.amount);
+    parts.push(
+      `you cannot be interrupted; each time you would be, lose ${amount} Energy or this ends`,
+    );
   }
   if (definition.conditionsExpireFaster !== 0) {
     const faster = String(Math.round(definition.conditionsExpireFaster * 100));
