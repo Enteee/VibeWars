@@ -4,6 +4,7 @@ import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/r
 import { WEAPONS, weaponDamageType, type Weapon } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { getSkill } from "../skills/catalog.js";
 import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { rankOf } from "../skills/tick.js";
@@ -241,5 +242,13 @@ describe("Elemental Attunement (#1984)", () => {
     expect(gained(fire, "elementalist.elemental-attunement", "c").energy).toBe(6);
     const mesmer = cast(sim, 1, "c");
     expect(gained(mesmer, "elementalist.elemental-attunement", "c").energy).toBe(0);
+  });
+});
+
+describe("the conjures' recharge (#1984)", () => {
+  it("is 45 s for Conjure Flame, 30 s for Frost and Lightning", () => {
+    expect(getSkill("elementalist.conjure-flame")?.rechargeSeconds).toBe(45);
+    expect(getSkill("elementalist.conjure-frost")?.rechargeSeconds).toBe(30);
+    expect(getSkill("elementalist.conjure-lightning")?.rechargeSeconds).toBe(30);
   });
 });

@@ -3304,9 +3304,10 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "master-of-magic", durationSeconds: 49 }],
   },
   // Self-buffs (#1984).
-  conjure("flame", "Flame", 182, "fire"),
-  conjure("frost", "Frost", 207, "water"),
-  conjure("lightning", "Lightning", 221, "air"),
+  // Flame recharges in 45 s, the other two in 30 (wiki).
+  conjure("flame", "Flame", 182, "fire", 45),
+  conjure("frost", "Frost", 207, "water", 30),
+  conjure("lightning", "Lightning", 221, "air", 30),
   {
     id: "elementalist.ether-prodigy",
     name: "Ether Prodigy",
@@ -3521,6 +3522,7 @@ function conjure(
   name: string,
   gwId: number,
   attribute: "fire" | "water" | "air",
+  rechargeSeconds: number,
 ): Skill {
   return {
     id: `elementalist.conjure-${element}`,
@@ -3535,7 +3537,7 @@ function conjure(
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 1,
-    rechargeSeconds: 30,
+    rechargeSeconds,
     range: RANGE_SPELL,
     target: "self",
     area: undefined,
