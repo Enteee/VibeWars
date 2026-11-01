@@ -642,7 +642,7 @@ describe("play-build raises a mantra before it is needed (#1964)", () => {
       }),
       fighter("foe", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
     ]);
-    sim.get("foe")?.combatant.statuses.apply("mantra-of-concentration", 31, "foe");
+    sim.get("foe")?.combatant.statuses.apply("mantra-of-concentration", 31, "foe", NO_RANKS);
     sim.setTarget("foe", "ranger");
     sim.requestSkill("foe", slotOf(ELEMENTALIST, "elementalist.chain-lightning"));
     expect(sim.get("foe")?.combatant.cast.activeCast?.remainingSeconds).toBe(2);

@@ -794,12 +794,12 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
   it("ends only a once-only interrupt guard when an interrupt is stopped (#1964)", () => {
     const once = new StatusSet();
-    once.apply("mantra-of-concentration", 31, "m");
+    once.apply("mantra-of-concentration", 31, "m", NO_RANKS);
     expect(once.endOnInterruptGuarded()).toEqual(["mantra-of-concentration"]);
     expect(once.has("mantra-of-concentration")).toBe(false);
 
     const paying = new StatusSet();
-    paying.apply("mantra-of-resolve", 5, "m");
+    paying.apply("mantra-of-resolve", 5, "m", NO_RANKS);
     expect(paying.endOnInterruptGuarded()).toEqual([]);
     expect(paying.has("mantra-of-resolve")).toBe(true);
   });
