@@ -7,6 +7,7 @@ import {
   displayLobbyCode,
   hostMaps,
   lobbyControls,
+  lobbyPanel,
   mapLabel,
   matchmakingButtons,
   modeLine,
@@ -251,6 +252,7 @@ describe("waitingFor (#580)", () => {
 
 /** Just enough DOM for a team column; the unit tests run in Node. */
 class FakeElement {
+  tagName = "";
   className = "";
   textContent = "";
   value = "";
@@ -394,5 +396,69 @@ describe("matchmakingButtons (#1766)", () => {
     house?.click();
     leave?.click();
     expect(pressed).toEqual(["house", "leave"]);
+  });
+});
+
+describe("lobbyPanel: the map (#1994)", () => {
+  const callbacks = {
+    onSelectMap: () => undefined,
+    onChooseTeam: () => undefined,
+    onToggleReady: () => undefined,
+    onStart: () => undefined,
+    onWatch: () => undefined,
+    onSetBots: () => undefined,
+  };
+  const maps = [
+    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation" },
+    { id: "arena-open", name: "Open", size: "small", mode: "kill-count" },
+  ] as const;
+  /** The map part of the host's bar in `mode`, on Alpha. */
+  const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
+    const shown = { ...snapshot("waiting"), mode, mapId: "arena-alpha" };
+    const [part] = lobbyPanel(shown, callbacks, undefined, maps).status;
+    return part as unknown as FakeElement;
+  };
+  const selects = (part: FakeElement): FakeElement[] =>
+    part.children.filter((child) => child.tagName === "select");
+
+  beforeEach(() => {
+    vi.stubGlobal("document", {
+      createElement: (tagName: string) => Object.assign(new FakeElement(), { tagName }),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("lets only a Hosted Game's host pick it", () => {
+    expect(selects(mapPart("hosted-game"))).toHaveLength(1);
+  });
+
+  it("says Team Arena draws it, with no picker", () => {
+    const part = mapPart("team-arena");
+    expect(selects(part)).toEqual([]);
+    expect(part.textContent).toBe("Map: random (Team Arena)");
+  });
+
+  it("names Heroes' Ascent's, with no picker", () => {
+    const part = mapPart("heroes-ascent");
+    expect(selects(part)).toEqual([]);
+    expect(part.textContent).toBe("Map: Alpha (small)");
+  });
+
+  /** The mode line under the bar in `mode`, on Alpha. */
+  const modeLines = (mode: LobbySnapshot["mode"]): string[] => {
+    const shown = { ...snapshot("waiting"), mode, mapId: "arena-alpha" };
+    const { body } = lobbyPanel(shown, callbacks, undefined, maps);
+    return (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent);
+  };
+
+  it("names what Team Arena's draw can play, not its placeholder map's mode", () => {
+    expect(modeLines("team-arena")).toEqual(["Annihilation or Kill Count: drawn at the start"]);
+  });
+
+  it("names the mode of a map that is set", () => {
+    expect(modeLines("hosted-game")).toEqual(["Annihilation: defeat every foe"]);
   });
 });

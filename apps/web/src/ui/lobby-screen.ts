@@ -155,6 +155,12 @@ export function modeLine(map: LobbyMap): string {
   return MODE_LINES[map.mode];
 }
 
+/** The modes a draw from `maps` can play, in a line: "Annihilation or Kill Count: drawn at the start". */
+export function drawnModesLine(maps: readonly LobbyMap[]): string {
+  const names = new Set(maps.map((map) => MODE_LINES[map.mode].split(":")[0] ?? map.mode));
+  return `${new Intl.ListFormat("en", { type: "disjunction" }).format(names)}: drawn at the start`;
+}
+
 /** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (large)". */
 export function mapLabel(map: LobbyMap): string {
   return `${map.name} (${map.size})`;
@@ -185,11 +191,12 @@ export function lobbyPanel(
 
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
 
-  // Only the host may change the map, so everyone else sees it as a
-  // label rather than a control they would be refused on clicking.
+  // Only a Hosted Game's host may change the map (#1994), so everyone
+  // else sees it as a label rather than a control they would be refused
+  // on clicking. Team Arena draws its own at the start.
   const current = availableMaps.find((map) => map.id === snapshot.mapId);
   let mapPart: HTMLElement;
-  if (snapshot.isHost && availableMaps.length > 1) {
+  if (snapshot.mode === "hosted-game" && snapshot.isHost && availableMaps.length > 1) {
     mapPart = h("label", "lobby-map");
     mapPart.appendChild(h("span", "field-label", "Map"));
     const select = document.createElement("select");
@@ -205,6 +212,8 @@ export function lobbyPanel(
       callbacks.onSelectMap(select.value);
     });
     mapPart.appendChild(select);
+  } else if (snapshot.mode === "team-arena") {
+    mapPart = h("div", "lobby-map", "Map: random (Team Arena)");
   } else {
     mapPart = h(
       "div",
@@ -241,8 +250,13 @@ export function lobbyPanel(
 
   // The mode follows from the map (#476). It is the only place a player
   // learns it before Start, so it gets a row of its own under the bar
-  // rather than being shortened in it (#1272).
-  if (current !== undefined) {
+  // rather than being shortened in it (#1272). Team Arena's map is a
+  // placeholder until its draw, so it names what the draw can give (#1994).
+  if (snapshot.mode === "team-arena") {
+    if (availableMaps.length > 0) {
+      panel.appendChild(h("div", "lobby-mode", drawnModesLine(availableMaps)));
+    }
+  } else if (current !== undefined) {
     panel.appendChild(h("div", "lobby-mode", modeLine(current)));
   }
 

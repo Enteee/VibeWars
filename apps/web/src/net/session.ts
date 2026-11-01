@@ -109,6 +109,8 @@ export const TEAM_PLAN_REJECTED_NOTICE =
 /** A joined player's ask the host turned down (#1194). */
 export const REFUSED_MESSAGE = "The host turned that down.";
 export const NOT_HOST_MESSAGE = "Only the host can do that.";
+/** A map picked outside a Hosted Game (#1994). */
+export const NOT_PICKABLE_MESSAGE = "Only a Hosted Game lets the host pick the map.";
 /** A Team Lobby's refusals (#1460). */
 export const PROPOSAL_REFUSED_MESSAGE =
   "That team build cannot be proposed: it needs your side's size and legal builds.";
@@ -718,6 +720,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return LOBBY_FULL_MESSAGE;
     case "not-host":
       return NOT_HOST_MESSAGE;
+    case "not-pickable":
+      return NOT_PICKABLE_MESSAGE;
     case "invalid-proposal":
       return PROPOSAL_REFUSED_MESSAGE;
     case "invalid-vote":

@@ -8,7 +8,8 @@ Priest Annihilation, **Heroes' Ascent** Relic Run, King of the Hill and
 Capture Points, and **GvG** the Guild Battle. **Hosted Game** offers
 every map. A **Random Arena** picks a map for you, and with it the mode,
 but never a Guild Battle, a Relic Run, King of the Hill or Capture
-Points.
+Points. Team Arena draws one of its maps for each match, Heroes' Ascent
+starts on its first map, and only a Hosted Game lets the host pick.
 
 In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
 objective off screen or under the HUD gets an outlined arrow at the

@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Shout (#1966), a stand-in until its art card: an open hand behind a bar.
+  // Shout (#2069): an open hand behind a bar.
   "cant-touch-this": [
     "shout",
     (c) =>
