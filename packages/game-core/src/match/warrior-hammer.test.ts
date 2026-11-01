@@ -10,6 +10,7 @@ import { KNOCKDOWN_SECONDS } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Warrior Hammer Mastery staples in a match (#1357): weakness into
@@ -191,7 +192,7 @@ describe("Irresistible Blow (#1357)", () => {
     // The first seed under which the stance blocks the blow.
     for (let seed = 0; seed < 50; seed += 1) {
       const sim = arena(`block-${String(seed)}`);
-      combatant(sim, "t").statuses.apply("gladiators-defense", 6, "t");
+      combatant(sim, "t").statuses.apply("gladiators-defense", 6, "t", NO_RANKS);
       const entry = swing(sim, "warrior.irresistible-blow");
       if (entry.events.some(({ kind }) => kind === "attack-blocked")) {
         expect(down(sim, "t")).toBe(true);

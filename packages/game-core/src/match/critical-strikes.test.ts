@@ -14,6 +14,7 @@ import { landedCritical } from "../skills/weapon-attack.js";
 import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Critical Strikes staples (#1315): Critical Strike crits on every blow,
@@ -171,7 +172,7 @@ describe("Malicious Strike (#1315)", () => {
   function malicious(bleeding: boolean): DamageEvent {
     const match = fight();
     if (bleeding) {
-      get(match, "foe").combatant.statuses.apply("bleeding", 20, "sin");
+      get(match, "foe").combatant.statuses.apply("bleeding", 20, "sin", NO_RANKS);
     }
     const [blow] = blowsOn(use(match, MALICIOUS_STRIKE));
     if (blow === undefined) {
@@ -227,14 +228,14 @@ describe("Critical Defenses (#1315)", () => {
       effects: [{ kind: "apply-status", statusId: "critical-defenses", durationSeconds: 9 }],
     });
     const bearer = makeCombatant({ id: "b" });
-    bearer.statuses.apply("critical-defenses", 9, "b");
+    bearer.statuses.apply("critical-defenses", 9, "b", NO_RANKS);
     expect(blockChanceOf(bearer, "melee")).toBe(0.75);
     expect(blockChanceOf(bearer, "projectile")).toBe(0.75);
   });
 
   it("a critical hit puts its remaining time back to the duration it was applied with", () => {
     const bearer = makeCombatant({ id: "b" });
-    bearer.statuses.apply("critical-defenses", 9, "b");
+    bearer.statuses.apply("critical-defenses", 9, "b", NO_RANKS);
     bearer.statuses.advance(5, false);
     expect(bearer.statuses.get("critical-defenses")?.remainingSeconds).toBeCloseTo(4, 9);
     landedCritical(bearer, 12, []);

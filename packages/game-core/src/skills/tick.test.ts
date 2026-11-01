@@ -4,7 +4,12 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 
 import { getSkill } from "./catalog.js";
-import { combinedHealingMultiplier, HEALING_MULTIPLIER_FLOOR, HEALTH_PER_PIP } from "./status.js";
+import {
+  NO_RANKS,
+  combinedHealingMultiplier,
+  HEALING_MULTIPLIER_FLOOR,
+  HEALTH_PER_PIP,
+} from "./status.js";
 import {
   advanceStatuses,
   attackMissChanceOf,
@@ -23,14 +28,14 @@ import type { Combatant, Skill } from "./types.js";
 describe("advanceStatuses health change", () => {
   it("applies degeneration continuously, not in once-per-second lumps", () => {
     const c = makeCombatant({ id: "c", health: 500 });
-    c.statuses.apply("bleeding", 10, "a"); // -3 pips, 6 HP/s
+    c.statuses.apply("bleeding", 10, "a", NO_RANKS); // -3 pips, 6 HP/s
     advanceStatuses(c, 0.05, 0); // one 20Hz tick
     expect(c.health).toBeCloseTo(500 - 6 * 0.05, 10);
   });
 
   it("accumulates degeneration correctly across many ticks", () => {
     const c = makeCombatant({ id: "c", health: 500 });
-    c.statuses.apply("bleeding", 10, "a");
+    c.statuses.apply("bleeding", 10, "a", NO_RANKS);
     for (let i = 0; i < 20; i += 1) {
       advanceStatuses(c, 0.05, 0);
     }
@@ -39,24 +44,24 @@ describe("advanceStatuses health change", () => {
 
   it("counts a pip as 2 HP/s: +4 regeneration heals 8 a second", () => {
     const c = makeCombatant({ id: "c", health: 100 });
-    c.statuses.apply("regeneration", 10, "a");
+    c.statuses.apply("regeneration", 10, "a", NO_RANKS);
     advanceStatuses(c, 1, 0);
     expect(c.health).toBeCloseTo(100 + 4 * HEALTH_PER_PIP, 10);
   });
 
   it("clamps stacked degeneration to 10 pips: burning, bleeding and poison (-14) drain 20 HP/s", () => {
     const c = makeCombatant({ id: "c", health: 500 });
-    c.statuses.apply("burning", 10, "a");
-    c.statuses.apply("bleeding", 10, "a");
-    c.statuses.apply("poison", 10, "a");
+    c.statuses.apply("burning", 10, "a", NO_RANKS);
+    c.statuses.apply("bleeding", 10, "a", NO_RANKS);
+    c.statuses.apply("poison", 10, "a", NO_RANKS);
     advanceStatuses(c, 1, 0);
     expect(c.health).toBeCloseTo(480, 10);
   });
 
   it("does nothing when regeneration cancels degeneration: +4 against poison's -4", () => {
     const c = makeCombatant({ id: "c", health: 300 });
-    c.statuses.apply("regeneration", 10, "a");
-    c.statuses.apply("poison", 10, "a");
+    c.statuses.apply("regeneration", 10, "a", NO_RANKS);
+    c.statuses.apply("poison", 10, "a", NO_RANKS);
     const events = advanceStatuses(c, 1, 0);
     expect(c.health).toBe(300);
     expect(events.some((e) => e.kind === "damage" || e.kind === "heal")).toBe(false);
@@ -64,7 +69,7 @@ describe("advanceStatuses health change", () => {
 
   it("applies regeneration up to, but never past, maximum health", () => {
     const c = makeCombatant({ id: "c", health: 498, maxHealth: 500 });
-    c.statuses.apply("regeneration", 10, "a"); // +4 pips, 8 HP/s
+    c.statuses.apply("regeneration", 10, "a", NO_RANKS); // +4 pips, 8 HP/s
     for (let i = 0; i < 40; i += 1) {
       advanceStatuses(c, 0.05, 0);
     }
@@ -73,7 +78,7 @@ describe("advanceStatuses health change", () => {
 
   it("kills a combatant whose degeneration reaches zero health", () => {
     const c = makeCombatant({ id: "c", health: 1 });
-    c.statuses.apply("burning", 10, "a");
+    c.statuses.apply("burning", 10, "a", NO_RANKS);
     const events = advanceStatuses(c, 1, 0);
     expect(c.dead).toBe(true);
     expect(c.health).toBe(0);
@@ -82,23 +87,23 @@ describe("advanceStatuses health change", () => {
 
   it("emits a damage event for degeneration and a heal event for regeneration", () => {
     const bleeding = makeCombatant({ id: "b", health: 500 });
-    bleeding.statuses.apply("bleeding", 10, "a");
+    bleeding.statuses.apply("bleeding", 10, "a", NO_RANKS);
     expect(advanceStatuses(bleeding, 1, 0).some((e) => e.kind === "damage")).toBe(true);
 
     const regen = makeCombatant({ id: "r", health: 100 });
-    regen.statuses.apply("regeneration", 10, "a");
+    regen.statuses.apply("regeneration", 10, "a", NO_RANKS);
     expect(advanceStatuses(regen, 1, 0).some((e) => e.kind === "heal")).toBe(true);
   });
 
   it("does nothing at all for a dead combatant", () => {
     const c = makeCombatant({ id: "c", health: 0, dead: true });
-    c.statuses.apply("bleeding", 10, "a");
+    c.statuses.apply("bleeding", 10, "a", NO_RANKS);
     expect(advanceStatuses(c, 1, 0)).toEqual([]);
   });
 
   it("emits no health event when no status changes health", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("crippled", 10, "a");
+    c.statuses.apply("crippled", 10, "a", NO_RANKS);
     const events = advanceStatuses(c, 1, 0);
     expect(events.some((e) => e.kind === "damage" || e.kind === "heal")).toBe(false);
   });
@@ -107,7 +112,7 @@ describe("advanceStatuses health change", () => {
 describe("advanceStatuses expiry", () => {
   it("emits status-expired when a status runs out", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("bleeding", 1, "a");
+    c.statuses.apply("bleeding", 1, "a", NO_RANKS);
     const events = advanceStatuses(c, 1.5, 0);
     expect(events).toContainEqual({
       kind: "status-expired",
@@ -119,7 +124,7 @@ describe("advanceStatuses expiry", () => {
 
   it("stops degeneration once the condition expires", () => {
     const c = makeCombatant({ id: "c", health: 500 });
-    c.statuses.apply("bleeding", 1, "a");
+    c.statuses.apply("bleeding", 1, "a", NO_RANKS);
     advanceStatuses(c, 1, 0);
     const healthAfterExpiry = c.health;
     advanceStatuses(c, 5, 0);
@@ -134,19 +139,19 @@ describe("effectiveMaxHealth", () => {
 
   it("is reduced by deep wound: 20% of the maximum, at most 100", () => {
     const small = makeCombatant({ id: "c", maxHealth: 480 });
-    small.statuses.apply("deep-wound", 10, "a");
+    small.statuses.apply("deep-wound", 10, "a", NO_RANKS);
     expect(effectiveMaxHealth(small)).toBe(384);
     const large = makeCombatant({ id: "c", maxHealth: 600 });
-    large.statuses.apply("deep-wound", 10, "a");
+    large.statuses.apply("deep-wound", 10, "a", NO_RANKS);
     expect(effectiveMaxHealth(large)).toBe(500);
   });
 
   it("adds a raised maximum before deep wound's cut (#1359)", () => {
     const c = makeCombatant({ id: "c", maxHealth: 200 });
-    c.statuses.apply("endure-pain", 16, "c");
+    c.statuses.apply("endure-pain", 16, "c", new Map([["warrior.strength", 12]]));
     expect(effectiveMaxHealth(c)).toBe(458);
     expect(raisedMaxHealth(c)).toBe(458);
-    c.statuses.apply("deep-wound", 10, "a");
+    c.statuses.apply("deep-wound", 10, "a", NO_RANKS);
     // 20% of 458, not of 200, and under the cap of 100.
     expect(effectiveMaxHealth(c)).toBeCloseTo(366.4);
     expect(raisedMaxHealth(c)).toBe(458);
@@ -154,15 +159,15 @@ describe("effectiveMaxHealth", () => {
 
   it("comes back whole when deep wound ends", () => {
     const c = makeCombatant({ id: "c", maxHealth: 480 });
-    c.statuses.apply("deep-wound", 10, "a");
+    c.statuses.apply("deep-wound", 10, "a", NO_RANKS);
     c.statuses.remove("deep-wound");
     expect(effectiveMaxHealth(c)).toBe(480);
   });
 
   it("caps regeneration at the deep-wound-reduced maximum, not the raw one", () => {
     const c = makeCombatant({ id: "c", health: 390, maxHealth: 500 });
-    c.statuses.apply("deep-wound", 100, "a");
-    c.statuses.apply("regeneration", 100, "a");
+    c.statuses.apply("deep-wound", 100, "a", NO_RANKS);
+    c.statuses.apply("regeneration", 100, "a", NO_RANKS);
     for (let i = 0; i < 100; i += 1) {
       advanceStatuses(c, 0.05, 0);
     }
@@ -174,7 +179,7 @@ describe("healingMultiplierOf", () => {
   it("is 1 with no status, and 0.8 while deep-wounded", () => {
     const c = makeCombatant({ id: "c" });
     expect(healingMultiplierOf(c)).toBe(1);
-    c.statuses.apply("deep-wound", 10, "a");
+    c.statuses.apply("deep-wound", 10, "a", NO_RANKS);
     expect(healingMultiplierOf(c)).toBe(0.8);
   });
 
@@ -190,14 +195,14 @@ describe("moveSpeedMultiplier", () => {
   it("is full speed with no status, and half while crippled", () => {
     const c = makeCombatant({ id: "c" });
     expect(moveSpeedMultiplier(c)).toBe(1);
-    c.statuses.apply("crippled", 10, "a");
+    c.statuses.apply("crippled", 10, "a", NO_RANKS);
     expect(moveSpeedMultiplier(c)).toBe(0.5);
   });
 
   it("multiplies crippled with Armor of Earth's slow", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("crippled", 10, "a");
-    c.statuses.apply("armor-boost", 10, "c");
+    c.statuses.apply("crippled", 10, "a", NO_RANKS);
+    c.statuses.apply("armor-boost", 10, "c", NO_RANKS);
     expect(moveSpeedMultiplier(c)).toBe(0.375);
   });
 
@@ -220,7 +225,7 @@ describe("effectiveActivationSeconds", () => {
 
   it("doubles while dazed", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("dazed", 10, "a");
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
     expect(fireball && effectiveActivationSeconds(fireball, c)).toBe(
       (fireball?.activationSeconds ?? 0) * 2,
     );
@@ -228,7 +233,7 @@ describe("effectiveActivationSeconds", () => {
 
   it("leaves an instant skill instant while dazed", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("dazed", 10, "a");
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
     expect(swiftChop?.activationSeconds).toBe(0);
     expect(swiftChop && effectiveActivationSeconds(swiftChop, c)).toBe(0);
   });
@@ -238,7 +243,7 @@ describe("attackMissChanceOf", () => {
   it("is 0 unblinded and 0.9 blind", () => {
     const c = makeCombatant({ id: "c" });
     expect(attackMissChanceOf(c)).toBe(0);
-    c.statuses.apply("blind", 10, "a");
+    c.statuses.apply("blind", 10, "a", NO_RANKS);
     expect(attackMissChanceOf(c)).toBe(0.9);
   });
 });
@@ -250,7 +255,7 @@ describe("death by degeneration", () => {
     // event, because TypeScript's narrowing would otherwise claim the
     // branch is unreachable after an earlier `dead` check.
     const c = makeCombatant({ id: "c", health: 2 });
-    c.statuses.apply("burning", 10, "a");
+    c.statuses.apply("burning", 10, "a", NO_RANKS);
 
     const events = advanceStatuses(c, 1, 0);
 
@@ -260,7 +265,7 @@ describe("death by degeneration", () => {
 
   it("emits no death event on a tick that merely damages", () => {
     const c = makeCombatant({ id: "c", health: 500 });
-    c.statuses.apply("burning", 10, "a");
+    c.statuses.apply("burning", 10, "a", NO_RANKS);
     expect(advanceStatuses(c, 1, 0).some((e) => e.kind === "death")).toBe(false);
   });
 });
@@ -293,7 +298,7 @@ describe("effectiveActivationSeconds with Fast Casting (#527)", () => {
 
   it("composes with dazed: ×1.149", () => {
     const c = mesmer();
-    c.statuses.apply("dazed", 10, "a");
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
     expect(effectiveActivationSeconds(mesmerHex, c)).toBeCloseTo(1.149, 3);
   });
 
@@ -305,7 +310,7 @@ describe("effectiveActivationSeconds with Fast Casting (#527)", () => {
     expect(signet.activationSeconds).toBe(3);
     const c = mesmer();
     expect(effectiveActivationSeconds(signet, c)).toBeCloseTo(1.92, 9);
-    c.statuses.apply("dazed", 10, "a");
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
     expect(effectiveActivationSeconds(signet, c)).toBeCloseTo(1.92, 9);
   });
 
@@ -347,7 +352,7 @@ describe("rankOf (#762)", () => {
 
   it("is one lower under weakness, but a rank bought at 0 stays, rune or not", () => {
     const w = warrior();
-    w.statuses.apply("weakness", 10, "necro");
+    w.statuses.apply("weakness", 10, "necro", NO_RANKS);
     expect(rankOf(w, "warrior.swordsmanship")).toBe(11);
     expect(rankOf(w, "warrior.tactics")).toBe(0);
     expect(rankOf(w, "warrior.hammer-mastery")).toBe(0);
@@ -375,14 +380,14 @@ describe("rankOf with scoped boosts (#1941)", () => {
 
   it("raises one attribute: Expert's Dexterity's Marksmanship", () => {
     const r = archer();
-    r.statuses.apply("experts-dexterity", 16, "r");
+    r.statuses.apply("experts-dexterity", 16, "r", NO_RANKS);
     expect(rankOf(r, "ranger.marksmanship")).toBe(11);
     expect(rankOf(r, "ranger.expertise")).toBe(0);
   });
 
   it("raises the elemental ones of a secondary Elementalist, a bought 0 too", () => {
     const r = archer();
-    r.statuses.apply("glyph-of-elemental-power", 25, "r");
+    r.statuses.apply("glyph-of-elemental-power", 25, "r", NO_RANKS);
     expect(rankOf(r, "elementalist.fire-magic")).toBe(10);
     expect(rankOf(r, "elementalist.water-magic")).toBe(2);
     expect(rankOf(r, "elementalist.energy-storage")).toBe(6);
@@ -391,7 +396,7 @@ describe("rankOf with scoped boosts (#1941)", () => {
 
   it("raises a profession's attributes, whatever the bearer's: Ritual Lord's", () => {
     const r = archer();
-    r.statuses.apply("ritual-lord", 29, "r");
+    r.statuses.apply("ritual-lord", 29, "r", NO_RANKS);
     expect(rankOf(r, "ritualist.spawning-power")).toBe(13);
     expect(rankOf(r, "ritualist.channeling-magic")).toBe(7);
     expect(rankOf(r, "elementalist.fire-magic")).toBe(8);
@@ -399,8 +404,8 @@ describe("rankOf with scoped boosts (#1941)", () => {
 
   it("sums a boost with Weakness, which is still −1 to all", () => {
     const r = archer();
-    r.statuses.apply("glyph-of-elemental-power", 25, "r");
-    r.statuses.apply("weakness", 10, "foe");
+    r.statuses.apply("glyph-of-elemental-power", 25, "r", NO_RANKS);
+    r.statuses.apply("weakness", 10, "foe", NO_RANKS);
     expect(rankOf(r, "elementalist.fire-magic")).toBe(9);
     expect(rankOf(r, "ranger.marksmanship")).toBe(9);
     // A net boost raises the bought 0; Weakness alone leaves it.
@@ -410,8 +415,8 @@ describe("rankOf with scoped boosts (#1941)", () => {
 
   it("holds one glyph at a time: the newest replaces the older", () => {
     const r = archer();
-    r.statuses.apply("glyph-of-elemental-power", 25, "r");
-    r.statuses.apply("glyph-of-energy", Number.POSITIVE_INFINITY, "r");
+    r.statuses.apply("glyph-of-elemental-power", 25, "r", NO_RANKS);
+    r.statuses.apply("glyph-of-energy", Number.POSITIVE_INFINITY, "r", NO_RANKS);
     expect(rankOf(r, "elementalist.fire-magic")).toBe(10);
   });
 
@@ -423,8 +428,8 @@ describe("rankOf with scoped boosts (#1941)", () => {
 
   it("gives way to a set rank: Master of Magic beats a boost", () => {
     const r = archer();
-    r.statuses.apply("glyph-of-elemental-power", 25, "r");
-    r.statuses.apply("master-of-magic", 49, "r");
+    r.statuses.apply("glyph-of-elemental-power", 25, "r", NO_RANKS);
+    r.statuses.apply("master-of-magic", 49, "r", NO_RANKS);
     expect(rankOf(r, "elementalist.fire-magic")).toBe(13);
     expect(rankOf(r, "elementalist.water-magic")).toBe(13);
   });
@@ -443,7 +448,7 @@ describe("a status damage pulse (#1501)", () => {
 
   it("grows by its growth each whole second, from its source, five in five seconds", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("wastrels-demise", 5, "m");
+    c.statuses.apply("wastrels-demise", 5, "m", NO_RANKS);
     advanceStatuses(c, 0.95, 0);
     expect(c.statuses.drainPulses()).toEqual([]);
     advanceStatuses(c, 0.05, 0);
@@ -454,13 +459,13 @@ describe("a status damage pulse (#1501)", () => {
 
   it("deals no partial pulse when it ends between two", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("wastrels-demise", 2.5, "m");
+    c.statuses.apply("wastrels-demise", 2.5, "m", NO_RANKS);
     expect(pulses(c, 4)).toEqual([8, 16]);
   });
 
   it("deals no pulse after it ended early", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("wastrels-demise", 5, "m");
+    c.statuses.apply("wastrels-demise", 5, "m", NO_RANKS);
     expect(pulses(c, 2.5)).toEqual([8, 16]);
     c.statuses.removeByCategory("hex");
     expect(pulses(c, 3)).toEqual([]);
@@ -468,15 +473,15 @@ describe("a status damage pulse (#1501)", () => {
 
   it("starts the count again when renewed", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("wastrels-demise", 5, "m");
+    c.statuses.apply("wastrels-demise", 5, "m", NO_RANKS);
     expect(pulses(c, 3)).toEqual([8, 16, 24]);
-    c.statuses.apply("wastrels-demise", 5, "m");
+    c.statuses.apply("wastrels-demise", 5, "m", NO_RANKS);
     expect(pulses(c, 2)).toEqual([8, 16]);
   });
 
   it("a big step deals every pulse it passes", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("wastrels-demise", 5, "m");
+    c.statuses.apply("wastrels-demise", 5, "m", NO_RANKS);
     advanceStatuses(c, 3, 0);
     expect(c.statuses.drainPulses().map(({ damage }) => damage)).toEqual([8, 16, 24]);
   });
@@ -485,7 +490,7 @@ describe("a status damage pulse (#1501)", () => {
 describe("raised maximum energy (#1464)", () => {
   it("adds Mighty Was Vorizun's 30 to the ceiling, and overcast still lowers it", () => {
     const c = makeCombatant({ id: "c", maxEnergy: 25 });
-    c.statuses.apply("mighty-was-vorizun", 51, "c");
+    c.statuses.apply("mighty-was-vorizun", 51, "c", NO_RANKS);
     expect(raisedMaxEnergy(c)).toBe(55);
     expect(effectiveMaxEnergy(c)).toBe(55);
     c.overcast = 10;
@@ -497,9 +502,9 @@ describe("raised maximum energy (#1464)", () => {
 describe("conditions that expire faster (#1464)", () => {
   it("runs a condition 42% faster under Pure Was Li Ming, and a hex at its rate", () => {
     const c = makeCombatant({ id: "c" });
-    c.statuses.apply("pure-was-li-ming", 17, "c");
-    c.statuses.apply("bleeding", 10, "a");
-    c.statuses.apply("faintheartedness", 10, "a");
+    c.statuses.apply("pure-was-li-ming", 17, "c", NO_RANKS);
+    c.statuses.apply("bleeding", 10, "a", NO_RANKS);
+    c.statuses.apply("faintheartedness", 10, "a", NO_RANKS);
     c.statuses.advance(1, false);
     expect(c.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(8.58);
     expect(c.statuses.get("faintheartedness")?.remainingSeconds).toBeCloseTo(9);

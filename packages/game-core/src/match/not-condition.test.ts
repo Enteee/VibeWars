@@ -11,6 +11,7 @@ import { makeCombatant } from "../skills/testing.js";
 import type { Skill, StateCondition } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The `not` condition (#1670) and the four skills it, or an existing
@@ -172,7 +173,7 @@ describe("Test of Faith (#1670)", () => {
     get(sim, "c").combatant.adrenaline.set(TEST_OF_FAITH, 5 * ADRENALINE_PER_STRIKE);
     const foe = get(sim, "f").combatant;
     if (enchanted) {
-      foe.statuses.apply(ENCHANTMENT, 1000, "f");
+      foe.statuses.apply(ENCHANTMENT, 1000, "f", NO_RANKS);
     }
     const events = used(sim, TEST_OF_FAITH, "f");
     return {
@@ -273,7 +274,7 @@ describe("Signet of Synergy (#1670)", () => {
       get(sim, id).combatant.health = 1000;
     }
     if (enchanted) {
-      get(sim, "c").combatant.statuses.apply(ENCHANTMENT, 1000, "c");
+      get(sim, "c").combatant.statuses.apply(ENCHANTMENT, 1000, "c", NO_RANKS);
     }
     const events = used(sim, SIGNET_OF_SYNERGY, "a");
     return { ally: amounts(events, "heal", "a"), caster: amounts(events, "heal", "c") };

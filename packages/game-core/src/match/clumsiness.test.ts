@@ -9,6 +9,7 @@ import type { CombatEvent } from "../skills/effects.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Clumsiness (#1593): "the next time each foe attacks, the attack is
@@ -158,7 +159,7 @@ describe("Clumsiness (#1593)", () => {
 
   it("cancels the next swing, deals 66, and the swing after it lands", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("clumsiness", 4, "m");
+    get(sim, "a").statuses.apply("clumsiness", 4, "m", NO_RANKS);
     expect(sim.requestAttack("a", "m")).toEqual({ ok: true });
     const first = untilEnds(sim, "a");
     expect(swingDamage(first)).toEqual([]);
@@ -176,8 +177,8 @@ describe("Clumsiness (#1593)", () => {
 
   it("a cancelled swing is no attack: what answers attacking waits for the next", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("clumsiness", 4, "m");
-    get(sim, "a").statuses.apply("ineptitude", 10, "m");
+    get(sim, "a").statuses.apply("clumsiness", 4, "m", NO_RANKS);
+    get(sim, "a").statuses.apply("ineptitude", 10, "m", NO_RANKS);
     expect(sim.requestAttack("a", "m")).toEqual({ ok: true });
     untilEnds(sim, "a");
     expect(get(sim, "a").statuses.has("ineptitude")).toBe(true);
@@ -187,7 +188,7 @@ describe("Clumsiness (#1593)", () => {
 
   it("a bow's arrow is never released", () => {
     const sim = match();
-    get(sim, "r").statuses.apply("clumsiness", 4, "m");
+    get(sim, "r").statuses.apply("clumsiness", 4, "m", NO_RANKS);
     expect(sim.requestAttack("r", "m")).toEqual({ ok: true });
     let released = false;
     untilEnds(sim, "r", () => {
@@ -198,7 +199,7 @@ describe("Clumsiness (#1593)", () => {
 
   it("interrupts an attack skill as it begins: no blow, and it recharges", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("clumsiness", 4, "m");
+    get(sim, "a").statuses.apply("clumsiness", 4, "m", NO_RANKS);
     sim.setTarget("a", "m");
     expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
     const log = stepFor(sim, 0.05);
@@ -216,7 +217,7 @@ describe("Clumsiness (#1593)", () => {
 
   it("a spell does not set it off", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("clumsiness", 4, "m");
+    get(sim, "a").statuses.apply("clumsiness", 4, "m", NO_RANKS);
     sim.setTarget("a", "m");
     expect(sim.requestSkill("a", 1)?.check).toEqual({ ok: true });
     stepFor(sim, 2.5);

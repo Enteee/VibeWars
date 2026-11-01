@@ -7,7 +7,7 @@ import { ANNIHILATION_MATCH_RULES, type MatchRules } from "../match-rules.js";
 import { BASE_ENERGY_PIPS_BY_PROFESSION } from "../equipment/armor.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
-import { ENERGY_PER_PIP } from "../skills/status.js";
+import { NO_RANKS, ENERGY_PER_PIP } from "../skills/status.js";
 import { chargeAdrenaline, strikesOf } from "../skills/testing.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -141,7 +141,7 @@ describe("MatchSimulation step", () => {
       });
       const a = participant(sim, "a");
       for (const id of ids) {
-        a.combatant.statuses.apply(id, 10, "a");
+        a.combatant.statuses.apply(id, 10, "a", NO_RANKS);
       }
       a.combatant.energy = 0;
       stepFor(sim, 3);
@@ -155,7 +155,7 @@ describe("MatchSimulation step", () => {
       participants: [spec("a", 0, vec2(0, 0), { baseEnergyPips: 0 })],
     });
     const a = participant(sim, "a");
-    a.combatant.statuses.apply("malaise", 10, "a");
+    a.combatant.statuses.apply("malaise", 10, "a", NO_RANKS);
     a.combatant.energy = 0.1;
     stepFor(sim, 2);
     expect(a.combatant.energy).toBe(0);
@@ -319,7 +319,7 @@ describe("previously uncovered branches", () => {
   it("respawns the dead after respawnSeconds: full health and energy, no statuses, at spawn", () => {
     const sim = duel(MATCH);
     const b = participant(sim, "b");
-    b.combatant.statuses.apply("weakness", 60, "a");
+    b.combatant.statuses.apply("weakness", 60, "a", NO_RANKS);
     b.combatant.health = 1;
     sim.setTarget("a", "b");
     sim.requestSkill("a", 0);
@@ -345,7 +345,7 @@ describe("previously uncovered branches", () => {
     const a = participant(sim, "a");
     sim.setTarget("a", "b");
     sim.requestSkill("a", 0);
-    a.combatant.statuses.apply("burning", 10, "b");
+    a.combatant.statuses.apply("burning", 10, "b", NO_RANKS);
     a.combatant.health = 0.2;
 
     const log = stepFor(sim, DT);
@@ -404,7 +404,7 @@ describe("status modifiers in the match", () => {
 
   it("a crippled player covers half the ground in the same time", () => {
     const sim = walkers();
-    participant(sim, "slow").combatant.statuses.apply("crippled", 10, "foe");
+    participant(sim, "slow").combatant.statuses.apply("crippled", 10, "foe", NO_RANKS);
     for (const id of ["fast", "slow"]) {
       sim.setInputDirection(id, vec2(1, 0));
     }
@@ -421,7 +421,7 @@ describe("status modifiers in the match", () => {
 
   it("a dazed Fireball takes twice as long to land", () => {
     const sim = duel();
-    participant(sim, "a").combatant.statuses.apply("dazed", 10, "b");
+    participant(sim, "a").combatant.statuses.apply("dazed", 10, "b", NO_RANKS);
     sim.setTarget("a", "b");
     sim.requestSkill("a", 0);
     expect(participant(sim, "a").combatant.cast.activeCast?.totalSeconds).toBe(2);
@@ -652,8 +652,8 @@ describe("reset policies", () => {
 
   /** Dirty everything a reset must put back, and move the dummy off spawn. */
   function dirty(d: ReturnType<typeof participant>): void {
-    d.combatant.statuses.apply("burning", 60, "a");
-    d.combatant.statuses.apply("armor-boost", 60, "d");
+    d.combatant.statuses.apply("burning", 60, "a", NO_RANKS);
+    d.combatant.statuses.apply("armor-boost", 60, "d", NO_RANKS);
     d.combatant.energy = 0;
     chargeAdrenaline(d.combatant);
     d.position = vec2(250, 50);

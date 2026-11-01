@@ -13,6 +13,7 @@ import { resolveTargets, type TargetCandidate } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
 import type { Combatant, Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Eight GW1 PvP staples the engine runs with no new mechanic (#522):
@@ -160,7 +161,7 @@ describe("conditions on a hit (#522)", () => {
       expect(hit.statuses.get(status)?.remainingSeconds).toBe(seconds);
 
       const blind = holding("a", 0, weapon, attr);
-      blind.statuses.apply("blind", 10, "foe");
+      blind.statuses.apply("blind", 10, "foe", NO_RANKS);
       const missed = foe("t");
       expect(strike(blind, id, missed, missing())).toEqual([
         { kind: "attack-missed", targetId: "t" },
@@ -234,7 +235,7 @@ describe("Punishing Shot (#522)", () => {
 
   it("interrupts nothing when it misses", () => {
     const ranger = holding("a", 0, WEAPONS.longbow, "ranger.marksmanship");
-    ranger.statuses.apply("blind", 10, "foe");
+    ranger.statuses.apply("blind", 10, "foe", NO_RANKS);
     const target = casting();
     strike(ranger, "ranger.punishing-shot", target, missing());
     expect(target.cast.isCasting).toBe(true);

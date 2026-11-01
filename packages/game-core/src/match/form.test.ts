@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, weaponDamageType } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { StatusSet } from "../skills/status.js";
+import { NO_RANKS, StatusSet } from "../skills/status.js";
 import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation } from "./simulation.js";
@@ -69,7 +69,7 @@ function dervish(match: MatchSimulation) {
 
 /** The Dervish in `skillId`'s form for `seconds`, as if just cast. */
 function inForm(match: MatchSimulation, statusId: "avatar-of-melandru", seconds: number): void {
-  dervish(match).combatant.statuses.apply(statusId, seconds, "d");
+  dervish(match).combatant.statuses.apply(statusId, seconds, "d", NO_RANKS);
 }
 
 describe("a form (#1437)", () => {
@@ -155,8 +155,8 @@ describe("a form (#1437)", () => {
 
   it("ends any other form: one at a time", () => {
     const statuses = new StatusSet();
-    statuses.apply("avatar-of-melandru", 74, "d");
-    statuses.apply("avatar-of-dwayna", 74, "d");
+    statuses.apply("avatar-of-melandru", 74, "d", NO_RANKS);
+    statuses.apply("avatar-of-dwayna", 74, "d", NO_RANKS);
     expect(statuses.has("avatar-of-melandru")).toBe(false);
     expect(statuses.has("avatar-of-dwayna")).toBe(true);
   });

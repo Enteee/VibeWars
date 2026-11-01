@@ -7,6 +7,7 @@ import type { StatusId } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Party-wide condition and hex moves (#1954): Martyr, Empathic Removal,
@@ -59,7 +60,7 @@ function get(sim: MatchSimulation, id: string): Participant {
 /** `id` bears each of `statuses` for `seconds`, from a foe. */
 function bear(sim: MatchSimulation, id: string, seconds: number, ...statuses: StatusId[]): void {
   for (const status of statuses) {
-    get(sim, id).combatant.statuses.apply(status, seconds, "x");
+    get(sim, id).combatant.statuses.apply(status, seconds, "x", NO_RANKS);
   }
 }
 

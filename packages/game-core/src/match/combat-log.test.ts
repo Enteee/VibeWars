@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyDamage, type CombatEvent } from "../skills/effects.js";
-import { HEALTH_PER_PIP, MAX_PIPS } from "../skills/status.js";
+import { NO_RANKS, HEALTH_PER_PIP, MAX_PIPS } from "../skills/status.js";
 import { vec2 } from "../vec2.js";
 import { CombatMeter, MatchTally, tallyCombat, type CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation } from "./simulation.js";
@@ -42,7 +42,12 @@ function degenerationEntry(sources: readonly string[]): CombatLogEntry | undefin
   const victim = sim.get("victim");
   const statuses = ["bleeding", "burning"] as const;
   sources.forEach((source, index) => {
-    victim?.combatant.statuses.apply(statuses[index % statuses.length] ?? "bleeding", 10, source);
+    victim?.combatant.statuses.apply(
+      statuses[index % statuses.length] ?? "bleeding",
+      10,
+      source,
+      NO_RANKS,
+    );
   });
   return sim.step(1 / RULES.tickRateHz).log[0];
 }

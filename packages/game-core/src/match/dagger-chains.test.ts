@@ -9,6 +9,7 @@ import { strikesOf } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Dagger chains in a running match (#831): an off-hand attack hits only
@@ -210,7 +211,7 @@ describe("dagger chains (#831)", () => {
     expect(gained(use(plain, "a", BLACK_LOTUS_STRIKE))).toEqual([]);
 
     const hexed = fight();
-    applyStatus(get(hexed, "foe").combatant, "malaise", 30, "b");
+    applyStatus(get(hexed, "foe").combatant, "malaise", 30, "b", NO_RANKS);
     // Critical Strikes 0: 5 energy.
     expect(gained(use(hexed, "a", BLACK_LOTUS_STRIKE))).toEqual([
       { kind: "energy-gain", targetId: "a", amount: 5 },

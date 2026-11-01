@@ -8,7 +8,7 @@ import { payCost } from "./activation.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { STATUS_DEFINITIONS, getStatusDefinition, type StatusId } from "./status.js";
+import { NO_RANKS, STATUS_DEFINITIONS, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, SkillEffect, SurroundingBody, Surroundings } from "./types.js";
 
@@ -46,7 +46,7 @@ function caster(): Combatant {
 function foe(id: string, ...hexes: StatusId[]): Combatant {
   const combatant = makeCombatant({ id, team: 1, maxHealth: 1000, health: 1000 });
   for (const hex of hexes) {
-    combatant.statuses.apply(hex, 10, "someone");
+    combatant.statuses.apply(hex, 10, "someone", NO_RANKS);
   }
   return combatant;
 }

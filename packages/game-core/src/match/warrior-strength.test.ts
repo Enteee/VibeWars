@@ -13,6 +13,7 @@ import { effectiveMaxHealth, raisedMaxHealth } from "../skills/tick.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The Strength staples in a match (#1359): Bull's Strike on a moving foe,
@@ -165,7 +166,7 @@ describe("Griffon's Sweep (#1359)", () => {
   it("blocked by Gladiator's Defense, knocks its target down and deals it 29", () => {
     for (let seed = 0; seed < 50; seed += 1) {
       const sim = arena(`griffon-${String(seed)}`);
-      combatant(sim, "t").statuses.apply("gladiators-defense", 10, "t");
+      combatant(sim, "t").statuses.apply("gladiators-defense", 10, "t", NO_RANKS);
       const entry = use(sim, GRIFFONS_SWEEP);
       if (entry.events.some(({ kind }) => kind === "attack-blocked")) {
         expect(combatant(sim, "t").knockdownRemaining).toBeGreaterThan(0);

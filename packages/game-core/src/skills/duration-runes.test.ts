@@ -8,7 +8,7 @@ import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "./catalog.js";
 import { applyEffect, applySkillEffects } from "./effects.js";
-import { scaledStatusDuration } from "./status.js";
+import { NO_RANKS, scaledStatusDuration } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -137,7 +137,7 @@ describe("condition-duration runes (#464)", () => {
 
   it("compares the scaled duration against a longer bleed already running", () => {
     const target = wearing("target", 1, "restoration");
-    target.statuses.apply("bleeding", 17, "earlier");
+    target.statuses.apply("bleeding", 17, "earlier", NO_RANKS);
     land("warrior.sever-artery", makeCombatant({ id: "caster" }), target);
     // 21 s scaled is 16.8 s, shorter than the 17 s left, so the 17 s stays.
     expect(target.statuses.get("bleeding")).toMatchObject({

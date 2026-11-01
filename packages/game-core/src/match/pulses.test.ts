@@ -9,6 +9,7 @@ import { describeSkill } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Pulses (#1113): a ground effect that lands its effects again and
@@ -188,7 +189,7 @@ describe("pulsing (#1113)", () => {
     const sim = match([spec("pal", 0, vec2(-300, 0))]);
     castSymbol(sim);
     const monk = get(sim, "m").combatant;
-    monk.statuses.apply("burning", 10, "f");
+    monk.statuses.apply("burning", 10, "f", NO_RANKS);
     monk.health = 0.2;
     const log = stepFor(sim, 5);
     expect(monk.dead).toBe(true);

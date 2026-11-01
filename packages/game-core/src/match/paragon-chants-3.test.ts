@@ -13,6 +13,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Paragon chants 3 (#1505): a chant that holds how the bearer's next skill
@@ -107,7 +108,7 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
 
 /** `id` on "p", from "p", for `seconds`. */
 function put(sim: MatchSimulation, id: StatusId, seconds = 10): void {
-  get(sim, "p").combatant.statuses.apply(id, seconds, "p");
+  get(sim, "p").combatant.statuses.apply(id, seconds, "p", NO_RANKS);
 }
 
 function has(sim: MatchSimulation, id: StatusId, on = "p"): boolean {
@@ -229,7 +230,7 @@ describe("nextSkillRule (#1505)", () => {
       const sim = match([ATTACK]);
       let count = 0;
       for (let chop = 0; chop < 10; chop += 1) {
-        get(sim, "f").combatant.statuses.apply("bonettis-defense", 60, "f");
+        get(sim, "f").combatant.statuses.apply("bonettis-defense", 60, "f", NO_RANKS);
         if (guided) {
           put(sim, "anthem-of-guidance");
         }

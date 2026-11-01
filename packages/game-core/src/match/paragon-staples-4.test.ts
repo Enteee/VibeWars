@@ -8,7 +8,7 @@ import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from 
 import { fillPools } from "../skills/adrenaline.js";
 import { getSkill } from "../skills/catalog.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant, strikesOf } from "../skills/testing.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { resolveSwing } from "../skills/weapon-attack.js";
@@ -189,7 +189,9 @@ describe('"Go for the Eyes!" (#1677)', () => {
   });
 
   it("+66% critical chance", () => {
-    expect(aggregateModifiers([{ id: "go-for-the-eyes" }]).criticalChanceBonus).toBe(0.66);
+    expect(
+      aggregateModifiers([{ id: "go-for-the-eyes", ranks: NO_RANKS }]).criticalChanceBonus,
+    ).toBe(0.66);
   });
 
   /** An unskilled swordsman under it swings at a dummy: whether the blow crits. */
@@ -199,7 +201,7 @@ describe('"Go for the Eyes!" (#1677)', () => {
       equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
     });
     if (status) {
-      attacker.statuses.apply("go-for-the-eyes", 10, "c");
+      attacker.statuses.apply("go-for-the-eyes", 10, "c", NO_RANKS);
     }
     const events = resolveSwing({
       attacker,
@@ -241,7 +243,7 @@ describe('"Go for the Eyes!" (#1677)', () => {
         ],
       });
       const ranger = get(sim, "r").combatant;
-      ranger.statuses.apply("go-for-the-eyes", 10, "c");
+      ranger.statuses.apply("go-for-the-eyes", 10, "c", NO_RANKS);
       expect(sim.requestAttack("r", "t")?.ok).toBe(true);
       let hit: CombatEvent | undefined;
       for (let i = 0; i < 5 * RULES.tickRateHz && hit === undefined; i += 1) {
@@ -309,7 +311,7 @@ describe('"It\'s Just a Flesh Wound." (#1677)', () => {
     const sim = match([FLESH_WOUND], [spec("a", 0, vec2(100, 0))]);
     const ally = get(sim, "a").combatant;
     for (const id of conditions) {
-      ally.statuses.apply(id, 20, "x");
+      ally.statuses.apply(id, 20, "x", NO_RANKS);
     }
     const events = used(sim, 0, "a");
     return { applied: applied(events), left: ally.statuses.active.map(({ id }) => id) };
@@ -320,7 +322,9 @@ describe('"It\'s Just a Flesh Wound." (#1677)', () => {
       applied: [["a", "its-just-a-flesh-wound", 8]],
       left: ["its-just-a-flesh-wound"],
     });
-    expect(aggregateModifiers([{ id: "its-just-a-flesh-wound" }]).moveSpeedMultiplier).toBe(1.25);
+    expect(
+      aggregateModifiers([{ id: "its-just-a-flesh-wound", ranks: NO_RANKS }]).moveSpeedMultiplier,
+    ).toBe(1.25);
   });
 
   it("with none: nothing", () => {
@@ -339,7 +343,7 @@ describe("Focused Anger (#1677)", () => {
 
     const warrior = makeCombatant({ id: "w", skillBar: [GO_FOR_THE_EYES] });
     warrior.adrenaline.set(GO_FOR_THE_EYES, 0);
-    warrior.statuses.apply("focused-anger", 45, "w");
+    warrior.statuses.apply("focused-anger", 45, "w", NO_RANKS);
     fillPools(warrior, ADRENALINE_PER_STRIKE);
     expect(warrior.adrenaline.get(GO_FOR_THE_EYES)).toBe(Math.floor(ADRENALINE_PER_STRIKE * 2.2));
   });
@@ -372,7 +376,7 @@ describe("Glowing Signet (#1677)", () => {
     const sim = match([GLOWING_SIGNET], [spec("f", 1, vec2(100, 0))]);
     get(sim, "c").combatant.energy = 100;
     if (burning) {
-      get(sim, "f").combatant.statuses.apply("burning", 10, "x");
+      get(sim, "f").combatant.statuses.apply("burning", 10, "x", NO_RANKS);
     }
     return gained(used(sim, 0, "f"), "c");
   }
@@ -392,7 +396,7 @@ describe("Signet of Aggression (#1677)", () => {
     const sim = match([SIGNET_OF_AGGRESSION, GO_FOR_THE_EYES], []);
     const caster: Combatant = get(sim, "c").combatant;
     if (statusId !== undefined) {
-      caster.statuses.apply(statusId, 30, "c");
+      caster.statuses.apply(statusId, 30, "c", NO_RANKS);
     }
     used(sim, 0);
     return strikesOf(caster, GO_FOR_THE_EYES);
@@ -416,8 +420,8 @@ describe("Remedy Signet (#1677)", () => {
   it("loses one condition of two", () => {
     const sim = match([REMEDY_SIGNET], []);
     const caster = get(sim, "c").combatant;
-    caster.statuses.apply("crippled", 20, "x");
-    caster.statuses.apply("bleeding", 20, "x");
+    caster.statuses.apply("crippled", 20, "x", NO_RANKS);
+    caster.statuses.apply("bleeding", 20, "x", NO_RANKS);
     used(sim, 0);
     expect(
       caster.statuses.active.filter(({ id }) => id === "crippled" || id === "bleeding"),

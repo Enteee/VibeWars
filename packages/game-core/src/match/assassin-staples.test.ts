@@ -15,6 +15,7 @@ import type { Segment } from "../geometry.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The Assassin's staples (#988): Death's Charge shadow-steps to its foe
@@ -321,7 +322,7 @@ describe("Shadow Refuge (#988)", () => {
 describe("Shroud of Distress (#988)", () => {
   it("blocks 75% only below half of the maximum a deep wound leaves", () => {
     const bearer = makeCombatant({ id: "b", maxHealth: 500, health: 250 });
-    bearer.statuses.apply("shroud-of-distress", 54, "b");
+    bearer.statuses.apply("shroud-of-distress", 54, "b", NO_RANKS);
     expect(blockChanceOf(bearer, "melee")).toBe(0);
     bearer.health = 249;
     expect(blockChanceOf(bearer, "melee")).toBe(0.75);
@@ -329,7 +330,7 @@ describe("Shroud of Distress (#988)", () => {
 
     // Deep Wound: a max of 400, so 210 is above half.
     bearer.health = 210;
-    bearer.statuses.apply("deep-wound", 10, "f");
+    bearer.statuses.apply("deep-wound", 10, "f", NO_RANKS);
     expect(blockChanceOf(bearer, "melee")).toBe(0);
     bearer.health = 199;
     expect(blockChanceOf(bearer, "melee")).toBe(0.75);
@@ -337,8 +338,8 @@ describe("Shroud of Distress (#988)", () => {
 
   it("combines with Guardian as blocks do", () => {
     const bearer = makeCombatant({ id: "b", health: 100 });
-    bearer.statuses.apply("shroud-of-distress", 54, "b");
-    bearer.statuses.apply("guardian", 10, "m");
+    bearer.statuses.apply("shroud-of-distress", 54, "b", NO_RANKS);
+    bearer.statuses.apply("guardian", 10, "m", NO_RANKS);
     expect(blockChanceOf(bearer, "melee")).toBeCloseTo(1 - 0.25 * 0.5, 9);
   });
 
@@ -386,7 +387,7 @@ describe("Critical Eye (#988)", () => {
   it("adds 13% to the chance to crit, at most 1, and 1 energy to each crit", () => {
     const attacker = makeCombatant({ id: "a", energy: 0 });
     const before = criticalChance(weaponSnapshotOf(attacker), RULES.combat);
-    attacker.statuses.apply("critical-eye", 30, "a");
+    attacker.statuses.apply("critical-eye", 30, "a", NO_RANKS);
     expect(criticalChance(weaponSnapshotOf(attacker), RULES.combat)).toBeCloseTo(before + 0.13, 9);
     expect(
       criticalChance(weaponSnapshotOf(attacker), {
@@ -404,7 +405,7 @@ describe("Critical Eye (#988)", () => {
 
   it("a stripping of enchantments leaves it: it is a skill effect", () => {
     const bearer = makeCombatant({ id: "b" });
-    bearer.statuses.apply("critical-eye", 30, "b");
+    bearer.statuses.apply("critical-eye", 30, "b", NO_RANKS);
     bearer.statuses.removeByCategory("enchantment", 10);
     expect(bearer.statuses.has("critical-eye")).toBe(true);
   });

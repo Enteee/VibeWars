@@ -7,6 +7,7 @@ import { moveSpeedMultiplier } from "../skills/tick.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type CreatureKind, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Shadow step 2 (#1930): Recall steps to its ally when it ends, Spirit
@@ -154,7 +155,7 @@ function waits(match: MatchSimulation, skillId: string): number {
 /** `id` dies of a burning it cannot outlast, within the tick. */
 function kill(match: MatchSimulation, id: string): void {
   const { combatant } = get(match, id);
-  combatant.statuses.apply("burning", 10, "foe");
+  combatant.statuses.apply("burning", 10, "foe", NO_RANKS);
   combatant.health = 0.2;
   match.step(DT);
   expect(combatant.dead).toBe(true);

@@ -5,6 +5,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -51,7 +52,7 @@ function stepFor(match: MatchSimulation, seconds: number): void {
 function doom(match: MatchSimulation, ...ids: string[]): void {
   for (const id of ids) {
     const { combatant } = get(match, id);
-    combatant.statuses.apply("burning", 10, "n");
+    combatant.statuses.apply("burning", 10, "n", NO_RANKS);
     combatant.health = 0.2;
   }
 }

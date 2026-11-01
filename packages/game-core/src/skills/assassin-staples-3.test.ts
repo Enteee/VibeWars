@@ -12,6 +12,7 @@ import { resolveSkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Assassin staples 3 (#1580): Golden Lotus Strike, Golden Phoenix
@@ -63,7 +64,7 @@ const body = (id: string, team = 1): Combatant =>
 
 /** A Golden Phoenix Strike's enchantment on `caster`. */
 function enchant(caster: Combatant): Combatant {
-  caster.statuses.apply("mystic-regeneration", 15, caster.id);
+  caster.statuses.apply("mystic-regeneration", 15, caster.id, NO_RANKS);
   return caster;
 }
 
@@ -302,7 +303,7 @@ describe("Palm Strike", () => {
 describe("Signet of Toxic Shock", () => {
   it("deals 82 to a poisoned foe and nothing to a clean one", () => {
     const poisoned = body("p");
-    poisoned.statuses.apply("poison", 10, "x");
+    poisoned.statuses.apply("poison", 10, "x", NO_RANKS);
     expect(damageTo(land("assassin.signet-of-toxic-shock", assassin(), poisoned), "p")).toEqual([
       82,
     ]);

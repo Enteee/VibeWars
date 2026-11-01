@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
@@ -87,7 +87,7 @@ function press(sim: MatchSimulation, skillId: string) {
 
 /** Kill `victim` as burning would. */
 function kill(sim: MatchSimulation, victim: Participant): void {
-  victim.combatant.statuses.apply("burning", 10, "x");
+  victim.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -106,7 +106,7 @@ describe("Otyugh's Cry (#1865)", () => {
   function bites(cry: boolean): { blocked: number; landed: number; armor: number } {
     const sim = match();
     const pet = wolf(sim);
-    get(sim, "a").combatant.statuses.apply("guardian", 60, "x");
+    get(sim, "a").combatant.statuses.apply("guardian", 60, "x", NO_RANKS);
     if (cry) {
       expect(press(sim, OTYUGH)?.check).toEqual({ ok: true });
     }
@@ -133,7 +133,7 @@ describe("Otyugh's Cry (#1865)", () => {
   it("covers the pet's attack skills' blows too", () => {
     const sim = match();
     const pet = wolf(sim);
-    get(sim, "a").combatant.statuses.apply("guardian", 60, "x");
+    get(sim, "a").combatant.statuses.apply("guardian", 60, "x", NO_RANKS);
     expect(press(sim, OTYUGH)?.check).toEqual({ ok: true });
     stepFor(sim, DT);
     sim.setTarget("r", "a");
@@ -157,7 +157,7 @@ describe("Predatory Bond (#1865)", () => {
     const sim = match();
     const owner = get(sim, "r");
     const pet = wolf(sim);
-    get(sim, "a").combatant.statuses.apply("guardian", 60, "x");
+    get(sim, "a").combatant.statuses.apply("guardian", 60, "x", NO_RANKS);
     expect(press(sim, BOND)?.check).toEqual({ ok: true });
     stepFor(sim, DT);
     expect(pet.combatant.statuses.has("predatory-bond")).toBe(true);

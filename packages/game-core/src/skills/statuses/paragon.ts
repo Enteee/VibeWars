@@ -291,10 +291,11 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
       amount: { flat: 18 },
     },
   }),
-  // PvP "Never Surrender!" at rank 12: +4 Health regeneration (#923).
+  // PvP "Never Surrender!": +1...4 Health regeneration (#923), at the
+  // shouter's Command (#1976).
   "never-surrender": define("never-surrender", "Never Surrender!", "shout", {
     profession: "paragon",
-    healthPips: 4,
+    healthPips: { scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 4 } },
   }),
 
   // Paragon echoes (#1423): each renews, or fires, whenever a chant or a

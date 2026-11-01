@@ -9,7 +9,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { moveSpeedMultiplier } from "./tick.js";
 import { fireTriggers, type FiredTrigger } from "./triggers.js";
@@ -126,7 +126,7 @@ describe("Vow of Strength (#939)", () => {
 
   it("with a scythe, each attack deals 22 slashing to every adjacent foe, its target included", () => {
     const self = dervish();
-    self.statuses.apply("vow-of-strength", 15, "dervish");
+    self.statuses.apply("vow-of-strength", 15, "dervish", NO_RANKS);
     const target = foe("target");
     const beside = foe("beside");
     const far = foe("far");
@@ -146,7 +146,7 @@ describe("Vow of Strength (#939)", () => {
 
   it("with a sword, an attack deals nothing", () => {
     const self = dervish(WEAPONS.sword);
-    self.statuses.apply("vow-of-strength", 15, "dervish");
+    self.statuses.apply("vow-of-strength", 15, "dervish", NO_RANKS);
     const target = foe("target");
     expect(attacks(self, around([self, vec2(0, 0)], [target, vec2(40, 0)]))).toEqual([]);
     expect(target.health).toBe(1000);
@@ -165,7 +165,7 @@ describe("Sand Shards (#939)", () => {
 
   it("four scythe hits splash 50 earth on the foe beside the one hit, then it ends", () => {
     const self = dervish();
-    self.statuses.apply("sand-shards", 30, "dervish");
+    self.statuses.apply("sand-shards", 30, "dervish", NO_RANKS);
     const target = foe("target");
     const beside = foe("beside");
     const surroundings = around([self, vec2(0, 0)], [target, vec2(40, 0)], [beside, vec2(40, 30)]);
@@ -213,7 +213,7 @@ describe("Sand Shards (#939)", () => {
 
   it("a sword hit splashes nothing and spends nothing", () => {
     const self = dervish(WEAPONS.sword);
-    self.statuses.apply("sand-shards", 30, "dervish");
+    self.statuses.apply("sand-shards", 30, "dervish", NO_RANKS);
     const target = foe("target");
     const surroundings = around(
       [self, vec2(0, 0)],
@@ -241,7 +241,7 @@ describe("Sand Shards (#939)", () => {
 
   it("a swing that cleaves three foes spends three hits", () => {
     const self = dervish();
-    self.statuses.apply("sand-shards", 30, "dervish");
+    self.statuses.apply("sand-shards", 30, "dervish", NO_RANKS);
     const target = foe("target");
     const surroundings = around(
       [self, vec2(0, 0)],
@@ -263,7 +263,7 @@ describe("Sand Shards (#939)", () => {
   it("a recast resets its hits to 4", () => {
     const self = dervish();
     // A second into it: the recast's 30 s is the longer.
-    self.statuses.apply("sand-shards", 29, "dervish");
+    self.statuses.apply("sand-shards", 29, "dervish", NO_RANKS);
     const target = foe("target");
     const surroundings = around([self, vec2(0, 0)], [target, vec2(40, 0)]);
     attackHitRiders(
@@ -295,7 +295,7 @@ describe("Pious Haste (#939)", () => {
 
   it("with Vow of Strength up: Vow goes, and the Dervish runs 50% faster", () => {
     const self = dervish();
-    self.statuses.apply("vow-of-strength", 15, "dervish");
+    self.statuses.apply("vow-of-strength", 15, "dervish", NO_RANKS);
     use(self, "dervish.pious-haste", self);
     expect(self.statuses.has("vow-of-strength")).toBe(false);
     expect(self.statuses.has("pious-haste")).toBe(false);

@@ -7,6 +7,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
 import { flagId, type FlagField } from "./flags.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Item spells (#1434): a Ritualist's ashes fill the hands as a flag does,
@@ -153,7 +154,7 @@ describe("holding ashes (#1434)", () => {
 describe("the ashes drop, their drop effect firing (#1434)", () => {
   it("when they run out", () => {
     const sim = match();
-    get(sim, "r").combatant.statuses.apply(ASHES, 0.3, "r");
+    get(sim, "r").combatant.statuses.apply(ASHES, 0.3, "r", NO_RANKS);
     stepFor(sim, 0.5);
     expect(holds(sim)).toBe(false);
     expect(blinded(sim, "x")).toBe(true);
@@ -164,7 +165,7 @@ describe("the ashes drop, their drop effect firing (#1434)", () => {
     const sim = match();
     use(sim, 0);
     const r = get(sim, "r").combatant;
-    r.statuses.apply("burning", 10, "x");
+    r.statuses.apply("burning", 10, "x", NO_RANKS);
     r.health = 0.2;
     stepFor(sim, 0.2);
     expect(r.dead).toBe(true);

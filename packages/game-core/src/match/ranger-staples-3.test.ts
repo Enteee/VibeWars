@@ -12,6 +12,7 @@ import { KNOCKDOWN_SECONDS, isEasilyInterrupted, type Skill } from "../skills/ty
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The Ranger staples 2 (#1629): a hit rider for one weapon class, an
@@ -244,7 +245,7 @@ describe("a hit rider for one weapon class (#1629)", () => {
       archer: ranger({ spawn: vec2(-500, 0) }),
     });
     const sword = get(sim, "w").combatant;
-    sword.statuses.apply("kindle-arrows", 24, "w");
+    sword.statuses.apply("kindle-arrows", 24, "w", NO_RANKS);
     expect(attackDamageTypeOf(sword)).toBeUndefined();
     const log = swingUntilHit(sim, "w");
     expect(damageTo(eventsOf(log, KINDLE_ARROWS), "f")).toEqual([]);
@@ -252,7 +253,7 @@ describe("a hit rider for one weapon class (#1629)", () => {
 
   it("a rider for any weapon rides both: Apply Poison's", () => {
     const sim = match([swordsman("w", 0, vec2(AREA_ADJACENT - 10, 0))]);
-    get(sim, "w").combatant.statuses.apply("apply-poison", 24, "w");
+    get(sim, "w").combatant.statuses.apply("apply-poison", 24, "w", NO_RANKS);
     swingUntilHit(sim, "w");
     expect(get(sim, "f").combatant.statuses.get("poison")).toBeDefined();
   });
@@ -302,7 +303,7 @@ describe("Precision Shot (#1629)", () => {
   it("is never blocked: a foe's 75% block does nothing", () => {
     for (let n = 0; n < 10; n += 1) {
       const sim = match([], { seed: `precision-${String(n)}` });
-      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
       const events = eventsOf(used(sim, PRECISION_SHOT), PRECISION_SHOT);
       expect(damageTo(events, "f")).toHaveLength(1);
     }
@@ -339,9 +340,9 @@ describe("Determined Shot (#1629)", () => {
     const sim = match();
     used(sim, POWER_SHOT);
     if (blocked) {
-      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
       // Guardian blocks 50%: keep the foe blocking until it has.
-      get(sim, "f").combatant.statuses.apply("lightning-reflexes", 1000, "f");
+      get(sim, "f").combatant.statuses.apply("lightning-reflexes", 1000, "f", NO_RANKS);
     }
     const events = eventsOf(used(sim, DETERMINED_SHOT), DETERMINED_SHOT);
     return { sim, events };
@@ -479,7 +480,7 @@ describe("Antidote Signet (#1629)", () => {
     const sim = match();
     const { statuses } = get(sim, "r").combatant;
     for (const [at, id] of conditions.entries()) {
-      statuses.apply(id, 20 + at, "f");
+      statuses.apply(id, 20 + at, "f", NO_RANKS);
       stepFor(sim, DT);
     }
     useOnSelf(sim, ANTIDOTE_SIGNET);

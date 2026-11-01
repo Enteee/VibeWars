@@ -124,11 +124,13 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     block: { chance: 0.5, against: "all" },
   }),
   // "For 3...10 seconds, target ally has a 75% chance to block attacks and
-  // gains 15...30 armor": +27, its rank-12 value (#1511).
+  // gains 15...30 armor" (#1511), at Protection Prayers (#1976).
   "shield-of-deflection": define("shield-of-deflection", "Shield of Deflection", "enchantment", {
     profession: "monk",
     block: { chance: 0.75, against: "all" },
-    armorModifier: 27,
+    armorModifier: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 27 },
+    },
   }),
   // "For 8 seconds, damage and life steal received by target ally is
   // reduced by 3...18. When Shielding Hands ends, that ally is healed for
@@ -434,10 +436,12 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     preventsKnockdown: true,
   }),
   // "While you maintain this enchantment, target ally has +40...200 maximum
-  // Health" (#1872): 168 at rank 12.
+  // Health" (#1872), at Protection Prayers (#1976).
   "vital-blessing": define("vital-blessing", "Vital Blessing", "enchantment", {
     profession: "monk",
-    maxHealthBonus: 168,
+    maxHealthBonus: {
+      scaling: { attributeId: "monk.protection-prayers", atZero: 40, atTwelve: 168 },
+    },
   }),
   // "For 10...30...35 seconds, you gain 3 Energy whenever you use a signet"
   // (#1913).

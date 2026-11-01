@@ -13,6 +13,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Casting-state hexes and Death Nova (#1931), at rank 12: Spinal Shivers
@@ -117,7 +118,7 @@ function hit(match: MatchSimulation, type: DamageType): void {
 /** `far` burns `id` to death, as the simulation sees it; what happened meanwhile. */
 function kill(match: MatchSimulation, id: string): CombatLogEntry[] {
   const victim = get(match, id);
-  victim.statuses.apply("burning", 10, "far");
+  victim.statuses.apply("burning", 10, "far", NO_RANKS);
   victim.health = 0.2;
   const log = stepFor(match, 4 * DT);
   expect(victim.dead).toBe(true);
@@ -154,7 +155,7 @@ describe("Spinal Shivers and Shivers of Dread (#1931)", () => {
   it("a cold hit mid-cast interrupts the skill and costs the caster 4 Energy", () => {
     for (const id of SHIVERS) {
       const match = sim();
-      get(match, "f").statuses.apply(id, 34, "n");
+      get(match, "f").statuses.apply(id, 34, "n", NO_RANKS);
       use(match, "f", 0, "n");
       stepFor(match, 0.25);
       expect(get(match, "f").cast.isCasting).toBe(true);
@@ -170,7 +171,7 @@ describe("Spinal Shivers and Shivers of Dread (#1931)", () => {
 
   it("answers several cold packets in one tick once", () => {
     const match = sim();
-    get(match, "f").statuses.apply("spinal-shivers", 34, "n");
+    get(match, "f").statuses.apply("spinal-shivers", 34, "n", NO_RANKS);
     use(match, "f", 0, "n");
     stepFor(match, 0.25);
     get(match, "n").energy = 50;
@@ -182,14 +183,14 @@ describe("Spinal Shivers and Shivers of Dread (#1931)", () => {
 
   it("leaves an idle foe alone, and a fire hit on a casting one, at no cost", () => {
     const idle = sim();
-    get(idle, "f").statuses.apply("spinal-shivers", 34, "n");
+    get(idle, "f").statuses.apply("spinal-shivers", 34, "n", NO_RANKS);
     get(idle, "n").energy = 50;
     hit(idle, "cold");
     stepFor(idle, DT);
     expect(get(idle, "n").energy).toBeCloseTo(50, 0);
 
     const fire = sim();
-    get(fire, "f").statuses.apply("spinal-shivers", 34, "n");
+    get(fire, "f").statuses.apply("spinal-shivers", 34, "n", NO_RANKS);
     use(fire, "f", 0, "n");
     stepFor(fire, 0.25);
     get(fire, "n").energy = 50;
@@ -202,7 +203,7 @@ describe("Spinal Shivers and Shivers of Dread (#1931)", () => {
 
   it("ends, and interrupts nothing, when its caster has less than 4 Energy", () => {
     const match = sim();
-    get(match, "f").statuses.apply("spinal-shivers", 34, "n");
+    get(match, "f").statuses.apply("spinal-shivers", 34, "n", NO_RANKS);
     use(match, "f", 0, "n");
     stepFor(match, 0.25);
     get(match, "n").energy = 3;
@@ -270,7 +271,7 @@ describe("Power Leech and Power Flux (#1931)", () => {
 
   it("Power Leech steals 13 Energy on the foe's next spell", () => {
     const match = sim();
-    get(match, "f").statuses.apply("power-leech", 10, "m");
+    get(match, "f").statuses.apply("power-leech", 10, "m", NO_RANKS);
     get(match, "m").energy = 50;
     get(match, "f").energy = 80;
     use(match, "f", 3, "n");
@@ -299,7 +300,7 @@ describe("Death Nova (#1931)", () => {
 
   it("a death under it costs adjacent foes 85 and poisons them, not a far one", () => {
     const match = sim();
-    get(match, "b").statuses.apply("death-nova", 30, "n");
+    get(match, "b").statuses.apply("death-nova", 30, "n", NO_RANKS);
     const log = kill(match, "b");
     const dealt = log
       .filter((entry) => entry.skillId === "necromancer.death-nova")
@@ -311,7 +312,7 @@ describe("Death Nova (#1931)", () => {
 
   it("does nothing once it is gone", () => {
     const match = sim();
-    get(match, "b").statuses.apply("death-nova", 30, "n");
+    get(match, "b").statuses.apply("death-nova", 30, "n", NO_RANKS);
     get(match, "b").statuses.end("death-nova");
     kill(match, "b");
     expect(get(match, "near").statuses.has("poison")).toBe(false);

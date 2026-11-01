@@ -41,6 +41,7 @@ import {
   maxHealthLossOf,
   raisedMaxHealth,
   rankOf,
+  statusRanks,
 } from "./tick.js";
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
@@ -1090,6 +1091,7 @@ export function applyStatus(
   statusId: StatusId,
   durationSeconds: number,
   sourceId: string,
+  ranks: ReadonlyMap<string, number>,
   returnPoint: Vec2 | null = null,
   sourceSkillId?: string,
 ): number | undefined {
@@ -1099,7 +1101,9 @@ export function applyStatus(
   }
   const lossBefore = maxHealthLossOf(target);
   const raisedBefore = raisedMaxHealth(target);
-  if (!target.statuses.apply(statusId, durationSeconds, sourceId, returnPoint, sourceSkillId)) {
+  if (
+    !target.statuses.apply(statusId, durationSeconds, sourceId, ranks, returnPoint, sourceSkillId)
+  ) {
     return 0;
   }
   const raised = raisedMaxHealth(target) - raisedBefore;
@@ -1162,11 +1166,11 @@ function castSpot(context: SkillContext, caster: Combatant): Vec2 | null {
  */
 export function landCaughtCondition(
   target: Combatant,
-  { id, remainingSeconds, sourceId }: ActiveStatus,
+  { id, remainingSeconds, sourceId, ranks }: ActiveStatus,
   events: CombatEvent[],
   surroundings: Surroundings,
 ): void {
-  landOnTaker(target, id, remainingSeconds, sourceId, events, surroundings, null);
+  landOnTaker(target, id, remainingSeconds, sourceId, ranks, events, surroundings, null);
 }
 
 /**
@@ -1180,6 +1184,7 @@ function landOnTaker(
   statusId: StatusId,
   durationSeconds: number,
   sourceId: string,
+  ranks: ReadonlyMap<string, number>,
   events: CombatEvent[],
   surroundings: Surroundings,
   returnPoint: Vec2 | null,
@@ -1191,6 +1196,7 @@ function landOnTaker(
     statusId,
     scaledStatusDuration(taker, statusId, durationSeconds),
     sourceId,
+    ranks,
     events,
     returnPoint,
     sourceSkillId,
@@ -1210,6 +1216,7 @@ function landStatus(
   statusId: StatusId,
   durationSeconds: number,
   sourceId: string,
+  ranks: ReadonlyMap<string, number>,
   events: CombatEvent[],
   returnPoint: Vec2 | null,
   sourceSkillId?: string,
@@ -1221,7 +1228,15 @@ function landStatus(
   const ending = endedByGaining(target, statusId);
   const breaker =
     getStatusDefinition(statusId).category === "hex" ? target.statuses.hexBreaker() : undefined;
-  const loss = applyStatus(target, statusId, durationSeconds, sourceId, returnPoint, sourceSkillId);
+  const loss = applyStatus(
+    target,
+    statusId,
+    durationSeconds,
+    sourceId,
+    ranks,
+    returnPoint,
+    sourceSkillId,
+  );
   if (loss === undefined) {
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
@@ -1710,6 +1725,7 @@ export function applyEffect(
         effect.statusId,
         base * (context.own?.durationMultiplier ?? 1),
         caster.id,
+        statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,
         context.surroundings,
         castSpot(context, caster),
@@ -1740,13 +1756,14 @@ export function applyEffect(
       const moved = giver.statuses.takeNewest("condition", effect.count);
       // The caster becomes every moved condition's source: a Bleeding Draw
       // Conditions takes from an ally counts as the Monk's own from then on.
-      for (const { id, remainingSeconds } of moved) {
+      for (const { id, remainingSeconds, ranks } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
         landOnTaker(
           taker,
           id,
           remainingSeconds * effect.durationMultiplier,
           caster.id,
+          ranks,
           events,
           context.surroundings,
           null,
@@ -1779,12 +1796,13 @@ export function applyEffect(
           ? 1
           : 1 + resolveMagnitude(effect.extendPercent, caster) / 100;
       for (const combatant of nearestFirst(reached, at)) {
-        for (const { id, remainingSeconds } of conditions) {
+        for (const { id, remainingSeconds, ranks } of conditions) {
           landOnTaker(
             combatant,
             id,
             Math.min(remainingSeconds * extend, effect.maxSeconds ?? Number.POSITIVE_INFINITY),
             caster.id,
+            ranks,
             events,
             context.surroundings,
             null,
@@ -1807,6 +1825,7 @@ export function applyEffect(
         effect.statusId,
         caster.id,
         caster.nextMaintainSeq,
+        statusRanks(effect.statusId, context.ranksFrom ?? caster),
         castSpot(context, caster),
         // The ally a caster wears it for (#1930), as Recall's.
         bearer === target ? null : (target?.id ?? null),
@@ -2007,6 +2026,7 @@ export function applyEffect(
         effect.statusId,
         effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
         caster.id,
+        statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,
         context.surroundings,
         castSpot(context, caster),
@@ -2034,6 +2054,7 @@ export function applyEffect(
         effect.statusId,
         effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
         caster.id,
+        statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,
         context.surroundings,
         castSpot(context, caster),

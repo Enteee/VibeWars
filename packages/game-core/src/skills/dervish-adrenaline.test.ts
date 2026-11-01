@@ -14,6 +14,7 @@ import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { cleaveVictims, resolveAttackSkill } from "./weapon-attack.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * A scythe's attack skill cleaves (#977), Zealous Sweep pays out for each
@@ -200,8 +201,8 @@ describe("a scythe's attack skill cleaves (#977)", () => {
 
   it("Wounding Strike on 3 bleeds and deep-wounds each, and costs one enchantment", () => {
     const self = dervish();
-    self.statuses.apply("mystic-regeneration", 10, "dervish");
-    self.statuses.apply("fleeting-stability", 10, "dervish");
+    self.statuses.apply("mystic-regeneration", 10, "dervish", NO_RANKS);
+    self.statuses.apply("fleeting-stability", 10, "dervish", NO_RANKS);
     const { foes, surroundings } = crowd(self);
     const [target, near1, near2] = foes as [Combatant, Combatant, Combatant];
     attack(self, "dervish.wounding-strike", target, surroundings);
@@ -250,7 +251,7 @@ describe("Zealous Sweep (#977)", () => {
     const self = dervish(WEAPONS.scythe, { energy: 10 });
     const { foes, surroundings } = crowd(self);
     for (const victim of foes) {
-      victim.statuses.apply("guardian", 10, "monk");
+      victim.statuses.apply("guardian", 10, "monk", NO_RANKS);
     }
     attack(self, "dervish.zealous-sweep", foes[0] ?? foe("missing"), surroundings, steady(10, 0.1));
     expect(self.energy).toBe(10);
@@ -333,7 +334,7 @@ describe("Mystic Twister (#977)", () => {
 
   it("deals 100 in one packet while you are enchanted", () => {
     const self = dervish();
-    self.statuses.apply("vow-of-strength", 15, "dervish");
+    self.statuses.apply("vow-of-strength", 15, "dervish", NO_RANKS);
     const events = twist(self, foe("a"));
     expect(events.filter((event) => event.kind === "damage")).toEqual([
       expect.objectContaining({ targetId: "a", amount: 100 }),

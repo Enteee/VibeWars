@@ -10,7 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { canActivate, payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { clampPips, getStatusDefinition } from "./status.js";
+import { NO_RANKS, clampPips, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { netPips } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
@@ -159,7 +159,7 @@ describe("Healing Light (#1650)", () => {
   it("heals 104, and an enchanted ally gives the Monk 3 energy", () => {
     const user = monk();
     const target = ally();
-    target.statuses.apply("healing-breeze", 15, "monk");
+    target.statuses.apply("healing-breeze", 15, "monk", NO_RANKS);
     expect(healed(use(user, "monk.healing-light", target))).toBe(104);
     expect(user.energy).toBe(48);
   });
@@ -193,10 +193,10 @@ describe("Divine Healing and Heaven's Delight (#1650)", () => {
 describe("Purge Conditions (#1650)", () => {
   it("takes every condition and leaves hexes", () => {
     const target = ally();
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("poison", 10, "foe");
-    target.statuses.apply("crippled", 10, "foe");
-    target.statuses.apply("empathy", 10, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
+    target.statuses.apply("crippled", 10, "foe", NO_RANKS);
+    target.statuses.apply("empathy", 10, "foe", NO_RANKS);
     use(monk(), "monk.purge-conditions", target);
     expect(target.statuses.countByCategory("condition")).toBe(0);
     expect(target.statuses.has("empathy")).toBe(true);
@@ -211,7 +211,7 @@ describe("Mend Ailment (#1650)", () => {
   ] as const)("on %i conditions: %i left, healed %i", (conditions, left, amount) => {
     const target = ally();
     for (const id of (["bleeding", "poison", "crippled"] as const).slice(0, conditions)) {
-      target.statuses.apply(id, 10, "foe");
+      target.statuses.apply(id, 10, "foe", NO_RANKS);
     }
     const events = use(monk(), "monk.mend-ailment", target);
     expect(target.statuses.countByCategory("condition")).toBe(left);
@@ -223,7 +223,7 @@ describe("Stonesoul Strike (#1650)", () => {
   it("is a touch skill, not a spell, so Spell Breaker does not stop it", () => {
     expect(skill("monk.stonesoul-strike").range).toBe(RANGE_MELEE);
     const foe = makeCombatant({ id: "foe", team: 1 });
-    foe.statuses.apply("spell-breaker", 15, "foe");
+    foe.statuses.apply("spell-breaker", 15, "foe", NO_RANKS);
     expect(
       canActivate({
         skill: skill("monk.stonesoul-strike"),
@@ -265,8 +265,8 @@ describe("Shield of Regeneration (#1650)", () => {
 
   it("its regeneration is capped as every regeneration is", () => {
     const target = ally();
-    target.statuses.apply("shield-of-regeneration", 11, "monk");
-    target.statuses.apply("healing-breeze", 15, "monk");
+    target.statuses.apply("shield-of-regeneration", 11, "monk", NO_RANKS);
+    target.statuses.apply("healing-breeze", 15, "monk", NO_RANKS);
     expect(netPips(target, 0, 0).health).toBe(clampPips(9 + 8));
     expect(netPips(target, 0, 0).health).toBe(10);
   });

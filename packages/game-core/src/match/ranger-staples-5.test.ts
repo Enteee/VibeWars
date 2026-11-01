@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill, describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -229,8 +229,8 @@ describe("Seeking Arrows and endsWhenBearerMisses (#1742)", () => {
   it("its arrows land through a 75% block every time", () => {
     for (let n = 0; n < 10; n += 1) {
       const sim = match([], `seeking-${String(n)}`);
-      get(sim, "r").combatant.statuses.apply("seeking-arrows", 1000, "r");
-      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+      get(sim, "r").combatant.statuses.apply("seeking-arrows", 1000, "r", NO_RANKS);
+      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
       const log = arrow(sim);
       expect(blocked(events(log)), String(n)).toBe(false);
       expect(damageTo(events(log), "f"), String(n)).toHaveLength(1);
@@ -240,8 +240,8 @@ describe("Seeking Arrows and endsWhenBearerMisses (#1742)", () => {
   it("the first arrow that fails to hit ends it: a blinded one", () => {
     const sim = match();
     const archer = get(sim, "r").combatant;
-    archer.statuses.apply("seeking-arrows", 1000, "r");
-    archer.statuses.apply("blind", 1000, "f");
+    archer.statuses.apply("seeking-arrows", 1000, "r", NO_RANKS);
+    archer.statuses.apply("blind", 1000, "f", NO_RANKS);
     expect(sim.requestAttack("r", "f")).toEqual({ ok: true });
     const shots = stepFor(sim, 10).filter(
       (entry) => entry.sourceId === "r" && entry.skillId === undefined && entry.events.length > 0,
@@ -261,7 +261,7 @@ describe("Seeking Arrows and endsWhenBearerMisses (#1742)", () => {
   it("a dodged arrow ends it too", () => {
     const sim = match([spec("f", 1, vec2(600, 0))]);
     const archer = get(sim, "r").combatant;
-    archer.statuses.apply("seeking-arrows", 1000, "r");
+    archer.statuses.apply("seeking-arrows", 1000, "r", NO_RANKS);
     releasedSpeed(sim);
     sim.setInputDirection("f", vec2(0, 1));
     const log = stepFor(sim, 3);
@@ -276,7 +276,7 @@ describe("Seeking Arrows and endsWhenBearerMisses (#1742)", () => {
   it("a hit keeps it", () => {
     const sim = match();
     const archer = get(sim, "r").combatant;
-    archer.statuses.apply("seeking-arrows", 1000, "r");
+    archer.statuses.apply("seeking-arrows", 1000, "r", NO_RANKS);
     arrow(sim);
     expect(archer.statuses.get("seeking-arrows")).toBeDefined();
   });
@@ -310,7 +310,7 @@ describe("Barbed Arrows (#1742)", () => {
 describe("Melandru's Arrows (#1742)", () => {
   it("its arrows cause Bleeding for 21 s, and no more damage on a foe with no enchantment", () => {
     const sim = match();
-    get(sim, "r").combatant.statuses.apply("melandrus-arrows", 1000, "r");
+    get(sim, "r").combatant.statuses.apply("melandrus-arrows", 1000, "r", NO_RANKS);
     const log = arrow(sim);
     expect(get(sim, "f").combatant.statuses.get("bleeding")?.durationSeconds).toBe(21);
     const melandru = log.filter((entry) => entry.skillId === MELANDRUS_ARROWS);
@@ -319,8 +319,8 @@ describe("Melandru's Arrows (#1742)", () => {
 
   it("+24 damage on an enchanted foe", () => {
     const sim = match();
-    get(sim, "r").combatant.statuses.apply("melandrus-arrows", 1000, "r");
-    get(sim, "f").combatant.statuses.apply("regeneration", 1000, "f");
+    get(sim, "r").combatant.statuses.apply("melandrus-arrows", 1000, "r", NO_RANKS);
+    get(sim, "f").combatant.statuses.apply("regeneration", 1000, "f", NO_RANKS);
     const melandru = arrow(sim).filter((entry) => entry.skillId === MELANDRUS_ARROWS);
     expect(damageTo(events(melandru), "f")).toEqual([24]);
   });
@@ -330,14 +330,14 @@ describe("Read the Wind and projectileSpeedMultiplier (#1742)", () => {
   it("its arrows fly twice as fast as the bow's", () => {
     const bow = releasedSpeed(match());
     const sim = match();
-    get(sim, "r").combatant.statuses.apply("read-the-wind", 1000, "r");
+    get(sim, "r").combatant.statuses.apply("read-the-wind", 1000, "r", NO_RANKS);
     expect(releasedSpeed(sim)).toBeCloseTo(2 * bow, 9);
   });
 
   it("an arrow in flight keeps the speed it left with when it ends", () => {
     const sim = match([spec("f", 1, vec2(600, 0))]);
     const archer = get(sim, "r").combatant;
-    archer.statuses.apply("read-the-wind", 1000, "r");
+    archer.statuses.apply("read-the-wind", 1000, "r", NO_RANKS);
     const fast = releasedSpeed(sim);
     archer.statuses.remove("read-the-wind");
     sim.step(DT);
@@ -360,7 +360,7 @@ describe("Crossfire and target-near-caster-ally (#1742)", () => {
         more.push(spec("a", 0, ally));
       }
       const sim = match(more, `crossfire-${String(n)}`);
-      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
       if (blocked(shot(sim, CROSSFIRE))) {
         count += 1;
       }

@@ -12,6 +12,7 @@ import { getSkill } from "./catalog.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Touch skills (#1643): Vile Touch, Touch of Agony, Wallow's Bite,
@@ -128,8 +129,8 @@ describe("the touches land (#1643)", () => {
 
   it("Lift Enchantment takes one enchantment off a knocked-down foe", () => {
     const f = foe({ knockdownRemaining: 2 });
-    f.statuses.apply("blood-is-power", 10, "x");
-    f.statuses.apply("order-of-pain", 10, "x");
+    f.statuses.apply("blood-is-power", 10, "x", NO_RANKS);
+    f.statuses.apply("order-of-pain", 10, "x", NO_RANKS);
     use(user(), "assassin.lift-enchantment", f);
     expect(
       (["blood-is-power", "order-of-pain"] as const).filter((id) => f.statuses.has(id)),
@@ -139,7 +140,7 @@ describe("the touches land (#1643)", () => {
   it("Lift Enchantment on a standing foe: nothing, cost spent", () => {
     const u = user({ energy: 20 });
     const f = foe();
-    f.statuses.apply("blood-is-power", 10, "x");
+    f.statuses.apply("blood-is-power", 10, "x", NO_RANKS);
     use(u, "assassin.lift-enchantment", f);
     expect(f.statuses.has("blood-is-power")).toBe(true);
     expect(u.energy).toBe(15);
@@ -181,7 +182,7 @@ describe("in a match (#1643)", () => {
     if (target === undefined) {
       throw new Error("no participant f");
     }
-    target.combatant.statuses.apply("spell-breaker", 30, "f");
+    target.combatant.statuses.apply("spell-breaker", 30, "f", NO_RANKS);
     sim.setTarget("n", "f");
     expect(sim.requestSkill("n", 0)?.check).toEqual({ ok: true });
     const hits = stepFor(sim, 4)

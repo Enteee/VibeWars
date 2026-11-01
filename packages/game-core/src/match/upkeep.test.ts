@@ -5,7 +5,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyEffect, type CombatEvent } from "../skills/effects.js";
-import { StatusSet } from "../skills/status.js";
+import { NO_RANKS, StatusSet } from "../skills/status.js";
 import type { Combatant } from "../skills/types.js";
 import { vec2 } from "../vec2.js";
 import { applyIntent } from "./apply-intent.js";
@@ -169,7 +169,7 @@ describe("maintained enchantments (#837)", () => {
     for (const id of ["a", "c"]) {
       const { combatant } = get(sim, id);
       combatant.health = 0.01;
-      combatant.statuses.apply("burning", 5, "foe");
+      combatant.statuses.apply("burning", 5, "foe", NO_RANKS);
     }
     sim.step(DT);
     expect(get(sim, "a").combatant.dead).toBe(true);
@@ -273,7 +273,7 @@ describe("ending a maintained enchantment (#838)", () => {
   it("refuses another caster's, a timed one, a missing one and an unknown id, quietly", () => {
     const sim = monks(["a", "b", "c"]);
     mend(sim, "b", "c");
-    get(sim, "c").combatant.statuses.apply("burning", 5, "a");
+    get(sim, "c").combatant.statuses.apply("burning", 5, "a", NO_RANKS);
     expect(sim.endUpkeep("a", "c", "mending")).toBe(false);
     expect(sim.endUpkeep("a", "c", "burning")).toBe(false);
     expect(sim.endUpkeep("a", "b", "mending")).toBe(false);
@@ -292,6 +292,6 @@ describe("ending a maintained enchantment (#838)", () => {
 
 describe("StatusSet.maintain (#837)", () => {
   it("refuses a status that is not an enchantment", () => {
-    expect(() => new StatusSet().maintain("bleeding", "a", 0)).toThrow(/enchantment/);
+    expect(() => new StatusSet().maintain("bleeding", "a", 0, NO_RANKS)).toThrow(/enchantment/);
   });
 });

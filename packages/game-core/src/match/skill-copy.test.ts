@@ -5,6 +5,7 @@ import { copyKey, slotSkill } from "../skills/cast-state.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Skills that take one from the target and stand in for it (#1928):
@@ -101,7 +102,7 @@ describe("Inspired Enchantment (#1928)", () => {
 
   it("strips one a trigger put on, and gains Energy, with no copy", () => {
     const match = sim();
-    get(match, "f").statuses.apply("armor-boost", 30, "f");
+    get(match, "f").statuses.apply("armor-boost", 30, "f", NO_RANKS);
     get(match, "a").energy = 50;
 
     use(match, "a", 0, "f");

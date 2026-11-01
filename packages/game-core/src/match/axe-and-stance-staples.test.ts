@@ -10,7 +10,7 @@ import { mitigate, skillDamage } from "../skills/damage.js";
 import { describeStatus } from "../skills/describe.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, getStatusDefinition } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, getStatusDefinition } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -194,7 +194,7 @@ describe("Keen Chop (#1869)", () => {
 
   it("a blocked chop is no critical hit, and no damage", () => {
     const sim = warriorMatch();
-    get(sim, "f").combatant.statuses.apply("frenzied-defense", 1000, "f");
+    get(sim, "f").combatant.statuses.apply("frenzied-defense", 1000, "f", NO_RANKS);
     for (let tries = 0; tries < 10; tries += 1) {
       const events = used(sim, KEEN_CHOP);
       if (events.some((event) => event.kind === "attack-blocked")) {
@@ -249,7 +249,7 @@ describe("Lacerating Chop (#1869)", () => {
 describe("Frenzied Defense (#1869)", () => {
   it("blocks about 75% of attacks over a seeded run", () => {
     const sim = warriorMatch();
-    get(sim, "a").combatant.statuses.apply("frenzied-defense", 1000, "a");
+    get(sim, "a").combatant.statuses.apply("frenzied-defense", 1000, "a", NO_RANKS);
     // `f` swings at `a`: the axe it is handed blocks nothing itself.
     expect(sim.requestAttack("f", "a")).toEqual({ ok: true });
     const events = stepFor(sim, 120)
@@ -264,14 +264,14 @@ describe("Frenzied Defense (#1869)", () => {
 
   it("doubles all damage taken, from anyone", () => {
     const bearer = makeCombatant({ id: "x", maxHealth: 480 });
-    bearer.statuses.apply("frenzied-defense", 8, "x");
+    bearer.statuses.apply("frenzied-defense", 8, "x", NO_RANKS);
     expect(mitigate(skillDamage(20, "typeless", 0), bearer, RULES.combat, "chest")).toBe(40);
   });
 });
 
 describe("Flurry (#1869)", () => {
   it("attacks 33% faster for 25% less weapon damage", () => {
-    expect(aggregateModifiers([{ id: "flurry" }])).toMatchObject({
+    expect(aggregateModifiers([{ id: "flurry", ranks: NO_RANKS }])).toMatchObject({
       attackDurationMultiplier: 0.67,
       weaponDamageMultiplier: 0.75,
     });
@@ -281,7 +281,7 @@ describe("Flurry (#1869)", () => {
     const run = (flurry: boolean) => {
       const sim = warriorMatch();
       if (flurry) {
-        get(sim, "a").combatant.statuses.apply("flurry", 1000, "a");
+        get(sim, "a").combatant.statuses.apply("flurry", 1000, "a", NO_RANKS);
       }
       expect(sim.requestAttack("a", "f")).toEqual({ ok: true });
       return damageTo(
@@ -306,7 +306,7 @@ describe("Heket's Rampage (#1869)", () => {
 
   it("a plain arrow keeps it", () => {
     const sim = rangerMatch();
-    get(sim, "a").combatant.statuses.apply("hekets-rampage", 10, "a");
+    get(sim, "a").combatant.statuses.apply("hekets-rampage", 10, "a", NO_RANKS);
     swing(sim);
     expect(get(sim, "a").combatant.statuses.has("hekets-rampage")).toBe(true);
   });
@@ -314,7 +314,7 @@ describe("Heket's Rampage (#1869)", () => {
   it("an attack skill ends it, and is not hastened by it", () => {
     const sim = rangerMatch();
     const ranger = get(sim, "a").combatant;
-    ranger.statuses.apply("hekets-rampage", 10, "a");
+    ranger.statuses.apply("hekets-rampage", 10, "a", NO_RANKS);
     sim.setTarget("a", "f");
     expect(sim.requestSkill("a", slot(SUNDERING_ATTACK))?.check).toEqual({ ok: true });
     expect(ranger.statuses.has("hekets-rampage")).toBe(false);

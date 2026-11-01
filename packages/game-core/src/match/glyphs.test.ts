@@ -8,7 +8,7 @@ import { energyCostOf, payCost } from "../skills/activation.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import { applyEffects } from "../skills/effects.js";
-import { EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
+import { NO_RANKS, EXCLUSIVE_CATEGORIES, getStatusDefinition } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -119,7 +119,7 @@ describe("Glyph of Lesser Energy (#526)", () => {
     const caster = makeCombatant({ id: "e" });
     const dear: Skill = { ...skill(FIREBALL), cost: { kind: "energy", amount: 25 } };
     expect(energyCostOf(dear, caster)).toBe(25);
-    caster.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    caster.statuses.apply("glyph-of-lesser-energy", 15, "e", NO_RANKS);
     expect(energyCostOf(dear, caster)).toBe(9);
     // A glyph is no spell: it does not cheapen itself, nor a signet.
     expect(energyCostOf(skill(GLYPH), caster)).toBe(5);
@@ -128,7 +128,7 @@ describe("Glyph of Lesser Energy (#526)", () => {
   it("shows on the bar what the payment takes, glyph and all (#637)", () => {
     const caster = makeCombatant({ id: "e" });
     const dear: Skill = { ...skill(FIREBALL), cost: { kind: "energy", amount: 25 } };
-    caster.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    caster.statuses.apply("glyph-of-lesser-energy", 15, "e", NO_RANKS);
     const shown = energyCostOf(dear, caster);
     const before = caster.energy;
     payCost(dear, caster);
@@ -200,9 +200,9 @@ describe("Glyph of Lesser Energy (#526)", () => {
 
   it("a second glyph ends the first and starts afresh", () => {
     const caster = makeCombatant({ id: "e" });
-    caster.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    caster.statuses.apply("glyph-of-lesser-energy", 15, "e", NO_RANKS);
     caster.statuses.countSpellStarted();
-    caster.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    caster.statuses.apply("glyph-of-lesser-energy", 15, "e", NO_RANKS);
     expect(caster.statuses.get("glyph-of-lesser-energy")).toMatchObject({
       remainingSeconds: 15,
       spellsLeft: 2,

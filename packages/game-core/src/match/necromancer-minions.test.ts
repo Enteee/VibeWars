@@ -8,6 +8,7 @@ import { magnitudeAtRank, resolveMagnitudeAtRanks } from "../skills/scaling.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Minions 2 (#1836): Vampiric Horror feeds its owner, Flesh Golem is one
@@ -73,7 +74,7 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
 /** Kill `id` as burning would. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "n");
+  victim.combatant.statuses.apply("burning", 10, "n", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -178,7 +179,7 @@ describe("Vampiric Horror (#1836)", () => {
     kill(sim, "x");
     cast(sim, VAMPIRIC);
     const horror = only(sim, "Vampiric Horror");
-    horror.combatant.statuses.apply("blind", 60, "y");
+    horror.combatant.statuses.apply("blind", 60, "y", NO_RANKS);
     get(sim, "n").combatant.health = 100;
     const missed = stepFor(sim, 20).filter(
       (entry) =>

@@ -9,6 +9,7 @@ import { strikesOf } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Cyclone Axe and "For Great Justice!" in a match (#936): who the spin
@@ -131,8 +132,8 @@ describe('"For Great Justice!" (#936)', () => {
     // The first seed under which Guardian blocks the lone target's blow.
     for (let seed = 0; seed < 50; seed += 1) {
       const sim = arena(`block-${String(seed)}`, true);
-      combatant(sim, "t").statuses.apply("guardian", 6, "t");
-      combatant(sim, "w").statuses.apply("for-great-justice", 8, "w");
+      combatant(sim, "t").statuses.apply("guardian", 6, "t", NO_RANKS);
+      combatant(sim, "w").statuses.apply("for-great-justice", 8, "w", NO_RANKS);
       const entry = spin(sim);
       if (entry.events.some(({ kind }) => kind === "attack-blocked")) {
         expect(damaged(entry)).toEqual([]);
@@ -150,7 +151,7 @@ describe('"For Great Justice!" (#936)', () => {
       warrior.maxHealth = 100;
       warrior.health = 100;
       if (justice) {
-        warrior.statuses.apply("for-great-justice", 8, "w");
+        warrior.statuses.apply("for-great-justice", 8, "w", NO_RANKS);
       }
       sim.setTarget("w", undefined);
       expect(sim.requestAttack("t", "w")).toEqual({ ok: true });

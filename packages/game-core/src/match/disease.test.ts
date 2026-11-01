@@ -8,6 +8,7 @@ import type { CombatEvent } from "../skills/effects.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -80,14 +81,14 @@ const spreads = (log: readonly CombatLogEntry[]): CombatEvent[] =>
 /** Dies this step, of burning: a corpse kept on the ground by a long respawn. */
 function dying(match: MatchSimulation, id: string): void {
   const combatant = get(match, id);
-  combatant.statuses.apply("burning", 10, "f");
+  combatant.statuses.apply("burning", 10, "f", NO_RANKS);
   combatant.health = 0.01;
 }
 
 describe("Disease spreads (#765)", () => {
   it("a diseased Warrior infects an adjacent ally and foe in one step, not one out of reach", () => {
     const match = melee();
-    get(match, "w").statuses.apply("disease", 10, "necro");
+    get(match, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     const log = stepFor(match, DT);
     expect(diseased(match)).toEqual(["w", "a", "f"]);
     expect(spreads(log)).toEqual([
@@ -102,7 +103,7 @@ describe("Disease spreads (#765)", () => {
 
   it("a caught copy lasts as long as its source has left, and keeps the caster as its source", () => {
     const match = melee();
-    get(match, "w").statuses.apply("disease", 10, "necro");
+    get(match, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     stepFor(match, DT);
     const source = get(match, "w").statuses.get("disease");
     expect(source?.remainingSeconds).toBeCloseTo(10 - DT, 9);
@@ -115,7 +116,7 @@ describe("Disease spreads (#765)", () => {
 
   it("one caught this step spreads from the next", () => {
     const match = melee();
-    get(match, "w").statuses.apply("disease", 10, "necro");
+    get(match, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     stepFor(match, DT);
     expect(get(match, "b").statuses.has("disease")).toBe(false);
     const log = stepFor(match, DT);
@@ -126,7 +127,7 @@ describe("Disease spreads (#765)", () => {
 
   it("a cured combatant next to a carrier of the same outbreak is not caught again; a new cast is", () => {
     const match = melee();
-    get(match, "w").statuses.apply("disease", 10, "necro");
+    get(match, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     stepFor(match, DT);
     get(match, "a").statuses.removeByCategory("condition");
     get(match, "w").statuses.remove("disease");
@@ -136,7 +137,7 @@ describe("Disease spreads (#765)", () => {
     // `f` still carries it, beside `w`, who is in the same outbreak.
     expect(diseased(match)).toEqual(["f"]);
 
-    get(match, "w").statuses.apply("disease", 10, "necro");
+    get(match, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     stepFor(match, DT);
     expect(get(match, "a").statuses.has("disease")).toBe(true);
   });
@@ -144,10 +145,10 @@ describe("Disease spreads (#765)", () => {
   it("a new cast on a carrier is a new outbreak, even when it lasts no longer", () => {
     const match = melee();
     const w = get(match, "w");
-    w.statuses.apply("disease", 10, "necro");
+    w.statuses.apply("disease", 10, "necro", NO_RANKS);
     stepFor(match, DT);
     get(match, "a").statuses.remove("disease");
-    w.statuses.apply("disease", 2, "necro");
+    w.statuses.apply("disease", 2, "necro", NO_RANKS);
     stepFor(match, DT);
     expect(get(match, "a").statuses.has("disease")).toBe(true);
     expect(w.statuses.get("disease")?.remainingSeconds).toBeCloseTo(10 - 2 * DT, 9);
@@ -155,8 +156,8 @@ describe("Disease spreads (#765)", () => {
 
   it("two outbreaks meeting: one Disease, the longer duration, the outbreak it had", () => {
     const match = melee();
-    get(match, "w").statuses.apply("disease", 5, "necro");
-    get(match, "b").statuses.apply("disease", 20, "necro");
+    get(match, "w").statuses.apply("disease", 5, "necro", NO_RANKS);
+    get(match, "b").statuses.apply("disease", 20, "necro", NO_RANKS);
     stepFor(match, DT);
     const a = get(match, "a").statuses.get("disease");
     // Caught from `w` first, in the participants' order; `b`'s is longer.
@@ -173,12 +174,12 @@ describe("Disease spreads (#765)", () => {
     dying(match, "a");
     stepFor(match, DT);
     expect(get(match, "a").dead).toBe(true);
-    get(match, "w").statuses.apply("disease", 10, "necro");
+    get(match, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     stepFor(match, DT);
     expect(get(match, "a").statuses.has("disease")).toBe(false);
 
     const second = melee();
-    get(second, "w").statuses.apply("disease", 10, "necro");
+    get(second, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     dying(second, "w");
     stepFor(second, 1);
     expect(get(second, "w").dead).toBe(true);
@@ -189,7 +190,7 @@ describe("Disease spreads (#765)", () => {
   it("an invulnerable body says so once an outbreak, not every step, and catches it after (#1233)", () => {
     const match = melee();
     get(match, "a").invulnerableRemaining = 0.5;
-    get(match, "w").statuses.apply("disease", 10, "necro");
+    get(match, "w").statuses.apply("disease", 10, "necro", NO_RANKS);
     const log = stepFor(match, 0.25);
     const refused = log.filter((entry) =>
       entry.events.some((event) => event.kind === "invulnerable"),
@@ -209,7 +210,7 @@ describe("Disease spreads (#765)", () => {
   it("is −4 health pips, like poison", () => {
     const match = melee();
     const x = get(match, "x");
-    x.statuses.apply("disease", 10, "necro");
+    x.statuses.apply("disease", 10, "necro", NO_RANKS);
     const before = x.health;
     stepFor(match, 1);
     expect(before - x.health).toBeCloseTo(8, 6);

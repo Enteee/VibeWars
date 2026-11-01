@@ -11,6 +11,7 @@ import type { CombatEvent } from "../skills/effects.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Warrior staples 3 (#1658): sixteen Warrior attacks and a shout on
@@ -167,14 +168,14 @@ function hit(skillId: string, state: FoeState) {
   const sim = match(skillId);
   const foe = get(sim, "f").combatant;
   if (state === "deep-wound" || state === "weakness" || state === "cracked-armor") {
-    foe.statuses.apply(state, 1000, "w");
+    foe.statuses.apply(state, 1000, "w", NO_RANKS);
   }
   if (state === "knocked-down") {
     foe.knockdownRemaining = 1000;
   }
   if (state === "moving") {
     // Limping away: the warrior catches it up and hits it walking.
-    foe.statuses.apply("crippled", 1000, "w");
+    foe.statuses.apply("crippled", 1000, "w", NO_RANKS);
     sim.setInputDirection("f", vec2(1, 0));
   }
   if (skillId !== MAGEHUNTERS_SMASH) {
@@ -217,7 +218,7 @@ describe("the Axe riders on a Deep Wound (#1658)", () => {
       ]);
       const foe = get(sim, "f").combatant;
       if (wounded) {
-        foe.statuses.apply("deep-wound", 1000, "w");
+        foe.statuses.apply("deep-wound", 1000, "w", NO_RANKS);
       }
       const events = used(sim, AGONIZING_CHOP, () => {
         if (!foe.cast.isCasting) {
@@ -270,7 +271,7 @@ describe("the Hammer attacks (#1658)", () => {
       { ...warrior(AXE_TWIST), id: "x", spawn: vec2(RANGE_MELEE, 0) },
     ]);
     const foe = get(sim, "f").combatant;
-    foe.statuses.apply("weakness", 3, "w");
+    foe.statuses.apply("weakness", 3, "w", NO_RANKS);
     used(sim, FIERCE_BLOW);
     expect(foe.statuses.get("deep-wound")?.durationSeconds).toBe(7);
     gainStrikes(get(sim, "x").combatant, 5, 0);
@@ -320,9 +321,9 @@ describe("the Hammer attacks (#1658)", () => {
     const blocked = (enchanted: boolean): boolean => {
       const sim = match(MAGEHUNTERS_SMASH);
       const foe = get(sim, "f").combatant;
-      foe.statuses.apply("shield-bash", 10, "f");
+      foe.statuses.apply("shield-bash", 10, "f", NO_RANKS);
       if (enchanted) {
-        foe.statuses.apply("armor-boost", 10, "f");
+        foe.statuses.apply("armor-boost", 10, "f", NO_RANKS);
       }
       return used(sim, MAGEHUNTERS_SMASH).some((event) => event.kind === "attack-blocked");
     };
@@ -350,7 +351,7 @@ describe("the Sword attacks (#1658)", () => {
   it("Seeking Blade blocked: 16 damage and Bleeding for 25 s, and it recharges as ever", () => {
     const sim = match(SEEKING_BLADE);
     const foe = get(sim, "f").combatant;
-    foe.statuses.apply("shield-bash", 10, "f");
+    foe.statuses.apply("shield-bash", 10, "f", NO_RANKS);
     const events = used(sim, SEEKING_BLADE);
     expect(events.some((event) => event.kind === "attack-blocked")).toBe(true);
     expect(damageTo(events, "f")).toEqual([16]);

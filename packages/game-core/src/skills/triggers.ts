@@ -455,11 +455,13 @@ function fire(
     } else if (effect.kind === "mirror-stance") {
       flush();
       // The copy is the hex's caster's own: its source, and where a
-      // returning stance (Shadow of Haste) brings it back to.
+      // returning stance (Shadow of Haste) brings it back to. Its numbers
+      // are the foe's, at the foe's ranks.
       events.push(
         ...applyEffects(stancesOf(usedSkill), {
           caster: source,
           target: source,
+          ranksFrom: bearer,
           rng,
           rules,
           surroundings,

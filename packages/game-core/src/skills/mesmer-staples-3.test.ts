@@ -14,6 +14,7 @@ import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Mesmer staples 3 (#1627): Ether Feast, Drain Delusions, Signet of
@@ -158,8 +159,8 @@ describe("Drain Delusions (#1627)", () => {
   it("takes one Mesmer hex off, then drains 4 energy for 16", () => {
     const user = mesmer({ energy: 10 });
     const target = foe("f");
-    target.statuses.apply("backfire", 10, "m");
-    target.statuses.apply("empathy", 10, "m");
+    target.statuses.apply("backfire", 10, "m", NO_RANKS);
+    target.statuses.apply("empathy", 10, "m", NO_RANKS);
     use(user, "mesmer.drain-delusions", target);
     expect((["backfire", "empathy"] as const).filter((id) => target.statuses.has(id))).toHaveLength(
       1,
@@ -171,7 +172,7 @@ describe("Drain Delusions (#1627)", () => {
   it("a foe with only a Necromancer hex: nothing removed, nothing drained", () => {
     const user = mesmer({ energy: 10 });
     const target = foe("f");
-    target.statuses.apply("faintheartedness", 10, "n");
+    target.statuses.apply("faintheartedness", 10, "n", NO_RANKS);
     use(user, "mesmer.drain-delusions", target);
     expect(target.statuses.has("faintheartedness")).toBe(true);
     expect(target.energy).toBe(30);
@@ -182,7 +183,7 @@ describe("Drain Delusions (#1627)", () => {
 describe("Signet of Disruption (#1627)", () => {
   function hexed(using: string): Combatant {
     const target = foe("f", using);
-    target.statuses.apply("backfire", 10, "m");
+    target.statuses.apply("backfire", 10, "m", NO_RANKS);
     return target;
   }
 
@@ -219,7 +220,7 @@ describe("Signet of Disruption (#1627)", () => {
   ] as const)("%s foe using nothing: one interrupt-missed, no damage", (_, isHexed) => {
     const target = foe("f");
     if (isHexed) {
-      target.statuses.apply("backfire", 10, "m");
+      target.statuses.apply("backfire", 10, "m", NO_RANKS);
     }
     const events = use(mesmer(), "mesmer.signet-of-disruption", target);
     expect(events.filter((event) => event.kind === "interrupt-missed")).toHaveLength(1);
@@ -239,13 +240,13 @@ describe("Hex Eater Vortex (#1627)", () => {
   function vortex(hex: boolean) {
     const ally = makeCombatant({ id: "a", team: 0 });
     if (hex) {
-      ally.statuses.apply("backfire", 10, "z");
-      ally.statuses.apply("faintheartedness", 10, "z");
+      ally.statuses.apply("backfire", 10, "z", NO_RANKS);
+      ally.statuses.apply("faintheartedness", 10, "z", NO_RANKS);
     }
     const x = foe("x");
     const y = foe("y");
     for (const one of [x, y]) {
-      one.statuses.apply("blood-is-power", 10, one.id);
+      one.statuses.apply("blood-is-power", 10, one.id, NO_RANKS);
     }
     const events = use(mesmer(), "mesmer.hex-eater-vortex", ally, [
       [x, 80],
@@ -350,7 +351,7 @@ describe("Wandering Eye (#1627)", () => {
 
   it("the next swing is cancelled; the bearer and foes nearby take 76, and it ends", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("wandering-eye", 4, "m");
+    get(sim, "a").statuses.apply("wandering-eye", 4, "m", NO_RANKS);
     expect(sim.requestAttack("a", "m")).toEqual({ ok: true });
     const log: CombatLogEntry[] = [];
     for (let tick = 0; tick < 4 / DT && get(sim, "a").statuses.has("wandering-eye"); tick += 1) {
@@ -375,7 +376,7 @@ describe("Wandering Eye (#1627)", () => {
 
   it("an attack skill sets it off too, and is interrupted", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("wandering-eye", 4, "m");
+    get(sim, "a").statuses.apply("wandering-eye", 4, "m", NO_RANKS);
     sim.setTarget("a", "m");
     expect(sim.requestSkill("a", 0)?.check).toEqual({ ok: true });
     const log = stepFor(sim, 0.05);

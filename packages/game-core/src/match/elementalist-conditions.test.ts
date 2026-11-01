@@ -6,6 +6,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The Elementalist condition staples in a match (#997): Water Trident
@@ -118,7 +119,7 @@ describe("Ebon Hawk, then Stoning (#997)", () => {
 
   it("a Weakened foe mid-cast loses its cast to the stone", () => {
     const sim = arena();
-    combatant(sim, "t").statuses.apply("weakness", 20, "e");
+    combatant(sim, "t").statuses.apply("weakness", 20, "e", NO_RANKS);
     expect(sim.requestSkill("e", 2)?.check).toEqual({ ok: true });
     wait(sim, 0.5);
     // The foe starts a 1 s Searing Flames; the stone lands before it ends.

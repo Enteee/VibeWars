@@ -10,6 +10,7 @@ import { describeSkill } from "./describe.js";
 import { resolveSkillEffects, type CombatEvent, type SkillOutcome } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Necromancer staples 3 (#1640): Dark Pact, Lifebane Strike, Taste of
@@ -207,7 +208,7 @@ describe("Toxic Chill (#1640)", () => {
     "a foe bearing %s is poisoned for 22 s",
     (statusId) => {
       const f = foe();
-      f.statuses.apply(statusId, 10, "x");
+      f.statuses.apply(statusId, 10, "x", NO_RANKS);
       use(necro(), "necromancer.toxic-chill", f);
       expect(f.statuses.get("poison")?.remainingSeconds).toBe(22);
     },
@@ -242,8 +243,8 @@ describe("Bitter Chill (#1640)", () => {
 describe("Rip Enchantment (#1640)", () => {
   it("removes one enchantment and bleeds the foe for 21 s", () => {
     const f = foe();
-    f.statuses.apply("blood-is-power", 10, "x");
-    f.statuses.apply("order-of-pain", 10, "x");
+    f.statuses.apply("blood-is-power", 10, "x", NO_RANKS);
+    f.statuses.apply("order-of-pain", 10, "x", NO_RANKS);
     use(necro(), "necromancer.rip-enchantment", f);
     expect(Number(f.statuses.has("blood-is-power")) + Number(f.statuses.has("order-of-pain"))).toBe(
       1,
@@ -261,8 +262,8 @@ describe("Rip Enchantment (#1640)", () => {
 describe("Gaze of Contempt (#1640)", () => {
   function enchanted(health: number): Combatant {
     const f = foe({ health });
-    f.statuses.apply("blood-is-power", 10, "x");
-    f.statuses.apply("order-of-pain", 10, "x");
+    f.statuses.apply("blood-is-power", 10, "x", NO_RANKS);
+    f.statuses.apply("order-of-pain", 10, "x", NO_RANKS);
     return f;
   }
 
