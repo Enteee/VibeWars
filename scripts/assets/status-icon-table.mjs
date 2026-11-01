@@ -3,38 +3,24 @@
 // test in apps/web/src/ui/icons.test.ts checks every status has one and that
 // each id is in exactly one table.
 //
-// A card that adds a status adds its row to `status-icons/<profession>.mjs`,
-// by the game-core file that declares its id
-// (packages/game-core/src/skills/statuses/<profession>.ts; common.ts goes in
-// common.mjs), and runs `node scripts/assets/icons.mjs`.
+// A card that adds a status adds a file of its own (#2021):
+// `status-icons/<profession>/<issue>-<slug>.mjs`, by the game-core file that
+// declares its id (packages/game-core/src/skills/statuses/<profession>.ts;
+// common.ts goes in common/), whose default export is its rows, and runs
+// `node scripts/assets/icons.mjs`. A stand-in goes in `<issue>-stand-in.mjs`,
+// which its art card deletes.
 
-import { mergeRows } from "./merge-rows.mjs";
-import { WARRIOR_STATUS_ICONS } from "./status-icons/warrior.mjs";
-import { RANGER_STATUS_ICONS } from "./status-icons/ranger.mjs";
-import { MONK_STATUS_ICONS } from "./status-icons/monk.mjs";
-import { NECROMANCER_STATUS_ICONS } from "./status-icons/necromancer.mjs";
-import { MESMER_STATUS_ICONS } from "./status-icons/mesmer.mjs";
-import { ELEMENTALIST_STATUS_ICONS } from "./status-icons/elementalist.mjs";
-import { ASSASSIN_STATUS_ICONS } from "./status-icons/assassin.mjs";
-import { RITUALIST_STATUS_ICONS } from "./status-icons/ritualist.mjs";
-import { PARAGON_STATUS_ICONS } from "./status-icons/paragon.mjs";
-import { DERVISH_STATUS_ICONS } from "./status-icons/dervish.mjs";
-import { COMMON_STATUS_ICONS } from "./status-icons/common.mjs";
+import { loadDirectories, mergeRows } from "./merge-rows.mjs";
 
-/** The tables by file name, so a test can check no id is in two. */
-export const STATUS_ICON_TABLES = {
-  warrior: WARRIOR_STATUS_ICONS,
-  ranger: RANGER_STATUS_ICONS,
-  monk: MONK_STATUS_ICONS,
-  necromancer: NECROMANCER_STATUS_ICONS,
-  mesmer: MESMER_STATUS_ICONS,
-  elementalist: ELEMENTALIST_STATUS_ICONS,
-  assassin: ASSASSIN_STATUS_ICONS,
-  ritualist: RITUALIST_STATUS_ICONS,
-  paragon: PARAGON_STATUS_ICONS,
-  dervish: DERVISH_STATUS_ICONS,
-  common: COMMON_STATUS_ICONS,
-};
+/** @typedef {readonly [import("./icon-kit.mjs").Category, import("./icon-kit.mjs").Glyph]} StatusIconRow */
 
-/** @type {Readonly<Record<string, [import("./icon-kit.mjs").Category, import("./icon-kit.mjs").Glyph]>>} */
-export const STATUS_ICONS = mergeRows(STATUS_ICON_TABLES, { prefixed: false });
+/**
+ * The tables by profession, so a test can check no id is in two.
+ * @type {Readonly<Record<string, Readonly<Record<string, StatusIconRow>>>>}
+ */
+export const STATUS_ICON_TABLES = /** @type {Record<string, Record<string, StatusIconRow>>} */ (
+  await loadDirectories(new URL("./status-icons/", import.meta.url), "icon row")
+);
+
+/** @type {Readonly<Record<string, StatusIconRow>>} */
+export const STATUS_ICONS = mergeRows(STATUS_ICON_TABLES, { prefixed: false, what: "icon row" });

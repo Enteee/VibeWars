@@ -1,7 +1,4 @@
-# Append-only generated or row files: a merge keeps both sides' lines
-# (builtin union driver, no git config needed). A stale result fails the
-# icon and snapshot tests in CI. A union merge can resurrect a deleted row:
-# mergeRows (scripts/assets/merge-rows.mjs) and eslint no-dupe-keys catch it;
-# the fix is to delete the stand-in row. See CONTRIBUTING.md, "Generated files".
+# An append-only generated file: a merge keeps both sides' lines (builtin
+# union driver, no git config needed). A stale result fails the snapshot
+# test in CI. See CONTRIBUTING.md, "Generated files".
 packages/game-core/src/skills/__snapshots__/roles.test.ts.snap merge=union
-scripts/assets/skill-icons/*.mjs merge=union

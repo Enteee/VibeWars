@@ -69,10 +69,11 @@ Concretely:
   Both bugs ADR-0011 describes lived there, were invisible to every
   headless test, and made the game unplayable through its main flow.
 - A new skill goes in `packages/game-core/src/skills/catalog/<profession>.ts`,
-  its status in `skills/statuses/<profession>.ts` and its icon rows in
-  `scripts/assets/skill-icons/<profession>.mjs` (skill) and
-  `scripts/assets/status-icons/<profession>.mjs` (status), so two cards for two
-  professions do not touch the same file. It then re-runs
+  its status in `skills/statuses/<profession>.ts` and its icon rows in a
+  file of the card's own, `scripts/assets/skill-icons/<profession>/<issue>-<slug>.mjs`
+  (skill) and `scripts/assets/status-icons/<profession>/<issue>-<slug>.mjs`
+  (status), and a new glyph in `scripts/assets/glyphs/<issue>-<slug>.mjs`, so
+  two icon cards never edit the same file (#2021). It then re-runs
   `node scripts/assets/icons.mjs`; `apps/web/src/ui/icons.test.ts` fails
   until it does.
 - Vendoring or bundling a third-party work whose licence asks for a notice
@@ -95,14 +96,12 @@ Concretely:
 
 Generated files: `packages/game-protocol/src/wire-schema.json`, the roles
 snapshot (`packages/game-core/src/skills/__snapshots__/roles.test.ts.snap`),
-the skill icon rows (`scripts/assets/skill-icons/*.mjs`) and the SVGs in
-`apps/web/public/icons/skill/`. Never hand-merge them.
-`scripts/assets/skill-icon-table.mjs` is not one of them: it is
-hand-written glue that merges the row files, and a conflict in it is
-resolved by hand.
+and the SVGs in `apps/web/public/icons/`. Never hand-merge them. The icon
+rows and glyphs under `scripts/assets/` are hand-written, one file per card,
+so they do not conflict.
 
-`.gitattributes` makes git keep both sides of the per-profession icon row
-files and the roles snapshot (`merge=union`). For any conflict left in a
+`.gitattributes` makes git keep both sides of the roles snapshot
+(`merge=union`). For any conflict left in a
 generated file:
 
 ```sh
