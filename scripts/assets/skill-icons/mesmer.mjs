@@ -96,10 +96,6 @@ export const MESMER_ICONS = {
   "mesmer.mirror-of-disenchantment": { glyph: "ring-mirror", modifier: "area" },
   "mesmer.extend-conditions": { glyph: "drop-push", modifier: "clock" },
   "mesmer.hex-eater-signet": { glyph: "hex-eaten", modifier: "area" },
-  // Stand-ins for the party-wide condition and hex moves (#1954).
-  "mesmer.mirror-of-disenchantment": { glyph: "cleanse", modifier: "area" },
-  "mesmer.extend-conditions": { glyph: "drop-spread", modifier: "plus" },
-  "mesmer.hex-eater-signet": { glyph: "vortex-hex", modifier: "up" },
   // Blocks that pay (#1974), a stand-in until its art card.
   "mesmer.distortion": { glyph: "shield-stance", modifier: "less" },
 };
