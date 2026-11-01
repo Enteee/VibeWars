@@ -59,6 +59,7 @@ import {
   type DisableOwnSkillsEffect,
   type DisableSkillEffect,
   type EnergyGainEffect,
+  type EnergyGainToCaster,
   type Skill,
   type SkillContext,
   type EffectCondition,
@@ -826,6 +827,29 @@ function perRemoved(
 }
 
 /**
+ * `amount`, or with `perRemoved`, `amount` for each status of that
+ * category an earlier `remove-status` took off anyone (#1954).
+ */
+function perRemovedByAnyone(
+  effect: EnergyGainToCaster,
+  amount: number,
+  earlier: readonly CombatEvent[],
+): number {
+  const category = effect.perRemoved;
+  if (category === undefined) {
+    return amount;
+  }
+  return (
+    amount *
+    earlier.filter(
+      (event) =>
+        event.kind === "status-removed" &&
+        getStatusDefinition(event.statusId).category === category,
+    ).length
+  );
+}
+
+/**
  * Whether a knockdown could land on `target`: alive and standing. One on
  * someone already down does nothing, however long it would have lasted
  * (GW1).
@@ -1512,22 +1536,26 @@ export function applyEffect(
       }
       gainEnergy(
         caster,
-        perOwnCreature(
+        perRemovedByAnyone(
           effect,
-          perEnergyLost(
+          perOwnCreature(
             effect,
-            withPerCount(
-              perUsedSkillEnergy(effect, caster, context.usedSkill),
-              effect.per,
-              caster,
-              target,
-              context.surroundings,
+            perEnergyLost(
+              effect,
+              withPerCount(
+                perUsedSkillEnergy(effect, caster, context.usedSkill),
+                effect.per,
+                caster,
+                target,
+                context.surroundings,
+              ),
+              lostBy,
+              earlier,
             ),
-            lostBy,
-            earlier,
+            caster,
+            context.surroundings,
           ),
-          caster,
-          context.surroundings,
+          earlier,
         ),
         events,
         effect.upTo,
@@ -1680,6 +1708,10 @@ export function applyEffect(
         return events;
       }
       const [giver, taker] = effect.from === "caster" ? [caster, target] : [target, caster];
+      // Martyr's caster is one of the party it takes from (#1954).
+      if (giver === taker) {
+        return events;
+      }
       const moved = giver.statuses.takeNewest("condition", effect.count);
       // The caster becomes every moved condition's source: a Bleeding Draw
       // Conditions takes from an ally counts as the Monk's own from then on.
@@ -1717,12 +1749,16 @@ export function applyEffect(
           combatant.team !== caster.team &&
           distance(position, at) <= effect.radius,
       );
+      const extend =
+        effect.extendPercent === undefined
+          ? 1
+          : 1 + resolveMagnitude(effect.extendPercent, caster) / 100;
       for (const combatant of nearestFirst(reached, at)) {
         for (const { id, remainingSeconds } of conditions) {
           landOnTaker(
             combatant,
             id,
-            remainingSeconds,
+            Math.min(remainingSeconds * extend, effect.maxSeconds ?? Number.POSITIVE_INFINITY),
             caster.id,
             events,
             context.surroundings,
@@ -1773,11 +1809,23 @@ export function applyEffect(
       if (bearer === undefined) {
         return events;
       }
+      // Mirror of Disenchantment's "that same enchantment" (#1954).
+      const same =
+        effect.sameAsRemoved === true
+          ? earlier.findLast(
+              (event) =>
+                event.kind === "status-removed" &&
+                getStatusDefinition(event.statusId).category === effect.category,
+            )
+          : undefined;
+      if (effect.sameAsRemoved === true && same === undefined) {
+        return events;
+      }
       const removed = bearer.statuses.removeByCategory(
         effect.category,
         removeCount(effect, caster, bearer, context.surroundings, earlier),
         effect.profession,
-        effect.statusId,
+        same?.kind === "status-removed" ? same.statusId : effect.statusId,
       );
       for (const { id: statusId, sourceSkillId } of removed) {
         events.push({ kind: "status-removed", targetId: bearer.id, statusId, sourceSkillId });
@@ -1976,9 +2024,15 @@ export function applyEffect(
           !combatant.dead &&
           combatant.id !== target.id &&
           splashReaches(effect.hits, caster, combatant, creature) &&
-          distance(position, at) <= effect.radius,
+          distance(position, at) <= effect.radius &&
+          (effect.onlyBearing === undefined ||
+            combatant.statuses.countByCategory(effect.onlyBearing) > 0),
       );
-      for (const combatant of nearestFirst(reached, at).slice(0, effect.maxTargets)) {
+      const maxTargets =
+        effect.maxTargets === undefined || typeof effect.maxTargets === "number"
+          ? effect.maxTargets
+          : resolveMagnitude(effect.maxTargets, caster);
+      for (const combatant of nearestFirst(reached, at).slice(0, maxTargets)) {
         for (const inner of effect.effects) {
           events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, centre));
         }
@@ -2403,7 +2457,12 @@ function removeCount(
       resolveMagnitude(effect.perRemoved.max, caster),
     );
   }
-  const count = effect.count === "all" ? Number.POSITIVE_INFINITY : effect.count;
+  const count =
+    effect.count === "all"
+      ? Number.POSITIVE_INFINITY
+      : typeof effect.count === "number"
+        ? effect.count
+        : resolveMagnitude(effect.count, caster);
   if (effect.perSpiritNear === undefined) {
     return count;
   }

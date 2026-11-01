@@ -1247,3 +1247,31 @@ describe("Predatory Bond, said to the Ranger who casts it (#1865)", () => {
     expect(text).not.toContain("Heals its owner");
   });
 });
+
+describe("party-wide condition and hex moves (#1954)", () => {
+  const texts = (id: string, attributeId: string): string[] =>
+    describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+
+  it("says what each moves, strips or gives, at rank 12", () => {
+    expect(texts("monk.martyr", "")).toEqual([
+      "Take all conditions from your allies, with the time each has left",
+    ]);
+    expect(texts("monk.divert-hexes", "monk.protection-prayers")).toEqual([
+      "Removes up to 3 hexes",
+      "Removes one condition for each hex removed (max 3)",
+      "Heals 63 for each hex removed",
+    ]);
+    expect(texts("mesmer.mirror-of-disenchantment", "")).toEqual([
+      "Removes 1 enchantment",
+      "All its party members lose that same enchantment",
+    ]);
+    expect(texts("mesmer.extend-conditions", "mesmer.inspiration-magic")).toEqual([
+      "Nearby foes get the target's conditions, with 81% more time (max 30s)",
+    ]);
+    expect(texts("mesmer.hex-eater-signet", "mesmer.inspiration-magic")).toEqual([
+      "Removes 1 hex",
+      "Up to 4 adjacent allies with a hex lose 1 hex",
+      "Gain 3 energy for each hex removed",
+    ]);
+  });
+});

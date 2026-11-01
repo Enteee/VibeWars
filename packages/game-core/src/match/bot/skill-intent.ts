@@ -48,8 +48,9 @@ export function botUses(skill: Skill): readonly BotUse[] {
       skill.attack !== undefined ||
       skill.effects.some(dealsDamage) ||
       // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
-      // a foe is the bot's to use.
-      (skill.target === "single-enemy" && copiesSkill(skill.id)))
+      // a foe is the bot's to use; Mirror of Disenchantment's strip (#1954).
+      (skill.target === "single-enemy" && copiesSkill(skill.id)) ||
+      takenOffFoe(skill) !== undefined)
   ) {
     uses.push("offence");
   }
@@ -145,15 +146,21 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
 }
 
 /**
- * The category a copier takes off its foe to stand in for (#1928):
- * Inspired Enchantment's enchantments. `undefined` for any other skill.
+ * The category a foe must bear for `skill` to be worth casting at it:
+ * what a copier takes off it to stand in for (#1928), Inspired
+ * Enchantment's enchantments, or what a skill that does nothing else
+ * strips (#1954), Mirror of Disenchantment's. `undefined` for any other.
  */
-export function copiedOffFoe(skill: Skill): StatusCategory | undefined {
-  if (skill.target !== "single-enemy" || !copiesSkill(skill.id)) {
+export function takenOffFoe(skill: Skill): StatusCategory | undefined {
+  if (skill.target !== "single-enemy") {
     return undefined;
   }
   const removal = skill.effects.find((effect) => effect.kind === "remove-status");
-  return removal?.kind === "remove-status" ? removal.category : undefined;
+  if (removal?.kind !== "remove-status") {
+    return undefined;
+  }
+  const strips = removal.category === "enchantment" && skillRoles(skill).length === 0;
+  return copiesSkill(skill.id) || strips ? removal.category : undefined;
 }
 
 /**

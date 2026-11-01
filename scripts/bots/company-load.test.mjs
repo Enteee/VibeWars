@@ -63,7 +63,11 @@ const facts = () => ({
     total: { replies: 2, output: 1_240_000, input: 0, cacheRead: 0, model: "" },
     todayOutput: 0,
   },
+  kpis: null,
 });
+
+/** @type {import("./kpi.mjs").JobStats} */
+const stats = { count: 0, waitP50S: null, waitP90S: null, durationP50S: null, durationP90S: null };
 
 describe("loadLines (#747)", () => {
   it("prints the board's queues, each employee's activity and each role's tokens", () => {
@@ -75,6 +79,7 @@ describe("loadLines (#747)", () => {
       "developer        2  developer in turn 1m; developer@2 between 2h10m   1.2M",
       "qa-tester        1  qa-tester firing (ready)                             0",
       "asset-designer   0  -                                                    0",
+      "CI      unknown (no KPI snapshot yet)",
     ]);
   });
 
@@ -95,11 +100,78 @@ describe("loadLines (#747)", () => {
     expect(lines[0]).toMatch(/staff 4\/\?$/);
     expect(lines[1]).toBe("board   unknown (hubd has no copy of the board yet)");
     expect(lines[3]).toMatch(/manager in turn 0m\s+\?$/);
-    expect(lines.at(-1)).toBe("tokens  unknown (no usage logs)");
+    expect(lines.at(-2)).toBe("tokens  unknown (no usage logs)");
 
     const nobody = loadLines({ ...facts(), staff: null });
     expect(nobody[0]).toMatch(/staff unknown \(no staff\.json\)$/);
     expect(nobody[3]).toMatch(/^manager\s+\? {2}unknown\s+40k$/);
+  });
+
+  it("prints the CI block: each workflow's wait and run over 24 h, then the host (#1892)", () => {
+    const wall = { count: 0, p50S: null, p90S: null };
+    const window = {
+      coverage: { runs: 20, read: 15, partial: 1 },
+      malformed: 0,
+      workflows: [
+        {
+          workflow: "ci.yml",
+          runner: /** @type {const} */ ("company"),
+          ...stats,
+          count: 12,
+          waitP50S: 4,
+          waitP90S: 75,
+          durationP50S: 250,
+          durationP90S: 4000,
+        },
+        { workflow: "e2e-repeat.yml", runner: /** @type {const} */ ("hosted"), ...stats, count: 3 },
+      ],
+      jobs: [],
+      wall: { push: wall, pull_request: wall },
+    };
+    const lines = loadLines({
+      ...facts(),
+      kpis: {
+        schemaVersion: 7,
+        at: NOW,
+        flow: null,
+        claude: null,
+        github: null,
+        host: null,
+        staff: null,
+        webCache: null,
+        ci: null,
+        ciJobs: { "24h": window, "7d": window },
+        machine: {
+          cpus: 16,
+          load1: 3.5,
+          load5: 2,
+          load15: 1.25,
+          memTotalBytes: 32 * 2 ** 30,
+          memAvailableBytes: 12.5 * 2 ** 30,
+          hubDiskFreeBytes: 0,
+        },
+        errors: {},
+      },
+    });
+    expect(lines.slice(-5)).toEqual([
+      "CI 24h  workflow                      wait p50/p90    run p50/p90  jobs",
+      "        ci.yml (company)                  4s/1m15s    4m10s/1h06m    12",
+      "        e2e-repeat.yml (hosted)                -/-            -/-     3",
+      "        a sample: jobs of 15/20 runs read, 1 in part",
+      "host    16 CPUs  load 3.50 2.00 1.25  mem free 12.5/32.0 GiB",
+    ]);
+  });
+
+  it("says why the CI block or the host is unknown (#1892)", () => {
+    const kpis = /** @type {import("./kpi.mjs").Kpis} */ ({
+      ...{ schemaVersion: 7, at: NOW, flow: null, claude: null, github: null, host: null },
+      ...{ staff: null, webCache: null, ci: null, ciJobs: null, machine: null },
+      errors: { ciJobs: "no history" },
+    });
+    expect(loadLines({ ...facts(), kpis }).slice(-2)).toEqual([
+      "CI      unknown (no history)",
+      "host    unknown (not read)",
+    ]);
   });
 
   it("makes every line visible: nothing read from a file can fake a header", () => {
