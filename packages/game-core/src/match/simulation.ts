@@ -118,6 +118,7 @@ import {
 } from "../skills/effects.js";
 import {
   aggregateModifiers,
+  attacksAgainstMiss,
   clampPips,
   ENERGY_PER_PIP,
   getStatusDefinition,
@@ -3948,7 +3949,9 @@ export class MatchSimulation {
    * `target` (#1475): Guilt's, on a spell at a foe. The spell is paid for
    * and recharges, as an interrupted one, and does nothing else; the
    * status ends, and its effects land on the bearer from its source,
-   * logged as its skill. A spell with no chosen target never fails so.
+   * logged as its skill. A foe's spell at a bearer of Shadow Form (#1951)
+   * fails so too, the form left on. A spell with no chosen target never
+   * fails so.
    */
   #failsSpell(
     record: ParticipantRecord,
@@ -3960,6 +3963,22 @@ export class MatchSimulation {
       return false;
     }
     const bearer = record.combatant;
+    // Shadow Form's (#1951): a foe's spell at its bearer, checked as it finishes.
+    const shield =
+      target.combatant.team === bearer.team
+        ? undefined
+        : target.combatant.statuses.active.find(({ id }) => STATUS_DEFINITIONS[id].foeSpellsFail);
+    if (shield !== undefined) {
+      beginRecharge(bearer.cast, skill, skill.rechargeSeconds, key);
+      this.#logFired([
+        {
+          sourceId: target.id,
+          skillId: shield.sourceSkillId ?? skill.id,
+          events: [{ kind: "spell-failed", targetId: bearer.id, skillId: skill.id }],
+        },
+      ]);
+      return true;
+    }
     const failer = bearer.statuses.spellFailer(
       target.combatant.team === bearer.team ? "ally-targeted" : "foe-targeted",
     );
@@ -5344,7 +5363,7 @@ export class MatchSimulation {
     if (skillHit?.kind !== "spell") {
       // Only a flying attack is released here.
       attacked = bearerAttacked(record.combatant, events, "projectile");
-      if (blindMisses(record.combatant, this.#rng)) {
+      if (blindMisses(record.combatant, target.combatant, this.#rng)) {
         bearerFailedToHit(record.combatant, events);
         events.push({ kind: "attack-missed", targetId: target.id });
         return [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
@@ -5517,9 +5536,17 @@ export class MatchSimulation {
     let hits = 0;
     let blocked = 0;
     for (let strike = 0; strike < strikes && !target.combatant.dead; strike += 1) {
-      if (strike > 0 && attacker !== undefined && blindMisses(attacker.combatant, this.#rng)) {
+      // Shadow Form's miss (#1951) is checked as each blow lands, the first too.
+      if (
+        attacksAgainstMiss(target.combatant.statuses.active) ||
+        (strike > 0 &&
+          attacker !== undefined &&
+          blindMisses(attacker.combatant, target.combatant, this.#rng))
+      ) {
         events.push({ kind: "attack-missed", targetId: target.id });
-        bearerFailedToHit(attacker.combatant, events);
+        if (attacker !== undefined) {
+          bearerFailedToHit(attacker.combatant, events);
+        }
         continue;
       }
       if (this.#landBlow(projectile, skillHit, target, attacker, events, fired, riders)) {

@@ -117,8 +117,6 @@ export const RANGER_ICONS = {
   "ranger.run-as-one": { glyph: "figure-paw-run" },
   "ranger.savage-pounce": { glyph: "paw-pounce-spell" },
   "ranger.bestial-mauling": { glyph: "paw-maul" },
-  // Attributes raised (#1941), a stand-in until its art card.
-  "ranger.experts-dexterity": { glyph: "arrow", modifier: "plus" },
   // Pets 3 (#1957), stand-ins until their art card.
   "ranger.predators-pounce": { glyph: "paw-leap", modifier: "plus" },
   "ranger.scavenger-strike": { glyph: "claw", modifier: "bolt" },
@@ -126,4 +124,6 @@ export const RANGER_ICONS = {
   "ranger.melandrus-assault": { glyph: "claw", modifier: "area" },
   "ranger.enraged-lunge": { glyph: "paw-lunge", modifier: "clock" },
   "ranger.heal-as-one": { glyph: "figure-paw-plus", modifier: "plus" },
+  // Attributes raised (#1941)
+  "ranger.experts-dexterity": { glyph: "arrow-bars-up" },
 };

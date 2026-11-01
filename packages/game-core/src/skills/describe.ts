@@ -210,6 +210,19 @@ function scopeText(scope: AttributeScope): string {
   return scope === "all" ? "attributes" : `${scope} attribute${scope === "primary" ? "" : "s"}`;
 }
 
+/**
+ * A scope before a noun (#1951): "Fire Magic skill", "elemental hex",
+ * "Ritualist spell".
+ */
+function scopeAdjective(scope: AttributeScope): string {
+  if (typeof scope === "object") {
+    return "profession" in scope
+      ? getProfession(scope.profession).name
+      : (getAttribute(scope.attributeId)?.name ?? scope.attributeId);
+  }
+  return scope === "all" ? "" : scope;
+}
+
 /** What an `attributeSet` does (#1929): "attributes set to 0", "elemental attributes set to 13". */
 function attributeSetText({ scope, rank }: AttributeSet): string {
   return `${scopeText(scope)} set to ${String(rank)}`;
@@ -420,6 +433,13 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.untargetableByFoeSpells) {
     parts.push("cannot be the target of enemy spells");
   }
+  // Shadow Form's (#1951).
+  if (definition.foeSpellsFail) {
+    parts.push("hostile spells targeting you fail");
+  }
+  if (definition.attacksAgainstMiss) {
+    parts.push("attacks against you miss");
+  }
   if (definition.preventsEnchantments) {
     parts.push("stripped of all enchantments, and cannot be enchanted");
   }
@@ -564,6 +584,13 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.damageReductionWhileCasting !== undefined) {
     const { skillType, amount } = definition.damageReductionWhileCasting;
     parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
+  }
+  // Mist Form's (#1951).
+  if (definition.damageReductionFromHexedSource !== undefined) {
+    const { attributeId, fraction } = definition.damageReductionFromHexedSource;
+    parts.push(
+      `${String(Math.round(fraction * 100))}% less damage from foes with a ${getAttribute(attributeId)?.name ?? attributeId} hex`,
+    );
   }
   if (definition.redirectsPhysicalDamage > 0) {
     parts.push(
@@ -900,6 +927,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-attacks": "attacks",
   "bearer-attack-begins": "attacks",
   "bearer-uses-skill": "uses a skill",
+  "bearer-applies-hex": "applies a hex",
   "bearer-hits": "hits with an attack",
   "bearer-fails-to-hit": "fails to hit",
   "bearer-takes-physical-damage": "takes physical damage",
@@ -929,6 +957,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
 
 /** A third-person leading verb (#1841), in the second person. */
 const SECOND_PERSON: Readonly<Record<string, string>> = {
+  applies: "apply",
   attacks: "attack",
   blocks: "block",
   casts: "cast",
@@ -996,6 +1025,7 @@ function describeTriggers(
       trigger.whileUsingSkill,
       trigger.minDamage,
       trigger.healthBelow,
+      trigger.appliedHex,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -1032,6 +1062,23 @@ function describeTriggers(
       ranks,
       bearerIsFoe,
     );
+    // A heal on the bearer and the same on the allies around (#1951):
+    // Mist Form's, said once.
+    const [self, splash] = trigger.effects;
+    const [first, second] = lines;
+    if (
+      !dropped &&
+      lines.length === 2 &&
+      first !== undefined &&
+      second !== undefined &&
+      self?.kind === "heal" &&
+      splash?.kind === "splash" &&
+      splash.effects.length === 1 &&
+      JSON.stringify(splash.effects[0]) === JSON.stringify(self)
+    ) {
+      const when = first.text.slice(0, first.text.indexOf(": ") + 2);
+      return [{ ...second, text: `${when}you and ${second.text.slice(when.length)}` }];
+    }
     // A drop is said once, all it does after it (#1434).
     if (!dropped || lines.length < 2) {
       return lines;
@@ -1169,13 +1216,23 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
   if (event === "bearer-loses-enchantment" && trigger.profession !== undefined) {
     return `loses a ${getProfession(trigger.profession).name} enchantment`;
   }
+  // Elemental Flame's (#1951).
+  if (event === "bearer-applies-hex" && trigger.appliedHex !== undefined) {
+    const words = `${scopeAdjective(trigger.appliedHex.attributes)} hex`;
+    return `applies ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words} to a foe`;
+  }
+  // Mist Form's (#1951).
+  if (event === "bearer-casts-spell" && trigger.usedSkill?.attributes !== undefined) {
+    const words = `${scopeAdjective(trigger.usedSkill.attributes)} spell`;
+    return `casts ${/^[aeiou]/i.test(words) ? "an" : "a"} ${words}`;
+  }
   if (event === "bearer-uses-skill" && trigger.usedSkill !== undefined) {
-    const { type, attribute, profession, elite, adrenal } = trigger.usedSkill;
+    const { type, attributes, profession, elite, adrenal } = trigger.usedSkill;
     const words = [
       ...(elite === undefined ? [] : ["elite"]),
       ...(adrenal === undefined ? [] : ["adrenal"]),
       ...(profession === undefined ? [] : [getProfession(profession).name]),
-      ...(attribute === undefined ? [] : [getAttribute(attribute)?.name ?? attribute]),
+      ...(attributes === undefined ? [] : [scopeAdjective(attributes)]),
       ...(type === undefined ? [] : [TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()]),
       "skill",
     ];
@@ -1858,6 +1915,7 @@ const SPLASH_SIDE: Readonly<Record<SplashEffect["hits"], string>> = {
   foes: "foes",
   "foe-creatures": "foe creatures",
   allies: "allies",
+  "non-spirit-allies": "non-spirit allies",
   party: "party members",
   "own-spirits": "your spirits",
   "own-minions": "your other minions",
@@ -2337,7 +2395,12 @@ function describeEffect(
         unit: " Health",
         onTarget: effect.recipient === "caster" ? "on target foe" : "on them",
       });
-      return { text: `${counted}${perAllyText(effect, ranks)}`, magnitude };
+      // Mist Form's (#1951): ", under 80% Health".
+      const below =
+        effect.onlyBelowHealthFraction === undefined
+          ? ""
+          : `, under ${String(Math.round(effect.onlyBelowHealthFraction * 100))}% Health`;
+      return { text: `${counted}${perAllyText(effect, ranks)}${below}`, magnitude };
     }
     case "energy-gain": {
       const magnitude = countedMagnitude(
@@ -2405,6 +2468,11 @@ function describeEffect(
       }
       const whose = getProfession(effect.perRemovedOfProfession).name;
       return { text: `${lose} for each ${whose} enchantment removed`, magnitude };
+    }
+    // Shadow Form's end (#1951): "Lose all but 41 Health".
+    case "lose-health-to": {
+      const magnitude = describeMagnitude(effect.keep, ranks);
+      return { text: `Lose all but ${String(magnitude.current)} Health`, magnitude };
     }
     case "transfer-conditions":
       return transferText(effect, ranks);

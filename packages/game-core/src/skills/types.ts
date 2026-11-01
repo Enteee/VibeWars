@@ -208,6 +208,11 @@ export interface HealEffect {
    * No energy cost, or no such skill: no heal.
    */
   readonly perUsedSkillEnergy?: true;
+  /**
+   * Only a recipient under this share of its effective maximum Health is
+   * healed (#1951): Mist Form's "allies under 80% Health". Absent: any.
+   */
+  readonly onlyBelowHealthFraction?: number;
 }
 
 /** Leader's Comfort's heal per ally in earshot (#923). */
@@ -370,6 +375,16 @@ export interface LoseHealthByTarget {
   readonly amount: Magnitude;
   readonly recipient: "target";
   readonly perRemovedOfProfession?: never;
+}
+
+/**
+ * The effect's target loses all of its Health above `keep` (#1951), as
+ * Shadow Form's end: "lose all but 5...50 Health". Health loss, not
+ * damage, as `LoseHealthByTarget`'s. At or below `keep`, or dead: nothing.
+ */
+export interface LoseHealthToEffect {
+  readonly kind: "lose-health-to";
+  readonly keep: Magnitude;
 }
 
 /**
@@ -640,7 +655,8 @@ export interface CompanionGainsStatusEffect {
  * Consume Soul's "all hostile summoned creatures in earshot of that foe".
  * `allies` reaches the
  * caster's side instead, the caster included (#1316): Spirit's Gift's "all
- * allies near that creature". `party` reaches the caster's side's players,
+ * allies near that creature"; `non-spirit-allies` leaves out its spirits
+ * (#1951), Mist Form's "non-spirit allies". `party` reaches the caster's side's players,
  * never a creature (#1434): Protective Was Kaolai's "all party members",
  * at a radius of `Infinity`, as `PartyArea` reaches them. `own-spirits`
  * reaches the caster's own living spirits (#1777), and is the one measured
@@ -651,7 +667,14 @@ export interface CompanionGainsStatusEffect {
  */
 export interface SplashEffect {
   readonly kind: "splash";
-  readonly hits: "foes" | "foe-creatures" | "allies" | "party" | "own-spirits" | "own-minions";
+  readonly hits:
+    | "foes"
+    | "foe-creatures"
+    | "allies"
+    | "non-spirit-allies"
+    | "party"
+    | "own-spirits"
+    | "own-minions";
   readonly radius: number;
   readonly around?: "caster";
   /**
@@ -1375,6 +1398,7 @@ export type UnconditionalEffect =
   | StealFromCorpseEffect
   | SacrificeHealthEffect
   | LoseHealthEffect
+  | LoseHealthToEffect
   | TransferConditionsEffect
   | SpreadConditionsEffect
   | GiveHealthEffect

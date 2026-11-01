@@ -31,6 +31,7 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import {
   aggregateModifiers,
+  attacksAgainstMiss,
   damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
@@ -277,12 +278,16 @@ export function landedCritical(attacker: Combatant, rank: number, events: Combat
 }
 
 /**
- * Whether a blinded attacker's blow misses.
+ * Whether a blinded attacker's blow misses, or any blow at a `victim`
+ * that attacks against miss (#1951): Shadow Form's, never rolled.
  *
  * Rolled only when there is a chance to miss, as for attack skills, so
  * an unblinded fight's random stream does not move.
  */
-export function blindMisses(attacker: Combatant, rng: SimulationRng): boolean {
+export function blindMisses(attacker: Combatant, victim: Combatant, rng: SimulationRng): boolean {
+  if (attacksAgainstMiss(victim.statuses.active)) {
+    return true;
+  }
   const chance = attackMissChanceOf(attacker);
   return chance > 0 && rng.nextFloat() < chance;
 }
@@ -875,7 +880,7 @@ function strike(
   if (victim.dead) {
     return;
   }
-  if (blindMisses(attacker, rng)) {
+  if (blindMisses(attacker, victim, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
     bearerFailedToHit(attacker, events);
     return;
@@ -1102,7 +1107,7 @@ export function resolveAttackSkillOutcome(
       if (victim.dead) {
         continue;
       }
-      if (blindMisses(caster, rng)) {
+      if (blindMisses(caster, victim, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
         bearerFailedToHit(caster, events);
         failed.push(victim);

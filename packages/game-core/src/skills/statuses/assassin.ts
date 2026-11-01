@@ -31,7 +31,9 @@ export type AssassinStatusId =
   // Shadow step 2 (#1930).
   | "recall"
   | "dark-prison"
-  | "shadow-walk";
+  | "shadow-walk"
+  // PvP forms (#1951).
+  | "shadow-form";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -219,5 +221,22 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   "shadow-walk": define("shadow-walk", "Shadow Walk", "stance", {
     profession: "assassin",
     returnsSource: { skillId: "assassin.shadow-walk", recastKeepsPoint: true },
+  }),
+  // PvP: "For 5...15 seconds, all hostile spells that target you fail and
+  // all attacks against you miss. When Shadow Form ends, lose all but
+  // 5...50 Health" (#1951): 41. Any end, a strip included; a dead bearer
+  // loses nothing.
+  "shadow-form": define("shadow-form", "Shadow Form", "enchantment", {
+    profession: "assassin",
+    foeSpellsFail: true,
+    attacksAgainstMiss: true,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "lose-health-to", keep: { flat: 41 } }],
+        target: "bearer",
+        skillId: "assassin.shadow-form",
+      },
+    ],
   }),
 };
