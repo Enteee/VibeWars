@@ -314,7 +314,7 @@ describe("weapon sets (#489)", () => {
     });
     const a = get(match, "a").combatant;
     a.health = 20;
-    for (let round = 0; round < 5; round += 1) {
+    for (let round = 0; round < 10; round += 1) {
       match.requestWeaponSet("a", 1);
       expect(a.health).toBe(1);
       match.requestWeaponSet("a", 0);
