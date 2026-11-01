@@ -17,6 +17,9 @@
   --adrenaline-shade: rgb(0 0 0 / 65%);
   /* An elite skill's frame (#459). */
   --elite: #d4a72c;
+  /* A number an attribute scales, in skill text (#1932): GW1's green, on
+     the dark panels. A light theme must redefine it. */
+  --scaled: #7ee787;
   /* Enchantment markers (art direction palette). */
   --enchantment: #56d4dd;
   /* A shrine raise's invulnerability (art direction palette, #1233). */
@@ -4626,8 +4629,10 @@ body.has-expanded-training #screens {
   line-height: 1.35;
 }
 
-.tip-scale {
-  color: var(--ink-dim);
+/* Bold as well as green, so it never relies on colour alone (#78). */
+.scaled-number {
+  color: var(--scaled);
+  font-weight: 700;
 }
 
 .tip-stats {
