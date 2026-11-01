@@ -373,13 +373,16 @@ describe("the wolf and its owner (#1046)", () => {
     const loadout: ResolvedLoadout = {
       attributeRanks: new Map([[BEAST_MASTERY, 12]]),
       weaponSets: [
-        { equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel), maxEnergy: 30 },
+        {
+          equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+          maxEnergy: 30,
+          maxHealth: 480,
+          baseEnergyPips: 4,
+        },
         null,
         null,
         null,
       ],
-      maxHealth: 480,
-      baseEnergyPips: 4,
     };
 
     it("keeps the same wolf, as it is, while Charm Animal stays on the bar", () => {

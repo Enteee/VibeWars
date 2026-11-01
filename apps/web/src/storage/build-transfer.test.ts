@@ -63,6 +63,38 @@ describe("build export", () => {
     expect(result.character.skillBar).toEqual(VALID.skillBar);
   });
 
+  it("round-trips the mods on every item (#2007)", () => {
+    const [set] = VALID.equipment.weaponSets;
+    if (set.offHand === null) {
+      throw new Error("an elementalist starts with a focus");
+    }
+    const modded: StoredCharacter = {
+      ...VALID,
+      equipment: {
+        ...VALID.equipment,
+        weaponSets: [
+          {
+            mainHand: {
+              ...set.mainHand,
+              upgrades: { prefix: null, suffix: null, inscription: "seize-the-day" },
+            },
+            offHand: {
+              ...set.offHand,
+              upgrades: { prefix: null, suffix: "of-fortitude", inscription: "live-for-today" },
+            },
+          },
+          null,
+          null,
+          null,
+        ],
+      },
+    };
+    const result = importBuild(exportBuild(modded), "local-2", 42);
+
+    expect(result.ok).toBe(true);
+    expect(result.ok && result.character.equipment).toEqual(modded.equipment);
+  });
+
   it("gives the imported build a new identity", () => {
     // Keeping the exporter's id would make importing a friend's build
     // silently overwrite one of your own characters on save.
@@ -341,7 +373,9 @@ describe("build format version", () => {
       return;
     }
     expect(result.problems).toHaveLength(1);
-    expect(result.problems[0]).toMatch(/uses format version 1, but this game reads only version 4/);
+    expect(result.problems[0]).toContain(
+      `uses format version 1, but this game reads only version ${String(BUILD_FORMAT_VERSION)}`,
+    );
   });
 
   it("refuses a build with no usable format version", () => {

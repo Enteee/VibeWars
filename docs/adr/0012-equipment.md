@@ -178,7 +178,9 @@ decision rather than exposing one.
 
 **Weapons as items with mods and inscriptions.** Rejected: it needs an
 item model, a loot or vendor source, and storage for inventories, in a
-game with no database that shares builds as a line of text.
+game with no database that shares builds as a line of text. Mods
+without items superseded by [ADR-0047](0047-weapon-upgrades-without-items.md)
+(operator, 2026-11-01).
 
 **Profession-gated weapons.** Rejected: a second source of truth that
 disagrees with the attribute rule as soon as a secondary profession

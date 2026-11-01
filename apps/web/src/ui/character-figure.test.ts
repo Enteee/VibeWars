@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  NO_UPGRADES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   MatchSimulation,
   STARTER_BUILDS,
@@ -56,7 +57,6 @@ function hostHeld(character: StoredCharacter): {
     team: 0,
     skillBar: loadout.skillBar,
     ...loadoutSpec(resolved),
-    baseEnergyPips: loadout.baseEnergyPips,
     spawn: { x: 100, y: 100 },
     facing: 0,
   });
@@ -81,7 +81,10 @@ describe("characterAppearance (#1250)", () => {
       equipment: {
         ...build.equipment,
         weaponSets: [
-          { ...set1, mainHand: { weaponId: "longbow", requirementAttributeId: null } },
+          {
+            ...set1,
+            mainHand: { weaponId: "longbow", requirementAttributeId: null, upgrades: NO_UPGRADES },
+          },
           ...spare,
         ],
       },

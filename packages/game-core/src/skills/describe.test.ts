@@ -1456,3 +1456,36 @@ describe("Tactics stances that pay on a block (#1978)", () => {
     ]);
   });
 });
+
+describe("minion care (#1986)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(
+      skill(id),
+      new Map([
+        ["necromancer.death-magic", 12],
+        ["necromancer.blood-magic", 12],
+      ]),
+    ).effects.map(({ text }) => text);
+
+  it("says who it reaches and what each costs, at rank 12", () => {
+    expect(texts("necromancer.blood-of-the-master")).toEqual([
+      "You sacrifice 5% of your maximum health",
+      "All allied minions gain 99 Health; you sacrifice 2% of your maximum health per minion",
+    ]);
+    expect(texts("necromancer.veratas-sacrifice")).toEqual([
+      "You sacrifice 15% of your maximum health",
+      "Your minions gain Verata's Sacrifice for 9s (+10 Health regeneration) " +
+        "and transfer all their conditions to you",
+      "If you control 3 or fewer minions: this skill recharges instantly",
+    ]);
+    expect(texts("necromancer.dark-bond")).toEqual([
+      "Applies Dark Bond for 54s (75% of the damage you take goes to your closest minion)",
+    ]);
+    expect(texts("necromancer.jagged-bones")).toEqual([
+      "Applies Jagged Bones for 60s " +
+        "(when it dies, 1 Jagged Horror (level 12, 320 Health) stands up in its place)",
+    ]);
+    // Feast for the Dead's target is one of them, and left out.
+    expect(texts("necromancer.feast-for-the-dead")[0]).toMatch(/^Your other minions/);
+  });
+});

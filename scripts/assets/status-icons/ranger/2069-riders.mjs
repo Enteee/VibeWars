@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Touch and trap riders (#1966), stand-ins until their art card.
+  // Touch and trap riders (#2069).
   // Skill effect: a claw over a limp line, your next hit Cripples.
   "strike-as-one": [
     "skill-effect",

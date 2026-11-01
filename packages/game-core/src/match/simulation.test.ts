@@ -750,13 +750,16 @@ describe("rearm", () => {
   const loadout = (maxHealth: number): ResolvedLoadout => ({
     attributeRanks: new Map([["elementalist.fire-magic", 9]]),
     weaponSets: [
-      { equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel), maxEnergy: 30 },
+      {
+        equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+        maxEnergy: 30,
+        maxHealth,
+        baseEnergyPips: 4,
+      },
       null,
       null,
       null,
     ],
-    maxHealth,
-    baseEnergyPips: 4,
   });
 
   it("keeps the health fraction, not the health: more max health is no free heal", () => {

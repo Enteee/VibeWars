@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   MAX_ATTRIBUTE_RANK,
+  NO_UPGRADES,
   describeSkill,
   type DescriptionPart,
   type SkillDescription,
@@ -294,6 +295,7 @@ describe("setProfessions", () => {
     expect(mesmer.equipment.weaponSets[0].mainHand).toEqual({
       weaponId: "wand",
       requirementAttributeId: primaryAttributeOf("mesmer").id,
+      upgrades: NO_UPGRADES,
     });
     expect(mesmer.equipment.weaponSets[0].offHand?.offhandId).toBe("focus");
     expect(validateBuild(mesmer)).toEqual([]);

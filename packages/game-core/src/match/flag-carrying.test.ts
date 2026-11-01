@@ -49,6 +49,8 @@ const AXE: ResolvedWeaponSet = {
     },
   },
   maxEnergy: 40,
+  maxHealth: 480,
+  baseEnergyPips: 0,
 };
 
 /** An axe in hand, an attack skill and a spell on the bar, a spare axe in set 2. */

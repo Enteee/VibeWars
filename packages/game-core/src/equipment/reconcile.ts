@@ -3,6 +3,7 @@ import { primaryAttributeOf, type ProfessionId } from "../professions.js";
 import { headgearAttributeOf, type ArmorPiece, type ArmorSet } from "./armor.js";
 import { getInsignia, insigniaAllowed, type InsigniaId } from "./insignias.js";
 import type { BuildEquipment, EquippedOffhand, EquippedWeapon, WeaponSet } from "./loadout.js";
+import { fittingUpgrades } from "./mods.js";
 import { getOffhand } from "./offhands.js";
 import { getUniversalRune, type EquippedRune } from "./runes.js";
 import type { EquipmentRequirement } from "./types.js";
@@ -155,7 +156,12 @@ function reconcileArmor(armor: ArmorSet, context: ReconcileContext): ArmorSet {
 function reconcileWeaponSet(set: WeaponSet, context: ReconcileContext): WeaponSet {
   const weapon = getWeapon(set.mainHand.weaponId);
 
-  let mainHand: EquippedWeapon = set.mainHand;
+  // A mod that no longer fits its item comes off, as a rune does on a
+  // profession change (#2007).
+  let mainHand: EquippedWeapon = {
+    ...set.mainHand,
+    upgrades: fittingUpgrades(set.mainHand.weaponId, set.mainHand.upgrades),
+  };
   if (weapon !== undefined) {
     const repointed = repointRequirement(
       weapon.requirement,
@@ -166,10 +172,7 @@ function reconcileWeaponSet(set: WeaponSet, context: ReconcileContext): WeaponSe
     // build will report a problem the player can see and fix, which is
     // better than silently swapping their weapon out from under them.
     if (repointed !== undefined) {
-      mainHand = {
-        weaponId: set.mainHand.weaponId,
-        requirementAttributeId: repointed.attributeId,
-      };
+      mainHand = { ...mainHand, requirementAttributeId: repointed.attributeId };
     }
   }
 
@@ -189,7 +192,11 @@ function reconcileWeaponSet(set: WeaponSet, context: ReconcileContext): WeaponSe
       offHand =
         repointed === undefined
           ? null
-          : { offhandId: offHand.offhandId, requirementAttributeId: repointed.attributeId };
+          : {
+              offhandId: offHand.offhandId,
+              requirementAttributeId: repointed.attributeId,
+              upgrades: fittingUpgrades(offHand.offhandId, offHand.upgrades),
+            };
     }
   }
 
