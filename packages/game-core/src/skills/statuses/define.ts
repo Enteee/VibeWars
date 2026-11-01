@@ -74,6 +74,7 @@ export function define(
     ignoresCriticalDamage: false,
     block: undefined,
     blockBelowHealth: undefined,
+    blockWhileUnder: undefined,
     criticalChanceBonus: 0,
     energyPerCritical: 0,
     healthPerCritical: 0,

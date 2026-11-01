@@ -299,7 +299,7 @@ describe("Riposte and Deadly Riposte (#1549)", () => {
   it("an arrow is neither blocked nor answered, and Riposte stays", () => {
     const sim = match([spec("f", 1, vec2(500, 0), { equipment: LONGBOW })]);
     riposting(sim, RIPOSTE);
-    expect(blockChanceOf(get(sim, "w").combatant, "projectile")).toBe(0);
+    expect(blockChanceOf(get(sim, "w").combatant, "projectile", false)).toBe(0);
     const events = attacked(sim);
     expect(damageTo(events, "w")).toHaveLength(1);
     expect(get(sim, "w").combatant.statuses.has("riposte")).toBe(true);

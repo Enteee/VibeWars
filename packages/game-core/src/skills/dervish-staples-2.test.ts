@@ -368,8 +368,8 @@ describe("in a match (#1604)", () => {
       }
       expect(dealt(log, "dervish.mirage-cloak", "far")).toBe(0);
       expect(secondsOf(sim, "c", "mirage-cloak")).toBeCloseTo(6, 0);
-      expect(blockChanceOf(get(sim, "c"), "melee")).toBeCloseTo(0.54, 5);
-      expect(blockChanceOf(get(sim, "c"), "projectile")).toBeCloseTo(0.54, 5);
+      expect(blockChanceOf(get(sim, "c"), "melee", false)).toBeCloseTo(0.54, 5);
+      expect(blockChanceOf(get(sim, "c"), "projectile", false)).toBeCloseTo(0.54, 5);
     });
   });
 

@@ -289,11 +289,15 @@ export interface EnergyGainToTarget extends Omit<
  * skill that is not recharging, each capped at its cost, as a hit's
  * strike (#977). `perTarget`: once for each target the skill hit, as
  * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ * `perOwnMeleeAttackSkill` (#1978): once for each melee attack skill on
+ * the caster's bar, at most `max` times: Defensive Stance's "1 strike of
+ * adrenaline for each melee attack skill on your bar (maximum 3)".
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
   readonly strikes: number;
   readonly perTarget?: true;
+  readonly perOwnMeleeAttackSkill?: { readonly max: number };
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
