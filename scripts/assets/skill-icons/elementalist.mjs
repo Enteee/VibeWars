@@ -89,4 +89,7 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.breath-of-fire": { glyph: "breath-fire" },
   // Attributes set or borrowed (#1929), stand-ins until their art card.
   "elementalist.master-of-magic": { glyph: "energy", modifier: "renew" },
+  // Shots that fly differently (#1914), a stand-in until its art card.
+  "elementalist.lava-arrows": { glyph: "fireball", modifier: "renew" },
+  "elementalist.master-of-magic": { glyph: "bars-set" },
 };

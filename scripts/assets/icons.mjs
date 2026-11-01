@@ -727,6 +727,22 @@ const ringDot = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {
   `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r)}" ${stroke(C.ink, 2.2)}/>` +
   `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r / 3)}" fill="${C.ink}"/>`;
 
+/** The curved arrow of the taken marks, from the top right down to the bottom left (#1946). */
+const takeArrow = () => inkLine("M14 9C9 10 8 12 8 15", 1.8) + inkLine("M5.5 13L8 16L10.5 13", 1.8);
+/** The source ring (or dashed hex ring) top right; `struck` crosses it out. @param {boolean} hexed @param {boolean} struck */
+const takeSrc = (hexed, struck) =>
+  `<circle cx="17" cy="7" r="4.2" ${stroke(C.ink, 2)}${hexed ? ' stroke-dasharray="3.2 2.5"' : ""}/>` +
+  (struck ? inkLine("M15 5L19 9M19 5L15 9", 1.6) : "");
+/** The copy bottom left: a solid disc when it is yours, a ring when only revealed. @param {boolean} hexed @param {boolean} solid */
+const takeCopy = (hexed, solid) =>
+  solid
+    ? `<circle cx="7" cy="18" r="3.6" fill="${C.ink}"/>`
+    : `<circle cx="7" cy="18" r="3.4" ${stroke(C.ink, 2)}${hexed ? ' stroke-dasharray="3.2 2.5"' : ""}/>`;
+/** @param {string} src @param {string} copy */
+const takeMark = (src, copy) => src + takeArrow() + copy;
+/** Three attribute bars cut down to stubs (#1946). */
+const barStubs = () => inkFill("M3 17H8V21H3ZM9.5 17H14.5V21H9.5ZM16 17H21V21H16Z");
+
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
@@ -3337,6 +3353,47 @@ const skillGlyph = {
     inkLine("M7 17L20 4", 2.6) +
     inkLine("M4 14L10 20", 2.6) +
     `<path d="M7 11s-4-2.4-4-5A2.2 2.2 0 0 1 7 4.7 2.2 2.2 0 0 1 11 6c0 2.6-4 5-4 5z" fill="${C.ink}" transform="translate(-0.5,0)"/>`,
+  // Taken from the target: its enchantment ring or hex ring top right, a curved arrow, the copy bottom left (#1946).
+  "take-ench-in": () => takeMark(takeSrc(false, false), takeCopy(false, true)),
+  "take-ench-rev": () => takeMark(takeSrc(false, true), takeCopy(false, false)),
+  "take-hex-in": () => takeMark(takeSrc(true, false), takeCopy(true, true)),
+  "take-hex-rev": () => takeMark(takeSrc(true, true), takeCopy(true, false)),
+  // A skill square taken: one square, or a stack of two (Larceny reaches further).
+  "take-skill": () =>
+    takeMark(
+      `<rect x="13" y="3" width="8" height="8" rx="1" fill="${C.ink}"/>`,
+      `<rect x="3" y="14" width="7" height="7" rx="1" fill="${C.ink}"/>`,
+    ),
+  "take-skills": () =>
+    takeMark(
+      `<rect x="15" y="1.5" width="7" height="4.5" rx="1" fill="${C.ink}"/><rect x="15" y="8" width="7" height="4.5" rx="1" fill="${C.ink}"/>`,
+      `<rect x="3" y="14" width="7" height="7" rx="1" fill="${C.ink}"/>`,
+    ),
+  // Three attribute bars cut to stubs, and a wail or a wilt above them (#1946).
+  "bars-wail": () =>
+    barStubs() + inkLine("M8 8A6 6 0 0 1 8 2M12 9.5A9 9 0 0 1 12 .5M16 8A6 6 0 0 0 16 2", 1.8),
+  "bars-wilt": () => barStubs() + inkLine("M6 3L12 9L18 3M6 8.5L12 14.5L18 8.5", 2),
+  // Three bars of one height under a ceiling: an attribute set to a rank (#1946).
+  "bars-set": () =>
+    inkFill("M3 8H8V20H3ZM9.5 8H14.5V20H9.5ZM16 8H21V20H16Z") + inkLine("M2.5 4H21.5", 2),
+  // A ringed dot lends its rank to the tallest bar (#1946).
+  "bars-lent": () =>
+    inkFill("M11 14H15V20H11ZM17 6H21V20H17Z") +
+    ringDot(5, 12, 3.4) +
+    inkLine("M9 9H14.5M12.5 6.5L15 9L12.5 11.5", 1.8),
+  // A skull over crossed bones: the order to rise (#1946).
+  "skull-order": () => smallSkull(12, 9, 0.75) + inkLine("M5 16L19 22M19 16L5 22", 2.2),
+  // A skull in a dotted ring: the lich's aura (#1946).
+  "skull-aura": () =>
+    smallSkull(12, 12, 0.6) +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 1.8)} stroke-dasharray="1.8 3.1"/>`,
+  // A drop flowing into a skull: a condition passed to the minion (#1946).
+  "drop-skull": () =>
+    inkFill("M5.5 6C9 10 9 13 5.5 15.5C2 13 2 10 5.5 6Z") +
+    inkLine("M4 20H12M9.5 17.5L12 20L9.5 22.5", 1.8) +
+    smallSkull(17, 14, 0.8),
+  // A skull and a plus: the minion's death heals (#1946).
+  "skull-heal": () => smallSkull(8, 13, 0.85) + inkLine("M18 7V17M13 12H23", 2.4),
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +

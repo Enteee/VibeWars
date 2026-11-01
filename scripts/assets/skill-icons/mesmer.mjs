@@ -17,13 +17,12 @@ export const MESMER_ICONS = {
   // A skill seen again: a spell, or any skill, echoed on (#1136).
   "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
   "mesmer.echo": { glyph: "echo-skill" },
-  // Stand-ins for the skills that take one from the target (#1928).
-  "mesmer.inspired-enchantment": { glyph: "echo-spell", modifier: "up" },
-  "mesmer.revealed-enchantment": { glyph: "echo-spell", modifier: "plus" },
-  "mesmer.inspired-hex": { glyph: "echo-spell", modifier: "hourglass" },
-  "mesmer.revealed-hex": { glyph: "echo-spell", modifier: "half" },
-  "mesmer.arcane-thievery": { glyph: "echo-spell", modifier: "down" },
-  "mesmer.arcane-larceny": { glyph: "echo-spell", modifier: "area" },
+  "mesmer.inspired-enchantment": { glyph: "take-ench-in" },
+  "mesmer.revealed-enchantment": { glyph: "take-ench-rev" },
+  "mesmer.inspired-hex": { glyph: "take-hex-in" },
+  "mesmer.revealed-hex": { glyph: "take-hex-rev" },
+  "mesmer.arcane-thievery": { glyph: "take-skill" },
+  "mesmer.arcane-larceny": { glyph: "take-skills" },
   // Illusion hexes and haste: each glyph shows the status it leaves, so the cripple and the cracks read apart (#1243).
   "mesmer.conjure-phantasm": { glyph: "ghost", modifier: "down" },
   "mesmer.imagined-burden": { glyph: "weight", modifier: "half" },
@@ -86,4 +85,8 @@ export const MESMER_ICONS = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929), stand-ins until their art card.
   "mesmer.signet-of-illusions": { glyph: "energy", modifier: "finale" },
+  "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  "mesmer.power-leech": { glyph: "energy", modifier: "bolt" },
+  "mesmer.power-flux": { glyph: "interrupt", modifier: "hourglass" },
 };
