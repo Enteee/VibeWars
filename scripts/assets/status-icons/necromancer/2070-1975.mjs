@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Enchantment party moves (#1975), stand-ins until their art cards.
+  // Enchantment party moves (#2070)s.
   // Enchantment: a blade over a broken ring, each hit strips a foe.
   "order-of-apostasy": [
     "enchantment",

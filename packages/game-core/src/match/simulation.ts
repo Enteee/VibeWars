@@ -101,10 +101,11 @@ import { getSkill } from "../skills/catalog.js";
 import { conditionRequirementText } from "../skills/describe.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
-  applyDamage,
   applyEffects,
+  applyRedirectedDamage,
   applySkillEffects,
   applyStatus,
+  closestOwnMinion,
   conditionTaker,
   disableOwnSkills,
   gainEnergy,
@@ -1013,6 +1014,8 @@ export class MatchSimulation {
     readonly creature: CreatureTemplate;
     readonly count: number;
     readonly at: Vec2;
+    /** Whose ranks it stands up at; `undefined`: its owner's as it does. */
+    readonly ranks: ReadonlyMap<string, number> | undefined;
   }[] = [];
   /** Priest Annihilation's shrines (#1186), one a team; `[]` for every other match. */
   readonly #shrines: readonly Shrine[];
@@ -4274,7 +4277,7 @@ export class MatchSimulation {
     for (const { record, changes: recorded } of changes) {
       for (const change of recorded) {
         if (change.kind === "redirected-damage") {
-          this.#landRedirected(record, change.toId, change.amount);
+          this.#landRedirected(record, change);
         }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4325,7 +4328,7 @@ export class MatchSimulation {
     const settle = (record: ParticipantRecord, changes: readonly StatusChange[]): void => {
       for (const change of changes) {
         if (change.kind === "redirected-damage") {
-          this.#landRedirected(record, change.toId, change.amount);
+          this.#landRedirected(record, change);
         }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4361,7 +4364,7 @@ export class MatchSimulation {
       for (const { record, changes } of left) {
         for (const change of changes) {
           if (round < LAST_PASS_LANDINGS && change.kind === "redirected-damage") {
-            this.#landRedirected(record, change.toId, change.amount);
+            this.#landRedirected(record, change);
           }
           if (round < LAST_PASS_LANDINGS && change.kind === "charged-source") {
             this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4455,15 +4458,21 @@ export class MatchSimulation {
 
   /**
    * Symbiotic Bond's share of a hit on `bearer` (#1108), on `toId`, the
-   * bond's caster: typeless, unmitigated and from nobody, so it is never
+   * bond's caster, or Dark Bond's (#1986) on the bearer's closest living
+   * minion now: typeless, unmitigated and from nobody, so it is never
    * redirected again and answers nothing. With its caster dead or gone,
-   * the bearer takes it back: damage never vanishes.
+   * or no minion, the bearer takes it back: damage never vanishes.
    */
-  #landRedirected(bearer: ParticipantRecord, toId: string, amount: number): void {
-    const to = this.#participants.get(toId);
-    const victim = to === undefined || to.combatant.dead ? bearer : to;
+  #landRedirected(
+    bearer: ParticipantRecord,
+    { toId, amount, toClosestMinion }: Extract<StatusChange, { kind: "redirected-damage" }>,
+  ): void {
+    const to = toClosestMinion
+      ? closestOwnMinion(bearer.combatant, this.#participants)
+      : this.#participants.get(toId)?.combatant;
+    const victim = to === undefined || to.dead ? bearer.combatant : to;
     const events: CombatEvent[] = [];
-    applyDamage(victim.combatant, amount, "typeless", false, events, undefined);
+    applyRedirectedDamage(victim, amount, events);
     if (events.length === 0) {
       return;
     }
@@ -6068,6 +6077,13 @@ export class MatchSimulation {
               remainingSeconds > 0 && getStatusDefinition(id).category === "condition",
           ),
         });
+        // Jagged Bones (#1986) stands a horror up: read before death clears it.
+        const replacedOnDeath = victim.combatant.statuses.active.flatMap(
+          ({ id, remainingSeconds, ranks }) => {
+            const by = getStatusDefinition(id).replacedOnDeathBy;
+            return by === undefined || remainingSeconds <= 0 ? [] : [{ ...by, ranks }];
+          },
+        );
         victim.combatant.statuses.endAll();
         victim.armedAttack = undefined;
         this.#clearChainMarks(victim);
@@ -6086,6 +6102,7 @@ export class MatchSimulation {
               : Number.POSITIVE_INFINITY;
           if (victim.creature.onDeath === "vanish") {
             this.#creatureFell(victim);
+            this.#replaceOnDeath(victim, replacedOnDeath);
           } else if (victim.creature.onDeath === "lie") {
             this.#deathPenalty(victim);
           }
@@ -6241,6 +6258,36 @@ export class MatchSimulation {
         skillId: creature.skillId ?? "",
         ...creature.replacedBy,
         at: record.position,
+        ranks: undefined,
+      });
+    }
+  }
+
+  /**
+   * What its statuses stand up where `record`, a creature, died (#1986):
+   * Jagged Bones's horror, its owner's, at its caster's ranks, beside
+   * the creature's own replacement.
+   */
+  #replaceOnDeath(
+    record: ParticipantRecord,
+    replacedOnDeath: readonly {
+      readonly creature: CreatureTemplate;
+      readonly count: number;
+      readonly ranks: ReadonlyMap<string, number>;
+    }[],
+  ): void {
+    const ownerId = record.creature?.ownerId;
+    if (ownerId === undefined) {
+      return;
+    }
+    for (const { creature, count, ranks } of replacedOnDeath) {
+      this.#replacements.push({
+        ownerId,
+        skillId: record.creature?.skillId ?? "",
+        creature,
+        count,
+        at: record.position,
+        ranks,
       });
     }
   }
@@ -6252,10 +6299,19 @@ export class MatchSimulation {
    */
   #replaceFallen(): void {
     const replacements = this.#replacements.splice(0);
-    for (const { ownerId, skillId, creature, count, at } of replacements) {
+    for (const { ownerId, skillId, creature, count, at, ranks } of replacements) {
       const owner = this.#participants.get(ownerId);
       if (owner !== undefined && !owner.combatant.dead) {
-        this.#summon(owner, skillId, creature, count, at, false, true);
+        this.#summon(
+          owner,
+          skillId,
+          creature,
+          count,
+          at,
+          false,
+          true,
+          ranks ?? ranksOf(owner.combatant),
+        );
       }
     }
   }
