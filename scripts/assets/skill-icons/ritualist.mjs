@@ -79,8 +79,6 @@ export const RITUALIST_ICONS = {
   "ritualist.brutal-weapon": { glyph: "blade-teeth", modifier: "up" },
   // Caster staples 2 (#1872).
   "ritualist.vital-weapon": { glyph: "heart-sword" },
-  // "Not enchanted" (#1916): stand-ins until their art.
-  "ritualist.brutal-weapon": { glyph: "blade-plus", modifier: "up" },
   // Attributes raised (#1941), a stand-in until its art card.
   "ritualist.ritual-lord": { glyph: "totem", modifier: "renew" },
   // Spirits as a resource (#1947), stand-ins until their art card.
