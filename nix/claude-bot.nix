@@ -338,6 +338,7 @@ let
       pkgs.curl
       pkgs.cacert
       pkgs.jq
+      pkgs.sqlite
       runnerSudo
     ];
   };
