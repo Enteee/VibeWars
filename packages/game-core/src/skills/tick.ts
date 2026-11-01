@@ -114,9 +114,9 @@ export interface NetPips {
 
 /**
  * The bearer's net pips as they apply (#502, #504): every status's, plus
- * `naturalPips` of natural regeneration for health and the base pips for
- * energy, and `upkeepPips` (`upkeepPips`) for energy, each clamped. None
- * when dead. The tick applies these and the wire shows these, so the two
+ * `naturalPips` of natural regeneration and the held set's mods' (#2009) for
+ * health, the base pips and `upkeepPips` (`upkeepPips`) for energy, each
+ * clamped. None when dead. The tick applies these and the wire shows these, so the two
  * cannot disagree.
  */
 export function netPips(combatant: Combatant, naturalPips: number, upkeepPips: number): NetPips {
@@ -124,7 +124,11 @@ export function netPips(combatant: Combatant, naturalPips: number, upkeepPips: n
     return { health: 0, energy: 0 };
   }
   return {
-    health: clampPips(aggregateModifiers(combatant.statuses.active).healthPips + naturalPips),
+    health: clampPips(
+      aggregateModifiers(combatant.statuses.active).healthPips +
+        combatant.equipment.healthPips +
+        naturalPips,
+    ),
     energy: clampPips(preCapEnergyPips(combatant, upkeepPips)),
   };
 }
