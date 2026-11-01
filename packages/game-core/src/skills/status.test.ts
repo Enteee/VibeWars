@@ -118,6 +118,10 @@ describe("status definitions", () => {
         def.returnsSource !== undefined ||
         def.stepsToTarget !== undefined ||
         def.elementalDamageTakenAs !== undefined ||
+        def.minionDamageBonus !== 0 ||
+        def.minionHitHealthLossPercent !== 0 ||
+        def.redirectsConditionsToMinion ||
+        def.attributeBonus !== undefined ||
         def.physicalDamageDealtAs !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }

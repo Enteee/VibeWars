@@ -270,6 +270,23 @@ export interface StatusDefinition {
    */
   readonly maxEnergyBonus: number;
   /**
+   * Damage the bearer's minions add to each hit (#1915), before armor,
+   * as Order of Undeath's "your minions deal +3...13...16 damage".
+   */
+  readonly minionDamageBonus: number;
+  /**
+   * The share of its effective maximum Health, in %, the bearer loses each
+   * time one of its minions lands a hit (#1915): Order of Undeath's 2%.
+   * Health loss, not damage or sacrifice.
+   */
+  readonly minionHitHealthLossPercent: number;
+  /**
+   * A condition the bearer would gain goes to its closest living minion
+   * instead (#1915), as Infuse Condition. None alive: it lands on the
+   * bearer.
+   */
+  readonly redirectsConditionsToMinion: boolean;
+  /**
    * Multiplier on the heals the bearer receives from skills (1 = unaffected).
    * Regeneration and life steal ignore it.
    */
@@ -339,6 +356,12 @@ export interface StatusDefinition {
    * −1. Read through `rankOf` alone (ADR-0019).
    */
   readonly attributeDelta: number;
+  /**
+   * Added to one attribute of the bearer above rank 0 (#1915), as Aura of
+   * the Lich's "+1 Death Magic". Read through `rankOf` alone, with
+   * `attributeDelta`. `undefined`: none.
+   */
+  readonly attributeBonus: { readonly attributeId: string; readonly amount: number } | undefined;
   /**
    * The bearer's rank in a set of attributes, whatever its sheet, runes
    * and deltas say (#1929): Wail of Doom's "all of target foe's
@@ -3142,6 +3165,8 @@ export interface StatusModifiers {
   readonly maxHealthBonus: number;
   /** Every status's, summed (#1464). */
   readonly maxEnergyBonus: number;
+  /** Every status's, summed (#1915). */
+  readonly minionDamageBonus: number;
   /** Every status's, multiplied, and floored at `HEALING_MULTIPLIER_FLOOR`. */
   readonly healingMultiplier: number;
   readonly weaponDamageMultiplier: number;
@@ -3284,6 +3309,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   let maxHealthLoss: MaxHealthLoss | undefined;
   let maxHealthBonus = 0;
   let maxEnergyBonus = 0;
+  let minionDamageBonus = 0;
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
   let physicalDamageTakenBonus = 0;
@@ -3354,6 +3380,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     }
     maxHealthBonus += def.maxHealthBonus + def.maxHealthBonusPerEnchantment * enchantments;
     maxEnergyBonus += def.maxEnergyBonus;
+    minionDamageBonus += def.minionDamageBonus;
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
@@ -3433,6 +3460,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     maxHealthLoss,
     maxHealthBonus,
     maxEnergyBonus,
+    minionDamageBonus,
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
     physicalDamageTakenBonus,

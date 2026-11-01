@@ -394,6 +394,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "wail-of-doom": icon("wail-of-doom"),
   atrophy: icon("atrophy"),
   "scribes-insight": icon("scribes-insight"),
+  // Minions 3 (#1915).
+  "order-of-undeath": icon("order-of-undeath"),
+  "aura-of-the-lich": icon("aura-of-the-lich"),
+  "infuse-condition": icon("infuse-condition"),
   // Casting-state hexes (#1931).
   "spinal-shivers": icon("spinal-shivers"),
   "shivers-of-dread": icon("shivers-of-dread"),

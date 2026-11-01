@@ -104,6 +104,7 @@ import {
   applyEffects,
   applySkillEffects,
   applyStatus,
+  conditionTaker,
   disableOwnSkills,
   gainEnergy,
   landCaughtCondition,
@@ -134,7 +135,7 @@ import {
   type StatusId,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
-import { resolveMagnitude } from "../skills/scaling.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks } from "../skills/scaling.js";
 import { resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
@@ -225,7 +226,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { nearestFreshCorpse } from "./corpses.js";
+import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
 import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
 import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
@@ -770,6 +771,16 @@ interface ParticipantRecord extends Participant {
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
   armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
+}
+
+/**
+ * Every rank the combatant has, as `rankOf` reads it now (#1915): what
+ * a summon is made at. One it has none of is 0.
+ */
+function ranksOf(combatant: Combatant): ReadonlyMap<string, number> {
+  return new Map(
+    [...combatant.attributeRanks.keys()].map((id) => [id, rankOf(combatant, id)] as const),
+  );
 }
 
 /**
@@ -1349,6 +1360,9 @@ export class MatchSimulation {
    *
    * `companion`: it travels with `skillId` on the owner's bar (#1046),
    * rather than coming from a cast.
+   *
+   * `ranks`: the owner's, as the skill went off (#1915), so a status the
+   * same skill gives, as Aura of the Lich's +1 Death Magic, comes after.
    */
   #summon(
     owner: ParticipantRecord,
@@ -1358,6 +1372,7 @@ export class MatchSimulation {
     at: Vec2,
     companion: boolean,
     replacement = false,
+    ranks: ReadonlyMap<string, number> = ranksOf(owner.combatant),
   ): void {
     if (template.onePerOwner) {
       this.#killOlder(owner, skillId);
@@ -1403,13 +1418,11 @@ export class MatchSimulation {
         attributeRanks:
           template.attack === undefined
             ? new Map()
-            : new Map([
-                [template.attack.attributeId, rankOf(owner.combatant, template.attack.attributeId)],
-              ]),
+            : new Map([[template.attack.attributeId, ranks.get(template.attack.attributeId) ?? 0]]),
         equipment: creatureResolvedEquipment(
-          resolveMagnitude(template.armor, owner.combatant),
+          resolveMagnitudeAtRanks(template.armor, ranks),
           template.attack,
-          template.attack === undefined ? 0 : rankOf(owner.combatant, template.attack.attributeId),
+          template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
         ),
         spawn: at,
         facing: owner.facing,
@@ -1418,10 +1431,10 @@ export class MatchSimulation {
         // list (#1144).
         maxHealth:
           template.kind === "pet"
-            ? resolveMagnitude(template.maxHealth, owner.combatant)
+            ? resolveMagnitudeAtRanks(template.maxHealth, ranks)
             : spawningPowerHealth(
-                rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
-                resolveMagnitude(template.maxHealth, owner.combatant),
+                ranks.get(SPAWNING_POWER_ATTRIBUTE) ?? 0,
+                resolveMagnitudeAtRanks(template.maxHealth, ranks),
               ),
         maxEnergy: 0,
         baseEnergyPips: 0,
@@ -1434,7 +1447,7 @@ export class MatchSimulation {
           expiresInSeconds:
             template.durationSeconds === undefined
               ? Number.POSITIVE_INFINITY
-              : resolveMagnitude(template.durationSeconds, owner.combatant),
+              : resolveMagnitudeAtRanks(template.durationSeconds, ranks),
           ageSeconds: 0,
           summonedAtTick: this.#tick,
           skillId,
@@ -1443,29 +1456,29 @@ export class MatchSimulation {
           ownerDisableSeconds:
             template.ownerDisableOnDeath === undefined
               ? 0
-              : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
+              : resolveMagnitudeAtRanks(template.ownerDisableOnDeath, ranks),
           deathBurst:
             template.deathBurst === undefined
               ? undefined
               : {
                   ...template.deathBurst,
-                  perSecondAlive: resolveMagnitude(
+                  perSecondAlive: resolveMagnitudeAtRanks(
                     template.deathBurst.perSecondAlive,
-                    owner.combatant,
+                    ranks,
                   ),
                 },
           onDeathInRange:
             template.onDeathInRange?.kind === "damage-same-type"
               ? {
                   ...template.onDeathInRange,
-                  damage: resolveMagnitude(template.onDeathInRange.damage, owner.combatant),
+                  damage: resolveMagnitudeAtRanks(template.onDeathInRange.damage, ranks),
                 }
               : template.onDeathInRange,
           replacedBy: template.replacedBy,
           corpsesLeft:
             template.leavesCorpses === undefined
               ? 0
-              : Math.round(resolveMagnitude(template.leavesCorpses, owner.combatant)),
+              : Math.round(resolveMagnitudeAtRanks(template.leavesCorpses, ranks)),
           companionSkillId: companion ? skillId : undefined,
           leaderId: undefined,
           mode: "guard",
@@ -3411,6 +3424,7 @@ export class MatchSimulation {
       check.ok &&
       skill.corpse !== undefined &&
       skill.corpse.elseSacrificePercent === undefined &&
+      skill.corpse.all !== true &&
       this.#freshCorpse(record, skill.corpse, target) === undefined
     ) {
       return { ok: false, reason: "no-corpse" };
@@ -3481,12 +3495,14 @@ export class MatchSimulation {
     // degeneration it causes is attributed to the dummy, and so is the
     // health a deep wound takes as it lands.
     for (const application of intent.applyStatuses) {
-      const target = this.#participants.get(application.targetId);
-      if (target !== undefined && !target.combatant.dead) {
+      const aimed = this.#participants.get(application.targetId);
+      if (aimed !== undefined && !aimed.combatant.dead) {
+        // Infuse Condition (#1915) sends a condition to a minion here too.
+        const target = conditionTaker(aimed.combatant, application.statusId, this.#participants);
         const loss = applyStatus(
-          target.combatant,
+          target,
           application.statusId,
-          scaledStatusDuration(target.combatant, application.statusId, application.durationSeconds),
+          scaledStatusDuration(target, application.statusId, application.durationSeconds),
           record.id,
         );
         if (loss !== undefined && loss > 0) {
@@ -3620,13 +3636,21 @@ export class MatchSimulation {
     // A corpse skill takes its corpse as it lands, not as it began (#466):
     // one used up during the cast leaves it with no effect, paid for. A
     // well finding none sacrifices instead and goes off where its caster
-    // stands (#1730), as though on a corpse there.
+    // stands (#1730), as though on a corpse there. One that takes every
+    // corpse (#1915) goes off where its caster stands, with none or many.
+    const every =
+      skill.corpse?.all === true ? this.#exploitEveryCorpse(record, skill.corpse) : undefined;
     const corpse =
-      skill.corpse === undefined
+      skill.corpse === undefined || every !== undefined
         ? undefined
         : this.#exploitCorpse(record, skill.corpse, targetRecord);
     const sacrifice = corpse === undefined ? skill.corpse?.elseSacrificePercent : undefined;
-    const site = corpse ?? (sacrifice === undefined ? undefined : record);
+    const site = corpse ?? (sacrifice === undefined && every === undefined ? undefined : record);
+    // What it summons is made at the ranks it went off at (#1915), before
+    // any status it gives itself, and with what it is lent (#1929).
+    const ranks = withBorrowedAttribute(record.combatant, lent, skill, () =>
+      ranksOf(record.combatant),
+    );
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
@@ -3728,9 +3752,11 @@ export class MatchSimulation {
           record,
           skill.id,
           summon.creature,
-          summon.count,
+          summon.count + (summon.perExploitedCorpse === true ? (every?.length ?? 0) : 0),
           corpse?.position ?? record.position,
           false,
+          false,
+          ranks,
         );
       }
       for (const ground of grounds) {
@@ -5502,6 +5528,8 @@ export class MatchSimulation {
       target.combatant,
       this.#participants,
     );
+    // No Order of Undeath bonus (#1915) here: every minion fights in melee
+    // (weapon-attack.ts adds it). A ranged minion needs it added here too.
     // Painful Bond's +18 on a spirit's shot that hits (#1270), armor-
     // ignoring on the same blow. A spirit gone before its shot lands
     // is no longer anyone's, so it adds nothing.
@@ -5958,7 +5986,7 @@ export class MatchSimulation {
     );
     for (const { combatant } of reached) {
       for (const condition of conditions) {
-        landCaughtCondition(combatant, condition, events);
+        landCaughtCondition(combatant, condition, events, this.#participants);
       }
     }
     return events;
@@ -6358,16 +6386,35 @@ export class MatchSimulation {
     target: ParticipantRecord | undefined,
   ): ParticipantRecord | undefined {
     const corpse = this.#freshCorpse(record, rule, target);
-    if (corpse?.creature !== undefined) {
+    if (corpse !== undefined) {
+      this.#markExploited(corpse);
+    }
+    return corpse;
+  }
+
+  /**
+   * Marks every fresh corpse within the rule's radius of `record` as
+   * exploited (#1915), once each, and returns them, nearest first.
+   */
+  #exploitEveryCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord[] {
+    const corpses = freshCorpsesWithin(record.position, rule.radius, this.#participants.values());
+    for (const corpse of corpses) {
+      this.#markExploited(corpse);
+    }
+    return corpses;
+  }
+
+  /** One corpse of `corpse`'s used up (#466). */
+  #markExploited(corpse: ParticipantRecord): void {
+    if (corpse.creature !== undefined) {
       // A Flesh Golem's (#1836) is several, and it goes with the last.
       corpse.creature.corpsesLeft -= 1;
       if (corpse.creature.corpsesLeft <= 0) {
         this.#leaving.add(corpse.id);
       }
-    } else if (corpse !== undefined) {
+    } else {
       corpse.corpseExploited = true;
     }
-    return corpse;
   }
 
   /**

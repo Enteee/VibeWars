@@ -38,15 +38,17 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (escapes(skill)) uses.push("escape");
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
+  // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
-    roles.includes("hex") ||
-    roles.includes("condition") ||
-    roles.includes("knockdown") ||
-    skill.attack !== undefined ||
-    skill.effects.some(dealsDamage) ||
-    // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
-    // a foe is the bot's to use.
-    (skill.target === "single-enemy" && copiesSkill(skill.id))
+    skill.target !== "allied-minion" &&
+    (roles.includes("hex") ||
+      roles.includes("condition") ||
+      roles.includes("knockdown") ||
+      skill.attack !== undefined ||
+      skill.effects.some(dealsDamage) ||
+      // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
+      // a foe is the bot's to use.
+      (skill.target === "single-enemy" && copiesSkill(skill.id)))
   ) {
     uses.push("offence");
   }
