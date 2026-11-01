@@ -367,7 +367,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "For 8 seconds, you attack 33% faster but take double damage."
+    // "For 8 seconds, you attack 33% faster but take 160% damage."
     effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
   },
 

@@ -716,14 +716,15 @@ leaves it alone, and stance removal leaves your enchantments. Sprint
 A stance and crippled multiply, as every movement change does.
 
 Three stances trade something for speed (#919). Frenzy (Warrior, 8 s,
-4 s recharge): you attack 33% faster but take double damage. Dark Escape
-(Assassin, Shadow Arts, 13 s): you move 25% faster and take half damage,
-until one of your attacks hits; a miss or a block keeps it. Natural
-Stride (Ranger, Wilderness Survival, 7 s): you run 33% faster and block
-half of incoming attacks, until a new hex or enchantment lands on you; a
-refreshed one does not end it. Damage taken is multiplied after armor
-and before a Rune of Absorption, on every damage packet; health loss,
-sacrifice and degeneration are not damage packets and are left alone.
+4 s recharge): you attack 33% faster but take 160% damage (the PvP
+version). Dark Escape (Assassin, Shadow Arts, 13 s): you move 25%
+faster and take half damage, until one of your attacks hits; a miss
+or a block keeps it. Natural Stride (Ranger, Wilderness Survival, 7 s):
+you run 33% faster and block half of incoming attacks, until a new hex
+or enchantment lands on you; a refreshed one does not end it. Damage
+taken is multiplied after armor and before a Rune of Absorption, on
+every damage packet; health loss, sacrifice and degeneration are not
+damage packets and are left alone.
 
 Two Ranger stances block (#976). Lightning Reflexes (Expertise, 10
 energy, 45 s recharge, 10 s): a 75% chance to block melee and projectile
