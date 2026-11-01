@@ -339,12 +339,14 @@ export function strikeCount(
  * is a chance to block, as blind is, so a fight without blocking keeps
  * its random stream. A hex of the attacker's that bars blocking it
  * (#1234, `unblockableBySource`) leaves no chance, and so does a hex that
- * bars blocking at all (#1332, `preventsBlocking`).
+ * bars blocking at all (#1332, `preventsBlocking`). `attackSkill`: an
+ * attack skill's blow or shot, which Wary Stance's block needs (#1978).
  */
 export function blocks(
   victim: Combatant,
   attackerId: string,
   kind: "melee" | "projectile",
+  attackSkill: boolean,
   rng: SimulationRng,
 ): boolean {
   const exposed = victim.statuses.active.some(
@@ -356,7 +358,7 @@ export function blocks(
   ) {
     return false;
   }
-  const blocking = blockingStatusesOf(victim);
+  const blocking = blockingStatusesOf(victim, attackSkill);
   const chance = combinedBlockChance(
     blocking.map(({ block }) => block),
     kind,
@@ -1029,7 +1031,7 @@ function strike(
     return;
   }
   const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
-  if (!unblockable && blocks(victim, attacker.id, "melee", rng)) {
+  if (!unblockable && blocks(victim, attacker.id, "melee", false, rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     bearerFailedToHit(attacker, events);
     attackReached(victim, events);
@@ -1271,7 +1273,7 @@ export function resolveAttackSkillOutcome(
       if (
         !unblockable &&
         (rule === undefined || !unblockableNow(rule.unblockable, caster, victim, surroundings)) &&
-        blocks(victim, caster.id, kind, rng)
+        blocks(victim, caster.id, kind, true, rng)
       ) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
         bearerFailedToHit(caster, events);

@@ -591,8 +591,8 @@ describe("block (#534)", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const target = foe("dummy");
     target.combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
-    expect(blockChanceOf(target.combatant, "melee")).toBe(0.5);
-    expect(blockChanceOf(target.combatant, "projectile")).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "melee", false)).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "projectile", false)).toBe(0.5);
     const rng = createRng(5);
     let blocked = 0;
     for (let i = 0; i < 2000; i += 1) {
@@ -632,14 +632,14 @@ describe("block (#534)", () => {
       }).events;
 
     target.combatant.knockdownRemaining = 2;
-    expect(blockChanceOf(target.combatant, "melee")).toBe(0);
-    expect(blockChanceOf(target.combatant, "projectile")).toBe(0);
+    expect(blockChanceOf(target.combatant, "melee", false)).toBe(0);
+    expect(blockChanceOf(target.combatant, "projectile", false)).toBe(0);
     for (let i = 0; i < 20; i += 1) {
       expect(swing().map((event) => event.kind)).toEqual(["damage"]);
     }
 
     target.combatant.knockdownRemaining = 0;
-    expect(blockChanceOf(target.combatant, "melee")).toBe(0.5);
+    expect(blockChanceOf(target.combatant, "melee", false)).toBe(0.5);
     let blocked = 0;
     for (let i = 0; i < 20; i += 1) {
       blocked += swing().filter((event) => event.kind === "attack-blocked").length;

@@ -38,6 +38,7 @@ import {
 import { effectiveActivationSeconds, outsideMatch, rankOf } from "./tick.js";
 import { blowRuleOf, isEasilyInterrupted } from "./types.js";
 import type {
+  AdrenalineGainEffect,
   ApplyStatusEffect,
   RadiusArea,
   AttackWeaponClass,
@@ -561,13 +562,25 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("you do not suffer extra damage from a critical attack");
   }
   if (definition.block !== undefined) {
-    const what = BLOCKED_ATTACKS[definition.block.against];
+    // Wary Stance's "attack skills" (#1978).
+    const what =
+      definition.block.attackSkillsOnly === true
+        ? "attack skills"
+        : BLOCKED_ATTACKS[definition.block.against];
     const below =
       definition.blockBelowHealth === undefined
         ? ""
         : ` while below ${String(Math.round(definition.blockBelowHealth * 100))}% Health`;
+    // Soldier's Defense's "while under a shout or chant" (#1978).
+    const under =
+      definition.blockWhileUnder === undefined
+        ? ""
+        : ` while under ${[
+            ...definition.blockWhileUnder.categories.map(aCategory),
+            ...definition.blockWhileUnder.statusIds.map(statusName),
+          ].join(" or ")}`;
     parts.push(
-      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}`,
+      `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}${under}`,
     );
   }
   if (definition.criticalChanceBonus !== 0) {
@@ -2509,6 +2522,14 @@ function perFoeHit(effect: { readonly perTarget?: true }): string {
   return effect.perTarget === undefined ? "" : " per foe hit";
 }
 
+/** Defensive Stance's " for each melee attack skill on your bar (at most 3)" (#1978). */
+function perOwnMeleeAttackSkill(effect: AdrenalineGainEffect): string {
+  const per = effect.perOwnMeleeAttackSkill;
+  return per === undefined
+    ? ""
+    : ` for each melee attack skill on your bar (at most ${String(per.max)})`;
+}
+
 /**
  * Signet of Creation's count and cap (#1316), in the corpus's words: " for
  * every summoned creature you control within earshot (maximum 10 Energy)".
@@ -2693,7 +2714,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "adrenaline-gain": {
       const strikes = effect.strikes === 1 ? "1 strike" : `${String(effect.strikes)} strikes`;
       return {
-        text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}`,
+        text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
         magnitude: undefined,
       };
     }

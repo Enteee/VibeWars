@@ -150,8 +150,8 @@ describe("Lightning Reflexes (#976)", () => {
     });
     const plain = swingIntervalSeconds(ranger);
     ranger.statuses.apply("lightning-reflexes", 10, "r", NO_RANKS);
-    expect(blockChanceOf(ranger, "melee")).toBe(0.75);
-    expect(blockChanceOf(ranger, "projectile")).toBe(0.75);
+    expect(blockChanceOf(ranger, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(ranger, "projectile", false)).toBe(0.75);
     expect(swingIntervalSeconds(ranger)).toBeCloseTo(plain * 0.67, 10);
     // Hunter's Shot's 1 s.
     expect(attackDurationSeconds(ranger, 1)).toBeCloseTo(0.67, 10);
@@ -168,7 +168,9 @@ describe("Escape (#976)", () => {
   it("moves 33% faster and blocks 75% of attacks", () => {
     const modifiers = aggregateModifiers([{ id: "escape", ranks: NO_RANKS }]);
     expect(modifiers.moveSpeedMultiplier).toBe(1.33);
-    expect(blockChanceOf(escaping(WEAPONS.longbow, "ranger.marksmanship"), "melee")).toBe(0.75);
+    expect(blockChanceOf(escaping(WEAPONS.longbow, "ranger.marksmanship"), "melee", false)).toBe(
+      0.75,
+    );
   });
 
   it("survives a longbow swing", () => {

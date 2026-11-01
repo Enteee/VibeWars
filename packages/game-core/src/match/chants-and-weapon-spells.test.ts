@@ -197,7 +197,7 @@ describe("Weapon of Warding (#758)", () => {
     const rng = createRng(758);
     let blocked = 0;
     for (let i = 0; i < 2000; i += 1) {
-      if (blocks(ally, "e", i % 2 === 0 ? "melee" : "projectile", rng)) {
+      if (blocks(ally, "e", i % 2 === 0 ? "melee" : "projectile", false, rng)) {
         blocked += 1;
       }
     }

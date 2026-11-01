@@ -55,6 +55,7 @@ import {
   isEasilyInterrupted,
   isInvulnerable,
   isSpell,
+  type AdrenalineGainEffect,
   type Combatant,
   type CountRule,
   type DisableOwnSkillsEffect,
@@ -1602,13 +1603,18 @@ export function applyEffect(
     }
 
     case "adrenaline-gain": {
+      const strikes = effect.strikes * adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
-      if (gainer !== undefined && fillPools(gainer, effect.strikes * ADRENALINE_PER_STRIKE)) {
+      if (
+        gainer !== undefined &&
+        strikes > 0 &&
+        fillPools(gainer, strikes * ADRENALINE_PER_STRIKE)
+      ) {
         events.push({
           kind: "adrenaline-gained",
           targetId: gainer.id,
-          strikes: effect.strikes,
+          strikes,
           skillId: context.skillId,
         });
       }
@@ -2828,6 +2834,22 @@ export function applyEffects(
     events.push(...applyInOrder(effect, context, events, held));
   }
   return events;
+}
+
+/**
+ * How many times an adrenaline gain pays (#1978): once, or once for each
+ * melee attack skill on the caster's bar up to its cap. A bow attack and
+ * a thrown spear are not melee.
+ */
+function adrenalineGainTimes(caster: Combatant, effect: AdrenalineGainEffect): number {
+  if (effect.perOwnMeleeAttackSkill === undefined) {
+    return 1;
+  }
+  const melee = resolvedBar(caster.skillBar, caster.cast).filter((slot) => {
+    const weapon = slot === null ? undefined : getSkill(slot.skillId)?.attack?.weapon;
+    return weapon !== undefined && weapon !== "bow" && weapon !== "spear";
+  }).length;
+  return Math.min(melee, effect.perOwnMeleeAttackSkill.max);
 }
 
 /**

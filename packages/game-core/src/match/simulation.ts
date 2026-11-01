@@ -5707,7 +5707,13 @@ export class MatchSimulation {
         target.combatant,
         this.#participants,
       ) &&
-      blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
+      blocks(
+        target.combatant,
+        projectile.attackerId,
+        "projectile",
+        skillHit !== undefined,
+        this.#rng,
+      )
     ) {
       events.push({ kind: "attack-blocked", targetId: target.id });
       if (attacker !== undefined) {

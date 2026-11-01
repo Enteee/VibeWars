@@ -141,11 +141,13 @@ export function clampPips(pips: number): number {
 /**
  * A chance to block incoming attacks (#534): a blocked attack does nothing.
  * `against` says which attacks: melee blows, projectiles, or both. Spells
- * are never blocked.
+ * are never blocked. `attackSkillsOnly` (#1978): only an attack skill's
+ * blow or shot, never a plain swing: Wary Stance's "block attack skills".
  */
 export interface BlockRule {
   readonly chance: number;
   readonly against: "all" | "melee" | "projectile";
+  readonly attackSkillsOnly?: true;
 }
 
 /**
@@ -538,6 +540,12 @@ export interface StatusDefinition {
    * are below 50% Health". `undefined`: at any health.
    */
   readonly blockBelowHealth: number | undefined;
+  /**
+   * `block` holds only while the bearer is under another status of one of
+   * these categories or ids (#1978): Soldier's Defense's "while under the
+   * effects of a shout or chant". `undefined`: always.
+   */
+  readonly blockWhileUnder: Pick<WhileUnder, "categories" | "statusIds"> | undefined;
   /** Added to the bearer's chance to land a critical hit (#988): Critical Eye's 0.13. */
   readonly criticalChanceBonus: number;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
