@@ -11,6 +11,7 @@ import type { CombatLogEntry } from "./combat-log.js";
 import { GUARD_ROLES, guardId, type BaseGuard } from "./guards.js";
 import { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./guild-lord.js";
 import { countsForTeam, MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * A Guild Battle's base guards (#1223): GW1's roster on leashes, the
@@ -263,7 +264,7 @@ describe("the Guild Lord's Health-loss cap in a match (#1223)", () => {
     const lord = get(sim, guildLordId(0)).combatant;
     // −10 pips of conditions against its +5 and natural regeneration.
     for (const condition of ["bleeding", "burning"] as const) {
-      lord.statuses.apply(condition, 10, "x");
+      lord.statuses.apply(condition, 10, "x", NO_RANKS);
     }
     sim.step(DT);
     // The whole second's cap, spent by one blow.
@@ -284,11 +285,11 @@ describe("the Guild Lord's Health-loss cap in a match (#1223)", () => {
     sim.step(DT);
     const lord = get(sim, guildLordId(0)).combatant;
     // 20% of its maximum, up to 100, uncapped.
-    expect(applyStatus(lord, "deep-wound", 20, "x")).toBe(25);
+    expect(applyStatus(lord, "deep-wound", 20, "x", NO_RANKS)).toBe(25);
     expect(lord.health).toBe(GUILD_LORD_HEALTH - 25);
     // The cap is spent: a second wound landing takes nothing more.
     lord.statuses.remove("deep-wound");
-    expect(applyStatus(lord, "deep-wound", 20, "x")).toBe(0);
+    expect(applyStatus(lord, "deep-wound", 20, "x", NO_RANKS)).toBe(0);
     expect(lord.health).toBe(GUILD_LORD_HEALTH - 25);
     // Nor does coming down to its new maximum, for the rest of the second.
     stepTo(sim, 1 - DT);

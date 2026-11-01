@@ -1,4 +1,5 @@
 import { isCompanionRule } from "./activation.js";
+import { statAtTwelve } from "./scaling.js";
 import { getStatusDefinition } from "./status.js";
 import type { StatusDefinition } from "./status.js";
 import type { Skill, SkillEffect } from "./types.js";
@@ -41,6 +42,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "apply-status":
     case "companion-gains-status":
       return statusRoles(getStatusDefinition(effect.statusId));
+    case "companion-steps-to-target":
+      return [];
     // Wearying Spear's own Weakness (#1486) is its price, not a role.
     case "caster-gains-status": {
       const definition = getStatusDefinition(effect.statusId);
@@ -135,11 +138,11 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   if (status.category === "hex" || status.category === "condition") {
     roles.push(status.category);
   } else if (
-    status.armorModifier > 0 ||
+    statAtTwelve(status.armorModifier) > 0 ||
     (status.whileUnder !== undefined && status.whileUnder.armorModifier > 0) ||
     status.armorWhileStill > 0 ||
     status.block !== undefined ||
-    status.damageTakenMultiplier < 1 ||
+    statAtTwelve(status.damageTakenMultiplier) < 1 ||
     status.maxDamageFractionPerHit !== undefined ||
     status.attackDamageCapFraction !== undefined ||
     status.lifeStealReduction > 0 ||
@@ -150,6 +153,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.incomingHexCastTimeMultiplier > 1 ||
     status.redirectsConditionsToMinion ||
     status.foeSpellsFail ||
+    status.failsFoeTouchSkills !== undefined ||
     status.attacksAgainstMiss ||
     status.damageReductionFromHexedSource !== undefined ||
     status.interruptGuard !== undefined ||
@@ -160,7 +164,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
   if (status.interruptsSpells) roles.push("interrupt");
   if (
     status.healthPerSecond > 0 ||
-    status.healthPips > 0 ||
+    statAtTwelve(status.healthPips) > 0 ||
     (status.whileUnder !== undefined && status.whileUnder.healthPips > 0) ||
     status.healthPipsPerEnchantment !== undefined
   ) {

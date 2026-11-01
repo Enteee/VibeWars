@@ -1,6 +1,7 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 
 import { rankOf } from "./tick.js";
+import type { StatusStat } from "./status.js";
 import type { AttributeScaling, Combatant, Magnitude } from "./types.js";
 
 /**
@@ -62,6 +63,26 @@ export function magnitudeAtRank(
   rank: number,
 ): number {
   return Math.round(curveAt(scaling, rank));
+}
+
+/**
+ * A status stat at the ranks its status was put on with (#1976),
+ * unrounded: a multiplier keeps Frenzy's 1.6, and whoever sums a whole
+ * number (pips, armor, Health) rounds it there. A flat one is itself.
+ */
+export function statAt(stat: StatusStat, ranks: ReadonlyMap<string, number>): number {
+  if (typeof stat === "number") {
+    return stat;
+  }
+  return curveAt(stat.scaling, ranks.get(stat.scaling.attributeId) ?? 0);
+}
+
+/**
+ * A status stat at rank 12 (#1976), for a reader of the definition alone
+ * that asks only which way it points: a bot's roles, a tooltip's sign.
+ */
+export function statAtTwelve(stat: StatusStat): number {
+  return typeof stat === "number" ? stat : stat.scaling.atTwelve;
 }
 
 /** The curve, unrounded. */

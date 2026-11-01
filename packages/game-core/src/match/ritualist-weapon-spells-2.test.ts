@@ -13,6 +13,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The Ritualist's second weapon spells (#1022): Vengeful Weapon and Weapon
@@ -178,7 +179,7 @@ describe("Vengeful Weapon (#1022)", () => {
     });
     const ally = combatant(match, "ally");
     ally.health = 300;
-    ally.statuses.apply("vengeful-weapon", 8, "rit");
+    ally.statuses.apply("vengeful-weapon", 8, "rit", NO_RANKS);
     return match;
   }
 
@@ -213,7 +214,7 @@ describe("Vengeful Weapon (#1022)", () => {
 
   it("Burning alone never sets it off, and it expires after 8 s", () => {
     const match = vengeful();
-    combatant(match, "ally").statuses.apply("burning", 7, "ele");
+    combatant(match, "ally").statuses.apply("burning", 7, "ele", NO_RANKS);
     const log = stepFor(match, 9);
     expect(log.flatMap((entry) => entry.events).some((e) => e.kind === "life-stolen")).toBe(false);
     expect(combatant(match, "ally").statuses.has("vengeful-weapon")).toBe(false);
@@ -222,7 +223,7 @@ describe("Vengeful Weapon (#1022)", () => {
   it("against Vengeful Weapon: the steal is a firing, and sets off nothing", () => {
     const match = vengeful();
     const foe = combatant(match, "ele");
-    foe.statuses.apply("vengeful-weapon", 8, "ele");
+    foe.statuses.apply("vengeful-weapon", 8, "ele", NO_RANKS);
     burn(foe, combatant(match, "ally"));
     const log = stepFor(match, 1);
     expect(
@@ -246,9 +247,9 @@ describe("Weapon of Remedy (#1022)", () => {
     const ally = combatant(match, "ally");
     ally.health = 300;
     for (const id of ["bleeding", "crippled", "poison"] as const) {
-      ally.statuses.apply(id, 15, "ele");
+      ally.statuses.apply(id, 15, "ele", NO_RANKS);
     }
-    ally.statuses.apply("weapon-of-remedy", 8, "rit");
+    ally.statuses.apply("weapon-of-remedy", 8, "rit", NO_RANKS);
     return match;
   }
 
@@ -273,7 +274,7 @@ describe("Weapon of Remedy (#1022)", () => {
   it("a hit Reversal of Fortune reverses took nothing: Remedy stays up", () => {
     const match = remedy();
     const ally = combatant(match, "ally");
-    ally.statuses.apply("reversal-of-fortune", 8, "rit");
+    ally.statuses.apply("reversal-of-fortune", 8, "rit", NO_RANKS);
     burn(combatant(match, "ele"), ally);
     expect(by(stepFor(match, DT), "ritualist.weapon-of-remedy")).toEqual([]);
     expect(ally.statuses.has("weapon-of-remedy")).toBe(true);
@@ -291,9 +292,9 @@ describe("Weapon of Remedy (#1022)", () => {
         swordsman("war", vec2(TOUCHING, 0)),
       ],
     });
-    combatant(match, "marked").statuses.apply("mark-of-pain", 30, "nec");
+    combatant(match, "marked").statuses.apply("mark-of-pain", 30, "nec", NO_RANKS);
     const ally = combatant(match, "ally");
-    ally.statuses.apply("weapon-of-remedy", 8, "rit");
+    ally.statuses.apply("weapon-of-remedy", 8, "rit", NO_RANKS);
     match.requestAttack("war", "marked");
     const log = stepFor(match, 3);
     const splashed = by(log, "necromancer.mark-of-pain")
@@ -320,7 +321,7 @@ describe("Splinter Weapon (#1022)", () => {
         body("far", vec2(foeAt.x + 90, foeAt.y), { team: 1, maxHealth: 1e6 }),
       ],
     });
-    combatant(match, attacker.id).statuses.apply("splinter-weapon", 20, "war");
+    combatant(match, attacker.id).statuses.apply("splinter-weapon", 20, "war", NO_RANKS);
     match.requestAttack(attacker.id, "foe");
     return match;
   }
@@ -358,7 +359,7 @@ describe("Splinter Weapon (#1022)", () => {
 
   it("a miss spends nothing", () => {
     const match = splinter(swordsman("war", vec2(0, 0), 0), vec2(TOUCHING, 0));
-    combatant(match, "war").statuses.apply("blind", 4, "foe");
+    combatant(match, "war").statuses.apply("blind", 4, "foe", NO_RANKS);
     const { splashes, misses } = untilSpent(match);
     expect(misses).toBeGreaterThan(0);
     expect(splashes).toHaveLength(4);
@@ -380,9 +381,9 @@ describe("Mending Grip (#1022)", () => {
   /** Mending Grip on an ally at 100, poisoned, with `weaponSpell` on it or not. */
   function grip(weaponSpell: boolean): Combatant {
     const ally = makeCombatant({ id: "ally", health: 100 });
-    ally.statuses.apply("poison", 10, "foe");
+    ally.statuses.apply("poison", 10, "foe", NO_RANKS);
     if (weaponSpell) {
-      ally.statuses.apply("weapon-of-warding", 10, "rit");
+      ally.statuses.apply("weapon-of-warding", 10, "rit", NO_RANKS);
     }
     applySkillEffects({
       skill: skill("ritualist.mending-grip"),

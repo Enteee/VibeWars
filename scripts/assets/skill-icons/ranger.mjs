@@ -121,6 +121,10 @@ export const RANGER_ICONS = {
   "ranger.run-as-one": { glyph: "figure-paw-run" },
   "ranger.savage-pounce": { glyph: "paw-pounce-spell" },
   "ranger.bestial-mauling": { glyph: "paw-maul" },
+  // Touch and trap riders (#1966), stand-ins until their art card.
+  "ranger.strike-as-one": { glyph: "paw-leap", modifier: "bleed" },
+  "ranger.trappers-focus": { glyph: "trap-dust", modifier: "plus" },
+  "ranger.trappers-speed": { glyph: "trap-dust", modifier: "up" },
   // Pets 3 (#1957), stand-ins until their art card.
   "ranger.predators-pounce": { glyph: "paw-leap", modifier: "plus" },
   "ranger.scavenger-strike": { glyph: "claw", modifier: "bolt" },

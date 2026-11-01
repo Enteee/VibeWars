@@ -125,6 +125,7 @@ import {
   isStatusId,
   isUnderAnother,
   MAX_PIPS,
+  NO_RANKS,
   ownSkillBoost,
   preventsAttacks,
   reducedRecharge,
@@ -137,7 +138,7 @@ import {
   type StatusId,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
-import { resolveMagnitude, resolveMagnitudeAtRanks } from "../skills/scaling.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks, statAt } from "../skills/scaling.js";
 import { nearestSpiritWithin, resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
@@ -149,6 +150,7 @@ import {
   preCapEnergyPips,
   raisedMaxHealth,
   rankOf,
+  statusRanks,
   upkeepPips,
   withRankLoan,
   type NetPips,
@@ -819,15 +821,16 @@ function degenerationSources(combatant: Combatant): {
   const healing = new Set<string>();
   for (const status of combatant.statuses.active) {
     const definition = STATUS_DEFINITIONS[status.id];
+    const pips = statAt(definition.healthPips, status.ranks);
     if (
-      definition.healthPips < 0 ||
+      pips < 0 ||
       (definition.whileUnder !== undefined &&
         definition.whileUnder.healthPips < 0 &&
         isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       draining.add(status.sourceId);
     } else if (
-      definition.healthPips > 0 ||
+      pips > 0 ||
       definition.healthPipsPerEnchantment !== undefined ||
       definition.healthPerSecondWhileMoving > 0 ||
       definition.healthPerSecond > 0 ||
@@ -1940,26 +1943,34 @@ export class MatchSimulation {
       readonly team: number;
       readonly position: Vec2;
       readonly aura: Aura;
+      /** Its owner's, as the status lands (#1976): a spirit's summoner, a ward's caster. */
+      readonly ranks: ReadonlyMap<string, number>;
     }[] = [];
     for (const record of this.#participants.values()) {
       const aura = record.creature?.aura;
       if (aura !== undefined && !record.combatant.dead) {
+        const ownerId = record.creature?.ownerId;
+        const owner = ownerId === undefined ? undefined : this.#participants.get(ownerId);
         sources.push({
           sourceId: record.id,
           team: record.combatant.team,
           position: record.position,
           aura,
+          ranks: statusRanks(aura.statusId, (owner ?? record).combatant),
         });
       }
     }
     // A ward's status names its owner: whoever cast it. A trap projects nothing.
     for (const effect of this.#groundEffects) {
       if (effect.act.kind === "aura") {
+        const owner = this.#participants.get(effect.ownerId);
         sources.push({
           sourceId: effect.ownerId,
           team: effect.team,
           position: effect.position,
           aura: effect.act.aura,
+          ranks:
+            owner === undefined ? NO_RANKS : statusRanks(effect.act.aura.statusId, owner.combatant),
         });
       }
     }
@@ -1971,14 +1982,14 @@ export class MatchSimulation {
       if (body.combatant.dead || body.creature?.kind === "spirit") {
         continue;
       }
-      const wears = new Map<StatusId, string>();
-      for (const { sourceId, team, position, aura } of sources) {
+      const wears = new Map<StatusId, { sourceId: string; ranks: ReadonlyMap<string, number> }>();
+      for (const { sourceId, team, position, aura, ranks } of sources) {
         if (
           !wears.has(aura.statusId) &&
           reaches(aura.affects, team, body.combatant.team) &&
           distance(position, body.position) <= aura.radius
         ) {
-          wears.set(aura.statusId, sourceId);
+          wears.set(aura.statusId, { sourceId, ranks });
         }
       }
       const { statuses } = body.combatant;
@@ -1987,8 +1998,8 @@ export class MatchSimulation {
           statuses.remove(status.id);
         }
       }
-      for (const [statusId, sourceId] of wears) {
-        statuses.project(statusId, sourceId);
+      for (const [statusId, { sourceId, ranks }] of wears) {
+        statuses.project(statusId, sourceId, ranks);
       }
     }
   }
@@ -3405,6 +3416,7 @@ export class MatchSimulation {
           scaledStatusDuration(other.combatant, status.id, remainingSeconds),
           status.sourceId,
           outbreak,
+          status.ranks,
         );
         // Already carrying it, from another outbreak: nothing new to say.
         if (had) {
@@ -3602,6 +3614,7 @@ export class MatchSimulation {
           application.statusId,
           scaledStatusDuration(target, application.statusId, application.durationSeconds),
           record.id,
+          statusRanks(application.statusId, record.combatant),
         );
         if (loss !== undefined && loss > 0) {
           this.#log.push({
@@ -3673,7 +3686,10 @@ export class MatchSimulation {
         : used;
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
-    if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
+    if (
+      this.#failsSpell(record, skill, targetRecord, cast.key) ||
+      this.#failsTouch(record, skill, targetRecord, cast.key)
+    ) {
       return;
     }
     // Signet of Illusions' (#1929): a finished spell spends a use and
@@ -4073,6 +4089,41 @@ export class MatchSimulation {
       );
     }
     this.#logFired([{ sourceId: failer.sourceId, skillId: fails.skillId, events }]);
+    return true;
+  }
+
+  /**
+   * Whether `target`'s status fails `record`'s touch skill on it (#1966):
+   * "Can't Touch This!" on a foe. It is paid for and recharges, as a
+   * failed spell, and spends one of the status's charges. An ally's
+   * touch lands.
+   */
+  #failsTouch(
+    record: ParticipantRecord,
+    skill: Skill,
+    target: ParticipantRecord | undefined,
+    key: string,
+  ): boolean {
+    if (
+      skill.touch !== true ||
+      target === undefined ||
+      target.combatant.team === record.combatant.team
+    ) {
+      return false;
+    }
+    const failer = target.combatant.statuses.touchFailer();
+    if (failer === undefined) {
+      return false;
+    }
+    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    target.combatant.statuses.spendTouchFail(failer.id);
+    this.#logFired([
+      {
+        sourceId: target.id,
+        skillId: failer.sourceSkillId ?? skill.id,
+        events: [{ kind: "spell-failed", targetId: record.id, skillId: skill.id }],
+      },
+    ]);
     return true;
   }
 
@@ -6331,6 +6382,18 @@ export class MatchSimulation {
         if (record !== undefined && other !== undefined && !other.combatant.dead) {
           this.#dropAshes(record);
           this.#swap(record, other);
+        }
+        continue;
+      }
+      if (event.kind === "companion-stepped") {
+        const pet = this.#participants.get(event.targetId);
+        const foe = this.#participants.get(event.toId);
+        if (pet !== undefined && foe !== undefined && !foe.combatant.dead) {
+          this.#stepBeside(pet, foe);
+          // As an armed pet attack's (#1865): a pet at heel only moves.
+          if (pet.creature?.mode !== "heel" && pet.behaviour?.kind === "follow-and-attack") {
+            this.requestAttack(pet.id, foe.id);
+          }
         }
         continue;
       }

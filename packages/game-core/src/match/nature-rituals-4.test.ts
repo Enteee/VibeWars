@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
@@ -232,9 +232,9 @@ describe("nature rituals 4 (#1956)", () => {
 
   it("Lacerate: -2 more degeneration on a Bleeding body only", () => {
     const bearer = makeCombatant({ id: "bearer" });
-    bearer.statuses.project("lacerate", "r/c1");
+    bearer.statuses.project("lacerate", "r/c1", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).healthPips).toBe(0);
-    bearer.statuses.apply("bleeding", 10, "f");
+    bearer.statuses.apply("bleeding", 10, "f", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).healthPips).toBe(-3 - 2);
   });
 

@@ -6,7 +6,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { getStatusDefinition, type StatusId } from "../skills/status.js";
+import { NO_RANKS, getStatusDefinition, type StatusId } from "../skills/status.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -334,7 +334,7 @@ describe("Earth (#1664)", () => {
         const sim = match();
         get(sim, "c").energy = 100;
         if (weakened) {
-          get(sim, "f").statuses.apply("weakness", 20, "x");
+          get(sim, "f").statuses.apply("weakness", 20, "x", NO_RANKS);
         }
         cast(sim, GLOWSTONE);
         return get(sim, "c").energy;
@@ -386,7 +386,7 @@ describe("Earth (#1664)", () => {
       attackMissChance: 0.64,
     });
     const sim = match();
-    get(sim, "h").statuses.apply("burning", 10, "x");
+    get(sim, "h").statuses.apply("burning", 10, "x", NO_RANKS);
     expect(struck(cast(sim, ASH_BLAST))).toEqual(new Set(["f", "h", "k"]));
     expect(seconds(sim, "h", "ash-blast")).toBeGreaterThan(3);
     expect(get(sim, "f").statuses.has("ash-blast")).toBe(false);

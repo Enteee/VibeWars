@@ -18,6 +18,7 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Nature rituals 3 (#1886): Edge of Extinction and Pestilence answer a
@@ -144,7 +145,7 @@ function hurt(sim: MatchSimulation, id: string, fraction: number): Combatant {
 /** Kill `id` as burning would, and return what Edge of Extinction did. */
 function kill(sim: MatchSimulation, id: string): CombatEvent[] {
   const victim = get(sim, id).combatant;
-  victim.statuses.apply("burning", 10, "x");
+  victim.statuses.apply("burning", 10, "x", NO_RANKS);
   victim.health = 0.2;
   const events = stepFor(sim, DT, "ranger.edge-of-extinction");
   expect(victim.dead).toBe(true);
@@ -161,7 +162,7 @@ function damageTo(events: readonly CombatEvent[], id: string): number {
 function under(statusId: StatusId, energy = 100): Combatant {
   const combatant = makeCombatant({ id: "c", maxEnergy: 100 });
   combatant.energy = energy;
-  combatant.statuses.project(statusId, "r/c1");
+  combatant.statuses.project(statusId, "r/c1", NO_RANKS);
   return combatant;
 }
 
@@ -228,8 +229,8 @@ describe("Pestilence (#1886)", () => {
       spec("clean", 1, vec2(300, 50)),
     );
     ritual(sim, "ranger.pestilence");
-    get(sim, "dies").combatant.statuses.apply("bleeding", 12, "x");
-    get(sim, "sick").combatant.statuses.apply("poison", 5, "x");
+    get(sim, "dies").combatant.statuses.apply("bleeding", 12, "x", NO_RANKS);
+    get(sim, "sick").combatant.statuses.apply("poison", 5, "x", NO_RANKS);
     kill(sim, "dies");
     const caught = get(sim, "sick").combatant.statuses.get("bleeding");
     expect(caught?.remainingSeconds).toBeGreaterThan(11);
@@ -252,7 +253,7 @@ describe("Energizing Wind (#1886)", () => {
 
   it("under Quickening Zephyr too, the cost is raised before the discount: 25 is 33, then 18", () => {
     const both = under("energizing-wind");
-    both.statuses.project("quickening-zephyr", "r/c2");
+    both.statuses.project("quickening-zephyr", "r/c2", NO_RANKS);
     expect(energyCostOf(skillOf("ranger.quickening-zephyr"), both)).toBe(18);
   });
 
