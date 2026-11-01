@@ -56,6 +56,18 @@ shout ends on that ally. A chant or shout reapplied before it ends has not
 ended. Nothing removes an echo: it ends when it runs out or its bearer
 dies. Most cannot target a spirit.
 
+## Skills that become another skill
+
+Some Mesmer skills put another skill in their own slot for a while.
+Arcane Echo and Echo copy the next skill you use. **Inspired
+Enchantment** and **Inspired Hex** become the skill that cast the
+enchantment or hex they removed, for 20 seconds. **Arcane Thievery**
+becomes the spell it disabled on your foe, for as long as the disable
+lasts. The copy has its own recharge. When it ends, the original skill
+comes back and starts its own recharge, and a cast of the copy still in
+progress fails. A status put on by a spirit or by another status cannot
+be copied, though removing it still gives you the Energy.
+
 ## Wells and glyphs
 
 A Necromancer's **wells** exploit the nearest corpse. With none near, a

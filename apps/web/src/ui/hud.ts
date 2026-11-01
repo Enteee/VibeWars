@@ -462,6 +462,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, string>> = {
   "cannot-shout-or-chant": "You cannot use shouts or chants.",
   "invalid-target-untargetable": "Your spells cannot target that foe.",
   "invalid-target-unenchantable": "That target cannot be enchanted.",
+  "no-spells": "That target has no spells.",
   "hands-full": "Your hands are full: drop what you carry first.",
   "not-your-flag": "That is not your flag.",
   "flag-on-stand": "Your flag is already on the stand.",

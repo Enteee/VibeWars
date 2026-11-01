@@ -2874,6 +2874,7 @@
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "status-removed" } },
+            { "name": "sourceSkillId", "optional": true, "type": "string" },
             {
               "name": "statusId",
               "optional": false,

@@ -169,7 +169,9 @@ describe("remove-status with a statusId (#1549)", () => {
     set.apply("crippled", 10, "f");
     set.apply("bleeding", 10, "f");
     expect(set.removeByCategory("hex", 1, undefined, "crippled")).toEqual([]);
-    expect(set.removeByCategory("condition", 1, undefined, "crippled")).toEqual(["crippled"]);
+    expect(set.removeByCategory("condition", 1, undefined, "crippled")).toEqual([
+      { id: "crippled", sourceSkillId: undefined },
+    ]);
     expect(set.has("bleeding")).toBe(true);
   });
 });

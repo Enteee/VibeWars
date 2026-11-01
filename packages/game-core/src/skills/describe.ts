@@ -2569,12 +2569,22 @@ function describeEffect(
             ? `All of the target's skills are disabled for ${time}`
             : effect.which === "elite"
               ? `The target's elite skill is disabled for ${time}`
-              : effect.which === "interrupted"
-                ? `The interrupted skill is disabled for ${time}`
-                : `That skill and all skills of the same attribute are disabled for ${time}`,
+              : effect.which === "random-spell"
+                ? `One of the target's spells, at random, is disabled for ${time}`
+                : effect.which === "interrupted"
+                  ? `The interrupted skill is disabled for ${time}`
+                  : `That skill and all skills of the same attribute are disabled for ${time}`,
         magnitude,
       };
     }
+    // Inspired Enchantment's and Arcane Thievery's (#1928).
+    case "copy-removed":
+      return {
+        text: `This skill becomes the one you removed for ${String(effect.seconds)} seconds`,
+        magnitude: undefined,
+      };
+    case "copy-disabled":
+      return { text: "This skill becomes that spell for as long", magnitude: undefined };
     case "disable-own-skills": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       return { text: disableOwnText(effect, false, magnitude.current), magnitude };
