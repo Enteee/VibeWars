@@ -219,11 +219,12 @@ export function lobbyPanel(
 
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
 
-  // Only the host may change the map, so everyone else sees it as a
-  // label rather than a control they would be refused on clicking.
+  // Only a Hosted Game's host may change the map (#1994), so everyone
+  // else sees it as a label rather than a control they would be refused
+  // on clicking. Team Arena draws its own at the start.
   const current = availableMaps.find((map) => map.id === snapshot.mapId);
   let mapPart: HTMLElement;
-  if (snapshot.isHost && availableMaps.length > 1) {
+  if (snapshot.mode === "hosted-game" && snapshot.isHost && availableMaps.length > 1) {
     mapPart = h("label", "lobby-map");
     mapPart.appendChild(h("span", "field-label", "Map"));
     const select = document.createElement("select");
@@ -239,6 +240,8 @@ export function lobbyPanel(
       callbacks.onSelectMap(select.value);
     });
     mapPart.appendChild(select);
+  } else if (snapshot.mode === "team-arena") {
+    mapPart = h("div", "lobby-map", "Map: random (Team Arena)");
   } else {
     mapPart = h(
       "div",
