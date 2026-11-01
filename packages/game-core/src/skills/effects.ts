@@ -1020,6 +1020,34 @@ export function applyStatus(
 }
 
 /**
+ * Who takes `statusId` aimed at `target` (#1915): `target`, unless it is a
+ * condition and `target` bears a status that redirects conditions, as
+ * Infuse Condition; then its closest living minion where they stand now,
+ * ties by id, or `target` when it has none.
+ */
+function conditionTaker(
+  target: Combatant,
+  statusId: StatusId,
+  surroundings: Surroundings,
+): Combatant {
+  if (
+    getStatusDefinition(statusId).category !== "condition" ||
+    !target.statuses.active.some(({ id }) => getStatusDefinition(id).redirectsConditionsToMinion)
+  ) {
+    return target;
+  }
+  const at = surroundings.get(target.id)?.position;
+  if (at === undefined) {
+    return target;
+  }
+  const minions = [...surroundings.values()].filter(
+    ({ combatant, creature }) =>
+      creature?.kind === "minion" && creature.ownerId === target.id && !combatant.dead,
+  );
+  return nearestFirst(minions, at)[0] ?? target;
+}
+
+/**
  * Where `caster` stands now, for a returning status it puts up to take it
  * back to when it ends (#1826). The simulation moves a shadow step's caster
  * after its effects, so this is where it stood as it cast.
@@ -1166,7 +1194,7 @@ function destroyCreature(
  * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
  * invulnerability and a Guild Lord's cap stop it, and it can kill.
  */
-function loseHealth(
+export function loseHealth(
   loser: Combatant,
   amount: number,
   kind: "sacrifice" | "health-loss",
@@ -1491,13 +1519,16 @@ export function applyEffect(
             spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
           : effect.durationSeconds;
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
+      // Infuse Condition's (#1915): a condition goes to the bearer's
+      // closest living minion instead, if it has one.
+      const bearer = conditionTaker(target, effect.statusId, context.surroundings);
       const durationSeconds = scaledStatusDuration(
-        target,
+        bearer,
         effect.statusId,
         base * (context.own?.durationMultiplier ?? 1),
       );
       landStatus(
-        target,
+        bearer,
         effect.statusId,
         durationSeconds,
         caster.id,

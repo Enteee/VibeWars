@@ -223,7 +223,7 @@ import {
   type ResetPolicy,
 } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { nearestFreshCorpse } from "./corpses.js";
+import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
 import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
 import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
@@ -3383,6 +3383,7 @@ export class MatchSimulation {
       check.ok &&
       skill.corpse !== undefined &&
       skill.corpse.elseSacrificePercent === undefined &&
+      skill.corpse.all !== true &&
       this.#freshCorpse(record, skill.corpse, target) === undefined
     ) {
       return { ok: false, reason: "no-corpse" };
@@ -3583,13 +3584,16 @@ export class MatchSimulation {
     // A corpse skill takes its corpse as it lands, not as it began (#466):
     // one used up during the cast leaves it with no effect, paid for. A
     // well finding none sacrifices instead and goes off where its caster
-    // stands (#1730), as though on a corpse there.
+    // stands (#1730), as though on a corpse there. One that takes every
+    // corpse (#1915) goes off where its caster stands, with none or many.
+    const every =
+      skill.corpse?.all === true ? this.#exploitEveryCorpse(record, skill.corpse) : undefined;
     const corpse =
-      skill.corpse === undefined
+      skill.corpse === undefined || every !== undefined
         ? undefined
         : this.#exploitCorpse(record, skill.corpse, targetRecord);
     const sacrifice = corpse === undefined ? skill.corpse?.elseSacrificePercent : undefined;
-    const site = corpse ?? (sacrifice === undefined ? undefined : record);
+    const site = corpse ?? (sacrifice === undefined && every === undefined ? undefined : record);
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
@@ -3683,7 +3687,7 @@ export class MatchSimulation {
         record,
         skill.id,
         summon.creature,
-        summon.count,
+        summon.count + (summon.perExploitedCorpse === true ? (every?.length ?? 0) : 0),
         corpse?.position ?? record.position,
         false,
       );
@@ -6203,16 +6207,35 @@ export class MatchSimulation {
     target: ParticipantRecord | undefined,
   ): ParticipantRecord | undefined {
     const corpse = this.#freshCorpse(record, rule, target);
-    if (corpse?.creature !== undefined) {
+    if (corpse !== undefined) {
+      this.#markExploited(corpse);
+    }
+    return corpse;
+  }
+
+  /**
+   * Marks every fresh corpse within the rule's radius of `record` as
+   * exploited (#1915), once each, and returns them, nearest first.
+   */
+  #exploitEveryCorpse(record: ParticipantRecord, rule: CorpseRule): ParticipantRecord[] {
+    const corpses = freshCorpsesWithin(record.position, rule.radius, this.#participants.values());
+    for (const corpse of corpses) {
+      this.#markExploited(corpse);
+    }
+    return corpses;
+  }
+
+  /** One corpse of `corpse`'s used up (#466). */
+  #markExploited(corpse: ParticipantRecord): void {
+    if (corpse.creature !== undefined) {
       // A Flesh Golem's (#1836) is several, and it goes with the last.
       corpse.creature.corpsesLeft -= 1;
       if (corpse.creature.corpsesLeft <= 0) {
         this.#leaving.add(corpse.id);
       }
-    } else if (corpse !== undefined) {
+    } else {
       corpse.corpseExploited = true;
     }
-    return corpse;
   }
 
   /**

@@ -20,6 +20,7 @@ import {
   gainEnergy,
   gainHealth,
   interruptOnHit,
+  loseHealth,
   resolveSkillEffects,
   stateHolds,
   type CombatEvent,
@@ -39,6 +40,7 @@ import {
   attackMissChanceOf,
   blockingStatusesOf,
   combinedBlockChance,
+  effectiveMaxHealth,
   rankOf,
   weaponDamageMultiplierOf,
 } from "./tick.js";
@@ -593,6 +595,7 @@ export function attackHitRiders(
   for (const statusId of attacker.statuses.countHit(mainHand.weapon.id)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
+  events.push(...ownerPaysForMinionHit(attacker, surroundings));
   return events;
 }
 
@@ -817,7 +820,13 @@ function strike(
   }
   const snapshot = withEndedCritical(weaponSnapshotOf(attacker), attacked);
   const before = victim.health;
-  if (landBlow(snapshot, attacker, victim, PLAIN_BLOW, swing.exposed(victim), rng, rules, events)) {
+  // Order of Undeath's "+13 damage" on its bearer's minions (#1915).
+  const owner = minionOwner(attacker, swing.surroundings);
+  const blow =
+    owner === undefined
+      ? PLAIN_BLOW
+      : { ...PLAIN_BLOW, bonus: aggregateModifiers(owner.statuses.active).minionDamageBonus };
+  if (landBlow(snapshot, attacker, victim, blow, swing.exposed(victim), rng, rules, events)) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
   }
   events.push(
@@ -1098,4 +1107,38 @@ export function resolveAttackSkillOutcome(
     grounds: [],
     skipped: undefined,
   };
+}
+
+/**
+ * Whoever owns `attacker`, when it is a minion (#1915), and is still in
+ * the match; `undefined` for anything else.
+ */
+function minionOwner(attacker: Combatant, surroundings: Surroundings): Combatant | undefined {
+  const creature = surroundings.get(attacker.id)?.creature;
+  return creature?.kind === "minion" && creature.ownerId !== undefined
+    ? surroundings.get(creature.ownerId)?.combatant
+    : undefined;
+}
+
+/**
+ * A minion's hit landed (#1915): its owner loses the share of its
+ * effective maximum Health its statuses say, rounded up, as Order of
+ * Undeath's "you lose 2% of your maximum Health". Health loss, not damage
+ * or sacrifice: no armor, and it can kill.
+ */
+function ownerPaysForMinionHit(attacker: Combatant, surroundings: Surroundings): CombatEvent[] {
+  const owner = minionOwner(attacker, surroundings);
+  if (owner === undefined) {
+    return [];
+  }
+  const percent = owner.statuses.active.reduce(
+    (sum, { id }) => sum + getStatusDefinition(id).minionHitHealthLossPercent,
+    0,
+  );
+  if (percent <= 0) {
+    return [];
+  }
+  const events: CombatEvent[] = [];
+  loseHealth(owner, Math.ceil((percent / 100) * effectiveMaxHealth(owner)), "health-loss", events);
+  return events;
 }

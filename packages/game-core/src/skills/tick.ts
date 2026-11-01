@@ -272,7 +272,8 @@ export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
 
 /**
  * The bearer's rank in `attributeId` right now (#762): its sheet's, runes
- * included, plus every status's `attributeDelta`, floored at 0. A rank
+ * included, plus every status's `attributeDelta` and its `attributeBonus` for
+ * this attribute (#1915), floored at 0. A rank
  * of 0 bought with points is never lowered, even when a rune raised it,
  * as GW1 says. The one match-time reader of `attributeRanks` (ADR-0019).
  */
@@ -283,7 +284,11 @@ export function rankOf(holder: RankHolder, attributeId: string): number {
     return rank;
   }
   const { attributeDelta } = aggregateModifiers(holder.statuses.active);
-  return effectiveRank(rank, [{ delta: attributeDelta }]);
+  const bonus = holder.statuses.active.reduce((sum, { id }) => {
+    const own = getStatusDefinition(id).attributeBonus;
+    return own?.attributeId === attributeId ? sum + own.amount : sum;
+  }, 0);
+  return effectiveRank(rank, [{ delta: attributeDelta + bonus }]);
 }
 
 /** The multiplier on the bearer's weapon roll: weakness's 0.34 (#762). */
