@@ -22,6 +22,7 @@ function ticket(ticketId: string, mode: QueueTicket["mode"] = "random-arena-1v1"
     heartbeatAt: at,
     party: null,
     ascentRound: null,
+    hardNat: false,
   };
 }
 
