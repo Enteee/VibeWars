@@ -249,7 +249,7 @@ describe("death bursts (#1550)", () => {
     if (creature === undefined) {
       throw new Error("not a creature");
     }
-    expect(creature.deathBurst?.perSecondAlive).toBe(1);
+    expect(creature.deathBurst).toMatchObject({ perSecondAlive: 1 });
     creature.expiresInSeconds = 10.5 - creature.ageSeconds;
     expect(sum(eventsOf(stepFor(sim, 11.5), "r"), "damage", "f")).toBe(10);
     expect(

@@ -276,7 +276,7 @@ export function mitigate(
   const armor = effectiveArmor(target, packet, location);
   let dealt = armored * armorMultiplier(armor, rules) + packet.armorIgnoring;
 
-  // Frenzy's double and Dark Escape's half (#919): every packet, armored
+  // Frenzy's 160% and Dark Escape's half (#919): every packet, armored
   // or not, after armor and before the flat shield below.
   dealt *= modifiers.damageTakenMultiplier;
 

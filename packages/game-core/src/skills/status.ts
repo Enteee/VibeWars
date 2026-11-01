@@ -661,7 +661,7 @@ export interface StatusDefinition {
    */
   readonly immuneTo: readonly StatusId[];
   /**
-   * Multiplier on the damage the bearer takes (#919): Frenzy's 2, Dark
+   * Multiplier on the damage the bearer takes (#919): Frenzy's 1.6, Dark
    * Escape's 0.5. Applied to every damage packet after armor; health
    * loss and degeneration never pass through it.
    */
@@ -1054,6 +1054,13 @@ export type StatusTriggerEvent =
    * A dead bearer never answers.
    */
   | "bearer-energy-empty"
+  /**
+   * The bearer's whole Energy dropped to 0 (#1956): checked as
+   * `bearer-energy-empty`, when it is below 1 and had at least 1 at the
+   * last check, so once per drop. Famine's "reaches 0 Energy".
+   * A dead bearer never answers.
+   */
+  | "bearer-energy-drops-empty"
   /**
    * The bearer died while it was on (#1762): only what a death ends,
    * never an expiry or a removal earlier in the same tick. GW1's "if

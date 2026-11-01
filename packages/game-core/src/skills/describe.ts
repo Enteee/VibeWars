@@ -841,7 +841,8 @@ function damageTaken(multiplier: number): string {
   if (multiplier === 0.5) {
     return "half";
   }
-  return `${String(multiplier)}×`;
+  // GW1 words the rest as a percentage: Frenzy (PvP)'s "take 160% damage".
+  return `${String(Math.round(multiplier * 100))}%`;
 }
 
 /**
@@ -956,6 +957,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-gains-condition": "gains a new condition",
   "bearer-chant-or-shout-ends": "has a chant or shout end on it",
   "bearer-energy-empty": "has no energy left",
+  "bearer-energy-drops-empty": "drops to 0 Energy",
   "bearer-dies": "dies",
   ends: "ends",
   "ends-early": "ends prematurely",
@@ -970,6 +972,7 @@ const SECOND_PERSON: Readonly<Record<string, string>> = {
   casts: "cast",
   creates: "create",
   dies: "die",
+  drops: "drop",
   ends: "end",
   expires: "expire",
   fails: "fail",
@@ -2224,13 +2227,24 @@ function describeMinionDeath(
 
 /**
  * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
- * area take 8 damage per second it lived (max 150)".
+ * area take 8 damage per second it lived (max 150)", or Lacerate's
+ * status (#1956): "When it dies, non-spirit creatures in its range under
+ * 90% Health begin Bleeding for 21 seconds".
  */
 function describeDeathBurst(
   burst: DeathBurst,
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription {
-  const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
+  const where = AREA_TEXT.get(burst.radius) ?? "in its range";
+  const who = `${AURA_WHO[burst.affects].toLowerCase()} ${where}`;
+  if (burst.effect === "apply-status") {
+    const duration = describeMagnitude(burst.durationSeconds, ranks);
+    const below = `${String(Math.round(burst.belowHealthFraction * 100))}%`;
+    return {
+      text: `When it dies, ${who} under ${below} Health begin ${statusName(burst.statusId)} for ${String(duration.current)} seconds`,
+      magnitude: duration,
+    };
+  }
   const rate = describeMagnitude(burst.perSecondAlive, ranks);
   const amount = String(rate.current);
   const what =
