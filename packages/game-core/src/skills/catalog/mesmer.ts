@@ -2541,4 +2541,130 @@ export const MESMER_SKILLS: readonly Skill[] = [
       { kind: "copy-disabled" },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Party-wide condition and hex moves (#1954)                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.mirror-of-disenchantment",
+    name: "Mirror of Disenchantment",
+    // The base record; its numbers are the PvP split's (3194), 10e, 20 s.
+    gwId: 1349,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove one enchantment from target foe. All of that foe's party
+    // members also lose that same enchantment": the party is the team, at
+    // any distance, its minions and spirits included.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: Infinity,
+        maxTargets: undefined,
+        effects: [
+          { kind: "remove-status", category: "enchantment", count: 1, sameAsRemoved: true },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.extend-conditions",
+    name: "Extend Conditions",
+    gwId: 1333,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Spread all conditions from target foe to all foes near your target.
+    // The durations of those conditions are increased by 5...100%
+    // (maximum 30 seconds)." The target's own are unchanged.
+    effects: [
+      {
+        kind: "spread-conditions",
+        radius: AREA_NEARBY,
+        extendPercent: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 81 },
+        },
+        maxSeconds: 30,
+      },
+    ],
+  },
+  {
+    id: "mesmer.hex-eater-signet",
+    name: "Hex Eater Signet",
+    gwId: 1059,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_MELEE,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target touched ally and up to 2...5 adjacent allies each lose one
+    // hex. You gain 1...4 Energy for each hex removed this way." An
+    // unhexed neighbour takes no slot.
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "splash",
+        hits: "allies",
+        radius: AREA_ADJACENT,
+        maxTargets: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 2, atTwelve: 4.4 },
+        },
+        onlyBearing: "hex",
+        effects: [{ kind: "remove-status", category: "hex", count: 1 }],
+      },
+      {
+        kind: "energy-gain",
+        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 3.4 } },
+        perRemoved: "hex",
+      },
+    ],
+  },
 ];

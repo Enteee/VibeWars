@@ -420,11 +420,17 @@ describe("the Team Lobby's body (#1460)", () => {
     const seats = body(lobby("brann", "claim", claimSide(["aria", "brann", null, null]))).all(
       "team-lobby-seat",
     );
-    expect(seats.map((seat) => seat.all("team-lobby-seat-name")[0]?.text())).toEqual([
-      "Bram",
-      "Mira",
-      "Ash",
-      "Tove",
+    expect(seats.map((seat) => seat.all("play-card-line")[0]?.text())).toEqual([
+      "Warrior",
+      "Monk",
+      "Elementalist",
+      "Ranger",
+    ]);
+    expect(seats.map((seat) => seat.attributes.get("aria-label"))).toEqual([
+      "Warrior: Aria",
+      "Monk: Brann",
+      "Elementalist: Sit here",
+      "Ranger: Sit here",
     ]);
     expect(seats.map((seat) => seat.all("team-lobby-seat-holder")[0]?.text() ?? "free")).toEqual([
       "AriaC",
@@ -487,7 +493,7 @@ describe("the Team Lobby's body (#1460)", () => {
       expect(waiting?.all("is-empty")).toHaveLength(32);
     });
 
-    it("draws them on the chosen card, its members by name; a house seat stays a '?'", () => {
+    it("draws them on the chosen card and its seats, never by name; a house seat stays a '?' (#1863)", () => {
       body(lobby("brann", "vote", voteSide([proposal("aria", [])])));
       const shown = body(
         lobby(
@@ -510,11 +516,27 @@ describe("the Team Lobby's body (#1460)", () => {
       const chosen = shown.all("is-chosen")[0];
       const rows = chosen?.all("character-card-row") ?? [];
       expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual([
-        "Bram, Warrior",
-        "Mira, Monk",
-        "Ash, Elementalist",
+        "Warrior",
+        "Monk",
+        "Elementalist",
       ]);
       expect(chosen?.all("is-house")).toHaveLength(1);
+      const seats = shown.all("team-lobby-seat");
+      const [warrior] = seats;
+      expect(
+        warrior?.all("character-figure").map((figure) => figure.attributes.get("data-weapon-id")),
+      ).toEqual(["sword"]);
+      expect(warrior?.all("mini-skill")).toHaveLength(8);
+      expect(warrior?.all("play-card-line")[0]?.text()).toBe("Warrior");
+      expect(seats[3]?.all("is-house")).toHaveLength(1);
+      expect(seats[3]?.all("character-figure")).toHaveLength(0);
+      for (const name of ["Bram", "Mira", "Ash", "Bot"]) {
+        expect(shown.text()).not.toContain(name);
+        for (const each of seats) {
+          expect(each.title).not.toContain(name);
+          expect(each.attributes.get("aria-label")).not.toContain(name);
+        }
+      }
     });
   });
 

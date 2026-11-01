@@ -123,4 +123,6 @@ export const RANGER_ICONS = {
   "ranger.strike-as-one": { glyph: "paw-leap", modifier: "bleed" },
   "ranger.trappers-focus": { glyph: "trap-dust", modifier: "plus" },
   "ranger.trappers-speed": { glyph: "trap-dust", modifier: "up" },
+  // Attributes raised (#1941)
+  "ranger.experts-dexterity": { glyph: "arrow-bars-up" },
 };
