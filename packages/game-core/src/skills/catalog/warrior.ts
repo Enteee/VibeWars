@@ -353,8 +353,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "warrior",
-    // GW1's "No Attribute": any warrior can use it.
-    attributeId: undefined,
+    attributeId: "warrior.strength",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
