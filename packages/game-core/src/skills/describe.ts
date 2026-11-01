@@ -733,6 +733,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
     );
   }
+  if (definition.redirectsDamageToMinion > 0) {
+    parts.push(
+      `${share(definition.redirectsDamageToMinion)} the damage you take goes to your closest minion`,
+    );
+  }
   if (definition.maxDamageFractionPerHit !== undefined) {
     parts.push(
       `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
@@ -954,6 +959,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.destroysBearerOnExpiry) {
     parts.push("the bearer is destroyed when it expires");
+  }
+  // Jagged Bones's (#1986).
+  if (definition.replacedOnDeathBy !== undefined) {
+    const { creature, count } = definition.replacedOnDeathBy;
+    parts.push(
+      `when it dies, ${describeCreature(creature, count, triggerRanks).text} stands up in its place`,
+    );
   }
   // A trigger that does nothing but end it (#1748): Pacifism's "ends if
   // the target takes damage".
@@ -2116,6 +2128,8 @@ function conditionText(condition: EffectCondition): string {
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-spirit-within":
       return `If a spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
+    case "caster-controls-at-most":
+      return `If you control ${String(condition.count)} or fewer ${condition.creature}s`;
     case "caster-spirit-or-corpse-within":
       return `If a spirit or a corpse is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
   }
@@ -2158,6 +2172,7 @@ const SPLASH_SIDE: Readonly<Record<SplashEffect["hits"], string>> = {
   party: "party members",
   "own-spirits": "your spirits",
   "own-minions": "your other minions",
+  "allied-minions": "allied minions",
 };
 
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
@@ -2169,6 +2184,10 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   // Mirror of Disenchantment's foe's whole party (#1954).
   if (hits === "foes" && radius === Number.POSITIVE_INFINITY) {
     return "All its party members";
+  }
+  // Blood of the Master's, wherever they are (#1986).
+  if (hits === "allied-minions" && radius === Number.POSITIVE_INFINITY) {
+    return "All allied minions";
   }
   // Feast for the Dead's, wherever they are (#1836).
   if (hits === "own-minions" && radius === Number.POSITIVE_INFINITY) {
@@ -3082,11 +3101,15 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "splash": {
-      // "Adjacent foes take 40 damage" (#885).
-      const inner = effect.effects.map((each) => ({
-        each,
-        description: describeEffect(each, ranks),
-      }));
+      // "Adjacent foes take 40 damage" (#885). What the caster pays for
+      // each one reached is said apart (#1986).
+      const paid = effect.effects.filter((each) => each.kind === "sacrifice-health");
+      const inner = effect.effects
+        .filter((each) => each.kind !== "sacrifice-health")
+        .map((each) => ({
+          each,
+          description: describeEffect(each, ranks),
+        }));
       const parts = inner.map(({ each, description }) =>
         each.kind === "damage"
           ? `take ${shown(describeMagnitude(each.amount, ranks))}${typeWord(each.type)} damage` +
@@ -3107,12 +3130,17 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                     ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
                     : each.kind === "remove-status" && each.from === undefined
                       ? lostInSplash(each, ranks)
-                      : lowerFirst(description.text),
+                      : // Verata's Sacrifice's (#1986).
+                        each.kind === "transfer-conditions" &&
+                          each.from === "target" &&
+                          each.count === Number.POSITIVE_INFINITY
+                        ? "transfer all their conditions to you"
+                        : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${upTo(effect, ranks)} ${what}`,
+        text: `${upTo(effect, ranks)} ${what}${paid.map((each) => `; ${lowerFirst(describeEffect(each, ranks).text)} per ${effect.hits === "allied-minions" || effect.hits === "own-minions" ? "minion" : "one"}`).join("")}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -3832,7 +3860,15 @@ export function describeSkill(
                 magnitude: undefined,
               },
             ]
-          : describeEffects(petReads(skill, effect), ranks),
+          : // Verata's Sacrifice's (#1986): cast on yourself, no minion is left out.
+            effect.kind === "splash" &&
+              effect.hits === "own-minions" &&
+              skill.target !== "allied-minion"
+            ? describeEffects(effect, ranks).map((line) => ({
+                ...line,
+                text: line.text.replace(/^Your other minions/, "Your minions"),
+              }))
+            : describeEffects(petReads(skill, effect), ranks),
     ),
     ...onCritical,
     ...onBlocked,

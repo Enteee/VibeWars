@@ -1,5 +1,6 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition, StatusTrigger } from "../status.js";
+import { JAGGED_HORROR } from "../catalog/shared.js";
 import type { DamageEffect } from "../types.js";
 import { define, ownSkills } from "./define.js";
 
@@ -58,6 +59,10 @@ export type NecromancerStatusId =
   | "order-of-undeath"
   | "aura-of-the-lich"
   | "infuse-condition"
+  // Minion care (#1986).
+  | "veratas-sacrifice"
+  | "dark-bond"
+  | "jagged-bones"
   // Casting-state hexes (#1931).
   | "spinal-shivers"
   | "shivers-of-dread"
@@ -535,6 +540,26 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   "infuse-condition": define("infuse-condition", "Infuse Condition", "enchantment", {
     profession: "necromancer",
     redirectsConditionsToMinion: true,
+  }),
+  // Minion care (#1986). "For 5...9...10 seconds, your minions have +10
+  // Health regeneration": 10 pips, 20 Health a second.
+  "veratas-sacrifice": define("veratas-sacrifice", "Verata's Sacrifice", "skill-effect", {
+    profession: "necromancer",
+    healthPips: 10,
+  }),
+  // "For 30...54...60 seconds, 75% of the damage you take is redirected to
+  // your closest minion": any damage, rounded down.
+  "dark-bond": define("dark-bond", "Dark Bond", "enchantment", {
+    profession: "necromancer",
+    attribute: "necromancer.blood-magic",
+    redirectsDamageToMinion: 0.75,
+  }),
+  // "When target animated undead ally dies, it is replaced by a level
+  // 0...12...15 Jagged Horror": at its caster's Death Magic.
+  "jagged-bones": define("jagged-bones", "Jagged Bones", "enchantment", {
+    profession: "necromancer",
+    attribute: "necromancer.death-magic",
+    replacedOnDeathBy: { creature: JAGGED_HORROR, count: 1 },
   }),
   // Casting-state hexes (#1931). "Whenever target foe is struck for cold
   // damage while using a skill, that skill is interrupted and you lose

@@ -152,6 +152,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.reflectsAttackDamage !== undefined ||
     status.incomingHexCastTimeMultiplier > 1 ||
     status.redirectsConditionsToMinion ||
+    status.redirectsDamageToMinion > 0 ||
     status.foeSpellsFail ||
     status.failsFoeTouchSkills !== undefined ||
     status.attacksAgainstMiss ||

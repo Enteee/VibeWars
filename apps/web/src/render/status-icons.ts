@@ -412,6 +412,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "order-of-undeath": icon("order-of-undeath"),
   "aura-of-the-lich": icon("aura-of-the-lich"),
   "infuse-condition": icon("infuse-condition"),
+  // Minion care (#1986).
+  "veratas-sacrifice": icon("veratas-sacrifice"),
+  "dark-bond": icon("dark-bond"),
+  "jagged-bones": icon("jagged-bones"),
   // Casting-state hexes (#1931).
   "spinal-shivers": icon("spinal-shivers"),
   "shivers-of-dread": icon("shivers-of-dread"),
