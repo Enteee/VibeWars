@@ -123,6 +123,6 @@ export const RANGER_ICONS = {
   "ranger.bestial-mauling": { glyph: "paw-maul" },
   // Attributes raised (#1941)
   "ranger.experts-dexterity": { glyph: "arrow-bars-up" },
-  // Blocks that pay off (#1974), a stand-in until its art card.
-  "ranger.glass-arrows": { glyph: "arrow-pierce", modifier: "bleed" },
+  // Blocks that pay off (#1987): the small shield modifier.
+  "ranger.glass-arrows": { glyph: "arrow-pierce", modifier: "block" },
 };

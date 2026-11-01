@@ -3551,6 +3551,10 @@ const skillGlyph = {
     `<g transform="translate(0,6)">${skillGlyph.blink()}</g>` +
     `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
+  // Furious Axe (#1987): the axe, and the three rising bars of the adrenaline a block pays.
+  "axe-adrenaline": () =>
+    `<g transform="translate(9,14) scale(0.8) translate(-12,-12)">${skillGlyph.axe()}</g>` +
+    inkFill("M15 9V7H17V9ZM18 9V4.5H20V9ZM21 9V2H23V9Z"),
 };
 
 /** The ringed plus in the bottom right corner: Health healed (#1666). */
@@ -3640,6 +3644,9 @@ const skillModifier = {
   corpse: () =>
     inkFill("M19 14.8a3.4 3.4 0 0 1 2.1 6.1V22h-4.2v-1.1A3.4 3.4 0 0 1 19 14.8z") +
     `<circle cx="17.7" cy="18.1" r="0.9" fill="${C.bg}"/><circle cx="20.3" cy="18.1" r="0.9" fill="${C.bg}"/>`,
+  // A small shield: the skill pays when it blocks (#1987). The modifier for block payoffs.
+  block: () =>
+    inkFill("M19 14.2L22.4 15.5V18.2C22.4 20 20.9 21.3 19 22.2C17.1 21.3 15.6 20 15.6 18.2V15.5Z"),
   less: () => inkLine("M16.5 18H21.5", 2),
   area: () => `<circle cx="19" cy="18" r="3.4" ${stroke(C.ink, 1.6)}/>`,
   clock: () =>

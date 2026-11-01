@@ -90,7 +90,7 @@ export const WARRIOR_ICONS = {
   "warrior.lacerating-chop": { glyph: "chop-bleed" },
   "warrior.frenzied-defense": { glyph: "shield-frenzy" },
   "warrior.flurry": { glyph: "slashes-flurry" },
-  // Blocks that pay off (#1974), stand-ins until their art card.
-  "warrior.furious-axe": { glyph: "axe", modifier: "plus" },
-  "warrior.leviathans-sweep": { glyph: "shield-whirl", modifier: "down" },
+  // Blocks that pay off (#1987): the small shield modifier.
+  "warrior.furious-axe": { glyph: "axe-adrenaline", modifier: "block" },
+  "warrior.leviathans-sweep": { glyph: "shield-whirl", modifier: "block" },
 };

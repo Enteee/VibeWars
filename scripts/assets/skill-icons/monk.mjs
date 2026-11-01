@@ -104,6 +104,6 @@ export const MONK_ICONS = {
   "monk.martyr": { glyph: "draw-drops", modifier: "area" },
   "monk.empathic-removal": { glyph: "cleanse", modifier: "half" },
   "monk.divert-hexes": { glyph: "hex-cut", modifier: "up" },
-  // Blocks that pay (#1974), a stand-in until its art card.
-  "monk.shield-guardian": { glyph: "block-half", modifier: "plus" },
+  // Blocks that pay (#1987): the small shield modifier, and what the block pays.
+  "monk.shield-guardian": { glyph: "heal", modifier: "block" },
 };
