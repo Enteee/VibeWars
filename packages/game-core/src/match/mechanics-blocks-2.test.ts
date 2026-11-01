@@ -5,6 +5,7 @@ import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/r
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { makeCombatant, strikesOf } from "../skills/testing.js";
+import { NO_RANKS } from "../skills/status.js";
 import { KNOCKDOWN_SECONDS } from "../skills/types.js";
 import { weaponSnapshotOf } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -112,7 +113,7 @@ describe("Distortion (#1974)", () => {
     const sim = match([body("m", 0, vec2(0, 0)), body("f", 1, vec2(RANGE_MELEE / 2, 0), SWORD)]);
     const mesmer = get(sim, "m");
     mesmer.energy = energy;
-    mesmer.statuses.apply("distortion", 1000, "m");
+    mesmer.statuses.apply("distortion", 1000, "m", NO_RANKS);
     return sim;
   }
 
@@ -142,7 +143,7 @@ describe("Shield Guardian (#1974)", () => {
     ]);
     for (const id of ["w", "a"]) {
       get(sim, id).health = 5e5;
-      get(sim, id).statuses.apply("shield-guardian", 1000, "mo");
+      get(sim, id).statuses.apply("shield-guardian", 1000, "mo", NO_RANKS);
     }
     const log = attackUntil(sim, "f", "w", (entries) => blocksOn(entries, "w") === 1);
     const heals = log
@@ -180,7 +181,7 @@ describe("blocked attack skills (#1974)", () => {
         `blocked-${String(seed)}`,
       );
       get(sim, "w").energy = 100;
-      get(sim, "t").statuses.apply("shield-of-deflection", 1000, "t");
+      get(sim, "t").statuses.apply("shield-of-deflection", 1000, "t", NO_RANKS);
       sim.setTarget("w", "t");
       expect(sim.requestSkill("w", 0)?.check).toEqual({ ok: true });
       for (let tick = 0; tick < 3 / DT; tick += 1) {
@@ -217,28 +218,28 @@ describe("Glass Arrows (#1974)", () => {
   it("arrows strike for +16; a sword's blows do not", () => {
     const archer = makeCombatant({ id: "archer", equipment: BOW });
     const swordsman = makeCombatant({ id: "swordsman", equipment: SWORD });
-    archer.statuses.apply("glass-arrows", 30, "archer");
-    swordsman.statuses.apply("glass-arrows", 30, "swordsman");
+    archer.statuses.apply("glass-arrows", 30, "archer", NO_RANKS);
+    swordsman.statuses.apply("glass-arrows", 30, "swordsman", NO_RANKS);
     expect(weaponSnapshotOf(archer).damageDelta).toBe(16);
     expect(weaponSnapshotOf(swordsman).damageDelta).toBe(0);
   });
 
   function prepared(equipment: ResolvedEquipment, spawn: Vec2): MatchSimulation {
     const sim = match([body("r", 0, vec2(0, 0), equipment), body("t", 1, spawn)]);
-    get(sim, "r").statuses.apply("glass-arrows", 1000, "r");
+    get(sim, "r").statuses.apply("glass-arrows", 1000, "r", NO_RANKS);
     return sim;
   }
 
   it("a blocked arrow Bleeds its blocker for 18 s", () => {
     const sim = prepared(BOW, vec2(600, 0));
-    get(sim, "t").statuses.apply("shield-of-deflection", 1000, "t");
+    get(sim, "t").statuses.apply("shield-of-deflection", 1000, "t", NO_RANKS);
     attackUntil(sim, "r", "t", (log) => blocksOn(log, "t") === 1);
     expect(get(sim, "t").statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(18, 0);
   });
 
   it("a blind archer's misses Bleed nobody", () => {
     const sim = prepared(BOW, vec2(600, 0));
-    get(sim, "r").statuses.apply("blind", 1000, "t");
+    get(sim, "r").statuses.apply("blind", 1000, "t", NO_RANKS);
     const log = attackUntil(sim, "r", "t", (entries) =>
       entries.some((entry) => entry.events.some(({ kind }) => kind === "attack-missed")),
     );
@@ -248,7 +249,7 @@ describe("Glass Arrows (#1974)", () => {
 
   it("a sword's blocked blow Bleeds nobody", () => {
     const sim = prepared(SWORD, vec2(RANGE_MELEE / 2, 0));
-    get(sim, "t").statuses.apply("shield-of-deflection", 1000, "t");
+    get(sim, "t").statuses.apply("shield-of-deflection", 1000, "t", NO_RANKS);
     attackUntil(sim, "r", "t", (log) => blocksOn(log, "t") === 3);
     expect(get(sim, "t").statuses.has("bleeding")).toBe(false);
   });

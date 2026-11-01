@@ -1199,7 +1199,7 @@ describe("onAttackBlocked (#1974)", () => {
   function blocked(weapon: Weapon, withAttackSkill: boolean): FiredTrigger[] {
     const archer = makeCombatant({ id: "archer", equipment: wielding(weapon) });
     const foe = makeCombatant({ id: "foe", team: 1 });
-    archer.statuses.apply("glass-arrows", 30, "archer");
+    archer.statuses.apply("glass-arrows", 30, "archer", NO_RANKS);
     const fired: FiredTrigger[] = [];
     attackBlockedRiders(
       archer,
