@@ -434,6 +434,51 @@ rise with intensity, so no top level is quieter than the one below it.
 Measured with `music:check`; the Firefox `audiostress` before/after table
 could not be run in the agent sandbox and is the operator's run.
 
+### 11. Firefox crackle (#1991)
+
+The operator still heard crackle in desktop Firefox at intensity above 0
+while the page worked hard. Two known paths could click, and both now
+cannot:
+
+1. **A late note is left out.** `defaultOutput` used to start a note whose
+   onset had passed, its envelope begun in the past: a truncated attack.
+   A note due sooner than `LATE_MARGIN_SECONDS` (0.01 s) after the audio
+   clock is now dropped (`host/late-notes.ts`), a tiny gap rather than a
+   click, and counted as `droppedEvents`, which replaces `lateEvents`.
+2. **A stall longer than the lead skips to live in one tick.** After one,
+   `catchUpTick` ran up to four ticks back to back, every note in them due
+   at once or past. A clock the audio has passed is reset instead, and
+   ticks once, `LEAD_SECONDS` ahead.
+
+Measured with `scripts/music-stress.mjs --browser firefox` (Playwright
+Firefox, null sink, unvalidated as in §8; underrun ms over 30 s, before →
+after). The headless Firefox has no WebGL, so "no stress" is the character
+builder:
+
+| Load            | Intensity 0 | Intensity 2 |
+| --------------- | ----------- | ----------- |
+| menu, no stress | 92 → 77     | 319 → 37    |
+| no stress       | 103 → 28    | 607 → 48    |
+| stress=40       | 124 → 165   | 1208 → 158  |
+| audiostress 1.5 | 470 → 698   | 1733 → 810  |
+| audiostress 2.5 | 5300 → 9400 | 7144 → 6979 |
+
+Late and dropped events were 0 and skipped music 0 ms in every run,
+before and after. Under this harness neither path ever fired, and the
+underrun numbers move with the load on the sandbox host (one discarded
+intensity-2 run on a busy host read 1 to 17 s), not with the change. What
+underruns is the audio thread itself. The fixes close the click paths a
+real main-thread stall opens; whether that was the crackle is the
+operator's ear check on desktop Firefox.
+
+One reverb on the bus, the lever §9 lists, was not built. It was a lever
+for render-ahead, which baked a reverb into every tail. The live path
+already has one convolver: superdough keeps one per orbit, and every
+track is wet only on orbit 2 (`MUSIC_ROOMS`). A bus reverb would cost the
+same convolution and lose each voice's own wet level. A shorter impulse
+response or a lower `MAX_DSP_COST` is the next lever, and a card of its
+own if the crackle is still heard.
+
 ## The scheduler works ahead
 
 Strudel's cyclist queries slots up to 0.2 s past its clock and skips every
