@@ -97,7 +97,7 @@ import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
-import { setToastHost, toast } from "./ui/kit.js";
+import { button, setToastHost, toast } from "./ui/kit.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -203,9 +203,18 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
   };
 }
 
+/** The line over a finished team match's result (#1997): what comes next, when, and one button. */
+export interface EndLine {
+  readonly text: string;
+  readonly button: string;
+  readonly onPress: () => void;
+}
+
 export interface MatchView {
   /** The match summary's tables once the host has sent them (#1057), for the queue screen. */
   summary(): readonly SummaryTable[] | undefined;
+  /** Shows `line` over the result, or none. */
+  setEndLine(line: EndLine | undefined): void;
   dispose(): Promise<void>;
 }
 
@@ -981,8 +990,36 @@ export async function startMatchView(
     }
   });
 
+  /** The end line (#1997), made the first time it is set. */
+  let endLine:
+    | { readonly root: HTMLElement; readonly text: HTMLElement; readonly press: HTMLElement }
+    | undefined;
+  let onEndPress: (() => void) | undefined;
+
   return {
     summary: () => summary?.tables,
+    setEndLine(line) {
+      if (line === undefined) {
+        endLine?.root.remove();
+        endLine = undefined;
+        return;
+      }
+      if (endLine === undefined) {
+        const root = document.createElement("div");
+        root.className = "hud-end-line";
+        const text = root.appendChild(document.createElement("span"));
+        const press = root.appendChild(
+          button("", "", () => {
+            onEndPress?.();
+          }),
+        );
+        parent.appendChild(root);
+        endLine = { root, text, press };
+      }
+      onEndPress = line.onPress;
+      endLine.text.textContent = line.text;
+      endLine.press.textContent = line.button;
+    },
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late
       // event cannot touch a destroyed scene.
@@ -1014,6 +1051,7 @@ export async function startMatchView(
       hud.top.remove();
       hud.result.remove();
       summary?.panel.remove();
+      endLine?.root.remove();
       waiting?.remove();
       offMute();
       jukebox.dispose();

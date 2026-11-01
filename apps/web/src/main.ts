@@ -21,6 +21,7 @@ import {
   STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
   TEAM_PLAN_REJECTED_NOTICE,
+  TEAM_RESULT_SECONDS,
   TEAM_SPLIT_MESSAGE,
   watchHostMove,
   type HostMove,
@@ -88,8 +89,12 @@ import type { SummaryTable } from "./ui/match-summary.js";
 import {
   mountQueueScreen,
   nextStreak,
+  requeuedSince,
+  teamEndAction,
+  teamEndLine,
   type QueueScreen,
   type StayOffer,
+  type TeamEndAction,
 } from "./ui/queue-screen.js";
 import {
   HOUSE_TEAM_AFTER_MS,
@@ -433,6 +438,18 @@ async function main(): Promise<void> {
   /** The queued match's result line once it finished, whether this side won, and the timer to its ended view. */
   let queuedEnd:
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
+  /**
+   * A team match's end (#1997), once it finished: what comes next, when
+   * by `Date.now`, the party a win queues again, and the countdown's tick.
+   */
+  let teamEnd:
+    | {
+        action: TeamEndAction;
+        readonly endsAt: number;
+        readonly party: LobbyConnection | undefined;
+        readonly timer: number;
+      }
+    | undefined;
   /** The ended view's result line, while it is up. */
   let endedOutcome: string | undefined;
   /** The ended view's match summary (#1057), while it is up. */
@@ -464,6 +481,13 @@ async function main(): Promise<void> {
     if (queuedEnd !== undefined) {
       clearTimeout(queuedEnd.timer);
       queuedEnd = undefined;
+    }
+  };
+
+  const clearTeamEnd = (): void => {
+    if (teamEnd !== undefined) {
+      clearInterval(teamEnd.timer);
+      teamEnd = undefined;
     }
   };
 
@@ -2053,6 +2077,8 @@ async function main(): Promise<void> {
     if (match === undefined) {
       return;
     }
+    // Out before its countdown is over, or by it (#1997): no second exit.
+    clearTeamEnd();
     if (queue !== undefined && queuedEnd !== undefined) {
       // Finished: leaving now, or the host going, only skips the wait.
       await endQueuedMatch(queuedEnd.outcome, queuedEnd.won);
@@ -2069,6 +2095,11 @@ async function main(): Promise<void> {
     const said = team?.finished === true ? undefined : notice;
     if (team !== undefined) {
       endTeamQueue();
+      // Its host may have left the match first and queued the party
+      // again (#1997), a change this tab saw while parked and let pass.
+      if (lobby === team.party && requeuedSince(team.party.getSnapshot(), team.nonce)) {
+        syncTeamQueue(team.party);
+      }
     }
     if (queue !== undefined) {
       // Before the end, the player's own leave forfeits; a host or a
@@ -2086,6 +2117,60 @@ async function main(): Promise<void> {
       menuNotice = said ?? menuNotice;
     }
     showMenu();
+  };
+
+  /**
+   * A finished team match counts down to `action` (#1997) over its
+   * result: its winners' party queues again, its losers go back to the
+   * menu, a coded lobby's players back to it. Its button goes now; a
+   * winner's, without queueing.
+   */
+  const startTeamEnd = (action: TeamEndAction, party: LobbyConnection | undefined): void => {
+    clearTeamEnd();
+    teamEnd = {
+      action,
+      endsAt: Date.now() + TEAM_RESULT_SECONDS * 1000,
+      party,
+      timer: window.setInterval(tickTeamEnd, 250),
+    };
+    tickTeamEnd();
+  };
+
+  const tickTeamEnd = (): void => {
+    const current = teamEnd;
+    if (current === undefined) {
+      return;
+    }
+    // The winning party's host left it: nothing to queue with, so the menu.
+    if (current.action === "requeue" && teamQueue?.partyClosed !== undefined) {
+      current.action = "menu";
+    }
+    const seconds = Math.ceil((current.endsAt - Date.now()) / 1000);
+    if (seconds <= 0) {
+      void endTeamMatch(current);
+      return;
+    }
+    match?.setEndLine({
+      ...teamEndLine(current.action, seconds),
+      onPress: () => {
+        void exitMatch();
+      },
+    });
+  };
+
+  /** `ending`'s countdown is over (#1997): out of the match, and a winning host queues again. */
+  const endTeamMatch = async (ending: NonNullable<typeof teamEnd>): Promise<void> => {
+    await exitMatch();
+    // As its host pressing Find a match: its members follow the lobby.
+    const { party } = ending;
+    if (
+      ending.action === "requeue" &&
+      party !== undefined &&
+      lobby === party &&
+      party.getSnapshot().isHost
+    ) {
+      party.findMatch();
+    }
   };
 
   /**
@@ -2166,14 +2251,21 @@ async function main(): Promise<void> {
             void exitMatch();
           },
           onFinished: (finished) => {
-            if (teamQueue?.parked !== undefined) {
-              teamQueue.finished = true;
-            }
-            if (queue === undefined) {
-              return;
+            const team = teamQueue?.parked === undefined ? undefined : teamQueue;
+            if (team !== undefined) {
+              team.finished = true;
             }
             const { winningTeam, endReason, selfTeam, aggression } = finished;
+            // A draw is no win.
             const won = selfTeam !== undefined && winningTeam === selfTeam;
+            if (queue === undefined) {
+              // A team match, queued by its party or in a coded lobby (#1997).
+              if (team !== undefined) {
+                queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
+              }
+              startTeamEnd(teamEndAction(won, team !== undefined), team?.party);
+              return;
+            }
             queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
             const outcome = describeOutcome(winningTeam, endReason, selfTeam, aggression);
             queuedEnd = {

@@ -3480,6 +3480,25 @@ body {
   color: var(--ink-dim);
 }
 
+/* Over the result banner after a team match (#1997): the countdown to what
+   comes next, and its one button, which takes clicks the banner does not. */
+.hud-end-line {
+  position: absolute;
+  top: calc(38% - 3.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  pointer-events: auto;
+}
+
 /* In the match, under the result banner; it takes no clicks. */
 .hud-summary {
   position: absolute;
@@ -4974,6 +4993,31 @@ body.has-expanded-training #screens {
   height: 1.4em;
   margin-right: 0.35em;
   vertical-align: -0.3em;
+}
+
+/* A rune's tier (#2058): one, two or three pips in the padding under the stone. */
+.gear-icon[data-tier] {
+  --pip: radial-gradient(circle, var(--ink, #d7dee8) 52%, transparent 58%);
+  padding-bottom: 0.3em;
+  background-image: var(--pip);
+  background-size: 0.26em 0.26em;
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+}
+
+.gear-icon[data-tier="major"] {
+  background-image: var(--pip), var(--pip);
+  background-position:
+    38% 100%,
+    62% 100%;
+}
+
+.gear-icon[data-tier="superior"] {
+  background-image: var(--pip), var(--pip), var(--pip);
+  background-position:
+    26% 100%,
+    50% 100%,
+    74% 100%;
 }
 
 .gear-box .skill-box-name {

@@ -199,6 +199,51 @@ export function endedLines(outcome: string, streak: number, stay?: StayOffer): Q
   };
 }
 
+/**
+ * What a team match's end leads to (#1997): a queued party's winners
+ * queue again, its losers (a draw too) go back to the menu; a coded
+ * lobby's players go back to it.
+ */
+export type TeamEndAction = "requeue" | "menu" | "lobby";
+
+/** The end of a team match that `won`, queued by its party or not (#1997). */
+export function teamEndAction(won: boolean, queued: boolean): TeamEndAction {
+  if (!queued) {
+    return "lobby";
+  }
+  return won ? "requeue" : "menu";
+}
+
+/**
+ * Whether a member out of its party's team match finds the party queued
+ * again (#1997), under a nonce other than the `played` match's: its host
+ * left the match first and queued while this tab was still in it.
+ */
+export function requeuedSince(
+  snapshot: Pick<LobbySnapshot, "phase" | "queueNonce">,
+  played: string,
+): boolean {
+  return (
+    snapshot.phase === "queued" && snapshot.queueNonce !== null && snapshot.queueNonce !== played
+  );
+}
+
+/** The line under a team match's result (#1997), `seconds` before `action`, and its button. */
+export function teamEndLine(
+  action: TeamEndAction,
+  seconds: number,
+): { text: string; button: string } {
+  const left = `${String(seconds)} s`;
+  switch (action) {
+    case "requeue":
+      return { text: `Next match in ${left}`, button: "Leave" };
+    case "menu":
+      return { text: `Back to menu in ${left}`, button: "Now" };
+    case "lobby":
+      return { text: `Back to lobby in ${left}`, button: "Now" };
+  }
+}
+
 /** The splash's two sides and its countdown line, from a queued lobby's snapshot. */
 export interface VersusTeams {
   readonly ours: readonly LobbyPlayerSnapshot[];

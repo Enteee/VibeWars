@@ -790,6 +790,7 @@ exports[`skillRoles > tags every ritualist skill the same way every time 1`] = `
 exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
 {
   "warrior.agonizing-chop": "interrupt",
+  "warrior.auspicious-parry": "defence",
   "warrior.axe-rake": "condition",
   "warrior.axe-twist": "condition",
   "warrior.backbreaker": "knockdown",
@@ -805,6 +806,7 @@ exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
   "warrior.crushing-blow": "condition",
   "warrior.cyclone-axe": "",
   "warrior.deadly-riposte": "condition defence",
+  "warrior.defensive-stance": "defence",
   "warrior.deflect-arrows": "defence",
   "warrior.defy-pain": "defence",
   "warrior.devastating-hammer": "knockdown condition",
@@ -862,6 +864,7 @@ exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
   "warrior.shield-stance": "defence",
   "warrior.signet-of-strength": "",
   "warrior.silverwing-slash": "",
+  "warrior.soldiers-defense": "defence",
   "warrior.sprint": "",
   "warrior.staggering-blow": "condition",
   "warrior.steelfang-slash": "",
@@ -870,6 +873,7 @@ exports[`skillRoles > tags every warrior skill the same way every time 1`] = `
   "warrior.triple-chop": "",
   "warrior.victory-is-mine": "healing",
   "warrior.warriors-endurance": "",
+  "warrior.wary-stance": "defence",
   "warrior.watch-yourself": "defence",
 }
 `;

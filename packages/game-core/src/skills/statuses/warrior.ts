@@ -40,7 +40,12 @@ export type WarriorStatusId =
   | "frenzied-defense"
   | "flurry"
   // Your next N attacks (#1916).
-  | "signet-of-strength";
+  | "signet-of-strength"
+  // Tactics stances that pay on a block (#1978).
+  | "wary-stance"
+  | "soldiers-defense"
+  | "defensive-stance"
+  | "auspicious-parry";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -342,5 +347,74 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     profession: "warrior",
     attackDamageDelta: 5,
     endsAfterAttackCount: 13,
+  }),
+  // "For 1...6 seconds, you block any attack skills used against you. For
+  // each successful block, you gain adrenaline and 5 Energy. Wary Stance
+  // ends if you use a skill" (#1978): 1 strike a block. A plain swing is
+  // not an attack skill, and is not blocked.
+  "wary-stance": define("wary-stance", "Wary Stance", "stance", {
+    profession: "warrior",
+    block: { chance: 1, against: "all", attackSkillsOnly: true },
+    endsWhenBearerUsesSkill: true,
+    triggers: [
+      {
+        on: "bearer-blocks",
+        target: "bearer",
+        effects: [
+          { kind: "adrenaline-gain", strikes: 1 },
+          { kind: "energy-gain", amount: { flat: 5 } },
+        ],
+        skillId: "warrior.wary-stance",
+      },
+    ],
+  }),
+  // "For 1...6 seconds, you have a 75% chance to block attacks while under
+  // the effects of a shout or chant. You gain 1 strike of adrenaline for
+  // each blocked attack" (#1978). The shout ending stops the block, not
+  // the stance.
+  "soldiers-defense": define("soldiers-defense", "Soldier's Defense", "stance", {
+    profession: "warrior",
+    block: { chance: 0.75, against: "all" },
+    blockWhileUnder: { categories: ["shout", "chant"], statusIds: [] },
+    triggers: [
+      {
+        on: "bearer-blocks",
+        target: "bearer",
+        effects: [{ kind: "adrenaline-gain", strikes: 1 }],
+        skillId: "warrior.soldiers-defense",
+      },
+    ],
+  }),
+  // "For 1...5 seconds, you have a 75% chance to block melee and projectile
+  // attacks. When Defensive Stance ends, you gain one strike of adrenaline
+  // for each melee attack skill you have (maximum 0...4)" (#1978): at most
+  // 3, its rank-12 value. Bow attacks and a thrown spear are not melee.
+  "defensive-stance": define("defensive-stance", "Defensive Stance", "stance", {
+    profession: "warrior",
+    block: { chance: 0.75, against: "all" },
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [{ kind: "adrenaline-gain", strikes: 1, perOwnMeleeAttackSkill: { max: 3 } }],
+        skillId: "warrior.defensive-stance",
+      },
+    ],
+  }),
+  // "For 8 seconds, the next attack against you is blocked. You gain 1...4
+  // strikes of adrenaline when this stance ends" (#1978): 3, its rank-12
+  // value. An unblockable attack still spends it, and any end pays.
+  "auspicious-parry": define("auspicious-parry", "Auspicious Parry", "stance", {
+    profession: "warrior",
+    block: { chance: 1, against: "all" },
+    endsAfterAttacks: 1,
+    triggers: [
+      {
+        on: "ends",
+        target: "bearer",
+        effects: [{ kind: "adrenaline-gain", strikes: 3 }],
+        skillId: "warrior.auspicious-parry",
+      },
+    ],
   }),
 };

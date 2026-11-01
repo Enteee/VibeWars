@@ -396,7 +396,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
   }
 });
 
-test("a player who quits a 1v1 forfeits it, and is back in an open lobby (#846)", async ({
+test("a player who quits a 1v1 forfeits it, and is back in an open lobby; its winner follows (#846, #1997)", async ({
   browser,
 }) => {
   // Annihilation: the quitter's team has nobody left, so it is wiped and
@@ -414,6 +414,13 @@ test("a player who quits a 1v1 forfeits it, and is back in an open lobby (#846)"
     await expect(host.locator(".lobby-panel")).toBeVisible();
     await expect(host.locator(".lobby-running")).toHaveCount(0);
     await expect(host.getByRole("button", { name: "Ready", exact: true })).toBeEnabled();
+
+    // The guest won: a coded lobby's match counts down back to it, or Now (#1997).
+    const line = guest.locator(".hud-end-line");
+    await expect(line).toContainText(/Back to lobby in \d+ s/);
+    await line.getByRole("button", { name: "Now" }).click();
+    await expect(guest.locator(".lobby-panel")).toBeVisible();
+    await expect(line).toHaveCount(0);
   } finally {
     await context.close();
   }

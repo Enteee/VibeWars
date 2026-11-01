@@ -1385,3 +1385,23 @@ describe("blocks that pay or pay off (#1974)", () => {
     ]);
   });
 });
+
+describe("Tactics stances that pay on a block (#1978)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(skill(id), new Map([["warrior.tactics", 12]])).effects.map(({ text }) => text);
+
+  it("says which attacks each blocks and what it pays, at rank 12", () => {
+    expect(texts("warrior.wary-stance")).toEqual([
+      "For 5s, 100% chance to block attack skills, ends if you use a skill. Whenever it blocks: gain 1 strike of adrenaline. Whenever it blocks: gain 5 energy",
+    ]);
+    expect(texts("warrior.soldiers-defense")).toEqual([
+      "For 5s, 75% chance to block attacks while under a shout or a chant. Whenever it blocks: gain 1 strike of adrenaline",
+    ]);
+    expect(texts("warrior.defensive-stance")).toEqual([
+      "For 4s, 75% chance to block attacks. When it ends: gain 1 strike of adrenaline for each melee attack skill on your bar (at most 3)",
+    ]);
+    expect(texts("warrior.auspicious-parry")).toEqual([
+      "For 8s, 100% chance to block attacks, ends after 1 incoming attack. When it ends: gain 3 strikes of adrenaline",
+    ]);
+  });
+});
