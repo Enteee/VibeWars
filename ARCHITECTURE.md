@@ -86,7 +86,10 @@ Everything that decides what happens in a fight.
   stepped by whoever owns the clock. `facing.ts` defines where a
   participant looks. `combat-log.ts` records each resolution with its
   source and time. `behaviour.ts` turns behaviours (data) into the same
-  intents a player sends. `training-scenarios.ts` holds the Training
+  intents a player sends; `bot/play-build.ts` thinks by trying
+  `bot/rules/index.ts`'s `BOT_RULES` in order, one file per rule. A new
+  bot rule = `bot/rules/<name>.ts` + its test + one line in
+  `bot/rules/index.ts`. `training-scenarios.ts` holds the Training
   Ground's scenarios as data (ADR-0020).
   Creatures, bodies that are not players, are participants with a
   `creature` record that never count for their team (ADR-0035).

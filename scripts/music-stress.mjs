@@ -472,8 +472,11 @@ async function measure(url, load, progress) {
         const seen = await page.evaluate(() =>
           "musicStressSeen" in window ? window.musicStressSeen : [],
         );
+        // Playwright's message names why: not visible, outside of the
+        // viewport, or which element intercepts the pointer.
+        const why = error instanceof Error ? error.message : String(error);
         console.log(
-          `[${load.browser}] no profession picker; the page shows:\n${shown}\n` +
+          `[${load.browser}] no profession picker: ${why}\nthe page shows:\n${shown}\n` +
             `it saw:\n${JSON.stringify(seen, null, 1)}`,
         );
         throw error;
