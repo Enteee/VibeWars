@@ -821,6 +821,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
   "bearer-hit-by-attack": "is hit by a foe's attack",
+  "bearer-healed-by-skill": "is healed by a skill",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-blocks": "blocks",
@@ -1336,6 +1337,13 @@ function describeTrigger(
         clause(
           `${when}, the caster of that ${gained} takes ${amount(effect.amount)}${typeWord(effect.type)} damage`,
         ),
+      ];
+    }
+    // Soul Bind's (#1913): "whenever it is healed by a skill, the healer
+    // takes 68 damage".
+    if (effect.kind === "damage" && trigger.target === "healer") {
+      return [
+        clause(`${when}, the healer takes ${amount(effect.amount)}${typeWord(effect.type)} damage`),
       ];
     }
     if (effect.kind === "heal" && trigger.target === "source") {

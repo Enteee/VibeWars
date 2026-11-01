@@ -50,7 +50,10 @@ export type NecromancerStatusId =
   | "blood-renewal"
   | "meekness"
   // Caster staples 2 (#1872).
-  | "vocal-minority";
+  | "vocal-minority"
+  // Skill-type and heal triggers (#1913).
+  | "cacophony"
+  | "soul-bind";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -446,5 +449,32 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   "vocal-minority": define("vocal-minority", "Vocal Minority", "hex", {
     profession: "necromancer",
     preventsShoutsAndChants: true,
+  }),
+  // "For 15 seconds, whenever target foe uses a shout or chant, that foe
+  // takes 30...90...105 damage" (#1913): 90, its rank-12 value. One trigger
+  // a type.
+  cacophony: define("cacophony", "Cacophony", "hex", {
+    profession: "necromancer",
+    triggers: (["shout", "chant"] as const).map((type) => ({
+      on: "bearer-uses-skill",
+      usedSkill: { type },
+      effects: [{ kind: "damage", amount: { flat: 90 }, type: "typeless", armorPenetration: 0 }],
+      target: "bearer",
+      skillId: "necromancer.cacophony",
+    })),
+  }),
+  // "For 30 seconds, whenever target foe is healed by a skill, the healer
+  // takes 20...68...80 damage" (#1913): 68, its rank-12 value. A healer on
+  // the caster's own team takes none.
+  "soul-bind": define("soul-bind", "Soul Bind", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-healed-by-skill",
+        effects: [{ kind: "damage", amount: { flat: 68 }, type: "typeless", armorPenetration: 0 }],
+        target: "healer",
+        skillId: "necromancer.soul-bind",
+      },
+    ],
   }),
 };

@@ -1316,19 +1316,21 @@ export function applyEffect(
         return events;
       }
       // Healer's Covenant's "heal 20% less" (#1761).
-      applyHeal(
-        healed,
-        ownHeal(
-          perEnergyLost(
-            effect,
-            healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
-            lostBy,
-            earlier,
-          ),
-          context.own,
+      const heal = ownHeal(
+        perEnergyLost(
+          effect,
+          healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+          lostBy,
+          earlier,
         ),
-        events,
+        context.own,
       );
+      // Soul Bind's "whenever target foe is healed by a skill" (#1913),
+      // at full Health too: the heal counts, not the Health it gained.
+      if (heal > 0) {
+        healed.statuses.recordHealedBySkill(caster.id);
+      }
+      applyHeal(healed, heal, events);
       return events;
     }
 
