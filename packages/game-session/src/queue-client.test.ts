@@ -56,8 +56,8 @@ class Queue {
     this.memory.board().subscribe(mode, (event) => this.heard.push(event));
   }
 
-  /** A client alone, or as a member of `party`. */
-  public join(party?: QueueParty): QueueClient {
+  /** A client alone, or as a member of `party`, its NAT `hardNat`. */
+  public join(party?: QueueParty, hardNat = false): QueueClient {
     const client = createQueueClient({
       board: this.memory.board(),
       mode: this.mode,
@@ -65,6 +65,7 @@ class Queue {
       now: () => this.now,
       newTicketKey: () => fakeKey((this.keys += 1)),
       mapPool: MAPS,
+      hardNat,
     });
     this.clients.push(client);
     return client;
@@ -80,6 +81,7 @@ class Queue {
       enteredAt: START,
       heartbeatAt: this.now,
       party: null,
+      hardNat: false,
       ...ticket,
     });
     await deliver();
@@ -259,6 +261,16 @@ describe("createQueueClient", () => {
       event.kind === "ticket" ? [event.ticket.heartbeatAt - START] : [],
     );
     expect(beats).toEqual([0, TICKET_HEARTBEAT_MS, 2 * TICKET_HEARTBEAT_MS]);
+  });
+
+  it("puts its hardNat on every ticket it publishes (#2090)", async () => {
+    const queue = new Queue("random-arena-4v4");
+    queue.join(undefined, true);
+    await deliver();
+
+    expect(queue.heard.flatMap((e) => (e.kind === "ticket" ? [e.ticket.hardNat] : []))).toEqual([
+      true,
+    ]);
   });
 
   it("fills a team mode's empty seats with bots, a party's and a soloist's alike", async () => {

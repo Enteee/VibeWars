@@ -794,9 +794,11 @@ describe("weapon mod pickers (#2008)", () => {
   it("offers what fits each slot, by name, and nothing where the item has no slot", () => {
     expect(modChoices("wand", "prefix")).toEqual([]);
     expect(modChoices("staff", "prefix").map((mod) => mod.id)).toEqual([
+      "adept",
       "defensive",
       "hale",
       "insightful",
+      "swift",
     ]);
     expect(modSlotsOf("wand")).toEqual(["suffix", "inscription"]);
     expect(modSlotsOf("unarmed")).toEqual([]);

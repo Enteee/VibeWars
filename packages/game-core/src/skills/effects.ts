@@ -1806,7 +1806,11 @@ export function applyEffect(
         effect.statusId,
         base *
           (context.own?.durationMultiplier ?? 1) *
-          inflictedScale(effect.statusId, bearer, context),
+          inflictedScale(effect.statusId, bearer, context) *
+          // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
+          (getStatusDefinition(effect.statusId).category === "enchantment"
+            ? caster.equipment.spellMods.enchantmentDurationScale
+            : 1),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,

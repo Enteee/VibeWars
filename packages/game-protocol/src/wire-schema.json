@@ -4151,6 +4151,7 @@
       "properties": [
         { "name": "bots", "optional": false, "type": "number" },
         { "name": "enteredAt", "optional": false, "type": "number" },
+        { "name": "hardNat", "optional": false, "type": "boolean" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
         { "name": "members", "optional": false, "type": { "array": "string" } },
         {
