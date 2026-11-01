@@ -765,6 +765,37 @@ const strikeWith = (rider, pair = false) =>
   `<circle cx="17.5" cy="17.5" r="6" fill="${C.bg}"/>` +
   `<g transform="translate(17.5,17.5) scale(0.5) translate(-12,-12)">${rider}</g>`;
 
+/**
+ * An arrow from one point to another, with a head at the tip: a condition or hex moving (#1973).
+ * Martyr gathers (tips point in), Extend Conditions spreads (tips point out).
+ * @param {number} x1
+ * @param {number} y1
+ * @param {number} x2
+ * @param {number} y2
+ */
+const moveArrow = (x1, y1, x2, y2) => {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  const p = (/** @type {number} */ d) =>
+    `${(x2 + 2.6 * Math.cos(a + d)).toFixed(2)} ${(y2 + 2.6 * Math.sin(a + d)).toFixed(2)}`;
+  return (
+    inkLine(`M${String(x1)} ${String(y1)}L${String(x2)} ${String(y2)}`, 1.8) +
+    inkLine(`M${p(Math.PI - 0.6)}L${String(x2)} ${String(y2)}L${p(Math.PI + 0.6)}`, 1.8)
+  );
+};
+/** A small solid drop centred on a point. @param {number} cx @param {number} cy */
+const miniDrop = (cx, cy) =>
+  inkFill(
+    `M${String(cx)} ${String(cy - 3)}C${String(cx - 1.8)} ${String(cy - 0.6)} ${String(cx - 2.6)} ${String(cy + 0.4)} ${String(cx - 2.6)} ${String(cy + 1)}A2.6 2.6 0 0 0 ${String(cx + 2.6)} ${String(cy + 1)}C${String(cx + 2.6)} ${String(cy + 0.4)} ${String(cx + 1.8)} ${String(cy - 0.6)} ${String(cx)} ${String(cy - 3)}Z`,
+  );
+/** A small ring with a slash through it: one enchantment stripped. @param {number} cx @param {number} cy */
+const struckRing = (cx, cy) =>
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="3.6" ${stroke(C.ink, 1.9)}/>` +
+  inkLine(`M${String(cx - 4.2)} ${String(cy + 4.2)}L${String(cx + 4.2)} ${String(cy - 4.2)}`, 1.9);
+/** A small dashed ring with a slash through it: one hex cut. @param {number} cx @param {number} cy */
+const struckHex = (cx, cy) =>
+  `<circle cx="${String(cx)}" cy="${String(cy)}" r="3.8" ${stroke(C.ink, 1.9)} stroke-dasharray="2.6 2"/>` +
+  inkLine(`M${String(cx - 4.4)} ${String(cy + 4.4)}L${String(cx + 4.4)} ${String(cy - 4.4)}`, 1.9);
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   // Payoffs of the chants of #1558: a burst struck through (cannot be interrupted), a bolt with a minus
@@ -3533,6 +3564,37 @@ const skillGlyph = {
     `<g transform="translate(0,6)">${skillGlyph.blink()}</g>` +
     `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
+  // Party-wide condition and hex moves (#1973).
+  // Martyr: drops from two allies drawn in to the one who takes them.
+  "martyr-gather": () =>
+    miniDrop(4, 5) +
+    miniDrop(4, 17) +
+    moveArrow(7.5, 6.5, 12, 10) +
+    moveArrow(7.5, 15.5, 12, 12.5) +
+    smallFigure(18, 11, 0.7),
+  // Empathic Removal: a hex cut and a drop cut, once for each of two bodies.
+  "pair-cleanse": () =>
+    struckHex(6.5, 6) +
+    inkFill(
+      "M17.5 2.5C15.5 5.5 14.3 6.8 14.3 8.6A3.2 3.2 0 0 0 20.7 8.6C20.7 6.8 19.5 5.5 17.5 2.5Z",
+    ) +
+    inkLine("M13.5 10.5L21.5 2.5", 1.9) +
+    smallFigure(6.5, 17, 0.55) +
+    smallFigure(17.5, 17, 0.55),
+  // Divert Hexes: a hex cut, and the drop it pays with going too.
+  "hex-to-drop": () => struckHex(6, 9) + moveArrow(11, 9, 14, 9) + miniDrop(18.5, 9),
+  // Mirror of Disenchantment: an enchantment ring struck on each side of a mirror.
+  "ring-mirror": () => struckRing(6, 8) + inkLine("M12 2.5V14.5", 1.8) + struckRing(18, 8),
+  // Extend Conditions: a drop on the foe and the same one pushed out to its neighbours.
+  "drop-push": () =>
+    inkFill("M10 6.5C8 9.5 6.8 10.8 6.8 12.6A3.2 3.2 0 0 0 13.2 12.6C13.2 10.8 12 9.5 10 6.5Z") +
+    moveArrow(7.5, 10, 4.5, 7) +
+    moveArrow(12.5, 10, 16, 7) +
+    moveArrow(10, 16.5, 10, 20) +
+    miniDrop(3, 4) +
+    miniDrop(18.5, 4.5),
+  // Hex Eater Signet: a hex cut and the Energy it feeds.
+  "hex-eaten": () => struckHex(8, 9) + inkFill("M18 3.5L13.5 10.5H17L15.5 16.5L21 8.5H17.5Z"),
 };
 
 /** The ringed plus in the bottom right corner: Health healed (#1666). */

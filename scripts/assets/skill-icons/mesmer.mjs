@@ -85,8 +85,8 @@ export const MESMER_ICONS = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929).
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
-  // Stand-ins for the party-wide condition and hex moves (#1954).
-  "mesmer.mirror-of-disenchantment": { glyph: "cleanse", modifier: "area" },
-  "mesmer.extend-conditions": { glyph: "drop-spread", modifier: "plus" },
-  "mesmer.hex-eater-signet": { glyph: "vortex-hex", modifier: "up" },
+  // Party-wide condition and hex moves (#1973).
+  "mesmer.mirror-of-disenchantment": { glyph: "ring-mirror", modifier: "area" },
+  "mesmer.extend-conditions": { glyph: "drop-push", modifier: "clock" },
+  "mesmer.hex-eater-signet": { glyph: "hex-eaten", modifier: "area" },
 };
