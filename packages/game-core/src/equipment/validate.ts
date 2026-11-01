@@ -7,11 +7,12 @@ import {
 } from "../professions.js";
 import { armorPieces } from "./armor.js";
 import { getInsignia, insigniaAllowed } from "./insignias.js";
+import { MOD_SLOT_KEYS, getWeaponMod, modFits, type ItemUpgrades } from "./mods.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
-import { getOffhand } from "./offhands.js";
+import { getOffhand, type OffhandId } from "./offhands.js";
 import { getUniversalRune, runeDisplayName, type EquippedRune } from "./runes.js";
 import type { EquipmentRequirement } from "./types.js";
-import { allowsOffhand, getWeapon } from "./weapons.js";
+import { allowsOffhand, getWeapon, type WeaponId } from "./weapons.js";
 
 /**
  * Legality rules for gear (ADR-0012, brief §32).
@@ -152,6 +153,14 @@ function validateWeaponSet(
       context,
       problems,
     );
+    checkUpgrades(
+      `${field}.mainHand`,
+      prefix,
+      set.mainHand.weaponId,
+      weapon.name,
+      set.mainHand.upgrades,
+      problems,
+    );
   }
 
   if (set.offHand !== null) {
@@ -178,6 +187,38 @@ function validateWeaponSet(
         context,
         problems,
       );
+      checkUpgrades(
+        `${field}.offHand`,
+        prefix,
+        set.offHand.offhandId,
+        offhand.name,
+        set.offHand.upgrades,
+        problems,
+      );
+    }
+  }
+}
+
+/**
+ * An item's mods (#2007): each in its own slot, on an item that has the
+ * slot and that the mod is made for. Parse already refused unknown ids.
+ */
+function checkUpgrades(
+  field: string,
+  prefix: string,
+  item: WeaponId | OffhandId,
+  itemName: string,
+  upgrades: ItemUpgrades,
+  problems: EquipmentProblem[],
+): void {
+  for (const slot of MOD_SLOT_KEYS) {
+    const id = upgrades[slot];
+    const mod = id === null ? undefined : getWeaponMod(id);
+    if (mod !== undefined && !modFits(mod, item, slot)) {
+      problems.push({
+        field: `${field}.upgrades.${slot}`,
+        message: `${prefix}${mod.name} does not fit a ${itemName.toLowerCase()}.`,
+      });
     }
   }
 }

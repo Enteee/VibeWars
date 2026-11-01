@@ -16,6 +16,7 @@ import {
   isStatusId,
   isSuppressed,
   NO_RANKS,
+  isUnderAnother,
   ownSkillBoost,
   scaledStatAttributes,
   type ArmorReduction,
@@ -113,9 +114,9 @@ export interface NetPips {
 
 /**
  * The bearer's net pips as they apply (#502, #504): every status's, plus
- * `naturalPips` of natural regeneration for health and the base pips for
- * energy, and `upkeepPips` (`upkeepPips`) for energy, each clamped. None
- * when dead. The tick applies these and the wire shows these, so the two
+ * `naturalPips` of natural regeneration and the held set's mods' (#2009) for
+ * health, the base pips and `upkeepPips` (`upkeepPips`) for energy, each
+ * clamped. None when dead. The tick applies these and the wire shows these, so the two
  * cannot disagree.
  */
 export function netPips(combatant: Combatant, naturalPips: number, upkeepPips: number): NetPips {
@@ -123,7 +124,11 @@ export function netPips(combatant: Combatant, naturalPips: number, upkeepPips: n
     return { health: 0, energy: 0 };
   }
   return {
-    health: clampPips(aggregateModifiers(combatant.statuses.active).healthPips + naturalPips),
+    health: clampPips(
+      aggregateModifiers(combatant.statuses.active).healthPips +
+        combatant.equipment.healthPips +
+        naturalPips,
+    ),
     energy: clampPips(preCapEnergyPips(combatant, upkeepPips)),
   };
 }
@@ -459,7 +464,8 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * multiplies with Dazed's. A status that hastens the caster's own skills
  * of a kind (#1761), as Holy Haste's Healing Prayers, multiplies in too,
  * and so does the skill's own `activationWhile` (#1916), as Natural
- * Healing's half while the caster is not enchanted.
+ * Healing's half while the caster is not enchanted. Last, the seconds a
+ * status takes off its own skills of a kind (#1975), never below 0.
  */
 export function effectiveActivationSeconds(
   skill: Skill,
@@ -468,20 +474,25 @@ export function effectiveActivationSeconds(
 ): number {
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   const modifiers = aggregateModifiers(caster.statuses.active);
+  const own = ownSkillBoost(caster.statuses.active, skill);
   const slowed =
     (skill.type === "attack" || skill.type === "pet-attack"
       ? 1
       : modifiers.skillActivationMultiplier) *
-    ownSkillBoost(caster.statuses.active, skill).activationMultiplier *
+    own.activationMultiplier *
     activationWhileMultiplier(skill, caster);
+  // Jaundiced Gaze's second (#1975), off after every multiplier.
+  const less = (seconds: number): number => Math.max(0, seconds - own.activationSecondsLess);
   if (!isSpell(skill.type)) {
-    return skill.activationSeconds * fastCasting * slowed;
+    return less(skill.activationSeconds * fastCasting * slowed);
   }
   const onTarget =
     skill.type === "hex" && target !== undefined
       ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
       : 1;
-  return skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * onTarget;
+  return less(
+    skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * onTarget,
+  );
 }
 
 /** `skill`'s own `activationWhile` multiplier for `caster` now (#1916); 1 without one. */
@@ -526,11 +537,16 @@ export function combinedBlockChance(
  * The chance in [0, 1] that the bearer blocks an attack of this kind
  * (#534). None while knocked down, as in GW1 (#610): 0, so no block is
  * rolled at all. A block that holds only below a share of health (#988)
- * reads the bearer's health as it is now.
+ * reads the bearer's health as it is now. `attackSkill`: the blow or shot
+ * is an attack skill's, which a block of attack skills only (#1978) needs.
  */
-export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
+export function blockChanceOf(
+  combatant: Combatant,
+  kind: "melee" | "projectile",
+  attackSkill: boolean,
+): number {
   return combinedBlockChance(
-    blockingStatusesOf(combatant).map(({ block }) => block),
+    blockingStatusesOf(combatant, attackSkill).map(({ block }) => block),
     kind,
   );
 }
@@ -544,16 +560,26 @@ export interface BlockingStatus {
 /**
  * The bearer's statuses that block now, in the order they roll (#1265),
  * as `blockChanceOf` reads them: none while knocked down, and one that
- * holds only below a share of health only below it.
+ * holds only below a share of health only below it. One that blocks only
+ * attack skills drops out against a plain swing, and one that holds only
+ * while under a shout or chant drops out without one (#1978).
  */
-export function blockingStatusesOf(combatant: Combatant): readonly BlockingStatus[] {
+export function blockingStatusesOf(
+  combatant: Combatant,
+  attackSkill: boolean,
+): readonly BlockingStatus[] {
   if (combatant.knockdownRemaining > 0) {
     return [];
   }
   const maxHealth = effectiveMaxHealth(combatant);
   return combatant.statuses.active.flatMap((status) => {
-    const { block, blockBelowHealth } = getStatusDefinition(status.id);
-    const holds = blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth;
-    return block !== undefined && holds ? [{ statusId: status.id, block }] : [];
+    const { block, blockBelowHealth, blockWhileUnder } = getStatusDefinition(status.id);
+    const holds =
+      (blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth) &&
+      (blockWhileUnder === undefined ||
+        isUnderAnother(combatant.statuses.active, status, blockWhileUnder));
+    return block !== undefined && holds && (attackSkill || block.attackSkillsOnly !== true)
+      ? [{ statusId: status.id, block }]
+      : [];
   });
 }

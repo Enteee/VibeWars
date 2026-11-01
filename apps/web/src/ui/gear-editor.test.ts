@@ -1,4 +1,5 @@
 import {
+  NO_UPGRADES,
   ARMOR_SLOTS,
   INSIGNIAS,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -21,8 +22,6 @@ import {
   describeConditions,
   encodeGearDrag,
   encodeRune,
-  armorTarget,
-  firstFreeArmorSlot,
   headgearChoices,
   insigniaChoices,
   insigniaEffectNote,
@@ -30,6 +29,7 @@ import {
   runeChoices,
   setHeadgearAttribute,
   setInsignia,
+  setInsigniaOnAll,
   setOffhand,
   setRequirementAttribute,
   setRune,
@@ -196,6 +196,20 @@ describe("runes and insignias", () => {
     const withIt = setInsignia(warrior(), "chest", "survivor");
     expect(withIt.equipment.armor.chest.insigniaId).toBe("survivor");
     expect(setInsignia(withIt, "chest", null).equipment.armor.chest.insigniaId).toBeNull();
+  });
+
+  it("puts one insignia on all five pieces, runes untouched (#2059)", () => {
+    const rune = { kind: "universal", runeId: "vigor", tier: "minor" } as const;
+    const character = setInsigniaOnAll(setRune(warrior(), "legs", rune), "survivor");
+    for (const piece of Object.values(character.equipment.armor)) {
+      expect(piece.insigniaId).toBe("survivor");
+    }
+    expect(character.equipment.armor.legs.rune).toEqual(rune);
+  });
+
+  it("refuses to spread None (#2059)", () => {
+    const character = setInsignia(warrior(), "chest", "survivor");
+    expect(setInsigniaOnAll(character, null)).toBe(character);
   });
 
   it("slots a rune without touching the insignia beside it", () => {
@@ -615,13 +629,6 @@ describe("gear drag and drop", () => {
     const sources = [
       { from: "weapon-library", weaponId: "hammer" },
       { from: "offhand-library", offhandId: "shield" },
-      { from: "insignia-library", insigniaId: "survivor" },
-      {
-        from: "rune-library",
-        rune: { kind: "attribute", attributeId: "warrior.strength", tier: "major" },
-      },
-      { from: "rune-library", rune: { kind: "universal", runeId: "vigor", tier: "superior" } },
-      { from: "armor-slot", slot: "chest", part: "rune" },
       { from: "hand", set: 0, hand: "offHand" },
       { from: "hand", set: 2, hand: "mainHand" },
     ] as const;
@@ -637,8 +644,6 @@ describe("gear drag and drop", () => {
     ["unknown kind", "gear-trousers:leather"],
     ["a skill drag", "library:elementalist.fireball"],
     ["a bar slot drag", "slot:3"],
-    ["bad armor slot", "gear-worn:elbow:rune"],
-    ["bad armor part", "gear-worn:chest:buckle"],
     ["bad hand", "gear-hand:0:tail"],
     ["bad set", "gear-hand:4:mainHand"],
     ["no set", "gear-hand:mainHand"],
@@ -661,64 +666,17 @@ describe("gear drag and drop", () => {
     const before = warrior();
     const nonsense = [
       [
-        { from: "rune-library", rune: { kind: "universal", runeId: "vigor", tier: "minor" } },
+        { from: "offhand-library", offhandId: "shield" },
         { kind: "main-hand", set: 0 },
       ],
       [
-        { from: "insignia-library", insigniaId: "survivor" },
-        { kind: "off-hand", set: 0 },
-      ],
-      [
         { from: "weapon-library", weaponId: "sword" },
-        { kind: "armor", slot: "chest", part: "rune" },
-      ],
-      [
-        { from: "offhand-library", offhandId: "shield" },
-        { kind: "armor", slot: "feet", part: "insignia" },
+        { kind: "off-hand", set: 0 },
       ],
     ] as const;
     for (const [source, target] of nonsense) {
       expect(applyGearDrop(before, source, target)).toBe(before);
     }
-  });
-
-  it("moves a rune between pieces rather than cloning it", () => {
-    const rune = { kind: "universal", runeId: "vigor", tier: "superior" } as const;
-    const seeded = setRune(warrior(), "head", rune);
-    const moved = applyGearDrop(
-      seeded,
-      { from: "armor-slot", slot: "head", part: "rune" },
-      { kind: "armor", slot: "feet", part: "rune" },
-    );
-    expect(moved.equipment.armor.head.rune).toBeNull();
-    expect(moved.equipment.armor.feet.rune).toEqual(rune);
-    // The health cost is paid once, not twice.
-    expect(firstSummary(moved).maxHealth).toBe(BASE_HEALTH + 50);
-  });
-
-  it("moves an insignia between pieces, re-pricing it for the new slot", () => {
-    // Survivor is worth 15 on the chest and 5 everywhere else, so moving
-    // it has to change the number rather than carry the old one along.
-    const seeded = setInsignia(warrior(), "chest", "survivor");
-    expect(firstSummary(seeded).maxHealth).toBe(BASE_HEALTH + 15);
-
-    const moved = applyGearDrop(
-      seeded,
-      { from: "armor-slot", slot: "chest", part: "insignia" },
-      { kind: "armor", slot: "hands", part: "insignia" },
-    );
-    expect(moved.equipment.armor.chest.insigniaId).toBeNull();
-    expect(firstSummary(moved).maxHealth).toBe(BASE_HEALTH + 5);
-  });
-
-  it("takes worn gear off when it is dropped back on the library", () => {
-    const seeded = setInsignia(warrior(), "legs", "radiant");
-    const removed = applyGearDrop(
-      seeded,
-      { from: "armor-slot", slot: "legs", part: "insignia" },
-      { kind: "library" },
-    );
-    expect(removed.equipment.armor.legs.insigniaId).toBeNull();
   });
 
   it("lets an off-hand be dropped away but never the weapon", () => {
@@ -734,25 +692,6 @@ describe("gear drag and drop", () => {
       applyGearDrop(withShield, { from: "hand", set: 0, hand: "mainHand" }, { kind: "library" }),
     ).toBe(withShield);
   });
-
-  it("fills the first free piece on click-to-equip, then wraps", () => {
-    let character = warrior();
-    expect(firstFreeArmorSlot(character, "rune")).toBe("head");
-    character = setRune(character, "head", {
-      kind: "universal",
-      runeId: "vitae",
-      tier: "minor",
-    });
-    expect(firstFreeArmorSlot(character, "rune")).toBe("chest");
-  });
-
-  it("puts a click on the selected piece, else the first free one (#570)", () => {
-    const character = setInsignia(warrior(), "head", "survivor");
-    expect(armorTarget(character, "insignia", undefined)).toBe("chest");
-    expect(armorTarget(character, "insignia", "legs")).toBe("legs");
-    // A selected piece takes the click even when it is already filled.
-    expect(armorTarget(character, "insignia", "head")).toBe("head");
-  });
 });
 
 describe("weapon sets 2-4 (#489)", () => {
@@ -766,7 +705,7 @@ describe("weapon sets 2-4 (#489)", () => {
     const after = setWeapon(before, 1, "hammer");
     expect(before.equipment.weaponSets[1]).toBeNull();
     expect(after.equipment.weaponSets[1]).toEqual({
-      mainHand: { weaponId: "hammer", requirementAttributeId: null },
+      mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
       offHand: null,
     });
     expect(after.equipment.weaponSets[0]).toEqual(before.equipment.weaponSets[0]);

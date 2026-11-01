@@ -1,7 +1,8 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition, StatusTrigger } from "../status.js";
+import { JAGGED_HORROR } from "../catalog/shared.js";
 import type { DamageEffect } from "../types.js";
-import { define } from "./define.js";
+import { define, ownSkills } from "./define.js";
 
 export type NecromancerStatusId =
   // Hexes / enchantments implemented so far.
@@ -58,12 +59,24 @@ export type NecromancerStatusId =
   | "order-of-undeath"
   | "aura-of-the-lich"
   | "infuse-condition"
+  // Minion care (#1986).
+  | "veratas-sacrifice"
+  | "dark-bond"
+  | "jagged-bones"
   // Casting-state hexes (#1931).
   | "spinal-shivers"
   | "shivers-of-dread"
   | "death-nova"
   | "wail-of-doom"
-  | "atrophy";
+  | "atrophy"
+  // Blood Magic orders and leeches (#1979).
+  | "order-of-the-vampire"
+  | "dark-fury"
+  | "awaken-the-blood"
+  | "soul-leech"
+  // Enchantment party moves (#1975).
+  | "order-of-apostasy"
+  | "jaundiced-gaze";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -528,6 +541,26 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     profession: "necromancer",
     redirectsConditionsToMinion: true,
   }),
+  // Minion care (#1986). "For 5...9...10 seconds, your minions have +10
+  // Health regeneration": 10 pips, 20 Health a second.
+  "veratas-sacrifice": define("veratas-sacrifice", "Verata's Sacrifice", "skill-effect", {
+    profession: "necromancer",
+    healthPips: 10,
+  }),
+  // "For 30...54...60 seconds, 75% of the damage you take is redirected to
+  // your closest minion": any damage, rounded down.
+  "dark-bond": define("dark-bond", "Dark Bond", "enchantment", {
+    profession: "necromancer",
+    attribute: "necromancer.blood-magic",
+    redirectsDamageToMinion: 0.75,
+  }),
+  // "When target animated undead ally dies, it is replaced by a level
+  // 0...12...15 Jagged Horror": at its caster's Death Magic.
+  "jagged-bones": define("jagged-bones", "Jagged Bones", "enchantment", {
+    profession: "necromancer",
+    attribute: "necromancer.death-magic",
+    replacedOnDeathBy: { creature: JAGGED_HORROR, count: 1 },
+  }),
   // Casting-state hexes (#1931). "Whenever target foe is struck for cold
   // damage while using a skill, that skill is interrupted and you lose
   // 8...4...3 Energy or Spinal Shivers ends": 4, at rank 12. Several cold
@@ -576,5 +609,85 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   atrophy: define("atrophy", "Atrophy", "hex", {
     profession: "necromancer",
     attributeSet: { scope: "primary", rank: 0, plusEquipment: false },
+  }),
+  // Blood Magic orders and leeches (#1979), at their rank-12 values.
+  // "For 5 seconds, whenever a party member who is not under the effects
+  // of another Necromancer enchantment hits a foe with physical damage,
+  // that party member steals up to 3...13...16 Health": the rider's
+  // caster is the attacker, so the check reads the attacker's statuses.
+  "order-of-the-vampire": define("order-of-the-vampire", "Order of the Vampire", "enchantment", {
+    profession: "necromancer",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [
+        {
+          kind: "if",
+          condition: {
+            kind: "caster-lacks",
+            category: "enchantment",
+            profession: "necromancer",
+            excluding: "order-of-the-vampire",
+          },
+          effects: [{ kind: "life-steal", amount: { flat: 13 } }],
+        },
+      ],
+      skillId: "necromancer.order-of-the-vampire",
+    },
+  }),
+  // "For 5 seconds, whenever a party member hits with an attack, that
+  // party member gains one additional strike of adrenaline."
+  "dark-fury": define("dark-fury", "Dark Fury", "enchantment", {
+    profession: "necromancer",
+    extraStrikesPerHit: 1,
+  }),
+  // "For 20...39...44 seconds, you have +2 Blood Magic and +2 Curses, and
+  // any Health sacrifices you make are 50% larger."
+  "awaken-the-blood": define("awaken-the-blood", "Awaken the Blood", "enchantment", {
+    profession: "necromancer",
+    attributeDeltas: [
+      { scope: { attributeId: "necromancer.blood-magic" }, amount: 2 },
+      { scope: { attributeId: "necromancer.curses" }, amount: 2 },
+    ],
+    sacrificeMultiplier: 1.5,
+  }),
+  // "For 10 seconds, whenever target foe casts a spell, you steal up to
+  // 16...67...80 Health from that foe": the trigger's caster is the hex's
+  // source, so the Necromancer steals.
+  "soul-leech": define("soul-leech", "Soul Leech", "hex", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        target: "bearer",
+        effects: [{ kind: "life-steal", amount: { flat: 67 } }],
+        skillId: "necromancer.soul-leech",
+      },
+    ],
+  }),
+  // "For 5 seconds, whenever a party member hits a foe with physical
+  // damage, that foe loses one enchantment. For each Monk enchantment
+  // removed, you lose 10...3% maximum Health" (#1975): 4% at rank 12, the
+  // Necromancer's, the status's source.
+  "order-of-apostasy": define("order-of-apostasy", "Order of Apostasy", "enchantment", {
+    profession: "necromancer",
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      skillId: "necromancer.order-of-apostasy",
+      sourceLosesPerRemoved: { profession: "monk", percentOfMax: 4 },
+    },
+  }),
+  // "...your next enchantment spell casts 0...1 seconds faster and costs
+  // 1...10 less Energy" (#1975): 1 s and 8 at rank 12.
+  "jaundiced-gaze": define("jaundiced-gaze", "Jaundiced Gaze", "enchantment", {
+    profession: "necromancer",
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        { energyDiscount: 8, energyFloor: 0, activationSecondsLess: 1, uses: 1 },
+      ),
+    ],
   }),
 };

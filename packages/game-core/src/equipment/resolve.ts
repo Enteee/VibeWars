@@ -18,8 +18,15 @@ import {
   type PieceArmor,
   type PieceReduction,
 } from "./armor.js";
-import { getInsignia, insigniaAllowed, perSlotAmount, type Insignia } from "./insignias.js";
+import {
+  getInsignia,
+  insigniaAllowed,
+  perSlotAmount,
+  type ArmorCondition,
+  type Insignia,
+} from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
+import { wornMods, type ModEffect, type WeaponMod } from "./mods.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
   ATTRIBUTE_RUNE_TIERS,
@@ -65,8 +72,36 @@ export interface ResolvedWeapon {
   readonly creatureDamageScale: number | undefined;
 }
 
+/** What the held weapon's mods do to its hits (#2009). */
+export interface WeaponHitMods {
+  /** Health each landed hit steals: Vampiric's. */
+  readonly lifeSteal: number;
+  /** Energy each landed hit gains: Zealous'. */
+  readonly energyOnHit: number;
+  /** Sundering's: the chance a hit has `sunderPenetration` more armor penetration. */
+  readonly sunderChance: number;
+  readonly sunderPenetration: number;
+  /** Furious': the chance a hit's adrenaline is doubled. */
+  readonly doubleAdrenalineChance: number;
+  /** Multiplier on a condition the weapon's attacks cause: Barbed's 1.33 on Bleeding. */
+  readonly inflictedDurationScale: ReadonlyMap<StatusId, number>;
+}
+
+export const NO_HIT_MODS: WeaponHitMods = Object.freeze({
+  lifeSteal: 0,
+  energyOnHit: 0,
+  sunderChance: 0,
+  sunderPenetration: 0,
+  doubleAdrenalineChance: 0,
+  inflictedDurationScale: new Map(),
+});
+
 export interface ResolvedEquipment {
   readonly mainHand: ResolvedWeapon;
+  /** The held set's mods that act on a hit (#2009). */
+  readonly hitMods: WeaponHitMods;
+  /** Health regeneration the held set's mods give, in pips: Vampiric's -1. */
+  readonly healthPips: number;
   /** Armor before any conditional bonus or status modifier. */
   readonly baseArmor: number;
   /** On every hit: the profession's inherent armor, a creature's, a guard's. */
@@ -94,6 +129,10 @@ export interface ResolvedWeaponSet {
   readonly equipment: ResolvedEquipment;
   /** Maximum energy holding this set, before morale: a focus's bonus is in it. */
   readonly maxEnergy: number;
+  /** Maximum health holding this set, before morale: its mods' is in it (#2007). */
+  readonly maxHealth: number;
+  /** Energy regeneration before any status, in pips: the primary's, and this set's mods'. */
+  readonly baseEnergyPips: number;
 }
 
 export type ResolvedWeaponSets = readonly [
@@ -104,9 +143,6 @@ export type ResolvedWeaponSets = readonly [
 ];
 
 export interface ResolvedLoadout {
-  readonly maxHealth: number;
-  /** Energy regeneration before any status, in pips: the primary profession's. */
-  readonly baseEnergyPips: number;
   /** Allocated ranks plus rune and headgear bonuses, clamped to `MAX_EFFECTIVE_RANK`. */
   readonly attributeRanks: ReadonlyMap<string, number>;
   /** Index i is build set i; `null` where the build's is. */
@@ -338,6 +374,8 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   // at join; only an Elementalist primary holds its rank.
   const shared: SharedGear = {
     baseArmor: baseArmorFor(input.primaryProfession),
+    health: rules.baseHealth + runes.healthDelta,
+    baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
     energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
     conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
     ...pieceInsigniasOf(input.equipment, input.primaryProfession),
@@ -350,8 +388,6 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
     set === null ? null : resolveWeaponSet(set, shared, rankOf, rules);
 
   return {
-    maxHealth: Math.max(rules.minimumMaxHealth, rules.baseHealth + runes.healthDelta),
-    baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
     attributeRanks,
     weaponSets: [
       resolveWeaponSet(set1, shared, rankOf, rules),
@@ -364,6 +400,10 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
 
 /** What every weapon set shares: armor and runes are one set (ADR-0036). */
 interface SharedGear {
+  /** Before any mod's; runes and insignias count once, in every set. */
+  readonly health: number;
+  /** Before any mod's. */
+  readonly baseEnergyPips: number;
   /** Before a shield's bonus. */
   readonly baseArmor: number;
   /** Before a focus's bonus. */
@@ -388,6 +428,7 @@ function resolveWeaponSet(
   let baseArmor = shared.baseArmor;
   let energyDelta = shared.energyDelta;
   let offhandId: OffhandId | undefined;
+  const mods: WeaponMod[] = wornMods(set.mainHand.upgrades);
 
   const offHand = set.offHand;
   if (offHand !== null) {
@@ -405,23 +446,105 @@ function resolveWeaponSet(
       } else {
         energyDelta += amount;
       }
+      mods.push(...wornMods(offHand.upgrades));
+    }
+  }
+
+  // The set's mods (#2007), on top of what every set shares.
+  let healthDelta = 0;
+  let pipsDelta = 0;
+  let healthPips = 0;
+  let conditionalArmor = shared.conditionalArmor;
+  let statusDurationScale = shared.statusDurationScale;
+  let mainHand = resolvedWeapon;
+  let hitMods = NO_HIT_MODS;
+  for (const effect of mods.flatMap((mod) => mod.effects)) {
+    switch (effect.kind) {
+      case "max-health":
+        healthDelta += effect.amount;
+        break;
+      case "max-energy":
+        energyDelta += effect.amount;
+        break;
+      case "energy-regen":
+        pipsDelta += effect.pips;
+        break;
+      case "armor":
+        baseArmor += effect.amount;
+        break;
+      case "armor-vs":
+        conditionalArmor = [...conditionalArmor, modArmor(effect)];
+        break;
+      case "condition-duration": {
+        // Multiplies with a rune of the same condition, as two runes do.
+        const scale = new Map(statusDurationScale);
+        scale.set(effect.statusId, (scale.get(effect.statusId) ?? 1) * (1 - effect.reduction));
+        statusDurationScale = scale;
+        break;
+      }
+      case "life-steal-on-hit":
+        hitMods = {
+          ...hitMods,
+          lifeSteal: hitMods.lifeSteal + (effect.amountByWeapon[set.mainHand.weaponId] ?? 0),
+        };
+        break;
+      case "health-regen":
+        healthPips += effect.pips;
+        break;
+      case "energy-on-hit":
+        hitMods = { ...hitMods, energyOnHit: hitMods.energyOnHit + effect.amount };
+        break;
+      case "armor-penetration-chance":
+        hitMods = {
+          ...hitMods,
+          sunderChance: effect.chance,
+          sunderPenetration: effect.penetration,
+        };
+        break;
+      case "double-adrenaline-chance":
+        hitMods = { ...hitMods, doubleAdrenalineChance: effect.chance };
+        break;
+      case "inflicted-condition-duration": {
+        const scale = new Map(hitMods.inflictedDurationScale);
+        scale.set(effect.statusId, (scale.get(effect.statusId) ?? 1) * (1 + effect.increase));
+        hitMods = { ...hitMods, inflictedDurationScale: scale };
+        break;
+      }
+      case "damage-type":
+        mainHand = { ...mainHand, damageType: effect.type };
+        break;
     }
   }
 
   return {
     equipment: {
-      mainHand: resolvedWeapon,
+      mainHand,
+      hitMods,
+      healthPips,
       baseArmor,
-      conditionalArmor: shared.conditionalArmor,
+      conditionalArmor,
       pieceArmor: shared.pieceArmor,
       pieceReduction: shared.pieceReduction,
       flatPhysicalReduction: shared.flatPhysicalReduction,
-      statusDurationScale: shared.statusDurationScale,
+      statusDurationScale,
       attributeBonuses: shared.attributeBonuses,
       offhandId,
     },
     maxEnergy: Math.max(1, rules.baseEnergy + energyDelta),
+    maxHealth: Math.max(rules.minimumMaxHealth, shared.health + healthDelta),
+    baseEnergyPips: shared.baseEnergyPips + pipsDelta,
   };
+}
+
+/** A mod's armor against one kind of damage, as an insignia's is written. */
+function modArmor(effect: Extract<ModEffect, { kind: "armor-vs" }>): ConditionalArmor {
+  const condition: ArmorCondition =
+    effect.against === "physical"
+      ? { kind: "vs-physical" }
+      : effect.against === "elemental"
+        ? { kind: "vs-elemental" }
+        : { kind: "vs-type", type: effect.against };
+  return { amount: effect.amount, conditions: [condition] };
 }
 
 function resolveWeapon(
@@ -462,6 +585,8 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
       requirementMet: true,
       creatureDamageScale: undefined,
     },
+    hitMods: NO_HIT_MODS,
+    healthPips: 0,
     baseArmor,
     conditionalArmor: [],
     pieceArmor: NO_PIECE_ARMOR,

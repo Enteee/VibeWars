@@ -1,15 +1,13 @@
-import { MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   HOUSE_TEAM_AFTER_MS,
-  RANDOM_STARTER,
   MATCH_RUNNING_NOTICE,
-  characterLine,
   displayLobbyCode,
   hostMaps,
   lobbyControls,
+  lobbyPanel,
   mapLabel,
   matchmakingButtons,
   modeLine,
@@ -34,7 +32,6 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
         team: 0,
         ready: true,
         isHost: true,
-        character: null,
         bot: false,
         away: false,
       },
@@ -45,7 +42,6 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
         team: 1,
         ready: true,
         isHost: false,
-        character: null,
         bot: false,
         away: false,
       },
@@ -66,7 +62,6 @@ describe("lobbyControls", () => {
       teamsDisabled: true,
       readyDisabled: true,
       startDisabled: true,
-      botsDisabled: true,
       canWatch: false,
     });
   });
@@ -78,7 +73,6 @@ describe("lobbyControls", () => {
       teamsDisabled: true,
       readyDisabled: true,
       startDisabled: true,
-      botsDisabled: true,
       canWatch: false,
     });
   });
@@ -90,7 +84,6 @@ describe("lobbyControls", () => {
       teamsDisabled: false,
       readyDisabled: false,
       startDisabled: false,
-      botsDisabled: false,
       canWatch: false,
     });
   });
@@ -107,7 +100,6 @@ describe("lobbyControls", () => {
           team: null,
           ready: false,
           isHost: true,
-          character: null,
           bot: false,
           away: false,
         },
@@ -118,7 +110,6 @@ describe("lobbyControls", () => {
           team: 1,
           ready: false,
           isHost: false,
-          character: null,
           bot: false,
           away: false,
         },
@@ -144,7 +135,6 @@ describe("lobbyControls", () => {
             team: null,
             ready: false,
             isHost: false,
-            character: null,
             bot: false,
             away: false,
           },
@@ -216,7 +206,6 @@ describe("waitingFor (#580)", () => {
     team,
     ready,
     isHost: false,
-    character: null,
     bot: false,
     away: false,
   });
@@ -261,58 +250,9 @@ describe("waitingFor (#580)", () => {
   });
 });
 
-describe("characterLine (#580)", () => {
-  it("gives the character name, then its professions", () => {
-    expect(
-      characterLine({ name: "Mhenlo", primary: "monk", secondary: "elementalist" }, false),
-    ).toBe("Mhenlo · Monk / Elementalist");
-    expect(characterLine({ name: "Cynn", primary: "elementalist", secondary: null }, false)).toBe(
-      "Cynn · Elementalist",
-    );
-  });
-
-  it("gives a bot its professions alone: its character is named after it (#1241)", () => {
-    expect(characterLine({ name: "Bot 1", primary: "warrior", secondary: "monk" }, true)).toBe(
-      "Warrior / Monk",
-    );
-  });
-
-  it("calls a player without a usable build a random starter build (#853)", () => {
-    expect(characterLine(null, false)).toBe(RANDOM_STARTER);
-  });
-});
-
-describe("lobbyControls: the bot count's + (#1194, #1454)", () => {
-  it("is disabled once every seat is taken, bots counting", () => {
-    const waiting = snapshot("waiting");
-    const full = Array.from({ length: MAX_LOBBY_PLAYERS }, (_, n) => ({
-      ...waiting.players[1],
-      sessionId: `p${String(n)}`,
-    })) as LobbyPlayerSnapshot[];
-    expect(lobbyControls({ ...waiting, players: full }).botsDisabled).toBe(true);
-    expect(lobbyControls(waiting).botsDisabled).toBe(false);
-  });
-
-  it("starts a lobby of only the host's bots, since a bot is always ready (Q133)", () => {
-    const waiting = snapshot("waiting");
-    const host = { ...waiting.players[0], team: null } as LobbyPlayerSnapshot;
-    const bot: LobbyPlayerSnapshot = {
-      sessionId: "bot-1",
-      name: "Monk Bot",
-      guildTag: null,
-      team: 1,
-      ready: true,
-      isHost: false,
-      character: { name: "Monk Bot", primary: "monk", secondary: "warrior" },
-      bot: true,
-      away: false,
-    };
-    expect(lobbyControls({ ...waiting, players: [host, bot] }).startDisabled).toBe(false);
-  });
-});
-
 /** Just enough DOM for a team column; the unit tests run in Node. */
 class FakeElement {
+  tagName = "";
   className = "";
   textContent = "";
   value = "";
@@ -359,8 +299,7 @@ class FakeElement {
   }
 }
 
-describe("teamColumn: bots (#1194, #1454)", () => {
-  let set: [number, number][];
+describe("teamColumn: names only (#2029)", () => {
   const callbacks = {
     onSelectMap: () => undefined,
     onChooseTeam: () => undefined,
@@ -368,46 +307,26 @@ describe("teamColumn: bots (#1194, #1454)", () => {
     onStart: () => undefined,
     onWatch: () => undefined,
     onLeave: () => undefined,
-    onSetBots: (team: 0 | 1, count: number) => {
-      set.push([team, count]);
-    },
   };
+  /** A bot playing a slot nobody claimed, under its character's name. */
   const bot: LobbyPlayerSnapshot = {
     sessionId: "bot-1",
-    name: "Monk Bot",
+    name: "Mhenlo",
     guildTag: null,
     team: 1,
     ready: true,
     isHost: false,
-    character: null,
     bot: true,
     away: false,
   };
-  const lobby = (isHost: boolean): LobbySnapshot => {
-    const waiting = snapshot("waiting");
-    return {
-      ...waiting,
-      selfSessionId: isHost ? "host" : "guest",
-      isHost,
-      players: [...waiting.players, bot],
-    };
+  const lobby: LobbySnapshot = {
+    ...snapshot("waiting"),
+    players: [...snapshot("waiting").players, bot],
   };
-  const column = (team: 0 | 1, shown: LobbySnapshot): FakeElement =>
-    teamColumn(team, shown, lobbyControls(shown), callbacks) as unknown as FakeElement;
-  /** The host's − and + for `team`. */
-  const stepper = (team: 0 | 1, shown: LobbySnapshot) => {
-    const shownColumn = column(team, shown);
-    const [fewer] = shownColumn.all("lobby-bots-fewer");
-    const [more] = shownColumn.all("lobby-bots-more");
-    const [count] = shownColumn.all("lobby-bot-count");
-    if (fewer === undefined || more === undefined || count === undefined) {
-      throw new Error("no bot count stepper");
-    }
-    return { fewer, more, count };
-  };
+  const column = (team: 0 | 1): FakeElement =>
+    teamColumn(team, lobby, lobbyControls(lobby), callbacks) as unknown as FakeElement;
 
   beforeEach(() => {
-    set = [];
     vi.stubGlobal("document", { createElement: () => new FakeElement() });
   });
 
@@ -415,60 +334,21 @@ describe("teamColumn: bots (#1194, #1454)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("shows the host each side's bot count with − and +, which ask for one fewer or more", () => {
-    const team2 = stepper(1, lobby(true));
-    expect(team2.count.textContent).toBe("1");
-    team2.more.click();
-    team2.fewer.click();
-    const team1 = stepper(0, lobby(true));
-    expect(team1.count.textContent).toBe("0");
-    team1.more.click();
-    expect(set).toEqual([
-      [1, 2],
-      [1, 0],
-      [0, 1],
+  it("lists each player by name and ready pill, with no character and no bot count", () => {
+    const team = column(1);
+    expect(team.all("player-label-name").map((name) => name.textContent)).toEqual([
+      "Guest",
+      "Mhenlo",
     ]);
+    expect(team.all("lobby-character")).toEqual([]);
+    expect(team.all("character-dot")).toEqual([]);
+    expect(team.all("lobby-bots")).toEqual([]);
   });
 
-  it("disables − at no bots, + in a full lobby, and both outside waiting", () => {
-    expect(stepper(0, lobby(true)).fewer.disabled).toBe(true);
-    expect(stepper(1, lobby(true)).fewer.disabled).toBe(false);
-    expect(stepper(1, lobby(true)).more.disabled).toBe(false);
-    const full = Array.from({ length: MAX_LOBBY_PLAYERS }, (_, n) => ({
-      ...bot,
-      sessionId: `bot-${String(n)}`,
-    }));
-    const crowded = stepper(1, { ...lobby(true), players: full });
-    expect([crowded.fewer.disabled, crowded.more.disabled]).toEqual([false, true]);
-    const playing = stepper(1, { ...lobby(true), phase: "in-match" });
-    expect([playing.fewer.disabled, playing.more.disabled]).toEqual([true, true]);
-  });
-
-  it("shows a non-host the count alone, and the bot's row without a ×", () => {
-    const team = column(1, lobby(false));
-    expect(team.all("lobby-bots").map((count) => count.textContent)).toEqual(["Bots: 1"]);
-    expect(team.all("lobby-bots-more")).toEqual([]);
-    expect(team.all("lobby-bots-fewer")).toEqual([]);
-    expect(team.all("bot-tag")).toHaveLength(1);
-  });
-
-  it("tags a bot's row BOT in place of its ready pill", () => {
-    const team = column(1, lobby(true));
-    expect(team.all("bot-tag").map((tag) => tag.textContent)).toEqual(["BOT"]);
-    // The guest's row keeps its pill; the bot's is the tag.
-    expect(team.all("lobby-ready").map((pill) => pill.textContent)).toEqual(["Ready", "BOT"]);
-  });
-
-  it("has no bot count on a team mode's one side: its empty seats are bots (#1766)", () => {
-    const shown = lobby(true);
-    const side = teamColumn(
-      0,
-      shown,
-      lobbyControls(shown),
-      callbacks,
-      false,
-    ) as unknown as FakeElement;
-    expect(side.all("lobby-bots")).toEqual([]);
+  it("marks no bot: it shows as its slot's character, ready", () => {
+    const team = column(1);
+    expect(team.all("bot-tag")).toEqual([]);
+    expect(team.all("lobby-ready").map((pill) => pill.textContent)).toEqual(["Ready", "Ready"]);
   });
 });
 
@@ -516,5 +396,69 @@ describe("matchmakingButtons (#1766)", () => {
     house?.click();
     leave?.click();
     expect(pressed).toEqual(["house", "leave"]);
+  });
+});
+
+describe("lobbyPanel: the map (#1994)", () => {
+  const callbacks = {
+    onSelectMap: () => undefined,
+    onChooseTeam: () => undefined,
+    onToggleReady: () => undefined,
+    onStart: () => undefined,
+    onWatch: () => undefined,
+    onSetBots: () => undefined,
+  };
+  const maps = [
+    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation" },
+    { id: "arena-open", name: "Open", size: "small", mode: "kill-count" },
+  ] as const;
+  /** The map part of the host's bar in `mode`, on Alpha. */
+  const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
+    const shown = { ...snapshot("waiting"), mode, mapId: "arena-alpha" };
+    const [part] = lobbyPanel(shown, callbacks, undefined, maps).status;
+    return part as unknown as FakeElement;
+  };
+  const selects = (part: FakeElement): FakeElement[] =>
+    part.children.filter((child) => child.tagName === "select");
+
+  beforeEach(() => {
+    vi.stubGlobal("document", {
+      createElement: (tagName: string) => Object.assign(new FakeElement(), { tagName }),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("lets only a Hosted Game's host pick it", () => {
+    expect(selects(mapPart("hosted-game"))).toHaveLength(1);
+  });
+
+  it("says Team Arena draws it, with no picker", () => {
+    const part = mapPart("team-arena");
+    expect(selects(part)).toEqual([]);
+    expect(part.textContent).toBe("Map: random (Team Arena)");
+  });
+
+  it("names Heroes' Ascent's, with no picker", () => {
+    const part = mapPart("heroes-ascent");
+    expect(selects(part)).toEqual([]);
+    expect(part.textContent).toBe("Map: Alpha (small)");
+  });
+
+  /** The mode line under the bar in `mode`, on Alpha. */
+  const modeLines = (mode: LobbySnapshot["mode"]): string[] => {
+    const shown = { ...snapshot("waiting"), mode, mapId: "arena-alpha" };
+    const { body } = lobbyPanel(shown, callbacks, undefined, maps);
+    return (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent);
+  };
+
+  it("names what Team Arena's draw can play, not its placeholder map's mode", () => {
+    expect(modeLines("team-arena")).toEqual(["Annihilation or Kill Count: drawn at the start"]);
+  });
+
+  it("names the mode of a map that is set", () => {
+    expect(modeLines("hosted-game")).toEqual(["Annihilation: defeat every foe"]);
   });
 });

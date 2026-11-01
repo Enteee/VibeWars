@@ -29,10 +29,8 @@ import {
 } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
-import { lobbyCharacter } from "./lobby-character.js";
 import type {
   ChatLine,
-  LobbyCharacter,
   LobbyClosedReason,
   LobbyConnection,
   LobbySnapshot,
@@ -106,8 +104,6 @@ export interface JoinLobbyOptions {
   readonly guildTag: string | null;
   /** The guild cape the player designed (#1422); `null` for none. */
   readonly guildCape: WireCape | null;
-  /** The selected character's name and professions; `null` brings a starter build. */
-  readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
   readonly timeoutMs: number;
   /** The queue's lobby, joined with this seat's ticket; not a coded one. */
@@ -140,7 +136,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     name: options.name,
     guildTag: options.guildTag,
     guildCape: options.guildCape,
-    character: options.character,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
   const codedJoin: PeerLobbyJoin = { ...base, admission: null };
@@ -298,7 +293,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       team: player.team,
       ready: player.ready,
       isHost: player.isHost,
-      character: lobbyCharacter(player.character),
       bot: player.bot,
       away: player.away,
     })),
@@ -377,9 +371,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       selectMap(mapId) {
         send({ kind: "select-map", mapId });
       },
-      setCharacter(character) {
-        send({ kind: "set-character", character });
-      },
       selectMode(mode) {
         send({ kind: "select-mode", mode });
       },
@@ -413,9 +404,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
             build: JSON.parse(JSON.stringify(build)) as JsonValue,
           });
         });
-      },
-      setBots(team, count) {
-        send({ kind: "set-bots", team, count });
       },
       propose(members) {
         if (members === null) {

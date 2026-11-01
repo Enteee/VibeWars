@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
+import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers } from "./helpers/peers.js";
@@ -35,7 +36,7 @@ async function paste(target: Locator, text: string): Promise<void> {
 function trioCode(): string {
   return JSON.stringify({
     format: "vibewars.team",
-    formatVersion: 1,
+    formatVersion: TEAM_FORMAT_VERSION,
     name: "Trio",
     members: TRIO.map((build) => ({
       format: "vibewars.character",
@@ -74,10 +75,10 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     await joinFriend(guest, code);
     await expect(guest.locator(".lobby-panel")).toBeVisible();
 
-    // One side of two players and a bot.
+    // One side of two players; a Hosted Game's side plays the Team Build
+    // it chooses, a bot in the slot nobody claims (#2029).
     await host.getByRole("button", { name: "join team 1" }).click();
     await guest.getByRole("button", { name: "join team 1" }).click();
-    await host.getByRole("button", { name: "One bot more on team 1" }).click();
     await expect(host.locator(".lobby-panel")).toContainText("Guest");
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
@@ -135,6 +136,8 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     await expect(guest.locator(".team-lobby-seat").nth(0)).toBeDisabled();
     await guest.locator(".team-lobby-seat").nth(1).click();
     await expect(host.locator(".team-lobby-seat").nth(1)).toContainText("Guest");
+    // The Monk's seat is nobody's yet: a bot is made for it at the end, unmarked here.
+    await expect(host.locator(".screen-team-lobby .bot-tag")).toHaveCount(0);
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
 

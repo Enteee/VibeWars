@@ -21,6 +21,7 @@ import { C, stroke } from "./icon-kit.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
 import { GLYPHS, MODIFIERS } from "./glyph-table.mjs";
+import { gearIcons, paperDollFigure } from "./gear-icons.mjs";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -224,6 +225,10 @@ const ui = {
     speaker + `<path d="M15.5 9a4 4 0 0 1 0 6M18.5 6a8 8 0 0 1 0 12" ${stroke(C.ink, 2)}/>`,
   // Speaker with a cross where the waves were: muted (#112).
   "sound-off": () => speaker + `<path d="M15.5 9l6 6M21.5 9l-6 6" ${stroke(C.ink, 2)}/>`,
+  // A speech bubble, its tail at the lower left, three dots in it: the chat (#2018).
+  chat: () =>
+    `<path d="M4 3.5h16a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5h-9.5L5 20.5v-4H4A1.5 1.5 0 0 1 2.5 15V5A1.5 1.5 0 0 1 4 3.5z" ${stroke(C.ink, 2)}/>` +
+    `<circle cx="7.5" cy="10" r="1.3" fill="${C.ink}"/><circle cx="12" cy="10" r="1.3" fill="${C.ink}"/><circle cx="16.5" cy="10" r="1.3" fill="${C.ink}"/>`,
   // Beamed eighth notes: music is on (#372).
   "music-on": () => notes,
   // The same notes under a slash cased in the background: music is muted (#372).
@@ -679,6 +684,8 @@ const mode = {
 };
 
 /** @type {Record<string, Record<string, string>>} */
+const gear = gearIcons(profession, plateTint);
+
 const families = {
   profession: Object.fromEntries(Object.entries(profession).map(([k, f]) => [k, svg(f())])),
   creature: Object.fromEntries(Object.entries(creature).map(([k, f]) => [k, f()])),
@@ -697,6 +704,9 @@ const families = {
     ),
     ...Object.fromEntries(Object.entries(SKILL_ICONS).map(([id, row]) => [id, skillIcon(id, row)])),
   },
+  insignia: gear.insignia,
+  rune: gear.rune,
+  "paper-doll": { figure: paperDollFigure() },
   mode: Object.fromEntries(Object.entries(mode).map(([k, f]) => [k, svg(f())])),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(

@@ -307,6 +307,9 @@ export interface EnergyGainToTarget extends Omit<
  * skill that is not recharging, each capped at its cost, as a hit's
  * strike (#977). `perTarget`: once for each target the skill hit, as
  * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ * `perOwnMeleeAttackSkill` (#1978): once for each melee attack skill on
+ * the caster's bar, at most `max` times: Defensive Stance's "1 strike of
+ * adrenaline for each melee attack skill on your bar (maximum 3)".
  * `recipient: "owner"`: the caster's living owner, a pet's, gains them
  * instead, as Ferocious Strike's (#1957); no owner, nobody.
  */
@@ -314,6 +317,7 @@ export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
   readonly strikes: number;
   readonly perTarget?: true;
+  readonly perOwnMeleeAttackSkill?: { readonly max: number };
   readonly recipient?: "owner";
 }
 
@@ -701,6 +705,9 @@ export interface CompanionStepsToTargetEffect {
  * reaches the caster's own living spirits (#1777), and is the one measured
  * from the caster, not the target: GW1's "your spirits within earshot" is
  * earshot of you, even when the skill strikes a foe (Spirit Boon Strike).
+ * `allied-minions` reaches every living minion on the caster's side,
+ * anyone's, measured from the caster as `own-minions` (#1986): Blood of
+ * the Master's "all animated undead allies".
  * `around: "caster"` centres it on the caster instead, whatever it
  * targeted (#1826): Return's "all adjacent foes", cast on an ally.
  */
@@ -713,7 +720,8 @@ export interface SplashEffect {
     | "non-spirit-allies"
     | "party"
     | "own-spirits"
-    | "own-minions";
+    | "own-minions"
+    | "allied-minions";
   readonly radius: number;
   readonly around?: "caster";
   /**
@@ -1321,12 +1329,14 @@ export type StateCondition =
    * The caster has no status of this category (#1354), the negation of
    * `caster-has`: Pure Strike's "if you are not using a stance". With
    * `profession`, none of that profession's (#1551): Wearying Strike's
-   * "if a Dervish enchantment is not removed".
+   * "if a Dervish enchantment is not removed". `excluding` is not counted
+   * (#1979): Order of the Vampire's "another Necromancer enchantment".
    */
   | {
       readonly kind: "caster-lacks";
       readonly category: StatusCategory;
       readonly profession?: ProfessionId;
+      readonly excluding?: StatusId;
     }
   /**
    * No living ally of the effect's target, the target itself excluded,
@@ -1442,6 +1452,16 @@ export type StateCondition =
    * earshot". The twin of `caster-no-spirit-within`.
    */
   | { readonly kind: "caster-spirit-within"; readonly radius: number }
+  /**
+   * The caster controls at most `count` living `creature`s (#1986), as
+   * counted at the start of the tick: Verata's Sacrifice's "if you control
+   * 3 or fewer minions".
+   */
+  | {
+      readonly kind: "caster-controls-at-most";
+      readonly creature: "minion";
+      readonly count: number;
+    }
   /**
    * A living spirit, any team's, or a fresh corpse lies within `radius` of
    * the caster (#1270): Lamentation's "within earshot of a spirit or
@@ -1989,8 +2009,11 @@ export interface Combatant {
    * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.
    */
   overcast: number;
-  /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
-  readonly baseEnergyPips: number;
+  /**
+   * Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`): the
+   * weapon set in hand's, as `maxEnergy` is (#2007).
+   */
+  baseEnergyPips: number;
   /**
    * Units per adrenaline skill on the bar (#463), keyed like
    * `cast.rechargeRemaining`. Exactly the bar's adrenaline skills are keys,

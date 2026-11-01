@@ -48,6 +48,7 @@
     "aegis",
     "aggressive-refrain",
     "air-attunement",
+    "air-of-enchantment",
     "anthem-of-disruption",
     "anthem-of-envy",
     "anthem-of-flame",
@@ -71,11 +72,13 @@
     "aura-of-stability",
     "aura-of-the-lich",
     "aura-of-thorns",
+    "auspicious-parry",
     "avatar-of-balthazar",
     "avatar-of-dwayna",
     "avatar-of-grenth",
     "avatar-of-lyssa",
     "avatar-of-melandru",
+    "awaken-the-blood",
     "backfire",
     "balanced-stance",
     "balthazars-aura",
@@ -118,7 +121,10 @@
     "critical-defenses",
     "critical-eye",
     "cruel-was-daoshen",
+    "dark-apostasy",
+    "dark-bond",
     "dark-escape",
+    "dark-fury",
     "dark-prison",
     "dash",
     "dazed",
@@ -127,6 +133,7 @@
     "deep-freeze",
     "deep-wound",
     "defensive-anthem",
+    "defensive-stance",
     "defiant-was-xinrae",
     "defile-defenses",
     "defile-flesh",
@@ -234,6 +241,8 @@
     "infuse-condition",
     "insidious-parasite",
     "its-just-a-flesh-wound",
+    "jagged-bones",
+    "jaundiced-gaze",
     "judges-insight",
     "judges-intervention",
     "kindle-arrows",
@@ -280,7 +289,9 @@
     "nightmare-weapon",
     "obsidian-flesh",
     "onslaught",
+    "order-of-apostasy",
     "order-of-pain",
+    "order-of-the-vampire",
     "order-of-undeath",
     "otyughs-cry",
     "overload",
@@ -361,6 +372,7 @@
     "signet-of-strength",
     "siphon-speed",
     "siphon-speed-haste",
+    "soldiers-defense",
     "soldiers-fury",
     "song-of-concentration",
     "song-of-purification",
@@ -368,6 +380,7 @@
     "soothing",
     "soul-barbs",
     "soul-bind",
+    "soul-leech",
     "spell-breaker",
     "spinal-shivers",
     "spirit-bond",
@@ -395,6 +408,7 @@
     "union",
     "vengeful-was-khanhei",
     "vengeful-weapon",
+    "veratas-sacrifice",
     "vigorous-spirit",
     "visions-of-regret",
     "vital-blessing",
@@ -411,6 +425,7 @@
     "ward-of-stability",
     "warmongers-weapon",
     "warriors-endurance",
+    "wary-stance",
     "wastrels-demise",
     "wastrels-worry",
     "watch-yourself",
@@ -785,6 +800,7 @@
                   { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "air-attunement" },
+                  { "literal": "air-of-enchantment" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-envy" },
                   { "literal": "anthem-of-flame" },
@@ -808,11 +824,13 @@
                   { "literal": "aura-of-stability" },
                   { "literal": "aura-of-the-lich" },
                   { "literal": "aura-of-thorns" },
+                  { "literal": "auspicious-parry" },
                   { "literal": "avatar-of-balthazar" },
                   { "literal": "avatar-of-dwayna" },
                   { "literal": "avatar-of-grenth" },
                   { "literal": "avatar-of-lyssa" },
                   { "literal": "avatar-of-melandru" },
+                  { "literal": "awaken-the-blood" },
                   { "literal": "backfire" },
                   { "literal": "balanced-stance" },
                   { "literal": "balthazars-aura" },
@@ -855,7 +873,10 @@
                   { "literal": "critical-defenses" },
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
+                  { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
+                  { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -864,6 +885,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defensive-stance" },
                   { "literal": "defiant-was-xinrae" },
                   { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
@@ -971,6 +993,8 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
+                  { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
                   { "literal": "kindle-arrows" },
@@ -1017,7 +1041,9 @@
                   { "literal": "nightmare-weapon" },
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
+                  { "literal": "order-of-apostasy" },
                   { "literal": "order-of-pain" },
+                  { "literal": "order-of-the-vampire" },
                   { "literal": "order-of-undeath" },
                   { "literal": "otyughs-cry" },
                   { "literal": "overload" },
@@ -1098,6 +1124,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
@@ -1105,6 +1132,7 @@
                   { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "soul-bind" },
+                  { "literal": "soul-leech" },
                   { "literal": "spell-breaker" },
                   { "literal": "spinal-shivers" },
                   { "literal": "spirit-bond" },
@@ -1132,6 +1160,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -1148,6 +1177,7 @@
                   { "literal": "ward-of-stability" },
                   { "literal": "warmongers-weapon" },
                   { "literal": "warriors-endurance" },
+                  { "literal": "wary-stance" },
                   { "literal": "wastrels-demise" },
                   { "literal": "wastrels-worry" },
                   { "literal": "watch-yourself" },
@@ -1232,6 +1262,7 @@
                   { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "air-attunement" },
+                  { "literal": "air-of-enchantment" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-envy" },
                   { "literal": "anthem-of-flame" },
@@ -1255,11 +1286,13 @@
                   { "literal": "aura-of-stability" },
                   { "literal": "aura-of-the-lich" },
                   { "literal": "aura-of-thorns" },
+                  { "literal": "auspicious-parry" },
                   { "literal": "avatar-of-balthazar" },
                   { "literal": "avatar-of-dwayna" },
                   { "literal": "avatar-of-grenth" },
                   { "literal": "avatar-of-lyssa" },
                   { "literal": "avatar-of-melandru" },
+                  { "literal": "awaken-the-blood" },
                   { "literal": "backfire" },
                   { "literal": "balanced-stance" },
                   { "literal": "balthazars-aura" },
@@ -1302,7 +1335,10 @@
                   { "literal": "critical-defenses" },
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
+                  { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
+                  { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -1311,6 +1347,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defensive-stance" },
                   { "literal": "defiant-was-xinrae" },
                   { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
@@ -1418,6 +1455,8 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
+                  { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
                   { "literal": "kindle-arrows" },
@@ -1464,7 +1503,9 @@
                   { "literal": "nightmare-weapon" },
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
+                  { "literal": "order-of-apostasy" },
                   { "literal": "order-of-pain" },
+                  { "literal": "order-of-the-vampire" },
                   { "literal": "order-of-undeath" },
                   { "literal": "otyughs-cry" },
                   { "literal": "overload" },
@@ -1545,6 +1586,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
@@ -1552,6 +1594,7 @@
                   { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "soul-bind" },
+                  { "literal": "soul-leech" },
                   { "literal": "spell-breaker" },
                   { "literal": "spinal-shivers" },
                   { "literal": "spirit-bond" },
@@ -1579,6 +1622,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -1595,6 +1639,7 @@
                   { "literal": "ward-of-stability" },
                   { "literal": "warmongers-weapon" },
                   { "literal": "warriors-endurance" },
+                  { "literal": "wary-stance" },
                   { "literal": "wastrels-demise" },
                   { "literal": "wastrels-worry" },
                   { "literal": "watch-yourself" },
@@ -1659,6 +1704,7 @@
                   { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "air-attunement" },
+                  { "literal": "air-of-enchantment" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-envy" },
                   { "literal": "anthem-of-flame" },
@@ -1682,11 +1728,13 @@
                   { "literal": "aura-of-stability" },
                   { "literal": "aura-of-the-lich" },
                   { "literal": "aura-of-thorns" },
+                  { "literal": "auspicious-parry" },
                   { "literal": "avatar-of-balthazar" },
                   { "literal": "avatar-of-dwayna" },
                   { "literal": "avatar-of-grenth" },
                   { "literal": "avatar-of-lyssa" },
                   { "literal": "avatar-of-melandru" },
+                  { "literal": "awaken-the-blood" },
                   { "literal": "backfire" },
                   { "literal": "balanced-stance" },
                   { "literal": "balthazars-aura" },
@@ -1729,7 +1777,10 @@
                   { "literal": "critical-defenses" },
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
+                  { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
+                  { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -1738,6 +1789,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defensive-stance" },
                   { "literal": "defiant-was-xinrae" },
                   { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
@@ -1845,6 +1897,8 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
+                  { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
                   { "literal": "kindle-arrows" },
@@ -1891,7 +1945,9 @@
                   { "literal": "nightmare-weapon" },
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
+                  { "literal": "order-of-apostasy" },
                   { "literal": "order-of-pain" },
+                  { "literal": "order-of-the-vampire" },
                   { "literal": "order-of-undeath" },
                   { "literal": "otyughs-cry" },
                   { "literal": "overload" },
@@ -1972,6 +2028,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
@@ -1979,6 +2036,7 @@
                   { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "soul-bind" },
+                  { "literal": "soul-leech" },
                   { "literal": "spell-breaker" },
                   { "literal": "spinal-shivers" },
                   { "literal": "spirit-bond" },
@@ -2006,6 +2064,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -2022,6 +2081,7 @@
                   { "literal": "ward-of-stability" },
                   { "literal": "warmongers-weapon" },
                   { "literal": "warriors-endurance" },
+                  { "literal": "wary-stance" },
                   { "literal": "wastrels-demise" },
                   { "literal": "wastrels-worry" },
                   { "literal": "watch-yourself" },
@@ -2083,6 +2143,7 @@
                   { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "air-attunement" },
+                  { "literal": "air-of-enchantment" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-envy" },
                   { "literal": "anthem-of-flame" },
@@ -2106,11 +2167,13 @@
                   { "literal": "aura-of-stability" },
                   { "literal": "aura-of-the-lich" },
                   { "literal": "aura-of-thorns" },
+                  { "literal": "auspicious-parry" },
                   { "literal": "avatar-of-balthazar" },
                   { "literal": "avatar-of-dwayna" },
                   { "literal": "avatar-of-grenth" },
                   { "literal": "avatar-of-lyssa" },
                   { "literal": "avatar-of-melandru" },
+                  { "literal": "awaken-the-blood" },
                   { "literal": "backfire" },
                   { "literal": "balanced-stance" },
                   { "literal": "balthazars-aura" },
@@ -2153,7 +2216,10 @@
                   { "literal": "critical-defenses" },
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
+                  { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
+                  { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -2162,6 +2228,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defensive-stance" },
                   { "literal": "defiant-was-xinrae" },
                   { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
@@ -2269,6 +2336,8 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
+                  { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
                   { "literal": "kindle-arrows" },
@@ -2315,7 +2384,9 @@
                   { "literal": "nightmare-weapon" },
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
+                  { "literal": "order-of-apostasy" },
                   { "literal": "order-of-pain" },
+                  { "literal": "order-of-the-vampire" },
                   { "literal": "order-of-undeath" },
                   { "literal": "otyughs-cry" },
                   { "literal": "overload" },
@@ -2396,6 +2467,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
@@ -2403,6 +2475,7 @@
                   { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "soul-bind" },
+                  { "literal": "soul-leech" },
                   { "literal": "spell-breaker" },
                   { "literal": "spinal-shivers" },
                   { "literal": "spirit-bond" },
@@ -2430,6 +2503,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -2446,6 +2520,7 @@
                   { "literal": "ward-of-stability" },
                   { "literal": "warmongers-weapon" },
                   { "literal": "warriors-endurance" },
+                  { "literal": "wary-stance" },
                   { "literal": "wastrels-demise" },
                   { "literal": "wastrels-worry" },
                   { "literal": "watch-yourself" },
@@ -2642,6 +2717,7 @@
                   { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "air-attunement" },
+                  { "literal": "air-of-enchantment" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-envy" },
                   { "literal": "anthem-of-flame" },
@@ -2665,11 +2741,13 @@
                   { "literal": "aura-of-stability" },
                   { "literal": "aura-of-the-lich" },
                   { "literal": "aura-of-thorns" },
+                  { "literal": "auspicious-parry" },
                   { "literal": "avatar-of-balthazar" },
                   { "literal": "avatar-of-dwayna" },
                   { "literal": "avatar-of-grenth" },
                   { "literal": "avatar-of-lyssa" },
                   { "literal": "avatar-of-melandru" },
+                  { "literal": "awaken-the-blood" },
                   { "literal": "backfire" },
                   { "literal": "balanced-stance" },
                   { "literal": "balthazars-aura" },
@@ -2712,7 +2790,10 @@
                   { "literal": "critical-defenses" },
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
+                  { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
+                  { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -2721,6 +2802,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defensive-stance" },
                   { "literal": "defiant-was-xinrae" },
                   { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
@@ -2828,6 +2910,8 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
+                  { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
                   { "literal": "kindle-arrows" },
@@ -2874,7 +2958,9 @@
                   { "literal": "nightmare-weapon" },
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
+                  { "literal": "order-of-apostasy" },
                   { "literal": "order-of-pain" },
+                  { "literal": "order-of-the-vampire" },
                   { "literal": "order-of-undeath" },
                   { "literal": "otyughs-cry" },
                   { "literal": "overload" },
@@ -2955,6 +3041,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
@@ -2962,6 +3049,7 @@
                   { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "soul-bind" },
+                  { "literal": "soul-leech" },
                   { "literal": "spell-breaker" },
                   { "literal": "spinal-shivers" },
                   { "literal": "spirit-bond" },
@@ -2989,6 +3077,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -3005,6 +3094,7 @@
                   { "literal": "ward-of-stability" },
                   { "literal": "warmongers-weapon" },
                   { "literal": "warriors-endurance" },
+                  { "literal": "wary-stance" },
                   { "literal": "wastrels-demise" },
                   { "literal": "wastrels-worry" },
                   { "literal": "watch-yourself" },
@@ -3058,6 +3148,7 @@
                   { "literal": "aegis" },
                   { "literal": "aggressive-refrain" },
                   { "literal": "air-attunement" },
+                  { "literal": "air-of-enchantment" },
                   { "literal": "anthem-of-disruption" },
                   { "literal": "anthem-of-envy" },
                   { "literal": "anthem-of-flame" },
@@ -3081,11 +3172,13 @@
                   { "literal": "aura-of-stability" },
                   { "literal": "aura-of-the-lich" },
                   { "literal": "aura-of-thorns" },
+                  { "literal": "auspicious-parry" },
                   { "literal": "avatar-of-balthazar" },
                   { "literal": "avatar-of-dwayna" },
                   { "literal": "avatar-of-grenth" },
                   { "literal": "avatar-of-lyssa" },
                   { "literal": "avatar-of-melandru" },
+                  { "literal": "awaken-the-blood" },
                   { "literal": "backfire" },
                   { "literal": "balanced-stance" },
                   { "literal": "balthazars-aura" },
@@ -3128,7 +3221,10 @@
                   { "literal": "critical-defenses" },
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
+                  { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
+                  { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
                   { "literal": "dash" },
                   { "literal": "dazed" },
@@ -3137,6 +3233,7 @@
                   { "literal": "deep-freeze" },
                   { "literal": "deep-wound" },
                   { "literal": "defensive-anthem" },
+                  { "literal": "defensive-stance" },
                   { "literal": "defiant-was-xinrae" },
                   { "literal": "defile-defenses" },
                   { "literal": "defile-flesh" },
@@ -3244,6 +3341,8 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
+                  { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
                   { "literal": "kindle-arrows" },
@@ -3290,7 +3389,9 @@
                   { "literal": "nightmare-weapon" },
                   { "literal": "obsidian-flesh" },
                   { "literal": "onslaught" },
+                  { "literal": "order-of-apostasy" },
                   { "literal": "order-of-pain" },
+                  { "literal": "order-of-the-vampire" },
                   { "literal": "order-of-undeath" },
                   { "literal": "otyughs-cry" },
                   { "literal": "overload" },
@@ -3371,6 +3472,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
                   { "literal": "song-of-purification" },
@@ -3378,6 +3480,7 @@
                   { "literal": "soothing" },
                   { "literal": "soul-barbs" },
                   { "literal": "soul-bind" },
+                  { "literal": "soul-leech" },
                   { "literal": "spell-breaker" },
                   { "literal": "spinal-shivers" },
                   { "literal": "spirit-bond" },
@@ -3405,6 +3508,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -3421,6 +3525,7 @@
                   { "literal": "ward-of-stability" },
                   { "literal": "warmongers-weapon" },
                   { "literal": "warriors-endurance" },
+                  { "literal": "wary-stance" },
                   { "literal": "wastrels-demise" },
                   { "literal": "wastrels-worry" },
                   { "literal": "watch-yourself" },
@@ -3585,13 +3690,13 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
-        { "literal": "invalid-bot" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },
         { "literal": "lobby-full" },
         { "literal": "not-admitted" },
         { "literal": "not-host" },
+        { "literal": "not-pickable" },
         { "literal": "protocol-mismatch" },
         { "literal": "slot-taken" },
         { "literal": "ticket-used" }
@@ -3782,26 +3887,6 @@
                 "properties": [
                   { "name": "admissionSig", "optional": false, "type": "string" },
                   { "name": "seatKey", "optional": false, "type": "string" }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
                 ]
               }
             ]
@@ -4753,42 +4838,6 @@
         },
         {
           "properties": [
-            {
-              "name": "character",
-              "optional": false,
-              "type": {
-                "union": [
-                  "null",
-                  {
-                    "properties": [
-                      { "name": "name", "optional": false, "type": "string" },
-                      { "name": "primary", "optional": false, "type": "string" },
-                      {
-                        "name": "secondary",
-                        "optional": false,
-                        "type": { "union": ["null", "string"] }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            { "name": "kind", "optional": false, "type": { "literal": "set-character" } }
-          ]
-        },
-        {
-          "properties": [
-            { "name": "count", "optional": false, "type": "number" },
-            { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
-            {
-              "name": "team",
-              "optional": false,
-              "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
-            }
-          ]
-        },
-        {
-          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "choose-team" } },
             {
               "name": "team",
@@ -4880,26 +4929,6 @@
       "properties": [
         { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
-                ]
-              }
-            ]
-          }
-        },
         {
           "name": "guildCape",
           "optional": false,
@@ -5015,26 +5044,6 @@
               "properties": [
                 { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
-                {
-                  "name": "character",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          { "name": "name", "optional": false, "type": "string" },
-                          { "name": "primary", "optional": false, "type": "string" },
-                          {
-                            "name": "secondary",
-                            "optional": false,
-                            "type": { "union": ["null", "string"] }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 {
                   "name": "guildCape",
                   "optional": false,
@@ -5235,7 +5244,11 @@
                                     }
                                   }
                                 },
-                                { "name": "size", "optional": false, "type": "number" }
+                                {
+                                  "name": "size",
+                                  "optional": false,
+                                  "type": { "union": ["null", "number"] }
+                                }
                               ]
                             }
                           ]
@@ -5350,7 +5363,11 @@
                                     }
                                   }
                                 },
-                                { "name": "size", "optional": false, "type": "number" }
+                                {
+                                  "name": "size",
+                                  "optional": false,
+                                  "type": { "union": ["null", "number"] }
+                                }
                               ]
                             }
                           ]
@@ -6764,7 +6781,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": "number" }
+                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
                     ]
                   }
                 ]
@@ -6863,7 +6880,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": "number" }
+                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
                     ]
                   }
                 ]
@@ -7001,7 +7018,7 @@
             }
           }
         },
-        { "name": "size", "optional": false, "type": "number" }
+        { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
       ]
     },
     "WireTraps": {

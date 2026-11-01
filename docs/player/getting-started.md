@@ -44,6 +44,11 @@ Not sure what to take? The random starter character is marked
 **Random**, with a dashed outline. **Reroll** on it gives you a fresh
 random build to try.
 
+**Team Builder** starts with a random Team Build too, a ready-made team
+for a Team Lobby, marked the same way and always last. **Reroll** puts
+another ready-made team in its place. **Clone** saves a copy of the
+team shown as your own Team Build and opens it, to change as you like.
+
 ## Play a Random Arena
 
 The quickest way into a fight. On **Random Arena**, click the card of
@@ -84,20 +89,20 @@ and the strip on top of every mode screen lists who is in it.
 **The host picks the mode** on the rail, and everyone's screen follows;
 a guest's modes are locked. **Character Builder** and **Team Builder**
 are open to everyone, and opening one does not leave the lobby. On a
-mode's screen, press **+** under a team's **Bots:** to fill an empty
-place, and when everyone is in, the host presses **Start match**.
-**Random Arena** queues only while you are alone in your lobby: leave
-the party, or play a Hosted Game. The character picked there is the one
-you bring; pick another, and the lobby shows it and you play it from the
-next match.
+mode's screen, join a team, and when everyone is in, the host presses
+**Start match**; bots play every place nobody takes. The lobby lists
+players by name: what you play is the character you claim in the Team
+Lobby, so you need no character of your own to join. **Random Arena**
+queues only while you are alone in your lobby: leave the party, or play
+a Hosted Game. It plays the character picked there; pick another, and you
+play it from the next match.
 
 **Team Arena**, **Heroes' Ascent** and **GvG** offer only that mode's
 maps: **Team Arena** the Annihilation, Kill Count and Priest Annihilation
 maps, **Heroes' Ascent** the Relic Run, King of the Hill and Capture
 Points maps, and **GvG** the Guild Battle's. **Hosted Game** offers every
-map. Below the lobby are your **Team Builds**: click one, or its
-**Edit**, to change it, or make another with **New team build**. You
-pick none there. On **Hosted Game**, when the host starts, the lobby
+map. Your **Team Builds** are on **Team Builder** alone, and you pick
+none before the lobby. On **Hosted Game**, when the host starts, the lobby
 opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
 click a card, which shows each member's weapons and skills, to vote
 for one, then click a seat to take one of its characters.
@@ -146,19 +151,6 @@ match goes on without you.
 
 Online play is peer to peer: the other players in your match see your
 IP address.
-
-## Your record
-
-Every match you finish with one of your characters, hosted, joined or
-from Random Arena, goes on that character's record. The menu shows it
-after the character's professions, such as **12W 7L**, with draws only
-once there are some. Press **Record** at the top of Random Arena for your
-last 50 matches: when, who, which map and mode, and how it went.
-
-The record is kept in this browser only. Nobody else sees or checks it.
-A match you leave before it ends, a Training Ground session and a match
-played with a starter build are not recorded. Deleting a character
-deletes its record.
 
 ## In a match
 

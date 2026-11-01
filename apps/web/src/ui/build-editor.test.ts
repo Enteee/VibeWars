@@ -2,12 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   MAX_ATTRIBUTE_RANK,
+  NO_UPGRADES,
+  describeSkill,
+  type DescriptionPart,
+  type SkillDescription,
   MINIMAL_GW_INSPIRED_PVP_V1,
   accessibleAttributeIds,
   getSkill,
   primaryAttributeOf,
 } from "@vibewars/game-core";
 
+import { exportBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import {
@@ -19,7 +24,9 @@ import {
   editorProblems,
   encodeDragSource,
   equipTarget,
+  followTip,
   isUnsaved,
+  loadCode,
   newCharacter,
   nextRankCost,
   pipTarget,
@@ -34,6 +41,8 @@ import {
   trySetRank,
   weaponWarning,
 } from "./build-editor.js";
+import { TEAM_FORMAT } from "../storage/team-transfer.js";
+import { characterRanks } from "./character-ranks.js";
 import { setHeadgearAttribute, setWeapon } from "./gear-editor.js";
 
 /**
@@ -286,6 +295,7 @@ describe("setProfessions", () => {
     expect(mesmer.equipment.weaponSets[0].mainHand).toEqual({
       weaponId: "wand",
       requirementAttributeId: primaryAttributeOf("mesmer").id,
+      upgrades: NO_UPGRADES,
     });
     expect(mesmer.equipment.weaponSets[0].offHand?.offhandId).toBe("focus");
     expect(validateBuild(mesmer)).toEqual([]);
@@ -677,5 +687,99 @@ describe("weaponWarning (#417)", () => {
     expect(weaponWarning(skill("warrior.swift-chop"), ["sword", "daggers"])?.title).toBe(
       "Needs an axe — your weapon is a sword",
     );
+  });
+});
+
+describe("loadCode (#2004)", () => {
+  const problems = (text: string) => {
+    const loaded = loadCode(text, "c1", 1);
+    return loaded.ok ? [] : loaded.problems;
+  };
+
+  it("loads a GW1 template code, trimmed, as a character of the editor's", () => {
+    // Warrior/Monk, Swift Chop and Orison of Healing (gw1-template.test.ts).
+    const loaded = loadCode("  OUwQEROqaGBAAAAAAAAA\n", "c1", 1);
+    expect(loaded).toMatchObject({
+      ok: true,
+      character: { id: "c1", name: "Warrior/Monk build", primaryProfession: "warrior" },
+      missingSkills: [],
+    });
+  });
+
+  it("loads a VibeWars build line too", () => {
+    const line = exportBuild({ ...newCharacter("other"), name: "Sent" });
+    expect(loadCode(line, "c1", 1)).toMatchObject({
+      ok: true,
+      character: { id: "c1", name: "Sent" },
+    });
+  });
+
+  it("says why it loads nothing: empty, a team code, not a code", () => {
+    expect(problems("  ")).toEqual(["Paste a code first."]);
+    expect(problems(`{"format":"${TEAM_FORMAT}"}`)).toEqual([
+      "That is a team code. Load it on Team Builder.",
+    ]);
+    expect(problems("gg, well played")).toEqual(["That is not a GW1 template code."]);
+  });
+
+  it("lists an illegal build's problems, as a paste's toast does", () => {
+    const orphaned = exportBuild({
+      ...newCharacter("other"),
+      primaryProfession: "warrior",
+      secondaryProfession: undefined,
+      skillBar: ["monk.orison-of-healing", null, null, null, null, null, null, null],
+    });
+    expect(problems(orphaned).join()).toContain("Orison of Healing is a Monk skill");
+  });
+});
+
+describe("followTip (#1932)", () => {
+  const scaled = (parts: readonly DescriptionPart[] | undefined) =>
+    (parts ?? []).flatMap((part) => (typeof part === "string" ? [] : [part.scaled]));
+  const fakeTip = () => {
+    const tip = { shown: true, drawn: [] as SkillDescription[] };
+    return {
+      tip,
+      tooltip: {
+        update: (description: SkillDescription) => {
+          tip.drawn.push(description);
+        },
+        hide: () => {
+          tip.shown = false;
+        },
+      },
+    };
+  };
+
+  it("redraws an open tooltip at a raised attribute, and keeps it shown", () => {
+    const signet = getSkill("warrior.healing-signet");
+    if (signet === undefined) {
+      throw new Error("no Healing Signet");
+    }
+    let character = setProfessions(newCharacter("c1"), "warrior", undefined);
+    const tipped = {
+      anchor: { isConnected: true },
+      describe: () => describeSkill(signet, characterRanks(character)),
+    };
+    const before = scaled(tipped.describe().effects[0]?.parts);
+    character = setRank(character, "warrior.tactics", 9);
+    const { tip, tooltip } = fakeTip();
+    expect(followTip(tooltip, tipped)).toBe(tipped);
+    expect(tip.shown).toBe(true);
+    const after = scaled(tip.drawn[0]?.effects[0]?.parts);
+    expect(after).toHaveLength(1);
+    expect(after).not.toEqual(before);
+  });
+
+  it("hides it when its anchor is gone or its slot emptied", () => {
+    const gone = fakeTip();
+    const described = { anchor: { isConnected: false }, describe: () => undefined };
+    expect(followTip(gone.tooltip, described)).toBeUndefined();
+    expect(gone.tip.shown).toBe(false);
+    const emptied = fakeTip();
+    expect(
+      followTip(emptied.tooltip, { anchor: { isConnected: true }, describe: () => undefined }),
+    ).toBeUndefined();
+    expect(emptied.tip.shown).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 import { AREA_ADJACENT } from "../distances.js";
-import type { ResolvedWeapon } from "../equipment/resolve.js";
-import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
-import { wieldsFor, type Weapon } from "../equipment/weapons.js";
+import type { ResolvedWeapon, WeaponHitMods } from "../equipment/resolve.js";
+import { type DamageType } from "../equipment/types.js";
+import { isCasterWeapon, wieldsFor, type Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
@@ -23,6 +23,7 @@ import {
   loseHealth,
   resolveSkillEffects,
   stateHolds,
+  stealLife,
   withPerCount,
   type CombatEvent,
   type SkillOutcome,
@@ -37,6 +38,7 @@ import {
   getStatusDefinition,
   physicalDamageDealtAsOf,
   isSuppressed,
+  type AttackHitRider,
   type StatusId,
 } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
@@ -221,6 +223,8 @@ export interface WeaponSnapshot {
    * `undefined`: none.
    */
   readonly physicalDamageDealtAs: DamageType | undefined;
+  /** The held set's mods that act on a hit (#2009): Sundering's chance rides the blow. */
+  readonly hitMods: WeaponHitMods;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -238,6 +242,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     armorPenetration: modifiers.attackArmorPenetration,
     damageDelta: attackDamageDeltaOf(attacker),
     physicalDamageDealtAs: physicalDamageDealtAsOf(attacker.statuses.active),
+    hitMods: attacker.equipment.hitMods,
   };
 }
 
@@ -338,12 +343,14 @@ export function strikeCount(
  * is a chance to block, as blind is, so a fight without blocking keeps
  * its random stream. A hex of the attacker's that bars blocking it
  * (#1234, `unblockableBySource`) leaves no chance, and so does a hex that
- * bars blocking at all (#1332, `preventsBlocking`).
+ * bars blocking at all (#1332, `preventsBlocking`). `attackSkill`: an
+ * attack skill's blow or shot, which Wary Stance's block needs (#1978).
  */
 export function blocks(
   victim: Combatant,
   attackerId: string,
   kind: "melee" | "projectile",
+  attackSkill: boolean,
   rng: SimulationRng,
 ): boolean {
   const exposed = victim.statuses.active.some(
@@ -355,7 +362,7 @@ export function blocks(
   ) {
     return false;
   }
-  const blocking = blockingStatusesOf(victim);
+  const blocking = blockingStatusesOf(victim, attackSkill);
   const chance = combinedBlockChance(
     blocking.map(({ block }) => block),
     kind,
@@ -553,6 +560,11 @@ export function landBlow(
     critical && !aggregateModifiers(victim.statuses.active).ignoresCriticalDamage
       ? weapon.damageMax * weapon.criticalMultiplier
       : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
+  // Sundering (#2009): bonus penetration on its roll, on top of the
+  // largest base. Drawn only for a weapon that has it, so no other
+  // fight's stream moves.
+  const { sunderChance, sunderPenetration } = snapshot.hitMods;
+  const sundered = sunderChance > 0 && rng.nextFloat() < sunderChance ? sunderPenetration : 0;
   const packet: DamagePacket = {
     armored: Math.max(
       0,
@@ -571,11 +583,12 @@ export function landBlow(
       victim.statuses.active,
     ),
     source: "weapon",
-    armorPenetration: Math.max(
-      blow.armorPenetration,
-      strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
-      snapshot.armorPenetration,
-    ),
+    armorPenetration:
+      Math.max(
+        blow.armorPenetration,
+        strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+        snapshot.armorPenetration,
+      ) + sundered,
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);
@@ -622,7 +635,10 @@ export function attackHitRiders(
   fired: FiredTrigger[],
   spent: readonly StatusId[],
 ): CombatEvent[] {
-  const onHit = weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings);
+  const onHit = [
+    ...weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings),
+    ...modsOnHit(attacker, victim),
+  ];
   applyRiders(
     "onAttackHit",
     attacker,
@@ -640,6 +656,21 @@ export function attackHitRiders(
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
   events.push(...ownerPaysForMinionHit(attacker, surroundings));
+  return events;
+}
+
+/**
+ * What the held set's mods do on a landed hit (#2009): Vampiric steals,
+ * past armor, from a victim the blow left alive; Zealous gains energy.
+ * Each blow of a double strike is a hit of its own.
+ */
+function modsOnHit(attacker: Combatant, victim: Combatant): CombatEvent[] {
+  const { lifeSteal, energyOnHit } = attacker.equipment.hitMods;
+  const events: CombatEvent[] = [];
+  if (lifeSteal > 0 && !victim.dead && !attacker.dead) {
+    stealLife(attacker, victim, lifeSteal, events);
+  }
+  gainEnergy(attacker, energyOnHit, events);
   return events;
 }
 
@@ -678,7 +709,8 @@ export function attackBlockedRiders(
  * Each of the attacker's statuses' `which` rider onto `victim`, active
  * and `spent` alike: one for attack skills only rides a blow
  * `withAttackSkill`, one for a weapon class only a blow of that weapon,
- * and a non-physical blow only a weapon spell's.
+ * and a wand's or staff's blow only a weapon spell's: a martial
+ * weapon's elemental prefix (#2009) changes its damage, not its riders.
  */
 function applyRiders(
   which: "onAttackHit" | "onAttackBlocked",
@@ -692,7 +724,7 @@ function applyRiders(
   fired: FiredTrigger[],
   spent: readonly StatusId[],
 ): void {
-  const physical = isPhysicalDamage(mainHand.damageType);
+  const caster = isCasterWeapon(mainHand.weapon);
   const active = attacker.statuses.active;
   for (const status of [...active, ...spent.map((id) => ({ id }))]) {
     const definition = getStatusDefinition(status.id);
@@ -701,7 +733,7 @@ function applyRiders(
       rider === undefined ||
       isSuppressed(active, status) ||
       (rider.attackSkillsOnly && !withAttackSkill) ||
-      (!physical && definition.category !== "weapon-spell") ||
+      (caster && definition.category !== "weapon-spell") ||
       (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
     ) {
       continue;
@@ -713,6 +745,85 @@ function applyRiders(
       rules,
       surroundings,
     });
+    sourcePaysForRemoved(rider, attacker.statuses.get(status.id)?.sourceId, surroundings, events);
+    if (events.length > 0) {
+      fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
+    }
+  }
+}
+
+/**
+ * Order of Apostasy's price (#1975): the rider's status's source loses
+ * its share of its effective maximum Health, rounded up, for each status
+ * of the profession the rider's `events` removed, as Order of Undeath's
+ * owner does. Health loss, not damage: it can kill. A source dead or
+ * gone loses nothing; a status this attack spent has no source left.
+ */
+function sourcePaysForRemoved(
+  rider: AttackHitRider,
+  sourceId: string | undefined,
+  surroundings: Surroundings,
+  events: CombatEvent[],
+): void {
+  const price = rider.sourceLosesPerRemoved;
+  const source = sourceId === undefined ? undefined : surroundings.get(sourceId)?.combatant;
+  if (price === undefined || source === undefined) {
+    return;
+  }
+  const removed = events.filter(
+    (event) =>
+      event.kind === "status-removed" &&
+      getStatusDefinition(event.statusId).profession === price.profession,
+  ).length;
+  const each = Math.ceil((price.percentOfMax / 100) * effectiveMaxHealth(source));
+  for (let index = 0; index < removed; index += 1) {
+    loseHealth(source, each, "health-loss", events);
+  }
+}
+
+/**
+ * What a critical hit the attacker landed does to `victim` through its
+ * statuses (#1975): each `onCriticalHit`'s effects, with the attacker as
+ * caster, onto `fired` under its own skill. One that removed an
+ * enchantment costs its bearer `energyIfRemoved` Energy, or, short of
+ * it, ends; the removal stands. A dead attacker's do nothing.
+ */
+export function criticalHitRiders(
+  attacker: Combatant,
+  victim: Combatant,
+  rng: SimulationRng,
+  rules: CombatRules,
+  surroundings: Surroundings,
+  fired: FiredTrigger[],
+): void {
+  if (attacker.dead) {
+    return;
+  }
+  const active = attacker.statuses.active;
+  for (const status of [...active]) {
+    const rider = getStatusDefinition(status.id).onCriticalHit;
+    if (rider === undefined || isSuppressed(active, status)) {
+      continue;
+    }
+    const events = applyEffects(rider.effects, {
+      caster: attacker,
+      target: victim,
+      rng,
+      rules,
+      surroundings,
+    });
+    const removed = events.some(
+      (event) =>
+        event.kind === "status-removed" &&
+        getStatusDefinition(event.statusId).category === "enchantment",
+    );
+    if (removed && attacker.energy < rider.energyIfRemoved) {
+      attacker.statuses.end(status.id);
+      events.push({ kind: "status-expired", targetId: attacker.id, statusId: status.id });
+    } else if (removed && rider.energyIfRemoved > 0) {
+      attacker.energy -= rider.energyIfRemoved;
+      events.push({ kind: "energy-loss", targetId: attacker.id, amount: rider.energyIfRemoved });
+    }
     if (events.length > 0) {
       fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
     }
@@ -949,7 +1060,7 @@ function strike(
     return;
   }
   const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
-  if (!unblockable && blocks(victim, attacker.id, "melee", rng)) {
+  if (!unblockable && blocks(victim, attacker.id, "melee", false, rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     bearerFailedToHit(attacker, events);
     attackReached(victim, events);
@@ -975,6 +1086,7 @@ function strike(
       : { ...PLAIN_BLOW, bonus: aggregateModifiers(owner.statuses.active).minionDamageBonus };
   if (landBlow(snapshot, attacker, victim, blow, swing.exposed(victim), rng, rules, events)) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
+    criticalHitRiders(attacker, victim, rng, rules, swing.surroundings, fired);
   }
   events.push(
     ...attackHitRiders(
@@ -1190,7 +1302,7 @@ export function resolveAttackSkillOutcome(
       if (
         !unblockable &&
         (rule === undefined || !unblockableNow(rule.unblockable, caster, victim, surroundings)) &&
-        blocks(victim, caster.id, kind, rng)
+        blocks(victim, caster.id, kind, true, rng)
       ) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
         bearerFailedToHit(caster, events);
@@ -1224,6 +1336,7 @@ export function resolveAttackSkillOutcome(
         )
       ) {
         landedCritical(caster, snapshot.criticalStrikes, events);
+        criticalHitRiders(caster, victim, rng, rules, surroundings, fired);
         critical.push(victim);
       }
       events.push(

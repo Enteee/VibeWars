@@ -17,6 +17,9 @@
   --adrenaline-shade: rgb(0 0 0 / 65%);
   /* An elite skill's frame (#459). */
   --elite: #d4a72c;
+  /* A number an attribute scales, in skill text (#1932): GW1's green, on
+     the dark panels. A light theme must redefine it. */
+  --scaled: #7ee787;
   /* Enchantment markers (art direction palette). */
   --enchantment: #56d4dd;
   /* A shrine raise's invulnerability (art direction palette, #1233). */
@@ -1402,29 +1405,6 @@ body {
   gap: 0.35rem;
 }
 
-/* The Record screen (#1404): the last matches, one row each. */
-.record-table {
-  border-collapse: collapse;
-}
-
-.record-table th,
-.record-table td {
-  padding: 0.2rem 0.75rem 0.2rem 0;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.record-table th {
-  color: var(--ink-dim);
-  font-weight: normal;
-  border-bottom: 1px solid var(--line);
-}
-
-.record-table td {
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
 /* The menu's rail screens (#1525, #1522 variant C): the mode rail down the
    left edge, as tall as the screen body, and the screen's own beside it. */
 #screens:has(> .screen-rail) {
@@ -2503,20 +2483,23 @@ body {
 
 .editor-more {
   position: absolute;
-  z-index: 40;
+  /* Above an open Share or Load panel, so ⋯ can switch between them. */
+  z-index: 41;
   top: calc(100% + 0.3rem);
   right: 0;
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
   background: var(--bg);
   border: 1px solid var(--line);
   box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
 }
 
-/* Share (#572): one line of build text and Copy, under ⋯. */
-.editor-share {
+/* Share (#572): one line of build text and Copy, under ⋯; Load (#2004) the same. */
+.editor-share,
+.editor-load {
   position: absolute;
   z-index: 40;
   top: calc(100% + 0.3rem);
@@ -2524,6 +2507,7 @@ body {
   display: flex;
   gap: 0.3rem;
   width: min(28rem, 80vw);
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
   background: var(--bg);
   border: 1px solid var(--line);
@@ -2541,8 +2525,27 @@ body {
   font-size: 0.8rem;
 }
 
+/* Load GW1 code (#2004): the share line's place, its problems under it. */
+.editor-load {
+  flex-wrap: wrap;
+}
+
+.editor-load-problems {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #ffb3ae;
+  font-size: 0.85rem;
+}
+
+.editor-load-problems:empty {
+  display: none;
+}
+
 .editor-more[hidden],
 .editor-share[hidden],
+.editor-load[hidden],
 .problems-list[hidden] {
   display: none;
 }
@@ -2926,13 +2929,6 @@ body {
   min-width: 0;
 }
 
-/* Wrapped, not cut: a team column is narrow, and the line is the point. */
-.lobby-character {
-  color: var(--ink-dim);
-  font-size: 0.82rem;
-  overflow-wrap: anywhere;
-}
-
 .lobby-slot-empty {
   color: var(--ink-dim);
   font-style: italic;
@@ -2951,25 +2947,6 @@ body {
 .lobby-ready.is-ready {
   border-color: #7ee787;
   color: #7ee787;
-}
-
-/* A team's bot count (#1454), under its name: the host's − n +. */
-.lobby-bots {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-}
-
-.lobby-bot-count {
-  min-width: 1.5ch;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.lobby-bots button {
-  padding: 0.15rem 0.6rem;
-  font-size: 0.8rem;
 }
 
 /* A bot's tag (#1194), wherever its name shows: small, so it labels the
@@ -3167,11 +3144,6 @@ body {
 .team-lobby-seat-holder {
   align-self: center;
   font-size: 1.05rem;
-}
-
-.lobby-ready.bot-tag {
-  padding: 0.1rem 0.55rem;
-  font-size: 0.78rem;
 }
 
 /* Count and clock: top-centre, away from the skill bar, so checking the
@@ -3529,6 +3501,25 @@ body {
 
 .match-summary-table td.is-zero {
   color: var(--ink-dim);
+}
+
+/* Over the result banner after a team match (#1997): the countdown to what
+   comes next, and its one button, which takes clicks the banner does not. */
+.hud-end-line {
+  position: absolute;
+  top: calc(38% - 3.4rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  pointer-events: auto;
 }
 
 /* In the match, under the result banner; it takes no clicks. */
@@ -4626,8 +4617,10 @@ body.has-expanded-training #screens {
   line-height: 1.35;
 }
 
-.tip-scale {
-  color: var(--ink-dim);
+/* Bold as well as green, so it never relies on colour alone (#78). */
+.scaled-number {
+  color: var(--scaled);
+  font-weight: 700;
 }
 
 .tip-stats {
@@ -4882,43 +4875,281 @@ body.has-expanded-training #screens {
   gap: 0.5rem;
 }
 
-.armor-grid {
+/* The armor paper-doll (#2059): the figure on the left, a row per piece
+   on the right. */
+.paper-doll {
+  display: grid;
+  grid-template-columns: minmax(9rem, 11rem) 1fr;
+  align-items: start;
+  gap: 0.75rem;
+}
+
+.paper-doll-stage {
+  position: relative;
+  aspect-ratio: 200 / 360;
+  width: 100%;
+}
+
+.paper-doll-figure,
+.paper-doll-figure::after {
+  position: absolute;
+  inset: 0;
+  background: var(--figure) center / contain no-repeat;
+}
+
+/* The primary's colour, laid over the figure through its own shape. */
+.paper-doll-figure::after {
+  content: "";
+  background: var(--tint, var(--ink-dim));
+  mask: var(--figure) center / contain no-repeat;
+  opacity: 0.4;
+}
+
+.paper-doll-hand {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+/* The number sits on the piece; its icons run to its right. */
+.paper-doll-hotspot {
+  position: absolute;
+  transform: translate(-0.65rem, -50%);
+}
+
+.paper-doll-hotspot {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.1rem 0.2rem 0.1rem 0.1rem;
+  font: inherit;
+  color: var(--ink);
+  white-space: nowrap;
+  cursor: pointer;
+  background: rgb(14 17 22 / 80%);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.paper-doll-hotspot:hover,
+.paper-doll-hotspot:focus-visible,
+.paper-doll-hotspot[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+.paper-doll-hotspot-number {
+  display: inline-grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  font-size: 0.7rem;
+  color: var(--bg);
+  background: var(--ink);
+  border-radius: 50%;
+}
+
+.paper-doll-hotspot-icons {
+  display: flex;
+  gap: 0.1rem;
+}
+
+.paper-doll-hotspot .gear-icon,
+.paper-doll-empty {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.paper-doll-hotspot .gear-icon[data-tier] {
+  height: 20px;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+
+.paper-doll-empty {
+  display: inline-block;
+  box-sizing: border-box;
+  border: 1px dashed var(--ink-dim);
+  border-radius: 3px;
+}
+
+.paper-doll-hand .gear-icon {
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+
+.paper-doll-summary {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
-/* Fixed first column so the five rows line up; the two slots share what
-   is left rather than sizing to their contents. */
-.armor-row {
-  display: grid;
-  grid-template-columns: 4rem 1fr 1fr;
+.paper-doll-row {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem 0.5rem;
 }
 
-/* The piece the next insignia or rune goes to (#570), outlined as a
-   picked bar slot is. */
-.armor-row {
-  border-radius: 4px;
+.paper-doll-row-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.35rem;
+  padding: 0.2rem 0.35rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink);
+  text-align: left;
   cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 
-.armor-row.is-selected {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.paper-doll-row-pick:hover,
+.paper-doll-row-pick:focus-visible,
+.paper-doll-row.is-open .paper-doll-row-pick {
+  border-color: var(--accent);
 }
 
-.gear-box-target {
+.paper-doll-row-name {
+  color: var(--ink-dim);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paper-doll-row-dot,
+.paper-doll-none {
+  color: var(--ink-dim);
+}
+
+/* The headgear's +1 (#1140), on its own row: inline and small. */
+.paper-doll-headgear .editor-field {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+}
+
+.paper-doll-row-part {
+  display: inline-flex;
+  align-items: center;
+}
+
+.paper-doll-popover {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.3rem 0.6rem;
+  width: 36rem;
+  max-width: calc(100vw - 16px);
+  max-height: min(34rem, calc(100vh - 16px));
+  padding: 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
+}
+
+.paper-doll-popover[hidden] {
+  display: none;
+}
+
+.paper-doll-popover-title {
+  grid-column: 1 / -1;
+  font-weight: bold;
+}
+
+.paper-doll-popover-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 0;
+}
+
+.paper-doll-popover-heading {
+  margin-top: 0.2rem;
+  color: var(--ink-dim);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.paper-doll-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.paper-doll-choice {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  align-items: center;
+  column-gap: 0.3rem;
+  padding: 0.15rem 0.3rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+}
+
+.paper-doll-choice:hover,
+.paper-doll-choice:focus-visible {
+  border-color: var(--line);
+}
+
+.paper-doll-choice.is-chosen {
+  border-color: var(--accent);
+  background: rgb(89 194 255 / 12%);
+}
+
+.paper-doll-choice .gear-icon {
+  grid-row: span 2;
+  margin: 0;
+}
+
+.paper-doll-choice-note {
+  grid-column: 2;
   color: var(--ink-dim);
   font-size: 0.72rem;
 }
 
-.armor-slot-name {
-  color: var(--ink-dim);
-  font-size: 0.76rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.paper-doll-choice-note:empty {
+  display: none;
+}
+
+.paper-doll-apply-all {
+  align-self: flex-start;
+}
+
+/* A phone (desktop first, it just has to work): the rows under the
+   figure, and the popover a sheet along the bottom. */
+@media (max-width: 700px) {
+  .paper-doll {
+    grid-template-columns: 1fr;
+  }
+
+  .paper-doll-stage {
+    max-width: 11rem;
+    margin: 0 auto;
+  }
+
+  .paper-doll-popover {
+    inset: auto 0 0;
+    width: auto;
+    max-width: none;
+    max-height: 60vh;
+  }
 }
 
 .gear-stats {
@@ -5023,6 +5254,31 @@ body.has-expanded-training #screens {
   height: 1.4em;
   margin-right: 0.35em;
   vertical-align: -0.3em;
+}
+
+/* A rune's tier (#2058): one, two or three pips in the padding under the stone. */
+.gear-icon[data-tier] {
+  --pip: radial-gradient(circle, var(--ink, #d7dee8) 52%, transparent 58%);
+  padding-bottom: 0.3em;
+  background-image: var(--pip);
+  background-size: 0.26em 0.26em;
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+}
+
+.gear-icon[data-tier="major"] {
+  background-image: var(--pip), var(--pip);
+  background-position:
+    38% 100%,
+    62% 100%;
+}
+
+.gear-icon[data-tier="superior"] {
+  background-image: var(--pip), var(--pip), var(--pip);
+  background-position:
+    26% 100%,
+    50% 100%,
+    74% 100%;
 }
 
 .gear-box .skill-box-name {
@@ -5887,7 +6143,6 @@ body:has(#app > .chat) .now-playing {
   gap: 0.3rem;
   width: min(24rem, 40vw);
   font-size: 0.78rem;
-  transition: opacity 400ms ease;
 }
 
 #viewport > .chat {
@@ -5899,28 +6154,73 @@ body:has(#app > .chat) .now-playing {
   left: calc(76px + 0.9rem);
 }
 
-/* In a match the arena is under the panel: every click and wheel goes
-   there, and the box shows only while it is open (Enter). A name mutes
-   only then. */
-.chat.in-match:not(.is-open) {
+/* Closed (#2018): only the lines and the icon. Every click and wheel goes
+   through the lines to what is under them, the arena or a menu; the icon
+   alone takes one. A name mutes only while open. */
+.chat:not(.is-open) {
   pointer-events: none;
 }
 
-.chat.in-match:not(.is-open) .chat-form {
+.chat:not(.is-open) .chat-form {
   display: none;
 }
 
-/* Idle in a match: faded, until a line comes or the box opens. */
-.chat.is-idle {
-  opacity: 0.35;
+/* Closed, a line fades out once it has shown CHAT_LINE_SHOWN_SECONDS;
+   opening shows every kept line again. */
+.chat:not(.is-open) .chat-line {
+  transition: opacity 1s linear;
+}
+
+.chat:not(.is-open) .chat-line.is-faded {
+  opacity: 0;
+}
+
+.chat:not(.is-open) .chat-lines {
+  overflow: hidden;
+  text-shadow: 0 1px 2px #000;
+}
+
+/* Open: a clear box around the lines and the input. */
+.chat.is-open {
+  padding: 0.4rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+}
+
+.chat-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.chat-toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0.15rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.chat-toggle img {
+  width: 100%;
+  height: 100%;
+}
+
+.chat-toggle:hover,
+.chat-toggle:focus-visible,
+.chat-toggle[aria-expanded="true"] {
+  border-color: var(--accent);
 }
 
 .chat-lines {
   max-height: 12rem;
   overflow-y: auto;
   padding: 0.3rem 0.5rem;
-  background: rgb(14 17 22 / 75%);
-  border: 1px solid var(--line);
   overflow-wrap: anywhere;
 }
 
@@ -5975,6 +6275,7 @@ body:has(#app > .chat) .now-playing {
 
 .chat-form {
   display: flex;
+  flex: 1 1 auto;
   gap: 0.3rem;
 }
 
@@ -6107,11 +6408,6 @@ body:has(#app > .chat) .now-playing {
 .versus-player-text {
   display: flex;
   flex-direction: column;
-}
-
-.versus-player-character {
-  color: var(--ink-dim);
-  font-size: 0.8rem;
 }
 
 .versus-countdown {

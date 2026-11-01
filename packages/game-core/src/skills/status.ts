@@ -39,6 +39,7 @@ import {
   type AttributeScaling,
   type Combatant,
   type ConditionalBonus,
+  type CreatureTemplate,
   type Skill,
   type SkillEffect,
   type SkillType,
@@ -141,11 +142,13 @@ export function clampPips(pips: number): number {
 /**
  * A chance to block incoming attacks (#534): a blocked attack does nothing.
  * `against` says which attacks: melee blows, projectiles, or both. Spells
- * are never blocked.
+ * are never blocked. `attackSkillsOnly` (#1978): only an attack skill's
+ * blow or shot, never a plain swing: Wary Stance's "block attack skills".
  */
 export interface BlockRule {
   readonly chance: number;
   readonly against: "all" | "melee" | "projectile";
+  readonly attackSkillsOnly?: true;
 }
 
 /**
@@ -183,6 +186,10 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     if (typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
     }
+  }
+  // Jagged Bones's horror stands up at its caster's rank (#1986).
+  if (definition.replacedOnDeathBy !== undefined && definition.attribute !== undefined) {
+    attributes.add(definition.attribute);
   }
   return [...attributes];
 }
@@ -538,6 +545,12 @@ export interface StatusDefinition {
    * are below 50% Health". `undefined`: at any health.
    */
   readonly blockBelowHealth: number | undefined;
+  /**
+   * `block` holds only while the bearer is under another status of one of
+   * these categories or ids (#1978): Soldier's Defense's "while under the
+   * effects of a shout or chant". `undefined`: always.
+   */
+  readonly blockWhileUnder: Pick<WhileUnder, "categories" | "statusIds"> | undefined;
   /** Added to the bearer's chance to land a critical hit (#988): Critical Eye's 0.13. */
   readonly criticalChanceBonus: number;
   /** Energy the bearer gains on each critical hit it lands, beyond Critical Strikes' (#988). */
@@ -552,6 +565,14 @@ export interface StatusDefinition {
    * the duration it was applied with (#1315): Critical Defenses'.
    */
   readonly refreshesOnCritical: boolean;
+  /**
+   * What each critical hit the bearer lands does to its victim (#1975):
+   * Dark Apostasy's strip. `effects` resolve with the bearer as caster
+   * and the victim as target, logged as `skillId`. If they removed an
+   * enchantment, the bearer pays `energyIfRemoved` Energy, or, short of
+   * it, the status ends; the removal stands. `undefined`: none.
+   */
+  readonly onCriticalHit: CriticalHitRider | undefined;
   /**
    * It ends after this many incoming attacks, each a hit or a block
    * (#524); `undefined`: only its duration ends it. Counted on each
@@ -764,6 +785,21 @@ export interface StatusDefinition {
    */
   readonly redirectsPhysicalDamage: number;
   /**
+   * The share of each hit on the bearer, of any type, that its closest
+   * living minion takes instead (#1986): Dark Bond's 0.75, rounded down.
+   * No minion as it lands: the bearer takes it. 0: none.
+   */
+  readonly redirectsDamageToMinion: number;
+  /**
+   * What stands up where the bearer, a minion, dies (#1986): Jagged
+   * Bones's Jagged Horror, for the minion's owner, at the level the
+   * status's source's rank in its `attribute` makes, kept in its `ranks`.
+   * Beside the minion's own replacement. A destroyed minion did not die:
+   * none. `undefined`: none.
+   */
+  readonly replacedOnDeathBy:
+    { readonly creature: CreatureTemplate; readonly count: number } | undefined;
+  /**
    * The most of its max health the bearer can lose to one hit (#936):
    * Protective Spirit's 0.1. Applied last in `mitigate`, so it caps
    * every typed damage packet; degeneration and sacrifice are not hits.
@@ -778,6 +814,11 @@ export interface StatusDefinition {
   readonly attackDamageCapFraction: number | undefined;
   /** Taken off every life steal on the bearer (#1265): Union's 15. Never below 0. */
   readonly lifeStealReduction: number;
+  /**
+   * Every Health sacrifice the bearer makes is multiplied by this (#1979):
+   * Awaken the Blood's 1.5. Not "lose N Health", which is no sacrifice. 1: none.
+   */
+  readonly sacrificeMultiplier: number;
   /**
    * A knockdown of the bearer lasts at least this long (#1265):
    * Earthbind's 3 s. `undefined`: as long as it says.
@@ -892,6 +933,14 @@ export interface StatusDefinition {
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
    */
   readonly incomingHexCastTimeMultiplier: number;
+  /**
+   * Energy off each enchantment cast on the bearer (#1975): Air of
+   * Enchantment's 10. Taken off last, after the caster's own discounts
+   * and glyphs, never below 1; a cost already at 1 or less stays. Only a
+   * single-target enchantment whose chosen target is the bearer, any
+   * caster's, the bearer's own on itself too. 0: none.
+   */
+  readonly enchantmentsOnBearerCostLess: number;
   /**
    * Damage added to each spirit's attack that hits the bearer (#1270):
    * Painful Bond's 18. Armor-ignoring, on the same blow; a missed or
@@ -1239,6 +1288,11 @@ export interface OwnSkillModifier {
   readonly energySurcharge: number;
   /** On activation time. 1: none. */
   readonly activationMultiplier: number;
+  /**
+   * Seconds off the activation time, after every multiplier, never below
+   * 0 (#1975): Jaundiced Gaze's "casts 1 second faster". 0: none.
+   */
+  readonly activationSecondsLess: number;
   /** The share taken off the recharge, as `spellRechargeFaster`. 0: none. */
   readonly rechargeFaster: number;
   /**
@@ -1268,6 +1322,7 @@ export interface OwnSkillBoost {
   readonly energyFloor: number;
   readonly energySurcharge: number;
   readonly activationMultiplier: number;
+  readonly activationSecondsLess: number;
   readonly rechargeFaster: number;
   readonly rechargeSlower: number;
   readonly durationMultiplier: number;
@@ -1283,6 +1338,7 @@ export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
   energyFloor: 1,
   energySurcharge: 0,
   activationMultiplier: 1,
+  activationSecondsLess: 0,
   rechargeFaster: 0,
   rechargeSlower: 0,
   durationMultiplier: 1,
@@ -1317,6 +1373,7 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
         energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
         energySurcharge: boost.energySurcharge + modifier.energySurcharge,
         activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
+        activationSecondsLess: boost.activationSecondsLess + modifier.activationSecondsLess,
         rechargeFaster: Math.max(boost.rechargeFaster, modifier.rechargeFaster),
         rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
         durationMultiplier: boost.durationMultiplier * modifier.durationMultiplier,
@@ -1453,6 +1510,23 @@ export interface AttackHitRider {
   readonly skillId: string;
   readonly attackSkillsOnly: boolean;
   readonly weapon: AttackWeaponClass | undefined;
+  /**
+   * The status's source loses this share of its effective maximum Health,
+   * rounded up, for each status of `profession` the rider removed
+   * (#1975): Order of Apostasy's 4% per Monk enchantment. Health loss,
+   * not damage; a dead source loses nothing. `undefined`: none.
+   */
+  readonly sourceLosesPerRemoved?: {
+    readonly profession: ProfessionId;
+    readonly percentOfMax: number;
+  };
+}
+
+/** `StatusDefinition.onCriticalHit` (#1975). */
+export interface CriticalHitRider {
+  readonly effects: readonly SkillEffect[];
+  readonly energyIfRemoved: number;
+  readonly skillId: string;
 }
 
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */
@@ -1640,7 +1714,17 @@ export type StatusChange =
       readonly offenderId: string | undefined;
       readonly fired: readonly AnsweringTrigger[];
     }
-  | { readonly kind: "redirected-damage"; readonly toId: string; readonly amount: number }
+  /**
+   * A share of a hit on the bearer (#1108), for `toId`, its bond's source,
+   * or, `toClosestMinion`, for the bearer's closest living minion as it
+   * lands (#1986): Dark Bond's.
+   */
+  | {
+      readonly kind: "redirected-damage";
+      readonly toId: string;
+      readonly amount: number;
+      readonly toClosestMinion: boolean;
+    }
   /** A status of `toId`'s changed an outcome, and `toId` pays `amount` health (#1265). */
   | {
       readonly kind: "charged-source";
@@ -2762,17 +2846,30 @@ export class StatusSet {
   }
 
   /**
-   * Split a physical hit of `amount` on the bearer (#1108): with a status
-   * that redirects, the newest, its share, rounded down, is recorded for
-   * its source and the rest returned; without one, all of it.
+   * Split a hit of `amount` on the bearer (#1108, #1986): with a status
+   * whose rule takes it, the newest, its share, rounded down, is recorded
+   * and the rest returned; without one, all of it. A bond on physical
+   * hits (Symbiotic Bond) sends to its source and takes only a
+   * `physical` one; one on any hit (Dark Bond) to the closest minion.
    */
-  public redirect(amount: number): number {
+  public redirect(amount: number, physical: boolean): number {
     for (const status of [...this.#statuses.values()].reverse()) {
-      const share = getStatusDefinition(status.id).redirectsPhysicalDamage;
+      const definition = getStatusDefinition(status.id);
+      const toClosestMinion = definition.redirectsDamageToMinion > 0;
+      const share = toClosestMinion
+        ? definition.redirectsDamageToMinion
+        : physical
+          ? definition.redirectsPhysicalDamage
+          : 0;
       if (share > 0) {
         const sent = Math.floor(amount * share);
         if (sent > 0) {
-          this.#changes.push({ kind: "redirected-damage", toId: status.sourceId, amount: sent });
+          this.#changes.push({
+            kind: "redirected-damage",
+            toId: status.sourceId,
+            amount: sent,
+            toClosestMinion,
+          });
         }
         return amount - sent;
       }
@@ -3194,12 +3291,14 @@ export class StatusSet {
 
   /**
    * How many are up of a category; with a `profession`, only that
-   * profession's (#1021); with an `attribute`, only that attribute's (#1765).
+   * profession's (#1021); with an `attribute`, only that attribute's (#1765);
+   * `excluding` is not counted (#1979).
    */
   public countByCategory(
     category: StatusCategory,
     profession?: ProfessionId,
     attribute?: string,
+    excluding?: StatusId,
   ): number {
     let count = 0;
     for (const status of this.#statuses.values()) {
@@ -3207,7 +3306,8 @@ export class StatusSet {
       if (
         definition.category === category &&
         (profession === undefined || definition.profession === profession) &&
-        (attribute === undefined || definition.attribute === attribute)
+        (attribute === undefined || definition.attribute === attribute) &&
+        status.id !== excluding
       ) {
         count += 1;
       }
@@ -3443,6 +3543,8 @@ export interface StatusModifiers {
   readonly attackDamageCapFraction: number | undefined;
   /** Every status's, summed (#1265). */
   readonly lifeStealReduction: number;
+  /** Every status's, multiplied (#1979). */
+  readonly sacrificeMultiplier: number;
   /** The longest single status's (#1265); `undefined`: none. */
   readonly knockdownMinSeconds: number | undefined;
   /** Every status's, summed (#936). */
@@ -3579,6 +3681,7 @@ export function aggregateModifiers(
   let maxDamageFractionPerHit: number | undefined;
   let attackDamageCapFraction: number | undefined;
   let lifeStealReduction = 0;
+  let sacrificeMultiplier = 1;
   let knockdownMinSeconds: number | undefined;
   let extraStrikesPerHit = 0;
   let adrenalineGainFaster = 0;
@@ -3670,6 +3773,7 @@ export function aggregateModifiers(
       attackDamageCapFraction = def.attackDamageCapFraction;
     }
     lifeStealReduction += def.lifeStealReduction;
+    sacrificeMultiplier *= def.sacrificeMultiplier;
     if (
       def.knockdownMinSeconds !== undefined &&
       (knockdownMinSeconds === undefined || def.knockdownMinSeconds > knockdownMinSeconds)
@@ -3735,6 +3839,7 @@ export function aggregateModifiers(
     maxDamageFractionPerHit,
     attackDamageCapFraction,
     lifeStealReduction,
+    sacrificeMultiplier,
     knockdownMinSeconds,
     extraStrikesPerHit,
     spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),

@@ -182,7 +182,6 @@ function benchMatch(
     team,
     skillBar: BENCH_LOADOUT.skillBar,
     ...bench,
-    baseEnergyPips: BENCH_LOADOUT.baseEnergyPips,
     // Nobody dies, so everyone keeps walking and swinging the whole run.
     maxHealth: 1e7,
     spawn: at,
@@ -198,7 +197,6 @@ function benchMatch(
       ...body(spawn.id, spawn.team, spawn.at),
       skillBar: casterBar(loadout, index, skills),
       ...specOf(loadout),
-      baseEnergyPips: loadout.baseEnergyPips,
       maxHealth: 1e7,
       // Full, and never short: energy never decides what is cast.
       maxEnergy: 1e6,

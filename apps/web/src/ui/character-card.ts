@@ -141,7 +141,9 @@ export interface TeamFigureCardOptions {
   readonly members: readonly TeamFigureMember[];
   /** Under the members: the lobby's voter tokens and count, "Your vote ✓". */
   readonly footer?: readonly HTMLElement[];
-  /** In its corner: Team Play's Edit. */
+  /** After the title: the random starter team's Random (#2036). */
+  readonly tags?: readonly HTMLElement[];
+  /** In its corner: Team Builder's Edit. */
   readonly actions?: readonly HTMLElement[];
   readonly onOpen?: () => void;
   readonly pressed?: boolean;
@@ -152,7 +154,7 @@ export interface TeamFigureCardOptions {
 
 /**
  * The one Team card (#1864): a Team Build with its characters, a row
- * each, on Team Play, in the Team Lobby and wherever a team is picked.
+ * each, on Team Builder, in the Team Lobby and wherever a team is picked.
  */
 export function teamFigureCard({
   title,

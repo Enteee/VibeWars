@@ -67,22 +67,6 @@ export async function rollStarterCharacter(
 }
 
 /**
- * A clone of the rolled starter character `source` (#1457): not a copy
- * but a fresh roll, as Reroll would give, under the new `id`, and a
- * random name none of `taken` (the roster's names). `source` is not
- * touched; the caller saves the clone.
- */
-export function rollClone(
-  source: StoredCharacter,
-  random: () => number,
-  id: string,
-  now: number,
-  taken: readonly string[],
-): StoredCharacter {
-  return rollCharacter(random, taken, id, now, source);
-}
-
-/**
  * `current` as another starter build, never one with its professions:
  * the same id, and a new random name, none of `taken` (the roster's
  * names, its own among them). Edits made to it are lost.

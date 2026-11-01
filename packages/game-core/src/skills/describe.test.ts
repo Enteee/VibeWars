@@ -7,7 +7,7 @@ import {
   chainRequirementText,
   describeSkill,
   describeStatus,
-  formatScalingRange,
+  type DescriptionPart,
   secondPerson,
   TRIGGER_WHEN,
 } from "./describe.js";
@@ -910,6 +910,11 @@ describe("attack skills (#417)", () => {
     ).toEqual([
       {
         text: "Applies Patient Spirit for 2s (when it expires: heals for 102)",
+        parts: [
+          "Applies Patient Spirit for 2s (when it expires: heals for ",
+          { scaled: "102", attributeId: "monk.healing-prayers" },
+          ")",
+        ],
         magnitude: undefined,
       },
     ]);
@@ -936,6 +941,7 @@ describe("attack skills (#417)", () => {
     const atTwelve = describeSkill(chop, new Map([["warrior.axe-mastery", 12]]));
     expect(atTwelve.effects[0]).toEqual({
       text: "+16 damage",
+      parts: ["+", { scaled: "16", attributeId: "warrior.axe-mastery" }, " damage"],
       magnitude: { current: 16, atZero: 1, atTwelve: 16.2, attributeId: "warrior.axe-mastery" },
     });
     expect(atTwelve.headline).toBe("+16 damage");
@@ -1098,40 +1104,92 @@ describe("describeStatus", () => {
   });
 });
 
-describe("formatScalingRange", () => {
-  it("shows the span a scaled effect covers", () => {
-    const described = describeSkill(skill("elementalist.fireball"));
-    const magnitude = described.effects[0]?.magnitude;
-    expect(magnitude).toBeDefined();
-    if (magnitude === undefined) {
-      return;
+describe("scaled numbers in the prose (#1932)", () => {
+  const at = (rank: number, attributeId = "elementalist.fire-magic") =>
+    new Map([[attributeId, rank]]);
+  const scaledParts = (parts: readonly DescriptionPart[]) =>
+    parts.filter((part) => typeof part !== "string");
+  const joined = (parts: readonly DescriptionPart[]) =>
+    parts.map((part) => (typeof part === "string" ? part : part.scaled)).join("");
+
+  it.each([0, 9, 12])("splits out Healing Signet's heal at rank %i", (rank) => {
+    const ranks = new Map([["warrior.tactics", rank]]);
+    const [heal] = describeSkill(skill("warrior.healing-signet"), ranks).effects;
+    expect(heal?.magnitude?.current).toBeDefined();
+    expect(scaledParts(heal?.parts ?? [])).toEqual([
+      { scaled: String(heal?.magnitude?.current), attributeId: "warrior.tactics" },
+    ]);
+    expect(joined(heal?.parts ?? [])).toBe(heal?.text);
+  });
+
+  it("draws a status stat at the live rank: Endure Pain's Health (#1976)", () => {
+    const ranks = at(12, "warrior.strength");
+    const parts = describeSkill(skill("warrior.endure-pain"), ranks).effects.flatMap(
+      (effect) => effect.parts,
+    );
+    expect(scaledParts(parts)).toContainEqual({ scaled: "258", attributeId: "warrior.strength" });
+  });
+
+  it("draws a status's attack rider at the live rank: Avatar of Grenth's life steal", () => {
+    const stolen = (rank: number) =>
+      describeSkill(skill("dervish.avatar-of-grenth"), at(rank, "dervish.mysticism"))
+        .effects.flatMap(({ parts }) => parts)
+        .map((part, index, parts) => ({ part, next: parts[index + 1] }))
+        .filter(
+          ({ part, next }) =>
+            typeof part !== "string" && typeof next === "string" && next.startsWith(" Health"),
+        )
+        .map(({ part }) => (typeof part === "string" ? part : part.scaled));
+    expect(stolen(0)).toEqual(["0"]);
+    expect(stolen(12)).toEqual(["10"]);
+  });
+
+  it("splits out a summon's level and health, and both ends of a minion's damage", () => {
+    const ranks = new Map([["necromancer.death-magic", 10]]);
+    const lines = describeSkill(skill("necromancer.animate-bone-horror"), ranks).effects;
+    const summon = lines.find((line) => line.text.includes("Bone Horror ("));
+    expect(scaledParts(summon?.parts ?? []).map((part) => part.attributeId)).toEqual([
+      "necromancer.death-magic",
+      "necromancer.death-magic",
+    ]);
+    const damage = lines.find((line) => line.text.startsWith("Its attacks deal"));
+    expect(damage?.text).toMatch(/\d+–\d+ damage/);
+    expect(scaledParts(damage?.parts ?? [])).toHaveLength(2);
+  });
+
+  it("leaves a No Attribute skill's numbers plain", () => {
+    for (const line of describeSkill(skill("common.resurrection-signet")).effects) {
+      expect(line.parts).toEqual([line.text]);
     }
-    expect(formatScalingRange(magnitude)).toBe("7…91 at 12");
   });
 
-  it("rounds the ends as the live value does, so rank 12 reads what it gives", () => {
-    const scaling = { attributeId: "test", atZero: 1, atTwelve: 8.2 };
-    const atTwelve = resolveMagnitudeAtRanks({ scaling }, new Map([["test", 12]]));
-    expect(atTwelve).toBe(8);
-    expect(
-      formatScalingRange({
-        current: atTwelve,
-        atZero: scaling.atZero,
-        atTwelve: scaling.atTwelve,
-        attributeId: scaling.attributeId,
-      }),
-    ).toBe("1…8 at 12");
+  it("splits the headline too", () => {
+    const fireball = describeSkill(skill("elementalist.fireball"), at(12));
+    expect(fireball.headlineParts).toEqual([
+      { scaled: "91", attributeId: "elementalist.fire-magic" },
+      " fire damage",
+    ]);
   });
 
-  it("returns nothing for a flat magnitude, rather than a fake range", () => {
-    expect(
-      formatScalingRange({
-        current: 5,
-        atZero: undefined,
-        atTwelve: undefined,
-        attributeId: undefined,
-      }),
-    ).toBeUndefined();
+  it("joins back to the text, never leaks a mark, and splits every scaled line", () => {
+    const leaks = (text: string) => text.includes("\u0001") || text.includes("\u0002");
+    for (const each of IMPLEMENTED_SKILLS) {
+      for (const rank of [0, 12]) {
+        const described = describeSkill(each, at(rank, each.attributeId ?? "none"));
+        expect(leaks(described.headline ?? ""), each.id).toBe(false);
+        expect(joined(described.headlineParts ?? []), each.id).toBe(described.headline ?? "");
+        for (const line of described.effects) {
+          expect(leaks(line.text), each.id).toBe(false);
+          expect(joined(line.parts), each.id).toBe(line.text);
+          if (line.magnitude?.atZero !== undefined) {
+            expect(scaledParts(line.parts).length, `${each.id}: ${line.text}`).toBeGreaterThan(0);
+          }
+        }
+      }
+    }
+    for (const id of Object.keys(STATUS_DEFINITIONS)) {
+      expect(leaks(describeStatus(id)), id).toBe(false);
+    }
   });
 });
 
@@ -1325,5 +1383,82 @@ describe("blocks that pay or pay off (#1974)", () => {
       "If blocked: knocks down for 2s",
       "If blocked: deals 29 damage",
     ]);
+  });
+});
+
+describe("enchantment party moves (#1975)", () => {
+  const texts = (id: string): string[] => describeSkill(skill(id)).effects.map(({ text }) => text);
+
+  it("says what each strips, cheapens or costs, at rank 12", () => {
+    expect(texts("monk.air-of-enchantment")).toEqual([
+      "Applies Air of Enchantment for 9s " +
+        "(enchantments cast on the bearer cost 10 less Energy, minimum 1)",
+    ]);
+    expect(texts("necromancer.order-of-apostasy")).toEqual([
+      "Applies Order of Apostasy for 5s (foes your physical attacks hit lose 1 enchantment, " +
+        "for each Monk enchantment removed, Order of Apostasy's caster loses 4% maximum Health)",
+    ]);
+    expect(texts("assassin.dark-apostasy")).toEqual([
+      "Applies Dark Apostasy for 14s (every time you land a critical hit: removes 1 enchantment " +
+        "from your target, if one is removed, you lose 4 Energy or it ends)",
+    ]);
+    expect(texts("necromancer.jaundiced-gaze")).toEqual([
+      "Removes 1 enchantment",
+      "If it removes an enchantment: applies Jaundiced Gaze to you for 16s " +
+        "(your next enchantment costs 8 less Energy (minimum 0) and casts 1s faster)",
+    ]);
+  });
+});
+
+describe("Tactics stances that pay on a block (#1978)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(skill(id), new Map([["warrior.tactics", 12]])).effects.map(({ text }) => text);
+
+  it("says which attacks each blocks and what it pays, at rank 12", () => {
+    expect(texts("warrior.wary-stance")).toEqual([
+      "For 5s, 100% chance to block attack skills, ends if you use a skill. Whenever it blocks: gain 1 strike of adrenaline. Whenever it blocks: gain 5 energy",
+    ]);
+    expect(texts("warrior.soldiers-defense")).toEqual([
+      "For 5s, 75% chance to block attacks while under a shout or a chant. Whenever it blocks: gain 1 strike of adrenaline",
+    ]);
+    expect(texts("warrior.defensive-stance")).toEqual([
+      "For 4s, 75% chance to block attacks. When it ends: gain 1 strike of adrenaline for each melee attack skill on your bar (at most 3)",
+    ]);
+    expect(texts("warrior.auspicious-parry")).toEqual([
+      "For 8s, 100% chance to block attacks, ends after 1 incoming attack. When it ends: gain 3 strikes of adrenaline",
+    ]);
+  });
+});
+
+describe("minion care (#1986)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(
+      skill(id),
+      new Map([
+        ["necromancer.death-magic", 12],
+        ["necromancer.blood-magic", 12],
+      ]),
+    ).effects.map(({ text }) => text);
+
+  it("says who it reaches and what each costs, at rank 12", () => {
+    expect(texts("necromancer.blood-of-the-master")).toEqual([
+      "You sacrifice 5% of your maximum health",
+      "All allied minions gain 99 Health; you sacrifice 2% of your maximum health per minion",
+    ]);
+    expect(texts("necromancer.veratas-sacrifice")).toEqual([
+      "You sacrifice 15% of your maximum health",
+      "Your minions gain Verata's Sacrifice for 9s (+10 Health regeneration) " +
+        "and transfer all their conditions to you",
+      "If you control 3 or fewer minions: this skill recharges instantly",
+    ]);
+    expect(texts("necromancer.dark-bond")).toEqual([
+      "Applies Dark Bond for 54s (75% of the damage you take goes to your closest minion)",
+    ]);
+    expect(texts("necromancer.jagged-bones")).toEqual([
+      "Applies Jagged Bones for 60s " +
+        "(when it dies, 1 Jagged Horror (level 12, 320 Health) stands up in its place)",
+    ]);
+    // Feast for the Dead's target is one of them, and left out.
+    expect(texts("necromancer.feast-for-the-dead")[0]).toMatch(/^Your other minions/);
   });
 });

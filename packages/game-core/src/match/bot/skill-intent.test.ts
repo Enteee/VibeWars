@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "../../skills/catalog.js";
-import { botUses, onlyInterrupts, removedCategories, takenOffFoe } from "./skill-intent.js";
+import {
+  botUses,
+  onlyInterrupts,
+  removedCategories,
+  setupOf,
+  takenOffFoe,
+} from "./skill-intent.js";
 
 /**
  * Skills a bot never uses (#1189). A new skill is either given a use by
@@ -207,6 +213,9 @@ const NO_BOT_USE = new Set([
   // against one kind of damage, and a spirit's adrenaline aura are none
   // the bot weighs.
   "necromancer.blood-is-power",
+  // Awaken the Blood (#1979) makes sacrifices larger: no attack status
+  // for a boost (#2000) to weigh.
+  "necromancer.awaken-the-blood",
   "elementalist.ward-against-elements",
   "ranger.infuriating-heat",
   // Nature rituals 1 (#1745): auras on both teams the bot does not weigh,
@@ -319,6 +328,9 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("necromancer.order-of-pain"))).toEqual(["boost"]);
     expect(botUses(skill("warrior.for-great-justice"))).toEqual(["boost"]);
     expect(botUses(skill("warrior.frenzy"))).toEqual(["boost"]);
+    // Blood Magic orders (#1979): a steal on each hit, a strike more of adrenaline.
+    expect(botUses(skill("necromancer.order-of-the-vampire"))).toEqual(["boost"]);
+    expect(botUses(skill("necromancer.dark-fury"))).toEqual(["boost"]);
     // A glyph, an attunement or a run acts on no blow.
     expect(botUses(skill("elementalist.glyph-of-energy"))).toEqual([]);
     expect(botUses(skill("elementalist.fire-attunement"))).toEqual([]);
@@ -334,6 +346,21 @@ describe("botUses (#1189)", () => {
     expect(takenOffFoe(skill("necromancer.pain-of-disenchantment"))).toBe("enchantment");
     // Anything else is cast at any foe.
     expect(takenOffFoe(skill("elementalist.fireball"))).toBeUndefined();
+  });
+
+  it("knows each setup and the status it puts on (#1975)", () => {
+    expect(setupOf(skill("monk.air-of-enchantment"))).toEqual({
+      setup: "cheaper-enchantments",
+      statusId: "air-of-enchantment",
+    });
+    expect(setupOf(skill("necromancer.order-of-apostasy"))?.setup).toBe("party-strips");
+    expect(setupOf(skill("assassin.dark-apostasy"))?.setup).toBe("critical-strips");
+    expect(botUses(skill("assassin.dark-apostasy"))).toEqual(["setup"]);
+    // Order of Pain's rider is no setup; Jaundiced Gaze is a strip at an
+    // enchanted foe.
+    expect(setupOf(skill("necromancer.order-of-pain"))).toBeUndefined();
+    expect(botUses(skill("necromancer.jaundiced-gaze"))).toEqual(["offence"]);
+    expect(takenOffFoe(skill("necromancer.jaundiced-gaze"))).toBe("enchantment");
   });
 
   it("holds a skill whose only role is interrupting", () => {

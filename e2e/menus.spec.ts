@@ -179,7 +179,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
 /** A rolled character's random name (#1149): "Kaelen Ashvale". */
 const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
-test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone rolls a new one", async ({
+test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
   page,
 }) => {
   await openMenu(page);
@@ -216,13 +216,13 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(name).toHaveText(ROLLED_NAME);
   await expect(card).toHaveCount(1);
 
-  // It has Clone, not Edit (#1147): Clone opens the editor on a fresh
-  // roll under another random name (#1457), one even for a double-click.
+  // It has Clone, not Edit (#1147): Clone opens the editor on a copy of
+  // the character shown (#2038), one even for a double-click.
   const rolled = await name.innerText();
+  const professions = await card.locator(".play-card-line").innerText();
   await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();
-  await expect(page.locator("input.editor-name")).toHaveValue(ROLLED_NAME);
-  await expect(page.locator("input.editor-name")).not.toHaveValue(rolled);
+  await expect(page.locator("input.editor-name")).toHaveValue(`${rolled} (copy)`);
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -232,6 +232,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const original = page.locator(".character-card", { hasText: rolled });
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
   await expect(pyro.locator(".roster-clone, .roster-reroll")).toHaveCount(0);
+  await expect(pyro.locator(".play-card-line")).toHaveText(professions);
   await expect(original.locator(".roster-reroll")).toHaveCount(1);
   // The rerolled one is still chosen.
   await openRail(page, "Random Arena");
@@ -283,9 +284,9 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   // Random Arena only chooses: nothing to edit there.
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Record is Random Arena's own button in the top bar; Options is its ⚙ (#1272), Music its ♪ (#1453).
+  // Random Arena has no button of its own (#2019); Options is its ⚙ (#1272), Music its ♪ (#1453).
   const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
-  await expect(own).toHaveText(["Record"]);
+  await expect(own).toHaveCount(0);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
 
@@ -298,50 +299,50 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   await expect(starter).toHaveClass(/is-selected/);
 });
 
-test("#1272: on a phone, the menu's ⋯ holds Record and the chevron is Back", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 800 });
-  await openMenu(page);
-  const more = page.locator("#topbar .topbar-more");
-  const record = page
-    .locator("#topbar .topbar-screen-actions")
-    .getByRole("button", { name: "Record", exact: true });
+for (const screen of ["Random Arena", "Character Builder"] as const) {
+  test(`#2053: on a phone, ${screen} folds the lobby code and Join into a ⋯, in full`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMenu(page);
+    await openRail(page, screen);
+    const bar = page.locator("#topbar");
+    await expect(bar.getByRole("button", { name: "Record", exact: true })).toHaveCount(0);
+    const code = bar.locator(".topbar-lobby-code");
+    await expect(code).toBeHidden();
+    await bar.locator(".topbar-more").click();
+    await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+    const box = await code.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
+    // Nothing inside the box is cut off: the whole code shows.
+    const clipped = await code.evaluate((node) => node.scrollWidth > node.clientWidth);
+    expect(clipped).toBe(false);
+    await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
+    await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
+  });
+}
 
-  // Folded away until ⋯ opens; the global icons with them.
-  await expect(record).toBeHidden();
-  await expect(page.locator("#topbar .topbar-options")).toBeHidden();
-  await more.click();
-  await expect(more).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator("#topbar .topbar-options")).toBeVisible();
-  await record.click();
-  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
-  await expect(more).toHaveAttribute("aria-expanded", "false");
-
-  // Only the place shows, not the crumbs before it.
-  await expect(page.locator("#topbar .topbar-crumb", { hasText: "VibeWars" })).toBeHidden();
-
-  const back = page.locator("#topbar").getByRole("button", { name: "Back", exact: true });
-  await expect(back).toHaveText("‹", { useInnerText: true });
-  await back.click();
-  await expect(menuHeading(page)).toBeVisible();
-});
-
-test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the global icons on screen", async ({
+test("#1525: on a phone, the join's ⋯, Lobby Key, Join and the global icons stay on screen", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await openMenu(page);
   await openRail(page, "Team Builder");
   const bar = page.locator("#topbar");
-  await expect(bar.locator(".topbar-more")).toBeHidden();
-  await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
-  await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
-  // The rightmost icon still inside the bar, and nothing scrolls sideways.
-  const right = await bar.locator(".topbar-fullscreen").evaluate((node) => {
-    return node.getBoundingClientRect().right;
-  });
+  const more = bar.locator(".topbar-more");
+  await expect(more).toBeVisible();
+  const right = await more.evaluate((node) => node.getBoundingClientRect().right);
   expect(right).toBeLessThanOrEqual(320);
   const overflow = await bar.evaluate((node) => node.scrollWidth - node.clientWidth);
   expect(overflow).toBe(0);
+  await more.click();
+  await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
 });
 
 test("#1525: the rail switches screens and keeps the last; each mode hosts on its own maps", async ({
@@ -381,9 +382,11 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   // GvG plays one map, so its host sees it named, not picked.
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
 
-  // Heroes' Ascent picks among its three.
+  // Heroes' Ascent starts on its first map, and Team Arena draws one for
+  // each match: neither is picked (#1994).
   await openRail(page, "Heroes' Ascent");
-  const options = page.locator("#topbar .lobby-map select option");
-  await expect(options).toHaveCount(3);
-  await expect(page.locator("#topbar .lobby-map select")).toHaveValue("relic-temples");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: Relic Temples \(/);
+  await expect(page.locator("#topbar .lobby-map select")).toHaveCount(0);
+  await openRail(page, "Team Arena");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: random (Team Arena)");
 });

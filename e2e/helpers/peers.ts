@@ -55,30 +55,35 @@ export async function hostLobby(page: Page): Promise<string> {
  * Save the active character as a Team Build of one, named after it, so a
  * side of one can propose it in the Team Lobby and play it (#1525): every
  * hosted lobby is a Team Lobby, and a spec plays the character it
- * brought. Ends on Team Builder; returns the Team Build's name.
+ * brought. `size` copies of it make a side of that many with no bot
+ * (#2029). Ends on Team Builder; returns the Team Build's name.
  */
-export async function saveSoloTeam(page: Page): Promise<string> {
+export async function saveSoloTeam(page: Page, size = 1): Promise<string> {
   await openRail(page, "Random Arena");
   const picked = page.locator('.play-card-open[aria-pressed="true"] .play-card-name');
   const name = (await picked.textContent())?.trim() ?? "";
   expect(name, "a character is picked").not.toBe("");
   await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
-  await page.getByLabel("team name").fill(`Solo ${name}`);
-  await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
+  const teamName = size === 1 ? `Solo ${name}` : `${String(size)} × ${name}`;
+  await page.getByLabel("team name").fill(teamName);
+  for (let copy = 0; copy < size; copy += 1) {
+    await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
+  }
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
-  return `Solo ${name}`;
+  return teamName;
 }
 
 /**
  * The Team Lobby (#1460) of sides of one: each page proposes its Team
- * Build, everyone is ready, then each takes its side's one seat and is
- * ready again. Resolves once each page's HUD shows the player.
+ * Build, everyone is ready, then each takes its side's seat `seat`, the
+ * first unless said, and is ready again. Resolves once each page's HUD
+ * shows the player.
  */
 export async function playOwnTeams(
-  players: readonly { readonly page: Page; readonly team: string }[],
+  players: readonly { readonly page: Page; readonly team: string; readonly seat?: number }[],
 ): Promise<void> {
   for (const { page, team } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
@@ -91,9 +96,12 @@ export async function playOwnTeams(
   for (const { page } of players) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
-  for (const { page } of players) {
+  for (const { page, seat } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    await page.locator(".team-lobby-seat").first().click();
+    await page
+      .locator(".team-lobby-seat")
+      .nth(seat ?? 0)
+      .click();
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
   for (const { page } of players) {
@@ -133,7 +141,8 @@ export async function playHouseTeams(
 
 /**
  * A match in a lobby of one, which `canStart` allows: what Quick Match
- * was for the tests that need nobody else. The player plays the active
+ * was for the tests that need nobody else, but for the one bot of the
+ * house team its empty side plays (#2029). The player plays the active
  * character, through a Team Build of one (#1525). Resolves once the HUD
  * shows the player, so the match is really on. Starts from the menu.
  */

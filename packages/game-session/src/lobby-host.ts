@@ -44,7 +44,6 @@ import {
 } from "@vibewars/game-protocol";
 
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
-import { lobbyCharacter } from "./lobby-character.js";
 import type { LobbyCharacter, PartyPlanSeat } from "./lobby-connection.js";
 import { keyGated } from "./key-gate.js";
 import { createLocalPeer } from "./local-peer.js";
@@ -110,8 +109,8 @@ interface PartyProposal {
 
 /** One side of a Team Lobby (#1458), as its host keeps it. */
 interface TeamSide {
-  /** Its humans and bots as the Team Lobby began. */
-  readonly size: number;
+  /** Its team mode's size; `null` in a Hosted Game, which plays what it chose (#2029). */
+  readonly size: number | null;
   /** Each proposer's builds, `size` legal ones, in the order proposed. */
   readonly proposals: Map<string, readonly PlayerBuild[]>;
   /** Each proposer's slots of its next proposal, as they arrive, one a message. */
@@ -293,12 +292,11 @@ interface Member {
   guildCape: WireCape | null;
   team: 0 | 1 | null;
   ready: boolean;
-  character: LobbyCharacter | null;
   /** The seat key it was admitted on, in a queued lobby (#882). */
   readonly seatKey: string | null;
   /**
    * A bot's build (#1193): it has no peer, is always ready and plays
-   * this, which the host refigures while the lobby waits (#1454).
+   * this, a slot nobody claimed (#2029).
    */
   bot: PlayerBuild | null;
 }
@@ -518,7 +516,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       team: member.team,
       ready: isReady(member),
       isHost: member.id === local.selfId,
-      character: member.character,
       bot: member.bot !== null,
       away: away.has(member.id),
     })),
@@ -548,10 +545,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   const broadcast = (): void => {
     tellReach();
-    // Before the start a bot is nobody's: it follows its side (#1454).
-    if (phase === "waiting") {
-      figureBots();
-    }
     if (teamLobby === undefined) {
       transport.send("lobby-state", state(undefined));
       return;
@@ -650,6 +643,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         build,
       });
     }
+    // Team Arena draws its map for each match (#1994); a queued lobby's
+    // is its group's.
+    if (mode === "team-arena" && queued === undefined) {
+      mapId = pick(options.modeMaps[mode]) ?? mapId;
+    }
     const room = scopeTransport(transport);
     try {
       match = {
@@ -667,7 +665,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // The caller's to report; the lobby only has to stay usable.
       void room.leave();
       phase = "waiting";
+      // Back as before the vote (#2086): no retry adds a second set of
+      // bots, and nobody stays ready to start the same failure again.
+      dropCodedBots();
+      clearReady();
       note("start-rejected", "the match could not be created", local.selfId);
+      broadcast();
       return;
     }
     phase = "in-match";
@@ -687,6 +690,21 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   };
 
+  /**
+   * A coded lobby's bots were its match's alone (#2029): the next plays
+   * its own unclaimed slots. A queued lobby's belong to its queue plan.
+   */
+  const dropCodedBots = (): void => {
+    if (queued !== undefined) {
+      return;
+    }
+    for (const member of [...members.values()]) {
+      if (member.bot !== null) {
+        members.delete(member.id);
+      }
+    }
+  };
+
   /** Everyone re-confirms: a stage, or what they agreed to, changed. */
   const clearReady = (): void => {
     for (const member of members.values()) {
@@ -695,25 +713,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
 
   /**
-   * Everyone ready, in a lobby hosted from Team Play (#1458): each side's
-   * size is frozen, and its vote begins. A side over a GW1 team is turned
-   * down, since its proposals would not fit on the wire.
+   * Everyone ready, in a lobby hosted from Team Play (#1458): its vote
+   * begins. A team mode's side is the mode's size; a Hosted Game's is the
+   * Team Build it chooses (#2029). A side with more players than it
+   * plays is turned down. A party's side alone queues (#1766).
    */
-  const beginTeamLobby = (
-    sizes: readonly number[] = ([0, 1] as const).map(
-      (team) => [...members.values()].filter((member) => member.team === team).length,
-    ),
-    forQueue = false,
-  ): boolean => {
-    if (sizes.some((size) => size > MAX_TEAM_LOBBY_SIDE)) {
-      note(
-        "start-rejected",
-        `a team plays at most ${String(MAX_TEAM_LOBBY_SIDE)}, bots included`,
-        local.selfId,
-      );
+  const beginTeamLobby = (forQueue = false): boolean => {
+    const queueMode = teamQueueModeOf(mode);
+    const size = queueMode === undefined ? null : teamSizeOf(queueMode);
+    const most = size ?? MAX_TEAM_LOBBY_SIDE;
+    if (([0, 1] as const).some((team) => humansOn(team).length > most)) {
+      note("start-rejected", `a team plays at most ${String(most)}`, local.selfId);
       return false;
     }
-    const side = (size: number): TeamSide => ({
+    const side = (size: number | null): TeamSide => ({
       size,
       proposals: new Map(),
       pending: new Map(),
@@ -725,12 +738,16 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     teamLobby = {
       stage: "vote",
       endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
-      sides: [side(sizes[0] ?? 0), side(sizes[1] ?? 0)],
+      sides: [side(size), side(forQueue ? 0 : size)],
       forQueue,
     };
     clearReady();
     return true;
   };
+
+  /** Whether `team` plays the house team: nobody proposed, or nobody is there to. */
+  const playsHouse = (team: 0 | 1, side: TeamSide): boolean =>
+    side.proposals.size === 0 || humansOn(team).length === 0;
 
   /** One of `options`, at random from the lobby's RNG. */
   const pick = <T>(options: readonly T[]): T | undefined =>
@@ -740,14 +757,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * The Team Build `team` plays, and why: the most votes; on a tie the
    * captain's vote if it is one of the tied, else one of them at random;
    * with no votes any proposal at random; with no proposal, or nobody to
-   * make one, the house team: the starter builds in order, round and round.
+   * make one, the house team of `houseSize`: the starter builds in order,
+   * round and round.
    */
-  const chooseFor = (team: 0 | 1, side: TeamSide): NonNullable<TeamSide["chosen"]> => {
-    if (side.proposals.size === 0 || humansOn(team).length === 0) {
+  const chooseFor = (
+    team: 0 | 1,
+    side: TeamSide,
+    houseSize: number,
+  ): NonNullable<TeamSide["chosen"]> => {
+    if (playsHouse(team, side)) {
       return {
         proposerId: null,
         reason: "house",
-        builds: Array.from({ length: side.size }, (_, slot) => {
+        builds: Array.from({ length: houseSize }, (_, slot) => {
           const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
           if (build === undefined) {
             throw new Error("there are no starter builds for a house team");
@@ -784,12 +806,22 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const endStage = (lobby: TeamLobby): void => {
     if (lobby.stage === "vote") {
-      for (const team of [0, 1] as const) {
+      // A Hosted Game's house team plays as many as the other side chose
+      // (#2029); with neither chosen, 4 or the larger side's players.
+      const order = playsHouse(0, lobby.sides[0]) ? ([1, 0] as const) : ([0, 1] as const);
+      for (const team of order) {
         const side = lobby.sides[team];
+        const other = team === 0 ? 1 : 0;
+        const otherSize =
+          lobby.sides[other].chosen?.builds.length ?? Math.max(4, humansOn(other).length);
         // A proposal still arriving is not one.
         side.pending.clear();
-        side.chosen = chooseFor(team, side);
-        side.claims = Array.from({ length: side.size }, () => null);
+        side.chosen = chooseFor(
+          team,
+          side,
+          side.size ?? Math.max(otherSize, humansOn(team).length),
+        );
+        side.claims = Array.from({ length: side.chosen.builds.length }, () => null);
       }
       lobby.stage = "claim";
       lobby.endsAt = clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000;
@@ -812,16 +844,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     for (const team of [0, 1] as const) {
       const side = lobby.sides[team];
       const builds = side.chosen?.builds ?? [];
-      // The side's bots, in their order, play every slot nobody holds.
-      const claims = claimsOf(team, side);
-      const bots = [...members.values()].filter(
-        (member) => member.bot !== null && member.team === team,
-      );
-      for (const [slot, holder] of claims.entries()) {
-        const playedBy = holder ?? bots.shift()?.id;
+      // A bot, made now, plays every slot nobody holds (#2029).
+      for (const [slot, holder] of claimsOf(team, side).entries()) {
         const build = builds[slot];
-        if (playedBy !== undefined && build !== undefined) {
-          assigned.set(playedBy, build);
+        if (build !== undefined) {
+          assigned.set(holder ?? addBot(team), build);
         }
       }
     }
@@ -847,10 +874,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     for (const member of members.values()) {
       const build = assigned.get(member.id);
       if (member.bot !== null && build !== undefined) {
-        const character = characterOf(build);
         member.bot = build;
-        member.name = character.name;
-        member.character = character;
+        member.name = characterOf(build).name;
       }
     }
   };
@@ -1054,10 +1079,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           side.pending.delete(member.id);
           return dropProposal(side, member.id);
         }
-        // Exactly the side's size, each build held to the rule a hello's is.
+        // Exactly the side's size, or in a Hosted Game any size with a
+        // slot for each of its players (#2029), each build held to the
+        // rule a hello's is.
         const build = parsePlayerBuild(command.build);
         if (
-          command.size !== side.size ||
+          command.size !== (side.size ?? command.size) ||
+          command.size < humansOn(member.team).length ||
           build === undefined ||
           validatePlayerBuild(build, RULESET.attributes).length > 0
         ) {
@@ -1065,11 +1093,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           refuse(member.id, "invalid-proposal");
           return false;
         }
+        const arriving = side.pending.get(member.id);
         const slots =
-          side.pending.get(member.id) ?? Array.from({ length: side.size }, () => undefined);
+          arriving?.length === command.size
+            ? arriving
+            : Array.from({ length: command.size }, () => undefined);
         slots[command.slot] = build;
         const builds = slots.flatMap((slot) => (slot === undefined ? [] : [slot]));
-        if (builds.length < side.size) {
+        if (builds.length < command.size) {
           side.pending.set(member.id, slots);
           return false;
         }
@@ -1108,7 +1139,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           return true;
         }
         const { slot } = command;
-        if (!Number.isInteger(slot) || slot < 0 || slot >= side.size) {
+        if (!Number.isInteger(slot) || slot < 0 || slot >= side.claims.length) {
           refuse(member.id, "invalid-slot");
           return false;
         }
@@ -1150,6 +1181,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return changed;
       }
       case "select-map":
+        // Only a Hosted Game is picked (#1994); every other mode chooses its own.
+        if (mode !== "hosted-game") {
+          refuse(member.id, "not-pickable");
+          return false;
+        }
         // The host decides what maps exist, and only its own player picks.
         if (member.id !== local.selfId || !mapIds.includes(command.mapId)) {
           return false;
@@ -1160,14 +1196,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           other.ready = false;
         }
         return true;
-      case "set-character": {
-        const character = lobbyCharacter(command.character);
-        if (JSON.stringify(member.character) === JSON.stringify(character)) {
-          return false;
-        }
-        member.character = character;
-        return true;
-      }
       case "select-mode": {
         if (member.id !== local.selfId) {
           refuse(member.id, "not-host");
@@ -1179,8 +1207,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         mode = command.mode;
         const [first = defaultMap, ...rest] = options.modeMaps[mode];
         // In the same broadcast as the mode: no member ever sees a mode
-        // with a map outside it.
-        if (mapId !== first && !rest.includes(mapId)) {
+        // with a map outside it. Only a Hosted Game keeps a picked one
+        // (#1994): Heroes' Ascent starts on its first, and Team Arena's is a
+        // placeholder until its draw.
+        if (mapId !== first && (mode !== "hosted-game" || !rest.includes(mapId))) {
           mapId = first;
           for (const other of members.values()) {
             other.ready = false;
@@ -1218,54 +1248,22 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         if (matchmaking === undefined || queueMode === undefined) {
           return false;
         }
-        // The party is every human here, on the one side; its seats
-        // nobody claims are bots, so a lobby's own bots go.
+        // The party is everyone here, on the one side; its seats nobody
+        // claims are bots.
         const size = teamSizeOf(queueMode);
-        const party = [...members.values()].filter((other) => other.bot === null);
-        if (party.length > size) {
+        if (members.size > size) {
           note("start-rejected", `a side plays ${String(size)}`, member.id);
           return false;
         }
-        for (const other of [...members.values()]) {
-          if (other.bot === null) {
-            other.team = 0;
-          } else {
-            members.delete(other.id);
-          }
+        for (const other of members.values()) {
+          other.team = 0;
         }
-        return beginTeamLobby([size, 0], true);
+        return beginTeamLobby(true);
       }
       case "leave-queue":
       case "house-team":
         // A queued party's, and this one is not.
         return false;
-      case "set-bots": {
-        if (member.id !== local.selfId) {
-          refuse(member.id, "not-host");
-          return false;
-        }
-        const { team, count } = command;
-        if (!Number.isInteger(count) || count < 0) {
-          refuse(member.id, "invalid-bot");
-          return false;
-        }
-        const side = [...members.values()].filter(
-          (other) => other.bot !== null && other.team === team,
-        );
-        // Bots take seats like anyone.
-        if (members.size - side.length + count > MAX_LOBBY_PLAYERS) {
-          refuse(member.id, "lobby-full");
-          return false;
-        }
-        // Fewer: the last added go first.
-        for (const bot of side.slice(count)) {
-          members.delete(bot.id);
-        }
-        for (let added = side.length; added < count; added += 1) {
-          addBot(team);
-        }
-        return side.length !== count;
-      }
       case "propose":
       case "vote":
       case "claim":
@@ -1298,7 +1296,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   /**
    * Seat a bot on `team` (#1193), under an id no member has, and say
-   * which; `figureBots` makes it someone.
+   * which; the build it is given makes it someone.
    */
   const addBot = (team: 0 | 1): string => {
     const id = freeBotId();
@@ -1310,40 +1308,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       guildCape: null,
       team,
       ready: true,
-      character: null,
       seatKey: null,
       bot: build,
     });
     return id;
-  };
-
-  /**
-   * Give each side's bots their builds and names (#1454): bot k on a side,
-   * in the order they were added, plays the k-th starter build whose
-   * profession no player on that side plays, and past those all of them
-   * in turn, round and round. Each is `"<Profession> Bot"`, numbered from
-   * 2 when the name is taken, in the order the bots were added.
-   */
-  const figureBots = (): void => {
-    const builds = new Map<string, PlayerBuild>();
-    for (const team of [0, 1] as const) {
-      const side = [...members.values()].filter((member) => member.team === team);
-      const played = new Set(
-        side.flatMap((member) =>
-          member.bot === null && member.character !== null ? [member.character.primary] : [],
-        ),
-      );
-      const lacking = STARTER_BUILDS.filter((build) => !played.has(build.primaryProfession));
-      side
-        .filter((member) => member.bot !== null)
-        .forEach((bot, k) => {
-          const build = lacking[k] ?? STARTER_BUILDS[(k - lacking.length) % STARTER_BUILDS.length];
-          if (build !== undefined) {
-            builds.set(bot.id, build);
-          }
-        });
-    }
-    nameBots(builds);
   };
 
   /**
@@ -1369,11 +1337,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       names.add(name);
       bot.bot = build;
       bot.name = name;
-      bot.character = {
-        name,
-        primary: build.primaryProfession,
-        secondary: build.secondaryProfession ?? null,
-      };
     }
   };
 
@@ -1395,7 +1358,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ...sanitizeGuild(join),
       team,
       ready: false,
-      character: lobbyCharacter(join.character),
       seatKey,
       bot: null,
     });
@@ -1629,7 +1591,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const guild = sanitizeGuild(join);
       returning.guildTag = guild.guildTag;
       returning.guildCape = guild.guildCape;
-      returning.character = lobbyCharacter(join.character);
       returning.ready = false;
       // The proposals its side lists, and the chosen one, it was told of
       // while here (#1811): it may have missed some.
@@ -1696,12 +1657,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (phase !== "waiting" && phase !== "team-lobby") {
       return;
     }
-    // In a queued lobby nothing else is chosen, and bots are a coded lobby's
-    // (#1193), or a team mode's side's own, by its plan.
+    // In a queued lobby nothing else is chosen.
     if (queued !== undefined) {
-      if (command.kind === "set-bots") {
-        refuse(from, "invalid-bot");
-      }
       return;
     }
     if (teamLobby === undefined ? apply(member, command) : applyTeam(teamLobby, member, command)) {
@@ -1767,7 +1724,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /**
    * `peerId` gone for good: it left, or did not come back in time. In a
    * Team Lobby (#1458) its proposal, vote and claim go with it, and a bot
-   * takes its seat, so its side stays the size it proposed for.
+   * plays its slot (#2029).
    */
   const remove = (peerId: string): void => {
     const leaving = members.get(peerId);
@@ -1785,11 +1742,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       dropProposal(side, peerId);
       side.votes.delete(peerId);
       side.claims = side.claims.map((holder) => (holder === peerId ? null : holder));
-      // A party's free seats are bots already (#1766).
-      if (!teamLobby.forQueue) {
-        addBot(leaving.team);
-        figureBots();
-      }
       if (everyoneReady()) {
         endStage(teamLobby);
         return;
@@ -2115,14 +2067,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         if (queued !== undefined) {
           beginVote(queued, winningTeam);
         }
-        // A party lobby's bots were its house match's alone (#1766).
-        if (matchmaking !== undefined && teamQueueModeOf(mode) !== undefined) {
-          for (const member of [...members.values()]) {
-            if (member.bot !== null) {
-              members.delete(member.id);
-            }
-          }
-        }
+        dropCodedBots();
         // Whoever is still away is not coming back to this lobby.
         dropAway(() => true);
         for (const member of members.values()) {

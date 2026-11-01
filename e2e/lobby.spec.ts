@@ -6,6 +6,7 @@ import {
   openPeers,
   openToFriends,
   playHouseTeams,
+  playOwnTeams,
   saveSoloTeam,
 } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
@@ -53,18 +54,24 @@ async function joinLobby(page: Page, playerName: string, code: string): Promise<
 
 /**
  * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
- * the host starts; both play the house team (#1525), side by side when they
- * share one.
+ * the host starts; each side proposes a Team Build as big as its players
+ * (#1525), so no bot plays beside them (#2029). A side nobody is on plays
+ * the house team, as many as the other.
  */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
-  const code = await hostLobby(host, "Host");
+  await openMenu(host, "Host");
+  const team = await saveSoloTeam(host, guestTeam === 1 ? 2 : 1);
+  const code = await hostFromMenu(host);
   await joinLobby(guest, "Guest", code);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
-  await playHouseTeams([host, guest], guestTeam === 1 ? [0, 1] : [0, 0]);
+  await playOwnTeams([
+    { page: host, team },
+    { page: guest, team, seat: guestTeam === 1 ? 1 : 0 },
+  ]);
   return code;
 }
 
@@ -389,7 +396,7 @@ test("a player who quits early is told the match still runs, until it ends", asy
   }
 });
 
-test("a player who quits a 1v1 forfeits it, and is back in an open lobby (#846)", async ({
+test("a player who quits a 1v1 forfeits it, and is back in an open lobby; its winner follows (#846, #1997)", async ({
   browser,
 }) => {
   // Annihilation: the quitter's team has nobody left, so it is wiped and
@@ -407,6 +414,13 @@ test("a player who quits a 1v1 forfeits it, and is back in an open lobby (#846)"
     await expect(host.locator(".lobby-panel")).toBeVisible();
     await expect(host.locator(".lobby-running")).toHaveCount(0);
     await expect(host.getByRole("button", { name: "Ready", exact: true })).toBeEnabled();
+
+    // The guest won: a coded lobby's match counts down back to it, or Now (#1997).
+    const line = guest.locator(".hud-end-line");
+    await expect(line).toContainText(/Back to lobby in \d+ s/);
+    await line.getByRole("button", { name: "Now" }).click();
+    await expect(guest.locator(".lobby-panel")).toBeVisible();
+    await expect(line).toHaveCount(0);
   } finally {
     await context.close();
   }
@@ -431,17 +445,16 @@ test("a refused clipboard leaves the code selected, to copy by hand (#580)", asy
   expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(code);
 });
 
-test("each row shows the character a player brings, an empty bar too, and Start says who it waits for (#580)", async ({
+test("each row shows a player's name alone, and Start says who it waits for (#580, #2029)", async ({
   browser,
 }) => {
   const { context, pages } = await openPeers(browser, 2);
   const [host, guest] = pages as [Page, Page];
 
   try {
-    // The host plays a saved character with a skill; the guest one with an
-    // empty bar, a build like any other (#1290), so it lists by its own
-    // name. Both pages share one storage, so the guest picks its own after
-    // the host is in.
+    // Each picked a character, but a lobby lists names alone: what a
+    // player plays is the Team Build slot they claim (#2029). Both pages
+    // share one storage, so the guest picks its own after the host is in.
     await host.goto("./");
     await openRail(host, "Character Builder");
     await host.getByRole("button", { name: "New character", exact: true }).click();
@@ -461,8 +474,10 @@ test("each row shows the character a player brings, an empty bar too, and Start 
     await guest.getByRole("button", { name: "join team 2" }).click();
     const hostRow = guest.locator(".lobby-team").nth(0).locator(".lobby-slot");
     const guestRow = host.locator(".lobby-team").nth(1).locator(".lobby-slot");
-    await expect(hostRow.locator(".lobby-character")).toHaveText("Cynn · Warrior");
-    await expect(guestRow.locator(".lobby-character")).toHaveText("Blank · Warrior");
+    await expect(hostRow.locator(".player-label-name")).toHaveText("Host");
+    await expect(guestRow.locator(".player-label-name")).toHaveText("Guest");
+    await expect(host.locator(".lobby-panel")).not.toContainText("Cynn");
+    await expect(guest.locator(".lobby-panel")).not.toContainText("Blank");
     await expect(guestRow.locator(".lobby-ready")).toHaveText("Not ready");
 
     await host.getByRole("button", { name: "Ready", exact: true }).click();
@@ -506,8 +521,6 @@ test("a match plays the seat the host took, not a character selected after joini
 
     await host.getByRole("button", { name: "join team 1" }).click();
     await guest.getByRole("button", { name: "join team 2" }).click();
-    const hostRow = host.locator(".lobby-team").nth(0).locator(".lobby-slot");
-    await expect(hostRow.locator(".lobby-character")).toHaveText("Cynn · Warrior");
     await host.getByRole("button", { name: "Ready", exact: true }).click();
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
@@ -565,30 +578,24 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
   }
 });
 
-test("the host gives the other team a bot; it plays, named and tagged BOT (#1194, #1454)", async ({
+test("a bot plays every slot nobody claims, tagged BOT in the match alone (#1194, #2029)", async ({
   page,
 }) => {
   await hostLobby(page, "Host");
   await page.getByRole("button", { name: "join team 1" }).click();
-  await page.getByRole("button", { name: "one bot more on team 2" }).click();
-
-  const team = page.locator(".lobby-team").nth(1);
-  await expect(team.locator(".lobby-bot-count")).toHaveText("1");
-  // Nobody on its side plays one, so the first starter build: Warrior.
-  const row = team.locator(".lobby-slot", { hasText: "Warrior Bot" });
-  await expect(row.locator(".bot-tag")).toHaveText("BOT");
-  // Its subtitle is the professions alone, not its name again (#1241).
-  await expect(row.locator(".lobby-character")).toHaveText(/^Warrior\b/);
-  await expect(row.locator(".lobby-character")).not.toContainText("Bot");
+  // No bot count: the host adds none, and the lobby lists people only.
+  await expect(page.locator(".lobby-bots")).toHaveCount(0);
+  await expect(page.locator(".lobby-team").nth(1).locator(".lobby-slot")).toHaveCount(0);
+  await expect(page.locator(".bot-tag")).toHaveCount(0);
 
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
   await playHouseTeams([page]);
 
-  // The only foe in the arena is the bot, playing its house team's first
-  // slot under that character's name (#1458).
+  // Every foe in the arena is a bot, playing its house team's slot under
+  // that character's name (#1458), cut short when long.
   await page.keyboard.press(key("target-closest"));
-  await expect(page.locator(".hud-target-text")).toHaveText("Warrior/Monk");
+  await expect(page.locator(".hud-target-text")).toHaveText(/^[A-Z][a-z]+(\/[A-Z][a-z]+|…)$/);
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
 });

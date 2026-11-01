@@ -39,8 +39,9 @@ You have **200 points** to spend. Each rank of an attribute costs more
 than the last, up to rank 12; the row shows what the next one costs.
 Twelve, twelve and three spends all of it. Runes and headgear can add up
 to four more ranks on top; see [Equipment](equipment.md). Raising the
-attribute a skill uses makes it stronger, and the numbers in its
-description change as you spend.
+attribute a skill uses makes it stronger: numbers that grow with the
+attribute are shown in green and bold, at your current ranks including
+runes and headgear.
 
 In a fight your ranks can change for a while. Weakness takes one off
 each. Some hexes set a foe's attributes to 0, and Master of Magic sets
@@ -130,13 +131,16 @@ In the editor's **⋯** menu, **Share** gives your build as a line of
 text, and **Share as GW1 code** as a GW1 template code. Press **Copy**
 and send it.
 
-To take one in, paste it anywhere in the editor that is not a text
-field. Both kinds work. A GW1 skill VibeWars does not have yet arrives as
-an empty slot. The build is yours once you press **Save**.
+To take one in, choose **Load GW1 code** under **⋯**, paste the code
+and press **Load**. If it cannot load, it says why under the field. As a
+shortcut, you can also paste a code anywhere in the editor that is not a
+text field. Both kinds of code work either way. A GW1 skill VibeWars
+does not have yet arrives as an empty slot. The build is yours once you
+press **Save**.
 
 **Save** keeps your build and takes you back to where you came from.
 **Esc** leaves without saving, and asks first if you changed anything.
-**Share**, **Duplicate** and **Delete** are under **⋯**.
+**Share**, **Load GW1 code**, **Duplicate** and **Delete** are under **⋯**.
 
 A team code is pasted on **Team Builder** instead.
 
@@ -144,7 +148,7 @@ A team code is pasted on **Team Builder** instead.
 
 A **team build** is a team of its own characters, made on **Team
 Builder** and kept apart from your own characters. Each one is a card
-there and on each team mode: **New team build** makes one, and a click
+there, and only there: **New team build** makes one, and a click
 on a card, or its **Edit**, opens it. You propose one in the
 [Team Lobby](modes.md#team-lobby). Add a member
 with **New character**, or **Add** one of your characters to copy its
@@ -154,3 +158,5 @@ build editor; its **Save** puts it back in the team, and the team's own
 **Save** keeps it all and takes you back to Team Builder. **Esc** leaves
 without saving, and asks first. The team's **Share**, **Duplicate** and
 **Delete** are under **⋯**.
+Your first start rolls one ready-made team, marked **Random**: its
+**Reroll** swaps in another, and **Clone** gives you a copy to edit.

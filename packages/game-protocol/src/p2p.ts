@@ -859,7 +859,6 @@ export interface PeerLobbyJoin {
   readonly guildTag: string | null;
   /** As `PeerHello.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
-  readonly character: WireLobbyCharacter | null;
   /**
    * The seat's proof in a queued lobby (#871, ADR-0032 §6); `null` in a
    * coded lobby, which refuses one.
@@ -992,7 +991,6 @@ export interface WireLobbyPlayer {
   readonly ready: boolean;
   /** The host's own player: the one who picks the map and starts. */
   readonly isHost: boolean;
-  readonly character: WireLobbyCharacter | null;
   /** A bot the host added (#1193): no peer, always ready, never the host. */
   readonly bot: boolean;
   /** Its peer dropped (#1764): its seat is held while it may come back. */
@@ -1046,8 +1044,12 @@ export interface WireTeamLobby {
 
 /** One side of a Team Lobby, as only its own members see it. */
 export interface WireTeamSide {
-  /** Its humans and bots as the Team Lobby began: every proposal is this many. */
-  readonly size: number;
+  /**
+   * The size every proposal is: a team mode's (#2029). `null` in a Hosted
+   * Game, where a side proposes any size up to `MAX_TEAM_LOBBY_SIDE`, no
+   * smaller than its humans, and plays the one it chose.
+   */
+  readonly size: number | null;
   /** Who breaks a tie; `null` for a side with no humans. */
   readonly captainId: string | null;
   /** In `"vote"`, in the order they were proposed, at most one per member; `[]` in `"claim"`. */
@@ -1103,11 +1105,6 @@ export type WireLobbyCommand =
   | { readonly kind: "select-map"; readonly mapId: string }
   /** Host only (#1526): the lobby's mode; a map outside it moves to the mode's first. */
   | { readonly kind: "select-mode"; readonly mode: LobbyMode }
-  /**
-   * The character this member now brings (#1526): the lobby outlives a
-   * pick on the menu. `null` is a starter build.
-   */
-  | { readonly kind: "set-character"; readonly character: WireLobbyCharacter | null }
   | { readonly kind: "start" }
   /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
@@ -1117,11 +1114,6 @@ export type WireLobbyCommand =
   | { readonly kind: "find-match" }
   | { readonly kind: "leave-queue" }
   | { readonly kind: "house-team" }
-  /**
-   * Host only (#1454): `team` has `count` bots, an integer from 0; the
-   * host picks what they play.
-   */
-  | { readonly kind: "set-bots"; readonly team: 0 | 1; readonly count: number }
   /**
    * In a Team Lobby's vote (#1458): slot `slot` of a Team Build of `size`,
    * its build opaque here. One build a message, so a side of large builds
@@ -1174,10 +1166,10 @@ export const LOBBY_REFUSALS = [
   "not-admitted",
   "ticket-used",
   "fell-through",
-  // A bot command (#1193) from anyone but the host; one whose count is no
-  // integer from 0 (#1454), or sent in a queued lobby.
+  // A host's command (a mode, a match search) from anyone but the host.
   "not-host",
-  "invalid-bot",
+  // A map picked outside a Hosted Game (#1994): other modes choose their own.
+  "not-pickable",
   // A Team Lobby's (#1458): a proposal not of the side's size or with a
   // build that is not legal; a vote for no proposal of the voter's side;
   // a slot someone holds, or no slot of the chosen build.
@@ -2286,14 +2278,12 @@ function parseAdmission(value: unknown): WireAdmission | null | undefined {
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
   const guildTag = parseRawGuildTag(raw?.guildTag);
-  const character = parseLobbyCharacter(raw?.character);
   const admission = parseAdmission(raw?.admission);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
     guildTag === undefined ||
-    character === undefined ||
     admission === undefined
   ) {
     return undefined;
@@ -2304,7 +2294,6 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     guildTag,
     // As the hello's.
     guildCape: parseWireCape(raw.guildCape) ?? null,
-    character,
     admission,
   };
 }
@@ -2423,7 +2412,6 @@ function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
   const team = parseLobbyTeam(raw?.team);
-  const character = parseLobbyCharacter(raw?.character);
   const guildCape = parseNullableCape(raw?.guildCape);
   return raw !== undefined &&
     isString(raw.id) &&
@@ -2433,7 +2421,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     team !== undefined &&
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
-    character !== undefined &&
     typeof raw.bot === "boolean" &&
     typeof raw.away === "boolean"
     ? {
@@ -2444,7 +2431,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         team,
         ready: raw.ready,
         isHost: raw.isHost,
-        character,
         bot: raw.bot,
         away: raw.away,
       }
@@ -2495,15 +2481,14 @@ function parseTeamSide(value: unknown): WireTeamSide | null | undefined {
   const raw = fields(value);
   if (
     raw === undefined ||
-    !isCount(raw.size) ||
-    raw.size > MAX_TEAM_LOBBY_SIDE ||
+    !(raw.size === null || (isCount(raw.size) && raw.size <= MAX_TEAM_LOBBY_SIDE)) ||
     !isNullableString(raw.captainId)
   ) {
     return undefined;
   }
   const proposals = parseArray(raw.proposals, MAX_TEAM_LOBBY_SIDE, parseTeamProposal);
   const chosen = parseTeamChoice(raw.chosen);
-  const claims = parseArray(raw.claims, raw.size, (item) =>
+  const claims = parseArray(raw.claims, raw.size ?? MAX_TEAM_LOBBY_SIDE, (item) =>
     item === null ? null : parseString(item),
   );
   return proposals === undefined || chosen === undefined || claims === undefined
@@ -2579,19 +2564,11 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
-    case "set-character": {
-      const character = parseLobbyCharacter(raw.character);
-      return character === undefined ? undefined : { kind: "set-character", character };
-    }
     case "start":
     case "find-match":
     case "leave-queue":
     case "house-team":
       return { kind: raw.kind };
-    case "set-bots":
-      return isTeam(raw.team) && isNumber(raw.count)
-        ? { kind: "set-bots", team: raw.team, count: raw.count }
-        : undefined;
     case "propose": {
       if (raw.slot === null) {
         return { kind: "propose", slot: null };

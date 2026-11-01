@@ -15,22 +15,17 @@ import {
   defaultBuildEquipment,
   defaultEquipmentFor,
   getAttribute,
-  getInsignia,
   getOffhand,
   getSkill,
   getWeapon,
   IMPLEMENTED_SKILLS,
   neededWeaponText,
-  perSlotAmount,
   reconcileEquipment,
   runeDisplayName,
   totalCost,
   weaponReachable,
   wieldsFor,
-  type ArmorSlot,
   type BuildEquipment,
-  type InsigniaEffect,
-  type InsigniaId,
   type ProfessionId,
   type Skill,
   type SkillDescription,
@@ -69,24 +64,17 @@ import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import { characterRanks } from "./character-ranks.js";
 import {
-  armorTarget,
   canEquipOffhand,
   clearWeaponSet,
   clearArmorUpgrades,
   applyGearDrop,
   decodeGearDrag,
   encodeGearDrag,
-  encodeRune,
   headgearChoices,
   offhandAttributeChoices,
-  insigniaChoices,
-  insigniaEffectNote,
-  runeChoices,
   setHeadgearAttribute,
-  setInsignia,
   setOffhand,
   setRequirementAttribute,
-  setRune,
   setWeapon,
   summariseGear,
   weaponAttributeChoices,
@@ -116,12 +104,18 @@ import {
   missingFromCatalog,
   skillTypesOf,
 } from "./skill-library.js";
-import { createSkillTooltip, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
+import {
+  appendParts,
+  createSkillTooltip,
+  renderSkillDescription,
+  type SkillTooltip,
+} from "./skill-tooltip.js";
 import {
   button,
   h,
   inlineConfirm,
   listenForPaste,
+  loadLine,
   moreMenu,
   problemsChip,
   screenBar,
@@ -132,6 +126,7 @@ import {
   type ChipProblem,
   type InlineConfirm,
 } from "./kit.js";
+import { mountPaperDoll, type PaperDoll } from "./paper-doll.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
 
 /**
@@ -682,6 +677,60 @@ export interface EditorProblem {
   readonly cause: ProblemCause;
 }
 
+/** A code read for the editor (#2004): the build it holds, or why not, in words. */
+export type LoadedCode =
+  | {
+      readonly ok: true;
+      readonly character: StoredCharacter;
+      /** A GW1 code's skills this game lacks, which arrive as empty slots (#494). */
+      readonly missingSkills: readonly number[];
+    }
+  | {
+      readonly ok: false;
+      readonly reason: "empty" | "team" | "not-a-code" | "invalid";
+      readonly problems: readonly string[];
+    };
+
+/**
+ * The build in `text` (#2004), for a paste on the editor and for Load GW1
+ * code alike, as a character `id` saved at `now`: a VibeWars build line
+ * (#572) or a GW1 template code (#494), trimmed. A team code holds builds
+ * too, so it is told apart first (#577).
+ */
+export function loadCode(text: string, id: string, now: number): LoadedCode {
+  const code = text.trim();
+  if (code === "") {
+    return { ok: false, reason: "empty", problems: ["Paste a code first."] };
+  }
+  if (looksLikeTeam(code)) {
+    return {
+      ok: false,
+      reason: "team",
+      problems: ["That is a team code. Load it on Team Builder."],
+    };
+  }
+  let result: ImportResult;
+  let missing: readonly number[] = [];
+  if (looksLikeBuild(code)) {
+    result = importBuild(code, id, now);
+  } else if (looksLikeTemplate(code)) {
+    const decoded = decodeTemplate(code, id, now);
+    result = decoded;
+    missing = decoded.ok ? decoded.missingSkills : [];
+  } else {
+    return { ok: false, reason: "not-a-code", problems: ["That is not a GW1 template code."] };
+  }
+  return result.ok
+    ? { ok: true, character: result.character, missingSkills: missing }
+    : { ok: false, reason: "invalid", problems: result.problems };
+}
+
+/** Put a loaded build in the editor, unsaved: the player sees what arrived and chooses to keep it. */
+function loadInto(context: EditorContext, loaded: Extract<LoadedCode, { ok: true }>): void {
+  context.commit(loaded.character);
+  toast(`Imported ${loaded.character.name}${missingSkillsNote(loaded.missingSkills)}`);
+}
+
 /** A message as a sentence: capitalised, with a full stop. */
 function sentence(message: string): string {
   const capitalised = message.charAt(0).toUpperCase() + message.slice(1);
@@ -817,14 +866,15 @@ interface EditorContext {
   readonly notice: () => string | undefined;
   /** One tooltip for the whole editor. */
   readonly tooltip: SkillTooltip;
+  /**
+   * Show the tooltip at `anchor`, with what `describe` says now; a change
+   * to the character redraws it in place from `describe` again (#1932).
+   */
+  readonly showTip: (anchor: HTMLElement, describe: () => SkillDescription | undefined) => void;
   /** The bar slot picked for the next equip (#564), if any. */
   readonly selected: () => number | undefined;
   /** Pick a bar slot, or none; every region shows it. */
   readonly select: (slot: number | undefined) => void;
-  /** The armor piece picked for the next insignia or rune (#570), if any. */
-  readonly piece: () => ArmorSlot | undefined;
-  /** Pick an armor piece, or none; every region shows it. */
-  readonly selectPiece: (slot: ArmorSlot | undefined) => void;
   /** The weapon set the gear panel shows and edits (#489); screen state, never stored. */
   readonly weaponSet: () => WeaponSetIndex;
   /** Show and edit another weapon set; every region shows it. */
@@ -856,6 +906,30 @@ export interface BuildEditorView {
  * or a hover survives a change made elsewhere. Reopening starts afresh:
  * the skills tab, an empty search.
  */
+/** What the editor's tooltip shows a skill for: where, and how to describe it again. */
+export interface TippedSkill {
+  readonly anchor: Pick<HTMLElement, "isConnected">;
+  readonly describe: () => SkillDescription | undefined;
+}
+
+/**
+ * After a change to the character, an open tooltip follows it at its new
+ * numbers (#1932), unless its anchor is gone or its slot emptied: then it
+ * hides. What it shows afterwards, if anything.
+ */
+export function followTip(
+  tooltip: Pick<SkillTooltip, "update" | "hide">,
+  tipped: TippedSkill | undefined,
+): TippedSkill | undefined {
+  const described = tipped?.anchor.isConnected === true ? tipped.describe() : undefined;
+  if (described === undefined) {
+    tooltip.hide();
+    return undefined;
+  }
+  tooltip.update(described);
+  return tipped;
+}
+
 export function mountBuildEditor(
   root: HTMLElement,
   initial: StoredCharacter,
@@ -896,7 +970,6 @@ export function mountBuildEditor(
 
   let notice: string | undefined;
   let selected: number | undefined;
-  let piece: ArmorSlot | undefined;
   let weaponSet: WeaponSetIndex = 0;
   // Read once per open, as the arena's bar does; labels by code until the
   // browser says what the layout is.
@@ -918,20 +991,21 @@ export function mountBuildEditor(
     dismissUndo = undefined;
   };
 
+  // What the tooltip last showed a description of, to redraw on a change.
+  let tipped: TippedSkill | undefined;
   const commit = (next: StoredCharacter, said: string | undefined): void => {
     dropUndo();
-    // Another profession is another bar to build: the picks go.
+    // Another profession is another bar to build: the pick goes.
     if (
       next.primaryProfession !== character.primaryProfession ||
       next.secondaryProfession !== character.secondaryProfession
     ) {
       selected = undefined;
-      piece = undefined;
     }
     character = next;
     notice = said;
-    tooltip.hide();
     update();
+    tipped = followTip(tooltip, tipped);
     training?.refocus();
   };
 
@@ -958,14 +1032,16 @@ export function mountBuildEditor(
     },
     notice: () => notice,
     tooltip,
+    showTip: (anchor, describe) => {
+      const described = describe();
+      if (described !== undefined) {
+        tipped = { anchor, describe };
+        tooltip.show(anchor, described);
+      }
+    },
     selected: () => selected,
     select: (slot) => {
       selected = slot;
-      update();
-    },
-    piece: () => piece,
-    selectPiece: (slot) => {
-      piece = slot;
       update();
     },
     weaponSet: () => weaponSet,
@@ -987,8 +1063,9 @@ export function mountBuildEditor(
     },
   };
 
+  const paperDoll = mountPaperDoll(context);
   // Spans every column, the Training Ground's included (#566).
-  const bar = mountCommandBar(context, initial, callbacks, (name) => {
+  const bar = mountCommandBar(context, paperDoll, initial, callbacks, (name) => {
     // Typing changes nothing another region shows but the bar's own
     // marker: the arena hears about the new name directly.
     dropUndo();
@@ -1013,7 +1090,7 @@ export function mountBuildEditor(
     stats,
     mountAttributes(panel, context),
     mountSkillBar(panel, context),
-    mountGear(panel, context),
+    mountGear(panel, context, paperDoll),
     library,
   );
   update();
@@ -1046,36 +1123,27 @@ export function mountBuildEditor(
   };
   document.addEventListener("keydown", onKeyDown);
 
-  // A build pasted anywhere but a field imports it (#572), unsaved: the
-  // player sees what arrived and chooses to keep it. Other text is
-  // ignored; a broken build says why. A team code holds builds too, so it
-  // is told apart first (#577); a GW1 template code comes last (#494).
+  // A build pasted anywhere but a field imports it (#572), as Load GW1
+  // code does (#2004). Other text is ignored; a broken build says why.
   const stopPaste = listenForPaste((text) => {
-    if (looksLikeTeam(text)) {
-      toast("That is a team code. Paste it on Team Builder.");
+    const loaded = loadCode(text, context.current().id, Date.now());
+    if (loaded.ok) {
+      loadInto(context, loaded);
       return true;
     }
-    let result: ImportResult;
-    // A GW1 code's skills this game lacks arrive as empty slots (#494).
-    let missing: readonly number[] = [];
-    if (looksLikeBuild(text)) {
-      result = importBuild(text, context.current().id, Date.now());
-    } else if (looksLikeTemplate(text)) {
-      const decoded = decodeTemplate(text, context.current().id, Date.now());
-      result = decoded;
-      missing = decoded.ok ? decoded.missingSkills : [];
-    } else {
-      return false;
+    switch (loaded.reason) {
+      case "empty":
+      case "not-a-code":
+        return false;
+      case "team":
+        toast("That is a team code. Paste it on Team Builder.");
+        return true;
+      case "invalid":
+        // Every problem at once: someone fixing a pasted build should not
+        // discover its faults one round trip at a time.
+        toast("Could not import", { problems: loaded.problems });
+        return true;
     }
-    if (!result.ok) {
-      // Every problem at once: someone fixing a pasted build should not
-      // discover its faults one round trip at a time.
-      toast("Could not import", { problems: result.problems });
-      return true;
-    }
-    context.commit(result.character);
-    toast(`Imported ${result.character.name}${missingSkillsNote(missing)}`);
-    return true;
   });
 
   return {
@@ -1089,6 +1157,7 @@ export function mountBuildEditor(
       stopPaste();
       bar.dispose();
       tooltip.dispose();
+      paperDoll.close();
       training?.dispose();
     },
   };
@@ -1107,11 +1176,12 @@ interface CommandBar extends Region {
 /**
  * The command bar (#566, #1902): the name and professions, the point
  * budget, the problems chip, an unsaved marker, Save, which stores and
- * leaves, and ⋯ with Share (#572), Duplicate and Delete. Esc with unsaved
+ * leaves, and ⋯ with Share (#572), Load GW1 code (#2004), Duplicate and Delete. Esc with unsaved
  * edits, and Delete always, ask in the bar first.
  */
 function mountCommandBar(
   context: EditorContext,
+  paperDoll: PaperDoll,
   opened: StoredCharacter,
   callbacks: BuildEditorCallbacks,
   onName: (name: string) => void,
@@ -1193,21 +1263,38 @@ function mountCommandBar(
     );
   });
 
-  // Share (#572): the build as one line, selected, with Copy.
+  // Share (#572): the build as one line, selected, with Copy. Load
+  // (#2004) opens in its place: one of the two at a time.
   const share = shareLine("build to share");
+  const load = loadLine("GW1 code to load", "Paste a GW1 template code", (text) => {
+    const loaded = loadCode(text, context.current().id, Date.now());
+    if (!loaded.ok) {
+      return loaded.problems;
+    }
+    loadInto(context, loaded);
+    return [];
+  });
+  const showShare = (text: string): void => {
+    load.hide();
+    share.show(text);
+  };
   const more = moreMenu(
     [
       button("Share", "", () => {
-        share.show(exportBuild(context.current()));
+        showShare(exportBuild(context.current()));
       }),
       // The same build as a GW1 template code (#494), for GW1's build sites.
       button("Share as GW1 code", "", () => {
         const encoded = encodeTemplate(context.current());
         if (encoded.ok) {
-          share.show(encoded.code);
+          showShare(encoded.code);
         } else {
           toast(encoded.problem);
         }
+      }),
+      button("Load GW1 code", "", () => {
+        share.hide();
+        load.show();
       }),
       // An edited character duplicates as edited, as it always has.
       button("Duplicate", "", () => {
@@ -1226,7 +1313,7 @@ function mountCommandBar(
         );
       }),
     ],
-    [share.element],
+    [share.element, load.element],
   );
 
   // Esc puts away the ⋯ menu, Share, the problem list and then the pick
@@ -1240,6 +1327,10 @@ function mountCommandBar(
       share.hide();
       return true;
     }
+    if (load.isOpen()) {
+      load.hide();
+      return true;
+    }
     if (chip.isOpen()) {
       chip.close();
       return true;
@@ -1248,8 +1339,8 @@ function mountCommandBar(
       context.select(undefined);
       return true;
     }
-    if (context.piece() !== undefined) {
-      context.selectPiece(undefined);
+    if (paperDoll.isOpen()) {
+      paperDoll.close();
       return true;
     }
     return false;
@@ -1274,6 +1365,7 @@ function mountCommandBar(
     if (!more.element.contains(target)) {
       more.close();
       share.hide();
+      load.hide();
     }
     if (!chip.element.contains(target)) {
       chip.close();
@@ -1310,7 +1402,13 @@ function mountCommandBar(
       save.title = firstBlocking?.text ?? "Save this character";
     },
     isOpen() {
-      return asking?.isOpen() === true || more.isOpen() || share.isOpen() || chip.isOpen();
+      return (
+        asking?.isOpen() === true ||
+        more.isOpen() ||
+        share.isOpen() ||
+        load.isOpen() ||
+        chip.isOpen()
+      );
     },
     leave,
     dispose() {
@@ -1696,10 +1794,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
       event.dataTransfer?.setData("text/plain", encodeDragSource({ from: "slot", slot }));
     });
     cell.addEventListener("mouseenter", () => {
-      const description = described.get(slot);
-      if (description !== undefined) {
-        tooltip.show(cell, description);
-      }
+      context.showTip(cell, () => described.get(slot));
     });
     cell.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -1838,10 +1933,8 @@ function mountLibrary(layout: HTMLElement, context: EditorContext): LibraryRegio
   };
   const tabButtons = (["skills", "gear"] as const).map((tab) => {
     const node = button(tab, "library-tab", () => {
-      // Switched by hand, the gear tab no longer serves the picked piece.
       if (active !== tab) {
         open(tab);
-        context.selectPiece(undefined);
       }
     });
     node.classList.toggle("is-active", tab === active);
@@ -2055,7 +2148,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     // The hover tooltip stays beside the inline details (#549 Q3), as in
     // GW1's skill window.
     box.addEventListener("mouseenter", () => {
-      tooltip.show(box, describeSkill(skill, characterRanks(context.current())));
+      context.showTip(box, () => describeSkill(skill, characterRanks(context.current())));
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2088,7 +2181,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     details.hidden = true;
     box.appendChild(details);
     box.addEventListener("mouseenter", () => {
-      tooltip.show(box, describeSkill(skill, characterRanks(context.current())));
+      context.showTip(box, () => describeSkill(skill, characterRanks(context.current())));
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2137,10 +2230,11 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     if (cost !== null && cost.textContent !== description.cost) {
       cost.textContent = description.cost;
     }
-    const headline = box.querySelector(".skill-box-headline");
+    const headline = box.querySelector<HTMLElement>(".skill-box-headline");
     const headlineText = description.headline ?? "";
     if (headline !== null && headline.textContent !== headlineText) {
-      headline.textContent = headlineText;
+      headline.replaceChildren();
+      appendParts(headline, description.headlineParts ?? []);
     }
     const isOpen = open === skill.id;
     box.classList.toggle("is-open", isOpen);
@@ -2467,7 +2561,7 @@ function mountGearSlot(
  * a number, and a player weighing +3 Swordsmanship against 75 health
  * needs to see both sides of the trade as they make it.
  */
-function mountGear(panel: HTMLElement, context: EditorContext): Region {
+function mountGear(panel: HTMLElement, context: EditorContext, doll: PaperDoll): Region {
   const { current, commit } = context;
   const section = h("div", "editor-gear");
   section.dataset.cause = "equipment";
@@ -2565,8 +2659,6 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   const headgearLink = mountSelectRow((value) => {
     commit(setHeadgearAttribute(current(), value));
   });
-  headgearLink.element.classList.add("editor-headgear");
-  linkRow.appendChild(headgearLink.element);
   section.appendChild(linkRow);
 
   // --- armor ----------------------------------------------------------
@@ -2579,42 +2671,11 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
   );
   section.appendChild(armorHeader);
 
-  const armorGrid = h("div", "armor-grid");
-  const armorSlots = ARMOR_SLOTS.map((slot) => {
-    const row = h("div", "armor-row");
-    row.dataset.cause = `equipment.armor.${slot}`;
-    row.dataset.slot = slot;
-    // A piece clicked is picked for the library's next insignia or rune
-    // (#570), and the library opens on them; again lets go.
-    row.tabIndex = 0;
-    row.setAttribute("role", "button");
-    row.setAttribute("aria-label", `${slot} armor`);
-    const toggle = (): void => {
-      const picking = context.piece() !== slot;
-      context.selectPiece(picking ? slot : undefined);
-      if (picking) {
-        context.showLibrary("gear", "insignias");
-      }
-    };
-    row.addEventListener("click", toggle);
-    row.addEventListener("keydown", (event: KeyboardEvent) => {
-      if (event.target === row && (event.key === "Enter" || event.key === " ")) {
-        event.preventDefault();
-        toggle();
-      }
-    });
-    row.appendChild(h("span", "armor-slot-name", slot));
-    const insignia = mountGearSlot(
-      "insignia",
-      context,
-      drop({ kind: "armor", slot, part: "insignia" }),
-    );
-    const rune = mountGearSlot("rune", context, drop({ kind: "armor", slot, part: "rune" }));
-    row.append(insignia.element, rune.element);
-    armorGrid.appendChild(row);
-    return { slot, row, insignia, rune };
-  });
-  section.appendChild(armorGrid);
+  // The figure, a piece clicked picks its insignia and rune (#2059). The
+  // headgear's attribute sits on the headgear's row.
+  headgearLink.element.classList.add("editor-headgear");
+  doll.headgearSlot.appendChild(headgearLink.element);
+  section.appendChild(doll.element);
 
   // --- the summary ------------------------------------------------------
   // What the gear adds beyond the headline stats, which sit under the
@@ -2723,7 +2784,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         );
       }
       headgearLink.update(
-        "Headgear +1",
+        "+1",
         attributeOptions(headgearChoices(character)),
         character.equipment.armor.head.headgearAttributeId ?? "",
       );
@@ -2731,31 +2792,13 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         linkRow.prepend(node);
       });
       present(offhandLink.element, offhandChoices.length > 0, (node) => {
-        headgearLink.element.before(node);
+        linkRow.appendChild(node);
+      });
+      present(linkRow, weaponChoices.length > 0 || offhandChoices.length > 0, (node) => {
+        armorHeader.before(node);
       });
 
-      for (const { slot, row, insignia, rune } of armorSlots) {
-        row.classList.toggle("is-selected", context.piece() === slot);
-        row.setAttribute("aria-pressed", String(context.piece() === slot));
-        const piece = character.equipment.armor[slot];
-        insignia.update({
-          filled: piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId)?.name,
-          detail:
-            piece.insigniaId === null ? undefined : insigniaAmountNote(piece.insigniaId, slot),
-          dragSource:
-            piece.insigniaId === null ? undefined : { from: "armor-slot", slot, part: "insignia" },
-          onClear: () => {
-            commit(setInsignia(current(), slot, null));
-          },
-        });
-        rune.update({
-          filled: piece.rune === null ? undefined : runeDisplayName(piece.rune),
-          dragSource: piece.rune === null ? undefined : { from: "armor-slot", slot, part: "rune" },
-          onClear: () => {
-            commit(setRune(current(), slot, null));
-          },
-        });
-      }
+      doll.update(character);
 
       const lines = statLines(character, selected);
       stats.replaceChildren(...lines);
@@ -2850,23 +2893,6 @@ function statLine(label: string, value: string): HTMLElement {
 }
 
 /**
- * What an insignia is worth on *this* piece.
- *
- * Survivor and Radiant give more on the chest than on the gloves, so a
- * single number would be wrong on four slots out of five.
- */
-function insigniaAmountNote(insigniaId: InsigniaId, slot: ArmorSlot): string {
-  const insignia = getInsignia(insigniaId);
-  if (insignia === undefined) {
-    return "";
-  }
-  const { effect } = insignia;
-  return effect.kind === "health" || effect.kind === "energy"
-    ? `+${String(perSlotAmount(effect, slot))} ${effect.kind}`
-    : insigniaEffectNote(effect);
-}
-
-/**
  * The gear library: everything you could equip, grouped and draggable.
  *
  * Deliberately the same box-and-drag vocabulary as the skill library —
@@ -2945,25 +2971,6 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
     return { id: offhand.id, node };
   });
 
-  // A click on an insignia or rune says which piece it goes to (#570).
-  const targetNote = (): HTMLElement => h("span", "gear-box-target");
-  const showTarget = (note: HTMLElement, character: StoredCharacter, part: "insignia" | "rune") => {
-    note.textContent = `→ ${armorTarget(character, part, context.piece())}`;
-  };
-
-  // --- insignias -------------------------------------------------------
-  // The common ones and the primary's own (#1142), so this list changes too.
-  const insignias = group("insignias");
-  const insigniaBoxes = h("div", "skill-group-boxes");
-  insignias.appendChild(insigniaBoxes);
-
-  // --- runes -----------------------------------------------------------
-  // Which runes there are depends on the primary profession, so this list
-  // is the one that changes.
-  const runes = group("runes");
-  const runeBoxes = h("div", "skill-group-boxes");
-  runes.appendChild(runeBoxes);
-
   return {
     elements: [host],
     update(character) {
@@ -2974,73 +2981,6 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       for (const { id, node } of offhandBoxes) {
         node.classList.toggle("is-equipped", id === held?.offHand?.offhandId);
       }
-      const worn = ARMOR_SLOTS.map((slot) => character.equipment.armor[slot]);
-      const wornInsignias = new Set(worn.map((piece) => piece.insigniaId));
-      syncList(
-        insigniaBoxes,
-        insigniaChoices(character),
-        (insignia) => insignia.id,
-        (insignia) => {
-          const node = box({
-            name: insignia.name,
-            detail: insigniaLibraryNote(insignia.effect),
-            drag: { from: "insignia-library", insigniaId: insignia.id },
-            onClick: () => {
-              const next = current();
-              commit(
-                setInsignia(next, armorTarget(next, "insignia", context.piece()), insignia.id),
-              );
-            },
-          });
-          node.appendChild(targetNote());
-          return node;
-        },
-        (node, insignia) => {
-          node.classList.toggle("is-equipped", wornInsignias.has(insignia.id));
-          const target = node.querySelector<HTMLElement>(".gear-box-target");
-          if (target !== null) {
-            showTarget(target, character, "insignia");
-          }
-        },
-      );
-      const wornRunes = new Set(
-        worn.flatMap((piece) => (piece.rune === null ? [] : [encodeRune(piece.rune)])),
-      );
-      syncList(
-        runeBoxes,
-        runeChoices(character),
-        (choice) => choice.key,
-        (choice) => {
-          const node = box({
-            name: choice.label,
-            detail: "",
-            drag: { from: "rune-library", rune: choice.rune },
-            onClick: () => {
-              const next = current();
-              commit(setRune(next, armorTarget(next, "rune", context.piece()), choice.rune));
-            },
-          });
-          node.appendChild(targetNote());
-          return node;
-        },
-        (node, choice) => {
-          node.classList.toggle("is-equipped", wornRunes.has(choice.key));
-          const target = node.querySelector<HTMLElement>(".gear-box-target");
-          if (target !== null) {
-            showTarget(target, character, "rune");
-          }
-        },
-      );
     },
   };
-}
-
-/** A one-line summary of what an insignia does, for the library list. */
-function insigniaLibraryNote(effect: InsigniaEffect): string {
-  if (effect.kind === "conditional-armor" || effect.kind === "physical-reduction") {
-    return insigniaEffectNote(effect);
-  }
-  // The chest value, as the headline — the library cannot know which
-  // slot it will land in, and the chest is the best case.
-  return `+${String(effect.chest)} ${effect.kind} (chest)`;
 }

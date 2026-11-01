@@ -2,23 +2,24 @@ import { MAX_CHAT_GRAPHEMES, type ChatChannel } from "@vibewars/game-protocol";
 import type { ChatLine } from "@vibewars/game-session";
 
 import { isHelpOverlayOpen } from "./help-screen.js";
-import { button, h } from "./kit.js";
+import { chatIcon } from "./icons.js";
+import { button, h, iconButton } from "./kit.js";
 import { isOptionsOverlayOpen } from "./options-screen.js";
 
 /**
- * Chat (#479): the panel at the lower left, in the lobby and through its
- * match. Enter opens the box, Enter sends, Esc cancels; while the box has
- * focus no key reaches the game. The host routes every line; this only
- * shows what arrives, as text, never as HTML. In a match the panel lets
- * every click through to the arena and shows the box only while it is
- * open, as GW1's edit line does.
+ * Chat (#479): the panel at the lower left, in the lobby, on the menu's
+ * screens and through a match. It starts closed (#2018): only its lines,
+ * which every click goes through, and a chat icon that opens it. Enter or
+ * the icon opens the box, Enter sends and closes, Esc or the icon closes;
+ * while the box has focus no key reaches the game. The host routes every
+ * line; this only shows what arrives, as text, never as HTML.
  */
 
 /** How many lines the panel keeps. */
 export const CHAT_LINES_KEPT = 50;
 
-/** Seconds without a line before the panel fades in a match. */
-export const CHAT_IDLE_SECONDS = 10;
+/** Seconds a line shows while the chat is closed, before it fades out (#2018). */
+export const CHAT_LINE_SHOWN_SECONDS = 8;
 
 /** The prefixes that pick a channel, GW1's: `!` all, `#` team. */
 const PREFIXES: Readonly<Record<string, ChatChannel>> = { "!": "all", "#": "team" };
@@ -54,14 +55,20 @@ export function chatSide(line: ChatLine, selfId: string, selfTeam: 0 | 1 | null)
   return selfTeam === null || line.team === selfTeam ? "ally" : "enemy";
 }
 
+/** A kept line, and when it arrived on `Date.now()`'s clock (#2018). */
+export interface KeptLine {
+  readonly line: ChatLine;
+  readonly at: number;
+}
+
 /** The lines kept, newest last, and who this player muted for the session. */
 export class ChatLog {
-  readonly #lines: ChatLine[] = [];
+  readonly #lines: KeptLine[] = [];
   readonly #muted = new Set<string>();
 
-  /** Keep `line`; whether it shows, which a muted sender's does not. */
-  public add(line: ChatLine): boolean {
-    this.#lines.push(line);
+  /** Keep `line`, arrived `at`; whether it shows, which a muted sender's does not. */
+  public add(line: ChatLine, at: number): boolean {
+    this.#lines.push({ line, at });
     this.#lines.splice(0, Math.max(0, this.#lines.length - CHAT_LINES_KEPT));
     return !this.#muted.has(line.fromId);
   }
@@ -79,8 +86,8 @@ export class ChatLog {
   }
 
   /** The kept lines that show, oldest first. */
-  public visible(): readonly ChatLine[] {
-    return this.#lines.filter((line) => !this.#muted.has(line.fromId));
+  public visible(): readonly KeptLine[] {
+    return this.#lines.filter(({ line }) => !this.#muted.has(line.fromId));
   }
 }
 
@@ -109,10 +116,7 @@ export interface ChatPanel {
   add(line: ChatLine): void;
   /** A line of this client's own, such as being told to slow down. */
   notice(text: string): void;
-  /**
-   * In a match: team chat by default, the panel fades when idle, and it
-   * takes no click and shows no box until Enter opens it.
-   */
+  /** In a match, team chat is the default; elsewhere all. */
   setInMatch(inMatch: boolean): void;
   dispose(): void;
 }
@@ -124,6 +128,7 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   const lines = h("div", "chat-lines");
   lines.setAttribute("role", "log");
   lines.setAttribute("aria-live", "polite");
+  const toggle = iconButton("chat-toggle", "Chat (Enter)", chatIcon());
   const form = h("div", "chat-form");
   let channel: ChatChannel = "all";
   const channelButton = button("", "chat-channel", () => {
@@ -138,10 +143,12 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   // graphemes, so a line of emoji stops near half that: a bound on size,
   // and the host cuts to whole graphemes itself.
   input.maxLength = MAX_CHAT_GRAPHEMES + 1;
-  input.placeholder = "Enter to chat · ! all · # team";
+  input.placeholder = "! all · # team";
   input.setAttribute("aria-label", "chat message");
   form.append(channelButton, input);
-  root.append(lines, form);
+  const bar = h("div", "chat-bar");
+  bar.append(toggle, form);
+  root.append(lines, bar);
 
   const paintChannel = (): void => {
     if (deps.selfTeam() === null) {
@@ -154,24 +161,42 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   };
   paintChannel();
 
-  let inMatch = false;
-  let idleTimer: ReturnType<typeof setTimeout> | undefined;
-  /** Lit while something is new or the box is open; in a match it fades after a while. */
-  const wake = (): void => {
-    root.classList.remove("is-idle");
-    clearTimeout(idleTimer);
-    if (inMatch && document.activeElement !== input) {
-      idleTimer = setTimeout(() => {
-        root.classList.add("is-idle");
-      }, CHAT_IDLE_SECONDS * 1000);
-    }
-  };
-
   const follow = (): void => {
     lines.scrollTop = lines.scrollHeight;
   };
 
-  const lineElement = (line: ChatLine): HTMLElement => {
+  /**
+   * Each shown line not yet faded, and when it arrived. One timer, for the
+   * next line due, fades each once it has shown CHAT_LINE_SHOWN_SECONDS;
+   * the panel hides faded lines only while it is closed.
+   */
+  const fresh = new Map<HTMLElement, number>();
+  let fadeTimer: ReturnType<typeof setTimeout> | undefined;
+  const fade = (): void => {
+    clearTimeout(fadeTimer);
+    const now = Date.now();
+    let next: number | undefined;
+    for (const [row, at] of fresh) {
+      const left = at + CHAT_LINE_SHOWN_SECONDS * 1000 - now;
+      if (left <= 0) {
+        row.classList.add("is-faded");
+        fresh.delete(row);
+      } else {
+        next = Math.min(next ?? left, left);
+      }
+    }
+    if (next !== undefined) {
+      fadeTimer = setTimeout(fade, next);
+    }
+  };
+
+  /** `row`, arrived `at`, to fade in its turn. */
+  const fading = (row: HTMLElement, at: number): HTMLElement => {
+    fresh.set(row, at);
+    return row;
+  };
+
+  const lineElement = ({ line, at }: KeptLine): HTMLElement => {
     const row = h("div", "chat-line");
     row.dataset.channel = line.channel;
     row.dataset.from = line.fromId;
@@ -190,13 +215,15 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     name.dataset.side = chatSide(line, deps.selfId, deps.selfTeam());
     name.title = line.fromId === deps.selfId ? "" : `Mute ${line.name}`;
     row.append(tag, " ", name, ": ", h("span", "chat-line-text", line.text));
-    return row;
+    return fading(row, at);
   };
 
   /** Every kept line again, as after a mute: notices are this client's and go. */
   const repaint = (): void => {
+    fresh.clear();
     lines.replaceChildren(...log.visible().map(lineElement));
     follow();
+    fade();
   };
 
   const notice = (text: string, undo?: () => void): void => {
@@ -204,15 +231,32 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     if (undo !== undefined) {
       row.append(" ", button("Unmute", "chat-unmute", undo));
     }
-    lines.append(row);
+    lines.append(fading(row, Date.now()));
     follow();
-    wake();
+    fade();
   };
 
-  const close = (): void => {
-    input.value = "";
-    input.blur();
+  // Closed, the panel is its lines and the icon, and every click but the
+  // icon's goes through (#2018). Open, it has its box, and a name mutes.
+  let open = false;
+  const setOpen = (value: boolean): void => {
+    open = value;
+    root.classList.toggle("is-open", value);
+    toggle.setAttribute("aria-expanded", String(value));
+    if (value) {
+      paintChannel();
+      // Shown first: a box that is not displayed takes no focus.
+      input.focus();
+      follow();
+    } else {
+      input.value = "";
+      input.blur();
+    }
   };
+  setOpen(false);
+  toggle.addEventListener("click", () => {
+    setOpen(!open);
+  });
 
   input.addEventListener("keydown", (event: KeyboardEvent) => {
     // Typing is not playing: no key in the box moves, casts or targets.
@@ -223,27 +267,18 @@ export function mountChat(deps: ChatDeps): ChatPanel {
       if (said !== undefined) {
         deps.send(said.channel, said.text);
       }
-      close();
+      setOpen(false);
     } else if (event.key === "Escape") {
       event.preventDefault();
-      close();
+      setOpen(false);
     }
   });
-  // In a match a click on the open panel (the channel, a name, Unmute)
-  // keeps the box focused: a blur would hide it under the pointer, and
-  // the click would land on the arena.
+  // A click on the open panel (the channel, a name, Unmute) keeps the box
+  // focused, so the next key still types.
   root.addEventListener("mousedown", (event: MouseEvent) => {
-    if (inMatch && event.target !== input) {
+    if (event.target !== input) {
       event.preventDefault();
     }
-  });
-  input.addEventListener("focus", () => {
-    root.classList.add("is-open");
-    wake();
-  });
-  input.addEventListener("blur", () => {
-    root.classList.remove("is-open");
-    wake();
   });
 
   // Enter opens the box from anywhere that has no use for Enter itself,
@@ -265,37 +300,32 @@ export function mountChat(deps: ChatDeps): ChatPanel {
       return;
     }
     event.preventDefault();
-    paintChannel();
-    // Shown first: a box that is not displayed takes no focus.
-    root.classList.add("is-open");
-    input.focus();
+    setOpen(true);
   };
   window.addEventListener("keydown", onKeyDown);
 
   return {
     root,
     add(line) {
-      if (log.add(line)) {
-        lines.append(lineElement(line));
+      const at = Date.now();
+      if (log.add(line, at)) {
+        lines.append(lineElement({ line, at }));
         while (lines.childElementCount > CHAT_LINES_KEPT) {
           lines.firstElementChild?.remove();
         }
         follow();
-        wake();
+        fade();
       }
     },
     notice(text) {
       notice(text);
     },
     setInMatch(value) {
-      inMatch = value;
-      root.classList.toggle("in-match", value);
       channel = value ? "team" : "all";
       paintChannel();
-      wake();
     },
     dispose() {
-      clearTimeout(idleTimer);
+      clearTimeout(fadeTimer);
       window.removeEventListener("keydown", onKeyDown);
       root.remove();
     },

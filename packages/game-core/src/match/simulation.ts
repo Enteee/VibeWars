@@ -101,10 +101,11 @@ import { getSkill } from "../skills/catalog.js";
 import { conditionRequirementText } from "../skills/describe.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
-  applyDamage,
   applyEffects,
+  applyRedirectedDamage,
   applySkillEffects,
   applyStatus,
+  closestOwnMinion,
   conditionTaker,
   disableOwnSkills,
   gainEnergy,
@@ -191,6 +192,7 @@ import {
   bearerHit,
   blindMisses,
   blocks,
+  criticalHitRiders,
   landedCritical,
   landBlow,
   nextAttackSkillOf,
@@ -588,9 +590,9 @@ export function loadoutSpec(
   return {
     attributeRanks: loadout.attributeRanks,
     equipment: set1.equipment,
-    maxHealth: loadout.maxHealth,
+    maxHealth: set1.maxHealth,
     maxEnergy: set1.maxEnergy,
-    baseEnergyPips: loadout.baseEnergyPips,
+    baseEnergyPips: set1.baseEnergyPips,
     spareWeaponSets: [set2, set3, set4],
   };
 }
@@ -782,6 +784,11 @@ interface ParticipantRecord extends Participant {
   resurrectedAtSeconds: number;
   weaponSets: ResolvedWeaponSets;
   activeWeaponSet: WeaponSetIndex;
+  /**
+   * Health a swap's floor of 1 held back from its drop (#2007): the next
+   * swap up pays it first, so swapping down and up again is never a heal.
+   */
+  swapHealthDebt: number;
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
   armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
@@ -1007,6 +1014,8 @@ export class MatchSimulation {
     readonly creature: CreatureTemplate;
     readonly count: number;
     readonly at: Vec2;
+    /** Whose ranks it stands up at; `undefined`: its owner's as it does. */
+    readonly ranks: ReadonlyMap<string, number> | undefined;
   }[] = [];
   /** Priest Annihilation's shrines (#1186), one a team; `[]` for every other match. */
   readonly #shrines: readonly Shrine[];
@@ -1313,6 +1322,7 @@ export class MatchSimulation {
       creature: spec.creature === undefined ? undefined : { ...spec.creature },
       weaponSets: this.#weaponSets(spec),
       activeWeaponSet: 0,
+      swapHealthDebt: 0,
       pendingWeaponSet: undefined,
       corpseExploited: false,
       armedAttack: undefined,
@@ -2109,11 +2119,12 @@ export class MatchSimulation {
     const fraction = raised > 0 ? before.health / raised : 0;
     const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
     record.combatant = this.#combatant(spec);
-    record.resolvedMaxHealth = loadout.maxHealth;
+    record.resolvedMaxHealth = loadout.weaponSets[0].maxHealth;
     record.resolvedMaxEnergy = loadout.weaponSets[0].maxEnergy;
     // Back to set 1, as a fresh build starts (#489).
     record.weaponSets = this.#weaponSets(spec);
     record.activeWeaponSet = 0;
+    record.swapHealthDebt = 0;
     record.pendingWeaponSet = undefined;
     this.#setMorale(record, before.morale);
     record.combatant.health = record.combatant.maxHealth * fraction;
@@ -2670,7 +2681,7 @@ export class MatchSimulation {
     if (pet === undefined) {
       return;
     }
-    const { rule } = this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key, undefined);
     // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
     const faster = Math.max(
       aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster,
@@ -2721,7 +2732,7 @@ export class MatchSimulation {
     key: string,
     castTargetId: string | undefined,
   ): void {
-    const { rule } = this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key, castTargetId);
     this.#castBegun(record, skill, castTargetId);
     // An instant flies nowhere, so no time passes for it.
     this.resolveCast(
@@ -2742,17 +2753,24 @@ export class MatchSimulation {
   /**
    * A skill used, at once or as it begins: its cost, and what it uses up
    * of a glyph, the chants on its user, or a status counting its next
-   * skills of a kind (#1761). Returns what they give it.
+   * skills of a kind (#1761). Returns what they give it. `castTargetId`
+   * is whose statuses may cut an enchantment's cost (#1975).
    */
   #payForUse(
     record: ParticipantRecord,
     skill: Skill,
     key: string,
+    castTargetId: string | undefined,
   ): { rule: CastRule; castsInstantly: boolean } {
     // Read before anything is spent: Extend Enchantments lengthens the
     // enchantment that uses it up.
     const own = ownSkillBoost(record.combatant.statuses.active, skill);
-    payCost(skill, record.combatant, key);
+    payCost(
+      skill,
+      record.combatant,
+      key,
+      castTargetId === undefined ? undefined : this.#participants.get(castTargetId)?.combatant,
+    );
     const glyphs = this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     // Heket's Rampage (#1869) ends before the attack skill is timed.
@@ -2814,7 +2832,7 @@ export class MatchSimulation {
               : this.#participants.get(castTargetId)?.combatant,
           )
         : undefined;
-    const { rule, castsInstantly } = this.#payForUse(record, skill, key);
+    const { rule, castsInstantly } = this.#payForUse(record, skill, key, castTargetId);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -4259,7 +4277,7 @@ export class MatchSimulation {
     for (const { record, changes: recorded } of changes) {
       for (const change of recorded) {
         if (change.kind === "redirected-damage") {
-          this.#landRedirected(record, change.toId, change.amount);
+          this.#landRedirected(record, change);
         }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4310,7 +4328,7 @@ export class MatchSimulation {
     const settle = (record: ParticipantRecord, changes: readonly StatusChange[]): void => {
       for (const change of changes) {
         if (change.kind === "redirected-damage") {
-          this.#landRedirected(record, change.toId, change.amount);
+          this.#landRedirected(record, change);
         }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4346,7 +4364,7 @@ export class MatchSimulation {
       for (const { record, changes } of left) {
         for (const change of changes) {
           if (round < LAST_PASS_LANDINGS && change.kind === "redirected-damage") {
-            this.#landRedirected(record, change.toId, change.amount);
+            this.#landRedirected(record, change);
           }
           if (round < LAST_PASS_LANDINGS && change.kind === "charged-source") {
             this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4440,15 +4458,21 @@ export class MatchSimulation {
 
   /**
    * Symbiotic Bond's share of a hit on `bearer` (#1108), on `toId`, the
-   * bond's caster: typeless, unmitigated and from nobody, so it is never
+   * bond's caster, or Dark Bond's (#1986) on the bearer's closest living
+   * minion now: typeless, unmitigated and from nobody, so it is never
    * redirected again and answers nothing. With its caster dead or gone,
-   * the bearer takes it back: damage never vanishes.
+   * or no minion, the bearer takes it back: damage never vanishes.
    */
-  #landRedirected(bearer: ParticipantRecord, toId: string, amount: number): void {
-    const to = this.#participants.get(toId);
-    const victim = to === undefined || to.combatant.dead ? bearer : to;
+  #landRedirected(
+    bearer: ParticipantRecord,
+    { toId, amount, toClosestMinion }: Extract<StatusChange, { kind: "redirected-damage" }>,
+  ): void {
+    const to = toClosestMinion
+      ? closestOwnMinion(bearer.combatant, this.#participants)
+      : this.#participants.get(toId)?.combatant;
+    const victim = to === undefined || to.dead ? bearer.combatant : to;
     const events: CombatEvent[] = [];
-    applyDamage(victim.combatant, amount, "typeless", false, events, undefined);
+    applyRedirectedDamage(victim, amount, events);
     if (events.length === 0) {
       return;
     }
@@ -5699,7 +5723,13 @@ export class MatchSimulation {
         target.combatant,
         this.#participants,
       ) &&
-      blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
+      blocks(
+        target.combatant,
+        projectile.attackerId,
+        "projectile",
+        skillHit !== undefined,
+        this.#rng,
+      )
     ) {
       events.push({ kind: "attack-blocked", targetId: target.id });
       if (attacker !== undefined) {
@@ -5752,6 +5782,14 @@ export class MatchSimulation {
     );
     if (critical && attacker !== undefined) {
       landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
+      criticalHitRiders(
+        attacker.combatant,
+        target.combatant,
+        this.#rng,
+        this.#ruleset.combat,
+        this.#participants,
+        fired,
+      );
     }
     if (attacker !== undefined) {
       events.push(
@@ -5939,8 +5977,8 @@ export class MatchSimulation {
    * attack skill landed on (#936), one for a shot, and one per landed blow
    * of a swing, so
    * a double strike earns two. A blocked blow deals no damage, so it earns
-   * nothing (#534). "For Great Justice!" (#936) adds its extra strikes
-   * to each. What filled is told in `log` (#1735), the events logged
+   * nothing (#534). A Furious weapon's blow may count twice (#2009).
+   * "For Great Justice!" (#936) adds its extra strikes to each. What filled is told in `log` (#1735), the events logged
    * for the blow.
    */
   #gainAdrenaline(
@@ -5955,7 +5993,16 @@ export class MatchSimulation {
     });
     if (damagedFoe) {
       const { extraStrikesPerHit } = aggregateModifiers(record.combatant.statuses.active);
-      const strikes = blows * (1 + extraStrikesPerHit);
+      // Furious (#2009): each blow rolls to count twice. Drawn only for a
+      // weapon that has it, so no other fight's stream moves.
+      const { doubleAdrenalineChance } = record.combatant.equipment.hitMods;
+      let doubled = 0;
+      for (let blow = 0; doubleAdrenalineChance > 0 && blow < blows; blow += 1) {
+        if (this.#rng.nextFloat() < doubleAdrenalineChance) {
+          doubled += 1;
+        }
+      }
+      const strikes = (blows + doubled) * (1 + extraStrikesPerHit);
       if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds)) {
         log.push({ kind: "adrenaline-gained", targetId: record.id, strikes, skillId: undefined });
       }
@@ -6039,6 +6086,13 @@ export class MatchSimulation {
               remainingSeconds > 0 && getStatusDefinition(id).category === "condition",
           ),
         });
+        // Jagged Bones (#1986) stands a horror up: read before death clears it.
+        const replacedOnDeath = victim.combatant.statuses.active.flatMap(
+          ({ id, remainingSeconds, ranks }) => {
+            const by = getStatusDefinition(id).replacedOnDeathBy;
+            return by === undefined || remainingSeconds <= 0 ? [] : [{ ...by, ranks }];
+          },
+        );
         victim.combatant.statuses.endAll();
         victim.armedAttack = undefined;
         this.#clearChainMarks(victim);
@@ -6057,6 +6111,7 @@ export class MatchSimulation {
               : Number.POSITIVE_INFINITY;
           if (victim.creature.onDeath === "vanish") {
             this.#creatureFell(victim);
+            this.#replaceOnDeath(victim, replacedOnDeath);
           } else if (victim.creature.onDeath === "lie") {
             this.#deathPenalty(victim);
           }
@@ -6212,6 +6267,36 @@ export class MatchSimulation {
         skillId: creature.skillId ?? "",
         ...creature.replacedBy,
         at: record.position,
+        ranks: undefined,
+      });
+    }
+  }
+
+  /**
+   * What its statuses stand up where `record`, a creature, died (#1986):
+   * Jagged Bones's horror, its owner's, at its caster's ranks, beside
+   * the creature's own replacement.
+   */
+  #replaceOnDeath(
+    record: ParticipantRecord,
+    replacedOnDeath: readonly {
+      readonly creature: CreatureTemplate;
+      readonly count: number;
+      readonly ranks: ReadonlyMap<string, number>;
+    }[],
+  ): void {
+    const ownerId = record.creature?.ownerId;
+    if (ownerId === undefined) {
+      return;
+    }
+    for (const { creature, count, ranks } of replacedOnDeath) {
+      this.#replacements.push({
+        ownerId,
+        skillId: record.creature?.skillId ?? "",
+        creature,
+        count,
+        at: record.position,
+        ranks,
       });
     }
   }
@@ -6223,10 +6308,19 @@ export class MatchSimulation {
    */
   #replaceFallen(): void {
     const replacements = this.#replacements.splice(0);
-    for (const { ownerId, skillId, creature, count, at } of replacements) {
+    for (const { ownerId, skillId, creature, count, at, ranks } of replacements) {
       const owner = this.#participants.get(ownerId);
       if (owner !== undefined && !owner.combatant.dead) {
-        this.#summon(owner, skillId, creature, count, at, false, true);
+        this.#summon(
+          owner,
+          skillId,
+          creature,
+          count,
+          at,
+          false,
+          true,
+          ranks ?? ranksOf(owner.combatant),
+        );
       }
     }
   }
@@ -6644,6 +6738,7 @@ export class MatchSimulation {
         record.respawnInSeconds = 0;
         record.outOfCombatSeconds = 0;
         record.resurrectedAtSeconds = this.#elapsedSeconds;
+        record.swapHealthDebt = 0;
         record.corpseExploited = false;
       }
     }
@@ -6775,6 +6870,9 @@ export class MatchSimulation {
    * Put `set` in hand (#489): the only writer of `combatant.equipment`.
    * Maximum energy becomes the set's, and current energy moves by the
    * same amount, below 0 if it must (GW1's hidden energy, ADR-0036).
+   * Maximum health and regeneration follow the set's mods (#2007);
+   * health moves like energy but never below 1: a swap does not kill, and
+   * what that floor held back is owed to the next swap up.
    * `moraleMaximum` is linear, so the move is the sets' difference at any
    * morale. An attack in progress swings afresh with the new weapon.
    */
@@ -6785,9 +6883,11 @@ export class MatchSimulation {
     }
     const { combatant } = record;
     const before = combatant.maxEnergy;
+    const healthBefore = combatant.maxHealth;
     record.activeWeaponSet = set;
     record.pendingWeaponSet = undefined;
     combatant.equipment = held.equipment;
+    combatant.baseEnergyPips = held.baseEnergyPips;
     record.resolvedMaxEnergy = held.maxEnergy;
     combatant.maxEnergy = moraleMaximum(
       this.#ruleset.combat.baseEnergy,
@@ -6795,6 +6895,22 @@ export class MatchSimulation {
       combatant.morale,
     );
     combatant.energy += combatant.maxEnergy - before;
+    record.resolvedMaxHealth = held.maxHealth;
+    combatant.maxHealth = moraleMaximum(
+      this.#ruleset.combat.baseHealth,
+      record.resolvedMaxHealth,
+      combatant.morale,
+    );
+    const change = combatant.maxHealth - healthBefore;
+    if (change >= 0) {
+      const repaid = Math.min(record.swapHealthDebt, change);
+      record.swapHealthDebt -= repaid;
+      combatant.health += change - repaid;
+    } else {
+      const health = Math.max(Math.min(1, combatant.health), combatant.health + change);
+      record.swapHealthDebt += health - (combatant.health + change);
+      combatant.health = health;
+    }
     if (combatant.attack !== undefined) {
       combatant.attack.swingElapsed = 0;
     }
@@ -7012,6 +7128,7 @@ export class MatchSimulation {
     combatant.statuses.clear();
     combatant.dead = false;
     combatant.health = effectiveMaxHealth(combatant);
+    record.swapHealthDebt = 0;
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
@@ -7207,6 +7324,7 @@ export class MatchSimulation {
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
+    record.swapHealthDebt = 0;
     record.corpseExploited = false;
     record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
     emptyAdrenaline(record.combatant);
@@ -7279,7 +7397,12 @@ export class MatchSimulation {
   #weaponSets(spec: ParticipantSpec): ResolvedWeaponSets {
     const [set2, set3, set4] = spec.spareWeaponSets ?? [null, null, null];
     return [
-      { equipment: spec.equipment, maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy },
+      {
+        equipment: spec.equipment,
+        maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
+        maxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
+        baseEnergyPips: spec.baseEnergyPips ?? 0,
+      },
       set2,
       set3,
       set4,

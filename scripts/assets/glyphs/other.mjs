@@ -346,6 +346,21 @@ const glyphs = {
       `<g transform="translate(0,6)">${glyph("blink")}</g>` +
       `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   },
+  "stance-mirror": {
+    means:
+      "Two stances either side of a dashed axis, one the mirror of the other: a stance copied (#1999).",
+    draw: () =>
+      `<path d="M12 3V15" ${stroke(C.ink, 1.2)} stroke-dasharray="2 2"/>` +
+      `<circle cx="7" cy="5.5" r="2.2" fill="${C.ink}"/><circle cx="17" cy="5.5" r="2.2" fill="${C.ink}"/>` +
+      inkLine("M7 9L5.5 11.5L4 14M7 9L9 11.5L9.5 14", 2) +
+      inkLine("M17 9L18.5 11.5L20 14M17 9L15 11.5L14.5 14", 2),
+  },
+  "wand-echo": {
+    means: "A four-point spark and its hollow twin: a borrowed skill (#1999).",
+    draw: () =>
+      inkFill("M8 3.5L10.2 6.8L13.5 9L10.2 11.2L8 14.5L5.8 11.2L2.5 9L5.8 6.8Z") +
+      `<path d="M15.5 3.8L17.2 6.3L19.7 8L17.2 9.7L15.5 12.2L13.8 9.7L11.3 8L13.8 6.3Z" ${stroke(C.ink, 1.5)}/>`,
+  },
 };
 
 export default glyphs;
