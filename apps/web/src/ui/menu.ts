@@ -1,7 +1,6 @@
 import type { QueueMode } from "@vibewars/game-protocol";
 
 import { capeLook } from "../render/cape-shape.js";
-import type { Tally } from "../storage/match-record.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
@@ -25,8 +24,6 @@ export interface MenuCallbacks {
   readonly onRandomArena: (mode: QueueMode, name: string) => void;
   /** Show another rail entry (#1525); the rail has stored it. */
   readonly onSwitch: (entry: RailEntry) => void;
-  /** Open the Record screen (#1404). */
-  readonly onShowRecord: () => void;
   /** Open the build editor on a new character. */
   readonly onNewCharacter: () => void;
   readonly onEditCharacter: (id: string) => void;
@@ -82,16 +79,6 @@ export function saveActiveCharacterId(id: string): void {
   }
 }
 
-/**
- * Random Arena's own button in the title bar (#1453): Record. Music is
- * the ♪.
- */
-export function randomArenaActions(
-  callbacks: Pick<MenuCallbacks, "onShowRecord">,
-): readonly { readonly label: string; readonly onPress: () => void }[] {
-  return [{ label: "Record", onPress: callbacks.onShowRecord }];
-}
-
 const STARTER_STORAGE_KEY = `${STORAGE_NAMESPACE}.starterCharacterId`;
 
 /**
@@ -114,18 +101,11 @@ export function saveStarterCharacterId(id: string): void {
   }
 }
 
-/**
- * "Elementalist / Monk · 5/8 skills", then its record (#1404) once it has
- * played: "· 12W 7L", with "1D" only when it has drawn.
- */
-export function rosterSubtitle(character: StoredCharacter, tally?: Tally): string {
+/** "Elementalist / Monk · 5/8 skills". */
+export function rosterSubtitle(character: StoredCharacter): string {
   const professions = professionLabel(character.primaryProfession, character.secondaryProfession);
   const skills = `${String(equippedCount(character))}/${String(character.skillBar.length)} skills`;
-  if (tally === undefined) {
-    return `${professions} · ${skills}`;
-  }
-  const draws = tally.draws > 0 ? ` ${String(tally.draws)}D` : "";
-  return `${professions} · ${skills} · ${String(tally.wins)}W ${String(tally.losses)}L${draws}`;
+  return `${professions} · ${skills}`;
 }
 
 /**
@@ -176,13 +156,12 @@ export function rosterTags(
 interface CharacterCardParts {
   readonly character: StoredCharacter;
   readonly starter: string | undefined;
-  readonly tally: Tally | undefined;
   readonly worn: ReturnType<typeof capeLook> | undefined;
 }
 
 /** A character's card, marked Random and Invalid as its tags say (#1290, #1426). */
 function characterCard(
-  { character, starter, tally, worn }: CharacterCardParts,
+  { character, starter, worn }: CharacterCardParts,
   options: Pick<Parameters<typeof playCard>[0], "onOpen" | "pressed" | "actions">,
 ): HTMLElement {
   const card = playCard({
@@ -193,7 +172,7 @@ function characterCard(
     content: [
       characterFigureCard(lookOfCharacter(character, worn), {
         size: "card",
-        line: rosterSubtitle(character, tally),
+        line: rosterSubtitle(character),
       }),
     ],
     ...options,
@@ -218,7 +197,6 @@ function wornCape(): ReturnType<typeof capeLook> | undefined {
 /**
  * Render Random Arena (#880, #1525): your characters as cards, to pick who
  * to queue as and nothing more, and the three format tiles that queue.
- * Each character's record (#1404) follows its line.
  */
 export function renderRandomArena(
   root: HTMLElement,
@@ -226,15 +204,10 @@ export function renderRandomArena(
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
-  tallies: ReadonlyMap<string, Tally> = new Map(),
 ): void {
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
-  screenBar({
-    crumbs: ["VibeWars"],
-    actions: randomArenaActions(callbacks).map(({ label, onPress }) => button(label, "", onPress)),
-    join: true,
-  });
+  screenBar({ crumbs: ["VibeWars"], actions: [], join: true });
   const body = railScreen(root, "random-arena", RANDOM_ARENA_GOAL, callbacks.onSwitch);
 
   // Why the last try failed, under the bar it was tried from.
@@ -268,7 +241,7 @@ export function renderRandomArena(
     for (const character of rosterOrder(characters, starter)) {
       const playable = isPlayable(character);
       const card = characterCard(
-        { character, starter, tally: tallies.get(character.id), worn },
+        { character, starter, worn },
         {
           pressed: character.id === active && playable,
           onOpen: () => {
@@ -318,7 +291,6 @@ export function renderCharacterBuilder(
   characters: readonly StoredCharacter[] = [],
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
-  tallies: ReadonlyMap<string, Tally> = new Map(),
 ): void {
   // A Reroll redraws the screen under its own button (#1425): the new
   // card's Reroll takes the focus back.
@@ -349,7 +321,7 @@ export function renderCharacterBuilder(
     });
     cards.appendChild(
       characterCard(
-        { character, starter, tally: tallies.get(character.id), worn },
+        { character, starter, worn },
         character.id === starter
           ? {
               actions: [

@@ -12,7 +12,6 @@ import type { BuildEquipment, ProfessionId } from "@vibewars/game-core";
 
 export const CHARACTER_SCHEMA_VERSION = 4;
 export const TEAM_SCHEMA_VERSION = 2;
-export const MATCH_RECORD_SCHEMA_VERSION = 1;
 
 export interface StoredAttribute {
   readonly attributeId: string;
@@ -52,28 +51,6 @@ export interface StoredTeam {
   readonly members: readonly StoredTeamMember[];
   readonly rulesetId: string;
   readonly updatedAt: number;
-}
-
-/** A finished match from the player's team's side (#1404). */
-export type MatchResult = "win" | "loss" | "draw";
-
-const MATCH_RESULTS: readonly string[] = ["win", "loss", "draw"] satisfies MatchResult[];
-
-/**
- * One match a saved character finished seated (#1404). Kept in this
- * browser only: nobody else sees or checks it (brief §2).
- */
-export interface StoredMatchRecord {
-  readonly schemaVersion: number;
-  readonly id: string;
-  readonly characterId: string;
-  /** As it was then: a rename does not rewrite history. */
-  readonly characterName: string;
-  readonly finishedAt: number;
-  readonly mapId: string;
-  /** The map's mode id (#476). */
-  readonly mode: string;
-  readonly result: MatchResult;
 }
 
 export class PersistenceError extends Error {
@@ -135,23 +112,5 @@ export function isStoredTeam(value: unknown): value is StoredTeam {
     (record.members as readonly unknown[]).every(isStoredTeamMember) &&
     typeof record.rulesetId === "string" &&
     typeof record.updatedAt === "number"
-  );
-}
-
-export function isStoredMatchRecord(value: unknown): value is StoredMatchRecord {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const record = value as Record<string, unknown>;
-  return (
-    record.schemaVersion === MATCH_RECORD_SCHEMA_VERSION &&
-    typeof record.id === "string" &&
-    typeof record.characterId === "string" &&
-    typeof record.characterName === "string" &&
-    typeof record.finishedAt === "number" &&
-    typeof record.mapId === "string" &&
-    typeof record.mode === "string" &&
-    typeof record.result === "string" &&
-    MATCH_RESULTS.includes(record.result)
   );
 }

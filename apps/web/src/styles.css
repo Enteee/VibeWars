@@ -1405,29 +1405,6 @@ body {
   gap: 0.35rem;
 }
 
-/* The Record screen (#1404): the last matches, one row each. */
-.record-table {
-  border-collapse: collapse;
-}
-
-.record-table th,
-.record-table td {
-  padding: 0.2rem 0.75rem 0.2rem 0;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.record-table th {
-  color: var(--ink-dim);
-  font-weight: normal;
-  border-bottom: 1px solid var(--line);
-}
-
-.record-table td {
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
 /* The menu's rail screens (#1525, #1522 variant C): the mode rail down the
    left edge, as tall as the screen body, and the screen's own beside it. */
 #screens:has(> .screen-rail) {
