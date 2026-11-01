@@ -11,9 +11,9 @@ import { railScreen, type RailEntry } from "./rail.js";
 
 /**
  * The menu's team screens (#1525, #1522 variant C): a screen per team
- * mode, each the lobby on its own maps (#1526) above the Team Build
- * cards, Hosted Game, the lobby on every map, and Team Builder, the cards
- * alone. Team Builds are proposed and voted on in the Team Lobby (#1460),
+ * mode, each the lobby on its own maps (#1526), Hosted Game, the lobby on
+ * every map, and Team Builder, the only one with the Team Build cards
+ * (#2031). Team Builds are proposed and voted on in the Team Lobby (#1460),
  * never picked here (#1515). There are no team queues yet.
  */
 
@@ -186,19 +186,18 @@ function teamScreen(
 
 /**
  * Render a lobby's screen (#1525, #1526): Team Arena, Heroes' Ascent and
- * GvG show the lobby on their maps above the Team Build cards; Hosted
- * Game on every map (Q188). `panel` is the lobby, once there is one.
+ * GvG show the lobby on their maps, Hosted Game on every map (Q188), and
+ * none the Team Build cards, which are Team Builder's (#2031). `panel` is
+ * the lobby, once there is one.
  */
 export function renderHostScreen(
   root: HTMLElement,
   entry: HostEntry,
-  teams: readonly StoredTeam[],
   problems: readonly string[],
   connectionNotice: string | undefined,
   callbacks: TeamPlayCallbacks,
   panel: LobbyPanel | undefined,
 ): void {
-  const rerolled = rerollFocused();
   const body = teamScreen(
     root,
     entry,
@@ -209,9 +208,6 @@ export function renderHostScreen(
     panel,
   );
   body.appendChild(panel?.body ?? h("p", "screen-info", OPENING_LOBBY));
-  if (entry !== "hosted-game") {
-    teamCards(body, teams, callbacks, rerolled);
-  }
 }
 
 /** Render Team Builder (#1525): the Team Build cards, to make and edit them. */
