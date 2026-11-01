@@ -124,7 +124,7 @@ function minionsOf(sim: MatchSimulation, owner = "n"): Participant[] {
 }
 
 describe("Animate Bone Minions (#467)", () => {
-  it("raises two Bone Minions at the corpse at Death Magic 12: 272 Health, armor 29", () => {
+  it("raises two Bone Minions at the corpse at Death Magic 12: 280 Health, armor 30", () => {
     const sim = match();
     kill(sim, "x");
     get(sim, "n").combatant.energy = 100;
@@ -137,8 +137,8 @@ describe("Animate Bone Minions (#467)", () => {
     for (const minion of risen) {
       expect(minion.creature).toMatchObject({ kind: "minion", name: "Bone Minion", ownerId: "n" });
       expect(minion.combatant.team).toBe(0);
-      expect(minion.combatant.maxHealth).toBe(272);
-      expect(minion.combatant.equipment.baseArmor).toBe(29);
+      expect(minion.combatant.maxHealth).toBe(280);
+      expect(minion.combatant.equipment.baseArmor).toBe(30);
       // Risen at the corpse: one step toward heel already, as it acts this
       // tick, and shouldered off its twin.
       expect(distance(minion.position, vec2(300, 0))).toBeLessThanOrEqual(
@@ -158,7 +158,7 @@ describe("Animate Bone Minions (#467)", () => {
     }
   });
 
-  it("raises them with 4% more Health a rank of their master's Spawning Power (#1098): 403", () => {
+  it("raises them with 4% more Health a rank of their master's Spawning Power (#1098): 414", () => {
     const sim = new MatchSimulation({
       seed: "minions",
       participants: [
@@ -173,7 +173,7 @@ describe("Animate Bone Minions (#467)", () => {
     });
     kill(sim, "x");
     raise(sim);
-    expect(minionsOf(sim).map((minion) => minion.combatant.maxHealth)).toEqual([403, 403]);
+    expect(minionsOf(sim).map((minion) => minion.combatant.maxHealth)).toEqual([414, 414]);
   });
 
   it("refuses with no corpse in range, and takes nothing", () => {
@@ -185,7 +185,7 @@ describe("Animate Bone Minions (#467)", () => {
     expect(n.combatant.energy).toBe(50);
   });
 
-  it("rots 2 Health a second, 4 after 20 s, and dies untouched at 64 s", () => {
+  it("rots 2 Health a second, 4 after 20 s, and dies untouched at 65 s", () => {
     const sim = match();
     kill(sim, "x");
     raise(sim);
@@ -211,7 +211,7 @@ describe("Animate Bone Minions (#467)", () => {
       expect(minion.combatant.health).toBeLessThan(last);
       last = minion.combatant.health;
     }
-    expect(age()).toBeCloseTo(64, 1);
+    expect(age()).toBeCloseTo(65, 1);
   });
 
   it("sums its rot with its statuses before the ±10 clamp", () => {
@@ -468,14 +468,14 @@ describe("Bone Minions assisting their master (#1118)", () => {
 });
 
 describe("Animate Bone Horror (#467)", () => {
-  it("raises one Bone Horror at Death Magic 12: 356 Health, armor 55", () => {
+  it("raises one Bone Horror at Death Magic 12: 360 Health, armor 56", () => {
     const sim = match();
     kill(sim, "x");
     raise(sim, 1);
     const risen = minionsOf(sim);
     expect(risen).toHaveLength(1);
     expect(risen[0]?.creature?.name).toBe("Bone Horror");
-    expect(risen[0]?.combatant.maxHealth).toBe(356);
-    expect(risen[0]?.combatant.equipment.baseArmor).toBe(55);
+    expect(risen[0]?.combatant.maxHealth).toBe(360);
+    expect(risen[0]?.combatant.equipment.baseArmor).toBe(56);
   });
 });

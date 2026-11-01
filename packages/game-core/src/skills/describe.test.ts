@@ -938,12 +938,12 @@ describe("describeStatus", () => {
     const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
     expect(texts("necromancer.animate-bone-minions")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 2 Bone Minion (level 10, 272 Health)",
+      "Summons 2 Bone Minion (level 10, 280 Health)",
       "Its attacks deal 6–11 damage",
     ]);
     expect(texts("necromancer.animate-bone-horror")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Bone Horror (level 14, 356 Health)",
+      "Summons 1 Bone Horror (level 14, 360 Health)",
       "Its attacks deal 12–24 damage",
     ]);
   });
@@ -953,14 +953,14 @@ describe("describeStatus", () => {
     const texts = (id: string) => describeSkill(skill(id), ranks).effects.map(({ text }) => text);
     expect(texts("necromancer.animate-flesh-golem")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Flesh Golem (level 21, 492 Health)",
+      "Summons 1 Flesh Golem (level 21, 500 Health)",
       "Its attacks deal 50–74 damage",
       "Only one at a time: a new one kills the old",
       "Leaves 3 corpses when it dies",
     ]);
     expect(texts("necromancer.animate-shambling-horror")).toEqual([
       "Exploits the nearest corpse",
-      "Summons 1 Shambling Horror (level 14, 356 Health)",
+      "Summons 1 Shambling Horror (level 14, 360 Health)",
       "Its attacks deal 11–21 damage",
       "When it dies, 1 Jagged Horror (level 12, 320 Health) stands up in its place; its attacks: applies Bleeding for 25s (−3 Health degeneration)",
     ]);

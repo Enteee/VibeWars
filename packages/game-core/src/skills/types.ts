@@ -49,8 +49,22 @@ export interface AttributeScaling {
   readonly atTwelve: number;
 }
 
-/** A magnitude that is either flat or attribute-scaled. */
-export type Magnitude = { readonly flat: number } | { readonly scaling: AttributeScaling };
+/**
+ * A line in a creature's whole level (#1899): a GW1 minion is level 21,
+ * never 20.6, and its Health is 80 + 20·21, so Health steps with the
+ * rank where the level does. `level` is rounded at the rank first.
+ */
+export interface LevelScaling {
+  readonly level: AttributeScaling;
+  readonly atLevelZero: number;
+  readonly perLevel: number;
+}
+
+/** A magnitude that is flat, attribute-scaled, or a line in a whole level. */
+export type Magnitude =
+  | { readonly flat: number }
+  | { readonly scaling: AttributeScaling }
+  | { readonly byLevel: LevelScaling };
 
 export type TargetRule =
   | "self"

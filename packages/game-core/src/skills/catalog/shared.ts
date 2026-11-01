@@ -30,8 +30,9 @@ export const MINION_BEHAVIOUR: Behaviour = {
 /**
  * A minion of Death Magic (#1836): GW1's `level a...b`, its level at ranks 0
  * and 15, gives the level at 12 unrounded, a + 0.8 (b − a), so every rank
- * lands on GW1's table (#1899). Health is 80 + 20 per level, and armor
+ * lands on GW1's table (#1899). Health is 80 + 20 per whole level, and armor
  * `armor.atZero` plus `armor.perLevel` for each level it gains.
+ * Its blows scale on the unrounded level.
  */
 function deathMinion(
   look: CreatureTemplate["look"],
@@ -43,30 +44,31 @@ function deathMinion(
   onHit: readonly OnHitEffect[],
 ): Omit<CreatureTemplate, "replacedBy" | "leavesCorpses" | "onePerOwner"> {
   const [levelAtZero, levelAtFifteen] = level;
-  const levelAtTwelve = levelAtZero + 0.8 * (levelAtFifteen - levelAtZero);
+  const levelScaling = {
+    attributeId: "necromancer.death-magic",
+    atZero: levelAtZero,
+    atTwelve: levelAtZero + 0.8 * (levelAtFifteen - levelAtZero),
+  };
   return {
     kind: "minion",
     look,
     name,
-    maxHealth: {
-      scaling: {
-        attributeId: "necromancer.death-magic",
-        atZero: 80 + 20 * levelAtZero,
-        atTwelve: 80 + 20 * levelAtTwelve,
-      },
-    },
+    maxHealth: { byLevel: { level: levelScaling, atLevelZero: 80, perLevel: 20 } },
     armor: {
-      scaling: {
-        attributeId: "necromancer.death-magic",
-        atZero: armor.atZero,
-        atTwelve: armor.atZero + armor.perLevel * (levelAtTwelve - levelAtZero),
+      byLevel: {
+        level: levelScaling,
+        atLevelZero: armor.atZero - armor.perLevel * levelAtZero,
+        perLevel: armor.perLevel,
       },
     },
     attack: {
       attributeId: "necromancer.death-magic",
       damageMin: damage[0],
       damageMax: damage[1],
-      scaling: { kind: "level", level: { atZero: levelAtZero, atTwelve: levelAtTwelve } },
+      scaling: {
+        kind: "level",
+        level: { atZero: levelScaling.atZero, atTwelve: levelScaling.atTwelve },
+      },
       damageType,
       attackIntervalSeconds: 3.1,
       range: RANGE_MELEE,

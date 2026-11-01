@@ -141,6 +141,15 @@ function describeMagnitude(
   if ("flat" in magnitude) {
     return { current, atZero: undefined, atTwelve: undefined, attributeId: undefined };
   }
+  if ("byLevel" in magnitude) {
+    const { attributeId } = magnitude.byLevel.level;
+    return {
+      current,
+      atZero: resolveMagnitudeAtRanks(magnitude, new Map([[attributeId, 0]])),
+      atTwelve: resolveMagnitudeAtRanks(magnitude, new Map([[attributeId, 12]])),
+      attributeId,
+    };
+  }
   return {
     current,
     atZero: magnitude.scaling.atZero,

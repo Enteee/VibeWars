@@ -4,7 +4,7 @@ import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { FLESH_GOLEM } from "../skills/catalog/shared.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { magnitudeAtRank } from "../skills/scaling.js";
+import { magnitudeAtRank, resolveMagnitudeAtRanks } from "../skills/scaling.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
@@ -118,11 +118,11 @@ function only(sim: MatchSimulation, name: string): Participant {
 describe("the three new minions (#1836)", () => {
   it.each([
     [VAMPIRIC, "Vampiric Horror", 0, 100, 9],
-    [VAMPIRIC, "Vampiric Horror", 12, 356, 57],
+    [VAMPIRIC, "Vampiric Horror", 12, 360, 58],
     [GOLEM, "Flesh Golem", 0, 140, 16],
-    [GOLEM, "Flesh Golem", 12, 492, 82],
+    [GOLEM, "Flesh Golem", 12, 500, 84],
     [SHAMBLING, "Shambling Horror", 0, 100, 9],
-    [SHAMBLING, "Shambling Horror", 12, 356, 57],
+    [SHAMBLING, "Shambling Horror", 12, 360, 58],
   ])(
     "%s raises a %s at Death Magic %i: %i Health, armor %i",
     (skill, name, rank, health, armor) => {
@@ -205,17 +205,23 @@ describe("Vampiric Horror (#1836)", () => {
 });
 
 describe("Flesh Golem (#1836)", () => {
-  it("is GW1's level at every Death Magic rank, from level 3...25 (#1899)", () => {
+  it("is GW1's level at every Death Magic rank, from level 3...25, Health 80 + 20 a level (#1899)", () => {
     const scaling = FLESH_GOLEM.attack?.scaling;
-    const health = FLESH_GOLEM.maxHealth;
-    if (scaling?.kind !== "level" || !("scaling" in health)) {
-      throw new Error("the Flesh Golem scales by level and Death Magic");
+    if (scaling?.kind !== "level") {
+      throw new Error("the Flesh Golem's blows scale by level");
     }
     const ranks = Array.from({ length: 13 }, (_, rank) => rank);
-    expect(ranks.map((rank) => magnitudeAtRank(scaling.level, rank))).toEqual([
-      3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21,
-    ]);
-    expect(magnitudeAtRank(health.scaling, 12)).toBe(492);
+    const levels = [3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19, 21];
+    expect(ranks.map((rank) => magnitudeAtRank(scaling.level, rank))).toEqual(levels);
+    // Whole levels, so Health steps with them: 500 at 12, not 80 + 20·20.6.
+    expect(
+      ranks.map((rank) =>
+        resolveMagnitudeAtRanks(
+          FLESH_GOLEM.maxHealth,
+          new Map([["necromancer.death-magic", rank]]),
+        ),
+      ),
+    ).toEqual(levels.map((level) => 80 + 20 * level));
   });
 
   it("leaves 3 corpses at Death Magic 12, each exploited once, and goes with the last", () => {
