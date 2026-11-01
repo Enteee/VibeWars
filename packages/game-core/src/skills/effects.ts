@@ -1535,6 +1535,20 @@ export function interruptLands(
 }
 
 /**
+ * The Health `caster` gives up to a sacrifice of `percentOfMax` of its
+ * max: larger under Awaken the Blood (#1979). The bots weigh it with this
+ * too (#2000).
+ */
+export function sacrificedHealth(caster: Combatant, percentOfMax: number): number {
+  return Math.round(
+    (caster.maxHealth *
+      percentOfMax *
+      aggregateModifiers(caster.statuses.active).sacrificeMultiplier) /
+      100,
+  );
+}
+
+/**
  * Apply one effect to `context.target`. `earlier` is what this skill's
  * resolution has emitted before it, for a `perEnergyLost` amount (#793)
  * and an interrupt that finds its target already interrupted (#817); an
@@ -1723,17 +1737,7 @@ export function applyEffect(
     }
 
     case "sacrifice-health": {
-      loseHealth(
-        caster,
-        Math.round(
-          (caster.maxHealth *
-            effect.percentOfMax *
-            aggregateModifiers(caster.statuses.active).sacrificeMultiplier) /
-            100,
-        ),
-        "sacrifice",
-        events,
-      );
+      loseHealth(caster, sacrificedHealth(caster, effect.percentOfMax), "sacrifice", events);
       return events;
     }
 
@@ -1802,7 +1806,11 @@ export function applyEffect(
         effect.statusId,
         base *
           (context.own?.durationMultiplier ?? 1) *
-          inflictedScale(effect.statusId, bearer, context),
+          inflictedScale(effect.statusId, bearer, context) *
+          // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
+          (getStatusDefinition(effect.statusId).category === "enchantment"
+            ? caster.equipment.spellMods.enchantmentDurationScale
+            : 1),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,

@@ -1,4 +1,5 @@
 import bindSpirit from "./bind-spirit.js";
+import boost from "./boost.js";
 import cleanse from "./cleanse.js";
 import closeIn from "./close-in.js";
 import fight from "./fight.js";
@@ -20,6 +21,7 @@ import wayOut from "./way-out.js";
  */
 export const BOT_RULES: readonly BotRule[] = inOrder([
   bindSpirit,
+  boost,
   cleanse,
   closeIn,
   fight,
