@@ -129,6 +129,26 @@ describe("Angelic Bond (#1955)", () => {
     expect(get(sim, "p").combatant.statuses.has("angelic-bond")).toBe(false);
   });
 
+  it("spent by damage landed while triggers settle, still ends everywhere and saves again", () => {
+    const sim = match([...allies(2), spec("x", 0, vec2(AREA_EARSHOT * 3, 0))]);
+    use(sim, BOND);
+    const [a1, a2] = [get(sim, "a1").combatant, get(sim, "a2").combatant];
+    // Half of x's hit goes to a1, landed as x's changes are drained.
+    get(sim, "x").combatant.statuses.apply("symbiotic-bond", 10, "a1");
+    get(sim, "x").combatant.statuses.redirect(1000);
+    a1.health = 100;
+    sim.step(DT);
+    expect(a1.dead).toBe(false);
+    for (const id of ["p", "a1", "a2"]) {
+      expect(get(sim, id).combatant.statuses.has("angelic-bond")).toBe(false);
+    }
+    // The next Bond from the same Paragon saves as the first did.
+    a2.statuses.apply("angelic-bond", 10, "p");
+    a2.health = 100;
+    applyDamage(a2, 500, "typeless", false, [], undefined);
+    expect(a2.dead).toBe(false);
+  });
+
   it("after Judge's Intervention, spends only the oldest", () => {
     const sim = match([...allies(1), spec("f", 1, vec2(300, 0))]);
     const a1 = get(sim, "a1").combatant;

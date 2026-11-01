@@ -1855,15 +1855,15 @@ export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): bo
   );
 }
 
+/** How `StatusSet`'s `spent` names `id` from `sourceId` (#1955). */
+function spentKey(id: StatusId, sourceId: string): string {
+  return `${id}/${sourceId}`;
+}
+
 /**
  * All active statuses on one combatant, plus the lifecycle rules that
  * govern them.
  */
-/** How `StatusSet`'s `spent` names `id` from `sourceId` (#1955). */
-export function spentKey(id: StatusId, sourceId: string): string {
-  return `${id}/${sourceId}`;
-}
-
 export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
@@ -1871,8 +1871,8 @@ export class StatusSet {
   readonly #spent: Set<string>;
 
   /**
-   * `spent`: the match's `endsEverywhereWhenSpent` statuses spent since
-   * the last drain (#1955), as `spentKey`s, shared by every set in it, so
+   * `spent`: the match's `endsEverywhereWhenSpent` statuses spent this
+   * tick (#1955), as `spentKey`s, shared by every set in it, so
    * one Angelic Bond saves exactly one ally even when two die in a tick.
    */
   public constructor(spent = new Set<string>()) {

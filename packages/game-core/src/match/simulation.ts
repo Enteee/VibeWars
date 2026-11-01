@@ -127,7 +127,6 @@ import {
   MAX_PIPS,
   ownSkillBoost,
   preventsAttacks,
-  spentKey,
   reducedRecharge,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
@@ -940,7 +939,10 @@ export class MatchSimulation {
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
-  /** What every participant's `StatusSet` shares as spent this tick (#1955). */
+  /**
+   * What every participant's `StatusSet` shares as spent this tick
+   * (#1955), cleared once the tick's last drain is done.
+   */
   readonly #spentStatuses = new Set<string>();
   /**
    * Every team anyone was added to (#846): one whose members all left is
@@ -4170,6 +4172,8 @@ export class MatchSimulation {
       }
     }
     this.#settleTriggered(context, false);
+    // Every drain is done: what was spent this tick has ended everywhere.
+    this.#spentStatuses.clear();
   }
 
   /**
@@ -4207,6 +4211,7 @@ export class MatchSimulation {
         this.#endForm(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
+        this.#endEverywhere(record, change);
         if (ownEnds && change.kind === "ended") {
           this.#logFired(fireEndTriggers(record.combatant, change, context));
           this.#logFired(fireDeathTriggers(record.combatant, change, context));
@@ -4240,6 +4245,7 @@ export class MatchSimulation {
           this.#endForm(record, change);
           this.#returnSource(change);
           this.#stepToTarget(change);
+          this.#endEverywhere(record, change);
         }
       }
     }
@@ -6339,7 +6345,6 @@ export class MatchSimulation {
     ) {
       return;
     }
-    this.#spentStatuses.delete(spentKey(change.statusId, change.sourceId));
     for (const other of this.#participants.values()) {
       if (
         other !== record &&
