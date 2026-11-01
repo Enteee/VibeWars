@@ -115,6 +115,9 @@ async function startLobbyMatch(
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
   await playOwnTeams([host, ...guests].map((page) => ({ page, team })));
+  // The last page opened is the tab in front, and a tab behind it can go
+  // full screen no more than a person can see it (#2012).
+  await host.bringToFront();
   return host.locator("#viewport canvas:not(.compass)");
 }
 
