@@ -478,6 +478,20 @@ describe("describeSkill", () => {
     expect(describeStatus("weakness")).toBe("−66% weapon damage, −1 to all attributes");
   });
 
+  it("says which attributes a boost raises, and for what (#1941)", () => {
+    expect(describeStatus("glyph-of-elemental-power")).toBe(
+      "+2 to elemental attributes, for your next 10 spells",
+    );
+    expect(describeStatus("glyph-of-energy")).toBe(
+      "+2 to elemental attributes, your next 3 spells cost 22 less energy, no Overcast",
+    );
+    expect(describeStatus("ritual-lord")).toBe(
+      "+4 to Ritualist attributes, for your next skill, if it is a binding ritual, " +
+        "it recharges 50% faster and Ritual Lord recharges instantly",
+    );
+    expect(describeStatus("experts-dexterity")).toBe("+1 to Marksmanship, attacks 15% faster");
+  });
+
   it("words a status's pips as GW1 does", () => {
     expect(describeStatus("bleeding")).toContain("−3 Health degeneration");
     expect(describeStatus("regeneration")).toContain("+4 Health regeneration");

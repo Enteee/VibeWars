@@ -47,7 +47,7 @@ export function define(
     attackArmorPenetration: 0,
     attackDamageDelta: 0,
     attackDamageDeltaWeapon: undefined,
-    attributeDelta: 0,
+    attributeDeltas: [],
     attributeSet: undefined,
     borrowsAttribute: undefined,
     castTimeMultiplier: 1,

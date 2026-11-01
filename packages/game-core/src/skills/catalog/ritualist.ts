@@ -2400,6 +2400,36 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // is under no enchantments": the 13 is the status's.
     effects: [{ kind: "apply-status", statusId: "brutal-weapon", durationSeconds: 34 }],
   },
+  // Attributes raised (#1941).
+  {
+    id: "ritualist.ritual-lord",
+    name: "Ritual Lord",
+    gwId: 1217,
+    type: "skill",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.spawning-power",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...29...35 seconds, your Ritualist attributes are boosted by
+    // 2...4 for your next skill. If that skill is a Binding Ritual, it
+    // recharges 10...50...60% faster and Ritual Lord recharges instantly"
+    // (#1941): the status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "ritual-lord", durationSeconds: 29 }],
+  },
 ];
 
 /**

@@ -4432,4 +4432,33 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // 8...14...15 seconds": the poison is the status's `onAttackHit`.
     effects: [{ kind: "apply-status", statusId: "poison-tip-signet", durationSeconds: 60 }],
   },
+  // Attributes raised (#1941).
+  {
+    id: "ranger.experts-dexterity",
+    name: "Expert's Dexterity",
+    gwId: 1724,
+    type: "stance",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...16...20 seconds, you attack 15% faster and your
+    // Marksmanship attribute is increased by 1" (#1941): PvP's (2959),
+    // not PvE's 33% and +2.
+    effects: [{ kind: "apply-status", statusId: "experts-dexterity", durationSeconds: 16 }],
+  },
 ];

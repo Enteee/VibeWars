@@ -400,6 +400,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "death-nova": icon("death-nova"),
   "power-leech": icon("power-leech"),
   "power-flux": icon("power-flux"),
+  // Attributes raised (#1941).
+  "glyph-of-elemental-power": icon("glyph-of-elemental-power"),
+  "glyph-of-energy": icon("glyph-of-energy"),
+  "ritual-lord": icon("ritual-lord"),
+  "experts-dexterity": icon("experts-dexterity"),
 };
 
 const GAP = 2;

@@ -59,7 +59,9 @@ export type RangerStatusId =
   // Staples (#1869).
   | "hekets-rampage"
   // Your next attack (#1916).
-  | "poison-tip-signet";
+  | "poison-tip-signet"
+  // Attributes raised (#1941).
+  | "experts-dexterity";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -483,5 +485,12 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 14 }],
       skillId: "ranger.poison-tip-signet",
     },
+  }),
+  // "For 1...16...20 seconds, you attack 15% faster and your Marksmanship
+  // is boosted by 1" (#1941): the PvP split, at rank 12.
+  "experts-dexterity": define("experts-dexterity", "Expert's Dexterity", "stance", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.85,
+    attributeDeltas: [{ scope: { attributeId: "ranger.marksmanship" }, amount: 1 }],
   }),
 };

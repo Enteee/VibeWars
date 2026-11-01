@@ -17,7 +17,8 @@ import {
   isSuppressed,
   ownSkillBoost,
   type ArmorReduction,
-  type AttributeSet,
+  type AttributeDelta,
+  type AttributeScope,
   type BlockRule,
   type MaxHealthLoss,
   type StatusId,
@@ -257,7 +258,10 @@ export function clampMoveSpeed(raw: number): number {
 }
 
 /** What `rankOf` reads of a combatant: a tooltip outside a match passes no statuses. */
-export type RankHolder = Pick<Combatant, "attributeRanks" | "borrowedAttribute" | "statuses"> & {
+export type RankHolder = Pick<
+  Combatant,
+  "attributeRanks" | "borrowedAttribute" | "heldAttributeDeltas" | "statuses"
+> & {
   readonly equipment: Pick<ResolvedEquipment, "attributeBonuses">;
 };
 
@@ -269,6 +273,7 @@ export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
   return {
     attributeRanks: ranks,
     borrowedAttribute: null,
+    heldAttributeDeltas: [],
     statuses: new StatusSet(),
     equipment: { attributeBonuses: new Map() },
   };
@@ -276,28 +281,42 @@ export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
 
 /**
  * The bearer's rank in `attributeId` right now (#762): its sheet's, runes
- * included, plus every status's `attributeDelta`, floored at 0. A rank
- * of 0 bought with points is never lowered, even when a rune raised it,
- * as GW1 says. The one match-time reader of `attributeRanks` (ADR-0019).
+ * included, plus every in-scope `attributeDeltas` of its statuses and of
+ * those held by the skill resolving (#1941), floored at 0 and capped. A
+ * rank of 0 bought with points is never lowered, even when a rune raised
+ * it, as GW1 says, but a boost raises it. A set rank (#1929) beats them
+ * all. The one match-time reader of `attributeRanks` (ADR-0019).
  */
 export function rankOf(holder: RankHolder, asked: string): number {
   const borrowed = holder.borrowedAttribute;
   const attributeId = borrowed !== null && borrowed.from === asked ? borrowed.to : asked;
   const rank = holder.attributeRanks.get(attributeId) ?? 0;
   const bonus = holder.equipment.attributeBonuses.get(attributeId) ?? 0;
-  const { attributeDelta, attributeSets } = aggregateModifiers(holder.statuses.active);
-  const set = attributeSets.findLast(({ scope }) => setHolds(scope, attributeId));
+  const { attributeDeltas, attributeSets } = aggregateModifiers(holder.statuses.active);
+  const set = attributeSets.findLast(({ scope }) => inScope(scope, attributeId));
   if (set !== undefined) {
     return effectiveRank(set.rank, [{ delta: set.plusEquipment ? bonus : 0 }]);
   }
-  if (rank - bonus <= 0) {
+  const delta = [...attributeDeltas, ...holder.heldAttributeDeltas]
+    .filter(({ scope }) => inScope(scope, attributeId))
+    .reduce((sum, { amount }) => sum + amount, 0);
+  if (delta < 0 && rank - bonus <= 0) {
     return rank;
   }
-  return effectiveRank(rank, [{ delta: attributeDelta }]);
+  return effectiveRank(rank, [{ delta }]);
 }
 
-/** Whether an `attributeSet` of `scope` holds `attributeId` (#1929). */
-function setHolds(scope: AttributeSet["scope"], attributeId: string): boolean {
+/**
+ * Whether an attribute set's or delta's `scope` holds `attributeId`
+ * (#1929, #1941). A profession's scope holds its attributes whatever the
+ * bearer's professions: a secondary Elementalist's are elemental too.
+ */
+export function inScope(scope: AttributeScope, attributeId: string): boolean {
+  if (typeof scope === "object") {
+    return "profession" in scope
+      ? getAttribute(attributeId)?.professionId === scope.profession
+      : scope.attributeId === attributeId;
+  }
   switch (scope) {
     case "all":
       return true;
@@ -318,25 +337,44 @@ const ELEMENTAL_ATTRIBUTES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * `resolve` with `caster`'s spell `skill` borrowing the attribute a status
- * lends it (#1929), Signet of Illusions' Illusion Magic: every rank read
- * of the skill's own attribute meanwhile reads the lent one. Nothing
- * lent: `resolve` as it is.
+ * What a resolving skill lends its user's ranks (#1929, #1941): the
+ * attribute a status lends a spell, Signet of Illusions' Illusion Magic,
+ * and the deltas of the statuses its start spent, held through it.
  */
-export function withBorrowedAttribute<T>(
+export interface RankLoan {
+  readonly lent: string | undefined;
+  readonly held: readonly AttributeDelta[];
+}
+
+/** A skill resolving with nothing lent. */
+export const NO_RANK_LOAN: RankLoan = { lent: undefined, held: [] };
+
+/**
+ * `resolve` with `caster`'s `skill` under `loan` (#1929, #1941): every
+ * rank read of the skill's own attribute meanwhile reads the lent one,
+ * and every rank read adds the held deltas. Nothing lent: `resolve` as
+ * it is.
+ */
+export function withRankLoan<T>(
   caster: Combatant,
-  lent: string | undefined,
+  { lent, held }: RankLoan,
   skill: Skill,
   resolve: () => T,
 ): T {
-  if (lent === undefined || skill.attributeId === undefined) {
+  const borrowed =
+    lent === undefined || skill.attributeId === undefined
+      ? null
+      : { from: skill.attributeId, to: lent };
+  if (borrowed === null && held.length === 0) {
     return resolve();
   }
-  caster.borrowedAttribute = { from: skill.attributeId, to: lent };
+  caster.borrowedAttribute = borrowed;
+  caster.heldAttributeDeltas = held;
   try {
     return resolve();
   } finally {
     caster.borrowedAttribute = null;
+    caster.heldAttributeDeltas = [];
   }
 }
 

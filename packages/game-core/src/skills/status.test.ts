@@ -66,7 +66,7 @@ describe("status definitions", () => {
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
         def.physicalDamageTakenBonus !== 0 ||
-        def.attributeDelta !== 0 ||
+        def.attributeDeltas.length > 0 ||
         def.attributeSet !== undefined ||
         def.borrowsAttribute !== undefined ||
         def.castTimeMultiplier !== 1 ||
@@ -136,7 +136,7 @@ describe("status definitions", () => {
     expect(getStatusDefinition("dazed").castTimeMultiplier).toBeGreaterThan(1);
     expect(getStatusDefinition("weakness")).toMatchObject({
       weaponDamageMultiplier: 0.34,
-      attributeDelta: -1,
+      attributeDeltas: [{ scope: "all", amount: -1 }],
       armorModifier: 0,
     });
   });
@@ -972,7 +972,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -992,6 +992,7 @@ describe("attack duration (ADR-0029)", () => {
       "sum-of-all-fears": 1.33,
       flurry: 0.67,
       "hekets-rampage": 0.67,
+      "experts-dexterity": 0.85,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

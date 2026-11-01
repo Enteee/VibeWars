@@ -276,6 +276,13 @@ const NO_BOT_USE = new Set([
   // no rule the bot weighs, as an attunement's energy.
   "elementalist.master-of-magic",
   "mesmer.signet-of-illusions",
+  // Attributes raised (#1941): a boost timed before the next spell, binding
+  // ritual or bow shot has no use in the bot's vocabulary yet, as the glyphs
+  // on the next spell and Heket's Rampage's attack speed.
+  "elementalist.glyph-of-elemental-power",
+  "elementalist.glyph-of-energy",
+  "ritualist.ritual-lord",
+  "ranger.experts-dexterity",
 ]);
 
 function skill(id: string) {

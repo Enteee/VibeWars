@@ -46,7 +46,10 @@ In a fight your ranks can change for a while. Weakness takes one off
 each. Some hexes set a foe's attributes to 0, and Master of Magic sets
 your elemental ones to 13: a rank set this way overrides runes and
 Weakness alike. Signet of Illusions lets your next spells of other
-attributes use your Illusion Magic rank.
+attributes use your Illusion Magic rank. Some skills raise your
+attributes for a time or for your next spells, as Glyph of Elemental
+Power and Ritual Lord do, even one you left at 0; a set rank, as Master
+of Magic's, beats such a boost.
 
 ## Echoes
 

@@ -91,6 +91,7 @@ import {
   CastState,
   beginRecharge,
   resolvedBar,
+  skillIdOfKey,
   slotSkill,
   type ActiveCast,
   type CastRule,
@@ -147,8 +148,9 @@ import {
   raisedMaxHealth,
   rankOf,
   upkeepPips,
-  withBorrowedAttribute,
+  withRankLoan,
   type NetPips,
+  type RankLoan,
 } from "../skills/tick.js";
 import {
   isInvulnerable,
@@ -2662,18 +2664,22 @@ export class MatchSimulation {
     // enchantment that uses it up.
     const own = ownSkillBoost(record.combatant.statuses.active, skill);
     payCost(skill, record.combatant, key);
-    this.#useGlyph(record, skill);
+    const glyphs = this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     // Heket's Rampage (#1869) ends before the attack skill is timed.
     if (skill.type === "attack") {
       this.#logSpent(record, skill, record.combatant.statuses.endOnBearerStartAttackSkill());
     }
-    const { rule, castsInstantly, losesAllEnergy } = this.#useNextSkillRules(record, skill);
+    const { rule, castsInstantly, losesAllEnergy, spent } = this.#useNextSkillRules(record, skill);
     // Glyph of Essence's price (#1730), once the cost is paid.
     if (losesAllEnergy) {
       record.combatant.energy = 0;
     }
-    return { rule: { ...rule, own }, castsInstantly };
+    // A glyph or a rule this start spent still boosts the skill (#1941).
+    const heldAttributeDeltas = [...glyphs, ...spent].flatMap(
+      (id) => getStatusDefinition(id).attributeDeltas,
+    );
+    return { rule: { ...rule, heldAttributeDeltas, own }, castsInstantly };
   }
 
   /**
@@ -2792,11 +2798,13 @@ export class MatchSimulation {
    * glyph holds (#526): an interrupt or a cancel after this does not give
    * it back, as in GW1. A glyph spent logs its end.
    */
-  #useGlyph(record: ParticipantRecord, skill: Skill): void {
+  #useGlyph(record: ParticipantRecord, skill: Skill): readonly StatusId[] {
     if (!isSpell(skill.type)) {
-      return;
+      return [];
     }
-    this.#logSpent(record, skill, record.combatant.statuses.countSpellStarted());
+    const ended = record.combatant.statuses.countSpellStarted();
+    this.#logSpent(record, skill, ended);
+    return ended;
   }
 
   /** The statuses `skill`'s use spent, each logged as ended under it. */
@@ -2830,7 +2838,12 @@ export class MatchSimulation {
   #useNextSkillRules(
     record: ParticipantRecord,
     skill: Skill,
-  ): { rule: Omit<CastRule, "own">; castsInstantly: boolean; losesAllEnergy: boolean } {
+  ): {
+    rule: Omit<CastRule, "own" | "heldAttributeDeltas">;
+    castsInstantly: boolean;
+    losesAllEnergy: boolean;
+    spent: readonly StatusId[];
+  } {
     const all = record.combatant.statuses.useNextSkillRules(skill);
     const used = all.filter(({ answered }) => answered);
     this.#logFired(
@@ -2846,9 +2859,20 @@ export class MatchSimulation {
         unblockable: used.some(({ rule }) => rule.unblockable),
         rechargesInstantly: used.some(({ rule }) => rule.rechargesInstantly),
         extraRechargeSeconds: used.reduce((sum, { rule }) => sum + rule.extraRechargeSeconds, 0),
+        // Ritual Lord's on a binding ritual (#1941).
+        rechargeFaster: Math.max(
+          0,
+          ...used.map(({ rule }) =>
+            rule.rechargeFasterIfType?.type === skill.type ? rule.rechargeFasterIfType.fraction : 0,
+          ),
+        ),
+        resetsRecharge: used.flatMap(({ rule }) =>
+          rule.resetsOwnRechargeIfType === skill.type ? [rule.skillId] : [],
+        ),
       },
       castsInstantly: used.some(({ rule }) => rule.castsInstantly),
       losesAllEnergy: used.some(({ rule }) => rule.losesAllEnergy),
+      spent: used.map(({ statusId }) => statusId),
     };
   }
 
@@ -3558,6 +3582,8 @@ export class MatchSimulation {
       borrowing === undefined
         ? undefined
         : getStatusDefinition(borrowing).borrowsAttribute?.attributeId;
+    // What its start spent still boosts it (#1941): the last glyph spell's.
+    const loan = { lent, held: cast.rule.heldAttributeDeltas };
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
@@ -3578,7 +3604,7 @@ export class MatchSimulation {
     const resolve =
       flight !== undefined
         ? (resolution: SkillResolution) =>
-            only(this.#releaseSpell(record, resolution, flight.speed, dt, lent))
+            only(this.#releaseSpell(record, resolution, flight.speed, dt, loan))
         : skill.attack === undefined
           ? (resolution: SkillResolution) => resolveSkillEffects(resolution)
           : speed === undefined
@@ -3619,7 +3645,7 @@ export class MatchSimulation {
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
-        : withBorrowedAttribute(record.combatant, lent, skill, () =>
+        : withRankLoan(record.combatant, loan, skill, () =>
             resolve({
               skill:
                 sacrifice === undefined
@@ -3710,7 +3736,7 @@ export class MatchSimulation {
     this.#recordKnockdowns(events);
     this.#recordSteps(events);
     this.#recordResurrections(events);
-    withBorrowedAttribute(record.combatant, lent, skill, () => {
+    withRankLoan(record.combatant, loan, skill, () => {
       // A raised minion rises where its corpse lay (#467).
       for (const summon of summons) {
         this.#summon(
@@ -3781,6 +3807,7 @@ export class MatchSimulation {
         modifiers.skillRechargeFaster,
         typeFaster,
         cast.rule.own.rechargeFaster,
+        cast.rule.rechargeFaster,
       );
       // A glyph's hold on the spell (#1730): Renewal's 0 over Sacrifice's 30 more.
       beginRecharge(
@@ -3798,6 +3825,12 @@ export class MatchSimulation {
       // A form's "disabled for 45 seconds" (#1437), beside its recharge.
       if (skill.disabledAfterUseSeconds !== undefined) {
         record.combatant.cast.disable(cast.key, skill.disabledAfterUseSeconds);
+      }
+      // Ritual Lord's own recharge, over once its binding ritual is (#1941).
+      for (const key of [...record.combatant.cast.rechargeRemaining.keys()]) {
+        if (cast.rule.resetsRecharge.includes(skillIdOfKey(key))) {
+          record.combatant.cast.endRecharge(key);
+        }
       }
     }
     // The use itself leads its entry (#1735), and one that did nothing says
@@ -5208,7 +5241,7 @@ export class MatchSimulation {
     resolution: SkillResolution,
     speed: number,
     dt: number,
-    lent: string | undefined,
+    loan: RankLoan,
   ): CombatEvent[] {
     const { skill } = resolution;
     const spread = skill.projectile?.spread === true;
@@ -5219,7 +5252,7 @@ export class MatchSimulation {
       skill: spread ? { ...skill, area: undefined } : skill,
       caster: record.combatant,
       own: resolution.own,
-      lent,
+      loan,
     };
     return victims.flatMap((victim) => {
       const target = this.#participants.get(victim.id);
@@ -5569,7 +5602,7 @@ export class MatchSimulation {
       return;
     }
     const { skill, caster } = spell;
-    const { events, skipped } = withBorrowedAttribute(caster, spell.lent, skill, () =>
+    const { events, skipped } = withRankLoan(caster, spell.loan, skill, () =>
       resolveSkillEffects({
         skill,
         caster,
@@ -7032,6 +7065,7 @@ export class MatchSimulation {
       lastCombatAt: this.#elapsedSeconds,
       attributeRanks: spec.attributeRanks,
       borrowedAttribute: null,
+      heldAttributeDeltas: [],
       team: spec.team,
       dead: false,
       statuses,

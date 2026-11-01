@@ -117,4 +117,6 @@ export const RANGER_ICONS = {
   "ranger.forked-arrow": { glyph: "volley", modifier: "less" },
   // Next attack (#1916): stand-ins until their art.
   "ranger.poison-tip-signet": { glyph: "flask", modifier: "self" },
+  // Attributes raised (#1941), a stand-in until its art card.
+  "ranger.experts-dexterity": { glyph: "arrow", modifier: "plus" },
 };
