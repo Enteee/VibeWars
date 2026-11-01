@@ -2950,4 +2950,116 @@ export const MONK_SKILLS: readonly Skill[] = [
     // energy pip on its caster.
     effects: [{ kind: "maintain-status", on: "target", statusId: "vital-blessing" }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Party-wide condition and hex moves (#1954)                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.martyr",
+    name: "Martyr",
+    gwId: 298,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Transfer all conditions and their remaining durations from your
+    // allies to you": the party is the team, at any distance. The caster is
+    // one of it, and keeps its own.
+    effects: [
+      { kind: "transfer-conditions", from: "target", count: Infinity, durationMultiplier: 1 },
+    ],
+  },
+  {
+    id: "monk.empathic-removal",
+    name: "Empathic Removal",
+    gwId: 1126,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You and target other ally lose 1 condition and 1 hex, and are
+    // healed for 50": both are healed, whatever was removed.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      { kind: "remove-status", category: "hex", count: 1 },
+      { kind: "heal", amount: { flat: 50 } },
+      { kind: "remove-status", category: "condition", count: 1, from: "caster" },
+      { kind: "remove-status", category: "hex", count: 1, from: "caster" },
+      { kind: "heal", amount: { flat: 50 }, recipient: "caster" },
+    ],
+  },
+  {
+    id: "monk.divert-hexes",
+    name: "Divert Hexes",
+    gwId: 1692,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove up to 1...3 hexes from target ally. For each hex removed in
+    // this way, that ally loses one condition and gains 15...75 Health."
+    effects: [
+      {
+        kind: "remove-status",
+        category: "hex",
+        count: { scaling: { attributeId: "monk.protection-prayers", atZero: 1, atTwelve: 2.6 } },
+      },
+      {
+        kind: "remove-status",
+        category: "condition",
+        count: 1,
+        perRemoved: { category: "hex", max: { flat: 3 } },
+      },
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 63 } },
+        perRemoved: "hex",
+      },
+    ],
+  },
 ];

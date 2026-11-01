@@ -3383,22 +3383,60 @@ const skillGlyph = {
     inkLine("M9 9H14.5M12.5 6.5L15 9L12.5 11.5", 1.8),
   // PvP forms (#1951, #1968): the form mark is a dashed outline of a figure, you
   // as something else; what you become sits inside it. Future forms reuse it.
-  // Shadow Form: a solid shadow inside the outline.
+  // Shadow Form: a solid silhouette filling the outline.
   "form-shadow": () =>
     formShell() +
-    `<g transform="translate(7.2,8.4) scale(0.4)">` +
+    `<g transform="translate(2.6,3.5) scale(0.78)">` +
     `<circle cx="12" cy="5.5" r="3.2" fill="${C.ink}"/>` +
-    inkFill("M4 22V17Q4 10.5 12 10.5Q20 10.5 20 17V22Z") +
+    inkFill("M3.5 22V17Q3.5 10.5 12 10.5Q20.5 10.5 20.5 17V22Z") +
     "</g>",
-  // Elemental Flame: a flame inside the outline.
+  // Elemental Flame: a big flame filling the outline's body.
   "form-flame": () =>
     formShell() +
     inkFill(
-      "M12 11C13.2 12.8 15 14 15 16.8A3 3 0 0 1 9 16.8C9 15.4 10.2 15 10.5 13.3C11.1 13.8 11.4 14.2 11.6 14.8C11.9 13.8 12 12.5 12 11Z",
+      "M12 8.5C14 11.5 17.5 13.5 17.5 16.5A5.5 5.5 0 0 1 6.5 16.5C6.5 14.5 8.5 14 9 11.5C10 12.3 10.5 13 10.8 13.8C11.6 12.2 12 10.5 12 8.5Z",
     ),
-  // Mist Form: a drop inside the outline.
+  // Mist Form: a big drop filling the outline's body.
   "form-mist": () =>
-    formShell() + inkFill("M12 11Q15.6 15 15.6 17.4A3.6 3.6 0 0 1 8.4 17.4Q8.4 15 12 11Z"),
+    formShell() + inkFill("M12 8.5Q18.2 14.8 18.2 17A6.2 6.2 0 0 1 5.8 17Q5.8 14.8 12 8.5Z"),
+  // Attributes raised (#1941, #1947). The mark for "raised" is three rising bars,
+  // the counterpart of the wilted bars of #1946; the glyphs ring a picture instead.
+  // Glyph of Elemental Power: a flame in the glyph ring, the rising bars beside it.
+  "glyph-power-up": () =>
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkFill(
+      "M8.5 6.5C9.7 8.5 11.5 9.7 11.5 12.5A3 3 0 0 1 5.5 12.5C5.5 11 6.7 10.5 7 8.8C7.6 9.5 7.9 10 8.1 10.5C8.5 9.5 8.6 8 8.5 6.5Z",
+    ) +
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
+  // Glyph of Energy: a bolt in the glyph ring, the rising bars beside it.
+  "glyph-energy-up": () =>
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkFill("M9.5 6.5L5.5 12.8H8.3L7.3 17.5L11.8 11H9Z") +
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
+  // Ritual Lord: the spirit totem, and three rising bars.
+  "totem-bars-up": () =>
+    inkFill("M5 11H9.5L9.7 20H4.8Z") +
+    `<circle cx="7.2" cy="6.5" r="3.6" fill="${C.ink}"/>` +
+    inkFill("M12.5 20V15H15.1V20ZM16.3 20V10.5H18.9V20ZM20.1 20V6H22.7V20Z"),
+  // Expert's Dexterity: an arrow in flight above three rising bars.
+  "arrow-bars-up": () =>
+    inkLine("M3 6.5H16", 2.4) +
+    inkFill("M23 6.5L15 2V11Z") +
+    inkLine("M3 6.5L1.5 4M5.5 6.5L4 4M3 6.5L1.5 9M5.5 6.5L4 9", 1.5) +
+    inkFill("M3 21V17H6V21ZM8.5 21V13.5H11.5V21ZM14 21V10H17V21Z"),
+  // Spirit Transfer: the spirit post sends its Health over to an ally, a ringed plus.
+  "spirit-give": () =>
+    spiritPost() +
+    inkLine("M11 8.5H15Q18 8.5 18 11.5", 2) +
+    inkLine("M15.5 10L18 12.5L20.5 10", 2) +
+    `<circle cx="18" cy="18.5" r="4.2" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M18 16.2V20.8M15.7 18.5H20.3", 1.8),
+  // Gaze of Fury: a spirit given up, an angry eye in its place.
+  "spirit-eye": () =>
+    brokenPost(7) +
+    `<path d="M11 14Q17 7.5 23 14Q17 20.5 11 14Z" ${stroke(C.ink, 1.9)}/>` +
+    `<circle cx="17" cy="14" r="2.2" fill="${C.ink}"/>` +
+    inkLine("M11.5 7L22.5 10", 2.2),
   // A skull over crossed bones: the order to rise (#1946).
   "skull-order": () => smallSkull(12, 9, 0.75) + inkLine("M5 16L19 22M19 16L5 22", 2.2),
   // A skull in a dotted ring: the lich's aura (#1946).
