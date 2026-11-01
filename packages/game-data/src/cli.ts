@@ -6,6 +6,7 @@ import {
   formatCoverage,
   getSkill,
   runHeadlessMatch,
+  statAtTwelve,
 } from "@vibewars/game-core";
 
 import { generateSkillBundle } from "./generate.js";
@@ -55,14 +56,17 @@ function printSkills(filter: string | undefined): void {
 function printStatuses(): void {
   for (const status of Object.values(STATUS_DEFINITIONS)) {
     const parts: string[] = [];
-    if (status.healthPips !== 0) {
-      parts.push(`${String(status.healthPips)} health pips`);
+    const healthPips = statAtTwelve(status.healthPips);
+    const armorModifier = statAtTwelve(status.armorModifier);
+    const attackDurationMultiplier = statAtTwelve(status.attackDurationMultiplier);
+    if (healthPips !== 0) {
+      parts.push(`${String(healthPips)} health pips`);
     }
     if (status.energyPips !== 0) {
       parts.push(`${String(status.energyPips)} energy pips`);
     }
-    if (status.armorModifier !== 0) {
-      parts.push(`${String(status.armorModifier)} armor`);
+    if (armorModifier !== 0) {
+      parts.push(`${String(armorModifier)} armor`);
     }
     if (status.moveSpeedMultiplier !== 1) {
       parts.push(`move x${String(status.moveSpeedMultiplier)}`);
@@ -83,8 +87,8 @@ function printStatuses(): void {
     if (status.interruptsSpells) {
       parts.push("attacks interrupt spells");
     }
-    if (status.attackDurationMultiplier !== 1) {
-      parts.push(`attack x${String(status.attackDurationMultiplier)}`);
+    if (attackDurationMultiplier !== 1) {
+      parts.push(`attack x${String(attackDurationMultiplier)}`);
     }
     console.info(`${status.id.padEnd(14)} ${status.category.padEnd(12)} ${parts.join(", ")}`);
   }
