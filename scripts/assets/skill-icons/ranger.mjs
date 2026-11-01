@@ -100,9 +100,9 @@ export const RANGER_ICONS = {
   "ranger.sloth-hunters-shot": { glyph: "arrow-idle" },
   // Own-skill modifiers (#1761, #1855).
   "ranger.practiced-stance": { glyph: "bow-recharge" },
-  // Staples (#1869), stand-ins until their art card.
-  "ranger.hekets-rampage": { glyph: "shield-bolt", modifier: "clock" },
-  "ranger.sundering-attack": { glyph: "arrow-pierce", modifier: "plus" },
+  // Staples (#1869).
+  "ranger.hekets-rampage": { glyph: "claws-rampage" },
+  "ranger.sundering-attack": { glyph: "arrow-sunder" },
   // Pets 2 (#1865, #1939): the paw and what the pet does with you.
   "ranger.otyughs-cry": { glyph: "paw-shield-cry" },
   "ranger.predatory-bond": { glyph: "paw-bond-plus" },

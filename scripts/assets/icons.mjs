@@ -3138,6 +3138,103 @@ const skillGlyph = {
   "step-aura": () => stepAndReturn("aura", C.ink, 1.8),
   "step-meld": () => stepAndReturn("meld", C.ink, 1.8),
   "step-haste": () => stepAndReturn("haste", C.ink, 1.8),
+  // Staples art (#1938). A chopping axe, head up and right, shaft down and left.
+  "chop-keen": () =>
+    inkLine("M8 21L17 9", 2.4) +
+    inkFill("M11 4.5C16 3 21 5 20.5 8.5C19 11.5 15.5 12 14 9.5Z") +
+    inkFill("M5 2.5L6.2 5.3L9 6.5L6.2 7.7L5 10.5L3.8 7.7L1 6.5L3.8 5.3Z"),
+  // The axe over two plates it passes through: part of the armor is ignored.
+  "chop-pierce": () =>
+    inkLine("M9 21L18 9", 2.4) +
+    inkFill("M12 4.5C17 3 22 5 21.5 8.5C20 11.5 16.5 12 15 9.5Z") +
+    inkLine("M2 13H8M2 17H8", 2.2),
+  // The same axe and a drop of blood: it cuts a knocked-down foe.
+  "chop-bleed": () =>
+    inkLine("M9 21L18 9", 2.4) +
+    inkFill("M12 4.5C17 3 22 5 21.5 8.5C20 11.5 16.5 12 15 9.5Z") +
+    inkFill("M5 11C5 11 2 14.8 2 16.6A3 3 0 0 0 8 16.6C8 14.8 5 11 5 11Z"),
+  // An arrow through a split shield: armor that gives way.
+  "arrow-sunder": () =>
+    `<path d="M11 3L19.5 6V12C19.5 16.5 16 19.5 11 21.5C6 19.5 2.5 16.5 2.5 12V6Z" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M11 6.5L8.5 11L12.5 13.5L10 18", 2) +
+    inkLine("M22 3L15.5 9.5", 2.2) +
+    inkFill("M12 12.5L13 6.5L18.5 12Z"),
+  // Three quick slashes, the middle one longest: attacks in a hurry.
+  "slashes-flurry": () =>
+    inkLine("M3 17L9 5", 2.4) + inkLine("M9 20L17 4", 2.4) + inkLine("M16 21L21 11", 2.4),
+  // A shield with a bolt cut out of it: a wild block that costs you.
+  "shield-frenzy": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<path d="M13.5 6L8.5 13H12L10.5 18.5L15.5 11H12Z" fill="${C.bg}"/>`,
+  // Three curved claw marks side by side: a rampage of quick strikes.
+  "claws-rampage": () =>
+    inkLine("M4 4C7 9 7 15 4 20", 2.4) +
+    inkLine("M11 3C14 9 14 15 11 21", 2.4) +
+    inkLine("M18 4C21 9 21 15 18 20", 2.4),
+  // A cone of fire widening to the right, with a wavy front: the breath.
+  "breath-fire": () =>
+    inkLine("M2 8H8M2 12H7M2 16H8", 2.2) +
+    `<g transform="translate(5,1)">${inkFill("M14 3c.6 4 5 6 5 11a7 7 0 0 1-14 0c0-3 1.2-5.2 3-6.4 0 2.3.6 3.5 1.8 4.1-.6-3.5 1.2-7 4.2-8.7z")}</g>`,
+  // Three fingers of earth reaching up out of the ground.
+  "roots-grasp": () =>
+    inkLine("M2 21.5H22", 2.4) +
+    inkFill("M3 21L8 7L10.5 21Z") +
+    inkFill("M9 21L12 3L15 21Z") +
+    inkFill("M13.5 21L16 7L21 21Z"),
+  // A hex ring around a weight: a heavy burden that slows.
+  "hex-burden": () =>
+    punisher(
+      `<circle cx="12" cy="15" r="6" fill="${C.ink}"/>` +
+        inkLine("M8.5 10.5C8.5 4.5 15.5 4.5 15.5 10.5", 2.4),
+    ),
+  // A hex ring around a ghost: fear in everything the foe does.
+  "hex-ghost": () =>
+    punisher(
+      inkFill("M5 21V11A7 7 0 0 1 19 11V21L16 18.5L13 21L10 18.5L7 21Z") +
+        `<circle cx="9.5" cy="11" r="1.6" fill="${C.bg}"/><circle cx="14.5" cy="11" r="1.6" fill="${C.bg}"/>`,
+    ),
+  // A ring around a mountain: an aura that keeps you standing.
+  "ring-mountain": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)}/>` +
+    `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${inkFill("M2 20L9.5 6L13.5 13L16.5 9L22 20Z")}</g>`,
+  // Four plus signs around an empty centre: heals all around, never the caster.
+  "ring-healers": () =>
+    inkLine("M12 1.5V8.5M8.5 5H15.5", 2.4) +
+    inkLine("M12 15.5V22.5M8.5 19H15.5", 2.4) +
+    inkLine("M1.5 12H8.5M5 8.5V15.5", 2.4) +
+    inkLine("M15.5 12H22.5M19 8.5V15.5", 2.4) +
+    `<circle cx="12" cy="12" r="2" ${stroke(C.ink, 1.6)}/>`,
+  // A drop of blood with a plus cut out of it: Health back after the bleeding.
+  "drop-plus": () =>
+    inkFill("M12 2C12 2 5 10.5 5 15.5A7 7 0 0 0 19 15.5C19 10.5 12 2 12 2Z") +
+    `<path d="M12 12V19M8.5 15.5H15.5" ${stroke(C.bg, 2.4)}/>`,
+  // A hex ring around a sword hanging point down: attackers lose heart.
+  "hex-sword-limp": () =>
+    punisher(
+      inkLine("M18 5L7 17", 3) +
+        inkFill("M3.5 21L5.5 14.5L9.5 18.5Z") +
+        inkLine("M13.5 2.8L20.5 9.2", 2.6),
+    ),
+  // A filled shield with a flame cut out of it: protection from elements.
+  "shield-flame": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)"><path d="M14 3c.6 4 5 6 5 11a7 7 0 0 1-14 0c0-3 1.2-5.2 3-6.4 0 2.3.6 3.5 1.8 4.1-.6-3.5 1.2-7 4.2-8.7z" fill="${C.bg}"/></g>`,
+  // A filled shield with a sword cut out of it: protection from blows.
+  "shield-blow": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<path d="M7.5 16.5L16 8M9.5 9.5L14.5 14.5" ${stroke(C.bg, 2.4)}/>`,
+  // A heart inside a ring: an enchantment that adds to your Health.
+  "ring-heart": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)}/>` +
+    `<path d="M12 18s-6-3.7-6-7.7A3.3 3.3 0 0 1 12 8.5 3.3 3.3 0 0 1 18 10.3c0 4-6 7.7-6 7.7z" fill="${C.ink}"/>`,
+  // A hex ring around a speech bubble struck through: no shouts, no chants.
+  "hex-bubble-cut": () =>
+    punisher(inkFill("M3 4H21V15H13L8 20V15H3Z") + `<path d="M2 20L22 3" ${stroke(C.bg, 3.4)}/>`),
+  // A sword with a heart on its hilt: more Health while it is armed.
+  "heart-sword": () =>
+    inkLine("M7 17L20 4", 2.6) +
+    inkLine("M4 14L10 20", 2.6) +
+    `<path d="M7 11s-4-2.4-4-5A2.2 2.2 0 0 1 7 4.7 2.2 2.2 0 0 1 11 6c0 2.6-4 5-4 5z" fill="${C.ink}" transform="translate(-0.5,0)"/>`,
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +
