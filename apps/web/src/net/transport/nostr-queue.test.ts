@@ -20,11 +20,10 @@ import {
   createNostrQueue,
   MAX_QUEUE_MESSAGE_BYTES,
   QUEUE_EVENT_KIND,
-  RELAY_RETRY_MS,
   VERIFY_BURST,
   VERIFY_PER_SECOND,
-  type RelaySocketHandlers,
 } from "./nostr-queue.js";
+import { RELAY_RETRY_MS, type RelaySocketHandlers } from "./nostr-relays.js";
 import { APP_ID } from "./relays.js";
 import { newTicketKey, verifyTicketSig } from "./ticket-key.js";
 

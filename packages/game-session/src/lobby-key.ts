@@ -7,11 +7,17 @@ import { LOBBY_KEY_ITERATIONS, LOBBY_KEY_SALT, normalizeLobbyCode } from "@vibew
  * what peers prove the key with to each other (`keyGated`); it never
  * leaves the page, and a transport never reads it. `null` for a Random
  * Arena queue room, which strangers meet in by design.
+ *
+ * `relay` is where a host's shared TURN relay is offered (#2091,
+ * ADR-0048): the Nostr topic offers are tagged with, and the AES-GCM key
+ * they are sealed under. `null` for a Random Arena room too, which never
+ * shares one.
  */
 export interface LobbyRoom {
   readonly roomId: string;
   readonly password: string;
   readonly proofKey: Uint8Array | null;
+  readonly relay: { readonly topic: string; readonly key: Uint8Array } | null;
 }
 
 const encoder = new TextEncoder();
@@ -34,8 +40,9 @@ async function hmac(key: Uint8Array, label: string): Promise<ArrayBuffer> {
 /**
  * The room lobby key `key` names (ADR-0043): PBKDF2-HMAC-SHA-256 of the
  * normalised key into a seed, and from the seed one HMAC each for the
- * room, its password and the proof key. A peer pays the stretch once per
- * open or join; someone hashing topics pays it for every key they try.
+ * room, its password, the proof key and the relay offer's topic and key
+ * (#2091). A peer pays the stretch once per open or join; someone hashing
+ * topics pays it for every key they try.
  */
 export async function deriveLobbyRoom(key: string): Promise<LobbyRoom> {
   const base = await crypto.subtle.importKey(
@@ -57,12 +64,19 @@ export async function deriveLobbyRoom(key: string): Promise<LobbyRoom> {
       256,
     ),
   );
-  const [room, password, proof] = await Promise.all([
+  const [room, password, proof, relayTopic, relayKey] = await Promise.all([
     hmac(seed, "room"),
     hmac(seed, "password"),
     hmac(seed, "proof"),
+    hmac(seed, "relay-topic"),
+    hmac(seed, "relay-key"),
   ]);
-  return { roomId: hex(room), password: hex(password), proofKey: new Uint8Array(proof) };
+  return {
+    roomId: hex(room),
+    password: hex(password),
+    proofKey: new Uint8Array(proof),
+    relay: { topic: hex(relayTopic), key: new Uint8Array(relayKey) },
+  };
 }
 
 /**
@@ -70,5 +84,5 @@ export async function deriveLobbyRoom(key: string): Promise<LobbyRoom> {
  * Its `ra-` prefix keeps it apart from every derived room, which is hex.
  */
 export function publicRoom(room: string): LobbyRoom {
-  return { roomId: room, password: room, proofKey: null };
+  return { roomId: room, password: room, proofKey: null, relay: null };
 }

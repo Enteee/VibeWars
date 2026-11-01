@@ -20,7 +20,7 @@ import { joinTrysteroRoom, type TrysteroDeps } from "./trystero.js";
 import type { TurnConfig } from "./turn-config.js";
 
 /** A room as a lobby key's derivation names it; the transport reads only these two. */
-const ROOM: LobbyRoom = { roomId: "a7", password: "kq", proofKey: null };
+const ROOM: LobbyRoom = { roomId: "a7", password: "kq", proofKey: null, relay: null };
 
 /** A Trystero room with no network: the test plays the remote peers. */
 function fakeRoom(options: { sendFails?: boolean; turn?: TurnConfig } = {}) {

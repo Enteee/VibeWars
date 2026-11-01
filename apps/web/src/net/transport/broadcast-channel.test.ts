@@ -23,7 +23,12 @@ function freshCode(): string {
 }
 
 /** The room `roomId` names; a BroadcastChannel reads nothing else of it. */
-const roomOf = (roomId: string): LobbyRoom => ({ roomId, password: "unused", proofKey: null });
+const roomOf = (roomId: string): LobbyRoom => ({
+  roomId,
+  password: "unused",
+  proofKey: null,
+  relay: null,
+});
 
 /** Frames posted on each channel name, by every channel the transport opens. */
 const posted = new Map<string, number>();
