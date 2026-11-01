@@ -782,13 +782,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const endStage = (lobby: TeamLobby): void => {
     if (lobby.stage === "vote") {
       // A Hosted Game's house team plays as many as the other side chose
-      // (#2029), and with neither chosen, as many as the larger side has players.
+      // (#2029); with neither chosen, 4 or the larger side's players.
       const order = playsHouse(0, lobby.sides[0]) ? ([1, 0] as const) : ([0, 1] as const);
       for (const team of order) {
         const side = lobby.sides[team];
         const other = team === 0 ? 1 : 0;
         const otherSize =
-          lobby.sides[other].chosen?.builds.length ?? Math.max(1, humansOn(other).length);
+          lobby.sides[other].chosen?.builds.length ?? Math.max(4, humansOn(other).length);
         // A proposal still arriving is not one.
         side.pending.clear();
         side.chosen = chooseFor(
