@@ -13,6 +13,7 @@ import { chargeAdrenaline } from "../skills/testing.js";
 import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Arcane Echo and Echo (#469, #1126): the next skill used stands in the
@@ -270,12 +271,12 @@ describe("a copy and what reads the bar (#1126)", () => {
   it("Diversion lengthens the skill used, not the copy it makes; used, the copy is lengthened", () => {
     const match = sim();
     echoUp(match, 0);
-    get(match, "a").statuses.apply("diversion", 6, "m");
+    get(match, "a").statuses.apply("diversion", 6, "m", NO_RANKS);
     use(match, 2);
     const a = get(match, "a");
     expect(a.cast.rechargeRemaining.get(FIREBALL)).toBeGreaterThan(47);
     expect(a.cast.rechargeRemaining.has(copyKey(FIREBALL, 0))).toBe(false);
-    a.statuses.apply("diversion", 6, "m");
+    a.statuses.apply("diversion", 6, "m", NO_RANKS);
     use(match, 0);
     expect(a.cast.rechargeRemaining.get(copyKey(FIREBALL, 0))).toBeGreaterThan(47);
   });
@@ -309,7 +310,7 @@ describe("a copy and what reads the bar (#1126)", () => {
     const a = get(match, "a");
     const echoRecharge = a.cast.rechargeRemaining.get(ARCANE_ECHO) ?? 0;
     a.health = 1;
-    a.statuses.apply("bleeding", 10, "m");
+    a.statuses.apply("bleeding", 10, "m", NO_RANKS);
     stepUntil(match, () => a.dead);
     expect(a.cast.overrides.size).toBe(0);
     expect(held(match, 0)?.skillId).toBe(ARCANE_ECHO);

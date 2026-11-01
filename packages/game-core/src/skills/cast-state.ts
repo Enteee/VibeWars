@@ -10,6 +10,7 @@
 import type { SkillBar } from "../build.js";
 import {
   NO_OWN_SKILL_BOOST,
+  NO_RANKS,
   type AttributeDelta,
   type OwnSkillBoost,
   type StatusId,
@@ -211,7 +212,8 @@ export class CastState {
       rule,
     };
     if (bears !== undefined) {
-      this.#statuses.apply(bears, Number.POSITIVE_INFINITY, this.#ownerId);
+      // No `whileActivating` status scales (#1976).
+      this.#statuses.apply(bears, Number.POSITIVE_INFINITY, this.#ownerId, NO_RANKS);
     }
   }
 

@@ -15,6 +15,7 @@ import { applyIntent } from "./apply-intent.js";
 import { CLAIM_SKILL_ID, GHOST_HEALTH, ghostId, type HillField } from "./ghost.js";
 import { ALTAR_REACH_UNITS } from "./relics.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * King of the Hill in the simulation (#1377), on Hill Courtyard: each
@@ -117,7 +118,7 @@ function stepUntil(sim: MatchSimulation, done: () => boolean, seconds: number): 
 /** `id` dies this tick, where it stands. */
 function kill(sim: MatchSimulation, id: string): void {
   const { combatant } = get(sim, id);
-  combatant.statuses.apply("burning", 10, "nobody");
+  combatant.statuses.apply("burning", 10, "nobody", NO_RANKS);
   combatant.health = 0.2;
 }
 
@@ -385,5 +386,56 @@ describe("a King of the Hill match (#1377)", () => {
     sim.step(DT);
     expect(get(sim, GHOST_1).combatant.dead).toBe(false);
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 0, reason: "annihilation" });
+  });
+});
+
+/** Hall of Heroes (#1995): packages/game-maps/maps/hall-of-heroes, walls as [x, y, width, height]. */
+const HALL_WALLS: readonly (readonly [number, number, number, number])[] = [
+  [420, 380, 40, 240],
+  [420, 980, 40, 240],
+  [1940, 380, 40, 240],
+  [1940, 980, 40, 240],
+  [700, 300, 120, 120],
+  [700, 1180, 120, 120],
+  [1580, 300, 120, 120],
+  [1580, 1180, 120, 120],
+  [700, 500, 50, 50],
+  [700, 1050, 50, 50],
+  [1650, 500, 50, 50],
+  [1650, 1050, 50, 50],
+  [820, 500, 50, 50],
+  [820, 1050, 50, 50],
+  [1530, 500, 50, 50],
+  [1530, 1050, 50, 50],
+  [1005, 605, 50, 50],
+  [1005, 945, 50, 50],
+  [1345, 605, 50, 50],
+  [1345, 945, 50, 50],
+  [1160, 200, 80, 80],
+  [1160, 1320, 80, 80],
+];
+
+describe("on the Hall of Heroes (#1995)", () => {
+  it("lets a Ghostly Hero step onto the altar, claim it and score for its team", () => {
+    const altar = vec2(1200, 800);
+    const sim = new MatchSimulation({
+      seed: "hall-of-heroes",
+      matchRules: KING_OF_THE_HILL_MATCH_RULES,
+      walls: HALL_WALLS.flatMap(([x, y, width, height]) => rect(x, y, width, height)),
+      bounds: { width: 2400, height: 1600 },
+      hillField: {
+        altar,
+        spawns: [
+          { team: 0, position: vec2(200, 800) },
+          { team: 1, position: vec2(2200, 800) },
+        ],
+      },
+      participants: [fighter("a", 0, vec2(250, 720)), fighter("x", 1, vec2(2150, 720))],
+    });
+    get(sim, GHOST_0).position = altar;
+    stepUntil(sim, () => sim.altarState.holder === 0, CLAIM_SECONDS + 1);
+    stepFor(sim, POINT_TICK_SECONDS * 2 + 1);
+    expect(points(sim)[0]).toBeGreaterThan(0);
+    expect(points(sim)[1]).toBe(0);
   });
 });

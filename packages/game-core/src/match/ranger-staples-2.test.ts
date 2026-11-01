@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill, describeStatus } from "../skills/describe.js";
 import { stateHolds, type CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { blockChanceOf } from "../skills/tick.js";
 import type { Skill, StateCondition } from "../skills/types.js";
@@ -178,7 +178,7 @@ describe("Serpent's Quickness and skillRechargeFaster (#1539)", () => {
     // Below full, so Healing Signet heals and logs.
     get(sim, "r").combatant.health -= 500;
     for (const statusId of statuses) {
-      get(sim, "r").combatant.statuses.apply(statusId, 1000, "r");
+      get(sim, "r").combatant.statuses.apply(statusId, 1000, "r", NO_RANKS);
     }
     used(sim, skillId, skill(skillId).target === "self" ? "r" : "f");
     return get(sim, "r").combatant.cast.rechargeTotal.get(skillId);
@@ -200,8 +200,8 @@ describe("Serpent's Quickness and skillRechargeFaster (#1539)", () => {
     expect(recharge(CRY, ["serpents-quickness"])).toBeCloseTo(20 * 0.67, 9);
     const sim = match();
     const statuses = get(sim, "r").combatant.statuses;
-    statuses.apply("serpents-quickness", 1000, "r");
-    statuses.apply("mantra-of-recovery", 1000, "r");
+    statuses.apply("serpents-quickness", 1000, "r", NO_RANKS);
+    statuses.apply("mantra-of-recovery", 1000, "r", NO_RANKS);
     used(sim, CRY);
     expect(get(sim, "r").combatant.cast.rechargeTotal.get(CRY)).toBeCloseTo(20 * 0.67, 9);
   });
@@ -213,7 +213,7 @@ describe("Serpent's Quickness and skillRechargeFaster (#1539)", () => {
       }),
     ]);
     const bearer = get(sim, "r").combatant;
-    bearer.statuses.apply("serpents-quickness", 27, "r");
+    bearer.statuses.apply("serpents-quickness", 27, "r", NO_RANKS);
     bearer.health = bearer.maxHealth * 0.5 + 1;
     expect(sim.requestAttack("f", "r")).toEqual({ ok: true });
     for (let i = 0; i < 10 / DT && bearer.health >= bearer.maxHealth * 0.5; i += 1) {
@@ -229,8 +229,8 @@ describe("Serpent's Quickness and skillRechargeFaster (#1539)", () => {
   it("does not end on Bleeding below half, until a foe damages its bearer", () => {
     const sim = match();
     const bearer = get(sim, "r").combatant;
-    bearer.statuses.apply("serpents-quickness", 27, "r");
-    bearer.statuses.apply("bleeding", 100, "f");
+    bearer.statuses.apply("serpents-quickness", 27, "r", NO_RANKS);
+    bearer.statuses.apply("bleeding", 100, "f", NO_RANKS);
     bearer.health = bearer.maxHealth * 0.5 + 1;
     stepFor(sim, 2);
     expect(bearer.health).toBeLessThan(bearer.maxHealth * 0.5);
@@ -253,7 +253,7 @@ describe("Dual Shot (#1539)", () => {
     const landed = new Set<number>();
     for (let n = 0; n < 40; n += 1) {
       const sim = match([], `dual-${String(n)}`);
-      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
       landed.add(damageTo(used(sim, DUAL_SHOT), "f").length);
     }
     expect([...landed].sort()).toEqual([0, 1, 2]);
@@ -322,7 +322,7 @@ describe("Zojun's Shot and Point Blank Shot (#1539)", () => {
 describe("Whirling Defense (#1539)", () => {
   it("blocks 75% of attacks, melee and projectile", () => {
     const bearer = makeCombatant({ id: "r" });
-    bearer.statuses.apply("whirling-defense", 18, "r");
+    bearer.statuses.apply("whirling-defense", 18, "r", NO_RANKS);
     expect(blockChanceOf(bearer, "melee", false)).toBe(0.75);
     expect(blockChanceOf(bearer, "projectile", false)).toBe(0.75);
   });
@@ -332,7 +332,7 @@ describe("Whirling Defense (#1539)", () => {
       spec("f", 1, vec2(500, 0), { equipment: wielding(WEAPONS.longbow, "ranger.marksmanship") }),
       spec("east", 1, vec2(AREA_ADJACENT / 2, 0)),
     ]);
-    get(sim, "r").combatant.statuses.apply("whirling-defense", 1000, "r");
+    get(sim, "r").combatant.statuses.apply("whirling-defense", 1000, "r", NO_RANKS);
     expect(sim.requestAttack("f", "r")).toEqual({ ok: true });
     let splash: CombatEvent[] = [];
     for (let i = 0; i < 20 / DT && splash.length === 0; i += 1) {
@@ -349,7 +349,7 @@ describe("Whirling Defense (#1539)", () => {
 describe("Dodge (#1539)", () => {
   it("moves 33% faster and blocks 65% of projectiles, no melee blow", () => {
     const bearer = makeCombatant({ id: "r" });
-    bearer.statuses.apply("dodge", 10, "r");
+    bearer.statuses.apply("dodge", 10, "r", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.33);
     expect(blockChanceOf(bearer, "projectile", false)).toBe(0.65);
     expect(blockChanceOf(bearer, "melee", false)).toBe(0);
@@ -357,7 +357,7 @@ describe("Dodge (#1539)", () => {
 
   it("ends as its bearer releases a shot", () => {
     const sim = match();
-    get(sim, "r").combatant.statuses.apply("dodge", 10, "r");
+    get(sim, "r").combatant.statuses.apply("dodge", 10, "r", NO_RANKS);
     used(sim, ZOJUNS_SHOT);
     expect(get(sim, "r").combatant.statuses.has("dodge")).toBe(false);
   });

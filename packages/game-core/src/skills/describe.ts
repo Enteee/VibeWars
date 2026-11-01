@@ -19,10 +19,11 @@ import { getAttribute, getProfession, type ProfessionId } from "../professions.j
 import { energyCostOf } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { creatureDamageMultiplier } from "./damage.js";
-import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
+import { magnitudeAtRank, resolveMagnitudeAtRanks, statAt, statAtTwelve } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
+  NO_RANKS,
   type AttributeDelta,
   type AttributeScope,
   type AttributeSet,
@@ -30,6 +31,7 @@ import {
   type NextSkillRule,
   type OwnSkillModifier,
   type StatusCategory,
+  type StatusStat,
   type StatusTrigger,
   type StatusTriggerEvent,
   type TriggerEffect,
@@ -250,22 +252,51 @@ function adrenalineGainText(faster: number): string {
 }
 
 /**
- * What a status actually does, so a tooltip does not just name it.
- * `ranks` are its caster's, for a trigger an attribute scales (#944):
- * Patient Spirit's heal. Empty, it reads at rank 0.
+ * A status stat as its line prints it (#1976), through `format`: at
+ * `ranks`, or GW1's "90...258" across ranks 0 and 12 with none to read.
  */
-export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = new Map()): string {
+function statText(
+  stat: StatusStat,
+  ranks: ReadonlyMap<string, number> | undefined,
+  format: (value: number) => string,
+): string {
+  if (typeof stat === "number") {
+    return format(stat);
+  }
+  if (ranks === undefined) {
+    return `${format(stat.scaling.atZero)}...${format(stat.scaling.atTwelve)}`;
+  }
+  return format(statAt(stat, ranks));
+}
+
+function whole(value: number): string {
+  return String(Math.abs(Math.round(value)));
+}
+
+/**
+ * What a status actually does, so a tooltip does not just name it.
+ * `ranks` are its caster's, for a trigger an attribute scales (#944),
+ * Patient Spirit's heal, and for a stat (#1976), Endure Pain's Health.
+ * Without them, as for a status on a bearer, whose source's ranks the
+ * client does not have, a trigger reads at rank 0 and a stat as its range.
+ */
+export function describeStatus(id: string, ranks?: ReadonlyMap<string, number>): string {
   const definition = findStatusDefinition(id);
   if (definition === undefined) {
     return id;
   }
+  const triggerRanks = ranks ?? NO_RANKS;
+  const healthPips = statAtTwelve(definition.healthPips);
+  const armorModifier = statAtTwelve(definition.armorModifier);
+  const physicalDamageTakenBonus = statAtTwelve(definition.physicalDamageTakenBonus);
+  const attackDurationMultiplier = statAtTwelve(definition.attackDurationMultiplier);
   const parts: string[] = [];
   // In pips, as GW1 words it: "−3 Health degeneration".
-  if (definition.healthPips < 0) {
-    parts.push(`−${String(-definition.healthPips)} Health degeneration`);
+  if (healthPips < 0) {
+    parts.push(`−${statText(definition.healthPips, ranks, whole)} Health degeneration`);
   }
-  if (definition.healthPips > 0) {
-    parts.push(`+${String(definition.healthPips)} Health regeneration`);
+  if (healthPips > 0) {
+    parts.push(`+${statText(definition.healthPips, ranks, whole)} Health regeneration`);
   }
   if (definition.healthPipsPerEnchantment !== undefined) {
     const { pips, max } = definition.healthPipsPerEnchantment;
@@ -279,9 +310,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.energyPips > 0) {
     parts.push(`+${String(definition.energyPips)} Energy regeneration`);
   }
-  if (definition.armorModifier !== 0) {
-    const sign = definition.armorModifier > 0 ? "+" : "";
-    parts.push(`${sign}${String(definition.armorModifier)} armor`);
+  if (armorModifier !== 0) {
+    const sign = armorModifier > 0 ? "+" : "-";
+    parts.push(`${sign}${statText(definition.armorModifier, ranks, whole)} armor`);
   }
   for (const bonus of definition.conditionalArmor) {
     parts.push(statusArmorText(bonus));
@@ -326,8 +357,8 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const { fraction, cap } = definition.maxHealthLoss;
     parts.push(`−${String(Math.round(fraction * 100))}% maximum health (at most ${String(cap)})`);
   }
-  if (definition.maxHealthBonus !== 0) {
-    parts.push(`+${String(definition.maxHealthBonus)} maximum health`);
+  if (statAtTwelve(definition.maxHealthBonus) !== 0) {
+    parts.push(`+${statText(definition.maxHealthBonus, ranks, whole)} maximum health`);
   }
   if (definition.maxHealthBonusPerEnchantment !== 0) {
     parts.push(
@@ -356,8 +387,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const change = Math.round((definition.weaponDamageMultiplier - 1) * 100);
     parts.push(`${signed(change)}% weapon damage`);
   }
-  if (definition.physicalDamageTakenBonus !== 0) {
-    parts.push(`take ${signed(definition.physicalDamageTakenBonus)} from physical damage`);
+  if (physicalDamageTakenBonus !== 0) {
+    const sign = physicalDamageTakenBonus > 0 ? "+" : "−";
+    const amount = statText(definition.physicalDamageTakenBonus, ranks, whole);
+    parts.push(`take ${sign}${amount} from physical damage`);
   }
   if (definition.elementalDamageTakenAs !== undefined) {
     parts.push(`elemental damage taken is ${definition.elementalDamageTakenAs} damage`);
@@ -414,11 +447,13 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.interruptsSpells) {
     parts.push("spells are interrupted by attacks");
   }
-  if (definition.attackDurationMultiplier !== 1) {
+  if (attackDurationMultiplier !== 1) {
     // GW1's wording: "50% slower" is 1.5× as long, "33% faster" is 0.67×.
-    const change = Math.round(Math.abs(definition.attackDurationMultiplier - 1) * 100);
-    const way = definition.attackDurationMultiplier > 1 ? "slower" : "faster";
-    parts.push(`attacks ${String(change)}% ${way}`);
+    const change = statText(definition.attackDurationMultiplier, ranks, (multiplier) =>
+      String(Math.round(Math.abs(multiplier - 1) * 100)),
+    );
+    const way = attackDurationMultiplier > 1 ? "slower" : "faster";
+    parts.push(`attacks ${change}% ${way}`);
   }
   if (definition.projectileSpeedMultiplier !== 1) {
     parts.push(`arrows move ${String(definition.projectileSpeedMultiplier)}× as fast`);
@@ -585,15 +620,15 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.endsWhenBearerAttacksInMelee) {
     parts.push("ends if the bearer makes a melee attack");
   }
-  if (definition.damageTakenMultiplier !== 1) {
-    parts.push(`takes ${damageTaken(definition.damageTakenMultiplier)} damage`);
+  if (statAtTwelve(definition.damageTakenMultiplier) !== 1) {
+    parts.push(`takes ${statText(definition.damageTakenMultiplier, ranks, damageTaken)} damage`);
   }
   if (definition.damageReduction > 0) {
     parts.push(`−${String(definition.damageReduction)} damage taken`);
   }
   if (definition.damageReductionPerRank !== undefined) {
     const { attributeId, perRank, max } = definition.damageReductionPerRank;
-    const now = Math.min(max, perRank * (ranks.get(attributeId) ?? 0));
+    const now = Math.min(max, perRank * (triggerRanks.get(attributeId) ?? 0));
     const attribute = getAttribute(attributeId)?.name ?? attributeId;
     parts.push(
       `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
@@ -695,10 +730,16 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.failsNextSpell !== undefined) {
     const { on, effects } = definition.failsNextSpell;
     const what = effects
-      .flatMap((effect) => describeEffects(effect, ranks))
+      .flatMap((effect) => describeEffects(effect, triggerRanks))
       .map(({ text }) => lowerFirst(text));
     parts.push(
       `the next spell it casts at ${on === "foe-targeted" ? "a foe" : "an ally"} fails: ${what.join(", ")}`,
+    );
+  }
+  // "Can't Touch This!"'s (#1966).
+  if (definition.failsFoeTouchSkills !== undefined) {
+    parts.push(
+      `the next ${String(definition.failsFoeTouchSkills)} touch skills used against you fail`,
     );
   }
   // Wastrel's Demise's (#1501): "each second, it and adjacent foes take 8
@@ -844,7 +885,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   const sentences: string[] = [];
   for (const { text, clause } of describeTriggers(
     definition.triggers.filter((trigger) => !enders.includes(trigger)),
-    ranks,
+    triggerRanks,
     definition.endsWhenBearerUsesSkill,
     definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
@@ -1704,6 +1745,7 @@ function describeOwnSkillModifier({
   rechargeSlower,
   durationMultiplier,
   healMultiplier,
+  notEasilyInterrupted,
   uses,
 }: OwnSkillModifier): string {
   const one = uses === 1;
@@ -1732,6 +1774,8 @@ function describeOwnSkillModifier({
     healMultiplier === 1
       ? undefined
       : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
+    // Trapper's Focus's (#1966).
+    notEasilyInterrupted ? `${verb("are", "is")} not easily interrupted` : undefined,
   ].filter((change) => change !== undefined);
   const kind = filter.type === undefined ? "skill" : filter.type.replaceAll("-", " ");
   const named = [
@@ -2814,6 +2858,9 @@ function describeEffect(
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
+    // Strike as One's "your animal companion instantly moves to your target" (#1966).
+    case "companion-steps-to-target":
+      return { text: "Your pet moves to your target and attacks it", magnitude: undefined };
     case "pull-to-caster":
       return { text: "Teleports target to you", magnitude: undefined };
     case "destroy-target-spirit":

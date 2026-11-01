@@ -12,7 +12,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
+import { NO_RANKS, aggregateModifiers, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -167,11 +167,12 @@ describe("the enchantments (#1511)", () => {
     const target = ally();
     use(monk(), "monk.shield-of-deflection", target);
     expect(target.statuses.get("shield-of-deflection")?.durationSeconds).toBe(9);
-    const definition = getStatusDefinition("shield-of-deflection");
-    expect([definition.block, definition.armorModifier]).toEqual([
-      { chance: 0.75, against: "all" },
-      27,
-    ]);
+    expect(getStatusDefinition("shield-of-deflection").block).toEqual({
+      chance: 0.75,
+      against: "all",
+    });
+    // Protection Prayers 12 (#1976).
+    expect(aggregateModifiers(target.statuses.active).armorModifier).toBe(27);
   });
 
   it("Shielding Hands: 15 off damage and life steal for 8 s", () => {
@@ -209,9 +210,9 @@ describe("Draw Conditions (#1511)", () => {
   it("takes all three of the ally's conditions, with their time left, and heals 22 each", () => {
     const user = monk({ health: 100 });
     const target = ally();
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("poison", 8, "foe");
-    target.statuses.apply("burning", 3, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("poison", 8, "foe", NO_RANKS);
+    target.statuses.apply("burning", 3, "foe", NO_RANKS);
     const events = use(user, "monk.draw-conditions", target);
     expect(target.statuses.countByCategory("condition")).toBe(0);
     expect(
@@ -230,9 +231,9 @@ describe("Draw Conditions (#1511)", () => {
 
   it("a Bleeding the Monk already has for longer stays", () => {
     const user = monk();
-    user.statuses.apply("bleeding", 20, "foe");
+    user.statuses.apply("bleeding", 20, "foe", NO_RANKS);
     const target = ally();
-    target.statuses.apply("bleeding", 5, "foe");
+    target.statuses.apply("bleeding", 5, "foe", NO_RANKS);
     use(user, "monk.draw-conditions", target);
     expect(user.statuses.get("bleeding")?.remainingSeconds).toBe(20);
     expect(target.statuses.has("bleeding")).toBe(false);
@@ -252,10 +253,10 @@ describe("Blessed Light (#1511)", () => {
   it("heals 98, and Divine Favor's 38, and takes one condition and one hex", () => {
     const user = monk({ attributeRanks: new Map([["monk.divine-favor", 12]]) });
     const target = ally();
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("poison", 10, "foe");
-    target.statuses.apply("empathy", 10, "foe");
-    target.statuses.apply("malaise", 10, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
+    target.statuses.apply("empathy", 10, "foe", NO_RANKS);
+    target.statuses.apply("malaise", 10, "foe", NO_RANKS);
     expect(healed(use(user, "monk.blessed-light", target))).toBe(98 + 38);
     expect(target.statuses.countByCategory("condition")).toBe(1);
     expect(target.statuses.countByCategory("hex")).toBe(1);
@@ -266,7 +267,7 @@ describe("Words of Comfort (#1511)", () => {
   it("heals 56, and 44 more on an ally with a condition", () => {
     expect(healed(use(monk(), "monk.words-of-comfort", ally()))).toBe(56);
     const conditioned = ally();
-    conditioned.statuses.apply("bleeding", 10, "foe");
+    conditioned.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     expect(healed(use(monk(), "monk.words-of-comfort", conditioned))).toBe(100);
   });
 });

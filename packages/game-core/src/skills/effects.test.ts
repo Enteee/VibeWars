@@ -17,7 +17,7 @@ import {
 } from "./effects.js";
 import { chainAllows } from "./chain.js";
 import { effectiveMaxEnergy } from "./overcast.js";
-import { HEALTH_PER_PIP, getStatusDefinition, type StatusId } from "./status.js";
+import { NO_RANKS, HEALTH_PER_PIP, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
 import { vec2 } from "../vec2.js";
@@ -55,7 +55,7 @@ describe("damage or life steal from a foe (#1022)", () => {
   } {
     const target = makeCombatant({ id: "target", team });
     const ctx = context(undefined, target);
-    target.statuses.apply("vengeful-weapon", 8, "rit");
+    target.statuses.apply("vengeful-weapon", 8, "rit", NO_RANKS);
     target.statuses.drainChanges();
     return {
       ctx,
@@ -91,7 +91,7 @@ describe("damage or life steal from a foe (#1022)", () => {
 
   it("a packet Reversal of Fortune reverses records nothing", () => {
     const { ctx, offenders } = vengeful();
-    ctx.target?.statuses.apply("reversal-of-fortune", 8, "monk");
+    ctx.target?.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
     ctx.target?.statuses.drainChanges();
     applyEffect(hit, ctx);
     expect(offenders()).toEqual([]);
@@ -102,7 +102,7 @@ describe("Symbiotic Bond's redirect (#1108)", () => {
   /** A bonded pet at full Health, with `owner` as the bond's source. */
   function bonded(): Combatant {
     const pet = makeCombatant({ id: "pet", team: 0 });
-    pet.statuses.apply("symbiotic-bond", 264, "owner");
+    pet.statuses.apply("symbiotic-bond", 264, "owner", NO_RANKS);
     pet.statuses.drainChanges();
     return pet;
   }
@@ -130,7 +130,7 @@ describe("Symbiotic Bond's redirect (#1108)", () => {
   it("comes after Reversal of Fortune, which negates the whole hit", () => {
     const pet = bonded();
     pet.health = 100;
-    pet.statuses.apply("reversal-of-fortune", 8, "monk");
+    pet.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
     applyDamage(pet, 25, "slashing", false, [], undefined);
     expect(pet.health).toBe(125);
     expect(redirected(pet)).toEqual([]);
@@ -341,7 +341,7 @@ describe("deep wound (#764)", () => {
 
   it("weakens a heal by 20%, and never heals past the reduced maximum", () => {
     const target = woundedAt(200);
-    target.statuses.apply("deep-wound", 20, "caster");
+    target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
     const ctx = context(makeCombatant({ id: "caster" }), target);
     const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(280);
@@ -353,8 +353,8 @@ describe("deep wound (#764)", () => {
 
   it("leaves regeneration pips at full strength", () => {
     const target = woundedAt(200);
-    target.statuses.apply("deep-wound", 20, "caster");
-    target.statuses.apply("regeneration", 20, "caster");
+    target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
+    target.statuses.apply("regeneration", 20, "caster", NO_RANKS);
     advanceStatuses(target, 1, 0);
     expect(target.health).toBeCloseTo(200 + 4 * HEALTH_PER_PIP, 9);
   });
@@ -425,20 +425,23 @@ describe("energy-gain to its target (#1485)", () => {
 });
 
 describe("a raised maximum (#1359)", () => {
+  // Endure Pain at Strength 12: +258 (#1976).
+  const STRENGTH_12: ReadonlyMap<string, number> = new Map([["warrior.strength", 12]]);
+
   it("raises health with the maximum as it lands, and a refresh raises nothing", () => {
     const c = makeCombatant({ id: "c", health: 480, maxHealth: 480 });
-    applyStatus(c, "endure-pain", 16, "c");
+    applyStatus(c, "endure-pain", 16, "c", STRENGTH_12);
     expect(effectiveMaxHealth(c)).toBe(738);
     expect(c.health).toBe(738);
-    applyStatus(c, "endure-pain", 16, "c");
+    applyStatus(c, "endure-pain", 16, "c", STRENGTH_12);
     expect(c.health).toBe(738);
   });
 
   it("with a Deep Wound, raises health no higher than the cut maximum", () => {
     const c = makeCombatant({ id: "c", health: 480, maxHealth: 480 });
-    applyStatus(c, "deep-wound", 10, "a");
+    applyStatus(c, "deep-wound", 10, "a", NO_RANKS);
     expect(c.health).toBe(384);
-    applyStatus(c, "endure-pain", 16, "c");
+    applyStatus(c, "endure-pain", 16, "c", STRENGTH_12);
     // 20% of 738 is past the cap: 638, not 384 + 258.
     expect(effectiveMaxHealth(c)).toBe(638);
     expect(c.health).toBe(638);
@@ -575,7 +578,7 @@ describe("life-steal effect (#935)", () => {
   it("takes from the target what the caster gains, armor or not", () => {
     const caster = makeCombatant({ id: "caster", health: 300 });
     const target = makeCombatant({ id: "target", team: 1 });
-    target.statuses.apply("armor-boost", 10, "target");
+    target.statuses.apply("armor-boost", 10, "target", NO_RANKS);
     const events = applyEffect(steal(52), context(caster, target));
     expect(events).toEqual([
       { kind: "life-stolen", targetId: "target", amount: 52 },
@@ -613,7 +616,7 @@ describe("life-steal effect (#935)", () => {
 
   it("is not a heal: deep wound does not shrink the gain", () => {
     const caster = makeCombatant({ id: "caster", health: 300 });
-    caster.statuses.apply("deep-wound", 10, "target");
+    caster.statuses.apply("deep-wound", 10, "target", NO_RANKS);
     const target = makeCombatant({ id: "target", team: 1 });
     applyEffect(steal(52), context(caster, target));
     expect(caster.health).toBe(352);
@@ -633,7 +636,7 @@ describe("life-steal effect (#935)", () => {
 
   it("is not physical damage: a Mark of Pain bearer records nothing", () => {
     const target = makeCombatant({ id: "target", team: 1 });
-    target.statuses.apply("mark-of-pain", 30, "caster");
+    target.statuses.apply("mark-of-pain", 30, "caster", NO_RANKS);
     applyEffect(steal(39), context(makeCombatant({ id: "caster", health: 300 }), target));
     expect(target.statuses.drainChanges()).toEqual([]);
   });
@@ -923,12 +926,12 @@ describe("if effects (#521)", () => {
   it("lands after a removal only when one of that category went", () => {
     const strip = { kind: "remove-status", category: "enchantment", count: 1 } as const;
     const enchanted = makeCombatant({ id: "target", team: 1 });
-    enchanted.statuses.apply("guardian", 10, "ally");
+    enchanted.statuses.apply("guardian", 10, "ally", NO_RANKS);
     run([strip, ifRemoved], enchanted);
     expect(enchanted.health).toBe(470);
 
     const conditioned = makeCombatant({ id: "target", team: 1 });
-    conditioned.statuses.apply("bleeding", 10, "foe");
+    conditioned.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     run(
       [{ kind: "remove-status", category: "condition", count: 1 }, strip, ifRemoved],
       conditioned,
@@ -965,8 +968,8 @@ describe("if effects (#521)", () => {
     const caster = makeCombatant({ id: "caster", energy: 10 });
     const [a, b, c] = ["a", "b", "c"].map((id) => makeCombatant({ id, team: 1 }));
     if (a === undefined || b === undefined || c === undefined) throw new Error("no targets");
-    a.statuses.apply("guardian", 10, "ally");
-    c.statuses.apply("regeneration", 10, "ally");
+    a.statuses.apply("guardian", 10, "ally", NO_RANKS);
+    c.statuses.apply("regeneration", 10, "ally", NO_RANKS);
 
     const events = applySkillEffects({
       surroundings: new Map(),
@@ -1028,11 +1031,11 @@ describe("state conditions (#794)", () => {
   it("target-health-below: is a share of the maximum a deep wound left", () => {
     // 500 less deep wound's 100 is 400, so half is 200, not 250.
     const wounded = at(190);
-    wounded.statuses.apply("deep-wound", 20, "caster");
+    wounded.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
     const below = healIf({ kind: "target-health-below", fraction: 0.5 });
     expect(healed(below, at(100), wounded)).toBe(110 * 0.8);
     const notBelow = at(210);
-    notBelow.statuses.apply("deep-wound", 20, "caster");
+    notBelow.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
     expect(healed(below, at(100), notBelow)).toBe(10 * 0.8);
   });
 
@@ -1051,9 +1054,9 @@ describe("state conditions (#794)", () => {
 
   it("target-has and caster-has: a status of the category, on whom they name", () => {
     const hexed = at(100);
-    hexed.statuses.apply("malaise", 10, "foe");
+    hexed.statuses.apply("malaise", 10, "foe", NO_RANKS);
     const enchanted = at(100, "caster");
-    enchanted.statuses.apply("regeneration", 10, "caster");
+    enchanted.statuses.apply("regeneration", 10, "caster", NO_RANKS);
     const targetHex = healIf({ kind: "target-has", category: "hex" });
     expect(healed(targetHex, at(100, "caster"), hexed)).toBe(110);
     expect(healed(targetHex, hexed, at(100))).toBe(10);
@@ -1118,7 +1121,7 @@ describe("state conditions (#794)", () => {
     const lacks = (statusId: StatusId) => healIf({ kind: "target-lacks-status", statusId });
     const bearing = (statusId: StatusId): Combatant => {
       const target = at(100);
-      target.statuses.apply(statusId, 10, "caster");
+      target.statuses.apply(statusId, 10, "caster", NO_RANKS);
       return target;
     };
     for (const statusId of ["burning", "weakness"] as const) {
@@ -1226,7 +1229,7 @@ describe("resurrect effect (#812)", () => {
       adrenaline: new Map([["warrior.backbreaker", 100]]),
       dead: true,
     });
-    applyStatus(target, "bleeding", 10, "foe");
+    applyStatus(target, "bleeding", 10, "foe", NO_RANKS);
     return target;
   };
 
@@ -1302,8 +1305,8 @@ describe("losing your own enchantment (#845)", () => {
   });
   const dervish = (): Combatant => {
     const caster = makeCombatant({ id: "caster" });
-    caster.statuses.apply("mystic-regeneration", 10, "caster");
-    caster.statuses.apply("fleeting-stability", 10, "caster");
+    caster.statuses.apply("mystic-regeneration", 10, "caster", NO_RANKS);
+    caster.statuses.apply("fleeting-stability", 10, "caster", NO_RANKS);
     return caster;
   };
   const foes = (): Combatant[] => ["a", "b"].map((id) => makeCombatant({ id, team: 1 }));
@@ -1327,7 +1330,7 @@ describe("losing your own enchantment (#845)", () => {
 
   it("leaves a target's enchantments alone", () => {
     const targets = foes();
-    targets[0]?.statuses.apply("mystic-regeneration", 10, "a");
+    targets[0]?.statuses.apply("mystic-regeneration", 10, "a", NO_RANKS);
     applySkillEffects({
       surroundings: new Map(),
       skill: skill([lose]),
@@ -1354,7 +1357,7 @@ describe("losing your own enchantment (#845)", () => {
 
   it("holds it for none, with no Dervish enchantment to lose", () => {
     const caster = makeCombatant({ id: "caster" });
-    caster.statuses.apply("guardian", 10, "monk");
+    caster.statuses.apply("guardian", 10, "monk", NO_RANKS);
     const targets = foes();
     const events = applySkillEffects({
       surroundings: new Map(),
@@ -1372,7 +1375,7 @@ describe("losing your own enchantment (#845)", () => {
   it("does not take a target's removal for the caster's", () => {
     const strip = { kind: "remove-status", category: "enchantment", count: 1 } as const;
     const target = makeCombatant({ id: "a", team: 1 });
-    target.statuses.apply("guardian", 10, "a");
+    target.statuses.apply("guardian", 10, "a", NO_RANKS);
     applySkillEffects({
       surroundings: new Map(),
       skill: skill([strip, ifLost]),
@@ -1407,7 +1410,7 @@ describe("losing your own enchantment (#845)", () => {
 describe("a knockdown prevented (#845)", () => {
   it("does nothing to the bearer and ends Fleeting Stability", () => {
     const target = makeCombatant({ id: "target", team: 1 });
-    target.statuses.apply("fleeting-stability", 9, "target");
+    target.statuses.apply("fleeting-stability", 9, "target", NO_RANKS);
     expect(
       applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target)),
     ).toEqual([{ kind: "status-removed", targetId: "target", statusId: "fleeting-stability" }]);
@@ -1419,14 +1422,14 @@ describe("a knockdown prevented (#845)", () => {
 
   it("still stops one landing on the tick it would run out", () => {
     const target = makeCombatant({ id: "target", team: 1 });
-    target.statuses.apply("fleeting-stability", 0.05, "target");
+    target.statuses.apply("fleeting-stability", 0.05, "target", NO_RANKS);
     applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target));
     expect(target.knockdownRemaining).toBe(0);
   });
 
   it("is not spent on someone already down", () => {
     const target = makeCombatant({ id: "target", team: 1, knockdownRemaining: 1 });
-    target.statuses.apply("fleeting-stability", 9, "target");
+    target.statuses.apply("fleeting-stability", 9, "target", NO_RANKS);
     expect(
       applyEffect({ kind: "knockdown", durationSeconds: 2 }, context(undefined, target)),
     ).toEqual([]);
@@ -1535,10 +1538,10 @@ describe("an invulnerable target (#1208)", () => {
 
   it("refuses a hex and a condition, and takes any other status", () => {
     const target = invulnerable();
-    expect(applyStatus(target, "malaise", 10, "caster")).toBeUndefined();
-    expect(applyStatus(target, "deep-wound", 10, "caster")).toBeUndefined();
+    expect(applyStatus(target, "malaise", 10, "caster", NO_RANKS)).toBeUndefined();
+    expect(applyStatus(target, "deep-wound", 10, "caster", NO_RANKS)).toBeUndefined();
     expect(target.statuses.has("malaise") || target.statuses.has("deep-wound")).toBe(false);
-    expect(applyStatus(target, "armor-boost", 10, "caster")).toBe(0);
+    expect(applyStatus(target, "armor-boost", 10, "caster", NO_RANKS)).toBe(0);
     expect(target.statuses.has("armor-boost")).toBe(true);
   });
 
@@ -1587,10 +1590,10 @@ describe("removing by what an earlier removal took (#1205)", () => {
   function enchantedAndHexed(enchantments: readonly StatusId[]): SkillContext {
     const caster = makeCombatant({ id: "caster", health: 100, maxHealth: 1000 });
     for (const id of enchantments) {
-      caster.statuses.apply(id, 30, "caster");
+      caster.statuses.apply(id, 30, "caster", NO_RANKS);
     }
     for (const id of ["malaise", "faintheartedness", "empathy"] as const) {
-      caster.statuses.apply(id, 30, "foe");
+      caster.statuses.apply(id, 30, "foe", NO_RANKS);
     }
     return context(caster, caster);
   }
@@ -1648,9 +1651,9 @@ describe("spread-conditions (#1501)", () => {
     const adjacent = makeCombatant({ id: "adjacent", team: 1 });
     const beyond = makeCombatant({ id: "beyond", team: 1 });
     const friend = makeCombatant({ id: "friend", team: 0 });
-    target.statuses.apply("bleeding", 4, "x");
-    target.statuses.apply("crippled", 2, "x");
-    target.statuses.apply("barbs", 10, "x");
+    target.statuses.apply("bleeding", 4, "x", NO_RANKS);
+    target.statuses.apply("crippled", 2, "x", NO_RANKS);
+    target.statuses.apply("barbs", 10, "x", NO_RANKS);
     const at = (combatant: Combatant, x: number) =>
       [
         combatant.id,
@@ -1688,7 +1691,7 @@ describe("spread-conditions (#1501)", () => {
 
   it("a longer one already on a foe wins", () => {
     const { ctx, adjacent } = scene();
-    adjacent.statuses.apply("bleeding", 8, "x");
+    adjacent.statuses.apply("bleeding", 8, "x", NO_RANKS);
     applyEffect(spread, ctx);
     expect(left(adjacent, "bleeding")).toBe(8);
     expect(left(adjacent, "crippled")).toBe(2);
@@ -1714,7 +1717,7 @@ describe("uninterruptible and skill armor penetration (#1464)", () => {
 
   it("refuses an interrupt, and the rest of the skill still lands", () => {
     const foe = casting();
-    foe.statuses.apply("tranquil-was-tanasen", 17, "target");
+    foe.statuses.apply("tranquil-was-tanasen", 17, "target", NO_RANKS);
     const events = applyEffects(
       [
         { kind: "interrupt" },
@@ -1730,7 +1733,7 @@ describe("uninterruptible and skill armor penetration (#1464)", () => {
   /** What `amount` lightning damage takes off a fresh foe, from a caster holding Cruel's ashes. */
   function lightning(armorPenetration: number, profession: SkillContext["profession"]): number {
     const caster = makeCombatant({ id: "caster" });
-    caster.statuses.apply("cruel-was-daoshen", 51, "caster");
+    caster.statuses.apply("cruel-was-daoshen", 51, "caster", NO_RANKS);
     const foe = makeCombatant({ id: "target", team: 1 });
     applyEffect(
       { kind: "damage", amount: { flat: 100 }, type: "lightning", armorPenetration },

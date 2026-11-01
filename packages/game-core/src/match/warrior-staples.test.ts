@@ -8,7 +8,7 @@ import { gainStrikes } from "../skills/adrenaline.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill, describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, getStatusDefinition, StatusSet } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, getStatusDefinition, StatusSet } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { blockChanceOf } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
@@ -166,8 +166,8 @@ function damageTo(events: readonly CombatEvent[], targetId: string): number[] {
 describe("remove-status with a statusId (#1549)", () => {
   it("takes only that status, and only if its category matches", () => {
     const set = new StatusSet();
-    set.apply("crippled", 10, "f");
-    set.apply("bleeding", 10, "f");
+    set.apply("crippled", 10, "f", NO_RANKS);
+    set.apply("bleeding", 10, "f", NO_RANKS);
     expect(set.removeByCategory("hex", 1, undefined, "crippled")).toEqual([]);
     expect(set.removeByCategory("condition", 1, undefined, "crippled")).toEqual([
       { id: "crippled", sourceSkillId: undefined },
@@ -180,8 +180,8 @@ describe("a bearer-blocks trigger bound to melee (#1549)", () => {
   /** The statuses whose triggers a block by `blocker` of `kind` fired, Riposte also on. */
   function fired(blocker: "bonettis-defense" | "riposte", kind: "melee" | "projectile") {
     const set = new StatusSet();
-    set.apply("bonettis-defense", 10, "w");
-    set.apply("riposte", 8, "w");
+    set.apply("bonettis-defense", 10, "w", NO_RANKS);
+    set.apply("riposte", 8, "w", NO_RANKS);
     set.recordBlock(blocker, "f", kind);
     return set
       .drainChanges()
@@ -208,7 +208,7 @@ describe("Flail (#1549)", () => {
       effects: [{ kind: "apply-status", statusId: "flail", durationSeconds: 12 }],
     });
     const set = new StatusSet();
-    set.apply("flail", 12, "w");
+    set.apply("flail", 12, "w", NO_RANKS);
     const modifiers = aggregateModifiers(set.active);
     expect(modifiers.attackDurationMultiplier).toBe(0.67);
     expect(modifiers.moveSpeedMultiplier).toBe(0.67);
@@ -322,8 +322,8 @@ describe('"Charge!" (#1549)', () => {
   it("allies in earshot lose Crippled, not Bleeding, and move 33% faster for 11 s", () => {
     const sim = match([spec("a", 0, vec2(-200, 0))]);
     const ally = get(sim, "a").combatant;
-    ally.statuses.apply("crippled", 30, "f");
-    ally.statuses.apply("bleeding", 30, "f");
+    ally.statuses.apply("crippled", 30, "f", NO_RANKS);
+    ally.statuses.apply("bleeding", 30, "f", NO_RANKS);
     used(sim, CHARGE);
     expect(ally.statuses.has("crippled")).toBe(false);
     expect(ally.statuses.has("bleeding")).toBe(true);
@@ -339,7 +339,7 @@ describe("Enraging Charge (#1549)", () => {
     const sim = match([], warrior({ equipment }));
     const w = get(sim, "w").combatant;
     if (charging) {
-      w.statuses.apply("enraging-charge", 13, "w");
+      w.statuses.apply("enraging-charge", 13, "w", NO_RANKS);
     }
     expect(sim.requestAttack("w", "f")).toEqual({ ok: true });
     for (let i = 0; i < 4 * RULES.tickRateHz; i += 1) {
@@ -376,7 +376,7 @@ describe("Enraging Charge (#1549)", () => {
       effects: [{ kind: "apply-status", statusId: "enraging-charge", durationSeconds: 13 }],
     });
     const bearer = makeCombatant({ id: "w" });
-    bearer.statuses.apply("enraging-charge", 13, "w");
+    bearer.statuses.apply("enraging-charge", 13, "w", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.25);
   });
 });

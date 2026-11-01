@@ -8,7 +8,7 @@ import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { describeStatus } from "../skills/describe.js";
 import { applyEffects, type CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { chargeAdrenaline, makeCombatant } from "../skills/testing.js";
 import { blockChanceOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -129,7 +129,7 @@ function attacked(
   statusId: Parameters<ReturnType<typeof get>["combatant"]["statuses"]["apply"]>[0],
   seconds = 20,
 ): CombatLogEntry[] {
-  get(match, "w").combatant.statuses.apply(statusId, 1000, "w");
+  get(match, "w").combatant.statuses.apply(statusId, 1000, "w", NO_RANKS);
   expect(match.requestAttack(attackerId, "w")).toEqual({ ok: true });
   return stepFor(match, seconds);
 }
@@ -196,7 +196,7 @@ describe("Deflect Arrows (#1329)", () => {
       foe("north", vec2(0, AREA_ADJACENT / 2)),
       foe("nearby", vec2(-(AREA_ADJACENT + AREA_NEARBY) / 2, 0)),
     ]);
-    get(match, "w").combatant.statuses.apply("deflect-arrows", 1000, "w");
+    get(match, "w").combatant.statuses.apply("deflect-arrows", 1000, "w", NO_RANKS);
     expect(match.requestAttack("bow", "w")).toEqual({ ok: true });
     let bleeds: CombatEvent[] = [];
     for (let i = 0; i < 20 / DT && bleeds.length === 0; i += 1) {
@@ -245,7 +245,7 @@ describe("Gladiator's Defense (#1329)", () => {
     const match = fight([swordsman()]);
     const w = get(match, "w").combatant;
     w.health = w.maxHealth * 0.4;
-    w.statuses.apply("shroud-of-distress", 1000, "w");
+    w.statuses.apply("shroud-of-distress", 1000, "w", NO_RANKS);
     const log = attacked(match, "sword", "gladiators-defense", 60);
     const dealt = backlash(log).length;
     expect(dealt).toBeGreaterThan(0);
@@ -257,7 +257,7 @@ describe("Disciplined Stance (#1329)", () => {
   it("is +10 armor and a 75% block while up", () => {
     const match = fight([]);
     const w = get(match, "w").combatant;
-    w.statuses.apply("disciplined-stance", 1000, "w");
+    w.statuses.apply("disciplined-stance", 1000, "w", NO_RANKS);
     expect(aggregateModifiers(w.statuses.active).armorModifier).toBe(10);
     expect(blockChanceOf(w, "melee", false)).toBe(0.75);
     expect(blockChanceOf(w, "projectile", false)).toBe(0.75);
@@ -266,7 +266,7 @@ describe("Disciplined Stance (#1329)", () => {
   it("a signet keeps it; an adrenal shout ends it", () => {
     const match = fight([]);
     const w = get(match, "w").combatant;
-    w.statuses.apply("disciplined-stance", 1000, "w");
+    w.statuses.apply("disciplined-stance", 1000, "w", NO_RANKS);
     use(match, HEALING_SIGNET);
     expect(w.statuses.has("disciplined-stance")).toBe(true);
     chargeAdrenaline(w, "warrior.watch-yourself");
@@ -278,7 +278,7 @@ describe("Disciplined Stance (#1329)", () => {
 describe("Balanced Stance (#1329)", () => {
   it("a knockdown does nothing, and the stance stays", () => {
     const target = makeCombatant({ id: "target", team: 1 });
-    target.statuses.apply("balanced-stance", 18, "target");
+    target.statuses.apply("balanced-stance", 18, "target", NO_RANKS);
     applyEffects([{ kind: "knockdown", durationSeconds: 2 }], {
       caster: makeCombatant({ id: "caster" }),
       target,
@@ -307,7 +307,7 @@ describe("Balanced Stance (#1329)", () => {
       ALL_CRIT,
     );
     if (balanced) {
-      get(match, "w").combatant.statuses.apply("balanced-stance", 1000, "w");
+      get(match, "w").combatant.statuses.apply("balanced-stance", 1000, "w", NO_RANKS);
     }
     get(match, "sin").combatant.energy = 0;
     expect(match.requestAttack("sin", "w")).toEqual({ ok: true });

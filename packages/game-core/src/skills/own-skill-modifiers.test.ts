@@ -11,7 +11,7 @@ import { energyCostOf } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { resolveSkillEffects, type CombatEvent } from "./effects.js";
-import { NO_OWN_SKILL_BOOST, ownSkillBoost, type StatusId } from "./status.js";
+import { NO_RANKS, NO_OWN_SKILL_BOOST, ownSkillBoost, type StatusId } from "./status.js";
 import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
@@ -42,7 +42,7 @@ function skill(id: string): Skill {
 function bearer(...statuses: StatusId[]): Combatant {
   const caster = makeCombatant({ id: "m", team: 0, health: 200, maxHealth: 500 });
   for (const id of statuses) {
-    caster.statuses.apply(id, 60, "m");
+    caster.statuses.apply(id, 60, "m", NO_RANKS);
   }
   return caster;
 }
@@ -101,6 +101,7 @@ describe("the rule (#1761)", () => {
       rechargeSlower: 0,
       durationMultiplier: 1,
       healMultiplier: 0.8,
+      notEasilyInterrupted: false,
     });
   });
 
@@ -279,6 +280,7 @@ describe("in flight, and on its caster (#1761)", () => {
       rechargeSlower: 0,
       durationMultiplier: 2,
       healMultiplier: 1,
+      notEasilyInterrupted: false,
       uses: undefined,
     };
     return withStatusDefinitions({ "blessed-aura": { ownSkillModifiers: [doubles] } }, () => {
@@ -317,7 +319,7 @@ describe("in flight, and on its caster (#1761)", () => {
         ],
       });
       if (boosted) {
-        sim.get("m")?.combatant.statuses.apply("blessed-aura", 60, "m");
+        sim.get("m")?.combatant.statuses.apply("blessed-aura", 60, "m", NO_RANKS);
       }
       sim.setTarget("m", "w");
       expect(sim.requestSkill("m", 0)?.check).toEqual({ ok: true });

@@ -6,6 +6,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { copyKey, slotSkill } from "../skills/cast-state.js";
 import { describeSkill } from "../skills/describe.js";
 import { getSkill } from "../skills/catalog.js";
+import { aggregateModifiers } from "../skills/status.js";
 import type { Aura } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
@@ -187,6 +188,22 @@ describe("Mirrored Stance (#1965)", () => {
     expect(get(sim, "m").combatant.statuses.has("shadow-of-haste")).toBe(false);
     expect(get(sim, "m").position).toEqual(mAt);
     expect(get(sim, "f").position).toEqual(fAt);
+  });
+
+  it("copies the stance at the foe's ranks, not its caster's (#1976)", () => {
+    const sim = match([
+      {
+        ...spec("w", 1, vec2(200, -60), ["warrior.frenzy"]),
+        attributeRanks: new Map([["warrior.strength", 12]]),
+      },
+    ]);
+    use(sim, "m", MIRRORED, "w");
+    use(sim, "w", "warrior.frenzy", "w");
+    const mirrored = get(sim, "m").combatant;
+    expect(mirrored.statuses.has("frenzy")).toBe(true);
+    // 160% at the foe's Strength 12; the Assassin's 0 would be 200%.
+    expect(aggregateModifiers(mirrored.statuses.active).damageTakenMultiplier).toBeCloseTo(1.6, 10);
+    expect(mirrored.statuses.get("frenzy")?.sourceId).toBe("m");
   });
 
   it("a second hexed foe's stance replaces the first", () => {

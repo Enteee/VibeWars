@@ -462,6 +462,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     activationSeconds: 1,
     rechargeSeconds: 30,
     // "Target touched foe": the foe must be at hand.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     // "...and foes adjacent to your target".
@@ -4630,6 +4631,94 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // Marksmanship attribute is increased by 1" (#1941): PvP's (2959),
     // not PvE's 33% and +2.
     effects: [{ kind: "apply-status", statusId: "experts-dexterity", durationSeconds: 16 }],
+  },
+  // Touch and trap riders (#1966), at rank 12.
+  {
+    id: "ranger.strike-as-one",
+    name: "Strike as One",
+    gwId: 1468,
+    type: "shout",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Your animal companion instantly moves to your target and causes
+    // Bleeding for 5...15 seconds with its next attack. The next time you
+    // hit with an attack, target foe is Crippled for 5...15 seconds." No
+    // pet: only your Cripple.
+    effects: [
+      { kind: "companion-steps-to-target" },
+      { kind: "companion-gains-status", statusId: "strike-as-one-pet", durationSeconds: 10 },
+      { kind: "caster-gains-status", statusId: "strike-as-one", durationSeconds: 10 },
+    ],
+  },
+  {
+    id: "ranger.trappers-focus",
+    name: "Trapper's Focus",
+    gwId: 946,
+    type: "preparation",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 12...36 seconds, your trap skills are not easily interruptible
+    // and your Wilderness Survival attribute is increased by 0...4."
+    effects: [{ kind: "apply-status", statusId: "trappers-focus", durationSeconds: 31 }],
+  },
+  {
+    id: "ranger.trappers-speed",
+    name: "Trapper's Speed",
+    gwId: 1475,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...30 seconds, your Traps recharge 25% faster and activate 25%
+    // faster. This stance ends if you successfully hit with an attack."
+    effects: [{ kind: "apply-status", statusId: "trappers-speed", durationSeconds: 25 }],
   },
   // Pets 3 (#1957): pet attacks that pay their owner, and Heal as One. A
   // pet attack's effects land with the pet as their caster.

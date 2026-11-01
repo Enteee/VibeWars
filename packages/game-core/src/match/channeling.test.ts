@@ -10,6 +10,7 @@ import type { Magnitude, Skill, SkillEffect } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Ritualist Channeling staples (#1270): Spirit Rift's delayed strike,
@@ -124,7 +125,7 @@ function energyGained(events: readonly CombatEvent[]): number[] {
 /** Kill `id` as burning would: a fresh corpse. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "y");
+  victim.combatant.statuses.apply("burning", 10, "y", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -273,7 +274,7 @@ describe("Painful Bond (#1270)", () => {
       throw new Error("no spirit");
     }
     if (hexed) {
-      get(sim, "f").combatant.statuses.apply("painful-bond", 60, "r");
+      get(sim, "f").combatant.statuses.apply("painful-bond", 60, "r", NO_RANKS);
     }
     for (let i = 0; i < 10 * RULES.tickRateHz; i += 1) {
       const hits = damageTo(
@@ -298,10 +299,10 @@ describe("Painful Bond (#1270)", () => {
     const sim = match([spec("f", 1, vec2(300, 0))]);
     cast(sim, PAIN, undefined);
     const f = get(sim, "f").combatant;
-    f.statuses.apply("painful-bond", 60, "r");
+    f.statuses.apply("painful-bond", 60, "r", NO_RANKS);
     let blocked = 0;
     for (let i = 0; i < 25 * RULES.tickRateHz; i += 1) {
-      f.statuses.apply("lightning-reflexes", 60, "f");
+      f.statuses.apply("lightning-reflexes", 60, "f", NO_RANKS);
       const events = sim.step(DT).log.flatMap((entry) => entry.events);
       if (events.some((event) => event.kind === "attack-blocked" && event.targetId === "f")) {
         blocked += 1;

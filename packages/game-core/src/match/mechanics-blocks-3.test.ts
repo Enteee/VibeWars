@@ -4,7 +4,7 @@ import { RANGE_MELEE } from "../distances.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
-import type { StatusId } from "../skills/status.js";
+import { NO_RANKS, type StatusId } from "../skills/status.js";
 import { strikesOf } from "../skills/testing.js";
 import { blockChanceOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -136,7 +136,7 @@ describe("Wary Stance (#1978)", () => {
   it("does not block a plain swing, and gives nothing", () => {
     const sim = duel();
     get(sim, "w").energy = 50;
-    get(sim, "w").statuses.apply("wary-stance", 1000, "w");
+    get(sim, "w").statuses.apply("wary-stance", 1000, "w", NO_RANKS);
     const log = swings(sim, 5);
     expect(eventsOn(log, "w", "attack-blocked")).toBe(0);
     expect(eventsOn(log, "w", "damage")).toBeGreaterThan(0);
@@ -147,7 +147,7 @@ describe("Wary Stance (#1978)", () => {
   it("blocks an attack skill, for 5 Energy and 1 strike of adrenaline", () => {
     const sim = duel();
     get(sim, "w").energy = 50;
-    get(sim, "w").statuses.apply("wary-stance", 1000, "w");
+    get(sim, "w").statuses.apply("wary-stance", 1000, "w", NO_RANKS);
     const entry = powerAttack(sim);
     expect(entry.events.some(({ kind }) => kind === "attack-blocked")).toBe(true);
     expect(get(sim, "w").energy).toBe(55);
@@ -157,7 +157,7 @@ describe("Wary Stance (#1978)", () => {
   it("ends when the bearer uses a skill", () => {
     const sim = duel(["warrior.frenzy"]);
     get(sim, "w").energy = 50;
-    get(sim, "w").statuses.apply("wary-stance", 1000, "w");
+    get(sim, "w").statuses.apply("wary-stance", 1000, "w", NO_RANKS);
     expect(sim.requestSkill("w", 0)?.check).toEqual({ ok: true });
     sim.step(DT);
     expect(get(sim, "w").statuses.has("wary-stance")).toBe(false);
@@ -165,7 +165,7 @@ describe("Wary Stance (#1978)", () => {
 
   it("blocks every attack skill, blow or shot, and no plain attack", () => {
     const sim = duel();
-    get(sim, "w").statuses.apply("wary-stance", 1000, "w");
+    get(sim, "w").statuses.apply("wary-stance", 1000, "w", NO_RANKS);
     expect(blockChanceOf(get(sim, "w"), "melee", false)).toBe(0);
     expect(blockChanceOf(get(sim, "w"), "projectile", false)).toBe(0);
     expect(blockChanceOf(get(sim, "w"), "melee", true)).toBe(1);
@@ -176,15 +176,15 @@ describe("Wary Stance (#1978)", () => {
 describe("Soldier's Defense (#1978)", () => {
   it("does not block without a shout or chant", () => {
     const sim = duel();
-    get(sim, "w").statuses.apply("soldiers-defense", 1000, "w");
+    get(sim, "w").statuses.apply("soldiers-defense", 1000, "w", NO_RANKS);
     expect(eventsOn(swings(sim, 5), "w", "attack-blocked")).toBe(0);
   });
 
   it("under a shout, blocks and gives 1 strike of adrenaline a block; the shout ending stops it", () => {
     const sim = duel();
     const w = get(sim, "w");
-    w.statuses.apply("soldiers-defense", 1000, "w");
-    w.statuses.apply("for-great-justice", 1000, "w");
+    w.statuses.apply("soldiers-defense", 1000, "w", NO_RANKS);
+    w.statuses.apply("for-great-justice", 1000, "w", NO_RANKS);
     expect(blockChanceOf(w, "melee", false)).toBe(0.75);
     const log = swings(sim, 3);
     const blocked = eventsOn(log, "w", "attack-blocked");
@@ -200,7 +200,7 @@ describe("Defensive Stance (#1978)", () => {
   /** Strikes `w` holds in Backbreaker once a short Defensive Stance ends, with `bar`. */
   function strikesAtEnd(bar: readonly string[]): number {
     const sim = duel(bar);
-    get(sim, "w").statuses.apply("defensive-stance", 0.5, "w");
+    get(sim, "w").statuses.apply("defensive-stance", 0.5, "w", NO_RANKS);
     untilEnded(sim, "defensive-stance");
     return strikesOf(get(sim, "w"), "warrior.backbreaker");
   }
@@ -226,7 +226,7 @@ describe("Defensive Stance (#1978)", () => {
 describe("Auspicious Parry (#1978)", () => {
   it("blocks the first attack, ends, and gives 3 strikes; the second attack hits", () => {
     const sim = duel();
-    get(sim, "w").statuses.apply("auspicious-parry", 8, "w");
+    get(sim, "w").statuses.apply("auspicious-parry", 8, "w", NO_RANKS);
     expect(sim.requestAttack("f", "w")).toEqual({ ok: true });
     const log: CombatLogEntry[] = [];
     for (let tick = 0; tick < 10 / DT; tick += 1) {

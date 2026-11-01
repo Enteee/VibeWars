@@ -7,6 +7,7 @@ import { describeStatus } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -119,19 +120,19 @@ describe("Soul Barbs (#1403)", () => {
     cast(match, "n", 0, "b");
     const bearer = get(match, "b");
 
-    bearer.statuses.apply("guardian", 10, "ally");
+    bearer.statuses.apply("guardian", 10, "ally", NO_RANKS);
     const enchanted = stepFor(match, 0.5);
     expect(damageBy(enchanted, SOUL_BARBS, "b")).toEqual([27]);
     expect(enchanted.find((entry) => entry.skillId === SOUL_BARBS)?.sourceId).toBe("n");
 
-    bearer.statuses.apply("barbs", 30, "n");
+    bearer.statuses.apply("barbs", 30, "n", NO_RANKS);
     expect(damageBy(stepFor(match, 0.5), SOUL_BARBS, "b")).toEqual([27]);
 
-    bearer.statuses.apply("guardian", 10, "ally");
+    bearer.statuses.apply("guardian", 10, "ally", NO_RANKS);
     expect(damageBy(stepFor(match, 0.5), SOUL_BARBS, "b")).toEqual([27]);
 
     // Shorter than what runs: a refresh that changes nothing is no gain.
-    bearer.statuses.apply("guardian", 2, "ally");
+    bearer.statuses.apply("guardian", 2, "ally", NO_RANKS);
     expect(damageBy(stepFor(match, 0.5), SOUL_BARBS, "b")).toEqual([]);
   });
 
@@ -148,7 +149,7 @@ describe("Scourge Enchantment (#1403)", () => {
     cast(match, "m", 0, "b");
     expect(get(match, "b").statuses.get("scourge-enchantment")?.sourceId).toBe("m");
 
-    get(match, "b").statuses.apply("guardian", 10, "ally");
+    get(match, "b").statuses.apply("guardian", 10, "ally", NO_RANKS);
     const log = stepFor(match, 0.5);
     expect(damageBy(log, SCOURGE_ENCHANTMENT, "ally")).toEqual([63]);
     expect(damageBy(log, SCOURGE_ENCHANTMENT, "b")).toEqual([]);
@@ -158,10 +159,10 @@ describe("Scourge Enchantment (#1403)", () => {
   it("hurts a bearer that enchants itself, and a hex not at all", () => {
     const match = sim();
     cast(match, "m", 0, "b");
-    get(match, "b").statuses.apply("barbs", 30, "n");
+    get(match, "b").statuses.apply("barbs", 30, "n", NO_RANKS);
     expect(damageBy(stepFor(match, 0.5), SCOURGE_ENCHANTMENT, "n")).toEqual([]);
 
-    get(match, "b").statuses.apply("guardian", 10, "b");
+    get(match, "b").statuses.apply("guardian", 10, "b", NO_RANKS);
     expect(damageBy(stepFor(match, 0.5), SCOURGE_ENCHANTMENT, "b")).toEqual([63]);
   });
 
@@ -180,8 +181,8 @@ describe("Defile Defenses (#1403)", () => {
 
     const match = sim(caster("a", 0, [], vec2(170, 0)));
     const bearer = get(match, "n");
-    bearer.statuses.apply("defile-defenses", 17, "a");
-    bearer.statuses.apply("guardian", 30, "n");
+    bearer.statuses.apply("defile-defenses", 17, "a", NO_RANKS);
+    bearer.statuses.apply("guardian", 30, "n", NO_RANKS);
 
     expect(match.requestAttack("a", "n")).toEqual({ ok: true });
     const log = stepFor(match, 12);
@@ -229,26 +230,26 @@ describe("Hex Breaker (#1403)", () => {
 
   it("spares only its bearer from an area hex, and stops Soul Barbs, which never fires", () => {
     const match = sim();
-    get(match, "ally").statuses.apply("hex-breaker", 65, "ally");
-    get(match, "b").statuses.apply("hex-breaker", 65, "b");
+    get(match, "ally").statuses.apply("hex-breaker", 65, "ally", NO_RANKS);
+    get(match, "b").statuses.apply("hex-breaker", 65, "b", NO_RANKS);
     cast(match, "e", 0, "b");
     expect(get(match, "b").statuses.has("ice-spikes")).toBe(false);
     expect(get(match, "ally").statuses.has("ice-spikes")).toBe(false);
 
     const lone = sim();
-    get(lone, "b").statuses.apply("hex-breaker", 65, "b");
+    get(lone, "b").statuses.apply("hex-breaker", 65, "b", NO_RANKS);
     const log = cast(lone, "e", 0, "b");
     expect(get(lone, "b").statuses.has("ice-spikes")).toBe(false);
     expect(get(lone, "ally").statuses.has("ice-spikes")).toBe(true);
     expect(damageBy(log, HEX_BREAKER, "e")).toEqual([39]);
 
     const barbed = sim();
-    get(barbed, "b").statuses.apply("soul-barbs", 30, "n");
-    get(barbed, "b").statuses.apply("hex-breaker", 65, "b");
+    get(barbed, "b").statuses.apply("soul-barbs", 30, "n", NO_RANKS);
+    get(barbed, "b").statuses.apply("hex-breaker", 65, "b", NO_RANKS);
     expect(damageBy(cast(barbed, "e", 0, "b"), SOUL_BARBS, "b")).toEqual([]);
 
     const broken = sim();
-    get(broken, "b").statuses.apply("hex-breaker", 65, "b");
+    get(broken, "b").statuses.apply("hex-breaker", 65, "b", NO_RANKS);
     cast(broken, "n", 0, "b");
     expect(get(broken, "b").statuses.has("soul-barbs")).toBe(false);
   });

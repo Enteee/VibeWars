@@ -11,7 +11,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { blockChanceOf, effectiveMaxHealth } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
@@ -221,13 +221,13 @@ describe("in a match (#1604)", () => {
 
   /** A Dervish enchantment on `c`, as if it had cast Mystic Regeneration. */
   function enchant(sim: MatchSimulation): void {
-    get(sim, "c").statuses.apply("mystic-regeneration", 15, "c");
+    get(sim, "c").statuses.apply("mystic-regeneration", 15, "c", NO_RANKS);
   }
 
   /** `f` blocks every melee attack (Riposte) and is in a stance (Bonetti's Defense). */
   function guard(sim: MatchSimulation): void {
-    get(sim, "f").statuses.apply("riposte", 30, "f");
-    get(sim, "f").statuses.apply("bonettis-defense", 30, "f");
+    get(sim, "f").statuses.apply("riposte", 30, "f", NO_RANKS);
+    get(sim, "f").statuses.apply("bonettis-defense", 30, "f", NO_RANKS);
   }
 
   describe("Irresistible Sweep", () => {
@@ -254,7 +254,7 @@ describe("in a match (#1604)", () => {
       const sim = match();
       enchant(sim);
       guard(sim);
-      get(sim, "c").statuses.apply("blind", 10, "f");
+      get(sim, "c").statuses.apply("blind", 10, "f", NO_RANKS);
       const log = use(sim, "dervish.irresistible-sweep");
       expect(events(log)).toContainEqual({ kind: "attack-missed", targetId: "f" });
       expect(hasStatus(sim, "c", "mystic-regeneration")).toBe(false);
@@ -277,7 +277,7 @@ describe("in a match (#1604)", () => {
       const sim = match();
       enchant(sim);
       for (const id of ["f", "h"]) {
-        get(sim, id).statuses.apply("mystic-regeneration", 30, id);
+        get(sim, id).statuses.apply("mystic-regeneration", 30, id, NO_RANKS);
       }
       use(sim, "dervish.rending-sweep");
       expect(hasStatus(sim, "c", "mystic-regeneration")).toBe(false);
@@ -288,7 +288,7 @@ describe("in a match (#1604)", () => {
 
     it("without one, is a plain hit that strips nothing", () => {
       const sim = match();
-      get(sim, "f").statuses.apply("mystic-regeneration", 30, "f");
+      get(sim, "f").statuses.apply("mystic-regeneration", 30, "f", NO_RANKS);
       const log = use(sim, "dervish.rending-sweep");
       expect(dealt(log, "dervish.rending-sweep", "f")).toBeGreaterThan(0);
       expect(hasStatus(sim, "f", "mystic-regeneration")).toBe(true);
@@ -298,7 +298,7 @@ describe("in a match (#1604)", () => {
   describe("Pious Fury", () => {
     it("attacks 25% faster for 4 s, nothing lost without a Dervish enchantment", () => {
       const sim = match();
-      get(sim, "c").statuses.apply("shadow-refuge", 4, "c");
+      get(sim, "c").statuses.apply("shadow-refuge", 4, "c", NO_RANKS);
       use(sim, "dervish.pious-fury", "c");
       expect(secondsOf(sim, "c", "pious-fury")).toBeCloseTo(4, 0);
       expect(aggregateModifiers(get(sim, "c").statuses.active).attackDurationMultiplier).toBe(0.75);
@@ -406,7 +406,7 @@ describe("in a match (#1604)", () => {
   describe("Guiding Hands", () => {
     it("ends the Dervish's Blindness, and its next 2 attacks cannot be blocked", () => {
       const sim = match();
-      get(sim, "c").statuses.apply("blind", 10, "f");
+      get(sim, "c").statuses.apply("blind", 10, "f", NO_RANKS);
       use(sim, "dervish.guiding-hands", "c");
       expect(hasStatus(sim, "c", "blind")).toBe(false);
       expect(secondsOf(sim, "c", "guiding-hands")).toBeCloseTo(20, 0);

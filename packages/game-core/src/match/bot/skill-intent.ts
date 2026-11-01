@@ -47,6 +47,8 @@ export function botUses(skill: Skill): readonly BotUse[] {
       roles.includes("knockdown") ||
       skill.attack !== undefined ||
       skill.effects.some(dealsDamage) ||
+      // Strike as One (#1966): the pet and the Cripple are the offence.
+      sendsPet(skill) ||
       // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
       // a foe is the bot's to use; Mirror of Disenchantment's strip (#1954).
       (skill.target === "single-enemy" && copiesSkill(skill.id)) ||
@@ -55,6 +57,44 @@ export function botUses(skill: Skill): readonly BotUse[] {
     uses.push("offence");
   }
   return uses;
+}
+
+/** Whether `skill` sends its user's pet to its target (#1966), as Strike as One. */
+export function sendsPet(skill: Skill): boolean {
+  return skill.effects.some(({ kind }) => kind === "companion-steps-to-target");
+}
+
+/**
+ * The status `skill` puts on its user that only changes that user's own
+ * traps (#1966), as Trapper's Focus and Trapper's Speed; `undefined`
+ * for any other skill.
+ */
+export function ownTrapBoost(skill: Skill): StatusId | undefined {
+  if (skill.target !== "self") {
+    return undefined;
+  }
+  for (const effect of skill.effects) {
+    if (effect.kind !== "apply-status") {
+      continue;
+    }
+    const modifiers = getStatusDefinition(effect.statusId).ownSkillModifiers;
+    if (modifiers.length > 0 && modifiers.every(({ filter }) => filter.type === "trap")) {
+      return effect.statusId;
+    }
+  }
+  return undefined;
+}
+
+/** Whether `skill` puts on its user what fails foes' touch skills (#1966), "Can't Touch This!". */
+export function wardsTouch(skill: Skill): boolean {
+  return (
+    skill.target === "self" &&
+    skill.effects.some(
+      (effect) =>
+        effect.kind === "apply-status" &&
+        getStatusDefinition(effect.statusId).failsFoeTouchSkills !== undefined,
+    )
+  );
 }
 
 /**

@@ -869,7 +869,14 @@ describe("attack skills (#417)", () => {
   });
 
   it("words Endure Pain's maximum, Warrior's Endurance's cap and a weapon-bound trigger (#1359)", () => {
-    expect(describeStatus("endure-pain")).toBe("+258 maximum health");
+    // At the warrior's Strength (#1976); its range where that is not known.
+    expect(describeStatus("endure-pain", new Map([["warrior.strength", 12]]))).toBe(
+      "+258 maximum health",
+    );
+    expect(describeStatus("endure-pain", new Map([["warrior.strength", 0]]))).toBe(
+      "+90 maximum health",
+    );
+    expect(describeStatus("endure-pain")).toBe("+90...258 maximum health");
     expect(describeStatus("warriors-endurance")).toBe(
       "whenever it hits with a melee attack: gain 3 energy, never above 55",
     );
@@ -1168,7 +1175,10 @@ describe("signets and shouts (#524)", () => {
   });
 
   it("says a shout reaches allies in earshot, and when its effect ends", () => {
-    const description = describeSkill(skill("warrior.watch-yourself"));
+    const description = describeSkill(
+      skill("warrior.watch-yourself"),
+      new Map([["warrior.tactics", 12]]),
+    );
     expect(description.targetText).toBe("Allies in earshot");
     expect(description.rangeText).toBe("350 radius");
     expect(description.castTime).toBe("Instant");

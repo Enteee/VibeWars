@@ -13,6 +13,7 @@ import { blocks } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Ritualist protective spirits (#1265): Shelter, Union, Displacement and
@@ -228,7 +229,7 @@ describe("Displacement (#1265)", () => {
     const sim = match();
     ritual(sim, DISPLACEMENT);
     const ally = get(sim, "ally").combatant;
-    ally.statuses.apply("guardian", 60, "r");
+    ally.statuses.apply("guardian", 60, "r", NO_RANKS);
     ally.statuses.drainChanges();
     const rng = createRng(1265);
     let blocked = 0;

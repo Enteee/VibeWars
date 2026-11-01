@@ -1,5 +1,6 @@
 import {
   CastState,
+  NO_RANKS,
   outsideMatch,
   getStatusDefinition,
   type ActiveStatus,
@@ -52,11 +53,13 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     ownSkillsLeft: undefined,
     triggersLeft: undefined,
     reflectionsLeft: undefined,
+    touchFailsLeft: undefined,
     hitsLeft: undefined,
     unblockableLeft: undefined,
     attacksMadeLeft: undefined,
     sourceId: "caster",
     sourceSkillId: undefined,
+    ranks: NO_RANKS,
     outbreak: null,
     maintained: null,
     projected: false,
@@ -309,7 +312,7 @@ describe("skillBarSlots", () => {
 
   it("costs a spell what the glyph leaves of it (#637)", () => {
     const bearer = outsideMatch(new Map());
-    bearer.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    bearer.statuses.apply("glyph-of-lesser-energy", 15, "e", NO_RANKS);
     expect(skillBarSlots(["elementalist.fireball"], idle(), bearer, 0)[0]?.energyCost).toBe(0);
   });
 });
@@ -327,7 +330,7 @@ describe("sameSkillBar (#637)", () => {
 
   it("tells a changed cost, a moved gap and a different length apart", () => {
     const glyphed = outsideMatch(new Map());
-    glyphed.statuses.apply("glyph-of-lesser-energy", 15, "e");
+    glyphed.statuses.apply("glyph-of-lesser-energy", 15, "e", NO_RANKS);
     const cheaper = skillBarSlots([...bar], idle(), glyphed, 0);
     expect(sameSkillBar(plain(), cheaper)).toBe(false);
     expect(sameSkillBar(plain(), [...plain()].reverse())).toBe(false);

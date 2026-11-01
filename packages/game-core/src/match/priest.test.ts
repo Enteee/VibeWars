@@ -14,6 +14,7 @@ import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { PRIEST_HEALTH, priestId } from "./priest.js";
 import { countsForTeam, MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Priest Annihilation's priest (#1186): it stands on its team's shrine,
@@ -77,7 +78,7 @@ function stepTo(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
 /** Kill `id` as burning would. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "x");
+  victim.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
   victim.combatant.health = 0.2;
   sim.step(DT);
 }
@@ -228,7 +229,7 @@ describe("a shrine's raise (#1208)", () => {
     expect(sim.requestAttack("y", "a")?.ok).toBe(true);
     sim.setTarget("x", "a");
     expect(sim.requestSkill("x", 0)?.check).toEqual({ ok: true });
-    a.combatant.statuses.apply("bleeding", 20, "x");
+    a.combatant.statuses.apply("bleeding", 20, "x", NO_RANKS);
 
     const window = stepTo(sim, PRIEST_WAVE_SECONDS + SHRINE_INVULNERABLE_SECONDS - DT);
     expect(window.some((entry) => entry.skillId === "elementalist.fireball")).toBe(true);

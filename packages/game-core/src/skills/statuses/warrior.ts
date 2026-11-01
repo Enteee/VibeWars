@@ -53,12 +53,13 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     moveSpeedMultiplier: 1.25,
   }),
   // PvP: "For 8 seconds, you attack 33% faster but take 200...150% damage"
-  // (#1958): 160%, its Strength-12 value, as status numbers are. Faster
-  // is 1 − x (ADR-0029).
+  // (#1958), at the warrior's Strength (#1976). Faster is 1 − x (ADR-0029).
   frenzy: define("frenzy", "Frenzy", "stance", {
     profession: "warrior",
     attackDurationMultiplier: 0.67,
-    damageTakenMultiplier: 1.6,
+    damageTakenMultiplier: {
+      scaling: { attributeId: "warrior.strength", atZero: 2, atTwelve: 1.6 },
+    },
   }),
   // "For 5...11 seconds, you have a 75% chance to block melee and
   // projectile attacks. You gain 5 Energy for each successful melee attack
@@ -131,10 +132,11 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     ignoresCriticalDamage: true,
   }),
 
-  // "Watch Yourself!" at rank 12: +5...21 armor, ending after 1...3 attacks.
+  // "Watch Yourself!": +5...21 armor at the shouter's Tactics (#1976),
+  // ending after 1...3 attacks: 3, its rank-12 value.
   "watch-yourself": define("watch-yourself", "Watch Yourself!", "shout", {
     profession: "warrior",
-    armorModifier: 21,
+    armorModifier: { scaling: { attributeId: "warrior.tactics", atZero: 5, atTwelve: 21 } },
     endsAfterAttacks: 3,
   }),
   // "For Great Justice!" (PvP): "For 8 seconds, whenever you hit with an
@@ -180,11 +182,11 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     preventsKnockdown: true,
     moveSpeedMultiplier: 0.25,
   }),
-  // "For 7...18 seconds you have an additional 90...300 Health" (#1359):
-  // 258, its rank-12 value.
+  // "For 7...18 seconds you have an additional 90...300 Health" (#1359),
+  // at Strength (#1976).
   "endure-pain": define("endure-pain", "Endure Pain", "skill-effect", {
     profession: "warrior",
-    maxHealthBonus: 258,
+    maxHealthBonus: { scaling: { attributeId: "warrior.strength", atZero: 90, atTwelve: 258 } },
   }),
   // "For 5...35 seconds, you gain 3 Energy each time you hit with a melee
   // attack. Warrior's Endurance cannot raise your Energy above 10...25"

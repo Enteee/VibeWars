@@ -10,6 +10,7 @@ import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, SurroundingBody, Surroundings } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The Ritualist's heals (#955): Mend Body and Soul, Spirit Light and
@@ -116,8 +117,8 @@ function use(
 describe("Mend Body and Soul (#955)", () => {
   it("heals 96 and leaves the ally's conditions alone, with no spirit in earshot", () => {
     const target = ally();
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("weakness", 10, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("weakness", 10, "foe", NO_RANKS);
     const events = use(ritualist(), "ritualist.mend-body-and-soul", target);
     expect(events).toEqual([{ kind: "heal", targetId: "ally", amount: 96 }]);
     expect(target.health).toBe(196);
@@ -129,7 +130,7 @@ describe("Mend Body and Soul (#955)", () => {
       const caster = ritualist();
       const target = ally();
       for (const id of ["bleeding", "weakness", "crippled"] as const) {
-        target.statuses.apply(id, 10, "foe");
+        target.statuses.apply(id, 10, "foe", NO_RANKS);
       }
       const at = vec2(300, 0);
       use(caster, "ritualist.mend-body-and-soul", target, around(caster, target, at, spirits));
@@ -205,7 +206,7 @@ describe("Wielder's Boon (#955)", () => {
 
   it("heals 63 more an ally under a weapon spell", () => {
     const target = ally();
-    target.statuses.apply("weapon-of-warding", 7, "caster");
+    target.statuses.apply("weapon-of-warding", 7, "caster", NO_RANKS);
     expect(use(ritualist(), BOON, target)).toEqual([
       { kind: "heal", targetId: "ally", amount: 51 },
       { kind: "heal", targetId: "ally", amount: 63 },
@@ -215,7 +216,7 @@ describe("Wielder's Boon (#955)", () => {
 
   it("gives no bonus for an enchantment", () => {
     const target = ally();
-    target.statuses.apply("regeneration", 10, "caster");
+    target.statuses.apply("regeneration", 10, "caster", NO_RANKS);
     expect(use(ritualist(), BOON, target)).toEqual([
       { kind: "heal", targetId: "ally", amount: 51 },
     ]);
