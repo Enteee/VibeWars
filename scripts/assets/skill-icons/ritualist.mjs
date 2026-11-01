@@ -79,6 +79,8 @@ export const RITUALIST_ICONS = {
   "ritualist.brutal-weapon": { glyph: "blade-teeth", modifier: "up" },
   // Caster staples 2 (#1872).
   "ritualist.vital-weapon": { glyph: "heart-sword" },
+  // Take what another has (#1965), a stand-in until its art card.
+  "ritualist.signet-of-binding": { glyph: "spirit-rupture", modifier: "renew" },
   // Attributes raised (#1941)
   "ritualist.ritual-lord": { glyph: "totem-bars-up" },
   // Spirits as a resource (#1947)
