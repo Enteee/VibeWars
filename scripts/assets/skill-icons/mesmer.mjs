@@ -6,19 +6,19 @@ export const MESMER_ICONS = {
   "mesmer.shatter-enchantment": { glyph: "cleanse", modifier: "down" },
   "mesmer.drain-enchantment": { glyph: "cleanse", modifier: "up" },
   "mesmer.energy-burn": { glyph: "flame", modifier: "down" },
-  "mesmer.energy-tap": { glyph: "energy", modifier: "self" },
+  "mesmer.energy-tap": { glyph: "energy", modifier: "plus" },
   "mesmer.backfire": { glyph: "fireball", modifier: "self" },
   "mesmer.empathy": { glyph: "sword", modifier: "self" },
   "mesmer.diversion": { glyph: "slow", modifier: "clock" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
-  // Mantras (#1964), stand-ins until their art card.
-  "mesmer.mantra-of-concentration": { glyph: "shield-stance", modifier: "self" },
-  "mesmer.mantra-of-resolve": { glyph: "energy-cut", modifier: "self" },
-  "mesmer.mantra-of-earth": { glyph: "rock", modifier: "self" },
-  "mesmer.mantra-of-flame": { glyph: "flame", modifier: "self" },
-  "mesmer.mantra-of-frost": { glyph: "frost", modifier: "self" },
-  "mesmer.mantra-of-lightning": { glyph: "lightning", modifier: "self" },
+  // Mantras (#1981): one frame, and what each holds against.
+  "mesmer.mantra-of-concentration": { glyph: "mantra-burst-struck" },
+  "mesmer.mantra-of-resolve": { glyph: "mantra-shield" },
+  "mesmer.mantra-of-earth": { glyph: "mantra-rock" },
+  "mesmer.mantra-of-flame": { glyph: "mantra-flame" },
+  "mesmer.mantra-of-frost": { glyph: "mantra-frost" },
+  "mesmer.mantra-of-lightning": { glyph: "mantra-lightning" },
   "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
   // A skill seen again: a spell, or any skill, echoed on (#1136).
@@ -92,6 +92,8 @@ export const MESMER_ICONS = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929).
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Take what another has (#1965), a stand-in until its art card.
+  "mesmer.arcane-mimicry": { glyph: "bars-lent", modifier: "renew" },
   // Stand-ins for the party-wide condition and hex moves (#1954).
   "mesmer.mirror-of-disenchantment": { glyph: "cleanse", modifier: "area" },
   "mesmer.extend-conditions": { glyph: "drop-spread", modifier: "plus" },

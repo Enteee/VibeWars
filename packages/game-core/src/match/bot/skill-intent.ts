@@ -121,6 +121,20 @@ export function renewsSpirit(skill: Skill): boolean {
 }
 
 /**
+ * A hex that copies its bearer's stances onto its caster (#1965), as
+ * Mirrored Stance: worth a foe only while that foe has a stance to use.
+ */
+export function mirrorsStance(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) =>
+      effect.kind === "apply-status" &&
+      getStatusDefinition(effect.statusId).triggers.some(({ effects }) =>
+        effects.some(({ kind }) => kind === "mirror-stance"),
+      ),
+  );
+}
+
+/**
  * The only role `skill` has is `interrupt`: Distracting Blow's, Power
  * Drain's. Held for a foe's cast or swing, never spent on anything else.
  */

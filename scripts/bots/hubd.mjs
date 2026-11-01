@@ -487,6 +487,8 @@ async function rest(rel, cfg) {
  */
 const NAMED_WORKFLOWS = ["ci.yml", "dependency-review.yml"];
 const EVERY_JOB_WORKFLOWS = ["e2e-repeat.yml", "codeql.yml"];
+/** Workflows a path filter may leave unstarted: no run is then satisfied (#1884). */
+const OPTIONAL_WORKFLOWS = ["e2e-repeat.yml"];
 /** Every workflow the merge gate reads, the CI KPIs' "gate" (#1612). */
 const GATE_WORKFLOWS = [...NAMED_WORKFLOWS, ...EVERY_JOB_WORKFLOWS];
 
@@ -531,7 +533,12 @@ async function restJobs(sha, cfg, files) {
     if ("error" in runs) {
       return runs;
     }
-    const run = judgingRuns(runs.runs, { sha, repo: cfg.repo, file });
+    const run = judgingRuns(runs.runs, {
+      sha,
+      repo: cfg.repo,
+      file,
+      optional: OPTIONAL_WORKFLOWS.includes(file),
+    });
     if (!run.ok) {
       return { refusal: run.reason };
     }
