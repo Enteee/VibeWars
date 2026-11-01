@@ -104,3 +104,34 @@ test("in a match a click under the panel walks, and the box shows only while ope
   await page.mouse.click(at.x, at.y);
   await expect(stage).not.toHaveAttribute("data-camera", before ?? "");
 });
+
+test("in the lobby the closed chat is its lines, clicks go through it, and its icon opens it (#2018)", async ({
+  page,
+}) => {
+  await openMenu(page, "Ann");
+  await hostLobby(page);
+  const box = page.getByRole("textbox", { name: "chat message" });
+  await expect(box).toBeHidden();
+  await say(page, "anyone up for a 2v2");
+  await expect(box).toBeHidden();
+  const log = page.getByRole("log");
+  await expect(log).toContainText("anyone up for a 2v2");
+
+  // What is under the middle of the lines takes the click, not the chat.
+  const panel = await log.boundingBox();
+  if (panel === null) {
+    throw new Error("the chat log has no box");
+  }
+  const under = await page.evaluate(
+    ({ x, y }) => document.elementFromPoint(x, y)?.closest(".chat") === null,
+    { x: panel.x + panel.width / 2, y: panel.y + panel.height / 2 },
+  );
+  expect(under).toBe(true);
+
+  const icon = page.getByRole("button", { name: "Chat (Enter)" });
+  await icon.click();
+  await expect(box).toBeVisible();
+  await expect(box).toBeFocused();
+  await icon.click();
+  await expect(box).toBeHidden();
+});
