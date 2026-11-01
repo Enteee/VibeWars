@@ -103,14 +103,6 @@ export const RANGER_ICONS = {
   // Staples (#1869).
   "ranger.hekets-rampage": { glyph: "claws-rampage" },
   "ranger.sundering-attack": { glyph: "arrow-sunder" },
-  // Pets 2 (#1865), stand-ins until their art card.
-  "ranger.otyughs-cry": { glyph: "paw-shield", modifier: "up" },
-  "ranger.predatory-bond": { glyph: "paw-heart", modifier: "plus" },
-  "ranger.companionship": { glyph: "heal-other", modifier: "paw" },
-  "ranger.rampage-as-one": { glyph: "paw-speed", modifier: "up" },
-  "ranger.run-as-one": { glyph: "paw-speed", modifier: "self" },
-  "ranger.savage-pounce": { glyph: "paw-leap", modifier: "up" },
-  "ranger.bestial-mauling": { glyph: "blink-daze", modifier: "stun" },
   // Shots that fly differently (#1914)
   "ranger.focused-shot": { glyph: "arrow-focus" },
   "ranger.needling-shot": { glyph: "arrow-needle" },
@@ -125,10 +117,4 @@ export const RANGER_ICONS = {
   "ranger.run-as-one": { glyph: "figure-paw-run" },
   "ranger.savage-pounce": { glyph: "paw-pounce-spell" },
   "ranger.bestial-mauling": { glyph: "paw-maul" },
-  // Shots that fly differently (#1914), stand-ins until their art card.
-  "ranger.focused-shot": { glyph: "arrow-pierce", modifier: "clock" },
-  "ranger.needling-shot": { glyph: "arrow", modifier: "half" },
-  "ranger.forked-arrow": { glyph: "volley", modifier: "less" },
-  // Next attack (#1916): stand-ins until their art.
-  "ranger.poison-tip-signet": { glyph: "flask", modifier: "self" },
 };
