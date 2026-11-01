@@ -869,7 +869,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     teamEditor = undefined;
     editor?.dispose();
-    editor = mountBuildEditor(screenRoot, character, editorCallbacks);
+    editor = mountBuildEditor(screenRoot, character, editorCallbacks, "character-builder");
   };
 
   /**
@@ -1223,6 +1223,7 @@ async function main(): Promise<void> {
           back(team);
         },
       },
+      "member-editor",
     );
   };
 

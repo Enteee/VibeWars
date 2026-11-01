@@ -133,6 +133,7 @@ import {
   type InlineConfirm,
 } from "./kit.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
+import { MENU_DEPTH } from "../music/fixed-tracks.js";
 
 /**
  * The character/build editor (brief §17).
@@ -860,6 +861,8 @@ export function mountBuildEditor(
   root: HTMLElement,
   initial: StoredCharacter,
   callbacks: BuildEditorCallbacks,
+  /** The menu it is open in, so its Training Ground keeps that menu's music (#2020). */
+  screen: "character-builder" | "member-editor",
 ): BuildEditorView {
   let character = initial;
   const tooltip = createSkillTooltip();
@@ -874,7 +877,7 @@ export function mountBuildEditor(
   // context and leaks.
   let training: TrainingPanel | undefined;
   try {
-    training = createTrainingPanel();
+    training = createTrainingPanel(MENU_DEPTH[screen]);
   } catch (error) {
     console.warn("[web] training ground unavailable", error);
     // No WebGL: the arena's column says so (#655). Mounted once, so it

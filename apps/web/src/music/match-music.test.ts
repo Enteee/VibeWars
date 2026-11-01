@@ -99,7 +99,7 @@ function hit(caster: string, target: string): CombatMessage {
   };
 }
 
-function setup() {
+function setup(screen: "training" | "match" = "match") {
   let clock = 1_000_000;
   let combat: (message: CombatMessage) => void = () => undefined;
   const connection = {
@@ -111,9 +111,11 @@ function setup() {
   } as unknown as MatchConnection;
   const changes: MusicState[] = [];
   const music = attachMatchMusic(connection, {
-    screen: "match",
+    screen,
+    menuDepth: screen === "training" ? 1 : null,
     mode: () => ({ kind: "auto" }),
     tracks: [
+      { id: "first-light", moods: ["atmospheric"], layers: 2 },
       { id: "hall-of-champions", moods: ["epic"], layers: 4 },
       { id: "victors-hymn", moods: ["triumphant"], layers: 4 },
     ],
@@ -224,6 +226,15 @@ describe("attachMatchMusic", () => {
     expect(changes.at(-1)).toEqual(
       expect.objectContaining({ trackId: "victors-hymn", intensity: 0, context: "result-victory" }),
     );
+  });
+
+  it("keeps a Training Ground on the menus' song at their depth, its end too (#2020)", () => {
+    const { changes, at } = setup("training");
+    at(0);
+    at(DIRECT_INTERVAL_MS, snapshot({ allyHealth: 10, finished: 0 }));
+    expect(changes).toEqual([
+      expect.objectContaining({ trackId: "first-light", intensity: 1, context: "menu" }),
+    ]);
   });
 
   it("says nothing once disposed", () => {

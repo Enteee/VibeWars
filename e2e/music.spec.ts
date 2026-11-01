@@ -600,3 +600,36 @@ test("Options → Sound names the menu's track, and a fixed intensity reaches th
   );
   await expect.poll(() => intensitiesSent(page), { timeout: 5_000 }).toContain(3);
 });
+
+/** The track of every message the game sent its host that names one, in order. */
+async function tracksSent(page: Page): Promise<string[]> {
+  const host = page.frames().find((frame) => frame.url().includes("music-host"));
+  if (host === undefined) {
+    return [];
+  }
+  return host.evaluate(
+    () =>
+      (window as unknown as { fromGame?: unknown[] }).fromGame?.flatMap((message) =>
+        typeof message === "object" && message !== null && "trackId" in message
+          ? [String(message.trackId)]
+          : [],
+      ) ?? [],
+  );
+}
+
+test("the Character Builder's Training Ground keeps the menu's song while it runs (#2020)", async ({
+  page,
+}) => {
+  await recordHostInbox(page);
+  await page.goto("./");
+  await expect(page.locator(".mode-rail")).toBeVisible();
+  await page.locator("body").click({ position: { x: 5, y: 5 } });
+  await expect.poll(() => tracksSent(page), { timeout: 5_000 }).toEqual(["first-light"]);
+
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "new character" }).click();
+  // The arena runs on its own once open; its music is asked every few frames.
+  await expect(page.locator(".training canvas")).toBeVisible();
+  await page.waitForTimeout(2_000);
+  expect(new Set(await tracksSent(page))).toEqual(new Set(["first-light"]));
+});

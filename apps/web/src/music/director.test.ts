@@ -82,16 +82,34 @@ describe("directMusic: track choice", () => {
 
   it("gives every map its table's song for any seed, and an unknown map hall-of-champions", () => {
     for (const [mapId, expected] of MAP_TRACKS) {
-      const screen = mapId.startsWith("training-") ? "training" : "match";
       const picked = new Set(
         Array.from(
           { length: 20 },
-          (_, i) => run([{ screen, mapId, matchSeed: `${mapId}:${String(i)}` }])[0]?.trackId,
+          (_, i) => run([{ mapId, matchSeed: `${mapId}:${String(i)}` }])[0]?.trackId,
         ),
       );
       expect([...picked], mapId).toEqual([expected]);
     }
     expect(run([{ mapId: "arena-new" }])[0]?.trackId).toBe("hall-of-champions");
+  });
+
+  it("keeps first-light, in the menu's context, from a menu into the Training Ground and back (#2020)", () => {
+    const menu: Partial<MusicInput> = {
+      screen: "menu",
+      menuDepth: 1,
+      mapId: null,
+      matchSeed: null,
+    };
+    const states = run([
+      menu,
+      { screen: "training", menuDepth: 1, mapId: "training-hall", matchSeed: null, ...FIGHTING },
+      menu,
+    ]);
+    expect(states.map((state) => [state.trackId, state.context])).toEqual([
+      ["first-light", "menu"],
+      ["first-light", "menu"],
+      ["first-light", "menu"],
+    ]);
   });
 
   for (const { result, expected } of [
@@ -192,12 +210,31 @@ describe("targetIntensity", () => {
     { why: "nothing near", at: {}, level: 0 },
     { why: "training, nothing near", at: { screen: "training" }, level: 0 },
     { why: "training, fighting", at: { screen: "training", ...FIGHTING }, level: 2 },
+    {
+      why: "training one menu deep, fighting",
+      at: { screen: "training", menuDepth: 1, ...FIGHTING },
+      level: 2,
+    },
+    {
+      why: "training one menu deep, nothing near",
+      at: { screen: "training", menuDepth: 1 },
+      level: 1,
+    },
+    {
+      why: "training one menu deep, dead",
+      at: { screen: "training", menuDepth: 1, self: { alive: false, healthFraction: 0 } },
+      level: 1,
+    },
   ];
   for (const { why, at, level } of rows) {
     it(`is ${String(level)} for ${why}`, () => {
       expect(targetIntensity(input(at), 4)).toBe(level);
     });
   }
+
+  it("keeps training's fight within its song's layers (#2020)", () => {
+    expect(targetIntensity(input({ screen: "training", menuDepth: 1, ...PEAK }), 2)).toBe(1);
+  });
 });
 
 describe("directMusic: intensity over time", () => {

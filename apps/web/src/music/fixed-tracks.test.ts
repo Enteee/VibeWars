@@ -12,24 +12,30 @@ const MAPS = path.resolve(
   "../../../../packages/game-maps",
 );
 
-/** Every map id the game ships: the arenas and the training grounds. */
-function mapIds(): string[] {
-  return ["maps", "training"].flatMap((dir) =>
-    fs
-      .readdirSync(path.join(MAPS, dir), { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name),
-  );
+/** Every map id in `dir` of the game's maps. */
+function mapIds(dir: "maps" | "training"): string[] {
+  return fs
+    .readdirSync(path.join(MAPS, dir), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 }
 
 describe("fixed tracks (#1993)", () => {
   const shipped = new Set(TRACKS.map((track) => track.id));
 
-  it("gives every map a song of its own row", () => {
-    const ids = mapIds();
+  it("gives every arena a song of its own row", () => {
+    const ids = mapIds("maps");
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) {
       expect(MAP_TRACKS.has(id), id).toBe(true);
+    }
+  });
+
+  it("has a row only for an arena: a Training Ground plays the menus' song (#2020)", () => {
+    const arenas = new Set(mapIds("maps"));
+    expect(mapIds("training").length).toBeGreaterThan(0);
+    for (const mapId of MAP_TRACKS.keys()) {
+      expect(arenas.has(mapId), mapId).toBe(true);
     }
   });
 

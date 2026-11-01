@@ -202,7 +202,8 @@ interface Session {
   parked: boolean;
 }
 
-export function createTrainingPanel(): TrainingPanel {
+/** `menuDepth`: the editor's, which the music keeps to with nothing fighting (#2020). */
+export function createTrainingPanel(menuDepth: 0 | 1): TrainingPanel {
   // Up front, before any DOM: the editor shows the notice instead (#655).
   if (!hasWebGl()) {
     throw new NoWebGlError("no WebGL");
@@ -660,6 +661,7 @@ export function createTrainingPanel(): TrainingPanel {
       sounds: attachMatchSounds(connection, soundPlayer()),
       music: attachMatchMusic(connection, {
         screen: "training",
+        menuDepth,
         mode: () => music().mode(),
         tracks: TRACKS,
         onChange: (state) => {

@@ -33,6 +33,8 @@ export interface MatchMusic {
 
 export interface MatchMusicOptions {
   readonly screen: "training" | "match";
+  /** Training only: the depth of the editor it is in (#2020); `null` in a match. */
+  readonly menuDepth: 0 | 1 | null;
   /** Asked on every snapshot, so a mode the player changes mid-match applies at once. */
   readonly mode: () => MusicMode;
   readonly tracks: readonly TrackChoice[];
@@ -53,6 +55,8 @@ function fromSnapshot(
 > {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const finished = snapshot.phase === "finished";
+  // A Training Ground's end is no match's result: it stays on the menus' song (#2020).
+  const shown = finished && screen === "match" ? "result" : screen;
   const result =
     !finished || self === undefined || snapshot.winningTeam === undefined
       ? null
@@ -61,7 +65,7 @@ function fromSnapshot(
         : "defeat";
   if (self === undefined) {
     return {
-      screen: finished ? "result" : screen,
+      screen: shown,
       result,
       self: null,
       enemyInRange: false,
@@ -79,7 +83,7 @@ function fromSnapshot(
   const enemies = living.filter((p) => p.team !== self.team);
   const others = allies.filter((p) => p.sessionId !== self.sessionId);
   return {
-    screen: finished ? "result" : screen,
+    screen: shown,
     result,
     self: { alive: !self.dead, healthFraction: fraction(self.health, self.maxHealth) },
     enemyInRange:
@@ -99,10 +103,11 @@ function sameMusic(a: MusicState, b: MusicState): boolean {
 export function attachMatchMusic(
   /** A seat, or a watcher's match (#480). */
   connection: Pick<MatchConnection, "map" | "selfSessionId" | "onCombat">,
-  { screen, mode, tracks, onChange, now = Date.now }: MatchMusicOptions,
+  { screen, menuDepth, mode, tracks, onChange, now = Date.now }: MatchMusicOptions,
 ): MatchMusic {
   const mapId = connection.map.id;
-  const matchSeed = `${mapId}:${String(now())}`;
+  // The Training Ground plays the menus' song (#2020), so shuffles as they do.
+  const matchSeed = screen === "match" ? `${mapId}:${String(now())}` : null;
   /** When each hit this player dealt or took landed, oldest first. */
   const dealt: number[] = [];
   const taken: number[] = [];
@@ -150,7 +155,7 @@ export function attachMatchMusic(
         ...fromSnapshot(next, screen, teamSize),
         mapId,
         matchSeed,
-        menuDepth: null,
+        menuDepth,
         hitsDealtLast5s: recent(dealt, at),
         hitsTakenLast5s: recent(taken, at),
         nowMs: at,

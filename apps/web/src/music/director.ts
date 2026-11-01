@@ -43,7 +43,7 @@ export interface TrackChoice {
 
 export interface MusicInput {
   readonly screen: "menu" | "training" | "match" | "result";
-  /** Menu only: how deep in the menus the player is (#1993). */
+  /** Menu and training: how deep in the menus the player is (#1993). */
   readonly menuDepth: 0 | 1 | null;
   /** Training and match only. */
   readonly mapId: string | null;
@@ -78,21 +78,19 @@ export interface MusicState {
   readonly context: string;
 }
 
-function fighting(screen: MusicInput["screen"]): boolean {
-  return screen === "training" || screen === "match";
-}
-
 /**
  * The context, and for a result the key `map-moods.ts` knows it by. Every
- * menu is one context, so moving between them keeps the song (#1993).
+ * menu is one context, so moving between them keeps the song (#1993). The
+ * Training Ground is inside an editor, a menu, so it is that context too
+ * (#2020).
  */
 function contextOf(input: MusicInput): string {
   switch (input.screen) {
     case "menu":
-      return "menu";
     case "training":
+      return "menu";
     case "match":
-      return `${input.screen}:${input.mapId ?? ""}`;
+      return `match:${input.mapId ?? ""}`;
     case "result":
       return input.result === null ? "result" : `result-${input.result}`;
   }
@@ -100,14 +98,33 @@ function contextOf(input: MusicInput): string {
 
 /**
  * The level the fight calls for right now, before any hysteresis. A menu's
- * is its depth, up to the top of the `layers` its song has (#1993).
+ * is its depth, up to the top of the `layers` its song has (#1993); the
+ * Training Ground's is its fight's or its menu's, whichever is higher (#2020).
  */
 export function targetIntensity(input: MusicInput, layers: number): Intensity {
-  if (input.screen === "menu") {
-    return MENU_LEVEL[Math.max(0, Math.min(input.menuDepth ?? 0, layers - 1))] ?? 0;
+  const menu = MENU_LEVEL[Math.max(0, Math.min(input.menuDepth ?? 0, layers - 1))] ?? 0;
+  switch (input.screen) {
+    case "menu":
+      return menu;
+    case "training": {
+      const fight = fightIntensity(input);
+      let level = fight > menu ? fight : menu;
+      while (level > 0 && level >= layers) {
+        level = ONE_LOWER[level];
+      }
+      return level;
+    }
+    case "match":
+      return fightIntensity(input);
+    case "result":
+      return 0;
   }
+}
+
+/** The level a fight calls for, from who is hurt and who is hitting. */
+function fightIntensity(input: MusicInput): Intensity {
   const { self } = input;
-  if (!fighting(input.screen) || !self?.alive) {
+  if (!self?.alive) {
     return 0;
   }
   if (
@@ -139,8 +156,8 @@ function pick(tracks: readonly TrackChoice[], seed: string): TrackChoice | undef
 function autoTrack(input: MusicInput, seed: string, tracks: readonly TrackChoice[]): string | null {
   switch (input.screen) {
     case "menu":
-      return MENU_TRACK;
     case "training":
+      return MENU_TRACK;
     case "match":
       return mapTrack(input.mapId ?? "");
     case "result":
