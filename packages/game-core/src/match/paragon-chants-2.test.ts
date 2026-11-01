@@ -8,7 +8,7 @@ import { gainStrikes } from "../skills/adrenaline.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeStatus } from "../skills/describe.js";
 import { applyEffects } from "../skills/effects.js";
-import { StatusSet, type StatusId } from "../skills/status.js";
+import { NO_RANKS, StatusSet, type StatusId } from "../skills/status.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -114,7 +114,7 @@ function spent(sim: MatchSimulation, energy = 20): void {
 
 /** `id` on "p", from "p", for `seconds`. */
 function put(sim: MatchSimulation, id: StatusId, seconds = 10): void {
-  get(sim, "p").combatant.statuses.apply(id, seconds, "p");
+  get(sim, "p").combatant.statuses.apply(id, seconds, "p", NO_RANKS);
 }
 
 /** "p" uses its skill in `slot` on the foe, and finishes it: the log meanwhile. */
@@ -146,7 +146,7 @@ describe("StatusSet.useNextSkill (#1483)", () => {
     ];
     for (const [id, yes, no] of kinds) {
       const set = new StatusSet();
-      set.apply(id, 10, "p");
+      set.apply(id, 10, "p", NO_RANKS);
       expect(set.useNextSkill(skill(no), new Set()).answered, `${id} ${no}`).toEqual([]);
       expect(set.useNextSkill(skill(yes), new Set()).ended, `${id} ${yes}`).toEqual([id]);
       expect(set.has(id)).toBe(false);
@@ -155,7 +155,7 @@ describe("StatusSet.useNextSkill (#1483)", () => {
 
   it("with a count of 5 answers any five skills, then ends", () => {
     const set = new StatusSet();
-    set.apply("song-of-purification", 20, "p");
+    set.apply("song-of-purification", 20, "p", NO_RANKS);
     for (const id of [SPELL, SIGNET, SHOUT, ATTACK]) {
       expect(set.useNextSkill(skill(id), new Set()).ended).toEqual([]);
     }
@@ -165,7 +165,7 @@ describe("StatusSet.useNextSkill (#1483)", () => {
 
   it("leaves one the skill put on its own user", () => {
     const set = new StatusSet();
-    set.apply("chorus-of-restoration", 10, "p");
+    set.apply("chorus-of-restoration", 10, "p", NO_RANKS);
     const spared = new Set<StatusId>(["chorus-of-restoration"]);
     expect(set.useNextSkill(skill("paragon.chorus-of-restoration"), spared).answered).toEqual([]);
     expect(set.get("chorus-of-restoration")?.skillsLeft).toBe(1);
@@ -247,7 +247,7 @@ describe("a next-skill chant in a match (#1483)", () => {
   it("Song of Purification uses a count on a skill even with no condition to remove", () => {
     const sim = match([SIGNET, SHOUT]);
     put(sim, "song-of-purification", 20);
-    get(sim, "p").combatant.statuses.apply("bleeding", 20, "f");
+    get(sim, "p").combatant.statuses.apply("bleeding", 20, "f", NO_RANKS);
     use(sim, 0);
     expect(has(sim, "bleeding")).toBe(false);
     use(sim, 1);
@@ -376,7 +376,7 @@ describe("the twelve chants (#1483)", () => {
     });
     const sim = match([SIGNET]);
     put(sim, "lyric-of-purification");
-    get(sim, "p").combatant.statuses.apply("poison", 20, "f");
+    get(sim, "p").combatant.statuses.apply("poison", 20, "f", NO_RANKS);
     use(sim, 0);
     expect(has(sim, "poison")).toBe(false);
   });
@@ -407,7 +407,7 @@ describe("the twelve chants (#1483)", () => {
     });
     const sim = match([SPELL]);
     put(sim, "hexbreaker-aria");
-    get(sim, "p").combatant.statuses.apply("empathy", 20, "f");
+    get(sim, "p").combatant.statuses.apply("empathy", 20, "f", NO_RANKS);
     use(sim, 0);
     expect(has(sim, "empathy")).toBe(false);
   });

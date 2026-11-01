@@ -9,7 +9,7 @@ import { createRng } from "../rng.js";
 import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { describeSkill, describeStatus } from "./describe.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { getSkill } from "./catalog.js";
 import { makeCombatant } from "./testing.js";
 import type { FiredTrigger } from "./triggers.js";
@@ -108,7 +108,7 @@ describe("flash enchantment tooltips (#1421)", () => {
 describe("Enchanted Haste (#1421)", () => {
   it("moves you 25% faster", () => {
     const self = makeCombatant({ id: "d" });
-    self.statuses.apply("enchanted-haste", 7, "d");
+    self.statuses.apply("enchanted-haste", 7, "d", NO_RANKS);
     expect(aggregateModifiers(self.statuses.active).moveSpeedMultiplier).toBe(1.25);
   });
 
@@ -116,14 +116,14 @@ describe("Enchanted Haste (#1421)", () => {
     const stripped = sim(["dervish.enchanted-haste"], []);
     use(stripped, 0);
     const self = combatant(stripped, "d");
-    self.statuses.apply("poison", 20, "f");
+    self.statuses.apply("poison", 20, "f", NO_RANKS);
     self.statuses.remove("enchanted-haste");
     stepFor(stripped, 0.25);
     expect(self.statuses.has("poison")).toBe(false);
 
     const expired = sim(["dervish.enchanted-haste"], []);
     use(expired, 0);
-    combatant(expired, "d").statuses.apply("poison", 20, "f");
+    combatant(expired, "d").statuses.apply("poison", 20, "f", NO_RANKS);
     stepFor(expired, 7);
     expect(combatant(expired, "d").statuses.has("enchanted-haste")).toBe(false);
     expect(combatant(expired, "d").statuses.has("poison")).toBe(true);
@@ -176,7 +176,7 @@ describe("Harrier's Haste (#1421)", () => {
   /** What a scythe hit on `victim` adds under Harrier's Haste. */
   function riders(moving: boolean): FiredTrigger[] {
     const self = makeCombatant({ id: "d", equipment: SCYTHE });
-    self.statuses.apply("harriers-haste", 7, "d");
+    self.statuses.apply("harriers-haste", 7, "d", NO_RANKS);
     const victim = makeCombatant({ id: "f", team: 1, maxHealth: 1000, health: 1000 });
     victim.moving = moving;
     const fired: FiredTrigger[] = [];
@@ -204,7 +204,7 @@ describe("Harrier's Haste (#1421)", () => {
 
   it("moves you 25% faster", () => {
     const self = makeCombatant({ id: "d" });
-    self.statuses.apply("harriers-haste", 7, "d");
+    self.statuses.apply("harriers-haste", 7, "d", NO_RANKS);
     expect(aggregateModifiers(self.statuses.active).moveSpeedMultiplier).toBe(1.25);
   });
 });

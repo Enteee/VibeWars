@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { attachFullscreenButton, fullscreenButtonState } from "./fullscreen.js";
+import { attachFullscreenButton, fullscreenButtonState, fullscreenTarget } from "./fullscreen.js";
 
 /** Just enough of a button: its icon, attributes and click listener. */
 class FakeButton {
@@ -98,5 +98,17 @@ describe("the fullscreen button (#454)", () => {
     expect(button.click).toBeUndefined();
     page.set(true);
     expect(button.icon.src).toMatch(/\/fullscreen\.svg$/);
+  });
+});
+
+describe("what goes fullscreen (#2012)", () => {
+  it("is the whole document, so tooltips on <body> are drawn too", () => {
+    const root = {};
+    vi.stubGlobal("document", { documentElement: root });
+    try {
+      expect(fullscreenTarget()).toBe(root);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

@@ -7,6 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { directionAngle, facingToward, showsBackTo, spawnFacing } from "./facing.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -222,7 +223,7 @@ describe("a blow from behind a moving target always crits (#533)", () => {
   it("crits every swing at a target walking away", () => {
     const sim = chase();
     // Crippled, so the chase catches it.
-    sim.get("b")?.combatant.statuses.apply("crippled", 1e6, "a");
+    sim.get("b")?.combatant.statuses.apply("crippled", 1e6, "a", NO_RANKS);
     sim.setInputDirection("b", vec2(1, 0));
     const swings = swingsOver(sim, 8);
     expect(swings.length).toBeGreaterThanOrEqual(3);

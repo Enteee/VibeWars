@@ -676,6 +676,16 @@ export interface CompanionGainsStatusEffect {
 }
 
 /**
+ * The caster's living pet moves beside the effect's target at once and
+ * attacks it (#1966): Strike as One's "your animal companion instantly
+ * moves to your target". Once however many targets; no pet, a dead one
+ * or a dead target: nothing. A pet at heel moves and does not attack.
+ */
+export interface CompanionStepsToTargetEffect {
+  readonly kind: "companion-steps-to-target";
+}
+
+/**
  * Apply `effects` to every foe of the caster within `radius` of the
  * effect's target, the target itself excluded (#885), as Death Blossom's
  * "all adjacent foes take 20...40 damage". Not a blow: no block, no crit
@@ -1485,6 +1495,7 @@ export type UnconditionalEffect =
   | OvercastEffect
   | CasterGainsStatusEffect
   | CompanionGainsStatusEffect
+  | CompanionStepsToTargetEffect
   | RechargeFasterEffect
   | RechargeResetEffect
   | SplashEffect
@@ -1832,6 +1843,11 @@ export interface Skill {
    */
   readonly easilyInterrupted?: true;
   /**
+   * A touch skill (#1966): its corpus text has its user touch the target,
+   * "target touched foe". What "Can't Touch This!" fails. Absent: not one.
+   */
+  readonly touch?: true;
+  /**
    * GW1's "Health gain from Divine Favor is doubled for this spell"
    * (#1754): Healing Touch's. Absent: the normal bonus.
    */
@@ -2124,6 +2140,11 @@ export interface SkillContext {
    * `SkillResolution.own`. Absent for a trigger, which is no use.
    */
   readonly own?: OwnSkillBoost | undefined;
+  /**
+   * Whose attribute ranks scale the statuses these effects put on (#1976),
+   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965).
+   */
+  readonly ranksFrom?: Combatant | undefined;
 }
 
 /**

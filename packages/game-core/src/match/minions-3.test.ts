@@ -8,6 +8,7 @@ import { rankOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Minions 3 (#1915): Order of Undeath makes minions hit harder at their
@@ -86,7 +87,7 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
 /** Kill `id` as burning would. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "n");
+  victim.combatant.statuses.apply("burning", 10, "n", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -224,7 +225,7 @@ describe("Order of Undeath (#1915)", () => {
     cast(sim, HORROR);
     const horror = onlyHorror(sim);
     if (bearer !== undefined) {
-      get(sim, bearer).combatant.statuses.apply("order-of-undeath", 60, "n");
+      get(sim, bearer).combatant.statuses.apply("order-of-undeath", 60, "n", NO_RANKS);
     }
     return blowsOn(stepFor(sim, 8), horror.id);
   }
@@ -246,8 +247,8 @@ describe("Order of Undeath (#1915)", () => {
     kill(sim, "x");
     cast(sim, HORROR);
     const horror = onlyHorror(sim);
-    horror.combatant.statuses.apply("blind", 60, "y");
-    get(sim, "n").combatant.statuses.apply("order-of-undeath", 60, "n");
+    horror.combatant.statuses.apply("blind", 60, "y", NO_RANKS);
+    get(sim, "n").combatant.statuses.apply("order-of-undeath", 60, "n", NO_RANKS);
     const missed = stepFor(sim, 20).filter(
       (entry) =>
         entry.sourceId === horror.id &&
@@ -345,7 +346,7 @@ describe("Infuse Condition (#1915)", () => {
     cast(sim, HORROR);
     const horror = onlyHorror(sim);
     cast(sim, INFUSE);
-    get(sim, "c").combatant.statuses.apply("bleeding", 10, "n");
+    get(sim, "c").combatant.statuses.apply("bleeding", 10, "n", NO_RANKS);
     useFirst(sim, "c", PLAGUE_SIGNET, "n");
     expect(conditionsOf(horror)).toContain("bleeding");
     expect(conditionsOf(get(sim, "n"))).not.toContain("bleeding");
@@ -357,7 +358,7 @@ describe("Infuse Condition (#1915)", () => {
     cast(sim, HORROR);
     const horror = onlyHorror(sim);
     cast(sim, INFUSE);
-    get(sim, "a").combatant.statuses.apply("bleeding", 10, "c");
+    get(sim, "a").combatant.statuses.apply("bleeding", 10, "c", NO_RANKS);
     useFirst(sim, "c", EPIDEMIC, "a");
     expect(conditionsOf(horror)).toContain("bleeding");
     expect(conditionsOf(get(sim, "n"))).not.toContain("bleeding");

@@ -42,7 +42,7 @@ export type GameToHost =
 
 /**
  * One second of the music's timing (#420), counted only after `measure`.
- * Gaps show as `skippedMs` and `lateEvents`, crackle as `underrunMs` in
+ * Gaps show as `skippedMs` and `droppedEvents`, crackle as `underrunMs` in
  * every browser and `glitches` in Chromium, clipping as `maxReductionDb`.
  */
 export interface MusicStats {
@@ -58,8 +58,8 @@ export interface MusicStats {
   readonly skippedMs: number;
   /** Events handed to superdough this second. */
   readonly events: number;
-  /** Of those, the ones whose onset had already passed: superdough drops them. */
-  readonly lateEvents: number;
+  /** Events left out, not handed over, because their onset was too near or past (#1991). */
+  readonly droppedEvents: number;
   /** `AudioContext.baseLatency` and `outputLatency`, in milliseconds. */
   readonly baseLatencyMs: number;
   readonly outputLatencyMs: number;
@@ -238,7 +238,8 @@ function optionalStat(value: unknown): value is number | null {
 }
 
 function stats(message: Fields): HostToGame | null {
-  const { ticks, lateTicks, maxTickGapMs, maxTickWorkMs, skippedMs, events, lateEvents } = message;
+  const { ticks, lateTicks, maxTickGapMs, maxTickWorkMs, skippedMs, events, droppedEvents } =
+    message;
   const { baseLatencyMs, outputLatencyMs, glitches, glitchMs } = message;
   const { underruns, underrunMs, maxReductionDb } = message;
   return stat(ticks) &&
@@ -247,7 +248,7 @@ function stats(message: Fields): HostToGame | null {
     stat(maxTickWorkMs) &&
     stat(skippedMs) &&
     stat(events) &&
-    stat(lateEvents) &&
+    stat(droppedEvents) &&
     stat(baseLatencyMs) &&
     stat(outputLatencyMs) &&
     optionalStat(glitches) &&
@@ -263,7 +264,7 @@ function stats(message: Fields): HostToGame | null {
         maxTickWorkMs,
         skippedMs,
         events,
-        lateEvents,
+        droppedEvents,
         baseLatencyMs,
         outputLatencyMs,
         glitches,

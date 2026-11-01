@@ -6,7 +6,7 @@ import type { MatchRules } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
-import { HEALTH_PER_PIP } from "../skills/status.js";
+import { NO_RANKS, HEALTH_PER_PIP } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 
@@ -77,7 +77,7 @@ function stepFor(sim: MatchSimulation, seconds: number): void {
 /** Kill `id` as burning would. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "n");
+  victim.combatant.statuses.apply("burning", 10, "n", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);

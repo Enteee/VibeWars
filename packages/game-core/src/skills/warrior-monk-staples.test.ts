@@ -8,7 +8,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
@@ -33,7 +33,7 @@ function skill(id: string): Skill {
 /** A bearer of 480 max health, at full, under Protective Spirit. */
 function spirited(overrides: Partial<Combatant> = {}): Combatant {
   const bearer = makeCombatant({ id: "b", maxHealth: 480, health: 480, ...overrides });
-  bearer.statuses.apply("protective-spirit", 19, "monk");
+  bearer.statuses.apply("protective-spirit", 19, "monk", NO_RANKS);
   return bearer;
 }
 
@@ -65,14 +65,14 @@ describe("Protective Spirit (#936)", () => {
 
   it("caps last, after Frenzy's 160%: 40 is 64, and still 48", () => {
     const frenzied = spirited();
-    frenzied.statuses.apply("frenzy", 8, "b");
+    frenzied.statuses.apply("frenzy", 8, "b", new Map([["warrior.strength", 12]]));
     expect(mitigate(typeless(20), frenzied, RULES, "chest")).toBe(32);
     expect(mitigate(typeless(40), frenzied, RULES, "chest")).toBe(48);
   });
 
   it("caps at 10% of the max a deep wound leaves: 38 of 384", () => {
     const wounded = spirited();
-    wounded.statuses.apply("deep-wound", 20, "foe");
+    wounded.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     expect(effectiveMaxHealth(wounded)).toBe(384);
     expect(mitigate(typeless(200), wounded, RULES, "chest")).toBe(38);
   });
@@ -80,14 +80,17 @@ describe("Protective Spirit (#936)", () => {
   it("keeps the lowest of two caps, and none without one", () => {
     expect(aggregateModifiers([]).maxDamageFractionPerHit).toBeUndefined();
     expect(
-      aggregateModifiers([{ id: "protective-spirit" }, { id: "frenzy" }]).maxDamageFractionPerHit,
+      aggregateModifiers([
+        { id: "protective-spirit", ranks: NO_RANKS },
+        { id: "frenzy", ranks: NO_RANKS },
+      ]).maxDamageFractionPerHit,
     ).toBe(0.1);
   });
 
   it("does not cap degeneration", () => {
     const bleeding = spirited({ maxHealth: 20, health: 20 });
-    bleeding.statuses.apply("bleeding", 10, "foe");
-    bleeding.statuses.apply("poison", 10, "foe");
+    bleeding.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    bleeding.statuses.apply("poison", 10, "foe", NO_RANKS);
     const events = advanceStatuses(bleeding, 1, 0);
     // −7 pips is 14 a second; the cap would be 2.
     expect(events).toContainEqual(expect.objectContaining({ kind: "damage", amount: 14 }));
@@ -185,9 +188,9 @@ describe("Infuse Health (#936)", () => {
 
   it("is weakened by a healing reduction on the ally, not on the caster", () => {
     const user = monk(400);
-    user.statuses.apply("deep-wound", 20, "foe");
+    user.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     const target = ally();
-    target.statuses.apply("deep-wound", 20, "foe");
+    target.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     infuse(user, target);
     expect(user.health).toBe(200);
     expect(target.health).toBeCloseTo(100 + 258 * 0.8, 6);
@@ -228,7 +231,9 @@ describe('Cyclone Axe and "For Great Justice!" (#936)', () => {
       target: "self",
       effects: [{ kind: "apply-status", statusId: "for-great-justice", durationSeconds: 8 }],
     });
-    expect(aggregateModifiers([{ id: "for-great-justice" }]).extraStrikesPerHit).toBe(1);
+    expect(
+      aggregateModifiers([{ id: "for-great-justice", ranks: NO_RANKS }]).extraStrikesPerHit,
+    ).toBe(1);
     expect(describeStatus("for-great-justice")).toBe("gain 1 more strike of adrenaline per hit");
   });
 });

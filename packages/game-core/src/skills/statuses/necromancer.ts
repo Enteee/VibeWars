@@ -98,10 +98,11 @@ function shivers(skillId: string): StatusTrigger {
 }
 
 export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDefinition>> = {
-  // Faintheartedness at rank 12: attacks 50% slower, −2 pips (GW1 PvP).
+  // Faintheartedness (GW1 PvP): attacks 50% slower, −0...2 pips at the
+  // caster's Curses (#1976).
   faintheartedness: define("faintheartedness", "Faintheartedness", "hex", {
     profession: "necromancer",
-    healthPips: -2,
+    healthPips: { scaling: { attributeId: "necromancer.curses", atZero: 0, atTwelve: -2 } },
     attackDurationMultiplier: 1.5,
   }),
   malaise: define("malaise", "Malaise", "hex", {
@@ -271,11 +272,13 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     profession: "necromancer",
     energyPips: -1,
   }),
-  // "...takes 4...16 more damage when hit by physical damage" (#1332): 14,
-  // its rank-12 value.
+  // "...takes 4...16 more damage when hit by physical damage" (#1332), at
+  // the caster's Curses (#1976).
   barbs: define("barbs", "Barbs", "hex", {
     profession: "necromancer",
-    physicalDamageTakenBonus: 14,
+    physicalDamageTakenBonus: {
+      scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 13.6 },
+    },
   }),
   // "...has a 25% chance to miss with attacks and takes 1...46 damage
   // whenever that foe fails to hit in combat" (#1332): 37, its rank-12

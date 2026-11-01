@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
-import { getStatusDefinition, type StatusId } from "../skills/status.js";
+import { NO_RANKS, getStatusDefinition, type StatusId } from "../skills/status.js";
 import { raisedMaxEnergy } from "../skills/overcast.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -262,12 +262,12 @@ describe("Ritualist item spells 2 (#1464)", () => {
   it("Pure Was Li Ming: conditions run 42% faster held; the drop cleanses 3 from allies in earshot", () => {
     const sim = cast("ritualist.pure-was-li-ming");
     const r = get(sim, "r").combatant;
-    r.statuses.apply("bleeding", 10, "x");
+    r.statuses.apply("bleeding", 10, "x", NO_RANKS);
     stepFor(sim, 1);
     expect(r.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(8.58, 1);
-    r.statuses.apply("poison", 10, "x");
-    r.statuses.apply("weakness", 10, "x");
-    r.statuses.apply("crippled", 10, "x");
+    r.statuses.apply("poison", 10, "x", NO_RANKS);
+    r.statuses.apply("weakness", 10, "x", NO_RANKS);
+    r.statuses.apply("crippled", 10, "x", NO_RANKS);
     drop(sim);
     expect(r.statuses.countByCategory("condition")).toBe(1);
   });

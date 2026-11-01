@@ -6,6 +6,7 @@ import { makeCombatant } from "./testing.js";
 import type { StatusId } from "./status.js";
 import { fireChangeTriggers, fireTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 describe("fireTriggers", () => {
   /** A bearer singing a paragon's song and hexed with a necromancer's Spiteful Spirit. */
@@ -15,8 +16,8 @@ describe("fireTriggers", () => {
       ["p", makeCombatant({ id: "p", team: 0 })],
       ["n", makeCombatant({ id: "n", team: 1 })],
     ]);
-    self.statuses.apply("song-of-restoration", 10, "p");
-    self.statuses.apply("spiteful-spirit", 8, "n");
+    self.statuses.apply("song-of-restoration", 10, "p", NO_RANKS);
+    self.statuses.apply("spiteful-spirit", 8, "n", NO_RANKS);
     return { bearer: self, sources };
   }
 
@@ -59,9 +60,9 @@ describe("an offender trigger (#1022)", () => {
       ["rit", makeCombatant({ id: "rit", team: 0, health: 200 })],
       ["war", makeCombatant({ id: "war", team: 1 })],
     ]);
-    self.statuses.apply("bleeding", 10, "war");
-    self.statuses.apply("poison", 10, "war");
-    self.statuses.apply("weapon-of-remedy", 8, "rit");
+    self.statuses.apply("bleeding", 10, "war", NO_RANKS);
+    self.statuses.apply("poison", 10, "war", NO_RANKS);
+    self.statuses.apply("weapon-of-remedy", 8, "rit", NO_RANKS);
     self.statuses.drainChanges();
     self.statuses.recordDamageFromFoe("war", "slashing", 10, false);
     return { bearer: self, sources };
@@ -121,8 +122,8 @@ describe("an ends-early trigger (#1421)", () => {
   /** A Dervish under its own Enchanted Haste, poisoned by a foe. */
   function hasted(): Combatant {
     const self = makeCombatant({ id: "d", team: 0 });
-    self.statuses.apply("poison", 20, "foe");
-    self.statuses.apply("enchanted-haste", 7, "d");
+    self.statuses.apply("poison", 20, "foe", NO_RANKS);
+    self.statuses.apply("enchanted-haste", 7, "d", NO_RANKS);
     self.statuses.drainChanges();
     return self;
   }
@@ -159,7 +160,7 @@ describe("an ends-early trigger (#1421)", () => {
 
   it("fires nothing when it is renewed", () => {
     const self = hasted();
-    self.statuses.apply("enchanted-haste", 7, "d");
+    self.statuses.apply("enchanted-haste", 7, "d", NO_RANKS);
     expect(fire(self)).toEqual([]);
     expect(self.statuses.has("poison")).toBe(true);
   });
@@ -171,11 +172,11 @@ describe("a bearer-loses-enchantment trigger (#1437)", () => {
   /** A Dervish in Avatar of Melandru, poisoned and bleeding, under a Dervish and a Monk enchantment. */
   function avatar(): Combatant {
     const self = makeCombatant({ id: "d", team: 0 });
-    self.statuses.apply("poison", 20, "foe");
-    self.statuses.apply("bleeding", 20, "foe");
-    self.statuses.apply("avatar-of-melandru", 74, "d");
-    self.statuses.apply("enchanted-haste", 7, "d");
-    self.statuses.apply("guardian", 10, "monk");
+    self.statuses.apply("poison", 20, "foe", NO_RANKS);
+    self.statuses.apply("bleeding", 20, "foe", NO_RANKS);
+    self.statuses.apply("avatar-of-melandru", 74, "d", NO_RANKS);
+    self.statuses.apply("enchanted-haste", 7, "d", NO_RANKS);
+    self.statuses.apply("guardian", 10, "monk", NO_RANKS);
     self.statuses.drainChanges();
     return self;
   }
@@ -207,9 +208,9 @@ describe("a bearer-loses-enchantment trigger (#1437)", () => {
 
   it("fires when a Dervish enchantment is stripped, once for each", () => {
     const self = avatar();
-    self.statuses.apply("mystic-regeneration", 10, "d");
-    self.statuses.apply("crippled", 20, "foe");
-    self.statuses.apply("blind", 20, "foe");
+    self.statuses.apply("mystic-regeneration", 10, "d", NO_RANKS);
+    self.statuses.apply("crippled", 20, "foe", NO_RANKS);
+    self.statuses.apply("blind", 20, "foe", NO_RANKS);
     self.statuses.drainChanges();
     self.statuses.removeByCategory("enchantment", Number.POSITIVE_INFINITY, "dervish");
     expect(fire(self).filter((id) => id === "dervish.avatar-of-melandru")).toHaveLength(2);
@@ -232,7 +233,7 @@ describe("a bearer-loses-enchantment trigger (#1437)", () => {
 
   it("does not fire for a form ending, which is no enchantment", () => {
     const self = avatar();
-    self.statuses.apply("avatar-of-dwayna", 74, "d");
+    self.statuses.apply("avatar-of-dwayna", 74, "d", NO_RANKS);
     expect(self.statuses.has("avatar-of-melandru")).toBe(false);
     expect(fire(self)).toEqual([]);
   });
@@ -241,8 +242,8 @@ describe("a bearer-loses-enchantment trigger (#1437)", () => {
 describe("a bearer-uses-skill trigger bound to a kind of skill (#1437)", () => {
   function used(skillId: string): string[] {
     const self = makeCombatant({ id: "d", team: 0 });
-    self.statuses.apply("avatar-of-dwayna", 74, "d");
-    self.statuses.apply("faintheartedness", 10, "foe");
+    self.statuses.apply("avatar-of-dwayna", 74, "d", NO_RANKS);
+    self.statuses.apply("faintheartedness", 10, "foe", NO_RANKS);
     return fireTriggers(
       self,
       "bearer-uses-skill",
@@ -273,9 +274,9 @@ describe("a bearer-loses-condition trigger (#1475)", () => {
   /** A bearer under Fragility from `m`, poisoned and bleeding. */
   function fragile(): Combatant {
     const self = makeCombatant({ id: "b", team: 0 });
-    self.statuses.apply("fragility", 18, "m");
-    self.statuses.apply("poison", 5, "foe");
-    self.statuses.apply("bleeding", 20, "foe");
+    self.statuses.apply("fragility", 18, "m", NO_RANKS);
+    self.statuses.apply("poison", 5, "foe", NO_RANKS);
+    self.statuses.apply("bleeding", 20, "foe", NO_RANKS);
     self.statuses.drainChanges();
     return self;
   }
@@ -311,7 +312,7 @@ describe("a bearer-loses-condition trigger (#1475)", () => {
 
   it("does not fire on a refresh", () => {
     const self = fragile();
-    self.statuses.apply("poison", 20, "foe");
+    self.statuses.apply("poison", 20, "foe", NO_RANKS);
     expect(fire(self)).toEqual([]);
   });
 

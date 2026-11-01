@@ -11,6 +11,7 @@ import arenaRing from "@vibewars/game-maps/maps/arena-ring/map.json" with { type
 import arenaSplit from "@vibewars/game-maps/maps/arena-split/map.json" with { type: "json" };
 import guildHallIsle from "@vibewars/game-maps/maps/guild-hall-isle/map.json" with { type: "json" };
 import relicTemples from "@vibewars/game-maps/maps/relic-temples/map.json" with { type: "json" };
+import hallOfHeroes from "@vibewars/game-maps/maps/hall-of-heroes/map.json" with { type: "json" };
 import hillCourtyard from "@vibewars/game-maps/maps/hill-courtyard/map.json" with { type: "json" };
 import forgottenShrines from "@vibewars/game-maps/maps/forgotten-shrines/map.json" with { type: "json" };
 import type {
@@ -50,6 +51,8 @@ export const ARENA_MAPS: readonly MapData[] = [
   relicTemples,
   // King of the Hill's (#1377).
   hillCourtyard,
+  // The Heroes' Ascent's last round (#1995): a Hosted Game's pick until the progression places it.
+  hallOfHeroes,
   // Capture Points' (#1378).
   forgottenShrines,
 ].map((raw) => validateMapData(raw));
@@ -79,6 +82,12 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
     "hosted-game": undefined,
   };
 
+/**
+ * Maps no Heroes' Ascent pool draws yet: the Hall of Heroes (#1995) is its last round, placed
+ * by the progression card, and until then only a Hosted Game picks it.
+ */
+const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
+
 /** Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them. */
 export function modeMapIds(): Record<LobbyMode, string[]> {
   const of = (mode: LobbyMode): string[] => {
@@ -88,7 +97,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
   return {
     "random-arena": of("random-arena"),
     "team-arena": of("team-arena"),
-    "heroes-ascent": of("heroes-ascent"),
+    "heroes-ascent": of("heroes-ascent").filter((id) => !ASCENT_FINALE_ONLY.includes(id)),
     gvg: of("gvg"),
     "hosted-game": of("hosted-game"),
   };

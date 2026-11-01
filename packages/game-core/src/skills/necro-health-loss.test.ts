@@ -12,6 +12,7 @@ import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Target Health loss (#1648): `lose-health` with `recipient: "target"`,
@@ -112,7 +113,7 @@ describe("a target's health loss (#1648)", () => {
 
   it("ignores armor and damage reduction: Protective Spirit lets all 53 through", () => {
     const f = foe("f");
-    f.statuses.apply("protective-spirit", 10, "x");
+    f.statuses.apply("protective-spirit", 10, "x", NO_RANKS);
     use(user(), "necromancer.enfeebling-touch", [[f, RANGE_MELEE / 2]]);
     expect(f.health).toBe(447);
   });
@@ -165,7 +166,7 @@ describe("Pain of Disenchantment (#1648)", () => {
       "shielding-hands",
     ] as const;
     for (const id of enchantments) {
-      f.statuses.apply(id, 10, "x");
+      f.statuses.apply(id, 10, "x", NO_RANKS);
     }
     const near = foe("n");
     const far = foe("far");
@@ -182,7 +183,7 @@ describe("Pain of Disenchantment (#1648)", () => {
 
   it("one enchantment is enough", () => {
     const f = foe("f");
-    f.statuses.apply("blood-is-power", 10, "x");
+    f.statuses.apply("blood-is-power", 10, "x", NO_RANKS);
     use(user(), "necromancer.pain-of-disenchantment", [[f, AT]]);
     expect(f.statuses.has("blood-is-power")).toBe(false);
     expect(f.health).toBe(418);
