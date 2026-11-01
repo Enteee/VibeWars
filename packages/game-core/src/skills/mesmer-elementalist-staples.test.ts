@@ -10,7 +10,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { aggregateModifiers, MAX_RECHARGE_REDUCTION } from "./status.js";
+import { NO_RANKS, aggregateModifiers, MAX_RECHARGE_REDUCTION } from "./status.js";
 import { resolveTargets } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
 import { moveSpeedMultiplier } from "./tick.js";
@@ -168,7 +168,7 @@ describe("Ice Spikes and Deep Freeze (#938)", () => {
 
   it("on a foe Shard Storm already slows, the slows multiply, down to the 25% floor", () => {
     const target = foe("target");
-    target.statuses.apply("shard-storm", 5, "caster");
+    target.statuses.apply("shard-storm", 5, "caster", NO_RANKS);
     use(caster(), "elementalist.deep-freeze", [target]);
     expect(aggregateModifiers(target.statuses.active).moveSpeedMultiplier).toBeCloseTo(
       0.34 * 0.34,
@@ -235,10 +235,12 @@ describe("Mantra of Recovery (#938)", () => {
   });
 
   it("two such statuses combine as 1 − Π(1 − f), at most 50% (#975)", () => {
-    const one = aggregateModifiers([{ id: "mantra-of-recovery" }]).spellRechargeFaster;
+    const one = aggregateModifiers([
+      { id: "mantra-of-recovery", ranks: NO_RANKS },
+    ]).spellRechargeFaster;
     const two = aggregateModifiers([
-      { id: "mantra-of-recovery" },
-      { id: "weapon-of-quickening" },
+      { id: "mantra-of-recovery", ranks: NO_RANKS },
+      { id: "weapon-of-quickening", ranks: NO_RANKS },
     ]).spellRechargeFaster;
     expect(one).toBeCloseTo(0.33, 9);
     expect(1 - 0.67 * 0.67).toBeGreaterThan(MAX_RECHARGE_REDUCTION);

@@ -18,7 +18,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
+import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -128,7 +128,7 @@ describe("Gale (#1575)", () => {
   it("does nothing to an ally inside a Ward of Stability", () => {
     const ele = makeCombatant({ id: "e", attributeRanks: RANKS });
     const warded = makeCombatant({ id: "w", team: 1 });
-    warded.statuses.apply("ward-of-stability", 10, "ward");
+    warded.statuses.apply("ward-of-stability", 10, "ward", NO_RANKS);
     use(ele, "elementalist.gale", warded);
     expect(warded.knockdownRemaining).toBe(0);
   });
@@ -153,7 +153,7 @@ describe("Glowing Gaze (#1575)", () => {
   it("strikes for 41 fire, and pays 11 energy back off a burning foe", () => {
     const ele = makeCombatant({ id: "e", attributeRanks: RANKS, energy: 30, maxEnergy: 80 });
     const burning = makeCombatant({ id: "f", team: 1, health: 1000, maxHealth: 1000 });
-    burning.statuses.apply("burning", 5, "x");
+    burning.statuses.apply("burning", 5, "x", NO_RANKS);
     expect(damageIn(use(ele, "elementalist.glowing-gaze", burning), "f")).toBeGreaterThan(0);
     expect(ele.energy).toBe(30 - 5 + 11);
   });

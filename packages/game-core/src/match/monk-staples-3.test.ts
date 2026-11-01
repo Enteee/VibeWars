@@ -8,6 +8,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Vigorous Spirit in a match (#1039): each swing and each completed
@@ -177,7 +178,7 @@ describe("Vigorous Spirit in a match (#1039)", () => {
 
   it("with Divine Favor 12, Cure Hex heals 86 + 38 and each swing still 17", () => {
     const sim = match(12);
-    sim.get("w")?.combatant.statuses.apply("malaise", 10, "mesmer");
+    sim.get("w")?.combatant.statuses.apply("malaise", 10, "mesmer", NO_RANKS);
     use(sim, "monk", 1, "w");
     const cured = stepFor(sim, 2);
     expect(heals(cured, CURE_HEX, "w").reduce((sum, amount) => sum + amount, 0)).toBe(86 + 38);

@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { describeStatus } from "../skills/describe.js";
 import { AREA_NEARBY } from "../distances.js";
 import { applyEffects } from "../skills/effects.js";
-import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { attackMissChanceOf } from "../skills/tick.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -129,7 +129,7 @@ function hex(match: MatchSimulation, slot: number): void {
 function healed(statuses: readonly StatusId[]): number {
   const target = makeCombatant({ id: "t", health: 100 });
   for (const id of statuses) {
-    target.statuses.apply(id, 30, "n");
+    target.statuses.apply(id, 30, "n", NO_RANKS);
   }
   const events = applyEffects([{ kind: "heal", amount: { flat: 100 } }], {
     caster: makeCombatant({ id: "c" }),
@@ -141,18 +141,20 @@ function healed(statuses: readonly StatusId[]): number {
   return events.flatMap((event) => (event.kind === "heal" ? [event.amount] : []))[0] ?? 0;
 }
 
+const CURSES_12: ReadonlyMap<string, number> = new Map([["necromancer.curses", 12]]);
+
 describe("Barbs (#1332)", () => {
   it("is cast as the barbs hex", () => {
     const match = sim();
     hex(match, 0);
     expect(get(match, "a").statuses.get("barbs")?.sourceId).toBe("n");
-    expect(describeStatus("barbs")).toBe("take +14 from physical damage");
+    expect(describeStatus("barbs", CURSES_12)).toBe("take +14 from physical damage");
   });
 
   it("a weapon hit deals 14 more, a spell no more", () => {
     const plain = sim();
     const barbed = sim();
-    get(barbed, "n").statuses.apply("barbs", 30, "a");
+    get(barbed, "n").statuses.apply("barbs", 30, "a", CURSES_12);
     const without = damageTo(weaponEntries(swings(plain, 3)), "n");
     const withBarbs = damageTo(weaponEntries(swings(barbed, 3)), "n");
     expect(without.length).toBeGreaterThan(0);
@@ -165,7 +167,7 @@ describe("Barbs (#1332)", () => {
     };
     const unbarbed = sim();
     const barbedSpell = sim();
-    get(barbedSpell, "n").statuses.apply("barbs", 30, "a");
+    get(barbedSpell, "n").statuses.apply("barbs", 30, "a", NO_RANKS);
     const fireball = spell(unbarbed);
     expect(fireball.length).toBeGreaterThan(0);
     expect(spell(barbedSpell)).toEqual(fireball);
@@ -184,8 +186,8 @@ describe("Price of Failure (#1332)", () => {
 
   it("each missed or blocked blow costs its attacker 37, a landed one nothing", () => {
     const match = sim();
-    get(match, "a").statuses.apply("price-of-failure", 30, "n");
-    get(match, "n").statuses.apply("guardian", 30, "n");
+    get(match, "a").statuses.apply("price-of-failure", 30, "n", NO_RANKS);
+    get(match, "n").statuses.apply("guardian", 30, "n", NO_RANKS);
     const log = swings(match, 20);
     const misses = count(log, "attack-missed");
     const blocks = count(log, "attack-blocked");
@@ -200,9 +202,9 @@ describe("Price of Failure (#1332)", () => {
   it("on a Blinded foe misses at the blind rate", () => {
     const match = sim();
     const bearer = get(match, "a");
-    bearer.statuses.apply("blind", 30, "n");
+    bearer.statuses.apply("blind", 30, "n", NO_RANKS);
     const blind = attackMissChanceOf(bearer);
-    bearer.statuses.apply("price-of-failure", 30, "n");
+    bearer.statuses.apply("price-of-failure", 30, "n", NO_RANKS);
     expect(attackMissChanceOf(bearer)).toBe(blind);
   });
 
@@ -210,8 +212,8 @@ describe("Price of Failure (#1332)", () => {
     const match = sim();
     const bearer = get(match, "a");
     bearer.health = 30;
-    bearer.statuses.apply("price-of-failure", 30, "n");
-    bearer.statuses.apply("blind", 30, "n");
+    bearer.statuses.apply("price-of-failure", 30, "n", NO_RANKS);
+    bearer.statuses.apply("blind", 30, "n", NO_RANKS);
     const log = swings(match, 5);
     expect(bearer.dead).toBe(true);
     const death = log.find((entry) =>
@@ -274,12 +276,12 @@ describe("Rigor Mortis (#1332)", () => {
 
   it("a bearer in a blocking stance takes every hit", () => {
     const guarded = sim();
-    get(guarded, "n").statuses.apply("guardian", 30, "n");
+    get(guarded, "n").statuses.apply("guardian", 30, "n", NO_RANKS);
     expect(count(swings(guarded, 10), "attack-blocked")).toBeGreaterThan(0);
 
     const stiff = sim();
-    get(stiff, "n").statuses.apply("guardian", 30, "n");
-    get(stiff, "n").statuses.apply("rigor-mortis", 30, "a");
+    get(stiff, "n").statuses.apply("guardian", 30, "n", NO_RANKS);
+    get(stiff, "n").statuses.apply("rigor-mortis", 30, "a", NO_RANKS);
     const log = swings(stiff, 10);
     expect(weaponEntries(log).length).toBeGreaterThan(3);
     expect(count(log, "attack-blocked")).toBe(0);

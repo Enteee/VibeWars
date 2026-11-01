@@ -10,7 +10,7 @@ import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js
 import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import type { CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
@@ -145,7 +145,7 @@ describe("Lyssa's Assault (#1667)", () => {
   function strike(enchanted: boolean, casting: boolean): { events: CombatEvent[]; foe: Combatant } {
     const dervish = makeCombatant({ id: "c", equipment: SCYTHE, attributeRanks: RANKS });
     if (enchanted) {
-      dervish.statuses.apply("mystic-regeneration", 15, "c");
+      dervish.statuses.apply("mystic-regeneration", 15, "c", NO_RANKS);
     }
     const foe = makeCombatant({ id: "f", team: 1, skillBar: ["elementalist.fireball"] });
     if (casting) {
@@ -308,7 +308,7 @@ describe("in a match (#1667)", () => {
 
   /** A Dervish enchantment on `id`, as if it had cast Mystic Regeneration. */
   function enchant(sim: MatchSimulation, id = "c"): void {
-    get(sim, id).statuses.apply("mystic-regeneration", 30, id);
+    get(sim, id).statuses.apply("mystic-regeneration", 30, id, NO_RANKS);
   }
 
   function recharge(sim: MatchSimulation, skillId: BarSkill): number | undefined {
@@ -318,7 +318,7 @@ describe("in a match (#1667)", () => {
   describe("Reap Impurities", () => {
     it("takes a condition off the foe hit, and its adjacent foes take 34 holy", () => {
       const sim = match(SWORD);
-      get(sim, "f").statuses.apply("poison", 20, "c");
+      get(sim, "f").statuses.apply("poison", 20, "c", NO_RANKS);
       const log = use(sim, "dervish.reap-impurities");
       expect(hasStatus(sim, "f", "poison")).toBe(false);
       expect(dealt(log, "dervish.reap-impurities", "h")).toBe(34);
@@ -481,7 +481,7 @@ describe("in a match (#1667)", () => {
       use(sim, "dervish.zealous-vow", "c");
       // Both foes the scythe reaches block.
       for (const id of ["f", "h"]) {
-        get(sim, id).statuses.apply("riposte", 30, id);
+        get(sim, id).statuses.apply("riposte", 30, id, NO_RANKS);
       }
       expect(sim.requestAttack("c", "f")).toEqual({ ok: true });
       const log: CombatLogEntry[] = [];

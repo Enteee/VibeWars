@@ -8,7 +8,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { resolveSkillEffects, stateHolds, type CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
+import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { ChainRole, Combatant, Skill } from "./types.js";
 import { resolveAttackSkillOutcome } from "./weapon-attack.js";
@@ -75,7 +75,7 @@ function marked(caster: Combatant, target: Combatant, role: ChainRole): Combatan
 
 /** `target` blocks 75% of attacks. */
 function guarded(target: Combatant): Combatant {
-  target.statuses.apply("critical-defenses", 10, target.id);
+  target.statuses.apply("critical-defenses", 10, target.id, NO_RANKS);
   return target;
 }
 

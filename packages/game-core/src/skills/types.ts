@@ -2138,6 +2138,11 @@ export interface SkillContext {
    * `SkillResolution.own`. Absent for a trigger, which is no use.
    */
   readonly own?: OwnSkillBoost | undefined;
+  /**
+   * Whose attribute ranks scale the statuses these effects put on (#1976),
+   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965).
+   */
+  readonly ranksFrom?: Combatant | undefined;
 }
 
 /**
