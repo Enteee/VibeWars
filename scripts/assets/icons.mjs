@@ -3552,9 +3552,12 @@ const skillGlyph = {
     `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
   // Furious Axe (#1987): the axe, and the three rising bars of the adrenaline a block pays.
+  // Glass Arrows: the dripping arrow turned about, so the drop clears the block modifier (#1987).
+  "arrow-drip-turned": () =>
+    `<g transform="translate(24,0) scale(-1,1)">${skillGlyph["arrow-drip"]()}</g>`,
   "axe-adrenaline": () =>
     `<g transform="translate(9,14) scale(0.8) translate(-12,-12)">${skillGlyph.axe()}</g>` +
-    inkFill("M15 9V7H17V9ZM18 9V4.5H20V9ZM21 9V2H23V9Z"),
+    inkFill("M13.5 9V7.5H15.5V9ZM16.5 9V5H18.5V9ZM19.5 9V2.5H21V9Z"),
 };
 
 /** The ringed plus in the bottom right corner: Health healed (#1666). */

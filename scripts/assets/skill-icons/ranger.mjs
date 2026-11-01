@@ -124,5 +124,5 @@ export const RANGER_ICONS = {
   // Attributes raised (#1941)
   "ranger.experts-dexterity": { glyph: "arrow-bars-up" },
   // Blocks that pay off (#1987): the small shield modifier.
-  "ranger.glass-arrows": { glyph: "arrow-pierce", modifier: "block" },
+  "ranger.glass-arrows": { glyph: "arrow-drip-turned", modifier: "block" },
 };
