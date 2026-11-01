@@ -3571,16 +3571,16 @@ const skillGlyph = {
     miniDrop(4, 17) +
     moveArrow(7.5, 6.5, 12, 10) +
     moveArrow(7.5, 15.5, 12, 12.5) +
-    smallFigure(18, 11, 0.7),
+    smallFigure(16.5, 9.5, 0.65),
   // Empathic Removal: a hex cut and a drop cut, once for each of two bodies.
   "pair-cleanse": () =>
-    struckHex(6.5, 6) +
+    struckHex(6, 6) +
     inkFill(
-      "M17.5 2.5C15.5 5.5 14.3 6.8 14.3 8.6A3.2 3.2 0 0 0 20.7 8.6C20.7 6.8 19.5 5.5 17.5 2.5Z",
+      "M15.5 2.5C13.5 5.5 12.3 6.8 12.3 8.6A3.2 3.2 0 0 0 18.7 8.6C18.7 6.8 17.5 5.5 15.5 2.5Z",
     ) +
-    inkLine("M13.5 10.5L21.5 2.5", 1.9) +
-    smallFigure(6.5, 17, 0.55) +
-    smallFigure(17.5, 17, 0.55),
+    inkLine("M11.5 10.5L19.5 2.5", 1.9) +
+    smallFigure(6, 17, 0.55) +
+    smallFigure(12.5, 17, 0.55),
   // Divert Hexes: a hex cut, and the drop it pays with going too.
   "hex-to-drop": () => struckHex(6, 9) + moveArrow(11, 9, 14, 9) + miniDrop(18.5, 9),
   // Mirror of Disenchantment: an enchantment ring struck on each side of a mirror.
