@@ -8,6 +8,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyEffect, type CombatEvent } from "../skills/effects.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The resurrection skills (#474): Resurrection Signet, spent until a
@@ -89,7 +90,7 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatEvent[] {
 /** Kill `id` as burning would, so its respawn timer starts. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "foe");
+  victim.combatant.statuses.apply("burning", 10, "foe", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);

@@ -15,6 +15,7 @@ import { resolveAttackSkill } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Paragon spears (#1486): a faster flight, riders on a critical hit and
@@ -200,7 +201,7 @@ describe("a faster flight (#1486)", () => {
     const plain = released(arena([BARBED]), 0);
     expect(released(arena([SWIFT]), 0)).toBeCloseTo(plain, 9);
     const enchanted = arena([SWIFT]);
-    paragon(enchanted).statuses.apply("guardian", 1000, "p");
+    paragon(enchanted).statuses.apply("guardian", 1000, "p", NO_RANKS);
     expect(released(enchanted, 0)).toBeCloseTo(plain / 2, 9);
   });
 
@@ -230,11 +231,11 @@ describe("riders on a critical hit (#1486)", () => {
   it("a blocked critical is no critical: no Deep Wound", () => {
     const { seed } = onSomeSeed("attack-blocked", (seed) => {
       const match = arena([VICIOUS], { seed, ruleset: ALL_CRIT });
-      foe(match).statuses.apply("guardian", 1000, "foe");
+      foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
       return thrown(match, 0);
     });
     const match = arena([VICIOUS], { seed, ruleset: ALL_CRIT });
-    foe(match).statuses.apply("guardian", 1000, "foe");
+    foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
     thrown(match, 0);
     expect(foe(match).statuses.has("deep-wound")).toBe(false);
   });
@@ -276,8 +277,8 @@ describe("riders on a blow that fails to hit (#1486)", () => {
   /** A Spear of Redemption thrower, Bleeding and Burning. */
   function redeemer(seed: string): MatchSimulation {
     const match = arena([REDEMPTION], { seed });
-    paragon(match).statuses.apply("bleeding", 1000, "foe");
-    paragon(match).statuses.apply("burning", 1000, "foe");
+    paragon(match).statuses.apply("bleeding", 1000, "foe", NO_RANKS);
+    paragon(match).statuses.apply("burning", 1000, "foe", NO_RANKS);
     return match;
   }
   const conditions = (match: MatchSimulation): number =>
@@ -292,11 +293,11 @@ describe("riders on a blow that fails to hit (#1486)", () => {
   it("loses one condition when it is blocked", () => {
     const { seed } = onSomeSeed("attack-blocked", (seed) => {
       const match = redeemer(seed);
-      foe(match).statuses.apply("guardian", 1000, "foe");
+      foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
       return thrown(match, 0);
     });
     const match = redeemer(seed);
-    foe(match).statuses.apply("guardian", 1000, "foe");
+    foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
     expect(kinds(thrown(match, 0))).toEqual(["attack-blocked", "status-removed"]);
     expect(conditions(match)).toBe(1);
   });
@@ -304,7 +305,7 @@ describe("riders on a blow that fails to hit (#1486)", () => {
   it("loses one condition when blindness makes it miss", () => {
     const { events } = onSomeSeed("attack-missed", (seed) => {
       const match = redeemer(seed);
-      paragon(match).statuses.apply("blind", 1000, "foe");
+      paragon(match).statuses.apply("blind", 1000, "foe", NO_RANKS);
       expect(match.requestSkill("p", 0)?.check).toEqual({ ok: true });
       const log: CombatEvent[] = [];
       for (let i = 0; i < 40; i += 1) {
@@ -341,9 +342,9 @@ describe("riders on a blow that fails to hit (#1486)", () => {
         team: 0,
         equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
       });
-      caster.statuses.apply("bleeding", 1000, "t");
+      caster.statuses.apply("bleeding", 1000, "t", NO_RANKS);
       if (blind) {
-        caster.statuses.apply("blind", 1000, "t");
+        caster.statuses.apply("blind", 1000, "t", NO_RANKS);
       }
       const events = resolveAttackSkill(
         {
@@ -407,7 +408,7 @@ describe("Paragon spears (#1486)", () => {
   it("Unblockable Throw is never blocked by a foe who blocks often", () => {
     for (let n = 0; n < 20; n += 1) {
       const match = arena([UNBLOCKABLE], { seed: `unblockable-${String(n)}` });
-      foe(match).statuses.apply("guardian", 1000, "foe");
+      foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
       expect(kinds(thrown(match, 0))).toEqual(["damage"]);
     }
   });
@@ -420,11 +421,11 @@ describe("Paragon spears (#1486)", () => {
 
     const { seed } = onSomeSeed("attack-blocked", (seed) => {
       const match = arena([WEARYING], { seed });
-      foe(match).statuses.apply("guardian", 1000, "foe");
+      foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
       return thrown(match, 0);
     });
     const blocked = arena([WEARYING], { seed });
-    foe(blocked).statuses.apply("guardian", 1000, "foe");
+    foe(blocked).statuses.apply("guardian", 1000, "foe", NO_RANKS);
     thrown(blocked, 0);
     expect(paragon(blocked).statuses.has("weakness")).toBe(false);
   });
@@ -433,7 +434,7 @@ describe("Paragon spears (#1486)", () => {
     const casting = (bleeding: boolean): MatchSimulation => {
       const match = arena([DISRUPTING]);
       if (bleeding) {
-        foe(match).statuses.apply("bleeding", 1000, "p");
+        foe(match).statuses.apply("bleeding", 1000, "p", NO_RANKS);
       }
       released(match, 0);
       foe(match).cast.beginCast("elementalist.fireball", "p", 10, undefined);
@@ -459,20 +460,20 @@ describe("Paragon spears (#1486)", () => {
   it("Swift Javelin is unblockable only while its thrower is enchanted", () => {
     for (let n = 0; n < 20; n += 1) {
       const match = arena([SWIFT], { seed: `swift-${String(n)}` });
-      paragon(match).statuses.apply("guardian", 1000, "p");
-      foe(match).statuses.apply("guardian", 1000, "foe");
+      paragon(match).statuses.apply("guardian", 1000, "p", NO_RANKS);
+      foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
       expect(kinds(thrown(match, 0))).not.toContain("attack-blocked");
     }
     onSomeSeed("attack-blocked", (seed) => {
       const match = arena([SWIFT], { seed });
-      foe(match).statuses.apply("guardian", 1000, "foe");
+      foe(match).statuses.apply("guardian", 1000, "foe", NO_RANKS);
       return thrown(match, 0);
     });
   });
 
   it("Chest Thumper deep-wounds a foe with Cracked Armor for 17 s, not one without", () => {
     const cracked = arena([CHEST]);
-    foe(cracked).statuses.apply("cracked-armor", 1000, "p");
+    foe(cracked).statuses.apply("cracked-armor", 1000, "p", NO_RANKS);
     thrown(cracked, 0);
     expect(durationOn(foe(cracked), "deep-wound")).toBe(17);
 

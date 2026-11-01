@@ -5,6 +5,7 @@ import { KILL_COUNT_MATCH_RULES, moraleMaximum, type MatchRules } from "../match
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Morale and the death penalty (#843, GW1): −15% a death down to −60%,
@@ -72,7 +73,7 @@ function stepFor(sim: MatchSimulation, seconds: number): void {
 function kill(sim: MatchSimulation, ...ids: string[]): void {
   for (const id of ids) {
     const victim = get(sim, id).combatant;
-    victim.statuses.apply("burning", 10, "foe");
+    victim.statuses.apply("burning", 10, "foe", NO_RANKS);
     victim.health = 0.2;
   }
   sim.step(DT);

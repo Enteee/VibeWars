@@ -12,7 +12,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applyDamage, applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
+import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant, Skill } from "./types.js";
@@ -158,7 +158,7 @@ describe("a damage threshold on a trigger (#1754)", () => {
   function bonded(): Map<string, Combatant> {
     const combatants = party();
     const a = member(combatants, "a");
-    a.statuses.apply("spirit-bond", 8, "m");
+    a.statuses.apply("spirit-bond", 8, "m", NO_RANKS);
     a.statuses.drainChanges();
     return combatants;
   }
@@ -219,7 +219,7 @@ describe("a share of a blow reflected (#1754)", () => {
   function wrathful(): Map<string, Combatant> {
     const combatants = party();
     const a = member(combatants, "a");
-    a.statuses.apply("holy-wrath", 26, "m");
+    a.statuses.apply("holy-wrath", 26, "m", NO_RANKS);
     a.statuses.drainChanges();
     return combatants;
   }
@@ -400,10 +400,10 @@ describe("in a match (#1754)", () => {
     const sim = match();
     const a = get(sim, "a").combatant;
     const w = get(sim, "w").combatant;
-    a.statuses.apply("holy-wrath", 26, "m");
+    a.statuses.apply("holy-wrath", 26, "m", NO_RANKS);
     // Holy Wrath on the swordsman too, from his own side: a reflection is
     // no attack, so it never comes back to `a`.
-    w.statuses.apply("holy-wrath", 26, "z");
+    w.statuses.apply("holy-wrath", 26, "z", NO_RANKS);
     a.health = a.maxHealth;
     expect(sim.requestAttack("w", "a")).toEqual({ ok: true });
     const wHealth = w.health;
@@ -431,7 +431,7 @@ describe("in a match (#1754)", () => {
     const a = get(sim, "a").combatant;
     const w = get(sim, "w").combatant;
     const v = get(sim, "v").combatant;
-    a.statuses.apply("holy-wrath", 26, "m");
+    a.statuses.apply("holy-wrath", 26, "m", NO_RANKS);
     const wrath = a.statuses.get("holy-wrath");
     if (wrath === undefined) {
       throw new Error("no Holy Wrath");
@@ -462,7 +462,7 @@ describe("in a match (#1754)", () => {
     const w = get(sim, "w").combatant;
     const z = get(sim, "z").combatant;
     expect(getStatusDefinition("balthazars-aura").damagePulse?.hitsBearer).toBe(false);
-    a.statuses.apply("balthazars-aura", 8, "m");
+    a.statuses.apply("balthazars-aura", 8, "m", NO_RANKS);
     const before = { a: a.health, w: w.health, z: z.health };
     const log = stepUntil(sim, 1 + DT, () => false);
     expect(packets(log, "w")).toEqual([26]);
@@ -477,7 +477,7 @@ describe("in a match (#1754)", () => {
     const sim = match();
     const w = get(sim, "w").combatant;
     expect(getStatusDefinition("wastrels-demise").damagePulse?.hitsBearer).toBe(true);
-    w.statuses.apply("wastrels-demise", 8, "m");
+    w.statuses.apply("wastrels-demise", 8, "m", NO_RANKS);
     const log = stepUntil(sim, 1 + DT, () => false);
     expect(packets(log, "w")).toEqual([8]);
   });
@@ -486,9 +486,9 @@ describe("in a match (#1754)", () => {
     const sim = match();
     const a = get(sim, "a").combatant;
     const w = get(sim, "w").combatant;
-    a.statuses.apply("balthazars-aura", 8, "m");
+    a.statuses.apply("balthazars-aura", 8, "m", NO_RANKS);
     a.health = 0.2;
-    a.statuses.apply("burning", 10, "w");
+    a.statuses.apply("burning", 10, "w", NO_RANKS);
     const log = stepUntil(sim, 2, () => false);
     expect(a.dead).toBe(true);
     expect(packets(log, "w")).toEqual([]);

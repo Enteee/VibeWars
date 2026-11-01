@@ -11,6 +11,7 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Ritualist attacking spirits (#1239): Pain, Shadowsong, Dissonance and
@@ -216,8 +217,8 @@ describe("an attacking spirit (#1239)", () => {
   it("Disenchantment strips the most recent enchantment with each hit", () => {
     const sim = match([spec("f", 1, vec2(300, 0))]);
     const f = get(sim, "f").combatant;
-    f.statuses.apply("regeneration", 60, "f");
-    f.statuses.apply("guardian", 60, "f");
+    f.statuses.apply("regeneration", 60, "f", NO_RANKS);
+    f.statuses.apply("guardian", 60, "f", NO_RANKS);
     const disenchantment = ritual(sim, DISENCHANTMENT);
     const log: CombatLogEntry[] = [];
     while (damaged(shots(log, disenchantment.id), "f") === 0) {
@@ -238,7 +239,7 @@ describe("an attacking spirit (#1239)", () => {
     const shadowsong = ritual(sim, SHADOWSONG);
     let blocked = 0;
     for (let i = 0; i < 25 * RULES.tickRateHz; i += 1) {
-      f.statuses.apply("lightning-reflexes", 60, "f");
+      f.statuses.apply("lightning-reflexes", 60, "f", NO_RANKS);
       f.statuses.remove("blind");
       const events = shots(sim.step(DT).log, shadowsong.id);
       if (events.some((event) => event.kind === "attack-blocked")) {

@@ -12,7 +12,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
+import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { isEasilyInterrupted, type Combatant, type Skill } from "./types.js";
 
@@ -120,9 +120,9 @@ describe("Gift of Health (#1748)", () => {
 describe("Purifying Veil (#1748)", () => {
   it("conditions on its bearer run 41% faster; hexes do not", () => {
     const target = ally();
-    target.statuses.maintain("purifying-veil", "monk", 0);
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("empathy", 10, "foe");
+    target.statuses.maintain("purifying-veil", "monk", 0, NO_RANKS);
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("empathy", 10, "foe", NO_RANKS);
     target.statuses.advance(1, false);
     expect(target.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(10 - 1.41);
     expect(target.statuses.get("empathy")?.remainingSeconds).toBeCloseTo(9);
@@ -148,19 +148,19 @@ describe("Watchful Spirit (#1748)", () => {
 describe("Signet of Removal (#1748)", () => {
   it("on an unenchanted ally does nothing", () => {
     const target = ally();
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("empathy", 10, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("empathy", 10, "foe", NO_RANKS);
     expect(use(monk(), "monk.signet-of-removal", target)).toEqual([]);
     expect([target.statuses.has("bleeding"), target.statuses.has("empathy")]).toEqual([true, true]);
   });
 
   it("on an enchanted ally takes one hex and one condition", () => {
     const target = ally();
-    target.statuses.apply("healing-breeze", 15, "monk");
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("poison", 10, "foe");
-    target.statuses.apply("empathy", 10, "foe");
-    target.statuses.apply("faintheartedness", 10, "foe");
+    target.statuses.apply("healing-breeze", 15, "monk", NO_RANKS);
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
+    target.statuses.apply("empathy", 10, "foe", NO_RANKS);
+    target.statuses.apply("faintheartedness", 10, "foe", NO_RANKS);
     use(monk(), "monk.signet-of-removal", target);
     expect(target.statuses.countByCategory("condition")).toBe(1);
     expect(target.statuses.countByCategory("hex")).toBe(1);
@@ -303,8 +303,8 @@ describe("in a match (#1748)", () => {
     const sim = match();
     cast(sim, "monk.purifying-veil");
     const target = get(sim, "a");
-    target.statuses.apply("bleeding", 20, "f");
-    target.statuses.apply("poison", 20, "f");
+    target.statuses.apply("bleeding", 20, "f", NO_RANKS);
+    target.statuses.apply("poison", 20, "f", NO_RANKS);
     expect(sim.endUpkeep("m", "a", "purifying-veil")).toBe(true);
     stepFor(sim, DT);
     expect(target.statuses.countByCategory("condition")).toBe(1);
@@ -316,7 +316,7 @@ describe("in a match (#1748)", () => {
     const foe = get(sim, "f");
     expect(foe.statuses.get("pacifism")?.durationSeconds).toBe(7);
     expect(sim.requestAttack("f", "a")?.ok).toBe(false);
-    foe.statuses.apply("bleeding", 10, "m");
+    foe.statuses.apply("bleeding", 10, "m", NO_RANKS);
     stepFor(sim, 1);
     expect(foe.statuses.has("pacifism")).toBe(true);
     expect(sim.requestAttack("a", "f")).toEqual({ ok: true });
@@ -344,7 +344,7 @@ describe("in a match (#1748)", () => {
     target.health = 1000;
     const caster = get(sim, "m");
     caster.health = 0.01;
-    caster.statuses.apply("burning", 5, "f");
+    caster.statuses.apply("burning", 5, "f", NO_RANKS);
     const log = stepFor(sim, DT);
     expect(caster.dead).toBe(true);
     expect(target.statuses.has("watchful-spirit")).toBe(false);

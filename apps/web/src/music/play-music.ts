@@ -7,6 +7,7 @@ import {
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import { beatEdits, editStoppedNotice, type BeatEditStore } from "./beat-edits.js";
 import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
+import { MENU_DEPTH, type MenuScreen } from "./fixed-tracks.js";
 import {
   intensityOverride,
   playedIntensity,
@@ -28,13 +29,17 @@ import { TRACKS } from "./tracks/index.js";
  * (#878): then it is removed, and the shipped track plays from then on.
  */
 
-type PlayableTrack = MusicTrack & { readonly title: string; readonly moods: readonly Mood[] };
+type PlayableTrack = MusicTrack & {
+  readonly title: string;
+  readonly moods: readonly Mood[];
+  readonly layers: number;
+};
 
 export interface MusicFollower {
   /** Play what `state` says, changing only what differs from the last state. */
   follow(state: MusicState): void;
-  /** The music of a screen with no fight on it. */
-  screen(screen: "menu" | "lobby"): void;
+  /** The menus' music, as deep as `screen` is (#1993); the song already playing goes on. */
+  menu(screen: MenuScreen): void;
   /** The global mute, which mutes the music too. */
   setMuted(muted: boolean): void;
   /** The director's mode, as the player chose it. */
@@ -84,8 +89,8 @@ export function createMusicFollower(
       listener();
     }
   };
-  /** The screen with no fight on it the player is on, to redirect when the mode changes. */
-  let onScreen: "menu" | "lobby" | null = null;
+  /** The menu the player is on, to redirect when the mode changes. */
+  let onScreen: MenuScreen | null = null;
 
   // A hung or flooding edit would do it again on every load: it goes.
   // A shipped track that did it is the next play's to try again.
@@ -150,11 +155,12 @@ export function createMusicFollower(
 
   const mode = (): MusicMode => musicModeOf(preference);
 
-  const screen = (name: "menu" | "lobby"): void => {
+  const menu = (name: MenuScreen): void => {
     follow(
       directMusic(
         {
-          screen: name,
+          screen: "menu",
+          menuDepth: MENU_DEPTH[name],
           mapId: null,
           matchSeed: null,
           result: null,
@@ -182,7 +188,7 @@ export function createMusicFollower(
       onScreen = null;
       follow(state);
     },
-    screen,
+    menu,
     setMuted(next) {
       muted = next;
       player.setVolume(volume(), VOLUME_RAMP_SECONDS);
@@ -198,10 +204,10 @@ export function createMusicFollower(
       if (volume() !== before) {
         player.setVolume(volume(), VOLUME_RAMP_SECONDS);
       }
-      // A fight's music asks for the mode on its next snapshot; a screen
-      // without one is asked again here.
+      // A fight's music asks for the mode on its next snapshot; a menu,
+      // without one, is asked again here.
       if (onScreen !== null) {
-        screen(onScreen);
+        menu(onScreen);
       }
       changed();
     },

@@ -8,7 +8,7 @@ import { vec2 } from "../vec2.js";
 import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { applySkillEffects } from "./effects.js";
-import { aggregateModifiers, reducedRecharge, type StatusId } from "./status.js";
+import { NO_RANKS, aggregateModifiers, reducedRecharge, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
@@ -78,7 +78,7 @@ describe("Spirit Light Weapon (#975)", () => {
 
   it("heals 21 a second, 210 over its 10 s, and then stops", () => {
     const target = ally();
-    target.statuses.apply("spirit-light-weapon", 10, "rt");
+    target.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
     tickFor(target, 1);
     expect(target.health).toBeCloseTo(121, 9);
 
@@ -92,14 +92,14 @@ describe("Spirit Light Weapon (#975)", () => {
 
   it("is a heal: Deep Wound scales it, Bleeding nets against it in one event a tick", () => {
     const wounded = ally();
-    wounded.statuses.apply("spirit-light-weapon", 10, "rt");
-    wounded.statuses.apply("deep-wound", 10, "foe");
+    wounded.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
+    wounded.statuses.apply("deep-wound", 10, "foe", NO_RANKS);
     advanceStatuses(wounded, 1, 0);
     expect(wounded.health).toBeCloseTo(100 + 21 * 0.8, 9);
 
     const bled = ally();
-    bled.statuses.apply("spirit-light-weapon", 10, "rt");
-    bled.statuses.apply("bleeding", 10, "foe");
+    bled.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
+    bled.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     const events = advanceStatuses(bled, DT, 0);
     expect(events.filter((e) => e.kind === "heal" || e.kind === "damage")).toEqual([
       { kind: "heal", targetId: "ally", amount: expect.closeTo(15 * DT, 9) as number },
@@ -108,7 +108,7 @@ describe("Spirit Light Weapon (#975)", () => {
 
   it("heals nothing, and says nothing, on an ally at full health", () => {
     const full = makeCombatant({ id: "full", maxHealth: 500, health: 500 });
-    full.statuses.apply("spirit-light-weapon", 10, "rt");
+    full.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
     expect(advanceStatuses(full, DT, 0).filter((e) => e.kind === "heal")).toEqual([]);
     expect(full.health).toBe(500);
   });
@@ -117,25 +117,25 @@ describe("Spirit Light Weapon (#975)", () => {
 describe("one weapon spell at a time (#975)", () => {
   it.each(WEAPON_SPELLS)("%s replaces Weapon of Warding, and Warding replaces it", (id) => {
     const bearer = ally();
-    bearer.statuses.apply("weapon-of-warding", 7, "rt");
-    bearer.statuses.apply(id, 10, "rt");
+    bearer.statuses.apply("weapon-of-warding", 7, "rt", NO_RANKS);
+    bearer.statuses.apply(id, 10, "rt", NO_RANKS);
     expect(bearer.statuses.active.map((s) => s.id)).toEqual([id]);
-    bearer.statuses.apply("weapon-of-warding", 7, "rt");
+    bearer.statuses.apply("weapon-of-warding", 7, "rt", NO_RANKS);
     expect(bearer.statuses.active.map((s) => s.id)).toEqual(["weapon-of-warding"]);
   });
 
   it("a recast restarts it at its full duration", () => {
     const bearer = ally();
-    bearer.statuses.apply("spirit-light-weapon", 10, "rt");
+    bearer.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
     tickFor(bearer, 4);
-    bearer.statuses.apply("spirit-light-weapon", 10, "rt");
+    bearer.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
     expect(bearer.statuses.get("spirit-light-weapon")?.remainingSeconds).toBe(10);
   });
 });
 
 describe("Weapon of Aggression (#975)", () => {
   const multiplier = (...ids: StatusId[]): number =>
-    aggregateModifiers(ids.map((id) => ({ id }))).attackDurationMultiplier;
+    aggregateModifiers(ids.map((id) => ({ id, ranks: NO_RANKS }))).attackDurationMultiplier;
 
   it("is on yourself only, for 13 s", () => {
     const caster = makeCombatant({ id: "caster", energy: 30 });
@@ -158,7 +158,7 @@ describe("Weapon of Aggression (#975)", () => {
 
   it("does not end when its bearer attacks", () => {
     const bearer = ally();
-    bearer.statuses.apply("weapon-of-aggression", 13, "bearer");
+    bearer.statuses.apply("weapon-of-aggression", 13, "bearer", NO_RANKS);
     bearer.statuses.endOnBearerAttack("melee");
     expect(bearer.statuses.has("weapon-of-aggression")).toBe(true);
   });

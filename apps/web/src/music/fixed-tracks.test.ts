@@ -1,0 +1,42 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { describe, expect, it } from "vitest";
+
+import { MAP_TRACKS, MENU_TRACK } from "./fixed-tracks.js";
+import { TRACKS } from "./tracks/index.js";
+
+const MAPS = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../../../packages/game-maps",
+);
+
+/** Every map id the game ships: the arenas and the training grounds. */
+function mapIds(): string[] {
+  return ["maps", "training"].flatMap((dir) =>
+    fs
+      .readdirSync(path.join(MAPS, dir), { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name),
+  );
+}
+
+describe("fixed tracks (#1993)", () => {
+  const shipped = new Set(TRACKS.map((track) => track.id));
+
+  it("gives every map a song of its own row", () => {
+    const ids = mapIds();
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) {
+      expect(MAP_TRACKS.has(id), id).toBe(true);
+    }
+  });
+
+  it("names only tracks the manifest ships, the menu's too", () => {
+    for (const [mapId, trackId] of MAP_TRACKS) {
+      expect(shipped.has(trackId), `${mapId}: ${trackId}`).toBe(true);
+    }
+    expect(shipped.has(MENU_TRACK)).toBe(true);
+  });
+});

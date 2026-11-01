@@ -46,7 +46,7 @@ export { applyEffect, applyEffects, applyStatus } from "./effects.js";
 export type { SkillRole } from "./roles.js";
 export { SKILL_ROLES, skillRoles } from "./roles.js";
 
-export { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
+export { resolveMagnitude, resolveMagnitudeAtRanks, statAt, statAtTwelve } from "./scaling.js";
 
 export type {
   ActiveStatus,
@@ -58,10 +58,12 @@ export type {
   StatusId,
   MaxHealthLoss,
   StatusModifiers,
+  StatusStat,
 } from "./status.js";
 export {
   STATUS_DEFINITIONS,
   HEALING_MULTIPLIER_FLOOR,
+  NO_RANKS,
   StatusSet,
   aggregateModifiers,
   combinedHealingMultiplier,
