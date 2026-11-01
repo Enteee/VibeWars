@@ -770,8 +770,8 @@ const strikeWith = (rider, pair = false) =>
  * @param {string} inner
  */
 const mantra = (inner) =>
-  `<rect x="2.5" y="2.5" width="19" height="19" rx="4" ${stroke(C.ink, 2)}/>` +
-  `<g transform="translate(12,12) scale(0.56) translate(-12,-12)">${inner}</g>`;
+  `<path d="M1.5 6.5V3.5Q1.5 1.5 3.5 1.5H6.5M17.5 1.5H20.5Q22.5 1.5 22.5 3.5V6.5M22.5 17.5V20.5Q22.5 22.5 20.5 22.5H17.5M6.5 22.5H3.5Q1.5 22.5 1.5 20.5V17.5" ${stroke(C.ink, 1.6)}/>` +
+  `<g transform="translate(12,12) scale(0.78) translate(-12,-12)">${inner}</g>`;
 
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
@@ -3561,7 +3561,10 @@ const skillGlyph = {
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
   // Mesmer mantras (#1981): the frame, and what the mantra holds against.
   "mantra-burst-struck": () => mantra(skillGlyph.interrupt() + inkLine("M3 21L21 3", 3.2)),
-  "mantra-shield": () => mantra(skillGlyph.armor()),
+  "mantra-shield": () =>
+    mantra(
+      `<path d="M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z" ${stroke(C.ink, 3.4)}/>`,
+    ),
   "mantra-rock": () => mantra(skillGlyph.rock()),
   "mantra-flame": () => mantra(skillGlyph.flame()),
   "mantra-frost": () => mantra(skillGlyph.snowflake()),
@@ -3569,12 +3572,14 @@ const skillGlyph = {
   // Nature rituals 4 (#1981). Quicksand: the Energy bolt sinking in the mud.
   "ritual-bolt-sink": () =>
     spiritPost() +
-    inkFill("M18.5 1.5L13.5 8H16.8L15.8 12L21 5.8H17.6Z") +
-    inkLine("M11 13C12.5 11.8 14 11.8 15.5 13S18.5 14.2 20 13S22 12.2 23.5 12.7", 1.8),
+    inkFill("M18.5 1.5L14 7.5H17L16.2 10.5L21 5.2H17.8Z") +
+    inkLine(
+      "M11 12.5C12.5 11.2 14 11.2 15.5 12.5S18.5 13.8 20 12.5S22 11.7 23.5 12.2M11 16.5C12.5 15.2 14 15.2 15.5 16.5S18.5 17.8 20 16.5S22 15.7 23.5 16.2",
+      2.2,
+    ),
   // Famine: the Energy bolt run empty.
   "ritual-bolt-hollow": () =>
-    spiritPost() +
-    `<path d="M18.5 1.5L12.5 9.5H16.5L15.2 14.5L22 6.5H17.8Z" ${stroke(C.ink, 1.8)}/>`,
+    spiritPost() + `<path d="M18.5 1L11.5 9.5H16L14.5 16L23 6.5H18.2Z" ${stroke(C.ink, 2.2)}/>`,
   // Lacerate: a drop and the claw marks that opened it.
   "ritual-drop-claw": () =>
     spiritPost() +
