@@ -3,15 +3,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import {
   HOST_PICKS_MODE,
+  HOST_SETS_TEAM_SIZE,
+  NO_TEAM_SIZE_HERE,
   RAIL,
   loadRail,
+  loadTeamSize,
+  onTeamSizeChange,
   modeRail,
   redrawModeRail,
   redrawsOnLobbyChange,
   railScreen,
   saveRail,
   setRailParty,
+  teamSizeProblem,
   type RailEntry,
+  type TeamSize,
 } from "./rail.js";
 
 /** Just enough DOM to render the rail; the unit tests run in Node. */
@@ -19,6 +25,8 @@ class FakeElement {
   className = "";
   textContent = "";
   title = "";
+  value = "";
+  disabled = false;
   readonly tagName: string;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -90,6 +98,7 @@ describe("the mode rail (#1525)", () => {
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
     expect(rail.children.map((child) => child.tagName)).toEqual([
       ...Array<string>(5).fill("button"),
+      "label",
       "hr",
       "button",
       "button",
@@ -239,5 +248,106 @@ describe("the mode rail (#1525)", () => {
     expect(loadRail()).toBe("hosted-game");
     stored.set(`${STORAGE_NAMESPACE}.rail`, "team");
     expect(loadRail()).toBe("random-arena");
+  });
+
+  /** The team size dropdown of `entry`'s rail. */
+  const sizeSelect = (entry: RailEntry): FakeElement => {
+    const rail = modeRail(entry, () => undefined) as unknown as FakeElement;
+    const select = rail.children
+      .find((child) => child.className === "mode-rail-size")
+      ?.children.find((child) => child.tagName === "select");
+    if (select === undefined) {
+      throw new Error("no team size dropdown");
+    }
+    return select;
+  };
+
+  it("puts the team size dropdown after the modes, above the divider (#2022)", () => {
+    const rail = modeRail("random-arena", () => undefined) as unknown as FakeElement;
+    const tags = rail.children.map((child) => child.className);
+    expect(tags.indexOf("mode-rail-size")).toBe(5);
+    expect(tags.indexOf("mode-rail-divider")).toBe(6);
+  });
+
+  it("offers every size, disabling those the screen does not play, with why (#2022)", () => {
+    const options = (entry: RailEntry): string[] =>
+      sizeSelect(entry).children.map(
+        (option) => `${option.textContent}${option.disabled ? " (off)" : ""}`,
+      );
+    expect(options("random-arena")).toEqual([
+      "1v1",
+      "2v2",
+      "4v4",
+      "8v8 — not in Random Arena (off)",
+    ]);
+    expect(options("hosted-game")).toEqual(["1v1", "2v2", "4v4", "8v8"]);
+    expect(options("gvg")).toEqual([
+      "1v1 — not in GvG (off)",
+      "2v2 — not in GvG (off)",
+      "4v4 — not in GvG (off)",
+      "8v8",
+    ]);
+    expect(teamSizeProblem("heroes-ascent", 4)).toBe("4v4 is not in Heroes' Ascent");
+    expect(teamSizeProblem("teams", 8)).toBeUndefined();
+  });
+
+  it("keeps an unplayable size selected rather than changing it (#2022)", () => {
+    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "8");
+    expect(sizeSelect("random-arena").value).toBe("8");
+  });
+
+  it("disables the dropdown on Character Builder, with why (#2022)", () => {
+    const select = sizeSelect("characters");
+    expect(select.disabled).toBe(true);
+    const rail = modeRail("characters", () => undefined) as unknown as FakeElement;
+    expect(rail.children.find((child) => child.className === "mode-rail-size")?.title).toBe(
+      NO_TEAM_SIZE_HERE,
+    );
+    expect(sizeSelect("teams").disabled).toBe(false);
+  });
+
+  it("locks a guest's dropdown: the host sets the team size (#2022)", () => {
+    setRailParty({
+      code: "ACDEFG",
+      mode: "hosted-game",
+      isHost: false,
+      open: false,
+      members: [],
+      queuedMs: null,
+      teams: undefined,
+    });
+    const rail = modeRail("hosted-game", () => undefined) as unknown as FakeElement;
+    const field = rail.children.find((child) => child.className === "mode-rail-size");
+    expect(field?.title).toBe(HOST_SETS_TEAM_SIZE);
+    expect(field?.children.find((child) => child.tagName === "select")?.disabled).toBe(true);
+  });
+
+  it("stores the size picked, tells the shown screen, and reads 4v4 for anything else (#2022)", () => {
+    expect(loadTeamSize()).toBe(4);
+    const heard: TeamSize[] = [];
+    railScreen(
+      new FakeElement("div") as unknown as HTMLElement,
+      "random-arena",
+      "",
+      () => undefined,
+    );
+    onTeamSizeChange((size) => heard.push(size));
+    const select = sizeSelect("random-arena");
+    select.value = "2";
+    select.listeners.get("change")?.();
+    expect(stored.get(`${STORAGE_NAMESPACE}.teamSize`)).toBe("2");
+    expect(loadTeamSize()).toBe(2);
+    expect(heard).toEqual([2]);
+
+    // Another screen drawn: the last one hears nothing more.
+    railScreen(new FakeElement("div") as unknown as HTMLElement, "teams", "", () => undefined);
+    select.value = "1";
+    select.listeners.get("change")?.();
+    expect(heard).toEqual([2]);
+
+    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "3");
+    expect(loadTeamSize()).toBe(4);
+    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "eight");
+    expect(loadTeamSize()).toBe(4);
   });
 });

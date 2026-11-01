@@ -2,7 +2,7 @@ import type { MatchMode } from "@vibewars/game-core";
 import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import { button, h, toast } from "./kit.js";
+import { button, h, readyButton, toast } from "./kit.js";
 import { relayLine } from "./relay-section.js";
 import { playerLabelElement } from "./player-label.js";
 
@@ -225,18 +225,14 @@ export function lobbyPanel(
   // The next thing to press is the primary one, the one a phone keeps out
   // of the ⋯ (#1272): Ready until you are, then the host's Start match.
   const ready = self?.ready === true;
-  const readyButton = button(
-    ready ? "Not ready" : "Ready",
-    ready ? "" : "primary",
-    callbacks.onToggleReady,
-  );
-  readyButton.disabled = controls.readyDisabled;
+  const readyToggle = readyButton(ready, callbacks.onToggleReady);
+  readyToggle.disabled = controls.readyDisabled;
   // A member on no team has nothing to ready while the match runs, but
   // can watch it (#480).
   const actions: HTMLElement[] = controls.canWatch
     ? [button("Watch", "primary lobby-watch", callbacks.onWatch)]
     : matchmaking === undefined
-      ? [readyButton]
+      ? [readyToggle]
       : [];
   if (matchmaking !== undefined) {
     if (snapshot.isHost) {

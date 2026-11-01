@@ -1430,6 +1430,23 @@ body {
   border-right: 1px solid var(--line);
 }
 
+/* The team size dropdown (#2022), under the modes it sizes. */
+.mode-rail-size {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 66px;
+  margin-top: 0.3rem;
+  color: var(--ink-dim);
+}
+
+.screen .mode-rail-size-select {
+  width: 100%;
+  padding: 0.2rem 0.1rem;
+  font-size: 0.75rem;
+}
+
 .mode-rail-divider {
   width: 56px;
   margin: auto 0 0.3rem;
@@ -6303,25 +6320,7 @@ body:has(#app > .chat) .now-playing {
   outline: none;
 }
 
-/* Random Arena's formats in the title bar (#2022): each queues for its
-   format. One segmented control, as tight as the bar beside the lobby
-   code needs it down to the ⋯ at 45rem. */
-.random-arena-queue {
-  display: flex;
-}
-
-#topbar .random-arena-queue button {
-  padding: 0.25rem 0.3rem;
-}
-
-#topbar .random-arena-queue button + button {
-  margin-left: -1px;
-}
-
-#topbar .random-arena-queue button:hover:not(:disabled) {
-  position: relative;
-}
-
+/* Why Random Arena's Ready is greyed out (#2022). */
 .random-arena-hint {
   margin: 0;
   color: var(--ink-dim);

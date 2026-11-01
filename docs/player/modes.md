@@ -11,6 +11,10 @@ but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
 
+The rail's **Team size** offers 1v1, 2v2, 4v4 and 8v8; a mode greys out
+the sizes it does not play. Random Arena plays 1v1, 2v2 and 4v4,
+Team Arena 4v4, and Heroes' Ascent and GvG 8v8.
+
 In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
 objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for
