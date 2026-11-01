@@ -176,4 +176,13 @@ export const ASSASSIN_STATUS_ICONS = {
       `<path d="M12 3l2.2 6.8H21l-5.5 4 2.1 6.7L12 16.4l-5.6 4.1 2.1-6.7-5.5-4h6.8z" ${stroke(c, 1.6)}/>` +
       `<path d="M4 20L20 4" ${stroke(c, 2)}/>`,
   ],
+  // Take what another has (#1965), a stand-in until its art card.
+  // Hex: a stance and its mirror image either side of a line.
+  "mirrored-stance": [
+    "hex",
+    (c) =>
+      `<path d="M12 3v18" ${stroke(c, 1.5)} stroke-dasharray="2 2"/>` +
+      `<path d="M9 6l-4 6 4 6" ${stroke(c, 2)}/>` +
+      `<path d="M15 6l4 6-4 6" ${stroke(c, 2)}/>`,
+  ],
 };

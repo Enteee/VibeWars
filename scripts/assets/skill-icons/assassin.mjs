@@ -86,6 +86,8 @@ export const ASSASSIN_ICONS = {
   "assassin.shadow-walk": { glyph: "step-haste", modifier: "clock" },
   // Stand-in for the enchantment party moves (#1975).
   "assassin.dark-apostasy": { glyph: "dagger-crit", modifier: "down" },
+  // Take what another has (#1965), a stand-in until its art card.
+  "assassin.mirrored-stance": { glyph: "step-haste", modifier: "half" },
   // PvP forms (#1951)
   "assassin.shadow-form": { glyph: "form-shadow" },
 };

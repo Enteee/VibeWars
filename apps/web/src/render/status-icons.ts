@@ -427,6 +427,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "order-of-apostasy": icon("order-of-apostasy"),
   "jaundiced-gaze": icon("jaundiced-gaze"),
   "dark-apostasy": icon("dark-apostasy"),
+  // Take what another has (#1965).
+  "mirrored-stance": icon("mirrored-stance"),
   // Blocks that pay or pay off (#1974).
   distortion: icon("distortion"),
   "shield-guardian": icon("shield-guardian"),
