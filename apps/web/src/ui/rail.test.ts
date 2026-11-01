@@ -202,7 +202,6 @@ describe("the mode rail (#1525)", () => {
   it("shows no party strip while the player is alone, and the strip once someone joins (#1782)", () => {
     const member = (name: string, isHost: boolean) => ({
       name,
-      primary: null,
       isHost,
       self: isHost,
       away: false,

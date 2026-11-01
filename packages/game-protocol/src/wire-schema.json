@@ -3690,7 +3690,6 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
-        { "literal": "invalid-bot" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },
@@ -3888,26 +3887,6 @@
                 "properties": [
                   { "name": "admissionSig", "optional": false, "type": "string" },
                   { "name": "seatKey", "optional": false, "type": "string" }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
                 ]
               }
             ]
@@ -4859,42 +4838,6 @@
         },
         {
           "properties": [
-            {
-              "name": "character",
-              "optional": false,
-              "type": {
-                "union": [
-                  "null",
-                  {
-                    "properties": [
-                      { "name": "name", "optional": false, "type": "string" },
-                      { "name": "primary", "optional": false, "type": "string" },
-                      {
-                        "name": "secondary",
-                        "optional": false,
-                        "type": { "union": ["null", "string"] }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            { "name": "kind", "optional": false, "type": { "literal": "set-character" } }
-          ]
-        },
-        {
-          "properties": [
-            { "name": "count", "optional": false, "type": "number" },
-            { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
-            {
-              "name": "team",
-              "optional": false,
-              "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
-            }
-          ]
-        },
-        {
-          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "choose-team" } },
             {
               "name": "team",
@@ -4986,26 +4929,6 @@
       "properties": [
         { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
-                ]
-              }
-            ]
-          }
-        },
         {
           "name": "guildCape",
           "optional": false,
@@ -5121,26 +5044,6 @@
               "properties": [
                 { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
-                {
-                  "name": "character",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          { "name": "name", "optional": false, "type": "string" },
-                          { "name": "primary", "optional": false, "type": "string" },
-                          {
-                            "name": "secondary",
-                            "optional": false,
-                            "type": { "union": ["null", "string"] }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 {
                   "name": "guildCape",
                   "optional": false,
@@ -5341,7 +5244,11 @@
                                     }
                                   }
                                 },
-                                { "name": "size", "optional": false, "type": "number" }
+                                {
+                                  "name": "size",
+                                  "optional": false,
+                                  "type": { "union": ["null", "number"] }
+                                }
                               ]
                             }
                           ]
@@ -5456,7 +5363,11 @@
                                     }
                                   }
                                 },
-                                { "name": "size", "optional": false, "type": "number" }
+                                {
+                                  "name": "size",
+                                  "optional": false,
+                                  "type": { "union": ["null", "number"] }
+                                }
                               ]
                             }
                           ]
@@ -6870,7 +6781,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": "number" }
+                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
                     ]
                   }
                 ]
@@ -6969,7 +6880,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": "number" }
+                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
                     ]
                   }
                 ]
@@ -7107,7 +7018,7 @@
             }
           }
         },
-        { "name": "size", "optional": false, "type": "number" }
+        { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
       ]
     },
     "WireTraps": {

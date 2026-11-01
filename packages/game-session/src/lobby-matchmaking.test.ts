@@ -39,7 +39,7 @@ async function landed(): Promise<void> {
   }
 }
 
-/** A Team Arena party lobby of the host and `guests`, with a bot to be dropped. */
+/** A Team Arena party lobby of the host and `guests`. */
 async function partyLobby(
   guests: readonly string[],
 ): Promise<{ lobby: TestLobby; party: Member[] }> {
@@ -52,7 +52,6 @@ async function partyLobby(
     party.push(await lobby.join(name));
   }
   lobby.host.connection.selectMode("team-arena");
-  lobby.host.connection.setBots(1, 1);
   party.forEach((who, i) => {
     who.connection.chooseTeam(i % 2 === 0 ? 0 : 1);
   });
@@ -91,7 +90,7 @@ describe("a party lobby's matchmaking (#1766)", () => {
       expect(shown.phase).toBe("team-lobby");
       expect(shown.teamLobby?.sides[0]?.size).toBe(4);
       expect(shown.teamLobby?.sides[1]).toBeNull();
-      // The lobby's own bot is gone: the party's free seats are bots.
+      // Nobody is a bot yet: the party's free seats are, once claimed (#2029).
       expect(shown.players.map((player) => [player.name, player.team])).toEqual([
         ["Host", 0],
         ["Ann", 0],

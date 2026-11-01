@@ -2929,13 +2929,6 @@ body {
   min-width: 0;
 }
 
-/* Wrapped, not cut: a team column is narrow, and the line is the point. */
-.lobby-character {
-  color: var(--ink-dim);
-  font-size: 0.82rem;
-  overflow-wrap: anywhere;
-}
-
 .lobby-slot-empty {
   color: var(--ink-dim);
   font-style: italic;
@@ -2954,25 +2947,6 @@ body {
 .lobby-ready.is-ready {
   border-color: #7ee787;
   color: #7ee787;
-}
-
-/* A team's bot count (#1454), under its name: the host's − n +. */
-.lobby-bots {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.85rem;
-}
-
-.lobby-bot-count {
-  min-width: 1.5ch;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.lobby-bots button {
-  padding: 0.15rem 0.6rem;
-  font-size: 0.8rem;
 }
 
 /* A bot's tag (#1194), wherever its name shows: small, so it labels the
@@ -3170,11 +3144,6 @@ body {
 .team-lobby-seat-holder {
   align-self: center;
   font-size: 1.05rem;
-}
-
-.lobby-ready.bot-tag {
-  padding: 0.1rem 0.55rem;
-  font-size: 0.78rem;
 }
 
 /* Count and clock: top-centre, away from the skill bar, so checking the
@@ -6439,11 +6408,6 @@ body:has(#app > .chat) .now-playing {
 .versus-player-text {
   display: flex;
   flex-direction: column;
-}
-
-.versus-player-character {
-  color: var(--ink-dim);
-  font-size: 0.8rem;
 }
 
 .versus-countdown {
