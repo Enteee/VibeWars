@@ -297,9 +297,18 @@ export function rankOf(holder: RankHolder, asked: string): number {
   if (set !== undefined) {
     return effectiveRank(set.rank, [{ delta: set.plusEquipment ? bonus : 0 }]);
   }
-  const delta = [...attributeDeltas, ...holder.heldAttributeDeltas]
-    .filter(({ scope }) => inScope(scope, attributeId))
-    .reduce((sum, { amount }) => sum + amount, 0);
+  // Plain loops: this runs on every rank read, so it allocates nothing.
+  let delta = 0;
+  for (const { scope, amount } of attributeDeltas) {
+    if (inScope(scope, attributeId)) {
+      delta += amount;
+    }
+  }
+  for (const { scope, amount } of holder.heldAttributeDeltas) {
+    if (inScope(scope, attributeId)) {
+      delta += amount;
+    }
+  }
   if (delta < 0 && rank - bonus <= 0) {
     return rank;
   }

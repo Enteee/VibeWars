@@ -3413,7 +3413,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
-    attributeDeltas.push(...def.attributeDeltas);
+    for (const delta of def.attributeDeltas) {
+      attributeDeltas.push(delta);
+    }
     if (def.attributeSet !== undefined) {
       attributeSets.push(def.attributeSet);
     }
