@@ -1642,6 +1642,12 @@ body {
   white-space: nowrap;
 }
 
+/* A saved Team Build that cannot be proposed (#2110), by its first problem. */
+.play-card-unplayable {
+  color: var(--damage);
+  font-size: 0.85em;
+}
+
 .play-card-line {
   color: var(--ink-dim);
   font-size: 0.8rem;

@@ -158,5 +158,8 @@ build editor; its **Save** puts it back in the team, and the team's own
 **Save** keeps it all and takes you back to Team Builder. **Esc** leaves
 without saving, and asks first. The team's **Share**, **Duplicate** and
 **Delete** are under **⋯**.
+You can save a team at any time, problems and all, but only a team
+without problems can be proposed in a Team Lobby: a card says
+**Not playable** and why, and a team with no name shows as **Unnamed team**.
 Your first start rolls one ready-made team, marked **Random**: its
 **Reroll** swaps in another, and **Clone** gives you a copy to edit.

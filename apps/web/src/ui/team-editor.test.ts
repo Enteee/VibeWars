@@ -23,6 +23,7 @@ import {
   memberSkillCells,
   pastedTeam,
   placesLeft,
+  saveTitle,
   teamEditorProblems,
   topAttributes,
 } from "./team-editor.js";
@@ -132,6 +133,22 @@ describe("teamEditorProblems (#573)", () => {
     expect(texts(teamOf(...ids))).toEqual([
       [`The team is full: ${String(MAX_TEAM_SIZE)} members.`, false],
     ]);
+  });
+});
+
+describe("saveTitle (#2110)", () => {
+  it("saves an empty new team, naming its first problem", () => {
+    expect(saveTitle(teamEditorProblems(newTeam("t1")))).toBe(
+      "Save this team (it has problems: A team needs at least one member.)",
+    );
+  });
+
+  it("names no problem for a playable team, a full one included", () => {
+    const ids = Array.from({ length: MAX_TEAM_SIZE }, (_, index) => `m${String(index)}`);
+    expect([
+      saveTitle(teamEditorProblems(teamOf("a"))),
+      saveTitle(teamEditorProblems(teamOf(...ids))),
+    ]).toEqual(["Save this team", "Save this team"]);
   });
 });
 
