@@ -49,6 +49,7 @@ test("Esc leaves at once without edits, and asks before it discards them; Save l
   await expect(bar.locator(".editor-more button")).toHaveText([
     "Share",
     "Share as GW1 code",
+    "Load GW1 code",
     "Duplicate",
     "Delete",
   ]);
@@ -923,6 +924,50 @@ test("⋯ Share as GW1 code shows a template code; a pasted one imports, missing
   await expect(page.locator(".toast")).toHaveText(
     "Vital Transfer is not a GW1 skill, so this build has no GW1 code.",
   );
+  await expect(page.getByLabel("build to share")).toBeHidden();
+});
+
+test("⋯ Load GW1 code loads a pasted code, and says plainly why it will not (#2004)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  const field = page.getByLabel("GW1 code to load");
+  await expect(field).toBeFocused();
+  await expect(field).toHaveAttribute("placeholder", "Paste a GW1 template code");
+
+  await field.fill("gg, well played");
+  await field.press("Enter");
+  await expect(page.getByRole("alert")).toHaveText("That is not a GW1 template code.");
+  await expect(field).toHaveValue("gg, well played");
+
+  // Warrior/Monk, Swift Chop and Orison of Healing, as the paste test's.
+  await field.fill("OUwQEROqaGBAAAAAAAAA");
+  await page.getByRole("button", { name: "Load", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Imported Warrior/Monk build");
+  await expect(field).toBeHidden();
+  await expect(page.locator("input.editor-name")).toHaveValue("Warrior/Monk build");
+  await expect(page.locator(".skill-slot", { hasText: "Swift Chop" })).toHaveCount(1);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+});
+
+test("⋯ opens above the Load field, and Share takes its place (#2004)", async ({ page }) => {
+  await newCharacter(page);
+  const more = page.getByRole("button", { name: "more actions" });
+  await more.click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  const field = page.getByLabel("GW1 code to load");
+  await expect(field).toBeVisible();
+
+  await more.click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  await expect(page.getByLabel("build to share")).toBeVisible();
+  await expect(field).toBeHidden();
+
+  await more.click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  await expect(field).toBeVisible();
   await expect(page.getByLabel("build to share")).toBeHidden();
 });
 

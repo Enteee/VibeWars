@@ -129,6 +129,7 @@ import {
   h,
   inlineConfirm,
   listenForPaste,
+  loadLine,
   moreMenu,
   problemsChip,
   screenBar,
@@ -689,6 +690,60 @@ export interface EditorProblem {
   readonly cause: ProblemCause;
 }
 
+/** A code read for the editor (#2004): the build it holds, or why not, in words. */
+export type LoadedCode =
+  | {
+      readonly ok: true;
+      readonly character: StoredCharacter;
+      /** A GW1 code's skills this game lacks, which arrive as empty slots (#494). */
+      readonly missingSkills: readonly number[];
+    }
+  | {
+      readonly ok: false;
+      readonly reason: "empty" | "team" | "not-a-code" | "invalid";
+      readonly problems: readonly string[];
+    };
+
+/**
+ * The build in `text` (#2004), for a paste on the editor and for Load GW1
+ * code alike, as a character `id` saved at `now`: a VibeWars build line
+ * (#572) or a GW1 template code (#494), trimmed. A team code holds builds
+ * too, so it is told apart first (#577).
+ */
+export function loadCode(text: string, id: string, now: number): LoadedCode {
+  const code = text.trim();
+  if (code === "") {
+    return { ok: false, reason: "empty", problems: ["Paste a code first."] };
+  }
+  if (looksLikeTeam(code)) {
+    return {
+      ok: false,
+      reason: "team",
+      problems: ["That is a team code. Load it on Team Builder."],
+    };
+  }
+  let result: ImportResult;
+  let missing: readonly number[] = [];
+  if (looksLikeBuild(code)) {
+    result = importBuild(code, id, now);
+  } else if (looksLikeTemplate(code)) {
+    const decoded = decodeTemplate(code, id, now);
+    result = decoded;
+    missing = decoded.ok ? decoded.missingSkills : [];
+  } else {
+    return { ok: false, reason: "not-a-code", problems: ["That is not a GW1 template code."] };
+  }
+  return result.ok
+    ? { ok: true, character: result.character, missingSkills: missing }
+    : { ok: false, reason: "invalid", problems: result.problems };
+}
+
+/** Put a loaded build in the editor, unsaved: the player sees what arrived and chooses to keep it. */
+function loadInto(context: EditorContext, loaded: Extract<LoadedCode, { ok: true }>): void {
+  context.commit(loaded.character);
+  toast(`Imported ${loaded.character.name}${missingSkillsNote(loaded.missingSkills)}`);
+}
+
 /** A message as a sentence: capitalised, with a full stop. */
 function sentence(message: string): string {
   const capitalised = message.charAt(0).toUpperCase() + message.slice(1);
@@ -1091,36 +1146,27 @@ export function mountBuildEditor(
   };
   document.addEventListener("keydown", onKeyDown);
 
-  // A build pasted anywhere but a field imports it (#572), unsaved: the
-  // player sees what arrived and chooses to keep it. Other text is
-  // ignored; a broken build says why. A team code holds builds too, so it
-  // is told apart first (#577); a GW1 template code comes last (#494).
+  // A build pasted anywhere but a field imports it (#572), as Load GW1
+  // code does (#2004). Other text is ignored; a broken build says why.
   const stopPaste = listenForPaste((text) => {
-    if (looksLikeTeam(text)) {
-      toast("That is a team code. Paste it on Team Builder.");
+    const loaded = loadCode(text, context.current().id, Date.now());
+    if (loaded.ok) {
+      loadInto(context, loaded);
       return true;
     }
-    let result: ImportResult;
-    // A GW1 code's skills this game lacks arrive as empty slots (#494).
-    let missing: readonly number[] = [];
-    if (looksLikeBuild(text)) {
-      result = importBuild(text, context.current().id, Date.now());
-    } else if (looksLikeTemplate(text)) {
-      const decoded = decodeTemplate(text, context.current().id, Date.now());
-      result = decoded;
-      missing = decoded.ok ? decoded.missingSkills : [];
-    } else {
-      return false;
+    switch (loaded.reason) {
+      case "empty":
+      case "not-a-code":
+        return false;
+      case "team":
+        toast("That is a team code. Paste it on Team Builder.");
+        return true;
+      case "invalid":
+        // Every problem at once: someone fixing a pasted build should not
+        // discover its faults one round trip at a time.
+        toast("Could not import", { problems: loaded.problems });
+        return true;
     }
-    if (!result.ok) {
-      // Every problem at once: someone fixing a pasted build should not
-      // discover its faults one round trip at a time.
-      toast("Could not import", { problems: result.problems });
-      return true;
-    }
-    context.commit(result.character);
-    toast(`Imported ${result.character.name}${missingSkillsNote(missing)}`);
-    return true;
   });
 
   return {
@@ -1152,7 +1198,7 @@ interface CommandBar extends Region {
 /**
  * The command bar (#566, #1902): the name and professions, the point
  * budget, the problems chip, an unsaved marker, Save, which stores and
- * leaves, and ⋯ with Share (#572), Duplicate and Delete. Esc with unsaved
+ * leaves, and ⋯ with Share (#572), Load GW1 code (#2004), Duplicate and Delete. Esc with unsaved
  * edits, and Delete always, ask in the bar first.
  */
 function mountCommandBar(
@@ -1238,21 +1284,38 @@ function mountCommandBar(
     );
   });
 
-  // Share (#572): the build as one line, selected, with Copy.
+  // Share (#572): the build as one line, selected, with Copy. Load
+  // (#2004) opens in its place: one of the two at a time.
   const share = shareLine("build to share");
+  const load = loadLine("GW1 code to load", "Paste a GW1 template code", (text) => {
+    const loaded = loadCode(text, context.current().id, Date.now());
+    if (!loaded.ok) {
+      return loaded.problems;
+    }
+    loadInto(context, loaded);
+    return [];
+  });
+  const showShare = (text: string): void => {
+    load.hide();
+    share.show(text);
+  };
   const more = moreMenu(
     [
       button("Share", "", () => {
-        share.show(exportBuild(context.current()));
+        showShare(exportBuild(context.current()));
       }),
       // The same build as a GW1 template code (#494), for GW1's build sites.
       button("Share as GW1 code", "", () => {
         const encoded = encodeTemplate(context.current());
         if (encoded.ok) {
-          share.show(encoded.code);
+          showShare(encoded.code);
         } else {
           toast(encoded.problem);
         }
+      }),
+      button("Load GW1 code", "", () => {
+        share.hide();
+        load.show();
       }),
       // An edited character duplicates as edited, as it always has.
       button("Duplicate", "", () => {
@@ -1271,7 +1334,7 @@ function mountCommandBar(
         );
       }),
     ],
-    [share.element],
+    [share.element, load.element],
   );
 
   // Esc puts away the ⋯ menu, Share, the problem list and then the pick
@@ -1283,6 +1346,10 @@ function mountCommandBar(
     }
     if (share.isOpen()) {
       share.hide();
+      return true;
+    }
+    if (load.isOpen()) {
+      load.hide();
       return true;
     }
     if (chip.isOpen()) {
@@ -1319,6 +1386,7 @@ function mountCommandBar(
     if (!more.element.contains(target)) {
       more.close();
       share.hide();
+      load.hide();
     }
     if (!chip.element.contains(target)) {
       chip.close();
@@ -1355,7 +1423,13 @@ function mountCommandBar(
       save.title = firstBlocking?.text ?? "Save this character";
     },
     isOpen() {
-      return asking?.isOpen() === true || more.isOpen() || share.isOpen() || chip.isOpen();
+      return (
+        asking?.isOpen() === true ||
+        more.isOpen() ||
+        share.isOpen() ||
+        load.isOpen() ||
+        chip.isOpen()
+      );
     },
     leave,
     dispose() {

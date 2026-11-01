@@ -2483,7 +2483,8 @@ body {
 
 .editor-more {
   position: absolute;
-  z-index: 40;
+  /* Above an open Share or Load panel, so ⋯ can switch between them. */
+  z-index: 41;
   top: calc(100% + 0.3rem);
   right: 0;
   display: flex;
@@ -2495,8 +2496,9 @@ body {
   box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
 }
 
-/* Share (#572): one line of build text and Copy, under ⋯. */
-.editor-share {
+/* Share (#572): one line of build text and Copy, under ⋯; Load (#2004) the same. */
+.editor-share,
+.editor-load {
   position: absolute;
   z-index: 40;
   top: calc(100% + 0.3rem);
@@ -2521,8 +2523,27 @@ body {
   font-size: 0.8rem;
 }
 
+/* Load GW1 code (#2004): the share line's place, its problems under it. */
+.editor-load {
+  flex-wrap: wrap;
+}
+
+.editor-load-problems {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #ffb3ae;
+  font-size: 0.85rem;
+}
+
+.editor-load-problems:empty {
+  display: none;
+}
+
 .editor-more[hidden],
 .editor-share[hidden],
+.editor-load[hidden],
 .problems-list[hidden] {
   display: none;
 }
