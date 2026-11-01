@@ -16,6 +16,7 @@ import {
   searchingLabel,
   stayButton,
   streakLine,
+  requeuedSince,
   teamEndAction,
   teamEndLine,
   versusTeams,
@@ -223,6 +224,18 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
     expect(teamEndLine("requeue", 20)).toEqual({ text: "Next match in 20 s", button: "Leave" });
     expect(teamEndLine("menu", 3)).toEqual({ text: "Back to menu in 3 s", button: "Now" });
     expect(teamEndLine("lobby", 1)).toEqual({ text: "Back to lobby in 1 s", button: "Now" });
+  });
+});
+
+describe("requeuedSince (#1997)", () => {
+  it("catches a member up on a queue its host started while it was still in the match", () => {
+    expect(requeuedSince({ phase: "queued", queueNonce: "next" }, "played")).toBe(true);
+  });
+
+  it("leaves a member out before its host to the host's own requeue", () => {
+    // Its host is still in the played match's queue, or out of it and not queued again.
+    expect(requeuedSince({ phase: "queued", queueNonce: "played" }, "played")).toBe(false);
+    expect(requeuedSince({ phase: "waiting", queueNonce: null }, "played")).toBe(false);
   });
 });
 

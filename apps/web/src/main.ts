@@ -95,6 +95,7 @@ import type { SummaryTable } from "./ui/match-summary.js";
 import {
   mountQueueScreen,
   nextStreak,
+  requeuedSince,
   teamEndAction,
   teamEndLine,
   type QueueScreen,
@@ -2115,6 +2116,11 @@ async function main(): Promise<void> {
     const said = team?.finished === true ? undefined : notice;
     if (team !== undefined) {
       endTeamQueue();
+      // Its host may have left the match first and queued the party
+      // again (#1997), a change this tab saw while parked and let pass.
+      if (lobby === team.party && requeuedSince(team.party.getSnapshot(), team.nonce)) {
+        syncTeamQueue(team.party);
+      }
     }
     if (queue !== undefined) {
       // Before the end, the player's own leave forfeits; a host or a

@@ -215,6 +215,20 @@ export function teamEndAction(won: boolean, queued: boolean): TeamEndAction {
   return won ? "requeue" : "menu";
 }
 
+/**
+ * Whether a member out of its party's team match finds the party queued
+ * again (#1997), under a nonce other than the `played` match's: its host
+ * left the match first and queued while this tab was still in it.
+ */
+export function requeuedSince(
+  snapshot: Pick<LobbySnapshot, "phase" | "queueNonce">,
+  played: string,
+): boolean {
+  return (
+    snapshot.phase === "queued" && snapshot.queueNonce !== null && snapshot.queueNonce !== played
+  );
+}
+
 /** The line under a team match's result (#1997), `seconds` before `action`, and its button. */
 export function teamEndLine(
   action: TeamEndAction,
