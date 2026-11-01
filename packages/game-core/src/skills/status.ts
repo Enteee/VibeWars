@@ -1814,10 +1814,25 @@ export function triggerAnswersWeapon(trigger: StatusTrigger, weapon: Weapon): bo
  * All active statuses on one combatant, plus the lifecycle rules that
  * govern them.
  */
+/** How `StatusSet`'s `spent` names `id` from `sourceId` (#1955). */
+export function spentKey(id: StatusId, sourceId: string): string {
+  return `${id}/${sourceId}`;
+}
+
 export class StatusSet {
   readonly #statuses = new Map<StatusId, ActiveStatus>();
   #changes: StatusChange[] = [];
   #pulses: StatusPulse[] = [];
+  readonly #spent: Set<string>;
+
+  /**
+   * `spent`: the match's `endsEverywhereWhenSpent` statuses spent since
+   * the last drain (#1955), as `spentKey`s, shared by every set in it, so
+   * one Angelic Bond saves exactly one ally even when two die in a tick.
+   */
+  public constructor(spent = new Set<string>()) {
+    this.#spent = spent;
+  }
 
   /**
    * What happened to this set since the last drain (#887), oldest first,
@@ -2085,14 +2100,22 @@ export class StatusSet {
   }
 
   /**
-   * Spend the oldest status that negates fatal damage (#1789), recorded as
+   * Spend the oldest status that negates fatal damage (#1789), but not a
+   * copy of one already spent elsewhere this tick (#1955), recorded as
    * ended, with its `bearer-fatal-damage-negated` triggers aimed at
    * `offenderId`; `undefined` if none is up.
    */
   public takeFatalNegation(offenderId: string | undefined): StatusId | undefined {
     for (const status of this.#statuses.values()) {
       const definition = getStatusDefinition(status.id);
-      if (definition.negatesFatalDamage) {
+      const key = spentKey(status.id, status.sourceId);
+      if (
+        definition.negatesFatalDamage &&
+        !(definition.endsEverywhereWhenSpent && this.#spent.has(key))
+      ) {
+        if (definition.endsEverywhereWhenSpent) {
+          this.#spent.add(key);
+        }
         this.#end([status.id]);
         const fired = definition.triggers
           .filter((trigger) => trigger.on === "bearer-fatal-damage-negated")

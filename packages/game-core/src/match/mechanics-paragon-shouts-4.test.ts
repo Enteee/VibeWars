@@ -113,6 +113,22 @@ describe("Angelic Bond (#1955)", () => {
     }
   });
 
+  it("saves exactly one of two allies a single blow set kills in one tick", () => {
+    const sim = match([...allies(2), spec("f", 1, vec2(300, 0))]);
+    use(sim, BOND);
+    const foe = get(sim, "f").combatant;
+    const [a1, a2] = [get(sim, "a1").combatant, get(sim, "a2").combatant];
+    a1.health = 100;
+    a2.health = 100;
+    // One splash, two packets, before any drain.
+    applyDamage(a1, 500, "typeless", false, [], foe);
+    applyDamage(a2, 500, "typeless", false, [], foe);
+    expect([a1.dead, a2.dead]).toEqual([false, true]);
+    sim.step(DT);
+    expect(a1.health).toBe(264);
+    expect(get(sim, "p").combatant.statuses.has("angelic-bond")).toBe(false);
+  });
+
   it("after Judge's Intervention, spends only the oldest", () => {
     const sim = match([...allies(1), spec("f", 1, vec2(300, 0))]);
     const a1 = get(sim, "a1").combatant;
@@ -174,6 +190,14 @@ describe('"Help!" (#1955)', () => {
     expect(effectiveActivationSeconds(twoSecondHeal, monk, a1)).toBe(1);
     expect(effectiveActivationSeconds(twoSecondHeal, a1, a1)).toBe(2);
     expect(effectiveActivationSeconds(twoSecondHeal, foe, a1)).toBe(2);
+  });
+
+  it("leaves an ally's non-spell on the bearer as long as it was", () => {
+    const sim = match(allies(1));
+    use(sim, HELP, "a1");
+    const signet: Skill = { ...twoSecondHeal, type: "signet" };
+    const monk = makeCombatant({ id: "m", team: 0 });
+    expect(effectiveActivationSeconds(signet, monk, get(sim, "a1").combatant)).toBe(2);
   });
 
   it("never targets a spirit", () => {

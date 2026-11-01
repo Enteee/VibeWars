@@ -126,6 +126,7 @@ import {
   MAX_PIPS,
   ownSkillBoost,
   preventsAttacks,
+  spentKey,
   reducedRecharge,
   scaledStatusDuration,
   STATUS_DEFINITIONS,
@@ -938,6 +939,8 @@ export class MatchSimulation {
   readonly #bodies: Vec2[] = [];
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
+  /** What every participant's `StatusSet` shares as spent this tick (#1955). */
+  readonly #spentStatuses = new Set<string>();
   /**
    * Every team anyone was added to (#846): one whose members all left is
    * still in the standing, wiped, rather than gone.
@@ -6309,6 +6312,7 @@ export class MatchSimulation {
     ) {
       return;
     }
+    this.#spentStatuses.delete(spentKey(change.statusId, change.sourceId));
     for (const other of this.#participants.values()) {
       if (
         other !== record &&
@@ -7140,7 +7144,7 @@ export class MatchSimulation {
 
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
-    const statuses = new StatusSet();
+    const statuses = new StatusSet(this.#spentStatuses);
     return {
       id: spec.id,
       health: maxHealth * (spec.startHealthFraction ?? 1),
