@@ -146,7 +146,8 @@ export function ascentMapName(round: number): string {
   return hostMap(ascentMapId(round))?.descriptor.name ?? ascentMapId(round);
 }
 
-function ascentMapId(round: number): string {
+/** The id of the map Heroes' Ascent plays at `round` (#1996). */
+export function ascentMapId(round: number): string {
   const id = ASCENT_PROGRESSION[round];
   if (id === undefined) {
     throw new RangeError(`no Heroes' Ascent round ${String(round)}`);

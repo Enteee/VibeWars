@@ -40,7 +40,7 @@ export const VOTE_TITLE = "Choose a team build";
 export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
-export const NO_PROPOSALS = "No proposals: the house team plays";
+export const NO_PROPOSALS = "No proposals: the house team build plays";
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";

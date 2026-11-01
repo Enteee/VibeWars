@@ -3,7 +3,7 @@ import type { Guild, LobbyConnection, LobbySnapshot, MatchStarting } from "@vibe
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
+import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -1071,8 +1071,11 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
-      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter((map) =>
-        modeMapIds()[entry].includes(map.id),
+      // A queued Heroes' Ascent names its round's map, the Hall's too (#1996).
+      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
+        (map) =>
+          modeMapIds()[entry].includes(map.id) ||
+          (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
       ),
       matchmakingFor(entry),
     );
