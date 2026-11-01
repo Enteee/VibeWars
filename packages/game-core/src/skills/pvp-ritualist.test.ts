@@ -1,3 +1,4 @@
+import { createRng } from "../rng.js";
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
@@ -130,7 +131,13 @@ function refusal(sim: MatchSimulation, skillId: string, targetId: string): strin
 
 /** What 50 typeless damage does to `r` now. */
 function taken(sim: MatchSimulation, amount = 50): number {
-  return mitigate(skillDamage(amount, "typeless", 0), get(sim, "r").combatant, RULES.combat, null);
+  return mitigate(
+    skillDamage(amount, "typeless", 0),
+    get(sim, "r").combatant,
+    RULES.combat,
+    null,
+    createRng(1),
+  );
 }
 
 /** Every log entry over `seconds`. */

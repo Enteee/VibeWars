@@ -1,6 +1,7 @@
 import { AREA_ADJACENT } from "../distances.js";
 import type { ResolvedWeapon, WeaponHitMods } from "../equipment/resolve.js";
 import { type DamageType } from "../equipment/types.js";
+import { modWhileHolds } from "./mod-conditions.js";
 import { isCasterWeapon, wieldsFor, type Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
@@ -225,6 +226,14 @@ export interface WeaponSnapshot {
   readonly physicalDamageDealtAs: DamageType | undefined;
   /** The held set's mods that act on a hit (#2009): Sundering's chance rides the blow. */
   readonly hitMods: WeaponHitMods;
+  /**
+   * What the held set's inscription adds to the weapon's roll (#2010),
+   * read from the attacker as the blow begins: Strength and Honor's 0.15
+   * above half Health, To the Pain!'s always.
+   */
+  readonly modDamageIncrease: number;
+  /** Too Much Information's, only on a victim hexed as the blow lands. */
+  readonly vsHexedDamageIncrease: number;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -243,7 +252,24 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     damageDelta: attackDamageDeltaOf(attacker),
     physicalDamageDealtAs: physicalDamageDealtAsOf(attacker.statuses.active),
     hitMods: attacker.equipment.hitMods,
+    ...modDamageOf(attacker),
   };
+}
+
+/** The inscription's increases, split into what the attacker answers now and what the victim does on landing. */
+function modDamageOf(
+  attacker: Combatant,
+): Pick<WeaponSnapshot, "modDamageIncrease" | "vsHexedDamageIncrease"> {
+  let modDamageIncrease = 0;
+  let vsHexedDamageIncrease = 0;
+  for (const mod of attacker.equipment.hitMods.attackDamage) {
+    if (mod.while === "target-hexed") {
+      vsHexedDamageIncrease += mod.increase;
+    } else if (mod.while === undefined || modWhileHolds(mod.while, attacker, undefined)) {
+      modDamageIncrease += mod.increase;
+    }
+  }
+  return { modDamageIncrease, vsHexedDamageIncrease };
 }
 
 /**
@@ -565,10 +591,16 @@ export function landBlow(
   // fight's stream moves.
   const { sunderChance, sunderPenetration } = snapshot.hitMods;
   const sundered = sunderChance > 0 && rng.nextFloat() < sunderChance ? sunderPenetration : 0;
+  // The inscription's (#2010): the weapon's roll only, never a skill's bonus.
+  const inscribed =
+    1 +
+    snapshot.modDamageIncrease +
+    (victim.statuses.countByCategory("hex") > 0 ? snapshot.vsHexedDamageIncrease : 0);
   const packet: DamagePacket = {
     armored: Math.max(
       0,
       base *
+        inscribed *
         snapshot.damageMultiplier *
         blow.weaponDamage *
         (snapshot.mainHand.creatureDamageScale ?? weaponAttributeMultiplier(snapshot.rank, rules)) *
@@ -594,7 +626,7 @@ export function landBlow(
   const location = hitLocationOf(packet, rng);
   applyDamage(
     victim,
-    mitigate(packet, victim, rules, location),
+    mitigate(packet, victim, rules, location, rng),
     packet.type,
     critical,
     events,
