@@ -2581,7 +2581,7 @@
       "h": 12
     },
     "projectile/spear": {
-      "x": 297,
+      "x": 363,
       "y": 531,
       "w": 32,
       "h": 12
@@ -2593,104 +2593,104 @@
       "h": 12
     },
     "projectile/fireball": {
-      "x": 387,
+      "x": 420,
       "y": 514,
       "w": 32,
       "h": 12
     },
     "projectile/lightning-orb": {
-      "x": 0,
+      "x": 33,
       "y": 531,
       "w": 32,
       "h": 12
     },
     "projectile/ice-shard": {
-      "x": 66,
-      "y": 531,
-      "w": 32,
-      "h": 12
-    },
-    "projectile/water-trident": {
       "x": 99,
       "y": 531,
       "w": 32,
       "h": 12
     },
-    "projectile/ebon-hawk": {
+    "projectile/water-trident": {
       "x": 132,
       "y": 531,
       "w": 32,
       "h": 12
     },
+    "projectile/ebon-hawk": {
+      "x": 165,
+      "y": 531,
+      "w": 32,
+      "h": 12
+    },
     "projectile/stone": {
-      "x": 198,
+      "x": 231,
       "y": 531,
       "w": 32,
       "h": 12
     },
     "projectile/thrown-dagger": {
-      "x": 264,
+      "x": 330,
       "y": 531,
       "w": 32,
       "h": 12
     },
     "profession/warrior": {
-      "x": 330,
+      "x": 396,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/ranger": {
-      "x": 342,
+      "x": 408,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/monk": {
-      "x": 354,
+      "x": 420,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/necromancer": {
-      "x": 366,
+      "x": 432,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/mesmer": {
-      "x": 378,
+      "x": 444,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/elementalist": {
-      "x": 390,
+      "x": 456,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/assassin": {
-      "x": 402,
+      "x": 468,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/ritualist": {
-      "x": 414,
+      "x": 480,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/paragon": {
-      "x": 426,
+      "x": 492,
       "y": 531,
       "w": 11,
       "h": 11
     },
     "profession/dervish": {
-      "x": 438,
-      "y": 531,
+      "x": 0,
+      "y": 544,
       "w": 11,
       "h": 11
     }
