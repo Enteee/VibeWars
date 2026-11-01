@@ -89,10 +89,10 @@ export const RANGER_ICONS = {
   "ranger.energizing-wind": { glyph: "ritual-wind-minus" },
   "ranger.primal-echoes": { glyph: "ritual-echo" },
   "ranger.roaring-winds": { glyph: "ritual-wind-plus" },
-  // Nature rituals 4 (#1956), stand-ins until their art card.
-  "ranger.quicksand": { glyph: "ritual-mud", modifier: "down" },
-  "ranger.famine": { glyph: "ritual-skull-burst", modifier: "down" },
-  "ranger.lacerate": { glyph: "ritual-drop-spread", modifier: "bleed" },
+  // Nature rituals 4 (#1981): Winnowing's post and a cue each.
+  "ranger.quicksand": { glyph: "ritual-bolt-sink" },
+  "ranger.famine": { glyph: "ritual-bolt-hollow" },
+  "ranger.lacerate": { glyph: "ritual-drop-claw" },
   // Ranger staples 4 (#1742, #1768): an arrow over a shield, barbs, a leaf, a wind curl; the rest keep a shared glyph.
   "ranger.seeking-arrows": { glyph: "arrow-over-shield", modifier: "up" },
   "ranger.barbed-arrows": { glyph: "arrow-barbed", modifier: "bleed" },

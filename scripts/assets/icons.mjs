@@ -765,6 +765,14 @@ const strikeWith = (rider, pair = false) =>
   `<circle cx="17.5" cy="17.5" r="6" fill="${C.bg}"/>` +
   `<g transform="translate(17.5,17.5) scale(0.5) translate(-12,-12)">${rider}</g>`;
 
+/**
+ * The mantra frame: a rounded square, the enchantment's plate, round a mark scaled to fit (#1981).
+ * @param {string} inner
+ */
+const mantra = (inner) =>
+  `<rect x="2.5" y="2.5" width="19" height="19" rx="4" ${stroke(C.ink, 2)}/>` +
+  `<g transform="translate(12,12) scale(0.56) translate(-12,-12)">${inner}</g>`;
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   // Payoffs of the chants of #1558: a burst struck through (cannot be interrupted), a bolt with a minus
@@ -3551,6 +3559,27 @@ const skillGlyph = {
     `<g transform="translate(0,6)">${skillGlyph.blink()}</g>` +
     `<circle cx="5.5" cy="4.5" r="1.8" fill="${C.ink}"/><circle cx="12" cy="2.8" r="1.8" fill="${C.ink}"/><circle cx="18.5" cy="4.5" r="1.8" fill="${C.ink}"/>`,
   "next-attack-adrenaline": () => nextSkill("attack", "next-adrenaline"),
+  // Mesmer mantras (#1981): the frame, and what the mantra holds against.
+  "mantra-burst-struck": () => mantra(skillGlyph.interrupt() + inkLine("M3 21L21 3", 3.2)),
+  "mantra-shield": () => mantra(skillGlyph.armor()),
+  "mantra-rock": () => mantra(skillGlyph.rock()),
+  "mantra-flame": () => mantra(skillGlyph.flame()),
+  "mantra-frost": () => mantra(skillGlyph.snowflake()),
+  "mantra-lightning": () => mantra(skillGlyph.lightning()),
+  // Nature rituals 4 (#1981). Quicksand: the Energy bolt sinking in the mud.
+  "ritual-bolt-sink": () =>
+    spiritPost() +
+    inkFill("M18.5 1.5L13.5 8H16.8L15.8 12L21 5.8H17.6Z") +
+    inkLine("M11 13C12.5 11.8 14 11.8 15.5 13S18.5 14.2 20 13S22 12.2 23.5 12.7", 1.8),
+  // Famine: the Energy bolt run empty.
+  "ritual-bolt-hollow": () =>
+    spiritPost() +
+    `<path d="M18.5 1.5L12.5 9.5H16.5L15.2 14.5L22 6.5H17.8Z" ${stroke(C.ink, 1.8)}/>`,
+  // Lacerate: a drop and the claw marks that opened it.
+  "ritual-drop-claw": () =>
+    spiritPost() +
+    inkFill("M16 2.5C14.2 5.4 13.2 6.6 13.2 8.2A2.8 2.8 0 0 0 18.8 8.2C18.8 6.6 17.8 5.4 16 2.5Z") +
+    inkLine("M20 2L23.5 7M17.5 11.5L22 14", 1.8),
 };
 
 /** The ringed plus in the bottom right corner: Health healed (#1666). */
