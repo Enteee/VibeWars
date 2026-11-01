@@ -906,17 +906,29 @@ export interface CreatureTemplate {
  * alive" or Life's heal: killed, destroyed or at the end of its lifespan,
  * every living non-spirit of `affects` within `radius` of it takes, or
  * is healed, `perSecondAlive` × its whole seconds alive, at most `max`.
- * Damage is typeless, from its owner.
+ * Damage is typeless, from its owner. `"apply-status"`, Lacerate's
+ * (#1956): every one of them strictly below `belowHealthFraction` of its
+ * maximum gets `statusId` for `durationSeconds`, from its owner.
  */
-export interface DeathBurst {
-  readonly effect: "damage" | "heal";
-  /** Scaled by its owner, read once at summoning (#1603). */
-  readonly perSecondAlive: Magnitude;
-  /** `undefined`: no cap. */
-  readonly max: number | undefined;
-  readonly affects: "allies" | "foes";
-  readonly radius: number;
-}
+export type DeathBurst =
+  | {
+      readonly effect: "damage" | "heal";
+      /** Scaled by its owner, read once at summoning (#1603). */
+      readonly perSecondAlive: Magnitude;
+      /** `undefined`: no cap. */
+      readonly max: number | undefined;
+      readonly affects: "allies" | "foes" | "all";
+      readonly radius: number;
+    }
+  | {
+      readonly effect: "apply-status";
+      readonly statusId: StatusId;
+      /** Scaled by its owner, read once at summoning. */
+      readonly durationSeconds: Magnitude;
+      readonly belowHealthFraction: number;
+      readonly affects: "allies" | "foes" | "all";
+      readonly radius: number;
+    };
 
 /**
  * What a spirit does when a non-spirit body dies within its
