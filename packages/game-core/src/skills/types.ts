@@ -84,6 +84,12 @@ export type TargetRule =
   | "single-dead-ally"
   /** A living spirit on the caster's team, whoever made it (#1309): GW1's "allied spirit". */
   | "allied-spirit"
+  /**
+   * A living spirit another team's character made (#1965): Signet of
+   * Binding's "target enemy-controlled spirit". Never a map's, which no
+   * one controls.
+   */
+  | "enemy-spirit"
   /** A living minion the caster made (#1836): Putrid Flesh's "target minion". */
   | "own-minion"
   /** A living minion on the caster's team, whoever made it (#1836): Feast for the Dead's. */
@@ -787,6 +793,16 @@ export interface CopyDisabledEffect {
 }
 
 /**
+ * The slot of the skill resolving holds a copy of the first elite from
+ * the left on the target's bar that is not a form, for `seconds` (#1965):
+ * Arcane Mimicry's. None: no copy.
+ */
+export interface CopyEliteEffect {
+  readonly kind: "copy-elite";
+  readonly seconds: number;
+}
+
+/**
  * A skill takes `seconds` longer to recharge. Recharge, not a disable:
  * what ends a recharge ends it.
  *
@@ -1039,6 +1055,16 @@ export interface Aura {
   readonly affects: "all" | "allies" | "foes";
   /** Centre to centre, world units. Walls do not block it. */
   readonly radius: number;
+}
+
+/**
+ * The caster takes control of its target, a spirit (#1965): Signet of
+ * Binding's. It is the caster's from then on, on its team, and leaves
+ * with it, keeping what it has left. Acts on each target; the simulation
+ * moves it, as it makes a `summon`'s. A dead caster takes nothing.
+ */
+export interface TakeControlEffect {
+  readonly kind: "take-control";
 }
 
 /**
@@ -1412,10 +1438,12 @@ export type UnconditionalEffect =
   | DisableSkillEffect
   | CopyRemovedEffect
   | CopyDisabledEffect
+  | CopyEliteEffect
   | LengthenRechargeEffect
   | DisableOwnSkillsEffect
   | ChainMarkEffect
   | SummonEffect
+  | TakeControlEffect
   | CreateGroundEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
@@ -1913,7 +1941,8 @@ export interface Combatant {
    * cleared around it by `withRankLoan`; empty otherwise.
    */
   heldAttributeDeltas: readonly AttributeDelta[];
-  readonly team: number;
+  /** A spirit someone takes control of changes sides (#1965). */
+  team: number;
   /** Set once health reaches 0; a dead combatant is skipped by the simulation. */
   dead: boolean;
   /** Active conditions, hexes and enchantments. */

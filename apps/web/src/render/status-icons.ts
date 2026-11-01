@@ -413,6 +413,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "shadow-form": icon("shadow-form"),
   "elemental-flame": icon("elemental-flame"),
   "mist-form": icon("mist-form"),
+  // Take what another has (#1965).
+  "mirrored-stance": icon("mirrored-stance"),
 };
 
 const GAP = 2;

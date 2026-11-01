@@ -588,3 +588,97 @@ describe("play-build renews a spirit near its end (#1947)", () => {
     expect(askBot(ending(10, 2000), "r").useSkillId).toBeUndefined();
   });
 });
+
+describe("play-build takes what another has (#1965)", () => {
+  const body = (id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    ({
+      id,
+      team,
+      skillBar: [],
+      attributeRanks: new Map([
+        ["assassin.shadow-arts", 12],
+        ["ritualist.spawning-power", 12],
+      ]),
+      equipment: unarmedResolvedEquipment(60),
+      maxHealth: 600,
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      ...extra,
+    }) satisfies ParticipantSpec;
+  const spirit = (id: string, ownerId: string, team: number, spawn: Vec2) =>
+    body(id, team, spawn, {
+      creature: {
+        ownerId,
+        kind: "spirit",
+        look: "spirit",
+        name: id,
+        expiresInSeconds: 60,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: undefined,
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        deathBurst: undefined,
+        onDeathInRange: undefined,
+        replacedBy: undefined,
+        corpsesLeft: 0,
+        companionSkillId: undefined,
+        leaderId: undefined,
+        mode: "guard",
+      },
+    });
+
+  it("casts Signet of Binding on a foe's spirit in reach, with Health to spare", () => {
+    const binder = () =>
+      match([
+        body("r", 0, vec2(0, 0), { behaviour: BOT, skillBar: ["ritualist.signet-of-binding"] }),
+        body("foe", 1, vec2(1500, 0)),
+        spirit("s", "foe", 1, vec2(300, 0)),
+      ]);
+    expect(askBot(binder(), "r")).toMatchObject({
+      targetId: "s",
+      useSkillId: "ritualist.signet-of-binding",
+    });
+    const hurt = binder();
+    const r = hurt.get("r");
+    if (r !== undefined) {
+      r.combatant.health = 200;
+    }
+    expect(askBot(hurt, "r").useSkillId).toBeUndefined();
+  });
+
+  it("casts Mirrored Stance only on a foe with a stance on its bar", () => {
+    const at = (foeBar: readonly string[]) =>
+      match([
+        body("a", 0, vec2(0, 0), { behaviour: BOT, skillBar: ["assassin.mirrored-stance"] }),
+        body("foe", 1, vec2(300, 0), { skillBar: foeBar }),
+      ]);
+    expect(askBot(at(["assassin.dash"]), "a")).toMatchObject({
+      targetId: "foe",
+      useSkillId: "assassin.mirrored-stance",
+    });
+    expect(askBot(at(["monk.word-of-healing"]), "a").useSkillId).toBeUndefined();
+  });
+
+  it("casts Arcane Mimicry on an ally's elite with no foe in reach, never an attack or its own", () => {
+    const at = (allyBar: readonly string[], ownBar: readonly string[] = []) =>
+      match([
+        body("m", 0, vec2(0, 0), {
+          behaviour: BOT,
+          skillBar: ["mesmer.arcane-mimicry", ...ownBar],
+        }),
+        body("ally", 0, vec2(0, 60), { skillBar: allyBar }),
+        body("foe", 1, vec2(1500, 0)),
+      ]);
+    expect(askBot(at(["monk.word-of-healing"]), "m")).toMatchObject({
+      targetId: "ally",
+      useSkillId: "mesmer.arcane-mimicry",
+    });
+    expect(askBot(at(["warrior.eviscerate"]), "m").useSkillId).toBeUndefined();
+    expect(
+      askBot(at(["monk.word-of-healing"], ["monk.word-of-healing"]), "m").useSkillId,
+    ).toBeUndefined();
+  });
+});

@@ -2,7 +2,7 @@ import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
-import type { StatusCategory } from "../../skills/status.js";
+import { getStatusDefinition, type StatusCategory } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -75,6 +75,20 @@ export function renewsSpirit(skill: Skill): boolean {
     skill.target === "allied-spirit" &&
     skill.effects.some((effect) => effect.kind === "destroy-target-spirit") &&
     skill.effects.some((effect) => effect.kind === "summon")
+  );
+}
+
+/**
+ * A hex that copies its bearer's stances onto its caster (#1965), as
+ * Mirrored Stance: worth a foe only while that foe has a stance to use.
+ */
+export function mirrorsStance(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) =>
+      effect.kind === "apply-status" &&
+      getStatusDefinition(effect.statusId).triggers.some(({ effects }) =>
+        effects.some(({ kind }) => kind === "mirror-stance"),
+      ),
   );
 }
 

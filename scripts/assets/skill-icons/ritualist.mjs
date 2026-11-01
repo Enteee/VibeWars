@@ -84,4 +84,6 @@ export const RITUALIST_ICONS = {
   // Spirits as a resource (#1947), stand-ins until their art card.
   "ritualist.spirit-transfer": { glyph: "spirit-last-heal", modifier: "plus" },
   "ritualist.gaze-of-fury": { glyph: "spirit-rupture", modifier: "bolt" },
+  // Take what another has (#1965), a stand-in until its art card.
+  "ritualist.signet-of-binding": { glyph: "spirit-rupture", modifier: "renew" },
 };

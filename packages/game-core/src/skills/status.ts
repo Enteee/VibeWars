@@ -1398,6 +1398,17 @@ export interface EchoEffect {
 }
 
 /**
+ * Mirrored Stance's copy (#1965): the stance the bearer just entered, by
+ * the skill the simulation's trigger context names, goes on the status's
+ * source too, as the bearer would put it on itself, at its ranks. Only
+ * the skill's `apply-status`es of a stance; whatever else it does is not
+ * copied.
+ */
+export interface MirrorStanceEffect {
+  readonly kind: "mirror-stance";
+}
+
+/**
  * Clumsiness's interrupt (#1593): the attack the bearer is beginning, on
  * `bearer-attack-begins`, is interrupted. An attack skill is, as by an
  * `interrupt`, and recharges; a plain swing never lands, and its swing
@@ -1425,6 +1436,7 @@ export type TriggerEffect =
   | SkillEffect
   | SpreadGainedConditionEffect
   | EchoEffect
+  | MirrorStanceEffect
   | CancelAttackEffect
   | PayEnergyOrEndEffect;
 

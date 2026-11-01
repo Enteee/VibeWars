@@ -288,6 +288,10 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-energy",
   "ritualist.ritual-lord",
   "ranger.experts-dexterity",
+  // Take what another has (#1965): an ally's elite borrowed and a foe's
+  // spirit taken have steps of their own in `playBuild`, no use to weigh.
+  "mesmer.arcane-mimicry",
+  "ritualist.signet-of-binding",
 ]);
 
 function skill(id: string) {

@@ -86,4 +86,6 @@ export const ASSASSIN_ICONS = {
   "assassin.shadow-walk": { glyph: "step-haste", modifier: "clock" },
   // PvP forms (#1951), a stand-in until its art card.
   "assassin.shadow-form": { glyph: "crescent", modifier: "self" },
+  // Take what another has (#1965), a stand-in until its art card.
+  "assassin.mirrored-stance": { glyph: "step-haste", modifier: "half" },
 };

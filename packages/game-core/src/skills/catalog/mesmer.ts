@@ -2540,4 +2540,32 @@ export const MESMER_SKILLS: readonly Skill[] = [
       { kind: "copy-disabled" },
     ],
   },
+  {
+    id: "mesmer.arcane-mimicry",
+    name: "Arcane Mimicry",
+    gwId: 65,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    // GW1's "No Attribute": any mesmer can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, Arcane Mimicry becomes the non-form elite skill from
+    // target other ally" (#1965). None: no copy, and it recharges.
+    effects: [{ kind: "copy-elite", seconds: 20 }],
+  },
 ];

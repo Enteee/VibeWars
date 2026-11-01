@@ -3044,4 +3044,31 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // all but 5...50 Health": 13 s.
     effects: [{ kind: "apply-status", statusId: "shadow-form", durationSeconds: 13 }],
   },
+  {
+    id: "assassin.mirrored-stance",
+    name: "Mirrored Stance",
+    gwId: 816,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...35 seconds, whenever target foe enters a stance, you enter
+    // the same stance" (#1965): 30.
+    effects: [{ kind: "apply-status", statusId: "mirrored-stance", durationSeconds: 30 }],
+  },
 ];

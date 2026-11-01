@@ -1,5 +1,6 @@
 import { AREA_IN_THE_AREA, RANGE_SPELL, RANGE_SPIRIT } from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
+import { mimickedElite } from "../../skills/stand-in.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
 import { swingProgress } from "../../skills/weapon-attack.js";
@@ -14,6 +15,7 @@ import type { Participant } from "../simulation.js";
 import {
   botUses,
   copiedOffFoe,
+  mirrorsStance,
   interruptAimed,
   onlyInterrupts,
   removedCategories,
@@ -55,6 +57,9 @@ const HURT_FRACTION = 0.6;
 
 /** Below this share of its lifetime left, a spirit of a bot's own is worth renewing (#1947). */
 const RENEW_FRACTION = 0.25;
+
+/** At this Health or less, a bot takes no foe's spirit (#1965): Signet of Binding costs up to 200. */
+const BIND_HEALTH_FLOOR = 200;
 
 /** Below this share of its own health, a bot with a foe at hand steps away (#1930). */
 const ESCAPE_FRACTION = 0.5;
@@ -369,19 +374,43 @@ function think(
     }
   }
 
+  // 4c. Take a foe's spirit in reach (#1965), as Signet of Binding, with
+  // Health to spare for its price.
+  const binds = bar.filter((skill) => skill.target === "enemy-spirit");
+  if (binds.length > 0 && self.combatant.health > BIND_HEALTH_FLOOR) {
+    const theirs = context.participants.filter(
+      ({ combatant, creature, position }) =>
+        creature?.kind === "spirit" &&
+        creature.ownerId !== undefined &&
+        combatant.team !== team &&
+        !combatant.dead &&
+        distance(position, self.position) <= RANGE_SPELL,
+    );
+    for (const spirit of nearestFirst(theirs)) {
+      const skill = binds.find((held) => mayUse(held, spirit.id));
+      if (skill !== undefined) {
+        return use(skill, spirit.id);
+      }
+    }
+  }
+
   if (targetId !== undefined) {
     // 5. Offence, in bar order. A copier only at a foe with what it
-    // takes (#1928): Inspired Enchantment at an enchanted one.
+    // takes (#1928): Inspired Enchantment at an enchanted one. Mirrored
+    // Stance only at a foe with a stance to use (#1965).
     const foe = context.participants.find((other) => other.id === targetId)?.combatant;
     const copies = (held: Skill): boolean => {
       const category = copiedOffFoe(held);
       return category === undefined || (foe?.statuses.countByCategory(category) ?? 0) > 0;
     };
+    const hasStance =
+      foe?.skillBar.some((id) => id !== null && getSkill(id)?.type === "stance") ?? false;
     const skill = bar.find(
       (held) =>
         botUses(held).includes("offence") &&
         !onlyInterrupts(held) &&
         copies(held) &&
+        (hasStance || !mirrorsStance(held)) &&
         mayUse(held, targetId),
     );
     if (skill !== undefined) {
@@ -389,6 +418,26 @@ function think(
     }
     // 6. The weapon.
     return { ...NOTHING, targetId, attackTargetId: targetId };
+  }
+
+  // 6b. No foe in reach: borrow an ally's elite (#1965), as Arcane
+  // Mimicry, one that is no attack and not on its own bar already.
+  const mimics = bar.filter((skill) =>
+    skill.effects.some((effect) => effect.kind === "copy-elite"),
+  );
+  for (const ally of mimics.length === 0 ? [] : nearestFirst(allies)) {
+    const elite = ally.id === self.id ? undefined : mimickedElite(ally.combatant.skillBar);
+    if (
+      elite === undefined ||
+      getSkill(elite)?.type === "attack" ||
+      self.skillBar.includes(elite)
+    ) {
+      continue;
+    }
+    const skill = mimics.find((held) => mayUse(held, ally.id));
+    if (skill !== undefined) {
+      return use(skill, ally.id);
+    }
   }
 
   // 7. Nothing to fight in reach: walk to the nearest foe, whatever the
