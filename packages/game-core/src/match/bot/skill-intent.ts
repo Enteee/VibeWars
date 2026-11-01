@@ -1,9 +1,20 @@
 import type { DamageType } from "../../equipment/types.js";
 import { isCompanionRule } from "../../skills/activation.js";
-import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
+import {
+  interruptLands,
+  isStateCondition,
+  sacrificedHealth,
+  stateHolds,
+} from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
-import { getStatusDefinition, type StatusCategory, type StatusId } from "../../skills/status.js";
+import { statAtTwelve } from "../../skills/scaling.js";
+import {
+  getStatusDefinition,
+  type StatusCategory,
+  type StatusDefinition,
+  type StatusId,
+} from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -18,8 +29,9 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, raising the dead, a way out (#1930), a setup (#1975) and
- * minion care (#1986), which is that alone.
+ * skill, raising the dead, a way out (#1930), a buff that only makes
+ * attacks hit harder (#2000), a setup (#1975) and minion care (#1986),
+ * which is that alone.
  */
 export type BotUse =
   | "interrupt"
@@ -28,6 +40,7 @@ export type BotUse =
   | "escape"
   | "removal"
   | "resurrect"
+  | "boost"
   | "offence"
   | "setup"
   | "minion-care";
@@ -70,6 +83,7 @@ export function botUses(skill: Skill): readonly BotUse[] {
   ) {
     uses.push("offence");
   }
+  if (uses.length === 0 && boosts(skill)) uses.push("boost");
   return uses;
 }
 
@@ -141,6 +155,87 @@ export function wardsTouch(skill: Skill): boolean {
         effect.kind === "apply-status" &&
         getStatusDefinition(effect.statusId).failsFoeTouchSkills !== undefined,
     )
+  );
+}
+
+/**
+ * A buff for the side's attacks and nothing else (#2000): Order of Pain's,
+ * Order of the Vampire's (#1979), "For Great Justice!"'s. Cast on the
+ * caster alone, its party, or an area round it that takes it in, with a
+ * status that acts on its bearer's attacks. A glyph, an attunement or a
+ * run is none: what it does is no blow's.
+ */
+function boosts(skill: Skill): boolean {
+  const area = skill.area;
+  const ours =
+    area === undefined ||
+    area.origin === "party" ||
+    (area.origin === "caster" && area.includesCaster && area.affects !== "enemies");
+  return (
+    skill.target === "self" &&
+    ours &&
+    skill.effects.some(
+      (effect) =>
+        effect.kind === "apply-status" && actsOnAttacks(getStatusDefinition(effect.statusId)),
+    )
+  );
+}
+
+/**
+ * Whether `status` makes its bearer's attacks worth more (#2000): more on
+ * a hit, more adrenaline, faster, more often critical or through more
+ * armor, a rider on its next attack skill, or a trigger on its attacking.
+ */
+function actsOnAttacks(status: StatusDefinition): boolean {
+  return (
+    status.onAttackHit !== undefined ||
+    status.extraStrikesPerHit > 0 ||
+    status.attackDamageDelta > 0 ||
+    statAtTwelve(status.attackDurationMultiplier) < 1 ||
+    status.criticalChanceBonus > 0 ||
+    status.attackArmorPenetration > 0 ||
+    status.nextAttackSkill !== undefined ||
+    status.triggers.some(({ on }) => on === "bearer-attacks" || on === "bearer-hits")
+  );
+}
+
+/**
+ * Whether `skill`'s boost does `member` any good (#2000). A rider on its
+ * hits whose every effect waits on a state of the attacker's, as Order of
+ * the Vampire's "not under another Necromancer enchantment", counts only
+ * while that state holds for `member`; one on the foe hit may hold.
+ */
+export function boostsMember(skill: Skill, member: Combatant): boolean {
+  return skill.effects.some((effect) => {
+    if (effect.kind !== "apply-status") {
+      return false;
+    }
+    const status = getStatusDefinition(effect.statusId);
+    const rider = status.onAttackHit;
+    if (rider === undefined || actsOnAttacks({ ...status, onAttackHit: undefined })) {
+      return actsOnAttacks(status);
+    }
+    return rider.effects.some(
+      (hit) =>
+        hit.kind !== "if" ||
+        !isStateCondition(hit.condition) ||
+        !hit.condition.kind.startsWith("caster-") ||
+        stateHolds(hit.condition, member, member, new Map()),
+    );
+  });
+}
+
+/**
+ * The share of its max Health `skill` costs `caster` (#2000): Order of
+ * Pain's 17%, more under Awaken the Blood.
+ */
+export function sacrificedFraction(skill: Skill, caster: Combatant): number {
+  return skill.effects.reduce(
+    (sum, effect) =>
+      effect.kind === "sacrifice-health"
+        ? sum + sacrificedHealth(caster, effect.percentOfMax) / caster.maxHealth
+        : sum,
+    0,
   );
 }
 

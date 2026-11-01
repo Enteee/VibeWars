@@ -11,3 +11,4 @@ page in this directory is listed here exactly once.
 - [Modes](modes.md)
 - [Bots](bots.md)
 - [Glossary](glossary.md)
+- [Support VibeWars](support.md)
