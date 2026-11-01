@@ -270,7 +270,7 @@ than its 0.2 s lookahead. Those are the gaps a player hears.
 - **`latencyHint: "playback"`.** The music has a context of its own,
   with a bigger output buffer (base 10 → 23 ms, output 32 → 72 ms here),
   so a busy phone's audio thread is less likely to run dry. The sound
-  effects keep theirs.
+  effects keep theirs. §12 asks for 0.5 s instead.
 - **The music stops while the page is hidden.** Its context is suspended
   on `visibilitychange` and resumed on return. That is a deliberate change
   from measurement 3, where a hidden tab played on: a phone may freeze a
@@ -478,6 +478,56 @@ track is wet only on orbit 2 (`MUSIC_ROOMS`). A bus reverb would cost the
 same convolution and lose each voice's own wet level. A shorter impulse
 response or a lower `MAX_DSP_COST` is the next lever, and a card of its
 own if the crackle is still heard.
+
+### 12. A big output buffer (#2023)
+
+The music context asks for `latencyHint: MUSIC_LATENCY_SECONDS` (0.5 s,
+`host/engine.ts`) instead of `"playback"`. Music needs no low latency, and
+every bit of buffer is slack for an audio thread the OS schedules late.
+The sound effects keep their own context at the default latency.
+
+What each browser grants, read from the music host with
+`scripts/music-stress.mjs --latency-hint <hint>` (Playwright builds,
+PulseAudio null sink, base / output latency in ms):
+
+| Hint       | Chromium 155 | Firefox 155 |
+| ---------- | -----------: | ----------: |
+| `playback` |     23 / 112 |   0 / 21–29 |
+| 0.2        |    186 / 504 |   0 / 21–24 |
+| 0.5        |    186 / 552 |   0 / 19–26 |
+| 1.0        |    186 / 512 |   0 / 16–33 |
+
+Chromium grants one big step, an 8192-frame render buffer, for any
+numeric hint from 0.2 up. **Firefox ignores the hint**: its base latency
+reads 0 and its output latency stays at 13 to 46 ms whatever is asked,
+the spread between runs being larger than between hints. The #1991
+table again, Firefox, underrun ms over 30 s, `"playback"` → 0.5:
+
+| Load            | Intensity 0 | Intensity 2 |
+| --------------- | ----------- | ----------- |
+| menu, no stress | 280 → 99    | 198 → 103   |
+| no stress       | 95 → 60     | 73 → 98     |
+| stress=40       | 83 → 174    | 114 → 195   |
+| audiostress 1.5 | 444 → 681   | 886 → 209   |
+| audiostress 2.5 | 1901 → 3052 | 2733 → 3968 |
+
+Noise, both ways, as in §11; dropped events were 0 in every run. The
+change stays: it helps Chromium, and a phone's Chromium most of all.
+Firefox's crackle needs the next lever, pre-rendered music.
+
+Two things move with it in Chromium:
+
+- **Edit latency.** `--reactivity` at CPU 4×, menu: `evaluate` heard
+  after 0.94 s → 1.12 s on the audio clock. Heard at the speaker, add the
+  output latency: about 1.0 s → 1.7 s, of which the buffer is +0.45 s and
+  the rest a throttled tick's run-to-run spread. Intensity changes move
+  the same way.
+- **Chromium's underrun probe misreads.** With the big buffer,
+  `getOutputTimestamp().performanceTime` jumps by seconds between
+  readings, backwards too, while `currentTime` keeps pace with the wall
+  clock to 1 %. The probe (`host/underruns.ts`) reads that as underruns
+  of seconds: 7 to 65 s "lost" in runs whose audio clock lost none. Chromium's
+  `underrunMs` is unvalidated anyway (§8); it now says nothing at all.
 
 ## The scheduler works ahead
 

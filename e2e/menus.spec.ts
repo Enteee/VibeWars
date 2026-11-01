@@ -283,9 +283,9 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   // Random Arena only chooses: nothing to edit there.
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Record is Random Arena's own button in the top bar; Options is its ⚙ (#1272), Music its ♪ (#1453).
+  // Random Arena has no button of its own (#2019); Options is its ⚙ (#1272), Music its ♪ (#1453).
   const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
-  await expect(own).toHaveText(["Record"]);
+  await expect(own).toHaveCount(0);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
 
@@ -298,31 +298,15 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   await expect(starter).toHaveClass(/is-selected/);
 });
 
-test("#1272: on a phone, the menu's ⋯ holds Record and the chevron is Back", async ({ page }) => {
+test("#2019: on a phone, Random Arena has no ⋯ and keeps the global icons on screen", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await openMenu(page);
-  const more = page.locator("#topbar .topbar-more");
-  const record = page
-    .locator("#topbar .topbar-screen-actions")
-    .getByRole("button", { name: "Record", exact: true });
-
-  // Folded away until ⋯ opens; the global icons with them.
-  await expect(record).toBeHidden();
-  await expect(page.locator("#topbar .topbar-options")).toBeHidden();
-  await more.click();
-  await expect(more).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator("#topbar .topbar-options")).toBeVisible();
-  await record.click();
-  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
-  await expect(more).toHaveAttribute("aria-expanded", "false");
-
-  // Only the place shows, not the crumbs before it.
-  await expect(page.locator("#topbar .topbar-crumb", { hasText: "VibeWars" })).toBeHidden();
-
-  const back = page.locator("#topbar").getByRole("button", { name: "Back", exact: true });
-  await expect(back).toHaveText("‹", { useInnerText: true });
-  await back.click();
-  await expect(menuHeading(page)).toBeVisible();
+  const bar = page.locator("#topbar");
+  await expect(bar.getByRole("button", { name: "Record", exact: true })).toHaveCount(0);
+  await expect(bar.locator(".topbar-more")).toBeHidden();
+  await expect(bar.locator(".topbar-options")).toBeVisible();
 });
 
 test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the global icons on screen", async ({

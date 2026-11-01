@@ -1,13 +1,10 @@
 import {
   CHARACTER_SCHEMA_VERSION,
-  MATCH_RECORD_SCHEMA_VERSION,
   TEAM_SCHEMA_VERSION,
   PersistenceError,
   isStoredCharacter,
-  isStoredMatchRecord,
   isStoredTeam,
   type StoredCharacter,
-  type StoredMatchRecord,
   type StoredTeam,
 } from "./schema.js";
 import { STORAGE_NAMESPACE } from "./namespace.js";
@@ -16,19 +13,17 @@ import { STORAGE_NAMESPACE } from "./namespace.js";
  * Typed repositories over IndexedDB (ADR-0005).
  *
  * Deliberately a handful of get/put/list/delete functions rather than a
- * generic ORM: there are exactly three entity types, and a thin typed layer
+ * generic ORM: there are exactly two entity types, and a thin typed layer
  * is easier to reason about than a framework's abstractions (brief §30,
  * "do not over-engineer simple things").
  */
 
 const DB_NAME = STORAGE_NAMESPACE;
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const CHARACTER_STORE = "characters";
 const TEAM_STORE = "teams";
+/** Match records lived here until #2019: a store left from then is deleted on open. */
 const MATCH_STORE = "matches";
-
-/** The most match records kept, across all characters (#1404): a save past it drops the oldest. */
-export const MATCH_RECORD_CAP = 200;
 
 /** The notice shown when `count` stale characters were discarded. */
 export function discardedCharactersNotice(count: number): string {
@@ -42,13 +37,6 @@ export function discardedTeamsNotice(count: number): string {
   return count === 1
     ? "A saved team from an older build of the game could not be read and was discarded."
     : `${String(count)} saved teams from an older build of the game could not be read and were discarded.`;
-}
-
-/** The notice shown when `count` stale match records were discarded. */
-export function discardedMatchRecordsNotice(count: number): string {
-  return count === 1
-    ? "A recorded match from an older build of the game could not be read and was discarded."
-    : `${String(count)} recorded matches from an older build of the game could not be read and were discarded.`;
 }
 
 /**
@@ -116,8 +104,8 @@ export function openIndexedDbStore(onBlocked: () => void): Promise<KeyValueStore
       if (!db.objectStoreNames.contains(TEAM_STORE)) {
         db.createObjectStore(TEAM_STORE);
       }
-      if (!db.objectStoreNames.contains(MATCH_STORE)) {
-        db.createObjectStore(MATCH_STORE);
+      if (db.objectStoreNames.contains(MATCH_STORE)) {
+        db.deleteObjectStore(MATCH_STORE);
       }
     };
 
@@ -317,53 +305,5 @@ export class TeamRepository {
 
   public async delete(id: string): Promise<void> {
     await this.#store.delete(TEAM_STORE, id);
-  }
-}
-
-/** Finished matches, kept in this browser only (#1404). */
-export class MatchRecordRepository {
-  readonly #store: KeyValueStore;
-
-  public constructor(store: KeyValueStore) {
-    this.#store = store;
-  }
-
-  /** Saves `record`, then drops the oldest past `MATCH_RECORD_CAP`. */
-  public async save(record: StoredMatchRecord): Promise<void> {
-    if (record.schemaVersion !== MATCH_RECORD_SCHEMA_VERSION) {
-      throw new PersistenceError(
-        `refusing to save a record with schema ${String(record.schemaVersion)}`,
-      );
-    }
-    await this.#store.put(MATCH_STORE, record.id, record);
-    // Stale records are left for `list` to discard, and to report.
-    const current = (await this.#store.list(MATCH_STORE)).flatMap(({ value }) =>
-      isStoredMatchRecord(value) ? [value] : [],
-    );
-    current.sort((a, b) => b.finishedAt - a.finishedAt);
-    for (const old of current.slice(MATCH_RECORD_CAP)) {
-      await this.#store.delete(MATCH_STORE, old.id);
-    }
-  }
-
-  /** Every recorded match, newest first. Stale records are discarded and reported. */
-  public async list(): Promise<{ records: StoredMatchRecord[]; problems: string[] }> {
-    const { records, problems } = await listCurrent(
-      this.#store,
-      MATCH_STORE,
-      isStoredMatchRecord,
-      discardedMatchRecordsNotice,
-    );
-    records.sort((a, b) => b.finishedAt - a.finishedAt);
-    return { records, problems };
-  }
-
-  /** Deletes every match `characterId` played, as its character is deleted. */
-  public async deleteFor(characterId: string): Promise<void> {
-    for (const { key, value } of await this.#store.list(MATCH_STORE)) {
-      if (isStoredMatchRecord(value) && value.characterId === characterId) {
-        await this.#store.delete(MATCH_STORE, key);
-      }
-    }
   }
 }

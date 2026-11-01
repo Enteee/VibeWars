@@ -9,7 +9,7 @@ import type {
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, mapMode, modeMapIds } from "./net/maps.js";
+import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -49,7 +49,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
-import { startMatchView, type MatchOutcome, type MatchView } from "./match-view.js";
+import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
@@ -58,14 +58,12 @@ import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
   BLOCKED_NOTICE,
   CharacterRepository,
-  MatchRecordRepository,
   TeamRepository,
   createMemoryStore,
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
 import { cloneCharacter } from "./storage/clone-character.js";
-import { matchRecordFrom, tally, type Tally } from "./storage/match-record.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
@@ -110,7 +108,6 @@ import {
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
 import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
-import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
@@ -255,8 +252,6 @@ interface Entrant {
   readonly build: PlayerBuild | undefined;
   /** How the lobby lists it (#580). */
   readonly character: LobbyCharacter | null;
-  /** Whose record its matches go on (#1404); `undefined` for a starter build. */
-  readonly characterId: string | undefined;
   /** The menu's guild tag (#1406) if it is a valid one, and its cape (#1422). */
   readonly guild: Guild;
 }
@@ -308,7 +303,6 @@ async function main(): Promise<void> {
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
-  const records = new MatchRecordRepository(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
   if (persistent) {
@@ -683,7 +677,6 @@ async function main(): Promise<void> {
       build,
       guild: playerGuild(),
       character,
-      characterId: character === null ? undefined : id,
     };
   };
 
@@ -735,10 +728,7 @@ async function main(): Promise<void> {
       return;
     }
     void (async () => {
-      const [{ characters: list, problems }, played] = await Promise.all([
-        characters.list(),
-        records.list(),
-      ]);
+      const { characters: list, problems } = await characters.list();
       // Host, Join or Random Arena clicked on the old menu while this
       // awaited (#1513): that screen has it now, so draw nothing over it.
       if (!turn()) {
@@ -748,12 +738,7 @@ async function main(): Promise<void> {
       // the card it was on keeps the focus (#1526).
       const cardsBefore = [...screenRoot.querySelectorAll<HTMLElement>(".play-card-open")];
       const focused = cardsBefore.findIndex((card) => card === document.activeElement);
-      renderMenuWith(
-        entry,
-        list,
-        [...problems, ...played.problems, ...notices.draw(entry)],
-        tally(played.records),
-      );
+      renderMenuWith(entry, list, [...problems, ...notices.draw(entry)]);
       if (focused !== -1) {
         screenRoot.querySelectorAll<HTMLElement>(".play-card-open")[focused]?.focus();
       }
@@ -774,19 +759,11 @@ async function main(): Promise<void> {
     showMenu();
   };
 
-  const showRecord = async (): Promise<void> => {
-    leaveScreen();
-    music().menu("record");
-    const { records: played, problems } = await records.list();
-    renderRecordScreen(screenRoot, played, problems, { onBack: showMenu });
-  };
-
   /** Random Arena or Character Builder (#1525), with `list`. */
   const renderMenuWith = (
     entry: "random-arena" | "characters",
     list: readonly StoredCharacter[],
     problems: readonly string[] = [],
-    tallies: ReadonlyMap<string, Tally> = new Map(),
   ): void => {
     (entry === "random-arena" ? renderRandomArena : renderCharacterBuilder)(
       screenRoot,
@@ -795,9 +772,6 @@ async function main(): Promise<void> {
           void enterRandomArena(mode, name);
         },
         onSwitch: switchTo,
-        onShowRecord: () => {
-          void showRecord();
-        },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
         },
@@ -853,7 +827,7 @@ async function main(): Promise<void> {
         // highlighted row matches what was just picked, without a round
         // trip to storage for a list we already hold.
         onSelectCharacter: () => {
-          renderMenuWith(entry, list, problems, tallies);
+          renderMenuWith(entry, list, problems);
           // The lobby lists, and plays, the one picked (#1526).
           void refreshEntrant();
         },
@@ -861,7 +835,6 @@ async function main(): Promise<void> {
       list,
       problems,
       menuNotice,
-      tallies,
     );
   };
 
@@ -874,10 +847,6 @@ async function main(): Promise<void> {
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
-          // Its record goes with it (#1404); a failure leaves orphans, which no roster tallies.
-          await records.deleteFor(id).catch((error: unknown) => {
-            console.warn("[web] could not delete the character's record", error);
-          });
           back();
         })();
       },
@@ -2203,29 +2172,6 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Keeps a finished match on `entrant`'s character's record (#1404). A
-   * starter build has none. Saving is a convenience: a failure is only logged.
-   */
-  const recordMatch = (outcome: MatchOutcome, mapId: string, entrant: Entrant): void => {
-    if (entrant.characterId === undefined || entrant.character === null) {
-      return;
-    }
-    const record = matchRecordFrom(outcome, {
-      id: crypto.randomUUID(),
-      characterId: entrant.characterId,
-      characterName: entrant.character.name,
-      mapId,
-      mode: mapMode(mapId),
-      finishedAt: Date.now(),
-    });
-    if (record !== undefined) {
-      records.save(record).catch((error: unknown) => {
-        console.warn("[web] could not record the match", error);
-      });
-    }
-  };
-
-  /**
    * Watch the lobby's match from no team (#480), 10 s late, with nothing
    * to act with. Leaving, or its end, is back to the lobby; the match
    * goes on without the watcher either way.
@@ -2302,9 +2248,7 @@ async function main(): Promise<void> {
           onLeave: () => {
             void exitMatch();
           },
-          // Every lobby match, coded or queued, goes on the record (#1404).
           onFinished: (finished) => {
-            recordMatch(finished, start.mapId, entrant);
             const team = teamQueue?.parked === undefined ? undefined : teamQueue;
             if (team !== undefined) {
               team.finished = true;

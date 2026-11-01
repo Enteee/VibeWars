@@ -106,6 +106,12 @@ export {
 export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
 export { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
 export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";
+export {
+  STARTER_TEAMS,
+  pickStarterTeam,
+  type StarterTeam,
+  type StarterTeamMember,
+} from "./starter-teams.js";
 export { FIRST_NAMES, SURNAMES, randomCharacterName } from "./character-names.js";
 
 export * from "./skills/index.js";

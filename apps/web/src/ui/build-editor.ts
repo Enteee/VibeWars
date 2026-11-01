@@ -116,7 +116,12 @@ import {
   missingFromCatalog,
   skillTypesOf,
 } from "./skill-library.js";
-import { createSkillTooltip, renderSkillDescription, type SkillTooltip } from "./skill-tooltip.js";
+import {
+  appendParts,
+  createSkillTooltip,
+  renderSkillDescription,
+  type SkillTooltip,
+} from "./skill-tooltip.js";
 import {
   button,
   h,
@@ -817,6 +822,11 @@ interface EditorContext {
   readonly notice: () => string | undefined;
   /** One tooltip for the whole editor. */
   readonly tooltip: SkillTooltip;
+  /**
+   * Show the tooltip at `anchor`, with what `describe` says now; a change
+   * to the character redraws it in place from `describe` again (#1932).
+   */
+  readonly showTip: (anchor: HTMLElement, describe: () => SkillDescription | undefined) => void;
   /** The bar slot picked for the next equip (#564), if any. */
   readonly selected: () => number | undefined;
   /** Pick a bar slot, or none; every region shows it. */
@@ -856,6 +866,30 @@ export interface BuildEditorView {
  * or a hover survives a change made elsewhere. Reopening starts afresh:
  * the skills tab, an empty search.
  */
+/** What the editor's tooltip shows a skill for: where, and how to describe it again. */
+export interface TippedSkill {
+  readonly anchor: Pick<HTMLElement, "isConnected">;
+  readonly describe: () => SkillDescription | undefined;
+}
+
+/**
+ * After a change to the character, an open tooltip follows it at its new
+ * numbers (#1932), unless its anchor is gone or its slot emptied: then it
+ * hides. What it shows afterwards, if anything.
+ */
+export function followTip(
+  tooltip: Pick<SkillTooltip, "update" | "hide">,
+  tipped: TippedSkill | undefined,
+): TippedSkill | undefined {
+  const described = tipped?.anchor.isConnected === true ? tipped.describe() : undefined;
+  if (described === undefined) {
+    tooltip.hide();
+    return undefined;
+  }
+  tooltip.update(described);
+  return tipped;
+}
+
 export function mountBuildEditor(
   root: HTMLElement,
   initial: StoredCharacter,
@@ -918,6 +952,8 @@ export function mountBuildEditor(
     dismissUndo = undefined;
   };
 
+  // What the tooltip last showed a description of, to redraw on a change.
+  let tipped: TippedSkill | undefined;
   const commit = (next: StoredCharacter, said: string | undefined): void => {
     dropUndo();
     // Another profession is another bar to build: the picks go.
@@ -930,8 +966,8 @@ export function mountBuildEditor(
     }
     character = next;
     notice = said;
-    tooltip.hide();
     update();
+    tipped = followTip(tooltip, tipped);
     training?.refocus();
   };
 
@@ -958,6 +994,13 @@ export function mountBuildEditor(
     },
     notice: () => notice,
     tooltip,
+    showTip: (anchor, describe) => {
+      const described = describe();
+      if (described !== undefined) {
+        tipped = { anchor, describe };
+        tooltip.show(anchor, described);
+      }
+    },
     selected: () => selected,
     select: (slot) => {
       selected = slot;
@@ -1696,10 +1739,7 @@ function mountSkillBar(panel: HTMLElement, context: EditorContext): Region {
       event.dataTransfer?.setData("text/plain", encodeDragSource({ from: "slot", slot }));
     });
     cell.addEventListener("mouseenter", () => {
-      const description = described.get(slot);
-      if (description !== undefined) {
-        tooltip.show(cell, description);
-      }
+      context.showTip(cell, () => described.get(slot));
     });
     cell.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2055,7 +2095,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     // The hover tooltip stays beside the inline details (#549 Q3), as in
     // GW1's skill window.
     box.addEventListener("mouseenter", () => {
-      tooltip.show(box, describeSkill(skill, characterRanks(context.current())));
+      context.showTip(box, () => describeSkill(skill, characterRanks(context.current())));
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2088,7 +2128,7 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     details.hidden = true;
     box.appendChild(details);
     box.addEventListener("mouseenter", () => {
-      tooltip.show(box, describeSkill(skill, characterRanks(context.current())));
+      context.showTip(box, () => describeSkill(skill, characterRanks(context.current())));
     });
     box.addEventListener("mouseleave", () => {
       tooltip.hide();
@@ -2137,10 +2177,11 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
     if (cost !== null && cost.textContent !== description.cost) {
       cost.textContent = description.cost;
     }
-    const headline = box.querySelector(".skill-box-headline");
+    const headline = box.querySelector<HTMLElement>(".skill-box-headline");
     const headlineText = description.headline ?? "";
     if (headline !== null && headline.textContent !== headlineText) {
-      headline.textContent = headlineText;
+      headline.replaceChildren();
+      appendParts(headline, description.headlineParts ?? []);
     }
     const isOpen = open === skill.id;
     box.classList.toggle("is-open", isOpen);

@@ -17,6 +17,9 @@
   --adrenaline-shade: rgb(0 0 0 / 65%);
   /* An elite skill's frame (#459). */
   --elite: #d4a72c;
+  /* A number an attribute scales, in skill text (#1932): GW1's green, on
+     the dark panels. A light theme must redefine it. */
+  --scaled: #7ee787;
   /* Enchantment markers (art direction palette). */
   --enchantment: #56d4dd;
   /* A shrine raise's invulnerability (art direction palette, #1233). */
@@ -1400,29 +1403,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-}
-
-/* The Record screen (#1404): the last matches, one row each. */
-.record-table {
-  border-collapse: collapse;
-}
-
-.record-table th,
-.record-table td {
-  padding: 0.2rem 0.75rem 0.2rem 0;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.record-table th {
-  color: var(--ink-dim);
-  font-weight: normal;
-  border-bottom: 1px solid var(--line);
-}
-
-.record-table td {
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
 }
 
 /* The menu's rail screens (#1525, #1522 variant C): the mode rail down the
@@ -4645,8 +4625,10 @@ body.has-expanded-training #screens {
   line-height: 1.35;
 }
 
-.tip-scale {
-  color: var(--ink-dim);
+/* Bold as well as green, so it never relies on colour alone (#78). */
+.scaled-number {
+  color: var(--scaled);
+  font-weight: 700;
 }
 
 .tip-stats {
