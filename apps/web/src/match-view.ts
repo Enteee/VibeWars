@@ -39,7 +39,6 @@ import { music } from "./music/play-music.js";
 import { TRACKS } from "./music/tracks/index.js";
 import {
   ACTOR_RADIUS,
-  CREATURE_RADIUS,
   withCalls,
   withNames,
   teamColour,
@@ -48,6 +47,8 @@ import {
   type RenderableWall,
 } from "./render/arena-snapshot.js";
 import { attackCastOf } from "./render/attack-clock.js";
+import { CREATURE_ARMS } from "./render/creature-arms.js";
+import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import { conditionCues } from "./render/body-conditions.js";
 import { bodyFlags } from "./render/body-rings.js";
 import { capeLook } from "./render/cape-shape.js";
@@ -287,14 +288,24 @@ export function toArenaSnapshot(
         bot: player.bot,
         position: { x: player.x, y: player.y },
         facing: player.facing,
-        weaponId: player.weaponId,
+        // A creature carries what its look is armed with (#2047), or nothing.
+        weaponId:
+          player.creature === undefined
+            ? player.weaponId
+            : CREATURE_ARMS[player.creature.look]?.weapon,
         swingElapsed: player.swingElapsed,
         swingTotal: player.swingTotal,
         attackCast: attackCastOf(player.castingSkillId, player.castRemaining, player.castTotal),
-        offhandId: player.offhandId,
+        offhandId:
+          player.creature === undefined
+            ? player.offhandId
+            : CREATURE_ARMS[player.creature.look]?.offHand,
         profession: player.primaryProfession,
         creatureLook: player.creature?.look,
-        radius: player.creature === undefined ? ACTOR_RADIUS : CREATURE_RADIUS,
+        radius:
+          player.creature === undefined
+            ? ACTOR_RADIUS
+            : CREATURE_DRAWN_RADIUS[player.creature.look],
         team:
           player.sessionId === match.selfSessionId
             ? ("self" as const)
