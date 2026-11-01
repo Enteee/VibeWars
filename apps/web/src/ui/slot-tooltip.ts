@@ -42,6 +42,11 @@ export interface SlotTooltips {
    * skill that was there, or hangs off a button no longer on the page.
    */
   repainted(slots: readonly number[]): void;
+  /**
+   * A step went by: re-read the shown tooltip, so a cost the host changed
+   * under it, as Primal Echoes does a signet's (#1920), shows at once.
+   */
+  refresh(): void;
   dispose(): void;
 }
 
@@ -51,11 +56,15 @@ export function createSlotTooltips(): SlotTooltips {
   let timer: ReturnType<typeof setTimeout> | undefined;
   // The slot whose tooltip is up, or waiting out the delay.
   let current: number | undefined;
+  // The tooltip that is up: what it reads, and what it last said.
+  let shown:
+    { button: HTMLElement; read: () => SkillDescription | undefined; said: string } | undefined;
 
   const hide = (): void => {
     clearTimeout(timer);
     timer = undefined;
     current = undefined;
+    shown = undefined;
     tooltip?.hide();
   };
 
@@ -66,11 +75,18 @@ export function createSlotTooltips(): SlotTooltips {
         current = slot;
         timer = setTimeout(() => {
           timer = undefined;
-          const held = holding();
-          const skill = held === null ? undefined : getSkill(held.id);
-          if (held !== null && skill !== undefined && button.isConnected) {
+          const read = (): SkillDescription | undefined => {
+            const held = holding();
+            const skill = held === null ? undefined : getSkill(held.id);
+            return held === null || skill === undefined
+              ? undefined
+              : slotDescription(skill, held, ranks(), now());
+          };
+          const description = read();
+          if (description !== undefined && button.isConnected) {
             tooltip ??= createSkillTooltip("above");
-            tooltip.show(button, slotDescription(skill, held, ranks(), now()));
+            tooltip.show(button, description);
+            shown = { button, read, said: JSON.stringify(description) };
           }
         }, SLOT_TOOLTIP_DELAY_MS);
       };
@@ -89,6 +105,22 @@ export function createSlotTooltips(): SlotTooltips {
     repainted(slots) {
       if (current !== undefined && slots.includes(current)) {
         hide();
+      }
+    },
+    refresh() {
+      if (shown === undefined) {
+        return;
+      }
+      const description = shown.read();
+      if (description === undefined || !shown.button.isConnected) {
+        hide();
+        return;
+      }
+      // Drawn again only when it says something new, not every step.
+      const said = JSON.stringify(description);
+      if (said !== shown.said) {
+        shown.said = said;
+        tooltip?.show(shown.button, description);
       }
     },
     dispose() {
@@ -117,9 +149,11 @@ export function slotDescription(
     echoed === undefined
       ? described
       : { ...described, effects: [...described.effects, { text: echoed, magnitude: undefined }] };
-  if (skill.cost?.kind !== "energy") {
+  // A signet under Primal Echoes (#1886) costs Energy it does not list.
+  const listed = skill.cost?.kind === "energy" ? skill.cost.amount : undefined;
+  if (listed === undefined && slot.energyCost === 0) {
     return description;
   }
-  const base = slot.energyCost === skill.cost.amount ? "" : ` (${String(skill.cost.amount)})`;
+  const base = listed === undefined || slot.energyCost === listed ? "" : ` (${String(listed)})`;
   return { ...description, cost: `${String(slot.energyCost)} energy${base}${overcastText(skill)}` };
 }

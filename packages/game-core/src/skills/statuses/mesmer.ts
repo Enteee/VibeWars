@@ -40,7 +40,17 @@ export type MesmerStatusId =
   | "wandering-eye"
   | "illusion-of-weakness"
   // "N for each X" (#1760).
-  | "channeling";
+  | "channeling"
+  // Caster staples (#1870).
+  | "ethereal-burden"
+  | "sum-of-all-fears"
+  // Caster staples 2 (#1872).
+  | "elemental-resistance"
+  | "physical-resistance"
+  // Casting-state hexes (#1931).
+  | "power-leech"
+  | "power-flux"
+  | "signet-of-illusions";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -582,5 +592,71 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.channeling",
       },
     ],
+  }),
+  // "For 6...11...12 seconds, target foe moves 50% slower. When Ethereal
+  // Burden ends, you gain 10...16...18 Energy" (#1870): the caster, however
+  // it ends, the target dead included.
+  "ethereal-burden": define("ethereal-burden", "Ethereal Burden", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.5,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "energy-gain", amount: { flat: 16 } }],
+        target: "source",
+        skillId: "mesmer.ethereal-burden",
+      },
+    ],
+  }),
+  // "For 4...10...12 seconds, target foe moves, attacks, and casts spells
+  // 33% slower" (#1870).
+  "sum-of-all-fears": define("sum-of-all-fears", "Sum of All Fears", "hex", {
+    profession: "mesmer",
+    moveSpeedMultiplier: 0.67,
+    attackDurationMultiplier: 1.33,
+    castTimeMultiplier: 1.33,
+  }),
+  // "For 30...90 seconds, You gain +40 armor against elemental damage, but
+  // you lose 24...12 armor against physical damage" (#1872): 14 at rank 12.
+  "elemental-resistance": define("elemental-resistance", "Elemental Resistance", "stance", {
+    profession: "mesmer",
+    conditionalArmor: [
+      { amount: 40, conditions: [{ kind: "vs-elemental" }] },
+      { amount: -14, conditions: [{ kind: "vs-physical" }] },
+    ],
+  }),
+  // Its mirror (#1872): +40 against physical, -14 against elemental.
+  "physical-resistance": define("physical-resistance", "Physical Resistance", "stance", {
+    profession: "mesmer",
+    conditionalArmor: [
+      { amount: 40, conditions: [{ kind: "vs-physical" }] },
+      { amount: -14, conditions: [{ kind: "vs-elemental" }] },
+    ],
+  }),
+  // Casting-state hexes (#1931), put on whether or not the skill's
+  // interrupt landed. "For 10 seconds, whenever target foe casts a spell,
+  // you steal up to 5...13...15 Energy": 13, at rank 12.
+  "power-leech": define("power-leech", "Power Leech", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [{ kind: "energy-steal", amount: { flat: 13 } }],
+        target: "bearer",
+        skillId: "mesmer.power-leech",
+      },
+    ],
+  }),
+  // "...target foe suffers -2 Energy degeneration for 4...9...10 seconds."
+  "power-flux": define("power-flux", "Power Flux", "hex", {
+    profession: "mesmer",
+    energyPips: -2,
+  }),
+  // "Your next 1...3...3 non-Illusion spells use your Illusion attribute
+  // instead of its normal attribute" (#1929): no duration, it lasts
+  // until its 3 are spent.
+  "signet-of-illusions": define("signet-of-illusions", "Signet of Illusions", "skill-effect", {
+    profession: "mesmer",
+    borrowsAttribute: { attributeId: "mesmer.illusion-magic", spells: 3 },
   }),
 };

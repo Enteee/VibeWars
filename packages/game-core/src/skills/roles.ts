@@ -30,6 +30,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "heal":
     case "give-health":
     case "steal-from-corpse":
+    case "drain-nearest-spirit":
       return ["healing"];
     case "remove-status":
       // Stripping a foe's enchantment helps no ally: not removal.
@@ -70,6 +71,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "resurrect-companions":
     case "drain-own-energy":
     case "recharge-faster":
+    case "recharge-reset":
     case "recharge-others":
     case "pull-to-caster":
     case "destroy-target-spirit":
@@ -77,6 +79,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "owner-gains-damage-dealt":
     case "destroy-allied-spirits":
     case "disable-skill":
+    case "copy-removed":
+    case "copy-disabled":
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
@@ -137,7 +141,8 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.negatesFatalDamage ||
     status.breaksNextHex !== undefined ||
     status.reflectsAttackDamage !== undefined ||
-    status.incomingHexCastTimeMultiplier > 1
+    status.incomingHexCastTimeMultiplier > 1 ||
+    status.redirectsConditionsToMinion
   ) {
     roles.push("defence");
   }
@@ -174,6 +179,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
               effect.kind === "spread-gained-condition" ||
               effect.kind === "echo" ||
               effect.kind === "cancel-attack" ||
+              effect.kind === "pay-energy-or-end" ||
               (target === "bearer" && isPrice(effect))
                 ? []
                 : [effect],

@@ -61,7 +61,7 @@ export const DERVISH_ICONS = {
   "dervish.guiding-hands": { glyph: "hand-arrow" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "dervish.test-of-faith": { glyph: "hand-bare" },
-  // Own-skill modifiers (#1761), stand-in until its art card.
+  // Own-skill modifiers (#1761, #1855).
   "dervish.extend-enchantments": { glyph: "scythe-stretch" },
   // Ally threshold mechanics (#1789, #1817): a Health bar and the line that answers.
   "dervish.watchful-intervention": { glyph: "eye-bar" },
@@ -69,4 +69,6 @@ export const DERVISH_ICONS = {
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "dervish.arcane-zeal": { glyph: "each-zeal" },
   "dervish.mystic-vigor": { glyph: "each-vigor" },
+  // "Not enchanted" (#1916)
+  "dervish.natural-healing": { glyph: "leaf", modifier: "plus" },
 };

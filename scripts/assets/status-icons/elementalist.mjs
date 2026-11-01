@@ -224,4 +224,33 @@ export const ELEMENTALIST_STATUS_ICONS = {
       `<circle cx="12" cy="12" r="9.5" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
       `<path d="M6 9.5h7M6 14.5h9M17 7v10" ${stroke(c, 2)}/>`,
   ],
+  // Caster staples (#1870), stand-ins until their art card.
+  // Hex: hands of earth closing on a foot, moving slower.
+  "grasping-earth": [
+    "hex",
+    (c) =>
+      `<path d="M4 19h16" ${stroke(c, 2.4)}/>` +
+      `<path d="M7 19V12M10 19V9M14 19V9M17 19V12" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment (#1929), a stand-in until its art card: four elements
+  // held level, at one rank.
+  "master-of-magic": [
+    "enchantment",
+    (c) => `<path d="M12 4l8 8-8 8-8-8z" ${stroke(c, 2)}/>` + `<path d="M8 12h8" ${stroke(c, 2)}/>`,
+  ],
+  // Glyphs (#1941), stand-ins until their art card.
+  // Glyph: a diamond of the four elements with an arrow up, boosted.
+  "glyph-of-elemental-power": [
+    "glyph",
+    (c) =>
+      `<path d="M12 4l8 8-8 8-8-8z" ${stroke(c, 2)}/>` +
+      `<path d="M12 16V9M9 11.5l3-3 3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Glyph: a bolt of energy struck through, cheaper and no Overcast.
+  "glyph-of-energy": [
+    "glyph",
+    (c) =>
+      `<path d="M13 3l-6 10h5l-1 8 6-10h-5z" ${stroke(c, 2)}/>` +
+      `<path d="M4 20L20 4" ${stroke(c, 1.6)}/>`,
+  ],
 };

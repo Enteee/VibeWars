@@ -261,6 +261,48 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     effects: [{ kind: "apply-status", statusId: "glyph-of-essence", durationSeconds: 15 }],
   },
   {
+    id: "elementalist.lava-arrows",
+    name: "Lava Arrows",
+    gwId: 824,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Lava Arrows fly toward up to 3 foes near your target": the target
+    // and two more, found as it leaves, one arrow each (#1914).
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: 3,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // Our own tuning, as GW1 publishes no speeds: Lightning Orb's.
+    projectile: { speed: 1.5 * RANGE_SPELL, spread: true },
+    // "...and strike for 20...65 fire damage if they hit": 56 each.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 56 } },
+        type: "fire",
+        armorPenetration: 0,
+      },
+    ],
+  },
+  {
     id: "elementalist.lightning-orb",
     name: "Lightning Orb",
     gwId: 229,
@@ -1854,7 +1896,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "create-ground-effect",
         anchor: "caster",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 17.6 },
         },
         act: {
           kind: "aura",
@@ -2011,7 +2053,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85.2 },
         },
         type: "earth",
         armorPenetration: 0,
@@ -2113,7 +2155,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "create-ground-effect",
         anchor: "caster",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 17.6 },
         },
         act: {
           kind: "aura",
@@ -2753,7 +2795,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 26, atTwelve: 85.2 },
         },
         type: "earth",
         armorPenetration: 0,
@@ -3132,6 +3174,192 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
           condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
         },
         effects: [{ kind: "apply-status", statusId: "freezing-gust", durationSeconds: 4 }],
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.grasping-earth",
+    name: "Grasping Earth",
+    gwId: 173,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All nearby foes": around the caster.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, all nearby foes move 50% slower": 17 s.
+    effects: [{ kind: "apply-status", statusId: "grasping-earth", durationSeconds: 17 }],
+  },
+  {
+    id: "elementalist.breath-of-fire",
+    name: "Breath of Fire",
+    gwId: 1094,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create Breath of Fire at target foe's current location. For 5
+    // seconds, foes adjacent to that location are struck for 10...34...40
+    // fire damage each second": it stays where the foe stood, as Meteor
+    // Shower's.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 34 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.master-of-magic",
+    name: "Master of Magic",
+    gwId: 1378,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...49...61 seconds, all of your elemental attributes are set to
+    // 8...13...14" (#1929): the status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "master-of-magic", durationSeconds: 49 }],
+  },
+  // Attributes raised (#1941).
+  {
+    id: "elementalist.glyph-of-elemental-power",
+    name: "Glyph of Elemental Power",
+    gwId: 198,
+    type: "glyph",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 25 seconds, your elemental attributes are boosted by 2 for your
+    // next 10 spells" (#1941): the status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "glyph-of-elemental-power", durationSeconds: 25 }],
+  },
+  {
+    id: "elementalist.glyph-of-energy",
+    name: "Glyph of Energy",
+    gwId: 199,
+    type: "glyph",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Your next 1...3 spells do not cause Overcast and cost 10...25 less
+    // Energy to cast. Your elemental attributes are increased by 1...2"
+    // (#1941): no duration, it lasts until its 3 are spent.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "glyph-of-energy",
+        durationSeconds: Number.POSITIVE_INFINITY,
       },
     ],
   },

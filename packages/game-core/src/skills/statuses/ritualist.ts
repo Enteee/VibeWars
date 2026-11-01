@@ -58,7 +58,13 @@ export type RitualistStatusId =
   | "spiritleech-aura"
   // The PvP Communing pair (#1827).
   | "armor-of-unfeeling"
-  | "signet-of-ghostly-might";
+  | "signet-of-ghostly-might"
+  // Caster staples 2 (#1872).
+  | "vital-weapon"
+  // Suppressed while enchanted (#1916).
+  | "brutal-weapon"
+  // Attributes raised (#1941).
+  | "ritual-lord";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -531,6 +537,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     profession: "ritualist",
     whileUnder: {
       categories: ["condition", "hex"],
+      statusIds: [],
       attackDurationMultiplier: 1,
       adrenalineGainFaster: 0,
       healthPips: 5,
@@ -685,4 +692,39 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       destroysBearerOnExpiry: true,
     },
   ),
+  // "Target ally has a Vital Weapon and has +40...175 maximum Health"
+  // (#1872): 148 at rank 12.
+  "vital-weapon": define("vital-weapon", "Vital Weapon", "weapon-spell", {
+    profession: "ritualist",
+    maxHealthBonus: 148,
+  }),
+  // "The bearer's weapon strikes for +5...13...15 damage as long as the
+  // bearer is under no enchantments" (#1916): another weapon spell is no
+  // enchantment, so it never stops itself.
+  "brutal-weapon": define("brutal-weapon", "Brutal Weapon", "weapon-spell", {
+    profession: "ritualist",
+    attackDamageDelta: 13,
+    suppressedWhileUnder: ["enchantment"],
+  }),
+  // "For 5...29...35 seconds, your Ritualist attributes are boosted by
+  // 2...4 for your next skill. If that skill is a binding ritual, it
+  // recharges 10...50...60% faster and Ritual Lord recharges instantly"
+  // (#1941): rank 12. Any other skill spends it to no effect.
+  "ritual-lord": define("ritual-lord", "Ritual Lord", "skill-effect", {
+    profession: "ritualist",
+    attributeDeltas: [{ scope: { profession: "ritualist" }, amount: 4 }],
+    nextSkillRule: {
+      which: "any",
+      uninterruptible: false,
+      unblockable: false,
+      energyDiscount: 0,
+      castsInstantly: false,
+      extraRechargeSeconds: 0,
+      rechargesInstantly: false,
+      losesAllEnergy: false,
+      rechargeFasterIfType: { type: "binding-ritual", fraction: 0.5 },
+      resetsOwnRechargeIfType: "binding-ritual",
+      skillId: "ritualist.ritual-lord",
+    },
+  }),
 };

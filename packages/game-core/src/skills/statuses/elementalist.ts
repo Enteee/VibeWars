@@ -42,7 +42,12 @@ export type ElementalistStatusId =
   | "windborne-speed"
   | "ash-blast"
   // Attribute hexes (#1765).
-  | "freezing-gust";
+  | "freezing-gust"
+  // Caster staples (#1870).
+  | "grasping-earth"
+  | "master-of-magic"
+  | "glyph-of-elemental-power"
+  | "glyph-of-energy";
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -81,7 +86,28 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
   // rank-12 value; Energy Storage scaling waits for #532.
   "glyph-of-lesser-energy": define("glyph-of-lesser-energy", "Glyph of Lesser Energy", "glyph", {
     profession: "elementalist",
-    nextSpells: { count: 2, costReduction: 16 },
+    nextSpells: { count: 2, costReduction: 16, noOvercast: false },
+  }),
+  // "For 25 seconds, your elemental attributes are boosted by 1...2 for
+  // your next 10 spells" (#1941): 2, its rank-12 value. Spent as each
+  // spell starts, as every glyph here; GW1 keeps it on an interrupted one.
+  "glyph-of-elemental-power": define(
+    "glyph-of-elemental-power",
+    "Glyph of Elemental Power",
+    "glyph",
+    {
+      profession: "elementalist",
+      nextSpells: { count: 10, costReduction: 0, noOvercast: false },
+      attributeDeltas: [{ scope: "elemental", amount: 2 }],
+    },
+  ),
+  // "Your next 1...3 spells cost 10...25 less Energy, cause no Overcast,
+  // and your elemental attributes are boosted by 1...2 for those spells"
+  // (#1941): 3, 22 and 2 at rank 12; no duration, as Signet of Illusions.
+  "glyph-of-energy": define("glyph-of-energy", "Glyph of Energy", "glyph", {
+    profession: "elementalist",
+    nextSpells: { count: 3, costReduction: 22, noOvercast: true },
+    attributeDeltas: [{ scope: "elemental", amount: 2 }],
   }),
   // "Your next 1 spells cannot be interrupted" (#1730); "and ignore the
   // effects of being Dazed" waits for Dazed's casting to come.
@@ -96,6 +122,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 0,
       rechargesInstantly: false,
       losesAllEnergy: false,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-concentration",
     },
   }),
@@ -112,6 +140,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 30,
       rechargesInstantly: false,
       losesAllEnergy: false,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-sacrifice",
     },
     endsWhenBearerUsesOtherSkill: true,
@@ -128,6 +158,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 0,
       rechargesInstantly: true,
       losesAllEnergy: false,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-renewal",
     },
   }),
@@ -143,6 +175,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       extraRechargeSeconds: 0,
       rechargesInstantly: false,
       losesAllEnergy: true,
+      rechargeFasterIfType: undefined,
+      resetsOwnRechargeIfType: undefined,
       skillId: "elementalist.glyph-of-essence",
     },
   }),
@@ -307,6 +341,36 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
+  }),
+  // "For 5...17...20 seconds, all nearby foes move 50% slower" (#1870).
+  "grasping-earth": define("grasping-earth", "Grasping Earth", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.earth-magic",
+    moveSpeedMultiplier: 0.5,
+  }),
+  // "For 1...49...61 seconds, all of your elemental attributes are set to
+  // 8...13...14 and your elemental spells return 1 Energy plus 30% of
+  // their Energy cost" (#1929): rank 13, at rank 12, over runes and
+  // Weakness alike; the return as an attunement's.
+  "master-of-magic": define("master-of-magic", "Master of Magic", "enchantment", {
+    profession: "elementalist",
+    attributeSet: { scope: "elemental", rank: 13, plusEquipment: false },
+    triggers: (["air-magic", "earth-magic", "fire-magic", "water-magic"] as const).map(
+      (attribute) => ({
+        on: "bearer-uses-skill" as const,
+        usedSkill: { attribute: `elementalist.${attribute}` },
+        target: "bearer" as const,
+        effects: [
+          { kind: "energy-gain" as const, amount: { flat: 1 } },
+          {
+            kind: "energy-gain" as const,
+            amount: { flat: 0.3 },
+            perUsedSkillEnergy: true as const,
+          },
+        ],
+        skillId: "elementalist.master-of-magic",
+      }),
+    ),
   }),
 };
 

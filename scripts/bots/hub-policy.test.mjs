@@ -49,7 +49,7 @@ describe("the roster", () => {
 });
 
 describe("merging", () => {
-  it("is allowed for qa-tester, behind three guards", () => {
+  it("is allowed for qa-tester, behind four guards", () => {
     const verdict = gh("qa-tester", ["pr", "merge", "22", "--squash"]);
 
     expect(verdict.allow).toBe(true);
@@ -57,6 +57,7 @@ describe("merging", () => {
       "checks-green",
       "approved-by:lead-dev",
       "approved-by:perf-sec-qa",
+      "workflow-author:cicd-engineer",
     ]);
   });
 
@@ -625,6 +626,7 @@ describe("borrowed hats", () => {
       "checks-green",
       "approved-by:lead-dev",
       "approved-by:perf-sec-qa",
+      "workflow-author:cicd-engineer",
     ]);
   });
 
@@ -746,6 +748,36 @@ describe("company load (#747)", () => {
     expect(
       authorize("lead-dev", { kind: "load", argv: [] }, { acting: ["manager"] }),
     ).toMatchObject({ allow: false });
+  });
+});
+
+describe("company runners (#1890)", () => {
+  it("only the manager sets n, and no hat lends it", () => {
+    expect(authorize("manager", { kind: "runners", argv: ["2"] })).toEqual({ allow: true });
+    expect(authorize("manager", { kind: "runners", argv: ["0"] })).toEqual({ allow: true });
+    for (const role of ROLES.filter((r) => r !== "manager")) {
+      expect(authorize(role, { kind: "runners", argv: ["1"] }), role).toMatchObject({
+        allow: false,
+      });
+    }
+    expect(
+      authorize("lead-dev", { kind: "runners", argv: ["1"] }, { acting: ["manager"] }),
+    ).toMatchObject({ allow: false });
+  });
+
+  it("the manager and the business-analyst read it", () => {
+    expect(authorize("manager", { kind: "runners", argv: [] })).toEqual({ allow: true });
+    expect(authorize("business-analyst", { kind: "runners", argv: [] })).toEqual({ allow: true });
+    expect(authorize("developer", { kind: "runners", argv: [] })).toMatchObject({ allow: false });
+  });
+
+  it("refuses anything but one whole number", () => {
+    for (const argv of [["x"], ["-1"], ["1.5"], ["1", "2"], ["99999"]]) {
+      expect(authorize("manager", { kind: "runners", argv }), argv.join(" ")).toMatchObject({
+        allow: false,
+        reason: "usage: company runners [<n>]",
+      });
+    }
   });
 });
 

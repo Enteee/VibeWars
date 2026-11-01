@@ -82,4 +82,13 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.icy-prism": { glyph: "prism-fan" },
   "elementalist.teinais-crystals": { glyph: "crystals-crack" },
   "elementalist.freezing-gust": { glyph: "gust-bar" },
+  // Shots that fly differently (#1914)
+  "elementalist.lava-arrows": { glyph: "arrow-lava" },
+  // Caster staples (#1870).
+  "elementalist.grasping-earth": { glyph: "roots-grasp" },
+  "elementalist.breath-of-fire": { glyph: "breath-fire" },
+  "elementalist.master-of-magic": { glyph: "bars-set" },
+  // Attributes raised (#1941), stand-ins until their art card.
+  "elementalist.glyph-of-elemental-power": { glyph: "fireball", modifier: "up" },
+  "elementalist.glyph-of-energy": { glyph: "energy", modifier: "half" },
 };

@@ -184,6 +184,13 @@ let
         export VIBEWARS_CREDENTIALS="${config.vibewars.claudeBot.credentials}"
         # Where each role's Claude logs are, for the dashboard's tokens (#50).
         export VIBEWARS_CLAUDE_BOXES="$HOME/${config.vibewars.claudeBot.boxes}"
+        # The company's CI runners (#1890): the runner supervisor's config,
+        # which hubd reads the max of. Off while max is 0.
+        export VIBEWARS_MAX_RUNNERS="${toString config.vibewars.runners.max}"
+        export VIBEWARS_RUNNER_CPUS="${toString config.vibewars.runners.cpus}"
+        export VIBEWARS_RUNNER_MEMORY_GIB="${toString config.vibewars.runners.memoryGib}"
+        export VIBEWARS_RUNNER_TASKS_MAX="${toString config.vibewars.runners.tasksMax}"
+        export VIBEWARS_RUNNER_SCRATCH="${config.vibewars.runners.scratch}"
 
         usage() {
       cat ${llcUsage}
@@ -198,7 +205,7 @@ let
         hub_window() {
           mkdir -p "$VIBEWARS_BOT_ROOT/hub"
           ${node} ${llcScripts}/hub-window.mjs open
-          echo "claude-llc: hubd and supervisor started in the hub window (logs: .bots/hub/)"
+          echo "claude-llc: hubd, the supervisor and the runner supervisor started in the hub window (logs: .bots/hub/)"
         }
 
         # One employee's pane (#383, #722), the only way an agent starts:
@@ -213,6 +220,7 @@ let
           pkill -f run-forever.mjs 2>/dev/null || true
           pkill -f hubd.mjs 2>/dev/null || true
           pkill -f supervisor.mjs 2>/dev/null || true
+          pkill -f runner-supervisor.mjs 2>/dev/null || true
         }
 
         # The build the running company was started from, against the
@@ -296,7 +304,7 @@ let
             else
               echo "session $SESSION is not running"
             fi
-            for d in hubd supervisor; do
+            for d in hubd supervisor runner-supervisor; do
               if pgrep -f "run-forever.mjs $d" >/dev/null 2>&1; then echo "  $d: running (restarted on exit)"; else echo "  $d: stopped"; fi
             done
             # Running, and its heartbeat fresh: a hung sidecar is stopped too (#583).
@@ -361,7 +369,7 @@ let
             touch "$VIBEWARS_BOT_ROOT/stopping"
             ${tmux} kill-session -t "=$SESSION" 2>/dev/null && echo "stopped $SESSION" || echo "$SESSION was not running"
             stop_daemons
-            echo "stopped hubd and supervisor"
+            echo "stopped hubd, the supervisor and the runner supervisor"
             pkill -f "link.mjs serve" 2>/dev/null && echo "stopped the Telegram sidecar" || true
             exit 0
             ;;
@@ -567,6 +575,7 @@ let
           -c "$VIBEWARS_CODE" "${node} ${llcScripts}/dashboard.mjs feed")"
         company_pane="$(${tmux} split-window -h -l 40% -t "$board_pane" -P -F '#{pane_id}' \
           -c "$VIBEWARS_CODE" -e "VIBEWARS_CLAUDE_BOXES=$VIBEWARS_CLAUDE_BOXES" \
+          -e "VIBEWARS_MAX_RUNNERS=$VIBEWARS_MAX_RUNNERS" \
           "${node} ${llcScripts}/dashboard.mjs company")"
         ${tmux} select-pane -t "$feed_pane" -T TELEGRAM
         ${tmux} select-pane -t "$company_pane" -T COMPANY

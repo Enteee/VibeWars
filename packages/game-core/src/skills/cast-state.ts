@@ -8,7 +8,13 @@
  */
 
 import type { SkillBar } from "../build.js";
-import { NO_OWN_SKILL_BOOST, type OwnSkillBoost, type StatusId, type StatusSet } from "./status.js";
+import {
+  NO_OWN_SKILL_BOOST,
+  type AttributeDelta,
+  type OwnSkillBoost,
+  type StatusId,
+  type StatusSet,
+} from "./status.js";
 import type { Skill } from "./types.js";
 
 /**
@@ -24,6 +30,16 @@ export interface CastRule {
   readonly rechargesInstantly: boolean;
   /** Seconds on its recharge as it ends (#1730): Glyph of Sacrifice's. */
   readonly extraRechargeSeconds: number;
+  /** How much faster it recharges as it ends (#1941): Ritual Lord's binding ritual, 0.5. */
+  readonly rechargeFaster: number;
+  /** Skills whose recharge ends as it ends (#1941): Ritual Lord's own. */
+  readonly resetsRecharge: readonly string[];
+  /**
+   * The attribute deltas of the statuses its start spent (#1941), held
+   * while it resolves: the last of Glyph of Elemental Power's spells, or
+   * Ritual Lord's skill, still scales with the boost.
+   */
+  readonly heldAttributeDeltas: readonly AttributeDelta[];
   /**
    * What its caster's statuses do to skills of its kind (#1761), taken as
    * it was paid for: a status spent on it, or one that ends during the
@@ -38,6 +54,9 @@ export const NO_CAST_RULE: CastRule = {
   unblockable: false,
   rechargesInstantly: false,
   extraRechargeSeconds: 0,
+  rechargeFaster: 0,
+  resetsRecharge: [],
+  heldAttributeDeltas: [],
   own: NO_OWN_SKILL_BOOST,
 };
 

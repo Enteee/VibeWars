@@ -56,3 +56,20 @@ export function nearestFreshCorpse<Body extends CorpseCandidate>(
   }
   return best;
 }
+
+/**
+ * Every fresh corpse within `radius` of `origin` (#1915), nearest first,
+ * ties by id, as `nearestFreshCorpse` breaks them.
+ */
+export function freshCorpsesWithin<Body extends CorpseCandidate>(
+  origin: Vec2,
+  radius: number,
+  bodies: Iterable<Body>,
+): Body[] {
+  return [...bodies]
+    .filter((body) => isFreshCorpse(body) && distanceWithinRange(origin, body.position, radius))
+    .sort((a, b) => {
+      const d = distance(origin, a.position) - distance(origin, b.position);
+      return d !== 0 ? d : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+    });
+}

@@ -76,4 +76,12 @@ export const ASSASSIN_ICONS = {
   "assassin.shadow-meld": { glyph: "step-meld" },
   "assassin.shadow-of-haste": { glyph: "step-haste" },
   "assassin.return": { glyph: "blink-ally", modifier: "area" },
+  // Shots that fly differently (#1914)
+  "assassin.dancing-daggers": { glyph: "dagger-pair" },
+  // Shadow step 2 (#1930)
+  "assassin.recall": { glyph: "blink-ally", modifier: "upkeep" },
+  "assassin.spirit-walk": { glyph: "blink-ally", modifier: "plus" },
+  "assassin.swap": { glyph: "blink-ally", modifier: "renew" },
+  "assassin.dark-prison": { glyph: "blink", modifier: "down" },
+  "assassin.shadow-walk": { glyph: "step-haste", modifier: "clock" },
 };

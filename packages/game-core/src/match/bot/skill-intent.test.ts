@@ -16,17 +16,33 @@ const NO_BOT_USE = new Set([
   "monk.holy-haste",
   "ranger.practiced-stance",
   "dervish.extend-enchantments",
+  // Aura of Stability (#1870): knockdown kept off an ally is no defence
+  // the bot weighs, as Balanced Stance on itself.
+  "monk.aura-of-stability",
+  // Elemental and Physical Resistance, Vital Blessing and Vital Weapon
+  // (#1872): armor against one kind of damage and more maximum Health are
+  // no defence the bot weighs, as Avatar of Melandru's.
+  "mesmer.elemental-resistance",
+  "mesmer.physical-resistance",
+  "monk.vital-blessing",
+  "ritualist.vital-weapon",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
   // Dwayna's Sorrow (#1762): a heal that waits on an ally's death is
   // nothing the bot plans for.
   "monk.dwaynas-sorrow",
+  // Death Nova (#1931), the same, a burst that waits on an ally's death.
+  "necromancer.death-nova",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",
   "assassin.shadow-meld",
   "assassin.shadow-of-haste",
+  // Recall and Shadow Walk (#1930): a step that waits on an end, or
+  // that disables its own attacks, is nothing the bot plans for yet.
+  "assassin.recall",
+  "assassin.shadow-walk",
   // Live Vicariously (#1748): Health to the caster when its ally hits is
   // no heal the bot weighs.
   "monk.live-vicariously",
@@ -86,6 +102,7 @@ const NO_BOT_USE = new Set([
   "paragon.fall-back",
   "paragon.incoming",
   "paragon.make-haste",
+  "ranger.hekets-rampage",
   "ranger.serpents-quickness",
   "ranger.winnowing",
   "ritualist.cruel-was-daoshen",
@@ -101,6 +118,7 @@ const NO_BOT_USE = new Set([
   "warrior.endure-pain",
   "warrior.enraging-charge",
   "warrior.flail",
+  "warrior.flurry",
   "warrior.for-great-justice",
   "warrior.frenzy",
   "warrior.rage-of-the-ntouka",
@@ -112,6 +130,11 @@ const NO_BOT_USE = new Set([
   "necromancer.animate-vampiric-horror",
   "necromancer.animate-flesh-golem",
   "necromancer.animate-shambling-horror",
+  // Minions 3 (#1915): no minion rule yet either. Infuse Condition is a
+  // defence.
+  "necromancer.order-of-undeath",
+  "necromancer.aura-of-the-lich",
+  "necromancer.taste-of-death",
   "necromancer.gaze-of-contempt",
   "necromancer.rend-enchantments",
   // An enchantment strip whose payoff is Health loss, not damage (#1648).
@@ -170,6 +193,8 @@ const NO_BOT_USE = new Set([
   "elementalist.water-attunement",
   "elementalist.air-attunement",
   "elementalist.earth-attunement",
+  // Scribe's Insight (#1913), the same, for signets still to be used.
+  "monk.scribes-insight",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",
@@ -207,6 +232,20 @@ const NO_BOT_USE = new Set([
   "ranger.muddy-terrain",
   "ranger.conflagration",
   "ranger.winter",
+  // Nature rituals 2 (#1873): auras on both teams, as rituals 1's.
+  "ranger.symbiosis",
+  "ranger.favorable-winds",
+  "ranger.brambles",
+  "ranger.tranquility",
+  "ranger.toxicity",
+  "ranger.greater-conflagration",
+  // Nature rituals 3 (#1886): a death in range, and costs on both teams,
+  // nothing the bot weighs.
+  "ranger.edge-of-extinction",
+  "ranger.pestilence",
+  "ranger.energizing-wind",
+  "ranger.primal-echoes",
+  "ranger.roaring-winds",
   // Chants (#1505) on how the next skill goes: nothing the bot weighs.
   "paragon.song-of-concentration",
   "paragon.anthem-of-guidance",
@@ -233,6 +272,22 @@ const NO_BOT_USE = new Set([
   // Assassin staples 5 (#1757): unblockable next attacks are no rule the
   // bot weighs.
   "assassin.way-of-the-fox",
+  // "Not enchanted" and next attacks (#1916): more damage or adrenaline
+  // on the bearer's attacks is no rule the bot weighs, as Flurry's.
+  "ritualist.brutal-weapon",
+  "paragon.natural-temper",
+  "warrior.signet-of-strength",
+  // Attributes set or borrowed (#1929): a higher rank on its own spells is
+  // no rule the bot weighs, as an attunement's energy.
+  "elementalist.master-of-magic",
+  "mesmer.signet-of-illusions",
+  // Attributes raised (#1941): a boost timed before the next spell, binding
+  // ritual or bow shot has no use in the bot's vocabulary yet, as the glyphs
+  // on the next spell and Heket's Rampage's attack speed.
+  "elementalist.glyph-of-elemental-power",
+  "elementalist.glyph-of-energy",
+  "ritualist.ritual-lord",
+  "ranger.experts-dexterity",
 ]);
 
 function skill(id: string) {
@@ -263,6 +318,10 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("elementalist.fireball"))).toEqual(["offence"]);
     // An attack skill is offence, whatever else it does.
     expect(botUses(skill("warrior.distracting-blow"))).toEqual(["interrupt", "offence"]);
+    // A step to a creature of its side is a way out (#1930); one to a foe is not.
+    expect(botUses(skill("assassin.spirit-walk"))).toEqual(["escape"]);
+    expect(botUses(skill("assassin.swap"))).toEqual(["escape"]);
+    expect(botUses(skill("assassin.dark-prison"))).toEqual(["offence"]);
   });
 
   it("holds a skill whose only role is interrupting", () => {

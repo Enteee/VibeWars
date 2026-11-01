@@ -6,6 +6,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { createRng, type SimulationRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
+import { resolveMagnitudeAtRanks } from "../skills/scaling.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { makeCombatant } from "../skills/testing.js";
@@ -341,6 +342,7 @@ describe("bodies a spirit, minion or pet does not block (#1278)", () => {
       onDeath: "vanish",
       ownerDisableSeconds: 0,
       deathBurst: undefined,
+      onDeathInRange: undefined,
       replacedBy: undefined,
       corpsesLeft: 0,
       companionSkillId: undefined,
@@ -686,3 +688,27 @@ function skillOf(id: string) {
   }
   return found;
 }
+
+describe("a spirit's Health by whole level (#1917)", () => {
+  /** The Health `skillId`'s spirit has at `rank` of the attribute it scales with. */
+  function healthAt(skillId: string, rank: number): number {
+    const summon = getSkill(skillId)?.effects.find((effect) => effect.kind === "summon");
+    if (summon?.kind !== "summon") {
+      throw new Error(`${skillId} summons nothing`);
+    }
+    const health = summon.creature.maxHealth;
+    if (!("byLevel" in health)) {
+      throw new Error(`${skillId}'s spirit has no level`);
+    }
+    return resolveMagnitudeAtRanks(health, new Map([[health.byLevel.level.attributeId, rank]]));
+  }
+
+  it("steps Winnowing's spirit by GW1's level 1...10: 50 + 20 per level", () => {
+    // Levels 1, 2, 8 and 10: never the straight line's 245 at 15.
+    expect([0, 1, 12, 15].map((rank) => healthAt(WINNOWING, rank))).toEqual([70, 90, 210, 250]);
+  });
+
+  it("gives a Ritualist spirit 210 at 12, not the unrounded 214", () => {
+    expect(healthAt("ritualist.displacement", 12)).toBe(210);
+  });
+});

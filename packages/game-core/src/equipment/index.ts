@@ -121,7 +121,12 @@ export type {
   ResolvedWeaponSet,
   ResolvedWeaponSets,
 } from "./resolve.js";
-export { creatureResolvedEquipment, resolveLoadout, unarmedResolvedEquipment } from "./resolve.js";
+export {
+  creatureResolvedEquipment,
+  effectiveRanks,
+  resolveLoadout,
+  unarmedResolvedEquipment,
+} from "./resolve.js";
 
 export type { ReconcileContext } from "./reconcile.js";
 export { reconcileEquipment, weaponReachable } from "./reconcile.js";

@@ -10,7 +10,8 @@ import {
   getStatusDefinition,
   type StatusId,
 } from "./status.js";
-import { withAttackDuration } from "./testing.js";
+import { makeCombatant, withAttackDuration } from "./testing.js";
+import { attackDamageDeltaOf } from "./tick.js";
 
 const ALL_STATUS_IDS = Object.keys(STATUS_DEFINITIONS) as StatusId[];
 
@@ -61,10 +62,13 @@ describe("status definitions", () => {
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||
         def.maxHealthBonus !== 0 ||
+        def.maxHealthBonusPerEnchantment !== 0 ||
         def.healingMultiplier !== 1 ||
         def.weaponDamageMultiplier !== 1 ||
         def.physicalDamageTakenBonus !== 0 ||
-        def.attributeDelta !== 0 ||
+        def.attributeDeltas.length > 0 ||
+        def.attributeSet !== undefined ||
+        def.borrowsAttribute !== undefined ||
         def.castTimeMultiplier !== 1 ||
         def.interruptsSpells ||
         def.untargetableByFoeSpells ||
@@ -112,7 +116,12 @@ describe("status definitions", () => {
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
         def.returnsSource !== undefined ||
-        def.elementalDamageTakenAs !== undefined;
+        def.stepsToTarget !== undefined ||
+        def.elementalDamageTakenAs !== undefined ||
+        def.minionDamageBonus !== 0 ||
+        def.minionHitHealthLossPercent !== 0 ||
+        def.redirectsConditionsToMinion ||
+        def.physicalDamageDealtAs !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -130,7 +139,7 @@ describe("status definitions", () => {
     expect(getStatusDefinition("dazed").castTimeMultiplier).toBeGreaterThan(1);
     expect(getStatusDefinition("weakness")).toMatchObject({
       weaponDamageMultiplier: 0.34,
-      attributeDelta: -1,
+      attributeDeltas: [{ scope: "all", amount: -1 }],
       armorModifier: 0,
     });
   });
@@ -183,6 +192,7 @@ describe("status definitions", () => {
       "corrupt-enchantment": -7,
       "reapers-mark": -4,
       "putrid-bile": -3,
+      "blood-renewal": 5,
     });
   });
 
@@ -203,6 +213,7 @@ describe("status definitions", () => {
       "obsidian-flesh": -2,
       "zealous-renewal": -1,
       "zealous-vow": -3,
+      "power-flux": -2,
       "the-power-is-yours": 2,
       "well-of-power": 2,
       "well-of-weariness": -1,
@@ -304,7 +315,9 @@ describe("StatusSet apply/remove", () => {
     const set = new StatusSet();
     set.apply("guardian", 10, "a");
     set.apply("regeneration", 10, "a");
-    expect(set.removeByCategory("enchantment", 1)).toEqual(["regeneration"]);
+    expect(set.removeByCategory("enchantment", 1)).toEqual([
+      { id: "regeneration", sourceSkillId: undefined },
+    ]);
     expect(set.has("guardian")).toBe(true);
   });
 
@@ -314,8 +327,21 @@ describe("StatusSet apply/remove", () => {
       set.apply("guardian", 10, "a");
       set.apply("regeneration", 10, "a");
       set.apply("guardian", duration, "a");
-      expect(set.removeByCategory("enchantment", 1), String(duration)).toEqual(["guardian"]);
+      expect(set.removeByCategory("enchantment", 1), String(duration)).toEqual([
+        { id: "guardian", sourceSkillId: undefined },
+      ]);
     }
+  });
+
+  it("records the skill that put each on, and says it as it removes it (#1928)", () => {
+    const set = new StatusSet();
+    set.apply("armor-boost", 10, "a", null, "elementalist.armor-of-earth");
+    set.apply("guardian", 10, "a");
+    expect(set.get("armor-boost")?.sourceSkillId).toBe("elementalist.armor-of-earth");
+    expect(set.removeByCategory("enchantment")).toEqual([
+      { id: "guardian", sourceSkillId: undefined },
+      { id: "armor-boost", sourceSkillId: "elementalist.armor-of-earth" },
+    ]);
   });
 });
 
@@ -325,7 +351,9 @@ describe("StatusSet removal by profession (#845)", () => {
     set.apply("mystic-regeneration", 10, "a");
     set.apply("fleeting-stability", 10, "a");
     set.apply("guardian", 10, "b");
-    expect(set.removeByCategory("enchantment", 1, "dervish")).toEqual(["fleeting-stability"]);
+    expect(set.removeByCategory("enchantment", 1, "dervish")).toEqual([
+      { id: "fleeting-stability", sourceSkillId: undefined },
+    ]);
     expect(set.has("mystic-regeneration")).toBe(true);
     expect(set.has("guardian")).toBe(true);
   });
@@ -516,6 +544,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: true,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -524,6 +553,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -532,6 +562,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -540,6 +571,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -548,6 +580,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -556,6 +589,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -564,6 +598,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -589,6 +624,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -597,6 +633,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -656,6 +693,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -664,6 +702,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -672,6 +711,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -680,6 +720,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -768,6 +809,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -779,18 +821,18 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       trigger: getStatusDefinition("vengeful-weapon").triggers[0],
     };
     const set = new StatusSet();
-    set.recordDamageFromFoe("war", "slashing", 10);
+    set.recordDamageFromFoe("war", "slashing", 10, false);
     expect(set.drainChanges()).toEqual([]);
 
     set.apply("vengeful-weapon", 8, "rit");
     set.drainChanges();
-    set.recordDamageFromFoe("war", "slashing", 10);
-    set.recordDamageFromFoe("ele", "fire", 10);
+    set.recordDamageFromFoe("war", "slashing", 10, false);
+    set.recordDamageFromFoe("ele", "fire", 10, false);
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "war", fired: [vengeful] },
     ]);
 
-    set.recordDamageFromFoe("ele", "fire", 10);
+    set.recordDamageFromFoe("ele", "fire", 10, false);
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "ele", fired: [vengeful] },
     ]);
@@ -805,11 +847,11 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     const set = new StatusSet();
     set.apply("mark-of-rodgort", 30, "ele");
     set.drainChanges();
-    set.recordDamageFromFoe("ele", "lightning", 10);
-    set.recordDamageFromFoe("ele", undefined, 10);
+    set.recordDamageFromFoe("ele", "lightning", 10, false);
+    set.recordDamageFromFoe("ele", undefined, 10, false);
     expect(set.drainChanges()).toEqual([]);
 
-    set.recordDamageFromFoe("ele", "fire", 10);
+    set.recordDamageFromFoe("ele", "fire", 10, false);
     expect(set.drainChanges()).toEqual([
       { kind: "took-damage-from-foe", offenderId: "ele", fired: [rodgort] },
     ]);
@@ -865,6 +907,22 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
   it("counts neither itself nor another echo as a chant or a shout", () => {
     const echoes = aggregateModifiers([{ id: "soldiers-fury" }, { id: "mending-refrain" }]);
     expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, 0]);
+  });
+});
+
+describe("attackDamageDeltaOf, suppressed while enchanted (#1916)", () => {
+  const deltaWith = (...ids: StatusId[]): number => {
+    const bearer = makeCombatant({ id: "bearer" });
+    for (const id of ids) {
+      bearer.statuses.apply(id, 60, "bearer");
+    }
+    return attackDamageDeltaOf(bearer);
+  };
+
+  it("drops Brutal Weapon's +13 beside an enchantment, keeps it beside a stance or nothing", () => {
+    expect(deltaWith("brutal-weapon")).toBe(13);
+    expect(deltaWith("brutal-weapon", "balanced-stance")).toBe(13);
+    expect(deltaWith("brutal-weapon", "guardian")).toBe(0);
   });
 });
 
@@ -934,7 +992,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -950,6 +1008,11 @@ describe("attack duration (ADR-0029)", () => {
       "pious-fury": 0.75,
       onslaught: 0.75,
       "rampage-as-one": 0.67,
+      meekness: 1.5,
+      "sum-of-all-fears": 1.33,
+      flurry: 0.67,
+      "hekets-rampage": 0.67,
+      "experts-dexterity": 0.85,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

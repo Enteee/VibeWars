@@ -32,6 +32,8 @@ export function paths(root) {
     claudeIdentity: path.join(root, "claude-identity"),
     gh: path.join(root, "gh"),
     ghHosts: path.join(root, "gh", "hosts.yml"),
+    // The runner supervisor's admin token (#1890); nothing else uses it.
+    runnersGh: path.join(root, "runners-gh"),
     ssh: path.join(root, "ssh"),
     sshKey: path.join(root, "ssh", "id_ed25519"),
     sshPub: path.join(root, "ssh", "id_ed25519.pub"),
@@ -179,6 +181,27 @@ export function claudeIdentity(dir, run = runCommand) {
     scopes = Array.isArray(names) ? names.filter((s) => typeof s === "string").join(" ") : null;
   }
   return { state: "ok", who: text(status.email), expiry, scopes };
+}
+
+/**
+ * The scopes the company's GitHub account is signed in with (`claude-llc
+ * auth github`): the board, and `workflow`, without which GitHub refuses
+ * to merge a pull request that changes a workflow file (#1897). gh adds its
+ * defaults (`repo`, `read:org`, `gist`).
+ */
+export const COMPANY_GITHUB_SCOPES = ["project", "read:project", "workflow"];
+
+/**
+ * Which of the scopes the company cannot work without are missing from a
+ * token's `x-oauth-scopes`: `project` for the board, `workflow` for
+ * merging workflow changes (#1897).
+ *
+ * @param {string | null} scopes comma-separated, as GitHub sends them
+ * @returns {string[]}
+ */
+export function missingGithubScopes(scopes) {
+  const held = new Set((scopes ?? "").split(/[\s,]+/));
+  return ["project", "workflow"].filter((scope) => !held.has(scope));
 }
 
 /**

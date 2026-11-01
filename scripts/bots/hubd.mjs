@@ -75,6 +75,7 @@ import {
   explainGuard,
   pathsOutside,
   pathsWithin,
+  workflowAuthorAllowed,
 } from "./hub-guards.mjs";
 import {
   jobsFromRest,
@@ -155,6 +156,15 @@ import {
 import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
+import {
+  maxRunners,
+  readAlertTold as readRunnersAlertTold,
+  readStatus as readRunnersStatus,
+  runnersLines,
+  runnersStateDir,
+  writeAlertTold as writeRunnersAlertTold,
+  writeTarget as writeRunnersTarget,
+} from "./runners-state.mjs";
 import {
   dueNudges,
   ownNudges,
@@ -278,6 +288,13 @@ const WATCHES = path.join(HUB, "watches.json");
 const LOCK = path.join(HUB, "hubd.lock");
 /** Every employee's last turn, as the manager's `peek` reads it (#19), for `company load`. */
 const PEEK = path.join(ROOT, "peek");
+/**
+ * The runner supervisor's state (#1890): hubd writes its target and reads
+ * its status, and makes no runner call of its own. Host-only, outside ROOT.
+ */
+const RUNNERS_STATE = runnersStateDir(process.env);
+/** The most runners the operator allows; 0, its default, keeps them off. */
+const MAX_RUNNERS = maxRunners(process.env);
 /** The agents' Claude logs, for `company load`'s tokens (#747): the dashboard's reader. */
 const usage = usageReader(process.env.VIBEWARS_CLAUDE_BOXES);
 
@@ -1032,9 +1049,80 @@ async function evaluateGuards(guards, argv) {
       continue;
     }
 
+    if (guard.startsWith("workflow-author:")) {
+      const refused = await refuseWorkflowMerge(
+        merge.pr,
+        sha,
+        guard.slice("workflow-author:".length).split(","),
+        cfg,
+      );
+      if (refused !== null) {
+        return { ok: false, reason: refused };
+      }
+      continue;
+    }
+
     return { ok: false, reason: `unknown guard "${guard}"; refusing rather than guessing` };
   }
   return { ok: true, pr: merge.pr, flags: merge.flags, sha };
+}
+
+/**
+ * Why pull request `pr` must not be merged under a `workflow-author:` guard
+ * (#1897), or null if it may: its head is fetched into the mirror at `sha`,
+ * the commit every other guard validated, and its changes are judged by
+ * `workflowAuthorAllowed`.
+ *
+ * It fails closed: a pull request it cannot read, a head it cannot fetch, or
+ * a diff it cannot take, is a refusal.
+ *
+ * @param {number} pr
+ * @param {string} sha
+ * @param {string[]} authors the roles the guard names
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseWorkflowMerge(pr, sha, authors, cfg) {
+  const unlisted = "could not list this pull request's changes; try again";
+  const pull = obj(await rest(`pulls/${String(pr)}`, cfg));
+  const head = obj(pull.head);
+  const headRepo = obj(head.repo).full_name;
+  const baseRepo = obj(obj(pull.base).repo).full_name;
+  if (typeof head.ref !== "string" || typeof baseRepo !== "string") {
+    return unlisted;
+  }
+  if (head.sha !== sha) {
+    return `#${String(pr)} moved to a new head while it was being checked; try again`;
+  }
+  const ref = `refs/hub/merge/${String(pr)}`;
+  const fetched = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    `+refs/pull/${String(pr)}/head:${ref}`,
+  ]);
+  if (fetched.code !== 0) {
+    return unlisted;
+  }
+  const at = await git(["rev-parse", ref]);
+  if (at.code !== 0 || at.stdout.trim() !== sha) {
+    return unlisted;
+  }
+  const paths = await changedPaths(sha, cfg);
+  if (paths === null) {
+    return unlisted;
+  }
+  const verdict = workflowAuthorAllowed({
+    pr,
+    paths,
+    headRefName: head.ref,
+    crossRepository: headRepo !== baseRepo,
+    authors,
+    restricted: RESTRICTED_PATHS,
+    roleOf: (employee) => staffed.get(employee),
+  });
+  return verdict.ok ? null : verdict.reason;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1054,14 +1142,16 @@ function audit(entry) {
 /**
  * Which files would this push change, relative to main? Both sides of a
  * rename (--no-renames), so a file moved out of a directory is a change
- * to it. The push guards refuse on it (`refusePush`), and the audit log
+ * to it. The push guards refuse on it (`refusePush`), as does the
+ * workflow merge guard (`refuseWorkflowMerge`), and the audit log
  * is tagged with it, so that a change to the definition of a quality gate
  * is findable afterwards with one `grep`.
  *
  * Compared in the mirror, against `main` as GitHub has it: not against
  * whatever an agent's repository calls `origin/main`.
  *
- * @param {string} ref the pushed branch, as it is in the mirror
+ * @param {string} ref the pushed branch, as it is in the mirror, or a pull
+ *   request's head commit fetched into it (#1897)
  * @param {ReturnType<typeof company>} cfg
  * @returns {Promise<string[] | null>} `null` when they could not be worked out
  */
@@ -1794,6 +1884,57 @@ function serveLoad(cfg) {
     usage: readUsage(usage, now, null)?.summary ?? null,
   });
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/**
+ * `company runners` (#1890): the supervisor's status, as the dashboard
+ * shows it; `company runners <n>` sets the target it reads, within the
+ * operator's max.
+ *
+ * @param {string[]} argv `[]` or `[n]`, checked by the policy
+ * @returns {{ code: number, stdout: string, stderr: string }}
+ */
+function serveRunners(argv) {
+  const [word] = argv;
+  if (word !== undefined) {
+    const n = Number(word);
+    if (n > MAX_RUNNERS) {
+      return {
+        code: 1,
+        stdout: "",
+        stderr: `company runners: ${String(n)} is above the operator's max of ${String(MAX_RUNNERS)} (VIBEWARS_MAX_RUNNERS)\n`,
+      };
+    }
+    writeRunnersTarget(RUNNERS_STATE, n);
+    return {
+      code: 0,
+      stdout: `runners: target ${String(n)}; the supervisor follows within seconds\n`,
+      stderr: "",
+    };
+  }
+  const lines = runnersLines(readRunnersStatus(RUNNERS_STATE), MAX_RUNNERS);
+  return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/**
+ * The supervisor holds no Telegram: what the manager must hear about the
+ * runners, their missing credential, hubd passes on, once. The alert told
+ * is kept on disk, so a hubd restart does not repeat a standing one.
+ *
+ * @returns {void}
+ */
+function relayRunnersAlert() {
+  const alert = readRunnersStatus(RUNNERS_STATE)?.alert ?? null;
+  const told = readRunnersAlertTold(RUNNERS_STATE);
+  if (alert === told) {
+    return;
+  }
+  if (alert !== null) {
+    tellCompany("runners-alert", `Company runners are down: ${alert}. Tell the operator.`, {
+      to: "manager",
+    });
+  }
+  writeRunnersAlertTold(RUNNERS_STATE, alert);
 }
 
 /**
@@ -3106,6 +3247,12 @@ async function serve(request, verdict, acting) {
     return { allow: true, ...answered };
   }
 
+  if (kind === "runners") {
+    const answered = serveRunners(argv);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code });
+    return { allow: true, ...answered };
+  }
+
   if (kind === "watch") {
     return watch(employee, role, argv, cfg);
   }
@@ -4344,6 +4491,7 @@ async function main() {
     if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
       lastNudgeCheck = Date.now();
       sendNudges();
+      relayRunnersAlert();
     }
     if (Date.now() - lastKpis >= KPI_EVERY_MS) {
       lastKpis = Date.now();

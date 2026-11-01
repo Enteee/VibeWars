@@ -209,8 +209,10 @@ body {
     flex: 0 0 auto;
   }
 
+  /* An editor's own ⋯ stays out with Save: its menu cannot open
+     from inside this one (#1902). */
   #topbar.has-more .topbar-actions,
-  #topbar.has-more .topbar-screen-actions > :not(.primary) {
+  #topbar.has-more .topbar-screen-actions > :not(.primary, .editor-more-wrap) {
     display: none;
   }
 
@@ -2997,14 +2999,10 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.team-lobby-propose {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.team-lobby-propose select {
-  max-width: 24rem;
+/* A Team Build of the wrong size, on its faded card (#1862). */
+.team-lobby-needs {
+  color: var(--ink-dim);
+  text-align: center;
 }
 
 /* No proposal yet: where the cards would be. */
@@ -3018,9 +3016,11 @@ body {
   text-align: center;
 }
 
-/* A vote's state on the shared team card (#1864): yours, then the
-   result's chosen card lifted, the rest faded behind it. */
-.screen .play-card.is-voted .play-card-open {
+/* A vote's state on the shared team card (#1864): yours, and the build
+   you proposed (#1862), then the result's chosen card lifted, the rest
+   faded behind it. */
+.screen .play-card.is-voted .play-card-open,
+.screen .play-card.is-proposed .play-card-open {
   border-color: var(--accent);
 }
 
@@ -3101,7 +3101,8 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.team-lobby-your-vote {
+.team-lobby-your-vote,
+.team-lobby-proposed {
   padding: 0.2rem;
   border: 1px solid var(--accent);
   color: var(--accent);
@@ -3116,7 +3117,7 @@ body {
 
 .team-lobby-seats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 0.8rem;
 }
 

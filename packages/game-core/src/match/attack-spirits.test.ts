@@ -102,19 +102,20 @@ function damaged(events: readonly CombatEvent[], targetId: string): number {
 }
 
 describe("the four spirits' numbers (#1239)", () => {
-  // Rank 0...15 is GW1's a...b, so 12 is four fifths of the way.
+  // Rank 0...15 is GW1's a...b, so 12 is four fifths of the way; Health
+  // is 50 + 20 per whole level (#1917).
   it.each([
     [PAIN, 0, 70, 30, 5],
-    [PAIN, 12, 182, 126, 25],
+    [PAIN, 12, 190, 126, 25],
     [PAIN, 15, 210, 150, 30],
     [SHADOWSONG, 0, 70, 30, 5],
     [SHADOWSONG, 12, 150, 30, 17],
     [SHADOWSONG, 15, 170, 30, 20],
     [DISSONANCE, 0, 70, 10, 5],
-    [DISSONANCE, 12, 182, 22, 17],
+    [DISSONANCE, 12, 190, 22, 17],
     [DISSONANCE, 15, 210, 25, 20],
     [DISENCHANTMENT, 0, 70, 15, 5],
-    [DISENCHANTMENT, 12, 182, 35, 17],
+    [DISENCHANTMENT, 12, 190, 35, 17],
     [DISENCHANTMENT, 15, 210, 40, 20],
   ])("%s at Communing %i: %i Health, %i s, hits for %i", (id, rank, health, seconds, damage) => {
     const sim = match([], rank);

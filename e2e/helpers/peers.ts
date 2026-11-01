@@ -64,11 +64,10 @@ export async function saveSoloTeam(page: Page): Promise<string> {
   expect(name, "a character is picked").not.toBe("");
   await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
-  await page.getByLabel("Team name").fill(`Solo ${name}`);
+  await page.getByLabel("team name").fill(`Solo ${name}`);
   await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
-  await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.locator(".screen-teams")).toBeVisible();
   return `Solo ${name}`;
 }
@@ -83,7 +82,11 @@ export async function playOwnTeams(
 ): Promise<void> {
   for (const { page, team } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    await page.locator(".team-lobby-propose select").selectOption({ label: team });
+    // A page that brought its starter twice has two Team Builds of that
+    // name, which propose the same: the first is as good as any.
+    const propose = page.getByRole("button", { name: `Propose ${team}`, exact: true }).first();
+    await propose.click();
+    await expect(propose).toHaveAttribute("aria-pressed", "true");
   }
   for (const { page } of players) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();

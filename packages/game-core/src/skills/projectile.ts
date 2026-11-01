@@ -1,6 +1,7 @@
 import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
-import type { OwnSkillBoost } from "./status.js";
+import type { OwnSkillBoost, StatusId } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
+import type { RankLoan } from "./tick.js";
 import type { BlowRule, NextAttackSkill, WeaponSnapshot } from "./weapon-attack.js";
 
 /**
@@ -45,6 +46,8 @@ export interface Projectile {
   readonly skillHit: SkillHit | SpellHit | undefined;
   /** A status of its attacker's made it unblockable as it left (#1604, Guiding Hands). */
   readonly unblockable: boolean;
+  /** The statuses its release used up (#1916): their riders land with it, as Poison Tip Signet's. */
+  readonly spent: readonly StatusId[];
 }
 
 /**
@@ -60,6 +63,8 @@ export interface SkillHit {
   readonly next: NextAttackSkill;
   /** What the attacker's statuses did to it at release (#1761): its riders land with it. */
   readonly own: OwnSkillBoost | undefined;
+  /** Its blows on its victim, read at release (#1914): Forked Arrow's one or two. */
+  readonly strikes: number;
 }
 
 /**
@@ -73,6 +78,11 @@ export interface SpellHit {
   readonly caster: Combatant;
   /** What the caster's statuses did to it at release (#1761): its heals and statuses land with it. */
   readonly own: OwnSkillBoost | undefined;
+  /**
+   * What its ranks were lent at release (#1929, #1941): Signet of
+   * Illusions' Illusion Magic, a spent glyph's boost.
+   */
+  readonly loan: RankLoan;
 }
 
 /**

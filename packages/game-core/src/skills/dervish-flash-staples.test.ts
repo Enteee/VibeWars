@@ -190,6 +190,7 @@ describe("Harrier's Haste (#1421)", () => {
       RULES.combat,
       new Map(),
       fired,
+      [],
     );
     return fired;
   }

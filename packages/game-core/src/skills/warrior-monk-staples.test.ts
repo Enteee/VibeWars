@@ -211,7 +211,7 @@ describe('Cyclone Axe and "For Great Justice!" (#936)', () => {
       area: { origin: "caster", affects: "enemies", maxTargets: undefined, includesCaster: false },
       attack: {
         weapon: "axe",
-        bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10 } },
+        bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10.4 } },
       },
     });
     expect(describeSkill(skill("warrior.cyclone-axe")).targetText).toBe(

@@ -1,5 +1,6 @@
 import {
   AREA_ADJACENT,
+  AREA_EARSHOT,
   AREA_IN_THE_AREA,
   AREA_NEARBY,
   RANGE_MELEE,
@@ -497,6 +498,125 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     ],
   },
   {
+    id: "necromancer.order-of-undeath",
+    name: "Order of Undeath",
+    gwId: 1352,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5 seconds, your minions deal +3...13...16 damage. You lose 2%
+    // maximum Health each time a minion hits" (#1915).
+    effects: [{ kind: "apply-status", statusId: "order-of-undeath", durationSeconds: 5 }],
+  },
+  {
+    id: "necromancer.aura-of-the-lich",
+    name: "Aura of the Lich",
+    gwId: 114,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    // Every fresh corpse in earshot, or none (#1915).
+    corpse: { radius: AREA_EARSHOT, elseSacrificePercent: undefined, all: true },
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Exploit all fresh corpses in earshot. You animate a level 1...14...17
+    // Bone Horror, plus one for each corpse exploited. For 5...37...45
+    // seconds, you have +1 Death Magic" (#1915).
+    effects: [
+      { kind: "summon", creature: BONE_HORROR, count: 1, perExploitedCorpse: true },
+      { kind: "apply-status", statusId: "aura-of-the-lich", durationSeconds: 37 },
+    ],
+  },
+  {
+    id: "necromancer.infuse-condition",
+    name: "Infuse Condition",
+    gwId: 139,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15...51...60 seconds, conditions you would receive go to your
+    // closest minion instead" (#1915).
+    effects: [{ kind: "apply-status", statusId: "infuse-condition", durationSeconds: 51 }],
+  },
+  {
+    id: "necromancer.taste-of-death",
+    name: "Taste of Death",
+    gwId: 152,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "allied-minion",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Steal up to 100...340...400 Health from target allied minion" (#1915).
+    effects: [
+      {
+        kind: "life-steal",
+        amount: {
+          scaling: { attributeId: "necromancer.death-magic", atZero: 100, atTwelve: 340 },
+        },
+      },
+    ],
+  },
+  {
     id: "necromancer.feast-for-the-dead",
     name: "Feast for the Dead",
     gwId: 1354,
@@ -813,7 +933,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         kind: "create-ground-effect",
         anchor: "corpse",
         durationSeconds: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 17.6 },
         },
         act: {
           kind: "aura",
@@ -969,6 +1089,60 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     // skill, Spiteful Spirit deals 15...39...45 shadow damage to that foe
     // and all adjacent allies of that foe." The damage is the hex's.
     effects: [{ kind: "apply-status", statusId: "spiteful-spirit", durationSeconds: 22 }],
+  },
+  {
+    id: "necromancer.cacophony",
+    name: "Cacophony",
+    gwId: 1998,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 15 seconds, whenever target foe uses a shout or chant, that foe
+    // takes 30...90...105 damage" (#1913). The damage is the hex's.
+    effects: [{ kind: "apply-status", statusId: "cacophony", durationSeconds: 15 }],
+  },
+  {
+    id: "necromancer.soul-bind",
+    name: "Soul Bind",
+    gwId: 901,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, whenever target foe is healed by a skill, the healer
+    // takes 20...68...80 damage" (#1913). The damage is the hex's.
+    effects: [{ kind: "apply-status", statusId: "soul-bind", durationSeconds: 30 }],
   },
   {
     id: "necromancer.insidious-parasite",
@@ -1234,7 +1408,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       {
         kind: "life-steal",
         amount: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 18, atTwelve: 52 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 18, atTwelve: 51.6 },
         },
       },
     ],
@@ -1414,7 +1588,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "life-steal",
             amount: {
-              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 },
             },
           },
         ],
@@ -1422,7 +1596,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       {
         kind: "damage",
         amount: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 },
         },
         type: "shadow",
         armorPenetration: 0,
@@ -1534,7 +1708,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       {
         kind: "energy-gain",
         amount: {
-          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 18 },
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 8, atTwelve: 17.6 },
         },
       },
     ],
@@ -1955,7 +2129,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
               {
                 kind: "damage",
                 amount: {
-                  scaling: { attributeId: "necromancer.death-magic", atZero: 24, atTwelve: 101 },
+                  scaling: { attributeId: "necromancer.death-magic", atZero: 24, atTwelve: 100.8 },
                 },
                 type: "typeless",
                 armorPenetration: 0,
@@ -2078,7 +2252,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 } },
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 } },
         type: "shadow",
         armorPenetration: 0,
       },
@@ -2089,7 +2263,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "life-steal",
             amount: {
-              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 41 },
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 40.8 },
             },
           },
         ],
@@ -2176,7 +2350,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 8 },
+              scaling: { attributeId: "necromancer.soul-reaping", atZero: 1, atTwelve: 8.2 },
             },
           },
         ],
@@ -2438,7 +2612,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50 } },
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50.4 } },
         type: "shadow",
         armorPenetration: 0,
       },
@@ -2474,7 +2648,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50 } },
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 50.4 } },
         type: "shadow",
         armorPenetration: 0,
       },
@@ -2743,12 +2917,12 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49 } },
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49.2 } },
         type: "shadow",
         armorPenetration: 0,
         per: {
           count: { kind: "statuses", on: "target", categories: ["enchantment"] },
-          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 17 } },
+          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 16.8 } },
           max: undefined,
         },
       },
@@ -2789,15 +2963,269 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "damage",
-        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49 } },
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 6, atTwelve: 49.2 } },
         type: "shadow",
         armorPenetration: 0,
         per: {
           count: { kind: "statuses", on: "target", categories: ["enchantment"] },
-          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 17 } },
+          amount: { scaling: { attributeId: "necromancer.curses", atZero: 4, atTwelve: 16.8 } },
           max: undefined,
         },
       },
     ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.blood-renewal",
+    name: "Blood Renewal",
+    gwId: 115,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 7 seconds, you gain +3...5...6 Health regeneration. When Blood
+    // Renewal ends, you gain 40...160...190 Health." The status heals;
+    // the 15% sacrifice is paid up front.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 15 },
+      { kind: "apply-status", statusId: "blood-renewal", durationSeconds: 7 },
+    ],
+  },
+  {
+    id: "necromancer.meekness",
+    name: "Meekness",
+    gwId: 1260,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all foes in the area": the target, then every foe in
+    // the area around it.
+    area: {
+      radius: AREA_IN_THE_AREA,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The 17% sacrifice is paid once a cast, however many foes it reaches;
+    // "For 5...25...30 seconds, ... attack 50% slower": 25 s.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "meekness", durationSeconds: 25 },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples 2 (#1872), at their rank-12 values                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.vocal-minority",
+    name: "Vocal Minority",
+    gwId: 883,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes": the target, then every foe near it.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds": 17 s.
+    effects: [{ kind: "apply-status", statusId: "vocal-minority", durationSeconds: 17 }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Casting-state hexes (#1931)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "necromancer.spinal-shivers",
+    name: "Spinal Shivers",
+    gwId: 124,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...34...40 seconds, whenever target foe is struck for cold
+    // damage while using a skill, that skill is interrupted and you lose
+    // 8...4...3 Energy or Spinal Shivers ends": 34 s. The rest is the hex's.
+    effects: [{ kind: "apply-status", statusId: "spinal-shivers", durationSeconds: 34 }],
+  },
+  {
+    id: "necromancer.shivers-of-dread",
+    name: "Shivers of Dread",
+    gwId: 1071,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Factions' copy of Spinal Shivers, the same numbers.
+    effects: [{ kind: "apply-status", statusId: "shivers-of-dread", durationSeconds: 34 }],
+  },
+  {
+    id: "necromancer.death-nova",
+    name: "Death Nova",
+    gwId: 104,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30 seconds, if target ally dies, all adjacent foes take
+    // 26...85...100 damage and are Poisoned for 15 seconds." The rest is the
+    // enchantment's.
+    effects: [{ kind: "apply-status", statusId: "death-nova", durationSeconds: 30 }],
+  },
+  {
+    id: "necromancer.wail-of-doom",
+    name: "Wail of Doom",
+    gwId: 764,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.soul-reaping",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Sacrifice 10% maximum Health. For 2...5...6 seconds, all of target
+    // foe's attributes are set to 0" (#1929): the corpus's numbers, not the
+    // wiki's later 1...3...4.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 10 },
+      { kind: "apply-status", statusId: "wail-of-doom", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "necromancer.atrophy",
+    name: "Atrophy",
+    gwId: 2237,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...6...7 seconds, target foe's primary attribute is reduced to
+    // 0" (#1929).
+    effects: [{ kind: "apply-status", statusId: "atrophy", durationSeconds: 6 }],
   },
 ];

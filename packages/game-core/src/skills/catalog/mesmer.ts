@@ -131,7 +131,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 13 },
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 12.6 },
             },
           },
         ],
@@ -172,7 +172,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "damage",
             amount: {
-              scaling: { attributeId: "mesmer.domination-magic", atZero: 14, atTwelve: 83 },
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 14, atTwelve: 82.8 },
             },
             type: "typeless",
             armorPenetration: 0,
@@ -215,7 +215,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 15 },
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 15.2 },
             },
           },
           {
@@ -262,7 +262,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-loss",
-        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8.2 } },
       },
       {
         kind: "damage",
@@ -301,7 +301,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-loss",
-        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 6 } },
+        amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 6.4 } },
       },
       { kind: "energy-gain", amount: { flat: 2 }, perEnergyLost: true },
     ],
@@ -336,7 +336,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-loss",
-        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8 } },
+        amount: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8.2 } },
       },
       {
         kind: "damage",
@@ -538,7 +538,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "disable-skill",
         which: "interrupted-and-attribute",
-        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 10 } },
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 9.8 } },
       },
     ],
   },
@@ -1049,7 +1049,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
         which: "other-professions",
         profession: "mesmer",
         exceptTypes: [],
-        seconds: 4,
+        seconds: { flat: 4 },
       },
     ],
   },
@@ -1179,7 +1179,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
         which: "other-professions",
         profession: "mesmer",
         exceptTypes: ["signet"],
-        seconds: 10,
+        seconds: { flat: 10 },
       },
     ],
   },
@@ -1509,7 +1509,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-loss",
             amount: {
-              scaling: { attributeId: "mesmer.domination-magic", atZero: 3, atTwelve: 14 },
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 3, atTwelve: 14.2 },
             },
           },
         ],
@@ -1547,9 +1547,9 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "disable-skill",
         which: "all",
-        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 2, atTwelve: 7 } },
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 2, atTwelve: 6.8 } },
       },
-      { kind: "disable-own-skills", which: "all", seconds: 5 },
+      { kind: "disable-own-skills", which: "all", seconds: { flat: 5 } },
     ],
   },
   {
@@ -1759,7 +1759,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "energy-loss",
             amount: {
-              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 4 },
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 4.2 },
             },
           },
           { kind: "energy-gain", amount: { flat: 4 }, perEnergyLost: true },
@@ -1809,7 +1809,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           {
             kind: "damage",
             amount: {
-              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 43 },
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 10, atTwelve: 42.8 },
             },
             type: "typeless",
             armorPenetration: 0,
@@ -2075,5 +2075,469 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 8...56 seconds, whenever you cast a spell, you gain 1 Energy for
     // each foe in the area": 46 s, its rank-12 value. The status gains.
     effects: [{ kind: "apply-status", statusId: "channeling", durationSeconds: 46 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.ethereal-burden",
+    name: "Ethereal Burden",
+    gwId: 45,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6...11...12 seconds, target foe moves 50% slower. When Ethereal
+    // Burden ends, you gain 10...16...18 Energy": 11 s; the status gives it.
+    effects: [{ kind: "apply-status", statusId: "ethereal-burden", durationSeconds: 11 }],
+  },
+  {
+    id: "mesmer.sum-of-all-fears",
+    name: "Sum of All Fears",
+    gwId: 1996,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...10...12 seconds, target foe moves, attacks, and casts spells
+    // 33% slower": 10 s.
+    effects: [{ kind: "apply-status", statusId: "sum-of-all-fears", durationSeconds: 10 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples 2 (#1872), at their rank-12 values                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.elemental-resistance",
+    name: "Elemental Resistance",
+    gwId: 72,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30...90 seconds": 78 s; the armor is the status's.
+    effects: [{ kind: "apply-status", statusId: "elemental-resistance", durationSeconds: 78 }],
+  },
+  {
+    id: "mesmer.physical-resistance",
+    name: "Physical Resistance",
+    gwId: 73,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 30...90 seconds": 78 s; the armor is the status's.
+    effects: [{ kind: "apply-status", statusId: "physical-resistance", durationSeconds: 78 }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Casting-state hexes (#1931)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.power-leech",
+    name: "Power Leech",
+    gwId: 803,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a Spell or Chant, that skill is interrupted.
+    // For 10 seconds, whenever target foe casts a spell, you steal up to
+    // 5...13...15 Energy." The hex goes on even when the interrupt is
+    // prevented: what the foe was casting decides, read before it lands.
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "target-casting", spell: true, orChant: true },
+        effects: [{ kind: "apply-status", statusId: "power-leech", durationSeconds: 10 }],
+      },
+    ],
+  },
+  {
+    id: "mesmer.power-flux",
+    name: "Power Flux",
+    gwId: 953,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a Spell or Chant, that skill is interrupted
+    // and target foe suffers -2 Energy degeneration for 4...9...10 seconds":
+    // 9 s (8.8). The hex goes on even when the interrupt is prevented.
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "target-casting", spell: true, orChant: true },
+        effects: [{ kind: "apply-status", statusId: "power-flux", durationSeconds: 9 }],
+      },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-illusions",
+    name: "Signet of Illusions",
+    gwId: 1346,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Your next 1...3...3 non-Illusion spells use your Illusion attribute"
+    // (#1929): no duration, it lasts until its 3 are spent.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "signet-of-illusions",
+        durationSeconds: Number.POSITIVE_INFINITY,
+      },
+    ],
+  },
+  {
+    id: "mesmer.inspired-enchantment",
+    name: "Inspired Enchantment",
+    gwId: 21,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove an enchantment from target foe and gain 3...15 Energy. For 20
+    // seconds, Inspired Enchantment is replaced with the enchantment removed from target
+    // foe" (#1928). Nothing removed: no Energy, no copy.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+          { kind: "copy-removed", seconds: 20 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.revealed-enchantment",
+    name: "Revealed Enchantment",
+    gwId: 1048,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove an enchantment from target foe and gain 3...15 Energy. For 20
+    // seconds, Revealed Enchantment is replaced with the enchantment removed from target
+    // foe" (#1928). Nothing removed: no Energy, no copy.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "enchantment" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+          { kind: "copy-removed", seconds: 20 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.inspired-hex",
+    name: "Inspired Hex",
+    gwId: 22,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally and gain 4...10 Energy. For 20 seconds,
+    // Inspired Hex is replaced with the hex that was removed" (#1928).
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 8.8 },
+            },
+          },
+          { kind: "copy-removed", seconds: 20 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.revealed-hex",
+    name: "Revealed Hex",
+    gwId: 1049,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove a hex from target ally and gain 4...10 Energy. For 20 seconds,
+    // Revealed Hex is replaced with the hex that was removed" (#1928).
+    effects: [
+      { kind: "remove-status", category: "hex", count: 1 },
+      {
+        kind: "if",
+        condition: { kind: "removed", category: "hex" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 4, atTwelve: 8.8 },
+            },
+          },
+          { kind: "copy-removed", seconds: 20 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.arcane-thievery",
+    name: "Arcane Thievery",
+    gwId: 81,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...35 seconds, one random spell is disabled for target foe, and
+    // Arcane Thievery is replaced by that spell" (#1928).
+    effects: [
+      {
+        kind: "disable-skill",
+        which: "random-spell",
+        seconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 29 },
+        },
+      },
+      { kind: "copy-disabled" },
+    ],
+  },
+  {
+    id: "mesmer.arcane-larceny",
+    name: "Arcane Larceny",
+    gwId: 1062,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...35 seconds, one random spell is disabled for target foe, and
+    // Arcane Larceny is replaced by that spell" (#1928).
+    effects: [
+      {
+        kind: "disable-skill",
+        which: "random-spell",
+        seconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 29 },
+        },
+      },
+      { kind: "copy-disabled" },
+    ],
   },
 ];

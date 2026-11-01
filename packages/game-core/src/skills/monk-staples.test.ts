@@ -179,6 +179,7 @@ describe("Reversal of Fortune (#987)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });

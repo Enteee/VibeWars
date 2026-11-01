@@ -75,4 +75,13 @@ export const RITUALIST_ICONS = {
   // The PvP Communing pair (#1827, #1874).
   "ritualist.armor-of-unfeeling": { glyph: "plate-post" },
   "ritualist.signet-of-ghostly-might": { glyph: "fist-fade" },
+  // "Not enchanted" (#1916)
+  "ritualist.brutal-weapon": { glyph: "blade-teeth", modifier: "up" },
+  // Caster staples 2 (#1872).
+  "ritualist.vital-weapon": { glyph: "heart-sword" },
+  // Attributes raised (#1941), a stand-in until its art card.
+  "ritualist.ritual-lord": { glyph: "totem", modifier: "renew" },
+  // Spirits as a resource (#1947), stand-ins until their art card.
+  "ritualist.spirit-transfer": { glyph: "spirit-last-heal", modifier: "plus" },
+  "ritualist.gaze-of-fury": { glyph: "spirit-rupture", modifier: "bolt" },
 };

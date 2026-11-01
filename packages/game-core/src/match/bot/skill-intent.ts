@@ -1,6 +1,7 @@
 import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
+import { copiesSkill } from "../../skills/stand-in.js";
 import type { StatusCategory } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
@@ -16,9 +17,10 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, and raising the dead.
+ * skill, raising the dead, and a way out (#1930).
  */
-export type BotUse = "interrupt" | "healing" | "defence" | "removal" | "resurrect" | "offence";
+export type BotUse =
+  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -33,18 +35,47 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (roles.includes("interrupt")) uses.push("interrupt");
   if (roles.includes("healing")) uses.push("healing");
   if (roles.includes("defence")) uses.push("defence");
+  if (escapes(skill)) uses.push("escape");
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
+  // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
-    roles.includes("hex") ||
-    roles.includes("condition") ||
-    roles.includes("knockdown") ||
-    skill.attack !== undefined ||
-    skill.effects.some(dealsDamage)
+    skill.target !== "allied-minion" &&
+    (roles.includes("hex") ||
+      roles.includes("condition") ||
+      roles.includes("knockdown") ||
+      skill.attack !== undefined ||
+      skill.effects.some(dealsDamage) ||
+      // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
+      // a foe is the bot's to use.
+      (skill.target === "single-enemy" && copiesSkill(skill.id)))
   ) {
     uses.push("offence");
   }
   return uses;
+}
+
+/**
+ * A way out (#1930): a Shadow Step to a creature of the caster's side, or
+ * a swap with one, as Spirit Walk's and Swap's.
+ */
+function escapes(skill: Skill): boolean {
+  return (
+    (skill.target === "allied-spirit" || skill.target === "allied-summoned-creature") &&
+    skill.effects.some((effect) => effect.kind === "shadow-step")
+  );
+}
+
+/**
+ * A spirit for a spirit (#1947): one of the caster's side destroyed and a
+ * new one in its place, as Gaze of Fury's.
+ */
+export function renewsSpirit(skill: Skill): boolean {
+  return (
+    skill.target === "allied-spirit" &&
+    skill.effects.some((effect) => effect.kind === "destroy-target-spirit") &&
+    skill.effects.some((effect) => effect.kind === "summon")
+  );
 }
 
 /**
@@ -106,6 +137,18 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
     }
   }
   return [...found];
+}
+
+/**
+ * The category a copier takes off its foe to stand in for (#1928):
+ * Inspired Enchantment's enchantments. `undefined` for any other skill.
+ */
+export function copiedOffFoe(skill: Skill): StatusCategory | undefined {
+  if (skill.target !== "single-enemy" || !copiesSkill(skill.id)) {
+    return undefined;
+  }
+  const removal = skill.effects.find((effect) => effect.kind === "remove-status");
+  return removal?.kind === "remove-status" ? removal.category : undefined;
 }
 
 /**

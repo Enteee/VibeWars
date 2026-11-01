@@ -35,7 +35,12 @@ export type WarriorStatusId =
   // Warrior staples 2 (#1592).
   | "shield-bash"
   | "shield-stance"
-  | "rage-of-the-ntouka";
+  | "rage-of-the-ntouka"
+  // Staples (#1869).
+  | "frenzied-defense"
+  | "flurry"
+  // Your next N attacks (#1916).
+  | "signet-of-strength";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -312,5 +317,27 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
     profession: "warrior",
     armorModifier: -40,
+  }),
+  // Staples (#1869). "For 8 seconds, you have a 75% chance to block
+  // incoming attacks, but take double damage": all damage, from anyone.
+  "frenzied-defense": define("frenzied-defense", "Frenzied Defense", "stance", {
+    profession: "warrior",
+    block: { chance: 0.75, against: "all" },
+    damageTakenMultiplier: 2,
+  }),
+  // "For 5 seconds, your attack rate is increased by 33%, but you deal 25%
+  // less damage": the weapon roll, as Weakness's; a skill's bonus is not
+  // scaled.
+  flurry: define("flurry", "Flurry", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    weaponDamageMultiplier: 0.75,
+  }),
+  // "Your next 1...13...16 attacks deal +5 damage" (#1916): a hit, a miss
+  // and a block each spend one, and nothing else ends it.
+  "signet-of-strength": define("signet-of-strength", "Signet of Strength", "skill-effect", {
+    profession: "warrior",
+    attackDamageDelta: 5,
+    endsAfterAttackCount: 13,
   }),
 };

@@ -85,16 +85,20 @@ describe("a P2P match (#375)", () => {
       attacksLeft: undefined,
       hitsLeft: undefined,
       unblockableLeft: undefined,
+      attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId: remote.selfSessionId,
+      sourceSkillId: undefined,
       outbreak: null,
       maintained: null,
       projected: false,
       returnPoint: null,
+      stepTargetId: null,
     }));
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue(many);
     const before = remote.getSnapshot().elapsedSeconds;
@@ -117,16 +121,20 @@ describe("a P2P match (#375)", () => {
       attacksLeft: undefined,
       hitsLeft: undefined,
       unblockableLeft: undefined,
+      attacksMadeLeft: undefined,
       spellsLeft: undefined,
+      castsLeft: undefined,
       skillsLeft: undefined,
       ownSkillsLeft: undefined,
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId: "foe",
+      sourceSkillId: undefined,
       outbreak: null,
       maintained: null,
       projected: false,
       returnPoint: null,
+      stepTargetId: null,
     };
     vi.spyOn(StatusSet.prototype, "active", "get").mockReturnValue([bleeding]);
 
