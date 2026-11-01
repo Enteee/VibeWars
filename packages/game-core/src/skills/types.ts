@@ -1120,8 +1120,12 @@ export type StateCondition =
    * (#1234): Iron Palm's "suffering from a hex or condition".
    */
   | { readonly kind: "target-has-any"; readonly categories: readonly StatusCategory[] }
-  /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
-  | { readonly kind: "target-casting"; readonly spell: true }
+  /**
+   * The effect's target is activating a spell (`isSpell`); a chant is not
+   * one, unless `orChant` (#1931), as Power Leech's "if target foe is
+   * casting a Spell or Chant".
+   */
+  | { readonly kind: "target-casting"; readonly spell: true; readonly orChant?: true }
   /**
    * The effect's target is activating any skill, an attack skill included
    * (#1473): Overload's "if target foe is using a skill". A plain weapon

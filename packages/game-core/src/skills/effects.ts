@@ -388,7 +388,7 @@ function recordFromFoe(
   amount: number,
 ): void {
   if (dealer !== undefined && dealer.team !== target.team) {
-    target.statuses.recordDamageFromFoe(dealer.id, type, amount);
+    target.statuses.recordDamageFromFoe(dealer.id, type, amount, target.cast.isCasting);
   }
 }
 
@@ -2090,7 +2090,10 @@ export function stateHolds(
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
-      return skill !== undefined && isSpell(skill.type);
+      return (
+        skill !== undefined &&
+        (isSpell(skill.type) || (condition.orChant === true && skill.type === "chant"))
+      );
     }
     case "target-using-skill":
       return target.cast.activeCast !== undefined;

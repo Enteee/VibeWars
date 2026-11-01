@@ -1241,6 +1241,13 @@ export interface StatusTrigger {
    */
   readonly damageType?: DamageType;
   /**
+   * On `bearer-takes-damage-from-foe` only (#1931): it fires only while the
+   * bearer is using a skill, never mid-swing nor idle, as Spinal Shivers'
+   * "whenever target foe is struck for cold damage while using a skill".
+   * Absent: whatever the bearer is doing.
+   */
+  readonly whileUsingSkill?: true;
+  /**
    * On `bearer-takes-damage-from-foe` only (#1754): it fires only for one
    * packet of damage that took more than this much health, never for a
    * life steal, as Spirit Bond's "whenever target ally takes more than 50
@@ -1329,11 +1336,25 @@ export interface CancelAttackEffect {
 }
 
 /**
- * What a trigger can do: any skill effect, Contagion's spread, an echo or
- * a cancelled attack.
+ * Spinal Shivers' price (#1931): the status's source loses `amount` Energy,
+ * or, with less than that or dead, the status ends and the trigger's
+ * remaining effects do not happen: "the hex ends if its caster dies".
+ */
+export interface PayEnergyOrEndEffect {
+  readonly kind: "pay-energy-or-end";
+  readonly amount: number;
+}
+
+/**
+ * What a trigger can do: any skill effect, Contagion's spread, an echo,
+ * a cancelled attack or a price its source pays to keep it.
  */
 export type TriggerEffect =
-  SkillEffect | SpreadGainedConditionEffect | EchoEffect | CancelAttackEffect;
+  | SkillEffect
+  | SpreadGainedConditionEffect
+  | EchoEffect
+  | CancelAttackEffect
+  | PayEnergyOrEndEffect;
 
 /**
  * What happened to a `StatusSet` that a trigger may answer (#887), in the
@@ -1813,14 +1834,15 @@ export class StatusSet {
    * life steal from `offenderId`, a foe (#1022), recorded only if a status
    * on it answers that, with the triggers that do: one with a `damageType`
    * answers only that type (#1540), one with a `minDamage` only damage
-   * above it (#1754). A status already waiting to answer
-   * one, undrained, does not answer another: it fires once, at the first
-   * foe.
+   * above it (#1754), one `whileUsingSkill` only while
+   * `usingSkill` (#1931). A status already waiting to answer one, undrained,
+   * does not answer another: it fires once, at the first foe.
    */
   public recordDamageFromFoe(
     offenderId: string,
     type: DamageType | undefined,
     amount: number,
+    usingSkill: boolean,
   ): void {
     const pending = new Set(
       this.#changes.flatMap((change) =>
@@ -1831,7 +1853,8 @@ export class StatusSet {
       ({ statusId, trigger }) =>
         !pending.has(statusId) &&
         (trigger.damageType === undefined || trigger.damageType === type) &&
-        (trigger.minDamage === undefined || (type !== undefined && amount > trigger.minDamage)),
+        (trigger.minDamage === undefined || (type !== undefined && amount > trigger.minDamage)) &&
+        (trigger.whileUsingSkill === undefined || usingSkill),
     );
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-damage-from-foe", offenderId, fired });

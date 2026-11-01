@@ -100,4 +100,8 @@ export const NECROMANCER_ICONS = {
   // Skill-type and heal triggers (#1913), stand-ins until their art card.
   "necromancer.cacophony": { glyph: "hex-mute", modifier: "bolt" },
   "necromancer.soul-bind": { glyph: "hex-cut", modifier: "bleed" },
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  "necromancer.spinal-shivers": { glyph: "interrupt", modifier: "stun" },
+  "necromancer.shivers-of-dread": { glyph: "hex-cut", modifier: "stun" },
+  "necromancer.death-nova": { glyph: "germ", modifier: "corpse" },
 };

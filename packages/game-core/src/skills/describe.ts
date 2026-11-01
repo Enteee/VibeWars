@@ -940,6 +940,7 @@ function describeTriggers(
       trigger.profession,
       trigger.usedSkill,
       trigger.damageType,
+      trigger.whileUsingSkill,
       trigger.minDamage,
       trigger.healthBelow,
     ]);
@@ -1035,7 +1036,8 @@ function describeDeath(
     }
     return effect.kind === "spread-gained-condition" ||
       effect.kind === "echo" ||
-      effect.kind === "cancel-attack"
+      effect.kind === "cancel-attack" ||
+      effect.kind === "pay-energy-or-end"
       ? []
       : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
   };
@@ -1089,6 +1091,14 @@ const DROPPED = "drop effect";
  * `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
+  // Spinal Shivers' (#1931).
+  if (
+    event === "bearer-takes-damage-from-foe" &&
+    trigger.damageType !== undefined &&
+    trigger.whileUsingSkill === true
+  ) {
+    return `is struck for ${trigger.damageType} damage while using a skill`;
+  }
   if (event === "bearer-takes-damage-from-foe" && trigger.damageType !== undefined) {
     return `takes ${trigger.damageType} damage from a foe`;
   }
@@ -1178,6 +1188,7 @@ function describeCreation(
       case "spread-gained-condition":
       case "echo":
       case "cancel-attack":
+      case "pay-energy-or-end":
         return "";
       default:
         return describeEffects(effect, ranks)
@@ -1267,7 +1278,8 @@ function describeTrigger(
       }
       return effect.kind === "spread-gained-condition" ||
         effect.kind === "echo" ||
-        effect.kind === "cancel-attack"
+        effect.kind === "cancel-attack" ||
+        effect.kind === "pay-energy-or-end"
         ? []
         : describeEffects(effect, ranks).map(({ text }) => lowerFirst(text));
     });
@@ -1300,6 +1312,21 @@ function describeTrigger(
           : "",
     );
     return [sentence(`${when}, that attack is interrupted and ${hurt.join(" and ")}`)];
+  }
+  // Spinal Shivers' (#1931), said as one: "whenever it is struck for cold
+  // damage while using a skill, it is interrupted and you lose 4 Energy or
+  // this ends".
+  if (
+    first?.kind === "pay-energy-or-end" &&
+    trigger.target === "bearer" &&
+    after.length > 0 &&
+    after.every(({ kind }) => kind === "interrupt")
+  ) {
+    return [
+      sentence(
+        `${when}, it is interrupted and you lose ${String(first.amount)} Energy or this ends`,
+      ),
+    ];
   }
   // An attunement's and Aura of Restoration's (#1614), said at once:
   // "whenever it casts a spell: gains 1 energy and is healed for 360% of
@@ -1344,6 +1371,9 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    if (effect.kind === "pay-energy-or-end") {
+      return [sentence(`${when}: you lose ${String(effect.amount)} Energy or this ends`)];
     }
     // A cancel with nothing to say after it (#1593).
     if (effect.kind === "cancel-attack") {
@@ -1654,7 +1684,9 @@ function conditionText(condition: EffectCondition): string {
         ? `If you have no ${condition.category}`
         : `If you have no ${getProfession(condition.profession).name} ${condition.category}`;
     case "target-casting":
-      return "If target is casting a spell";
+      return condition.orChant === true
+        ? "If target is casting a spell or chant"
+        : "If target is casting a spell";
     case "target-using-skill":
       return "If target is using a skill";
     case "target-lacks-other-hex":
