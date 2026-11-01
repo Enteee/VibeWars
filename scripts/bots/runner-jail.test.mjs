@@ -194,6 +194,21 @@ describe("runnerCommand", () => {
     ]);
   });
 
+  it("remounts externals/ with node24 and a node20 link, no write into the overlay (#2006)", () => {
+    const ext = "/nix/store/aaa-github-runner/lib/externals";
+    const at = command.indexOf(ext);
+    expect(command.slice(at - 1, at + 7)).toEqual([
+      "--tmpfs",
+      ext,
+      "--ro-bind",
+      `${ext}/node24`,
+      `${ext}/node24`,
+      "--symlink",
+      "node24",
+      `${ext}/node20`,
+    ]);
+  });
+
   it("runs the runner through the init, with no JIT config in any argument", () => {
     expect(command.slice(-4)).toEqual([
       "--",
