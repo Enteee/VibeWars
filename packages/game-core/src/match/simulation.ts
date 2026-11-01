@@ -104,6 +104,7 @@ import {
   applyEffects,
   applySkillEffects,
   applyStatus,
+  disableOwnSkills,
   gainEnergy,
   landCaughtCondition,
   resolveSkillEffects,
@@ -2164,6 +2165,7 @@ export class MatchSimulation {
       expired: false,
       death: false,
       returnPoint: null,
+      stepTargetId: null,
     };
     this.#loseRaisedMaxima(record, change);
     this.#logFired(
@@ -3147,8 +3149,16 @@ export class MatchSimulation {
           bearer.statuses.remove(status.id);
           continue;
         }
+        // Recall's (#1930) holds while its ally is within compass range,
+        // as GW1 has it, and ends with the ally gone from the match.
+        const anchor =
+          status.stepTargetId === null ? caster : this.#participants.get(status.stepTargetId);
+        if (anchor === undefined) {
+          bearer.statuses.remove(status.id);
+          continue;
+        }
         status.maintained.outOfRangeSeconds =
-          distance(caster.position, record.position) > RANGE_COMPASS
+          distance(anchor.position, record.position) > RANGE_COMPASS
             ? status.maintained.outOfRangeSeconds + dt
             : 0;
         if (status.maintained.outOfRangeSeconds > UPKEEP_RANGE_GRACE_SECONDS) {
@@ -4025,6 +4035,7 @@ export class MatchSimulation {
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
         this.#returnSource(change);
+        this.#stepToTarget(change);
       }
     }
     const context = this.#triggerContext();
@@ -4078,6 +4089,7 @@ export class MatchSimulation {
         this.#loseRaisedMaxima(record, change);
         this.#endForm(record, change);
         this.#returnSource(change);
+        this.#stepToTarget(change);
         if (ownEnds && change.kind === "ended") {
           this.#logFired(fireEndTriggers(record.combatant, change, context));
           this.#logFired(fireDeathTriggers(record.combatant, change, context));
@@ -4110,6 +4122,7 @@ export class MatchSimulation {
           this.#loseRaisedMaxima(record, change);
           this.#endForm(record, change);
           this.#returnSource(change);
+          this.#stepToTarget(change);
         }
       }
     }
@@ -6090,7 +6103,8 @@ export class MatchSimulation {
    * clear as they do a walk; the doorway rule does not hold, since a step
    * is not a walk. It faces the target, and nothing reads the step as a
    * run: its track starts over, and it did not walk this step. An attack
-   * and a skill walking in stay. A step away (#1326) is `#stepAway`'s. A shadow
+   * and a skill walking in stay. A step away (#1326) is `#stepAway`'s. A
+   * swap (#1930) is `#swap`'s, unless its creature died since. A shadow
    * step drops its caster's ashes first, where it stood (#1434).
    */
   #recordSteps(events: readonly CombatEvent[]): void {
@@ -6100,6 +6114,15 @@ export class MatchSimulation {
         if (record !== undefined) {
           this.#dropAshes(record);
           this.#stepAway(record);
+        }
+        continue;
+      }
+      if (event.kind === "shadow-swapped") {
+        const record = this.#participants.get(event.targetId);
+        const other = this.#participants.get(event.withId);
+        if (record !== undefined && other !== undefined && !other.combatant.dead) {
+          this.#dropAshes(record);
+          this.#swap(record, other);
         }
         continue;
       }
@@ -6115,18 +6138,39 @@ export class MatchSimulation {
       if (event.kind === "shadow-stepped") {
         this.#dropAshes(record);
       }
-      const radius = this.#ruleset.collision.playerRadius;
-      const away =
-        distance(record.position, target.position) > 0
-          ? normalize(sub(record.position, target.position))
-          : vec2(-Math.cos(target.facing), -Math.sin(target.facing));
-      const beside = add(target.position, scale(away, 2 * radius));
-      this.#placeAt(
-        record,
-        hasLineOfSight(target.position, beside, this.#walls) ? beside : target.position,
-      );
-      faceToward(record, target.position);
+      this.#stepBeside(record, target);
     }
+  }
+
+  /** Put `record` beside `target`, facing it, as `#recordSteps` describes. */
+  #stepBeside(record: ParticipantRecord, target: ParticipantRecord): void {
+    const radius = this.#ruleset.collision.playerRadius;
+    const away =
+      distance(record.position, target.position) > 0
+        ? normalize(sub(record.position, target.position))
+        : vec2(-Math.cos(target.facing), -Math.sin(target.facing));
+    const beside = add(target.position, scale(away, 2 * radius));
+    this.#placeAt(
+      record,
+      hasLineOfSight(target.position, beside, this.#walls) ? beside : target.position,
+    );
+    faceToward(record, target.position);
+  }
+
+  /**
+   * Swap (#1930): `record` and `other` trade places exactly, each facing
+   * the other after. The one moved first stands on the other's old spot
+   * only for the push-outs of the second, which see the two as far apart
+   * as they were.
+   */
+  #swap(record: ParticipantRecord, other: ParticipantRecord): void {
+    const from = record.position;
+    const to = other.position;
+    other.position = from;
+    this.#placeAt(record, to);
+    this.#placeAt(other, from);
+    faceToward(record, other.position);
+    faceToward(other, record.position);
   }
 
   /**
@@ -6179,6 +6223,49 @@ export class MatchSimulation {
       area: undefined,
       doubleStrike: false,
       events: [{ kind: "shadow-stepped-back", targetId: source.id }],
+    });
+  }
+
+  /**
+   * A status that steps to its ally ended (#1930), Recall's: its source
+   * Shadow Steps beside that ally, ashes dropped first, and all its skills
+   * are disabled, logged as the status's skill. Either of the two dead, or
+   * gone: nothing.
+   */
+  #stepToTarget(change: StatusChange): void {
+    if (change.kind !== "ended" || change.stepTargetId === null) {
+      return;
+    }
+    const steps = STATUS_DEFINITIONS[change.id].stepsToTarget;
+    const source = this.#participants.get(change.sourceId);
+    const ally = this.#participants.get(change.stepTargetId);
+    if (
+      steps === undefined ||
+      source === undefined ||
+      ally === undefined ||
+      source.combatant.dead ||
+      ally.combatant.dead
+    ) {
+      return;
+    }
+    this.#dropAshes(source);
+    this.#stepBeside(source, ally);
+    const disabled = disableOwnSkills(
+      source.combatant,
+      { kind: "disable-own-skills", which: "all", seconds: { flat: steps.disableSeconds } },
+      steps.skillId,
+    );
+    this.#log.push({
+      tick: this.#tick,
+      atSeconds: this.#elapsedSeconds,
+      cause: "skill",
+      sourceId: source.id,
+      skillId: steps.skillId,
+      weaponId: undefined,
+      attributeId: undefined,
+      area: undefined,
+      doubleStrike: false,
+      events: [{ kind: "shadow-stepped", targetId: source.id, toId: ally.id }, ...disabled],
     });
   }
 

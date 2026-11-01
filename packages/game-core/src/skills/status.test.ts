@@ -114,6 +114,7 @@ describe("status definitions", () => {
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
         def.returnsSource !== undefined ||
+        def.stepsToTarget !== undefined ||
         def.elementalDamageTakenAs !== undefined ||
         def.physicalDamageDealtAs !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
@@ -520,6 +521,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: true,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -528,6 +530,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -536,6 +539,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -544,6 +548,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -552,6 +557,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -560,6 +566,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -568,6 +575,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -593,6 +601,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -601,6 +610,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: false,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -660,6 +670,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -668,6 +679,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -676,6 +688,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
       {
         kind: "ended",
@@ -684,6 +697,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
@@ -772,6 +786,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
         expired: false,
         death: true,
         returnPoint: null,
+        stepTargetId: null,
       },
     ]);
   });
