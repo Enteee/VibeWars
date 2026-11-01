@@ -84,6 +84,7 @@ export function define(
     endsAfterAttackCount: undefined,
     attacksUnblockable: false,
     onAttackHit: undefined,
+    onAttackBlocked: undefined,
     endsAfterHits: undefined,
     nextSpells: undefined,
     spreads: false,

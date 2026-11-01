@@ -1276,6 +1276,32 @@ describe("party-wide condition and hex moves (#1954)", () => {
   });
 });
 
+describe("blocks that pay or pay off (#1974)", () => {
+  const texts = (id: string, attributeId: string): string[] =>
+    describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+
+  it("says what each block costs or gives, at rank 12", () => {
+    expect(texts("mesmer.distortion", "mesmer.illusion-magic")).toEqual([
+      "For 4s, 75% chance to block attacks. Each block costs you 2 Energy or this ends",
+    ]);
+    expect(texts("monk.shield-guardian", "monk.protection-prayers")).toEqual([
+      "Applies Shield Guardian for 3s (75% chance to block attacks, ends after it takes effect once. When you block, you and allies in earshot are healed for 30)",
+    ]);
+    expect(texts("ranger.glass-arrows", "ranger.expertise")).toEqual([
+      "For 30s, bow attacks deal 16 more damage, foes that block your bow attacks get Bleeding for 18s",
+    ]);
+    expect(texts("warrior.furious-axe", "warrior.axe-mastery")).toEqual([
+      "+29 damage",
+      "If blocked: gain 3 strikes of adrenaline",
+    ]);
+    expect(texts("warrior.leviathans-sweep", "warrior.strength")).toEqual([
+      "+17 damage",
+      "If blocked: knocks down for 2s",
+      "If blocked: deals 29 damage",
+    ]);
+  });
+});
+
 describe("enchantment party moves (#1975)", () => {
   const texts = (id: string): string[] => describeSkill(skill(id)).effects.map(({ text }) => text);
 

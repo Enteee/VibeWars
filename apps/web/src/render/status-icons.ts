@@ -427,6 +427,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "order-of-apostasy": icon("order-of-apostasy"),
   "jaundiced-gaze": icon("jaundiced-gaze"),
   "dark-apostasy": icon("dark-apostasy"),
+  // Blocks that pay or pay off (#1974).
+  distortion: icon("distortion"),
+  "shield-guardian": icon("shield-guardian"),
+  "glass-arrows": icon("glass-arrows"),
 };
 
 const GAP = 2;

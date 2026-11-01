@@ -106,4 +106,6 @@ export const MONK_ICONS = {
   "monk.divert-hexes": { glyph: "hex-cut", modifier: "up" },
   // Stand-ins for the enchantment party moves (#1975).
   "monk.air-of-enchantment": { glyph: "attune-air", modifier: "less" },
+  // Blocks that pay (#1974), a stand-in until its art card.
+  "monk.shield-guardian": { glyph: "block-half", modifier: "plus" },
 };
