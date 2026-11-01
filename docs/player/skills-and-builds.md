@@ -148,7 +148,7 @@ A team code is pasted on **Team Builder** instead.
 
 A **team build** is a team of its own characters, made on **Team
 Builder** and kept apart from your own characters. Each one is a card
-there and on each team mode: **New team build** makes one, and a click
+there, and only there: **New team build** makes one, and a click
 on a card, or its **Edit**, opens it. You propose one in the
 [Team Lobby](modes.md#team-lobby). Add a member
 with **New character**, or **Add** one of your characters to copy its

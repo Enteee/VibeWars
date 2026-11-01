@@ -1189,15 +1189,7 @@ async function main(): Promise<void> {
     };
     const problems = [...teamList.problems, ...notices.draw(entry)];
     if (isHostEntry(entry)) {
-      renderHostScreen(
-        screenRoot,
-        entry,
-        teamList.teams,
-        problems,
-        menuNotice,
-        callbacks,
-        panelFor(entry),
-      );
+      renderHostScreen(screenRoot, entry, problems, menuNotice, callbacks, panelFor(entry));
     } else {
       renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
     }
