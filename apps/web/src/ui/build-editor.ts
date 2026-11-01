@@ -95,6 +95,8 @@ import {
 } from "./gear-editor.js";
 import {
   gearIconImg,
+  insigniaIcon,
+  runeIcon,
   offhandIcon,
   professionIcon,
   SKILL_TYPE_NAME,
@@ -2781,6 +2783,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         const piece = character.equipment.armor[slot];
         insignia.update({
           filled: piece.insigniaId === null ? undefined : getInsignia(piece.insigniaId)?.name,
+          icon: piece.insigniaId === null ? undefined : insigniaIcon(piece.insigniaId),
           detail:
             piece.insigniaId === null ? undefined : insigniaAmountNote(piece.insigniaId, slot),
           dragSource:
@@ -2791,6 +2794,7 @@ function mountGear(panel: HTMLElement, context: EditorContext): Region {
         });
         rune.update({
           filled: piece.rune === null ? undefined : runeDisplayName(piece.rune),
+          icon: piece.rune === null ? undefined : runeIcon(piece.rune),
           dragSource: piece.rune === null ? undefined : { from: "armor-slot", slot, part: "rune" },
           onClear: () => {
             commit(setRune(current(), slot, null));
@@ -3024,6 +3028,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
         (insignia) => {
           const node = box({
             name: insignia.name,
+            icon: insigniaIcon(insignia.id),
             detail: insigniaLibraryNote(insignia.effect),
             drag: { from: "insignia-library", insigniaId: insignia.id },
             onClick: () => {
@@ -3054,6 +3059,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
         (choice) => {
           const node = box({
             name: choice.label,
+            icon: runeIcon(choice.rune),
             detail: "",
             drag: { from: "rune-library", rune: choice.rune },
             onClick: () => {

@@ -5007,6 +5007,31 @@ body.has-expanded-training #screens {
   vertical-align: -0.3em;
 }
 
+/* A rune's tier (#2058): one, two or three pips in the padding under the stone. */
+.gear-icon[data-tier] {
+  --pip: radial-gradient(circle, var(--ink, #d7dee8) 52%, transparent 58%);
+  padding-bottom: 0.3em;
+  background-image: var(--pip);
+  background-size: 0.26em 0.26em;
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+}
+
+.gear-icon[data-tier="major"] {
+  background-image: var(--pip), var(--pip);
+  background-position:
+    38% 100%,
+    62% 100%;
+}
+
+.gear-icon[data-tier="superior"] {
+  background-image: var(--pip), var(--pip), var(--pip);
+  background-position:
+    26% 100%,
+    50% 100%,
+    74% 100%;
+}
+
 .gear-box .skill-box-name {
   /* Rune labels carry their whole trade-off, so they get two lines
      rather than being cut off at the interesting part. */

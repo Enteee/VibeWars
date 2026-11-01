@@ -1,13 +1,18 @@
 import {
+  PROFESSIONS,
+  getInsignia,
   getOffhand,
   getSkill,
   getWeapon,
   type ChainRole,
   type CreatureLook,
+  type EquippedRune,
   type OffhandId,
   type ProfessionId,
+  type RuneTier,
   type SkillType,
   type WeaponId,
+  runeDisplayName,
 } from "@vibewars/game-core";
 
 import { CREATURE_GLYPH } from "../render/arena-atlas.js";
@@ -103,6 +108,8 @@ const OFFHAND_ICON: Readonly<Record<OffhandId, string>> = {
 export interface GearIcon {
   readonly src: string;
   readonly name: string;
+  /** A rune's tier, drawn as pips by the stylesheet (#2058). */
+  readonly tier?: RuneTier;
 }
 
 /**
@@ -120,7 +127,31 @@ export function offhandIcon(offhandId: string): GearIcon | undefined {
   return offhand === undefined ? undefined : { src: OFFHAND_ICON[offhand.id], name: offhand.name };
 }
 
-/** A weapon or off-hand icon (#419), named for a screen reader and a hover. */
+/** An insignia's icon (#2058): the shield plate with its emblem. An id this client does not know gets none. */
+export function insigniaIcon(insigniaId: string): GearIcon | undefined {
+  const insignia = getInsignia(insigniaId);
+  return insignia === undefined
+    ? undefined
+    : { src: iconUrl("insignia", insignia.id), name: insignia.name };
+}
+
+/**
+ * A rune's icon (#2058): a stone with its emblem, or with its profession's
+ * glyph for an attribute rune. The tier is the caller's pips, from `data-tier`.
+ * An attribute rune of no known profession gets none.
+ */
+export function runeIcon(rune: EquippedRune): (GearIcon & { readonly tier: RuneTier }) | undefined {
+  const name = runeDisplayName(rune);
+  if (rune.kind === "universal") {
+    return { src: iconUrl("rune", rune.runeId), name, tier: rune.tier };
+  }
+  const profession = rune.attributeId.split(".")[0] ?? "";
+  return Object.hasOwn(PROFESSIONS, profession)
+    ? { src: iconUrl("rune", `attribute-${profession}`), name, tier: rune.tier }
+    : undefined;
+}
+
+/** A weapon, off-hand, insignia or rune icon, named for a screen reader and a hover; a rune's tier goes in `data-tier`. */
 export function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | undefined {
   if (icon === undefined) {
     return undefined;
@@ -130,6 +161,9 @@ export function gearIconImg(icon: GearIcon | undefined): HTMLImageElement | unde
   img.src = icon.src;
   img.alt = icon.name;
   img.title = icon.name;
+  if (icon.tier !== undefined) {
+    img.dataset.tier = icon.tier;
+  }
   return img;
 }
 
