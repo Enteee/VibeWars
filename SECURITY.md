@@ -31,9 +31,10 @@ The host runs the simulation in a `MatchHost` (game-session) and sends
 snapshots. Every peer sends intents and draws what the host says. Peers
 find each other through Trystero over public Nostr relays, then talk over
 WebRTC data channels, with public STUN and no TURN. The lobby key is a
-secret that never reaches Trystero: the room and its password are derived
-from it by a slow function, and peers prove the key to each other before
-the lobby says anything (ADR-0043). There are **no accounts**: players' own
+256-bit secret, shared only inside an invite link's fragment, that never
+reaches Trystero: the room and its password are derived from it, and
+peers prove the key to each other before the lobby says anything
+(ADR-0043, ADR-0048). There are **no accounts**: players' own
 data (characters, builds) lives in their browser's IndexedDB and reaches
 the host only as the build in a join.
 
@@ -88,9 +89,9 @@ channels, as often as they like.
   from its own peer id. The peer id itself is whatever the transport
   reports, which a peer chooses; a peer that also claims a joiner's id
   could at most race that joiner for its one seat.
-- **Knowing the key means being invited, while the lobby is open.**
-  Anyone with the lobby key can join an open lobby and see it, and share
-  the key on. Closing the lobby is the host's defence against a key that
+- **Having the invite link means being invited, while the lobby is open.**
+  Anyone with the invite link can join an open lobby and see it, and share
+  the link on. Closing the lobby is the host's defence against a link that
   went further than meant: it keeps the guests already in and takes
   nobody new. A key is shared like a party
   invite: an invitation, not an identity. The relays see a topic, the
@@ -160,7 +161,7 @@ channels, as often as they like.
   screen says so (Getting started).
 - **The relays see who meets whom.** Each public Nostr relay sees the IP
   address of every browser in a room, the room's name, which is derived
-  from the lobby key by ADR-0043's slow function, and the WebRTC offers and answers (SDP) that pass
+  from the lobby key by ADR-0048's one-way derivation, and the WebRTC offers and answers (SDP) that pass
   through it. Every open tab hosts its own lobby (#1526, ADR-0041), so a
   relay sees each player online, not only those in a match. The relays
   are third parties we do not run; the list lives in
@@ -200,7 +201,7 @@ channels, as often as they like.
   cannot take the guest's seat. What remains is a live relay: a peer that
   poses as the host's id to the guest and as the guest's id to the real
   host, both at once, while both are up. That needs two spoofed ids, the
-  lobby key and a real drop, and we accept it. Authenticating the host to
+  invite link and a real drop, and we accept it. Authenticating the host to
   its guests is out of scope.
 - `MatchHost` (#375) parses every intent with `parseClientIntent` and
   counts a message budget (gap 3) per peer. The budget covers every
@@ -304,8 +305,8 @@ saying so in the same PR. Keep the numbers: issues cite them.
    Trystero announces a room on the topic
    `sha1("Trystero@" + APP_ID + "@" + room)` in clear, and the room was
    the code: hashing all 23⁶ ≈ 148 million codes took minutes on one core,
-   and the password was the code too. The key is now 23¹² ≈ 2⁵⁴, and room
-   and password come from 600 000 rounds of PBKDF2 over it (ADR-0043).
+   and the password was the code too. The key is now 256 random bits, and
+   room and password come from HKDF over it (ADR-0043, ADR-0048).
 6. **Gone with the server (#404):** there was no cap on rooms or players on
    the shared server (#114, #265).
 7. **Gone with the server (#404):** client strings reached the server log
