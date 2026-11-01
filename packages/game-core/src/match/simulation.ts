@@ -137,7 +137,7 @@ import {
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
 import { resolveMagnitude, resolveMagnitudeAtRanks } from "../skills/scaling.js";
-import { resolveTargets, spiritsWithin } from "../skills/targeting.js";
+import { nearestSpiritWithin, resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
   clampMoveSpeed,
@@ -3453,6 +3453,15 @@ export class MatchSimulation {
     ) {
       return { ok: false, reason: "no-corpse" };
     }
+    // Spirit Transfer drains the spirit nearest its caster (#1947): none
+    // within earshot, nothing is paid.
+    if (
+      check.ok &&
+      skill.effects.some(({ kind }) => kind === "drain-nearest-spirit") &&
+      nearestSpiritWithin(this.#participants.values(), record.position, AREA_EARSHOT) === undefined
+    ) {
+      return { ok: false, reason: "no-spirit" };
+    }
     // Resurrection skills targeted on players cannot target pets (#1046,
     // fandom): told before a walk toward one starts.
     if (
@@ -3777,7 +3786,9 @@ export class MatchSimulation {
           skill.id,
           summon.creature,
           summon.count + (summon.perExploitedCorpse === true ? (every?.length ?? 0) : 0),
-          corpse?.position ?? record.position,
+          summon.at === "target"
+            ? (primary?.position ?? record.position)
+            : (corpse?.position ?? record.position),
           false,
           false,
           ranks,

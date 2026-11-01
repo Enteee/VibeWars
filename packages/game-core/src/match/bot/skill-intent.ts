@@ -67,6 +67,18 @@ function escapes(skill: Skill): boolean {
 }
 
 /**
+ * A spirit for a spirit (#1947): one of the caster's side destroyed and a
+ * new one in its place, as Gaze of Fury's.
+ */
+export function renewsSpirit(skill: Skill): boolean {
+  return (
+    skill.target === "allied-spirit" &&
+    skill.effects.some((effect) => effect.kind === "destroy-target-spirit") &&
+    skill.effects.some((effect) => effect.kind === "summon")
+  );
+}
+
+/**
  * The only role `skill` has is `interrupt`: Distracting Blow's, Power
  * Drain's. Held for a foe's cast or swing, never spent on anything else.
  */

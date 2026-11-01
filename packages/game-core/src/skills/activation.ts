@@ -69,6 +69,9 @@ export type ActivationRejection =
   // A corpse skill with no fresh corpse in reach (#466): checked by the
   // simulation, which knows where the bodies are.
   | "no-corpse"
+  // Spirit Transfer with no spirit within earshot to drain (#1947):
+  // checked by the simulation, which knows where the spirits stand.
+  | "no-spirit"
   // Comfort Animal with no pet to act on (#1046).
   | "no-companion"
   // A pet attack with a dead pet, or one beyond earshot of its owner (#1046).
