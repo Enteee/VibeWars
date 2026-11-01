@@ -39,8 +39,9 @@ You have **200 points** to spend. Each rank of an attribute costs more
 than the last, up to rank 12; the row shows what the next one costs.
 Twelve, twelve and three spends all of it. Runes and headgear can add up
 to four more ranks on top; see [Equipment](equipment.md). Raising the
-attribute a skill uses makes it stronger, and the numbers in its
-description change as you spend.
+attribute a skill uses makes it stronger: numbers that grow with the
+attribute are shown in green and bold, at your current ranks including
+runes and headgear.
 
 In a fight your ranks can change for a while. Weakness takes one off
 each. Some hexes set a foe's attributes to 0, and Master of Magic sets

@@ -1321,12 +1321,14 @@ export type StateCondition =
    * The caster has no status of this category (#1354), the negation of
    * `caster-has`: Pure Strike's "if you are not using a stance". With
    * `profession`, none of that profession's (#1551): Wearying Strike's
-   * "if a Dervish enchantment is not removed".
+   * "if a Dervish enchantment is not removed". `excluding` is not counted
+   * (#1979): Order of the Vampire's "another Necromancer enchantment".
    */
   | {
       readonly kind: "caster-lacks";
       readonly category: StatusCategory;
       readonly profession?: ProfessionId;
+      readonly excluding?: StatusId;
     }
   /**
    * No living ally of the effect's target, the target itself excluded,
