@@ -122,9 +122,11 @@ jobs:
   e2e-shard:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    # Full e2e on every main push is what catches two pull requests that are
-    # green alone and red together (#1571), but it need not run for every
-    # merge: at most one run per shard and one pending, always the newest main.
+    # Two pull requests that are green alone and red together (#1571) are
+    # caught on main by e2e, but a push runs only a third of the suite (above):
+    # the clash shows within three pushes, or in the nightly e2e-soak (#1885).
+    # It need not run for every merge: at most one run per shard and one
+    # pending, always the newest main.
     # A pending run replaced by a newer push concludes cancelled, so a red main
     # e2e covers the merges since the last green one (#1620). A pull request
     # gets a group of its own and is never coalesced.
@@ -134,15 +136,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        # A main push runs two jobs, a rotating third of the suite (#1885).
+        shard: ${{ fromJSON(github.event_name == 'push' && '[1,2]' || '[1,2,3,4,5,6]') }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       # An asset-only pull request skips the work below, but the job still
-      # reports (#1609). main always runs everything, and so does a diff that
-      # fails: scripts/ci/e2e-needed.mjs fails closed, and only an explicit
-      # "false" skips. The checkout is the
-      # merge commit, so its diff against the base tip is the pull request.
+      # reports (#1609). A diff that fails to classify runs everything:
+      # scripts/ci/e2e-needed.mjs fails closed, and only an explicit "false"
+      # skips. The checkout is the merge commit, so its diff against the base
+      # tip is the pull request.
       - name: Is e2e needed
         id: needed
         env:
@@ -176,7 +179,17 @@ jobs:
       - name: End-to-end tests
         if: steps.needed.outputs.needed != 'false'
         timeout-minutes: 45
-        run: devenv shell -- node scripts/ci/shard-e2e.mjs ${{ matrix.shard }} 6
+        env:
+          EVENT: ${{ github.event_name }}
+          SHARD: ${{ matrix.shard }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          # A main push covers one third of the suite, rotating: shards
+          # 1-2, 3-4 or 5-6 of 6 by run number. A pull request runs its own.
+          k=$SHARD
+          if [ "$EVENT" = push ]; then k=$(( (RUN_NUMBER % 3) * 2 + SHARD )); fi
+          echo "e2e shard $k of 6"
+          devenv shell -- node scripts/ci/shard-e2e.mjs "$k" 6
 
       - name: Upload Playwright output
         if: failure()
