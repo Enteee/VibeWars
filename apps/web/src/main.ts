@@ -63,11 +63,13 @@ import {
   type StoredTeam,
   type TeamCharacter,
 } from "./storage/schema.js";
+import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import {
-  rerollStarterCharacter,
-  rollClone,
-  rollStarterCharacter,
-} from "./storage/starter-character.js";
+  loadStarterTeamId,
+  rerollStarterTeam,
+  rollStarterTeam,
+  saveStarterTeamId,
+} from "./storage/starter-team.js";
 import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
@@ -306,6 +308,15 @@ async function main(): Promise<void> {
     if (rolled !== undefined) {
       saveActiveCharacterId(rolled.id);
     }
+    // And a curated Team Build, on its own key (#2036).
+    await rollStarterTeam({
+      teams,
+      key: { load: loadStarterTeamId, save: saveStarterTeamId },
+      random: Math.random,
+      id: crypto.randomUUID(),
+      newId: () => crypto.randomUUID(),
+      now: Date.now(),
+    });
   }
 
   // The arenas a host can pick, built into the client (#403).
@@ -736,14 +747,9 @@ async function main(): Promise<void> {
               showMenu();
               return;
             }
-            // Only the random starter has Clone: a fresh roll, not a copy (#1457).
-            const copy = rollClone(
-              character,
-              Math.random,
-              crypto.randomUUID(),
-              Date.now(),
-              list.map((c) => c.name),
-            );
+            // Only the random starter has Clone: a copy of the character shown,
+            // as the editor's Duplicate makes (#2038).
+            const copy = cloneCharacter(character, crypto.randomUUID(), Date.now());
             try {
               await characters.save(copy);
             } catch (error) {
@@ -1088,6 +1094,40 @@ async function main(): Promise<void> {
           return;
         }
         openPastedTeam(result.team, characterList.characters);
+      },
+      // Only the random starter team has Clone: an exact copy, to edit (#2036).
+      onCloneStarterTeam: (id) => {
+        void (async () => {
+          const team = await teams.load(id);
+          if (team === undefined) {
+            showMenu();
+            return;
+          }
+          const copy = duplicateTeam(team, crypto.randomUUID());
+          try {
+            await teams.save(copy);
+          } catch (error) {
+            console.warn("[web] could not save the clone", error);
+            showMenu();
+            return;
+          }
+          showTeamEditor(openedTeam(copy, true), characterList.characters);
+        })();
+      },
+      onRerollTeam: (id) => {
+        void (async () => {
+          const team = await teams.load(id);
+          if (team !== undefined) {
+            await rerollStarterTeam(
+              teams,
+              team,
+              Math.random,
+              () => crypto.randomUUID(),
+              Date.now(),
+            );
+          }
+          showMenu();
+        })();
       },
     };
     const problems = [...teamList.problems, ...notices.draw(entry)];

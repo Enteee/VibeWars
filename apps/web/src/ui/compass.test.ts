@@ -5,7 +5,6 @@ import { PING_SECONDS } from "@vibewars/game-session";
 
 import {
   ACTOR_RADIUS,
-  CREATURE_RADIUS,
   EMPTY_SNAPSHOT,
   type ArenaSnapshot,
   type RenderableActor,
@@ -115,7 +114,10 @@ describe("compassView (#1056)", () => {
     const view = compassView(
       arena({
         actors: [
-          actor("wolf", 1100, 1000, { team: "enemy", radius: CREATURE_RADIUS }),
+          actor("wolf", 1100, 1000, { team: "enemy", creatureLook: "beast", radius: 10 }),
+          // NPCs are drawn bigger than a pet, and are still creatures (#2047).
+          actor("priest", 1150, 1000, { team: "enemy", creatureLook: "priest", radius: 12 }),
+          actor("horror", 1150, 1050, { team: "enemy", creatureLook: "bone-horror", radius: 11.5 }),
           actor("warrior", 1200, 1000, { team: "enemy" }),
         ],
       }),
@@ -126,6 +128,8 @@ describe("compassView (#1056)", () => {
     expect(view?.dots.map((dot) => [dot.id, dot.small])).toEqual([
       ["me", false],
       ["wolf", true],
+      ["priest", true],
+      ["horror", true],
       ["warrior", false],
     ]);
   });
