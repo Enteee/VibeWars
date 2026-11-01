@@ -97,7 +97,7 @@ const CROSSFADE_TO = "last-stand";
  * @typedef {{
  *   ticks: number, lateTicks: number, maxTickGapMs: number, maxTickWorkMs: number,
  *   skippedMs: number,
- *   events: number, lateEvents: number, baseLatencyMs: number, outputLatencyMs: number,
+ *   events: number, droppedEvents: number, baseLatencyMs: number, outputLatencyMs: number,
  *   glitches: number | null, glitchMs: number | null,
  *   underruns: number | null, underrunMs: number | null, maxReductionDb: number,
  * }} Stats
@@ -654,7 +654,7 @@ function report(load, rows) {
   console.log(`\n## ${load.browser}, ${load.name} (${String(rows.length)} s)`);
   if (options.rows) {
     console.log(
-      "s | ticks | late ticks | max gap ms | max tick work ms | skipped ms | events | late events | underrun ms | max reduction dB | glitches",
+      "s | ticks | late ticks | max gap ms | max tick work ms | skipped ms | events | dropped events | underrun ms | max reduction dB | glitches",
     );
     rows.forEach((row, i) => {
       console.log(
@@ -666,7 +666,7 @@ function report(load, rows) {
           row.maxTickWorkMs,
           row.skippedMs,
           row.events,
-          row.lateEvents,
+          row.droppedEvents,
           row.underrunMs ?? "-",
           row.maxReductionDb,
         ]
@@ -688,7 +688,7 @@ function report(load, rows) {
   console.log(
     `ticks ${String(sum("ticks"))}, late ${String(sum("lateTicks"))}, max gap ${fixed(max("maxTickGapMs"))} ms, max tick work ${fixed(max("maxTickWorkMs"))} ms, ` +
       `skipped ${fixed(sum("skippedMs"))} ms, events ${String(sum("events"))}, ` +
-      `late events ${String(sum("lateEvents"))}, glitches ${glitches}, ` +
+      `dropped events ${String(sum("droppedEvents"))}, glitches ${glitches}, ` +
       `underruns ${underruns}, max reduction ${fixed(Math.min(0, ...rows.map((r) => r.maxReductionDb)))} dB, ` +
       `latency base ${fixed(last?.baseLatencyMs ?? 0)} / output ${fixed(last?.outputLatencyMs ?? 0)} ms`,
   );

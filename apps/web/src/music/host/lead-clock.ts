@@ -19,14 +19,18 @@
  * It never falls behind the audio clock itself (#1321): a main thread that
  * stalls for longer than the lead would otherwise leave every later tick
  * querying music that has already played, a note at a time, and the music
- * never back to live. After such a stall it resumes at the audio clock, and
- * the music it jumped is skipped.
+ * never back to live. After such a stall it starts again `lead` ahead of
+ * the audio clock, in one tick, and the music it jumped is skipped (#1991):
+ * caught up a tick at a time, every note in the first ticks would be due
+ * at once or already past, a burst of truncated attacks that crackles.
  */
 export interface LeadClock {
   /** The time the scheduler works at now. */
   (): number;
   /** How far the clock is behind `lead` ahead of the audio clock, in seconds. */
   deficit(): number;
+  /** Whether the audio clock has passed the clock's last reading: a stall longer than `lead`. */
+  behind(): boolean;
   /** Forget the clock: the next reading is `lead` ahead of the audio clock again. */
   reset(): void;
 }
@@ -40,6 +44,7 @@ export function leadClock(audioTime: () => number, lead: number, maxStep: number
     return last;
   };
   read.deficit = (): number => (last === undefined ? 0 : Math.max(0, audioTime() + lead - last));
+  read.behind = (): boolean => last !== undefined && last < audioTime();
   read.reset = (): void => {
     last = undefined;
   };
@@ -53,8 +58,14 @@ const MAX_CATCH_UP_TICKS = 4;
  * One firing of the scheduler's timer: the cyclist's tick, and again while
  * the clock is still more than a quarter of its step behind, so that a late
  * timer finds the music queried as far ahead as an on-time one would have.
+ * A clock the audio has passed is reset instead, and ticks once.
  */
 export function catchUpTick(clock: LeadClock, maxStep: number, callback: () => void): void {
+  if (clock.behind()) {
+    clock.reset();
+    callback();
+    return;
+  }
   callback();
   for (let again = 1; again < MAX_CATCH_UP_TICKS && clock.deficit() > maxStep / 4; again += 1) {
     callback();

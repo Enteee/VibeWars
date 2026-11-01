@@ -201,7 +201,7 @@ page keeps the last second's counts in `window.__musicStats`.
 4. In the remote console, read `__musicStats` a few times.
 
 Pass: the music sounds clean, with no crackle and no gaps.
-`lateEvents` and `skippedMs` stay 0 in nearly every second. `underrunMs`
+`droppedEvents` and `skippedMs` stay 0 in nearly every second. `underrunMs`
 (the audio clock falling behind the wall clock: the audio thread running
 dry, in Firefox as well) is 0 in nearly every second, and
 `maxReductionDb` stays above −3 (below that the limiter is pumping). In
