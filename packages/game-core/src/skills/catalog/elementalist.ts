@@ -612,6 +612,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 10,
     // "Target touched foe": the foe must be at hand.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2218,6 +2219,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 5,
     // "Target touched foe": at hand.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     // "...and all adjacent foes".

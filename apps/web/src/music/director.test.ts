@@ -10,18 +10,19 @@ import {
   type MusicState,
   type TrackChoice,
 } from "./director.js";
+import { MAP_TRACKS } from "./fixed-tracks.js";
 
 /** The epic's example tracks (#366 §3.5), with plausible moods, primary first. */
 const TRACKS: readonly TrackChoice[] = [
-  { id: "first-light", moods: ["atmospheric", "adventurous"] },
-  { id: "ashen-fields", moods: ["melancholy", "atmospheric"] },
-  { id: "northern-pass", moods: ["adventurous"] },
-  { id: "hall-of-champions", moods: ["epic", "triumphant"] },
-  { id: "clash-of-banners", moods: ["action", "epic"] },
-  { id: "ember-deep", moods: ["dark", "tense"] },
-  { id: "jungle-veil", moods: ["mysterious", "atmospheric"] },
-  { id: "glass-dunes", moods: ["mysterious", "tense"] },
-  { id: "victors-hymn", moods: ["triumphant", "epic"] },
+  { id: "first-light", moods: ["atmospheric", "adventurous"], layers: 2 },
+  { id: "ashen-fields", moods: ["melancholy", "atmospheric"], layers: 4 },
+  { id: "northern-pass", moods: ["adventurous"], layers: 4 },
+  { id: "hall-of-champions", moods: ["epic", "triumphant"], layers: 4 },
+  { id: "clash-of-banners", moods: ["action", "epic"], layers: 4 },
+  { id: "ember-deep", moods: ["dark", "tense"], layers: 4 },
+  { id: "jungle-veil", moods: ["mysterious", "atmospheric"], layers: 4 },
+  { id: "glass-dunes", moods: ["mysterious", "tense"], layers: 4 },
+  { id: "victors-hymn", moods: ["triumphant", "epic"], layers: 4 },
 ];
 
 const AUTO: MusicMode = { kind: "auto" };
@@ -29,6 +30,7 @@ const AUTO: MusicMode = { kind: "auto" };
 function input(over: Partial<MusicInput> = {}): MusicInput {
   return {
     screen: "match",
+    menuDepth: null,
     mapId: "arena-alpha",
     matchSeed: "arena-alpha:1",
     result: null,
@@ -71,81 +73,51 @@ function calmFrom(start: Partial<MusicInput>, times: readonly number[]): number[
 }
 
 describe("directMusic: track choice", () => {
-  const rows: {
-    context: string;
-    at: Partial<MusicInput>;
-    expected: readonly string[];
-  }[] = [
-    {
-      context: "menu",
-      at: { screen: "menu", mapId: null },
-      expected: ["first-light", "ashen-fields"],
-    },
-    { context: "lobby", at: { screen: "lobby", mapId: null }, expected: ["northern-pass"] },
-    {
-      context: "training-hall",
-      at: { screen: "training", mapId: "training-hall" },
-      expected: ["first-light", "northern-pass"],
-    },
-    {
-      context: "training-pillars",
-      at: { screen: "training", mapId: "training-pillars" },
-      expected: ["first-light", "northern-pass"],
-    },
-    { context: "arena-alpha", at: { mapId: "arena-alpha" }, expected: ["hall-of-champions"] },
-    {
-      context: "arena-open",
-      at: { mapId: "arena-open" },
-      expected: ["clash-of-banners", "northern-pass"],
-    },
-    { context: "arena-pillars", at: { mapId: "arena-pillars" }, expected: ["ember-deep"] },
-    {
-      context: "arena-split",
-      at: { mapId: "arena-split" },
-      expected: ["jungle-veil", "glass-dunes"],
-    },
-    {
-      context: "result, victory",
-      at: { screen: "result", result: "victory" },
-      expected: ["victors-hymn"],
-    },
-    {
-      context: "result, defeat",
-      at: { screen: "result", result: "defeat" },
-      expected: ["ashen-fields"],
-    },
-    { context: "an unknown map", at: { mapId: "arena-new" }, expected: ["hall-of-champions"] },
-  ];
+  it("plays first-light on every menu, as loud as it is deep (#1993)", () => {
+    for (const menuDepth of [0, 1] as const) {
+      const [state] = run([{ screen: "menu", menuDepth, mapId: null, matchSeed: null }]);
+      expect(state).toMatchObject({ trackId: "first-light", intensity: menuDepth });
+    }
+  });
 
-  for (const { context, at, expected } of rows) {
-    it(`plays ${expected.join(" or ")} for ${context}, every one of them for some seed`, () => {
+  it("gives every map its table's song for any seed, and an unknown map hall-of-champions", () => {
+    for (const [mapId, expected] of MAP_TRACKS) {
+      const screen = mapId.startsWith("training-") ? "training" : "match";
+      const picked = new Set(
+        Array.from(
+          { length: 20 },
+          (_, i) => run([{ screen, mapId, matchSeed: `${mapId}:${String(i)}` }])[0]?.trackId,
+        ),
+      );
+      expect([...picked], mapId).toEqual([expected]);
+    }
+    expect(run([{ mapId: "arena-new" }])[0]?.trackId).toBe("hall-of-champions");
+  });
+
+  for (const { result, expected } of [
+    { result: "victory", expected: ["victors-hymn"] },
+    { result: "defeat", expected: ["ashen-fields"] },
+  ] as const) {
+    it(`plays ${expected.join(" or ")} for a ${result}, by its mood`, () => {
       const picked = new Set(
         Array.from(
           { length: 40 },
-          (_, i) => run([{ ...at, matchSeed: `seed-${String(i)}` }])[0]?.trackId,
+          (_, i) => run([{ screen: "result", result, matchSeed: `seed-${String(i)}` }])[0]?.trackId,
         ),
       );
-      expect([...picked].sort()).toEqual([...expected].sort());
+      expect([...picked]).toEqual(expected);
     });
   }
 
-  it("plays the same track for the same seed, and a rematch may differ", () => {
-    const at = { mapId: "arena-split" };
-    const seeds = Array.from({ length: 20 }, (_, i) => `arena-split:${String(i)}`);
-    const first = seeds.map((matchSeed) => run([{ ...at, matchSeed }])[0]?.trackId);
-    const again = seeds.map((matchSeed) => run([{ ...at, matchSeed }])[0]?.trackId);
-    expect(again).toEqual(first);
-    expect(new Set(first).size).toBeGreaterThan(1);
-  });
-
-  it("falls back to any epic track when none fits, and to silence when there is none", () => {
+  it("plays a result any epic track when none fits, and silence when there is none", () => {
+    const defeat: Partial<MusicInput> = { screen: "result", result: "defeat" };
     const tracks: TrackChoice[] = [
-      { id: "storm", moods: ["tense", "epic"] },
-      { id: "lull", moods: ["atmospheric"] },
+      { id: "storm", moods: ["tense", "epic"], layers: 4 },
+      { id: "lull", moods: ["atmospheric"], layers: 4 },
     ];
-    expect(run([{ mapId: "arena-pillars" }], AUTO, tracks)[0]?.trackId).toBe("storm");
-    expect(run([{ mapId: "arena-pillars" }], AUTO, tracks.slice(1))[0]?.trackId).toBeNull();
-    expect(run([{}], AUTO, [])[0]?.trackId).toBeNull();
+    expect(run([defeat], AUTO, tracks)[0]?.trackId).toBe("storm");
+    expect(run([defeat], AUTO, tracks.slice(1))[0]?.trackId).toBeNull();
+    expect(run([defeat], AUTO, [])[0]?.trackId).toBeNull();
   });
 
   it("plays a pinned track anywhere, and an unknown pinned id as Auto", () => {
@@ -200,7 +172,8 @@ describe("directMusic: track choice", () => {
 
 describe("targetIntensity", () => {
   const rows: { why: string; at: Partial<MusicInput>; level: number }[] = [
-    { why: "the menu", at: { screen: "menu", ...FIGHTING }, level: 0 },
+    { why: "the main menu", at: { screen: "menu", menuDepth: 0, ...FIGHTING }, level: 0 },
+    { why: "a menu one deep", at: { screen: "menu", menuDepth: 1 }, level: 1 },
     { why: "a result", at: { screen: "result", ...PEAK }, level: 0 },
     { why: "no self", at: { self: null, ...FIGHTING }, level: 0 },
     { why: "dead", at: { self: { alive: false, healthFraction: 0 }, ...FIGHTING }, level: 0 },
@@ -222,7 +195,7 @@ describe("targetIntensity", () => {
   ];
   for (const { why, at, level } of rows) {
     it(`is ${String(level)} for ${why}`, () => {
-      expect(targetIntensity(input(at))).toBe(level);
+      expect(targetIntensity(input(at), 4)).toBe(level);
     });
   }
 });
@@ -285,5 +258,29 @@ describe("directMusic: intensity over time", () => {
       { screen: "result", result: "defeat", nowMs: 100 },
     ]);
     expect(states.map((s) => s.intensity)).toEqual([3, 0]);
+  });
+});
+
+describe("directMusic: menus (#1993)", () => {
+  const menu = (menuDepth: 0 | 1, nowMs: number): Partial<MusicInput> => ({
+    screen: "menu",
+    menuDepth,
+    mapId: null,
+    matchSeed: null,
+    nowMs,
+  });
+
+  it("keeps the song from menu to menu, its intensity following the depth at once", () => {
+    const states = run([menu(0, 0), menu(1, 1000), menu(0, 2000)]);
+    expect(states.map((state) => state.intensity)).toEqual([0, 1, 0]);
+    expect(new Set(states.map((state) => state.trackId))).toEqual(new Set(["first-light"]));
+  });
+
+  it("clamps the depth to the song's top layer, a pinned one's too", () => {
+    expect(targetIntensity(input({ screen: "menu", menuDepth: 1 }), 1)).toBe(0);
+    const pinned: MusicMode = { kind: "pinned", trackId: "ember-deep" };
+    expect(run([menu(1, 0)], pinned)[0]).toMatchObject({ trackId: "ember-deep", intensity: 1 });
+    const single: TrackChoice[] = [{ id: "first-light", moods: ["atmospheric"], layers: 1 }];
+    expect(run([menu(1, 0)], AUTO, single)[0]?.intensity).toBe(0);
   });
 });

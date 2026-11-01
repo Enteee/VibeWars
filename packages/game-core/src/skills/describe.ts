@@ -707,6 +707,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `the next spell it casts at ${on === "foe-targeted" ? "a foe" : "an ally"} fails: ${what.join(", ")}`,
     );
   }
+  // "Can't Touch This!"'s (#1966).
+  if (definition.failsFoeTouchSkills !== undefined) {
+    parts.push(
+      `the next ${String(definition.failsFoeTouchSkills)} touch skills used against you fail`,
+    );
+  }
   // Wastrel's Demise's (#1501): "each second, it and adjacent foes take 8
   // damage, 8 more each second".
   // Balthazar's Aura's (#1754): "each second, adjacent foes take 26 holy
@@ -1727,6 +1733,7 @@ function describeOwnSkillModifier({
   rechargeSlower,
   durationMultiplier,
   healMultiplier,
+  notEasilyInterrupted,
   uses,
 }: OwnSkillModifier): string {
   const one = uses === 1;
@@ -1758,6 +1765,8 @@ function describeOwnSkillModifier({
     healMultiplier === 1
       ? undefined
       : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
+    // Trapper's Focus's (#1966).
+    notEasilyInterrupted ? `${verb("are", "is")} not easily interrupted` : undefined,
   ].filter((change) => change !== undefined);
   const kind = filter.type === undefined ? "skill" : filter.type.replaceAll("-", " ");
   const named = [
@@ -2832,6 +2841,9 @@ function describeEffect(
           `(${describeStatus(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
+    // Strike as One's "your animal companion instantly moves to your target" (#1966).
+    case "companion-steps-to-target":
+      return { text: "Your pet moves to your target and attacks it", magnitude: undefined };
     case "pull-to-caster":
       return { text: "Teleports target to you", magnitude: undefined };
     case "destroy-target-spirit":

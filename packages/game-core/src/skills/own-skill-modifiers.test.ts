@@ -102,6 +102,7 @@ describe("the rule (#1761)", () => {
       rechargeSlower: 0,
       durationMultiplier: 1,
       healMultiplier: 0.8,
+      notEasilyInterrupted: false,
     });
   });
 
@@ -281,6 +282,7 @@ describe("in flight, and on its caster (#1761)", () => {
       rechargeSlower: 0,
       durationMultiplier: 2,
       healMultiplier: 1,
+      notEasilyInterrupted: false,
       uses: undefined,
     };
     return withStatusDefinitions({ "blessed-aura": { ownSkillModifiers: [doubles] } }, () => {

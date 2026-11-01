@@ -2580,4 +2580,32 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // under the effects of an enchantment."
     effects: [{ kind: "apply-status", statusId: "natural-temper", durationSeconds: 13 }],
   },
+  // Touch riders (#1966): the PvP split, under its base record's gwId.
+  {
+    id: "paragon.cant-touch-this",
+    name: '"Can\'t Touch This!"',
+    gwId: 1780,
+    type: "shout",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.command",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 20 seconds, the next 1...5 touch skills used against you fail"
+    // (PvP): 4 at rank 12.
+    effects: [{ kind: "apply-status", statusId: "cant-touch-this", durationSeconds: 20 }],
+  },
 ];

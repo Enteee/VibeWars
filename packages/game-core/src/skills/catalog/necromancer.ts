@@ -251,6 +251,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     rechargeSeconds: 2,
     // A touch skill: the ally must be at hand, and not the caster, or
     // it would be a free +3 energy for the Necromancer.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-other-ally",
     area: undefined,
@@ -1463,6 +1464,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 0,
     // "Target touched foe", as Throw Dirt's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -1494,6 +1496,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 2,
     // "Touch target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2563,6 +2566,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 2,
     // "Touch target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2597,6 +2601,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 3,
     // "Touch target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2633,6 +2638,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 3,
     // "Touch target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2669,6 +2675,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 2,
     // "Touch target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2703,6 +2710,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 3,
     // "Target touched foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,

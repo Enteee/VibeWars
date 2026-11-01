@@ -137,6 +137,7 @@ export function define(
     damageFromSpiritAttacks: 0,
     breaksNextHex: undefined,
     failsNextSpell: undefined,
+    failsFoeTouchSkills: undefined,
     damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
     renewsOnBearerSpell: false,
@@ -169,6 +170,7 @@ export function ownSkills(
     rechargeSlower: 0,
     durationMultiplier: 1,
     healMultiplier: 1,
+    notEasilyInterrupted: false,
     uses: undefined,
     ...change,
   };

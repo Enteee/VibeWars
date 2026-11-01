@@ -50,7 +50,9 @@ export type ParagonStatusId =
   | "its-just-a-flesh-wound"
   | "focused-anger"
   // Not enchanted (#1916).
-  | "natural-temper";
+  | "natural-temper"
+  // Touch riders (#1966).
+  | "cant-touch-this";
 
 export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition>> = {
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
@@ -448,5 +450,11 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     profession: "paragon",
     adrenalineGainFaster: 0.33,
     suppressedWhileUnder: ["enchantment"],
+  }),
+  // "For 20 seconds, the next 1...5 touch skills used against you fail"
+  // (PvP, #1966): 4.
+  "cant-touch-this": define("cant-touch-this", '"Can\'t Touch This!"', "shout", {
+    profession: "paragon",
+    failsFoeTouchSkills: 4,
   }),
 };

@@ -52,6 +52,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     ownSkillsLeft: undefined,
     triggersLeft: undefined,
     reflectionsLeft: undefined,
+    touchFailsLeft: undefined,
     hitsLeft: undefined,
     unblockableLeft: undefined,
     attacksMadeLeft: undefined,

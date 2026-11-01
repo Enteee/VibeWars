@@ -3681,7 +3681,10 @@ export class MatchSimulation {
         : used;
 
     const targetRecord = targetId === undefined ? undefined : this.#participants.get(targetId);
-    if (this.#failsSpell(record, skill, targetRecord, cast.key)) {
+    if (
+      this.#failsSpell(record, skill, targetRecord, cast.key) ||
+      this.#failsTouch(record, skill, targetRecord, cast.key)
+    ) {
       return;
     }
     // Signet of Illusions' (#1929): a finished spell spends a use and
@@ -4081,6 +4084,41 @@ export class MatchSimulation {
       );
     }
     this.#logFired([{ sourceId: failer.sourceId, skillId: fails.skillId, events }]);
+    return true;
+  }
+
+  /**
+   * Whether `target`'s status fails `record`'s touch skill on it (#1966):
+   * "Can't Touch This!" on a foe. It is paid for and recharges, as a
+   * failed spell, and spends one of the status's charges. An ally's
+   * touch lands.
+   */
+  #failsTouch(
+    record: ParticipantRecord,
+    skill: Skill,
+    target: ParticipantRecord | undefined,
+    key: string,
+  ): boolean {
+    if (
+      skill.touch !== true ||
+      target === undefined ||
+      target.combatant.team === record.combatant.team
+    ) {
+      return false;
+    }
+    const failer = target.combatant.statuses.touchFailer();
+    if (failer === undefined) {
+      return false;
+    }
+    beginRecharge(record.combatant.cast, skill, skill.rechargeSeconds, key);
+    target.combatant.statuses.spendTouchFail(failer.id);
+    this.#logFired([
+      {
+        sourceId: target.id,
+        skillId: failer.sourceSkillId ?? skill.id,
+        events: [{ kind: "spell-failed", targetId: record.id, skillId: skill.id }],
+      },
+    ]);
     return true;
   }
 
@@ -6347,6 +6385,18 @@ export class MatchSimulation {
         if (record !== undefined && other !== undefined && !other.combatant.dead) {
           this.#dropAshes(record);
           this.#swap(record, other);
+        }
+        continue;
+      }
+      if (event.kind === "companion-stepped") {
+        const pet = this.#participants.get(event.targetId);
+        const foe = this.#participants.get(event.toId);
+        if (pet !== undefined && foe !== undefined && !foe.combatant.dead) {
+          this.#stepBeside(pet, foe);
+          // As an armed pet attack's (#1865): a pet at heel only moves.
+          if (pet.creature?.mode !== "heel" && pet.behaviour?.kind === "follow-and-attack") {
+            this.requestAttack(pet.id, foe.id);
+          }
         }
         continue;
       }
