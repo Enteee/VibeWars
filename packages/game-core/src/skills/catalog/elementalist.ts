@@ -3301,6 +3301,68 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // 8...13...14" (#1929): the status holds the rest.
     effects: [{ kind: "apply-status", statusId: "master-of-magic", durationSeconds: 49 }],
   },
+  // Attributes raised (#1941).
+  {
+    id: "elementalist.glyph-of-elemental-power",
+    name: "Glyph of Elemental Power",
+    gwId: 198,
+    type: "glyph",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 25 seconds, your elemental attributes are boosted by 2 for your
+    // next 10 spells" (#1941): the status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "glyph-of-elemental-power", durationSeconds: 25 }],
+  },
+  {
+    id: "elementalist.glyph-of-energy",
+    name: "Glyph of Energy",
+    gwId: 199,
+    type: "glyph",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Your next 1...3 spells do not cause Overcast and cost 10...25 less
+    // Energy to cast. Your elemental attributes are increased by 1...2"
+    // (#1941): no duration, it lasts until its 3 are spent.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "glyph-of-energy",
+        durationSeconds: Number.POSITIVE_INFINITY,
+      },
+    ],
+  },
 ];
 
 /**

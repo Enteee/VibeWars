@@ -476,8 +476,16 @@ export function payCost(skill: Skill, caster: Combatant, key: string = skill.id)
   }
   // After the energy, so a spell that lowers the ceiling below its own
   // cost still goes off; at activation start, so an interrupted or
-  // cancelled cast stays overcast (#461).
-  addOvercast(caster, skill.overcast);
+  // cancelled cast stays overcast (#461). Read before the glyph is spent:
+  // Glyph of Energy's spells cause none (#1941).
+  const noOvercast =
+    isSpell(skill.type) &&
+    caster.statuses.active.some(
+      ({ id }) => getStatusDefinition(id).nextSpells?.noOvercast === true,
+    );
+  if (!noOvercast) {
+    addOvercast(caster, skill.overcast);
+  }
 }
 
 /**

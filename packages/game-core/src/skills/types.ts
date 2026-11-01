@@ -10,7 +10,13 @@ import type { ProfessionId, SkillProfession } from "../professions.js";
 import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
 import type { AttackState } from "./weapon-attack.js";
-import type { OwnSkillBoost, StatusCategory, StatusId, StatusSet } from "./status.js";
+import type {
+  AttributeDelta,
+  OwnSkillBoost,
+  StatusCategory,
+  StatusId,
+  StatusSet,
+} from "./status.js";
 import type { HealthLossGuard } from "./loss-guard.js";
 
 /**
@@ -1873,10 +1879,16 @@ export interface Combatant {
   /**
    * While a spell that borrows an attribute resolves (#1929), Signet of
    * Illusions': its own attribute `from` reads the rank in `to`. Set and
-   * cleared around that resolution by `withBorrowedAttribute`; `null`
+   * cleared around that resolution by `withRankLoan`; `null`
    * otherwise.
    */
   borrowedAttribute: { readonly from: string; readonly to: string } | null;
+  /**
+   * While a skill resolves (#1941), the attribute deltas of the statuses
+   * its start spent, Glyph of Elemental Power's last spell's +2: set and
+   * cleared around it by `withRankLoan`; empty otherwise.
+   */
+  heldAttributeDeltas: readonly AttributeDelta[];
   readonly team: number;
   /** Set once health reaches 0; a dead combatant is skipped by the simulation. */
   dead: boolean;

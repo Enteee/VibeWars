@@ -88,4 +88,7 @@ export const ELEMENTALIST_ICONS = {
   // Shots that fly differently (#1914), a stand-in until its art card.
   "elementalist.lava-arrows": { glyph: "fireball", modifier: "renew" },
   "elementalist.master-of-magic": { glyph: "bars-set" },
+  // Attributes raised (#1941), stand-ins until their art card.
+  "elementalist.glyph-of-elemental-power": { glyph: "fireball", modifier: "up" },
+  "elementalist.glyph-of-energy": { glyph: "energy", modifier: "half" },
 };
