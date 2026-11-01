@@ -1,4 +1,4 @@
-import { AREA_IN_THE_AREA, RANGE_SPELL } from "../../distances.js";
+import { AREA_IN_THE_AREA, RANGE_SPELL, RANGE_SPIRIT } from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
@@ -18,6 +18,7 @@ import {
   onlyInterrupts,
   removedCategories,
   removesFromCaster,
+  renewsSpirit,
   sacrificesTooMuch,
 } from "./skill-intent.js";
 
@@ -26,7 +27,8 @@ import {
  * sensible GW1 hero does. Each think it does the first of: interrupt a
  * foe's cast or else its swing, heal or protect the most hurt ally, step
  * away when hurt with a foe at hand, take
- * a hex or condition off an ally, raise a dead one, use an offensive
+ * a hex or condition off an ally, raise a dead one, renew a spirit of
+ * its own about to expire, use an offensive
  * skill on the team target, attack it with the weapon, and otherwise walk
  * to the nearest foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
  * backing off would never end.
@@ -50,6 +52,9 @@ const NOTHING: BehaviourIntent = {
 
 /** Below this share of its health, an ally is worth a heal. */
 const HURT_FRACTION = 0.6;
+
+/** Below this share of its lifetime left, a spirit of a bot's own is worth renewing (#1947). */
+const RENEW_FRACTION = 0.25;
 
 /** Below this share of its own health, a bot with a foe at hand steps away (#1930). */
 const ESCAPE_FRACTION = 0.5;
@@ -339,6 +344,27 @@ function think(
       const skill = raises.find((held) => mayUse(held, corpse.id));
       if (skill !== undefined) {
         return use(skill, corpse.id);
+      }
+    }
+  }
+
+  // 4b. Renew a spirit of its own near its end with a foe in its reach
+  // (#1947), as Gaze of Fury: the new one fights on where it stood.
+  const renews = bar.filter(renewsSpirit);
+  if (renews.length > 0) {
+    const ending = context.participants.filter(
+      ({ combatant, creature, position }) =>
+        creature?.kind === "spirit" &&
+        creature.ownerId === self.id &&
+        !combatant.dead &&
+        creature.expiresInSeconds <
+          RENEW_FRACTION * (creature.ageSeconds + creature.expiresInSeconds) &&
+        foes.some((foe) => distance(foe.position, position) <= RANGE_SPIRIT),
+    );
+    for (const spirit of ending) {
+      const skill = renews.find((held) => mayUse(held, spirit.id));
+      if (skill !== undefined) {
+        return use(skill, spirit.id);
       }
     }
   }

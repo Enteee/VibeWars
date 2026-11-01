@@ -2521,6 +2521,16 @@ function describeEffect(
       return { text: "Destroys target allied spirit", magnitude: undefined };
     case "destroy-target-minion":
       return { text: "Destroys target minion", magnitude: undefined };
+    case "drain-nearest-spirit": {
+      // Spirit Transfer's (#1947): what it takes, then what each point is worth.
+      const magnitude = describeMagnitude(effect.health, ranks);
+      return {
+        text:
+          `Nearest spirit loses ${String(magnitude.current)} Health; ` +
+          `target ally is healed ${String(effect.healPerPoint)} per point`,
+        magnitude,
+      };
+    }
     case "owner-gains-damage-dealt":
       return { text: "Its owner gains Health equal to the damage it deals", magnitude: undefined };
     case "destroy-allied-spirits":

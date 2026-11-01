@@ -661,6 +661,19 @@ export interface DestroyTargetSpiritEffect {
 }
 
 /**
+ * The living spirit nearest the caster within earshot, any team's, loses
+ * `health` Health, or what it has; the target is healed `healPerPoint` for
+ * each point it lost (#1947): Spirit Transfer's. The spirit can die of it.
+ * Acts once, on the primary target. None in earshot: the simulation
+ * refuses the cast before it starts.
+ */
+export interface DrainNearestSpiritEffect {
+  readonly kind: "drain-nearest-spirit";
+  readonly health: Magnitude;
+  readonly healPerPoint: number;
+}
+
+/**
  * The skill's target, a living allied minion, is destroyed (#1836), as
  * `destroy-target-spirit` a spirit: Putrid Flesh's and Feast for the
  * Dead's "it is destroyed". No killer and no morale, but what its death
@@ -1013,6 +1026,11 @@ export interface SummonEffect {
    * Lich's "plus one per corpse exploited". Absent: `count` alone.
    */
   readonly perExploitedCorpse?: true;
+  /**
+   * Where the primary target stands (#1947), as Gaze of Fury's spirit
+   * takes the destroyed one's place. Absent: at the corpse, or the caster.
+   */
+  readonly at?: "target";
 }
 
 /**
@@ -1356,6 +1374,7 @@ export type UnconditionalEffect =
   | SplashEffect
   | PullToCasterEffect
   | DestroyTargetSpiritEffect
+  | DrainNearestSpiritEffect
   | DestroyTargetMinionEffect
   | OwnerGainsDamageDealtEffect
   | DestroyAlliedSpiritsEffect
