@@ -43,7 +43,14 @@ runs:
       shell: bash
       run: |
         rev=$(jq -r .nodes.nixpkgs.locked.rev devenv.lock)
-        nix profile install "github:cachix/devenv-nixpkgs/$rev#devenv"
+        # Substituting into the restored store now and then dies on a chmod
+        # of an existing path ("Operation not permitted"); retry rather than
+        # fail the job.
+        for attempt in 1 2 3; do
+          nix profile install "github:cachix/devenv-nixpkgs/$rev#devenv" && break
+          [ "$attempt" = 3 ] && exit 1
+          sleep 5
+        done
         devenv version
 
     - name: Point pnpm at a cacheable store
