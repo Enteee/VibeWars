@@ -114,8 +114,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * the damage its bearer takes (Dark Escape, #919), caps it (Protective
  * Spirit, #936; Shelter, #1265), cuts its life stolen (Union, #1265), reverses it (Reversal of Fortune, #987) or slows the
  * hexes cast on it (Holy Veil, #944), or fails a foe's spells and attacks
- * at it or cuts a hexed foe's damage (Shadow Form, Mist Form, #1951) is
- * defence, and one that interrupts
+ * at it or cuts a hexed foe's damage (Shadow Form, Mist Form, #1951) or one
+ * type's (Mantra of Flame, #1964), or guards its casts from interrupts
+ * (Mantra of Resolve, #1964) is defence, and one that interrupts
  * a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
@@ -149,7 +150,9 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.redirectsConditionsToMinion ||
     status.foeSpellsFail ||
     status.attacksAgainstMiss ||
-    status.damageReductionFromHexedSource !== undefined
+    status.damageReductionFromHexedSource !== undefined ||
+    status.interruptGuard !== undefined ||
+    (status.damageTypeTakenMultiplier?.multiplier ?? 1) < 1
   ) {
     roles.push("defence");
   }

@@ -501,6 +501,18 @@ describe("describeSkill", () => {
     );
   });
 
+  it("words the mantras (#1964)", () => {
+    expect(describeStatus("mantra-of-concentration")).toBe(
+      "the next time you would be interrupted, you are not",
+    );
+    expect(describeStatus("mantra-of-resolve")).toBe(
+      "you cannot be interrupted; each time you would be, lose 5 Energy or this ends",
+    );
+    expect(describeStatus("mantra-of-flame")).toBe(
+      "45% less fire damage. Whenever it takes fire damage from a foe: gain 2 energy",
+    );
+  });
+
   it("words the PvP forms (#1951)", () => {
     expect(describeStatus("shadow-form")).toBe(
       "hostile spells targeting you fail, attacks against you miss. " +
