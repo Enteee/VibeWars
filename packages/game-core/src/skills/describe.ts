@@ -322,6 +322,17 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.maxEnergyBonus !== 0) {
     parts.push(`+${String(definition.maxEnergyBonus)} maximum energy`);
   }
+  if (definition.minionDamageBonus !== 0) {
+    parts.push(`your minions deal ${signed(definition.minionDamageBonus)} damage`);
+  }
+  if (definition.minionHitHealthLossPercent !== 0) {
+    parts.push(
+      `lose ${String(definition.minionHitHealthLossPercent)}% maximum health each time a minion of yours hits`,
+    );
+  }
+  if (definition.redirectsConditionsToMinion) {
+    parts.push("conditions you would receive go to your closest minion instead");
+  }
   if (definition.healingMultiplier !== 1) {
     const change = Math.round((definition.healingMultiplier - 1) * 100);
     parts.push(`${change > 0 ? "+" : "−"}${String(Math.abs(change))}% healing`);
@@ -2589,7 +2600,12 @@ function describeEffect(
       // "Summons 2 Bone Minion (60 Health, lasts 30 seconds)" (#1052), with
       // Spawning Power's health and the base in brackets (#1098).
       const { text, magnitude } = describeCreature(effect.creature, effect.count, ranks);
-      return { text: `Summons ${text}`, magnitude };
+      return {
+        text:
+          `Summons ${text}` +
+          (effect.perExploitedCorpse === true ? ", plus one per corpse exploited" : ""),
+        magnitude,
+      };
     }
     case "create-ground-effect": {
       // "Creates a ward at your location for 17 seconds" (#1087), "Sets a
@@ -3325,7 +3341,9 @@ export function describeSkill(
             text:
               (skill.corpse.near === "target"
                 ? "Exploits the corpse nearest your target"
-                : "Exploits the nearest corpse") +
+                : skill.corpse.all === true
+                  ? `Exploits every fresh corpse ${AREA_TEXT.get(skill.corpse.radius) ?? `within ${String(skill.corpse.radius)}`}`
+                  : "Exploits the nearest corpse") +
               // A well's price for none (#1730).
               (skill.corpse.elseSacrificePercent === undefined
                 ? ""

@@ -1039,6 +1039,34 @@ export function applyStatus(
 }
 
 /**
+ * Who takes `statusId` aimed at `target` (#1915): `target`, unless it is a
+ * condition and `target` bears a status that redirects conditions, as
+ * Infuse Condition; then its closest living minion where they stand now,
+ * ties by id, or `target` when it has none.
+ */
+export function conditionTaker(
+  target: Combatant,
+  statusId: StatusId,
+  surroundings: Surroundings,
+): Combatant {
+  if (
+    getStatusDefinition(statusId).category !== "condition" ||
+    !target.statuses.active.some(({ id }) => getStatusDefinition(id).redirectsConditionsToMinion)
+  ) {
+    return target;
+  }
+  const at = surroundings.get(target.id)?.position;
+  if (at === undefined) {
+    return target;
+  }
+  const minions = [...surroundings.values()].filter(
+    ({ combatant, creature }) =>
+      creature?.kind === "minion" && creature.ownerId === target.id && !combatant.dead,
+  );
+  return nearestFirst(minions, at)[0] ?? target;
+}
+
+/**
  * Where `caster` stands now, for a returning status it puts up to take it
  * back to when it ends (#1826). The simulation moves a shadow step's caster
  * after its effects, so this is where it stood as it cast.
@@ -1055,14 +1083,36 @@ export function landCaughtCondition(
   target: Combatant,
   { id, remainingSeconds, sourceId }: ActiveStatus,
   events: CombatEvent[],
+  surroundings: Surroundings,
 ): void {
+  landOnTaker(target, id, remainingSeconds, sourceId, events, surroundings, null);
+}
+
+/**
+ * `statusId` aimed at `target`, for `durationSeconds` before its taker's
+ * own lengthening, landed on whoever takes it (#1915): every status a
+ * skill aims at a combatant comes through here, so Infuse Condition sends
+ * each condition to a minion however it arrives.
+ */
+function landOnTaker(
+  target: Combatant,
+  statusId: StatusId,
+  durationSeconds: number,
+  sourceId: string,
+  events: CombatEvent[],
+  surroundings: Surroundings,
+  returnPoint: Vec2 | null,
+  sourceSkillId?: string,
+): void {
+  const taker = conditionTaker(target, statusId, surroundings);
   landStatus(
-    target,
-    id,
-    scaledStatusDuration(target, id, remainingSeconds),
+    taker,
+    statusId,
+    scaledStatusDuration(taker, statusId, durationSeconds),
     sourceId,
     events,
-    null,
+    returnPoint,
+    sourceSkillId,
   );
 }
 
@@ -1186,7 +1236,7 @@ function destroyCreature(
  * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
  * invulnerability and a Guild Lord's cap stop it, and it can kill.
  */
-function loseHealth(
+export function loseHealth(
   loser: Combatant,
   amount: number,
   kind: "sacrifice" | "health-loss",
@@ -1516,17 +1566,15 @@ export function applyEffect(
             spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
           : effect.durationSeconds;
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
-      const durationSeconds = scaledStatusDuration(
+      // Infuse Condition's (#1915): a condition goes to the bearer's
+      // closest living minion instead, if it has one.
+      landOnTaker(
         bearer,
         effect.statusId,
         base * (context.own?.durationMultiplier ?? 1),
-      );
-      landStatus(
-        bearer,
-        effect.statusId,
-        durationSeconds,
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
         context.skillId,
       );
@@ -1543,13 +1591,13 @@ export function applyEffect(
       // Conditions takes from an ally counts as the Monk's own from then on.
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
-        const durationSeconds = remainingSeconds * effect.durationMultiplier;
-        landStatus(
+        landOnTaker(
           taker,
           id,
-          scaledStatusDuration(taker, id, durationSeconds),
+          remainingSeconds * effect.durationMultiplier,
           caster.id,
           events,
+          context.surroundings,
           null,
         );
       }
@@ -1577,12 +1625,13 @@ export function applyEffect(
       );
       for (const combatant of nearestFirst(reached, at)) {
         for (const { id, remainingSeconds } of conditions) {
-          landStatus(
+          landOnTaker(
             combatant,
             id,
-            scaledStatusDuration(combatant, id, remainingSeconds),
+            remainingSeconds,
             caster.id,
             events,
+            context.surroundings,
             null,
           );
         }
@@ -1786,17 +1835,13 @@ export function applyEffect(
         return events;
       }
       // A status the skill puts on its caster is one it applies (#1761).
-      const durationSeconds = scaledStatusDuration(
+      landOnTaker(
         caster,
         effect.statusId,
         effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
-      );
-      landStatus(
-        caster,
-        effect.statusId,
-        durationSeconds,
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
         context.skillId,
       );
@@ -1808,16 +1853,13 @@ export function applyEffect(
       if (caster.dead || pet === undefined) {
         return events;
       }
-      landStatus(
+      landOnTaker(
         pet,
         effect.statusId,
-        scaledStatusDuration(
-          pet,
-          effect.statusId,
-          effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
-        ),
+        effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
         context.skillId,
       );

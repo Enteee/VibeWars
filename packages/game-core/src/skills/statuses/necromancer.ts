@@ -54,6 +54,10 @@ export type NecromancerStatusId =
   // Skill-type and heal triggers (#1913).
   | "cacophony"
   | "soul-bind"
+  // Minions 3 (#1915).
+  | "order-of-undeath"
+  | "aura-of-the-lich"
+  | "infuse-condition"
   // Casting-state hexes (#1931).
   | "spinal-shivers"
   | "shivers-of-dread"
@@ -502,6 +506,24 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.soul-bind",
       },
     ],
+  }),
+  // "For 5 seconds, your minions deal +3...13...16 damage. You lose 2%
+  // maximum Health each time a minion hits" (#1915).
+  "order-of-undeath": define("order-of-undeath", "Order of Undeath", "skill-effect", {
+    profession: "necromancer",
+    minionDamageBonus: 13,
+    minionHitHealthLossPercent: 2,
+  }),
+  // "For 5...37...45 seconds, you have +1 Death Magic" (#1915).
+  "aura-of-the-lich": define("aura-of-the-lich", "Aura of the Lich", "enchantment", {
+    profession: "necromancer",
+    attributeDeltas: [{ scope: { attributeId: "necromancer.death-magic" }, amount: 1 }],
+  }),
+  // "For 15...51...60 seconds, the next conditions you would receive are
+  // transferred to your closest minion instead" (#1915).
+  "infuse-condition": define("infuse-condition", "Infuse Condition", "enchantment", {
+    profession: "necromancer",
+    redirectsConditionsToMinion: true,
   }),
   // Casting-state hexes (#1931). "Whenever target foe is struck for cold
   // damage while using a skill, that skill is interrupted and you lose

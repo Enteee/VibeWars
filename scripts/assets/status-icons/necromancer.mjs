@@ -288,6 +288,28 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M9 9a3 3 0 1 0 0 6h2M15 15a3 3 0 1 0 0-6h-2" ${stroke(c, 2.2)}/>` +
       `<path d="M9 12h6" ${stroke(c, 2)}/>`,
   ],
+  // Minions 3 (#1915), stand-ins until their art card.
+  // Skill effect: a fist over a skull, minions that hit harder.
+  "order-of-undeath": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="10" r="5" fill="${c}"/>` +
+      `<path d="M9 18v2M12 18v2M15 18v2M5 5l3 3M19 5l-3 3" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a crowned skull, the lich.
+  "aura-of-the-lich": [
+    "enchantment",
+    (c) =>
+      `<path d="M6 8l2-4 2 3 2-3 2 3 2-3 2 4z" fill="${c}"/>` +
+      `<circle cx="12" cy="14" r="5" ${stroke(c, 2)}/>`,
+  ],
+  // Enchantment: a drop passed along an arrow, a condition handed on.
+  "infuse-condition": [
+    "enchantment",
+    (c) =>
+      `<path d="M7 5C9 8 10 10 10 11.5a3 3 0 0 1-6 0C4 10 5 8 7 5z" fill="${c}"/>` +
+      `<path d="M12 15h8M17 12l3 3-3 3" ${stroke(c, 2)}/>`,
+  ],
   // Casting-state hexes (#1931), stand-ins until their art card.
   // Hex: a spine with a snowflake, cold breaks the cast.
   "spinal-shivers": [
