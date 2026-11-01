@@ -670,7 +670,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // The caller's to report; the lobby only has to stay usable.
       void room.leave();
       phase = "waiting";
+      // Back as before the vote (#2086): no retry adds a second set of
+      // bots, and nobody stays ready to start the same failure again.
+      dropCodedBots();
+      clearReady();
       note("start-rejected", "the match could not be created", local.selfId);
+      broadcast();
       return;
     }
     phase = "in-match";
@@ -686,6 +691,21 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           teamPlanRejected: rejected.has(seat.team),
         };
         transport.send("match-start", message, peerId);
+      }
+    }
+  };
+
+  /**
+   * A coded lobby's bots were its match's alone (#2029): the next plays
+   * its own unclaimed slots. A queued lobby's belong to its queue plan.
+   */
+  const dropCodedBots = (): void => {
+    if (queued !== undefined) {
+      return;
+    }
+    for (const member of [...members.values()]) {
+      if (member.bot !== null) {
+        members.delete(member.id);
       }
     }
   };
@@ -2064,15 +2084,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         if (queued !== undefined) {
           beginVote(queued, winningTeam);
         }
-        // A coded lobby's bots were its match's alone (#2029): the next
-        // plays its own unclaimed slots.
-        if (queued === undefined) {
-          for (const member of [...members.values()]) {
-            if (member.bot !== null) {
-              members.delete(member.id);
-            }
-          }
-        }
+        dropCodedBots();
         // Whoever is still away is not coming back to this lobby.
         dropAway(() => true);
         for (const member of members.values()) {
