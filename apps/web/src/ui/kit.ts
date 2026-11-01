@@ -778,7 +778,7 @@ export function loadLine(
   placeholder: string,
   onLoad: (text: string) => readonly string[],
 ): LoadLine {
-  const element = h("div", "editor-share editor-load");
+  const element = h("div", "editor-load");
   element.hidden = true;
   const line = document.createElement("input");
   line.className = "editor-share-line";

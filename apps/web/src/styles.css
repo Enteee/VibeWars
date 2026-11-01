@@ -2515,8 +2515,9 @@ body {
   box-shadow: 0 6px 20px rgb(0 0 0 / 45%);
 }
 
-/* Share (#572): one line of build text and Copy, under ⋯. */
-.editor-share {
+/* Share (#572): one line of build text and Copy, under ⋯; Load (#2004) the same. */
+.editor-share,
+.editor-load {
   position: absolute;
   z-index: 40;
   top: calc(100% + 0.3rem);
@@ -2561,6 +2562,7 @@ body {
 
 .editor-more[hidden],
 .editor-share[hidden],
+.editor-load[hidden],
 .problems-list[hidden] {
   display: none;
 }
