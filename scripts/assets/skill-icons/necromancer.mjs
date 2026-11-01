@@ -100,4 +100,9 @@ export const NECROMANCER_ICONS = {
   // Skill-type and heal triggers (#1913), stand-ins until their art card.
   "necromancer.cacophony": { glyph: "hex-mute", modifier: "bolt" },
   "necromancer.soul-bind": { glyph: "hex-cut", modifier: "bleed" },
+  // Minions 3 (#1915), stand-ins until their art card.
+  "necromancer.order-of-undeath": { glyph: "bone-minions", modifier: "bolt" },
+  "necromancer.aura-of-the-lich": { glyph: "bone-horror", modifier: "corpse" },
+  "necromancer.infuse-condition": { glyph: "bone-minions", modifier: "bleed" },
+  "necromancer.taste-of-death": { glyph: "feast-jaw", modifier: "bleed" },
 };

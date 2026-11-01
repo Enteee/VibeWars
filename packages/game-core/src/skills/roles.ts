@@ -137,7 +137,8 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.negatesFatalDamage ||
     status.breaksNextHex !== undefined ||
     status.reflectsAttackDamage !== undefined ||
-    status.incomingHexCastTimeMultiplier > 1
+    status.incomingHexCastTimeMultiplier > 1 ||
+    status.redirectsConditionsToMinion
   ) {
     roles.push("defence");
   }

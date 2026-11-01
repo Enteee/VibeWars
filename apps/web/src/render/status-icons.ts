@@ -377,6 +377,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   cacophony: icon("cacophony"),
   "soul-bind": icon("soul-bind"),
   "scribes-insight": icon("scribes-insight"),
+  // Minions 3 (#1915).
+  "order-of-undeath": icon("order-of-undeath"),
+  "aura-of-the-lich": icon("aura-of-the-lich"),
+  "infuse-condition": icon("infuse-condition"),
 };
 
 const GAP = 2;

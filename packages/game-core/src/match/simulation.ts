@@ -133,7 +133,7 @@ import {
   type StatusId,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
-import { resolveMagnitude } from "../skills/scaling.js";
+import { resolveMagnitude, resolveMagnitudeAtRanks } from "../skills/scaling.js";
 import { resolveTargets, spiritsWithin } from "../skills/targeting.js";
 import {
   advanceStatuses,
@@ -771,6 +771,16 @@ interface ParticipantRecord extends Participant {
 }
 
 /**
+ * Every rank the combatant has, as `rankOf` reads it now (#1915): what
+ * a summon is made at. One it has none of is 0.
+ */
+function ranksOf(combatant: Combatant): ReadonlyMap<string, number> {
+  return new Map(
+    [...combatant.attributeRanks.keys()].map((id) => [id, rankOf(combatant, id)] as const),
+  );
+}
+
+/**
  * Who is behind the degeneration about to tick on `combatant`, split by
  * whether it drains or regenerates.
  *
@@ -1341,6 +1351,9 @@ export class MatchSimulation {
    *
    * `companion`: it travels with `skillId` on the owner's bar (#1046),
    * rather than coming from a cast.
+   *
+   * `ranks`: the owner's, as the skill went off (#1915), so a status the
+   * same skill gives, as Aura of the Lich's +1 Death Magic, comes after.
    */
   #summon(
     owner: ParticipantRecord,
@@ -1350,6 +1363,7 @@ export class MatchSimulation {
     at: Vec2,
     companion: boolean,
     replacement = false,
+    ranks: ReadonlyMap<string, number> = ranksOf(owner.combatant),
   ): void {
     if (template.onePerOwner) {
       this.#killOlder(owner, skillId);
@@ -1395,13 +1409,11 @@ export class MatchSimulation {
         attributeRanks:
           template.attack === undefined
             ? new Map()
-            : new Map([
-                [template.attack.attributeId, rankOf(owner.combatant, template.attack.attributeId)],
-              ]),
+            : new Map([[template.attack.attributeId, ranks.get(template.attack.attributeId) ?? 0]]),
         equipment: creatureResolvedEquipment(
-          resolveMagnitude(template.armor, owner.combatant),
+          resolveMagnitudeAtRanks(template.armor, ranks),
           template.attack,
-          template.attack === undefined ? 0 : rankOf(owner.combatant, template.attack.attributeId),
+          template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
         ),
         spawn: at,
         facing: owner.facing,
@@ -1410,10 +1422,10 @@ export class MatchSimulation {
         // list (#1144).
         maxHealth:
           template.kind === "pet"
-            ? resolveMagnitude(template.maxHealth, owner.combatant)
+            ? resolveMagnitudeAtRanks(template.maxHealth, ranks)
             : spawningPowerHealth(
-                rankOf(owner.combatant, SPAWNING_POWER_ATTRIBUTE),
-                resolveMagnitude(template.maxHealth, owner.combatant),
+                ranks.get(SPAWNING_POWER_ATTRIBUTE) ?? 0,
+                resolveMagnitudeAtRanks(template.maxHealth, ranks),
               ),
         maxEnergy: 0,
         baseEnergyPips: 0,
@@ -1426,7 +1438,7 @@ export class MatchSimulation {
           expiresInSeconds:
             template.durationSeconds === undefined
               ? Number.POSITIVE_INFINITY
-              : resolveMagnitude(template.durationSeconds, owner.combatant),
+              : resolveMagnitudeAtRanks(template.durationSeconds, ranks),
           ageSeconds: 0,
           summonedAtTick: this.#tick,
           skillId,
@@ -1435,29 +1447,29 @@ export class MatchSimulation {
           ownerDisableSeconds:
             template.ownerDisableOnDeath === undefined
               ? 0
-              : resolveMagnitude(template.ownerDisableOnDeath, owner.combatant),
+              : resolveMagnitudeAtRanks(template.ownerDisableOnDeath, ranks),
           deathBurst:
             template.deathBurst === undefined
               ? undefined
               : {
                   ...template.deathBurst,
-                  perSecondAlive: resolveMagnitude(
+                  perSecondAlive: resolveMagnitudeAtRanks(
                     template.deathBurst.perSecondAlive,
-                    owner.combatant,
+                    ranks,
                   ),
                 },
           onDeathInRange:
             template.onDeathInRange?.kind === "damage-same-type"
               ? {
                   ...template.onDeathInRange,
-                  damage: resolveMagnitude(template.onDeathInRange.damage, owner.combatant),
+                  damage: resolveMagnitudeAtRanks(template.onDeathInRange.damage, ranks),
                 }
               : template.onDeathInRange,
           replacedBy: template.replacedBy,
           corpsesLeft:
             template.leavesCorpses === undefined
               ? 0
-              : Math.round(resolveMagnitude(template.leavesCorpses, owner.combatant)),
+              : Math.round(resolveMagnitudeAtRanks(template.leavesCorpses, ranks)),
           companionSkillId: companion ? skillId : undefined,
           leaderId: undefined,
           mode: "guard",
@@ -3594,6 +3606,9 @@ export class MatchSimulation {
         : this.#exploitCorpse(record, skill.corpse, targetRecord);
     const sacrifice = corpse === undefined ? skill.corpse?.elseSacrificePercent : undefined;
     const site = corpse ?? (sacrifice === undefined && every === undefined ? undefined : record);
+    // What it summons is made at the ranks it went off at (#1915), before
+    // any status it gives itself.
+    const ranks = ranksOf(record.combatant);
     const { events, rechargeFraction, rechargeLongerSeconds, summons, grounds, skipped } =
       skill.corpse !== undefined && site === undefined
         ? only([])
@@ -3690,6 +3705,8 @@ export class MatchSimulation {
         summon.count + (summon.perExploitedCorpse === true ? (every?.length ?? 0) : 0),
         corpse?.position ?? record.position,
         false,
+        false,
+        ranks,
       );
     }
     for (const ground of grounds) {
