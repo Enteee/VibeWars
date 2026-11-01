@@ -57,16 +57,22 @@ const NO_BOT_USE = new Set([
   "ranger.charm-animal",
   "ranger.comfort-animal",
   "ranger.disrupting-lunge",
+  "ranger.enraged-lunge",
+  "ranger.ferocious-strike",
   "ranger.feral-lunge",
+  "ranger.heal-as-one",
   "ranger.maiming-strike",
+  "ranger.melandrus-assault",
   "ranger.otyughs-cry",
   "ranger.poisonous-bite",
   "ranger.pounce",
+  "ranger.predators-pounce",
   "ranger.predatory-bond",
   "ranger.rampage-as-one",
   "ranger.revive-animal",
   "ranger.run-as-one",
   "ranger.savage-pounce",
+  "ranger.scavenger-strike",
   "ranger.symbiotic-bond",
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.critical-eye",
@@ -285,6 +291,10 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-energy",
   "ritualist.ritual-lord",
   "ranger.experts-dexterity",
+  // Take what another has (#1965): an ally's elite borrowed and a foe's
+  // spirit taken have steps of their own in `playBuild`, no use to weigh.
+  "mesmer.arcane-mimicry",
+  "ritualist.signet-of-binding",
   // Nature rituals 4 (#1956): an energy toll on everyone who attacks or
   // uses a skill, damage to whoever runs dry or a worse bleed, both sides
   // alike, is no rule the bot weighs, as Winnowing.

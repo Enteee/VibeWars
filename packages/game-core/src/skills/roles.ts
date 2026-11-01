@@ -82,6 +82,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "disable-skill":
     case "copy-removed":
     case "copy-disabled":
+    case "copy-elite":
+    case "take-control":
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
@@ -188,6 +190,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
             effects.flatMap((effect) =>
               effect.kind === "spread-gained-condition" ||
               effect.kind === "echo" ||
+              effect.kind === "mirror-stance" ||
               effect.kind === "cancel-attack" ||
               effect.kind === "pay-energy-or-end" ||
               (target === "bearer" && isPrice(effect))

@@ -84,6 +84,12 @@ export type TargetRule =
   | "single-dead-ally"
   /** A living spirit on the caster's team, whoever made it (#1309): GW1's "allied spirit". */
   | "allied-spirit"
+  /**
+   * A living spirit another team's character made (#1965): Signet of
+   * Binding's "target enemy-controlled spirit". Never a map's, which no
+   * one controls.
+   */
+  | "enemy-spirit"
   /** A living minion the caster made (#1836): Putrid Flesh's "target minion". */
   | "own-minion"
   /** A living minion on the caster's team, whoever made it (#1836): Feast for the Dead's. */
@@ -142,7 +148,13 @@ export type CountRule =
       readonly categories: readonly StatusCategory[];
     }
   /** Living foes of the caster within `radius` of the caster. */
-  | { readonly kind: "foes-within"; readonly radius: number };
+  | { readonly kind: "foes-within"; readonly radius: number }
+  /**
+   * The skills of `attributeId` on the bar of the caster's living owner,
+   * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
+   * your Beast Mastery skills that is recharging". No owner: 0.
+   */
+  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -261,6 +273,11 @@ export interface EnergyGainToCaster {
   /** More for each of a count, in the same gain (#1760): Channeling's. */
   readonly per?: PerCount;
   /**
+   * `owner`: the living owner of the caster, a pet, gains it, as
+   * Scavenger Strike's "you gain 3...15 Energy" (#1957). No owner: nobody.
+   */
+  readonly recipient?: "owner";
+  /**
    * Per status of this category any earlier `remove-status` of this use
    * took off anyone, a splash's included (#1954): Hex Eater Signet's "1...4
    * Energy for each hex removed this way". None removed: no gain.
@@ -271,7 +288,7 @@ export interface EnergyGainToCaster {
 
 export interface EnergyGainToTarget extends Omit<
   EnergyGainToCaster,
-  "perEnergyLost" | "perOwnCreatureWithin" | "perRemoved" | "toTarget"
+  "perEnergyLost" | "perOwnCreatureWithin" | "perRemoved" | "recipient" | "toTarget"
 > {
   /**
    * The effect's target gains it, not its caster (#1485): in a status
@@ -282,6 +299,7 @@ export interface EnergyGainToTarget extends Omit<
   readonly perEnergyLost?: never;
   readonly perOwnCreatureWithin?: never;
   readonly perRemoved?: never;
+  readonly recipient?: never;
 }
 
 /**
@@ -289,11 +307,14 @@ export interface EnergyGainToTarget extends Omit<
  * skill that is not recharging, each capped at its cost, as a hit's
  * strike (#977). `perTarget`: once for each target the skill hit, as
  * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
+ * `recipient: "owner"`: the caster's living owner, a pet's, gains them
+ * instead, as Ferocious Strike's (#1957); no owner, nobody.
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
   readonly strikes: number;
   readonly perTarget?: true;
+  readonly recipient?: "owner";
 }
 
 /** The effect's target loses up to `amount` energy (never below 0). */
@@ -818,6 +839,16 @@ export interface CopyDisabledEffect {
 }
 
 /**
+ * The slot of the skill resolving holds a copy of the first elite from
+ * the left on the target's bar that is not a form, for `seconds` (#1965):
+ * Arcane Mimicry's. None: no copy.
+ */
+export interface CopyEliteEffect {
+  readonly kind: "copy-elite";
+  readonly seconds: number;
+}
+
+/**
  * A skill takes `seconds` longer to recharge. Recharge, not a disable:
  * what ends a recharge ends it.
  *
@@ -1082,6 +1113,16 @@ export interface Aura {
   readonly affects: "all" | "allies" | "foes";
   /** Centre to centre, world units. Walls do not block it. */
   readonly radius: number;
+}
+
+/**
+ * The caster takes control of its target, a spirit (#1965): Signet of
+ * Binding's. It is the caster's from then on, on its team, and leaves
+ * with it, keeping what it has left. Acts on each target; the simulation
+ * moves it, as it makes a `summon`'s. A dead caster takes nothing.
+ */
+export interface TakeControlEffect {
+  readonly kind: "take-control";
 }
 
 /**
@@ -1457,10 +1498,12 @@ export type UnconditionalEffect =
   | DisableSkillEffect
   | CopyRemovedEffect
   | CopyDisabledEffect
+  | CopyEliteEffect
   | LengthenRechargeEffect
   | DisableOwnSkillsEffect
   | ChainMarkEffect
   | SummonEffect
+  | TakeControlEffect
   | CreateGroundEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
@@ -1605,6 +1648,12 @@ export interface AttackSkillRule {
    * +10 damage". One damage number, not a second hit. `undefined`: none.
    */
   readonly conditionalBonus: ConditionalBonus | undefined;
+  /**
+   * More bonus for each of a count, read as the skill's blow is made
+   * (#1957), capped at its `max`: Enraged Lunge's "+3...23 damage for
+   * each of your Beast Mastery skills that is recharging". Absent: none.
+   */
+  readonly bonusPer?: PerCount;
   /**
    * When a blow of it is a critical hit whatever the roll (#1315):
    * `"always"`, Critical Strike's "results in a critical hit"; a
@@ -1958,7 +2007,8 @@ export interface Combatant {
    * cleared around it by `withRankLoan`; empty otherwise.
    */
   heldAttributeDeltas: readonly AttributeDelta[];
-  readonly team: number;
+  /** A spirit someone takes control of changes sides (#1965). */
+  team: number;
   /** Set once health reaches 0; a dead combatant is skipped by the simulation. */
   dead: boolean;
   /** Active conditions, hexes and enchantments. */
