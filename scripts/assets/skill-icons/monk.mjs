@@ -93,11 +93,6 @@ export const MONK_ICONS = {
   "monk.holy-haste": { glyph: "plus-streaks" },
   // Death trigger (#1762, #1832): a skull and a plus.
   "monk.dwaynas-sorrow": { glyph: "death-heal" },
-  // Caster staples (#1870), stand-ins until their art card.
-  "monk.aura-of-stability": { glyph: "mountain", modifier: "up" },
-  "monk.healing-ring": { glyph: "plus-ripple", modifier: "less" },
-  // Caster staples 2 (#1872), stand-ins until their art card.
-  "monk.vital-blessing": { glyph: "heart-plus", modifier: "upkeep" },
   // Skill-type and heal triggers (#1913)
   "monk.scribes-insight": { glyph: "scroll", modifier: "bolt" },
   // Caster staples (#1870).
@@ -105,6 +100,4 @@ export const MONK_ICONS = {
   "monk.healing-ring": { glyph: "ring-healers" },
   // Caster staples 2 (#1872).
   "monk.vital-blessing": { glyph: "ring-heart" },
-  // Skill-type and heal triggers (#1913), a stand-in until its art card.
-  "monk.scribes-insight": { glyph: "energy", modifier: "plus" },
 };

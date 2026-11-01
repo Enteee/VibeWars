@@ -75,12 +75,6 @@ export const MESMER_ICONS = {
   "mesmer.illusion-of-weakness": { glyph: "haze-heart-bar" },
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "mesmer.channeling": { glyph: "each-channeling" },
-  // Caster staples (#1870), stand-ins until their art card.
-  "mesmer.ethereal-burden": { glyph: "slow", modifier: "bolt" },
-  "mesmer.sum-of-all-fears": { glyph: "slow", modifier: "plus" },
-  // Caster staples 2 (#1872), stand-ins until their art card.
-  "mesmer.elemental-resistance": { glyph: "armor", modifier: "bolt" },
-  "mesmer.physical-resistance": { glyph: "armor", modifier: "half" },
   // Casting-state hexes (#1931)
   "mesmer.power-leech": { glyph: "bolt-ring" },
   "mesmer.power-flux": { glyph: "burst-bolt", modifier: "down" },
@@ -92,7 +86,4 @@ export const MESMER_ICONS = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929), stand-ins until their art card.
   "mesmer.signet-of-illusions": { glyph: "energy", modifier: "finale" },
-  // Casting-state hexes (#1931), stand-ins until their art card.
-  "mesmer.power-leech": { glyph: "energy", modifier: "bolt" },
-  "mesmer.power-flux": { glyph: "interrupt", modifier: "hourglass" },
 };

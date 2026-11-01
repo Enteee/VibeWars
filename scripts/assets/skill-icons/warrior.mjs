@@ -82,12 +82,6 @@ export const WARRIOR_ICONS = {
   "warrior.coward": { glyph: "shout-fall" },
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "warrior.victory-is-mine": { glyph: "each-victory" },
-  // Staples (#1869), stand-ins until their art card.
-  "warrior.keen-chop": { glyph: "axe", modifier: "bolt" },
-  "warrior.penetrating-chop": { glyph: "axe-pierce", modifier: "plus" },
-  "warrior.lacerating-chop": { glyph: "axe-cross", modifier: "bleed" },
-  "warrior.frenzied-defense": { glyph: "shield-stance", modifier: "up" },
-  "warrior.flurry": { glyph: "sword", modifier: "less" },
   // Next attacks (#1916)
   "warrior.signet-of-strength": { glyph: "sword-pips" },
   // Staples (#1869).
@@ -96,6 +90,4 @@ export const WARRIOR_ICONS = {
   "warrior.lacerating-chop": { glyph: "chop-bleed" },
   "warrior.frenzied-defense": { glyph: "shield-frenzy" },
   "warrior.flurry": { glyph: "slashes-flurry" },
-  // Next attacks (#1916): stand-ins until their art.
-  "warrior.signet-of-strength": { glyph: "sword", modifier: "plus" },
 };
