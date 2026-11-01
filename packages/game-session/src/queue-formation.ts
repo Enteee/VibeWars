@@ -179,13 +179,15 @@ function takeGroups(queue: readonly QueueTicket[], mode: QueueMode): QueueTicket
     (isSide(ticket, mode) ? parties : solos).push({ ticket, place });
     const candidates: Queued[][] = [];
     if (parties.length >= 2) {
-      candidates.push(parties.slice(0, 2));
+      candidates.push(...reachable(parties.slice(0, 2), [parties]));
     }
     if (parties.length >= 1 && solos.length >= teamSize) {
-      candidates.push([...parties.slice(0, 1), ...solos.slice(0, teamSize)]);
+      candidates.push(
+        ...reachable([...parties.slice(0, 1), ...solos.slice(0, teamSize)], [parties, solos]),
+      );
     }
     if (solos.length >= 2 * teamSize) {
-      candidates.push(solos.slice(0, 2 * teamSize));
+      candidates.push(...reachable(solos.slice(0, 2 * teamSize), [solos]));
     }
     const best = candidates
       .map((candidate) => [...candidate].sort((a, b) => a.place - b.place))
@@ -205,6 +207,33 @@ function takeGroups(queue: readonly QueueTicket[], mode: QueueMode): QueueTicket
   return groups;
 }
 
+/**
+ * The candidates `front`, drawn front first from `pools`, stands for
+ * (#2090): itself when any of its tickets is not `hardNat`, since a
+ * group of only hard ones could not connect. Else, per pool, `front`
+ * with that pool's latest placed member swapped for the pool's earliest
+ * ticket not hard, where there is one. Dropping `front` instead would
+ * block the queue's head for good: in [A hard, B hard, C open] the solos
+ * candidate stays [A, B]. The hard tickets left over keep their place.
+ */
+function reachable(front: readonly Queued[], pools: readonly (readonly Queued[])[]): Queued[][] {
+  if (front.some((queued) => !queued.ticket.hardNat)) {
+    return [[...front]];
+  }
+  return pools.flatMap((pool) => {
+    const open = pool.find((queued) => !queued.ticket.hardNat);
+    const latest = front
+      .filter((queued) => pool.includes(queued))
+      .reduce<Queued | undefined>(
+        (last, queued) => (last === undefined || queued.place > last.place ? queued : last),
+        undefined,
+      );
+    return open === undefined || latest === undefined
+      ? []
+      : [front.map((queued) => (queued === latest ? open : queued))];
+  });
+}
+
 async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
@@ -217,8 +246,14 @@ async function sha256Hex(text: string): Promise<string> {
  * a late joiner can try secrets until they host the group they join, in
  * about `2 * teamSize` tries. Accepted on #869; see SECURITY.md,
  * "Choosing to host a Random Arena".
+ *
+ * Only the tickets not `hardNat` are ranked (#2090): a hard host is one
+ * the others may not reach. All of them if every one is hard, which
+ * formation never lets happen.
  */
-async function hostOf(groupId: string, ids: readonly string[]): Promise<string | undefined> {
+async function hostOf(groupId: string, group: readonly QueueTicket[]): Promise<string | undefined> {
+  const open = group.filter((ticket) => !ticket.hardNat);
+  const ids = (open.length > 0 ? open : group).map((ticket) => ticket.ticketId);
   const ranked = await Promise.all(
     ids.map(async (ticketId) => ({ ticketId, rank: await sha256Hex(`${groupId}${ticketId}`) })),
   );
@@ -270,7 +305,7 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
   for (const group of takeGroups(liveQueue(input), input.mode)) {
     const ids = group.map((ticket) => ticket.ticketId).sort(compare);
     const groupId = await sha256Hex(ids.join("\n"));
-    const hostTicketId = await hostOf(groupId, ids);
+    const hostTicketId = await hostOf(groupId, group);
     const mapId =
       input.mapPool[createRng(seedFromString(`${groupId}:map`)).nextInt(0, input.mapPool.length)];
     if (hostTicketId === undefined || mapId === undefined) {

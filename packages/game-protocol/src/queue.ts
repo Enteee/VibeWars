@@ -120,6 +120,13 @@ export interface QueueTicket {
    * they are in.
    */
   readonly party: TicketParty | null;
+  /**
+   * Whether its publisher found its own NAT hard (#2090): symmetric, or
+   * UDP blocked, so a peer behind one too cannot reach it. For a party,
+   * the leader's. A hint, untrusted: it only ever keeps a ticket out of
+   * hosting, and a group of only hard tickets from forming.
+   */
+  readonly hardNat: boolean;
 }
 
 /** How a party ticket proves every member is in it (#1078). */
@@ -141,7 +148,7 @@ const TICKET_ID = /^[0-9a-f]{64}$/;
 /** A group id is a sha256, as hex. */
 const GROUP_ID = TICKET_ID;
 const CONSENT = /^[0-9a-f]{128}$/;
-const TICKET_FIELDS = 8;
+const TICKET_FIELDS = 9;
 const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
@@ -229,7 +236,7 @@ function parseParty(value: unknown, members: readonly string[]): TicketParty | n
  * id, an unknown mode, members and bots that are not a solo or a whole
  * team in Random Arena or not a whole side in a team mode, members
  * out of party order or not led by its id, a party that does not match
- * them, a time that is not a whole number of ms, or any field more than a
+ * them, a `hardNat` that is not a boolean, a time that is not a whole number of ms, or any field more than a
  * ticket has, so a flood of padded events costs a client nothing to
  * refuse.
  */
@@ -240,10 +247,8 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
   if (Object.keys(raw).length !== TICKET_FIELDS) {
     return undefined;
   }
-  const { ticketId, protocol, mode, members, bots, enteredAt, heartbeatAt, party } = raw as Record<
-    string,
-    unknown
-  >;
+  const { ticketId, protocol, mode, members, bots, enteredAt, heartbeatAt, party, hardNat } =
+    raw as Record<string, unknown>;
   if (
     typeof ticketId !== "string" ||
     !TICKET_ID.test(ticketId) ||
@@ -255,7 +260,8 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     !Number.isSafeInteger(bots) ||
     bots < 0 ||
     !isTime(enteredAt) ||
-    !isTime(heartbeatAt)
+    !isTime(heartbeatAt) ||
+    typeof hardNat !== "boolean"
   ) {
     return undefined;
   }
@@ -263,5 +269,15 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
   const proof = parsed === undefined ? undefined : parseParty(party, parsed);
   return parsed === undefined || proof === undefined
     ? undefined
-    : { ticketId, protocol, mode, members: parsed, bots, enteredAt, heartbeatAt, party: proof };
+    : {
+        ticketId,
+        protocol,
+        mode,
+        members: parsed,
+        bots,
+        enteredAt,
+        heartbeatAt,
+        party: proof,
+        hardNat,
+      };
 }

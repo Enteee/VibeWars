@@ -12,6 +12,7 @@ const TICKET: QueueTicket = {
   enteredAt: 1_700_000_000_000,
   heartbeatAt: 1_700_000_005_000,
   party: null,
+  hardNat: false,
 };
 
 /** A whole 4v4 team, sorted, led by `TICKET`'s id. */
@@ -77,8 +78,11 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     ["a missing field", { ...TICKET, heartbeatAt: undefined }],
     ["an oversize ticket, padded with a field", { ...TICKET, padding: "x".repeat(10_000) }],
     ["an undefined party", { ...TICKET, party: undefined }],
-    ["seven fields: no party at all", (({ party: _, ...seven }) => seven)(TICKET)],
-    ["seven fields: no bots at all", (({ bots: _, ...seven }) => seven)(TICKET)],
+    ["eight fields: no party at all", (({ party: _, ...eight }) => eight)(TICKET)],
+    ["eight fields: no bots at all", (({ bots: _, ...eight }) => eight)(TICKET)],
+    ["eight fields: no hardNat at all (#2090)", (({ hardNat: _, ...eight }) => eight)(TICKET)],
+    ["a hardNat that is not a boolean (#2090)", { ...TICKET, hardNat: "true" }],
+    ["a null hardNat (#2090)", { ...TICKET, hardNat: null }],
     ["bots in Random Arena", { ...TICKET, bots: 1 }],
     ["bots in a Random Arena party", { ...TEAM, mode: "random-arena-2v2", bots: 2 }],
     ["a solo in a team mode", { ...TICKET, mode: "team-arena" }],
