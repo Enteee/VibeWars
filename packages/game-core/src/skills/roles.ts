@@ -70,6 +70,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "resurrect-companions":
     case "drain-own-energy":
     case "recharge-faster":
+    case "recharge-reset":
     case "recharge-others":
     case "pull-to-caster":
     case "destroy-target-spirit":

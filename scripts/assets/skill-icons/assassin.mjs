@@ -76,4 +76,6 @@ export const ASSASSIN_ICONS = {
   "assassin.shadow-meld": { glyph: "step-meld" },
   "assassin.shadow-of-haste": { glyph: "step-haste" },
   "assassin.return": { glyph: "blink-ally", modifier: "area" },
+  // Shots that fly differently (#1914), a stand-in until its art card.
+  "assassin.dancing-daggers": { glyph: "dagger", modifier: "renew" },
 };

@@ -203,6 +203,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     profession: "necromancer",
     whileUnder: {
       categories: ["hex"],
+      statusIds: [],
       attackDurationMultiplier: 1,
       adrenalineGainFaster: 0,
       healthPips: 0,

@@ -196,6 +196,7 @@ import {
   skillBlow,
   useNextAttackSkill,
   swingIntervalSeconds,
+  strikeCount,
   unblockableNow,
   weaponSnapshotOf,
   withEndedStatuses,
@@ -800,7 +801,12 @@ function degenerationSources(combatant: Combatant): {
   const healing = new Set<string>();
   for (const status of combatant.statuses.active) {
     const definition = STATUS_DEFINITIONS[status.id];
-    if (definition.healthPips < 0) {
+    if (
+      definition.healthPips < 0 ||
+      (definition.whileUnder !== undefined &&
+        definition.whileUnder.healthPips < 0 &&
+        isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
+    ) {
       draining.add(status.sourceId);
     } else if (
       definition.healthPips > 0 ||
@@ -809,7 +815,7 @@ function degenerationSources(combatant: Combatant): {
       definition.healthPerSecond > 0 ||
       (definition.whileUnder !== undefined &&
         definition.whileUnder.healthPips > 0 &&
-        isUnderAnother(combatant.statuses.active, status, definition.whileUnder.categories))
+        isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       healing.add(status.sourceId);
     }
@@ -3585,9 +3591,11 @@ export class MatchSimulation {
       primary,
       // Only an area looks past the primary: skip the copy every other
       // cast would make for nothing. A flying spell's area is found
-      // where it lands, not here.
+      // where it lands, not here, but a spread's, whose shots it aims (#1914).
       candidates:
-        skill.area === undefined || flight !== undefined ? [] : [...this.#participants.values()],
+        skill.area === undefined || (flight !== undefined && flight.spread !== true)
+          ? []
+          : [...this.#participants.values()],
       losBlockers: this.#walls,
     });
     // An item spell's ashes take the hands (#1434): a flag, a relic or the
@@ -3667,7 +3675,12 @@ export class MatchSimulation {
     // Blossom's splash on adjacent foes earns nothing more. One that loses
     // all adrenaline (#1097) earns none back: GW1 takes it after the strike.
     if (skill.type === "attack" && !losesAllAdrenaline(skill)) {
-      const strikes = skill.attack?.strikes ?? 1;
+      const strikes = strikeCount(
+        skill.attack?.strikes,
+        record.combatant,
+        primary?.combatant ?? record.combatant,
+        this.#participants,
+      );
       const swungAt = new Set(targets.map((target) => target.id));
       const blocked = (targetId: string): boolean => {
         const blows = events.filter(
@@ -4148,7 +4161,8 @@ export class MatchSimulation {
 
   /**
    * A status that raised its bearer's maximum ended: Endure Pain's health
-   * (#1359), Mighty Was Vorizun's energy (#1464). What is above the maximum
+   * (#1359), Mighty Was Vorizun's energy (#1464), or an enchantment that
+   * Symbiosis counted (#1873). What is above the maximum
    * left is lost, as in GW1; a bearer below it loses nothing, so the end
    * never kills.
    */
@@ -4156,9 +4170,10 @@ export class MatchSimulation {
     if (change.kind !== "ended") {
       return;
     }
-    const { maxHealthBonus, maxEnergyBonus } = STATUS_DEFINITIONS[change.id];
+    const { maxHealthBonus, maxHealthBonusPerEnchantment, maxEnergyBonus, category } =
+      STATUS_DEFINITIONS[change.id];
     const { combatant } = record;
-    if (maxHealthBonus !== 0) {
+    if (maxHealthBonus !== 0 || maxHealthBonusPerEnchantment !== 0 || category === "enchantment") {
       combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
     }
     if (maxEnergyBonus !== 0) {
@@ -5107,7 +5122,8 @@ export class MatchSimulation {
    *
    * A skill's `flightSpeed` (#1486) speeds each shot whose `when` holds
    * now, its victim the target: Swift Javelin keeps its speed if its
-   * enchantment ends in flight.
+   * enchantment ends in flight. Its `strikes` are read now too (#1914):
+   * Forked Arrow shoots one arrow if its user was hexed as it left.
    */
   #releaseSkill(
     record: ParticipantRecord,
@@ -5121,6 +5137,7 @@ export class MatchSimulation {
       blow: skillBlow(resolution.skill, record.combatant),
       next: nextAttackSkillOf(record.combatant),
       own: resolution.own,
+      strikes: 1,
     };
     const flight = resolution.skill.attack?.flightSpeed;
     const released: CombatEvent[] = [];
@@ -5133,9 +5150,15 @@ export class MatchSimulation {
           stateHolds(flight.when, record.combatant, victim, this.#participants))
           ? flight.multiplier
           : 1;
+      const strikes = strikeCount(
+        resolution.skill.attack?.strikes,
+        record.combatant,
+        victim,
+        this.#participants,
+      );
       return target === undefined || victim.dead
         ? []
-        : this.#release(record, target, speed * multiplier, dt, skillHit);
+        : this.#release(record, target, speed * multiplier, dt, { ...skillHit, strikes });
     });
     useNextAttackSkill(record.combatant, skillHit.next, events);
     return [...released, ...events];
@@ -5172,6 +5195,9 @@ export class MatchSimulation {
   /**
    * A flying spell (#535): one shot at the primary target, carrying the
    * cast. Its effects, and anyone its area catches, land with it.
+   * Several (#1914): its `shots` at the primary, each flying and dodged
+   * alone, Dancing Daggers'; or, `spread`, one at each target its area
+   * found as it left, the primary first, none splashing, Lava Arrows'.
    */
   #releaseSpell(
     record: ParticipantRecord,
@@ -5179,16 +5205,24 @@ export class MatchSimulation {
     speed: number,
     dt: number,
   ): CombatEvent[] {
-    const [primary] = resolution.targets;
-    const target = primary === undefined ? undefined : this.#participants.get(primary.id);
-    return target === undefined || target.combatant.dead
-      ? []
-      : this.#release(record, target, speed, dt, {
-          kind: "spell",
-          skill: resolution.skill,
-          caster: record.combatant,
-          own: resolution.own,
-        });
+    const { skill } = resolution;
+    const spread = skill.projectile?.spread === true;
+    const victims = spread ? resolution.targets : resolution.targets.slice(0, 1);
+    const shots = skill.projectile?.shots ?? 1;
+    const spellHit: SpellHit = {
+      kind: "spell",
+      skill: spread ? { ...skill, area: undefined } : skill,
+      caster: record.combatant,
+      own: resolution.own,
+    };
+    return victims.flatMap((victim) => {
+      const target = this.#participants.get(victim.id);
+      return target === undefined || target.combatant.dead
+        ? []
+        : Array.from({ length: shots }, () =>
+            this.#release(record, target, speed, dt, spellHit),
+          ).flat();
+    });
   }
 
   /**
@@ -5394,7 +5428,7 @@ export class MatchSimulation {
     fired: FiredTrigger[],
     riders: (effects: Skill["effects"]) => CombatEvent[],
   ): boolean {
-    const strikes = skillHit?.skill.attack?.strikes ?? 1;
+    const strikes = skillHit?.strikes ?? 1;
     let hits = 0;
     let blocked = 0;
     for (let strike = 0; strike < strikes && !target.combatant.dead; strike += 1) {

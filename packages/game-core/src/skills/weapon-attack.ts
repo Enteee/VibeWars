@@ -30,13 +30,16 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import {
   aggregateModifiers,
+  damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
+  physicalDamageDealtAsOf,
   isSuppressed,
   type StatusId,
 } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import {
+  attackDamageDeltaOf,
   attackDamageTypeOf,
   attackMissChanceOf,
   blockingStatusesOf,
@@ -52,6 +55,7 @@ import {
   type Skill,
   type SkillEffect,
   type StateCondition,
+  type Strikes,
   type Surroundings,
 } from "./types.js";
 
@@ -204,8 +208,17 @@ export interface WeaponSnapshot {
   readonly damageType: DamageType;
   /** The least armor penetration the attacker's statuses give (#1519): Judge's Insight's 0.2. */
   readonly armorPenetration: number;
-  /** Added to each blow before armor by the attacker's statuses (#1654): Nightmare Weapon's −42. */
+  /**
+   * Added to each blow before armor by the attacker's statuses (#1654):
+   * Nightmare Weapon's −42, Favorable Winds' +6 to arrows (#1873).
+   */
   readonly damageDelta: number;
+  /**
+   * The type the attacker's statuses turn its physical blows into, after
+   * `damageType` or the skill's own (#1873): Greater Conflagration's fire.
+   * `undefined`: none.
+   */
+  readonly physicalDamageDealtAs: DamageType | undefined;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -221,7 +234,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalChanceBonus: modifiers.criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
-    damageDelta: modifiers.attackDamageDelta,
+    damageDelta: attackDamageDeltaOf(attacker),
+    physicalDamageDealtAs: physicalDamageDealtAsOf(attacker.statuses.active),
   };
 }
 
@@ -293,6 +307,23 @@ export function unblockableNow(
     return unblockable;
   }
   return attacker !== undefined && stateHolds(unblockable, attacker, victim, surroundings);
+}
+
+/**
+ * How many blows `strikes` lands on `victim` (#1914): a number as it
+ * is; Forked Arrow's two, but one while its state holds for `attacker`.
+ * None: one.
+ */
+export function strikeCount(
+  strikes: Strikes | undefined,
+  attacker: Combatant,
+  victim: Combatant,
+  surroundings: Surroundings,
+): number {
+  if (strikes === undefined || typeof strikes === "number") {
+    return strikes ?? 1;
+  }
+  return stateHolds(strikes.oneWhile, attacker, victim, surroundings) ? 1 : strikes.count;
 }
 
 /**
@@ -518,8 +549,12 @@ export function landBlow(
         snapshot.damageDelta,
     ),
     armorIgnoring: blow.bonus,
-    // The attacker's type first, then Winter's on the victim (#1745).
-    type: damageTypeTaken(blow.damageType ?? snapshot.damageType, victim.statuses.active),
+    // The attacker's type first, turned by its Greater Conflagration
+    // (#1873), then Winter's on the victim (#1745).
+    type: damageTypeTaken(
+      damageTypeDealt(blow.damageType ?? snapshot.damageType, snapshot.physicalDamageDealtAs),
+      victim.statuses.active,
+    ),
     source: "weapon",
     armorPenetration: Math.max(
       blow.armorPenetration,
@@ -1045,7 +1080,7 @@ export function resolveAttackSkillOutcome(
     }
     victims.push(victim);
   }
-  const strikes = rule?.strikes ?? 1;
+  const strikes = strikeCount(rule?.strikes, caster, primary ?? caster, surroundings);
   for (let strike = 0; strike < strikes; strike += 1) {
     const since = strike === 0 ? 0 : events.length;
     const hit: Combatant[] = [];
