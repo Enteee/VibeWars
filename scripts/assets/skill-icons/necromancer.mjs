@@ -104,25 +104,11 @@ export const NECROMANCER_ICONS = {
   "necromancer.meekness": { glyph: "hex-sword-limp" },
   // Caster staples 2 (#1872).
   "necromancer.vocal-minority": { glyph: "hex-bubble-cut" },
-  // Minions 3 (#1915), stand-ins until their art card.
-  "necromancer.order-of-undeath": { glyph: "bone-minions", modifier: "bolt" },
-  "necromancer.aura-of-the-lich": { glyph: "bone-horror", modifier: "corpse" },
-  "necromancer.infuse-condition": { glyph: "bone-minions", modifier: "bleed" },
-  "necromancer.taste-of-death": { glyph: "feast-jaw", modifier: "bleed" },
-  // Attributes set or borrowed (#1929), stand-ins until their art card.
-  "necromancer.wail-of-doom": { glyph: "slow", modifier: "stun" },
-  "necromancer.atrophy": { glyph: "slow", modifier: "half" },
-  // Skill-type and heal triggers (#1913), stand-ins until their art card.
-  "necromancer.cacophony": { glyph: "hex-mute", modifier: "bolt" },
-  "necromancer.soul-bind": { glyph: "hex-cut", modifier: "bleed" },
+  // Minions 3, attribute and trigger skills (#1915, #1929, #1913).
   "necromancer.order-of-undeath": { glyph: "skull-order" },
   "necromancer.aura-of-the-lich": { glyph: "skull-aura" },
   "necromancer.infuse-condition": { glyph: "drop-skull" },
   "necromancer.taste-of-death": { glyph: "skull-heal" },
   "necromancer.wail-of-doom": { glyph: "bars-wail" },
   "necromancer.atrophy": { glyph: "bars-wilt" },
-  // Casting-state hexes (#1931), stand-ins until their art card.
-  "necromancer.spinal-shivers": { glyph: "interrupt", modifier: "stun" },
-  "necromancer.shivers-of-dread": { glyph: "hex-cut", modifier: "stun" },
-  "necromancer.death-nova": { glyph: "germ", modifier: "corpse" },
 };
