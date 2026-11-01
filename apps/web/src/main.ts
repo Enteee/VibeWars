@@ -1,10 +1,5 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type {
-  Guild,
-  LobbyConnection,
-  LobbySnapshot,
-  MatchStarting,
-} from "@vibewars/game-session";
+import type { Guild, LobbyConnection, LobbySnapshot, MatchStarting } from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 

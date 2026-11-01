@@ -1070,7 +1070,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         const arriving = side.pending.get(member.id);
         const slots =
-          arriving?.length === command.size ? arriving : Array.from({ length: command.size }, () => undefined);
+          arriving?.length === command.size
+            ? arriving
+            : Array.from({ length: command.size }, () => undefined);
         slots[command.slot] = build;
         const builds = slots.flatMap((slot) => (slot === undefined ? [] : [slot]));
         if (builds.length < command.size) {

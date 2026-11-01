@@ -2041,7 +2041,11 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyCommand,
     { kind: "add-bot", team: 0, profession: "monk" },
   ],
-  ["set-bots, which is gone (#2029)", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
+  [
+    "set-bots, which is gone (#2029)",
+    parseWireLobbyCommand,
+    { kind: "set-bots", team: 1, count: 3 },
+  ],
   ["a command of an unknown kind", parseWireLobbyCommand, { kind: "kick", id: "peer-2" }],
   ["a note of an unknown kind", parseWireLobbyNote, { kind: "kicked", reason: "x" }],
   [

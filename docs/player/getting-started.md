@@ -84,12 +84,13 @@ and the strip on top of every mode screen lists who is in it.
 **The host picks the mode** on the rail, and everyone's screen follows;
 a guest's modes are locked. **Character Builder** and **Team Builder**
 are open to everyone, and opening one does not leave the lobby. On a
-mode's screen, press **+** under a team's **Bots:** to fill an empty
-place, and when everyone is in, the host presses **Start match**.
-**Random Arena** queues only while you are alone in your lobby: leave
-the party, or play a Hosted Game. The character picked there is the one
-you bring; pick another, and the lobby shows it and you play it from the
-next match.
+mode's screen, join a team, and when everyone is in, the host presses
+**Start match**; bots play every place nobody takes. The lobby lists
+players by name: what you play is the character you claim in the Team
+Lobby, so you need no character of your own to join. **Random Arena**
+queues only while you are alone in your lobby: leave the party, or play
+a Hosted Game. It plays the character picked there; pick another, and you
+play it from the next match.
 
 **Team Arena**, **Heroes' Ascent** and **GvG** offer only that mode's
 maps: **Team Arena** the Annihilation, Kill Count and Priest Annihilation

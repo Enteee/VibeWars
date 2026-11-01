@@ -169,8 +169,11 @@ Forgotten Shrines plays it.
 ## Team Lobby
 
 A hosted lobby does not start the match when everyone is ready. It opens the Team Lobby first, where each side picks one Team
-Build together and then splits its characters. Each side is as big as
-it was when the Team Lobby opened, its bots included, and at most 8.
+Build together and then splits its characters. In Team Arena, Heroes'
+Ascent and GvG a side is as big as the mode's team (4, 8 and 8). In a
+Hosted Game a side is as big as the Team Build it chooses, up to 8, and
+the two sides may differ; a side playing the house team is as big as
+the other.
 A queued party ([Find a match](getting-started.md#host-or-join-a-match)
 on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
 only, as big as the mode's team (4 for Team Arena, 8 for the others)
@@ -179,7 +182,8 @@ Each stage lasts 60 seconds and ends early once everyone in the Team
 Lobby is ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
-side's size, one proposal each, by clicking one of your Team Builds'
+side's size (in a Hosted Game, any size with a character for each player
+on the side), one proposal each, by clicking one of your Team Builds'
 cards; click it again to withdraw. A Team Build of the wrong size is
 shown faded, with the size it needs. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
@@ -202,5 +206,5 @@ to take it, or your own to leave it, first come, first served, one each. Whoever
 bots play the rest, under their character's name. Then the match starts, or a queued party
 joins the queue.
 
-Anyone who leaves during the Team Lobby is replaced by a bot, so the
-side keeps its size. Someone joining then only watches.
+Anyone who leaves during the Team Lobby leaves their character to a bot,
+so the side keeps its size. Someone joining then only watches.
