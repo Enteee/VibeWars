@@ -1402,7 +1402,8 @@ body {
   gap: 0.35rem;
 }
 
-left edge, as tall as the screen body, and the screen's own beside it. */
+/* The menu's rail screens (#1525, #1522 variant C): the mode rail down the
+   left edge, as tall as the screen body, and the screen's own beside it. */
 #screens:has(> .screen-rail) {
   padding: 0;
 }
