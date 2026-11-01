@@ -12,8 +12,7 @@ Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
 
 Every map is made for some team sizes, and a mode only plays a map made
-for its size: a small arena for a 1v1 or a 2v2, a big one for a 4v4 or
-an 8v8.
+for its size: an 8v8 never crowds onto an arena built for a 1v1.
 
 | Mode           | Team sizes    | Map                                  |
 | -------------- | ------------- | ------------------------------------ |

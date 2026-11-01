@@ -36,6 +36,7 @@ describe("randomArenaMapPool", () => {
       "arena-split",
     ]);
     expect(randomArenaMapPool("random-arena-4v4")).toEqual([
+      "arena-pillars",
       "arena-split",
       "arena-ring",
       "arena-crossroads",
