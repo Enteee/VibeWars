@@ -29,7 +29,8 @@ export interface LobbyMatchmaking {
   readonly queuedMs: number | null;
   readonly onFindMatch: () => void;
   readonly onLeaveQueue: () => void;
-  readonly onPlayHouseTeam: () => void;
+  /** `undefined` where no house team is offered: Heroes' Ascent waits for a side (#1996). */
+  readonly onPlayHouseTeam: (() => void) | undefined;
 }
 
 /** The host may play the house team after this long with no other team (Q191). */
@@ -316,12 +317,10 @@ export function matchmakingButtons(
     return [find];
   }
   const leave = button("Leave the queue", "lobby-leave-queue", matchmaking.onLeaveQueue);
-  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS
+  const { onPlayHouseTeam } = matchmaking;
+  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS || onPlayHouseTeam === undefined
     ? [leave]
-    : [
-        button("Play the house team", "primary lobby-house-team", matchmaking.onPlayHouseTeam),
-        leave,
-      ];
+    : [button("Play the house team", "primary lobby-house-team", onPlayHouseTeam), leave];
 }
 
 /**

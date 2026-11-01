@@ -83,8 +83,8 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
   };
 
 /**
- * Maps no Heroes' Ascent pool draws yet: the Hall of Heroes (#1995) is its last round, placed
- * by the progression card, and until then only a Hosted Game picks it.
+ * Maps only a queued Heroes' Ascent's last round plays (#1996): a coded
+ * Ascent lobby never draws the Hall of Heroes (#1995).
  */
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
@@ -131,13 +131,42 @@ export function randomArenaMapPool(mode: QueueMode): string[] {
 }
 
 /**
- * The arenas a queued match of `mode` is drawn from: a team mode's are
- * its lobby mode's (#1766), a Random Arena's its own pool.
+ * Heroes' Ascent's rounds in order (#1996), one map each, `ASCENT_ROUNDS`
+ * of them: a side that wins moves on to the next, up to the Hall.
  */
-export function queueMapPool(mode: QueueMode): string[] {
+export const ASCENT_PROGRESSION: readonly string[] = [
+  "relic-temples",
+  "forgotten-shrines",
+  "hill-courtyard",
+  "hall-of-heroes",
+];
+
+/** The name of the map Heroes' Ascent plays at `round` (#1996). */
+export function ascentMapName(round: number): string {
+  return hostMap(ascentMapId(round))?.descriptor.name ?? ascentMapId(round);
+}
+
+function ascentMapId(round: number): string {
+  const id = ASCENT_PROGRESSION[round];
+  if (id === undefined) {
+    throw new RangeError(`no Heroes' Ascent round ${String(round)}`);
+  }
+  return id;
+}
+
+/**
+ * The arenas a queued match of `mode` is drawn from: a team mode's are
+ * its lobby mode's (#1766), a Random Arena's its own pool, and a Heroes'
+ * Ascent's the one map of `ascentRound` (#1996), `null` in other modes.
+ */
+export function queueMapPool(mode: QueueMode, ascentRound: number | null): string[] {
   switch (mode) {
-    case "team-arena":
     case "heroes-ascent":
+      if (ascentRound === null) {
+        throw new RangeError("a Heroes' Ascent queue has a round");
+      }
+      return [ascentMapId(ascentRound)];
+    case "team-arena":
     case "gvg":
       return modeMapIds()[mode];
     default:

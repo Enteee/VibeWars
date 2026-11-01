@@ -214,3 +214,18 @@ After a queued team match, its winners queue again on their own after
 20 seconds, and its losers (a draw too) return to the menu; a coded
 lobby's match returns everyone to the lobby. A button under the result
 skips the wait, or, for winners, leaves without queueing.
+
+## Heroes' Ascent
+
+A queued Heroes' Ascent is four rounds, always in this order: Relic
+Temples (Relic Run), Forgotten Shrines (Capture Points), Hill Courtyard
+(King of the Hill), then the Hall of Heroes. The party strip says where
+you are while you look for a team: `Round 2 of 4 · Forgotten Shrines`.
+You only ever meet a team at the same round, and you wait for one as
+long as it takes: no bots fill in. Win, and your party ascends to the
+next map on its own after 20 seconds; win in the Hall, and you stay to
+defend it. Lose, or leave a match before it ends, and your next Ascent
+starts again at round 1; so does leaving the queue or the party. A match
+lost to its host leaving keeps your round. The round is remembered by
+the host of your party, and only until you close the tab. A Heroes'
+Ascent lobby joined by code plays round 1's map.

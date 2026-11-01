@@ -41,6 +41,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     countdownSeconds: null,
     teamLobby: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds: new Map(),
   };
 }
@@ -69,6 +70,7 @@ describe("the party strip's party (#1526)", () => {
       ],
       queuedMs: null,
       teams: undefined,
+      ascentRound: null,
     });
     expect(isAlone(party)).toBe(false);
   });
@@ -109,6 +111,11 @@ describe("the party strip's party (#1526)", () => {
   it("says how long a queued party has looked for a team (#1766)", () => {
     expect(partyOf(lobby([player("me")]), 65_000, 2)).toMatchObject({ queuedMs: 65_000, teams: 2 });
     expect(lookingLabel(65_000, undefined)).toBe("Looking for a team… 1:05");
+  });
+
+  it("carries a queued Heroes' Ascent party's round from its lobby (#1996)", () => {
+    const queued = { ...lobby([player("me")]), phase: "queued", ascentRound: 1 } as const;
+    expect(partyOf(queued, 5_000, 1).ascentRound).toBe(1);
   });
 
   it("says how many teams are searching, its own included (#1881)", () => {

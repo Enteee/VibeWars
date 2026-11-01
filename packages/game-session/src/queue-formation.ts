@@ -47,6 +47,11 @@ export interface FormGroupsInput {
   /** ms since the epoch. */
   readonly now: number;
   readonly mode: QueueMode;
+  /**
+   * In Heroes' Ascent, the round being matched: only tickets at it form
+   * groups (#1996). `null` in every other mode.
+   */
+  readonly ascentRound: number | null;
   /** Ticket ids that never showed up for an earlier group (#854 C7). */
   readonly ignored: ReadonlySet<string>;
   /** The maps a group may play on, in the same order on every client. */
@@ -87,12 +92,15 @@ export function isLive(ticket: QueueTicket, now: number): boolean {
  * The live tickets, first queued first: this protocol and mode, `isLive`,
  * each id once. Ignored ones are still here: see `liveQueue`.
  */
-function liveTickets(input: Pick<FormGroupsInput, "tickets" | "now" | "mode">): QueueTicket[] {
+function liveTickets(
+  input: Pick<FormGroupsInput, "tickets" | "now" | "mode" | "ascentRound">,
+): QueueTicket[] {
   const live = input.tickets
     .filter(
       (ticket) =>
         ticket.protocol === PROTOCOL_VERSION &&
         ticket.mode === input.mode &&
+        ticket.ascentRound === input.ascentRound &&
         isLive(ticket, input.now),
     )
     .sort(queueOrder);

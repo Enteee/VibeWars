@@ -50,9 +50,12 @@ class Queue {
   public keys = 0;
 
   public readonly mode: QueueMode;
+  public readonly round: number | null;
 
-  public constructor(mode: QueueMode) {
+  /** In Heroes' Ascent at `round`, its first by default (#1996). */
+  public constructor(mode: QueueMode, round: number | null = mode === "heroes-ascent" ? 0 : null) {
     this.mode = mode;
+    this.round = round;
     this.memory.board().subscribe(mode, (event) => this.heard.push(event));
   }
 
@@ -61,6 +64,7 @@ class Queue {
     const client = createQueueClient({
       board: this.memory.board(),
       mode: this.mode,
+      ascentRound: this.round,
       ...(party === undefined ? {} : { party }),
       now: () => this.now,
       newTicketKey: () => fakeKey((this.keys += 1)),
@@ -80,6 +84,7 @@ class Queue {
       enteredAt: START,
       heartbeatAt: this.now,
       party: null,
+      ascentRound: this.round,
       ...ticket,
     });
     await deliver();
@@ -295,6 +300,19 @@ describe("createQueueClient", () => {
     await queue.advance();
 
     expect(a.state).toMatchObject({ kind: "searching", searching: 2, teams: 2 });
+  });
+
+  it("counts and meets only Heroes' Ascent sides at its own round (#1996)", async () => {
+    const queue = new Queue("heroes-ascent", 1);
+    const a = queue.join();
+    await queue.publish({ ticketId: EARLY, bots: 7, ascentRound: 0 });
+    await queue.publish({ ticketId: "0".repeat(63) + "2", bots: 7, ascentRound: 2 });
+    await queue.advance();
+    expect(a.state).toMatchObject({ kind: "searching", searching: 1, teams: 1 });
+
+    await queue.publish({ ticketId: "0".repeat(63) + "3", bots: 7, ascentRound: 1 });
+    await queue.advance();
+    expect(a.state).toMatchObject({ kind: "forming" });
   });
 
   it("says unreachable when the board has no relay, and searches when it talks again", async () => {

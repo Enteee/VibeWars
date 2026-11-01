@@ -430,10 +430,12 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
  * queues again on it. With `party`, it queues as a member of a team that
  * stayed together, or of a team mode's party (#1766); with `teamPlan`,
  * as that party's host, which sends the match's host its side's seats
- * once in the match's lobby (ADR-0042).
+ * once in the match's lobby (ADR-0042). A Heroes' Ascent queues at
+ * `ascentRound` (#1996), every other mode at `null`.
  */
 export function enterQueue(
   mode: QueueMode,
+  ascentRound: number | null,
   name: string,
   guild: Guild,
   events: RandomArenaEvents,
@@ -444,10 +446,11 @@ export function enterQueue(
   const client = createQueueClient({
     board: queue.board,
     mode,
+    ascentRound,
     ...(party === undefined ? {} : { party: party.party }),
     now: () => Date.now(),
     newTicketKey: () => queue.newTicketKey(),
-    mapPool: queueMapPool(mode),
+    mapPool: queueMapPool(mode, ascentRound),
   });
   let done = false;
   let sinceTick = 0;

@@ -50,6 +50,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     countdownSeconds: null,
     teamLobby: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds: new Map(),
   };
 }
@@ -396,6 +397,13 @@ describe("matchmakingButtons (#1766)", () => {
     house?.click();
     leave?.click();
     expect(pressed).toEqual(["house", "leave"]);
+  });
+  it("never offers Heroes' Ascent the house team: it waits for a side (#1996)", () => {
+    const shown = matchmakingButtons(
+      { ...matchmaking(10 * HOUSE_TEAM_AFTER_MS), onPlayHouseTeam: undefined },
+      lobbyControls(snapshot("waiting")),
+    ) as unknown as FakeElement[];
+    expect(shown.map((button) => button.textContent)).toEqual(["Leave the queue"]);
   });
 });
 

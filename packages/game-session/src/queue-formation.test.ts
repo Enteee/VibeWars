@@ -21,6 +21,11 @@ import {
 const NOW = 1_700_000_100_000;
 const MAPS = ["arena-a", "arena-b", "arena-c"];
 
+/** A ticket of `mode`'s round: Heroes' Ascent's first (#1996), none in other modes. */
+function roundOf(mode: QueueMode): number | null {
+  return mode === "heroes-ascent" ? 0 : null;
+}
+
 /** Ticket `n`: its id is `n` in hex, it entered `n` seconds before `NOW`'s epoch start. */
 function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
   const ticketId = n.toString(16).padStart(64, "0");
@@ -33,6 +38,7 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     enteredAt: 1_700_000_000_000 + n * 1_000,
     heartbeatAt: NOW,
     party: null,
+    ascentRound: roundOf(fields.mode ?? "random-arena-4v4"),
     ...fields,
   };
 }
@@ -63,7 +69,14 @@ function form(
   mode: QueueMode = "random-arena-4v4",
   ignored: ReadonlySet<string> = new Set(),
 ): Promise<FormedGroup[]> {
-  return formGroups({ tickets, now: NOW, mode, ignored, mapPool: MAPS });
+  return formGroups({
+    tickets,
+    now: NOW,
+    mode,
+    ascentRound: roundOf(mode),
+    ignored,
+    mapPool: MAPS,
+  });
 }
 
 function members(group: FormedGroup): string[] {
@@ -307,6 +320,7 @@ describe("formGroups (#869)", () => {
     const empty = {
       now: NOW,
       mode: "random-arena-1v1" as const,
+      ascentRound: null,
       ignored: new Set<string>(),
       mapPool: [],
     };
@@ -360,6 +374,41 @@ describe("team modes (ADR-0042)", () => {
     const tickets = [side(1, "heroes-ascent", 8), side(2, "gvg", 8)];
     expect(await form(tickets, "heroes-ascent")).toEqual([]);
     expect(await form(tickets, "gvg")).toEqual([]);
+  });
+
+  describe("Heroes' Ascent rounds (#1996)", () => {
+    /** Heroes' Ascent's sides `n` at `round`, formed at `round` with its one map. */
+    const hero = (n: number, round: number): QueueTicket => ({
+      ...side(n, "heroes-ascent", 1),
+      ascentRound: round,
+    });
+    const formAt = (tickets: readonly QueueTicket[], round: number, map: string) =>
+      formGroups({
+        tickets,
+        now: NOW,
+        mode: "heroes-ascent",
+        ascentRound: round,
+        ignored: new Set(),
+        mapPool: [map],
+      });
+
+    it("never groups sides at different rounds, even the only two queued", async () => {
+      const tickets = [hero(1, 0), hero(2, 1)];
+      expect(await formAt(tickets, 0, "relic-temples")).toEqual([]);
+      expect(await formAt(tickets, 1, "forgotten-shrines")).toEqual([]);
+    });
+
+    it("groups two sides at round 2 on its map, and leaves the round-1 side waiting", async () => {
+      const pair = [hero(2, 1), hero(3, 1)];
+      const groups = await formAt([hero(1, 0), ...pair], 1, "forgotten-shrines");
+      expect(groups.map(members)).toEqual([ids(pair)]);
+      expect(groups[0]?.mapId).toBe("forgotten-shrines");
+    });
+
+    it("plays a pair at the last round in the Hall", async () => {
+      const groups = await formAt([hero(1, 3), hero(2, 3)], 3, "hall-of-heroes");
+      expect(groups.map((group) => group.mapId)).toEqual(["hall-of-heroes"]);
+    });
   });
 
   it("the earliest two are picked, and the third waits", async () => {

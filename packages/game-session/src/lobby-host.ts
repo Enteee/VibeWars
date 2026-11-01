@@ -153,6 +153,8 @@ interface TeamLobby {
   readonly sides: readonly [TeamSide, TeamSide];
   /** A team mode's (#1766): side 0 alone, the party, which queues once it ends. */
   readonly forQueue: boolean;
+  /** The Heroes' Ascent round the party queues at (#1996); `null` in other modes. */
+  readonly ascentRound: number | null;
 }
 
 /** One seat of a queueing party's side (#1766): its human's peer, `null` for a bot, and its build. */
@@ -426,6 +428,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let queueing:
     | {
         readonly nonce: string;
+        /** The Heroes' Ascent round it queues at (#1996); `null` in other modes. */
+        readonly ascentRound: number | null;
         readonly seats: readonly PartySeat[];
         /** On the lobby's clock: by then a party of more than one has every key, or leaves the queue. */
         readonly endsAt: number;
@@ -521,6 +525,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     queueNonce: queueing?.nonce ?? null,
+    ascentRound: queueing?.ascentRound ?? null,
     teamLobby: teamLobby === undefined ? null : wireTeamLobby(teamLobby, to?.team ?? null),
   });
 
@@ -718,7 +723,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * Team Build it chooses (#2029). A side with more players than it
    * plays is turned down. A party's side alone queues (#1766).
    */
-  const beginTeamLobby = (forQueue = false): boolean => {
+  const beginTeamLobby = (forQueue = false, ascentRound: number | null = null): boolean => {
     const queueMode = teamQueueModeOf(mode);
     const size = queueMode === undefined ? null : teamSizeOf(queueMode);
     const most = size ?? MAX_TEAM_LOBBY_SIDE;
@@ -740,6 +745,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       endsAt: clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000,
       sides: [side(size), side(forQueue ? 0 : size)],
       forQueue,
+      ascentRound,
     };
     clearReady();
     return true;
@@ -837,7 +843,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         build,
       }));
       teamLobby = undefined;
-      beginQueueing(seats);
+      beginQueueing(seats, lobby.ascentRound);
       return;
     }
     const assigned = new Map<string, PlayerBuild>();
@@ -885,13 +891,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * nonce, and once it is known which group that makes, a party of more
    * than one gathers its members' keys and consents.
    */
-  const beginQueueing = (seats: readonly PartySeat[]): void => {
+  const beginQueueing = (seats: readonly PartySeat[], ascentRound: number | null): void => {
     if (matchmaking === undefined) {
       return;
     }
     const nonce = matchmaking.newNonce();
     const current: NonNullable<typeof queueing> = {
       nonce,
+      ascentRound,
       seats,
       endsAt: clockMs() + PARTY_CONSENT_MS,
       groupId: undefined,
@@ -1245,7 +1252,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           return false;
         }
         const queueMode = teamQueueModeOf(mode);
-        if (matchmaking === undefined || queueMode === undefined) {
+        // Heroes' Ascent queues at a round, and no other mode does (#1996).
+        if (
+          matchmaking === undefined ||
+          queueMode === undefined ||
+          (queueMode === "heroes-ascent") !== (command.ascentRound !== null)
+        ) {
           return false;
         }
         // The party is everyone here, on the one side; its seats nobody
@@ -1258,7 +1270,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         for (const other of members.values()) {
           other.team = 0;
         }
-        return beginTeamLobby(true);
+        return beginTeamLobby(true, command.ascentRound);
       }
       case "leave-queue":
       case "house-team":
@@ -1649,7 +1661,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (phase === "queued") {
       if (member.id === local.selfId && command.kind === "leave-queue") {
         leaveQueue();
-      } else if (member.id === local.selfId && command.kind === "house-team") {
+      } else if (
+        member.id === local.selfId &&
+        command.kind === "house-team" &&
+        // Heroes' Ascent waits for a side at its round, never for bots (#1996).
+        mode !== "heroes-ascent"
+      ) {
         playHouseTeam();
       }
       return;
