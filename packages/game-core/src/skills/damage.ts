@@ -12,6 +12,7 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { isAttacking, signetsOnBar } from "./attacking.js";
 import { getSkill } from "./catalog.js";
+import { modWhileHolds } from "./mod-conditions.js";
 import { aggregateModifiers, getStatusDefinition } from "./status.js";
 import { armorReductionOf, effectiveMaxHealth, raisedMaxHealth, rankOf } from "./tick.js";
 import type { Combatant, CreatureLevel } from "./types.js";
@@ -154,6 +155,25 @@ export function effectiveArmor(
   return Math.max(-rulesFloor, armor);
 }
 
+/**
+ * What the held set's mods cut off a physical hit (#2010), beside Rune
+ * of Absorption: each whose condition holds, and one with a chance on its
+ * roll, Luck of the Draw's 20%. Drawn only for a mod with a chance, so no
+ * other fight's stream moves.
+ */
+function modPhysicalReduction(target: Combatant, rng: SimulationRng): number {
+  let cut = 0;
+  for (const mod of target.equipment.physicalReductions) {
+    if (
+      (mod.while === undefined || modWhileHolds(mod.while, target, undefined)) &&
+      (mod.chance === undefined || rng.nextFloat() < mod.chance)
+    ) {
+      cut += mod.amount;
+    }
+  }
+  return cut;
+}
+
 function conditionHolds(
   condition: ArmorCondition,
   target: Combatant,
@@ -193,6 +213,8 @@ function conditionHolds(
       return target.cast.activeCast !== undefined;
     case "signets-at-least":
       return signetsOnBar(target) >= condition.count;
+    case "mod-while":
+      return modWhileHolds(condition.while, target, undefined);
   }
 }
 
@@ -278,6 +300,7 @@ export function mitigate(
   target: Combatant,
   rules: CombatRules,
   location: HitLocation,
+  rng: SimulationRng,
 ): number {
   if (packet.armored + packet.armorIgnoring <= 0) {
     return 0;
@@ -316,7 +339,7 @@ export function mitigate(
   // Knight's (#1142) beside it, and stacking with it, but only on a hit
   // to its own piece.
   if (isPhysicalDamage(packet.type)) {
-    dealt -= target.equipment.flatPhysicalReduction;
+    dealt -= target.equipment.flatPhysicalReduction + modPhysicalReduction(target, rng);
     if (location !== null) {
       dealt -= target.equipment.pieceReduction[location];
     }

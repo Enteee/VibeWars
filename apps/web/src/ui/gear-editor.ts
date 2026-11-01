@@ -10,6 +10,7 @@ import {
   SHIELD_REQUIREMENT_ATTRIBUTES,
   accessibleAttributeIds,
   primaryAttributeIds,
+  MOD_WHILE_TEXT,
   NO_UPGRADES,
   fittingUpgrades,
   allowsOffhand,
@@ -440,6 +441,8 @@ function conditionLabel(condition: ArmorCondition): string {
       return "while activating a skill";
     case "signets-at-least":
       return `with ${String(condition.count)}+ signets on your bar`;
+    case "mod-while":
+      return MOD_WHILE_TEXT[condition.while];
   }
 }
 
