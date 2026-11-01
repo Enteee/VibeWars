@@ -84,8 +84,8 @@ export const ASSASSIN_ICONS = {
   "assassin.swap": { glyph: "blink-ally", modifier: "renew" },
   "assassin.dark-prison": { glyph: "blink", modifier: "down" },
   "assassin.shadow-walk": { glyph: "step-haste", modifier: "clock" },
-  // PvP forms (#1951), a stand-in until its art card.
-  "assassin.shadow-form": { glyph: "crescent", modifier: "self" },
   // Stand-in for the enchantment party moves (#1975).
   "assassin.dark-apostasy": { glyph: "dagger-crit", modifier: "down" },
+  // PvP forms (#1951)
+  "assassin.shadow-form": { glyph: "form-shadow" },
 };

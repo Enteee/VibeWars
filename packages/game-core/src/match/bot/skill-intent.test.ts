@@ -291,6 +291,12 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-energy",
   "ritualist.ritual-lord",
   "ranger.experts-dexterity",
+  // Nature rituals 4 (#1956): an energy toll on everyone who attacks or
+  // uses a skill, damage to whoever runs dry or a worse bleed, both sides
+  // alike, is no rule the bot weighs, as Winnowing.
+  "ranger.famine",
+  "ranger.lacerate",
+  "ranger.quicksand",
 ]);
 
 function skill(id: string) {

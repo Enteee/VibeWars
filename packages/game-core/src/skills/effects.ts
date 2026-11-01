@@ -899,6 +899,9 @@ function interruptCast(
   if (!castInterruptible(target)) {
     return false;
   }
+  if (target.cast.activeCast === undefined || interruptGuarded(target, events)) {
+    return false;
+  }
   const cancelled = target.cast.cancelCast();
   if (cancelled === undefined) {
     return false;
@@ -924,6 +927,35 @@ function castInterruptible(target: Combatant): boolean {
     !aggregateModifiers(target.statuses.active).uninterruptible &&
     target.cast.activeCast?.rule.uninterruptible !== true
   );
+}
+
+/**
+ * Whether a status on `target` stops this interrupt (#1964), one that
+ * already got past `uninterruptible`. Mantra of Concentration's is spent
+ * on it. Mantra of Resolve's costs its Energy, paid at once since that
+ * decides the interrupt; short of it, the stance ends and the interrupt
+ * lands, as in GW1.
+ */
+function interruptGuarded(target: Combatant, events: CombatEvent[]): boolean {
+  for (const { id } of target.statuses.active) {
+    const guard = getStatusDefinition(id).interruptGuard;
+    if (guard?.kind === "once") {
+      for (const statusId of target.statuses.endOnInterruptGuarded()) {
+        events.push({ kind: "status-removed", targetId: target.id, statusId });
+      }
+      return true;
+    }
+    if (guard?.kind === "pay-energy") {
+      if (Math.floor(target.energy) >= guard.amount) {
+        loseEnergy(target, guard.amount, events);
+        return true;
+      }
+      target.statuses.end(id);
+      events.push({ kind: "status-removed", targetId: target.id, statusId: id });
+      return false;
+    }
+  }
+  return false;
 }
 
 /**
@@ -956,6 +988,9 @@ function interruptSwing(
 ): boolean {
   const { attack } = target;
   if (attack === undefined || !swingInterruptible(target)) {
+    return false;
+  }
+  if (interruptGuarded(target, events)) {
     return false;
   }
   attack.swingElapsed = 0;

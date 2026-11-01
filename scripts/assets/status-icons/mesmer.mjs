@@ -9,6 +9,22 @@ export const MESMER_STATUS_ICONS = {
       `<path d="M16.5 10.5A5 5 0 1 0 17 15" ${stroke(c, 2)}/>` +
       `<path d="M14 9.5l3.5-1 .5 3.5z" fill="${c}"/>`,
   ],
+  // Mantras (#1964), stand-ins until their art card.
+  // Stance: a ring unbroken, the next interrupt shrugged off.
+  "mantra-of-concentration": ["stance", (c) => `<circle cx="12" cy="13" r="5" ${stroke(c, 2.2)}/>`],
+  // Stance: a bolt through a bar, Energy paid to stay uninterrupted.
+  "mantra-of-resolve": [
+    "stance",
+    (c) => `<path d="M13 6l-4 7h5l-3 6" ${stroke(c, 2)}/><path d="M6 13h12" ${stroke(c, 1.6)}/>`,
+  ],
+  // Stance: an element's mark under a bar, its damage cut.
+  "mantra-of-earth": ["stance", (c) => `<path d="M7 17l3-7 4 2 3 5z" fill="${c}"/>`],
+  "mantra-of-flame": ["stance", (c) => `<path d="M12 7c3 3 3 6 0 10c-3-4-3-7 0-10z" fill="${c}"/>`],
+  "mantra-of-frost": [
+    "stance",
+    (c) => `<path d="M12 7v10M7.5 9.5l9 5M7.5 14.5l9-5" ${stroke(c, 1.8)}/>`,
+  ],
+  "mantra-of-lightning": ["stance", (c) => `<path d="M13 6l-4 7h5l-3 6" ${stroke(c, 2)}/>`],
   // Hex: an arrow turning back on itself, a spell that hurts its caster (#469).
   backfire: [
     "hex",

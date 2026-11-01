@@ -355,10 +355,17 @@ export const CREATURE_LOOKS = [
 ] as const;
 export type CreatureLook = (typeof CREATURE_LOOKS)[number];
 
-/** A spirit's death burst as it arrived: its rate on its owner's rank (#1603). */
-export type ArrivedDeathBurst = Omit<DeathBurst, "perSecondAlive"> & {
-  readonly perSecondAlive: number;
-};
+/**
+ * A spirit's death burst as it arrived: its rate (#1603), or the time of
+ * the status it gives (#1956), on its owner's rank.
+ */
+export type ArrivedDeathBurst =
+  | (Omit<Extract<DeathBurst, { effect: "damage" | "heal" }>, "perSecondAlive"> & {
+      readonly perSecondAlive: number;
+    })
+  | (Omit<Extract<DeathBurst, { effect: "apply-status" }>, "durationSeconds"> & {
+      readonly durationSeconds: number;
+    });
 
 /** A spirit's answer to a death in its range as it arrived: its damage on its owner's rank (#1886). */
 export type ArrivedDeathInRange =
@@ -775,6 +782,11 @@ interface ParticipantRecord extends Participant {
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
   armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
+  /**
+   * Whether its Energy was at least 1 at the last step's check (#1956):
+   * what makes a drop to 0 Famine's, and a body that stays there not.
+   */
+  hadEnergy: boolean;
 }
 
 /**
@@ -1300,6 +1312,7 @@ export class MatchSimulation {
       pendingWeaponSet: undefined,
       corpseExploited: false,
       armedAttack: undefined,
+      hadEnergy: false,
       interact: undefined,
     };
     this.#participants.set(spec.id, record);
@@ -1464,13 +1477,21 @@ export class MatchSimulation {
           deathBurst:
             template.deathBurst === undefined
               ? undefined
-              : {
-                  ...template.deathBurst,
-                  perSecondAlive: resolveMagnitudeAtRanks(
-                    template.deathBurst.perSecondAlive,
-                    ranks,
-                  ),
-                },
+              : template.deathBurst.effect === "apply-status"
+                ? {
+                    ...template.deathBurst,
+                    durationSeconds: resolveMagnitudeAtRanks(
+                      template.deathBurst.durationSeconds,
+                      ranks,
+                    ),
+                  }
+                : {
+                    ...template.deathBurst,
+                    perSecondAlive: resolveMagnitudeAtRanks(
+                      template.deathBurst.perSecondAlive,
+                      ranks,
+                    ),
+                  },
           onDeathInRange:
             template.onDeathInRange?.kind === "damage-same-type"
               ? {
@@ -1814,11 +1835,22 @@ export class MatchSimulation {
   /**
    * Every living bearer with no energy left answers it (#1583), in
    * participant order, after upkeep has taken its share: Wither's damage.
+   * One whose whole Energy fell from at least 1 at the last check to 0
+   * answers its drop (#1956), Famine's: Energy regenerates continuously,
+   * so a 1-Energy skill paid at 1.03 leaves 0.03, which GW1 shows as 0.
    */
   #fireEnergyEmpty(): void {
     for (const record of this.#participants.values()) {
-      if (!record.combatant.dead && record.combatant.energy <= 0) {
+      const hadEnergy = record.hadEnergy;
+      record.hadEnergy = record.combatant.energy >= 1;
+      if (record.combatant.dead) {
+        continue;
+      }
+      if (record.combatant.energy <= 0) {
         this.#fireTriggers(record, "bearer-energy-empty", NONE_SPARED);
+      }
+      if (hadEnergy && !record.hadEnergy) {
+        this.#fireTriggers(record, "bearer-energy-drops-empty", NONE_SPARED);
       }
     }
   }
@@ -1952,7 +1984,8 @@ export class MatchSimulation {
    * of its `affects` within its radius takes, or is healed, its rate
    * times the whole seconds it lived, capped, from its owner, logged as
    * its skill. A creature a burst kills leaves too, and bursts nothing:
-   * only a spirit has one, and a burst passes spirits by.
+   * only a spirit has one, and a burst passes spirits by. A status burst
+   * (#1956) gives its status instead, to each one under its Health line.
    */
   #burstLeaving(): void {
     for (const id of [...this.#leaving]) {
@@ -1969,25 +2002,33 @@ export class MatchSimulation {
       ) {
         continue;
       }
-      const amount = Math.min(
-        burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
-        burst.max ?? Number.POSITIVE_INFINITY,
-      );
+      const amount =
+        burst.effect === "apply-status"
+          ? burst.durationSeconds
+          : Math.min(
+              burst.perSecondAlive * Math.floor(creature.ageSeconds + SWING_EPSILON),
+              burst.max ?? Number.POSITIVE_INFINITY,
+            );
       if (amount <= 0) {
         continue;
       }
       const effect: SkillEffect =
-        burst.effect === "damage"
-          ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
-          : { kind: "heal", amount: { flat: amount } };
+        burst.effect === "apply-status"
+          ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: amount }
+          : burst.effect === "damage"
+            ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
+            : { kind: "heal", amount: { flat: amount } };
       const events: CombatEvent[] = [];
       for (const other of this.#participants.values()) {
         const ally = other.combatant.team === spirit.combatant.team;
         if (
           other.combatant.dead ||
           other.creature?.kind === "spirit" ||
-          ally !== (burst.affects === "allies") ||
-          distance(other.position, spirit.position) > burst.radius
+          (burst.affects !== "all" && ally !== (burst.affects === "allies")) ||
+          distance(other.position, spirit.position) > burst.radius ||
+          (burst.effect === "apply-status" &&
+            other.combatant.health >=
+              burst.belowHealthFraction * effectiveMaxHealth(other.combatant))
         ) {
           continue;
         }
