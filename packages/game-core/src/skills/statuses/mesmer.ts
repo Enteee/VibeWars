@@ -43,7 +43,10 @@ export type MesmerStatusId =
   | "channeling"
   // Caster staples (#1870).
   | "ethereal-burden"
-  | "sum-of-all-fears";
+  | "sum-of-all-fears"
+  // Caster staples 2 (#1872).
+  | "elemental-resistance"
+  | "physical-resistance";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -608,5 +611,22 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     moveSpeedMultiplier: 0.67,
     attackDurationMultiplier: 1.33,
     castTimeMultiplier: 1.33,
+  }),
+  // "For 30...90 seconds, You gain +40 armor against elemental damage, but
+  // you lose 24...12 armor against physical damage" (#1872): 14 at rank 12.
+  "elemental-resistance": define("elemental-resistance", "Elemental Resistance", "stance", {
+    profession: "mesmer",
+    conditionalArmor: [
+      { amount: 40, conditions: [{ kind: "vs-elemental" }] },
+      { amount: -14, conditions: [{ kind: "vs-physical" }] },
+    ],
+  }),
+  // Its mirror (#1872): +40 against physical, -14 against elemental.
+  "physical-resistance": define("physical-resistance", "Physical Resistance", "stance", {
+    profession: "mesmer",
+    conditionalArmor: [
+      { amount: 40, conditions: [{ kind: "vs-physical" }] },
+      { amount: -14, conditions: [{ kind: "vs-elemental" }] },
+    ],
   }),
 };

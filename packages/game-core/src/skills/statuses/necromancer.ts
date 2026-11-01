@@ -48,7 +48,9 @@ export type NecromancerStatusId =
   | "icy-veins"
   // Caster staples (#1870).
   | "blood-renewal"
-  | "meekness";
+  | "meekness"
+  // Caster staples 2 (#1872).
+  | "vocal-minority";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -439,5 +441,10 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   meekness: define("meekness", "Meekness", "hex", {
     profession: "necromancer",
     attackDurationMultiplier: 1.5,
+  }),
+  // "Target foe and all nearby foes cannot use shouts or chants" (#1872).
+  "vocal-minority": define("vocal-minority", "Vocal Minority", "hex", {
+    profession: "necromancer",
+    preventsShoutsAndChants: true,
   }),
 };

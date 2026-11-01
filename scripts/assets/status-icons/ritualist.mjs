@@ -276,4 +276,12 @@ export const RITUALIST_STATUS_ICONS = {
     "item",
     (c) => `<path d="M12 7c-2 3-3 4.5-3 6a3 3 0 0 0 6 0c0-1.5-1-3-3-6z" ${stroke(c, 1.6)}/>`,
   ],
+  // Caster staples 2 (#1872), stand-ins until their art card.
+  // Weapon spell: a heart on a blade, more maximum Health.
+  "vital-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M12 2v14M8 16h8M12 16v5" ${stroke(c, 2)}/>` +
+      `<path d="M12 12l-3-3a2 2 0 0 1 3-2 2 2 0 0 1 3 2z" fill="${c}"/>`,
+  ],
 };

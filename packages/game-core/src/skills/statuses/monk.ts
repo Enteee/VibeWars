@@ -37,7 +37,9 @@ export type MonkStatusId =
   | "judges-intervention"
   | "dwaynas-sorrow"
   // Caster staples (#1870).
-  | "aura-of-stability";
+  | "aura-of-stability"
+  // Caster staples 2 (#1872).
+  | "vital-blessing";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -407,5 +409,11 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   "aura-of-stability": define("aura-of-stability", "Aura of Stability", "enchantment", {
     profession: "monk",
     preventsKnockdown: true,
+  }),
+  // "While you maintain this enchantment, target ally has +40...200 maximum
+  // Health" (#1872): 168 at rank 12.
+  "vital-blessing": define("vital-blessing", "Vital Blessing", "enchantment", {
+    profession: "monk",
+    maxHealthBonus: 168,
   }),
 };

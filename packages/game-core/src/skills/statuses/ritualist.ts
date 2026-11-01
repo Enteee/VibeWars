@@ -58,7 +58,9 @@ export type RitualistStatusId =
   | "spiritleech-aura"
   // The PvP Communing pair (#1827).
   | "armor-of-unfeeling"
-  | "signet-of-ghostly-might";
+  | "signet-of-ghostly-might"
+  // Caster staples 2 (#1872).
+  | "vital-weapon";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -685,4 +687,10 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       destroysBearerOnExpiry: true,
     },
   ),
+  // "Target ally has a Vital Weapon and has +40...175 maximum Health"
+  // (#1872): 148 at rank 12.
+  "vital-weapon": define("vital-weapon", "Vital Weapon", "weapon-spell", {
+    profession: "ritualist",
+    maxHealthBonus: 148,
+  }),
 };

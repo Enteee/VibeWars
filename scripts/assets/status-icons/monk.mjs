@@ -230,4 +230,12 @@ export const MONK_STATUS_ICONS = {
       `<circle cx="12" cy="6" r="2.2" fill="${c}"/>` +
       `<path d="M12 9v7M5 20h14M8 20l4-4 4 4" ${stroke(c, 2.2)}/>`,
   ],
+  // Caster staples 2 (#1872), stand-ins until their art card.
+  // Enchantment: a heart with a plus over it, more maximum Health.
+  "vital-blessing": [
+    "enchantment",
+    (c) =>
+      `<path d="M12 20l-7-7a4 4 0 0 1 7-5 4 4 0 0 1 7 5z" fill="${c}"/>` +
+      `<path d="M12 2v5M9.5 4.5h5" ${stroke(c, 2)}/>`,
+  ],
 };

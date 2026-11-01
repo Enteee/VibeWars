@@ -19,6 +19,13 @@ const NO_BOT_USE = new Set([
   // Aura of Stability (#1870): knockdown kept off an ally is no defence
   // the bot weighs, as Balanced Stance on itself.
   "monk.aura-of-stability",
+  // Elemental and Physical Resistance, Vital Blessing and Vital Weapon
+  // (#1872): armor against one kind of damage and more maximum Health are
+  // no defence the bot weighs, as Avatar of Melandru's.
+  "mesmer.elemental-resistance",
+  "mesmer.physical-resistance",
+  "monk.vital-blessing",
+  "ritualist.vital-weapon",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",

@@ -2873,4 +2873,41 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "apply-status", statusId: "meekness", durationSeconds: 25 },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples 2 (#1872), at their rank-12 values                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.vocal-minority",
+    name: "Vocal Minority",
+    gwId: 883,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all nearby foes": the target, then every foe near it.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds": 17 s.
+    effects: [{ kind: "apply-status", statusId: "vocal-minority", durationSeconds: 17 }],
+  },
 ];

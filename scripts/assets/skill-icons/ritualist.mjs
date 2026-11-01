@@ -75,4 +75,6 @@ export const RITUALIST_ICONS = {
   // The PvP Communing pair (#1827, #1874).
   "ritualist.armor-of-unfeeling": { glyph: "plate-post" },
   "ritualist.signet-of-ghostly-might": { glyph: "fist-fade" },
+  // Caster staples 2 (#1872), stand-ins until their art card.
+  "ritualist.vital-weapon": { glyph: "heart-bar", modifier: "plus" },
 };

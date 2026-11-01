@@ -96,4 +96,6 @@ export const MONK_ICONS = {
   // Caster staples (#1870), stand-ins until their art card.
   "monk.aura-of-stability": { glyph: "mountain", modifier: "up" },
   "monk.healing-ring": { glyph: "plus-ripple", modifier: "less" },
+  // Caster staples 2 (#1872), stand-ins until their art card.
+  "monk.vital-blessing": { glyph: "heart-plus", modifier: "upkeep" },
 };
