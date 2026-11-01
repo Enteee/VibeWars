@@ -209,8 +209,10 @@ body {
     flex: 0 0 auto;
   }
 
+  /* An editor's own ⋯ stays out with Save: its menu cannot open
+     from inside this one (#1902). */
   #topbar.has-more .topbar-actions,
-  #topbar.has-more .topbar-screen-actions > :not(.primary) {
+  #topbar.has-more .topbar-screen-actions > :not(.primary, .editor-more-wrap) {
     display: none;
   }
 

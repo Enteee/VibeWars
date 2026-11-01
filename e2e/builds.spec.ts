@@ -377,6 +377,27 @@ async function teamList(page: Page): Promise<string[]> {
   );
 }
 
+test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens (#1902)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 700 });
+  await page.goto("./");
+  const bar = page.locator("#topbar");
+  await openRail(page, "Team Builder");
+  await page.getByRole("button", { name: "New team build", exact: true }).click();
+  await bar.getByRole("button", { name: "more actions" }).click();
+  await expect(bar.getByRole("button", { name: "Share", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await expect(bar.getByRole("button", { name: "Save", exact: true })).toBeVisible();
+  await bar.getByRole("button", { name: "more actions" }).click();
+  await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
+  await bar.getByRole("button", { name: "Share", exact: true }).click();
+  await expect(bar.locator(".editor-share")).toBeVisible();
+});
+
 test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
   page,
 }) => {
