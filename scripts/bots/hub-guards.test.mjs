@@ -56,6 +56,16 @@ describe("judgingRuns", () => {
     });
   });
 
+  it("an optional workflow with no run is satisfied; one that ran is still judged (#1884)", () => {
+    /** @param {Record<string, unknown>[]} runs */
+    const optional = (runs) =>
+      judgingRuns(runs, { sha: HEAD, repo: REPO, file: "ci.yml", optional: true });
+    expect(optional([])).toEqual({ ok: true, ids: [] });
+    expect(optional([run()])).toEqual({ ok: true, ids: [10] });
+    expect(optional([run({ status: "in_progress" })]).ok).toBe(false);
+    expect(optional([run({ conclusion: "failure" })]).ok).toBe(false);
+  });
+
   it("ignores a push run, another path, another sha and another repository", () => {
     for (const over of [
       { event: "push" },

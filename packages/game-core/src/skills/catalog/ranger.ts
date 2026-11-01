@@ -4956,4 +4956,33 @@ export const RANGER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "ranger.glass-arrows",
+    name: "Glass Arrows",
+    gwId: 1199,
+    type: "preparation",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.expertise",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The PvP split (3145): "For 10...35 seconds, your arrows strike for
+    // +6...18 damage if they hit and cause Bleeding for 10...20 seconds
+    // if they are Blocked" (#1974): 30 s, its rank-12 value. The damage and
+    // the Bleeding are the status's.
+    effects: [{ kind: "apply-status", statusId: "glass-arrows", durationSeconds: 30 }],
+  },
 ];
