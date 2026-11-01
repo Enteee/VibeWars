@@ -100,4 +100,8 @@ export const MONK_ICONS = {
   "monk.healing-ring": { glyph: "ring-healers" },
   // Caster staples 2 (#1872).
   "monk.vital-blessing": { glyph: "ring-heart" },
+  // Stand-ins for the party-wide condition and hex moves (#1954).
+  "monk.martyr": { glyph: "draw-drops", modifier: "area" },
+  "monk.empathic-removal": { glyph: "cleanse", modifier: "half" },
+  "monk.divert-hexes": { glyph: "hex-cut", modifier: "up" },
 };
