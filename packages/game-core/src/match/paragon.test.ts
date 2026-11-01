@@ -333,10 +333,10 @@ describe('"Stand Your Ground!" (#921)', () => {
     bearer.statuses.apply("stand-your-ground", 17, "p", NO_RANKS);
     const blow = skillDamage(100, "piercing", 0);
     const still = effectiveArmor(bearer, blow, "chest");
-    const stillDamage = mitigate(blow, bearer, RULES.combat, "chest");
+    const stillDamage = mitigate(blow, bearer, RULES.combat, "chest", createRng(1));
     bearer.moving = true;
     expect(still - effectiveArmor(bearer, blow, "chest")).toBe(24);
-    expect(stillDamage).toBeLessThan(mitigate(blow, bearer, RULES.combat, "chest"));
+    expect(stillDamage).toBeLessThan(mitigate(blow, bearer, RULES.combat, "chest", createRng(1)));
   });
 
   it("starts and stops a tick after its bearer does", () => {

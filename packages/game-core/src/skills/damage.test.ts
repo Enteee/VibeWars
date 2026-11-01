@@ -84,16 +84,19 @@ describe("the armor curve", () => {
 
   it("makes a warrior measurably tougher than a caster against the same hit", () => {
     const packet = skillDamage(100, "chaos", 0);
-    expect(mitigate(packet, defender(60), RULES, "chest")).toBe(100);
-    expect(mitigate(packet, defender(70), RULES, "chest")).toBe(84);
-    expect(mitigate(packet, defender(80), RULES, "chest")).toBe(71);
+    expect(mitigate(packet, defender(60), RULES, "chest", createRng(1))).toBe(100);
+    expect(mitigate(packet, defender(70), RULES, "chest", createRng(1))).toBe(84);
+    expect(mitigate(packet, defender(80), RULES, "chest", createRng(1))).toBe(71);
   });
 });
 
 describe("what armor does and does not stop", () => {
   it("applies to physical, elemental, chaos and dark skill damage", () => {
     for (const type of ["slashing", "fire", "chaos", "dark"] as const) {
-      expect(mitigate(skillDamage(100, type, 0), defender(80), RULES, "chest"), type).toBe(71);
+      expect(
+        mitigate(skillDamage(100, type, 0), defender(80), RULES, "chest", createRng(1)),
+        type,
+      ).toBe(71);
     }
   });
 
@@ -102,7 +105,7 @@ describe("what armor does and does not stop", () => {
       expect(skillDamage(20, type, 0)).toMatchObject({ armored: 0, armorIgnoring: 20 });
       for (const armor of [0, 60, 100, -50]) {
         expect(
-          mitigate(skillDamage(20, type, 0), defender(armor), RULES, "chest"),
+          mitigate(skillDamage(20, type, 0), defender(armor), RULES, "chest", createRng(1)),
           `${type} at ${String(armor)}`,
         ).toBe(20);
       }
@@ -111,10 +114,10 @@ describe("what armor does and does not stop", () => {
 
   it("adds the armor-ignoring part after the curve, which still bends the armored part", () => {
     const packet: DamagePacket = { ...physical(40), armorIgnoring: 20 };
-    expect(mitigate(physical(40), defender(100), RULES, "chest")).toBe(20);
-    expect(mitigate(packet, defender(100), RULES, "chest")).toBe(40);
+    expect(mitigate(physical(40), defender(100), RULES, "chest", createRng(1))).toBe(20);
+    expect(mitigate(packet, defender(100), RULES, "chest", createRng(1))).toBe(40);
     // The −100 floor amplifies only the armored part: 40 × 2^(160/40) + 20.
-    expect(mitigate(packet, defender(-300), RULES, "chest")).toBe(40 * 16 + 20);
+    expect(mitigate(packet, defender(-300), RULES, "chest", createRng(1))).toBe(40 * 16 + 20);
   });
 
   it("never applies to degeneration or life steal", () => {
@@ -122,13 +125,21 @@ describe("what armor does and does not stop", () => {
     // heavily-armored target rather than a smaller version of the same
     // one.
     const target = defender(100);
-    expect(mitigate(unmitigatedDamage(50, "degeneration"), target, RULES, null)).toBe(50);
-    expect(mitigate(unmitigatedDamage(50, "life-steal"), target, RULES, null)).toBe(50);
+    expect(mitigate(unmitigatedDamage(50, "degeneration"), target, RULES, null, createRng(1))).toBe(
+      50,
+    );
+    expect(mitigate(unmitigatedDamage(50, "life-steal"), target, RULES, null, createRng(1))).toBe(
+      50,
+    );
   });
 
   it("returns nothing for a zero or negative packet", () => {
-    expect(mitigate(skillDamage(0, "chaos", 0), defender(60), RULES, "chest")).toBe(0);
-    expect(mitigate(skillDamage(-10, "typeless", 0), defender(60), RULES, "chest")).toBe(0);
+    expect(mitigate(skillDamage(0, "chaos", 0), defender(60), RULES, "chest", createRng(1))).toBe(
+      0,
+    );
+    expect(
+      mitigate(skillDamage(-10, "typeless", 0), defender(60), RULES, "chest", createRng(1)),
+    ).toBe(0);
   });
 });
 
@@ -142,18 +153,18 @@ describe("status modifiers reaching the armor calculation", () => {
     const healthy = defender(100);
     const packet = skillDamage(100, "chaos", 0);
 
-    expect(mitigate(packet, exposed, RULES, "chest")).toBeGreaterThan(
-      mitigate(packet, healthy, RULES, "chest"),
+    expect(mitigate(packet, exposed, RULES, "chest", createRng(1))).toBeGreaterThan(
+      mitigate(packet, healthy, RULES, "chest", createRng(1)),
     );
     // 100 - 40 = 60, the reference level: exactly unmitigated.
-    expect(mitigate(packet, exposed, RULES, "chest")).toBe(100);
+    expect(mitigate(packet, exposed, RULES, "chest", createRng(1))).toBe(100);
   });
 
   it("lets Armor of Earth's enchantment actually protect its bearer", () => {
     const warded = defender(60);
     warded.statuses.apply("armor-boost", 30, "self", NO_RANKS);
     // 60 + 24 = 84.
-    expect(mitigate(skillDamage(100, "chaos", 0), warded, RULES, "chest")).toBe(66);
+    expect(mitigate(skillDamage(100, "chaos", 0), warded, RULES, "chest", createRng(1))).toBe(66);
   });
 
   it("stacks a buff and a debuff additively, as aggregateModifiers does", () => {
@@ -168,15 +179,15 @@ describe("status modifiers reaching the armor calculation", () => {
 describe("damage taken multipliers (#919)", () => {
   it("takes 160% of a packet against Frenzy and halves it against Dark Escape", () => {
     const packet = skillDamage(100, "chaos", 0);
-    const plain = mitigate(packet, defender(60), RULES, "chest");
+    const plain = mitigate(packet, defender(60), RULES, "chest", createRng(1));
     const frenzied = defender(60);
     frenzied.statuses.apply("frenzy", 8, "self", STRENGTH_12);
     const escaping = defender(60);
     escaping.statuses.apply("dark-escape", 13, "self", NO_RANKS);
 
     expect(plain).toBe(100);
-    expect(mitigate(packet, frenzied, RULES, "chest")).toBe(160);
-    expect(mitigate(packet, escaping, RULES, "chest")).toBe(50);
+    expect(mitigate(packet, frenzied, RULES, "chest", createRng(1))).toBe(160);
+    expect(mitigate(packet, escaping, RULES, "chest", createRng(1))).toBe(50);
   });
 
   it("multiplies the multipliers of statuses that are up together", () => {
@@ -194,8 +205,8 @@ describe("damage taken multipliers (#919)", () => {
     escaping.statuses.apply("dark-escape", 13, "self", NO_RANKS);
     // (40 + 15) × 0.5 = 27.5: rounded once, at the end.
     const packet: DamagePacket = { ...physical(40), armorIgnoring: 15 };
-    expect(mitigate(packet, escaping, RULES, "chest")).toBe(28);
-    expect(mitigate(skillDamage(25, "typeless", 0), escaping, RULES, null)).toBe(13);
+    expect(mitigate(packet, escaping, RULES, "chest", createRng(1))).toBe(28);
+    expect(mitigate(skillDamage(25, "typeless", 0), escaping, RULES, null, createRng(1))).toBe(13);
   });
 
   it("applies before a Rune of Absorption's flat reduction", () => {
@@ -226,10 +237,12 @@ describe("damage taken multipliers (#919)", () => {
       RULES,
     );
     const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
-    const before = mitigate(physical(100), runed, RULES, "chest");
+    const before = mitigate(physical(100), runed, RULES, "chest", createRng(1));
     runed.statuses.apply("frenzy", 8, "self", STRENGTH_12);
     // (x + 3) × 1.6 − 3, not (x − 3) × 1.6.
-    expect(mitigate(physical(100), runed, RULES, "chest")).toBe(Math.round((before + 3) * 1.6) - 3);
+    expect(mitigate(physical(100), runed, RULES, "chest", createRng(1))).toBe(
+      Math.round((before + 3) * 1.6) - 3,
+    );
   });
 });
 
@@ -247,21 +260,21 @@ describe("damage reduction (#1108)", () => {
       skillDamage(40, "holy", 0),
       skillDamage(40, "typeless", 0),
     ]) {
-      expect(mitigate(packet, protectedDefender(), RULES, "chest")).toBe(
-        mitigate(packet, defender(60), RULES, "chest") - 17,
+      expect(mitigate(packet, protectedDefender(), RULES, "chest", createRng(1))).toBe(
+        mitigate(packet, defender(60), RULES, "chest", createRng(1)) - 17,
       );
     }
   });
 
   it("never takes a packet below 0", () => {
-    expect(mitigate(physical(10), protectedDefender(), RULES, "chest")).toBe(0);
+    expect(mitigate(physical(10), protectedDefender(), RULES, "chest", createRng(1))).toBe(0);
   });
 
   it("comes after the damage taken multiplier", () => {
     const target = protectedDefender();
     target.statuses.apply("frenzy", 8, "self", STRENGTH_12);
     // 40 × 1.6 − 17, not (40 − 17) × 1.6.
-    expect(mitigate(skillDamage(40, "chaos", 0), target, RULES, "chest")).toBe(47);
+    expect(mitigate(skillDamage(40, "chaos", 0), target, RULES, "chest", createRng(1))).toBe(47);
   });
 });
 
@@ -279,8 +292,8 @@ describe("armor penetration", () => {
     // absolute gain moves the other way (a soft target lets more damage
     // through to begin with), which is why this asserts the ratio.
     const ratio = (armor: number): number =>
-      mitigate(physical(100, 0.1), defender(armor), RULES, "chest") /
-      mitigate(physical(100, 0), defender(armor), RULES, "chest");
+      mitigate(physical(100, 0.1), defender(armor), RULES, "chest", createRng(1)) /
+      mitigate(physical(100, 0), defender(armor), RULES, "chest", createRng(1));
     expect(ratio(100)).toBeGreaterThan(ratio(60));
   });
 
@@ -289,7 +302,7 @@ describe("armor penetration", () => {
     // A Ranger's 70 + 30 vs elemental, a Warrior's 80 vs lightning.
     expect(effectiveArmor(primary("ranger"), orb, "chest")).toBe(75);
     expect(effectiveArmor(primary("warrior"), orb, "chest")).toBe(60);
-    expect(mitigate(orb, primary("ranger"), RULES, "chest")).toBe(63);
+    expect(mitigate(orb, primary("ranger"), RULES, "chest", createRng(1))).toBe(63);
   });
 });
 
@@ -511,18 +524,18 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
   it("cuts 3 off a physical hit to Knight's piece, after armor, and stacks with Absorption", () => {
     // 100 armor vs physical halves a hit: 40 is 20 before the cut.
     const knight = wearing("warrior", "knights");
-    expect(mitigate(physical(40), knight, RULES, "chest")).toBe(17);
-    expect(mitigate(physical(40), knight, RULES, "legs")).toBe(20);
-    expect(mitigate(physical(40), knight, RULES, null)).toBe(20);
-    expect(mitigate(skillDamage(40, "fire", 0), knight, RULES, "chest")).toBe(
-      mitigate(skillDamage(40, "fire", 0), knight, RULES, "legs"),
+    expect(mitigate(physical(40), knight, RULES, "chest", createRng(1))).toBe(17);
+    expect(mitigate(physical(40), knight, RULES, "legs", createRng(1))).toBe(20);
+    expect(mitigate(physical(40), knight, RULES, null, createRng(1))).toBe(20);
+    expect(mitigate(skillDamage(40, "fire", 0), knight, RULES, "chest", createRng(1))).toBe(
+      mitigate(skillDamage(40, "fire", 0), knight, RULES, "legs", createRng(1)),
     );
     const absorbing = wearing("warrior", "knights", {
       chestRune: { kind: "universal", runeId: "absorption", tier: "superior" },
     });
-    expect(mitigate(physical(40), absorbing, RULES, "chest")).toBe(14);
+    expect(mitigate(physical(40), absorbing, RULES, "chest", createRng(1))).toBe(14);
     // Never a heal.
-    expect(mitigate(physical(2), knight, RULES, "chest")).toBe(0);
+    expect(mitigate(physical(2), knight, RULES, "chest", createRng(1))).toBe(0);
   });
 
   it("grants another primary's insignia nothing", () => {
@@ -739,8 +752,8 @@ describe("Mysticism's armor while enchanted (#874)", () => {
     // Armor of Earth's own +24, then Mysticism's +12.
     target.statuses.apply("armor-boost", 30, "someone-else", NO_RANKS);
     expect(effectiveArmor(target, physical(10), "chest")).toBe(116);
-    expect(mitigate(physical(100), target, RULES, "chest")).toBeLessThan(
-      mitigate(physical(100), dervish(12), RULES, "chest"),
+    expect(mitigate(physical(100), target, RULES, "chest", createRng(1))).toBeLessThan(
+      mitigate(physical(100), dervish(12), RULES, "chest", createRng(1)),
     );
   });
 
@@ -802,7 +815,9 @@ describe("a profession's typed armor (#759)", () => {
   });
 
   it("halves a Fireball on a Ranger: 91 lands for 46", () => {
-    expect(mitigate(skillDamage(91, "fire", 0), primary("ranger"), RULES, "chest")).toBe(46);
+    expect(
+      mitigate(skillDamage(91, "fire", 0), primary("ranger"), RULES, "chest", createRng(1)),
+    ).toBe(46);
   });
 });
 
@@ -858,9 +873,12 @@ describe("Cracked Armor (#763)", () => {
 
   it("makes a sword hit a cracked Warrior about 41% harder", () => {
     const warrior = primary("warrior");
-    const healthy = mitigate(physical(100), warrior, RULES, "chest");
+    const healthy = mitigate(physical(100), warrior, RULES, "chest", createRng(1));
     warrior.statuses.apply("cracked-armor", 17, "attacker", NO_RANKS);
-    expect(mitigate(physical(100), warrior, RULES, "chest") / healthy).toBeCloseTo(1.41, 1);
+    expect(mitigate(physical(100), warrior, RULES, "chest", createRng(1)) / healthy).toBeCloseTo(
+      1.41,
+      1,
+    );
   });
 });
 
@@ -896,20 +914,20 @@ describe("Rune of Absorption", () => {
     // A Warrior's 80, +20 vs physical.
     const plain = defender(100);
     const runed = absorbing("superior");
-    const before = mitigate(physical(100), plain, RULES, "chest");
-    expect(mitigate(physical(100), runed, RULES, "chest")).toBe(before - 3);
+    const before = mitigate(physical(100), plain, RULES, "chest", createRng(1));
+    expect(mitigate(physical(100), runed, RULES, "chest", createRng(1))).toBe(before - 3);
   });
 
   it("subtracts from the whole of a physical hit, its armor-ignoring part included", () => {
     const packet: DamagePacket = { ...physical(40), armorIgnoring: 16 };
     // 40 at 100 armor is 20, plus 16, minus 3.
-    expect(mitigate(packet, absorbing("superior"), RULES, "chest")).toBe(33);
+    expect(mitigate(packet, absorbing("superior"), RULES, "chest", createRng(1))).toBe(33);
   });
 
   it("does nothing against non-physical damage", () => {
-    expect(mitigate(skillDamage(100, "chaos", 0), absorbing("superior"), RULES, "chest")).toBe(
-      mitigate(skillDamage(100, "chaos", 0), defender(80), RULES, "chest"),
-    );
+    expect(
+      mitigate(skillDamage(100, "chaos", 0), absorbing("superior"), RULES, "chest", createRng(1)),
+    ).toBe(mitigate(skillDamage(100, "chaos", 0), defender(80), RULES, "chest", createRng(1)));
   });
 
   it("is worth proportionally more against many small hits than one big one", () => {
@@ -918,14 +936,14 @@ describe("Rune of Absorption", () => {
     const runed = absorbing("superior");
     const plain = defender(100);
     const lossFraction = (amount: number): number => {
-      const base = mitigate(physical(amount), plain, RULES, "chest");
-      return (base - mitigate(physical(amount), runed, RULES, "chest")) / base;
+      const base = mitigate(physical(amount), plain, RULES, "chest", createRng(1));
+      return (base - mitigate(physical(amount), runed, RULES, "chest", createRng(1))) / base;
     };
     expect(lossFraction(10)).toBeGreaterThan(lossFraction(100));
   });
 
   it("never drives a hit below zero", () => {
-    expect(mitigate(physical(1), absorbing("superior"), RULES, "chest")).toBe(0);
+    expect(mitigate(physical(1), absorbing("superior"), RULES, "chest", createRng(1))).toBe(0);
   });
 });
 

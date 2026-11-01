@@ -75,3 +75,32 @@ counts. The martial prefixes that act on a hit:
 "On a hit" means a landed hit of an attack or an attack skill: a blocked
 or missed one does nothing. A longer condition is one your attack skill
 causes.
+
+The mods that wait on your state count only while it holds. "Above" or
+"below half Health" is strictly so: at exactly half, neither counts. When a
+raised maximum ends, Health or Energy above the new maximum is lost.
+
+| Mod                                                | Slot, fits                   | What it does                                           |
+| -------------------------------------------------- | ---------------------------- | ------------------------------------------------------ |
+| "Strength and Honor"                               | inscription, martial         | +15% weapon damage above half Health                   |
+| "Guided by Fate", "Dance with Death"               | inscription, martial         | +15% weapon damage while enchanted, in a stance        |
+| "Too Much Information"                             | inscription, martial         | +15% weapon damage against a hexed foe                 |
+| "Vengeance is Mine"                                | inscription, martial         | +20% weapon damage below half Health                   |
+| "Don't Fear the Reaper"                            | inscription, martial         | +20% weapon damage while hexed                         |
+| "To the Pain!"                                     | inscription, martial         | +15% weapon damage; -10 armor while attacking          |
+| "Brawn over Brains"                                | inscription, martial         | +15% weapon damage; -5 Energy                          |
+| "Hale and Hearty", "Have Faith"                    | inscription, any weapon      | +5 Energy above half Health, while enchanted           |
+| "Don't call it a comeback!", "I am Sorrow."        | inscription, any weapon      | +7 Energy below half Health, while hexed               |
+| of Devotion, of Endurance                          | suffix, staff, shield, focus | +45 Health while enchanted, in a stance                |
+| of Valor                                           | suffix, staff, shield, focus | +60 Health while hexed                                 |
+| "Luck of the Draw"                                 | inscription, shield or focus | 20% chance a physical hit deals 5 less                 |
+| "Sheltered by Faith", "Run For Your Life!"         | inscription, shield or focus | physical hits deal 2 less while enchanted, in a stance |
+| "Nothing to Fear"                                  | inscription, shield or focus | physical hits deal 3 less while hexed                  |
+| "Hail to the King", "Faith is My Shield"           | inscription, focus           | +5 armor above half Health, while enchanted            |
+| "Might makes Right", "Knowing is Half the Battle." | inscription, focus           | +5 armor while attacking, while casting a spell        |
+| "Man for All Seasons", "Survival of the Fittest"   | inscription, focus           | +5 armor against elemental, physical damage            |
+| "Ignorance is Bliss", "Life is Pain"               | inscription, focus           | +5 armor; -5 Energy, -20 Health                        |
+| "Down But Not Out", "Be Just and Fear Not"         | inscription, focus           | +10 armor below half Health, while hexed               |
+
+Weapon damage is the weapon's own roll: an attack skill's bonus damage is
+not raised.

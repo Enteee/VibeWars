@@ -170,11 +170,13 @@ describe("Shelter (#1265)", () => {
     const ally = get(sim, "ally").combatant;
     const cap = Math.floor(0.1 * ally.maxHealth);
 
-    expect(mitigate(packet(200, "weapon"), ally, RULES.combat, null)).toBe(cap);
+    expect(mitigate(packet(200, "weapon"), ally, RULES.combat, null, createRng(1))).toBe(cap);
     expect(paid(stepFor(sim, DT), shelter.id, "shelter")).toEqual([51]);
 
-    expect(mitigate(packet(cap - 10, "weapon"), ally, RULES.combat, null)).toBe(cap - 10);
-    expect(mitigate(packet(200, "skill"), ally, RULES.combat, null)).toBe(200);
+    expect(mitigate(packet(cap - 10, "weapon"), ally, RULES.combat, null, createRng(1))).toBe(
+      cap - 10,
+    );
+    expect(mitigate(packet(200, "skill"), ally, RULES.combat, null, createRng(1))).toBe(200);
     expect(paid(stepFor(sim, DT), shelter.id, "shelter")).toEqual([]);
     expect(shelter.combatant.health).toBe(190 - 51);
   });
@@ -186,8 +188,8 @@ describe("Union (#1265)", () => {
     const union = ritual(sim, UNION);
     const ally = get(sim, "ally").combatant;
 
-    expect(mitigate(packet(40, "skill"), ally, RULES.combat, null)).toBe(25);
-    expect(mitigate(packet(10, "weapon"), ally, RULES.combat, null)).toBe(0);
+    expect(mitigate(packet(40, "skill"), ally, RULES.combat, null, createRng(1))).toBe(25);
+    expect(mitigate(packet(10, "weapon"), ally, RULES.combat, null, createRng(1))).toBe(0);
     const before = ally.health;
     const events = applyEffects([{ kind: "life-steal", amount: { flat: 30 } }], {
       surroundings: new Map(),

@@ -26,7 +26,7 @@ import {
   type Insignia,
 } from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
-import { wornMods, type ModEffect, type WeaponMod } from "./mods.js";
+import { wornMods, type ModEffect, type ModWhile, type WeaponMod } from "./mods.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
   ATTRIBUTE_RUNE_TIERS,
@@ -85,7 +85,12 @@ export interface WeaponHitMods {
   readonly doubleAdrenalineChance: number;
   /** Multiplier on a condition the weapon's attacks cause: Barbed's 1.33 on Bleeding. */
   readonly inflictedDurationScale: ReadonlyMap<StatusId, number>;
+  /** More from the weapon's roll, each while its condition holds (#2010): Strength and Honor's. */
+  readonly attackDamage: readonly ModOf<"attack-damage">[];
 }
+
+/** One kind of mod effect, as the resolved set carries it. */
+export type ModOf<K extends ModEffect["kind"]> = Extract<ModEffect, { readonly kind: K }>;
 
 export const NO_HIT_MODS: WeaponHitMods = Object.freeze({
   lifeSteal: 0,
@@ -94,6 +99,7 @@ export const NO_HIT_MODS: WeaponHitMods = Object.freeze({
   sunderPenetration: 0,
   doubleAdrenalineChance: 0,
   inflictedDurationScale: new Map(),
+  attackDamage: [],
 });
 
 export interface ResolvedEquipment {
@@ -112,6 +118,12 @@ export interface ResolvedEquipment {
   readonly pieceReduction: PieceReduction;
   /** Rune of Absorption: subtracted from each physical hit, after mitigation. */
   readonly flatPhysicalReduction: number;
+  /** The held set's cuts off a physical hit, by condition or chance (#2010): Luck of the Draw's. */
+  readonly physicalReductions: readonly ModOf<"physical-reduction">[];
+  /** The held set's maximum Health while its condition holds (#2010): of Devotion's. */
+  readonly conditionalMaxHealth: readonly ModOf<"conditional-max-health">[];
+  /** The held set's maximum Energy while its condition holds (#2010): Hale and Hearty's. */
+  readonly conditionalMaxEnergy: readonly ModOf<"conditional-max-energy">[];
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
   /**
@@ -458,6 +470,9 @@ function resolveWeaponSet(
   let statusDurationScale = shared.statusDurationScale;
   let mainHand = resolvedWeapon;
   let hitMods = NO_HIT_MODS;
+  const physicalReductions: ModOf<"physical-reduction">[] = [];
+  const conditionalMaxHealth: ModOf<"conditional-max-health">[] = [];
+  const conditionalMaxEnergy: ModOf<"conditional-max-energy">[] = [];
   for (const effect of mods.flatMap((mod) => mod.effects)) {
     switch (effect.kind) {
       case "max-health":
@@ -513,6 +528,21 @@ function resolveWeaponSet(
       case "damage-type":
         mainHand = { ...mainHand, damageType: effect.type };
         break;
+      case "attack-damage":
+        hitMods = { ...hitMods, attackDamage: [...hitMods.attackDamage, effect] };
+        break;
+      case "conditional-armor":
+        conditionalArmor = [...conditionalArmor, whileArmor(effect.amount, effect.while)];
+        break;
+      case "conditional-max-health":
+        conditionalMaxHealth.push(effect);
+        break;
+      case "conditional-max-energy":
+        conditionalMaxEnergy.push(effect);
+        break;
+      case "physical-reduction":
+        physicalReductions.push(effect);
+        break;
     }
   }
 
@@ -526,6 +556,9 @@ function resolveWeaponSet(
       pieceArmor: shared.pieceArmor,
       pieceReduction: shared.pieceReduction,
       flatPhysicalReduction: shared.flatPhysicalReduction,
+      physicalReductions,
+      conditionalMaxHealth,
+      conditionalMaxEnergy,
       statusDurationScale,
       attributeBonuses: shared.attributeBonuses,
       offhandId,
@@ -545,6 +578,11 @@ function modArmor(effect: Extract<ModEffect, { kind: "armor-vs" }>): Conditional
         ? { kind: "vs-elemental" }
         : { kind: "vs-type", type: effect.against };
   return { amount: effect.amount, conditions: [condition] };
+}
+
+/** A mod's armor while the wielder's `condition` holds (#2010), as an insignia's is written. */
+function whileArmor(amount: number, condition: ModWhile): ConditionalArmor {
+  return { amount, conditions: [{ kind: "mod-while", while: condition }] };
 }
 
 function resolveWeapon(
@@ -592,6 +630,9 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     pieceArmor: NO_PIECE_ARMOR,
     pieceReduction: NO_PIECE_REDUCTION,
     flatPhysicalReduction: 0,
+    physicalReductions: [],
+    conditionalMaxHealth: [],
+    conditionalMaxEnergy: [],
     statusDurationScale: new Map(),
     attributeBonuses: new Map(),
     offhandId: undefined,
