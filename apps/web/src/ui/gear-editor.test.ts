@@ -831,6 +831,25 @@ describe("weapon mod pickers (#2008)", () => {
     expect(droppedModNotes(sword, setUpgrade(sword, 0, "mainHand", "suffix", null))).toEqual([]);
   });
 
+  it("names what the mod no longer fits with the right article, or bare hands", () => {
+    const staff = setUpgrade(
+      setWeapon(warrior(), 0, "staff"),
+      0,
+      "mainHand",
+      "prefix",
+      "insightful",
+    );
+    expect(droppedModNotes(staff, setWeapon(staff, 0, "axe"))).toEqual([
+      "Removed Insightful: it does not fit an axe.",
+    ]);
+    expect(droppedModNotes(staff, setWeapon(staff, 0, "unarmed"))).toEqual([
+      "Removed Insightful: it does not fit bare hands.",
+    ]);
+    expect(droppedModNotes(staff, setWeapon(staff, 0, "daggers"))).toEqual([
+      "Removed Insightful: it does not fit daggers.",
+    ]);
+  });
+
   it("gives each set its own mods", () => {
     const two = setWeapon(setWeapon(warrior(), 0, "staff"), 1, "staff");
     const headed = setUpgrade(two, 1, "mainHand", "prefix", "hale");

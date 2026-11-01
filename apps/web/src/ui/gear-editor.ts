@@ -295,6 +295,21 @@ export function modChoices(item: WeaponId | OffhandId, slot: ModSlot): readonly 
 }
 
 /**
+ * Item `id` named `name` as a toast says it fits: "an axe", "a sword",
+ * "daggers", which come as a pair, and "bare hands" for no weapon.
+ */
+function itemPhrase(id: string, name: string): string {
+  if (id === "unarmed") {
+    return "bare hands";
+  }
+  const lower = name.toLowerCase();
+  if (id === "daggers") {
+    return lower;
+  }
+  return /^[aeiou]/.test(lower) ? `an ${lower}` : `a ${lower}`;
+}
+
+/**
  * What `before` wore that a changed weapon or off-hand in `after` lost,
  * one line each (#2008): `Removed Insightful: it does not fit a sword.`
  */
@@ -305,7 +320,7 @@ export function droppedModNotes(before: StoredCharacter, after: StoredCharacter)
       const id = was[slot];
       if (id !== null && now?.[slot] !== id) {
         const name = getWeaponMod(id)?.name ?? id;
-        notes.push(`Removed ${name}: it does not fit a ${itemName.toLowerCase()}.`);
+        notes.push(`Removed ${name}: it does not fit ${itemName}.`);
       }
     }
   };
@@ -316,7 +331,7 @@ export function droppedModNotes(before: StoredCharacter, after: StoredCharacter)
     }
     if (now.mainHand.weaponId !== was.mainHand.weaponId) {
       const name = getWeapon(now.mainHand.weaponId)?.name ?? now.mainHand.weaponId;
-      lost(was.mainHand.upgrades, now.mainHand.upgrades, name);
+      lost(was.mainHand.upgrades, now.mainHand.upgrades, itemPhrase(now.mainHand.weaponId, name));
     }
     if (
       was.offHand !== null &&
@@ -324,7 +339,7 @@ export function droppedModNotes(before: StoredCharacter, after: StoredCharacter)
       now.offHand.offhandId !== was.offHand.offhandId
     ) {
       const name = getOffhand(now.offHand.offhandId)?.name ?? now.offHand.offhandId;
-      lost(was.offHand.upgrades, now.offHand.upgrades, name);
+      lost(was.offHand.upgrades, now.offHand.upgrades, itemPhrase(now.offHand.offhandId, name));
     }
   });
   return notes;
