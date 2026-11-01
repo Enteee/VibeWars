@@ -112,7 +112,11 @@ describe("status definitions", () => {
         def.preventsResurrection ||
         def.preventsSpeedBoosts ||
         def.returnsSource !== undefined ||
-        def.elementalDamageTakenAs !== undefined;
+        def.elementalDamageTakenAs !== undefined ||
+        def.minionDamageBonus !== 0 ||
+        def.minionHitHealthLossPercent !== 0 ||
+        def.redirectsConditionsToMinion ||
+        def.attributeBonus !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
