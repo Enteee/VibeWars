@@ -88,10 +88,10 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.grasping-earth": { glyph: "roots-grasp" },
   "elementalist.breath-of-fire": { glyph: "breath-fire" },
   "elementalist.master-of-magic": { glyph: "bars-set" },
+  // PvP forms (#1951)
+  "elementalist.elemental-flame": { glyph: "form-flame" },
+  "elementalist.mist-form": { glyph: "form-mist" },
   // Attributes raised (#1941)
   "elementalist.glyph-of-elemental-power": { glyph: "glyph-power-up" },
   "elementalist.glyph-of-energy": { glyph: "glyph-energy-up" },
-  // PvP forms (#1951), stand-ins until their art card.
-  "elementalist.elemental-flame": { glyph: "hex-flame", modifier: "self" },
-  "elementalist.mist-form": { glyph: "mist-shield", modifier: "self" },
 };
