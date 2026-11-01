@@ -15,11 +15,11 @@
 # runner left registered, when it ends. The operator's checkout and index
 # are not touched: the spike commit is written with git plumbing.
 #
-# Jails can write the checkout's refs and objects, so no local ref is
-# trusted: the base is PR #1895's head as GitHub reports it, fetched by
-# SHA, and every git call runs with git-hardening.mjs's pins (SECURITY.md,
-# "Host git near agent data"). Objects are content-addressed, so a planted
-# one cannot pass for the base.
+# Jails can write the checkout's refs and objects, and the base's ids are
+# public, so a planted object could pass for it. So nothing local is
+# used: the base is PR #1895's head as GitHub reports it, fetched into a
+# fresh bare repository under $work, and every git call runs there with
+# git-hardening.mjs's pins (SECURITY.md, "Host git near agent data").
 #
 # Run it from a checkout of PR #1895's branch, inside `devenv shell` with
 # `vibewars.claudeBot.enable` (which puts `vibewars-runner-jail` on PATH),
@@ -46,11 +46,14 @@ gh auth status >/dev/null 2>&1 || {
 }
 
 # git-hardening.mjs's GIT_HARDENING and GIT_ENV, and none of the
-# operator's ssh overrides; pushes authenticate through gh.
+# operator's ssh or repository overrides, in the private repository under
+# $work; pushes authenticate through gh.
 hgit() {
-  env -u GIT_SSH_COMMAND -u GIT_SSH -u GIT_SSH_VARIANT \
+  env -u GIT_SSH_COMMAND -u GIT_SSH -u GIT_SSH_VARIANT -u GIT_DIR -u GIT_WORK_TREE \
+    -u GIT_OBJECT_DIRECTORY -u GIT_ALTERNATE_OBJECT_DIRECTORIES -u GIT_COMMON_DIR \
     GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 \
-    git -c core.hooksPath=/dev/null -c core.fsmonitor=false -c core.sshCommand=ssh \
+    git --git-dir="$work/git" -c user.name=runner-spike -c user.email=runner-spike@invalid \
+    -c core.hooksPath=/dev/null -c core.fsmonitor=false -c core.sshCommand=ssh \
     -c core.gitProxy= -c core.askPass= -c credential.helper= \
     -c 'credential.https://github.com.helper=!gh auth git-credential' \
     -c diff.external= -c protocol.ext.allow=never -c merge.verifySignatures=false \
@@ -61,6 +64,7 @@ remote="https://github.com/$repo.git"
 
 umask 077
 work=$(mktemp -d)
+hgit init -q --bare
 pr=""
 cleanup() {
   echo "== cleanup"
@@ -87,7 +91,7 @@ base=$(gh pr view 1895 -R "$repo" --json headRefOid --jq .headRefOid)
   echo "runner-spike: GitHub gave no head SHA for PR #1895: $base" >&2
   exit 1
 }
-hgit fetch -q --no-tags "$remote" "refs/pull/1895/head"
+hgit fetch -q --no-tags --depth=1 "$remote" "refs/pull/1895/head"
 [ "$(hgit rev-parse --verify "$base^{commit}")" = "$base" ] || {
   echo "runner-spike: PR #1895's head $base did not arrive" >&2
   exit 1
