@@ -49,7 +49,8 @@ export type MesmerStatusId =
   | "physical-resistance"
   // Casting-state hexes (#1931).
   | "power-leech"
-  | "power-flux";
+  | "power-flux"
+  | "signet-of-illusions";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -650,5 +651,12 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "power-flux": define("power-flux", "Power Flux", "hex", {
     profession: "mesmer",
     energyPips: -2,
+  }),
+  // "Your next 1...3...3 non-Illusion spells use your Illusion attribute
+  // instead of its normal attribute" (#1929): no duration, it lasts
+  // until its 3 are spent.
+  "signet-of-illusions": define("signet-of-illusions", "Signet of Illusions", "skill-effect", {
+    profession: "mesmer",
+    borrowsAttribute: { attributeId: "mesmer.illusion-magic", spells: 3 },
   }),
 };

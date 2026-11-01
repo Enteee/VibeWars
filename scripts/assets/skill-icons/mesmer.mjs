@@ -74,6 +74,14 @@ export const MESMER_ICONS = {
   // Caster staples 2 (#1872).
   "mesmer.elemental-resistance": { glyph: "shield-flame" },
   "mesmer.physical-resistance": { glyph: "shield-blow" },
+  // Caster staples (#1870), stand-ins until their art card.
+  "mesmer.ethereal-burden": { glyph: "slow", modifier: "bolt" },
+  "mesmer.sum-of-all-fears": { glyph: "slow", modifier: "plus" },
+  // Caster staples 2 (#1872), stand-ins until their art card.
+  "mesmer.elemental-resistance": { glyph: "armor", modifier: "bolt" },
+  "mesmer.physical-resistance": { glyph: "armor", modifier: "half" },
+  // Attributes set or borrowed (#1929), stand-ins until their art card.
+  "mesmer.signet-of-illusions": { glyph: "energy", modifier: "finale" },
   // Casting-state hexes (#1931), stand-ins until their art card.
   "mesmer.power-leech": { glyph: "energy", modifier: "bolt" },
   "mesmer.power-flux": { glyph: "interrupt", modifier: "hourglass" },
