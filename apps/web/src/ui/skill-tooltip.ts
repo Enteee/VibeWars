@@ -1,4 +1,4 @@
-import { formatScalingRange, getAttribute, type SkillDescription } from "@vibewars/game-core";
+import { getAttribute, type DescriptionPart, type SkillDescription } from "@vibewars/game-core";
 import type { CorpusSkill } from "@vibewars/game-data/corpus";
 
 import { skillIconHtml } from "./icons.js";
@@ -17,6 +17,8 @@ export interface SkillTooltip {
   show(anchor: HTMLElement, description: SkillDescription): void;
   /** A GW1 skill not in the game yet (#1220): GW1's own fields. */
   showCorpus(anchor: HTMLElement, skill: CorpusSkill): void;
+  /** Redraws an open tooltip in place at new numbers (#1932); closed, does nothing. */
+  update(description: SkillDescription): void;
   hide(): void;
   dispose(): void;
 }
@@ -33,14 +35,30 @@ function row(parent: HTMLElement, label: string, value: string): void {
   parent.appendChild(line);
 }
 
+/**
+ * `parts` into `node`: prose as text, a number an attribute scales as a
+ * `.scaled-number` span (#1932), green and bold, as GW1 draws it.
+ */
+export function appendParts(node: HTMLElement, parts: readonly DescriptionPart[]): void {
+  for (const part of parts) {
+    if (typeof part === "string") {
+      node.append(part);
+    } else {
+      const number = document.createElement("span");
+      number.className = "scaled-number";
+      number.textContent = part.scaled;
+      node.appendChild(number);
+    }
+  }
+}
+
 /** The tooltip header's skill icon, px (#727). */
 const TIP_ICON_PX = 48;
 
 /**
  * A skill's description into `node`: its type, an attack skill's weapon,
- * its attribute, effect lines
- * with the span the attribute buys, and its cost, cast, recharge and
- * target. The hover tooltip and a library card's inline details (#567)
+ * its attribute, effect lines with their scaled numbers drawn apart, and
+ * its cost, cast, recharge and target. The hover tooltip and a library card's inline details (#567)
  * both show it; the card already names the skill and shows its icon, so
  * it leaves the header (#727).
  */
@@ -91,18 +109,7 @@ export function renderSkillDescription(
   for (const effect of description.effects) {
     const line = document.createElement("div");
     line.className = "tip-effect";
-    line.textContent = effect.text;
-
-    // The span the attribute buys, next to the value it currently has.
-    // Showing only the current number hides what another point would
-    // do; showing only the span hides what you actually have.
-    const span = effect.magnitude === undefined ? undefined : formatScalingRange(effect.magnitude);
-    if (span !== undefined) {
-      const scale = document.createElement("span");
-      scale.className = "tip-scale";
-      scale.textContent = ` (${span})`;
-      line.appendChild(scale);
-    }
+    appendParts(line, effect.parts);
     effects.appendChild(line);
   }
   node.appendChild(effects);
@@ -224,6 +231,8 @@ export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"):
   node.style.display = "none";
   document.body.appendChild(node);
 
+  // What the open tooltip hangs from, while it shows a description.
+  let shownAt: HTMLElement | undefined;
   const render = (description: SkillDescription): void => {
     node.classList.toggle("is-elite", description.elite);
     renderSkillDescription(node, description);
@@ -233,14 +242,24 @@ export function createSkillTooltip(placement: SkillTooltipPlacement = "beside"):
     show(anchor, description) {
       render(description);
       placeTip(node, anchor, placement);
+      shownAt = anchor;
     },
     showCorpus(anchor, skill) {
+      shownAt = undefined;
       node.classList.toggle("is-elite", skill.elite);
       renderCorpusDescription(node, skill);
       placeTip(node, anchor, placement);
     },
+    update(description) {
+      if (shownAt === undefined || node.style.display === "none") {
+        return;
+      }
+      render(description);
+      placeTip(node, shownAt, placement);
+    },
     hide() {
       node.style.display = "none";
+      shownAt = undefined;
     },
     dispose() {
       node.remove();

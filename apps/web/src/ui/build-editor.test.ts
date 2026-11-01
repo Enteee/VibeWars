@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   MAX_ATTRIBUTE_RANK,
+  describeSkill,
+  type DescriptionPart,
+  type SkillDescription,
   MINIMAL_GW_INSPIRED_PVP_V1,
   accessibleAttributeIds,
   getSkill,
@@ -19,6 +22,7 @@ import {
   editorProblems,
   encodeDragSource,
   equipTarget,
+  followTip,
   isUnsaved,
   newCharacter,
   nextRankCost,
@@ -34,6 +38,7 @@ import {
   trySetRank,
   weaponWarning,
 } from "./build-editor.js";
+import { characterRanks } from "./character-ranks.js";
 import { setHeadgearAttribute, setWeapon } from "./gear-editor.js";
 
 /**
@@ -677,5 +682,56 @@ describe("weaponWarning (#417)", () => {
     expect(weaponWarning(skill("warrior.swift-chop"), ["sword", "daggers"])?.title).toBe(
       "Needs an axe — your weapon is a sword",
     );
+  });
+});
+
+describe("followTip (#1932)", () => {
+  const scaled = (parts: readonly DescriptionPart[] | undefined) =>
+    (parts ?? []).flatMap((part) => (typeof part === "string" ? [] : [part.scaled]));
+  const fakeTip = () => {
+    const tip = { shown: true, drawn: [] as SkillDescription[] };
+    return {
+      tip,
+      tooltip: {
+        update: (description: SkillDescription) => {
+          tip.drawn.push(description);
+        },
+        hide: () => {
+          tip.shown = false;
+        },
+      },
+    };
+  };
+
+  it("redraws an open tooltip at a raised attribute, and keeps it shown", () => {
+    const signet = getSkill("warrior.healing-signet");
+    if (signet === undefined) {
+      throw new Error("no Healing Signet");
+    }
+    let character = setProfessions(newCharacter("c1"), "warrior", undefined);
+    const tipped = {
+      anchor: { isConnected: true },
+      describe: () => describeSkill(signet, characterRanks(character)),
+    };
+    const before = scaled(tipped.describe().effects[0]?.parts);
+    character = setRank(character, "warrior.tactics", 9);
+    const { tip, tooltip } = fakeTip();
+    expect(followTip(tooltip, tipped)).toBe(tipped);
+    expect(tip.shown).toBe(true);
+    const after = scaled(tip.drawn[0]?.effects[0]?.parts);
+    expect(after).toHaveLength(1);
+    expect(after).not.toEqual(before);
+  });
+
+  it("hides it when its anchor is gone or its slot emptied", () => {
+    const gone = fakeTip();
+    const described = { anchor: { isConnected: false }, describe: () => undefined };
+    expect(followTip(gone.tooltip, described)).toBeUndefined();
+    expect(gone.tip.shown).toBe(false);
+    const emptied = fakeTip();
+    expect(
+      followTip(emptied.tooltip, { anchor: { isConnected: true }, describe: () => undefined }),
+    ).toBeUndefined();
+    expect(emptied.tip.shown).toBe(false);
   });
 });

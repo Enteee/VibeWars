@@ -1,4 +1,3 @@
-import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 import {
   AREA_ADJACENT,
   AREA_EARSHOT,
@@ -18,7 +17,7 @@ import { getAttribute, getProfession, type ProfessionId } from "../professions.j
 
 import { energyCostOf } from "./activation.js";
 import { creatureDamageMultiplier } from "./damage.js";
-import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
+import { resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
@@ -89,9 +88,17 @@ export interface MagnitudeDescription {
   readonly attributeId: string | undefined;
 }
 
+/**
+ * A piece of a line (#1932): plain prose, or a number an attribute
+ * scales, which the client draws apart from the prose.
+ */
+export type DescriptionPart = string | { readonly scaled: string; readonly attributeId: string };
+
 export interface EffectDescription {
   /** One line of plain prose, e.g. "Deals 91 damage". */
   readonly text: string;
+  /** `text`, split at its scaled numbers: joined, they are `text`. */
+  readonly parts: readonly DescriptionPart[];
   /** Present when the line's number is attribute-scaled. */
   readonly magnitude: MagnitudeDescription | undefined;
 }
@@ -132,7 +139,12 @@ export interface SkillDescription {
    * attribute scales wins over a flat one; `undefined` with no number.
    */
   readonly headline: string | undefined;
+  /** `headline`, split at its scaled numbers. */
+  readonly headlineParts: readonly DescriptionPart[] | undefined;
 }
+
+/** An effect line as it is built, its scaled numbers still marked; `describeSkill` splits it. */
+type Line = Omit<EffectDescription, "parts">;
 
 function describeMagnitude(
   magnitude: Magnitude,
@@ -157,6 +169,47 @@ function describeMagnitude(
     atTwelve: magnitude.scaling.atTwelve,
     attributeId: magnitude.scaling.attributeId,
   };
+}
+
+// A scaled number travels inside the prose between these two marks,
+// as "\u0001attribute\u0001number\u0002", until a public exit splits
+// it out (#1932). They never leave this file.
+const MARK = "\u0001";
+const END = "\u0002";
+const MARKED = new RegExp(`${MARK}([^${MARK}${END}]*)${MARK}([^${MARK}${END}]*)${END}`, "g");
+
+/** `formatted`, marked as the number `attributeId` scales. */
+function marked(attributeId: string, formatted: string): string {
+  return `${MARK}${attributeId}${MARK}${formatted}${END}`;
+}
+
+/** `magnitude`'s number, `formatted` if it is not the plain one, marked when it scales. */
+function shown(magnitude: MagnitudeDescription, formatted = String(magnitude.current)): string {
+  return magnitude.atZero === undefined || magnitude.attributeId === undefined
+    ? formatted
+    : marked(magnitude.attributeId, formatted);
+}
+
+/** Marked prose split into its parts. */
+function partsOf(text: string): DescriptionPart[] {
+  const parts: DescriptionPart[] = [];
+  let from = 0;
+  for (const match of text.matchAll(MARKED)) {
+    if (match.index > from) {
+      parts.push(text.slice(from, match.index));
+    }
+    parts.push({ scaled: match[2] ?? "", attributeId: match[1] ?? "" });
+    from = match.index + match[0].length;
+  }
+  if (from < text.length) {
+    parts.push(text.slice(from));
+  }
+  return parts;
+}
+
+/** Marked prose as plain prose. */
+function plain(text: string): string {
+  return text.replace(MARKED, "$2");
 }
 
 function seconds(value: number): string {
@@ -213,6 +266,11 @@ function adrenalineGainText(faster: number): string {
  * Patient Spirit's heal. Empty, it reads at rank 0.
  */
 export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = new Map()): string {
+  return plain(statusText(id, ranks));
+}
+
+/** `describeStatus`, its scaled numbers still marked for the skill line it sits in. */
+function statusText(id: string, ranks: ReadonlyMap<string, number>): string {
   const definition = findStatusDefinition(id);
   if (definition === undefined) {
     return id;
@@ -465,7 +523,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.nextAttackSkillBonus !== undefined) {
     const { condition, amount } = definition.nextAttackSkillBonus;
     const more = describeMagnitude(amount, new Map());
-    parts.push(`next attack skill: ${conditionText(condition)}: +${String(more.current)} damage`);
+    parts.push(`next attack skill: ${conditionText(condition)}: +${shown(more)} damage`);
   }
   if (definition.nextSkill !== undefined) {
     parts.push(...describeNextSkill(definition.nextSkill));
@@ -777,12 +835,12 @@ function describeAttackHits(
     } else if (effect.kind === "life-steal") {
       // Said of the bearer's attacks, never "your": a spirit's aura
       // steals for the spirit (#1777).
-      const amount = String(describeMagnitude(effect.amount, new Map()).current);
+      const amount = shown(describeMagnitude(effect.amount, new Map()));
       parts.push(`${attacks} steal up to ${amount} Health`);
     } else if (effect.kind === "heal" && effect.recipient === "owner") {
       // Only a pet bears it (Predatory Bond, #1865), cast from its
       // Ranger's bar: the pet's attacks heal whoever reads this.
-      const amount = String(describeMagnitude(effect.amount, new Map()).current);
+      const amount = shown(describeMagnitude(effect.amount, new Map()));
       parts.push(`your pet's attacks heal you for ${amount}`);
     } else {
       parts.push(
@@ -795,7 +853,7 @@ function describeAttackHits(
 
 /** A rider's damage: "20 fire damage", "13 damage" when it is typeless. */
 function riderDamage(effect: DamageEffect): string {
-  const amount = String(describeMagnitude(effect.amount, new Map()).current);
+  const amount = shown(describeMagnitude(effect.amount, new Map()));
   return `${amount}${typeWord(effect.type)} damage`;
 }
 
@@ -993,8 +1051,7 @@ function describeDeath(
   ranks: ReadonlyMap<string, number>,
   bearerIsFoe: boolean,
 ): string {
-  const amount = (magnitude: Magnitude): string =>
-    String(describeMagnitude(magnitude, ranks).current);
+  const amount = (magnitude: Magnitude): string => shown(describeMagnitude(magnitude, ranks));
   const answer = (effect: TriggerEffect): string[] => {
     if (effect.kind === "energy-gain") {
       return [`you gain ${amount(effect.amount)} Energy`];
@@ -1052,8 +1109,8 @@ function partyHealed(
   if (party?.kind !== "heal") {
     return undefined;
   }
-  const amount = String(describeMagnitude(self.amount, ranks).current);
-  return amount === String(describeMagnitude(party.amount, ranks).current) ? amount : undefined;
+  const amount = shown(describeMagnitude(self.amount, ranks));
+  return amount === shown(describeMagnitude(party.amount, ranks)) ? amount : undefined;
 }
 
 /** An item status's end (#1434), every one a drop: "Drop effect: …". */
@@ -1126,8 +1183,7 @@ function describeCreation(
   when: string,
   ranks: ReadonlyMap<string, number>,
 ): string {
-  const amount = (magnitude: Magnitude): string =>
-    String(describeMagnitude(magnitude, ranks).current);
+  const amount = (magnitude: Magnitude): string => shown(describeMagnitude(magnitude, ranks));
   const answer = (effect: TriggerEffect): string => {
     switch (effect.kind) {
       case "heal":
@@ -1181,8 +1237,7 @@ function describeTrigger(
   ranks: ReadonlyMap<string, number>,
   bearerIsFoe: boolean,
 ): TriggerLine[] {
-  const amount = (magnitude: Magnitude): string =>
-    String(describeMagnitude(magnitude, ranks).current);
+  const amount = (magnitude: Magnitude): string => shown(describeMagnitude(magnitude, ranks));
   const clause = (text: string): TriggerLine => ({ text, clause: true });
   const sentence = (text: string): TriggerLine => ({ text, clause: false });
   // The caster's foes beside a hexed or conditioned bearer are the
@@ -1292,8 +1347,10 @@ function describeTrigger(
     perCost.length === trigger.effects.length &&
     perCost.some((effect) => effect.perUsedSkillEnergy === true)
   ) {
-    const share = (magnitude: Magnitude): string =>
-      percentOf(describeMagnitude(magnitude, ranks).current);
+    const share = (magnitude: Magnitude): string => {
+      const described = describeMagnitude(magnitude, ranks);
+      return shown(described, percentOf(described.current));
+    };
     const gains = perCost.flatMap((effect) =>
       effect.kind !== "energy-gain"
         ? []
@@ -1533,7 +1590,7 @@ function describeNextSkillRule({
 function suffered(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
   return (
     `suffer ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
-    `(${describeStatus(effect.statusId, ranks)})`
+    `(${statusText(effect.statusId, ranks)})`
   );
 }
 
@@ -1713,9 +1770,9 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
   if (perAlly === undefined) {
     return "";
   }
-  const amount = describeMagnitude(perAlly.amount, ranks).current;
+  const amount = shown(describeMagnitude(perAlly.amount, ranks));
   const area = AREA_TEXT.get(perAlly.radius) ?? `within ${String(perAlly.radius)}`;
-  return `, +${String(amount)} Health for each ally ${area} (max ${String(perAlly.max)})`;
+  return `, +${amount} Health for each ally ${area} (max ${String(perAlly.max)})`;
 }
 
 /** Who a splash reaches, in the plural (#885, #1777). */
@@ -1771,10 +1828,7 @@ function upTo(splash: SplashEffect): string {
  * An effect's lines: one, or for an `if`, one per effect inside it, each
  * led by its condition: "If it interrupts: deals 102 damage".
  */
-function describeEffects(
-  effect: SkillEffect,
-  ranks: ReadonlyMap<string, number>,
-): EffectDescription[] {
+function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>): Line[] {
   if (effect.kind === "summon") {
     const { kind, aura, attack, deathBurst, onDeathInRange } = effect.creature;
     return [
@@ -1842,10 +1896,7 @@ function describeEffects(
  * What a spirit's blow deals (#1631): "Its attacks deal 17 damage",
  * linear in the rank as GW1 states it when it scales by rank.
  */
-function describeSpiritDamage(
-  attack: CreatureAttack,
-  ranks: ReadonlyMap<string, number>,
-): EffectDescription {
+function describeSpiritDamage(attack: CreatureAttack, ranks: ReadonlyMap<string, number>): Line {
   const amount: Magnitude =
     attack.scaling.kind === "rank"
       ? {
@@ -1857,7 +1908,7 @@ function describeSpiritDamage(
         }
       : { flat: attack.damageMax };
   const magnitude = describeMagnitude(amount, ranks);
-  return { text: `Its attacks deal ${String(magnitude.current)} damage`, magnitude };
+  return { text: `Its attacks deal ${shown(magnitude)} damage`, magnitude };
 }
 
 /**
@@ -1866,19 +1917,14 @@ function describeSpiritDamage(
  * spirit loses 54 Health". Health it loses is the spirit's, not its
  * caster's. The line's scaling is its first number that scales.
  */
-function describeSpiritBlow(
-  effect: SkillEffect,
-  ranks: ReadonlyMap<string, number>,
-): EffectDescription {
-  const parts = (effect.kind === "if" ? effect.effects : [effect]).map(
-    (inner): EffectDescription => {
-      if (inner.kind === "lose-health" && inner.perRemovedOfProfession === undefined) {
-        const magnitude = describeMagnitude(inner.amount, ranks);
-        return { text: `this spirit loses ${String(magnitude.current)} Health`, magnitude };
-      }
-      return describeEffect(inner, ranks);
-    },
-  );
+function describeSpiritBlow(effect: SkillEffect, ranks: ReadonlyMap<string, number>): Line {
+  const parts = (effect.kind === "if" ? effect.effects : [effect]).map((inner): Line => {
+    if (inner.kind === "lose-health" && inner.perRemovedOfProfession === undefined) {
+      const magnitude = describeMagnitude(inner.amount, ranks);
+      return { text: `this spirit loses ${shown(magnitude)} Health`, magnitude };
+    }
+    return describeEffect(inner, ranks);
+  });
   const when = effect.kind === "if" ? `${lowerFirst(conditionText(effect.condition))}: ` : "";
   const what = parts.map(({ text }) => lowerFirst(text)).join(", ");
   const scaled = parts.find(({ magnitude }) => magnitude?.atZero !== undefined);
@@ -1894,19 +1940,22 @@ function describeCreature(
   creature: CreatureTemplate,
   count: number,
   ranks: ReadonlyMap<string, number>,
-): EffectDescription {
+): Line {
   const health = describeMagnitude(creature.maxHealth, ranks);
   const spawned = spawningPowerHealth(spawningPowerOf(ranks), health.current);
   const healthText =
     spawned === health.current
-      ? `${String(health.current)} Health`
-      : `${String(spawned)} Health (${String(health.current)})`;
+      ? `${shown(health)} Health`
+      : `${shown(health, String(spawned))} Health (${shown(health)})`;
   const level = creatureLevel(creature.attack, ranks);
-  const levelText = level === undefined ? "" : `level ${String(Math.round(level))}, `;
+  const levelText =
+    level === undefined || creature.attack === undefined
+      ? ""
+      : `level ${marked(creature.attack.attributeId, String(Math.round(level)))}, `;
   const lasts =
     creature.durationSeconds === undefined
       ? ""
-      : `, lasts ${String(describeMagnitude(creature.durationSeconds, ranks).current)} seconds`;
+      : `, lasts ${shown(describeMagnitude(creature.durationSeconds, ranks))} seconds`;
   return {
     text: `${String(count)} ${creature.name} (${levelText}${healthText}${lasts})`,
     magnitude: health,
@@ -1938,15 +1987,16 @@ function describeMinionDamage(
   attack: CreatureAttack,
   level: CreatureLevel,
   ranks: ReadonlyMap<string, number>,
-): EffectDescription {
+): Line {
   const atRank = (rank: number): number =>
     Math.round(attack.damageMax * creatureDamageMultiplier(rank, level));
   const rank = rankOf(outsideMatch(ranks), attack.attributeId);
   const multiplier = creatureDamageMultiplier(rank, level);
   const min = Math.round(attack.damageMin * multiplier);
   const max = Math.round(attack.damageMax * multiplier);
+  const scaled = (damage: number): string => marked(attack.attributeId, String(damage));
   return {
-    text: `Its attacks deal ${min === max ? String(max) : `${String(min)}–${String(max)}`} damage`,
+    text: `Its attacks deal ${min === max ? scaled(max) : `${scaled(min)}–${scaled(max)}`} damage`,
     magnitude: {
       current: max,
       atZero: atRank(0),
@@ -1963,7 +2013,7 @@ function describeMinionDamage(
 function describeMinionDeath(
   creature: CreatureTemplate,
   ranks: ReadonlyMap<string, number>,
-): EffectDescription[] {
+): Line[] {
   const { onePerOwner, leavesCorpses, replacedBy } = creature;
   const corpses = leavesCorpses === undefined ? undefined : describeMagnitude(leavesCorpses, ranks);
   const replacement =
@@ -1978,7 +2028,7 @@ function describeMinionDeath(
       ? []
       : [
           {
-            text: `Leaves ${String(corpses.current)} ${corpses.current === 1 ? "corpse" : "corpses"} when it dies`,
+            text: `Leaves ${shown(corpses)} ${corpses.current === 1 ? "corpse" : "corpses"} when it dies`,
             magnitude: corpses,
           },
         ]),
@@ -2002,13 +2052,10 @@ function describeMinionDeath(
  * A spirit's death burst (#1550): "When it dies, non-spirit foes in the
  * area take 8 damage per second it lived (max 150)".
  */
-function describeDeathBurst(
-  burst: DeathBurst,
-  ranks: ReadonlyMap<string, number>,
-): EffectDescription {
+function describeDeathBurst(burst: DeathBurst, ranks: ReadonlyMap<string, number>): Line {
   const who = `non-spirit ${burst.affects} ${AREA_TEXT.get(burst.radius) ?? "in its range"}`;
   const rate = describeMagnitude(burst.perSecondAlive, ranks);
-  const amount = String(rate.current);
+  const amount = shown(rate);
   const what =
     burst.effect === "damage" ? `take ${amount} damage` : `are healed for ${amount} Health`;
   const max = burst.max === undefined ? "" : ` (max ${String(burst.max)})`;
@@ -2023,10 +2070,7 @@ function describeDeathBurst(
  * dies in its range, each of its type in its range below 90% Health takes
  * 43 damage".
  */
-function describeDeathInRange(
-  rule: DeathInRange,
-  ranks: ReadonlyMap<string, number>,
-): EffectDescription {
+function describeDeathInRange(rule: DeathInRange, ranks: ReadonlyMap<string, number>): Line {
   const when = "When a non-spirit dies in its range";
   if (rule.kind === "spread-conditions") {
     const where = AREA_TEXT.get(rule.radius) ?? "nearby";
@@ -2038,15 +2082,15 @@ function describeDeathInRange(
   const damage = describeMagnitude(rule.damage, ranks);
   const below = `${String(Math.round(rule.belowHealthFraction * 100))}%`;
   return {
-    text: `${when}, each of its type in its range below ${below} Health takes ${String(damage.current)} damage`,
+    text: `${when}, each of its type in its range below ${below} Health takes ${shown(damage)} damage`,
     magnitude: damage,
   };
 }
 
 /** Who an aura reaches and what they wear: "Non-spirit allies in its range: …". */
-function describeAura(aura: Aura, where: string): EffectDescription {
+function describeAura(aura: Aura, where: string): Line {
   const who = AURA_WHO[aura.affects];
-  return { text: `${who} ${where}: ${describeStatus(aura.statusId)}`, magnitude: undefined };
+  return { text: `${who} ${where}: ${statusText(aura.statusId, new Map())}`, magnitude: undefined };
 }
 
 const AURA_WHO: Record<Aura["affects"], string> = {
@@ -2082,8 +2126,8 @@ function perOwnCreatureText(effect: EnergyGainEffect, ranks: ReadonlyMap<string,
   }
   const area = AREA_TEXT.get(per.radius) ?? `within ${String(per.radius)}`;
   const where = area === "in earshot" ? "within earshot" : area;
-  const max = describeMagnitude(per.max, ranks).current;
-  return ` for every summoned creature you control ${where} (maximum ${String(max)} Energy)`;
+  const max = shown(describeMagnitude(per.max, ranks));
+  return ` for every summoned creature you control ${where} (maximum ${max} Energy)`;
 }
 
 /** The line's scaled number: a zero base's `per` amount (#1760), else the base. */
@@ -2114,14 +2158,13 @@ function withPerText(
   if (per === undefined) {
     return text;
   }
-  const amount = String(describeMagnitude(per.amount, ranks).current);
+  const amount = shown(describeMagnitude(per.amount, ranks));
   const { count } = per;
   const what =
     count.kind === "statuses"
       ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : words.onTarget}`
       : `foe ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
-  const max =
-    per.max === undefined ? "" : ` (maximum ${String(describeMagnitude(per.max, ranks).current)})`;
+  const max = per.max === undefined ? "" : ` (maximum ${shown(describeMagnitude(per.max, ranks))})`;
   const each = `${amount}${words.unit} for each ${what}${max}`;
   return "flat" in base && base.flat === 0 ? `${words.alone} ${each}` : `${text}, +${each}`;
 }
@@ -2141,10 +2184,7 @@ function percentOf(share: number): string {
   return `${String(Math.round(share * 100))}%`;
 }
 
-function describeEffect(
-  effect: UnconditionalEffect,
-  ranks: ReadonlyMap<string, number>,
-): EffectDescription {
+function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, number>): Line {
   switch (effect.kind) {
     case "damage": {
       const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
@@ -2152,7 +2192,7 @@ function describeEffect(
         effect.armorPenetration > 0
           ? ` (${String(Math.round(effect.armorPenetration * 100))}% armor penetration)`
           : "";
-      const text = `Deals ${String(magnitude.current)}${typeWord(effect.type)} damage${perPointLost(effect)}${penetration}`;
+      const text = `Deals ${shown(magnitude)}${typeWord(effect.type)} damage${perPointLost(effect)}${penetration}`;
       // Mystic Twister's "if you are enchanted, 50 more" (#977).
       const bonus = effect.conditionalBonus;
       const counted = withPerText(text, effect.amount, effect.per, ranks, {
@@ -2164,13 +2204,13 @@ function describeEffect(
         text:
           bonus === undefined
             ? counted
-            : `${counted}; ${lowerFirst(conditionText(bonus.condition))}: +${String(describeMagnitude(bonus.amount, ranks).current)}`,
+            : `${counted}; ${lowerFirst(conditionText(bonus.condition))}: +${shown(describeMagnitude(bonus.amount, ranks))}`,
         magnitude,
       };
     }
     case "heal": {
       const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
-      const amount = String(magnitude.current);
+      const amount = shown(magnitude);
       const text =
         effect.perRemoved !== undefined
           ? `Heals ${amount} for each ${effect.perRemoved} removed`
@@ -2179,7 +2219,7 @@ function describeEffect(
             : effect.perEnergyLost === true
               ? `${effect.recipient === "caster" ? "You are healed" : "Heals"} ${amount} for each point of Energy lost`
               : effect.perUsedSkillEnergy === true
-                ? `Heals for ${percentOf(magnitude.current)} of the spell's energy cost`
+                ? `Heals for ${shown(magnitude, percentOf(magnitude.current))} of the spell's energy cost`
                 : effect.recipient === "caster"
                   ? `You gain ${amount} health`
                   : effect.recipient === "companion"
@@ -2202,11 +2242,11 @@ function describeEffect(
       );
       if (effect.toTarget !== true && effect.perUsedSkillEnergy === true) {
         return {
-          text: `Gain ${percentOf(magnitude.current)} of the skill's base energy cost`,
+          text: `Gain ${shown(magnitude, percentOf(magnitude.current))} of the skill's base energy cost`,
           magnitude,
         };
       }
-      const text = `${effect.toTarget === true ? "Target gains" : "Gain"} ${String(magnitude.current)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}`;
+      const text = `${effect.toTarget === true ? "Target gains" : "Gain"} ${shown(magnitude)} energy${perPointLost(effect)}${perFoeHit(effect)}${perOwnCreatureText(effect, ranks)}`;
       return {
         text: `${effect.toTarget === true ? text : withPerText(text, effect.amount, effect.per, ranks, { alone: "Gain", unit: " energy", onTarget: "on target foe" })}${upToText(effect)}`,
         magnitude,
@@ -2221,19 +2261,19 @@ function describeEffect(
     }
     case "energy-loss": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Target loses ${String(magnitude.current)} energy`, magnitude };
+      return { text: `Target loses ${shown(magnitude)} energy`, magnitude };
     }
     case "energy-steal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Steals up to ${String(magnitude.current)} energy`, magnitude };
+      return { text: `Steals up to ${shown(magnitude)} energy`, magnitude };
     }
     case "life-steal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Steals up to ${String(magnitude.current)} Health`, magnitude };
+      return { text: `Steals up to ${shown(magnitude)} Health`, magnitude };
     }
     case "steal-from-corpse": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `You steal ${String(magnitude.current)} Health`, magnitude };
+      return { text: `You steal ${shown(magnitude)} Health`, magnitude };
     }
     case "sacrifice-health":
       return {
@@ -2246,9 +2286,9 @@ function describeEffect(
       // "Target foe loses 53 Health".
       const magnitude = describeMagnitude(effect.amount, ranks);
       if (effect.recipient === "target") {
-        return { text: `Target foe loses ${String(magnitude.current)} Health`, magnitude };
+        return { text: `Target foe loses ${shown(magnitude)} Health`, magnitude };
       }
-      const lose = `You lose ${String(magnitude.current)} health`;
+      const lose = `You lose ${shown(magnitude)} health`;
       if (effect.perRemovedOfProfession === undefined) {
         return { text: lose, magnitude };
       }
@@ -2266,7 +2306,7 @@ function describeEffect(
     case "give-health": {
       const magnitude = describeMagnitude(effect.healPercent, ranks);
       return {
-        text: `Lose ${share(effect.fractionOfCurrent)} your health; heal for ${String(magnitude.current)}% of it`,
+        text: `Lose ${share(effect.fractionOfCurrent)} your health; heal for ${shown(magnitude)}% of it`,
         magnitude,
       };
     }
@@ -2279,8 +2319,7 @@ function describeEffect(
         case "preparation":
         case "glyph":
           return {
-            text:
-              `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId, ranks),
+            text: `For ${seconds(effect.durationSeconds)}, ` + statusText(effect.statusId, ranks),
             magnitude: undefined,
           };
         default:
@@ -2293,12 +2332,12 @@ function describeEffect(
           (Number.isFinite(effect.durationSeconds)
             ? `for ${statusDuration(effect, ranks)} `
             : "until it ends ") +
-          `(${describeStatus(effect.statusId, ranks)})`,
+          `(${statusText(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
     case "maintain-status": {
       // GW1 words upkeep as the caster's energy degeneration (#837).
-      const what = describeStatus(effect.statusId, ranks);
+      const what = statusText(effect.statusId, ranks);
       return {
         text:
           `Maintained${effect.on === "caster" ? " on you" : ""}: −1 Energy regeneration while it lasts. ` +
@@ -2310,10 +2349,10 @@ function describeEffect(
       // Contemplation of Purity's "lose one hex for each one lost" (#1205).
       const { perRemoved } = effect;
       if (perRemoved !== undefined) {
-        const max = describeMagnitude(perRemoved.max, ranks).current;
+        const max = shown(describeMagnitude(perRemoved.max, ranks));
         const verb = effect.from === "caster" ? "Lose" : "Removes";
         return {
-          text: `${verb} one ${effect.category} for each ${perRemoved.category} removed (max ${String(max)})`,
+          text: `${verb} one ${effect.category} for each ${perRemoved.category} removed (max ${max})`,
           magnitude: undefined,
         };
       }
@@ -2387,7 +2426,7 @@ function describeEffect(
           : undefined;
       const healthText =
         effect.health.kind === "percent"
-          ? `${String(health?.current)}% health`
+          ? `${shown(describeMagnitude(effect.health.percent, ranks))}% health`
           : `your health after losing ${share(effect.health.casterLosesFractionOfCurrent)}`;
       const radius = effect.perPartyMemberWithin;
       const per =
@@ -2396,7 +2435,7 @@ function describeEffect(
           : ` per party member ${AREA_TEXT.get(radius) ?? `within ${String(radius)}`}`;
       const teleport = effect.at === "caster" ? ", and teleports the target to you" : "";
       return {
-        text: `Returns the target to life with ${healthText} and ${String(energy.current)}% energy${per}${teleport}`,
+        text: `Returns the target to life with ${healthText} and ${shown(energy)}% energy${per}${teleport}`,
         magnitude: health ?? energy,
       };
     }
@@ -2405,7 +2444,7 @@ function describeEffect(
       const health = describeMagnitude(effect.healthPercent, ranks);
       const where = AREA_TEXT.get(effect.radius) ?? `within ${String(effect.radius)}`;
       return {
-        text: `Returns every dead allied pet ${where} to life with ${String(health.current)}% health`,
+        text: `Returns every dead allied pet ${where} to life with ${shown(health)}% health`,
         magnitude: health,
       };
     }
@@ -2416,7 +2455,7 @@ function describeEffect(
       return {
         text:
           `You gain ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
-          `(${describeStatus(effect.statusId, ranks)})`,
+          `(${statusText(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
     // Run as One's "you and your pet run 25% faster" (#1865).
@@ -2424,7 +2463,7 @@ function describeEffect(
       return {
         text:
           `Your pet gains ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
-          `(${describeStatus(effect.statusId, ranks)})`,
+          `(${statusText(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
     case "pull-to-caster":
@@ -2483,13 +2522,13 @@ function describeEffect(
               : "Creates a ward";
       const where = GROUND_ANCHOR_TEXT[effect.anchor];
       return {
-        text: `${what} ${where} for ${String(magnitude.current)} seconds`,
+        text: `${what} ${where} for ${shown(magnitude)} seconds`,
         magnitude,
       };
     }
     case "disable-skill": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
-      const time = `${String(magnitude.current)} seconds`;
+      const time = `${shown(magnitude)} seconds`;
       return {
         text:
           effect.which === "all"
@@ -2504,7 +2543,7 @@ function describeEffect(
     }
     case "disable-own-skills": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
-      return { text: disableOwnText(effect, false, magnitude.current), magnitude };
+      return { text: disableOwnText(effect, false, shown(magnitude)), magnitude };
     }
     case "chain-mark":
       return {
@@ -2513,13 +2552,13 @@ function describeEffect(
       };
     case "overcast": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      return { text: `Target suffers ${String(magnitude.current)} overcast`, magnitude };
+      return { text: `Target suffers ${shown(magnitude)} overcast`, magnitude };
     }
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const which = effect.of === "this-skill" ? "This skill" : "That skill";
       return {
-        text: `${which} takes ${String(magnitude.current)} seconds longer to recharge`,
+        text: `${which} takes ${shown(magnitude)} seconds longer to recharge`,
         magnitude,
       };
     }
@@ -2531,7 +2570,7 @@ function describeEffect(
       }));
       const parts = inner.map(({ each, description }) =>
         each.kind === "damage"
-          ? `take ${String(describeMagnitude(each.amount, ranks).current)}${typeWord(each.type)} damage` +
+          ? `take ${shown(describeMagnitude(each.amount, ranks))}${typeWord(each.type)} damage` +
             (each.perEnergyLost === undefined ? "" : " for each point of energy lost")
           : each.kind === "interrupt"
             ? each.only === undefined
@@ -2544,9 +2583,9 @@ function describeEffect(
                   ? suffered(each, ranks)
                   : `gain ${suffered(each, ranks).slice("suffer ".length)}`
                 : each.kind === "heal" && each.recipient === undefined
-                  ? `gain ${String(describeMagnitude(each.amount, ranks).current)} Health`
+                  ? `gain ${shown(describeMagnitude(each.amount, ranks))} Health`
                   : each.kind === "lose-health" && each.recipient === "target"
-                    ? `lose ${String(describeMagnitude(each.amount, ranks).current)} Health`
+                    ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
                     : lowerFirst(description.text),
       );
       const last = parts.pop();
@@ -2570,7 +2609,7 @@ function headlineOf(
     case "heal":
     case "energy-gain": {
       const magnitude = describeMagnitude(effect.amount, ranks);
-      const amount = String(magnitude.current);
+      const amount = shown(magnitude);
       const text =
         effect.kind === "damage"
           ? `${amount}${typeWord(effect.type)} damage${perPointLost(effect)}`
@@ -2582,28 +2621,28 @@ function headlineOf(
     case "energy-loss": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `drains ${String(magnitude.current)} energy`,
+        text: `drains ${shown(magnitude)} energy`,
         scales: magnitude.attributeId !== undefined,
       };
     }
     case "energy-steal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `steals ${String(magnitude.current)} energy`,
+        text: `steals ${shown(magnitude)} energy`,
         scales: magnitude.attributeId !== undefined,
       };
     }
     case "life-steal": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `steals ${String(magnitude.current)} health`,
+        text: `steals ${shown(magnitude)} health`,
         scales: magnitude.attributeId !== undefined,
       };
     }
     case "steal-from-corpse": {
       const magnitude = describeMagnitude(effect.amount, ranks);
       return {
-        text: `steals ${String(magnitude.current)} health`,
+        text: `steals ${shown(magnitude)} health`,
         scales: magnitude.attributeId !== undefined,
       };
     }
@@ -2611,27 +2650,27 @@ function headlineOf(
       if (effect.health.kind === "caster-current") {
         const energy = describeMagnitude(effect.energyPercent, ranks);
         return {
-          text: `resurrects, ${String(energy.current)}% energy`,
+          text: `resurrects, ${shown(energy)}% energy`,
           scales: energy.attributeId !== undefined,
         };
       }
       const health = describeMagnitude(effect.health.percent, ranks);
       return {
-        text: `resurrects, ${String(health.current)}% health`,
+        text: `resurrects, ${shown(health)}% health`,
         scales: health.attributeId !== undefined,
       };
     }
     case "resurrect-companions": {
       const health = describeMagnitude(effect.healthPercent, ranks);
       return {
-        text: `resurrects pets, ${String(health.current)}% health`,
+        text: `resurrects pets, ${shown(health)}% health`,
         scales: health.attributeId !== undefined,
       };
     }
     case "give-health": {
       const percent = describeMagnitude(effect.healPercent, ranks);
       return {
-        text: `heals ${String(percent.current)}% of ${share(effect.fractionOfCurrent)} your health`,
+        text: `heals ${shown(percent)}% of ${share(effect.fractionOfCurrent)} your health`,
         scales: percent.attributeId !== undefined,
       };
     }
@@ -2752,10 +2791,7 @@ export function neededWeaponText(weapon: AttackWeaponClass): string {
  * healed for 22 for each", or "Moves all of your conditions with 180% of
  * their remaining durations to the target" (#1540).
  */
-function transferText(
-  effect: TransferConditionsEffect,
-  ranks: ReadonlyMap<string, number>,
-): EffectDescription {
+function transferText(effect: TransferConditionsEffect, ranks: ReadonlyMap<string, number>): Line {
   const count = effect.count === Infinity ? "all" : `up to ${String(effect.count)}`;
   const lasting =
     effect.durationMultiplier === 1
@@ -2770,7 +2806,7 @@ function transferText(
   }
   const magnitude = describeMagnitude(effect.healPerCondition, ranks);
   return {
-    text: `${moves}; you are healed for ${String(magnitude.current)} for each`,
+    text: `${moves}; you are healed for ${shown(magnitude)} for each`,
     magnitude,
   };
 }
@@ -2806,8 +2842,8 @@ const TYPE_TEXT: Record<SkillType, string> = {
  * skill of the attribute it disables spares itself: "All of your other
  * Healing Prayers" (#1748). "All of your other attack skills" (#1914).
  */
-function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: number): string {
-  const time = `are disabled for ${String(seconds)} seconds`;
+function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: string): string {
+  const time = `are disabled for ${seconds} seconds`;
   if (effect.which === "all") {
     return `All of your skills ${time}`;
   }
@@ -2979,8 +3015,8 @@ export function describeSkill(
       : [
           {
             text: weaponless
-              ? `Deals only ${String(bonus.current)}${damageTypeText(skill)} damage`
-              : `+${String(bonus.current)}${damageTypeText(skill)} damage`,
+              ? `Deals only ${shown(bonus)}${damageTypeText(skill)} damage`
+              : `+${shown(bonus)}${damageTypeText(skill)} damage`,
             magnitude: bonus,
           },
         ]),
@@ -2988,7 +3024,7 @@ export function describeSkill(
       ? []
       : [
           {
-            text: `${conditionText(conditionalBonus.condition)}: +${String(more.current)} damage`,
+            text: `${conditionText(conditionalBonus.condition)}: +${shown(more)} damage`,
             magnitude: more,
           },
         ]),
@@ -3126,7 +3162,7 @@ export function describeSkill(
       ? []
       : [
           {
-            text: `While activating: ${describeStatus(skill.whileActivating, ranks)}`,
+            text: `While activating: ${statusText(skill.whileActivating, ranks)}`,
             magnitude: undefined,
           },
         ];
@@ -3198,7 +3234,7 @@ export function describeSkill(
       ? []
       : [
           {
-            text: `While on your bar, a ${skill.companion.name} (${String(companionHealth.current)} Health) fights beside you`,
+            text: `While on your bar, a ${skill.companion.name} (${shown(companionHealth)} Health) fights beside you`,
             magnitude: companionHealth,
           },
         ];
@@ -3231,7 +3267,7 @@ export function describeSkill(
       effect.attributeId === skill.attributeId
         ? [
             {
-              text: disableOwnText(effect, true, describeMagnitude(effect.seconds, ranks).current),
+              text: disableOwnText(effect, true, shown(describeMagnitude(effect.seconds, ranks))),
               magnitude: describeMagnitude(effect.seconds, ranks),
             },
           ]
@@ -3268,7 +3304,11 @@ export function describeSkill(
       skill.attributeId === undefined
         ? undefined
         : (getAttribute(skill.attributeId)?.name ?? skill.attributeId),
-    effects,
+    effects: effects.map((line) => ({
+      ...line,
+      text: plain(line.text),
+      parts: partsOf(line.text),
+    })),
     cost: costText(skill, ranks),
     castTime: castTimeText(skill, ranks),
     recharge:
@@ -3276,27 +3316,7 @@ export function describeSkill(
     rangeText: range,
     targetText: target,
     scalesWithAttribute: effects.some((effect) => effect.magnitude?.attributeId !== undefined),
-    headline,
+    headline: headline === undefined ? undefined : plain(headline),
+    headlineParts: headline === undefined ? undefined : partsOf(headline),
   };
-}
-
-/**
- * "7…91" — the value at rank 0 and at the maximum rank.
- *
- * The corpus writes scaling as "7...91...112" because its rank scale ran
- * past 12 with bonuses; ours caps at `MAX_ATTRIBUTE_RANK`, so a third
- * number would just repeat the second. Showing a redundant figure would
- * imply headroom that does not exist.
- *
- * Both ends are rounded as the live value is, so a curve written to end
- * at 8.2 reads "…8", the number rank 12 actually gives.
- */
-export function formatScalingRange(magnitude: MagnitudeDescription): string | undefined {
-  if (magnitude.atZero === undefined || magnitude.atTwelve === undefined) {
-    return undefined;
-  }
-  const scaling = { atZero: magnitude.atZero, atTwelve: magnitude.atTwelve };
-  const low = magnitudeAtRank(scaling, 0);
-  const high = magnitudeAtRank(scaling, MAX_ATTRIBUTE_RANK);
-  return `${String(low)}…${String(high)} at ${String(MAX_ATTRIBUTE_RANK)}`;
 }
