@@ -126,6 +126,8 @@ export interface LobbyMap {
   readonly name: string;
   readonly size: string;
   readonly mode: MatchMode;
+  /** The team sizes it is made for (#2108): a Hosted Game lists those for its own (#2104). */
+  readonly teamSizes: readonly number[];
 }
 
 /**
@@ -202,11 +204,13 @@ export function lobbyPanel(
     snapshot.ascentRound === null ? snapshot.mapId : ascentMapId(snapshot.ascentRound);
   const current = availableMaps.find((map) => map.id === shownMapId);
   let mapPart: HTMLElement;
-  if (snapshot.mode === "hosted-game" && snapshot.isHost && availableMaps.length > 1) {
+  // The host lists only the maps made for the lobby's team size (#2104).
+  const sized = availableMaps.filter((map) => map.teamSizes.includes(snapshot.teamSize));
+  if (snapshot.mode === "hosted-game" && snapshot.isHost && sized.length > 1) {
     mapPart = h("label", "lobby-map");
     mapPart.appendChild(h("span", "field-label", "Map"));
     const select = document.createElement("select");
-    for (const map of availableMaps) {
+    for (const map of sized) {
       const option = document.createElement("option");
       option.value = map.id;
       option.textContent = mapLabel(map);

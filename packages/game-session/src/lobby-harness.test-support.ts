@@ -9,7 +9,7 @@
  * the build.
  */
 import { ANNIHILATION_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
-import type { LobbyMode, WireCape } from "@vibewars/game-protocol";
+import type { LobbyMode, LobbyTeamSize, WireCape } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
 import { joinLobby } from "./lobby-client.js";
@@ -44,6 +44,15 @@ export const MODE_MAPS: Readonly<Record<LobbyMode, readonly string[]>> = {
   "heroes-ascent": MAP_IDS,
   gvg: ["other-arena"],
   "hosted-game": MAP_IDS,
+};
+
+/**
+ * The team sizes each map suits (#2108): the other arena plays no 1v1,
+ * so a Hosted Game's size can move it (#2104).
+ */
+export const MAP_TEAM_SIZES: Readonly<Record<string, readonly number[]>> = {
+  "test-arena": [1, 2, 4, 8],
+  "other-arena": [2, 4, 8],
 };
 
 /** One member: its lobby connection, the room it is in, and every match start it was handed. */
@@ -88,6 +97,8 @@ export async function openLobby(
     open?: boolean;
     /** A party that may queue in a team mode (#1766); every member is told its room id. */
     matchmaking?: LobbyMatchmakingOptions;
+    /** A Hosted Game's team size to begin with (#2104): 4v4 by default. */
+    hostedTeamSize?: LobbyTeamSize;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -100,6 +111,8 @@ export async function openLobby(
     proofKey: PROOF_KEY,
     mapIds: MAP_IDS,
     modeMaps: MODE_MAPS,
+    mapTeamSizes: MAP_TEAM_SIZES,
+    hostedTeamSize: options.hostedTeamSize ?? 4,
     teamLobby: options.teamLobby ?? false,
     ...(options.matchmaking === undefined ? {} : { matchmaking: options.matchmaking }),
     random: options.random ?? (() => 0.5),

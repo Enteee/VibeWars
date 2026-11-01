@@ -34,6 +34,7 @@ describe("a guest in a room other key holders come into (#1682)", () => {
       phase: "waiting",
       mode: "random-arena",
       mapId: MAP_IDS[0],
+      teamSize: 4,
       open: true,
       hostId: "stranger",
       matchId: null,

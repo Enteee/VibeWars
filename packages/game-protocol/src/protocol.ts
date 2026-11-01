@@ -283,6 +283,15 @@ export const MAX_LOBBY_PLAYERS = 16;
  */
 export const MAX_TEAM_LOBBY_SIDE = 8;
 
+/**
+ * The team sizes a lobby plays (#2104): 1v1, 2v2, 4v4 and 8v8, the maps'
+ * own (`TEAM_SIZES_ALL` in game-maps), which the protocol cannot import.
+ */
+export const LOBBY_TEAM_SIZES = [1, 2, 4, 8] as const;
+
+/** One of `LOBBY_TEAM_SIZES`. */
+export type LobbyTeamSize = (typeof LOBBY_TEAM_SIZES)[number];
+
 /** How long each stage of a Team Lobby (#1458) lasts, on the lobby's clock. */
 export const TEAM_LOBBY_STAGE_SECONDS = 60;
 

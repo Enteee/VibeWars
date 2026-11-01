@@ -8,6 +8,7 @@ import {
   playHouseTeams,
   playOwnTeams,
   saveSoloTeam,
+  setTeamSize,
 } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -60,8 +61,10 @@ async function joinLobby(page: Page, playerName: string, code: string): Promise<
  */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   await openMenu(host, "Host");
-  const team = await saveSoloTeam(host, guestTeam === 1 ? 2 : 1);
+  const size = guestTeam === 1 ? 2 : 1;
+  const team = await saveSoloTeam(host, size);
   const code = await hostFromMenu(host);
+  await setTeamSize(host, size);
   await joinLobby(guest, "Guest", code);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
@@ -182,6 +185,25 @@ test("a closed lobby takes nobody with its key; opened it does, and closed again
     await expect(late.locator(".screen-connection-problem")).toHaveText(CLOSED);
     await expect(host.locator(".lobby-panel")).not.toContainText("Late");
     await expect(guest.locator("#topbar .topbar-lobby-code")).toHaveText(code);
+  } finally {
+    await context.close();
+  }
+});
+
+test("the host sets the team size in the sidebar, and the guest sees it there, locked (#2104)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    const code = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", code);
+    const size = (page: Page) => page.getByRole("combobox", { name: "Team size" });
+    await expect(size(guest)).toHaveValue("4");
+    await setTeamSize(host, 2);
+    await expect(size(guest)).toHaveValue("2");
+    await expect(size(guest)).toBeDisabled();
   } finally {
     await context.close();
   }
@@ -515,6 +537,7 @@ test("a match plays the seat the host took, not a character selected after joini
     await pickCharacter(host, "Cynn");
     const cynn = await saveSoloTeam(host);
     const code = await hostLobby(host, "Host");
+    await setTeamSize(host, 1);
     await guest.goto("./");
     await pickCharacter(guest, "Blank");
     await joinLobby(guest, "Guest", code);
