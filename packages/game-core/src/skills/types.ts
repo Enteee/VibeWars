@@ -1995,8 +1995,11 @@ export interface Combatant {
    * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.
    */
   overcast: number;
-  /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
-  readonly baseEnergyPips: number;
+  /**
+   * Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`): the
+   * weapon set in hand's, as `maxEnergy` is (#2007).
+   */
+  baseEnergyPips: number;
   /**
    * Units per adrenaline skill on the bar (#463), keyed like
    * `cast.rechargeRemaining`. Exactly the bar's adrenaline skills are keys,

@@ -1,4 +1,5 @@
 import {
+  NO_UPGRADES,
   ALL_INSIGNIAS,
   ALL_OFFHANDS,
   ALL_WEAPONS,
@@ -219,8 +220,16 @@ const NECRO_ELE_ATTRIBUTES = [
 /** The largest build a player can bring: longest name, ids and every set linked. */
 function fullBuild(): PlayerBuild {
   const linkedSet = {
-    mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
-    offHand: { offhandId: "focus", requirementAttributeId: "necromancer.soul-reaping" },
+    mainHand: {
+      weaponId: "wand",
+      requirementAttributeId: "elementalist.fire-magic",
+      upgrades: NO_UPGRADES,
+    },
+    offHand: {
+      offhandId: "focus",
+      requirementAttributeId: "necromancer.soul-reaping",
+      upgrades: NO_UPGRADES,
+    },
   } as const;
   return {
     name: NAME,
@@ -231,7 +240,11 @@ function fullBuild(): PlayerBuild {
     equipment: {
       weaponSets: [
         {
-          mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
+          mainHand: {
+            weaponId: "staff",
+            requirementAttributeId: "necromancer.soul-reaping",
+            upgrades: NO_UPGRADES,
+          },
           offHand: null,
         },
         // Every set carried, each with both hands linked: the largest gear.

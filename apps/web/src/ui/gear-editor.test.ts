@@ -1,4 +1,5 @@
 import {
+  NO_UPGRADES,
   ARMOR_SLOTS,
   INSIGNIAS,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -766,7 +767,7 @@ describe("weapon sets 2-4 (#489)", () => {
     const after = setWeapon(before, 1, "hammer");
     expect(before.equipment.weaponSets[1]).toBeNull();
     expect(after.equipment.weaponSets[1]).toEqual({
-      mainHand: { weaponId: "hammer", requirementAttributeId: null },
+      mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
       offHand: null,
     });
     expect(after.equipment.weaponSets[0]).toEqual(before.equipment.weaponSets[0]);

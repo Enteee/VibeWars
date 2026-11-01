@@ -44,14 +44,20 @@ function wielding(weapon: Weapon, attributeId: string | undefined): ResolvedEqui
 const SWORD: ResolvedWeaponSet = {
   equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
   maxEnergy: 40,
+  maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+  baseEnergyPips: 0,
 };
 const AXE: ResolvedWeaponSet = {
   equipment: wielding(WEAPONS.axe, "warrior.axe-mastery"),
   maxEnergy: 28,
+  maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+  baseEnergyPips: 0,
 };
 const BOW: ResolvedWeaponSet = {
   equipment: wielding(WEAPONS["recurve-bow"], "ranger.marksmanship"),
   maxEnergy: 40,
+  maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+  baseEnergyPips: 0,
 };
 
 /** Set 1 a sword (40 energy, a focus's worth over set 2), set 2 an axe, set 3 a bow, set 4 empty. */
@@ -269,6 +275,35 @@ describe("weapon sets (#489)", () => {
     }
   });
 
+  it("moves health by the sets' difference in maximum, but never below 1 (#2007)", () => {
+    const base = MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth;
+    // Set 1's sword carries of Fortitude: +30 Health while it is in hand.
+    const match = new MatchSimulation({
+      seed: "weapon-sets",
+      participants: [
+        fighter("a", vec2(0, 0), {
+          maxHealth: base + 30,
+          spareWeaponSets: [AXE, { ...AXE, baseEnergyPips: 3 }, null],
+        }),
+      ],
+    });
+    const a = get(match, "a").combatant;
+    a.health = 100;
+    match.requestWeaponSet("a", 1);
+    expect(a.maxHealth).toBe(base);
+    expect(a.health).toBe(70);
+    match.requestWeaponSet("a", 0);
+    expect(a.maxHealth).toBe(base + 30);
+    expect(a.health).toBe(100);
+    a.health = 20;
+    match.requestWeaponSet("a", 1);
+    expect(a.health).toBe(1);
+    // Regeneration is the set's too.
+    expect(a.baseEnergyPips).toBe(0);
+    match.requestWeaponSet("a", 2);
+    expect(a.baseEnergyPips).toBe(3);
+  });
+
   it("hides energy below 0, which regeneration climbs back through before a skill is paid", () => {
     const match = sim(undefined);
     const a = get(match, "a");
@@ -288,7 +323,13 @@ describe("weapon sets (#489)", () => {
   it("climbs from hidden energy as regeneration runs, and pays only once it is enough", () => {
     const match = new MatchSimulation({
       seed: "weapon-sets",
-      participants: [fighter("a", vec2(0, 0), { baseEnergyPips: 4 }), dummy("d", vec2(40, 0))],
+      participants: [
+        fighter("a", vec2(0, 0), {
+          baseEnergyPips: 4,
+          spareWeaponSets: [{ ...AXE, baseEnergyPips: 4 }, BOW, null],
+        }),
+        dummy("d", vec2(40, 0)),
+      ],
     });
     const a = get(match, "a").combatant;
     a.energy = 5;

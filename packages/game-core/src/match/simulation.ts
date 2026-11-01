@@ -589,9 +589,9 @@ export function loadoutSpec(
   return {
     attributeRanks: loadout.attributeRanks,
     equipment: set1.equipment,
-    maxHealth: loadout.maxHealth,
+    maxHealth: set1.maxHealth,
     maxEnergy: set1.maxEnergy,
-    baseEnergyPips: loadout.baseEnergyPips,
+    baseEnergyPips: set1.baseEnergyPips,
     spareWeaponSets: [set2, set3, set4],
   };
 }
@@ -2110,7 +2110,7 @@ export class MatchSimulation {
     const fraction = raised > 0 ? before.health / raised : 0;
     const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
     record.combatant = this.#combatant(spec);
-    record.resolvedMaxHealth = loadout.maxHealth;
+    record.resolvedMaxHealth = loadout.weaponSets[0].maxHealth;
     record.resolvedMaxEnergy = loadout.weaponSets[0].maxEnergy;
     // Back to set 1, as a fresh build starts (#489).
     record.weaponSets = this.#weaponSets(spec);
@@ -6797,6 +6797,8 @@ export class MatchSimulation {
    * Put `set` in hand (#489): the only writer of `combatant.equipment`.
    * Maximum energy becomes the set's, and current energy moves by the
    * same amount, below 0 if it must (GW1's hidden energy, ADR-0036).
+   * Maximum health and regeneration follow the set's mods (#2007);
+   * health moves like energy but never below 1: a swap does not kill.
    * `moraleMaximum` is linear, so the move is the sets' difference at any
    * morale. An attack in progress swings afresh with the new weapon.
    */
@@ -6807,9 +6809,11 @@ export class MatchSimulation {
     }
     const { combatant } = record;
     const before = combatant.maxEnergy;
+    const healthBefore = combatant.maxHealth;
     record.activeWeaponSet = set;
     record.pendingWeaponSet = undefined;
     combatant.equipment = held.equipment;
+    combatant.baseEnergyPips = held.baseEnergyPips;
     record.resolvedMaxEnergy = held.maxEnergy;
     combatant.maxEnergy = moraleMaximum(
       this.#ruleset.combat.baseEnergy,
@@ -6817,6 +6821,16 @@ export class MatchSimulation {
       combatant.morale,
     );
     combatant.energy += combatant.maxEnergy - before;
+    record.resolvedMaxHealth = held.maxHealth;
+    combatant.maxHealth = moraleMaximum(
+      this.#ruleset.combat.baseHealth,
+      record.resolvedMaxHealth,
+      combatant.morale,
+    );
+    combatant.health = Math.max(
+      Math.min(1, combatant.health),
+      combatant.health + combatant.maxHealth - healthBefore,
+    );
     if (combatant.attack !== undefined) {
       combatant.attack.swingElapsed = 0;
     }
@@ -7301,7 +7315,12 @@ export class MatchSimulation {
   #weaponSets(spec: ParticipantSpec): ResolvedWeaponSets {
     const [set2, set3, set4] = spec.spareWeaponSets ?? [null, null, null];
     return [
-      { equipment: spec.equipment, maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy },
+      {
+        equipment: spec.equipment,
+        maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
+        maxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
+        baseEnergyPips: spec.baseEnergyPips ?? 0,
+      },
       set2,
       set3,
       set4,

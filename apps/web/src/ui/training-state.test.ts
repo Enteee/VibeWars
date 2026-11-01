@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { TRAINING_SCENARIOS } from "@vibewars/game-core";
+import { NO_UPGRADES, TRAINING_SCENARIOS } from "@vibewars/game-core";
 
 import { DEFAULT_KEYMAP, KEYMAP_PRESETS } from "../input/keymap.js";
 import { newCharacter, setProfessions, setRank, setSkill } from "./build-editor.js";
@@ -63,7 +63,11 @@ describe("buildSignature", () => {
         weaponSets: [
           {
             ...elementalist.equipment.weaponSets[0],
-            offHand: { offhandId: "shield" as const, requirementAttributeId: null },
+            offHand: {
+              offhandId: "shield" as const,
+              requirementAttributeId: null,
+              upgrades: NO_UPGRADES,
+            },
           },
           null,
           null,

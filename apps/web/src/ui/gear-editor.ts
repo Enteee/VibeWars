@@ -10,6 +10,8 @@ import {
   SHIELD_REQUIREMENT_ATTRIBUTES,
   accessibleAttributeIds,
   primaryAttributeIds,
+  NO_UPGRADES,
+  fittingUpgrades,
   allowsOffhand,
   getAttribute,
   getOffhand,
@@ -141,11 +143,14 @@ export function setWeapon(
   // Picking a two-hander puts the off-hand down. That coupling lives
   // here, in a tested function, rather than in a click handler — it is
   // the rule the whole gear trade-off rests on.
-  const offHand = allowsOffhand(weapon) ? (setAt(character, set)?.offHand ?? null) : null;
+  const held = setAt(character, set);
+  const offHand = allowsOffhand(weapon) ? (held?.offHand ?? null) : null;
+  // The mods that fit the new weapon stay on it (#2007); an empty set has none.
+  const upgrades = fittingUpgrades(weaponId, held?.mainHand.upgrades ?? NO_UPGRADES);
 
   return touched(
     character,
-    withSet(character, set, { mainHand: { weaponId, requirementAttributeId }, offHand }),
+    withSet(character, set, { mainHand: { weaponId, requirementAttributeId, upgrades }, offHand }),
   );
 }
 
@@ -196,6 +201,7 @@ export function setOffhand(
           offhand.requirement.kind === "fixed"
             ? null
             : defaultNomination(character, offhand.requirement.from),
+        upgrades: fittingUpgrades(offhandId, held.offHand?.upgrades ?? NO_UPGRADES),
       },
     }),
   );
@@ -367,7 +373,7 @@ export function resolveForDisplay(character: StoredCharacter): ResolvedLoadout {
 export interface GearSummary {
   readonly maxHealth: number;
   readonly maxEnergy: number;
-  /** Energy regeneration in pips: the primary profession's. */
+  /** Energy regeneration in pips: the primary profession's, with the set's mods. */
   readonly baseEnergyPips: number;
   readonly armor: number;
   readonly weaponName: string;
@@ -610,9 +616,9 @@ export function summariseGear(
   const dealt = (damage: number): string => String(Math.round(damage * scale));
 
   return {
-    maxHealth: resolved.maxHealth,
+    maxHealth: held.maxHealth,
     maxEnergy: held.maxEnergy,
-    baseEnergyPips: resolved.baseEnergyPips,
+    baseEnergyPips: held.baseEnergyPips,
     armor: held.equipment.baseArmor,
     weaponName: weapon.name,
     damageRange: `${dealt(weapon.damageMin)}–${dealt(weapon.damageMax)}`,
