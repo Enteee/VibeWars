@@ -3381,6 +3381,24 @@ const skillGlyph = {
     inkFill("M11 14H15V20H11ZM17 6H21V20H17Z") +
     ringDot(5, 12, 3.4) +
     inkLine("M9 9H14.5M12.5 6.5L15 9L12.5 11.5", 1.8),
+  // PvP forms (#1951, #1968): the form mark is a dashed outline of a figure, you
+  // as something else; what you become sits inside it. Future forms reuse it.
+  // Shadow Form: a solid shadow inside the outline.
+  "form-shadow": () =>
+    formShell() +
+    `<g transform="translate(7.2,8.4) scale(0.4)">` +
+    `<circle cx="12" cy="5.5" r="3.2" fill="${C.ink}"/>` +
+    inkFill("M4 22V17Q4 10.5 12 10.5Q20 10.5 20 17V22Z") +
+    "</g>",
+  // Elemental Flame: a flame inside the outline.
+  "form-flame": () =>
+    formShell() +
+    inkFill(
+      "M12 11C13.2 12.8 15 14 15 16.8A3 3 0 0 1 9 16.8C9 15.4 10.2 15 10.5 13.3C11.1 13.8 11.4 14.2 11.6 14.8C11.9 13.8 12 12.5 12 11Z",
+    ),
+  // Mist Form: a drop inside the outline.
+  "form-mist": () =>
+    formShell() + inkFill("M12 11Q15.6 15 15.6 17.4A3.6 3.6 0 0 1 8.4 17.4Q8.4 15 12 11Z"),
   // A skull over crossed bones: the order to rise (#1946).
   "skull-order": () => smallSkull(12, 9, 0.75) + inkLine("M5 16L19 22M19 16L5 22", 2.2),
   // A skull in a dotted ring: the lich's aura (#1946).
@@ -3547,6 +3565,11 @@ const riderOn = (/** @type {string} */ weapon, /** @type {string} */ rider) =>
   `<g transform="translate(18,18) scale(0.38) translate(-12,-12)">${rider}</g>`;
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
+/** The form mark: a figure's outline, dashed (#1968). */
+const formShell = () =>
+  `<circle cx="12" cy="5.5" r="3.2" ${stroke(C.ink, 1.8)} stroke-dasharray="3 2.2"/>` +
+  `<path d="M3.5 22V17Q3.5 10.5 12 10.5Q20.5 10.5 20.5 17V22Z" ${stroke(C.ink, 1.8)} stroke-dasharray="3.2 2.4"/>`;
+
 const spiritPost = () =>
   inkFill("M4.8 11H9.2L9.4 20H4.6Z") + `<circle cx="7" cy="6.8" r="3.4" fill="${C.ink}"/>`;
 
