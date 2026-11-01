@@ -402,6 +402,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "soul-bind": icon("soul-bind"),
   "wail-of-doom": icon("wail-of-doom"),
   atrophy: icon("atrophy"),
+  // Blood Magic orders and leeches (#1979).
+  "order-of-the-vampire": icon("order-of-the-vampire"),
+  "dark-fury": icon("dark-fury"),
+  "awaken-the-blood": icon("awaken-the-blood"),
+  "soul-leech": icon("soul-leech"),
   "scribes-insight": icon("scribes-insight"),
   // Minions 3 (#1915).
   "order-of-undeath": icon("order-of-undeath"),

@@ -114,6 +114,7 @@ export function define(
     maxDamageFractionPerHit: undefined,
     attackDamageCapFraction: undefined,
     lifeStealReduction: 0,
+    sacrificeMultiplier: 1,
     knockdownMinSeconds: undefined,
     sourceLosesHealth: undefined,
     reversesNextDamage: undefined,

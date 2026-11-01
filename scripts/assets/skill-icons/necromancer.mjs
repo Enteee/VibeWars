@@ -111,4 +111,9 @@ export const NECROMANCER_ICONS = {
   "necromancer.taste-of-death": { glyph: "skull-heal" },
   "necromancer.wail-of-doom": { glyph: "bars-wail" },
   "necromancer.atrophy": { glyph: "bars-wilt" },
+  // Blood Magic orders and leeches (#1979), stand-ins until their art card.
+  "necromancer.order-of-the-vampire": { glyph: "ring-steal" },
+  "necromancer.dark-fury": { glyph: "skull-order" },
+  "necromancer.awaken-the-blood": { glyph: "drop-plus" },
+  "necromancer.soul-leech": { glyph: "drop-siphon" },
 };
