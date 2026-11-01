@@ -5,7 +5,7 @@ const rows = {
   "necromancer.jaundiced-gaze": { glyph: "eye", modifier: "unring" },
   "necromancer.order-of-the-vampire": { glyph: "order-drop", modifier: "plus" },
   "necromancer.dark-fury": { glyph: "order-drop", modifier: "up" },
-  "necromancer.awaken-the-blood": { glyph: "drop-plus", modifier: "up" },
+  "necromancer.awaken-the-blood": { glyph: "drop-plus", modifier: "self" },
   "necromancer.soul-leech": { glyph: "drop-siphon", modifier: "bolt" },
 };
 
