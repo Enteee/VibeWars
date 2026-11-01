@@ -1,7 +1,6 @@
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
-import { addCopyPool } from "./adrenaline.js";
-import { copyKey, type SlotSkill } from "./cast-state.js";
+import type { SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { applyEffects, interruptAttackSkill, type CombatEvent } from "./effects.js";
 import {
@@ -14,6 +13,7 @@ import {
   type StatusTrigger,
   type StatusTriggerEvent,
 } from "./status.js";
+import { standIn } from "./stand-in.js";
 import { isSpell, type Combatant, type SkillEffect, type Surroundings } from "./types.js";
 
 /** What one status's trigger did, credited to whoever applied the status. */
@@ -467,29 +467,10 @@ function cancelAttack(trigger: StatusTrigger, sourceId: string, bearer: Combatan
   return events;
 }
 
-/** Whether status `statusId` copies its bearer's next skill (#469). */
-export function isEchoStatus(statusId: StatusId): boolean {
-  return getStatusDefinition(statusId).triggers.some(({ effects }) =>
-    effects.some(({ kind }) => kind === "echo"),
-  );
-}
-
-/**
- * Whether `skillId` puts an echo on its user (#469): Arcane Echo and Echo.
- * The Mesmer's copy, not a Paragon's `"echo"` skill type (#1423).
- * One is never copied, and does not use up another echo already up.
- */
-export function isEchoSkill(skillId: string): boolean {
-  return (getSkill(skillId)?.effects ?? []).some(
-    (effect) => effect.kind === "apply-status" && isEchoStatus(effect.statusId),
-  );
-}
-
 /**
  * An echo answers `used` (#469): the slot of `echoSkillId` on the bearer's
- * bar holds a copy of it, under its own key, for `effect.seconds`; then the
- * echo skill is back, and starts its own recharge. Not for another echo
- * skill, and with `spellsOnly`, only for a spell.
+ * bar holds a copy of it for `effect.seconds` (`standIn`). With
+ * `spellsOnly`, only for a spell.
  */
 function echo(
   effect: EchoEffect,
@@ -498,23 +479,8 @@ function echo(
   used: SlotSkill | undefined,
 ): void {
   const skill = used === undefined ? undefined : getSkill(used.skillId);
-  const echoSkill = getSkill(echoSkillId);
-  const slot = bearer.skillBar.indexOf(echoSkillId);
-  if (
-    skill === undefined ||
-    echoSkill === undefined ||
-    slot === -1 ||
-    isEchoSkill(skill.id) ||
-    (effect.spellsOnly && !isSpell(skill.type))
-  ) {
+  if (skill === undefined || (effect.spellsOnly && !isSpell(skill.type))) {
     return;
   }
-  const key = copyKey(skill.id, slot);
-  bearer.cast.override(slot, {
-    skillId: skill.id,
-    key,
-    remainingSeconds: effect.seconds,
-    restores: { skillId: echoSkillId, rechargeSeconds: echoSkill.rechargeSeconds },
-  });
-  addCopyPool(bearer, key);
+  standIn(bearer, echoSkillId, skill.id, effect.seconds);
 }

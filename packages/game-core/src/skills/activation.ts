@@ -11,6 +11,8 @@ import {
 import type { Vec2 } from "../vec2.js";
 
 import { canAffordAdrenaline, spendAdrenaline } from "./adrenaline.js";
+import { resolvedBar } from "./cast-state.js";
+import { getSkill } from "./catalog.js";
 import { addOvercast } from "./overcast.js";
 import {
   getStatusDefinition,
@@ -91,6 +93,8 @@ export type ActivationRejection =
   // An enchantment spell at a target that can hold none, as Well of the
   // Profane's (#1732), the caster itself included.
   | "invalid-target-unenchantable"
+  // Arcane Thievery at a foe with no spell on its bar to take (#1928).
+  | "no-spells"
   // An attack or attack skill while carrying a flag (#1225): checked by
   // the simulation, which knows who carries one.
   | "hands-full"
@@ -106,6 +110,13 @@ export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };
 
 const OK: ActivationCheck = { ok: true };
+
+/** Whether `skill` disables a spell of its target's at random (#1928): Arcane Thievery. */
+function takesASpell(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) => effect.kind === "disable-skill" && effect.which === "random-spell",
+  );
+}
 
 function reject(reason: ActivationRejection): ActivationCheck {
   return { ok: false, reason };
@@ -353,6 +364,16 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
     preventsEnchantments(enchanted.statuses.active)
   ) {
     return reject("invalid-target-unenchantable");
+  }
+  if (
+    request.target !== undefined &&
+    takesASpell(skill) &&
+    !resolvedBar(request.target.skillBar, request.target.cast).some((slot) => {
+      const held = slot === null ? undefined : getSkill(slot.skillId);
+      return held !== undefined && isSpell(held.type);
+    })
+  ) {
+    return reject("no-spells");
   }
   // A pet attack needs its pet alive and within earshot of its owner,
   // seen or not, and never walks its owner in (#1046).

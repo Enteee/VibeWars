@@ -56,6 +56,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     unblockableLeft: undefined,
     attacksMadeLeft: undefined,
     sourceId: "caster",
+    sourceSkillId: undefined,
     outbreak: null,
     maintained: null,
     projected: false,

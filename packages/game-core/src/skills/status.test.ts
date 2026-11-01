@@ -312,7 +312,9 @@ describe("StatusSet apply/remove", () => {
     const set = new StatusSet();
     set.apply("guardian", 10, "a");
     set.apply("regeneration", 10, "a");
-    expect(set.removeByCategory("enchantment", 1)).toEqual(["regeneration"]);
+    expect(set.removeByCategory("enchantment", 1)).toEqual([
+      { id: "regeneration", sourceSkillId: undefined },
+    ]);
     expect(set.has("guardian")).toBe(true);
   });
 
@@ -322,8 +324,21 @@ describe("StatusSet apply/remove", () => {
       set.apply("guardian", 10, "a");
       set.apply("regeneration", 10, "a");
       set.apply("guardian", duration, "a");
-      expect(set.removeByCategory("enchantment", 1), String(duration)).toEqual(["guardian"]);
+      expect(set.removeByCategory("enchantment", 1), String(duration)).toEqual([
+        { id: "guardian", sourceSkillId: undefined },
+      ]);
     }
+  });
+
+  it("records the skill that put each on, and says it as it removes it (#1928)", () => {
+    const set = new StatusSet();
+    set.apply("armor-boost", 10, "a", null, "elementalist.armor-of-earth");
+    set.apply("guardian", 10, "a");
+    expect(set.get("armor-boost")?.sourceSkillId).toBe("elementalist.armor-of-earth");
+    expect(set.removeByCategory("enchantment")).toEqual([
+      { id: "guardian", sourceSkillId: undefined },
+      { id: "armor-boost", sourceSkillId: "elementalist.armor-of-earth" },
+    ]);
   });
 });
 
@@ -333,7 +348,9 @@ describe("StatusSet removal by profession (#845)", () => {
     set.apply("mystic-regeneration", 10, "a");
     set.apply("fleeting-stability", 10, "a");
     set.apply("guardian", 10, "b");
-    expect(set.removeByCategory("enchantment", 1, "dervish")).toEqual(["fleeting-stability"]);
+    expect(set.removeByCategory("enchantment", 1, "dervish")).toEqual([
+      { id: "fleeting-stability", sourceSkillId: undefined },
+    ]);
     expect(set.has("mystic-regeneration")).toBe(true);
     expect(set.has("guardian")).toBe(true);
   });

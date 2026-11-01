@@ -211,13 +211,12 @@ import {
   fireDeathTriggers,
   fireEndTriggers,
   fireTriggers,
-  isEchoSkill,
-  isEchoStatus,
   type DirectTriggerEvent,
   type FiredTrigger,
   type SpreadGainedCondition,
   type TriggerContext,
 } from "../skills/triggers.js";
+import { copiesSkill, isEchoStatus } from "../skills/stand-in.js";
 import { add, distance, normalize, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import {
   createCursor,
@@ -882,6 +881,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "invalid-target-enemy",
   "invalid-target-untargetable",
   "invalid-target-unenchantable",
+  "no-spells",
 ]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */
@@ -3076,6 +3076,17 @@ export class MatchSimulation {
         continue;
       }
 
+      // A copy that ends this tick takes its cast with it (#1928): the
+      // skill being cast is no longer in the slot.
+      const casting = record.combatant.cast.activeCast;
+      if (
+        casting !== undefined &&
+        [...record.combatant.cast.overrides.values()].some(
+          (copy) => copy.key === casting.key && copy.remainingSeconds <= dt,
+        )
+      ) {
+        this.#cancelCast(record);
+      }
       const completed = record.combatant.cast.advance(dt);
       dropEndedCopyPools(record.combatant);
       if (completed !== undefined) {
@@ -3667,12 +3678,12 @@ export class MatchSimulation {
           );
     // What the skill put on its own user does not answer this use of it
     // (#999): the chanter's own Song of Restoration waits for its next skill.
-    // An echo skill does not use up an echo already up, either (#469).
+    // A copier does not use up an echo already up, either (#469, #1928).
     const spared: ReadonlySet<StatusId> = new Set([
       ...events.flatMap((event) =>
         event.kind === "status-applied" && event.targetId === record.id ? [event.statusId] : [],
       ),
-      ...(isEchoSkill(skill.id)
+      ...(copiesSkill(skill.id)
         ? record.combatant.statuses.active.map(({ id }) => id).filter(isEchoStatus)
         : []),
     ]);
