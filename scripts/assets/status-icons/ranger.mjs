@@ -302,4 +302,12 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M4 20L14 10M10 6h8v8" ${stroke(c, 2)}/>` +
       `<path d="M18 16c-1.5 2-2 3-2 4a2 2 0 0 0 4 0c0-1-.5-2-2-4z" fill="${c}"/>`,
   ],
+  // Attributes raised (#1941), a stand-in until its art card.
+  // Stance: a bow with a plus, quicker and truer shots.
+  "experts-dexterity": [
+    "stance",
+    (c) =>
+      `<path d="M6 3c6 4 6 14 0 18M6 3v18" ${stroke(c, 2)}/>` +
+      `<path d="M17 8v8M13 12h8" ${stroke(c, 2.2)}/>`,
+  ],
 };

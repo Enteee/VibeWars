@@ -517,7 +517,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   // "For 5...37...45 seconds, you have +1 Death Magic" (#1915).
   "aura-of-the-lich": define("aura-of-the-lich", "Aura of the Lich", "enchantment", {
     profession: "necromancer",
-    attributeBonus: { attributeId: "necromancer.death-magic", amount: 1 },
+    attributeDeltas: [{ scope: { attributeId: "necromancer.death-magic" }, amount: 1 }],
   }),
   // "For 15...51...60 seconds, the next conditions you would receive are
   // transferred to your closest minion instead" (#1915).

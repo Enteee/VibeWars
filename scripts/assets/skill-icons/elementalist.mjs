@@ -88,4 +88,7 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.grasping-earth": { glyph: "roots-grasp" },
   "elementalist.breath-of-fire": { glyph: "breath-fire" },
   "elementalist.master-of-magic": { glyph: "bars-set" },
+  // Attributes raised (#1941), stand-ins until their art card.
+  "elementalist.glyph-of-elemental-power": { glyph: "fireball", modifier: "up" },
+  "elementalist.glyph-of-energy": { glyph: "energy", modifier: "half" },
 };

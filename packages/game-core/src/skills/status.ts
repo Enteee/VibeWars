@@ -352,16 +352,12 @@ export interface StatusDefinition {
    */
   readonly attackDamageDeltaWeapon: AttackWeaponClass | undefined;
   /**
-   * Added to every attribute of the bearer above rank 0 (#762): weakness's
-   * −1. Read through `rankOf` alone (ADR-0019).
+   * Added to the bearer's attributes in each scope (#762, #1941): weakness's
+   * −1 to all, Glyph of Elemental Power's +2 to the elemental ones. A
+   * negative one never lowers a rank bought at 0. Read through `rankOf`
+   * alone (ADR-0019).
    */
-  readonly attributeDelta: number;
-  /**
-   * Added to one attribute of the bearer above rank 0 (#1915), as Aura of
-   * the Lich's "+1 Death Magic". Read through `rankOf` alone, with
-   * `attributeDelta`. `undefined`: none.
-   */
-  readonly attributeBonus: { readonly attributeId: string; readonly amount: number } | undefined;
+  readonly attributeDeltas: readonly AttributeDelta[];
   /**
    * The bearer's rank in a set of attributes, whatever its sheet, runes
    * and deltas say (#1929): Wail of Doom's "all of target foe's
@@ -1534,21 +1530,42 @@ export interface PipsPerEnchantment {
   readonly max: number;
 }
 
-/** A glyph's hold on the next spells: how many, and how much cheaper (#526). */
+/**
+ * A glyph's hold on the next spells: how many, and how much cheaper
+ * (#526). With `noOvercast` they cause no Overcast (#1941): Glyph of
+ * Energy's.
+ */
 export interface NextSpells {
   readonly count: number;
   readonly costReduction: number;
+  readonly noOvercast: boolean;
 }
 
 /**
- * Which attributes an `attributeSet` holds (#1929), and at what rank:
- * `all` of them, the bearer's `primary` one, or the four `elemental`
- * ones. With `plusEquipment` the runes and headgear still add theirs, as
- * Wail of Doom leaves them; without, they are overridden too, as Master
- * of Magic overrides them.
+ * Which attributes a set or a delta holds (#1929, #1941): `all` of them,
+ * the bearer's `primary` one, the four `elemental` ones, every one of a
+ * `profession` (whatever the bearer's own), or one `attributeId`.
+ */
+export type AttributeScope =
+  | "all"
+  | "primary"
+  | "elemental"
+  | { readonly profession: ProfessionId }
+  | { readonly attributeId: string };
+
+/** What a status adds to the bearer's attributes in `scope` (#1941). */
+export interface AttributeDelta {
+  readonly scope: AttributeScope;
+  readonly amount: number;
+}
+
+/**
+ * An `attributeSet`'s rank over its `scope` (#1929). With `plusEquipment`
+ * the runes and headgear still add theirs, as Wail of Doom leaves them;
+ * without, they are overridden too, as Master of Magic overrides them.
  */
 export interface AttributeSet {
-  readonly scope: "all" | "primary" | "elemental";
+  readonly scope: AttributeScope;
   readonly rank: number;
   readonly plusEquipment: boolean;
 }
@@ -1597,6 +1614,17 @@ export interface NextSkillRule {
   readonly rechargesInstantly: boolean;
   /** The bearer's Energy goes to 0 once that skill is paid for (#1730). */
   readonly losesAllEnergy: boolean;
+  /**
+   * That skill, if of `type`, recharges `fraction` faster (#1941): Ritual
+   * Lord's binding ritual, 50%. `undefined`: none.
+   */
+  readonly rechargeFasterIfType:
+    { readonly type: SkillType; readonly fraction: number } | undefined;
+  /**
+   * `skillId`, the skill that applied it, recharges at once when that
+   * skill is of this type (#1941): Ritual Lord's binding ritual.
+   */
+  readonly resetsOwnRechargeIfType: SkillType | undefined;
   /** The skill the log names it after: "paragon.song-of-concentration". */
   readonly skillId: string;
 }
@@ -3172,7 +3200,8 @@ export interface StatusModifiers {
   readonly weaponDamageMultiplier: number;
   /** Every status's, summed (#1064). */
   readonly physicalDamageTakenBonus: number;
-  readonly attributeDelta: number;
+  /** Every status's `attributeDeltas`, in `active` order (#1941). */
+  readonly attributeDeltas: readonly AttributeDelta[];
   /** Every status's `attributeSet`, oldest first (#1929). */
   readonly attributeSets: readonly AttributeSet[];
   readonly castTimeMultiplier: number;
@@ -3313,7 +3342,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
   const healingMultipliers: number[] = [];
   let weaponDamageMultiplier = 1;
   let physicalDamageTakenBonus = 0;
-  let attributeDelta = 0;
+  const attributeDeltas: AttributeDelta[] = [];
   const attributeSets: AttributeSet[] = [];
   let castTimeMultiplier = 1;
   let skillActivationMultiplier = 1;
@@ -3384,7 +3413,9 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     healingMultipliers.push(def.healingMultiplier);
     weaponDamageMultiplier *= def.weaponDamageMultiplier;
     physicalDamageTakenBonus += def.physicalDamageTakenBonus;
-    attributeDelta += def.attributeDelta;
+    for (const delta of def.attributeDeltas) {
+      attributeDeltas.push(delta);
+    }
     if (def.attributeSet !== undefined) {
       attributeSets.push(def.attributeSet);
     }
@@ -3464,7 +3495,7 @@ export function aggregateModifiers(statuses: readonly Pick<ActiveStatus, "id">[]
     healingMultiplier: combinedHealingMultiplier(healingMultipliers),
     weaponDamageMultiplier,
     physicalDamageTakenBonus,
-    attributeDelta,
+    attributeDeltas,
     attributeSets,
     castTimeMultiplier,
     skillActivationMultiplier,

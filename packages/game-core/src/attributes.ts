@@ -76,7 +76,7 @@ export function isAffordable(allocations: readonly AttributeAllocation[], budget
 /**
  * A temporary rank modifier — the seam the brief asks for ("skills
  * modifying attributes", "effects modifying attributes", §5): a status's
- * `attributeDelta`, as weakness's −1, through `rankOf` (#762).
+ * `attributeDeltas`, as weakness's −1, through `rankOf` (#762).
  * `delta` may be negative (a penalty) or positive (a bonus).
  */
 export interface AttributeModifier {

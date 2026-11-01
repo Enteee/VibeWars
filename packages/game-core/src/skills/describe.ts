@@ -17,11 +17,14 @@ import {
 import { getAttribute, getProfession, type ProfessionId } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
+import { getSkill } from "./catalog.js";
 import { creatureDamageMultiplier } from "./damage.js";
 import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
+  type AttributeDelta,
+  type AttributeScope,
   type AttributeSet,
   type NextSkill,
   type NextSkillRule,
@@ -194,11 +197,27 @@ const BLOCKED_ATTACKS: Record<"all" | "melee" | "projectile", string> = {
   projectile: "projectiles",
 };
 
+/**
+ * The attributes a `scope` holds (#1929, #1941): "attributes", "primary
+ * attribute", "elemental attributes", "Ritualist attributes", "Marksmanship".
+ */
+function scopeText(scope: AttributeScope): string {
+  if (typeof scope === "object") {
+    return "profession" in scope
+      ? `${getProfession(scope.profession).name} attributes`
+      : (getAttribute(scope.attributeId)?.name ?? scope.attributeId);
+  }
+  return scope === "all" ? "attributes" : `${scope} attribute${scope === "primary" ? "" : "s"}`;
+}
+
 /** What an `attributeSet` does (#1929): "attributes set to 0", "elemental attributes set to 13". */
 function attributeSetText({ scope, rank }: AttributeSet): string {
-  const which =
-    scope === "all" ? "attributes" : `${scope} attribute${scope === "primary" ? "" : "s"}`;
-  return `${which} set to ${String(rank)}`;
+  return `${scopeText(scope)} set to ${String(rank)}`;
+}
+
+/** What an attribute delta does (#762, #1941): "−1 to all attributes", "+1 to Marksmanship". */
+function attributeDeltaText({ scope, amount }: AttributeDelta): string {
+  return `${signed(amount)} to ${scope === "all" ? "all attributes" : scopeText(scope)}`;
 }
 
 /** `n` with its sign, a minus as GW1 prints it: "+3", "−66". */
@@ -359,13 +378,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.adrenalineGainFaster !== 0) {
     parts.push(adrenalineGainText(definition.adrenalineGainFaster));
   }
-  if (definition.attributeDelta !== 0) {
-    parts.push(`${signed(definition.attributeDelta)} to all attributes`);
-  }
-  if (definition.attributeBonus !== undefined) {
-    const { attributeId, amount } = definition.attributeBonus;
-    parts.push(`${signed(amount)} ${getAttribute(attributeId)?.name ?? attributeId}`);
-  }
+  parts.push(...definition.attributeDeltas.map(attributeDeltaText));
   if (definition.attributeSet !== undefined) {
     parts.push(attributeSetText(definition.attributeSet));
   }
@@ -499,9 +512,17 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`ends after ${String(count)} hit${plural}${how}`);
   }
   if (definition.nextSpells !== undefined) {
-    const { count, costReduction } = definition.nextSpells;
-    const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
-    parts.push(`your next ${spells} ${String(costReduction)} less energy`);
+    const { count, costReduction, noOvercast } = definition.nextSpells;
+    if (costReduction > 0) {
+      const spells = count === 1 ? "spell costs" : `${String(count)} spells cost`;
+      parts.push(`your next ${spells} ${String(costReduction)} less energy`);
+    } else {
+      // Glyph of Elemental Power's (#1941): a boost for the next spells alone.
+      parts.push(`for your next ${count === 1 ? "spell" : `${String(count)} spells`}`);
+    }
+    if (noOvercast) {
+      parts.push("no Overcast");
+    }
   }
   if (definition.spreads) {
     parts.push("spreads to adjacent combatants");
@@ -1590,6 +1611,9 @@ function describeNextSkillRule({
   extraRechargeSeconds,
   rechargesInstantly,
   losesAllEnergy,
+  rechargeFasterIfType,
+  resetsOwnRechargeIfType,
+  skillId,
 }: NextSkillRule): string[] {
   // One clause for all a rule does to the skill (#1730): "your next
   // spell casts instantly and takes 30s longer to recharge".
@@ -1607,7 +1631,32 @@ function describeNextSkillRule({
   return [
     ...(does.length > 0 ? [`your next ${NEXT_SKILL_KIND[which][0]} ${does.join(" and ")}`] : []),
     ...(losesAllEnergy ? ["you lose all energy as it is cast"] : []),
+    ...ifTypeText(rechargeFasterIfType, resetsOwnRechargeIfType, skillId),
   ];
+}
+
+/**
+ * What a rule does when its skill is of a type (#1941), Ritual Lord's:
+ * "for your next skill", "if it is a binding ritual, it recharges 50%
+ * faster and Ritual Lord recharges instantly".
+ */
+function ifTypeText(
+  faster: NextSkillRule["rechargeFasterIfType"],
+  resets: NextSkillRule["resetsOwnRechargeIfType"],
+  skillId: string,
+): string[] {
+  const type = faster?.type ?? resets;
+  if (type === undefined) {
+    return [];
+  }
+  const does = [
+    ...(faster === undefined
+      ? []
+      : [`it recharges ${String(Math.round(faster.fraction * 100))}% faster`]),
+    ...(resets === undefined ? [] : [`${getSkill(skillId)?.name ?? skillId} recharges instantly`]),
+  ];
+  const kind = TYPE_TEXT[type].slice(0, -1).toLowerCase();
+  return ["for your next skill", `if it is a ${kind}, ${does.join(" and ")}`];
 }
 
 /**
@@ -2363,12 +2412,17 @@ function describeEffect(
       switch (findStatusDefinition(effect.statusId)?.category) {
         case "stance":
         case "preparation":
-        case "glyph":
+        case "glyph": {
+          // One with no end of its own (#1941), as Glyph of Energy, lasts
+          // until what it holds is spent.
+          const what = describeStatus(effect.statusId, ranks);
           return {
-            text:
-              `For ${seconds(effect.durationSeconds)}, ` + describeStatus(effect.statusId, ranks),
+            text: Number.isFinite(effect.durationSeconds)
+              ? `For ${seconds(effect.durationSeconds)}, ${what}`
+              : `${what.charAt(0).toUpperCase()}${what.slice(1)}`,
             magnitude: undefined,
           };
+        }
         default:
           break;
       }

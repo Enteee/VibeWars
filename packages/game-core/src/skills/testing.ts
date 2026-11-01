@@ -31,6 +31,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     lastCombatAt: 0,
     attributeRanks: new Map(),
     borrowedAttribute: null,
+    heldAttributeDeltas: [],
     team: 0,
     dead: false,
     statuses,

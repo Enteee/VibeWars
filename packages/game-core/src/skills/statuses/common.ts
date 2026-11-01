@@ -22,7 +22,7 @@ export const COMMON_STATUSES: Readonly<Record<CommonStatusId, StatusDefinition>>
   blind: define("blind", "Blind", "condition", { attackMissChance: 0.9 }),
   weakness: define("weakness", "Weakness", "condition", {
     weaponDamageMultiplier: 0.34,
-    attributeDelta: -1,
+    attributeDeltas: [{ scope: "all", amount: -1 }],
   }),
   "cracked-armor": define("cracked-armor", "Cracked Armor", "condition", {
     armorReduction: { amount: 20, floor: 60 },
