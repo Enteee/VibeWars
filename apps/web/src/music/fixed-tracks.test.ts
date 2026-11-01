@@ -12,14 +12,12 @@ const MAPS = path.resolve(
   "../../../../packages/game-maps",
 );
 
-/** Every map id the game ships: the arenas and the training grounds. */
+/** Every arena the game ships; the Training Ground plays the menu's song (#2020). */
 function mapIds(): string[] {
-  return ["maps", "training"].flatMap((dir) =>
-    fs
-      .readdirSync(path.join(MAPS, dir), { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name),
-  );
+  return fs
+    .readdirSync(path.join(MAPS, "maps"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 }
 
 describe("fixed tracks (#1993)", () => {
@@ -30,6 +28,13 @@ describe("fixed tracks (#1993)", () => {
     expect(ids.length).toBeGreaterThan(0);
     for (const id of ids) {
       expect(MAP_TRACKS.has(id), id).toBe(true);
+    }
+  });
+
+  it("has a row for no map but an arena", () => {
+    const ids = new Set(mapIds());
+    for (const mapId of MAP_TRACKS.keys()) {
+      expect(ids.has(mapId), mapId).toBe(true);
     }
   });
 

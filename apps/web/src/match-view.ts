@@ -506,6 +506,7 @@ export async function startMatchView(
   const matchSounds = attachMatchSounds(seat ?? viewed, sounds);
   const matchMusic = attachMatchMusic(viewed, {
     screen: "match",
+    menuDepth: null,
     mode: () => music().mode(),
     tracks: TRACKS,
     onChange: (state) => {
