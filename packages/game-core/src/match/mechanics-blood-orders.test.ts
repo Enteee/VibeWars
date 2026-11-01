@@ -6,6 +6,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
+import { NO_RANKS } from "../skills/status.js";
 import { strikesOf } from "../skills/testing.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -180,7 +181,7 @@ describe("Dark Fury (#1979)", () => {
   function strikes(fury: boolean): number {
     const sim = match();
     if (fury) {
-      get(sim, "a").statuses.apply("dark-fury", 30, "c");
+      get(sim, "a").statuses.apply("dark-fury", 30, "c", NO_RANKS);
     }
     expect(sim.requestAttack("a", "f")).toEqual({ ok: true });
     stepFor(sim, 4);
@@ -215,7 +216,7 @@ describe("Awaken the Blood (#1979)", () => {
     const caster = get(sim, "c");
     caster.maxHealth = 480;
     caster.health = 480;
-    caster.statuses.apply("awaken-the-blood", 39, "c");
+    caster.statuses.apply("awaken-the-blood", 39, "c", NO_RANKS);
     cast(sim, "c", "necromancer.order-of-pain", "c");
     expect(caster.health).toBe(480 - 122);
   });
