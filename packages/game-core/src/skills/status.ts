@@ -1295,7 +1295,7 @@ export interface SpreadGainedConditionEffect {
 /**
  * An echo's copy (#469): the trigger's own skill's slot holds the skill the
  * bearer just used, for `seconds`, then gives it back. Only a spell, with
- * `spellsOnly`; never another echo skill (`isEchoSkill`). The simulation's
+ * `spellsOnly`; never another copier (`copiesSkill`). The simulation's
  * trigger context names the skill used.
  */
 export interface EchoEffect {
@@ -1583,6 +1583,11 @@ export interface ActiveStatus {
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
+  /**
+   * The skill that put it on (#1928): what Inspired Hex's copy is of.
+   * `undefined` for one a trigger, a zone or a spirit put on.
+   */
+  readonly sourceSkillId: string | undefined;
   /** The outbreak it belongs to, for a status that spreads; `null` for every other. */
   outbreak: Outbreak | null;
   /**
@@ -1603,6 +1608,12 @@ export interface ActiveStatus {
    * (#1826), as `apply` or `maintain` put it up; `null` for every other, and for one replaced.
    */
   returnPoint: Vec2 | null;
+}
+
+/** A status `removeByCategory` took off, and the skill that put it on (#1928). */
+export interface RemovedStatus {
+  readonly id: StatusId;
+  readonly sourceSkillId: string | undefined;
 }
 
 export function isStatusId(value: unknown): value is StatusId {
@@ -2031,6 +2042,7 @@ export class StatusSet {
     appliedSeconds: number,
     sourceId: string,
     returnPoint: Vec2 | null = null,
+    sourceSkillId?: string,
   ): boolean {
     if (appliedSeconds <= 0 || this.isImmuneTo(id) || this.#breaksHex(id, sourceId)) {
       return false;
@@ -2078,6 +2090,7 @@ export class StatusSet {
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
       sourceId,
+      sourceSkillId,
       outbreak,
       maintained: null,
       projected: false,
@@ -2137,6 +2150,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId: undefined,
       outbreak,
       maintained: null,
       projected: false,
@@ -2159,6 +2173,7 @@ export class StatusSet {
     sourceId: string,
     seq: number,
     returnPoint: Vec2 | null = null,
+    sourceSkillId?: string,
   ): boolean {
     const definition = getStatusDefinition(id);
     if (definition.category !== "enchantment") {
@@ -2179,6 +2194,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId,
       outbreak: null,
       maintained: { seq, outOfRangeSeconds: 0 },
       projected: false,
@@ -2215,6 +2231,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       sourceId,
+      sourceSkillId: undefined,
       outbreak: null,
       maintained: null,
       projected: true,
@@ -2357,8 +2374,9 @@ export class StatusSet {
 
   /**
    * Remove up to `count` statuses of a category — the shape every
-   * "remove a condition"/"strip an enchantment" skill needs. Returns the
-   * ids actually removed, so a caller can report exactly what it stripped.
+   * "remove a condition"/"strip an enchantment" skill needs. Returns what
+   * it actually removed, so a caller can report exactly what it stripped,
+   * and the skill that put each on, for one that copies it (#1928).
    *
    * The newest applied goes first, as in GW1 (#521), where covering an
    * important enchantment or condition with a cheaper one is a tactic.
@@ -2371,8 +2389,8 @@ export class StatusSet {
     count = Number.POSITIVE_INFINITY,
     profession?: ProfessionId,
     statusId?: StatusId,
-  ): StatusId[] {
-    const removed: StatusId[] = [];
+  ): RemovedStatus[] {
+    const removed: RemovedStatus[] = [];
     for (const status of [...this.#statuses.values()].reverse()) {
       if (removed.length >= count) {
         break;
@@ -2383,10 +2401,10 @@ export class StatusSet {
         (profession === undefined || definition.profession === profession) &&
         (statusId === undefined || status.id === statusId)
       ) {
-        removed.push(status.id);
+        removed.push({ id: status.id, sourceSkillId: status.sourceSkillId });
       }
     }
-    this.#end(removed);
+    this.#end(removed.map(({ id }) => id));
     return removed;
   }
 
