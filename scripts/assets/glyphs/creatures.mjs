@@ -3,6 +3,14 @@
 import { C, stroke } from "../icon-kit.mjs";
 import { inkFill, inkLine, smallFigure, smallSkull, pawPrint, glyph } from "../glyph-kit.mjs";
 
+/**
+ * The pet attacks of #2003: the claw gashes low and left, a small mark in the
+ * free top right for what the strike pays off. @param {string} mark
+ */
+const clawMark = (mark) =>
+  `<g transform="translate(0.5,3) scale(0.8)">${inkLine("M5.5 4L9.5 20M10.5 4L13 15M15.5 4L18 11", 2.8)}</g>` +
+  mark;
+
 /** @type {Readonly<Record<string, import("../glyph-kit.mjs").GlyphEntry>>} */
 const glyphs = {
   "fox-head": {
@@ -285,17 +293,6 @@ const glyphs = {
       inkLine("M12 15C6.5 12.5 16.5 9.5 11.5 5", 2.8) +
       `<circle cx="11" cy="3.8" r="2.2" fill="${C.ink}"/>`,
   },
-};
-
-/**
- * The pet attacks of #2003: the claw gashes low and left, a small mark in the
- * free top right for what the strike pays off. @param {string} mark
- */
-const clawMark = (mark) =>
-  `<g transform="translate(0.5,3) scale(0.8)">${inkLine("M5.5 4L9.5 20M10.5 4L13 15M15.5 4L18 11", 2.8)}</g>` +
-  mark;
-
-Object.assign(glyphs, {
   "claw-heal": {
     means: "Claw gashes with a plus: a pet attack that heals you (#2003).",
     draw: () => clawMark(inkLine("M18 2.5V9.5M14.5 6H21.5", 2.2)),
@@ -312,14 +309,15 @@ Object.assign(glyphs, {
   },
   "claw-enchanted": {
     means:
-      "Claw gashes under a four-point spark: a pet attack that needs an enchantment on you (#2003).",
-    draw: () => clawMark(inkFill("M18 2L19.5 5L22.5 6.5L19.5 8L18 11L16.5 8L13.5 6.5L16.5 5Z")),
+      "Claw gashes under a hollow rounded square, the enchantment plate: a pet attack that needs an enchantment on you (#2003).",
+    draw: () =>
+      clawMark(`<rect x="14.2" y="2.8" width="7" height="7" rx="2" ${stroke(C.ink, 1.7)}/>`),
   },
   "claw-recharge": {
     means:
       "Claw gashes under an hourglass: a pet attack that counts your recharging skills (#2003).",
     draw: () => clawMark(inkLine("M15 2.5H21L15 10H21Z", 1.6)),
   },
-});
+};
 
 export default glyphs;
