@@ -747,6 +747,8 @@ async function main(): Promise<void> {
     list: readonly StoredCharacter[],
     problems: readonly string[] = [],
   ): void => {
+    // Both carry the Random Arena join controls: its NAT check starts now (#2090).
+    startNatCheck();
     (entry === "random-arena" ? renderRandomArena : renderCharacterBuilder)(
       screenRoot,
       {

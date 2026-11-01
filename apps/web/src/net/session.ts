@@ -26,6 +26,7 @@ import {
   generateLobbyCode,
   joinLobby,
   publicRoom,
+  startingQueueState,
   type FormedGroup,
   type Guild,
   type LobbyClosedReason,
@@ -601,6 +602,8 @@ export function enterQueue(
     });
     events.onState(started.state);
   };
+  // The screen is searching at once, not once the NAT hint is in (#2090).
+  events.onState(startingQueueState(mode));
   void start();
 
   return {
