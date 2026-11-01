@@ -650,6 +650,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         build,
       });
     }
+    // Team Arena draws its map for each match (#1994); a queued lobby's
+    // is its group's.
+    if (mode === "team-arena" && queued === undefined) {
+      mapId = pick(options.modeMaps[mode]) ?? mapId;
+    }
     const room = scopeTransport(transport);
     try {
       match = {
@@ -1150,6 +1155,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return changed;
       }
       case "select-map":
+        // Only a Hosted Game is picked (#1994); every other mode chooses its own.
+        if (mode !== "hosted-game") {
+          refuse(member.id, "not-pickable");
+          return false;
+        }
         // The host decides what maps exist, and only its own player picks.
         if (member.id !== local.selfId || !mapIds.includes(command.mapId)) {
           return false;
@@ -1179,8 +1189,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         mode = command.mode;
         const [first = defaultMap, ...rest] = options.modeMaps[mode];
         // In the same broadcast as the mode: no member ever sees a mode
-        // with a map outside it.
-        if (mapId !== first && !rest.includes(mapId)) {
+        // with a map outside it. Only a Hosted Game keeps a picked one
+        // (#1994): Heroes' Ascent starts on its first, and Team Arena's is a
+        // placeholder until its draw.
+        if (mapId !== first && (mode !== "hosted-game" || !rest.includes(mapId))) {
           mapId = first;
           for (const other of members.values()) {
             other.ready = false;

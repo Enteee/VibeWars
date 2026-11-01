@@ -6174,7 +6174,6 @@ body:has(#app > .chat) .now-playing {
   gap: 0.3rem;
   width: min(24rem, 40vw);
   font-size: 0.78rem;
-  transition: opacity 400ms ease;
 }
 
 #viewport > .chat {
@@ -6186,28 +6185,73 @@ body:has(#app > .chat) .now-playing {
   left: calc(76px + 0.9rem);
 }
 
-/* In a match the arena is under the panel: every click and wheel goes
-   there, and the box shows only while it is open (Enter). A name mutes
-   only then. */
-.chat.in-match:not(.is-open) {
+/* Closed (#2018): only the lines and the icon. Every click and wheel goes
+   through the lines to what is under them, the arena or a menu; the icon
+   alone takes one. A name mutes only while open. */
+.chat:not(.is-open) {
   pointer-events: none;
 }
 
-.chat.in-match:not(.is-open) .chat-form {
+.chat:not(.is-open) .chat-form {
   display: none;
 }
 
-/* Idle in a match: faded, until a line comes or the box opens. */
-.chat.is-idle {
-  opacity: 0.35;
+/* Closed, a line fades out once it has shown CHAT_LINE_SHOWN_SECONDS;
+   opening shows every kept line again. */
+.chat:not(.is-open) .chat-line {
+  transition: opacity 1s linear;
+}
+
+.chat:not(.is-open) .chat-line.is-faded {
+  opacity: 0;
+}
+
+.chat:not(.is-open) .chat-lines {
+  overflow: hidden;
+  text-shadow: 0 1px 2px #000;
+}
+
+/* Open: a clear box around the lines and the input. */
+.chat.is-open {
+  padding: 0.4rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+}
+
+.chat-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.chat-toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0.15rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.chat-toggle img {
+  width: 100%;
+  height: 100%;
+}
+
+.chat-toggle:hover,
+.chat-toggle:focus-visible,
+.chat-toggle[aria-expanded="true"] {
+  border-color: var(--accent);
 }
 
 .chat-lines {
   max-height: 12rem;
   overflow-y: auto;
   padding: 0.3rem 0.5rem;
-  background: rgb(14 17 22 / 75%);
-  border: 1px solid var(--line);
   overflow-wrap: anywhere;
 }
 
@@ -6262,6 +6306,7 @@ body:has(#app > .chat) .now-playing {
 
 .chat-form {
   display: flex;
+  flex: 1 1 auto;
   gap: 0.3rem;
 }
 
