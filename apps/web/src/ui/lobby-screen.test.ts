@@ -568,4 +568,19 @@ describe("lobbyPanel: the map (#1994)", () => {
     expect(selects(part)).toEqual([]);
     expect(part.textContent).toBe("Map: Alpha (small)");
   });
+
+  /** The mode line under the bar in `mode`, on Alpha. */
+  const modeLines = (mode: LobbySnapshot["mode"]): string[] => {
+    const shown = { ...snapshot("waiting"), mode, mapId: "arena-alpha" };
+    const { body } = lobbyPanel(shown, callbacks, undefined, maps);
+    return (body as unknown as FakeElement).all("lobby-mode").map((line) => line.textContent);
+  };
+
+  it("names what Team Arena's draw can play, not its placeholder map's mode", () => {
+    expect(modeLines("team-arena")).toEqual(["Annihilation or Kill Count: drawn at the start"]);
+  });
+
+  it("names the mode of a map that is set", () => {
+    expect(modeLines("hosted-game")).toEqual(["Annihilation: defeat every foe"]);
+  });
 });
