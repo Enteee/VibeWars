@@ -194,6 +194,15 @@ describe("runnerCommand", () => {
     ]);
   });
 
+  it("points externals/node20 at node24 inside the jail (#2006)", () => {
+    const i = command.lastIndexOf("--symlink");
+    expect(command.slice(i, i + 3)).toEqual([
+      "--symlink",
+      "node24",
+      "/nix/store/aaa-github-runner/lib/externals/node20",
+    ]);
+  });
+
   it("runs the runner through the init, with no JIT config in any argument", () => {
     expect(command.slice(-4)).toEqual([
       "--",

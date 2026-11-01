@@ -191,6 +191,10 @@ export function runnerCommand({ jail, unit, bwrap, cpus, memoryGib, tasksMax, in
     "--",
     bwrap,
     ...runnerJailArgs(jail),
+    // The runner's hashFiles() starts externals/node20/bin/node whatever the
+    // env says (#2006), and nixpkgs ships node24 alone. The runner's store
+    // directory is an overlay, so the link exists in the jail only.
+    ...["--symlink", "node24", `${runner}/lib/externals/node20`],
     "--",
     init,
     `${runner}/bin/Runner.Listener`,
