@@ -3016,4 +3016,32 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "assassin.shadow-form",
+    name: "Shadow Form",
+    gwId: 826,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP (#1951): "For 5...15 seconds, all hostile spells that target you
+    // fail and all attacks against you miss. When Shadow Form ends, lose
+    // all but 5...50 Health": 13 s.
+    effects: [{ kind: "apply-status", statusId: "shadow-form", durationSeconds: 13 }],
+  },
 ];

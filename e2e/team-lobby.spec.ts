@@ -125,6 +125,11 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       await expect(page.locator(".play-card.is-chosen .play-card-member")).toHaveCount(3);
     }
 
+    // A seat is its character held over its skills, not its name (#1863).
+    const first = host.locator(".team-lobby-seat").nth(0);
+    await expect(first.locator("canvas.character-figure")).toHaveCount(1);
+    await expect(first.locator(".mini-skill")).toHaveCount(8);
+    await expect(first).toContainText("Warrior / Monk");
     // Seats: the host the Warrior, the guest the Ranger; the bot gets the Monk.
     await host.locator(".team-lobby-seat").nth(0).click();
     await expect(guest.locator(".team-lobby-seat").nth(0)).toBeDisabled();

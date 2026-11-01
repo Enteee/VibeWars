@@ -363,12 +363,14 @@ export function applyDamage(
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
   }
-  if (reverse(target, amount, events)) {
+  // Mist Form's (#1951), after every mitigation: what a hexed foe deals.
+  const cut = hexedSourceDamage(target, amount, dealer);
+  if (cut <= 0 || reverse(target, cut, events)) {
     return;
   }
   // Symbiotic Bond (#1108): its share of a physical hit goes to its
   // source when the tick drains; the bearer takes the rest.
-  const kept = isPhysicalDamage(type) ? target.statuses.redirect(amount) : amount;
+  const kept = isPhysicalDamage(type) ? target.statuses.redirect(cut) : cut;
   const applied = Math.min(guardedDamage(target, kept), target.health);
   if (negateFatal(target, applied, dealer, events)) {
     return;
@@ -1200,6 +1202,8 @@ function splashReaches(
   switch (hits) {
     case "allies":
       return combatant.team === caster.team;
+    case "non-spirit-allies":
+      return combatant.team === caster.team && creature?.kind !== "spirit";
     case "party":
       return combatant.team === caster.team && creature === undefined;
     case "foes":
@@ -1233,6 +1237,36 @@ function destroyCreature(
   combatant.health = 0;
   combatant.dead = true;
   events.push({ kind: "creature-destroyed", targetId: combatant.id });
+}
+
+/**
+ * `amount` from `dealer`, cut by each status on `target` that cuts damage
+ * from a foe carrying a hex of its attribute (#1951): Mist Form's 33%
+ * against a Water Magic hex. Rounded once, as `mitigate` rounds.
+ */
+function hexedSourceDamage(
+  target: Combatant,
+  amount: number,
+  dealer: Combatant | undefined,
+): number {
+  if (dealer === undefined || dealer.team === target.team) {
+    return amount;
+  }
+  let multiplier = 1;
+  for (const { id } of target.statuses.active) {
+    const cut = getStatusDefinition(id).damageReductionFromHexedSource;
+    if (
+      cut !== undefined &&
+      dealer.statuses.active.some(
+        (status) =>
+          getStatusDefinition(status.id).category === "hex" &&
+          getStatusDefinition(status.id).attribute === cut.attributeId,
+      )
+    ) {
+      multiplier *= 1 - cut.fraction;
+    }
+  }
+  return multiplier === 1 ? amount : Math.round(amount * multiplier);
 }
 
 /**
@@ -1410,7 +1444,11 @@ export function applyEffect(
 
     case "heal": {
       const healed = healRecipient(effect.recipient, caster, target, context.surroundings);
-      if (healed === undefined) {
+      if (
+        healed === undefined ||
+        (effect.onlyBelowHealthFraction !== undefined &&
+          healed.health >= effect.onlyBelowHealthFraction * effectiveMaxHealth(healed))
+      ) {
         return events;
       }
       // Healer's Covenant's "heal 20% less" (#1761).
@@ -1537,6 +1575,14 @@ export function applyEffect(
       return events;
     }
 
+    case "lose-health-to": {
+      if (target !== undefined) {
+        const keep = resolveMagnitude(effect.keep, caster);
+        loseHealth(target, target.health - keep, "health-loss", events);
+      }
+      return events;
+    }
+
     case "give-health": {
       if (target === undefined || target.dead) {
         return events;
@@ -1578,6 +1624,7 @@ export function applyEffect(
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
       // Infuse Condition's (#1915): a condition goes to the bearer's
       // closest living minion instead, if it has one.
+      const before = events.length;
       landOnTaker(
         bearer,
         effect.statusId,
@@ -1588,6 +1635,16 @@ export function applyEffect(
         castSpot(context, caster),
         context.skillId,
       );
+      // Elemental Flame's (#1951): the caster's hex landed on a foe.
+      if (
+        bearer.team !== caster.team &&
+        getStatusDefinition(effect.statusId).category === "hex" &&
+        events
+          .slice(before)
+          .some((event) => event.kind === "status-applied" && event.targetId === bearer.id)
+      ) {
+        caster.statuses.recordAppliedHex(effect.statusId, bearer.id);
+      }
       return events;
     }
 
@@ -2663,6 +2720,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "life-steal":
     case "damage":
     case "lose-health":
+    case "lose-health-to":
     case "transfer-conditions":
     case "spread-conditions":
     case "give-health":

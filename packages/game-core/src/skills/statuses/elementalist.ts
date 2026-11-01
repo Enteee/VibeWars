@@ -1,8 +1,11 @@
-import { AREA_NEARBY } from "../../distances.js";
+import { AREA_EARSHOT, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import { define } from "./define.js";
 
 export type ElementalistStatusId =
+  // PvP forms (#1951).
+  | "elemental-flame"
+  | "mist-form"
   | "shard-storm"
   | "ice-spikes"
   | "deep-freeze"
@@ -48,6 +51,14 @@ export type ElementalistStatusId =
   | "master-of-magic"
   | "glyph-of-elemental-power"
   | "glyph-of-energy";
+
+/** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
+const MIST_FORM_HEAL = {
+  kind: "heal",
+  amount: { flat: 2.1 },
+  perUsedSkillEnergy: true,
+  onlyBelowHealthFraction: 0.8,
+} as const;
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -358,7 +369,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     triggers: (["air-magic", "earth-magic", "fire-magic", "water-magic"] as const).map(
       (attribute) => ({
         on: "bearer-uses-skill" as const,
-        usedSkill: { attribute: `elementalist.${attribute}` },
+        usedSkill: { attributes: { attributeId: `elementalist.${attribute}` } },
         target: "bearer" as const,
         effects: [
           { kind: "energy-gain" as const, amount: { flat: 1 } },
@@ -371,6 +382,47 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         skillId: "elementalist.master-of-magic",
       }),
     ),
+  }),
+  // PvP: "For 5...20 seconds, whenever you apply an Elemental hex to a foe,
+  // that foe is set on fire for 1...2 seconds" (#1951): 2.
+  "elemental-flame": define("elemental-flame", "Elemental Flame", "enchantment", {
+    profession: "elementalist",
+    triggers: [
+      {
+        on: "bearer-applies-hex",
+        appliedHex: { attributes: "elemental" },
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 2 }],
+        target: "hexed-foe",
+        skillId: "elementalist.elemental-flame",
+      },
+    ],
+  }),
+  // PvP: "you take 33% less damage from foes under the effect of Water Magic
+  // hexes. Whenever you cast an elemental spell, all non-spirit allies in
+  // earshot are healed for 50...250% of the Energy cost of the spell. This
+  // spell does not heal allies above 80% Health" (#1951): 210%, the bearer
+  // among them.
+  "mist-form": define("mist-form", "Mist Form", "enchantment", {
+    profession: "elementalist",
+    damageReductionFromHexedSource: { attributeId: "elementalist.water-magic", fraction: 0.33 },
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        usedSkill: { attributes: "elemental" },
+        target: "bearer",
+        effects: [
+          MIST_FORM_HEAL,
+          {
+            kind: "splash",
+            hits: "non-spirit-allies",
+            radius: AREA_EARSHOT,
+            maxTargets: undefined,
+            effects: [MIST_FORM_HEAL],
+          },
+        ],
+        skillId: "elementalist.mist-form",
+      },
+    ],
   }),
 };
 
@@ -389,7 +441,7 @@ function attunement(
     triggers: [
       {
         on: "bearer-uses-skill",
-        usedSkill: { attribute: `elementalist.${attribute}` },
+        usedSkill: { attributes: { attributeId: `elementalist.${attribute}` } },
         target: "bearer",
         effects: [
           { kind: "energy-gain", amount: { flat: 1 } },

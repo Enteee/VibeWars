@@ -439,6 +439,20 @@ export interface StatusDefinition {
    */
   readonly untargetableByFoeSpells: boolean;
   /**
+   * A foe's spell whose chosen target is the bearer fails as it finishes
+   * (#1951): Shadow Form's "hostile spells that target you fail". It is
+   * paid for and recharges, as an interrupted one, and does nothing else.
+   * Unlike `untargetableByFoeSpells` it may be started; an area or a
+   * splash still reaches the bearer.
+   */
+  readonly foeSpellsFail: boolean;
+  /**
+   * Every blow at the bearer misses (#1951): Shadow Form's "attacks
+   * against you miss", as a blind attacker's miss, never a block, so
+   * nothing that answers a block fires.
+   */
+  readonly attacksAgainstMiss: boolean;
+  /**
    * The bearer can hold no enchantment (#1732): Well of the Profane's
    * "stripped of all enchantments and cannot be the target of further
    * enchantments". Gaining it ends every enchantment on the bearer, its
@@ -680,6 +694,14 @@ export interface StatusDefinition {
   readonly damageReductionWhileCasting:
     { readonly skillType: SkillType; readonly amount: number } | undefined;
   /**
+   * Damage from a dealer carrying a hex of `attributeId` is cut by
+   * `fraction` (#1951): Mist Form's "33% less damage from foes under a
+   * Water Magic hex". Read as each packet lands, after every other
+   * mitigation; several multiply. `undefined`: none.
+   */
+  readonly damageReductionFromHexedSource:
+    { readonly attributeId: string; readonly fraction: number } | undefined;
+  /**
    * The bearer is destroyed when this runs its time (#1827), as
    * `destroy-target-spirit` destroys: no corpse, no killer, no morale.
    * Signet of Ghostly Might's "After 10 seconds, that creature is
@@ -916,6 +938,13 @@ export type StatusTriggerEvent =
    */
   | "bearer-attack-begins"
   | "bearer-uses-skill"
+  /**
+   * A hex the bearer put on a foe landed, new or renewed (#1951): once per
+   * foe, an area hex's too, of `StatusTrigger.appliedHex`'s attributes.
+   * Elemental Flame's "whenever you apply an Elemental hex". Recorded on
+   * the hexed foe, and fired at the drain, at it.
+   */
+  | "bearer-applies-hex"
   | "bearer-hits"
   /**
    * One of the bearer's blows did not land (#1332): it missed on a roll
@@ -1260,6 +1289,8 @@ export interface StatusTrigger {
    * struck the killing blow.
    * Or `healer` (#1913): the status's source turns on whoever healed the
    * bearer, only a foe of the source's, as Soul Bind hurts the healer.
+   * Or `hexed-foe` (#1951): the bearer turns on the foe its hex just
+   * landed on, as Elemental Flame sets it on fire.
    */
   readonly effects: readonly TriggerEffect[];
   readonly target:
@@ -1269,7 +1300,8 @@ export interface StatusTrigger {
     | "created"
     | "gained-source"
     | "source-on-offender"
-    | "healer";
+    | "healer"
+    | "hexed-foe";
   /**
    * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
    * only for an attack made with a weapon of this class in the bearer's
@@ -1319,17 +1351,23 @@ export interface StatusTrigger {
    */
   readonly healthBelow?: number;
   /**
+   * On `bearer-applies-hex`, and only there (#1951): the hex's attribute
+   * must be in `attributes`, as Elemental Flame's "Elemental hex".
+   */
+  readonly appliedHex?: { readonly attributes: AttributeScope };
+  /**
    * On `bearer-uses-skill` only (#1437): it fires only for a skill of this
    * type and profession, as Avatar of Dwayna's "whenever you use a Dervish
    * attack skill". With `elite`, only an elite skill (#1473): Price of
    * Pride's. With `adrenal`, only one paid for in adrenaline (#1592): Rage of
-   * the Ntouka's "whenever you use an adrenal skill". With `attribute`, only
-   * a skill of that attribute (#1614): Fire Attunement's "each time you use
-   * Fire Magic". Absent: any skill.
+   * the Ntouka's "whenever you use an adrenal skill". With `attributes`,
+   * only a skill of an attribute in that scope (#1614, #1951): Fire
+   * Attunement's "each time you use Fire Magic", Mist Form's "elemental
+   * spell". On `bearer-casts-spell` too. Absent: any skill.
    */
   readonly usedSkill?: {
     readonly type?: SkillType;
-    readonly attribute?: string;
+    readonly attributes?: AttributeScope;
     readonly profession?: ProfessionId;
     readonly elite?: true;
     readonly adrenal?: true;
@@ -1435,6 +1473,13 @@ export type StatusChange =
       readonly kind: "gained-hex-or-enchantment";
       readonly id: StatusId;
       readonly sourceId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  /** The bearer's hex `id` landed on `hexedId`, new or renewed (#1951). */
+  | {
+      readonly kind: "applied-hex";
+      readonly id: StatusId;
+      readonly hexedId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
   | {
@@ -1945,6 +1990,18 @@ export class StatusSet {
     const fired = this.#answering("bearer-takes-physical-damage");
     if (fired.length > 0) {
       this.#changes.push({ kind: "took-physical-damage", fired });
+    }
+  }
+
+  /**
+   * The bearer's hex `id` landed on `hexedId` (#1951), recorded only if a
+   * status on it answers that, with the triggers that do; which of them
+   * answer a hex of `id`'s attribute is the firing's to say.
+   */
+  public recordAppliedHex(id: StatusId, hexedId: string): void {
+    const fired = this.#answering("bearer-applies-hex");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "applied-hex", id, hexedId, fired });
     }
   }
 
@@ -3128,6 +3185,11 @@ export class StatusSet {
  */
 export function untargetableByFoeSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
   return statuses.some(({ id }) => getStatusDefinition(id).untargetableByFoeSpells);
+}
+
+/** Whether every blow at the bearer misses (#1951, `attacksAgainstMiss`). */
+export function attacksAgainstMiss(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
+  return statuses.some(({ id }) => getStatusDefinition(id).attacksAgainstMiss);
 }
 
 /**
