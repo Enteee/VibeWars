@@ -1,6 +1,7 @@
 import { isCompanionRule } from "../../skills/activation.js";
 import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
+import { copiesSkill } from "../../skills/stand-in.js";
 import type { StatusCategory } from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
@@ -44,7 +45,10 @@ export function botUses(skill: Skill): readonly BotUse[] {
       roles.includes("condition") ||
       roles.includes("knockdown") ||
       skill.attack !== undefined ||
-      skill.effects.some(dealsDamage))
+      skill.effects.some(dealsDamage) ||
+      // Inspired Enchantment and Arcane Thievery (#1928): what it takes off
+      // a foe is the bot's to use.
+      (skill.target === "single-enemy" && copiesSkill(skill.id)))
   ) {
     uses.push("offence");
   }
@@ -121,6 +125,18 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
     }
   }
   return [...found];
+}
+
+/**
+ * The category a copier takes off its foe to stand in for (#1928):
+ * Inspired Enchantment's enchantments. `undefined` for any other skill.
+ */
+export function copiedOffFoe(skill: Skill): StatusCategory | undefined {
+  if (skill.target !== "single-enemy" || !copiesSkill(skill.id)) {
+    return undefined;
+  }
+  const removal = skill.effects.find((effect) => effect.kind === "remove-status");
+  return removal?.kind === "remove-status" ? removal.category : undefined;
 }
 
 /**

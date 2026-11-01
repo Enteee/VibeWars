@@ -22,6 +22,7 @@ import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
+  type AttributeSet,
   type NextSkill,
   type NextSkillRule,
   type OwnSkillModifier,
@@ -193,6 +194,13 @@ const BLOCKED_ATTACKS: Record<"all" | "melee" | "projectile", string> = {
   projectile: "projectiles",
 };
 
+/** What an `attributeSet` does (#1929): "attributes set to 0", "elemental attributes set to 13". */
+function attributeSetText({ scope, rank }: AttributeSet): string {
+  const which =
+    scope === "all" ? "attributes" : `${scope} attribute${scope === "primary" ? "" : "s"}`;
+  return `${which} set to ${String(rank)}`;
+}
+
 /** `n` with its sign, a minus as GW1 prints it: "+3", "−66". */
 function signed(n: number): string {
   return n > 0 ? `+${String(n)}` : `−${String(-n)}`;
@@ -357,6 +365,15 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.attributeBonus !== undefined) {
     const { attributeId, amount } = definition.attributeBonus;
     parts.push(`${signed(amount)} ${getAttribute(attributeId)?.name ?? attributeId}`);
+  }
+  if (definition.attributeSet !== undefined) {
+    parts.push(attributeSetText(definition.attributeSet));
+  }
+  if (definition.borrowsAttribute !== undefined) {
+    const { attributeId, spells } = definition.borrowsAttribute;
+    const name = getAttribute(attributeId)?.name ?? attributeId;
+    const next = spells === 1 ? "spell uses" : `${String(spells)} spells use`;
+    parts.push(`your next ${next} ${name}`);
   }
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);
@@ -2572,12 +2589,22 @@ function describeEffect(
             ? `All of the target's skills are disabled for ${time}`
             : effect.which === "elite"
               ? `The target's elite skill is disabled for ${time}`
-              : effect.which === "interrupted"
-                ? `The interrupted skill is disabled for ${time}`
-                : `That skill and all skills of the same attribute are disabled for ${time}`,
+              : effect.which === "random-spell"
+                ? `One of the target's spells, at random, is disabled for ${time}`
+                : effect.which === "interrupted"
+                  ? `The interrupted skill is disabled for ${time}`
+                  : `That skill and all skills of the same attribute are disabled for ${time}`,
         magnitude,
       };
     }
+    // Inspired Enchantment's and Arcane Thievery's (#1928).
+    case "copy-removed":
+      return {
+        text: `This skill becomes the one you removed for ${String(effect.seconds)} seconds`,
+        magnitude: undefined,
+      };
+    case "copy-disabled":
+      return { text: "This skill becomes that spell for as long", magnitude: undefined };
     case "disable-own-skills": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       return { text: disableOwnText(effect, false, magnitude.current), magnitude };

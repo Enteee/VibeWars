@@ -241,4 +241,12 @@ export const MESMER_STATUS_ICONS = {
       `<path d="M12 3c2 2.6 3.5 4.3 3.5 6a3.5 3.5 0 0 1-7 0c0-1.7 1.5-3.4 3.5-6z" ${stroke(c, 1.8)}/>` +
       `<path d="M8 15l4 3 4-3M8 19l4 3 4-3" ${stroke(c, 1.8)}/>`,
   ],
+  // Skill effect (#1929), a stand-in until its art card: a mask over
+  // tally marks, spells counted down.
+  "signet-of-illusions": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 9q8-6 16 0q-8 7-16 0z" ${stroke(c, 2)}/>` +
+      `<path d="M8 17v4M12 17v4M16 17v4" ${stroke(c, 1.6)}/>`,
+  ],
 };

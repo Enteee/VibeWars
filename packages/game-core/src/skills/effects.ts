@@ -14,6 +14,7 @@ import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from 
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
+import { standIn } from "./stand-in.js";
 import {
   aggregateModifiers,
   damageTypeDealt,
@@ -144,7 +145,16 @@ export type CombatEvent =
       readonly amount: number;
       readonly statusId: StatusId;
     }
-  | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
+  | {
+      readonly kind: "status-removed";
+      readonly targetId: string;
+      readonly statusId: StatusId;
+      /**
+       * The skill that put it on, when a `remove-status` took it (#1928):
+       * what a `copy-removed` after it copies. Absent for any other end.
+       */
+      readonly sourceSkillId?: string | undefined;
+    }
   | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
   /**
    * A maintained enchantment on `targetId` its caster `casterId` could no
@@ -1000,6 +1010,7 @@ export function applyStatus(
   durationSeconds: number,
   sourceId: string,
   returnPoint: Vec2 | null = null,
+  sourceSkillId?: string,
 ): number | undefined {
   const { category } = getStatusDefinition(statusId);
   if (isInvulnerable(target) && (category === "hex" || category === "condition")) {
@@ -1007,7 +1018,7 @@ export function applyStatus(
   }
   const lossBefore = maxHealthLossOf(target);
   const raisedBefore = raisedMaxHealth(target);
-  if (!target.statuses.apply(statusId, durationSeconds, sourceId, returnPoint)) {
+  if (!target.statuses.apply(statusId, durationSeconds, sourceId, returnPoint, sourceSkillId)) {
     return 0;
   }
   const raised = raisedMaxHealth(target) - raisedBefore;
@@ -1091,6 +1102,7 @@ function landOnTaker(
   events: CombatEvent[],
   surroundings: Surroundings,
   returnPoint: Vec2 | null,
+  sourceSkillId?: string,
 ): void {
   const taker = conditionTaker(target, statusId, surroundings);
   landStatus(
@@ -1100,6 +1112,7 @@ function landOnTaker(
     sourceId,
     events,
     returnPoint,
+    sourceSkillId,
   );
 }
 
@@ -1118,6 +1131,7 @@ function landStatus(
   sourceId: string,
   events: CombatEvent[],
   returnPoint: Vec2 | null,
+  sourceSkillId?: string,
 ): void {
   // Immune (#1455): it does not land, and there is nothing to say.
   if (target.statuses.isImmuneTo(statusId)) {
@@ -1126,7 +1140,7 @@ function landStatus(
   const ending = endedByGaining(target, statusId);
   const breaker =
     getStatusDefinition(statusId).category === "hex" ? target.statuses.hexBreaker() : undefined;
-  const loss = applyStatus(target, statusId, durationSeconds, sourceId, returnPoint);
+  const loss = applyStatus(target, statusId, durationSeconds, sourceId, returnPoint, sourceSkillId);
   if (loss === undefined) {
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
@@ -1562,6 +1576,7 @@ export function applyEffect(
         events,
         context.surroundings,
         castSpot(context, caster),
+        context.skillId,
       );
       return events;
     }
@@ -1640,6 +1655,7 @@ export function applyEffect(
         castSpot(context, caster),
         // The ally a caster wears it for (#1930), as Recall's.
         bearer === target ? null : (target?.id ?? null),
+        context.skillId,
       );
       caster.nextMaintainSeq += 1;
       // Vital Blessing (#1872): the Health comes with the maximum, as
@@ -1669,8 +1685,8 @@ export function applyEffect(
         effect.profession,
         effect.statusId,
       );
-      for (const statusId of removed) {
-        events.push({ kind: "status-removed", targetId: bearer.id, statusId });
+      for (const { id: statusId, sourceSkillId } of removed) {
+        events.push({ kind: "status-removed", targetId: bearer.id, statusId, sourceSkillId });
       }
       return events;
     }
@@ -1827,6 +1843,7 @@ export function applyEffect(
         events,
         context.surroundings,
         castSpot(context, caster),
+        context.skillId,
       );
       return events;
     }
@@ -1844,6 +1861,7 @@ export function applyEffect(
         events,
         context.surroundings,
         castSpot(context, caster),
+        context.skillId,
       );
       return events;
     }
@@ -1927,7 +1945,7 @@ export function applyEffect(
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
-      for (const key of disabledBy(effect, target, interrupted)) {
+      for (const key of disabledBy(effect, target, interrupted, context.rng)) {
         // A disabled skill loses all its adrenaline (GW1, #1097), though
         // a longer recharge kept the disable from lengthening its wait.
         emptyPool(target, key);
@@ -1935,6 +1953,29 @@ export function applyEffect(
           const skillId = skillIdOfKey(key);
           events.push({ kind: "skill-disabled", targetId: target.id, skillId, seconds });
         }
+      }
+      return events;
+    }
+
+    case "copy-removed": {
+      // The newest a `remove-status` of this skill's took off its target.
+      const removed = earlier.findLast(
+        (event) => event.kind === "status-removed" && event.targetId === target?.id,
+      );
+      const copied = removed?.kind === "status-removed" ? removed.sourceSkillId : undefined;
+      if (context.skillId !== undefined && copied !== undefined) {
+        standIn(caster, context.skillId, copied, effect.seconds);
+      }
+      return events;
+    }
+
+    case "copy-disabled": {
+      // What a `disable-skill` of this skill's just disabled on its target.
+      const disabled = earlier.findLast(
+        (event) => event.kind === "skill-disabled" && event.targetId === target?.id,
+      );
+      if (context.skillId !== undefined && disabled?.kind === "skill-disabled") {
+        standIn(caster, context.skillId, disabled.skillId, disabled.seconds);
       }
       return events;
     }
@@ -2313,17 +2354,24 @@ function interruptedSkill(targetId: string, earlier: readonly CombatEvent[]): st
  * The keys a `disable-skill` reaches on `target` (#914): the one
  * interrupted, and for Power Block every skill on its bar of the same
  * attribute. One with no attribute is linked to nothing (GW1). With
- * `all`, the whole bar, empty slots aside (#474). The bar is the one
+ * `all`, the whole bar, empty slots aside (#474). With `random-spell`, one
+ * spell on it, picked with `rng` (#1928). The bar is the one
  * standing now (#469): a copy is disabled under its own key.
  */
 function disabledBy(
   effect: DisableSkillEffect,
   target: Combatant,
   interrupted: string | undefined,
+  rng: SimulationRng,
 ): readonly string[] {
   const bar = resolvedBar(target.skillBar, target.cast).filter((slot) => slot !== null);
   if (effect.which === "all") {
     return bar.map(({ key }) => key);
+  }
+  if (effect.which === "random-spell") {
+    const spells = bar.filter((slot) => isSpellId(slot.skillId));
+    const picked = spells.length === 0 ? undefined : spells[rng.nextInt(0, spells.length)];
+    return picked === undefined ? [] : [picked.key];
   }
   if (effect.which === "elite") {
     return bar.filter((slot) => getSkill(slot.skillId)?.elite === true).map(({ key }) => key);
@@ -2594,6 +2642,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "resurrect":
     case "pull-to-caster":
     case "disable-skill":
+    case "copy-removed":
+    case "copy-disabled":
     case "owner-gains-damage-dealt":
     case "chain-mark":
     case "overcast":

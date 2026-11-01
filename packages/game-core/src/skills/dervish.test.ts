@@ -144,6 +144,7 @@ describe("Wounding Strike (#845)", () => {
       kind: "status-removed",
       targetId: "d",
       statusId: "fleeting-stability",
+      sourceSkillId: "dervish.fleeting-stability",
     });
     expect(statusesOf(target)).toEqual(["bleeding", "deep-wound"]);
     expect(target.statuses.get("deep-wound")?.remainingSeconds).toBe(17);

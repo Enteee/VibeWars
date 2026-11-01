@@ -13,6 +13,7 @@ import type {
 import type { Participant } from "../simulation.js";
 import {
   botUses,
+  copiedOffFoe,
   interruptAimed,
   onlyInterrupts,
   removedCategories,
@@ -343,10 +344,19 @@ function think(
   }
 
   if (targetId !== undefined) {
-    // 5. Offence, in bar order.
+    // 5. Offence, in bar order. A copier only at a foe with what it
+    // takes (#1928): Inspired Enchantment at an enchanted one.
+    const foe = context.participants.find((other) => other.id === targetId)?.combatant;
+    const copies = (held: Skill): boolean => {
+      const category = copiedOffFoe(held);
+      return category === undefined || (foe?.statuses.countByCategory(category) ?? 0) > 0;
+    };
     const skill = bar.find(
       (held) =>
-        botUses(held).includes("offence") && !onlyInterrupts(held) && mayUse(held, targetId),
+        botUses(held).includes("offence") &&
+        !onlyInterrupts(held) &&
+        copies(held) &&
+        mayUse(held, targetId),
     );
     if (skill !== undefined) {
       return use(skill, targetId);

@@ -92,11 +92,11 @@ export const NECROMANCER_ICONS = {
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "necromancer.desecrate-enchantments": { glyph: "each-desecrate" },
   "necromancer.defile-enchantments": { glyph: "each-defile" },
-  // Caster staples (#1870), stand-ins until their art card.
-  "necromancer.blood-renewal": { glyph: "heal", modifier: "bleed" },
-  "necromancer.meekness": { glyph: "slow", modifier: "down" },
-  // Caster staples 2 (#1872), stand-ins until their art card.
-  "necromancer.vocal-minority": { glyph: "hex-mute", modifier: "area" },
+  // Caster staples (#1870).
+  "necromancer.blood-renewal": { glyph: "drop-plus" },
+  "necromancer.meekness": { glyph: "hex-sword-limp" },
+  // Caster staples 2 (#1872).
+  "necromancer.vocal-minority": { glyph: "hex-bubble-cut" },
   // Skill-type and heal triggers (#1913), stand-ins until their art card.
   "necromancer.cacophony": { glyph: "hex-mute", modifier: "bolt" },
   "necromancer.soul-bind": { glyph: "hex-cut", modifier: "bleed" },
@@ -105,6 +105,9 @@ export const NECROMANCER_ICONS = {
   "necromancer.aura-of-the-lich": { glyph: "bone-horror", modifier: "corpse" },
   "necromancer.infuse-condition": { glyph: "bone-minions", modifier: "bleed" },
   "necromancer.taste-of-death": { glyph: "feast-jaw", modifier: "bleed" },
+  // Attributes set or borrowed (#1929), stand-ins until their art card.
+  "necromancer.wail-of-doom": { glyph: "slow", modifier: "stun" },
+  "necromancer.atrophy": { glyph: "slow", modifier: "half" },
   // Casting-state hexes (#1931), stand-ins until their art card.
   "necromancer.spinal-shivers": { glyph: "interrupt", modifier: "stun" },
   "necromancer.shivers-of-dread": { glyph: "hex-cut", modifier: "stun" },
