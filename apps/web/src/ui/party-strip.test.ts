@@ -21,7 +21,6 @@ function player(
     team: null,
     ready: false,
     isHost: false,
-    character: null,
     bot: false,
     away: false,
     ...overrides,
@@ -52,7 +51,6 @@ describe("the party strip's party (#1526)", () => {
       lobby([
         player("host", {
           isHost: true,
-          character: { name: "Mhenlo", primary: "monk", secondary: null },
         }),
         player("Warrior Bot", { bot: true, team: 0 }),
         player("me"),
@@ -66,8 +64,8 @@ describe("the party strip's party (#1526)", () => {
       isHost: false,
       open: true,
       members: [
-        { name: "host", primary: "monk", isHost: true, self: false, away: false },
-        { name: "me", primary: null, isHost: false, self: true, away: false },
+        { name: "host", isHost: true, self: false, away: false },
+        { name: "me", isHost: false, self: true, away: false },
       ],
       queuedMs: null,
       teams: undefined,

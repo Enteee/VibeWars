@@ -1,7 +1,7 @@
 import { AREA_ADJACENT } from "../distances.js";
-import type { ResolvedWeapon } from "../equipment/resolve.js";
-import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
-import { wieldsFor, type Weapon } from "../equipment/weapons.js";
+import type { ResolvedWeapon, WeaponHitMods } from "../equipment/resolve.js";
+import { type DamageType } from "../equipment/types.js";
+import { isCasterWeapon, wieldsFor, type Weapon } from "../equipment/weapons.js";
 import {
   CRITICAL_STRIKES_ATTRIBUTE,
   CRITICAL_STRIKES_CHANCE_PER_RANK,
@@ -23,6 +23,7 @@ import {
   loseHealth,
   resolveSkillEffects,
   stateHolds,
+  stealLife,
   withPerCount,
   type CombatEvent,
   type SkillOutcome,
@@ -222,6 +223,8 @@ export interface WeaponSnapshot {
    * `undefined`: none.
    */
   readonly physicalDamageDealtAs: DamageType | undefined;
+  /** The held set's mods that act on a hit (#2009): Sundering's chance rides the blow. */
+  readonly hitMods: WeaponHitMods;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -239,6 +242,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     armorPenetration: modifiers.attackArmorPenetration,
     damageDelta: attackDamageDeltaOf(attacker),
     physicalDamageDealtAs: physicalDamageDealtAsOf(attacker.statuses.active),
+    hitMods: attacker.equipment.hitMods,
   };
 }
 
@@ -556,6 +560,11 @@ export function landBlow(
     critical && !aggregateModifiers(victim.statuses.active).ignoresCriticalDamage
       ? weapon.damageMax * weapon.criticalMultiplier
       : rng.nextInt(weapon.damageMin, weapon.damageMax + 1);
+  // Sundering (#2009): bonus penetration on its roll, on top of the
+  // largest base. Drawn only for a weapon that has it, so no other
+  // fight's stream moves.
+  const { sunderChance, sunderPenetration } = snapshot.hitMods;
+  const sundered = sunderChance > 0 && rng.nextFloat() < sunderChance ? sunderPenetration : 0;
   const packet: DamagePacket = {
     armored: Math.max(
       0,
@@ -574,11 +583,12 @@ export function landBlow(
       victim.statuses.active,
     ),
     source: "weapon",
-    armorPenetration: Math.max(
-      blow.armorPenetration,
-      strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
-      snapshot.armorPenetration,
-    ),
+    armorPenetration:
+      Math.max(
+        blow.armorPenetration,
+        strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+        snapshot.armorPenetration,
+      ) + sundered,
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);
@@ -625,7 +635,10 @@ export function attackHitRiders(
   fired: FiredTrigger[],
   spent: readonly StatusId[],
 ): CombatEvent[] {
-  const onHit = weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings);
+  const onHit = [
+    ...weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings),
+    ...modsOnHit(attacker, victim),
+  ];
   applyRiders(
     "onAttackHit",
     attacker,
@@ -643,6 +656,21 @@ export function attackHitRiders(
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
   events.push(...ownerPaysForMinionHit(attacker, surroundings));
+  return events;
+}
+
+/**
+ * What the held set's mods do on a landed hit (#2009): Vampiric steals,
+ * past armor, from a victim the blow left alive; Zealous gains energy.
+ * Each blow of a double strike is a hit of its own.
+ */
+function modsOnHit(attacker: Combatant, victim: Combatant): CombatEvent[] {
+  const { lifeSteal, energyOnHit } = attacker.equipment.hitMods;
+  const events: CombatEvent[] = [];
+  if (lifeSteal > 0 && !victim.dead && !attacker.dead) {
+    stealLife(attacker, victim, lifeSteal, events);
+  }
+  gainEnergy(attacker, energyOnHit, events);
   return events;
 }
 
@@ -681,7 +709,8 @@ export function attackBlockedRiders(
  * Each of the attacker's statuses' `which` rider onto `victim`, active
  * and `spent` alike: one for attack skills only rides a blow
  * `withAttackSkill`, one for a weapon class only a blow of that weapon,
- * and a non-physical blow only a weapon spell's.
+ * and a wand's or staff's blow only a weapon spell's: a martial
+ * weapon's elemental prefix (#2009) changes its damage, not its riders.
  */
 function applyRiders(
   which: "onAttackHit" | "onAttackBlocked",
@@ -695,7 +724,7 @@ function applyRiders(
   fired: FiredTrigger[],
   spent: readonly StatusId[],
 ): void {
-  const physical = isPhysicalDamage(mainHand.damageType);
+  const caster = isCasterWeapon(mainHand.weapon);
   const active = attacker.statuses.active;
   for (const status of [...active, ...spent.map((id) => ({ id }))]) {
     const definition = getStatusDefinition(status.id);
@@ -704,7 +733,7 @@ function applyRiders(
       rider === undefined ||
       isSuppressed(active, status) ||
       (rider.attackSkillsOnly && !withAttackSkill) ||
-      (!physical && definition.category !== "weapon-spell") ||
+      (caster && definition.category !== "weapon-spell") ||
       (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
     ) {
       continue;

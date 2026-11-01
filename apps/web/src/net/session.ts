@@ -28,7 +28,6 @@ import {
   publicRoom,
   type FormedGroup,
   type Guild,
-  type LobbyCharacter,
   type LobbyClosedReason,
   type LobbyConnection,
   type MatchPlan,
@@ -104,13 +103,12 @@ export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
 export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
 /** #854 C7's wording. */
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
-/** A joined player's ask the host turned down (#1194): a bot it had no seat for, or could not add. */
-export const NO_SEAT_FOR_BOT_MESSAGE = "The lobby is full: there is no seat for a bot.";
 /** A queued party's team plan (ADR-0042) was not whole at the start (#1822). */
 export const TEAM_PLAN_REJECTED_NOTICE =
   "Your party's team plan was not accepted; the house team plays for you.";
-export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
-export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
+/** A joined player's ask the host turned down (#1194). */
+export const REFUSED_MESSAGE = "The host turned that down.";
+export const NOT_HOST_MESSAGE = "Only the host can do that.";
 /** A map picked outside a Hosted Game (#1994). */
 export const NOT_PICKABLE_MESSAGE = "Only a Hosted Game lets the host pick the map.";
 /** A Team Lobby's refusals (#1460). */
@@ -185,10 +183,10 @@ function startMatch(plan: MatchPlan) {
 
 /**
  * Host a lobby in this tab: a fresh key, the room derived from it, the
- * lobby host on it, and this player joined to it as one more peer,
- * bringing `character`. A coded lobby starts closed, and its host is in
- * its room only while it is open or has guests (#1682); its room is
- * derived once, here, for the lobby's life.
+ * lobby host on it, and this player joined to it as one more peer. A
+ * coded lobby starts closed, and its host is in its room only while it
+ * is open or has guests (#1682); its room is derived once, here, for the
+ * lobby's life.
  *
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
@@ -199,7 +197,6 @@ function startMatch(plan: MatchPlan) {
 export async function hostLobby(
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   teamLobby: boolean,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
@@ -274,7 +271,6 @@ export async function hostLobby(
       proofKey: null,
       name,
       ...guild,
-      character,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
@@ -295,15 +291,14 @@ export async function hostLobby(
 }
 
 /**
- * Join the lobby `code` names, hosted on another peer's browser, bringing
- * `character`; with `queued`, a Random Arena group's lobby in the group's room,
- * `code` the group's id.
+ * Join the lobby `code` names, hosted on another peer's browser; with
+ * `queued`, a Random Arena group's lobby in the group's room, `code` the
+ * group's id.
  */
 export async function joinLobbyByCode(
   code: string,
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
@@ -328,7 +323,6 @@ export async function joinLobbyByCode(
       proofKey: lobbyRoom.proofKey,
       name,
       ...guild,
-      character,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
@@ -426,7 +420,7 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
 }
 
 /**
- * Queue for a Random Arena of `mode` as `name` of `guild`, bringing `character`
+ * Queue for a Random Arena of `mode` as `name` of `guild`
  * (#854 C1–C7): a ticket on the board `joinQueueBoard` picks, ticked from
  * the host clock so a background tab keeps its place. When a group
  * settles, this tab hosts its lobby or joins it; a lobby that never fills,
@@ -442,7 +436,6 @@ export function enterQueue(
   mode: QueueMode,
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   events: RandomArenaEvents,
   party?: PartyPlace,
   teamPlan?: HostedLobby["teamPlan"],
@@ -489,7 +482,7 @@ export function enterQueue(
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guild, character, false, {
+        hosted = await hostLobby(name, guild, false, {
           group,
           key,
           verifyTicketSig,
@@ -504,7 +497,7 @@ export function enterQueue(
         });
         lobby = hosted.lobby;
       } else {
-        lobby = await joinLobbyByCode(group.groupId, name, guild, character, {
+        lobby = await joinLobbyByCode(group.groupId, name, guild, {
           group,
           key,
           verifyTicketSig,
@@ -724,7 +717,7 @@ export async function followHost<T>(
 export function lobbyRefusalNotice(reason: LobbyRefusal): string {
   switch (reason) {
     case "lobby-full":
-      return NO_SEAT_FOR_BOT_MESSAGE;
+      return LOBBY_FULL_MESSAGE;
     case "not-host":
       return NOT_HOST_MESSAGE;
     case "not-pickable":
@@ -738,7 +731,7 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
     case "invalid-slot":
       return SEAT_REFUSED_MESSAGE;
     default:
-      return BOT_REFUSED_MESSAGE;
+      return REFUSED_MESSAGE;
   }
 }
 

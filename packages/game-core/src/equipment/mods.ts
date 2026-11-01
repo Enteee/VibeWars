@@ -39,7 +39,31 @@ export type ModEffect =
       readonly kind: "condition-duration";
       readonly statusId: StatusId;
       readonly reduction: number;
-    };
+    }
+  /** Each hit of the weapon steals this much Health, by weapon (#2009). */
+  | {
+      readonly kind: "life-steal-on-hit";
+      readonly amountByWeapon: Readonly<Partial<Record<WeaponId, number>>>;
+    }
+  /** Health regeneration, in pips; Vampiric takes one away. */
+  | { readonly kind: "health-regen"; readonly pips: number }
+  | { readonly kind: "energy-on-hit"; readonly amount: number }
+  /** Sundering: `chance` a hit has `penetration` more armor penetration. */
+  | {
+      readonly kind: "armor-penetration-chance";
+      readonly chance: number;
+      readonly penetration: number;
+    }
+  /** Furious: `chance` a hit's adrenaline is doubled. */
+  | { readonly kind: "double-adrenaline-chance"; readonly chance: number }
+  /** That condition, caused by the weapon's attacks, lasts `increase` longer (0.33: 33%). */
+  | {
+      readonly kind: "inflicted-condition-duration";
+      readonly statusId: StatusId;
+      readonly increase: number;
+    }
+  /** The weapon's damage becomes this type: Ebon, Fiery, Icy, Shocking. */
+  | { readonly kind: "damage-type"; readonly type: DamageType };
 
 export interface WeaponMod {
   readonly id: ModId;
@@ -101,6 +125,25 @@ const MARTIAL: readonly ModItem[] = Object.freeze([
   "hornbow",
 ]);
 const MARTIAL_AND_STAFF: readonly ModItem[] = Object.freeze([...MARTIAL, "staff"]);
+const BOWS: readonly ModItem[] = Object.freeze([
+  "flatbow",
+  "shortbow",
+  "longbow",
+  "recurve-bow",
+  "hornbow",
+]);
+const MARTIAL_BUT_BOWS: readonly ModItem[] = Object.freeze(
+  MARTIAL.filter((item) => !BOWS.includes(item)),
+);
+const MARTIAL_BUT_HAMMER: readonly ModItem[] = Object.freeze(
+  MARTIAL.filter((item) => item !== "hammer"),
+);
+/** Vampiric's steal: 3 on the lighter weapons, 5 on hammer, scythe and bows. */
+const VAMPIRIC_STEAL: Readonly<Partial<Record<WeaponId, number>>> = Object.freeze(
+  Object.fromEntries(
+    MARTIAL.map((item) => [item, ["sword", "axe", "daggers", "spear"].includes(item) ? 3 : 5]),
+  ),
+);
 const OFFHANDS: readonly ModItem[] = Object.freeze(["shield", "focus"]);
 
 function mod(
@@ -136,6 +179,29 @@ function shorter(id: ModId, name: string, statusId: StatusId, label: string): We
     [{ kind: "condition-duration", statusId, reduction: 0.2 }],
     `Reduces ${label} duration on you by 20%`,
   );
+}
+
+/** A martial prefix that makes a condition the weapon causes last 33% longer. */
+function longer(
+  id: ModId,
+  name: string,
+  fits: readonly ModItem[],
+  statusId: StatusId,
+  label: string,
+): WeaponMod {
+  return mod(
+    id,
+    name,
+    "prefix",
+    fits,
+    [{ kind: "inflicted-condition-duration", statusId, increase: 0.33 }],
+    `Lengthens ${label} duration on foes by 33%`,
+  );
+}
+
+/** A martial prefix that turns the weapon's damage into an element. */
+function elemental(id: ModId, name: string, type: DamageType, label: string): WeaponMod {
+  return mod(id, name, "prefix", MARTIAL, [{ kind: "damage-type", type }], `${label} Dmg`);
 }
 
 export const WEAPON_MODS: readonly WeaponMod[] = Object.freeze([
@@ -226,6 +292,55 @@ export const WEAPON_MODS: readonly WeaponMod[] = Object.freeze([
   shorter("cast-out-the-unclean", '"Cast Out the Unclean"', "disease", "Disease"),
   shorter("pure-of-heart", '"Pure of Heart"', "poison", "Poison"),
   shorter("only-the-strong-survive", '"Only the Strong Survive"', "weakness", "Weakness"),
+  // The martial prefixes that act on a hit (#2009).
+  mod(
+    "vampiric",
+    "Vampiric",
+    "prefix",
+    MARTIAL,
+    [
+      { kind: "life-steal-on-hit", amountByWeapon: VAMPIRIC_STEAL },
+      { kind: "health-regen", pips: -1 },
+    ],
+    "Life Draining: 3 (5 on hammer, scythe and bows), Health regeneration -1",
+  ),
+  mod(
+    "zealous",
+    "Zealous",
+    "prefix",
+    MARTIAL,
+    [
+      { kind: "energy-on-hit", amount: 1 },
+      { kind: "energy-regen", pips: -1 },
+    ],
+    "Energy gain on hit: 1, Energy regeneration -1",
+  ),
+  mod(
+    "sundering",
+    "Sundering",
+    "prefix",
+    MARTIAL,
+    [{ kind: "armor-penetration-chance", chance: 0.2, penetration: 0.2 }],
+    "Armor penetration +20% (Chance: 20%)",
+  ),
+  mod(
+    "furious",
+    "Furious",
+    "prefix",
+    MARTIAL_BUT_BOWS,
+    [{ kind: "double-adrenaline-chance", chance: 0.1 }],
+    "Double Adrenaline on hit (Chance: 10%)",
+  ),
+  longer("barbed", "Barbed", MARTIAL_BUT_HAMMER, "bleeding", "Bleeding"),
+  longer("crippling", "Crippling", MARTIAL_BUT_HAMMER, "crippled", "Cripple"),
+  longer("poisonous", "Poisonous", MARTIAL_BUT_HAMMER, "poison", "Poison"),
+  longer("cruel", "Cruel", MARTIAL_BUT_BOWS, "deep-wound", "Deep Wound"),
+  longer("heavy", "Heavy", ["axe", "hammer", "scythe", "spear"], "weakness", "Weakness"),
+  longer("silencing", "Silencing", ["daggers", "spear", ...BOWS], "dazed", "Daze"),
+  elemental("ebon", "Ebon", "earth", "Earth"),
+  elemental("fiery", "Fiery", "fire", "Fire"),
+  elemental("icy", "Icy", "cold", "Cold"),
+  elemental("shocking", "Shocking", "lightning", "Lightning"),
 ]);
 
 const MODS_BY_ID: ReadonlyMap<ModId, WeaponMod> = new Map(WEAPON_MODS.map((m) => [m.id, m]));

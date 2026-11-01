@@ -194,7 +194,6 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
     name: `ticket-${ticketId.slice(0, 1)}`,
     guildTag: null,
     guildCape: null,
-    character: null,
     timeoutMs,
     queued: { group, key: keyOf(ticketId), verifyTicketSig },
   });
@@ -311,7 +310,6 @@ async function forgedJoin(
     name: "Forger",
     guildTag: null,
     guildCape: null,
-    character: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
   };
 }
@@ -365,7 +363,6 @@ describe("a queued lobby", () => {
         protocolVersion: PROTOCOL_VERSION,
         name: "Bare",
         guildTag: null,
-        character: null,
         admission: null,
       },
       "host",
@@ -497,7 +494,6 @@ describe("a queued lobby", () => {
               isHost: false,
               guildTag: null,
               guildCape: null,
-              character: null,
               bot: false,
               away: false,
             },

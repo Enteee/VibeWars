@@ -92,9 +92,8 @@ async function phoneMatch(page: Page, phone: Phone, map?: string): Promise<void>
   if (map !== undefined) {
     await page.locator(".lobby-map select").selectOption(map);
   }
+  // Team 2's empty side plays a house team of one bot (#2029).
   await page.getByRole("button", { name: "join team 1" }).click();
-  await page.getByRole("button", { name: "one bot more on team 2" }).click();
-  await expect(page.locator(".lobby-team").nth(1).locator(".lobby-bot-count")).toHaveText("1");
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
   // Any character will do: the house team's one seat (#1525).

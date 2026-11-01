@@ -373,6 +373,11 @@ export function getWeapon(id: string): Weapon | undefined {
 /** Every weapon, in catalog order. Handy for a picker and for data tests. */
 export const ALL_WEAPONS: readonly Weapon[] = Object.freeze(Object.values(WEAPONS));
 
+/** Whether `weapon` is a wand or a staff: a spellcaster's, not a martial one. */
+export function isCasterWeapon(weapon: Weapon): boolean {
+  return weapon.requirement === CASTER_REQUIREMENT;
+}
+
 /** A two-handed weapon leaves no hand free for a shield or a focus. */
 export function allowsOffhand(weapon: Weapon): boolean {
   return weapon.grip === "one-handed";
@@ -426,8 +431,11 @@ export const CASTER_WEAPON_ELEMENT: Readonly<Record<string, DamageType>> = Objec
  * weapon's element, every other weapon its own type.
  */
 export function weaponDamageType(weapon: Weapon, attributeId: string | undefined): DamageType {
-  const caster = weapon.requirement === CASTER_REQUIREMENT;
-  if (!caster || attributeId === undefined || !Object.hasOwn(CASTER_WEAPON_ELEMENT, attributeId)) {
+  if (
+    !isCasterWeapon(weapon) ||
+    attributeId === undefined ||
+    !Object.hasOwn(CASTER_WEAPON_ELEMENT, attributeId)
+  ) {
     return weapon.damageType;
   }
   return CASTER_WEAPON_ELEMENT[attributeId] ?? weapon.damageType;
