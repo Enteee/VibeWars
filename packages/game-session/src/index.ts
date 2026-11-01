@@ -84,7 +84,6 @@ export type {
   MatchToWatch,
   PartyPlanSeat,
 } from "./lobby-connection.js";
-export { UNNAMED_CHARACTER, lobbyCharacter } from "./lobby-character.js";
 export { PARTY_CONSENT_MS, canStart, createLobbyHost } from "./lobby-host.js";
 export type {
   LobbyHost,

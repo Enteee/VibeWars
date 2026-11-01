@@ -133,8 +133,10 @@ export type {
   ResolvedWeapon,
   ResolvedWeaponSet,
   ResolvedWeaponSets,
+  WeaponHitMods,
 } from "./resolve.js";
 export {
+  NO_HIT_MODS,
   creatureResolvedEquipment,
   effectiveRanks,
   resolveLoadout,

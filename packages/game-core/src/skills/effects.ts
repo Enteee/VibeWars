@@ -562,7 +562,7 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
  * Lord's per-second cap (#1223) holds it too, and a status that negates
  * fatal damage (#1789) drops a steal that would kill.
  */
-function stealLife(
+export function stealLife(
   caster: Combatant,
   target: Combatant,
   amount: number,
@@ -1211,6 +1211,24 @@ export function landCaughtCondition(
 }
 
 /**
+ * What the caster's weapon mods do to a condition its attack skill
+ * causes a foe (#2009): Barbed's Bleeding lasts 33% longer. Before the
+ * taker's own lengthening or shortening. 1 for anything else.
+ */
+function inflictedScale(statusId: StatusId, bearer: Combatant, context: SkillContext): number {
+  const { caster, skillId } = context;
+  if (
+    bearer.team === caster.team ||
+    skillId === undefined ||
+    getSkill(skillId)?.type !== "attack" ||
+    getStatusDefinition(statusId).category !== "condition"
+  ) {
+    return 1;
+  }
+  return caster.equipment.hitMods.inflictedDurationScale.get(statusId) ?? 1;
+}
+
+/**
  * `statusId` aimed at `target`, for `durationSeconds` before its taker's
  * own lengthening, landed on whoever takes it (#1915): every status a
  * skill aims at a combatant comes through here, so Infuse Condition sends
@@ -1783,7 +1801,9 @@ export function applyEffect(
       landOnTaker(
         bearer,
         effect.statusId,
-        base * (context.own?.durationMultiplier ?? 1),
+        base *
+          (context.own?.durationMultiplier ?? 1) *
+          inflictedScale(effect.statusId, bearer, context),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,

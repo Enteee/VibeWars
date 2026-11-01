@@ -55,4 +55,25 @@ describe("weapon mods (#2007)", () => {
       inscription: "seize-the-day",
     });
   });
+
+  it("fits the martial prefixes on the weapons GW1 makes them for (#2009)", () => {
+    const fits = (id: string): readonly string[] => getWeaponMod(id)?.fits ?? [];
+    const bows = ["flatbow", "shortbow", "longbow", "recurve-bow", "hornbow"];
+    const martial = ["sword", "axe", "hammer", "daggers", "scythe", "spear", ...bows];
+    const but = (...out: string[]) => martial.filter((item) => !out.includes(item));
+    for (const id of ["vampiric", "zealous", "sundering", "ebon", "fiery", "icy", "shocking"]) {
+      expect(fits(id), id).toEqual(martial);
+    }
+    for (const id of ["furious", "cruel"]) {
+      expect(fits(id), id).toEqual(but(...bows));
+    }
+    for (const id of ["barbed", "crippling", "poisonous"]) {
+      expect(fits(id), id).toEqual(but("hammer"));
+    }
+    expect(fits("heavy")).toEqual(["axe", "hammer", "scythe", "spear"]);
+    expect(fits("silencing")).toEqual(["daggers", "spear", ...bows]);
+    for (const id of ["vampiric", "furious", "barbed", "heavy", "silencing", "icy"]) {
+      expect(getWeaponMod(id)?.slot, id).toBe("prefix");
+    }
+  });
 });

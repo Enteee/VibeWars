@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Blood Magic orders and leeches (#1979), stand-ins until their art card.
+  // Blood Magic orders and leeches (#2070).
   // Enchantment: a fang over a drop, the party's hits drink.
   "order-of-the-vampire": [
     "enchantment",

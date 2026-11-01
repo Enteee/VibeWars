@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Enchantment party moves (#1975), a stand-in until its art card.
+  // Enchantment party moves (#2070).
   // Enchantment: a star struck through, a critical hit that strips.
   "dark-apostasy": [
     "enchantment",

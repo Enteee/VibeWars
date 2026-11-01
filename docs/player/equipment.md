@@ -53,3 +53,25 @@ on the figure.
 
 The editor adds it all up for you: Health, Energy, armor and damage, as
 your first weapon set has them.
+
+## Weapon mods
+
+A weapon has a prefix, a suffix and an inscription; a wand, shield or focus
+has no prefix. Every mod is at its best value, and only the set in hand
+counts. The martial prefixes that act on a hit:
+
+| Prefix                       | Fits                       | What it does on a hit                                        |
+| ---------------------------- | -------------------------- | ------------------------------------------------------------ |
+| Vampiric                     | any martial weapon         | steals 3 Health (5 on hammer, scythe, bows); -1 Health regen |
+| Zealous                      | any martial weapon         | gains 1 Energy; -1 Energy regen                              |
+| Sundering                    | any martial weapon         | 20% chance of +20% armor penetration                         |
+| Furious                      | martial, not bows          | 10% chance of double adrenaline                              |
+| Barbed, Crippling, Poisonous | martial, not hammer        | Bleeding, Crippled, Poison you cause last 33% longer         |
+| Cruel                        | martial, not bows          | Deep Wound you cause lasts 33% longer                        |
+| Heavy                        | axe, hammer, scythe, spear | Weakness you cause lasts 33% longer                          |
+| Silencing                    | daggers, spear, bows       | Dazed you cause lasts 33% longer                             |
+| Ebon, Fiery, Icy, Shocking   | any martial weapon         | its damage becomes earth, fire, cold or lightning            |
+
+"On a hit" means a landed hit of an attack or an attack skill: a blocked
+or missed one does nothing. A longer condition is one your attack skill
+causes.

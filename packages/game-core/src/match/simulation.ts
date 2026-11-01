@@ -5983,8 +5983,8 @@ export class MatchSimulation {
    * attack skill landed on (#936), one for a shot, and one per landed blow
    * of a swing, so
    * a double strike earns two. A blocked blow deals no damage, so it earns
-   * nothing (#534). "For Great Justice!" (#936) adds its extra strikes
-   * to each. What filled is told in `log` (#1735), the events logged
+   * nothing (#534). A Furious weapon's blow may count twice (#2009).
+   * "For Great Justice!" (#936) adds its extra strikes to each. What filled is told in `log` (#1735), the events logged
    * for the blow.
    */
   #gainAdrenaline(
@@ -5999,7 +5999,16 @@ export class MatchSimulation {
     });
     if (damagedFoe) {
       const { extraStrikesPerHit } = aggregateModifiers(record.combatant.statuses.active);
-      const strikes = blows * (1 + extraStrikesPerHit);
+      // Furious (#2009): each blow rolls to count twice. Drawn only for a
+      // weapon that has it, so no other fight's stream moves.
+      const { doubleAdrenalineChance } = record.combatant.equipment.hitMods;
+      let doubled = 0;
+      for (let blow = 0; doubleAdrenalineChance > 0 && blow < blows; blow += 1) {
+        if (this.#rng.nextFloat() < doubleAdrenalineChance) {
+          doubled += 1;
+        }
+      }
+      const strikes = (blows + doubled) * (1 + extraStrikesPerHit);
       if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds)) {
         log.push({ kind: "adrenaline-gained", targetId: record.id, strikes, skillId: undefined });
       }

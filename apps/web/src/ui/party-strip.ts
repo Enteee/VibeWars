@@ -1,8 +1,6 @@
-import type { ProfessionId } from "@vibewars/game-core";
 import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
-import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { h } from "./kit.js";
 import { displayLobbyCode } from "./lobby-screen.js";
 import { waitedLabel } from "./queue-screen.js";
@@ -15,8 +13,6 @@ import { waitedLabel } from "./queue-screen.js";
 /** One person in the party: a bot is the lobby's, not the party's. */
 export interface PartyMember {
   readonly name: string;
-  /** The active character's; `null` for a starter build. */
-  readonly primary: ProfessionId | null;
   readonly isHost: boolean;
   readonly self: boolean;
   /** Dropped, its seat held while it may come back (#1764). */
@@ -78,7 +74,6 @@ export function partyOf(
       .filter((player) => !player.bot)
       .map((player) => ({
         name: player.name,
-        primary: player.character?.primary ?? null,
         isHost: player.isHost,
         self: player.sessionId === snapshot.selfSessionId,
         away: player.away,
@@ -114,11 +109,6 @@ export function partyStrip(party: RailParty): HTMLElement {
   const list = h("ul", "party-members");
   for (const member of party.members) {
     const row = h("li", memberClass(member));
-    if (member.primary !== null) {
-      const dot = createProfessionDot(member.primary, undefined);
-      dot.title = professionLabel(member.primary, undefined);
-      row.appendChild(dot);
-    }
     row.appendChild(h("span", "party-member-name", member.name));
     if (member.isHost) {
       row.appendChild(h("span", "party-host-mark", "Host"));
