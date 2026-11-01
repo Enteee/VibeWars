@@ -31,18 +31,11 @@ export const MAP_TRACKS: ReadonlyMap<string, string> = new Map([
 ]);
 
 export type MenuScreen =
-  | "main"
-  | "record"
-  | "character-builder"
-  | "team-builder"
-  | "member-editor"
-  | "team-lobby"
-  | "queue";
+  "main" | "character-builder" | "team-builder" | "member-editor" | "team-lobby" | "queue";
 
 /** How deep in the menus a screen is: the menu song's intensity there, up to its top layer. */
 export const MENU_DEPTH: Readonly<Record<MenuScreen, 0 | 1>> = {
   main: 0,
-  record: 1,
   "character-builder": 1,
   "team-builder": 1,
   "member-editor": 1,
