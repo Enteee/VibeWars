@@ -1,7 +1,7 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
-  // Stand-ins for the enchantment party moves (#1975).
-  "monk.air-of-enchantment": { glyph: "attune-air", modifier: "less" },
+  // Enchantment party moves (#2070).
+  "monk.air-of-enchantment": { glyph: "attune-air", modifier: "ring" },
 };
 
 export default rows;
