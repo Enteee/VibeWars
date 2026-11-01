@@ -47,6 +47,9 @@ export type MesmerStatusId =
   // Caster staples 2 (#1872).
   | "elemental-resistance"
   | "physical-resistance"
+  // Casting-state hexes (#1931).
+  | "power-leech"
+  | "power-flux"
   | "signet-of-illusions";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
@@ -629,6 +632,25 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       { amount: 40, conditions: [{ kind: "vs-physical" }] },
       { amount: -14, conditions: [{ kind: "vs-elemental" }] },
     ],
+  }),
+  // Casting-state hexes (#1931), put on whether or not the skill's
+  // interrupt landed. "For 10 seconds, whenever target foe casts a spell,
+  // you steal up to 5...13...15 Energy": 13, at rank 12.
+  "power-leech": define("power-leech", "Power Leech", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-casts-spell",
+        effects: [{ kind: "energy-steal", amount: { flat: 13 } }],
+        target: "bearer",
+        skillId: "mesmer.power-leech",
+      },
+    ],
+  }),
+  // "...target foe suffers -2 Energy degeneration for 4...9...10 seconds."
+  "power-flux": define("power-flux", "Power Flux", "hex", {
+    profession: "mesmer",
+    energyPips: -2,
   }),
   // "Your next 1...3...3 non-Illusion spells use your Illusion attribute
   // instead of its normal attribute" (#1929): no duration, it lasts

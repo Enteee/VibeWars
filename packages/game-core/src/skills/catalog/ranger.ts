@@ -9,7 +9,7 @@ import {
   RANGE_SPELL,
 } from "../../distances.js";
 import { KNOCKDOWN_SECONDS, type Skill, type StateCondition } from "../types.js";
-import { RANGE_LONG, WOLF } from "./shared.js";
+import { RANGE_LONG, WOLF, spiritHealth } from "./shared.js";
 
 /** Melandru's Shot's "a foe that is moving or knocked down" (#1539). */
 const MOVING_OR_KNOCKED_DOWN: StateCondition = {
@@ -1124,9 +1124,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Winnowing",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -1499,9 +1497,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Infuriating Heat",
-          maxHealth: {
-            scaling: { attributeId: "ranger.expertise", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.expertise", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -2965,9 +2961,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Fertile Season",
-          maxHealth: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3020,9 +3014,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Quickening Zephyr",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3074,9 +3066,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Frozen Soil",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3128,9 +3118,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Muddy Terrain",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3182,9 +3170,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Conflagration",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3237,9 +3223,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Predatory Season",
-          maxHealth: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3291,9 +3275,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Winter",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3348,9 +3330,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Edge of Extinction",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3410,9 +3390,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Pestilence",
-          maxHealth: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3465,9 +3443,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Energizing Wind",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 150 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 6]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3520,9 +3496,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Primal Echoes",
-          maxHealth: {
-            scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3574,9 +3548,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Roaring Winds",
-          maxHealth: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 70, atTwelve: 210 },
-          },
+          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
           armor: { flat: 51 },
           attack: undefined,
           durationSeconds: {
@@ -3584,6 +3556,323 @@ export const RANGER_SKILLS: readonly Skill[] = [
           },
           behaviour: { kind: "idle" },
           aura: { statusId: "roaring-winds", affects: "all", radius: RANGE_NATURE_RITUAL },
+          replacedBy: undefined,
+          leavesCorpses: undefined,
+          onePerOwner: false,
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.symbiosis",
+    name: "Symbiosis",
+    gwId: 468,
+    type: "nature-ritual",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "For each enchantment on a non-spirit creature within
+    // range, that creature has +27...150 maximum Health. This spirit dies
+    // after 30...240 seconds."
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Symbiosis",
+          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 198 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "symbiosis", affects: "all", radius: RANGE_NATURE_RITUAL },
+          replacedBy: undefined,
+          leavesCorpses: undefined,
+          onePerOwner: false,
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.favorable-winds",
+    name: "Favorable Winds",
+    gwId: 472,
+    type: "nature-ritual",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.marksmanship",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "For non-spirit creatures within its range, arrows move
+    // twice as fast and strike for +6 damage. This spirit dies after
+    // 30...240 seconds."
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Favorable Winds",
+          maxHealth: spiritHealth("ranger.marksmanship", [1, 10]),
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.marksmanship", atZero: 30, atTwelve: 198 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "favorable-winds", affects: "all", radius: RANGE_NATURE_RITUAL },
+          replacedBy: undefined,
+          leavesCorpses: undefined,
+          onePerOwner: false,
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.brambles",
+    name: "Brambles",
+    gwId: 947,
+    type: "nature-ritual",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Non-spirit creatures that are knocked down in its range
+    // take 5 damage and begin Bleeding for 5...20 seconds. This spirit dies
+    // after 30...240 seconds."
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Brambles",
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "brambles", affects: "all", radius: RANGE_NATURE_RITUAL },
+          replacedBy: undefined,
+          leavesCorpses: undefined,
+          onePerOwner: false,
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.tranquility",
+    name: "Tranquility",
+    gwId: 1213,
+    type: "nature-ritual",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Enchantments cast by non-spirit creatures within its
+    // range expire 10...30% faster. This spirit dies after 15...120
+    // seconds." (PvP, 3460)
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Tranquility",
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 15, atTwelve: 99 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "tranquility", affects: "all", radius: RANGE_NATURE_RITUAL },
+          replacedBy: undefined,
+          leavesCorpses: undefined,
+          onePerOwner: false,
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.toxicity",
+    name: "Toxicity",
+    gwId: 1472,
+    type: "nature-ritual",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.beast-mastery",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Poisoned or Diseased creatures within its range suffer
+    // -2 Health degeneration. This spirit dies after 30...180 seconds."
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Toxicity",
+          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 150 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "toxicity", affects: "all", radius: RANGE_NATURE_RITUAL },
+          replacedBy: undefined,
+          leavesCorpses: undefined,
+          onePerOwner: false,
+          onDeath: "vanish",
+          ownerDisableOnDeath: undefined,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+        },
+      },
+    ],
+  },
+  {
+    id: "ranger.greater-conflagration",
+    name: "Greater Conflagration",
+    gwId: 465,
+    type: "nature-ritual",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    projectile: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "For non-spirit creatures within its range, all physical
+    // damage is fire damage instead. This spirit dies after 30...240
+    // seconds."
+    effects: [
+      {
+        kind: "summon",
+        count: 1,
+        creature: {
+          kind: "spirit",
+          look: "spirit",
+          name: "Greater Conflagration",
+          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
+          armor: { flat: 51 },
+          attack: undefined,
+          durationSeconds: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
+          },
+          behaviour: { kind: "idle" },
+          aura: { statusId: "greater-conflagration", affects: "all", radius: RANGE_NATURE_RITUAL },
           replacedBy: undefined,
           leavesCorpses: undefined,
           onePerOwner: false,

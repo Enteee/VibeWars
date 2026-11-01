@@ -226,6 +226,21 @@ export const MESMER_STATUS_ICONS = {
       `<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z" ${stroke(c, 2)}/>` +
       `<path d="M9 8l6 8M15 8l-6 8" ${stroke(c, 1.8)}/>`,
   ],
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  // Hex: a bolt drawn out of a drop, each spell leaks Energy.
+  "power-leech": [
+    "hex",
+    (c) =>
+      `<path d="M12 3c3 4 5 6.5 5 9a5 5 0 0 1-10 0c0-2.5 2-5 5-9z" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 9l-3 4h4l-3 4" ${stroke(c, 1.8)}/>`,
+  ],
+  // Hex: a drop over two down chevrons, Energy draining away.
+  "power-flux": [
+    "hex",
+    (c) =>
+      `<path d="M12 3c2 2.6 3.5 4.3 3.5 6a3.5 3.5 0 0 1-7 0c0-1.7 1.5-3.4 3.5-6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M8 15l4 3 4-3M8 19l4 3 4-3" ${stroke(c, 1.8)}/>`,
+  ],
   // Skill effect (#1929), a stand-in until its art card: a mask over
   // tally marks, spells counted down.
   "signet-of-illusions": [

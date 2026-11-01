@@ -103,4 +103,8 @@ export const NECROMANCER_ICONS = {
   // Attributes set or borrowed (#1929), stand-ins until their art card.
   "necromancer.wail-of-doom": { glyph: "slow", modifier: "stun" },
   "necromancer.atrophy": { glyph: "slow", modifier: "half" },
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  "necromancer.spinal-shivers": { glyph: "interrupt", modifier: "stun" },
+  "necromancer.shivers-of-dread": { glyph: "hex-cut", modifier: "stun" },
+  "necromancer.death-nova": { glyph: "germ", modifier: "corpse" },
 };

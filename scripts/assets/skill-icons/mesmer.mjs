@@ -76,4 +76,7 @@ export const MESMER_ICONS = {
   "mesmer.physical-resistance": { glyph: "armor", modifier: "half" },
   // Attributes set or borrowed (#1929), stand-ins until their art card.
   "mesmer.signet-of-illusions": { glyph: "energy", modifier: "finale" },
+  // Casting-state hexes (#1931), stand-ins until their art card.
+  "mesmer.power-leech": { glyph: "energy", modifier: "bolt" },
+  "mesmer.power-flux": { glyph: "interrupt", modifier: "hourglass" },
 };

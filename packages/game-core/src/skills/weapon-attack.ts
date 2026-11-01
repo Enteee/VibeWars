@@ -29,13 +29,16 @@ import {
 import { resolveMagnitude } from "./scaling.js";
 import {
   aggregateModifiers,
+  damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
+  physicalDamageDealtAsOf,
   isSuppressed,
   type StatusId,
 } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
 import {
+  attackDamageDeltaOf,
   attackDamageTypeOf,
   attackMissChanceOf,
   blockingStatusesOf,
@@ -203,8 +206,17 @@ export interface WeaponSnapshot {
   readonly damageType: DamageType;
   /** The least armor penetration the attacker's statuses give (#1519): Judge's Insight's 0.2. */
   readonly armorPenetration: number;
-  /** Added to each blow before armor by the attacker's statuses (#1654): Nightmare Weapon's −42. */
+  /**
+   * Added to each blow before armor by the attacker's statuses (#1654):
+   * Nightmare Weapon's −42, Favorable Winds' +6 to arrows (#1873).
+   */
   readonly damageDelta: number;
+  /**
+   * The type the attacker's statuses turn its physical blows into, after
+   * `damageType` or the skill's own (#1873): Greater Conflagration's fire.
+   * `undefined`: none.
+   */
+  readonly physicalDamageDealtAs: DamageType | undefined;
 }
 
 export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
@@ -220,7 +232,8 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     criticalChanceBonus: modifiers.criticalChanceBonus,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
-    damageDelta: modifiers.attackDamageDelta,
+    damageDelta: attackDamageDeltaOf(attacker),
+    physicalDamageDealtAs: physicalDamageDealtAsOf(attacker.statuses.active),
   };
 }
 
@@ -534,8 +547,12 @@ export function landBlow(
         snapshot.damageDelta,
     ),
     armorIgnoring: blow.bonus,
-    // The attacker's type first, then Winter's on the victim (#1745).
-    type: damageTypeTaken(blow.damageType ?? snapshot.damageType, victim.statuses.active),
+    // The attacker's type first, turned by its Greater Conflagration
+    // (#1873), then Winter's on the victim (#1745).
+    type: damageTypeTaken(
+      damageTypeDealt(blow.damageType ?? snapshot.damageType, snapshot.physicalDamageDealtAs),
+      victim.statuses.active,
+    ),
     source: "weapon",
     armorPenetration: Math.max(
       blow.armorPenetration,

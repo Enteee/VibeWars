@@ -392,11 +392,16 @@ export interface GiveHealthEffect {
   readonly healPercent: Magnitude;
 }
 
-/** Apply a condition/hex/enchantment to the effect's target. */
+/**
+ * Apply a condition/hex/enchantment to the effect's target, or to the
+ * caster whatever it targeted (`on: "caster"`, #1930), as Shadow Walk's
+ * stance while it Shadow Steps to a foe.
+ */
 export interface ApplyStatusEffect {
   readonly kind: "apply-status";
   readonly statusId: StatusId;
   readonly durationSeconds: number;
+  readonly on?: "caster";
 }
 
 /**
@@ -503,13 +508,15 @@ export interface KnockdownEffect {
  * Shadow Step (#988): the caster moves to the effect's target, as Death's
  * Charge's "Shadow Step to target foe" (`"target"`), or away from what it
  * has selected (#1326), as Heart of Shadow's "Shadow Step to a nearby
- * location directly away from your target" (`"away-from-selection"`). The
- * effect layer only reports it (`shadow-stepped`, `shadow-stepped-away`);
- * the simulation places the body.
+ * location directly away from your target" (`"away-from-selection"`), or
+ * trades places with it (#1930), as Swap's "you and target summoned
+ * creature Shadow Step to each other's locations" (`"swap"`). The effect
+ * layer only reports it (`shadow-stepped`, `shadow-stepped-away`,
+ * `shadow-swapped`); the simulation places the bodies.
  */
 export interface ShadowStepEffect {
   readonly kind: "shadow-step";
-  readonly to: "target" | "away-from-selection";
+  readonly to: "target" | "away-from-selection" | "swap";
 }
 
 /**
@@ -745,7 +752,10 @@ export interface LengthenRechargeEffect {
  * every skill on the bar, the one used included, as Blackout's "all of
  * your skills are disabled for 5 seconds". `attacks` (#1914): every
  * attack skill on the bar but the one used, as Focused Shot's "your other
- * attack skills are disabled". None on it: nothing. `seconds` scales
+ * attack skills are disabled". `types` (#1930): every skill on the
+ * bar of one of `types`, the one used included, as Shadow Walk's "your
+ * enchantments and stances are disabled"; a status it keeps up runs on.
+ * None on it: nothing. `seconds` scales
  * with the caster's rank, as Focused Shot's 8...5...4.
  */
 export type DisableOwnSkillsEffect =
@@ -775,6 +785,12 @@ export type DisableOwnSkillsEffect =
       readonly which: "other-professions";
       readonly profession: ProfessionId;
       readonly exceptTypes: readonly SkillType[];
+      readonly seconds: Magnitude;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "types";
+      readonly types: readonly SkillType[];
       readonly seconds: Magnitude;
     };
 
@@ -1104,8 +1120,12 @@ export type StateCondition =
    * (#1234): Iron Palm's "suffering from a hex or condition".
    */
   | { readonly kind: "target-has-any"; readonly categories: readonly StatusCategory[] }
-  /** The effect's target is activating a spell (`isSpell`); a chant is not one. */
-  | { readonly kind: "target-casting"; readonly spell: true }
+  /**
+   * The effect's target is activating a spell (`isSpell`); a chant is not
+   * one, unless `orChant` (#1931), as Power Leech's "if target foe is
+   * casting a Spell or Chant".
+   */
+  | { readonly kind: "target-casting"; readonly spell: true; readonly orChant?: true }
   /**
    * The effect's target is activating any skill, an attack skill included
    * (#1473): Overload's "if target foe is using a skill". A plain weapon

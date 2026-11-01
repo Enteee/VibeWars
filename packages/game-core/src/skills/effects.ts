@@ -16,8 +16,10 @@ import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
 import {
   aggregateModifiers,
+  damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
+  physicalDamageDealtAsOf,
   scaledStatusDuration,
   type ActiveStatus,
   type OwnSkillBoost,
@@ -265,6 +267,12 @@ export type CombatEvent =
    */
   | { readonly kind: "shadow-stepped-away"; readonly targetId: string }
   /**
+   * Shadow swapped (#1930): `targetId`, the caster, and `withId`, the
+   * creature it targeted, trade places. The simulation places both bodies
+   * when it reads this.
+   */
+  | { readonly kind: "shadow-swapped"; readonly targetId: string; readonly withId: string }
+  /**
    * Shadow Stepped back (#1826): `targetId`, a returning status's source,
    * is back where it put it up. The simulation has placed the body.
    */
@@ -380,7 +388,7 @@ function recordFromFoe(
   amount: number,
 ): void {
   if (dealer !== undefined && dealer.team !== target.team) {
-    target.statuses.recordDamageFromFoe(dealer.id, type, amount);
+    target.statuses.recordDamageFromFoe(dealer.id, type, amount, target.cast.isCasting);
   }
 }
 
@@ -1313,10 +1321,14 @@ export function applyEffect(
       if (amount <= 0) {
         return events;
       }
-      // Winter's (#1745): elemental damage reaches its bearer as cold.
+      // Greater Conflagration's (#1873) on the caster, then Winter's (#1745)
+      // on the target: elemental damage reaches its bearer as cold.
       const packet = skillDamage(
         amount,
-        damageTypeTaken(effect.type, target.statuses.active),
+        damageTypeTaken(
+          damageTypeDealt(effect.type, physicalDamageDealtAsOf(caster.statuses.active)),
+          target.statuses.active,
+        ),
         withSkillArmorPenetration(effect.armorPenetration, caster, context.profession),
       );
       applyDamage(
@@ -1480,7 +1492,8 @@ export function applyEffect(
     }
 
     case "apply-status": {
-      if (target === undefined || target.dead) {
+      const bearer = effect.on === "caster" ? caster : target;
+      if (bearer === undefined || bearer.dead) {
         return events;
       }
       // A weapon spell lasts longer with its caster's Spawning Power (#1098),
@@ -1492,12 +1505,12 @@ export function applyEffect(
           : effect.durationSeconds;
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
       const durationSeconds = scaledStatusDuration(
-        target,
+        bearer,
         effect.statusId,
         base * (context.own?.durationMultiplier ?? 1),
       );
       landStatus(
-        target,
+        bearer,
         effect.statusId,
         durationSeconds,
         caster.id,
@@ -1578,6 +1591,8 @@ export function applyEffect(
         caster.id,
         caster.nextMaintainSeq,
         castSpot(context, caster),
+        // The ally a caster wears it for (#1930), as Recall's.
+        bearer === target ? null : (target?.id ?? null),
       );
       caster.nextMaintainSeq += 1;
       // Vital Blessing (#1872): the Health comes with the maximum, as
@@ -1668,6 +1683,7 @@ export function applyEffect(
         target.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
       }
       knockDown(target, durationSeconds);
+      target.statuses.recordKnockdown();
       events.push({ kind: "knocked-down", targetId: target.id, durationSeconds });
       return events;
     }
@@ -1683,7 +1699,11 @@ export function applyEffect(
       if (target === undefined || target.dead || caster.dead) {
         return events;
       }
-      events.push({ kind: "shadow-stepped", targetId: caster.id, toId: target.id });
+      events.push(
+        effect.to === "swap"
+          ? { kind: "shadow-swapped", targetId: caster.id, withId: target.id }
+          : { kind: "shadow-stepped", targetId: caster.id, toId: target.id },
+      );
       return events;
     }
 
@@ -1879,23 +1899,9 @@ export function applyEffect(
       return events;
     }
 
-    case "disable-own-skills": {
-      const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
-      const disabled = bar.filter((slot) => disabledOwn(effect, slot.skillId, context.skillId));
-      const seconds = resolveMagnitude(effect.seconds, caster);
-      for (const { key, skillId } of disabled) {
-        emptyPool(caster, key);
-        if (caster.cast.disable(key, seconds)) {
-          events.push({
-            kind: "skill-disabled",
-            targetId: caster.id,
-            skillId,
-            seconds,
-          });
-        }
-      }
+    case "disable-own-skills":
+      events.push(...disableOwnSkills(caster, effect, context.skillId));
       return events;
-    }
 
     // A shot's (#1914): its recharge began as it left, and ends here.
     case "recharge-reset":
@@ -2084,7 +2090,10 @@ export function stateHolds(
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
-      return skill !== undefined && isSpell(skill.type);
+      return (
+        skill !== undefined &&
+        (isSpell(skill.type) || (condition.orChant === true && skill.type === "chant"))
+      );
     }
     case "target-using-skill":
       return target.cast.activeCast !== undefined;
@@ -2295,9 +2304,32 @@ function disabledBy(
 }
 
 /**
+ * Disable `caster`'s own skills as `effect` names them (#1473), `usedId`
+ * the skill that does it, each one's adrenaline lost: one whose wait
+ * does not get longer (`CastState.disable`) is not reported.
+ */
+export function disableOwnSkills(
+  caster: Combatant,
+  effect: DisableOwnSkillsEffect,
+  usedId: string | undefined,
+): CombatEvent[] {
+  const events: CombatEvent[] = [];
+  const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
+  const seconds = resolveMagnitude(effect.seconds, caster);
+  for (const { key, skillId } of bar.filter((slot) => disabledOwn(effect, slot.skillId, usedId))) {
+    emptyPool(caster, key);
+    if (caster.cast.disable(key, seconds)) {
+      events.push({ kind: "skill-disabled", targetId: caster.id, skillId, seconds });
+    }
+  }
+  return events;
+}
+
+/**
  * Whether `effect` disables the caster's bar skill `skillId` (#1473):
  * for `attribute` (#1511), never `usedId`, the skill that disables them;
- * for `all` (#1570), every one.
+ * for `all` (#1570), every one; for `types` (#1930), those of a type,
+ * `usedId` included.
  */
 function disabledOwn(
   effect: DisableOwnSkillsEffect,
@@ -2316,6 +2348,9 @@ function disabledOwn(
   }
   if (effect.which === "attacks") {
     return skillId !== usedId && skill?.type === "attack";
+  }
+  if (effect.which === "types") {
+    return skill !== undefined && effect.types.includes(skill.type);
   }
   return (
     skill !== undefined &&
@@ -2503,6 +2538,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "remove-status":
       return effect.from === "caster";
     case "maintain-status":
+    case "apply-status":
       return effect.on === "caster";
     case "energy-loss":
     case "energy-steal":
@@ -2512,7 +2548,6 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "transfer-conditions":
     case "spread-conditions":
     case "give-health":
-    case "apply-status":
     case "interrupt":
     case "knockdown":
     case "shadow-step":

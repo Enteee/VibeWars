@@ -47,6 +47,7 @@ export type DirectTriggerEvent = Exclude<
   | "bearer-loses-condition"
   | "bearer-blocks"
   | "bearer-interrupted"
+  | "bearer-knocked-down"
   | "bearer-health-drops-below"
   | "bearer-fatal-damage-negated"
   | "bearer-creates-creature"
@@ -206,6 +207,7 @@ export function fireChangeTriggers(
     case "hit":
     case "failed-to-hit":
     case "took-physical-damage":
+    case "knocked-down":
     case "lost-enchantment":
     case "lost-condition":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
@@ -423,6 +425,15 @@ function fire(
     } else if (effect.kind === "cancel-attack") {
       flush();
       events.push(...cancelAttack(trigger, sourceId, bearer));
+    } else if (effect.kind === "pay-energy-or-end") {
+      flush();
+      if (source.dead || source.energy < effect.amount) {
+        bearer.statuses.end(statusId);
+        events.push({ kind: "status-expired", targetId: bearer.id, statusId });
+        return [{ sourceId, skillId: trigger.skillId, events }];
+      }
+      source.energy -= effect.amount;
+      events.push({ kind: "energy-loss", targetId: source.id, amount: effect.amount });
     } else {
       pending.push(effect);
     }

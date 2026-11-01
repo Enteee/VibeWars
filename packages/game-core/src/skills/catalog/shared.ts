@@ -248,6 +248,24 @@ export const WOLF: CreatureTemplate = {
   onDeathInRange: undefined,
 };
 
+/**
+ * A spirit's Health (#1917): GW1's "level a...b spirit", its level at ranks
+ * 0 and 15, gives the level at 12 unrounded, a + 0.8 (b − a), so the level
+ * is whole at every rank, and Health 50 + 20 per level.
+ */
+export function spiritHealth(
+  attributeId: string,
+  [atZero, atFifteen]: readonly [atZero: number, atFifteen: number],
+): Magnitude {
+  return {
+    byLevel: {
+      level: { attributeId, atZero, atTwelve: atZero + 0.8 * (atFifteen - atZero) },
+      atLevelZero: 50,
+      perLevel: 20,
+    },
+  };
+}
+
 /** A spirit's shot, world units per second: a wand's (house tuning). */
 export const SPIRIT_SHOT_SPEED = 900;
 
@@ -255,13 +273,13 @@ export const SPIRIT_SHOT_SPEED = 900;
  * A binding ritual's attacking spirit (#1239), as Pain: it stands where
  * it was made and shoots the nearest foe within spirit range, a blow
  * every 2 s (house tuning: GW1 publishes none) for its stated damage,
- * linear in `attributeId` (#1550), Communing for most. A level-L spirit
- * has 50 + 20 per L Health; armor 51, as every other spirit's.
+ * linear in `attributeId` (#1550), Communing for most. Health from its
+ * `levels` (#1917); armor 51, as every other spirit's.
  */
 export function attackingSpirit(
   name: string,
   attributeId: string,
-  healthAtTwelve: number,
+  levels: readonly [atZero: number, atFifteen: number],
   durationSeconds: Magnitude,
   damage: { readonly atZero: number; readonly atTwelve: number },
   onHit: readonly OnHitEffect[],
@@ -270,7 +288,7 @@ export function attackingSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: { scaling: { attributeId, atZero: 70, atTwelve: healthAtTwelve } },
+    maxHealth: spiritHealth(attributeId, levels),
     armor: { flat: 51 },
     attack: {
       attributeId,
@@ -300,13 +318,13 @@ export function attackingSpirit(
 /**
  * A protective spirit (#1265): it attacks nothing and projects `statusId`
  * on whoever `affects` in its range, paying for every outcome it
- * changes with its own health. Health from its level, as Recuperation's:
- * 50 + 20 per level, armor 51; both linear in `attributeId` (#1550).
+ * changes with its own health. Health from its `levels` (#1917), armor
+ * 51; its duration linear in `attributeId` (#1550).
  */
 export function protectiveSpirit(
   name: string,
   attributeId: string,
-  healthAtTwelve: number,
+  levels: readonly [atZero: number, atFifteen: number],
   duration: { readonly atZero: number; readonly atTwelve: number },
   statusId: StatusId,
   affects: "allies" | "foes",
@@ -315,7 +333,7 @@ export function protectiveSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: { scaling: { attributeId, atZero: 70, atTwelve: healthAtTwelve } },
+    maxHealth: spiritHealth(attributeId, levels),
     armor: { flat: 51 },
     attack: undefined,
     durationSeconds: { scaling: { attributeId, ...duration } },
