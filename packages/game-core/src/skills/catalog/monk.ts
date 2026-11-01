@@ -3062,4 +3062,38 @@ export const MONK_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "monk.shield-guardian",
+    name: "Shield Guardian",
+    gwId: 885,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 25,
+    range: RANGE_SPELL,
+    target: "self",
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The PvP split (3454): "For 1...4 seconds, all party members in
+    // earshot have a 75% chance to block attacks" (#1974): 3 s, its
+    // rank-12 value. The heal on a block is the status's.
+    effects: [{ kind: "apply-status", statusId: "shield-guardian", durationSeconds: 3 }],
+  },
 ];

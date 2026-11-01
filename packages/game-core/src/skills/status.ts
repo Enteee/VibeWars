@@ -544,6 +544,12 @@ export interface StatusDefinition {
    */
   readonly onAttackHit: AttackHitRider | undefined;
   /**
+   * Effects on whoever blocks one of the bearer's physical attacks while
+   * it lasts (#1974), shaped as `onAttackHit`: Glass Arrows' Bleeding on
+   * a foe that blocked an arrow. A miss is no block, so it adds nothing.
+   */
+  readonly onAttackBlocked: AttackHitRider | undefined;
+  /**
    * It ends after this many of the bearer's hits with a weapon of
    * `weapon` (#939): Sand Shards' "the next 4 times you hit with a
    * scythe". Each victim a blow lands on is a hit, a cleave's included;

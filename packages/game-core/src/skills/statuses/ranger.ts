@@ -65,7 +65,9 @@ export type RangerStatusId =
   // Your next attack (#1916).
   | "poison-tip-signet"
   // Attributes raised (#1941).
-  | "experts-dexterity";
+  | "experts-dexterity"
+  // Blocks that pay off (#1974).
+  | "glass-arrows";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -535,5 +537,20 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     attackDurationMultiplier: 0.85,
     attributeDeltas: [{ scope: { attributeId: "ranger.marksmanship" }, amount: 1 }],
+  }),
+  // Glass Arrows (PvP): "For 10...35 seconds, your arrows strike for
+  // +6...18 damage if they hit and cause Bleeding for 10...20 seconds if
+  // they are Blocked" (#1974): +16 and 18 s at rank 12. A blind miss is no
+  // block, and a sword gets neither.
+  "glass-arrows": define("glass-arrows", "Glass Arrows", "preparation", {
+    profession: "ranger",
+    attackDamageDelta: 16,
+    attackDamageDeltaWeapon: "bow",
+    onAttackBlocked: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 18 }],
+      skillId: "ranger.glass-arrows",
+    },
   }),
 };
