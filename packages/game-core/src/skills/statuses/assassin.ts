@@ -34,6 +34,8 @@ export type AssassinStatusId =
   | "shadow-walk"
   // PvP forms (#1951).
   | "shadow-form"
+  // Enchantment party moves (#1975).
+  | "dark-apostasy"
   // Take what another has (#1965).
   | "mirrored-stance";
 
@@ -240,6 +242,18 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.shadow-form",
       },
     ],
+  }),
+  // "For 3...17 seconds, every time you successfully land a critical hit,
+  // you remove one enchantment from your target. If you remove an
+  // enchantment in this way, you lose 10...3 Energy or Dark Apostasy ends"
+  // (#1975): 4 at rank 12.
+  "dark-apostasy": define("dark-apostasy", "Dark Apostasy", "enchantment", {
+    profession: "assassin",
+    onCriticalHit: {
+      effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
+      energyIfRemoved: 4,
+      skillId: "assassin.dark-apostasy",
+    },
   }),
   // "For 10...35 seconds, whenever target foe enters a stance, you enter
   // the same stance" (#1965): 30. Only the stance itself, at the foe's

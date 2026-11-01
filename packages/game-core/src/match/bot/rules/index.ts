@@ -10,6 +10,7 @@ import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
 import type { BotRule } from "./types.js";
 import wardTouch from "./ward-touch.js";
+import setup from "./setup.js";
 import wayOut from "./way-out.js";
 
 /**
@@ -27,6 +28,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   mimicElite,
   raise,
   renewSpirit,
+  setup,
   wardTouch,
   wayOut,
 ]);

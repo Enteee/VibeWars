@@ -37,6 +37,7 @@ import {
   getStatusDefinition,
   physicalDamageDealtAsOf,
   isSuppressed,
+  type AttackHitRider,
   type StatusId,
 } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
@@ -715,6 +716,85 @@ function applyRiders(
       rules,
       surroundings,
     });
+    sourcePaysForRemoved(rider, attacker.statuses.get(status.id)?.sourceId, surroundings, events);
+    if (events.length > 0) {
+      fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
+    }
+  }
+}
+
+/**
+ * Order of Apostasy's price (#1975): the rider's status's source loses
+ * its share of its effective maximum Health, rounded up, for each status
+ * of the profession the rider's `events` removed, as Order of Undeath's
+ * owner does. Health loss, not damage: it can kill. A source dead or
+ * gone loses nothing; a status this attack spent has no source left.
+ */
+function sourcePaysForRemoved(
+  rider: AttackHitRider,
+  sourceId: string | undefined,
+  surroundings: Surroundings,
+  events: CombatEvent[],
+): void {
+  const price = rider.sourceLosesPerRemoved;
+  const source = sourceId === undefined ? undefined : surroundings.get(sourceId)?.combatant;
+  if (price === undefined || source === undefined) {
+    return;
+  }
+  const removed = events.filter(
+    (event) =>
+      event.kind === "status-removed" &&
+      getStatusDefinition(event.statusId).profession === price.profession,
+  ).length;
+  const each = Math.ceil((price.percentOfMax / 100) * effectiveMaxHealth(source));
+  for (let index = 0; index < removed; index += 1) {
+    loseHealth(source, each, "health-loss", events);
+  }
+}
+
+/**
+ * What a critical hit the attacker landed does to `victim` through its
+ * statuses (#1975): each `onCriticalHit`'s effects, with the attacker as
+ * caster, onto `fired` under its own skill. One that removed an
+ * enchantment costs its bearer `energyIfRemoved` Energy, or, short of
+ * it, ends; the removal stands. A dead attacker's do nothing.
+ */
+export function criticalHitRiders(
+  attacker: Combatant,
+  victim: Combatant,
+  rng: SimulationRng,
+  rules: CombatRules,
+  surroundings: Surroundings,
+  fired: FiredTrigger[],
+): void {
+  if (attacker.dead) {
+    return;
+  }
+  const active = attacker.statuses.active;
+  for (const status of [...active]) {
+    const rider = getStatusDefinition(status.id).onCriticalHit;
+    if (rider === undefined || isSuppressed(active, status)) {
+      continue;
+    }
+    const events = applyEffects(rider.effects, {
+      caster: attacker,
+      target: victim,
+      rng,
+      rules,
+      surroundings,
+    });
+    const removed = events.some(
+      (event) =>
+        event.kind === "status-removed" &&
+        getStatusDefinition(event.statusId).category === "enchantment",
+    );
+    if (removed && attacker.energy < rider.energyIfRemoved) {
+      attacker.statuses.end(status.id);
+      events.push({ kind: "status-expired", targetId: attacker.id, statusId: status.id });
+    } else if (removed && rider.energyIfRemoved > 0) {
+      attacker.energy -= rider.energyIfRemoved;
+      events.push({ kind: "energy-loss", targetId: attacker.id, amount: rider.energyIfRemoved });
+    }
     if (events.length > 0) {
       fired.push({ sourceId: attacker.id, skillId: rider.skillId, events });
     }
@@ -977,6 +1057,7 @@ function strike(
       : { ...PLAIN_BLOW, bonus: aggregateModifiers(owner.statuses.active).minionDamageBonus };
   if (landBlow(snapshot, attacker, victim, blow, swing.exposed(victim), rng, rules, events)) {
     landedCritical(attacker, snapshot.criticalStrikes, events);
+    criticalHitRiders(attacker, victim, rng, rules, swing.surroundings, fired);
   }
   events.push(
     ...attackHitRiders(
@@ -1226,6 +1307,7 @@ export function resolveAttackSkillOutcome(
         )
       ) {
         landedCritical(caster, snapshot.criticalStrikes, events);
+        criticalHitRiders(caster, victim, rng, rules, surroundings, fired);
         critical.push(victim);
       }
       events.push(

@@ -3101,4 +3101,32 @@ export const MONK_SKILLS: readonly Skill[] = [
     // rank-12 value. The heal on a block is the status's.
     effects: [{ kind: "apply-status", statusId: "shield-guardian", durationSeconds: 3 }],
   },
+  // Enchantment party moves (#1975).
+  {
+    id: "monk.air-of-enchantment",
+    name: "Air of Enchantment",
+    gwId: 1115,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...10 seconds, enchantments cast on target other ally cost 10
+    // less Energy (minimum 1 Energy)": 9 s.
+    effects: [{ kind: "apply-status", statusId: "air-of-enchantment", durationSeconds: 9 }],
+  },
 ];

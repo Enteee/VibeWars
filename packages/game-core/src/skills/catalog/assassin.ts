@@ -3048,6 +3048,36 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // all but 5...50 Health": 13 s.
     effects: [{ kind: "apply-status", statusId: "shadow-form", durationSeconds: 13 }],
   },
+  // Enchantment party moves (#1975).
+  {
+    id: "assassin.dark-apostasy",
+    name: "Dark Apostasy",
+    gwId: 1029,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.critical-strikes",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...17 seconds, every time you successfully land a critical hit,
+    // you remove one enchantment from your target. If you remove an
+    // enchantment in this way, you lose 10...3 Energy or Dark Apostasy
+    // ends": 14 s, and 4 Energy, the enchantment's.
+    effects: [{ kind: "apply-status", statusId: "dark-apostasy", durationSeconds: 14 }],
+  },
   {
     id: "assassin.mirrored-stance",
     name: "Mirrored Stance",

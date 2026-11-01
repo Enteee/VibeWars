@@ -561,6 +561,14 @@ export interface StatusDefinition {
    */
   readonly refreshesOnCritical: boolean;
   /**
+   * What each critical hit the bearer lands does to its victim (#1975):
+   * Dark Apostasy's strip. `effects` resolve with the bearer as caster
+   * and the victim as target, logged as `skillId`. If they removed an
+   * enchantment, the bearer pays `energyIfRemoved` Energy, or, short of
+   * it, the status ends; the removal stands. `undefined`: none.
+   */
+  readonly onCriticalHit: CriticalHitRider | undefined;
+  /**
    * It ends after this many incoming attacks, each a hit or a block
    * (#524); `undefined`: only its duration ends it. Counted on each
    * bearer's own status, so allies sharing a shout wear theirs out apart.
@@ -905,6 +913,14 @@ export interface StatusDefinition {
    * Veil's 2. Read once, as the cast begins; an instant hex stays instant.
    */
   readonly incomingHexCastTimeMultiplier: number;
+  /**
+   * Energy off each enchantment cast on the bearer (#1975): Air of
+   * Enchantment's 10. Taken off last, after the caster's own discounts
+   * and glyphs, never below 1; a cost already at 1 or less stays. Only a
+   * single-target enchantment whose chosen target is the bearer, any
+   * caster's, the bearer's own on itself too. 0: none.
+   */
+  readonly enchantmentsOnBearerCostLess: number;
   /**
    * Damage added to each spirit's attack that hits the bearer (#1270):
    * Painful Bond's 18. Armor-ignoring, on the same blow; a missed or
@@ -1252,6 +1268,11 @@ export interface OwnSkillModifier {
   readonly energySurcharge: number;
   /** On activation time. 1: none. */
   readonly activationMultiplier: number;
+  /**
+   * Seconds off the activation time, after every multiplier, never below
+   * 0 (#1975): Jaundiced Gaze's "casts 1 second faster". 0: none.
+   */
+  readonly activationSecondsLess: number;
   /** The share taken off the recharge, as `spellRechargeFaster`. 0: none. */
   readonly rechargeFaster: number;
   /**
@@ -1281,6 +1302,7 @@ export interface OwnSkillBoost {
   readonly energyFloor: number;
   readonly energySurcharge: number;
   readonly activationMultiplier: number;
+  readonly activationSecondsLess: number;
   readonly rechargeFaster: number;
   readonly rechargeSlower: number;
   readonly durationMultiplier: number;
@@ -1296,6 +1318,7 @@ export const NO_OWN_SKILL_BOOST: OwnSkillBoost = {
   energyFloor: 1,
   energySurcharge: 0,
   activationMultiplier: 1,
+  activationSecondsLess: 0,
   rechargeFaster: 0,
   rechargeSlower: 0,
   durationMultiplier: 1,
@@ -1330,6 +1353,7 @@ export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): Ow
         energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
         energySurcharge: boost.energySurcharge + modifier.energySurcharge,
         activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
+        activationSecondsLess: boost.activationSecondsLess + modifier.activationSecondsLess,
         rechargeFaster: Math.max(boost.rechargeFaster, modifier.rechargeFaster),
         rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
         durationMultiplier: boost.durationMultiplier * modifier.durationMultiplier,
@@ -1466,6 +1490,23 @@ export interface AttackHitRider {
   readonly skillId: string;
   readonly attackSkillsOnly: boolean;
   readonly weapon: AttackWeaponClass | undefined;
+  /**
+   * The status's source loses this share of its effective maximum Health,
+   * rounded up, for each status of `profession` the rider removed
+   * (#1975): Order of Apostasy's 4% per Monk enchantment. Health loss,
+   * not damage; a dead source loses nothing. `undefined`: none.
+   */
+  readonly sourceLosesPerRemoved?: {
+    readonly profession: ProfessionId;
+    readonly percentOfMax: number;
+  };
+}
+
+/** `StatusDefinition.onCriticalHit` (#1975). */
+export interface CriticalHitRider {
+  readonly effects: readonly SkillEffect[];
+  readonly energyIfRemoved: number;
+  readonly skillId: string;
 }
 
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */
