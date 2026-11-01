@@ -221,6 +221,11 @@
   .row2.off .s {
     color: #ffa657;
   }
+  .hint {
+    padding: 0 14px 8px;
+    color: #7d8899;
+    font-size: 12px;
+  }
   .empty {
     padding: 24px 14px;
     color: #7d8899;
@@ -297,9 +302,13 @@
   };
   const NONE = "You have no Team Builds. Make one in Team Builder.";
   const list = (q, ex) => {
-    const r = B.map((b, i) => [b, i]).filter(([b]) => b[0].toLowerCase().includes(q.toLowerCase()));
+    const r = B.map((b, i) => [b, i]).filter(
+      ([b]) => b[1] === 4 && b[0].toLowerCase().includes(q.toLowerCase()),
+    );
     return r.length
-      ? '<div class="list">' + r.map(([b, i]) => rowHtml(b, i, ex)).join("") + "</div>"
+      ? '<div class="hint">Showing 4-player builds · 2 others hidden</div><div class="list">' +
+          r.map(([b, i]) => rowHtml(b, i, ex)).join("") +
+          "</div>"
       : '<div class="empty">No Team Build named “' + q + "”.</div>";
   };
   const search = (q) =>
@@ -310,7 +319,7 @@
 </script>
 <h2>1 · Closed, a proposal pending</h2>
 <div class="row"><div class="f d" id="d1"></div></div>
-<h2>2 · Open: 8 builds, two the wrong size, yours marked</h2>
+<h2>2 · Open: 8 builds, wrong sizes filtered out, yours marked</h2>
 <div class="row"><div class="f d" id="d2"></div></div>
 <h2>3 · Open, search with no match</h2>
 <div class="row"><div class="f d" id="d3"></div></div>
