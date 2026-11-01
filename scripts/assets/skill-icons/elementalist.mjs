@@ -92,4 +92,5 @@ export const ELEMENTALIST_ICONS = {
   // Attributes raised (#1941), stand-ins until their art card.
   "elementalist.glyph-of-elemental-power": { glyph: "fireball", modifier: "up" },
   "elementalist.glyph-of-energy": { glyph: "energy", modifier: "half" },
+  "elementalist.master-of-magic": { glyph: "bars-set" },
 };
