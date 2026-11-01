@@ -12,6 +12,7 @@ import {
   primaryAttributeIds,
   MOD_SLOTS,
   MOD_SLOT_KEYS,
+  MOD_WHILE_TEXT,
   NO_UPGRADES,
   WEAPON_MODS,
   fittingUpgrades,
@@ -548,6 +549,8 @@ function conditionLabel(condition: ArmorCondition): string {
       return "while activating a skill";
     case "signets-at-least":
       return `with ${String(condition.count)}+ signets on your bar`;
+    case "mod-while":
+      return MOD_WHILE_TEXT[condition.while];
   }
 }
 

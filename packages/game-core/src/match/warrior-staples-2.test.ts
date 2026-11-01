@@ -1,3 +1,4 @@
+import { createRng } from "../rng.js";
 import { describe, expect, it } from "vitest";
 
 import { RANGE_MELEE } from "../distances.js";
@@ -276,9 +277,9 @@ describe("Shield Stance (#1592)", () => {
       source: "weapon",
       armorPenetration: 0,
     } as const;
-    expect(mitigate(packet, bearer, RULES.combat, null)).toBe(50);
+    expect(mitigate(packet, bearer, RULES.combat, null, createRng(1))).toBe(50);
     bearer.statuses.apply("shield-stance", 5, "w", NO_RANKS);
-    expect(mitigate(packet, bearer, RULES.combat, null)).toBe(35);
+    expect(mitigate(packet, bearer, RULES.combat, null, createRng(1))).toBe(35);
   });
 });
 

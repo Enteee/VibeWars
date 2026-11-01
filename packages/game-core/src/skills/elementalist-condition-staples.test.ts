@@ -76,7 +76,7 @@ function use(user: Combatant, skillId: string, ...targets: Combatant[]): CombatE
 
 /** What `amount` of `type` damage at no armor penetration does to `victim`. */
 function elemental(amount: number, type: "cold" | "earth" | "fire", victim: Combatant): number {
-  return mitigate(skillDamage(amount, type, 0), victim, RULES, "chest");
+  return mitigate(skillDamage(amount, type, 0), victim, RULES, "chest", createRng(1));
 }
 
 function remaining(combatant: Combatant, statusId: StatusId): number | undefined {

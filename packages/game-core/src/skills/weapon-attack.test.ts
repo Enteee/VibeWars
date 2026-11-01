@@ -305,6 +305,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       target,
       RULES,
       "chest",
+      createRng(1),
     );
     expect(events).toEqual([{ kind: "damage", targetId: "t", amount: expected, critical: false }]);
   });
@@ -361,6 +362,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         target,
         RULES,
         "chest",
+        createRng(1),
       );
 
     it("gives Swift Chop 1% armor penetration a rank: 12% at 12", () => {
@@ -441,6 +443,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
         target,
         RULES,
         "chest",
+        createRng(1),
       );
     /** A target with +40 armor against `condition`. */
     const armoredVs = (condition: ArmorCondition): Combatant =>
@@ -744,7 +747,7 @@ describe("block (#534)", () => {
         {
           kind: "damage",
           targetId: "t",
-          amount: mitigate(skillDamage(16, "typeless", 0), target, RULES, null),
+          amount: mitigate(skillDamage(16, "typeless", 0), target, RULES, null, createRng(1)),
           critical: false,
         },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
@@ -905,6 +908,7 @@ describe("critical hits (#533)", () => {
       foe("dummy").combatant,
       RULES,
       "chest",
+      createRng(1),
     );
 
   it.each([0, 9, 12, 15])("crits at 1%% plus 1.37%% a rank of mastery, at rank %i", (rank) => {
@@ -1372,6 +1376,7 @@ describe("weakness (#762)", () => {
       foe("dummy").combatant,
       RULES,
       "chest",
+      createRng(1),
     );
 
   const weakened = (who: Combatant): Combatant => {
@@ -1491,6 +1496,7 @@ describe("a caster weapon's element (#761)", () => {
       makeCombatant({ id: "plain", equipment: unarmedResolvedEquipment(armor) }),
       RULES,
       "chest",
+      createRng(1),
     );
 
   it("a Fire Magic wand meets a Ranger's 100 armor, a Domination wand its 70", () => {
@@ -1576,6 +1582,7 @@ describe("dual attacks (#885)", () => {
       target,
       RULES,
       "chest",
+      createRng(1),
     );
 
   it("after an off-hand strikes twice, its bonus on each, and leaves the dual mark", () => {
@@ -1648,7 +1655,7 @@ describe("dual attacks (#885)", () => {
         [ally, vec2(40, -10)],
       ),
     });
-    const splash = mitigate(skillDamage(40, "piercing", 0), near, RULES, "chest");
+    const splash = mitigate(skillDamage(40, "piercing", 0), near, RULES, "chest", createRng(1));
     expect(damageTo(events, "near")).toEqual([splash, splash]);
     expect(damageTo(events, "far")).toEqual([]);
     expect(damageTo(events, "ally")).toEqual([]);
