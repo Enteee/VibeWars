@@ -120,7 +120,9 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(leave).toBeVisible();
     await expect(host.locator(".party-strip .party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
-    await expect(guest.locator(".random-arena-tile").first()).toBeDisabled();
+    await expect(
+      guest.locator("#topbar").getByRole("button", { name: "1v1", exact: true }),
+    ).toBeDisabled();
 
     // The host picks the mode; the guest's rail and screen follow, its modes locked.
     await openRail(host, "GvG");
@@ -162,7 +164,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     await debugger_.send("Debugger.enable");
     await debugger_.send("Debugger.pause");
     await joinByCode(guest, hostCode);
-    await guest.locator(".random-arena-tile").first().click();
+    await guest.locator("#topbar").getByRole("button", { name: "1v1", exact: true }).click();
     await expect(guest.locator(".queue-count")).toBeVisible();
 
     // The host answers: the join lands late, and is let go.
@@ -191,7 +193,9 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const card = page.locator(".character-card");
   await expect(card).toHaveCount(1);
   await expect(card).toHaveClass(/is-selected/);
-  await expect(page.locator(".random-arena-tile").first()).toBeEnabled();
+  await expect(
+    page.locator("#topbar").getByRole("button", { name: "1v1", exact: true }),
+  ).toBeEnabled();
   const name = card.locator(".play-card-name");
   await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
@@ -284,9 +288,9 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   // Random Arena only chooses: nothing to edit there.
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Random Arena has no button of its own (#2019); Options is its ⚙ (#1272), Music its ♪ (#1453).
+  // Random Arena's own buttons are its formats (#2022); Options is its ⚙ (#1272), Music its ♪ (#1453).
   const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
-  await expect(own).toHaveCount(0);
+  await expect(own).toHaveText(["1v1", "2v2", "4v4"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
 
@@ -323,6 +327,44 @@ for (const screen of ["Random Arena", "Character Builder"] as const) {
     await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
   });
 }
+
+test("#2022: on a phone, Random Arena's 1v1, 2v2 and 4v4 fold into the ⋯ and queue from there", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openMenu(page);
+  await openRail(page, "Random Arena");
+  const bar = page.locator("#topbar");
+  // Folded away until ⋯ opens.
+  await expect(bar.locator(".random-arena-queue")).toBeHidden();
+  await bar.locator(".topbar-more").click();
+  const formats = bar.getByRole("group", { name: "Find a match" }).getByRole("button");
+  await expect(formats).toHaveText(["1v1", "2v2", "4v4"]);
+  for (const format of await formats.all()) {
+    await expect(format).toBeVisible();
+    await expect(format).toBeEnabled();
+  }
+  await bar.getByRole("button", { name: "1v1", exact: true }).click();
+  await expect(page.locator(".queue-count")).toBeVisible();
+});
+
+test("#2022: Random Arena's formats fit the desktop bar beside the lobby code, down to the ⋯", async ({
+  page,
+}) => {
+  await openMenu(page);
+  await openRail(page, "Random Arena");
+  await expect(page.locator("#topbar .topbar-lobby-code")).toHaveText(
+    /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/,
+  );
+  // 721 is the narrowest desktop bar; 771 is the tightest above 48rem.
+  for (const width of [721, 771, 1100]) {
+    await page.setViewportSize({ width, height: 700 });
+    await expect(page.locator("#topbar .random-arena-queue")).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth))
+      .toBe(0);
+  }
+});
 
 test("#1525: on a phone, the join's ⋯, Lobby Key, Join and the global icons stay on screen", async ({
   page,

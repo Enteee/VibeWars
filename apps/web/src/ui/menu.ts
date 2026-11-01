@@ -35,17 +35,42 @@ export interface MenuCallbacks {
   readonly onSelectCharacter: (id: string) => void;
 }
 
-/** The Random Arena formats (Q97), as their tiles read, smallest first. */
+/** The Random Arena formats (Q97), as their buttons read, smallest first. */
 export const RANDOM_ARENA_MODES: readonly { readonly mode: QueueMode; readonly label: string }[] = [
   { mode: "random-arena-1v1", label: "1v1" },
   { mode: "random-arena-2v2", label: "2v2" },
   { mode: "random-arena-4v4", label: "4v4" },
 ];
 
-/** Why the Random Arena tiles are greyed out: a queue needs a character to show strangers. */
+/** Why the Random Arena buttons are greyed out: a queue needs a character to show strangers. */
 export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
-/** Under the tiles while anyone else is in the lobby (#1526): a party queues in card 4. */
+/** Under the buttons while anyone else is in the lobby (#1526): a party queues in card 4. */
 export const PARTY_CANNOT_QUEUE = "Leave the party, or play a Hosted Game";
+
+/**
+ * Random Arena's own buttons in the title bar (#2022), one per format, each
+ * joining its queue as the saved name. With a reason `why` they are greyed
+ * out, and each says why on hover.
+ */
+export function randomArenaQueue(
+  callbacks: Pick<MenuCallbacks, "onRandomArena">,
+  why: string | undefined,
+): HTMLElement {
+  const group = h("span", "random-arena-queue");
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", "Find a match");
+  for (const { mode, label } of RANDOM_ARENA_MODES) {
+    const join = button(label, "", () => {
+      callbacks.onRandomArena(mode, loadPlayerName());
+    });
+    if (why !== undefined) {
+      join.disabled = true;
+      join.title = why;
+    }
+    group.appendChild(join);
+  }
+  return group;
+}
 
 /** What Random Arena is for, under its heading. */
 export const RANDOM_ARENA_GOAL =
@@ -196,7 +221,7 @@ function wornCape(): ReturnType<typeof capeLook> | undefined {
 
 /**
  * Render Random Arena (#880, #1525): your characters as cards, to pick who
- * to queue as and nothing more, and the three format tiles that queue.
+ * to queue as and nothing more; the title bar's three formats queue (#2022).
  */
 export function renderRandomArena(
   root: HTMLElement,
@@ -205,9 +230,16 @@ export function renderRandomArena(
   characterProblems: readonly string[] = [],
   connectionNotice?: string,
 ): void {
+  const active = loadActiveCharacterId();
+  // An invalid active character is no choice at all (#1290).
+  const activeExists = characters.some((c) => c.id === active && isPlayable(c));
+  // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
+  const alone = isAlone(railParty());
+  const why = !activeExists ? NO_CHARACTER_FOR_QUEUE : !alone ? PARTY_CANNOT_QUEUE : undefined;
+
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
-  screenBar({ crumbs: ["VibeWars"], actions: [], join: true });
+  screenBar({ crumbs: ["VibeWars"], actions: [randomArenaQueue(callbacks, why)], join: true });
   const body = railScreen(root, "random-arena", RANDOM_ARENA_GOAL, callbacks.onSwitch);
 
   // Why the last try failed, under the bar it was tried from.
@@ -218,9 +250,6 @@ export function renderRandomArena(
     body.appendChild(h("div", "screen-problem", problem));
   }
 
-  const active = loadActiveCharacterId();
-  // An invalid active character is no choice at all (#1290).
-  const activeExists = characters.some((c) => c.id === active && isPlayable(c));
   const starter = loadStarterCharacterId();
   const worn = wornCape();
   /** Choose who to play, and keep the focus on the card a key chose. */
@@ -260,23 +289,8 @@ export function renderRandomArena(
     body.appendChild(cards);
   }
 
-  const tiles = h("div", "random-arena-tiles");
-  tiles.setAttribute("role", "group");
-  tiles.setAttribute("aria-label", "Find a match");
-  // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
-  const alone = isAlone(railParty());
-  for (const { mode, label } of RANDOM_ARENA_MODES) {
-    const tile = button(label, "random-arena-tile", () => {
-      callbacks.onRandomArena(mode, loadPlayerName());
-    });
-    tile.disabled = !activeExists || !alone;
-    tiles.appendChild(tile);
-  }
-  body.appendChild(tiles);
-  if (!activeExists) {
-    body.appendChild(h("p", "random-arena-hint", NO_CHARACTER_FOR_QUEUE));
-  } else if (!alone) {
-    body.appendChild(h("p", "random-arena-hint", PARTY_CANNOT_QUEUE));
+  if (why !== undefined) {
+    body.appendChild(h("p", "random-arena-hint", why));
   }
 }
 

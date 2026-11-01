@@ -6303,22 +6303,23 @@ body:has(#app > .chat) .now-playing {
   outline: none;
 }
 
-/* Random Arena's format tiles (#880, #1525): each queues for its format. */
-.random-arena-tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 10rem));
-  gap: 0.7rem;
+/* Random Arena's formats in the title bar (#2022): each queues for its
+   format. One segmented control, as tight as the bar beside the lobby
+   code needs it down to the ⋯ at 45rem. */
+.random-arena-queue {
+  display: flex;
 }
 
-.screen .random-arena-tile {
-  padding: 1rem;
-  font-weight: 700;
-  font-size: 1.1rem;
+#topbar .random-arena-queue button {
+  padding: 0.25rem 0.3rem;
 }
 
-.screen .random-arena-tile:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+#topbar .random-arena-queue button + button {
+  margin-left: -1px;
+}
+
+#topbar .random-arena-queue button:hover:not(:disabled) {
+  position: relative;
 }
 
 .random-arena-hint {
