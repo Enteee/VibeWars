@@ -621,7 +621,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           {
             kind: "heal",
             amount: {
-              scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 99 },
+              scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 98.8 },
             },
           },
           { kind: "sacrifice-health", percentOfMax: 2 },
