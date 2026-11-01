@@ -23,6 +23,7 @@ import {
   loseHealth,
   resolveSkillEffects,
   stateHolds,
+  withPerCount,
   type CombatEvent,
   type SkillOutcome,
   type SkillResolution,
@@ -444,8 +445,11 @@ export const PLAIN_BLOW: BlowRule = {
   criticalWhen: undefined,
 };
 
-/** The blow `skill` makes of `caster`'s weapon, its bonus at the caster's ranks. */
-export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
+/**
+ * The blow `skill` makes of `caster`'s weapon, its bonus at the caster's
+ * ranks, with its `bonusPer` counted now (#1957).
+ */
+export function skillBlow(skill: Skill, caster: Combatant, surroundings: Surroundings): BlowRule {
   const rule = blowRuleOf(skill);
   const bonusDamage = rule?.bonusDamage;
   const conditionalBonus = rule?.conditionalBonus;
@@ -457,7 +461,13 @@ export function skillBlow(skill: Skill, caster: Combatant): BlowRule {
   });
   return {
     weaponDamage: rule?.weaponDamage ?? PLAIN_BLOW.weaponDamage,
-    bonus: bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+    bonus: withPerCount(
+      bonusDamage === undefined ? 0 : resolveMagnitude(bonusDamage, caster),
+      rule?.bonusPer,
+      caster,
+      undefined,
+      surroundings,
+    ),
     strengthRank: rankIn(caster, STRENGTH_ATTRIBUTE),
     damageType: rule?.damageType,
     armorPenetration: rule?.armorPenetration ?? PLAIN_BLOW.armorPenetration,
@@ -1107,7 +1117,7 @@ export function resolveAttackSkillOutcome(
     return outcome.events;
   };
   const { skill, caster, rng, rules, surroundings } = resolution;
-  const blow = skillBlow(skill, caster);
+  const blow = skillBlow(skill, caster, surroundings);
   const rule = blowRuleOf(skill);
   const snapshot = weaponSnapshotOf(caster);
   const kind = blowKind(snapshot.mainHand.weapon);
