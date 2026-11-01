@@ -379,6 +379,7 @@ describe("lobby host", () => {
 
   it("ignores a map selection from a non-host, and an unknown map from the host", async () => {
     const { lobby, guest } = await hostAndGuest();
+    lobby.host.connection.selectMode("hosted-game");
     guest.connection.selectMap(MAP_IDS[1]);
     lobby.host.connection.selectMap("no-such-map");
     await settle();
@@ -450,10 +451,58 @@ describe("lobby host", () => {
 
   it("clears everyone's readiness when the host picks another map", async () => {
     const { lobby, guest } = await hostAndGuest();
+    lobby.host.connection.selectMode("hosted-game");
     await seat([lobby.host, guest], [0, 1]);
     lobby.host.connection.selectMap(MAP_IDS[1]);
     await settle();
     expect(playersOf(guest).map(({ ready }) => ready)).toEqual([false, false]);
+  });
+
+  it("refuses a map pick outside a Hosted Game, and changes nothing (#1994)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const notes: string[] = [];
+    guest.transport.on("lobby-note", (data) => {
+      notes.push(parseWireLobbyNote(data)?.reason ?? "");
+    });
+    await seat([lobby.host, guest], [0, 1]);
+    for (const mode of ["team-arena", "heroes-ascent"] as const) {
+      lobby.host.connection.selectMode(mode);
+      await settle();
+      await seat([lobby.host, guest], [0, 1]);
+      lobby.host.connection.selectMap(MAP_IDS[1]);
+      guest.connection.selectMap(MAP_IDS[1]);
+      await settle();
+      expect(guest.connection.getSnapshot().mapId).toBe(MAP_IDS[0]);
+      expect(playersOf(guest).map(({ ready }) => ready)).toEqual([true, true]);
+    }
+    expect(notes).toEqual(["not-pickable", "not-pickable"]);
+  });
+
+  it("draws Team Arena's map at each start from the lobby's RNG (#1994)", async () => {
+    for (const [draw, mapId] of [
+      [0, MAP_IDS[0]],
+      [0.9, MAP_IDS[1]],
+    ] as const) {
+      const lobby = await openLobby({ random: () => draw });
+      const guest = await lobby.join();
+      lobby.host.connection.selectMode("team-arena");
+      await seat([lobby.host, guest], [0, 1]);
+      await start(lobby);
+      expect(lobby.matches[0]?.plan.mapId).toBe(mapId);
+      expect(guest.starts[0]?.mapId).toBe(mapId);
+      expect(guest.connection.getSnapshot().mapId).toBe(mapId);
+    }
+  });
+
+  it("starts Heroes' Ascent on its first map, whatever the Hosted Game picked (#1994)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    lobby.host.connection.selectMode("hosted-game");
+    lobby.host.connection.selectMap(MAP_IDS[1]);
+    lobby.host.connection.selectMode("heroes-ascent");
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    expect(lobby.matches[0]?.plan.mapId).toBe(MAP_IDS[0]);
+    expect(guest.starts[0]?.mapId).toBe(MAP_IDS[0]);
   });
 
   it("turns a member away once it holds MAX_LOBBY_PLAYERS, and says so", async () => {

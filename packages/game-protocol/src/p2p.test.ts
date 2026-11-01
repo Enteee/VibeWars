@@ -913,6 +913,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWirePartyFormed,
     partyOf(["1", "2", "3", "4", "5", "6", "7", "8"].map((digit) => digit.repeat(64))),
   ],
+  ["map pick refusal (#1994)", parseWireLobbyNote, { kind: "refused", reason: "not-pickable" }],
   ["Team Lobby refusal (#1458)", parseWireLobbyNote, { kind: "refused", reason: "slot-taken" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],

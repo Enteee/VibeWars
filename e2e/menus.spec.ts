@@ -424,9 +424,11 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   // GvG plays one map, so its host sees it named, not picked.
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
 
-  // Heroes' Ascent picks among its three.
+  // Heroes' Ascent starts on its first map, and Team Arena draws one for
+  // each match: neither is picked (#1994).
   await openRail(page, "Heroes' Ascent");
-  const options = page.locator("#topbar .lobby-map select option");
-  await expect(options).toHaveCount(3);
-  await expect(page.locator("#topbar .lobby-map select")).toHaveValue("relic-temples");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: Relic Temples \(/);
+  await expect(page.locator("#topbar .lobby-map select")).toHaveCount(0);
+  await openRail(page, "Team Arena");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: random (Team Arena)");
 });
