@@ -199,7 +199,7 @@ describe("measuring the music (#420)", () => {
     maxTickWorkMs: 5,
     skippedMs: 0,
     events: 7,
-    lateEvents: 0,
+    droppedEvents: 0,
     baseLatencyMs: 10,
     outputLatencyMs: 32,
     glitches: null,

@@ -9,6 +9,7 @@ import {
   samples,
   webaudioOutput,
   webaudioRepl,
+  type Output,
 } from "@strudel/webaudio";
 
 import {
@@ -27,6 +28,7 @@ import {
 } from "./transitions.js";
 import { busGate, type BusGate } from "./bus-gate.js";
 import { crossfade, isTempoMark } from "./crossfade.js";
+import { dropLate } from "./late-notes.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
 import { makeLayer, type TrackClock } from "./layer.js";
 import { reverbPins } from "./reverb-pins.js";
@@ -67,6 +69,12 @@ const AUDIO_START_MS = 3_000;
 const LEAD_SECONDS = 0.75;
 /** The cyclist's own lookahead (interval plus overlap): the most its clock may move on at once. */
 const CYCLIST_LOOKAHEAD_SECONDS = 0.2;
+/**
+ * A note due to start sooner than this after the audio clock is left out
+ * rather than started with its attack cut off (#1991): about a render
+ * quantum's worth of time and Firefox's scheduling slack.
+ */
+const LATE_MARGIN_SECONDS = 0.01;
 /** A track as it plays: its pattern, unshifted, and where it started. */
 interface Playing {
   readonly trackId: string;
@@ -137,6 +145,20 @@ export async function startEngine(): Promise<void> {
     (callback, ms) => timers.setInterval(callback, ms),
   );
   const pins = reverbPins();
+  const pinned: Output = (hap, deadline, duration, cps, t) =>
+    webaudioOutput(
+      hap.withValue((value) => pins.pin(value)),
+      deadline,
+      duration,
+      cps,
+      t,
+    );
+  const output = dropLate(
+    pinned,
+    () => context.currentTime,
+    LATE_MARGIN_SECONDS,
+    () => measurement.meter,
+  );
   const schedulerTime = leadClock(
     () => context.currentTime,
     LEAD_SECONDS,
@@ -173,19 +195,8 @@ export async function startEngine(): Promise<void> {
     clearInterval: (id) => {
       timers.clearInterval(id);
     },
-    defaultOutput: (hap, deadline, duration, cps, t) => {
-      if (isTempoMark(hap.value)) {
-        return undefined;
-      }
-      measurement.meter?.event(t < context.currentTime);
-      return webaudioOutput(
-        hap.withValue((value) => pins.pin(value)),
-        deadline,
-        duration,
-        cps,
-        t,
-      );
-    },
+    defaultOutput: (hap, deadline, duration, cps, t) =>
+      isTempoMark(hap.value) ? undefined : output(hap, deadline, duration, cps, t),
   });
   const scheduler = repl.scheduler;
   /** The end of what the scheduler has queried. Nothing before it can change. */
