@@ -1,6 +1,7 @@
 import { STRENGTH_ATTRIBUTE } from "../primary-attributes.js";
 import type { ProfessionId } from "../professions.js";
 import type { StatusCategory } from "../skills/status.js";
+import type { ModWhile } from "./mods.js";
 import type { ConditionalArmor } from "./armor.js";
 import type { ArmorSlot, DamageType } from "./types.js";
 
@@ -88,7 +89,9 @@ export type ArmorCondition =
   /** Activating any skill, attack skills included; a plain swing is not one. */
   | { readonly kind: "activating" }
   /** Slots of your bar whose skill now is a signet, an echoed one's copy counted. */
-  | { readonly kind: "signets-at-least"; readonly count: number };
+  | { readonly kind: "signets-at-least"; readonly count: number }
+  /** A weapon mod's condition on the wielder (#2010): To the Pain!'s, Might makes Right's. */
+  | { readonly kind: "mod-while"; readonly while: ModWhile };
 
 export type InsigniaEffect =
   /** Per-piece amounts: chest is worth most, legs next, the rest equal. */

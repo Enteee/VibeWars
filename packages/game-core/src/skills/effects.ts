@@ -1590,7 +1590,7 @@ export function applyEffect(
       );
       applyDamage(
         target,
-        mitigate(packet, target, context.rules, hitLocationOf(packet, context.rng)),
+        mitigate(packet, target, context.rules, hitLocationOf(packet, context.rng), context.rng),
         packet.type,
         false,
         events,

@@ -4,15 +4,23 @@
  * Deep Wound. Not a status, so nothing that removes conditions touches it.
  */
 
+import { modWhileHolds } from "./mod-conditions.js";
 import { aggregateModifiers } from "./status.js";
 import type { Combatant } from "./types.js";
 
 /**
- * Maximum energy with the statuses' bonus (#1464, Mighty Was Vorizun),
- * before overcast: what the energy bar is drawn against.
+ * Maximum energy with the statuses' bonus (#1464, Mighty Was Vorizun)
+ * and the held set's mods' whose condition holds (#2010, Hale and
+ * Hearty), before overcast: what the energy bar is drawn against.
  */
-export function raisedMaxEnergy(combatant: Pick<Combatant, "maxEnergy" | "statuses">): number {
-  return combatant.maxEnergy + aggregateModifiers(combatant.statuses.active).maxEnergyBonus;
+export function raisedMaxEnergy(combatant: Combatant): number {
+  let bonus = aggregateModifiers(combatant.statuses.active).maxEnergyBonus;
+  for (const mod of combatant.equipment.conditionalMaxEnergy) {
+    if (modWhileHolds(mod.while, combatant, undefined)) {
+      bonus += mod.amount;
+    }
+  }
+  return combatant.maxEnergy + bonus;
 }
 
 /**
@@ -20,9 +28,7 @@ export function raisedMaxEnergy(combatant: Pick<Combatant, "maxEnergy" | "status
  * less overcast. Below 0 when overcast exceeds the maximum, and then
  * nothing fills.
  */
-export function effectiveMaxEnergy(
-  combatant: Pick<Combatant, "maxEnergy" | "overcast" | "statuses">,
-): number {
+export function effectiveMaxEnergy(combatant: Combatant): number {
   return raisedMaxEnergy(combatant) - combatant.overcast;
 }
 

@@ -92,9 +92,19 @@ export {
   perSlotAmount,
 } from "./insignias.js";
 
-export type { ItemUpgrades, ModEffect, ModId, ModItem, ModSlot, WeaponMod } from "./mods.js";
+export type {
+  ItemUpgrades,
+  ModEffect,
+  ModId,
+  ModItem,
+  ModSlot,
+  ModStatusWhile,
+  ModWhile,
+  WeaponMod,
+} from "./mods.js";
 export {
   MOD_SLOTS,
+  MOD_WHILE_TEXT,
   MOD_SLOT_KEYS,
   NO_UPGRADES,
   WEAPON_MODS,
