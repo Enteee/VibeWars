@@ -50,7 +50,9 @@ export type MesmerStatusId =
   // Casting-state hexes (#1931).
   | "power-leech"
   | "power-flux"
-  | "signet-of-illusions";
+  | "signet-of-illusions"
+  // Blocks that pay (#1974).
+  | "distortion";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -658,5 +660,26 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   "signet-of-illusions": define("signet-of-illusions", "Signet of Illusions", "skill-effect", {
     profession: "mesmer",
     borrowsAttribute: { attributeId: "mesmer.illusion-magic", spells: 3 },
+  }),
+  // "For 1...5 seconds, you have a 75% chance to block attacks. Whenever
+  // you block an attack this way, you lose 2 Energy or Distortion ends"
+  // (#1974). The block stands either way.
+  distortion: define("distortion", "Distortion", "stance", {
+    profession: "mesmer",
+    block: { chance: 0.75, against: "all" },
+    triggers: [
+      {
+        on: "bearer-blocks-melee",
+        target: "bearer",
+        effects: [{ kind: "pay-energy-or-end", amount: 2 }],
+        skillId: "mesmer.distortion",
+      },
+      {
+        on: "bearer-blocks-projectile",
+        target: "bearer",
+        effects: [{ kind: "pay-energy-or-end", amount: 2 }],
+        skillId: "mesmer.distortion",
+      },
+    ],
   }),
 };

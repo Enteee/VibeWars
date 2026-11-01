@@ -526,6 +526,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       ),
     );
   }
+  if (definition.onAttackBlocked !== undefined) {
+    const { effects, attackSkillsOnly, weapon } = definition.onAttackBlocked;
+    parts.push(...describeAttackBlocks(effects, attackSkillsOnly, weapon));
+  }
   if (definition.endsAfterHits !== undefined) {
     const { count, weapon } = definition.endsAfterHits;
     const plural = count === 1 ? "" : "s";
@@ -658,8 +662,10 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     parts.push(`while under ${under.join(" or ")}: ${gains.join(", ")}`);
   }
   if (definition.endsAfterTriggers !== undefined) {
-    const plural = definition.endsAfterTriggers === 1 ? "" : "s";
-    parts.push(`ends after it takes effect ${String(definition.endsAfterTriggers)} time${plural}`);
+    // Shield Guardian's (#1974): "ends after it takes effect once".
+    const times =
+      definition.endsAfterTriggers === 1 ? "once" : `${String(definition.endsAfterTriggers)} times`;
+    parts.push(`ends after it takes effect ${times}`);
   }
   if (definition.breaksNextHex !== undefined) {
     parts.push(
@@ -894,6 +900,30 @@ function describeAttackHits(
     }
   }
   return parts;
+}
+
+/**
+ * What a status does to foes that block the bearer's attacks (#1974):
+ * "foes that block your bow attacks get Bleeding for 18s".
+ */
+function describeAttackBlocks(
+  effects: readonly SkillEffect[],
+  attackSkillsOnly: boolean,
+  weapon: AttackWeaponClass | undefined,
+): string[] {
+  const attacks = attackSkillsOnly
+    ? `${weapon === undefined ? "" : `${weapon} `}attack skills`
+    : `${weapon ?? "physical"} attacks`;
+  return effects.flatMap((effect) =>
+    effect.kind === "apply-status"
+      ? [
+          `foes that block your ${attacks} get ${statusName(effect.statusId)} ` +
+            `for ${seconds(effect.durationSeconds)}`,
+        ]
+      : describeEffects(effect, new Map()).map(
+          ({ text }) => `foes that block your ${attacks}: ${lowerFirst(text)}`,
+        ),
+  );
 }
 
 /** A rider's damage: "20 fire damage", "13 damage" when it is typeless. */
@@ -1343,7 +1373,26 @@ function describeTrigger(
   // A stance's answer to its own block (#1329), in GW1's words.
   if (trigger.on === "bearer-blocks-melee" || trigger.on === "bearer-blocks-projectile") {
     const kind = trigger.on === "bearer-blocks-melee" ? "melee" : "projectile";
+    // Shield Guardian's (#1974): a heal on the blocker and, by a splash,
+    // the same on its allies around, said once.
+    const [self, splash] = trigger.effects;
+    if (
+      trigger.effects.length === 2 &&
+      self?.kind === "heal" &&
+      splash?.kind === "splash" &&
+      splash.hits === "allies" &&
+      JSON.stringify(splash.effects) === JSON.stringify([self])
+    ) {
+      const area = AREA_TEXT.get(splash.radius) ?? `within ${String(splash.radius)}`;
+      return [
+        sentence(`when you block, you and allies ${area} are healed for ${amount(self.amount)}`),
+      ];
+    }
     const answers = trigger.effects.flatMap((effect): TriggerLine[] => {
+      // Distortion's (#1974): the block stands, paid or not.
+      if (effect.kind === "pay-energy-or-end" && trigger.target === "bearer") {
+        return [sentence(`each block costs you ${String(effect.amount)} Energy or this ends`)];
+      }
       if (effect.kind === "energy-gain" && trigger.target === "bearer") {
         return [
           sentence(

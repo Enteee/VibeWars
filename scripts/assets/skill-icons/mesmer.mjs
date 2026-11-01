@@ -89,4 +89,6 @@ export const MESMER_ICONS = {
   "mesmer.mirror-of-disenchantment": { glyph: "cleanse", modifier: "area" },
   "mesmer.extend-conditions": { glyph: "drop-spread", modifier: "plus" },
   "mesmer.hex-eater-signet": { glyph: "vortex-hex", modifier: "up" },
+  // Blocks that pay (#1974), a stand-in until its art card.
+  "mesmer.distortion": { glyph: "shield-stance", modifier: "less" },
 };

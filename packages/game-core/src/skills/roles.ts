@@ -194,6 +194,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
           );
   const riders = [
     ...(status.onAttackHit?.effects ?? []),
+    ...(status.onAttackBlocked?.effects ?? []),
     ...(status.nextAttackSkill ?? []),
     ...(status.nextSkill?.effects ?? []),
     ...forBearer,

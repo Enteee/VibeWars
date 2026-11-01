@@ -413,6 +413,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "shadow-form": icon("shadow-form"),
   "elemental-flame": icon("elemental-flame"),
   "mist-form": icon("mist-form"),
+  // Blocks that pay or pay off (#1974).
+  distortion: icon("distortion"),
+  "shield-guardian": icon("shield-guardian"),
+  "glass-arrows": icon("glass-arrows"),
 };
 
 const GAP = 2;
