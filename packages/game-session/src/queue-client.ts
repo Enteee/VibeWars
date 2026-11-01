@@ -94,6 +94,11 @@ export interface QueueClientOptions {
   readonly newTicketKey: () => TicketKey;
   /** As `formGroups` takes it, the same on every client. */
   readonly mapPool: readonly string[];
+  /**
+   * Whether this client found its own NAT hard (#2090), put on every
+   * ticket it publishes as `hardNat`; the web layer's `checkNat` says.
+   */
+  readonly hardNat: boolean;
 }
 
 export interface QueueClient {
@@ -119,8 +124,16 @@ function same(a: QueueState, b: QueueState): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+/**
+ * A client of `mode`'s state before it has heard from the board: what a
+ * queue screen shows while the client is still being made (#2090).
+ */
+export function startingQueueState(mode: QueueMode): QueueState {
+  return { kind: "searching", searching: 0, teams: 0, needed: 2 * teamSizeOf(mode), waitedMs: 0 };
+}
+
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, party, now, newTicketKey, mapPool } = options;
+  const { board, mode, party, now, newTicketKey, mapPool, hardNat } = options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
@@ -136,7 +149,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   const ignored = new Map<string, number>();
   const handlers = new Set<(state: QueueState) => void>();
 
-  let state: QueueState = { kind: "searching", searching: 0, teams: 0, needed, waitedMs: 0 };
+  let state = startingQueueState(mode);
   /**
    * Replaced on every requeue, so every ticket has a key of its own; a
    * party keeps its member key, since its followers find it by its id.
@@ -175,6 +188,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       heartbeatAt: now(),
       // Kept across fall-throughs: the consents sign the group won, not the current one.
       party: party === undefined ? null : { groupId: party.groupId, consents: party.consents },
+      hardNat,
     };
     publishedAt = ticket.heartbeatAt;
     // Counted at once, not when the board echoes it back.

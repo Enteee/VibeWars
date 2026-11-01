@@ -8,6 +8,7 @@ import {
   connectMatchFor,
   observeMatchFor,
   enterQueue,
+  startNatCheck,
   followHost,
   hostLobby,
   joinFailureNotice,
@@ -764,6 +765,8 @@ async function main(): Promise<void> {
     list: readonly StoredCharacter[],
     problems: readonly string[] = [],
   ): void => {
+    // Both carry the Random Arena join controls: its NAT check starts now (#2090).
+    startNatCheck();
     (entry === "random-arena" ? renderRandomArena : renderCharacterBuilder)(
       screenRoot,
       {
@@ -1087,6 +1090,8 @@ async function main(): Promise<void> {
     if (lobby === undefined || teamQueueModeOf(entry) === undefined) {
       return undefined;
     }
+    // A lobby that may queue checks its NAT now, not on Find a match (#2090).
+    startNatCheck();
     return {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
       onFindMatch: () => {
@@ -1293,6 +1298,7 @@ async function main(): Promise<void> {
     name: string,
     from: { readonly party?: PartyPlace; readonly note?: string } = {},
   ): Promise<boolean> => {
+    startNatCheck();
     if (
       queue !== undefined ||
       joiningQueue ||
