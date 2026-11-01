@@ -2395,7 +2395,7 @@ async function main(): Promise<void> {
   }
   // An invite link pasted into this open tab only changes the fragment:
   // nothing reloads, so it is taken out and asked about here.
-  window.addEventListener("hashchange", () => {
+  const takeFragmentLinks = (): void => {
     const invited = takeLobbyLink();
     if (invited.kind === "malformed") {
       toast(NOT_A_KEY_MESSAGE);
@@ -2410,7 +2410,10 @@ async function main(): Promise<void> {
     } else if (pasted.kind === "config") {
       openRelayPrompt(app, pasted.config, loadTurnConfig());
     }
-  });
+  };
+  window.addEventListener("hashchange", takeFragmentLinks);
+  // One pasted while the page was still starting, before there was a listener.
+  takeFragmentLinks();
 }
 
 main().catch((error: unknown) => {

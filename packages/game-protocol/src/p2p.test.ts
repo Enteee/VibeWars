@@ -830,7 +830,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
-  ["lobby-move (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP" }],
+  [
+    "lobby-move (#1553)",
+    parseWireLobbyMove,
+    { code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE" }, // pragma: allowlist secret
+  ],
   [
     "counting-down lobby-state (#871)",
     parseWireLobbyState,
@@ -1831,10 +1835,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { members: ["ab".repeat(32), "cd".repeat(32)], consents: ["ef".repeat(64), "ef".repeat(64)] },
   ],
   ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
-  ["lobby-move with a dashed key (#1553)", parseWireLobbyMove, { code: "ACDE-FGHJ-KMNP" }],
+  [
+    "lobby-move with an old twelve-symbol key (#2100)",
+    parseWireLobbyMove,
+    { code: "ACDEFGHJKMNP" },
+  ],
   ["lobby-move with a short key (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMN" }],
   ["lobby-move with a number (#1553)", parseWireLobbyMove, { code: 7 }],
-  ["lobby-move with a field more (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP", to: "x" }],
+  [
+    "lobby-move with a field more (#1553)",
+    parseWireLobbyMove,
+    { code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", to: "x" }, // pragma: allowlist secret
+  ],
   [
     "lobby-welcome of a non-hex signature (#871)",
     parseWireLobbyWelcome,

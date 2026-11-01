@@ -257,7 +257,10 @@ export function putsMoreAway(
 export interface Topbar {
   /** The lobby the bar names (#1526); none while this tab is in none. */
   setLobby(lobby: BarLobby | undefined): void;
-  /** Join the lobby an invite link names (#2100): `false` on a bar that cannot. */
+  /**
+   * Join the lobby an invite link names (#2100): `false` on a bar that
+   * cannot. Before the first menu, it waits for it.
+   */
   invite(code: string): boolean;
   /**
    * In a match the bar is hidden and the HUD has its buttons (#454), but
@@ -318,6 +321,10 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   );
   join.element.hidden = true;
   actions.before(join.element);
+  // An invite link the page opened with (#2100) waits for the first
+  // screen with the bar's lobby on it: until then nothing could join.
+  let joinShown = false;
+  let early: string | undefined;
   attachJukeboxPopover(music, bar);
 
   // On a phone the screen's other buttons and the global icons fold into
@@ -366,6 +373,13 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
       music.hidden = shown.own === "music";
       join.element.hidden = !shown.join;
       join.settle();
+      if (shown.join && !joinShown) {
+        joinShown = true;
+        if (early !== undefined) {
+          join.invite(early);
+          early = undefined;
+        }
+      }
       const hasMore = barHasMore(
         Array.from(screenActions.children, (node) => node.classList.contains("primary")),
         shown.join,
@@ -390,7 +404,13 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
 
   return {
     setLobby: join.setLobby,
-    invite: join.invite,
+    invite(code) {
+      if (!joinShown) {
+        early = code;
+        return true;
+      }
+      return join.invite(code);
+    },
     setInMatch(next) {
       inMatch = next;
       paintHidden();
