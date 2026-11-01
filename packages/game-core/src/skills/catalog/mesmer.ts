@@ -2190,6 +2190,81 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 30...90 seconds": 78 s; the armor is the status's.
     effects: [{ kind: "apply-status", statusId: "physical-resistance", durationSeconds: 78 }],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Casting-state hexes (#1931)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.power-leech",
+    name: "Power Leech",
+    gwId: 803,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a Spell or Chant, that skill is interrupted.
+    // For 10 seconds, whenever target foe casts a spell, you steal up to
+    // 5...13...15 Energy." The hex goes on even when the interrupt is
+    // prevented: what the foe was casting decides, read before it lands.
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "target-casting", spell: true, orChant: true },
+        effects: [{ kind: "apply-status", statusId: "power-leech", durationSeconds: 10 }],
+      },
+    ],
+  },
+  {
+    id: "mesmer.power-flux",
+    name: "Power Flux",
+    gwId: 953,
+    type: "hex",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a Spell or Chant, that skill is interrupted
+    // and target foe suffers -2 Energy degeneration for 4...9...10 seconds":
+    // 9 s (8.8). The hex goes on even when the interrupt is prevented.
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "target-casting", spell: true, orChant: true },
+        effects: [{ kind: "apply-status", statusId: "power-flux", durationSeconds: 9 }],
+      },
+    ],
+  },
   {
     id: "mesmer.inspired-enchantment",
     name: "Inspired Enchantment",

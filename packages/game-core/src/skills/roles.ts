@@ -177,6 +177,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
               effect.kind === "spread-gained-condition" ||
               effect.kind === "echo" ||
               effect.kind === "cancel-attack" ||
+              effect.kind === "pay-energy-or-end" ||
               (target === "bearer" && isPrice(effect))
                 ? []
                 : [effect],

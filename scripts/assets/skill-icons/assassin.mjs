@@ -78,4 +78,10 @@ export const ASSASSIN_ICONS = {
   "assassin.return": { glyph: "blink-ally", modifier: "area" },
   // Shots that fly differently (#1914), a stand-in until its art card.
   "assassin.dancing-daggers": { glyph: "dagger", modifier: "renew" },
+  // Shadow step 2 (#1930), stand-ins until their art card.
+  "assassin.recall": { glyph: "blink-ally", modifier: "upkeep" },
+  "assassin.spirit-walk": { glyph: "blink-ally", modifier: "plus" },
+  "assassin.swap": { glyph: "blink-ally", modifier: "renew" },
+  "assassin.dark-prison": { glyph: "blink", modifier: "down" },
+  "assassin.shadow-walk": { glyph: "step-haste", modifier: "clock" },
 };

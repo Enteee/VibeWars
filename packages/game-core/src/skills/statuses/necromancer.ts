@@ -1,5 +1,5 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
-import type { StatusDefinition } from "../status.js";
+import type { StatusDefinition, StatusTrigger } from "../status.js";
 import type { DamageEffect } from "../types.js";
 import { define } from "./define.js";
 
@@ -53,7 +53,11 @@ export type NecromancerStatusId =
   | "vocal-minority"
   // Skill-type and heal triggers (#1913).
   | "cacophony"
-  | "soul-bind";
+  | "soul-bind"
+  // Casting-state hexes (#1931).
+  | "spinal-shivers"
+  | "shivers-of-dread"
+  | "death-nova";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -62,6 +66,25 @@ const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
   type: "shadow",
   armorPenetration: 0,
 };
+
+/**
+ * Spinal Shivers' answer (#1931), and its Factions copy's: a cold hit
+ * while the bearer uses a skill costs the hex's caster 4 Energy, or ends
+ * the hex, and interrupts that skill.
+ */
+function shivers(skillId: string): StatusTrigger {
+  return {
+    on: "bearer-takes-damage-from-foe",
+    damageType: "cold",
+    whileUsingSkill: true,
+    effects: [
+      { kind: "pay-energy-or-end", amount: 4 },
+      { kind: "interrupt", only: "skill" },
+    ],
+    target: "bearer",
+    skillId,
+  };
+}
 
 export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDefinition>> = {
   // Faintheartedness at rank 12: attacks 50% slower, −2 pips (GW1 PvP).
@@ -475,6 +498,43 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         effects: [{ kind: "damage", amount: { flat: 68 }, type: "typeless", armorPenetration: 0 }],
         target: "healer",
         skillId: "necromancer.soul-bind",
+      },
+    ],
+  }),
+  // Casting-state hexes (#1931). "Whenever target foe is struck for cold
+  // damage while using a skill, that skill is interrupted and you lose
+  // 8...4...3 Energy or Spinal Shivers ends": 4, at rank 12. Several cold
+  // packets in one tick answer once.
+  "spinal-shivers": define("spinal-shivers", "Spinal Shivers", "hex", {
+    profession: "necromancer",
+    triggers: [shivers("necromancer.spinal-shivers")],
+  }),
+  // Factions' copy of Spinal Shivers, the same numbers.
+  "shivers-of-dread": define("shivers-of-dread", "Shivers of Dread", "hex", {
+    profession: "necromancer",
+    triggers: [shivers("necromancer.shivers-of-dread")],
+  }),
+  // "If target ally dies, all adjacent foes take 26...85...100 damage and
+  // are Poisoned for 15 seconds": 85, the caster's foes beside the corpse.
+  "death-nova": define("death-nova", "Death Nova", "enchantment", {
+    profession: "necromancer",
+    triggers: [
+      {
+        on: "bearer-dies",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              { kind: "damage", amount: { flat: 85 }, type: "typeless", armorPenetration: 0 },
+              { kind: "apply-status", statusId: "poison", durationSeconds: 15 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "necromancer.death-nova",
       },
     ],
   }),

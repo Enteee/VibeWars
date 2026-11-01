@@ -60,6 +60,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     maintained: null,
     projected: false,
     returnPoint: null,
+    stepTargetId: null,
   };
 }
 

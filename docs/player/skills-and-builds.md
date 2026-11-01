@@ -107,6 +107,14 @@ take up a flag or relic. Your hands are full while you hold them: no
 attacks and no attack skills, but you walk at full speed and still cast
 spells. Nothing removes ashes; every end is a drop.
 
+## Shadow steps
+
+A **shadow step** moves you at once, no walk in between. Most step you to
+your target; some take you back to where you cast them when they end, as
+Shadow of Haste and Shadow Walk do. **Recall** steps you to its ally only
+when it ends, and disables all your skills for 3 seconds. **Swap** trades
+places with one of your side's spirits or minions.
+
 ## Sharing builds
 
 In the editor's **⋯** menu, **Share** gives your build as a line of

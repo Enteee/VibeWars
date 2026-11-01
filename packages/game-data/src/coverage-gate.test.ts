@@ -202,6 +202,69 @@ describe("scaled numbers at rank 12 against gw-skilldata (#1899)", () => {
     expect(creatures).toBeGreaterThanOrEqual(6);
   });
 
+  /**
+   * What is wrong with the Health of `skill`'s spirits (#1917), when its
+   * corpus text makes a "level a...b spirit": anything but GW1's 50 + 20
+   * per whole level, at every rank to 15, is named.
+   */
+  function spiritHealthProblems(skill: unknown, description: string): readonly string[] {
+    const pair = /level (\d+)\.\.\.(\d+) spirit/i.exec(description);
+    if (pair === null) {
+      return [];
+    }
+    const corpus = [Number(pair[1]), Number(pair[2])] as const;
+    return reachable(skill).flatMap((node) => {
+      if (node.kind !== "spirit") {
+        return [];
+      }
+      const name = String(node.name);
+      const health = node.maxHealth;
+      if (!isLevelLine(health)) {
+        return [`${name}: Health is not a level line`];
+      }
+      const { attributeId } = health.byLevel.level;
+      return Array.from({ length: 16 }, (_, rank) => rank).flatMap((rank) => {
+        const whole = Math.round(corpus[0] + ((corpus[1] - corpus[0]) * rank) / 15);
+        const got = resolveMagnitudeAtRanks(health, new Map([[attributeId, rank]]));
+        return got === 50 + 20 * whole
+          ? []
+          : [`${name}: Health ${String(got)} at ${String(rank)}, GW1 ${String(50 + 20 * whole)}`];
+      });
+    });
+  }
+
+  it("gives every spirit 50 + 20 Health a whole level of its corpus line (#1917)", () => {
+    const spirits = described.filter(({ description }) =>
+      /level \d+\.\.\.\d+ spirit/i.test(description),
+    );
+    expect(
+      spirits.flatMap(({ skill, description }) =>
+        spiritHealthProblems(skill, description).map((problem) => `${skill.id}: ${problem}`),
+      ),
+    ).toEqual([]);
+    // Not vacuous: every nature ritual and binding ritual.
+    expect(spirits.length).toBeGreaterThanOrEqual(20);
+  });
+
+  it("names a spirit whose Health is a straight line through ranks 0 and 12 (#1917)", () => {
+    const straight = {
+      effects: [
+        {
+          creature: {
+            kind: "spirit",
+            name: "Straight",
+            maxHealth: {
+              scaling: { attributeId: "ranger.wilderness-survival", atZero: 70, atTwelve: 210 },
+            },
+          },
+        },
+      ],
+    };
+    expect(spiritHealthProblems(straight, "Create a level 1...10 spirit.")).toEqual([
+      "Straight: Health is not a level line",
+    ]);
+  });
+
   it("never stores the wiki's rounded rank-12 value for a corpus a...b", () => {
     const hits: string[] = [];
     for (const { skill, description } of described) {
