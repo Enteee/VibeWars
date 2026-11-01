@@ -182,6 +182,7 @@ describe("Sand Shards (#939)", () => {
         RULES,
         surroundings,
         fired,
+        [],
       );
       return { fired, ended };
     };
@@ -231,6 +232,7 @@ describe("Sand Shards (#939)", () => {
         RULES,
         surroundings,
         fired,
+        [],
       ),
     ).toEqual([]);
     expect(fired).toEqual([]);
@@ -273,6 +275,7 @@ describe("Sand Shards (#939)", () => {
       createRng(1),
       RULES,
       surroundings,
+      [],
       [],
     );
     expect(self.statuses.get("sand-shards")?.hitsLeft).toBe(3);

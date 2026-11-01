@@ -50,7 +50,9 @@ export type RangerStatusId =
   | "rampage-as-one"
   | "run-as-one"
   // Staples (#1869).
-  | "hekets-rampage";
+  | "hekets-rampage"
+  // Your next attack (#1916).
+  | "poison-tip-signet";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -403,5 +405,18 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     attackDurationMultiplier: 0.67,
     endsWhenBearerUsesAttackSkill: true,
+  }),
+  // "For 60 seconds, your next attack also inflicts Poison for
+  // 8...14...15 seconds" (#1916): a miss or a block spends it with no
+  // poison; an arrow carries it from its release.
+  "poison-tip-signet": define("poison-tip-signet", "Poison Tip Signet", "skill-effect", {
+    profession: "ranger",
+    endsAfterAttackCount: 1,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 14 }],
+      skillId: "ranger.poison-tip-signet",
+    },
   }),
 };
