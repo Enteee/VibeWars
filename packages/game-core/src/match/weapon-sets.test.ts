@@ -304,6 +304,29 @@ describe("weapon sets (#489)", () => {
     expect(a.baseEnergyPips).toBe(3);
   });
 
+  it("owes the health a swap's floor held back, so swapping down and up is never a heal (#2007)", () => {
+    const base = MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth;
+    const match = new MatchSimulation({
+      seed: "weapon-sets",
+      participants: [
+        fighter("a", vec2(0, 0), { maxHealth: base + 30, spareWeaponSets: [AXE, null, null] }),
+      ],
+    });
+    const a = get(match, "a").combatant;
+    a.health = 20;
+    for (let round = 0; round < 5; round += 1) {
+      match.requestWeaponSet("a", 1);
+      expect(a.health).toBe(1);
+      match.requestWeaponSet("a", 0);
+      expect(a.health).toBe(20);
+    }
+    // 20 - 30 is -10, so the floor held back 11; a heal while down counts.
+    match.requestWeaponSet("a", 1);
+    a.health = 11;
+    match.requestWeaponSet("a", 0);
+    expect(a.health).toBe(30);
+  });
+
   it("hides energy below 0, which regeneration climbs back through before a skill is paid", () => {
     const match = sim(undefined);
     const a = get(match, "a");
