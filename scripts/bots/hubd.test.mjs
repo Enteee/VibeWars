@@ -311,6 +311,9 @@ async function startHubd(remaining, before, extra) {
     // The company's credential home (#866), and the operator's tokens,
     // which hubd must never use.
     VIBEWARS_CREDENTIALS: path.join(dir, "creds"),
+    // The runner supervisor's state (#1890), never the operator's own.
+    VIBEWARS_RUNNERS_STATE: path.join(dir, "runners"),
+    VIBEWARS_MAX_RUNNERS: "",
     GH_TOKEN: "operator-token",
     GITHUB_TOKEN: "operator-token",
     // Something only hubd's environment holds, to prove a filter cannot
@@ -2684,6 +2687,40 @@ describe("hubd hiring and firing", () => {
       "x",
       "--over-cap",
     ]);
+    expect(refused.allow).toBe(false);
+  }, 20_000);
+
+  it("company runners: the manager sets the target within the max, and reads the status", async () => {
+    const hubd = await startHubd(5000, undefined, () => ({ VIBEWARS_MAX_RUNNERS: "2" }));
+    const state = path.join(path.dirname(hubd.root), "runners");
+
+    const before = await hubd.request("manager", "runners", []);
+    expect(before.stdout).toBe("runners: not started (max 2)\n");
+    const over = await hubd.request("manager", "runners", ["3"]);
+    expect(over.code).toBe(1);
+    expect(String(over.stderr)).toMatch(/above the operator's max of 2/);
+    expect(fs.existsSync(path.join(state, "target"))).toBe(false);
+
+    const set = await hubd.request("manager", "runners", ["2"]);
+    expect(set.code, String(set.reason)).toBe(0);
+    expect(fs.readFileSync(path.join(state, "target"), "utf8")).toBe("2\n");
+    expect(fs.statSync(state).mode & 0o777).toBe(0o700);
+
+    fs.writeFileSync(
+      path.join(state, "status.json"),
+      JSON.stringify({
+        at: 1,
+        target: 2,
+        max: 2,
+        runners: [{ name: "vibewars-box-a-1", started: 1, busy: true }],
+        variable: true,
+        reason: null,
+        alert: null,
+      }),
+    );
+    const read = await hubd.request("business-analyst", "runners", []);
+    expect(read.stdout).toBe("runners: 1/2 (busy 1, max 2)\n");
+    const refused = await hubd.request("business-analyst", "runners", ["1"]);
     expect(refused.allow).toBe(false);
   }, 20_000);
 

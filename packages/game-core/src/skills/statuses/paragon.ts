@@ -48,7 +48,9 @@ export type ParagonStatusId =
   | "go-for-the-eyes"
   | "the-power-is-yours"
   | "its-just-a-flesh-wound"
-  | "focused-anger";
+  | "focused-anger"
+  // Not enchanted (#1916).
+  | "natural-temper";
 
 export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition>> = {
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
@@ -432,5 +434,12 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   "focused-anger": define("focused-anger", "Focused Anger", "skill-effect", {
     profession: "paragon",
     adrenalineGainFaster: 1.2,
+  }),
+  // "You gain 33% more adrenaline while not under the effects of an
+  // enchantment" (#1916).
+  "natural-temper": define("natural-temper", "Natural Temper", "skill-effect", {
+    profession: "paragon",
+    adrenalineGainFaster: 0.33,
+    suppressedWhileUnder: ["enchantment"],
   }),
 };

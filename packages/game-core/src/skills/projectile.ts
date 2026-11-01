@@ -1,5 +1,5 @@
 import { add, dot, lengthSquared, scale, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
-import type { OwnSkillBoost } from "./status.js";
+import type { OwnSkillBoost, StatusId } from "./status.js";
 import type { Combatant, Skill } from "./types.js";
 import type { BlowRule, NextAttackSkill, WeaponSnapshot } from "./weapon-attack.js";
 
@@ -45,6 +45,8 @@ export interface Projectile {
   readonly skillHit: SkillHit | SpellHit | undefined;
   /** A status of its attacker's made it unblockable as it left (#1604, Guiding Hands). */
   readonly unblockable: boolean;
+  /** The statuses its release used up (#1916): their riders land with it, as Poison Tip Signet's. */
+  readonly spent: readonly StatusId[];
 }
 
 /**

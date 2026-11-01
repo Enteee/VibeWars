@@ -273,4 +273,19 @@ export const NECROMANCER_STATUS_ICONS = {
       `<path d="M6 12c2-3 10-3 12 0-2 3-10 3-12 0z" ${stroke(c, 2)}/>` +
       `<path d="M5 19L19 5" ${stroke(c, 2.2)}/>`,
   ],
+  // Skill-type and heal triggers (#1913), stand-ins until their art card.
+  // Hex: a mouth with sound lines, a shout or chant that hurts.
+  cacophony: [
+    "hex",
+    (c) =>
+      `<path d="M5 9h4l5-4v14l-5-4H5z" fill="${c}"/>` +
+      `<path d="M17 8l3-2M17 12h4M17 16l3 2" ${stroke(c, 2)}/>`,
+  ],
+  // Hex: two links bound, a heal that hurts its healer.
+  "soul-bind": [
+    "hex",
+    (c) =>
+      `<path d="M9 9a3 3 0 1 0 0 6h2M15 15a3 3 0 1 0 0-6h-2" ${stroke(c, 2.2)}/>` +
+      `<path d="M9 12h6" ${stroke(c, 2)}/>`,
+  ],
 };

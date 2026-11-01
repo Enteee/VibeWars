@@ -108,4 +108,6 @@ export const RANGER_ICONS = {
   "ranger.focused-shot": { glyph: "arrow-pierce", modifier: "clock" },
   "ranger.needling-shot": { glyph: "arrow", modifier: "half" },
   "ranger.forked-arrow": { glyph: "volley", modifier: "less" },
+  // Next attack (#1916): stand-ins until their art.
+  "ranger.poison-tip-signet": { glyph: "flask", modifier: "self" },
 };

@@ -1891,6 +1891,7 @@ export function updateHud(
   const barred = silenced(skillBar, self);
   const lit = midAction(skillBar);
   hud.slotTips.casting(fill?.slot);
+  hud.slotTips.refresh();
   paintKnockdown(hud.skillBar, self.knockdownRemaining);
   skillBar.forEach((slot, index) => {
     const button = buttons[index];

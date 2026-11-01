@@ -18,6 +18,7 @@ import {
 import { ROLES } from "./hub-policy.mjs";
 import { withJailDir } from "./jail-fs.mjs";
 import { readRoster } from "./presence.mjs";
+import { maxRunners, readStatus, runnersStateDir } from "./runners-state.mjs";
 import { parseStaff } from "./staff.mjs";
 
 /**
@@ -123,4 +124,15 @@ export function readUsage(reader, now, limit) {
     limit,
     now,
   };
+}
+
+/**
+ * The runner supervisor's status (#1890), from its host-only state dir,
+ * and the operator's max for when it has not run yet.
+ *
+ * @param {Record<string, string | undefined>} env
+ * @returns {{ status: import("./runners-state.mjs").RunnersStatus | null, max: number }}
+ */
+export function readRunners(env) {
+  return { status: readStatus(runnersStateDir(env)), max: maxRunners(env) };
 }

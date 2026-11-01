@@ -2373,6 +2373,35 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     // "For 5...30 seconds": 25 s; the maximum Health is the status's.
     effects: [{ kind: "apply-status", statusId: "vital-weapon", durationSeconds: 25 }],
   },
+  // Suppressed while enchanted (#1916).
+  {
+    id: "ritualist.brutal-weapon",
+    name: "Brutal Weapon",
+    gwId: 1258,
+    type: "weapon-spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Give target ally a Brutal Weapon for 10...34...40 seconds. The
+    // bearer's weapon strikes for +5...13...15 damage as long as the bearer
+    // is under no enchantments": the 13 is the status's.
+    effects: [{ kind: "apply-status", statusId: "brutal-weapon", durationSeconds: 34 }],
+  },
 ];
 
 /**

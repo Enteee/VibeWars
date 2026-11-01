@@ -414,6 +414,17 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
     const plural = definition.endsAfterAttacks === 1 ? "" : "s";
     parts.push(`ends after ${String(definition.endsAfterAttacks)} incoming attack${plural}`);
   }
+  if (definition.endsAfterAttackCount !== undefined) {
+    const plural = definition.endsAfterAttackCount === 1 ? "" : "s";
+    parts.push(
+      `ends after your next ${String(definition.endsAfterAttackCount)} attack${plural}, hit, miss or block`,
+    );
+  }
+  if (definition.suppressedWhileUnder !== undefined) {
+    parts.push(
+      `no effect while under ${definition.suppressedWhileUnder.map(aCategory).join(" or ")}`,
+    );
+  }
   if (definition.unblockableAttacks !== undefined) {
     const plural = definition.unblockableAttacks === 1 ? "" : "s";
     parts.push(
@@ -822,6 +833,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
   "bearer-hit-by-attack": "is hit by a foe's attack",
+  "bearer-healed-by-skill": "is healed by a skill",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-blocks": "blocks",
@@ -1337,6 +1349,13 @@ function describeTrigger(
         clause(
           `${when}, the caster of that ${gained} takes ${amount(effect.amount)}${typeWord(effect.type)} damage`,
         ),
+      ];
+    }
+    // Soul Bind's (#1913): "whenever it is healed by a skill, the healer
+    // takes 68 damage".
+    if (effect.kind === "damage" && trigger.target === "healer") {
+      return [
+        clause(`${when}, the healer takes ${amount(effect.amount)}${typeWord(effect.type)} damage`),
       ];
     }
     if (effect.kind === "heal" && trigger.target === "source") {
@@ -3116,6 +3135,16 @@ export function describeSkill(
   const easilyInterrupted = isEasilyInterrupted(skill)
     ? [{ text: "Easily interrupted", magnitude: undefined }]
     : [];
+  // Natural Healing's (#1916): "if you are not enchanted, this spell activates 50% faster".
+  const activationWhileLine =
+    skill.activationWhile === undefined
+      ? []
+      : [
+          {
+            text: `${conditionText(skill.activationWhile.condition)}: activates ${String(Math.round(Math.abs(1 - skill.activationWhile.multiplier) * 100))}% ${skill.activationWhile.multiplier < 1 ? "faster" : "slower"}`,
+            magnitude: undefined,
+          },
+        ];
   // Healing Touch's (#1754).
   const divineFavorLine =
     skill.divineFavorDoubled === true
@@ -3212,6 +3241,7 @@ export function describeSkill(
     ...onBlocked,
     ...onFailedToHit,
     ...whileActivating,
+    ...activationWhileLine,
     ...divineFavorLine,
     ...easilyInterrupted,
     ...projectile,

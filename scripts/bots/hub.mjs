@@ -31,6 +31,8 @@
  *   company fire <employee> "<reason>"  manager only
  *   company load                     manager only: the board, staff and tokens
  *                                    the staffing review is decided on
+ *   company runners [<n>]            manager only: the company's CI runners,
+ *                                    or scale them to n (#1890)
  *     (`company` is this script with `company` as its first word)
  *
  * `whoami` is answered locally, because the policy is pure and bundled in
@@ -130,6 +132,10 @@ if (argv[0] === "whoami") {
   console.log(`  ${staff.allow ? "yes" : "no "}  hire and fire (company hire, company fire)`);
   const load = authorize(ROLE, { kind: "load", argv: [] }, { acting: ACTING });
   console.log(`  ${load.allow ? "yes" : "no "}  read the company's load (company load)`);
+  const runners = authorize(ROLE, { kind: "runners", argv: ["1"] }, { acting: ACTING });
+  console.log(
+    `  ${runners.allow ? "yes" : "no "}  scale the company's CI runners (company runners <n>)`,
+  );
   const schedules = authorize(ROLE, { kind: "schedule", argv: ["ls"] }, { acting: ACTING });
   console.log(
     `  ${schedules.allow ? "yes" : "no "}  keep recurring reminders to yourself (hub schedule)`,
@@ -189,11 +195,13 @@ if (argv[0] === "push") {
 } else if (argv[0] === "company") {
   // `company reboot "<reason>"`, `company reboot --abort` and
   // `company ready` (#21); `company hire` and `company fire` (#380);
-  // `company load` (#747).
+  // `company load` (#747); `company runners [<n>]` (#1890).
   const [, verb, ...rest] = argv;
   const [who, ...reason] = rest;
   if (verb === "load" && rest.length === 0) {
     request = { kind: "load", argv: [] };
+  } else if (verb === "runners" && rest.length <= 1) {
+    request = { kind: "runners", argv: rest };
   } else if ((verb === "hire" || verb === "fire") && who !== undefined && reason.length > 0) {
     request = { kind: "staff", argv: [verb, who, reason.join(" ")] };
   } else if (verb === "ready" && rest.length === 0) {
@@ -211,7 +219,8 @@ if (argv[0] === "push") {
   } else {
     console.error(
       'company: usage: company reboot "<reason>" | company reboot --abort | company reboot --workday | company ready\n' +
-        '       company hire <role> "<reason>" | company fire <employee> "<reason>" | company load',
+        '       company hire <role> "<reason>" | company fire <employee> "<reason>" | company load\n' +
+        "       company runners [<n>]",
     );
     process.exit(2);
   }

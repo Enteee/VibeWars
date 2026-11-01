@@ -125,10 +125,64 @@ two cannot drift apart.
   only its branch's scope, so it cannot poison `main`'s; only a run on
   `main` writes there.
 - **Residual.** A kernel bug in user namespaces or overlayfs is a
-  host escape. The scratch directory has no size cap: a runaway or
-  hostile job can fill the disk that hubd, git and the jails live on.
-  Part 2's supervisor (#1888) puts scratch on a filesystem of its own, or
-  under a quota, before `COMPANY_RUNNERS` is set.
+  host escape. The scratch directory has no size cap of its own: the
+  supervisor (below) starts no runner unless scratch is a filesystem of
+  its own, such as a partition or a dataset with a quota, so a runaway or
+  hostile job fills that and not the disk hubd, git and the jails live on.
+  The check compares device numbers, so it proves a filesystem of its
+  own, not a quota: a btrfs subvolume, or any pooled dataset without a
+  quota, passes it and still shares the pool. Giving such a dataset its
+  quota is the operator's part.
+- **The runners' token can change branch protection.** Minting a JIT
+  config needs _Administration: write_ on the repository, which also edits
+  rulesets and branch protection. Whoever holds that token can turn off
+  every gate the company has. It is a fine-grained token for this
+  repository only, with Administration and Variables write and nothing
+  else, with an expiry. Only the runner supervisor's pane is told where
+  it is (`VIBEWARS_CREDENTIALS`), never hubd's env or arguments.
+- **Residual: hubd can read that token.** The runner supervisor runs
+  under hubd's uid, and `runners-gh/` sits beside hubd's own `gh/` in the
+  credentials root. A compromised hubd, the daemon that parses every
+  jail's spool, can read it and turn the gates off. Only a separate uid
+  or a unit whose credential hubd's uid cannot read closes this; the
+  operator decides whether that must land before `COMPANY_RUNNERS` goes
+  on.
+
+## The supervisor (#1890)
+
+`scripts/bots/runner-supervisor.mjs` keeps `n` runners alive. It is its
+own daemon in the hub window, not part of hubd: hubd parses every jail's
+spool, so it must never hold the admin token. They share two host-only
+files in the supervisor's state directory (`runners-state.mjs`), which no
+jail binds: the target, which hubd writes for the manager's `company
+runners <n>`, and the status, which the supervisor writes and hubd and
+the dashboard read. Both are validated on read: a target that is not a
+whole number up to `VIBEWARS_MAX_RUNNERS` counts as 0.
+
+- `VIBEWARS_MAX_RUNNERS` (`vibewars.runners.max`) defaults to 0: runners
+  stay off, and the supervisor makes no GitHub call, until the operator
+  raises it.
+- Each runner's JIT config is minted, then piped to `runner-jail.mjs
+--jitconfig -` on stdin: never argv, a file or a log line.
+- Each launcher gets a lifeline, `--lifeline 3`: a pipe the supervisor
+  holds and never writes. When the supervisor exits, even of a SIGKILL,
+  the kernel closes it and the launcher stops its runner, so a restarted
+  supervisor never runs beside the last one's runners.
+- Every runner that exits without GitHub having seen it busy has its
+  registration removed; only such a job resets the back-off.
+- `COMPANY_RUNNERS` is `1` while a runner is up and `n > 0`. Scaling to 0
+  sets it to `0` first, and keeps one runner while a queued job asks for
+  `vibewars-company`, for at most 10 minutes. A crashed supervisor leaves
+  it at `1` until its restart reconciles; by hand, set it to `0` in
+  GitHub.
+- Leftover runners named `vibewars-<host>-` with our label, offline and
+  not alive here, are deleted at start and at stop: what a host crash
+  leaves.
+
+**A precondition for `COMPANY_RUNNERS=1`:** the operator sets _Require
+approval for all outside collaborators_. A fork's pull request that
+targets our label fails in the hook, but only after it has used up an
+ephemeral runner, so without the setting forks can burn capacity.
 
 ## The spike (2026-10-31)
 

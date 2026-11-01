@@ -869,6 +869,21 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
   });
 });
 
+describe("aggregateModifiers, suppressed while enchanted (#1916)", () => {
+  it("drops Brutal Weapon's +13 beside an enchantment, keeps it beside a weapon spell, a stance or nothing", () => {
+    expect(aggregateModifiers([{ id: "brutal-weapon" }]).attackDamageDelta).toBe(13);
+    for (const beside of ["vital-weapon", "balanced-stance"] as const) {
+      expect(
+        aggregateModifiers([{ id: "brutal-weapon" }, { id: beside }]).attackDamageDelta,
+        beside,
+      ).toBe(13);
+    }
+    expect(
+      aggregateModifiers([{ id: "brutal-weapon" }, { id: "guardian" }]).attackDamageDelta,
+    ).toBe(0);
+  });
+});
+
 describe("aggregateModifiers", () => {
   it("returns neutral modifiers for no statuses", () => {
     const mods = aggregateModifiers([]);

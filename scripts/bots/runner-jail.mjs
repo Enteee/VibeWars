@@ -31,9 +31,14 @@
  * runner as `ACTIONS_RUNNER_INPUT_JITCONFIG`: never an argument, which any
  * host process could read and systemd would log as the scope's
  * description, and never a file in the jail. The host's copy is deleted as
- * soon as the runner has started.
+ * soon as the runner has started. `--jitconfig -` reads it from stdin, as
+ * the runner supervisor (#1890) hands it over: then there is no file at all.
  *
- *     node runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
+ * `--lifeline <fd>` is a pipe the supervisor holds the other end of. When
+ * it breaks, the supervisor is gone, however it died, and the runner is
+ * stopped: a restarted supervisor would otherwise start a second set.
+ *
+ *     node runner-jail.mjs --jitconfig <file | -> [--lifeline <fd>] [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
  *
  * `VIBEWARS_RUNNER_JAIL` holds the jail's store paths as JSON, which the
  * `vibewars-runner-jail` wrapper in `nix/claude-bot.nix` sets.
@@ -41,6 +46,7 @@
 import { spawn } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import net from "node:net";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";
@@ -270,19 +276,44 @@ export function removeScratch(dir) {
 }
 
 /**
+ * Watches a lifeline: an fd nothing is written to, which ends when the
+ * process holding its other end exits.
+ *
+ * @param {number} fd
+ * @returns {{ cut: Promise<void>, close: () => void }}
+ */
+export function watchLifeline(fd) {
+  const socket = new net.Socket({ fd, readable: true, writable: false });
+  /** @type {Promise<void>} */
+  const cut = new Promise((resolve) => {
+    socket.once("close", () => {
+      resolve();
+    });
+  });
+  socket.on("error", () => {
+    // Either way the other end is gone.
+    socket.destroy();
+  });
+  socket.resume();
+  return { cut, close: () => socket.destroy() };
+}
+
+/**
  * Runs one runner to its end: the proxy, the scratch directory and the
  * jail, all gone when it exits.
  *
  * @param {object} options
  * @param {RunnerStore} options.store
- * @param {string} options.jitconfigFile
+ * @param {string} options.jitconfigFile `-` for stdin
+ * @param {Promise<void> | null} options.lifeline stops the runner when it resolves
  * @param {number} options.cpus
  * @param {number} options.memoryGib
  * @param {number} options.tasksMax
  * @returns {Promise<number>} the runner's exit code
  */
-export async function runRunner({ store, jitconfigFile, cpus, memoryGib, tasksMax }) {
-  const jitconfig = parseJitconfig(fs.readFileSync(jitconfigFile, "utf8"));
+export async function runRunner({ store, jitconfigFile, lifeline, cpus, memoryGib, tasksMax }) {
+  const fromStdin = jitconfigFile === "-";
+  const jitconfig = parseJitconfig(fs.readFileSync(fromStdin ? 0 : jitconfigFile, "utf8"));
   const id = crypto.randomBytes(4).toString("hex");
   fs.mkdirSync(store.scratch, { recursive: true, mode: 0o700 });
   fs.chmodSync(store.scratch, 0o700);
@@ -328,13 +359,21 @@ export async function runRunner({ store, jitconfigFile, cpus, memoryGib, tasksMa
     });
     child.once("spawn", () => {
       /** @type {import("node:stream").Writable} */ (child.stdio[3]).end(`${jitconfig}\n`);
-      fs.rmSync(jitconfigFile, { force: true });
+      if (!fromStdin) {
+        fs.rmSync(jitconfigFile, { force: true });
+      }
     });
     const stop = () => {
       child.kill("SIGTERM");
     };
     process.once("SIGTERM", stop);
     process.once("SIGINT", stop);
+    void lifeline?.then(() => {
+      if (child.exitCode === null && child.signalCode === null) {
+        log("the supervisor is gone; stopping");
+        stop();
+      }
+    });
     return await new Promise((resolve) => {
       child.once("error", (error) => {
         log(`could not start: ${error.message}`);
@@ -369,10 +408,25 @@ function positive(value, name, fallback) {
   return number;
 }
 
+/**
+ * The lifeline's fd: never stdin, stdout or stderr, which are not one.
+ *
+ * @param {string} value
+ * @returns {number}
+ */
+export function lifelineFd(value) {
+  const fd = Number(value);
+  if (!(Number.isInteger(fd) && fd >= 3)) {
+    throw new Error("runner-jail: --lifeline must be an fd of 3 or more");
+  }
+  return fd;
+}
+
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { values } = parseArgs({
     options: {
       jitconfig: { type: "string" },
+      lifeline: { type: "string" },
       cpus: { type: "string" },
       "memory-gib": { type: "string" },
       "tasks-max": { type: "string" },
@@ -381,16 +435,20 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   const storeJson = process.env.VIBEWARS_RUNNER_JAIL;
   if (values.jitconfig === undefined || storeJson === undefined) {
     console.error(
-      "usage: runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
+      "usage: runner-jail.mjs --jitconfig <file | -> [--lifeline <fd>] [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
     );
     console.error("       (VIBEWARS_RUNNER_JAIL is set by the vibewars-runner-jail wrapper)");
     process.exit(2);
   }
+  const lifeline =
+    values.lifeline === undefined ? null : watchLifeline(lifelineFd(values.lifeline));
   process.exitCode = await runRunner({
     store: parseRunnerStore(storeJson),
     jitconfigFile: values.jitconfig,
+    lifeline: lifeline?.cut ?? null,
     cpus: positive(values.cpus, "cpus", DEFAULT_CPUS),
     memoryGib: positive(values["memory-gib"], "memory-gib", DEFAULT_MEMORY_GIB),
     tasksMax: positive(values["tasks-max"], "tasks-max", DEFAULT_TASKS_MAX),
   });
+  lifeline?.close();
 }

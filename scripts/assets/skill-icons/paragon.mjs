@@ -79,4 +79,6 @@ export const PARAGON_ICONS = {
   "paragon.remedy-signet": { glyph: "signet-cure" },
   // The not condition (#1670, #1715): what the foe lacks, struck through.
   "paragon.signet-of-synergy": { glyph: "signet-plus-bare" },
+  // "Not enchanted" (#1916): stand-ins until their art.
+  "paragon.natural-temper": { glyph: "bars-rise", modifier: "up" },
 };

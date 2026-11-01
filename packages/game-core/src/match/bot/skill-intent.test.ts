@@ -182,6 +182,8 @@ const NO_BOT_USE = new Set([
   "elementalist.water-attunement",
   "elementalist.air-attunement",
   "elementalist.earth-attunement",
+  // Scribe's Insight (#1913), the same, for signets still to be used.
+  "monk.scribes-insight",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",
@@ -252,6 +254,11 @@ const NO_BOT_USE = new Set([
   // Assassin staples 5 (#1757): unblockable next attacks are no rule the
   // bot weighs.
   "assassin.way-of-the-fox",
+  // "Not enchanted" and next attacks (#1916): more damage or adrenaline
+  // on the bearer's attacks is no rule the bot weighs, as Flurry's.
+  "ritualist.brutal-weapon",
+  "paragon.natural-temper",
+  "warrior.signet-of-strength",
 ]);
 
 function skill(id: string) {
