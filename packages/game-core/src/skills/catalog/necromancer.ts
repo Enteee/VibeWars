@@ -2800,4 +2800,77 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "necromancer.blood-renewal",
+    name: "Blood Renewal",
+    gwId: 115,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 7 seconds, you gain +3...5...6 Health regeneration. When Blood
+    // Renewal ends, you gain 40...160...190 Health." The status heals;
+    // the 15% sacrifice is paid up front.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 15 },
+      { kind: "apply-status", statusId: "blood-renewal", durationSeconds: 7 },
+    ],
+  },
+  {
+    id: "necromancer.meekness",
+    name: "Meekness",
+    gwId: 1260,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all foes in the area": the target, then every foe in
+    // the area around it.
+    area: {
+      radius: AREA_IN_THE_AREA,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // The 17% sacrifice is paid once a cast, however many foes it reaches;
+    // "For 5...25...30 seconds, ... attack 50% slower": 25 s.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 17 },
+      { kind: "apply-status", statusId: "meekness", durationSeconds: 25 },
+    ],
+  },
 ];

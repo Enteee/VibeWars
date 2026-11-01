@@ -68,4 +68,7 @@ export const MESMER_ICONS = {
   "mesmer.illusion-of-weakness": { glyph: "haze-heart-bar" },
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "mesmer.channeling": { glyph: "each-channeling" },
+  // Caster staples (#1870), stand-ins until their art card.
+  "mesmer.ethereal-burden": { glyph: "slow", modifier: "bolt" },
+  "mesmer.sum-of-all-fears": { glyph: "slow", modifier: "plus" },
 };

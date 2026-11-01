@@ -92,4 +92,7 @@ export const NECROMANCER_ICONS = {
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "necromancer.desecrate-enchantments": { glyph: "each-desecrate" },
   "necromancer.defile-enchantments": { glyph: "each-defile" },
+  // Caster staples (#1870), stand-ins until their art card.
+  "necromancer.blood-renewal": { glyph: "heal", modifier: "bleed" },
+  "necromancer.meekness": { glyph: "slow", modifier: "down" },
 };

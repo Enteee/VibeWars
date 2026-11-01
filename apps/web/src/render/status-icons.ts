@@ -357,6 +357,13 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "predatory-bond": icon("predatory-bond"),
   "rampage-as-one": icon("rampage-as-one"),
   "run-as-one": icon("run-as-one"),
+  // Caster staples (#1870).
+  "blood-renewal": icon("blood-renewal"),
+  meekness: icon("meekness"),
+  "ethereal-burden": icon("ethereal-burden"),
+  "sum-of-all-fears": icon("sum-of-all-fears"),
+  "grasping-earth": icon("grasping-earth"),
+  "aura-of-stability": icon("aura-of-stability"),
 };
 
 const GAP = 2;

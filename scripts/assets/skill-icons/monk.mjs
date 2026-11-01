@@ -93,4 +93,7 @@ export const MONK_ICONS = {
   "monk.holy-haste": { glyph: "plus-streaks" },
   // Death trigger (#1762, #1832): a skull and a plus.
   "monk.dwaynas-sorrow": { glyph: "death-heal" },
+  // Caster staples (#1870), stand-ins until their art card.
+  "monk.aura-of-stability": { glyph: "mountain", modifier: "up" },
+  "monk.healing-ring": { glyph: "plus-ripple", modifier: "less" },
 };

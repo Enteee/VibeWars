@@ -45,7 +45,10 @@ export type NecromancerStatusId =
   | "corrupt-enchantment"
   | "reapers-mark"
   | "putrid-bile"
-  | "icy-veins";
+  | "icy-veins"
+  // Caster staples (#1870).
+  | "blood-renewal"
+  | "meekness";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -415,5 +418,26 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.icy-veins",
       },
     ],
+  }),
+  // "For 7 seconds, you gain +3...5...6 Health regeneration. When Blood
+  // Renewal ends, you gain 40...160...190 Health" (#1870): any end, a
+  // strip included, as Shadow Refuge.
+  "blood-renewal": define("blood-renewal", "Blood Renewal", "enchantment", {
+    profession: "necromancer",
+    healthPips: 5,
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "heal", amount: { flat: 160 } }],
+        target: "bearer",
+        skillId: "necromancer.blood-renewal",
+      },
+    ],
+  }),
+  // "For 5...25...30 seconds, target foe and all foes in the area attack
+  // 50% slower" (#1870).
+  meekness: define("meekness", "Meekness", "hex", {
+    profession: "necromancer",
+    attackDurationMultiplier: 1.5,
   }),
 };

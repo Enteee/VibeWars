@@ -2824,4 +2824,72 @@ export const MONK_SKILLS: readonly Skill[] = [
     // This enchantment ends if you cast another enchantment" (#1761).
     effects: [{ kind: "apply-status", statusId: "holy-haste", durationSeconds: 48 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.aura-of-stability",
+    name: "Aura of Stability",
+    gwId: 2063,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...7...8 seconds, target other ally cannot be knocked down": 7 s.
+    effects: [{ kind: "apply-status", statusId: "aura-of-stability", durationSeconds: 7 }],
+  },
+  {
+    id: "monk.healing-ring",
+    name: "Healing Ring",
+    gwId: 1262,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Heal adjacent creatures for 30...150...180 Health. The caster is not
+    // healed": foes too, as Heal Area's.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "caster",
+      affects: "all",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 150 } },
+      },
+    ],
+  },
 ];

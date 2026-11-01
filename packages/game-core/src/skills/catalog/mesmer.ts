@@ -2076,4 +2076,62 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // each foe in the area": 46 s, its rank-12 value. The status gains.
     effects: [{ kind: "apply-status", statusId: "channeling", durationSeconds: 46 }],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.ethereal-burden",
+    name: "Ethereal Burden",
+    gwId: 45,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 6...11...12 seconds, target foe moves 50% slower. When Ethereal
+    // Burden ends, you gain 10...16...18 Energy": 11 s; the status gives it.
+    effects: [{ kind: "apply-status", statusId: "ethereal-burden", durationSeconds: 11 }],
+  },
+  {
+    id: "mesmer.sum-of-all-fears",
+    name: "Sum of All Fears",
+    gwId: 1996,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.illusion-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...10...12 seconds, target foe moves, attacks, and casts spells
+    // 33% slower": 10 s.
+    effects: [{ kind: "apply-status", statusId: "sum-of-all-fears", durationSeconds: 10 }],
+  },
 ];
