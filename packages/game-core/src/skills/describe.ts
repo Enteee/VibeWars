@@ -935,6 +935,7 @@ const SECOND_PERSON: Readonly<Record<string, string>> = {
   casts: "cast",
   creates: "create",
   dies: "die",
+  drops: "drop",
   ends: "end",
   expires: "expire",
   fails: "fail",
