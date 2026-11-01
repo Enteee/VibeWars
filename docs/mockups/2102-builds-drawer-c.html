@@ -272,8 +272,8 @@
 </p>
 <p class="n">
   <b>Costs:</b> an extra click per proposal (the first inspects, the second proposes), and an
-  expanded row eats height, so 8 builds scroll. The drawer covers the right 420 px, the timer
-  included.
+  expanded row eats height, so 8 builds scroll. The drawer covers the right 420 px below the top
+  bar; the timer stays visible.
 </p>
 <script>
   const B = [
@@ -351,9 +351,9 @@
       : '<div class="empty">No Team Build named “' + q + "”.</div>";
   };
   const tab =
-    '<div class="tab" style="right:0;top:12px;padding:6px 12px;border-radius:4px 0 0 4px;border-right:0">Your Team Builds ▾</div>';
+    '<div class="tab" style="right:0;top:70px;padding:6px 12px;border-radius:4px 0 0 4px;border-right:0">Your Team Builds ▾</div>';
   const dr = (inner, w) =>
-    `<div class="dr" style="right:0;width:${w}px;border-left:1px solid #59c2ff;box-shadow:-10px 0 24px rgba(0,0,0,.5)"><div class="dh"><b>Your Team Builds</b><span class="x">Esc ✕</span></div>${inner}</div>`;
+    `<div class="dr" style="top:56px;right:0;width:${w}px;border-left:1px solid #59c2ff;box-shadow:-10px 0 24px rgba(0,0,0,.5)"><div class="dh"><b>Your Team Builds</b><span class="x">Esc ✕</span></div>${inner}</div>`;
   put("d1", lobby() + tab);
   put("d2", lobby() + dr(search("") + lst("", 0), W));
   put("d3", lobby() + dr(search("zzz") + lst("zzz", -1), W));

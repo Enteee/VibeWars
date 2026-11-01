@@ -271,9 +271,8 @@
   lobby, press Esc or the tab again, and it closes.
 </p>
 <p class="n">
-  <b>Costs:</b> the drawer covers the right of the lobby, the Proposals' votes and the timer
-  included, while it is open. The vertical tab is the least discoverable of the three, and rows are
-  plain (name, size, profession icons).
+  <b>Costs:</b> the drawer starts below the top bar, so the timer stays visible; it covers the right
+  of the Proposals while open.
 </p>
 <script>
   const B = [
@@ -331,7 +330,7 @@
 <script>
   const W = 380;
   const dr = (inner, w) =>
-    `<div class="dim"></div><div class="dr" style="right:0;width:${w || W}px;border-left:1px solid #59c2ff"><div class="dh"><b>Your Team Builds</b><span class="x">Esc ✕</span></div>${inner}</div>`;
+    `<div class="dim" style="top:56px"></div><div class="dr" style="top:56px;right:0;width:${w || W}px;border-left:1px solid #59c2ff"><div class="dh"><b>Your Team Builds</b><span class="x">Esc ✕</span></div>${inner}</div>`;
   const tabHtml =
     '<div class="tab" style="right:0;top:300px;writing-mode:vertical-rl;padding:16px 8px;border-right:0;border-radius:6px 0 0 6px">Your Team Builds ▸</div>';
   put("d1", lobby() + tabHtml);
