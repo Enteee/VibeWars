@@ -10,6 +10,13 @@ export type MesmerStatusId =
   | "arcane-echo"
   | "echo"
   | "mantra-of-recovery"
+  // Mesmer mantras (#1964).
+  | "mantra-of-concentration"
+  | "mantra-of-resolve"
+  | "mantra-of-earth"
+  | "mantra-of-flame"
+  | "mantra-of-frost"
+  | "mantra-of-lightning"
   // Mesmer Illusion Magic (#1228).
   | "conjure-phantasm"
   | "imagined-burden"
@@ -59,6 +66,30 @@ const WANDERING_EYE_DAMAGE: DamageEffect = {
   type: "typeless",
   armorPenetration: 0,
 };
+
+/**
+ * Mantra of Earth, Flame, Frost or Lightning (#1964), at rank 12: 45% less
+ * damage of `type` taken, and 2 Energy each time a foe deals it.
+ */
+function elementMantra(
+  id: MesmerStatusId,
+  name: string,
+  type: "earth" | "fire" | "cold" | "lightning",
+): StatusDefinition {
+  return define(id, name, "stance", {
+    profession: "mesmer",
+    damageTypeTakenMultiplier: { type, multiplier: 0.55 },
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        damageType: type,
+        effects: [{ kind: "energy-gain", amount: { flat: 2 } }],
+        target: "bearer",
+        skillId: `mesmer.${id}`,
+      },
+    ],
+  });
+}
 
 export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>> = {
   // "Whenever target foe casts a spell, that foe takes 35...119...140
@@ -136,6 +167,27 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     profession: "mesmer",
     spellRechargeFaster: 0.33,
   }),
+  // "For 1...31...38 seconds, the next time you would be interrupted, you
+  // are not" (#1964).
+  "mantra-of-concentration": define(
+    "mantra-of-concentration",
+    "Mantra of Concentration",
+    "stance",
+    { profession: "mesmer", interruptGuard: { kind: "once" } },
+  ),
+  // PvP: "For 5 seconds, you cannot be interrupted. Each time you would be,
+  // lose 10...5...4 Energy or Mantra of Resolve ends" (#1964).
+  "mantra-of-resolve": define("mantra-of-resolve", "Mantra of Resolve", "stance", {
+    profession: "mesmer",
+    interruptGuard: { kind: "pay-energy", amount: 5 },
+  }),
+  // "For 30...78...90 seconds, <type> damage you take is reduced by
+  // 26...45...50%, and you gain 2 Energy whenever you take <type> damage"
+  // (#1964).
+  "mantra-of-earth": elementMantra("mantra-of-earth", "Mantra of Earth", "earth"),
+  "mantra-of-flame": elementMantra("mantra-of-flame", "Mantra of Flame", "fire"),
+  "mantra-of-frost": elementMantra("mantra-of-frost", "Mantra of Frost", "cold"),
+  "mantra-of-lightning": elementMantra("mantra-of-lightning", "Mantra of Lightning", "lightning"),
 
   // Mesmer Illusion Magic (#1228), each at its rank-12 values.
   // "...target foe experiences -5 Health degeneration."

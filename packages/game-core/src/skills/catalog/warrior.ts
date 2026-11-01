@@ -353,8 +353,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "warrior",
-    // GW1's "No Attribute": any warrior can use it.
-    attributeId: undefined,
+    attributeId: "warrior.strength",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
@@ -368,7 +367,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "For 8 seconds, you attack 33% faster but take double damage."
+    // "For 8 seconds, you attack 33% faster but take 160% damage."
     effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
   },
 

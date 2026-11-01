@@ -12,6 +12,13 @@ export const MESMER_ICONS = {
   "mesmer.diversion": { glyph: "slow", modifier: "clock" },
   "mesmer.cry-of-frustration": { glyph: "interrupt", modifier: "area" },
   "mesmer.mantra-of-recovery": { glyph: "speed", modifier: "clock" },
+  // Mantras (#1964), stand-ins until their art card.
+  "mesmer.mantra-of-concentration": { glyph: "shield-stance", modifier: "self" },
+  "mesmer.mantra-of-resolve": { glyph: "energy-cut", modifier: "self" },
+  "mesmer.mantra-of-earth": { glyph: "rock", modifier: "self" },
+  "mesmer.mantra-of-flame": { glyph: "flame", modifier: "self" },
+  "mesmer.mantra-of-frost": { glyph: "frost", modifier: "self" },
+  "mesmer.mantra-of-lightning": { glyph: "lightning", modifier: "self" },
   "mesmer.energy-surge": { glyph: "energy", modifier: "area" },
   "mesmer.leech-signet": { glyph: "interrupt", modifier: "self" },
   // A skill seen again: a spell, or any skill, echoed on (#1136).
@@ -85,4 +92,8 @@ export const MESMER_ICONS = {
   "mesmer.physical-resistance": { glyph: "shield-blow" },
   // Attributes set or borrowed (#1929).
   "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Stand-ins for the party-wide condition and hex moves (#1954).
+  "mesmer.mirror-of-disenchantment": { glyph: "cleanse", modifier: "area" },
+  "mesmer.extend-conditions": { glyph: "drop-spread", modifier: "plus" },
+  "mesmer.hex-eater-signet": { glyph: "vortex-hex", modifier: "up" },
 };

@@ -271,12 +271,18 @@ export interface EnergyGainToCaster {
    * Scavenger Strike's "you gain 3...15 Energy" (#1957). No owner: nobody.
    */
   readonly recipient?: "owner";
+  /**
+   * Per status of this category any earlier `remove-status` of this use
+   * took off anyone, a splash's included (#1954): Hex Eater Signet's "1...4
+   * Energy for each hex removed this way". None removed: no gain.
+   */
+  readonly perRemoved?: StatusCategory;
   readonly toTarget?: never;
 }
 
 export interface EnergyGainToTarget extends Omit<
   EnergyGainToCaster,
-  "perEnergyLost" | "perOwnCreatureWithin" | "recipient" | "toTarget"
+  "perEnergyLost" | "perOwnCreatureWithin" | "perRemoved" | "recipient" | "toTarget"
 > {
   /**
    * The effect's target gains it, not its caster (#1485): in a status
@@ -286,6 +292,7 @@ export interface EnergyGainToTarget extends Omit<
   readonly toTarget: true;
   readonly perEnergyLost?: never;
   readonly perOwnCreatureWithin?: never;
+  readonly perRemoved?: never;
   readonly recipient?: never;
 }
 
@@ -395,6 +402,8 @@ export interface LoseHealthToEffect {
  * with `durationMultiplier` times the time it had left (#1540): Plague
  * Signet's "with 100...200% of their remaining durations", Plague Touch's 1.
  * `healPerCondition`: the caster is healed that much per condition moved.
+ * A `count` of `Infinity` moves them all; a giver who is the taker, as
+ * Martyr's caster among its party (#1954), keeps its own as they are.
  */
 export interface TransferConditionsEffect {
   readonly kind: "transfer-conditions";
@@ -413,6 +422,13 @@ export interface TransferConditionsEffect {
 export interface SpreadConditionsEffect {
   readonly kind: "spread-conditions";
   readonly radius: number;
+  /**
+   * Each copy lands with this many percent more time than the target's
+   * has left, at most `maxSeconds` (#1954): Extend Conditions' "durations
+   * ... increased by 5...100% (maximum 30 seconds)". Absent: the same time.
+   */
+  readonly extendPercent?: Magnitude;
+  readonly maxSeconds?: number;
 }
 
 /**
@@ -458,9 +474,10 @@ export interface RemoveStatusEffect {
   readonly category: StatusCategory;
   /**
    * How many, newest first; `"all"` as Restore Condition's "remove all
-   * conditions". Ignored when `perRemoved` is set.
+   * conditions"; a `Magnitude` as Divert Hexes' "remove up to 1...3 hexes"
+   * (#1954). Ignored when `perRemoved` is set.
    */
-  readonly count: number | "all";
+  readonly count: number | "all" | Magnitude;
   /**
    * Only statuses of this profession (`StatusDefinition.profession`), as
    * "lose 1 Dervish enchantment" (#845). Absent: any.
@@ -489,6 +506,12 @@ export interface RemoveStatusEffect {
    * hex (maximum 1...7...8)" (#1205). Absent: `count` as it is.
    */
   readonly perRemoved?: { readonly category: StatusCategory; readonly max: Magnitude };
+  /**
+   * Only the status the newest earlier `status-removed` of `category` in
+   * this use took off, whoever bore it (#1954): Mirror of Disenchantment's
+   * "also lose that same enchantment". None removed: nothing.
+   */
+  readonly sameAsRemoved?: true;
 }
 
 /**
@@ -679,9 +702,17 @@ export interface SplashEffect {
   readonly around?: "caster";
   /**
    * At most this many, the nearest to the centre first, a tie by id
-   * (#1316): Explosive Growth's "up to 5 foes". `undefined`: all of them.
+   * (#1316): Explosive Growth's "up to 5 foes", or by attribute, as Hex
+   * Eater Signet's "up to 2...5 adjacent allies" (#1954). `undefined`:
+   * all of them.
    */
-  readonly maxTargets: number | undefined;
+  readonly maxTargets: number | Magnitude | undefined;
+  /**
+   * Only those bearing a status of this category, picked before
+   * `maxTargets` (#1954): Hex Eater Signet's allies "each lose one hex"
+   * spend no slot on one with none. Absent: anyone.
+   */
+  readonly onlyBearing?: StatusCategory;
   readonly effects: readonly UnconditionalEffect[];
 }
 
@@ -944,17 +975,29 @@ export interface CreatureTemplate {
  * alive" or Life's heal: killed, destroyed or at the end of its lifespan,
  * every living non-spirit of `affects` within `radius` of it takes, or
  * is healed, `perSecondAlive` × its whole seconds alive, at most `max`.
- * Damage is typeless, from its owner.
+ * Damage is typeless, from its owner. `"apply-status"`, Lacerate's
+ * (#1956): every one of them strictly below `belowHealthFraction` of its
+ * maximum gets `statusId` for `durationSeconds`, from its owner.
  */
-export interface DeathBurst {
-  readonly effect: "damage" | "heal";
-  /** Scaled by its owner, read once at summoning (#1603). */
-  readonly perSecondAlive: Magnitude;
-  /** `undefined`: no cap. */
-  readonly max: number | undefined;
-  readonly affects: "allies" | "foes";
-  readonly radius: number;
-}
+export type DeathBurst =
+  | {
+      readonly effect: "damage" | "heal";
+      /** Scaled by its owner, read once at summoning (#1603). */
+      readonly perSecondAlive: Magnitude;
+      /** `undefined`: no cap. */
+      readonly max: number | undefined;
+      readonly affects: "allies" | "foes" | "all";
+      readonly radius: number;
+    }
+  | {
+      readonly effect: "apply-status";
+      readonly statusId: StatusId;
+      /** Scaled by its owner, read once at summoning. */
+      readonly durationSeconds: Magnitude;
+      readonly belowHealthFraction: number;
+      readonly affects: "allies" | "foes" | "all";
+      readonly radius: number;
+    };
 
 /**
  * What a spirit does when a non-spirit body dies within its

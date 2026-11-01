@@ -48,6 +48,9 @@ lands and the swing starts over. A foe still walking up to its target
 has nothing to interrupt. An interrupt whose card says "a skill" or "a
 spell" leaves a plain attack alone.
 
+Some stances, such as Mantra of Concentration, stop an interrupt aimed
+at you. None of them stops a knockdown.
+
 **Knocked down**, you cannot move, attack or use a skill for a moment,
 except a shout or a stance, and a cast in progress fails.
 

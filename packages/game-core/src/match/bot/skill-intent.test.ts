@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "../../skills/catalog.js";
-import { botUses, onlyInterrupts, removedCategories } from "./skill-intent.js";
+import { botUses, onlyInterrupts, removedCategories, takenOffFoe } from "./skill-intent.js";
 
 /**
  * Skills a bot never uses (#1189). A new skill is either given a use by
@@ -142,9 +142,6 @@ const NO_BOT_USE = new Set([
   "necromancer.aura-of-the-lich",
   "necromancer.taste-of-death",
   "necromancer.gaze-of-contempt",
-  "necromancer.rend-enchantments",
-  // An enchantment strip whose payoff is Health loss, not damage (#1648).
-  "necromancer.pain-of-disenchantment",
   // An enchantment strip only on a knocked-down foe (#1643).
   "assassin.lift-enchantment",
   "necromancer.well-of-suffering",
@@ -294,6 +291,12 @@ const NO_BOT_USE = new Set([
   "elementalist.glyph-of-energy",
   "ritualist.ritual-lord",
   "ranger.experts-dexterity",
+  // Nature rituals 4 (#1956): an energy toll on everyone who attacks or
+  // uses a skill, damage to whoever runs dry or a worse bleed, both sides
+  // alike, is no rule the bot weighs, as Winnowing.
+  "ranger.famine",
+  "ranger.lacerate",
+  "ranger.quicksand",
 ]);
 
 function skill(id: string) {
@@ -328,6 +331,16 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("assassin.spirit-walk"))).toEqual(["escape"]);
     expect(botUses(skill("assassin.swap"))).toEqual(["escape"]);
     expect(botUses(skill("assassin.dark-prison"))).toEqual(["offence"]);
+  });
+
+  it("casts a pure enchantment strip at an enchanted foe (#1954)", () => {
+    expect(botUses(skill("mesmer.mirror-of-disenchantment"))).toEqual(["offence"]);
+    expect(takenOffFoe(skill("mesmer.mirror-of-disenchantment"))).toBe("enchantment");
+    expect(takenOffFoe(skill("mesmer.inspired-enchantment"))).toBe("enchantment");
+    // Its payoff, Health loss per Monk enchantment, needs one too (#1648).
+    expect(takenOffFoe(skill("necromancer.pain-of-disenchantment"))).toBe("enchantment");
+    // Anything else is cast at any foe.
+    expect(takenOffFoe(skill("elementalist.fireball"))).toBeUndefined();
   });
 
   it("holds a skill whose only role is interrupting", () => {

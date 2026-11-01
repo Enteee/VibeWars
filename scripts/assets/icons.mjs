@@ -3381,6 +3381,24 @@ const skillGlyph = {
     inkFill("M11 14H15V20H11ZM17 6H21V20H17Z") +
     ringDot(5, 12, 3.4) +
     inkLine("M9 9H14.5M12.5 6.5L15 9L12.5 11.5", 1.8),
+  // PvP forms (#1951, #1968): the form mark is a dashed outline of a figure, you
+  // as something else; what you become sits inside it. Future forms reuse it.
+  // Shadow Form: a solid silhouette filling the outline.
+  "form-shadow": () =>
+    formShell() +
+    `<g transform="translate(2.6,3.5) scale(0.78)">` +
+    `<circle cx="12" cy="5.5" r="3.2" fill="${C.ink}"/>` +
+    inkFill("M3.5 22V17Q3.5 10.5 12 10.5Q20.5 10.5 20.5 17V22Z") +
+    "</g>",
+  // Elemental Flame: a big flame filling the outline's body.
+  "form-flame": () =>
+    formShell() +
+    inkFill(
+      "M12 8.5C14 11.5 17.5 13.5 17.5 16.5A5.5 5.5 0 0 1 6.5 16.5C6.5 14.5 8.5 14 9 11.5C10 12.3 10.5 13 10.8 13.8C11.6 12.2 12 10.5 12 8.5Z",
+    ),
+  // Mist Form: a big drop filling the outline's body.
+  "form-mist": () =>
+    formShell() + inkFill("M12 8.5Q18.2 14.8 18.2 17A6.2 6.2 0 0 1 5.8 17Q5.8 14.8 12 8.5Z"),
   // Attributes raised (#1941, #1947). The mark for "raised" is three rising bars,
   // the counterpart of the wilted bars of #1946; the glyphs ring a picture instead.
   // Glyph of Elemental Power: a flame in the glyph ring, the rising bars beside it.
@@ -3583,6 +3601,11 @@ const riderOn = (/** @type {string} */ weapon, /** @type {string} */ rider) =>
   `<g transform="translate(10,10) scale(0.84) translate(-12,-12)">${weapon}</g>` +
   `<circle cx="18" cy="18" r="5.6" fill="${C.bg}"/>` +
   `<g transform="translate(18,18) scale(0.38) translate(-12,-12)">${rider}</g>`;
+
+/** The form mark: a figure's outline, dashed (#1968). */
+const formShell = () =>
+  `<circle cx="12" cy="5.5" r="3.2" ${stroke(C.ink, 1.8)} stroke-dasharray="3 2.2"/>` +
+  `<path d="M3.5 22V17Q3.5 10.5 12 10.5Q20.5 10.5 20.5 17V22Z" ${stroke(C.ink, 1.8)} stroke-dasharray="3.2 2.4"/>`;
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>
