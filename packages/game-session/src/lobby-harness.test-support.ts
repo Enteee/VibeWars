@@ -78,7 +78,8 @@ export async function openLobby(
   options: {
     /** One set of rules for every match, or the rules of the `n`th, from 0. */
     matchRules?: MatchRules | ((n: number) => MatchRules);
-    startMatch?: (plan: MatchPlan) => MatchHost;
+    /** A match of its own, or `undefined` for the default one. */
+    startMatch?: (plan: MatchPlan) => MatchHost | undefined;
     /** Hosted from Team Play (#1458). */
     teamLobby?: boolean;
     /** The lobby's RNG: a fixed sequence by default. */
