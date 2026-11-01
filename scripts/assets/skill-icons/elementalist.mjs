@@ -91,9 +91,6 @@ export const ELEMENTALIST_ICONS = {
   // Attributes raised (#1941)
   "elementalist.glyph-of-elemental-power": { glyph: "glyph-power-up" },
   "elementalist.glyph-of-energy": { glyph: "glyph-energy-up" },
-  // Attributes raised (#1941), stand-ins until their art card.
-  "elementalist.glyph-of-elemental-power": { glyph: "fireball", modifier: "up" },
-  "elementalist.glyph-of-energy": { glyph: "energy", modifier: "half" },
   // PvP forms (#1951), stand-ins until their art card.
   "elementalist.elemental-flame": { glyph: "hex-flame", modifier: "self" },
   "elementalist.mist-form": { glyph: "mist-shield", modifier: "self" },
