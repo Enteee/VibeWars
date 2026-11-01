@@ -688,7 +688,6 @@ export interface EditorProblem {
   readonly cause: ProblemCause;
 }
 
-/** A message as a sentence: capitalised, with a full stop. */
 /** A code read for the editor (#2004): the build it holds, or why not, in words. */
 export type LoadedCode =
   | {
@@ -743,6 +742,7 @@ function loadInto(context: EditorContext, loaded: Extract<LoadedCode, { ok: true
   toast(`Imported ${loaded.character.name}${missingSkillsNote(loaded.missingSkills)}`);
 }
 
+/** A message as a sentence: capitalised, with a full stop. */
 function sentence(message: string): string {
   const capitalised = message.charAt(0).toUpperCase() + message.slice(1);
   return /[.!?]$/.test(capitalised) ? capitalised : `${capitalised}.`;
