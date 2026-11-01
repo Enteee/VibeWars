@@ -51,6 +51,23 @@ export function spiritsWithin(
 }
 
 /**
+ * The living spirit, any team's, nearest `at` within `radius` (#1947):
+ * the one Spirit Transfer drains. Ties by id, as `nearestFirst`. None:
+ * `undefined`. Walls do not matter.
+ */
+export function nearestSpiritWithin(
+  candidates: Iterable<TargetCandidate>,
+  at: Vec2,
+  radius: number,
+): Combatant | undefined {
+  const spirits = [...candidates].filter(
+    ({ combatant, position, creature }) =>
+      creature?.kind === "spirit" && !combatant.dead && distance(position, at) <= radius,
+  );
+  return nearestFirst(spirits, at)[0];
+}
+
+/**
  * How many living spirits and minions `owner` created stand within
  * `radius` of `at` (#1316): what Signet of Creation counts. A pet is
  * charmed, not created. Walls do not matter.
