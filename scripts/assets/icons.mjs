@@ -749,6 +749,50 @@ const strikeWith = (rider, pair = false) =>
   `<circle cx="17.5" cy="17.5" r="6" fill="${C.bg}"/>` +
   `<g transform="translate(17.5,17.5) scale(0.5) translate(-12,-12)">${rider}</g>`;
 
+/**
+ * What a skill takes from its target (#1946), drawn round 0,0 in a radius of about 4: an enchantment's solid
+ * ring, a hex's dashed ring, a spell's four-point star.
+ */
+const takenThing = {
+  enchantment: (/** @type {string} */ c) => `<circle r="3.6" ${stroke(c, 2)}/>`,
+  hex: (/** @type {string} */ c) => `<circle r="3.6" ${stroke(c, 2)} stroke-dasharray="2.9 2.75"/>`,
+  spell: (/** @type {string} */ c) =>
+    `<path d="M0-4.6L1.3-1.3L4.6 0L1.3 1.3L0 4.6L-1.3 1.3L-4.6 0L-1.3-1.3Z" fill="${c}"/>`,
+};
+
+/**
+ * The taken mark (#1946): the foe's `thing` top right, an arrow hooked from it down into a skill square bottom
+ * left. `held` is the pair's other half: the thing struck off the foe and already in the square.
+ * @param {keyof typeof takenThing} thing
+ * @param {boolean} held
+ */
+const taken = (thing, held) =>
+  `<rect x="2.5" y="12" width="9.5" height="9.5" rx="1.2" fill="${C.ink}"/>` +
+  inkLine("M18 13C18 17 16.5 17.2 15 17.2", 2.2) +
+  inkFill("M12.5 17.2L15.6 14.4V20Z") +
+  `<g transform="translate(17.5,6.5)">${takenThing[thing](C.ink)}</g>` +
+  (held
+    ? `<g transform="translate(7.25,16.75) scale(0.9)">${takenThing[thing](C.bg)}</g>` +
+      `<path d="M14 10L21 3" stroke="${C.bg}" stroke-width="3.6" stroke-linecap="round"/>` +
+      inkLine("M14 10L21 3", 1.8)
+    : "");
+
+/** An attribute's 0, struck through (#1946), centred on a point. @param {number} cx @param {number} cy @param {number} k */
+const struckZero = (cx, cy, k) =>
+  `<g transform="translate(${String(cx)},${String(cy)}) scale(${String(k)})">` +
+  `<ellipse rx="3.4" ry="5" ${stroke(C.ink, 2.4)}/>` +
+  `<path d="M-4.5 5.5L4.5-5.5" ${stroke(C.ink, 2)}/>` +
+  "</g>";
+
+/** Three attribute bars level under one line (#1946): ranks set, not grown. @param {number} x0 @param {number} top */
+const levelBars = (x0, top) =>
+  [0, 4.6, 9.2]
+    .map(
+      (dx) =>
+        `<rect x="${String(x0 + dx)}" y="${String(top + 2.5)}" width="3.2" height="${String(20.5 - top - 2.5)}" fill="${C.ink}"/>`,
+    )
+    .join("") + inkLine(`M${String(x0 - 1.2)} ${String(top)}H${String(x0 + 13.6)}`, 2);
+
 const skillGlyph = {
   heal: () => inkFill("M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"),
   // Payoffs of the chants of #1558: a burst struck through (cannot be interrupted), a bolt with a minus
@@ -1388,6 +1432,56 @@ const skillGlyph = {
       "M12.5 8A5 5 0 0 1 12.5 16M16 5.5A8.5 8.5 0 0 1 16 18.5M19.5 3.5A12 12 0 0 1 19.5 20.5",
       2,
     ),
+  // Skills taken from the target (#1928, #1946): the taken mark, the thing taken top right. Inspired Enchantment,
+  // Inspired Hex and Arcane Thievery pull it; Revealed Enchantment, Revealed Hex and Arcane Larceny already hold it.
+  "take-enchantment": () => taken("enchantment", false),
+  "take-enchantment-held": () => taken("enchantment", true),
+  "take-hex": () => taken("hex", false),
+  "take-hex-held": () => taken("hex", true),
+  "take-spell": () => taken("spell", false),
+  "take-spell-held": () => taken("spell", true),
+  // Attributes to 0 (#1929, #1946): the struck 0. Wail of Doom wails every one away; Atrophy fells one bar of three.
+  "zero-wail": () =>
+    struckZero(7.5, 12, 1.25) +
+    inkLine("M14 7.5C16.5 10 16.5 14 14 16.5M17.8 4.5C21.8 8.5 21.8 15.5 17.8 19.5", 2.2),
+  "zero-bar": () =>
+    struckZero(6.5, 7.5, 0.85) +
+    `<rect x="12.5" y="5" width="3.4" height="15.5" fill="${C.ink}"/>` +
+    `<rect x="18" y="5" width="3.4" height="15.5" fill="${C.ink}"/>` +
+    `<rect x="2.5" y="17.1" width="8" height="3.4" fill="${C.ink}"/>`,
+  // Attributes set or lent (#1929, #1946): bars level under one line. Master of Magic's bolt is the Energy its
+  // elemental spells give back; Signet of Illusions' signet lends Illusion Magic.
+  "bars-level-bolt": () =>
+    levelBars(3.5, 9) + inkFill("M20.5 1.5L16.5 7.5H19.2L17.5 12.5L22.5 5.8H19.6Z"),
+  "bars-level-signet": () =>
+    `<circle cx="6" cy="6.5" r="3.8" ${stroke(C.ink, 2)}/><circle cx="6" cy="6.5" r="1.2" fill="${C.ink}"/>` +
+    levelBars(9.5, 11.5) +
+    inkLine("M10 6.5H15.5", 1.8) +
+    inkFill("M18 6.5L15 4.2V8.8Z"),
+  // Minions 3 (#1915, #1946). Order of Undeath: chevrons up over two minions, harder blows.
+  "minions-up": () =>
+    smallSkull(6.5, 15.5, 0.55) +
+    smallSkull(15, 15.5, 0.55) +
+    inkLine("M5 8.5L10.75 3.5L16.5 8.5", 2.6),
+  // Aura of the Lich: the horror in an enchantment's solid ring.
+  "horror-ring": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)}/>` +
+    `<g transform="translate(12,12.5) scale(0.68) translate(-12,-12)">` +
+    smallSkull(12, 13, 0.85) +
+    inkLine("M6.5 8.5C4 7.5 3.5 5 4 3M17.5 8.5C20 7.5 20.5 5 20 3", 2.2) +
+    "</g>",
+  // Infuse Condition: a condition's drop carried from you to your minion.
+  "drop-to-minion": () =>
+    smallFigure(5.5, 14, 0.62) +
+    smallSkull(17.5, 15.5, 0.55) +
+    inkFill("M12 2C10.3 4.7 9.3 5.9 9.3 7.5A2.7 2.7 0 0 0 14.7 7.5C14.7 5.9 13.7 4.7 12 2Z") +
+    inkLine("M9.5 12.5H13.5", 1.8) +
+    inkFill("M15.5 12.5L12.8 10.4V14.6Z"),
+  // Taste of Death: a heart drawn out of your own undead.
+  "skull-heart-drain": () =>
+    smallSkull(8, 14, 0.72) +
+    inkLine("M12.5 8.5L15 6", 1.8) +
+    `<path d="M18 11s-4.5-2.8-4.5-5.8A2.5 2.5 0 0 1 18 3.9 2.5 2.5 0 0 1 22.5 5.2c0 3-4.5 5.8-4.5 5.8z" fill="${C.ink}"/>`,
   // A paw print: your pet (#1215).
   paw: () => pawPrint(C.ink),
   // A heart with a paw cut from it: an animal won over (#1215).

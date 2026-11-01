@@ -17,13 +17,13 @@ export const MESMER_ICONS = {
   // A skill seen again: a spell, or any skill, echoed on (#1136).
   "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
   "mesmer.echo": { glyph: "echo-skill" },
-  // Stand-ins for the skills that take one from the target (#1928).
-  "mesmer.inspired-enchantment": { glyph: "echo-spell", modifier: "up" },
-  "mesmer.revealed-enchantment": { glyph: "echo-spell", modifier: "plus" },
-  "mesmer.inspired-hex": { glyph: "echo-spell", modifier: "hourglass" },
-  "mesmer.revealed-hex": { glyph: "echo-spell", modifier: "half" },
-  "mesmer.arcane-thievery": { glyph: "echo-spell", modifier: "down" },
-  "mesmer.arcane-larceny": { glyph: "echo-spell", modifier: "area" },
+  // Skills taken from the target (#1928, #1946): Inspired pulls the thing taken, Revealed and Larceny already hold it.
+  "mesmer.inspired-enchantment": { glyph: "take-enchantment" },
+  "mesmer.revealed-enchantment": { glyph: "take-enchantment-held" },
+  "mesmer.inspired-hex": { glyph: "take-hex" },
+  "mesmer.revealed-hex": { glyph: "take-hex-held" },
+  "mesmer.arcane-thievery": { glyph: "take-spell" },
+  "mesmer.arcane-larceny": { glyph: "take-spell-held" },
   // Illusion hexes and haste: each glyph shows the status it leaves, so the cripple and the cracks read apart (#1243).
   "mesmer.conjure-phantasm": { glyph: "ghost", modifier: "down" },
   "mesmer.imagined-burden": { glyph: "weight", modifier: "half" },
@@ -81,8 +81,8 @@ export const MESMER_ICONS = {
   // Caster staples 2 (#1872).
   "mesmer.elemental-resistance": { glyph: "shield-flame" },
   "mesmer.physical-resistance": { glyph: "shield-blow" },
-  // Attributes set or borrowed (#1929), stand-ins until their art card.
-  "mesmer.signet-of-illusions": { glyph: "energy", modifier: "finale" },
+  // Attributes set or lent (#1929, #1946).
+  "mesmer.signet-of-illusions": { glyph: "bars-level-signet" },
   // Casting-state hexes (#1931), stand-ins until their art card.
   "mesmer.power-leech": { glyph: "energy", modifier: "bolt" },
   "mesmer.power-flux": { glyph: "interrupt", modifier: "hourglass" },
