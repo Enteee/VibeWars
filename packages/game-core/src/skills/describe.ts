@@ -835,7 +835,8 @@ function damageTaken(multiplier: number): string {
   if (multiplier === 0.5) {
     return "half";
   }
-  return `${String(multiplier)}×`;
+  // GW1 words the rest as a percentage: Frenzy (PvP)'s "take 160% damage".
+  return `${String(Math.round(multiplier * 100))}%`;
 }
 
 /**

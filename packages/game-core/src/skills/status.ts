@@ -661,7 +661,7 @@ export interface StatusDefinition {
    */
   readonly immuneTo: readonly StatusId[];
   /**
-   * Multiplier on the damage the bearer takes (#919): Frenzy's 2, Dark
+   * Multiplier on the damage the bearer takes (#919): Frenzy's 1.6, Dark
    * Escape's 0.5. Applied to every damage packet after armor; health
    * loss and degeneration never pass through it.
    */

@@ -47,12 +47,13 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     profession: "warrior",
     moveSpeedMultiplier: 1.25,
   }),
-  // "For 8 seconds, you attack 33% faster but take double damage": faster
+  // PvP: "For 8 seconds, you attack 33% faster but take 200...150% damage"
+  // (#1958): 160%, its Strength-12 value, as status numbers are. Faster
   // is 1 − x (ADR-0029).
   frenzy: define("frenzy", "Frenzy", "stance", {
     profession: "warrior",
     attackDurationMultiplier: 0.67,
-    damageTakenMultiplier: 2,
+    damageTakenMultiplier: 1.6,
   }),
   // "For 5...11 seconds, you have a 75% chance to block melee and
   // projectile attacks. You gain 5 Energy for each successful melee attack
