@@ -1184,6 +1184,7 @@ function describeDeath(
     }
     return effect.kind === "spread-gained-condition" ||
       effect.kind === "echo" ||
+      effect.kind === "mirror-stance" ||
       effect.kind === "cancel-attack" ||
       effect.kind === "pay-energy-or-end"
       ? []
@@ -1345,6 +1346,7 @@ function describeCreation(
       // None answers a creation.
       case "spread-gained-condition":
       case "echo":
+      case "mirror-stance":
       case "cancel-attack":
       case "pay-energy-or-end":
         return "";
@@ -1455,6 +1457,7 @@ function describeTrigger(
       }
       return effect.kind === "spread-gained-condition" ||
         effect.kind === "echo" ||
+        effect.kind === "mirror-stance" ||
         effect.kind === "cancel-attack" ||
         effect.kind === "pay-energy-or-end"
         ? []
@@ -1548,6 +1551,10 @@ function describeTrigger(
       return [
         sentence(`${when}: ${which} takes this skill's slot for ${String(effect.seconds)} seconds`),
       ];
+    }
+    // "whenever target foe enters a stance, you enter the same stance" (#1965).
+    if (effect.kind === "mirror-stance") {
+      return [sentence(`${when}: you enter the same stance`)];
     }
     if (effect.kind === "pay-energy-or-end") {
       return [sentence(`${when}: you lose ${String(effect.amount)} Energy or this ends`)];
@@ -2870,6 +2877,14 @@ function describeEffect(
       };
     case "copy-disabled":
       return { text: "This skill becomes that spell for as long", magnitude: undefined };
+    // Arcane Mimicry's and Signet of Binding's (#1965).
+    case "copy-elite":
+      return {
+        text: `This skill becomes target ally's non-form elite skill for ${String(effect.seconds)} seconds`,
+        magnitude: undefined,
+      };
+    case "take-control":
+      return { text: "Take control of target enemy spirit", magnitude: undefined };
     case "disable-own-skills": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       return { text: disableOwnText(effect, false, magnitude.current), magnitude };
@@ -3229,6 +3244,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-any": "Any one target",
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
+  "enemy-spirit": "An enemy spirit",
   "own-minion": "One of your minions",
   "allied-minion": "An allied minion",
   "allied-summoned-creature": "An allied summoned creature",

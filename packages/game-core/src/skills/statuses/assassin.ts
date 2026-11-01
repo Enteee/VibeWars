@@ -33,7 +33,9 @@ export type AssassinStatusId =
   | "dark-prison"
   | "shadow-walk"
   // PvP forms (#1951).
-  | "shadow-form";
+  | "shadow-form"
+  // Take what another has (#1965).
+  | "mirrored-stance";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -236,6 +238,21 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         effects: [{ kind: "lose-health-to", keep: { flat: 41 } }],
         target: "bearer",
         skillId: "assassin.shadow-form",
+      },
+    ],
+  }),
+  // "For 10...35 seconds, whenever target foe enters a stance, you enter
+  // the same stance" (#1965): 30. Only the stance itself, at the foe's
+  // ranks; nothing else the foe's skill does.
+  "mirrored-stance": define("mirrored-stance", "Mirrored Stance", "hex", {
+    profession: "assassin",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { type: "stance" },
+        effects: [{ kind: "mirror-stance" }],
+        target: "source",
+        skillId: "assassin.mirrored-stance",
       },
     ],
   }),

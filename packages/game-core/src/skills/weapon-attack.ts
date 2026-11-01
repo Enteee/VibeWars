@@ -1256,6 +1256,7 @@ export function resolveAttackSkillOutcome(
     rechargeLongerSeconds,
     summons: [],
     grounds: [],
+    taken: [],
     skipped: undefined,
   };
 }

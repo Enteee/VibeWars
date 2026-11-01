@@ -15,7 +15,7 @@ import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from 
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
-import { standIn } from "./stand-in.js";
+import { mimickedElite, standIn } from "./stand-in.js";
 import {
   aggregateModifiers,
   damageTypeDealt,
@@ -2147,6 +2147,15 @@ export function applyEffect(
       return events;
     }
 
+    case "copy-elite": {
+      // Arcane Mimicry's (#1965).
+      const elite = target === undefined ? undefined : mimickedElite(target.skillBar);
+      if (context.skillId !== undefined && elite !== undefined) {
+        standIn(caster, context.skillId, elite, effect.seconds);
+      }
+      return events;
+    }
+
     case "disable-own-skills":
       events.push(...disableOwnSkills(caster, effect, context.skillId));
       return events;
@@ -2194,6 +2203,7 @@ export function applyEffect(
       return events;
     case "recharge-faster":
     case "summon":
+    case "take-control":
     case "create-ground-effect":
       // Nothing lands on anyone: the resolution reads it (`resolveSkillEffects`).
       return events;
@@ -2818,6 +2828,8 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "disable-skill":
     case "copy-removed":
     case "copy-disabled":
+    case "copy-elite":
+    case "take-control":
     case "owner-gains-damage-dealt":
     case "chain-mark":
     case "overcast":
@@ -2886,6 +2898,12 @@ export interface SkillOutcome {
    */
   readonly grounds: readonly CreateGroundEffect[];
   /**
+   * The ids of the spirits a `take-control` took (#1965), in order: the
+   * simulation moves them to the caster, which only it can do. Not when
+   * the caster died first, as of Signet of Binding's own Health loss.
+   */
+  readonly taken: readonly string[];
+  /**
    * The first `if` that did not hold (#1735), when nothing of the skill
    * happened, before or after it; else `undefined`. Its use is told so.
    */
@@ -2918,6 +2936,7 @@ export function resolveSkillEffects(
   let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
+  const taken: string[] = [];
   let skipped: SkippedEffect | undefined;
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
@@ -2961,6 +2980,9 @@ export function resolveSkillEffects(
         if (inner.kind === "create-ground-effect") {
           grounds.push(inner);
         }
+        if (inner.kind === "take-control" && target !== undefined && !target.dead && !caster.dead) {
+          taken.push(target.id);
+        }
         events.push(...applyEffect(inner, context, [...earlier, ...events]));
       }
     }
@@ -2989,6 +3011,7 @@ export function resolveSkillEffects(
     rechargeLongerSeconds,
     summons,
     grounds,
+    taken,
     skipped:
       skipped !== undefined && earlier.length === 0 && events.length === 0 ? skipped : undefined,
   };
