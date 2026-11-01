@@ -39,6 +39,7 @@ import type {
   Aura,
   CreatureTemplate,
   DeathBurst,
+  DeathInRange,
   ChainRole,
   ChainStep,
   CreateGroundEffect,
@@ -1442,9 +1443,13 @@ function describeNextSkill({ which, count, effects }: NextSkill): string[] {
  */
 function describeOwnSkillModifier({
   filter,
+  energyBase,
   energyDiscount,
+  energyFloor,
+  energySurcharge,
   activationMultiplier,
   rechargeFaster,
+  rechargeSlower,
   durationMultiplier,
   healMultiplier,
   uses,
@@ -1453,15 +1458,22 @@ function describeOwnSkillModifier({
   const percent = (share: number): string => `${String(Math.round(Math.abs(share) * 100))}%`;
   const verb = (plural: string, singular: string): string => (one ? singular : plural);
   const changes = [
+    energyBase === undefined ? undefined : `${verb("cost", "costs")} ${String(energyBase)} Energy`,
     energyDiscount === 0
       ? undefined
-      : `${verb("cost", "costs")} ${String(energyDiscount)} less Energy (minimum 1)`,
+      : `${verb("cost", "costs")} ${String(energyDiscount)} less Energy (minimum ${String(energyFloor)})`,
+    energySurcharge === 0
+      ? undefined
+      : `${verb("cost", "costs")} ${String(energySurcharge)} more Energy`,
     activationMultiplier === 1
       ? undefined
       : `${verb("cast", "casts")} ${percent(1 - activationMultiplier)} ${activationMultiplier < 1 ? "faster" : "slower"}`,
     rechargeFaster === 0
       ? undefined
       : `${verb("recharge", "recharges")} ${percent(rechargeFaster)} faster`,
+    rechargeSlower === 0
+      ? undefined
+      : `${verb("recharge", "recharges")} ${percent(rechargeSlower)} slower`,
     durationMultiplier === 1
       ? undefined
       : `${verb("last", "lasts")} ${percent(durationMultiplier - 1)} ${durationMultiplier > 1 ? "longer" : "shorter"}`,
@@ -1761,7 +1773,7 @@ function describeEffects(
   ranks: ReadonlyMap<string, number>,
 ): EffectDescription[] {
   if (effect.kind === "summon") {
-    const { kind, aura, attack, deathBurst } = effect.creature;
+    const { kind, aura, attack, deathBurst, onDeathInRange } = effect.creature;
     return [
       describeEffect(effect, ranks),
       // What the spirit projects (#1064): "Non-spirit allies in its range:
@@ -1775,6 +1787,7 @@ function describeEffects(
         : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
+      ...(onDeathInRange === undefined ? [] : [describeDeathInRange(onDeathInRange, ranks)]),
       ...describeMinionDeath(effect.creature, ranks),
     ];
   }
@@ -1999,6 +2012,31 @@ function describeDeathBurst(
   return {
     text: `When it dies, ${who} ${what} per second it lived${max}`,
     magnitude: rate,
+  };
+}
+
+/**
+ * A spirit's answer to a death in its range (#1886): "When a non-spirit
+ * dies in its range, each of its type in its range below 90% Health takes
+ * 43 damage".
+ */
+function describeDeathInRange(
+  rule: DeathInRange,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const when = "When a non-spirit dies in its range";
+  if (rule.kind === "spread-conditions") {
+    const where = AREA_TEXT.get(rule.radius) ?? "nearby";
+    return {
+      text: `${when}, its conditions spread to each non-spirit ${where} that has a condition`,
+      magnitude: undefined,
+    };
+  }
+  const damage = describeMagnitude(rule.damage, ranks);
+  const below = `${String(Math.round(rule.belowHealthFraction * 100))}%`;
+  return {
+    text: `${when}, each of its type in its range below ${below} Health takes ${String(damage.current)} damage`,
+    magnitude: damage,
   };
 }
 

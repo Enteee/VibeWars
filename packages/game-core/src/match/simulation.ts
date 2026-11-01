@@ -20,6 +20,7 @@ import {
   AREA_ADJACENT,
   AREA_EARSHOT,
   RANGE_COMPASS,
+  RANGE_NATURE_RITUAL,
   RANGE_SPIRIT,
   SHADOW_STEP_AWAY_DISTANCE,
 } from "../distances.js";
@@ -104,6 +105,7 @@ import {
   applySkillEffects,
   applyStatus,
   gainEnergy,
+  landCaughtCondition,
   resolveSkillEffects,
   stateHolds,
   type CombatEvent,
@@ -156,6 +158,7 @@ import {
   type CreateGroundEffect,
   type CreatureTemplate,
   type DeathBurst,
+  type DeathInRange,
   type GroundAct,
   type PulseRule,
   type Skill,
@@ -350,6 +353,13 @@ export type ArrivedDeathBurst = Omit<DeathBurst, "perSecondAlive"> & {
   readonly perSecondAlive: number;
 };
 
+/** A spirit's answer to a death in its range as it arrived: its damage on its owner's rank (#1886). */
+export type ArrivedDeathInRange =
+  | (Omit<Extract<DeathInRange, { kind: "damage-same-type" }>, "damage"> & {
+      readonly damage: number;
+    })
+  | Extract<DeathInRange, { kind: "spread-conditions" }>;
+
 /**
  * A body that is not a player (#1052, ADR-0035): a participant that never
  * counts for its team and has no seat. A spirit or minion is gone once it
@@ -389,6 +399,8 @@ export interface Creature {
    * read on its owner's rank at arrival (#1603).
    */
   readonly deathBurst: ArrivedDeathBurst | undefined;
+  /** From the template (#1886): what another's death in its range does. */
+  readonly onDeathInRange: ArrivedDeathInRange | undefined;
   /** From the template (#1836): who stands up where it falls, its owner's. */
   readonly replacedBy: CreatureTemplate["replacedBy"];
   /**
@@ -1439,6 +1451,13 @@ export class MatchSimulation {
                     owner.combatant,
                   ),
                 },
+          onDeathInRange:
+            template.onDeathInRange?.kind === "damage-same-type"
+              ? {
+                  ...template.onDeathInRange,
+                  damage: resolveMagnitude(template.onDeathInRange.damage, owner.combatant),
+                }
+              : template.onDeathInRange,
           replacedBy: template.replacedBy,
           corpsesLeft:
             template.leavesCorpses === undefined
@@ -2565,7 +2584,7 @@ export class MatchSimulation {
     beginRecharge(
       record.combatant.cast,
       skill,
-      reducedRecharge(skill.rechargeSeconds, faster),
+      reducedRecharge(skill.rechargeSeconds, faster) * (1 + rule.own.rechargeSlower),
       key,
     );
     pet.armedAttack = { skillId: skill.id, remainingSeconds: PET_ATTACK_SECONDS };
@@ -3739,7 +3758,9 @@ export class MatchSimulation {
         skill,
         cast.rule.rechargesInstantly
           ? 0
-          : reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) +
+          : // Energizing Wind's slower share (#1886), once the faster is off.
+            reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) *
+              (1 + cast.rule.own.rechargeSlower) +
               rechargeLongerSeconds +
               cast.rule.extraRechargeSeconds,
         cast.key,
@@ -5677,6 +5698,7 @@ export class MatchSimulation {
    * one place, whether a skill, a swing or degeneration caused it.
    */
   #recordDeaths(events: readonly CombatEvent[]): void {
+    const fallen: { victim: ParticipantRecord; conditions: ActiveStatus[] }[] = [];
     for (const event of events) {
       // A destroyed spirit (#1309) is no death: it leaves as an expired
       // one does, at the end of the step, and nothing answers it.
@@ -5706,6 +5728,14 @@ export class MatchSimulation {
         victim.combatant.knockdownRemaining = 0;
         victim.combatant.invulnerableRemaining = 0;
         victim.pendingWeaponSet = undefined;
+        // Pestilence (#1886) spreads what it bore: read before death clears it.
+        fallen.push({
+          victim,
+          conditions: victim.combatant.statuses.active.filter(
+            ({ id, remainingSeconds }) =>
+              remainingSeconds > 0 && getStatusDefinition(id).category === "condition",
+          ),
+        });
         victim.combatant.statuses.endAll();
         victim.armedAttack = undefined;
         this.#clearChainMarks(victim);
@@ -5739,6 +5769,125 @@ export class MatchSimulation {
         this.recordDeath(victim.combatant.team);
       }
     }
+    for (const { victim, conditions } of fallen) {
+      this.#diedInRange(victim, conditions);
+    }
+  }
+
+  /**
+   * A non-spirit body died (#1886): every living spirit with an
+   * `onDeathInRange` whose range it died in answers it, one of a skill:
+   * Edge of Extinction's hardest, else the first. Logged as the spirit's
+   * skill, so a death it causes is answered in turn, by each spirit once.
+   */
+  #diedInRange(victim: ParticipantRecord, conditions: readonly ActiveStatus[]): void {
+    if (victim.creature?.kind === "spirit") {
+      return;
+    }
+    const answering = new Map<string, { spirit: ParticipantRecord; rule: ArrivedDeathInRange }>();
+    for (const record of this.#participants.values()) {
+      const rule = record.creature?.onDeathInRange;
+      const skillId = record.creature?.skillId;
+      if (
+        rule === undefined ||
+        skillId === undefined ||
+        record.combatant.dead ||
+        !distanceWithinRange(record.position, victim.position, RANGE_NATURE_RITUAL)
+      ) {
+        continue;
+      }
+      const kept = answering.get(skillId)?.rule;
+      if (
+        kept === undefined ||
+        (rule.kind === "damage-same-type" &&
+          kept.kind === "damage-same-type" &&
+          rule.damage > kept.damage)
+      ) {
+        answering.set(skillId, { spirit: record, rule });
+      }
+    }
+    for (const [skillId, { spirit, rule }] of answering) {
+      const events =
+        rule.kind === "damage-same-type"
+          ? this.#extinction(spirit, victim, rule)
+          : this.#pestilence(victim, conditions, rule.radius);
+      if (events.length > 0) {
+        this.#logFired([{ sourceId: spirit.id, skillId, events }]);
+      }
+    }
+  }
+
+  /**
+   * Edge of Extinction (#1886): every living body of `victim`'s type in
+   * `spirit`'s range, below its share of maximum Health, takes the
+   * damage, typeless, from the spirit.
+   */
+  #extinction(
+    spirit: ParticipantRecord,
+    victim: ParticipantRecord,
+    rule: Extract<ArrivedDeathInRange, { kind: "damage-same-type" }>,
+  ): CombatEvent[] {
+    const type = bodyType(victim);
+    const effect: SkillEffect = {
+      kind: "damage",
+      amount: { flat: rule.damage },
+      type: "typeless",
+      armorPenetration: 0,
+    };
+    const events: CombatEvent[] = [];
+    for (const other of this.#participants.values()) {
+      const { combatant } = other;
+      if (
+        combatant.dead ||
+        other.creature?.kind === "spirit" ||
+        bodyType(other) !== type ||
+        combatant.health >= rule.belowHealthFraction * effectiveMaxHealth(combatant) ||
+        !distanceWithinRange(spirit.position, other.position, RANGE_NATURE_RITUAL)
+      ) {
+        continue;
+      }
+      events.push(
+        ...applyEffects([effect], {
+          caster: spirit.combatant,
+          target: combatant,
+          rng: this.#rng,
+          rules: this.#ruleset.combat,
+          surroundings: this.#participants,
+        }),
+      );
+    }
+    return events;
+  }
+
+  /**
+   * Pestilence (#1886): each of `conditions`, what `victim` bore as it
+   * died, lands on every living non-spirit within `radius` of the corpse
+   * that bears a condition already, read before any lands.
+   */
+  #pestilence(
+    victim: ParticipantRecord,
+    conditions: readonly ActiveStatus[],
+    radius: number,
+  ): CombatEvent[] {
+    const events: CombatEvent[] = [];
+    if (conditions.length === 0) {
+      return events;
+    }
+    const reached = [...this.#participants.values()].filter(
+      ({ combatant, creature, position }) =>
+        !combatant.dead &&
+        creature?.kind !== "spirit" &&
+        distance(position, victim.position) <= radius &&
+        combatant.statuses.active.some(
+          ({ id }) => getStatusDefinition(id).category === "condition",
+        ),
+    );
+    for (const { combatant } of reached) {
+      for (const condition of conditions) {
+        landCaughtCondition(combatant, condition, events);
+      }
+    }
+    return events;
   }
 
   /**
@@ -6761,4 +6910,9 @@ export class MatchSimulation {
       lossGuard: undefined,
     };
   }
+}
+
+/** A body's type, as Edge of Extinction reads it (#1886): a creature's kind, or `"character"`. */
+function bodyType(record: ParticipantRecord): CreatureKind | "character" {
+  return record.creature?.kind ?? "character";
 }

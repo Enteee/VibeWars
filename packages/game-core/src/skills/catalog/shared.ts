@@ -80,6 +80,7 @@ function deathMinion(
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
     deathBurst: undefined,
+    onDeathInRange: undefined,
   };
 }
 
@@ -244,6 +245,7 @@ export const WOLF: CreatureTemplate = {
     scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 4 },
   },
   deathBurst: undefined,
+  onDeathInRange: undefined,
 };
 
 /** A spirit's shot, world units per second: a wand's (house tuning). */
@@ -291,6 +293,7 @@ export function attackingSpirit(
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
     deathBurst: undefined,
+    onDeathInRange: undefined,
   };
 }
 
@@ -324,5 +327,6 @@ export function protectiveSpirit(
     onDeath: "vanish",
     ownerDisableOnDeath: undefined,
     deathBurst: undefined,
+    onDeathInRange: undefined,
   };
 }
