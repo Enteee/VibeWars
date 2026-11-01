@@ -181,6 +181,7 @@ import {
   type SpellHit,
 } from "../skills/projectile.js";
 import {
+  attackBlockedRiders,
   attackDurationSeconds,
   attackHitRiders,
   attackReached,
@@ -5642,6 +5643,19 @@ export class MatchSimulation {
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
+      if (attacker !== undefined) {
+        attackBlockedRiders(
+          attacker.combatant,
+          target.combatant,
+          projectile.weaponSnapshot.mainHand,
+          skillHit !== undefined,
+          this.#rng,
+          this.#ruleset.combat,
+          this.#participants,
+          fired,
+          projectile.spent,
+        );
+      }
       events.push(...riders(skillHit?.skill.attack?.onFailedToHit ?? []));
       return false;
     }

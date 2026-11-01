@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { WEAPONS } from "../equipment/weapons.js";
+import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS, type Weapon } from "../equipment/weapons.js";
+import { createRng } from "../rng.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import { vec2 } from "../vec2.js";
 import {
   NO_RANKS,
   MAX_PIPS,
@@ -14,6 +18,8 @@ import {
 import { statAtTwelve } from "./scaling.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { attackDamageDeltaOf } from "./tick.js";
+import type { FiredTrigger } from "./triggers.js";
+import { attackBlockedRiders } from "./weapon-attack.js";
 
 const ALL_STATUS_IDS = Object.keys(STATUS_DEFINITIONS) as StatusId[];
 
@@ -97,6 +103,7 @@ describe("status definitions", () => {
         def.attackDamageDelta !== 0 ||
         def.damageReductionWhileCasting !== undefined ||
         def.onAttackHit !== undefined ||
+        def.onAttackBlocked !== undefined ||
         def.triggers.length > 0 ||
         def.nextSpells !== undefined ||
         def.nextAttackSkill !== undefined ||
@@ -1171,5 +1178,71 @@ describe("countHit (#939)", () => {
     expect(set.get("sand-shards")?.hitsLeft).toBe(4);
     expect(set.countHit("sword")).toEqual(["splinter-weapon"]);
     expect(set.has("splinter-weapon")).toBe(false);
+  });
+});
+
+describe("onAttackBlocked (#1974)", () => {
+  function wielding(weapon: Weapon): ResolvedEquipment {
+    return {
+      ...unarmedResolvedEquipment(60),
+      mainHand: {
+        weapon,
+        attributeId: "ranger.marksmanship",
+        damageType: weapon.damageType,
+        requirementMet: true,
+        creatureDamageScale: undefined,
+      },
+    };
+  }
+
+  /** The riders Glass Arrows fires when `weapon`'s blow on a foe is blocked. */
+  function blocked(weapon: Weapon, withAttackSkill: boolean): FiredTrigger[] {
+    const archer = makeCombatant({ id: "archer", equipment: wielding(weapon) });
+    const foe = makeCombatant({ id: "foe", team: 1 });
+    archer.statuses.apply("glass-arrows", 30, "archer");
+    const fired: FiredTrigger[] = [];
+    attackBlockedRiders(
+      archer,
+      foe,
+      archer.equipment.mainHand,
+      withAttackSkill,
+      createRng(1),
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+      new Map([
+        [
+          "archer",
+          { combatant: archer, position: vec2(0, 0), creature: undefined, corpseExploited: false },
+        ],
+        [
+          "foe",
+          { combatant: foe, position: vec2(600, 0), creature: undefined, corpseExploited: false },
+        ],
+      ]),
+      fired,
+      [],
+    );
+    return fired;
+  }
+
+  it("Glass Arrows Bleeds whoever blocks an arrow for 18 s, a plain shot's or an attack skill's", () => {
+    for (const withAttackSkill of [false, true]) {
+      expect(blocked(WEAPONS.longbow, withAttackSkill)).toEqual([
+        {
+          sourceId: "archer",
+          skillId: "ranger.glass-arrows",
+          events: [
+            expect.objectContaining({
+              kind: "status-applied",
+              targetId: "foe",
+              statusId: "bleeding",
+            }),
+          ],
+        },
+      ]);
+    }
+  });
+
+  it("a sword's blocked blow fires nothing", () => {
+    expect(blocked(WEAPONS.sword, false)).toEqual([]);
   });
 });
