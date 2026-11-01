@@ -480,6 +480,7 @@ describe("a queued lobby", () => {
           phase: "waiting",
           mode: "random-arena",
           mapId: "other-arena",
+          teamSize: 1,
           open: true,
           hostId: "impostor",
           matchId: null,

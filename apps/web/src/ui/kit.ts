@@ -27,6 +27,55 @@ export function button(label: string, className: string, onClick: () => void): H
   return node;
 }
 
+/** One choice of a title-bar segment group. */
+export interface BarSegment {
+  readonly label: string;
+  /** What a screen reader calls it, when `label` is shortened. */
+  readonly name?: string;
+  /** The current one: the group says so with `aria-pressed`. */
+  readonly pressed?: boolean;
+  readonly onPress: () => void;
+}
+
+/**
+ * Choices side by side in the title bar, one segmented control (#2022,
+ * #2104), named `label` for a screen reader. With a reason `why` every
+ * one is greyed out, and says why on hover; the pressed one still shows.
+ * A `caption` before them says what they are to the eye, as a field's
+ * label does; `label` says it aloud.
+ */
+export function barSegments(
+  className: string,
+  label: string,
+  segments: readonly BarSegment[],
+  why: string | undefined,
+  caption?: string,
+): HTMLElement {
+  const group = h("span", `bar-segments ${className}`);
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", label);
+  if (caption !== undefined) {
+    const shown = h("span", "field-label", caption);
+    shown.setAttribute("aria-hidden", "true");
+    group.appendChild(shown);
+  }
+  for (const segment of segments) {
+    const choice = button(segment.label, "", segment.onPress);
+    if (segment.name !== undefined) {
+      choice.setAttribute("aria-label", segment.name);
+    }
+    if (segment.pressed !== undefined) {
+      choice.setAttribute("aria-pressed", String(segment.pressed));
+    }
+    if (why !== undefined) {
+      choice.disabled = true;
+      choice.title = why;
+    }
+    group.appendChild(choice);
+  }
+  return group;
+}
+
 /**
  * A square button that is only an icon (#454): `label` names it for a
  * screen reader and on hover. Who uses it listens for its clicks.

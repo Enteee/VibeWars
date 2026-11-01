@@ -1,8 +1,8 @@
 import type { MatchMode } from "@vibewars/game-core";
-import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
+import { LOBBY_CODE_LENGTH, MAX_TEAM_LOBBY_SIDE, type LobbyMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import { button, h, toast } from "./kit.js";
+import { barSegments, button, h, toast } from "./kit.js";
 import { relayLine } from "./relay-section.js";
 import { playerLabelElement } from "./player-label.js";
 
@@ -13,6 +13,8 @@ import { playerLabelElement } from "./player-label.js";
 
 export interface LobbyScreenCallbacks {
   readonly onSelectMap: (mapId: string) => void;
+  /** The host's team size (#2104), in a Hosted Game. */
+  readonly onSelectTeamSize: (size: number) => void;
   readonly onChooseTeam: (team: 0 | 1 | null) => void;
   readonly onToggleReady: () => void;
   readonly onStart: () => void;
@@ -81,6 +83,66 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
     canWatch: snapshot.phase === "in-match" && self?.team === null,
   };
+}
+
+/** A guest's word on the locked team size (#2104). */
+export const HOST_SETS_TEAM_SIZE = "Only the host sets the team size";
+/** The host's, once its Team Lobby's vote is over: the chosen builds are this size. */
+export const TEAM_SIZE_CHOSEN = "The builds are chosen: the team size is set";
+/** Each mode that plays its own size (#2104), as its locked group says. */
+const FIXED_SIZE_MODES: Readonly<Partial<Record<LobbyMode, string>>> = {
+  "team-arena": "Team Arena",
+  "heroes-ascent": "Heroes' Ascent",
+  gvg: "GvG",
+};
+
+/**
+ * The lobby's team size in the title bar (#2104): 1v1 to 8v8, shown 1
+ * to 8 after a "Team" caption, the current one pressed. Only a Hosted Game's host changes it, before its
+ * Team Lobby or in its vote; everyone else, and every other mode, sees
+ * it locked, and on hover why. Random Arena has none: its own formats
+ * join (#2022).
+ */
+export function teamSizeGroup(
+  snapshot: LobbySnapshot,
+  onSelectTeamSize: (size: number) => void,
+): HTMLElement | undefined {
+  if (snapshot.mode === "random-arena") {
+    return undefined;
+  }
+  const fixed = FIXED_SIZE_MODES[snapshot.mode];
+  const size = String(snapshot.teamSize);
+  const picking =
+    snapshot.phase === "waiting" ||
+    (snapshot.phase === "team-lobby" && snapshot.teamLobby?.stage === "vote");
+  const why =
+    fixed !== undefined
+      ? `${fixed} is ${size}v${size}`
+      : !snapshot.isHost
+        ? HOST_SETS_TEAM_SIZE
+        : !picking
+          ? TEAM_SIZE_CHOSEN
+          : undefined;
+  return barSegments(
+    "lobby-team-size",
+    "Team size",
+    Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, index) => {
+      const each = index + 1;
+      // Eight in the bar beside the map: each is its number, and is read "2v2".
+      return {
+        label: String(each),
+        name: `${String(each)}v${String(each)}`,
+        pressed: each === snapshot.teamSize,
+        onPress: () => {
+          if (each !== snapshot.teamSize) {
+            onSelectTeamSize(each);
+          }
+        },
+      };
+    }),
+    why,
+    "Team",
+  );
 }
 
 /**
@@ -299,7 +361,14 @@ export function lobbyPanel(
     panel.appendChild(h("div", "screen-info lobby-running", controls.running));
   }
 
-  return { status: [mapPart], actions, body: panel };
+  // Beside the map: the lobby's two settings, on the bar's second row
+  // where it is crowded.
+  const sizes = teamSizeGroup(snapshot, callbacks.onSelectTeamSize);
+  return {
+    status: sizes === undefined ? [mapPart] : [mapPart, sizes],
+    actions,
+    body: panel,
+  };
 }
 
 /**

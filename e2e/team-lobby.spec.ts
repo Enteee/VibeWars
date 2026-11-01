@@ -4,7 +4,7 @@ import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js"
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
-import { hostLobby, openPeers } from "./helpers/peers.js";
+import { hostLobby, openPeers, setTeamSize } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -70,13 +70,15 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     await expect(host.locator(".toast")).toHaveText("Saved");
 
     const code = await hostLobby(host);
+    // The Trio's size (#2104).
+    await setTeamSize(host, 3);
 
     await nameOnMenu(guest, "Guest");
     await joinFriend(guest, code);
     await expect(guest.locator(".lobby-panel")).toBeVisible();
 
-    // One side of two players; a Hosted Game's side plays the Team Build
-    // it chooses, a bot in the slot nobody claims (#2029).
+    // One side of two players, of three a side: a bot plays the slot
+    // nobody claims (#2029).
     await host.getByRole("button", { name: "join team 1" }).click();
     await guest.getByRole("button", { name: "join team 1" }).click();
     await expect(host.locator(".lobby-panel")).toContainText("Guest");

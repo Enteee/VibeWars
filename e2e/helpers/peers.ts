@@ -52,11 +52,24 @@ export async function hostLobby(page: Page): Promise<string> {
 }
 
 /**
+ * The host's Hosted Game plays `size` a side (#2104), picked in the
+ * lobby's title bar: a side proposes a Team Build of exactly that many.
+ */
+export async function setTeamSize(page: Page, size: number): Promise<void> {
+  const choice = page
+    .getByRole("group", { name: "Team size" })
+    .getByRole("button", { name: `${String(size)}v${String(size)}`, exact: true });
+  await choice.click();
+  await expect(choice).toHaveAttribute("aria-pressed", "true");
+}
+
+/**
  * Save the active character as a Team Build of one, named after it, so a
  * side of one can propose it in the Team Lobby and play it (#1525): every
  * hosted lobby is a Team Lobby, and a spec plays the character it
  * brought. `size` copies of it make a side of that many with no bot
- * (#2029). Ends on Team Builder; returns the Team Build's name.
+ * (#2029), in a lobby of that team size (#2104). Ends on Team Builder;
+ * returns the Team Build's name.
  */
 export async function saveSoloTeam(page: Page, size = 1): Promise<string> {
   await openRail(page, "Random Arena");
@@ -149,6 +162,7 @@ export async function playHouseTeams(
 export async function startSoloMatch(page: Page): Promise<void> {
   const team = await saveSoloTeam(page);
   await hostLobby(page);
+  await setTeamSize(page, 1);
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();

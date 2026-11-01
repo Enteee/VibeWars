@@ -1040,6 +1040,9 @@ async function main(): Promise<void> {
         onSelectMap: (mapId) => {
           lobby?.selectMap(mapId);
         },
+        onSelectTeamSize: (size) => {
+          lobby?.selectTeamSize(size);
+        },
         onChooseTeam: (team) => {
           lobby?.chooseTeam(team);
         },
@@ -1834,6 +1837,11 @@ async function main(): Promise<void> {
         lobbyChanged();
       });
     }
+    // A team size change withdrew the proposal of another size (#2104).
+    const proposed = teamPicks.teams.find((saved) => saved.id === teamPicks?.proposed);
+    if (proposed !== undefined && proposed.members.length !== snapshot.teamSize) {
+      teamPicks.proposed = undefined;
+    }
     renderTeamLobbyScreen(
       screenRoot,
       snapshot,
@@ -1846,6 +1854,9 @@ async function main(): Promise<void> {
         onPropose: proposeTeam,
         onClaim: (slot) => {
           lobby?.claim(slot);
+        },
+        onSelectTeamSize: (size) => {
+          lobby?.selectTeamSize(size);
         },
         onToggleReady: () => {
           const self = lobby
@@ -1935,6 +1946,12 @@ async function main(): Promise<void> {
     joined.onStartRejected((reason) => {
       if (lobby === joined) {
         lobbyNotice = reason;
+        lobbyChanged();
+      }
+    });
+    joined.onNotice((text) => {
+      if (lobby === joined) {
+        lobbyNotice = text;
         lobbyChanged();
       }
     });

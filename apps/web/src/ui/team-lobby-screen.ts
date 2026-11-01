@@ -16,6 +16,7 @@ import {
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
+import { teamSizeGroup } from "./lobby-screen.js";
 
 /**
  * The Team Lobby screen (#1460, #1449 variant B, the card table): while
@@ -34,6 +35,8 @@ export interface TeamLobbyCallbacks {
   readonly onClaim: (slot: number | null) => void;
   readonly onToggleReady: () => void;
   readonly onLeave: () => void;
+  /** The host's team size (#2104), in a Hosted Game's vote. */
+  readonly onSelectTeamSize: (size: number) => void;
 }
 
 export const VOTE_TITLE = "Choose a team build";
@@ -42,6 +45,10 @@ export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: the house team plays";
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
+/** None of your Team Builds is the side's size (#2104). */
+export function noTeamBuildOf(size: number): string {
+  return `No Team Build of ${String(size)} — make one in the Team Builder.`;
+}
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
 export const HOUSE_TEAM = "House team";
@@ -88,33 +95,12 @@ export function initial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?";
 }
 
-/** A saved Team Build as the propose cards show it (#1862). */
-export interface ProposableTeam {
-  readonly team: StoredTeam;
-  /** Not the side's size, so the host would refuse it (Q182). */
-  readonly disabled: boolean;
-  /** Why it is disabled, as a line on its card: "needs 4 characters". */
-  readonly reason: string | undefined;
-}
-
 /**
- * `teams` for a side of `size`: only those of exactly `size` members can
- * be proposed. A Hosted Game's side, `size` `null`, takes any with a slot
- * for each of its `players` (#2029).
+ * `teams` a side of `size` can propose: exactly `size` members (#2104).
+ * The rest are left out, never shown greyed.
  */
-export function proposableTeams(
-  teams: readonly StoredTeam[],
-  size: number | null,
-  players: number,
-): readonly ProposableTeam[] {
-  const least = size ?? players;
-  const characters = `${String(least)} ${least === 1 ? "character" : "characters"}`;
-  const needs = size === null ? `needs at least ${characters}` : `needs ${characters}`;
-  return teams.map((team) => {
-    const count = team.members.length;
-    const disabled = size === null ? count < players : count !== size;
-    return { team, disabled, reason: disabled ? needs : undefined };
-  });
+export function proposableTeams(teams: readonly StoredTeam[], size: number): readonly StoredTeam[] {
+  return teams.filter((team) => team.members.length === size);
 }
 
 /** The member at `sessionId`'s name, or the id itself for someone already gone. */
@@ -303,6 +289,7 @@ export function renderTeamLobbyScreen(
   const side = team === null ? null : lobby.sides[team];
   const clock = h("span", "team-lobby-clock", clockText(lobby.secondsLeft));
   tickDown(clock, lobby.secondsLeft);
+  const sizes = teamSizeGroup(snapshot, callbacks.onSelectTeamSize);
   const status = h("div", "team-lobby-status");
   status.append(
     h("span", "team-lobby-stage", lobby.stage === "vote" ? VOTE_TITLE : CLAIM_TITLE),
@@ -318,7 +305,8 @@ export function renderTeamLobbyScreen(
   screenBar({
     crumbs: ["VibeWars", team === null ? "Team Lobby" : `Team Lobby · Team ${String(team + 1)}`],
     back: { label: "Leave", onBack: callbacks.onLeave },
-    status: [status],
+    // The host may still change the team size in the vote (#2104).
+    status: sizes === undefined ? [status] : [status, sizes],
     actions,
   });
 
@@ -365,15 +353,12 @@ function humansOnSide(snapshot: LobbySnapshot): number {
  * for the team, without Edit.
  */
 function ownCard(
-  { team, disabled, reason }: ProposableTeam,
+  team: StoredTeam,
   proposedTeamId: string | undefined,
   onPropose: (teamId: string | undefined) => void,
 ): HTMLElement {
   const proposed = team.id === proposedTeamId;
   const footer: HTMLElement[] = [];
-  if (reason !== undefined) {
-    footer.push(h("span", "team-lobby-needs", reason));
-  }
   if (proposed) {
     footer.push(h("span", "team-lobby-proposed", "Proposed ✓"));
   }
@@ -389,11 +374,9 @@ function ownCard(
       onPropose(proposed ? undefined : team.id);
     },
     pressed: proposed,
-    disabled,
     label: `Propose ${team.name}`,
   });
   card.classList.toggle("is-proposed", proposed);
-  card.classList.toggle("is-faded", disabled);
   return card;
 }
 
@@ -405,12 +388,15 @@ function voteStage(
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
   const shown: HTMLElement[] = [h("h3", "menu-column-title", "Your Team Builds")];
+  const proposable = proposableTeams(teams, side.size);
   if (teams.length === 0) {
     shown.push(h("div", "screen-info team-lobby-no-teams", NO_TEAM_BUILDS));
+  } else if (proposable.length === 0) {
+    shown.push(h("div", "screen-info team-lobby-no-teams", noTeamBuildOf(side.size)));
   } else {
     const own = h("div", "play-cards team-lobby-own-cards");
-    for (const proposable of proposableTeams(teams, side.size, humansOnSide(snapshot))) {
-      own.appendChild(ownCard(proposable, proposedTeamId, callbacks.onPropose));
+    for (const team of proposable) {
+      own.appendChild(ownCard(team, proposedTeamId, callbacks.onPropose));
     }
     shown.push(own);
   }

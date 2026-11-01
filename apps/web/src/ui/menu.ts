@@ -6,7 +6,7 @@ import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
 import { characterFigureCard, lookOfCharacter } from "./character-card.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
-import { button, emptyState, h, playCard, screenBar } from "./kit.js";
+import { barSegments, button, emptyState, h, playCard, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
 import { isAlone } from "./party-strip.js";
 import { railParty, railScreen, type RailEntry } from "./rail.js";
@@ -56,20 +56,17 @@ export function randomArenaQueue(
   callbacks: Pick<MenuCallbacks, "onRandomArena">,
   why: string | undefined,
 ): HTMLElement {
-  const group = h("span", "random-arena-queue");
-  group.setAttribute("role", "group");
-  group.setAttribute("aria-label", "Find a match");
-  for (const { mode, label } of RANDOM_ARENA_MODES) {
-    const join = button(label, "", () => {
-      callbacks.onRandomArena(mode, loadPlayerName());
-    });
-    if (why !== undefined) {
-      join.disabled = true;
-      join.title = why;
-    }
-    group.appendChild(join);
-  }
-  return group;
+  return barSegments(
+    "random-arena-queue",
+    "Find a match",
+    RANDOM_ARENA_MODES.map(({ mode, label }) => ({
+      label,
+      onPress: () => {
+        callbacks.onRandomArena(mode, loadPlayerName());
+      },
+    })),
+    why,
+  );
 }
 
 /** What Random Arena is for, under its heading. */

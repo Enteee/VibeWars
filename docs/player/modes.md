@@ -171,10 +171,12 @@ Forgotten Shrines plays it.
 
 A hosted lobby does not start the match when everyone is ready. It opens the Team Lobby first, where each side picks one Team
 Build together and then splits its characters. In Team Arena, Heroes'
-Ascent and GvG a side is as big as the mode's team (4, 8 and 8). In a
-Hosted Game a side is as big as the Team Build it chooses, up to 8, and
-the two sides may differ; a side playing the house team is as big as
-the other.
+Ascent and GvG a side is as big as the mode's team (4, 8 and 8), which
+the top bar shows, locked. In a Hosted Game the host sets the team size
+in the top bar, 1v1 to 8v8 (4v4 to begin with), before the Team Lobby
+and during its vote, and both sides play exactly that many. It never
+goes below a side's players, and a side that has as many players as the
+team size takes nobody more.
 A queued party ([Find a match](getting-started.md#host-or-join-a-match)
 on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
 only, as big as the mode's team (4 for Team Arena, 8 for the others)
@@ -183,10 +185,11 @@ Each stage lasts 60 seconds and ends early once everyone in the Team
 Lobby is ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
-side's size (in a Hosted Game, any size with a character for each player
-on the side), one proposal each, by clicking one of your Team Builds'
-cards; click it again to withdraw. A Team Build of the wrong size is
-shown faded, with the size it needs. Anyone may vote for one of their
+side's size, one proposal each, by clicking one of your Team Builds'
+cards; click it again to withdraw. Only your Team Builds of that size
+are listed. If the host changes the team size during the vote, every
+proposal of another size is withdrawn, its proposer is told, everyone
+confirms again, and the vote's 60 seconds start over. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
 initials of who voted for it: click a card to vote, and click it again

@@ -2195,6 +2195,20 @@ body {
   }
 }
 
+/* With the team size beside the map (#2104), the lobby's status needs
+   the second row until the bar has room for all of it, at 100rem. */
+@media (45rem < width <= 100rem) {
+  #topbar:has(.lobby-team-size) {
+    flex-wrap: wrap;
+  }
+
+  #topbar:has(.lobby-team-size) .topbar-status {
+    flex: 1 0 100%;
+    order: 10;
+    flex-wrap: wrap;
+  }
+}
+
 .editor-skill-slot select {
   flex: 1 1 auto;
 }
@@ -2974,12 +2988,6 @@ body {
   color: var(--accent);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-/* A Team Build of the wrong size, on its faded card (#1862). */
-.team-lobby-needs {
-  color: var(--ink-dim);
-  text-align: center;
 }
 
 /* No proposal yet: where the cards would be. */
@@ -6303,23 +6311,41 @@ body:has(#app > .chat) .now-playing {
   outline: none;
 }
 
-/* Random Arena's formats in the title bar (#2022): each queues for its
-   format. One segmented control, as tight as the bar beside the lobby
-   code needs it down to the ⋯ at 45rem. */
-.random-arena-queue {
+/* Choices in the title bar as one segmented control (#2022, #2104):
+   Random Arena's formats, a lobby's team size. As tight as the bar
+   beside the lobby code needs it down to the ⋯ at 45rem. */
+.bar-segments {
   display: flex;
 }
 
-#topbar .random-arena-queue button {
+#topbar .bar-segments button {
   padding: 0.25rem 0.3rem;
 }
 
-#topbar .random-arena-queue button + button {
+#topbar .bar-segments button + button {
   margin-left: -1px;
 }
 
-#topbar .random-arena-queue button:hover:not(:disabled) {
+#topbar .bar-segments button:hover:not(:disabled),
+#topbar .bar-segments button[aria-pressed="true"] {
   position: relative;
+}
+
+/* The team size's caption, as the map's (#2104). */
+#topbar .lobby-team-size {
+  align-items: center;
+}
+
+#topbar .lobby-team-size .field-label {
+  margin-right: 0.4rem;
+  white-space: nowrap;
+}
+
+/* The current one, still shown when the group is locked. */
+#topbar .bar-segments button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: rgb(89 194 255 / 14%);
+  color: var(--accent);
 }
 
 .random-arena-hint {

@@ -34,6 +34,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     phase: "waiting",
     mode: "team-arena",
     mapId: "arena-alpha",
+    teamSize: 4,
     open: true,
     hostId: "host",
     players,

@@ -2,8 +2,10 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  HOST_SETS_TEAM_SIZE,
   HOUSE_TEAM_AFTER_MS,
   MATCH_RUNNING_NOTICE,
+  TEAM_SIZE_CHOSEN,
   displayLobbyCode,
   hostMaps,
   lobbyControls,
@@ -12,6 +14,7 @@ import {
   matchmakingButtons,
   modeLine,
   teamColumn,
+  teamSizeGroup,
   waitingFor,
 } from "./lobby-screen.js";
 
@@ -22,6 +25,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     phase,
     mode: "hosted-game",
     mapId: "arena",
+    teamSize: 4,
     open: true,
     hostId: "host-peer",
     players: [
@@ -302,6 +306,7 @@ class FakeElement {
 describe("teamColumn: names only (#2029)", () => {
   const callbacks = {
     onSelectMap: () => undefined,
+    onSelectTeamSize: () => undefined,
     onChooseTeam: () => undefined,
     onToggleReady: () => undefined,
     onStart: () => undefined,
@@ -402,6 +407,7 @@ describe("matchmakingButtons (#1766)", () => {
 describe("lobbyPanel: the map (#1994)", () => {
   const callbacks = {
     onSelectMap: () => undefined,
+    onSelectTeamSize: () => undefined,
     onChooseTeam: () => undefined,
     onToggleReady: () => undefined,
     onStart: () => undefined,
@@ -460,5 +466,105 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("names the mode of a map that is set", () => {
     expect(modeLines("hosted-game")).toEqual(["Annihilation: defeat every foe"]);
+  });
+});
+
+describe("teamSizeGroup (#2104)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const group = (lobby: LobbySnapshot, picked: number[] = []): FakeElement | undefined =>
+    teamSizeGroup(lobby, (size) => {
+      picked.push(size);
+    }) as unknown as FakeElement | undefined;
+  /** Each button, after the caption: its name, whether pressed, whether disabled, its hover. */
+  const buttons = (
+    shown: FakeElement | undefined,
+  ): [string, string | undefined, boolean, unknown][] =>
+    (shown?.children ?? [])
+      .slice(1)
+      .map((choice) => [
+        choice.attributes.get("aria-label") ?? "",
+        choice.attributes.get("aria-pressed"),
+        choice.disabled,
+        (choice as unknown as { title?: string }).title,
+      ]);
+
+  it("shows the host 1v1 to 8v8, the current one pressed, and picks another on a click", () => {
+    const picked: number[] = [];
+    const shown = group({ ...snapshot("waiting"), teamSize: 2 }, picked);
+    expect(shown?.attributes.get("aria-label")).toBe("Team size");
+    expect(buttons(shown)).toEqual(
+      ["1v1", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8"].map((label) => [
+        label,
+        String(label === "2v2"),
+        false,
+        undefined,
+      ]),
+    );
+    // A caption first, then 1 to 8.
+    expect(shown?.children.map((child) => child.textContent)).toEqual([
+      "Team",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+    ]);
+    expect(shown?.children[0]?.attributes.get("aria-hidden")).toBe("true");
+    shown?.children[3]?.click();
+    shown?.children[2]?.click();
+    expect(picked).toEqual([3]);
+  });
+
+  it("is locked for a guest, and says only the host sets it", () => {
+    const shown = group({ ...snapshot("waiting"), isHost: false });
+    expect(buttons(shown).every(([, , disabled]) => disabled)).toBe(true);
+    expect(buttons(shown)[3]).toEqual(["4v4", "true", true, HOST_SETS_TEAM_SIZE]);
+  });
+
+  it("is locked at a fixed-size mode's own size, and Random Arena has none", () => {
+    const ascent = buttons(group({ ...snapshot("waiting"), mode: "heroes-ascent", teamSize: 8 }));
+    expect(ascent[7]).toEqual(["8v8", "true", true, "Heroes' Ascent is 8v8"]);
+    const arena = buttons(group({ ...snapshot("waiting"), mode: "team-arena", teamSize: 4 }));
+    expect(arena[3]).toEqual(["4v4", "true", true, "Team Arena is 4v4"]);
+    expect(group({ ...snapshot("waiting"), mode: "random-arena" })).toBeUndefined();
+  });
+
+  it("is the host's in the Team Lobby's vote, and locked in its claim or a match", () => {
+    const teamLobby = (stage: "vote" | "claim"): LobbySnapshot => ({
+      ...snapshot("team-lobby"),
+      teamLobby: { stage, secondsLeft: 60, sides: [null, null] },
+    });
+    expect(buttons(group(teamLobby("vote")))[0]?.[2]).toBe(false);
+    expect(buttons(group(teamLobby("claim")))[0]).toEqual(["1v1", "false", true, TEAM_SIZE_CHOSEN]);
+    expect(buttons(group(snapshot("in-match")))[0]?.[2]).toBe(true);
+  });
+
+  it("sits beside the map in the bar's status, in a Hosted Game", () => {
+    const panel = lobbyPanel(
+      snapshot("waiting"),
+      {
+        onSelectMap: () => undefined,
+        onSelectTeamSize: () => undefined,
+        onChooseTeam: () => undefined,
+        onToggleReady: () => undefined,
+        onStart: () => undefined,
+        onWatch: () => undefined,
+      },
+      undefined,
+    );
+    expect(panel.status.map((part) => (part as unknown as FakeElement).className)).toEqual([
+      "lobby-map",
+      "bar-segments lobby-team-size",
+    ]);
   });
 });

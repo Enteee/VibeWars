@@ -11,6 +11,7 @@ import {
   playHouseTeams,
   playOwnTeams,
   saveSoloTeam,
+  setTeamSize,
   startSoloMatch as startMatchFromMenu,
 } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
@@ -105,6 +106,7 @@ async function startLobbyMatch(
   await bringStarter(host, build);
   const team = await saveSoloTeam(host);
   const code = await hostLobby(host);
+  await setTeamSize(host, 1);
   for (const guest of guests) {
     await guest.goto("./");
     await joinFriend(guest, code);

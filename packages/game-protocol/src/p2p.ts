@@ -1005,6 +1005,11 @@ export interface WireLobbyState {
   readonly mode: LobbyMode;
   readonly mapId: string;
   /**
+   * Players a side (#2104): a Hosted Game's, the host's pick, 1 to
+   * `MAX_TEAM_LOBBY_SIDE`; every other mode's, its own.
+   */
+  readonly teamSize: number;
+  /**
    * Whether a peer with the key may join (#1682): a closed lobby takes
    * nobody new, and keeps those already in. A queued lobby is always open.
    */
@@ -1044,12 +1049,8 @@ export interface WireTeamLobby {
 
 /** One side of a Team Lobby, as only its own members see it. */
 export interface WireTeamSide {
-  /**
-   * The size every proposal is: a team mode's (#2029). `null` in a Hosted
-   * Game, where a side proposes any size up to `MAX_TEAM_LOBBY_SIDE`, no
-   * smaller than its humans, and plays the one it chose.
-   */
-  readonly size: number | null;
+  /** The size every proposal is, and the side plays: the lobby's team size (#2104). */
+  readonly size: number;
   /** Who breaks a tie; `null` for a side with no humans. */
   readonly captainId: string | null;
   /** In `"vote"`, in the order they were proposed, at most one per member; `[]` in `"claim"`. */
@@ -1103,6 +1104,8 @@ export type WireLobbyCommand =
   | { readonly kind: "choose-team"; readonly team: 0 | 1 | null }
   | { readonly kind: "ready"; readonly ready: boolean }
   | { readonly kind: "select-map"; readonly mapId: string }
+  /** Host only, in a Hosted Game (#2104): players a side, 1 to `MAX_TEAM_LOBBY_SIDE`. */
+  | { readonly kind: "select-team-size"; readonly size: number }
   /** Host only (#1526): the lobby's mode; a map outside it moves to the mode's first. */
   | { readonly kind: "select-mode"; readonly mode: LobbyMode }
   | { readonly kind: "start" }
@@ -1147,9 +1150,11 @@ export type WireLobbyCommand =
 
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
-  readonly kind: "start-rejected" | "refused" | "chat-throttled";
+  readonly kind: "start-rejected" | "notice" | "refused" | "chat-throttled";
   /**
-   * For `"start-rejected"`, the words the host is shown. For `"refused"`,
+   * For `"start-rejected"`, the words the host is shown. For `"notice"`
+   * (#2104), the words this peer is shown: what the host did to its
+   * choice, or would not do. For `"refused"`,
    * one of `LOBBY_REFUSALS`. For `"chat-throttled"` (#479), empty: this
    * peer's chat lines are being dropped, too many too fast.
    */
@@ -1213,6 +1218,11 @@ function isNumber(value: unknown): value is number {
 
 function isCount(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && value >= 0;
+}
+
+/** A lobby's team size (#2104): 1 to `MAX_TEAM_LOBBY_SIDE` players a side. */
+function isTeamSize(value: unknown): value is number {
+  return isCount(value) && value >= 1 && value <= MAX_TEAM_LOBBY_SIDE;
 }
 
 function isPips(value: unknown): value is number {
@@ -2481,14 +2491,14 @@ function parseTeamSide(value: unknown): WireTeamSide | null | undefined {
   const raw = fields(value);
   if (
     raw === undefined ||
-    !(raw.size === null || (isCount(raw.size) && raw.size <= MAX_TEAM_LOBBY_SIDE)) ||
+    !(isCount(raw.size) && raw.size <= MAX_TEAM_LOBBY_SIDE) ||
     !isNullableString(raw.captainId)
   ) {
     return undefined;
   }
   const proposals = parseArray(raw.proposals, MAX_TEAM_LOBBY_SIDE, parseTeamProposal);
   const chosen = parseTeamChoice(raw.chosen);
-  const claims = parseArray(raw.claims, raw.size ?? MAX_TEAM_LOBBY_SIDE, (item) =>
+  const claims = parseArray(raw.claims, raw.size, (item) =>
     item === null ? null : parseString(item),
   );
   return proposals === undefined || chosen === undefined || claims === undefined
@@ -2525,6 +2535,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
+    !isTeamSize(raw.teamSize) ||
     typeof raw.open !== "boolean" ||
     !isString(raw.hostId) ||
     !isNullableString(raw.matchId) ||
@@ -2540,6 +2551,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         phase: raw.phase,
         mode: raw.mode,
         mapId: raw.mapId,
+        teamSize: raw.teamSize,
         open: raw.open,
         hostId: raw.hostId,
         matchId: raw.matchId,
@@ -2562,6 +2574,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return typeof raw.ready === "boolean" ? { kind: "ready", ready: raw.ready } : undefined;
     case "select-map":
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
+    case "select-team-size":
+      return isTeamSize(raw.size) ? { kind: "select-team-size", size: raw.size } : undefined;
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
     case "start":
@@ -2616,7 +2630,7 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
 export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
   const raw = fields(value);
   return raw !== undefined &&
-    isOneOf(raw.kind, ["start-rejected", "refused", "chat-throttled"] as const) &&
+    isOneOf(raw.kind, ["start-rejected", "notice", "refused", "chat-throttled"] as const) &&
     isString(raw.reason, MAX_WIRE_TEXT)
     ? { kind: raw.kind, reason: raw.reason }
     : undefined;
