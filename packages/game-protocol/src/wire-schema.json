@@ -3697,6 +3697,7 @@
         { "literal": "lobby-full" },
         { "literal": "not-admitted" },
         { "literal": "not-host" },
+        { "literal": "not-pickable" },
         { "literal": "protocol-mismatch" },
         { "literal": "slot-taken" },
         { "literal": "ticket-used" }

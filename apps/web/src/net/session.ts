@@ -111,6 +111,8 @@ export const TEAM_PLAN_REJECTED_NOTICE =
   "Your party's team plan was not accepted; the house team plays for you.";
 export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
 export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
+/** A map picked outside a Hosted Game (#1994). */
+export const NOT_PICKABLE_MESSAGE = "Only a Hosted Game lets the host pick the map.";
 /** A Team Lobby's refusals (#1460). */
 export const PROPOSAL_REFUSED_MESSAGE =
   "That team build cannot be proposed: it needs your side's size and legal builds.";
@@ -725,6 +727,8 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
       return NO_SEAT_FOR_BOT_MESSAGE;
     case "not-host":
       return NOT_HOST_MESSAGE;
+    case "not-pickable":
+      return NOT_PICKABLE_MESSAGE;
     case "invalid-proposal":
       return PROPOSAL_REFUSED_MESSAGE;
     case "invalid-vote":
