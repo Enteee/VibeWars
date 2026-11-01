@@ -73,6 +73,7 @@ export function define(
     refreshesOnCritical: false,
     endsAfterAttacks: undefined,
     unblockableAttacks: undefined,
+    endsAfterAttackCount: undefined,
     attacksUnblockable: false,
     onAttackHit: undefined,
     endsAfterHits: undefined,
@@ -129,6 +130,7 @@ export function define(
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
     whileUnder: undefined,
+    suppressedWhileUnder: undefined,
     triggers: [],
     ...overrides,
   };

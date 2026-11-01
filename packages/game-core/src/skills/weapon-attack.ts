@@ -32,6 +32,7 @@ import {
   aggregateModifiers,
   damageTypeTaken,
   getStatusDefinition,
+  isSuppressed,
   type StatusId,
 } from "./status.js";
 import { nearestFirst, type TargetCandidate } from "./targeting.js";
@@ -555,6 +556,9 @@ export function landBlow(
  * for attack skills only rides a blow `withAttackSkill` (#1551), and one
  * for a weapon class only a blow of that weapon (#1629). `dealt`: the
  * Health the blow took, what a Vampiric Horror's owner gains (#1836).
+ * `spent`: the statuses this attack used up (#1916), whose riders it
+ * still carries, as Poison Tip Signet's poison. A status that does
+ * nothing now (#1916), as Brutal Weapon beside an enchantment, adds none.
  */
 export function attackHitRiders(
   attacker: Combatant,
@@ -566,14 +570,17 @@ export function attackHitRiders(
   rules: CombatRules,
   surroundings: Surroundings,
   fired: FiredTrigger[],
+  spent: readonly StatusId[],
 ): CombatEvent[] {
   const onHit = weaponOnHit(attacker, victim, mainHand.weapon, dealt, rng, rules, surroundings);
   const physical = isPhysicalDamage(mainHand.damageType);
-  for (const { id } of attacker.statuses.active) {
-    const definition = getStatusDefinition(id);
+  const active = attacker.statuses.active;
+  for (const status of [...active, ...spent.map((id) => ({ id }))]) {
+    const definition = getStatusDefinition(status.id);
     const rider = definition.onAttackHit;
     if (
       rider === undefined ||
+      isSuppressed(active, status) ||
       (rider.attackSkillsOnly && !withAttackSkill) ||
       (!physical && definition.category !== "weapon-spell") ||
       (rider.weapon !== undefined && !wieldsFor(mainHand.weapon.id, rider.weapon))
@@ -641,35 +648,51 @@ function weaponOnHit(
  * Escape (#976). Returns whether a status of its own makes the attack
  * unblockable (#1604), as Guiding Hands, spending one of its attacks, and
  * the critical chance the statuses that ended still give this attack
- * (#1677): "Go for the Eyes!" ends on the attack it sharpens.
+ * (#1677): "Go for the Eyes!" ends on the attack it sharpens. Every
+ * status counting its bearer's attacks spends one (#1916): `spent`, those
+ * it used up, whose damage and riders this last attack still has, as
+ * Signet of Strength's thirteenth.
  */
 export function bearerAttacked(
   attacker: Combatant,
   events: CombatEvent[],
   kind: "melee" | "projectile",
-): { readonly unblockable: boolean; readonly criticalChanceBonus: number } {
-  const spent = attacker.statuses.spendUnblockableAttack();
+): {
+  readonly unblockable: boolean;
+  readonly criticalChanceBonus: number;
+  readonly damageDelta: number;
+  readonly spent: readonly StatusId[];
+} {
+  const unblockable = attacker.statuses.spendUnblockableAttack();
+  const spent = attacker.statuses.spendAttack();
   let criticalChanceBonus = 0;
-  for (const statusId of [...spent.ended, ...attacker.statuses.endOnBearerAttack(kind)]) {
+  let damageDelta = 0;
+  for (const statusId of [
+    ...unblockable.ended,
+    ...spent,
+    ...attacker.statuses.endOnBearerAttack(kind),
+  ]) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
     criticalChanceBonus += getStatusDefinition(statusId).criticalChanceBonus;
+    damageDelta += getStatusDefinition(statusId).attackDamageDelta;
   }
-  return { unblockable: spent.unblockable, criticalChanceBonus };
+  return { unblockable: unblockable.unblockable, criticalChanceBonus, damageDelta, spent };
 }
 
 /**
  * `snapshot`, read after the attack ended its statuses, with the critical
- * chance those statuses still give it (#1677).
+ * chance (#1677) and the damage (#1916) those statuses still give it.
  */
-export function withEndedCritical(
+export function withEndedStatuses(
   snapshot: WeaponSnapshot,
   attacked: ReturnType<typeof bearerAttacked>,
 ): WeaponSnapshot {
-  return attacked.criticalChanceBonus === 0
+  return attacked.criticalChanceBonus === 0 && attacked.damageDelta === 0
     ? snapshot
     : {
         ...snapshot,
         criticalChanceBonus: snapshot.criticalChanceBonus + attacked.criticalChanceBonus,
+        damageDelta: snapshot.damageDelta + attacked.damageDelta,
       };
 }
 
@@ -818,7 +841,7 @@ function strike(
     attackReached(victim, events);
     return;
   }
-  const snapshot = withEndedCritical(weaponSnapshotOf(attacker), attacked);
+  const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
   const before = victim.health;
   // Order of Undeath's "+13 damage" on its bearer's minions (#1915).
   const owner = minionOwner(attacker, swing.surroundings);
@@ -840,6 +863,7 @@ function strike(
       rules,
       swing.surroundings,
       fired,
+      attacked.spent,
     ),
   );
   bearerHit(
@@ -975,7 +999,8 @@ export function resolveAttackSkillOutcome(
   const kind = blowKind(snapshot.mainHand.weapon);
   const events: CombatEvent[] = [];
   // The snapshot, read first, still has what the attack ends.
-  const { unblockable } = bearerAttacked(caster, events, kind);
+  const attacked = bearerAttacked(caster, events, kind);
+  const { unblockable } = attacked;
   removePreparations(caster, skill, events);
   const next = nextAttackSkillOf(caster);
   const primary = resolution.targets[0];
@@ -1077,6 +1102,7 @@ export function resolveAttackSkillOutcome(
           rules,
           surroundings,
           fired,
+          attacked.spent,
         ),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );

@@ -38,7 +38,9 @@ export type WarriorStatusId =
   | "rage-of-the-ntouka"
   // Staples (#1869).
   | "frenzied-defense"
-  | "flurry";
+  | "flurry"
+  // Your next N attacks (#1916).
+  | "signet-of-strength";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -330,5 +332,12 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     profession: "warrior",
     attackDurationMultiplier: 0.67,
     weaponDamageMultiplier: 0.75,
+  }),
+  // "Your next 1...13...16 attacks deal +5 damage" (#1916): a hit, a miss
+  // and a block each spend one, and nothing else ends it.
+  "signet-of-strength": define("signet-of-strength", "Signet of Strength", "skill-effect", {
+    profession: "warrior",
+    attackDamageDelta: 5,
+    endsAfterAttackCount: 13,
   }),
 };

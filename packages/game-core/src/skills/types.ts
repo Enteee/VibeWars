@@ -1541,6 +1541,12 @@ export interface ChainMark {
   remainingSeconds: number;
 }
 
+/** A skill's faster or slower activation while its caster holds, or lacks, a status (#1916). */
+export interface ActivationWhile {
+  readonly condition: Extract<StateCondition, { kind: "caster-has" | "caster-lacks" }>;
+  readonly multiplier: number;
+}
+
 export interface Skill {
   readonly id: string;
   readonly name: string;
@@ -1616,6 +1622,12 @@ export interface Skill {
    * (#1754): Healing Touch's. Absent: the normal bonus.
    */
   readonly divineFavorDoubled?: true;
+  /**
+   * Its activation times `multiplier` while `condition` holds for its
+   * caster as the activation starts (#1916): Natural Healing's "activates
+   * 50% faster if you are not enchanted". Absent: no such change.
+   */
+  readonly activationWhile?: ActivationWhile;
   /** Maximum distance to target, in world units. */
   readonly range: number;
   /** What must be selected, and whether the cast is legal. */

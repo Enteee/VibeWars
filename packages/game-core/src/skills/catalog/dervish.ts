@@ -2350,4 +2350,41 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // longer" (#1761).
     effects: [{ kind: "apply-status", statusId: "extend-enchantments", durationSeconds: 10 }],
   },
+  // Not enchanted (#1916).
+  {
+    id: "dervish.natural-healing",
+    name: "Natural Healing",
+    gwId: 1525,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.wind-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    // "If you are not enchanted, this spell activates 50% faster."
+    activationWhile: {
+      condition: { kind: "caster-lacks", category: "enchantment" },
+      multiplier: 0.5,
+    },
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You are healed for 50...146...170 Health."
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 50, atTwelve: 146 } },
+      },
+    ],
+  },
 ];

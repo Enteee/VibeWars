@@ -326,7 +326,9 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * with no target, as in a tooltip, nothing on one counts. Migraine's
  * longer activation (#1473) slows every skill but an attack skill, and
  * multiplies with Dazed's. A status that hastens the caster's own skills
- * of a kind (#1761), as Holy Haste's Healing Prayers, multiplies in too.
+ * of a kind (#1761), as Holy Haste's Healing Prayers, multiplies in too,
+ * and so does the skill's own `activationWhile` (#1916), as Natural
+ * Healing's half while the caster is not enchanted.
  */
 export function effectiveActivationSeconds(
   skill: Skill,
@@ -339,7 +341,8 @@ export function effectiveActivationSeconds(
     (skill.type === "attack" || skill.type === "pet-attack"
       ? 1
       : modifiers.skillActivationMultiplier) *
-    ownSkillBoost(caster.statuses.active, skill).activationMultiplier;
+    ownSkillBoost(caster.statuses.active, skill).activationMultiplier *
+    activationWhileMultiplier(skill, caster);
   if (!isSpell(skill.type)) {
     return skill.activationSeconds * fastCasting * slowed;
   }
@@ -348,6 +351,16 @@ export function effectiveActivationSeconds(
       ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
       : 1;
   return skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * onTarget;
+}
+
+/** `skill`'s own `activationWhile` multiplier for `caster` now (#1916); 1 without one. */
+function activationWhileMultiplier(skill: Skill, caster: RankHolder): number {
+  if (skill.activationWhile === undefined) {
+    return 1;
+  }
+  const { condition, multiplier } = skill.activationWhile;
+  const held = caster.statuses.countByCategory(condition.category, condition.profession) > 0;
+  return held === (condition.kind === "caster-has") ? multiplier : 1;
 }
 
 /** The bearer's armor reduction (Cracked Armor, #763); `undefined`: none. */
