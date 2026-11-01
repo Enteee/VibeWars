@@ -259,8 +259,8 @@ describe("Disciplined Stance (#1329)", () => {
     const w = get(match, "w").combatant;
     w.statuses.apply("disciplined-stance", 1000, "w", NO_RANKS);
     expect(aggregateModifiers(w.statuses.active).armorModifier).toBe(10);
-    expect(blockChanceOf(w, "melee")).toBe(0.75);
-    expect(blockChanceOf(w, "projectile")).toBe(0.75);
+    expect(blockChanceOf(w, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(w, "projectile", false)).toBe(0.75);
   });
 
   it("a signet keeps it; an adrenal shout ends it", () => {

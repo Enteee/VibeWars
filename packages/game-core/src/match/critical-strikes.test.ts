@@ -229,8 +229,8 @@ describe("Critical Defenses (#1315)", () => {
     });
     const bearer = makeCombatant({ id: "b" });
     bearer.statuses.apply("critical-defenses", 9, "b", NO_RANKS);
-    expect(blockChanceOf(bearer, "melee")).toBe(0.75);
-    expect(blockChanceOf(bearer, "projectile")).toBe(0.75);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(bearer, "projectile", false)).toBe(0.75);
   });
 
   it("a critical hit puts its remaining time back to the duration it was applied with", () => {
