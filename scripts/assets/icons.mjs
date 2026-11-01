@@ -2180,6 +2180,108 @@ const skillGlyph = {
     [8.5, 11, 13.5, 16]
       .map((x) => `<circle cx="${String(x)}" cy="10.8" r="1.5" fill="${C.ink}"/>`)
       .join(""),
+  // Mechanics skills (#1940). Scribe's Insight (#1913): a page of lines, the signets it reads.
+  scroll: () =>
+    `<path fill-rule="evenodd" fill="${C.ink}" stroke="${C.bg}" stroke-width="1" stroke-linejoin="round" d="M5 3H17Q18 3 18 4V15Q18 17 16 17H7Q5 17 5 15ZM7.5 6.5H15.5V8H7.5ZM7.5 10H15.5V11.5H7.5Z"/>` +
+    inkLine("M5 17Q5 21 9 21H15", 2),
+  // Cacophony (#1913): a horn, and the sound that hurts its maker.
+  horn: () =>
+    inkFill("M3 9H8L16 4V20L8 15H3Z") +
+    inkLine("M19 8.5Q21.5 12 19 15.5", 1.8) +
+    inkLine("M21.5 5.5Q25 12 21.5 18.5", 1.4),
+  // Soul Bind (#1913): a heal cross cut open at its heart, a ring bound in the gap.
+  "plus-ring": () =>
+    inkLine("M12 3V8M12 16V21M3 12H8M16 12H21", 5) +
+    `<circle cx="12" cy="12" r="3" ${stroke(C.ink, 1.8)}/>`,
+  // Dancing Daggers (#1914): two daggers in flight, one behind the other.
+  "dagger-pair": () =>
+    inkLine("M4 14L12 6", 2.4) +
+    inkLine("M3 9L9 15", 2) +
+    inkLine("M10 21L19 12", 2.4) +
+    inkLine("M9 16L15 22", 2),
+  // Lava Arrows (#1914): an arrow trailing drops of lava.
+  "arrow-lava": () =>
+    inkLine("M3 14L14 3", 2.2) +
+    inkFill("M21 2L10 5L18 13Z") +
+    [
+      [6, 18],
+      [11, 16],
+      [8, 22],
+    ]
+      .map(([x, y]) =>
+        inkFill(
+          `M${String(x)} ${String((y ?? 0) - 2.6)}L${String((x ?? 0) + 2)} ${String(y)}A2 2 0 0 1 ${String((x ?? 0) - 2)} ${String(y)}Z`,
+        ),
+      )
+      .join(""),
+  // Focused Shot (#1914): an arrow driven into the middle of a ring.
+  "arrow-focus": () =>
+    `<circle cx="10.5" cy="13.5" r="7.5" ${stroke(C.ink, 1.6)}/>` +
+    inkLine("M21.5 2.5L13 11", 2.2) +
+    inkFill("M10.5 13.5L12 8.5L15.5 12Z"),
+  // Forked Arrow (#1914): one shaft, two heads.
+  "arrow-fork": () =>
+    inkLine("M2 12H10M10 12L18 5M10 12L18 19", 2.2) +
+    inkFill("M22 2L14.5 3.5L20.5 9.5Z") +
+    inkFill("M22 22L14.5 20.5L20.5 14.5Z"),
+  // Needling Shot (#1914): a thin needle with its eye, the thread's loop.
+  "arrow-needle": () =>
+    inkLine("M7 17L19 5", 1.4) +
+    inkFill("M22 2L16.5 4L20 7.5Z") +
+    `<ellipse cx="5" cy="19" rx="2.2" ry="3.2" transform="rotate(45 5 19)" ${stroke(C.ink, 1.4)}/>`,
+  // Natural Healing, Natural Temper (#1916): a leaf, what a skill does while nothing is enchanted.
+  leaf: () => inkFill("M4 20C4 10 9 4 20 4C20 15 14 20 4 20Z") + inkLine("M4 20L13 11", 1.2),
+  // Poison Tip Signet (#1916): an arrow whose next strike carries a drop.
+  "arrow-drip": () =>
+    inkLine("M3 14L12 5", 2.4) +
+    inkFill("M21 2L9 5.5L17.5 14Z") +
+    inkFill("M19 15C19 15 16.2 18.5 16.2 20.2A2.8 2.8 0 0 0 21.8 20.2C21.8 18.5 19 15 19 15Z"),
+  // Brutal Weapon (#1916): a blade with teeth along one edge.
+  "blade-teeth": () =>
+    inkLine("M5 19L19 5", 2.6) +
+    inkLine("M4 13.5L10.5 20", 2.4) +
+    inkFill("M9 10.5L5.5 8.5L8.5 7.5Z") +
+    inkFill("M13 6.5L10 4L12.5 3.5Z") +
+    inkFill("M15 16L17.5 19L13.5 18.5Z"),
+  // Signet of Strength (#1916): a sword and the strikes it is spent on.
+  "sword-pips": () =>
+    inkLine("M9 20L21 8", 2.6) +
+    inkLine("M8 15.5L13 20.5", 2.4) +
+    [4.5, 9, 13.5]
+      .map((y) => `<circle cx="4.5" cy="${String(y)}" r="1.6" fill="${C.ink}"/>`)
+      .join(""),
+  // Power Leech (#1931): a bolt of energy inside a dashed ring, drawn out of it.
+  "bolt-ring": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 1.6)} stroke-dasharray="3 2.4"/>` +
+    inkFill("M13 5L8 12.5H11.5L10.5 19L16 11H12.5Z"),
+  // Power Flux (#1931): the interrupt's burst with a bolt cut out of it, energy bled away.
+  "burst-bolt": () =>
+    `<path fill-rule="evenodd" fill="${C.ink}" d="${burst(6)}M13.5 6.5L8.5 12.5H11.5L10.5 17.5L15.5 11H12.5Z"/>`,
+  // Death Nova (#1931): a blast ringing out from a core.
+  nova: () =>
+    `<circle cx="12" cy="12" r="3.6" fill="${C.ink}"/>` +
+    inkLine(
+      Array.from({ length: 8 }, (_, i) => {
+        const a = (Math.PI * i) / 4;
+        const p = (r) =>
+          `${(12 + r * Math.cos(a)).toFixed(1)} ${(12 + r * Math.sin(a)).toFixed(1)}`;
+        return `M${p(6.8)}L${p(10.5)}`;
+      }).join(""),
+      2.2,
+    ),
+  // Spinal Shivers (#1931): a spine, bone after bone.
+  spine: () =>
+    inkLine("M12 3V21", 2) +
+    [4.5, 9.5, 14.5, 19.5]
+      .map(
+        (y) =>
+          `<ellipse cx="12" cy="${String(y)}" rx="4.6" ry="2.1" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>`,
+      )
+      .join(""),
+  // Shivers of Dread (#1931): a frost star, cold at the root of the fear.
+  frost: () =>
+    inkLine("M12 2V22M3.3 7L20.7 17M3.3 17L20.7 7", 2) +
+    inkLine("M9.5 3.8L12 6.3L14.5 3.8M9.5 20.2L12 17.7L14.5 20.2", 1.4),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +

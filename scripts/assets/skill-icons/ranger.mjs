@@ -103,6 +103,12 @@ export const RANGER_ICONS = {
   // Staples (#1869).
   "ranger.hekets-rampage": { glyph: "claws-rampage" },
   "ranger.sundering-attack": { glyph: "arrow-sunder" },
+  // Shots that fly differently (#1914)
+  "ranger.focused-shot": { glyph: "arrow-focus" },
+  "ranger.needling-shot": { glyph: "arrow-needle" },
+  "ranger.forked-arrow": { glyph: "arrow-fork" },
+  // Next attack (#1916)
+  "ranger.poison-tip-signet": { glyph: "arrow-drip" },
   // Pets 2 (#1865, #1939): the paw and what the pet does with you.
   "ranger.otyughs-cry": { glyph: "paw-shield-cry" },
   "ranger.predatory-bond": { glyph: "paw-bond-plus" },
@@ -111,12 +117,6 @@ export const RANGER_ICONS = {
   "ranger.run-as-one": { glyph: "figure-paw-run" },
   "ranger.savage-pounce": { glyph: "paw-pounce-spell" },
   "ranger.bestial-mauling": { glyph: "paw-maul" },
-  // Shots that fly differently (#1914), stand-ins until their art card.
-  "ranger.focused-shot": { glyph: "arrow-pierce", modifier: "clock" },
-  "ranger.needling-shot": { glyph: "arrow", modifier: "half" },
-  "ranger.forked-arrow": { glyph: "volley", modifier: "less" },
-  // Next attack (#1916): stand-ins until their art.
-  "ranger.poison-tip-signet": { glyph: "flask", modifier: "self" },
   // Attributes raised (#1941), a stand-in until its art card.
   "ranger.experts-dexterity": { glyph: "arrow", modifier: "plus" },
 };

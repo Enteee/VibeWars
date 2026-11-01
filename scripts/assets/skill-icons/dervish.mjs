@@ -69,6 +69,6 @@ export const DERVISH_ICONS = {
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "dervish.arcane-zeal": { glyph: "each-zeal" },
   "dervish.mystic-vigor": { glyph: "each-vigor" },
-  // "Not enchanted" (#1916): stand-ins until their art.
-  "dervish.natural-healing": { glyph: "heal", modifier: "half" },
+  // "Not enchanted" (#1916)
+  "dervish.natural-healing": { glyph: "leaf", modifier: "plus" },
 };
