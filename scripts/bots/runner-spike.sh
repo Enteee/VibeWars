@@ -15,6 +15,12 @@
 # runner left registered, when it ends. The operator's checkout and index
 # are not touched: the spike commit is written with git plumbing.
 #
+# Jails can write the checkout's refs and objects, so no local ref is
+# trusted: the base is PR #1895's head as GitHub reports it, fetched by
+# SHA, and every git call runs with git-hardening.mjs's pins (SECURITY.md,
+# "Host git near agent data"). Objects are content-addressed, so a planted
+# one cannot pass for the base.
+#
 # Run it from a checkout of PR #1895's branch, inside `devenv shell` with
 # `vibewars.claudeBot.enable` (which puts `vibewars-runner-jail` on PATH),
 # with `gh` logged in as someone who may register runners on the repo:
@@ -39,6 +45,20 @@ gh auth status >/dev/null 2>&1 || {
   exit 2
 }
 
+# git-hardening.mjs's GIT_HARDENING and GIT_ENV, and none of the
+# operator's ssh overrides; pushes authenticate through gh.
+hgit() {
+  env -u GIT_SSH_COMMAND -u GIT_SSH -u GIT_SSH_VARIANT \
+    GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_REPLACE_OBJECTS=1 \
+    git -c core.hooksPath=/dev/null -c core.fsmonitor=false -c core.sshCommand=ssh \
+    -c core.gitProxy= -c core.askPass= -c credential.helper= \
+    -c 'credential.https://github.com.helper=!gh auth git-credential' \
+    -c diff.external= -c protocol.ext.allow=never -c merge.verifySignatures=false \
+    -c log.showSignature=false -c gpg.program=false -c gpg.ssh.program=false \
+    -c gpg.x509.program=false -c submodule.recurse=false "$@"
+}
+remote="https://github.com/$repo.git"
+
 umask 077
 work=$(mktemp -d)
 pr=""
@@ -50,7 +70,7 @@ cleanup() {
   if [ -n "$pr" ]; then
     gh pr close -R "$repo" "$pr" --delete-branch >/dev/null 2>&1 || true
   else
-    git push -q origin ":refs/heads/$branch" 2>/dev/null || true
+    hgit push -q "$remote" ":refs/heads/$branch" 2>/dev/null || true
   fi
   for id in $(gh api "repos/$repo/actions/runners" --jq ".runners[] | select(.name == \"$name\") | .id" 2>/dev/null); do
     gh api -X DELETE "repos/$repo/actions/runners/$id" >/dev/null 2>&1 || true
@@ -59,10 +79,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# The spike commit: HEAD with the `ci` job on this runner's label and the
-# hook's allowlist pointed at nothing, written without touching the index.
-echo "== spike branch $branch"
-git show HEAD:.github/workflows/ci.yml |
+# The spike commit: PR #1895's head with the `ci` job on this runner's
+# label and the hook's allowlist pointed at nothing, written without
+# touching the index.
+base=$(gh pr view 1895 -R "$repo" --json headRefOid --jq .headRefOid)
+[[ $base =~ ^[0-9a-f]{40}$ ]] || {
+  echo "runner-spike: GitHub gave no head SHA for PR #1895: $base" >&2
+  exit 1
+}
+hgit fetch -q --no-tags "$remote" "refs/pull/1895/head"
+[ "$(hgit rev-parse --verify "$base^{commit}")" = "$base" ] || {
+  echo "runner-spike: PR #1895's head $base did not arrive" >&2
+  exit 1
+}
+echo "== spike branch $branch on $base"
+hgit cat-file blob "$base:.github/workflows/ci.yml" |
   awk -v label="$label" '
     /^  ci:$/ { job = 1 }
     job && /^    runs-on: ubuntu-latest$/ {
@@ -79,13 +110,13 @@ grep -q "runs-on: \[self-hosted, $label\]" "$work/ci.yml" || {
   exit 1
 }
 export GIT_INDEX_FILE="$work/index"
-git read-tree HEAD
-blob=$(git hash-object -w "$work/ci.yml")
-git update-index --cacheinfo "100644,$blob,.github/workflows/ci.yml"
-tree=$(git write-tree)
+hgit read-tree "$base"
+blob=$(hgit hash-object -w --no-filters "$work/ci.yml")
+hgit update-index --cacheinfo "100644,$blob,.github/workflows/ci.yml"
+tree=$(hgit write-tree)
 unset GIT_INDEX_FILE
-spike=$(git commit-tree "$tree" -p HEAD -m "SPIKE #1889: ci on a company runner (never merge)")
-git push -q origin "$spike:refs/heads/$branch"
+spike=$(hgit commit-tree "$tree" -p "$base" -m "SPIKE #1889: ci on a company runner (never merge)")
+hgit push -q "$remote" "$spike:refs/heads/$branch"
 pr=$(gh pr create -R "$repo" --draft --base main --head "$branch" \
   --title "SPIKE #1889: company runner (never merge)" \
   --body "Throwaway for scripts/bots/runner-spike.sh; it closes itself." | grep -o '[0-9]*$')
@@ -133,8 +164,8 @@ else
 fi
 
 echo "== 4: a replayed JIT config takes no second job"
-replayed=$(git commit-tree "$tree" -p "$spike" -m "SPIKE #1889: replay")
-git push -q origin "$replayed:refs/heads/$branch"
+replayed=$(hgit commit-tree "$tree" -p "$spike" -m "SPIKE #1889: replay")
+hgit push -q "$remote" "$replayed:refs/heads/$branch"
 sleep 20
 set +e
 timeout 180 vibewars-runner-jail --jitconfig "$work/jit.replay" >"$work/replay.log" 2>&1
