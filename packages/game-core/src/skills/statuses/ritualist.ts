@@ -60,7 +60,9 @@ export type RitualistStatusId =
   | "armor-of-unfeeling"
   | "signet-of-ghostly-might"
   // Caster staples 2 (#1872).
-  | "vital-weapon";
+  | "vital-weapon"
+  // Suppressed while enchanted (#1916).
+  | "brutal-weapon";
 
 export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefinition>> = {
   // "Non-Spirit allies within its range gain +1...3...3 Health
@@ -692,5 +694,13 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
   "vital-weapon": define("vital-weapon", "Vital Weapon", "weapon-spell", {
     profession: "ritualist",
     maxHealthBonus: 148,
+  }),
+  // "The bearer's weapon strikes for +5...13...15 damage as long as the
+  // bearer is under no enchantments" (#1916): another weapon spell is no
+  // enchantment, so it never stops itself.
+  "brutal-weapon": define("brutal-weapon", "Brutal Weapon", "weapon-spell", {
+    profession: "ritualist",
+    attackDamageDelta: 13,
+    suppressedWhileUnder: ["enchantment"],
   }),
 };

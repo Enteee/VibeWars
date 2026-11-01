@@ -104,4 +104,6 @@ export const RANGER_ICONS = {
   "ranger.run-as-one": { glyph: "paw-speed", modifier: "self" },
   "ranger.savage-pounce": { glyph: "paw-leap", modifier: "up" },
   "ranger.bestial-mauling": { glyph: "blink-daze", modifier: "stun" },
+  // Next attack (#1916): stand-ins until their art.
+  "ranger.poison-tip-signet": { glyph: "flask", modifier: "self" },
 };

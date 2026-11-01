@@ -284,4 +284,12 @@ export const RITUALIST_STATUS_ICONS = {
       `<path d="M12 2v14M8 16h8M12 16v5" ${stroke(c, 2)}/>` +
       `<path d="M12 12l-3-3a2 2 0 0 1 3-2 2 2 0 0 1 3 2z" fill="${c}"/>`,
   ],
+  // "Not enchanted" (#1916), a stand-in until its art card.
+  // Weapon spell: a blade with a plus, harder blows.
+  "brutal-weapon": [
+    "weapon-spell",
+    (c) =>
+      `<path d="M9 2v14M5 16h8M9 16v5" ${stroke(c, 2)}/>` +
+      `<path d="M17 5v8M13 9h8" ${stroke(c, 2.2)}/>`,
+  ],
 };

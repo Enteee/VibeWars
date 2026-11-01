@@ -3929,4 +3929,32 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [],
   },
+  // Your next attack (#1916).
+  {
+    id: "ranger.poison-tip-signet",
+    name: "Poison Tip Signet",
+    gwId: 2199,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ranger",
+    attributeId: "ranger.wilderness-survival",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 60 seconds, your next attack also inflicts Poison for
+    // 8...14...15 seconds": the poison is the status's `onAttackHit`.
+    effects: [{ kind: "apply-status", statusId: "poison-tip-signet", durationSeconds: 60 }],
+  },
 ];

@@ -3268,4 +3268,38 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // 25% less damage."
     effects: [{ kind: "apply-status", statusId: "flurry", durationSeconds: 5 }],
   },
+  // Your next N attacks (#1916).
+  {
+    id: "warrior.signet-of-strength",
+    name: "Signet of Strength",
+    gwId: 944,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.strength",
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Your next 1...13...16 attacks deal +5 damage": no duration, it
+    // lasts until its 13 attacks are spent.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "signet-of-strength",
+        durationSeconds: Number.POSITIVE_INFINITY,
+      },
+    ],
+  },
 ];
