@@ -49,6 +49,7 @@ runs:
         for attempt in 1 2 3; do
           nix profile install "github:cachix/devenv-nixpkgs/$rev#devenv" && break
           [ "$attempt" = 3 ] && exit 1
+          echo "::warning::nix profile install failed (attempt $attempt of 3), retrying"
           sleep 5
         done
         devenv version
