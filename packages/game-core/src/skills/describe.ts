@@ -22,6 +22,7 @@ import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
   getStatusDefinition,
+  type AttributeSet,
   type NextSkill,
   type NextSkillRule,
   type OwnSkillModifier,
@@ -193,6 +194,13 @@ const BLOCKED_ATTACKS: Record<"all" | "melee" | "projectile", string> = {
   projectile: "projectiles",
 };
 
+/** What an `attributeSet` does (#1929): "attributes set to 0", "elemental attributes set to 13". */
+function attributeSetText({ scope, rank }: AttributeSet): string {
+  const which =
+    scope === "all" ? "attributes" : `${scope} attribute${scope === "primary" ? "" : "s"}`;
+  return `${which} set to ${String(rank)}`;
+}
+
 /** `n` with its sign, a minus as GW1 prints it: "+3", "−66". */
 function signed(n: number): string {
   return n > 0 ? `+${String(n)}` : `−${String(-n)}`;
@@ -342,6 +350,15 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   }
   if (definition.attributeDelta !== 0) {
     parts.push(`${signed(definition.attributeDelta)} to all attributes`);
+  }
+  if (definition.attributeSet !== undefined) {
+    parts.push(attributeSetText(definition.attributeSet));
+  }
+  if (definition.borrowsAttribute !== undefined) {
+    const { attributeId, spells } = definition.borrowsAttribute;
+    const name = getAttribute(attributeId)?.name ?? attributeId;
+    const next = spells === 1 ? "spell uses" : `${String(spells)} spells use`;
+    parts.push(`your next ${next} ${name}`);
   }
   if (definition.castTimeMultiplier !== 1) {
     parts.push(`spells take ${String(definition.castTimeMultiplier)}× as long to cast`);

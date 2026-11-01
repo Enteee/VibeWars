@@ -232,4 +232,10 @@ export const ELEMENTALIST_STATUS_ICONS = {
       `<path d="M4 19h16" ${stroke(c, 2.4)}/>` +
       `<path d="M7 19V12M10 19V9M14 19V9M17 19V12" ${stroke(c, 2)}/>`,
   ],
+  // Enchantment (#1929), a stand-in until its art card: four elements
+  // held level, at one rank.
+  "master-of-magic": [
+    "enchantment",
+    (c) => `<path d="M12 4l8 8-8 8-8-8z" ${stroke(c, 2)}/>` + `<path d="M8 12h8" ${stroke(c, 2)}/>`,
+  ],
 };

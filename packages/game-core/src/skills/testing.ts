@@ -30,6 +30,7 @@ export function makeCombatant(overrides: Partial<Combatant> & { id: string }): C
     skillBar: [],
     lastCombatAt: 0,
     attributeRanks: new Map(),
+    borrowedAttribute: null,
     team: 0,
     dead: false,
     statuses,

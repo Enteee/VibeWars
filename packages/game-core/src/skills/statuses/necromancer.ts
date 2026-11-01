@@ -57,7 +57,9 @@ export type NecromancerStatusId =
   // Casting-state hexes (#1931).
   | "spinal-shivers"
   | "shivers-of-dread"
-  | "death-nova";
+  | "death-nova"
+  | "wail-of-doom"
+  | "atrophy";
 
 /** Spiteful Spirit's damage, on its bearer and each ally beside it (#935). */
 const SPITEFUL_SPIRIT_DAMAGE: DamageEffect = {
@@ -537,5 +539,17 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         skillId: "necromancer.death-nova",
       },
     ],
+  }),
+  // "For 2...5...6 seconds, all of target foe's attributes are set to 0"
+  // (#1929): runes and headgear still add theirs.
+  "wail-of-doom": define("wail-of-doom", "Wail of Doom", "hex", {
+    profession: "necromancer",
+    attributeSet: { scope: "all", rank: 0, plusEquipment: true },
+  }),
+  // "For 3...6...7 seconds, target foe's primary attribute is reduced to 0"
+  // (#1929).
+  atrophy: define("atrophy", "Atrophy", "hex", {
+    profession: "necromancer",
+    attributeSet: { scope: "primary", rank: 0, plusEquipment: false },
   }),
 };

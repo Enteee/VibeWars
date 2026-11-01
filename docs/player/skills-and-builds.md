@@ -42,6 +42,12 @@ to four more ranks on top; see [Equipment](equipment.md). Raising the
 attribute a skill uses makes it stronger, and the numbers in its
 description change as you spend.
 
+In a fight your ranks can change for a while. Weakness takes one off
+each. Some hexes set a foe's attributes to 0, and Master of Magic sets
+your elemental ones to 13: a rank set this way overrides runes and
+Weakness alike. Signet of Illusions lets your next spells of other
+attributes use your Illusion Magic rank.
+
 ## Echoes
 
 A Paragon's **echoes** are long buffs on one ally. A **refrain** renews

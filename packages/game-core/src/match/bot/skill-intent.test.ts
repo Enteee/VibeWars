@@ -272,6 +272,10 @@ const NO_BOT_USE = new Set([
   "ritualist.brutal-weapon",
   "paragon.natural-temper",
   "warrior.signet-of-strength",
+  // Attributes set or borrowed (#1929): a higher rank on its own spells is
+  // no rule the bot weighs, as an attunement's energy.
+  "elementalist.master-of-magic",
+  "mesmer.signet-of-illusions",
 ]);
 
 function skill(id: string) {
