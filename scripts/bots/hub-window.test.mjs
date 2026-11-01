@@ -93,9 +93,10 @@ describe("hub-window open", () => {
     expect(open).toMatch(/ -k /);
     expect(open).toMatch(/ -t =hub-test:99 -n hub /);
     expect(open).toMatch(/run-forever\.mjs hubd -- .*hubd\.mjs$/);
-    expect(result.calls.find((c) => c.startsWith("split-window"))).toMatch(
-      /run-forever\.mjs supervisor -- .*supervisor\.mjs$/,
-    );
+    const splits = result.calls.filter((c) => c.startsWith("split-window"));
+    expect(splits[0]).toMatch(/run-forever\.mjs supervisor -- .*\/supervisor\.mjs$/);
+    // The runner supervisor (#1890), a daemon of its own beside hubd.
+    expect(splits[1]).toMatch(/run-forever\.mjs runner-supervisor -- .*\/runner-supervisor\.mjs$/);
   });
 
   it("pins the window's name, so check can find it", () => {

@@ -32,6 +32,8 @@ export function paths(root) {
     claudeIdentity: path.join(root, "claude-identity"),
     gh: path.join(root, "gh"),
     ghHosts: path.join(root, "gh", "hosts.yml"),
+    // The runner supervisor's admin token (#1890); nothing else uses it.
+    runnersGh: path.join(root, "runners-gh"),
     ssh: path.join(root, "ssh"),
     sshKey: path.join(root, "ssh", "id_ed25519"),
     sshPub: path.join(root, "ssh", "id_ed25519.pub"),

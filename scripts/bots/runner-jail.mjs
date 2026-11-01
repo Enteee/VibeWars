@@ -31,9 +31,10 @@
  * runner as `ACTIONS_RUNNER_INPUT_JITCONFIG`: never an argument, which any
  * host process could read and systemd would log as the scope's
  * description, and never a file in the jail. The host's copy is deleted as
- * soon as the runner has started.
+ * soon as the runner has started. `--jitconfig -` reads it from stdin, as
+ * the runner supervisor (#1890) hands it over: then there is no file at all.
  *
- *     node runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
+ *     node runner-jail.mjs --jitconfig <file | -> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]
  *
  * `VIBEWARS_RUNNER_JAIL` holds the jail's store paths as JSON, which the
  * `vibewars-runner-jail` wrapper in `nix/claude-bot.nix` sets.
@@ -275,14 +276,15 @@ export function removeScratch(dir) {
  *
  * @param {object} options
  * @param {RunnerStore} options.store
- * @param {string} options.jitconfigFile
+ * @param {string} options.jitconfigFile `-` for stdin
  * @param {number} options.cpus
  * @param {number} options.memoryGib
  * @param {number} options.tasksMax
  * @returns {Promise<number>} the runner's exit code
  */
 export async function runRunner({ store, jitconfigFile, cpus, memoryGib, tasksMax }) {
-  const jitconfig = parseJitconfig(fs.readFileSync(jitconfigFile, "utf8"));
+  const fromStdin = jitconfigFile === "-";
+  const jitconfig = parseJitconfig(fs.readFileSync(fromStdin ? 0 : jitconfigFile, "utf8"));
   const id = crypto.randomBytes(4).toString("hex");
   fs.mkdirSync(store.scratch, { recursive: true, mode: 0o700 });
   fs.chmodSync(store.scratch, 0o700);
@@ -328,7 +330,9 @@ export async function runRunner({ store, jitconfigFile, cpus, memoryGib, tasksMa
     });
     child.once("spawn", () => {
       /** @type {import("node:stream").Writable} */ (child.stdio[3]).end(`${jitconfig}\n`);
-      fs.rmSync(jitconfigFile, { force: true });
+      if (!fromStdin) {
+        fs.rmSync(jitconfigFile, { force: true });
+      }
     });
     const stop = () => {
       child.kill("SIGTERM");
@@ -381,7 +385,7 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
   const storeJson = process.env.VIBEWARS_RUNNER_JAIL;
   if (values.jitconfig === undefined || storeJson === undefined) {
     console.error(
-      "usage: runner-jail.mjs --jitconfig <file> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
+      "usage: runner-jail.mjs --jitconfig <file | -> [--cpus 2] [--memory-gib 6] [--tasks-max 2048]",
     );
     console.error("       (VIBEWARS_RUNNER_JAIL is set by the vibewars-runner-jail wrapper)");
     process.exit(2);

@@ -103,6 +103,35 @@ A machine set up before this had the token wherever `managerTokenFile`
 pointed and still has that line in `devenv.local.nix`, which keeps working.
 Without that line, move the file once into the credential home.
 
+## Company CI runners
+
+CI jobs can run on this host, each in a one-job jail (ADR-0045). The
+runner supervisor, a third daemon in the hub window, keeps as many alive
+as the manager asks for with `company runners <n>`. They are off until
+you turn them on, and you turn them on only after ADR-0045's spike has run
+a whole `ci` job in the jail:
+
+1. In the repository's settings, set Actions to require approval for **all**
+   outside collaborators.
+2. Give runner scratch a filesystem of its own: a partition, or a dataset
+   with a quota, mounted at `vibewars.runners.scratch` (by default
+   `~/.local/state/vibewars/runners`). Without one the supervisor starts no
+   runner and says so, because a job could fill the disk the company lives
+   on.
+3. Make a fine-grained token for this repository only, with Administration:
+   write and Variables: write, nothing else, and an expiry. Run
+   `claude-llc auth runners` and paste it. It is kept in `runners-gh` in the
+   credential home, and only the supervisor uses it. Whoever holds it can
+   change branch protection.
+4. Set `vibewars.runners.max` in `devenv.local.nix`, and restart the
+   company. `cpus`, `memoryGib` and `tasksMax` there are each runner's
+   cap.
+
+The dashboard's COMPANY pane shows `runners: <online>/<target> (busy, max)`
+and the supervisor's last refusal. If the supervisor dies with runners
+up, `COMPANY_RUNNERS` stays `1` until it is back. To stop routing jobs
+here by hand, set that repository variable to `0` in GitHub.
+
 ## Unprivileged user namespaces for bubblewrap
 
 Every jail is a `bwrap --unshare-all`, which needs unprivileged user

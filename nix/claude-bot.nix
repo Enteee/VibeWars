@@ -386,12 +386,13 @@ let
     ];
   };
 
-  # `vibewars-runner-jail --jitconfig <file>`: one runner, one job (#1889).
+  # `vibewars-runner-jail --jitconfig <file | ->`: one runner, one job (#1889).
   # The scratch directories live in the operator's state dir, never under
-  # the hub, a worktree or the credentials.
+  # the hub, a worktree or the credentials; the runner supervisor (#1890)
+  # passes `vibewars.runners.scratch` as VIBEWARS_RUNNER_SCRATCH.
   runnerJail = pkgs.writeShellScriptBin "vibewars-runner-jail" ''
     VIBEWARS_RUNNER_JAIL="$(${pkgs.jq}/bin/jq -nc \
-      --arg scratch "''${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runners" \
+      --arg scratch "''${VIBEWARS_RUNNER_SCRATCH:-''${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runners}" \
       --argjson store ${
         lib.escapeShellArg (
           builtins.toJSON {
@@ -1210,6 +1211,47 @@ in
         Where the company keeps its credentials: telegram-manager-token today,
         claude/, gh/ and ssh/ as #855 lands. Created at mode 0700 by
         claude-llc-init, which refuses a wider one. Not under the checkout.
+      '';
+    };
+  };
+
+  # The company's CI runners (#1890, ADR-0045), which claude-llc's runner
+  # supervisor keeps alive. Off until the operator raises `max`, after the
+  # ADR's spike runs a whole `ci` job in the jail.
+  options.vibewars.runners = {
+    max = lib.mkOption {
+      type = lib.types.ints.unsigned;
+      default = 0;
+      description = ''
+        The most company runners `company runners <n>` may ask for
+        (VIBEWARS_MAX_RUNNERS). 0 keeps them off, and the supervisor makes
+        no GitHub call.
+      '';
+    };
+    cpus = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 2;
+      description = "Each runner's CPU quota, in CPUs.";
+    };
+    memoryGib = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 6;
+      description = "Each runner's MemoryMax, in GiB.";
+    };
+    tasksMax = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 2048;
+      description = "Each runner's TasksMax.";
+    };
+    # A shell string: $HOME expands where it is used.
+    scratch = lib.mkOption {
+      type = lib.types.str;
+      default = "\${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runners";
+      description = ''
+        Where each runner's scratch directory is made. The disk cap: it must
+        be a filesystem of its own (a partition, or a dataset with a quota),
+        or the supervisor starts no runner, so a job that fills it cannot
+        fill the disk the company lives on.
       '';
     };
   };

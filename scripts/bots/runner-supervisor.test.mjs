@@ -1,0 +1,440 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  ApiError,
+  BACKOFF_MAX_MS,
+  CREDENTIAL_ALERT,
+  DRAIN_MS,
+  LABEL,
+  MEMORY_HEADROOM,
+  POLL_MS,
+  RunnerSupervisor,
+  backoffMs,
+  diskCapRefusal,
+  ghEnv,
+  launcherArgs,
+  parseRunners,
+} from "./runner-supervisor.mjs";
+
+const GIB = 1024 ** 3;
+const JIT = "c2VjcmV0LWppdC1jb25maWc=";
+
+/**
+ * A supervisor on a fake clock, API, launcher and host. Every call is
+ * recorded in `calls`, in order.
+ *
+ * @param {{ max?: number, target?: number }} [options]
+ */
+function rig({ max = 4, target = 1 } = {}) {
+  const t = { now: 1_000_000 };
+  /** @type {string[]} */
+  const calls = [];
+  /** @type {string[]} */
+  const logs = [];
+  /** @type {import("./runners-state.mjs").RunnersStatus[]} */
+  const statuses = [];
+  /** @type {{ jitconfig: string, exit: (code: number) => void, killed: boolean }[]} */
+  const launched = [];
+  /** @type {import("./runner-supervisor.mjs").GithubRunner[]} */
+  let github = [];
+  /** @type {Error | null} */
+  let mintError = null;
+  let queued = false;
+  const host = { free: 64 * GIB, load: 0.5, cpus: 8, disk: /** @type {string | null} */ (null) };
+  const state = { target: { n: target, reason: /** @type {string | null} */ (null) } };
+  let ids = 100;
+
+  /** @type {import("./runner-supervisor.mjs").Api} */
+  const api = {
+    async mint(name) {
+      await Promise.resolve();
+      calls.push(`mint ${name}`);
+      if (mintError !== null) {
+        throw mintError;
+      }
+      ids += 1;
+      github.push({ id: ids, name, status: "online", busy: false, labels: ["self-hosted", LABEL] });
+      return { id: ids, jitconfig: JIT };
+    },
+    async list() {
+      await Promise.resolve();
+      calls.push("list");
+      return github.map((runner) => ({ ...runner }));
+    },
+    async remove(id) {
+      await Promise.resolve();
+      calls.push(`remove ${String(id)}`);
+      github = github.filter((runner) => runner.id !== id);
+    },
+    async setVariable(on) {
+      await Promise.resolve();
+      calls.push(`variable ${on ? "1" : "0"}`);
+    },
+    async queuedCompanyJobs() {
+      await Promise.resolve();
+      calls.push("queued?");
+      return queued;
+    },
+  };
+  const supervisor = new RunnerSupervisor({
+    now: () => t.now,
+    api,
+    launch(jitconfig) {
+      /** @type {(code: number) => void} */
+      let resolve = Number;
+      /** @type {Promise<number>} */
+      const promise = new Promise((done) => {
+        resolve = done;
+      });
+      const entry = {
+        jitconfig,
+        killed: false,
+        exit: (/** @type {number} */ code) => {
+          resolve(code);
+        },
+      };
+      launched.push(entry);
+      return {
+        exited: promise,
+        kill: () => {
+          entry.killed = true;
+          resolve(143);
+        },
+      };
+    },
+    host: {
+      freeBytes: () => host.free,
+      load1: () => host.load,
+      cpus: () => host.cpus,
+      diskCapRefusal: () => host.disk,
+    },
+    readTarget: () => state.target,
+    writeStatus: (status) => statuses.push(status),
+    log: (line) => logs.push(line),
+    config: { max, hostName: "box", memoryBytes: 6 * GIB },
+  });
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+  return {
+    t,
+    calls,
+    logs,
+    statuses,
+    launched,
+    host,
+    state,
+    supervisor,
+    settle,
+    get github() {
+      return github;
+    },
+    set github(value) {
+      github = value;
+    },
+    /** @param {Error | null} error */
+    failMint(error) {
+      mintError = error;
+    },
+    /** @param {boolean} value */
+    setQueued(value) {
+      queued = value;
+    },
+    last: () => statuses.at(-1),
+  };
+}
+
+describe("runner supervisor", () => {
+  it("starts the target, then sets COMPANY_RUNNERS to 1", async () => {
+    const r = rig({ target: 2 });
+    await r.supervisor.tick();
+    expect(r.calls.filter((call) => !call.startsWith("list"))).toEqual([
+      expect.stringMatching(/^mint vibewars-box-/),
+      expect.stringMatching(/^mint vibewars-box-/),
+      "variable 1",
+    ]);
+    expect(r.launched).toHaveLength(2);
+    expect(r.last()).toMatchObject({ target: 2, max: 4, variable: true, reason: null });
+    expect(r.last()?.runners).toHaveLength(2);
+  });
+
+  it("replaces a runner that took its job and exited", async () => {
+    const r = rig();
+    await r.supervisor.tick();
+    r.launched[0]?.exit(0);
+    await r.settle();
+    expect(r.supervisor.alive).toBe(0);
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(2);
+    expect(r.calls.filter((call) => call.startsWith("mint"))).toHaveLength(2);
+  });
+
+  it("backs off on repeated failures, doubling to 5 min, and a job resets it", async () => {
+    const r = rig();
+    await r.supervisor.tick();
+    r.launched[0]?.exit(1);
+    await r.settle();
+    expect(r.last()?.reason).toMatch(/backing off 5 s after 1 failure/);
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(1);
+    r.t.now += 5_000;
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(2);
+    r.launched[1]?.exit(1);
+    await r.settle();
+    expect(r.last()?.reason).toMatch(/backing off 10 s after 2 failure/);
+    expect([1, 2, 3, 7, 20].map(backoffMs)).toEqual([
+      5_000,
+      10_000,
+      20_000,
+      BACKOFF_MAX_MS,
+      BACKOFF_MAX_MS,
+    ]);
+    r.t.now += 10_000;
+    await r.supervisor.tick();
+    r.launched[2]?.exit(0);
+    await r.settle();
+    expect(r.supervisor.failures).toBe(0);
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(4);
+    expect(r.last()?.reason).toBeNull();
+  });
+
+  it("does not start a runner on an overloaded host, and that is no failure", async () => {
+    const r = rig();
+    r.host.free = 6 * GIB + MEMORY_HEADROOM - 1;
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(0);
+    expect(r.last()?.reason).toBe("not starting a runner: host memory is short");
+    r.host.free = 64 * GIB;
+    r.host.load = 9;
+    await r.supervisor.tick();
+    expect(r.last()?.reason).toBe("not starting a runner: host load is above its CPU count");
+    expect(r.supervisor.failures).toBe(0);
+    r.host.load = 1;
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(1);
+    expect(r.last()?.reason).toBeNull();
+  });
+
+  it("refuses to start without the disk cap, and says why", async () => {
+    const r = rig();
+    r.host.disk = "no disk cap: /s is on the same filesystem as /home; mount one of its own there";
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(0);
+    expect(r.calls.some((call) => call.startsWith("mint"))).toBe(false);
+    expect(r.last()).toMatchObject({ reason: r.host.disk, variable: false });
+  });
+
+  it("scaling to 0 flips the variable to 0 first, and keeps a runner while company jobs queue", async () => {
+    const r = rig({ target: 2 });
+    await r.supervisor.tick();
+    r.calls.length = 0;
+    r.setQueued(true);
+    r.state.target = { n: 0, reason: null };
+    await r.supervisor.tick();
+    expect(r.calls[0]).toBe("variable 0");
+    expect(r.calls).toContain("queued?");
+    await r.settle();
+    expect(r.supervisor.alive).toBe(1);
+    expect(r.launched.filter((l) => l.killed)).toHaveLength(1);
+    // Polled at most once a minute.
+    r.calls.length = 0;
+    await r.supervisor.tick();
+    expect(r.calls).not.toContain("queued?");
+    r.t.now += POLL_MS;
+    r.setQueued(false);
+    await r.supervisor.tick();
+    expect(r.calls).toContain("queued?");
+    await r.settle();
+    expect(r.supervisor.alive).toBe(0);
+    expect(r.last()).toMatchObject({ target: 0, variable: false, runners: [] });
+  });
+
+  it("gives up waiting for queued jobs after 10 minutes", async () => {
+    const r = rig();
+    await r.supervisor.tick();
+    r.setQueued(true);
+    r.state.target = { n: 0, reason: null };
+    await r.supervisor.tick();
+    expect(r.supervisor.alive).toBe(1);
+    r.t.now += DRAIN_MS;
+    await r.supervisor.tick();
+    await r.settle();
+    expect(r.supervisor.alive).toBe(0);
+    expect(r.logs).toContain("runners: gave up waiting for queued company jobs");
+  });
+
+  it("scaling down kills idle runners and lets busy ones finish", async () => {
+    const r = rig({ target: 3 });
+    await r.supervisor.tick();
+    const [first] = r.github;
+    if (first !== undefined) {
+      first.busy = true;
+    }
+    r.state.target = { n: 1, reason: null };
+    await r.supervisor.tick();
+    await r.settle();
+    expect(r.launched.map((l) => l.killed)).toEqual([false, true, true]);
+    expect(r.supervisor.alive).toBe(1);
+    // The killed idle runners' registrations go too.
+    expect(r.calls.filter((call) => call.startsWith("remove"))).toHaveLength(2);
+  });
+
+  it("removes only our offline leftovers, at start and at stop", async () => {
+    const r = rig({ target: 0 });
+    r.github = [
+      { id: 1, name: "vibewars-box-old-1", status: "offline", busy: false, labels: [LABEL] },
+      { id: 2, name: "vibewars-box-old-2", status: "online", busy: true, labels: [LABEL] },
+      { id: 3, name: "someone-else", status: "offline", busy: false, labels: ["self-hosted"] },
+    ];
+    await r.supervisor.tick();
+    expect(r.calls.filter((call) => call.startsWith("remove"))).toEqual(["remove 1"]);
+    r.state.target = { n: 1, reason: null };
+    await r.supervisor.tick();
+    const ours = r.github.find(
+      (runner) => runner.name.startsWith("vibewars-box-") && runner.id > 100,
+    );
+    if (ours !== undefined) {
+      ours.status = "offline";
+    }
+    r.calls.length = 0;
+    await r.supervisor.stop();
+    // "0" first, then the runners stop, then the leftovers go.
+    expect(r.calls[0]).toBe("variable 0");
+    expect(r.launched[0]?.killed).toBe(true);
+    expect(r.calls).toContain(`remove ${String(ours?.id)}`);
+    expect(r.calls).not.toContain("remove 2");
+    expect(r.calls).not.toContain("remove 3");
+  });
+
+  it("reports a refused credential once, and clears it when it works", async () => {
+    const r = rig();
+    r.failMint(new ApiError("POST …/generate-jitconfig: HTTP 403", 403));
+    await r.supervisor.tick();
+    r.t.now += BACKOFF_MAX_MS;
+    await r.supervisor.tick();
+    expect(r.last()?.alert).toBe(CREDENTIAL_ALERT);
+    expect(r.logs.filter((line) => line.includes(CREDENTIAL_ALERT))).toHaveLength(1);
+    expect(r.statuses.filter((s) => s.alert !== null).length).toBeGreaterThan(0);
+    r.failMint(null);
+    r.t.now += BACKOFF_MAX_MS;
+    await r.supervisor.tick();
+    expect(r.last()?.alert).toBeNull();
+  });
+
+  it("a rate limit backs off without blaming the credential", async () => {
+    const r = rig();
+    r.failMint(new ApiError("POST …: HTTP 403 (rate limit)", 403));
+    await r.supervisor.tick();
+    expect(r.last()?.alert).toBeNull();
+    expect(r.last()?.reason).toMatch(/backing off/);
+  });
+
+  it("makes no GitHub call when the max is 0", async () => {
+    const r = rig({ max: 0, target: 0 });
+    await r.supervisor.tick();
+    await r.supervisor.stop();
+    expect(r.calls).toEqual([]);
+    expect(r.last()?.reason).toBe("runners are off: VIBEWARS_MAX_RUNNERS is 0");
+  });
+
+  it("shows a refused target as the reason, at 0", async () => {
+    const r = rig();
+    r.state.target = { n: 0, reason: "the target is not a whole number; treated as 0" };
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(0);
+    expect(r.last()).toMatchObject({ target: 0, reason: r.state.target.reason });
+  });
+
+  it("hands the JIT config to the launcher alone: no log line or status holds it", async () => {
+    const r = rig({ target: 2 });
+    await r.supervisor.tick();
+    r.launched[0]?.exit(1);
+    await r.settle();
+    expect(r.launched.map((l) => l.jitconfig)).toEqual([JIT, JIT]);
+    expect(r.logs.join("\n")).not.toContain(JIT);
+    expect(JSON.stringify(r.statuses)).not.toContain(JIT);
+    const args = launcherArgs({ cpus: 2, memoryGib: 6, tasksMax: 2048 });
+    expect(args.slice(0, 2)).toEqual(["--jitconfig", "-"]);
+    expect(args.some((arg) => arg.includes(JIT))).toBe(false);
+  });
+
+  it("a runner the stop's signal reaches first is no failure", async () => {
+    const r = rig();
+    await r.supervisor.tick();
+    const stopping = r.supervisor.stop();
+    // The group's SIGTERM, before `stop` has marked it.
+    r.launched[0]?.exit(128);
+    await stopping;
+    expect(r.supervisor.failures).toBe(0);
+    expect(r.last()?.reason).toBeNull();
+  });
+
+  it("starts nothing once stopped", async () => {
+    const r = rig();
+    await r.supervisor.stop();
+    await r.supervisor.tick();
+    expect(r.launched).toHaveLength(0);
+  });
+});
+
+describe("gh environment", () => {
+  it("carries the runners' config dir and nothing of the company's", () => {
+    const env = ghEnv(
+      {
+        PATH: "/bin",
+        HOME: "/home/op",
+        GH_CONFIG_DIR: "/creds/gh",
+        GH_TOKEN: "company",
+        GITHUB_TOKEN: "x",
+        VIBEWARS_CREDENTIALS: "/creds",
+      },
+      "/creds/runners-gh",
+    );
+    expect(env.GH_CONFIG_DIR).toBe("/creds/runners-gh");
+    expect(Object.keys(env).sort()).toEqual([
+      "GH_CONFIG_DIR",
+      "GH_NO_UPDATE_NOTIFIER",
+      "GH_PROMPT_DISABLED",
+      "HOME",
+      "PATH",
+    ]);
+    expect(JSON.stringify(env)).not.toContain('/creds/gh"');
+  });
+});
+
+describe("disk cap", () => {
+  /** @param {Record<string, number>} devs */
+  const stat = (devs) => (/** @type {string} */ file) => {
+    const dev = devs[file];
+    if (dev === undefined) {
+      throw new Error("ENOENT");
+    }
+    return { dev };
+  };
+
+  it("passes a scratch dir on a filesystem of its own", () => {
+    expect(
+      diskCapRefusal("/s", ["/bots", "/home"], stat({ "/s": 3, "/bots": 1, "/home": 1 })),
+    ).toBeNull();
+  });
+
+  it("refuses one that shares a disk with the company, or is missing", () => {
+    expect(diskCapRefusal("/s", ["/bots", "/home"], stat({ "/s": 1, "/bots": 1 }))).toMatch(
+      /same filesystem as \/bots/,
+    );
+    expect(diskCapRefusal("/s", ["/bots"], stat({ "/bots": 1 }))).toMatch(/does not exist/);
+  });
+});
+
+describe("parseRunners", () => {
+  it("reads GitHub's runner list", () => {
+    expect(
+      parseRunners({
+        runners: [
+          { id: 7, name: "a", status: "online", busy: true, labels: [{ name: LABEL }] },
+          { id: "x", name: "bad" },
+        ],
+      }),
+    ).toEqual([{ id: 7, name: "a", status: "online", busy: true, labels: [LABEL] }]);
+  });
+});

@@ -157,6 +157,13 @@ import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
 import {
+  maxRunners,
+  readStatus as readRunnersStatus,
+  runnersLines,
+  runnersStateDir,
+  writeTarget as writeRunnersTarget,
+} from "./runners-state.mjs";
+import {
   dueNudges,
   ownNudges,
   parseNudgeClock,
@@ -279,6 +286,13 @@ const WATCHES = path.join(HUB, "watches.json");
 const LOCK = path.join(HUB, "hubd.lock");
 /** Every employee's last turn, as the manager's `peek` reads it (#19), for `company load`. */
 const PEEK = path.join(ROOT, "peek");
+/**
+ * The runner supervisor's state (#1890): hubd writes its target and reads
+ * its status, and makes no runner call of its own. Host-only, outside ROOT.
+ */
+const RUNNERS_STATE = runnersStateDir(process.env);
+/** The most runners the operator allows; 0, its default, keeps them off. */
+const MAX_RUNNERS = maxRunners(process.env);
 /** The agents' Claude logs, for `company load`'s tokens (#747): the dashboard's reader. */
 const usage = usageReader(process.env.VIBEWARS_CLAUDE_BOXES);
 
@@ -1871,6 +1885,55 @@ function serveLoad(cfg) {
 }
 
 /**
+ * `company runners` (#1890): the supervisor's status, as the dashboard
+ * shows it; `company runners <n>` sets the target it reads, within the
+ * operator's max.
+ *
+ * @param {string[]} argv `[]` or `[n]`, checked by the policy
+ * @returns {{ code: number, stdout: string, stderr: string }}
+ */
+function serveRunners(argv) {
+  const [word] = argv;
+  if (word !== undefined) {
+    const n = Number(word);
+    if (n > MAX_RUNNERS) {
+      return {
+        code: 1,
+        stdout: "",
+        stderr: `company runners: ${String(n)} is above the operator's max of ${String(MAX_RUNNERS)} (VIBEWARS_MAX_RUNNERS)\n`,
+      };
+    }
+    writeRunnersTarget(RUNNERS_STATE, n);
+    return {
+      code: 0,
+      stdout: `runners: target ${String(n)}; the supervisor follows within seconds\n`,
+      stderr: "",
+    };
+  }
+  const lines = runnersLines(readRunnersStatus(RUNNERS_STATE), MAX_RUNNERS);
+  return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/** The supervisor's alert the manager was last told, so it hears each once. */
+let runnersAlert = /** @type {string | null} */ (null);
+
+/**
+ * The supervisor holds no Telegram: what the manager must hear about the
+ * runners, their missing credential, hubd passes on, once.
+ *
+ * @returns {void}
+ */
+function relayRunnersAlert() {
+  const alert = readRunnersStatus(RUNNERS_STATE)?.alert ?? null;
+  if (alert !== null && alert !== runnersAlert) {
+    tellCompany("runners-alert", `Company runners are down: ${alert}. Tell the operator.`, {
+      to: "manager",
+    });
+  }
+  runnersAlert = alert;
+}
+
+/**
  * Answer `board ls`, `board show` or `board changes` from the copy.
  *
  * @param {string[]} argv
@@ -3180,6 +3243,12 @@ async function serve(request, verdict, acting) {
     return { allow: true, ...answered };
   }
 
+  if (kind === "runners") {
+    const answered = serveRunners(argv);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code });
+    return { allow: true, ...answered };
+  }
+
   if (kind === "watch") {
     return watch(employee, role, argv, cfg);
   }
@@ -4418,6 +4487,7 @@ async function main() {
     if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
       lastNudgeCheck = Date.now();
       sendNudges();
+      relayRunnersAlert();
     }
     if (Date.now() - lastKpis >= KPI_EVERY_MS) {
       lastKpis = Date.now();
