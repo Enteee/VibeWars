@@ -81,4 +81,7 @@ export const RITUALIST_ICONS = {
   "ritualist.brutal-weapon": { glyph: "blade-plus", modifier: "up" },
   // Attributes raised (#1941), a stand-in until its art card.
   "ritualist.ritual-lord": { glyph: "totem", modifier: "renew" },
+  // Spirits as a resource (#1947), stand-ins until their art card.
+  "ritualist.spirit-transfer": { glyph: "spirit-last-heal", modifier: "plus" },
+  "ritualist.gaze-of-fury": { glyph: "spirit-rupture", modifier: "bolt" },
 };
