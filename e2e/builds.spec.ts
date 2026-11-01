@@ -396,7 +396,7 @@ test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens 
   await bar.getByRole("button", { name: "more actions" }).click();
   await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
   await bar.getByRole("button", { name: "Share", exact: true }).click();
-  await expect(bar.locator(".editor-share")).toBeVisible();
+  await expect(bar.locator(".editor-share:not(.editor-load)")).toBeVisible();
 });
 
 test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
