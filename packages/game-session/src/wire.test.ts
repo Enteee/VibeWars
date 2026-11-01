@@ -47,6 +47,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     durationSeconds: 12,
     attacksLeft: undefined,
     spellsLeft: undefined,
+    castsLeft: undefined,
     skillsLeft: undefined,
     ownSkillsLeft: undefined,
     triggersLeft: undefined,
