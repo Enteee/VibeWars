@@ -149,6 +149,8 @@ export type CountRule =
     }
   /** Living foes of the caster within `radius` of the caster. */
   | { readonly kind: "foes-within"; readonly radius: number }
+  /** Living allies of the caster within `radius` of the caster, the caster included (#1955). */
+  | { readonly kind: "allies-within"; readonly radius: number }
   /**
    * The skills of `attributeId` on the bar of the caster's living owner,
    * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
@@ -460,6 +462,11 @@ export interface ApplyStatusEffect {
   readonly statusId: StatusId;
   readonly durationSeconds: number;
   readonly on?: "caster";
+  /**
+   * Seconds more for each of a count (#1955): "Lead the Way!"'s "1...5
+   * seconds for each ally in earshot (maximum 30 seconds)".
+   */
+  readonly per?: PerCount;
 }
 
 /**

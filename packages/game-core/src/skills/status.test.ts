@@ -132,6 +132,8 @@ describe("status definitions", () => {
         def.minionHitHealthLossPercent !== 0 ||
         def.redirectsConditionsToMinion ||
         def.physicalDamageDealtAs !== undefined ||
+        def.moveSpeedWhileEnchanted !== 1 ||
+        def.incomingAllySpellCastTimeMultiplier !== 1 ||
         def.interruptGuard !== undefined ||
         def.damageTypeTakenMultiplier !== undefined;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);

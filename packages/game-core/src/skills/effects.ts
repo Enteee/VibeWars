@@ -796,14 +796,16 @@ function countOf(
             0,
           );
     }
-    case "foes-within": {
+    case "foes-within":
+    case "allies-within": {
       const at = surroundings.get(caster.id)?.position;
+      const allies = rule.kind === "allies-within";
       return at === undefined
         ? 0
         : [...surroundings.values()].filter(
             ({ combatant, position }) =>
               !combatant.dead &&
-              combatant.team !== caster.team &&
+              (combatant.team === caster.team) === allies &&
               distance(position, at) <= rule.radius,
           ).length;
     }
@@ -1711,11 +1713,17 @@ export function applyEffect(
       }
       // A weapon spell lasts longer with its caster's Spawning Power (#1098),
       // whatever skill or trigger lands it.
+      const seconds = withPerCount(
+        effect.durationSeconds,
+        effect.per,
+        caster,
+        target,
+        context.surroundings,
+      );
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
-          ? effect.durationSeconds *
-            spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
-          : effect.durationSeconds;
+          ? seconds * spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
+          : seconds;
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
       // Infuse Condition's (#1915): a condition goes to the bearer's
       // closest living minion instead, if it has one.

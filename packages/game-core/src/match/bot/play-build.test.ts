@@ -743,3 +743,69 @@ describe("play-build raises a mantra before it is needed (#1964)", () => {
     expect(askBot(sim, "ranger").useSkillId).toBeUndefined();
   });
 });
+
+describe("play-build's Paragon riders (#1955)", () => {
+  const BOND = "paragon.angelic-bond";
+  const GODSPEED = "paragon.godspeed";
+  const LEAD = "paragon.lead-the-way";
+  const BRACE = "paragon.brace-yourself";
+  const paragon = (id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    ({
+      id,
+      team,
+      skillBar: [],
+      attributeRanks: new Map([
+        ["paragon.leadership", 12],
+        ["paragon.command", 12],
+      ]),
+      equipment: unarmedResolvedEquipment(60),
+      maxHealth: 500,
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      ...extra,
+    }) satisfies ParticipantSpec;
+  /** Bot `p` with `bar`, allies `a` and `b` in earshot, and a foe `foeAt` from `a`. */
+  const party = (bar: readonly string[], foeAt = 2000) =>
+    match([
+      paragon("p", 0, vec2(0, 0), { skillBar: [...bar], behaviour: BOT }),
+      paragon("a", 0, vec2(100, 0)),
+      paragon("b", 0, vec2(0, 100)),
+      paragon("foe", 1, vec2(100 + foeAt, 0)),
+    ]);
+  const bar = [BOND, GODSPEED, LEAD, BRACE];
+  const combatant = (sim: MatchSimulation, id: string) => {
+    const found = sim.get(id);
+    if (found === undefined) throw new Error(`no ${id}`);
+    return found;
+  };
+
+  it("holds them all while nothing calls for one", () => {
+    expect(askBot(party(bar), "p").useSkillId).toBeUndefined();
+  });
+
+  it("bonds the party when an ally in earshot is under a quarter of its Health", () => {
+    const sim = party(bar);
+    combatant(sim, "a").combatant.health = 100;
+    expect(askBot(sim, "p")).toMatchObject({ targetId: "p", useSkillId: BOND });
+  });
+
+  it("shouts Godspeed for two enchanted allies, and not again while it holds", () => {
+    const sim = party(bar);
+    combatant(sim, "a").combatant.statuses.apply("guardian", 10, "a", NO_RANKS);
+    combatant(sim, "b").combatant.statuses.apply("guardian", 10, "b", NO_RANKS);
+    expect(askBot(sim, "p")).toMatchObject({ targetId: "p", useSkillId: GODSPEED });
+    combatant(sim, "p").combatant.statuses.apply("godspeed", 17, "p", NO_RANKS);
+    expect(askBot(sim, "p").useSkillId).toBeUndefined();
+  });
+
+  it("leads the way for an ally on the move, three in earshot", () => {
+    const sim = party(bar);
+    combatant(sim, "a").combatant.moving = true;
+    expect(askBot(sim, "p")).toMatchObject({ targetId: "a", useSkillId: LEAD });
+  });
+
+  it("braces an ally with a foe at its elbow", () => {
+    expect(askBot(party(bar, 30), "p")).toMatchObject({ targetId: "a", useSkillId: BRACE });
+  });
+});

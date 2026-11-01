@@ -1,4 +1,4 @@
-import { AREA_ADJACENT } from "../../distances.js";
+import { AREA_ADJACENT, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
 import { define } from "./define.js";
 
@@ -51,6 +51,12 @@ export type ParagonStatusId =
   | "focused-anger"
   // Not enchanted (#1916).
   | "natural-temper"
+  // Paragon riders (#1955).
+  | "angelic-bond"
+  | "godspeed"
+  | "lead-the-way"
+  | "help"
+  | "brace-yourself"
   // Touch riders (#1966).
   | "cant-touch-this";
 
@@ -451,6 +457,61 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     profession: "paragon",
     adrenalineGainFaster: 0.33,
     suppressedWhileUnder: ["enchantment"],
+  }),
+  // Angelic Bond at Leadership 12 (#1955): the next fatal blow is
+  // negated and its bearer healed for 164; then every other ally loses it.
+  "angelic-bond": define("angelic-bond", "Angelic Bond", "skill-effect", {
+    profession: "paragon",
+    negatesFatalDamage: true,
+    endsEverywhereWhenSpent: true,
+    triggers: [
+      {
+        on: "bearer-fatal-damage-negated",
+        effects: [{ kind: "heal", amount: { flat: 164 } }],
+        target: "bearer",
+        skillId: "paragon.angelic-bond",
+      },
+    ],
+  }),
+  // Godspeed (#1955): 25% faster while enchanted.
+  godspeed: define("godspeed", "Godspeed", "shout", {
+    profession: "paragon",
+    moveSpeedWhileEnchanted: 1.25,
+  }),
+  // "Lead the Way!" (#1955): 25% faster; its length is the shout's.
+  "lead-the-way": define("lead-the-way", "Lead the Way!", "shout", {
+    profession: "paragon",
+    moveSpeedMultiplier: 1.25,
+  }),
+  // "Help!" (PvP, #1955): allies' spells on the bearer cast 50% faster.
+  help: define("help", "Help!", "shout", {
+    profession: "paragon",
+    incomingAllySpellCastTimeMultiplier: 0.5,
+  }),
+  // "Brace Yourself!" at Command 12 (PvP, #1955): the next knockdown is
+  // stopped, and 1 nearby foe takes 75 damage instead.
+  "brace-yourself": define("brace-yourself", "Brace Yourself!", "shout", {
+    profession: "paragon",
+    preventsKnockdown: true,
+    endsOnKnockdownPrevented: true,
+    triggers: [
+      {
+        on: "bearer-knockdown-prevented",
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_NEARBY,
+            maxTargets: 1,
+            effects: [
+              { kind: "damage", amount: { flat: 75 }, type: "typeless", armorPenetration: 0 },
+            ],
+          },
+        ],
+        target: "bearer",
+        skillId: "paragon.brace-yourself",
+      },
+    ],
   }),
   // "For 20 seconds, the next 1...5 touch skills used against you fail"
   // (PvP, #1966): 4.

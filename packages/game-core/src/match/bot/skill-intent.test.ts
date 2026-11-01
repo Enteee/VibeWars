@@ -110,7 +110,12 @@ const NO_BOT_USE = new Set([
   "necromancer.contagion",
   "necromancer.offering-of-blood",
   "paragon.fall-back",
+  // Godspeed, "Lead the Way!" and "Brace Yourself!" (#1955): cast by
+  // play-build's rider rule, not an intent.
+  "paragon.brace-yourself",
+  "paragon.godspeed",
   "paragon.incoming",
+  "paragon.lead-the-way",
   "paragon.make-haste",
   "ranger.hekets-rampage",
   "ranger.serpents-quickness",

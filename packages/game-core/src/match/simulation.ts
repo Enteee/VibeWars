@@ -957,6 +957,11 @@ export class MatchSimulation {
   readonly #rng: SimulationRng;
   readonly #participants = new Map<string, ParticipantRecord>();
   /**
+   * What every participant's `StatusSet` shares as spent this tick
+   * (#1955), cleared once the tick's last drain is done.
+   */
+  readonly #spentStatuses = new Set<string>();
+  /**
    * Every team anyone was added to (#846): one whose members all left is
    * still in the standing, wiped, rather than gone.
    */
@@ -4268,6 +4273,7 @@ export class MatchSimulation {
         this.#endForm(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
+        this.#endEverywhere(record, change);
       }
     }
     const context = this.#triggerContext();
@@ -4285,6 +4291,8 @@ export class MatchSimulation {
       }
     }
     this.#settleTriggered(context, false);
+    // Every drain is done: what was spent this tick has ended everywhere.
+    this.#spentStatuses.clear();
   }
 
   /**
@@ -4322,6 +4330,7 @@ export class MatchSimulation {
         this.#endForm(record, change);
         this.#returnSource(change);
         this.#stepToTarget(change);
+        this.#endEverywhere(record, change);
         if (ownEnds && change.kind === "ended") {
           this.#logFired(fireEndTriggers(record.combatant, change, context));
           this.#logFired(fireDeathTriggers(record.combatant, change, context));
@@ -4355,6 +4364,7 @@ export class MatchSimulation {
           this.#endForm(record, change);
           this.#returnSource(change);
           this.#stepToTarget(change);
+          this.#endEverywhere(record, change);
         }
       }
     }
@@ -6468,6 +6478,28 @@ export class MatchSimulation {
   }
 
   /**
+   * A status that ends everywhere when spent negated a fatal blow on
+   * `record` (#1955): every other copy its source put up ends, Angelic
+   * Bond's "then it ends on all other allies".
+   */
+  #endEverywhere(record: ParticipantRecord, change: StatusChange): void {
+    if (
+      change.kind !== "fatal-negated" ||
+      !getStatusDefinition(change.statusId).endsEverywhereWhenSpent
+    ) {
+      return;
+    }
+    for (const other of this.#participants.values()) {
+      if (
+        other !== record &&
+        other.combatant.statuses.get(change.statusId)?.sourceId === change.sourceId
+      ) {
+        other.combatant.statuses.end(change.statusId);
+      }
+    }
+  }
+
+  /**
    * A returning status ended (#1826): its source, alive, Shadow Steps back
    * to where it put it up, ashes dropped first, facing kept, and the step
    * logged as that status's skill.
@@ -7288,7 +7320,7 @@ export class MatchSimulation {
 
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
-    const statuses = new StatusSet();
+    const statuses = new StatusSet(this.#spentStatuses);
     return {
       id: spec.id,
       health: maxHealth * (spec.startHealthFraction ?? 1),

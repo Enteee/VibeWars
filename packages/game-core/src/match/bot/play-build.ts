@@ -1,4 +1,10 @@
-import { AREA_IN_THE_AREA, RANGE_SPELL, RANGE_SPIRIT } from "../../distances.js";
+import {
+  AREA_ADJACENT,
+  AREA_EARSHOT,
+  AREA_IN_THE_AREA,
+  RANGE_SPELL,
+  RANGE_SPIRIT,
+} from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
 import { mimickedElite } from "../../skills/stand-in.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
@@ -24,6 +30,7 @@ import {
   removedCategories,
   removesFromCaster,
   renewsSpirit,
+  riderOf,
   sacrificesTooMuch,
   ownTrapBoost,
   sendsPet,
@@ -37,7 +44,7 @@ import {
  * foe's cast or else its swing, heal or protect the most hurt ally, step
  * away when hurt with a foe at hand, take
  * a hex or condition off an ally, raise a dead one, renew a spirit of
- * its own about to expire, use an offensive
+ * its own about to expire, use a Paragon rider when it is due, use an offensive
  * skill on the team target, attack it with the weapon, and otherwise walk
  * to the nearest foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
  * backing off would never end.
@@ -70,6 +77,15 @@ const BIND_HEALTH_FLOOR = 200;
 
 /** Below this share of its own health, a bot with a foe at hand steps away (#1930). */
 const ESCAPE_FRACTION = 0.5;
+
+/** Below this share of its health, an ally in earshot is worth Angelic Bond (#1955). */
+const LAST_STAND_FRACTION = 0.25;
+
+/** Enchanted allies in earshot, the bot among them, worth Godspeed (#1955). */
+const ENCHANTED_SPEED_ALLIES = 2;
+
+/** Allies in earshot, the bot among them, worth "Lead the Way!" (#1955). */
+const SPEED_PER_ALLY_ALLIES = 3;
 
 /** A foe this near is at hand (#1930): GW1's "in the area". */
 const ESCAPE_THREAT_UNITS = AREA_IN_THE_AREA;
@@ -456,6 +472,50 @@ function think(
       if (skill !== undefined) {
         return use(skill, spirit.id);
       }
+    }
+  }
+
+  // 4e. A Paragon's rider (#1955), once what it waits for is there:
+  // an ally in earshot near death, enchanted allies, a party on the move,
+  // an ally with a foe at its elbow.
+  const inEarshot = allies.filter((ally) => distance(ally.position, self.position) <= AREA_EARSHOT);
+  const riderAim = (skill: Skill): string | undefined => {
+    switch (riderOf(skill)) {
+      case "last-stand":
+        return inEarshot.some((ally) => healthFraction(ally) < LAST_STAND_FRACTION)
+          ? self.id
+          : undefined;
+      case "enchanted-speed":
+        return inEarshot.filter(
+          (ally) => ally.combatant.statuses.countByCategory("enchantment") > 0,
+        ).length >= ENCHANTED_SPEED_ALLIES
+          ? self.id
+          : undefined;
+      case "speed-per-ally":
+        return inEarshot.length >= SPEED_PER_ALLY_ALLIES
+          ? inEarshot.find((ally) => ally.id !== self.id && ally.combatant.moving)?.id
+          : undefined;
+      case "brace":
+        return inEarshot.find(
+          (ally) =>
+            ally.id !== self.id &&
+            foes.some((foe) => distance(foe.position, ally.position) <= AREA_ADJACENT),
+        )?.id;
+      case undefined:
+        return undefined;
+    }
+  };
+  // Never again on a body that still bears what it put on.
+  const bears = (skill: Skill, id: string): boolean => {
+    const statuses = allies.find((ally) => ally.id === id)?.combatant.statuses;
+    return skill.effects.some(
+      (effect) => effect.kind === "apply-status" && statuses?.has(effect.statusId) === true,
+    );
+  };
+  for (const skill of bar) {
+    const aim = riderAim(skill);
+    if (aim !== undefined && !bears(skill, aim) && mayUse(skill, aim)) {
+      return use(skill, aim);
     }
   }
 
