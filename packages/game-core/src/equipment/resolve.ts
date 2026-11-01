@@ -72,8 +72,36 @@ export interface ResolvedWeapon {
   readonly creatureDamageScale: number | undefined;
 }
 
+/** What the held weapon's mods do to its hits (#2009). */
+export interface WeaponHitMods {
+  /** Health each landed hit steals: Vampiric's. */
+  readonly lifeSteal: number;
+  /** Energy each landed hit gains: Zealous'. */
+  readonly energyOnHit: number;
+  /** Sundering's: the chance a hit has `sunderPenetration` more armor penetration. */
+  readonly sunderChance: number;
+  readonly sunderPenetration: number;
+  /** Furious': the chance a hit's adrenaline is doubled. */
+  readonly doubleAdrenalineChance: number;
+  /** Multiplier on a condition the weapon's attacks cause: Barbed's 1.33 on Bleeding. */
+  readonly inflictedDurationScale: ReadonlyMap<StatusId, number>;
+}
+
+export const NO_HIT_MODS: WeaponHitMods = Object.freeze({
+  lifeSteal: 0,
+  energyOnHit: 0,
+  sunderChance: 0,
+  sunderPenetration: 0,
+  doubleAdrenalineChance: 0,
+  inflictedDurationScale: new Map(),
+});
+
 export interface ResolvedEquipment {
   readonly mainHand: ResolvedWeapon;
+  /** The held set's mods that act on a hit (#2009). */
+  readonly hitMods: WeaponHitMods;
+  /** Health regeneration the held set's mods give, in pips: Vampiric's -1. */
+  readonly healthPips: number;
   /** Armor before any conditional bonus or status modifier. */
   readonly baseArmor: number;
   /** On every hit: the profession's inherent armor, a creature's, a guard's. */
@@ -425,8 +453,11 @@ function resolveWeaponSet(
   // The set's mods (#2007), on top of what every set shares.
   let healthDelta = 0;
   let pipsDelta = 0;
+  let healthPips = 0;
   let conditionalArmor = shared.conditionalArmor;
   let statusDurationScale = shared.statusDurationScale;
+  let mainHand = resolvedWeapon;
+  let hitMods = NO_HIT_MODS;
   for (const effect of mods.flatMap((mod) => mod.effects)) {
     switch (effect.kind) {
       case "max-health":
@@ -451,12 +482,45 @@ function resolveWeaponSet(
         statusDurationScale = scale;
         break;
       }
+      case "life-steal-on-hit":
+        hitMods = {
+          ...hitMods,
+          lifeSteal: hitMods.lifeSteal + (effect.amountByWeapon[set.mainHand.weaponId] ?? 0),
+        };
+        break;
+      case "health-regen":
+        healthPips += effect.pips;
+        break;
+      case "energy-on-hit":
+        hitMods = { ...hitMods, energyOnHit: hitMods.energyOnHit + effect.amount };
+        break;
+      case "armor-penetration-chance":
+        hitMods = {
+          ...hitMods,
+          sunderChance: effect.chance,
+          sunderPenetration: effect.penetration,
+        };
+        break;
+      case "double-adrenaline-chance":
+        hitMods = { ...hitMods, doubleAdrenalineChance: effect.chance };
+        break;
+      case "inflicted-condition-duration": {
+        const scale = new Map(hitMods.inflictedDurationScale);
+        scale.set(effect.statusId, (scale.get(effect.statusId) ?? 1) * (1 + effect.increase));
+        hitMods = { ...hitMods, inflictedDurationScale: scale };
+        break;
+      }
+      case "damage-type":
+        mainHand = { ...mainHand, damageType: effect.type };
+        break;
     }
   }
 
   return {
     equipment: {
-      mainHand: resolvedWeapon,
+      mainHand,
+      hitMods,
+      healthPips,
       baseArmor,
       conditionalArmor,
       pieceArmor: shared.pieceArmor,
@@ -521,6 +585,8 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
       requirementMet: true,
       creatureDamageScale: undefined,
     },
+    hitMods: NO_HIT_MODS,
+    healthPips: 0,
     baseArmor,
     conditionalArmor: [],
     pieceArmor: NO_PIECE_ARMOR,

@@ -365,6 +365,30 @@ export function applyDamage(
   events: CombatEvent[],
   dealer: Combatant | undefined,
 ): void {
+  landDamage(target, amount, type, critical, events, dealer, true);
+}
+
+/**
+ * A bond's share of a hit (#1108, #1986), on whoever it went to: typeless,
+ * from nobody, and never redirected again, whatever bond its taker wears.
+ */
+export function applyRedirectedDamage(
+  target: Combatant,
+  amount: number,
+  events: CombatEvent[],
+): void {
+  landDamage(target, amount, "typeless", false, events, undefined, false);
+}
+
+function landDamage(
+  target: Combatant,
+  amount: number,
+  type: DamageType,
+  critical: boolean,
+  events: CombatEvent[],
+  dealer: Combatant | undefined,
+  redirectable: boolean,
+): void {
   if (amount <= 0 || target.dead) {
     return;
   }
@@ -377,9 +401,9 @@ export function applyDamage(
   if (cut <= 0 || reverse(target, cut, events)) {
     return;
   }
-  // Symbiotic Bond (#1108): its share of a physical hit goes to its
-  // source when the tick drains; the bearer takes the rest.
-  const kept = isPhysicalDamage(type) ? target.statuses.redirect(cut) : cut;
+  // Symbiotic Bond (#1108) and Dark Bond (#1986): a share goes elsewhere
+  // when the tick drains; the bearer takes the rest.
+  const kept = redirectable ? target.statuses.redirect(cut, isPhysicalDamage(type)) : cut;
   const applied = Math.min(guardedDamage(target, kept), target.health);
   if (negateFatal(target, applied, dealer, events)) {
     return;
@@ -538,7 +562,7 @@ function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): vo
  * Lord's per-second cap (#1223) holds it too, and a status that negates
  * fatal damage (#1789) drops a steal that would kill.
  */
-function stealLife(
+export function stealLife(
   caster: Combatant,
   target: Combatant,
   amount: number,
@@ -1141,15 +1165,27 @@ export function conditionTaker(
   ) {
     return target;
   }
-  const at = surroundings.get(target.id)?.position;
+  return closestOwnMinion(target, surroundings) ?? target;
+}
+
+/**
+ * `owner`'s closest living minion where they stand now, ties by id
+ * (#1915, #1986): where Infuse Condition sends a condition and Dark Bond
+ * its share of a hit. `undefined` when it has none.
+ */
+export function closestOwnMinion(
+  owner: Combatant,
+  surroundings: Surroundings,
+): Combatant | undefined {
+  const at = surroundings.get(owner.id)?.position;
   if (at === undefined) {
-    return target;
+    return undefined;
   }
   const minions = [...surroundings.values()].filter(
     ({ combatant, creature }) =>
-      creature?.kind === "minion" && creature.ownerId === target.id && !combatant.dead,
+      creature?.kind === "minion" && creature.ownerId === owner.id && !combatant.dead,
   );
-  return nearestFirst(minions, at)[0] ?? target;
+  return nearestFirst(minions, at)[0];
 }
 
 /**
@@ -1172,6 +1208,24 @@ export function landCaughtCondition(
   surroundings: Surroundings,
 ): void {
   landOnTaker(target, id, remainingSeconds, sourceId, ranks, events, surroundings, null);
+}
+
+/**
+ * What the caster's weapon mods do to a condition its attack skill
+ * causes a foe (#2009): Barbed's Bleeding lasts 33% longer. Before the
+ * taker's own lengthening or shortening. 1 for anything else.
+ */
+function inflictedScale(statusId: StatusId, bearer: Combatant, context: SkillContext): number {
+  const { caster, skillId } = context;
+  if (
+    bearer.team === caster.team ||
+    skillId === undefined ||
+    getSkill(skillId)?.type !== "attack" ||
+    getStatusDefinition(statusId).category !== "condition"
+  ) {
+    return 1;
+  }
+  return caster.equipment.hitMods.inflictedDurationScale.get(statusId) ?? 1;
 }
 
 /**
@@ -1282,7 +1336,8 @@ function isSummoned(creature: Creature | undefined): boolean {
 /**
  * Whether a splash that `hits` reaches `combatant` (#885), its distance
  * aside: `own-spirits` only the caster's own spirits (#1777), `own-minions`
- * its own minions (#1836).
+ * its own minions (#1836), `allied-minions` any minion on its side
+ * (#1986).
  */
 function splashReaches(
   hits: SplashEffect["hits"],
@@ -1305,7 +1360,18 @@ function splashReaches(
       return creature?.kind === "spirit" && creature.ownerId === caster.id;
     case "own-minions":
       return creature?.kind === "minion" && creature.ownerId === caster.id;
+    case "allied-minions":
+      return creature?.kind === "minion" && combatant.team === caster.team;
   }
+}
+
+/**
+ * Whether a splash that `hits` is measured from the caster, whatever it
+ * targeted, and so acts once (#1777, #1836, #1986): your spirits, your
+ * minions, every allied minion.
+ */
+function measuredFromCaster(hits: SplashEffect["hits"]): boolean {
+  return hits === "own-spirits" || hits === "own-minions" || hits === "allied-minions";
 }
 
 /**
@@ -1734,7 +1800,9 @@ export function applyEffect(
       landOnTaker(
         bearer,
         effect.statusId,
-        base * (context.own?.durationMultiplier ?? 1),
+        base *
+          (context.own?.durationMultiplier ?? 1) *
+          inflictedScale(effect.statusId, bearer, context),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,
@@ -2078,9 +2146,7 @@ export function applyEffect(
       // Your own spirits are within earshot of you, not of the target (#1777);
       // Return's adjacent foes are around its caster (#1826).
       const centre =
-        effect.around === "caster" || effect.hits === "own-spirits" || effect.hits === "own-minions"
-          ? caster
-          : target;
+        effect.around === "caster" || measuredFromCaster(effect.hits) ? caster : target;
       const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
       if (target === undefined || at === undefined) {
         return events;
@@ -2361,6 +2427,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
+    case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
       return true;
   }
@@ -2506,6 +2573,8 @@ export function stateHolds(
       const at = surroundings.get(caster.id)?.position;
       return at !== undefined && spiritsWithin(surroundings.values(), at, condition.radius) > 0;
     }
+    case "caster-controls-at-most":
+      return caster.controlled[condition.creature] <= condition.count;
     case "caster-spirit-or-corpse-within": {
       const at = surroundings.get(caster.id)?.position;
       return (
@@ -2773,6 +2842,7 @@ function conditionHolds(
     case "target-is-summoned":
     case "caster-no-spirit-within":
     case "caster-spirit-within":
+    case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
       return held.has(condition);
   }
@@ -2885,7 +2955,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return true;
     // Measured from the caster, so once (#1777), not once a target.
     case "splash":
-      return effect.hits === "own-spirits" || effect.hits === "own-minions";
+      return measuredFromCaster(effect.hits);
     case "lengthen-recharge":
       return effect.of === "this-skill";
     // Once, on the primary target, the spirit cast on (#1309), however

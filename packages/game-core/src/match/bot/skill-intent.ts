@@ -18,10 +18,19 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, raising the dead, a way out (#1930) and a setup (#1975).
+ * skill, raising the dead, a way out (#1930), a setup (#1975) and
+ * minion care (#1986), which is that alone.
  */
 export type BotUse =
-  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence" | "setup";
+  | "interrupt"
+  | "healing"
+  | "defence"
+  | "escape"
+  | "removal"
+  | "resurrect"
+  | "offence"
+  | "setup"
+  | "minion-care";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -30,6 +39,10 @@ export type BotUse =
 export function botUses(skill: Skill): readonly BotUse[] {
   if (isCompanionRule(skill.target)) {
     return [];
+  }
+  // Healing or bonding minions (#1986) is no heal or defence of a player's.
+  if (minionCareOf(skill) !== undefined) {
+    return ["minion-care"];
   }
   const roles = skillRoles(skill);
   const uses: BotUse[] = [];
@@ -58,6 +71,39 @@ export function botUses(skill: Skill): readonly BotUse[] {
     uses.push("offence");
   }
   return uses;
+}
+
+/**
+ * What `skill` does for minions (#1986), or `undefined` for any other:
+ * Blood of the Master heals every allied one, Verata's Sacrifice takes its
+ * own ones' conditions, Dark Bond sends a share of a hit to one, Jagged
+ * Bones stands a horror up where one dies.
+ */
+export type MinionCare = "heal-all" | "take-conditions" | "bond" | "replace-on-death";
+
+export function minionCareOf(skill: Skill): MinionCare | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind === "splash" && effect.hits === "allied-minions") {
+      return "heal-all";
+    }
+    if (
+      effect.kind === "splash" &&
+      effect.hits === "own-minions" &&
+      effect.effects.some((inner) => inner.kind === "transfer-conditions")
+    ) {
+      return "take-conditions";
+    }
+    if (effect.kind === "apply-status") {
+      const status = getStatusDefinition(effect.statusId);
+      if (status.redirectsDamageToMinion > 0) {
+        return "bond";
+      }
+      if (status.replacedOnDeathBy !== undefined) {
+        return "replace-on-death";
+      }
+    }
+  }
+  return undefined;
 }
 
 /** Whether `skill` sends its user's pet to its target (#1966), as Strike as One. */

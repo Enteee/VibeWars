@@ -122,6 +122,7 @@
     "critical-eye",
     "cruel-was-daoshen",
     "dark-apostasy",
+    "dark-bond",
     "dark-escape",
     "dark-fury",
     "dark-prison",
@@ -240,6 +241,7 @@
     "infuse-condition",
     "insidious-parasite",
     "its-just-a-flesh-wound",
+    "jagged-bones",
     "jaundiced-gaze",
     "judges-insight",
     "judges-intervention",
@@ -406,6 +408,7 @@
     "union",
     "vengeful-was-khanhei",
     "vengeful-weapon",
+    "veratas-sacrifice",
     "vigorous-spirit",
     "visions-of-regret",
     "vital-blessing",
@@ -871,6 +874,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -989,6 +993,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -1155,6 +1160,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -1330,6 +1336,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -1448,6 +1455,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -1614,6 +1622,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -1769,6 +1778,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -1887,6 +1897,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -2053,6 +2064,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -2205,6 +2217,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -2323,6 +2336,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -2489,6 +2503,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -2776,6 +2791,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -2894,6 +2910,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -3060,6 +3077,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -3204,6 +3222,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -3322,6 +3341,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -3488,6 +3508,7 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -3669,7 +3690,6 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
-        { "literal": "invalid-bot" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },
@@ -3867,26 +3887,6 @@
                 "properties": [
                   { "name": "admissionSig", "optional": false, "type": "string" },
                   { "name": "seatKey", "optional": false, "type": "string" }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
                 ]
               }
             ]
@@ -4838,42 +4838,6 @@
         },
         {
           "properties": [
-            {
-              "name": "character",
-              "optional": false,
-              "type": {
-                "union": [
-                  "null",
-                  {
-                    "properties": [
-                      { "name": "name", "optional": false, "type": "string" },
-                      { "name": "primary", "optional": false, "type": "string" },
-                      {
-                        "name": "secondary",
-                        "optional": false,
-                        "type": { "union": ["null", "string"] }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            { "name": "kind", "optional": false, "type": { "literal": "set-character" } }
-          ]
-        },
-        {
-          "properties": [
-            { "name": "count", "optional": false, "type": "number" },
-            { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
-            {
-              "name": "team",
-              "optional": false,
-              "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
-            }
-          ]
-        },
-        {
-          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "choose-team" } },
             {
               "name": "team",
@@ -4965,26 +4929,6 @@
       "properties": [
         { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
-                ]
-              }
-            ]
-          }
-        },
         {
           "name": "guildCape",
           "optional": false,
@@ -5100,26 +5044,6 @@
               "properties": [
                 { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
-                {
-                  "name": "character",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          { "name": "name", "optional": false, "type": "string" },
-                          { "name": "primary", "optional": false, "type": "string" },
-                          {
-                            "name": "secondary",
-                            "optional": false,
-                            "type": { "union": ["null", "string"] }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 {
                   "name": "guildCape",
                   "optional": false,
@@ -5320,7 +5244,11 @@
                                     }
                                   }
                                 },
-                                { "name": "size", "optional": false, "type": "number" }
+                                {
+                                  "name": "size",
+                                  "optional": false,
+                                  "type": { "union": ["null", "number"] }
+                                }
                               ]
                             }
                           ]
@@ -5435,7 +5363,11 @@
                                     }
                                   }
                                 },
-                                { "name": "size", "optional": false, "type": "number" }
+                                {
+                                  "name": "size",
+                                  "optional": false,
+                                  "type": { "union": ["null", "number"] }
+                                }
                               ]
                             }
                           ]
@@ -6849,7 +6781,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": "number" }
+                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
                     ]
                   }
                 ]
@@ -6948,7 +6880,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": "number" }
+                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
                     ]
                   }
                 ]
@@ -7086,7 +7018,7 @@
             }
           }
         },
-        { "name": "size", "optional": false, "type": "number" }
+        { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
       ]
     },
     "WireTraps": {

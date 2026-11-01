@@ -113,6 +113,8 @@ export function define(
     damageTypeTakenMultiplier: undefined,
     destroysBearerOnExpiry: false,
     redirectsPhysicalDamage: 0,
+    redirectsDamageToMinion: 0,
+    replacedOnDeathBy: undefined,
     maxDamageFractionPerHit: undefined,
     attackDamageCapFraction: undefined,
     lifeStealReduction: 0,

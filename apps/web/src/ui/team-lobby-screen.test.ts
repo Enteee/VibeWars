@@ -120,7 +120,6 @@ function player(
     team,
     ready: false,
     isHost: sessionId === "aria",
-    character: null,
     bot,
     away: false,
   };
@@ -240,11 +239,22 @@ describe("the Team Lobby's words (#1460)", () => {
   it("offers only the Team Builds of the side's exact size", () => {
     const duo = team("a", "Duo", 2);
     const four = team("b", "Four", 4);
-    expect(proposableTeams([duo, four], 4)).toEqual([
+    expect(proposableTeams([duo, four], 4, 1)).toEqual([
       { team: duo, disabled: true, reason: "needs 4 characters" },
       { team: four, disabled: false, reason: undefined },
     ]);
-    expect(proposableTeams([duo], 1)[0]?.reason).toBe("needs 1 character");
+    expect(proposableTeams([duo], 1, 1)[0]?.reason).toBe("needs 1 character");
+  });
+
+  it("offers a Hosted Game's side any Team Build with a slot for each of its players (#2029)", () => {
+    const solo = team("a", "Solo", 1);
+    const duo = team("b", "Duo", 2);
+    const eight = team("c", "Eight", 8);
+    expect(proposableTeams([solo, duo, eight], null, 2)).toEqual([
+      { team: solo, disabled: true, reason: "needs at least 2 characters" },
+      { team: duo, disabled: false, reason: undefined },
+      { team: eight, disabled: false, reason: undefined },
+    ]);
   });
 });
 

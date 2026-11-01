@@ -1,7 +1,7 @@
 /** @type {Readonly<Record<string, import("../../skill-icon-table.mjs").SkillIconRow>>} */
 const rows = {
-  // Stand-ins for the enchantment party moves (#1975).
-  "assassin.dark-apostasy": { glyph: "dagger-crit", modifier: "down" },
+  // Enchantment removal (#2070).
+  "assassin.dark-apostasy": { glyph: "dagger-crit", modifier: "unring" },
 };
 
 export default rows;
