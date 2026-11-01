@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { bareArmorSet, type ArmorSet } from "../equipment/armor.js";
 import { defaultEquipmentFor } from "../equipment/loadout.js";
+import { NO_UPGRADES } from "../equipment/mods.js";
 import { resolveLoadout, unarmedResolvedEquipment } from "../equipment/resolve.js";
 import type { InsigniaId } from "../equipment/insignias.js";
 import type { EquippedRune } from "../equipment/runes.js";
@@ -205,7 +206,10 @@ describe("damage taken multipliers (#919)", () => {
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
-            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            {
+              mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -312,7 +316,10 @@ describe("conditional insignia armor, per piece (#1135)", () => {
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
-            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            {
+              mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -866,7 +873,10 @@ describe("Rune of Absorption", () => {
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
-            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            {
+              mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -1073,8 +1083,16 @@ describe("resolved loadouts feeding the pipeline", () => {
           equipment: {
             weaponSets: [
               {
-                mainHand: { weaponId: "sword", requirementAttributeId: null },
-                offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+                mainHand: {
+                  weaponId: "sword",
+                  requirementAttributeId: null,
+                  upgrades: NO_UPGRADES,
+                },
+                offHand: {
+                  offhandId: "shield",
+                  requirementAttributeId: "warrior.strength",
+                  upgrades: NO_UPGRADES,
+                },
               },
               null,
               null,
@@ -1101,8 +1119,12 @@ describe("resolved loadouts feeding the pipeline", () => {
         equipment: {
           weaponSets: [
             {
-              mainHand: { weaponId: "hammer", requirementAttributeId: null },
-              offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+              mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: {
+                offhandId: "shield",
+                requirementAttributeId: "warrior.strength",
+                upgrades: NO_UPGRADES,
+              },
             },
             null,
             null,
@@ -1133,7 +1155,7 @@ describe("the off-hand a resolved loadout holds (#276)", () => {
                 weaponSets: [
                   {
                     ...equipment.weaponSets[0],
-                    mainHand: { weaponId, requirementAttributeId: null },
+                    mainHand: { weaponId, requirementAttributeId: null, upgrades: NO_UPGRADES },
                   },
                   null,
                   null,

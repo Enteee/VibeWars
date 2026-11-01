@@ -49,7 +49,6 @@ export function fighter(
     team,
     skillBar: loadout.skillBar,
     ...loadoutSpec(resolved),
-    baseEnergyPips: loadout.baseEnergyPips,
     spawn,
     facing: 0,
     behaviour: BOT,

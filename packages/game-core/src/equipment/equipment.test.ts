@@ -14,7 +14,13 @@ import {
   type ArmorSet,
 } from "./armor.js";
 import { GEAR_OMISSIONS, gearOmission, openGearGaps } from "./coverage.js";
-import { defaultEquipmentFor, defaultWeaponFor, type BuildEquipment } from "./loadout.js";
+import {
+  defaultEquipmentFor,
+  defaultWeaponFor,
+  type BuildEquipment,
+  type WeaponSet,
+} from "./loadout.js";
+import { NO_UPGRADES, type ItemUpgrades } from "./mods.js";
 import { parseBuildEquipment } from "./parse.js";
 import { reconcileEquipment } from "./reconcile.js";
 import { validateEquipment } from "./validate.js";
@@ -232,7 +238,10 @@ describe("resolving universal runes", () => {
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
-            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            {
+              mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -241,7 +250,7 @@ describe("resolving universal runes", () => {
         },
       },
       MINIMAL_GW_INSPIRED_PVP_V1.combat,
-    ).maxHealth;
+    ).weaponSets[0].maxHealth;
   }
 
   it("counts a rune that does not stack once, at the best tier worn (GW1)", () => {
@@ -264,7 +273,10 @@ describe("what a weapon deals (#761)", () => {
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
-            { mainHand: { weaponId, requirementAttributeId: nominated }, offHand: null },
+            {
+              mainHand: { weaponId, requirementAttributeId: nominated, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -309,7 +321,10 @@ describe("inherent armor by profession (#759) and insignia armor per piece (#113
         allocatedRanks: new Map(),
         equipment: {
           weaponSets: [
-            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            {
+              mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -489,8 +504,12 @@ describe("validateEquipment", () => {
       {
         weaponSets: [
           {
-            mainHand: { weaponId: "hammer", requirementAttributeId: null },
-            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: {
+              offhandId: "shield",
+              requirementAttributeId: "warrior.strength",
+              upgrades: NO_UPGRADES,
+            },
           },
           null,
           null,
@@ -509,7 +528,11 @@ describe("validateEquipment", () => {
       {
         weaponSets: [
           {
-            mainHand: { weaponId: "sword", requirementAttributeId: "warrior.axe-mastery" },
+            mainHand: {
+              weaponId: "sword",
+              requirementAttributeId: "warrior.axe-mastery",
+              upgrades: NO_UPGRADES,
+            },
             offHand: null,
           },
           null,
@@ -529,8 +552,12 @@ describe("validateEquipment", () => {
       {
         weaponSets: [
           {
-            mainHand: { weaponId: "sword", requirementAttributeId: null },
-            offHand: { offhandId: "shield", requirementAttributeId: "monk.divine-favor" },
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: {
+              offhandId: "shield",
+              requirementAttributeId: "monk.divine-favor",
+              upgrades: NO_UPGRADES,
+            },
           },
           null,
           null,
@@ -550,8 +577,12 @@ describe("validateEquipment", () => {
         // but a focus linked to Fire Magic is a rule they do not have.
         weaponSets: [
           {
-            mainHand: { weaponId: "sword", requirementAttributeId: null },
-            offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: {
+              offhandId: "focus",
+              requirementAttributeId: "elementalist.fire-magic",
+              upgrades: NO_UPGRADES,
+            },
           },
           null,
           null,
@@ -570,7 +601,10 @@ describe("validateEquipment", () => {
     const problems = validateEquipment(
       {
         weaponSets: [
-          { mainHand: { weaponId: "hammer", requirementAttributeId: null }, offHand: null },
+          {
+            mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: null,
+          },
           null,
           null,
           null,
@@ -587,7 +621,10 @@ describe("validateEquipment", () => {
     const problems = validateEquipment(
       {
         weaponSets: [
-          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: null,
+          },
           null,
           null,
           null,
@@ -609,7 +646,10 @@ describe("validateEquipment", () => {
   it("fits an attribute rune only to the primary's attributes (#1141)", () => {
     const withHeadRune = (attributeId: string): BuildEquipment => ({
       weaponSets: [
-        { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+        {
+          mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+          offHand: null,
+        },
         null,
         null,
         null,
@@ -645,7 +685,11 @@ describe("validateEquipment", () => {
       {
         weaponSets: [
           {
-            mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
+            mainHand: {
+              weaponId: "wand",
+              requirementAttributeId: "monk.divine-favor",
+              upgrades: NO_UPGRADES,
+            },
             offHand: null,
           },
           null,
@@ -670,7 +714,10 @@ describe("validateEquipment", () => {
     const problems = validateEquipment(
       {
         weaponSets: [
-          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: null,
+          },
           null,
           null,
           null,
@@ -692,7 +739,10 @@ describe("validateEquipment", () => {
       return validateEquipment(
         {
           weaponSets: [
-            { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+            {
+              mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -722,7 +772,11 @@ describe("validateEquipment", () => {
         // this shape. Validation still has to have an answer for it.
         weaponSets: [
           {
-            mainHand: { weaponId: "chainsaw" as never, requirementAttributeId: null },
+            mainHand: {
+              weaponId: "chainsaw" as never,
+              requirementAttributeId: null,
+              upgrades: NO_UPGRADES,
+            },
             offHand: null,
           },
           null,
@@ -743,8 +797,12 @@ describe("validateEquipment", () => {
         {
           weaponSets: [
             {
-              mainHand: { weaponId: "sword", requirementAttributeId: null },
-              offHand: { offhandId: offhand.id, requirementAttributeId: attributeId },
+              mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: {
+                offhandId: offhand.id,
+                requirementAttributeId: attributeId,
+                upgrades: NO_UPGRADES,
+              },
             },
             null,
             null,
@@ -808,7 +866,12 @@ describe("parseBuildEquipment", () => {
 
   it("fills in missing armor slots rather than failing on a sparse record", () => {
     const parsed = parseBuildEquipment({
-      weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
+      weaponSets: [
+        { mainHand: { weaponId: "sword", upgrades: NO_UPGRADES }, offHand: null },
+        null,
+        null,
+        null,
+      ],
       armor: { head: { headgearAttributeId: null } },
     });
     expect(parsed).toBeDefined();
@@ -821,7 +884,12 @@ describe("parseBuildEquipment", () => {
   it("needs the head's headgear attribute, a string or null, never absent (#1140)", () => {
     const withHead = (head: unknown) =>
       parseBuildEquipment({
-        weaponSets: [{ mainHand: { weaponId: "sword" }, offHand: null }, null, null, null],
+        weaponSets: [
+          { mainHand: { weaponId: "sword", upgrades: NO_UPGRADES }, offHand: null },
+          null,
+          null,
+          null,
+        ],
         armor: { head },
       });
     expect(withHead({ insigniaId: null, rune: null })).toBeUndefined();
@@ -840,7 +908,10 @@ describe("reconcileEquipment", () => {
   it("keeps the primary's attribute runes across professions, clears the rest (#1141)", () => {
     const equipment: BuildEquipment = {
       weaponSets: [
-        { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+        {
+          mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+          offHand: null,
+        },
         null,
         null,
         null,
@@ -894,7 +965,10 @@ describe("reconcileEquipment", () => {
     const reconciled = reconcileEquipment(
       {
         weaponSets: [
-          { mainHand: { weaponId: "hammer", requirementAttributeId: null }, offHand: null },
+          {
+            mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: null,
+          },
           null,
           null,
           null,
@@ -911,8 +985,12 @@ describe("reconcileEquipment", () => {
       {
         weaponSets: [
           {
-            mainHand: { weaponId: "sword", requirementAttributeId: null },
-            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: {
+              offhandId: "shield",
+              requirementAttributeId: "warrior.strength",
+              upgrades: NO_UPGRADES,
+            },
           },
           null,
           null,
@@ -930,8 +1008,12 @@ describe("reconcileEquipment", () => {
       {
         weaponSets: [
           {
-            mainHand: { weaponId: "hammer", requirementAttributeId: null },
-            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: {
+              offhandId: "shield",
+              requirementAttributeId: "warrior.strength",
+              upgrades: NO_UPGRADES,
+            },
           },
           null,
           null,
@@ -949,7 +1031,11 @@ describe("reconcileEquipment", () => {
       {
         weaponSets: [
           {
-            mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
+            mainHand: {
+              weaponId: "wand",
+              requirementAttributeId: "monk.divine-favor",
+              upgrades: NO_UPGRADES,
+            },
             offHand: null,
           },
           null,
@@ -971,7 +1057,11 @@ describe("reconcileEquipment", () => {
     const before: BuildEquipment = {
       weaponSets: [
         {
-          mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" } as const,
+          mainHand: {
+            weaponId: "wand",
+            requirementAttributeId: "monk.divine-favor",
+            upgrades: NO_UPGRADES,
+          } as const,
           offHand: null,
         },
         null,
@@ -991,7 +1081,10 @@ describe("reconcileEquipment", () => {
     const reconciled = reconcileEquipment(
       {
         weaponSets: [
-          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: null,
+          },
           null,
           null,
           null,
@@ -1018,7 +1111,10 @@ describe("reconcileEquipment", () => {
     const reconciled = reconcileEquipment(
       {
         weaponSets: [
-          { mainHand: { weaponId: "sword", requirementAttributeId: null }, offHand: null },
+          {
+            mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: null,
+          },
           null,
           null,
           null,
@@ -1277,7 +1373,8 @@ describe("the gear coverage record", () => {
     // armor is profession-locked and every max set within a profession
     // has the same rating.
     expect(gearOmission("per-piece-armor-ratings")?.kind).toBe("simplification");
-    expect(gearOmission("weapon-upgrades")?.kind).toBe("simplification");
+    // Mods are ids on an item (ADR-0047); only the stat mods are in (#2007).
+    expect(gearOmission("weapon-upgrades")?.kind).toBe("gap");
     expect(gearOmission("profession-insignias")?.kind).toBe("gap");
     expect(openGearGaps().length).toBeGreaterThan(0);
   });
@@ -1297,7 +1394,10 @@ describe("Energy Storage (#532)", () => {
         allocatedRanks: new Map([["elementalist.energy-storage", rank]]),
         equipment: {
           weaponSets: [
-            { mainHand: { weaponId: "staff", requirementAttributeId: null }, offHand: null },
+            {
+              mainHand: { weaponId: "staff", requirementAttributeId: null, upgrades: NO_UPGRADES },
+              offHand: null,
+            },
             null,
             null,
             null,
@@ -1333,20 +1433,36 @@ describe("Energy Storage (#532)", () => {
 
 describe("weapon sets (#489, ADR-0036)", () => {
   const SWORD = {
-    mainHand: { weaponId: "sword", requirementAttributeId: null },
+    mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
     offHand: null,
   } as const;
   const WAND_FOCUS = {
-    mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
-    offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+    mainHand: {
+      weaponId: "wand",
+      requirementAttributeId: "elementalist.fire-magic",
+      upgrades: NO_UPGRADES,
+    },
+    offHand: {
+      offhandId: "focus",
+      requirementAttributeId: "elementalist.fire-magic",
+      upgrades: NO_UPGRADES,
+    },
   } as const;
   const STAFF = {
-    mainHand: { weaponId: "staff", requirementAttributeId: "elementalist.fire-magic" },
+    mainHand: {
+      weaponId: "staff",
+      requirementAttributeId: "elementalist.fire-magic",
+      upgrades: NO_UPGRADES,
+    },
     offHand: null,
   } as const;
   const SWORD_SHIELD = {
-    mainHand: { weaponId: "sword", requirementAttributeId: null },
-    offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+    mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+    offHand: {
+      offhandId: "shield",
+      requirementAttributeId: "warrior.strength",
+      upgrades: NO_UPGRADES,
+    },
   } as const;
 
   it("parses four sets, set 1 required and the others a set or empty, in any pattern", () => {
@@ -1376,8 +1492,12 @@ describe("weapon sets (#489, ADR-0036)", () => {
           SWORD,
           null,
           {
-            mainHand: { weaponId: "hammer", requirementAttributeId: null },
-            offHand: { offhandId: "shield", requirementAttributeId: "warrior.strength" },
+            mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+            offHand: {
+              offhandId: "shield",
+              requirementAttributeId: "warrior.strength",
+              upgrades: NO_UPGRADES,
+            },
           },
           null,
         ],
@@ -1396,7 +1516,11 @@ describe("weapon sets (#489, ADR-0036)", () => {
         weaponSets: [
           SWORD,
           {
-            mainHand: { weaponId: "wand", requirementAttributeId: "monk.divine-favor" },
+            mainHand: {
+              weaponId: "wand",
+              requirementAttributeId: "monk.divine-favor",
+              upgrades: NO_UPGRADES,
+            },
             offHand: null,
           },
           null,
@@ -1499,5 +1623,199 @@ describe("creatureResolvedEquipment (#467)", () => {
     const spirit = { ...attack, damageMax: 25, scaling: { kind: "rank" as const, atZero: 5 } };
     expect(creatureResolvedEquipment(30, spirit, 6).mainHand.creatureDamageScale).toBe(15 / 25);
     expect(creatureResolvedEquipment(30, spirit, 15).mainHand.creatureDamageScale).toBe(30 / 25);
+  });
+});
+
+describe("weapon mods (#2007)", () => {
+  const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+  const mods = (upgrades: Partial<ItemUpgrades>): ItemUpgrades => ({ ...NO_UPGRADES, ...upgrades });
+  const sword = (upgrades: Partial<ItemUpgrades> = {}): WeaponSet => ({
+    mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: mods(upgrades) },
+    offHand: null,
+  });
+  const withSets = (one: WeaponSet, two: WeaponSet | null = null): BuildEquipment => ({
+    ...defaultEquipmentFor("warrior"),
+    weaponSets: [one, two, null, null],
+  });
+  const resolve = (equipment: BuildEquipment, primary: ProfessionId = "warrior") =>
+    resolveLoadout(
+      {
+        primaryProfession: primary,
+        secondaryProfession: undefined,
+        allocatedRanks: new Map(),
+        equipment,
+      },
+      RULES,
+    );
+
+  it("gives +30 Health in the set that holds of Fortitude, and only there", () => {
+    const [one, two] = resolve(withSets(sword({ suffix: "of-fortitude" }), sword())).weaponSets;
+    expect(one.maxHealth).toBe(RULES.baseHealth + 30);
+    expect(two?.maxHealth).toBe(RULES.baseHealth);
+  });
+
+  it("stacks two +30 Health sources in one set: sword and shield", () => {
+    const set: WeaponSet = {
+      ...sword({ suffix: "of-fortitude" }),
+      offHand: {
+        offhandId: "shield",
+        requirementAttributeId: "warrior.tactics",
+        upgrades: mods({ suffix: "of-fortitude" }),
+      },
+    };
+    expect(resolve(withSets(set)).weaponSets[0].maxHealth).toBe(RULES.baseHealth + 60);
+  });
+
+  it("gives Live for Today's +15 Energy for a pip of regeneration", () => {
+    const plain: WeaponSet = {
+      mainHand: {
+        weaponId: "wand",
+        requirementAttributeId: "monk.divine-favor",
+        upgrades: NO_UPGRADES,
+      },
+      offHand: {
+        offhandId: "focus",
+        requirementAttributeId: "monk.divine-favor",
+        upgrades: NO_UPGRADES,
+      },
+    };
+    const live: WeaponSet = {
+      ...plain,
+      offHand: {
+        offhandId: "focus",
+        requirementAttributeId: "monk.divine-favor",
+        upgrades: mods({ inscription: "live-for-today" }),
+      },
+    };
+    const [before, after] = resolve(withSets(plain, live), "monk").weaponSets;
+    expect(after?.maxEnergy).toBe(before.maxEnergy + 15);
+    expect(after?.baseEnergyPips).toBe(before.baseEnergyPips - 1);
+  });
+
+  it("puts typed armor where a hit of that type meets it", () => {
+    const [set] = resolve(
+      withSets(sword({ suffix: "of-shelter" }), sword({ suffix: "of-defense" })),
+    ).weaponSets;
+    expect(set.equipment.conditionalArmor).toContainEqual({
+      amount: 7,
+      conditions: [{ kind: "vs-physical" }],
+    });
+    const plain = resolve(withSets(sword())).weaponSets[0];
+    const defense = resolve(withSets(sword({ suffix: "of-defense" }))).weaponSets[0];
+    expect(defense.equipment.baseArmor).toBe(plain.equipment.baseArmor + 5);
+  });
+
+  it("multiplies Pure of Heart with a Rune of Purity on Poison", () => {
+    const shield = (inscription: string | null): WeaponSet => ({
+      ...sword(),
+      offHand: {
+        offhandId: "shield",
+        requirementAttributeId: "warrior.tactics",
+        upgrades: mods({ inscription }),
+      },
+    });
+    const base = defaultEquipmentFor("warrior");
+    const armor: ArmorSet = {
+      ...base.armor,
+      chest: { insigniaId: null, rune: { kind: "universal", runeId: "purity", tier: "minor" } },
+    };
+    const scale = (set: WeaponSet): number | undefined =>
+      resolve({ ...withSets(set), armor }).weaponSets[0].equipment.statusDurationScale.get(
+        "poison",
+      );
+    const rune = scale(shield(null));
+    expect(rune).toBeLessThan(1);
+    expect(scale(shield("pure-of-heart"))).toBeCloseTo(0.8 * (rune ?? 1));
+  });
+
+  it("counts an off-hand's mods only where the off-hand counts", () => {
+    const set: WeaponSet = {
+      mainHand: { weaponId: "hammer", requirementAttributeId: null, upgrades: NO_UPGRADES },
+      offHand: {
+        offhandId: "shield",
+        requirementAttributeId: "warrior.tactics",
+        upgrades: mods({ suffix: "of-fortitude" }),
+      },
+    };
+    expect(resolve(withSets(set)).weaponSets[0].maxHealth).toBe(RULES.baseHealth);
+  });
+
+  it("rejects an item without its upgrades, or with an unknown mod", () => {
+    const json = JSON.parse(JSON.stringify(withSets(sword()))) as {
+      weaponSets: { mainHand: Record<string, unknown> }[];
+    };
+    const without = JSON.parse(JSON.stringify(json)) as typeof json;
+    const first = without.weaponSets[0];
+    if (first === undefined) {
+      throw new Error("set 1 is always there");
+    }
+    delete first.mainHand.upgrades;
+    expect(parseBuildEquipment(without)).toBeUndefined();
+
+    const unknown = JSON.parse(JSON.stringify(json)) as typeof json;
+    const set = unknown.weaponSets[0];
+    if (set === undefined) {
+      throw new Error("set 1 is always there");
+    }
+    set.mainHand.upgrades = { ...NO_UPGRADES, prefix: "vorpal" };
+    expect(parseBuildEquipment(unknown)).toBeUndefined();
+
+    expect(
+      parseBuildEquipment(JSON.parse(JSON.stringify(withSets(sword({ suffix: "of-fortitude" }))))),
+    ).toEqual(withSets(sword({ suffix: "of-fortitude" })));
+  });
+
+  it("calls a mod in the wrong slot, or on the wrong item, a problem", () => {
+    const messages = (equipment: BuildEquipment, primary: ProfessionId): string[] =>
+      validateEquipment(equipment, contextFor(primary)).map(({ message }) => message);
+    // Staff heads are prefixes; a wand has no prefix at all.
+    const wand: WeaponSet = {
+      mainHand: {
+        weaponId: "wand",
+        requirementAttributeId: "monk.divine-favor",
+        upgrades: mods({ prefix: "insightful" }),
+      },
+      offHand: null,
+    };
+    expect(
+      messages({ ...withSets(wand), armor: defaultEquipmentFor("monk").armor }, "monk"),
+    ).toContain("Insightful does not fit a wand.");
+    // Live for Today is a focus's; a shield refuses it.
+    const shield: WeaponSet = {
+      ...sword(),
+      offHand: {
+        offhandId: "shield",
+        requirementAttributeId: "warrior.tactics",
+        upgrades: mods({ inscription: "live-for-today" }),
+      },
+    };
+    expect(messages(withSets(shield), "warrior")).toContain(
+      '"Live for Today" does not fit a shield.',
+    );
+    // A suffix under the prefix key.
+    expect(messages(withSets(sword({ prefix: "of-fortitude" })), "warrior")).toContain(
+      "of Fortitude does not fit a sword.",
+    );
+    expect(messages(withSets(sword({ suffix: "of-fortitude" })), "warrior")).toEqual([]);
+  });
+
+  it("drops a staff head when the staff becomes a sword", () => {
+    const staff: WeaponSet = {
+      mainHand: {
+        weaponId: "staff",
+        requirementAttributeId: "monk.divine-favor",
+        upgrades: mods({ prefix: "hale", suffix: "of-fortitude", inscription: "seize-the-day" }),
+      },
+      offHand: null,
+    };
+    const swapped: WeaponSet = {
+      mainHand: { ...staff.mainHand, weaponId: "sword", requirementAttributeId: null },
+      offHand: null,
+    };
+    const reconciled = reconcileEquipment(
+      { ...withSets(swapped), armor: defaultEquipmentFor("monk").armor },
+      contextFor("monk"),
+    );
+    expect(reconciled.weaponSets[0].mainHand.upgrades).toEqual(mods({ suffix: "of-fortitude" }));
   });
 });

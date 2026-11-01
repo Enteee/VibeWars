@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
+import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers } from "./helpers/peers.js";
@@ -35,7 +36,7 @@ async function paste(target: Locator, text: string): Promise<void> {
 function trioCode(): string {
   return JSON.stringify({
     format: "vibewars.team",
-    formatVersion: 1,
+    formatVersion: TEAM_FORMAT_VERSION,
     name: "Trio",
     members: TRIO.map((build) => ({
       format: "vibewars.character",

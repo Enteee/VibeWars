@@ -254,11 +254,14 @@ describe("ranged weapons fire projectiles", () => {
     match.rearm(
       "archer",
       {
-        maxHealth: RULES.combat.baseHealth,
-        baseEnergyPips: 0,
         attributeRanks: new Map(),
         weaponSets: [
-          { equipment: unarmedResolvedEquipment(60), maxEnergy: RULES.combat.baseEnergy },
+          {
+            equipment: unarmedResolvedEquipment(60),
+            maxEnergy: RULES.combat.baseEnergy,
+            maxHealth: RULES.combat.baseHealth,
+            baseEnergyPips: 0,
+          },
           null,
           null,
           null,
