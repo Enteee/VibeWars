@@ -18,6 +18,44 @@ certain weapon, and your maximum Energy all follow the set in hand.
 A weapon needs rank 9 in its attribute: below that it hits for a third of
 its damage, and the editor says so in red.
 
+## Weapon mods
+
+Every weapon and off-hand has slots for mods, picked under it in the gear
+panel: a **prefix**, a **suffix** and an **inscription**. A wand, a shield
+and a focus take no prefix; bare hands take none. A mod is always at its
+best value, and each weapon set wears its own, so swapping sets swaps
+their mods too: maximum Health and Energy move with the set in hand.
+Changing a weapon keeps the mods that still fit it and tells you which it
+dropped.
+
+| Mod                       | Slot        | Fits                                     | Effect                                    |
+| ------------------------- | ----------- | ---------------------------------------- | ----------------------------------------- |
+| Defensive                 | Prefix      | Staff                                    | Armor +5                                  |
+| Hale                      | Prefix      | Staff                                    | +30 Health                                |
+| Insightful                | Prefix      | Staff                                    | Energy +5                                 |
+| of Defense                | Suffix      | any martial weapon, Staff                | Armor +5                                  |
+| of Fortitude              | Suffix      | any martial weapon, Staff, Shield, Focus | +30 Health                                |
+| of Shelter                | Suffix      | any martial weapon, Staff                | Armor +7 (vs. physical damage)            |
+| of Warding                | Suffix      | any martial weapon, Staff                | Armor +7 (vs. elemental damage)           |
+| "Cast Out the Unclean"    | Inscription | Shield, Focus                            | Reduces Disease duration on you by 20%    |
+| "Fear Cuts Deeper"        | Inscription | Shield, Focus                            | Reduces Bleeding duration on you by 20%   |
+| "I Can See Clearly Now"   | Inscription | Shield, Focus                            | Reduces Blinded duration on you by 20%    |
+| "I have the power!"       | Inscription | any martial weapon                       | Energy +5                                 |
+| "Leaf on the Wind"        | Inscription | Shield, Focus                            | Armor +10 (vs. cold damage)               |
+| "Like a Rolling Stone"    | Inscription | Shield, Focus                            | Armor +10 (vs. earth damage)              |
+| "Live for Today"          | Inscription | Focus                                    | Energy +15, Energy regeneration -1        |
+| "Not the face!"           | Inscription | Shield, Focus                            | Armor +10 (vs. blunt damage)              |
+| "Only the Strong Survive" | Inscription | Shield, Focus                            | Reduces Weakness duration on you by 20%   |
+| "Pure of Heart"           | Inscription | Shield, Focus                            | Reduces Poison duration on you by 20%     |
+| "Riders on the Storm"     | Inscription | Shield, Focus                            | Armor +10 (vs. lightning damage)          |
+| "Seize the Day"           | Inscription | Staff, Wand                              | Energy +15, Energy regeneration -1        |
+| "Sleep Now in the Fire"   | Inscription | Shield, Focus                            | Armor +10 (vs. fire damage)               |
+| "Soundness of Mind"       | Inscription | Shield, Focus                            | Reduces Dazed duration on you by 20%      |
+| "Strength of Body"        | Inscription | Shield, Focus                            | Reduces Deep Wound duration on you by 20% |
+| "Swift as the Wind"       | Inscription | Shield, Focus                            | Reduces Crippled duration on you by 20%   |
+| "The Riddle of Steel"     | Inscription | Shield, Focus                            | Armor +10 (vs. slashing damage)           |
+| "Through Thick and Thin"  | Inscription | Shield, Focus                            | Armor +10 (vs. piercing damage)           |
+
 ## Armor
 
 Armor is five pieces: head, chest, hands, legs and feet. Every piece has

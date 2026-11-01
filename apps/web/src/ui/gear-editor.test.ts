@@ -25,6 +25,9 @@ import {
   headgearChoices,
   insigniaChoices,
   insigniaEffectNote,
+  modChoices,
+  modSlotsOf,
+  droppedModNotes,
   offhandAttributeChoices,
   runeChoices,
   setHeadgearAttribute,
@@ -33,6 +36,7 @@ import {
   setOffhand,
   setRequirementAttribute,
   setRune,
+  setUpgrade,
   setWeapon,
   summariseGear,
   type GearSummary,
@@ -783,5 +787,54 @@ describe("weapon sets 2-4 (#489)", () => {
     );
     expect(after.equipment.weaponSets[1]?.mainHand.weaponId).toBe("daggers");
     expect(after.equipment.weaponSets[0].mainHand.weaponId).toBe("sword");
+  });
+});
+
+describe("weapon mod pickers (#2008)", () => {
+  it("offers what fits each slot, by name, and nothing where the item has no slot", () => {
+    expect(modChoices("wand", "prefix")).toEqual([]);
+    expect(modChoices("staff", "prefix").map((mod) => mod.id)).toEqual([
+      "defensive",
+      "hale",
+      "insightful",
+    ]);
+    expect(modSlotsOf("wand")).toEqual(["suffix", "inscription"]);
+    expect(modSlotsOf("unarmed")).toEqual([]);
+  });
+
+  it("puts a mod on a hand, takes it off, and refuses one that does not fit", () => {
+    const staff = setWeapon(warrior(), 0, "staff");
+    const headed = setUpgrade(staff, 0, "mainHand", "prefix", "insightful");
+    expect(headed.equipment.weaponSets[0].mainHand.upgrades.prefix).toBe("insightful");
+    expect(
+      setUpgrade(headed, 0, "mainHand", "prefix", null).equipment.weaponSets[0].mainHand.upgrades
+        .prefix,
+    ).toBeNull();
+    expect(setUpgrade(staff, 0, "mainHand", "prefix", "of-fortitude")).toBe(staff);
+    expect(setUpgrade(staff, 0, "offHand", "suffix", "of-fortitude")).toBe(staff);
+  });
+
+  it("drops the staff head on a sword and says so, keeping what still fits", () => {
+    const staff = setUpgrade(
+      setUpgrade(setWeapon(warrior(), 0, "staff"), 0, "mainHand", "prefix", "insightful"),
+      0,
+      "mainHand",
+      "suffix",
+      "of-fortitude",
+    );
+    const sword = setWeapon(staff, 0, "sword");
+    expect(sword.equipment.weaponSets[0].mainHand.upgrades).toMatchObject({
+      prefix: null,
+      suffix: "of-fortitude",
+    });
+    expect(droppedModNotes(staff, sword)).toEqual(["Removed Insightful: it does not fit a sword."]);
+    expect(droppedModNotes(sword, setUpgrade(sword, 0, "mainHand", "suffix", null))).toEqual([]);
+  });
+
+  it("gives each set its own mods", () => {
+    const two = setWeapon(setWeapon(warrior(), 0, "staff"), 1, "staff");
+    const headed = setUpgrade(two, 1, "mainHand", "prefix", "hale");
+    expect(headed.equipment.weaponSets[0].mainHand.upgrades.prefix).toBeNull();
+    expect(headed.equipment.weaponSets[1]?.mainHand.upgrades.prefix).toBe("hale");
   });
 });

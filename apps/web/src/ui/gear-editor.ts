@@ -10,8 +10,13 @@ import {
   SHIELD_REQUIREMENT_ATTRIBUTES,
   accessibleAttributeIds,
   primaryAttributeIds,
+  MOD_SLOTS,
+  MOD_SLOT_KEYS,
   NO_UPGRADES,
+  WEAPON_MODS,
   fittingUpgrades,
+  getWeaponMod,
+  modFits,
   allowsOffhand,
   getAttribute,
   getOffhand,
@@ -36,12 +41,16 @@ import {
   type Insignia,
   type InsigniaEffect,
   type InsigniaId,
+  type ItemUpgrades,
+  type ModId,
+  type ModSlot,
   type OffhandId,
   type PieceArmor,
   type PieceReduction,
   type ResolvedLoadout,
   type RuneTier,
   type WeaponId,
+  type WeaponMod,
   type WeaponSet,
   type WeaponSetIndex,
 } from "@vibewars/game-core";
@@ -235,6 +244,90 @@ export function setRequirementAttribute(
       offHand: { ...held.offHand, requirementAttributeId: attributeId },
     }),
   );
+}
+
+/**
+ * `modId` into `slot` of set `set`'s `hand` (#2008); `null` takes it off.
+ * A mod that does not fit there, or a hand that is empty, changes nothing.
+ */
+export function setUpgrade(
+  character: StoredCharacter,
+  set: WeaponSetIndex,
+  hand: "mainHand" | "offHand",
+  slot: ModSlot,
+  modId: ModId | null,
+): StoredCharacter {
+  const held = setAt(character, set);
+  const worn = hand === "mainHand" ? held?.mainHand : held?.offHand;
+  if (held === null || worn === null || worn === undefined) {
+    return character;
+  }
+  const item = "weaponId" in worn ? worn.weaponId : worn.offhandId;
+  const mod = modId === null ? undefined : getWeaponMod(modId);
+  if (modId !== null && (mod === undefined || !modFits(mod, item, slot))) {
+    return character;
+  }
+  const upgrades = { ...worn.upgrades, [slot]: modId };
+  return touched(
+    character,
+    withSet(
+      character,
+      set,
+      hand === "mainHand"
+        ? { ...held, mainHand: { ...held.mainHand, upgrades } }
+        : held.offHand === null
+          ? held
+          : { ...held, offHand: { ...held.offHand, upgrades } },
+    ),
+  );
+}
+
+/** The slots `item` takes mods in, in slot order; bare hands take none (#2008). */
+export function modSlotsOf(item: WeaponId | OffhandId): readonly ModSlot[] {
+  return item === "unarmed" ? [] : MOD_SLOTS[item];
+}
+
+/** Every mod that may sit in `item`'s `slot`, by name; none for a slot it lacks (#2008). */
+export function modChoices(item: WeaponId | OffhandId, slot: ModSlot): readonly WeaponMod[] {
+  return WEAPON_MODS.filter((mod) => modFits(mod, item, slot)).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+}
+
+/**
+ * What `before` wore that a changed weapon or off-hand in `after` lost,
+ * one line each (#2008): `Removed Insightful: it does not fit a sword.`
+ */
+export function droppedModNotes(before: StoredCharacter, after: StoredCharacter): string[] {
+  const notes: string[] = [];
+  const lost = (was: ItemUpgrades, now: ItemUpgrades | undefined, itemName: string): void => {
+    for (const slot of MOD_SLOT_KEYS) {
+      const id = was[slot];
+      if (id !== null && now?.[slot] !== id) {
+        const name = getWeaponMod(id)?.name ?? id;
+        notes.push(`Removed ${name}: it does not fit a ${itemName.toLowerCase()}.`);
+      }
+    }
+  };
+  before.equipment.weaponSets.forEach((was, set) => {
+    const now = after.equipment.weaponSets[set];
+    if (was === null || now === null || now === undefined) {
+      return;
+    }
+    if (now.mainHand.weaponId !== was.mainHand.weaponId) {
+      const name = getWeapon(now.mainHand.weaponId)?.name ?? now.mainHand.weaponId;
+      lost(was.mainHand.upgrades, now.mainHand.upgrades, name);
+    }
+    if (
+      was.offHand !== null &&
+      now.offHand !== null &&
+      now.offHand.offhandId !== was.offHand.offhandId
+    ) {
+      const name = getOffhand(now.offHand.offhandId)?.name ?? now.offHand.offhandId;
+      lost(was.offHand.upgrades, now.offHand.upgrades, name);
+    }
+  });
+  return notes;
 }
 
 /**
