@@ -15,6 +15,10 @@ const NO_BOT_USE = new Set([
   "monk.healers-covenant",
   "monk.holy-haste",
   "ranger.practiced-stance",
+  // Trapper's Focus and Speed (#1966) go up before a trap, not for a use of
+  // their own.
+  "ranger.trappers-focus",
+  "ranger.trappers-speed",
   "dervish.extend-enchantments",
   // Aura of Stability (#1870): knockdown kept off an ally is no defence
   // the bot weighs, as Balanced Stance on itself.

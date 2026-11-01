@@ -3444,11 +3444,9 @@ export function describeSkill(
         ];
   // A trap (#1105), or a skill that says so (#1629): any attack that lands
   // while it is being used interrupts it.
-  const easilyInterrupted = [
-    ...(isEasilyInterrupted(skill) ? [{ text: "Easily interrupted", magnitude: undefined }] : []),
-    // What "Can't Touch This!" fails (#1966).
-    ...(skill.touch === true ? [{ text: "Touch skill", magnitude: undefined }] : []),
-  ];
+  const easilyInterrupted = isEasilyInterrupted(skill)
+    ? [{ text: "Easily interrupted", magnitude: undefined }]
+    : [];
   // Natural Healing's (#1916): "if you are not enchanted, this spell activates 50% faster".
   const activationWhileLine =
     skill.activationWhile === undefined

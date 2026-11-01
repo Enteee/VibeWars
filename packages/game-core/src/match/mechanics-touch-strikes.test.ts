@@ -263,6 +263,5 @@ describe("tooltips (#1966)", () => {
     expect(lines(STRIKE)).toContain("Your pet moves to your target and attacks it");
     expect(lines(FOCUS).join(" ")).toContain("your traps are not easily interrupted");
     expect(lines(CANT_TOUCH).join(" ")).toContain("the next 4 touch skills used against you fail");
-    expect(lines(VAMPIRIC_TOUCH)).toContain("Touch skill");
   });
 });
