@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   HOUSE_TEAM_AFTER_MS,
   MATCH_RUNNING_NOTICE,
-  displayLobbyCode,
   hostMaps,
+  inviteUrl,
   lobbyControls,
   lobbyPanel,
   mapLabel,
@@ -149,9 +149,24 @@ describe("lobbyControls", () => {
   });
 });
 
-describe("displayLobbyCode", () => {
-  it("reads a twelve-symbol key as three fours, the way it is read aloud (#1681)", () => {
-    expect(displayLobbyCode("ACDEFGHJKMNP")).toBe("ACDE-FGHJ-KMNP");
+describe("inviteUrl (#2100)", () => {
+  const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
+
+  it("is the page's own origin and path, with the key as its fragment", () => {
+    expect(inviteUrl(KEY, { origin: "https://enteee.github.io", pathname: "/VibeWars/" })).toBe(
+      `https://enteee.github.io/VibeWars/#lobby=${KEY}`,
+    );
+  });
+
+  it("works for a fork or a dev server", () => {
+    expect(inviteUrl(KEY, { origin: "http://localhost:5173", pathname: "/" })).toBe(
+      `http://localhost:5173/#lobby=${KEY}`,
+    );
+  });
+
+  it("drops the page's query and old fragment", () => {
+    const where = new URL("https://example.org/fork/index.html?stress=1#turn=abc");
+    expect(inviteUrl(KEY, where)).toBe(`https://example.org/fork/index.html#lobby=${KEY}`);
   });
 });
 

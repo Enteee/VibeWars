@@ -465,9 +465,7 @@
   "constants": {
     "FORMATION_SETTLE_MS": { "literal": 3000 },
     "FORMATION_TIMEOUT_MS": { "literal": 20000 },
-    "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
-    "LOBBY_CODE_LENGTH": { "literal": 12 },
-    "LOBBY_KEY_ITERATIONS": { "literal": 600000 },
+    "LOBBY_CODE_LENGTH": { "literal": 43 },
     "LOBBY_KEY_SALT": { "literal": "vibewars-lobby-key" },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },

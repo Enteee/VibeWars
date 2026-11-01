@@ -170,13 +170,6 @@ body {
     flex: 0 1 auto;
   }
 
-  /* Lobby Key's field says KEY: the label is the room the global
-     icons need on screens with no ⋯, and on the narrowest phones they
-     wrap under Join rather than off the screen (#1525). */
-  .topbar-join-label {
-    display: none;
-  }
-
   .topbar-tools {
     flex: 1 1 auto;
     flex-wrap: wrap;
@@ -263,15 +256,12 @@ body {
   }
 }
 
-/* Short of room for them, the key and its field go without their labels:
-   the key is the accented one, the field says KEY (#1526). The status
-   shares the row from 75rem, so the twelve-letter key needs a wider
-   window before they come back (#1681). The host's Closed/Open stays
+/* Short of room, the bar's lobby goes without its label: Copy invite
+   link says whose it is (#1526, #2100). The host's Closed/Open stays
    until the bar runs out: it decides whether friends get in at all
    (#1682). */
 @media (width <= 90rem) {
-  .topbar-lobby:not(.is-joining) .lobby-code-label,
-  .topbar-join-label {
+  .topbar-lobby:not(.is-joining) .lobby-code-label {
     display: none;
   }
 }
@@ -323,13 +313,16 @@ body {
   margin-left: auto;
 }
 
-/* A host's first Join (#1553): under the key field, over the screen, so
-   the bar keeps its width. */
+/* A host's invite link (#1553, #2100): under the bar's lobby, over the
+   screen, so the bar keeps its width. */
 .topbar-join-confirm {
   position: absolute;
   top: calc(100% + 0.3rem);
   right: 0;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.3rem 0.6rem;
   border: 1px solid var(--accent);
   background: var(--panel);
@@ -341,12 +334,6 @@ body {
   display: none;
 }
 
-/* Behind its host on the way to another lobby (#1553): the key it is
-   joining, greyed, after "Joining…", which keeps its word at any width. */
-.topbar-lobby.is-joining .lobby-code {
-  color: var(--ink-dim);
-}
-
 .topbar-join[hidden] {
   display: none;
 }
@@ -355,12 +342,7 @@ body {
   margin-left: 0;
 }
 
-.topbar-join-label {
-  color: var(--ink-dim);
-  white-space: nowrap;
-}
-
-/* The lobby this tab is in (#1526): its code, Copy, and a guest's Leave. */
+/* The lobby this tab is in (#1526): Copy invite link, and a guest's Leave. */
 .topbar-lobby {
   display: flex;
   align-items: center;
@@ -374,11 +356,6 @@ body {
 .topbar-lobby .topbar-leave[hidden],
 .topbar-lobby .lobby-copy[hidden] {
   display: none;
-}
-
-/* Its spacing is the bar's .lobby-code's, below (#1681). */
-#topbar .topbar-lobby-code {
-  font-size: 0.95rem;
 }
 
 #topbar .topbar-lobby button {
@@ -405,23 +382,10 @@ body {
   border-color: var(--accent);
 }
 
-/* A key is ACDE-FGHJ-KMNP, fourteen wide (#1681). */
-#topbar .topbar-join .code-input {
-  width: 18ch;
-  padding: 0.15rem 0.4rem;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
-}
-
-/* Between the ⋯ and a whole row the twelve-letter key, Copy and the
-   field crowd the global icons off the bar (#1526): Copy goes, as one
-   click on the key selects it all, and the field and key narrow. */
+/* Between the ⋯ and a whole row the lobby crowds the global icons off
+   the bar (#1526). */
 @media (45rem < width <= 60rem) {
-  #topbar .topbar-lobby .lobby-copy {
-    display: none;
-  }
-
-  /* The host's lock (#1682) takes its room from the gaps and the field. */
+  /* The host's lock (#1682) takes its room from the gaps. */
   #topbar .topbar-lobby {
     gap: 0.25rem;
     margin-right: 0.2rem;
@@ -429,14 +393,6 @@ body {
 
   #topbar .topbar-lobby .topbar-lobby-open {
     padding: 0.2rem 0.35rem;
-  }
-
-  #topbar .topbar-lobby-code {
-    font-size: 0.85rem;
-  }
-
-  #topbar .topbar-join .code-input {
-    width: 12ch;
   }
 }
 
@@ -1243,13 +1199,6 @@ body {
   font: inherit;
 }
 
-.code-input {
-  width: 8ch;
-  text-align: center;
-  letter-spacing: 0.3em;
-  font-size: 1.1rem;
-}
-
 /* Options' Player section (#1513): name and guild tag side by side (#1406),
    sharing rows: label, input, hint. The tag fits four wide letters. */
 .player-identity {
@@ -1562,13 +1511,6 @@ body {
 .party-closed {
   color: var(--ink-dim);
   font-style: italic;
-}
-
-.party-code {
-  margin-left: auto;
-  color: var(--accent);
-  letter-spacing: 0.15em;
-  user-select: all;
 }
 
 .lobby-panel {
@@ -2848,27 +2790,11 @@ body {
   white-space: nowrap;
 }
 
-/* The dashes group the key's twelve letters (#1681): wide spacing would
-   push the map under the bar's buttons. */
-#topbar .lobby-code {
-  letter-spacing: 0.05em;
-}
-
 .lobby-code-label {
   color: var(--ink-dim);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-size: 0.78rem;
-}
-
-/* The code is read aloud across a room, so it gets the most weight. One
-   click selects all of it, for a copy by hand when the clipboard is refused. */
-.lobby-code {
-  font-size: 1.2rem;
-  letter-spacing: 0.3em;
-  color: var(--accent);
-  font-weight: 700;
-  user-select: all;
 }
 
 .lobby-map,

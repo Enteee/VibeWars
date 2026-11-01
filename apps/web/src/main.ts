@@ -12,6 +12,7 @@ import {
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
+  NOT_A_KEY_MESSAGE,
   lobbyClosedNotice,
   lobbyRefusalNotice,
   matchFailureNotice,
@@ -29,6 +30,7 @@ import {
   type PartyPlace,
   type RandomArenaQueue,
 } from "./net/session.js";
+import { parseLobbyFragment, type LobbyFragment } from "./net/fragment.js";
 import {
   UNREADABLE_RELAY_NOTICE,
   loadTurnConfig,
@@ -152,12 +154,7 @@ import {
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
-import {
-  normalizeLobbyCode,
-  teamQueueModeOf,
-  teamSizeOf,
-  type QueueMode,
-} from "@vibewars/game-protocol";
+import { teamQueueModeOf, teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
 import { type PlayerBuild } from "@vibewars/game-core";
 
 /**
@@ -171,8 +168,10 @@ import { type PlayerBuild } from "@vibewars/game-core";
 
 /** Shown on the lobby or the menu once a match is lost for good. */
 const LOST_MATCH_NOTICE = "Lost the connection to the match.";
-/** A code typed into the title bar that is this tab's own lobby's (#1526). */
+/** An invite link to this tab's own lobby (#1526, #2100). */
 const OWN_LOBBY_NOTICE = "That is your own lobby";
+/** An invite link opened over a lobby's screen or a match (#2100), which a join would leave. */
+const INVITE_IN_LOBBY_NOTICE = "Go back to the menu, then open the invite link again.";
 
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
@@ -229,6 +228,21 @@ function takeRelayLink(): TurnFragment {
   return fragment;
 }
 
+/**
+ * The lobby invite link this page was opened with, if any (#2100), taken
+ * out of the address bar and the history entry at once, as `takeRelayLink`
+ * does: a reload or a screenshot of the URL carries no key. Only `lobby=`
+ * goes; the rest of the fragment stays.
+ */
+function takeLobbyLink(): LobbyFragment {
+  const fragment = parseLobbyFragment(location.hash);
+  if (fragment.kind !== "none") {
+    const rest = fragment.rest === "" ? "" : `#${fragment.rest}`;
+    history.replaceState(history.state, "", `${location.pathname}${location.search}${rest}`);
+  }
+  return fragment;
+}
+
 /** The served build id this tab last reloaded for (#1268): once per id, never a loop. */
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 
@@ -249,6 +263,7 @@ interface Entrant {
 async function main(): Promise<void> {
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
+  const lobbyLink = takeLobbyLink();
   // A touch-only device is told it needs a keyboard and mouse (#1392)
   // before the menu, which waits until it goes past.
   if (needsTouchNotice((query) => matchMedia(query).matches, loadTouchNoticeDismissed)) {
@@ -286,6 +301,9 @@ async function main(): Promise<void> {
     notices.add(UNREADABLE_RELAY_NOTICE);
   });
   const framed = window.top !== window.self;
+  if (lobbyLink.kind === "malformed") {
+    notices.add(NOT_A_KEY_MESSAGE);
+  }
   if (relayLink.kind === "malformed") {
     notices.add(MALFORMED_RELAY_LINK_NOTICE);
   } else if (relayLink.kind === "config" && framed) {
@@ -980,7 +998,7 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Join the lobby `code` from the title bar (#1526): this tab's own stays
+   * Join the lobby `code` an invite link named (#1526, #2100): this tab's own stays
    * open until the join is in, so a failed one keeps its code and guests,
    * and only then sends them after it (#1553).
    */
@@ -989,7 +1007,7 @@ async function main(): Promise<void> {
     const movedOn = (): boolean => movedOnSince(turn);
     void (async () => {
       const current = lobby?.getSnapshot().code;
-      if (current !== undefined && normalizeLobbyCode(code) === current) {
+      if (current !== undefined && code === current) {
         if (hosted !== undefined) {
           toast(OWN_LOBBY_NOTICE);
         }
@@ -1019,7 +1037,7 @@ async function main(): Promise<void> {
       }
       // In: only now does this tab's own lobby close, sending its guests
       // after it (#1553).
-      await closeLobby(normalizeLobbyCode(code));
+      await closeLobby(code);
       if (movedOn()) {
         await joined.disconnect();
         return;
@@ -2367,12 +2385,21 @@ async function main(): Promise<void> {
   const buildWatch = watchServedBuild();
 
   showMenu();
+  if (lobbyLink.kind === "invite") {
+    topbarView.invite(lobbyLink.code);
+  }
   if (relayLink.kind === "config" && !framed) {
     openRelayPrompt(app, relayLink.config, savedRelay);
   }
   // An invite link pasted into this open tab only changes the fragment:
   // nothing reloads, so it is taken out and asked about here.
   window.addEventListener("hashchange", () => {
+    const invited = takeLobbyLink();
+    if (invited.kind === "malformed") {
+      toast(NOT_A_KEY_MESSAGE);
+    } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
+      toast(INVITE_IN_LOBBY_NOTICE);
+    }
     const pasted = takeRelayLink();
     if (pasted.kind === "malformed") {
       toast(MALFORMED_RELAY_LINK_NOTICE);

@@ -6,7 +6,6 @@ import {
   PROTOCOL_VERSION,
   isLobbyCode,
   isTeamQueueMode,
-  normalizeLobbyCode,
   type JsonValue,
   type LobbyRefusal,
   type PeerHello,
@@ -73,11 +72,11 @@ const MATCH_TIMEOUT_MS = 10_000;
  * lobby, whose host is in no room (#1682), cannot be told apart.
  */
 export const NO_ANSWER_MESSAGE =
-  "Couldn't reach that lobby. Check the key, and ask the host to open it.";
-/** Typed wrong: not 12 symbols of the key alphabet (#1681). Nothing was sent anywhere. */
-export const NOT_A_KEY_MESSAGE = "That is not a lobby key.";
+  "Couldn't reach that lobby. Check the invite link, and ask the host to open it.";
+/** Not a 43-character lobby key (#2100). Nothing was sent anywhere. */
+export const NOT_A_KEY_MESSAGE = "That invite link is broken.";
 
-/** What was typed cannot be a lobby key, so it was never looked for (#1681). */
+/** What was given cannot be a lobby key, so it was never looked for (#1681). */
 export class NotALobbyKeyError extends Error {
   public constructor() {
     super("That is not a lobby key.");
@@ -302,7 +301,7 @@ export async function joinLobbyByCode(
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
-  if (queued === undefined && !isLobbyCode(normalizeLobbyCode(code))) {
+  if (queued === undefined && !isLobbyCode(code)) {
     throw new NotALobbyKeyError();
   }
   const lobbyRoom =
