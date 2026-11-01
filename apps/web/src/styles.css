@@ -2490,6 +2490,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
   background: var(--bg);
   border: 1px solid var(--line);
@@ -2506,6 +2507,7 @@ body {
   display: flex;
   gap: 0.3rem;
   width: min(28rem, 80vw);
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
   background: var(--bg);
   border: 1px solid var(--line);

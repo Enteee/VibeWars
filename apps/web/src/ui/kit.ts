@@ -715,6 +715,28 @@ export interface ShareLine {
   isOpen(): boolean;
 }
 
+/** What `keepInside` reads and moves of a panel. */
+export interface InsidePanel {
+  readonly style: { translate: string; maxWidth: string };
+  getBoundingClientRect(): { readonly left: number; readonly right: number };
+}
+
+/**
+ * Shift a shown `panel` sideways until it is wholly inside the window,
+ * `margin` px from each edge (#2028), as `placeTip` does a tooltip. It
+ * keeps its anchor whenever that fits, and is never wider than the window.
+ */
+export function keepInside(panel: InsidePanel, margin = 8): void {
+  panel.style.translate = "";
+  panel.style.maxWidth = `${String(window.innerWidth - 2 * margin)}px`;
+  const box = panel.getBoundingClientRect();
+  const shift =
+    box.left < margin ? margin - box.left : Math.min(0, window.innerWidth - margin - box.right);
+  if (shift !== 0) {
+    panel.style.translate = `${String(shift)}px`;
+  }
+}
+
 /**
  * A code to share as one line, selected, with Copy (#572). Copy toasts
  * "Copied"; when the clipboard is refused the line stays selected, so it
@@ -750,6 +772,7 @@ export function shareLine(label: string): ShareLine {
     show(text) {
       line.value = text;
       element.hidden = false;
+      keepInside(element);
       selectLine();
     },
     hide() {
@@ -807,6 +830,7 @@ export function loadLine(
       line.value = "";
       problems.replaceChildren();
       element.hidden = false;
+      keepInside(element);
       line.focus();
     },
     hide() {
@@ -840,9 +864,27 @@ export function moreMenu(
     menu.hidden = true;
     toggle.setAttribute("aria-expanded", "false");
   };
+  // A resized window moves what is open back inside it, until the screen
+  // that holds the ⋯ is gone.
+  const panels = [menu, ...below];
+  const refit = (): void => {
+    if (!element.isConnected) {
+      window.removeEventListener("resize", refit);
+      return;
+    }
+    for (const panel of panels) {
+      if (!panel.hidden) {
+        keepInside(panel);
+      }
+    }
+  };
   const toggle = button("⋯", "editor-more-toggle", () => {
     menu.hidden = !menu.hidden;
     toggle.setAttribute("aria-expanded", String(!menu.hidden));
+    if (!menu.hidden) {
+      keepInside(menu);
+      window.addEventListener("resize", refit);
+    }
   });
   toggle.setAttribute("aria-label", "more actions");
   toggle.setAttribute("aria-expanded", "false");
