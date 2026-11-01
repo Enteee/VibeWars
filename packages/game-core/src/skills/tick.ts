@@ -292,6 +292,21 @@ export function weaponDamageMultiplierOf(combatant: Combatant): number {
 }
 
 /**
+ * What the bearer's statuses add to each of its blows (#1654), summed.
+ * One that names a weapon (#1873) counts only while the bearer wields it:
+ * Favorable Winds' arrows.
+ */
+export function attackDamageDeltaOf(combatant: Combatant): number {
+  const wielded = combatant.equipment.mainHand.weapon.id;
+  return combatant.statuses.active.reduce((sum, { id }) => {
+    const { attackDamageDelta, attackDamageDeltaWeapon } = getStatusDefinition(id);
+    return attackDamageDeltaWeapon === undefined || wieldsFor(wielded, attackDamageDeltaWeapon)
+      ? sum + attackDamageDelta
+      : sum;
+  }, 0);
+}
+
+/**
  * The type the bearer's attacks deal while a status sets one (#1021):
  * the newest such status's, a pick and not a sum. One that names a weapon
  * (#1455) counts only while the bearer wields it. `undefined`: the

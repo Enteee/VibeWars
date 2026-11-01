@@ -280,6 +280,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.maxHealthBonus !== 0) {
     parts.push(`+${String(definition.maxHealthBonus)} maximum health`);
   }
+  if (definition.maxHealthBonusPerEnchantment !== 0) {
+    parts.push(
+      `+${String(definition.maxHealthBonusPerEnchantment)} maximum health per enchantment`,
+    );
+  }
   if (definition.maxEnergyBonus !== 0) {
     parts.push(`+${String(definition.maxEnergyBonus)} maximum energy`);
   }
@@ -297,6 +302,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.elementalDamageTakenAs !== undefined) {
     parts.push(`elemental damage taken is ${definition.elementalDamageTakenAs} damage`);
   }
+  if (definition.physicalDamageDealtAs !== undefined) {
+    parts.push(`physical damage dealt is ${definition.physicalDamageDealtAs} damage`);
+  }
   if (definition.damageFromSpiritAttacks !== 0) {
     parts.push(`take ${signed(definition.damageFromSpiritAttacks)} from spirits' attacks`);
   }
@@ -311,11 +319,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
     );
   }
-  if (definition.attackDamageDelta < 0) {
-    parts.push(`attacks deal ${String(-definition.attackDamageDelta)} less damage`);
-  }
-  if (definition.attackDamageDelta > 0) {
-    parts.push(`attacks deal ${String(definition.attackDamageDelta)} more damage`);
+  if (definition.attackDamageDelta !== 0) {
+    const weapon = definition.attackDamageDeltaWeapon;
+    const delta = definition.attackDamageDelta;
+    parts.push(
+      `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${String(Math.abs(delta))} ${delta < 0 ? "less" : "more"} damage`,
+    );
   }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
@@ -524,6 +533,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.whileUnder !== undefined) {
     const {
       categories,
+      statusIds,
       attackDurationMultiplier,
       adrenalineGainFaster,
       healthPips,
@@ -541,7 +551,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
       ...(adrenalineGainFaster === 0 ? [] : [adrenalineGainText(adrenalineGainFaster)]),
     ];
-    parts.push(`while under a ${categories.join(" or ")}: ${gains.join(", ")}`);
+    // Toxicity's (#1873): "while under Poison or Disease".
+    const under = [
+      ...categories.map((category) => `a ${category}`),
+      ...statusIds.map((id) => getStatusDefinition(id).name),
+    ];
+    parts.push(`while under ${under.join(" or ")}: ${gains.join(", ")}`);
   }
   if (definition.endsAfterTriggers !== undefined) {
     const plural = definition.endsAfterTriggers === 1 ? "" : "s";
@@ -825,6 +840,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-blocks": "blocks",
   "bearer-interrupted": "is interrupted",
+  "bearer-knocked-down": "is knocked down",
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
   "bearer-loses-enchantment": "loses an enchantment",
