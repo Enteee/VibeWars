@@ -373,6 +373,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "vital-blessing": icon("vital-blessing"),
   "vital-weapon": icon("vital-weapon"),
   "vocal-minority": icon("vocal-minority"),
+  // Skill-type and heal triggers (#1913).
+  cacophony: icon("cacophony"),
+  "soul-bind": icon("soul-bind"),
+  "scribes-insight": icon("scribes-insight"),
 };
 
 const GAP = 2;

@@ -39,7 +39,9 @@ export type MonkStatusId =
   // Caster staples (#1870).
   | "aura-of-stability"
   // Caster staples 2 (#1872).
-  | "vital-blessing";
+  | "vital-blessing"
+  // Skill-type and heal triggers (#1913).
+  | "scribes-insight";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -415,5 +417,19 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   "vital-blessing": define("vital-blessing", "Vital Blessing", "enchantment", {
     profession: "monk",
     maxHealthBonus: 168,
+  }),
+  // "For 10...30...35 seconds, you gain 3 Energy whenever you use a signet"
+  // (#1913).
+  "scribes-insight": define("scribes-insight", "Scribe's Insight", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { type: "signet" },
+        effects: [{ kind: "energy-gain", amount: { flat: 3 } }],
+        target: "bearer",
+        skillId: "monk.scribes-insight",
+      },
+    ],
   }),
 };

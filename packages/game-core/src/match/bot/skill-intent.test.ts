@@ -182,6 +182,8 @@ const NO_BOT_USE = new Set([
   "elementalist.water-attunement",
   "elementalist.air-attunement",
   "elementalist.earth-attunement",
+  // Scribe's Insight (#1913), the same, for signets still to be used.
+  "monk.scribes-insight",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",

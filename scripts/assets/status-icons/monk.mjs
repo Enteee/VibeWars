@@ -238,4 +238,11 @@ export const MONK_STATUS_ICONS = {
       `<path d="M12 20l-7-7a4 4 0 0 1 7-5 4 4 0 0 1 7 5z" fill="${c}"/>` +
       `<path d="M12 2v5M9.5 4.5h5" ${stroke(c, 2)}/>`,
   ],
+  // Skill-type and heal triggers (#1913), a stand-in until its art card.
+  // Enchantment: a quill over a spark, Energy for each signet.
+  "scribes-insight": [
+    "enchantment",
+    (c) =>
+      `<path d="M18 3L8 13l-2 5 5-2L21 6z" fill="${c}"/>` + `<path d="M4 21h8" ${stroke(c, 2)}/>`,
+  ],
 };

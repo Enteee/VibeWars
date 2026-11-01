@@ -852,6 +852,14 @@ export type StatusTriggerEvent =
    */
   | "bearer-hit-by-attack"
   /**
+   * A skill's heal effect landed on the bearer (#1913), its amount above
+   * 0, an overheal at full Health too: Soul Bind's. Pips, regeneration,
+   * life steal and Divine Favor's bonus are no such heal. Recorded with
+   * the healer, the offender, and fired at the drain, as damage from a
+   * foe is.
+   */
+  | "bearer-healed-by-skill"
+  /**
    * The bearer blocked a melee or a projectile attack (#1329), and the
    * status holding the trigger is the one whose share the block roll fell
    * in. Recorded with the attacker, who is the offender, and fired at the
@@ -1133,10 +1141,18 @@ export interface StatusTrigger {
    * Or `source-on-offender` (#1789): the status's source turns on the
    * offender, with its own ranks, as Judge's Intervention smites whoever
    * struck the killing blow.
+   * Or `healer` (#1913): the status's source turns on whoever healed the
+   * bearer, only a foe of the source's, as Soul Bind hurts the healer.
    */
   readonly effects: readonly TriggerEffect[];
   readonly target:
-    "bearer" | "source" | "offender" | "created" | "gained-source" | "source-on-offender";
+    | "bearer"
+    | "source"
+    | "offender"
+    | "created"
+    | "gained-source"
+    | "source-on-offender"
+    | "healer";
   /**
    * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
    * only for an attack made with a weapon of this class in the bearer's
@@ -1322,6 +1338,12 @@ export type StatusChange =
     }
   | {
       readonly kind: "hit-by-attack";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
+  /** A skill healed the bearer (#1913); `offenderId` is the healer. */
+  | {
+      readonly kind: "healed-by-skill";
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
@@ -1744,6 +1766,18 @@ export class StatusSet {
     const fired = this.#answering("bearer-interrupted");
     if (fired.length > 0) {
       this.#changes.push({ kind: "interrupted", offenderId, fired });
+    }
+  }
+
+  /**
+   * `healerId` healed the bearer with a skill (#1913), recorded only if a
+   * status on it answers that, with the triggers that do: once for each
+   * heal.
+   */
+  public recordHealedBySkill(healerId: string): void {
+    const fired = this.#answering("bearer-healed-by-skill");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "healed-by-skill", offenderId: healerId, fired });
     }
   }
 
