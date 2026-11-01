@@ -212,7 +212,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: { flat: 17 } }],
         skillId: "mesmer.phantom-pain",
       },
     ],
@@ -227,7 +227,9 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
+        effects: [
+          { kind: "apply-status", statusId: "cracked-armor", durationSeconds: { flat: 17 } },
+        ],
         skillId: "mesmer.shrinking-armor",
       },
     ],
@@ -241,7 +243,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 3 }],
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 3 } }],
         skillId: "mesmer.illusion-of-haste",
       },
     ],
@@ -266,7 +268,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
             type: "typeless",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
+          { kind: "apply-status", statusId: "blind", durationSeconds: { flat: 10 } },
         ],
         skillId: "mesmer.ineptitude",
       },

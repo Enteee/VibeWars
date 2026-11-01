@@ -284,7 +284,7 @@ describe("Reaper's Mark (#1762)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
       rechargeSeconds: 10,
-      effects: [{ kind: "apply-status", statusId: "reapers-mark", durationSeconds: 30 }],
+      effects: [{ kind: "apply-status", statusId: "reapers-mark", durationSeconds: { flat: 30 } }],
     });
     expect(describeStatus("reapers-mark", RANKS)).toBe(
       "−4 Health degeneration. If target foe dies while hexed with this, you gain 13 Energy",
@@ -313,7 +313,15 @@ describe("Assassin's Promise (#1762)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0.75,
       rechargeSeconds: 45,
-      effects: [{ kind: "apply-status", statusId: "assassins-promise", durationSeconds: 13 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "assassins-promise",
+          durationSeconds: {
+            scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 13 },
+          },
+        },
+      ],
     });
     expect(describeStatus("assassins-promise", RANKS)).toBe(
       "if target foe dies while hexed with this, you gain 17 Energy and all your skills are recharged",
@@ -354,7 +362,15 @@ describe("Putrid Bile (#1762)", () => {
       attributeId: "necromancer.death-magic",
       cost: { kind: "energy", amount: 10 },
       rechargeSeconds: 12,
-      effects: [{ kind: "apply-status", statusId: "putrid-bile", durationSeconds: 21 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "putrid-bile",
+          durationSeconds: {
+            scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 21 },
+          },
+        },
+      ],
     });
     expect(describeStatus("putrid-bile", RANKS)).toBe(
       "−3 Health degeneration. If target foe dies while hexed with this, nearby foes take 73 damage",

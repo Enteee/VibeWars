@@ -462,7 +462,7 @@ export interface GiveHealthEffect {
 export interface ApplyStatusEffect {
   readonly kind: "apply-status";
   readonly statusId: StatusId;
-  readonly durationSeconds: number;
+  readonly durationSeconds: Magnitude;
   readonly on?: "caster";
 }
 

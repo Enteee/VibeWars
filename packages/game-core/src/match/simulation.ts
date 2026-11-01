@@ -2057,7 +2057,7 @@ export class MatchSimulation {
       }
       const effect: SkillEffect =
         burst.effect === "apply-status"
-          ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: amount }
+          ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: { flat: amount } }
           : burst.effect === "damage"
             ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
             : { kind: "heal", amount: { flat: amount } };
@@ -4509,7 +4509,13 @@ export class MatchSimulation {
       )
       .flatMap((other) =>
         applyEffects(
-          [{ kind: "apply-status", statusId: gained.id, durationSeconds: gained.durationSeconds }],
+          [
+            {
+              kind: "apply-status",
+              statusId: gained.id,
+              durationSeconds: { flat: gained.durationSeconds },
+            },
+          ],
           {
             caster: bearer,
             target: other.combatant,

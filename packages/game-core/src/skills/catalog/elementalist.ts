@@ -119,7 +119,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // A self-enchantment: real armor gain, and the real movement penalty
     // that makes it a genuine trade-off rather than a free buff.
-    effects: [{ kind: "apply-status", statusId: "armor-boost", durationSeconds: 30 }],
+    effects: [{ kind: "apply-status", statusId: "armor-boost", durationSeconds: { flat: 30 } }],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -151,7 +151,9 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15 seconds, your next 2 spells cost 10...16...18 less Energy to
     // cast": the two spells and the 16 are the status's `nextSpells`.
-    effects: [{ kind: "apply-status", statusId: "glyph-of-lesser-energy", durationSeconds: 15 }],
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-lesser-energy", durationSeconds: { flat: 15 } },
+    ],
   },
   {
     id: "elementalist.glyph-of-concentration",
@@ -178,7 +180,9 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15 seconds, your next 1 spells cannot be interrupted" (#1730):
     // the status's `nextSkillRule`.
-    effects: [{ kind: "apply-status", statusId: "glyph-of-concentration", durationSeconds: 15 }],
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-concentration", durationSeconds: { flat: 15 } },
+    ],
   },
   {
     id: "elementalist.glyph-of-sacrifice",
@@ -205,7 +209,9 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15 seconds, your next spell casts instantly, but it takes an
     // additional 30 seconds to recharge" (#1730).
-    effects: [{ kind: "apply-status", statusId: "glyph-of-sacrifice", durationSeconds: 15 }],
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-sacrifice", durationSeconds: { flat: 15 } },
+    ],
   },
   {
     id: "elementalist.glyph-of-renewal",
@@ -231,7 +237,9 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 15 seconds, your next spell instantly recharges" (#1730).
-    effects: [{ kind: "apply-status", statusId: "glyph-of-renewal", durationSeconds: 15 }],
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-renewal", durationSeconds: { flat: 15 } },
+    ],
   },
   {
     id: "elementalist.glyph-of-essence",
@@ -258,7 +266,9 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15 seconds, your next spell casts instantly but causes you to
     // lose all Energy" (#1730).
-    effects: [{ kind: "apply-status", statusId: "glyph-of-essence", durationSeconds: 15 }],
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-essence", durationSeconds: { flat: 15 } },
+    ],
   },
   {
     id: "elementalist.lava-arrows",
@@ -472,7 +482,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "cold",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "shard-storm", durationSeconds: 5 },
+      {
+        kind: "apply-status",
+        statusId: "shard-storm",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 2, atTwelve: 5.2 },
+        },
+      },
     ],
   },
   {
@@ -516,7 +532,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "cold",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "ice-spikes", durationSeconds: 5 },
+      {
+        kind: "apply-status",
+        statusId: "ice-spikes",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 2, atTwelve: 5.2 },
+        },
+      },
     ],
   },
   {
@@ -560,7 +582,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "cold",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "deep-freeze", durationSeconds: 10 },
+      { kind: "apply-status", statusId: "deep-freeze", durationSeconds: { flat: 10 } },
     ],
   },
 
@@ -592,7 +614,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Target enemy is blinded for 3...7...8 seconds": 7 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 7 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "blind",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 3, atTwelve: 7 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.shock",
@@ -846,7 +876,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-lacks-status", statusId: "burning" },
-        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "burning",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 5.8 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -885,7 +923,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "earth",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "weakness", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "weakness",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 13 },
+        },
+      },
     ],
   },
   {
@@ -1074,7 +1118,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "fire",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 2.6 },
+        },
+      },
     ],
   },
   {
@@ -1261,7 +1311,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "fire",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 2.6 },
+        },
+      },
     ],
   },
   {
@@ -1380,7 +1436,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
             type: "fire",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "burning", durationSeconds: 8 },
+          {
+            kind: "apply-status",
+            statusId: "burning",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.fire-magic", atZero: 1, atTwelve: 8.2 },
+            },
+          },
         ],
       },
     ],
@@ -1413,7 +1475,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8...18...20 seconds, target foe's legs are encased in ice,
     // causing the foe to move 66% slower."
-    effects: [{ kind: "apply-status", statusId: "ice-prison", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ice-prison",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.frozen-burst",
@@ -1455,7 +1525,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "cold",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "frozen-burst", durationSeconds: 7 },
+      {
+        kind: "apply-status",
+        statusId: "frozen-burst",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 3, atTwelve: 7 },
+        },
+      },
     ],
   },
   {
@@ -1600,7 +1676,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "blurred-vision", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "blurred-vision",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.armor-of-mist",
@@ -1627,7 +1711,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8...18...20 seconds, you gain +10...34...40 armor and move 33%
     // faster."
-    effects: [{ kind: "apply-status", statusId: "armor-of-mist", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "armor-of-mist",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.shatterstone",
@@ -1664,7 +1756,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "cold",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "shatterstone", durationSeconds: 3 },
+      { kind: "apply-status", statusId: "shatterstone", durationSeconds: { flat: 3 } },
     ],
   },
   {
@@ -1716,7 +1808,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
             type: "cold",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "mind-freeze", durationSeconds: 4 },
+          {
+            kind: "apply-status",
+            statusId: "mind-freeze",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 4.2 },
+            },
+          },
         ],
       },
     ],
@@ -1805,7 +1903,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // "For 10...35 seconds, whenever each foe is struck for fire damage,
     // that foe is set on fire for 1...4 seconds": 30 s. The Burning is the
     // hex's.
-    effects: [{ kind: "apply-status", statusId: "mark-of-rodgort", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mark-of-rodgort",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.lava-font",
@@ -1987,7 +2093,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8...20 seconds, you gain +20 armor and cannot be the target of
     // enemy spells, but cannot attack and have -2 energy degeneration."
-    effects: [{ kind: "apply-status", statusId: "obsidian-flesh", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "obsidian-flesh",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.gale",
@@ -2248,8 +2362,20 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "lightning",
         armorPenetration: 0.25,
       },
-      { kind: "apply-status", statusId: "blind", durationSeconds: 3 },
-      { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 },
+      {
+        kind: "apply-status",
+        statusId: "blind",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 1, atTwelve: 3.4 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "cracked-armor",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 1, atTwelve: 8.2 },
+        },
+      },
     ],
   },
   {
@@ -2393,7 +2519,9 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // PvP: "For 60 seconds, you gain 0...1 Energy and are healed for
     // 200...400% of the Energy cost each time you cast a spell."
-    effects: [{ kind: "apply-status", statusId: "aura-of-restoration", durationSeconds: 60 }],
+    effects: [
+      { kind: "apply-status", statusId: "aura-of-restoration", durationSeconds: { flat: 60 } },
+    ],
   },
   {
     id: "elementalist.kinetic-armor",
@@ -2420,7 +2548,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 12 seconds, you gain +20...80 armor. Whenever you cast a spell,
     // Kinetic Armor is renewed for 12 seconds."
-    effects: [{ kind: "apply-status", statusId: "kinetic-armor", durationSeconds: 12 }],
+    effects: [{ kind: "apply-status", statusId: "kinetic-armor", durationSeconds: { flat: 12 } }],
   },
   {
     id: "elementalist.steam",
@@ -2459,7 +2587,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "if",
         condition: { kind: "target-has-status", statusId: "burning" },
         effects: [
-          { kind: "apply-status", statusId: "blind", durationSeconds: 9 },
+          {
+            kind: "apply-status",
+            statusId: "blind",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 5, atTwelve: 9 },
+            },
+          },
           {
             kind: "damage",
             amount: {
@@ -2508,7 +2642,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         type: "lightning",
         armorPenetration: 0.25,
       },
-      { kind: "apply-status", statusId: "weakness", durationSeconds: 17 },
+      {
+        kind: "apply-status",
+        statusId: "weakness",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
     ],
   },
   {
@@ -2682,8 +2822,20 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         armorPenetration: 0.25,
       },
       { kind: "interrupt" },
-      { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 },
-      { kind: "apply-status", statusId: "weakness", durationSeconds: 17 },
+      {
+        kind: "apply-status",
+        statusId: "cracked-armor",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "weakness",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
     ],
   },
   {
@@ -2710,7 +2862,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 5...13 seconds, target ally moves 33% faster": 11 s.
-    effects: [{ kind: "apply-status", statusId: "windborne-speed", durationSeconds: 11 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "windborne-speed",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 11.4 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.glowstone",
@@ -2858,7 +3018,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
                 type: "earth",
                 armorPenetration: 0,
               },
-              { kind: "apply-status", statusId: "blind", durationSeconds: 10 },
+              { kind: "apply-status", statusId: "blind", durationSeconds: { flat: 10 } },
             ],
           },
         },
@@ -2909,7 +3069,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "burning" },
-        effects: [{ kind: "apply-status", statusId: "ash-blast", durationSeconds: 5 }],
+        effects: [{ kind: "apply-status", statusId: "ash-blast", durationSeconds: { flat: 5 } }],
       },
     ],
   },
@@ -2958,7 +3118,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
             type: "earth",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "weakness", durationSeconds: 8 },
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 8.2 },
+            },
+          },
         ],
       },
       {
@@ -2975,7 +3141,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
             type: "earth",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 },
+          {
+            kind: "apply-status",
+            statusId: "cracked-armor",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 8.2 },
+            },
+          },
         ],
       },
       {
@@ -2992,7 +3164,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
             type: "earth",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "blind", durationSeconds: 8 },
+          {
+            kind: "apply-status",
+            statusId: "blind",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 8.2 },
+            },
+          },
         ],
       },
     ],
@@ -3119,7 +3297,13 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
                 type: "typeless",
                 armorPenetration: 0,
               },
-              { kind: "apply-status", statusId: "cracked-armor", durationSeconds: 13 },
+              {
+                kind: "apply-status",
+                statusId: "cracked-armor",
+                durationSeconds: {
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 13 },
+                },
+              },
             ],
           },
         ],
@@ -3175,7 +3359,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
           kind: "not",
           condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
         },
-        effects: [{ kind: "apply-status", statusId: "freezing-gust", durationSeconds: 4 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "freezing-gust",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 4.2 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -3214,7 +3406,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, all nearby foes move 50% slower": 17 s.
-    effects: [{ kind: "apply-status", statusId: "grasping-earth", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "grasping-earth",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "elementalist.breath-of-fire",
@@ -3301,7 +3501,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...49...61 seconds, all of your elemental attributes are set to
     // 8...13...14" (#1929): the status holds the rest.
-    effects: [{ kind: "apply-status", statusId: "master-of-magic", durationSeconds: 49 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "master-of-magic",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 1, atTwelve: 49 },
+        },
+      },
+    ],
   },
   // Attributes raised (#1941).
   {
@@ -3329,7 +3537,9 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 25 seconds, your elemental attributes are boosted by 2 for your
     // next 10 spells" (#1941): the status holds the rest.
-    effects: [{ kind: "apply-status", statusId: "glyph-of-elemental-power", durationSeconds: 25 }],
+    effects: [
+      { kind: "apply-status", statusId: "glyph-of-elemental-power", durationSeconds: { flat: 25 } },
+    ],
   },
   {
     id: "elementalist.glyph-of-energy",
@@ -3361,7 +3571,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       {
         kind: "apply-status",
         statusId: "glyph-of-energy",
-        durationSeconds: Number.POSITIVE_INFINITY,
+        durationSeconds: { flat: Number.POSITIVE_INFINITY },
       },
     ],
   },
@@ -3390,7 +3600,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // PvP (#1951): "For 5...20 seconds, whenever you apply an Elemental hex
     // to a foe, that foe is set on fire for 1...2 seconds": 17 s.
-    effects: [{ kind: "apply-status", statusId: "elemental-flame", durationSeconds: 17 }],
+    effects: [{ kind: "apply-status", statusId: "elemental-flame", durationSeconds: { flat: 17 } }],
   },
   {
     id: "elementalist.mist-form",
@@ -3419,7 +3629,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     // under the effect of Water Magic hexes. Whenever you cast an elemental
     // spell, all non-spirit allies in earshot are healed for 50...250% of
     // the Energy cost of the spell": 38 s.
-    effects: [{ kind: "apply-status", statusId: "mist-form", durationSeconds: 38 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mist-form",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 10, atTwelve: 38 },
+        },
+      },
+    ],
   },
 ];
 
@@ -3456,6 +3674,14 @@ function attunement(
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: `${element}-attunement`, durationSeconds: 55 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: `${element}-attunement`,
+        durationSeconds: {
+          scaling: { attributeId: `elementalist.${element}-magic`, atZero: 36, atTwelve: 55.2 },
+        },
+      },
+    ],
   };
 }

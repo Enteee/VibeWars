@@ -114,7 +114,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   // causes Burning for 1...3...3 seconds": 3 s, its rank-12 value.
   "anthem-of-flame": define("anthem-of-flame", "Anthem of Flame", "chant", {
     profession: "paragon",
-    nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+    nextAttackSkill: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } }],
   }),
   // "For 10 seconds, the next time each ally within earshot uses an attack
   // skill, that ally gains 1...8 Energy" (#1483): 7, its rank-12 value.
@@ -215,12 +215,16 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   // Weakness for 1...16 seconds" (#1483): 13 s at rank 12.
   "anthem-of-weariness": define("anthem-of-weariness", "Anthem of Weariness", "chant", {
     profession: "paragon",
-    nextAttackSkill: [{ kind: "apply-status", statusId: "weakness", durationSeconds: 13 }],
+    nextAttackSkill: [
+      { kind: "apply-status", statusId: "weakness", durationSeconds: { flat: 13 } },
+    ],
   }),
   // "...causes Crippling for 5...15 seconds" (#1483): 13 s at rank 12.
   "crippling-anthem": define("crippling-anthem", "Crippling Anthem", "chant", {
     profession: "paragon",
-    nextAttackSkill: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+    nextAttackSkill: [
+      { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 13 } },
+    ],
   }),
   // "...also interrupts an action" (#1483).
   "anthem-of-disruption": define("anthem-of-disruption", "Anthem of Disruption", "chant", {
@@ -319,7 +323,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
             hits: "foes",
             radius: AREA_ADJACENT,
             maxTargets: undefined,
-            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 4 }],
+            effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 4 } }],
           },
         ],
         target: "bearer",
@@ -336,7 +340,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
         {
           kind: "if",
           condition: { kind: "target-more-health" },
-          effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+          effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } }],
         },
       ],
       skillId: "paragon.burning-refrain",

@@ -33,7 +33,11 @@ vi.mock("./status.js", async (importOriginal) => {
             radius: AREA_NEARBY,
             maxTargets: undefined,
             effects: [
-              { kind: "apply-status", statusId: "crippling-anguish", durationSeconds: 10 },
+              {
+                kind: "apply-status",
+                statusId: "crippling-anguish",
+                durationSeconds: { flat: 10 },
+              },
               { kind: "damage", amount: { flat: 40 }, type: "piercing", armorPenetration: 1 },
             ],
           },

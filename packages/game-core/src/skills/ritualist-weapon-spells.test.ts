@@ -22,6 +22,9 @@ import type { Combatant, Skill } from "./types.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 const DT = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
+/** Rank 12 of what Weapon of Aggression and of Quickening last by (#2041). */
+const CHANNELING_12 = new Map([["ritualist.channeling-magic", 12]]);
+const COMMUNING_12 = new Map([["ritualist.communing", 12]]);
 const WEAPON_SPELLS: readonly StatusId[] = [
   "spirit-light-weapon",
   "weapon-of-quickening",
@@ -138,7 +141,7 @@ describe("Weapon of Aggression (#975)", () => {
     aggregateModifiers(ids.map((id) => ({ id, ranks: NO_RANKS }))).attackDurationMultiplier;
 
   it("is on yourself only, for 13 s", () => {
-    const caster = makeCombatant({ id: "caster", energy: 30 });
+    const caster = makeCombatant({ id: "caster", energy: 30, attributeRanks: CHANNELING_12 });
     use(caster, "ritualist.weapon-of-aggression", caster);
     expect(caster.statuses.get("weapon-of-aggression")?.remainingSeconds).toBe(13);
     expect(skill("ritualist.weapon-of-aggression")).toMatchObject({
@@ -202,7 +205,7 @@ describe("Weapon of Quickening (#975)", () => {
   }
 
   it("lasts 21 s, and is an elite Communing weapon spell", () => {
-    const caster = makeCombatant({ id: "caster", energy: 30 });
+    const caster = makeCombatant({ id: "caster", energy: 30, attributeRanks: COMMUNING_12 });
     const target = ally();
     use(caster, "ritualist.weapon-of-quickening", target);
     expect(target.statuses.get("weapon-of-quickening")?.remainingSeconds).toBe(21);
@@ -219,7 +222,10 @@ describe("Weapon of Quickening (#975)", () => {
     const caster = makeCombatant({
       id: "caster",
       energy: 60,
-      attributeRanks: new Map([["ritualist.spawning-power", 12]]),
+      attributeRanks: new Map([
+        ["ritualist.spawning-power", 12],
+        ["ritualist.communing", 12],
+      ]),
     });
     const target = ally();
     use(caster, "ritualist.weapon-of-quickening", target);

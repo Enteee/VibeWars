@@ -93,7 +93,9 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
             hits: "foes",
             radius: AREA_ADJACENT,
             maxTargets: undefined,
-            effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+            effects: [
+              { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } },
+            ],
           },
         ],
         skillId: "warrior.deflect-arrows",
@@ -250,7 +252,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         target: "offender",
         effects: [
           { kind: "damage", amount: { flat: 75 }, type: "typeless", armorPenetration: 0 },
-          { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+          { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 21 } },
         ],
         skillId: "warrior.deadly-riposte",
       },

@@ -201,7 +201,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
     // each Enchantment (maximum of 3) on you": 17 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "mystic-regeneration", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mystic-regeneration",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.fleeting-stability",
@@ -228,7 +236,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...9...10 seconds, you cannot be knocked down and move 25%
     // faster": 9 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "fleeting-stability", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "fleeting-stability",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.earth-prayers", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.heart-of-fury",
@@ -254,7 +270,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 2...8...10 seconds, you attack 25% faster": 8 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "heart-of-fury", durationSeconds: 8 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "heart-of-fury",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.mysticism", atZero: 2, atTwelve: 8.4 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.wounding-strike",
@@ -299,7 +323,13 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // removed, target foe also suffers from a Deep Wound for 5...17...20
     // seconds": 17 s each, the rank-12 values.
     effects: [
-      { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.scythe-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
       {
         kind: "remove-status",
         category: "enchantment",
@@ -310,7 +340,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "removed", category: "enchantment", from: "caster" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.scythe-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -431,7 +469,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15 seconds, whenever you attack a foe with your scythe, you deal
     // 10...22...25 slashing damage to all adjacent foes": the status deals it.
-    effects: [{ kind: "apply-status", statusId: "vow-of-strength", durationSeconds: 15 }],
+    effects: [{ kind: "apply-status", statusId: "vow-of-strength", durationSeconds: { flat: 15 } }],
   },
   {
     id: "dervish.sand-shards",
@@ -458,7 +496,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 30 seconds, the next 1...4...5 times you hit with a scythe, all
     // other adjacent foes take 10...50...60 earth damage": the status does.
-    effects: [{ kind: "apply-status", statusId: "sand-shards", durationSeconds: 30 }],
+    effects: [{ kind: "apply-status", statusId: "sand-shards", durationSeconds: { flat: 30 } }],
   },
   {
     id: "dervish.pious-haste",
@@ -495,11 +533,25 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         profession: "dervish",
         from: "caster",
       },
-      { kind: "apply-status", statusId: "pious-haste", durationSeconds: 6 },
+      {
+        kind: "apply-status",
+        statusId: "pious-haste",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 5.8 },
+        },
+      },
       {
         kind: "if",
         condition: { kind: "removed", category: "enchantment", from: "caster" },
-        effects: [{ kind: "apply-status", statusId: "pious-haste-run", durationSeconds: 6 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "pious-haste-run",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 5.8 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -736,7 +788,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // seconds, your attacks deal earth damage": 34, its rank-12 value. The
     // status turns the attacks, and cracks armor when it ends.
     effects: [
-      { kind: "apply-status", statusId: "staggering-force", durationSeconds: 30 },
+      { kind: "apply-status", statusId: "staggering-force", durationSeconds: { flat: 30 } },
       {
         kind: "splash",
         hits: "foes",
@@ -780,7 +832,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // seconds, your attacks deal earth damage": 34. The status blinds
     // when it ends.
     effects: [
-      { kind: "apply-status", statusId: "dust-cloak", durationSeconds: 30 },
+      { kind: "apply-status", statusId: "dust-cloak", durationSeconds: { flat: 30 } },
       {
         kind: "splash",
         hits: "foes",
@@ -824,13 +876,21 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // seconds, this enchantment does nothing": 13 s. The status cripples
     // when it ends.
     effects: [
-      { kind: "apply-status", statusId: "aura-of-thorns", durationSeconds: 30 },
+      { kind: "apply-status", statusId: "aura-of-thorns", durationSeconds: { flat: 30 } },
       {
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.earth-prayers", atZero: 5, atTwelve: 13 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -859,7 +919,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 7 seconds, you move 25% faster. If this enchantment ends
     // prematurely, you lose 1 conditions" (#1421).
-    effects: [{ kind: "apply-status", statusId: "enchanted-haste", durationSeconds: 7 }],
+    effects: [{ kind: "apply-status", statusId: "enchanted-haste", durationSeconds: { flat: 7 } }],
   },
   {
     id: "dervish.heart-of-holy-flame",
@@ -888,7 +948,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // your attacks deal holy damage" (#1421): 25, its rank-12 value. The
     // status burns when it ends.
     effects: [
-      { kind: "apply-status", statusId: "heart-of-holy-flame", durationSeconds: 30 },
+      { kind: "apply-status", statusId: "heart-of-holy-flame", durationSeconds: { flat: 30 } },
       {
         kind: "splash",
         hits: "foes",
@@ -932,13 +992,21 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // afterward, this enchantment does nothing" (#1421): 3 s, its rank-12
     // value. The status gives adrenaline when it ends.
     effects: [
-      { kind: "apply-status", statusId: "balthazars-rage", durationSeconds: 20 },
+      { kind: "apply-status", statusId: "balthazars-rage", durationSeconds: { flat: 20 } },
       {
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "burning",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 2.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -967,7 +1035,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 2...8 seconds, you move 25% faster and deal +3...12 more damage
     // against moving foes" (#1421): 7 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "harriers-haste", durationSeconds: 7 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "harriers-haste",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.wind-prayers", atZero: 2, atTwelve: 6.8 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.avatar-of-melandru",
@@ -995,7 +1071,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // "Elite Form. For 10...90 seconds, you have +100 Health, +30 elemental
     // armor, and your attacks deal earth damage. ... This skill is disabled
     // for 45 seconds" (#1437, PvP): 74 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "avatar-of-melandru", durationSeconds: 74 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "avatar-of-melandru",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.mysticism", atZero: 10, atTwelve: 74 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.avatar-of-dwayna",
@@ -1023,7 +1107,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // "Elite Form. For 10...90 seconds, your attacks deal holy damage. ...
     // This skill is disabled for 45 seconds" (#1437, PvP): 74 s, its
     // rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "avatar-of-dwayna", durationSeconds: 74 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "avatar-of-dwayna",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.mysticism", atZero: 10, atTwelve: 74 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.avatar-of-balthazar",
@@ -1052,7 +1144,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // physical damage, you gain adrenaline 25% faster, your attacks deal holy
     // damage ... This skill is disabled for 45 seconds" (#1455): 74 s, its
     // rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "avatar-of-balthazar", durationSeconds: 74 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "avatar-of-balthazar",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.mysticism", atZero: 10, atTwelve: 74 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.avatar-of-grenth",
@@ -1081,7 +1181,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // damage, and steal 0...10...12 Health. You are immune to Disease ...
     // This skill is disabled for 45 seconds" (#1455): 74 s, its rank-12
     // value.
-    effects: [{ kind: "apply-status", statusId: "avatar-of-grenth", durationSeconds: 74 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "avatar-of-grenth",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.mysticism", atZero: 10, atTwelve: 74 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.avatar-of-lyssa",
@@ -1109,7 +1217,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // "Elite Form. For 10...74...90 seconds, your Dervish enchantments
     // recharge 50% faster and your attacks deal chaos damage ... This skill
     // is disabled for 45 seconds" (#1455): 74 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "avatar-of-lyssa", durationSeconds: 74 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "avatar-of-lyssa",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.mysticism", atZero: 10, atTwelve: 74 },
+        },
+      },
+    ],
   },
   // Dervish staples (#1551), at their rank-12 values.
   {
@@ -1179,7 +1295,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // "For 20 seconds, your attack skills also Cripple that foe for
     // 1...11 seconds and you transfer 1...3 conditions from yourself to
     // that foe": the status carries both.
-    effects: [{ kind: "apply-status", statusId: "grenths-grasp", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "grenths-grasp", durationSeconds: { flat: 20 } }],
   },
   {
     id: "dervish.rending-aura",
@@ -1222,7 +1338,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
           },
         ],
       },
-      { kind: "apply-status", statusId: "rending-aura", durationSeconds: 30 },
+      { kind: "apply-status", statusId: "rending-aura", durationSeconds: { flat: 30 } },
     ],
   },
   {
@@ -1252,7 +1368,13 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // lose 1 Dervish enchantment. If an enchantment was removed, this
     // attack knocks down for 2...3 seconds": 13 s and 3 s.
     effects: [
-      { kind: "apply-status", statusId: "crippled", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 12.6 },
+        },
+      },
       LOSE_DERVISH_ENCHANTMENT,
       {
         kind: "if",
@@ -1370,7 +1492,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "removed", category: "enchantment", from: "caster" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 9 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 8.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1496,7 +1626,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 10.2 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.rending-sweep",
@@ -1567,12 +1705,12 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "caster-lacks", category: "enchantment", profession: "dervish" },
-        effects: [{ kind: "apply-status", statusId: "pious-fury", durationSeconds: 4 }],
+        effects: [{ kind: "apply-status", statusId: "pious-fury", durationSeconds: { flat: 4 } }],
       },
       {
         kind: "if",
         condition: { kind: "caster-has", category: "enchantment", profession: "dervish" },
-        effects: [{ kind: "apply-status", statusId: "pious-fury", durationSeconds: 8 }],
+        effects: [{ kind: "apply-status", statusId: "pious-fury", durationSeconds: { flat: 8 } }],
       },
       LOSE_DERVISH_ENCHANTMENT,
     ],
@@ -1604,7 +1742,11 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // have -1 Energy regeneration and gain 1 Energy whenever you hit a
     // foe": 25 and 21 s, the rank-12 values. The status has the rest.
     effects: [
-      { kind: "apply-status", statusId: "zealous-renewal", durationSeconds: 21 },
+      {
+        kind: "apply-status",
+        statusId: "zealous-renewal",
+        durationSeconds: { scaling: { attributeId: "dervish.mysticism", atZero: 5, atTwelve: 21 } },
+      },
       {
         kind: "splash",
         hits: "foes",
@@ -1648,7 +1790,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // attacks. When you cast this enchantment, all nearby foes are struck
     // for 10...40 earth damage": 6 s and 34, the rank-12 values.
     effects: [
-      { kind: "apply-status", statusId: "mirage-cloak", durationSeconds: 6 },
+      { kind: "apply-status", statusId: "mirage-cloak", durationSeconds: { flat: 6 } },
       {
         kind: "splash",
         hits: "foes",
@@ -1690,7 +1832,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 20 seconds, you have +40...100 maximum Health. When this
     // enchantment ends, you are healed for 75...200 Health": the status.
-    effects: [{ kind: "apply-status", statusId: "vital-boon", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "vital-boon", durationSeconds: { flat: 20 } }],
   },
   {
     id: "dervish.guiding-hands",
@@ -1720,7 +1862,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // its rank-12 value, on the status.
     effects: [
       { kind: "remove-status", category: "condition", count: 1, statusId: "blind" },
-      { kind: "apply-status", statusId: "guiding-hands", durationSeconds: 20 },
+      { kind: "apply-status", statusId: "guiding-hands", durationSeconds: { flat: 20 } },
     ],
   },
   {
@@ -1809,11 +1951,23 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // seconds. If you are enchanted, you also inflict Cracked Armor for
     // 1...8...10 second[s]": 13 and 8 s, the rank-12 values.
     effects: [
-      { kind: "apply-status", statusId: "bleeding", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: { scaling: { attributeId: "dervish.mysticism", atZero: 5, atTwelve: 13 } },
+      },
       {
         kind: "if",
         condition: { kind: "caster-has", category: "enchantment" },
-        effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 8 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "cracked-armor",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 8.2 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1845,7 +1999,13 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // take 10...26...30 earth damage": 7 s and 26. Read after the blow, as
     // Chilling Victory's; the foe struck is spared.
     effects: [
-      { kind: "apply-status", statusId: "crippled", durationSeconds: 7 },
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.scythe-mastery", atZero: 3, atTwelve: 7 },
+        },
+      },
       {
         kind: "if",
         condition: { kind: "target-less-health" },
@@ -2039,7 +2199,13 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // faster": 13 s at rank 12. A signet costs nothing.
     effects: [
       LOSE_DERVISH_ENCHANTMENT,
-      { kind: "apply-status", statusId: "crippled", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 13 },
+        },
+      },
       {
         kind: "if",
         condition: { kind: "removed", category: "enchantment", from: "caster" },
@@ -2072,7 +2238,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // PvP: "For 2...7...8 seconds, you attack and gain adrenaline 25%
     // faster": 7 s at rank 12. No movement bonus in PvP.
-    effects: [{ kind: "apply-status", statusId: "onslaught", durationSeconds: 7 }],
+    effects: [{ kind: "apply-status", statusId: "onslaught", durationSeconds: { flat: 7 } }],
   },
   {
     id: "dervish.zealous-vow",
@@ -2099,7 +2265,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 20 seconds, you have -3 Energy regeneration, and you gain
     // 1...5...6 Energy every time you hit with an attack": the status.
-    effects: [{ kind: "apply-status", statusId: "zealous-vow", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "zealous-vow", durationSeconds: { flat: 20 } }],
   },
   {
     id: "dervish.featherfoot-grace",
@@ -2126,7 +2292,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...17...20 seconds, you move 25% faster, and conditions expire
     // 50% faster": 17 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "featherfoot-grace", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "featherfoot-grace",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "dervish.whirling-charge",
@@ -2154,7 +2328,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // PvP: "For 1...6 seconds, you move 33% faster than normal. The next
     // time you strike a foe, all other nearby foes take 10...50 cold
     // damage and this enchantment ends": 5 s and 42, the rank-12 values.
-    effects: [{ kind: "apply-status", statusId: "whirling-charge", durationSeconds: 5 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "whirling-charge",
+        durationSeconds: {
+          scaling: { attributeId: "dervish.wind-prayers", atZero: 1, atTwelve: 5 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2198,7 +2380,15 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "not", condition: { kind: "target-has", category: "enchantment" } },
-        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 5 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "dazed",
+            durationSeconds: {
+              scaling: { attributeId: "dervish.wind-prayers", atZero: 2, atTwelve: 5.2 },
+            },
+          },
+        ],
       },
       { kind: "remove-status", category: "enchantment", count: 1 },
     ],
@@ -2228,7 +2418,9 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 60 seconds, the next time damage drops target ally's Health
     // below 25%, that ally is healed for 50...200 Health" (#1789).
-    effects: [{ kind: "apply-status", statusId: "watchful-intervention", durationSeconds: 60 }],
+    effects: [
+      { kind: "apply-status", statusId: "watchful-intervention", durationSeconds: { flat: 60 } },
+    ],
   },
   {
     id: "dervish.faithful-intervention",
@@ -2259,7 +2451,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       {
         kind: "apply-status",
         statusId: "faithful-intervention",
-        durationSeconds: Number.POSITIVE_INFINITY,
+        durationSeconds: { flat: Number.POSITIVE_INFINITY },
       },
     ],
   },
@@ -2293,7 +2485,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, whenever you cast a spell, you gain 2 Energy for each
     // enchantment on you (maximum 2...7 Energy)". The status gains.
-    effects: [{ kind: "apply-status", statusId: "arcane-zeal", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "arcane-zeal", durationSeconds: { flat: 10 } }],
   },
   {
     id: "dervish.mystic-vigor",
@@ -2321,7 +2513,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     // "For 20 seconds, every time you successfully hit with an attack, you
     // gain 3...15 Health for each enchantment on you (maximum 25 Health)".
     // The status heals.
-    effects: [{ kind: "apply-status", statusId: "mystic-vigor", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "mystic-vigor", durationSeconds: { flat: 20 } }],
   },
   {
     id: "dervish.extend-enchantments",
@@ -2348,7 +2540,9 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, your next Dervish enchantment lasts 10...122...150%
     // longer" (#1761).
-    effects: [{ kind: "apply-status", statusId: "extend-enchantments", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "extend-enchantments", durationSeconds: { flat: 10 } },
+    ],
   },
   // Not enchanted (#1916).
   {

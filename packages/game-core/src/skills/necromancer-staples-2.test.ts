@@ -182,7 +182,11 @@ describe("Wither (#1583)", () => {
 
   it("is -4 health and -1 energy pips for 29 s", () => {
     const status = getSkill("necromancer.wither")?.effects[0];
-    expect(status).toEqual({ kind: "apply-status", statusId: "wither", durationSeconds: 29 });
+    expect(status).toEqual({
+      kind: "apply-status",
+      statusId: "wither",
+      durationSeconds: { scaling: { attributeId: "necromancer.curses", atZero: 5, atTwelve: 29 } },
+    });
     expect(aggregateModifiers([{ id: "wither", ranks: NO_RANKS }])).toMatchObject({
       healthPips: -4,
       energyPips: -1,
