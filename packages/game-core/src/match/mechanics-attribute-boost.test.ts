@@ -195,7 +195,16 @@ describe("Expert's Dexterity (#1941)", () => {
   it("attacks 15% faster and raises Marksmanship by 1 for 16 s", () => {
     const match = new MatchSimulation({
       seed: "ed",
-      participants: [caster("a", ["ranger.experts-dexterity"], [["ranger.marksmanship", 10]])],
+      participants: [
+        caster(
+          "a",
+          ["ranger.experts-dexterity"],
+          [
+            ["ranger.marksmanship", 10],
+            ["ranger.expertise", 12],
+          ],
+        ),
+      ],
     });
     const self = get(match, "a").combatant;
     const swing = swingIntervalSeconds(self);
@@ -203,7 +212,7 @@ describe("Expert's Dexterity (#1941)", () => {
     expect(self.statuses.get("experts-dexterity")?.remainingSeconds).toBeCloseTo(16 - 0.45, 1);
     expect(swingIntervalSeconds(self)).toBeCloseTo(swing * 0.85);
     expect(rankOf(self, "ranger.marksmanship")).toBe(11);
-    expect(rankOf(self, "ranger.expertise")).toBe(0);
+    expect(rankOf(self, "ranger.expertise")).toBe(12);
     stepFor(match, 16);
     expect(rankOf(self, "ranger.marksmanship")).toBe(10);
   });

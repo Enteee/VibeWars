@@ -182,7 +182,7 @@ describe("stances (#523)", () => {
     };
     const sprint = getSkill(SPRINT);
     expect(sprint === undefined ? undefined : describeSkill(sprint).typeText).toBe("Stance.");
-    expect(text(SPRINT)).toEqual(["For 13s, moves at 125% speed"]);
+    expect(text(SPRINT)).toEqual(["For 8s, moves at 125% speed"]);
     expect(text(DASH)).toEqual(["For 3s, moves at 150% speed"]);
     expect(text(WILD_THROW)).toEqual([
       "+5 damage",

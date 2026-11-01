@@ -113,18 +113,18 @@ const damageTo = (events: readonly CombatEvent[], id: string): number[] =>
 
 describe("the ten are the corpus's (#1654)", () => {
   it.each([
-    ["resilient-weapon", 787, false, "restoration-magic", 10, 1, 6, 10],
-    ["ghostly-weapon", 2206, false, "communing", 3, 0.25, 1, 17],
-    ["guided-weapon", 1259, false, "communing", 5, 2, 12, 9],
-    ["sundering-weapon", 2148, false, "communing", 5, 1, 10, 9],
-    ["weapon-of-shadow", 983, false, "restoration-magic", 10, 1, 20, 6],
-    ["warmongers-weapon", 1751, false, "channeling-magic", 10, 1, 30, 11],
-    ["wailing-weapon", 794, false, "channeling-magic", 5, 1, 15, 12],
+    ["resilient-weapon", 787, false, "restoration-magic", 10, 1, 6, [3, 10.2]],
+    ["ghostly-weapon", 2206, false, "communing", 3, 0.25, 1, [5, 17]],
+    ["guided-weapon", 1259, false, "communing", 5, 2, 12, [4, 8.8]],
+    ["sundering-weapon", 2148, false, "communing", 5, 1, 10, [4, 8.8]],
+    ["weapon-of-shadow", 983, false, "restoration-magic", 10, 1, 20, [1, 5.8]],
+    ["warmongers-weapon", 1751, false, "channeling-magic", 10, 1, 30, [3, 11]],
+    ["wailing-weapon", 794, false, "channeling-magic", 5, 1, 15, [3, 11.8]],
     ["nightmare-weapon", 795, false, "channeling-magic", 5, 1, 10, 12],
-    ["weapon-of-fury", 1749, true, "channeling-magic", 5, 1, 8, 17],
-    ["weapon-of-renewal", 2149, false, "spawning-power", 5, 1, 10, 17],
+    ["weapon-of-fury", 1749, true, "channeling-magic", 5, 1, 8, [5, 17]],
+    ["weapon-of-renewal", 2149, false, "spawning-power", 5, 1, 10, [5, 17]],
   ] as const)(
-    "%s: gwId %i, elite %s, %s, %i energy, %d s, %i s recharge, %i s",
+    "%s: gwId %i, elite %s, %s, %i energy, %d s, %i s recharge, %j s",
     (id, gwId, elite, attribute, energy, activation, recharge, seconds) => {
       expect(skill(`ritualist.${id}`)).toMatchObject({
         gwId,
@@ -136,7 +136,23 @@ describe("the ten are the corpus's (#1654)", () => {
         rechargeSeconds: recharge,
         range: RANGE_SPELL,
         target: id === "ghostly-weapon" ? "single-other-ally" : "single-ally",
-        effects: [{ kind: "apply-status", statusId: id, durationSeconds: seconds }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: id,
+            // A pair scales from rank 0 to rank 12 of the attribute (#2041).
+            durationSeconds:
+              typeof seconds === "number"
+                ? { flat: seconds }
+                : {
+                    scaling: {
+                      attributeId: `ritualist.${attribute}`,
+                      atZero: seconds[0],
+                      atTwelve: seconds[1],
+                    },
+                  },
+          },
+        ],
       });
     },
   );

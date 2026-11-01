@@ -252,7 +252,7 @@ describe("Weapon of Warding (#758)", () => {
     const description = describeSkill(skill(WARDING));
     expect(description.typeText).toBe("Weapon Spell.");
     expect(description.effects.map((effect) => effect.text)).toEqual([
-      "Applies Weapon of Warding for 7s (+4 Health regeneration, " +
+      "Applies Weapon of Warding for 3s (+4 Health regeneration, " +
         "50% chance to block attacks, ends if the bearer attacks)",
     ]);
   });

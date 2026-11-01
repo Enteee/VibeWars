@@ -20,8 +20,9 @@ import {
 /**
  * Assassin Deadly Arts staples (#1234): Shroud of Silence, Expose
  * Defenses, Enduring Toxin, Mark of Death, Disrupting Dagger, Crippling
- * Dagger and Iron Palm. Durations and pips are each skill's rank-12
- * values, as every status's are; damage is the caster's rank.
+ * Dagger and Iron Palm. Pips are each skill's rank-12 values; damage and
+ * durations are the caster's rank's, a duration rounded to the second as
+ * GW1's are (#2041).
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -300,12 +301,12 @@ describe("Enduring Toxin (#1234)", () => {
 });
 
 describe("Mark of Death (#1234)", () => {
-  it("halves a heal for 8.8 s, as far as the 40% floor on heal cuts lets it", () => {
+  it("halves a heal for 9 s, as far as the 40% floor on heal cuts lets it", () => {
     const healed = (marked: boolean): number => {
       const sim = match();
       if (marked) {
         use(sim, "assassin.mark-of-death");
-        expect(worn(sim, "a", "mark-of-death")).toEqual({ sourceId: "s", seconds: 8.8 });
+        expect(worn(sim, "a", "mark-of-death")).toEqual({ sourceId: "s", seconds: 9 });
       }
       get(sim, "a").health = 1000;
       sim.setTarget("a", "a");
@@ -362,7 +363,7 @@ describe("Disrupting Dagger (#1234)", () => {
 });
 
 describe("Crippling Dagger (#1234)", () => {
-  it("cripples a moving foe for 12.6 s, read as it hits, and a still one not", () => {
+  it("cripples a moving foe for 13 s, read as it hits, and a still one not", () => {
     const still = match();
     use(still, "assassin.crippling-dagger");
     expect(get(still, "a").statuses.has("crippled")).toBe(false);
@@ -371,7 +372,7 @@ describe("Crippling Dagger (#1234)", () => {
     moving.setInputDirection("a", vec2(1, 0));
     stepFor(moving, 0.1);
     use(moving, "assassin.crippling-dagger");
-    expect(worn(moving, "a", "crippled")).toEqual({ sourceId: "s", seconds: 12.6 });
+    expect(worn(moving, "a", "crippled")).toEqual({ sourceId: "s", seconds: 13 });
   });
 });
 

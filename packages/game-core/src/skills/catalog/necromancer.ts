@@ -719,7 +719,13 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         radius: Number.POSITIVE_INFINITY,
         maxTargets: undefined,
         effects: [
-          { kind: "apply-status", statusId: "veratas-sacrifice", durationSeconds: 9 },
+          {
+            kind: "apply-status",
+            statusId: "veratas-sacrifice",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 5, atTwelve: 9 },
+            },
+          },
           {
             kind: "transfer-conditions",
             from: "target",
@@ -760,7 +766,15 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 30...54...60 seconds, 75% of the damage you take is redirected
     // to your closest minion" (#1986).
-    effects: [{ kind: "apply-status", statusId: "dark-bond", durationSeconds: 54 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dark-bond",
+        durationSeconds: {
+          scaling: { attributeId: "necromancer.blood-magic", atZero: 30, atTwelve: 54 },
+        },
+      },
+    ],
   },
   {
     id: "necromancer.jagged-bones",
@@ -787,7 +801,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Enchantment Spell. For 60 seconds, when target animated undead ally
     // dies, it is replaced by a level 0...12...15 Jagged Horror" (#1986).
-    effects: [{ kind: "apply-status", statusId: "jagged-bones", durationSeconds: 60 }],
+    effects: [{ kind: "apply-status", statusId: "jagged-bones", durationSeconds: { flat: 60 } }],
   },
   {
     id: "necromancer.taste-of-death",

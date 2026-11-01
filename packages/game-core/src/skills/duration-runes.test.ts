@@ -15,7 +15,18 @@ import type { Combatant, Skill } from "./types.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
-/** A combatant wearing these universal runes, one per armor piece. */
+/** Rank 12 of what Sever Artery and Broad Head Arrow scale with (#2041). */
+const RANKS = new Map([
+  ["warrior.swordsmanship", 12],
+  ["ranger.marksmanship", 12],
+]);
+
+/** A rune-less caster at `RANKS`. */
+function caster(): Combatant {
+  return makeCombatant({ id: "caster", attributeRanks: RANKS });
+}
+
+/** A combatant at `RANKS` wearing these universal runes, one per armor piece. */
 function wearing(id: string, team: number, ...runeIds: UniversalRuneId[]): Combatant {
   const armor = { ...bareArmorSet() };
   ARMOR_SLOTS.forEach((slot, index) => {
@@ -48,7 +59,12 @@ function wearing(id: string, team: number, ...runeIds: UniversalRuneId[]): Comba
     },
     RULES,
   );
-  return makeCombatant({ id, team, equipment: resolved.weaponSets[0].equipment });
+  return makeCombatant({
+    id,
+    team,
+    attributeRanks: RANKS,
+    equipment: resolved.weaponSets[0].equipment,
+  });
 }
 
 function skill(id: string): Skill {
@@ -73,7 +89,7 @@ function land(skillId: string, caster: Combatant, target: Combatant) {
 describe("condition-duration runes (#464)", () => {
   it("a Restoration wearer hit by Sever Artery bleeds 16.8 s, and the event says 16.8", () => {
     const target = wearing("target", 1, "restoration");
-    const events = land("warrior.sever-artery", makeCombatant({ id: "caster" }), target);
+    const events = land("warrior.sever-artery", caster(), target);
 
     expect(target.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(16.8, 9);
     const applied = events.find((event) => event.kind === "status-applied");
@@ -83,7 +99,7 @@ describe("condition-duration runes (#464)", () => {
 
   it("a Recovery wearer is dazed by Broad Head Arrow for 13.6 s", () => {
     const target = wearing("target", 1, "recovery");
-    land("ranger.broad-head-arrow", makeCombatant({ id: "caster" }), target);
+    land("ranger.broad-head-arrow", caster(), target);
     expect(target.statuses.get("dazed")?.remainingSeconds).toBeCloseTo(13.6, 9);
   });
 
@@ -142,7 +158,7 @@ describe("condition-duration runes (#464)", () => {
   it("compares the scaled duration against a longer bleed already running", () => {
     const target = wearing("target", 1, "restoration");
     target.statuses.apply("bleeding", 17, "earlier", NO_RANKS);
-    land("warrior.sever-artery", makeCombatant({ id: "caster" }), target);
+    land("warrior.sever-artery", caster(), target);
     // 21 s scaled is 16.8 s, shorter than the 17 s left, so the 17 s stays.
     expect(target.statuses.get("bleeding")).toMatchObject({
       remainingSeconds: 17,
