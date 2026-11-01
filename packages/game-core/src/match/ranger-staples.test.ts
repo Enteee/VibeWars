@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { blockChanceOf } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
@@ -71,7 +71,7 @@ function escaping(weapon: Weapon, attributeId: string): Combatant {
     equipment: wielding(weapon, attributeId),
     attributeRanks: new Map([[attributeId, 12]]),
   });
-  ranger.statuses.apply("escape", 7, "r");
+  ranger.statuses.apply("escape", 7, "r", NO_RANKS);
   return ranger;
 }
 
@@ -134,10 +134,10 @@ describe("the four skills (#976)", () => {
 
   it("are stances that end each other, and Natural Stride", () => {
     const ranger = makeCombatant({ id: "r" });
-    ranger.statuses.apply("natural-stride", 7, "r");
-    ranger.statuses.apply("lightning-reflexes", 10, "r");
+    ranger.statuses.apply("natural-stride", 7, "r", NO_RANKS);
+    ranger.statuses.apply("lightning-reflexes", 10, "r", NO_RANKS);
     expect(ranger.statuses.active.map(({ id }) => id)).toEqual(["lightning-reflexes"]);
-    ranger.statuses.apply("escape", 7, "r");
+    ranger.statuses.apply("escape", 7, "r", NO_RANKS);
     expect(ranger.statuses.active.map(({ id }) => id)).toEqual(["escape"]);
   });
 });
@@ -149,7 +149,7 @@ describe("Lightning Reflexes (#976)", () => {
       equipment: wielding(WEAPONS.longbow, "ranger.marksmanship"),
     });
     const plain = swingIntervalSeconds(ranger);
-    ranger.statuses.apply("lightning-reflexes", 10, "r");
+    ranger.statuses.apply("lightning-reflexes", 10, "r", NO_RANKS);
     expect(blockChanceOf(ranger, "melee")).toBe(0.75);
     expect(blockChanceOf(ranger, "projectile")).toBe(0.75);
     expect(swingIntervalSeconds(ranger)).toBeCloseTo(plain * 0.67, 10);
@@ -166,7 +166,7 @@ describe("Lightning Reflexes (#976)", () => {
 
 describe("Escape (#976)", () => {
   it("moves 33% faster and blocks 75% of attacks", () => {
-    const modifiers = aggregateModifiers([{ id: "escape" }]);
+    const modifiers = aggregateModifiers([{ id: "escape", ranks: NO_RANKS }]);
     expect(modifiers.moveSpeedMultiplier).toBe(1.33);
     expect(blockChanceOf(escaping(WEAPONS.longbow, "ranger.marksmanship"), "melee")).toBe(0.75);
   });
@@ -185,10 +185,10 @@ describe("Escape (#976)", () => {
     expect(hitting.statuses.has("escape")).toBe(false);
 
     const blinded = escaping(WEAPONS.sword, "warrior.swordsmanship");
-    blinded.statuses.apply("blind", 10, "foe");
+    blinded.statuses.apply("blind", 10, "foe", NO_RANKS);
     let missed = 0;
     for (let seed = 0; seed < 20 && missed === 0; seed += 1) {
-      blinded.statuses.apply("escape", 7, "r");
+      blinded.statuses.apply("escape", 7, "r", NO_RANKS);
       const missing = swing(blinded, seed);
       if (
         missing.every((event) => event.kind === "attack-missed" || event.kind === "status-expired")
@@ -295,7 +295,7 @@ describe("the Ranger's arrows in a match (#976)", () => {
   it("Pin Down cripples nobody when its arrow is blocked", () => {
     for (let seed = 0; seed < 20; seed += 1) {
       const match = sim(`block-${String(seed)}`);
-      combatant(match, "t").statuses.apply("guardian", 1000, "t");
+      combatant(match, "t").statuses.apply("guardian", 1000, "t", NO_RANKS);
       const landed = shoot(match, 0);
       if (!kinds(landed).includes("attack-blocked")) {
         continue;
@@ -310,7 +310,7 @@ describe("the Ranger's arrows in a match (#976)", () => {
   it("Pin Down cripples nobody when a blinded ranger misses", () => {
     for (let seed = 0; seed < 20; seed += 1) {
       const match = sim(`blind-${String(seed)}`);
-      combatant(match, "r").statuses.apply("blind", 1000, "t");
+      combatant(match, "r").statuses.apply("blind", 1000, "t", NO_RANKS);
       match.setTarget("r", "t");
       match.requestSkill("r", 0);
       const log: CombatEvent[] = [];
@@ -329,7 +329,7 @@ describe("the Ranger's arrows in a match (#976)", () => {
   it("an arrow from a ranger in Escape, Savage Shot's too, keeps Escape up", () => {
     const match = sim();
     const ranger = combatant(match, "r");
-    ranger.statuses.apply("escape", 1000, "r");
+    ranger.statuses.apply("escape", 1000, "r", NO_RANKS);
     expect(kinds(shoot(match, 0))).toContain("damage");
     expect(kinds(shoot(match, 2))).toContain("damage");
     expect(ranger.statuses.has("escape")).toBe(true);
@@ -429,7 +429,7 @@ describe("the four shots (#1008)", () => {
   it("Concussion Shot at a foe already Dazed: the hit interrupts, and the daze refreshes", () => {
     const match = sim();
     const foe = casting(match, "elementalist.fireball");
-    foe.statuses.apply("dazed", 2, "r");
+    foe.statuses.apply("dazed", 2, "r", NO_RANKS);
     const landed = shoot(match, 0);
     expect(kinds(landed).filter((kind) => kind === "interrupted")).toHaveLength(1);
     expect(kinds(landed)).not.toContain("interrupt-missed");
@@ -440,7 +440,7 @@ describe("the four shots (#1008)", () => {
   it("Crippling Shot cripples for 10 s through Lightning Reflexes, never blocked", () => {
     for (let seed = 0; seed < 10; seed += 1) {
       const match = sim(`unblockable-${String(seed)}`);
-      combatant(match, "t").statuses.apply("lightning-reflexes", 1000, "t");
+      combatant(match, "t").statuses.apply("lightning-reflexes", 1000, "t", NO_RANKS);
       const landed = shoot(match, 1);
       expect(kinds(landed)).toEqual(["damage", "status-applied"]);
       expect(combatant(match, "t").statuses.get("crippled")?.durationSeconds).toBe(10);
@@ -450,7 +450,7 @@ describe("the four shots (#1008)", () => {
   it("Crippling Shot still misses when the ranger is Blind", () => {
     for (let seed = 0; seed < 20; seed += 1) {
       const match = sim(`blind-${String(seed)}`);
-      combatant(match, "r").statuses.apply("blind", 1000, "t");
+      combatant(match, "r").statuses.apply("blind", 1000, "t", NO_RANKS);
       match.setTarget("r", "t");
       match.requestSkill("r", 1);
       const log: CombatEvent[] = [];
@@ -498,7 +498,7 @@ describe("the four shots (#1008)", () => {
         const match = sim(`block-${String(slot)}-${String(seed)}`);
         const foe = casting(match, "elementalist.fireball");
         foe.energy = 20;
-        foe.statuses.apply("guardian", 1000, "t");
+        foe.statuses.apply("guardian", 1000, "t", NO_RANKS);
         const landed = shoot(match, slot);
         if (!kinds(landed).includes("attack-blocked")) {
           continue;

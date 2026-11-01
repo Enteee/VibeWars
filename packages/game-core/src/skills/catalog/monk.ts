@@ -280,6 +280,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 4,
     rechargeSeconds: 8,
     // "Touch the body of a fallen party member": at hand, as Blood Ritual.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-dead-ally",
     area: undefined,
@@ -746,6 +747,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 6,
     // "Touched ally": at hand, as Blood Ritual's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-ally",
     area: undefined,
@@ -1833,6 +1835,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 8,
     // "Touched target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2197,6 +2200,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 8,
     // "Touched target foe", as Plague Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-enemy",
     area: undefined,
@@ -2627,6 +2631,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     activationSeconds: 0.75,
     rechargeSeconds: 5,
     // "Touched ally": at hand, as Mending Touch's.
+    touch: true,
     range: RANGE_MELEE,
     target: "single-ally",
     area: undefined,

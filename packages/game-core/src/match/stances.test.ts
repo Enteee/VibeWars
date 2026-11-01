@@ -10,6 +10,7 @@ import { chargeAdrenaline } from "../skills/testing.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -130,8 +131,8 @@ describe("stances (#523)", () => {
       participants: [thrower("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
     });
     const foe = get(match, "d").combatant;
-    foe.statuses.apply("sprint", 100, "d");
-    foe.statuses.apply("regeneration", 100, "d");
+    foe.statuses.apply("sprint", 100, "d", NO_RANKS);
+    foe.statuses.apply("regeneration", 100, "d", NO_RANKS);
     chargeAdrenaline(get(match, "a").combatant);
     match.setTarget("a", "d");
     expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
@@ -146,7 +147,7 @@ describe("stances (#523)", () => {
         seed: `wild-${String(seed)}`,
         participants: [thrower("a", vec2(0, 0)), dummy("d", vec2(300, 0))],
       });
-      get(match, "d").combatant.statuses.apply("guardian", 100, "d");
+      get(match, "d").combatant.statuses.apply("guardian", 100, "d", NO_RANKS);
       chargeAdrenaline(get(match, "a").combatant);
       match.setTarget("a", "d");
       match.requestSkill("a", 0);

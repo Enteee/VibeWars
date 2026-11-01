@@ -6,6 +6,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { CAPTURE_SECONDS } from "./capture-points.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Capture Points in the simulation (#1378), on Forgotten Shrines' five
@@ -86,7 +87,7 @@ function run(sim: MatchSimulation, seconds: number): void {
 /** `id` dies this tick, where they stand. */
 function kill(sim: MatchSimulation, id: string): void {
   const { combatant } = get(sim, id);
-  combatant.statuses.apply("burning", 10, "nobody");
+  combatant.statuses.apply("burning", 10, "nobody", NO_RANKS);
   combatant.health = 0.2;
 }
 

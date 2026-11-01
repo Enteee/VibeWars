@@ -10,7 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition, HEALTH_PER_PIP } from "./status.js";
+import { NO_RANKS, getStatusDefinition, HEALTH_PER_PIP } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -59,8 +59,8 @@ function use(user: Combatant, skillId: string, target: Combatant): CombatEvent[]
 describe("Remove Hex (#1013)", () => {
   it("takes the newest of two hexes and leaves the other", () => {
     const hexed = ally();
-    hexed.statuses.apply("malaise", 10, "foe");
-    hexed.statuses.apply("faintheartedness", 10, "foe");
+    hexed.statuses.apply("malaise", 10, "foe", NO_RANKS);
+    hexed.statuses.apply("faintheartedness", 10, "foe", NO_RANKS);
     expect(use(monk(), "monk.remove-hex", hexed)).toEqual([
       { kind: "status-removed", targetId: "ally", statusId: "faintheartedness" },
     ]);
@@ -78,8 +78,8 @@ describe("Remove Hex (#1013)", () => {
 describe("Dismiss Condition (#1013)", () => {
   it("on an enchanted, Poisoned ally removes Poison and heals 63", () => {
     const target = ally();
-    target.statuses.apply("mending", 10, "monk");
-    target.statuses.apply("poison", 10, "foe");
+    target.statuses.apply("mending", 10, "monk", NO_RANKS);
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
     expect(use(monk(), "monk.dismiss-condition", target)).toEqual([
       { kind: "status-removed", targetId: "ally", statusId: "poison" },
       { kind: "heal", targetId: "ally", amount: 63 },
@@ -89,7 +89,7 @@ describe("Dismiss Condition (#1013)", () => {
 
   it("on an enchanted ally with no condition still heals 63", () => {
     const target = ally();
-    target.statuses.apply("healing-breeze", 15, "monk");
+    target.statuses.apply("healing-breeze", 15, "monk", NO_RANKS);
     expect(use(monk(), "monk.dismiss-condition", target)).toEqual([
       { kind: "heal", targetId: "ally", amount: 63 },
     ]);
@@ -97,7 +97,7 @@ describe("Dismiss Condition (#1013)", () => {
 
   it("on a Poisoned ally with no enchantment removes Poison and heals nothing", () => {
     const target = ally();
-    target.statuses.apply("poison", 10, "foe");
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
     expect(use(monk(), "monk.dismiss-condition", target)).toEqual([
       { kind: "status-removed", targetId: "ally", statusId: "poison" },
     ]);

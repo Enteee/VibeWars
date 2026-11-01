@@ -7,6 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -135,7 +136,7 @@ describe("walkTo (#310)", () => {
       expect(distance(before, get(match, "a").position)).toBeLessThanOrEqual(SPEED * DT + 1e-9);
     }
 
-    get(match, "a").combatant.statuses.apply("crippled", 10, "a");
+    get(match, "a").combatant.statuses.apply("crippled", 10, "a", NO_RANKS);
     for (let i = 0; i < 40; i += 1) {
       const before = get(match, "a").position;
       match.step(DT);
@@ -296,7 +297,7 @@ describe("walkTo (#310)", () => {
     const match = arena(hero("a", vec2(80, 200)));
     match.walkTo("a", vec2(880, 200));
     const a = get(match, "a");
-    a.combatant.statuses.apply("bleeding", 1000, "a");
+    a.combatant.statuses.apply("bleeding", 1000, "a", NO_RANKS);
     a.combatant.health = 0.1;
     stepFor(match, 1);
     expect(a.combatant.dead).toBe(true);

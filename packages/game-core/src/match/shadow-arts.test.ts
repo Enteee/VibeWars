@@ -14,7 +14,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { landedCritical } from "../skills/weapon-attack.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
@@ -286,7 +286,7 @@ describe("Feigned Neutrality (#1326)", () => {
   it("stays through a missed blow", () => {
     // A seed whose first blind blow misses: one that hits ends it first.
     const match = feigned("a");
-    get(match, "sin").combatant.statuses.apply("blind", 30, "foe");
+    get(match, "sin").combatant.statuses.apply("blind", 30, "foe", NO_RANKS);
     match.requestAttack("sin", "foe");
     let missed = false;
     for (let i = 0; i < 200 && !missed; i += 1) {
@@ -313,8 +313,8 @@ describe("Feigned Neutrality (#1326)", () => {
 describe("Way of Perfection (#1326)", () => {
   it("gains 34 Health on a critical hit, beside Critical Eye's energy", () => {
     const attacker = makeCombatant({ id: "a", health: 300, energy: 0 });
-    attacker.statuses.apply("way-of-perfection", 60, "a");
-    attacker.statuses.apply("critical-eye", 30, "a");
+    attacker.statuses.apply("way-of-perfection", 60, "a", NO_RANKS);
+    attacker.statuses.apply("critical-eye", 30, "a", NO_RANKS);
     const events: CombatEvent[] = [];
     landedCritical(attacker, 12, events);
     expect(events).toEqual([
@@ -325,7 +325,7 @@ describe("Way of Perfection (#1326)", () => {
 
   it("gains nothing at full Health, and nothing when dead", () => {
     const full = makeCombatant({ id: "a", energy: 60 });
-    full.statuses.apply("way-of-perfection", 60, "a");
+    full.statuses.apply("way-of-perfection", 60, "a", NO_RANKS);
     const events: CombatEvent[] = [];
     landedCritical(full, 0, events);
     expect(events).toEqual([]);

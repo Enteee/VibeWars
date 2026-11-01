@@ -4,7 +4,8 @@
  * (#420). Not part of CI: timing on a shared runner says nothing.
  *
  * Builds the static client, serves it, and plays 60 s of the Training
- * Ground with `?musicstats`: intensity forced to 3 and one crossfade
+ * Ground with `?musicstats`: intensity forced (3 unless
+ * `--intensity`) and one crossfade
  * halfway. Prints one row per second of what the music host counted
  * (apps/web/src/music/host/stats.ts), and the totals, for each load:
  *
@@ -25,6 +26,7 @@
  *
  *   --browser chromium|firefox   one browser only
  *   --seconds <n>                play this long (default 60)
+ *   --intensity <n>              the intensity it plays at (default 3)
  *   --url <url>                  measure a client already served there, built
  *                                with VITE_VIBEWARS_STRESS=on for `?stress=`
  *   --only <text>               only the loads whose name contains this
@@ -83,9 +85,11 @@ const { values: options } = parseArgs({
     pulse: { type: "boolean", default: false },
     json: { type: "string" },
     reactivity: { type: "boolean", default: false },
+    intensity: { type: "string", default: "3" },
   },
 });
 const SECONDS = Number(options.seconds);
+const INTENSITY = Number(options.intensity);
 /** The track the crossfade goes to: one no Training Ground map plays by default. */
 const CROSSFADE_TO = "last-stand";
 
@@ -93,7 +97,7 @@ const CROSSFADE_TO = "last-stand";
  * @typedef {{
  *   ticks: number, lateTicks: number, maxTickGapMs: number, maxTickWorkMs: number,
  *   skippedMs: number,
- *   events: number, lateEvents: number, baseLatencyMs: number, outputLatencyMs: number,
+ *   events: number, droppedEvents: number, baseLatencyMs: number, outputLatencyMs: number,
  *   glitches: number | null, glitchMs: number | null,
  *   underruns: number | null, underrunMs: number | null, maxReductionDb: number,
  * }} Stats
@@ -114,6 +118,7 @@ const LOADS = [
   { name: "match, CPU 4x", browser: "chromium", cpu: 4, stress: 0, screen: "match" },
   { name: "match, CPU 6x", browser: "chromium", cpu: 6, stress: 0, screen: "match" },
   { name: "menu, CPU 4x", browser: "chromium", cpu: 4, stress: 0, screen: "menu" },
+  { name: "menu, no stress", browser: "firefox", cpu: 1, stress: 0, screen: "menu" },
   { name: "no stress", browser: "firefox", cpu: 1, stress: 0, screen: "training" },
   { name: "stress=40", browser: "firefox", cpu: 1, stress: 40, screen: "training" },
   { name: "menu, stress=40", browser: "firefox", cpu: 1, stress: 40, screen: "menu" },
@@ -384,12 +389,12 @@ async function measure(url, load, progress) {
     await page.goto(`${url}${query}`);
     // The Pixel 7 profile is touch-only, so the page holds the menu behind
     // its keyboard-and-mouse notice (#1392) until Continue anyway.
-    await page.locator(".roster, .touch-notice-continue").first().waitFor();
+    await page.locator(".mode-rail, .touch-notice-continue").first().waitFor();
     const touchNotice = page.locator(".touch-notice-continue");
     if (await touchNotice.isVisible()) {
       await touchNotice.click();
     }
-    await page.locator(".roster").waitFor();
+    await page.locator(".mode-rail").waitFor();
     at("setup");
     if (load.screen !== "menu") {
       // Every screen #screens shows and every press the page receives, in
@@ -423,6 +428,12 @@ async function measure(url, load, progress) {
       // sandbox, as here, drops a mouse press that jumps to some points of
       // the page before the page sees it, and since the top bar (#814) the
       // button sits on one (#862). Enter is as much a gesture for the music.
+      // The editor opens from Character Builder on the mode rail (#1525).
+      await page
+        .locator(".mode-rail")
+        .getByRole("button", { name: "Character Builder", exact: true })
+        .focus();
+      await page.keyboard.press("Enter");
       await page.getByRole("button", { name: "new character" }).focus();
       await page.keyboard.press("Enter");
       // The profession is a picker: open it, then click the cell.
@@ -477,7 +488,7 @@ async function measure(url, load, progress) {
     if (options.reactivity) {
       await steps(page);
     } else {
-      await music(page, "intensity", 3);
+      await music(page, "intensity", INTENSITY);
       await sleep((SECONDS * 1000) / 2);
       await music(page, "crossfadeTo", CROSSFADE_TO);
       await sleep((SECONDS * 1000) / 2);
@@ -643,7 +654,7 @@ function report(load, rows) {
   console.log(`\n## ${load.browser}, ${load.name} (${String(rows.length)} s)`);
   if (options.rows) {
     console.log(
-      "s | ticks | late ticks | max gap ms | max tick work ms | skipped ms | events | late events | underrun ms | max reduction dB | glitches",
+      "s | ticks | late ticks | max gap ms | max tick work ms | skipped ms | events | dropped events | underrun ms | max reduction dB | glitches",
     );
     rows.forEach((row, i) => {
       console.log(
@@ -655,7 +666,7 @@ function report(load, rows) {
           row.maxTickWorkMs,
           row.skippedMs,
           row.events,
-          row.lateEvents,
+          row.droppedEvents,
           row.underrunMs ?? "-",
           row.maxReductionDb,
         ]
@@ -677,7 +688,7 @@ function report(load, rows) {
   console.log(
     `ticks ${String(sum("ticks"))}, late ${String(sum("lateTicks"))}, max gap ${fixed(max("maxTickGapMs"))} ms, max tick work ${fixed(max("maxTickWorkMs"))} ms, ` +
       `skipped ${fixed(sum("skippedMs"))} ms, events ${String(sum("events"))}, ` +
-      `late events ${String(sum("lateEvents"))}, glitches ${glitches}, ` +
+      `dropped events ${String(sum("droppedEvents"))}, glitches ${glitches}, ` +
       `underruns ${underruns}, max reduction ${fixed(Math.min(0, ...rows.map((r) => r.maxReductionDb)))} dB, ` +
       `latency base ${fixed(last?.baseLatencyMs ?? 0)} / output ${fixed(last?.outputLatencyMs ?? 0)} ms`,
   );

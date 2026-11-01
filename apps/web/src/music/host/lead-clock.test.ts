@@ -90,13 +90,13 @@ describe("lead clock", () => {
     expect(outcome.late).toBe(0);
   });
 
-  it("holds across a stall of 0.9 s, the most the lead can cover", async () => {
+  it("skips to live after a stall of 0.9 s, longer than the lead, with nothing late (#1991)", async () => {
     const outcome = await run(
       (audio) => leadClock(audio, LEAD, LOOKAHEAD),
       { from: 3, to: 3.9 },
       8,
     );
-    expect(outcome.missing).toBe(0);
+    expect(outcome.missing).toBeGreaterThan(0);
     expect(outcome.late).toBe(0);
   });
 
@@ -157,6 +157,38 @@ describe("lead clock", () => {
   it("hands nothing over late once a 5 s stall is over (#1321)", async () => {
     const outcome = await run((audio) => leadClock(audio, LEAD, LOOKAHEAD), { from: 3, to: 8 }, 16);
     expect(outcome.late).toBe(0);
+  });
+
+  it("runs one tick, at `lead` ahead, after a stall longer than the lead (#1991)", () => {
+    let audio = 4;
+    const clock = leadClock(() => audio, LEAD, LOOKAHEAD);
+    let ticks = 0;
+    const tick = (): void => {
+      ticks += 1;
+      clock();
+    };
+    catchUpTick(clock, LOOKAHEAD, tick);
+    audio = 5;
+    ticks = 0;
+    catchUpTick(clock, LOOKAHEAD, tick);
+    expect(ticks).toBe(1);
+    expect(clock()).toBeCloseTo(5.75, 9);
+  });
+
+  it("catches up a tick at a time after a stall within the lead", () => {
+    let audio = 4;
+    const clock = leadClock(() => audio, LEAD, LOOKAHEAD);
+    let ticks = 0;
+    const tick = (): void => {
+      ticks += 1;
+      clock();
+    };
+    catchUpTick(clock, LOOKAHEAD, tick);
+    audio = 4.6;
+    ticks = 0;
+    catchUpTick(clock, LOOKAHEAD, tick);
+    expect(ticks).toBeGreaterThan(1);
+    expect(clock()).toBeCloseTo(5.35, 9);
   });
 
   it("starts from the audio clock again after a reset", () => {

@@ -246,4 +246,11 @@ export const PARAGON_STATUS_ICONS = {
       `<path d="M8 19v-5M14 19v-9" ${stroke(c, 2.4)}/>` +
       `<path d="M15 5.5l3-3 3 3" ${stroke(c, 1.8)}/>`,
   ],
+  // Shout (#1966), a stand-in until its art card: an open hand behind a bar.
+  "cant-touch-this": [
+    "shout",
+    (c) =>
+      `<path d="M8 20V9a1.5 1.5 0 0 1 3 0v4V6a1.5 1.5 0 0 1 3 0v7V8a1.5 1.5 0 0 1 3 0v7c0 3-2 5-5 5z" ${stroke(c, 1.6)}/>` +
+      `<path d="M4 4l16 16" ${stroke(c, 2)}/>`,
+  ],
 };

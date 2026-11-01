@@ -6,7 +6,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { applyEffect, type CombatEvent } from "../skills/effects.js";
-import type { StatusId } from "../skills/status.js";
+import { NO_RANKS, type StatusId } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -184,7 +184,7 @@ function axe(): ResolvedEquipment {
 }
 
 function put(match: MatchSimulation, id: string, status: StatusId, seconds: number): void {
-  get(match, id).combatant.statuses.apply(status, seconds, id);
+  get(match, id).combatant.statuses.apply(status, seconds, id, NO_RANKS);
 }
 
 /** `m` begins its 3 s Kinetic Armor. */

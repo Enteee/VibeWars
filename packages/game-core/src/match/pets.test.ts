@@ -8,6 +8,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Ranger pets (#1046 child 1, #1079): Charm Animal on the bar brings a
@@ -99,7 +100,7 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
 
 /** Kill `victim` as burning would. */
 function kill(sim: MatchSimulation, victim: Participant): void {
-  victim.combatant.statuses.apply("burning", 10, "x");
+  victim.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);

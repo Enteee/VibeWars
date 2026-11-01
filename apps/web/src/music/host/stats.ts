@@ -22,8 +22,10 @@ export interface StatsMeter {
   worked(ms: number): void;
   /** `ms` of music the scheduler skipped. */
   skipped(ms: number): void;
-  /** An event handed to superdough, `late` if its onset had passed. */
-  event(late: boolean): void;
+  /** An event handed to superdough. */
+  event(): void;
+  /** An event left out because its onset was too near or past (#1991). */
+  dropped(): void;
   /** The limiter pulled the mix down by `db` (0 or less) just now. */
   reduced(db: number): void;
   /** The counts since the last take, which starts the next second. */
@@ -41,7 +43,7 @@ export function createMeter(): StatsMeter {
   let maxTickWorkMs = 0;
   let skippedMs = 0;
   let events = 0;
-  let lateEvents = 0;
+  let droppedEvents = 0;
   let maxReductionDb = 0;
   return {
     tick(atMs, intervalMs) {
@@ -61,11 +63,11 @@ export function createMeter(): StatsMeter {
     skipped(ms) {
       skippedMs += ms;
     },
-    event(late) {
+    event() {
       events += 1;
-      if (late) {
-        lateEvents += 1;
-      }
+    },
+    dropped() {
+      droppedEvents += 1;
     },
     reduced(db) {
       maxReductionDb = Math.min(maxReductionDb, db);
@@ -78,7 +80,7 @@ export function createMeter(): StatsMeter {
         maxTickWorkMs,
         skippedMs,
         events,
-        lateEvents,
+        droppedEvents,
         maxReductionDb,
         ...audio,
       };
@@ -88,7 +90,7 @@ export function createMeter(): StatsMeter {
       maxTickWorkMs = 0;
       skippedMs = 0;
       events = 0;
-      lateEvents = 0;
+      droppedEvents = 0;
       maxReductionDb = 0;
       return taken;
     },
