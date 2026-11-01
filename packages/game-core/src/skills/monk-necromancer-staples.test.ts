@@ -8,7 +8,7 @@ import { vec2 } from "../vec2.js";
 import { payCost } from "./activation.js";
 import { getSkill, IMPLEMENTED_SKILLS } from "./catalog.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition, type StatusId } from "./status.js";
+import { NO_RANKS, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import { fireChangeTriggers, type TriggerContext } from "./triggers.js";
@@ -76,12 +76,12 @@ describe("ends and expires (#944)", () => {
   it("Patient Spirit's heal fires when it expires, not when it is removed", () => {
     const ally = makeCombatant({ id: "ally", health: 300 });
     const monk = makeCombatant({ id: "monk", attributeRanks: RANKS });
-    ally.statuses.apply("patient-spirit", 2, "monk");
+    ally.statuses.apply("patient-spirit", 2, "monk", NO_RANKS);
     ally.statuses.drainChanges();
     ally.statuses.advance(2, false);
     expect(fireChanges(ally, monk)).toEqual([{ kind: "heal", targetId: "ally", amount: 102 }]);
 
-    ally.statuses.apply("patient-spirit", 2, "monk");
+    ally.statuses.apply("patient-spirit", 2, "monk", NO_RANKS);
     ally.statuses.remove("patient-spirit");
     expect(fireChanges(ally, monk)).toEqual([]);
   });
@@ -89,7 +89,7 @@ describe("ends and expires (#944)", () => {
   it("Patient Spirit heals by its caster's Healing Prayers: 30 at rank 0", () => {
     const ally = makeCombatant({ id: "ally", health: 300 });
     const unskilled = makeCombatant({ id: "monk" });
-    ally.statuses.apply("patient-spirit", 2, "monk");
+    ally.statuses.apply("patient-spirit", 2, "monk", NO_RANKS);
     ally.statuses.drainChanges();
     ally.statuses.advance(2, false);
     expect(fireChanges(ally, unskilled)).toEqual([{ kind: "heal", targetId: "ally", amount: 30 }]);
@@ -97,16 +97,16 @@ describe("ends and expires (#944)", () => {
 
   it("Holy Veil's hex removal fires on any end, an expiry too", () => {
     const ally = makeCombatant({ id: "ally" });
-    ally.statuses.apply("malaise", 10, "foe");
-    ally.statuses.apply("holy-veil", 1, "ally");
+    ally.statuses.apply("malaise", 10, "foe", NO_RANKS);
+    ally.statuses.apply("holy-veil", 1, "ally", NO_RANKS);
     ally.statuses.drainChanges();
     ally.statuses.advance(1, false);
     expect(fireChanges(ally, ally)).toEqual([
       { kind: "status-removed", targetId: "ally", statusId: "malaise" },
     ]);
 
-    ally.statuses.apply("malaise", 10, "foe");
-    ally.statuses.maintain("holy-veil", "ally", 0);
+    ally.statuses.apply("malaise", 10, "foe", NO_RANKS);
+    ally.statuses.maintain("holy-veil", "ally", 0, NO_RANKS);
     ally.statuses.remove("holy-veil");
     expect(fireChanges(ally, ally)).toEqual([
       { kind: "status-removed", targetId: "ally", statusId: "malaise" },
@@ -173,7 +173,7 @@ describe("Holy Veil (#944)", () => {
 
   it("doubles a hex's cast time on its bearer, not a spell's nor a hex on another", () => {
     const veiled = makeCombatant({ id: "veiled" });
-    veiled.statuses.maintain("holy-veil", "monk", 0);
+    veiled.statuses.maintain("holy-veil", "monk", 0, NO_RANKS);
     const necromancer = makeCombatant({ id: "necromancer", team: 1 });
     expect(effectiveActivationSeconds(HEX, necromancer, veiled)).toBe(2 * HEX.activationSeconds);
     expect(effectiveActivationSeconds(HEX, necromancer, makeCombatant({ id: "other" }))).toBe(
@@ -187,9 +187,9 @@ describe("Holy Veil (#944)", () => {
 
   it("with a dazed caster: four times as long", () => {
     const veiled = makeCombatant({ id: "veiled" });
-    veiled.statuses.maintain("holy-veil", "monk", 0);
+    veiled.statuses.maintain("holy-veil", "monk", 0, NO_RANKS);
     const necromancer = makeCombatant({ id: "necromancer", team: 1 });
-    necromancer.statuses.apply("dazed", 5, "x");
+    necromancer.statuses.apply("dazed", 5, "x", NO_RANKS);
     expect(effectiveActivationSeconds(HEX, necromancer, veiled)).toBe(4 * HEX.activationSeconds);
   });
 
@@ -229,9 +229,9 @@ describe("Holy Veil (#944)", () => {
     if (monk === undefined) {
       throw new Error("no monk");
     }
-    monk.statuses.apply("faintheartedness", 10, "necromancer");
-    monk.statuses.apply("malaise", 10, "necromancer");
-    monk.statuses.maintain("holy-veil", "monk", 0);
+    monk.statuses.apply("faintheartedness", 10, "necromancer", NO_RANKS);
+    monk.statuses.apply("malaise", 10, "necromancer", NO_RANKS);
+    monk.statuses.maintain("holy-veil", "monk", 0, NO_RANKS);
     sim.step(DT);
     expect(sim.endUpkeep("monk", "monk", "holy-veil")).toBe(true);
     const events = sim.step(DT).log.flatMap((entry) => entry.events);
@@ -246,7 +246,7 @@ describe("Holy Veil (#944)", () => {
 
   it("with no hex on its ally, ending does nothing", () => {
     const ally = makeCombatant({ id: "ally" });
-    ally.statuses.maintain("holy-veil", "ally", 0);
+    ally.statuses.maintain("holy-veil", "ally", 0, NO_RANKS);
     ally.statuses.remove("holy-veil");
     expect(fireChanges(ally, ally)).toEqual([]);
   });
@@ -257,9 +257,9 @@ describe("Rend Enchantments (#944)", () => {
 
   it("strips Guardian, Mending and Contagion and costs 31 for each of the two Monk ones", () => {
     const target = foe();
-    target.statuses.apply("guardian", 10, "x");
-    target.statuses.maintain("mending", "x", 0);
-    target.statuses.apply("contagion", 10, "x");
+    target.statuses.apply("guardian", 10, "x", NO_RANKS);
+    target.statuses.maintain("mending", "x", 0, NO_RANKS);
+    target.statuses.apply("contagion", 10, "x", NO_RANKS);
     const user = caster();
     const events = use(user, REND, target);
     expect(target.statuses.countByCategory("enchantment")).toBe(0);
@@ -269,8 +269,8 @@ describe("Rend Enchantments (#944)", () => {
 
   it("can kill its caster, after the removal", () => {
     const target = foe();
-    target.statuses.apply("guardian", 10, "x");
-    target.statuses.maintain("mending", "x", 0);
+    target.statuses.apply("guardian", 10, "x", NO_RANKS);
+    target.statuses.maintain("mending", "x", 0, NO_RANKS);
     const user = caster(50);
     const events = use(user, REND, target);
     expect(target.statuses.size).toBe(0);
@@ -304,7 +304,7 @@ describe("Rend Enchantments (#944)", () => {
       "patient-spirit",
     ];
     for (const id of ids) {
-      target.statuses.apply(id, 10, "x");
+      target.statuses.apply(id, 10, "x", NO_RANKS);
     }
     use(caster(), REND, target);
     expect(target.statuses.active.map(({ id }) => id)).toEqual(["regeneration"]);
@@ -316,11 +316,11 @@ describe("Plague Touch (#944)", () => {
 
   it("moves your newest 3 conditions, each with the time it had left, yours as source", () => {
     const user = caster();
-    user.statuses.apply("bleeding", 10, "x");
-    user.statuses.apply("poison", 9, "x");
-    user.statuses.apply("blind", 8, "x");
-    user.statuses.apply("weakness", 7, "x");
-    user.statuses.apply("crippled", 6, "x");
+    user.statuses.apply("bleeding", 10, "x", NO_RANKS);
+    user.statuses.apply("poison", 9, "x", NO_RANKS);
+    user.statuses.apply("blind", 8, "x", NO_RANKS);
+    user.statuses.apply("weakness", 7, "x", NO_RANKS);
+    user.statuses.apply("crippled", 6, "x", NO_RANKS);
     user.statuses.advance(1, false);
     const target = foe();
     const events = use(user, PLAGUE, target);
@@ -342,9 +342,9 @@ describe("Plague Touch (#944)", () => {
 
   it("a longer blind already on the foe stays; yours is still taken off you", () => {
     const user = caster();
-    user.statuses.apply("blind", 3, "x");
+    user.statuses.apply("blind", 3, "x", NO_RANKS);
     const target = foe();
-    target.statuses.apply("blind", 10, "y");
+    target.statuses.apply("blind", 10, "y", NO_RANKS);
     use(user, PLAGUE, target);
     expect(user.statuses.has("blind")).toBe(false);
     expect(target.statuses.get("blind")?.remainingSeconds).toBe(10);
@@ -358,7 +358,7 @@ describe("Plague Touch (#944)", () => {
 
   it("is a touch skill, not a spell: Dazed does not slow it", () => {
     const user = caster();
-    user.statuses.apply("dazed", 5, "x");
+    user.statuses.apply("dazed", 5, "x", NO_RANKS);
     expect(skill(PLAGUE)).toMatchObject({ type: "skill", target: "single-enemy" });
     expect(effectiveActivationSeconds(skill(PLAGUE), user)).toBe(0.75);
   });
@@ -377,7 +377,7 @@ describe("Plague Touch (#944)", () => {
       seed: "plague-touch",
       participants: [spec("necromancer", 0, 0), spec("foe", 1, 50)],
     });
-    sim.get("necromancer")?.combatant.statuses.apply("blind", 8, "foe");
+    sim.get("necromancer")?.combatant.statuses.apply("blind", 8, "foe", NO_RANKS);
     sim.setTarget("necromancer", "foe");
     expect(sim.requestSkill("necromancer", 0)?.check).toEqual({ ok: true });
     for (let i = 0; i < Math.round(1 / DT); i += 1) {

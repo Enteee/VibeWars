@@ -8,6 +8,7 @@ import type { Skill } from "../skills/types.js";
 import { swingIntervalSeconds } from "../skills/weapon-attack.js";
 import { vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Attributes raised for a time or for the next skills (#1941): Glyph of
@@ -56,7 +57,7 @@ describe("Glyph of Elemental Power (#1941)", () => {
     });
     const self = get(match, "a").combatant;
     // Longer than the glyph's own 25 s, so only its count ends it.
-    self.statuses.apply("glyph-of-elemental-power", 1000, "a");
+    self.statuses.apply("glyph-of-elemental-power", 1000, "a", NO_RANKS);
     for (let spell = 1; spell <= 10; spell += 1) {
       expect(dealt(match, 0, 9), `spell ${String(spell)}`).toBe(boosted);
     }
@@ -114,7 +115,7 @@ describe("Glyph of Energy (#1941)", () => {
     });
     const self = get(match, "a").combatant;
     expect(skill("elementalist.mind-burn").overcast).toBe(5);
-    self.statuses.apply("glyph-of-energy", Number.POSITIVE_INFINITY, "a");
+    self.statuses.apply("glyph-of-energy", Number.POSITIVE_INFINITY, "a", NO_RANKS);
     for (let spell = 1; spell <= 3; spell += 1) {
       use(match, 0, 7);
       expect(self.overcast, `spell ${String(spell)}`).toBe(0);

@@ -11,6 +11,7 @@ import { strikesOf } from "../skills/testing.js";
 import { vec2, ZERO, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -272,7 +273,7 @@ describe("ranged weapons fire projectiles", () => {
 
   it("a blinded release misses at once, and nothing flies", () => {
     const match = sim();
-    get(match, "archer").combatant.statuses.apply("blind", 60, "target");
+    get(match, "archer").combatant.statuses.apply("blind", 60, "target", NO_RANKS);
     match.requestAttack("archer", "target");
     const misses: CombatLogEntry[] = [];
     for (let i = 0; i < 20 * 30; i += 1) {
@@ -478,7 +479,7 @@ describe("a landing arrow and daze (#546)", () => {
     const match = sim();
     fire(match);
     const victim = get(match, "target").combatant;
-    victim.statuses.apply("dazed", 1000, "archer");
+    victim.statuses.apply("dazed", 1000, "archer", NO_RANKS);
     victim.cast.beginCast("elementalist.fireball", "archer", 10, undefined);
     expect(
       land(match)
@@ -493,7 +494,7 @@ describe("a landing arrow and daze (#546)", () => {
     fire(match, UP);
     match.setInputDirection("target", DOWN);
     const victim = get(match, "target").combatant;
-    victim.statuses.apply("dazed", 1000, "archer");
+    victim.statuses.apply("dazed", 1000, "archer", NO_RANKS);
     victim.cast.beginCast("elementalist.fireball", "archer", 10, undefined);
     expect(land(match).events).toEqual([{ kind: "attack-dodged", targetId: "target" }]);
     expect(victim.cast.isCasting).toBe(true);
@@ -653,7 +654,7 @@ describe("ranged attack skills fly (#416)", () => {
         seed: `block-${String(seed)}`,
         participants: [skilled(vec2(0, 0)), target(vec2(300, 0))],
       });
-      get(match, "target").combatant.statuses.apply("guardian", 1000, "target");
+      get(match, "target").combatant.statuses.apply("guardian", 1000, "target", NO_RANKS);
       shoot(match, 0);
       const landed = landSkill(match);
       if (!kinds(landed).includes("attack-blocked")) {
@@ -804,7 +805,7 @@ describe("Fireball flies (#535)", () => {
 
   it("is not blinded: a blind caster's Fireball still flies", () => {
     const match = fireSim();
-    get(match, "caster").combatant.statuses.apply("blind", 1000, "target");
+    get(match, "caster").combatant.statuses.apply("blind", 1000, "target", NO_RANKS);
     cast(match);
     expect(match.projectiles).toHaveLength(1);
     expect(landFireball(match).events.map((event) => event.kind)).toEqual(["damage"]);

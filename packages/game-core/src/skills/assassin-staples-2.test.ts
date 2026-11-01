@@ -11,6 +11,7 @@ import type { CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Surroundings } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Assassin staples 2 (#1041): Leaping Mantis Sting cripples a runner,
@@ -76,7 +77,7 @@ const damageTo = (events: readonly CombatEvent[], targetId: string): number[] =>
   );
 
 const crippled = (target: Combatant): Combatant => {
-  target.statuses.apply("crippled", 10, "x");
+  target.statuses.apply("crippled", 10, "x", NO_RANKS);
   return target;
 };
 

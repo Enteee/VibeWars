@@ -8,6 +8,7 @@ import { distance, vec2, ZERO, type Vec2 } from "../vec2.js";
 import { createCursor, decide, type Behaviour } from "./behaviour.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type CompanionMode, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -221,7 +222,7 @@ describe("chase", () => {
         spec("p", 0, vec2(500, 0)),
       ],
     });
-    sim.get("dummy")?.combatant.statuses.apply("crippled", 30, "p");
+    sim.get("dummy")?.combatant.statuses.apply("crippled", 30, "p", NO_RANKS);
     run(sim, 8);
     const gap = distance(at(sim, "dummy"), at(sim, "p"));
     expect(gap).toBeGreaterThanOrEqual(100);

@@ -6,7 +6,12 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { targetRuleAllows } from "../skills/activation.js";
 import { getSkill } from "../skills/catalog.js";
 import { effectiveArmor, skillDamage } from "../skills/damage.js";
-import { aggregateModifiers, getStatusDefinition, type StatusId } from "../skills/status.js";
+import {
+  NO_RANKS,
+  aggregateModifiers,
+  getStatusDefinition,
+  type StatusId,
+} from "../skills/status.js";
 import { isSpell } from "../skills/types.js";
 import { attackDurationSeconds } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -97,7 +102,7 @@ function stepFor(sim: MatchSimulation, seconds: number): void {
 
 /** `id` on "a", from "p", for `seconds`. */
 function put(sim: MatchSimulation, id: StatusId, seconds: number, on = "a"): void {
-  get(sim, on).combatant.statuses.apply(id, seconds, "p");
+  get(sim, on).combatant.statuses.apply(id, seconds, "p", NO_RANKS);
 }
 
 /** A chant ends on "a" by running out, over the next 0.5 s. */
@@ -171,7 +176,7 @@ describe("an echo (#1423)", () => {
     put(sim, FINALE, 30);
     put(sim, CHANT, 10);
     const ally = get(sim, "a").combatant;
-    ally.statuses.apply("burning", 10, "f");
+    ally.statuses.apply("burning", 10, "f", NO_RANKS);
     ally.health = 0.2;
     stepFor(sim, 0.5);
     expect(ally.dead).toBe(true);

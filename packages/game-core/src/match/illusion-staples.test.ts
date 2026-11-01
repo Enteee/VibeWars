@@ -5,7 +5,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeStatus } from "../skills/describe.js";
-import { HEALTH_PER_PIP, aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, HEALTH_PER_PIP, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
@@ -257,7 +257,7 @@ describe("Ineptitude (#1228)", () => {
     [15, 135],
   ])("at Illusion Magic %i, the next attack costs %i damage and 10 s of Blind", (rank, damage) => {
     const sim = match(rank);
-    get(sim, "a").statuses.apply("ineptitude", 4, "m");
+    get(sim, "a").statuses.apply("ineptitude", 4, "m", NO_RANKS);
     expect(sim.requestAttack("a", "m")).toEqual({ ok: true });
     const log = stepFor(sim, 2.5);
     expect(damageFrom(log, "mesmer.ineptitude", "a")).toEqual([damage]);
@@ -289,7 +289,7 @@ describe("Ineptitude (#1228)", () => {
 
   it("a spell does not set it off", () => {
     const sim = match();
-    get(sim, "a").statuses.apply("ineptitude", 4, "m");
+    get(sim, "a").statuses.apply("ineptitude", 4, "m", NO_RANKS);
     sim.setTarget("a", "m");
     expect(sim.requestSkill("a", 2)?.check).toEqual({ ok: true });
     const log = stepFor(sim, 2.5);

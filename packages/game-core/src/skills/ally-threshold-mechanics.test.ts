@@ -10,7 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applyDamage, applyEffects, applySkillEffects, type CombatEvent } from "./effects.js";
-import { STATUS_DEFINITIONS, getStatusDefinition, type StatusId } from "./status.js";
+import { NO_RANKS, STATUS_DEFINITIONS, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import { fireChangeTriggers, type SpreadGainedCondition } from "./triggers.js";
 import type { Combatant, Skill } from "./types.js";
@@ -145,7 +145,7 @@ describe("Health left under a line (#1789, #1818)", () => {
     const combatants = party();
     const a = member(combatants, "a");
     const w = member(combatants, "w");
-    a.statuses.apply("watchful-intervention", 60, "m");
+    a.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     applyDamage(a, 300, "slashing", false, [], w);
     expect(drain(a, combatants)).toEqual([]);
     applyDamage(a, 100, "slashing", false, [], w);
@@ -159,7 +159,7 @@ describe("Health left under a line (#1789, #1818)", () => {
     const combatants = party();
     const a = member(combatants, "a");
     a.health = 100;
-    a.statuses.apply("watchful-intervention", 60, "m");
+    a.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     applyDamage(a, 10, "slashing", false, [], member(combatants, "w"));
     expect(a.health).toBe(90);
     expect(healed(drain(a, combatants), "a")).toBe(170);
@@ -170,7 +170,7 @@ describe("Health left under a line (#1789, #1818)", () => {
     const combatants = party();
     const a = member(combatants, "a");
     a.health = 100;
-    a.statuses.apply("watchful-intervention", 60, "m");
+    a.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     applyDamage(a, 0, "slashing", false, [], member(combatants, "w"));
     expect(a.health).toBe(100);
     expect(drain(a, combatants)).toEqual([]);
@@ -180,13 +180,13 @@ describe("Health left under a line (#1789, #1818)", () => {
   it("fires for a packet with no dealer, and for a life steal", () => {
     const combatants = party();
     const a = member(combatants, "a");
-    a.statuses.apply("watchful-intervention", 60, "m");
+    a.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     applyDamage(a, 400, "typeless", false, [], undefined);
     expect(healed(drain(a, combatants), "a")).toBe(170);
 
     const b = makeCombatant({ id: "b", team: 0, health: 130, maxHealth: 500 });
     combatants.set("b", b);
-    b.statuses.apply("watchful-intervention", 60, "m");
+    b.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     steal(member(combatants, "w"), b, 20);
     expect(b.health).toBe(110);
     expect(healed(drain(b, combatants), "b")).toBe(170);
@@ -215,8 +215,8 @@ describe("Health left under a line (#1789, #1818)", () => {
     const combatants = party();
     const a = member(combatants, "a");
     a.health = 300;
-    a.statuses.apply("watchful-intervention", 60, "m");
-    a.statuses.apply("faithful-intervention", Number.POSITIVE_INFINITY, "a");
+    a.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
+    a.statuses.apply("faithful-intervention", Number.POSITIVE_INFINITY, "a", NO_RANKS);
     applyDamage(a, 250, "slashing", false, [], member(combatants, "w"));
     const ended = drain(a, combatants).flatMap(({ events }) =>
       events.flatMap((event) => (event.kind === "status-expired" ? [event.statusId] : [])),
@@ -229,7 +229,7 @@ describe("Health left under a line (#1789, #1818)", () => {
   it("a killing blow does not fire it, crossing or not: the dead are not healed", () => {
     const combatants = party();
     const a = member(combatants, "a");
-    a.statuses.apply("watchful-intervention", 60, "m");
+    a.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     applyDamage(a, 600, "slashing", false, [], member(combatants, "w"));
     expect(a.dead).toBe(true);
     expect(drain(a, combatants)).toEqual([]);
@@ -237,7 +237,7 @@ describe("Health left under a line (#1789, #1818)", () => {
 
     const b = makeCombatant({ id: "b", team: 0, health: 30, maxHealth: 500 });
     combatants.set("b", b);
-    b.statuses.apply("watchful-intervention", 60, "m");
+    b.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     applyDamage(b, 100, "slashing", false, [], member(combatants, "w"));
     expect(b.dead).toBe(true);
     expect(drain(b, combatants)).toEqual([]);
@@ -249,7 +249,7 @@ describe("fatal damage negated (#1789)", () => {
     const combatants = party();
     const a = member(combatants, "a");
     a.health = 100;
-    a.statuses.apply("judges-intervention", 10, "m");
+    a.statuses.apply("judges-intervention", 10, "m", NO_RANKS);
     return combatants;
   }
 
@@ -302,7 +302,7 @@ describe("fatal damage negated (#1789)", () => {
     const combatants = judged();
     const a = member(combatants, "a");
     const w = member(combatants, "w");
-    a.statuses.apply("reversal-of-fortune", 8, "m");
+    a.statuses.apply("reversal-of-fortune", 8, "m", NO_RANKS);
     applyDamage(a, 150, "slashing", false, [], w);
     expect(a.statuses.has("reversal-of-fortune")).toBe(false);
     expect(a.statuses.has("judges-intervention")).toBe(true);
@@ -315,7 +315,7 @@ describe("fatal damage negated (#1789)", () => {
     const combatants = judged();
     const a = member(combatants, "a");
     a.health = 200;
-    a.statuses.apply("watchful-intervention", 60, "m");
+    a.statuses.apply("watchful-intervention", 60, "m", NO_RANKS);
     applyDamage(a, 300, "slashing", false, [], member(combatants, "w"));
     expect(a.health).toBe(200);
     drain(a, combatants);
@@ -378,7 +378,7 @@ describe("in a match (#1789)", () => {
     (id, skillId, line, heal) => {
       const sim = match();
       const d = get(sim, "d").combatant;
-      d.statuses.apply(id, Number.POSITIVE_INFINITY, "d");
+      d.statuses.apply(id, Number.POSITIVE_INFINITY, "d", NO_RANKS);
       step(sim, DT);
       const cut = Math.round(d.maxHealth * (1 - line)) + 10;
       applyDamage(d, cut, "typeless", false, [], get(sim, "w").combatant);
@@ -394,7 +394,7 @@ describe("in a match (#1789)", () => {
     const sim = match();
     const d = get(sim, "d").combatant;
     d.health = 300;
-    d.statuses.apply("faithful-intervention", Number.POSITIVE_INFINITY, "d");
+    d.statuses.apply("faithful-intervention", Number.POSITIVE_INFINITY, "d", NO_RANKS);
     step(sim, 120);
     expect(d.statuses.has("faithful-intervention")).toBe(true);
     d.health = 300;
@@ -407,8 +407,8 @@ describe("in a match (#1789)", () => {
     const sim = match();
     const d = get(sim, "d").combatant;
     d.health = Math.round(d.maxHealth * 0.25) + 3;
-    d.statuses.apply("watchful-intervention", 60, "d");
-    d.statuses.apply("bleeding", 10, "w");
+    d.statuses.apply("watchful-intervention", 60, "d", NO_RANKS);
+    d.statuses.apply("bleeding", 10, "w", NO_RANKS);
     step(sim, 5);
     expect(d.health).toBeLessThan(d.maxHealth * 0.25);
     expect(d.statuses.has("watchful-intervention")).toBe(true);

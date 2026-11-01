@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getTrainingScenario } from "@vibewars/game-core";
+import { NO_RANKS, getTrainingScenario } from "@vibewars/game-core";
 import type { CastRefusedMessage, WireCape } from "@vibewars/game-protocol";
 import { NO_GUILD, type CombatMessage } from "@vibewars/game-session";
 
@@ -54,7 +54,7 @@ describe("createLocalConnection", () => {
 
   it("gives each status its end on the match clock, its length and its caster (#803)", () => {
     const { setup, connection } = targetDummy();
-    setup.simulation.get(SELF_ID)?.combatant.statuses.apply("bleeding", 8, "dummy");
+    setup.simulation.get(SELF_ID)?.combatant.statuses.apply("bleeding", 8, "dummy", NO_RANKS);
     for (let i = 0; i < 10; i += 1) {
       connection.advance(TICK_SECONDS);
     }

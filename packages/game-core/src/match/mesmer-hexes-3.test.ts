@@ -6,6 +6,7 @@ import { describeStatus } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -212,19 +213,19 @@ describe("Fragility (#1475)", () => {
         event.kind === "damage" && event.targetId === "b" ? [event.amount] : [],
       );
 
-    bearer.statuses.apply("bleeding", 3, "f");
+    bearer.statuses.apply("bleeding", 3, "f", NO_RANKS);
     expect(damage(stepFor(match, 0.25))).toEqual([17]);
     // Already bleeding: no gain, and the old one's end is no loss.
-    bearer.statuses.apply("bleeding", 5, "f");
+    bearer.statuses.apply("bleeding", 5, "f", NO_RANKS);
     expect(damage(stepFor(match, 0.25))).toEqual([]);
 
-    bearer.statuses.apply("poison", 10, "f");
-    bearer.statuses.apply("weakness", 10, "f");
+    bearer.statuses.apply("poison", 10, "f", NO_RANKS);
+    bearer.statuses.apply("weakness", 10, "f", NO_RANKS);
     stepFor(match, 0.25);
     expect(bearer.statuses.removeByCategory("condition", 3)).toHaveLength(3);
     expect(damage(stepFor(match, 0.25))).toEqual([17, 17, 17]);
 
-    bearer.statuses.apply("blind", 0.5, "f");
+    bearer.statuses.apply("blind", 0.5, "f", NO_RANKS);
     stepFor(match, 0.25);
     expect(damage(stepFor(match, 0.5))).toEqual([17]);
   });

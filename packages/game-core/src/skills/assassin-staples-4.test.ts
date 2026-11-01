@@ -10,6 +10,7 @@ import { resolveSkillEffects, type CombatEvent } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Assassin staples 4 (#1637): Black Mantis Thrust, Black Spider Strike,
@@ -65,19 +66,19 @@ const body = (id: string): Combatant => makeCombatant({ id, team: 1, health: 1e6
 
 /** An enchantment on `caster`. */
 function enchant(caster: Combatant): Combatant {
-  caster.statuses.apply("mystic-regeneration", 15, caster.id);
+  caster.statuses.apply("mystic-regeneration", 15, caster.id, NO_RANKS);
   return caster;
 }
 
 /** A Mesmer hex on `target`. */
 function hex(target: Combatant): Combatant {
-  target.statuses.apply("empathy", 10, "x");
+  target.statuses.apply("empathy", 10, "x", NO_RANKS);
   return target;
 }
 
 /** `target` blocks 75% of attacks. */
 function guarded(target: Combatant): Combatant {
-  target.statuses.apply("critical-defenses", 10, target.id);
+  target.statuses.apply("critical-defenses", 10, target.id, NO_RANKS);
   return target;
 }
 
@@ -389,7 +390,7 @@ describe("Shattering Assault", () => {
   it("after an off-hand, strikes twice for +41, unblockable, an enchantment off per blow", () => {
     // Critical Defenses blocks, and is itself the second enchantment.
     const foe = guarded(body("f"));
-    foe.statuses.apply("mystic-regeneration", 15, foe.id);
+    foe.statuses.apply("mystic-regeneration", 15, foe.id, NO_RANKS);
     const caster = marked(assassin(), foe, "off-hand");
     const events = attack("assassin.shattering-assault", caster, foe, blocking());
     expect(blockedCount(events)).toBe(0);
@@ -402,7 +403,7 @@ describe("Signet of Shadows", () => {
   it("deals 29, or one packet of 80 to a Blind foe", () => {
     expect(damageTo(land("assassin.signet-of-shadows", assassin(), body("c")), "c")).toEqual([29]);
     const blind = body("b");
-    blind.statuses.apply("blind", 10, "x");
+    blind.statuses.apply("blind", 10, "x", NO_RANKS);
     expect(damageTo(land("assassin.signet-of-shadows", assassin(), blind), "b")).toEqual([80]);
   });
 });

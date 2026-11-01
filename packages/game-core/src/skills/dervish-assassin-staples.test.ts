@@ -11,6 +11,7 @@ import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
 import type { Combatant, Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Dervish and Assassin staples (#1551): Mystic Sandstorm, Grenth's Grasp,
@@ -231,7 +232,7 @@ describe("in a match (#1551)", () => {
 
   /** A Dervish enchantment on `c`, as if it had cast Mystic Regeneration. */
   function enchant(sim: MatchSimulation): void {
-    get(sim, "c").statuses.apply("mystic-regeneration", 15, "c");
+    get(sim, "c").statuses.apply("mystic-regeneration", 15, "c", NO_RANKS);
   }
 
   describe("Mystic Sandstorm", () => {
@@ -284,8 +285,8 @@ describe("in a match (#1551)", () => {
       const sim = match();
       use(sim, "dervish.grenths-grasp", "c");
       const caster = get(sim, "c");
-      caster.statuses.apply("bleeding", 10, "far");
-      caster.statuses.apply("poison", 10, "far");
+      caster.statuses.apply("bleeding", 10, "far", NO_RANKS);
+      caster.statuses.apply("poison", 10, "far", NO_RANKS);
       use(sim, "dervish.chilling-victory");
       // The cleave's second victim too.
       for (const id of ["f", "h"]) {
@@ -313,7 +314,7 @@ describe("in a match (#1551)", () => {
     it("strips an enchantment from a knocked-down foe an attack skill hits, not from a standing one", () => {
       const sim = match();
       use(sim, "dervish.rending-aura", "c");
-      get(sim, "f").statuses.apply("mystic-regeneration", 30, "f");
+      get(sim, "f").statuses.apply("mystic-regeneration", 30, "f", NO_RANKS);
       // Reaper's Sweep's own knockdown comes after the blow: too late.
       enchant(sim);
       use(sim, "dervish.reapers-sweep");
@@ -358,7 +359,7 @@ describe("in a match (#1551)", () => {
     it("spends a Dervish enchantment even on a miss: recharges in 3 s, 35 to the target's adjacent foes", () => {
       const sim = match();
       enchant(sim);
-      get(sim, "c").statuses.apply("blind", 10, "f");
+      get(sim, "c").statuses.apply("blind", 10, "f", NO_RANKS);
       const log = use(sim, "dervish.pious-assault");
       expect(log.flatMap((entry) => entry.events).some((e) => e.kind === "attack-missed")).toBe(
         true,
@@ -432,7 +433,7 @@ describe("in a match (#1551)", () => {
 
     it("weakens the Dervish for 10 s with only another profession's enchantment on", () => {
       const sim = match();
-      get(sim, "c").statuses.apply("shadow-refuge", 4, "c");
+      get(sim, "c").statuses.apply("shadow-refuge", 4, "c", NO_RANKS);
       use(sim, "dervish.wearying-strike");
       expect(secondsOf(sim, "c", "weakness")).toBeCloseTo(10, 0);
       expect(hasStatus(sim, "c", "shadow-refuge")).toBe(true);

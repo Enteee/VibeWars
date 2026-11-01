@@ -32,6 +32,7 @@ import {
   weaponSnapshotOf,
 } from "./weapon-attack.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.combat;
 
@@ -132,7 +133,7 @@ describe("resolveSwing", () => {
 
   it("a blind attacker misses 90% of 1000 swings, each one an attack-missed", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-    sword.statuses.apply("blind", 1e6, "someone");
+    sword.statuses.apply("blind", 1e6, "someone", NO_RANKS);
     const rng = createRng(3);
     let misses = 0;
     for (let i = 0; i < 1000; i += 1) {
@@ -186,7 +187,7 @@ describe("resolveSwing", () => {
 
   it("says a swing struck twice, a blinded blow's miss included (#561)", () => {
     const daggers = attacker(WEAPONS.daggers, "assassin.dagger-mastery");
-    daggers.statuses.apply("blind", 1e6, "someone");
+    daggers.statuses.apply("blind", 1e6, "someone", NO_RANKS);
     const rng = createRng(561);
     let doubles = 0;
     let missedDoubles = 0;
@@ -392,7 +393,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     it("yields to Judge's Insight's 20% (#1519): holy, and the highest counts, nothing adds", () => {
       const insightful = (strength: number): Combatant => {
         const attacker = strong(WEAPONS.axe, "warrior.axe-mastery", strength);
-        attacker.statuses.apply("judges-insight", 18, "monk");
+        attacker.statuses.apply("judges-insight", 18, "monk", NO_RANKS);
         return attacker;
       };
       const holy = { ...WEAPONS.axe, damageType: "holy" } as const;
@@ -488,7 +489,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
     it("keeps its own 25% and lightning under Judge's Insight's holy 20% (#1519)", () => {
       const target = victim();
       const insightful = thrower();
-      insightful.statuses.apply("judges-insight", 18, "monk");
+      insightful.statuses.apply("judges-insight", 18, "monk", NO_RANKS);
       expect(damages(resolve(spearOfLightning, insightful, [target]))).toEqual([
         blowOf("lightning", 0.25, target),
       ]);
@@ -509,7 +510,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
 
   it("blinded, a miss is an attack-missed and none of the riders", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-    sword.statuses.apply("blind", 10, "foe");
+    sword.statuses.apply("blind", 10, "foe", NO_RANKS);
     const target = victim();
     const events = resolve(severArtery, sword, [target], fixed(10, 0.5));
     expect(events).toEqual([{ kind: "attack-missed", targetId: "t" }]);
@@ -554,7 +555,7 @@ describe("resolveAttackSkill (ADR-0029)", () => {
 
     it("blinded, misses and interrupts nothing", () => {
       const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-      sword.statuses.apply("blind", 10, "foe");
+      sword.statuses.apply("blind", 10, "foe", NO_RANKS);
       const target = casting();
       expect(resolve(blow, sword, [target], fixed(10, 0.5))).toEqual([
         { kind: "attack-missed", targetId: "t" },
@@ -589,7 +590,7 @@ describe("block (#534)", () => {
   it("Guardian blocks about half of 2000 swings, each an attack-blocked that deals nothing", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const target = foe("dummy");
-    target.combatant.statuses.apply("guardian", 1e6, "monk");
+    target.combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
     expect(blockChanceOf(target.combatant, "melee")).toBe(0.5);
     expect(blockChanceOf(target.combatant, "projectile")).toBe(0.5);
     const rng = createRng(5);
@@ -618,7 +619,7 @@ describe("block (#534)", () => {
   it("a knocked-down target blocks nothing, and blocks again once it stands (#610)", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     const target = foe("dummy");
-    target.combatant.statuses.apply("guardian", 1e6, "monk");
+    target.combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
     const rng = createRng(610);
     const swing = () =>
       resolveSwing({
@@ -648,9 +649,9 @@ describe("block (#534)", () => {
 
   it("a blind attacker's miss is a miss: no block roll is drawn", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-    sword.statuses.apply("blind", 10, "foe");
+    sword.statuses.apply("blind", 10, "foe", NO_RANKS);
     const target = foe("dummy");
-    target.combatant.statuses.apply("guardian", 10, "monk");
+    target.combatant.statuses.apply("guardian", 10, "monk", NO_RANKS);
     let floats = 0;
     const rng = Object.assign(createRng(1), {
       nextFloat: () => {
@@ -685,7 +686,7 @@ describe("block (#534)", () => {
       if (skill === undefined) {
         throw new Error(`missing ${skillId}`);
       }
-      target.statuses.apply("guardian", 10, "monk");
+      target.statuses.apply("guardian", 10, "monk", NO_RANKS);
       return resolveAttackSkill(
         {
           surroundings: new Map(),
@@ -773,7 +774,7 @@ describe("block (#534)", () => {
         makeCombatant({ id, team: 1, health: 1e6, maxHealth: 1e6 }),
       );
       for (const target of targets) {
-        target.statuses.apply("guardian", 10, "monk");
+        target.statuses.apply("guardian", 10, "monk", NO_RANKS);
       }
       // Block; land with no crit, on the chest or wherever; block.
       const floats = [0.1, 0.9, 0.9, 0.9, 0.1];
@@ -824,9 +825,9 @@ describe("unblockable attacks (#1604)", () => {
 
   it("Guiding Hands' 2 stop two blocks, then it ends and the third is blocked", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-    sword.statuses.apply("guiding-hands", 20, "attacker");
+    sword.statuses.apply("guiding-hands", 20, "attacker", NO_RANKS);
     const target = foe("dummy");
-    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy", NO_RANKS);
     expect(kinds(swing(sword, target).events)).toEqual(["damage"]);
     const second = swing(sword, target).events;
     expect(kinds(second)).toEqual(["damage"]);
@@ -841,9 +842,9 @@ describe("unblockable attacks (#1604)", () => {
 
   it("a double strike spends 1, both its blows unblockable", () => {
     const daggers = attacker(WEAPONS.daggers, "assassin.dagger-mastery");
-    daggers.statuses.apply("guiding-hands", 20, "attacker");
+    daggers.statuses.apply("guiding-hands", 20, "attacker", NO_RANKS);
     const target = foe("dummy");
-    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy", NO_RANKS);
     const first = swing(daggers, target);
     expect(first.doubleStrike).toBe(true);
     expect(kinds(first.events)).toEqual(["damage", "damage"]);
@@ -852,9 +853,9 @@ describe("unblockable attacks (#1604)", () => {
 
   it("an attack skill spends 1 too, and its blow is not blocked", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-    sword.statuses.apply("guiding-hands", 20, "attacker");
+    sword.statuses.apply("guiding-hands", 20, "attacker", NO_RANKS);
     const target = foe("dummy");
-    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy");
+    target.combatant.statuses.apply("bonettis-defense", 1e6, "dummy", NO_RANKS);
     const strike = getSkill("warrior.power-attack");
     if (strike === undefined) {
       throw new Error("no Power Attack");
@@ -1019,7 +1020,7 @@ describe("critical hits (#533)", () => {
 
   it("draws no crit roll for a blinded attacker's miss", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-    sword.statuses.apply("blind", 1e6, "someone");
+    sword.statuses.apply("blind", 1e6, "someone", NO_RANKS);
     let draws = 0;
     const rng = Object.assign(createRng(1), {
       nextFloat: () => {
@@ -1162,7 +1163,7 @@ describe("daze (#546)", () => {
     }
     target.combatant.cast.beginCast(skill.id, "attacker", 2, skill.whileActivating);
     if (dazed) {
-      target.combatant.statuses.apply("dazed", 10, "attacker");
+      target.combatant.statuses.apply("dazed", 10, "attacker", NO_RANKS);
     }
     return target;
   }
@@ -1219,7 +1220,7 @@ describe("daze (#546)", () => {
 
   it("a blind miss does not interrupt", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
-    sword.statuses.apply("blind", 10, "caster");
+    sword.statuses.apply("blind", 10, "caster", NO_RANKS);
     // The first seed whose swing misses: blind misses nine in ten.
     for (let seed = 1; seed < 20; seed += 1) {
       const target = dazedCasting("elementalist.fireball");
@@ -1245,7 +1246,7 @@ describe("daze (#546)", () => {
     // The first seed whose swing Guardian blocks: half are.
     for (let seed = 1; seed < 20; seed += 1) {
       const target = dazedCasting("elementalist.fireball");
-      target.combatant.statuses.apply("guardian", 10, "caster");
+      target.combatant.statuses.apply("guardian", 10, "caster", NO_RANKS);
       const events = resolveSwing({
         attacker: sword,
         target,
@@ -1278,7 +1279,7 @@ describe("daze (#546)", () => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     for (let seed = 1; seed < 20; seed += 1) {
       const target = dazedCasting("ranger.barbed-trap", false);
-      target.combatant.statuses.apply("guardian", 10, "caster");
+      target.combatant.statuses.apply("guardian", 10, "caster", NO_RANKS);
       const events = resolveSwing({
         attacker: sword,
         target,
@@ -1373,7 +1374,7 @@ describe("weakness (#762)", () => {
     );
 
   const weakened = (who: Combatant): Combatant => {
-    who.statuses.apply("weakness", 10, "necro");
+    who.statuses.apply("weakness", 10, "necro", NO_RANKS);
     return who;
   };
 
@@ -1597,7 +1598,7 @@ describe("dual attacks (#885)", () => {
   it("blocked once and landed once: one hit, its riders once, and the dual mark", () => {
     const caster = assassin();
     const target = victim();
-    target.statuses.apply("guardian", 10, "monk");
+    target.statuses.apply("guardian", 10, "monk", NO_RANKS);
     marked(caster, target, "off-hand");
     // The first block roll blocks; the second does not, nor does the crit roll.
     const events = resolve("assassin.twisting-fangs", caster, target, { rng: sequence(0.25) });
@@ -1612,7 +1613,7 @@ describe("dual attacks (#885)", () => {
   it("blocked twice: no damage, and the off-hand mark stays", () => {
     const caster = assassin();
     const target = victim();
-    target.statuses.apply("guardian", 10, "monk");
+    target.statuses.apply("guardian", 10, "monk", NO_RANKS);
     marked(caster, target, "off-hand");
     const events = resolve("assassin.twisting-fangs", caster, target, {
       rng: sequence(0.25, 0.25),
@@ -1828,11 +1829,11 @@ describe("hit by a foe's attack (#1464)", () => {
   function swings(blind: boolean): { recorded: number; landed: number } {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship");
     if (blind) {
-      sword.statuses.apply("blind", 1e6, "x");
+      sword.statuses.apply("blind", 1e6, "x", NO_RANKS);
     }
     const target = foe("r");
-    target.combatant.statuses.apply("vengeful-was-khanhei", 1e6, "r");
-    target.combatant.statuses.apply("guardian", 1e6, "monk");
+    target.combatant.statuses.apply("vengeful-was-khanhei", 1e6, "r", NO_RANKS);
+    target.combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
     target.combatant.statuses.drainChanges();
     const rng = createRng(1464);
     let recorded = 0;

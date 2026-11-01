@@ -10,6 +10,7 @@ import type { CombatEvent } from "../skills/effects.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Shots that fly differently (#1914): Focused Shot, Needling Shot, Forked
@@ -185,7 +186,7 @@ describe("Focused Shot (#1914)", () => {
     let misses = 0;
     for (let n = 0; n < 20; n += 1) {
       const sim = match([], `focused-blind-${String(n)}`);
-      get(sim, "r").combatant.statuses.apply("blind", 1000, "f");
+      get(sim, "r").combatant.statuses.apply("blind", 1000, "f", NO_RANKS);
       const events = used(sim, FOCUSED_SHOT);
       if (events.some((event) => event.kind === "attack-missed")) {
         misses += 1;
@@ -198,7 +199,7 @@ describe("Focused Shot (#1914)", () => {
   it("cannot be blocked: Guardian on its target stops none of 20", () => {
     for (let n = 0; n < 20; n += 1) {
       const sim = match([], `focused-guardian-${String(n)}`);
-      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+      get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
       const events = used(sim, FOCUSED_SHOT);
       expect(events.some((event) => event.kind === "attack-blocked")).toBe(false);
       expect(damageTo(events, "f")).toHaveLength(1);
@@ -256,7 +257,7 @@ describe("Forked Arrow (#1914)", () => {
   function blows(statusId?: "guardian" | "mark-of-death"): number {
     const sim = match();
     if (statusId !== undefined) {
-      get(sim, "r").combatant.statuses.apply(statusId, 1000, "f");
+      get(sim, "r").combatant.statuses.apply(statusId, 1000, "f", NO_RANKS);
     }
     return damageTo(used(sim, FORKED_ARROW), "f").length;
   }
@@ -270,7 +271,7 @@ describe("Forked Arrow (#1914)", () => {
   it("reads the hex as it leaves: one that ends in flight still leaves one arrow", () => {
     const sim = match();
     const archer = get(sim, "r").combatant;
-    archer.statuses.apply("mark-of-death", 1000, "f");
+    archer.statuses.apply("mark-of-death", 1000, "f", NO_RANKS);
     released(sim, FORKED_ARROW);
     archer.statuses.remove("mark-of-death");
     const events: CombatEvent[] = [];

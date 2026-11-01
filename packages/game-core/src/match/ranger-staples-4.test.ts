@@ -7,7 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { blockChanceOf } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
@@ -208,7 +208,7 @@ describe("Called Shot and Arcing Shot (#1676)", () => {
     for (const id of [CALLED_SHOT, ARCING_SHOT]) {
       for (let n = 0; n < 10; n += 1) {
         const sim = match([], { seed: `unblockable-${String(n)}` });
-        get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+        get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
         const { events } = shot(sim, id);
         expect(damageTo(events, "f"), `${id} ${String(n)}`).toHaveLength(1);
       }
@@ -240,7 +240,7 @@ describe("Splinter Shot (#1676)", () => {
       ],
       { seed },
     );
-    get(sim, "f").combatant.statuses.apply("guardian", 1000, "f");
+    get(sim, "f").combatant.statuses.apply("guardian", 1000, "f", NO_RANKS);
     const { events } = shot(sim, SPLINTER_SHOT);
     return events;
   }
@@ -270,7 +270,7 @@ describe("Magebane Shot (#1676)", () => {
   function magebane(skillId: string | undefined) {
     const sim = match();
     const foe = get(sim, "f").combatant;
-    foe.statuses.apply("guardian", 1000, "f");
+    foe.statuses.apply("guardian", 1000, "f", NO_RANKS);
     if (skillId !== undefined) {
       foe.cast.beginCast(skillId, "r", 60, undefined);
     }
@@ -322,7 +322,7 @@ describe("the pet attacks (#1676)", () => {
   it("Pounce knocks down a moving foe, not a standing one", () => {
     // Crippled, so the wolf catches it walking away.
     const moving = petBlow(POUNCE, (sim) => {
-      get(sim, "f").combatant.statuses.apply("crippled", 1000, "r");
+      get(sim, "f").combatant.statuses.apply("crippled", 1000, "r", NO_RANKS);
       sim.setInputDirection("f", vec2(0, 1));
     });
     expect(knockedDown(moving.events, "f")).toBe(true);
@@ -369,7 +369,7 @@ describe("the traps (#1676)", () => {
       spec("f", 1, vec2(AREA_ADJACENT - 10, 0)),
       spec("lame", 1, vec2(0, AREA_NEARBY - 10)),
     ]);
-    get(sim, "lame").combatant.statuses.apply("crippled", 1000, "r");
+    get(sim, "lame").combatant.statuses.apply("crippled", 1000, "r", NO_RANKS);
     expect(sim.requestSkill("r", BAR.indexOf(TRIPWIRE))?.check).toEqual({ ok: true });
     const events = stepFor(sim, 3)
       .filter((entry) => entry.skillId === TRIPWIRE)
@@ -398,7 +398,7 @@ describe("the traps (#1676)", () => {
 describe("Zojun's Haste (#1676)", () => {
   it("moves 33% faster and blocks 65% of projectiles, no melee blow", () => {
     const bearer = makeCombatant({ id: "r" });
-    bearer.statuses.apply("zojuns-haste", 10, "r");
+    bearer.statuses.apply("zojuns-haste", 10, "r", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.33);
     expect(blockChanceOf(bearer, "projectile")).toBe(0.65);
     expect(blockChanceOf(bearer, "melee")).toBe(0);

@@ -13,6 +13,7 @@ import { resolveTargets, type TargetCandidate } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import { KNOCKDOWN_SECONDS, type Combatant, type Skill } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The Elementalist knockdown staples (#985): Blinding Flash, Shock,
@@ -80,7 +81,7 @@ describe("Blinding Flash (#985)", () => {
 
   it("leaves a longer blind as it is", () => {
     const target = foe();
-    target.statuses.apply("blind", 13, "ranger");
+    target.statuses.apply("blind", 13, "ranger", NO_RANKS);
     use(caster(), "elementalist.blinding-flash", target);
     expect(target.statuses.active.find(({ id }) => id === "blind")?.remainingSeconds).toBe(13);
   });
@@ -92,7 +93,7 @@ describe("Shock (#985)", () => {
     expect(shock.type).toBe("skill");
     expect(shock.range).toBe(RANGE_MELEE);
     const dazed = caster();
-    dazed.statuses.apply("dazed", 10, "foe");
+    dazed.statuses.apply("dazed", 10, "foe", NO_RANKS);
     expect(effectiveActivationSeconds(shock, dazed)).toBe(0.75);
   });
 
@@ -110,7 +111,7 @@ describe("Shock (#985)", () => {
 
   it("against Fleeting Stability: no knockdown, the damage lands", () => {
     const target = foe();
-    target.statuses.apply("fleeting-stability", 10, "foe");
+    target.statuses.apply("fleeting-stability", 10, "foe", NO_RANKS);
     const events = use(caster(), "elementalist.shock", target);
     expect(target.knockdownRemaining).toBe(0);
     expect(events.filter((event) => event.kind === "damage")).toHaveLength(1);

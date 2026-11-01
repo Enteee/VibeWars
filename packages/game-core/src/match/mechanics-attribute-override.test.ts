@@ -9,6 +9,7 @@ import { effectiveActivationSeconds, rankOf } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Attributes set or borrowed (#1929): Wail of Doom's "all of target foe's
@@ -44,15 +45,15 @@ describe("Wail of Doom (#1929)", () => {
       ],
       [["necromancer.curses", 2]],
     );
-    necro.statuses.apply("wail-of-doom", 5, "foe");
+    necro.statuses.apply("wail-of-doom", 5, "foe", NO_RANKS);
     expect(rankOf(necro, "necromancer.curses")).toBe(2);
     expect(rankOf(necro, "necromancer.soul-reaping")).toBe(0);
   });
 
   it("stays 0 under Weakness too", () => {
     const necro = bearer([["necromancer.curses", 12]]);
-    necro.statuses.apply("wail-of-doom", 5, "foe");
-    necro.statuses.apply("weakness", 5, "foe");
+    necro.statuses.apply("wail-of-doom", 5, "foe", NO_RANKS);
+    necro.statuses.apply("weakness", 5, "foe", NO_RANKS);
     expect(rankOf(necro, "necromancer.curses")).toBe(0);
   });
 
@@ -60,14 +61,14 @@ describe("Wail of Doom (#1929)", () => {
     const mesmer = bearer([["mesmer.fast-casting", 12]]);
     const spell = skill("elementalist.lightning-hammer");
     const fast = effectiveActivationSeconds(spell, mesmer);
-    mesmer.statuses.apply("wail-of-doom", 5, "foe");
+    mesmer.statuses.apply("wail-of-doom", 5, "foe", NO_RANKS);
     expect(effectiveActivationSeconds(spell, mesmer)).toBeGreaterThan(fast);
     expect(effectiveActivationSeconds(spell, mesmer)).toBe(spell.activationSeconds);
   });
 
   it("ends, and the ranks come back", () => {
     const necro = bearer([["necromancer.curses", 12]]);
-    necro.statuses.apply("wail-of-doom", 5, "foe");
+    necro.statuses.apply("wail-of-doom", 5, "foe", NO_RANKS);
     necro.statuses.advance(5.1, false);
     expect(rankOf(necro, "necromancer.curses")).toBe(12);
   });
@@ -80,7 +81,7 @@ describe("Atrophy (#1929)", () => {
       ["mesmer.domination-magic", 10],
       ["necromancer.curses", 8],
     ]);
-    mesmer.statuses.apply("atrophy", 6, "foe");
+    mesmer.statuses.apply("atrophy", 6, "foe", NO_RANKS);
     expect(rankOf(mesmer, "mesmer.fast-casting")).toBe(0);
     expect(rankOf(mesmer, "mesmer.domination-magic")).toBe(10);
     expect(rankOf(mesmer, "necromancer.curses")).toBe(8);
@@ -89,7 +90,7 @@ describe("Atrophy (#1929)", () => {
   it("drops a Mesmer's Fast Casting from its casts", () => {
     const mesmer = bearer([["mesmer.fast-casting", 12]]);
     const spell = skill("elementalist.lightning-hammer");
-    mesmer.statuses.apply("atrophy", 6, "foe");
+    mesmer.statuses.apply("atrophy", 6, "foe", NO_RANKS);
     expect(effectiveActivationSeconds(spell, mesmer)).toBe(spell.activationSeconds);
   });
 });
@@ -104,8 +105,8 @@ describe("Master of Magic (#1929)", () => {
       ],
       [["elementalist.fire-magic", 4]],
     );
-    ele.statuses.apply("weakness", 10, "foe");
-    ele.statuses.apply("master-of-magic", 49, "b");
+    ele.statuses.apply("weakness", 10, "foe", NO_RANKS);
+    ele.statuses.apply("master-of-magic", 49, "b", NO_RANKS);
     expect(rankOf(ele, "elementalist.fire-magic")).toBe(13);
     expect(rankOf(ele, "elementalist.air-magic")).toBe(13);
     expect(rankOf(ele, "elementalist.water-magic")).toBe(13);
@@ -116,8 +117,8 @@ describe("Master of Magic (#1929)", () => {
 
   it("loses to a newer Wail of Doom", () => {
     const ele = bearer([["elementalist.fire-magic", 12]]);
-    ele.statuses.apply("master-of-magic", 49, "b");
-    ele.statuses.apply("wail-of-doom", 5, "foe");
+    ele.statuses.apply("master-of-magic", 49, "b", NO_RANKS);
+    ele.statuses.apply("wail-of-doom", 5, "foe", NO_RANKS);
     expect(rankOf(ele, "elementalist.fire-magic")).toBe(0);
   });
 
@@ -131,7 +132,7 @@ describe("Master of Magic (#1929)", () => {
         ],
       });
       if (mastered) {
-        get(match, "a").combatant.statuses.apply("master-of-magic", 49, "a");
+        get(match, "a").combatant.statuses.apply("master-of-magic", 49, "a", NO_RANKS);
       }
       match.setTarget("a", "d");
       return [spentOn(match, 0), spentOn(match, 1)];
@@ -196,7 +197,7 @@ describe("Signet of Illusions (#1929)", () => {
 
   it("is not spent by a spell of Illusion Magic, nor by a non-spell", () => {
     const mesmer = makeCombatant({ id: "m" });
-    mesmer.statuses.apply("signet-of-illusions", Number.POSITIVE_INFINITY, "m");
+    mesmer.statuses.apply("signet-of-illusions", Number.POSITIVE_INFINITY, "m", NO_RANKS);
     expect(mesmer.statuses.borrowedFor(skill("mesmer.conjure-phantasm"))).toBeUndefined();
     expect(mesmer.statuses.borrowedFor(skill("warrior.signet-of-strength"))).toBeUndefined();
     expect(mesmer.statuses.borrowedFor(skill("elementalist.lightning-strike"))).toBe(
@@ -206,10 +207,10 @@ describe("Signet of Illusions (#1929)", () => {
 
   it("starts its count again on a recast", () => {
     const mesmer = makeCombatant({ id: "m" });
-    mesmer.statuses.apply("signet-of-illusions", Number.POSITIVE_INFINITY, "m");
+    mesmer.statuses.apply("signet-of-illusions", Number.POSITIVE_INFINITY, "m", NO_RANKS);
     mesmer.statuses.spendBorrowed("signet-of-illusions");
     mesmer.statuses.spendBorrowed("signet-of-illusions");
-    mesmer.statuses.apply("signet-of-illusions", Number.POSITIVE_INFINITY, "m");
+    mesmer.statuses.apply("signet-of-illusions", Number.POSITIVE_INFINITY, "m", NO_RANKS);
     expect(mesmer.statuses.get("signet-of-illusions")?.castsLeft).toBe(3);
   });
 });

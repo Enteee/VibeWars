@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveMagnitude } from "./scaling.js";
+import { resolveMagnitude, statAt } from "./scaling.js";
 import { makeCombatant } from "./testing.js";
 
 function casterWithRank(attributeId: string, rank: number) {
@@ -59,5 +59,19 @@ describe("resolveMagnitude", () => {
       scaling: { attributeId: "elementalist.fire-magic", atZero: 7, atTwelve: 91 },
     };
     expect(resolveMagnitude(magnitude, caster)).toBe(91);
+  });
+});
+
+describe("statAt (#1976)", () => {
+  const frenzy = { scaling: { attributeId: "warrior.strength", atZero: 2, atTwelve: 1.6 } };
+
+  it("gives a flat stat back as it is", () => {
+    expect(statAt(27, new Map([["warrior.strength", 3]]))).toBe(27);
+  });
+
+  it("gives a scaled one at the ranks, unrounded", () => {
+    expect(statAt(frenzy, new Map([["warrior.strength", 12]]))).toBeCloseTo(1.6, 10);
+    expect(statAt(frenzy, new Map([["warrior.strength", 0]]))).toBe(2);
+    expect(statAt(frenzy, new Map([["warrior.strength", 6]]))).toBeCloseTo(1.8, 10);
   });
 });

@@ -9,6 +9,7 @@ import { KNOCKDOWN_SECONDS } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Hammer Bash in a match (#1097): "Lose all adrenaline. If Hammer Bash
@@ -112,7 +113,7 @@ describe("Hammer Bash (#1097)", () => {
     // The first seed under which Guardian blocks the blow.
     for (let seed = 0; seed < 50; seed += 1) {
       const sim = arena(`block-${String(seed)}`);
-      combatant(sim, "t").statuses.apply("guardian", 6, "t");
+      combatant(sim, "t").statuses.apply("guardian", 6, "t", NO_RANKS);
       const entry = bash(sim);
       if (entry.events.some(({ kind }) => kind === "attack-blocked")) {
         expect(pools(sim)).toEqual([0, 0, 0]);
@@ -125,7 +126,7 @@ describe("Hammer Bash (#1097)", () => {
 
   it('under "For Great Justice!" its blow still earns nothing', () => {
     const sim = arena();
-    combatant(sim, "w").statuses.apply("for-great-justice", 8, "w");
+    combatant(sim, "w").statuses.apply("for-great-justice", 8, "w", NO_RANKS);
     bash(sim);
     expect(pools(sim)).toEqual([0, 0, 0]);
   });

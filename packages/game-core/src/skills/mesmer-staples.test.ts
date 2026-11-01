@@ -11,7 +11,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -168,7 +168,7 @@ describe("Blackout (#1570)", () => {
 describe("Shatter Hex (#1570)", () => {
   it("removes a hex from the ally and hits foes nearby it for 102", () => {
     const ally = makeCombatant({ id: "a" });
-    ally.statuses.apply("empathy", 10, "x");
+    ally.statuses.apply("empathy", 10, "x", NO_RANKS);
     const near = foe("near");
     const far = foe("far");
     const events = use(mesmer(), "mesmer.shatter-hex", ally, [
@@ -241,9 +241,14 @@ describe("Arcane Conundrum (#1570)", () => {
   });
 
   it("doubles spell cast time, and with Dazed makes it 4×", () => {
-    expect(aggregateModifiers([{ id: "arcane-conundrum" }]).castTimeMultiplier).toBe(2);
     expect(
-      aggregateModifiers([{ id: "arcane-conundrum" }, { id: "dazed" }]).castTimeMultiplier,
+      aggregateModifiers([{ id: "arcane-conundrum", ranks: NO_RANKS }]).castTimeMultiplier,
+    ).toBe(2);
+    expect(
+      aggregateModifiers([
+        { id: "arcane-conundrum", ranks: NO_RANKS },
+        { id: "dazed", ranks: NO_RANKS },
+      ]).castTimeMultiplier,
     ).toBe(4);
     expect(describeStatus("arcane-conundrum")).toBe(
       "spells take 2× as long to cast, its caster gains 6 energy when it ends",

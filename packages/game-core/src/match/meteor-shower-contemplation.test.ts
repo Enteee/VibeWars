@@ -4,7 +4,7 @@ import { AREA_ADJACENT } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
-import { getStatusDefinition } from "../skills/status.js";
+import { NO_RANKS, getStatusDefinition } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
@@ -197,12 +197,12 @@ describe("Contemplation of Purity (#1205)", () => {
     self.health = 100;
     // A maintained enchantment of your own counts, and ends, too (#462).
     // No weakness: it would take a rank off Divine Favor for the heal.
-    self.statuses.maintain("holy-veil", "e", 0);
-    self.statuses.apply("guardian", 30, "e");
-    self.statuses.apply("armor-boost", 30, "e");
-    self.statuses.apply("malaise", 30, "f");
+    self.statuses.maintain("holy-veil", "e", 0, NO_RANKS);
+    self.statuses.apply("guardian", 30, "e", NO_RANKS);
+    self.statuses.apply("armor-boost", 30, "e", NO_RANKS);
+    self.statuses.apply("malaise", 30, "f", NO_RANKS);
     for (const condition of ["blind", "crippled", "poison", "dazed", "bleeding"] as const) {
-      self.statuses.apply(condition, 30, "f");
+      self.statuses.apply(condition, 30, "f", NO_RANKS);
     }
     const entry = contemplate(sim);
     expect(entry.events.filter((event) => event.kind === "heal")).toEqual([
@@ -225,13 +225,13 @@ describe("Contemplation of Purity (#1205)", () => {
   it("caps the hexes and conditions at its maximum: 1 at Divine Favor 0, however many enchantments went", () => {
     const sim = match([], 0);
     const self = get(sim, "e").combatant;
-    self.statuses.apply("guardian", 30, "e");
-    self.statuses.apply("armor-boost", 30, "e");
-    self.statuses.apply("vow-of-strength", 30, "e");
-    self.statuses.apply("malaise", 30, "f");
-    self.statuses.apply("faintheartedness", 30, "f");
-    self.statuses.apply("blind", 30, "f");
-    self.statuses.apply("crippled", 30, "f");
+    self.statuses.apply("guardian", 30, "e", NO_RANKS);
+    self.statuses.apply("armor-boost", 30, "e", NO_RANKS);
+    self.statuses.apply("vow-of-strength", 30, "e", NO_RANKS);
+    self.statuses.apply("malaise", 30, "f", NO_RANKS);
+    self.statuses.apply("faintheartedness", 30, "f", NO_RANKS);
+    self.statuses.apply("blind", 30, "f", NO_RANKS);
+    self.statuses.apply("crippled", 30, "f", NO_RANKS);
     const entry = contemplate(sim);
     expect(removed(entry).sort()).toEqual([
       "condition",
@@ -246,8 +246,8 @@ describe("Contemplation of Purity (#1205)", () => {
     const sim = match();
     const self = get(sim, "e").combatant;
     self.health = 100;
-    self.statuses.apply("malaise", 30, "f");
-    self.statuses.apply("blind", 30, "f");
+    self.statuses.apply("malaise", 30, "f", NO_RANKS);
+    self.statuses.apply("blind", 30, "f", NO_RANKS);
     const energy = self.energy;
     const entry = contemplate(sim);
     expect(entry.events.filter((event) => event.kind === "heal")).toEqual([]);

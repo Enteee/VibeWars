@@ -11,7 +11,7 @@ import { canActivate, payCost } from "./activation.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { STATUS_DEFINITIONS, aggregateModifiers, type StatusId } from "./status.js";
+import { NO_RANKS, STATUS_DEFINITIONS, aggregateModifiers, type StatusId } from "./status.js";
 import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import { attackDurationSeconds, resolveAttackSkill } from "./weapon-attack.js";
 import type { Combatant, Skill, SkillEffect } from "./types.js";
@@ -115,10 +115,10 @@ describe("Mystic Regeneration (#845)", () => {
     expect(caster.statuses.get("mystic-regeneration")?.remainingSeconds).toBe(17);
     expect(aggregateModifiers(caster.statuses.active).healthPips).toBe(3);
 
-    caster.statuses.apply("guardian", 10, "monk");
+    caster.statuses.apply("guardian", 10, "monk", NO_RANKS);
     cast(caster, "dervish.fleeting-stability");
     expect(aggregateModifiers(caster.statuses.active).healthPips).toBe(9);
-    caster.statuses.apply("armor-boost", 10, "ele");
+    caster.statuses.apply("armor-boost", 10, "ele", NO_RANKS);
     expect(aggregateModifiers(caster.statuses.active).healthPips).toBe(9);
   });
 
@@ -153,7 +153,7 @@ describe("Wounding Strike (#845)", () => {
 
   it("with none: Bleeding alone, and a Monk's enchantment kept", () => {
     const caster = dervish();
-    caster.statuses.apply("guardian", 10, "monk");
+    caster.statuses.apply("guardian", 10, "monk", NO_RANKS);
     const target = foe();
     strike(caster, target);
     expect(statusesOf(target)).toEqual(["bleeding"]);
@@ -164,7 +164,7 @@ describe("Wounding Strike (#845)", () => {
     const caster = dervish();
     cast(caster, "dervish.fleeting-stability");
     const target = foe();
-    target.statuses.apply("guardian", 10, "monk");
+    target.statuses.apply("guardian", 10, "monk", NO_RANKS);
     const events = strike(caster, target, steady(10, 0.1));
     expect(events).toContainEqual({ kind: "attack-blocked", targetId: "f" });
     expect(statusesOf(caster)).toEqual(["fleeting-stability"]);
@@ -174,7 +174,7 @@ describe("Wounding Strike (#845)", () => {
   it("missed: nothing lost", () => {
     const caster = dervish();
     cast(caster, "dervish.fleeting-stability");
-    caster.statuses.apply("blind", 10, "foe");
+    caster.statuses.apply("blind", 10, "foe", NO_RANKS);
     const events = strike(caster, foe(), steady(10, 0.5));
     expect(events).toContainEqual({ kind: "attack-missed", targetId: "f" });
     expect(caster.statuses.has("fleeting-stability")).toBe(true);
@@ -186,7 +186,7 @@ describe("Pious Restoration (#845)", () => {
     const caster = dervish();
     caster.health = 100;
     for (const hex of ["faintheartedness", "malaise"] as const) {
-      caster.statuses.apply(hex, 10, "necro");
+      caster.statuses.apply(hex, 10, "necro", NO_RANKS);
     }
     return caster;
   }
@@ -210,7 +210,7 @@ describe("Pious Restoration (#845)", () => {
     const caster = dervish();
     caster.health = 100;
     cast(caster, "dervish.fleeting-stability");
-    caster.statuses.apply("bleeding", 10, "foe");
+    caster.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     cast(caster, "dervish.pious-restoration");
     expect(statusesOf(caster)).toEqual(["bleeding"]);
   });
@@ -255,7 +255,7 @@ describe("Fleeting Stability (#845)", () => {
 describe("Heart of Fury (#845)", () => {
   it("you attack 25% faster, and it ends Sprint", () => {
     const caster = dervish();
-    caster.statuses.apply("sprint", 10, "d");
+    caster.statuses.apply("sprint", 10, "d", NO_RANKS);
     const swing = WEAPONS.scythe.attackIntervalSeconds;
     expect(attackDurationSeconds(caster, swing)).toBe(swing);
     chargeAdrenaline(caster, "dervish.heart-of-fury");

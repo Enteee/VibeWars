@@ -9,7 +9,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { getStatusDefinition } from "./status.js";
+import { NO_RANKS, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 
@@ -91,8 +91,8 @@ describe("Cure Hex (#1039)", () => {
 
   it("removes the newest hex and heals 86", () => {
     const target = ally();
-    target.statuses.apply("empathy", 13, "foe");
-    target.statuses.apply("malaise", 10, "foe");
+    target.statuses.apply("empathy", 13, "foe", NO_RANKS);
+    target.statuses.apply("malaise", 10, "foe", NO_RANKS);
     const events = use(monk(), "monk.cure-hex", target);
     expect(target.statuses.has("empathy")).toBe(true);
     expect(target.statuses.has("malaise")).toBe(false);
@@ -177,7 +177,7 @@ describe("Smite Condition (#1039)", () => {
 
   it("removes Poison, and a foe in the area takes 50 holy through armor; nobody else", () => {
     const { target, near, far, friend, surroundings } = crowd();
-    target.statuses.apply("poison", 10, "near");
+    target.statuses.apply("poison", 10, "near", NO_RANKS);
     use(monk(), "monk.smite-condition", target, surroundings);
     expect(target.statuses.has("poison")).toBe(false);
     expect([near.health, far.health, friend.health, target.health]).toEqual([450, 500, 500, 500]);
@@ -217,9 +217,9 @@ describe("Mending Touch (#1039)", () => {
 
   it("with three conditions removes the newest two and heals 2 × 51", () => {
     const target = ally();
-    target.statuses.apply("bleeding", 10, "foe");
-    target.statuses.apply("poison", 10, "foe");
-    target.statuses.apply("burning", 3, "foe");
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
+    target.statuses.apply("burning", 3, "foe", NO_RANKS);
     const events = use(monk(), "monk.mending-touch", target);
     expect(target.statuses.has("bleeding")).toBe(true);
     expect(target.statuses.has("poison")).toBe(false);
@@ -229,23 +229,23 @@ describe("Mending Touch (#1039)", () => {
 
   it("with one condition heals 51, with none nothing", () => {
     const one = ally();
-    one.statuses.apply("poison", 10, "foe");
+    one.statuses.apply("poison", 10, "foe", NO_RANKS);
     expect(healed(use(monk(), "monk.mending-touch", one))).toBe(51);
     expect(use(monk(), "monk.mending-touch", ally())).toEqual([]);
   });
 
   it("heals in full when a Deep Wound is among the two it removes", () => {
     const target = ally();
-    target.statuses.apply("poison", 10, "foe");
-    target.statuses.apply("deep-wound", 20, "foe");
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
+    target.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     expect(healed(use(monk(), "monk.mending-touch", target))).toBe(102);
   });
 
   it("is cut by a Deep Wound it leaves behind", () => {
     const target = ally();
-    target.statuses.apply("deep-wound", 20, "foe");
-    target.statuses.apply("poison", 10, "foe");
-    target.statuses.apply("bleeding", 10, "foe");
+    target.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
+    target.statuses.apply("poison", 10, "foe", NO_RANKS);
+    target.statuses.apply("bleeding", 10, "foe", NO_RANKS);
     expect(healed(use(monk(), "monk.mending-touch", target))).toBeLessThan(102);
   });
 

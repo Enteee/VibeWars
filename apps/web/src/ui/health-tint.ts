@@ -1,4 +1,4 @@
-import { findStatusDefinition } from "@vibewars/game-core";
+import { findStatusDefinition, statAtTwelve } from "@vibewars/game-core";
 import type { PlayerSnapshot } from "@vibewars/game-session";
 
 /** A health bar's tint for the worst degeneration on its combatant (#807). */
@@ -19,7 +19,7 @@ export function healthTint(statusIds: readonly string[]): HealthTint | null {
     if (definition === undefined) {
       continue;
     }
-    if (definition.category === "hex" && definition.healthPips < 0) {
+    if (definition.category === "hex" && statAtTwelve(definition.healthPips) < 0) {
       return "hex";
     }
     if (POISONS.has(id)) {

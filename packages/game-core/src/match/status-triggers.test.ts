@@ -6,6 +6,7 @@ import { describeStatus } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Triggers on a change to the bearer's statuses (#887): Contagion answers
@@ -109,9 +110,9 @@ describe("Contagion (#887)", () => {
     const match = contagious();
     const n = get(match, "n");
     n.position = vec2(-1000, 0);
-    n.combatant.statuses.apply("bleeding", 10, "e");
+    n.combatant.statuses.apply("bleeding", 10, "e", NO_RANKS);
     const first = firedBy(stepFor(match, DT), CONTAGION);
-    n.combatant.statuses.apply("bleeding", 20, "e");
+    n.combatant.statuses.apply("bleeding", 20, "e", NO_RANKS);
     const again = firedBy(stepFor(match, DT), CONTAGION);
 
     expect(first.flatMap((entry) => entry.events)).toEqual([
@@ -123,8 +124,8 @@ describe("Contagion (#887)", () => {
   it("fires once for each condition gained in one tick, in the order gained", () => {
     const match = contagious();
     const n = get(match, "n").combatant;
-    n.statuses.apply("bleeding", 10, "e");
-    n.statuses.apply("crippled", 10, "e");
+    n.statuses.apply("bleeding", 10, "e", NO_RANKS);
+    n.statuses.apply("crippled", 10, "e", NO_RANKS);
     const fired = firedBy(stepFor(match, DT), CONTAGION);
 
     expect(
@@ -137,8 +138,8 @@ describe("Contagion (#887)", () => {
 
   it("never echoes between two Contagions", () => {
     const match = contagious();
-    get(match, "e").combatant.statuses.apply("contagion", 60, "e");
-    get(match, "n").combatant.statuses.apply("poison", 10, "e");
+    get(match, "e").combatant.statuses.apply("contagion", 60, "e", NO_RANKS);
+    get(match, "n").combatant.statuses.apply("poison", 10, "e", NO_RANKS);
     const fired = firedBy(stepFor(match, 1), CONTAGION);
 
     expect(fired.map((entry) => entry.sourceId)).toEqual(["n"]);
@@ -159,7 +160,7 @@ describe("Contagion (#887)", () => {
     const match = contagious();
     const n = get(match, "n").combatant;
     n.health = 20;
-    n.statuses.apply("bleeding", 10, "e");
+    n.statuses.apply("bleeding", 10, "e", NO_RANKS);
     const log = stepFor(match, DT);
 
     expect(n.dead).toBe(true);

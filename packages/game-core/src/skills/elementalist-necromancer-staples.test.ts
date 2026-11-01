@@ -14,6 +14,7 @@ import { makeCombatant } from "./testing.js";
 import { moveSpeedMultiplier } from "./tick.js";
 import { KNOCKDOWN_SECONDS, type Combatant, type Skill } from "./types.js";
 import { attackDurationSeconds } from "./weapon-attack.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * The Elementalist and Necromancer staples (#918): Lightning Strike, Mind
@@ -103,7 +104,7 @@ describe("Mind Shock (#918)", () => {
 
   it("against Fleeting Stability: the bonus lands, the knockdown is prevented", () => {
     const target = foe("foe", { energy: 0 });
-    target.statuses.apply("fleeting-stability", 10, "foe");
+    target.statuses.apply("fleeting-stability", 10, "foe", NO_RANKS);
     const events = use(caster(), "elementalist.mind-shock", target);
     expect(events.filter((event) => event.kind === "damage")).toHaveLength(2);
     expect(target.knockdownRemaining).toBe(0);

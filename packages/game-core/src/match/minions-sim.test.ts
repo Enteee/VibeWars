@@ -11,6 +11,7 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Minions (#467 child 3): Animate Bone Minions and Animate Bone Horror
@@ -105,7 +106,7 @@ function stepFor(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
 /** Kill `id` as burning would. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "n");
+  victim.combatant.statuses.apply("burning", 10, "n", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -225,8 +226,8 @@ describe("Animate Bone Minions (#467)", () => {
     }
     stepFor(sim, 21);
     // +12 from statuses, −2 of rot: +10, where clamping first would leave +8.
-    minion.combatant.statuses.apply("shadow-refuge", 30, "n");
-    minion.combatant.statuses.apply("mending", 30, "n");
+    minion.combatant.statuses.apply("shadow-refuge", 30, "n", NO_RANKS);
+    minion.combatant.statuses.apply("mending", 30, "n", NO_RANKS);
     expect(sim.pips(minion).health).toBe(10);
   });
 

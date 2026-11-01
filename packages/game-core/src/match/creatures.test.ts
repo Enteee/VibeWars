@@ -18,6 +18,7 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Creatures (#1052, ADR-0035): bodies that are not players. No catalog
@@ -162,7 +163,7 @@ function creatures(sim: MatchSimulation): Participant[] {
 /** Kill `id` on the next step, by a burning it cannot outlast. */
 function kill(sim: MatchSimulation, id: string): void {
   const { combatant } = get(sim, id);
-  combatant.statuses.apply("burning", 10, "x");
+  combatant.statuses.apply("burning", 10, "x", NO_RANKS);
   combatant.health = 0.2;
   sim.step(DT);
 }

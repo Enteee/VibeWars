@@ -7,6 +7,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Reversal of Fortune in a match (#987): a Warrior's axe blow on the
@@ -52,7 +53,7 @@ describe("Reversal of Fortune in a match (#987)", () => {
     }
     target.maxHealth = 1000;
     target.health = 500;
-    target.statuses.apply("reversal-of-fortune", 8, "monk");
+    target.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
     expect(sim.requestAttack("w", "ally")).toEqual({ ok: true });
 
     let tick = 0;

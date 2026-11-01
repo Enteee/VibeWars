@@ -15,6 +15,7 @@ import {
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The anti-summon skills (#1528): Banish, Banishing Strike, Holy Spear
@@ -174,7 +175,7 @@ describe("Banishing Strike (#1528)", () => {
 
   it("deals nothing when blocked", () => {
     const sim = match(BANISHING_STRIKE, [creature("t", "spirit", vec2(60, 0))]);
-    get(sim, "t").combatant.statuses.apply("guardian", 1000, "t");
+    get(sim, "t").combatant.statuses.apply("guardian", 1000, "t", NO_RANKS);
     for (let n = 0; n < 40; n += 1) {
       const events = used(sim, "t");
       if (events.some((event) => event.kind === "attack-blocked")) {

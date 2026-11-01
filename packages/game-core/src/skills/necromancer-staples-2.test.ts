@@ -11,7 +11,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 
@@ -183,7 +183,7 @@ describe("Wither (#1583)", () => {
   it("is -4 health and -1 energy pips for 29 s", () => {
     const status = getSkill("necromancer.wither")?.effects[0];
     expect(status).toEqual({ kind: "apply-status", statusId: "wither", durationSeconds: 29 });
-    expect(aggregateModifiers([{ id: "wither" }])).toMatchObject({
+    expect(aggregateModifiers([{ id: "wither", ranks: NO_RANKS }])).toMatchObject({
       healthPips: -4,
       energyPips: -1,
     });
@@ -225,8 +225,8 @@ describe("Life Siphon (#1583)", () => {
     expect(f.statuses.get("life-siphon")?.sourceId).toBe("n");
     expect(f.statuses.get("life-siphon")?.remainingSeconds).toBe(22);
     expect(n.statuses.get("life-siphon-regen")?.remainingSeconds).toBe(22);
-    expect(aggregateModifiers([{ id: "life-siphon" }]).healthPips).toBe(-3);
-    expect(aggregateModifiers([{ id: "life-siphon-regen" }]).healthPips).toBe(3);
+    expect(aggregateModifiers([{ id: "life-siphon", ranks: NO_RANKS }]).healthPips).toBe(-3);
+    expect(aggregateModifiers([{ id: "life-siphon-regen", ranks: NO_RANKS }]).healthPips).toBe(3);
   });
 
   it("the caster keeps its regeneration when the hex is removed early", () => {
@@ -247,7 +247,7 @@ describe("Reckless Haste (#1583)", () => {
     const f = foe("f");
     use(necro(), "necromancer.reckless-haste", [f]);
     expect(f.statuses.get("reckless-haste")?.remainingSeconds).toBe(11);
-    expect(aggregateModifiers([{ id: "reckless-haste" }])).toMatchObject({
+    expect(aggregateModifiers([{ id: "reckless-haste", ranks: NO_RANKS }])).toMatchObject({
       attackMissChance: 0.5,
       attackDurationMultiplier: 0.75,
     });
@@ -257,12 +257,14 @@ describe("Reckless Haste (#1583)", () => {
 describe("Corrupt Enchantment (#1583)", () => {
   it("removes one enchantment and hexes -7 for 10 s", () => {
     const f = foe("f");
-    f.statuses.apply("blood-is-power", 10, "x");
-    f.statuses.apply("order-of-pain", 10, "x");
+    f.statuses.apply("blood-is-power", 10, "x", NO_RANKS);
+    f.statuses.apply("order-of-pain", 10, "x", NO_RANKS);
     use(necro(), "necromancer.corrupt-enchantment", [f]);
     expect(enchantments(f)).toBe(1);
     expect(f.statuses.get("corrupt-enchantment")?.remainingSeconds).toBe(10);
-    expect(aggregateModifiers([{ id: "corrupt-enchantment" }]).healthPips).toBe(-7);
+    expect(aggregateModifiers([{ id: "corrupt-enchantment", ranks: NO_RANKS }]).healthPips).toBe(
+      -7,
+    );
   });
 
   it("on an unenchanted foe: no hex, and the cost is paid", () => {
@@ -279,7 +281,7 @@ describe("Strip Enchantment (#1583)", () => {
     const n = necro({ health: 300 });
     const f = foe("f");
     for (const id of ENCHANTMENTS) {
-      f.statuses.apply(id, 10, "x");
+      f.statuses.apply(id, 10, "x", NO_RANKS);
     }
     const events = use(n, "necromancer.strip-enchantment", [f]);
     expect(enchantments(f)).toBe(1);
@@ -380,7 +382,7 @@ describe("Putrid Explosion (#1583)", () => {
 
   function kill(match: MatchSimulation, id: string): void {
     const victim = get(match, id);
-    victim.combatant.statuses.apply("burning", 10, "n");
+    victim.combatant.statuses.apply("burning", 10, "n", NO_RANKS);
     victim.combatant.health = 0.2;
     stepFor(match, DT);
     expect(victim.combatant.dead).toBe(true);

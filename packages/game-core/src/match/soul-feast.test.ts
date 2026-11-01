@@ -5,6 +5,7 @@ import type { MatchRules } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Corpses and Soul Feast (#466): every dead player or dummy is a corpse,
@@ -73,7 +74,7 @@ function stepFor(sim: MatchSimulation, seconds: number): void {
 /** Kill `id` as burning would. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "y");
+  victim.combatant.statuses.apply("burning", 10, "y", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -101,7 +102,7 @@ describe("Soul Feast (#466)", () => {
     kill(sim, "x");
     kill(sim, "a");
     const n = get(sim, "n");
-    n.combatant.statuses.apply("deep-wound", 30, "y");
+    n.combatant.statuses.apply("deep-wound", 30, "y", NO_RANKS);
     n.combatant.health = 100;
     feast(sim);
     expect(n.combatant.health).toBe(334);
@@ -226,7 +227,7 @@ describe("Soul Feast (#466)", () => {
       ],
     });
     get(sim, "m").combatant.health = 0.2;
-    get(sim, "m").combatant.statuses.apply("burning", 10, "n");
+    get(sim, "m").combatant.statuses.apply("burning", 10, "n", NO_RANKS);
     stepFor(sim, DT);
     expect(sim.requestSkill("n", 0)?.check).toEqual({ ok: false, reason: "no-corpse" });
   });

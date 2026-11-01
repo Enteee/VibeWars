@@ -13,6 +13,7 @@ import { swingIntervalSeconds } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Weapon sets (#489, ADR-0036): up to four, swapped at once or queued
@@ -136,7 +137,7 @@ const blowOf =
 /** Kill `id` in one tick, as burning would. */
 function kill(match: MatchSimulation, id: string): void {
   const victim = get(match, id).combatant;
-  victim.statuses.apply("burning", 10, "foe");
+  victim.statuses.apply("burning", 10, "foe", NO_RANKS);
   victim.health = 0.2;
   match.step(DT);
   expect(victim.dead).toBe(true);

@@ -14,6 +14,7 @@ import {
   type FlagField,
 } from "./flags.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Flags in the simulation (#1225): Space on a flag walks to it and takes
@@ -163,7 +164,7 @@ describe("Space on a flag", () => {
     const a = get(sim, "a");
     applyIntent(sim, "a", { kind: "attack", targetId: flagId(0) });
     sim.step(DT);
-    a.combatant.statuses.apply("burning", 10, "x");
+    a.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
     a.combatant.health = 0.2;
     sim.step(DT);
     expect(a.combatant.dead).toBe(true);
@@ -251,7 +252,7 @@ describe("dropping the flag", () => {
     pickUp(sim, "a");
     const where = get(sim, "a").position;
     const carrier = get(sim, "a").combatant;
-    carrier.statuses.apply("burning", 10, "x");
+    carrier.statuses.apply("burning", 10, "x", NO_RANKS);
     carrier.health = 0.2;
     sim.step(DT);
     expect(carrier.dead).toBe(true);

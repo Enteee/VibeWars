@@ -12,6 +12,7 @@ import { chargeAdrenaline, strikesOf, withAttackDuration } from "../skills/testi
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { tallyCombat, type CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -394,7 +395,7 @@ describe("adrenaline (#463)", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(40, 0)));
     const caster = get(match, "a").combatant;
     chargeAdrenaline(caster);
-    caster.statuses.apply("burning", 10, "d");
+    caster.statuses.apply("burning", 10, "d", NO_RANKS);
     caster.health = 0.2;
     stepFor(match, DT);
     expect(caster.dead).toBe(true);
@@ -452,7 +453,7 @@ describe("adrenaline from damage taken (#827)", () => {
   it("a bleeding tick gains nothing", () => {
     const match = sim(swordsman("a", vec2(0, 0)), victim(480));
     const taker = get(match, "v").combatant;
-    taker.statuses.apply("bleeding", 10, "a");
+    taker.statuses.apply("bleeding", 10, "a", NO_RANKS);
     const log = stepFor(match, 3);
     expect(log.some((entry) => entry.events.some((event) => event.kind === "damage"))).toBe(true);
     expect(taker.health).toBeLessThan(480);
@@ -525,7 +526,7 @@ describe("adrenaline is lost out of combat (#828)", () => {
 
   it("a blow started keeps it, even one that is blocked and earns nothing", () => {
     const match = charged();
-    get(match, "d").combatant.statuses.apply("guardian", 1e6, "monk");
+    get(match, "d").combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
     stepFor(match, 20);
     match.requestAttack("a", "d");
     for (let i = 0; i < 2000; i += 1) {
@@ -557,7 +558,7 @@ describe("adrenaline is lost out of combat (#828)", () => {
     const match = charged();
     const caster = get(match, "a").combatant;
     stepFor(match, 10);
-    caster.statuses.apply("burning", 10, "d");
+    caster.statuses.apply("burning", 10, "d", NO_RANKS);
     caster.health = 0.2;
     stepFor(match, DT);
     expect(caster.dead).toBe(true);
@@ -572,7 +573,7 @@ describe("adrenaline is lost out of combat (#828)", () => {
 describe("block (#534)", () => {
   /** `defender` under a Guardian that outlasts the test. */
   function guarded(match: MatchSimulation, defender: string): void {
-    get(match, defender).combatant.statuses.apply("guardian", 1e6, "monk");
+    get(match, defender).combatant.statuses.apply("guardian", 1e6, "monk", NO_RANKS);
   }
 
   /** What landed, less the adrenaline it filled (#1735): these read the bar itself. */
@@ -754,7 +755,7 @@ describe("the log", () => {
         dummy("e", vec2(220, 20)),
         dummy("f", vec2(220, -20)),
       );
-      get(match, "a").combatant.statuses.apply("blind", 5, "d");
+      get(match, "a").combatant.statuses.apply("blind", 5, "d", NO_RANKS);
       match.requestAttack("a", "d");
       return stepFor(match, 20);
     };
@@ -1370,13 +1371,13 @@ describe("attack skills ride the weapon (ADR-0029)", () => {
       const fast = WEAPONS.axe.attackIntervalSeconds * 0.67;
 
       const swinging = sim(axeman(), dummy("d", vec2(40, 0)));
-      get(swinging, "a").combatant.statuses.apply("bleeding", 100, "x");
+      get(swinging, "a").combatant.statuses.apply("bleeding", 100, "x", NO_RANKS);
       swinging.requestAttack("a", "d");
       const first = swings(stepFor(swinging, 2))[0]?.atSeconds ?? 0;
       expect(Math.abs(first - fast)).toBeLessThanOrEqual(DT);
 
       const chopping = sim(axeman(), dummy("d", vec2(40, 0)));
-      get(chopping, "a").combatant.statuses.apply("bleeding", 100, "x");
+      get(chopping, "a").combatant.statuses.apply("bleeding", 100, "x", NO_RANKS);
       chopping.setTarget("a", "d");
       chopping.requestSkill("a", 0);
       expect(get(chopping, "a").combatant.cast.activeCast?.totalSeconds).toBeCloseTo(fast / 2, 9);

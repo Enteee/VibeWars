@@ -1,5 +1,6 @@
 import {
   MatchSimulation,
+  NO_RANKS,
   StatusSet,
   type ActiveStatus,
   type Participant,
@@ -94,6 +95,7 @@ describe("a P2P match (#375)", () => {
       reflectionsLeft: undefined,
       sourceId: remote.selfSessionId,
       sourceSkillId: undefined,
+      ranks: NO_RANKS,
       outbreak: null,
       maintained: null,
       projected: false,
@@ -130,6 +132,7 @@ describe("a P2P match (#375)", () => {
       reflectionsLeft: undefined,
       sourceId: "foe",
       sourceSkillId: undefined,
+      ranks: NO_RANKS,
       outbreak: null,
       maintained: null,
       projected: false,

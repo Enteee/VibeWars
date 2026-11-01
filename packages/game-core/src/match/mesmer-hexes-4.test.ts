@@ -8,6 +8,7 @@ import type { StatusId } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -183,7 +184,7 @@ describe("Wastrel's Demise (#1501)", () => {
     hex(match, 1, "b", "wastrels-demise");
     const first = stepFor(match, 3.1);
     expect(damageTo(first, WASTRELS_DEMISE, "b")).toEqual([8, 16, 24]);
-    get(match, "b").statuses.apply("wastrels-demise", 5, "m");
+    get(match, "b").statuses.apply("wastrels-demise", 5, "m", NO_RANKS);
     expect(damageTo(stepFor(match, 1.1), WASTRELS_DEMISE, "b")).toEqual([8]);
   });
 
@@ -201,9 +202,9 @@ describe("Epidemic (#1501)", () => {
   it("spreads bleeding and crippled with their time left to adjacent foes; a longer one stays", () => {
     const match = sim();
     const target = get(match, "b");
-    target.statuses.apply("bleeding", 4, "f");
-    target.statuses.apply("crippled", 2, "f");
-    get(match, "ally").statuses.apply("crippled", 8, "f");
+    target.statuses.apply("bleeding", 4, "f", NO_RANKS);
+    target.statuses.apply("crippled", 2, "f", NO_RANKS);
+    get(match, "ally").statuses.apply("crippled", 8, "f", NO_RANKS);
     start(match, "m", 2, "b");
     stepFor(match, 0.5);
     expect(remaining(match, "ally", "bleeding")).toBeCloseTo(
@@ -218,7 +219,7 @@ describe("Epidemic (#1501)", () => {
 
   it("spreads disease like any condition", () => {
     const match = sim();
-    get(match, "b").statuses.apply("disease", 6, "f");
+    get(match, "b").statuses.apply("disease", 6, "f", NO_RANKS);
     start(match, "m", 2, "b");
     // Disease's own outbreak may reach `ally` first: Epidemic lands it all the same.
     expect(eventsOf(stepFor(match, 0.5), EPIDEMIC)).toContainEqual(

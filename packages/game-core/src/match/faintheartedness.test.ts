@@ -8,6 +8,7 @@ import { describeStatus } from "../skills/describe.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -109,7 +110,7 @@ describe("Faintheartedness (#493)", () => {
 
   it("a sword swings every 1.5 × 1.33 s while hexed, and every 1.33 s after", () => {
     const match = swinging();
-    get(match, "a").statuses.apply("faintheartedness", 7, "necro");
+    get(match, "a").statuses.apply("faintheartedness", 7, "necro", NO_RANKS);
     const times = swingTimes(stepFor(match, 12));
 
     const hexed = times.filter((t) => t < 7);
@@ -127,14 +128,14 @@ describe("Faintheartedness (#493)", () => {
   it("landing mid-swing stretches that swing", () => {
     const match = swinging();
     stepFor(match, 1);
-    get(match, "a").statuses.apply("faintheartedness", 7, "necro");
+    get(match, "a").statuses.apply("faintheartedness", 7, "necro", NO_RANKS);
     const first = swingTimes(stepFor(match, 2))[0] ?? 0;
     expect(Math.abs(first - SLOW_SWORD)).toBeLessThanOrEqual(2 * DT);
   });
 
   it("ending mid-swing, a swing already past the sword's interval lands on the next tick", () => {
     const match = swinging();
-    get(match, "a").statuses.apply("faintheartedness", 1.5, "necro");
+    get(match, "a").statuses.apply("faintheartedness", 1.5, "necro", NO_RANKS);
     const first = swingTimes(stepFor(match, 2))[0] ?? 0;
     expect(first).toBeGreaterThan(1.5 - DT);
     expect(first).toBeLessThanOrEqual(1.5 + 2 * DT);
@@ -142,7 +143,7 @@ describe("Faintheartedness (#493)", () => {
 
   it("Swift Chop winds up for half of 1.5 × the axe's swing", () => {
     const match = sim(warrior("a", vec2(0, 0), WEAPONS.axe), dummy("d", vec2(40, 0)));
-    get(match, "a").statuses.apply("faintheartedness", 10, "necro");
+    get(match, "a").statuses.apply("faintheartedness", 10, "necro", NO_RANKS);
     match.setTarget("a", "d");
     expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
     expect(get(match, "a").cast.activeCast?.totalSeconds).toBeCloseTo(
@@ -153,7 +154,7 @@ describe("Faintheartedness (#493)", () => {
 
   it("does not slow a spell", () => {
     const match = sim(warrior("a", vec2(0, 0)), dummy("d", vec2(200, 0)));
-    get(match, "a").statuses.apply("faintheartedness", 10, "necro");
+    get(match, "a").statuses.apply("faintheartedness", 10, "necro", NO_RANKS);
     match.setTarget("a", "d");
     expect(match.requestSkill("a", 1)?.check).toEqual({ ok: true });
     expect(get(match, "a").cast.activeCast?.totalSeconds).toBe(

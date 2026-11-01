@@ -5,6 +5,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Pet attacks (#1046 child 2, #1107): the owner pays, and the wolf's
@@ -147,7 +148,7 @@ describe("a pet attack arms the wolf's next blow (#1046)", () => {
   it("recharges 33% faster under its owner's Serpent's Quickness (#1539)", () => {
     const sim = match();
     const owner = get(sim, "r");
-    owner.combatant.statuses.apply("serpents-quickness", 1000, "r");
+    owner.combatant.statuses.apply("serpents-quickness", 1000, "r", NO_RANKS);
     expect(press(sim, BRUTAL)?.check).toEqual({ ok: true });
     expect(owner.combatant.cast.rechargeTotal.get(BRUTAL)).toBeCloseTo(5 * 0.67, 9);
   });
@@ -225,7 +226,7 @@ describe("a pet attack arms the wolf's next blow (#1046)", () => {
   it("is used up by a blind miss", () => {
     const sim = match();
     const pet = wolf(sim);
-    pet.combatant.statuses.apply("blind", 30, "a");
+    pet.combatant.statuses.apply("blind", 30, "a", NO_RANKS);
     sim.setTarget("r", "a");
     press(sim, BRUTAL);
     const [first, second] = blows(stepFor(sim, 5), pet);
@@ -273,7 +274,7 @@ describe("a pet attack refused costs nothing (#1046)", () => {
   it("with a dead pet, once its death's disable is over", () => {
     const sim = match();
     const pet = wolf(sim);
-    pet.combatant.statuses.apply("burning", 10, "a");
+    pet.combatant.statuses.apply("burning", 10, "a", NO_RANKS);
     pet.combatant.health = 0.2;
     stepFor(sim, 5);
     expect(pet.combatant.dead).toBe(true);

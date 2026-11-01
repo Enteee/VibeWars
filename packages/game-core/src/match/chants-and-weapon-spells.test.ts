@@ -9,7 +9,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { effectiveActivationSeconds } from "../skills/tick.js";
 import { isSpell, type Combatant, type Skill } from "../skills/types.js";
@@ -53,7 +53,7 @@ function chanted(): Combatant {
     equipment: wielding(WEAPONS.axe, "warrior.axe-mastery"),
     attributeRanks: new Map([["warrior.axe-mastery", 12]]),
   });
-  attacker.statuses.apply("anthem-of-flame", 10, "p");
+  attacker.statuses.apply("anthem-of-flame", 10, "p", NO_RANKS);
   return attacker;
 }
 
@@ -110,7 +110,7 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
     for (let seed = 0; seed < 30; seed += 1) {
       const attacker = chanted();
       const target = victim();
-      target.statuses.apply("guardian", 10, "ally");
+      target.statuses.apply("guardian", 10, "ally", NO_RANKS);
       const events = chop(attacker, [target], seed);
       const blocked = events.some((event) => event.kind === "attack-blocked");
       seenBlock ||= blocked;
@@ -122,9 +122,9 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
 
   it("a blind miss burns nobody and still ends the chant", () => {
     const attacker = chanted();
-    attacker.statuses.apply("blind", 10, "foe");
+    attacker.statuses.apply("blind", 10, "foe", NO_RANKS);
     for (let seed = 0; seed < 30; seed += 1) {
-      attacker.statuses.apply("anthem-of-flame", 10, "p");
+      attacker.statuses.apply("anthem-of-flame", 10, "p", NO_RANKS);
       const target = victim();
       const missed = chop(attacker, [target], seed).some((event) => event.kind === "attack-missed");
       expect(target.statuses.has("burning")).toBe(!missed);
@@ -145,7 +145,7 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
       equipment: wielding(WEAPONS.longbow, "ranger.marksmanship"),
       attributeRanks: new Map([["ranger.marksmanship", 12]]),
     });
-    ranger.statuses.apply("anthem-of-flame", 10, "p");
+    ranger.statuses.apply("anthem-of-flame", 10, "p", NO_RANKS);
     const events = resolveAttackSkill(
       {
         surroundings: new Map(),
@@ -167,12 +167,12 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
     expect(anthem.type).toBe("chant");
     expect(isSpell(anthem.type)).toBe(false);
     const dazed = makeCombatant({ id: "p" });
-    dazed.statuses.apply("dazed", 10, "foe");
+    dazed.statuses.apply("dazed", 10, "foe", NO_RANKS);
     expect(effectiveActivationSeconds(anthem, dazed)).toBe(1);
     const ally = makeCombatant({ id: "a" });
-    ally.statuses.apply("anthem-of-flame", 10, "p");
-    ally.statuses.apply("watch-yourself", 10, "w");
-    ally.statuses.apply("anthem-of-flame", 4, "p");
+    ally.statuses.apply("anthem-of-flame", 10, "p", NO_RANKS);
+    ally.statuses.apply("watch-yourself", 10, "w", NO_RANKS);
+    ally.statuses.apply("anthem-of-flame", 4, "p", NO_RANKS);
     // The re-application is the newest (#521), but the longer duration stays.
     expect(ally.statuses.active.map((status) => [status.id, status.remainingSeconds])).toEqual([
       ["watch-yourself", 10],
@@ -192,7 +192,7 @@ describe("Anthem of Flame on an attack skill (#758)", () => {
 describe("Weapon of Warding (#758)", () => {
   it("+4 health regeneration and a 50% chance to block", () => {
     const ally = makeCombatant({ id: "a" });
-    ally.statuses.apply("weapon-of-warding", 7, "r");
+    ally.statuses.apply("weapon-of-warding", 7, "r", NO_RANKS);
     expect(aggregateModifiers(ally.statuses.active).healthPips).toBe(4);
     const rng = createRng(758);
     let blocked = 0;
@@ -207,8 +207,8 @@ describe("Weapon of Warding (#758)", () => {
 
   it("ends when its bearer swings, hit or miss, and when it uses an attack skill", () => {
     const swinger = chanted();
-    swinger.statuses.apply("weapon-of-warding", 7, "r");
-    swinger.statuses.apply("blind", 10, "foe");
+    swinger.statuses.apply("weapon-of-warding", 7, "r", NO_RANKS);
+    swinger.statuses.apply("blind", 10, "foe", NO_RANKS);
     const events = swing(swinger, victim());
     expect(events[0]).toEqual({
       kind: "status-expired",
@@ -218,22 +218,22 @@ describe("Weapon of Warding (#758)", () => {
     expect(swinger.statuses.has("weapon-of-warding")).toBe(false);
 
     const chopper = chanted();
-    chopper.statuses.apply("weapon-of-warding", 7, "r");
+    chopper.statuses.apply("weapon-of-warding", 7, "r", NO_RANKS);
     chop(chopper, [victim()]);
     expect(chopper.statuses.has("weapon-of-warding")).toBe(false);
   });
 
   it("one weapon spell at a time: the same one again starts over at its duration", () => {
     const ally = makeCombatant({ id: "a" });
-    ally.statuses.apply("weapon-of-warding", 7, "r");
-    ally.statuses.apply("weapon-of-warding", 3, "r");
+    ally.statuses.apply("weapon-of-warding", 7, "r", NO_RANKS);
+    ally.statuses.apply("weapon-of-warding", 3, "r", NO_RANKS);
     expect(ally.statuses.get("weapon-of-warding")?.remainingSeconds).toBe(3);
   });
 
   it("is no enchantment: enchantment removal leaves it", () => {
     const ally = makeCombatant({ id: "a" });
-    ally.statuses.apply("weapon-of-warding", 7, "r");
-    ally.statuses.apply("guardian", 7, "m");
+    ally.statuses.apply("weapon-of-warding", 7, "r", NO_RANKS);
+    ally.statuses.apply("guardian", 7, "m", NO_RANKS);
     expect(ally.statuses.removeByCategory("enchantment")).toEqual([
       { id: "guardian", sourceSkillId: undefined },
     ]);
@@ -244,7 +244,7 @@ describe("Weapon of Warding (#758)", () => {
     const warding = skill(WARDING);
     expect(isSpell(warding.type)).toBe(true);
     const dazed = makeCombatant({ id: "r" });
-    dazed.statuses.apply("dazed", 10, "foe");
+    dazed.statuses.apply("dazed", 10, "foe", NO_RANKS);
     expect(effectiveActivationSeconds(warding, dazed)).toBe(2);
   });
 
@@ -381,7 +381,7 @@ describe("Anthem of Flame in the match (#758)", () => {
       participants: [warrior("w", vec2(0, 0)), spec("foe", 1, vec2(30, 0))],
     });
     const chopper = get(match, "w").combatant;
-    chopper.statuses.apply("anthem-of-flame", 10, "p");
+    chopper.statuses.apply("anthem-of-flame", 10, "p", NO_RANKS);
     match.requestAttack("w", "foe");
     expect(match.requestSkill("w", 0)?.check).toEqual({ ok: true });
     match.step(DT);
@@ -398,7 +398,7 @@ describe("Anthem of Flame in the match (#758)", () => {
       participants: [archer("r", vec2(0, 0)), spec("foe", 1, vec2(600, 0))],
     });
     const ranger = get(match, "r").combatant;
-    ranger.statuses.apply("anthem-of-flame", 10, "p");
+    ranger.statuses.apply("anthem-of-flame", 10, "p", NO_RANKS);
     match.requestAttack("r", "foe");
     expect(match.requestSkill("r", 0)?.check).toEqual({ ok: true });
     const released = untilFlying(match, 1);
@@ -420,7 +420,7 @@ describe("Anthem of Flame in the match (#758)", () => {
     });
     const ranger = get(match, "r").combatant;
     ranger.energy = 50;
-    ranger.statuses.apply("anthem-of-flame", 10, "p");
+    ranger.statuses.apply("anthem-of-flame", 10, "p", NO_RANKS);
     match.requestAttack("r", "foe");
     expect(match.requestSkill("r", 0)?.check).toEqual({ ok: true });
     untilFlying(match, 1);
@@ -446,7 +446,7 @@ describe("Anthem of Flame in the match (#758)", () => {
     match.requestAttack("r", "foe");
     expect(match.requestSkill("r", 0)?.check).toEqual({ ok: true });
     // Up just long enough for the release, then gone with the arrow in the air.
-    ranger.statuses.apply("anthem-of-flame", 3, "p");
+    ranger.statuses.apply("anthem-of-flame", 3, "p", NO_RANKS);
     untilFlying(match, 1);
     stepFor(match, 3);
     expect(get(match, "foe").combatant.statuses.has("burning")).toBe(false);

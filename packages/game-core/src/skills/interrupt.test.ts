@@ -9,6 +9,7 @@ import { applyEffects } from "./effects.js";
 import { makeCombatant } from "./testing.js";
 import { advanceStatuses } from "./tick.js";
 import type { Combatant, SkillEffect } from "./types.js";
+import { NO_RANKS } from "./status.js";
 
 /**
  * Interrupts (brief §14 — "a critical GW1-inspired mechanic").
@@ -194,7 +195,7 @@ describe("status-driven combat scenarios", () => {
   it("condition removal cures the bleed and stops the degeneration", () => {
     const monk = makeCombatant({ id: "monk", team: 0 });
     const ally = makeCombatant({ id: "ally", team: 0, health: 400 });
-    ally.statuses.apply("bleeding", 20, "enemy");
+    ally.statuses.apply("bleeding", 20, "enemy", NO_RANKS);
 
     const events = applyEffects(getSkill("monk.mend-condition")?.effects ?? [], {
       surroundings: new Map(),
@@ -255,7 +256,11 @@ describe("status-driven combat scenarios", () => {
   });
 
   it("a hex applied by a skill drains the victim's health over its duration", () => {
-    const necro = makeCombatant({ id: "necro", team: 0 });
+    const necro = makeCombatant({
+      id: "necro",
+      team: 0,
+      attributeRanks: new Map([["necromancer.curses", 12]]),
+    });
     const victim = makeCombatant({ id: "victim", team: 1, health: 500 });
 
     applyEffects(getSkill("necromancer.faintheartedness")?.effects ?? [], {
@@ -320,7 +325,7 @@ describe("applying Dazed (#546)", () => {
 
   it("interrupts again a target already dazed", () => {
     const victim = makeCombatant({ id: "victim", team: 1 });
-    victim.statuses.apply("dazed", 10, "ranger");
+    victim.statuses.apply("dazed", 10, "ranger", NO_RANKS);
     cast(victim, "monk.orison-of-healing", victim);
     expect(daze(victim)).toContainEqual({
       kind: "interrupted",
@@ -400,7 +405,7 @@ describe("interrupting a plain swing (#1709)", () => {
 
   it("is a miss on an uninterruptible foe", () => {
     const victim = swinging();
-    victim.statuses.apply("tranquil-was-tanasen", 30, "victim");
+    victim.statuses.apply("tranquil-was-tanasen", 30, "victim", NO_RANKS);
     expect(hit([{ kind: "interrupt" }], victim)).toEqual([missed]);
     expect(victim.attack?.swingElapsed).toBe(0.8);
   });

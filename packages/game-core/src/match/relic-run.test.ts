@@ -9,6 +9,7 @@ import { applyIntent } from "./apply-intent.js";
 import { FLAG_CARRIER_SPEED_MULTIPLIER } from "./flags.js";
 import { relicId, type RelicField } from "./relics.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * A Relic Run in the simulation (#1374), on Relic Temples: runners take
@@ -117,7 +118,7 @@ function run(sim: MatchSimulation, id: string): void {
 /** `id` dies this tick, where they stand. */
 function kill(sim: MatchSimulation, id: string): void {
   const { combatant } = get(sim, id);
-  combatant.statuses.apply("burning", 10, "nobody");
+  combatant.statuses.apply("burning", 10, "nobody", NO_RANKS);
   combatant.health = 0.2;
 }
 

@@ -9,7 +9,7 @@ import { energyCostOf } from "../skills/activation.js";
 import { getSkill } from "../skills/catalog.js";
 import { describeSkill } from "../skills/describe.js";
 import { applyEffect, type CombatEvent } from "../skills/effects.js";
-import { aggregateModifiers, damageTypeTaken, type StatusId } from "../skills/status.js";
+import { NO_RANKS, aggregateModifiers, damageTypeTaken, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { effectiveMaxHealth, moveSpeedMultiplier } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
@@ -143,7 +143,7 @@ function ritual(sim: MatchSimulation, skillId: string, by = "r"): CombatEvent[] 
 /** Kill `id` as burning would, so it lies there to be resurrected. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "f");
+  victim.combatant.statuses.apply("burning", 10, "f", NO_RANKS);
   victim.combatant.health = 0.2;
   stepFor(sim, DT);
   expect(victim.combatant.dead).toBe(true);
@@ -186,7 +186,7 @@ function armoredAgainst(type: "cold" | "fire", id = "victim"): Combatant {
 describe("energyCostMultiplier (#1745)", () => {
   it("raises the base cost by 30%, rounded half up: 5 is 7, 10 is 13, 25 is 33", () => {
     const zephyred = makeCombatant({ id: "z" });
-    zephyred.statuses.project("quickening-zephyr", "r/c1");
+    zephyred.statuses.project("quickening-zephyr", "r/c1", NO_RANKS);
     const plain = makeCombatant({ id: "p" });
     const cost = (id: string, who: Combatant) => energyCostOf(skillOf(id), who);
     expect(cost("ranger.winnowing", plain)).toBe(5);
@@ -197,7 +197,7 @@ describe("energyCostMultiplier (#1745)", () => {
 
   it("leaves a skill with no Energy cost at 0, an adrenal one included", () => {
     const zephyred = makeCombatant({ id: "z" });
-    zephyred.statuses.project("quickening-zephyr", "r/c1");
+    zephyred.statuses.project("quickening-zephyr", "r/c1", NO_RANKS);
     expect(energyCostOf(skillOf(RES_SIGNET), zephyred)).toBe(0);
     const adrenal = skillOf("warrior.sever-artery");
     expect(adrenal.cost?.kind).toBe("adrenaline");
@@ -224,7 +224,7 @@ describe("preventsResurrection (#1745)", () => {
     sim.setTarget("r", "a");
     expect(sim.requestSkill("r", 7)?.check).toEqual({ ok: true });
     stepFor(sim, 1);
-    get(sim, "r").combatant.statuses.project("frozen-soil", "f/c1");
+    get(sim, "r").combatant.statuses.project("frozen-soil", "f/c1", NO_RANKS);
     const events = stepFor(sim, 2 + DT);
     expect(events).toContainEqual(expect.objectContaining({ kind: "resurrected", targetId: "a" }));
   });
@@ -233,12 +233,12 @@ describe("preventsResurrection (#1745)", () => {
 describe("preventsSpeedBoosts (#1745)", () => {
   it("cancels a running stance's boost but keeps a slow", () => {
     const muddy = makeCombatant({ id: "m" });
-    muddy.statuses.project("muddy-terrain", "r/c1");
+    muddy.statuses.project("muddy-terrain", "r/c1", NO_RANKS);
     expect(moveSpeedMultiplier(muddy)).toBeCloseTo(0.9, 10);
-    muddy.statuses.apply("natural-stride", 8, "m");
+    muddy.statuses.apply("natural-stride", 8, "m", NO_RANKS);
     expect(moveSpeedMultiplier(muddy)).toBeCloseTo(0.9, 10);
-    muddy.statuses.apply("crippled", 8, "f");
-    const crippled = aggregateModifiers([{ id: "crippled" }]).moveSpeedMultiplier;
+    muddy.statuses.apply("crippled", 8, "f", NO_RANKS);
+    const crippled = aggregateModifiers([{ id: "crippled", ranks: NO_RANKS }]).moveSpeedMultiplier;
     expect(moveSpeedMultiplier(muddy)).toBeCloseTo(0.9 * crippled, 10);
   });
 });
@@ -257,16 +257,16 @@ describe("elementalDamageTakenAs (#1745)", () => {
   it("makes Conflagration's fire arrows cold on a bearer of Winter", () => {
     const ranger = makeCombatant({ id: "ranger", equipment: BOW });
     const plain = struck(ranger, armoredAgainst("cold"));
-    ranger.statuses.project("conflagration", "r/c1");
+    ranger.statuses.project("conflagration", "r/c1", NO_RANKS);
     // Fire now, so armor against cold does nothing.
     expect(struck(ranger, armoredAgainst("cold"))).toBe(plain);
     expect(struck(ranger, armoredAgainst("fire"))).toBeLessThan(plain);
     // Under Winter the fire is cold: armor against cold counts again.
     const wintered = armoredAgainst("cold");
-    wintered.statuses.project("winter", "r/c2");
+    wintered.statuses.project("winter", "r/c2", NO_RANKS);
     expect(struck(ranger, wintered)).toBeLessThan(plain);
     const fireArmored = armoredAgainst("fire");
-    fireArmored.statuses.project("winter", "r/c2");
+    fireArmored.statuses.project("winter", "r/c2", NO_RANKS);
     expect(struck(ranger, fireArmored)).toBe(plain);
   });
 
@@ -287,10 +287,10 @@ describe("elementalDamageTakenAs (#1745)", () => {
     };
     expect(burnt(armoredAgainst("cold"))).toBe(50);
     const wintered = armoredAgainst("cold");
-    wintered.statuses.project("winter", "r/c1");
+    wintered.statuses.project("winter", "r/c1", NO_RANKS);
     expect(burnt(wintered)).toBeLessThan(50);
     const fireArmored = armoredAgainst("fire");
-    fireArmored.statuses.project("winter", "r/c1");
+    fireArmored.statuses.project("winter", "r/c1", NO_RANKS);
     expect(burnt(fireArmored)).toBe(50);
   });
 });
@@ -349,8 +349,8 @@ describe("nature rituals 1 (#1745)", () => {
   it("Conflagration: a bow's blows deal fire, an axe's stay slashing", () => {
     const ranger = makeCombatant({ id: "ranger", equipment: BOW });
     const warrior = makeCombatant({ id: "warrior", equipment: AXE });
-    ranger.statuses.project("conflagration", "r/c1");
-    warrior.statuses.project("conflagration", "r/c1");
+    ranger.statuses.project("conflagration", "r/c1", NO_RANKS);
+    warrior.statuses.project("conflagration", "r/c1", NO_RANKS);
     expect(weaponSnapshotOf(ranger).damageType).toBe("fire");
     expect(weaponSnapshotOf(warrior).damageType).toBe("slashing");
   });

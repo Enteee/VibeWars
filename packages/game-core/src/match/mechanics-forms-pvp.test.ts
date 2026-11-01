@@ -8,6 +8,7 @@ import type { StatusId } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The PvP forms (#1951): Shadow Form fails a foe's spells at its bearer
@@ -223,7 +224,7 @@ function put(
   seconds: number,
   from = id,
 ): void {
-  get(match, id).combatant.statuses.apply(status, seconds, from);
+  get(match, id).combatant.statuses.apply(status, seconds, from, NO_RANKS);
 }
 
 /**

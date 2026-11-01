@@ -13,6 +13,7 @@ import { KNOCKDOWN_SECONDS, type Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * Ritualist spirits (#1550): spirit blows that steal, double on a hex or
@@ -143,7 +144,7 @@ describe("Anguish (#1550)", () => {
   function blow(hexed: boolean): CombatEvent[] {
     const sim = match([spec("f", 1, vec2(300, 0), { skillBar: [] })]);
     if (hexed) {
-      get(sim, "f").combatant.statuses.apply("lamentation", 1000, "r");
+      get(sim, "f").combatant.statuses.apply("lamentation", 1000, "r", NO_RANKS);
     }
     const spirit = ritual(sim, ANGUISH);
     const log = stepFor(sim, 4);
@@ -309,7 +310,7 @@ describe("Xinrae's Weapon (#1550)", () => {
     const sim = match([spec("f", 1, vec2(100, 0), { skillBar: [] })]);
     const ally = get(sim, "r").combatant;
     const foe = get(sim, "f").combatant;
-    ally.statuses.apply("xinraes-weapon", 8, "r");
+    ally.statuses.apply("xinraes-weapon", 8, "r", NO_RANKS);
     const before = ally.health;
     const events = applyEffects(
       [{ kind: "damage", amount: { flat: 100 }, type: "typeless", armorPenetration: 0 }],

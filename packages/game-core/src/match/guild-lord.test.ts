@@ -10,6 +10,7 @@ import type { CombatLogEntry } from "./combat-log.js";
 import { GUILD_LORD_HEALTH, guildLordId } from "./guild-lord.js";
 import { priestId } from "./priest.js";
 import { countsForTeam, MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { NO_RANKS } from "../skills/status.js";
 
 /**
  * The Guild Battle (#1222): each team's Guild Lord stands rooted at its
@@ -77,7 +78,7 @@ function stepTo(sim: MatchSimulation, seconds: number): CombatLogEntry[] {
 /** Kill `id` as burning would, with `x` as its source. */
 function kill(sim: MatchSimulation, id: string): void {
   const victim = get(sim, id);
-  victim.combatant.statuses.apply("burning", 10, "x");
+  victim.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
   victim.combatant.health = 0.2;
   sim.step(DT);
 }
@@ -165,7 +166,7 @@ describe("the Guild Lord (#1222)", () => {
     const sim = match();
     for (const team of [0, 1]) {
       const lord = get(sim, guildLordId(team));
-      lord.combatant.statuses.apply("burning", 10, "x");
+      lord.combatant.statuses.apply("burning", 10, "x", NO_RANKS);
       lord.combatant.health = 0.2;
     }
     sim.step(DT);
@@ -233,7 +234,7 @@ describe("aggression (#1222)", () => {
 
   it("does not count degeneration", () => {
     const sim = match();
-    get(sim, guildLordId(0)).combatant.statuses.apply("burning", 10, "x");
+    get(sim, guildLordId(0)).combatant.statuses.apply("burning", 10, "x", NO_RANKS);
     const log = stepTo(sim, 5);
     expect(
       log.some(
