@@ -3135,6 +3135,103 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.grasping-earth",
+    name: "Grasping Earth",
+    gwId: 173,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All nearby foes": around the caster.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...17...20 seconds, all nearby foes move 50% slower": 17 s.
+    effects: [{ kind: "apply-status", statusId: "grasping-earth", durationSeconds: 17 }],
+  },
+  {
+    id: "elementalist.breath-of-fire",
+    name: "Breath of Fire",
+    gwId: 1094,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.fire-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Create Breath of Fire at target foe's current location. For 5
+    // seconds, foes adjacent to that location are struck for 10...34...40
+    // fire damage each second": it stays where the foe stood, as Meteor
+    // Shower's.
+    effects: [
+      {
+        kind: "create-ground-effect",
+        anchor: "target",
+        durationSeconds: { flat: 5 },
+        act: {
+          kind: "pulse",
+          pulse: {
+            count: 5,
+            everySeconds: 1,
+            delaySeconds: 0,
+            area: {
+              radius: AREA_ADJACENT,
+              origin: "caster",
+              affects: "enemies",
+              maxTargets: undefined,
+              includesCaster: false,
+            },
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.fire-magic", atZero: 10, atTwelve: 34 },
+                },
+                type: "fire",
+                armorPenetration: 0,
+              },
+            ],
+          },
+        },
+      },
+    ],
+  },
 ];
 
 /**

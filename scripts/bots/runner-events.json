@@ -1,0 +1,4 @@
+{
+  "any": ["push", "schedule", "workflow_dispatch"],
+  "sameRepository": ["pull_request"]
+}

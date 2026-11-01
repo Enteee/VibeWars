@@ -224,4 +224,12 @@ export const ELEMENTALIST_STATUS_ICONS = {
       `<circle cx="12" cy="12" r="9.5" ${stroke(c, 1.8)} stroke-dasharray="4 3"/>` +
       `<path d="M6 9.5h7M6 14.5h9M17 7v10" ${stroke(c, 2)}/>`,
   ],
+  // Caster staples (#1870), stand-ins until their art card.
+  // Hex: hands of earth closing on a foot, moving slower.
+  "grasping-earth": [
+    "hex",
+    (c) =>
+      `<path d="M4 19h16" ${stroke(c, 2.4)}/>` +
+      `<path d="M7 19V12M10 19V9M14 19V9M17 19V12" ${stroke(c, 2)}/>`,
+  ],
 };

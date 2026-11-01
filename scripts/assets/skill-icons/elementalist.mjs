@@ -82,4 +82,7 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.icy-prism": { glyph: "prism-fan" },
   "elementalist.teinais-crystals": { glyph: "crystals-crack" },
   "elementalist.freezing-gust": { glyph: "gust-bar" },
+  // Caster staples (#1870), stand-ins until their art card.
+  "elementalist.grasping-earth": { glyph: "mountain", modifier: "down" },
+  "elementalist.breath-of-fire": { glyph: "flame", modifier: "hourglass" },
 };

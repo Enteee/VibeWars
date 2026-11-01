@@ -259,6 +259,62 @@ export function pathsOutside(prefixes, paths) {
 }
 
 /**
+ * May qa-tester merge this pull request, as far as workflows go (#1897)?
+ *
+ * The company's token holds the `workflow` scope, so GitHub no longer
+ * stops a merge that changes `.github/workflows/` or `.github/actions/`.
+ * This does: such a pull request merges only when it was pushed, from this
+ * repository, on a `bot/<employee>/` branch whose employee's role owns
+ * every restricted prefix it touches, and is one of `authors`. Pushes are
+ * already restricted the same way; this is the second lock, for a stale
+ * merge base or a branch someone else pushed. Anything else is the
+ * operator's to merge.
+ *
+ * @param {{
+ *   pr: number,
+ *   paths: readonly string[],
+ *   headRefName: string,
+ *   crossRepository: boolean,
+ *   authors: readonly string[],
+ *   restricted: Readonly<Record<string, readonly string[]>>,
+ *   roleOf: (employee: string) => string | undefined,
+ * }} pull `paths` is every path the pull request changes against main, both
+ *   sides of a rename; `restricted` is `RESTRICTED_PATHS`; `roleOf` maps an
+ *   employee to their role, from `staff.json`
+ * @returns {{ ok: true } | { ok: false, reason: string }}
+ */
+export function workflowAuthorAllowed({
+  pr,
+  paths,
+  headRefName,
+  crossRepository,
+  authors,
+  restricted,
+  roleOf,
+}) {
+  const prefixes = Object.keys(restricted);
+  const touched = paths.filter((path) => prefixes.some((prefix) => path.startsWith(prefix)));
+  if (touched.length === 0) {
+    return { ok: true };
+  }
+  const hit = prefixes.filter((prefix) => touched.some((path) => path.startsWith(prefix)));
+  const owners = [...new Set(hit.flatMap((prefix) => restricted[prefix] ?? []))];
+  const employee = /^bot\/([^/]+)\//.exec(headRefName)?.[1];
+  const role = employee === undefined ? undefined : roleOf(employee);
+  const owns =
+    role !== undefined &&
+    authors.includes(role) &&
+    hit.every((prefix) => restricted[prefix]?.includes(role) === true);
+  if (!crossRepository && owns) {
+    return { ok: true };
+  }
+  return {
+    ok: false,
+    reason: `#${String(pr)} changes ${touched.join(", ")}, pushed from ${crossRepository ? "another repository" : headRefName}; only the operator merges workflow changes not pushed by ${owners.join(", ")}`,
+  };
+}
+
+/**
  * Turn a guard name from the policy into a human sentence, for the refusal
  * the agent actually reads.
  *

@@ -279,26 +279,57 @@ function pieceInsigniasOf(
 /* The resolver                                                                */
 /* -------------------------------------------------------------------------- */
 
-export function resolveLoadout(input: LoadoutInput, rules: CombatRules): ResolvedLoadout {
-  const runes = totalRunes(input.equipment, input.primaryProfession);
+/** Each attribute's rune and headgear bonus, before any cap. */
+function attributeBonusesOf(
+  equipment: BuildEquipment,
+  primary: ProfessionId,
+  secondary: ProfessionId | undefined,
+): Map<string, number> {
   // The headgear's +1 stacks with the best rune of its attribute (#1140).
-  const attributeBonuses = new Map(runes.attributeBonuses);
-  const headgear = headgearAttributeOf(
-    input.equipment.armor.head,
-    input.primaryProfession,
-    input.secondaryProfession,
-  );
+  const attributeBonuses = new Map(totalRunes(equipment, primary).attributeBonuses);
+  const headgear = headgearAttributeOf(equipment.armor.head, primary, secondary);
   if (headgear !== undefined) {
     attributeBonuses.set(headgear, (attributeBonuses.get(headgear) ?? 0) + HEADGEAR_BONUS);
   }
+  return attributeBonuses;
+}
 
+function withBonuses(
+  allocatedRanks: ReadonlyMap<string, number>,
+  attributeBonuses: ReadonlyMap<string, number>,
+): Map<string, number> {
   // Rune and headgear bonuses raise the ceiling past what points alone
   // can buy, which is exactly what a superior rune is for.
-  const attributeRanks = new Map(input.allocatedRanks);
+  const attributeRanks = new Map(allocatedRanks);
   for (const [attributeId, bonus] of attributeBonuses) {
     const base = attributeRanks.get(attributeId) ?? 0;
     attributeRanks.set(attributeId, Math.min(MAX_EFFECTIVE_RANK, base + bonus));
   }
+  return attributeRanks;
+}
+
+/**
+ * The ranks a build fights at: bought ranks plus rune and headgear
+ * bonuses, capped at `MAX_EFFECTIVE_RANK` (#1900). What `resolveLoadout`
+ * puts in `attributeRanks`, for skill text outside a match.
+ */
+export function effectiveRanks(
+  allocatedRanks: ReadonlyMap<string, number>,
+  equipment: BuildEquipment,
+  primary: ProfessionId,
+  secondary: ProfessionId | undefined,
+): Map<string, number> {
+  return withBonuses(allocatedRanks, attributeBonusesOf(equipment, primary, secondary));
+}
+
+export function resolveLoadout(input: LoadoutInput, rules: CombatRules): ResolvedLoadout {
+  const runes = totalRunes(input.equipment, input.primaryProfession);
+  const attributeBonuses = attributeBonusesOf(
+    input.equipment,
+    input.primaryProfession,
+    input.secondaryProfession,
+  );
+  const attributeRanks = withBonuses(input.allocatedRanks, attributeBonuses);
 
   const rankOf = (attributeId: string | undefined): number =>
     attributeId === undefined ? 0 : (attributeRanks.get(attributeId) ?? 0);

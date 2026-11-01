@@ -177,8 +177,10 @@ Each stage lasts 60 seconds and ends early once everyone in the Team
 Lobby is ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
-side's size, one proposal each, with **Propose**, and vote for one of
-their side's proposals, their own included. Each proposal is a card
+side's size, one proposal each, by clicking one of your Team Builds'
+cards; click it again to withdraw. A Team Build of the wrong size is
+shown faded, with the size it needs. Anyone may vote for one of their
+side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
 initials of who voted for it: click a card to vote, and click it again
 to take your vote back. Nothing is proposed for you: the menu only

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PlayerBuild } from "../../build.js";
+import { AREA_ADJACENT } from "../../distances.js";
 import { resolveLoadout } from "../../equipment/resolve.js";
 import { loadoutOf } from "../../join-loadout.js";
 import { ANNIHILATION_MATCH_RULES } from "../../match-rules.js";
@@ -260,6 +261,26 @@ describe("play-build (#1189)", () => {
     expect(cast).toMatchObject({ skillId: "monk.mend-condition", targetId: "ally" });
     skillsUsed(sim, "warrior", 2);
     expect(sim.get("ally")?.combatant.statuses.has("bleeding")).toBe(false);
+  });
+
+  it("casts Healing Ring for a hurt ally beside it, never for itself alone (#1870)", () => {
+    const ring = { skillBar: ["monk.healing-ring"], startHealthFraction: 0.3 };
+    const alone = match([
+      fighter("monk", 0, MONK, vec2(400, 400), ring),
+      fighter("foe", 1, WARRIOR, vec2(400 + AREA_ADJACENT / 2, 400), { behaviour: undefined }),
+    ]);
+    expect(askBot(alone, "monk").useSkillId).toBeUndefined();
+    const beside = match([
+      fighter("monk", 0, MONK, vec2(400, 400), { ...ring, startHealthFraction: 1 }),
+      fighter("ally", 0, WARRIOR, vec2(400 + AREA_ADJACENT / 2, 400), {
+        behaviour: undefined,
+        startHealthFraction: 0.3,
+      }),
+    ]);
+    expect(askBot(beside, "monk")).toMatchObject({
+      useSkillId: "monk.healing-ring",
+      targetId: "monk",
+    });
   });
 
   it("walks in to an out-of-range ally to heal them", () => {

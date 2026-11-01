@@ -42,7 +42,9 @@ export type ElementalistStatusId =
   | "windborne-speed"
   | "ash-blast"
   // Attribute hexes (#1765).
-  | "freezing-gust";
+  | "freezing-gust"
+  // Caster staples (#1870).
+  | "grasping-earth";
 
 export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, StatusDefinition>> = {
   // "...move 66% slower for 2...5...6 seconds" (#918).
@@ -307,6 +309,12 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     profession: "elementalist",
     attribute: "elementalist.water-magic",
     moveSpeedMultiplier: 0.34,
+  }),
+  // "For 5...17...20 seconds, all nearby foes move 50% slower" (#1870).
+  "grasping-earth": define("grasping-earth", "Grasping Earth", "hex", {
+    profession: "elementalist",
+    attribute: "elementalist.earth-magic",
+    moveSpeedMultiplier: 0.5,
   }),
 };
 

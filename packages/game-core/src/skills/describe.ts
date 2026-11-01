@@ -17,6 +17,7 @@ import {
 import { getAttribute, getProfession, type ProfessionId } from "../professions.js";
 
 import { energyCostOf } from "./activation.js";
+import { creatureDamageMultiplier } from "./damage.js";
 import { magnitudeAtRank, resolveMagnitudeAtRanks } from "./scaling.js";
 import {
   findStatusDefinition,
@@ -42,6 +43,7 @@ import type {
   ChainStep,
   CreateGroundEffect,
   CreatureAttack,
+  CreatureLevel,
   DisableOwnSkillsEffect,
   EffectCondition,
   EnergyGainEffect,
@@ -1743,6 +1745,9 @@ function describeEffects(
       ...(kind === "spirit" && attack !== undefined && attack.damageMax > 0
         ? [describeSpiritDamage(attack, ranks)]
         : []),
+      ...(kind !== "spirit" && attack?.scaling.kind === "level"
+        ? [describeMinionDamage(attack, attack.scaling.level, ranks)]
+        : []),
       ...(attack?.onHit ?? []).map((onHit) => describeSpiritBlow(onHit, ranks)),
       ...(deathBurst === undefined ? [] : [describeDeathBurst(deathBurst, ranks)]),
       ...describeMinionDeath(effect.creature, ranks),
@@ -1855,13 +1860,58 @@ function describeCreature(
     spawned === health.current
       ? `${String(health.current)} Health`
       : `${String(spawned)} Health (${String(health.current)})`;
+  const level = creatureLevel(creature.attack, ranks);
+  const levelText = level === undefined ? "" : `level ${String(Math.round(level))}, `;
   const lasts =
     creature.durationSeconds === undefined
       ? ""
       : `, lasts ${String(describeMagnitude(creature.durationSeconds, ranks).current)} seconds`;
   return {
-    text: `${String(count)} ${creature.name} (${healthText}${lasts})`,
+    text: `${String(count)} ${creature.name} (${levelText}${healthText}${lasts})`,
     magnitude: health,
+  };
+}
+
+/**
+ * A minion's GW1 level at its summoner's rank (#1900), linear in the
+ * rank; `undefined` when its blows do not scale by level.
+ */
+function creatureLevel(
+  attack: CreatureAttack | undefined,
+  ranks: ReadonlyMap<string, number>,
+): number | undefined {
+  if (attack?.scaling.kind !== "level") {
+    return undefined;
+  }
+  const { atZero, atTwelve } = attack.scaling.level;
+  const rank = rankOf(outsideMatch(ranks), attack.attributeId);
+  return atZero + ((atTwelve - atZero) * rank) / 12;
+}
+
+/**
+ * What a minion's blows deal at its summoner's rank (#1900): "Its attacks
+ * deal 23–35 damage", its base times `creatureDamageMultiplier`, as the
+ * simulation scales them.
+ */
+function describeMinionDamage(
+  attack: CreatureAttack,
+  level: CreatureLevel,
+  ranks: ReadonlyMap<string, number>,
+): EffectDescription {
+  const atRank = (rank: number): number =>
+    Math.round(attack.damageMax * creatureDamageMultiplier(rank, level));
+  const rank = rankOf(outsideMatch(ranks), attack.attributeId);
+  const multiplier = creatureDamageMultiplier(rank, level);
+  const min = Math.round(attack.damageMin * multiplier);
+  const max = Math.round(attack.damageMax * multiplier);
+  return {
+    text: `Its attacks deal ${min === max ? String(max) : `${String(min)}–${String(max)}`} damage`,
+    magnitude: {
+      current: max,
+      atZero: atRank(0),
+      atTwelve: atRank(12),
+      attributeId: attack.attributeId,
+    },
   };
 }
 
