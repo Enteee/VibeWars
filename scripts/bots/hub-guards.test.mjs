@@ -21,7 +21,9 @@ import {
   landingAllowed,
   pathsOutside,
   pathsWithin,
+  workflowAuthorAllowed,
 } from "./hub-guards.mjs";
+import { RESTRICTED_PATHS } from "./hub-policy.mjs";
 
 const HEAD = "abc1234def";
 const REPO = "Enteee/VibeWars";
@@ -584,5 +586,94 @@ describe("landingAllowed (#517)", () => {
     expect(ok("manager", "In Review", true)).toBe(true);
     expect(ok("manager", "Ready", true)).toBe(false);
     expect(ok("developer", "In Review", true)).toBe(false);
+  });
+});
+
+describe("workflowAuthorAllowed", () => {
+  const STAFF = new Map([
+    ["cicd-engineer", "cicd-engineer"],
+    ["cicd-engineer@2", "cicd-engineer"],
+    ["developer", "developer"],
+  ]);
+  /** @param {{ paths: string[], headRefName: string, crossRepository?: boolean }} pull */
+  const judge = ({ paths, headRefName, crossRepository = false }) =>
+    workflowAuthorAllowed({
+      pr: 7,
+      paths,
+      headRefName,
+      crossRepository,
+      authors: ["cicd-engineer"],
+      restricted: RESTRICTED_PATHS,
+      roleOf: (employee) => STAFF.get(employee),
+    });
+
+  it("passes a pull request that changes no restricted path, from any branch", () => {
+    expect(
+      judge({ paths: ["apps/web/src/main.ts"], headRefName: "bot/developer/issue-1" }),
+    ).toEqual({ ok: true });
+  });
+
+  it("passes a workflow change from a cicd-engineer branch", () => {
+    expect(
+      judge({ paths: [".github/workflows/ci.yml"], headRefName: "bot/cicd-engineer/issue-1" }),
+    ).toEqual({ ok: true });
+  });
+
+  it("passes a workflow change from a second cicd-engineer's branch", () => {
+    expect(
+      judge({ paths: [".github/workflows/ci.yml"], headRefName: "bot/cicd-engineer@2/issue-1" }),
+    ).toEqual({ ok: true });
+  });
+
+  it("refuses a workflow change from a developer's branch", () => {
+    expect(
+      judge({
+        paths: ["apps/web/src/main.ts", ".github/workflows/ci.yml"],
+        headRefName: "bot/developer/issue-1",
+      }),
+    ).toEqual({
+      ok: false,
+      reason:
+        "#7 changes .github/workflows/ci.yml, pushed from bot/developer/issue-1; only the operator merges workflow changes not pushed by cicd-engineer",
+    });
+  });
+
+  it("refuses a cicd-engineer branch from another repository", () => {
+    expect(
+      judge({
+        paths: [".github/workflows/ci.yml"],
+        headRefName: "bot/cicd-engineer/issue-1",
+        crossRepository: true,
+      }),
+    ).toEqual({
+      ok: false,
+      reason:
+        "#7 changes .github/workflows/ci.yml, pushed from another repository; only the operator merges workflow changes not pushed by cicd-engineer",
+    });
+  });
+
+  it("treats a change to .github/actions/ alone the same way", () => {
+    const paths = [".github/actions/setup/action.yml"];
+
+    expect(judge({ paths, headRefName: "bot/cicd-engineer/issue-1" })).toEqual({ ok: true });
+    expect(judge({ paths, headRefName: "bot/developer/issue-1" })).toMatchObject({ ok: false });
+  });
+
+  it("refuses a branch named for nobody on the staff, or for no employee", () => {
+    const paths = [".github/workflows/ci.yml"];
+
+    expect(judge({ paths, headRefName: "bot/cicd-engineer@9/issue-1" })).toMatchObject({
+      ok: false,
+    });
+    expect(judge({ paths, headRefName: "cicd-engineer/issue-1" })).toMatchObject({ ok: false });
+  });
+
+  it("counts the old side of a rename out of .github/workflows/", () => {
+    expect(
+      judge({
+        paths: [".github/workflows/ci.yml", "docs/ci.yml"],
+        headRefName: "bot/developer/issue-1",
+      }),
+    ).toMatchObject({ ok: false });
   });
 });

@@ -1,4 +1,5 @@
 import { isPhysicalDamage, type DamageType } from "../equipment/types.js";
+import { AREA_EARSHOT } from "../distances.js";
 import {
   DIVINE_FAVOR_ATTRIBUTE,
   divineFavorBonusHeal,
@@ -14,17 +15,22 @@ import { hitLocationOf, mitigate, skillDamage, withSkillArmorPenetration } from 
 import { guardedDamage, guardedLoss } from "./loss-guard.js";
 import { addOvercast, effectiveMaxEnergy } from "./overcast.js";
 import { resolveMagnitude, resolveMagnitudeTimes } from "./scaling.js";
+import { standIn } from "./stand-in.js";
 import {
   aggregateModifiers,
+  damageTypeDealt,
   damageTypeTaken,
   getStatusDefinition,
+  physicalDamageDealtAsOf,
   scaledStatusDuration,
+  type ActiveStatus,
   type OwnSkillBoost,
   type StatusCategory,
   type StatusId,
 } from "./status.js";
 import {
   nearestFirst,
+  nearestSpiritWithin,
   ownCreaturesWithin,
   spiritsWithin,
   type TargetCandidate,
@@ -53,6 +59,7 @@ import {
   type DisableOwnSkillsEffect,
   type DisableSkillEffect,
   type EnergyGainEffect,
+  type EnergyGainToCaster,
   type Skill,
   type SkillContext,
   type EffectCondition,
@@ -141,7 +148,16 @@ export type CombatEvent =
       readonly amount: number;
       readonly statusId: StatusId;
     }
-  | { readonly kind: "status-removed"; readonly targetId: string; readonly statusId: StatusId }
+  | {
+      readonly kind: "status-removed";
+      readonly targetId: string;
+      readonly statusId: StatusId;
+      /**
+       * The skill that put it on, when a `remove-status` took it (#1928):
+       * what a `copy-removed` after it copies. Absent for any other end.
+       */
+      readonly sourceSkillId?: string | undefined;
+    }
   | { readonly kind: "status-expired"; readonly targetId: string; readonly statusId: StatusId }
   /**
    * A maintained enchantment on `targetId` its caster `casterId` could no
@@ -264,6 +280,12 @@ export type CombatEvent =
    */
   | { readonly kind: "shadow-stepped-away"; readonly targetId: string }
   /**
+   * Shadow swapped (#1930): `targetId`, the caster, and `withId`, the
+   * creature it targeted, trade places. The simulation places both bodies
+   * when it reads this.
+   */
+  | { readonly kind: "shadow-swapped"; readonly targetId: string; readonly withId: string }
+  /**
    * Shadow Stepped back (#1826): `targetId`, a returning status's source,
    * is back where it put it up. The simulation has placed the body.
    */
@@ -342,12 +364,14 @@ export function applyDamage(
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
   }
-  if (reverse(target, amount, events)) {
+  // Mist Form's (#1951), after every mitigation: what a hexed foe deals.
+  const cut = hexedSourceDamage(target, amount, dealer);
+  if (cut <= 0 || reverse(target, cut, events)) {
     return;
   }
   // Symbiotic Bond (#1108): its share of a physical hit goes to its
   // source when the tick drains; the bearer takes the rest.
-  const kept = isPhysicalDamage(type) ? target.statuses.redirect(amount) : amount;
+  const kept = isPhysicalDamage(type) ? target.statuses.redirect(cut) : cut;
   const applied = Math.min(guardedDamage(target, kept), target.health);
   if (negateFatal(target, applied, dealer, events)) {
     return;
@@ -379,7 +403,7 @@ function recordFromFoe(
   amount: number,
 ): void {
   if (dealer !== undefined && dealer.team !== target.team) {
-    target.statuses.recordDamageFromFoe(dealer.id, type, amount);
+    target.statuses.recordDamageFromFoe(dealer.id, type, amount, target.cast.isCasting);
   }
 }
 
@@ -803,6 +827,29 @@ function perRemoved(
 }
 
 /**
+ * `amount`, or with `perRemoved`, `amount` for each status of that
+ * category an earlier `remove-status` took off anyone (#1954).
+ */
+function perRemovedByAnyone(
+  effect: EnergyGainToCaster,
+  amount: number,
+  earlier: readonly CombatEvent[],
+): number {
+  const category = effect.perRemoved;
+  if (category === undefined) {
+    return amount;
+  }
+  return (
+    amount *
+    earlier.filter(
+      (event) =>
+        event.kind === "status-removed" &&
+        getStatusDefinition(event.statusId).category === category,
+    ).length
+  );
+}
+
+/**
  * Whether a knockdown could land on `target`: alive and standing. One on
  * someone already down does nothing, however long it would have lasted
  * (GW1).
@@ -991,6 +1038,7 @@ export function applyStatus(
   durationSeconds: number,
   sourceId: string,
   returnPoint: Vec2 | null = null,
+  sourceSkillId?: string,
 ): number | undefined {
   const { category } = getStatusDefinition(statusId);
   if (isInvulnerable(target) && (category === "hex" || category === "condition")) {
@@ -998,7 +1046,7 @@ export function applyStatus(
   }
   const lossBefore = maxHealthLossOf(target);
   const raisedBefore = raisedMaxHealth(target);
-  if (!target.statuses.apply(statusId, durationSeconds, sourceId, returnPoint)) {
+  if (!target.statuses.apply(statusId, durationSeconds, sourceId, returnPoint, sourceSkillId)) {
     return 0;
   }
   const raised = raisedMaxHealth(target) - raisedBefore;
@@ -1019,12 +1067,81 @@ export function applyStatus(
 }
 
 /**
+ * Who takes `statusId` aimed at `target` (#1915): `target`, unless it is a
+ * condition and `target` bears a status that redirects conditions, as
+ * Infuse Condition; then its closest living minion where they stand now,
+ * ties by id, or `target` when it has none.
+ */
+export function conditionTaker(
+  target: Combatant,
+  statusId: StatusId,
+  surroundings: Surroundings,
+): Combatant {
+  if (
+    getStatusDefinition(statusId).category !== "condition" ||
+    !target.statuses.active.some(({ id }) => getStatusDefinition(id).redirectsConditionsToMinion)
+  ) {
+    return target;
+  }
+  const at = surroundings.get(target.id)?.position;
+  if (at === undefined) {
+    return target;
+  }
+  const minions = [...surroundings.values()].filter(
+    ({ combatant, creature }) =>
+      creature?.kind === "minion" && creature.ownerId === target.id && !combatant.dead,
+  );
+  return nearestFirst(minions, at)[0] ?? target;
+}
+
+/**
  * Where `caster` stands now, for a returning status it puts up to take it
  * back to when it ends (#1826). The simulation moves a shadow step's caster
  * after its effects, so this is where it stood as it cast.
  */
 function castSpot(context: SkillContext, caster: Combatant): Vec2 | null {
   return context.surroundings.get(caster.id)?.position ?? null;
+}
+
+/**
+ * A condition caught from a corpse (#1886), Pestilence's: with the time
+ * it had left and its own source, landing as Epidemic's copies do.
+ */
+export function landCaughtCondition(
+  target: Combatant,
+  { id, remainingSeconds, sourceId }: ActiveStatus,
+  events: CombatEvent[],
+  surroundings: Surroundings,
+): void {
+  landOnTaker(target, id, remainingSeconds, sourceId, events, surroundings, null);
+}
+
+/**
+ * `statusId` aimed at `target`, for `durationSeconds` before its taker's
+ * own lengthening, landed on whoever takes it (#1915): every status a
+ * skill aims at a combatant comes through here, so Infuse Condition sends
+ * each condition to a minion however it arrives.
+ */
+function landOnTaker(
+  target: Combatant,
+  statusId: StatusId,
+  durationSeconds: number,
+  sourceId: string,
+  events: CombatEvent[],
+  surroundings: Surroundings,
+  returnPoint: Vec2 | null,
+  sourceSkillId?: string,
+): void {
+  const taker = conditionTaker(target, statusId, surroundings);
+  landStatus(
+    taker,
+    statusId,
+    scaledStatusDuration(taker, statusId, durationSeconds),
+    sourceId,
+    events,
+    returnPoint,
+    sourceSkillId,
+  );
 }
 
 /**
@@ -1042,6 +1159,7 @@ function landStatus(
   sourceId: string,
   events: CombatEvent[],
   returnPoint: Vec2 | null,
+  sourceSkillId?: string,
 ): void {
   // Immune (#1455): it does not land, and there is nothing to say.
   if (target.statuses.isImmuneTo(statusId)) {
@@ -1050,7 +1168,7 @@ function landStatus(
   const ending = endedByGaining(target, statusId);
   const breaker =
     getStatusDefinition(statusId).category === "hex" ? target.statuses.hexBreaker() : undefined;
-  const loss = applyStatus(target, statusId, durationSeconds, sourceId, returnPoint);
+  const loss = applyStatus(target, statusId, durationSeconds, sourceId, returnPoint, sourceSkillId);
   if (loss === undefined) {
     events.push({ kind: "invulnerable", targetId: target.id });
     return;
@@ -1106,6 +1224,8 @@ function splashReaches(
   switch (hits) {
     case "allies":
       return combatant.team === caster.team;
+    case "non-spirit-allies":
+      return combatant.team === caster.team && creature?.kind !== "spirit";
     case "party":
       return combatant.team === caster.team && creature === undefined;
     case "foes":
@@ -1142,11 +1262,41 @@ function destroyCreature(
 }
 
 /**
+ * `amount` from `dealer`, cut by each status on `target` that cuts damage
+ * from a foe carrying a hex of its attribute (#1951): Mist Form's 33%
+ * against a Water Magic hex. Rounded once, as `mitigate` rounds.
+ */
+function hexedSourceDamage(
+  target: Combatant,
+  amount: number,
+  dealer: Combatant | undefined,
+): number {
+  if (dealer === undefined || dealer.team === target.team) {
+    return amount;
+  }
+  let multiplier = 1;
+  for (const { id } of target.statuses.active) {
+    const cut = getStatusDefinition(id).damageReductionFromHexedSource;
+    if (
+      cut !== undefined &&
+      dealer.statuses.active.some(
+        (status) =>
+          getStatusDefinition(status.id).category === "hex" &&
+          getStatusDefinition(status.id).attribute === cut.attributeId,
+      )
+    ) {
+      multiplier *= 1 - cut.fraction;
+    }
+  }
+  return multiplier === 1 ? amount : Math.round(amount * multiplier);
+}
+
+/**
  * `loser` loses `amount` health: the caster's `sacrifice`, or a target's
  * `health-loss` (#1648, #1678). Not damage, so nothing mitigates it; only
  * invulnerability and a Guild Lord's cap stop it, and it can kill.
  */
-function loseHealth(
+export function loseHealth(
   loser: Combatant,
   amount: number,
   kind: "sacrifice" | "health-loss",
@@ -1293,10 +1443,14 @@ export function applyEffect(
       if (amount <= 0) {
         return events;
       }
-      // Winter's (#1745): elemental damage reaches its bearer as cold.
+      // Greater Conflagration's (#1873) on the caster, then Winter's (#1745)
+      // on the target: elemental damage reaches its bearer as cold.
       const packet = skillDamage(
         amount,
-        damageTypeTaken(effect.type, target.statuses.active),
+        damageTypeTaken(
+          damageTypeDealt(effect.type, physicalDamageDealtAsOf(caster.statuses.active)),
+          target.statuses.active,
+        ),
         withSkillArmorPenetration(effect.armorPenetration, caster, context.profession),
       );
       applyDamage(
@@ -1312,23 +1466,29 @@ export function applyEffect(
 
     case "heal": {
       const healed = healRecipient(effect.recipient, caster, target, context.surroundings);
-      if (healed === undefined) {
+      if (
+        healed === undefined ||
+        (effect.onlyBelowHealthFraction !== undefined &&
+          healed.health >= effect.onlyBelowHealthFraction * effectiveMaxHealth(healed))
+      ) {
         return events;
       }
       // Healer's Covenant's "heal 20% less" (#1761).
-      applyHeal(
-        healed,
-        ownHeal(
-          perEnergyLost(
-            effect,
-            healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
-            lostBy,
-            earlier,
-          ),
-          context.own,
+      const heal = ownHeal(
+        perEnergyLost(
+          effect,
+          healAmount(effect, caster, target, context.surroundings, earlier, context.usedSkill),
+          lostBy,
+          earlier,
         ),
-        events,
+        context.own,
       );
+      // Soul Bind's "whenever target foe is healed by a skill" (#1913),
+      // at full Health too: the heal counts, not the Health it gained.
+      if (heal > 0) {
+        healed.statuses.recordHealedBySkill(caster.id);
+      }
+      applyHeal(healed, heal, events);
       return events;
     }
 
@@ -1341,22 +1501,26 @@ export function applyEffect(
       }
       gainEnergy(
         caster,
-        perOwnCreature(
+        perRemovedByAnyone(
           effect,
-          perEnergyLost(
+          perOwnCreature(
             effect,
-            withPerCount(
-              perUsedSkillEnergy(effect, caster, context.usedSkill),
-              effect.per,
-              caster,
-              target,
-              context.surroundings,
+            perEnergyLost(
+              effect,
+              withPerCount(
+                perUsedSkillEnergy(effect, caster, context.usedSkill),
+                effect.per,
+                caster,
+                target,
+                context.surroundings,
+              ),
+              lostBy,
+              earlier,
             ),
-            lostBy,
-            earlier,
+            caster,
+            context.surroundings,
           ),
-          caster,
-          context.surroundings,
+          earlier,
         ),
         events,
         effect.upTo,
@@ -1437,6 +1601,14 @@ export function applyEffect(
       return events;
     }
 
+    case "lose-health-to": {
+      if (target !== undefined) {
+        const keep = resolveMagnitude(effect.keep, caster);
+        loseHealth(target, target.health - keep, "health-loss", events);
+      }
+      return events;
+    }
+
     case "give-health": {
       if (target === undefined || target.dead) {
         return events;
@@ -1458,7 +1630,8 @@ export function applyEffect(
     }
 
     case "apply-status": {
-      if (target === undefined || target.dead) {
+      const bearer = effect.on === "caster" ? caster : target;
+      if (bearer === undefined || bearer.dead) {
         return events;
       }
       // A weapon spell lasts longer with its caster's Spawning Power (#1098),
@@ -1469,19 +1642,29 @@ export function applyEffect(
             spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
           : effect.durationSeconds;
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
-      const durationSeconds = scaledStatusDuration(
-        target,
+      // Infuse Condition's (#1915): a condition goes to the bearer's
+      // closest living minion instead, if it has one.
+      const before = events.length;
+      landOnTaker(
+        bearer,
         effect.statusId,
         base * (context.own?.durationMultiplier ?? 1),
-      );
-      landStatus(
-        target,
-        effect.statusId,
-        durationSeconds,
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
+        context.skillId,
       );
+      // Elemental Flame's (#1951): the caster's hex landed on a foe.
+      if (
+        bearer.team !== caster.team &&
+        getStatusDefinition(effect.statusId).category === "hex" &&
+        events
+          .slice(before)
+          .some((event) => event.kind === "status-applied" && event.targetId === bearer.id)
+      ) {
+        caster.statuses.recordAppliedHex(effect.statusId, bearer.id);
+      }
       return events;
     }
 
@@ -1490,18 +1673,22 @@ export function applyEffect(
         return events;
       }
       const [giver, taker] = effect.from === "caster" ? [caster, target] : [target, caster];
+      // Martyr's caster is one of the party it takes from (#1954).
+      if (giver === taker) {
+        return events;
+      }
       const moved = giver.statuses.takeNewest("condition", effect.count);
       // The caster becomes every moved condition's source: a Bleeding Draw
       // Conditions takes from an ally counts as the Monk's own from then on.
       for (const { id, remainingSeconds } of moved) {
         events.push({ kind: "status-removed", targetId: giver.id, statusId: id });
-        const durationSeconds = remainingSeconds * effect.durationMultiplier;
-        landStatus(
+        landOnTaker(
           taker,
           id,
-          scaledStatusDuration(taker, id, durationSeconds),
+          remainingSeconds * effect.durationMultiplier,
           caster.id,
           events,
+          context.surroundings,
           null,
         );
       }
@@ -1527,14 +1714,19 @@ export function applyEffect(
           combatant.team !== caster.team &&
           distance(position, at) <= effect.radius,
       );
+      const extend =
+        effect.extendPercent === undefined
+          ? 1
+          : 1 + resolveMagnitude(effect.extendPercent, caster) / 100;
       for (const combatant of nearestFirst(reached, at)) {
         for (const { id, remainingSeconds } of conditions) {
-          landStatus(
+          landOnTaker(
             combatant,
             id,
-            scaledStatusDuration(combatant, id, remainingSeconds),
+            Math.min(remainingSeconds * extend, effect.maxSeconds ?? Number.POSITIVE_INFINITY),
             caster.id,
             events,
+            context.surroundings,
             null,
           );
         }
@@ -1550,13 +1742,23 @@ export function applyEffect(
       }
       // The caster's newest; the simulation drops what it cannot pay for.
       const ending = endedByGaining(bearer, effect.statusId);
+      const raisedBefore = raisedMaxHealth(bearer);
       bearer.statuses.maintain(
         effect.statusId,
         caster.id,
         caster.nextMaintainSeq,
         castSpot(context, caster),
+        // The ally a caster wears it for (#1930), as Recall's.
+        bearer === target ? null : (target?.id ?? null),
+        context.skillId,
       );
       caster.nextMaintainSeq += 1;
+      // Vital Blessing (#1872): the Health comes with the maximum, as
+      // `applyStatus` gives it.
+      const raised = raisedMaxHealth(bearer) - raisedBefore;
+      if (raised > 0) {
+        bearer.health = Math.min(bearer.health + raised, effectiveMaxHealth(bearer));
+      }
       events.push({
         kind: "status-applied",
         targetId: bearer.id,
@@ -1572,14 +1774,26 @@ export function applyEffect(
       if (bearer === undefined) {
         return events;
       }
+      // Mirror of Disenchantment's "that same enchantment" (#1954).
+      const same =
+        effect.sameAsRemoved === true
+          ? earlier.findLast(
+              (event) =>
+                event.kind === "status-removed" &&
+                getStatusDefinition(event.statusId).category === effect.category,
+            )
+          : undefined;
+      if (effect.sameAsRemoved === true && same === undefined) {
+        return events;
+      }
       const removed = bearer.statuses.removeByCategory(
         effect.category,
         removeCount(effect, caster, bearer, context.surroundings, earlier),
         effect.profession,
-        effect.statusId,
+        same?.kind === "status-removed" ? same.statusId : effect.statusId,
       );
-      for (const statusId of removed) {
-        events.push({ kind: "status-removed", targetId: bearer.id, statusId });
+      for (const { id: statusId, sourceSkillId } of removed) {
+        events.push({ kind: "status-removed", targetId: bearer.id, statusId, sourceSkillId });
       }
       return events;
     }
@@ -1639,6 +1853,7 @@ export function applyEffect(
         target.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
       }
       knockDown(target, durationSeconds);
+      target.statuses.recordKnockdown();
       events.push({ kind: "knocked-down", targetId: target.id, durationSeconds });
       return events;
     }
@@ -1654,7 +1869,11 @@ export function applyEffect(
       if (target === undefined || target.dead || caster.dead) {
         return events;
       }
-      events.push({ kind: "shadow-stepped", targetId: caster.id, toId: target.id });
+      events.push(
+        effect.to === "swap"
+          ? { kind: "shadow-swapped", targetId: caster.id, withId: target.id }
+          : { kind: "shadow-stepped", targetId: caster.id, toId: target.id },
+      );
       return events;
     }
 
@@ -1723,18 +1942,15 @@ export function applyEffect(
         return events;
       }
       // A status the skill puts on its caster is one it applies (#1761).
-      const durationSeconds = scaledStatusDuration(
+      landOnTaker(
         caster,
         effect.statusId,
         effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
-      );
-      landStatus(
-        caster,
-        effect.statusId,
-        durationSeconds,
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
+        context.skillId,
       );
       return events;
     }
@@ -1744,17 +1960,15 @@ export function applyEffect(
       if (caster.dead || pet === undefined) {
         return events;
       }
-      landStatus(
+      landOnTaker(
         pet,
         effect.statusId,
-        scaledStatusDuration(
-          pet,
-          effect.statusId,
-          effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
-        ),
+        effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
         caster.id,
         events,
+        context.surroundings,
         castSpot(context, caster),
+        context.skillId,
       );
       return events;
     }
@@ -1775,9 +1989,15 @@ export function applyEffect(
           !combatant.dead &&
           combatant.id !== target.id &&
           splashReaches(effect.hits, caster, combatant, creature) &&
-          distance(position, at) <= effect.radius,
+          distance(position, at) <= effect.radius &&
+          (effect.onlyBearing === undefined ||
+            combatant.statuses.countByCategory(effect.onlyBearing) > 0),
       );
-      for (const combatant of nearestFirst(reached, at).slice(0, effect.maxTargets)) {
+      const maxTargets =
+        effect.maxTargets === undefined || typeof effect.maxTargets === "number"
+          ? effect.maxTargets
+          : resolveMagnitude(effect.maxTargets, caster);
+      for (const combatant of nearestFirst(reached, at).slice(0, maxTargets)) {
         for (const inner of effect.effects) {
           events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, centre));
         }
@@ -1796,6 +2016,25 @@ export function applyEffect(
       if (spirit !== undefined) {
         destroyCreature(spirit, "spirit", caster, events);
       }
+      return events;
+    }
+
+    case "drain-nearest-spirit": {
+      const at = castSpot(context, caster);
+      const spirit =
+        at === null
+          ? undefined
+          : nearestSpiritWithin(context.surroundings.values(), at, AREA_EARSHOT);
+      if (spirit === undefined || target === undefined) {
+        return events;
+      }
+      const before = spirit.health;
+      loseHealth(spirit, resolveMagnitude(effect.health, caster), "health-loss", events);
+      const heal = ownHeal((before - spirit.health) * effect.healPerPoint, context.own);
+      if (heal > 0) {
+        target.statuses.recordHealedBySkill(caster.id);
+      }
+      applyHeal(target, heal, events);
       return events;
     }
 
@@ -1838,7 +2077,7 @@ export function applyEffect(
         return events;
       }
       const seconds = resolveMagnitude(effect.seconds, caster);
-      for (const key of disabledBy(effect, target, interrupted)) {
+      for (const key of disabledBy(effect, target, interrupted, context.rng)) {
         // A disabled skill loses all its adrenaline (GW1, #1097), though
         // a longer recharge kept the disable from lengthening its wait.
         emptyPool(target, key);
@@ -1850,22 +2089,41 @@ export function applyEffect(
       return events;
     }
 
-    case "disable-own-skills": {
-      const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
-      const disabled = bar.filter((slot) => disabledOwn(effect, slot.skillId, context.skillId));
-      for (const { key, skillId } of disabled) {
-        emptyPool(caster, key);
-        if (caster.cast.disable(key, effect.seconds)) {
-          events.push({
-            kind: "skill-disabled",
-            targetId: caster.id,
-            skillId,
-            seconds: effect.seconds,
-          });
-        }
+    case "copy-removed": {
+      // The newest a `remove-status` of this skill's took off its target.
+      const removed = earlier.findLast(
+        (event) => event.kind === "status-removed" && event.targetId === target?.id,
+      );
+      const copied = removed?.kind === "status-removed" ? removed.sourceSkillId : undefined;
+      if (context.skillId !== undefined && copied !== undefined) {
+        standIn(caster, context.skillId, copied, effect.seconds);
       }
       return events;
     }
+
+    case "copy-disabled": {
+      // What a `disable-skill` of this skill's just disabled on its target.
+      const disabled = earlier.findLast(
+        (event) => event.kind === "skill-disabled" && event.targetId === target?.id,
+      );
+      if (context.skillId !== undefined && disabled?.kind === "skill-disabled") {
+        standIn(caster, context.skillId, disabled.skillId, disabled.seconds);
+      }
+      return events;
+    }
+
+    case "disable-own-skills":
+      events.push(...disableOwnSkills(caster, effect, context.skillId));
+      return events;
+
+    // A shot's (#1914): its recharge began as it left, and ends here.
+    case "recharge-reset":
+      for (const key of [...caster.cast.rechargeRemaining.keys()]) {
+        if (skillIdOfKey(key) === context.skillId) {
+          caster.cast.endRecharge(key);
+        }
+      }
+      return events;
 
     case "chain-mark":
       if (target !== undefined && !target.dead) {
@@ -2045,7 +2303,10 @@ export function stateHolds(
     case "target-casting": {
       const cast = target.cast.activeCast;
       const skill = cast === undefined ? undefined : getSkill(cast.skillId);
-      return skill !== undefined && isSpell(skill.type);
+      return (
+        skill !== undefined &&
+        (isSpell(skill.type) || (condition.orChant === true && skill.type === "chant"))
+      );
     }
     case "target-using-skill":
       return target.cast.activeCast !== undefined;
@@ -2161,7 +2422,12 @@ function removeCount(
       resolveMagnitude(effect.perRemoved.max, caster),
     );
   }
-  const count = effect.count === "all" ? Number.POSITIVE_INFINITY : effect.count;
+  const count =
+    effect.count === "all"
+      ? Number.POSITIVE_INFINITY
+      : typeof effect.count === "number"
+        ? effect.count
+        : resolveMagnitude(effect.count, caster);
   if (effect.perSpiritNear === undefined) {
     return count;
   }
@@ -2225,17 +2491,24 @@ function interruptedSkill(targetId: string, earlier: readonly CombatEvent[]): st
  * The keys a `disable-skill` reaches on `target` (#914): the one
  * interrupted, and for Power Block every skill on its bar of the same
  * attribute. One with no attribute is linked to nothing (GW1). With
- * `all`, the whole bar, empty slots aside (#474). The bar is the one
+ * `all`, the whole bar, empty slots aside (#474). With `random-spell`, one
+ * spell on it, picked with `rng` (#1928). The bar is the one
  * standing now (#469): a copy is disabled under its own key.
  */
 function disabledBy(
   effect: DisableSkillEffect,
   target: Combatant,
   interrupted: string | undefined,
+  rng: SimulationRng,
 ): readonly string[] {
   const bar = resolvedBar(target.skillBar, target.cast).filter((slot) => slot !== null);
   if (effect.which === "all") {
     return bar.map(({ key }) => key);
+  }
+  if (effect.which === "random-spell") {
+    const spells = bar.filter((slot) => isSpellId(slot.skillId));
+    const picked = spells.length === 0 ? undefined : spells[rng.nextInt(0, spells.length)];
+    return picked === undefined ? [] : [picked.key];
   }
   if (effect.which === "elite") {
     return bar.filter((slot) => getSkill(slot.skillId)?.elite === true).map(({ key }) => key);
@@ -2256,9 +2529,32 @@ function disabledBy(
 }
 
 /**
+ * Disable `caster`'s own skills as `effect` names them (#1473), `usedId`
+ * the skill that does it, each one's adrenaline lost: one whose wait
+ * does not get longer (`CastState.disable`) is not reported.
+ */
+export function disableOwnSkills(
+  caster: Combatant,
+  effect: DisableOwnSkillsEffect,
+  usedId: string | undefined,
+): CombatEvent[] {
+  const events: CombatEvent[] = [];
+  const bar = resolvedBar(caster.skillBar, caster.cast).filter((slot) => slot !== null);
+  const seconds = resolveMagnitude(effect.seconds, caster);
+  for (const { key, skillId } of bar.filter((slot) => disabledOwn(effect, slot.skillId, usedId))) {
+    emptyPool(caster, key);
+    if (caster.cast.disable(key, seconds)) {
+      events.push({ kind: "skill-disabled", targetId: caster.id, skillId, seconds });
+    }
+  }
+  return events;
+}
+
+/**
  * Whether `effect` disables the caster's bar skill `skillId` (#1473):
  * for `attribute` (#1511), never `usedId`, the skill that disables them;
- * for `all` (#1570), every one.
+ * for `all` (#1570), every one; for `types` (#1930), those of a type,
+ * `usedId` included.
  */
 function disabledOwn(
   effect: DisableOwnSkillsEffect,
@@ -2274,6 +2570,12 @@ function disabledOwn(
   const skill = getSkill(skillId);
   if (effect.which === "attribute") {
     return skillId !== usedId && skill?.attributeId === effect.attributeId;
+  }
+  if (effect.which === "attacks") {
+    return skillId !== usedId && skill?.type === "attack";
+  }
+  if (effect.which === "types") {
+    return skill !== undefined && effect.types.includes(skill.type);
   }
   return (
     skill !== undefined &&
@@ -2434,6 +2736,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.perTarget !== true;
     case "sacrifice-health":
     case "recharge-faster":
+    case "recharge-reset":
     case "recharge-others":
     case "steal-from-corpse":
     case "summon":
@@ -2454,28 +2757,32 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     // many allies the skill's area also caught.
     case "destroy-target-spirit":
     case "destroy-target-minion":
+    case "drain-nearest-spirit":
       return true;
     case "heal":
       return effect.recipient !== undefined;
     case "remove-status":
       return effect.from === "caster";
     case "maintain-status":
+    case "apply-status":
       return effect.on === "caster";
     case "energy-loss":
     case "energy-steal":
     case "life-steal":
     case "damage":
     case "lose-health":
+    case "lose-health-to":
     case "transfer-conditions":
     case "spread-conditions":
     case "give-health":
-    case "apply-status":
     case "interrupt":
     case "knockdown":
     case "shadow-step":
     case "resurrect":
     case "pull-to-caster":
     case "disable-skill":
+    case "copy-removed":
+    case "copy-disabled":
     case "owner-gains-damage-dealt":
     case "chain-mark":
     case "overcast":

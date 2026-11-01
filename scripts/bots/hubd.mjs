@@ -16,6 +16,7 @@
 import { execFile, spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -75,6 +76,7 @@ import {
   explainGuard,
   pathsOutside,
   pathsWithin,
+  workflowAuthorAllowed,
 } from "./hub-guards.mjs";
 import {
   jobsFromRest,
@@ -140,21 +142,36 @@ import {
   addEdge,
   buildKpis,
   ciKpis,
+  ciJobKpis,
   ciRunFromRest,
+  ciRunJobsFromRest,
   cpuShare,
   employeeOfUnit,
   EDGES_SCHEMA_VERSION,
   flowKpis,
   parseCiHistory,
+  parseCiJobs,
+  planCiJobs,
   parseEdges,
+  parseMeminfo,
   parseUnits,
   projectSevenDay,
   staffKpis,
   tokensByRole,
+  unreadCiRunJobs,
 } from "./kpi.mjs";
 import { idleWaitsDir, parseWaits, WAITS_FILE } from "./waits.mjs";
 import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
+import {
+  maxRunners,
+  readAlertTold as readRunnersAlertTold,
+  readStatus as readRunnersStatus,
+  runnersLines,
+  runnersStateDir,
+  writeAlertTold as writeRunnersAlertTold,
+  writeTarget as writeRunnersTarget,
+} from "./runners-state.mjs";
 import {
   dueNudges,
   ownNudges,
@@ -262,6 +279,8 @@ const NUDGES = path.join(HUB, "nudges.json");
 const BOARD_HISTORY = path.join(HUB, "board-history.jsonl");
 /** Every completed Actions run of the last 8 days, one JSON line each (#1612). */
 const CI_HISTORY = path.join(HUB, "ci-history.jsonl");
+/** Each run's jobs, a line per run (#1892), kept for 7 days. */
+const CI_JOBS = path.join(HUB, "ci-jobs.jsonl");
 /** The KPI snapshot (kpi.mjs), written every `KPI_EVERY_MS`; every jail reads it. */
 const KPIS = path.join(HUB, "kpis.json");
 /**
@@ -278,6 +297,13 @@ const WATCHES = path.join(HUB, "watches.json");
 const LOCK = path.join(HUB, "hubd.lock");
 /** Every employee's last turn, as the manager's `peek` reads it (#19), for `company load`. */
 const PEEK = path.join(ROOT, "peek");
+/**
+ * The runner supervisor's state (#1890): hubd writes its target and reads
+ * its status, and makes no runner call of its own. Host-only, outside ROOT.
+ */
+const RUNNERS_STATE = runnersStateDir(process.env);
+/** The most runners the operator allows; 0, its default, keeps them off. */
+const MAX_RUNNERS = maxRunners(process.env);
 /** The agents' Claude logs, for `company load`'s tokens (#747): the dashboard's reader. */
 const usage = usageReader(process.env.VIBEWARS_CLAUDE_BOXES);
 
@@ -1039,9 +1065,80 @@ async function evaluateGuards(guards, argv) {
       continue;
     }
 
+    if (guard.startsWith("workflow-author:")) {
+      const refused = await refuseWorkflowMerge(
+        merge.pr,
+        sha,
+        guard.slice("workflow-author:".length).split(","),
+        cfg,
+      );
+      if (refused !== null) {
+        return { ok: false, reason: refused };
+      }
+      continue;
+    }
+
     return { ok: false, reason: `unknown guard "${guard}"; refusing rather than guessing` };
   }
   return { ok: true, pr: merge.pr, flags: merge.flags, sha };
+}
+
+/**
+ * Why pull request `pr` must not be merged under a `workflow-author:` guard
+ * (#1897), or null if it may: its head is fetched into the mirror at `sha`,
+ * the commit every other guard validated, and its changes are judged by
+ * `workflowAuthorAllowed`.
+ *
+ * It fails closed: a pull request it cannot read, a head it cannot fetch, or
+ * a diff it cannot take, is a refusal.
+ *
+ * @param {number} pr
+ * @param {string} sha
+ * @param {string[]} authors the roles the guard names
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<string | null>}
+ */
+async function refuseWorkflowMerge(pr, sha, authors, cfg) {
+  const unlisted = "could not list this pull request's changes; try again";
+  const pull = obj(await rest(`pulls/${String(pr)}`, cfg));
+  const head = obj(pull.head);
+  const headRepo = obj(head.repo).full_name;
+  const baseRepo = obj(obj(pull.base).repo).full_name;
+  if (typeof head.ref !== "string" || typeof baseRepo !== "string") {
+    return unlisted;
+  }
+  if (head.sha !== sha) {
+    return `#${String(pr)} moved to a new head while it was being checked; try again`;
+  }
+  const ref = `refs/hub/merge/${String(pr)}`;
+  const fetched = await git([
+    "fetch",
+    "-q",
+    "--no-tags",
+    remoteUrl(cfg),
+    `+refs/pull/${String(pr)}/head:${ref}`,
+  ]);
+  if (fetched.code !== 0) {
+    return unlisted;
+  }
+  const at = await git(["rev-parse", ref]);
+  if (at.code !== 0 || at.stdout.trim() !== sha) {
+    return unlisted;
+  }
+  const paths = await changedPaths(sha, cfg);
+  if (paths === null) {
+    return unlisted;
+  }
+  const verdict = workflowAuthorAllowed({
+    pr,
+    paths,
+    headRefName: head.ref,
+    crossRepository: headRepo !== baseRepo,
+    authors,
+    restricted: RESTRICTED_PATHS,
+    roleOf: (employee) => staffed.get(employee),
+  });
+  return verdict.ok ? null : verdict.reason;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1061,14 +1158,16 @@ function audit(entry) {
 /**
  * Which files would this push change, relative to main? Both sides of a
  * rename (--no-renames), so a file moved out of a directory is a change
- * to it. The push guards refuse on it (`refusePush`), and the audit log
+ * to it. The push guards refuse on it (`refusePush`), as does the
+ * workflow merge guard (`refuseWorkflowMerge`), and the audit log
  * is tagged with it, so that a change to the definition of a quality gate
  * is findable afterwards with one `grep`.
  *
  * Compared in the mirror, against `main` as GitHub has it: not against
  * whatever an agent's repository calls `origin/main`.
  *
- * @param {string} ref the pushed branch, as it is in the mirror
+ * @param {string} ref the pushed branch, as it is in the mirror, or a pull
+ *   request's head commit fetched into it (#1897)
  * @param {ReturnType<typeof company>} cfg
  * @returns {Promise<string[] | null>} `null` when they could not be worked out
  */
@@ -1799,8 +1898,60 @@ function serveLoad(cfg) {
     stale,
     peek,
     usage: readUsage(usage, now, null)?.summary ?? null,
+    kpis: lastSnapshot,
   });
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/**
+ * `company runners` (#1890): the supervisor's status, as the dashboard
+ * shows it; `company runners <n>` sets the target it reads, within the
+ * operator's max.
+ *
+ * @param {string[]} argv `[]` or `[n]`, checked by the policy
+ * @returns {{ code: number, stdout: string, stderr: string }}
+ */
+function serveRunners(argv) {
+  const [word] = argv;
+  if (word !== undefined) {
+    const n = Number(word);
+    if (n > MAX_RUNNERS) {
+      return {
+        code: 1,
+        stdout: "",
+        stderr: `company runners: ${String(n)} is above the operator's max of ${String(MAX_RUNNERS)} (VIBEWARS_MAX_RUNNERS)\n`,
+      };
+    }
+    writeRunnersTarget(RUNNERS_STATE, n);
+    return {
+      code: 0,
+      stdout: `runners: target ${String(n)}; the supervisor follows within seconds\n`,
+      stderr: "",
+    };
+  }
+  const lines = runnersLines(readRunnersStatus(RUNNERS_STATE), MAX_RUNNERS);
+  return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
+}
+
+/**
+ * The supervisor holds no Telegram: what the manager must hear about the
+ * runners, their missing credential, hubd passes on, once. The alert told
+ * is kept on disk, so a hubd restart does not repeat a standing one.
+ *
+ * @returns {void}
+ */
+function relayRunnersAlert() {
+  const alert = readRunnersStatus(RUNNERS_STATE)?.alert ?? null;
+  const told = readRunnersAlertTold(RUNNERS_STATE);
+  if (alert === told) {
+    return;
+  }
+  if (alert !== null) {
+    tellCompany("runners-alert", `Company runners are down: ${alert}. Tell the operator.`, {
+      to: "manager",
+    });
+  }
+  writeRunnersAlertTold(RUNNERS_STATE, alert);
 }
 
 /**
@@ -3113,6 +3264,12 @@ async function serve(request, verdict, acting) {
     return { allow: true, ...answered };
   }
 
+  if (kind === "runners") {
+    const answered = serveRunners(argv);
+    audit({ role, kind, argv, decision: "allowed", code: answered.code });
+    return { allow: true, ...answered };
+  }
+
   if (kind === "watch") {
     return watch(employee, role, argv, cfg);
   }
@@ -3725,7 +3882,7 @@ async function recordCiRuns(now, cfg) {
     }
     /** @type {unknown[]} */
     const got = rows;
-    read.push(...got.flatMap((row) => ciRunFromRest(row, GATE_WORKFLOWS) ?? []));
+    read.push(...got.flatMap((row) => ciRunFromRest(row, NAMED_RUN_WORKFLOWS) ?? []));
     if (got.length < 100) {
       break;
     }
@@ -3747,6 +3904,129 @@ async function recordCiRuns(now, cfg) {
     writeAtomic(CI_HISTORY, kept.map((run) => `${JSON.stringify(run)}\n`).join(""));
   }
   return kept;
+}
+
+/**
+ * The workflows that can run on company runners (#1891), the only ones whose
+ * job waits say anything about runners (#1892). CodeQL, dependency review,
+ * audit and Pages stay hosted, so their jobs are never read.
+ */
+const RUNNER_WORKFLOWS = ["ci.yml", "e2e-repeat.yml", "e2e-soak.yml", "music-measure.yml"];
+/** The workflows `ci-history.jsonl` names; every other one is `"other"`. */
+const NAMED_RUN_WORKFLOWS = [...new Set([...GATE_WORKFLOWS, ...RUNNER_WORKFLOWS])];
+/**
+ * The most runs whose jobs one KPI tick reads (#1892); a backfill past this
+ * is reported as `coverage` until it catches up.
+ */
+const JOBS_PER_TICK = 10;
+/** A run whose jobs fail this many reads is recorded as unread, never asked for again. */
+const JOBS_MAX_FAILURES = 3;
+/** Failed jobs reads per run id, since hubd started. */
+const jobsFailures = /** @type {Map<number, number>} */ (new Map());
+/** `ci-jobs.jsonl` as read once at the first tick, and kept since; null before. */
+let ciJobsRead = /** @type {import("./kpi.mjs").CiRunJobs[] | null} */ (null);
+/** Whether a `readCiJobs` is under way. */
+let ciJobsReading = false;
+
+/**
+ * The runs' jobs read so far: `ci-jobs.jsonl`, parsed on the first call.
+ *
+ * @returns {import("./kpi.mjs").CiRunJobs[]}
+ */
+function ciJobsSoFar() {
+  ciJobsRead ??= fs.existsSync(CI_JOBS) ? parseCiJobs(fs.readFileSync(CI_JOBS, "utf8")) : [];
+  return ciJobsRead;
+}
+
+/**
+ * Start reading the jobs `planCiJobs` names next, unless a read is still
+ * under way. Never awaited: each read is a `gh api` call, and hubd's loop
+ * serves every hub command. The next tick's snapshot uses what has landed.
+ *
+ * @param {number} now
+ * @param {readonly import("./kpi.mjs").CiRun[]} runs `ci-history.jsonl`'s
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {void}
+ */
+function startCiJobs(now, runs, cfg) {
+  if (ciJobsReading) {
+    return;
+  }
+  ciJobsReading = true;
+  readCiJobs(now, runs, cfg)
+    .catch((/** @type {unknown} */ error) => {
+      console.error(`hubd: ci-jobs.jsonl: ${error instanceof Error ? error.message : "failed"}`);
+    })
+    .finally(() => {
+      ciJobsReading = false;
+    });
+}
+
+/**
+ * Drop from `ci-jobs.jsonl` the runs past 7 days, then append the jobs of
+ * the next runs, one at a time. The batch stops at the first failed read:
+ * a rate limit fails the rest too. A run that failed `JOBS_MAX_FAILURES`
+ * times is recorded with no jobs, as not whole.
+ *
+ * @param {number} now
+ * @param {readonly import("./kpi.mjs").CiRun[]} runs
+ * @param {ReturnType<typeof company>} cfg
+ * @returns {Promise<void>}
+ */
+async function readCiJobs(now, runs, cfg) {
+  const read = ciJobsSoFar();
+  const { keep, next } = planCiJobs({
+    now,
+    history: runs,
+    read,
+    workflows: RUNNER_WORKFLOWS,
+    cap: JOBS_PER_TICK,
+  });
+  if (keep.length < read.length) {
+    writeAtomic(CI_JOBS, keep.map((run) => `${JSON.stringify(run)}\n`).join(""));
+    ciJobsRead = keep;
+  }
+  for (const run of next) {
+    const answer = await rest(
+      `actions/runs/${String(run.id)}/jobs?filter=latest&per_page=100`,
+      cfg,
+    );
+    const jobs = ciRunJobsFromRest(run, answer);
+    const failures = jobs === null ? (jobsFailures.get(run.id) ?? 0) + 1 : 0;
+    const line = jobs ?? (failures >= JOBS_MAX_FAILURES ? unreadCiRunJobs(run) : null);
+    if (line === null) {
+      jobsFailures.set(run.id, failures);
+      return;
+    }
+    jobsFailures.delete(run.id);
+    fs.appendFileSync(CI_JOBS, `${JSON.stringify(line)}\n`);
+    ciJobsRead = [...ciJobsSoFar(), line];
+    if (jobs === null) {
+      return;
+    }
+  }
+}
+
+/**
+ * The host's instant load (#1892): CPUs, load averages, memory, and the free
+ * disk under the hub's directory.
+ *
+ * @returns {NonNullable<import("./kpi.mjs").Kpis["machine"]>}
+ */
+function sampleMachine() {
+  const memory = parseMeminfo(fs.readFileSync("/proc/meminfo", "utf8"));
+  if (memory === null) {
+    throw new Error("/proc/meminfo has no MemTotal or MemAvailable");
+  }
+  const [load1 = 0, load5 = 0, load15 = 0] = os.loadavg();
+  return {
+    cpus: os.availableParallelism(),
+    load1,
+    load5,
+    load15,
+    ...memory,
+    hubDiskFreeBytes: freeBytes(HUB),
+  };
 }
 
 /**
@@ -3793,6 +4073,9 @@ function readWaits(staff) {
   }
   return waits;
 }
+
+/** The last snapshot written, for `company load`; null before the first. */
+let lastSnapshot = /** @type {import("./kpi.mjs").Kpis | null} */ (null);
 
 /**
  * Write `kpis.json` (#891). A section that cannot be read is `null` with its
@@ -3894,8 +4177,20 @@ async function writeKpis(cfg) {
         const { done7d } = flowKpis({ now, moves: history, cards: [], waits, staff: roles });
         return ciKpis({ now, runs: ciRuns, moves: history, done7d, gate: GATE_WORKFLOWS });
       },
+      ciJobs: () => {
+        if (ciRuns instanceof Error) {
+          throw ciRuns;
+        }
+        const wanted = ciRuns.filter((run) => RUNNER_WORKFLOWS.includes(run.workflow));
+        return ciJobKpis(now, ciJobsSoFar(), wanted);
+      },
+      machine: sampleMachine,
     });
     writeAtomic(KPIS, JSON.stringify(kpis));
+    lastSnapshot = kpis;
+    if (!(ciRuns instanceof Error)) {
+      startCiJobs(now, ciRuns, cfg);
+    }
   } catch (error) {
     console.error(`hubd: kpis.json: ${error instanceof Error ? error.message : "failed"}`);
   }
@@ -4351,6 +4646,7 @@ async function main() {
     if (Date.now() - lastNudgeCheck > NUDGE_CHECK_MS) {
       lastNudgeCheck = Date.now();
       sendNudges();
+      relayRunnersAlert();
     }
     if (Date.now() - lastKpis >= KPI_EVERY_MS) {
       lastKpis = Date.now();

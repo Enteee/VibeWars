@@ -357,6 +357,79 @@ describe("rankOf (#762)", () => {
   });
 });
 
+describe("rankOf with scoped boosts (#1941)", () => {
+  /** A Ranger/Elementalist: Marksmanship 10, Fire 8, Water 0 bought, Expertise 0. */
+  const archer = (): Combatant =>
+    makeCombatant({
+      id: "r",
+      attributeRanks: new Map([
+        ["ranger.marksmanship", 10],
+        ["ranger.expertise", 0],
+        ["elementalist.fire-magic", 8],
+        ["elementalist.water-magic", 0],
+        ["elementalist.energy-storage", 6],
+        ["ritualist.spawning-power", 9],
+        ["ritualist.channeling-magic", 3],
+      ]),
+    });
+
+  it("raises one attribute: Expert's Dexterity's Marksmanship", () => {
+    const r = archer();
+    r.statuses.apply("experts-dexterity", 16, "r");
+    expect(rankOf(r, "ranger.marksmanship")).toBe(11);
+    expect(rankOf(r, "ranger.expertise")).toBe(0);
+  });
+
+  it("raises the elemental ones of a secondary Elementalist, a bought 0 too", () => {
+    const r = archer();
+    r.statuses.apply("glyph-of-elemental-power", 25, "r");
+    expect(rankOf(r, "elementalist.fire-magic")).toBe(10);
+    expect(rankOf(r, "elementalist.water-magic")).toBe(2);
+    expect(rankOf(r, "elementalist.energy-storage")).toBe(6);
+    expect(rankOf(r, "ranger.marksmanship")).toBe(10);
+  });
+
+  it("raises a profession's attributes, whatever the bearer's: Ritual Lord's", () => {
+    const r = archer();
+    r.statuses.apply("ritual-lord", 29, "r");
+    expect(rankOf(r, "ritualist.spawning-power")).toBe(13);
+    expect(rankOf(r, "ritualist.channeling-magic")).toBe(7);
+    expect(rankOf(r, "elementalist.fire-magic")).toBe(8);
+  });
+
+  it("sums a boost with Weakness, which is still −1 to all", () => {
+    const r = archer();
+    r.statuses.apply("glyph-of-elemental-power", 25, "r");
+    r.statuses.apply("weakness", 10, "foe");
+    expect(rankOf(r, "elementalist.fire-magic")).toBe(9);
+    expect(rankOf(r, "ranger.marksmanship")).toBe(9);
+    // A net boost raises the bought 0; Weakness alone leaves it.
+    expect(rankOf(r, "elementalist.water-magic")).toBe(1);
+    expect(rankOf(r, "ranger.expertise")).toBe(0);
+  });
+
+  it("holds one glyph at a time: the newest replaces the older", () => {
+    const r = archer();
+    r.statuses.apply("glyph-of-elemental-power", 25, "r");
+    r.statuses.apply("glyph-of-energy", Number.POSITIVE_INFINITY, "r");
+    expect(rankOf(r, "elementalist.fire-magic")).toBe(10);
+  });
+
+  it("counts the deltas a resolving skill holds", () => {
+    const r = archer();
+    r.heldAttributeDeltas = [{ scope: "elemental", amount: 2 }];
+    expect(rankOf(r, "elementalist.fire-magic")).toBe(10);
+  });
+
+  it("gives way to a set rank: Master of Magic beats a boost", () => {
+    const r = archer();
+    r.statuses.apply("glyph-of-elemental-power", 25, "r");
+    r.statuses.apply("master-of-magic", 49, "r");
+    expect(rankOf(r, "elementalist.fire-magic")).toBe(13);
+    expect(rankOf(r, "elementalist.water-magic")).toBe(13);
+  });
+});
+
 describe("a status damage pulse (#1501)", () => {
   /** What `c`'s pulses deal over `seconds` of 20 Hz ticks. */
   function pulses(c: Combatant, seconds: number): number[] {

@@ -17,6 +17,12 @@ export const MESMER_ICONS = {
   // A skill seen again: a spell, or any skill, echoed on (#1136).
   "mesmer.arcane-echo": { glyph: "echo-spell", modifier: "clock" },
   "mesmer.echo": { glyph: "echo-skill" },
+  "mesmer.inspired-enchantment": { glyph: "take-ench-in" },
+  "mesmer.revealed-enchantment": { glyph: "take-ench-rev" },
+  "mesmer.inspired-hex": { glyph: "take-hex-in" },
+  "mesmer.revealed-hex": { glyph: "take-hex-rev" },
+  "mesmer.arcane-thievery": { glyph: "take-skill" },
+  "mesmer.arcane-larceny": { glyph: "take-skills" },
   // Illusion hexes and haste: each glyph shows the status it leaves, so the cripple and the cracks read apart (#1243).
   "mesmer.conjure-phantasm": { glyph: "ghost", modifier: "down" },
   "mesmer.imagined-burden": { glyph: "weight", modifier: "half" },
@@ -68,4 +74,19 @@ export const MESMER_ICONS = {
   "mesmer.illusion-of-weakness": { glyph: "haze-heart-bar" },
   // "N for each X" (#1760, #1850): the counted thing, its gift, three pips.
   "mesmer.channeling": { glyph: "each-channeling" },
+  // Casting-state hexes (#1931)
+  "mesmer.power-leech": { glyph: "bolt-ring" },
+  "mesmer.power-flux": { glyph: "burst-bolt", modifier: "down" },
+  // Caster staples (#1870).
+  "mesmer.ethereal-burden": { glyph: "hex-burden" },
+  "mesmer.sum-of-all-fears": { glyph: "hex-ghost" },
+  // Caster staples 2 (#1872).
+  "mesmer.elemental-resistance": { glyph: "shield-flame" },
+  "mesmer.physical-resistance": { glyph: "shield-blow" },
+  // Attributes set or borrowed (#1929).
+  "mesmer.signet-of-illusions": { glyph: "bars-lent" },
+  // Stand-ins for the party-wide condition and hex moves (#1954).
+  "mesmer.mirror-of-disenchantment": { glyph: "cleanse", modifier: "area" },
+  "mesmer.extend-conditions": { glyph: "drop-spread", modifier: "plus" },
+  "mesmer.hex-eater-signet": { glyph: "vortex-hex", modifier: "up" },
 };

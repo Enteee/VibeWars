@@ -716,14 +716,15 @@ leaves it alone, and stance removal leaves your enchantments. Sprint
 A stance and crippled multiply, as every movement change does.
 
 Three stances trade something for speed (#919). Frenzy (Warrior, 8 s,
-4 s recharge): you attack 33% faster but take double damage. Dark Escape
-(Assassin, Shadow Arts, 13 s): you move 25% faster and take half damage,
-until one of your attacks hits; a miss or a block keeps it. Natural
-Stride (Ranger, Wilderness Survival, 7 s): you run 33% faster and block
-half of incoming attacks, until a new hex or enchantment lands on you; a
-refreshed one does not end it. Damage taken is multiplied after armor
-and before a Rune of Absorption, on every damage packet; health loss,
-sacrifice and degeneration are not damage packets and are left alone.
+4 s recharge): you attack 33% faster but take 160% damage (the PvP
+version). Dark Escape (Assassin, Shadow Arts, 13 s): you move 25%
+faster and take half damage, until one of your attacks hits; a miss
+or a block keeps it. Natural Stride (Ranger, Wilderness Survival, 7 s):
+you run 33% faster and block half of incoming attacks, until a new hex
+or enchantment lands on you; a refreshed one does not end it. Damage
+taken is multiplied after armor and before a Rune of Absorption, on
+every damage packet; health loss, sacrifice and degeneration are not
+damage packets and are left alone.
 
 Two Ranger stances block (#976). Lightning Reflexes (Expertise, 10
 energy, 45 s recharge, 10 s): a 75% chance to block melee and projectile
@@ -1411,7 +1412,7 @@ not. A skill's own type, as Spear of Lightning's, wins over it.
 **Protective Spirit** (#936, Monk, Protection Prayers, 10 energy, ¼ s,
 5 s recharge) lasts 19 s on any ally: no single hit takes more than 10%
 of its max health, the max a deep wound has lowered. The cap comes last,
-after armor, Frenzy's double and a Rune of Absorption, on every hit,
+after armor, Frenzy's 160% and a Rune of Absorption, on every hit,
 blow or spell. Degeneration, sacrifice and life steal are not hits and
 are not capped. Two caps: the lower wins.
 

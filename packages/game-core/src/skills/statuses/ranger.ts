@@ -40,13 +40,32 @@ export type RangerStatusId =
   | "conflagration"
   | "predatory-season"
   | "winter"
+  // Nature rituals 2 (#1873).
+  | "symbiosis"
+  | "favorable-winds"
+  | "brambles"
+  | "tranquility"
+  | "toxicity"
+  | "greater-conflagration"
+  // Nature rituals 3 (#1886).
+  | "energizing-wind"
+  | "primal-echoes"
+  | "roaring-winds"
+  // Nature rituals 4 (#1956).
+  | "quicksand"
+  | "famine"
+  | "lacerate"
   // Pets 2 (#1865).
   | "otyughs-cry"
   | "predatory-bond"
   | "rampage-as-one"
   | "run-as-one"
   // Staples (#1869).
-  | "hekets-rampage";
+  | "hekets-rampage"
+  // Your next attack (#1916).
+  | "poison-tip-signet"
+  // Attributes raised (#1941).
+  | "experts-dexterity";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -331,6 +350,124 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     elementalDamageTakenAs: "cold",
   }),
+  // Nature rituals 3 (#1886). Energizing Wind: "all skills cost 15 less
+  // Energy (minimum cost 10 Energy), and skills recharge 25% slower."
+  "energizing-wind": define("energizing-wind", "Energizing Wind", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills({}, { energyDiscount: 15, energyFloor: 10, rechargeSlower: 0.25 }),
+    ],
+  }),
+  // "Signets cost 10 Energy to use."
+  "primal-echoes": define("primal-echoes", "Primal Echoes", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [ownSkills({ type: "signet" }, { energyBase: 10 })],
+  }),
+  // "Chants and shouts cost 1...5 more Energy": 4, at rank 12.
+  "roaring-winds": define("roaring-winds", "Roaring Winds", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills({ type: "chant" }, { energySurcharge: 4 }),
+      ownSkills({ type: "shout" }, { energySurcharge: 4 }),
+    ],
+  }),
+
+  // Nature rituals 4 (#1956), at rank 12 as rituals 1's. Quicksand: "lose
+  // 1 Energy each time they attack or use a skill": an attack skill is
+  // both, so it costs 2, as in GW1.
+  quicksand: define("quicksand", "Quicksand", "skill-effect", {
+    profession: "ranger",
+    triggers: (["bearer-uses-skill", "bearer-attacks"] as const).map((on) => ({
+      on,
+      effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+      target: "bearer",
+      skillId: "ranger.quicksand",
+    })),
+  }),
+  // Famine: "Whenever a non-spirit creature in its range reaches 0
+  // Energy, that creature takes 20...70 damage": 60, once per drop.
+  famine: define("famine", "Famine", "skill-effect", {
+    profession: "ranger",
+    triggers: [
+      {
+        on: "bearer-energy-drops-empty",
+        effects: [{ kind: "damage", amount: { flat: 60 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "ranger.famine",
+      },
+    ],
+  }),
+  // Lacerate: "Bleeding creatures within its range suffer -2 Health
+  // degeneration." Its death's Bleeding is the spirit's burst.
+  lacerate: define("lacerate", "Lacerate", "skill-effect", {
+    profession: "ranger",
+    whileUnder: {
+      categories: [],
+      statusIds: ["bleeding"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: -2,
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
+  }),
+  // Nature rituals 2 (#1873), at rank 12 as rituals 1's.
+  // Symbiosis: "For each enchantment on a non-spirit creature within
+  // range, that creature has +27...150 maximum Health": +125.
+  symbiosis: define("symbiosis", "Symbiosis", "skill-effect", {
+    profession: "ranger",
+    maxHealthBonusPerEnchantment: 125,
+  }),
+  // "Arrows move twice as fast and strike for +6 damage."
+  "favorable-winds": define("favorable-winds", "Favorable Winds", "skill-effect", {
+    profession: "ranger",
+    projectileSpeedMultiplier: 2,
+    attackDamageDelta: 6,
+    attackDamageDeltaWeapon: "bow",
+  }),
+  // "Non-spirit creatures that are knocked down in its range take 5 damage
+  // and begin Bleeding for 5...20 seconds": 17.
+  brambles: define("brambles", "Brambles", "skill-effect", {
+    profession: "ranger",
+    triggers: [
+      {
+        on: "bearer-knocked-down",
+        effects: [
+          { kind: "damage", amount: { flat: 5 }, type: "typeless", armorPenetration: 0 },
+          { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
+        ],
+        target: "bearer",
+        skillId: "ranger.brambles",
+      },
+    ],
+  }),
+  // PvP: "Enchantments cast by non-spirit creatures within its range expire
+  // 10...30% faster": 26% shorter.
+  tranquility: define("tranquility", "Tranquility", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [ownSkills({ type: "enchantment" }, { durationMultiplier: 0.74 })],
+  }),
+  // "Poisoned or Diseased creatures within its range suffer -2 Health
+  // degeneration."
+  toxicity: define("toxicity", "Toxicity", "skill-effect", {
+    profession: "ranger",
+    whileUnder: {
+      categories: [],
+      statusIds: ["poison", "disease"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: -2,
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
+  }),
+  // "All physical damage is fire damage instead."
+  "greater-conflagration": define(
+    "greater-conflagration",
+    "Greater Conflagration",
+    "skill-effect",
+    { profession: "ranger", physicalDamageDealtAs: "fire" },
+  ),
 
   // "Your preparations recharge 50% faster and last 30...246...300%
   // longer" (#1761), at rank 12.
@@ -378,5 +515,25 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     attackDurationMultiplier: 0.67,
     endsWhenBearerUsesAttackSkill: true,
+  }),
+  // "For 60 seconds, your next attack also inflicts Poison for
+  // 8...14...15 seconds" (#1916): a miss or a block spends it with no
+  // poison; an arrow carries it from its release.
+  "poison-tip-signet": define("poison-tip-signet", "Poison Tip Signet", "skill-effect", {
+    profession: "ranger",
+    endsAfterAttackCount: 1,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: undefined,
+      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 14 }],
+      skillId: "ranger.poison-tip-signet",
+    },
+  }),
+  // "For 1...16...20 seconds, you attack 15% faster and your Marksmanship
+  // is boosted by 1" (#1941): the PvP split, at rank 12.
+  "experts-dexterity": define("experts-dexterity", "Expert's Dexterity", "stance", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.85,
+    attributeDeltas: [{ scope: { attributeId: "ranger.marksmanship" }, amount: 1 }],
   }),
 };

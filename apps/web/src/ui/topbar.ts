@@ -312,7 +312,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks): Topba
   attachJukeboxPopover(music, bar);
 
   // On a phone the screen's other buttons and the global icons fold into
-  // ⋯ (styles.css), and only the screen's primary button stays out.
+  // ⋯ (styles.css); the screen's primary button and an editor's own ⋯ stay out.
   const more = button("⋯", "topbar-more", () => {
     setMore(!bar.classList.contains("is-more-open"));
   });

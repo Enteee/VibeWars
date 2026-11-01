@@ -301,7 +301,7 @@ export const MONK_SKILLS: readonly Skill[] = [
           },
         },
         energyPercent: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80 },
+          scaling: { attributeId: "monk.healing-prayers", atZero: 42, atTwelve: 80.4 },
         },
         perPartyMemberWithin: undefined,
         at: "corpse",
@@ -351,7 +351,7 @@ export const MONK_SKILLS: readonly Skill[] = [
             kind: "disable-skill",
             which: "all",
             seconds: {
-              scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 4 },
+              scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 4.4 },
             },
           },
         ],
@@ -417,7 +417,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         kind: "give-health",
         fractionOfCurrent: 0.5,
         healPercent: {
-          scaling: { attributeId: "monk.healing-prayers", atZero: 100, atTwelve: 129 },
+          scaling: { attributeId: "monk.healing-prayers", atZero: 100, atTwelve: 128.8 },
         },
       },
     ],
@@ -1032,7 +1032,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         from: "caster",
         perRemoved: {
           category: "enchantment",
-          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 7 } },
+          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 6.6 } },
         },
       },
       {
@@ -1042,7 +1042,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         from: "caster",
         perRemoved: {
           category: "enchantment",
-          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 7 } },
+          max: { scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 6.6 } },
         },
       },
     ],
@@ -1372,7 +1372,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         kind: "disable-own-skills",
         which: "attribute",
         attributeId: "monk.smiting-prayers",
-        seconds: 20,
+        seconds: { flat: 20 },
       },
     ],
   },
@@ -1996,7 +1996,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "energy-gain",
-            amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 1, atTwelve: 3 } },
+            amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 1, atTwelve: 2.6 } },
           },
         ],
       },
@@ -2320,7 +2320,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         kind: "disable-own-skills",
         which: "attribute",
         attributeId: "monk.healing-prayers",
-        seconds: 6,
+        seconds: { flat: 6 },
       },
     ],
   },
@@ -2482,7 +2482,7 @@ export const MONK_SKILLS: readonly Skill[] = [
               {
                 kind: "damage",
                 amount: {
-                  scaling: { attributeId: "monk.smiting-prayers", atZero: 8, atTwelve: 27 },
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 8, atTwelve: 27.2 },
                 },
                 type: "holy",
                 armorPenetration: 0,
@@ -2771,6 +2771,33 @@ export const MONK_SKILLS: readonly Skill[] = [
     effects: [{ kind: "maintain-status", on: "target", statusId: "blessed-aura" }],
   },
   {
+    id: "monk.scribes-insight",
+    name: "Scribe's Insight",
+    gwId: 1684,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.divine-favor",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10...30...35 seconds, you gain 3 Energy whenever you use a
+    // signet" (#1913).
+    effects: [{ kind: "apply-status", statusId: "scribes-insight", durationSeconds: 30 }],
+  },
+  {
     id: "monk.healers-covenant",
     name: "Healer's Covenant",
     gwId: 1394,
@@ -2823,5 +2850,216 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "For 1...48...60 seconds, your Healing Prayers spells cast 50% faster.
     // This enchantment ends if you cast another enchantment" (#1761).
     effects: [{ kind: "apply-status", statusId: "holy-haste", durationSeconds: 48 }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples (#1870), at their rank-12 values                        */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.aura-of-stability",
+    name: "Aura of Stability",
+    gwId: 2063,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 12,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3...7...8 seconds, target other ally cannot be knocked down": 7 s.
+    effects: [{ kind: "apply-status", statusId: "aura-of-stability", durationSeconds: 7 }],
+  },
+  {
+    id: "monk.healing-ring",
+    name: "Healing Ring",
+    gwId: 1262,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.healing-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Heal adjacent creatures for 30...150...180 Health. The caster is not
+    // healed": foes too, as Heal Area's.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "caster",
+      affects: "all",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 150 } },
+      },
+    ],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Caster staples 2 (#1872), at their rank-12 values                      */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "monk.vital-blessing",
+    name: "Vital Blessing",
+    gwId: 289,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 2,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // Maintained, as Mending is: +168 maximum Health while it lasts, for −1
+    // energy pip on its caster.
+    effects: [{ kind: "maintain-status", on: "target", statusId: "vital-blessing" }],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Party-wide condition and hex moves (#1954)                              */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "monk.martyr",
+    name: "Martyr",
+    gwId: 298,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: { origin: "party" },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Transfer all conditions and their remaining durations from your
+    // allies to you": the party is the team, at any distance. The caster is
+    // one of it, and keeps its own.
+    effects: [
+      { kind: "transfer-conditions", from: "target", count: Infinity, durationMultiplier: 1 },
+    ],
+  },
+  {
+    id: "monk.empathic-removal",
+    name: "Empathic Removal",
+    gwId: 1126,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You and target other ally lose 1 condition and 1 hex, and are
+    // healed for 50": both are healed, whatever was removed.
+    effects: [
+      { kind: "remove-status", category: "condition", count: 1 },
+      { kind: "remove-status", category: "hex", count: 1 },
+      { kind: "heal", amount: { flat: 50 } },
+      { kind: "remove-status", category: "condition", count: 1, from: "caster" },
+      { kind: "remove-status", category: "hex", count: 1, from: "caster" },
+      { kind: "heal", amount: { flat: 50 }, recipient: "caster" },
+    ],
+  },
+  {
+    id: "monk.divert-hexes",
+    name: "Divert Hexes",
+    gwId: 1692,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "monk",
+    attributeId: "monk.protection-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Remove up to 1...3 hexes from target ally. For each hex removed in
+    // this way, that ally loses one condition and gains 15...75 Health."
+    effects: [
+      {
+        kind: "remove-status",
+        category: "hex",
+        count: { scaling: { attributeId: "monk.protection-prayers", atZero: 1, atTwelve: 2.6 } },
+      },
+      {
+        kind: "remove-status",
+        category: "condition",
+        count: 1,
+        perRemoved: { category: "hex", max: { flat: 3 } },
+      },
+      {
+        kind: "heal",
+        amount: { scaling: { attributeId: "monk.protection-prayers", atZero: 15, atTwelve: 63 } },
+        perRemoved: "hex",
+      },
+    ],
   },
 ];

@@ -82,4 +82,16 @@ export const ELEMENTALIST_ICONS = {
   "elementalist.icy-prism": { glyph: "prism-fan" },
   "elementalist.teinais-crystals": { glyph: "crystals-crack" },
   "elementalist.freezing-gust": { glyph: "gust-bar" },
+  // Shots that fly differently (#1914)
+  "elementalist.lava-arrows": { glyph: "arrow-lava" },
+  // Caster staples (#1870).
+  "elementalist.grasping-earth": { glyph: "roots-grasp" },
+  "elementalist.breath-of-fire": { glyph: "breath-fire" },
+  "elementalist.master-of-magic": { glyph: "bars-set" },
+  // PvP forms (#1951)
+  "elementalist.elemental-flame": { glyph: "form-flame" },
+  "elementalist.mist-form": { glyph: "form-mist" },
+  // Attributes raised (#1941)
+  "elementalist.glyph-of-elemental-power": { glyph: "glyph-power-up" },
+  "elementalist.glyph-of-energy": { glyph: "glyph-energy-up" },
 };

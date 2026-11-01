@@ -4,11 +4,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSlotTooltips, SLOT_TOOLTIP_DELAY_MS, slotDescription } from "./slot-tooltip.js";
 
 // The tooltip itself is DOM; these tests watch whether it is shown and hidden.
-const tip = vi.hoisted(() => ({ shown: false }));
+const tip = vi.hoisted(() => ({ shown: false, shows: 0, cost: undefined as string | undefined }));
 vi.mock("./skill-tooltip.js", () => ({
   createSkillTooltip: () => ({
-    show: () => {
+    show: (_anchor: HTMLElement, description: { cost: string | undefined }) => {
       tip.shown = true;
+      tip.shows += 1;
+      tip.cost = description.cost;
     },
     hide: () => {
       tip.shown = false;
@@ -51,6 +53,12 @@ describe("slotDescription (#719)", () => {
     expect(slotDescription(backbreaker, slot(backbreaker.id, 0, 9), new Map(), 0).cost).toBe(
       "9 adrenaline",
     );
+  });
+
+  it("prices a signet the host says costs Energy, as under Primal Echoes (#1886)", () => {
+    const signet = skill("ranger.antidote-signet");
+    expect(slotDescription(signet, slot(signet.id, 0), new Map(), 0).cost).toBe("Free");
+    expect(slotDescription(signet, slot(signet.id, 10), new Map(), 0).cost).toBe("10 energy");
   });
 
   it("ends an echo's copy with how long it has left, in whole seconds rounded up (#1154)", () => {
@@ -116,5 +124,46 @@ describe("createSlotTooltips (#469)", () => {
     tips.repainted([1, 2]);
     expect(tip.shown).toBe(true);
     tips.dispose();
+  });
+
+  it("re-reads a shown tooltip each step, so a signet priced under it shows its cost (#1920)", () => {
+    vi.useFakeTimers();
+    const tips = createSlotTooltips();
+    const signet = skill("mesmer.signet-of-humility");
+    let energyCost = 0;
+    const slot0 = button();
+    tips.bind(
+      slot0.element,
+      0,
+      () => slot(signet.id, energyCost),
+      () => new Map(),
+      () => 0,
+    );
+    slot0.hover();
+    vi.advanceTimersByTime(SLOT_TOOLTIP_DELAY_MS);
+    const free = tip.cost;
+    const shows = tip.shows;
+    // Nothing changed: the tooltip is not drawn again.
+    tips.refresh();
+    expect(tip.shows).toBe(shows);
+
+    // Primal Echoes comes up while it is shown.
+    energyCost = 10;
+    tips.refresh();
+    expect(tip.cost).toBe("10 energy");
+    expect(tip.shows).toBe(shows + 1);
+
+    energyCost = 0;
+    tips.refresh();
+    expect(tip.cost).toBe(free);
+    tips.dispose();
+  });
+
+  it("refreshes nothing once hidden", () => {
+    const tips = shown();
+    tips.casting(0);
+    const shows = tip.shows;
+    tips.refresh();
+    expect({ shown: tip.shown, shows: tip.shows }).toEqual({ shown: false, shows });
   });
 });

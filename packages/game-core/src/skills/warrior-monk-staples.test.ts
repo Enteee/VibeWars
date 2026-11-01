@@ -63,10 +63,10 @@ describe("Protective Spirit (#936)", () => {
     ).toBe(200);
   });
 
-  it("caps last, after Frenzy's double: 40 doubled is 80, and still 48", () => {
+  it("caps last, after Frenzy's 160%: 40 is 64, and still 48", () => {
     const frenzied = spirited();
     frenzied.statuses.apply("frenzy", 8, "b");
-    expect(mitigate(typeless(20), frenzied, RULES, "chest")).toBe(40);
+    expect(mitigate(typeless(20), frenzied, RULES, "chest")).toBe(32);
     expect(mitigate(typeless(40), frenzied, RULES, "chest")).toBe(48);
   });
 
@@ -211,7 +211,7 @@ describe('Cyclone Axe and "For Great Justice!" (#936)', () => {
       area: { origin: "caster", affects: "enemies", maxTargets: undefined, includesCaster: false },
       attack: {
         weapon: "axe",
-        bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10 } },
+        bonusDamage: { scaling: { attributeId: "warrior.axe-mastery", atZero: 4, atTwelve: 10.4 } },
       },
     });
     expect(describeSkill(skill("warrior.cyclone-axe")).targetText).toBe(

@@ -844,12 +844,7 @@ async function main(): Promise<void> {
   const showCharacterEditor = (character: StoredCharacter, back: () => void = showMenu): void => {
     leaveScreen();
     const editorCallbacks = {
-      onSave: (saved: StoredCharacter) => {
-        void (async () => {
-          await characters.save(saved);
-          back();
-        })();
-      },
+      onSave: (saved: StoredCharacter) => characters.save(saved),
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
@@ -1181,7 +1176,7 @@ async function main(): Promise<void> {
    * `member` of the team `left` in the build editor (#576, #1452): its
    * Save puts it in the team, which comes back as it was left and still
    * unsaved; nothing is stored. Delete takes it off the team, Duplicate
-   * adds a copy, and Close comes back without either.
+   * adds a copy, and Esc comes back without either.
    */
   const showMemberEditor = (
     member: TeamCharacter,
@@ -1192,6 +1187,8 @@ async function main(): Promise<void> {
       showTeamEditor({ ...left, team }, available);
     };
     const present = left.team.members.some((m) => m.character.id === member.id);
+    // What the way out takes back: the team as left, or with Save's member in it.
+    let team = left.team;
     leaveScreen();
     teamEditor?.dispose();
     teamEditor = undefined;
@@ -1202,7 +1199,8 @@ async function main(): Promise<void> {
       {
         onSave: (saved) => {
           const character = teamCharacter(saved, member.id);
-          back(present ? replaceMember(left.team, character) : addMember(left.team, character));
+          team = present ? replaceMember(left.team, character) : addMember(left.team, character);
+          return Promise.resolve();
         },
         onDelete: () => {
           back(
@@ -1219,7 +1217,7 @@ async function main(): Promise<void> {
           back(addMember(left.team, { ...copy, name: `${source.name} (copy)` }));
         },
         onClose: () => {
-          back(left.team);
+          back(team);
         },
       },
     );

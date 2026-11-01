@@ -369,7 +369,7 @@ describe("the Sword attacks (#1658)", () => {
       cost: { kind: "adrenaline", amount: 7 },
       attack: {
         weapon: "sword",
-        bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atTwelve: 32 } },
+        bonusDamage: { scaling: { attributeId: "warrior.swordsmanship", atTwelve: 32.2 } },
       },
       effects: [],
     });

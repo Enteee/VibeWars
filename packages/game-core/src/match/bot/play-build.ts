@@ -1,4 +1,4 @@
-import { RANGE_SPELL } from "../../distances.js";
+import { AREA_IN_THE_AREA, RANGE_SPELL, RANGE_SPIRIT } from "../../distances.js";
 import { getSkill } from "../../skills/catalog.js";
 import { raisedMaxHealth } from "../../skills/tick.js";
 import type { Skill } from "../../skills/types.js";
@@ -13,18 +13,22 @@ import type {
 import type { Participant } from "../simulation.js";
 import {
   botUses,
+  takenOffFoe,
   interruptAimed,
   onlyInterrupts,
   removedCategories,
   removesFromCaster,
+  renewsSpirit,
   sacrificesTooMuch,
 } from "./skill-intent.js";
 
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a
  * sensible GW1 hero does. Each think it does the first of: interrupt a
- * foe's cast or else its swing, heal or protect the most hurt ally, take
- * a hex or condition off an ally, raise a dead one, use an offensive
+ * foe's cast or else its swing, heal or protect the most hurt ally, step
+ * away when hurt with a foe at hand, take
+ * a hex or condition off an ally, raise a dead one, renew a spirit of
+ * its own about to expire, use an offensive
  * skill on the team target, attack it with the weapon, and otherwise walk
  * to the nearest foe. A ranged bot stands and fights a foe at its elbow: at equal speed,
  * backing off would never end.
@@ -48,6 +52,15 @@ const NOTHING: BehaviourIntent = {
 
 /** Below this share of its health, an ally is worth a heal. */
 const HURT_FRACTION = 0.6;
+
+/** Below this share of its lifetime left, a spirit of a bot's own is worth renewing (#1947). */
+const RENEW_FRACTION = 0.25;
+
+/** Below this share of its own health, a bot with a foe at hand steps away (#1930). */
+const ESCAPE_FRACTION = 0.5;
+
+/** A foe this near is at hand (#1930): GW1's "in the area". */
+const ESCAPE_THREAT_UNITS = AREA_IN_THE_AREA;
 
 /** How much longer than the interrupt itself a cast or a swing must have left. */
 const INTERRUPT_MARGIN_SECONDS = 0.25;
@@ -238,15 +251,55 @@ function think(
   }
   if (hurt !== undefined && healthFraction(hurt) < HURT_FRACTION) {
     const patient = hurt;
+    // A self-targeted skill reaches the caster, unless its area spares the
+    // caster (Healing Ring, #1870): then only an ally beside it, so it is
+    // never cast for the caster alone or into foes only.
+    const reaches = (held: Skill): boolean => {
+      if (held.target !== "self") {
+        return true;
+      }
+      const area = held.area;
+      if (area?.origin !== "caster" || area.includesCaster) {
+        return patient.id === self.id;
+      }
+      return patient.id !== self.id && distance(patient.position, self.position) <= area.radius;
+    };
     for (const role of ["healing", "defence"] as const) {
       const skill = bar.find(
         (held) =>
           botUses(held).includes(role) &&
-          (held.target !== "self" || patient.id === self.id) &&
-          mayUse(held, patient.id),
+          reaches(held) &&
+          mayUse(held, held.target === "self" ? self.id : patient.id),
       );
       if (skill !== undefined) {
-        return use(skill, patient.id);
+        return use(skill, skill.target === "self" ? self.id : patient.id);
+      }
+    }
+  }
+
+  // 2b. Hurt with a foe at hand, and nothing to heal it (#1930): step
+  // away to the creature of its side farthest from that foe, one farther
+  // than it stands, in reach now; never a walk towards one.
+  const threat = nearestLiving(self, foes);
+  if (
+    healthFraction(self) < ESCAPE_FRACTION &&
+    threat !== undefined &&
+    distance(threat.position, self.position) <= ESCAPE_THREAT_UNITS
+  ) {
+    const fromThreat = (body: Participant): number => distance(body.position, threat.position);
+    const havens = context.participants
+      .filter(
+        (other) =>
+          !other.combatant.dead &&
+          other.combatant.team === team &&
+          other.creature !== undefined &&
+          fromThreat(other) > fromThreat(self),
+      )
+      .sort((a, b) => fromThreat(b) - fromThreat(a));
+    for (const skill of bar.filter((held) => botUses(held).includes("escape"))) {
+      const haven = havens.find((other) => context.check(skill.id, other.id).ok);
+      if (haven !== undefined) {
+        return use(skill, haven.id);
       }
     }
   }
@@ -295,11 +348,42 @@ function think(
     }
   }
 
+  // 4b. Renew a spirit of its own near its end with a foe in its reach
+  // (#1947), as Gaze of Fury: the new one fights on where it stood.
+  const renews = bar.filter(renewsSpirit);
+  if (renews.length > 0) {
+    const ending = context.participants.filter(
+      ({ combatant, creature, position }) =>
+        creature?.kind === "spirit" &&
+        creature.ownerId === self.id &&
+        !combatant.dead &&
+        creature.expiresInSeconds <
+          RENEW_FRACTION * (creature.ageSeconds + creature.expiresInSeconds) &&
+        foes.some((foe) => distance(foe.position, position) <= RANGE_SPIRIT),
+    );
+    for (const spirit of ending) {
+      const skill = renews.find((held) => mayUse(held, spirit.id));
+      if (skill !== undefined) {
+        return use(skill, spirit.id);
+      }
+    }
+  }
+
   if (targetId !== undefined) {
-    // 5. Offence, in bar order.
+    // 5. Offence, in bar order. A copier or a stripper only at a foe with
+    // what it takes (#1928, #1954): Inspired Enchantment and Mirror of
+    // Disenchantment at an enchanted one.
+    const foe = context.participants.find((other) => other.id === targetId)?.combatant;
+    const copies = (held: Skill): boolean => {
+      const category = takenOffFoe(held);
+      return category === undefined || (foe?.statuses.countByCategory(category) ?? 0) > 0;
+    };
     const skill = bar.find(
       (held) =>
-        botUses(held).includes("offence") && !onlyInterrupts(held) && mayUse(held, targetId),
+        botUses(held).includes("offence") &&
+        !onlyInterrupts(held) &&
+        copies(held) &&
+        mayUse(held, targetId),
     );
     if (skill !== undefined) {
       return use(skill, targetId);

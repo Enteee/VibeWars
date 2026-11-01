@@ -67,7 +67,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       weapon: "daggers",
       weaponDamage: 1,
       bonusDamage: {
-        scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 27 },
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 26.8 },
       },
       conditionalBonus: undefined,
       strikes: 1,
@@ -95,7 +95,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
           {
             kind: "energy-gain",
             amount: {
-              scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 11 },
+              scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 11.4 },
             },
           },
         ],
@@ -414,8 +414,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "assassin",
-    // GW1's "No Attribute": any assassin can use it.
-    attributeId: undefined,
+    // Linked to Shadow Arts, though nothing in it scales (#1958).
+    attributeId: "assassin.shadow-arts",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
@@ -848,7 +848,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "All of your spells are disabled for 15 seconds. For 1...6 seconds,
     // target touched foe cannot cast spells": 5 s, its rank-12 value.
     effects: [
-      { kind: "disable-own-skills", which: "spells", seconds: 15 },
+      { kind: "disable-own-skills", which: "spells", seconds: { flat: 15 } },
       { kind: "apply-status", statusId: "shroud-of-silence", durationSeconds: 5 },
     ],
   },
@@ -931,6 +931,46 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "For 4...10 seconds, target foe gains 50% less benefit from
     // healing": 8.8 s.
     effects: [{ kind: "apply-status", statusId: "mark-of-death", durationSeconds: 8.8 }],
+  },
+  {
+    id: "assassin.dancing-daggers",
+    name: "Dancing Daggers",
+    gwId: 858,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    // "Dancing Daggers has half the normal range."
+    range: RANGE_SPELL / 2,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Send out three Dancing Daggers at target foe" (#1914), each its own
+    // flight and dodge. Our own tuning, as GW1 publishes no speeds:
+    // Disrupting Dagger's.
+    projectile: { speed: 1.5 * RANGE_SPELL, shots: 3 },
+    // "...each striking for 5...35 earth damage if they hit. This skill
+    // counts as a lead attack": 29 each, and each dagger that lands
+    // leaves the mark.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 29 } },
+        type: "earth",
+        armorPenetration: 0,
+      },
+      { kind: "chain-mark", role: "lead" },
+    ],
   },
   {
     id: "assassin.disrupting-dagger",
@@ -1101,7 +1141,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       {
         kind: "energy-gain",
         amount: {
-          scaling: { attributeId: "assassin.critical-strikes", atZero: 1, atTwelve: 3 },
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 1, atTwelve: 2.6 },
         },
       },
     ],
@@ -1178,7 +1218,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       weapon: "daggers",
       weaponDamage: 1,
       bonusDamage: {
-        scaling: { attributeId: "assassin.critical-strikes", atZero: 19, atTwelve: 29 },
+        scaling: { attributeId: "assassin.critical-strikes", atZero: 19, atTwelve: 28.6 },
       },
       conditionalBonus: {
         condition: { kind: "target-health-above", fraction: 0.9 },
@@ -1519,7 +1559,9 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "energy-gain",
-            amount: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 7 } },
+            amount: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 7.4 },
+            },
           },
         ],
       },
@@ -1806,7 +1848,9 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "daggers",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 8, atTwelve: 18 } },
+      bonusDamage: {
+        scaling: { attributeId: "assassin.dagger-mastery", atZero: 8, atTwelve: 17.6 },
+      },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -2069,7 +2113,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "energy-gain",
-        amount: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 10 } },
+        amount: { scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 9.8 } },
       },
     ],
   },
@@ -2814,5 +2858,190 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         },
       },
     ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Shadow step 2 (#1930), at their rank-12 values                          */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "assassin.recall",
+    name: "Recall",
+    gwId: 925,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    // GW1's "No Attribute": any assassin can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "While you maintain Recall, nothing happens. When Recall ends, you
+    // Shadow Step to the ally you targeted": maintained on its caster, the
+    // ally remembered; the status's end does the rest.
+    effects: [{ kind: "maintain-status", on: "caster", statusId: "recall" }],
+  },
+  {
+    id: "assassin.spirit-walk",
+    name: "Spirit Walk",
+    gwId: 1040,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    // GW1's "No Attribute": any assassin can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "allied-spirit",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Shadow Step to target spirit": GW1 allows a foe's too; here, as every
+    // spirit skill, only one of the caster's side.
+    effects: [{ kind: "shadow-step", to: "target" }],
+  },
+  {
+    id: "assassin.swap",
+    name: "Swap",
+    gwId: 1653,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    // GW1's "No Attribute": any assassin can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "allied-summoned-creature",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You and target summoned creature Shadow Step to each other's location."
+    effects: [{ kind: "shadow-step", to: "swap" }],
+  },
+  {
+    id: "assassin.dark-prison",
+    name: "Dark Prison",
+    gwId: 1044,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.deadly-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Shadow Step to target foe. For 1...6 seconds, that foe moves 33%
+    // slower": 5 s. The step and the hex land apart, as the wiki notes.
+    effects: [
+      { kind: "shadow-step", to: "target" },
+      { kind: "apply-status", statusId: "dark-prison", durationSeconds: 5 },
+    ],
+  },
+  {
+    id: "assassin.shadow-walk",
+    name: "Shadow Walk",
+    gwId: 1650,
+    type: "stance",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    // GW1's "No Attribute": any assassin can use it.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Shadow Step to target foe. For 15 seconds, nothing happens. Your
+    // attack skills are disabled for 1 second, and your stances and
+    // enchantments are disabled for 10 seconds. When this stance ends, you
+    // return to your original location": the stance on its caster.
+    effects: [
+      { kind: "shadow-step", to: "target" },
+      { kind: "apply-status", on: "caster", statusId: "shadow-walk", durationSeconds: 15 },
+      { kind: "disable-own-skills", which: "types", types: ["attack"], seconds: { flat: 1 } },
+      {
+        kind: "disable-own-skills",
+        which: "types",
+        types: ["enchantment", "stance"],
+        seconds: { flat: 10 },
+      },
+    ],
+  },
+  {
+    id: "assassin.shadow-form",
+    name: "Shadow Form",
+    gwId: 826,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "assassin",
+    attributeId: "assassin.shadow-arts",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 60,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP (#1951): "For 5...15 seconds, all hostile spells that target you
+    // fail and all attacks against you miss. When Shadow Form ends, lose
+    // all but 5...50 Health": 13 s.
+    effects: [{ kind: "apply-status", statusId: "shadow-form", durationSeconds: 13 }],
   },
 ];

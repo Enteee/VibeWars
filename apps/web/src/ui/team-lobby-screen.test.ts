@@ -12,6 +12,7 @@ import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
   NO_PROPOSALS,
+  NO_TEAM_BUILDS,
   SEATS_LINE,
   SPECTATING_LINE,
   VOTE_HINT,
@@ -39,6 +40,7 @@ vi.mock("./character-figure.js", async (original) => ({
 
 /** Just enough DOM for the Team Lobby's body; the unit tests run in Node. */
 class FakeElement {
+  tagName = "";
   className = "";
   textContent = "";
   title = "";
@@ -97,11 +99,6 @@ class FakeElement {
 
   click(): void {
     this.listeners.get("click")?.();
-  }
-
-  change(value: string): void {
-    this.value = value;
-    this.listeners.get("change")?.();
   }
 }
 
@@ -241,11 +238,13 @@ describe("the Team Lobby's words (#1460)", () => {
   });
 
   it("offers only the Team Builds of the side's exact size", () => {
-    expect(proposableTeams([team("a", "Duo", 2), team("b", "Four", 4)], 4)).toEqual([
-      { id: "a", label: "Duo (needs 4 characters)", disabled: true },
-      { id: "b", label: "Four", disabled: false },
+    const duo = team("a", "Duo", 2);
+    const four = team("b", "Four", 4);
+    expect(proposableTeams([duo, four], 4)).toEqual([
+      { team: duo, disabled: true, reason: "needs 4 characters" },
+      { team: four, disabled: false, reason: undefined },
     ]);
-    expect(proposableTeams([team("a", "Duo", 2)], 1)[0]?.label).toBe("Duo (needs 1 character)");
+    expect(proposableTeams([duo], 1)[0]?.reason).toBe("needs 1 character");
   });
 });
 
@@ -270,7 +269,10 @@ describe("the Team Lobby's body (#1460)", () => {
 
   beforeEach(() => {
     sent = [];
-    vi.stubGlobal("document", { createElement: () => new FakeElement() });
+    vi.stubGlobal("document", {
+      createElement: (tag: string) =>
+        Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
+    });
   });
 
   afterEach(() => {
@@ -317,25 +319,58 @@ describe("the Team Lobby's body (#1460)", () => {
     ]);
   });
 
-  it("proposes only a Team Build of the side's size, and None withdraws", () => {
+  it("shows each saved Team Build as a card to propose, and a click on yours withdraws it (#1862)", () => {
     const shown = body(
       lobby("aria", "vote", voteSide([])),
-      [team("duo", "Duo", 2), team("four", "Four", 4)],
+      [team("duo", "Duo", 2), team("four", "Four", 4), team("quad", "Quad", 4)],
       "four",
     );
-    const [select] = shown.all("team-lobby-propose").flatMap((label) => label.children.slice(1));
-    expect(select?.children.map((option) => [option.textContent, option.disabled])).toEqual([
-      ["None", false],
-      ["Duo (needs 4 characters)", true],
-      ["Four", false],
+    const own = shown.all("team-lobby-own-cards")[0]?.all("play-card") ?? [];
+    expect(own.map((card) => card.all("play-card-name")[0]?.textContent)).toEqual([
+      "Duo",
+      "Four",
+      "Quad",
     ]);
-    expect(select?.value).toBe("four");
-    select?.change("");
-    select?.change("four");
+    expect(own[1]?.all("character-figure")).toHaveLength(4);
+    // The one proposed is marked, and only it.
+    expect(own.map((card) => press(card)?.attributes.get("aria-pressed"))).toEqual([
+      "false",
+      "true",
+      "false",
+    ]);
+    expect(own.map((card) => card.has("is-proposed"))).toEqual([false, true, false]);
+    expect(own[1]?.text()).toContain("Proposed ✓");
+    press(own[2])?.click();
+    press(own[1])?.click();
     expect(sent).toEqual([
+      { kind: "propose", value: "quad" },
       { kind: "propose", value: undefined },
-      { kind: "propose", value: "four" },
     ]);
+  });
+
+  it("shows a Team Build of the wrong size faded, its press disabled, and says why", () => {
+    const [duo] =
+      body(lobby("aria", "vote", voteSide([])), [team("duo", "Duo", 2)])
+        .all("team-lobby-own-cards")[0]
+        ?.all("play-card") ?? [];
+    expect(press(duo)?.disabled).toBe(true);
+    expect(duo?.has("is-faded")).toBe(true);
+    expect(duo?.all("team-lobby-needs").map((line) => line.textContent)).toEqual([
+      "needs 4 characters",
+    ]);
+  });
+
+  it("says where to make a Team Build when you have none, with no cards and no dropdown", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])));
+    expect(shown.all("team-lobby-own-cards")).toEqual([]);
+    expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
+      NO_TEAM_BUILDS,
+    ]);
+    const tags = (element: FakeElement): string[] => [
+      element.tagName,
+      ...element.children.flatMap(tags),
+    ];
+    expect(tags(shown)).not.toContain("SELECT");
   });
 
   it("shows one dashed box where the cards would be when nobody proposed", () => {
@@ -385,11 +420,17 @@ describe("the Team Lobby's body (#1460)", () => {
     const seats = body(lobby("brann", "claim", claimSide(["aria", "brann", null, null]))).all(
       "team-lobby-seat",
     );
-    expect(seats.map((seat) => seat.all("team-lobby-seat-name")[0]?.text())).toEqual([
-      "Bram",
-      "Mira",
-      "Ash",
-      "Tove",
+    expect(seats.map((seat) => seat.all("play-card-line")[0]?.text())).toEqual([
+      "Warrior",
+      "Monk",
+      "Elementalist",
+      "Ranger",
+    ]);
+    expect(seats.map((seat) => seat.attributes.get("aria-label"))).toEqual([
+      "Warrior: Aria",
+      "Monk: Brann",
+      "Elementalist: Sit here",
+      "Ranger: Sit here",
     ]);
     expect(seats.map((seat) => seat.all("team-lobby-seat-holder")[0]?.text() ?? "free")).toEqual([
       "AriaC",
@@ -452,7 +493,7 @@ describe("the Team Lobby's body (#1460)", () => {
       expect(waiting?.all("is-empty")).toHaveLength(32);
     });
 
-    it("draws them on the chosen card, its members by name; a house seat stays a '?'", () => {
+    it("draws them on the chosen card and its seats, never by name; a house seat stays a '?' (#1863)", () => {
       body(lobby("brann", "vote", voteSide([proposal("aria", [])])));
       const shown = body(
         lobby(
@@ -475,11 +516,27 @@ describe("the Team Lobby's body (#1460)", () => {
       const chosen = shown.all("is-chosen")[0];
       const rows = chosen?.all("character-card-row") ?? [];
       expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual([
-        "Bram, Warrior",
-        "Mira, Monk",
-        "Ash, Elementalist",
+        "Warrior",
+        "Monk",
+        "Elementalist",
       ]);
       expect(chosen?.all("is-house")).toHaveLength(1);
+      const seats = shown.all("team-lobby-seat");
+      const [warrior] = seats;
+      expect(
+        warrior?.all("character-figure").map((figure) => figure.attributes.get("data-weapon-id")),
+      ).toEqual(["sword"]);
+      expect(warrior?.all("mini-skill")).toHaveLength(8);
+      expect(warrior?.all("play-card-line")[0]?.text()).toBe("Warrior");
+      expect(seats[3]?.all("is-house")).toHaveLength(1);
+      expect(seats[3]?.all("character-figure")).toHaveLength(0);
+      for (const name of ["Bram", "Mira", "Ash", "Bot"]) {
+        expect(shown.text()).not.toContain(name);
+        for (const each of seats) {
+          expect(each.title).not.toContain(name);
+          expect(each.attributes.get("aria-label")).not.toContain(name);
+        }
+      }
     });
   });
 

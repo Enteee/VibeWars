@@ -30,6 +30,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "heal":
     case "give-health":
     case "steal-from-corpse":
+    case "drain-nearest-spirit":
       return ["healing"];
     case "remove-status":
       // Stripping a foe's enchantment helps no ally: not removal.
@@ -65,11 +66,13 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "life-steal":
     case "sacrifice-health":
     case "lose-health":
+    case "lose-health-to":
     case "shadow-step":
     case "resurrect":
     case "resurrect-companions":
     case "drain-own-energy":
     case "recharge-faster":
+    case "recharge-reset":
     case "recharge-others":
     case "pull-to-caster":
     case "destroy-target-spirit":
@@ -77,6 +80,8 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "owner-gains-damage-dealt":
     case "destroy-allied-spirits":
     case "disable-skill":
+    case "copy-removed":
+    case "copy-disabled":
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
@@ -107,7 +112,9 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
  * their own roles, any other status that raises armor, blocks or cuts
  * the damage its bearer takes (Dark Escape, #919), caps it (Protective
  * Spirit, #936; Shelter, #1265), cuts its life stolen (Union, #1265), reverses it (Reversal of Fortune, #987) or slows the
- * hexes cast on it (Holy Veil, #944) is defence, and one that interrupts
+ * hexes cast on it (Holy Veil, #944), or fails a foe's spells and attacks
+ * at it or cuts a hexed foe's damage (Shadow Form, Mist Form, #1951) is
+ * defence, and one that interrupts
  * a spell (Dazed) is an interrupt.
  * What it does on each attack hit counts too: Apply Poison poisons,
  * and so does what it adds to the next attack skill: Anthem of Flame burns.
@@ -137,7 +144,11 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.negatesFatalDamage ||
     status.breaksNextHex !== undefined ||
     status.reflectsAttackDamage !== undefined ||
-    status.incomingHexCastTimeMultiplier > 1
+    status.incomingHexCastTimeMultiplier > 1 ||
+    status.redirectsConditionsToMinion ||
+    status.foeSpellsFail ||
+    status.attacksAgainstMiss ||
+    status.damageReductionFromHexedSource !== undefined
   ) {
     roles.push("defence");
   }
@@ -167,13 +178,15 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
                 on === "bearer-creates-creature") &&
                 target === "bearer") ||
               target === "offender" ||
-              target === "created",
+              target === "created" ||
+              target === "hexed-foe",
           )
           .flatMap(({ effects, target }) =>
             effects.flatMap((effect) =>
               effect.kind === "spread-gained-condition" ||
               effect.kind === "echo" ||
               effect.kind === "cancel-attack" ||
+              effect.kind === "pay-energy-or-end" ||
               (target === "bearer" && isPrice(effect))
                 ? []
                 : [effect],

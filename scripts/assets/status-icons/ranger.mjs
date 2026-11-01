@@ -184,6 +184,94 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M12 4v16M5 8l14 8M19 8L5 16" ${stroke(c, 1.8)}/>` +
       `<path d="M10 5.5l2 2 2-2M10 18.5l2-2 2 2" ${stroke(c, 1.6)}/>`,
   ],
+  // Nature rituals 2 (#1873).
+  // Skill effect: a heart over a sparkle, more health per enchantment.
+  symbiosis: [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 17s-5-3-5-6.5A2.7 2.7 0 0 1 12 9a2.7 2.7 0 0 1 5 1.5c0 3.5-5 6.5-5 6.5z" ${stroke(c, 2)}/>` +
+      `<path d="M12 3v3M10.5 4.5h3" ${stroke(c, 1.6)}/>`,
+  ],
+  // Skill effect: an arrow on wind lines, arrows fly faster and harder.
+  "favorable-winds": [
+    "skill-effect",
+    (c) =>
+      `<path d="M5 19L19 5M19 5h-5M19 5v5" ${stroke(c, 2)}/>` +
+      `<path d="M4 12h5M7 16h4" ${stroke(c, 1.6)}/>`,
+  ],
+  // Skill effect: a thorned stem, the knocked down bleed.
+  brambles: [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 19c3-3 4-8 12-14" ${stroke(c, 2)}/>` +
+      `<path d="M9 14l-3-1M11 11l1-3M14 8l3 1" ${stroke(c, 1.6)}/>`,
+  ],
+  // Skill effect: a still wave, enchantments end sooner.
+  tranquility: [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 10c2.5-2 5.5-2 8 0s5.5 2 8 0" ${stroke(c, 2)}/>` +
+      `<path d="M4 15h16" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: a drop over a minus, the poisoned and diseased degenerate.
+  toxicity: [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4c2 3 4.5 5.5 4.5 8.5a4.5 4.5 0 0 1-9 0C7.5 9.5 10 7 12 4z" ${stroke(c, 1.8)}/>` +
+      `<path d="M9.5 19.5h5" ${stroke(c, 2.2)}/>`,
+  ],
+  // Skill effect: a sword in a flame, physical damage burns.
+  "greater-conflagration": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 4c.6 3 4.5 4.8 4.5 9a4.5 4.5 0 0 1-9 0c0-2 .9-3.6 2.2-4.4 0 1.6.5 2.4 1.3 2.8-.4-2.5-.4-5.1 1-7.4z" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 21V11M9.5 14h5" ${stroke(c, 2)}/>`,
+  ],
+  // Nature rituals 3 (#1886, #1921). Skill effect: three straight wind
+  // streaks over a bold minus, skills cost less. No curl: Roaring Winds has
+  // those; Primal Echoes is round.
+  "energizing-wind": [
+    "skill-effect",
+    (c) =>
+      `<path d="M3 7h13M3 11h18M3 15h9" ${stroke(c, 1.8)}/>` +
+      `<path d="M14 17.5h6" ${stroke(c, 2.8)}/>`,
+  ],
+  // Skill effect: a seal and the ring that echoes it, signets cost Energy.
+  "primal-echoes": [
+    "skill-effect",
+    (c) =>
+      `<circle cx="12" cy="12" r="8.5" ${stroke(c, 1.6)}/>` +
+      `<circle cx="12" cy="12" r="4.5" fill="${c}"/>`,
+  ],
+  // Skill effect: a wind curl with a plus, shouts and chants cost more.
+  "roaring-winds": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 10h10a3 3 0 1 0-3-3M4 15h13a3 3 0 1 1-3 3" ${stroke(c, 1.8)}/>` +
+      `<path d="M18 5v5M15.5 7.5h5" ${stroke(c, 1.6)}/>`,
+  ],
+  // Nature rituals 4 (#1956), stand-ins until their art card. Skill
+  // effect: sand running down, Energy lost to each act.
+  quicksand: [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 5h12l-5 7 5 7H6l5-7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M10 17h4" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: an empty bar struck, damage at 0 Energy.
+  famine: [
+    "skill-effect",
+    (c) =>
+      `<rect x="4" y="9" width="16" height="6" rx="1.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 4l-3 8h4l-3 8" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect: a drop with a minus, Bleeding worsened.
+  lacerate: [
+    "skill-effect",
+    (c) =>
+      `<path d="M10 4c-3 5-5 8-5 10.5a5 5 0 0 0 10 0C15 12 13 9 10 4z" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 7h5" ${stroke(c, 2)}/>`,
+  ],
   // Stance (#1761, #1855): a bow and a recharge arrow, preparations come back sooner.
   "practiced-stance": [
     "stance",
@@ -227,5 +315,21 @@ export const RANGER_STATUS_ICONS = {
     (c) =>
       `<path d="M5 9l4-4 4 4M11 9l4-4 4 4" ${stroke(c, 2.2)}/>` +
       `<path d="M6.5 19l3-7M10.5 19l3-7M14.5 19l3-7" ${stroke(c, 2)}/>`,
+  ],
+  // Next attack (#1916), a stand-in until its art card.
+  // Skill: an arrowhead dripping poison.
+  "poison-tip-signet": [
+    "skill-effect",
+    (c) =>
+      `<path d="M4 20L14 10M10 6h8v8" ${stroke(c, 2)}/>` +
+      `<path d="M18 16c-1.5 2-2 3-2 4a2 2 0 0 0 4 0c0-1-.5-2-2-4z" fill="${c}"/>`,
+  ],
+  // Attributes raised (#1941), a stand-in until its art card.
+  // Stance: a bow with a plus, quicker and truer shots.
+  "experts-dexterity": [
+    "stance",
+    (c) =>
+      `<path d="M6 3c6 4 6 14 0 18M6 3v18" ${stroke(c, 2)}/>` +
+      `<path d="M17 8v8M13 12h8" ${stroke(c, 2.2)}/>`,
   ],
 };

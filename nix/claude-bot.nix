@@ -35,6 +35,8 @@ let
       case "$f" in *.test.mjs) continue ;; esac
       cp "$f" "$out/$(basename "$f")"
     done
+    # Data, not code: runner-jail.mjs reads it beside itself (#1889).
+    cp ${../scripts/bots/runner-proxy-allow.json} $out/runner-proxy-allow.json
   '';
 
   node = "${pkgs.nodejs_24}/bin/node";
@@ -307,6 +309,108 @@ let
       sleep 0.1
     done
     exec "$@"
+  '';
+
+  # A company CI runner's jail (#1889, ADR-0045). runner-jail.mjs builds the
+  # bwrap arguments, where CI tests them; these are the store paths it
+  # mounts. Nothing here is the host's: the userland is what a job's shell
+  # finds on PATH, the /etc is the jail's own, and the closure below is the
+  # whole of /nix/store a job can see.
+  runnerUserland = pkgs.buildEnv {
+    name = "vibewars-runner-userland";
+    paths = [
+      pkgs.bash
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnugrep
+      pkgs.gnused
+      pkgs.git
+      pkgs.gnutar
+      pkgs.zstd
+      pkgs.gzip
+      pkgs.xz
+      pkgs.curl
+      pkgs.cacert
+      pkgs.jq
+    ];
+  };
+
+  runnerEtc = pkgs.runCommand "vibewars-runner-etc" { } ''
+    mkdir $out
+    printf '%s\n' 'runner:x:1001:1001:runner:/home/runner:/bin/bash' > $out/passwd
+    printf '%s\n' 'runner:x:1001:' > $out/group
+    printf '%s\n' '127.0.0.1 localhost' '::1 localhost' > $out/hosts
+    printf '%s\n' 'passwd: files' 'group: files' 'hosts: files' > $out/nsswitch.conf
+  '';
+
+  # The runner jail's entrypoint: the forwarder to its proxy, as support's,
+  # and the JIT config from fd 3 into the runner's environment, so it is in
+  # no argv and no file (runner-jail.mjs).
+  runnerInit = pkgs.writeShellScript "vibewars-runner-init" ''
+    IFS= read -r ACTIONS_RUNNER_INPUT_JITCONFIG <&3 || {
+      echo "vibewars-runner-init: no JIT config on fd 3" >&2
+      exit 1
+    }
+    exec 3<&-
+    ${pkgs.socat}/bin/socat \
+      "TCP-LISTEN:$VIBEWARS_PROXY_PORT,bind=127.0.0.1,fork,reuseaddr" \
+      "UNIX-CONNECT:$VIBEWARS_PROXY_SOCKET" &
+    export ACTIONS_RUNNER_INPUT_JITCONFIG
+    for _ in $(${pkgs.coreutils}/bin/seq 50); do
+      (exec 3<>"/dev/tcp/127.0.0.1/$VIBEWARS_PROXY_PORT") 2>/dev/null && break
+      ${pkgs.coreutils}/bin/sleep 0.1
+    done
+    exec "$@"
+  '';
+
+  # The runner runs a hook by its extension, so it ends in .sh.
+  runnerHook = pkgs.writeTextFile {
+    name = "vibewars-runner-hook-job-started.sh";
+    text = builtins.readFile ../scripts/bots/runner-hook-job-started.sh;
+    executable = true;
+  };
+
+  # The hook's event allowlist, which #1891's test reads beside runs-on.
+  runnerEvents = pkgs.writeText "vibewars-runner-events.json" (
+    builtins.readFile ../scripts/bots/runner-events.json
+  );
+
+  runnerClosure = pkgs.closureInfo {
+    rootPaths = [
+      pkgs.github-runner
+      runnerUserland
+      runnerEtc
+      runnerInit
+      runnerHook
+      runnerEvents
+    ];
+  };
+
+  # `vibewars-runner-jail --jitconfig <file | ->`: one runner, one job (#1889).
+  # The scratch directories live in the operator's state dir, never under
+  # the hub, a worktree or the credentials; the runner supervisor (#1890)
+  # passes `vibewars.runners.scratch` as VIBEWARS_RUNNER_SCRATCH.
+  runnerJail = pkgs.writeShellScriptBin "vibewars-runner-jail" ''
+    VIBEWARS_RUNNER_JAIL="$(${pkgs.jq}/bin/jq -nc \
+      --arg scratch "''${VIBEWARS_RUNNER_SCRATCH:-''${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runners}" \
+      --argjson store ${
+        lib.escapeShellArg (
+          builtins.toJSON {
+            closure = "${runnerClosure}/store-paths";
+            runner = pkgs.github-runner;
+            inherit bwrap;
+            userland = runnerUserland;
+            etc = runnerEtc;
+            init = runnerInit;
+            hook = runnerHook;
+            events = runnerEvents;
+            allow = "${botScripts}/runner-proxy-allow.json";
+          }
+        )
+      } \
+      '$store + {scratch: $scratch}')"
+    export VIBEWARS_RUNNER_JAIL
+    exec ${node} ${botScripts}/runner-jail.mjs "$@"
   '';
 
   # `claude-bot --smoke support`: support's jail holds no secret and can
@@ -1069,68 +1173,111 @@ let
   '';
 in
 {
-  options.vibewars.claudeBot = {
-    # Off in CI: the checks need the toolchain, not the agent tooling, and
-    # claude-code alone is a large unfree download. CI writes a
-    # devenv.local.nix that sets this to false; see .github/actions/devenv.
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''
-        Whether to put claude-bot, claude-llc and their tools (claude-code,
-        bubblewrap, tg, hub, board, tmux) into the shell.
-      '';
+  options.vibewars = {
+    claudeBot = {
+      # Off in CI: the checks need the toolchain, not the agent tooling, and
+      # claude-code alone is a large unfree download. CI writes a
+      # devenv.local.nix that sets this to false; see .github/actions/devenv.
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Whether to put claude-bot, claude-llc and their tools (claude-code,
+          bubblewrap, tg, hub, board, tmux) into the shell.
+        '';
+      };
+
+      # Where each employee's Claude keeps its config and session logs, as
+      # `$HOME/<boxes>/<employee>/config`: claude-bot makes them, and claude-llc's
+      # dashboard reads the logs for tokens per role (#50).
+      boxes = lib.mkOption {
+        type = lib.types.str;
+        default = ".claude-bot";
+        readOnly = true;
+        description = ''
+          The directory under $HOME holding one Claude config dir per role.
+        '';
+      };
+
+      # The company's credential home (#855, #864): everything it authenticates
+      # with, in one directory of mode 0700, outside the checkout where the
+      # agents write. A shell string: $HOME expands where it is used.
+      # The default is a sibling of the per-employee dirs in `boxes`, safe only
+      # because no employee id can be "creds".
+      credentials = lib.mkOption {
+        type = lib.types.str;
+        default = "$HOME/${config.vibewars.claudeBot.boxes}/creds";
+        example = "/home/you/.secrets/vibewars";
+        description = ''
+          Where the company keeps its credentials: telegram-manager-token today,
+          claude/, gh/ and ssh/ as #855 lands. Created at mode 0700 by
+          claude-llc-init, which refuses a wider one. Not under the checkout.
+        '';
+      };
     };
 
-    # Where each employee's Claude keeps its config and session logs, as
-    # `$HOME/<boxes>/<employee>/config`: claude-bot makes them, and claude-llc's
-    # dashboard reads the logs for tokens per role (#50).
-    boxes = lib.mkOption {
-      type = lib.types.str;
-      default = ".claude-bot";
-      readOnly = true;
-      description = ''
-        The directory under $HOME holding one Claude config dir per role.
-      '';
+    # The company's CI runners (#1890, ADR-0045), which claude-llc's runner
+    # supervisor keeps alive. Off until the operator raises `max`, after the
+    # ADR's spike runs a whole `ci` job in the jail.
+    runners = {
+      max = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 0;
+        description = ''
+          The most company runners `company runners <n>` may ask for
+          (VIBEWARS_MAX_RUNNERS). 0 keeps them off, and the supervisor makes
+          no GitHub call.
+        '';
+      };
+      cpus = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 2;
+        description = "Each runner's CPU quota, in CPUs.";
+      };
+      memoryGib = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 6;
+        description = "Each runner's MemoryMax, in GiB.";
+      };
+      tasksMax = lib.mkOption {
+        type = lib.types.ints.positive;
+        default = 2048;
+        description = "Each runner's TasksMax.";
+      };
+      # A shell string: $HOME expands where it is used.
+      scratch = lib.mkOption {
+        type = lib.types.str;
+        default = "\${XDG_STATE_HOME:-$HOME/.local/state}/vibewars/runners";
+        description = ''
+          Where each runner's scratch directory is made. The disk cap: it must
+          be a filesystem of its own (a partition, or a dataset with a quota),
+          or the supervisor starts no runner, so a job that fills it cannot
+          fill the disk the company lives on.
+        '';
+      };
     };
 
-    # The company's credential home (#855, #864): everything it authenticates
-    # with, in one directory of mode 0700, outside the checkout where the
-    # agents write. A shell string: $HOME expands where it is used.
-    # The default is a sibling of the per-employee dirs in `boxes`, safe only
-    # because no employee id can be "creds".
-    credentials = lib.mkOption {
-      type = lib.types.str;
-      default = "$HOME/${config.vibewars.claudeBot.boxes}/creds";
-      example = "/home/you/.secrets/vibewars";
-      description = ''
-        Where the company keeps its credentials: telegram-manager-token today,
-        claude/, gh/ and ssh/ as #855 lands. Created at mode 0700 by
-        claude-llc-init, which refuses a wider one. Not under the checkout.
-      '';
-    };
-  };
+    telegram = {
+      managerTokenFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "${config.vibewars.claudeBot.credentials}/telegram-manager-token";
+        example = "/home/you/.secrets/telegram-manager-token";
+        description = ''
+          Path to a file containing the manager bot's token, read at runtime.
+          Preferred over `managerToken`: the value never reaches the Nix store.
+          Defaults to telegram-manager-token in the credential home, where
+          `claude-llc auth telegram` keeps it.
+        '';
+      };
 
-  options.vibewars.telegram = {
-    managerTokenFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = "${config.vibewars.claudeBot.credentials}/telegram-manager-token";
-      example = "/home/you/.secrets/telegram-manager-token";
-      description = ''
-        Path to a file containing the manager bot's token, read at runtime.
-        Preferred over `managerToken`: the value never reaches the Nix store.
-        Defaults to telegram-manager-token in the credential home, where
-        `claude-llc auth telegram` keeps it.
-      '';
-    };
-
-    managerToken = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = ''
-        The manager bot's token, inline. Convenient, but it is interpolated
-        into a world-readable /nix/store path; `managerTokenFile` is safer.
-      '';
+      managerToken = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          The manager bot's token, inline. Convenient, but it is interpolated
+          into a world-readable /nix/store path; `managerTokenFile` is safer.
+        '';
+      };
     };
   };
 
@@ -1138,6 +1285,8 @@ in
     packages = [
       pkgs.bubblewrap
       pkgs.claude-code
+      pkgs.github-runner
+      runnerJail
       # Also on the dev shell's PATH, not just the sandbox's: when an agent
       # reports that `hub` refused something, the quickest way to understand
       # why is to run the same command yourself.

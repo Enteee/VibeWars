@@ -93,4 +93,15 @@ export const MONK_ICONS = {
   "monk.holy-haste": { glyph: "plus-streaks" },
   // Death trigger (#1762, #1832): a skull and a plus.
   "monk.dwaynas-sorrow": { glyph: "death-heal" },
+  // Skill-type and heal triggers (#1913)
+  "monk.scribes-insight": { glyph: "scroll", modifier: "bolt" },
+  // Caster staples (#1870).
+  "monk.aura-of-stability": { glyph: "ring-mountain" },
+  "monk.healing-ring": { glyph: "ring-healers" },
+  // Caster staples 2 (#1872).
+  "monk.vital-blessing": { glyph: "ring-heart" },
+  // Stand-ins for the party-wide condition and hex moves (#1954).
+  "monk.martyr": { glyph: "draw-drops", modifier: "area" },
+  "monk.empathic-removal": { glyph: "cleanse", modifier: "half" },
+  "monk.divert-hexes": { glyph: "hex-cut", modifier: "up" },
 };

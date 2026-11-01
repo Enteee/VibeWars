@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   CLAUDE_TOKEN_VARS,
+  COMPANY_GITHUB_SCOPES,
   GITHUB_TOKEN_VARS,
   claudeIdentity,
   ensureHome,
@@ -40,10 +41,22 @@ import { collect, renderTable } from "./doctor.mjs";
 /** The steps, in the order they run. */
 export const STEPS = /** @type {const} */ (["claude", "github", "push", "telegram"]);
 
-/** @typedef {(typeof STEPS)[number]} Step */
+/**
+ * Steps that run only when named: the runner supervisor's admin token
+ * (#1890), which a company without company runners never needs.
+ */
+export const OPTIONAL_STEPS = /** @type {const} */ (["runners"]);
+
+/** @typedef {(typeof STEPS)[number] | (typeof OPTIONAL_STEPS)[number]} Step */
 
 /** @type {Record<Step, string>} the doctor row each step signs in */
-const ROW = { claude: "claude", github: "github api", push: "github push", telegram: "telegram" };
+const ROW = {
+  claude: "claude",
+  github: "github api",
+  push: "github push",
+  telegram: "telegram",
+  runners: "github runners",
+};
 
 /** The telegram step signs in two rows: the bot, then its group. */
 const GROUP_ROW = "telegram group";
@@ -51,10 +64,12 @@ const GROUP_ROW = "telegram group";
 const POLL_MS = 5_000;
 const POLL_FOR_MS = 10 * 60_000;
 
-export const USAGE = `claude-llc auth [claude | github | push | telegram]
+export const USAGE = `claude-llc auth [claude | github | push | telegram | runners]
 
   Sign the company's accounts in: Claude, GitHub, the push key, Telegram
-  (the manager bot, then the group it runs in).
+  (the manager bot, then the group it runs in). \`runners\` runs only when
+  named: the company CI runners' own token (#1890), fine-grained, for this
+  repository only, with Administration and Variables write and an expiry.
   Shows what is signed in (as claude-llc doctor does), runs the sign-in of
   each credential that is not, or only of the one named, and prints no
   secret. Interactive: run it in a terminal.`;
@@ -97,7 +112,9 @@ function identityOf(rows, step) {
  */
 export function plan(rows, only) {
   const github = identityOf(rows, "github");
-  return STEPS.filter((step) => only === null || step === only).map((step) => {
+  /** @type {readonly Step[]} */
+  const steps = only === null ? STEPS : [only];
+  return steps.map((step) => {
     const identity = identityOf(rows, step);
     const mismatch =
       step === "push" &&
@@ -160,8 +177,8 @@ function mismatchLine(key, login) {
  * @property {string} root the credential home
  * @property {boolean} tty whether stdin is a terminal
  * @property {Record<string, string | undefined>} env the environment children start from
- * @property {(command: string, args: string[], env: Record<string, string>) => Promise<Spawned>} spawn
- *   runs a child on the TTY
+ * @property {(command: string, args: string[], env: Record<string, string>, input?: string) => Promise<Spawned>} spawn
+ *   runs a child on the TTY; `input`, when given, is its stdin instead
  * @property {(question: string) => Promise<string | null>} prompt reads a
  *   line with echo off; `null` is Ctrl-C
  * @property {(root: string) => Promise<{ rows: Row[] }>} collect the doctor's rows
@@ -215,10 +232,11 @@ const INTERRUPTED = Symbol("interrupted");
  * @param {string} command
  * @param {string[]} args
  * @param {Record<string, string>} set
+ * @param {string} [input] its stdin, for a secret that must not be in argv
  * @returns {Promise<boolean | typeof INTERRUPTED>}
  */
-async function run(deps, step, command, args, set) {
-  const result = await deps.spawn(command, args, childEnv(deps.env, set));
+async function run(deps, step, command, args, set, input) {
+  const result = await deps.spawn(command, args, childEnv(deps.env, set), input);
   if (result.signal === "SIGINT") {
     return INTERRUPTED;
   }
@@ -269,7 +287,7 @@ async function signIn(deps, step, githubLogin) {
         "ssh",
         "--insecure-storage",
         "--scopes",
-        "project,read:project",
+        COMPANY_GITHUB_SCOPES.join(","),
         "--skip-ssh-key",
       ],
       { GH_CONFIG_DIR: p.gh },
@@ -277,6 +295,9 @@ async function signIn(deps, step, githubLogin) {
   }
   if (step === "push") {
     return pushKey(deps, githubLogin);
+  }
+  if (step === "runners") {
+    return runnersToken(deps);
   }
   return telegramToken(deps);
 }
@@ -348,6 +369,35 @@ async function telegramToken(deps) {
   }
   writePrivate(p.telegram, token.trim());
   return telegramGroup(deps, token.trim());
+}
+
+/**
+ * The runner supervisor's token (#1890), in a gh config dir of its own that
+ * hubd and the agents never use. A fine-grained token cannot be made by a
+ * browser sign-in, so the operator pastes it; it reaches gh on stdin.
+ *
+ * @param {Deps} deps
+ * @returns {Promise<unknown>}
+ */
+async function runnersToken(deps) {
+  const p = paths(deps.root);
+  deps.out(
+    "Make a fine-grained token at https://github.com/settings/personal-access-tokens/new: " +
+      "this repository only, Administration: write and Variables: write, nothing else, with an expiry.",
+  );
+  const token = await deps.prompt("Runners token: ");
+  if (token === null) {
+    return INTERRUPTED;
+  }
+  ensureDir(p.runnersGh);
+  return run(
+    deps,
+    "runners",
+    "gh",
+    ["auth", "login", "--hostname", "github.com", "--insecure-storage", "--with-token"],
+    { GH_CONFIG_DIR: p.runnersGh },
+    `${token.trim()}\n`,
+  );
 }
 
 /**
@@ -479,7 +529,7 @@ export async function auth(argv, deps) {
     return 0;
   }
   const named = argv[0] ?? null;
-  const only = STEPS.find((step) => step === named) ?? null;
+  const only = [...STEPS, ...OPTIONAL_STEPS].find((step) => step === named) ?? null;
   if (argv.length > 1 || (named !== null && only === null)) {
     deps.err(USAGE);
     return 2;
@@ -569,9 +619,13 @@ function promptHidden(question) {
 }
 
 /** @type {Deps["spawn"]} */
-function spawnOnTty(command, args, env) {
+function spawnOnTty(command, args, env, input) {
   return new Promise((resolve) => {
-    const child = spawnChild(command, args, { stdio: "inherit", env });
+    const child = spawnChild(command, args, {
+      stdio: [input === undefined ? "inherit" : "pipe", "inherit", "inherit"],
+      env,
+    });
+    child.stdin?.end(input);
     child.on("error", (error) => {
       resolve({
         code: null,
@@ -604,6 +658,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     check: {
       claude: () => claudeIdentity(p.claude),
       github: () => githubIdentity(p.gh),
+      runners: () => githubIdentity(p.runnersGh),
       push: () => pushIdentity(p.sshKey),
       telegram: async () => {
         const bot = await telegramIdentity(p.telegram);

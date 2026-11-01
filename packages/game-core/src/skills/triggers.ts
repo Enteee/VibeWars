@@ -1,7 +1,6 @@
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
-import { addCopyPool } from "./adrenaline.js";
-import { copyKey, type SlotSkill } from "./cast-state.js";
+import type { SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { applyEffects, interruptAttackSkill, type CombatEvent } from "./effects.js";
 import {
@@ -14,6 +13,8 @@ import {
   type StatusTrigger,
   type StatusTriggerEvent,
 } from "./status.js";
+import { standIn } from "./stand-in.js";
+import { inScope } from "./tick.js";
 import { isSpell, type Combatant, type SkillEffect, type Surroundings } from "./types.js";
 
 /** What one status's trigger did, credited to whoever applied the status. */
@@ -42,11 +43,13 @@ export type DirectTriggerEvent = Exclude<
   StatusTriggerEvent,
   | "bearer-gains-condition"
   | "bearer-gains-hex-or-enchantment"
+  | "bearer-applies-hex"
   | "bearer-gains-enchantment"
   | "bearer-loses-enchantment"
   | "bearer-loses-condition"
   | "bearer-blocks"
   | "bearer-interrupted"
+  | "bearer-knocked-down"
   | "bearer-health-drops-below"
   | "bearer-fatal-damage-negated"
   | "bearer-creates-creature"
@@ -98,7 +101,8 @@ export function fireTriggers(
         !spared.has(statusId) &&
         (event !== "bearer-attacks" ||
           triggerAnswersWeapon(trigger, bearer.equipment.mainHand.weapon)) &&
-        (event !== "bearer-uses-skill" || answersUsedSkill(trigger, context.usedSkill)),
+        ((event !== "bearer-uses-skill" && event !== "bearer-casts-spell") ||
+          answersUsedSkill(trigger, context.usedSkill)),
     )
     .flatMap(({ statusId, sourceId, trigger }) =>
       fire(trigger, statusId, sourceId, bearer, undefined, undefined, context),
@@ -118,8 +122,9 @@ function answersUsedSkill(trigger: StatusTrigger, used: SlotSkill | undefined): 
   return (
     skill !== undefined &&
     (trigger.usedSkill.type === undefined || skill.type === trigger.usedSkill.type) &&
-    (trigger.usedSkill.attribute === undefined ||
-      skill.attributeId === trigger.usedSkill.attribute) &&
+    (trigger.usedSkill.attributes === undefined ||
+      (skill.attributeId !== undefined &&
+        inScope(trigger.usedSkill.attributes, skill.attributeId))) &&
     (trigger.usedSkill.profession === undefined ||
       skill.profession === trigger.usedSkill.profession) &&
     (trigger.usedSkill.elite === undefined || skill.elite) &&
@@ -159,7 +164,8 @@ export function fireCreationTriggers(
  * the hexes its death ended. Damage or life steal from a foe (#1022)
  * fires what answered it at that foe, and a block (#1329) what answered
  * it at the attacker, and an interrupt (#1473) what answered it at the
- * interrupter. A hex or an enchantment gained (#1403) fires what
+ * interrupter. A heal by a skill (#1913) fires what answered it at
+ * the healer. A hex or an enchantment gained (#1403) fires what
  * answered it, toward whoever put it on, and a hex a status broke costs
  * its caster that status's damage. An enchantment lost (#1437) fires what
  * answered it when it went, and a condition lost (#1475) what answered
@@ -205,6 +211,7 @@ export function fireChangeTriggers(
     case "hit":
     case "failed-to-hit":
     case "took-physical-damage":
+    case "knocked-down":
     case "lost-enchantment":
     case "lost-condition":
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
@@ -212,6 +219,7 @@ export function fireChangeTriggers(
       );
     case "took-damage-from-foe":
     case "hit-by-attack":
+    case "healed-by-skill":
     case "blocked":
     case "interrupted":
     case "health-dropped":
@@ -223,6 +231,8 @@ export function fireChangeTriggers(
       return change.fired.flatMap(({ statusId, sourceId, trigger }) =>
         fire(trigger, statusId, sourceId, bearer, change.sourceId, undefined, context),
       );
+    case "applied-hex":
+      return fireAppliedHex(bearer, change, context);
     case "broke-hex":
       return breakHex(bearer, change, context);
     case "reflected":
@@ -285,7 +295,8 @@ export function fireDeathTriggers(
  * or on itself, or (#1022) the bearer on `otherId`, the foe that set it
  * off, or (#1316) the creature it created, or (#1403) the source on
  * `otherId`, who put the gained hex or enchantment on the bearer, or (#1789)
- * the source on `otherId`, the offender. `undefined` when one of them is
+ * the source on `otherId`, the offender, or (#1913) the source on
+ * `otherId`, the healer, only a foe of its own. `undefined` when one of them is
  * gone, or an offender's bearer is dead: then it fires nothing.
  */
 function parties(
@@ -308,7 +319,35 @@ function parties(
     case "gained-source":
     case "source-on-offender":
       return other === undefined || other.dead ? undefined : { caster: source, target: other };
+    case "healer":
+      return other === undefined || other.dead || other.team === source.team
+        ? undefined
+        : { caster: source, target: other };
+    case "hexed-foe":
+      return other === undefined || other.dead ? undefined : { caster: bearer, target: other };
   }
+}
+
+/**
+ * The bearer's hex landed on a foe (#1951): each status that answered it
+ * and answers one of that hex's attribute fires, once each, in `active`
+ * order, at that foe.
+ */
+function fireAppliedHex(
+  hexer: Combatant,
+  change: Extract<StatusChange, { kind: "applied-hex" }>,
+  context: TriggerContext,
+): FiredTrigger[] {
+  const { attribute } = getStatusDefinition(change.id);
+  return change.fired
+    .filter(({ trigger }) =>
+      trigger.appliedHex === undefined
+        ? true
+        : attribute !== undefined && inScope(trigger.appliedHex.attributes, attribute),
+    )
+    .flatMap(({ statusId, sourceId, trigger }) =>
+      fire(trigger, statusId, sourceId, hexer, change.hexedId, undefined, context),
+    );
 }
 
 /**
@@ -416,6 +455,15 @@ function fire(
     } else if (effect.kind === "cancel-attack") {
       flush();
       events.push(...cancelAttack(trigger, sourceId, bearer));
+    } else if (effect.kind === "pay-energy-or-end") {
+      flush();
+      if (source.dead || source.energy < effect.amount) {
+        bearer.statuses.end(statusId);
+        events.push({ kind: "status-expired", targetId: bearer.id, statusId });
+        return [{ sourceId, skillId: trigger.skillId, events }];
+      }
+      source.energy -= effect.amount;
+      events.push({ kind: "energy-loss", targetId: source.id, amount: effect.amount });
     } else {
       pending.push(effect);
     }
@@ -449,29 +497,10 @@ function cancelAttack(trigger: StatusTrigger, sourceId: string, bearer: Combatan
   return events;
 }
 
-/** Whether status `statusId` copies its bearer's next skill (#469). */
-export function isEchoStatus(statusId: StatusId): boolean {
-  return getStatusDefinition(statusId).triggers.some(({ effects }) =>
-    effects.some(({ kind }) => kind === "echo"),
-  );
-}
-
-/**
- * Whether `skillId` puts an echo on its user (#469): Arcane Echo and Echo.
- * The Mesmer's copy, not a Paragon's `"echo"` skill type (#1423).
- * One is never copied, and does not use up another echo already up.
- */
-export function isEchoSkill(skillId: string): boolean {
-  return (getSkill(skillId)?.effects ?? []).some(
-    (effect) => effect.kind === "apply-status" && isEchoStatus(effect.statusId),
-  );
-}
-
 /**
  * An echo answers `used` (#469): the slot of `echoSkillId` on the bearer's
- * bar holds a copy of it, under its own key, for `effect.seconds`; then the
- * echo skill is back, and starts its own recharge. Not for another echo
- * skill, and with `spellsOnly`, only for a spell.
+ * bar holds a copy of it for `effect.seconds` (`standIn`). With
+ * `spellsOnly`, only for a spell.
  */
 function echo(
   effect: EchoEffect,
@@ -480,23 +509,8 @@ function echo(
   used: SlotSkill | undefined,
 ): void {
   const skill = used === undefined ? undefined : getSkill(used.skillId);
-  const echoSkill = getSkill(echoSkillId);
-  const slot = bearer.skillBar.indexOf(echoSkillId);
-  if (
-    skill === undefined ||
-    echoSkill === undefined ||
-    slot === -1 ||
-    isEchoSkill(skill.id) ||
-    (effect.spellsOnly && !isSpell(skill.type))
-  ) {
+  if (skill === undefined || (effect.spellsOnly && !isSpell(skill.type))) {
     return;
   }
-  const key = copyKey(skill.id, slot);
-  bearer.cast.override(slot, {
-    skillId: skill.id,
-    key,
-    remainingSeconds: effect.seconds,
-    restores: { skillId: echoSkillId, rechargeSeconds: echoSkill.rechargeSeconds },
-  });
-  addCopyPool(bearer, key);
+  standIn(bearer, echoSkillId, skill.id, effect.seconds);
 }

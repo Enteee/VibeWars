@@ -1477,7 +1477,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
           kind: "percent",
           percent: { scaling: { attributeId: "paragon.leadership", atZero: 5, atTwelve: 13 } },
         },
-        energyPercent: { scaling: { attributeId: "paragon.leadership", atZero: 1, atTwelve: 3 } },
+        energyPercent: { scaling: { attributeId: "paragon.leadership", atZero: 1, atTwelve: 3.4 } },
         perPartyMemberWithin: AREA_EARSHOT,
         at: "corpse",
       },
@@ -2314,7 +2314,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "energy-gain",
-            amount: { scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 8 } },
+            amount: { scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 8.2 } },
             toTarget: true,
           },
         ],
@@ -2551,5 +2551,33 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "You lose 1 condition."
     effects: [{ kind: "remove-status", category: "condition", count: 1 }],
+  },
+  // Not enchanted (#1916).
+  {
+    id: "paragon.natural-temper",
+    name: "Natural Temper",
+    gwId: 1770,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "paragon",
+    attributeId: "paragon.leadership",
+    cost: { kind: "adrenaline", amount: 3 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 0,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...13...15 seconds, you gain 33% more adrenaline while not
+    // under the effects of an enchantment."
+    effects: [{ kind: "apply-status", statusId: "natural-temper", durationSeconds: 13 }],
   },
 ];

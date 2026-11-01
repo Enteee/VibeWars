@@ -727,6 +727,22 @@ const ringDot = (/** @type {number} */ cx, /** @type {number} */ cy, /** @type {
   `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r)}" ${stroke(C.ink, 2.2)}/>` +
   `<circle cx="${String(cx)}" cy="${String(cy)}" r="${String(r / 3)}" fill="${C.ink}"/>`;
 
+/** The curved arrow of the taken marks, from the top right down to the bottom left (#1946). */
+const takeArrow = () => inkLine("M14 9C9 10 8 12 8 15", 1.8) + inkLine("M5.5 13L8 16L10.5 13", 1.8);
+/** The source ring (or dashed hex ring) top right; `struck` crosses it out. @param {boolean} hexed @param {boolean} struck */
+const takeSrc = (hexed, struck) =>
+  `<circle cx="17" cy="7" r="4.2" ${stroke(C.ink, 2)}${hexed ? ' stroke-dasharray="3.2 2.5"' : ""}/>` +
+  (struck ? inkLine("M15 5L19 9M19 5L15 9", 1.6) : "");
+/** The copy bottom left: a solid disc when it is yours, a ring when only revealed. @param {boolean} hexed @param {boolean} solid */
+const takeCopy = (hexed, solid) =>
+  solid
+    ? `<circle cx="7" cy="18" r="3.6" fill="${C.ink}"/>`
+    : `<circle cx="7" cy="18" r="3.4" ${stroke(C.ink, 2)}${hexed ? ' stroke-dasharray="3.2 2.5"' : ""}/>`;
+/** @param {string} src @param {string} copy */
+const takeMark = (src, copy) => src + takeArrow() + copy;
+/** Three attribute bars cut down to stubs (#1946). */
+const barStubs = () => inkFill("M3 17H8V21H3ZM9.5 17H14.5V21H9.5ZM16 17H21V21H16Z");
+
 /** A spear standing on the left of the icon, the Paragon's thrown spears keep the right free (#1508). */
 const sideSpear = () => inkLine("M7 21V9", 2.4) + inkFill("M7 2.5L11.5 10H2.5Z");
 
@@ -1408,6 +1424,45 @@ const skillGlyph = {
   "paw-shield": () =>
     inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
     `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)">${pawPrint(C.bg)}</g>`,
+  // Pets 2 (#1865, #1939): the paw is the pet; what it does with you, or to whom, beside it.
+  // Bestial Mauling: the paw comes down on a foe laid flat, dazed stars either side.
+  "paw-maul": () =>
+    `<g transform="translate(12,8.5) scale(0.62) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M2.5 20H21.5", 3.2) +
+    inkFill("M4.5 11L5.4 13.1L7.5 14L5.4 14.9L4.5 17L3.6 14.9L1.5 14L3.6 13.1Z") +
+    inkFill("M19.5 11L20.4 13.1L22.5 14L20.4 14.9L19.5 17L18.6 14.9L16.5 14L18.6 13.1Z"),
+  // Savage Pounce: the paw leaps on to a spell's four-point star.
+  "paw-pounce-spell": () =>
+    `<g transform="translate(7,17) scale(0.5) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    `<path d="M3 11C4.5 4 11 1.5 15.5 5" ${stroke(C.ink, 2.2)}/>` +
+    inkFill("M18 7L19.4 11.1L23.5 12.5L19.4 13.9L18 18L16.6 13.9L12.5 12.5L16.6 11.1Z"),
+  // Otyugh's Cry: the guarded paw and the shout's arcs.
+  "paw-shield-cry": () =>
+    `<g transform="translate(9,12) scale(0.78) translate(-12,-12)">` +
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)">${pawPrint(C.bg)}</g></g>` +
+    inkLine("M17.5 8A5 5 0 0 1 17.5 16M20.5 5A9 9 0 0 1 20.5 19", 2),
+  // Predatory Bond: the pet's blows send a plus back to you.
+  "paw-bond-plus": () =>
+    `<g transform="translate(7.5,15.5) scale(0.55) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M11 10.5L14.5 7.5", 2) +
+    inkLine("M18 2.5V11.5M13.5 7H22.5", 3),
+  // Companionship: you and your pet, a plus over you both for the lower.
+  "figure-paw-plus": () =>
+    smallFigure(7, 15, 0.6) +
+    `<g transform="translate(17.5,17) scale(0.45) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M12 1.5V8.5M8.5 5H15.5", 2.4),
+  // Run as One: you and your pet under speed chevrons.
+  "figure-paw-run": () =>
+    smallFigure(7, 15, 0.6) +
+    `<g transform="translate(17.5,17) scale(0.45) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M5 2L9.5 5.5L5 9M13 2L17.5 5.5L13 9", 2.2),
+  // Rampage as One: the same pair, the chevrons and the claw's gashes: faster at running and at blows.
+  "figure-paw-rampage": () =>
+    smallFigure(7, 15, 0.6) +
+    `<g transform="translate(17.5,17) scale(0.45) translate(-12,-12)">${pawPrint(C.ink)}</g>` +
+    inkLine("M2 2L6.5 5.5L2 9M8.5 2L13 5.5L8.5 9", 2.2) +
+    inkLine("M15 1.5L16.5 9M18.5 1.5L20 9M22 1.5L23.5 9", 1.8),
   // A dashed ring (a hex) struck through: the hex is lifted (#1216).
   "hex-cut": () =>
     `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.2)} stroke-dasharray="4.2 3.2"/>` +
@@ -1743,6 +1798,37 @@ const skillGlyph = {
     inkLine("M11 17L24 3", 2.2),
   "ritual-snowflake": () =>
     spiritPost() + inkLine("M17.5 2.5V14.5M12.3 5.5L22.7 11.5M22.7 5.5L12.3 11.5", 1.8),
+  // Nature rituals 3 (#1886, #1939). Edge of Extinction: a skull and the blows thrown from it.
+  "ritual-skull-burst": () =>
+    spiritPost() +
+    smallSkull(17.5, 9, 0.5) +
+    inkLine("M11.5 2.5L13 4.5M23.5 2.5L22 4.5M11 15.5L13 13.5M24 15.5L22 13.5", 1.8),
+  // Pestilence: a drop and the two it spreads to.
+  "ritual-drop-spread": () =>
+    spiritPost() +
+    inkFill("M17.5 1.5C15.8 4.2 14.8 5.4 14.8 7A2.7 2.7 0 0 0 20.2 7C20.2 5.4 19.2 4.2 17.5 1.5Z") +
+    inkFill(
+      "M13 10.5C11.8 12.3 11.1 13.1 11.1 14.2A1.9 1.9 0 0 0 14.9 14.2C14.9 13.1 14.2 12.3 13 10.5Z",
+    ) +
+    inkFill(
+      "M22 10.5C20.8 12.3 20.1 13.1 20.1 14.2A1.9 1.9 0 0 0 23.9 14.2C23.9 13.1 23.2 12.3 22 10.5Z",
+    ),
+  // The three windier rituals draw their status icon (#1921) small beside the post.
+  "ritual-wind-minus": () =>
+    spiritPost() +
+    `<g transform="translate(10.5,1) scale(0.58)">` +
+    `<path d="M3 7h13M3 11h18M3 15h9" ${stroke(C.ink, 3)}/>` +
+    `<path d="M14 17.5h6" ${stroke(C.ink, 4.4)}/></g>`,
+  "ritual-echo": () =>
+    spiritPost() +
+    `<g transform="translate(10.5,1.5) scale(0.58)">` +
+    `<circle cx="12" cy="12" r="8.5" ${stroke(C.ink, 2.8)}/>` +
+    `<circle cx="12" cy="12" r="4.5" fill="${C.ink}"/></g>`,
+  "ritual-wind-plus": () =>
+    spiritPost() +
+    `<g transform="translate(10.5,1) scale(0.58)">` +
+    `<path d="M4 10h10a3 3 0 1 0-3-3M4 15h13a3 3 0 1 1-3 3" ${stroke(C.ink, 3)}/>` +
+    `<path d="M18 5v5M15.5 7.5h5" ${stroke(C.ink, 2.8)}/></g>`,
   // The spirit post, low on the left, shooting a mark up and right: what the
   // mark is says what the spirit does (#1271). Pain only hurts.
   "spirit-pain": () => spiritPost() + inkLine("M19.5 2.5L14 9.5H19L14.5 15.5", 2.4),
@@ -2094,6 +2180,108 @@ const skillGlyph = {
     [8.5, 11, 13.5, 16]
       .map((x) => `<circle cx="${String(x)}" cy="10.8" r="1.5" fill="${C.ink}"/>`)
       .join(""),
+  // Mechanics skills (#1940). Scribe's Insight (#1913): a page of lines, the signets it reads.
+  scroll: () =>
+    `<path fill-rule="evenodd" fill="${C.ink}" stroke="${C.bg}" stroke-width="1" stroke-linejoin="round" d="M5 3H17Q18 3 18 4V15Q18 17 16 17H7Q5 17 5 15ZM7.5 6.5H15.5V8H7.5ZM7.5 10H15.5V11.5H7.5Z"/>` +
+    inkLine("M5 17Q5 21 9 21H15", 2),
+  // Cacophony (#1913): a horn, and the sound that hurts its maker.
+  horn: () =>
+    inkFill("M3 9H8L16 4V20L8 15H3Z") +
+    inkLine("M19 8.5Q21.5 12 19 15.5", 1.8) +
+    inkLine("M21.5 5.5Q25 12 21.5 18.5", 1.4),
+  // Soul Bind (#1913): a heal cross cut open at its heart, a ring bound in the gap.
+  "plus-ring": () =>
+    inkLine("M12 3V8M12 16V21M3 12H8M16 12H21", 5) +
+    `<circle cx="12" cy="12" r="3" ${stroke(C.ink, 1.8)}/>`,
+  // Dancing Daggers (#1914): two daggers in flight, one behind the other.
+  "dagger-pair": () =>
+    inkLine("M4 14L12 6", 2.4) +
+    inkLine("M3 9L9 15", 2) +
+    inkLine("M10 21L19 12", 2.4) +
+    inkLine("M9 16L15 22", 2),
+  // Lava Arrows (#1914): an arrow trailing drops of lava.
+  "arrow-lava": () =>
+    inkLine("M3 14L14 3", 2.2) +
+    inkFill("M21 2L10 5L18 13Z") +
+    [
+      [6, 18],
+      [11, 16],
+      [8, 22],
+    ]
+      .map(([x, y]) =>
+        inkFill(
+          `M${String(x)} ${String((y ?? 0) - 2.6)}L${String((x ?? 0) + 2)} ${String(y)}A2 2 0 0 1 ${String((x ?? 0) - 2)} ${String(y)}Z`,
+        ),
+      )
+      .join(""),
+  // Focused Shot (#1914): an arrow driven into the middle of a ring.
+  "arrow-focus": () =>
+    `<circle cx="10.5" cy="13.5" r="7.5" ${stroke(C.ink, 1.6)}/>` +
+    inkLine("M21.5 2.5L13 11", 2.2) +
+    inkFill("M10.5 13.5L12 8.5L15.5 12Z"),
+  // Forked Arrow (#1914): one shaft, two heads.
+  "arrow-fork": () =>
+    inkLine("M2 12H10M10 12L18 5M10 12L18 19", 2.2) +
+    inkFill("M22 2L14.5 3.5L20.5 9.5Z") +
+    inkFill("M22 22L14.5 20.5L20.5 14.5Z"),
+  // Needling Shot (#1914): a thin needle with its eye, the thread's loop.
+  "arrow-needle": () =>
+    inkLine("M7 17L19 5", 1.4) +
+    inkFill("M22 2L16.5 4L20 7.5Z") +
+    `<ellipse cx="5" cy="19" rx="2.2" ry="3.2" transform="rotate(45 5 19)" ${stroke(C.ink, 1.4)}/>`,
+  // Natural Healing, Natural Temper (#1916): a leaf, what a skill does while nothing is enchanted.
+  leaf: () => inkFill("M4 20C4 10 9 4 20 4C20 15 14 20 4 20Z") + inkLine("M4 20L13 11", 1.2),
+  // Poison Tip Signet (#1916): an arrow whose next strike carries a drop.
+  "arrow-drip": () =>
+    inkLine("M3 14L12 5", 2.4) +
+    inkFill("M21 2L9 5.5L17.5 14Z") +
+    inkFill("M19 15C19 15 16.2 18.5 16.2 20.2A2.8 2.8 0 0 0 21.8 20.2C21.8 18.5 19 15 19 15Z"),
+  // Brutal Weapon (#1916): a blade with teeth along one edge.
+  "blade-teeth": () =>
+    inkLine("M5 19L19 5", 2.6) +
+    inkLine("M4 13.5L10.5 20", 2.4) +
+    inkFill("M9 10.5L5.5 8.5L8.5 7.5Z") +
+    inkFill("M13 6.5L10 4L12.5 3.5Z") +
+    inkFill("M15 16L17.5 19L13.5 18.5Z"),
+  // Signet of Strength (#1916): a sword and the strikes it is spent on.
+  "sword-pips": () =>
+    inkLine("M9 20L21 8", 2.6) +
+    inkLine("M8 15.5L13 20.5", 2.4) +
+    [4.5, 9, 13.5]
+      .map((y) => `<circle cx="4.5" cy="${String(y)}" r="1.6" fill="${C.ink}"/>`)
+      .join(""),
+  // Power Leech (#1931): a bolt of energy inside a dashed ring, drawn out of it.
+  "bolt-ring": () =>
+    `<circle cx="12" cy="12" r="9" ${stroke(C.ink, 1.6)} stroke-dasharray="3 2.4"/>` +
+    inkFill("M13 5L8 12.5H11.5L10.5 19L16 11H12.5Z"),
+  // Power Flux (#1931): the interrupt's burst with a bolt cut out of it, energy bled away.
+  "burst-bolt": () =>
+    `<path fill-rule="evenodd" fill="${C.ink}" d="${burst(6)}M13.5 6.5L8.5 12.5H11.5L10.5 17.5L15.5 11H12.5Z"/>`,
+  // Death Nova (#1931): a blast ringing out from a core.
+  nova: () =>
+    `<circle cx="12" cy="12" r="3.6" fill="${C.ink}"/>` +
+    inkLine(
+      Array.from({ length: 8 }, (_, i) => {
+        const a = (Math.PI * i) / 4;
+        const p = (r) =>
+          `${(12 + r * Math.cos(a)).toFixed(1)} ${(12 + r * Math.sin(a)).toFixed(1)}`;
+        return `M${p(6.8)}L${p(10.5)}`;
+      }).join(""),
+      2.2,
+    ),
+  // Spinal Shivers (#1931): a spine, bone after bone.
+  spine: () =>
+    inkLine("M12 3V21", 2) +
+    [4.5, 9.5, 14.5, 19.5]
+      .map(
+        (y) =>
+          `<ellipse cx="12" cy="${String(y)}" rx="4.6" ry="2.1" fill="${C.ink}" stroke="${C.bg}" stroke-width="1"/>`,
+      )
+      .join(""),
+  // Shivers of Dread (#1931): a frost star, cold at the root of the fear.
+  frost: () =>
+    inkLine("M12 2V22M3.3 7L20.7 17M3.3 17L20.7 7", 2) +
+    inkLine("M9.5 3.8L12 6.3L14.5 3.8M9.5 20.2L12 17.7L14.5 20.2", 1.4),
   // The ward's ring and pole, with a blade struck from it: it turns melee (#1217).
   "ward-blade": () =>
     `<ellipse cx="12" cy="17" rx="8.5" ry="4" ${stroke(C.ink, 2.5)}/>` +
@@ -3068,6 +3256,200 @@ const skillGlyph = {
   "step-aura": () => stepAndReturn("aura", C.ink, 1.8),
   "step-meld": () => stepAndReturn("meld", C.ink, 1.8),
   "step-haste": () => stepAndReturn("haste", C.ink, 1.8),
+  // Staples art (#1938). A chopping axe, head up and right, shaft down and left.
+  "chop-keen": () =>
+    inkLine("M8 21L17 9", 2.4) +
+    inkFill("M11 4.5C16 3 21 5 20.5 8.5C19 11.5 15.5 12 14 9.5Z") +
+    inkFill("M5 2.5L6.2 5.3L9 6.5L6.2 7.7L5 10.5L3.8 7.7L1 6.5L3.8 5.3Z"),
+  // The axe over two plates it passes through: part of the armor is ignored.
+  "chop-pierce": () =>
+    inkLine("M9 21L18 9", 2.4) +
+    inkFill("M12 4.5C17 3 22 5 21.5 8.5C20 11.5 16.5 12 15 9.5Z") +
+    inkLine("M2 13H8M2 17H8", 2.2),
+  // The same axe and a drop of blood: it cuts a knocked-down foe.
+  "chop-bleed": () =>
+    inkLine("M9 21L18 9", 2.4) +
+    inkFill("M12 4.5C17 3 22 5 21.5 8.5C20 11.5 16.5 12 15 9.5Z") +
+    inkFill("M5 11C5 11 2 14.8 2 16.6A3 3 0 0 0 8 16.6C8 14.8 5 11 5 11Z"),
+  // An arrow through a split shield: armor that gives way.
+  "arrow-sunder": () =>
+    `<path d="M11 3L19.5 6V12C19.5 16.5 16 19.5 11 21.5C6 19.5 2.5 16.5 2.5 12V6Z" ${stroke(C.ink, 2.4)}/>` +
+    inkLine("M11 6.5L8.5 11L12.5 13.5L10 18", 2) +
+    inkLine("M22 3L15.5 9.5", 2.2) +
+    inkFill("M12 12.5L13 6.5L18.5 12Z"),
+  // Three quick slashes, the middle one longest: attacks in a hurry.
+  "slashes-flurry": () =>
+    inkLine("M3 17L9 5", 2.4) + inkLine("M9 20L17 4", 2.4) + inkLine("M16 21L21 11", 2.4),
+  // A shield with a bolt cut out of it: a wild block that costs you.
+  "shield-frenzy": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<path d="M13.5 6L8.5 13H12L10.5 18.5L15.5 11H12Z" fill="${C.bg}"/>`,
+  // Three curved claw marks side by side: a rampage of quick strikes.
+  "claws-rampage": () =>
+    inkLine("M4 4C7 9 7 15 4 20", 2.4) +
+    inkLine("M11 3C14 9 14 15 11 21", 2.4) +
+    inkLine("M18 4C21 9 21 15 18 20", 2.4),
+  // A cone of fire widening to the right, with a wavy front: the breath.
+  "breath-fire": () =>
+    inkLine("M2 8H8M2 12H7M2 16H8", 2.2) +
+    `<g transform="translate(5,1)">${inkFill("M14 3c.6 4 5 6 5 11a7 7 0 0 1-14 0c0-3 1.2-5.2 3-6.4 0 2.3.6 3.5 1.8 4.1-.6-3.5 1.2-7 4.2-8.7z")}</g>`,
+  // Three fingers of earth reaching up out of the ground.
+  "roots-grasp": () =>
+    inkLine("M2 21.5H22", 2.4) +
+    inkFill("M3 21L8 7L10.5 21Z") +
+    inkFill("M9 21L12 3L15 21Z") +
+    inkFill("M13.5 21L16 7L21 21Z"),
+  // A hex ring around a weight: a heavy burden that slows.
+  "hex-burden": () =>
+    punisher(
+      `<circle cx="12" cy="15" r="6" fill="${C.ink}"/>` +
+        inkLine("M8.5 10.5C8.5 4.5 15.5 4.5 15.5 10.5", 2.4),
+    ),
+  // A hex ring around a ghost: fear in everything the foe does.
+  "hex-ghost": () =>
+    punisher(
+      inkFill("M5 21V11A7 7 0 0 1 19 11V21L16 18.5L13 21L10 18.5L7 21Z") +
+        `<circle cx="9.5" cy="11" r="1.6" fill="${C.bg}"/><circle cx="14.5" cy="11" r="1.6" fill="${C.bg}"/>`,
+    ),
+  // A ring around a mountain: an aura that keeps you standing.
+  "ring-mountain": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)}/>` +
+    `<g transform="translate(12,12) scale(0.62) translate(-12,-12)">${inkFill("M2 20L9.5 6L13.5 13L16.5 9L22 20Z")}</g>`,
+  // Four plus signs around an empty centre: heals all around, never the caster.
+  "ring-healers": () =>
+    inkLine("M12 1.5V8.5M8.5 5H15.5", 2.4) +
+    inkLine("M12 15.5V22.5M8.5 19H15.5", 2.4) +
+    inkLine("M1.5 12H8.5M5 8.5V15.5", 2.4) +
+    inkLine("M15.5 12H22.5M19 8.5V15.5", 2.4) +
+    `<circle cx="12" cy="12" r="2" ${stroke(C.ink, 1.6)}/>`,
+  // A drop of blood with a plus cut out of it: Health back after the bleeding.
+  "drop-plus": () =>
+    inkFill("M12 2C12 2 5 10.5 5 15.5A7 7 0 0 0 19 15.5C19 10.5 12 2 12 2Z") +
+    `<path d="M12 12V19M8.5 15.5H15.5" ${stroke(C.bg, 2.4)}/>`,
+  // A hex ring around a sword hanging point down: attackers lose heart.
+  "hex-sword-limp": () =>
+    punisher(
+      inkLine("M18 5L7 17", 3) +
+        inkFill("M3.5 21L5.5 14.5L9.5 18.5Z") +
+        inkLine("M13.5 2.8L20.5 9.2", 2.6),
+    ),
+  // A filled shield with a flame cut out of it: protection from elements.
+  "shield-flame": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<g transform="translate(12,12.5) scale(0.5) translate(-12,-12)"><path d="M14 3c.6 4 5 6 5 11a7 7 0 0 1-14 0c0-3 1.2-5.2 3-6.4 0 2.3.6 3.5 1.8 4.1-.6-3.5 1.2-7 4.2-8.7z" fill="${C.bg}"/></g>`,
+  // A filled shield with a sword cut out of it: protection from blows.
+  "shield-blow": () =>
+    inkFill("M12 2.5L20 5.5V12C20 16.5 16.5 19.5 12 21.5C7.5 19.5 4 16.5 4 12V5.5Z") +
+    `<path d="M7.5 16.5L16 8M9.5 9.5L14.5 14.5" ${stroke(C.bg, 2.4)}/>`,
+  // A heart inside a ring: an enchantment that adds to your Health.
+  "ring-heart": () =>
+    `<circle cx="12" cy="12" r="9.5" ${stroke(C.ink, 1.8)}/>` +
+    `<path d="M12 18s-6-3.7-6-7.7A3.3 3.3 0 0 1 12 8.5 3.3 3.3 0 0 1 18 10.3c0 4-6 7.7-6 7.7z" fill="${C.ink}"/>`,
+  // A hex ring around a speech bubble struck through: no shouts, no chants.
+  "hex-bubble-cut": () =>
+    punisher(inkFill("M3 4H21V15H13L8 20V15H3Z") + `<path d="M2 20L22 3" ${stroke(C.bg, 3.4)}/>`),
+  // A sword with a heart on its hilt: more Health while it is armed.
+  "heart-sword": () =>
+    inkLine("M7 17L20 4", 2.6) +
+    inkLine("M4 14L10 20", 2.6) +
+    `<path d="M7 11s-4-2.4-4-5A2.2 2.2 0 0 1 7 4.7 2.2 2.2 0 0 1 11 6c0 2.6-4 5-4 5z" fill="${C.ink}" transform="translate(-0.5,0)"/>`,
+  // Taken from the target: its enchantment ring or hex ring top right, a curved arrow, the copy bottom left (#1946).
+  "take-ench-in": () => takeMark(takeSrc(false, false), takeCopy(false, true)),
+  "take-ench-rev": () => takeMark(takeSrc(false, true), takeCopy(false, false)),
+  "take-hex-in": () => takeMark(takeSrc(true, false), takeCopy(true, true)),
+  "take-hex-rev": () => takeMark(takeSrc(true, true), takeCopy(true, false)),
+  // A skill square taken: one square, or a stack of two (Larceny reaches further).
+  "take-skill": () =>
+    takeMark(
+      `<rect x="13" y="3" width="8" height="8" rx="1" fill="${C.ink}"/>`,
+      `<rect x="3" y="14" width="7" height="7" rx="1" fill="${C.ink}"/>`,
+    ),
+  "take-skills": () =>
+    takeMark(
+      `<rect x="15" y="1.5" width="7" height="4.5" rx="1" fill="${C.ink}"/><rect x="15" y="8" width="7" height="4.5" rx="1" fill="${C.ink}"/>`,
+      `<rect x="3" y="14" width="7" height="7" rx="1" fill="${C.ink}"/>`,
+    ),
+  // Three attribute bars cut to stubs, and a wail or a wilt above them (#1946).
+  "bars-wail": () =>
+    barStubs() + inkLine("M8 8A6 6 0 0 1 8 2M12 9.5A9 9 0 0 1 12 .5M16 8A6 6 0 0 0 16 2", 1.8),
+  "bars-wilt": () => barStubs() + inkLine("M6 3L12 9L18 3M6 8.5L12 14.5L18 8.5", 2),
+  // Three bars of one height under a ceiling: an attribute set to a rank (#1946).
+  "bars-set": () =>
+    inkFill("M3 8H8V20H3ZM9.5 8H14.5V20H9.5ZM16 8H21V20H16Z") + inkLine("M2.5 4H21.5", 2),
+  // A ringed dot lends its rank to the tallest bar (#1946).
+  "bars-lent": () =>
+    inkFill("M11 14H15V20H11ZM17 6H21V20H17Z") +
+    ringDot(5, 12, 3.4) +
+    inkLine("M9 9H14.5M12.5 6.5L15 9L12.5 11.5", 1.8),
+  // PvP forms (#1951, #1968): the form mark is a dashed outline of a figure, you
+  // as something else; what you become sits inside it. Future forms reuse it.
+  // Shadow Form: a solid silhouette filling the outline.
+  "form-shadow": () =>
+    formShell() +
+    `<g transform="translate(2.6,3.5) scale(0.78)">` +
+    `<circle cx="12" cy="5.5" r="3.2" fill="${C.ink}"/>` +
+    inkFill("M3.5 22V17Q3.5 10.5 12 10.5Q20.5 10.5 20.5 17V22Z") +
+    "</g>",
+  // Elemental Flame: a big flame filling the outline's body.
+  "form-flame": () =>
+    formShell() +
+    inkFill(
+      "M12 8.5C14 11.5 17.5 13.5 17.5 16.5A5.5 5.5 0 0 1 6.5 16.5C6.5 14.5 8.5 14 9 11.5C10 12.3 10.5 13 10.8 13.8C11.6 12.2 12 10.5 12 8.5Z",
+    ),
+  // Mist Form: a big drop filling the outline's body.
+  "form-mist": () =>
+    formShell() + inkFill("M12 8.5Q18.2 14.8 18.2 17A6.2 6.2 0 0 1 5.8 17Q5.8 14.8 12 8.5Z"),
+  // Attributes raised (#1941, #1947). The mark for "raised" is three rising bars,
+  // the counterpart of the wilted bars of #1946; the glyphs ring a picture instead.
+  // Glyph of Elemental Power: a flame in the glyph ring, the rising bars beside it.
+  "glyph-power-up": () =>
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkFill(
+      "M8.5 6.5C9.7 8.5 11.5 9.7 11.5 12.5A3 3 0 0 1 5.5 12.5C5.5 11 6.7 10.5 7 8.8C7.6 9.5 7.9 10 8.1 10.5C8.5 9.5 8.6 8 8.5 6.5Z",
+    ) +
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
+  // Glyph of Energy: a bolt in the glyph ring, the rising bars beside it.
+  "glyph-energy-up": () =>
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkFill("M9.5 6.5L5.5 12.8H8.3L7.3 17.5L11.8 11H9Z") +
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
+  // Ritual Lord: the spirit totem, and three rising bars.
+  "totem-bars-up": () =>
+    inkFill("M5 11H9.5L9.7 20H4.8Z") +
+    `<circle cx="7.2" cy="6.5" r="3.6" fill="${C.ink}"/>` +
+    inkFill("M12.5 20V15H15.1V20ZM16.3 20V10.5H18.9V20ZM20.1 20V6H22.7V20Z"),
+  // Expert's Dexterity: an arrow in flight above three rising bars.
+  "arrow-bars-up": () =>
+    inkLine("M3 6.5H16", 2.4) +
+    inkFill("M23 6.5L15 2V11Z") +
+    inkLine("M3 6.5L1.5 4M5.5 6.5L4 4M3 6.5L1.5 9M5.5 6.5L4 9", 1.5) +
+    inkFill("M3 21V17H6V21ZM8.5 21V13.5H11.5V21ZM14 21V10H17V21Z"),
+  // Spirit Transfer: the spirit post sends its Health over to an ally, a ringed plus.
+  "spirit-give": () =>
+    spiritPost() +
+    inkLine("M11 8.5H15Q18 8.5 18 11.5", 2) +
+    inkLine("M15.5 10L18 12.5L20.5 10", 2) +
+    `<circle cx="18" cy="18.5" r="4.2" ${stroke(C.ink, 1.9)}/>` +
+    inkLine("M18 16.2V20.8M15.7 18.5H20.3", 1.8),
+  // Gaze of Fury: a spirit given up, an angry eye in its place.
+  "spirit-eye": () =>
+    brokenPost(7) +
+    `<path d="M11 14Q17 7.5 23 14Q17 20.5 11 14Z" ${stroke(C.ink, 1.9)}/>` +
+    `<circle cx="17" cy="14" r="2.2" fill="${C.ink}"/>` +
+    inkLine("M11.5 7L22.5 10", 2.2),
+  // A skull over crossed bones: the order to rise (#1946).
+  "skull-order": () => smallSkull(12, 9, 0.75) + inkLine("M5 16L19 22M19 16L5 22", 2.2),
+  // A skull in a dotted ring: the lich's aura (#1946).
+  "skull-aura": () =>
+    smallSkull(12, 12, 0.6) +
+    `<circle cx="12" cy="12" r="10" ${stroke(C.ink, 1.8)} stroke-dasharray="1.8 3.1"/>`,
+  // A drop flowing into a skull: a condition passed to the minion (#1946).
+  "drop-skull": () =>
+    inkFill("M5.5 6C9 10 9 13 5.5 15.5C2 13 2 10 5.5 6Z") +
+    inkLine("M4 20H12M9.5 17.5L12 20L9.5 22.5", 1.8) +
+    smallSkull(17, 14, 0.8),
+  // A skull and a plus: the minion's death heals (#1946).
+  "skull-heal": () => smallSkull(8, 13, 0.85) + inkLine("M18 7V17M13 12H23", 2.4),
   "arrow-lob": () =>
     `<path d="M3 17C4 6 14 2 19 12" ${stroke(C.ink, 2.4)}/>` +
     inkFill("M19.5 21L15 13.5L23 14Z") +
@@ -3219,6 +3601,11 @@ const riderOn = (/** @type {string} */ weapon, /** @type {string} */ rider) =>
   `<g transform="translate(10,10) scale(0.84) translate(-12,-12)">${weapon}</g>` +
   `<circle cx="18" cy="18" r="5.6" fill="${C.bg}"/>` +
   `<g transform="translate(18,18) scale(0.38) translate(-12,-12)">${rider}</g>`;
+
+/** The form mark: a figure's outline, dashed (#1968). */
+const formShell = () =>
+  `<circle cx="12" cy="5.5" r="3.2" ${stroke(C.ink, 1.8)} stroke-dasharray="3 2.2"/>` +
+  `<path d="M3.5 22V17Q3.5 10.5 12 10.5Q20.5 10.5 20.5 17V22Z" ${stroke(C.ink, 1.8)} stroke-dasharray="3.2 2.4"/>`;
 
 /** The shared spirit post of the attacking spirits, left of the mark it shoots (#1271). */
 const spiritPost = () =>

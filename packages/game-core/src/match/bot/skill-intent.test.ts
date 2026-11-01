@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "../../skills/catalog.js";
-import { botUses, onlyInterrupts, removedCategories } from "./skill-intent.js";
+import { botUses, onlyInterrupts, removedCategories, takenOffFoe } from "./skill-intent.js";
 
 /**
  * Skills a bot never uses (#1189). A new skill is either given a use by
@@ -16,17 +16,33 @@ const NO_BOT_USE = new Set([
   "monk.holy-haste",
   "ranger.practiced-stance",
   "dervish.extend-enchantments",
+  // Aura of Stability (#1870): knockdown kept off an ally is no defence
+  // the bot weighs, as Balanced Stance on itself.
+  "monk.aura-of-stability",
+  // Elemental and Physical Resistance, Vital Blessing and Vital Weapon
+  // (#1872): armor against one kind of damage and more maximum Health are
+  // no defence the bot weighs, as Avatar of Melandru's.
+  "mesmer.elemental-resistance",
+  "mesmer.physical-resistance",
+  "monk.vital-blessing",
+  "ritualist.vital-weapon",
   // Spell Breaker (#1511): a foe's spells refused is not a defence the
   // bot weighs.
   "monk.spell-breaker",
   // Dwayna's Sorrow (#1762): a heal that waits on an ally's death is
   // nothing the bot plans for.
   "monk.dwaynas-sorrow",
+  // Death Nova (#1931), the same, a burst that waits on an ally's death.
+  "necromancer.death-nova",
   // Aura of Displacement, Shadow Meld and Shadow of Haste (#1826): a step
   // there and back is nothing the bot plans for yet.
   "assassin.aura-of-displacement",
   "assassin.shadow-meld",
   "assassin.shadow-of-haste",
+  // Recall and Shadow Walk (#1930): a step that waits on an end, or
+  // that disables its own attacks, is nothing the bot plans for yet.
+  "assassin.recall",
+  "assassin.shadow-walk",
   // Live Vicariously (#1748): Health to the caster when its ally hits is
   // no heal the bot weighs.
   "monk.live-vicariously",
@@ -114,10 +130,12 @@ const NO_BOT_USE = new Set([
   "necromancer.animate-vampiric-horror",
   "necromancer.animate-flesh-golem",
   "necromancer.animate-shambling-horror",
+  // Minions 3 (#1915): no minion rule yet either. Infuse Condition is a
+  // defence.
+  "necromancer.order-of-undeath",
+  "necromancer.aura-of-the-lich",
+  "necromancer.taste-of-death",
   "necromancer.gaze-of-contempt",
-  "necromancer.rend-enchantments",
-  // An enchantment strip whose payoff is Health loss, not damage (#1648).
-  "necromancer.pain-of-disenchantment",
   // An enchantment strip only on a knocked-down foe (#1643).
   "assassin.lift-enchantment",
   "necromancer.well-of-suffering",
@@ -172,6 +190,8 @@ const NO_BOT_USE = new Set([
   "elementalist.water-attunement",
   "elementalist.air-attunement",
   "elementalist.earth-attunement",
+  // Scribe's Insight (#1913), the same, for signets still to be used.
+  "monk.scribes-insight",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
   "paragon.aggressive-refrain",
   "paragon.blazing-finale",
@@ -209,6 +229,20 @@ const NO_BOT_USE = new Set([
   "ranger.muddy-terrain",
   "ranger.conflagration",
   "ranger.winter",
+  // Nature rituals 2 (#1873): auras on both teams, as rituals 1's.
+  "ranger.symbiosis",
+  "ranger.favorable-winds",
+  "ranger.brambles",
+  "ranger.tranquility",
+  "ranger.toxicity",
+  "ranger.greater-conflagration",
+  // Nature rituals 3 (#1886): a death in range, and costs on both teams,
+  // nothing the bot weighs.
+  "ranger.edge-of-extinction",
+  "ranger.pestilence",
+  "ranger.energizing-wind",
+  "ranger.primal-echoes",
+  "ranger.roaring-winds",
   // Chants (#1505) on how the next skill goes: nothing the bot weighs.
   "paragon.song-of-concentration",
   "paragon.anthem-of-guidance",
@@ -235,6 +269,28 @@ const NO_BOT_USE = new Set([
   // Assassin staples 5 (#1757): unblockable next attacks are no rule the
   // bot weighs.
   "assassin.way-of-the-fox",
+  // "Not enchanted" and next attacks (#1916): more damage or adrenaline
+  // on the bearer's attacks is no rule the bot weighs, as Flurry's.
+  "ritualist.brutal-weapon",
+  "paragon.natural-temper",
+  "warrior.signet-of-strength",
+  // Attributes set or borrowed (#1929): a higher rank on its own spells is
+  // no rule the bot weighs, as an attunement's energy.
+  "elementalist.master-of-magic",
+  "mesmer.signet-of-illusions",
+  // Attributes raised (#1941): a boost timed before the next spell, binding
+  // ritual or bow shot has no use in the bot's vocabulary yet, as the glyphs
+  // on the next spell and Heket's Rampage's attack speed.
+  "elementalist.glyph-of-elemental-power",
+  "elementalist.glyph-of-energy",
+  "ritualist.ritual-lord",
+  "ranger.experts-dexterity",
+  // Nature rituals 4 (#1956): an energy toll on everyone who attacks or
+  // uses a skill, damage to whoever runs dry or a worse bleed, both sides
+  // alike, is no rule the bot weighs, as Winnowing.
+  "ranger.famine",
+  "ranger.lacerate",
+  "ranger.quicksand",
 ]);
 
 function skill(id: string) {
@@ -265,6 +321,20 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("elementalist.fireball"))).toEqual(["offence"]);
     // An attack skill is offence, whatever else it does.
     expect(botUses(skill("warrior.distracting-blow"))).toEqual(["interrupt", "offence"]);
+    // A step to a creature of its side is a way out (#1930); one to a foe is not.
+    expect(botUses(skill("assassin.spirit-walk"))).toEqual(["escape"]);
+    expect(botUses(skill("assassin.swap"))).toEqual(["escape"]);
+    expect(botUses(skill("assassin.dark-prison"))).toEqual(["offence"]);
+  });
+
+  it("casts a pure enchantment strip at an enchanted foe (#1954)", () => {
+    expect(botUses(skill("mesmer.mirror-of-disenchantment"))).toEqual(["offence"]);
+    expect(takenOffFoe(skill("mesmer.mirror-of-disenchantment"))).toBe("enchantment");
+    expect(takenOffFoe(skill("mesmer.inspired-enchantment"))).toBe("enchantment");
+    // Its payoff, Health loss per Monk enchantment, needs one too (#1648).
+    expect(takenOffFoe(skill("necromancer.pain-of-disenchantment"))).toBe("enchantment");
+    // Anything else is cast at any foe.
+    expect(takenOffFoe(skill("elementalist.fireball"))).toBeUndefined();
   });
 
   it("holds a skill whose only role is interrupting", () => {

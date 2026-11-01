@@ -29,6 +29,10 @@ at a time. Using one disables it for 45 seconds. When a form ends, you
 stop what you were doing: your attack, your walk and any skill you were
 activating. Press a movement key again to walk on.
 
+**Some shots disable your other attacks.** Focused Shot and Needling
+Shot fly faster than an arrow should, but each one that hits turns your
+other attack skills off for a few seconds. Spells are unaffected.
+
 ## Attributes
 
 You have **200 points** to spend. Each rank of an attribute costs more
@@ -38,6 +42,15 @@ to four more ranks on top; see [Equipment](equipment.md). Raising the
 attribute a skill uses makes it stronger, and the numbers in its
 description change as you spend.
 
+In a fight your ranks can change for a while. Weakness takes one off
+each. Some hexes set a foe's attributes to 0, and Master of Magic sets
+your elemental ones to 13: a rank set this way overrides runes and
+Weakness alike. Signet of Illusions lets your next spells of other
+attributes use your Illusion Magic rank. Some skills raise your
+attributes for a time or for your next spells, as Glyph of Elemental
+Power and Ritual Lord do, even one you left at 0; a set rank, as Master
+of Magic's, beats such a boost.
+
 ## Echoes
 
 A Paragon's **echoes** are long buffs on one ally. A **refrain** renews
@@ -45,6 +58,18 @@ to its full length, and a **finale** takes effect, whenever a chant or a
 shout ends on that ally. A chant or shout reapplied before it ends has not
 ended. Nothing removes an echo: it ends when it runs out or its bearer
 dies. Most cannot target a spirit.
+
+## Skills that become another skill
+
+Some Mesmer skills put another skill in their own slot for a while.
+Arcane Echo and Echo copy the next skill you use. **Inspired
+Enchantment** and **Inspired Hex** become the skill that cast the
+enchantment or hex they removed, for 20 seconds. **Arcane Thievery**
+becomes the spell it disabled on your foe, for as long as the disable
+lasts. The copy has its own recharge. When it ends, the original skill
+comes back and starts its own recharge, and a cast of the copy still in
+progress fails. A status put on by a spirit or by another status cannot
+be copied, though removing it still gives you the Energy.
 
 ## Wells and glyphs
 
@@ -91,6 +116,14 @@ take up a flag or relic. Your hands are full while you hold them: no
 attacks and no attack skills, but you walk at full speed and still cast
 spells. Nothing removes ashes; every end is a drop.
 
+## Shadow steps
+
+A **shadow step** moves you at once, no walk in between. Most step you to
+your target; some take you back to where you cast them when they end, as
+Shadow of Haste and Shadow Walk do. **Recall** steps you to its ally only
+when it ends, and disables all your skills for 3 seconds. **Swap** trades
+places with one of your side's spirits or minions.
+
 ## Sharing builds
 
 In the editor's **⋯** menu, **Share** gives your build as a line of
@@ -100,6 +133,10 @@ and send it.
 To take one in, paste it anywhere in the editor that is not a text
 field. Both kinds work. A GW1 skill VibeWars does not have yet arrives as
 an empty slot. The build is yours once you press **Save**.
+
+**Save** keeps your build and takes you back to where you came from.
+**Esc** leaves without saving, and asks first if you changed anything.
+**Share**, **Duplicate** and **Delete** are under **⋯**.
 
 A team code is pasted on **Team Builder** instead.
 
@@ -114,4 +151,6 @@ with **New character**, or **Add** one of your characters to copy its
 build in. A copy is the team's own: changing it, or the character it came
 from, leaves the other as it was. Press a member's name to edit it in the
 build editor; its **Save** puts it back in the team, and the team's own
-**Save** keeps it all.
+**Save** keeps it all and takes you back to Team Builder. **Esc** leaves
+without saving, and asks first. The team's **Share**, **Duplicate** and
+**Delete** are under **⋯**.

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PlayerBuild } from "../../build.js";
-import { resolveLoadout } from "../../equipment/resolve.js";
+import { AREA_ADJACENT } from "../../distances.js";
+import { resolveLoadout, unarmedResolvedEquipment } from "../../equipment/resolve.js";
 import { loadoutOf } from "../../join-loadout.js";
 import { ANNIHILATION_MATCH_RULES } from "../../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../../ruleset.js";
@@ -262,6 +263,26 @@ describe("play-build (#1189)", () => {
     expect(sim.get("ally")?.combatant.statuses.has("bleeding")).toBe(false);
   });
 
+  it("casts Healing Ring for a hurt ally beside it, never for itself alone (#1870)", () => {
+    const ring = { skillBar: ["monk.healing-ring"], startHealthFraction: 0.3 };
+    const alone = match([
+      fighter("monk", 0, MONK, vec2(400, 400), ring),
+      fighter("foe", 1, WARRIOR, vec2(400 + AREA_ADJACENT / 2, 400), { behaviour: undefined }),
+    ]);
+    expect(askBot(alone, "monk").useSkillId).toBeUndefined();
+    const beside = match([
+      fighter("monk", 0, MONK, vec2(400, 400), { ...ring, startHealthFraction: 1 }),
+      fighter("ally", 0, WARRIOR, vec2(400 + AREA_ADJACENT / 2, 400), {
+        behaviour: undefined,
+        startHealthFraction: 0.3,
+      }),
+    ]);
+    expect(askBot(beside, "monk")).toMatchObject({
+      useSkillId: "monk.healing-ring",
+      targetId: "monk",
+    });
+  });
+
   it("walks in to an out-of-range ally to heal them", () => {
     const sim = match([
       fighter("monk", 0, MONK, vec2(400, 400)),
@@ -446,5 +467,124 @@ describe("play-build in a whole match (#1189)", () => {
       return t;
     }
     expect(survival(true)).toBeGreaterThan(survival(false));
+  });
+});
+
+describe("play-build's way out (#1930)", () => {
+  /** A bare body, a bot unless it is a creature. */
+  const bare = (id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    ({
+      id,
+      team,
+      skillBar: [],
+      attributeRanks: new Map(),
+      equipment: unarmedResolvedEquipment(60),
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      ...extra,
+    }) satisfies ParticipantSpec;
+  const spirit = (id: string, spawn: Vec2): ParticipantSpec =>
+    bare(id, 0, spawn, {
+      creature: {
+        ownerId: "sin",
+        kind: "spirit",
+        look: "spirit",
+        name: id,
+        expiresInSeconds: Number.POSITIVE_INFINITY,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: undefined,
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        deathBurst: undefined,
+        onDeathInRange: undefined,
+        replacedBy: undefined,
+        corpsesLeft: 0,
+        companionSkillId: undefined,
+        leaderId: undefined,
+        mode: "guard",
+      },
+    });
+  /** An assassin with Spirit Walk at `health`, a foe at its elbow, a spirit by the foe and one far off. */
+  const cornered = (health: number) => {
+    const sim = match([
+      bare("sin", 0, vec2(0, 0), { skillBar: ["assassin.spirit-walk"], behaviour: BOT }),
+      bare("foe", 1, vec2(AREA_ADJACENT, 0)),
+      spirit("near", vec2(AREA_ADJACENT, 60)),
+      spirit("far", vec2(-300, 0)),
+    ]);
+    const sin = sim.get("sin")?.combatant;
+    if (sin === undefined) throw new Error("no sin");
+    sin.health = sin.maxHealth * health;
+    return sim;
+  };
+
+  it("steps to the spirit farthest from the foe when hurt", () => {
+    expect(askBot(cornered(0.4), "sin")).toMatchObject({
+      targetId: "far",
+      useSkillId: "assassin.spirit-walk",
+    });
+  });
+
+  it("stays while it is not hurt", () => {
+    expect(askBot(cornered(0.9), "sin").useSkillId).toBeUndefined();
+  });
+});
+
+describe("play-build renews a spirit near its end (#1947)", () => {
+  const ritualist = (id: string, team: number, spawn: Vec2, extra: Partial<ParticipantSpec> = {}) =>
+    ({
+      id,
+      team,
+      skillBar: ["ritualist.gaze-of-fury"],
+      attributeRanks: new Map([["ritualist.channeling-magic", 12]]),
+      equipment: unarmedResolvedEquipment(60),
+      maxEnergy: 60,
+      spawn,
+      facing: 0,
+      ...extra,
+    }) satisfies ParticipantSpec;
+  /** `r`'s spirit with `left` of its 60 s, and a foe `foeAt` away from it. */
+  const ending = (left: number, foeAt: number) =>
+    match([
+      ritualist("r", 0, vec2(0, 0), { behaviour: BOT }),
+      ritualist("foe", 1, vec2(300 + foeAt, 0), { skillBar: [] }),
+      ritualist("s", 0, vec2(300, 0), {
+        skillBar: [],
+        creature: {
+          ownerId: "r",
+          kind: "spirit",
+          look: "spirit",
+          name: "s",
+          expiresInSeconds: left,
+          ageSeconds: 60 - left,
+          summonedAtTick: 0,
+          skillId: undefined,
+          aura: undefined,
+          onDeath: "vanish",
+          ownerDisableSeconds: 0,
+          deathBurst: undefined,
+          onDeathInRange: undefined,
+          replacedBy: undefined,
+          corpsesLeft: 0,
+          companionSkillId: undefined,
+          leaderId: undefined,
+          mode: "guard",
+        },
+      }),
+    ]);
+
+  it("casts Gaze of Fury on its own spirit with under a quarter of its life left, a foe in its reach", () => {
+    expect(askBot(ending(10, 200), "r")).toMatchObject({
+      targetId: "s",
+      useSkillId: "ritualist.gaze-of-fury",
+    });
+  });
+
+  it("leaves a spirit with most of its life, or one no foe is near", () => {
+    expect(askBot(ending(30, 200), "r").useSkillId).toBeUndefined();
+    expect(askBot(ending(10, 2000), "r").useSkillId).toBeUndefined();
   });
 });

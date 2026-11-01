@@ -35,7 +35,13 @@ export type MonkStatusId =
   | "holy-wrath"
   | "balthazars-aura"
   | "judges-intervention"
-  | "dwaynas-sorrow";
+  | "dwaynas-sorrow"
+  // Caster staples (#1870).
+  | "aura-of-stability"
+  // Caster staples 2 (#1872).
+  | "vital-blessing"
+  // Skill-type and heal triggers (#1913).
+  | "scribes-insight";
 
 /**
  * Vigorous Spirit's heal, each time its bearer attacks or casts a spell:
@@ -397,6 +403,32 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         target: "bearer",
         effects: [],
         skillId: "monk.holy-haste",
+      },
+    ],
+  }),
+  // "For 3...7...8 seconds, target other ally cannot be knocked down"
+  // (#1870).
+  "aura-of-stability": define("aura-of-stability", "Aura of Stability", "enchantment", {
+    profession: "monk",
+    preventsKnockdown: true,
+  }),
+  // "While you maintain this enchantment, target ally has +40...200 maximum
+  // Health" (#1872): 168 at rank 12.
+  "vital-blessing": define("vital-blessing", "Vital Blessing", "enchantment", {
+    profession: "monk",
+    maxHealthBonus: 168,
+  }),
+  // "For 10...30...35 seconds, you gain 3 Energy whenever you use a signet"
+  // (#1913).
+  "scribes-insight": define("scribes-insight", "Scribe's Insight", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-uses-skill",
+        usedSkill: { type: "signet" },
+        effects: [{ kind: "energy-gain", amount: { flat: 3 } }],
+        target: "bearer",
+        skillId: "monk.scribes-insight",
       },
     ],
   }),

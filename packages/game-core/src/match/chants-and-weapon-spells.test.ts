@@ -234,7 +234,9 @@ describe("Weapon of Warding (#758)", () => {
     const ally = makeCombatant({ id: "a" });
     ally.statuses.apply("weapon-of-warding", 7, "r");
     ally.statuses.apply("guardian", 7, "m");
-    expect(ally.statuses.removeByCategory("enchantment")).toEqual(["guardian"]);
+    expect(ally.statuses.removeByCategory("enchantment")).toEqual([
+      { id: "guardian", sourceSkillId: undefined },
+    ]);
     expect(ally.statuses.has("weapon-of-warding")).toBe(true);
   });
 

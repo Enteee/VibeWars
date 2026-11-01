@@ -19,7 +19,7 @@ export function resolveMagnitude(magnitude: Magnitude, caster: Combatant): numbe
   if ("flat" in magnitude) {
     return magnitude.flat;
   }
-  return magnitudeAtRank(magnitude.scaling, rankOf(caster, magnitude.scaling.attributeId));
+  return Math.round(scaledAt(magnitude, (attributeId) => rankOf(caster, attributeId)));
 }
 
 /**
@@ -37,7 +37,7 @@ export function resolveMagnitudeAtRanks(
   if ("flat" in magnitude) {
     return magnitude.flat;
   }
-  return magnitudeAtRank(magnitude.scaling, ranks.get(magnitude.scaling.attributeId) ?? 0);
+  return Math.round(scaledAt(magnitude, (attributeId) => ranks.get(attributeId) ?? 0));
 }
 
 /**
@@ -53,9 +53,7 @@ export function resolveMagnitudeTimes(
   if ("flat" in magnitude) {
     return Math.round(magnitude.flat * factor);
   }
-  return Math.round(
-    curveAt(magnitude.scaling, rankOf(caster, magnitude.scaling.attributeId)) * factor,
-  );
+  return Math.round(scaledAt(magnitude, (attributeId) => rankOf(caster, attributeId)) * factor);
 }
 
 /**
@@ -74,4 +72,19 @@ export function magnitudeAtRank(
 function curveAt(scaling: Pick<AttributeScaling, "atZero" | "atTwelve">, rank: number): number {
   const slope = (scaling.atTwelve - scaling.atZero) / MAX_ATTRIBUTE_RANK;
   return scaling.atZero + slope * rank;
+}
+
+/**
+ * A scaled magnitude at the rank `rankFor` gives its attribute, unrounded.
+ * A `byLevel` one takes the level whole first, as GW1 does (#1899).
+ */
+function scaledAt(
+  magnitude: Exclude<Magnitude, { readonly flat: number }>,
+  rankFor: (attributeId: string) => number,
+): number {
+  if ("byLevel" in magnitude) {
+    const { level, atLevelZero, perLevel } = magnitude.byLevel;
+    return atLevelZero + perLevel * magnitudeAtRank(level, rankFor(level.attributeId));
+  }
+  return curveAt(magnitude.scaling, rankFor(magnitude.scaling.attributeId));
 }

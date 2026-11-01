@@ -646,7 +646,7 @@ describe("skill types", () => {
       ...common,
       cost: energy(5),
       recharge: 10,
-      bonus: beastMastery(1, 10),
+      bonus: beastMastery(1, 9.8),
     });
   });
 
@@ -696,7 +696,7 @@ describe("skill types", () => {
           kind: "resurrect-companions",
           radius: AREA_NEARBY,
           healthPercent: {
-            scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 77 },
+            scaling: { attributeId: "ranger.beast-mastery", atZero: 10, atTwelve: 77.2 },
           },
         },
       ],

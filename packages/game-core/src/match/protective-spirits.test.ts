@@ -115,19 +115,19 @@ function packet(amount: number, source: "weapon" | "skill"): DamagePacket {
 
 describe("the four spirits' numbers (#1265)", () => {
   // Rank 0...15 is GW1's a...b, so 12 is four fifths of the way; health
-  // is 50 + 20 per level.
+  // is 50 + 20 per whole level (#1917).
   it.each([
     [SHELTER, 0, 70, 30],
-    [SHELTER, 12, 182, 54],
+    [SHELTER, 12, 190, 54],
     [SHELTER, 15, 210, 60],
     [UNION, 0, 70, 30],
-    [UNION, 12, 182, 54],
+    [UNION, 12, 190, 54],
     [UNION, 15, 210, 60],
     [DISPLACEMENT, 0, 70, 30],
-    [DISPLACEMENT, 12, 214, 54],
+    [DISPLACEMENT, 12, 210, 54],
     [DISPLACEMENT, 15, 250, 60],
     [EARTHBIND, 0, 70, 15],
-    [EARTHBIND, 12, 214, 39],
+    [EARTHBIND, 12, 210, 39],
     [EARTHBIND, 15, 250, 45],
   ])("%s at Communing %i: %i Health, %i s", (id, rank, health, seconds) => {
     const planted = ritual(match(rank), id);
@@ -175,7 +175,7 @@ describe("Shelter (#1265)", () => {
     expect(mitigate(packet(cap - 10, "weapon"), ally, RULES.combat, null)).toBe(cap - 10);
     expect(mitigate(packet(200, "skill"), ally, RULES.combat, null)).toBe(200);
     expect(paid(stepFor(sim, DT), shelter.id, "shelter")).toEqual([]);
-    expect(shelter.combatant.health).toBe(182 - 51);
+    expect(shelter.combatant.health).toBe(190 - 51);
   });
 });
 
@@ -217,8 +217,8 @@ describe("Displacement (#1265)", () => {
     expect(blocked / 400).toBeLessThan(0.8);
 
     const log = stepFor(sim, DT);
-    // 214 Health: three blocks, and the fourth takes what is left.
-    expect(paid(log, displacement.id, "displacement")).toEqual([60, 60, 60, 34]);
+    // 210 Health: three blocks, and the fourth takes what is left.
+    expect(paid(log, displacement.id, "displacement")).toEqual([60, 60, 60, 30]);
     expect(displacement.combatant.dead).toBe(true);
     stepFor(sim, DT * 2);
     expect(ally.statuses.has("displacement")).toBe(false);

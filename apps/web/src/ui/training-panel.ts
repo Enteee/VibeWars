@@ -510,8 +510,8 @@ export function createTrainingPanel(): TrainingPanel {
       button.addEventListener("click", () => {
         cast(index);
       });
-      // The slot and ranks read at hover, so a rearm or a glyph's
-      // discount (#637) shows at once.
+      // The slot and ranks read at hover and each step after, so a rearm,
+      // a glyph's discount (#637) or Primal Echoes (#1920) shows at once.
       slotTips.bind(
         button,
         index,
@@ -589,6 +589,7 @@ export function createTrainingPanel(): TrainingPanel {
     const barred = silenced(slots, self);
     const lit = midAction(slots);
     slotTips.casting(fill?.slot);
+    slotTips.refresh();
     // Greyed while you lie knocked down, as on the match HUD (#545).
     paintKnockdown(skills, self.knockdownRemaining);
     skillButtons.forEach((button, index) => {

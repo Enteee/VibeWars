@@ -193,7 +193,7 @@ describe("the corpus's numbers (#1676)", () => {
 
   it("bonus damage at rank 12", () => {
     expect(skill(ARCING_SHOT).attack?.bonusDamage).toMatchObject({ scaling: { atTwelve: 30 } });
-    expect(skill(SPLINTER_SHOT).attack?.bonusDamage).toMatchObject({ scaling: { atTwelve: 13 } });
+    expect(skill(SPLINTER_SHOT).attack?.bonusDamage).toMatchObject({ scaling: { atTwelve: 12.6 } });
     expect(skill(POUNCE).petAttack?.bonusDamage).toMatchObject({ scaling: { atTwelve: 17 } });
     expect(skill(BESTIAL_POUNCE).petAttack?.bonusDamage).toMatchObject({
       scaling: { atTwelve: 17 },

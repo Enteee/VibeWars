@@ -283,6 +283,7 @@ describe("aggression (#1222)", () => {
         onDeath: "vanish",
         ownerDisableSeconds: 0,
         deathBurst: undefined,
+        onDeathInRange: undefined,
         replacedBy: undefined,
         corpsesLeft: 0,
         companionSkillId: undefined,

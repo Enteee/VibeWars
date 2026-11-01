@@ -12,6 +12,7 @@ import { SPEND_WINDOW_MS, summarizeSpend } from "./hub-spend.mjs";
 import { KPI_SCHEMA_VERSION } from "./kpi.mjs";
 import { visible } from "./protocol.mjs";
 import { DRAIN_MS, clock, proposalName } from "./reboot.mjs";
+import { runnersLines } from "./runners-state.mjs";
 
 /**
  * Which roles each column needs before work can leave it. Used to explain a
@@ -362,6 +363,8 @@ export function boardScreenLines(snapshot, boardColumns, live, nudgeFacts, { row
  *   the pending reboot with the roles between turns, the reason of the one handed to the restarter (#345), or the one awaiting the operator (#960)
  * @property {{ line: string, stale: boolean } | null} build the build the company runs, against the checkout; null when the dashboard runs from the checkout (#557)
  * @property {{ file: Record<string, unknown> | null, now: number }} kpi `kpis.json` as read, null when missing or unreadable (#892)
+ * @property {{ status: import("./runners-state.mjs").RunnersStatus | null, max: number }} runners
+ *   the runner supervisor's status, null before it ran, and the operator's max (#1890)
  */
 
 /**
@@ -434,6 +437,19 @@ export function staffNote(id, { live, stale }, { staff, now }) {
     return `${id} down since ${hhmm(lastSeen)}`;
   }
   return live.has(id) ? null : `${id} not running`;
+}
+
+/**
+ * The company's CI runners (#1890): `runners: <online>/<target> (busy <b>,
+ * max <m>)`, and the supervisor's last refusal or back-off, in yellow.
+ *
+ * @param {CompanyFacts} facts
+ * @param {number} width
+ * @returns {string[]}
+ */
+function runnersSection({ runners: { status, max } }, width) {
+  const [line = "", ...reason] = runnersLines(status, max);
+  return [cut(line, width), ...reason.map((text) => paint(cut(text, width), WARN))];
 }
 
 /**
@@ -1062,6 +1078,7 @@ export const COMPANY_SECTIONS = [
   rebootSection,
   buildSection,
   staffSection,
+  runnersSection,
   kpiSection,
   hubSection,
   githubSection,
