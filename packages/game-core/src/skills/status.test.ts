@@ -121,7 +121,9 @@ describe("status definitions", () => {
         def.minionDamageBonus !== 0 ||
         def.minionHitHealthLossPercent !== 0 ||
         def.redirectsConditionsToMinion ||
-        def.physicalDamageDealtAs !== undefined;
+        def.physicalDamageDealtAs !== undefined ||
+        def.moveSpeedWhileEnchanted !== 1 ||
+        def.incomingAllySpellCastTimeMultiplier !== 1;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
