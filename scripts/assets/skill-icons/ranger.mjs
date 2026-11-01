@@ -76,6 +76,13 @@ export const RANGER_ICONS = {
   "ranger.conflagration": { glyph: "ritual-flame" },
   "ranger.predatory-season": { glyph: "ritual-heart-slash" },
   "ranger.winter": { glyph: "ritual-snowflake" },
+  // Nature rituals 2 (#1873): rituals 1's glyphs, told apart by a modifier.
+  "ranger.symbiosis": { glyph: "ritual-heart", modifier: "plus" },
+  "ranger.favorable-winds": { glyph: "ritual-cycle", modifier: "up" },
+  "ranger.brambles": { glyph: "ritual-heart-slash", modifier: "bleed" },
+  "ranger.tranquility": { glyph: "ritual-cycle", modifier: "less" },
+  "ranger.toxicity": { glyph: "ritual-mud", modifier: "less" },
+  "ranger.greater-conflagration": { glyph: "ritual-flame", modifier: "plus" },
   // Nature rituals 3 (#1886): stand-ins on Winnowing's totem until their art card.
   "ranger.edge-of-extinction": { glyph: "totem", modifier: "corpse" },
   "ranger.pestilence": { glyph: "totem", modifier: "bleed" },

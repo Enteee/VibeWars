@@ -790,7 +790,12 @@ function degenerationSources(combatant: Combatant): {
   const healing = new Set<string>();
   for (const status of combatant.statuses.active) {
     const definition = STATUS_DEFINITIONS[status.id];
-    if (definition.healthPips < 0) {
+    if (
+      definition.healthPips < 0 ||
+      (definition.whileUnder !== undefined &&
+        definition.whileUnder.healthPips < 0 &&
+        isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
+    ) {
       draining.add(status.sourceId);
     } else if (
       definition.healthPips > 0 ||
@@ -799,7 +804,7 @@ function degenerationSources(combatant: Combatant): {
       definition.healthPerSecond > 0 ||
       (definition.whileUnder !== undefined &&
         definition.whileUnder.healthPips > 0 &&
-        isUnderAnother(combatant.statuses.active, status, definition.whileUnder.categories))
+        isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       healing.add(status.sourceId);
     }
@@ -4132,7 +4137,8 @@ export class MatchSimulation {
 
   /**
    * A status that raised its bearer's maximum ended: Endure Pain's health
-   * (#1359), Mighty Was Vorizun's energy (#1464). What is above the maximum
+   * (#1359), Mighty Was Vorizun's energy (#1464), or an enchantment that
+   * Symbiosis counted (#1873). What is above the maximum
    * left is lost, as in GW1; a bearer below it loses nothing, so the end
    * never kills.
    */
@@ -4140,9 +4146,10 @@ export class MatchSimulation {
     if (change.kind !== "ended") {
       return;
     }
-    const { maxHealthBonus, maxEnergyBonus } = STATUS_DEFINITIONS[change.id];
+    const { maxHealthBonus, maxHealthBonusPerEnchantment, maxEnergyBonus, category } =
+      STATUS_DEFINITIONS[change.id];
     const { combatant } = record;
-    if (maxHealthBonus !== 0) {
+    if (maxHealthBonus !== 0 || maxHealthBonusPerEnchantment !== 0 || category === "enchantment") {
       combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
     }
     if (maxEnergyBonus !== 0) {
