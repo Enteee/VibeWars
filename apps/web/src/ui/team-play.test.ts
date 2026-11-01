@@ -140,7 +140,7 @@ class FakeElement {
   }
 }
 
-describe("the team screens' Team Builds (#1515, #1525)", () => {
+describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   let edited: string[];
   let added: number;
   let cloned: string[];
@@ -162,17 +162,14 @@ describe("the team screens' Team Builds (#1515, #1525)", () => {
       rerolled.push(id);
     },
   };
-  const render = (teams: readonly StoredTeam[], entry: HostEntry = "team-arena"): FakeElement => {
+  const render = (teams: readonly StoredTeam[]): FakeElement => {
     const root = new FakeElement();
-    renderHostScreen(
-      root as unknown as HTMLElement,
-      entry,
-      teams,
-      [],
-      undefined,
-      callbacks,
-      undefined,
-    );
+    renderTeamBuilder(root as unknown as HTMLElement, teams, [], undefined, callbacks);
+    return root;
+  };
+  const host = (entry: HostEntry): FakeElement => {
+    const root = new FakeElement();
+    renderHostScreen(root as unknown as HTMLElement, entry, [], undefined, callbacks, undefined);
     return root;
   };
 
@@ -262,16 +259,19 @@ describe("the team screens' Team Builds (#1515, #1525)", () => {
 
   it("says what each is for, and has no Host button: the lobby is always there (#1526)", () => {
     for (const entry of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
-      const root = render([team("a")], entry);
+      const root = host(entry);
       expect(root.all("rail-goal")[0]?.textContent).toBe(HOST_GOALS[entry]);
       expect(root.everything().some((node) => node.textContent.startsWith("Host a"))).toBe(false);
     }
   });
 
-  it("shows the lobby's place while it opens, and no cards on Hosted Game", () => {
-    const root = render([team("a")], "hosted-game");
-    expect(root.everything().some((node) => node.textContent === OPENING_LOBBY)).toBe(true);
-    expect(root.all("play-card")).toHaveLength(0);
+  it("shows the lobby's place while it opens, and no Team Build cards: they are Team Builder's", () => {
+    for (const entry of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
+      const root = host(entry);
+      expect(root.everything().some((node) => node.textContent === OPENING_LOBBY)).toBe(true);
+      expect(root.all("play-cards")).toHaveLength(0);
+      expect(root.everything().some((node) => node.textContent === "Team Builds")).toBe(false);
+    }
   });
 
   it("shows the cards alone on Team Builder", () => {
