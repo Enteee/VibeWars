@@ -3,6 +3,7 @@ import {
   getInsignia,
   getOffhand,
   getSkill,
+  getUniversalRune,
   getWeapon,
   type ChainRole,
   type CreatureLook,
@@ -137,13 +138,17 @@ export function insigniaIcon(insigniaId: string): GearIcon | undefined {
 
 /**
  * A rune's icon (#2058): a stone with its emblem, or with its profession's
- * glyph for an attribute rune. The tier is the caller's pips, from `data-tier`.
+ * glyph for an attribute rune. The tier is the caller's pips, from `data-tier`;
+ * a rune whose name carries no tier has none.
  * An attribute rune of no known profession gets none.
  */
-export function runeIcon(rune: EquippedRune): (GearIcon & { readonly tier: RuneTier }) | undefined {
+export function runeIcon(rune: EquippedRune): GearIcon | undefined {
   const name = runeDisplayName(rune);
   if (rune.kind === "universal") {
-    return { src: iconUrl("rune", rune.runeId), name, tier: rune.tier };
+    const src = iconUrl("rune", rune.runeId);
+    return getUniversalRune(rune.runeId)?.tiered === false
+      ? { src, name }
+      : { src, name, tier: rune.tier };
   }
   const profession = rune.attributeId.split(".")[0] ?? "";
   return Object.hasOwn(PROFESSIONS, profession)

@@ -88,11 +88,20 @@ const E = {
     solid("M3.4 2A2.7 2.7 0 0 1 5.8 5.4V7H1V5.4A2.7 2.7 0 0 1 3.4 2Z") +
     solid("M8.2 5A2.7 2.7 0 0 1 10.8 7.6V9.4H5.6V7.6A2.7 2.7 0 0 1 8.2 5Z"),
   bone:
-    line("M2.2 9.8L9.8 2.2M2.2 2.2L9.8 9.8", 2.2) +
-    dot(2, 2.2, 1.2) +
-    dot(10, 2.2, 1.2) +
-    dot(2, 9.8, 1.2) +
-    dot(10, 9.8, 1.2),
+    line("M2.4 9.6L9.6 2.4M2.4 2.4L9.6 9.6", 2) +
+    dot(1.8, 1.8, 1.7) +
+    dot(10.2, 1.8, 1.7) +
+    dot(1.8, 10.2, 1.7) +
+    dot(10.2, 10.2, 1.7),
+  waves: line(
+    "M.8 3.4Q2.4 1.6 4 3.4T7.2 3.4T11.2 3.4M.8 6.6Q2.4 4.8 4 6.6T7.2 6.6T11.2 6.6M.8 9.8Q2.4 8 4 9.8T7.2 9.8T11.2 9.8",
+    1.5,
+  ),
+  dagger: solid("M6 .6L7.8 6.8H4.2Z") + line("M2.6 7.4H9.4M6 7.6V11.2", 1.7),
+  bubbles:
+    ring("M3.6 8.2a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0", 1.5) +
+    ring("M1.4 3.4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0", 1.3) +
+    ring("M7 2.8a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0-3.4 0", 1.3),
   arrow: line("M1.6 10.4L9.6 2.4", 1.8) + solid("M5.6 1.6H10.4V6.4Z"),
   paw: `<circle cx="6" cy="8" r="2.6" ${ink}/><circle cx="2.4" cy="5" r="1.2" ${ink}/><circle cx="4.6" cy="2.6" r="1.2" ${ink}/><circle cx="7.4" cy="2.6" r="1.2" ${ink}/><circle cx="9.6" cy="5" r="1.2" ${ink}/>`,
   heart: solid("M6 10.6L1.6 6Q.6 3 3.2 2.2Q5 1.8 6 3.6Q7 1.8 8.8 2.2Q11.4 3 10.4 6Z"),
@@ -122,7 +131,7 @@ const INSIGNIA = {
   sentinels: ["stripes", "warrior"],
   dreadnought: ["shield", "warrior"],
   nightstalkers: ["moon", "assassin"],
-  infiltrators: ["x", "assassin"],
+  infiltrators: ["dagger", "assassin"],
   saboteurs: ["bomb", "assassin"],
   vanguards: ["spear", "assassin"],
   prodigys: ["star", "mesmer"],
@@ -133,7 +142,7 @@ const INSIGNIA = {
   anchorites: ["anchor", "monk"],
   disciples: ["book", "monk"],
   wanderers: ["boot", "monk"],
-  blighters: ["drop", "necromancer"],
+  blighters: ["bubbles", "necromancer"],
   undertakers: ["coffin", "necromancer"],
   "minion-masters": ["twoskulls", "necromancer"],
   bonelace: ["bone", "necromancer"],
@@ -143,7 +152,7 @@ const INSIGNIA = {
   prismatic: ["diamond", "elementalist"],
   aeromancer: ["wind", "elementalist", "spark"],
   geomancer: ["mountain", "elementalist", "spark"],
-  hydromancer: ["drop", "elementalist", "spark"],
+  hydromancer: ["waves", "elementalist", "spark"],
   pyromancer: ["flame", "elementalist", "spark"],
   earthbound: ["mountain", "ranger"],
   frostbound: ["snow", "ranger"],
@@ -154,17 +163,17 @@ const INSIGNIA = {
   centurions: ["banner", "paragon"],
 };
 
-/** The universal runes' emblems. */
-/** @type {Readonly<Record<string, string>>} */
+/** The universal runes' [emblem, stone colour]: health is red and green, energy blue, the rest apart. */
+/** @type {Readonly<Record<string, readonly [string, string]>>} */
 const RUNE = {
-  vigor: "heart",
-  vitae: "drop",
-  attunement: "bolt",
-  clarity: "eye",
-  purity: "clean",
-  recovery: "recover",
-  restoration: "restore",
-  absorption: "absorb",
+  vigor: ["heart", "#ff6e5a"],
+  vitae: ["drop", "#8fd36b"],
+  attunement: ["bolt", "#4f8cff"],
+  clarity: ["eye", "#56d4dd"],
+  purity: ["clean", "#ffa657"],
+  recovery: ["recover", "#e3b341"],
+  restoration: ["restore", "#f778ba"],
+  absorption: ["absorb", "#d2a8ff"],
 };
 
 /** @param {string} name */
@@ -209,8 +218,17 @@ export function gearIcons(profession, plateTint) {
   const rune = {};
   const stone = (/** @type {string} */ hue) =>
     `<path d="${STONE}" fill="${plateTint(hue)}" stroke="${hue}" stroke-width="1.4" stroke-linejoin="round"/>`;
-  for (const [id, emblem] of Object.entries(RUNE)) {
-    rune[id] = svg(stone(C.ink) + place(emblem, 0.78, 12, 11.2));
+  for (const [id, [emblem, hue]] of Object.entries(RUNE)) {
+    // A solid stone with a dark emblem: the ink and the dark swap, so each
+    // stone is told apart by colour as well as by shape at 18 px.
+    const swapped = place(emblem, 0.92, 12, 11.4)
+      .replaceAll(C.ink, "@")
+      .replaceAll(C.bg, hue)
+      .replaceAll("@", C.bg);
+    rune[id] = svg(
+      `<path d="${STONE}" fill="${hue}" stroke="${C.ink}" stroke-width="1.2" stroke-linejoin="round"/>` +
+        swapped,
+    );
   }
   for (const [name, draw] of Object.entries(profession)) {
     rune[`attribute-${name}`] = svg(

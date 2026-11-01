@@ -56,7 +56,7 @@ describe("icons", () => {
     }
     for (const rune of ALL_UNIVERSAL_RUNES) {
       const icon = runeIcon({ kind: "universal", runeId: rune.id, tier: "major" });
-      expect(icon?.tier, rune.id).toBe("major");
+      expect(icon?.tier, rune.id).toBe(rune.tiered ? "major" : undefined);
       expect(fs.existsSync(path.join(PUBLIC, icon?.src ?? "")), rune.id).toBe(true);
     }
     for (const profession of Object.keys(PROFESSIONS)) {
