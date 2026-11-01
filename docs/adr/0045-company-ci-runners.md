@@ -134,7 +134,15 @@ two cannot drift apart.
   rulesets and branch protection. Whoever holds that token can turn off
   every gate the company has. It is a fine-grained token for this
   repository only, with Administration and Variables write and nothing
-  else, with an expiry, and only the supervisor's process ever reads it.
+  else, with an expiry. Only the runner supervisor's pane is told where
+  it is (`VIBEWARS_CREDENTIALS`), never hubd's env or arguments.
+- **Residual: hubd can read that token.** The runner supervisor runs
+  under hubd's uid, and `runners-gh/` sits beside hubd's own `gh/` in the
+  credentials root. A compromised hubd, the daemon that parses every
+  jail's spool, can read it and turn the gates off. Only a separate uid
+  or a unit whose credential hubd's uid cannot read closes this; the
+  operator decides whether that must land before `COMPANY_RUNNERS` goes
+  on.
 
 ## The supervisor (#1890)
 
@@ -152,13 +160,20 @@ whole number up to `VIBEWARS_MAX_RUNNERS` counts as 0.
   raises it.
 - Each runner's JIT config is minted, then piped to `runner-jail.mjs
 --jitconfig -` on stdin: never argv, a file or a log line.
+- Each launcher gets a lifeline, `--lifeline 3`: a pipe the supervisor
+  holds and never writes. When the supervisor exits, even of a SIGKILL,
+  the kernel closes it and the launcher stops its runner, so a restarted
+  supervisor never runs beside the last one's runners.
+- Every runner that exits without GitHub having seen it busy has its
+  registration removed; only such a job resets the back-off.
 - `COMPANY_RUNNERS` is `1` while a runner is up and `n > 0`. Scaling to 0
   sets it to `0` first, and keeps one runner while a queued job asks for
   `vibewars-company`, for at most 10 minutes. A crashed supervisor leaves
   it at `1` until its restart reconciles; by hand, set it to `0` in
   GitHub.
-- Leftover runners with our label, offline and not alive here, are
-  deleted at start and at stop: what a host crash leaves.
+- Leftover runners named `vibewars-<host>-` with our label, offline and
+  not alive here, are deleted at start and at stop: what a host crash
+  leaves.
 
 **A precondition for `COMPANY_RUNNERS=1`:** the operator sets _Require
 approval for all outside collaborators_. A fork's pull request that

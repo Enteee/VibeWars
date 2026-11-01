@@ -1,3 +1,8 @@
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -14,6 +19,7 @@ import {
   ghEnv,
   launcherArgs,
   parseRunners,
+  spawnLauncher,
 } from "./runner-supervisor.mjs";
 
 const GIB = 1024 ** 3;
@@ -190,12 +196,41 @@ describe("runner supervisor", () => {
     ]);
     r.t.now += 10_000;
     await r.supervisor.tick();
+    for (const runner of r.github) {
+      runner.busy = true;
+    }
+    await r.supervisor.refreshBusy();
     r.launched[2]?.exit(0);
     await r.settle();
     expect(r.supervisor.failures).toBe(0);
     await r.supervisor.tick();
     expect(r.launched).toHaveLength(4);
     expect(r.last()?.reason).toBeNull();
+  });
+
+  it("removes the registration of a runner that exits without a job", async () => {
+    const r = rig({ target: 2 });
+    await r.supervisor.tick();
+    const [failed, idle] = r.github.map((runner) => runner.id);
+    r.launched[0]?.exit(1);
+    r.launched[1]?.exit(0);
+    await r.settle();
+    expect(r.calls).toContain(`remove ${String(failed)}`);
+    expect(r.calls).toContain(`remove ${String(idle)}`);
+    expect(r.github).toHaveLength(0);
+  });
+
+  it("an exit 0 GitHub never saw busy does not reset the back-off", async () => {
+    const r = rig();
+    await r.supervisor.tick();
+    r.launched[0]?.exit(1);
+    await r.settle();
+    r.t.now += 5_000;
+    await r.supervisor.tick();
+    // An expired JIT config: the runner exits 0 without taking a job.
+    r.launched[1]?.exit(0);
+    await r.settle();
+    expect(r.supervisor.failures).toBe(1);
   });
 
   it("does not start a runner on an overloaded host, and that is no failure", async () => {
@@ -285,6 +320,7 @@ describe("runner supervisor", () => {
       { id: 1, name: "vibewars-box-old-1", status: "offline", busy: false, labels: [LABEL] },
       { id: 2, name: "vibewars-box-old-2", status: "online", busy: true, labels: [LABEL] },
       { id: 3, name: "someone-else", status: "offline", busy: false, labels: ["self-hosted"] },
+      { id: 4, name: "vibewars-boxer-old-1", status: "offline", busy: false, labels: [LABEL] },
     ];
     await r.supervisor.tick();
     expect(r.calls.filter((call) => call.startsWith("remove"))).toEqual(["remove 1"]);
@@ -304,6 +340,7 @@ describe("runner supervisor", () => {
     expect(r.calls).toContain(`remove ${String(ours?.id)}`);
     expect(r.calls).not.toContain("remove 2");
     expect(r.calls).not.toContain("remove 3");
+    expect(r.calls).not.toContain("remove 4");
   });
 
   it("reports a refused credential once, and clears it when it works", async () => {
@@ -374,6 +411,58 @@ describe("runner supervisor", () => {
     await r.supervisor.stop();
     await r.supervisor.tick();
     expect(r.launched).toHaveLength(0);
+  });
+});
+
+describe("launchers", () => {
+  const url = (/** @type {string} */ name) => new URL(name, import.meta.url).href;
+  /** Stands in for runner-jail.mjs: reads its JIT config, then waits on its lifeline. */
+  const LAUNCHER = `
+    import fs from "node:fs";
+    import { watchLifeline } from ${JSON.stringify(url("./runner-jail.mjs"))};
+    fs.readFileSync(0, "utf8");
+    await watchLifeline(3).cut;
+    fs.writeFileSync(process.argv[2], "stopped");
+  `;
+  /** Stands in for the supervisor: two launchers, then nothing until it is killed. */
+  const SUPERVISOR = `
+    import { spawnLauncher } from ${JSON.stringify(url("./runner-supervisor.mjs"))};
+    const [launcher, ...markers] = process.argv.slice(2);
+    for (const marker of markers) {
+      spawnLauncher(process.execPath, [launcher, marker], {}, "jit");
+    }
+    process.stdout.write("up\\n");
+    setInterval(() => {}, 60_000);
+  `;
+
+  it("stop when their supervisor dies, even of a SIGKILL", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "lifeline-"));
+    const markers = ["a", "b"].map((name) => path.join(dir, name));
+    // Files, not `-e`: the supervisor's own main checks its argv[1].
+    const launcher = path.join(dir, "launcher.mjs");
+    const fake = path.join(dir, "supervisor.mjs");
+    fs.writeFileSync(launcher, LAUNCHER);
+    fs.writeFileSync(fake, SUPERVISOR);
+    const supervisor = spawn(process.execPath, [fake, launcher, ...markers], {
+      stdio: ["ignore", "pipe", "inherit"],
+    });
+    await new Promise((resolve) => supervisor.stdout.once("data", resolve));
+    expect(markers.filter((marker) => fs.existsSync(marker))).toEqual([]);
+    supervisor.kill("SIGKILL");
+    const deadline = Date.now() + 10_000;
+    while (!markers.every((marker) => fs.existsSync(marker)) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    expect(markers.filter((marker) => fs.existsSync(marker))).toEqual(markers);
+  });
+
+  it("one that exits unread, or never starts, is an exit code, not a crash", async () => {
+    // More than a pipe holds, so the write breaks once the launcher is gone.
+    const jitconfig = "x".repeat(1 << 20);
+    const unread = spawnLauncher(process.execPath, ["-e", "process.exit(2)"], {}, jitconfig);
+    expect(await unread.exited).toBe(2);
+    const missing = spawnLauncher(path.join(os.tmpdir(), "no-such-launcher"), [], {}, jitconfig);
+    expect(await missing.exited).toBe(1);
   });
 });
 

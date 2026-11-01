@@ -12,16 +12,20 @@
  * - For each missing runner it mints a JIT config and hands it to the
  *   launcher on stdin, never in argv, a file or a log line. A runner that
  *   exits, after its job, a crash or a kill, is replaced with a fresh one.
- *   Repeated failures back off, 5 s doubling to 5 min; a runner that ran
- *   its job resets that.
+ *   Repeated failures back off, 5 s doubling to 5 min; a runner GitHub
+ *   saw take its job resets that. Every runner that did not take one has
+ *   its registration removed.
+ * - Each launcher holds a lifeline to this process and stops its runner
+ *   when it breaks, so a supervisor that crashes leaves no runner behind.
  * - No runner starts while scratch is not a filesystem of its own (the disk
  *   cap), or while the host is short of memory or overloaded.
  * - `COMPANY_RUNNERS` is "1" while a runner is up and `n > 0`, otherwise
  *   "0". Scaling to 0 flips it to "0" first and keeps one runner until no
  *   queued job asks for `vibewars-company`, for at most 10 minutes.
  * - Scaling down kills idle runners first; busy ones finish their job.
- * - At start and at stop, every offline runner with our label that is not
- *   one of ours alive is deleted: what a host crash leaves behind.
+ * - At start and at stop, every offline runner with our host's name and
+ *   our label that is not one of ours alive is deleted: what a host crash
+ *   leaves behind.
  * - `VIBEWARS_MAX_RUNNERS` of 0, its default, makes no GitHub call at all.
  *
  * GitHub calls run one at a time, with the runners' own `GH_CONFIG_DIR`
@@ -459,26 +463,32 @@ export class RunnerSupervisor {
     this.runners.delete(runner.name);
     this.deps.log(`runners: ${runner.name} exited ${String(code)}`);
     // A signal to the whole group can reach a runner before `stop` marks it.
-    if (runner.killed || this.stopped) {
-      // An idle runner's registration outlives it; a busy one's job ended it.
+    const halted = runner.killed || this.stopped;
+    if (halted || code !== 0 || !runner.busy) {
+      // Only a job ends an ephemeral registration: any other exit leaves it.
       void this.call("remove", () => this.deps.api.remove(runner.id));
-    } else if (code === 0) {
-      // It took its job: whatever was failing works.
+    }
+    // Asked to go is no failure; an exit 0 GitHub never saw busy (an
+    // expired JIT config) proves nothing works.
+    if (!halted && code !== 0) {
+      this.fail(`${runner.name} exited ${String(code)}`);
+    } else if (!halted && runner.busy) {
+      // GitHub saw it take its job: whatever was failing works.
       this.failures = 0;
       this.retryAt = 0;
       this.backoffReason = null;
-    } else {
-      this.fail(`${runner.name} exited ${String(code)}`);
     }
     this.writeStatus();
   }
 
-  /** @returns {Promise<void>} what a crash left: offline, ours by label, not alive */
+  /** @returns {Promise<void>} what a crash left: offline, ours by host and label, not alive */
   async removeLeftovers() {
     const listed = await this.deps.api.list();
+    const ours = `vibewars-${this.deps.config.hostName}-`;
     for (const runner of listed) {
       if (
         runner.status === "offline" &&
+        runner.name.startsWith(ours) &&
         runner.labels.includes(LABEL) &&
         !this.runners.has(runner.name)
       ) {
@@ -778,6 +788,47 @@ function positive(value, fallback) {
   return value !== undefined && /^\d+$/.test(value) && number > 0 ? number : fallback;
 }
 
+/** The launcher's fd this process holds the other end of, and never writes. */
+export const LIFELINE_FD = 3;
+
+/**
+ * Starts one launcher, the JIT config on its stdin. Its lifeline is a pipe
+ * only this process holds open: when it exits, however it dies, the kernel
+ * closes it, and the launcher stops its runner. A restarted supervisor
+ * never finds the last one's runners still going.
+ *
+ * @param {string} command
+ * @param {string[]} args
+ * @param {Record<string, string>} env
+ * @param {string} jitconfig
+ * @returns {Launched}
+ */
+export function spawnLauncher(command, args, env, jitconfig) {
+  const child = spawn(command, args, {
+    env,
+    stdio: ["pipe", "inherit", "inherit", "pipe"],
+  });
+  child.stdin.once("error", () => {
+    // A launcher that exits before it reads, or never starts, breaks the
+    // pipe: that is its exit, which `exited` reports, not this one's crash.
+  });
+  child.stdin.end(`${jitconfig}\n`);
+  child.stdio[LIFELINE_FD]?.once("error", () => {
+    // Likewise: the launcher went first.
+  });
+  return {
+    exited: new Promise((resolve) => {
+      child.once("error", () => {
+        resolve(1);
+      });
+      child.once("exit", (code, signal) => {
+        resolve(code ?? (signal === null ? 1 : 128));
+      });
+    }),
+    kill: () => child.kill("SIGTERM"),
+  };
+}
+
 /**
  * The launcher's command line: no JIT config in it, ever; that goes on stdin.
  *
@@ -787,6 +838,7 @@ function positive(value, fallback) {
 export function launcherArgs({ cpus, memoryGib, tasksMax }) {
   return [
     ...["--jitconfig", "-"],
+    ...["--lifeline", String(LIFELINE_FD)],
     ...["--cpus", String(cpus)],
     ...["--memory-gib", String(memoryGib)],
     ...["--tasks-max", String(tasksMax)],
@@ -832,24 +884,8 @@ if (
   const supervisor = new RunnerSupervisor({
     now: () => Date.now(),
     api: githubApi(repo, gh),
-    launch(jitconfig) {
-      const child = spawn("vibewars-runner-jail", launcherArgs(cap), {
-        env: launcherEnv,
-        stdio: ["pipe", "inherit", "inherit"],
-      });
-      child.stdin.end(`${jitconfig}\n`);
-      return {
-        exited: new Promise((resolve) => {
-          child.once("error", () => {
-            resolve(1);
-          });
-          child.once("exit", (code, signal) => {
-            resolve(code ?? (signal === null ? 1 : 128));
-          });
-        }),
-        kill: () => child.kill("SIGTERM"),
-      };
-    },
+    launch: (jitconfig) =>
+      spawnLauncher("vibewars-runner-jail", launcherArgs(cap), launcherEnv, jitconfig),
     host: {
       freeBytes: () => os.freemem(),
       load1: () => os.loadavg()[0] ?? 0,

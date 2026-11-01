@@ -56,6 +56,7 @@ function hubWindow(command, windows, options = {}) {
       VIBEWARS_BOT_ROOT: path.join(dir, ".bots"),
       VIBEWARS_LLC_RESTART: "/restarter",
       VIBEWARS_CLAUDE_BOXES: "/boxes",
+      VIBEWARS_CREDENTIALS: "/creds",
     },
     encoding: "utf8",
   });
@@ -97,6 +98,10 @@ describe("hub-window open", () => {
     expect(splits[0]).toMatch(/run-forever\.mjs supervisor -- .*\/supervisor\.mjs$/);
     // The runner supervisor (#1890), a daemon of its own beside hubd.
     expect(splits[1]).toMatch(/run-forever\.mjs runner-supervisor -- .*\/runner-supervisor\.mjs$/);
+    // Where the runners' token lives reaches its pane, and not hubd's.
+    expect(splits[1]).toContain("-e VIBEWARS_CREDENTIALS=/creds");
+    expect(open).not.toContain("VIBEWARS_CREDENTIALS");
+    expect(splits[0]).not.toContain("VIBEWARS_CREDENTIALS");
   });
 
   it("pins the window's name, so check can find it", () => {

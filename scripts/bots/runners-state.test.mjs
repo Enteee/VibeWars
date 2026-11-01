@@ -8,10 +8,12 @@ import {
   maxRunners,
   parseStatus,
   parseTarget,
+  readAlertTold,
   readStatus,
   readTarget,
   runnersLines,
   runnersStateDir,
+  writeAlertTold,
   writeTarget,
 } from "./runners-state.mjs";
 
@@ -61,6 +63,16 @@ describe("runners state", () => {
       n: 0,
       reason: "the target 3 is above the max 2; treated as 0",
     });
+  });
+
+  it("keeps the alert told across a restart, and forgets it once cleared", () => {
+    const dir = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "runners-")), "state");
+    expect(readAlertTold(dir)).toBeNull();
+    writeAlertTold(dir, "the runners' credential was refused");
+    expect(fs.statSync(path.join(dir, "alert-told")).mode & 0o777).toBe(0o600);
+    expect(readAlertTold(dir)).toBe("the runners' credential was refused");
+    writeAlertTold(dir, null);
+    expect(readAlertTold(dir)).toBeNull();
   });
 
   it("reads only a status of the current shape", () => {

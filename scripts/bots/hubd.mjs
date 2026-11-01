@@ -158,9 +158,11 @@ import { loadLines } from "./company-load.mjs";
 import { peekRows } from "./peek.mjs";
 import {
   maxRunners,
+  readAlertTold as readRunnersAlertTold,
   readStatus as readRunnersStatus,
   runnersLines,
   runnersStateDir,
+  writeAlertTold as writeRunnersAlertTold,
   writeTarget as writeRunnersTarget,
 } from "./runners-state.mjs";
 import {
@@ -1914,23 +1916,25 @@ function serveRunners(argv) {
   return { code: 0, stdout: `${lines.join("\n")}\n`, stderr: "" };
 }
 
-/** The supervisor's alert the manager was last told, so it hears each once. */
-let runnersAlert = /** @type {string | null} */ (null);
-
 /**
  * The supervisor holds no Telegram: what the manager must hear about the
- * runners, their missing credential, hubd passes on, once.
+ * runners, their missing credential, hubd passes on, once. The alert told
+ * is kept on disk, so a hubd restart does not repeat a standing one.
  *
  * @returns {void}
  */
 function relayRunnersAlert() {
   const alert = readRunnersStatus(RUNNERS_STATE)?.alert ?? null;
-  if (alert !== null && alert !== runnersAlert) {
+  const told = readRunnersAlertTold(RUNNERS_STATE);
+  if (alert === told) {
+    return;
+  }
+  if (alert !== null) {
     tellCompany("runners-alert", `Company runners are down: ${alert}. Tell the operator.`, {
       to: "manager",
     });
   }
-  runnersAlert = alert;
+  writeRunnersAlertTold(RUNNERS_STATE, alert);
 }
 
 /**

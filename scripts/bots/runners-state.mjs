@@ -15,6 +15,8 @@ import path from "node:path";
 
 export const TARGET_FILE = "target";
 export const STATUS_FILE = "status.json";
+/** The alert hubd last told the manager, so a restart does not repeat it. */
+export const ALERT_TOLD_FILE = "alert-told";
 
 /** A status file is a few hundred bytes; anything bigger is not one. */
 const STATUS_FILE_BYTES = 64 * 1024;
@@ -109,6 +111,35 @@ export function writePrivate(file, contents) {
   const temp = `${file}.${String(process.pid)}.part`;
   fs.writeFileSync(temp, contents, { mode: 0o600 });
   fs.renameSync(temp, file);
+}
+
+/**
+ * The alert hubd last told the manager, or null.
+ *
+ * @param {string} dir the state directory
+ * @returns {string | null}
+ */
+export function readAlertTold(dir) {
+  try {
+    return fs.readFileSync(path.join(dir, ALERT_TOLD_FILE), "utf8");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Records the alert hubd told, or that none stands.
+ *
+ * @param {string} dir the state directory
+ * @param {string | null} alert
+ */
+export function writeAlertTold(dir, alert) {
+  if (alert === null) {
+    fs.rmSync(path.join(dir, ALERT_TOLD_FILE), { force: true });
+    return;
+  }
+  ensureStateDir(dir);
+  writePrivate(path.join(dir, ALERT_TOLD_FILE), alert);
 }
 
 /**

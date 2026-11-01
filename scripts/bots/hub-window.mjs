@@ -99,7 +99,6 @@ export function openHubWindow(tmux, session) {
     `VIBEWARS_TMUX=${tmux}`,
     // The runner supervisor's config (#1890); hubd reads the max.
     ...[
-      "VIBEWARS_CREDENTIALS",
       "VIBEWARS_MAX_RUNNERS",
       "VIBEWARS_RUNNER_CPUS",
       "VIBEWARS_RUNNER_MEMORY_GIB",
@@ -134,10 +133,13 @@ export function openHubWindow(tmux, session) {
   if (supervisor.code !== 0) {
     throw new Error("could not open the supervisor's pane in the hub window");
   }
+  // Where the runners' token is: its pane alone is told, never hubd's.
+  const credentials = process.env.VIBEWARS_CREDENTIALS;
   const runners = run(tmux, [
     "split-window",
     ...["-v", "-l", "25%", "-P", "-F", "#{pane_id}", "-t", supervisor.stdout.trim(), "-c", root],
     ...env,
+    ...(credentials === undefined ? [] : ["-e", `VIBEWARS_CREDENTIALS=${credentials}`]),
     daemon("runner-supervisor"),
   ]);
   if (runners.code !== 0) {

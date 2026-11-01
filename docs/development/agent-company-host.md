@@ -122,14 +122,16 @@ a whole `ci` job in the jail:
    write and Variables: write, nothing else, and an expiry. Run
    `claude-llc auth runners` and paste it. It is kept in `runners-gh` in the
    credential home, and only the supervisor uses it. Whoever holds it can
-   change branch protection.
+   change branch protection. The supervisor runs under hubd's uid, so a
+   compromised hubd could read it too (ADR-0045): decide whether that is
+   acceptable before you turn runners on.
 4. Set `vibewars.runners.max` in `devenv.local.nix`, and restart the
    company. `cpus`, `memoryGib` and `tasksMax` there are each runner's
    cap.
 
 The dashboard's COMPANY pane shows `runners: <online>/<target> (busy, max)`
 and the supervisor's last refusal. If the supervisor dies with runners
-up, `COMPANY_RUNNERS` stays `1` until it is back. To stop routing jobs
+up, they stop with it, and `COMPANY_RUNNERS` stays `1` until it is back. To stop routing jobs
 here by hand, set that repository variable to `0` in GitHub.
 
 ## Unprivileged user namespaces for bubblewrap
