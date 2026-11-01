@@ -3383,18 +3383,18 @@ const skillGlyph = {
     inkLine("M9 9H14.5M12.5 6.5L15 9L12.5 11.5", 1.8),
   // Attributes raised (#1941, #1947). The mark for "raised" is three rising bars,
   // the counterpart of the wilted bars of #1946; the glyphs ring a picture instead.
-  // Glyph of Elemental Power: a flame in the glyph ring, an up arrow beside it.
+  // Glyph of Elemental Power: a flame in the glyph ring, the rising bars beside it.
   "glyph-power-up": () =>
-    `<circle cx="10" cy="14" r="8" ${stroke(C.ink, 2.2)}/>` +
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
     inkFill(
-      "M10 8C11.5 10.5 14 12 14 15.5A4 4 0 0 1 6 15.5C6 13.5 7.5 13 8 10.5C8.8 11.2 9.2 11.8 9.5 12.5C10 11 10.2 9.5 10 8Z",
+      "M8.5 6.5C9.7 8.5 11.5 9.7 11.5 12.5A3 3 0 0 1 5.5 12.5C5.5 11 6.7 10.5 7 8.8C7.6 9.5 7.9 10 8.1 10.5C8.5 9.5 8.6 8 8.5 6.5Z",
     ) +
-    inkLine("M20.5 9.5V2.5M18 5L20.5 2.5L23 5", 2),
-  // Glyph of Energy: a bolt in the glyph ring, an up arrow beside it.
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
+  // Glyph of Energy: a bolt in the glyph ring, the rising bars beside it.
   "glyph-energy-up": () =>
-    `<circle cx="10" cy="14" r="8" ${stroke(C.ink, 2.2)}/>` +
-    inkFill("M11.5 8L6.5 15.5H10L8.5 20L14 12.5H10.5Z") +
-    inkLine("M20.5 9.5V2.5M18 5L20.5 2.5L23 5", 2),
+    `<circle cx="8.5" cy="12" r="6.5" ${stroke(C.ink, 2)}/>` +
+    inkFill("M9.5 6.5L5.5 12.8H8.3L7.3 17.5L11.8 11H9Z") +
+    inkFill("M16 20V16H18.2V20ZM18.9 20V11.5H21.1V20ZM21.8 20V7H24V20Z"),
   // Ritual Lord: the spirit totem, and three rising bars.
   "totem-bars-up": () =>
     inkFill("M5 11H9.5L9.7 20H4.8Z") +
