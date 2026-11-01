@@ -225,7 +225,15 @@ describe("Critical Defenses (#1315)", () => {
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 1,
       rechargeSeconds: 30,
-      effects: [{ kind: "apply-status", statusId: "critical-defenses", durationSeconds: 9 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "critical-defenses",
+          durationSeconds: {
+            scaling: { attributeId: "assassin.critical-strikes", atZero: 4, atTwelve: 8.8 },
+          },
+        },
+      ],
     });
     const bearer = makeCombatant({ id: "b" });
     bearer.statuses.apply("critical-defenses", 9, "b", NO_RANKS);

@@ -235,13 +235,24 @@ function spawningPowerOf(ranks: ReadonlyMap<string, number>): number {
  * brackets when Spawning Power lengthens a weapon spell (#1098).
  */
 function statusDuration(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
+  const base = lasting(effect.durationSeconds, ranks);
   if (findStatusDefinition(effect.statusId)?.category !== "weapon-spell") {
-    return seconds(effect.durationSeconds);
+    return base;
   }
-  const lasts = effect.durationSeconds * spawningPowerMultiplier(spawningPowerOf(ranks));
-  return lasts === effect.durationSeconds
-    ? seconds(effect.durationSeconds)
-    : `${seconds(lasts)} (${seconds(effect.durationSeconds)})`;
+  const at = resolveMagnitudeAtRanks(effect.durationSeconds, ranks);
+  const lasts = at * spawningPowerMultiplier(spawningPowerOf(ranks));
+  return lasts === at ? base : `${seconds(lasts)} (${base})`;
+}
+
+/** "16s": `duration` at these ranks, marked when it scales (#2041). */
+function lasting(duration: Magnitude, ranks: ReadonlyMap<string, number>): string {
+  const magnitude = describeMagnitude(duration, ranks);
+  return shown(magnitude, seconds(magnitude.current));
+}
+
+/** Whether `duration` has an end at all (#1789, #1941): Glyph of Energy's has none. */
+function ends(duration: Magnitude): boolean {
+  return !("flat" in duration) || Number.isFinite(duration.flat);
 }
 
 function statusName(id: string): string {
@@ -1024,7 +1035,7 @@ function describeAttackHits(
     if (effect.kind === "apply-status") {
       parts.push(
         `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
-          `for ${seconds(effect.durationSeconds)}`,
+          `for ${lasting(effect.durationSeconds, ranks)}`,
       );
     } else if (effect.kind === "damage") {
       parts.push(`foes your ${attacks} hit take ${riderDamage(effect, ranks)}`);
@@ -1085,7 +1096,7 @@ function describeAttackBlocks(
     effect.kind === "apply-status"
       ? [
           `foes that block your ${attacks} get ${statusName(effect.statusId)} ` +
-            `for ${seconds(effect.durationSeconds)}`,
+            `for ${lasting(effect.durationSeconds, ranks)}`,
         ]
       : describeEffects(effect, ranks).map(
           ({ text }) => `foes that block your ${attacks}: ${lowerFirst(text)}`,
@@ -1580,7 +1591,7 @@ function describeTrigger(
         return effect.effects.map((inner) =>
           sentence(
             inner.kind === "apply-status"
-              ? `if you block a ${kind} attack, ${foes} suffer from ${statusName(inner.statusId)} for ${String(inner.durationSeconds)} seconds`
+              ? `if you block a ${kind} attack, ${foes} suffer from ${statusName(inner.statusId)} for ${String(resolveMagnitudeAtRanks(inner.durationSeconds, ranks))} seconds`
               : `if you block a ${kind} attack, ${foes}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
           ),
         );
@@ -1806,7 +1817,9 @@ function describeNextAttackSkill(
   ranks: ReadonlyMap<string, number>,
 ): string[] {
   if (effect.kind === "apply-status") {
-    return [`next attack skill: ${statusName(effect.statusId)} ${seconds(effect.durationSeconds)}`];
+    return [
+      `next attack skill: ${statusName(effect.statusId)} ${lasting(effect.durationSeconds, ranks)}`,
+    ];
   }
   return describeEffects(effect, ranks).map(({ text }) => `next attack skill: ${text}`);
 }
@@ -1959,7 +1972,7 @@ function ifTypeText(
  */
 function suffered(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
   return (
-    `suffer ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+    `suffer ${statusName(effect.statusId)} for ${lasting(effect.durationSeconds, ranks)} ` +
     `(${statusText(effect.statusId, ranks)})`
   );
 }
@@ -2793,8 +2806,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           // until what it holds is spent.
           const what = statusText(effect.statusId, ranks);
           return {
-            text: Number.isFinite(effect.durationSeconds)
-              ? `For ${seconds(effect.durationSeconds)}, ${what}`
+            text: ends(effect.durationSeconds)
+              ? `For ${lasting(effect.durationSeconds, ranks)}, ${what}`
               : `${what.charAt(0).toUpperCase()}${what.slice(1)}`,
             magnitude: undefined,
           };
@@ -2806,7 +2819,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         text:
           `Applies ${statusName(effect.statusId)}${effect.on === "caster" ? " to you" : ""} ` +
           // No end of its own (#1789): Faithful Intervention's.
-          (Number.isFinite(effect.durationSeconds)
+          (ends(effect.durationSeconds)
             ? `for ${statusDuration(effect, ranks)} `
             : "until it ends ") +
           `(${statusText(effect.statusId, ranks)})`,

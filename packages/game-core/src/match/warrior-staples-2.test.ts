@@ -291,7 +291,7 @@ describe("Rage of the Ntouka (#1592)", () => {
       rechargeSeconds: 15,
       effects: [
         { kind: "adrenaline-gain", strikes: 6 },
-        { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: 8 },
+        { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: { flat: 8 } },
       ],
     });
     const sim = match();

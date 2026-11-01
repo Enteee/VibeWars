@@ -1720,13 +1720,14 @@ export function applyEffect(
       if (bearer === undefined || bearer.dead) {
         return events;
       }
-      // A weapon spell lasts longer with its caster's Spawning Power (#1098),
-      // whatever skill or trigger lands it.
+      // The duration at the ranks the status's stats use (#2041): a spirit's,
+      // ward's or trigger's are its owner's. A weapon spell lasts longer with
+      // its caster's Spawning Power (#1098), whatever skill or trigger lands it.
+      const seconds = resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster);
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
-          ? effect.durationSeconds *
-            spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
-          : effect.durationSeconds;
+          ? seconds * spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
+          : seconds;
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
       // Infuse Condition's (#1915): a condition goes to the bearer's
       // closest living minion instead, if it has one.

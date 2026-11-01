@@ -46,7 +46,31 @@ describe("Endure Pain", () => {
     warrior.statuses.apply("weakness", 10, "foe", NO_RANKS);
     expect(effectiveMaxHealth(warrior) - before).toBe(258);
   });
+
+  it("lasts 7 s at Strength 0, 16 at 12, 18 at 15 (#2041)", () => {
+    for (const [rank, seconds] of [
+      [0, 7],
+      [12, 16],
+      [15, 18],
+    ] as const) {
+      const warrior = ranked("w", "warrior.strength", rank);
+      cast("warrior.endure-pain", warrior);
+      expect(lasting(warrior, "endure-pain"), `Strength ${String(rank)}`).toBe(seconds);
+    }
+  });
+
+  it("lasts 15 s cast weakened at Strength 12: a rank less (#2041)", () => {
+    const warrior = ranked("w", "warrior.strength", 12);
+    warrior.statuses.apply("weakness", 10, "foe", NO_RANKS);
+    cast("warrior.endure-pain", warrior);
+    expect(lasting(warrior, "endure-pain")).toBe(15);
+  });
 });
+
+/** How long `statusId` on `bearer` lasts as it lands. */
+function lasting(bearer: Combatant, statusId: string): number | undefined {
+  return bearer.statuses.active.find((status) => status.id === statusId)?.durationSeconds;
+}
 
 describe("Faintheartedness", () => {
   it("degenerates by the caster's Curses, never the bearer's: 0 pips at 0, −2 at 12", () => {

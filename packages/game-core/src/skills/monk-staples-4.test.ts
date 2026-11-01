@@ -158,7 +158,15 @@ describe("the enchantments (#1511)", () => {
   it("Aegis: everyone in earshot, the Monk too, blocks half of all attacks for 13 s", () => {
     expect(skill("monk.aegis")).toMatchObject({
       area: { radius: AREA_EARSHOT, origin: "caster", affects: "allies", includesCaster: true },
-      effects: [{ kind: "apply-status", statusId: "aegis", durationSeconds: 13 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "aegis",
+          durationSeconds: {
+            scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 13.2 },
+          },
+        },
+      ],
     });
     expect(getStatusDefinition("aegis").block).toEqual({ chance: 0.5, against: "all" });
   });

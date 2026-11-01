@@ -183,7 +183,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: { flat: 17 } }],
         skillId: "assassin.shadow-fang",
       },
     ],

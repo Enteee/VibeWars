@@ -252,7 +252,9 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     triggers: [
       {
         on: "bearer-takes-physical-damage",
-        effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
+        effects: [
+          { kind: "apply-status", statusId: "cracked-armor", durationSeconds: { flat: 17 } },
+        ],
         target: "bearer",
         skillId: "necromancer.well-of-ruin",
       },
@@ -564,7 +566,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
             maxTargets: undefined,
             effects: [
               { kind: "damage", amount: { flat: 85 }, type: "typeless", armorPenetration: 0 },
-              { kind: "apply-status", statusId: "poison", durationSeconds: 15 },
+              { kind: "apply-status", statusId: "poison", durationSeconds: { flat: 15 } },
             ],
           },
         ],

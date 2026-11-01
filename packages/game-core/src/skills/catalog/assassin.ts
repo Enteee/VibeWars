@@ -43,7 +43,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "...your target suffers from Bleeding for 5...17...20 seconds": 17 s,
     // its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.black-lotus-strike",
@@ -298,8 +306,20 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     effects: [
-      { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
-      { kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 },
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 17 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "deep-wound",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 5, atTwelve: 17 },
+        },
+      },
     ],
   },
   {
@@ -429,7 +449,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: 3 }],
+    effects: [{ kind: "apply-status", statusId: "dash", durationSeconds: { flat: 3 } }],
   },
   {
     id: "assassin.dark-escape",
@@ -456,7 +476,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...13...15 seconds, you move 25% faster and take half damage":
     // 13 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "dark-escape", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dark-escape",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -527,7 +555,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
     // Refuge ends, you gain 40...88...100 Health if you are attacking."
-    effects: [{ kind: "apply-status", statusId: "shadow-refuge", durationSeconds: 6 }],
+    effects: [{ kind: "apply-status", statusId: "shadow-refuge", durationSeconds: { flat: 6 } }],
   },
   {
     id: "assassin.shroud-of-distress",
@@ -554,7 +582,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 30...54...60 seconds, if you are below 50% Health, you have a 75%
     // chance to block attacks": 54 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "shroud-of-distress", durationSeconds: 54 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "shroud-of-distress",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 30, atTwelve: 54 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.critical-eye",
@@ -582,7 +618,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "For 10...30...35 seconds, you have an additional 3...13...15% chance
     // to land a critical hit when attacking. You gain 1 Energy whenever you
     // score a critical hit": 30 s and 13%, the rank-12 values.
-    effects: [{ kind: "apply-status", statusId: "critical-eye", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "critical-eye",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -637,7 +681,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-moving" },
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -816,7 +868,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "poison",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Assassin Deadly Arts staples (#1234)                                   */
@@ -850,7 +910,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // target touched foe cannot cast spells": 5 s, its rank-12 value.
     effects: [
       { kind: "disable-own-skills", which: "spells", seconds: { flat: 15 } },
-      { kind: "apply-status", statusId: "shroud-of-silence", durationSeconds: 5 },
+      {
+        kind: "apply-status",
+        statusId: "shroud-of-silence",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 1, atTwelve: 5 },
+        },
+      },
     ],
   },
   {
@@ -877,7 +943,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 1...11 seconds, target foe cannot block your attacks": 9 s.
-    effects: [{ kind: "apply-status", statusId: "expose-defenses", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "expose-defenses",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 1, atTwelve: 9 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.enduring-toxin",
@@ -904,7 +978,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5 seconds ... renewed for another 5 seconds" while its bearer
     // moves (`renewsWhileMoving`).
-    effects: [{ kind: "apply-status", statusId: "enduring-toxin", durationSeconds: 5 }],
+    effects: [{ kind: "apply-status", statusId: "enduring-toxin", durationSeconds: { flat: 5 } }],
   },
   {
     id: "assassin.mark-of-death",
@@ -931,7 +1005,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...10 seconds, target foe gains 50% less benefit from
     // healing": 8.8 s.
-    effects: [{ kind: "apply-status", statusId: "mark-of-death", durationSeconds: 8.8 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mark-of-death",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.dancing-daggers",
@@ -1046,7 +1128,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-moving" },
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 12.6 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.deadly-arts", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1272,7 +1362,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "For 4...10 seconds, you have a 75% chance to block. Critical
     // Defenses refreshes every time you land a critical hit": 9 s, its
     // rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "critical-defenses", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "critical-defenses",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Assassin Shadow Arts staples (#1326)                                   */
@@ -1343,7 +1441,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         hits: "foes",
         radius: AREA_ADJACENT,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "poison",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.shadow-arts", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
       { kind: "shadow-step", to: "away-from-selection" },
     ],
@@ -1414,7 +1520,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...10 seconds, you have +7 Health regeneration and +80 armor":
     // 9 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "feigned-neutrality", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "feigned-neutrality",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.way-of-perfection",
@@ -1441,7 +1555,9 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 60 seconds, whenever you successfully land a critical hit, you
     // gain 10...40 Health".
-    effects: [{ kind: "apply-status", statusId: "way-of-perfection", durationSeconds: 60 }],
+    effects: [
+      { kind: "apply-status", statusId: "way-of-perfection", durationSeconds: { flat: 60 } },
+    ],
   },
   {
     id: "assassin.caltrops",
@@ -1476,8 +1592,20 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "Target foe and all foes adjacent to your target are Crippled and
     // Bleeding for 5...15 seconds": 13 s at rank 12.
     effects: [
-      { kind: "apply-status", statusId: "crippled", durationSeconds: 13 },
-      { kind: "apply-status", statusId: "bleeding", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 5, atTwelve: 13 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 5, atTwelve: 13 },
+        },
+      },
     ],
   },
   // Shadow Prison (#1551), at its rank-12 value.
@@ -1508,7 +1636,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // slower": 6 s.
     effects: [
       { kind: "shadow-step", to: "target" },
-      { kind: "apply-status", statusId: "shadow-prison", durationSeconds: 6 },
+      {
+        kind: "apply-status",
+        statusId: "shadow-prison",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 1, atTwelve: 5.8 },
+        },
+      },
     ],
   },
   /* ---------------------------------------------------------------------- */
@@ -1712,7 +1846,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // "Target foe becomes Crippled for 5...20 seconds. This skill counts as
     // an off-hand attack": 17 s. No attack, so never blocked.
     effects: [
-      { kind: "apply-status", statusId: "crippled", durationSeconds: 17 },
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 17 },
+        },
+      },
       { kind: "chain-mark", role: "off-hand" },
     ],
   },
@@ -1751,7 +1891,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         type: "typeless",
         armorPenetration: 0,
       },
-      { kind: "apply-status", statusId: "crippled", durationSeconds: 4 },
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 1, atTwelve: 4.2 },
+        },
+      },
       { kind: "chain-mark", role: "off-hand" },
     ],
   },
@@ -1822,7 +1968,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // seconds": 8 s.
     effects: [
       { kind: "shadow-step", to: "target" },
-      { kind: "apply-status", statusId: "dazed", durationSeconds: 8 },
+      {
+        kind: "apply-status",
+        statusId: "dazed",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 3, atTwelve: 7.8 },
+        },
+      },
     ],
   },
   /* ---------------------------------------------------------------------- */
@@ -1875,7 +2027,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has", category: "hex" },
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1925,7 +2085,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "poison",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.golden-fox-strike",
@@ -2017,7 +2185,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "caster-has", category: "enchantment" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.dagger-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2257,8 +2433,20 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [
       { kind: "interrupt", only: "spell" },
-      { kind: "apply-status", statusId: "dazed", durationSeconds: 8 },
-      { kind: "apply-status", statusId: "blind", durationSeconds: 8 },
+      {
+        kind: "apply-status",
+        statusId: "dazed",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 8.2 },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "blind",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.dagger-mastery", atZero: 1, atTwelve: 8.2 },
+        },
+      },
     ],
   },
   {
@@ -2561,7 +2749,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
             type: "earth",
             armorPenetration: 0,
           },
-          { kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 },
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 17 },
+            },
+          },
         ],
       },
     ],
@@ -2593,7 +2787,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // faster. This spell recharges 50% faster if cast on a moving foe"
     // (#1757): 13 s, its rank-12 value.
     effects: [
-      { kind: "apply-status", statusId: "siphon-speed", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "siphon-speed",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 13 },
+        },
+      },
       { kind: "caster-gains-status", statusId: "siphon-speed-haste", durationSeconds: 13 },
       {
         kind: "if",
@@ -2627,7 +2827,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10...35 seconds, your next 1...6 attacks cannot be blocked"
     // (#1757): 30 s, its rank-12 value; the count is the status's.
-    effects: [{ kind: "apply-status", statusId: "way-of-the-fox", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "way-of-the-fox",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Death triggers (#1762)                                                 */
@@ -2657,7 +2865,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...15 seconds, if target foe dies, you gain 5...20 Energy and
     // all your skills are recharged": 13 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "assassins-promise", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "assassins-promise",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Shadow Step and return (#1826)                                         */
@@ -2690,7 +2906,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // suffers from a Deep Wound" (#1826): the hex's end does both.
     effects: [
       { kind: "shadow-step", to: "target" },
-      { kind: "apply-status", statusId: "shadow-fang", durationSeconds: 10 },
+      { kind: "apply-status", statusId: "shadow-fang", durationSeconds: { flat: 10 } },
     ],
   },
   {
@@ -2781,7 +2997,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10...34...40 seconds you move 15% faster than normal. When Shadow
     // of Haste ends, you Shadow Step to your original location" (#1826).
-    effects: [{ kind: "apply-status", statusId: "shadow-of-haste", durationSeconds: 34 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "shadow-of-haste",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 10, atTwelve: 34 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.return",
@@ -2816,7 +3040,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         radius: AREA_ADJACENT,
         around: "caster",
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 7 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "assassin.shadow-arts", atZero: 3, atTwelve: 7 },
+            },
+          },
+        ],
       },
       { kind: "shadow-step", to: "target" },
     ],
@@ -2977,7 +3209,13 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // slower": 5 s. The step and the hex land apart, as the wiki notes.
     effects: [
       { kind: "shadow-step", to: "target" },
-      { kind: "apply-status", statusId: "dark-prison", durationSeconds: 5 },
+      {
+        kind: "apply-status",
+        statusId: "dark-prison",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.deadly-arts", atZero: 1, atTwelve: 5 },
+        },
+      },
     ],
   },
   {
@@ -3010,7 +3248,12 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // return to your original location": the stance on its caster.
     effects: [
       { kind: "shadow-step", to: "target" },
-      { kind: "apply-status", on: "caster", statusId: "shadow-walk", durationSeconds: 15 },
+      {
+        kind: "apply-status",
+        on: "caster",
+        statusId: "shadow-walk",
+        durationSeconds: { flat: 15 },
+      },
       { kind: "disable-own-skills", which: "types", types: ["attack"], seconds: { flat: 1 } },
       {
         kind: "disable-own-skills",
@@ -3046,7 +3289,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // PvP (#1951): "For 5...15 seconds, all hostile spells that target you
     // fail and all attacks against you miss. When Shadow Form ends, lose
     // all but 5...50 Health": 13 s.
-    effects: [{ kind: "apply-status", statusId: "shadow-form", durationSeconds: 13 }],
+    effects: [{ kind: "apply-status", statusId: "shadow-form", durationSeconds: { flat: 13 } }],
   },
   // Enchantment party moves (#1975).
   {
@@ -3076,7 +3319,15 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     // you remove one enchantment from your target. If you remove an
     // enchantment in this way, you lose 10...3 Energy or Dark Apostasy
     // ends": 14 s, and 4 Energy, the enchantment's.
-    effects: [{ kind: "apply-status", statusId: "dark-apostasy", durationSeconds: 14 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dark-apostasy",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.critical-strikes", atZero: 3, atTwelve: 14.2 },
+        },
+      },
+    ],
   },
   {
     id: "assassin.mirrored-stance",
@@ -3103,6 +3354,14 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10...35 seconds, whenever target foe enters a stance, you enter
     // the same stance" (#1965): 30.
-    effects: [{ kind: "apply-status", statusId: "mirrored-stance", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mirrored-stance",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
 ];

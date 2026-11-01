@@ -86,7 +86,7 @@ describe("condition-duration runes (#464)", () => {
   it("Recovery shortens deep wound too", () => {
     const target = wearing("target", 1, "recovery");
     applyEffect(
-      { kind: "apply-status", statusId: "deep-wound", durationSeconds: 10 },
+      { kind: "apply-status", statusId: "deep-wound", durationSeconds: { flat: 10 } },
       {
         surroundings: new Map(),
         caster: makeCombatant({ id: "caster" }),

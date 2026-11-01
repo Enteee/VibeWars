@@ -95,7 +95,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-not-moving" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -139,7 +147,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If this attack hits, your target begins Bleeding for 5...17...20
     // seconds": 17 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.maiming-spear",
@@ -185,7 +201,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "bleeding" },
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -234,7 +258,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-health-below", fraction: 0.5 },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -284,7 +316,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has", category: "condition" },
-        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 9 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "dazed",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.spear-mastery", atZero: 4, atTwelve: 8.8 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -368,7 +408,13 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // 13 Health per second while moving and 33% faster for 9 seconds,
     // ending on a hit: its rank-12 numbers, in the status.
-    effects: [{ kind: "apply-status", statusId: "fall-back", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "fall-back",
+        durationSeconds: { scaling: { attributeId: "paragon.command", atZero: 4, atTwelve: 8.8 } },
+      },
+    ],
   },
   {
     id: "paragon.stand-your-ground",
@@ -402,7 +448,13 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // +24 armor when not moving for 17 seconds, ending if its bearer
     // attacks: its rank-12 numbers, in the status.
-    effects: [{ kind: "apply-status", statusId: "stand-your-ground", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "stand-your-ground",
+        durationSeconds: { scaling: { attributeId: "paragon.command", atZero: 5, atTwelve: 17 } },
+      },
+    ],
   },
   {
     id: "paragon.incoming",
@@ -436,7 +488,13 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // 33% faster and 13 Health per second while moving for 9 seconds:
     // its rank-12 numbers, in the status (#956).
-    effects: [{ kind: "apply-status", statusId: "incoming", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "incoming",
+        durationSeconds: { scaling: { attributeId: "paragon.command", atZero: 4, atTwelve: 8.8 } },
+      },
+    ],
   },
   {
     id: "paragon.make-haste",
@@ -463,7 +521,13 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...17...20 seconds, target other ally moves 33% faster. This
     // skill ends if that ally successfully hits with an attack." (#956)
-    effects: [{ kind: "apply-status", statusId: "make-haste", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "make-haste",
+        durationSeconds: { scaling: { attributeId: "paragon.command", atZero: 5, atTwelve: 17 } },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -502,7 +566,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next attack skill used ... also causes Burning
     // for 1...3...3 seconds": the burning is the status's `nextAttackSkill`.
-    effects: [{ kind: "apply-status", statusId: "anthem-of-flame", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "anthem-of-flame", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.defensive-anthem",
@@ -536,7 +600,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // A 50% block for 9 seconds, ending on a member's attack-skill hit:
     // its rank-12 numbers, in the status (#956).
-    effects: [{ kind: "apply-status", statusId: "defensive-anthem", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "defensive-anthem",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.song-of-restoration",
@@ -573,7 +645,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // 97 at rank 12, in the status. A heal, not a gain, as the fandom's
     // anomaly note has it, so Deep Wound cuts it. The chanter's own cast
     // does not use it up: its next skill does.
-    effects: [{ kind: "apply-status", statusId: "song-of-restoration", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "song-of-restoration", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "paragon.aggressive-refrain",
@@ -601,7 +675,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 5...25 seconds, you attack 25% faster but have -20 armor. This
     // echo is reapplied every time a chant or shout ends on you": 21 s at
     // rank 12.
-    effects: [{ kind: "apply-status", statusId: "aggressive-refrain", durationSeconds: 21 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "aggressive-refrain",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.blazing-finale",
@@ -629,7 +711,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10...35 seconds, whenever a chant or shout ends on target
     // non-spirit ally, all foes adjacent to that ally are set on Fire for
     // 1...5 seconds" (PvP): 30 s and 4 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "blazing-finale", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "blazing-finale",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.burning-refrain",
@@ -658,7 +748,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // than that ally, that foe is set on Fire for 1...3 seconds. This echo
     // is reapplied every time a chant or shout ends on that ally": 3 s at
     // rank 12.
-    effects: [{ kind: "apply-status", statusId: "burning-refrain", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "burning-refrain", durationSeconds: { flat: 20 } }],
   },
   {
     id: "paragon.enduring-harmony",
@@ -685,7 +775,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10...35 seconds, chants and shouts last 50% longer on target
     // non-spirit ally": 30 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "enduring-harmony", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "enduring-harmony",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.finale-of-restoration",
@@ -713,7 +811,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10...35 seconds, the next 5 times that a chant or shout ends on
     // target non-spirit ally, that ally is healed for 15...75 Health"
     // (PvP): 30 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "finale-of-restoration", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "finale-of-restoration",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.motivation", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.hasty-refrain",
@@ -741,7 +847,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 8...20 seconds, target ally moves 25% faster. This echo is
     // reapplied every time a chant or shout ends on that ally": 18 s at
     // rank 12. A spirit may wear it.
-    effects: [{ kind: "apply-status", statusId: "hasty-refrain", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "hasty-refrain",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.mending-refrain",
@@ -769,7 +883,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 15 seconds, you have +2...3 Health regeneration. This echo is
     // reapplied every time a chant or shout ends on you" (PvP): +3 at rank
     // 12.
-    effects: [{ kind: "apply-status", statusId: "mending-refrain", durationSeconds: 15 }],
+    effects: [{ kind: "apply-status", statusId: "mending-refrain", durationSeconds: { flat: 15 } }],
   },
   {
     id: "paragon.purifying-finale",
@@ -796,7 +910,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10...35 seconds, target non-spirit ally loses 1 condition
     // whenever a chant or shout ends on that ally": 30 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "purifying-finale", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "purifying-finale",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.motivation", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.bladeturn-refrain",
@@ -824,7 +946,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 20 seconds, target non-spirit ally has +10...40 armor against
     // slashing damage. This echo is reapplied every time a chant or shout
     // ends on that ally" (PvP, #1485): +34 at rank 12.
-    effects: [{ kind: "apply-status", statusId: "bladeturn-refrain", durationSeconds: 20 }],
+    effects: [
+      { kind: "apply-status", statusId: "bladeturn-refrain", durationSeconds: { flat: 20 } },
+    ],
   },
   {
     id: "paragon.energizing-finale",
@@ -852,7 +976,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10...35 seconds, whenever a shout or chant ends on target
     // non-spirit ally, that ally gains 1...2 Energy" (#1485): 30 s and 2 at
     // rank 12.
-    effects: [{ kind: "apply-status", statusId: "energizing-finale", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "energizing-finale",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.motivation", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.soldiers-fury",
@@ -880,7 +1012,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10...35 seconds, if you are under the effects of a chant or a
     // shout, you attack 33% faster and gain 33% more adrenaline, but you
     // have -20 armor" (#1485): 30 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "soldiers-fury", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "soldiers-fury",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -919,7 +1059,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next time each ally within earshot uses an attack
     // skill, that ally gains 1...8 Energy": 7 at rank 12, in the status.
-    effects: [{ kind: "apply-status", statusId: "zealous-anthem", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "zealous-anthem", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.aria-of-zeal",
@@ -953,7 +1093,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next time each ally within earshot uses a spell,
     // that ally gains 1...6 Energy": 5 at rank 12, in the status.
-    effects: [{ kind: "apply-status", statusId: "aria-of-zeal", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "aria-of-zeal", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.lyric-of-zeal",
@@ -987,7 +1127,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next time each ally within earshot uses a signet,
     // that ally gains 1...8 Energy": 7 at rank 12, in the status.
-    effects: [{ kind: "apply-status", statusId: "lyric-of-zeal", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "lyric-of-zeal", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.aria-of-restoration",
@@ -1022,7 +1162,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10 seconds, the next time each party member within earshot uses a
     // spell, that party member gains 30...90 Health": 78 at rank 12, in the
     // status.
-    effects: [{ kind: "apply-status", statusId: "aria-of-restoration", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "aria-of-restoration", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "paragon.chorus-of-restoration",
@@ -1057,7 +1199,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10 seconds, the next time each ally within earshot uses a shout or
     // chant, that ally is healed for 30...90 Health": 78 at rank 12, in the
     // status. Its own cast is not one: the status lands after the use.
-    effects: [{ kind: "apply-status", statusId: "chorus-of-restoration", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "chorus-of-restoration", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "paragon.lyric-of-purification",
@@ -1091,7 +1235,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...20 seconds, the next time each ally within earshot uses a
     // signet, that ally loses 1 condition": 17 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "lyric-of-purification", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "lyric-of-purification",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.motivation", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.song-of-purification",
@@ -1126,7 +1278,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 20 seconds, the next 1...6 skills used by each ally within
     // earshot remove 1 condition from that ally": 5 skills at rank 12, in
     // the status.
-    effects: [{ kind: "apply-status", statusId: "song-of-purification", durationSeconds: 20 }],
+    effects: [
+      { kind: "apply-status", statusId: "song-of-purification", durationSeconds: { flat: 20 } },
+    ],
   },
   {
     id: "paragon.hexbreaker-aria",
@@ -1160,7 +1314,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next time each ally within earshot casts a spell,
     // that ally loses 1 hex". No attribute.
-    effects: [{ kind: "apply-status", statusId: "hexbreaker-aria", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "hexbreaker-aria", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.anthem-of-fury",
@@ -1195,7 +1349,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10 seconds, all party members within earshot gain 2...5 strikes
     // of adrenaline the next time they use an attack skill": 4 at rank 12,
     // in the status.
-    effects: [{ kind: "apply-status", statusId: "anthem-of-fury", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "anthem-of-fury", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.anthem-of-weariness",
@@ -1230,7 +1384,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 8 seconds, the next attack skill used by each ally within earshot
     // also causes Weakness for 1...16 seconds": 13 s at rank 12, the status's
     // `nextAttackSkill`.
-    effects: [{ kind: "apply-status", statusId: "anthem-of-weariness", durationSeconds: 8 }],
+    effects: [
+      { kind: "apply-status", statusId: "anthem-of-weariness", durationSeconds: { flat: 8 } },
+    ],
   },
   {
     id: "paragon.crippling-anthem",
@@ -1265,7 +1421,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10 seconds, the next attack skill used by each ally within earshot
     // causes Crippling for 5...15 seconds": 13 s at rank 12, the status's
     // `nextAttackSkill`.
-    effects: [{ kind: "apply-status", statusId: "crippling-anthem", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "crippling-anthem", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "paragon.anthem-of-disruption",
@@ -1300,7 +1458,13 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 1...10 seconds, the next attack skill used by each ally within
     // earshot also interrupts an action" (PvP): 8 s at rank 12. The
     // interrupt is the status's `nextAttackSkill`.
-    effects: [{ kind: "apply-status", statusId: "anthem-of-disruption", durationSeconds: 8 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "anthem-of-disruption",
+        durationSeconds: { scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 8.2 } },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -1339,7 +1503,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next skill used by each ally within earshot
     // cannot be interrupted": the status's `nextSkillRule`.
-    effects: [{ kind: "apply-status", statusId: "song-of-concentration", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "song-of-concentration", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "paragon.anthem-of-guidance",
@@ -1373,7 +1539,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next attack skill used by each party member
     // within earshot cannot be blocked": in PvP the party is the allies.
-    effects: [{ kind: "apply-status", statusId: "anthem-of-guidance", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "anthem-of-guidance", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "paragon.energizing-chorus",
@@ -1407,7 +1575,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, the next shout or chant used by each ally within
     // earshot costs 3...7 less Energy": 6 at rank 12, in the status.
-    effects: [{ kind: "apply-status", statusId: "energizing-chorus", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "energizing-chorus", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "paragon.anthem-of-envy",
@@ -1442,7 +1612,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "For 10 seconds, the next attack skill used by each ally within
     // earshot deals +10...20 damage against foes with more than 50%
     // Health" (PvP, 3148's numbers): 18 at rank 12, in the status.
-    effects: [{ kind: "apply-status", statusId: "anthem-of-envy", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "anthem-of-envy", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.signet-of-return",
@@ -1569,7 +1739,9 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-health-below", fraction: 0.75 },
-        effects: [{ kind: "apply-status", statusId: "never-surrender", durationSeconds: 10 }],
+        effects: [
+          { kind: "apply-status", statusId: "never-surrender", durationSeconds: { flat: 10 } },
+        ],
       },
     ],
   },
@@ -1658,7 +1830,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If this attack hits, it deals +5...25 damage and sets target foe on
     // Fire for 1...3 seconds" (#1486): 3 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.spear-mastery", atZero: 1, atTwelve: 2.6 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.mighty-throw",
@@ -1824,7 +2004,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       damageType: undefined,
       armorPenetration: 0,
       flightSpeed: undefined,
-      onCritical: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 13 }],
+      onCritical: [
+        {
+          kind: "apply-status",
+          statusId: "deep-wound",
+          durationSeconds: {
+            scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 13 },
+          },
+        },
+      ],
       onFailedToHit: [],
       onBlocked: [],
     },
@@ -1931,7 +2119,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-more-health" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2025,7 +2221,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "cracked-armor" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.spear-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2116,7 +2320,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "...target foe is Dazed for 4...10 seconds": 9 s.
-    effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dazed",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.holy-spear",
@@ -2180,7 +2392,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
                   scaling: { attributeId: "paragon.spear-mastery", atZero: 15, atTwelve: 75 },
                 },
               },
-              { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+              { kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } },
             ],
           },
         ],
@@ -2273,7 +2485,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // PvP: "For 10 seconds, the next time each ally within earshot makes an
     // attack, that attack has an additional 30...75% chance to critical":
     // 66% at Command 12, in the status.
-    effects: [{ kind: "apply-status", statusId: "go-for-the-eyes", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "go-for-the-eyes", durationSeconds: { flat: 10 } }],
   },
   {
     id: "paragon.never-give-up",
@@ -2353,7 +2565,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 2...4 seconds, all allies within earshot gain 1...2 Energy
     // regeneration": 4 s and 2 pips at Motivation 12, the pips in the status.
-    effects: [{ kind: "apply-status", statusId: "the-power-is-yours", durationSeconds: 4 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "the-power-is-yours",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.motivation", atZero: 2, atTwelve: 3.6 },
+        },
+      },
+    ],
   },
   {
     id: "paragon.its-just-a-flesh-wound",
@@ -2385,7 +2605,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has", category: "condition" },
-        effects: [{ kind: "apply-status", statusId: "its-just-a-flesh-wound", durationSeconds: 8 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "its-just-a-flesh-wound",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.motivation", atZero: 1, atTwelve: 8.2 },
+            },
+          },
+        ],
       },
       { kind: "remove-status", category: "condition", count: "all" },
     ],
@@ -2415,7 +2643,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 45 seconds, you gain 0...150% more adrenaline": 120% at
     // Leadership 12, in the status.
-    effects: [{ kind: "apply-status", statusId: "focused-anger", durationSeconds: 45 }],
+    effects: [{ kind: "apply-status", statusId: "focused-anger", durationSeconds: { flat: 45 } }],
   },
   {
     id: "paragon.awe",
@@ -2446,7 +2674,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-knocked-down" },
-        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 13 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "dazed",
+            durationSeconds: {
+              scaling: { attributeId: "paragon.leadership", atZero: 5, atTwelve: 13 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2578,7 +2814,15 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...13...15 seconds, you gain 33% more adrenaline while not
     // under the effects of an enchantment."
-    effects: [{ kind: "apply-status", statusId: "natural-temper", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "natural-temper",
+        durationSeconds: {
+          scaling: { attributeId: "paragon.leadership", atZero: 4, atTwelve: 12.8 },
+        },
+      },
+    ],
   },
   // Touch riders (#1966): the PvP split, under its base record's gwId.
   {
@@ -2606,6 +2850,6 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 20 seconds, the next 1...5 touch skills used against you fail"
     // (PvP): 4 at rank 12.
-    effects: [{ kind: "apply-status", statusId: "cant-touch-this", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "cant-touch-this", durationSeconds: { flat: 20 } }],
   },
 ];

@@ -431,7 +431,7 @@ describe("Anthem of Flame in the match (#758)", () => {
     );
     expect(first?.skill.id).toBe("ranger.barrage");
     expect(first?.next.effects).toEqual([
-      { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+      { kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } },
     ]);
     expect(second?.skill.id).toBe("ranger.broad-head-arrow");
     expect(second?.next).toEqual({ statusIds: [], effects: [] });

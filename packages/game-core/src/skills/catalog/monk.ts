@@ -105,8 +105,16 @@ export const MONK_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // A 50% chance to block attacks (#534), at its rank-12 duration.
-    effects: [{ kind: "apply-status", statusId: "guardian", durationSeconds: 6 }],
+    // A 50% chance to block attacks (#534), for as long as its rank allows.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "guardian",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 2, atTwelve: 6 },
+        },
+      },
+    ],
   },
   {
     id: "monk.mending",
@@ -386,7 +394,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "For 5...19...23 seconds, target ally cannot lose more than 10%
     // health due to damage from a single attack or spell": 19 s, its
     // rank-12 value; the cap is the status's.
-    effects: [{ kind: "apply-status", statusId: "protective-spirit", durationSeconds: 19 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "protective-spirit",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 19.4 },
+        },
+      },
+    ],
   },
   {
     id: "monk.infuse-health",
@@ -452,7 +468,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 2 seconds ... Unless this enchantment ends prematurely, that
     // ally is healed for 30...102...120 Health": the status's `expires`.
-    effects: [{ kind: "apply-status", statusId: "patient-spirit", durationSeconds: 2 }],
+    effects: [{ kind: "apply-status", statusId: "patient-spirit", durationSeconds: { flat: 2 } }],
   },
   {
     id: "monk.holy-veil",
@@ -545,7 +561,9 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "For 8 seconds, the next time target ally would take damage or life
     // steal, that ally gains that amount of health instead, maximum
     // 15...67...80": the 67 cap is the status's.
-    effects: [{ kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: 8 }],
+    effects: [
+      { kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: { flat: 8 } },
+    ],
   },
   {
     id: "monk.smite-hex",
@@ -795,7 +813,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 30 seconds, each time target ally attacks or casts a spell, that
     // ally is healed for 5...17...20 health": the 17 is the status's.
-    effects: [{ kind: "apply-status", statusId: "vigorous-spirit", durationSeconds: 30 }],
+    effects: [{ kind: "apply-status", statusId: "vigorous-spirit", durationSeconds: { flat: 30 } }],
   },
   {
     id: "monk.symbol-of-wrath",
@@ -954,7 +972,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15 seconds, target ally gains health regeneration of 4...8...9":
     // the status's +8.
-    effects: [{ kind: "apply-status", statusId: "healing-breeze", durationSeconds: 15 }],
+    effects: [{ kind: "apply-status", statusId: "healing-breeze", durationSeconds: { flat: 15 } }],
   },
   {
     id: "monk.heal-party",
@@ -1074,7 +1092,9 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 30 seconds, each time target foe is the target of an
     // enchantment, the caster of that enchantment takes 15...75 damage."
-    effects: [{ kind: "apply-status", statusId: "scourge-enchantment", durationSeconds: 30 }],
+    effects: [
+      { kind: "apply-status", statusId: "scourge-enchantment", durationSeconds: { flat: 30 } },
+    ],
   },
   {
     id: "monk.aegis",
@@ -1107,7 +1127,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 6...15 seconds, all party members within earshot have a 50%
     // chance to block attacks": 13 seconds, its rank-12 value (#1511).
-    effects: [{ kind: "apply-status", statusId: "aegis", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "aegis",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 13.2 },
+        },
+      },
+    ],
   },
   {
     id: "monk.shield-of-deflection",
@@ -1134,7 +1162,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 3...10 seconds, target ally has a 75% chance to block attacks and
     // gains 15...30 armor": 9 seconds, its rank-12 value (#1511).
-    effects: [{ kind: "apply-status", statusId: "shield-of-deflection", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "shield-of-deflection",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 3, atTwelve: 8.6 },
+        },
+      },
+    ],
   },
   {
     id: "monk.shielding-hands",
@@ -1162,7 +1198,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "For 8 seconds, damage and life steal received by target ally is
     // reduced by 3...18. When Shielding Hands ends, that ally is healed for
     // 5...50 Health" (#1511): the numbers are the status's.
-    effects: [{ kind: "apply-status", statusId: "shielding-hands", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "shielding-hands", durationSeconds: { flat: 8 } }],
   },
   {
     id: "monk.zealous-benediction",
@@ -1263,7 +1299,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...17 seconds, target ally cannot be the target of enemy
     // spells": 15 seconds, its rank-12 value (#1511).
-    effects: [{ kind: "apply-status", statusId: "spell-breaker", durationSeconds: 15 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "spell-breaker",
+        durationSeconds: {
+          scaling: { attributeId: "monk.divine-favor", atZero: 5, atTwelve: 14.6 },
+        },
+      },
+    ],
   },
   {
     id: "monk.blessed-light",
@@ -1653,7 +1697,13 @@ export const MONK_SKILLS: readonly Skill[] = [
                 type: "holy",
                 armorPenetration: 0,
               },
-              { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+              {
+                kind: "apply-status",
+                statusId: "burning",
+                durationSeconds: {
+                  scaling: { attributeId: "monk.smiting-prayers", atZero: 1, atTwelve: 2.6 },
+                },
+              },
             ],
           },
         },
@@ -1685,7 +1735,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8...20 seconds, target ally's attacks deal holy damage and have
     // +20% armor penetration": 18 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "judges-insight", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "judges-insight",
+        durationSeconds: {
+          scaling: { attributeId: "monk.smiting-prayers", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "monk.bane-signet",
@@ -2252,7 +2310,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...13 seconds, target ally gains +3...10 Health regeneration and
     // 20...45 armor": 11 seconds, its rank-12 value; the rest is the status's.
-    effects: [{ kind: "apply-status", statusId: "shield-of-regeneration", durationSeconds: 11 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "shield-of-regeneration",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 11.4 },
+        },
+      },
+    ],
   },
   // Monk staples 6 (#1748).
   {
@@ -2408,7 +2474,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...8 seconds, target foe cannot attack. This effect ends if the
     // target takes damage": 7 s, its rank-12 value; the rest is the status's.
-    effects: [{ kind: "apply-status", statusId: "pacifism", durationSeconds: 7 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "pacifism",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 4, atTwelve: 7.2 },
+        },
+      },
+    ],
   },
   {
     id: "monk.watchful-spirit",
@@ -2559,7 +2633,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     // PvP: 5 s recharge. "For 8 seconds, whenever target ally takes more
     // than 50 damage ... that ally is healed for 30...90 Health" (#1754):
     // the heal and its count are the status's.
-    effects: [{ kind: "apply-status", statusId: "spirit-bond", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "spirit-bond", durationSeconds: { flat: 8 } }],
   },
   {
     id: "monk.holy-wrath",
@@ -2587,7 +2661,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "For 10...30 seconds, the next 1...10 times target other ally takes
     // attack damage, this spell deals 66% of the damage back to the source"
     // (#1754): 26 seconds, its rank-12 value; the rest is the status's.
-    effects: [{ kind: "apply-status", statusId: "holy-wrath", durationSeconds: 26 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "holy-wrath",
+        durationSeconds: {
+          scaling: { attributeId: "monk.smiting-prayers", atZero: 10, atTwelve: 26 },
+        },
+      },
+    ],
   },
   {
     id: "monk.balthazars-aura",
@@ -2614,7 +2696,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8 seconds, foes adjacent to target ally take 10...30 holy damage
     // each second" (#1754): the pulse is the status's.
-    effects: [{ kind: "apply-status", statusId: "balthazars-aura", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "balthazars-aura", durationSeconds: { flat: 8 } }],
   },
   {
     id: "monk.healing-touch",
@@ -2679,7 +2761,9 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "For 10 seconds, the next time target ally receives damage that would
     // be fatal, the damage is negated and one nearby foe takes 30...180 holy
     // damage" (#1789): the negation and the smite are the status's.
-    effects: [{ kind: "apply-status", statusId: "judges-intervention", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "judges-intervention", durationSeconds: { flat: 10 } },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Death triggers (#1762)                                                 */
@@ -2711,13 +2795,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     // Dwayna's Sorrow. If an ally dies while under the effects of Dwayna's
     // Sorrow, your party is healed for 5...50."
     effects: [
-      { kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: 30 },
+      { kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: { flat: 30 } },
       {
         kind: "splash",
         hits: "allies",
         radius: AREA_NEARBY,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: 30 }],
+        effects: [
+          { kind: "apply-status", statusId: "dwaynas-sorrow", durationSeconds: { flat: 30 } },
+        ],
       },
     ],
   },
@@ -2746,7 +2832,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...11...14 seconds, Monk spells cost you 5 less Energy to cast"
     // (#1761): the discount is the status's.
-    effects: [{ kind: "apply-status", statusId: "divine-spirit", durationSeconds: 11 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "divine-spirit",
+        durationSeconds: {
+          scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 11.4 },
+        },
+      },
+    ],
   },
   {
     id: "monk.blessed-aura",
@@ -2800,7 +2894,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10...30...35 seconds, you gain 3 Energy whenever you use a
     // signet" (#1913).
-    effects: [{ kind: "apply-status", statusId: "scribes-insight", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "scribes-insight",
+        durationSeconds: {
+          scaling: { attributeId: "monk.divine-favor", atZero: 10, atTwelve: 30 },
+        },
+      },
+    ],
   },
   {
     id: "monk.healers-covenant",
@@ -2854,7 +2956,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...48...60 seconds, your Healing Prayers spells cast 50% faster.
     // This enchantment ends if you cast another enchantment" (#1761).
-    effects: [{ kind: "apply-status", statusId: "holy-haste", durationSeconds: 48 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "holy-haste",
+        durationSeconds: {
+          scaling: { attributeId: "monk.divine-favor", atZero: 1, atTwelve: 48.2 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2884,7 +2994,15 @@ export const MONK_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 3...7...8 seconds, target other ally cannot be knocked down": 7 s.
-    effects: [{ kind: "apply-status", statusId: "aura-of-stability", durationSeconds: 7 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "aura-of-stability",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 3, atTwelve: 7 },
+        },
+      },
+    ],
   },
   {
     id: "monk.healing-ring",
@@ -3099,7 +3217,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     // The PvP split (3454): "For 1...4 seconds, all party members in
     // earshot have a 75% chance to block attacks" (#1974): 3 s, its
     // rank-12 value. The heal on a block is the status's.
-    effects: [{ kind: "apply-status", statusId: "shield-guardian", durationSeconds: 3 }],
+    effects: [{ kind: "apply-status", statusId: "shield-guardian", durationSeconds: { flat: 3 } }],
   },
   // Enchantment party moves (#1975).
   {
@@ -3127,6 +3245,14 @@ export const MONK_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...10 seconds, enchantments cast on target other ally cost 10
     // less Energy (minimum 1 Energy)": 9 s.
-    effects: [{ kind: "apply-status", statusId: "air-of-enchantment", durationSeconds: 9 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "air-of-enchantment",
+        durationSeconds: {
+          scaling: { attributeId: "monk.protection-prayers", atZero: 4, atTwelve: 8.8 },
+        },
+      },
+    ],
   },
 ];

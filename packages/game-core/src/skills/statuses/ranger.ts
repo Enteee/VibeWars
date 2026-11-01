@@ -205,7 +205,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
-      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 13 }],
+      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 13 } }],
       skillId: "ranger.apply-poison",
     },
   }),
@@ -271,7 +271,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
-      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.barbed-arrows",
     },
   }),
@@ -289,7 +289,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       attackSkillsOnly: false,
       weapon: "bow",
       effects: [
-        { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+        { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 21 } },
         {
           kind: "if",
           condition: { kind: "target-has", category: "enchantment" },
@@ -441,7 +441,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
         on: "bearer-knocked-down",
         effects: [
           { kind: "damage", amount: { flat: 5 }, type: "typeless", armorPenetration: 0 },
-          { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
+          { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 17 } },
         ],
         target: "bearer",
         skillId: "ranger.brambles",
@@ -532,7 +532,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
-      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 14 }],
+      effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 14 } }],
       skillId: "ranger.poison-tip-signet",
     },
   }),
@@ -552,7 +552,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
-      effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
     endsAfterHits: { count: 1, weapon: undefined },
@@ -565,7 +565,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
-      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 13 }],
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
   }),
@@ -596,7 +596,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackBlocked: {
       attackSkillsOnly: false,
       weapon: "bow",
-      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 18 }],
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 18 } }],
       skillId: "ranger.glass-arrows",
     },
   }),

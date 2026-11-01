@@ -205,7 +205,15 @@ describe("Flail (#1549)", () => {
       type: "stance",
       attributeId: "warrior.strength",
       cost: { kind: "adrenaline", amount: 4 },
-      effects: [{ kind: "apply-status", statusId: "flail", durationSeconds: 12 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "flail",
+          durationSeconds: {
+            scaling: { attributeId: "warrior.strength", atZero: 1, atTwelve: 12.2 },
+          },
+        },
+      ],
     });
     const set = new StatusSet();
     set.apply("flail", 12, "w", NO_RANKS);
@@ -221,7 +229,7 @@ describe("Defy Pain (#1549)", () => {
       type: "stance",
       elite: true,
       cost: { kind: "adrenaline", amount: 5 },
-      effects: [{ kind: "apply-status", statusId: "defy-pain", durationSeconds: 20 }],
+      effects: [{ kind: "apply-status", statusId: "defy-pain", durationSeconds: { flat: 20 } }],
     });
     expect(getStatusDefinition("defy-pain")).toMatchObject({
       category: "stance",
@@ -373,7 +381,15 @@ describe("Enraging Charge (#1549)", () => {
     expect(skill(ENRAGING_CHARGE)).toMatchObject({
       cost: { kind: "energy", amount: 5 },
       rechargeSeconds: 20,
-      effects: [{ kind: "apply-status", statusId: "enraging-charge", durationSeconds: 13 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "enraging-charge",
+          durationSeconds: {
+            scaling: { attributeId: "warrior.strength", atZero: 5, atTwelve: 13 },
+          },
+        },
+      ],
     });
     const bearer = makeCombatant({ id: "w" });
     bearer.statuses.apply("enraging-charge", 13, "w", NO_RANKS);
