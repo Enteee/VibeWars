@@ -460,6 +460,16 @@ export interface RechargeFasterEffect {
 }
 
 /**
+ * This skill recharges at once (#1914), as Needling Shot's "if it hits a
+ * foe below 50% Health, it recharges instantly", inside an `if`. Unlike
+ * `recharge-faster` it lands with a shot, its recharge already running,
+ * and ends it there. Acts on the caster, once.
+ */
+export interface RechargeResetEffect {
+  readonly kind: "recharge-reset";
+}
+
+/**
  * Interrupt the target's in-progress cast (brief §14). Only lands if the
  * target is actually casting — a mistimed interrupt is wasted, which is
  * the entire skill-expression point of the mechanic.
@@ -733,31 +743,39 @@ export interface LengthenRechargeEffect {
  * own, a common skill included, but those of `exceptTypes`: Unnatural
  * Signet's "all your non-Mesmer skills except signets". `all` (#1570):
  * every skill on the bar, the one used included, as Blackout's "all of
- * your skills are disabled for 5 seconds". None on it: nothing.
+ * your skills are disabled for 5 seconds". `attacks` (#1914): every
+ * attack skill on the bar but the one used, as Focused Shot's "your other
+ * attack skills are disabled". None on it: nothing. `seconds` scales
+ * with the caster's rank, as Focused Shot's 8...5...4.
  */
 export type DisableOwnSkillsEffect =
   | {
       readonly kind: "disable-own-skills";
       readonly which: "spells";
-      readonly seconds: number;
+      readonly seconds: Magnitude;
     }
   | {
       readonly kind: "disable-own-skills";
       readonly which: "all";
-      readonly seconds: number;
+      readonly seconds: Magnitude;
+    }
+  | {
+      readonly kind: "disable-own-skills";
+      readonly which: "attacks";
+      readonly seconds: Magnitude;
     }
   | {
       readonly kind: "disable-own-skills";
       readonly which: "attribute";
       readonly attributeId: string;
-      readonly seconds: number;
+      readonly seconds: Magnitude;
     }
   | {
       readonly kind: "disable-own-skills";
       readonly which: "other-professions";
       readonly profession: ProfessionId;
       readonly exceptTypes: readonly SkillType[];
-      readonly seconds: number;
+      readonly seconds: Magnitude;
     };
 
 /**
@@ -1265,6 +1283,7 @@ export type UnconditionalEffect =
   | CasterGainsStatusEffect
   | CompanionGainsStatusEffect
   | RechargeFasterEffect
+  | RechargeResetEffect
   | SplashEffect
   | PullToCasterEffect
   | DestroyTargetSpiritEffect
@@ -1378,6 +1397,13 @@ export interface FlightSpeed {
   readonly when: StateCondition | undefined;
 }
 
+/**
+ * An attack skill's blows on each victim: 1, 2, or two but one while a
+ * state holds (#1914), read at release with the attacker as the caster:
+ * Forked Arrow's "if you are enchanted or hexed, only one arrow".
+ */
+export type Strikes = 1 | 2 | { readonly count: 2; readonly oneWhile: StateCondition };
+
 /** What makes an attack skill a blow of its weapon (ADR-0029). */
 export interface AttackSkillRule {
   readonly weapon: AttackWeaponClass;
@@ -1428,7 +1454,7 @@ export interface AttackSkillRule {
    * each rolling its own blind, block, crit and damage, with the skill's
    * effects on each that hits. A ranged attack skill flies once: 1.
    */
-  readonly strikes: 1 | 2;
+  readonly strikes: Strikes;
   /**
    * Whether no block stops it (Wild Throw's "This attack cannot be
    * blocked"), or while which state holds (#1354), read per blow as its
@@ -1648,6 +1674,19 @@ export interface SkillProjectile {
    * this project's tuning.
    */
   readonly speed: number;
+  /**
+   * How many it fires at the one target (#1914), each its own flight and
+   * dodge, its effects landing with each: Dancing Daggers' "three
+   * daggers". Absent: one.
+   */
+  readonly shots?: number;
+  /**
+   * One shot at each target the area finds as it leaves, the primary
+   * first, each landing the effects on its own victim and splashing no
+   * one (#1914): Lava Arrows' "an arrow at up to 3 foes near the target".
+   * Absent: one shot at the primary target, the area landing round it.
+   */
+  readonly spread?: true;
 }
 
 /**

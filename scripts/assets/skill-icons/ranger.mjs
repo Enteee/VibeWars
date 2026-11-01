@@ -98,4 +98,8 @@ export const RANGER_ICONS = {
   "ranger.run-as-one": { glyph: "paw-speed", modifier: "self" },
   "ranger.savage-pounce": { glyph: "paw-leap", modifier: "up" },
   "ranger.bestial-mauling": { glyph: "blink-daze", modifier: "stun" },
+  // Shots that fly differently (#1914), stand-ins until their art card.
+  "ranger.focused-shot": { glyph: "arrow-pierce", modifier: "clock" },
+  "ranger.needling-shot": { glyph: "arrow", modifier: "half" },
+  "ranger.forked-arrow": { glyph: "volley", modifier: "less" },
 };
