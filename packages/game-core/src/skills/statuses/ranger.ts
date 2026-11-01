@@ -40,6 +40,13 @@ export type RangerStatusId =
   | "conflagration"
   | "predatory-season"
   | "winter"
+  // Nature rituals 2 (#1873).
+  | "symbiosis"
+  | "favorable-winds"
+  | "brambles"
+  | "tranquility"
+  | "toxicity"
+  | "greater-conflagration"
   // Nature rituals 3 (#1886).
   | "energizing-wind"
   | "primal-echoes"
@@ -358,6 +365,64 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       ownSkills({ type: "shout" }, { energySurcharge: 4 }),
     ],
   }),
+
+  // Nature rituals 2 (#1873), at rank 12 as rituals 1's.
+  // Symbiosis: "For each enchantment on a non-spirit creature within
+  // range, that creature has +27...150 maximum Health": +125.
+  symbiosis: define("symbiosis", "Symbiosis", "skill-effect", {
+    profession: "ranger",
+    maxHealthBonusPerEnchantment: 125,
+  }),
+  // "Arrows move twice as fast and strike for +6 damage."
+  "favorable-winds": define("favorable-winds", "Favorable Winds", "skill-effect", {
+    profession: "ranger",
+    projectileSpeedMultiplier: 2,
+    attackDamageDelta: 6,
+    attackDamageDeltaWeapon: "bow",
+  }),
+  // "Non-spirit creatures that are knocked down in its range take 5 damage
+  // and begin Bleeding for 5...20 seconds": 17.
+  brambles: define("brambles", "Brambles", "skill-effect", {
+    profession: "ranger",
+    triggers: [
+      {
+        on: "bearer-knocked-down",
+        effects: [
+          { kind: "damage", amount: { flat: 5 }, type: "typeless", armorPenetration: 0 },
+          { kind: "apply-status", statusId: "bleeding", durationSeconds: 17 },
+        ],
+        target: "bearer",
+        skillId: "ranger.brambles",
+      },
+    ],
+  }),
+  // PvP: "Enchantments cast by non-spirit creatures within its range expire
+  // 10...30% faster": 26% shorter.
+  tranquility: define("tranquility", "Tranquility", "skill-effect", {
+    profession: "ranger",
+    ownSkillModifiers: [ownSkills({ type: "enchantment" }, { durationMultiplier: 0.74 })],
+  }),
+  // "Poisoned or Diseased creatures within its range suffer -2 Health
+  // degeneration."
+  toxicity: define("toxicity", "Toxicity", "skill-effect", {
+    profession: "ranger",
+    whileUnder: {
+      categories: [],
+      statusIds: ["poison", "disease"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: -2,
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
+  }),
+  // "All physical damage is fire damage instead."
+  "greater-conflagration": define(
+    "greater-conflagration",
+    "Greater Conflagration",
+    "skill-effect",
+    { profession: "ranger", physicalDamageDealtAs: "fire" },
+  ),
 
   // "Your preparations recharge 50% faster and last 30...246...300%
   // longer" (#1761), at rank 12.

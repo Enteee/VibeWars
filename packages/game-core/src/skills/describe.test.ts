@@ -575,7 +575,7 @@ describe("describeSkill", () => {
           lines(rule?.onFailedToHit ?? []) +
           (rule?.flightSpeed === undefined ? 0 : 1) +
           (rule?.removesPreparations === true ? 1 : 0) +
-          (rule !== undefined && rule.strikes > 1 ? 1 : 0) +
+          (rule !== undefined && rule.strikes !== 1 ? 1 : 0) +
           (entry.whileActivating === undefined ? 0 : 1) +
           (entry.activationWhile === undefined ? 0 : 1) +
           (entry.divineFavorDoubled === true ? 1 : 0) +

@@ -26,6 +26,7 @@ export type ProjectileSprite =
 export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.fireball": "fireball",
   "elementalist.flare": "fireball",
+  "elementalist.lava-arrows": "fireball",
   "elementalist.lightning-orb": "lightning-orb",
   "elementalist.shock-arrow": "lightning-orb",
   "elementalist.lightning-javelin": "lightning-orb",
@@ -37,6 +38,7 @@ export const SKILL_SPRITE: Readonly<Record<string, ProjectileSprite>> = {
   "elementalist.glowstone": "stone",
   "assassin.disrupting-dagger": "thrown-dagger",
   "assassin.crippling-dagger": "thrown-dagger",
+  "assassin.dancing-daggers": "thrown-dagger",
   "monk.spear-of-light": "spear",
 };
 

@@ -77,7 +77,15 @@ jobs:
   e2e-repeat:
     name: e2e-repeat (${{ matrix.job }})
     needs: plan
-    runs-on: ubuntu-latest
+    # Company runners when the job is trusted to run there, GitHub's otherwise
+    # (ADR-0045). An event allowlist, fail-closed: any event not named here,
+    # such as pull_request_target or workflow_run, runs hosted. The events
+    # equal scripts/bots/runner-events.json, which the job-started hook
+    # enforces; scripts/ci/runs-on.test.mjs holds the text identical in every
+    # workflow. A fork PR can rewrite this line in its own copy, so this does
+    # not stop it: that hook fails the job, and the outside-contributor
+    # approval setting stops it earlier.
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
     strategy:
       # One failing job is the answer; the others add nothing but cost.
       fail-fast: true

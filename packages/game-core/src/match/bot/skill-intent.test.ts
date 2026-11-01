@@ -221,6 +221,13 @@ const NO_BOT_USE = new Set([
   "ranger.muddy-terrain",
   "ranger.conflagration",
   "ranger.winter",
+  // Nature rituals 2 (#1873): auras on both teams, as rituals 1's.
+  "ranger.symbiosis",
+  "ranger.favorable-winds",
+  "ranger.brambles",
+  "ranger.tranquility",
+  "ranger.toxicity",
+  "ranger.greater-conflagration",
   // Nature rituals 3 (#1886): a death in range, and costs on both teams,
   // nothing the bot weighs.
   "ranger.edge-of-extinction",

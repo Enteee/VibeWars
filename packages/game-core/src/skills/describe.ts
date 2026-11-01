@@ -281,6 +281,11 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.maxHealthBonus !== 0) {
     parts.push(`+${String(definition.maxHealthBonus)} maximum health`);
   }
+  if (definition.maxHealthBonusPerEnchantment !== 0) {
+    parts.push(
+      `+${String(definition.maxHealthBonusPerEnchantment)} maximum health per enchantment`,
+    );
+  }
   if (definition.maxEnergyBonus !== 0) {
     parts.push(`+${String(definition.maxEnergyBonus)} maximum energy`);
   }
@@ -298,6 +303,9 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.elementalDamageTakenAs !== undefined) {
     parts.push(`elemental damage taken is ${definition.elementalDamageTakenAs} damage`);
   }
+  if (definition.physicalDamageDealtAs !== undefined) {
+    parts.push(`physical damage dealt is ${definition.physicalDamageDealtAs} damage`);
+  }
   if (definition.damageFromSpiritAttacks !== 0) {
     parts.push(`take ${signed(definition.damageFromSpiritAttacks)} from spirits' attacks`);
   }
@@ -312,11 +320,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
       `attacks have ${String(Math.round(definition.attackArmorPenetration * 100))}% armor penetration`,
     );
   }
-  if (definition.attackDamageDelta < 0) {
-    parts.push(`attacks deal ${String(-definition.attackDamageDelta)} less damage`);
-  }
-  if (definition.attackDamageDelta > 0) {
-    parts.push(`attacks deal ${String(definition.attackDamageDelta)} more damage`);
+  if (definition.attackDamageDelta !== 0) {
+    const weapon = definition.attackDamageDeltaWeapon;
+    const delta = definition.attackDamageDelta;
+    parts.push(
+      `${weapon === undefined ? "attacks" : `${weapon} attacks`} deal ${String(Math.abs(delta))} ${delta < 0 ? "less" : "more"} damage`,
+    );
   }
   if (definition.immuneTo.length > 0) {
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
@@ -536,6 +545,7 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
   if (definition.whileUnder !== undefined) {
     const {
       categories,
+      statusIds,
       attackDurationMultiplier,
       adrenalineGainFaster,
       healthPips,
@@ -553,7 +563,12 @@ export function describeStatus(id: string, ranks: ReadonlyMap<string, number> = 
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
       ...(adrenalineGainFaster === 0 ? [] : [adrenalineGainText(adrenalineGainFaster)]),
     ];
-    parts.push(`while under a ${categories.join(" or ")}: ${gains.join(", ")}`);
+    // Toxicity's (#1873): "while under Poison or Disease".
+    const under = [
+      ...(categories.length === 0 ? [] : [`a ${categories.join(" or ")}`]),
+      ...statusIds.map((id) => getStatusDefinition(id).name),
+    ];
+    parts.push(`while under ${under.join(" or ")}: ${gains.join(", ")}`);
   }
   if (definition.endsAfterTriggers !== undefined) {
     const plural = definition.endsAfterTriggers === 1 ? "" : "s";
@@ -838,6 +853,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-blocks-projectile": "blocks a projectile attack",
   "bearer-blocks": "blocks",
   "bearer-interrupted": "is interrupted",
+  "bearer-knocked-down": "is knocked down",
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
   "bearer-loses-enchantment": "loses an enchantment",
@@ -2449,6 +2465,8 @@ function describeEffect(
             : `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
         magnitude: undefined,
       };
+    case "recharge-reset":
+      return { text: "This skill recharges instantly", magnitude: undefined };
     case "recharge-others":
       return {
         text:
@@ -2500,8 +2518,10 @@ function describeEffect(
         magnitude,
       };
     }
-    case "disable-own-skills":
-      return { text: disableOwnText(effect, false), magnitude: undefined };
+    case "disable-own-skills": {
+      const magnitude = describeMagnitude(effect.seconds, ranks);
+      return { text: disableOwnText(effect, false, magnitude.current), magnitude };
+    }
     case "chain-mark":
       return {
         text: effect.role === "lead" ? "Counts as a lead attack" : "Counts as an off-hand attack",
@@ -2800,12 +2820,15 @@ const TYPE_TEXT: Record<SkillType, string> = {
  * of your spells", "All of your Smiting Prayers" (#1511), or "All of your
  * non-Mesmer skills except signets", "are disabled for 10 seconds". A
  * skill of the attribute it disables spares itself: "All of your other
- * Healing Prayers" (#1748).
+ * Healing Prayers" (#1748). "All of your other attack skills" (#1914).
  */
-function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean): string {
-  const time = `are disabled for ${String(effect.seconds)} seconds`;
+function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: number): string {
+  const time = `are disabled for ${String(seconds)} seconds`;
   if (effect.which === "all") {
     return `All of your skills ${time}`;
+  }
+  if (effect.which === "attacks") {
+    return `All of your other attack skills ${time}`;
   }
   if (effect.which === "spells") {
     return `All of your spells ${time}`;
@@ -3091,19 +3114,28 @@ export function describeSkill(
   // Dual Shot's arrows (#1539): "Shoot two arrows simultaneously at target
   // foe. These arrows deal 25% less damage".
   const strikes = rule?.strikes ?? 1;
+  const count = typeof strikes === "number" ? strikes : strikes.count;
+  // Forked Arrow's (#1914): "only one arrow" while its state holds.
+  const fewer =
+    typeof strikes === "number" ? "" : `; ${conditionText(strikes.oneWhile).toLowerCase()}, only 1`;
   const weaponDamage = rule?.weaponDamage ?? 1;
   const weaker =
     weaponDamage > 0 && weaponDamage < 1
       ? `, each dealing ${String(Math.round((1 - weaponDamage) * 100))}% less damage`
       : "";
   // Sun and Moon Slash's, a dual attack's (#1618): "Strikes twice".
-  const strikesText = strikes === 2 ? "Strikes twice" : `Strikes ${String(strikes)} times`;
+  const strikesText = count === 2 ? "Strikes twice" : `Strikes ${String(count)} times`;
   const arrowsLine =
-    strikes <= 1
+    count <= 1
       ? []
       : skill.attack?.weapon === "bow"
-        ? [{ text: `Shoots ${String(strikes)} arrows at once${weaker}`, magnitude: undefined }]
-        : [{ text: `${strikesText}${weaker}`, magnitude: undefined }];
+        ? [
+            {
+              text: `Shoots ${String(count)} arrows at once${weaker}${fewer}`,
+              magnitude: undefined,
+            },
+          ]
+        : [{ text: `${strikesText}${weaker}${fewer}`, magnitude: undefined }];
   // A status borne while activating (#524): Healing Signet's armor loss.
   const whileActivating =
     skill.whileActivating === undefined
@@ -3135,10 +3167,22 @@ export function describeSkill(
       ? [{ text: "Health gain from Divine Favor is doubled", magnitude: undefined }]
       : [];
   // A spell that flies (#535) lands only if it reaches its target.
+  // Several (#1914): Dancing Daggers' three, Lava Arrows' one a foe.
+  const shots = skill.projectile?.shots ?? 1;
   const projectile =
     skill.projectile === undefined
       ? []
-      : [{ text: "Projectile: can be dodged", magnitude: undefined }];
+      : [
+          {
+            text:
+              shots > 1
+                ? `${String(shots)} projectiles: each can be dodged`
+                : skill.projectile.spread === true
+                  ? "A projectile at each foe: each can be dodged"
+                  : "Projectile: can be dodged",
+            magnitude: undefined,
+          },
+        ];
   // "This spell has half the normal range" (#1326): Caltrops, the daggers.
   const halfRange =
     skill.target !== "self" && skill.range === RANGE_SPELL / 2
@@ -3201,7 +3245,12 @@ export function describeSkill(
       effect.kind === "disable-own-skills" &&
       effect.which === "attribute" &&
       effect.attributeId === skill.attributeId
-        ? [{ text: disableOwnText(effect, true), magnitude: undefined }]
+        ? [
+            {
+              text: disableOwnText(effect, true, describeMagnitude(effect.seconds, ranks).current),
+              magnitude: describeMagnitude(effect.seconds, ranks),
+            },
+          ]
         : describeEffects(effect, ranks),
     ),
     ...onCritical,

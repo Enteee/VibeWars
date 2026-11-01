@@ -405,6 +405,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     armorModifier: -20,
     whileUnder: {
       categories: ["shout", "chant"],
+      statusIds: [],
       attackDurationMultiplier: 0.67,
       adrenalineGainFaster: 0.33,
       healthPips: 0,

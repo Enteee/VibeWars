@@ -27,7 +27,8 @@ concurrency:
 jobs:
   soak:
     name: e2e soak
-    runs-on: ubuntu-latest
+    # Company runners or hosted, by the expression explained in e2e-repeat.yml.
+    runs-on: ${{ (vars.COMPANY_RUNNERS == '1' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository))) && fromJSON('["self-hosted","vibewars-company"]') || 'ubuntu-latest' }}
     # Five suites at about 3 minutes each, with ample headroom.
     timeout-minutes: 90
     steps:
