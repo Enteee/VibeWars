@@ -7,6 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { energyCostOf } from "../skills/activation.js";
 import { getSkill } from "../skills/catalog.js";
 import type { CombatEvent } from "../skills/effects.js";
+import { NO_RANKS } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
 import { effectiveActivationSeconds } from "../skills/tick.js";
 import type { FiredTrigger } from "../skills/triggers.js";
@@ -116,7 +117,7 @@ function healthLost(events: readonly CombatEvent[], targetId: string): number[] 
 describe("Air of Enchantment (#1975)", () => {
   it("cuts 10 off each enchantment cast on its bearer, never below 1", () => {
     const air = (sim: MatchSimulation): MatchSimulation => {
-      get(sim, "c").combatant.statuses.apply("air-of-enchantment", 9, "x");
+      get(sim, "c").combatant.statuses.apply("air-of-enchantment", 9, "x", NO_RANKS);
       return sim;
     };
     expect(paid(air(match()), TEN, "c")).toBe(1);
@@ -128,7 +129,7 @@ describe("Air of Enchantment (#1975)", () => {
 
   it("names no target on the skill bar, and spares an area enchantment", () => {
     const bearer = makeCombatant({ id: "b" });
-    bearer.statuses.apply("air-of-enchantment", 9, "x");
+    bearer.statuses.apply("air-of-enchantment", 9, "x", NO_RANKS);
     expect(energyCostOf(skill(FIFTEEN), bearer)).toBe(15);
     expect(energyCostOf(skill(FIFTEEN), bearer, bearer)).toBe(5);
     expect(energyCostOf(skill("necromancer.order-of-pain"), bearer, bearer)).toBe(10);
@@ -136,8 +137,8 @@ describe("Air of Enchantment (#1975)", () => {
 
   it("comes off after Jaundiced Gaze's: 10 − 8 = 2, then floor 1", () => {
     const bearer = makeCombatant({ id: "b" });
-    bearer.statuses.apply("air-of-enchantment", 9, "x");
-    bearer.statuses.apply("jaundiced-gaze", 16, "b");
+    bearer.statuses.apply("air-of-enchantment", 9, "x", NO_RANKS);
+    bearer.statuses.apply("jaundiced-gaze", 16, "b", NO_RANKS);
     expect(energyCostOf(skill(TEN), bearer, bearer)).toBe(1);
   });
 });
@@ -147,7 +148,7 @@ describe("Order of Apostasy (#1975)", () => {
     makeCombatant({ id: "n", maxHealth: 480, health: 480, energy: 50 });
   const ally = (weapon: Weapon, attributeId: string): Combatant => {
     const bearer = makeCombatant({ id: "a", equipment: wielding(weapon, attributeId) });
-    bearer.statuses.apply("order-of-apostasy", 5, "n");
+    bearer.statuses.apply("order-of-apostasy", 5, "n", NO_RANKS);
     return bearer;
   };
   const foe = (): Combatant => makeCombatant({ id: "f", team: 1, maxHealth: 1000, health: 1000 });
@@ -172,7 +173,7 @@ describe("Order of Apostasy (#1975)", () => {
     const n = necromancer();
     const a = ally(WEAPONS.sword, "warrior.swordsmanship");
     const f = foe();
-    f.statuses.apply("vital-blessing", 30, "x");
+    f.statuses.apply("vital-blessing", 30, "x", NO_RANKS);
     const events = hit(a, f, around(n, a, f));
     expect(f.statuses.has("vital-blessing")).toBe(false);
     expect(healthLost(events, "n")).toEqual([20]);
@@ -183,7 +184,7 @@ describe("Order of Apostasy (#1975)", () => {
     const n = necromancer();
     const a = ally(WEAPONS.sword, "warrior.swordsmanship");
     const f = foe();
-    f.statuses.apply("arcane-echo", 30, "x");
+    f.statuses.apply("arcane-echo", 30, "x", NO_RANKS);
     const events = hit(a, f, around(n, a, f));
     expect(f.statuses.has("arcane-echo")).toBe(false);
     expect(healthLost(events, "n")).toEqual([]);
@@ -193,9 +194,9 @@ describe("Order of Apostasy (#1975)", () => {
   it("fires beside Order of Pain on the same hit", () => {
     const n = necromancer();
     const a = ally(WEAPONS.sword, "warrior.swordsmanship");
-    a.statuses.apply("order-of-pain", 5, "n");
+    a.statuses.apply("order-of-pain", 5, "n", NO_RANKS);
     const f = foe();
-    f.statuses.apply("arcane-echo", 30, "x");
+    f.statuses.apply("arcane-echo", 30, "x", NO_RANKS);
     hit(a, f, around(n, a, f));
     expect(f.statuses.has("arcane-echo")).toBe(false);
     expect(f.health).toBe(1000 - 13);
@@ -205,7 +206,7 @@ describe("Order of Apostasy (#1975)", () => {
     const n = necromancer();
     const a = ally(WEAPONS.wand, "elementalist.fire-magic");
     const f = foe();
-    f.statuses.apply("vital-blessing", 30, "x");
+    f.statuses.apply("vital-blessing", 30, "x", NO_RANKS);
     hit(a, f, around(n, a, f));
     expect(f.statuses.has("vital-blessing")).toBe(true);
     expect(n.health).toBe(480);
@@ -215,8 +216,8 @@ describe("Order of Apostasy (#1975)", () => {
     const n = makeCombatant({ id: "n", maxHealth: 480, health: 10 });
     const a = ally(WEAPONS.sword, "warrior.swordsmanship");
     const f = foe();
-    f.statuses.apply("vital-blessing", 30, "x");
-    f.statuses.apply("judges-insight", 30, "x");
+    f.statuses.apply("vital-blessing", 30, "x", NO_RANKS);
+    f.statuses.apply("judges-insight", 30, "x", NO_RANKS);
     hit(a, f, around(n, a, f));
     expect(n.dead).toBe(true);
     hit(a, f, around(n, a, f));
@@ -232,10 +233,10 @@ describe("Dark Apostasy (#1975)", () => {
       energy,
       equipment: wielding(WEAPONS.daggers, "assassin.dagger-mastery"),
     });
-    attacker.statuses.apply("dark-apostasy", 14, "a");
+    attacker.statuses.apply("dark-apostasy", 14, "a", NO_RANKS);
     const victim = makeCombatant({ id: "f", team: 1, maxHealth: 1000, health: 1000 });
-    victim.statuses.apply("vital-blessing", 30, "x");
-    victim.statuses.apply("arcane-echo", 30, "x");
+    victim.statuses.apply("vital-blessing", 30, "x", NO_RANKS);
+    victim.statuses.apply("arcane-echo", 30, "x", NO_RANKS);
     resolveSwing({
       attacker,
       target: { combatant: victim, position: vec2(40, 0), creature: undefined },
@@ -273,7 +274,7 @@ describe("Jaundiced Gaze (#1975)", () => {
   it("the next enchantment costs 8 less and casts 1 s faster; the one after, full", () => {
     const sim = match();
     const caster = get(sim, "c").combatant;
-    caster.statuses.apply("jaundiced-gaze", 16, "c");
+    caster.statuses.apply("jaundiced-gaze", 16, "c", NO_RANKS);
     expect(effectiveActivationSeconds(skill(TEN), caster)).toBe(1);
     expect(paid(sim, TEN, "c")).toBe(2);
     expect(castSeconds(caster)).toBe(1);
@@ -303,7 +304,7 @@ describe("Jaundiced Gaze (#1975)", () => {
       sim.step(DT);
     }
     expect(caster.statuses.has("jaundiced-gaze")).toBe(false);
-    get(sim, "f").combatant.statuses.apply("vital-blessing", 30, "x");
+    get(sim, "f").combatant.statuses.apply("vital-blessing", 30, "x", NO_RANKS);
     for (let i = 0; !caster.statuses.has("jaundiced-gaze"); i++) {
       expect(i).toBeLessThan(20 * RULES.tickRateHz);
       if (castSeconds(caster) === undefined && !caster.cast.inAftercast) {

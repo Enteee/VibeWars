@@ -264,7 +264,7 @@ describe("status definitions", () => {
 
   it("sums each status's seconds off its own skills (#1975)", () => {
     const caster = makeCombatant({ id: "c" });
-    caster.statuses.apply("jaundiced-gaze", 16, "c");
+    caster.statuses.apply("jaundiced-gaze", 16, "c", NO_RANKS);
     const enchantment = getSkill("necromancer.order-of-pain");
     expect(enchantment && ownSkillBoost(caster.statuses.active, enchantment)).toMatchObject({
       energyDiscount: 8,

@@ -576,7 +576,7 @@ export function describeStatus(id: string, ranks?: ReadonlyMap<string, number>):
     if (price !== undefined) {
       const name = getProfession(price.profession).name;
       parts.push(
-        `for each ${name} enchantment removed, its caster loses ${String(price.percentOfMax)}% maximum Health`,
+        `for each ${name} enchantment removed, ${definition.name}'s caster loses ${String(price.percentOfMax)}% maximum Health`,
       );
     }
   }

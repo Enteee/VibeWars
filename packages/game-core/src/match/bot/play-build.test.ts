@@ -600,7 +600,7 @@ describe("setups (#1975)", () => {
       fighter("foe", 1, WARRIOR, vec2(480, 400), { behaviour: undefined, skillBar: [] }),
     ]);
   const enchant = (fight: MatchSimulation): void => {
-    fight.get("foe")?.combatant.statuses.apply("vital-blessing", 30, "x");
+    fight.get("foe")?.combatant.statuses.apply("vital-blessing", 30, "x", NO_RANKS);
   };
 
   it("casts Dark Apostasy only at an enchanted foe", () => {

@@ -1338,7 +1338,7 @@ describe("enchantment party moves (#1975)", () => {
     ]);
     expect(texts("necromancer.order-of-apostasy")).toEqual([
       "Applies Order of Apostasy for 5s (foes your physical attacks hit lose 1 enchantment, " +
-        "for each Monk enchantment removed, its caster loses 4% maximum Health)",
+        "for each Monk enchantment removed, Order of Apostasy's caster loses 4% maximum Health)",
     ]);
     expect(texts("assassin.dark-apostasy")).toEqual([
       "Applies Dark Apostasy for 14s (every time you land a critical hit: removes 1 enchantment " +
