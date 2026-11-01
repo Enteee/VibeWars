@@ -3264,7 +3264,7 @@ const skillGlyph = {
     ),
   "take-skills": () =>
     takeMark(
-      `<rect x="12" y="2" width="7" height="7" rx="1" fill="${C.ink}"/><rect x="16" y="6" width="6" height="6" rx="1" fill="${C.ink}"/>`,
+      `<rect x="15" y="1.5" width="7" height="4.5" rx="1" fill="${C.ink}"/><rect x="15" y="8" width="7" height="4.5" rx="1" fill="${C.ink}"/>`,
       `<rect x="3" y="14" width="7" height="7" rx="1" fill="${C.ink}"/>`,
     ),
   // Three attribute bars cut to stubs, and a wail or a wilt above them (#1946).
