@@ -1412,7 +1412,7 @@ not. A skill's own type, as Spear of Lightning's, wins over it.
 **Protective Spirit** (#936, Monk, Protection Prayers, 10 energy, ¼ s,
 5 s recharge) lasts 19 s on any ally: no single hit takes more than 10%
 of its max health, the max a deep wound has lowered. The cap comes last,
-after armor, Frenzy's double and a Rune of Absorption, on every hit,
+after armor, Frenzy's 160% and a Rune of Absorption, on every hit,
 blow or spell. Degeneration, sacrifice and life steal are not hits and
 are not capped. Two caps: the lower wins.
 
