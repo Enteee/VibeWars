@@ -64,11 +64,10 @@ export async function saveSoloTeam(page: Page): Promise<string> {
   expect(name, "a character is picked").not.toBe("");
   await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).click();
-  await page.getByLabel("Team name").fill(`Solo ${name}`);
+  await page.getByLabel("team name").fill(`Solo ${name}`);
   await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
-  await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.locator(".screen-teams")).toBeVisible();
   return `Solo ${name}`;
 }

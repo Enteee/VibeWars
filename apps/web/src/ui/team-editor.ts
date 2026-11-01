@@ -23,6 +23,7 @@ import {
   h,
   inlineConfirm,
   listenForPaste,
+  moreMenu,
   problemsChip,
   screenBar,
   shareLine,
@@ -48,8 +49,9 @@ import {
  * The team editor (#573, epic #554), mounted once per ADR-0030.
  *
  * Add, remove, reorder and rename change the team in memory and stay on
- * screen; nothing is stored until Save, which `validateTeam` gates. Back
- * with unsaved edits, and Delete always, ask inline first. A member's name
+ * screen; nothing is stored until Save, which `validateTeam` gates and
+ * which leaves once it has stored (#1902). Esc with unsaved edits, and
+ * Delete always, ask inline first. A member's name
  * opens them in the build editor, and the way back hands the editor its
  * own state again (#576), so nothing unsaved is lost on the trip. Share
  * copies the team as a code; a team code pasted here opens that team
@@ -81,7 +83,7 @@ export function pastedTeam(team: StoredTeam): TeamEditorState {
 }
 
 export interface TeamEditorCallbacks {
-  /** Store the team; the editor stays open once it has. */
+  /** Store the team; the editor then says so and leaves through `onClose` (#1902). */
   readonly onSave: (team: StoredTeam) => Promise<void>;
   readonly onDuplicate: (team: StoredTeam) => void;
   readonly onDelete: (id: string) => void;
@@ -96,7 +98,7 @@ export interface TeamEditorCallbacks {
 }
 
 export interface TeamEditorView {
-  /** Leave for `then`, as Back does: unsaved edits ask first (#1268). */
+  /** Leave for `then`, as Esc does: unsaved edits ask first (#1268). */
   leave(then: () => void): void;
   dispose(): void;
 }
@@ -304,8 +306,8 @@ export function mountTeamEditor(
   callbacks: TeamEditorCallbacks,
 ): TeamEditorView {
   let team = initial.team;
-  let opened = initial.opened;
-  let isStored = initial.stored;
+  const opened = initial.opened;
+  const isStored = initial.stored;
   let asking: InlineConfirm | undefined;
   let highlight: TeamHighlight | undefined;
   let disposed = false;
@@ -337,42 +339,36 @@ export function mountTeamEditor(
       then();
       return;
     }
-    ask(back, "Discard changes?", "Discard", then, "Keep editing");
-  };
-  const close = (): void => {
-    leave(callbacks.onClose);
+    ask(save, "Discard changes?", "Discard", then, "Keep editing");
   };
 
   root.replaceChildren();
   const panel = h("div", "screen team-editor");
 
-  const nameField = h("label", "field team-editor-name");
-  nameField.appendChild(h("span", "field-label", "Team name"));
+  // The name is the last crumb: the place is the team (#1902).
   const nameInput = document.createElement("input");
-  nameInput.className = "field-input";
+  nameInput.className = "editor-name";
+  nameInput.setAttribute("aria-label", "team name");
+  nameInput.placeholder = "Team name";
   nameInput.value = team.name;
   nameInput.addEventListener("input", () => {
     commit({ ...team, name: nameInput.value });
   });
-  nameField.appendChild(nameInput);
 
   const chip = problemsChip([]);
   const unsaved = h("span", "editor-unsaved", "● unsaved");
 
+  // Save is the way out (#1902): it stores, then leaves as Esc would.
   const save = button("Save", "primary", () => {
-    const saving = { ...team, updatedAt: Date.now() };
     save.disabled = true;
-    callbacks.onSave(saving).then(
+    callbacks.onSave({ ...team, updatedAt: Date.now() }).then(
       () => {
         if (disposed) {
           return;
         }
-        opened = saving;
-        isStored = true;
-        // Edits made while it was storing stay, and stay unsaved.
-        team = { ...team, updatedAt: saving.updatedAt };
+        // After leaving, which puts the last screen's toast away.
+        callbacks.onClose();
         toast("Saved");
-        update();
       },
       (error: unknown) => {
         if (disposed) {
@@ -394,11 +390,9 @@ export function mountTeamEditor(
     share.show(exportTeam(team));
   });
   shareButton.title = "share this team as one line";
-  const shareWrap = h("span", "editor-more-wrap");
-  shareWrap.append(shareButton, share.element);
   const remove = button("Delete", "", () => {
     ask(
-      remove,
+      more.toggle,
       `Delete ${team.name.trim() === "" ? "this team" : team.name}?`,
       "Delete",
       () => {
@@ -407,15 +401,22 @@ export function mountTeamEditor(
       "Cancel",
     );
   });
+  const more = moreMenu([shareButton, duplicate, remove], [share.element]);
 
-  const { back } = screenBar({
-    crumbs: ["VibeWars", "Team Builder", "Edit"],
-    back: { label: "Back", onBack: close },
+  screenBar({
+    crumbs: ["VibeWars", "Team Builder", nameInput],
+    escape: () => {
+      leave(callbacks.onClose);
+    },
     status: [chip.element, unsaved],
-    actions: [save, shareWrap, duplicate, remove],
-    // Esc puts away Share and the problem list, then clears the counter's
-    // marks, before it is Back.
+    actions: [save, more.element],
+    // Esc puts away the ⋯ menu, Share and the problem list, then clears
+    // the counter's marks, before it leaves.
     putAway: () => {
+      if (more.isOpen()) {
+        more.close();
+        return true;
+      }
       if (share.isOpen()) {
         share.hide();
         return true;
@@ -432,7 +433,6 @@ export function mountTeamEditor(
       return false;
     },
   });
-  panel.append(nameField);
 
   // What the bars hold; a counter marks its cells in the grid (#575).
   const counterBar = h("div", "team-counters");
@@ -667,7 +667,7 @@ export function mountTeamEditor(
     save.title = firstBlocking?.text ?? "save this team";
     duplicate.disabled = !isStored || isTeamUnsaved(opened, team);
     duplicate.title = duplicate.disabled ? "Save first to duplicate" : "duplicate this team";
-    // A new team has nothing to delete: Back leaves it.
+    // A new team has nothing to delete: Esc leaves it.
     remove.disabled = !isStored;
 
     const last = team.members.length - 1;
@@ -803,7 +803,7 @@ export function mountTeamEditor(
 
   update();
 
-  // A press anywhere else puts the problem list and Share away.
+  // A press anywhere else puts the problem list, ⋯ and Share away.
   const onPointerDown = (event: PointerEvent): void => {
     if (!(event.target instanceof Node)) {
       return;
@@ -811,7 +811,8 @@ export function mountTeamEditor(
     if (!chip.element.contains(event.target)) {
       chip.close();
     }
-    if (!shareWrap.contains(event.target)) {
+    if (!more.element.contains(event.target)) {
+      more.close();
       share.hide();
     }
   };
@@ -834,7 +835,7 @@ export function mountTeamEditor(
       return true;
     }
     ask(
-      back,
+      save,
       "Discard your edits and open the pasted team?",
       "Discard",
       () => {

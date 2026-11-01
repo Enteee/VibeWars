@@ -67,7 +67,6 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
     await paste(host.locator(".screen"), trioCode());
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await expect(host.locator(".toast")).toHaveText("Saved");
-    await host.getByRole("button", { name: "back" }).click();
 
     const code = await hostLobby(host);
 

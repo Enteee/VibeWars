@@ -38,29 +38,48 @@ function pip(row: Locator, rank: number): Locator {
   return row.locator(`.attribute-pip[data-pip="${String(rank)}"]`);
 }
 
-test("Close leaves at once without edits, and asks before it discards them (#566)", async ({
+test("Esc leaves at once without edits, and asks before it discards them; Save leaves too (#566, #1902)", async ({
   page,
 }) => {
   await newCharacter(page);
+  // Save and ⋯ are the bar's only buttons: no Close.
+  const bar = page.locator("#topbar");
+  await expect(bar.getByRole("button", { name: "Close", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "more actions" }).click();
+  await expect(bar.locator(".editor-more button")).toHaveText([
+    "Share",
+    "Share as GW1 code",
+    "Duplicate",
+    "Delete",
+  ]);
+  await page.keyboard.press("Escape");
+  await expect(bar.locator(".editor-more")).toBeHidden();
   await expect(page.locator(".editor-unsaved")).toBeHidden();
-  await page.getByRole("button", { name: "close" }).click();
+  await page.keyboard.press("Escape");
   await expect(roster(page)).toBeVisible();
 
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Draft");
   await expect(page.locator(".editor-unsaved")).toBeVisible();
-  await page.getByRole("button", { name: "close" }).click();
+  await page.keyboard.press("Escape");
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "keep editing" }).click();
   await expect(page.locator("input.editor-name")).toHaveValue("Draft");
+  // Cancel hands the focus back to Save, which the question stood in for.
+  await expect(page.getByRole("button", { name: "Save", exact: true })).toBeFocused();
 
-  // Esc is Close, and asks the same.
-  await page.getByRole("button", { name: "close" }).focus();
   await page.keyboard.press("Escape");
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "discard" }).click();
   await expect(roster(page)).toBeVisible();
   await expect(page.locator(".character-card", { hasText: "Draft" })).toHaveCount(0);
+
+  // Save stores and goes back where the editor was opened from.
+  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await page.locator("input.editor-name").fill("Kept");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect(roster(page)).toContainText("Kept");
 });
 
 test("the top bar's question stands in for the crumbs and fits the window at any width (#1320)", async ({
@@ -68,7 +87,7 @@ test("the top bar's question stands in for the crumbs and fits the window at any
 }) => {
   await newCharacter(page);
   await page.locator("input.editor-name").fill("Draft");
-  await page.locator(".topbar-back").click();
+  await page.keyboard.press("Escape");
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await expect(page.locator(".topbar-crumbs")).toBeHidden();
   for (const width of [360, 700, 721, 800, 940]) {
@@ -358,19 +377,54 @@ async function teamList(page: Page): Promise<string[]> {
   );
 }
 
-test("a new team is stored only on Save, which stays on the editor (#573)", async ({ page }) => {
+test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens (#1902)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 700 });
+  await page.goto("./");
+  const bar = page.locator("#topbar");
+  await openRail(page, "Team Builder");
+  await page.getByRole("button", { name: "New team build", exact: true }).click();
+  await bar.getByRole("button", { name: "more actions" }).click();
+  await expect(bar.getByRole("button", { name: "Share", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await expect(bar.getByRole("button", { name: "Save", exact: true })).toBeVisible();
+  await bar.getByRole("button", { name: "more actions" }).click();
+  await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
+  await bar.getByRole("button", { name: "Share", exact: true }).click();
+  await expect(bar.locator(".editor-share")).toBeVisible();
+});
+
+test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
+  page,
+}) => {
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
 
-  // Nothing stored yet: Back leaves at once and the list is still empty.
+  // The name is the last crumb, and Save and ⋯ are the bar's only buttons.
+  const bar = page.locator("#topbar");
+  await expect(bar.locator("span.topbar-crumb")).toHaveText(["VibeWars", "Team Builder"]);
+  await expect(bar.locator(".topbar-crumb").last()).toHaveAttribute("aria-label", "team name");
+  await expect(bar.getByRole("textbox", { name: "team name", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
+
+  // Nothing stored yet: Esc leaves at once and the list is still empty.
   const save = page.getByRole("button", { name: "Save", exact: true });
   await expect(save).toBeDisabled();
   await expect(save).toHaveAttribute("title", "A team needs at least one member.");
   // Nothing stored to copy or delete, so neither can store a half-made team.
+  await page.getByRole("button", { name: "more actions" }).click();
+  await expect(bar.locator(".editor-more button")).toHaveText(["Share", "Duplicate", "Delete"]);
   await expect(page.getByRole("button", { name: "duplicate" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "delete" })).toBeDisabled();
-  await page.getByRole("button", { name: "back" }).click();
+  // The first Esc puts ⋯ away, the second leaves.
+  await page.keyboard.press("Escape");
+  await expect(bar.locator(".editor-more")).toBeHidden();
+  await page.keyboard.press("Escape");
   await expect(page.getByText("Make a team build to propose it in the Team Lobby.")).toBeVisible();
 
   await page.getByRole("button", { name: "new team" }).click();
@@ -381,13 +435,26 @@ test("a new team is stored only on Save, which stays on the editor (#573)", asyn
   await expect(save).toBeEnabled();
   await save.click();
   await expect(page.locator(".toast")).toHaveText("Saved");
-  await expect(page.getByLabel("team name")).toBeVisible();
-  await expect(page.locator(".editor-unsaved")).toBeHidden();
-  await expect(page.getByRole("button", { name: "duplicate" })).toBeEnabled();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+
+  // Edit, rename and Save: back on Team Builder, the card renamed.
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("team name").fill("Trio");
+  await page.keyboard.press("Escape");
+  await expect(page.getByText("Discard changes?")).toBeVisible();
+  await page.getByRole("button", { name: "keep editing" }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await expect(page.getByRole("button", { name: "duplicate" })).toBeDisabled();
+  await page.getByRole("button", { name: "more actions" }).click();
+  await save.click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect(teamRows(page).first().locator(".play-card-name")).toHaveText("Trio");
 
   await page.reload();
   await openTeamBuilder(page);
-  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+  await expect.poll(() => teamList(page)).toEqual(["Trio · 1 member"]);
 });
 
 test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
@@ -396,20 +463,22 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
   await page.getByRole("button", { name: "add Alpha" }).click();
+  // Save leaves (#1902); its Saved shows on Team Builder.
   await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
   await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
 
+  // Opening the editor at once: well inside the toast's 5 s, so only the
+  // screen change can take it.
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await expect(page.locator(".toast")).toHaveCount(0, { timeout: 1_000 });
+  await page.getByRole("button", { name: "more actions" }).click();
   await page.getByRole("button", { name: "Share", exact: true }).click();
   const code = await page.getByLabel("team to share").inputValue();
   await page.keyboard.press("Escape");
-
-  // A fresh Saved, then back at once: well inside the toast's 5 s, so
-  // only the screen change can take it.
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.locator(".toast")).toHaveText("Saved");
-  await page.getByRole("button", { name: "back" }).click();
-  await expect(page.locator(".toast")).toHaveCount(0, { timeout: 1_000 });
-  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".screen-teams")).toBeVisible();
 
   // A pasted team's note is raised once the team editor is up, so it stays.
   await paste(page.locator(".screen"), code);
@@ -433,7 +502,6 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "add Bravo" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.getByRole("button", { name: "back" }).click();
 
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
   // Each member holds its weapons, as the roster's cards do (#1864).
@@ -445,7 +513,7 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await duo.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
-  await page.getByRole("button", { name: "back" }).click();
+  await page.keyboard.press("Escape");
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
 });
@@ -462,7 +530,6 @@ test("on a phone, a Team Build card's Edit sits below its members, never on them
     await page.getByRole("button", { name: "add Alpha" }).click();
   }
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.getByRole("button", { name: "back" }).click();
   await expect.poll(() => teamList(page)).toEqual(["Quad · 4 members"]);
 
   const card = teamRows(page).first();
@@ -474,7 +541,9 @@ test("on a phone, a Team Build card's Edit sits below its members, never on them
   expect(members).toBeLessThanOrEqual(edit?.y ?? 0);
 });
 
-test("team edits stay on screen until Save; Back and Delete ask first (#573)", async ({ page }) => {
+test("team edits stay on screen until Save, which leaves; Esc and Delete ask first (#573, #1902)", async ({
+  page,
+}) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
@@ -495,15 +564,21 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
   await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect(page.locator(".screen-teams")).toBeVisible();
 
-  // Remove a member: unsaved, and Back asks.
+  // Remove a member: unsaved, and Esc asks.
+  const more = page.getByRole("button", { name: "more actions" });
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await memberRows(page).first().getByRole("button", { name: "remove" }).click();
   await expect(memberNames(page)).toHaveText(["Alpha"]);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await more.click();
   const duplicate = page.getByRole("button", { name: "duplicate" });
   await expect(duplicate).toBeDisabled();
   await expect(duplicate).toHaveAttribute("title", "Save first to duplicate");
-  await page.getByRole("button", { name: "back" }).click();
+  await page.keyboard.press("Escape");
+  await expect(duplicate).toBeHidden();
+  await page.keyboard.press("Escape");
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "keep editing" }).click();
   await expect(memberNames(page)).toHaveText(["Alpha"]);
@@ -513,14 +588,17 @@ test("team edits stay on screen until Save; Back and Delete ask first (#573)", a
 
   // Duplicate.
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await more.click();
   await page.getByRole("button", { name: "duplicate" }).click();
   await expect(teamRows(page)).toHaveCount(2);
 
   // Delete asks; cancel keeps the team.
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await more.click();
   await page.getByRole("button", { name: "delete" }).click();
   await expect(page.getByText(/^Delete .*\?$/)).toBeVisible();
   await page.getByRole("button", { name: "cancel" }).click();
+  await more.click();
   await page.getByRole("button", { name: "delete" }).click();
   await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
   await expect(teamRows(page)).toHaveCount(1);
@@ -534,7 +612,7 @@ test("the team editor's bar puts its status on a second row from 721 to 1200 px,
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.locator(".toast")).toHaveText("Saved");
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
   await expect(page.locator(".editor-unsaved")).toBeVisible();
   for (const width of [721, 800, 900, 1100, 1201]) {
@@ -684,7 +762,7 @@ test("a team member is the team's own: an edit leaves the saved character alone;
   // A new character closed unsaved joins nothing; saved, it joins.
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Fresh");
-  await page.getByRole("button", { name: "close" }).click();
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "discard" }).click();
   await expect(memberNames(page)).toHaveText(["Alpha Prime"]);
   await page.getByRole("button", { name: "New character", exact: true }).click();
@@ -695,7 +773,6 @@ test("a team member is the team's own: an edit leaves the saved character alone;
   await expect(page.locator(".toast")).toHaveText("Saved");
 
   // Character Builder's are as they were: Alpha, unchanged, and no Fresh.
-  await page.getByRole("button", { name: "back" }).click();
   await openRail(page, "Character Builder");
   await expect(roster(page)).toContainText("Alpha");
   await expect(roster(page)).not.toContainText("Alpha Prime");
@@ -739,8 +816,8 @@ test("⋯ Share copies the build as one line, and a paste on the editor imports 
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(exported);
 
   // Someone pastes a build they were sent into a different character.
-  // Named but never saved: Close asks first (#566).
-  await page.getByRole("button", { name: "close" }).click();
+  // Named but never saved: Esc asks first (#566).
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "discard" }).click();
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await page.locator("input.editor-name").fill("Scratch");
@@ -849,6 +926,8 @@ test("Share copies a team as one line; pasted on Team Builder it opens unsaved (
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
 
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await page.getByRole("button", { name: "more actions" }).click();
   await page.getByRole("button", { name: "Share", exact: true }).click();
   const line = page.getByLabel("team to share");
   await expect(line).toBeFocused();
@@ -858,7 +937,7 @@ test("Share copies a team as one line; pasted on Team Builder it opens unsaved (
   await page.keyboard.press("Escape");
   await expect(line).toBeHidden();
 
-  await page.getByRole("button", { name: "back" }).click();
+  await page.keyboard.press("Escape");
   // Team Builder mounts once the teams load; a paste before that finds no listener.
   await expect(page.getByRole("button", { name: "new team" })).toBeVisible();
 
@@ -876,13 +955,14 @@ test("Share copies a team as one line; pasted on Team Builder it opens unsaved (
   await expect(page.locator(".toast")).toHaveText("Saved");
 
   // With edits pending, a pasted team asks first.
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("team name").fill("Edited");
   await paste(page.locator(".team-editor"), code);
   await expect(page.getByText("Discard your edits and open the pasted team?")).toBeVisible();
   await page.getByRole("button", { name: "keep editing" }).click();
   await expect(page.getByLabel("team name")).toHaveValue("Edited");
 
-  await page.getByRole("button", { name: "back" }).click();
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "discard" }).click();
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members", "Duo · 2 members"]);
 
@@ -1887,9 +1967,10 @@ test("a skill key over a library skill equips it to that key's slot, but not whi
   await page.keyboard.press(skillKey(6));
   await expect(page.locator(".skill-slot").nth(6)).toHaveClass(/is-empty/);
 
-  // While Close asks about the unsaved edits, the key equips nothing.
+  // While Esc asks about the unsaved edits, the key equips nothing.
   await search.fill("");
-  await page.getByRole("button", { name: "close" }).click();
+  await search.blur();
+  await page.keyboard.press("Escape");
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await box.hover();
   await page.keyboard.press(skillKey(6));

@@ -541,6 +541,28 @@ describe("screenBar in the top bar (#578, #1272)", () => {
     expect(old.onBack).not.toHaveBeenCalled();
   });
 
+  it("leaves through `escape` on a screen with no Back (#1902)", () => {
+    const escape = vi.fn();
+    let open = true;
+    const bar = screenBar({
+      crumbs: ["VibeWars", "Team Builder"],
+      escape,
+      actions: [],
+      putAway: () => {
+        const was = open;
+        open = false;
+        return was;
+      },
+    });
+    expect(bar.back).toBeUndefined();
+    expect(slots.back.children).toEqual([]);
+    // What is open is put away first, as before a Back.
+    expect(pressEscape()).toBe(true);
+    expect(escape).not.toHaveBeenCalled();
+    expect(pressEscape()).toBe(true);
+    expect(escape).toHaveBeenCalledOnce();
+  });
+
   it("shows an overlay's bar above the screen's, and the screen's again once it is released (#454)", () => {
     const below = screen();
     const onClose = vi.fn();

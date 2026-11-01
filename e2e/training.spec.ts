@@ -256,7 +256,7 @@ test("(8) leaving the editor leaves no arena behind", async ({ page }) => {
     await openRail(page, "Character Builder");
     await page.getByRole("button", { name: "new character" }).click();
     await expect(page.locator(".training canvas")).toBeVisible();
-    await page.getByRole("button", { name: "close" }).click();
+    await page.keyboard.press("Escape");
     await expect(page.locator(".screen-characters")).toBeVisible();
   }
   // The cards' character figures are canvases too (#1250); no arena is.

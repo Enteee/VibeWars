@@ -119,6 +119,11 @@ export interface ScreenBarOptions {
   readonly crumbs: readonly (string | HTMLElement)[];
   /** The way back, which Esc takes too. The main menu has none. */
   readonly back?: ScreenBarBack;
+  /**
+   * Where Esc leaves for when there is no `back`: an editor whose Save is
+   * its way out (#1902).
+   */
+  readonly escape?: () => void;
   readonly status?: readonly HTMLElement[];
   /** The screen's own buttons, after a divider. */
   readonly actions: readonly HTMLElement[];
@@ -306,7 +311,11 @@ export function screenBar(options: ScreenBarOptions): {
       if (options.putAway?.() === true) {
         return;
       }
-      options.back?.onBack();
+      if (options.back === undefined) {
+        options.escape?.();
+      } else {
+        options.back.onBack();
+      }
     },
   };
   if (options.overlay === true) {
@@ -748,4 +757,46 @@ export function shareLine(label: string): ShareLine {
     },
     isOpen: () => !element.hidden,
   };
+}
+
+/** A screen's ⋯ (#1902): everything it does besides Save. */
+export interface MoreMenu {
+  /** The ⋯ button, which an inline confirmation from the menu hangs off. */
+  readonly toggle: HTMLButtonElement;
+  /** ⋯, its menu and what hangs below them, for the bar's actions. */
+  readonly element: HTMLElement;
+  isOpen(): boolean;
+  close(): void;
+}
+
+/**
+ * A ⋯ toggle with `items` below it, top to bottom (#1902). Choosing one
+ * puts the menu away. `below` hangs from it too, such as a Share line.
+ */
+export function moreMenu(
+  items: readonly HTMLButtonElement[],
+  below: readonly HTMLElement[] = [],
+): MoreMenu {
+  const menu = h("div", "editor-more");
+  menu.hidden = true;
+  const close = (): void => {
+    menu.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+  };
+  const toggle = button("⋯", "editor-more-toggle", () => {
+    menu.hidden = !menu.hidden;
+    toggle.setAttribute("aria-expanded", String(!menu.hidden));
+  });
+  toggle.setAttribute("aria-label", "more actions");
+  toggle.setAttribute("aria-expanded", "false");
+  // After the item's own click, which may open what hangs below.
+  menu.addEventListener("click", (event) => {
+    if (event.target instanceof HTMLButtonElement) {
+      close();
+    }
+  });
+  menu.append(...items);
+  const element = h("span", "editor-more-wrap");
+  element.append(toggle, menu, ...below);
+  return { toggle, element, isOpen: () => !menu.hidden, close };
 }
