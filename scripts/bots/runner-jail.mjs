@@ -192,8 +192,11 @@ export function runnerCommand({ jail, unit, bwrap, cpus, memoryGib, tasksMax, in
     bwrap,
     ...runnerJailArgs(jail),
     // The runner's hashFiles() starts externals/node20/bin/node whatever the
-    // env says (#2006), and nixpkgs ships node24 alone. The runner's store
-    // directory is an overlay, so the link exists in the jail only.
+    // env says (#2006), and nixpkgs ships node24 alone. A symlink written into
+    // the overlay fails: its copy-up must chown to root, unmapped in the jail.
+    // So a fresh tmpfs goes over externals/, with node24 bound back in.
+    ...["--tmpfs", `${runner}/lib/externals`],
+    ...["--ro-bind", `${runner}/lib/externals/node24`, `${runner}/lib/externals/node24`],
     ...["--symlink", "node24", `${runner}/lib/externals/node20`],
     "--",
     init,
