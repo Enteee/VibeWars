@@ -1548,6 +1548,27 @@ async function equipFromLibrary(page: Page, name: string): Promise<void> {
   await page.locator(".gear-box").filter({ hasText: name }).first().click();
 }
 
+/** A piece's row in the paper-doll's summary (#2059). */
+function armorRow(page: Page, slot: string): Locator {
+  return page.locator(`.paper-doll-row[data-slot="${slot}"]`);
+}
+
+/** Open a piece's popover from its hotspot on the figure (#2059). */
+async function openPiece(page: Page, slot: string): Promise<Locator> {
+  await page.locator(`.paper-doll-hotspot[data-slot="${slot}"]`).click();
+  const popover = page.locator(".paper-doll-popover");
+  await expect(popover).toBeVisible();
+  return popover;
+}
+
+/** Pick an insignia or rune, by its name, for `slot`. */
+async function pickForPiece(page: Page, slot: string, name: string): Promise<void> {
+  const popover = await openPiece(page, slot);
+  await popover.locator(".paper-doll-choice", { hasText: name }).first().click();
+  await page.keyboard.press("Escape");
+  await expect(popover).toBeHidden();
+}
+
 test("gear is equipped from a library, like skills are", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
@@ -1602,31 +1623,20 @@ test("a weapon can be dragged from the library onto the weapon slot", async ({ p
   await expect(page.locator(".gear-slot").first()).toContainText("Recurve Bow");
 });
 
-test("a rune dropped on an armor piece shows what it costs", async ({ page }) => {
+test("a rune picked for an armor piece shows what it costs (#2059)", async ({ page }) => {
   await newCharacter(page);
-  await openGearLibrary(page);
 
   const health = stat(page, "health");
   await expect(health).toHaveText("500");
 
-  const runeBox = page
-    .locator(".gear-box")
-    .filter({ hasText: "Superior Rune of Swordsmanship" })
-    .first();
-  await expect(runeBox).toHaveCount(1);
-  await runeBox.evaluate((node) => {
-    node.id = "drag-source";
-  });
-  await dragGear(page, "#drag-source", ".armor-row .gear-slot:nth-child(3)");
-
-  const headRune = page.locator(".armor-row").first().locator(".gear-slot").nth(1);
-  await expect(headRune).toContainText("Superior Rune of Swordsmanship");
+  await pickForPiece(page, "head", "Superior Rune of Swordsmanship");
+  await expect(armorRow(page, "head")).toContainText("Superior Rune of Swordsmanship");
   // +3 Swordsmanship, paid for with 75 health — both halves on screen.
   await expect(health).toHaveText("425");
   await expect(page.locator(".gear-stats")).toContainText("+3");
 });
 
-test("the library follows your clicks; an insignia goes to the selected piece (#570)", async ({
+test("the library follows your clicks; a piece's popover picks its insignia (#570, #2059)", async ({
   page,
 }) => {
   await newCharacter(page);
@@ -1640,56 +1650,66 @@ test("the library follows your clicks; an insignia goes to the selected piece (#
   const offhands = page.locator('.skill-group[data-group="off-hands"]');
   const top = async (locator: Locator): Promise<number> =>
     (await locator.boundingBox())?.y ?? Number.NaN;
-  await expect.poll(async () => (await top(offhands)) - (await top(library))).toBeLessThan(20);
+  // Off-hands is the tab's last group: at the top, or the list scrolled as far as it goes.
+  await expect
+    .poll(async () => {
+      const atTop = (await top(offhands)) - (await top(library)) < 20;
+      const atEnd = await library.evaluate(
+        (node) => node.scrollTop + node.clientHeight >= node.scrollHeight - 1,
+      );
+      return atTop || atEnd;
+    })
+    .toBe(true);
 
   // A bar slot clicked opens the skills tab.
   await page.locator(".skill-slot").first().click();
   await expect(skillsTab).toHaveClass(/is-active/);
   await page.keyboard.press("Escape");
 
-  // No piece picked: an insignia goes to the first free one, and says so.
+  // The gear tab holds weapons and off-hands only: armor is picked on the figure.
   await gearTab.click();
-  const survivor = page.locator(".gear-box").filter({ hasText: "Survivor Insignia" }).first();
-  await expect(survivor.locator(".gear-box-target")).toHaveText("→ head");
-  await survivor.click();
-  const insigniaOn = (slot: string): Locator =>
-    page.locator(`.armor-row[data-slot="${slot}"] .gear-slot`).first();
-  await expect(insigniaOn("head")).toContainText("Survivor");
+  await expect(page.locator('.skill-group[data-group="insignias"]')).toHaveCount(0);
+  await expect(page.locator('.skill-group[data-group="runes"]')).toHaveCount(0);
 
-  // The legs picked: outlined, and the next insignia goes there.
-  const legs = page.locator('.armor-row[data-slot="legs"]');
-  await legs.locator(".armor-slot-name").click();
-  await expect(legs).toHaveClass(/is-selected/);
-  await expect(survivor.locator(".gear-box-target")).toHaveText("→ legs");
+  // The legs' row opens the legs' popover; a pick stays open, and lands there only.
+  await armorRow(page, "legs").locator(".paper-doll-row-pick").click();
+  const popover = page.locator(".paper-doll-popover");
+  await expect(popover.locator(".paper-doll-popover-title")).toHaveText("④ Leggings");
+  const survivor = popover.locator(".paper-doll-choice", { hasText: "Survivor Insignia" });
   await survivor.click();
-  await expect(insigniaOn("legs")).toContainText("Survivor");
-  await expect(insigniaOn("chest")).toContainText("empty");
+  await expect(survivor).toHaveClass(/is-chosen/);
+  await expect(armorRow(page, "legs")).toContainText("Survivor");
+  await expect(armorRow(page, "chest")).not.toContainText("Survivor");
 
-  // Switching the tab by hand lets the piece go.
-  await skillsTab.click();
-  await expect(legs).not.toHaveClass(/is-selected/);
+  // A click elsewhere puts it away.
+  await page.locator(".editor-label", { hasText: "Equipment" }).click();
+  await expect(popover).toBeHidden();
 });
 
-test("dragging worn gear back to the library takes it off", async ({ page }) => {
+test("dragging a worn off-hand back to the library takes it off", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
 
-  await equipFromLibrary(page, "Survivor Insignia");
-  const headInsignia = page.locator(".armor-row").first().locator(".gear-slot").first();
-  await expect(headInsignia).toContainText("Survivor");
-
-  await dragGear(page, ".armor-row .gear-slot", ".skill-library");
-  await expect(headInsignia).toContainText("empty");
+  const offhand = page.locator(".gear-slot").nth(1);
+  await expect(offhand).toContainText("Shield");
+  await offhand.evaluate((node) => {
+    node.id = "drag-source";
+  });
+  await dragGear(page, "#drag-source", ".skill-library");
+  await expect(offhand).toContainText("empty");
 });
 
-test("the × on a worn piece clears it", async ({ page }) => {
+test("None in a piece's popover takes its insignia off (#2059)", async ({ page }) => {
   await newCharacter(page);
-  await openGearLibrary(page);
-  await equipFromLibrary(page, "Survivor Insignia");
+  await pickForPiece(page, "head", "Survivor Insignia");
+  await expect(armorRow(page, "head")).toContainText("Survivor");
 
-  const headInsignia = page.locator(".armor-row").first().locator(".gear-slot").first();
-  await headInsignia.getByRole("button", { name: "×" }).click();
-  await expect(headInsignia).toContainText("empty");
+  const popover = await openPiece(page, "head");
+  await popover
+    .getByRole("listbox", { name: "Insignia" })
+    .getByRole("option", { name: "None" })
+    .click();
+  await expect(armorRow(page, "head")).not.toContainText("Survivor");
 });
 
 test("an unmet weapon requirement is called out before the match, not during", async ({ page }) => {
@@ -1721,7 +1741,7 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await page.locator("input.editor-name").fill("Gear Keeper");
   await openGearLibrary(page);
   await equipFromLibrary(page, "Axe");
-  await equipFromLibrary(page, "Survivor Insignia");
+  await pickForPiece(page, "head", "Survivor Insignia");
   // Set 2 (#489): its tab, then a weapon from the library goes into it.
   const setTab = (n: number): Locator =>
     page.getByRole("tab", { name: new RegExp(`^${String(n)}`) });
@@ -1741,11 +1761,33 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
     .click();
 
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
-  await expect(page.locator(".armor-row").first().locator(".gear-slot").first()).toContainText(
-    "Survivor",
-  );
+  await expect(armorRow(page, "head")).toContainText("Survivor");
   await setTab(2).click();
   await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
+});
+
+test("an insignia applied to all five pieces survives a reload (#2059)", async ({ page }) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Matched Set");
+  const popover = await openPiece(page, "chest");
+  await expect(popover.locator(".paper-doll-popover-title")).toHaveText("② Chest");
+  await popover.locator(".paper-doll-choice", { hasText: "Survivor Insignia" }).click();
+  await popover.getByRole("button", { name: "Apply insignia to all 5" }).click();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(roster(page)).toContainText("Matched Set");
+
+  await page.reload();
+  await page
+    .locator(".character-card")
+    .filter({ hasText: "Matched Set" })
+    .getByRole("button", { name: "edit" })
+    .click();
+  const rows = page.locator(".paper-doll-row");
+  await expect(rows).toHaveCount(5);
+  for (const slot of ["head", "chest", "hands", "legs", "feet"]) {
+    await expect(armorRow(page, slot)).toContainText("Survivor Insignia");
+  }
 });
 
 /* --- the editor updates in place (#563, ADR-0030) ------------------------- */

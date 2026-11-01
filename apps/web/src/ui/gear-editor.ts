@@ -16,8 +16,6 @@ import {
   getWeapon,
   headgearAttributeOf,
   insigniaAllowed,
-  isArmorSlot,
-  isInsigniaId,
   isOffhandId,
   isWeaponSetIndex,
   isUniversalRuneId,
@@ -296,6 +294,20 @@ export function setRune(
     ...character.equipment,
     armor: { ...character.equipment.armor, [slot]: { ...piece, rune } },
   });
+}
+
+/**
+ * Put `insigniaId` on every piece (#2059): one click for a matched set.
+ * None is refused, not spread: clearing all five is "Clear upgrades".
+ */
+export function setInsigniaOnAll(
+  character: StoredCharacter,
+  insigniaId: InsigniaId | null,
+): StoredCharacter {
+  if (insigniaId === null) {
+    return character;
+  }
+  return ARMOR_SLOTS.reduce((next, slot) => setInsignia(next, slot, insigniaId), character);
 }
 
 /**
@@ -760,9 +772,6 @@ export { TIER_LABEL };
 export type GearDragSource =
   | { readonly from: "weapon-library"; readonly weaponId: WeaponId }
   | { readonly from: "offhand-library"; readonly offhandId: OffhandId }
-  | { readonly from: "insignia-library"; readonly insigniaId: InsigniaId }
-  | { readonly from: "rune-library"; readonly rune: EquippedRune }
-  | { readonly from: "armor-slot"; readonly slot: ArmorSlot; readonly part: "insignia" | "rune" }
   | {
       readonly from: "hand";
       readonly set: WeaponSetIndex;
@@ -773,7 +782,6 @@ export type GearDragSource =
 export type GearDropTarget =
   | { readonly kind: "main-hand"; readonly set: WeaponSetIndex }
   | { readonly kind: "off-hand"; readonly set: WeaponSetIndex }
-  | { readonly kind: "armor"; readonly slot: ArmorSlot; readonly part: "insignia" | "rune" }
   | { readonly kind: "library" };
 
 export function encodeGearDrag(source: GearDragSource): string {
@@ -782,12 +790,6 @@ export function encodeGearDrag(source: GearDragSource): string {
       return `gear-weapon:${source.weaponId}`;
     case "offhand-library":
       return `gear-offhand:${source.offhandId}`;
-    case "insignia-library":
-      return `gear-insignia:${source.insigniaId}`;
-    case "rune-library":
-      return `gear-rune:${encodeRune(source.rune)}`;
-    case "armor-slot":
-      return `gear-worn:${source.slot}:${source.part}`;
     case "hand":
       return `gear-hand:${String(source.set)}:${source.hand}`;
   }
@@ -809,19 +811,6 @@ export function decodeGearDrag(raw: string): GearDragSource | undefined {
       return isWeaponId(rest) ? { from: "weapon-library", weaponId: rest } : undefined;
     case "gear-offhand":
       return isOffhandId(rest) ? { from: "offhand-library", offhandId: rest } : undefined;
-    case "gear-insignia":
-      return isInsigniaId(rest) ? { from: "insignia-library", insigniaId: rest } : undefined;
-    case "gear-rune": {
-      const rune = decodeRune(rest);
-      return rune === undefined ? undefined : { from: "rune-library", rune };
-    }
-    case "gear-worn": {
-      const [slot, part] = rest.split(":");
-      if (!isArmorSlot(slot) || (part !== "insignia" && part !== "rune")) {
-        return undefined;
-      }
-      return { from: "armor-slot", slot, part };
-    }
     case "gear-hand": {
       const [set, hand] = rest.split(":");
       const index = Number(set);
@@ -838,7 +827,7 @@ export function decodeGearDrag(raw: string): GearDragSource | undefined {
  * Resolve a drop.
  *
  * Returns the character unchanged for any combination that does not
- * make sense — a rune onto the weapon slot, a shield onto a leg. Doing
+ * make sense — a shield onto the weapon slot, a sword onto the off-hand. Doing
  * nothing is the right answer there: the alternative is either an error
  * nobody asked for, or quietly putting the item somewhere the player
  * did not aim.
@@ -850,11 +839,6 @@ export function applyGearDrop(
 ): StoredCharacter {
   // Dragging worn gear back to the library takes it off.
   if (target.kind === "library") {
-    if (source.from === "armor-slot") {
-      return source.part === "insignia"
-        ? setInsignia(character, source.slot, null)
-        : setRune(character, source.slot, null);
-    }
     if (source.from === "hand") {
       if (source.hand === "offHand") {
         return setOffhand(character, source.set, null);
@@ -872,58 +856,10 @@ export function applyGearDrop(
       : character;
   }
 
-  if (target.kind === "off-hand") {
-    if (source.from === "offhand-library") {
-      return setOffhand(character, target.set, source.offhandId);
-    }
-    // A one-handed weapon dropped on the off-hand slot is a reasonable
-    // thing to try; it just is not a thing the game supports.
-    return character;
+  if (source.from === "offhand-library") {
+    return setOffhand(character, target.set, source.offhandId);
   }
-
-  if (target.part === "insignia") {
-    if (source.from === "insignia-library") {
-      return setInsignia(character, target.slot, source.insigniaId);
-    }
-    if (source.from === "armor-slot" && source.part === "insignia") {
-      // Move it, rather than cloning it onto both pieces.
-      const moving = character.equipment.armor[source.slot].insigniaId;
-      return setInsignia(setInsignia(character, source.slot, null), target.slot, moving);
-    }
-    return character;
-  }
-
-  if (source.from === "rune-library") {
-    return setRune(character, target.slot, source.rune);
-  }
-  if (source.from === "armor-slot" && source.part === "rune") {
-    const moving = character.equipment.armor[source.slot].rune;
-    return setRune(setRune(character, source.slot, null), target.slot, moving);
-  }
+  // A one-handed weapon dropped on the off-hand slot is a reasonable
+  // thing to try; it just is not a thing the game supports.
   return character;
-}
-
-/**
- * Where click-to-equip puts an insignia or rune (#570): the armor piece
- * the player selected, or with none selected the first free one.
- */
-export function armorTarget(
-  character: StoredCharacter,
-  part: "insignia" | "rune",
-  selected: ArmorSlot | undefined,
-): ArmorSlot {
-  return selected ?? firstFreeArmorSlot(character, part);
-}
-
-/** The first armor slot with nothing of this kind in it, for click-to-equip. */
-export function firstFreeArmorSlot(
-  character: StoredCharacter,
-  part: "insignia" | "rune",
-): ArmorSlot {
-  const free = ARMOR_SLOTS.find((slot) =>
-    part === "insignia"
-      ? character.equipment.armor[slot].insigniaId === null
-      : character.equipment.armor[slot].rune === null,
-  );
-  return free ?? "head";
 }
