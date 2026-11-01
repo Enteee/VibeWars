@@ -63,6 +63,21 @@ function readOnly(perms) {
   );
 }
 
+/**
+ * Where a job runs: the one hosted label, the canonical company expression,
+ * or anything else, which this test refuses so no other label reaches the
+ * company pool unchecked.
+ * @param {string} block
+ * @returns {"hosted" | "company" | "other"}
+ */
+function runnerOf(block) {
+  const lines = block.split("\n").filter((l) => /^\s*runs-on:/.test(l));
+  const line = lines.length === 1 ? (lines[0] ?? "").trim() : "";
+  if (line === "runs-on: ubuntu-latest") return "hosted";
+  if (line === CANONICAL) return "company";
+  return "other";
+}
+
 const workflows = Object.fromEntries(
   files.map((name) => [name, split(fs.readFileSync(path.join(WORKFLOWS, name), "utf8"))]),
 );
@@ -71,11 +86,35 @@ const workflows = Object.fromEntries(
 const eligible = [];
 for (const [name, { jobs }] of Object.entries(workflows)) {
   for (const [id, block] of Object.entries(jobs)) {
-    if (block.includes("vibewars-company")) eligible.push([name, id, block]);
+    if (runnerOf(block) === "company") eligible.push([name, id, block]);
   }
 }
 
 describe("company runner selection", () => {
+  it.each(files)("%s: every job runs hosted or on the canonical expression", (name) => {
+    const jobs = Object.entries(workflows[name]?.jobs ?? {});
+    expect(jobs.length).toBeGreaterThan(0);
+    for (const [id, block] of jobs) {
+      expect(["hosted", "company"], `${name}:${id}`).toContain(runnerOf(block));
+    }
+  });
+
+  it.each([
+    ["a bare self-hosted label", "    runs-on: self-hosted\n"],
+    ["a label list", "    runs-on: [self-hosted, linux]\n"],
+    ["an inline company label", "    runs-on: [self-hosted, vibewars-company]\n"],
+    ["a matrix expression", "    runs-on: ${{ matrix.os }}\n"],
+    ["no runs-on", "    steps: []\n"],
+    ["two runs-on lines", "    runs-on: ubuntu-latest\n    runs-on: ubuntu-latest\n"],
+  ])("refuses %s", (_label, block) => {
+    expect(runnerOf(block)).toBe("other");
+  });
+
+  it("accepts the two allowed forms", () => {
+    expect(runnerOf("    runs-on: ubuntu-latest\n")).toBe("hosted");
+    expect(runnerOf(`    ${CANONICAL}\n`)).toBe("company");
+  });
+
   it("finds the jobs that use it", () => {
     expect(eligible.map(([n, id]) => `${n}:${id}`).sort()).toEqual([
       "e2e-repeat.yml:e2e-repeat",
@@ -102,6 +141,8 @@ describe("company runner selection", () => {
 
   it.each(HOSTED_ONLY)("%s never uses a company runner", (name) => {
     expect(files).toContain(name);
+    const jobs = Object.values(workflows[name]?.jobs ?? {});
+    expect(jobs.map(runnerOf)).not.toContain("company");
     expect(fs.readFileSync(path.join(WORKFLOWS, name), "utf8")).not.toContain("vibewars-company");
   });
 
