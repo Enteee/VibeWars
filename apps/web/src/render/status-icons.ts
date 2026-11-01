@@ -82,6 +82,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "disciplined-stance": icon("disciplined-stance"),
   "balanced-stance": icon("balanced-stance"),
   "mantra-of-recovery": icon("mantra-of-recovery"),
+  "mantra-of-concentration": icon("mantra-of-concentration"),
+  "mantra-of-resolve": icon("mantra-of-resolve"),
+  "mantra-of-earth": icon("mantra-of-earth"),
+  "mantra-of-flame": icon("mantra-of-flame"),
+  "mantra-of-frost": icon("mantra-of-frost"),
+  "mantra-of-lightning": icon("mantra-of-lightning"),
   "watch-yourself": icon("watch-yourself"),
   "healing-signet-armor": icon("healing-signet-armor"),
   "for-great-justice": icon("for-great-justice"),
@@ -306,6 +312,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "energizing-wind": icon("energizing-wind"),
   "primal-echoes": icon("primal-echoes"),
   "roaring-winds": icon("roaring-winds"),
+  quicksand: icon("quicksand"),
+  famine: icon("famine"),
+  lacerate: icon("lacerate"),
   panic: icon("panic"),
   "wastrels-demise": icon("wastrels-demise"),
   "arcane-conundrum": icon("arcane-conundrum"),
@@ -413,6 +422,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "shadow-form": icon("shadow-form"),
   "elemental-flame": icon("elemental-flame"),
   "mist-form": icon("mist-form"),
+  // Blocks that pay or pay off (#1974).
+  distortion: icon("distortion"),
+  "shield-guardian": icon("shield-guardian"),
+  "glass-arrows": icon("glass-arrows"),
 };
 
 const GAP = 2;

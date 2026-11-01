@@ -51,6 +51,10 @@ export type RangerStatusId =
   | "energizing-wind"
   | "primal-echoes"
   | "roaring-winds"
+  // Nature rituals 4 (#1956).
+  | "quicksand"
+  | "famine"
+  | "lacerate"
   // Pets 2 (#1865).
   | "otyughs-cry"
   | "predatory-bond"
@@ -61,7 +65,9 @@ export type RangerStatusId =
   // Your next attack (#1916).
   | "poison-tip-signet"
   // Attributes raised (#1941).
-  | "experts-dexterity";
+  | "experts-dexterity"
+  // Blocks that pay off (#1974).
+  | "glass-arrows";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -368,6 +374,45 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     ],
   }),
 
+  // Nature rituals 4 (#1956), at rank 12 as rituals 1's. Quicksand: "lose
+  // 1 Energy each time they attack or use a skill": an attack skill is
+  // both, so it costs 2, as in GW1.
+  quicksand: define("quicksand", "Quicksand", "skill-effect", {
+    profession: "ranger",
+    triggers: (["bearer-uses-skill", "bearer-attacks"] as const).map((on) => ({
+      on,
+      effects: [{ kind: "energy-loss", amount: { flat: 1 } }],
+      target: "bearer",
+      skillId: "ranger.quicksand",
+    })),
+  }),
+  // Famine: "Whenever a non-spirit creature in its range reaches 0
+  // Energy, that creature takes 20...70 damage": 60, once per drop.
+  famine: define("famine", "Famine", "skill-effect", {
+    profession: "ranger",
+    triggers: [
+      {
+        on: "bearer-energy-drops-empty",
+        effects: [{ kind: "damage", amount: { flat: 60 }, type: "typeless", armorPenetration: 0 }],
+        target: "bearer",
+        skillId: "ranger.famine",
+      },
+    ],
+  }),
+  // Lacerate: "Bleeding creatures within its range suffer -2 Health
+  // degeneration." Its death's Bleeding is the spirit's burst.
+  lacerate: define("lacerate", "Lacerate", "skill-effect", {
+    profession: "ranger",
+    whileUnder: {
+      categories: [],
+      statusIds: ["bleeding"],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: -2,
+      armorModifier: 0,
+      attackMissChance: 0,
+    },
+  }),
   // Nature rituals 2 (#1873), at rank 12 as rituals 1's.
   // Symbiosis: "For each enchantment on a non-spirit creature within
   // range, that creature has +27...150 maximum Health": +125.
@@ -492,5 +537,20 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     attackDurationMultiplier: 0.85,
     attributeDeltas: [{ scope: { attributeId: "ranger.marksmanship" }, amount: 1 }],
+  }),
+  // Glass Arrows (PvP): "For 10...35 seconds, your arrows strike for
+  // +6...18 damage if they hit and cause Bleeding for 10...20 seconds if
+  // they are Blocked" (#1974): +16 and 18 s at rank 12. A blind miss is no
+  // block, and a sword gets neither.
+  "glass-arrows": define("glass-arrows", "Glass Arrows", "preparation", {
+    profession: "ranger",
+    attackDamageDelta: 16,
+    attackDamageDeltaWeapon: "bow",
+    onAttackBlocked: {
+      attackSkillsOnly: false,
+      weapon: "bow",
+      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 18 }],
+      skillId: "ranger.glass-arrows",
+    },
   }),
 };

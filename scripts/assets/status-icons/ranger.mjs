@@ -250,6 +250,28 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M4 10h10a3 3 0 1 0-3-3M4 15h13a3 3 0 1 1-3 3" ${stroke(c, 1.8)}/>` +
       `<path d="M18 5v5M15.5 7.5h5" ${stroke(c, 1.6)}/>`,
   ],
+  // Nature rituals 4 (#1956), stand-ins until their art card. Skill
+  // effect: sand running down, Energy lost to each act.
+  quicksand: [
+    "skill-effect",
+    (c) =>
+      `<path d="M6 5h12l-5 7 5 7H6l5-7z" ${stroke(c, 1.8)}/>` +
+      `<path d="M10 17h4" ${stroke(c, 2)}/>`,
+  ],
+  // Skill effect: an empty bar struck, damage at 0 Energy.
+  famine: [
+    "skill-effect",
+    (c) =>
+      `<rect x="4" y="9" width="16" height="6" rx="1.5" ${stroke(c, 1.8)}/>` +
+      `<path d="M13 4l-3 8h4l-3 8" ${stroke(c, 1.8)}/>`,
+  ],
+  // Skill effect: a drop with a minus, Bleeding worsened.
+  lacerate: [
+    "skill-effect",
+    (c) =>
+      `<path d="M10 4c-3 5-5 8-5 10.5a5 5 0 0 0 10 0C15 12 13 9 10 4z" ${stroke(c, 1.8)}/>` +
+      `<path d="M16 7h5" ${stroke(c, 2)}/>`,
+  ],
   // Stance (#1761, #1855): a bow and a recharge arrow, preparations come back sooner.
   "practiced-stance": [
     "stance",
@@ -309,5 +331,13 @@ export const RANGER_STATUS_ICONS = {
     (c) =>
       `<path d="M6 3c6 4 6 14 0 18M6 3v18" ${stroke(c, 2)}/>` +
       `<path d="M17 8v8M13 12h8" ${stroke(c, 2.2)}/>`,
+  ],
+  // Blocks that pay off (#1974), a stand-in until its art card.
+  // Preparation: an arrow shattering into shards against a block.
+  "glass-arrows": [
+    "preparation",
+    (c) =>
+      `<path d="M3 21L13 11M9 7h6v6" ${stroke(c, 2)}/>` +
+      `<path d="M17 4l2 3M20 9l-3 1M16 8l1-4" ${stroke(c, 1.6)}/>`,
   ],
 };

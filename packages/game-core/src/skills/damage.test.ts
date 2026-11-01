@@ -162,7 +162,7 @@ describe("status modifiers reaching the armor calculation", () => {
 });
 
 describe("damage taken multipliers (#919)", () => {
-  it("doubles a packet against Frenzy and halves it against Dark Escape", () => {
+  it("takes 160% of a packet against Frenzy and halves it against Dark Escape", () => {
     const packet = skillDamage(100, "chaos", 0);
     const plain = mitigate(packet, defender(60), RULES, "chest");
     const frenzied = defender(60);
@@ -171,7 +171,7 @@ describe("damage taken multipliers (#919)", () => {
     escaping.statuses.apply("dark-escape", 13, "self");
 
     expect(plain).toBe(100);
-    expect(mitigate(packet, frenzied, RULES, "chest")).toBe(200);
+    expect(mitigate(packet, frenzied, RULES, "chest")).toBe(160);
     expect(mitigate(packet, escaping, RULES, "chest")).toBe(50);
   });
 
@@ -179,7 +179,7 @@ describe("damage taken multipliers (#919)", () => {
     // Two stances never are; the product is still the rule (aggregateModifiers).
     expect(
       aggregateModifiers([{ id: "frenzy" }, { id: "dark-escape" }]).damageTakenMultiplier,
-    ).toBe(1);
+    ).toBe(0.8);
   });
 
   it("multiplies armor-ignoring damage too, and rounds once", () => {
@@ -218,8 +218,8 @@ describe("damage taken multipliers (#919)", () => {
     const runed = makeCombatant({ id: "d", team: 1, equipment: resolved.weaponSets[0].equipment });
     const before = mitigate(physical(100), runed, RULES, "chest");
     runed.statuses.apply("frenzy", 8, "self");
-    // (x + 3) × 2 − 3, not (x − 3) × 2.
-    expect(mitigate(physical(100), runed, RULES, "chest")).toBe((before + 3) * 2 - 3);
+    // (x + 3) × 1.6 − 3, not (x − 3) × 1.6.
+    expect(mitigate(physical(100), runed, RULES, "chest")).toBe(Math.round((before + 3) * 1.6) - 3);
   });
 });
 
@@ -250,8 +250,8 @@ describe("damage reduction (#1108)", () => {
   it("comes after the damage taken multiplier", () => {
     const target = protectedDefender();
     target.statuses.apply("frenzy", 8, "self");
-    // 40 × 2 − 17, not (40 − 17) × 2.
-    expect(mitigate(skillDamage(40, "chaos", 0), target, RULES, "chest")).toBe(63);
+    // 40 × 1.6 − 17, not (40 − 17) × 1.6.
+    expect(mitigate(skillDamage(40, "chaos", 0), target, RULES, "chest")).toBe(47);
   });
 });
 
