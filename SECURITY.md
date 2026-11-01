@@ -77,6 +77,11 @@ channels, as often as they like.
   public, so a player can grind fresh ticket keys (about 2 × team size
   tries) to host their own match. Accepted, like any cheating host;
   commit-reveal is the lever if a mode with stakes ever uses the queue.
+  Tickets that say `hardNat` (#2090) are left out of that draw, so a
+  grinder who claims `false` needs fewer tries in a mixed group: with
+  half the tickets hard, half the work. `hardNat` is one more public bit
+  about each queued player, a recon hint, accepted. The NAT check's two
+  STUN servers see the player's IP, as Trystero's already do.
 - **A flood of fake queue tickets.** A ticket costs nothing to publish,
   so a sybil flood can stall the queue, every group falling through. A
   ticket id is its signing key, so nobody can rewrite an honest ticket.

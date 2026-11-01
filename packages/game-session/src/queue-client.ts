@@ -94,6 +94,11 @@ export interface QueueClientOptions {
   readonly newTicketKey: () => TicketKey;
   /** As `formGroups` takes it, the same on every client. */
   readonly mapPool: readonly string[];
+  /**
+   * Whether this client found its own NAT hard (#2090), put on every
+   * ticket it publishes as `hardNat`; the web layer's `checkNat` says.
+   */
+  readonly hardNat: boolean;
 }
 
 export interface QueueClient {
@@ -120,7 +125,7 @@ function same(a: QueueState, b: QueueState): boolean {
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, party, now, newTicketKey, mapPool } = options;
+  const { board, mode, party, now, newTicketKey, mapPool, hardNat } = options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
@@ -175,6 +180,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       heartbeatAt: now(),
       // Kept across fall-throughs: the consents sign the group won, not the current one.
       party: party === undefined ? null : { groupId: party.groupId, consents: party.consents },
+      hardNat,
     };
     publishedAt = ticket.heartbeatAt;
     // Counted at once, not when the board echoes it back.

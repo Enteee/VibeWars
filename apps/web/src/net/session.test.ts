@@ -225,6 +225,7 @@ describe("closing the tab while queued (#1881)", () => {
       now: () => 1_700_000_000_000,
       newTicketKey: () => ({ ticketId, sign: () => "b".repeat(128) }),
       mapPool: ["arena-a"],
+      hardNat: false,
     });
     await client.tick();
     const page = new EventTarget();
