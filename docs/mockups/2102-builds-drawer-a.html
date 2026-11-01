@@ -1,0 +1,351 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>#2102 mockup: builds drawer, A: overlay from the right</title>
+<style>
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    background: #080a0d;
+    color: #d7dee8;
+    font:
+      15px system-ui,
+      sans-serif;
+  }
+  h1 {
+    font-size: 1.2rem;
+  }
+  h2 {
+    font-size: 1rem;
+    margin: 1.6rem 0 0.3rem;
+    color: #59c2ff;
+  }
+  p.n {
+    color: #7d8899;
+    margin: 0.2rem 0 0.6rem;
+    max-width: 62rem;
+  }
+  p.n b {
+    color: #d7dee8;
+  }
+  .row {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .f {
+    position: relative;
+    overflow: hidden;
+    background: #0e1116;
+    border: 1px solid #2b3440;
+    flex: none;
+    font-size: 14px;
+  }
+  .d {
+    width: 1366px;
+    height: 768px;
+  }
+  .p {
+    width: 390px;
+    height: 768px;
+  }
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: #161b22;
+    border-bottom: 1px solid #2b3440;
+  }
+  .top b {
+    font-size: 18px;
+  }
+  .timer {
+    margin-left: auto;
+    font-size: 22px;
+    color: #ffd866;
+    font-variant-numeric: tabular-nums;
+  }
+  .main {
+    padding: 16px 20px;
+  }
+  .main h3 {
+    margin: 14px 0 8px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7d8899;
+  }
+  .seats {
+    display: flex;
+    gap: 8px;
+  }
+  .seat {
+    padding: 6px 10px;
+    border: 1px solid #2b3440;
+    background: #161b22;
+    border-radius: 4px;
+  }
+  .seat.me {
+    border-color: #59c2ff;
+    color: #59c2ff;
+  }
+  .cards {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .card {
+    width: 230px;
+    padding: 10px;
+    border: 1px solid #2b3440;
+    background: #161b22;
+    border-radius: 6px;
+  }
+  .card.mine {
+    border-color: #59c2ff;
+  }
+  .card .t {
+    font-weight: 600;
+  }
+  .card .m {
+    color: #7d8899;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 9px;
+    background: #59c2ff;
+    color: #0b0f14;
+    margin-left: 6px;
+  }
+  .pr {
+    display: flex;
+    gap: 3px;
+    margin-top: 6px;
+  }
+  .pi {
+    width: 22px;
+    height: 22px;
+    border-radius: 3px;
+    background: #202836;
+    border: 1px solid #3b4759;
+    font-size: 10px;
+    line-height: 22px;
+    text-align: center;
+    color: #d7dee8;
+  }
+  .btn {
+    background: #161b22;
+    border: 1px solid #59c2ff;
+    color: #59c2ff;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font: inherit;
+    cursor: default;
+  }
+  .dim {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 7, 10, 0.62);
+  }
+  .dr {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: #161b22;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+  .dh {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid #2b3440;
+  }
+  .dh b {
+    flex: 1;
+  }
+  .x {
+    color: #7d8899;
+  }
+  .srch {
+    margin: 10px 14px;
+    padding: 8px 10px;
+    background: #0e1116;
+    border: 1px solid #3b4759;
+    border-radius: 4px;
+    color: #7d8899;
+  }
+  .srch.on {
+    color: #d7dee8;
+    border-color: #59c2ff;
+  }
+  .srch i {
+    font-style: normal;
+    border-right: 1px solid #59c2ff;
+  }
+  .list {
+    padding: 0 14px 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .row2 {
+    padding: 8px 10px;
+    border: 1px solid #2b3440;
+    background: #0e1116;
+    border-radius: 5px;
+  }
+  .row2.mine {
+    border-color: #59c2ff;
+    background: #12202d;
+  }
+  .row2.off {
+    opacity: 0.38;
+  }
+  .row2 .t {
+    display: flex;
+    align-items: center;
+  }
+  .row2 .t span.s {
+    margin-left: auto;
+    color: #7d8899;
+    font-size: 12px;
+  }
+  .row2.off .s {
+    color: #ffa657;
+  }
+  .hint {
+    padding: 0 14px 8px;
+    color: #7d8899;
+    font-size: 12px;
+  }
+  .empty {
+    padding: 24px 14px;
+    color: #7d8899;
+  }
+  .tab {
+    position: absolute;
+    background: #161b22;
+    border: 1px solid #59c2ff;
+    color: #59c2ff;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+  }
+  .ex {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #2b3440;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .mc {
+    background: #161b22;
+    border: 1px solid #2b3440;
+    border-radius: 4px;
+    padding: 5px 6px;
+    font-size: 11px;
+    color: #7d8899;
+  }
+  .mc b {
+    color: #d7dee8;
+    display: block;
+    font-size: 12px;
+  }
+  .go {
+    margin-top: 8px;
+    text-align: right;
+  }
+</style>
+<h1>#2102 · Your Team Builds drawer · A: overlay from the right</h1>
+<p class="n">
+  <b>The idea:</b> the drawer slides over the lobby from the right edge, which is dimmed; a tab with
+  the label written vertically sits on that edge while closed. Click a build, click the dimmed
+  lobby, press Esc or the tab again, and it closes.
+</p>
+<p class="n">
+  <b>Costs:</b> the drawer covers the right of the lobby, the Proposals' votes and the timer
+  included, while it is open. The vertical tab is the least discoverable of the three, and rows are
+  plain (name, size, profession icons).
+</p>
+<script>
+  const B = [
+    ["Frontline Pressure", 4, ["Wa", "Mo", "El", "Rt"]],
+    ["Ward & Spike", 4, ["Mo", "Mo", "El", "Me"]],
+    ["Necro Bone Camp", 4, ["Ne", "Ne", "Mo", "Rt"]],
+    ["Duo Gank", 2, ["Wa", "El"]],
+    ["Ranger Splits", 4, ["Ra", "Ra", "Mo", "Mo"]],
+    ["Hexway", 4, ["Me", "Ne", "Mo", "Me"]],
+    ["Eight-man Wall", 8, ["Wa", "Wa", "Mo", "Mo", "El", "Ne", "Me", "Rt"]],
+    ["Paragon Banner", 4, ["Pa", "Pa", "Mo", "Ri"]],
+  ];
+  const PROP = 1;
+  const pis = (m) =>
+    '<div class="pr">' + m.map((x) => '<div class="pi">' + x + "</div>").join("") + "</div>";
+  const lobby = (
+    o = {},
+  ) => `<div class="top"><b>Team Lobby · Vote</b><span>Your side: 4v4</span>${o.hdrBtn || ""}<span class="timer">0:42</span></div>
+<div class="main"><h3>Seats</h3><div class="seats"><div class="seat me">You</div><div class="seat">Mira</div><div class="seat">Tobi</div><div class="seat">Bot slot</div></div>
+<h3>Proposals</h3><div class="cards"><div class="card mine"><div class="t">Ward &amp; Spike<span class="tag">yours</span></div><div class="m">proposed by You · votes: Y</div>${pis(B[1][2])}</div>
+<div class="card"><div class="t">Hexway</div><div class="m">proposed by Mira · votes: M, T</div>${pis(B[5][2])}</div>
+<div class="card"><div class="t">House team</div><div class="m">no proposal yet</div>${pis(["Wa", "Ra", "Mo", "El"])}</div></div>
+<div class="screen-info" style="margin-top:18px;color:#7d8899">Click a proposal to vote; click again to take your vote back.</div></div>`;
+  const rowHtml = (b, i, ex) => {
+    const off = b[1] !== 4;
+    return `<div class="row2${i === PROP ? " mine" : ""}${off ? " off" : ""}"><div class="t"><b>${b[0]}</b>${i === PROP ? '<span class="tag">proposed</span>' : ""}<span class="s">${off ? "needs " + b[1] + " · this side is 4" : b[1] + " members"}</span></div>${pis(b[2])}${ex && !off ? ex(b) : ""}</div>`;
+  };
+  const NONE = "You have no Team Builds. Make one in Team Builder.";
+  const list = (q, ex) => {
+    const r = B.map((b, i) => [b, i]).filter(
+      ([b]) => b[1] === 4 && b[0].toLowerCase().includes(q.toLowerCase()),
+    );
+    return r.length
+      ? '<div class="hint">Showing 4-player builds · 2 others hidden</div><div class="list">' +
+          r.map(([b, i]) => rowHtml(b, i, ex)).join("") +
+          "</div>"
+      : '<div class="empty">No Team Build named “' + q + "”.</div>";
+  };
+  const search = (q) =>
+    q
+      ? `<div class="srch on">${q}<i>&nbsp;</i></div>`
+      : '<div class="srch">Search your Team Builds…</div>';
+  const put = (id, h) => (document.getElementById(id).innerHTML = h);
+</script>
+<h2>1 · Closed, a proposal pending</h2>
+<div class="row"><div class="f d" id="d1"></div></div>
+<h2>2 · Open: 8 builds, wrong sizes filtered out, yours marked</h2>
+<div class="row"><div class="f d" id="d2"></div></div>
+<h2>3 · Open, search with no match</h2>
+<div class="row"><div class="f d" id="d3"></div></div>
+<h2>4 · Open, no saved builds</h2>
+<div class="row"><div class="f d" id="d4"></div></div>
+<h2>5 · Phone (390 px), drawer open</h2>
+<div class="row"><div class="f p" id="p2"></div></div>
+<script>
+  const W = 380;
+  const dr = (inner, w) =>
+    `<div class="dim"></div><div class="dr" style="right:0;width:${w || W}px;border-left:1px solid #59c2ff"><div class="dh"><b>Your Team Builds</b><span class="x">Esc ✕</span></div>${inner}</div>`;
+  const tabHtml =
+    '<div class="tab" style="right:0;top:300px;writing-mode:vertical-rl;padding:16px 8px;border-right:0;border-radius:6px 0 0 6px">Your Team Builds ▸</div>';
+  put("d1", lobby() + tabHtml);
+  put("d2", lobby() + dr(search("") + list("")));
+  put("d3", lobby() + dr(search("zzz") + list("zzz")));
+  put(
+    "d4",
+    lobby() +
+      dr(
+        search("") +
+          '<div class="empty">' +
+          NONE +
+          '<br><br><span class="btn">Open Team Builder</span></div>',
+      ),
+  );
+  put("p2", lobby() + dr(search("") + list(""), 330));
+</script>
