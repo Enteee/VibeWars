@@ -209,6 +209,22 @@ test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485
   await expect(tip).toHaveCount(0);
 });
 
+test("#2012: in full screen, hovering a slot still shows its tooltip", async ({ page }) => {
+  await startSoloMatch(page);
+  await page.locator(".hud-fullscreen").click();
+  // The whole document, so the tooltip hung off <body> is in the top layer.
+  await expect
+    .poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement))
+    .toBe(true);
+  await page.locator(".hud-skills").getByRole("button", { name: "Fireball", exact: true }).hover();
+  const tip = page.locator(".skill-tip");
+  await expect(tip).toBeVisible();
+  await expect(tip).toContainText("Fireball");
+  // toBeVisible alone passed with the bug: only the fullscreen element's
+  // subtree is drawn, and the tip was outside it.
+  expect(await tip.evaluate((node) => document.fullscreenElement?.contains(node))).toBe(true);
+});
+
 test("M mutes and unmutes the combat sounds", async ({ page }) => {
   await startSoloMatch(page);
   const mute = page.getByRole("button", { name: "Mute sounds" });

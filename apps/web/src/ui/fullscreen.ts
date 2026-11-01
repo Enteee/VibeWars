@@ -69,7 +69,11 @@ export function attachFullscreenButton(
   };
 }
 
-/** What goes fullscreen: the whole app, top bar or HUD and all. */
+/**
+ * What goes fullscreen: the whole app, top bar or HUD and all. The whole
+ * document, not `#app`: tooltips, effect tips and toasts hang off `<body>`,
+ * and only the fullscreen element's subtree is drawn (#2012).
+ */
 export function fullscreenTarget(): HTMLElement {
-  return document.getElementById("app") ?? document.documentElement;
+  return document.documentElement;
 }
