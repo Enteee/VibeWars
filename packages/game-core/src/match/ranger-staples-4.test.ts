@@ -400,8 +400,8 @@ describe("Zojun's Haste (#1676)", () => {
     const bearer = makeCombatant({ id: "r" });
     bearer.statuses.apply("zojuns-haste", 10, "r", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.33);
-    expect(blockChanceOf(bearer, "projectile")).toBe(0.65);
-    expect(blockChanceOf(bearer, "melee")).toBe(0);
+    expect(blockChanceOf(bearer, "projectile", false)).toBe(0.65);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0);
   });
 
   it("lasts 10 s, and ends as its bearer releases a shot", () => {

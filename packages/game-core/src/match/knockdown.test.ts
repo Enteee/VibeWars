@@ -294,9 +294,9 @@ describe("a knocked-down character can't block (#610)", () => {
     const v = get(match, "v").combatant;
     v.statuses.apply("guardian", 60, "monk", NO_RANKS);
     v.knockdownRemaining = DT;
-    expect(blockChanceOf(v, "melee")).toBe(0);
+    expect(blockChanceOf(v, "melee", false)).toBe(0);
     match.step(DT);
     expect(v.knockdownRemaining).toBe(0);
-    expect(blockChanceOf(v, "melee")).toBe(0.5);
+    expect(blockChanceOf(v, "melee", false)).toBe(0.5);
   });
 });

@@ -210,7 +210,7 @@ describe("Displacement (#1265)", () => {
     const rng = createRng(1265);
     let blocked = 0;
     for (let i = 0; i < 400; i += 1) {
-      if (blocks(ally, "foe", "melee", rng)) {
+      if (blocks(ally, "foe", "melee", false, rng)) {
         blocked += 1;
       }
     }
@@ -234,7 +234,7 @@ describe("Displacement (#1265)", () => {
     const rng = createRng(1265);
     let blocked = 0;
     for (let i = 0; i < 400; i += 1) {
-      if (blocks(ally, "foe", "melee", rng)) {
+      if (blocks(ally, "foe", "melee", false, rng)) {
         blocked += 1;
       }
     }

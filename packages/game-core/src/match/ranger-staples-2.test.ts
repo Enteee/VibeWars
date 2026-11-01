@@ -323,8 +323,8 @@ describe("Whirling Defense (#1539)", () => {
   it("blocks 75% of attacks, melee and projectile", () => {
     const bearer = makeCombatant({ id: "r" });
     bearer.statuses.apply("whirling-defense", 18, "r", NO_RANKS);
-    expect(blockChanceOf(bearer, "melee")).toBe(0.75);
-    expect(blockChanceOf(bearer, "projectile")).toBe(0.75);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(bearer, "projectile", false)).toBe(0.75);
   });
 
   it("a blocked arrow deals 10 to the foes adjacent to its bearer, not the archer", () => {
@@ -351,8 +351,8 @@ describe("Dodge (#1539)", () => {
     const bearer = makeCombatant({ id: "r" });
     bearer.statuses.apply("dodge", 10, "r", NO_RANKS);
     expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.33);
-    expect(blockChanceOf(bearer, "projectile")).toBe(0.65);
-    expect(blockChanceOf(bearer, "melee")).toBe(0);
+    expect(blockChanceOf(bearer, "projectile", false)).toBe(0.65);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0);
   });
 
   it("ends as its bearer releases a shot", () => {

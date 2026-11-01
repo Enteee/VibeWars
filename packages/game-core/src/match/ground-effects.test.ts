@@ -192,8 +192,8 @@ describe("Ward Against Melee (#1087)", () => {
     const sim = match();
     cast(sim, WARD);
     const { combatant } = get(sim, "a");
-    expect(blockChanceOf(combatant, "melee")).toBe(0.5);
-    expect(blockChanceOf(combatant, "projectile")).toBe(0);
+    expect(blockChanceOf(combatant, "melee", false)).toBe(0.5);
+    expect(blockChanceOf(combatant, "projectile", false)).toBe(0);
   });
 
   it("is lost the step after its wearer walks out", () => {

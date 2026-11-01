@@ -438,6 +438,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   distortion: icon("distortion"),
   "shield-guardian": icon("shield-guardian"),
   "glass-arrows": icon("glass-arrows"),
+  // Tactics stances that pay on a block (#1978).
+  "wary-stance": icon("wary-stance"),
+  "soldiers-defense": icon("soldiers-defense"),
+  "defensive-stance": icon("defensive-stance"),
+  "auspicious-parry": icon("auspicious-parry"),
 };
 
 const GAP = 2;
