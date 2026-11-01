@@ -184,14 +184,14 @@ export const RANGER_STATUS_ICONS = {
       `<path d="M12 4v16M5 8l14 8M19 8L5 16" ${stroke(c, 1.8)}/>` +
       `<path d="M10 5.5l2 2 2-2M10 18.5l2-2 2 2" ${stroke(c, 1.6)}/>`,
   ],
-  // Nature rituals 3 (#1886, #1921). Skill effect: three wind streaks, the top
-  // one curling, and a minus: skills cost less. Long and flat, where Primal
-  // Echoes is round.
+  // Nature rituals 3 (#1886, #1921). Skill effect: three straight wind
+  // streaks over a bold minus, skills cost less. No curl: Roaring Winds has
+  // those; Primal Echoes is round.
   "energizing-wind": [
     "skill-effect",
     (c) =>
-      `<path d="M3 10h11a2.5 2.5 0 1 0-2.5-2.5M3 14h15M3 18h9" ${stroke(c, 1.8)}/>` +
-      `<path d="M16 18h5" ${stroke(c, 1.8)}/>`,
+      `<path d="M3 7h13M3 11h18M3 15h9" ${stroke(c, 1.8)}/>` +
+      `<path d="M14 17.5h6" ${stroke(c, 2.8)}/>`,
   ],
   // Skill effect: a seal and the ring that echoes it, signets cost Energy.
   "primal-echoes": [
