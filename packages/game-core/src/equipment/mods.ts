@@ -98,7 +98,21 @@ export type ModEffect =
       readonly amount: number;
       readonly while?: ModWhile;
       readonly chance?: number;
-    };
+    }
+  /**
+   * At `chance`, a spell casts in half the time (#2011): one of the item's
+   * attribute, as Adept's, or `any`, as Swift's.
+   */
+  | { readonly kind: "cast-halve-chance"; readonly chance: number; readonly of: ModSpells }
+  /** At `chance`, a spell recharges in half the time (#2011): of Memory's, of Quickening's. */
+  | { readonly kind: "recharge-halve-chance"; readonly chance: number; readonly of: ModSpells }
+  /** At `chance`, the item's attribute is 1 higher for a spell (#2011): of Mastery's. */
+  | { readonly kind: "attribute-plus-one-chance"; readonly chance: number }
+  /** Enchantments the wielder casts last `increase` longer (#2011): of Enchanting's 0.2. */
+  | { readonly kind: "enchantment-duration"; readonly increase: number };
+
+/** Which spells a chance mod acts on (#2011): the item's attribute's, or every one. */
+export type ModSpells = "item-attribute" | "any";
 
 export interface WeaponMod {
   readonly id: ModId;
@@ -183,6 +197,8 @@ const OFFHANDS: readonly ModItem[] = Object.freeze(["shield", "focus"]);
 const ALL_WEAPONS: readonly ModItem[] = Object.freeze([...MARTIAL_AND_STAFF, "wand"]);
 /** Staff wrapping, shield handle, focus core: of Devotion, of Endurance, of Valor. */
 const STAFF_AND_OFFHANDS: readonly ModItem[] = Object.freeze(["staff", ...OFFHANDS]);
+/** A caster weapon's inscription (#2011): Aptitude not Attitude's. */
+const STAFF_AND_WAND: readonly ModItem[] = Object.freeze(["staff", "wand"]);
 
 /** How each condition reads in a tooltip. */
 export const MOD_WHILE_TEXT: Readonly<Record<ModWhile, string>> = Object.freeze({
@@ -205,6 +221,58 @@ function mod(
   text: string,
 ): WeaponMod {
   return Object.freeze({ id, name, slot, fits, effects: Object.freeze([...effects]), text });
+}
+
+/** A spell's casting time halved at `chance` (#2011). */
+function hastened(
+  id: ModId,
+  name: string,
+  slot: ModSlot,
+  fits: readonly ModItem[],
+  chance: number,
+  of: ModSpells,
+): WeaponMod {
+  const spells = of === "any" ? "spells" : "item's attribute spells";
+  return mod(
+    id,
+    name,
+    slot,
+    fits,
+    [{ kind: "cast-halve-chance", chance, of }],
+    `Halves casting time of ${spells} (Chance: ${String(chance * 100)}%)`,
+  );
+}
+
+/** A spell's recharge halved at `chance` (#2011). */
+function remembered(
+  id: ModId,
+  name: string,
+  slot: ModSlot,
+  fits: readonly ModItem[],
+  chance: number,
+  of: ModSpells,
+): WeaponMod {
+  const spells = of === "any" ? "spells" : "item's attribute spells";
+  return mod(
+    id,
+    name,
+    slot,
+    fits,
+    [{ kind: "recharge-halve-chance", chance, of }],
+    `Halves skill recharge of ${spells} (Chance: ${String(chance * 100)}%)`,
+  );
+}
+
+/** The item's attribute +1 for a spell, at 20% (#2011). */
+function mastered(id: ModId, name: string, slot: ModSlot, fits: readonly ModItem[]): WeaponMod {
+  return mod(
+    id,
+    name,
+    slot,
+    fits,
+    [{ kind: "attribute-plus-one-chance", chance: 0.2 }],
+    "Item's attribute +1 (Chance: 20%)",
+  );
 }
 
 /** `+10 armor vs <type>` on a shield or focus inscription. */
@@ -547,6 +615,42 @@ export const WEAPON_MODS: readonly WeaponMod[] = Object.freeze([
     ],
     "Armor +5, Health -20",
   ),
+  // Caster chance mods (#2011), at their perfect values.
+  hastened("adept", "Adept", "prefix", ["staff"], 0.2, "item-attribute"),
+  hastened("swift", "Swift", "prefix", ["staff"], 0.1, "any"),
+  hastened("of-swiftness", "of Swiftness", "suffix", ["focus"], 0.1, "any"),
+  hastened("of-aptitude", "of Aptitude", "suffix", ["focus"], 0.2, "item-attribute"),
+  remembered("of-quickening", "of Quickening", "suffix", ["wand"], 0.1, "any"),
+  remembered("of-memory", "of Memory", "suffix", ["wand"], 0.2, "item-attribute"),
+  mastered("of-mastery", "of Mastery", "suffix", ["staff"]),
+  mod(
+    "of-enchanting",
+    "of Enchanting",
+    "suffix",
+    MARTIAL_AND_STAFF,
+    [{ kind: "enchantment-duration", increase: 0.2 }],
+    "Enchantments last 20% longer",
+  ),
+  hastened(
+    "aptitude-not-attitude",
+    '"Aptitude not Attitude"',
+    "inscription",
+    STAFF_AND_WAND,
+    0.2,
+    "item-attribute",
+  ),
+  hastened("dont-think-twice", '"Don\'t think twice"', "inscription", STAFF_AND_WAND, 0.1, "any"),
+  remembered(
+    "let-the-memory-live-again",
+    '"Let the Memory Live Again"',
+    "inscription",
+    STAFF_AND_WAND,
+    0.1,
+    "any",
+  ),
+  remembered("serenity-now", '"Serenity Now"', "inscription", ["focus"], 0.1, "any"),
+  remembered("forget-me-not", '"Forget Me Not"', "inscription", ["focus"], 0.2, "item-attribute"),
+  mastered("master-of-my-domain", '"Master of My Domain"', "inscription", OFFHANDS),
 ]);
 
 const MODS_BY_ID: ReadonlyMap<ModId, WeaponMod> = new Map(WEAPON_MODS.map((m) => [m.id, m]));

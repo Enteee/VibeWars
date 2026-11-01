@@ -8,6 +8,7 @@ import {
   type ResolvedWeaponSets,
 } from "../equipment/resolve.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
+import { spellModComesUp } from "../skills/spell-mods.js";
 import {
   distanceWithinRange,
   firstHit,
@@ -2821,8 +2822,8 @@ export class MatchSimulation {
     }
 
     // Timed before it is paid for, so a status its use spends (#1761)
-    // still hastens it.
-    const timed =
+    // still hastens it. Adept's chance (#2011) halves it after the rest.
+    const scaled =
       skill.attack === undefined
         ? effectiveActivationSeconds(
             skill,
@@ -2832,6 +2833,12 @@ export class MatchSimulation {
               : this.#participants.get(castTargetId)?.combatant,
           )
         : undefined;
+    const timed =
+      scaled !== undefined &&
+      scaled > 0 &&
+      spellModComesUp(record.combatant.equipment.spellMods.castHalves, skill, this.#rng)
+        ? scaled / 2
+        : scaled;
     const { rule, castsInstantly } = this.#payForUse(record, skill, key, castTargetId);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
@@ -3718,7 +3725,25 @@ export class MatchSimulation {
         ? undefined
         : getStatusDefinition(borrowing).borrowsAttribute?.attributeId;
     // What its start spent still boosts it (#1941): the last glyph spell's.
-    const loan = { lent, held: cast.rule.heldAttributeDeltas };
+    // Of Mastery's +1 (#2011), rolled once a use, as the ranks are read.
+    const mastered =
+      skill.attributeId !== undefined &&
+      spellModComesUp(
+        record.combatant.equipment.spellMods.attributePlusOne.filter(
+          ({ attributeId }) => attributeId === skill.attributeId,
+        ),
+        skill,
+        this.#rng,
+      )
+        ? skill.attributeId
+        : undefined;
+    const loan = {
+      lent,
+      held:
+        mastered === undefined
+          ? cast.rule.heldAttributeDeltas
+          : [...cast.rule.heldAttributeDeltas, { scope: { attributeId: mastered }, amount: 1 }],
+    };
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
@@ -3959,16 +3984,24 @@ export class MatchSimulation {
         cast.rule.rechargeFaster,
       );
       // A glyph's hold on the spell (#1730): Renewal's 0 over Sacrifice's 30 more.
+      // Of Memory's chance (#2011) halves the whole of it.
       beginRecharge(
         record.combatant.cast,
         skill,
         cast.rule.rechargesInstantly
           ? 0
           : // Energizing Wind's slower share (#1886), once the faster is off.
-            reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) *
+            (reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) *
               (1 + cast.rule.own.rechargeSlower) +
               rechargeLongerSeconds +
-              cast.rule.extraRechargeSeconds,
+              cast.rule.extraRechargeSeconds) *
+              (spellModComesUp(
+                record.combatant.equipment.spellMods.rechargeHalves,
+                skill,
+                this.#rng,
+              )
+                ? 0.5
+                : 1),
         cast.key,
       );
       // A form's "disabled for 45 seconds" (#1437), beside its recharge.

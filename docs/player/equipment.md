@@ -104,3 +104,24 @@ raised maximum ends, Health or Energy above the new maximum is lost.
 
 Weapon damage is the weapon's own roll: an attack skill's bonus damage is
 not raised.
+
+The caster mods act on spells only, each by its own chance when you use
+one. "The item's attribute" is the attribute the staff, wand or focus is
+made for. Two halving mods that both come up still halve once.
+
+| Mod                         | Slot, fits                   | What it does                                                    |
+| --------------------------- | ---------------------------- | --------------------------------------------------------------- |
+| Adept                       | prefix, staff                | 20% chance to halve the cast of the item's attribute spells     |
+| Swift                       | prefix, staff                | 10% chance to halve any spell's cast                            |
+| of Aptitude                 | suffix, focus                | 20% chance to halve the cast of the item's attribute spells     |
+| of Swiftness                | suffix, focus                | 10% chance to halve any spell's cast                            |
+| "Aptitude not Attitude"     | inscription, staff or wand   | 20% chance to halve the cast of the item's attribute spells     |
+| "Don't think twice"         | inscription, staff or wand   | 10% chance to halve any spell's cast                            |
+| of Memory                   | suffix, wand                 | 20% chance to halve the recharge of the item's attribute spells |
+| of Quickening               | suffix, wand                 | 10% chance to halve any spell's recharge                        |
+| "Let the Memory Live Again" | inscription, staff or wand   | 10% chance to halve any spell's recharge                        |
+| "Forget Me Not"             | inscription, focus           | 20% chance to halve the recharge of the item's attribute spells |
+| "Serenity Now"              | inscription, focus           | 10% chance to halve any spell's recharge                        |
+| of Mastery                  | suffix, staff                | 20% chance the item's attribute is +1 for a spell               |
+| "Master of My Domain"       | inscription, shield or focus | 20% chance the item's attribute is +1 for a spell               |
+| of Enchanting               | suffix, martial or staff     | enchantments you cast last 20% longer                           |
