@@ -312,8 +312,8 @@ export function renderCharacterBuilder(
     const edit = (): void => {
       callbacks.onEditCharacter(character.id);
     };
-    // The rolled character is never edited (#1147): Clone gives a fresh
-    // roll to edit (#1457), and Reroll replaces it at once, unasked (#1146).
+    // The rolled character is never edited (#1147): Clone gives a copy of
+    // it to edit (#2038), and Reroll replaces it at once, unasked (#1146).
     const clone = button("Clone", "roster-clone", () => {
       // One copy per press: a double-click must not save two.
       clone.disabled = true;

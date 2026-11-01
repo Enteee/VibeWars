@@ -77,6 +77,12 @@ const glyphs = {
       `<path d="M21.6 18A2.6 2.6 0 1 1 19 15.4" ${stroke(C.ink, 1.5)}/>` +
       inkFill("M18.2 13.6L21 15.4L18.2 17.2Z"),
   },
+  take: {
+    means: "An arrow pulling a dot toward you: it takes what another has (#1999).",
+    draw: () =>
+      `<circle cx="21.4" cy="18" r="1.4" fill="${C.ink}"/>` +
+      inkLine("M20 18H16M17.8 16L16 18L17.8 20", 1.6),
+  },
   finale: {
     means: "A four-point spark: a finale fires once, when the chant ends (#1482).",
     draw: () =>

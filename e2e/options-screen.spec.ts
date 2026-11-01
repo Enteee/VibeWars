@@ -107,9 +107,8 @@ test("(4) Back leaves Options for the menu; on a narrow screen the sections sit 
 }) => {
   await page.setViewportSize({ width: 400, height: 800 });
   await page.goto("./");
-  // The menu has no button beyond its primary one, so no ⋯ (#1272, #2019):
-  // the global icons stay in the bar.
-  await expect(page.locator("#topbar .topbar-more")).toBeHidden();
+  // On a phone the menu's join controls and the global icons fold into ⋯ (#1272, #2053).
+  await page.locator("#topbar .topbar-more").click();
   await openKeys(page);
   const entry = await page.locator('.options-entry[data-section="controls"]').boundingBox();
   const pane = await page.locator(".options-pane").boundingBox();
