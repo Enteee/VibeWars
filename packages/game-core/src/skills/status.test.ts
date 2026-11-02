@@ -117,6 +117,7 @@ describe("status definitions", () => {
         def.attackDamageType !== undefined ||
         def.attackArmorPenetration !== 0 ||
         def.attackDamageDelta !== 0 ||
+        def.damageReductionPerHitTaken !== undefined ||
         def.damageReductionWhileCasting !== undefined ||
         def.onAttackHit !== undefined ||
         def.onAttackBlocked !== undefined ||
@@ -1267,7 +1268,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Rapid Fire (#2189) 33% with a bow, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Tiger's Fury (#2190) 25%, Rapid Fire (#2189) 33% with a bow, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -1291,6 +1292,7 @@ describe("attack duration (ADR-0029)", () => {
       "tiger-stance": 0.67,
       "berserker-stance": 0.67,
       "rapid-fire": 0.67,
+      "tigers-fury": 0.75,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

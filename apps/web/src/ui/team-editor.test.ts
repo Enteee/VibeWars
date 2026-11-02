@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   CHARACTER_SCHEMA_VERSION,
+  TEAM_BUILD_SIZES,
   type StoredCharacter,
+  type TeamBuildSize,
   type TeamCharacter,
-  type TeamSize,
 } from "../storage/schema.js";
 import {
   addMember,
@@ -15,7 +16,6 @@ import {
   replaceMember,
   teamCounters,
 } from "./team-builder.js";
-import { TEAM_SIZES } from "./rail.js";
 import {
   copyIntoTeam,
   dragMember,
@@ -42,13 +42,13 @@ function character(id: string): TeamCharacter {
 }
 
 /** A team of `size` (#2109) of a member per id, in order. */
-function teamAt(size: TeamSize, ...ids: readonly string[]) {
+function teamAt(size: TeamBuildSize, ...ids: readonly string[]) {
   return ids.reduce((team, id) => addMember(team, character(id)), newTeam("t1", size));
 }
 
 /** A complete team of a member per id: as many as a team size. */
 function teamOf(...ids: readonly string[]) {
-  const size = TEAM_SIZES.find((s) => s === ids.length);
+  const size = TEAM_BUILD_SIZES.find((s) => s === ids.length);
   if (size === undefined) {
     throw new Error(`no team size of ${String(ids.length)}`);
   }
@@ -112,7 +112,7 @@ describe("copyIntoTeam (#1452)", () => {
 
 describe("pastedTeam (#577)", () => {
   it("is unsaved and not stored, so Save stores it and Back asks", () => {
-    const state = pastedTeam({ ...teamOf("a"), name: "Duo" });
+    const state = pastedTeam({ ...teamOf("a", "b"), name: "Duo" });
 
     expect(state.stored).toBe(false);
     expect(isTeamUnsaved(state.opened, state.team)).toBe(true);
@@ -128,9 +128,9 @@ describe("teamEditorProblems (#573)", () => {
   });
 
   it("asks for a name in a sentence", () => {
-    expect(texts({ ...teamOf("a"), name: "  " })).toEqual([
+    expect(texts({ ...teamOf("a", "b"), name: "  " })).toEqual([
       ["Give the team a name.", true],
-      ["The team is full: 1 member.", false],
+      ["The team is full: 2 members.", false],
     ]);
   });
 
@@ -167,7 +167,7 @@ describe("saveTitle (#2110)", () => {
   it("names no problem for a playable team, a full one included", () => {
     const ids = Array.from({ length: 8 }, (_, index) => `m${String(index)}`);
     expect([
-      saveTitle(teamEditorProblems(teamOf("a"))),
+      saveTitle(teamEditorProblems(teamOf("a", "b"))),
       saveTitle(teamEditorProblems(teamOf(...ids))),
     ]).toEqual(["Save this team", "Save this team"]);
   });

@@ -85,7 +85,9 @@ export type RangerStatusId =
   // Ranger mechanics (#2189).
   | "melandrus-resilience"
   | "expert-focus"
-  | "rapid-fire";
+  | "rapid-fire"
+  // Ranger staples (#2190).
+  | "tigers-fury";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -736,5 +738,10 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     attackDurationMultiplier: 0.67,
     attackDurationMultiplierWeapon: "bow",
+  }),
+  // "For 5...11 seconds, you attack 25% faster" (#2190).
+  "tigers-fury": define("tigers-fury", "Tiger's Fury", "stance", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.75,
   }),
 };

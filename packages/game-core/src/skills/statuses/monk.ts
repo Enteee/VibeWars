@@ -1,6 +1,6 @@
 import { AREA_ADJACENT, AREA_EARSHOT } from "../../distances.js";
 import type { StatusDefinition } from "../status.js";
-import type { HealEffect, SkillEffect } from "../types.js";
+import { KNOCKDOWN_SECONDS, type HealEffect, type SkillEffect } from "../types.js";
 import { define, ownSkills } from "./define.js";
 
 export type MonkStatusId =
@@ -53,7 +53,12 @@ export type MonkStatusId =
   | "air-of-enchantment"
   // Monk mechanics (#2189).
   | "spell-shield"
-  | "convert-hexes";
+  | "convert-hexes"
+  // Monk staples (#2190).
+  | "shield-of-absorption"
+  | "divine-intervention"
+  | "healing-hands"
+  | "shield-of-judgment";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -584,5 +589,76 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     casterEnergyPerReduction: {
       scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 3.6 },
     },
+  }),
+  // "...damage received by target ally is reduced by 5 each time that ally
+  // is hit" (#2190): by 5 more on each, 5, 10, 15 ..., until it ends or is
+  // recast (GW1 wiki notes).
+  "shield-of-absorption": define("shield-of-absorption", "Shield of Absorption", "enchantment", {
+    profession: "monk",
+    damageReductionPerHitTaken: 5,
+  }),
+  // "...the next time target ally receives damage that would be fatal, the
+  // damage is negated and that ally is healed for 26...240 Health" (#2190):
+  // 197, from the Monk's Divine Favor. A blow that leaves the ally alive
+  // does not spend it.
+  "divine-intervention": define("divine-intervention", "Divine Intervention", "enchantment", {
+    profession: "monk",
+    negatesFatalDamage: true,
+    triggers: [
+      {
+        on: "bearer-fatal-damage-negated",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "monk.divine-favor", atZero: 26, atTwelve: 197.2 } },
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.divine-intervention",
+      },
+    ],
+  }),
+  // "...whenever target ally takes damage, that ally is healed for 5...35
+  // Health" (#2190): 29, from the Monk's Healing Prayers, for damage a foe
+  // deals, as Spirit Bond's.
+  "healing-hands": define("healing-hands", "Healing Hands", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 29 } },
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.healing-hands",
+      },
+    ],
+  }),
+  // "...anyone striking target ally with an attack is knocked down and
+  // suffers 5...50 holy damage" (#2190): 41, from the Monk's Smiting
+  // Prayers, on every attack that hits, whoever's.
+  "shield-of-judgment": define("shield-of-judgment", "Shield of Judgment", "enchantment", {
+    profession: "monk",
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "monk.smiting-prayers", atZero: 5, atTwelve: 41 },
+            },
+            type: "holy",
+            armorPenetration: 0,
+          },
+          { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
+        ],
+        target: "source-on-offender",
+        skillId: "monk.shield-of-judgment",
+      },
+    ],
   }),
 };

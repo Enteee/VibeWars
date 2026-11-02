@@ -4,7 +4,7 @@ import { newTeam } from "../ui/team-builder.js";
 import { fromPlayerBuild } from "./build-validation.js";
 import { STORAGE_NAMESPACE } from "./namespace.js";
 import type { TeamRepository } from "./repository.js";
-import type { StoredTeam, TeamCharacter, TeamSize } from "./schema.js";
+import type { StoredTeam, TeamCharacter, TeamBuildSize } from "./schema.js";
 
 /**
  * The Team Build a browser's first start rolls (#2036), as it rolls a
@@ -21,12 +21,12 @@ export interface StarterTeamKey {
   readonly save: (id: string) => void;
 }
 
-function starterTeamStorageKey(size: TeamSize): string {
+function starterTeamStorageKey(size: TeamBuildSize): string {
   return `${STORAGE_NAMESPACE}.starterTeamId.${String(size)}`;
 }
 
 /** The id of the starter team rolled at `size` (#2147), if any. */
-export function loadStarterTeamId(size: TeamSize): string | undefined {
+export function loadStarterTeamId(size: TeamBuildSize): string | undefined {
   try {
     return localStorage.getItem(starterTeamStorageKey(size)) ?? undefined;
   } catch {
@@ -34,7 +34,7 @@ export function loadStarterTeamId(size: TeamSize): string | undefined {
   }
 }
 
-export function saveStarterTeamId(size: TeamSize, id: string): void {
+export function saveStarterTeamId(size: TeamBuildSize, id: string): void {
   try {
     localStorage.setItem(starterTeamStorageKey(size), id);
   } catch {
@@ -48,7 +48,7 @@ export interface RollStarterTeamOptions {
   /** [0, 1), `Math.random` in the browser. */
   readonly random: () => number;
   /** The team size picked (#2109): the starter rolled is one of it. */
-  readonly size: TeamSize;
+  readonly size: TeamBuildSize;
   readonly id: string;
   /** A fresh id for each member. */
   readonly newId: () => string;
@@ -59,7 +59,7 @@ export interface RollStarterTeamOptions {
 /** `starter` as a Team Build under `id`, its members under their job names. */
 function storedStarterTeam(
   starter: StarterTeam,
-  size: TeamSize,
+  size: TeamBuildSize,
   id: string,
   newId: () => string,
   now: number,
