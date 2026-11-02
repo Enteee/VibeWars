@@ -119,9 +119,9 @@ export interface WhileUnder {
   readonly attackDurationMultiplier: number;
   readonly adrenalineGainFaster: number;
   /** Summed into the bearer's pips as the status's own (#1654): Resilient Weapon's. */
-  readonly healthPips: number;
+  readonly healthPips: StatusStat;
   /** Summed into the bearer's armor against every type, as the status's own (#1654). */
-  readonly armorModifier: number;
+  readonly armorModifier: StatusStat;
   /**
    * The bearer's chance to miss with attacks, joined with its other
    * `attackMissChance`s as they join each other (#1732): Well of
@@ -195,6 +195,17 @@ const OWN_SKILL_STAT_KEYS: Readonly<Record<OwnSkillStatKey, true>> = {
   durationMultiplier: true,
 };
 
+/** The fields of a `WhileUnder` that are a `StatusStat` (#2191). */
+type WhileUnderStatKey = {
+  [K in keyof WhileUnder]: StatusStat extends WhileUnder[K] ? K : never;
+}[keyof WhileUnder];
+
+/** Every `WhileUnderStatKey`, as `STATUS_STAT_KEYS`. */
+const WHILE_UNDER_STAT_KEYS: Readonly<Record<WhileUnderStatKey, true>> = {
+  healthPips: true,
+  armorModifier: true,
+};
+
 /** The attributes `id`'s scaled stats name, each once: what its source's ranks are read in. */
 export function scaledStatAttributes(id: StatusId): readonly string[] {
   const definition = getStatusDefinition(id);
@@ -209,6 +220,15 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
   for (const modifier of definition.ownSkillModifiers) {
     for (const key of Object.keys(OWN_SKILL_STAT_KEYS) as OwnSkillStatKey[]) {
       const stat = modifier[key];
+      if (typeof stat !== "number") {
+        attributes.add(stat.scaling.attributeId);
+      }
+    }
+  }
+  // Teinai's Prison's degen is its caster's Water Magic (#2191).
+  if (definition.whileUnder !== undefined) {
+    for (const key of Object.keys(WHILE_UNDER_STAT_KEYS) as WhileUnderStatKey[]) {
+      const stat = definition.whileUnder[key];
       if (typeof stat !== "number") {
         attributes.add(stat.scaling.attributeId);
       }
@@ -4088,8 +4108,8 @@ export function aggregateModifiers(
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
-      healthPips += def.whileUnder.healthPips;
-      armorModifier += def.whileUnder.armorModifier;
+      healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
+      armorModifier += Math.round(statAt(def.whileUnder.armorModifier, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);
     }
     if (def.enchantmentRechargeFaster !== undefined) {

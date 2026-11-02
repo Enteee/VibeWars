@@ -90,7 +90,8 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     moveSpeedMultiplier: 0.34,
   }),
   // "...causing the foe to move 66% slower. If that foe has Cracked Armor,
-  // the chill seeps through causing 5...9 Health degeneration" (#2166): 8.
+  // the chill seeps through causing 5...9 Health degeneration" (#2166),
+  // scaled by Water Magic (#2191).
   "teinais-prison": define("teinais-prison", "Teinai's Prison", "hex", {
     profession: "elementalist",
     attribute: "elementalist.water-magic",
@@ -100,7 +101,9 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       statusIds: ["cracked-armor"],
       attackDurationMultiplier: 1,
       adrenalineGainFaster: 0,
-      healthPips: -8,
+      healthPips: {
+        scaling: { attributeId: "elementalist.water-magic", atZero: -5, atTwelve: -8.2 },
+      },
       armorModifier: 0,
       attackMissChance: 0,
     },
