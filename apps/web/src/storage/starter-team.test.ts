@@ -87,7 +87,7 @@ describe("rollStarterTeam", () => {
     const key = memoryKey();
     const options = { teams, key, random: () => 0, newId: counter(), now: 5 };
 
-    expect(await rollStarterTeam({ ...options, size: 2, id: "t" })).toBeUndefined();
+    expect(await rollStarterTeam({ ...options, size: 1, id: "t" })).toBeUndefined();
     expect(key.value).toBeUndefined();
 
     const eight = await rollStarterTeam({ ...options, size: 8, id: "u" });
