@@ -483,6 +483,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
   "protectors-defense-block": icon("protectors-defense-block"),
+  // Warrior mechanics 4 (#2180).
+  "battle-rage": icon("battle-rage"),
+  "shields-up": icon("shields-up"),
   // Elementalist auras (#2095).
   "magnetic-aura": icon("magnetic-aura"),
   "swirling-aura": icon("swirling-aura"),

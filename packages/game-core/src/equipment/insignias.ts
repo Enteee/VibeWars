@@ -68,6 +68,8 @@ export type ArmorCondition =
   | { readonly kind: "vs-physical" }
   | { readonly kind: "vs-elemental" }
   | { readonly kind: "vs-type"; readonly type: DamageType }
+  /** A projectile attack's blow (#2180): "Shields Up!"'s. A spell is none. */
+  | { readonly kind: "vs-projectile" }
   /** Shadow Refuge's test: swinging while standing, or casting an attack skill. */
   | { readonly kind: "attacking" }
   | { readonly kind: "enchantments-at-least"; readonly count: number }
