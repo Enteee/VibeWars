@@ -175,6 +175,20 @@ const rows = {
     "skill-effect",
     (c) => `<path d="M12 5l5 2v4c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7V7z" ${stroke(c, 2)}/>`,
   ],
+  // Stance: a forward chevron beside two rising gauge bars, adrenaline doubled (#2205).
+  "battle-rage": [
+    "stance",
+    (c) =>
+      `<path d="M4 7l6 5-6 5" ${stroke(c, 2.5)}/>` +
+      `<path d="M13 19v-6h3v6zM18 19V6h3v13z" fill="${c}"/>`,
+  ],
+  // Shout: a shield with a chevron lifting inside it (#2205).
+  "shields-up": [
+    "shout",
+    (c) =>
+      `<path d="M12 4l7 2.5v5.5c0 3.5-3 5.5-7 7.5-4-2-7-4-7-7.5V6.5z" ${stroke(c, 2.2)}/>` +
+      `<path d="M9 14l3-3.5 3 3.5" ${stroke(c, 2.2)}/>`,
+  ],
 };
 
 export default rows;
