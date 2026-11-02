@@ -36,9 +36,11 @@ runs:
     # runners have no registration and skip this. After the cache restore, so
     # a restored db does not drop the registration.
     - name: Register the jail's store paths
-      if: env.VIBEWARS_NIX_REGISTRATION != ''
       shell: bash
       run: |
+        # Not an `if: env.…`: that context holds only what the workflow sets,
+        # never the runner process's own environment, so it was always false.
+        [ -n "${VIBEWARS_NIX_REGISTRATION:-}" ] || exit 0
         nix-store --load-db < "$VIBEWARS_NIX_REGISTRATION"
         mkdir -p /nix/var/nix/gcroots
         while read -r path; do
