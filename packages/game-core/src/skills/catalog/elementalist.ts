@@ -3672,7 +3672,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "magnetic-aura",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 7 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 6.6 },
         },
       },
       {
@@ -3689,7 +3689,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
                 kind: "apply-status",
                 statusId: "magnetic-aura",
                 durationSeconds: {
-                  scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 7 },
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 6.6 },
                 },
               },
             ],
@@ -3729,7 +3729,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "swirling-aura",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.water-magic", atZero: 3, atTwelve: 6 },
+          scaling: { attributeId: "elementalist.water-magic", atZero: 3, atTwelve: 6.2 },
         },
       },
       {
@@ -3746,7 +3746,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
                 kind: "apply-status",
                 statusId: "swirling-aura",
                 durationSeconds: {
-                  scaling: { attributeId: "elementalist.water-magic", atZero: 3, atTwelve: 6 },
+                  scaling: { attributeId: "elementalist.water-magic", atZero: 3, atTwelve: 6.2 },
                 },
               },
             ],
@@ -3803,7 +3803,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
                 kind: "apply-status",
                 statusId: "magnetic-surge",
                 durationSeconds: {
-                  scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 4 },
+                  scaling: { attributeId: "elementalist.earth-magic", atZero: 1, atTwelve: 4.2 },
                 },
               },
             ],
@@ -3843,7 +3843,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "sliver-armor",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 10 },
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 9.8 },
         },
       },
     ],

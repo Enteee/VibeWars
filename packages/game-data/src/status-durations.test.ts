@@ -7,14 +7,18 @@ import skilldesc from "../raw/gw-skilldata/skilldesc-en.json" with { type: "json
 // whose rank-12 seconds are a "N...M seconds" range of its skill's GW1 text
 // scales with the skill's attribute, from N at 0 to M at 15.
 
-const CONCISE: ReadonlyMap<number, string> = new Map(
-  Object.values(skilldesc.skilldesc).map((record) => [record.id, record.concise]),
+// Both texts: a concise one can drop the unit ("for 1...5 and block").
+const TEXT: ReadonlyMap<number, string> = new Map(
+  Object.values(skilldesc.skilldesc).map((record) => [
+    record.id,
+    `${record.description} ${record.concise}`,
+  ]),
 );
 
-/** Every "N...M second(s)" of `gwId`'s concise text, as [N, M]. */
+/** Every "N...M second(s)" of `gwId`'s full and concise text, as [N, M]. */
 function ranges(gwId: number | undefined): (readonly [number, number])[] {
   return [
-    ...((gwId === undefined ? undefined : CONCISE.get(gwId)) ?? "").matchAll(
+    ...((gwId === undefined ? undefined : TEXT.get(gwId)) ?? "").matchAll(
       /(\d+)\.\.\.(\d+) seconds?/g,
     ),
   ].map(([, low, high]) => [Number(low), Number(high)] as const);
