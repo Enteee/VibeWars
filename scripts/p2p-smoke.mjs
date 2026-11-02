@@ -154,8 +154,9 @@ async function serve() {
     `pnpm --filter @vibewars/web exec vite preview --outDir ${out} ` +
     `--host 127.0.0.1 --port ${String(PORT)} --strictPort`;
   const env = { ...process.env };
-  // Every build but e2e's plays over Trystero.
+  // Every build but e2e's plays over Trystero, with an unseeded lobby.
   delete env.VITE_VIBEWARS_TRANSPORT;
+  delete env.VITE_VIBEWARS_LOBBY_SEED;
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
     env,
