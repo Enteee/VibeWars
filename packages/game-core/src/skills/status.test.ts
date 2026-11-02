@@ -225,7 +225,7 @@ describe("status definitions", () => {
       overload: -3,
       migraine: -7,
       "conjure-nightmare": -8,
-      "images-of-remorse": -3,
+      "images-of-remorse": -2.6,
       wither: -4,
       "life-siphon": -3,
       "life-siphon-regen": 3,
