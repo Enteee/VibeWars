@@ -1724,7 +1724,7 @@ body {
 
 .team-row {
   display: grid;
-  grid-template-columns: 2.4rem 10rem repeat(8, minmax(4.5rem, 1fr)) auto;
+  grid-template-columns: 2.4rem 10rem repeat(8, 36px) auto;
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.5rem;
@@ -1874,34 +1874,28 @@ body {
   outline-offset: -1px;
 }
 
-/* A bar cell, edged in its type badge's colour (icons/skill-type). */
+/* A bar cell: the skill's icon (#2197), edged in its type badge's colour
+   (icons/skill-type). */
 .team-skill {
   position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 3.1rem;
-  padding: 0.2rem 0.3rem;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--line);
   border-left: 3px solid var(--skill-type-colour, var(--ink-dim));
   font-size: 0.64rem;
   line-height: 1.15;
 }
 
-/* Bottom right, beside the cost, so the name has the cell's width. */
-.team-skill .skill-type-badge {
-  top: auto;
-  bottom: 4px;
+.team-skill .skill-icon {
+  display: block;
 }
 
 .team-skill.is-empty {
   border: 1px dashed var(--line);
-}
-
-.team-skill.is-elite {
-  border-top-color: var(--elite);
-  border-right-color: var(--elite);
-  border-bottom-color: var(--elite);
 }
 
 .team-skill[data-skill-type="enchantment"] {
@@ -1938,19 +1932,11 @@ body {
   --skill-type-colour: var(--ink);
 }
 
+/* An id this client does not know: no icon, so its id, cut short. */
 .team-skill-name {
-  display: -webkit-box;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  /* Words wrap whole, hyphenated where the browser can; a word longer
-     than the cell breaks rather than hide its end. */
-  hyphens: auto;
-  overflow-wrap: break-word;
-}
-
-.team-skill-cost {
-  color: var(--ink-dim);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-picker {
@@ -4725,9 +4711,16 @@ body.has-expanded-training #screens {
 .skill-box.is-elite,
 .skill-locked-box.is-elite,
 .skill-corpus-box.is-elite,
+.team-skill.is-elite,
 .skill-tip.is-elite {
   margin: -2px;
   border: 3px double var(--elite);
+}
+
+/* A team grid cell is 36px wide by its 3px type edge (#2197): the elite
+   frame pays back 1px a side across, 2px down. */
+.team-skill.is-elite {
+  margin: -2px -1px;
 }
 
 /* A combat bar slot is sized border-box (#719): the wider border eats into

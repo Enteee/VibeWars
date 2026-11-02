@@ -1,4 +1,5 @@
 import {
+  describeSkill,
   energyCostOf,
   getAttribute,
   getSkill,
@@ -22,7 +23,7 @@ import {
   gearIcons,
   professionLabel,
 } from "./character-preview.js";
-import { professionIcon, skillTypeBadgeHtml } from "./icons.js";
+import { professionIcon, skillIconHtml } from "./icons.js";
 import {
   button,
   h,
@@ -51,6 +52,7 @@ import {
   type TeamCounterId,
 } from "./team-builder.js";
 import { teamSizeStepper } from "./rail.js";
+import { createSkillTooltip } from "./skill-tooltip.js";
 
 /**
  * The team editor (#573, epic #554), mounted once per ADR-0030.
@@ -209,6 +211,9 @@ function lockedTeamSize(size: TeamBuildSize): HTMLElement {
   );
   return field;
 }
+
+/** A team grid cell's skill icon, in px (#2197). */
+const TEAM_SKILL_ICON_PX = 32;
 
 /** One filled cell of a member's bar in the team grid (#574). */
 export interface TeamSkillCell {
@@ -496,6 +501,12 @@ export function mountTeamEditor(
   const body = h("div", "team-editor-body");
   // The grid scrolls sideways on a narrow window; the picker wraps below.
   const gridScroll = h("div", "team-grid-scroll");
+  // One skill tooltip for the grid (#2197); it is fixed, so it hides
+  // rather than drift when the grid scrolls under it.
+  const tooltip = createSkillTooltip();
+  gridScroll.addEventListener("scroll", () => {
+    tooltip.hide();
+  });
   const list = h("div", "team-grid team-members");
   list.setAttribute("role", "list");
   gridScroll.appendChild(list);
@@ -549,6 +560,22 @@ export function mountTeamEditor(
           toggleHighlight({ kind: "skill", skillId });
         }
       };
+      // The Character Builder's tooltip (#2197), at this member's ranks.
+      const showTip = (): void => {
+        const skill = getSkill(cell.dataset.skillId ?? "");
+        const member = team.members[indexOf()];
+        if (skill !== undefined && member !== undefined) {
+          tooltip.show(cell, describeSkill(skill, characterRanks(member.character)));
+        }
+      };
+      cell.addEventListener("mouseenter", showTip);
+      cell.addEventListener("focus", showTip);
+      cell.addEventListener("mouseleave", () => {
+        tooltip.hide();
+      });
+      cell.addEventListener("blur", () => {
+        tooltip.hide();
+      });
       cell.addEventListener("click", find);
       cell.addEventListener("keydown", (event: KeyboardEvent) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -634,20 +661,25 @@ export function mountTeamEditor(
         node.dataset.skillType = cell.type;
       }
       node.replaceChildren();
-      node.title = cell === null ? "empty slot" : `${cell.name}: find it on the team`;
       if (cell === null) {
+        node.title = "empty slot";
         delete node.dataset.skillId;
         node.removeAttribute("role");
         node.removeAttribute("tabindex");
+        node.removeAttribute("aria-label");
         return;
       }
+      // The icon alone (#2197): the tooltip carries name, cost and type.
+      node.removeAttribute("title");
       node.dataset.skillId = cell.skillId;
       node.setAttribute("role", "button");
+      node.setAttribute("aria-label", cell.name);
       node.tabIndex = 0;
-      if (cell.type !== undefined) {
-        node.insertAdjacentHTML("beforeend", skillTypeBadgeHtml(cell.type));
+      if (cell.type === undefined) {
+        node.appendChild(h("span", "team-skill-name", cell.name));
+      } else {
+        node.insertAdjacentHTML("beforeend", skillIconHtml(cell.skillId, TEAM_SKILL_ICON_PX));
       }
-      node.append(h("span", "team-skill-name", cell.name), h("span", "team-skill-cost", cell.cost));
     });
   };
 
@@ -887,6 +919,7 @@ export function mountTeamEditor(
     leave,
     dispose() {
       disposed = true;
+      tooltip.dispose();
       document.removeEventListener("pointerdown", onPointerDown);
       stopPaste();
     },

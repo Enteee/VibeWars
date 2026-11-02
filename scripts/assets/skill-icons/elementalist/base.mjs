@@ -94,6 +94,17 @@ const rows = {
   // Attributes raised (#1941)
   "elementalist.glyph-of-elemental-power": { glyph: "glyph-power-up" },
   "elementalist.glyph-of-energy": { glyph: "glyph-energy-up" },
+  // Conjures, ether buffs and auras (#2177)
+  "elementalist.conjure-flame": { glyph: "blade-conjure-flame" },
+  "elementalist.conjure-frost": { glyph: "blade-conjure-frost" },
+  "elementalist.conjure-lightning": { glyph: "blade-conjure-lightning" },
+  "elementalist.ether-prodigy": { glyph: "ether-fast" },
+  "elementalist.ether-renewal": { glyph: "ether-per-ring" },
+  "elementalist.elemental-attunement": { glyph: "ether-four" },
+  "elementalist.magnetic-aura": { glyph: "ring-figure", modifier: "block" },
+  "elementalist.swirling-aura": { glyph: "ring-figure-swirl" },
+  "elementalist.magnetic-surge": { glyph: "ring-figure-surge", modifier: "block" },
+  "elementalist.sliver-armor": { glyph: "ring-figure-shards" },
 };
 
 export default rows;

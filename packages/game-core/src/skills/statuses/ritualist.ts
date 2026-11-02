@@ -533,7 +533,8 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
   }),
   // Ritualist weapon spells 3 (#1654), rank-12 values.
   // "While suffering from a hex or condition, that ally gains +1...6
-  // Health regeneration and +24 armor": 5.
+  // Health regeneration and +24 armor", regeneration scaled by Restoration
+  // Magic (#2191).
   "resilient-weapon": define("resilient-weapon", "Resilient Weapon", "weapon-spell", {
     profession: "ritualist",
     whileUnder: {
@@ -541,7 +542,9 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       statusIds: [],
       attackDurationMultiplier: 1,
       adrenalineGainFaster: 0,
-      healthPips: 5,
+      healthPips: {
+        scaling: { attributeId: "ritualist.restoration-magic", atZero: 1, atTwelve: 5 },
+      },
       armorModifier: 24,
       attackMissChance: 0,
     },

@@ -849,7 +849,7 @@ function degenerationSources(combatant: Combatant): {
     if (
       pips < 0 ||
       (definition.whileUnder !== undefined &&
-        definition.whileUnder.healthPips < 0 &&
+        statAt(definition.whileUnder.healthPips, status.ranks) < 0 &&
         isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       draining.add(status.sourceId);
@@ -859,7 +859,7 @@ function degenerationSources(combatant: Combatant): {
       definition.healthPerSecondWhileMoving > 0 ||
       definition.healthPerSecond > 0 ||
       (definition.whileUnder !== undefined &&
-        definition.whileUnder.healthPips > 0 &&
+        statAt(definition.whileUnder.healthPips, status.ranks) > 0 &&
         isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       healing.add(status.sourceId);
@@ -6244,7 +6244,7 @@ export class MatchSimulation {
         }
       }
       const strikes = (blows + doubled) * (1 + extraStrikesPerHit);
-      if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds)) {
+      if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds, true)) {
         log.push({ kind: "adrenaline-gained", targetId: record.id, strikes, skillId: undefined });
       }
     }
@@ -6278,6 +6278,7 @@ export class MatchSimulation {
         victim.combatant,
         Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
         this.#elapsedSeconds,
+        false,
       );
     }
   }

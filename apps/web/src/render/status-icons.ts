@@ -478,16 +478,25 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
   "protectors-defense-block": icon("protectors-defense-block"),
+  // Warrior mechanics 4 (#2180).
+  "battle-rage": icon("battle-rage"),
+  "shields-up": icon("shields-up"),
   // Elementalist auras (#2095).
   "magnetic-aura": icon("magnetic-aura"),
   "swirling-aura": icon("swirling-aura"),
   "magnetic-surge": icon("magnetic-surge"),
   "sliver-armor": icon("sliver-armor"),
+  // Elementalist staples (#2166).
+  "teinais-prison": icon("teinais-prison"),
   // Chain and Paradox tools (#2134).
   "way-of-the-empty-palm": icon("way-of-the-empty-palm"),
   "mark-of-instability": icon("mark-of-instability"),
   "deadly-paradox": icon("deadly-paradox"),
   "unseen-fury": icon("unseen-fury"),
+  // Warrior staples 4 (#2181).
+  "tiger-stance": icon("tiger-stance"),
+  "berserker-stance": icon("berserker-stance"),
+  "bulls-charge": icon("bulls-charge"),
 };
 
 const GAP = 2;

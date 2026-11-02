@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { openLibraryGroup } from "./helpers/library.js";
 import { INVITE_URL, joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
 import {
   copyInvite,
@@ -558,6 +559,7 @@ test("each row shows a player's name alone, and Start says who it waits for (#58
     await openRail(host, "Character Builder");
     await host.getByRole("button", { name: "New character", exact: true }).click();
     await host.locator("input.editor-name").fill("Cynn");
+    await openLibraryGroup(host);
     await host.locator(".skill-box").first().locator(".skill-box-equip").click();
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await host.getByRole("button", { name: "New character", exact: true }).click();
@@ -607,6 +609,7 @@ test("a 1v1 plays the host's active character as it hosted, not one selected aft
     await openRail(host, "Character Builder");
     await host.getByRole("button", { name: "New character", exact: true }).click();
     await host.locator("input.editor-name").fill("Cynn");
+    await openLibraryGroup(host);
     await host.locator(".skill-box").first().locator(".skill-box-equip").click();
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await host.getByRole("button", { name: "New character", exact: true }).click();

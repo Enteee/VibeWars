@@ -163,9 +163,11 @@ only a full team build of its size.
 Add a member
 with **New character**, or **Add** one of your characters to copy its
 build in. A copy is the team's own: changing it, or the character it came
-from, leaves the other as it was. Press a member's name to edit it in the
-build editor; its **Save** puts it back in the team, and the team's own
-**Save** keeps it all and takes you back to Team Builder. **Esc** leaves
+from, leaves the other as it was. Each member's skills show as icons;
+hover one for its details, click it to find every copy on the team.
+Press a member's name to edit it in the build editor;
+its **Save** puts it back in the team, and the team's own **Save** keeps it all
+and takes you back to Team Builder. **Esc** leaves
 without saving, and asks first. The team's **Share**, **Duplicate** and
 **Delete** are under **⋯**.
 You can save a team at any time, problems and all, but only a team
