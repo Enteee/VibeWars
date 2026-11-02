@@ -3519,7 +3519,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
   {
     id: "assassin.unseen-fury",
     name: "Unseen Fury",
-    gwId: 3049,
+    gwId: 1041,
     type: "stance",
     elite: false,
     flash: false,

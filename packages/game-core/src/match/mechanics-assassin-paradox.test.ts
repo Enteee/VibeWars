@@ -177,7 +177,7 @@ describe("the five are the corpus's (#2134)", () => {
     [INSTABILITY, 978, "hex", false, 10, 0.25, 20],
     [PARADOX, 572, "stance", false, 15, 0, 10],
     [WASTREL, 1644, "skill", true, 5, 0.25, 20],
-    [UNSEEN_FURY, 3049, "stance", false, 5, 0, 45],
+    [UNSEEN_FURY, 1041, "stance", false, 5, 0, 45],
   ] as const)(
     "%s: gwId %i, %s, elite %s, %i energy, %f s, %i s recharge",
     (id, gwId, type, elite, energy, activation, recharge) => {
