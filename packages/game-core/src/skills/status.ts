@@ -855,6 +855,12 @@ export interface StatusDefinition {
   readonly damageReductionPerRank:
     { readonly attributeId: string; readonly perRank: number; readonly max: number } | undefined;
   /**
+   * As `damageReduction`, but `n` times this off the `n`th packet the
+   * bearer takes under it (#2190): Shield of Absorption's 5, 10, 15 ...
+   * A recast starts the count again. `undefined`: none.
+   */
+  readonly damageReductionPerHitTaken: number | undefined;
+  /**
    * As `damageReduction`, but only while the bearer is activating a skill
    * of `skillType` (#1827): Armor of Unfeeling's "10 base damage reduction
    * while casting binding rituals". Read as each packet lands, so it ends
@@ -2185,6 +2191,8 @@ export interface ActiveStatus {
   attacksLeft: number | undefined;
   /** The bearer's hits before it ends (`endsAfterHits`); `undefined`: no such limit. */
   hitsLeft: number | undefined;
+  /** Packets the bearer took under it (`damageReductionPerHitTaken`). */
+  hitsTaken: number;
   /** The bearer's unblockable attacks before it ends (`unblockableAttacks`); `undefined`: none. */
   unblockableLeft: number | undefined;
   /** The bearer's attacks before it ends (`endsAfterAttackCount`); `undefined`: no such limit. */
@@ -2812,6 +2820,7 @@ export class StatusSet {
       // A recast signet starts its count again (#1916), never adds to it.
       existing.attacksMadeLeft = definition.endsAfterAttackCount;
       existing.castsLeft = definition.borrowsAttribute?.spells;
+      existing.hitsTaken = 0;
       this.#statuses.set(id, existing);
       return false;
     }
@@ -2821,6 +2830,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: definition.endsAfterAttacks,
       hitsLeft: definition.endsAfterHits?.count,
+      hitsTaken: 0,
       unblockableLeft: definition.unblockableAttacks,
       attacksMadeLeft: definition.endsAfterAttackCount,
       spellsLeft: definition.nextSpells?.count,
@@ -2892,6 +2902,7 @@ export class StatusSet {
       durationSeconds,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      hitsTaken: 0,
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
@@ -2944,6 +2955,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      hitsTaken: 0,
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
@@ -2985,6 +2997,7 @@ export class StatusSet {
       durationSeconds: Number.POSITIVE_INFINITY,
       attacksLeft: undefined,
       hitsLeft: undefined,
+      hitsTaken: 0,
       unblockableLeft: undefined,
       attacksMadeLeft: undefined,
       spellsLeft: undefined,
@@ -3386,6 +3399,23 @@ export class StatusSet {
     }
     this.#end(ended);
     return ended;
+  }
+
+  /**
+   * The bearer took a packet (#2190): every status that takes more off
+   * each one counts it. Returns what they take off this one, Shield of
+   * Absorption's 5 off the first, 10 off the second, and so on.
+   */
+  public countHitTaken(): number {
+    let reduction = 0;
+    for (const status of this.#statuses.values()) {
+      const step = getStatusDefinition(status.id).damageReductionPerHitTaken;
+      if (step !== undefined) {
+        status.hitsTaken += 1;
+        reduction += step * status.hitsTaken;
+      }
+    }
+    return reduction;
   }
 
   /**

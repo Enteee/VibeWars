@@ -113,6 +113,7 @@ export function define(
     damageTakenMultiplier: 1,
     damageReduction: 0,
     damageReductionPerRank: undefined,
+    damageReductionPerHitTaken: undefined,
     damageReductionWhileCasting: undefined,
     damageReductionFromHexedSource: undefined,
     damageTypeTakenMultiplier: undefined,

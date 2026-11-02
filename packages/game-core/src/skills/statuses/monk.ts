@@ -558,10 +558,11 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     },
   }),
   // "...damage received by target ally is reduced by 5 each time that ally
-  // is hit" (#2190).
+  // is hit" (#2190): by 5 more on each, 5, 10, 15 ..., until it ends or is
+  // recast (GW1 wiki notes).
   "shield-of-absorption": define("shield-of-absorption", "Shield of Absorption", "enchantment", {
     profession: "monk",
-    damageReduction: 5,
+    damageReductionPerHitTaken: 5,
   }),
   // "...the next time target ally receives damage that would be fatal, the
   // damage is negated and that ally is healed for 26...240 Health" (#2190):

@@ -133,7 +133,7 @@ function drain(bearer: Combatant, combatants: Map<string, Combatant>): CombatEve
 }
 
 describe("Shield of Absorption (#2190)", () => {
-  it("lasts 6 s and takes 5 off every hit", () => {
+  it("lasts 6 s and takes 5 more off each hit, 5, 10, 15; a recast starts again at 5", () => {
     const combatants = party();
     const a = member(combatants, "a");
     expect(cast(combatants, "monk.shield-of-absorption")).toContainEqual(
@@ -142,7 +142,9 @@ describe("Shield of Absorption (#2190)", () => {
     expect(remaining(a, "shield-of-absorption")).toBe(6);
     const hit = () =>
       mitigate(unmitigatedDamage(50, "skill"), a, RULES.combat, null, createRng(1), new Map());
-    expect([hit(), hit()]).toEqual([45, 45]);
+    expect([hit(), hit(), hit()]).toEqual([45, 40, 35]);
+    cast(combatants, "monk.shield-of-absorption");
+    expect([hit(), hit()]).toEqual([45, 40]);
   });
 });
 

@@ -781,6 +781,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
     );
   }
+  if (definition.damageReductionPerHitTaken !== undefined) {
+    const step = String(definition.damageReductionPerHitTaken);
+    parts.push(`−${step} damage taken, ${step} more each hit`);
+  }
   if (definition.damageReductionWhileCasting !== undefined) {
     const { skillType, amount } = definition.damageReductionWhileCasting;
     parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
