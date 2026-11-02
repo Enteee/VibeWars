@@ -701,16 +701,33 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     energyPipsPerHex: 1,
   }),
   // "Your bow attack skills cost 1...2 less Energy and deal 1...10 extra
-  // damage" (#2189): 2 and 8, the rank-12 values, the damage an arrow's
-  // own type, and the cost never below 0.
+  // damage" (#2189), by its Expertise: piercing damage, as a bow's, and
+  // the cost never below 0.
   "expert-focus": define("expert-focus", "Expert Focus", "preparation", {
     profession: "ranger",
-    ownSkillModifiers: [ownSkills({ weapon: "bow" }, { energyDiscount: 2, energyFloor: 0 })],
+    ownSkillModifiers: [
+      ownSkills(
+        { weapon: "bow" },
+        {
+          energyDiscount: {
+            scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 1.8 },
+          },
+          energyFloor: 0,
+        },
+      ),
+    ],
     onAttackHit: {
       attackSkillsOnly: true,
       weapon: "bow",
       weaponDamage: undefined,
-      effects: [{ kind: "damage", amount: { flat: 8 }, type: "piercing", armorPenetration: 0 }],
+      effects: [
+        {
+          kind: "damage",
+          amount: { scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 8.2 } },
+          type: "piercing",
+          armorPenetration: 0,
+        },
+      ],
       skillId: "ranger.expert-focus",
     },
   }),

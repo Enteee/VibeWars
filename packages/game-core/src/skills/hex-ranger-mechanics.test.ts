@@ -167,7 +167,7 @@ describe("Melandru's Resilience (#2189)", () => {
 describe("Expert Focus (#2189)", () => {
   it("bow attack skills cost 2 less; other attacks and other skills do not", () => {
     const ranger = makeCombatant({ id: "ranger" });
-    ranger.statuses.apply("expert-focus", 24, "ranger", NO_RANKS);
+    ranger.statuses.apply("expert-focus", 24, "ranger", RANKS);
     expect(energyCostOf(skill("ranger.power-shot"), ranger)).toBe(8);
     expect(energyCostOf(skill("ranger.hunters-shot"), ranger)).toBe(3);
     expect(energyCostOf(skill("warrior.power-attack"), ranger)).toBe(
@@ -183,8 +183,14 @@ describe("Expert Focus (#2189)", () => {
       attributeRanks: new Map([["ranger.expertise", 15]]),
     });
     expect(energyCostOf(skill("ranger.hunters-shot"), ranger)).toBe(2);
-    ranger.statuses.apply("expert-focus", 24, "ranger", NO_RANKS);
+    ranger.statuses.apply("expert-focus", 24, "ranger", RANKS);
     expect(energyCostOf(skill("ranger.hunters-shot"), ranger)).toBe(0);
+  });
+
+  it("at Expertise 0 takes 1 off", () => {
+    const ranger = makeCombatant({ id: "ranger" });
+    ranger.statuses.apply("expert-focus", 24, "ranger", NO_RANKS);
+    expect(energyCostOf(skill("ranger.power-shot"), ranger)).toBe(9);
   });
 });
 
@@ -302,7 +308,7 @@ describe("in a match (#2189)", () => {
     });
   });
 
-  it("Spell Shield ending early disables all its bearer's skills for 5 s", () => {
+  it("Spell Shield ending early disables all its bearer's skills for 5 s at Divine Favor 12", () => {
     const sim = match();
     cast(sim, "m", "monk.spell-shield", "m");
     get(sim, "m").statuses.end("spell-shield");
@@ -315,6 +321,16 @@ describe("in a match (#2189)", () => {
     );
     expect(disabled[0]).toMatchObject({ seconds: 5 });
     expect(sim.requestSkill("m", SLOT["monk.convert-hexes"])?.check.ok).toBe(false);
+  });
+
+  it("Spell Shield at Divine Favor 0 disables for 8 s", () => {
+    const sim = match(new Map([...RANKS, ["monk.divine-favor", 0]]));
+    cast(sim, "m", "monk.spell-shield", "m");
+    get(sim, "m").statuses.end("spell-shield");
+    const disabled = events(stepFor(sim, DT)).find(
+      (event) => event.kind === "skill-disabled" && event.targetId === "m",
+    );
+    expect(disabled).toMatchObject({ seconds: 8 });
   });
 
   it("Withdraw Hexes clears the ally and adjacent allies, 2 s more recharge a hex", () => {
@@ -375,14 +391,20 @@ describe("in a match (#2189)", () => {
     }
   });
 
-  it("Expert Focus: a bow attack skill's hit deals 8 more", () => {
-    const sim = match();
+  /** The extra damage Expert Focus's hit on `f` deals, at `ranks`. */
+  function expertFocusDamage(ranks?: ReadonlyMap<string, number>): number[] {
+    const sim = match(ranks);
     cast(sim, "m", "ranger.expert-focus", "m");
     sim.setTarget("m", "f");
     expect(sim.requestSkill("m", SLOT["ranger.power-shot"])?.check).toEqual({ ok: true });
     const hit = stepFor(sim, 4).filter((entry) => entry.skillId === "ranger.expert-focus");
-    expect(events(hit)).toContainEqual(
-      expect.objectContaining({ kind: "damage", targetId: "f", amount: expect.any(Number) }),
+    return events(hit).flatMap((event) =>
+      event.kind === "damage" && event.targetId === "f" ? [event.amount] : [],
     );
+  }
+
+  it("Expert Focus: a bow attack skill's hit deals 8 more at Expertise 12, 1 at 0", () => {
+    expect(expertFocusDamage()).toEqual([8]);
+    expect(expertFocusDamage(new Map([...RANKS, ["ranger.expertise", 0]]))).toEqual([1]);
   });
 });

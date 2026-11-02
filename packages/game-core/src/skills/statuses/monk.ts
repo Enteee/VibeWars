@@ -511,7 +511,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   }),
   // "For 5...20 seconds, while you are casting spells, foes cannot target
   // you with spells. When Spell Shield ends, all your skills are disabled
-  // for 8...4 seconds" (#2189): 5, its rank-12 value.
+  // for 8...4 seconds" (#2189), by its Divine Favor.
   "spell-shield": define("spell-shield", "Spell Shield", "enchantment", {
     profession: "monk",
     untargetableByFoeSpells: true,
@@ -519,7 +519,15 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "disable-own-skills", which: "all", seconds: { flat: 5 } }],
+        effects: [
+          {
+            kind: "disable-own-skills",
+            which: "all",
+            seconds: {
+              scaling: { attributeId: "monk.divine-favor", atZero: 8, atTwelve: 4.8 },
+            },
+          },
+        ],
         target: "bearer",
         skillId: "monk.spell-shield",
       },
