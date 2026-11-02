@@ -2424,7 +2424,9 @@ function lostInSplash(effect: RemoveStatusEffect, ranks: ReadonlyMap<string, num
 /** A splash's reach with its cap (#1618): Cleave's "Up to 2 adjacent foes". */
 function upTo(splash: SplashEffect, ranks: ReadonlyMap<string, number>): string {
   // Hex Eater Signet's "adjacent allies with a hex" (#1954).
-  const bearing = splash.onlyBearing === undefined ? "" : ` with a ${splash.onlyBearing}`;
+  // Mystic Healing's "enchanted party members", "with an enchantment" (#2207).
+  const article = splash.onlyBearing === "enchantment" ? "an" : "a";
+  const bearing = splash.onlyBearing === undefined ? "" : ` with ${article} ${splash.onlyBearing}`;
   const who = `${foesWithin(splash.radius, splash.hits)}${splash.around === "caster" ? " around you" : ""}${bearing}`;
   return splash.maxTargets === undefined || splash.hits === "party"
     ? who
