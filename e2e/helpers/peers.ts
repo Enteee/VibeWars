@@ -84,8 +84,33 @@ export async function setTeamSize(page: Page, size: 1 | 2 | 4 | 8): Promise<void
 }
 
 /** The team size stepper (#2141) in `scope`: ‹ 4v4 ›. */
-export function teamSizeStepper(scope: Page | Locator): Locator {
+function teamSizeStepper(scope: Page | Locator): Locator {
   return scope.getByRole("group", { name: "Team size" });
+}
+
+/**
+ * The Team size in `scope` shows `size`, and with `locked` cannot be
+ * changed there, both arrows off: a party member's follows its leader
+ * (#2107), a Team Build's editor shows the size it was made at (#2109).
+ */
+export async function expectTeamSize(
+  scope: Page | Locator,
+  size: 1 | 2 | 4 | 8,
+  { locked = false }: { readonly locked?: boolean } = {},
+): Promise<void> {
+  const stepper = teamSizeStepper(scope);
+  await expect(stepper.locator(".mode-rail-size-value")).toHaveText(
+    `${String(size)}v${String(size)}`,
+  );
+  if (locked) {
+    await expect(stepper.getByRole("button", { disabled: true })).toHaveCount(2);
+  }
+}
+
+/** The Team size in `scope` is at `size`, and › goes no larger: 8v8 is no Random Arena (#2022). */
+export async function expectTeamSizeAtMost(scope: Page | Locator, size: 1 | 2 | 4): Promise<void> {
+  await expectTeamSize(scope, size);
+  await expect(teamSizeStepper(scope).getByRole("button", { name: "Larger team" })).toBeDisabled();
 }
 
 /**

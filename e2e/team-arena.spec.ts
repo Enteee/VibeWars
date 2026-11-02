@@ -6,11 +6,11 @@ import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import {
   copyInvite,
+  expectTeamSize,
   openPeers,
   openToFriends,
   proposeTeam,
   setTeamSize,
-  teamSizeStepper,
 } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
@@ -186,9 +186,7 @@ test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 
     // The leader's size is the party's; a member's is locked to it.
     await ann.bringToFront();
     await setTeamSize(ann, 2);
-    const size = teamSizeStepper(bea.locator(".mode-rail"));
-    await expect(size.locator(".mode-rail-size-value")).toHaveText("2v2");
-    await expect(size.getByRole("button", { disabled: true })).toHaveCount(2);
+    await expectTeamSize(bea, 2, { locked: true });
     await runTeamLobby([ann, bea], undefined, 2);
     for (const page of [ann, bea]) {
       await expect(page.locator(".party-queued")).toContainText("Team Arena 2v2 — searching…");

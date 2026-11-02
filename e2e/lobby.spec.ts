@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { INVITE_URL, joinByCode, joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
 import {
   copyInvite,
+  expectTeamSize,
   hostLobby as hostFromMenu,
   openPeers,
   openToFriends,
@@ -10,7 +11,6 @@ import {
   playOwnTeams,
   saveSoloTeam,
   setTeamSize,
-  teamSizeStepper,
 } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -203,11 +203,10 @@ test("the host sets the team size in the sidebar, and the guest sees it there, l
   try {
     const invite = await hostLobby(host, "Host");
     await joinLobby(guest, "Guest", invite);
-    const size = teamSizeStepper(guest.locator(".mode-rail"));
-    await expect(size.locator(".mode-rail-size-value")).toHaveText("1v1");
+    const rail = guest.locator(".mode-rail");
+    await expectTeamSize(rail, 1);
     await setTeamSize(host, 2);
-    await expect(size.locator(".mode-rail-size-value")).toHaveText("2v2");
-    await expect(size.getByRole("button", { disabled: true })).toHaveCount(2);
+    await expectTeamSize(rail, 2, { locked: true });
   } finally {
     await context.close();
   }

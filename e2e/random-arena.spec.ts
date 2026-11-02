@@ -2,7 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openRail } from "./helpers/menu.js";
-import { openPeers } from "./helpers/peers.js";
+import { expectTeamSize, expectTeamSizeAtMost, openPeers, setTeamSize } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
@@ -48,22 +48,18 @@ async function makeCharacter(page: Page): Promise<void> {
   await bringStarter(page, BUILD);
 }
 
-/** From Random Arena, queue for a 1v1 as `name`: ‹ to 1v1 in the sidebar, then Ready (#2022, #2141). */
+/** From Random Arena, queue for a 1v1 as `name`: 1v1 in the sidebar, then Ready (#2022). */
 async function queue1v1(page: Page, name: string): Promise<void> {
   await namePlayer(page, name);
   await openRail(page, "Random Arena");
-  const smaller = page.getByRole("button", { name: "Smaller team" });
-  const size = page.locator(".mode-rail-size-value");
-  while ((await size.textContent()) !== "1v1") {
-    await smaller.click();
-  }
+  await setTeamSize(page, 1);
   await page.locator("#topbar .screen-ready").click();
   await expect(page.locator("#topbar .topbar-crumb.is-place")).toHaveText(
     `Random Arena 1v1 · ${BUILD}`,
   );
 }
 
-test("Random Arena's Ready is greyed out without a character to queue with; its size is remembered (#1525, #2022, #2141)", async ({
+test("Random Arena's Ready is greyed out without a character to queue with, or at 8v8 (#1525, #2022)", async ({
   page,
 }) => {
   await page.goto("./");
@@ -77,12 +73,10 @@ test("Random Arena's Ready is greyed out without a character to queue with; its 
   await expect(ready).toHaveText("Ready");
   await expect(ready).toBeEnabled();
   await expect(hint).toBeHidden();
-  // 8v8 is no Random Arena: › stops at 4v4.
-  const size = screen.locator(".mode-rail-size-value");
-  await expect(size).toHaveText("4v4");
-  await expect(screen.getByRole("button", { name: "Larger team" })).toBeDisabled();
-  await screen.getByRole("button", { name: "Smaller team" }).click();
-  await expect(size).toHaveText("2v2");
+  // 8v8 is no Random Arena: offered, but not to pick.
+  await expectTeamSize(screen, 4);
+  await expectTeamSizeAtMost(screen, 4);
+  await setTeamSize(page, 2);
   await expect(ready).toBeEnabled();
   await page.evaluate(`
     new Promise((resolve, reject) => {
@@ -102,7 +96,7 @@ test("Random Arena's Ready is greyed out without a character to queue with; its 
   await expect(ready).toHaveAttribute("title", "Make a character first.");
   await expect(hint).toHaveText("Make a character first.");
   // The size picked survived the reload.
-  await expect(size).toHaveText("2v2");
+  await expectTeamSize(screen, 2);
 });
 
 test("two players queue for a 1v1, are matched, see the versus splash, play it out and queue again", async ({
