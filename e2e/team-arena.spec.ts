@@ -4,7 +4,7 @@ import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js"
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
-import { copyInvite, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
+import { copyInvite, openPeers, openToFriends, proposeTeam, setTeamSize } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -34,6 +34,7 @@ function quadCode(): string {
     format: "vibewars.team",
     formatVersion: TEAM_FORMAT_VERSION,
     name: "Quad",
+    size: 4,
     members: QUAD.map((build) => ({
       format: "vibewars.character",
       formatVersion: BUILD_FORMAT_VERSION,
@@ -132,7 +133,8 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
 
     await formParty([ann, bea], ["Ann", "Bea"]);
     await runTeamLobby([ann, bea], async () => {
-      await press(ann, ann.getByRole("button", { name: "Propose Quad", exact: true }));
+      await ann.bringToFront();
+      await proposeTeam(ann, "Quad");
       const card = bea.getByRole("button", { name: "Ann's team build" });
       await press(bea, card);
       await expect(card).toHaveAttribute("aria-pressed", "true");

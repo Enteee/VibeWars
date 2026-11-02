@@ -1,23 +1,39 @@
 import { IMPLEMENTED_SKILLS, type ApplyStatusEffect, type Skill } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import skilldata from "../raw/gw-skilldata/skilldata.json" with { type: "json" };
 import skilldesc from "../raw/gw-skilldata/skilldesc-en.json" with { type: "json" };
 
 // A status lasts as GW1 says at the caster's rank (#2041): an `apply-status`
 // whose rank-12 seconds are a "N...M seconds" range of its skill's GW1 text
-// scales with the skill's attribute, from N at 0 to M at 15.
+// scales with the skill's attribute, from N at 0 to M at 15. A split
+// skill's PvP text counts too (#2096): the catalog plays its PvP numbers.
 
-const CONCISE: ReadonlyMap<number, string> = new Map(
-  Object.values(skilldesc.skilldesc).map((record) => [record.id, record.concise]),
+// Both texts: a concise one can drop the unit ("for 1...5 and block").
+const TEXT: ReadonlyMap<number, string> = new Map(
+  Object.values(skilldesc.skilldesc).map((record) => [
+    record.id,
+    `${record.description} ${record.concise}`,
+  ]),
 );
 
-/** Every "N...M second(s)" of `gwId`'s concise text, as [N, M]. */
-function ranges(gwId: number | undefined): (readonly [number, number])[] {
-  return [
-    ...((gwId === undefined ? undefined : CONCISE.get(gwId)) ?? "").matchAll(
-      /(\d+)\.\.\.(\d+) seconds?/g,
-    ),
-  ].map(([, low, high]) => [Number(low), Number(high)] as const);
+const PVP_SPLIT: ReadonlyMap<number, number> = new Map(
+  Object.values(skilldata.skilldata).map((record) => [record.id, record.split_id]),
+);
+
+/**
+ * Every "N...M second(s)" of `gwId`'s full and concise text, as [N, M],
+ * and of its PvP split's when `withSplit`.
+ */
+function ranges(gwId: number | undefined, withSplit = false): (readonly [number, number])[] {
+  if (gwId === undefined) {
+    return [];
+  }
+  const split = withSplit ? PVP_SPLIT.get(gwId) : undefined;
+  const texts = [TEXT.get(gwId), split === undefined ? undefined : TEXT.get(split)];
+  return texts
+    .flatMap((text) => [...(text ?? "").matchAll(/(\d+)\.\.\.(\d+) seconds?/g)])
+    .map(([, low, high]) => [Number(low), Number(high)] as const);
 }
 
 /** The rank-12 value of a range, unrounded, as the catalog writes it. */
@@ -52,7 +68,7 @@ describe("status durations at the caster's rank (#2041)", () => {
       const { attributeId, atZero, atTwelve: twelve } = effect.durationSeconds.scaling;
       expect(attributeId, skill.id).toBe(skill.attributeId);
       expect(
-        ranges(skill.gwId).some(
+        ranges(skill.gwId, true).some(
           (range) => range[0] === atZero && Math.abs(atTwelve(range) - twelve) < 1e-9,
         ),
         `${skill.id} ${effect.statusId}`,

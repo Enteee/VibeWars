@@ -4,7 +4,7 @@ import { newTeam } from "../ui/team-builder.js";
 import { fromPlayerBuild } from "./build-validation.js";
 import { STORAGE_NAMESPACE } from "./namespace.js";
 import type { TeamRepository } from "./repository.js";
-import type { StoredTeam, TeamCharacter } from "./schema.js";
+import type { StoredTeam, TeamCharacter, TeamSize } from "./schema.js";
 
 /**
  * The Team Build a browser's first start rolls (#2036), as it rolls a
@@ -43,6 +43,8 @@ export interface RollStarterTeamOptions {
   readonly key: StarterTeamKey;
   /** [0, 1), `Math.random` in the browser. */
   readonly random: () => number;
+  /** The team size picked (#2109): the starter rolled is one of it. */
+  readonly size: TeamSize;
   readonly id: string;
   /** A fresh id for each member. */
   readonly newId: () => string;
@@ -53,6 +55,7 @@ export interface RollStarterTeamOptions {
 /** `starter` as a Team Build under `id`, its members under their job names. */
 function storedStarterTeam(
   starter: StarterTeam,
+  size: TeamSize,
   id: string,
   newId: () => string,
   now: number,
@@ -66,7 +69,7 @@ function storedStarterTeam(
     const member: TeamCharacter = { ...character, name };
     return { character: member };
   });
-  return { ...newTeam(id), name: starter.name, members, updatedAt: now };
+  return { ...newTeam(id, size), name: starter.name, members, updatedAt: now };
 }
 
 /** The curated team `team` is, by its name; `undefined` once renamed. */
@@ -83,11 +86,12 @@ function shownStarterTeam(team: StoredTeam): StarterTeam | undefined {
 export async function rollStarterTeam(
   options: RollStarterTeamOptions,
 ): Promise<StoredTeam | undefined> {
-  const { teams, key, random, id, newId, now } = options;
-  if (key.load() !== undefined) {
+  const { teams, key, random, size, id, newId, now } = options;
+  const starter = pickStarterTeam(random, size);
+  if (key.load() !== undefined || starter === undefined) {
     return undefined;
   }
-  const team = storedStarterTeam(pickStarterTeam(random), id, newId, now);
+  const team = storedStarterTeam(starter, size, id, newId, now);
   try {
     await teams.save(team);
   } catch (error) {
@@ -100,7 +104,8 @@ export async function rollStarterTeam(
 
 /**
  * `current` as another curated team, never the one shown: the same id,
- * under that team's names.
+ * under that team's names, at its size; `current` itself when there is
+ * no other of its size.
  */
 export async function rerollStarterTeam(
   teams: Pick<TeamRepository, "save">,
@@ -109,12 +114,11 @@ export async function rerollStarterTeam(
   newId: () => string,
   now: number,
 ): Promise<StoredTeam> {
-  const team = storedStarterTeam(
-    pickStarterTeam(random, shownStarterTeam(current)),
-    current.id,
-    newId,
-    now,
-  );
+  const starter = pickStarterTeam(random, current.size, shownStarterTeam(current));
+  if (starter === undefined) {
+    return current;
+  }
+  const team = storedStarterTeam(starter, current.size, current.id, newId, now);
   await teams.save(team);
   return team;
 }

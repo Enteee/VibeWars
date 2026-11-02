@@ -848,6 +848,33 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("painful-bond")).toBe("take +18 from spirits' attacks");
   });
 
+  it("words the Warrior conditions (#2096)", () => {
+    const lines = (id: string) =>
+      describeSkill(
+        skill(id),
+        new Map([
+          ["warrior.tactics", 12],
+          ["warrior.strength", 12],
+        ]),
+      ).effects.map(({ text }) => text);
+    expect(lines("warrior.thrill-of-victory")).toEqual([
+      "+36 damage",
+      "If target has less Health than you: gain 2 strikes of adrenaline",
+    ]);
+    expect(lines("warrior.you-will-die")).toEqual([
+      "If target is below 90% Health: gain 3 strikes of adrenaline",
+    ]);
+    expect(lines("warrior.youre-all-alone")[0]).toMatch(
+      /^If target is not near any allies: applies Crippled for 8s/,
+    );
+    expect(lines("warrior.retreat")).toEqual([
+      "If an ally is dead in earshot: applies Retreat! for 10s (moves at 133% speed)",
+    ]);
+    expect(describeStatus("protectors-defense")).toBe(
+      "allies adjacent to the bearer: 75% chance to block attacks, ends if the bearer moves",
+    );
+  });
+
   it("words the Assassin's staples (#988)", () => {
     const lines = (id: string) =>
       describeSkill(skill(id), new Map([["assassin.shadow-arts", 12]])).effects.map(
@@ -1501,6 +1528,35 @@ describe("minion care (#1986)", () => {
     expect(texts("necromancer.malign-intervention")).toEqual([
       "Applies Malign Intervention for 17s (−20% healing, when the bearer dies, " +
         "1 Bone Horror (level 14, 360 Health) rises where it fell, masterless)",
+    ]);
+  });
+});
+
+describe("Elementalist auras (#2095)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(
+      skill(id),
+      new Map([
+        ["elementalist.earth-magic", 12],
+        ["elementalist.water-magic", 12],
+      ]),
+    ).effects.map(({ text }) => text);
+
+  it("says what each blocks, who the Overcast reaches and what strikes back, at rank 12", () => {
+    expect(texts("elementalist.magnetic-aura")).toEqual([
+      "Applies Magnetic Aura for 7s (100% chance to block attacks, the next time it blocks, the foe who dealt it takes 42 damage)",
+      "If you are Overcast: all party members gain Magnetic Aura for 7s (100% chance to block attacks, the next time it blocks, the foe who dealt it takes 42 damage)",
+    ]);
+    expect(texts("elementalist.swirling-aura")).toEqual([
+      "Applies Swirling Aura for 6s (+5 Health regeneration, 50% chance to block projectiles)",
+      "If you are Overcast: all party members gain Swirling Aura for 6s (+5 Health regeneration, 50% chance to block projectiles)",
+    ]);
+    expect(texts("elementalist.magnetic-surge")).toEqual([
+      "Deals 63 damage",
+      "If you are Overcast: allies in earshot around you gain Magnetic Surge for 4s (100% chance to block attacks, ends after 1 incoming attack)",
+    ]);
+    expect(texts("elementalist.sliver-armor")).toEqual([
+      "Applies Sliver Armor for 10s (45% chance to block attacks, the nearest of nearby foes takes 29 earth damage whenever it is targeted by a foe's spell or attack)",
     ]);
   });
 });

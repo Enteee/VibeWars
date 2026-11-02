@@ -45,8 +45,10 @@ Not sure what to take? The random starter character is marked
 **Random**, with a dashed outline. **Reroll** on it gives you a fresh
 random build to try.
 
-**Team Builder** starts with a random Team Build too, a ready-made team
-for a Team Lobby, marked the same way and always last. **Reroll** puts
+**Team Builder** starts with a random Team Build too, a ready-made 4v4
+team for a Team Lobby, marked the same way and always last. It shows
+under the sidebar's **Team size** of 4v4: Team Builder lists the Team
+Builds of the size picked there. **Reroll** puts
 another ready-made team in its place. **Clone** saves a copy of the
 team shown as your own Team Build and opens it, to change as you like.
 

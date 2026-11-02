@@ -1071,6 +1071,16 @@ export function removePreparations(attacker: Combatant, skill: Skill, events: Co
 }
 
 /**
+ * A foe's blow or shot is aimed at `victim` (#2095), recorded before its
+ * rolls: Sliver Armor answers a miss and a block too.
+ */
+export function aimedAt(attacker: Combatant, victim: Combatant): void {
+  if (attacker.team !== victim.team) {
+    victim.statuses.recordTargetedByFoe(attacker.id);
+  }
+}
+
+/**
  * One blow on one victim: blind first, then block, unless `unblockable`,
  * then the crit and damage rolls.
  */
@@ -1086,6 +1096,7 @@ function strike(
   if (victim.dead) {
     return;
   }
+  aimedAt(attacker, victim);
   if (blindMisses(attacker, victim, rng)) {
     events.push({ kind: "attack-missed", targetId: victim.id });
     bearerFailedToHit(attacker, events);
@@ -1325,6 +1336,7 @@ export function resolveAttackSkillOutcome(
       if (victim.dead) {
         continue;
       }
+      aimedAt(caster, victim);
       if (blindMisses(caster, victim, rng)) {
         events.push({ kind: "attack-missed", targetId: victim.id });
         bearerFailedToHit(caster, events);

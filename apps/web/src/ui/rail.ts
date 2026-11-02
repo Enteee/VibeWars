@@ -1,6 +1,7 @@
 import type { LobbyMode } from "@vibewars/game-protocol";
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
+import { isTeamSize, type TeamSize } from "../storage/schema.js";
 import { button, h } from "./kit.js";
 import { isAlone, partyStrip, type RailParty } from "./party-strip.js";
 
@@ -45,8 +46,7 @@ export function isModeEntry(entry: RailEntry): entry is LobbyMode {
   return entry !== "characters" && entry !== "teams";
 }
 
-/** A side's size, as the team size dropdown offers it (#2022). */
-export type TeamSize = 1 | 2 | 4 | 8;
+export type { TeamSize };
 
 /** The team size dropdown's options, smallest first. */
 export const TEAM_SIZES: readonly TeamSize[] = [1, 2, 4, 8];
@@ -88,10 +88,6 @@ export function teamSizeProblem(entry: RailEntry, size: TeamSize): string | unde
 }
 
 const TEAM_SIZE_STORAGE_KEY = `${STORAGE_NAMESPACE}.teamSize`;
-
-function isTeamSize(value: number): value is TeamSize {
-  return TEAM_SIZES.some((size) => size === value);
-}
 
 /** The team size last picked; 4v4 on a first start, and for anything else stored. */
 export function loadTeamSize(): TeamSize {

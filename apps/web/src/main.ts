@@ -127,6 +127,7 @@ import {
   isModeEntry,
   loadRail,
   loadTeamSize,
+  saveTeamSize,
   onTeamSizeChange,
   railParty,
   redrawModeRail,
@@ -347,6 +348,7 @@ async function main(): Promise<void> {
       teams,
       key: { load: loadStarterTeamId, save: saveStarterTeamId },
       random: Math.random,
+      size: loadTeamSize(),
       id: crypto.randomUUID(),
       newId: () => crypto.randomUUID(),
       now: Date.now(),
@@ -1168,7 +1170,10 @@ async function main(): Promise<void> {
       onSwitch: switchTo,
       // A new team is stored only once it is saved (#573).
       onNewTeam: () => {
-        showTeamEditor(openedTeam(newTeam(crypto.randomUUID()), false), characterList.characters);
+        showTeamEditor(
+          openedTeam(newTeam(crypto.randomUUID(), loadTeamSize()), false),
+          characterList.characters,
+        );
       },
       onEditTeam: (id) => {
         void (async () => {
@@ -1303,6 +1308,8 @@ async function main(): Promise<void> {
     editor?.dispose();
     editor = undefined;
     teamEditor?.dispose();
+    // The sidebar comes back at the build's size, to its list (#2109).
+    saveTeamSize(state.team.size);
     teamEditor = mountTeamEditor(screenRoot, state, available, {
       onSave: (saved) => teams.save(saved),
       onDuplicate: (source) => {

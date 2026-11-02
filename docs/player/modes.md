@@ -207,9 +207,12 @@ Each stage lasts 60 seconds and ends early once everyone in the Team
 Lobby is ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
-side's size, one proposal each, by clicking one of your Team Builds'
-cards; click it again to withdraw. Only your Team Builds of that size
-and with no problems are listed. If the host changes the team size
+side's size, one proposal each. Your Team Builds open from the **Your
+Team Builds** tab on the right: search them by name, click one to see
+its members, then **Propose this build**; on yours, **Withdraw
+proposal**. Esc closes it. Only your Team Builds of that size and with
+no problems are listed; the drawer says how many of other sizes it
+leaves out. If the host changes the team size
 during the vote, every proposal of another size is withdrawn, its
 proposer is told, everyone confirms again, and the vote's 60 seconds
 start over. Anyone may vote for one of their

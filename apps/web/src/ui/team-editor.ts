@@ -7,7 +7,7 @@ import {
 } from "@vibewars/game-core";
 
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
-import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
+import type { StoredCharacter, StoredTeam, TeamCharacter, TeamSize } from "../storage/schema.js";
 import { exportTeam, importTeam, looksLikeTeam } from "../storage/team-transfer.js";
 import { characterAppearance } from "./character-figure.js";
 import { characterRanks } from "./character-ranks.js";
@@ -33,7 +33,8 @@ import {
 } from "./kit.js";
 import {
   addMember,
-  MAX_TEAM_SIZE,
+  isTeamComplete,
+  memberCount,
   moveMember,
   professionMix,
   removeMember,
@@ -44,6 +45,7 @@ import {
   type ProfessionMixEntry,
   type TeamCounterId,
 } from "./team-builder.js";
+import { teamSizeSelect } from "./rail.js";
 
 /**
  * The team editor (#573, epic #554), mounted once per ADR-0030.
@@ -148,7 +150,7 @@ function sentence(message: string): string {
 
 /**
  * What makes this team not playable, in plain sentences (#573): `validateTeam`'s
- * problems, then a full team as a hint that never blocks.
+ * problems and an empty slot (#2109), then a full team as a hint that never blocks.
  */
 export function teamEditorProblems(team: StoredTeam): TeamEditorProblem[] {
   const blocking = validateTeam(team).map((problem): TeamEditorProblem => ({
@@ -158,9 +160,13 @@ export function teamEditorProblems(team: StoredTeam): TeamEditorProblem[] {
         : sentence(problem.message),
     blocking: true,
   }));
+  // No members is `validateTeam`'s already.
+  if (!isTeamComplete(team) && team.members.length > 0) {
+    blocking.push({ text: emptySlots(team), blocking: true });
+  }
   const hints: TeamEditorProblem[] =
-    team.members.length >= MAX_TEAM_SIZE
-      ? [{ text: `The team is full: ${String(MAX_TEAM_SIZE)} members.`, blocking: false }]
+    team.members.length >= team.size
+      ? [{ text: `The team is full: ${memberCount(team.size)}.`, blocking: false }]
       : [];
   return [...blocking, ...hints];
 }
@@ -174,9 +180,29 @@ export function copyIntoTeam(team: StoredTeam, character: StoredCharacter, id: s
   return addMember(team, teamCharacter(character, id));
 }
 
-/** How many more members the team can take. */
+/** Why a team short of its size cannot be proposed (#2109): "1 of 4 slots is empty." */
+function emptySlots(team: StoredTeam): string {
+  const empty = placesLeft(team);
+  return `${String(empty)} of ${String(team.size)} slots ${empty === 1 ? "is" : "are"} empty: a lobby takes only a full team.`;
+}
+
+/** How many more members the team can take: its size's (#2109). */
 export function placesLeft(team: StoredTeam): number {
-  return Math.max(0, MAX_TEAM_SIZE - team.members.length);
+  return Math.max(0, team.size - team.members.length);
+}
+
+/** The editor's team size title (#2109): the size a build was made at stays. */
+export const TEAM_SIZE_FIXED = "A Team Build's size is fixed: make a new one for another size";
+
+/** The team size dropdown in the editor's bar (#2109), locked at the build's size. */
+function lockedTeamSize(size: TeamSize): HTMLElement {
+  const field = h("label", "team-lobby-size");
+  field.title = TEAM_SIZE_FIXED;
+  field.append(
+    h("span", "field-label", "Team size"),
+    teamSizeSelect("teams", size, true, () => undefined),
+  );
+  return field;
 }
 
 /** One filled cell of a member's bar in the team grid (#574). */
@@ -415,7 +441,7 @@ export function mountTeamEditor(
     escape: () => {
       leave(callbacks.onClose);
     },
-    status: [chip.element, unsaved],
+    status: [lockedTeamSize(team.size), chip.element, unsaved],
     actions: [save, more.element],
     // Esc puts away the ⋯ menu, Share and the problem list, then clears
     // the counter's marks, before it leaves.
