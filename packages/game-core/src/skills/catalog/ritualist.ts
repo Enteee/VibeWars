@@ -2842,6 +2842,268 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       { kind: "take-control", bondStatusId: undefined },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Ritualist staples (#2212)                                              */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "ritualist.gaze-from-beyond",
+    name: "Gaze from Beyond",
+    gwId: 1245,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 20...65 lightning damage. If you are within
+    // earshot of a spirit, that foe is Blinded for 2...6 seconds": 56 and
+    // 5 s, the rank-12 values; any team's spirit, as Spirit Burn's.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 20, atTwelve: 56 },
+        },
+        type: "lightning",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-spirit-within", radius: AREA_EARSHOT },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "blind",
+            durationSeconds: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 2, atTwelve: 5.2 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ritualist.ancestors-rage",
+    name: "Ancestors' Rage",
+    // The PvP split: the PvE skill (1246) is one burst as it ends.
+    gwId: 2867,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 3 seconds all foes adjacent to target ally take 4...50 lightning
+    // damage each second": the pulse is the status's.
+    effects: [{ kind: "apply-status", statusId: "ancestors-rage", durationSeconds: { flat: 3 } }],
+  },
+  {
+    id: "ritualist.channeled-strike",
+    name: "Channeled Strike",
+    gwId: 1225,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.channeling-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 5...95 lightning damage. That foe is struck
+    // for an additional 5...35 lightning damage if you are holding an
+    // item": 77, and 29 more with ashes in hand.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 77 },
+        },
+        type: "lightning",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-holds-item" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 29 },
+            },
+            type: "lightning",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ritualist.soothing-memories",
+    name: "Soothing Memories",
+    gwId: 1233,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 4,
+    range: RANGE_SPELL,
+    target: "single-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target ally is healed for 10...100 Health. If you are holding an
+    // item, you gain 3 Energy": 82.
+    effects: [
+      {
+        kind: "heal",
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 10, atTwelve: 82 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-holds-item" },
+        effects: [{ kind: "energy-gain", amount: { flat: 3 } }],
+      },
+    ],
+  },
+  {
+    id: "ritualist.ghostmirror-light",
+    name: "Ghostmirror Light",
+    gwId: 1741,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.restoration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 3,
+    range: RANGE_SPELL,
+    target: "single-other-ally",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target other ally is healed for 15...90 Health. If you are within
+    // earshot of a spirit, you are also healed for 15...90 Health": 75
+    // each; any team's spirit.
+    effects: [
+      {
+        kind: "heal",
+        amount: {
+          scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 75 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-spirit-within", radius: AREA_EARSHOT },
+        effects: [
+          {
+            kind: "heal",
+            amount: {
+              scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 75 },
+            },
+            recipient: "caster",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "ritualist.dulled-weapon",
+    name: "Dulled Weapon",
+    gwId: 1235,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "ritualist",
+    attributeId: "ritualist.communing",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and all adjacent foes": the target, then every foe
+    // adjacent to it as the spell lands; none later.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, ... cannot achieve a critical hit and deal
+    // 3...20 less damage": 17 s; the rest is the hex's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dulled-weapon",
+        durationSeconds: {
+          scaling: { attributeId: "ritualist.communing", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
 ];
 
 /**

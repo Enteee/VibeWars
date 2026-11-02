@@ -1507,6 +1507,11 @@ export type StateCondition =
    */
   | { readonly kind: "caster-holds-shield" }
   /**
+   * The caster holds a Ritualist's ashes, an `"item"` status (#2212):
+   * Channeled Strike's and Soothing Memories' "if you are holding an item".
+   */
+  | { readonly kind: "caster-holds-item" }
+  /**
    * The effect's target has less health than the caster, absolute, not a
    * share (#939): Victorious Sweep's "if target foe has less Health than
    * you". Equal is not less.

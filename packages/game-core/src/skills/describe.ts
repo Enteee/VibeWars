@@ -608,6 +608,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.ignoresCriticalDamage) {
     parts.push("you do not suffer extra damage from a critical attack");
   }
+  if (definition.preventsCriticals) {
+    parts.push("cannot land critical hits");
+  }
   if (definition.block !== undefined) {
     // Wary Stance's "attack skills" (#1978).
     const what =
@@ -2317,6 +2320,8 @@ function conditionText(
       return `If you wield ${NEEDED_WEAPON[condition.weapon]}`;
     case "caster-holds-shield":
       return "If you hold a shield";
+    case "caster-holds-item":
+      return "If you are holding an item";
     case "target-less-health":
       return "If target has less Health than you";
     case "target-more-health":
