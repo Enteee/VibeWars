@@ -153,6 +153,28 @@ const rows = {
     "stance",
     (c) => `<path d="M4 17l2-6M8 17l2-6M12 17l2-6M16 17l2-6M20 17l2-6" ${stroke(c, 1.6)}/>`,
   ],
+  // Warrior shouts (#2178): each pairs with its skill icon.
+  // Shout: shout arcs behind chevrons running back.
+  retreat: [
+    "shout",
+    (c) =>
+      `<path d="M21 8c2.5 2 2.5 5 0 7" ${stroke(c, 1.6)}/>` +
+      `<path d="M15 5l-6 7 6 7M9 5l-6 7 6 7" ${stroke(c, 2.4)}/>`,
+  ],
+  // Skill: a figure with a shield at each side, held for those beside you.
+  "protectors-defense": [
+    "skill-effect",
+    (c) =>
+      `<ellipse cx="12" cy="7" rx="2.8" ry="3.2" ${stroke(c, 1.8)}/>` +
+      `<path d="M12 11v9M8 13.5h8" ${stroke(c, 2)}/>` +
+      `<path d="M4 7l3 1.2V12c0 2-1.4 3.2-3 4-1.6-.8-3-2-3-4V8.2z" ${stroke(c, 1.5)}/>` +
+      `<path d="M20 7l3 1.2V12c0 2-1.4 3.2-3 4-1.6-.8-3-2-3-4V8.2z" ${stroke(c, 1.5)}/>`,
+  ],
+  // Skill: the shield alone, as an ally beside the bearer wears it.
+  "protectors-defense-block": [
+    "skill-effect",
+    (c) => `<path d="M12 5l5 2v4c0 3.5-2.5 5.5-5 7-2.5-1.5-5-3.5-5-7V7z" ${stroke(c, 2)}/>`,
+  ],
 };
 
 export default rows;

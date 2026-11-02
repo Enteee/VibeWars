@@ -431,6 +431,12 @@ describe("describeSkill", () => {
     ]);
   });
 
+  it("says a negative Health change while under a status is degeneration (#2166)", () => {
+    expect(describeStatus("teinais-prison")).toContain(
+      "while under Cracked Armor: −8 Health degeneration",
+    );
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
