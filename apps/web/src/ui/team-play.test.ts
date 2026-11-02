@@ -11,6 +11,7 @@ import {
   OPENING_LOBBY,
   renderHostScreen,
   renderTeamBuilder,
+  UNNAMED_TEAM,
   type HostEntry,
   type TeamPlayCallbacks,
 } from "./team-play.js";
@@ -272,6 +273,18 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
       expect(root.all("play-cards")).toHaveLength(0);
       expect(root.everything().some((node) => node.textContent === "Team Builds")).toBe(false);
     }
+  });
+
+  it("names an unnamed team and says why a team is not playable (#2110)", () => {
+    const playable = { ...team("p"), members: [{ character: warrior("Ser Bash") }] };
+    const root = render([{ ...team("u"), name: " " }, playable]);
+    expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
+      UNNAMED_TEAM,
+      "Team p",
+    ]);
+    expect(root.all("play-card-unplayable").map((line) => line.textContent)).toEqual([
+      "Not playable: team name must not be empty",
+    ]);
   });
 
   it("shows the cards alone on Team Builder", () => {

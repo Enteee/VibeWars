@@ -16,6 +16,7 @@ import {
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
+import { validateTeam } from "./team-builder.js";
 
 /**
  * The Team Lobby screen (#1460, #1449 variant B, the card table): while
@@ -42,6 +43,9 @@ export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: the house team plays";
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
+/** Every Team Build has problems (#2110): saved, but none can be proposed. */
+export const NO_PLAYABLE_TEAM_BUILDS =
+  "None of your Team Builds is playable. Fix one in Team Builder.";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
 export const HOUSE_TEAM = "House team";
@@ -100,7 +104,8 @@ export interface ProposableTeam {
 /**
  * `teams` for a side of `size`: only those of exactly `size` members can
  * be proposed. A Hosted Game's side, `size` `null`, takes any with a slot
- * for each of its `players` (#2029).
+ * for each of its `players` (#2029). A team with problems is left out:
+ * it saves, but is not playable (#2110).
  */
 export function proposableTeams(
   teams: readonly StoredTeam[],
@@ -110,11 +115,13 @@ export function proposableTeams(
   const least = size ?? players;
   const characters = `${String(least)} ${least === 1 ? "character" : "characters"}`;
   const needs = size === null ? `needs at least ${characters}` : `needs ${characters}`;
-  return teams.map((team) => {
-    const count = team.members.length;
-    const disabled = size === null ? count < players : count !== size;
-    return { team, disabled, reason: disabled ? needs : undefined };
-  });
+  return teams
+    .filter((team) => validateTeam(team).length === 0)
+    .map((team) => {
+      const count = team.members.length;
+      const disabled = size === null ? count < players : count !== size;
+      return { team, disabled, reason: disabled ? needs : undefined };
+    });
 }
 
 /** The member at `sessionId`'s name, or the id itself for someone already gone. */
@@ -405,12 +412,19 @@ function voteStage(
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
   const shown: HTMLElement[] = [h("h3", "menu-column-title", "Your Team Builds")];
-  if (teams.length === 0) {
-    shown.push(h("div", "screen-info team-lobby-no-teams", NO_TEAM_BUILDS));
+  const proposable = proposableTeams(teams, side.size, humansOnSide(snapshot));
+  if (proposable.length === 0) {
+    shown.push(
+      h(
+        "div",
+        "screen-info team-lobby-no-teams",
+        teams.length === 0 ? NO_TEAM_BUILDS : NO_PLAYABLE_TEAM_BUILDS,
+      ),
+    );
   } else {
     const own = h("div", "play-cards team-lobby-own-cards");
-    for (const proposable of proposableTeams(teams, side.size, humansOnSide(snapshot))) {
-      own.appendChild(ownCard(proposable, proposedTeamId, callbacks.onPropose));
+    for (const one of proposable) {
+      own.appendChild(ownCard(one, proposedTeamId, callbacks.onPropose));
     }
     shown.push(own);
   }

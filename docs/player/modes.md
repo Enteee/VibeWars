@@ -190,7 +190,8 @@ Lobby is ready.
 side's size (in a Hosted Game, any size with a character for each player
 on the side), one proposal each, by clicking one of your Team Builds'
 cards; click it again to withdraw. A Team Build of the wrong size is
-shown faded, with the size it needs. Anyone may vote for one of their
+shown faded, with the size it needs; one with problems is not shown at
+all. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
 initials of who voted for it: click a card to vote, and click it again

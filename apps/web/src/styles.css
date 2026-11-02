@@ -1659,6 +1659,12 @@ body {
   white-space: nowrap;
 }
 
+/* A saved Team Build that cannot be proposed (#2110), by its first problem. */
+.play-card-unplayable {
+  color: var(--damage);
+  font-size: 0.85em;
+}
+
 .play-card-line {
   color: var(--ink-dim);
   font-size: 0.8rem;
@@ -4890,6 +4896,30 @@ body.has-expanded-training #screens {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
+}
+
+/* A hand's mod pickers under it (#2008); they wrap, never widen the panel. */
+.gear-mods {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.gear-mods-hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  min-width: 0;
+}
+
+.gear-mods-hand .editor-field {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+.gear-mods-hand select {
+  width: 100%;
+  min-width: 0;
 }
 
 /* The armor paper-doll (#2059): the figure on the left, a row per piece
