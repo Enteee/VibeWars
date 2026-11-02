@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   HOUSE_TEAM_AFTER_MS,
   MATCH_RUNNING_NOTICE,
+  READY_JOIN_A_TEAM,
+  READY_MATCH_STARTED,
   hostMaps,
   inviteUrl,
   lobbyControls,
@@ -62,7 +64,7 @@ describe("lobbyControls", () => {
       running: MATCH_RUNNING_NOTICE,
       mapDisabled: true,
       teamsDisabled: true,
-      readyDisabled: true,
+      readyProblem: READY_MATCH_STARTED,
       startDisabled: true,
       canWatch: false,
     });
@@ -73,7 +75,7 @@ describe("lobbyControls", () => {
       running: undefined,
       mapDisabled: true,
       teamsDisabled: true,
-      readyDisabled: true,
+      readyProblem: READY_MATCH_STARTED,
       startDisabled: true,
       canWatch: false,
     });
@@ -84,7 +86,7 @@ describe("lobbyControls", () => {
       running: undefined,
       mapDisabled: false,
       teamsDisabled: false,
-      readyDisabled: false,
+      readyProblem: undefined,
       startDisabled: false,
       canWatch: false,
     });
@@ -117,8 +119,13 @@ describe("lobbyControls", () => {
         },
       ],
     });
-    expect(controls.readyDisabled).toBe(true);
+    expect(controls.readyProblem).toBe(READY_JOIN_A_TEAM);
     expect(controls.startDisabled).toBe(true);
+  });
+
+  it("asks one not in the lobby yet to join a team first (#2124)", () => {
+    const shown = { ...snapshot("waiting"), selfSessionId: "stranger" };
+    expect(lobbyControls(shown).readyProblem).toBe(READY_JOIN_A_TEAM);
   });
 
   it("offers Watch to a member on no team, only while the match runs (#480)", () => {
@@ -298,6 +305,7 @@ class FakeElement {
   value = "";
   disabled = false;
   hidden = false;
+  title = "";
   type = "";
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -501,6 +509,19 @@ describe("lobbyPanel: the map (#1994)", () => {
     const part = mapPart("heroes-ascent");
     expect(selects(part)).toEqual([]);
     expect(part.textContent).toBe("Map: Alpha (small)");
+  });
+
+  it("says on a disabled Ready why, and nothing on an enabled one (#2124)", () => {
+    const readyOf = (shown: LobbySnapshot): FakeElement => {
+      const [ready] = lobbyPanel(shown, callbacks, undefined, maps).actions;
+      return ready as unknown as FakeElement;
+    };
+    const started = readyOf(snapshot("starting"));
+    expect(started.disabled).toBe(true);
+    expect(started.title).toBe(READY_MATCH_STARTED);
+    const open = readyOf(snapshot("waiting"));
+    expect(open.disabled).toBe(false);
+    expect(open.title).toBe("");
   });
 
   /** The mode line under the bar in `mode`, on Alpha. */
