@@ -50,6 +50,9 @@ export type WarriorStatusId =
   | "retreat"
   | "protectors-defense"
   | "protectors-defense-block"
+  // Warrior mechanics 4 (#2180).
+  | "battle-rage"
+  | "shields-up"
   // Warrior staples 4 (#2181).
   | "tiger-stance"
   | "berserker-stance"
@@ -467,6 +470,21 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       block: { chance: 0.75, against: "all" },
     },
   ),
+  // "For 5...20 seconds, you move 33% faster and gain double adrenaline
+  // from attacks. Battle Rage ends if you use any non-adrenal skills."
+  // (#2180) Battle Rage's own use is adrenal, so it starts it.
+  "battle-rage": define("battle-rage", "Battle Rage", "stance", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.33,
+    adrenalineGainFaster: 1,
+    adrenalineGainFasterFrom: "attacks",
+    endsWhenBearerUsesNonAdrenalSkill: true,
+  }),
+  // "Shields Up!": "+60 armor against incoming projectile attacks" (#2180).
+  "shields-up": define("shields-up", "Shields Up!", "shout", {
+    profession: "warrior",
+    conditionalArmor: [{ amount: 60, conditions: [{ kind: "vs-projectile" }] }],
+  }),
   // Warrior staples 4 (#2181). "For 4...10 seconds, you attack 33% faster.
   // Tiger Stance ends if any of your attacks fail to hit": a miss, a block
   // or an evade ends it, a hit for 0 does not.

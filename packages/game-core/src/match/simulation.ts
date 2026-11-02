@@ -6244,7 +6244,7 @@ export class MatchSimulation {
         }
       }
       const strikes = (blows + doubled) * (1 + extraStrikesPerHit);
-      if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds)) {
+      if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds, true)) {
         log.push({ kind: "adrenaline-gained", targetId: record.id, strikes, skillId: undefined });
       }
     }
@@ -6278,6 +6278,7 @@ export class MatchSimulation {
         victim.combatant,
         Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
         this.#elapsedSeconds,
+        false,
       );
     }
   }

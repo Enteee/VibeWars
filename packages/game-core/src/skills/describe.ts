@@ -519,7 +519,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push(`immune to ${names.join(" and ")}`);
   }
   if (statAtTwelve(definition.adrenalineGainFaster) !== 0) {
-    parts.push(adrenalineGainText(definition.adrenalineGainFaster, ranks));
+    parts.push(
+      `${adrenalineGainText(definition.adrenalineGainFaster, ranks)}${definition.adrenalineGainFasterFrom === "attacks" ? " from attacks" : ""}`,
+    );
   }
   parts.push(...definition.attributeDeltas.map(attributeDeltaText));
   if (definition.attributeSet !== undefined) {
@@ -854,7 +856,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       ...(attackMissChance === 0
         ? []
         : [`${String(Math.round(attackMissChance * 100))}% of attacks miss`]),
-      ...(healthPips === 0 ? [] : [`${signed(healthPips)} Health regeneration`]),
+      ...(healthPips === 0
+        ? []
+        : [`${signed(healthPips)} Health ${healthPips > 0 ? "regeneration" : "degeneration"}`]),
       ...(armorModifier === 0 ? [] : [`${signed(armorModifier)} armor`]),
       ...(attackDurationMultiplier === 1
         ? []
@@ -1017,6 +1021,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.endsWhenBearerUsesAdrenalSkill) {
     parts.push("ends if you use an adrenal skill");
+  }
+  if (definition.endsWhenBearerUsesNonAdrenalSkill) {
+    parts.push("ends if you use a non-adrenal skill");
   }
   if (definition.endsWhenBearerUsesAttackSkill) {
     parts.push("ends if you use an attack skill");
@@ -1195,12 +1202,15 @@ function riderDamage(effect: DamageEffect, ranks: ReadonlyMap<string, number>): 
 }
 
 /**
- * A status's typed armor (#1437), as GW1 words it: "+30 elemental armor".
- * Only the damage-type conditions are a status's; any other is a catalog
- * bug, not data.
+ * A status's typed armor (#1437), as GW1 words it: "+30 elemental armor",
+ * or "+60 armor against projectile attacks" (#2180). Only the damage-type
+ * and projectile conditions are a status's; any other is a catalog bug,
+ * not data.
  */
 function statusArmorText(bonus: ConditionalArmor): string {
-  const against = bonus.conditions.map((condition) => {
+  const projectile = bonus.conditions.some(({ kind }) => kind === "vs-projectile");
+  const typed = bonus.conditions.filter(({ kind }) => kind !== "vs-projectile");
+  const against = typed.map((condition) => {
     switch (condition.kind) {
       case "vs-physical":
         return "physical";
@@ -1212,7 +1222,8 @@ function statusArmorText(bonus: ConditionalArmor): string {
         throw new Error(`a status's armor holds only against a damage type, not ${condition.kind}`);
     }
   });
-  return `${signed(bonus.amount)} ${[...against, "armor"].join(" ")}`;
+  const text = `${signed(bonus.amount)} ${[...against, "armor"].join(" ")}`;
+  return projectile ? `${text} against projectile attacks` : text;
 }
 
 /** What the bearer does that a trigger answers, as its tooltip says it. */
@@ -2190,6 +2201,10 @@ function conditionText(
       return "If it interrupts a skill";
     case "interrupted-spell":
       return "If that action was a spell";
+    case "interrupted-attack":
+      return "If that action was an attack";
+    case "target-killed":
+      return "If it kills the target";
     case "resurrected":
       return "If it resurrects";
     case "removed":
@@ -3004,6 +3019,17 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           `(${statusText(effect.statusId, ranks)})`,
         magnitude: undefined,
       };
+    // Desperation Blow's (#2180).
+    case "apply-random-status":
+      return {
+        text: `Applies one of, at random: ${effect.choices
+          .map(
+            ({ statusId, durationSeconds }) =>
+              `${statusName(statusId)} (${lasting(durationSeconds, ranks)})`,
+          )
+          .join(", ")}`,
+        magnitude: undefined,
+      };
     case "maintain-status": {
       // GW1 words upkeep as the caster's energy degeneration (#837).
       const what = statusText(effect.statusId, ranks);
@@ -3078,7 +3104,10 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     case "knockdown":
       return {
-        text: `Knocks down for ${seconds(effect.durationSeconds)}`,
+        text:
+          effect.on === "caster"
+            ? `You are knocked down for ${seconds(effect.durationSeconds)}`
+            : `Knocks down for ${seconds(effect.durationSeconds)}`,
         magnitude: undefined,
       };
     case "shadow-step":
@@ -3229,6 +3258,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "disable-skill": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const time = `${shown(magnitude)} seconds`;
+      // Signet of Distraction's (#2165).
+      const perSignet = effect.perOwnSignet === true ? " for each signet you have equipped" : "";
       return {
         text:
           effect.which === "all"
@@ -3237,9 +3268,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
               ? `The target's elite skill is disabled for ${time}`
               : effect.which === "random-spell"
                 ? `One of the target's spells, at random, is disabled for ${time}`
-                : effect.which === "interrupted"
-                  ? `The interrupted skill is disabled for ${time}`
-                  : `That skill and all skills of the same attribute are disabled for ${time}`,
+                : effect.which === "attacks"
+                  ? `All of the target's attack skills are disabled for ${time}`
+                  : effect.which === "interrupted"
+                    ? `The interrupted skill is disabled for ${time}${perSignet}`
+                    : effect.which === "centre-interrupted"
+                      ? `holding that skill have it disabled for ${time}`
+                      : `That skill and all skills of the same attribute are disabled for ${time}`,
         magnitude,
       };
     }

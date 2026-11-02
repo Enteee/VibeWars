@@ -62,7 +62,9 @@ export type MesmerStatusId =
   | "distortion"
   // Mesmer energy and utility (#2132).
   | "lyssas-aura"
-  | "persistence-of-memory";
+  | "persistence-of-memory"
+  // Mesmer interrupts (#2165).
+  | "web-of-disruption";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -758,6 +760,19 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         usedSkill: { spell: true },
         effects: [{ kind: "recharge-reset", of: "used-skill" }],
         skillId: "mesmer.persistence-of-memory",
+      },
+    ],
+  }),
+  // "When this hex ends, that foe is interrupted again" (#2165): on
+  // expiry and on removal; a recast refreshes it, which is no end.
+  "web-of-disruption": define("web-of-disruption", "Web of Disruption", "hex", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "ends",
+        effects: [{ kind: "interrupt" }],
+        target: "bearer",
+        skillId: "mesmer.web-of-disruption",
       },
     ],
   }),

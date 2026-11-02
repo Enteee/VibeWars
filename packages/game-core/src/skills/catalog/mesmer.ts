@@ -5,7 +5,12 @@ import {
   RANGE_MELEE,
   RANGE_SPELL,
 } from "../../distances.js";
-import type { Skill } from "../types.js";
+import type { Magnitude, Skill } from "../types.js";
+
+/** Complicate's 5...12 (#2165): 11 s, on its target and on each foe in the area. */
+const COMPLICATE_DISABLE: Magnitude = {
+  scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 10.6 },
+};
 
 export const MESMER_SKILLS: readonly Skill[] = [
   /* ---------------------------------------------------------------------- */
@@ -3269,6 +3274,158 @@ export const MESMER_SKILLS: readonly Skill[] = [
     effects: [
       { kind: "apply-status", statusId: "blind", durationSeconds: { flat: 15 } },
       { kind: "caster-gains-status", statusId: "blind", durationSeconds: 15 },
+    ],
+  },
+  /* ---------------------------------------------------------------------- */
+  /* Mesmer interrupts (#2165)                                              */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "mesmer.power-lock",
+    name: "Power Lock",
+    gwId: 1994,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a spell or chant, that skill is
+    // interrupted and disabled for an additional 5...13 seconds": 11 s.
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "disable-skill",
+        which: "interrupted",
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 11.4 } },
+      },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-distraction",
+    name: "Signet of Distraction",
+    gwId: 1992,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a spell, that spell is interrupted and
+    // disabled for 1...5 seconds for each signet you have equipped": 4 s
+    // each, this one counted.
+    effects: [
+      { kind: "interrupt", only: "spell" },
+      {
+        kind: "disable-skill",
+        which: "interrupted",
+        seconds: { scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 4.2 } },
+        perOwnSignet: true,
+      },
+    ],
+  },
+  {
+    id: "mesmer.complicate",
+    name: "Complicate",
+    gwId: 932,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.domination-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is using a skill, that skill is interrupted and
+    // disabled for target foe and all foes in the area for an additional
+    // 5...12 seconds": 11 s, for each foe in the area that holds it.
+    effects: [
+      { kind: "interrupt", only: "skill" },
+      { kind: "disable-skill", which: "interrupted", seconds: COMPLICATE_DISABLE },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_IN_THE_AREA,
+            maxTargets: undefined,
+            effects: [
+              { kind: "disable-skill", which: "centre-interrupted", seconds: COMPLICATE_DISABLE },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.web-of-disruption",
+    name: "Web of Disruption",
+    // The base record; its numbers are the PvP split's (3386), 10 energy.
+    gwId: 1344,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    // GW1's "No Attribute": its 10 s is flat.
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Interrupt target foe. For 10 seconds, target foe is hexed with Web
+    // of Disruption. When this hex ends, that foe is interrupted again."
+    effects: [
+      { kind: "interrupt" },
+      { kind: "apply-status", statusId: "web-of-disruption", durationSeconds: { flat: 10 } },
     ],
   },
 ];

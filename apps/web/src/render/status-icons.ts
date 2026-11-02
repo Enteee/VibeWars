@@ -472,15 +472,22 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Mesmer energy and utility (#2132).
   "lyssas-aura": icon("lyssas-aura"),
   "persistence-of-memory": icon("persistence-of-memory"),
+  // Mesmer interrupts (#2165).
+  "web-of-disruption": icon("web-of-disruption"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),
   "protectors-defense-block": icon("protectors-defense-block"),
+  // Warrior mechanics 4 (#2180).
+  "battle-rage": icon("battle-rage"),
+  "shields-up": icon("shields-up"),
   // Elementalist auras (#2095).
   "magnetic-aura": icon("magnetic-aura"),
   "swirling-aura": icon("swirling-aura"),
   "magnetic-surge": icon("magnetic-surge"),
   "sliver-armor": icon("sliver-armor"),
+  // Elementalist staples (#2166).
+  "teinais-prison": icon("teinais-prison"),
   // Chain and Paradox tools (#2134).
   "way-of-the-empty-palm": icon("way-of-the-empty-palm"),
   "mark-of-instability": icon("mark-of-instability"),

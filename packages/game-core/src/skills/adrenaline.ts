@@ -20,24 +20,34 @@ function unitsFor(skill: Skill | undefined): number {
 /**
  * Give `units` to every adrenaline skill of `combatant` that is not
  * recharging, each capped at what it costs. Gaining any is combat, so it
- * stamps `lastCombatAt` with `atSeconds` (#828). Whether any pool filled.
+ * stamps `lastCombatAt` with `atSeconds` (#828). `fromAttacks`: the
+ * bearer's own blows earned it (#2180). Whether any pool filled.
  */
-export function gainUnits(combatant: Combatant, units: number, atSeconds: number): boolean {
+export function gainUnits(
+  combatant: Combatant,
+  units: number,
+  atSeconds: number,
+  fromAttacks = false,
+): boolean {
   combatant.lastCombatAt = atSeconds;
-  return fillPools(combatant, units);
+  return fillPools(combatant, units, fromAttacks);
 }
 
 /**
  * `gainUnits` without the stamp (#977): what a skill's `adrenaline-gain`
  * does, since an effect does not know the time. The attack skill that
  * carries one has stamped it already, with its blow. A status that gains
- * adrenaline faster (#1455) gives `floor(units × (1 + faster))`. Whether
- * any pool filled (#1735): not for a bar with no adrenaline skill, nor one
+ * adrenaline faster (#1455) gives `floor(units × (1 + faster))`, one
+ * that does only from attacks (#2180) when `fromAttacks`. Whether any
+ * pool filled (#1735): not for a bar with no adrenaline skill, nor one
  * whose pools are all full or recharging.
  */
-export function fillPools(combatant: Combatant, units: number): boolean {
-  const { adrenalineGainFaster } = aggregateModifiers(combatant.statuses.active);
-  const gained = Math.floor(units * (1 + adrenalineGainFaster));
+export function fillPools(combatant: Combatant, units: number, fromAttacks = false): boolean {
+  const { adrenalineGainFaster, adrenalineGainFasterFromAttacks } = aggregateModifiers(
+    combatant.statuses.active,
+  );
+  const faster = adrenalineGainFaster + (fromAttacks ? adrenalineGainFasterFromAttacks : 0);
+  const gained = Math.floor(units * (1 + faster));
   let filled = false;
   for (const [key, held] of combatant.adrenaline) {
     if ((combatant.cast.rechargeRemaining.get(key) ?? 0) > 0) {
@@ -51,8 +61,13 @@ export function fillPools(combatant: Combatant, units: number): boolean {
 }
 
 /** Give `strikes` strikes to every adrenaline skill of `combatant`, as `gainUnits`. */
-export function gainStrikes(combatant: Combatant, strikes: number, atSeconds: number): boolean {
-  return gainUnits(combatant, strikes * ADRENALINE_PER_STRIKE, atSeconds);
+export function gainStrikes(
+  combatant: Combatant,
+  strikes: number,
+  atSeconds: number,
+  fromAttacks = false,
+): boolean {
+  return gainUnits(combatant, strikes * ADRENALINE_PER_STRIKE, atSeconds, fromAttacks);
 }
 
 /** Whether using `skill` loses all adrenaline (#1097), GW1's Hammer Bash. */
