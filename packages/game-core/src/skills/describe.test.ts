@@ -849,6 +849,33 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("painful-bond")).toBe("take +18 from spirits' attacks");
   });
 
+  it("words the Warrior conditions (#2096)", () => {
+    const lines = (id: string) =>
+      describeSkill(
+        skill(id),
+        new Map([
+          ["warrior.tactics", 12],
+          ["warrior.strength", 12],
+        ]),
+      ).effects.map(({ text }) => text);
+    expect(lines("warrior.thrill-of-victory")).toEqual([
+      "+36 damage",
+      "If target has less Health than you: gain 2 strikes of adrenaline",
+    ]);
+    expect(lines("warrior.you-will-die")).toEqual([
+      "If target is below 90% Health: gain 3 strikes of adrenaline",
+    ]);
+    expect(lines("warrior.youre-all-alone")[0]).toMatch(
+      /^If target is not near any allies: applies Crippled for 8s/,
+    );
+    expect(lines("warrior.retreat")).toEqual([
+      "If an ally is dead in earshot: applies Retreat! for 10s (moves at 133% speed)",
+    ]);
+    expect(describeStatus("protectors-defense")).toBe(
+      "allies adjacent to the bearer: 75% chance to block attacks, ends if the bearer moves",
+    );
+  });
+
   it("words the Assassin's staples (#988)", () => {
     const lines = (id: string) =>
       describeSkill(skill(id), new Map([["assassin.shadow-arts", 12]])).effects.map(

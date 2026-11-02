@@ -177,6 +177,32 @@ describe("a count's amount (#1760)", () => {
       ),
     ).toEqual([{ kind: "energy-gain", targetId: "caster", amount: 3 }]);
   });
+
+  it("counts living allies within the radius, the caster among them, with allies-within (#1955)", () => {
+    const user = caster();
+    const near = makeCombatant({ id: "near" });
+    const dead = makeCombatant({ id: "dead" });
+    dead.dead = true;
+    const far = makeCombatant({ id: "far" });
+    const surroundings = around(
+      [user, vec2(0, 0)],
+      [near, vec2(AREA_IN_THE_AREA - 1, 0)],
+      [dead, vec2(0, 10)],
+      [far, vec2(AREA_IN_THE_AREA + 1, 0)],
+      [foe("foe"), vec2(10, 0)],
+    );
+    const per: PerCount = {
+      count: { kind: "allies-within", radius: AREA_IN_THE_AREA },
+      amount: { flat: 3 },
+      max: { flat: 5 },
+    };
+    expect(
+      applyEffect(
+        { kind: "energy-gain", amount: { flat: 0 }, per },
+        context(near, user, surroundings),
+      ),
+    ).toEqual([{ kind: "energy-gain", targetId: "caster", amount: 5 }]);
+  });
 });
 
 describe("Desecrate and Defile Enchantments (#1760)", () => {
