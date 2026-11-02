@@ -2,6 +2,11 @@ import type { StatusDefinition } from "../status.js";
 import { AREA_ADJACENT } from "../../distances.js";
 import { define, ownSkills } from "./define.js";
 
+/** Roaring Winds' "1...5 more Energy" (#2158), on chants and shouts alike. */
+const ROARING_WINDS_SURCHARGE = {
+  scaling: { attributeId: "ranger.wilderness-survival", atZero: 1, atTwelve: 4.2 },
+};
+
 export type RangerStatusId =
   | "practiced-stance"
   | "regeneration"
@@ -72,7 +77,11 @@ export type RangerStatusId =
   | "trappers-focus"
   | "trappers-speed"
   // Blocks that pay off (#1974).
-  | "glass-arrows";
+  | "glass-arrows"
+  // Ranger staples 5 (#2133).
+  | "disrupting-accuracy"
+  | "marksmans-wager"
+  | "storm-chaser";
 
 export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>> = {
   // Troll Unguent's (a ranger skill), though it is an enchantment here.
@@ -205,6 +214,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 13 } }],
       skillId: "ranger.apply-poison",
     },
@@ -219,6 +229,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [
         {
           kind: "damage",
@@ -238,6 +249,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [
         { kind: "damage", amount: { flat: 15 }, type: "fire", armorPenetration: 0 },
         {
@@ -251,12 +263,14 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
       skillId: "ranger.ignite-arrows",
     },
   }),
-  // Infuriating Heat (#1540), at its rank-12 value.
-  // The spirit's aura, PvP: "Non-spirit creatures within its range gain
-  // adrenaline 33...66% as fast": 59% faster.
+  // Infuriating Heat (#1540). The spirit's aura, PvP: "Non-spirit
+  // creatures within its range gain adrenaline 33...66% as fast", read as
+  // that much faster, at its summoner's Expertise (#2158).
   "infuriating-heat": define("infuriating-heat", "Infuriating Heat", "skill-effect", {
     profession: "ranger",
-    adrenalineGainFaster: 0.59,
+    adrenalineGainFaster: {
+      scaling: { attributeId: "ranger.expertise", atZero: 0.33, atTwelve: 0.594 },
+    },
   }),
   // Ranger staples 4 (#1742), at rank 12. "For 3...14 seconds, your
   // arrows cannot be blocked. Seeking Arrows ends if you fail to hit."
@@ -271,6 +285,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.barbed-arrows",
     },
@@ -288,6 +303,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [
         { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 21 } },
         {
@@ -348,6 +364,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "heal", amount: { flat: 5 }, recipient: "caster" }],
       skillId: "ranger.predatory-season",
     },
@@ -370,12 +387,12 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     profession: "ranger",
     ownSkillModifiers: [ownSkills({ type: "signet" }, { energyBase: 10 })],
   }),
-  // "Chants and shouts cost 1...5 more Energy": 4, at rank 12.
+  // "Chants and shouts cost 1...5 more Energy", at its summoner's rank (#2158).
   "roaring-winds": define("roaring-winds", "Roaring Winds", "skill-effect", {
     profession: "ranger",
     ownSkillModifiers: [
-      ownSkills({ type: "chant" }, { energySurcharge: 4 }),
-      ownSkills({ type: "shout" }, { energySurcharge: 4 }),
+      ownSkills({ type: "chant" }, { energySurcharge: ROARING_WINDS_SURCHARGE }),
+      ownSkills({ type: "shout" }, { energySurcharge: ROARING_WINDS_SURCHARGE }),
     ],
   }),
 
@@ -449,10 +466,19 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     ],
   }),
   // PvP: "Enchantments cast by non-spirit creatures within its range expire
-  // 10...30% faster": 26% shorter.
+  // 10...30% faster", at its summoner's rank (#2158).
   tranquility: define("tranquility", "Tranquility", "skill-effect", {
     profession: "ranger",
-    ownSkillModifiers: [ownSkills({ type: "enchantment" }, { durationMultiplier: 0.74 })],
+    ownSkillModifiers: [
+      ownSkills(
+        { type: "enchantment" },
+        {
+          durationMultiplier: {
+            scaling: { attributeId: "ranger.wilderness-survival", atZero: 0.9, atTwelve: 0.74 },
+          },
+        },
+      ),
+    ],
   }),
   // "Poisoned or Diseased creatures within its range suffer -2 Health
   // degeneration."
@@ -476,12 +502,20 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     { profession: "ranger", physicalDamageDealtAs: "fire" },
   ),
 
-  // "Your preparations recharge 50% faster and last 30...246...300%
-  // longer" (#1761), at rank 12.
+  // "Your preparations recharge 50% faster and last 30...300% longer"
+  // (#1761), the 300% at its Expertise (#2158).
   "practiced-stance": define("practiced-stance", "Practiced Stance", "stance", {
     profession: "ranger",
     ownSkillModifiers: [
-      ownSkills({ type: "preparation" }, { rechargeFaster: 0.5, durationMultiplier: 3.46 }),
+      ownSkills(
+        { type: "preparation" },
+        {
+          rechargeFaster: 0.5,
+          durationMultiplier: {
+            scaling: { attributeId: "ranger.expertise", atZero: 1.3, atTwelve: 3.46 },
+          },
+        },
+      ),
     ],
   }),
 
@@ -500,6 +534,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "heal", amount: { flat: 25 }, recipient: "owner" }],
       skillId: "ranger.predatory-bond",
     },
@@ -532,6 +567,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: { flat: 14 } }],
       skillId: "ranger.poison-tip-signet",
     },
@@ -552,6 +588,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
@@ -565,6 +602,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 13 } }],
       skillId: "ranger.strike-as-one",
     },
@@ -596,8 +634,57 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onAttackBlocked: {
       attackSkillsOnly: false,
       weapon: "bow",
+      weaponDamage: undefined,
       effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 18 } }],
       skillId: "ranger.glass-arrows",
     },
+  }),
+  // "For 36 seconds, whenever your arrows land a critical hit, they also
+  // interrupt the target" (#2133). A sword's critical does not.
+  "disrupting-accuracy": define("disrupting-accuracy", "Disrupting Accuracy", "preparation", {
+    profession: "ranger",
+    onCriticalHit: {
+      effects: [{ kind: "interrupt" }],
+      energyIfRemoved: 0,
+      skillId: "ranger.disrupting-accuracy",
+      weapon: "bow",
+    },
+  }),
+  // "For 18 seconds, you gain 5...10 Energy whenever your arrows hit, and
+  // lose 10 Energy whenever they fail to strike" (#2133): 9 at rank 12.
+  "marksmans-wager": define("marksmans-wager", "Marksman's Wager", "preparation", {
+    profession: "ranger",
+    triggers: [
+      {
+        on: "bearer-hits",
+        weapon: "bow",
+        effects: [{ kind: "energy-gain", amount: { flat: 9 } }],
+        target: "bearer",
+        skillId: "ranger.marksmans-wager",
+      },
+      {
+        on: "bearer-fails-to-hit",
+        weapon: "bow",
+        effects: [{ kind: "energy-loss", amount: { flat: 10 } }],
+        target: "bearer",
+        skillId: "ranger.marksmans-wager",
+      },
+    ],
+  }),
+  // "For 8...20 seconds, you move 25% faster and gain 1...5 Energy whenever
+  // you take elemental damage" (#2133): 4 at rank 12, for each packet from
+  // a foe; burning's degeneration is no packet.
+  "storm-chaser": define("storm-chaser", "Storm Chaser", "stance", {
+    profession: "ranger",
+    moveSpeedMultiplier: 1.25,
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        damageType: "elemental",
+        effects: [{ kind: "energy-gain", amount: { flat: 4 } }],
+        target: "bearer",
+        skillId: "ranger.storm-chaser",
+      },
+    ],
   }),
 };

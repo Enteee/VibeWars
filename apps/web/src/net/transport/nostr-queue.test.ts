@@ -460,20 +460,20 @@ describe("party consents on the Nostr queue board (#1078)", () => {
   it("drops a team ticket whose consents were to a Random Arena party, and hears its own mode's (#1766)", () => {
     const { queue, sockets } = fakeRelays();
     const heard: QueueBoardEvent[] = [];
-    queue.board.subscribe("team-arena", (event) => heard.push(event));
+    queue.board.subscribe("team-arena-4v4", (event) => heard.push(event));
     const members = membersOf();
     const team = (mode: QueueMode) =>
       partyTicket(
         members,
         members.map((key) => consentOf(key, members, GROUP_WON, mode)),
-        { mode: "team-arena", bots: 2 },
+        { mode: "team-arena-4v4", bots: 2 },
       );
     const tagged = (ticket: QueueTicket) =>
-      remoteEvent(members[0], ticket, QUEUE_EVENT_KIND, "team-arena");
+      remoteEvent(members[0], ticket, QUEUE_EVENT_KIND, "team-arena-4v4");
     deliver(sockets[0], tagged(team("random-arena-2v2")));
     expect(heard).toEqual([]);
 
-    const ticket = { ...team("team-arena"), heartbeatAt: NOW + 1 };
+    const ticket = { ...team("team-arena-4v4"), heartbeatAt: NOW + 1 };
     deliver(sockets[0], tagged(ticket));
     expect(heard).toEqual([{ kind: "ticket", ticket }]);
   });

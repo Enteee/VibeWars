@@ -337,15 +337,25 @@ describe('"It\'s Just a Flesh Wound." (#1677)', () => {
 });
 
 describe("Focused Anger (#1677)", () => {
-  it("45 s of 120% more adrenaline: a strike gives 2.2, floored", () => {
+  it("45 s of 0...150% more adrenaline: at Leadership 12 a strike gives 2.2, floored", () => {
     const sim = match([FOCUSED_ANGER], []);
     expect(applied(used(sim, 0))).toEqual([["c", "focused-anger", 45]]);
 
-    const warrior = makeCombatant({ id: "w", skillBar: [GO_FOR_THE_EYES] });
-    warrior.adrenaline.set(GO_FOR_THE_EYES, 0);
-    warrior.statuses.apply("focused-anger", 45, "w", NO_RANKS);
-    fillPools(warrior, ADRENALINE_PER_STRIKE);
-    expect(warrior.adrenaline.get(GO_FOR_THE_EYES)).toBe(Math.floor(ADRENALINE_PER_STRIKE * 2.2));
+    const strikeAt = (leadership: number) => {
+      const warrior = makeCombatant({ id: "w", skillBar: [GO_FOR_THE_EYES] });
+      warrior.adrenaline.set(GO_FOR_THE_EYES, 0);
+      warrior.statuses.apply(
+        "focused-anger",
+        45,
+        "w",
+        new Map([["paragon.leadership", leadership]]),
+      );
+      fillPools(warrior, ADRENALINE_PER_STRIKE);
+      return warrior.adrenaline.get(GO_FOR_THE_EYES);
+    };
+    expect(strikeAt(12)).toBe(Math.floor(ADRENALINE_PER_STRIKE * 2.2));
+    // At 0, no more than a strike's own (#2158).
+    expect(strikeAt(0)).toBe(ADRENALINE_PER_STRIKE);
   });
 });
 

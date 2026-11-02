@@ -15,6 +15,8 @@ import {
   PROXY_DIR,
   lifelineFd,
   parseJitconfig,
+  NIX_REGISTRATION,
+  NIX_STORE_PATHS,
   parseRunnerStore,
   removeScratch,
   runnerCommand,
@@ -28,6 +30,8 @@ const HOST_HOME = "/home/op";
 const SCRATCH = `${HOST_HOME}/.local/state/vibewars/runners/0a1b2c3d`;
 
 const JAIL = {
+  closure: "/nix/store/x-closure/store-paths",
+  registration: "/nix/store/x-closure/registration",
   storeDirs: ["/nix/store/aaa-github-runner", "/nix/store/bbb-userland", "/nix/store/ccc-glibc"],
   storeFiles: ["/nix/store/ddd-vibewars-runner-init"],
   userland: "/nix/store/bbb-userland",
@@ -97,6 +101,8 @@ describe("runnerJailArgs", () => {
       const allowed =
         JAIL.storeDirs.includes(source) ||
         JAIL.storeFiles.includes(source) ||
+        source === JAIL.closure ||
+        source === JAIL.registration ||
         source.startsWith(`${SCRATCH}/`);
       expect(allowed, source).toBe(true);
     }
@@ -129,6 +135,18 @@ describe("runnerJailArgs", () => {
       "--ro-bind",
       file,
       file,
+    ]);
+  });
+
+  it("hands the job the closure's Nix registration, read-only (#2101)", () => {
+    expect(args.join(" ")).toContain(
+      `--ro-bind ${JAIL.registration} ${NIX_REGISTRATION} --ro-bind ${JAIL.closure} ${NIX_STORE_PATHS}`,
+    );
+    const at = args.indexOf("VIBEWARS_NIX_REGISTRATION");
+    expect(args.slice(at - 1, at + 2)).toEqual([
+      "--setenv",
+      "VIBEWARS_NIX_REGISTRATION",
+      NIX_REGISTRATION,
     ]);
   });
 
@@ -225,6 +243,7 @@ describe("runnerCommand", () => {
 describe("parseRunnerStore and parseJitconfig", () => {
   const STORE = {
     closure: "/nix/store/x-closure/store-paths",
+    registration: "/nix/store/x-closure/registration",
     runner: "/nix/store/aaa-github-runner",
     bwrap: "/nix/store/ggg-bubblewrap/bin/bwrap",
     userland: "/nix/store/bbb-userland",

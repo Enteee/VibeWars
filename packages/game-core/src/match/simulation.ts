@@ -153,6 +153,7 @@ import {
   netPips,
   preCapEnergyPips,
   raisedMaxHealth,
+  outsideMatch,
   rankOf,
   statusRanks,
   upkeepPips,
@@ -195,6 +196,7 @@ import {
   bearerMissed,
   bearerHit,
   blindMisses,
+  lowRankMisses,
   blocks,
   criticalHitRiders,
   landedCritical,
@@ -847,7 +849,7 @@ function degenerationSources(combatant: Combatant): {
     if (
       pips < 0 ||
       (definition.whileUnder !== undefined &&
-        definition.whileUnder.healthPips < 0 &&
+        statAt(definition.whileUnder.healthPips, status.ranks) < 0 &&
         isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       draining.add(status.sourceId);
@@ -857,7 +859,7 @@ function degenerationSources(combatant: Combatant): {
       definition.healthPerSecondWhileMoving > 0 ||
       definition.healthPerSecond > 0 ||
       (definition.whileUnder !== undefined &&
-        definition.whileUnder.healthPips > 0 &&
+        statAt(definition.whileUnder.healthPips, status.ranks) > 0 &&
         isUnderAnother(combatant.statuses.active, status, definition.whileUnder))
     ) {
       healing.add(status.sourceId);
@@ -4399,13 +4401,16 @@ export class MatchSimulation {
     const bearer = record.combatant;
     const { answered, ended } = bearer.statuses.useNextSkill(skill, spared);
     this.#logFired(
-      answered.map(({ statusId, next }) => ({
+      answered.map(({ statusId, next, ranks }) => ({
         sourceId: record.id,
         skillId: next.skillId,
         events: [
+          // At its source's ranks as it landed (#2143): an ally's Anthem
+          // of Fury gives the Paragon's strikes.
           ...applyEffects(next.effects, {
             caster: bearer,
             target: bearer,
+            ranksFrom: outsideMatch(ranks),
             rng: this.#rng,
             rules: this.#ruleset.combat,
             surroundings: this.#participants,
@@ -5724,8 +5729,11 @@ export class MatchSimulation {
       // Only a flying attack is released here.
       attacked = bearerAttacked(record.combatant, events, "projectile");
       aimedAt(record.combatant, target.combatant);
-      if (blindMisses(record.combatant, target.combatant, this.#rng)) {
-        bearerFailedToHit(record.combatant, events);
+      if (
+        blindMisses(record.combatant, target.combatant, this.#rng) ||
+        lowRankMisses(skillHit?.skill.attack, record.combatant, this.#rng)
+      ) {
+        bearerFailedToHit(record.combatant, record.combatant.equipment.mainHand.weapon, events);
         events.push({ kind: "attack-missed", targetId: target.id });
         return [...events, ...this.#failedToHit(record.combatant, target, skillHit, events)];
       }
@@ -5906,11 +5914,12 @@ export class MatchSimulation {
         attacksAgainstMiss(target.combatant.statuses.active) ||
         (strike > 0 &&
           attacker !== undefined &&
-          blindMisses(attacker.combatant, target.combatant, this.#rng))
+          (blindMisses(attacker.combatant, target.combatant, this.#rng) ||
+            lowRankMisses(skillHit?.skill.attack, attacker.combatant, this.#rng)))
       ) {
         events.push({ kind: "attack-missed", targetId: target.id });
         if (attacker !== undefined) {
-          bearerFailedToHit(attacker.combatant, events);
+          bearerFailedToHit(attacker.combatant, projectile.weaponSnapshot.mainHand.weapon, events);
         }
         continue;
       }
@@ -5956,7 +5965,7 @@ export class MatchSimulation {
     ) {
       events.push({ kind: "attack-blocked", targetId: target.id });
       if (attacker !== undefined) {
-        bearerFailedToHit(attacker.combatant, events);
+        bearerFailedToHit(attacker.combatant, projectile.weaponSnapshot.mainHand.weapon, events);
       }
       attackReached(target.combatant, events);
       events.push(...riders(skillHit?.skill.attack?.onBlocked ?? []));
@@ -6008,6 +6017,7 @@ export class MatchSimulation {
       criticalHitRiders(
         attacker.combatant,
         target.combatant,
+        projectile.weaponSnapshot.mainHand.weapon,
         this.#rng,
         this.#ruleset.combat,
         this.#participants,
@@ -6234,7 +6244,7 @@ export class MatchSimulation {
         }
       }
       const strikes = (blows + doubled) * (1 + extraStrikesPerHit);
-      if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds)) {
+      if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds, true)) {
         log.push({ kind: "adrenaline-gained", targetId: record.id, strikes, skillId: undefined });
       }
     }
@@ -6268,6 +6278,7 @@ export class MatchSimulation {
         victim.combatant,
         Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
         this.#elapsedSeconds,
+        false,
       );
     }
   }

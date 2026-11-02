@@ -16,12 +16,16 @@ swaps at once. There is no cooldown. Your attacks, the skills that need a
 certain weapon, and your maximum Energy all follow the set in hand.
 
 A weapon needs rank 9 in its attribute: below that it hits for a third of
-its damage, and the editor says so in red.
+its damage, and the editor says so in red. A sword is always
+Swordsmanship, but a staff, a wand, a shield or a focus is made for an
+attribute you choose: click its hand on the figure (**6** for the weapon,
+**7** for the off-hand) and pick one.
 
 ## Weapon mods
 
-Every weapon and off-hand has slots for mods, picked under it in the gear
-panel: a **prefix**, a **suffix** and an **inscription**. A wand, a shield
+Every weapon and off-hand has slots for mods: a **prefix**, a **suffix**
+and an **inscription**. Click the hand on the figure, or its row beside
+it, to pick them; each says what it does. A wand, a shield
 and a focus take no prefix; bare hands take none. A mod is always at its
 best value, and each weapon set wears its own, so swapping sets swaps
 their mods too: maximum Health and Energy move with the set in hand.
@@ -143,7 +147,7 @@ In the editor, armor is a figure. Click a numbered piece on it, or its
 row beside it, to pick its insignia and rune; each choice says what it
 does on that piece. **Apply insignia to all 5** puts the one you picked
 on every piece. The figure shows each piece's insignia and rune, and
-holds the weapons of the set you are looking at.
+holds the weapons of the set you are looking at, with their mods.
 
 ## Runes
 

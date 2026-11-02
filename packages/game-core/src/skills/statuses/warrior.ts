@@ -49,7 +49,14 @@ export type WarriorStatusId =
   // Warrior conditions (#2096).
   | "retreat"
   | "protectors-defense"
-  | "protectors-defense-block";
+  | "protectors-defense-block"
+  // Warrior mechanics 4 (#2180).
+  | "battle-rage"
+  | "shields-up"
+  // Warrior staples 4 (#2181).
+  | "tiger-stance"
+  | "berserker-stance"
+  | "bulls-charge";
 
 export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition>> = {
   sprint: define("sprint", "Sprint", "stance", {
@@ -280,7 +287,12 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "bearer-hits",
         weapon: "melee",
-        effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: { scaling: { attributeId: "warrior.strength", atZero: 0, atTwelve: 2.4 } },
+          },
+        ],
         target: "bearer",
         skillId: "warrior.enraging-charge",
       },
@@ -367,7 +379,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
         on: "bearer-blocks",
         target: "bearer",
         effects: [
-          { kind: "adrenaline-gain", strikes: 1 },
+          { kind: "adrenaline-gain", strikes: { flat: 1 } },
           { kind: "energy-gain", amount: { flat: 5 } },
         ],
         skillId: "warrior.wary-stance",
@@ -386,7 +398,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "bearer-blocks",
         target: "bearer",
-        effects: [{ kind: "adrenaline-gain", strikes: 1 }],
+        effects: [{ kind: "adrenaline-gain", strikes: { flat: 1 } }],
         skillId: "warrior.soldiers-defense",
       },
     ],
@@ -402,7 +414,9 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "adrenaline-gain", strikes: 1, perOwnMeleeAttackSkill: { max: 3 } }],
+        effects: [
+          { kind: "adrenaline-gain", strikes: { flat: 1 }, perOwnMeleeAttackSkill: { max: 3 } },
+        ],
         skillId: "warrior.defensive-stance",
       },
     ],
@@ -418,7 +432,12 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       {
         on: "ends",
         target: "bearer",
-        effects: [{ kind: "adrenaline-gain", strikes: 3 }],
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 3.4 } },
+          },
+        ],
         skillId: "warrior.auspicious-parry",
       },
     ],
@@ -451,4 +470,57 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
       block: { chance: 0.75, against: "all" },
     },
   ),
+  // "For 5...20 seconds, you move 33% faster and gain double adrenaline
+  // from attacks. Battle Rage ends if you use any non-adrenal skills."
+  // (#2180) Battle Rage's own use is adrenal, so it starts it.
+  "battle-rage": define("battle-rage", "Battle Rage", "stance", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.33,
+    adrenalineGainFaster: 1,
+    adrenalineGainFasterFrom: "attacks",
+    endsWhenBearerUsesNonAdrenalSkill: true,
+  }),
+  // "Shields Up!": "+60 armor against incoming projectile attacks" (#2180).
+  "shields-up": define("shields-up", "Shields Up!", "shout", {
+    profession: "warrior",
+    conditionalArmor: [{ amount: 60, conditions: [{ kind: "vs-projectile" }] }],
+  }),
+  // Warrior staples 4 (#2181). "For 4...10 seconds, you attack 33% faster.
+  // Tiger Stance ends if any of your attacks fail to hit": a miss, a block
+  // or an evade ends it, a hit for 0 does not.
+  "tiger-stance": define("tiger-stance", "Tiger Stance", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    endsWhenBearerMisses: true,
+  }),
+  // "For 8...14 seconds, you attack 33% faster and gain 100% more
+  // adrenaline. Berserker Stance ends if you use a skill." Not the stance
+  // itself, which its own use spares.
+  "berserker-stance": define("berserker-stance", "Berserker Stance", "stance", {
+    profession: "warrior",
+    attackDurationMultiplier: 0.67,
+    adrenalineGainFaster: 1,
+    endsWhenBearerUsesSkill: true,
+  }),
+  // "For 1...7 seconds, you move 50% faster and if you strike a moving foe
+  // in melee, that foe is knocked down. Bull's Charge ends if you use a
+  // skill." Moving is read as the blow lands.
+  "bulls-charge": define("bulls-charge", "Bull's Charge", "stance", {
+    profession: "warrior",
+    moveSpeedMultiplier: 1.5,
+    onAttackHit: {
+      attackSkillsOnly: false,
+      weapon: "melee",
+      weaponDamage: undefined,
+      effects: [
+        {
+          kind: "if",
+          condition: { kind: "target-moving" },
+          effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+        },
+      ],
+      skillId: "warrior.bulls-charge",
+    },
+    endsWhenBearerUsesSkill: true,
+  }),
 };

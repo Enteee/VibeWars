@@ -106,6 +106,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -261,7 +262,14 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
             hits: "foes",
             radius: AREA_EARSHOT,
             maxTargets: 1,
-            effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+            effects: [
+              {
+                kind: "adrenaline-gain",
+                strikes: {
+                  scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 1.8 },
+                },
+              },
+            ],
           },
         ],
         skillId: "dervish.balthazars-rage",
@@ -277,6 +285,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -374,6 +383,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -440,6 +450,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: true,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 9 } },
         { kind: "transfer-conditions", from: "caster", count: 3, durationMultiplier: 1 },
@@ -456,6 +467,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: true,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -576,6 +588,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "splash",
@@ -637,14 +650,19 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     ],
   }),
 
-  // "Your next Dervish enchantment lasts 10...122...150% longer" (#1761),
-  // at rank 12: the first one used spends it.
+  // "Your next Dervish enchantment lasts 10...150% longer" (#1761, #2158):
+  // the first one used spends it.
   "extend-enchantments": define("extend-enchantments", "Extend Enchantments", "skill-effect", {
     profession: "dervish",
     ownSkillModifiers: [
       ownSkills(
         { type: "enchantment", profession: "dervish" },
-        { durationMultiplier: 2.22, uses: 1 },
+        {
+          durationMultiplier: {
+            scaling: { attributeId: "dervish.mysticism", atZero: 1.1, atTwelve: 2.22 },
+          },
+          uses: 1,
+        },
       ),
     ],
   }),

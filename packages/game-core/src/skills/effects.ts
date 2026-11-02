@@ -7,7 +7,7 @@ import {
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
-import { isAttacking } from "./attacking.js";
+import { isAttacking, signetsOnBar } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
@@ -843,6 +843,10 @@ function countOf(
             ([key, remaining]) =>
               remaining > 0 && getSkill(skillIdOfKey(key))?.attributeId === rule.attributeId,
           ).length;
+    }
+    case "energy": {
+      const bearer = rule.on === "caster" ? caster : target;
+      return bearer === undefined ? 0 : Math.floor(bearer.energy);
     }
   }
 }
@@ -1721,13 +1725,17 @@ export function applyEffect(
     }
 
     case "adrenaline-gain": {
-      const strikes = effect.strikes * adrenalineGainTimes(caster, effect);
+      // Whole strikes at the caster's rank (#2143), as a duration's (#2041):
+      // Enraging Charge's "0...3" gives none at a low rank.
+      const strikes =
+        Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)) *
+        adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
       if (
         gainer !== undefined &&
         strikes > 0 &&
-        fillPools(gainer, strikes * ADRENALINE_PER_STRIKE)
+        fillPools(gainer, strikes * ADRENALINE_PER_STRIKE, false)
       ) {
         events.push({
           kind: "adrenaline-gained",
@@ -1784,7 +1792,13 @@ export function applyEffect(
         return events;
       }
       if (effect.recipient === "target") {
-        loseHealth(target, resolveMagnitude(effect.amount, caster), "health-loss", events);
+        const amount = resolveMagnitude(effect.amount, caster);
+        loseHealth(
+          target,
+          withPerCount(amount, effect.per, caster, target, context.surroundings),
+          "health-loss",
+          events,
+        );
         return events;
       }
       const removed =
@@ -1821,6 +1835,16 @@ export function applyEffect(
         events,
       );
       return events;
+    }
+
+    case "apply-random-status": {
+      if (target === undefined || target.dead || effect.choices.length === 0) {
+        return events;
+      }
+      const choice = effect.choices[context.rng.nextInt(0, effect.choices.length)];
+      return choice === undefined
+        ? events
+        : applyEffect({ kind: "apply-status", ...choice }, context, earlier, lostBy);
     }
 
     case "apply-status": {
@@ -2046,26 +2070,27 @@ export function applyEffect(
     }
 
     case "knockdown": {
-      if (target === undefined || !canBeKnockedDown(target)) {
+      const falls = effect.on === "caster" ? caster : target;
+      if (falls === undefined || !canBeKnockedDown(falls)) {
         return events;
       }
-      if (preventsKnockdown(target)) {
+      if (preventsKnockdown(falls)) {
         // Stopped, and what stops only one is spent (#845).
-        for (const statusId of target.statuses.endOnKnockdownPrevented()) {
-          events.push({ kind: "status-removed", targetId: target.id, statusId });
+        for (const statusId of falls.statuses.endOnKnockdownPrevented()) {
+          events.push({ kind: "status-removed", targetId: falls.id, statusId });
         }
         return events;
       }
       // Earthbind (#1265): never shorter than its minimum, and its spirit
       // pays for every knockdown, one long enough already included.
-      const minimum = aggregateModifiers(target.statuses.active).knockdownMinSeconds;
+      const minimum = aggregateModifiers(falls.statuses.active).knockdownMinSeconds;
       const durationSeconds = Math.max(effect.durationSeconds, minimum ?? 0);
       if (minimum !== undefined) {
-        target.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
+        falls.statuses.chargeSources((definition) => definition.knockdownMinSeconds !== undefined);
       }
-      knockDown(target, durationSeconds);
-      target.statuses.recordKnockdown();
-      events.push({ kind: "knocked-down", targetId: target.id, durationSeconds });
+      knockDown(falls, durationSeconds);
+      falls.statuses.recordKnockdown();
+      events.push({ kind: "knocked-down", targetId: falls.id, durationSeconds });
       return events;
     }
 
@@ -2269,14 +2294,20 @@ export function applyEffect(
       if (target === undefined) {
         return events;
       }
-      const interrupted = interruptedSkill(target.id, earlier);
+      // Complicate's (#2165) reads what its splash's centre was using.
+      const from = effect.which === "centre-interrupted" ? lostBy : target;
+      const interrupted = from === undefined ? undefined : interruptedSkill(from.id, earlier);
       if (
-        (effect.which === "interrupted" || effect.which === "interrupted-and-attribute") &&
+        (effect.which === "interrupted" ||
+          effect.which === "interrupted-and-attribute" ||
+          effect.which === "centre-interrupted") &&
         interrupted === undefined
       ) {
         return events;
       }
-      const seconds = resolveMagnitude(effect.seconds, caster);
+      const seconds =
+        resolveMagnitude(effect.seconds, caster) *
+        (effect.perOwnSignet === true ? signetsOnBar(caster) : 1);
       for (const key of disabledBy(effect, target, interrupted, context.rng)) {
         // A disabled skill loses all its adrenaline (GW1, #1097), though
         // a longer recharge kept the disable from lengthening its wait.
@@ -2442,6 +2473,8 @@ export function isStateCondition(condition: EffectCondition): condition is State
   switch (condition.kind) {
     case "interrupted":
     case "interrupted-spell":
+    case "interrupted-attack":
+    case "target-killed":
     case "removed":
     case "resurrected":
       return false;
@@ -2460,6 +2493,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-lacks":
     case "target-alone":
     case "target-near-caster-ally":
+    case "target-within":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
@@ -2579,6 +2613,11 @@ export function stateHolds(
             distance(position, at) <= condition.radius,
         )
       );
+    }
+    case "target-within": {
+      const at = surroundings.get(target.id)?.position;
+      const from = surroundings.get(caster.id)?.position;
+      return at !== undefined && from !== undefined && distance(from, at) <= condition.radius;
     }
     case "target-not-moving":
       return !target.moving;
@@ -2748,8 +2787,9 @@ function interruptedSkill(targetId: string, earlier: readonly CombatEvent[]): st
  * interrupted, and for Power Block every skill on its bar of the same
  * attribute. One with no attribute is linked to nothing (GW1). With
  * `all`, the whole bar, empty slots aside (#474). With `random-spell`, one
- * spell on it, picked with `rng` (#1928). The bar is the one
- * standing now (#469): a copy is disabled under its own key.
+ * spell on it, picked with `rng` (#1928). With `centre-interrupted`, each
+ * slot holding the skill interrupted on the splash's centre (#2165). The
+ * bar is the one standing now (#469): a copy is disabled under its own key.
  */
 function disabledBy(
   effect: DisableSkillEffect,
@@ -2769,8 +2809,14 @@ function disabledBy(
   if (effect.which === "elite") {
     return bar.filter((slot) => getSkill(slot.skillId)?.elite === true).map(({ key }) => key);
   }
+  if (effect.which === "attacks") {
+    return bar.filter((slot) => getSkill(slot.skillId)?.type === "attack").map(({ key }) => key);
+  }
   if (interrupted === undefined) {
     return [];
+  }
+  if (effect.which === "centre-interrupted") {
+    return bar.filter((slot) => slot.skillId === interrupted).map(({ key }) => key);
   }
   const cancelled = target.cast.lastCancelled;
   const key = cancelled?.skillId === interrupted ? cancelled.key : interrupted;
@@ -2870,6 +2916,15 @@ function conditionHolds(
         (event) =>
           event.kind === "interrupted" && event.targetId === target.id && isSpellId(event.skillId),
       );
+    case "interrupted-attack":
+      return earlier.some(
+        (event) =>
+          event.targetId === target.id &&
+          (event.kind === "attack-interrupted" ||
+            (event.kind === "interrupted" && getSkill(event.skillId)?.type === "attack")),
+      );
+    case "target-killed":
+      return earlier.some((event) => event.kind === "death" && event.targetId === target.id);
     case "removed": {
       const bearerId = condition.from === "caster" ? caster.id : target.id;
       return earlier.some(
@@ -2896,6 +2951,7 @@ function conditionHolds(
     case "caster-lacks":
     case "target-alone":
     case "target-near-caster-ally":
+    case "target-within":
     case "target-not-moving":
     case "target-knocked-down":
     case "target-moving":
@@ -3045,6 +3101,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
       return effect.from === "caster";
     case "maintain-status":
     case "apply-status":
+    case "knockdown":
       return effect.on === "caster";
     case "energy-loss":
     case "energy-steal":
@@ -3056,7 +3113,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "spread-conditions":
     case "give-health":
     case "interrupt":
-    case "knockdown":
+    case "apply-random-status":
     case "shadow-step":
     case "resurrect":
     case "pull-to-caster":

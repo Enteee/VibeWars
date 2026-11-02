@@ -116,11 +116,8 @@ describe("company runner selection", () => {
   });
 
   it("finds the jobs that use it", () => {
-    expect(eligible.map(([n, id]) => `${n}:${id}`).sort()).toEqual([
-      "e2e-repeat.yml:e2e-repeat",
-      "e2e-soak.yml:soak",
-      "music-measure.yml:measure",
-    ]);
+    // None while the company runners are off (#2101, #2155).
+    expect(eligible.map(([n, id]) => `${n}:${id}`).sort()).toEqual([]);
   });
 
   it.each(eligible)("%s %s uses exactly the canonical expression", (_n, _id, block) => {

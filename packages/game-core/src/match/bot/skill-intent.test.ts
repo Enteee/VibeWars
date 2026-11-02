@@ -86,7 +86,6 @@ const NO_BOT_USE = new Set([
   "ranger.symbiotic-bond",
   // Speed, energy, attack speed and other self-help no rule reaches for.
   "assassin.dash",
-  "dervish.arcane-zeal",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
   "dervish.avatar-of-lyssa",
@@ -125,9 +124,11 @@ const NO_BOT_USE = new Set([
   "ritualist.vengeful-was-khanhei",
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
+  "warrior.battle-rage",
   "warrior.endure-pain",
   "warrior.rage-of-the-ntouka",
   "warrior.rush",
+  "warrior.shields-up",
   "warrior.sprint",
   // Minions, wells and enchantment strips: no rule for them yet.
   "necromancer.animate-bone-horror",
@@ -362,6 +363,10 @@ describe("botUses (#1189)", () => {
     expect(setupOf(skill("necromancer.order-of-apostasy"))?.setup).toBe("party-strips");
     expect(setupOf(skill("assassin.dark-apostasy"))?.setup).toBe("critical-strips");
     expect(botUses(skill("assassin.dark-apostasy"))).toEqual(["setup"]);
+    // The Ranger's (#2159).
+    expect(setupOf(skill("ranger.disrupting-accuracy"))?.setup).toBe("critical-interrupts");
+    expect(setupOf(skill("ranger.marksmans-wager"))?.setup).toBe("hit-wager");
+    expect(botUses(skill("ranger.storm-chaser"))).toEqual(["setup"]);
     // Order of Pain's rider is no setup; Jaundiced Gaze is a strip at an
     // enchanted foe.
     expect(setupOf(skill("necromancer.order-of-pain"))).toBeUndefined();

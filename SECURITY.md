@@ -221,6 +221,13 @@ channels, as often as they like.
   (`game-session/src/rejoin-proof.ts`). The host checks it against the
   `from` the proof arrives on. A nonce is good for one proof, and a new
   hello from the same peer kills the old one.
+- A lobby seat held for a dropped guest (#1764) goes back only to a
+  `lobby-join` carrying that seat's lobby rejoin token (#2157): 128 random
+  bits the host sends the guest alone in `lobby-seat` when it admits it,
+  and the guest sends only to that host, only on a return. Any other join
+  under its peer id is ignored, not refused, so a prober cannot tell the
+  seat exists. A peer posing as the host could still relay a token; the
+  match layer accepts the same residual.
 - A peer id is not a credential either way. Trystero's peer id is a string
   the peer itself puts in its signalling, so a modified client can announce
   any id. When the host's peer drops mid-match (#515), a guest answers a

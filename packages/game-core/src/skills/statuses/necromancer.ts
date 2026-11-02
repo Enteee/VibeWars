@@ -370,6 +370,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "damage", amount: { flat: 13 }, type: "typeless", armorPenetration: 1 }],
       skillId: "necromancer.order-of-pain",
     },
@@ -642,6 +643,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",
@@ -696,19 +698,29 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
       skillId: "necromancer.order-of-apostasy",
       sourceLosesPerRemoved: { profession: "monk", percentOfMax: 4 },
     },
   }),
   // "...your next enchantment spell casts 0...1 seconds faster and costs
-  // 1...10 less Energy" (#1975): 1 s and 8 at rank 12.
+  // 1...10 less Energy" (#1975), at its caster's Blood Magic (#2158).
   "jaundiced-gaze": define("jaundiced-gaze", "Jaundiced Gaze", "enchantment", {
     profession: "necromancer",
     ownSkillModifiers: [
       ownSkills(
         { type: "enchantment" },
-        { energyDiscount: 8, energyFloor: 0, activationSecondsLess: 1, uses: 1 },
+        {
+          energyDiscount: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 1, atTwelve: 8.2 },
+          },
+          energyFloor: 0,
+          activationSecondsLess: {
+            scaling: { attributeId: "necromancer.blood-magic", atZero: 0, atTwelve: 0.8 },
+          },
+          uses: 1,
+        },
       ),
     ],
   }),

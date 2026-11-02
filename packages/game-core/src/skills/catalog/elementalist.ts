@@ -3512,6 +3512,109 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Self-buffs (#1984).
+  // Flame recharges in 45 s, the other two in 30 (wiki).
+  conjure("flame", "Flame", 182, "fire", 45),
+  conjure("frost", "Frost", 207, "water", 30),
+  conjure("lightning", "Lightning", 221, "air", 30),
+  {
+    id: "elementalist.ether-prodigy",
+    name: "Ether Prodigy",
+    gwId: 178,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Lose all enchantments. For 8...20 seconds, you gain +6 Energy
+    // regeneration" (#1984): 18; the strip first, so it never strips itself.
+    effects: [
+      { kind: "remove-status", category: "enchantment", count: "all" },
+      {
+        kind: "apply-status",
+        statusId: "ether-prodigy",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.ether-renewal",
+    name: "Ether Renewal",
+    gwId: 181,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // PvP: "For 10 seconds, each time you cast a spell..." (#1984): the
+    // status holds the rest.
+    effects: [{ kind: "apply-status", statusId: "ether-renewal", durationSeconds: { flat: 10 } }],
+  },
+  {
+    id: "elementalist.elemental-attunement",
+    name: "Elemental Attunement",
+    gwId: 164,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 25...60 seconds, you are attuned to Air, Fire, Water, and
+    // Earth" (#1984): 53; the status holds the rest.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "elemental-attunement",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.energy-storage", atZero: 25, atTwelve: 53 },
+        },
+      },
+    ],
+  },
   // Attributes raised (#1941).
   {
     id: "elementalist.glyph-of-elemental-power",
@@ -3848,7 +3951,354 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist staples (#2166): Air and Water, at rank 12                */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.blinding-surge",
+    name: "Blinding Surge",
+    gwId: 1367,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 5...50 lightning damage. That foe and all
+    // adjacent foes are Blinded for 3...8 seconds. This spell has 25% armor
+    // penetration. If this spell strikes an attacking foe, all adjacent
+    // foes are also struck and this spell deals 50% more damage."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 41 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+        conditionalBonus: {
+          condition: { kind: "target-attacking" },
+          amount: {
+            scaling: { attributeId: "elementalist.air-magic", atZero: 3, atTwelve: 21 },
+          },
+        },
+      },
+      {
+        kind: "apply-status",
+        statusId: "blind",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 3, atTwelve: 7 },
+        },
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_ADJACENT,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "blind",
+            durationSeconds: {
+              scaling: { attributeId: "elementalist.air-magic", atZero: 3, atTwelve: 7 },
+            },
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-attacking" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.air-magic", atZero: 8, atTwelve: 62 },
+                },
+                type: "lightning",
+                armorPenetration: 0.25,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.shell-shock",
+    name: "Shell Shock",
+    gwId: 2059,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 10...30 lightning damage and has Cracked
+    // Armor for 5...20 seconds. This spell has 25% armor penetration. If
+    // you are Overcast, this spell strikes adjacent foes."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 26 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+      {
+        kind: "apply-status",
+        statusId: "cracked-armor",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "caster-overcast" },
+        effects: [
+          {
+            kind: "splash",
+            hits: "foes",
+            radius: AREA_ADJACENT,
+            maxTargets: undefined,
+            effects: [
+              {
+                kind: "damage",
+                amount: {
+                  scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 26 },
+                },
+                type: "lightning",
+                armorPenetration: 0.25,
+              },
+              {
+                kind: "apply-status",
+                statusId: "cracked-armor",
+                durationSeconds: {
+                  scaling: { attributeId: "elementalist.air-magic", atZero: 5, atTwelve: 17 },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.teinais-prison",
+    name: "Teinai's Prison",
+    gwId: 1097,
+    type: "hex",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 1...8 seconds, target foe's legs are encased in ice, causing the
+    // foe to move 66% slower. If that foe has Cracked Armor, the chill seeps
+    // through causing 5...9 Health degeneration."
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "teinais-prison",
+        durationSeconds: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 6.6 },
+        },
+      },
+    ],
+  },
+  {
+    id: "elementalist.glowing-ice",
+    name: "Glowing Ice",
+    gwId: 2192,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 5...50 cold damage. If that foe is under the
+    // effects of a Water Magic hex, you gain 5 Energy plus 1 Energy for
+    // every 2 ranks of Energy Storage", as Glowing Gaze's.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.water-magic", atZero: 5, atTwelve: 41 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "hex", attribute: "elementalist.water-magic" },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "elementalist.energy-storage", atZero: 5, atTwelve: 11 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "elementalist.vapor-blade",
+    name: "Vapor Blade",
+    gwId: 866,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.water-magic",
+    // The wiki's 10 Energy; the corpus record reads 5.
+    cost: { kind: "energy", amount: 10 },
+    overcast: 5,
+    activationSeconds: 1.5,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe is struck for 15...135 cold damage. Vapor Blade deals half
+    // damage if that foe has any enchantments on them": 56, rounded up.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "not", condition: { kind: "target-has", category: "enchantment" } },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 15, atTwelve: 111 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+        ],
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has", category: "enchantment" },
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "elementalist.water-magic", atZero: 8, atTwelve: 56 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
 ];
+
+/**
+ * A conjure (#1984): "For 60 seconds, if you're wielding a fire weapon,
+ * your attacks strike for an additional 5...20 fire damage", of its
+ * element's attribute.
+ */
+function conjure(
+  element: "flame" | "frost" | "lightning",
+  name: string,
+  gwId: number,
+  attribute: "fire" | "water" | "air",
+  rechargeSeconds: number,
+): Skill {
+  return {
+    id: `elementalist.conjure-${element}`,
+    name: `Conjure ${name}`,
+    gwId,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: `elementalist.${attribute}-magic`,
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      { kind: "apply-status", statusId: `conjure-${element}`, durationSeconds: { flat: 60 } },
+    ],
+  };
+}
 
 /**
  * An attunement (#1614): "For 36...60 seconds, you are attuned to Fire. You

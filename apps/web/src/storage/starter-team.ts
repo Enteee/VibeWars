@@ -9,9 +9,10 @@ import type { StoredTeam, TeamCharacter, TeamSize } from "./schema.js";
 /**
  * The Team Build a browser's first start rolls (#2036), as it rolls a
  * starter character (#853): one of the curated `STARTER_TEAMS` (#2035) at
- * random, saved as a Team Build like any other, once per browser, under
- * the team's archetype name and its members' job names. Which one it is,
- * is remembered by id, so its card alone has Clone and Reroll.
+ * random for each team size that has one (#2147), saved as a Team Build
+ * like any other, once per browser, under the team's archetype name and
+ * its members' job names. Which one it is, is remembered by id for its
+ * size, so its card alone has Clone and Reroll.
  */
 
 /** Where the rolled team's id is kept: set means "rolled already". */
@@ -20,19 +21,22 @@ export interface StarterTeamKey {
   readonly save: (id: string) => void;
 }
 
-const STARTER_TEAM_STORAGE_KEY = `${STORAGE_NAMESPACE}.starterTeamId`;
+function starterTeamStorageKey(size: TeamSize): string {
+  return `${STORAGE_NAMESPACE}.starterTeamId.${String(size)}`;
+}
 
-export function loadStarterTeamId(): string | undefined {
+/** The id of the starter team rolled at `size` (#2147), if any. */
+export function loadStarterTeamId(size: TeamSize): string | undefined {
   try {
-    return localStorage.getItem(STARTER_TEAM_STORAGE_KEY) ?? undefined;
+    return localStorage.getItem(starterTeamStorageKey(size)) ?? undefined;
   } catch {
     return undefined;
   }
 }
 
-export function saveStarterTeamId(id: string): void {
+export function saveStarterTeamId(size: TeamSize, id: string): void {
   try {
-    localStorage.setItem(STARTER_TEAM_STORAGE_KEY, id);
+    localStorage.setItem(starterTeamStorageKey(size), id);
   } catch {
     // Unset, the next start rolls again: a second team, not a failure.
   }

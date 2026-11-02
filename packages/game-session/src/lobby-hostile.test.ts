@@ -1,4 +1,4 @@
-import type { JsonValue } from "@vibewars/game-protocol";
+import { PROTOCOL_VERSION, type JsonValue } from "@vibewars/game-protocol";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND } from "./intent-budget.js";
 import { describe, expect, it } from "vitest";
 
@@ -60,6 +60,48 @@ async function stranger(lobby: TestLobby): Promise<Transport> {
   await settle();
   return transport;
 }
+
+/** A coded lobby's join as `name`, carrying `rejoinToken` (#2157). */
+const joinAs = (name: string, rejoinToken: string | null) => ({
+  protocolVersion: PROTOCOL_VERSION,
+  name,
+  guildTag: null,
+  guildCape: null,
+  admission: null,
+  rejoinToken,
+});
+
+/**
+ * A guest joined by hand, then dropped from the room: away, its seat held
+ * (#1764). Its id, the token the host gave it, and every lobby-state the
+ * room was told while it was in, seen by a bystander.
+ */
+async function droppedGuest(
+  lobby: TestLobby,
+): Promise<{ id: string; token: string | undefined; states: unknown[] }> {
+  const guest = await stranger(lobby);
+  const bystander = await lobby.join("Bystander");
+  const states: unknown[] = [];
+  bystander.transport.on("lobby-state", (data) => states.push(data));
+  guest.on("lobby-state", (data) => states.push(data));
+  let token: string | undefined;
+  guest.on("lobby-seat", (data) => {
+    token = (data as { rejoinToken?: string }).rejoinToken;
+  });
+  guest.send("lobby-join", joinAs("Guest", null), "host");
+  await settle();
+  const id = guest.selfId;
+  await guest.leave();
+  await settle();
+  return { id, token, states };
+}
+
+/** The guest's row as the host has it: name, team, ready, away. */
+const guestRow = (lobby: TestLobby) =>
+  lobby.host.connection
+    .getSnapshot()
+    .players.filter(({ name }) => name !== "Host" && name !== "Bystander")
+    .map(({ name, team, ready, away }) => [name, team, ready, away]);
 
 describe("lobby host against hostile peers", () => {
   it("ignores every hostile lobby message and keeps the lobby healthy", async () => {
@@ -168,6 +210,35 @@ describe("lobby host against hostile peers", () => {
     flooder.connection.chooseTeam(0);
     await settle();
     expect(playersOf(lobby.host)[1]?.team).toBeNull();
+  });
+
+  it("re-seats a dropped guest only for its token, never for its peer id alone (#2157)", async () => {
+    const lobby = await openLobby();
+    const { id, token, states } = await droppedGuest(lobby);
+    expect(token).toMatch(/^[0-9a-f]{32}$/);
+    expect(guestRow(lobby)).toEqual([["Guest", null, false, true]]);
+
+    // Another peer that saw the guest's id in the room takes it.
+    const impostor = await provenPeer(lobby, id);
+    await settle();
+    const told: string[] = [];
+    for (const channel of ["lobby-state", "lobby-note", "lobby-seat"] as const) {
+      impostor.on(channel, () => told.push(channel));
+    }
+    for (const wrong of [null, "0f".repeat(16)]) {
+      impostor.send("lobby-join", joinAs("Thief", wrong), "host");
+      await settle();
+    }
+    // The seat stays away and as it was, and nothing says it exists.
+    expect(guestRow(lobby)).toEqual([["Guest", null, false, true]]);
+    expect(told).toEqual([]);
+
+    // The guest itself, back with its token, has its seat again.
+    impostor.send("lobby-join", joinAs("Guest", token ?? null), "host");
+    await settle();
+    expect(guestRow(lobby)).toEqual([["Guest", null, false, false]]);
+    // No state the room was told ever carried a token.
+    expect(JSON.stringify(states)).not.toContain(token);
   });
 
   it("ignores a hello for its match from a member it did not seat, and the match plays on", async () => {

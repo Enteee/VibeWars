@@ -119,9 +119,9 @@ export interface WhileUnder {
   readonly attackDurationMultiplier: number;
   readonly adrenalineGainFaster: number;
   /** Summed into the bearer's pips as the status's own (#1654): Resilient Weapon's. */
-  readonly healthPips: number;
+  readonly healthPips: StatusStat;
   /** Summed into the bearer's armor against every type, as the status's own (#1654). */
-  readonly armorModifier: number;
+  readonly armorModifier: StatusStat;
   /**
    * The bearer's chance to miss with attacks, joined with its other
    * `attackMissChance`s as they join each other (#1732): Well of
@@ -178,6 +178,32 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   physicalDamageTakenBonus: true,
   attackDurationMultiplier: true,
   damageTakenMultiplier: true,
+  adrenalineGainFaster: true,
+};
+
+/** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
+type OwnSkillStatKey = {
+  [K in keyof OwnSkillModifier]: StatusStat extends OwnSkillModifier[K] ? K : never;
+}[keyof OwnSkillModifier];
+
+/** Every `OwnSkillStatKey`, as `STATUS_STAT_KEYS`. */
+const OWN_SKILL_STAT_KEYS: Readonly<Record<OwnSkillStatKey, true>> = {
+  energyDiscount: true,
+  energySurcharge: true,
+  activationSecondsLess: true,
+  rechargeFaster: true,
+  durationMultiplier: true,
+};
+
+/** The fields of a `WhileUnder` that are a `StatusStat` (#2191). */
+type WhileUnderStatKey = {
+  [K in keyof WhileUnder]: StatusStat extends WhileUnder[K] ? K : never;
+}[keyof WhileUnder];
+
+/** Every `WhileUnderStatKey`, as `STATUS_STAT_KEYS`. */
+const WHILE_UNDER_STAT_KEYS: Readonly<Record<WhileUnderStatKey, true>> = {
+  healthPips: true,
+  armorModifier: true,
 };
 
 /** The attributes `id`'s scaled stats name, each once: what its source's ranks are read in. */
@@ -190,11 +216,54 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
       attributes.add(stat.scaling.attributeId);
     }
   }
+  // Way of the Empty Palm's recharge share is its caster's (#2158).
+  for (const modifier of definition.ownSkillModifiers) {
+    for (const key of Object.keys(OWN_SKILL_STAT_KEYS) as OwnSkillStatKey[]) {
+      const stat = modifier[key];
+      if (typeof stat !== "number") {
+        attributes.add(stat.scaling.attributeId);
+      }
+    }
+  }
+  // Teinai's Prison's degen is its caster's Water Magic (#2191).
+  if (definition.whileUnder !== undefined) {
+    for (const key of Object.keys(WHILE_UNDER_STAT_KEYS) as WhileUnderStatKey[]) {
+      const stat = definition.whileUnder[key];
+      if (typeof stat !== "number") {
+        attributes.add(stat.scaling.attributeId);
+      }
+    }
+  }
+  // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143).
+  if (definition.nextSkill !== undefined) {
+    scalingAttributes(definition.nextSkill.effects, attributes);
+  }
   // Jagged Bones's horror stands up at its caster's rank (#1986).
   if (definition.replacedOnDeathBy !== undefined && definition.attribute !== undefined) {
     attributes.add(definition.attribute);
   }
   return [...attributes];
+}
+
+/** Every `scaling.attributeId` anywhere in `value`, into `into`. */
+function scalingAttributes(value: unknown, into: Set<string>): void {
+  if (typeof value !== "object" || value === null) {
+    return;
+  }
+  const entries: [string, unknown][] = Object.entries(value);
+  for (const [key, field] of entries) {
+    if (
+      key === "scaling" &&
+      typeof field === "object" &&
+      field !== null &&
+      "attributeId" in field &&
+      typeof field.attributeId === "string"
+    ) {
+      into.add(field.attributeId);
+    } else {
+      scalingAttributes(field, into);
+    }
+  }
 }
 
 export interface StatusDefinition {
@@ -718,6 +787,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesAdrenalSkill: boolean;
   /**
+   * It ends the moment the bearer uses a skill that costs no adrenaline
+   * (#2180), as `endsWhenBearerUsesSkill` does for any: Battle Rage's
+   * "ends if you use any non-adrenal skills".
+   */
+  readonly endsWhenBearerUsesNonAdrenalSkill: boolean;
+  /**
    * It ends the moment the bearer starts an attack skill (#1869), before
    * that attack is timed, so the attack does not get its speed: Heket's
    * Rampage's "ends if you use an attack skill". A plain swing keeps it.
@@ -904,7 +979,13 @@ export interface StatusDefinition {
    * The bearer gains adrenaline this much faster (#1455), from hits,
    * damage taken and skills alike: Avatar of Balthazar's 0.25.
    */
-  readonly adrenalineGainFaster: number;
+  readonly adrenalineGainFaster: StatusStat;
+  /**
+   * Where `adrenalineGainFaster` reaches (#2180): `all` of it, or only
+   * what the bearer's own blows earn, `attacks`, as Battle Rage's "gain
+   * double adrenaline from attacks".
+   */
+  readonly adrenalineGainFasterFrom: "all" | "attacks";
   /**
    * The share taken off the recharge of each spell the bearer finishes
    * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
@@ -1350,30 +1431,30 @@ export interface OwnSkillModifier {
    */
   readonly energyBase: number | undefined;
   /** Energy off the cost, never below `energyFloor`. 0: none. */
-  readonly energyDiscount: number;
+  readonly energyDiscount: StatusStat;
   /**
    * The least a discount leaves (#1886); a cost already below it is left
    * alone, as Energizing Wind's "minimum cost 10 Energy". 1: never below 1.
    */
   readonly energyFloor: number;
   /** Energy on the cost after the discount (#1886), as Roaring Winds'. 0: none. */
-  readonly energySurcharge: number;
+  readonly energySurcharge: StatusStat;
   /** On activation time. 1: none. */
   readonly activationMultiplier: number;
   /**
    * Seconds off the activation time, after every multiplier, never below
    * 0 (#1975): Jaundiced Gaze's "casts 1 second faster". 0: none.
    */
-  readonly activationSecondsLess: number;
+  readonly activationSecondsLess: StatusStat;
   /** The share taken off the recharge, as `spellRechargeFaster`. 0: none. */
-  readonly rechargeFaster: number;
+  readonly rechargeFaster: StatusStat;
   /**
    * The share the recharge grows by once `rechargeFaster` is off (#1886),
    * as Energizing Wind's "recharge 25% slower". 0: none.
    */
   readonly rechargeSlower: number;
   /** On the duration of every status the skill applies, to anyone. 1: none. */
-  readonly durationMultiplier: number;
+  readonly durationMultiplier: StatusStat;
   /** On every heal the skill does. 1: none. */
   readonly healMultiplier: number;
   /** Its cast is not easily interrupted (#1966), as Trapper's Focus's traps. */
@@ -1432,25 +1513,32 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
   );
 }
 
-/** What `active`'s modifiers do to a use of `skill` now (#1761). */
+/**
+ * What `active`'s modifiers do to a use of `skill` now (#1761), each
+ * scaled number at its own status's ranks (#2158), Energy whole.
+ */
 export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): OwnSkillBoost {
   return active
-    .flatMap(({ id }) => getStatusDefinition(id).ownSkillModifiers)
-    .filter(({ filter }) => ownSkillAnswers(filter, skill))
+    .flatMap(({ id, ranks }) =>
+      getStatusDefinition(id).ownSkillModifiers.map((modifier) => ({ modifier, ranks })),
+    )
+    .filter(({ modifier }) => ownSkillAnswers(modifier.filter, skill))
     .reduce<OwnSkillBoost>(
-      (boost, modifier) => ({
+      (boost, { modifier, ranks }) => ({
         energyBase:
           modifier.energyBase === undefined
             ? boost.energyBase
             : Math.max(boost.energyBase ?? 0, modifier.energyBase),
-        energyDiscount: boost.energyDiscount + modifier.energyDiscount,
+        energyDiscount: boost.energyDiscount + Math.round(statAt(modifier.energyDiscount, ranks)),
         energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
-        energySurcharge: boost.energySurcharge + modifier.energySurcharge,
+        energySurcharge:
+          boost.energySurcharge + Math.round(statAt(modifier.energySurcharge, ranks)),
         activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
-        activationSecondsLess: boost.activationSecondsLess + modifier.activationSecondsLess,
-        rechargeFaster: Math.max(boost.rechargeFaster, modifier.rechargeFaster),
+        activationSecondsLess:
+          boost.activationSecondsLess + statAt(modifier.activationSecondsLess, ranks),
+        rechargeFaster: Math.max(boost.rechargeFaster, statAt(modifier.rechargeFaster, ranks)),
         rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
-        durationMultiplier: boost.durationMultiplier * modifier.durationMultiplier,
+        durationMultiplier: boost.durationMultiplier * statAt(modifier.durationMultiplier, ranks),
         healMultiplier: boost.healMultiplier * modifier.healMultiplier,
         notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
       }),
@@ -1497,9 +1585,10 @@ export interface StatusTrigger {
     | "healer"
     | "hexed-foe";
   /**
-   * On `bearer-attacks` and `bearer-hits` only (#1354, #1359): it fires
-   * only for an attack made with a weapon of this class in the bearer's
-   * main hand, as Hundred Blades' "whenever you attack with a sword".
+   * On `bearer-attacks`, `bearer-hits` and `bearer-fails-to-hit` only
+   * (#1354, #1359, #2133): it fires only for an attack made with a weapon
+   * of this class in the bearer's main hand, as Hundred Blades' "whenever
+   * you attack with a sword".
    * `melee` is any weapon that strikes in melee, never a bow nor a thrown
    * spear: Warrior's Endurance's "each time you hit with a melee attack".
    * Absent: any attack.
@@ -1520,10 +1609,11 @@ export interface StatusTrigger {
   /**
    * On `bearer-takes-damage-from-foe` only (#1540): it fires only for
    * damage of this type, never for a life steal, as Mark of Rodgort's
-   * "whenever each foe is struck for fire damage". Absent: any damage or
-   * steal.
+   * "whenever each foe is struck for fire damage"; `elemental` (#2133),
+   * any of cold, fire, lightning or earth, as Storm Chaser's. Absent: any
+   * damage or steal.
    */
-  readonly damageType?: DamageType;
+  readonly damageType?: DamageType | "elemental";
   /**
    * On `bearer-takes-damage-from-foe` only (#1931): it fires only while the
    * bearer is using a skill, never mid-swing nor idle, as Spinal Shivers'
@@ -1589,12 +1679,17 @@ export interface StatusTrigger {
  * effects, as Grenth's Grasp's "your attack skills also"; a plain swing
  * carries none. `weapon` (#1629): only a blow of that weapon class
  * carries it, as Kindle Arrows' "your arrows"; `undefined`: any.
+ * `weaponDamage` (#1984): only a blow of a weapon whose own damage type
+ * is this carries it, elemental blows included, as Conjure Flame's "while
+ * you wield a fire weapon"; a conversion such as Greater Conflagration's
+ * does not count. `undefined`: any, physical blows only.
  */
 export interface AttackHitRider {
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
   readonly attackSkillsOnly: boolean;
   readonly weapon: AttackWeaponClass | undefined;
+  readonly weaponDamage: DamageType | undefined;
   /**
    * The status's source loses this share of its effective maximum Health,
    * rounded up, for each status of `profession` the rider removed
@@ -1612,6 +1707,12 @@ export interface CriticalHitRider {
   readonly effects: readonly SkillEffect[];
   readonly energyIfRemoved: number;
   readonly skillId: string;
+  /**
+   * Only a critical hit made with a weapon of this class in the bearer's
+   * main hand (#2133), as `AttackHitRider.weapon`: Disrupting Accuracy's
+   * "your arrows". `undefined`: any weapon.
+   */
+  readonly weapon: AttackWeaponClass | undefined;
 }
 
 /** How many of the bearer's hits, with which weapon, a status lasts (#939). */
@@ -2102,6 +2203,24 @@ export function getStatusDefinition(id: StatusId): StatusDefinition {
 }
 
 /**
+ * Whether a trigger bound to damage of `wanted` answers damage of `type`
+ * (#1540): any, with none wanted; `elemental` any elemental type (#2133).
+ * A life steal, `undefined`, answers only a trigger that wants none.
+ */
+function damageTypeAnswers(
+  wanted: DamageType | "elemental" | undefined,
+  type: DamageType | undefined,
+): boolean {
+  if (wanted === undefined) {
+    return true;
+  }
+  if (type === undefined) {
+    return false;
+  }
+  return wanted === "elemental" ? isElementalDamage(type) : wanted === type;
+}
+
+/**
  * Whether `trigger` answers an attack with `weapon` (#1354): any, unless
  * it is bound to a class. `melee` (#1359) asks a weapon that strikes in
  * melee, so a spear, thrown, does not answer it.
@@ -2233,11 +2352,14 @@ export class StatusSet {
   }
 
   /**
-   * One of the bearer's blows missed or was blocked (#1332), recorded only
-   * if a status on it answers that, with the triggers that do.
+   * One of the bearer's blows with `weapon` missed or was blocked (#1332),
+   * recorded only if a status on it answers that, with the triggers that
+   * do: one bound to a weapon class only for that class (#2133).
    */
-  public recordFailedHit(): void {
-    const fired = this.#answering("bearer-fails-to-hit");
+  public recordFailedHit(weapon: Weapon): void {
+    const fired = this.#answering("bearer-fails-to-hit").filter(({ trigger }) =>
+      triggerAnswersWeapon(trigger, weapon),
+    );
     if (fired.length > 0) {
       this.#changes.push({ kind: "failed-to-hit", fired });
     }
@@ -2301,7 +2423,8 @@ export class StatusSet {
    * The bearer lost `amount` health to damage of `type` or, `undefined`,
    * life steal from `offenderId`, a foe (#1022), recorded only if a status
    * on it answers that, with the triggers that do: one with a `damageType`
-   * answers only that type (#1540), one with a `minDamage` only damage
+   * answers only that type (#1540), `elemental` any elemental one
+   * (#2133), one with a `minDamage` only damage
    * above it (#1754), one `whileUsingSkill` only while
    * `usingSkill` (#1931). A status already waiting to answer one, undrained,
    * does not answer another: it fires once, at the first foe.
@@ -2320,7 +2443,7 @@ export class StatusSet {
     const fired = this.#answering("bearer-takes-damage-from-foe").filter(
       ({ statusId, trigger }) =>
         !pending.has(statusId) &&
-        (trigger.damageType === undefined || trigger.damageType === type) &&
+        damageTypeAnswers(trigger.damageType, type) &&
         (trigger.minDamage === undefined || (type !== undefined && amount > trigger.minDamage)) &&
         (trigger.whileUsingSkill === undefined || usingSkill),
     );
@@ -3301,10 +3424,18 @@ export class StatusSet {
     skill: Skill,
     spared: ReadonlySet<StatusId>,
   ): {
-    readonly answered: readonly { readonly statusId: StatusId; readonly next: NextSkill }[];
+    readonly answered: readonly {
+      readonly statusId: StatusId;
+      readonly next: NextSkill;
+      readonly ranks: ReadonlyMap<string, number>;
+    }[];
     readonly ended: readonly StatusId[];
   } {
-    const answered: { statusId: StatusId; next: NextSkill }[] = [];
+    const answered: {
+      statusId: StatusId;
+      next: NextSkill;
+      ranks: ReadonlyMap<string, number>;
+    }[] = [];
     const ended: StatusId[] = [];
     for (const status of this.active) {
       const next = getStatusDefinition(status.id).nextSkill;
@@ -3316,7 +3447,7 @@ export class StatusSet {
       ) {
         continue;
       }
-      answered.push({ statusId: status.id, next });
+      answered.push({ statusId: status.id, next, ranks: status.ranks });
       status.skillsLeft -= 1;
       if (status.skillsLeft <= 0) {
         ended.push(status.id);
@@ -3357,7 +3488,7 @@ export class StatusSet {
   /**
    * The bearer used a skill (#949): every status that ends when it does
    * is gone, and every one that ends on an adrenal skill if it was one
-   * (#1329), but those in `spared`, which that skill put on its own user
+   * (#1329), or on a non-adrenal one if it was not (#2180), but those in `spared`, which that skill put on its own user
    * (#999). Returns the ids that ended on it.
    */
   public endOnBearerUseSkill(spared: ReadonlySet<StatusId>, adrenal: boolean): StatusId[] {
@@ -3366,7 +3497,8 @@ export class StatusSet {
         const definition = getStatusDefinition(id);
         return (
           (definition.endsWhenBearerUsesSkill ||
-            (adrenal && definition.endsWhenBearerUsesAdrenalSkill)) &&
+            (adrenal && definition.endsWhenBearerUsesAdrenalSkill) ||
+            (!adrenal && definition.endsWhenBearerUsesNonAdrenalSkill)) &&
           !spared.has(id)
         );
       })
@@ -3735,8 +3867,10 @@ export interface StatusModifiers {
   readonly skillRechargeFaster: number;
   /** As `spellRechargeFaster`, for a binding ritual (#1064). */
   readonly bindingRitualRechargeFaster: number;
-  /** Every status's, summed (#1455). */
+  /** Every status's that reaches all adrenaline, summed (#1455). */
   readonly adrenalineGainFaster: number;
+  /** What only the bearer's own blows gain faster on top (#2180): `adrenalineGainFasterFrom: "attacks"`. */
+  readonly adrenalineGainFasterFromAttacks: number;
   /** Every status's (#1455): the recharge takes the largest that applies. */
   readonly enchantmentRechargeFaster: readonly EnchantmentRechargeFaster[];
   /** Every status's (#1464): a skill takes every share that names its profession. */
@@ -3864,6 +3998,7 @@ export function aggregateModifiers(
   let knockdownMinSeconds: number | undefined;
   let extraStrikesPerHit = 0;
   let adrenalineGainFaster = 0;
+  let adrenalineGainFasterFromAttacks = 0;
   const enchantmentRechargeFaster: EnchantmentRechargeFaster[] = [];
   const skillArmorPenetration: SkillArmorPenetration[] = [];
   let uninterruptible = false;
@@ -3964,13 +4099,17 @@ export function aggregateModifiers(
       knockdownMinSeconds = def.knockdownMinSeconds;
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
-    adrenalineGainFaster += def.adrenalineGainFaster;
+    if (def.adrenalineGainFasterFrom === "attacks") {
+      adrenalineGainFasterFromAttacks += statAt(def.adrenalineGainFaster, ranks);
+    } else {
+      adrenalineGainFaster += statAt(def.adrenalineGainFaster, ranks);
+    }
     if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
-      healthPips += def.whileUnder.healthPips;
-      armorModifier += def.whileUnder.armorModifier;
+      healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
+      armorModifier += Math.round(statAt(def.whileUnder.armorModifier, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);
     }
     if (def.enchantmentRechargeFaster !== undefined) {
@@ -4030,6 +4169,7 @@ export function aggregateModifiers(
     skillRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - skillRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     adrenalineGainFaster,
+    adrenalineGainFasterFromAttacks,
     enchantmentRechargeFaster,
     skillArmorPenetration,
     uninterruptible,

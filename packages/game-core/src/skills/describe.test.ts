@@ -431,6 +431,16 @@ describe("describeSkill", () => {
     ]);
   });
 
+  it("says a negative Health change while under a status is degeneration (#2166)", () => {
+    expect(describeStatus("teinais-prison")).toContain(
+      "while under Cracked Armor: −5...8 Health degeneration",
+    );
+    // At its caster's ranks, scaled (#2191).
+    expect(describeStatus("teinais-prison", new Map([["elementalist.water-magic", 15]]))).toContain(
+      "while under Cracked Armor: −9 Health degeneration",
+    );
+  });
+
   it("says Guardian blocks half of all attacks (#534)", () => {
     expect(describeStatus("guardian")).toBe("50% chance to block attacks");
   });
@@ -634,6 +644,7 @@ describe("describeSkill", () => {
           (rule?.conditionalBonus === undefined ? 0 : 1) +
           (rule?.bonusPer === undefined ? 0 : 1) +
           (rule?.criticalWhen === undefined ? 0 : 1) +
+          (rule?.missChanceAtOrBelowRank === undefined ? 0 : 1) +
           ((rule?.armorPenetration ?? 0) > 0 ? 1 : 0) +
           lines(rule?.onBlocked ?? []) +
           lines(rule?.onCritical ?? []) +
@@ -1443,7 +1454,7 @@ describe("enchantment party moves (#1975)", () => {
     return describeSkill(skill(id), ranks).effects.map(({ text }) => text);
   };
 
-  it("says what each strips, cheapens or costs, at rank 12", () => {
+  it("says what each strips, cheapens or costs, at rank 12 (#2158: 0.8s, unrounded)", () => {
     expect(texts("monk.air-of-enchantment")).toEqual([
       "Applies Air of Enchantment for 9s " +
         "(enchantments cast on the bearer cost 10 less Energy, minimum 1)",
@@ -1459,7 +1470,7 @@ describe("enchantment party moves (#1975)", () => {
     expect(texts("necromancer.jaundiced-gaze")).toEqual([
       "Removes 1 enchantment",
       "If it removes an enchantment: applies Jaundiced Gaze to you for 16s " +
-        "(your next enchantment costs 8 less Energy (minimum 0) and casts 1s faster)",
+        "(your next enchantment costs 8 less Energy (minimum 0) and casts 0.8s faster)",
     ]);
   });
 });
@@ -1480,6 +1491,26 @@ describe("Tactics stances that pay on a block (#1978)", () => {
     ]);
     expect(texts("warrior.auspicious-parry")).toEqual([
       "For 8s, 100% chance to block attacks, ends after 1 incoming attack. When it ends: gain 3 strikes of adrenaline",
+    ]);
+  });
+});
+
+describe("Elementalist self-buffs (#1984)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(skill(id), new Map([["elementalist.energy-storage", 12]])).effects.map(
+      ({ text }) => text,
+    );
+
+  it("says the conjure's weapon, Ether Prodigy's end and Ether Renewal's count", () => {
+    expect(texts("elementalist.conjure-flame")).toEqual([
+      "Applies Conjure Flame for 60s (while you wield a fire weapon, foes your attacks hit take 17 fire damage)",
+    ]);
+    expect(texts("elementalist.ether-prodigy")).toEqual([
+      "Removes all enchantments",
+      "Applies Ether Prodigy for 18s (+6 Energy regeneration. When it ends: lose 2 Health for each point of Energy you have)",
+    ]);
+    expect(texts("elementalist.ether-renewal")).toEqual([
+      "Applies Ether Renewal for 10s (whenever it casts a spell: gain 3 energy for each enchantment on you. Whenever it casts a spell: heals 17 Health for each enchantment on you)",
     ]);
   });
 });
@@ -1592,6 +1623,14 @@ describe("Elementalist auras (#2095)", () => {
       "Applies Sliver Armor for 10s (45% chance to block attacks, the nearest of nearby foes takes 29 earth damage whenever it is targeted by a foe's spell or attack)",
     ]);
   });
+
+  it("says Marksman's Wager costs your energy, Oath Shot recharges the others (#2133)", () => {
+    const texts = (id: string) => describeSkill(skill(id)).effects.map(({ text }) => text);
+    expect(texts("ranger.marksmans-wager")).toEqual([
+      "For 18s, whenever your arrows hit: gain 9 energy. Whenever your arrows fail to hit: you lose 10 energy",
+    ]);
+    expect(texts("ranger.oath-shot")).toContain("Recharges all your other skills");
+  });
 });
 
 describe("Assassin chain and Paradox tools (#2134)", () => {
@@ -1621,5 +1660,33 @@ describe("Assassin chain and Paradox tools (#2134)", () => {
       "Your non-dagger attack skills are disabled for 10 seconds",
     ]);
     expect(texts("assassin.unseen-fury")).toEqual(["For 51s, cannot be blocked by Blinded foes"]);
+  });
+});
+
+describe("Mesmer interrupts (#2165)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(skill(id), new Map([["mesmer.domination-magic", 12]])).effects.map(
+      ({ text }) => text,
+    );
+
+  it("says the disable per signet, the one on foes in the area and the hex's second interrupt", () => {
+    expect(texts("mesmer.power-lock")).toEqual([
+      "Interrupts the target's spell or chant, if they are casting one",
+      "The interrupted skill is disabled for 11 seconds",
+    ]);
+    expect(texts("mesmer.signet-of-distraction")).toEqual([
+      "Interrupts the target's spell, if they are casting one",
+      "The interrupted skill is disabled for 4 seconds for each signet you have equipped",
+    ]);
+    expect(texts("mesmer.complicate")).toEqual([
+      "Interrupts the target's skill, if they are using one",
+      "The interrupted skill is disabled for 11 seconds",
+      "If it interrupts a skill: foes in the area holding that skill have it disabled for 11 seconds",
+    ]);
+    expect(texts("mesmer.web-of-disruption")).toEqual([
+      "Interrupts the target's action: a skill or an attack",
+      "Applies Web of Disruption for 10s " +
+        "(when it ends: interrupts the target's action: a skill or an attack)",
+    ]);
   });
 });

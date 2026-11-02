@@ -1,6 +1,7 @@
 import {
   ARMOR_SLOTS,
   getInsignia,
+  getWeaponMod,
   getUniversalRune,
   perSlotAmount,
   type ArmorSlot,
@@ -13,6 +14,7 @@ import {
 
 import type { StoredCharacter } from "../storage/schema.js";
 import {
+  canEquipOffhand,
   encodeRune,
   insigniaChoices,
   insigniaEffectNote,
@@ -22,9 +24,19 @@ import {
   setRune,
   type RuneChoice,
 } from "./gear-editor.js";
-import { gearIconImg, insigniaIcon, offhandIcon, runeIcon, weaponIcon } from "./icons.js";
+import { gearIconImg, insigniaIcon, runeIcon } from "./icons.js";
 import { button, h, syncList } from "./kit.js";
-import { PAPER_DOLL_ANCHORS, PAPER_DOLL_SIZE } from "./paper-doll-figure.js";
+import { HELD, PAPER_DOLL_ANCHORS, PAPER_DOLL_SIZE } from "./paper-doll-figure.js";
+import {
+  attributeName,
+  HAND_NAME,
+  HAND_NUMBER,
+  HANDS,
+  heldIn,
+  MOD_SLOT_NAME,
+  mountHandPopover,
+  type Hand,
+} from "./paper-doll-weapon.js";
 
 /** What the paper-doll needs of the editor: the character, a way to change it, the set shown. */
 export interface PaperDollContext {
@@ -77,6 +89,10 @@ const PROFESSION_TINT: Readonly<Record<ProfessionId, string>> = {
 /** The figure (#2058); the stylesheet draws it, and tints it through it as a mask. */
 const FIGURE_URL = `${import.meta.env.BASE_URL}icons/paper-doll/figure.svg`;
 
+/** What a hand holds, drawn at the figure's scale (#2154). */
+const heldUrl = (item: keyof typeof HELD): string =>
+  `${import.meta.env.BASE_URL}icons/paper-doll/held/${item}.svg`;
+
 /**
  * At this width and under, the popover is a sheet along the bottom, placed
  * by the stylesheet: its @media (max-width: 700px) includes 700 too.
@@ -105,14 +121,38 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     node.style.left = `${String((anchor.x / PAPER_DOLL_SIZE.width) * 100)}%`;
     node.style.top = `${String((anchor.y / PAPER_DOLL_SIZE.height) * 100)}%`;
   };
-
-  const hands = (["mainHand", "offHand"] as const).map((hand) => {
-    const node = h("span", "paper-doll-hand");
-    node.dataset.hand = hand;
-    at(node, PAPER_DOLL_ANCHORS[hand]);
-    stage.appendChild(node);
-    return { hand, node, shown: "" };
-  });
+  // The shown set's weapons in the figure's hands (#2154): in front of the
+  // arms, behind every hotspot, and never in the way of a click.
+  const heldArt = Object.fromEntries(
+    HANDS.map((hand) => {
+      const img = h("img", "paper-doll-held") as HTMLImageElement;
+      img.alt = "";
+      img.dataset.slot = hand;
+      img.hidden = true;
+      at(img, PAPER_DOLL_ANCHORS[hand]);
+      stage.appendChild(img);
+      return [hand, { img, shown: "" }];
+    }),
+  ) as Record<Hand, { readonly img: HTMLImageElement; shown: string }>;
+  /** Draw `item` held in `hand`, its grip in the hand; nothing for none. */
+  const hold = (hand: Hand, item: keyof typeof HELD | undefined, mirrored: boolean): void => {
+    const art = heldArt[hand];
+    const signature = `${item ?? ""}|${String(mirrored)}`;
+    if (signature === art.shown) {
+      return;
+    }
+    art.shown = signature;
+    art.img.hidden = item === undefined;
+    if (item === undefined) {
+      return;
+    }
+    const pose = HELD[item];
+    art.img.src = heldUrl(item);
+    art.img.style.height = `${String((pose.length / PAPER_DOLL_SIZE.height) * 100)}%`;
+    art.img.style.setProperty("--grip", `${String((1 - pose.grip) * 100)}%`);
+    art.img.style.setProperty("--tilt", `${String(pose.tilt)}deg`);
+    art.img.classList.toggle("is-mirrored", mirrored);
+  };
 
   // --- the summary ----------------------------------------------------
   const summary = h("div", "paper-doll-summary");
@@ -156,6 +196,32 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     return { slot, hotspot, icons, row, pick, insignia, rune, shown: "" };
   });
 
+  // The shown set's weapon and off-hand, ⑥ and ⑦ after the armor (#2151):
+  // the item in the hand, its mods beside it. Bare hands open nothing.
+  const hands = HANDS.map((hand) => {
+    const hotspot = button("", "paper-doll-hotspot paper-doll-hand", () => {
+      toggle(hand);
+    });
+    hotspot.dataset.slot = hand;
+    hotspot.setAttribute("aria-haspopup", "dialog");
+    hotspot.setAttribute("aria-expanded", "false");
+    hotspot.setAttribute("aria-label", HAND_NAME[hand]);
+    at(hotspot, PAPER_DOLL_ANCHORS[hand]);
+    const icons = h("span", "paper-doll-hotspot-icons");
+    hotspot.append(h("span", "paper-doll-hotspot-number", String(HANDS.indexOf(hand) + 6)), icons);
+    stage.appendChild(hotspot);
+
+    const row = h("div", "paper-doll-row is-hand");
+    row.dataset.slot = hand;
+    const pick = button("", "paper-doll-row-pick", () => {
+      toggle(hand);
+    });
+    pick.setAttribute("aria-haspopup", "dialog");
+    row.appendChild(pick);
+    summary.appendChild(row);
+    return { slot: hand, hotspot, icons, row, pick, shown: undefined as string | undefined };
+  });
+
   // --- the popover ----------------------------------------------------
   const popover = h("div", "paper-doll-popover");
   popover.setAttribute("role", "dialog");
@@ -168,7 +234,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
   runeList.setAttribute("role", "listbox");
   runeList.setAttribute("aria-label", "Rune");
   const applyAll = button("Apply insignia to all 5", "paper-doll-apply-all", () => {
-    if (open === undefined) {
+    if (open === undefined || isHand(open)) {
       return;
     }
     commit(setInsigniaOnAll(current(), current().equipment.armor[open].insigniaId));
@@ -176,9 +242,13 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
   // Side by side, each list scrolling on its own, so neither pushes the other out of sight.
   const insignias = h("div", "paper-doll-popover-column");
   insignias.append(h("div", "paper-doll-popover-heading", "Insignia"), insigniaList, applyAll);
-  const runes = h("div", "paper-doll-popover-column");
-  runes.append(h("div", "paper-doll-popover-heading", "Rune"), runeList);
-  popover.append(title, insignias, runes);
+  const runeColumn = h("div", "paper-doll-popover-column");
+  runeColumn.append(h("div", "paper-doll-popover-heading", "Rune"), runeList);
+  // A hand's body (#2151): its attribute under the title, a column per mod slot.
+  const handBody = mountHandPopover(context);
+  const head = h("div", "paper-doll-popover-head");
+  head.append(title, handBody.attribute);
+  popover.append(head, insignias, runeColumn, ...handBody.columns);
   // Arrow keys walk a list; Esc closes and goes back to the piece.
   popover.addEventListener("keydown", (event: KeyboardEvent) => {
     if (event.key === "Escape") {
@@ -187,7 +257,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       event.stopPropagation();
       const slot = open;
       close();
-      pieces.find((piece) => piece.slot === slot)?.hotspot.focus();
+      spots.find((spot) => spot.slot === slot)?.hotspot.focus();
       return;
     }
     const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
@@ -208,14 +278,15 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
   });
   element.append(stage, summary, popover);
 
-  let open: ArmorSlot | undefined;
+  const spots = [...pieces, ...hands];
+  let open: ArmorSlot | Hand | undefined;
 
   const onOutside = (event: PointerEvent): void => {
     const target = event.target;
     if (
       target instanceof Node &&
       !popover.contains(target) &&
-      !pieces.some((piece) => piece.hotspot.contains(target) || piece.pick.contains(target))
+      !spots.some((spot) => spot.hotspot.contains(target) || spot.pick.contains(target))
     ) {
       close();
     }
@@ -233,13 +304,13 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     document.removeEventListener("pointerdown", onOutside, { capture: true });
     window.removeEventListener("resize", onMove);
     document.removeEventListener("scroll", onMove, { capture: true });
-    for (const piece of pieces) {
-      piece.hotspot.setAttribute("aria-expanded", "false");
-      piece.row.classList.remove("is-open");
+    for (const spot of spots) {
+      spot.hotspot.setAttribute("aria-expanded", "false");
+      spot.row.classList.remove("is-open");
     }
   }
 
-  function toggle(slot: ArmorSlot): void {
+  function toggle(slot: ArmorSlot | Hand): void {
     if (open === slot) {
       close();
       return;
@@ -252,13 +323,16 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       window.addEventListener("resize", onMove);
       document.addEventListener("scroll", onMove, { capture: true });
     }
-    for (const piece of pieces) {
-      piece.hotspot.setAttribute("aria-expanded", String(piece.slot === slot));
-      piece.row.classList.toggle("is-open", piece.slot === slot);
+    for (const spot of spots) {
+      spot.hotspot.setAttribute("aria-expanded", String(spot.slot === slot));
+      spot.row.classList.toggle("is-open", spot.slot === slot);
     }
     fill(current());
     place();
-    insigniaList.querySelector<HTMLElement>(".is-chosen")?.focus();
+    (isHand(slot)
+      ? handBody.focusTarget()
+      : insigniaList.querySelector<HTMLElement>(".is-chosen")
+    )?.focus();
   }
 
   /**
@@ -267,7 +341,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
    * narrow window gets a sheet along the bottom from the stylesheet.
    */
   function place(): void {
-    const piece = pieces.find((candidate) => candidate.slot === open);
+    const piece = spots.find((candidate) => candidate.slot === open);
     if (piece === undefined) {
       return;
     }
@@ -297,6 +371,18 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     if (slot === undefined) {
       return;
     }
+    const hand = isHand(slot);
+    popover.classList.toggle("is-hand", hand);
+    insignias.hidden = hand;
+    runeColumn.hidden = hand;
+    if (hand) {
+      fillHand(character, slot);
+      return;
+    }
+    handBody.attribute.hidden = true;
+    for (const column of handBody.columns) {
+      column.hidden = true;
+    }
     const piece = character.equipment.armor[slot];
     title.textContent = `${PIECE_NUMBER[slot]} ${PIECE_NAME[slot]}`;
     popover.setAttribute("aria-label", PIECE_NAME[slot]);
@@ -311,7 +397,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
           entry.id === null ? "None" : (getInsignia(entry.id)?.name ?? entry.id),
           entry.id === null ? undefined : insigniaIcon(entry.id),
           () => {
-            if (open !== undefined) {
+            if (open !== undefined && !isHand(open)) {
               commit(setInsignia(current(), open, entry.id));
             }
           },
@@ -339,7 +425,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
           entry === null ? "None" : entry.label,
           entry === null ? undefined : runeIcon(entry.rune),
           () => {
-            if (open !== undefined) {
+            if (open !== undefined && !isHand(open)) {
               commit(setRune(current(), open, entry?.rune ?? null));
             }
           },
@@ -349,6 +435,19 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
         note(node, entry === null ? "" : runeNote(entry.rune));
       },
     );
+  }
+
+  /** The open hand's attribute and mods, in the shown set; a hand now empty closes it. */
+  function fillHand(character: StoredCharacter, hand: Hand): void {
+    const held = heldIn(character, context.weaponSet(), hand);
+    if (held === undefined) {
+      close();
+      return;
+    }
+    title.textContent = `${HAND_NUMBER[hand]} ${held.name}`;
+    popover.setAttribute("aria-label", `${HAND_NAME[hand]}: ${held.name}`);
+    popover.style.setProperty("--columns", String(held.slots.length));
+    handBody.fill(hand, held);
   }
 
   return {
@@ -374,25 +473,53 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
         piece.hotspot.title = `${PIECE_NAME[piece.slot]}: ${insignia?.name ?? "no insignia"}, ${rune?.name ?? "no rune"}`;
       }
 
-      // The shown set's weapons in the hands; display only. Bare hands hold nothing.
-      const held = character.equipment.weaponSets[context.weaponSet()];
-      const mainHand = held?.mainHand.weaponId;
-      const offHand = held?.offHand?.offhandId;
+      // The shown set's weapon and off-hand, with their mods (#2151). Bare
+      // hands open nothing; no ⑦ where no off-hand can go.
+      const set = context.weaponSet();
+      // Daggers are a pair: the off hand holds the second, mirrored.
+      const main = heldIn(character, set, "mainHand")?.item;
+      const off = canEquipOffhand(character, set)
+        ? heldIn(character, set, "offHand")?.item
+        : undefined;
+      hold("mainHand", main, false);
+      hold("offHand", main === "daggers" ? main : off, main === "daggers");
       for (const entry of hands) {
-        const icon =
-          entry.hand === "mainHand"
-            ? mainHand === undefined || mainHand === "unarmed"
-              ? undefined
-              : weaponIcon(mainHand)
-            : offHand === undefined
-              ? undefined
-              : offhandIcon(offHand);
-        const signature = icon?.src ?? "";
-        if (signature !== entry.shown) {
-          entry.shown = signature;
-          const img = gearIconImg(icon);
-          entry.node.replaceChildren(...(img === undefined ? [] : [img]));
+        const held = heldIn(character, set, entry.slot);
+        const drawn = entry.slot === "mainHand" || canEquipOffhand(character, set);
+        const signature = held === undefined ? String(drawn) : JSON.stringify(held);
+        if (signature === entry.shown) {
+          continue;
         }
+        entry.shown = signature;
+        entry.hotspot.hidden = !drawn;
+        entry.hotspot.disabled = held === undefined;
+        entry.row.hidden = held === undefined;
+        if (held === undefined) {
+          entry.icons.replaceChildren();
+          entry.pick.replaceChildren();
+          entry.hotspot.title = `${HAND_NAME[entry.slot]}: empty`;
+          continue;
+        }
+        const mods = held.slots.map((slot) => {
+          const id = held.upgrades[slot];
+          return { slot, name: id === null ? undefined : (getWeaponMod(id)?.name ?? id) };
+        });
+        entry.icons.replaceChildren(...mods.map((mod) => modGlyph(mod.name)));
+        entry.pick.replaceChildren(
+          h("span", "paper-doll-row-name", `${HAND_NUMBER[entry.slot]} ${held.name}`),
+          ...[
+            held.attributeId === null ? undefined : attributeName(held.attributeId),
+            ...mods.map((mod) => mod.name),
+          ].flatMap((part) => [
+            h("span", "paper-doll-row-dot", "·"),
+            part === undefined
+              ? h("span", "paper-doll-none", "—")
+              : h("span", "paper-doll-row-part", part),
+          ]),
+        );
+        entry.hotspot.title = `${held.name}: ${mods
+          .map((mod) => mod.name ?? `no ${MOD_SLOT_NAME[mod.slot].toLowerCase()}`)
+          .join(", ")}`;
       }
 
       // An open popover re-lists: a new primary changes which fit.
@@ -411,6 +538,16 @@ function slotIcon(icon: Parameters<typeof gearIconImg>[0]): HTMLElement {
   return gearIconImg(icon) ?? h("span", "paper-doll-empty");
 }
 
+/** A mod on a hand's hotspot: the generic glyph, or a dashed empty slot. */
+function modGlyph(name: string | undefined): HTMLElement {
+  if (name === undefined) {
+    return h("span", "paper-doll-empty");
+  }
+  const glyph = h("span", "paper-doll-mod");
+  glyph.title = name;
+  return glyph;
+}
+
 /** A summary row's part: its icon before its name, or "—". */
 function named(icon: Parameters<typeof gearIconImg>[0]): HTMLElement[] {
   const img = gearIconImg(icon);
@@ -419,7 +556,7 @@ function named(icon: Parameters<typeof gearIconImg>[0]): HTMLElement[] {
     : [img, h("span", "paper-doll-part-name", icon.name)];
 }
 
-function choice(
+export function choice(
   name: string,
   icon: Parameters<typeof gearIconImg>[0],
   onPick: () => void,
@@ -436,14 +573,14 @@ function choice(
 }
 
 /** An entry's effect text; the note is its last child. */
-function note(node: HTMLElement, text: string): void {
+export function note(node: HTMLElement, text: string): void {
   const last = node.lastElementChild;
   if (last !== null && last.textContent !== text) {
     last.textContent = text;
   }
 }
 
-function chosen(node: HTMLElement, on: boolean): void {
+export function chosen(node: HTMLElement, on: boolean): void {
   node.classList.toggle("is-chosen", on);
   node.setAttribute("aria-selected", String(on));
 }
@@ -478,4 +615,8 @@ function runeEffectNote(effect: RuneEffect): string {
     case "status-duration":
       return `${effect.statusIds.map((id) => id.replace("-", " ")).join(", ")} −${String(Math.round(effect.reduction * 100))}% duration`;
   }
+}
+
+function isHand(spot: ArmorSlot | Hand): spot is Hand {
+  return spot === "mainHand" || spot === "offHand";
 }

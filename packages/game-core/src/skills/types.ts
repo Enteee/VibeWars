@@ -9,6 +9,7 @@ import type { CreatureKind, CreatureLook } from "../match/simulation.js";
 import type { ProfessionId, SkillProfession } from "../professions.js";
 import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
+import type { RankHolder } from "./tick.js";
 import type { AttackState } from "./weapon-attack.js";
 import type {
   AttributeDelta,
@@ -161,7 +162,12 @@ export type CountRule =
    * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
    * your Beast Mastery skills that is recharging". No owner: 0.
    */
-  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string };
+  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string }
+  /**
+   * Whole points of Energy, rounded down (#1984): Ether Prodigy's "lose 2
+   * Health for each point of Energy you have".
+   */
+  | { readonly kind: "energy"; readonly on: "target" | "caster" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -312,7 +318,8 @@ export interface EnergyGainToTarget extends Omit<
 /**
  * The caster gains `strikes` strikes of adrenaline in every adrenaline
  * skill that is not recharging, each capped at its cost, as a hit's
- * strike (#977). `perTarget`: once for each target the skill hit, as
+ * strike (#977); whole strikes at the caster's rank, as Thrill of
+ * Victory's "1...2" (#2143). `perTarget`: once for each target the skill hit, as
  * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
  * `perOwnMeleeAttackSkill` (#1978): once for each melee attack skill on
  * the caster's bar, at most `max` times: Defensive Stance's "1 strike of
@@ -322,7 +329,7 @@ export interface EnergyGainToTarget extends Omit<
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
-  readonly strikes: number;
+  readonly strikes: Magnitude;
   readonly perTarget?: true;
   readonly perOwnMeleeAttackSkill?: { readonly max: number };
   readonly recipient?: "owner";
@@ -399,6 +406,8 @@ export interface LoseHealthByTarget {
   readonly amount: Magnitude;
   readonly recipient: "target";
   readonly perRemovedOfProfession?: never;
+  /** More for each of a count (#1984): Ether Prodigy's 2 per point of Energy. */
+  readonly per?: PerCount;
 }
 
 /**
@@ -476,6 +485,19 @@ export interface ApplyStatusEffect {
    * seconds for each ally in earshot (maximum 30 seconds)".
    */
   readonly per?: PerCount;
+}
+
+/**
+ * Apply one of `choices` to the effect's target (#2180), picked with the
+ * match's rng, each as likely: Desperation Blow's "one of the following
+ * conditions". Each lands as an `apply-status` of it would.
+ */
+export interface ApplyRandomStatusEffect {
+  readonly kind: "apply-random-status";
+  readonly choices: readonly {
+    readonly statusId: StatusId;
+    readonly durationSeconds: Magnitude;
+  }[];
 }
 
 /**
@@ -585,11 +607,15 @@ export interface InterruptEffect {
 /**
  * Knock the target down (#468): for `durationSeconds` it cannot move,
  * attack or use skills, and whatever it was doing ends. Not an
- * interrupt, and not a status: `Combatant.knockdownRemaining`.
+ * interrupt, and not a status: `Combatant.knockdownRemaining`. With
+ * `on: "caster"`, the caster falls instead (#2180), whatever it
+ * targeted: Desperation Blow's "after making a Desperation Blow, you are
+ * knocked down".
  */
 export interface KnockdownEffect {
   readonly kind: "knockdown";
   readonly durationSeconds: number;
+  readonly on?: "caster";
 }
 
 /**
@@ -849,11 +875,27 @@ export interface RechargeOthersEffect {
  * the elite skill on the target's bar (#1473), Signet of Humility's; no
  * elite: nothing. With `random-spell`, one spell on the target's bar,
  * picked with the match's rng (#1928), Arcane Thievery's; no spell: nothing.
+ * With `centre-interrupted`, only inside a `splash` (#2165), the skill
+ * interrupted on the splash's centre, on each foe whose bar holds it,
+ * Complicate's "disabled for target foe and all foes in the area"; nothing
+ * interrupted, or a foe without it: nothing. `perOwnSignet` multiplies
+ * `seconds` by the signets on the caster's bar, this one included (#2165),
+ * as Signet of Distraction's "for each signet you have equipped".
+ * With `attacks`, every attack skill on the target's bar (#2180),
+ * Disarm's "all of that foe's attack skills are disabled".
  */
 export interface DisableSkillEffect {
   readonly kind: "disable-skill";
-  readonly which: "interrupted" | "interrupted-and-attribute" | "all" | "elite" | "random-spell";
+  readonly which:
+    | "interrupted"
+    | "interrupted-and-attribute"
+    | "all"
+    | "elite"
+    | "random-spell"
+    | "centre-interrupted"
+    | "attacks";
   readonly seconds: Magnitude;
+  readonly perOwnSignet?: true;
 }
 
 /**
@@ -1287,6 +1329,17 @@ export type EventCondition =
    */
   | { readonly kind: "interrupted-spell" }
   /**
+   * An `interrupt` earlier in the list cancelled an attack (#2180): an
+   * attack skill or a plain swing, as Disarm's "if that action was an
+   * attack".
+   */
+  | { readonly kind: "interrupted-attack" }
+  /**
+   * Damage earlier in the list brought this target to 0 Health (#2180):
+   * Decapitate's "if foe is killed".
+   */
+  | { readonly kind: "target-killed" }
+  /**
    * A `remove-status` earlier in the list removed at least one status of
    * this category; with `from: "caster"`, from the caster (#845), which
    * holds for every target of that use.
@@ -1398,6 +1451,12 @@ export type StateCondition =
    * pets and spirits included.
    */
   | { readonly kind: "target-near-caster-ally"; readonly radius: number }
+  /**
+   * The effect's target stands within `radius` of the caster (#2133),
+   * read as the effect lands: Screaming Shot's "if target foe is within
+   * earshot", measured as its arrow hits, not as it leaves the bow.
+   */
+  | { readonly kind: "target-within"; readonly radius: number }
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
   | { readonly kind: "target-not-moving" }
   /**
@@ -1561,6 +1620,7 @@ export type UnconditionalEffect =
   | SpreadConditionsEffect
   | GiveHealthEffect
   | ApplyStatusEffect
+  | ApplyRandomStatusEffect
   | MaintainStatusEffect
   | RemoveStatusEffect
   | InterruptEffect
@@ -1681,6 +1741,14 @@ export function isEasilyInterrupted(skill: Skill): boolean {
 export type AttackWeaponClass =
   "axe" | "sword" | "hammer" | "daggers" | "scythe" | "spear" | "bow" | "melee";
 
+/** An attack skill's miss chance at a low rank (#2133): Oath Shot's. */
+export interface MissChanceAtOrBelowRank {
+  readonly attributeId: string;
+  readonly rank: number;
+  /** Each blow's chance to miss, 0..1. */
+  readonly chance: number;
+}
+
 /** Bonus damage an attack skill adds only while `condition` holds (#794). */
 export interface ConditionalBonus {
   readonly condition: StateCondition;
@@ -1765,6 +1833,14 @@ export interface AttackSkillRule {
    * you are not using a stance, Pure Strike cannot be blocked".
    */
   readonly unblockable: boolean | StateCondition;
+  /**
+   * A chance each blow misses while its user's rank in an attribute is at
+   * most `rank` (#2133): Oath Shot's "50% chance to miss with Expertise 7
+   * or less". The effective rank, read as the roll is made, an arrow's at
+   * its release. Rolled per blow after blindness and before the block; a
+   * miss as blindness's is, so `onFailedToHit` lands. Absent: none.
+   */
+  readonly missChanceAtOrBelowRank?: MissChanceAtOrBelowRank;
   /**
    * What a blocked blow does to its target instead of the skill's
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.
@@ -2223,9 +2299,10 @@ export interface SkillContext {
   readonly own?: OwnSkillBoost | undefined;
   /**
    * Whose attribute ranks scale the statuses these effects put on (#1976),
-   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965).
+   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965),
+   * and a next-skill status its source's, as it landed (#2143).
    */
-  readonly ranksFrom?: Combatant | undefined;
+  readonly ranksFrom?: RankHolder | undefined;
 }
 
 /**

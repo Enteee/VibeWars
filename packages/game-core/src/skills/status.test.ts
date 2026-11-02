@@ -16,9 +16,12 @@ import {
   clampPips,
   getStatusDefinition,
   ownSkillBoost,
+  scaledStatAttributes,
   type StatusId,
 } from "./status.js";
 import { statAtTwelve } from "./scaling.js";
+
+const BLOOD = "necromancer.blood-magic";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { attackDamageDeltaOf } from "./tick.js";
 import type { FiredTrigger } from "./triggers.js";
@@ -234,6 +237,7 @@ describe("status definitions", () => {
       "blood-ritual": 3,
       "energetic-was-lee-sa": 2,
       "blood-is-power": 5,
+      "ether-prodigy": 6,
       wither: -1,
       "obsidian-flesh": -2,
       "zealous-renewal": -1,
@@ -264,7 +268,12 @@ describe("status definitions", () => {
       skillId: "assassin.dark-apostasy",
     });
     expect(getStatusDefinition("jaundiced-gaze").ownSkillModifiers).toMatchObject([
-      { energyDiscount: 8, energyFloor: 0, activationSecondsLess: 1, uses: 1 },
+      {
+        energyDiscount: { scaling: { attributeId: BLOOD, atZero: 1, atTwelve: 8.2 } },
+        energyFloor: 0,
+        activationSecondsLess: { scaling: { attributeId: BLOOD, atZero: 0, atTwelve: 0.8 } },
+        uses: 1,
+      },
     ]);
     expect(getStatusDefinition("blind")).toMatchObject({
       enchantmentsOnBearerCostLess: 0,
@@ -273,14 +282,22 @@ describe("status definitions", () => {
     expect(getStatusDefinition("order-of-pain").onAttackHit?.sourceLosesPerRemoved).toBeUndefined();
   });
 
-  it("sums each status's seconds off its own skills (#1975)", () => {
-    const caster = makeCombatant({ id: "c" });
-    caster.statuses.apply("jaundiced-gaze", 16, "c", NO_RANKS);
+  it("takes its caster's Blood Magic for the Energy and seconds off its own skills (#1975, #2158)", () => {
     const enchantment = getSkill("necromancer.order-of-pain");
-    expect(enchantment && ownSkillBoost(caster.statuses.active, enchantment)).toMatchObject({
-      energyDiscount: 8,
-      activationSecondsLess: 1,
-    });
+    if (enchantment === undefined) {
+      throw new Error("missing necromancer.order-of-pain");
+    }
+    const boostAt = (rank: number) => {
+      const caster = makeCombatant({ id: "c" });
+      caster.statuses.apply("jaundiced-gaze", 16, "c", new Map([[BLOOD, rank]]));
+      return ownSkillBoost(caster.statuses.active, enchantment);
+    };
+    expect(boostAt(0)).toMatchObject({ energyDiscount: 1, activationSecondsLess: 0 });
+    // 8.2 Energy, whole; 0.8 s, not rounded.
+    expect(boostAt(12).energyDiscount).toBe(8);
+    expect(boostAt(12).activationSecondsLess).toBeCloseTo(0.8);
+    // Its ranks are read in Blood Magic alone.
+    expect(scaledStatAttributes("jaundiced-gaze")).toEqual([BLOOD]);
   });
 });
 
@@ -900,7 +917,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
   it("frees and hastens only the chain roles Way of the Empty Palm names (#2134)", () => {
     const set = new StatusSet();
-    set.apply("way-of-the-empty-palm", 13, "s", NO_RANKS);
+    set.apply("way-of-the-empty-palm", 13, "s", new Map([["assassin.deadly-arts", 12]]));
     const boost = (id: string) => {
       const found = getSkill(id);
       if (found === undefined) {
@@ -918,6 +935,20 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       energyBase: undefined,
       rechargeFaster: 0,
     });
+  });
+
+  it("recharges 25% faster at Deadly Arts 0, 45% at 12 (#2158)", () => {
+    const deathBlossom = getSkill("assassin.death-blossom");
+    if (deathBlossom === undefined) {
+      throw new Error("missing assassin.death-blossom");
+    }
+    const rechargeAt = (rank: number) => {
+      const set = new StatusSet();
+      set.apply("way-of-the-empty-palm", 13, "s", new Map([["assassin.deadly-arts", rank]]));
+      return ownSkillBoost(set.active, deathBlossom).rechargeFaster;
+    };
+    expect(rechargeAt(0)).toBeCloseTo(0.25);
+    expect(rechargeAt(12)).toBeCloseTo(0.45);
   });
 
   it("marks the mantras with what they do (#1964)", () => {
@@ -1229,7 +1260,7 @@ describe("attack duration (ADR-0029)", () => {
     });
   }
 
-  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
+  it("is 1 with nothing on; Faintheartedness (#493) and Shadow of Fear (#918) are 50% slower, Heart of Fury and Weapon of Aggression (#975) 25% faster (#845), Frenzy (#919) and Lightning Reflexes (#976) 33%, Call of Haste (#1108) 25% faster, Aggressive Refrain (#1423, #1516) 25%, Flail (#1549) 33%, Reckless Haste (#1583) 25%, Pious Fury (#1604) 25%, Onslaught (#1667) 25%, Rampage as One (#1865) 33%, Flurry and Heket's Rampage (#1869) 33%, Expert's Dexterity (#1941) 15%, Tiger Stance and Berserker Stance (#2181) 33%, Meekness (#1870) 50% and Sum of All Fears (#1870) 33% slower", () => {
     expect(aggregateModifiers([]).attackDurationMultiplier).toBe(1);
     const multipliers: Partial<Record<StatusId, number>> = {
       faintheartedness: 1.5,
@@ -1250,6 +1281,8 @@ describe("attack duration (ADR-0029)", () => {
       flurry: 0.67,
       "hekets-rampage": 0.67,
       "experts-dexterity": 0.85,
+      "tiger-stance": 0.67,
+      "berserker-stance": 0.67,
     };
     for (const id of ALL_STATUS_IDS) {
       const expected = multipliers[id] ?? 1;

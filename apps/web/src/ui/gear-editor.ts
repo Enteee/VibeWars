@@ -523,6 +523,8 @@ function conditionLabel(condition: ArmorCondition): string {
       return "vs physical damage";
     case "vs-elemental":
       return "vs elemental damage";
+    case "vs-projectile":
+      return "vs projectile attacks";
     case "attacking":
       return "while attacking";
     case "enchantments-at-least":

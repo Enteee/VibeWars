@@ -45,10 +45,10 @@ Not sure what to take? The random starter character is marked
 **Random**, with a dashed outline. **Reroll** on it gives you a fresh
 random build to try.
 
-**Team Builder** starts with a random Team Build too, a ready-made 4v4
-team for a Team Lobby, marked the same way and always last. It shows
-under the sidebar's **Team size** of 4v4: Team Builder lists the Team
-Builds of the size picked there. **Reroll** puts
+**Team Builder** starts with a random Team Build too, a ready-made team
+for a Team Lobby at each size, 2v2, 4v4 and 8v8, marked the same way and
+always last. Team Builder lists the Team Builds of the sidebar's **Team
+size**, so the random one shown is of the size picked there. **Reroll** puts
 another ready-made team in its place. **Clone** saves a copy of the
 team shown as your own Team Build and opens it, to change as you like.
 
@@ -119,12 +119,14 @@ opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
 click a card, which shows each member's weapons and skills, to vote
 for one, then click a seat to take one of its characters.
 
-On **Team Arena** (4 a side), **Heroes' Ascent** and **GvG** (8 a side)
+On **Team Arena** (2, 4 or 8 a side, the host's **Team size**),
+**Heroes' Ascent** and **GvG** (8 a side)
 your lobby is one side, your party, and there is no Start or bot count:
 the host presses **Find a match**. The Team Lobby comes first, with only
 Team Builds of exactly that size; every seat nobody claims is a bot.
 Then the party is queued, and the party strip says **Looking for a
-team…** with the time waited and how many teams of that mode are
+team…** (in Team Arena, **Team Arena 2v2 — searching…** with its size)
+with the time waited and how many teams of that mode are
 searching, yours included: `1:05 · 2 teams searching`. Closing the
 host's tab takes the party out of the queue at once. When another
 queued team of the same mode turns up, you play them on one of the
