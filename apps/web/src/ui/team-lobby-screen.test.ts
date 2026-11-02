@@ -4,7 +4,7 @@ import type {
   WireTeamProposal,
   WireTeamSide,
 } from "@vibewars/game-protocol";
-import { defaultBuildEquipment } from "@vibewars/game-core";
+import { defaultBuildEquipment, STARTER_TEAMS } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +15,7 @@ import type * as Kit from "./kit.js";
 import {
   NO_PROPOSALS,
   SOLO_PROPOSAL,
+  PRESET_TEAM,
   NO_PLAYABLE_TEAM_BUILDS,
   NO_TEAM_BUILDS,
   SEATS_LINE,
@@ -186,6 +187,7 @@ function voteSide(proposals: readonly WireTeamProposal[]): WireTeamSide {
 const SUNRISE = {
   proposerId: "aria",
   reason: "captain" as const,
+  presetName: null,
   members: [
     { name: "Bram", primary: "warrior", secondary: null },
     { name: "Mira", primary: "monk", secondary: null },
@@ -261,7 +263,12 @@ describe("the Team Lobby's words (#1460)", () => {
     expect(reasonLine({ ...SUNRISE, reason: "random" }, unvoted)).toBe(
       "No votes: picked at random",
     );
-    expect(reasonLine({ ...SUNRISE, proposerId: null, reason: "house" }, [])).toBe("House team");
+    expect(
+      reasonLine(
+        { ...SUNRISE, proposerId: null, reason: "preset", presetName: "Balanced 4v4" },
+        [],
+      ),
+    ).toBe("No proposals: a random preset");
   });
 
   it("shows the clock as m:ss and a voter as an initial", () => {
@@ -750,18 +757,69 @@ describe("the Team Lobby's body (#1460)", () => {
     });
   });
 
-  it("names the house team when nobody proposed", () => {
+  it("names the random preset team when nobody proposed (#2148)", () => {
     body(lobby("aria", "vote", voteSide([])));
     const shown = body(
       lobby("aria", "claim", {
         ...claimSide([null, null, null, null]),
-        chosen: { ...SUNRISE, proposerId: null, reason: "house" },
+        chosen: { ...SUNRISE, proposerId: null, reason: "preset", presetName: "Balanced 4v4" },
       }),
     );
     const cards = shown.all("play-card");
     expect(cards.map((card) => card.all("team-lobby-name-text")[0]?.textContent)).toEqual([
-      "House team",
+      "Balanced 4v4",
     ]);
-    expect(shown.all("team-lobby-reason")[0]?.textContent).toBe("House team");
+    expect(shown.all("team-lobby-reason")[0]?.textContent).toBe("No proposals: a random preset");
+  });
+
+  it("draws the preset's job names and skill bars on its card and seats (#2148)", () => {
+    const preset = STARTER_TEAMS.find((team) => team.members.length === 4);
+    if (preset === undefined) throw new Error("no 4-member starter team");
+    const shown = body(
+      lobby("aria", "claim", {
+        ...claimSide([null, null, null, null]),
+        chosen: {
+          proposerId: null,
+          reason: "preset",
+          presetName: preset.name,
+          members: preset.members.map(({ name, build }) => ({
+            name,
+            primary: build.primaryProfession,
+            secondary: build.secondaryProfession ?? null,
+          })),
+        },
+      }),
+    );
+    const jobs = preset.members.map(({ name }) => name);
+    const rows = shown.all("is-chosen")[0]?.all("character-card-row") ?? [];
+    expect(rows.map((row) => row.attributes.get("aria-label"))).toEqual(jobs);
+    const seats = shown.all("team-lobby-seat");
+    expect(seats.map((seat) => seat.attributes.get("aria-label"))).toEqual(
+      jobs.map((job) => `${job}: Sit here`),
+    );
+    for (const seat of seats) {
+      expect(
+        seat.all("mini-skill").filter((cell) => !cell.className.includes("is-empty")),
+      ).not.toHaveLength(0);
+    }
+  });
+
+  it("titles a side of one's preset, which has no name, a preset team (#2148)", () => {
+    const shown = body(
+      lobby("aria", "claim", {
+        ...claimSide([null]),
+        size: 1,
+        chosen: {
+          ...SUNRISE,
+          proposerId: null,
+          reason: "preset",
+          presetName: null,
+          members: SUNRISE.members.slice(0, 1),
+        },
+      }),
+    );
+    expect(
+      shown.all("play-card").map((card) => card.all("team-lobby-name-text")[0]?.textContent),
+    ).toEqual([PRESET_TEAM]);
   });
 });

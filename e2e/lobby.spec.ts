@@ -59,8 +59,8 @@ async function joinLobby(page: Page, playerName: string, invite: string): Promis
  * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
  * the host starts; each side proposes a Team Build as big as its players
  * (#1525), or a side of one its active character (#2141), so no bot plays
- * beside them (#2029). A side nobody is on plays the house team, as many
- * as the other.
+ * beside them (#2029). A side nobody is on plays a random preset team, as
+ * many as the other.
  */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   await openMenu(host, "Host");
@@ -694,10 +694,10 @@ test("a bot plays every slot nobody claims, tagged BOT in the match alone (#1194
   await page.getByRole("button", { name: "start match" }).click();
   await playHouseTeams([page]);
 
-  // Every foe in the arena is a bot, playing its house team's slot under
-  // that character's name (#1458), cut short when long.
+  // Every foe in the arena is a bot, playing its preset team's slot under
+  // that member's job (#1458, #2148), cut short when long.
   await page.keyboard.press(key("target-closest"));
-  await expect(page.locator(".hud-target-text")).toHaveText(/^[A-Z][a-z]+(\/[A-Z][a-z]+|…)$/);
+  await expect(page.locator(".hud-target-text")).toHaveText(/^[A-Z][a-z]+([ /][A-Z][a-z]+|…)$/);
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
 });

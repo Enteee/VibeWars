@@ -1,4 +1,4 @@
-import { PROFESSIONS } from "@vibewars/game-core";
+import { PROFESSIONS, STARTER_TEAMS, type StarterTeam } from "@vibewars/game-core";
 import type {
   WireProposalBuild,
   WireTeamChoice,
@@ -42,7 +42,7 @@ export const VOTE_TITLE = "Choose a team build";
 export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
-export const NO_PROPOSALS = "No proposals: the house team build plays";
+export const NO_PROPOSALS = "No proposals: a random preset team plays";
 /** A 1v1's vote (#2141): there are no Team Builds of one. */
 export const SOLO_PROPOSAL = "A 1v1 plays your active character";
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
@@ -69,7 +69,8 @@ export const PROPOSE_BUILD = "Propose this build";
 export const WITHDRAW_PROPOSAL = "Withdraw proposal";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
-export const HOUSE_TEAM = "House team";
+/** A preset team's card title where it has no name (#2148): a side of one plays a starter build. */
+export const PRESET_TEAM = "Preset team";
 
 /** Why the chosen build won, as the line under it reads. */
 export type ReasonLine =
@@ -77,7 +78,7 @@ export type ReasonLine =
   | "Tie: captain's pick"
   | "Tie: picked at random"
   | "No votes: picked at random"
-  | "House team";
+  | "No proposals: a random preset";
 
 /**
  * The reason line for `choice`. The host says `"random"` both for a tie
@@ -97,8 +98,8 @@ export function reasonLine(
       return proposals.some((proposal) => proposal.voterIds.length > 0)
         ? "Tie: picked at random"
         : "No votes: picked at random";
-    case "house":
-      return "House team";
+    case "preset":
+      return "No proposals: a random preset";
   }
 }
 
@@ -162,12 +163,15 @@ function nameOf(players: readonly LobbyPlayerSnapshot[], sessionId: string): str
 function cardMembers(
   members: readonly { readonly primary: string; readonly secondary: string | null }[],
   builds: readonly WireProposalBuild[] | undefined,
+  preset?: StarterTeam,
 ): TeamFigureMember[] {
   return members.map((member, slot) => {
     const look = lookOfWire(member, builds?.[slot]);
     return {
       look,
-      label: look === undefined ? member.primary : professionLabel(look.primary, look.secondary),
+      label:
+        preset?.members[slot]?.name ??
+        (look === undefined ? member.primary : professionLabel(look.primary, look.secondary)),
     };
   });
 }
@@ -222,7 +226,38 @@ export function proposalCard(
   return card;
 }
 
-/** The chosen build as a card: its proposer, or the house team, and its characters. */
+/**
+ * The preset team `choice` plays (#2148): the starter team its name and
+ * size name, which the client holds as the host does. A proposal's, or
+ * a size-1 side's nameless preset, is none.
+ */
+function presetOf(choice: WireTeamChoice): StarterTeam | undefined {
+  return choice.proposerId === null
+    ? STARTER_TEAMS.find(
+        (team) => team.name === choice.presetName && team.members.length === choice.members.length,
+      )
+    : undefined;
+}
+
+/** What `choice`'s members hold, as the host sends a proposal's (#1811). */
+function choiceBuilds(
+  choice: WireTeamChoice,
+  snapshot: LobbySnapshot,
+): readonly WireProposalBuild[] | undefined {
+  if (choice.proposerId !== null) {
+    return snapshot.proposalBuilds.get(choice.proposerId);
+  }
+  return presetOf(choice)?.members.map(({ build }) => {
+    const [set] = build.equipment.weaponSets;
+    return {
+      skills: [...build.skillBar],
+      mainHand: set.mainHand.weaponId,
+      offHand: set.offHand?.offhandId ?? null,
+    };
+  });
+}
+
+/** The chosen build as a card: its proposer, or the preset team's name, and its characters. */
 function chosenCard(
   choice: WireTeamChoice,
   side: WireTeamSide,
@@ -231,16 +266,13 @@ function chosenCard(
   const card = teamFigureCard({
     title:
       choice.proposerId === null
-        ? personName("team-lobby-card-name", HOUSE_TEAM, false)
+        ? personName("team-lobby-card-name", choice.presetName ?? PRESET_TEAM, false)
         : personName(
             "team-lobby-card-name",
             nameOf(snapshot.players, choice.proposerId),
             choice.proposerId === side.captainId,
           ),
-    members: cardMembers(
-      choice.members,
-      choice.proposerId === null ? undefined : snapshot.proposalBuilds.get(choice.proposerId),
-    ),
+    members: cardMembers(choice.members, choiceBuilds(choice, snapshot), presetOf(choice)),
   });
   card.classList.add("is-chosen");
   return card;
@@ -270,11 +302,11 @@ export function seat(
   node.classList.toggle("is-taken", holder !== null && !mine);
   const holderName = holder === null ? undefined : nameOf(snapshot.players, holder);
   if (character !== undefined) {
-    const builds =
-      choice.proposerId === null ? undefined : snapshot.proposalBuilds.get(choice.proposerId);
-    const look = lookOfWire(character, builds?.[slot]);
+    const look = lookOfWire(character, choiceBuilds(choice, snapshot)?.[slot]);
+    // A preset's seat is its job (#2148): "Healer Monk".
     const professions =
-      look === undefined ? character.primary : professionLabel(look.primary, look.secondary);
+      presetOf(choice)?.members[slot]?.name ??
+      (look === undefined ? character.primary : professionLabel(look.primary, look.secondary));
     if (look === undefined) {
       node.append(
         h("span", "character-dot is-house", "?"),
