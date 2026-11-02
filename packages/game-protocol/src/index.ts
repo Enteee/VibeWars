@@ -217,6 +217,7 @@ export {
   QUEUE_MODES,
   TICKET_HEARTBEAT_MS,
   TICKET_TTL_MS,
+  isTeamArena,
   isTeamQueueMode,
   inPartyOrder,
   parseQueueTicket,

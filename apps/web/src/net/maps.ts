@@ -22,7 +22,7 @@ import type {
   RelicField,
   Vec2,
 } from "@vibewars/game-core";
-import { teamSizeOf, type LobbyMode, type QueueMode } from "@vibewars/game-protocol";
+import { isTeamArena, teamSizeOf, type LobbyMode, type QueueMode } from "@vibewars/game-protocol";
 import type { HostMap } from "@vibewars/game-session";
 import { TRAINING_MAPS } from "../training/maps.js";
 
@@ -103,13 +103,19 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
   };
   return {
     "random-arena": of("random-arena"),
-    "team-arena": of("team-arena", teamSizeOf("team-arena")),
+    "team-arena": teamArenaMapIds(teamSizeOf("team-arena-4v4")),
     "heroes-ascent": of("heroes-ascent", teamSizeOf("heroes-ascent")).filter(
       (id) => !ASCENT_FINALE_ONLY.includes(id),
     ),
     gvg: of("gvg", teamSizeOf("gvg")),
     "hosted-game": of("hosted-game"),
   };
+}
+
+/** Team Arena's map ids at `size` a side (#2107), in `arenaIds`' order: its modes' maps that suit it (#2108). */
+export function teamArenaMapIds(size: number): string[] {
+  const modes = LOBBY_MODE_MATCH_MODES["team-arena"] ?? [];
+  return arenaIds().filter((id) => modes.includes(mapMode(id)) && suits(id, size));
 }
 
 /** The arenas among `maps` that suit a side of `size` (#2108), in their order. */
@@ -174,11 +180,10 @@ export function queueMapPool(mode: QueueMode, ascentRound: number | null): strin
         throw new RangeError("a Heroes' Ascent queue has a round");
       }
       return [ascentMapId(ascentRound)];
-    case "team-arena":
     case "gvg":
       return modeMapIds()[mode];
     default:
-      return randomArenaMapPool(mode);
+      return isTeamArena(mode) ? teamArenaMapIds(teamSizeOf(mode)) : randomArenaMapPool(mode);
   }
 }
 

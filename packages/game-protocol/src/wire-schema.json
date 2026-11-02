@@ -4145,7 +4145,9 @@
         { "literal": "random-arena-1v1" },
         { "literal": "random-arena-2v2" },
         { "literal": "random-arena-4v4" },
-        { "literal": "team-arena" }
+        { "literal": "team-arena-2v2" },
+        { "literal": "team-arena-4v4" },
+        { "literal": "team-arena-8v8" }
       ]
     },
     "QueueTicket": {
@@ -4166,7 +4168,9 @@
               { "literal": "random-arena-1v1" },
               { "literal": "random-arena-2v2" },
               { "literal": "random-arena-4v4" },
-              { "literal": "team-arena" }
+              { "literal": "team-arena-2v2" },
+              { "literal": "team-arena-4v4" },
+              { "literal": "team-arena-8v8" }
             ]
           }
         },
@@ -5425,7 +5429,9 @@
               { "literal": "random-arena-1v1" },
               { "literal": "random-arena-2v2" },
               { "literal": "random-arena-4v4" },
-              { "literal": "team-arena" }
+              { "literal": "team-arena-2v2" },
+              { "literal": "team-arena-4v4" },
+              { "literal": "team-arena-8v8" }
             ]
           }
         }

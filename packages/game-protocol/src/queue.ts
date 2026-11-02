@@ -17,7 +17,9 @@ export const QUEUE_MODES = [
   "random-arena-1v1",
   "random-arena-2v2",
   "random-arena-4v4",
-  "team-arena",
+  "team-arena-2v2",
+  "team-arena-4v4",
+  "team-arena-8v8",
   "heroes-ascent",
   "gvg",
 ] as const;
@@ -28,16 +30,33 @@ const TEAM_SIZES: Readonly<Record<QueueMode, number>> = {
   "random-arena-1v1": 1,
   "random-arena-2v2": 2,
   "random-arena-4v4": 4,
-  "team-arena": 4,
+  "team-arena-2v2": 2,
+  "team-arena-4v4": 4,
+  "team-arena-8v8": 8,
   "heroes-ascent": 8,
   gvg: 8,
 };
 
-const TEAM_QUEUE_MODES: ReadonlySet<QueueMode> = new Set(["team-arena", "heroes-ascent", "gvg"]);
+const TEAM_ARENA_MODES: ReadonlySet<QueueMode> = new Set([
+  "team-arena-2v2",
+  "team-arena-4v4",
+  "team-arena-8v8",
+]);
+
+const TEAM_QUEUE_MODES: ReadonlySet<QueueMode> = new Set([
+  ...TEAM_ARENA_MODES,
+  "heroes-ascent",
+  "gvg",
+]);
 
 /** Players a side in `mode`; a match is twice this. */
 export function teamSizeOf(mode: QueueMode): number {
   return TEAM_SIZES[mode];
+}
+
+/** Whether `mode` is a Team Arena of any size (#2107). */
+export function isTeamArena(mode: QueueMode): boolean {
+  return TEAM_ARENA_MODES.has(mode);
 }
 
 /**
@@ -66,9 +85,15 @@ export function inPartyOrder(members: readonly string[]): boolean {
   return true;
 }
 
-/** A lobby's `mode` as the queue mode its party queues for (#1766), if it is a team mode. */
+/**
+ * A lobby's `mode` as the queue mode its party queues for (#1766), if it
+ * is a team mode. A Team Arena lobby queues at 4v4 (#2107).
+ */
 export function teamQueueModeOf(mode: LobbyMode): QueueMode | undefined {
-  return mode === "team-arena" || mode === "heroes-ascent" || mode === "gvg" ? mode : undefined;
+  if (mode === "team-arena") {
+    return "team-arena-4v4";
+  }
+  return mode === "heroes-ascent" || mode === "gvg" ? mode : undefined;
 }
 
 /** A queued client re-publishes its ticket this often. */

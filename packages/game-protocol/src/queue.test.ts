@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import { PROTOCOL_VERSION } from "./protocol-version.js";
 import {
   ASCENT_ROUNDS,
+  isTeamArena,
   isTeamQueueMode,
   parseQueueTicket,
+  QUEUE_MODES,
+  teamQueueModeOf,
   teamSizeOf,
   type QueueTicket,
 } from "./queue.js";
@@ -30,7 +33,7 @@ const TEAM: QueueTicket = { ...TICKET, members: PARTY, party: PROOF };
 /** A Team Arena side of three humans and a bot (ADR-0042). */
 const ARENA_SIDE: QueueTicket = {
   ...TICKET,
-  mode: "team-arena",
+  mode: "team-arena-4v4",
   members: PARTY.slice(0, 3),
   bots: 1,
   party: { ...PROOF, consents: PROOF.consents.slice(1) },
@@ -113,7 +116,7 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     ["a null hardNat (#2090)", { ...TICKET, hardNat: null }],
     ["bots in Random Arena", { ...TICKET, bots: 1 }],
     ["bots in a Random Arena party", { ...TEAM, mode: "random-arena-2v2", bots: 2 }],
-    ["a solo in a team mode", { ...TICKET, mode: "team-arena" }],
+    ["a solo in a team mode", { ...TICKET, mode: "team-arena-4v4" }],
     ["a side short of a bot", { ...ARENA_SIDE, bots: 0 }],
     ["a side a bot over", { ...ARENA_SIDE, bots: 2 }],
     ["a side of bots alone", { ...ARENA_SIDE, members: [], bots: 4, party: null }],
@@ -150,21 +153,45 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
 });
 
 describe("teamSizeOf", () => {
-  it("is 1, 2 and 4 for Random Arena, 4, 8 and 8 for the team modes", () => {
+  it("is 1, 2 and 4 for Random Arena, 2, 4 and 8 for Team Arena, 8 for the rest", () => {
     expect([
       teamSizeOf("random-arena-1v1"),
       teamSizeOf("random-arena-2v2"),
       teamSizeOf("random-arena-4v4"),
-      teamSizeOf("team-arena"),
+      teamSizeOf("team-arena-2v2"),
+      teamSizeOf("team-arena-4v4"),
+      teamSizeOf("team-arena-8v8"),
       teamSizeOf("heroes-ascent"),
       teamSizeOf("gvg"),
-    ]).toEqual([1, 2, 4, 4, 8, 8]);
+    ]).toEqual([1, 2, 4, 2, 4, 8, 8, 8]);
+  });
+});
+
+describe("isTeamArena (#2107)", () => {
+  it("is Team Arena at every size, and no other mode", () => {
+    expect(QUEUE_MODES.filter(isTeamArena)).toEqual([
+      "team-arena-2v2",
+      "team-arena-4v4",
+      "team-arena-8v8",
+    ]);
+  });
+});
+
+describe("teamQueueModeOf (#1766)", () => {
+  it("queues a team mode's lobby, and never a Random Arena's or a Hosted Game's", () => {
+    expect(teamQueueModeOf("team-arena")).toBe("team-arena-4v4");
+    expect(teamQueueModeOf("heroes-ascent")).toBe("heroes-ascent");
+    expect(teamQueueModeOf("gvg")).toBe("gvg");
+    expect(teamQueueModeOf("random-arena")).toBeUndefined();
+    expect(teamQueueModeOf("hosted-game")).toBeUndefined();
   });
 });
 
 describe("isTeamQueueMode (ADR-0042)", () => {
   it("is Team Arena, Heroes' Ascent and GvG, never Random Arena", () => {
-    expect(isTeamQueueMode("team-arena")).toBe(true);
+    expect(isTeamQueueMode("team-arena-2v2")).toBe(true);
+    expect(isTeamQueueMode("team-arena-4v4")).toBe(true);
+    expect(isTeamQueueMode("team-arena-8v8")).toBe(true);
     expect(isTeamQueueMode("heroes-ascent")).toBe(true);
     expect(isTeamQueueMode("gvg")).toBe(true);
     expect(isTeamQueueMode("random-arena-4v4")).toBe(false);
