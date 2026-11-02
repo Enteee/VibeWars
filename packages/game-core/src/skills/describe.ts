@@ -781,6 +781,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `−${String(now)} damage taken (${String(perRank)} per rank of ${attribute}, at most ${String(max)})`,
     );
   }
+  if (definition.damageReductionPerHitTaken !== undefined) {
+    const step = String(definition.damageReductionPerHitTaken);
+    parts.push(`−${step} damage taken, ${step} more each hit`);
+  }
   if (definition.damageReductionWhileCasting !== undefined) {
     const { skillType, amount } = definition.damageReductionWhileCasting;
     parts.push(`−${String(amount)} damage taken while casting ${skillType.replaceAll("-", " ")}s`);
@@ -3667,6 +3671,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
  * skill of the attribute it disables spares itself: "All of your other
  * Healing Prayers" (#1748). "All of your other attack skills" (#1914). "Your
  * enchantment spells and stances" (#1930). "Your non-dagger attack skills" (#2134).
+ * "All of your non-attack skills" (#2190).
  */
 function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: string): string {
   const time = `are disabled for ${seconds} seconds`;
@@ -3679,6 +3684,13 @@ function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds
       : `Your non-${WEAPON_WORD[effect.exceptWeapon]} attack skills ${time}`;
   }
   if (effect.which === "types") {
+    // Marauder's Shot's and Tiger's Fury's "all your non-attack skills" (#2190).
+    const spared = Object.keys(TYPE_TEXT).filter(
+      (type) => !effect.types.some((disabled) => disabled === type),
+    );
+    if (spared.length === 1 && spared[0] === "attack") {
+      return `All of your non-attack skills ${time}`;
+    }
     const types = effect.types.map(
       (type) => `${TYPE_TEXT[type].replace(/\.$/, "").toLowerCase()}s`,
     );

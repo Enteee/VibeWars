@@ -457,6 +457,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "spotless-soul": icon("spotless-soul"),
   "mark-of-protection": icon("mark-of-protection"),
   "protective-bond": icon("protective-bond"),
+  // Monk staples (#2190).
+  "shield-of-absorption": icon("shield-of-absorption"),
+  "divine-intervention": icon("divine-intervention"),
+  "healing-hands": icon("healing-hands"),
+  "shield-of-judgment": icon("shield-of-judgment"),
   "order-of-apostasy": icon("order-of-apostasy"),
   "jaundiced-gaze": icon("jaundiced-gaze"),
   "dark-apostasy": icon("dark-apostasy"),
@@ -470,6 +475,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "disrupting-accuracy": icon("disrupting-accuracy"),
   "marksmans-wager": icon("marksmans-wager"),
   "storm-chaser": icon("storm-chaser"),
+  "tigers-fury": icon("tigers-fury"),
   // Tactics stances that pay on a block (#1978).
   "wary-stance": icon("wary-stance"),
   "soldiers-defense": icon("soldiers-defense"),
