@@ -9,11 +9,11 @@
  * the build.
  */
 import { ANNIHILATION_MATCH_RULES, type MatchRules } from "@vibewars/game-core";
-import type { LobbyMode, WireCape } from "@vibewars/game-protocol";
+import type { LobbyMode, LobbyTeamSize, WireCape } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
 import { joinLobby } from "./lobby-client.js";
-import type { LobbyCharacter, LobbyConnection, MatchStarting } from "./lobby-connection.js";
+import type { LobbyConnection, MatchStarting } from "./lobby-connection.js";
 import {
   createLobbyHost,
   type LobbyHost,
@@ -26,7 +26,7 @@ import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { Transport } from "./transport.js";
 
-export const CODE = "ACDEFGHJKMNP";
+export const CODE = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE"; // pragma: allowlist secret
 
 /**
  * What the test lobby's peers prove its key with (#1681): any bytes do,
@@ -46,6 +46,15 @@ export const MODE_MAPS: Readonly<Record<LobbyMode, readonly string[]>> = {
   "hosted-game": MAP_IDS,
 };
 
+/**
+ * The team sizes each map suits (#2108): the other arena plays no 1v1,
+ * so a Hosted Game's size can move it (#2104).
+ */
+export const MAP_TEAM_SIZES: Readonly<Record<string, readonly number[]>> = {
+  "test-arena": [1, 2, 4, 8],
+  "other-arena": [2, 4, 8],
+};
+
 /** One member: its lobby connection, the room it is in, and every match start it was handed. */
 export interface Member {
   readonly connection: LobbyConnection;
@@ -62,13 +71,8 @@ export interface TestLobby {
   readonly host: Member;
   /** Each match the lobby started, with the plan it was started on. */
   readonly matches: { readonly plan: MatchPlan; readonly host: MatchHost }[];
-  /** A remote member joining as `name` with `character`; resolves once it is in. */
-  join(
-    name?: string,
-    character?: LobbyCharacter | null,
-    guildTag?: string | null,
-    guildCape?: WireCape | null,
-  ): Promise<Member>;
+  /** A remote member joining as `name`; resolves once it is in. */
+  join(name?: string, guildTag?: string | null, guildCape?: WireCape | null): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
 }
@@ -83,7 +87,8 @@ export async function openLobby(
   options: {
     /** One set of rules for every match, or the rules of the `n`th, from 0. */
     matchRules?: MatchRules | ((n: number) => MatchRules);
-    startMatch?: (plan: MatchPlan) => MatchHost;
+    /** A match of its own, or `undefined` for the default one. */
+    startMatch?: (plan: MatchPlan) => MatchHost | undefined;
     /** Hosted from Team Play (#1458). */
     teamLobby?: boolean;
     /** The lobby's RNG: a fixed sequence by default. */
@@ -92,6 +97,8 @@ export async function openLobby(
     open?: boolean;
     /** A party that may queue in a team mode (#1766); every member is told its room id. */
     matchmaking?: LobbyMatchmakingOptions;
+    /** A Hosted Game's team size to begin with (#2104): 4v4 by default. */
+    hostedTeamSize?: LobbyTeamSize;
   } = {},
 ): Promise<TestLobby> {
   const network = createMemoryNetwork();
@@ -104,6 +111,8 @@ export async function openLobby(
     proofKey: PROOF_KEY,
     mapIds: MAP_IDS,
     modeMaps: MODE_MAPS,
+    mapTeamSizes: MAP_TEAM_SIZES,
+    hostedTeamSize: options.hostedTeamSize ?? 4,
     teamLobby: options.teamLobby ?? false,
     ...(options.matchmaking === undefined ? {} : { matchmaking: options.matchmaking }),
     random: options.random ?? (() => 0.5),
@@ -132,7 +141,6 @@ export async function openLobby(
     transport: Transport,
     proofKey: Uint8Array | null,
     name: string,
-    character: LobbyCharacter | null,
     guildTag: string | null,
     guildCape: WireCape | null,
   ): Promise<Member> =>
@@ -144,13 +152,12 @@ export async function openLobby(
         name,
         guildTag,
         guildCape,
-        character,
         timeoutMs: 1000,
         ...(options.matchmaking === undefined ? {} : { roomId: options.matchmaking.roomId }),
       }),
       transport,
     );
-  const host = await join(lobby.local, null, "Host", null, null, null);
+  const host = await join(lobby.local, null, "Host", null, null);
   lobby.setOpen(options.open ?? true);
   return {
     network,
@@ -158,8 +165,8 @@ export async function openLobby(
     room,
     host,
     matches,
-    join: (name = "Guest", character = null, guildTag = null, guildCape = null) =>
-      join(network.join(), PROOF_KEY, name, character, guildTag, guildCape),
+    join: (name = "Guest", guildTag = null, guildCape = null) =>
+      join(network.join(), PROOF_KEY, name, guildTag, guildCape),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {

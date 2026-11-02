@@ -1,4 +1,5 @@
 import bindSpirit from "./bind-spirit.js";
+import boost from "./boost.js";
 import cleanse from "./cleanse.js";
 import closeIn from "./close-in.js";
 import fight from "./fight.js";
@@ -6,11 +7,13 @@ import heal from "./heal.js";
 import interrupt from "./interrupt.js";
 import mantra from "./mantra.js";
 import mimicElite from "./mimic-elite.js";
+import minionCare from "./minion-care.js";
 import raise from "./raise.js";
 import renewSpirit from "./renew-spirit.js";
 import type { BotRule } from "./types.js";
 import wardTouch from "./ward-touch.js";
 import setup from "./setup.js";
+import takeMinion from "./take-minion.js";
 import wayOut from "./way-out.js";
 
 /**
@@ -19,6 +22,7 @@ import wayOut from "./way-out.js";
  */
 export const BOT_RULES: readonly BotRule[] = inOrder([
   bindSpirit,
+  boost,
   cleanse,
   closeIn,
   fight,
@@ -26,9 +30,11 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   interrupt,
   mantra,
   mimicElite,
+  minionCare,
   raise,
   renewSpirit,
   setup,
+  takeMinion,
   wardTouch,
   wayOut,
 ]);

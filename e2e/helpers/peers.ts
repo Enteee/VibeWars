@@ -1,6 +1,6 @@
 import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
-import { openRail } from "./menu.js";
+import { INVITE_URL, openRail } from "./menu.js";
 
 /**
  * Pages that play with each other (#403).
@@ -39,61 +39,123 @@ export async function openToFriends(page: Page): Promise<void> {
 }
 
 /**
- * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
- * opened to friends (#1682); its code, as the title bar shows it.
+ * The invite link to the lobby `page` is in (#2100), from Copy invite
+ * link and the clipboard, granted, as a player would send it.
  */
-export async function hostLobby(page: Page): Promise<string> {
+export async function copyInvite(page: Page): Promise<string> {
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  const copy = page.locator("#topbar .lobby-copy");
+  const more = page.locator("#topbar .topbar-more");
+  if (!(await copy.isVisible()) && (await more.isVisible())) {
+    await more.click();
+  }
+  await copy.click();
+  await expect(page.locator(".toast")).toHaveText("Copied");
+  const invite = await page.evaluate(() => navigator.clipboard.readText());
+  expect(invite).toMatch(INVITE_URL);
+  return invite;
+}
+
+/**
+ * The sidebar's Team size, `size`: a Hosted Game host's plays that many a
+ * side (#2104), and Team Builder lists and makes Team Builds of it (#2109).
+ */
+export async function setTeamSize(page: Page, size: 1 | 2 | 4 | 8): Promise<void> {
+  const select = page.getByRole("combobox", { name: "Team size" });
+  await select.selectOption(String(size));
+  await expect(select).toHaveValue(String(size));
+}
+
+/**
+ * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
+ * opened to friends (#1682); its invite link (#2100). It plays `size`
+ * a side on `map`, 1v1 on arena-alpha unless said: the sidebar's
+ * stored size (#2104) is 4v4, which most specs do not want.
+ */
+export async function hostLobby(
+  page: Page,
+  { size = 1, map = "arena-alpha" }: { readonly size?: 1 | 2 | 4 | 8; readonly map?: string } = {},
+): Promise<string> {
   await openRail(page, "Hosted Game");
-  const code = page.locator("#topbar .topbar-lobby-code");
-  await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
   await expect(page.locator(".lobby-panel")).toBeVisible();
+  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
+  await setTeamSize(page, size);
+  // A size keeps a map that suits it: pick the map after the size.
+  const maps = page.locator(".lobby-map select");
+  await maps.selectOption(map);
+  await expect(maps).toHaveValue(map);
   await openToFriends(page);
-  return (await code.textContent())?.trim() ?? "";
+  return copyInvite(page);
 }
 
 /**
  * Save the active character as a Team Build of one, named after it, so a
  * side of one can propose it in the Team Lobby and play it (#1525): every
  * hosted lobby is a Team Lobby, and a spec plays the character it
- * brought. Ends on Team Builder; returns the Team Build's name.
+ * brought. `size` copies of it make a side of that many with no bot
+ * (#2029), in a lobby of that team size (#2104): a Team Build of that
+ * size (#2109), picked in the sidebar first. Ends on Team Builder;
+ * returns the Team Build's name.
  */
-export async function saveSoloTeam(page: Page): Promise<string> {
+export async function saveSoloTeam(page: Page, size: 1 | 2 | 4 | 8 = 1): Promise<string> {
   await openRail(page, "Random Arena");
   const picked = page.locator('.play-card-open[aria-pressed="true"] .play-card-name');
   const name = (await picked.textContent())?.trim() ?? "";
   expect(name, "a character is picked").not.toBe("");
   await openRail(page, "Team Builder");
+  await setTeamSize(page, size);
   await page.getByRole("button", { name: "New team build", exact: true }).click();
-  await page.getByLabel("team name").fill(`Solo ${name}`);
-  await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
+  const teamName = size === 1 ? `Solo ${name}` : `${String(size)} × ${name}`;
+  await page.getByLabel("team name").fill(teamName);
+  for (let copy = 0; copy < size; copy += 1) {
+    await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
+  }
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
-  return `Solo ${name}`;
+  return teamName;
+}
+
+/**
+ * Propose `team` in the Team Lobby's vote, as a player does (#2116):
+ * open Your Team Builds, expand its row, press Propose this build. A
+ * page that brought its starter twice has two Team Builds of that name,
+ * which propose the same: the first is as good as any. Resolves once
+ * the proposal is the side's.
+ */
+export async function proposeTeam(page: Page, team: string): Promise<void> {
+  const proposals = page.locator(".team-lobby-proposals .play-card");
+  const before = await proposals.count();
+  await page.getByRole("button", { name: "Your Team Builds", exact: true }).click();
+  const drawer = page.getByRole("complementary", { name: "Your Team Builds" });
+  await drawer.getByRole("button", { name: team, exact: true }).first().click();
+  await drawer.getByRole("button", { name: "Propose this build", exact: true }).click();
+  await expect(drawer).toBeHidden();
+  await expect(proposals).not.toHaveCount(before);
 }
 
 /**
  * The Team Lobby (#1460) of sides of one: each page proposes its Team
- * Build, everyone is ready, then each takes its side's one seat and is
- * ready again. Resolves once each page's HUD shows the player.
+ * Build, everyone is ready, then each takes its side's seat `seat`, the
+ * first unless said, and is ready again. Resolves once each page's HUD
+ * shows the player.
  */
 export async function playOwnTeams(
-  players: readonly { readonly page: Page; readonly team: string }[],
+  players: readonly { readonly page: Page; readonly team: string; readonly seat?: number }[],
 ): Promise<void> {
   for (const { page, team } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    // A page that brought its starter twice has two Team Builds of that
-    // name, which propose the same: the first is as good as any.
-    const propose = page.getByRole("button", { name: `Propose ${team}`, exact: true }).first();
-    await propose.click();
-    await expect(propose).toHaveAttribute("aria-pressed", "true");
+    await proposeTeam(page, team);
   }
   for (const { page } of players) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
-  for (const { page } of players) {
+  for (const { page, seat } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
-    await page.locator(".team-lobby-seat").first().click();
+    await page
+      .locator(".team-lobby-seat")
+      .nth(seat ?? 0)
+      .click();
     await page.getByRole("button", { name: "Ready", exact: true }).click();
   }
   for (const { page } of players) {
@@ -133,7 +195,8 @@ export async function playHouseTeams(
 
 /**
  * A match in a lobby of one, which `canStart` allows: what Quick Match
- * was for the tests that need nobody else. The player plays the active
+ * was for the tests that need nobody else, but for the one bot of the
+ * house team its empty side plays (#2029). The player plays the active
  * character, through a Team Build of one (#1525). Resolves once the HUD
  * shows the player, so the match is really on. Starts from the menu.
  */

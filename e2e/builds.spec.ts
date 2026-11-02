@@ -7,7 +7,7 @@ import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { openRail, pickCharacter } from "./helpers/menu.js";
-import { startSoloMatch } from "./helpers/peers.js";
+import { setTeamSize, startSoloMatch } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
 import { skillKey } from "./keys.js";
@@ -402,7 +402,7 @@ test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens 
   await bar.getByRole("button", { name: "more actions" }).click();
   await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
   await bar.getByRole("button", { name: "Share", exact: true }).click();
-  await expect(bar.locator(".editor-share")).toBeVisible();
+  await expect(bar.locator(".editor-share:not([hidden])")).toBeVisible();
 });
 
 test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
@@ -410,6 +410,8 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
 }) => {
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
+  // A Team Build of one, so one member fills it (#2109).
+  await setTeamSize(page, 1);
   await page.getByRole("button", { name: "new team" }).click();
 
   // The name is the last crumb, and Save and ⋯ are the bar's only buttons.
@@ -420,9 +422,13 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await expect(bar.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
 
   // Nothing stored yet: Esc leaves at once and the list is still empty.
+  // Save would store it anyway, problems and all (#2110).
   const save = page.getByRole("button", { name: "Save", exact: true });
-  await expect(save).toBeDisabled();
-  await expect(save).toHaveAttribute("title", "A team needs at least one member.");
+  await expect(save).toBeEnabled();
+  await expect(save).toHaveAttribute(
+    "title",
+    "Save this team (it has problems: A team needs at least one member.)",
+  );
   // Nothing stored to copy or delete, so neither can store a half-made team.
   await page.getByRole("button", { name: "more actions" }).click();
   await expect(bar.locator(".editor-more button")).toHaveText(["Share", "Duplicate", "Delete"]);
@@ -438,9 +444,12 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
   await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(save).toHaveAttribute("title", "Give the team a name.");
+  await expect(save).toHaveAttribute(
+    "title",
+    "Save this team (it has problems: Give the team a name.)",
+  );
   await page.getByLabel("team name").fill("Duo");
-  await expect(save).toBeEnabled();
+  await expect(save).toHaveAttribute("title", "Save this team");
   await save.click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
@@ -577,6 +586,33 @@ test("on a phone, a Team Build card's Edit sits below its members, never on them
   expect(members).toBeLessThanOrEqual(edit?.y ?? 0);
 });
 
+test("Save stores a team with problems at once, and its card says why it is not playable (#2110)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  const save = page.getByRole("button", { name: "Save", exact: true });
+  const unplayable = teamRows(page).locator(".play-card-unplayable");
+
+  // An untouched new team: Save stores it as it is.
+  await page.getByRole("button", { name: "new team" }).click();
+  await save.click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect.poll(() => teamList(page)).toEqual(["New Team · 0 members"]);
+  await expect(unplayable).toHaveText(["Not playable: a team needs at least one member"]);
+
+  // A team with no name is "Unnamed team" on its card; its name stays empty.
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("team name").fill("");
+  await save.click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect.poll(() => teamList(page)).toEqual(["Unnamed team · 0 members"]);
+  await expect(unplayable).toHaveText(["Not playable: team name must not be empty"]);
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await expect(page.getByLabel("team name")).toHaveValue("");
+});
+
 test("team edits stay on screen until Save, which leaves; Esc and Delete ask first (#573, #1902)", async ({
   page,
 }) => {
@@ -660,6 +696,31 @@ test("the team editor's bar puts its status on a second row from 721 to 1200 px,
   }
 });
 
+test("a Team Build is made at the sidebar's size, which its editor shows locked (#2109)", async ({
+  page,
+}) => {
+  await saveCharacters(page, ["Alpha"]);
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await expect(page.locator(".team-play-hint")).toHaveText("No 2v2 Team Builds yet.");
+  await page.getByRole("button", { name: "new team" }).click();
+
+  const size = page.locator("#topbar").getByRole("combobox", { name: "Team size" });
+  await expect(size).toHaveValue("2");
+  await expect(size).toBeDisabled();
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await page.getByRole("button", { name: "add Alpha" }).click();
+  await expect(page.locator(".team-picker-header")).toHaveText("0 places left");
+  await expect(memberRows(page)).toHaveCount(2);
+  await page.getByLabel("team name").fill("Pair");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+
+  // Back at 2v2, the build listed full; at 4v4 it is not.
+  await expect(teamRows(page).locator(".play-card-size")).toHaveText(["2/2"]);
+  await setTeamSize(page, 4);
+  await expect(teamRows(page)).toHaveCount(0);
+});
+
 test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places left (#574)", async ({
   page,
 }) => {
@@ -668,12 +729,12 @@ test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places le
   await page.getByRole("button", { name: "new team" }).click();
 
   const header = page.locator(".team-picker-header");
-  await expect(header).toHaveText("16 places left");
+  await expect(header).toHaveText("4 places left");
   await expect(page.locator(".team-pick-sub").first()).toHaveText(/^Warrior.* · \d\/8 skills$/);
   for (const name of ["Alpha", "Bravo", "Charlie"]) {
     await page.getByRole("button", { name: `add ${name}` }).click();
   }
-  await expect(header).toHaveText("13 places left");
+  await expect(header).toHaveText("1 place left");
   // An added character is copied (#1452): all four stay on offer.
   await expect(page.locator(".team-pick")).toHaveCount(4);
 
@@ -991,7 +1052,7 @@ test("⋯, Share and Load stay inside the window at 1100 px and on a phone (#202
     await more.click();
     await inside(bar.locator(".editor-more"), width);
     await bar.getByRole("button", { name: "Share", exact: true }).click();
-    await inside(bar.locator(".editor-share"), width);
+    await inside(bar.locator(".editor-share:not([hidden])"), width);
     await more.click();
     await bar.getByRole("button", { name: "Load GW1 code", exact: true }).click();
     await inside(bar.locator(".editor-load"), width);
@@ -1472,15 +1533,15 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   await page.reload();
   // The page's own lobby opening redraws the roster (#1526): a click
   // before it lands on a card the redraw takes away.
-  await expect(page.locator("#topbar .topbar-lobby-code")).not.toBeEmpty();
+  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
 
   const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);
   await expect(outlaw.locator(".roster-invalid-tag")).toHaveText("Invalid");
   await expect(outlaw.locator(".play-card-open")).toHaveAttribute("aria-disabled", "true");
-  // Kept, but no choice: nothing is chosen, so Random Arena's tiles wait.
+  // Kept, but no choice: nothing is chosen, so Random Arena's Ready waits.
   await expect(page.locator(".character-card.is-selected")).toHaveCount(0);
-  const queue = page.locator(".random-arena-tile").first();
+  const queue = page.locator("#topbar .screen-ready");
   await expect(queue).toBeDisabled();
 
   // Clicking it anyway chooses nothing; the rolled character still can be.
@@ -2322,4 +2383,28 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await page.reload();
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
+});
+
+test("of Fortitude on the sword adds 30 Health, and stays on after Save and a reload (#2008)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Fortified");
+  await expect(page.locator(".gear-slot").first()).toContainText("Sword");
+  const health = page.locator('.editor-stat-value[data-stat="health"]');
+  const before = Number(await health.innerText());
+  const suffix = page.locator('.gear-mods-hand[data-hand="mainHand"] [data-slot="suffix"] select');
+  await suffix.selectOption({ label: "of Fortitude — +30 Health" });
+  await expect(health).toHaveText(String(before + 30));
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(roster(page)).toContainText("Fortified");
+
+  await page.reload();
+  await page
+    .locator(".character-card", { hasText: "Fortified" })
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  await expect(suffix).toHaveValue("of-fortitude");
+  await expect(health).toHaveText(String(before + 30));
 });

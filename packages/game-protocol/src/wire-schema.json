@@ -125,6 +125,7 @@
     "critical-eye",
     "cruel-was-daoshen",
     "dark-apostasy",
+    "dark-bond",
     "dark-escape",
     "dark-fury",
     "dark-prison",
@@ -246,6 +247,7 @@
     "infuse-condition",
     "insidious-parasite",
     "its-just-a-flesh-wound",
+    "jagged-bones",
     "jaundiced-gaze",
     "judges-insight",
     "judges-intervention",
@@ -260,8 +262,11 @@
     "live-vicariously",
     "lyric-of-purification",
     "lyric-of-zeal",
+    "magnetic-aura",
+    "magnetic-surge",
     "make-haste",
     "malaise",
+    "malign-intervention",
     "mantra-of-concentration",
     "mantra-of-earth",
     "mantra-of-flame",
@@ -376,6 +381,7 @@
     "signet-of-strength",
     "siphon-speed",
     "siphon-speed-haste",
+    "sliver-armor",
     "soldiers-defense",
     "soldiers-fury",
     "song-of-concentration",
@@ -401,6 +407,7 @@
     "suffering",
     "sum-of-all-fears",
     "sundering-weapon",
+    "swirling-aura",
     "symbiosis",
     "symbiotic-bond",
     "the-power-is-yours",
@@ -412,6 +419,8 @@
     "union",
     "vengeful-was-khanhei",
     "vengeful-weapon",
+    "veratas-aura",
+    "veratas-sacrifice",
     "vigorous-spirit",
     "visions-of-regret",
     "vital-blessing",
@@ -466,12 +475,12 @@
     "zojuns-haste"
   ],
   "constants": {
+    "ASCENT_ROUNDS": { "literal": 4 },
     "FORMATION_SETTLE_MS": { "literal": 3000 },
     "FORMATION_TIMEOUT_MS": { "literal": 20000 },
-    "LOBBY_CODE_ALPHABET": { "literal": "ACDEFGHJKMNPQRTWXY34679" },
-    "LOBBY_CODE_LENGTH": { "literal": 12 },
-    "LOBBY_KEY_ITERATIONS": { "literal": 600000 },
+    "LOBBY_CODE_LENGTH": { "literal": 43 },
     "LOBBY_KEY_SALT": { "literal": "vibewars-lobby-key" },
+    "MASTERLESS_WIRE_TEAM": { "literal": -1 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
     "MAX_LOBBY_PLAYERS": { "literal": 16 },
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
@@ -880,6 +889,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -1001,6 +1011,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -1015,8 +1026,11 @@
                   { "literal": "live-vicariously" },
                   { "literal": "lyric-of-purification" },
                   { "literal": "lyric-of-zeal" },
+                  { "literal": "magnetic-aura" },
+                  { "literal": "magnetic-surge" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
+                  { "literal": "malign-intervention" },
                   { "literal": "mantra-of-concentration" },
                   { "literal": "mantra-of-earth" },
                   { "literal": "mantra-of-flame" },
@@ -1131,6 +1145,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "sliver-armor" },
                   { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
@@ -1156,6 +1171,7 @@
                   { "literal": "suffering" },
                   { "literal": "sum-of-all-fears" },
                   { "literal": "sundering-weapon" },
+                  { "literal": "swirling-aura" },
                   { "literal": "symbiosis" },
                   { "literal": "symbiotic-bond" },
                   { "literal": "the-power-is-yours" },
@@ -1167,6 +1183,8 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-aura" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -1345,6 +1363,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -1466,6 +1485,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -1480,8 +1500,11 @@
                   { "literal": "live-vicariously" },
                   { "literal": "lyric-of-purification" },
                   { "literal": "lyric-of-zeal" },
+                  { "literal": "magnetic-aura" },
+                  { "literal": "magnetic-surge" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
+                  { "literal": "malign-intervention" },
                   { "literal": "mantra-of-concentration" },
                   { "literal": "mantra-of-earth" },
                   { "literal": "mantra-of-flame" },
@@ -1596,6 +1619,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "sliver-armor" },
                   { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
@@ -1621,6 +1645,7 @@
                   { "literal": "suffering" },
                   { "literal": "sum-of-all-fears" },
                   { "literal": "sundering-weapon" },
+                  { "literal": "swirling-aura" },
                   { "literal": "symbiosis" },
                   { "literal": "symbiotic-bond" },
                   { "literal": "the-power-is-yours" },
@@ -1632,6 +1657,8 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-aura" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -1790,6 +1817,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -1911,6 +1939,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -1925,8 +1954,11 @@
                   { "literal": "live-vicariously" },
                   { "literal": "lyric-of-purification" },
                   { "literal": "lyric-of-zeal" },
+                  { "literal": "magnetic-aura" },
+                  { "literal": "magnetic-surge" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
+                  { "literal": "malign-intervention" },
                   { "literal": "mantra-of-concentration" },
                   { "literal": "mantra-of-earth" },
                   { "literal": "mantra-of-flame" },
@@ -2041,6 +2073,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "sliver-armor" },
                   { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
@@ -2066,6 +2099,7 @@
                   { "literal": "suffering" },
                   { "literal": "sum-of-all-fears" },
                   { "literal": "sundering-weapon" },
+                  { "literal": "swirling-aura" },
                   { "literal": "symbiosis" },
                   { "literal": "symbiotic-bond" },
                   { "literal": "the-power-is-yours" },
@@ -2077,6 +2111,8 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-aura" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -2232,6 +2268,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -2353,6 +2390,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -2367,8 +2405,11 @@
                   { "literal": "live-vicariously" },
                   { "literal": "lyric-of-purification" },
                   { "literal": "lyric-of-zeal" },
+                  { "literal": "magnetic-aura" },
+                  { "literal": "magnetic-surge" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
+                  { "literal": "malign-intervention" },
                   { "literal": "mantra-of-concentration" },
                   { "literal": "mantra-of-earth" },
                   { "literal": "mantra-of-flame" },
@@ -2483,6 +2524,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "sliver-armor" },
                   { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
@@ -2508,6 +2550,7 @@
                   { "literal": "suffering" },
                   { "literal": "sum-of-all-fears" },
                   { "literal": "sundering-weapon" },
+                  { "literal": "swirling-aura" },
                   { "literal": "symbiosis" },
                   { "literal": "symbiotic-bond" },
                   { "literal": "the-power-is-yours" },
@@ -2519,6 +2562,8 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-aura" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -2809,6 +2854,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -2930,6 +2976,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -2944,8 +2991,11 @@
                   { "literal": "live-vicariously" },
                   { "literal": "lyric-of-purification" },
                   { "literal": "lyric-of-zeal" },
+                  { "literal": "magnetic-aura" },
+                  { "literal": "magnetic-surge" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
+                  { "literal": "malign-intervention" },
                   { "literal": "mantra-of-concentration" },
                   { "literal": "mantra-of-earth" },
                   { "literal": "mantra-of-flame" },
@@ -3060,6 +3110,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "sliver-armor" },
                   { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
@@ -3085,6 +3136,7 @@
                   { "literal": "suffering" },
                   { "literal": "sum-of-all-fears" },
                   { "literal": "sundering-weapon" },
+                  { "literal": "swirling-aura" },
                   { "literal": "symbiosis" },
                   { "literal": "symbiotic-bond" },
                   { "literal": "the-power-is-yours" },
@@ -3096,6 +3148,8 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-aura" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -3243,6 +3297,7 @@
                   { "literal": "critical-eye" },
                   { "literal": "cruel-was-daoshen" },
                   { "literal": "dark-apostasy" },
+                  { "literal": "dark-bond" },
                   { "literal": "dark-escape" },
                   { "literal": "dark-fury" },
                   { "literal": "dark-prison" },
@@ -3364,6 +3419,7 @@
                   { "literal": "infuse-condition" },
                   { "literal": "insidious-parasite" },
                   { "literal": "its-just-a-flesh-wound" },
+                  { "literal": "jagged-bones" },
                   { "literal": "jaundiced-gaze" },
                   { "literal": "judges-insight" },
                   { "literal": "judges-intervention" },
@@ -3378,8 +3434,11 @@
                   { "literal": "live-vicariously" },
                   { "literal": "lyric-of-purification" },
                   { "literal": "lyric-of-zeal" },
+                  { "literal": "magnetic-aura" },
+                  { "literal": "magnetic-surge" },
                   { "literal": "make-haste" },
                   { "literal": "malaise" },
+                  { "literal": "malign-intervention" },
                   { "literal": "mantra-of-concentration" },
                   { "literal": "mantra-of-earth" },
                   { "literal": "mantra-of-flame" },
@@ -3494,6 +3553,7 @@
                   { "literal": "signet-of-strength" },
                   { "literal": "siphon-speed" },
                   { "literal": "siphon-speed-haste" },
+                  { "literal": "sliver-armor" },
                   { "literal": "soldiers-defense" },
                   { "literal": "soldiers-fury" },
                   { "literal": "song-of-concentration" },
@@ -3519,6 +3579,7 @@
                   { "literal": "suffering" },
                   { "literal": "sum-of-all-fears" },
                   { "literal": "sundering-weapon" },
+                  { "literal": "swirling-aura" },
                   { "literal": "symbiosis" },
                   { "literal": "symbiotic-bond" },
                   { "literal": "the-power-is-yours" },
@@ -3530,6 +3591,8 @@
                   { "literal": "union" },
                   { "literal": "vengeful-was-khanhei" },
                   { "literal": "vengeful-weapon" },
+                  { "literal": "veratas-aura" },
+                  { "literal": "veratas-sacrifice" },
                   { "literal": "vigorous-spirit" },
                   { "literal": "visions-of-regret" },
                   { "literal": "vital-blessing" },
@@ -3711,17 +3774,20 @@
         { "literal": "closed" },
         { "literal": "fell-through" },
         { "literal": "host-left" },
-        { "literal": "invalid-bot" },
         { "literal": "invalid-proposal" },
         { "literal": "invalid-slot" },
         { "literal": "invalid-vote" },
         { "literal": "lobby-full" },
         { "literal": "not-admitted" },
         { "literal": "not-host" },
+        { "literal": "not-pickable" },
         { "literal": "protocol-mismatch" },
         { "literal": "slot-taken" },
         { "literal": "ticket-used" }
       ]
+    },
+    "LobbyTeamSize": {
+      "union": [{ "literal": 1 }, { "literal": 2 }, { "literal": 4 }, { "literal": 8 }]
     },
     "MapDescriptor": {
       "properties": [
@@ -3908,26 +3974,6 @@
                 "properties": [
                   { "name": "admissionSig", "optional": false, "type": "string" },
                   { "name": "seatKey", "optional": false, "type": "string" }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
                 ]
               }
             ]
@@ -4190,8 +4236,10 @@
     },
     "QueueTicket": {
       "properties": [
+        { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "bots", "optional": false, "type": "number" },
         { "name": "enteredAt", "optional": false, "type": "number" },
+        { "name": "hardNat", "optional": false, "type": "boolean" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
         { "name": "members", "optional": false, "type": { "array": "string" } },
         {
@@ -4828,6 +4876,12 @@
       "union": [
         {
           "properties": [
+            { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
+            { "name": "kind", "optional": false, "type": { "literal": "find-match" } }
+          ]
+        },
+        {
+          "properties": [
             {
               "name": "build",
               "optional": false,
@@ -4879,42 +4933,6 @@
         },
         {
           "properties": [
-            {
-              "name": "character",
-              "optional": false,
-              "type": {
-                "union": [
-                  "null",
-                  {
-                    "properties": [
-                      { "name": "name", "optional": false, "type": "string" },
-                      { "name": "primary", "optional": false, "type": "string" },
-                      {
-                        "name": "secondary",
-                        "optional": false,
-                        "type": { "union": ["null", "string"] }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            { "name": "kind", "optional": false, "type": { "literal": "set-character" } }
-          ]
-        },
-        {
-          "properties": [
-            { "name": "count", "optional": false, "type": "number" },
-            { "name": "kind", "optional": false, "type": { "literal": "set-bots" } },
-            {
-              "name": "team",
-              "optional": false,
-              "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
-            }
-          ]
-        },
-        {
-          "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "choose-team" } },
             {
               "name": "team",
@@ -4928,9 +4946,6 @@
             { "name": "kind", "optional": false, "type": { "literal": "claim" } },
             { "name": "slot", "optional": false, "type": { "union": ["null", "number"] } }
           ]
-        },
-        {
-          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "find-match" } }]
         },
         {
           "properties": [{ "name": "kind", "optional": false, "type": { "literal": "house-team" } }]
@@ -4976,6 +4991,18 @@
             }
           ]
         },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "select-team-size" } },
+            {
+              "name": "size",
+              "optional": false,
+              "type": {
+                "union": [{ "literal": 1 }, { "literal": 2 }, { "literal": 4 }, { "literal": 8 }]
+              }
+            }
+          ]
+        },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
         {
           "properties": [
@@ -4994,6 +5021,7 @@
           "type": {
             "union": [
               { "literal": "chat-throttled" },
+              { "literal": "notice" },
               { "literal": "refused" },
               { "literal": "start-rejected" }
             ]
@@ -5006,26 +5034,6 @@
       "properties": [
         { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
-        {
-          "name": "character",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "name", "optional": false, "type": "string" },
-                  { "name": "primary", "optional": false, "type": "string" },
-                  {
-                    "name": "secondary",
-                    "optional": false,
-                    "type": { "union": ["null", "string"] }
-                  }
-                ]
-              }
-            ]
-          }
-        },
         {
           "name": "guildCape",
           "optional": false,
@@ -5101,6 +5109,7 @@
     },
     "WireLobbyState": {
       "properties": [
+        { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "code", "optional": false, "type": "string" },
         { "name": "countdownSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "hostId", "optional": false, "type": "string" },
@@ -5141,26 +5150,6 @@
               "properties": [
                 { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
-                {
-                  "name": "character",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          { "name": "name", "optional": false, "type": "string" },
-                          { "name": "primary", "optional": false, "type": "string" },
-                          {
-                            "name": "secondary",
-                            "optional": false,
-                            "type": { "union": ["null", "string"] }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 {
                   "name": "guildCape",
                   "optional": false,
@@ -5493,7 +5482,8 @@
               }
             ]
           }
-        }
+        },
+        { "name": "teamSize", "optional": false, "type": "number" }
       ]
     },
     "WireLobbyWelcome": {
@@ -5740,7 +5730,7 @@
         {
           "name": "team",
           "optional": false,
-          "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+          "type": { "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }] }
         },
         { "name": "walking", "optional": false, "type": "boolean" },
         { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -6183,7 +6173,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }] }
                 },
                 { "name": "walking", "optional": false, "type": "boolean" },
                 { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },
@@ -6628,7 +6618,7 @@
                 {
                   "name": "team",
                   "optional": false,
-                  "type": { "union": [{ "literal": 0 }, { "literal": 1 }] }
+                  "type": { "union": [{ "literal": -1 }, { "literal": 0 }, { "literal": 1 }] }
                 },
                 { "name": "walking", "optional": false, "type": "boolean" },
                 { "name": "weaponId", "optional": false, "type": { "union": ["null", "string"] } },

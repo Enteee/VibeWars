@@ -1,3 +1,4 @@
+import { createRng } from "../rng.js";
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
@@ -254,11 +255,14 @@ describe("ranged weapons fire projectiles", () => {
     match.rearm(
       "archer",
       {
-        maxHealth: RULES.combat.baseHealth,
-        baseEnergyPips: 0,
         attributeRanks: new Map(),
         weaponSets: [
-          { equipment: unarmedResolvedEquipment(60), maxEnergy: RULES.combat.baseEnergy },
+          {
+            equipment: unarmedResolvedEquipment(60),
+            maxEnergy: RULES.combat.baseEnergy,
+            maxHealth: RULES.combat.baseHealth,
+            baseEnergyPips: 0,
+          },
           null,
           null,
           null,
@@ -876,9 +880,15 @@ describe("Lightning Orb flies (#761)", () => {
     expect(completed.events.map((event) => event.kind)).toEqual(["skill-used"]);
     expect(landed.atSeconds - completed.atSeconds).toBeGreaterThanOrEqual(300 / ORB_SPEED - DT);
     const victim = get(match, "target").combatant;
-    const expected = mitigate(skillDamage(82, "lightning", 0.25), victim, RULES.combat, "chest");
+    const expected = mitigate(
+      skillDamage(82, "lightning", 0.25),
+      victim,
+      RULES.combat,
+      "chest",
+      createRng(1),
+    );
     expect(expected).toBeGreaterThan(
-      mitigate(skillDamage(82, "lightning", 0), victim, RULES.combat, "chest"),
+      mitigate(skillDamage(82, "lightning", 0), victim, RULES.combat, "chest", createRng(1)),
     );
     expect(landed.events).toEqual([
       expect.objectContaining({ kind: "damage", targetId: "target", amount: expected }),

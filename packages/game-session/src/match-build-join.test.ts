@@ -1,4 +1,5 @@
 import {
+  NO_UPGRADES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   STARTER_BUILDS,
   defaultBuildEquipment,
@@ -248,7 +249,11 @@ describe("joining a P2P match with a build (#375)", () => {
   it("seats a legal four-set build holding set 1, and refuses one with an illegal set 3 (#489)", async () => {
     const [set1] = LEGAL_BUILD.equipment.weaponSets;
     const staff = {
-      mainHand: { weaponId: "staff", requirementAttributeId: "elementalist.fire-magic" },
+      mainHand: {
+        weaponId: "staff",
+        requirementAttributeId: "elementalist.fire-magic",
+        upgrades: NO_UPGRADES,
+      },
       offHand: null,
     } as const;
     const fourSets: PlayerBuild = {

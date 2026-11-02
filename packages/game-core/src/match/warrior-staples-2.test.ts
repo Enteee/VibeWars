@@ -1,3 +1,4 @@
+import { createRng } from "../rng.js";
 import { describe, expect, it } from "vitest";
 
 import { RANGE_MELEE } from "../distances.js";
@@ -276,9 +277,9 @@ describe("Shield Stance (#1592)", () => {
       source: "weapon",
       armorPenetration: 0,
     } as const;
-    expect(mitigate(packet, bearer, RULES.combat, null)).toBe(50);
+    expect(mitigate(packet, bearer, RULES.combat, null, createRng(1))).toBe(50);
     bearer.statuses.apply("shield-stance", 5, "w", NO_RANKS);
-    expect(mitigate(packet, bearer, RULES.combat, null)).toBe(35);
+    expect(mitigate(packet, bearer, RULES.combat, null, createRng(1))).toBe(35);
   });
 });
 
@@ -291,7 +292,7 @@ describe("Rage of the Ntouka (#1592)", () => {
       rechargeSeconds: 15,
       effects: [
         { kind: "adrenaline-gain", strikes: 6 },
-        { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: 8 },
+        { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: { flat: 8 } },
       ],
     });
     const sim = match();

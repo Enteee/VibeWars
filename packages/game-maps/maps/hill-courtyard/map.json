@@ -2,6 +2,7 @@
   "id": "hill-courtyard",
   "name": "Hill Courtyard",
   "mode": "king-of-the-hill",
+  "teamSizes": [4, 8],
   "width": 2000,
   "height": 1400,
   "walls": [
@@ -117,6 +118,34 @@
       }
     },
     {
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 420
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 420
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 110,
+        "y": 980
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 980
+      }
+    },
+    {
       "team": 1,
       "position": {
         "x": 1890,
@@ -142,6 +171,34 @@
       "position": {
         "x": 1710,
         "y": 560
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1890,
+        "y": 980
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1710,
+        "y": 980
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1890,
+        "y": 420
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1710,
+        "y": 420
       }
     }
   ]

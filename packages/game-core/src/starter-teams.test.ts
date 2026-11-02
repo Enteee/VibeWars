@@ -83,16 +83,31 @@ describe("STARTER_TEAMS (#2035)", () => {
 });
 
 describe("pickStarterTeam (#2035)", () => {
-  it("picks the first at 0 and the last just under 1", () => {
-    expect(pickStarterTeam(() => 0)).toBe(STARTER_TEAMS[0]);
-    expect(pickStarterTeam(() => 0.9999999)).toBe(STARTER_TEAMS[STARTER_TEAMS.length - 1]);
+  const FOURS = STARTER_TEAMS.filter((team) => team.members.length === 4);
+
+  it("has only teams of 1, 2, 4 or 8, a size a Team Build can have (#2109)", () => {
+    for (const team of STARTER_TEAMS) {
+      expect([1, 2, 4, 8], team.name).toContain(team.members.length);
+    }
+  });
+
+  it("picks the first of the size at 0 and the last just under 1", () => {
+    expect(pickStarterTeam(() => 0, 4)).toBe(FOURS[0]);
+    expect(pickStarterTeam(() => 0.9999999, 4)).toBe(FOURS[FOURS.length - 1]);
+  });
+
+  it("picks only a team of the size asked for, and none when there is none (#2109)", () => {
+    for (const r of [0, 0.5, 0.9999999]) {
+      expect(pickStarterTeam(() => r, 8)?.members).toHaveLength(8);
+      expect(pickStarterTeam(() => r, 2)).toBeUndefined();
+    }
   });
 
   it("never picks the team it is told not to, by name", () => {
     for (const team of STARTER_TEAMS) {
       const not = { ...team, members: [] };
       for (const r of [0, 0.2, 0.4, 0.6, 0.8, 0.9999999]) {
-        expect(pickStarterTeam(() => r, not).name).not.toBe(team.name);
+        expect(pickStarterTeam(() => r, team.members.length, not)?.name).not.toBe(team.name);
       }
     }
   });
@@ -104,9 +119,10 @@ describe("pickStarterTeam (#2035)", () => {
       seed = (seed * 1_103_515_245 + 12_345) % 2_147_483_648;
       return seed / 2_147_483_648;
     };
-    const seen = new Set<string>();
+    const seen = new Set<string | undefined>();
     for (let i = 0; i < 200; i += 1) {
-      seen.add(pickStarterTeam(random).name);
+      seen.add(pickStarterTeam(random, 4)?.name);
+      seen.add(pickStarterTeam(random, 8)?.name);
     }
     expect([...seen].sort()).toEqual(STARTER_TEAMS.map((team) => team.name).sort());
   });

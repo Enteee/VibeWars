@@ -24,6 +24,7 @@ describe("play-build binds a foe's spirit (#1965)", () => {
         corpsesLeft: 0,
         companionSkillId: undefined,
         leaderId: undefined,
+        bondStatusId: undefined,
         mode: "guard",
       },
     });

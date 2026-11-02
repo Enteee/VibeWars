@@ -289,6 +289,7 @@ describe("aggression (#1222)", () => {
         corpsesLeft: 0,
         companionSkillId: undefined,
         leaderId: undefined,
+        bondStatusId: undefined,
         mode: "guard",
       },
     };

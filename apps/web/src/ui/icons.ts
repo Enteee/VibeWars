@@ -253,3 +253,8 @@ export function helpIcon(): string {
 export function fullscreenIcon(fullscreen: boolean): string {
   return iconUrl("ui", fullscreen ? "fullscreen-exit" : "fullscreen");
 }
+
+/** The speech bubble at the chat's lower left that opens and closes it (#2018). */
+export function chatIcon(): string {
+  return iconUrl("ui", "chat");
+}

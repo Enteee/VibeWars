@@ -1,4 +1,5 @@
 import {
+  NO_UPGRADES,
   MatchSimulation,
   NO_RANKS,
   StatusSet,
@@ -259,7 +260,7 @@ describe("weapon sets (#489)", () => {
     const build = starterBuild("Warrior/Monk");
     const [set1] = build.equipment.weaponSets;
     const bow = {
-      mainHand: { weaponId: "recurve-bow", requirementAttributeId: null },
+      mainHand: { weaponId: "recurve-bow", requirementAttributeId: null, upgrades: NO_UPGRADES },
       offHand: null,
     };
     return hello({

@@ -1,12 +1,10 @@
 import type { MatchMode } from "@vibewars/game-core";
-import { LOBBY_CODE_LENGTH, MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
-import type { LobbyCharacter, LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
+import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import type { RenderableActor } from "../render/arena-snapshot.js";
-import { createProfessionDot, professionLabel } from "./character-preview.js";
-import { button, h, toast } from "./kit.js";
+import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
+import { ascentMapId } from "../net/maps.js";
+import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { relayLine } from "./relay-section.js";
-import { botTagElement } from "./bot-tag.js";
 import { playerLabelElement } from "./player-label.js";
 
 /**
@@ -21,8 +19,6 @@ export interface LobbyScreenCallbacks {
   readonly onStart: () => void;
   /** A member on no team, while the match runs (#480): watch it, late. */
   readonly onWatch: () => void;
-  /** Host only (#1454): `team` has `count` bots. */
-  readonly onSetBots: (team: 0 | 1, count: number) => void;
 }
 
 /**
@@ -34,7 +30,8 @@ export interface LobbyMatchmaking {
   readonly queuedMs: number | null;
   readonly onFindMatch: () => void;
   readonly onLeaveQueue: () => void;
-  readonly onPlayHouseTeam: () => void;
+  /** `undefined` where no house team is offered: Heroes' Ascent waits for a side (#1996). */
+  readonly onPlayHouseTeam: (() => void) | undefined;
 }
 
 /** The host may play the house team after this long with no other team (Q191). */
@@ -47,9 +44,20 @@ export const SELECTABLE_TEAMS = [0, 1] as const;
 
 export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens again when it ends.";
 
-/** A lobby key as it is read aloud: `ACDEFGHJKMNP` as `ACDE-FGHJ-KMNP` (#379, #1681). */
-export function displayLobbyCode(code: string): string {
-  return code.length === LOBBY_CODE_LENGTH ? (code.match(/.{4}/g) ?? []).join("-") : code;
+// Why Ready is disabled, as its hover says (#2124).
+export const READY_MATCH_STARTED = "The match has already started.";
+export const READY_JOIN_A_TEAM = "Join a team first.";
+
+/**
+ * The invite link to lobby `code` (#2100): this page's own origin and
+ * path, so a fork or a dev server invites to itself, with `#lobby=<key>`
+ * for its only fragment. Its query and any other fragment are left out.
+ */
+export function inviteUrl(
+  code: string,
+  where: Pick<Location, "origin" | "pathname"> = location,
+): string {
+  return `${where.origin}${where.pathname}#${LOBBY_FRAGMENT_KEY}=${code}`;
 }
 
 /**
@@ -66,10 +74,9 @@ export interface LobbyControls {
   readonly running: string | undefined;
   readonly mapDisabled: boolean;
   readonly teamsDisabled: boolean;
-  readonly readyDisabled: boolean;
+  /** Why Ready is disabled (#2124); `undefined` when it is enabled. */
+  readonly readyProblem: string | undefined;
   readonly startDisabled: boolean;
-  /** The bot count's + (#1454): a bot takes a seat like anyone, so a full lobby has none for it. */
-  readonly botsDisabled: boolean;
   /** Watch (#480): only for a member on no team, and only while the match runs. */
   readonly canWatch: boolean;
 }
@@ -84,9 +91,12 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
     teamsDisabled: !waiting,
     // Readiness is meaningless without a team, so the control is disabled
     // rather than silently doing nothing when pressed.
-    readyDisabled: !waiting || self === undefined || self.team === null,
+    readyProblem: !waiting
+      ? READY_MATCH_STARTED
+      : self === undefined || self.team === null
+        ? READY_JOIN_A_TEAM
+        : undefined,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
-    botsDisabled: !waiting || snapshot.players.length >= MAX_LOBBY_PLAYERS,
     canWatch: snapshot.phase === "in-match" && self?.team === null,
   };
 }
@@ -107,49 +117,23 @@ export function waitingFor(snapshot: LobbySnapshot): string | undefined {
   return notReady.length === 0 ? undefined : `Waiting for ${notReady.join(", ")} to ready up`;
 }
 
-/**
- * "Mhenlo · Monk / Elementalist", or "Random starter build" without a
- * usable one (#580, #853). A bot's character is named after the bot, so
- * its line is the professions alone (#1241).
- */
-export function characterLine(character: LobbyCharacter | null, bot: boolean): string {
-  if (character === null) {
-    return RANDOM_STARTER;
-  }
-  const professions = professionLabel(character.primary, character.secondary ?? undefined);
-  return bot ? professions : `${character.name} · ${professions}`;
-}
-
-export const RANDOM_STARTER = "Random starter build";
 export const COPIED = "Copied";
-export const COPY_BY_HAND = "Could not copy: the key is selected, copy it by hand";
+export const COPY_BY_HAND = "Could not copy: the invite link is selected, copy it by hand";
 
 /**
- * Copy the code to the clipboard, and say so. A browser may refuse the
- * clipboard, or not offer one off https: the code is then selected, so
- * the player's own copy takes it, and the toast says to.
+ * Copy lobby `code`'s invite link (#2100), and say so. A browser may
+ * refuse the clipboard, or not offer one off https: the link is then
+ * shown selected in `share`, to copy by hand.
  */
-export async function copyCode(code: string, shown: HTMLElement): Promise<void> {
+export async function copyInviteLink(code: string, share: ShareLine): Promise<void> {
+  const url = inviteUrl(code);
   try {
-    await navigator.clipboard.writeText(code);
+    await navigator.clipboard.writeText(url);
     toast(COPIED);
   } catch {
-    const selection = window.getSelection();
-    selection?.selectAllChildren(shown);
+    share.show(url);
     toast(COPY_BY_HAND);
   }
-}
-
-/** How the arena will paint `player` for whoever is looking: you, your side, or theirs. */
-function dotTeam(
-  player: LobbyPlayerSnapshot,
-  self: LobbyPlayerSnapshot | undefined,
-): RenderableActor["team"] {
-  if (player.sessionId === self?.sessionId) {
-    return "self";
-  }
-  // A spectator watches team 1 as its own side, so the two still differ.
-  return player.team === (self?.team ?? 0) ? "ally" : "enemy";
 }
 
 /** An arena the host may pick, how big it plays (#444), and the mode it plays (#476). */
@@ -158,6 +142,8 @@ export interface LobbyMap {
   readonly name: string;
   readonly size: string;
   readonly mode: MatchMode;
+  /** The team sizes it is made for (#2108): a Hosted Game lists those for its own (#2104). */
+  readonly teamSizes: readonly number[];
 }
 
 /**
@@ -187,6 +173,12 @@ const MODE_LINES: Readonly<Record<MatchMode, string>> = {
 /** The mode `map` plays, in a line: "Kill Count: most kills in 3 minutes". */
 export function modeLine(map: LobbyMap): string {
   return MODE_LINES[map.mode];
+}
+
+/** The modes a draw from `maps` can play, in a line: "Annihilation or Kill Count: drawn at the start". */
+export function drawnModesLine(maps: readonly LobbyMap[]): string {
+  const names = new Set(maps.map((map) => MODE_LINES[map.mode].split(":")[0] ?? map.mode));
+  return `${new Intl.ListFormat("en", { type: "disjunction" }).format(names)}: drawn at the start`;
 }
 
 /** The arena as the picker names it: its name, then its size class, e.g. "Long Hall (large)". */
@@ -219,15 +211,22 @@ export function lobbyPanel(
 
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
 
-  // Only the host may change the map, so everyone else sees it as a
-  // label rather than a control they would be refused on clicking.
-  const current = availableMaps.find((map) => map.id === snapshot.mapId);
+  // Only a Hosted Game's host may change the map (#1994), so everyone
+  // else sees it as a label rather than a control they would be refused
+  // on clicking. Team Arena draws its own at the start.
+  // A party queued in Heroes' Ascent is bound for its round's map, not
+  // the lobby's (#1996).
+  const shownMapId =
+    snapshot.ascentRound === null ? snapshot.mapId : ascentMapId(snapshot.ascentRound);
+  const current = availableMaps.find((map) => map.id === shownMapId);
   let mapPart: HTMLElement;
-  if (snapshot.isHost && availableMaps.length > 1) {
+  // The host lists only the maps made for the lobby's team size (#2104).
+  const sized = availableMaps.filter((map) => map.teamSizes.includes(snapshot.teamSize));
+  if (snapshot.mode === "hosted-game" && snapshot.isHost && sized.length > 1) {
     mapPart = h("label", "lobby-map");
     mapPart.appendChild(h("span", "field-label", "Map"));
     const select = document.createElement("select");
-    for (const map of availableMaps) {
+    for (const map of sized) {
       const option = document.createElement("option");
       option.value = map.id;
       option.textContent = mapLabel(map);
@@ -239,29 +238,28 @@ export function lobbyPanel(
       callbacks.onSelectMap(select.value);
     });
     mapPart.appendChild(select);
+  } else if (snapshot.mode === "team-arena") {
+    mapPart = h("div", "lobby-map", "Map: random (Team Arena)");
   } else {
     mapPart = h(
       "div",
       "lobby-map",
-      `Map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`,
+      `Map: ${current === undefined ? shownMapId : mapLabel(current)}`,
     );
   }
 
   // The next thing to press is the primary one, the one a phone keeps out
   // of the ⋯ (#1272): Ready until you are, then the host's Start match.
   const ready = self?.ready === true;
-  const readyButton = button(
-    ready ? "Not ready" : "Ready",
-    ready ? "" : "primary",
-    callbacks.onToggleReady,
-  );
-  readyButton.disabled = controls.readyDisabled;
+  const readyToggle = readyButton(ready, callbacks.onToggleReady);
+  readyToggle.disabled = controls.readyProblem !== undefined;
+  readyToggle.title = controls.readyProblem ?? "";
   // A member on no team has nothing to ready while the match runs, but
   // can watch it (#480).
   const actions: HTMLElement[] = controls.canWatch
     ? [button("Watch", "primary lobby-watch", callbacks.onWatch)]
     : matchmaking === undefined
-      ? [readyButton]
+      ? [readyToggle]
       : [];
   if (matchmaking !== undefined) {
     if (snapshot.isHost) {
@@ -275,8 +273,13 @@ export function lobbyPanel(
 
   // The mode follows from the map (#476). It is the only place a player
   // learns it before Start, so it gets a row of its own under the bar
-  // rather than being shortened in it (#1272).
-  if (current !== undefined) {
+  // rather than being shortened in it (#1272). Team Arena's map is a
+  // placeholder until its draw, so it names what the draw can give (#1994).
+  if (snapshot.mode === "team-arena") {
+    if (availableMaps.length > 0) {
+      panel.appendChild(h("div", "lobby-mode", drawnModesLine(availableMaps)));
+    }
+  } else if (current !== undefined) {
     panel.appendChild(h("div", "lobby-mode", modeLine(current)));
   }
 
@@ -303,7 +306,7 @@ export function lobbyPanel(
   const teams = h("div", "lobby-teams");
   // A team mode's lobby is one side, the party; its empty seats are bots.
   for (const team of matchmaking === undefined ? SELECTABLE_TEAMS : ([0] as const)) {
-    teams.appendChild(teamColumn(team, snapshot, controls, callbacks, matchmaking === undefined));
+    teams.appendChild(teamColumn(team, snapshot, controls, callbacks));
   }
   panel.appendChild(teams);
 
@@ -336,24 +339,21 @@ export function matchmakingButtons(
     return [find];
   }
   const leave = button("Leave the queue", "lobby-leave-queue", matchmaking.onLeaveQueue);
-  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS
+  const { onPlayHouseTeam } = matchmaking;
+  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS || onPlayHouseTeam === undefined
     ? [leave]
-    : [
-        button("Play the house team", "primary lobby-house-team", matchmaking.onPlayHouseTeam),
-        leave,
-      ];
+    : [button("Play the house team", "primary lobby-house-team", onPlayHouseTeam), leave];
 }
 
 /**
- * One team's column: its name and Join, its bot count (#1454), which the
- * host steps, unless `withBots` is off, and its members, bots among them.
+ * One team's column: its name and Join, and its members by name (#2029);
+ * a bot plays a slot nobody claimed, under that slot's character's name.
  */
 export function teamColumn(
   team: 0 | 1,
   snapshot: LobbySnapshot,
   controls: LobbyControls,
   callbacks: LobbyScreenCallbacks,
-  withBots = true,
 ): HTMLElement {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const column = h("div", "lobby-team");
@@ -367,94 +367,34 @@ export function teamColumn(
   title.appendChild(join);
   column.appendChild(title);
   const members = snapshot.players.filter((p) => p.team === team);
-  if (withBots) {
-    column.appendChild(
-      botCount(
-        team,
-        members.filter((member) => member.bot).length,
-        snapshot.isHost,
-        controls,
-        callbacks,
-      ),
-    );
-  }
   if (members.length === 0) {
     column.appendChild(h("div", "lobby-slot-empty", "Empty"));
   }
   for (const member of members) {
-    column.appendChild(playerRow(member, self));
+    column.appendChild(playerRow(member));
   }
   return column;
 }
 
 /**
- * `team`'s "Bots: n" (#1454): the host steps it with − and +; everyone
- * else only reads it.
+ * One player on a team: name and a ready pill (#2029). What they play is
+ * the Team Build slot they claim, so no character of their own is listed;
+ * a bot, always ready, is marked only in the match.
  */
-function botCount(
-  team: 0 | 1,
-  count: number,
-  isHost: boolean,
-  controls: LobbyControls,
-  callbacks: LobbyScreenCallbacks,
-): HTMLElement {
-  const control = h("div", "lobby-bots");
-  if (!isHost) {
-    control.textContent = `Bots: ${String(count)}`;
-    return control;
-  }
-  const fewer = button("−", "lobby-bots-fewer", () => {
-    callbacks.onSetBots(team, count - 1);
-  });
-  fewer.setAttribute("aria-label", `One bot fewer on team ${String(team + 1)}`);
-  // Locked outside "waiting", like Join.
-  fewer.disabled = controls.teamsDisabled || count === 0;
-  const more = button("+", "lobby-bots-more", () => {
-    callbacks.onSetBots(team, count + 1);
-  });
-  more.setAttribute("aria-label", `One bot more on team ${String(team + 1)}`);
-  more.disabled = controls.botsDisabled;
-  control.append(
-    h("span", "lobby-bots-label", "Bots:"),
-    fewer,
-    h("span", "lobby-bot-count", String(count)),
-    more,
-  );
-  return control;
-}
-
-/** One player on a team: dot, name, the character they bring, and a ready pill. */
-function playerRow(
-  member: LobbyPlayerSnapshot,
-  self: LobbyPlayerSnapshot | undefined,
-): HTMLElement {
+function playerRow(member: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "lobby-slot");
-  const { character } = member;
-  row.appendChild(
-    character === null
-      ? h("span", "character-dot is-house", "?")
-      : createProfessionDot(
-          character.primary,
-          character.secondary ?? undefined,
-          dotTeam(member, self),
-        ),
-  );
   const text = h("span", "lobby-slot-text");
   const player = text.appendChild(playerLabelElement("lobby-player", member.name, member.guildTag));
   if (member.isHost) {
     player.appendChild(h("span", "lobby-host", " (host)"));
   }
-  text.appendChild(h("span", "lobby-character", characterLine(character, member.bot)));
   row.appendChild(text);
-  // A bot is always ready, so its pill says what it is instead (#1194).
   row.appendChild(
-    member.bot
-      ? botTagElement("lobby-ready")
-      : h(
-          "span",
-          member.ready ? "lobby-ready is-ready" : "lobby-ready",
-          member.ready ? "Ready" : "Not ready",
-        ),
+    h(
+      "span",
+      member.ready ? "lobby-ready is-ready" : "lobby-ready",
+      member.ready ? "Ready" : "Not ready",
+    ),
   );
   return row;
 }

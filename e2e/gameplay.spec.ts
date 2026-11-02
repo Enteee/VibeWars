@@ -11,6 +11,7 @@ import {
   playHouseTeams,
   playOwnTeams,
   saveSoloTeam,
+  setTeamSize,
   startSoloMatch as startMatchFromMenu,
 } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
@@ -82,11 +83,12 @@ async function settledArenaShot(page: Page, canvas: Locator): Promise<Buffer> {
 }
 
 /**
- * A match in a lobby of one, which is what a test with nobody to fight
- * needs: nothing moves in it that the test did not move (#128).
+ * A match against an idle player, which is what a test with nobody to
+ * fight needs: nothing moves in it that the test did not move (#128). Not
+ * a lobby of one: its empty side would play a bot (#2029).
  */
 async function startSoloMatch(page: Page): Promise<Locator> {
-  return startLobbyMatch(page, []);
+  return startLobbyMatch(page, [await page.context().newPage()]);
 }
 
 /**
@@ -104,6 +106,7 @@ async function startLobbyMatch(
   await bringStarter(host, build);
   const team = await saveSoloTeam(host);
   const code = await hostLobby(host);
+  await setTeamSize(host, 1);
   for (const guest of guests) {
     await guest.goto("./");
     await joinFriend(guest, code);
@@ -114,6 +117,9 @@ async function startLobbyMatch(
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
   await playOwnTeams([host, ...guests].map((page) => ({ page, team })));
+  // The last page opened is the tab in front, and a tab behind it can go
+  // full screen no more than a person can see it (#2012).
+  await host.bringToFront();
   return host.locator("#viewport canvas:not(.compass)");
 }
 

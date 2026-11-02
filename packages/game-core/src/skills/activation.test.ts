@@ -357,6 +357,22 @@ describe("targetRuleAllows (#599)", () => {
     const spirit = { id: "s", team: 0, creatureKind: "spirit" as const, creatureOwnerId: "me" };
     expect(targetRuleAllows("own-minion", caster, spirit)).toBe(own);
   });
+
+  it("allows a foe's minion or a masterless one, never your side's (#2092)", () => {
+    const refused = "invalid-target-not-enemy-minion";
+    expect(verdicts("enemy-minion")).toEqual([refused, refused, refused]);
+    const minion = (team: number, ownerId: string | undefined) => ({
+      id: "minion",
+      team,
+      creatureKind: "minion" as const,
+      creatureOwnerId: ownerId,
+    });
+    expect(targetRuleAllows("enemy-minion", caster, minion(1, "foe"))).toBeUndefined();
+    expect(targetRuleAllows("enemy-minion", caster, minion(-1, undefined))).toBeUndefined();
+    expect(targetRuleAllows("enemy-minion", caster, minion(0, "me"))).toBe(refused);
+    const spirit = { id: "s", team: 1, creatureKind: "spirit" as const, creatureOwnerId: "foe" };
+    expect(targetRuleAllows("enemy-minion", caster, spirit)).toBe(refused);
+  });
 });
 
 describe("canActivate, a pet's skills (#1046)", () => {

@@ -418,6 +418,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "order-of-undeath": icon("order-of-undeath"),
   "aura-of-the-lich": icon("aura-of-the-lich"),
   "infuse-condition": icon("infuse-condition"),
+  // Minion care (#1986).
+  "veratas-sacrifice": icon("veratas-sacrifice"),
+  "dark-bond": icon("dark-bond"),
+  "jagged-bones": icon("jagged-bones"),
+  "veratas-aura": icon("veratas-aura"),
+  "malign-intervention": icon("malign-intervention"),
   // Casting-state hexes (#1931).
   "spinal-shivers": icon("spinal-shivers"),
   "shivers-of-dread": icon("shivers-of-dread"),
@@ -454,6 +460,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "soldiers-defense": icon("soldiers-defense"),
   "defensive-stance": icon("defensive-stance"),
   "auspicious-parry": icon("auspicious-parry"),
+  // Elementalist auras (#2095).
+  "magnetic-aura": icon("magnetic-aura"),
+  "swirling-aura": icon("swirling-aura"),
+  "magnetic-surge": icon("magnetic-surge"),
+  "sliver-armor": icon("sliver-armor"),
 };
 
 const GAP = 2;

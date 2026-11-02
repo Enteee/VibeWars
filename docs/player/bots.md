@@ -1,26 +1,24 @@
 # Bots
 
-A **bot** is a player the game plays for you. Bots fill empty places in
-a lobby you host, so you can practise, or play with fewer friends.
+A **bot** is a player the game plays for you. In a lobby you host, bots
+play every place nobody takes, so you can practise, or play with fewer
+friends.
 
-## Adding bots
+## Who plays a bot
 
-Only the host sets bots. Under each team's name is **Bots:** and how
-many it has; the host presses **+** for one more and **−** for one
-fewer. Everyone else sees the count.
+Nobody adds bots: a lobby lists its people only. When the
+[Team Lobby](modes.md#team-lobby) ends, each side plays the Team Build it
+chose, and every one of its characters nobody claimed is played by a bot,
+under that character's name. A side with nobody on it plays the house
+team, all bots. Someone who leaves during the Team Lobby leaves their
+character to a bot.
 
-You choose how many, not what they play. Bots pick professions your side
-lacks, in this order: Warrior/Monk, Ranger/Mesmer, Monk/Elementalist,
-Necromancer/Elementalist, Elementalist/Mesmer. A profession a player on
-the side already plays is skipped; once every one is taken, bots go round
-the whole list again. When players switch sides, bots change profession
-to match, until the match starts.
+In the lobby and the Team Lobby a bot looks like anyone else. In the
+match it is tagged **BOT** on its nameplate, the target frame, the party
+window and the match summary.
 
-A bot is named after its profession, such as "Warrior Bot", and shows
-**BOT** where players show whether they are ready. Fewer bots takes out
-the last one added.
-
-A lobby holds 16 places in all, bots included.
+Bots are made for one match: once it is over, the lobby lists its people
+again, and the next match's bots are made afresh.
 
 ## Random Arena
 

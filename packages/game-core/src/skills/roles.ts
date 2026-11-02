@@ -87,6 +87,7 @@ function effectRoles(effect: SkillEffect): readonly SkillRole[] {
     case "copy-disabled":
     case "copy-elite":
     case "take-control":
+    case "gaze-minion":
     case "lengthen-recharge":
     case "disable-own-skills":
     case "chain-mark":
@@ -152,6 +153,7 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     status.reflectsAttackDamage !== undefined ||
     status.incomingHexCastTimeMultiplier > 1 ||
     status.redirectsConditionsToMinion ||
+    status.redirectsDamageToMinion > 0 ||
     status.foeSpellsFail ||
     status.failsFoeTouchSkills !== undefined ||
     status.attacksAgainstMiss ||

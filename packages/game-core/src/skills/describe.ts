@@ -235,13 +235,24 @@ function spawningPowerOf(ranks: ReadonlyMap<string, number>): number {
  * brackets when Spawning Power lengthens a weapon spell (#1098).
  */
 function statusDuration(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
+  const base = lasting(effect.durationSeconds, ranks);
   if (findStatusDefinition(effect.statusId)?.category !== "weapon-spell") {
-    return seconds(effect.durationSeconds);
+    return base;
   }
-  const lasts = effect.durationSeconds * spawningPowerMultiplier(spawningPowerOf(ranks));
-  return lasts === effect.durationSeconds
-    ? seconds(effect.durationSeconds)
-    : `${seconds(lasts)} (${seconds(effect.durationSeconds)})`;
+  const at = resolveMagnitudeAtRanks(effect.durationSeconds, ranks);
+  const lasts = at * spawningPowerMultiplier(spawningPowerOf(ranks));
+  return lasts === at ? base : `${seconds(lasts)} (${base})`;
+}
+
+/** "16s": `duration` at these ranks, marked when it scales (#2041). */
+function lasting(duration: Magnitude, ranks: ReadonlyMap<string, number>): string {
+  const magnitude = describeMagnitude(duration, ranks);
+  return shown(magnitude, seconds(magnitude.current));
+}
+
+/** Whether `duration` has an end at all (#1789, #1941): Glyph of Energy's has none. */
+function ends(duration: Magnitude): boolean {
+  return !("flat" in duration) || Number.isFinite(duration.flat);
 }
 
 function statusName(id: string): string {
@@ -738,6 +749,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `${share(definition.redirectsPhysicalDamage)} its physical damage goes to its caster`,
     );
   }
+  if (definition.redirectsDamageToMinion > 0) {
+    parts.push(
+      `${share(definition.redirectsDamageToMinion)} the damage you take goes to your closest minion`,
+    );
+  }
   if (definition.maxDamageFractionPerHit !== undefined) {
     parts.push(
       `damage from a single hit is capped at ${String(Math.round(definition.maxDamageFractionPerHit * 100))}% of max health`,
@@ -960,6 +976,20 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.destroysBearerOnExpiry) {
     parts.push("the bearer is destroyed when it expires");
   }
+  // Verata's Aura's (#2092).
+  if (definition.bindsCreatures) {
+    parts.push("the minions it took become masterless when it ends");
+  }
+  // Jagged Bones's (#1986); Malign Intervention's, nobody's (#2092).
+  if (definition.replacedOnDeathBy !== undefined) {
+    const { creature, count, masterless } = definition.replacedOnDeathBy;
+    const stands = describeCreature(creature, count, triggerRanks).text;
+    parts.push(
+      masterless === true
+        ? `when the bearer dies, ${stands} rises where it fell, masterless`
+        : `when it dies, ${stands} stands up in its place`,
+    );
+  }
   // A trigger that does nothing but end it (#1748): Pacifism's "ends if
   // the target takes damage".
   const enders = definition.endsWhenTriggered
@@ -1029,7 +1059,7 @@ function describeAttackHits(
     if (effect.kind === "apply-status") {
       parts.push(
         `foes your ${attacks} hit get ${statusName(effect.statusId)} ` +
-          `for ${seconds(effect.durationSeconds)}`,
+          `for ${lasting(effect.durationSeconds, ranks)}`,
       );
     } else if (effect.kind === "damage") {
       parts.push(`foes your ${attacks} hit take ${riderDamage(effect, ranks)}`);
@@ -1090,7 +1120,7 @@ function describeAttackBlocks(
     effect.kind === "apply-status"
       ? [
           `foes that block your ${attacks} get ${statusName(effect.statusId)} ` +
-            `for ${seconds(effect.durationSeconds)}`,
+            `for ${lasting(effect.durationSeconds, ranks)}`,
         ]
       : describeEffects(effect, ranks).map(
           ({ text }) => `foes that block your ${attacks}: ${lowerFirst(text)}`,
@@ -1139,6 +1169,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
   "bearer-hit-by-attack": "is hit by a foe's attack",
+  "bearer-targeted-by-foe": "is targeted by a foe's spell or attack",
   "bearer-healed-by-skill": "is healed by a skill",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
@@ -1585,7 +1616,7 @@ function describeTrigger(
         return effect.effects.map((inner) =>
           sentence(
             inner.kind === "apply-status"
-              ? `if you block a ${kind} attack, ${foes} suffer from ${statusName(inner.statusId)} for ${String(inner.durationSeconds)} seconds`
+              ? `if you block a ${kind} attack, ${foes} suffer from ${statusName(inner.statusId)} for ${String(resolveMagnitudeAtRanks(inner.durationSeconds, ranks))} seconds`
               : `if you block a ${kind} attack, ${foes}: ${lowerFirst(describeEffect(inner, ranks).text)}`,
           ),
         );
@@ -1791,9 +1822,16 @@ function describeTrigger(
         const joint = effect.effects[0]?.kind === "apply-status" ? " " : ": ";
         return [sentence(`${when}: ${allies}${joint}${what.join(", ")}`)];
       }
+      // Sliver Armor's (#2095): "the nearest of nearby foes takes 29 earth damage".
+      const struck =
+        effect.maxTargets === 1
+          ? `the nearest of ${allies} takes`
+          : effect.maxTargets === undefined
+            ? `${allies} take`
+            : `up to ${String(countAt(effect.maxTargets, ranks))} ${allies} take`;
       return effect.effects.map((inner) =>
         inner.kind === "damage" && when !== DROPPED
-          ? clause(`${allies} take ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`)
+          ? clause(`${struck} ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`)
           : inner.kind === "apply-status"
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
@@ -1823,7 +1861,9 @@ function describeNextAttackSkill(
   ranks: ReadonlyMap<string, number>,
 ): string[] {
   if (effect.kind === "apply-status") {
-    return [`next attack skill: ${statusName(effect.statusId)} ${seconds(effect.durationSeconds)}`];
+    return [
+      `next attack skill: ${statusName(effect.statusId)} ${lasting(effect.durationSeconds, ranks)}`,
+    ];
   }
   return describeEffects(effect, ranks).map(({ text }) => `next attack skill: ${text}`);
 }
@@ -1976,7 +2016,7 @@ function ifTypeText(
  */
 function suffered(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
   return (
-    `suffer ${statusName(effect.statusId)} for ${seconds(effect.durationSeconds)} ` +
+    `suffer ${statusName(effect.statusId)} for ${lasting(effect.durationSeconds, ranks)} ` +
     `(${statusText(effect.statusId, ranks)})`
   );
 }
@@ -2133,6 +2173,8 @@ function conditionText(condition: EffectCondition): string {
       return `If no spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
     case "caster-spirit-within":
       return `If a spirit is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
+    case "caster-controls-at-most":
+      return `If you control ${String(condition.count)} or fewer ${condition.creature}s`;
     case "caster-spirit-or-corpse-within":
       return `If a spirit or a corpse is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
   }
@@ -2170,11 +2212,13 @@ function perAllyText(effect: HealEffect, ranks: ReadonlyMap<string, number>): st
 const SPLASH_SIDE: Readonly<Record<SplashEffect["hits"], string>> = {
   foes: "foes",
   "foe-creatures": "foe creatures",
+  "foe-minions": "foe minions",
   allies: "allies",
   "non-spirit-allies": "non-spirit allies",
   party: "party members",
   "own-spirits": "your spirits",
   "own-minions": "your other minions",
+  "allied-minions": "allied minions",
 };
 
 /** Who a splash reaches, as GW1 words it (#885): "Adjacent foes". */
@@ -2186,6 +2230,10 @@ function foesWithin(radius: number, hits: SplashEffect["hits"]): string {
   // Mirror of Disenchantment's foe's whole party (#1954).
   if (hits === "foes" && radius === Number.POSITIVE_INFINITY) {
     return "All its party members";
+  }
+  // Blood of the Master's, wherever they are (#1986).
+  if (hits === "allied-minions" && radius === Number.POSITIVE_INFINITY) {
+    return "All allied minions";
   }
   // Feast for the Dead's, wherever they are (#1836).
   if (hits === "own-minions" && radius === Number.POSITIVE_INFINITY) {
@@ -2821,8 +2869,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           // until what it holds is spent.
           const what = statusText(effect.statusId, ranks);
           return {
-            text: Number.isFinite(effect.durationSeconds)
-              ? `For ${seconds(effect.durationSeconds)}, ${what}`
+            text: ends(effect.durationSeconds)
+              ? `For ${lasting(effect.durationSeconds, ranks)}, ${what}`
               : `${what.charAt(0).toUpperCase()}${what.slice(1)}`,
             magnitude: undefined,
           };
@@ -2834,7 +2882,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         text:
           `Applies ${statusName(effect.statusId)}${effect.on === "caster" ? " to you" : ""} ` +
           // No end of its own (#1789): Faithful Intervention's.
-          (Number.isFinite(effect.durationSeconds)
+          (ends(effect.durationSeconds)
             ? `for ${statusDuration(effect, ranks)} `
             : "until it ends ") +
           `(${statusText(effect.statusId, ranks)})`,
@@ -3087,7 +3135,21 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
         magnitude: undefined,
       };
     case "take-control":
-      return { text: "Take control of target enemy spirit", magnitude: undefined };
+      // Verata's Aura's foe minions, its own while it lasts (#2092).
+      return effect.bondStatusId === undefined
+        ? { text: "Take control of target enemy spirit", magnitude: undefined }
+        : {
+            text: `Become your minions while you bear ${getStatusDefinition(effect.bondStatusId).name}`,
+            magnitude: undefined,
+          };
+    case "gaze-minion": {
+      // Verata's Gaze's (#2092).
+      const magnitude = describeMagnitude(effect.heal, ranks);
+      return {
+        text: `Target minion with a master becomes masterless; a masterless one becomes yours and is healed for ${shown(magnitude)} Health`,
+        magnitude,
+      };
+    }
     case "disable-own-skills": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       return { text: disableOwnText(effect, false, shown(magnitude)), magnitude };
@@ -3110,11 +3172,15 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "splash": {
-      // "Adjacent foes take 40 damage" (#885).
-      const inner = effect.effects.map((each) => ({
-        each,
-        description: describeEffect(each, ranks),
-      }));
+      // "Adjacent foes take 40 damage" (#885). What the caster pays for
+      // each one reached is said apart (#1986).
+      const paid = effect.effects.filter((each) => each.kind === "sacrifice-health");
+      const inner = effect.effects
+        .filter((each) => each.kind !== "sacrifice-health")
+        .map((each) => ({
+          each,
+          description: describeEffect(each, ranks),
+        }));
       const parts = inner.map(({ each, description }) =>
         each.kind === "damage"
           ? `take ${shown(describeMagnitude(each.amount, ranks))}${typeWord(each.type)} damage` +
@@ -3135,12 +3201,17 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
                     ? `lose ${shown(describeMagnitude(each.amount, ranks))} Health`
                     : each.kind === "remove-status" && each.from === undefined
                       ? lostInSplash(each, ranks)
-                      : lowerFirst(description.text),
+                      : // Verata's Sacrifice's (#1986).
+                        each.kind === "transfer-conditions" &&
+                          each.from === "target" &&
+                          each.count === Number.POSITIVE_INFINITY
+                        ? "transfer all their conditions to you"
+                        : lowerFirst(description.text),
       );
       const last = parts.pop();
       const what = parts.length === 0 ? (last ?? "") : `${parts.join(", ")} and ${String(last)}`;
       return {
-        text: `${upTo(effect, ranks)} ${what}`,
+        text: `${upTo(effect, ranks)} ${what}${paid.map((each) => `; ${lowerFirst(describeEffect(each, ranks).text)} per ${effect.hits === "allied-minions" || effect.hits === "own-minions" ? "minion" : "one"}`).join("")}`,
         magnitude: inner.find(({ description }) => description.magnitude !== undefined)?.description
           .magnitude,
       };
@@ -3445,6 +3516,7 @@ const TARGET_TEXT: Record<Skill["target"], string> = {
   "single-dead-ally": "A dead ally",
   "allied-spirit": "An allied spirit",
   "enemy-spirit": "An enemy spirit",
+  "enemy-minion": "A foe's minion",
   "own-minion": "One of your minions",
   "allied-minion": "An allied minion",
   "allied-summoned-creature": "An allied summoned creature",
@@ -3860,7 +3932,15 @@ export function describeSkill(
                 magnitude: undefined,
               },
             ]
-          : describeEffects(petReads(skill, effect), ranks),
+          : // Verata's Sacrifice's (#1986): cast on yourself, no minion is left out.
+            effect.kind === "splash" &&
+              effect.hits === "own-minions" &&
+              skill.target !== "allied-minion"
+            ? describeEffects(effect, ranks).map((line) => ({
+                ...line,
+                text: line.text.replace(/^Your other minions/, "Your minions"),
+              }))
+            : describeEffects(petReads(skill, effect), ranks),
     ),
     ...onCritical,
     ...onBlocked,

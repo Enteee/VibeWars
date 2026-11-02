@@ -15,6 +15,7 @@ import {
   MIN_WIRE_MORALE,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
+  MASTERLESS_WIRE_TEAM,
   MAX_WIRE_STATUSES,
   MAX_WIRE_ACTORS,
   MAX_WIRE_STATUS_INDEX,
@@ -444,7 +445,6 @@ const lobbyJoin: PeerLobbyJoin = {
   name: "Mhenlo",
   guildTag: "vb",
   guildCape: null,
-  character: { name: "Mhenlo Healer", primary: "monk", secondary: "elementalist" },
   admission: null,
 };
 
@@ -469,6 +469,7 @@ const lobbyState: WireLobbyState = {
   phase: "in-match",
   mode: "gvg",
   mapId: "isle",
+  teamSize: 8,
   open: true,
   hostId: "peer-1",
   matchId: "match-2",
@@ -481,7 +482,6 @@ const lobbyState: WireLobbyState = {
       team: 0,
       ready: true,
       isHost: true,
-      character: { name: "Cynn", primary: "elementalist", secondary: null },
       bot: false,
       away: false,
     },
@@ -493,7 +493,6 @@ const lobbyState: WireLobbyState = {
       team: null,
       ready: false,
       isHost: false,
-      character: null,
       bot: false,
       away: false,
     },
@@ -505,13 +504,13 @@ const lobbyState: WireLobbyState = {
       team: 1,
       ready: true,
       isHost: false,
-      character: { name: "Monk Bot", primary: "monk", secondary: "elementalist" },
       bot: true,
       away: false,
     },
   ],
   countdownSeconds: null,
   queueNonce: null,
+  ascentRound: null,
   teamLobby: null,
 };
 
@@ -805,7 +804,6 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["chat-line from a spectator (#479)", parseWireChatLine, { ...chatLine, team: null }],
   ["chat-throttled (#479)", parseWireLobbyNote, { kind: "chat-throttled", reason: "" }],
   ["lobby-join", parsePeerLobbyJoin, lobbyJoin],
-  ["lobby-join on a starter build", parsePeerLobbyJoin, { ...lobbyJoin, character: null }],
   ["queued lobby-join (#871)", parsePeerLobbyJoin, { ...lobbyJoin, admission }],
   ["untagged lobby-join (#1406)", parsePeerLobbyJoin, { ...lobbyJoin, guildTag: null }],
   ["lobby-hello (#871)", parsePeerLobbyHello, {}],
@@ -835,7 +833,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
-  ["lobby-move (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP" }],
+  [
+    "lobby-move (#1553)",
+    parseWireLobbyMove,
+    { code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE" }, // pragma: allowlist secret
+  ],
   [
     "counting-down lobby-state (#871)",
     parseWireLobbyState,
@@ -847,28 +849,49 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, phase: "queued", matchId: null, queueNonce: "ab".repeat(32) },
   ],
+  [
+    "queued Heroes' Ascent lobby-state at its last round (#1996)",
+    parseWireLobbyState,
+    {
+      ...lobbyState,
+      mode: "heroes-ascent",
+      phase: "queued",
+      matchId: null,
+      queueNonce: "ab".repeat(32),
+      ascentRound: 3,
+    },
+  ],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
   ["ready", parseWireLobbyCommand, { kind: "ready", ready: false }],
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
+  ["select-team-size (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 8 }],
+  ["select-team-size of one (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 1 }],
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
-  [
-    "set-character (#1526)",
-    parseWireLobbyCommand,
-    { kind: "set-character", character: { name: "Mhenlo", primary: "monk", secondary: null } },
-  ],
-  [
-    "set-character to a starter build (#1526)",
-    parseWireLobbyCommand,
-    { kind: "set-character", character: null },
-  ],
   ["start", parseWireLobbyCommand, { kind: "start" }],
-  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match" }],
+  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match", ascentRound: null }],
+  [
+    "find-match at a Heroes' Ascent round (#1996)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: 2 },
+  ],
   ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
   ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
-  ["set-bots", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: 3 }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
+  [
+    "Hosted Game's Team Lobby lobby-state, a side of one (#2104)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamSize: 1,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 41,
+        sides: [{ ...teamSide, size: 1, claims: [null] }, null],
+      },
+    },
+  ],
   [
     "Team Lobby lobby-state in its vote, with the house team chosen (#1458)",
     parseWireLobbyState,
@@ -913,8 +936,10 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWirePartyFormed,
     partyOf(["1", "2", "3", "4", "5", "6", "7", "8"].map((digit) => digit.repeat(64))),
   ],
+  ["map pick refusal (#1994)", parseWireLobbyNote, { kind: "refused", reason: "not-pickable" }],
   ["Team Lobby refusal (#1458)", parseWireLobbyNote, { kind: "refused", reason: "slot-taken" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
+  ["notice (#2104)", parseWireLobbyNote, { kind: "notice", reason: "Red is full" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
   ["fell-through (#871)", parseWireLobbyNote, { kind: "refused", reason: "fell-through" }],
   [
@@ -1732,21 +1757,6 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["lobby-join without a name", parsePeerLobbyJoin, { protocolVersion: PROTOCOL_VERSION }],
   [
-    "lobby-join without a character",
-    parsePeerLobbyJoin,
-    { protocolVersion: PROTOCOL_VERSION, name: "Mhenlo" },
-  ],
-  [
-    "lobby-join with a character of no primary",
-    parsePeerLobbyJoin,
-    { ...lobbyJoin, character: { name: "Mhenlo Healer", secondary: null } },
-  ],
-  [
-    "lobby-state with a player of no character",
-    parseWireLobbyState,
-    { ...lobbyState, players: [{ ...lobbyState.players[1], character: undefined }] },
-  ],
-  [
     "lobby-join without an admission (#871)",
     parsePeerLobbyJoin,
     { ...lobbyJoin, admission: undefined },
@@ -1853,10 +1863,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { members: ["ab".repeat(32), "cd".repeat(32)], consents: ["ef".repeat(64), "ef".repeat(64)] },
   ],
   ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
-  ["lobby-move with a dashed key (#1553)", parseWireLobbyMove, { code: "ACDE-FGHJ-KMNP" }],
+  [
+    "lobby-move with an old twelve-symbol key (#2100)",
+    parseWireLobbyMove,
+    { code: "ACDEFGHJKMNP" },
+  ],
   ["lobby-move with a short key (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMN" }],
   ["lobby-move with a number (#1553)", parseWireLobbyMove, { code: 7 }],
-  ["lobby-move with a field more (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP", to: "x" }],
+  [
+    "lobby-move with a field more (#1553)",
+    parseWireLobbyMove,
+    { code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", to: "x" }, // pragma: allowlist secret
+  ],
   [
     "lobby-welcome of a non-hex signature (#871)",
     parseWireLobbyWelcome,
@@ -1884,6 +1902,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "lobby-state without a queue nonce (#1766)",
     parseWireLobbyState,
     { ...lobbyState, queueNonce: undefined },
+  ],
+  [
+    "lobby-state without an ascent round (#1996)",
+    parseWireLobbyState,
+    { ...lobbyState, ascentRound: undefined },
+  ],
+  ["lobby-state past the Hall (#1996)", parseWireLobbyState, { ...lobbyState, ascentRound: 4 }],
+  ["find-match without a round (#1996)", parseWireLobbyCommand, { kind: "find-match" }],
+  [
+    "find-match at a negative round (#1996)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: -1 },
   ],
   [
     "lobby-state of a short queue nonce (#1766)",
@@ -2049,19 +2079,35 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["choose-team of a string", parseWireLobbyCommand, { kind: "choose-team", team: "0" }],
   ["ready of a string", parseWireLobbyCommand, { kind: "ready", ready: "true" }],
   ["select-map with a long id", parseWireLobbyCommand, { kind: "select-map", mapId: long }],
+  ["select-team-size of 0 (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 0 }],
+  ["select-team-size of 9 (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 9 }],
+  ["select-team-size of 3 (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 3 }],
+  [
+    "select-team-size of 2.5 (#2104)",
+    parseWireLobbyCommand,
+    { kind: "select-team-size", size: 2.5 },
+  ],
+  ["lobby-state of team size 0 (#2104)", parseWireLobbyState, { ...lobbyState, teamSize: 0 }],
   [
     "select-mode of an unknown mode (#1526)",
     parseWireLobbyCommand,
     { kind: "select-mode", mode: "ranked" },
   ],
-  ["set-character without one (#1526)", parseWireLobbyCommand, { kind: "set-character" }],
+  [
+    "set-character, which is gone (#2029)",
+    parseWireLobbyCommand,
+    { kind: "set-character", character: { name: "Mhenlo", primary: "monk", secondary: null } },
+  ],
   [
     "add-bot, which is gone",
     parseWireLobbyCommand,
     { kind: "add-bot", team: 0, profession: "monk" },
   ],
-  ["set-bots without a team", parseWireLobbyCommand, { kind: "set-bots", count: 2 }],
-  ["set-bots of a string", parseWireLobbyCommand, { kind: "set-bots", team: 1, count: "2" }],
+  [
+    "set-bots, which is gone (#2029)",
+    parseWireLobbyCommand,
+    { kind: "set-bots", team: 1, count: 3 },
+  ],
   ["a command of an unknown kind", parseWireLobbyCommand, { kind: "kick", id: "peer-2" }],
   ["a note of an unknown kind", parseWireLobbyNote, { kind: "kicked", reason: "x" }],
   [
@@ -2147,6 +2193,11 @@ describe("the P2P validators (#82)", () => {
     );
   });
 
+  it("accept a masterless body on MASTERLESS_WIRE_TEAM (#2092)", () => {
+    const loose = { ...player, team: MASTERLESS_WIRE_TEAM };
+    expect(parseWireSnapshotPart({ ...snapshot, players: [loose] })?.players).toEqual([loose]);
+  });
+
   it("drop a token from a hello's rejoin: a rejoin is proven, never told (#593)", () => {
     const parsed = parsePeerHello({ ...hello, rejoin: { playerId: "peer-2", token: TOKEN } });
     expect(parsed?.rejoin).toEqual({ playerId: "peer-2" });
@@ -2155,14 +2206,6 @@ describe("the P2P validators (#82)", () => {
   it("cut a hello's long name to MAX_WIRE_TEXT: shortening it is the host's job", () => {
     const named = parsePeerHello({ ...hello, name: "x".repeat(5000) });
     expect(named?.name).toBe("x".repeat(MAX_WIRE_TEXT));
-  });
-
-  it("cut a lobby-join's long character name to MAX_WIRE_TEXT, like its own (#580)", () => {
-    const named = parsePeerLobbyJoin({
-      ...lobbyJoin,
-      character: { name: "x".repeat(5000), primary: "monk", secondary: null },
-    });
-    expect(named?.character?.name).toBe("x".repeat(MAX_WIRE_TEXT));
   });
 
   it("read a hello's version even when the rest of it is malformed", () => {

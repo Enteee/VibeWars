@@ -28,12 +28,14 @@ import {
   MAX_LOBBY_PLAYERS,
   isLobbyCode,
   MAX_TEAM_LOBBY_SIDE,
+  LOBBY_TEAM_SIZES,
+  type LobbyTeamSize,
   type CompanionMode,
   type LobbyMode,
   type LobbyPhase,
   type WireChainMark,
 } from "./protocol.js";
-import { inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
+import { ASCENT_ROUNDS, inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -94,6 +96,12 @@ export const MAX_WIRE_TEXT = 256;
 
 /** The most statuses one player carries in a snapshot. */
 export const MAX_WIRE_STATUSES = 32;
+
+/**
+ * `WirePlayer.team` for a masterless creature (#2092): one Verata's Gaze
+ * broke off its master, or one that rose masterless. A foe to both teams.
+ */
+export const MASTERLESS_WIRE_TEAM = -1;
 
 /**
  * The most creatures a snapshot carries (#1052): game-core's
@@ -411,7 +419,8 @@ export interface WirePlayer {
   readonly guildTag: string | null;
   /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
-  readonly team: 0 | 1;
+  /** A match team, or `MASTERLESS_WIRE_TEAM` for a masterless creature (#2092). */
+  readonly team: 0 | 1 | typeof MASTERLESS_WIRE_TEAM;
   readonly x: number;
   readonly y: number;
   /** Radians, `atan2` convention, 0 = +x (#187). */
@@ -859,7 +868,6 @@ export interface PeerLobbyJoin {
   readonly guildTag: string | null;
   /** As `PeerHello.guildCape` (#1422). */
   readonly guildCape: WireCape | null;
-  readonly character: WireLobbyCharacter | null;
   /**
    * The seat's proof in a queued lobby (#871, ADR-0032 §6); `null` in a
    * coded lobby, which refuses one.
@@ -992,7 +1000,6 @@ export interface WireLobbyPlayer {
   readonly ready: boolean;
   /** The host's own player: the one who picks the map and starts. */
   readonly isHost: boolean;
-  readonly character: WireLobbyCharacter | null;
   /** A bot the host added (#1193): no peer, always ready, never the host. */
   readonly bot: boolean;
   /** Its peer dropped (#1764): its seat is held while it may come back. */
@@ -1006,6 +1013,11 @@ export interface WireLobbyState {
   /** The host's pick (#1526): every member's rail shows it. */
   readonly mode: LobbyMode;
   readonly mapId: string;
+  /**
+   * Players a side (#2104): a Hosted Game's, the host's pick, one of
+   * `LOBBY_TEAM_SIZES`; every other mode's, its own.
+   */
+  readonly teamSize: number;
   /**
    * Whether a peer with the key may join (#1682): a closed lobby takes
    * nobody new, and keeps those already in. A queued lobby is always open.
@@ -1030,6 +1042,12 @@ export interface WireLobbyState {
    * before it consents. Public: the room id never is.
    */
   readonly queueNonce: string | null;
+  /**
+   * While `phase` is `"queued"` in Heroes' Ascent (#1996), the round the
+   * party queues at, the host's run: every member's ticket is at it.
+   * `null` otherwise.
+   */
+  readonly ascentRound: number | null;
 }
 
 /**
@@ -1046,7 +1064,7 @@ export interface WireTeamLobby {
 
 /** One side of a Team Lobby, as only its own members see it. */
 export interface WireTeamSide {
-  /** Its humans and bots as the Team Lobby began: every proposal is this many. */
+  /** The size every proposal is, and the side plays: the lobby's team size (#2104). */
   readonly size: number;
   /** Who breaks a tie; `null` for a side with no humans. */
   readonly captainId: string | null;
@@ -1101,27 +1119,20 @@ export type WireLobbyCommand =
   | { readonly kind: "choose-team"; readonly team: 0 | 1 | null }
   | { readonly kind: "ready"; readonly ready: boolean }
   | { readonly kind: "select-map"; readonly mapId: string }
+  /** Host only, in a Hosted Game (#2104): players a side, one of `LOBBY_TEAM_SIZES`. */
+  | { readonly kind: "select-team-size"; readonly size: LobbyTeamSize }
   /** Host only (#1526): the lobby's mode; a map outside it moves to the mode's first. */
   | { readonly kind: "select-mode"; readonly mode: LobbyMode }
-  /**
-   * The character this member now brings (#1526): the lobby outlives a
-   * pick on the menu. `null` is a starter build.
-   */
-  | { readonly kind: "set-character"; readonly character: WireLobbyCharacter | null }
   | { readonly kind: "start" }
   /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; `leave-queue` takes it out again, `house-team` plays the house
-   * team instead, in this lobby.
+   * team instead, in this lobby. In Heroes' Ascent it queues at the
+   * host's `ascentRound` (#1996), `null` in every other mode.
    */
-  | { readonly kind: "find-match" }
+  | { readonly kind: "find-match"; readonly ascentRound: number | null }
   | { readonly kind: "leave-queue" }
   | { readonly kind: "house-team" }
-  /**
-   * Host only (#1454): `team` has `count` bots, an integer from 0; the
-   * host picks what they play.
-   */
-  | { readonly kind: "set-bots"; readonly team: 0 | 1; readonly count: number }
   /**
    * In a Team Lobby's vote (#1458): slot `slot` of a Team Build of `size`,
    * its build opaque here. One build a message, so a side of large builds
@@ -1155,9 +1166,11 @@ export type WireLobbyCommand =
 
 /** Lobby host to one peer: a start it turned down, or a member it turned away. */
 export interface WireLobbyNote {
-  readonly kind: "start-rejected" | "refused" | "chat-throttled";
+  readonly kind: "start-rejected" | "notice" | "refused" | "chat-throttled";
   /**
-   * For `"start-rejected"`, the words the host is shown. For `"refused"`,
+   * For `"start-rejected"`, the words the host is shown. For `"notice"`
+   * (#2104), the words this peer is shown: what the host did to its
+   * choice, or would not do. For `"refused"`,
    * one of `LOBBY_REFUSALS`. For `"chat-throttled"` (#479), empty: this
    * peer's chat lines are being dropped, too many too fast.
    */
@@ -1174,10 +1187,10 @@ export const LOBBY_REFUSALS = [
   "not-admitted",
   "ticket-used",
   "fell-through",
-  // A bot command (#1193) from anyone but the host; one whose count is no
-  // integer from 0 (#1454), or sent in a queued lobby.
+  // A host's command (a mode, a match search) from anyone but the host.
   "not-host",
-  "invalid-bot",
+  // A map picked outside a Hosted Game (#1994): other modes choose their own.
+  "not-pickable",
   // A Team Lobby's (#1458): a proposal not of the side's size or with a
   // build that is not legal; a vote for no proposal of the voter's side;
   // a slot someone holds, or no slot of the chosen build.
@@ -1223,6 +1236,16 @@ function isCount(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && value >= 0;
 }
 
+/** Whether `value` is a Heroes' Ascent round (#1996), or `null` for none. */
+function isAscentRound(value: unknown): value is number | null {
+  return value === null || (isCount(value) && value < ASCENT_ROUNDS);
+}
+
+/** A lobby's team size (#2104): one of `LOBBY_TEAM_SIZES`. */
+function isTeamSize(value: unknown): value is LobbyTeamSize {
+  return LOBBY_TEAM_SIZES.some((size) => size === value);
+}
+
 function isPips(value: unknown): value is number {
   return isNumber(value) && Number.isInteger(value) && Math.abs(value) <= MAX_WIRE_PIPS;
 }
@@ -1243,6 +1266,11 @@ function isSlot(value: unknown): value is number {
 
 function isTeam(value: unknown): value is 0 | 1 {
   return value === 0 || value === 1;
+}
+
+/** A body's `WirePlayer.team` (#2092): a match team, or masterless. */
+function isBodyTeam(value: unknown): value is 0 | 1 | typeof MASTERLESS_WIRE_TEAM {
+  return isTeam(value) || value === MASTERLESS_WIRE_TEAM;
 }
 
 function isNullableString(value: unknown): value is string | null {
@@ -1663,7 +1691,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isString(raw.id) ||
     !isString(raw.name) ||
     !isNullableString(raw.guildTag) ||
-    !isTeam(raw.team) ||
+    !isBodyTeam(raw.team) ||
     !isNumber(raw.x) ||
     !isNumber(raw.y) ||
     !isNumber(raw.facing) ||
@@ -2286,14 +2314,12 @@ function parseAdmission(value: unknown): WireAdmission | null | undefined {
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
   const guildTag = parseRawGuildTag(raw?.guildTag);
-  const character = parseLobbyCharacter(raw?.character);
   const admission = parseAdmission(raw?.admission);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
     typeof raw.name !== "string" ||
     guildTag === undefined ||
-    character === undefined ||
     admission === undefined
   ) {
     return undefined;
@@ -2304,7 +2330,6 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     guildTag,
     // As the hello's.
     guildCape: parseWireCape(raw.guildCape) ?? null,
-    character,
     admission,
   };
 }
@@ -2423,7 +2448,6 @@ function parseLobbyTeam(value: unknown): 0 | 1 | null | undefined {
 function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
   const raw = fields(value);
   const team = parseLobbyTeam(raw?.team);
-  const character = parseLobbyCharacter(raw?.character);
   const guildCape = parseNullableCape(raw?.guildCape);
   return raw !== undefined &&
     isString(raw.id) &&
@@ -2433,7 +2457,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     team !== undefined &&
     typeof raw.ready === "boolean" &&
     typeof raw.isHost === "boolean" &&
-    character !== undefined &&
     typeof raw.bot === "boolean" &&
     typeof raw.away === "boolean"
     ? {
@@ -2444,7 +2467,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         team,
         ready: raw.ready,
         isHost: raw.isHost,
-        character,
         bot: raw.bot,
         away: raw.away,
       }
@@ -2495,8 +2517,7 @@ function parseTeamSide(value: unknown): WireTeamSide | null | undefined {
   const raw = fields(value);
   if (
     raw === undefined ||
-    !isCount(raw.size) ||
-    raw.size > MAX_TEAM_LOBBY_SIDE ||
+    !(isCount(raw.size) && raw.size <= MAX_TEAM_LOBBY_SIDE) ||
     !isNullableString(raw.captainId)
   ) {
     return undefined;
@@ -2538,8 +2559,10 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isString(raw.code) ||
     !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
+    !isAscentRound(raw.ascentRound) ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
+    !isTeamSize(raw.teamSize) ||
     typeof raw.open !== "boolean" ||
     !isString(raw.hostId) ||
     !isNullableString(raw.matchId) ||
@@ -2555,6 +2578,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         phase: raw.phase,
         mode: raw.mode,
         mapId: raw.mapId,
+        teamSize: raw.teamSize,
         open: raw.open,
         hostId: raw.hostId,
         matchId: raw.matchId,
@@ -2562,6 +2586,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         countdownSeconds: raw.countdownSeconds,
         teamLobby,
         queueNonce: raw.queueNonce,
+        ascentRound: raw.ascentRound,
       };
 }
 
@@ -2577,21 +2602,18 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return typeof raw.ready === "boolean" ? { kind: "ready", ready: raw.ready } : undefined;
     case "select-map":
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
+    case "select-team-size":
+      return isTeamSize(raw.size) ? { kind: "select-team-size", size: raw.size } : undefined;
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
-    case "set-character": {
-      const character = parseLobbyCharacter(raw.character);
-      return character === undefined ? undefined : { kind: "set-character", character };
-    }
-    case "start":
     case "find-match":
+      return isAscentRound(raw.ascentRound)
+        ? { kind: "find-match", ascentRound: raw.ascentRound }
+        : undefined;
+    case "start":
     case "leave-queue":
     case "house-team":
       return { kind: raw.kind };
-    case "set-bots":
-      return isTeam(raw.team) && isNumber(raw.count)
-        ? { kind: "set-bots", team: raw.team, count: raw.count }
-        : undefined;
     case "propose": {
       if (raw.slot === null) {
         return { kind: "propose", slot: null };
@@ -2639,7 +2661,7 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
 export function parseWireLobbyNote(value: unknown): WireLobbyNote | undefined {
   const raw = fields(value);
   return raw !== undefined &&
-    isOneOf(raw.kind, ["start-rejected", "refused", "chat-throttled"] as const) &&
+    isOneOf(raw.kind, ["start-rejected", "notice", "refused", "chat-throttled"] as const) &&
     isString(raw.reason, MAX_WIRE_TEXT)
     ? { kind: raw.kind, reason: raw.reason }
     : undefined;

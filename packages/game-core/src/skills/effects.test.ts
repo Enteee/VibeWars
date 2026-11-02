@@ -8,6 +8,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "./catalog.js";
 import {
   applyDamage,
+  applyRedirectedDamage,
   applyEffect,
   applyEffects,
   applySkillEffects,
@@ -116,7 +117,9 @@ describe("Symbiotic Bond's redirect (#1108)", () => {
     const events: CombatEvent[] = [];
     applyDamage(pet, 25, "slashing", false, events, undefined);
     expect(events).toEqual([{ kind: "damage", targetId: "pet", amount: 13, critical: false }]);
-    expect(redirected(pet)).toEqual([{ kind: "redirected-damage", toId: "owner", amount: 12 }]);
+    expect(redirected(pet)).toEqual([
+      { kind: "redirected-damage", toId: "owner", amount: 12, toClosestMinion: false },
+    ]);
   });
 
   it("does not split elemental damage", () => {
@@ -134,6 +137,53 @@ describe("Symbiotic Bond's redirect (#1108)", () => {
     applyDamage(pet, 25, "slashing", false, [], undefined);
     expect(pet.health).toBe(125);
     expect(redirected(pet)).toEqual([]);
+  });
+});
+
+describe("Dark Bond's redirect (#1986)", () => {
+  function bound(): Combatant {
+    const necromancer = makeCombatant({ id: "n", team: 0 });
+    necromancer.statuses.apply("dark-bond", 54, "n", NO_RANKS);
+    necromancer.statuses.drainChanges();
+    return necromancer;
+  }
+
+  function redirected(bearer: Combatant): unknown[] {
+    return bearer.statuses.drainChanges().filter((change) => change.kind === "redirected-damage");
+  }
+
+  it("keeps 26 of a 101 fire hit and records 75, rounded down, for the closest minion", () => {
+    const necromancer = bound();
+    const events: CombatEvent[] = [];
+    applyDamage(necromancer, 101, "fire", false, events, undefined);
+    expect(events).toEqual([{ kind: "damage", targetId: "n", amount: 26, critical: false }]);
+    expect(redirected(necromancer)).toEqual([
+      { kind: "redirected-damage", toId: "n", amount: 75, toClosestMinion: true },
+    ]);
+  });
+
+  it("splits a typeless hit, but never a share already redirected", () => {
+    const necromancer = bound();
+    applyDamage(necromancer, 100, "typeless", false, [], undefined);
+    expect(redirected(necromancer)).toHaveLength(1);
+    const events: CombatEvent[] = [];
+    applyRedirectedDamage(necromancer, 75, events);
+    expect(events).toEqual([{ kind: "damage", targetId: "n", amount: 75, critical: false }]);
+    expect(redirected(necromancer)).toEqual([]);
+  });
+
+  it("gives way to a newer Symbiotic Bond on a physical hit, and keeps an elemental one", () => {
+    const necromancer = bound();
+    necromancer.statuses.apply("symbiotic-bond", 264, "ranger", NO_RANKS);
+    necromancer.statuses.drainChanges();
+    applyDamage(necromancer, 100, "slashing", false, [], undefined);
+    expect(redirected(necromancer)).toEqual([
+      { kind: "redirected-damage", toId: "ranger", amount: 50, toClosestMinion: false },
+    ]);
+    applyDamage(necromancer, 100, "fire", false, [], undefined);
+    expect(redirected(necromancer)).toEqual([
+      { kind: "redirected-damage", toId: "n", amount: 75, toClosestMinion: true },
+    ]);
   });
 });
 
@@ -290,7 +340,7 @@ describe("deep wound (#764)", () => {
   const deepWound: SkillEffect = {
     kind: "apply-status",
     statusId: "deep-wound",
-    durationSeconds: 20,
+    durationSeconds: { flat: 20 },
   };
 
   function woundedAt(health: number, maxHealth = 480): Combatant {
@@ -333,7 +383,7 @@ describe("deep wound (#764)", () => {
     const target = woundedAt(480);
     const ctx = context(makeCombatant({ id: "caster" }), target);
     applyEffect(deepWound, ctx);
-    const events = applyEffect({ ...deepWound, durationSeconds: 30 }, ctx);
+    const events = applyEffect({ ...deepWound, durationSeconds: { flat: 30 } }, ctx);
     expect(target.health).toBe(384);
     expect(events.some((event) => event.kind === "health-lost")).toBe(false);
     expect(target.statuses.get("deep-wound")?.remainingSeconds).toBe(30);
@@ -1548,7 +1598,7 @@ describe("an invulnerable target (#1208)", () => {
   it("says it is invulnerable once for a hex a skill puts on it, and gains none (#1233)", () => {
     const target = invulnerable();
     const events = applyEffect(
-      { kind: "apply-status", statusId: "malaise", durationSeconds: 10 },
+      { kind: "apply-status", statusId: "malaise", durationSeconds: { flat: 10 } },
       context(makeCombatant({ id: "caster" }), target),
     );
     expect(events).toEqual([{ kind: "invulnerable", targetId: "target" }]);

@@ -139,7 +139,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
           skillBar: [],
           attributeRanks: resolved.attributeRanks,
           equipment: resolved.weaponSets[0].equipment,
-          baseEnergyPips: fighter.baseEnergyPips,
+          baseEnergyPips: resolved.weaponSets[0].baseEnergyPips,
           maxHealth: 1e7,
           spawn: at,
           facing: 0,

@@ -58,6 +58,7 @@ export type ActivationRejection =
   // A spirit skill on anything but a living spirit of your team (#1309).
   | "invalid-target-not-allied-spirit"
   | "invalid-target-not-enemy-spirit"
+  | "invalid-target-not-enemy-minion"
   | "invalid-target-not-own-minion"
   | "invalid-target-not-allied-minion"
   // A summoned-creature skill on anything but a living spirit or minion of
@@ -205,6 +206,11 @@ export function targetRuleAllows(
       return isEnemy && target.creatureKind === "spirit" && target.creatureOwnerId !== undefined
         ? undefined
         : "invalid-target-not-enemy-spirit";
+    case "enemy-minion":
+      // A masterless minion is on no one's team (#2092): a foe's to Gaze too.
+      return isEnemy && target.creatureKind === "minion"
+        ? undefined
+        : "invalid-target-not-enemy-minion";
     case "own-minion":
       return target.creatureKind === "minion" && target.creatureOwnerId === caster.id
         ? undefined

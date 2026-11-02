@@ -10,6 +10,14 @@ import {
   SHIELD_REQUIREMENT_ATTRIBUTES,
   accessibleAttributeIds,
   primaryAttributeIds,
+  MOD_SLOTS,
+  MOD_SLOT_KEYS,
+  MOD_WHILE_TEXT,
+  NO_UPGRADES,
+  WEAPON_MODS,
+  fittingUpgrades,
+  getWeaponMod,
+  modFits,
   allowsOffhand,
   getAttribute,
   getOffhand,
@@ -34,12 +42,16 @@ import {
   type Insignia,
   type InsigniaEffect,
   type InsigniaId,
+  type ItemUpgrades,
+  type ModId,
+  type ModSlot,
   type OffhandId,
   type PieceArmor,
   type PieceReduction,
   type ResolvedLoadout,
   type RuneTier,
   type WeaponId,
+  type WeaponMod,
   type WeaponSet,
   type WeaponSetIndex,
 } from "@vibewars/game-core";
@@ -139,11 +151,14 @@ export function setWeapon(
   // Picking a two-hander puts the off-hand down. That coupling lives
   // here, in a tested function, rather than in a click handler — it is
   // the rule the whole gear trade-off rests on.
-  const offHand = allowsOffhand(weapon) ? (setAt(character, set)?.offHand ?? null) : null;
+  const held = setAt(character, set);
+  const offHand = allowsOffhand(weapon) ? (held?.offHand ?? null) : null;
+  // The mods that fit the new weapon stay on it (#2007); an empty set has none.
+  const upgrades = fittingUpgrades(weaponId, held?.mainHand.upgrades ?? NO_UPGRADES);
 
   return touched(
     character,
-    withSet(character, set, { mainHand: { weaponId, requirementAttributeId }, offHand }),
+    withSet(character, set, { mainHand: { weaponId, requirementAttributeId, upgrades }, offHand }),
   );
 }
 
@@ -194,6 +209,7 @@ export function setOffhand(
           offhand.requirement.kind === "fixed"
             ? null
             : defaultNomination(character, offhand.requirement.from),
+        upgrades: fittingUpgrades(offhandId, held.offHand?.upgrades ?? NO_UPGRADES),
       },
     }),
   );
@@ -229,6 +245,105 @@ export function setRequirementAttribute(
       offHand: { ...held.offHand, requirementAttributeId: attributeId },
     }),
   );
+}
+
+/**
+ * `modId` into `slot` of set `set`'s `hand` (#2008); `null` takes it off.
+ * A mod that does not fit there, or a hand that is empty, changes nothing.
+ */
+export function setUpgrade(
+  character: StoredCharacter,
+  set: WeaponSetIndex,
+  hand: "mainHand" | "offHand",
+  slot: ModSlot,
+  modId: ModId | null,
+): StoredCharacter {
+  const held = setAt(character, set);
+  const worn = hand === "mainHand" ? held?.mainHand : held?.offHand;
+  if (held === null || worn === null || worn === undefined) {
+    return character;
+  }
+  const item = "weaponId" in worn ? worn.weaponId : worn.offhandId;
+  const mod = modId === null ? undefined : getWeaponMod(modId);
+  if (modId !== null && (mod === undefined || !modFits(mod, item, slot))) {
+    return character;
+  }
+  const upgrades = { ...worn.upgrades, [slot]: modId };
+  return touched(
+    character,
+    withSet(
+      character,
+      set,
+      hand === "mainHand"
+        ? { ...held, mainHand: { ...held.mainHand, upgrades } }
+        : held.offHand === null
+          ? held
+          : { ...held, offHand: { ...held.offHand, upgrades } },
+    ),
+  );
+}
+
+/** The slots `item` takes mods in, in slot order; bare hands take none (#2008). */
+export function modSlotsOf(item: WeaponId | OffhandId): readonly ModSlot[] {
+  return item === "unarmed" ? [] : MOD_SLOTS[item];
+}
+
+/** Every mod that may sit in `item`'s `slot`, by name; none for a slot it lacks (#2008). */
+export function modChoices(item: WeaponId | OffhandId, slot: ModSlot): readonly WeaponMod[] {
+  return WEAPON_MODS.filter((mod) => modFits(mod, item, slot)).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+}
+
+/**
+ * Item `id` named `name` as a toast says it fits: "an axe", "a sword",
+ * "daggers", which come as a pair, and "bare hands" for no weapon.
+ */
+function itemPhrase(id: string, name: string): string {
+  if (id === "unarmed") {
+    return "bare hands";
+  }
+  const lower = name.toLowerCase();
+  if (id === "daggers") {
+    return lower;
+  }
+  return /^[aeiou]/.test(lower) ? `an ${lower}` : `a ${lower}`;
+}
+
+/**
+ * What `before` wore that a changed weapon or off-hand in `after` lost,
+ * one line each (#2008): `Removed Insightful: it does not fit a sword.`
+ */
+export function droppedModNotes(before: StoredCharacter, after: StoredCharacter): string[] {
+  const notes: string[] = [];
+  const lost = (was: ItemUpgrades, now: ItemUpgrades | undefined, itemName: string): void => {
+    for (const slot of MOD_SLOT_KEYS) {
+      const id = was[slot];
+      if (id !== null && now?.[slot] !== id) {
+        const name = getWeaponMod(id)?.name ?? id;
+        notes.push(`Removed ${name}: it does not fit ${itemName}.`);
+      }
+    }
+  };
+  before.equipment.weaponSets.forEach((was, set) => {
+    const now = after.equipment.weaponSets[set];
+    if (was === null || now === null || now === undefined) {
+      return;
+    }
+    if (now.mainHand.weaponId !== was.mainHand.weaponId) {
+      const name = getWeapon(now.mainHand.weaponId)?.name ?? now.mainHand.weaponId;
+      lost(was.mainHand.upgrades, now.mainHand.upgrades, itemPhrase(now.mainHand.weaponId, name));
+    }
+    if (
+      was.offHand !== null &&
+      now.offHand !== null &&
+      now.offHand.offhandId !== was.offHand.offhandId
+    ) {
+      const name = getOffhand(now.offHand.offhandId)?.name ?? now.offHand.offhandId;
+      lost(was.offHand.upgrades, now.offHand.upgrades, itemPhrase(now.offHand.offhandId, name));
+    }
+  });
+  return notes;
 }
 
 /**
@@ -379,7 +494,7 @@ export function resolveForDisplay(character: StoredCharacter): ResolvedLoadout {
 export interface GearSummary {
   readonly maxHealth: number;
   readonly maxEnergy: number;
-  /** Energy regeneration in pips: the primary profession's. */
+  /** Energy regeneration in pips: the primary profession's, with the set's mods. */
   readonly baseEnergyPips: number;
   readonly armor: number;
   readonly weaponName: string;
@@ -434,6 +549,8 @@ function conditionLabel(condition: ArmorCondition): string {
       return "while activating a skill";
     case "signets-at-least":
       return `with ${String(condition.count)}+ signets on your bar`;
+    case "mod-while":
+      return MOD_WHILE_TEXT[condition.while];
   }
 }
 
@@ -622,9 +739,9 @@ export function summariseGear(
   const dealt = (damage: number): string => String(Math.round(damage * scale));
 
   return {
-    maxHealth: resolved.maxHealth,
+    maxHealth: held.maxHealth,
     maxEnergy: held.maxEnergy,
-    baseEnergyPips: resolved.baseEnergyPips,
+    baseEnergyPips: held.baseEnergyPips,
     armor: held.equipment.baseArmor,
     weaponName: weapon.name,
     damageRange: `${dealt(weapon.damageMin)}–${dealt(weapon.damageMax)}`,

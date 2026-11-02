@@ -39,6 +39,7 @@ import {
   type AttributeScaling,
   type Combatant,
   type ConditionalBonus,
+  type CreatureTemplate,
   type Skill,
   type SkillEffect,
   type SkillType,
@@ -185,6 +186,10 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     if (typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
     }
+  }
+  // Jagged Bones's horror stands up at its caster's rank (#1986).
+  if (definition.replacedOnDeathBy !== undefined && definition.attribute !== undefined) {
+    attributes.add(definition.attribute);
   }
   return [...attributes];
 }
@@ -775,10 +780,37 @@ export interface StatusDefinition {
    */
   readonly destroysBearerOnExpiry: boolean;
   /**
+   * Creatures a `take-control` takes are held by it (#2092): Verata's
+   * Aura's foe minions, which go masterless once its bearer no longer has
+   * it. Every `bondStatusId` names one of these.
+   */
+  readonly bindsCreatures: boolean;
+  /**
    * The share of each physical hit on the bearer that its source takes
    * instead (#1108): Symbiotic Bond's 0.5, rounded down. 0: none.
    */
   readonly redirectsPhysicalDamage: number;
+  /**
+   * The share of each hit on the bearer, of any type, that its closest
+   * living minion takes instead (#1986): Dark Bond's 0.75, rounded down.
+   * No minion as it lands: the bearer takes it. 0: none.
+   */
+  readonly redirectsDamageToMinion: number;
+  /**
+   * What stands up where the bearer, a minion, dies (#1986): Jagged
+   * Bones's Jagged Horror, for the minion's owner, at the level the
+   * status's source's rank in its `attribute` makes, kept in its `ranks`.
+   * Beside the minion's own replacement. A destroyed minion did not die:
+   * none. `masterless`: Malign Intervention's horror (#2092), which rises
+   * masterless where any bearer dies, a player too. `undefined`: none.
+   */
+  readonly replacedOnDeathBy:
+    | {
+        readonly creature: CreatureTemplate;
+        readonly count: number;
+        readonly masterless?: true;
+      }
+    | undefined;
   /**
    * The most of its max health the bearer can lose to one hit (#936):
    * Protective Spirit's 0.1. Applied last in `mitigate`, so it caps
@@ -1066,6 +1098,15 @@ export type StatusTriggerEvent =
    * foe is. Vengeful Was Khanhei's.
    */
   | "bearer-hit-by-attack"
+  /**
+   * A foe's blow, shot or spell is aimed at the bearer (#2095): once for
+   * each blow or shot as it resolves, before its blind, block and damage
+   * rolls, so a miss and a block count; once for each spell whose chosen
+   * target is the bearer, as it finishes, before anything fails it. An
+   * area spell with no chosen target never counts. Recorded with the
+   * foe, the offender, and fired at the drain. Sliver Armor's.
+   */
+  | "bearer-targeted-by-foe"
   /**
    * A skill's heal effect landed on the bearer (#1913), its amount above
    * 0, an overheal at full Health too: Soul Bind's. Pips, regeneration,
@@ -1661,6 +1702,12 @@ export type StatusChange =
       readonly offenderId: string;
       readonly fired: readonly AnsweringTrigger[];
     }
+  /** A foe aimed a blow, shot or spell at the bearer (#2095); `offenderId` is the foe. */
+  | {
+      readonly kind: "targeted-by-foe";
+      readonly offenderId: string;
+      readonly fired: readonly AnsweringTrigger[];
+    }
   /** A skill healed the bearer (#1913); `offenderId` is the healer. */
   | {
       readonly kind: "healed-by-skill";
@@ -1699,7 +1746,17 @@ export type StatusChange =
       readonly offenderId: string | undefined;
       readonly fired: readonly AnsweringTrigger[];
     }
-  | { readonly kind: "redirected-damage"; readonly toId: string; readonly amount: number }
+  /**
+   * A share of a hit on the bearer (#1108), for `toId`, its bond's source,
+   * or, `toClosestMinion`, for the bearer's closest living minion as it
+   * lands (#1986): Dark Bond's.
+   */
+  | {
+      readonly kind: "redirected-damage";
+      readonly toId: string;
+      readonly amount: number;
+      readonly toClosestMinion: boolean;
+    }
   /** A status of `toId`'s changed an outcome, and `toId` pays `amount` health (#1265). */
   | {
       readonly kind: "charged-source";
@@ -2191,6 +2248,18 @@ export class StatusSet {
     const fired = this.#answering("bearer-interrupted");
     if (fired.length > 0) {
       this.#changes.push({ kind: "interrupted", offenderId, fired });
+    }
+  }
+
+  /**
+   * `offenderId`, a foe, aimed a blow, shot or spell at the bearer
+   * (#2095), recorded only if a status on it answers that, with the
+   * triggers that do: once for each.
+   */
+  public recordTargetedByFoe(offenderId: string): void {
+    const fired = this.#answering("bearer-targeted-by-foe");
+    if (fired.length > 0) {
+      this.#changes.push({ kind: "targeted-by-foe", offenderId, fired });
     }
   }
 
@@ -2821,17 +2890,30 @@ export class StatusSet {
   }
 
   /**
-   * Split a physical hit of `amount` on the bearer (#1108): with a status
-   * that redirects, the newest, its share, rounded down, is recorded for
-   * its source and the rest returned; without one, all of it.
+   * Split a hit of `amount` on the bearer (#1108, #1986): with a status
+   * whose rule takes it, the newest, its share, rounded down, is recorded
+   * and the rest returned; without one, all of it. A bond on physical
+   * hits (Symbiotic Bond) sends to its source and takes only a
+   * `physical` one; one on any hit (Dark Bond) to the closest minion.
    */
-  public redirect(amount: number): number {
+  public redirect(amount: number, physical: boolean): number {
     for (const status of [...this.#statuses.values()].reverse()) {
-      const share = getStatusDefinition(status.id).redirectsPhysicalDamage;
+      const definition = getStatusDefinition(status.id);
+      const toClosestMinion = definition.redirectsDamageToMinion > 0;
+      const share = toClosestMinion
+        ? definition.redirectsDamageToMinion
+        : physical
+          ? definition.redirectsPhysicalDamage
+          : 0;
       if (share > 0) {
         const sent = Math.floor(amount * share);
         if (sent > 0) {
-          this.#changes.push({ kind: "redirected-damage", toId: status.sourceId, amount: sent });
+          this.#changes.push({
+            kind: "redirected-damage",
+            toId: status.sourceId,
+            amount: sent,
+            toClosestMinion,
+          });
         }
         return amount - sent;
       }

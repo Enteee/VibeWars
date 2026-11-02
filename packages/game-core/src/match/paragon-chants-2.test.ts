@@ -283,7 +283,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 1,
       rechargeSeconds: 10,
-      effects: [{ kind: "apply-status", statusId: "zealous-anthem", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "zealous-anthem", durationSeconds: { flat: 10 } },
+      ],
     });
     const sim = match([ATTACK]);
     put(sim, "zealous-anthem");
@@ -304,7 +306,7 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
       rechargeSeconds: 10,
-      effects: [{ kind: "apply-status", statusId: "aria-of-zeal", durationSeconds: 10 }],
+      effects: [{ kind: "apply-status", statusId: "aria-of-zeal", durationSeconds: { flat: 10 } }],
     });
   });
 
@@ -317,7 +319,7 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "adrenaline", amount: 6 },
       activationSeconds: 1,
       rechargeSeconds: 0,
-      effects: [{ kind: "apply-status", statusId: "lyric-of-zeal", durationSeconds: 10 }],
+      effects: [{ kind: "apply-status", statusId: "lyric-of-zeal", durationSeconds: { flat: 10 } }],
     });
     const sim = match([SIGNET]);
     put(sim, "lyric-of-zeal");
@@ -338,7 +340,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 1,
       rechargeSeconds: 10,
-      effects: [{ kind: "apply-status", statusId: "aria-of-restoration", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "aria-of-restoration", durationSeconds: { flat: 10 } },
+      ],
     });
     const sim = match([SPELL]);
     put(sim, "aria-of-restoration");
@@ -359,7 +363,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "adrenaline", amount: 4 },
       activationSeconds: 1,
       rechargeSeconds: 5,
-      effects: [{ kind: "apply-status", statusId: "chorus-of-restoration", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "chorus-of-restoration", durationSeconds: { flat: 10 } },
+      ],
     });
   });
 
@@ -372,7 +378,15 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
       rechargeSeconds: 10,
-      effects: [{ kind: "apply-status", statusId: "lyric-of-purification", durationSeconds: 17 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "lyric-of-purification",
+          durationSeconds: {
+            scaling: { attributeId: "paragon.motivation", atZero: 5, atTwelve: 17 },
+          },
+        },
+      ],
     });
     const sim = match([SIGNET]);
     put(sim, "lyric-of-purification");
@@ -390,7 +404,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "adrenaline", amount: 3 },
       activationSeconds: 2,
       rechargeSeconds: 0,
-      effects: [{ kind: "apply-status", statusId: "song-of-purification", durationSeconds: 20 }],
+      effects: [
+        { kind: "apply-status", statusId: "song-of-purification", durationSeconds: { flat: 20 } },
+      ],
     });
   });
 
@@ -403,7 +419,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "adrenaline", amount: 8 },
       activationSeconds: 2,
       rechargeSeconds: 0,
-      effects: [{ kind: "apply-status", statusId: "hexbreaker-aria", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "hexbreaker-aria", durationSeconds: { flat: 10 } },
+      ],
     });
     const sim = match([SPELL]);
     put(sim, "hexbreaker-aria");
@@ -421,7 +439,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
       rechargeSeconds: 10,
-      effects: [{ kind: "apply-status", statusId: "anthem-of-fury", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "anthem-of-fury", durationSeconds: { flat: 10 } },
+      ],
     });
     const pool = (withAnthem: boolean): number => {
       const sim = match([ATTACK, ADRENAL]);
@@ -443,7 +463,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
       rechargeSeconds: 10,
-      effects: [{ kind: "apply-status", statusId: "anthem-of-weariness", durationSeconds: 8 }],
+      effects: [
+        { kind: "apply-status", statusId: "anthem-of-weariness", durationSeconds: { flat: 8 } },
+      ],
     });
     const sim = match([ATTACK]);
     put(sim, "anthem-of-weariness");
@@ -461,7 +483,9 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "adrenaline", amount: 3 },
       activationSeconds: 1,
       rechargeSeconds: 0,
-      effects: [{ kind: "apply-status", statusId: "crippling-anthem", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "crippling-anthem", durationSeconds: { flat: 10 } },
+      ],
     });
     const sim = match([ATTACK]);
     put(sim, "crippling-anthem");
@@ -478,7 +502,15 @@ describe("the twelve chants (#1483)", () => {
       cost: { kind: "energy", amount: 10 },
       activationSeconds: 2,
       rechargeSeconds: 15,
-      effects: [{ kind: "apply-status", statusId: "anthem-of-disruption", durationSeconds: 8 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "anthem-of-disruption",
+          durationSeconds: {
+            scaling: { attributeId: "paragon.command", atZero: 1, atTwelve: 8.2 },
+          },
+        },
+      ],
     });
     const sim = match([ATTACK], ["warrior.healing-signet"]);
     put(sim, "anthem-of-disruption");

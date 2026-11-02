@@ -309,7 +309,9 @@ describe("the four chants (#1505), numbers from the corpus at rank 12", () => {
       cost: { kind: "adrenaline", amount: 8 },
       activationSeconds: 2,
       rechargeSeconds: 5,
-      effects: [{ kind: "apply-status", statusId: "song-of-concentration", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "song-of-concentration", durationSeconds: { flat: 10 } },
+      ],
     });
   });
 
@@ -322,7 +324,9 @@ describe("the four chants (#1505), numbers from the corpus at rank 12", () => {
       cost: { kind: "adrenaline", amount: 2 },
       activationSeconds: 1,
       rechargeSeconds: 0,
-      effects: [{ kind: "apply-status", statusId: "anthem-of-guidance", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "anthem-of-guidance", durationSeconds: { flat: 10 } },
+      ],
     });
   });
 
@@ -335,7 +339,9 @@ describe("the four chants (#1505), numbers from the corpus at rank 12", () => {
       cost: { kind: "adrenaline", amount: 3 },
       activationSeconds: 1,
       rechargeSeconds: 0,
-      effects: [{ kind: "apply-status", statusId: "energizing-chorus", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "energizing-chorus", durationSeconds: { flat: 10 } },
+      ],
     });
   });
 
@@ -348,7 +354,9 @@ describe("the four chants (#1505), numbers from the corpus at rank 12", () => {
       cost: { kind: "adrenaline", amount: 6 },
       activationSeconds: 1,
       rechargeSeconds: 6,
-      effects: [{ kind: "apply-status", statusId: "anthem-of-envy", durationSeconds: 10 }],
+      effects: [
+        { kind: "apply-status", statusId: "anthem-of-envy", durationSeconds: { flat: 10 } },
+      ],
     });
   });
 });

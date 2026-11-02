@@ -63,7 +63,7 @@ function use(user: Combatant, skillId: string, ...targets: Combatant[]): CombatE
 
 /** What `amount` of `type` damage at no armor penetration does to `victim`. */
 function elemental(amount: number, type: "earth" | "fire", victim: Combatant): number {
-  return mitigate(skillDamage(amount, type, 0), victim, RULES, "chest");
+  return mitigate(skillDamage(amount, type, 0), victim, RULES, "chest", createRng(1));
 }
 
 describe("Blinding Flash (#985)", () => {
@@ -100,9 +100,15 @@ describe("Shock (#985)", () => {
   it("knocks down for 2 s and strikes for 50 lightning at 25% armor penetration", () => {
     const target = foe();
     const events = use(caster(), "elementalist.shock", target);
-    const expected = mitigate(skillDamage(50, "lightning", 0.25), target, RULES, "chest");
+    const expected = mitigate(
+      skillDamage(50, "lightning", 0.25),
+      target,
+      RULES,
+      "chest",
+      createRng(1),
+    );
     expect(expected).toBeGreaterThan(
-      mitigate(skillDamage(50, "lightning", 0), target, RULES, "chest"),
+      mitigate(skillDamage(50, "lightning", 0), target, RULES, "chest", createRng(1)),
     );
     expect(events.map((event) => event.kind)).toEqual(["knocked-down", "damage"]);
     expect(target.knockdownRemaining).toBe(KNOCKDOWN_SECONDS);

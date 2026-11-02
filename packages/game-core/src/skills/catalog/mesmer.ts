@@ -391,7 +391,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds, whenever target foe casts a spell, that foe takes
     // 35...119...140 damage." The damage is the hex's, at rank 12.
-    effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "backfire", durationSeconds: { flat: 10 } }],
   },
   {
     id: "mesmer.diversion",
@@ -419,7 +419,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 6 seconds, the next time target foe uses a skill, that skill
     // takes an additional 10...47...56 seconds to recharge." The extra
     // recharge is the hex's, at rank 12 (#949).
-    effects: [{ kind: "apply-status", statusId: "diversion", durationSeconds: 6 }],
+    effects: [{ kind: "apply-status", statusId: "diversion", durationSeconds: { flat: 6 } }],
   },
   {
     id: "mesmer.arcane-echo",
@@ -446,7 +446,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If you cast a spell in the next 20 seconds, Arcane Echo is replaced
     // with that spell for 20 seconds." The copy is the status's (#469).
-    effects: [{ kind: "apply-status", statusId: "arcane-echo", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "arcane-echo", durationSeconds: { flat: 20 } }],
   },
   {
     id: "mesmer.echo",
@@ -473,7 +473,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 30 seconds, Echo is replaced with the next skill you use. Echo
     // acts as this skill for 20 seconds." The copy is the status's (#469).
-    effects: [{ kind: "apply-status", statusId: "echo", durationSeconds: 30 }],
+    effects: [{ kind: "apply-status", statusId: "echo", durationSeconds: { flat: 30 } }],
   },
   {
     id: "mesmer.empathy",
@@ -500,7 +500,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...13...15 seconds, whenever target foe attacks, that foe takes
     // 15...39...45 damage" (PvP). Both at rank 12, as every status is.
-    effects: [{ kind: "apply-status", statusId: "empathy", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "empathy",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 13 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -635,7 +643,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds, spells you cast recharge 33% faster."
-    effects: [{ kind: "apply-status", statusId: "mantra-of-recovery", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-recovery",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.fast-casting", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.mantra-of-concentration",
@@ -661,7 +677,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 1...31...38 seconds, the next time you would be interrupted, you are not." (#1964)
-    effects: [{ kind: "apply-status", statusId: "mantra-of-concentration", durationSeconds: 31 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-concentration",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 1, atTwelve: 30.6 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.mantra-of-resolve",
@@ -687,7 +711,9 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "PvP: for 5 seconds, you cannot be interrupted. Each time you would be, lose 10...5...4 Energy or Mantra of Resolve ends." (#1964)
-    effects: [{ kind: "apply-status", statusId: "mantra-of-resolve", durationSeconds: 5 }],
+    effects: [
+      { kind: "apply-status", statusId: "mantra-of-resolve", durationSeconds: { flat: 5 } },
+    ],
   },
   {
     id: "mesmer.mantra-of-earth",
@@ -713,7 +739,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 30...78...90 seconds, earth damage you take is reduced by 26...45...50%, and you gain 2 Energy whenever you take earth damage." (#1964)
-    effects: [{ kind: "apply-status", statusId: "mantra-of-earth", durationSeconds: 78 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-earth",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 30, atTwelve: 78 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.mantra-of-flame",
@@ -739,7 +773,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "As Mantra of Earth, for fire damage." (#1964)
-    effects: [{ kind: "apply-status", statusId: "mantra-of-flame", durationSeconds: 78 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-flame",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 30, atTwelve: 78 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.mantra-of-frost",
@@ -765,7 +807,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "As Mantra of Earth, for cold damage." (#1964)
-    effects: [{ kind: "apply-status", statusId: "mantra-of-frost", durationSeconds: 78 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-frost",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 30, atTwelve: 78 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.mantra-of-lightning",
@@ -791,7 +841,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "As Mantra of Earth, for lightning damage." (#1964)
-    effects: [{ kind: "apply-status", statusId: "mantra-of-lightning", durationSeconds: 78 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "mantra-of-lightning",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 30, atTwelve: 78 },
+        },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Mesmer Illusion Magic staples (#1228)                                  */
@@ -821,7 +879,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...15...18 seconds, target foe experiences -5 Health
     // degeneration": 15 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "conjure-phantasm", durationSeconds: 15 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "conjure-phantasm",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 4, atTwelve: 15.2 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.imagined-burden",
@@ -847,7 +913,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 8...18...20 seconds, target foe moves 50% slower": 18 s.
-    effects: [{ kind: "apply-status", statusId: "imagined-burden", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "imagined-burden",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.phantom-pain",
@@ -874,7 +948,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds ... When Phantom Pain ends, that foe suffers a Deep
     // Wound": the hex carries the wound.
-    effects: [{ kind: "apply-status", statusId: "phantom-pain", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "phantom-pain", durationSeconds: { flat: 10 } }],
   },
   {
     id: "mesmer.shrinking-armor",
@@ -901,7 +975,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 10 seconds ... When this hex ends, that foe has Cracked Armor":
     // the hex carries the crack.
-    effects: [{ kind: "apply-status", statusId: "shrinking-armor", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "shrinking-armor", durationSeconds: { flat: 10 } }],
   },
   {
     id: "mesmer.illusion-of-haste",
@@ -929,7 +1003,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...10...11 seconds, you move 33% faster" (PvP): 10 s, its
     // rank-12 value. The cripple as it ends is the enchantment's.
-    effects: [{ kind: "apply-status", statusId: "illusion-of-haste", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "illusion-of-haste",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 9.8 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.ineptitude",
@@ -962,7 +1044,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "ineptitude", durationSeconds: 4 }],
+    effects: [{ kind: "apply-status", statusId: "ineptitude", durationSeconds: { flat: 4 } }],
   },
   {
     id: "mesmer.clumsiness",
@@ -995,7 +1077,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "clumsiness", durationSeconds: 4 }],
+    effects: [{ kind: "apply-status", statusId: "clumsiness", durationSeconds: { flat: 4 } }],
   },
   {
     id: "mesmer.crippling-anguish",
@@ -1023,7 +1105,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...17...20 seconds, target moves 50% slower and suffers
     // -2...5...6 Health degeneration" (PvP): 17 s.
-    effects: [{ kind: "apply-status", statusId: "crippling-anguish", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "crippling-anguish",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Mesmer skill-use punishers (#1473)                                     */
@@ -1053,7 +1143,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "After 3 seconds ...": the hex carries the damage, dealt as it expires.
-    effects: [{ kind: "apply-status", statusId: "wastrels-worry", durationSeconds: 3 }],
+    effects: [{ kind: "apply-status", statusId: "wastrels-worry", durationSeconds: { flat: 3 } }],
   },
   {
     id: "mesmer.overload",
@@ -1082,7 +1172,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // to that foe and 75% of that damage to all adjacent foes": 47, 75% of
     // the rank-12 63 rounded, read as the hex lands.
     effects: [
-      { kind: "apply-status", statusId: "overload", durationSeconds: 5 },
+      { kind: "apply-status", statusId: "overload", durationSeconds: { flat: 5 } },
       {
         kind: "if",
         condition: { kind: "target-using-skill" },
@@ -1140,7 +1230,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 5...17...20 seconds": 17 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "frustration", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "frustration",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.price-of-pride",
@@ -1165,7 +1263,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "price-of-pride", durationSeconds: 5 }],
+    effects: [{ kind: "apply-status", statusId: "price-of-pride", durationSeconds: { flat: 5 } }],
   },
   {
     id: "mesmer.signet-of-humility",
@@ -1234,7 +1332,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 4...16 seconds": 14 s, its rank-12 13.6 rounded.
-    effects: [{ kind: "apply-status", statusId: "migraine", durationSeconds: 14 }],
+    effects: [{ kind: "apply-status", statusId: "migraine", durationSeconds: { flat: 14 } }],
   },
   {
     id: "mesmer.visions-of-regret",
@@ -1268,7 +1366,9 @@ export const MESMER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "visions-of-regret", durationSeconds: 10 }],
+    effects: [
+      { kind: "apply-status", statusId: "visions-of-regret", durationSeconds: { flat: 10 } },
+    ],
   },
   {
     id: "mesmer.unnatural-signet",
@@ -1365,7 +1465,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 5...80 seconds, the next time you are the target of a hex, that
     // hex fails and the caster takes 10...46 damage": 65 s, its rank-12
     // value.
-    effects: [{ kind: "apply-status", statusId: "hex-breaker", durationSeconds: 65 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "hex-breaker",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 5, atTwelve: 65 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.guilt",
@@ -1393,7 +1501,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 6 seconds, the next time target foe casts a spell that targets
     // a foe, the spell fails and you steal up to 5...14 Energy from that
     // foe" (#1475): the steal is the hex's, at rank 12.
-    effects: [{ kind: "apply-status", statusId: "guilt", durationSeconds: 6 }],
+    effects: [{ kind: "apply-status", statusId: "guilt", durationSeconds: { flat: 6 } }],
   },
   {
     id: "mesmer.shame",
@@ -1421,7 +1529,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 6 seconds, the next time target foe casts a spell that targets
     // an ally, the spell fails and you steal up to 5...14 Energy from that
     // foe" (#1475).
-    effects: [{ kind: "apply-status", statusId: "shame", durationSeconds: 6 }],
+    effects: [{ kind: "apply-status", statusId: "shame", durationSeconds: { flat: 6 } }],
   },
   {
     id: "mesmer.mistrust",
@@ -1449,7 +1557,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 6 seconds, the next spell that target foe casts on one of your
     // allies fails and deals 10...60 damage to that foe and 75% of that
     // damage to all nearby foes" (PvP, #1475).
-    effects: [{ kind: "apply-status", statusId: "mistrust", durationSeconds: 6 }],
+    effects: [{ kind: "apply-status", statusId: "mistrust", durationSeconds: { flat: 6 } }],
   },
   {
     id: "mesmer.fragility",
@@ -1478,13 +1586,27 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // each time they suffer or recover from a new condition" (PvP, #1475):
     // 18 s, its rank-12 value.
     effects: [
-      { kind: "apply-status", statusId: "fragility", durationSeconds: 18 },
+      {
+        kind: "apply-status",
+        statusId: "fragility",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 8, atTwelve: 17.6 },
+        },
+      },
       {
         kind: "splash",
         hits: "foes",
         radius: AREA_ADJACENT,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "fragility", durationSeconds: 18 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "fragility",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 8, atTwelve: 17.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1514,13 +1636,27 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // "For 1...10 seconds, target foe and all nearby foes are hexed with
     // Panic" (#1501): 8 s, its rank-12 value. The interrupt is the hex's.
     effects: [
-      { kind: "apply-status", statusId: "panic", durationSeconds: 8 },
+      {
+        kind: "apply-status",
+        statusId: "panic",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8.2 },
+        },
+      },
       {
         kind: "splash",
         hits: "foes",
         radius: AREA_NEARBY,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "panic", durationSeconds: 8 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "panic",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 1, atTwelve: 8.2 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1549,7 +1685,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5 seconds, target foe is hexed with Wastrel's Demise" (#1501):
     // the pulses are the hex's.
-    effects: [{ kind: "apply-status", statusId: "wastrels-demise", durationSeconds: 5 }],
+    effects: [{ kind: "apply-status", statusId: "wastrels-demise", durationSeconds: { flat: 5 } }],
   },
   {
     id: "mesmer.epidemic",
@@ -1832,13 +1968,27 @@ export const MESMER_SKILLS: readonly Skill[] = [
     // take twice as long to cast. When this hex ends, you gain 1...7
     // energy": 13 s, and 6 for each foe it caught.
     effects: [
-      { kind: "apply-status", statusId: "arcane-conundrum", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "arcane-conundrum",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 13 },
+        },
+      },
       {
         kind: "splash",
         hits: "foes",
         radius: AREA_ADJACENT,
         maxTargets: undefined,
-        effects: [{ kind: "apply-status", statusId: "arcane-conundrum", durationSeconds: 13 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "arcane-conundrum",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.illusion-magic", atZero: 5, atTwelve: 13 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1999,7 +2149,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    effects: [{ kind: "apply-status", statusId: "wandering-eye", durationSeconds: 4 }],
+    effects: [{ kind: "apply-status", statusId: "wandering-eye", durationSeconds: { flat: 4 } }],
   },
   {
     id: "mesmer.hex-eater-vortex",
@@ -2197,7 +2347,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "apply-status",
         statusId: "illusion-of-weakness",
-        durationSeconds: Number.POSITIVE_INFINITY,
+        durationSeconds: { flat: Number.POSITIVE_INFINITY },
       },
     ],
   },
@@ -2231,7 +2381,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8...56 seconds, whenever you cast a spell, you gain 1 Energy for
     // each foe in the area": 46 s, its rank-12 value. The status gains.
-    effects: [{ kind: "apply-status", statusId: "channeling", durationSeconds: 46 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "channeling",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 8, atTwelve: 46.4 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2262,7 +2420,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 6...11...12 seconds, target foe moves 50% slower. When Ethereal
     // Burden ends, you gain 10...16...18 Energy": 11 s; the status gives it.
-    effects: [{ kind: "apply-status", statusId: "ethereal-burden", durationSeconds: 11 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "ethereal-burden",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 6, atTwelve: 10.8 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.sum-of-all-fears",
@@ -2289,7 +2455,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 4...10...12 seconds, target foe moves, attacks, and casts spells
     // 33% slower": 10 s.
-    effects: [{ kind: "apply-status", statusId: "sum-of-all-fears", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "sum-of-all-fears",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 4, atTwelve: 10.4 },
+        },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2319,7 +2493,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 30...90 seconds": 78 s; the armor is the status's.
-    effects: [{ kind: "apply-status", statusId: "elemental-resistance", durationSeconds: 78 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "elemental-resistance",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 30, atTwelve: 78 },
+        },
+      },
+    ],
   },
   {
     id: "mesmer.physical-resistance",
@@ -2345,7 +2527,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 30...90 seconds": 78 s; the armor is the status's.
-    effects: [{ kind: "apply-status", statusId: "physical-resistance", durationSeconds: 78 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "physical-resistance",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.inspiration-magic", atZero: 30, atTwelve: 78 },
+        },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Casting-state hexes (#1931)                                             */
@@ -2383,7 +2573,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-casting", spell: true, orChant: true },
-        effects: [{ kind: "apply-status", statusId: "power-leech", durationSeconds: 10 }],
+        effects: [{ kind: "apply-status", statusId: "power-leech", durationSeconds: { flat: 10 } }],
       },
     ],
   },
@@ -2418,7 +2608,15 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-casting", spell: true, orChant: true },
-        effects: [{ kind: "apply-status", statusId: "power-flux", durationSeconds: 9 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "power-flux",
+            durationSeconds: {
+              scaling: { attributeId: "mesmer.domination-magic", atZero: 4, atTwelve: 8.8 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2451,7 +2649,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "apply-status",
         statusId: "signet-of-illusions",
-        durationSeconds: Number.POSITIVE_INFINITY,
+        durationSeconds: { flat: Number.POSITIVE_INFINITY },
       },
     ],
   },
@@ -2878,6 +3076,14 @@ export const MESMER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...5 seconds, you have a 75% chance to block attacks" (#1974):
     // 4 s, its rank-12 value. Each block's 2 Energy is the status's.
-    effects: [{ kind: "apply-status", statusId: "distortion", durationSeconds: 4 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "distortion",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.illusion-magic", atZero: 1, atTwelve: 4.2 },
+        },
+      },
+    ],
   },
 ];

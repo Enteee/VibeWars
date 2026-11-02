@@ -150,7 +150,17 @@ A **team build** is a team of its own characters, made on **Team
 Builder** and kept apart from your own characters. Each one is a card
 there, and only there: **New team build** makes one, and a click
 on a card, or its **Edit**, opens it. You propose one in the
-[Team Lobby](modes.md#team-lobby). Add a member
+[Team Lobby](modes.md#team-lobby).
+
+Every team build has a size, 1v1, 2v2, 4v4 or 8v8: the **Team size** in
+the sidebar. Team Builder lists the team builds of the size picked there,
+each with its slots filled, such as **3/4**, and **New team build** makes
+one of that size. A team build's size is fixed: its editor shows it
+locked, and to play another size you make another team build. A pasted
+team keeps its size, and the sidebar switches to it. A Team Lobby offers
+only a full team build of its size.
+
+Add a member
 with **New character**, or **Add** one of your characters to copy its
 build in. A copy is the team's own: changing it, or the character it came
 from, leaves the other as it was. Press a member's name to edit it in the
@@ -158,5 +168,9 @@ build editor; its **Save** puts it back in the team, and the team's own
 **Save** keeps it all and takes you back to Team Builder. **Esc** leaves
 without saving, and asks first. The team's **Share**, **Duplicate** and
 **Delete** are under **⋯**.
-Your first start rolls one ready-made team, marked **Random**: its
+You can save a team at any time, problems and all, but only a team
+without problems can be proposed in a Team Lobby: a card says
+**Not playable** and why, and a team with no name shows as **Unnamed team**.
+Your first start rolls one ready-made team at the picked size, 4v4 unless you
+changed it, marked **Random**: its
 **Reroll** swaps in another, and **Clone** gives you a copy to edit.

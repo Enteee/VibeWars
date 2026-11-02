@@ -52,3 +52,5 @@ rewriting history.
 | [0044](0044-lock-decides-what-runs.md)        | The lock decides what runs; the checkout is the operator's      |
 | [0045](0045-company-ci-runners.md)            | Company-hosted CI runners: one job per jail, allowlisted egress |
 | [0046](0046-qa-merges-workflow-prs.md)        | qa-tester merges workflow PRs that cicd-engineer pushed         |
+| [0047](0047-weapon-upgrades-without-items.md) | Weapon mods are ids on an equipped item, always perfect         |
+| [0048](0048-lobby-keys-in-urls.md)            | Lobby keys are 256-bit and travel only in invite links          |

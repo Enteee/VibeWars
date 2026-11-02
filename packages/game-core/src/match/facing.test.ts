@@ -167,13 +167,16 @@ describe("facing in the match (#187)", () => {
       {
         attributeRanks: new Map(),
         weaponSets: [
-          { equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel), maxEnergy: 30 },
+          {
+            equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+            maxEnergy: 30,
+            maxHealth: 500,
+            baseEnergyPips: 0,
+          },
           null,
           null,
           null,
         ],
-        maxHealth: 500,
-        baseEnergyPips: 0,
       },
       [],
     );

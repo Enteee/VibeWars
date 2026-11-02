@@ -90,6 +90,11 @@ export type TargetRule =
    * one controls.
    */
   | "enemy-spirit"
+  /**
+   * A living minion not on the caster's team (#2092): Verata's Gaze's
+   * "target minion", a foe's or a masterless one.
+   */
+  | "enemy-minion"
   /** A living minion the caster made (#1836): Putrid Flesh's "target minion". */
   | "own-minion"
   /** A living minion on the caster's team, whoever made it (#1836): Feast for the Dead's. */
@@ -469,7 +474,7 @@ export interface GiveHealthEffect {
 export interface ApplyStatusEffect {
   readonly kind: "apply-status";
   readonly statusId: StatusId;
-  readonly durationSeconds: number;
+  readonly durationSeconds: Magnitude;
   readonly on?: "caster";
 }
 
@@ -712,6 +717,11 @@ export interface CompanionStepsToTargetEffect {
  * reaches the caster's own living spirits (#1777), and is the one measured
  * from the caster, not the target: GW1's "your spirits within earshot" is
  * earshot of you, even when the skill strikes a foe (Spirit Boon Strike).
+ * `allied-minions` reaches every living minion on the caster's side,
+ * anyone's, measured from the caster as `own-minions` (#1986): Blood of
+ * the Master's "all animated undead allies". `foe-minions` reaches every
+ * living minion not on the caster's side, a masterless one too (#2092):
+ * Verata's Aura's "foe minions in the area".
  * `around: "caster"` centres it on the caster instead, whatever it
  * targeted (#1826): Return's "all adjacent foes", cast on an ally.
  */
@@ -720,11 +730,13 @@ export interface SplashEffect {
   readonly hits:
     | "foes"
     | "foe-creatures"
+    | "foe-minions"
     | "allies"
     | "non-spirit-allies"
     | "party"
     | "own-spirits"
-    | "own-minions";
+    | "own-minions"
+    | "allied-minions";
   readonly radius: number;
   readonly around?: "caster";
   /**
@@ -1137,13 +1149,31 @@ export interface Aura {
 }
 
 /**
- * The caster takes control of its target, a spirit (#1965): Signet of
- * Binding's. It is the caster's from then on, on its team, and leaves
- * with it, keeping what it has left. Acts on each target; the simulation
- * moves it, as it makes a `summon`'s. A dead caster takes nothing.
+ * The caster takes control of its target, a spirit (#1965) or a minion
+ * (#2092): Signet of Binding's, Verata's Aura's. It is the caster's from
+ * then on, on its team, and leaves with it, keeping what it has left.
+ * Acts on each target; the simulation moves it, as it makes a `summon`'s.
+ * A dead caster takes nothing. Never a cull: the cap is checked at the
+ * caster's next raise.
  */
 export interface TakeControlEffect {
   readonly kind: "take-control";
+  /**
+   * The caster's status that holds it (#2092): Verata's Aura's. Once the
+   * caster no longer bears it, the creature goes masterless. `undefined`:
+   * it is the caster's for good.
+   */
+  readonly bondStatusId: StatusId | undefined;
+}
+
+/**
+ * Verata's Gaze on its target, a foe's minion (#2092): one with a master
+ * goes masterless; a masterless one is healed for `heal` and becomes the
+ * caster's, as a `take-control`'s. The simulation moves it.
+ */
+export interface GazeMinionEffect {
+  readonly kind: "gaze-minion";
+  readonly heal: Magnitude;
 }
 
 /**
@@ -1456,6 +1486,16 @@ export type StateCondition =
    */
   | { readonly kind: "caster-spirit-within"; readonly radius: number }
   /**
+   * The caster controls at most `count` living `creature`s (#1986), as
+   * counted at the start of the tick: Verata's Sacrifice's "if you control
+   * 3 or fewer minions".
+   */
+  | {
+      readonly kind: "caster-controls-at-most";
+      readonly creature: "minion";
+      readonly count: number;
+    }
+  /**
    * A living spirit, any team's, or a fresh corpse lies within `radius` of
    * the caster (#1270): Lamentation's "within earshot of a spirit or
    * corpse". The corpse is not exploited.
@@ -1526,6 +1566,7 @@ export type UnconditionalEffect =
   | ChainMarkEffect
   | SummonEffect
   | TakeControlEffect
+  | GazeMinionEffect
   | CreateGroundEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;
@@ -2002,8 +2043,11 @@ export interface Combatant {
    * ceiling energy fills to is `maxEnergy − overcast`, and may be below 0.
    */
   overcast: number;
-  /** Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`). */
-  readonly baseEnergyPips: number;
+  /**
+   * Energy regeneration before statuses, in pips (`ENERGY_PER_PIP`): the
+   * weapon set in hand's, as `maxEnergy` is (#2007).
+   */
+  baseEnergyPips: number;
   /**
    * Units per adrenaline skill on the bar (#463), keyed like
    * `cast.rechargeRemaining`. Exactly the bar's adrenaline skills are keys,

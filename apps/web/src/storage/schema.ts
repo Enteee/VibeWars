@@ -1,4 +1,5 @@
 import type { BuildEquipment, ProfessionId } from "@vibewars/game-core";
+import { LOBBY_TEAM_SIZES, type LobbyTeamSize } from "@vibewars/game-protocol";
 
 /**
  * Browser-local persistence schema (brief §22–§24, ADR-0005, ADR-0016).
@@ -10,8 +11,8 @@ import type { BuildEquipment, ProfessionId } from "@vibewars/game-core";
  * data, and nothing should (ADR-0016).
  */
 
-export const CHARACTER_SCHEMA_VERSION = 4;
-export const TEAM_SCHEMA_VERSION = 2;
+export const CHARACTER_SCHEMA_VERSION = 5;
+export const TEAM_SCHEMA_VERSION = 4;
 
 export interface StoredAttribute {
   readonly attributeId: string;
@@ -44,10 +45,15 @@ export interface StoredTeamMember {
   readonly character: TeamCharacter;
 }
 
+/** A Team Build's size (#2109): the players a side it plays, as the team size dropdown offers it. */
+export type TeamSize = LobbyTeamSize;
+
 export interface StoredTeam {
   readonly schemaVersion: number;
   readonly id: string;
   readonly name: string;
+  /** Fixed when the build is made (#2109); `members` never exceeds it. */
+  readonly size: TeamSize;
   readonly members: readonly StoredTeamMember[];
   readonly rulesetId: string;
   readonly updatedAt: number;
@@ -99,6 +105,10 @@ function isStoredTeamMember(value: unknown): value is StoredTeamMember {
   );
 }
 
+export function isTeamSize(value: unknown): value is TeamSize {
+  return LOBBY_TEAM_SIZES.some((size) => size === value);
+}
+
 export function isStoredTeam(value: unknown): value is StoredTeam {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -108,8 +118,10 @@ export function isStoredTeam(value: unknown): value is StoredTeam {
     record.schemaVersion === TEAM_SCHEMA_VERSION &&
     typeof record.id === "string" &&
     typeof record.name === "string" &&
+    isTeamSize(record.size) &&
     Array.isArray(record.members) &&
     (record.members as readonly unknown[]).every(isStoredTeamMember) &&
+    record.members.length <= record.size &&
     typeof record.rulesetId === "string" &&
     typeof record.updatedAt === "number"
   );

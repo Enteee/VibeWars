@@ -124,6 +124,8 @@ describe("status definitions", () => {
         def.enchantmentsOnBearerCostLess !== 0 ||
         def.damageReduction !== 0 ||
         def.redirectsPhysicalDamage !== 0 ||
+        def.redirectsDamageToMinion !== 0 ||
+        def.replacedOnDeathBy !== undefined ||
         def.damageFromSpiritAttacks !== 0 ||
         def.adrenalineGainFaster !== 0 ||
         def.energyCostMultiplier !== 1 ||
@@ -137,7 +139,8 @@ describe("status definitions", () => {
         def.redirectsConditionsToMinion ||
         def.physicalDamageDealtAs !== undefined ||
         def.interruptGuard !== undefined ||
-        def.damageTypeTakenMultiplier !== undefined;
+        def.damageTypeTakenMultiplier !== undefined ||
+        def.bindsCreatures;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });
@@ -189,6 +192,7 @@ describe("status definitions", () => {
       "well-of-power": 5,
       "well-of-silence": -3,
       "symbiotic-bond": 3,
+      "veratas-sacrifice": 10,
       "conjure-phantasm": -5,
       "phantom-pain": -3,
       "shrinking-armor": -3,
@@ -196,6 +200,7 @@ describe("status definitions", () => {
       "enduring-toxin": -4,
       lamentation: -2,
       suffering: -2,
+      "swirling-aura": 5,
       "lingering-curse": -3,
       "mending-refrain": 3,
       "ice-spear": 3,
@@ -817,6 +822,28 @@ describe("StatusSet changes, for the triggers (#887)", () => {
           },
         ],
       },
+    ]);
+  });
+
+  it("records each time a foe takes aim only while a status answers that (#2095)", () => {
+    const set = new StatusSet();
+    set.recordTargetedByFoe("f");
+    expect(set.drainChanges()).toEqual([]);
+
+    set.apply("sliver-armor", 10, "e", NO_RANKS);
+    set.drainChanges();
+    set.recordTargetedByFoe("f");
+    set.recordTargetedByFoe("g");
+    const fired = [
+      {
+        statusId: "sliver-armor",
+        sourceId: "e",
+        trigger: getStatusDefinition("sliver-armor").triggers[0],
+      },
+    ];
+    expect(set.drainChanges()).toEqual([
+      { kind: "targeted-by-foe", offenderId: "f", fired },
+      { kind: "targeted-by-foe", offenderId: "g", fired },
     ]);
   });
 
