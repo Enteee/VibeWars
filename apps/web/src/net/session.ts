@@ -1,4 +1,4 @@
-import { MATCH_MODES, type PlayerBuild } from "@vibewars/game-core";
+import { MATCH_MODES, createRng, type PlayerBuild } from "@vibewars/game-core";
 import {
   FORMATION_TIMEOUT_MS,
   MAX_LOBBY_PLAYERS,
@@ -167,9 +167,30 @@ function newQueueNonce(): string {
 }
 
 /** In [0, 1), from `crypto`: a rejoin token is only as good as its randomness. */
-function secureRandom(): number {
+export function secureRandom(): number {
   const [value = 0] = crypto.getRandomValues(new Uint32Array(1));
   return value / 2 ** 32;
+}
+
+/**
+ * What a Team Lobby picks at random from (#2148: preset foes, ties, maps):
+ * `secureRandom`, or, with `seed` (`VITE_VIBEWARS_LOBBY_SEED`, set only by
+ * the e2e build), a fresh seeded RNG per lobby, so every solo match meets
+ * the same foe (#2213). Only the lobby's: matches, keys and tokens stay on
+ * `crypto` whatever the seed. Throws for a seed that is not a decimal
+ * integer.
+ */
+export function lobbyRandom(seed: string | undefined): () => number {
+  if (seed === undefined) {
+    return secureRandom;
+  }
+  if (!/^\d+$/.test(seed)) {
+    throw new Error(
+      `VITE_VIBEWARS_LOBBY_SEED must be a decimal integer, got ${JSON.stringify(seed)}`,
+    );
+  }
+  const rng = createRng(Number(seed));
+  return () => rng.nextFloat();
 }
 
 /** Build the match the lobby planned, on its map and by its mode. Throws for a map it does not have. */
@@ -245,7 +266,7 @@ export async function hostLobby(
     hostedTeamSize,
     startMatch,
     teamLobby,
-    random: secureRandom,
+    random: lobbyRandom(import.meta.env.VITE_VIBEWARS_LOBBY_SEED),
     ...(queued === undefined
       ? // Its party queues for a team mode under a group its room id names (#1766).
         { matchmaking: { roomId: lobbyRoom.roomId, verifyTicketSig, newNonce: newQueueNonce } }

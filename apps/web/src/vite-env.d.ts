@@ -20,6 +20,13 @@ interface ImportMetaEnv {
    * where `?stress=` works (#420). Read only by `music/stress.ts`.
    */
   readonly VITE_VIBEWARS_STRESS?: string;
+  /**
+   * A decimal integer only in the build e2e runs against: every Team Lobby
+   * draws from an RNG seeded with it, so a solo match always meets the same
+   * foe (#2213). Unset for every other build. Read only by `net/session.ts`;
+   * `vite.config.ts` refuses anything else.
+   */
+  readonly VITE_VIBEWARS_LOBBY_SEED?: string;
 }
 
 interface ImportMeta {

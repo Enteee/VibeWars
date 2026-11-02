@@ -1,3 +1,4 @@
+import { pickStarterBuild } from "@vibewars/game-core";
 import {
   LobbyNoAnswerError,
   LobbyRefusedError,
@@ -27,9 +28,11 @@ import {
   joinFailureNotice,
   leaveOnPageHide,
   lobbyClosedNotice,
+  lobbyRandom,
   lobbyRefusalNotice,
   loopbackHint,
   matchFailureNotice,
+  secureRandom,
   watchHostMove,
   type FollowSteps,
 } from "./session.js";
@@ -248,5 +251,22 @@ describe("closing the tab while queued (#1881)", () => {
     page.dispatchEvent(new Event("pagehide"));
     await Promise.resolve();
     expect([leaves, withdrawals()]).toEqual([1, 1]);
+  });
+});
+
+describe("a Team Lobby's RNG (#2213)", () => {
+  it("is crypto's in every build that sets no seed", () => {
+    expect(lobbyRandom(undefined)).toBe(secureRandom);
+  });
+
+  it("with the e2e build's seed, gives every lobby the same solo foe: a Monk/Elementalist", () => {
+    const foes = [lobbyRandom("11"), lobbyRandom("11")].map((random) => pickStarterBuild(random));
+    expect(foes.map((foe) => foe.name)).toEqual(["Monk/Elementalist", "Monk/Elementalist"]);
+  });
+
+  it("refuses a seed that is not a decimal integer, rather than falling back to crypto", () => {
+    for (const seed of ["", "1.5", "-3", "eleven"]) {
+      expect(() => lobbyRandom(seed)).toThrow(/decimal integer/);
+    }
   });
 });
