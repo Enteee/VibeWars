@@ -891,6 +891,13 @@ export interface StatusDefinition {
   readonly damageReductionFromHexedSource:
     { readonly attributeId: string; readonly fraction: number } | undefined;
   /**
+   * As `damageReductionFromHexedSource`, but from a dealer suffering status
+   * `statusId` (#2222): "They're on Fire!"'s "29% less damage from foes
+   * suffering from Burning". Read as each packet lands. `undefined`: none.
+   */
+  readonly damageReductionFromSourceWith:
+    { readonly statusId: StatusId; readonly fraction: number } | undefined;
+  /**
    * Taken off each packet a foe whose current Health is lower than the
    * bearer's deals (#2207): Intimidating Aura's "take 1...10 less damage
    * from foes with less Health than you". Compared as the packet lands;
@@ -1784,6 +1791,11 @@ export interface CriticalHitRider {
   readonly effects: readonly SkillEffect[];
   readonly energyIfRemoved: number;
   readonly skillId: string;
+  /**
+   * The status ends once it fired (#2222): "Find Their Weakness!"'s "the
+   * next time target ally criticals". `false`: every critical.
+   */
+  readonly endsWhenFired: boolean;
   /**
    * Only a critical hit made with a weapon of this class in the bearer's
    * main hand (#2133), as `AttackHitRider.weapon`: Disrupting Accuracy's

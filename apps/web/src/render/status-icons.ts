@@ -515,6 +515,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "tiger-stance": icon("tiger-stance"),
   "berserker-stance": icon("berserker-stance"),
   "bulls-charge": icon("bulls-charge"),
+  // Paragon staples (#2222).
+  "song-of-power": icon("song-of-power"),
+  "ballad-of-restoration": icon("ballad-of-restoration"),
+  "theyre-on-fire": icon("theyre-on-fire"),
+  "find-their-weakness": icon("find-their-weakness"),
 };
 
 const GAP = 2;

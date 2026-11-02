@@ -58,7 +58,12 @@ export type ParagonStatusId =
   | "help"
   | "brace-yourself"
   // Touch riders (#1966).
-  | "cant-touch-this";
+  | "cant-touch-this"
+  // Paragon staples (#2222).
+  | "song-of-power"
+  | "ballad-of-restoration"
+  | "theyre-on-fire"
+  | "find-their-weakness";
 
 export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition>> = {
   // "Fall Back!" at rank 12: 13 Health per second while moving, 33%
@@ -530,5 +535,52 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
   "cant-touch-this": define("cant-touch-this", '"Can\'t Touch This!"', "shout", {
     profession: "paragon",
     failsFoeTouchSkills: 4,
+  }),
+
+  // Song of Power (#2222): "4 Energy regeneration until that ally uses a
+  // skill". Each ally's ends on its own skill; an auto-attack is none.
+  "song-of-power": define("song-of-power", "Song of Power", "chant", {
+    profession: "paragon",
+    energyPips: 4,
+    endsWhenBearerUsesSkill: true,
+  }),
+  // Ballad of Restoration (#2222): "the next time each party member within
+  // earshot takes damage, that party member gains 15...75 Health", by its
+  // chanter's Motivation. Damage cut to nothing is not taken.
+  "ballad-of-restoration": define("ballad-of-restoration", "Ballad of Restoration", "chant", {
+    profession: "paragon",
+    triggers: [
+      {
+        on: "bearer-takes-damage-from-foe",
+        effects: [
+          {
+            kind: "heal",
+            amount: { scaling: { attributeId: "paragon.motivation", atZero: 15, atTwelve: 63 } },
+          },
+        ],
+        target: "bearer",
+        skillId: "paragon.ballad-of-restoration",
+      },
+    ],
+    endsWhenTriggered: true,
+  }),
+  // "They're on Fire!" at Leadership 12 (#2222): "take 5...35% less damage
+  // from foes suffering from Burning", 29%.
+  "theyre-on-fire": define("theyre-on-fire", "They're on Fire!", "shout", {
+    profession: "paragon",
+    damageReductionFromSourceWith: { statusId: "burning", fraction: 0.29 },
+  }),
+  // "Find Their Weakness!" at Command 12 (#2222), PvP: "the next time target
+  // ally criticals, that ally also inflicts a Deep Wound for 5...20
+  // seconds", 17 s. A hit that is no critical leaves it.
+  "find-their-weakness": define("find-their-weakness", "Find Their Weakness!", "shout", {
+    profession: "paragon",
+    onCriticalHit: {
+      effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: { flat: 17 } }],
+      energyIfRemoved: 0,
+      endsWhenFired: true,
+      skillId: "paragon.find-their-weakness",
+      weapon: undefined,
+    },
   }),
 };

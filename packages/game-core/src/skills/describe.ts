@@ -57,6 +57,7 @@ import type {
   HealEffect,
   Magnitude,
   PerCount,
+  CountRule,
   RemoveStatusEffect,
   Skill,
   SkillEffect,
@@ -657,11 +658,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("refreshes every time you land a critical hit");
   }
   if (definition.onCriticalHit !== undefined) {
-    const { effects, energyIfRemoved, weapon } = definition.onCriticalHit;
-    const when =
-      weapon === undefined
-        ? "every time you land a critical hit"
-        : `every time you land a critical hit with ${NEEDED_WEAPON[weapon]}`;
+    const { effects, energyIfRemoved, weapon, endsWhenFired } = definition.onCriticalHit;
+    const critical = endsWhenFired
+      ? "the next time you land a critical hit"
+      : "every time you land a critical hit";
+    const when = weapon === undefined ? critical : `${critical} with ${NEEDED_WEAPON[weapon]}`;
     parts.push(
       ...effects.flatMap((effect) =>
         describeEffects(effect, new Map()).map(({ text }) =>
@@ -805,6 +806,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const { attributeId, fraction } = definition.damageReductionFromHexedSource;
     parts.push(
       `${String(Math.round(fraction * 100))}% less damage from foes with a ${getAttribute(attributeId)?.name ?? attributeId} hex`,
+    );
+  }
+  // "They're on Fire!"'s (#2222).
+  if (definition.damageReductionFromSourceWith !== undefined) {
+    const { statusId, fraction } = definition.damageReductionFromSourceWith;
+    parts.push(
+      `${String(Math.round(fraction * 100))}% less damage from foes suffering from ${getStatusDefinition(statusId).name}`,
     );
   }
   // Intimidating Aura's (#2207).
@@ -2843,6 +2851,19 @@ function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarge
   return `for each ${what}${max}`;
 }
 
+/** What a `per` counts, one of it, as a headline names it (#2222): "ally", "hex". */
+function perCountNoun(count: CountRule): string {
+  return count.kind === "statuses"
+    ? count.categories.join(" or ")
+    : count.kind === "recharging-skills"
+      ? "recharging skill"
+      : count.kind === "energy"
+        ? "point of Energy"
+        : count.kind === "foes-within"
+          ? "foe"
+          : "ally";
+}
+
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
 function upToText(effect: EnergyGainEffect): string {
   return effect.upTo === undefined ? "" : `, never above ${String(effect.upTo)}`;
@@ -2963,10 +2984,23 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "adrenaline-gain": {
-      const magnitude = describeMagnitude(effect.strikes, ranks);
+      const magnitude = countedMagnitude(effect.strikes, effect.per, ranks);
       const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
+      const gain = effect.recipient === "owner" ? "You gain" : "Gain";
+      // "Make Your Time!"'s (#2222): "Gain 2 strikes of adrenaline for each ally in earshot".
+      const counted = withPerText(
+        `${gain} ${strikes} of adrenaline`,
+        effect.strikes,
+        effect.per,
+        ranks,
+        {
+          alone: gain,
+          unit: " strikes of adrenaline",
+          onTarget: "on them",
+        },
+      );
       return {
-        text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
+        text: `${counted}${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
         magnitude,
       };
     }
@@ -3440,14 +3474,20 @@ function headlineOf(
     case "damage":
     case "heal":
     case "energy-gain": {
-      const magnitude = describeMagnitude(effect.amount, ranks);
+      // A zero base leads with its `per` amount (#2222): Leader's Zeal's
+      // "+4 energy per ally", never "+0 energy".
+      const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       const amount = shown(magnitude);
+      const each =
+        effect.per !== undefined && "flat" in effect.amount && effect.amount.flat === 0
+          ? ` per ${perCountNoun(effect.per.count)}`
+          : perPointLost(effect);
       const text =
         effect.kind === "damage"
-          ? `${amount}${typeWord(effect.type)} damage${perPointLost(effect)}`
+          ? `${amount}${typeWord(effect.type)} damage${each}`
           : effect.kind === "heal"
-            ? `heals ${amount}`
-            : `+${amount} energy${perPointLost(effect)}`;
+            ? `heals ${amount}${each}`
+            : `+${amount} energy${each}`;
       return { text, scales: magnitude.attributeId !== undefined };
     }
     case "energy-loss": {

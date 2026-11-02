@@ -894,7 +894,7 @@ export function criticalHitRiders(
         event.kind === "status-removed" &&
         getStatusDefinition(event.statusId).category === "enchantment",
     );
-    if (removed && attacker.energy < rider.energyIfRemoved) {
+    if ((removed && attacker.energy < rider.energyIfRemoved) || rider.endsWhenFired) {
       attacker.statuses.end(status.id);
       events.push({ kind: "status-expired", targetId: attacker.id, statusId: status.id });
     } else if (removed && rider.energyIfRemoved > 0) {

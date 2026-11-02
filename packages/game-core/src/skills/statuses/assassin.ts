@@ -258,6 +258,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
     onCriticalHit: {
       effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
       energyIfRemoved: 4,
+      endsWhenFired: false,
       skillId: "assassin.dark-apostasy",
       weapon: undefined,
     },

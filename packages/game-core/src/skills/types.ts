@@ -155,8 +155,12 @@ export type CountRule =
     }
   /** Living foes of the caster within `radius` of the caster. */
   | { readonly kind: "foes-within"; readonly radius: number }
-  /** Living allies of the caster within `radius` of the caster, the caster included (#1955). */
-  | { readonly kind: "allies-within"; readonly radius: number }
+  /**
+   * Living allies of the caster within `radius` of the caster, the caster
+   * included (#1955), or with `excludesCaster` only the others (#2222):
+   * Leader's Zeal's "for each nearby ally".
+   */
+  | { readonly kind: "allies-within"; readonly radius: number; readonly excludesCaster?: true }
   /**
    * The skills of `attributeId` on the bar of the caster's living owner,
    * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
@@ -331,13 +335,16 @@ export interface EnergyGainToTarget extends Omit<
  * the caster's bar, at most `max` times: Defensive Stance's "1 strike of
  * adrenaline for each melee attack skill on your bar (maximum 3)".
  * `recipient: "owner"`: the caster's living owner, a pet's, gains them
- * instead, as Ferocious Strike's (#1957); no owner, nobody.
+ * instead, as Ferocious Strike's (#1957); no owner, nobody. `per`: more
+ * strikes for each of a count (#2222), "Make Your Time!"'s "2 strikes of
+ * adrenaline for each party member within earshot (maximum 1...8)".
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
   readonly strikes: Magnitude;
   readonly perTarget?: true;
   readonly perOwnMeleeAttackSkill?: { readonly max: number };
+  readonly per?: PerCount;
   readonly recipient?: "owner";
 }
 

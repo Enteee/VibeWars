@@ -118,6 +118,7 @@ export function define(
     damageReductionPerHitTaken: undefined,
     damageReductionWhileCasting: undefined,
     damageReductionFromHexedSource: undefined,
+    damageReductionFromSourceWith: undefined,
     damageReductionFromWeakerFoe: 0,
     damageTypeTakenMultiplier: undefined,
     destroysBearerOnExpiry: false,
