@@ -109,6 +109,12 @@ const NO_BOT_USE = new Set([
   "necromancer.contagion",
   "necromancer.offering-of-blood",
   "paragon.fall-back",
+  // Paragon staples (#2222): Song of Power's Energy regeneration, as Blood
+  // Ritual's, and Leader's Zeal's Energy and "Make Your Time!"'s adrenaline
+  // by allies near, as Channeling's by foes, are no rule the bot weighs.
+  "paragon.leaders-zeal",
+  "paragon.make-your-time",
+  "paragon.song-of-power",
   // Godspeed, "Lead the Way!" and "Brace Yourself!" (#1955): cast by
   // play-build's rider rule, not an intent.
   "paragon.brace-yourself",
@@ -288,6 +294,11 @@ const NO_BOT_USE = new Set([
   "ranger.famine",
   "ranger.lacerate",
   "ranger.quicksand",
+  // Pips for each condition and hex on the bearer (#2189): worth most when
+  // it suffers, which no rule the bot has weighs.
+  // Untargetable only while casting, then every skill disabled (#2189).
+  "monk.spell-shield",
+  "ranger.melandrus-resilience",
 ]);
 
 function skill(id: string) {

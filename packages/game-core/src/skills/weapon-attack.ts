@@ -102,10 +102,16 @@ export interface Swing {
 /**
  * How long an attack of `baseSeconds` takes this combatant, after
  * attack-speed effects (ADR-0029): a swing's interval, or an attack
- * skill's whole duration. Cast-speed effects do not apply.
+ * skill's whole duration. Cast-speed effects do not apply, nor does a
+ * speed-up held for a weapon the combatant is not wielding (#2189).
  */
 export function attackDurationSeconds(combatant: Combatant, baseSeconds: number): number {
-  return baseSeconds * aggregateModifiers(combatant.statuses.active).attackDurationMultiplier;
+  const wielded = combatant.equipment.mainHand.weapon.id;
+  const counted = combatant.statuses.active.filter(({ id }) => {
+    const weapon = getStatusDefinition(id).attackDurationMultiplierWeapon;
+    return weapon === undefined || wieldsFor(wielded, weapon);
+  });
+  return baseSeconds * aggregateModifiers(counted).attackDurationMultiplier;
 }
 
 /** The length of this combatant's swing with the weapon it holds, attack speed included. */
@@ -894,7 +900,7 @@ export function criticalHitRiders(
         event.kind === "status-removed" &&
         getStatusDefinition(event.statusId).category === "enchantment",
     );
-    if (removed && attacker.energy < rider.energyIfRemoved) {
+    if ((removed && attacker.energy < rider.energyIfRemoved) || rider.endsWhenFired) {
       attacker.statuses.end(status.id);
       events.push({ kind: "status-expired", targetId: attacker.id, statusId: status.id });
     } else if (removed && rider.energyIfRemoved > 0) {

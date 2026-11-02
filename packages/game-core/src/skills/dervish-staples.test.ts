@@ -9,13 +9,13 @@ import { vec2, type Vec2 } from "../vec2.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import type { CombatEvent } from "./effects.js";
-import { NO_RANKS } from "./status.js";
+import { aggregateModifiers, NO_RANKS } from "./status.js";
 import { effectiveMaxHealth } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
 
 /**
  * Dervish staples (#2207): Mystic Healing, Imbue Health, Intimidating
- * Aura, Eremite's Zeal and Vow of Silence. Numbers are the corpus's at
+ * Aura, Eremite's Zeal and Vow of Silence; Conviction (#2217). Numbers are the corpus's at
  * rank 12; the PvP ones where GW1 splits them.
  */
 
@@ -24,6 +24,7 @@ const DT = 1 / RULES.tickRateHz;
 const RANKS = new Map([
   ["dervish.wind-prayers", 12],
   ["dervish.mysticism", 12],
+  ["dervish.earth-prayers", 12],
 ]);
 
 function skill(id: string): Skill {
@@ -65,6 +66,20 @@ describe("the five are the corpus's (#2207)", () => {
     },
   );
 
+  it("Conviction is the corpus's: a flash Earth Prayers enchantment (#2217)", () => {
+    expect(skill("dervish.conviction")).toMatchObject({
+      gwId: 1540,
+      type: "enchantment",
+      elite: false,
+      flash: true,
+      attributeId: "dervish.earth-prayers",
+      cost: { kind: "energy", amount: 5 },
+      activationSeconds: 0,
+      rechargeSeconds: 10,
+      target: "self",
+    });
+  });
+
   it("Imbue Health cannot target its caster", () => {
     expect(skill("dervish.imbue-health").target).toBe("single-other-ally");
   });
@@ -93,6 +108,14 @@ describe("they read as GW1 words them (#2207)", () => {
     expect(describeStatus("eremites-zeal")).toMatch(/ends/i);
   });
 
+  it("Conviction: +10 armor if conditioned, +3 regeneration a condition, cures 2 as it ends", () => {
+    const words = describeStatus("conviction", RANKS);
+    expect(words).toMatch(/\+3 Health regeneration for each condition on you/);
+    expect(words).toMatch(/while under a condition: \+10 armor/);
+    expect(words).toMatch(/ends/i);
+    expect(text("dervish.conviction")).toMatch(/for 10s/);
+  });
+
   it("Vow of Silence: no spell targets you, and you cast none", () => {
     const words = describeStatus("vow-of-silence");
     expect(words).toMatch(/cannot be the target of spells/);
@@ -109,6 +132,7 @@ describe("in a match (#2207)", () => {
     "dervish.vow-of-silence",
     "monk.orison-of-healing",
     "elementalist.flare",
+    "dervish.conviction",
   ] as const;
   type BarSkill = (typeof BAR)[number];
   const SLOT = Object.fromEntries(BAR.map((id, slot) => [id, slot])) as Record<BarSkill, number>;
@@ -352,6 +376,84 @@ describe("in a match (#2207)", () => {
         ok: false,
         reason: "cannot-cast-spells",
       });
+    });
+  });
+
+  describe("Conviction (#2217)", () => {
+    /** Conditions of no pips of their own, on `c` from foe `f`. */
+    function condition(sim: MatchSimulation, ...ids: ("crippled" | "blind" | "weakness")[]): void {
+      for (const id of ids) {
+        get(sim, "c").statuses.apply(id, 30, "f", NO_RANKS);
+      }
+    }
+
+    /** Conviction's own armor and health pips on `c`, the rest of its statuses left out. */
+    function convictionGives(sim: MatchSimulation): { armor: number; pips: number } {
+      const active = [...get(sim, "c").statuses.active];
+      const all = aggregateModifiers(active);
+      const without = aggregateModifiers(active.filter(({ id }) => id !== "conviction"));
+      return {
+        armor: all.armorModifier - without.armorModifier,
+        pips: all.healthPips - without.healthPips,
+      };
+    }
+
+    function conditions(sim: MatchSimulation): number {
+      return [...get(sim, "c").statuses.active].filter(({ id }) =>
+        ["crippled", "blind", "weakness"].includes(id),
+      ).length;
+    }
+
+    it("with no condition gives no armor and no regeneration", () => {
+      const sim = match();
+      use(sim, "dervish.conviction");
+      expect(hasStatus(sim, "c", "conviction")).toBe(true);
+      expect(convictionGives(sim)).toEqual({ armor: 0, pips: 0 });
+    });
+
+    it("gives a flat +10 armor and +3 regeneration for each condition, recounted as one goes", () => {
+      const sim = match();
+      use(sim, "dervish.conviction");
+      condition(sim, "crippled");
+      expect(convictionGives(sim)).toEqual({ armor: 10, pips: 3 });
+      condition(sim, "blind");
+      expect(convictionGives(sim)).toEqual({ armor: 10, pips: 6 });
+      get(sim, "c").statuses.remove("blind");
+      expect(convictionGives(sim)).toEqual({ armor: 10, pips: 3 });
+    });
+
+    it("at Earth Prayers 0 gives +1 a condition", () => {
+      const sim = match(true, new Map([...RANKS, ["dervish.earth-prayers", 0]]));
+      use(sim, "dervish.conviction");
+      condition(sim, "crippled", "blind");
+      expect(convictionGives(sim)).toEqual({ armor: 10, pips: 2 });
+    });
+
+    it("lasts 10 s and cures 2 conditions as it ends", () => {
+      const sim = match();
+      use(sim, "dervish.conviction");
+      condition(sim, "crippled", "blind", "weakness");
+      stepFor(sim, 9.5);
+      expect(conditions(sim)).toBe(3);
+      stepFor(sim, 1);
+      expect(hasStatus(sim, "c", "conviction")).toBe(false);
+      expect(conditions(sim)).toBe(1);
+    });
+
+    it("stripped early, still cures, at most as many as there are", () => {
+      const sim = match();
+      use(sim, "dervish.conviction");
+      condition(sim, "crippled");
+      get(sim, "c").statuses.remove("conviction");
+      stepFor(sim, DT);
+      expect(conditions(sim)).toBe(0);
+    });
+
+    it("has no activation: it is on after one step", () => {
+      const sim = match();
+      expect(sim.requestSkill("c", SLOT["dervish.conviction"])?.check).toEqual({ ok: true });
+      stepFor(sim, DT);
+      expect(hasStatus(sim, "c", "conviction")).toBe(true);
     });
   });
 });

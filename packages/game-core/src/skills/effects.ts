@@ -877,6 +877,11 @@ function countOf(
             ({ combatant, position }) =>
               !combatant.dead &&
               (combatant.team === caster.team) === allies &&
+              !(
+                rule.kind === "allies-within" &&
+                rule.excludesCaster === true &&
+                combatant === caster
+              ) &&
               distance(position, at) <= rule.radius,
           ).length;
     }
@@ -929,17 +934,15 @@ function perRemovedByAnyone(
   earlier: readonly CombatEvent[],
 ): number {
   const category = effect.perRemoved;
-  if (category === undefined) {
-    return amount;
-  }
-  return (
-    amount *
-    earlier.filter(
-      (event) =>
-        event.kind === "status-removed" &&
-        getStatusDefinition(event.statusId).category === category,
-    ).length
-  );
+  return category === undefined ? amount : amount * removedByAnyone(category, earlier);
+}
+
+/** How many statuses of `category` an earlier `remove-status` took off anyone. */
+function removedByAnyone(category: StatusCategory, earlier: readonly CombatEvent[]): number {
+  return earlier.filter(
+    (event) =>
+      event.kind === "status-removed" && getStatusDefinition(event.statusId).category === category,
+  ).length;
 }
 
 /**
@@ -1485,8 +1488,9 @@ function destroyCreature(
 
 /**
  * `amount` from `dealer`, cut by each status on `target` that cuts damage
- * from a foe carrying a hex of its attribute (#1951): Mist Form's 33%
- * against a Water Magic hex. Rounded once, as `mitigate` rounds.
+ * from a foe carrying a hex of its attribute (#1951), Mist Form's 33%
+ * against a Water Magic hex, or suffering a given status (#2222), "They're
+ * on Fire!"'s against Burning. Rounded once, as `mitigate` rounds.
  */
 function hexedSourceDamage(
   target: Combatant,
@@ -1498,7 +1502,8 @@ function hexedSourceDamage(
   }
   let multiplier = 1;
   for (const { id } of target.statuses.active) {
-    const cut = getStatusDefinition(id).damageReductionFromHexedSource;
+    const definition = getStatusDefinition(id);
+    const cut = definition.damageReductionFromHexedSource;
     if (
       cut !== undefined &&
       dealer.statuses.active.some(
@@ -1508,6 +1513,10 @@ function hexedSourceDamage(
       )
     ) {
       multiplier *= 1 - cut.fraction;
+    }
+    const withStatus = definition.damageReductionFromSourceWith;
+    if (withStatus !== undefined && dealer.statuses.has(withStatus.statusId)) {
+      multiplier *= 1 - withStatus.fraction;
     }
   }
   return multiplier === 1 ? amount : Math.round(amount * multiplier);
@@ -1800,8 +1809,13 @@ export function applyEffect(
       // Whole strikes at the caster's rank (#2143), as a duration's (#2041):
       // Enraging Charge's "0...3" gives none at a low rank.
       const strikes =
-        Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)) *
-        adrenalineGainTimes(caster, effect);
+        withPerCount(
+          Math.max(0, resolveMagnitude(effect.strikes, context.ranksFrom ?? caster)),
+          effect.per,
+          caster,
+          target,
+          context.surroundings,
+        ) * adrenalineGainTimes(caster, effect);
       const gainer =
         effect.recipient === "owner" ? livingOwnerOf(caster, context.surroundings) : caster;
       if (
@@ -1924,6 +1938,14 @@ export function applyEffect(
       if (bearer === undefined || bearer.dead) {
         return events;
       }
+      // Convert Hexes' (#2189): a stack for each such status the use took off it, or nothing.
+      const stacks =
+        effect.stacksPerRemovedOfProfession === undefined
+          ? 1
+          : removedOfProfession(bearer.id, effect.stacksPerRemovedOfProfession, earlier);
+      if (stacks === 0) {
+        return events;
+      }
       // The duration at the ranks the status's stats use (#2041): a spirit's,
       // ward's or trigger's are its owner's. A weapon spell lasts longer with
       // its caster's Spawning Power (#1098), whatever skill or trigger lands it.
@@ -1959,6 +1981,10 @@ export function applyEffect(
         castSpot(context, caster),
         context.skillId,
       );
+      const stacked = bearer.statuses.get(effect.statusId);
+      if (stacked !== undefined && effect.stacksPerRemovedOfProfession !== undefined) {
+        stacked.stacks = stacks;
+      }
       // Elemental Flame's (#1951): the caster's hex landed on a foe.
       if (
         bearer.team !== caster.team &&
@@ -3375,14 +3401,21 @@ export function resolveSkillEffects(
           rechargeOthers(caster, skill.id, inner.which);
         }
         if (inner.kind === "lengthen-recharge" && inner.of === "this-skill") {
-          const seconds = resolveMagnitude(inner.seconds, caster);
-          rechargeLongerSeconds += seconds;
-          events.push({
-            kind: "recharge-lengthened",
-            targetId: caster.id,
-            skillId: skill.id,
-            seconds,
-          });
+          // Withdraw Hexes' (#2189): for each hex this use took off anyone.
+          const seconds =
+            resolveMagnitude(inner.seconds, caster) *
+            (inner.perRemoved === undefined
+              ? 1
+              : removedByAnyone(inner.perRemoved, [...earlier, ...events]));
+          if (seconds > 0) {
+            rechargeLongerSeconds += seconds;
+            events.push({
+              kind: "recharge-lengthened",
+              targetId: caster.id,
+              skillId: skill.id,
+              seconds,
+            });
+          }
         }
         if (inner.kind === "summon") {
           summons.push(inner);

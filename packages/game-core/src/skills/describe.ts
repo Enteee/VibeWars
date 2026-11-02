@@ -57,6 +57,7 @@ import type {
   HealEffect,
   Magnitude,
   PerCount,
+  CountRule,
   RemoveStatusEffect,
   Skill,
   SkillEffect,
@@ -406,6 +407,21 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.energyPips > 0) {
     parts.push(`+${String(definition.energyPips)} Energy regeneration`);
   }
+  // Melandru's Resilience's (#2189), Conviction's scaled (#2217).
+  if (statAtTwelve(definition.healthPipsPerCondition) !== 0) {
+    parts.push(
+      `${signedStat(definition.healthPipsPerCondition, ranks)} Health regeneration for each condition on you`,
+    );
+  }
+  for (const [pips, what, each] of [
+    [definition.healthPipsPerHex, "Health", "hex"],
+    [definition.energyPipsPerCondition, "Energy", "condition"],
+    [definition.energyPipsPerHex, "Energy", "hex"],
+  ] as const) {
+    if (pips !== 0) {
+      parts.push(`${signed(pips)} ${what} regeneration for each ${each} on you`);
+    }
+  }
   if (armorModifier !== 0) {
     const sign = armorModifier > 0 ? "+" : "-";
     parts.push(`${sign}${statText(definition.armorModifier, ranks, whole)} armor`);
@@ -555,7 +571,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       String(Math.round(Math.abs(multiplier - 1) * 100)),
     );
     const way = attackDurationMultiplier > 1 ? "slower" : "faster";
-    parts.push(`attacks ${change}% ${way}`);
+    // Rapid Fire's "while wielding a bow" (#2189).
+    const weapon = definition.attackDurationMultiplierWeapon;
+    parts.push(
+      `attacks ${change}% ${way}${weapon === undefined ? "" : ` while wielding a ${weapon}`}`,
+    );
   }
   if (definition.projectileSpeedMultiplier !== 1) {
     parts.push(`arrows move ${String(definition.projectileSpeedMultiplier)}× as fast`);
@@ -570,7 +590,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("cannot use resurrection skills");
   }
   if (definition.untargetableByFoeSpells) {
-    parts.push("cannot be the target of enemy spells");
+    // Spell Shield's (#2189).
+    parts.push(
+      definition.whileCasting
+        ? "cannot be the target of enemy spells while casting spells"
+        : "cannot be the target of enemy spells",
+    );
   }
   if (definition.untargetableBySpells) {
     parts.push("cannot be the target of spells");
@@ -657,11 +682,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("refreshes every time you land a critical hit");
   }
   if (definition.onCriticalHit !== undefined) {
-    const { effects, energyIfRemoved, weapon } = definition.onCriticalHit;
-    const when =
-      weapon === undefined
-        ? "every time you land a critical hit"
-        : `every time you land a critical hit with ${NEEDED_WEAPON[weapon]}`;
+    const { effects, energyIfRemoved, weapon, endsWhenFired } = definition.onCriticalHit;
+    const critical = endsWhenFired
+      ? "the next time you land a critical hit"
+      : "every time you land a critical hit";
+    const when = weapon === undefined ? critical : `${critical} with ${NEEDED_WEAPON[weapon]}`;
     parts.push(
       ...effects.flatMap((effect) =>
         describeEffects(effect, new Map()).map(({ text }) =>
@@ -805,6 +830,13 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const { attributeId, fraction } = definition.damageReductionFromHexedSource;
     parts.push(
       `${String(Math.round(fraction * 100))}% less damage from foes with a ${getAttribute(attributeId)?.name ?? attributeId} hex`,
+    );
+  }
+  // "They're on Fire!"'s (#2222).
+  if (definition.damageReductionFromSourceWith !== undefined) {
+    const { statusId, fraction } = definition.damageReductionFromSourceWith;
+    parts.push(
+      `${String(Math.round(fraction * 100))}% less damage from foes suffering from ${getStatusDefinition(statusId).name}`,
     );
   }
   // Intimidating Aura's (#2207).
@@ -2096,9 +2128,12 @@ function describeOwnSkillModifier(
   const kind =
     filter.chainRoles !== undefined
       ? `${filter.chainRoles.join(" and ")} attack`
-      : filter.type === undefined
-        ? "skill"
-        : filter.type.replaceAll("-", " ");
+      : // Expert Focus's "bow attack skills" (#2189).
+        filter.weapon !== undefined
+        ? `${filter.weapon} attack skill`
+        : filter.type === undefined
+          ? "skill"
+          : filter.type.replaceAll("-", " ");
   const named = [
     filter.profession === undefined ? undefined : getProfession(filter.profession).name,
     filter.attributeId === undefined
@@ -2843,6 +2878,19 @@ function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarge
   return `for each ${what}${max}`;
 }
 
+/** What a `per` counts, one of it, as a headline names it (#2222): "ally", "hex". */
+function perCountNoun(count: CountRule): string {
+  return count.kind === "statuses"
+    ? count.categories.join(" or ")
+    : count.kind === "recharging-skills"
+      ? "recharging skill"
+      : count.kind === "energy"
+        ? "point of Energy"
+        : count.kind === "foes-within"
+          ? "foe"
+          : "ally";
+}
+
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
 function upToText(effect: EnergyGainEffect): string {
   return effect.upTo === undefined ? "" : `, never above ${String(effect.upTo)}`;
@@ -2963,10 +3011,23 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       };
     }
     case "adrenaline-gain": {
-      const magnitude = describeMagnitude(effect.strikes, ranks);
+      const magnitude = countedMagnitude(effect.strikes, effect.per, ranks);
       const strikes = `${shown(magnitude)} ${magnitude.current === 1 ? "strike" : "strikes"}`;
+      const gain = effect.recipient === "owner" ? "You gain" : "Gain";
+      // "Make Your Time!"'s (#2222): "Gain 2 strikes of adrenaline for each ally in earshot".
+      const counted = withPerText(
+        `${gain} ${strikes} of adrenaline`,
+        effect.strikes,
+        effect.per,
+        ranks,
+        {
+          alone: gain,
+          unit: " strikes of adrenaline",
+          onTarget: "on them",
+        },
+      );
       return {
-        text: `${effect.recipient === "owner" ? "You gain" : "Gain"} ${strikes} of adrenaline${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
+        text: `${counted}${perFoeHit(effect)}${perOwnMeleeAttackSkill(effect)}`,
         magnitude,
       };
     }
@@ -3070,7 +3131,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           (ends(effect.durationSeconds)
             ? `for ${statusDuration(effect, ranks)} `
             : "until it ends ") +
-          `(${statusText(effect.statusId, ranks)})`,
+          `(${statusText(effect.statusId, ranks)}` +
+          // Convert Hexes' (#2189).
+          (effect.stacksPerRemovedOfProfession === undefined
+            ? ")"
+            : ` for each ${getProfession(effect.stacksPerRemovedOfProfession).name} hex removed)`),
         magnitude: undefined,
       };
     // Desperation Blow's (#2180).
@@ -3378,8 +3443,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const which = effect.of === "this-skill" ? "This skill" : "That skill";
+      // Withdraw Hexes' (#2189).
+      const each =
+        effect.perRemoved === undefined
+          ? ""
+          : ` for each ${categoryNoun(1, effect.perRemoved)} removed`;
       return {
-        text: `${which} takes ${shown(magnitude)} seconds longer to recharge`,
+        text: `${which} takes ${shown(magnitude)} seconds longer to recharge${each}`,
         magnitude,
       };
     }
@@ -3440,14 +3510,20 @@ function headlineOf(
     case "damage":
     case "heal":
     case "energy-gain": {
-      const magnitude = describeMagnitude(effect.amount, ranks);
+      // A zero base leads with its `per` amount (#2222): Leader's Zeal's
+      // "+4 energy per ally", never "+0 energy".
+      const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       const amount = shown(magnitude);
+      const each =
+        effect.per !== undefined && "flat" in effect.amount && effect.amount.flat === 0
+          ? ` per ${perCountNoun(effect.per.count)}`
+          : perPointLost(effect);
       const text =
         effect.kind === "damage"
-          ? `${amount}${typeWord(effect.type)} damage${perPointLost(effect)}`
+          ? `${amount}${typeWord(effect.type)} damage${each}`
           : effect.kind === "heal"
-            ? `heals ${amount}`
-            : `+${amount} energy${perPointLost(effect)}`;
+            ? `heals ${amount}${each}`
+            : `+${amount} energy${each}`;
       return { text, scales: magnitude.attributeId !== undefined };
     }
     case "energy-loss": {
@@ -4068,6 +4144,17 @@ export function describeSkill(
   const easilyInterrupted = isEasilyInterrupted(skill)
     ? [{ text: "Easily interrupted", magnitude: undefined }]
     : [];
+  // Withdraw Hexes' (#2189): "50% failure chance with Divine Favor 4 or less".
+  const failChance = skill.failChanceUnless;
+  const failChanceLine =
+    failChance === undefined
+      ? []
+      : [
+          {
+            text: `${String(Math.round(failChance.chance * 100))}% failure chance with ${getAttribute(failChance.attributeId)?.name ?? failChance.attributeId} ${String(failChance.rank - 1)} or less`,
+            magnitude: undefined,
+          },
+        ];
   // Natural Healing's (#1916): "if you are not enchanted, this spell activates 50% faster".
   const activationWhileLine =
     skill.activationWhile === undefined
@@ -4198,6 +4285,7 @@ export function describeSkill(
     ...activationWhileLine,
     ...divineFavorLine,
     ...easilyInterrupted,
+    ...failChanceLine,
     ...projectile,
     ...halfRange,
     ...companionLine,

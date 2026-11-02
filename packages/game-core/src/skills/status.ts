@@ -181,6 +181,7 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   adrenalineGainFaster: true,
   damageReductionFromWeakerFoe: true,
   casterEnergyPerReduction: true,
+  healthPipsPerCondition: true,
 };
 
 /** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
@@ -302,8 +303,19 @@ export interface StatusDefinition {
    * `healthPips`. `undefined`: none.
    */
   readonly healthPipsPerEnchantment: PipsPerEnchantment | undefined;
+  /**
+   * Health pips for each condition, and for each hex, on the bearer
+   * (#2189), recounted as they come and go: Melandru's Resilience's "+4
+   * Health regeneration for each condition and hex"; Conviction's 1...3 a
+   * condition scales (#2217). Summed with `healthPips`. 0: none.
+   */
+  readonly healthPipsPerCondition: StatusStat;
+  readonly healthPipsPerHex: number;
   /** Energy regeneration while active, in pips (`ENERGY_PER_PIP`), summed with the base. */
   readonly energyPips: number;
+  /** Energy pips for each condition, and for each hex, as `healthPipsPerCondition` (#2189). */
+  readonly energyPipsPerCondition: number;
+  readonly energyPipsPerHex: number;
   /** Flat armor modifier while active. */
   readonly armorModifier: StatusStat;
   /**
@@ -533,6 +545,12 @@ export interface StatusDefinition {
    */
   readonly attackDurationMultiplier: StatusStat;
   /**
+   * `attackDurationMultiplier` holds only while the bearer wields this
+   * weapon (#2189), as `attackDamageTypeWeapon`: Rapid Fire's "you attack
+   * 33% faster while wielding a bow". `undefined`: whatever it wields.
+   */
+  readonly attackDurationMultiplierWeapon: AttackWeaponClass | undefined;
+  /**
    * Multiplier on how fast the bearer's shots fly (#1742): Read the
    * Wind's "your arrows move twice as fast" is 2. Read as each shot is
    * released, so one in flight keeps its speed; a melee blow and a spell
@@ -566,6 +584,12 @@ export interface StatusDefinition {
    * bearer, and an ally's spell or a foe's non-spell is left alone.
    */
   readonly untargetableByFoeSpells: boolean;
+  /**
+   * `untargetableByFoeSpells` holds only while the bearer is activating a
+   * spell (#2189): Spell Shield's "while you are casting spells, foes
+   * cannot target you with spells".
+   */
+  readonly whileCasting: boolean;
   /**
    * No other character, foe or ally, can start a spell with the bearer as
    * its target (#2207): Vow of Silence's "you cannot be the target of
@@ -890,6 +914,13 @@ export interface StatusDefinition {
    */
   readonly damageReductionFromHexedSource:
     { readonly attributeId: string; readonly fraction: number } | undefined;
+  /**
+   * As `damageReductionFromHexedSource`, but from a dealer suffering status
+   * `statusId` (#2222): "They're on Fire!"'s "29% less damage from foes
+   * suffering from Burning". Read as each packet lands. `undefined`: none.
+   */
+  readonly damageReductionFromSourceWith:
+    { readonly statusId: StatusId; readonly fraction: number } | undefined;
   /**
    * Taken off each packet a foe whose current Health is lower than the
    * bearer's deals (#2207): Intimidating Aura's "take 1...10 less damage
@@ -1496,6 +1527,8 @@ export interface OwnSkillFilter {
   readonly profession: ProfessionId | undefined;
   /** Attack skills of one of these chain roles (#2134), as Way of the Empty Palm's. */
   readonly chainRoles: readonly ChainRole[] | undefined;
+  /** Attack skills of this weapon (#2189), as Expert Focus's "your bow attack skills". */
+  readonly weapon: AttackWeaponClass | undefined;
 }
 
 /** `StatusDefinition.ownSkillModifiers` (#1761). */
@@ -1586,41 +1619,46 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
     (filter.attributeId === undefined || skill.attributeId === filter.attributeId) &&
     (filter.profession === undefined || skill.profession === filter.profession) &&
     (filter.chainRoles === undefined ||
-      (skill.attack?.chain !== undefined && filter.chainRoles.includes(skill.attack.chain.role)))
+      (skill.attack?.chain !== undefined && filter.chainRoles.includes(skill.attack.chain.role))) &&
+    (filter.weapon === undefined || skill.attack?.weapon === filter.weapon)
   );
 }
 
 /**
  * What `active`'s modifiers do to a use of `skill` now (#1761), each
- * scaled number at its own status's ranks (#2158), Energy whole.
+ * scaled number at its own status's ranks (#2158), Energy whole. The
+ * floor is the highest of theirs, so one of 0 (#2189), Expert Focus's,
+ * holds only alone.
  */
 export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): OwnSkillBoost {
-  return active
+  const answering = active
     .flatMap(({ id, ranks }) =>
       getStatusDefinition(id).ownSkillModifiers.map((modifier) => ({ modifier, ranks })),
     )
-    .filter(({ modifier }) => ownSkillAnswers(modifier.filter, skill))
-    .reduce<OwnSkillBoost>(
-      (boost, { modifier, ranks }) => ({
-        energyBase:
-          modifier.energyBase === undefined
-            ? boost.energyBase
-            : Math.max(boost.energyBase ?? 0, modifier.energyBase),
-        energyDiscount: boost.energyDiscount + Math.round(statAt(modifier.energyDiscount, ranks)),
-        energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
-        energySurcharge:
-          boost.energySurcharge + Math.round(statAt(modifier.energySurcharge, ranks)),
-        activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
-        activationSecondsLess:
-          boost.activationSecondsLess + statAt(modifier.activationSecondsLess, ranks),
-        rechargeFaster: Math.max(boost.rechargeFaster, statAt(modifier.rechargeFaster, ranks)),
-        rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
-        durationMultiplier: boost.durationMultiplier * statAt(modifier.durationMultiplier, ranks),
-        healMultiplier: boost.healMultiplier * modifier.healMultiplier,
-        notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
-      }),
-      NO_OWN_SKILL_BOOST,
-    );
+    .filter(({ modifier }) => ownSkillAnswers(modifier.filter, skill));
+  if (answering.length === 0) {
+    return NO_OWN_SKILL_BOOST;
+  }
+  return answering.reduce<OwnSkillBoost>(
+    (boost, { modifier, ranks }) => ({
+      energyBase:
+        modifier.energyBase === undefined
+          ? boost.energyBase
+          : Math.max(boost.energyBase ?? 0, modifier.energyBase),
+      energyDiscount: boost.energyDiscount + Math.round(statAt(modifier.energyDiscount, ranks)),
+      energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
+      energySurcharge: boost.energySurcharge + Math.round(statAt(modifier.energySurcharge, ranks)),
+      activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
+      activationSecondsLess:
+        boost.activationSecondsLess + statAt(modifier.activationSecondsLess, ranks),
+      rechargeFaster: Math.max(boost.rechargeFaster, statAt(modifier.rechargeFaster, ranks)),
+      rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
+      durationMultiplier: boost.durationMultiplier * statAt(modifier.durationMultiplier, ranks),
+      healMultiplier: boost.healMultiplier * modifier.healMultiplier,
+      notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
+    }),
+    { ...NO_OWN_SKILL_BOOST, energyFloor: 0 },
+  );
 }
 
 /** `StatusDefinition.enchantmentRechargeFaster` (#1455). */
@@ -1784,6 +1822,11 @@ export interface CriticalHitRider {
   readonly effects: readonly SkillEffect[];
   readonly energyIfRemoved: number;
   readonly skillId: string;
+  /**
+   * The status ends once it fired (#2222): "Find Their Weakness!"'s "the
+   * next time target ally criticals". `false`: every critical.
+   */
+  readonly endsWhenFired: boolean;
   /**
    * Only a critical hit made with a weapon of this class in the bearer's
    * main hand (#2133), as `AttackHitRider.weapon`: Disrupting Accuracy's
@@ -2232,6 +2275,12 @@ export interface ActiveStatus {
   reflectionsLeft: number | undefined;
   /** Foes' touch skills still to fail before it ends (`failsFoeTouchSkills`); `undefined`: none. */
   touchFailsLeft: number | undefined;
+  /**
+   * How many times over its `armorModifier` counts (#2189): Convert Hexes'
+   * +10 for each Necromancer hex removed (`ApplyStatusEffect.stacksPerRemovedOfProfession`).
+   * 1 for every other.
+   */
+  stacks: number;
   /** Who applied it — needed so a future "when this ends, heal the caster"
    *  effect knows whom to credit. */
   readonly sourceId: string;
@@ -2861,6 +2910,7 @@ export class StatusSet {
       triggersLeft: definition.endsAfterTriggers,
       reflectionsLeft: definition.reflectsAttackDamage?.times,
       touchFailsLeft: definition.failsFoeTouchSkills,
+      stacks: 1,
       sourceId,
       sourceSkillId,
       ranks,
@@ -2933,6 +2983,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       touchFailsLeft: undefined,
+      stacks: 1,
       sourceId,
       sourceSkillId: undefined,
       ranks,
@@ -2986,6 +3037,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       touchFailsLeft: undefined,
+      stacks: 1,
       sourceId,
       sourceSkillId,
       ranks,
@@ -3028,6 +3080,7 @@ export class StatusSet {
       triggersLeft: undefined,
       reflectionsLeft: undefined,
       touchFailsLeft: undefined,
+      stacks: 1,
       sourceId,
       sourceSkillId: undefined,
       ranks,
@@ -3860,10 +3913,17 @@ export function untargetableBySpells(statuses: readonly Pick<ActiveStatus, "id">
 
 /**
  * Whether a foe cannot start a spell at a bearer of `statuses` (#1511,
- * `untargetableByFoeSpells`).
+ * `untargetableByFoeSpells`); one held `whileCasting` (#2189) only while
+ * `castingSpell`.
  */
-export function untargetableByFoeSpells(statuses: readonly Pick<ActiveStatus, "id">[]): boolean {
-  return statuses.some(({ id }) => getStatusDefinition(id).untargetableByFoeSpells);
+export function untargetableByFoeSpells(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+  castingSpell: boolean,
+): boolean {
+  return statuses.some(({ id }) => {
+    const def = getStatusDefinition(id);
+    return def.untargetableByFoeSpells && (castingSpell || !def.whileCasting);
+  });
 }
 
 /** Whether every blow at the bearer misses (#1951, `attacksAgainstMiss`). */
@@ -4139,11 +4199,13 @@ export function isSuppressed(
  * Attack duration is GW1's rule: only the strongest speed-up and the
  * strongest slow-down count, and they multiply. Pips per enchantment
  * (#845) count every enchantment in `statuses`, the one giving them
- * included. Under a status that bars speed boosts (#1745), only the
- * slows among the move speeds count.
+ * included; pips per condition and per hex (#2189) count those in
+ * `statuses`. Under a status that bars speed boosts (#1745), only the
+ * slows among the move speeds count. A status read without its
+ * `stacks`, by id alone, counts once.
  */
 export function aggregateModifiers(
-  statuses: readonly Pick<ActiveStatus, "id" | "ranks">[],
+  statuses: readonly (Pick<ActiveStatus, "id" | "ranks"> & Partial<Pick<ActiveStatus, "stacks">>)[],
 ): StatusModifiers {
   let healthPips = 0;
   let energyPips = 0;
@@ -4195,9 +4257,11 @@ export function aggregateModifiers(
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
   let preventsCriticals = false;
-  const enchantments = statuses.filter(
-    (status) => getStatusDefinition(status.id).category === "enchantment",
-  ).length;
+  const ofCategory = (category: StatusCategory): number =>
+    statuses.filter((status) => getStatusDefinition(status.id).category === category).length;
+  const enchantments = ofCategory("enchantment");
+  const conditions = ofCategory("condition");
+  const hexes = ofCategory("hex");
 
   for (const status of statuses) {
     const def = getStatusDefinition(status.id);
@@ -4210,8 +4274,12 @@ export function aggregateModifiers(
       const { pips, max } = def.healthPipsPerEnchantment;
       healthPips += pips * Math.min(enchantments, max);
     }
-    energyPips += def.energyPips;
-    armorModifier += Math.round(statAt(def.armorModifier, ranks));
+    healthPips +=
+      Math.round(statAt(def.healthPipsPerCondition, ranks)) * conditions +
+      def.healthPipsPerHex * hexes;
+    energyPips +=
+      def.energyPips + def.energyPipsPerCondition * conditions + def.energyPipsPerHex * hexes;
+    armorModifier += Math.round(statAt(def.armorModifier, ranks)) * (status.stacks ?? 1);
     armorWhileStill += def.armorWhileStill;
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     healthPerSecond += def.healthPerSecond;

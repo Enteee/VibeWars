@@ -51,6 +51,9 @@ export type MonkStatusId =
   | "shield-guardian"
   // Enchantment party moves (#1975).
   | "air-of-enchantment"
+  // Monk mechanics (#2189).
+  | "spell-shield"
+  | "convert-hexes"
   // Monk staples (#2190).
   | "shield-of-absorption"
   | "divine-intervention"
@@ -510,6 +513,36 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   "air-of-enchantment": define("air-of-enchantment", "Air of Enchantment", "enchantment", {
     profession: "monk",
     enchantmentsOnBearerCostLess: 10,
+  }),
+  // "For 5...20 seconds, while you are casting spells, foes cannot target
+  // you with spells. When Spell Shield ends, all your skills are disabled
+  // for 8...4 seconds" (#2189), by its Divine Favor.
+  "spell-shield": define("spell-shield", "Spell Shield", "enchantment", {
+    profession: "monk",
+    untargetableByFoeSpells: true,
+    whileCasting: true,
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "disable-own-skills",
+            which: "all",
+            seconds: {
+              scaling: { attributeId: "monk.divine-favor", atZero: 8, atTwelve: 4.8 },
+            },
+          },
+        ],
+        target: "bearer",
+        skillId: "monk.spell-shield",
+      },
+    ],
+  }),
+  // "That ally gains +10 armor for each Necromancer hex that was removed"
+  // (#2189): one stack a hex.
+  "convert-hexes": define("convert-hexes", "Convert Hexes", "skill-effect", {
+    profession: "monk",
+    armorModifier: 10,
   }),
   // Protection staples (#2187). "For 8 seconds, the next time target ally
   // would take damage, the source of that damage takes that much damage

@@ -82,6 +82,10 @@ export type RangerStatusId =
   | "disrupting-accuracy"
   | "marksmans-wager"
   | "storm-chaser"
+  // Ranger mechanics (#2189).
+  | "melandrus-resilience"
+  | "expert-focus"
+  | "rapid-fire"
   // Ranger staples (#2190).
   | "tigers-fury";
 
@@ -648,6 +652,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
     onCriticalHit: {
       effects: [{ kind: "interrupt" }],
       energyIfRemoved: 0,
+      endsWhenFired: false,
       skillId: "ranger.disrupting-accuracy",
       weapon: "bow",
     },
@@ -688,6 +693,52 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
         skillId: "ranger.storm-chaser",
       },
     ],
+  }),
+  // "You gain +4 Health regeneration and +1 Energy regeneration for each
+  // condition and hex you are suffering" (#2189).
+  "melandrus-resilience": define("melandrus-resilience", "Melandru's Resilience", "stance", {
+    profession: "ranger",
+    healthPipsPerCondition: 4,
+    healthPipsPerHex: 4,
+    energyPipsPerCondition: 1,
+    energyPipsPerHex: 1,
+  }),
+  // "Your bow attack skills cost 1...2 less Energy and deal 1...10 extra
+  // damage" (#2189), by its Expertise: piercing damage, as a bow's, and
+  // the cost never below 0.
+  "expert-focus": define("expert-focus", "Expert Focus", "preparation", {
+    profession: "ranger",
+    ownSkillModifiers: [
+      ownSkills(
+        { weapon: "bow" },
+        {
+          energyDiscount: {
+            scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 1.8 },
+          },
+          energyFloor: 0,
+        },
+      ),
+    ],
+    onAttackHit: {
+      attackSkillsOnly: true,
+      weapon: "bow",
+      weaponDamage: undefined,
+      effects: [
+        {
+          kind: "damage",
+          amount: { scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 8.2 } },
+          type: "piercing",
+          armorPenetration: 0,
+        },
+      ],
+      skillId: "ranger.expert-focus",
+    },
+  }),
+  // "You attack 33% faster while wielding a bow" (#2189).
+  "rapid-fire": define("rapid-fire", "Rapid Fire", "preparation", {
+    profession: "ranger",
+    attackDurationMultiplier: 0.67,
+    attackDurationMultiplierWeapon: "bow",
   }),
   // "For 5...11 seconds, you attack 25% faster" (#2190).
   "tigers-fury": define("tigers-fury", "Tiger's Fury", "stance", {

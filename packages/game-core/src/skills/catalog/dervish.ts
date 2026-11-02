@@ -2769,4 +2769,32 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  {
+    id: "dervish.conviction",
+    name: "Conviction",
+    gwId: 1540,
+    type: "enchantment",
+    elite: false,
+    flash: true,
+    disabledAfterUseSeconds: undefined,
+    profession: "dervish",
+    attributeId: "dervish.earth-prayers",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, you gain +10 armor if you have a condition and gain
+    // 1...3 Health regen for each condition you are suffering from. When
+    // this enchantment ends, you are cured of 1...2 conditions" (#2217).
+    effects: [{ kind: "apply-status", statusId: "conviction", durationSeconds: { flat: 10 } }],
+  },
 ];
