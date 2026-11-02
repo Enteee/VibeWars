@@ -4146,7 +4146,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
         kind: "apply-status",
         statusId: "teinais-prison",
         durationSeconds: {
-          scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 7 },
+          scaling: { attributeId: "elementalist.water-magic", atZero: 1, atTwelve: 6.6 },
         },
       },
     ],
