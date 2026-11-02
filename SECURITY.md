@@ -121,6 +121,14 @@ channels, as often as they like.
   send its guests to any open lobby whose key it holds. That is
   accepted: the follow is an ordinary keyed join, and the guest sees
   the lobby it lands in.
+- **An invite link opens a join, framed or not (#2100).** Unlike a relay
+  link, which a framed page never acts on, an invite link joins whatever
+  frame it opens in, so any site can put a hidden frame in a lobby it
+  holds the key to. Accepted: browsers partition a third-party frame's
+  storage, so that frame has no character, name or builds of the
+  player's, and the IP address the lobby sees is one any site can
+  already learn over WebRTC. A top-level link joins as soon as it opens,
+  as a party invite does; the player sees the lobby it lands in.
 - **A flooded lobby topic.** The topic a lobby announces on is public, so
   anyone watching the relays can announce on it too and make the host
   start handshakes that fail. That is denial of service, not access: such

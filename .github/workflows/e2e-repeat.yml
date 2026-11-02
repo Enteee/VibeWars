@@ -58,10 +58,13 @@ jobs:
       # and ci.yml's `e2e` job already runs it once.
       - id: select
         name: Select specs
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
         run: |
-          specs=$(node scripts/ci/select-e2e-specs.mjs "$BASE")
+          # The checkout is the merge of the pull request into main as it is
+          # now; its first parent is that main. `pull_request.base.sha` is
+          # main as it was at the last sync, and would count what has landed
+          # since as the pull request's own (#2125).
+          base=$(git rev-parse HEAD^1)
+          specs=$(node scripts/ci/select-e2e-specs.mjs "$base")
           if [ -z "$specs" ]; then
             echo "no e2e specs changed"
           else
