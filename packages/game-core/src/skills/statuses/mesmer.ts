@@ -786,11 +786,10 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     healthPips: -8,
   }),
   // "For 5...10 seconds, target foe suffers -1...3 Health degeneration"
-  // (#2231): -3, its rank-12 2.6 rounded. The damage if it was attacking
-  // is the skill's.
+  // (#2231). The damage if it was attacking is the skill's.
   "images-of-remorse": define("images-of-remorse", "Images of Remorse", "hex", {
     profession: "mesmer",
-    healthPips: -3,
+    healthPips: { scaling: { attributeId: "mesmer.illusion-magic", atZero: -1, atTwelve: -2.6 } },
   }),
   // "...target foe takes twice as long to activate non-attack skills"
   // (#2231), as Migraine's.

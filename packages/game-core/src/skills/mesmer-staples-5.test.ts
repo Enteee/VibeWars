@@ -128,6 +128,12 @@ describe("Images of Remorse (#2231)", () => {
     expect(aggregateModifiers(target.statuses.active).healthPips).toBe(-3);
   });
 
+  it("degenerates -1 from a rank-0 caster", () => {
+    const target = foe("f");
+    use(makeCombatant({ id: "m", energy: 20 }), "mesmer.images-of-remorse", target);
+    expect(aggregateModifiers(target.statuses.active).healthPips).toBe(-1);
+  });
+
   it("only hexes a foe that is casting a spell, or idle", () => {
     const casting = foe("f");
     casting.cast.beginCast("mesmer.energy-drain", "m", 1, undefined);
