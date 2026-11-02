@@ -340,7 +340,7 @@ describe("the mode rail (#1525)", () => {
     expect(size.textContent).toBe("8v8");
     expect([smaller.disabled, larger.disabled]).toEqual([false, true]);
     expect(loadTeamSize("teams")).toBe(8);
-    expect(loadTeamBuildSize("teams")).toBe(8);
+    expect(loadTeamBuildSize()).toBe(8);
   });
 
   it("steps with Left and Right on a focused arrow (#2141)", () => {
@@ -429,7 +429,7 @@ describe("the mode rail (#1525)", () => {
   });
 
   it("shows a Hosted Game lobby's team size, the host's pick, not your own (#2104)", () => {
-    saveTeamSize("hosted-game", 8);
+    saveTeamSize("hosted-game", 1);
     const party = {
       code: "ACDEFG",
       mode: "hosted-game",
@@ -439,13 +439,13 @@ describe("the mode rail (#1525)", () => {
       queuedMs: null,
       teams: undefined,
       ascentRound: null,
-      teamSize: 4,
+      teamSize: 2,
     } as const;
     setRailParty(party);
-    expect(shown("hosted-game")).toBe("‹ 4v4 ›");
+    expect(shown("hosted-game")).toBe("‹ 2v2 ›");
     // In a lobby of another mode, it is your own.
     setRailParty({ ...party, mode: "random-arena" });
-    expect(shown("hosted-game")).toBe("‹ 8v8 -");
+    expect(shown("hosted-game")).toBe("- 1v1 ›");
   });
 
   it("tells the shown screen of a step, not of opening it (#2022)", () => {

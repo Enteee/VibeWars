@@ -46,12 +46,12 @@ type Frame = Record<string, Box | null>;
 
 /**
  * A match against a bot from the menu on show, the bot targeted, the HUD
- * noted; in `lobby`'s size and map when given, else 2v2 on arena-alpha.
+ * noted; in `lobby`'s size and map when given, else 1v1 on arena-alpha.
  */
 async function phoneMatch(
   page: Page,
   phone: Phone,
-  lobby?: { readonly size: 2 | 4 | 8; readonly map: string },
+  lobby?: { readonly size: 1 | 2 | 4 | 8; readonly map: string },
 ): Promise<void> {
   await page.setViewportSize(phone);
   await page.goto("./");

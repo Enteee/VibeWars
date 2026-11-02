@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { key } from "./keys.js";
 import { joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
-import { hostLobby, playOwnTeams, saveSoloTeam, startSoloMatch } from "./helpers/peers.js";
+import { hostLobby, playOwnTeams, startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
@@ -157,9 +157,7 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   const foe = await page.context().newPage();
   // The pages share one storage, so the foe plays this starter too.
   await bringStarter(page, ARMORED);
-  // Each side of one plays it through a Team Build of two (#1525, #2141),
-  // saved once for both.
-  const team = await saveSoloTeam(page);
+  // Each side of one plays it, the active character, as a 1v1 does (#2141).
   const code = await hostLobby(page);
   await foe.goto("./");
   await joinFriend(foe, code);
@@ -168,10 +166,7 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await playOwnTeams([
-    { page, team },
-    { page: foe, team },
-  ]);
+  await playOwnTeams([{ page }, { page: foe }]);
 
   const effects = page.getByRole("list", { name: "your target's effects" });
   await expect(effects).toBeHidden();

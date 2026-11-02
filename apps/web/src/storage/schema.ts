@@ -1,10 +1,5 @@
 import type { BuildEquipment, ProfessionId } from "@vibewars/game-core";
-import {
-  HOSTED_GAME_TEAM_SIZES,
-  LOBBY_TEAM_SIZES,
-  type HostedGameTeamSize,
-  type LobbyTeamSize,
-} from "@vibewars/game-protocol";
+import { LOBBY_TEAM_SIZES, type LobbyTeamSize } from "@vibewars/game-protocol";
 
 /**
  * Browser-local persistence schema (brief §22–§24, ADR-0005, ADR-0016).
@@ -53,14 +48,11 @@ export interface StoredTeamMember {
 /** A size the sidebar's Team size offers (#2022): the players a side a mode plays. */
 export type TeamSize = LobbyTeamSize;
 
-/**
- * A Team Build's size (#2109): the players a side it plays; never 1v1
- * (#2141). A Hosted Game side plays one, so the sizes are a Hosted Game's.
- */
-export type TeamBuildSize = HostedGameTeamSize;
+/** A Team Build's size (#2109): the players a side it plays; never 1v1 (#2141). */
+export type TeamBuildSize = 2 | 4 | 8;
 
 /** Every Team Build size, smallest first. */
-export const TEAM_BUILD_SIZES: readonly TeamBuildSize[] = HOSTED_GAME_TEAM_SIZES;
+export const TEAM_BUILD_SIZES: readonly TeamBuildSize[] = [2, 4, 8];
 
 export interface StoredTeam {
   readonly schemaVersion: number;

@@ -8,7 +8,6 @@ import {
   openToFriends,
   playHouseTeams,
   playOwnTeams,
-  proposeTeam,
   saveSoloTeam,
   setTeamSize,
   teamSizeStepper,
@@ -56,38 +55,25 @@ async function joinLobby(page: Page, playerName: string, invite: string): Promis
 }
 
 /**
- * A 2v2 (#2141): the host on team 1, the guest on team 2 unless
- * `guestTeam` says, and on team 1 too each of `mates`, all ready, and
- * the host starts. Each side proposes a Team Build of two (#1525): a
- * side of one plays a bot beside its player (#2029). A side nobody is on
- * plays the house team.
+ * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
+ * the host starts; each side proposes a Team Build as big as its players
+ * (#1525), or a side of one its active character (#2141), so no bot plays
+ * beside them (#2029). A side nobody is on plays the house team, as many
+ * as the other.
  */
-async function startTwoPlayerMatch(
-  host: Page,
-  guest: Page,
-  guestTeam = 2,
-  mates: readonly Page[] = [],
-): Promise<string> {
+async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   await openMenu(host, "Host");
-  const team = await saveSoloTeam(host);
-  const invite = await hostFromMenu(host);
+  const team = guestTeam === 1 ? await saveSoloTeam(host, 2) : undefined;
+  const invite = await hostFromMenu(host, { size: guestTeam === 1 ? 2 : 1 });
   await joinLobby(guest, "Guest", invite);
-  for (const [index, mate] of mates.entries()) {
-    await joinLobby(mate, `Mate ${String(index + 1)}`, invite);
-  }
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
-  for (const mate of mates) {
-    await mate.getByRole("button", { name: "join team 1" }).click();
-  }
-  for (const page of [host, guest, ...mates]) {
-    await page.getByRole("button", { name: "Ready", exact: true }).click();
-  }
+  await host.getByRole("button", { name: "Ready", exact: true }).click();
+  await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
   await playOwnTeams([
     { page: host, team },
     { page: guest, team, seat: guestTeam === 1 ? 1 : 0 },
-    ...mates.map((page, index) => ({ page, team, seat: index + 1 })),
   ]);
   return invite;
 }
@@ -218,9 +204,9 @@ test("the host sets the team size in the sidebar, and the guest sees it there, l
     const invite = await hostLobby(host, "Host");
     await joinLobby(guest, "Guest", invite);
     const size = teamSizeStepper(guest.locator(".mode-rail"));
+    await expect(size.locator(".mode-rail-size-value")).toHaveText("1v1");
+    await setTeamSize(host, 2);
     await expect(size.locator(".mode-rail-size-value")).toHaveText("2v2");
-    await setTeamSize(host, 4);
-    await expect(size.locator(".mode-rail-size-value")).toHaveText("4v4");
     await expect(size.getByRole("button", { disabled: true })).toHaveCount(2);
   } finally {
     await context.close();
@@ -488,23 +474,19 @@ test("a player who quits early is told the match still runs, until it ends", asy
   }
 });
 
-test("a side whose players all quit forfeits, and is back in an open lobby; its winner follows (#846, #1997)", async ({
+test("a player who quits a 1v1 forfeits it, and is back in an open lobby; its winner follows (#846, #1997)", async ({
   browser,
 }) => {
-  // Annihilation: the quitters' team has nobody left, so it is wiped and
+  // Annihilation: the quitter's team has nobody left, so it is wiped and
   // the match ends at once, rather than running on with nobody to fight.
-  test.setTimeout(90_000);
-  const { context, pages } = await openPeers(browser, 3);
-  const [host, guest, mate] = pages as [Page, Page, Page];
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
 
   try {
-    await startTwoPlayerMatch(host, guest, 2, [mate]);
-    for (const page of [host, guest, mate]) {
-      await expect(page.locator(".hud-leave")).toBeVisible();
-    }
+    await startTwoPlayerMatch(host, guest);
+    await expect(host.locator(".hud-leave")).toBeVisible();
+    await expect(guest.locator(".hud-leave")).toBeVisible();
 
-    await leaveMatch(mate);
-    await expect(mate.locator(".lobby-running")).toBeVisible();
     await leaveMatch(host);
     await expect(host.locator(".lobby-panel")).toBeVisible();
     await expect(host.locator(".lobby-panel")).toBeVisible();
@@ -611,7 +593,7 @@ test("each row shows a player's name alone, and Start says who it waits for (#58
   }
 });
 
-test("a match plays the seat the host took, not a character selected after joining (#1070, #1525)", async ({
+test("a 1v1 plays the host's active character as it hosted, not one selected after joining (#1070, #1525, #2141)", async ({
   browser,
 }) => {
   const { context, pages } = await openPeers(browser, 2);
@@ -619,8 +601,9 @@ test("a match plays the seat the host took, not a character selected after joini
 
   try {
     // Both pages share one storage, so the guest selecting Blank changes
-    // the host's selection too. The host proposes a Team Build of Cynn,
-    // takes Cynn's seat and plays Cynn; the guest's side plays the house team.
+    // the host's selection too. A 1v1 proposes each player's active
+    // character as it joined (#2141): the host takes Cynn's seat and plays
+    // Cynn, the one it hosted with.
     await host.goto("./");
     await openRail(host, "Character Builder");
     await host.getByRole("button", { name: "New character", exact: true }).click();
@@ -631,7 +614,6 @@ test("a match plays the seat the host took, not a character selected after joini
     await host.locator("input.editor-name").fill("Blank");
     await host.getByRole("button", { name: "Save", exact: true }).click();
     await pickCharacter(host, "Cynn");
-    const cynn = await saveSoloTeam(host);
     const invite = await hostLobby(host, "Host");
     await guest.goto("./");
     await pickCharacter(guest, "Blank");
@@ -643,7 +625,7 @@ test("a match plays the seat the host took, not a character selected after joini
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
     await expect(host.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    await proposeTeam(host, cynn);
+    await expect(host.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
     await playHouseTeams([host, guest]);
 
     // Cynn's one skill, not Blank's empty bar.

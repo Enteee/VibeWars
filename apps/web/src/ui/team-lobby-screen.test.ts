@@ -14,6 +14,7 @@ import type * as Figure from "./character-figure.js";
 import type * as Kit from "./kit.js";
 import {
   NO_PROPOSALS,
+  SOLO_PROPOSAL,
   NO_PLAYABLE_TEAM_BUILDS,
   NO_TEAM_BUILDS,
   SEATS_LINE,
@@ -581,6 +582,17 @@ describe("the Team Lobby's body (#1460)", () => {
     const shown = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 }));
     expect(shown.all("team-lobby-hint")).toEqual([]);
     expect(shown.all("play-card")).toHaveLength(1);
+  });
+
+  it("offers a 1v1 no Team Builds: it plays the active character (#2141)", () => {
+    const shown = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 }));
+    expect(shown.all("team-lobby-drawer-tab")).toEqual([]);
+    expect(shown.all("team-lobby-drawer")).toEqual([]);
+    expect(shown.all("team-lobby-solo").map((line) => line.textContent)).toEqual([SOLO_PROPOSAL]);
+    // A side of two still picks from its Team Builds.
+    const pair = body(lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 2 }));
+    expect(pair.all("team-lobby-drawer-tab")).toHaveLength(1);
+    expect(pair.all("team-lobby-solo")).toEqual([]);
   });
 
   it("shows a spectator one line and nothing of either side", () => {

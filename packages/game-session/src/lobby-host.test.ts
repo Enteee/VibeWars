@@ -4,7 +4,7 @@ import {
   type Channel,
   type JsonValue,
   type LobbyMode,
-  type HostedGameTeamSize,
+  type LobbyTeamSize,
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
   parsePeerLobbySeat,
@@ -940,7 +940,7 @@ describe("a Team Lobby (#1458)", () => {
     random: () => number = draws(),
     mode?: LobbyMode,
     startMatch?: (plan: MatchPlan) => MatchHost | undefined,
-    size?: HostedGameTeamSize,
+    size?: LobbyTeamSize,
   ): Promise<{ lobby: TestLobby; members: Member[] }> {
     const lobby = await openLobby({
       teamLobby: true,
@@ -1121,10 +1121,10 @@ describe("a Team Lobby (#1458)", () => {
   });
 
   it("starts a Hosted Game at the host's team size, on the first map made for it (#2104)", async () => {
-    const lobby = await openLobby({ teamLobby: true, hostedTeamSize: 2 });
+    const lobby = await openLobby({ teamLobby: true, hostedTeamSize: 1 });
     lobby.host.connection.selectMode("hosted-game");
     await settle();
-    expect(lobby.host.connection.getSnapshot()).toMatchObject({ teamSize: 2, mapId: "test-arena" });
+    expect(lobby.host.connection.getSnapshot()).toMatchObject({ teamSize: 1, mapId: "test-arena" });
   });
 
   it("plays a Hosted Game only on a map made for its team size (#2104)", async () => {
@@ -1136,36 +1136,30 @@ describe("a Team Lobby (#1458)", () => {
     host.connection.selectMap("other-arena");
     await settle();
     expect(ann.connection.getSnapshot().mapId).toBe("other-arena");
-    // The other arena plays no 2v2: the lobby moves to the first that does.
-    host.connection.selectTeamSize(2);
+    // The other arena plays no 1v1: the lobby moves to the first that does.
+    host.connection.selectTeamSize(1);
     await settle();
-    expect(ann.connection.getSnapshot()).toMatchObject({ teamSize: 2, mapId: "test-arena" });
+    expect(ann.connection.getSnapshot()).toMatchObject({ teamSize: 1, mapId: "test-arena" });
     host.connection.selectMap("other-arena");
     await settle();
     expect(ann.connection.getSnapshot().mapId).toBe("test-arena");
   });
 
   it("refuses a team size below a side's players, and tells the host why (#2104)", async () => {
-    const { lobby, members } = await teamLobby(
-      ["Ann", "Bob", "Cid"],
-      [0, 1, 1, 1],
-      draws(),
-      "hosted-game",
-    );
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 1, 1], draws(), "hosted-game");
     const [host, ann] = members;
     if (host === undefined || ann === undefined) {
-      throw new Error("four members");
+      throw new Error("three members");
     }
     const told: string[] = [];
     host.connection.onNotice((text) => told.push(text));
-    host.connection.selectTeamSize(2);
+    host.connection.selectTeamSize(1);
     await settle();
-    expect(told).toEqual(["Team 2 has 3 players: team size can't go below 3"]);
+    expect(told).toEqual(["Team 2 has 2 players: team size can't go below 2"]);
     expect(lobby.host.connection.getSnapshot().teamSize).toBe(4);
     // Nobody is moved, and nobody needs to confirm again.
     expect(playersOf(ann).map(({ team, ready }) => [team, ready])).toEqual([
       [0, true],
-      [1, true],
       [1, true],
       [1, true],
     ]);
@@ -1191,13 +1185,16 @@ describe("a Team Lobby (#1458)", () => {
     host.connection.selectTeamSize(8);
     await settle();
     expect(ann.connection.getSnapshot().teamSize).toBe(8);
-    // Once the lobby has moved on, nothing changes.
+    // 1v1 is no Team Arena, and once the lobby has moved on nothing changes.
     const hostRefused = refusals(host);
+    host.connection.selectTeamSize(1);
+    await settle();
+    expect(hostRefused).toEqual(["not-pickable"]);
     await seat([host, ann], [0, 1]);
     await begin(lobby);
     host.connection.selectTeamSize(4);
     await settle();
-    expect(hostRefused).toEqual(["not-pickable"]);
+    expect(hostRefused).toEqual(["not-pickable", "not-pickable"]);
     expect(sideOf(ann)?.size).toBe(8);
   });
 
@@ -1495,15 +1492,15 @@ describe("a Team Lobby (#1458)", () => {
       draws(),
       undefined,
       undefined,
-      2,
+      1,
     );
     const [host, ann, cy] = members;
     if (host === undefined || ann === undefined || cy === undefined) {
       throw new Error("three members");
     }
     await begin(lobby);
-    host.connection.propose([WARRIOR, MONK]);
-    ann.connection.propose([MONK, WARRIOR]);
+    host.connection.propose([WARRIOR]);
+    ann.connection.propose([MONK]);
     await settle();
     expect(teamOf(host)?.sides[1]).toBeNull();
     expect(teamOf(host)?.sides[0]?.proposals.map(({ proposerId }) => proposerId)).toEqual([

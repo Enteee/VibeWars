@@ -10,7 +10,6 @@ import {
   hostLobby,
   playHouseTeams,
   playOwnTeams,
-  saveSoloTeam,
   startSoloMatch as startMatchFromMenu,
 } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
@@ -99,11 +98,10 @@ async function startLobbyMatch(
   guests: readonly Page[],
   build = "Elementalist/Mesmer",
 ): Promise<Locator> {
-  // A known bar (#852), played through a Team Build of two (#1525,
-  // #2141). The pages of a test share one storage, so the guests propose
-  // and play it too.
+  // A known bar (#852), the active character, which a 1v1 plays (#2141).
+  // The pages of a test share one storage, so the guests play it too: a
+  // side of one each.
   await bringStarter(host, build);
-  const team = await saveSoloTeam(host);
   const code = await hostLobby(host);
   for (const guest of guests) {
     await guest.goto("./");
@@ -114,7 +112,7 @@ async function startLobbyMatch(
   await host.getByRole("button", { name: "join team 1" }).click();
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
-  await playOwnTeams([host, ...guests].map((page) => ({ page, team })));
+  await playOwnTeams([host, ...guests].map((page) => ({ page })));
   // The last page opened is the tab in front, and a tab behind it can go
   // full screen no more than a person can see it (#2012).
   await host.bringToFront();
@@ -613,8 +611,7 @@ test("a match whose host goes returns to the menu and says why (#195)", async ({
 
   // A new match works, and the notice is gone with the menu. From the
   // menu on show: the starter is already picked, and bringing it again
-  // would save a second one. Its Team Build of one is saved again, under
-  // the same name, which proposes the same.
+  // would save a second one.
   await startMatchFromMenu(page);
   await expect(notice).toHaveCount(0);
   await host.close();

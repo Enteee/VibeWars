@@ -8,7 +8,7 @@ import {
   isTeamQueueMode,
   type JsonValue,
   type LobbyRefusal,
-  type HostedGameTeamSize,
+  type LobbyTeamSize,
   type PeerHello,
   type QueueMode,
 } from "@vibewars/game-protocol";
@@ -210,7 +210,7 @@ export async function hostLobby(
   name: string,
   guild: Guild,
   teamLobby: boolean,
-  hostedTeamSize: HostedGameTeamSize,
+  hostedTeamSize: LobbyTeamSize,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
   // A queued lobby meets in its group's room, which no lobby key can

@@ -182,7 +182,7 @@ function teamBuilderBody(
   callbacks: TeamPlayCallbacks,
   rerolled: boolean,
 ): void {
-  let section = teamCards(teams, loadTeamBuildSize("teams"), callbacks);
+  let section = teamCards(teams, loadTeamBuildSize(), callbacks);
   body.appendChild(section);
   if (rerolled) {
     section.querySelector<HTMLElement>(".play-card-reroll")?.focus();

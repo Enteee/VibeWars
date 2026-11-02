@@ -25,7 +25,7 @@ import {
   teamSizeOf,
   type LobbyMode,
   type LobbyPhase,
-  type HostedGameTeamSize,
+  type LobbyTeamSize,
   type TeamArenaSize,
   type PeerLobbyJoin,
   type PeerLobbySeat,
@@ -242,7 +242,7 @@ export interface LobbyHostOptions {
    */
   readonly mapTeamSizes: Readonly<Record<string, readonly number[]>>;
   /** A Hosted Game's players a side to begin with (#2104): the host's sidebar Team size. */
-  readonly hostedTeamSize: HostedGameTeamSize;
+  readonly hostedTeamSize: LobbyTeamSize;
   /** Build the match for `plan`. Injected, so a test can play a fake one. */
   readonly startMatch: (plan: MatchPlan) => MatchHost;
   /** The queue's lobby, not a coded one; its map must be one of `mapIds`. */
@@ -405,7 +405,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let phase: LobbyPhase = "waiting";
   let mapId = queued?.group.mapId ?? defaultMap;
   /** A Hosted Game's players a side, the host's pick (#2104). */
-  let hostedSize: HostedGameTeamSize = options.hostedTeamSize;
+  let hostedSize: LobbyTeamSize = options.hostedTeamSize;
   /** A Team Arena's players a side, its leader's pick (#2107). */
   let arenaSize: TeamArenaSize = 4;
   /** The host's pick on the rail (#1526). */
@@ -1112,7 +1112,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * is told. A map the size does not suit moves to the first that does.
    * Everyone re-confirms.
    */
-  const pickArenaSize = (member: Member, size: HostedGameTeamSize): boolean => {
+  const pickArenaSize = (member: Member, size: LobbyTeamSize): boolean => {
     if (phase !== "waiting" || !isTeamArenaSize(size)) {
       refuse(member.id, "not-pickable");
       return false;
@@ -1148,7 +1148,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * size is withdrawn, its proposer told, and the vote's clock starts
    * again. Everyone re-confirms.
    */
-  const pickTeamSize = (member: Member, size: HostedGameTeamSize): boolean => {
+  const pickTeamSize = (member: Member, size: LobbyTeamSize): boolean => {
     if (member.id !== local.selfId) {
       refuse(member.id, "not-host");
       return false;

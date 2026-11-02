@@ -59,7 +59,7 @@ export const DEFAULT_TEAM_SIZE: TeamSize = 4;
 
 /**
  * The sizes each rail screen plays (#2022), smallest first: Team Arena's
- * its leader picks from (#2107), Team Builder's and a Hosted Game's never 1v1 (#2141). A
+ * its leader picks from (#2107), Team Builder's never 1v1 (#2141). A
  * builder's empty list disables the stepper.
  */
 export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]>> = {
@@ -67,7 +67,7 @@ export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]
   "team-arena": [2, 4, 8],
   "heroes-ascent": [8],
   gvg: [8],
-  "hosted-game": TEAM_BUILD_SIZES,
+  "hosted-game": [1, 2, 4, 8],
   characters: [],
   teams: TEAM_BUILD_SIZES,
 };
@@ -126,12 +126,9 @@ export function loadTeamSize(entry: RailEntry): TeamSize {
     : defaultTeamSize(entry);
 }
 
-/**
- * The size of a screen that plays Team Builds: a new build's, or a Hosted
- * Game's or a Team Arena's lobby's, never 1v1 (#2141).
- */
-export function loadTeamBuildSize(entry: "teams" | "hosted-game" | "team-arena"): TeamBuildSize {
-  const size = loadTeamSize(entry);
+/** Team Builder's size: a new build's, never 1v1 (#2141). */
+export function loadTeamBuildSize(): TeamBuildSize {
+  const size = loadTeamSize("teams");
   return isTeamBuildSize(size) ? size : 4;
 }
 
@@ -173,6 +170,8 @@ export function teamSizeStepper(
   const sizes = TEAM_SIZES_BY_ENTRY[entry];
   const stepper = h("div", "mode-rail-stepper");
   stepper.setAttribute("data-entry", "team-size");
+  stepper.setAttribute("role", "group");
+  stepper.setAttribute("aria-label", "Team size");
   let shown = value;
   const next = (direction: -1 | 1): TeamSize | undefined => {
     if (shown === undefined) {

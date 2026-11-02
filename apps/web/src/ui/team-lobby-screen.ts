@@ -43,6 +43,8 @@ export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
 export const NO_PROPOSALS = "No proposals: the house team build plays";
+/** A 1v1's vote (#2141): there are no Team Builds of one. */
+export const SOLO_PROPOSAL = "A 1v1 plays your active character";
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
 /** Every Team Build has problems (#2110): saved, but none can be proposed. */
 export const NO_PLAYABLE_TEAM_BUILDS =
@@ -634,7 +636,11 @@ function voteStage(
   proposedTeamId: string | undefined,
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
-  const shown: HTMLElement[] = buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
+  // A 1v1 proposes the active character itself, not a Team Build (#2141).
+  const shown: HTMLElement[] =
+    side.size === 1
+      ? [h("div", "screen-info team-lobby-solo", SOLO_PROPOSAL)]
+      : buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
   shown.push(h("h3", "menu-column-title", "Proposals"));
   if (humansOnSide(snapshot) > 1) {
     shown.push(h("div", "screen-info team-lobby-hint", VOTE_HINT));

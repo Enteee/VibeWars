@@ -91,13 +91,12 @@ export function teamSizeStepper(scope: Page | Locator): Locator {
 /**
  * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
  * opened to friends (#1682); its invite link (#2100). It plays `size`
- * a side on `map`, 2v2 on arena-alpha unless said, the smallest a
- * Hosted Game plays (#2141): the sidebar's default (#2104) is 4v4, which
- * most specs do not want.
+ * a side on `map`, 1v1 on arena-alpha unless said: the sidebar's
+ * stored size (#2104) is 4v4, which most specs do not want.
  */
 export async function hostLobby(
   page: Page,
-  { size = 2, map = "arena-alpha" }: { readonly size?: 2 | 4 | 8; readonly map?: string } = {},
+  { size = 1, map = "arena-alpha" }: { readonly size?: 1 | 2 | 4 | 8; readonly map?: string } = {},
 ): Promise<string> {
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
@@ -115,12 +114,13 @@ export async function hostLobby(
  * Save `size` copies of the active character as a Team Build, named
  * after it, so a side can propose it in the Team Lobby and play it
  * (#1525): every hosted lobby is a Team Lobby, and a spec plays the
- * character it brought. It is for a lobby of that team size (#2104): a
- * Team Build of that size (#2109), picked in the sidebar first; 2v2, the
- * smallest, unless said (#2141). Ends on Team Builder; returns the Team
+ * character it brought. `size` copies make a side of that many with no
+ * bot (#2029), in a lobby of that team size (#2104): a Team Build of that
+ * size (#2109), picked in the sidebar first. A 1v1 needs none: it plays
+ * the active character (#2141). Ends on Team Builder; returns the Team
  * Build's name.
  */
-export async function saveSoloTeam(page: Page, size: 2 | 4 | 8 = 2): Promise<string> {
+export async function saveSoloTeam(page: Page, size: 2 | 4 | 8): Promise<string> {
   await openRail(page, "Random Arena");
   const picked = page.locator('.play-card-open[aria-pressed="true"] .play-card-name');
   const name = (await picked.textContent())?.trim() ?? "";
@@ -158,17 +158,26 @@ export async function proposeTeam(page: Page, team: string): Promise<void> {
 }
 
 /**
- * The Team Lobby (#1460) of sides of one: each page proposes its Team
- * Build, everyone is ready, then each takes its side's seat `seat`, the
- * first unless said, and is ready again. Resolves once each page's HUD
- * shows the player.
+ * The Team Lobby (#1460) of each page's own build: each page proposes its
+ * Team Build `team`, or in a 1v1, with no `team`, sees its active
+ * character proposed for it (#2141). Everyone is ready, then each takes
+ * its side's seat `seat`, the first unless said, and is ready again.
+ * Resolves once each page's HUD shows the player.
  */
 export async function playOwnTeams(
-  players: readonly { readonly page: Page; readonly team: string; readonly seat?: number }[],
+  players: readonly {
+    readonly page: Page;
+    readonly team?: string | undefined;
+    readonly seat?: number;
+  }[],
 ): Promise<void> {
   for (const { page, team } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    await proposeTeam(page, team);
+    if (team === undefined) {
+      await expect(page.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
+    } else {
+      await proposeTeam(page, team);
+    }
   }
   for (const { page } of players) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();
@@ -220,14 +229,13 @@ export async function playHouseTeams(
  * A match in a lobby of one, which `canStart` allows: what Quick Match
  * was for the tests that need nobody else, but for the one bot of the
  * house team its empty side plays (#2029). The player plays the active
- * character, through a Team Build of one (#1525). Resolves once the HUD
- * shows the player, so the match is really on. Starts from the menu.
+ * character, as a 1v1 does (#2141). Resolves once the HUD shows the
+ * player, so the match is really on. Starts from the menu.
  */
 export async function startSoloMatch(page: Page): Promise<void> {
-  const team = await saveSoloTeam(page);
   await hostLobby(page);
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await playOwnTeams([{ page, team }]);
+  await playOwnTeams([{ page }]);
 }
