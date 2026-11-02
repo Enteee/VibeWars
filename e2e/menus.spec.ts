@@ -284,9 +284,9 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   // Random Arena only chooses: nothing to edit there.
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Random Arena has no button of its own (#2019); Options is its ⚙ (#1272), Music its ♪ (#1453).
+  // Random Arena's one button is Ready (#2022); Options is its ⚙ (#1272), Music its ♪ (#1453).
   const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
-  await expect(own).toHaveCount(0);
+  await expect(own).toHaveText(["Ready"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
 

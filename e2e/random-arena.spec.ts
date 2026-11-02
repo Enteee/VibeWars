@@ -76,7 +76,7 @@ test("Random Arena's Ready is greyed out without a character to queue with, or a
   // 8v8 is no Random Arena: offered, but not to pick.
   const size = screen.locator(".mode-rail-size-select");
   await expect(size).toHaveValue("4");
-  await expect(size.locator("option", { hasText: "8v8" })).toBeDisabled();
+  await expect(size.locator("option", { hasText: "8v8" })).toHaveJSProperty("disabled", true);
   await size.selectOption("2");
   await expect(ready).toBeEnabled();
   await page.evaluate(`
