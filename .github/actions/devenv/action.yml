@@ -31,7 +31,13 @@ runs:
       run: |
         # An output, not GITHUB_ENV: a later step's `if` in this composite
         # action does not see the env file (run 41452493771 restored anyway).
-        [ -z "${VIBEWARS_NIX_REGISTRATION:-}" ] && echo "company=" >> "$GITHUB_OUTPUT" || echo "company=1" >> "$GITHUB_OUTPUT"
+        if [ -n "${VIBEWARS_NIX_REGISTRATION:-}" ]; then
+          echo "company runner: registration $VIBEWARS_NIX_REGISTRATION"
+          echo "company=1" >> "$GITHUB_OUTPUT"
+        else
+          echo "hosted runner: VIBEWARS_NIX_REGISTRATION is not set"
+          echo "company=" >> "$GITHUB_OUTPUT"
+        fi
 
     - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
       if: steps.where.outputs.company != '1'
