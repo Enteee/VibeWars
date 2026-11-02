@@ -33,6 +33,7 @@ describe("BOT_RULES (#2042)", () => {
       "minion-care",
       "take-minion",
       "bind-spirit",
+      "rider",
       "setup",
       "boost",
       "fight",

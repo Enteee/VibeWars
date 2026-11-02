@@ -235,6 +235,20 @@ function spawningPowerOf(ranks: ReadonlyMap<string, number>): number {
  * brackets when Spawning Power lengthens a weapon spell (#1098).
  */
 function statusDuration(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
+  if (effect.per !== undefined) {
+    // "Lead the Way!"'s (#1955): "4s for each ally in earshot (maximum 30)".
+    return withPerText(
+      lasting(effect.durationSeconds, ranks),
+      effect.durationSeconds,
+      effect.per,
+      ranks,
+      {
+        alone: "",
+        unit: "s",
+        onTarget: "on target",
+      },
+    ).trim();
+  }
   const base = lasting(effect.durationSeconds, ranks);
   if (findStatusDefinition(effect.statusId)?.category !== "weapon-spell") {
     return base;
@@ -406,6 +420,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.moveSpeedMultiplier !== 1) {
     parts.push(`moves at ${String(Math.round(definition.moveSpeedMultiplier * 100))}% speed`);
+  }
+  if (definition.moveSpeedWhileEnchanted !== 1) {
+    const speed = String(Math.round(definition.moveSpeedWhileEnchanted * 100));
+    parts.push(`moves at ${speed}% speed while enchanted`);
   }
   if (definition.preventsSpeedBoosts) {
     parts.push("speed boosts have no effect");
@@ -873,6 +891,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.negatesFatalDamage) {
     parts.push("the next damage or life steal that would kill it is negated");
   }
+  if (definition.endsEverywhereWhenSpent) {
+    parts.push("when one ally's is spent, it ends on all others");
+  }
   if (definition.extraStrikesPerHit > 0) {
     parts.push(
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
@@ -930,6 +951,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
     parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
+  }
+  if (definition.incomingAllySpellCastTimeMultiplier !== 1) {
+    const times = String(definition.incomingAllySpellCastTimeMultiplier);
+    parts.push(`other allies' spells on the bearer take ${times}× as long to cast`);
   }
   if (definition.enchantmentsOnBearerCostLess !== 0) {
     const less = String(definition.enchantmentsOnBearerCostLess);
@@ -1171,6 +1196,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-blocks": "blocks",
   "bearer-interrupted": "is interrupted",
   "bearer-knocked-down": "is knocked down",
+  "bearer-knockdown-prevented": "has a knockdown stopped",
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
   "bearer-loses-enchantment": "loses an enchantment",
@@ -2635,9 +2661,9 @@ function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarge
   const what =
     count.kind === "statuses"
       ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
-      : count.kind === "foes-within"
-        ? `foe ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`
-        : `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`;
+      : count.kind === "recharging-skills"
+        ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
+        : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
   const max = per.max === undefined ? "" : ` (maximum ${shown(describeMagnitude(per.max, ranks))})`;
   return `for each ${what}${max}`;
 }

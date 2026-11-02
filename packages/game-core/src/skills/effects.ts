@@ -822,14 +822,16 @@ function countOf(
             0,
           );
     }
-    case "foes-within": {
+    case "foes-within":
+    case "allies-within": {
       const at = surroundings.get(caster.id)?.position;
+      const allies = rule.kind === "allies-within";
       return at === undefined
         ? 0
         : [...surroundings.values()].filter(
             ({ combatant, position }) =>
               !combatant.dead &&
-              combatant.team !== caster.team &&
+              (combatant.team === caster.team) === allies &&
               distance(position, at) <= rule.radius,
           ).length;
     }
@@ -1829,7 +1831,13 @@ export function applyEffect(
       // The duration at the ranks the status's stats use (#2041): a spirit's,
       // ward's or trigger's are its owner's. A weapon spell lasts longer with
       // its caster's Spawning Power (#1098), whatever skill or trigger lands it.
-      const seconds = resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster);
+      const seconds = withPerCount(
+        resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster),
+        effect.per,
+        caster,
+        target,
+        context.surroundings,
+      );
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
           ? seconds * spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
