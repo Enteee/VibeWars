@@ -11,7 +11,13 @@ import { energyCostOf } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill } from "./describe.js";
 import { resolveSkillEffects, type CombatEvent } from "./effects.js";
-import { NO_RANKS, NO_OWN_SKILL_BOOST, ownSkillBoost, type StatusId } from "./status.js";
+import {
+  NO_RANKS,
+  NO_OWN_SKILL_BOOST,
+  ownSkillBoost,
+  scaledStatAttributes,
+  type StatusId,
+} from "./status.js";
 import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import { effectiveActivationSeconds } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
@@ -40,7 +46,8 @@ function skill(id: string): Skill {
 
 /**
  * A caster with Protection Prayers 12, for Guardian's 6 s (#2041), and no
- * other attribute ranks, bearing `statuses` for a minute each.
+ * other attribute ranks, bearing `statuses` for a minute each, each
+ * cast at rank 12 in what it scales by (#2158).
  */
 function bearer(...statuses: StatusId[]): Combatant {
   const caster = makeCombatant({
@@ -51,9 +58,14 @@ function bearer(...statuses: StatusId[]): Combatant {
     attributeRanks: new Map([["monk.protection-prayers", 12]]),
   });
   for (const id of statuses) {
-    caster.statuses.apply(id, 60, "m", NO_RANKS);
+    caster.statuses.apply(id, 60, "m", atTwelve(id));
   }
   return caster;
+}
+
+/** Rank 12 in every attribute `id`'s scaled numbers name (#2158). */
+function atTwelve(id: StatusId): ReadonlyMap<string, number> {
+  return new Map(scaledStatAttributes(id).map((attributeId) => [attributeId, 12]));
 }
 
 /** `skill` with its energy cost set to `amount`. */
@@ -392,9 +404,24 @@ describe("says what each does (#1761)", () => {
     ["ranger.practiced-stance", "your preparations recharge 50% faster and last 246% longer"],
     ["dervish.extend-enchantments", "your next Dervish enchantment lasts 122% longer"],
   ])("%s", (id, text) => {
-    const lines = describeSkill(skill(id))
+    const described = skill(id);
+    const ranks = new Map([[described.attributeId ?? "", 12]]);
+    const lines = describeSkill(described, ranks)
       .effects.map((line) => line.text)
       .join(" | ");
     expect(lines.toLowerCase()).toContain(text.toLowerCase());
+  });
+});
+
+describe("scales with its caster's rank (#2158)", () => {
+  it.each([
+    [0, "recharge 25% faster"],
+    [12, "recharge 45% faster"],
+  ])("Way of the Empty Palm at Deadly Arts %i: %s", (rank, text) => {
+    const ranks = new Map([["assassin.deadly-arts", rank]]);
+    const lines = describeSkill(skill("assassin.way-of-the-empty-palm"), ranks)
+      .effects.map((line) => line.text)
+      .join(" | ");
+    expect(lines).toContain(text);
   });
 });

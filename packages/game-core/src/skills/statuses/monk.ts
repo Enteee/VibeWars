@@ -392,21 +392,33 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     ownSkillModifiers: [ownSkills({ type: "spell", profession: "monk" }, { energyDiscount: 5 })],
   }),
   // "While you maintain this enchantment, Monk enchantments you cast last
-  // 10...30...35% longer." One maintained has no duration to lengthen.
+  // 10...35% longer" (#2158). One maintained has no duration to lengthen.
   "blessed-aura": define("blessed-aura", "Blessed Aura", "enchantment", {
     profession: "monk",
     ownSkillModifiers: [
-      ownSkills({ type: "enchantment", profession: "monk" }, { durationMultiplier: 1.3 }),
+      ownSkills(
+        { type: "enchantment", profession: "monk" },
+        {
+          durationMultiplier: {
+            scaling: { attributeId: "monk.divine-favor", atZero: 1.1, atTwelve: 1.3 },
+          },
+        },
+      ),
     ],
   }),
   // "Your Healing Prayers spells heal for 20% less Health, but cost
-  // 1...3...4 less Energy." The 20% is the Divine Favor bonus's too.
+  // 1...4 less Energy" (#2158). The 20% is the Divine Favor bonus's too.
   "healers-covenant": define("healers-covenant", "Healer's Covenant", "enchantment", {
     profession: "monk",
     ownSkillModifiers: [
       ownSkills(
         { type: "spell", attributeId: "monk.healing-prayers" },
-        { energyDiscount: 3, healMultiplier: 0.8 },
+        {
+          energyDiscount: {
+            scaling: { attributeId: "monk.healing-prayers", atZero: 1, atTwelve: 3.4 },
+          },
+          healMultiplier: 0.8,
+        },
       ),
     ],
   }),

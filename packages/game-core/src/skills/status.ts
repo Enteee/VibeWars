@@ -178,6 +178,21 @@ const STATUS_STAT_KEYS: Readonly<Record<StatusStatKey, true>> = {
   physicalDamageTakenBonus: true,
   attackDurationMultiplier: true,
   damageTakenMultiplier: true,
+  adrenalineGainFaster: true,
+};
+
+/** The fields of an `OwnSkillModifier` that are a `StatusStat` (#2158). */
+type OwnSkillStatKey = {
+  [K in keyof OwnSkillModifier]: StatusStat extends OwnSkillModifier[K] ? K : never;
+}[keyof OwnSkillModifier];
+
+/** Every `OwnSkillStatKey`, as `STATUS_STAT_KEYS`. */
+const OWN_SKILL_STAT_KEYS: Readonly<Record<OwnSkillStatKey, true>> = {
+  energyDiscount: true,
+  energySurcharge: true,
+  activationSecondsLess: true,
+  rechargeFaster: true,
+  durationMultiplier: true,
 };
 
 /** The attributes `id`'s scaled stats name, each once: what its source's ranks are read in. */
@@ -188,6 +203,15 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     const stat = definition[key];
     if (typeof stat !== "number") {
       attributes.add(stat.scaling.attributeId);
+    }
+  }
+  // Way of the Empty Palm's recharge share is its caster's (#2158).
+  for (const modifier of definition.ownSkillModifiers) {
+    for (const key of Object.keys(OWN_SKILL_STAT_KEYS) as OwnSkillStatKey[]) {
+      const stat = modifier[key];
+      if (typeof stat !== "number") {
+        attributes.add(stat.scaling.attributeId);
+      }
     }
   }
   // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143).
@@ -929,7 +953,7 @@ export interface StatusDefinition {
    * The bearer gains adrenaline this much faster (#1455), from hits,
    * damage taken and skills alike: Avatar of Balthazar's 0.25.
    */
-  readonly adrenalineGainFaster: number;
+  readonly adrenalineGainFaster: StatusStat;
   /**
    * The share taken off the recharge of each spell the bearer finishes
    * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
@@ -1375,30 +1399,30 @@ export interface OwnSkillModifier {
    */
   readonly energyBase: number | undefined;
   /** Energy off the cost, never below `energyFloor`. 0: none. */
-  readonly energyDiscount: number;
+  readonly energyDiscount: StatusStat;
   /**
    * The least a discount leaves (#1886); a cost already below it is left
    * alone, as Energizing Wind's "minimum cost 10 Energy". 1: never below 1.
    */
   readonly energyFloor: number;
   /** Energy on the cost after the discount (#1886), as Roaring Winds'. 0: none. */
-  readonly energySurcharge: number;
+  readonly energySurcharge: StatusStat;
   /** On activation time. 1: none. */
   readonly activationMultiplier: number;
   /**
    * Seconds off the activation time, after every multiplier, never below
    * 0 (#1975): Jaundiced Gaze's "casts 1 second faster". 0: none.
    */
-  readonly activationSecondsLess: number;
+  readonly activationSecondsLess: StatusStat;
   /** The share taken off the recharge, as `spellRechargeFaster`. 0: none. */
-  readonly rechargeFaster: number;
+  readonly rechargeFaster: StatusStat;
   /**
    * The share the recharge grows by once `rechargeFaster` is off (#1886),
    * as Energizing Wind's "recharge 25% slower". 0: none.
    */
   readonly rechargeSlower: number;
   /** On the duration of every status the skill applies, to anyone. 1: none. */
-  readonly durationMultiplier: number;
+  readonly durationMultiplier: StatusStat;
   /** On every heal the skill does. 1: none. */
   readonly healMultiplier: number;
   /** Its cast is not easily interrupted (#1966), as Trapper's Focus's traps. */
@@ -1457,25 +1481,32 @@ export function ownSkillAnswers(filter: OwnSkillFilter, skill: Skill): boolean {
   );
 }
 
-/** What `active`'s modifiers do to a use of `skill` now (#1761). */
+/**
+ * What `active`'s modifiers do to a use of `skill` now (#1761), each
+ * scaled number at its own status's ranks (#2158), Energy whole.
+ */
 export function ownSkillBoost(active: readonly ActiveStatus[], skill: Skill): OwnSkillBoost {
   return active
-    .flatMap(({ id }) => getStatusDefinition(id).ownSkillModifiers)
-    .filter(({ filter }) => ownSkillAnswers(filter, skill))
+    .flatMap(({ id, ranks }) =>
+      getStatusDefinition(id).ownSkillModifiers.map((modifier) => ({ modifier, ranks })),
+    )
+    .filter(({ modifier }) => ownSkillAnswers(modifier.filter, skill))
     .reduce<OwnSkillBoost>(
-      (boost, modifier) => ({
+      (boost, { modifier, ranks }) => ({
         energyBase:
           modifier.energyBase === undefined
             ? boost.energyBase
             : Math.max(boost.energyBase ?? 0, modifier.energyBase),
-        energyDiscount: boost.energyDiscount + modifier.energyDiscount,
+        energyDiscount: boost.energyDiscount + Math.round(statAt(modifier.energyDiscount, ranks)),
         energyFloor: Math.max(boost.energyFloor, modifier.energyFloor),
-        energySurcharge: boost.energySurcharge + modifier.energySurcharge,
+        energySurcharge:
+          boost.energySurcharge + Math.round(statAt(modifier.energySurcharge, ranks)),
         activationMultiplier: boost.activationMultiplier * modifier.activationMultiplier,
-        activationSecondsLess: boost.activationSecondsLess + modifier.activationSecondsLess,
-        rechargeFaster: Math.max(boost.rechargeFaster, modifier.rechargeFaster),
+        activationSecondsLess:
+          boost.activationSecondsLess + statAt(modifier.activationSecondsLess, ranks),
+        rechargeFaster: Math.max(boost.rechargeFaster, statAt(modifier.rechargeFaster, ranks)),
         rechargeSlower: Math.max(boost.rechargeSlower, modifier.rechargeSlower),
-        durationMultiplier: boost.durationMultiplier * modifier.durationMultiplier,
+        durationMultiplier: boost.durationMultiplier * statAt(modifier.durationMultiplier, ranks),
         healMultiplier: boost.healMultiplier * modifier.healMultiplier,
         notEasilyInterrupted: boost.notEasilyInterrupted || modifier.notEasilyInterrupted,
       }),
@@ -4032,7 +4063,7 @@ export function aggregateModifiers(
       knockdownMinSeconds = def.knockdownMinSeconds;
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
-    adrenalineGainFaster += def.adrenalineGainFaster;
+    adrenalineGainFaster += statAt(def.adrenalineGainFaster, ranks);
     if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
