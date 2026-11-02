@@ -213,6 +213,15 @@ describe("Crystal Wave (#2232)", () => {
     expect(damage(log, CRYSTAL_WAVE, "f")).toBe(0);
   });
 
+  it("ignores armor: a foe in twice the reference armor still takes 58", () => {
+    const armored: ParticipantSpec = {
+      ...spec("n", 1, 25, []),
+      equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel * 2),
+    };
+    const sim = match([CRYSTAL_WAVE], [armored]);
+    expect(damage(cast(sim, 0, "c"), CRYSTAL_WAVE, "n")).toBe(58);
+  });
+
   it("with no adjacent foe the energy is spent and nothing happens", () => {
     const sim = match([CRYSTAL_WAVE]);
     const log = cast(sim, 0, "c");

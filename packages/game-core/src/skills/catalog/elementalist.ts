@@ -4426,14 +4426,15 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "Are struck for 10...70 damage but are cured of any negative
     // conditions. Each condition removed deals 5...15 damage": one packet
-    // of 58 and 13 for each condition, counted before the cure.
+    // of 58 and 13 for each condition, counted before the cure. The plain
+    // "damage" ignores armor (wiki).
     effects: [
       {
         kind: "damage",
         amount: {
           scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 58 },
         },
-        type: "earth",
+        type: "typeless",
         armorPenetration: 0,
         per: {
           count: { kind: "statuses", on: "target", categories: ["condition"] },
