@@ -23,6 +23,7 @@ import {
   proposableTeams,
   reasonLine,
   teamLobbyBody,
+  teamLobbySize,
   type TeamLobbyCallbacks,
 } from "./team-lobby-screen.js";
 
@@ -180,6 +181,7 @@ function lobby(
     phase: "team-lobby",
     mode: "hosted-game",
     mapId: "arena",
+    teamSize: 4,
     open: true,
     hostId: "aria",
     players,
@@ -239,31 +241,20 @@ describe("the Team Lobby's words (#1460)", () => {
     expect([initial("aria"), initial(" Brann"), initial("")]).toEqual(["A", "B", "?"]);
   });
 
-  it("offers only the Team Builds of the side's exact size", () => {
-    const duo = team("a", "Duo", 2);
-    const four = team("b", "Four", 4);
-    expect(proposableTeams([duo, four], 4, 1)).toEqual([
-      { team: duo, disabled: true, reason: "needs 4 characters" },
-      { team: four, disabled: false, reason: undefined },
-    ]);
-    expect(proposableTeams([duo], 1, 1)[0]?.reason).toBe("needs 1 character");
-  });
-
   it("never offers a Team Build with problems: it saves, but is not playable (#2110)", () => {
     const unnamed = team("a", "", 4);
     const four = team("b", "Four", 4);
-    expect(proposableTeams([unnamed, four], 4, 1).map((one) => one.team)).toEqual([four]);
+    expect(proposableTeams([unnamed, four], 4)).toEqual([four]);
   });
 
-  it("offers a Hosted Game's side any Team Build with a slot for each of its players (#2029)", () => {
+  it("offers only the Team Builds of the side's exact size (#2104)", () => {
     const solo = team("a", "Solo", 1);
     const duo = team("b", "Duo", 2);
-    const eight = team("c", "Eight", 8);
-    expect(proposableTeams([solo, duo, eight], null, 2)).toEqual([
-      { team: solo, disabled: true, reason: "needs at least 2 characters" },
-      { team: duo, disabled: false, reason: undefined },
-      { team: eight, disabled: false, reason: undefined },
-    ]);
+    const four = team("c", "Four", 4);
+    const sixteen = team("d", "Sixteen", 16);
+    expect(proposableTeams([solo, duo, four, sixteen], 4)).toEqual([four]);
+    expect(proposableTeams([solo, duo, four, sixteen], 1)).toEqual([solo]);
+    expect(proposableTeams([duo, sixteen], 8)).toEqual([]);
   });
 });
 
@@ -275,6 +266,7 @@ describe("the Team Lobby's body (#1460)", () => {
     onClaim: (slot) => sent.push({ kind: "claim", value: slot }),
     onToggleReady: () => undefined,
     onLeave: () => undefined,
+    onSelectTeamSize: () => undefined,
   };
   const body = (
     shown: LobbySnapshot,
@@ -296,6 +288,25 @@ describe("the Team Lobby's body (#1460)", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("shows the team size in the bar, the host's to change in a Hosted Game's vote only (#2104)", () => {
+    const picked: number[] = [];
+    const select = (shown: LobbySnapshot, stage: WireTeamLobby["stage"]): FakeElement | undefined =>
+      (
+        teamLobbySize(shown, stage, (size) => picked.push(size)) as unknown as FakeElement
+      ).children.find((child) => child.tagName === "SELECT");
+    const vote = select(lobby("aria", "vote", voteSide([])), "vote");
+    expect([vote?.value, vote?.disabled]).toEqual(["4", false]);
+    if (vote !== undefined) {
+      vote.value = "2";
+    }
+    vote?.listeners.get("change")?.();
+    expect(picked).toEqual([2]);
+    expect(select(lobby("aria", "claim", voteSide([])), "claim")?.disabled).toBe(true);
+    expect(select(lobby("brann", "vote", voteSide([])), "vote")?.disabled).toBe(true);
+    const arena = { ...lobby("aria", "vote", voteSide([])), mode: "team-arena" } as const;
+    expect(select(arena, "vote")?.disabled).toBe(true);
   });
 
   it("draws a card per proposal with its proposer, captain crown and voters' initials", () => {
@@ -341,46 +352,40 @@ describe("the Team Lobby's body (#1460)", () => {
   it("shows each saved Team Build as a card to propose, and a click on yours withdraws it (#1862)", () => {
     const shown = body(
       lobby("aria", "vote", voteSide([])),
-      [team("duo", "Duo", 2), team("four", "Four", 4), team("quad", "Quad", 4)],
+      [team("four", "Four", 4), team("quad", "Quad", 4)],
       "four",
     );
     const own = shown.all("team-lobby-own-cards")[0]?.all("play-card") ?? [];
-    expect(own.map((card) => card.all("play-card-name")[0]?.textContent)).toEqual([
-      "Duo",
-      "Four",
-      "Quad",
-    ]);
-    expect(own[1]?.all("character-figure")).toHaveLength(4);
+    expect(own.map((card) => card.all("play-card-name")[0]?.textContent)).toEqual(["Four", "Quad"]);
+    expect(own[0]?.all("character-figure")).toHaveLength(4);
     // The one proposed is marked, and only it.
     expect(own.map((card) => press(card)?.attributes.get("aria-pressed"))).toEqual([
-      "false",
       "true",
       "false",
     ]);
-    expect(own.map((card) => card.has("is-proposed"))).toEqual([false, true, false]);
-    expect(own[1]?.text()).toContain("Proposed ✓");
-    press(own[2])?.click();
+    expect(own.map((card) => card.has("is-proposed"))).toEqual([true, false]);
+    expect(own[0]?.text()).toContain("Proposed ✓");
     press(own[1])?.click();
+    press(own[0])?.click();
     expect(sent).toEqual([
       { kind: "propose", value: "quad" },
       { kind: "propose", value: undefined },
     ]);
   });
 
-  it("shows a Team Build of the wrong size faded, its press disabled, and says why", () => {
-    const [duo] =
-      body(lobby("aria", "vote", voteSide([])), [team("duo", "Duo", 2)])
-        .all("team-lobby-own-cards")[0]
-        ?.all("play-card") ?? [];
-    expect(press(duo)?.disabled).toBe(true);
-    expect(duo?.has("is-faded")).toBe(true);
-    expect(duo?.all("team-lobby-needs").map((line) => line.textContent)).toEqual([
-      "needs 4 characters",
+  it("leaves out a Team Build of the wrong size, and says so when none is the side's (#2104)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [
+      team("duo", "Duo", 2),
+      team("eight", "Eight", 8),
+    ]);
+    expect(shown.all("team-lobby-own-cards")).toEqual([]);
+    expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
+      "No Team Build of 4 — make one in the Team Builder.",
     ]);
   });
 
   it("says to fix a Team Build when none is playable (#2110)", () => {
-    const shown = body(lobby("aria", "vote", voteSide([])), [team("empty", "Empty", 0)]);
+    const shown = body(lobby("aria", "vote", voteSide([])), [team("unnamed", "", 4)]);
     expect(shown.all("team-lobby-own-cards")).toEqual([]);
     expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
       NO_PLAYABLE_TEAM_BUILDS,

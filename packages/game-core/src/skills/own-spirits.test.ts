@@ -65,6 +65,7 @@ function spirit(id: string, ownerId: string, team: number, spawn: Vec2): Partici
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   };

@@ -6,9 +6,9 @@ import {
   PROTOCOL_VERSION,
   isLobbyCode,
   isTeamQueueMode,
-  normalizeLobbyCode,
   type JsonValue,
   type LobbyRefusal,
+  type LobbyTeamSize,
   type PeerHello,
   type QueueMode,
 } from "@vibewars/game-protocol";
@@ -47,7 +47,7 @@ import {
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
 import { linkLobbyRoom } from "./lobby-room.js";
-import { arenaIds, hostMap, modeMapIds, queueMapPool } from "./maps.js";
+import { arenaIds, hostMap, mapTeamSizes, modeMapIds, queueMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import { checkTransportNat, joinQueueBoard, joinRoom, roomSelfId } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
@@ -75,11 +75,11 @@ const MATCH_TIMEOUT_MS = 10_000;
  * lobby, whose host is in no room (#1682), cannot be told apart.
  */
 export const NO_ANSWER_MESSAGE =
-  "Couldn't reach that lobby. Check the key, and ask the host to open it.";
-/** Typed wrong: not 12 symbols of the key alphabet (#1681). Nothing was sent anywhere. */
-export const NOT_A_KEY_MESSAGE = "That is not a lobby key.";
+  "Couldn't reach that lobby. Check the invite link, and ask the host to open it.";
+/** Not a 43-character lobby key (#2100). Nothing was sent anywhere. */
+export const NOT_A_KEY_MESSAGE = "That invite link is broken.";
 
-/** What was typed cannot be a lobby key, so it was never looked for (#1681). */
+/** What was given cannot be a lobby key, so it was never looked for (#1681). */
 export class NotALobbyKeyError extends Error {
   public constructor() {
     super("That is not a lobby key.");
@@ -200,6 +200,7 @@ export async function hostLobby(
   name: string,
   guild: Guild,
   teamLobby: boolean,
+  hostedTeamSize: LobbyTeamSize,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
   // A queued lobby meets in its group's room, which no lobby key can
@@ -230,6 +231,8 @@ export async function hostLobby(
     proofKey: lobbyRoom.proofKey,
     mapIds: arenaIds(),
     modeMaps: modeMapIds(),
+    mapTeamSizes: mapTeamSizes(),
+    hostedTeamSize,
     startMatch,
     teamLobby,
     random: secureRandom,
@@ -304,7 +307,7 @@ export async function joinLobbyByCode(
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
-  if (queued === undefined && !isLobbyCode(normalizeLobbyCode(code))) {
+  if (queued === undefined && !isLobbyCode(code)) {
     throw new NotALobbyKeyError();
   }
   const lobbyRoom =
@@ -508,7 +511,8 @@ export function enterQueue(
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guild, false, {
+        // A queued lobby plays its group's size, never a Hosted Game's.
+        hosted = await hostLobby(name, guild, false, 4, {
           group,
           key,
           verifyTicketSig,

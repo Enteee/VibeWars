@@ -34,6 +34,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     phase: "waiting",
     mode: "team-arena",
     mapId: "arena-alpha",
+    teamSize: 4,
     open: true,
     hostId: "host",
     players,
@@ -62,6 +63,7 @@ describe("the party strip's party (#1526)", () => {
     expect(party).toEqual({
       code: "ACDEFG",
       mode: "team-arena",
+      teamSize: 4,
       isHost: false,
       open: true,
       members: [

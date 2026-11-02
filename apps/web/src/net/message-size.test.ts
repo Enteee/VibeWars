@@ -478,6 +478,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       phase: "in-match",
       // The longest mode.
       mode: "heroes-ascent",
+      teamSize: MAX_TEAM_LOBBY_SIDE,
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       open: true,
       hostId: PEER_ID,
@@ -541,10 +542,11 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       claims: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, i) => id(i)),
     };
     const state: WireLobbyState = {
-      code: "ACDEFGHJKMNP",
+      code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", // pragma: allowlist secret
       phase: "team-lobby",
       // The longest mode.
       mode: "heroes-ascent",
+      teamSize: MAX_TEAM_LOBBY_SIDE,
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       open: true,
       hostId: PEER_ID,

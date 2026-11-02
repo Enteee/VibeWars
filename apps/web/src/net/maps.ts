@@ -123,6 +123,11 @@ export function mapsForSize(maps: readonly MapData[], size: number): MapData[] {
   return maps.filter((map) => map.teamSizes.some((each) => each === size));
 }
 
+/** The team sizes each arena suits (#2108), for a lobby host to pick by (#2104). */
+export function mapTeamSizes(): Record<string, readonly number[]> {
+  return Object.fromEntries(ARENA_MAPS.map((map) => [map.id, map.teamSizes]));
+}
+
 /** Whether the arena `mapId` suits a side of `size` (#2108); no map this build lacks does. */
 function suits(mapId: string, size: number): boolean {
   return mapsForSize(ARENA_MAPS, size).some((map) => map.id === mapId);

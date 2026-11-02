@@ -14,6 +14,7 @@ import {
   redrawsOnLobbyChange,
   railScreen,
   saveRail,
+  saveTeamSize,
   setRailParty,
   teamSizeProblem,
   type RailEntry,
@@ -138,6 +139,7 @@ describe("the mode rail (#1525)", () => {
       queuedMs: null,
       teams: undefined,
       ascentRound: null,
+      teamSize: 4,
     });
     saveRail("hosted-game");
     const switched: RailEntry[] = [];
@@ -165,6 +167,7 @@ describe("the mode rail (#1525)", () => {
       queuedMs: null,
       teams: undefined,
       ascentRound: null,
+      teamSize: 4,
     });
     const rail = modeRail("gvg", () => undefined) as unknown as FakeElement;
     expect(rail.children.some((child) => child.attributes.has("aria-disabled"))).toBe(false);
@@ -200,6 +203,7 @@ describe("the mode rail (#1525)", () => {
       queuedMs: null,
       teams: undefined,
       ascentRound: null,
+      teamSize: 4,
     });
     redrawModeRail(root as unknown as HTMLElement, "teams", () => undefined);
     const locked = replacement?.children.filter((child) => child.attributes.has("aria-disabled"));
@@ -219,13 +223,14 @@ describe("the mode rail (#1525)", () => {
       away: false,
     });
     const party = {
-      code: "ACDEFGHJKLMN",
+      code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", // pragma: allowlist secret
       mode: "gvg",
       isHost: true,
       open: true,
       queuedMs: null,
       teams: undefined,
       ascentRound: null,
+      teamSize: 4,
     } as const;
     const strip = (): FakeElement | undefined => {
       const root = new FakeElement("div");
@@ -320,11 +325,33 @@ describe("the mode rail (#1525)", () => {
       queuedMs: null,
       teams: undefined,
       ascentRound: null,
+      teamSize: 4,
     });
     const rail = modeRail("hosted-game", () => undefined) as unknown as FakeElement;
     const field = rail.children.find((child) => child.className === "mode-rail-size");
     expect(field?.title).toBe(HOST_SETS_TEAM_SIZE);
     expect(field?.children.find((child) => child.tagName === "select")?.disabled).toBe(true);
+  });
+
+  it("shows a Hosted Game lobby's team size, the host's pick, not your own (#2104)", () => {
+    saveTeamSize(1);
+    const party = {
+      code: "ACDEFG",
+      mode: "hosted-game",
+      isHost: false,
+      open: false,
+      members: [],
+      queuedMs: null,
+      teams: undefined,
+      ascentRound: null,
+      teamSize: 2,
+    } as const;
+    setRailParty(party);
+    expect(sizeSelect("hosted-game").value).toBe("2");
+    // Elsewhere, and in a lobby of another mode, it is your own.
+    expect(sizeSelect("teams").value).toBe("1");
+    setRailParty({ ...party, mode: "random-arena" });
+    expect(sizeSelect("hosted-game").value).toBe("1");
   });
 
   it("stores the size picked, tells the shown screen, and reads 4v4 for anything else (#2022)", () => {

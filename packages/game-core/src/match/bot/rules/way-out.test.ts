@@ -40,6 +40,7 @@ describe("play-build's way out (#1930)", () => {
         corpsesLeft: 0,
         companionSkillId: undefined,
         leaderId: undefined,
+        bondStatusId: undefined,
         mode: "guard",
       },
     });

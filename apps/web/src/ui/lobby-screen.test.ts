@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   HOUSE_TEAM_AFTER_MS,
   MATCH_RUNNING_NOTICE,
-  displayLobbyCode,
   hostMaps,
+  inviteUrl,
   lobbyControls,
   lobbyPanel,
   mapLabel,
@@ -22,6 +22,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     phase,
     mode: "hosted-game",
     mapId: "arena",
+    teamSize: 4,
     open: true,
     hostId: "host-peer",
     players: [
@@ -150,26 +151,59 @@ describe("lobbyControls", () => {
   });
 });
 
-describe("displayLobbyCode", () => {
-  it("reads a twelve-symbol key as three fours, the way it is read aloud (#1681)", () => {
-    expect(displayLobbyCode("ACDEFGHJKMNP")).toBe("ACDE-FGHJ-KMNP");
+describe("inviteUrl (#2100)", () => {
+  const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
+
+  it("is the page's own origin and path, with the key as its fragment", () => {
+    expect(inviteUrl(KEY, { origin: "https://enteee.github.io", pathname: "/VibeWars/" })).toBe(
+      `https://enteee.github.io/VibeWars/#lobby=${KEY}`,
+    );
+  });
+
+  it("works for a fork or a dev server", () => {
+    expect(inviteUrl(KEY, { origin: "http://localhost:5173", pathname: "/" })).toBe(
+      `http://localhost:5173/#lobby=${KEY}`,
+    );
+  });
+
+  it("drops the page's query and old fragment", () => {
+    const where = new URL("https://example.org/fork/index.html?stress=1#turn=abc");
+    expect(inviteUrl(KEY, where)).toBe(`https://example.org/fork/index.html#lobby=${KEY}`);
   });
 });
 
 describe("mapLabel (#444)", () => {
   it("names an arena, then how big it plays", () => {
     expect(
-      mapLabel({ id: "arena-long-hall", name: "Long Hall", size: "large", mode: "annihilation" }),
+      mapLabel({
+        id: "arena-long-hall",
+        name: "Long Hall",
+        size: "large",
+        mode: "annihilation",
+        teamSizes: [4],
+      }),
     ).toBe("Long Hall (large)");
   });
 });
 
 describe("hostMaps (#1453)", () => {
   const maps = [
-    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation" },
-    { id: "guild-hall-isle", name: "Guild Hall Isle", size: "large", mode: "guild-battle" },
-    { id: "relic-temples", name: "Relic Temples", size: "large", mode: "relic-run" },
-    { id: "arena-open", name: "Open", size: "small", mode: "kill-count" },
+    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation", teamSizes: [4] },
+    {
+      id: "guild-hall-isle",
+      name: "Guild Hall Isle",
+      size: "large",
+      mode: "guild-battle",
+      teamSizes: [4],
+    },
+    {
+      id: "relic-temples",
+      name: "Relic Temples",
+      size: "large",
+      mode: "relic-run",
+      teamSizes: [4],
+    },
+    { id: "arena-open", name: "Open", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
 
   it("offers every map without a filter", () => {
@@ -187,7 +221,12 @@ describe("hostMaps (#1453)", () => {
 
 describe("modeLine (#476)", () => {
   it("says what the map's mode is, in a line", () => {
-    const map = { id: "arena-pillars", name: "Pillar Hall", size: "small" } as const;
+    const map = {
+      id: "arena-pillars",
+      name: "Pillar Hall",
+      size: "small",
+      teamSizes: [4],
+    } as const;
     expect(modeLine({ ...map, mode: "kill-count" })).toBe("Kill Count: most kills in 3 minutes");
     expect(modeLine({ ...map, mode: "annihilation" })).toBe("Annihilation: defeat every foe");
     expect(modeLine({ ...map, mode: "relic-run" })).toBe(
@@ -417,8 +456,8 @@ describe("lobbyPanel: the map (#1994)", () => {
     onSetBots: () => undefined,
   };
   const maps = [
-    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation" },
-    { id: "arena-open", name: "Open", size: "small", mode: "kill-count" },
+    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation", teamSizes: [2, 4] },
+    { id: "arena-open", name: "Open", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
   /** The map part of the host's bar in `mode`, on Alpha. */
   const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
@@ -441,6 +480,15 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("lets only a Hosted Game's host pick it", () => {
     expect(selects(mapPart("hosted-game"))).toHaveLength(1);
+  });
+
+  it("lists only the maps made for a Hosted Game's team size (#2104)", () => {
+    const [select] = selects(mapPart("hosted-game"));
+    expect(select?.children.map((option) => option.value)).toEqual(["arena-alpha", "arena-open"]);
+    const twos = { ...snapshot("waiting"), mapId: "arena-alpha", teamSize: 2 };
+    const [part] = lobbyPanel(twos, callbacks, undefined, maps).status;
+    // Alpha alone: nothing to pick.
+    expect(selects(part as unknown as FakeElement)).toEqual([]);
   });
 
   it("says Team Arena draws it, with no picker", () => {
@@ -472,12 +520,19 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("names a queued Heroes' Ascent's round map and its mode, not the lobby's (#1996)", () => {
     const ascent = [
-      { id: "relic-temples", name: "Relic Temples", size: "medium", mode: "relic-run" },
+      {
+        id: "relic-temples",
+        name: "Relic Temples",
+        size: "medium",
+        mode: "relic-run",
+        teamSizes: [4, 8],
+      },
       {
         id: "forgotten-shrines",
         name: "Forgotten Shrines",
         size: "medium",
         mode: "capture-points",
+        teamSizes: [4, 8],
       },
     ] as const;
     const queued = {

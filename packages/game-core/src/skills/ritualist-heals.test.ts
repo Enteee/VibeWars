@@ -87,6 +87,7 @@ function around(
           corpsesLeft: 0,
           companionSkillId: undefined,
           leaderId: undefined,
+          bondStatusId: undefined,
           mode: "guard",
         },
         corpseExploited: false,

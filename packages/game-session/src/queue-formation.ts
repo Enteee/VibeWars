@@ -59,8 +59,8 @@ export interface FormGroupsInput {
 }
 
 /**
- * Lobby codes are upper case (`LOBBY_CODE_ALPHABET`) with no dash, so a
- * queue room can never be one.
+ * Lobby keys are 43 characters (ADR-0048) and a queue room is this plus
+ * 64 hex, so the two can never be the same room.
  */
 export const ROOM_PREFIX = "ra-";
 

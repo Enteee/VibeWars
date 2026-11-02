@@ -4,6 +4,7 @@ import type {
   LobbyMode,
   LobbyPhase,
   LobbyRefusal,
+  LobbyTeamSize,
   WirePartyFormed,
   WireProposalBuild,
   WireTeamLobby,
@@ -46,6 +47,8 @@ export interface LobbySnapshot {
   /** The host's mode (#1526): every member's rail follows it. */
   readonly mode: LobbyMode;
   readonly mapId: string;
+  /** Players a side (#2104): a Hosted Game's, its host's pick; every other mode's, its own. */
+  readonly teamSize: number;
   /** Whether a peer with the key may join (#1682): a guest's party strip says when not. */
   readonly open: boolean;
   /** The peer the lobby and its match are hosted on. */
@@ -121,6 +124,8 @@ export interface LobbyConnection {
   chooseTeam(team: 0 | 1 | null): void;
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
+  /** Host only, in a Hosted Game (#2104): players a side. */
+  selectTeamSize(size: LobbyTeamSize): void;
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;
@@ -155,6 +160,8 @@ export interface LobbyConnection {
   watchMatch(): MatchToWatch | undefined;
   /** The host's own player alone: why the start it asked for did not happen. */
   onStartRejected(handler: (reason: string) => void): void;
+  /** What the host did to this player's choice, or would not do (#2104), in its words. */
+  onNotice(handler: (text: string) => void): void;
   /** Once joined: the host refused something this player asked for, such as a bot (#1194). */
   onRefused(handler: (reason: LobbyRefusal) => void): void;
   /** A chat line reached this player. */

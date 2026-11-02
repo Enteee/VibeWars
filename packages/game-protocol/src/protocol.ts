@@ -24,37 +24,27 @@ export const LOBBY_MODES = [
 export type LobbyMode = (typeof LOBBY_MODES)[number];
 
 /**
- * Lobby codes are read aloud across a room at a LAN party, so the alphabet
- * excludes characters that are easy to mishear or misread:
- * `0`/`O`, `1`/`I`/`L`, `2`/`Z`, `5`/`S`, `8`/`B`, `U`/`V`.
+ * A lobby key is a secret (#2100, ADR-0048): 32 random bytes written as
+ * base64url without padding, 43 case-sensitive characters, 2²⁵⁶ keys.
+ * Nobody types or reads it: it travels only inside an invite URL
+ * (`#lobby=<key>`), and relays see only a derivation of it, never the key.
  */
-export const LOBBY_CODE_ALPHABET = "ACDEFGHJKMNPQRTWXY34679";
+export const LOBBY_CODE_LENGTH = 43;
 
 /**
- * A lobby key is a secret (#1681, ADR-0043): 23¹² ≈ 2⁵⁴ keys, and relays
- * see only a slow derivation of it, never the key. Shown as
- * `ACDE-FGHJ-KMNP`; `normalizeLobbyCode` strips the dashes.
- */
-export const LOBBY_CODE_LENGTH = 12;
-
-/**
- * The lobby key's derivation (ADR-0043): PBKDF2-HMAC-SHA-256 over the
- * key with this fixed salt, so one key names one room for every peer.
- * Part of the protocol: changing either moves every room.
+ * The lobby key's derivation (ADR-0048): HKDF-SHA-256 over the key's
+ * bytes with this fixed salt, so one key names one room for every peer.
+ * Part of the protocol: changing it moves every room.
  */
 export const LOBBY_KEY_SALT = "vibewars-lobby-key";
-export const LOBBY_KEY_ITERATIONS = 600_000;
-
-const LOBBY_CODE_PATTERN = new RegExp(`^[${LOBBY_CODE_ALPHABET}]{${String(LOBBY_CODE_LENGTH)}}$`);
 
 /**
- * Normalise user-typed input (trim, strip separators, upper-case) before
- * validating. Players mistype lobby codes constantly; this is the one place
- * that tolerance lives.
+ * 43 base64url characters. The last one holds the final 4 bits and 2 zero
+ * padding bits, so each key has exactly one spelling.
  */
-export function normalizeLobbyCode(raw: string): string {
-  return raw.replace(/[\s-]/g, "").toUpperCase();
-}
+const LOBBY_CODE_PATTERN = new RegExp(
+  `^[A-Za-z0-9_-]{${String(LOBBY_CODE_LENGTH - 1)}}[AEIMQUYcgkosw048]$`,
+);
 
 export function isLobbyCode(value: string): boolean {
   return LOBBY_CODE_PATTERN.test(value);
@@ -282,6 +272,15 @@ export const MAX_LOBBY_PLAYERS = 16;
  * team. It bounds what one side's proposals put on the wire.
  */
 export const MAX_TEAM_LOBBY_SIDE = 8;
+
+/**
+ * The team sizes a lobby plays (#2104): 1v1, 2v2, 4v4 and 8v8, the maps'
+ * own (`TEAM_SIZES_ALL` in game-maps), which the protocol cannot import.
+ */
+export const LOBBY_TEAM_SIZES = [1, 2, 4, 8] as const;
+
+/** One of `LOBBY_TEAM_SIZES`. */
+export type LobbyTeamSize = (typeof LOBBY_TEAM_SIZES)[number];
 
 /** How long each stage of a Team Lobby (#1458) lasts, on the lobby's clock. */
 export const TEAM_LOBBY_STAGE_SECONDS = 60;

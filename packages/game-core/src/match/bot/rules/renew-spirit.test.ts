@@ -43,6 +43,7 @@ describe("play-build renews a spirit near its end (#1947)", () => {
           corpsesLeft: 0,
           companionSkillId: undefined,
           leaderId: undefined,
+          bondStatusId: undefined,
           mode: "guard",
         },
       }),

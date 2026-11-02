@@ -185,6 +185,7 @@ export {
 export type { CorpseCandidate } from "./match/corpses.js";
 export { isFreshCorpse, nearestFreshCorpse } from "./match/corpses.js";
 export {
+  MASTERLESS_TEAM,
   MINION_CAP_ATTRIBUTE,
   MINION_DEGENERATION_STEP_SECONDS,
   minionCap,

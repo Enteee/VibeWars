@@ -43,7 +43,8 @@ export type BotUse =
   | "boost"
   | "offence"
   | "setup"
-  | "minion-care";
+  | "minion-care"
+  | "take-minion";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -52,6 +53,10 @@ export type BotUse =
 export function botUses(skill: Skill): readonly BotUse[] {
   if (isCompanionRule(skill.target)) {
     return [];
+  }
+  // Taking or freeing foe minions (#2092) is the take-minion rule's alone.
+  if (takesMinions(skill)) {
+    return ["take-minion"];
   }
   // Healing or bonding minions (#1986) is no heal or defence of a player's.
   if (minionCareOf(skill) !== undefined) {
@@ -118,6 +123,20 @@ export function minionCareOf(skill: Skill): MinionCare | undefined {
     }
   }
   return undefined;
+}
+
+/**
+ * Whether `skill` takes foe minions or frees them (#2092): Verata's Gaze,
+ * Verata's Aura, and Malign Intervention's masterless horror.
+ */
+export function takesMinions(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) =>
+      effect.kind === "gaze-minion" ||
+      (effect.kind === "splash" && effect.effects.some(({ kind }) => kind === "take-control")) ||
+      (effect.kind === "apply-status" &&
+        getStatusDefinition(effect.statusId).replacedOnDeathBy?.masterless === true),
+  );
 }
 
 /** Whether `skill` sends its user's pet to its target (#1966), as Strike as One. */
