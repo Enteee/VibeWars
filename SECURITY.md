@@ -86,6 +86,12 @@ channels, as often as they like.
   so a sybil flood can stall the queue, every group falling through. A
   ticket id is its signing key, so nobody can rewrite an honest ticket.
   NIP-13 proof-of-work is the lever if it happens.
+- **A Heroes' Ascent round is self-asserted.** A party queues at the
+  round its host says it reached (#1996), and nothing checks the wins
+  behind it, so a party can queue straight at the Hall of Heroes. Ascent
+  is unranked, so it costs only the honest
+  side it meets a fair climb; a signed round from the last match's host
+  is the lever if a mode with stakes ever needs one.
 - **A Random Arena peer id is self-asserted.** Admission and the host's
   welcome are Schnorr signatures by ticket keys that name the group, the
   host's ticket and the joiner's transport peer id, so an outsider in the
