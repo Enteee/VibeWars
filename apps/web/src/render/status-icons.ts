@@ -449,6 +449,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   distortion: icon("distortion"),
   "shield-guardian": icon("shield-guardian"),
   "glass-arrows": icon("glass-arrows"),
+  // Ranger staples 5 (#2133).
+  "disrupting-accuracy": icon("disrupting-accuracy"),
+  "marksmans-wager": icon("marksmans-wager"),
+  "storm-chaser": icon("storm-chaser"),
   // Tactics stances that pay on a block (#1978).
   "wary-stance": icon("wary-stance"),
   "soldiers-defense": icon("soldiers-defense"),

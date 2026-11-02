@@ -1377,6 +1377,12 @@ export type StateCondition =
    * pets and spirits included.
    */
   | { readonly kind: "target-near-caster-ally"; readonly radius: number }
+  /**
+   * The effect's target stands within `radius` of the caster (#2133),
+   * read as the effect lands: Screaming Shot's "if target foe is within
+   * earshot", measured as its arrow hits, not as it leaves the bow.
+   */
+  | { readonly kind: "target-within"; readonly radius: number }
   /** The effect's target did not walk in the previous tick (#921, `Combatant.moving`). */
   | { readonly kind: "target-not-moving" }
   /**
@@ -1648,6 +1654,14 @@ export function isEasilyInterrupted(skill: Skill): boolean {
 export type AttackWeaponClass =
   "axe" | "sword" | "hammer" | "daggers" | "scythe" | "spear" | "bow" | "melee";
 
+/** An attack skill's miss chance at a low rank (#2133): Oath Shot's. */
+export interface MissChanceAtOrBelowRank {
+  readonly attributeId: string;
+  readonly rank: number;
+  /** Each blow's chance to miss, 0..1. */
+  readonly chance: number;
+}
+
 /** Bonus damage an attack skill adds only while `condition` holds (#794). */
 export interface ConditionalBonus {
   readonly condition: StateCondition;
@@ -1732,6 +1746,14 @@ export interface AttackSkillRule {
    * you are not using a stance, Pure Strike cannot be blocked".
    */
   readonly unblockable: boolean | StateCondition;
+  /**
+   * A chance each blow misses while its user's rank in an attribute is at
+   * most `rank` (#2133): Oath Shot's "50% chance to miss with Expertise 7
+   * or less". The effective rank, read as the roll is made, an arrow's at
+   * its release. Rolled per blow after blindness and before the block; a
+   * miss as blindness's is, so `onFailedToHit` lands. Absent: none.
+   */
+  readonly missChanceAtOrBelowRank?: MissChanceAtOrBelowRank;
   /**
    * What a blocked blow does to its target instead of the skill's
    * `effects` (#534): Swift Chop's damage and Deep Wound. Usually none.

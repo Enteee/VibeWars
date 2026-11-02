@@ -111,6 +111,7 @@ const NO_BOT_USE = new Set([
   "paragon.incoming",
   "paragon.make-haste",
   "ranger.serpents-quickness",
+  "ranger.storm-chaser",
   "ranger.winnowing",
   "ritualist.cruel-was-daoshen",
   "ritualist.destructive-was-glaive",

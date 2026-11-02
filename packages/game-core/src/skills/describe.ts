@@ -609,14 +609,22 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("refreshes every time you land a critical hit");
   }
   if (definition.onCriticalHit !== undefined) {
-    const { effects, energyIfRemoved } = definition.onCriticalHit;
+    const { effects, energyIfRemoved, weapon } = definition.onCriticalHit;
+    const when =
+      weapon === undefined
+        ? "every time you land a critical hit"
+        : `every time you land a critical hit with ${NEEDED_WEAPON[weapon]}`;
     parts.push(
       ...effects.flatMap((effect) =>
-        describeEffects(effect, new Map()).map(
-          ({ text }) => `every time you land a critical hit: ${lowerFirst(text)} from your target`,
+        describeEffects(effect, new Map()).map(({ text }) =>
+          effect.kind === "remove-status"
+            ? `${when}: ${lowerFirst(text)} from your target`
+            : `${when}: ${lowerFirst(text)}`,
         ),
       ),
-      `if one is removed, you lose ${String(energyIfRemoved)} Energy or it ends`,
+      ...(energyIfRemoved > 0
+        ? [`if one is removed, you lose ${String(energyIfRemoved)} Energy or it ends`]
+        : []),
     );
   }
   if (definition.endsAfterAttacks !== undefined) {
@@ -2116,6 +2124,10 @@ function conditionText(condition: EffectCondition): string {
       return condition.radius === AREA_NEARBY
         ? "If target is near any of your allies"
         : `If any of your allies is within ${String(condition.radius)} of target`;
+    case "target-within":
+      return condition.radius === AREA_EARSHOT
+        ? "If target is within earshot"
+        : `If target is within ${String(condition.radius)} of you`;
     case "target-not-moving":
       return "If target is not moving";
     case "target-knocked-down":
@@ -3665,6 +3677,17 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
+  // A miss chance at a low rank (#2133): Oath Shot's.
+  const miss = rule?.missChanceAtOrBelowRank;
+  const missLine =
+    miss === undefined
+      ? []
+      : [
+          {
+            text: `${String(Math.round(miss.chance * 100))}% chance to miss with ${getAttribute(miss.attributeId)?.name ?? miss.attributeId} ${String(miss.rank)} or less`,
+            magnitude: undefined,
+          },
+        ];
   // A critical whatever the roll (#1315): Critical Strike's always,
   // Malicious Strike's on a conditioned foe.
   const criticalWhen = rule?.criticalWhen;
@@ -3877,6 +3900,7 @@ export function describeSkill(
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,
+    ...missLine,
     ...criticalLine,
     ...cleaveLine,
     ...cleaveAllLine,
