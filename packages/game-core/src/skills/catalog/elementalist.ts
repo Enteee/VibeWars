@@ -4257,6 +4257,235 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  /* ---------------------------------------------------------------------- */
+  /* Elementalist staples (#2232): Earth, Air and Energy Storage, rank 12   */
+  /* ---------------------------------------------------------------------- */
+  {
+    id: "elementalist.obsidian-flame",
+    name: "Obsidian Flame",
+    // The PvP split (2809); the base record is 219.
+    gwId: 219,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 5,
+    activationSeconds: 1.5,
+    rechargeSeconds: 5,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Deal 22...92 damage to target foe. This spell ignores armor" (PvP).
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 22, atTwelve: 78 },
+        },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+    ],
+  },
+  {
+    id: "elementalist.invoke-lightning",
+    name: "Invoke Lightning",
+    gwId: 1664,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 5,
+    activationSeconds: 1,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    // "Target foe and up to two other foes near your target", as Chain
+    // Lightning's.
+    area: {
+      radius: AREA_NEARBY,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: 3,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Are struck for 10...90 lightning damage. This spell has 25% armor
+    // penetration."
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 74 },
+        },
+        type: "lightning",
+        armorPenetration: 0.25,
+      },
+    ],
+  },
+  {
+    id: "elementalist.teinais-wind",
+    name: "Teinai's Wind",
+    gwId: 1081,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.air-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "target",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe and all adjacent foes take 10...40 cold damage. Burning
+    // foes struck by Teinai's Wind take an additional 40...80 damage and
+    // are interrupted": 34, and 72 more in the same packet.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.air-magic", atZero: 10, atTwelve: 34 },
+        },
+        type: "cold",
+        armorPenetration: 0,
+        conditionalBonus: {
+          condition: { kind: "target-has-status", statusId: "burning" },
+          amount: {
+            scaling: { attributeId: "elementalist.air-magic", atZero: 40, atTwelve: 72 },
+          },
+        },
+      },
+      {
+        kind: "if",
+        condition: { kind: "target-has-status", statusId: "burning" },
+        effects: [{ kind: "interrupt" }],
+      },
+    ],
+  },
+  {
+    id: "elementalist.crystal-wave",
+    name: "Crystal Wave",
+    gwId: 217,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.earth-magic",
+    cost: { kind: "energy", amount: 15 },
+    overcast: 0,
+    activationSeconds: 0.75,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "self",
+    // "Foes adjacent to you": around the caster, as Inferno's.
+    area: {
+      radius: AREA_ADJACENT,
+      origin: "caster",
+      affects: "enemies",
+      maxTargets: undefined,
+      includesCaster: false,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Are struck for 10...70 damage but are cured of any negative
+    // conditions. Each condition removed deals 5...15 damage": one packet
+    // of 58 and 13 for each condition, counted before the cure.
+    effects: [
+      {
+        kind: "damage",
+        amount: {
+          scaling: { attributeId: "elementalist.earth-magic", atZero: 10, atTwelve: 58 },
+        },
+        type: "earth",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "statuses", on: "target", categories: ["condition"] },
+          amount: { scaling: { attributeId: "elementalist.earth-magic", atZero: 5, atTwelve: 13 } },
+          max: undefined,
+        },
+      },
+      { kind: "remove-status", category: "condition", count: "all" },
+    ],
+  },
+  {
+    id: "elementalist.energy-blast",
+    name: "Energy Blast",
+    gwId: 2193,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "elementalist",
+    attributeId: "elementalist.energy-storage",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1.5,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Target foe takes 1...2 damage for each point of Energy you have
+    // (maximum 130 damage)": 2 for each at rank 12 (the wiki's progression
+    // rounds the 1.8), counted after the cost is paid.
+    effects: [
+      {
+        kind: "damage",
+        amount: { flat: 0 },
+        type: "typeless",
+        armorPenetration: 0,
+        per: {
+          count: { kind: "energy", on: "caster" },
+          amount: {
+            scaling: { attributeId: "elementalist.energy-storage", atZero: 1, atTwelve: 1.8 },
+          },
+          max: { flat: 130 },
+        },
+      },
+    ],
+  },
 ];
 
 /**
