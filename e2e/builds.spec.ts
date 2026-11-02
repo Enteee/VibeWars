@@ -2318,7 +2318,7 @@ test("a library card opens its details inline with Enter, one at a time, its ran
   await expect(fireball).not.toHaveClass(/is-equipped/);
 
   // Another card closes the first.
-  const other = page.locator('.skill-box[data-skill-id="monk.orison-of-healing"]');
+  const other = page.locator('.skill-box[data-skill-id="elementalist.flare"]');
   await other.locator(".skill-box-card").click();
   await expect(other.locator(".skill-box-details")).toBeVisible();
   await expect(details).toBeHidden();
