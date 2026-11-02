@@ -29,6 +29,22 @@ runs:
         # store does not ride along in every cache generation.
         gc-max-store-size-linux: 8G
 
+    # On a company runner the jail overlays host store paths the job's fresh
+    # Nix db does not know. Nix then deletes such a path before substituting
+    # it, and its chmod is EPERM (#2101). Register them as valid, and root
+    # them so the cache's gc does not try to delete them either. Hosted
+    # runners have no registration and skip this. After the cache restore, so
+    # a restored db does not drop the registration.
+    - name: Register the jail's store paths
+      if: env.VIBEWARS_NIX_REGISTRATION != ''
+      shell: bash
+      run: |
+        nix-store --load-db < "$VIBEWARS_NIX_REGISTRATION"
+        mkdir -p /nix/var/nix/gcroots
+        while read -r path; do
+          ln -sfn "$path" "/nix/var/nix/gcroots/vibewars-jail-$(basename "$path")"
+        done < "$VIBEWARS_NIX_STORE_PATHS"
+
     # The agent tooling (claude-code, bubblewrap, tmux, hub, tg, board) stays
     # out of CI's shell; see vibewars.claudeBot.enable in nix/claude-bot.nix.
     # devenv.local.nix is gitignored, so this never reaches a checkout.
