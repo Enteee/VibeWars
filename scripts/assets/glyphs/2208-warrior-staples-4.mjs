@@ -1,5 +1,5 @@
 // Glyphs (#2208): the Warrior staples of #2181. Stances are creatures' marks
-// (claws, horns, a bull's horns); attacks draw what they do to the foe.
+// (claws, a furious face, a bull's horns); attacks draw what they do to the foe.
 
 import { C, stroke } from "../icon-kit.mjs";
 import { DROP, inkFill, inkLine } from "../glyph-kit.mjs";
@@ -11,13 +11,14 @@ const glyphs = {
       "Tiger Stance: three curved claw rakes side by side: you strike faster, until a blow misses.",
     draw: () => inkLine("M3 5Q9 11 6 21M10 3Q16 10 13 21M17 5Q22 11 20 20", 2.6),
   },
-  "horns-helm": {
+  "face-furious": {
     means:
-      "Berserker Stance: a horned helm over two gauge bars: faster, and double adrenaline, until a skill is used.",
+      "Berserker Stance: a furious face, slanted brows over a gritted mouth, rage ticks above: faster, and double adrenaline, until a skill is used.",
     draw: () =>
-      inkLine("M4 4C4 9 6 11 9 11M20 4C20 9 18 11 15 11", 2.6) +
-      `<path d="M7 11H17V15C17 17.5 15 19 12 20.5C9 19 7 17.5 7 15Z" ${stroke(C.ink, 2.2)}/>` +
-      inkLine("M10.5 14.5V16M13.5 14.5V16", 1.6),
+      `<circle cx="12" cy="14" r="8" ${stroke(C.ink, 2.4)}/>` +
+      inkLine("M7 10.5L11 12.5M17 10.5L13 12.5", 2.4) +
+      inkLine("M8.5 18L10 16.5L12 18L14 16.5L15.5 18", 1.6) +
+      inkLine("M12 1.5V3.5M5.5 3.5L7 5M18.5 3.5L17 5", 1.8),
   },
   "skull-cracked": {
     means:

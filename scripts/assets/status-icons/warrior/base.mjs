@@ -194,12 +194,13 @@ const rows = {
     "stance",
     (c) => `<path d="M5 6Q9 11 7 19M11 5Q15 10 13 19M17 6Q20 11 19 18" ${stroke(c, 2.4)}/>`,
   ],
-  // Stance: a horned helm over two bars, faster and double adrenaline (#2208).
+  // Stance: a furious face, slanted brows over a gritted mouth, faster and double adrenaline (#2208).
   "berserker-stance": [
     "stance",
     (c) =>
-      `<path d="M5 5C5 9 6 10.5 8 10.5M19 5C19 9 18 10.5 16 10.5" ${stroke(c, 2.2)}/>` +
-      `<path d="M8 11h8v3.5c0 2-1.5 3.5-4 5-2.5-1.5-4-3-4-5z" ${stroke(c, 2)}/>`,
+      `<circle cx="12" cy="12" r="8" ${stroke(c, 2.2)}/>` +
+      `<path d="M6.5 8.5l4 2.5M17.5 8.5l-4 2.5" ${stroke(c, 2.4)}/>` +
+      `<path d="M8.5 16.5l1.8-1.5 1.7 1.5 1.7-1.5 1.8 1.5" ${stroke(c, 1.6)}/>`,
   ],
   // Stance: chevrons running into a ground bar, a moving foe knocked down.
   "bulls-charge": [
