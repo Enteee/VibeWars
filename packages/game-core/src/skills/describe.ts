@@ -57,6 +57,7 @@ import type {
   HealEffect,
   Magnitude,
   PerCount,
+  CountRule,
   RemoveStatusEffect,
   Skill,
   SkillEffect,
@@ -2850,6 +2851,19 @@ function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarge
   return `for each ${what}${max}`;
 }
 
+/** What a `per` counts, one of it, as a headline names it (#2222): "ally", "hex". */
+function perCountNoun(count: CountRule): string {
+  return count.kind === "statuses"
+    ? count.categories.join(" or ")
+    : count.kind === "recharging-skills"
+      ? "recharging skill"
+      : count.kind === "energy"
+        ? "point of Energy"
+        : count.kind === "foes-within"
+          ? "foe"
+          : "ally";
+}
+
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
 function upToText(effect: EnergyGainEffect): string {
   return effect.upTo === undefined ? "" : `, never above ${String(effect.upTo)}`;
@@ -3460,14 +3474,20 @@ function headlineOf(
     case "damage":
     case "heal":
     case "energy-gain": {
-      const magnitude = describeMagnitude(effect.amount, ranks);
+      // A zero base leads with its `per` amount (#2222): Leader's Zeal's
+      // "+4 energy per ally", never "+0 energy".
+      const magnitude = countedMagnitude(effect.amount, effect.per, ranks);
       const amount = shown(magnitude);
+      const each =
+        effect.per !== undefined && "flat" in effect.amount && effect.amount.flat === 0
+          ? ` per ${perCountNoun(effect.per.count)}`
+          : perPointLost(effect);
       const text =
         effect.kind === "damage"
-          ? `${amount}${typeWord(effect.type)} damage${perPointLost(effect)}`
+          ? `${amount}${typeWord(effect.type)} damage${each}`
           : effect.kind === "heal"
-            ? `heals ${amount}`
-            : `+${amount} energy${perPointLost(effect)}`;
+            ? `heals ${amount}${each}`
+            : `+${amount} energy${each}`;
       return { text, scales: magnitude.attributeId !== undefined };
     }
     case "energy-loss": {

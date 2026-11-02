@@ -285,6 +285,17 @@ describe("describeSkill", () => {
     expect(describeSkill(skill("mesmer.power-spike"), ranks).headline).toBe("102 damage");
   });
 
+  it("headlines a zero base by its per-count amount, never +0 (#2222)", () => {
+    const headline = (id: string, attributeId: string) =>
+      describeSkill(skill(id), new Map([[attributeId, 12]])).headline;
+    expect(headline("paragon.leaders-zeal", "paragon.motivation")).toBe("+4 energy per ally");
+    expect(headline("dervish.eremites-zeal", "dervish.mysticism")).toBe("+3 energy per foe");
+    expect(headline("monk.mend-ailment", "monk.protection-prayers")).toBe("heals 57 per condition");
+    expect(headline("assassin.sadists-signet", "assassin.deadly-arts")).toBe(
+      "heals 34 per condition",
+    );
+  });
+
   it("words Concussion Shot's spell-only interrupt and its daze (#1008)", () => {
     const ranks = new Map([["ranger.marksmanship", 12]]);
     expect(
