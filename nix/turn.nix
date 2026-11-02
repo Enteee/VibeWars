@@ -196,6 +196,8 @@ in
     (lib.mkIf cfg.enable {
       processes.turn.exec = ''
         set -euo pipefail
+        # turnserver.conf holds the shared secret (#2240): 0600, not the umask's.
+        umask 077
         ${preamble}
         mkdir -p ${lib.escapeShellArg cfg.stateDir}
         chmod 700 ${lib.escapeShellArg cfg.stateDir}
@@ -212,6 +214,10 @@ in
         turn-link = {
           description = "Print a TURN user's invite link (sets a new password)";
           exec = command "link";
+        };
+        turn-shared = {
+          description = "Print the Shared URLs and secret for Options; rotate sets a new secret";
+          exec = command "shared";
         };
         turn-check = {
           description = "Check the TURN server once; exit 0 when healthy";

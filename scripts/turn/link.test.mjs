@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { parseTurnFragment } from "../../apps/web/src/net/transport/turn-config.ts";
 import { encodeTurnFragment, inviteLink, turnUrls } from "./link.mjs";
 import { parseSettings } from "./settings.mjs";
 
@@ -38,13 +39,29 @@ function decode(link) {
 }
 
 describe("invite links", () => {
-  const config = { urls: turnUrls(settings), username: "alice", credential: "s3cr+t/=" };
+  const config = {
+    urls: turnUrls(settings),
+    username: "alice",
+    credential: "s3cr+t/=",
+    shared: { urls: turnUrls(settings), secret: "ab".repeat(32) },
+  };
 
   it("carry the config as unpadded base64url JSON in the fragment", () => {
     const link = inviteLink("https://enteee.github.io/VibeWars/next/", config);
     expect(link.startsWith("https://enteee.github.io/VibeWars/next/#turn=")).toBe(true);
     expect(link).not.toMatch(/=$|[+/]\w*$/);
     expect(decode(link)).toEqual(config);
+  });
+
+  // #2240: the shared relay rides along, and the game takes the link whole.
+  it("carry the shared relay, and the game reads them", () => {
+    const link = inviteLink("https://x.example/", config);
+    expect(parseTurnFragment(new URL(link).hash)).toEqual({
+      kind: "config",
+      config: { urls: config.urls, username: "alice", credential: "s3cr+t/=" },
+      shared: config.shared,
+      rest: "",
+    });
   });
 
   it("replace a fragment the base already has", () => {

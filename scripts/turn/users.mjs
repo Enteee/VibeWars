@@ -7,8 +7,9 @@
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import process from "node:process";
 
-import { files } from "./settings.mjs";
+import { checkSharedSecret, files } from "./settings.mjs";
 
 /** The user turn-check allocates as. turn-user list does not show it. */
 export const HEALTH_USER = "vibewars-health";
@@ -111,4 +112,98 @@ export function healthPassword(s) {
     setUser(s, HEALTH_USER, password);
   }
   return password;
+}
+
+/** More than a secret and its newline: a file this long is not one. */
+const MAX_SECRET_FILE = 256;
+
+/**
+ * Reads a secret file without following a link, and only when it is a
+ * regular file of ours that nobody else may read.
+ *
+ * @param {string} file
+ * @returns {string}
+ */
+function readSecretFile(file) {
+  const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+  try {
+    const st = fs.fstatSync(fd);
+    if (!st.isFile() || st.uid !== process.getuid?.() || (st.mode & 0o077) !== 0) {
+      throw new Error(`${file} must be a regular file of yours, mode 0600`);
+    }
+    const buf = Buffer.alloc(MAX_SECRET_FILE + 1);
+    const n = fs.readSync(fd, buf, 0, buf.length, 0);
+    if (n > MAX_SECRET_FILE) throw new Error(`${file} is too long for a secret`);
+    return checkSharedSecret(buf.subarray(0, n).toString("utf8"));
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/**
+ * Creates `file` at 0600 with `secret`, never over an existing file or
+ * through a link: EEXIST when it is there.
+ *
+ * @param {string} file
+ * @param {string} secret
+ */
+function createSecretFile(file, secret) {
+  const { O_WRONLY, O_CREAT, O_EXCL, O_NOFOLLOW } = fs.constants;
+  const fd = fs.openSync(file, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600);
+  try {
+    fs.writeSync(fd, `${secret}\n`);
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/** @returns {string} 32 random bytes, hex */
+function newSharedSecret() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+/**
+ * The shared relay's secret (#2240, coturn use-auth-secret), created the
+ * first time it is needed. A malformed file is an error, never replaced:
+ * a new secret would kill every host's offers without a word. Two first
+ * creates racing end with the same secret: the loser reads the winner's.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @returns {string}
+ */
+export function sharedSecret(s) {
+  const file = files(s).sharedSecret;
+  fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
+  try {
+    return readSecretFile(file);
+  } catch (e) {
+    if (!(e instanceof Error && "code" in e && e.code === "ENOENT")) throw e;
+  }
+  const secret = newSharedSecret();
+  try {
+    createSecretFile(file, secret);
+    return secret;
+  } catch (e) {
+    if (!(e instanceof Error && "code" in e && e.code === "EEXIST")) throw e;
+    return readSecretFile(file);
+  }
+}
+
+/**
+ * A new shared secret, written to a 0600 temp file and renamed over the
+ * old one, so a crash mid-rotate leaves the old secret or the new one.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @returns {string}
+ */
+export function rotateSharedSecret(s) {
+  const file = files(s).sharedSecret;
+  const secret = checkSharedSecret(newSharedSecret());
+  fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
+  const tmp = `${file}.${String(process.pid)}.tmp`;
+  fs.rmSync(tmp, { force: true });
+  createSecretFile(tmp, secret);
+  fs.renameSync(tmp, file);
+  return secret;
 }

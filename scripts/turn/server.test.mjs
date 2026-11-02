@@ -7,6 +7,7 @@
  * permission checks ask for the host's own public address (#1266).
  */
 import { spawn, spawnSync } from "node:child_process";
+import crypto from "node:crypto";
 import dgram from "node:dgram";
 import fs from "node:fs";
 import net from "node:net";
@@ -18,7 +19,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { healthy, runChecks } from "./check.mjs";
 import { files, parseSettings, turnserverConf } from "./settings.mjs";
+import { splitRelayUrls } from "../../apps/web/src/ui/relay-section.ts";
 import { allocate, binding, permissions } from "./stun.mjs";
+import { sharedSecret } from "./users.mjs";
 
 const TURN = path.join(import.meta.dirname, "turn.mjs");
 
@@ -55,6 +58,9 @@ let dir;
 let settings;
 /** @type {import("node:child_process").ChildProcess | null} */
 let server = null;
+
+/** The shared secret (#2240) the server was started with. */
+const secret = () => fs.readFileSync(files(settings).sharedSecret, "utf8").trim();
 
 /**
  * @param {string[]} args
@@ -93,7 +99,7 @@ beforeAll(async () => {
   });
   fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings));
   fs.mkdirSync(settings.stateDir, { mode: 0o700 });
-  fs.writeFileSync(files(settings).conf, turnserverConf(settings));
+  fs.writeFileSync(files(settings).conf, turnserverConf(settings, sharedSecret(settings)));
   server = spawn("turnserver", ["-c", files(settings).conf], { stdio: "ignore" });
   // Ready is answering a Binding: the pid file does not mean the UDP
   // listener is up, and a check's single request would be lost to it.
@@ -178,6 +184,48 @@ describe("a real turnserver", () => {
     expect(turn(["user", "remove", "alice"]).status).toBe(0);
     expect(await allocate(as)).toEqual({ ok: false, code: 401 });
     expect(turn(["user", "list"]).stdout).toBe("");
+  });
+
+  // #2240: what the game mints from the shared secret, as coturn REST checks it.
+  /** @param {number} expiry  unix seconds */
+  const minted = (expiry) => {
+    const username = `${String(expiry)}:${crypto.randomBytes(4).toString("hex")}`;
+    const password = crypto.createHmac("sha1", secret()).update(username).digest("base64");
+    return { host: "127.0.0.1", port: settings.listeningPort, username, password };
+  };
+
+  it("prints the shared relay for Options, as the game splits it", () => {
+    const out = turn(["shared"]);
+    expect(out.stderr).toBe("");
+    expect(out.status).toBe(0);
+    const urls = splitRelayUrls(/^Shared URLs: (.*)$/m.exec(out.stdout)?.[1] ?? "");
+    expect(urls).toEqual([
+      `turn:127.0.0.1:${String(settings.listeningPort)}?transport=udp`,
+      `turn:127.0.0.1:${String(settings.listeningPort)}?transport=tcp`,
+    ]);
+    expect(out.stdout.split("\n")).toContain(`Shared secret: ${secret()}`);
+    expect(fs.statSync(files(settings).sharedSecret).mode & 0o777).toBe(0o600);
+  });
+
+  it("puts the shared secret in every invite link", () => {
+    const add = turn(["user", "add", "bob", "--base", "https://play.example/"]);
+    expect(add.status).toBe(0);
+    const value = /#turn=([A-Za-z0-9_-]+)$/m.exec(add.stdout)?.[1] ?? "";
+    /** @type {unknown} */
+    const config = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+    expect(config).toMatchObject({ shared: { secret: secret() } });
+    expect(turn(["user", "remove", "bob"]).stdout).toMatch(/turn-shared rotate/);
+  });
+
+  it("allocates with a credential minted from the shared secret, and keeps it out of the log", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    expect(await allocate(minted(now + 3600))).toMatchObject({ ok: true });
+    expect(fs.readFileSync(files(settings).log, "utf8")).not.toContain(secret());
+  });
+
+  it("answers 401 to an expired minted credential", async () => {
+    const now = Math.floor(Date.now() / 1000);
+    expect(await allocate(minted(now - 60))).toEqual({ ok: false, code: 401 });
   });
 
   it("fails turn-check once the server is gone", async () => {
