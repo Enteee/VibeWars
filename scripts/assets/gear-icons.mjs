@@ -381,23 +381,23 @@ const HELD_DRAWINGS = {
   axe: (/** @type {number} */ L) => {
     const w = 80,
       c = w / 2;
-    // The bit outward (left), a short beak behind it.
+    // The bit inward (right), over the arm, a short beak behind it.
     return [
       w,
       shaft(c, 7, 6, L - 2) +
         wrap(c, 8, L - 32, L - 6) +
         knob(c, L - 3, 3.6, M.steelDark) +
         shape(
-          `M${n(c - 3)} 14L${n(c - 18)} 10Q${n(c - 36)} 4 ${n(c - 38)} 2Q${n(c - 31)} 22 ${n(c - 38)} 46Q${n(c - 34)} 40 ${n(c - 18)} 36L${n(c - 3)} 32Z`,
+          `M${n(c + 3)} 14L${n(c + 18)} 10Q${n(c + 36)} 4 ${n(c + 38)} 2Q${n(c + 31)} 22 ${n(c + 38)} 46Q${n(c + 34)} 40 ${n(c + 18)} 36L${n(c + 3)} 32Z`,
           M.steel,
         ) +
-        streak(`M${n(c - 36)} 6Q${n(c - 29)} 24 ${n(c - 36)} 42`, M.steelLight, 1.6) +
-        shape(`M${n(c + 3)} 16L${n(c + 18)} 22L${n(c + 3)} 30Z`, M.steelDark) +
+        streak(`M${n(c + 36)} 6Q${n(c + 29)} 24 ${n(c + 36)} 42`, M.steelLight, 1.6) +
+        shape(`M${n(c - 3)} 16L${n(c - 14)} 22L${n(c - 3)} 30Z`, M.steelDark) +
         shape(bar(c, 10, 12, 36), M.steelDark, 1.2),
     ];
   },
   hammer: (/** @type {number} */ L) => {
-    const w = 64,
+    const w = 52,
       c = w / 2;
     return [
       w,
@@ -427,19 +427,20 @@ const HELD_DRAWINGS = {
     ];
   },
   scythe: (/** @type {number} */ L) => {
-    const w = 184,
+    const w = 140,
       c = w / 2;
-    // The snath upright, the blade sweeping outward (left) from its top.
+    // The snath upright, the blade sweeping inward (right) from its top,
+    // over the shoulder, so the figure's box holds it.
     return [
       w,
       shaft(c, 7, 4, L - 2) +
         wrap(c, 9, L - 112, L - 96, 3) +
         wrap(c, 9, L - 30, L - 14, 3) +
         shape(
-          `M${n(c - 2)} 4Q${n(c - 60)} -2 ${n(c - 90)} 30Q${n(c - 62)} 10 ${n(c - 2)} 18Z`,
+          `M${n(c + 2)} 4Q${n(c + 44)} -2 ${n(c + 64)} 26Q${n(c + 44)} 10 ${n(c + 2)} 18Z`,
           M.steel,
         ) +
-        streak(`M${n(c - 6)} 7Q${n(c - 58)} 3 ${n(c - 86)} 27`, M.steelLight, 1.4) +
+        streak(`M${n(c + 6)} 7Q${n(c + 42)} 3 ${n(c + 60)} 23`, M.steelLight, 1.4) +
         shape(bar(c, 11, 2, 20), M.steelDark, 1.2),
     ];
   },

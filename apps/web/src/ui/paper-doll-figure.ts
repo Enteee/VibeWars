@@ -33,9 +33,9 @@ export interface HeldPose {
 }
 
 export const HELD: Readonly<Record<Exclude<WeaponId, "unarmed"> | OffhandId, HeldPose>> = {
-  sword: { length: 170, grip: 0.12, tilt: 15 },
-  axe: { length: 140, grip: 0.12, tilt: 15 },
-  hammer: { length: 175, grip: 0.12, tilt: 15 },
+  sword: { length: 170, grip: 0.12, tilt: 10 },
+  axe: { length: 140, grip: 0.12, tilt: 5 },
+  hammer: { length: 175, grip: 0.12, tilt: 0 },
   daggers: { length: 75, grip: 0.2, tilt: 20 },
   scythe: { length: 300, grip: 0.35, tilt: 8 },
   spear: { length: 280, grip: 0.4, tilt: 5 },
