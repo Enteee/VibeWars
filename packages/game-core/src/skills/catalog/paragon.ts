@@ -3085,7 +3085,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
   {
     id: "paragon.ballad-of-restoration",
     name: "Ballad of Restoration",
-    gwId: 2877,
+    gwId: 1564,
     type: "chant",
     elite: false,
     flash: false,
@@ -3231,7 +3231,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
   {
     id: "paragon.find-their-weakness",
     name: '"Find Their Weakness!"',
-    gwId: 3034,
+    gwId: 1781,
     type: "shout",
     elite: false,
     flash: false,

@@ -107,6 +107,13 @@ const NO_BOT_USE = new Set([
   "necromancer.contagion",
   "necromancer.offering-of-blood",
   "paragon.fall-back",
+  // Song of Power (#2222): Energy regeneration that ends on the next skill,
+  // as Blood Ritual's, and Leader's Zeal's Energy by allies near, as
+  // Channeling's by foes, and "Make Your Time!"'s adrenaline by allies
+  // near, are no rule the bot weighs.
+  "paragon.leaders-zeal",
+  "paragon.make-your-time",
+  "paragon.song-of-power",
   // Godspeed, "Lead the Way!" and "Brace Yourself!" (#1955): cast by
   // play-build's rider rule, not an intent.
   "paragon.brace-yourself",

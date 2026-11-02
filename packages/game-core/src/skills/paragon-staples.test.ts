@@ -52,11 +52,11 @@ describe("the six are the corpus's (#2222)", () => {
   it.each([
     ["song-of-power", 1560, "chant", "motivation", 15, 1, 30],
     // PvP: recharges in 20 s, not 10.
-    ["ballad-of-restoration", 2877, "chant", "motivation", 10, 1, 20],
+    ["ballad-of-restoration", 1564, "chant", "motivation", 10, 1, 20],
     ["leaders-zeal", 1583, "skill", "motivation", 5, 0, 12],
     ["make-your-time", 1779, "shout", "leadership", 10, 0, 10],
     ["theyre-on-fire", 1597, "shout", "leadership", 10, 0, 10],
-    ["find-their-weakness", 3034, "shout", "command", 10, 0, 15],
+    ["find-their-weakness", 1781, "shout", "command", 10, 0, 15],
   ] as const)("%s", (id, gwId, type, attribute, energy, activation, recharge) => {
     expect(skill(`paragon.${id}`)).toMatchObject({
       gwId,
