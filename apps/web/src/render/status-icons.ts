@@ -391,6 +391,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "intimidating-aura": icon("intimidating-aura"),
   "eremites-zeal": icon("eremites-zeal"),
   "vow-of-silence": icon("vow-of-silence"),
+  conviction: icon("conviction"),
   // Pets 2 (#1865).
   "otyughs-cry": icon("otyughs-cry"),
   "predatory-bond": icon("predatory-bond"),

@@ -48,7 +48,9 @@ export type DervishStatusId =
   // Dervish staples (#2207).
   | "intimidating-aura"
   | "eremites-zeal"
-  | "vow-of-silence";
+  | "vow-of-silence"
+  // Conviction (#2217).
+  | "conviction";
 
 export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition>> = {
   // "For 5...17...20 seconds, you have 1...3...4 Health regeneration for
@@ -757,5 +759,38 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     profession: "dervish",
     untargetableBySpells: true,
     preventsSpells: true,
+  }),
+  // "+10 armor if you have a condition and gain 1...3 Health regen for
+  // each condition you are suffering from. When this enchantment ends,
+  // you are cured of 1...2 conditions", by its Earth Prayers: any end, a
+  // strip included.
+  conviction: define("conviction", "Conviction", "enchantment", {
+    profession: "dervish",
+    healthPipsPerCondition: {
+      scaling: { attributeId: "dervish.earth-prayers", atZero: 1, atTwelve: 2.6 },
+    },
+    whileUnder: {
+      categories: ["condition"],
+      statusIds: [],
+      attackDurationMultiplier: 1,
+      adrenalineGainFaster: 0,
+      healthPips: 0,
+      armorModifier: 10,
+      attackMissChance: 0,
+    },
+    triggers: [
+      {
+        on: "ends",
+        effects: [
+          {
+            kind: "remove-status",
+            category: "condition",
+            count: { scaling: { attributeId: "dervish.earth-prayers", atZero: 1, atTwelve: 1.8 } },
+          },
+        ],
+        target: "bearer",
+        skillId: "dervish.conviction",
+      },
+    ],
   }),
 };

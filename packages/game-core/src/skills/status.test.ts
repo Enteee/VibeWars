@@ -59,7 +59,7 @@ describe("status definitions", () => {
       const hasEffect =
         def.healthPips !== 0 ||
         def.healthPipsPerEnchantment !== undefined ||
-        def.healthPipsPerCondition !== 0 ||
+        statAtTwelve(def.healthPipsPerCondition) !== 0 ||
         def.healthPipsPerHex !== 0 ||
         def.energyPipsPerCondition !== 0 ||
         def.energyPipsPerHex !== 0 ||
