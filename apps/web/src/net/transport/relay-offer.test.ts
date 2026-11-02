@@ -216,7 +216,7 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
   });
 
   it("never puts the secret in an offer, sealed or before it is (#2240)", async () => {
-    const linked: SharedRelay = { urls: SHARED.urls, secret: "ab".repeat(32) };
+    const linked: SharedRelay = { urls: SHARED.urls, secret: "cd".repeat(32) };
     const plains: string[] = [];
     const encrypt = crypto.subtle.encrypt.bind(crypto.subtle);
     vi.spyOn(crypto.subtle, "encrypt").mockImplementation((algorithm, key, data) => {
