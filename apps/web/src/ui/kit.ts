@@ -28,6 +28,18 @@ export function button(label: string, className: string, onClick: () => void): H
 }
 
 /**
+ * Every mode screen's Ready (#2022): the title bar's primary action, the
+ * one a phone keeps out of the ⋯ (#1272), until `ready` makes it Not ready.
+ */
+export function readyButton(ready: boolean, onClick: () => void): HTMLButtonElement {
+  return button(
+    ready ? "Not ready" : "Ready",
+    ready ? "screen-ready" : "primary screen-ready",
+    onClick,
+  );
+}
+
+/**
  * A square button that is only an icon (#454): `label` names it for a
  * screen reader and on hover. Who uses it listens for its clicks.
  */
