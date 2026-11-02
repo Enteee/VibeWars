@@ -259,6 +259,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
       effects: [{ kind: "remove-status", category: "enchantment", count: 1 }],
       energyIfRemoved: 4,
       skillId: "assassin.dark-apostasy",
+      weapon: undefined,
     },
   }),
   // "For 10...35 seconds, whenever target foe enters a stance, you enter

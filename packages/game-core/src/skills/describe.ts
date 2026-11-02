@@ -636,14 +636,22 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("refreshes every time you land a critical hit");
   }
   if (definition.onCriticalHit !== undefined) {
-    const { effects, energyIfRemoved } = definition.onCriticalHit;
+    const { effects, energyIfRemoved, weapon } = definition.onCriticalHit;
+    const when =
+      weapon === undefined
+        ? "every time you land a critical hit"
+        : `every time you land a critical hit with ${NEEDED_WEAPON[weapon]}`;
     parts.push(
       ...effects.flatMap((effect) =>
-        describeEffects(effect, new Map()).map(
-          ({ text }) => `every time you land a critical hit: ${lowerFirst(text)} from your target`,
+        describeEffects(effect, new Map()).map(({ text }) =>
+          effect.kind === "remove-status"
+            ? `${when}: ${lowerFirst(text)} from your target`
+            : `${when}: ${lowerFirst(text)}`,
         ),
       ),
-      `if one is removed, you lose ${String(energyIfRemoved)} Energy or it ends`,
+      ...(energyIfRemoved > 0
+        ? [`if one is removed, you lose ${String(energyIfRemoved)} Energy or it ends`]
+        : []),
     );
   }
   if (definition.endsAfterAttacks !== undefined) {
@@ -1053,6 +1061,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     definition.endsWhenTriggered,
     definition.category === "hex" || definition.category === "condition",
     definition.category === "item",
+    definition.category === "preparation" || definition.category === "stance",
   )) {
     (clause ? parts : sentences).push(text);
   }
@@ -1290,6 +1299,7 @@ function describeTriggers(
   nextOnly: boolean,
   bearerIsFoe: boolean,
   dropped: boolean,
+  bearerIsCaster: boolean,
 ): TriggerLine[] {
   const groups = new Map<string, { trigger: StatusTrigger; on: StatusTriggerEvent[] }>();
   for (const trigger of triggers) {
@@ -1338,9 +1348,12 @@ function describeTriggers(
                   ? NEXT_SKILL
                   : nextOnly
                     ? `the next time it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`
-                    : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
+                    : bearerIsCaster && trigger.weapon === "bow"
+                      ? `whenever your arrows ${on.map((event) => ARROWS_WHEN[event] ?? whenOf(event, trigger)).join(" or ")}`
+                      : `whenever it ${on.map((event) => whenOf(event, trigger)).join(" or ")}`,
       ranks,
       bearerIsFoe,
+      bearerIsCaster,
     );
     // A heal on the bearer and the same on the allies around (#1951):
     // Mist Form's, said once.
@@ -1373,6 +1386,15 @@ function describeTriggers(
     return [{ text: `${DROPPED}: ${what.join(", ")}`, clause: false }];
   });
 }
+
+/**
+ * A caster's own bow-bound trigger in the corpus's words (#2133):
+ * Marksman's Wager's "whenever your arrows hit".
+ */
+const ARROWS_WHEN: Partial<Record<StatusTriggerEvent, string>> = {
+  "bearer-hits": "hit",
+  "bearer-fails-to-hit": "fail to hit",
+};
 
 /**
  * What the bearer does with a weapon that a bound trigger answers
@@ -1612,6 +1634,7 @@ function describeTrigger(
   when: string,
   ranks: ReadonlyMap<string, number>,
   bearerIsFoe: boolean,
+  bearerIsCaster: boolean,
 ): TriggerLine[] {
   const amount = (magnitude: Magnitude): string => shown(describeMagnitude(magnitude, ranks));
   const clause = (text: string): TriggerLine => ({ text, clause: true });
@@ -1898,11 +1921,14 @@ function describeTrigger(
       );
     }
     // Energizing Finale's (#1485): "whenever a chant or shout ends on it:
-    // it gains 2 energy".
+    // it gains 2 energy". On the caster's own preparation or stance, a loss
+    // is yours (#2133): Marksman's Wager's "you lose 10 energy".
+    const bearer = (text: string): string =>
+      text
+        .replace(/^Target gains/, "it gains")
+        .replace(/^Target loses/, bearerIsCaster ? "you lose" : "it loses");
     return describeEffects(effect, ranks).map(({ text }) =>
-      sentence(
-        `${when}: ${lowerFirst(trigger.target === "bearer" ? text.replace(/^Target gains/, "it gains") : text)}`,
-      ),
+      sentence(`${when}: ${lowerFirst(trigger.target === "bearer" ? bearer(text) : text)}`),
     );
   });
 }
@@ -2199,6 +2225,10 @@ function conditionText(
       return condition.radius === AREA_NEARBY
         ? "If target is near any of your allies"
         : `If any of your allies is within ${String(condition.radius)} of target`;
+    case "target-within":
+      return condition.radius === AREA_EARSHOT
+        ? "If target is within earshot"
+        : `If target is within ${String(condition.radius)} of you`;
     case "target-not-moving":
       return "If target is not moving";
     case "target-knocked-down":
@@ -3144,7 +3174,7 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
       return {
         text:
           effect.which === "all"
-            ? "Recharges all your skills"
+            ? "Recharges all your other skills"
             : "Recharges all your other attack skills",
         magnitude: undefined,
       };
@@ -3788,6 +3818,17 @@ export function describeSkill(
             magnitude: undefined,
           },
         ];
+  // A miss chance at a low rank (#2133): Oath Shot's.
+  const miss = rule?.missChanceAtOrBelowRank;
+  const missLine =
+    miss === undefined
+      ? []
+      : [
+          {
+            text: `${String(Math.round(miss.chance * 100))}% chance to miss with ${getAttribute(miss.attributeId)?.name ?? miss.attributeId} ${String(miss.rank)} or less`,
+            magnitude: undefined,
+          },
+        ];
   // A critical whatever the roll (#1315): Critical Strike's always,
   // Malicious Strike's on a conditioned foe.
   const criticalWhen = rule?.criticalWhen;
@@ -4000,6 +4041,7 @@ export function describeSkill(
     ...chainLine,
     ...bonusLine,
     ...unblockableLine,
+    ...missLine,
     ...criticalLine,
     ...cleaveLine,
     ...cleaveAllLine,
