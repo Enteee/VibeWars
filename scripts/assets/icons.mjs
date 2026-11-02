@@ -21,7 +21,7 @@ import { C, stroke } from "./icon-kit.mjs";
 import { STATUS_ICONS } from "./status-icon-table.mjs";
 import { SKILL_ICONS } from "./skill-icon-table.mjs";
 import { GLYPHS, MODIFIERS } from "./glyph-table.mjs";
-import { gearIcons, paperDollFigure } from "./gear-icons.mjs";
+import { gearIcons, heldItems, paperDollFigure } from "./gear-icons.mjs";
 import { WEAPON_MARK_GEOMETRY } from "../../apps/web/src/render/weapon-mark-geometry.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -707,6 +707,8 @@ const families = {
   insignia: gear.insignia,
   rune: gear.rune,
   "paper-doll": { figure: paperDollFigure() },
+  // After "paper-doll", whose clean-out would take this with it.
+  "paper-doll/held": heldItems(),
   mode: Object.fromEntries(Object.entries(mode).map(([k, f]) => [k, svg(f())])),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
