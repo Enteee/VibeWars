@@ -7,6 +7,7 @@ import {
   type LobbyTeamSize,
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
+  parsePeerLobbySeat,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
   MAX_LOBBY_PLAYERS,
@@ -1892,12 +1893,13 @@ describe("the key gate (#1681, ADR-0043)", () => {
   const GUEST_NONCE = "1a".repeat(16);
 
   /** A well-formed coded join, as `name`. */
-  const joinAs = (name: string) => ({
+  const joinAs = (name: string, rejoinToken: string | null = null) => ({
     protocolVersion: PROTOCOL_VERSION,
     name,
     guildTag: null,
     guildCape: null,
     admission: null,
+    rejoinToken,
   });
 
   /** The nonce `got` was challenged with. */
@@ -1964,6 +1966,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     await until(() => proven(got));
     peer.send("lobby-join", joinAs("Proven"), "host");
     await until(() => playersOf(lobby.host).length === 2);
+    const seat = parsePeerLobbySeat(got.find(([channel]) => channel === "lobby-seat")?.[1]);
 
     got.length = 0;
     lobby.network.blip("host", peer.selfId);
@@ -1977,7 +1980,8 @@ describe("the key gate (#1681, ADR-0043)", () => {
 
     await prove(peer, got);
     await until(() => proven(got));
-    peer.send("lobby-join", joinAs("Again"), "host");
+    // Back with the seat's token (#2157).
+    peer.send("lobby-join", joinAs("Again", seat?.rejoinToken ?? null), "host");
     await until(() => playersOf(lobby.host)[1]?.name === "Again");
   });
 

@@ -23,6 +23,7 @@
     "lobby-hello",
     "lobby-welcome",
     "lobby-leave",
+    "lobby-seat",
     "stay-together",
     "party-proposal",
     "party-consent",
@@ -603,6 +604,7 @@
         { "literal": "lobby-leave" },
         { "literal": "lobby-move" },
         { "literal": "lobby-note" },
+        { "literal": "lobby-seat" },
         { "literal": "lobby-state" },
         { "literal": "lobby-welcome" },
         { "literal": "match-start" },
@@ -4070,10 +4072,14 @@
         },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "name", "optional": false, "type": "string" },
-        { "name": "protocolVersion", "optional": false, "type": "string" }
+        { "name": "protocolVersion", "optional": false, "type": "string" },
+        { "name": "rejoinToken", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
     "PeerLobbyLeave": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
+    "PeerLobbySeat": {
+      "properties": [{ "name": "rejoinToken", "optional": false, "type": "string" }]
+    },
     "PeerObserve": {
       "properties": [
         { "name": "matchId", "optional": false, "type": "string" },

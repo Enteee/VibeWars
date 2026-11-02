@@ -25,6 +25,7 @@ import {
   type LobbyPhase,
   type LobbyTeamSize,
   type PeerLobbyJoin,
+  type PeerLobbySeat,
   type LobbyRefusal,
   type WireCape,
   type WireChatLine,
@@ -304,10 +305,25 @@ interface Member {
   /** The seat key it was admitted on, in a queued lobby (#882). */
   readonly seatKey: string | null;
   /**
+   * What its `lobby-join` must carry to get the seat back after a drop
+   * (#2157); `null` for the host's own player and a bot, never re-seated so.
+   */
+  readonly rejoinToken: string | null;
+  /**
    * A bot's build (#1193): it has no peer, is always ready and plays
    * this, a slot nobody claimed (#2029).
    */
   bot: PlayerBuild | null;
+}
+
+/**
+ * A lobby rejoin token (#2157): 128 fresh random bits as 32 hex digits,
+ * never from the seeded `random`, which a peer could predict.
+ */
+function newRejoinToken(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 /** Whether `member` counts as ready: a bot always is (#1193). */
@@ -1406,6 +1422,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       team,
       ready: true,
       seatKey: null,
+      rejoinToken: null,
       bot: build,
     });
     return id;
@@ -1449,6 +1466,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return;
     }
     joined += 1;
+    const rejoinToken = from === local.selfId ? null : newRejoinToken();
     members.set(from, {
       id: from,
       name: sanitizeName(join.name, `player-${String(joined)}`),
@@ -1456,10 +1474,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       team,
       ready: false,
       seatKey,
+      rejoinToken,
       bot: null,
     });
     beginCountdown();
     broadcast();
+    // To it alone, after the state that lists it, so it knows the host by then.
+    if (rejoinToken !== null) {
+      transport.send("lobby-seat", { rejoinToken } satisfies PeerLobbySeat, from);
+    }
   };
 
   /**
@@ -1681,6 +1704,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const returning = members.get(from);
     // Back from a drop, it was admitted already: as this peer, on its ticket.
     if (returning !== undefined) {
+      // Only with the seat's token (#2157): a peer id is seen by the whole
+      // room. Not refused, which would tell a prober the seat exists.
+      if (returning.rejoinToken === null || join.rejoinToken !== returning.rejoinToken) {
+        return;
+      }
       // Back from a drop during the match (#596): the seat it held, on its
       // team, to confirm again like everyone else when the match is over.
       away.delete(from);
