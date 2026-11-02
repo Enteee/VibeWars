@@ -875,14 +875,27 @@ export interface RechargeOthersEffect {
  * the elite skill on the target's bar (#1473), Signet of Humility's; no
  * elite: nothing. With `random-spell`, one spell on the target's bar,
  * picked with the match's rng (#1928), Arcane Thievery's; no spell: nothing.
+ * With `centre-interrupted`, only inside a `splash` (#2165), the skill
+ * interrupted on the splash's centre, on each foe whose bar holds it,
+ * Complicate's "disabled for target foe and all foes in the area"; nothing
+ * interrupted, or a foe without it: nothing. `perOwnSignet` multiplies
+ * `seconds` by the signets on the caster's bar, this one included (#2165),
+ * as Signet of Distraction's "for each signet you have equipped".
  * With `attacks`, every attack skill on the target's bar (#2180),
  * Disarm's "all of that foe's attack skills are disabled".
  */
 export interface DisableSkillEffect {
   readonly kind: "disable-skill";
   readonly which:
-    "interrupted" | "interrupted-and-attribute" | "all" | "elite" | "random-spell" | "attacks";
+    | "interrupted"
+    | "interrupted-and-attribute"
+    | "all"
+    | "elite"
+    | "random-spell"
+    | "centre-interrupted"
+    | "attacks";
   readonly seconds: Magnitude;
+  readonly perOwnSignet?: true;
 }
 
 /**

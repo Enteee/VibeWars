@@ -1,6 +1,7 @@
-import type { Skill } from "../../../skills/types.js";
+import type { Skill, SkillEffect } from "../../../skills/types.js";
 import { swingProgress } from "../../../skills/weapon-attack.js";
 import type { Participant } from "../../simulation.js";
+import { distance } from "../../../vec2.js";
 import { botUses, interruptAimed } from "../skill-intent.js";
 import type { BotRule } from "./types.js";
 
@@ -24,15 +25,21 @@ const interrupt: BotRule = {
           interruptAimed(held, self.combatant, foe.combatant) === lands &&
           mayUse(held, foe.id),
       );
+    // Complicate's (#2165): one that splashes goes where the most foes stand.
+    let best: { foe: Participant; skill: Skill; crowd: number } | undefined;
     for (const foe of foes) {
       const activeCast = foe.combatant.cast.activeCast;
       const skill =
         activeCast === undefined
           ? undefined
           : interrupting("cast", foe, activeCast.remainingSeconds);
-      if (skill !== undefined) {
-        return use(skill, foe.id);
+      const crowd = skill === undefined ? 0 : crowdAround(skill, foe, foes);
+      if (skill !== undefined && (best === undefined || crowd > best.crowd)) {
+        best = { foe, skill, crowd };
       }
+    }
+    if (best !== undefined) {
+      return use(best.skill, best.foe.id);
     }
     for (const foe of foes) {
       const swing = swingProgress(foe.combatant);
@@ -46,6 +53,31 @@ const interrupt: BotRule = {
 };
 
 export default interrupt;
+
+/** How many other foes stand in the area of `skill`'s splash around `foe`; none splashes: 0. */
+function crowdAround(skill: Skill, foe: Participant, foes: readonly Participant[]): number {
+  const radius = splashRadius(skill.effects);
+  return radius === undefined
+    ? 0
+    : foes.filter((other) => other !== foe && distance(other.position, foe.position) <= radius)
+        .length;
+}
+
+/** The radius of the first `splash` in `effects`, an `if`'s included. */
+function splashRadius(effects: readonly SkillEffect[]): number | undefined {
+  for (const effect of effects) {
+    const radius =
+      effect.kind === "splash"
+        ? effect.radius
+        : effect.kind === "if"
+          ? splashRadius(effect.effects)
+          : undefined;
+    if (radius !== undefined) {
+      return radius;
+    }
+  }
+  return undefined;
+}
 
 /**
  * How long `skill` takes to land once begun: its activation, or for an

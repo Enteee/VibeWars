@@ -472,6 +472,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   // Mesmer energy and utility (#2132).
   "lyssas-aura": icon("lyssas-aura"),
   "persistence-of-memory": icon("persistence-of-memory"),
+  // Mesmer interrupts (#2165).
+  "web-of-disruption": icon("web-of-disruption"),
   // Warrior conditions (#2096).
   retreat: icon("retreat"),
   "protectors-defense": icon("protectors-defense"),

@@ -7,7 +7,7 @@ import {
   spawningPowerMultiplier,
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
-import { isAttacking } from "./attacking.js";
+import { isAttacking, signetsOnBar } from "./attacking.js";
 import { beginRecharge, resolvedBar, skillIdOfKey, type SlotSkill } from "./cast-state.js";
 import { getSkill } from "./catalog.js";
 import { CHAIN_MARK_SECONDS } from "./chain.js";
@@ -2294,14 +2294,20 @@ export function applyEffect(
       if (target === undefined) {
         return events;
       }
-      const interrupted = interruptedSkill(target.id, earlier);
+      // Complicate's (#2165) reads what its splash's centre was using.
+      const from = effect.which === "centre-interrupted" ? lostBy : target;
+      const interrupted = from === undefined ? undefined : interruptedSkill(from.id, earlier);
       if (
-        (effect.which === "interrupted" || effect.which === "interrupted-and-attribute") &&
+        (effect.which === "interrupted" ||
+          effect.which === "interrupted-and-attribute" ||
+          effect.which === "centre-interrupted") &&
         interrupted === undefined
       ) {
         return events;
       }
-      const seconds = resolveMagnitude(effect.seconds, caster);
+      const seconds =
+        resolveMagnitude(effect.seconds, caster) *
+        (effect.perOwnSignet === true ? signetsOnBar(caster) : 1);
       for (const key of disabledBy(effect, target, interrupted, context.rng)) {
         // A disabled skill loses all its adrenaline (GW1, #1097), though
         // a longer recharge kept the disable from lengthening its wait.
@@ -2781,8 +2787,9 @@ function interruptedSkill(targetId: string, earlier: readonly CombatEvent[]): st
  * interrupted, and for Power Block every skill on its bar of the same
  * attribute. One with no attribute is linked to nothing (GW1). With
  * `all`, the whole bar, empty slots aside (#474). With `random-spell`, one
- * spell on it, picked with `rng` (#1928). The bar is the one
- * standing now (#469): a copy is disabled under its own key.
+ * spell on it, picked with `rng` (#1928). With `centre-interrupted`, each
+ * slot holding the skill interrupted on the splash's centre (#2165). The
+ * bar is the one standing now (#469): a copy is disabled under its own key.
  */
 function disabledBy(
   effect: DisableSkillEffect,
@@ -2807,6 +2814,9 @@ function disabledBy(
   }
   if (interrupted === undefined) {
     return [];
+  }
+  if (effect.which === "centre-interrupted") {
+    return bar.filter((slot) => slot.skillId === interrupted).map(({ key }) => key);
   }
   const cancelled = target.cast.lastCancelled;
   const key = cancelled?.skillId === interrupted ? cancelled.key : interrupted;

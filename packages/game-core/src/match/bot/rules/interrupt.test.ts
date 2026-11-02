@@ -109,3 +109,34 @@ describe("play-build interrupts (#1189, #1713)", () => {
     });
   });
 });
+
+describe("Complicate's crowd (#2165)", () => {
+  const COMPLICATE = "mesmer.complicate";
+
+  it("interrupts the casting foe with another foe in its area over a lone one", () => {
+    const sim = match([
+      fighter("bot", 0, WARRIOR, vec2(400, 400), { behaviour: undefined, skillBar: [COMPLICATE] }),
+      fighter("lone", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
+      fighter("crowded", 1, ELEMENTALIST, vec2(400, 700), { behaviour: undefined }),
+      fighter("beside", 1, ELEMENTALIST, vec2(460, 700), { behaviour: undefined }),
+    ]);
+    for (const id of ["lone", "crowded"]) {
+      sim.setTarget(id, "bot");
+      sim.requestSkill(id, slotOf(ELEMENTALIST, "elementalist.chain-lightning"));
+    }
+    expect(askBot(sim, "bot")).toMatchObject({ targetId: "crowded", useSkillId: COMPLICATE });
+  });
+
+  it("with nobody beside either, takes the first casting foe as before", () => {
+    const sim = match([
+      fighter("bot", 0, WARRIOR, vec2(400, 400), { behaviour: undefined, skillBar: [COMPLICATE] }),
+      fighter("lone", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
+      fighter("crowded", 1, ELEMENTALIST, vec2(400, 700), { behaviour: undefined }),
+    ]);
+    for (const id of ["lone", "crowded"]) {
+      sim.setTarget(id, "bot");
+      sim.requestSkill(id, slotOf(ELEMENTALIST, "elementalist.chain-lightning"));
+    }
+    expect(askBot(sim, "bot")).toMatchObject({ targetId: "lone", useSkillId: COMPLICATE });
+  });
+});
