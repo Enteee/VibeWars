@@ -109,7 +109,50 @@ describe("a sharing host's sibling relay room (#2091)", () => {
     await guest.leave();
   });
 
-  it("gives a peer id heard in both rooms one seat: the newest", async () => {
+  it("never moves a live seat for a join in the other room: a peer id is anyone's", async () => {
+    const { main, relay, host, seats, heard } = hosted(SHARED);
+    await settle();
+    const hostHeard: unknown[] = [];
+    host.on("chat-line", (data) => {
+      hostHeard.push(data);
+    });
+    const seated = main.join("guest");
+    const seatedHeard: unknown[] = [];
+    seated.on("chat-line", (data) => {
+      seatedHeard.push(data);
+    });
+    await settle();
+    // The same id, announced in the sibling by whoever holds the invite.
+    const thief = relay.join("guest");
+    const thiefHeard: unknown[] = [];
+    thief.on("chat-line", (data) => {
+      thiefHeard.push(data);
+    });
+    await settle();
+    expect(heard).toEqual(["+guest"]);
+    expect([...seats]).toEqual(["guest"]);
+
+    // The seat's room is heard and sent to; the other is not.
+    seated.send("chat-line", { seated: 1 });
+    thief.send("chat-line", { thief: 1 });
+    host.send("chat-line", { all: 1 });
+    await settle();
+    expect(hostHeard).toEqual([{ seated: 1 }]);
+    expect(seatedHeard).toEqual([{ all: 1 }]);
+    expect(thiefHeard).toEqual([]);
+
+    // Its leaving the other room is not the peer leaving.
+    await thief.leave();
+    await settle();
+    expect(heard).toEqual(["+guest"]);
+    await seated.leave();
+    await settle();
+    expect(heard).toEqual(["+guest", "-guest"]);
+    expect([...seats]).toEqual([]);
+    await host.leave();
+  });
+
+  it("seats a peer in the other room once its seat's room loses it", async () => {
     const { main, relay, host, seats, heard } = hosted(SHARED);
     await settle();
     const hostHeard: unknown[] = [];
@@ -119,34 +162,15 @@ describe("a sharing host's sibling relay room (#2091)", () => {
     const direct = main.join("guest");
     await settle();
     const relayed = relay.join("guest");
-    const relayedHeard: unknown[] = [];
-    relayed.on("chat-line", (data) => {
-      relayedHeard.push(data);
-    });
-    const directHeard: unknown[] = [];
-    direct.on("chat-line", (data) => {
-      directHeard.push(data);
-    });
+    await settle();
+    await direct.leave();
     await settle();
     expect(heard).toEqual(["+guest", "-guest", "+guest"]);
     expect([...seats]).toEqual(["guest"]);
-
-    // The older connection is not heard, and is not sent to.
-    direct.send("chat-line", { old: 1 });
-    relayed.send("chat-line", { new: 1 });
-    host.send("chat-line", { all: 1 });
+    relayed.send("chat-line", { relayed: 1 });
     await settle();
-    expect(hostHeard).toEqual([{ new: 1 }]);
-    expect(relayedHeard).toEqual([{ all: 1 }]);
-    expect(directHeard).toEqual([]);
-
-    // Its leaving the older room is not the peer leaving.
-    await direct.leave();
-    await settle();
-    expect([...seats]).toEqual(["guest"]);
+    expect(hostHeard).toEqual([{ relayed: 1 }]);
     await relayed.leave();
-    await settle();
-    expect([...seats]).toEqual([]);
     await host.leave();
   });
 

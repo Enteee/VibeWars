@@ -32,8 +32,10 @@ export interface SiblingRoomOptions {
 /**
  * The host's `main` room, joined by its sibling while it offers a relay.
  * A peer heard in both rooms holds one seat, in the room it came into
- * last: the other room's traffic for it is dropped, and its leaving there
- * is not the peer leaving.
+ * first: a join in the other room never moves a live seat, since a peer
+ * id is anyone's to announce. That room's traffic for it is dropped, and
+ * its leaving there is not the peer leaving. Once the seat's room loses
+ * it, a connection still open in the other room takes the seat.
  */
 export function withSiblingRoom(options: SiblingRoomOptions): Transport {
   const { main, joinSibling, offering } = options;
@@ -41,8 +43,10 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
   const handlers = new HandlerSets();
   /** Every channel listened on: a sibling joined later hears them all. */
   const channels = new Set<Channel>();
-  /** The room each peer's seat is in: the one it came into last. */
+  /** The room each peer's seat is in: the one it came into first. */
   const seats = new Map<string, Transport>();
+  /** The peers each room has heard join and not yet leave. */
+  const present = new Map<Transport, Set<string>>();
   let sibling: { readonly transport: Transport; readonly offs: (() => void)[] } | undefined;
   let syncing = Promise.resolve();
   let left = false;
@@ -55,10 +59,31 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
       }
     });
 
+  const presentIn = (transport: Transport): Set<string> => {
+    const peers = present.get(transport) ?? new Set<string>();
+    present.set(transport, peers);
+    return peers;
+  };
+
+  /** `peerId` leaves its seat; still connected in the other room, it is seated there. */
+  const unseat = (peerId: string): void => {
+    seats.delete(peerId);
+    handlers.left(peerId);
+    const other = [...present].find(([, peers]) => peers.has(peerId))?.[0];
+    if (other !== undefined) {
+      seats.set(peerId, other);
+      handlers.joined(peerId);
+    }
+  };
+
   const hook = (transport: Transport): (() => void)[] => [
     ...[...channels].map((channel) => listen(transport, channel)),
     transport.onPeerJoin((peerId) => {
+      presentIn(transport).add(peerId);
       const held = seats.get(peerId);
+      if (held !== undefined && held !== transport) {
+        return;
+      }
       seats.set(peerId, transport);
       if (held !== undefined) {
         handlers.left(peerId);
@@ -66,9 +91,9 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
       handlers.joined(peerId);
     }),
     transport.onPeerLeave((peerId) => {
+      presentIn(transport).delete(peerId);
       if (seats.get(peerId) === transport) {
-        seats.delete(peerId);
-        handlers.left(peerId);
+        unseat(peerId);
       }
     }),
     transport.onTrouble((trouble) => {
@@ -88,10 +113,10 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
     for (const off of offs) {
       off();
     }
+    present.delete(transport);
     for (const [peerId, seat] of [...seats]) {
       if (seat === transport) {
-        seats.delete(peerId);
-        handlers.left(peerId);
+        unseat(peerId);
       }
     }
     await transport.leave();
@@ -164,6 +189,7 @@ export function withSiblingRoom(options: SiblingRoomOptions): Transport {
         off();
       }
       seats.clear();
+      present.clear();
       await main.leave();
       handlers.clear();
     },
