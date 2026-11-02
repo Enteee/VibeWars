@@ -6,7 +6,7 @@ import {
   sacrificedHealth,
   stateHolds,
 } from "../../skills/effects.js";
-import { skillRoles } from "../../skills/roles.js";
+import { skillRoles, strikesFoesOnly } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
 import { statAtTwelve } from "../../skills/scaling.js";
 import {
@@ -454,8 +454,10 @@ export function removedCategories(skill: Skill): readonly StatusCategory[] {
       : [],
   );
   for (const effect of [...skill.effects, ...pulsed].flatMap(flatten)) {
+    // Crystal Wave's (#2232) comes off the foes its area strikes.
     if (
       effect.kind === "remove-status" &&
+      !strikesFoesOnly(skill) &&
       (effect.category === "hex" || effect.category === "condition")
     ) {
       found.add(effect.category);
