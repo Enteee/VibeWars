@@ -257,6 +257,8 @@ const NO_BOT_USE = new Set([
   // Monk mechanics (#1754): a holy aura round an ally is no rule the bot
   // weighs.
   "monk.balthazars-aura",
+  // Ancestors' Rage (#2212): the same, a lightning pulse round an ally.
+  "ritualist.ancestors-rage",
   // Assassin staples 5 (#1757): unblockable next attacks are no rule the
   // bot weighs.
   "assassin.way-of-the-fox",

@@ -2898,8 +2898,9 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
   {
     id: "ritualist.ancestors-rage",
     name: "Ancestors' Rage",
-    // The PvP split: the PvE skill (1246) is one burst as it ends.
-    gwId: 2867,
+    // The base record; its numbers are the PvP split's (2867), a 3 s pulse
+    // where the PvE skill is one burst as it ends.
+    gwId: 1246,
     type: "skill",
     elite: false,
     flash: false,
