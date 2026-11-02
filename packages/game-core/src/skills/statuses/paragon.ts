@@ -213,7 +213,12 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     nextSkill: {
       which: "attack-skill",
       count: 1,
-      effects: [{ kind: "adrenaline-gain", strikes: 4 }],
+      effects: [
+        {
+          kind: "adrenaline-gain",
+          strikes: { scaling: { attributeId: "paragon.leadership", atZero: 2, atTwelve: 4.4 } },
+        },
+      ],
       skillId: "paragon.anthem-of-fury",
     },
   }),
@@ -342,6 +347,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
+      weaponDamage: undefined,
       effects: [
         {
           kind: "if",

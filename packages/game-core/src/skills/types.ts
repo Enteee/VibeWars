@@ -9,6 +9,7 @@ import type { CreatureKind, CreatureLook } from "../match/simulation.js";
 import type { ProfessionId, SkillProfession } from "../professions.js";
 import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
+import type { RankHolder } from "./tick.js";
 import type { AttackState } from "./weapon-attack.js";
 import type {
   AttributeDelta,
@@ -161,7 +162,12 @@ export type CountRule =
    * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
    * your Beast Mastery skills that is recharging". No owner: 0.
    */
-  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string };
+  | { readonly kind: "recharging-skills"; readonly of: "owner"; readonly attributeId: string }
+  /**
+   * Whole points of Energy, rounded down (#1984): Ether Prodigy's "lose 2
+   * Health for each point of Energy you have".
+   */
+  | { readonly kind: "energy"; readonly on: "target" | "caster" };
 
 /**
  * "+`amount` for each" (#1760): the effect's own amount plus `amount`
@@ -312,7 +318,8 @@ export interface EnergyGainToTarget extends Omit<
 /**
  * The caster gains `strikes` strikes of adrenaline in every adrenaline
  * skill that is not recharging, each capped at its cost, as a hit's
- * strike (#977). `perTarget`: once for each target the skill hit, as
+ * strike (#977); whole strikes at the caster's rank, as Thrill of
+ * Victory's "1...2" (#2143). `perTarget`: once for each target the skill hit, as
  * Zealous Sweep's "1 strike of adrenaline for each foe you hit".
  * `perOwnMeleeAttackSkill` (#1978): once for each melee attack skill on
  * the caster's bar, at most `max` times: Defensive Stance's "1 strike of
@@ -322,7 +329,7 @@ export interface EnergyGainToTarget extends Omit<
  */
 export interface AdrenalineGainEffect {
   readonly kind: "adrenaline-gain";
-  readonly strikes: number;
+  readonly strikes: Magnitude;
   readonly perTarget?: true;
   readonly perOwnMeleeAttackSkill?: { readonly max: number };
   readonly recipient?: "owner";
@@ -399,6 +406,8 @@ export interface LoseHealthByTarget {
   readonly amount: Magnitude;
   readonly recipient: "target";
   readonly perRemovedOfProfession?: never;
+  /** More for each of a count (#1984): Ether Prodigy's 2 per point of Energy. */
+  readonly per?: PerCount;
 }
 
 /**
@@ -2223,9 +2232,10 @@ export interface SkillContext {
   readonly own?: OwnSkillBoost | undefined;
   /**
    * Whose attribute ranks scale the statuses these effects put on (#1976),
-   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965).
+   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965),
+   * and a next-skill status its source's, as it landed (#2143).
    */
-  readonly ranksFrom?: Combatant | undefined;
+  readonly ranksFrom?: RankHolder | undefined;
 }
 
 /**

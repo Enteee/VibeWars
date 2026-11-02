@@ -190,11 +190,36 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
       attributes.add(stat.scaling.attributeId);
     }
   }
+  // Anthem of Fury's strikes are its Paragon's, not the ally's (#2143).
+  if (definition.nextSkill !== undefined) {
+    scalingAttributes(definition.nextSkill.effects, attributes);
+  }
   // Jagged Bones's horror stands up at its caster's rank (#1986).
   if (definition.replacedOnDeathBy !== undefined && definition.attribute !== undefined) {
     attributes.add(definition.attribute);
   }
   return [...attributes];
+}
+
+/** Every `scaling.attributeId` anywhere in `value`, into `into`. */
+function scalingAttributes(value: unknown, into: Set<string>): void {
+  if (typeof value !== "object" || value === null) {
+    return;
+  }
+  const entries: [string, unknown][] = Object.entries(value);
+  for (const [key, field] of entries) {
+    if (
+      key === "scaling" &&
+      typeof field === "object" &&
+      field !== null &&
+      "attributeId" in field &&
+      typeof field.attributeId === "string"
+    ) {
+      into.add(field.attributeId);
+    } else {
+      scalingAttributes(field, into);
+    }
+  }
 }
 
 export interface StatusDefinition {
@@ -1589,12 +1614,17 @@ export interface StatusTrigger {
  * effects, as Grenth's Grasp's "your attack skills also"; a plain swing
  * carries none. `weapon` (#1629): only a blow of that weapon class
  * carries it, as Kindle Arrows' "your arrows"; `undefined`: any.
+ * `weaponDamage` (#1984): only a blow of a weapon whose own damage type
+ * is this carries it, elemental blows included, as Conjure Flame's "while
+ * you wield a fire weapon"; a conversion such as Greater Conflagration's
+ * does not count. `undefined`: any, physical blows only.
  */
 export interface AttackHitRider {
   readonly effects: readonly SkillEffect[];
   readonly skillId: string;
   readonly attackSkillsOnly: boolean;
   readonly weapon: AttackWeaponClass | undefined;
+  readonly weaponDamage: DamageType | undefined;
   /**
    * The status's source loses this share of its effective maximum Health,
    * rounded up, for each status of `profession` the rider removed
@@ -3301,10 +3331,18 @@ export class StatusSet {
     skill: Skill,
     spared: ReadonlySet<StatusId>,
   ): {
-    readonly answered: readonly { readonly statusId: StatusId; readonly next: NextSkill }[];
+    readonly answered: readonly {
+      readonly statusId: StatusId;
+      readonly next: NextSkill;
+      readonly ranks: ReadonlyMap<string, number>;
+    }[];
     readonly ended: readonly StatusId[];
   } {
-    const answered: { statusId: StatusId; next: NextSkill }[] = [];
+    const answered: {
+      statusId: StatusId;
+      next: NextSkill;
+      ranks: ReadonlyMap<string, number>;
+    }[] = [];
     const ended: StatusId[] = [];
     for (const status of this.active) {
       const next = getStatusDefinition(status.id).nextSkill;
@@ -3316,7 +3354,7 @@ export class StatusSet {
       ) {
         continue;
       }
-      answered.push({ statusId: status.id, next });
+      answered.push({ statusId: status.id, next, ranks: status.ranks });
       status.skillsLeft -= 1;
       if (status.skillsLeft <= 0) {
         ended.push(status.id);

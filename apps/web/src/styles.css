@@ -5028,30 +5028,6 @@ body.has-expanded-training #screens {
   gap: 0.5rem;
 }
 
-/* A hand's mod pickers under it (#2008); they wrap, never widen the panel. */
-.gear-mods {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.gear-mods-hand {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.5rem;
-  min-width: 0;
-}
-
-.gear-mods-hand .editor-field {
-  flex: 1 1 8rem;
-  min-width: 0;
-}
-
-.gear-mods-hand select {
-  width: 100%;
-  min-width: 0;
-}
-
 /* The armor paper-doll (#2059): the figure on the left, a row per piece
    on the right. */
 .paper-doll {
@@ -5080,11 +5056,6 @@ body.has-expanded-training #screens {
   background: var(--tint, var(--ink-dim));
   mask: var(--figure) center / contain no-repeat;
   opacity: 0.4;
-}
-
-.paper-doll-hand {
-  position: absolute;
-  transform: translate(-50%, -50%);
 }
 
 /* The number sits on the piece; its icons run to its right. */
@@ -5150,11 +5121,65 @@ body.has-expanded-training #screens {
   border-radius: 3px;
 }
 
-.paper-doll-hand .gear-icon {
+/* A hand (#2151): what it holds on the hand, its mods in a row above, so
+   the two hands, level with each other, never meet. The off-hand runs
+   inwards from its hand. */
+.paper-doll-hotspot.paper-doll-hand {
+  display: grid;
+  grid-template-areas: "icons icons" "number item";
+  justify-items: start;
+  border-radius: 0.6rem;
+  transform: translate(-0.65rem, calc(-100% + 0.8rem));
+}
+
+.paper-doll-hotspot.paper-doll-hand[data-slot="offHand"] {
+  grid-template-areas: "icons icons" "item number";
+  justify-items: end;
+  transform: translate(calc(-100% + 0.65rem), calc(-100% + 0.8rem));
+}
+
+.paper-doll-hand .paper-doll-hotspot-icons {
+  grid-area: icons;
+}
+
+.paper-doll-hand .paper-doll-hotspot-number {
+  grid-area: number;
+  background: var(--accent);
+}
+
+.paper-doll-hand-item {
+  grid-area: item;
+}
+
+.paper-doll-hand-item .gear-icon {
   display: block;
   width: 22px;
   height: 22px;
   margin: 0;
+}
+
+/* Bare hands: the number alone, and nothing to open. */
+.paper-doll-hotspot.paper-doll-hand:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.paper-doll-hotspot[hidden],
+.paper-doll-row[hidden],
+.paper-doll-popover-column[hidden],
+.paper-doll-attribute[hidden] {
+  display: none;
+}
+
+/* A worn mod: the one glyph every mod shares, its name on hover. */
+.paper-doll-mod {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, var(--accent) 0 3px, transparent 4px), rgb(89 194 255 / 18%);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
 }
 
 .paper-doll-summary {
@@ -5199,6 +5224,10 @@ body.has-expanded-training #screens {
   text-transform: uppercase;
 }
 
+.paper-doll-row.is-hand .paper-doll-row-name {
+  color: var(--accent);
+}
+
 .paper-doll-row-dot,
 .paper-doll-none {
   color: var(--ink-dim);
@@ -5237,9 +5266,50 @@ body.has-expanded-training #screens {
   display: none;
 }
 
-.paper-doll-popover-title {
+/* A hand (#2151): a column per mod slot it takes; three are the widest. */
+.paper-doll-popover.is-hand {
+  grid-template-columns: repeat(var(--columns, 3), minmax(0, 1fr));
+  width: calc(var(--columns, 3) * 15rem);
+}
+
+.paper-doll-popover-head {
   grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.paper-doll-popover-title {
   font-weight: bold;
+}
+
+.paper-doll-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.paper-doll-pill {
+  padding: 0.05rem 0.55rem;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+
+.paper-doll-pill:hover,
+.paper-doll-pill:focus-visible {
+  border-color: var(--ink-dim);
+}
+
+.paper-doll-pill.is-chosen {
+  color: var(--accent);
+  background: rgb(89 194 255 / 12%);
+  border-color: var(--accent);
 }
 
 .paper-doll-popover-column {
@@ -5305,6 +5375,19 @@ body.has-expanded-training #screens {
   display: none;
 }
 
+/* Mods have no icons: the name and its effect, full width. */
+.paper-doll-list.is-plain .paper-doll-choice {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.paper-doll-list.is-plain .paper-doll-choice-blank {
+  display: none;
+}
+
+.paper-doll-list.is-plain .paper-doll-choice-note {
+  grid-column: 1;
+}
+
 .paper-doll-apply-all {
   align-self: flex-start;
 }
@@ -5326,6 +5409,10 @@ body.has-expanded-training #screens {
     width: auto;
     max-width: none;
     max-height: 60vh;
+  }
+
+  .paper-doll-popover.is-hand {
+    width: auto;
   }
 }
 

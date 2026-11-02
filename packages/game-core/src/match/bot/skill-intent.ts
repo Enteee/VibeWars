@@ -483,17 +483,24 @@ export function takenOffFoe(skill: Skill): StatusCategory | undefined {
  * party's hits, while they hit enchanted foes; Dark Apostasy's strip on
  * a critical hit, at an enchanted foe. Way of the Empty Palm's free chain
  * attacks, Deadly Paradox's faster profession skills and Unseen Fury's
- * blows a Blinded foe cannot block (#2134).
+ * blows a Blinded foe cannot block (#2134). The Elementalist's self-buffs
+ * (#1984): a conjure's rider for the element it wields, Ether Prodigy's
+ * Energy for Health, Ether Renewal's gains per enchantment on the next
+ * spell, Elemental Attunement's ranks.
  */
 export type Setup =
   | "cheaper-enchantments"
   | "party-strips"
   | "critical-strips"
+  | "weapon-element"
+  | "energy-for-health"
+  | "spell-gains"
+  | "elemental-ranks"
   | "free-chain"
   | "profession-haste"
   | "blind-unblock";
 
-/** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975). */
+/** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975, #1984). */
 export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | undefined {
   const applied = skill.effects.find((effect) => effect.kind === "apply-status");
   if (applied?.kind !== "apply-status") {
@@ -507,18 +514,40 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
         ? "party-strips"
         : status.onCriticalHit !== undefined
           ? "critical-strips"
-          : status.ownSkillModifiers.some(({ filter }) => filter.chainRoles !== undefined)
-            ? "free-chain"
-            : status.ownSkillModifiers.some(
-                  ({ filter, rechargeFaster }) =>
-                    filter.profession !== undefined &&
-                    filter.type === undefined &&
-                    rechargeFaster > 0,
+          : status.onAttackHit?.weaponDamage !== undefined
+            ? "weapon-element"
+            : status.energyPips > 0 &&
+                status.triggers.some(
+                  ({ on, effects }) =>
+                    on === "ends" && effects.some(({ kind }) => kind === "lose-health"),
                 )
-              ? "profession-haste"
-              : status.unblockableByBlinded
-                ? "blind-unblock"
-                : undefined;
+              ? "energy-for-health"
+              : status.triggers.some(
+                    ({ on, effects }) =>
+                      on === "bearer-casts-spell" &&
+                      effects.some(
+                        (effect) =>
+                          effect.kind === "energy-gain" && effect.per?.count.kind === "statuses",
+                      ),
+                  )
+                ? "spell-gains"
+                : status.category === "enchantment" &&
+                    status.attributeDeltas.some(
+                      ({ scope, amount }) => scope === "elemental" && amount > 0,
+                    )
+                  ? "elemental-ranks"
+                  : status.ownSkillModifiers.some(({ filter }) => filter.chainRoles !== undefined)
+                    ? "free-chain"
+                    : status.ownSkillModifiers.some(
+                          ({ filter, rechargeFaster }) =>
+                            filter.profession !== undefined &&
+                            filter.type === undefined &&
+                            rechargeFaster > 0,
+                        )
+                      ? "profession-haste"
+                      : status.unblockableByBlinded
+                        ? "blind-unblock"
+                        : undefined;
   return setup === undefined ? undefined : { setup, statusId: applied.statusId };
 }
 

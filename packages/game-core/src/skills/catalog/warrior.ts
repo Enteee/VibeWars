@@ -1128,7 +1128,12 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "If Dragon Slash hits, you strike for +10...40 damage and gain 1...5
     // strikes of adrenaline": +34 and 4 strikes, the rank-12 values. They land
     // after its own cost is paid.
-    effects: [{ kind: "adrenaline-gain", strikes: 4 }],
+    effects: [
+      {
+        kind: "adrenaline-gain",
+        strikes: { scaling: { attributeId: "warrior.swordsmanship", atZero: 1, atTwelve: 4.2 } },
+      },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Warrior Hammer Mastery staples (#1357)                                 */
@@ -2281,7 +2286,10 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "Gain 1...7 strikes of adrenaline": 6 at rank 12 (5.8). The 3 s
     // recharge on each adrenal skill is the status's.
     effects: [
-      { kind: "adrenaline-gain", strikes: 6 },
+      {
+        kind: "adrenaline-gain",
+        strikes: { scaling: { attributeId: "warrior.strength", atZero: 1, atTwelve: 5.8 } },
+      },
       { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: { flat: 8 } },
     ],
   },
@@ -2899,7 +2907,10 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     effects: [
-      { kind: "adrenaline-gain", strikes: 3 },
+      {
+        kind: "adrenaline-gain",
+        strikes: { scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 2.6 } },
+      },
       {
         kind: "if",
         condition: { kind: "target-moving" },
@@ -3091,7 +3102,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-knocked-down" },
-        effects: [{ kind: "adrenaline-gain", strikes: 4 }],
+        effects: [{ kind: "adrenaline-gain", strikes: { flat: 4 } }],
       },
     ],
   },
@@ -3550,7 +3561,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       flightSpeed: undefined,
       onCritical: [],
       onFailedToHit: [],
-      onBlocked: [{ kind: "adrenaline-gain", strikes: 3 }],
+      onBlocked: [{ kind: "adrenaline-gain", strikes: { flat: 3 } }],
     },
     whileActivating: undefined,
     corpse: undefined,
@@ -3790,7 +3801,12 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-less-health" },
-        effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 1.8 } },
+          },
+        ],
       },
     ],
   },
@@ -3823,7 +3839,12 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-health-below", fraction: 0.9 },
-        effects: [{ kind: "adrenaline-gain", strikes: 3 }],
+        effects: [
+          {
+            kind: "adrenaline-gain",
+            strikes: { scaling: { attributeId: "warrior.strength", atZero: 1, atTwelve: 2.6 } },
+          },
+        ],
       },
     ],
   },
