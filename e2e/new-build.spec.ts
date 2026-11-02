@@ -35,7 +35,7 @@ test("a match chunk the deploy removed says a new version is out, not a lost con
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  // The Team Lobby (#1460): a preset team, its one seat. The match's
+  // The Team Lobby (#1460): the house team, its one seat. The match's
   // chunk is fetched once the seats are taken.
   await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
   await page.getByRole("button", { name: "Ready", exact: true }).click();

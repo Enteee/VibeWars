@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { joinFriend } from "./helpers/menu.js";
-import { hostLobby, openPeers, playPresetTeams, startSoloMatch } from "./helpers/peers.js";
+import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
 
@@ -43,8 +43,8 @@ test("all chat reaches both teams, team chat only its own, as text (#479)", asyn
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
-  // Any characters will do: both sides play a preset team (#1525, #2148).
-  await playPresetTeams([host, guest]);
+  // Any characters will do: both sides play the house team (#1525).
+  await playHouseTeams([host, guest]);
 
   // In a match, team chat is the default; `!` says it to all.
   await say(host, "spike their monk");

@@ -8,7 +8,7 @@ import { key, skillKey } from "./keys.js";
 import { joinFriend } from "./helpers/menu.js";
 import {
   hostLobby,
-  playPresetTeams,
+  playHouseTeams,
   playOwnTeams,
   saveSoloTeam,
   setTeamSize,
@@ -659,8 +659,8 @@ test("at the arena's bottom edge, an RMB drag down looks past it, and springs ba
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  // Any character will do: the preset team's one seat (#1525).
-  await playPresetTeams([page]);
+  // Any character will do: the house team's one seat (#1525).
+  await playHouseTeams([page]);
   const stage = page.locator("#viewport");
   const canvas = page.locator("#viewport canvas:not(.compass)");
   const box = await canvas.boundingBox();

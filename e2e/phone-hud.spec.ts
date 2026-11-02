@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
-import { hostLobby, playPresetTeams } from "./helpers/peers.js";
+import { hostLobby, playHouseTeams } from "./helpers/peers.js";
 
 /**
  * A phone in a match (#1297, #1306): the HUD's top band is narrower than
@@ -93,12 +93,12 @@ async function phoneMatch(
     note();
   }, PARTS);
   await hostLobby(page, lobby);
-  // Team 2's empty side plays a preset team of bots (#2029).
+  // Team 2's empty side plays a house team of bots (#2029).
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  // Any character will do: the preset team's one seat (#1525).
-  await playPresetTeams([page]);
+  // Any character will do: the house team's one seat (#1525).
+  await playHouseTeams([page]);
   await page.keyboard.press(key("target-closest"));
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
 }

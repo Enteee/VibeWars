@@ -6,7 +6,7 @@ import {
   hostLobby as hostFromMenu,
   openPeers,
   openToFriends,
-  playPresetTeams,
+  playHouseTeams,
   playOwnTeams,
   proposeTeam,
   saveSoloTeam,
@@ -379,7 +379,7 @@ test("the host starts a match and both players enter the arena", async ({ browse
     const start = host.getByRole("button", { name: "start match" });
     await expect(start).toBeEnabled();
     await start.click();
-    await playPresetTeams([host, guest]);
+    await playHouseTeams([host, guest]);
 
     // The arena canvas only exists once Phaser has booted into a match.
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
@@ -627,7 +627,7 @@ test("a match plays the seat the host took, not a character selected after joini
     await host.getByRole("button", { name: "start match" }).click();
     await expect(host.locator(".team-lobby-stage")).toHaveText("Choose a team build");
     await proposeTeam(host, cynn);
-    await playPresetTeams([host, guest]);
+    await playHouseTeams([host, guest]);
 
     // Cynn's one skill, not Blank's empty bar.
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
@@ -691,7 +691,7 @@ test("a bot plays every slot nobody claims, tagged BOT in the match alone (#1194
 
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await playPresetTeams([page]);
+  await playHouseTeams([page]);
 
   // Every foe in the arena is a bot, playing its preset team's slot under
   // that member's job (#1458, #2148), cut short when long.

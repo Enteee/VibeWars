@@ -170,7 +170,7 @@ export async function playOwnTeams(
  * the first unless said, and is ready again. Resolves once each page's
  * HUD shows the player.
  */
-export async function playPresetTeams(
+export async function playHouseTeams(
   pages: readonly Page[],
   seats: readonly number[] = [],
 ): Promise<void> {
