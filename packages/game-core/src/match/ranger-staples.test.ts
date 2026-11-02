@@ -98,7 +98,15 @@ describe("the four skills (#976)", () => {
       activationSeconds: 0,
       rechargeSeconds: 45,
       target: "self",
-      effects: [{ kind: "apply-status", statusId: "lightning-reflexes", durationSeconds: 10 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "lightning-reflexes",
+          durationSeconds: {
+            scaling: { attributeId: "ranger.expertise", atZero: 5, atTwelve: 9.8 },
+          },
+        },
+      ],
     });
     expect(skill("ranger.escape")).toMatchObject({
       type: "stance",
@@ -110,7 +118,15 @@ describe("the four skills (#976)", () => {
       activationSeconds: 0,
       rechargeSeconds: 12,
       target: "self",
-      effects: [{ kind: "apply-status", statusId: "escape", durationSeconds: 7 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "escape",
+          durationSeconds: {
+            scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 6.6 },
+          },
+        },
+      ],
     });
     expect(skill(PIN_DOWN)).toMatchObject({
       type: "attack",
@@ -119,7 +135,15 @@ describe("the four skills (#976)", () => {
       activationSeconds: 0,
       rechargeSeconds: 8,
       attack: { weapon: "bow", unblockable: false },
-      effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "crippled",
+          durationSeconds: {
+            scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 12.6 },
+          },
+        },
+      ],
     });
     expect(skill(HUNTERS_SHOT)).toMatchObject({
       type: "attack",
@@ -128,7 +152,15 @@ describe("the four skills (#976)", () => {
       activationSeconds: 1,
       rechargeSeconds: 10,
       attack: { weapon: "bow", unblockable: false },
-      effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "bleeding",
+          durationSeconds: {
+            scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 20.6 },
+          },
+        },
+      ],
     });
   });
 

@@ -420,15 +420,15 @@ describe("the Paragon shouts read as what they do (#921)", () => {
 
   it("Fall Back!, Stand Your Ground! and Cruel Spear", () => {
     expect(text(FALL_BACK)).toEqual([
-      "Applies Fall Back! for 9s (13 Health per second while moving, moves at 133% speed, " +
+      "Applies Fall Back! for 4s (13 Health per second while moving, moves at 133% speed, " +
         "ends if the bearer hits with an attack)",
     ]);
     expect(text(STAND)).toEqual([
-      "Applies Stand Your Ground! for 17s (+24 armor while not moving, ends if the bearer attacks)",
+      "Applies Stand Your Ground! for 5s (+24 armor while not moving, ends if the bearer attacks)",
     ]);
     expect(text(CRUEL_SPEAR)).toEqual([
       "+10 damage",
-      "If target is not moving: applies Deep Wound for 17s " +
+      "If target is not moving: applies Deep Wound for 5s " +
         "(−20% maximum health (at most 100), −20% healing)",
     ]);
   });
@@ -747,13 +747,13 @@ describe("the #956 Paragon skills read as what they do", () => {
 
   it('"Incoming!", "Make Haste!" and Defensive Anthem', () => {
     expect(text(INCOMING)).toEqual([
-      "Applies Incoming! for 9s (13 Health per second while moving, moves at 133% speed)",
+      "Applies Incoming! for 4s (13 Health per second while moving, moves at 133% speed)",
     ]);
     expect(text(MAKE_HASTE)).toEqual([
-      "Applies Make Haste! for 17s (moves at 133% speed, ends if the bearer hits with an attack)",
+      "Applies Make Haste! for 5s (moves at 133% speed, ends if the bearer hits with an attack)",
     ]);
     expect(text(DEFENSIVE_ANTHEM)).toEqual([
-      "Applies Defensive Anthem for 9s " +
+      "Applies Defensive Anthem for 4s " +
         "(50% chance to block attacks, ends if the bearer hits with an attack skill)",
     ]);
   });
@@ -1088,15 +1088,15 @@ describe("the #1030 spear attacks read as what they do", () => {
         "paragon.harriers-toss",
       ].map(text),
     ).toEqual([
-      ["Applies Bleeding for 17s (−3 Health degeneration)"],
-      ["If target has Bleeding: applies Crippled for 17s (moves at 50% speed)"],
+      ["Applies Bleeding for 5s (−3 Health degeneration)"],
+      ["If target has Bleeding: applies Crippled for 5s (moves at 50% speed)"],
       [
-        "If target is below 50% Health: applies Deep Wound for 17s " +
+        "If target is below 50% Health: applies Deep Wound for 5s " +
           "(−20% maximum health (at most 100), −20% healing)",
       ],
       [
         "+10 damage",
-        "If target has a condition: applies Dazed for 9s " +
+        "If target has a condition: applies Dazed for 4s " +
           "(spells take 2× as long to cast, spells are interrupted by attacks)",
       ],
       ["+5 damage", "If target is moving: +5 damage"],

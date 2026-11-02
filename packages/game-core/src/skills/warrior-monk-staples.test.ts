@@ -50,7 +50,15 @@ describe("Protective Spirit (#936)", () => {
       activationSeconds: 0.25,
       rechargeSeconds: 5,
       target: "single-ally",
-      effects: [{ kind: "apply-status", statusId: "protective-spirit", durationSeconds: 19 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "protective-spirit",
+          durationSeconds: {
+            scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 19.4 },
+          },
+        },
+      ],
     });
   });
 
@@ -235,7 +243,9 @@ describe('Cyclone Axe and "For Great Justice!" (#936)', () => {
       cost: { kind: "energy", amount: 5 },
       rechargeSeconds: 45,
       target: "self",
-      effects: [{ kind: "apply-status", statusId: "for-great-justice", durationSeconds: 8 }],
+      effects: [
+        { kind: "apply-status", statusId: "for-great-justice", durationSeconds: { flat: 8 } },
+      ],
     });
     expect(
       aggregateModifiers([{ id: "for-great-justice", ranks: NO_RANKS }]).extraStrikesPerHit,

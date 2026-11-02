@@ -340,7 +340,7 @@ describe("deep wound (#764)", () => {
   const deepWound: SkillEffect = {
     kind: "apply-status",
     statusId: "deep-wound",
-    durationSeconds: 20,
+    durationSeconds: { flat: 20 },
   };
 
   function woundedAt(health: number, maxHealth = 480): Combatant {
@@ -383,7 +383,7 @@ describe("deep wound (#764)", () => {
     const target = woundedAt(480);
     const ctx = context(makeCombatant({ id: "caster" }), target);
     applyEffect(deepWound, ctx);
-    const events = applyEffect({ ...deepWound, durationSeconds: 30 }, ctx);
+    const events = applyEffect({ ...deepWound, durationSeconds: { flat: 30 } }, ctx);
     expect(target.health).toBe(384);
     expect(events.some((event) => event.kind === "health-lost")).toBe(false);
     expect(target.statuses.get("deep-wound")?.remainingSeconds).toBe(30);
@@ -1598,7 +1598,7 @@ describe("an invulnerable target (#1208)", () => {
   it("says it is invulnerable once for a hex a skill puts on it, and gains none (#1233)", () => {
     const target = invulnerable();
     const events = applyEffect(
-      { kind: "apply-status", statusId: "malaise", durationSeconds: 10 },
+      { kind: "apply-status", statusId: "malaise", durationSeconds: { flat: 10 } },
       context(makeCombatant({ id: "caster" }), target),
     );
     expect(events).toEqual([{ kind: "invulnerable", targetId: "target" }]);

@@ -93,7 +93,7 @@ describe("Frenzy (#919)", () => {
     expect(frenzy.cost).toEqual({ kind: "energy", amount: 5 });
     expect(frenzy.rechargeSeconds).toBe(4);
     expect(frenzy.effects).toEqual([
-      { kind: "apply-status", statusId: "frenzy", durationSeconds: 8 },
+      { kind: "apply-status", statusId: "frenzy", durationSeconds: { flat: 8 } },
     ]);
     const warrior = makeCombatant({
       id: "w",
@@ -120,7 +120,13 @@ describe("Dark Escape (#919)", () => {
     expect(darkEscape.attributeId).toBe("assassin.shadow-arts");
     expect(darkEscape.rechargeSeconds).toBe(30);
     expect(darkEscape.effects).toEqual([
-      { kind: "apply-status", statusId: "dark-escape", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "dark-escape",
+        durationSeconds: {
+          scaling: { attributeId: "assassin.shadow-arts", atZero: 5, atTwelve: 13 },
+        },
+      },
     ]);
     const modifiers = aggregateModifiers([{ id: "dark-escape", ranks: NO_RANKS }]);
     expect(modifiers.moveSpeedMultiplier).toBe(1.25);
@@ -238,7 +244,7 @@ describe("Natural Stride (#919)", () => {
 
   function land(target: Combatant, statusId: StatusId): CombatEvent[] {
     return applyEffect(
-      { kind: "apply-status", statusId, durationSeconds: 10 },
+      { kind: "apply-status", statusId, durationSeconds: { flat: 10 } },
       {
         caster: makeCombatant({ id: "c", team: 1 }),
         target,
@@ -254,7 +260,13 @@ describe("Natural Stride (#919)", () => {
     expect(naturalStride.attributeId).toBe("ranger.wilderness-survival");
     expect(naturalStride.rechargeSeconds).toBe(12);
     expect(naturalStride.effects).toEqual([
-      { kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 },
+      {
+        kind: "apply-status",
+        statusId: "natural-stride",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.wilderness-survival", atZero: 1, atTwelve: 6.6 },
+        },
+      },
     ]);
     expect(
       aggregateModifiers([{ id: "natural-stride", ranks: NO_RANKS }]).moveSpeedMultiplier,

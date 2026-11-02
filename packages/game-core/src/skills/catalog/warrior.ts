@@ -42,7 +42,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
           type: "typeless",
           armorPenetration: 0,
         },
-        { kind: "apply-status", statusId: "deep-wound", durationSeconds: 20 },
+        { kind: "apply-status", statusId: "deep-wound", durationSeconds: { flat: 20 } },
       ],
     },
     whileActivating: undefined,
@@ -228,7 +228,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "...the opponent begins bleeding for 5...21...25 seconds": 21 s, its
     // rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 21 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.eviscerate",
@@ -270,7 +278,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "...and inflict a Deep Wound ... for 5...17...20 seconds": 17 s, its
     // rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "deep-wound",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.axe-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.executioners-strike",
@@ -341,8 +357,16 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 8...13...14 seconds, you move 25% faster": 13 s, its rank-12
-    // value, until durations scale with ranks.
-    effects: [{ kind: "apply-status", statusId: "sprint", durationSeconds: 13 }],
+    // value.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "sprint",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.strength", atZero: 8, atTwelve: 12.8 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.frenzy",
@@ -368,7 +392,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 8 seconds, you attack 33% faster but take 160% damage."
-    effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "frenzy", durationSeconds: { flat: 8 } }],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -439,7 +463,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // +21 armor for 10 seconds, ending after 3 incoming attacks: its
     // rank-12 numbers, in the status.
-    effects: [{ kind: "apply-status", statusId: "watch-yourself", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "watch-yourself", durationSeconds: { flat: 10 } }],
   },
   {
     id: "warrior.bonettis-defense",
@@ -467,7 +491,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 5...11 seconds, you have a 75% chance to block melee and
     // projectile attacks" (#1329): 10 s, its rank-12 value. The block's
     // 5 Energy and its end on a skill are the status's.
-    effects: [{ kind: "apply-status", statusId: "bonettis-defense", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "bonettis-defense",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 5, atTwelve: 9.8 } },
+      },
+    ],
   },
   {
     id: "warrior.deflect-arrows",
@@ -495,7 +525,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 1...6 seconds, you have a 75% chance to block attacks" (#1329):
     // 5 s, its rank-12 value; the Bleeding a blocked projectile spreads is
     // the status's.
-    effects: [{ kind: "apply-status", statusId: "deflect-arrows", durationSeconds: 5 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "deflect-arrows",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 5 } },
+      },
+    ],
   },
   {
     id: "warrior.gladiators-defense",
@@ -523,7 +559,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 5...11 seconds, you have a 75% chance to block incoming
     // attacks" (#1329): 10 s, its rank-12 value; the attacker's 29 damage
     // on a blocked melee attack is the status's.
-    effects: [{ kind: "apply-status", statusId: "gladiators-defense", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "gladiators-defense",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 5, atTwelve: 9.8 } },
+      },
+    ],
   },
   {
     id: "warrior.disciplined-stance",
@@ -550,7 +592,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...4 seconds, you gain +10 armor and have a 75% chance to
     // block attacks" (#1329): 3 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "disciplined-stance", durationSeconds: 3 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "disciplined-stance",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 3.4 } },
+      },
+    ],
   },
   {
     id: "warrior.balanced-stance",
@@ -578,7 +626,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 8...20 seconds, you cannot be knocked down and you do not
     // suffer extra damage from a critical attack" (#1329): 18 s, its
     // rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "balanced-stance", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "balanced-stance",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 8, atTwelve: 17.6 } },
+      },
+    ],
   },
   {
     id: "warrior.disrupting-chop",
@@ -706,7 +760,9 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // The PvP split: "For 8 seconds, whenever you hit with an attack, you
     // gain 1 additional strike of adrenaline."
-    effects: [{ kind: "apply-status", statusId: "for-great-justice", durationSeconds: 8 }],
+    effects: [
+      { kind: "apply-status", statusId: "for-great-justice", durationSeconds: { flat: 8 } },
+    ],
   },
   /* ---------------------------------------------------------------------- */
   /* Warrior Swordsmanship staples (#1354)                                  */
@@ -751,7 +807,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If this attack hits, your target is Crippled for 3...15 seconds": 13 s,
     // its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.swordsmanship", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.pure-strike",
@@ -844,7 +908,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "bleeding" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.swordsmanship", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1007,7 +1079,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // PvP: "For 15 seconds, whenever you attack with a sword, all adjacent
     // foes take 10...30 slashing damage." The splash is the status's.
-    effects: [{ kind: "apply-status", statusId: "hundred-blades", durationSeconds: 15 }],
+    effects: [{ kind: "apply-status", statusId: "hundred-blades", durationSeconds: { flat: 15 } }],
   },
   {
     id: "warrior.dragon-slash",
@@ -1145,7 +1217,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-knocked-down" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.hammer-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1343,7 +1423,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If this hammer blow hits, your target will suffer from Weakness for
     // 5...20 seconds": 17 at rank 12.
-    effects: [{ kind: "apply-status", statusId: "weakness", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "weakness",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.hammer-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.earth-shaker",
@@ -1439,7 +1527,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // from Weakness for 5...20 seconds": 17 at rank 12.
     effects: [
       { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
-      { kind: "apply-status", statusId: "weakness", durationSeconds: 17 },
+      {
+        kind: "apply-status",
+        statusId: "weakness",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.hammer-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
     ],
   },
   /* ---------------------------------------------------------------------- */
@@ -1659,7 +1753,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "For 8...20 seconds, you move 25% faster": 18 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "rush", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "rush",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.strength", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.dolyak-signet",
@@ -1688,7 +1790,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 8...20 seconds, you have +10...40 armor and cannot be knocked
     // down, but your movement is slowed by 75%": 18 s, its rank-12 value;
     // the armor is the status's.
-    effects: [{ kind: "apply-status", statusId: "dolyak-signet", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dolyak-signet",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.strength", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.endure-pain",
@@ -1715,7 +1825,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 7...18 seconds you have an additional 90...300 Health": 16 s, its
     // rank-12 value; the 258 Health is the status's.
-    effects: [{ kind: "apply-status", statusId: "endure-pain", durationSeconds: 16 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "endure-pain",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.strength", atZero: 7, atTwelve: 15.8 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.warriors-endurance",
@@ -1743,7 +1861,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // PvP, a stance: "For 5...35 seconds, you gain 3 Energy each time you
     // hit with a melee attack. Warrior's Endurance cannot raise your Energy
     // above 10...25": 29 s, its rank-12 value; the gain is the status's.
-    effects: [{ kind: "apply-status", statusId: "warriors-endurance", durationSeconds: 29 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "warriors-endurance",
+        durationSeconds: { scaling: { attributeId: "warrior.strength", atZero: 5, atTwelve: 29 } },
+      },
+    ],
   },
   // Warrior staples (#1549).
   {
@@ -1771,7 +1895,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...15 seconds, you attack 33% faster but move 33% slower"
     // (PvP): 12 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "flail", durationSeconds: 12 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "flail",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.strength", atZero: 1, atTwelve: 12.2 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.defy-pain",
@@ -1798,7 +1930,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 20 seconds, you have an additional 90...300 Health and an
     // additional 20 armor" (PvP): its numbers in the status.
-    effects: [{ kind: "apply-status", statusId: "defy-pain", durationSeconds: 20 }],
+    effects: [{ kind: "apply-status", statusId: "defy-pain", durationSeconds: { flat: 20 } }],
   },
   {
     id: "warrior.dismember",
@@ -1840,7 +1972,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If it hits, this axe blow will inflict a Deep Wound on target foe
     // ... for 5...20 seconds": 17 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "deep-wound",
+        durationSeconds: {
+          scaling: { attributeId: "warrior.axe-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "warrior.jaizhenju-strike",
@@ -1914,7 +2054,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "caster-wields", weapon: "sword" },
-        effects: [{ kind: "apply-status", statusId: "riposte", durationSeconds: 8 }],
+        effects: [{ kind: "apply-status", statusId: "riposte", durationSeconds: { flat: 8 } }],
       },
     ],
   },
@@ -1946,7 +2086,9 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "caster-wields", weapon: "sword" },
-        effects: [{ kind: "apply-status", statusId: "deadly-riposte", durationSeconds: 8 }],
+        effects: [
+          { kind: "apply-status", statusId: "deadly-riposte", durationSeconds: { flat: 8 } },
+        ],
       },
     ],
   },
@@ -1984,7 +2126,11 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // seconds, these allies move 33% faster": 11 s, its rank-12 value.
     effects: [
       { kind: "remove-status", category: "condition", count: 1, statusId: "crippled" },
-      { kind: "apply-status", statusId: "charge", durationSeconds: 11 },
+      {
+        kind: "apply-status",
+        statusId: "charge",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 5, atTwelve: 11.4 } },
+      },
     ],
   },
   {
@@ -2012,7 +2158,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...15 seconds, you move 25% faster": 13 s, its rank-12 value.
     // The adrenaline on a melee hit is the status's.
-    effects: [{ kind: "apply-status", statusId: "enraging-charge", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "enraging-charge",
+        durationSeconds: { scaling: { attributeId: "warrior.strength", atZero: 5, atTwelve: 13 } },
+      },
+    ],
   },
   {
     id: "warrior.shield-bash",
@@ -2044,7 +2196,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "caster-holds-shield" },
-        effects: [{ kind: "apply-status", statusId: "shield-bash", durationSeconds: 10 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "shield-bash",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.strength", atZero: 5, atTwelve: 9.8 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2077,7 +2237,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "caster-holds-shield" },
-        effects: [{ kind: "apply-status", statusId: "shield-stance", durationSeconds: 5 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "shield-stance",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 5 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2108,7 +2276,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // recharge on each adrenal skill is the status's.
     effects: [
       { kind: "adrenaline-gain", strikes: 6 },
-      { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: 8 },
+      { kind: "apply-status", statusId: "rage-of-the-ntouka", durationSeconds: { flat: 8 } },
     ],
   },
   {
@@ -2305,7 +2473,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "deep-wound" },
-        effects: [{ kind: "apply-status", statusId: "weakness", durationSeconds: 20 }],
+        effects: [{ kind: "apply-status", statusId: "weakness", durationSeconds: { flat: 20 } }],
       },
     ],
   },
@@ -2356,7 +2524,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "deep-wound" },
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 15 }],
+        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 15 } }],
       },
     ],
   },
@@ -2502,7 +2670,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "weakness" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 7 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 6.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2552,7 +2728,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-knocked-down" },
-        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 7 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "dazed",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.hammer-mastery", atZero: 1, atTwelve: 6.6 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2608,7 +2792,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
             hits: "foes",
             radius: AREA_ADJACENT,
             maxTargets: undefined,
-            effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 6 }],
+            effects: [
+              {
+                kind: "apply-status",
+                statusId: "blind",
+                durationSeconds: {
+                  scaling: { attributeId: "warrior.hammer-mastery", atZero: 3, atTwelve: 6.2 },
+                },
+              },
+            ],
           },
         ],
       },
@@ -2750,7 +2942,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
           type: "typeless",
           armorPenetration: 0,
         },
-        { kind: "apply-status", statusId: "bleeding", durationSeconds: 25 },
+        { kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 25 } },
       ],
     },
     whileActivating: undefined,
@@ -2845,7 +3037,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-moving" },
-        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 10 }],
+        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: { flat: 10 } }],
       },
     ],
   },
@@ -2985,7 +3177,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "cracked-armor" },
-        effects: [{ kind: "apply-status", statusId: "deep-wound", durationSeconds: 12 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "deep-wound",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.strength", atZero: 0, atTwelve: 12 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -3207,7 +3407,15 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-knocked-down" },
-        effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.axe-mastery", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -3237,7 +3445,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8 seconds, you have a 75% chance to block incoming attacks, but
     // take double damage."
-    effects: [{ kind: "apply-status", statusId: "frenzied-defense", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "frenzied-defense", durationSeconds: { flat: 8 } }],
   },
   {
     id: "warrior.flurry",
@@ -3265,7 +3473,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5 seconds, your attack rate is increased by 33%, but you deal
     // 25% less damage."
-    effects: [{ kind: "apply-status", statusId: "flurry", durationSeconds: 5 }],
+    effects: [{ kind: "apply-status", statusId: "flurry", durationSeconds: { flat: 5 } }],
   },
   // Your next N attacks (#1916).
   {
@@ -3297,7 +3505,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       {
         kind: "apply-status",
         statusId: "signet-of-strength",
-        durationSeconds: Number.POSITIVE_INFINITY,
+        durationSeconds: { flat: Number.POSITIVE_INFINITY },
       },
     ],
   },
@@ -3424,7 +3632,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 1...6 seconds, you block any attack skills used against you"
     // (#1978): 5 s, its rank-12 value. The gain on a block and the end on
     // a skill are the status's.
-    effects: [{ kind: "apply-status", statusId: "wary-stance", durationSeconds: 5 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "wary-stance",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 5 } },
+      },
+    ],
   },
   {
     id: "warrior.soldiers-defense",
@@ -3451,7 +3665,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...6 seconds, you have a 75% chance to block attacks while
     // under the effects of a shout or chant" (#1978): 5 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "soldiers-defense", durationSeconds: 5 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "soldiers-defense",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 5 } },
+      },
+    ],
   },
   {
     id: "warrior.defensive-stance",
@@ -3479,7 +3699,13 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 1...5 seconds, you have a 75% chance to block melee and
     // projectile attacks" (#1978): 4 s, its rank-12 value. The adrenaline
     // when it ends is the status's.
-    effects: [{ kind: "apply-status", statusId: "defensive-stance", durationSeconds: 4 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "defensive-stance",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 1, atTwelve: 4.2 } },
+      },
+    ],
   },
   {
     id: "warrior.auspicious-parry",
@@ -3506,6 +3732,6 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 8 seconds, the next attack against you is blocked" (#1978). The
     // 3 strikes when it ends are the status's.
-    effects: [{ kind: "apply-status", statusId: "auspicious-parry", durationSeconds: 8 }],
+    effects: [{ kind: "apply-status", statusId: "auspicious-parry", durationSeconds: { flat: 8 } }],
   },
 ];
