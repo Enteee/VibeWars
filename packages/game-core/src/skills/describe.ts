@@ -573,6 +573,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.unblockableBySource) {
     parts.push("cannot block its caster's attacks");
   }
+  if (definition.unblockableByBlinded) {
+    parts.push("cannot be blocked by Blinded foes");
+  }
   if (definition.preventsBlocking) {
     parts.push("cannot block");
   }
@@ -1297,6 +1300,7 @@ function describeTriggers(
       trigger.minDamage,
       trigger.healthBelow,
       trigger.appliedHex,
+      trigger.hitBy,
     ]);
     const group = groups.get(key);
     if (group === undefined) {
@@ -1484,6 +1488,11 @@ function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): strin
   // Watchful Intervention's (#1789).
   if (event === "bearer-health-drops-below" && trigger.healthBelow !== undefined) {
     return `has its Health dropped below ${String(Math.round(trigger.healthBelow * 100))}% by damage`;
+  }
+  // Mark of Instability's (#2134).
+  if (event === "bearer-hit-by-attack" && trigger.hitBy !== undefined) {
+    const role = trigger.hitBy.chainRole;
+    return `is hit by ${role === undefined ? "an attack" : `a ${role} attack`} of its caster's`;
   }
   if (event === "bearer-blocks" && trigger.blocked !== undefined) {
     return `blocks a ${trigger.blocked} attack`;
@@ -1966,7 +1975,13 @@ function describeOwnSkillModifier({
     // Trapper's Focus's (#1966).
     notEasilyInterrupted ? `${verb("are", "is")} not easily interrupted` : undefined,
   ].filter((change) => change !== undefined);
-  const kind = filter.type === undefined ? "skill" : filter.type.replaceAll("-", " ");
+  // Way of the Empty Palm's "off-hand and dual attacks" (#2134).
+  const kind =
+    filter.chainRoles !== undefined
+      ? `${filter.chainRoles.join(" and ")} attack`
+      : filter.type === undefined
+        ? "skill"
+        : filter.type.replaceAll("-", " ");
   const named = [
     filter.profession === undefined ? undefined : getProfession(filter.profession).name,
     filter.attributeId === undefined
@@ -3434,6 +3449,18 @@ const NEEDED_WEAPON: Record<AttackWeaponClass, string> = {
   melee: "a melee weapon",
 };
 
+/** A weapon class as an adjective, for "your non-dagger attack skills" (#2134). */
+const WEAPON_WORD: Record<AttackWeaponClass, string> = {
+  axe: "axe",
+  sword: "sword",
+  hammer: "hammer",
+  daggers: "dagger",
+  scythe: "scythe",
+  spear: "spear",
+  bow: "bow",
+  melee: "melee",
+};
+
 /**
  * What an attack skill needs in hand, for "Needs an axe." (#417): the
  * HUD's refusal and the build editor's warning say it the same way.
@@ -3498,7 +3525,7 @@ const TYPE_TEXT: Record<SkillType, string> = {
  * non-Mesmer skills except signets", "are disabled for 10 seconds". A
  * skill of the attribute it disables spares itself: "All of your other
  * Healing Prayers" (#1748). "All of your other attack skills" (#1914). "Your
- * enchantment spells and stances" (#1930).
+ * enchantment spells and stances" (#1930). "Your non-dagger attack skills" (#2134).
  */
 function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds: string): string {
   const time = `are disabled for ${seconds} seconds`;
@@ -3506,7 +3533,9 @@ function disableOwnText(effect: DisableOwnSkillsEffect, others: boolean, seconds
     return `All of your skills ${time}`;
   }
   if (effect.which === "attacks") {
-    return `All of your other attack skills ${time}`;
+    return effect.exceptWeapon === undefined
+      ? `All of your other attack skills ${time}`
+      : `Your non-${WEAPON_WORD[effect.exceptWeapon]} attack skills ${time}`;
   }
   if (effect.which === "types") {
     const types = effect.types.map(

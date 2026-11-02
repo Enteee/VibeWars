@@ -227,7 +227,7 @@ describe("a share of a blow reflected (#1754)", () => {
   it("sends 66% of the damage back as holy damage, from the status's source", () => {
     const combatants = wrathful();
     const a = member(combatants, "a");
-    a.statuses.recordHitByAttack("w", 30);
+    a.statuses.recordHitByAttack("w", 30, undefined);
     expect(drain(a, combatants)).toEqual([
       {
         sourceId: "m",
@@ -242,7 +242,7 @@ describe("a share of a blow reflected (#1754)", () => {
   it("caps a reflection at 41", () => {
     const combatants = wrathful();
     const a = member(combatants, "a");
-    a.statuses.recordHitByAttack("w", 200);
+    a.statuses.recordHitByAttack("w", 200, undefined);
     drain(a, combatants);
     expect(member(combatants, "w").health).toBe(400 - 41);
   });
@@ -250,7 +250,7 @@ describe("a share of a blow reflected (#1754)", () => {
   it("reflects nothing for a blow that took nothing", () => {
     const combatants = wrathful();
     const a = member(combatants, "a");
-    a.statuses.recordHitByAttack("w", 0);
+    a.statuses.recordHitByAttack("w", 0, undefined);
     expect(drain(a, combatants)).toEqual([]);
     expect(a.statuses.get("holy-wrath")?.reflectionsLeft).toBe(8);
   });
@@ -260,7 +260,7 @@ describe("a share of a blow reflected (#1754)", () => {
     const a = member(combatants, "a");
     for (let blow = 1; blow <= 8; blow += 1) {
       expect(a.statuses.has("holy-wrath")).toBe(true);
-      a.statuses.recordHitByAttack("w", 10);
+      a.statuses.recordHitByAttack("w", 10, undefined);
       drain(a, combatants);
     }
     expect(a.statuses.has("holy-wrath")).toBe(false);
@@ -275,8 +275,8 @@ describe("a share of a blow reflected (#1754)", () => {
       throw new Error("no Holy Wrath");
     }
     wrath.reflectionsLeft = 1;
-    a.statuses.recordHitByAttack("w", 30);
-    a.statuses.recordHitByAttack("v", 30);
+    a.statuses.recordHitByAttack("w", 30, undefined);
+    a.statuses.recordHitByAttack("v", 30, undefined);
     const events = drain(a, combatants).flatMap((fired) => fired.events);
     expect(events).toEqual([
       { kind: "damage", targetId: "w", amount: 20, critical: false },
@@ -288,7 +288,7 @@ describe("a share of a blow reflected (#1754)", () => {
   it("reflects nothing once stripped in the tick the blow landed", () => {
     const combatants = wrathful();
     const a = member(combatants, "a");
-    a.statuses.recordHitByAttack("w", 30);
+    a.statuses.recordHitByAttack("w", 30, undefined);
     a.statuses.end("holy-wrath");
     const fired = drain(a, combatants).filter(({ skillId }) => skillId === HOLY_WRATH);
     expect(fired).toEqual([]);
@@ -300,7 +300,7 @@ describe("a share of a blow reflected (#1754)", () => {
     const a = member(combatants, "a");
     const w = member(combatants, "w");
     w.dead = true;
-    a.statuses.recordHitByAttack("w", 30);
+    a.statuses.recordHitByAttack("w", 30, undefined);
     expect(drain(a, combatants)).toEqual([]);
     expect(a.statuses.get("holy-wrath")?.reflectionsLeft).toBe(8);
   });

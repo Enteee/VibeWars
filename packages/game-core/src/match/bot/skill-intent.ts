@@ -481,9 +481,17 @@ export function takenOffFoe(skill: Skill): StatusCategory | undefined {
  * the bot can see, no role of its own. Air of Enchantment's cheaper
  * enchantments on an ally, before one; Order of Apostasy's strip on the
  * party's hits, while they hit enchanted foes; Dark Apostasy's strip on
- * a critical hit, at an enchanted foe.
+ * a critical hit, at an enchanted foe. Way of the Empty Palm's free chain
+ * attacks, Deadly Paradox's faster profession skills and Unseen Fury's
+ * blows a Blinded foe cannot block (#2134).
  */
-export type Setup = "cheaper-enchantments" | "party-strips" | "critical-strips";
+export type Setup =
+  | "cheaper-enchantments"
+  | "party-strips"
+  | "critical-strips"
+  | "free-chain"
+  | "profession-haste"
+  | "blind-unblock";
 
 /** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975). */
 export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | undefined {
@@ -499,7 +507,18 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
         ? "party-strips"
         : status.onCriticalHit !== undefined
           ? "critical-strips"
-          : undefined;
+          : status.ownSkillModifiers.some(({ filter }) => filter.chainRoles !== undefined)
+            ? "free-chain"
+            : status.ownSkillModifiers.some(
+                  ({ filter, rechargeFaster }) =>
+                    filter.profession !== undefined &&
+                    filter.type === undefined &&
+                    rechargeFaster > 0,
+                )
+              ? "profession-haste"
+              : status.unblockableByBlinded
+                ? "blind-unblock"
+                : undefined;
   return setup === undefined ? undefined : { setup, statusId: applied.statusId };
 }
 

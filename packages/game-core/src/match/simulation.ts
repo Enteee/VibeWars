@@ -5948,6 +5948,7 @@ export class MatchSimulation {
       blocks(
         target.combatant,
         projectile.attackerId,
+        attacker?.combatant.statuses.active ?? [],
         "projectile",
         skillHit !== undefined,
         this.#rng,
@@ -6032,7 +6033,7 @@ export class MatchSimulation {
         attacker.combatant,
         target.combatant,
         events,
-        skillHit !== undefined,
+        skillHit?.skill,
         projectile.weaponSnapshot.mainHand.weapon,
         Math.max(0, before - target.combatant.health),
       );

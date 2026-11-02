@@ -1593,3 +1593,33 @@ describe("Elementalist auras (#2095)", () => {
     ]);
   });
 });
+
+describe("Assassin chain and Paradox tools (#2134)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(
+      skill(id),
+      new Map([
+        ["assassin.deadly-arts", 12],
+        ["assassin.shadow-arts", 12],
+      ]),
+    ).effects.map(({ text }) => text);
+
+  it("says what each frees, topples, hastens, disables and leaves unblockable, at rank 12", () => {
+    expect(texts("assassin.way-of-the-empty-palm")).toEqual([
+      "Applies Way of the Empty Palm for 13s (your off-hand and dual attacks cost 0 Energy and recharge 45% faster)",
+    ]);
+    expect(texts("assassin.mark-of-instability")).toEqual([
+      "Applies Mark of Instability for 20s (the next time it is hit by a dual attack of its caster's: knocks down for 2s)",
+    ]);
+    expect(texts("assassin.deadly-paradox")).toEqual([
+      "All of your other attack skills are disabled for 10 seconds",
+      "For 13s, your Assassin skills cast 33% faster and recharge 33% faster",
+    ]);
+    expect(texts("assassin.wastrels-collapse")).toEqual([
+      "Shadow steps to the target",
+      "If target is not using a skill: knocks down for 2s",
+      "Your non-dagger attack skills are disabled for 10 seconds",
+    ]);
+    expect(texts("assassin.unseen-fury")).toEqual(["For 51s, cannot be blocked by Blinded foes"]);
+  });
+});

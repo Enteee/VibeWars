@@ -1,5 +1,6 @@
 import type { StatusDefinition } from "../status.js";
-import { define } from "./define.js";
+import { KNOCKDOWN_SECONDS } from "../types.js";
+import { define, ownSkills } from "./define.js";
 
 export type AssassinStatusId =
   | "shadow-refuge"
@@ -37,7 +38,12 @@ export type AssassinStatusId =
   // Enchantment party moves (#1975).
   | "dark-apostasy"
   // Take what another has (#1965).
-  | "mirrored-stance";
+  | "mirrored-stance"
+  // Chain and Paradox tools (#2134).
+  | "way-of-the-empty-palm"
+  | "mark-of-instability"
+  | "deadly-paradox"
+  | "unseen-fury";
 
 export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefinition>> = {
   // "For 6 seconds, you gain 5...9...10 Health regeneration. When Shadow
@@ -269,5 +275,42 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
         skillId: "assassin.mirrored-stance",
       },
     ],
+  }),
+  // "For 5...15 seconds, off-hand and dual attacks cost no Energy and
+  // recharge 25...50% faster" (#2134): 45% at rank 12. Lead attacks pay.
+  "way-of-the-empty-palm": define("way-of-the-empty-palm", "Way of the Empty Palm", "enchantment", {
+    profession: "assassin",
+    ownSkillModifiers: [
+      ownSkills({ chainRoles: ["off-hand", "dual"] }, { energyBase: 0, rechargeFaster: 0.45 }),
+    ],
+  }),
+  // "For 20 seconds, the next time you hit target foe with a dual attack
+  // skill that foe is knocked down" (#2134). Only its caster's dual hit;
+  // a miss or a block is none, and the hex stays.
+  "mark-of-instability": define("mark-of-instability", "Mark of Instability", "hex", {
+    profession: "assassin",
+    endsWhenTriggered: true,
+    triggers: [
+      {
+        on: "bearer-hit-by-attack",
+        hitBy: { fromSource: true, chainRole: "dual" },
+        target: "bearer",
+        effects: [{ kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS }],
+        skillId: "assassin.mark-of-instability",
+      },
+    ],
+  }),
+  // "For 5...15 seconds, your Assassin skills activate and recharge 33%
+  // faster" (#2134); the attack skills it disables are the skill's.
+  "deadly-paradox": define("deadly-paradox", "Deadly Paradox", "stance", {
+    profession: "assassin",
+    ownSkillModifiers: [
+      ownSkills({ profession: "assassin" }, { activationMultiplier: 0.67, rechargeFaster: 0.33 }),
+    ],
+  }),
+  // PvP (#2134): "For 15...60 seconds, you cannot be blocked by Blinded foes".
+  "unseen-fury": define("unseen-fury", "Unseen Fury", "stance", {
+    profession: "assassin",
+    unblockableByBlinded: true,
   }),
 };
