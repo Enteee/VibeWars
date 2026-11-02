@@ -39,19 +39,6 @@ export async function openToFriends(page: Page): Promise<void> {
 }
 
 /**
- * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
- * opened to friends (#1682); its code, as the title bar shows it.
- */
-export async function hostLobby(page: Page): Promise<string> {
-  await openRail(page, "Hosted Game");
-  const code = page.locator("#topbar .topbar-lobby-code");
-  await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-  await expect(page.locator(".lobby-panel")).toBeVisible();
-  await openToFriends(page);
-  return (await code.textContent())?.trim() ?? "";
-}
-
-/**
  * The host's Hosted Game plays `size` a side (#2104), picked with the
  * sidebar's Team size: a side proposes a Team Build of exactly that many.
  */
@@ -59,6 +46,29 @@ export async function setTeamSize(page: Page, size: 1 | 2 | 4 | 8): Promise<void
   const select = page.getByRole("combobox", { name: "Team size" });
   await select.selectOption(String(size));
   await expect(select).toHaveValue(String(size));
+}
+
+/**
+ * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
+ * opened to friends (#1682); its code, as the title bar shows it. It
+ * plays `size` a side on `map`, 1v1 on arena-alpha unless said: the
+ * sidebar's stored size (#2104) is 4v4, which most specs do not want.
+ */
+export async function hostLobby(
+  page: Page,
+  { size = 1, map = "arena-alpha" }: { readonly size?: 1 | 2 | 4 | 8; readonly map?: string } = {},
+): Promise<string> {
+  await openRail(page, "Hosted Game");
+  const code = page.locator("#topbar .topbar-lobby-code");
+  await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
+  await expect(page.locator(".lobby-panel")).toBeVisible();
+  await setTeamSize(page, size);
+  // A size keeps a map that suits it: pick the map after the size.
+  const maps = page.locator(".lobby-map select");
+  await maps.selectOption(map);
+  await expect(maps).toHaveValue(map);
+  await openToFriends(page);
+  return (await code.textContent())?.trim() ?? "";
 }
 
 /**
@@ -160,7 +170,6 @@ export async function playHouseTeams(
 export async function startSoloMatch(page: Page): Promise<void> {
   const team = await saveSoloTeam(page);
   await hostLobby(page);
-  await setTeamSize(page, 1);
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();

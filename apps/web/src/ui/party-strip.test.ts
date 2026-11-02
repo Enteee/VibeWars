@@ -63,6 +63,7 @@ describe("the party strip's party (#1526)", () => {
     expect(party).toEqual({
       code: "ACDEFG",
       mode: "team-arena",
+      teamSize: 4,
       isHost: false,
       open: true,
       members: [

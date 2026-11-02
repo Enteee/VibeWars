@@ -200,7 +200,7 @@ test("the host sets the team size in the sidebar, and the guest sees it there, l
     const code = await hostLobby(host, "Host");
     await joinLobby(guest, "Guest", code);
     const size = (page: Page) => page.getByRole("combobox", { name: "Team size" });
-    await expect(size(guest)).toHaveValue("4");
+    await expect(size(guest)).toHaveValue("1");
     await setTeamSize(host, 2);
     await expect(size(guest)).toHaveValue("2");
     await expect(size(guest)).toBeDisabled();
