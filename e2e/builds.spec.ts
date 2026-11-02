@@ -1844,7 +1844,7 @@ test("an insignia applied to all five pieces survives a reload (#2059)", async (
     .filter({ hasText: "Matched Set" })
     .getByRole("button", { name: "edit" })
     .click();
-  const rows = page.locator(".paper-doll-row");
+  const rows = page.locator(".paper-doll-row:not(.is-hand)");
   await expect(rows).toHaveCount(5);
   for (const slot of ["head", "chest", "hands", "legs", "feet"]) {
     await expect(armorRow(page, slot)).toContainText("Survivor Insignia");
@@ -2385,7 +2385,7 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
 });
 
-test("of Fortitude on the sword adds 30 Health, and stays on after Save and a reload (#2008)", async ({
+test("of Fortitude on the sword, picked on the paper-doll, adds 30 Health, and stays on after Save and a reload (#2008, #2151)", async ({
   page,
 }) => {
   await newCharacter(page);
@@ -2393,9 +2393,17 @@ test("of Fortitude on the sword adds 30 Health, and stays on after Save and a re
   await expect(page.locator(".gear-slot").first()).toContainText("Sword");
   const health = page.locator('.editor-stat-value[data-stat="health"]');
   const before = Number(await health.innerText());
-  const suffix = page.locator('.gear-mods-hand[data-hand="mainHand"] [data-slot="suffix"] select');
-  await suffix.selectOption({ label: "of Fortitude — +30 Health" });
+  // ⑥, the sword hand, opens its mods; a pick applies at once and keeps it open.
+  const mainHand = page.locator('.paper-doll-hand[data-slot="mainHand"]');
+  await mainHand.click();
+  const suffix = page.getByRole("listbox", { name: "Suffix" });
+  await suffix.getByRole("option", { name: /^of Fortitude/ }).click();
   await expect(health).toHaveText(String(before + 30));
+  await expect(suffix.getByRole("option", { name: /^of Fortitude/ })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page.locator('.paper-doll-row[data-slot="mainHand"]')).toContainText("of Fortitude");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(roster(page)).toContainText("Fortified");
 
@@ -2405,6 +2413,6 @@ test("of Fortitude on the sword adds 30 Health, and stays on after Save and a re
     .first()
     .getByRole("button", { name: "Edit", exact: true })
     .click();
-  await expect(suffix).toHaveValue("of-fortitude");
+  await expect(page.locator('.paper-doll-row[data-slot="mainHand"]')).toContainText("of Fortitude");
   await expect(health).toHaveText(String(before + 30));
 });
