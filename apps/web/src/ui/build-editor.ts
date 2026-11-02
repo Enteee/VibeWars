@@ -18,7 +18,6 @@ import {
   getOffhand,
   getSkill,
   getWeapon,
-  getWeaponMod,
   IMPLEMENTED_SKILLS,
   neededWeaponText,
   reconcileEquipment,
@@ -27,9 +26,6 @@ import {
   weaponReachable,
   wieldsFor,
   type BuildEquipment,
-  type ItemUpgrades,
-  type ModSlot,
-  type OffhandId,
   type ProfessionId,
   type Skill,
   type SkillDescription,
@@ -76,16 +72,10 @@ import {
   droppedModNotes,
   encodeGearDrag,
   headgearChoices,
-  modChoices,
-  modSlotsOf,
-  offhandAttributeChoices,
   setHeadgearAttribute,
   setOffhand,
-  setRequirementAttribute,
-  setUpgrade,
   setWeapon,
   summariseGear,
-  weaponAttributeChoices,
   type GearDragSource,
   type GearDropTarget,
 } from "./gear-editor.js";
@@ -2417,77 +2407,6 @@ function commitGear(context: EditorContext, next: StoredCharacter): void {
   }
 }
 
-const MOD_SLOT_LABEL: Readonly<Record<ModSlot, string>> = {
-  prefix: "Prefix",
-  suffix: "Suffix",
-  inscription: "Inscription",
-};
-
-/**
- * One hand's mod pickers (#2008): a select per slot its item has, None
- * and every mod that fits, from the catalog, so a new mod needs no UI.
- */
-function mountModPickers(
-  context: EditorContext,
-  hand: "mainHand" | "offHand",
-): {
-  readonly element: HTMLElement;
-  update(item: WeaponId | OffhandId | undefined, upgrades: ItemUpgrades | undefined): void;
-} {
-  const element = h("div", "gear-mods-hand");
-  element.dataset.hand = hand;
-  const pickers = new Map(
-    (["prefix", "suffix", "inscription"] as const).map((slot) => [
-      slot,
-      mountSelectRow((value) => {
-        context.commit(
-          setUpgrade(
-            context.current(),
-            context.weaponSet(),
-            hand,
-            slot,
-            value === "" ? null : value,
-          ),
-        );
-      }),
-    ]),
-  );
-  let shown = "";
-  return {
-    element,
-    update(item, upgrades) {
-      const slots = item === undefined ? [] : modSlotsOf(item);
-      const rows = slots.flatMap((slot) => {
-        const picker = pickers.get(slot);
-        if (picker === undefined || item === undefined) {
-          return [];
-        }
-        const worn = upgrades?.[slot] ?? null;
-        picker.update(
-          MOD_SLOT_LABEL[slot],
-          [
-            { value: "", label: "None" },
-            ...modChoices(item, slot).map((mod) => ({
-              value: mod.id,
-              label: `${mod.name} — ${mod.text}`,
-            })),
-          ],
-          worn ?? "",
-        );
-        picker.element.dataset.slot = slot;
-        picker.element.title = worn === null ? "" : (getWeaponMod(worn)?.text ?? "");
-        return [picker.element];
-      });
-      // Kept, not rebuilt, so a picker keeps focus across a pick.
-      const signature = slots.join("|");
-      if (signature !== shown) {
-        shown = signature;
-        element.replaceChildren(...rows);
-      }
-    },
-  };
-}
-
 /** A labelled `<select>`, the shape this file already uses for professions, kept and refilled. */
 function mountSelectRow(onChange: (value: string) => void): {
   readonly element: HTMLElement;
@@ -2735,30 +2654,11 @@ function mountGear(panel: HTMLElement, context: EditorContext, doll: PaperDoll):
   handsGrid.append(weaponSlot.element, offhandSlot.element);
   section.appendChild(handsGrid);
 
-  // --- weapon mods ----------------------------------------------------
-  // Under each hand, a picker per slot its item has (#2008).
-  const modsGrid = h("div", "gear-mods");
-  const weaponMods = mountModPickers(context, "mainHand");
-  const offhandMods = mountModPickers(context, "offHand");
-  modsGrid.append(weaponMods.element, offhandMods.element);
-  section.appendChild(modsGrid);
-
-  // --- attribute nominations ------------------------------------------
-  // Only shown for gear that genuinely has a choice to make. A sword is
-  // always Swordsmanship, and offering a one-option dropdown would imply
-  // otherwise. The headgear always has one (#1140), so the row is always
-  // there, the weapon's and the off-hand's ahead of it.
-  const linkRow = h("div", "editor-row");
-  const weaponLink = mountSelectRow((value) => {
-    commit(setRequirementAttribute(current(), context.weaponSet(), "mainHand", value));
-  });
-  const offhandLink = mountSelectRow((value) => {
-    commit(setRequirementAttribute(current(), context.weaponSet(), "offHand", value));
-  });
+  // The headgear's attribute (#1140); the weapon's and the off-hand's,
+  // and their mods, are picked on the paper-doll (#2151).
   const headgearLink = mountSelectRow((value) => {
     commit(setHeadgearAttribute(current(), value));
   });
-  section.appendChild(linkRow);
 
   // --- armor ----------------------------------------------------------
   const armorHeader = h("div", "editor-subheader");
@@ -2862,43 +2762,14 @@ function mountGear(panel: HTMLElement, context: EditorContext, doll: PaperDoll):
         },
       });
 
-      weaponMods.update(mainHand?.weaponId, mainHand?.upgrades);
-      offhandMods.update(offHand?.offhandId, offHand?.upgrades);
-
-      const weaponChoices =
-        weapon?.requirement.kind === "chosen" ? weaponAttributeChoices(character, selected) : [];
-      const offhandChoices =
-        offHand === null ? [] : offhandAttributeChoices(character, offHand.offhandId);
-      const attributeOptions = (ids: readonly string[]) =>
-        ids.map((id) => ({ value: id, label: getAttribute(id)?.name ?? id }));
-      if (weapon !== undefined && mainHand !== undefined && weaponChoices.length > 0) {
-        weaponLink.update(
-          `${weapon.name.toLowerCase()} attribute`,
-          attributeOptions(weaponChoices),
-          mainHand.requirementAttributeId ?? "",
-        );
-      }
-      if (offHand !== null && offhandChoices.length > 0) {
-        offhandLink.update(
-          `${offhandDefinition?.name.toLowerCase() ?? "off-hand"} attribute`,
-          attributeOptions(offhandChoices),
-          offHand.requirementAttributeId ?? "",
-        );
-      }
       headgearLink.update(
         "+1",
-        attributeOptions(headgearChoices(character)),
+        headgearChoices(character).map((id) => ({
+          value: id,
+          label: getAttribute(id)?.name ?? id,
+        })),
         character.equipment.armor.head.headgearAttributeId ?? "",
       );
-      present(weaponLink.element, weaponChoices.length > 0, (node) => {
-        linkRow.prepend(node);
-      });
-      present(offhandLink.element, offhandChoices.length > 0, (node) => {
-        linkRow.appendChild(node);
-      });
-      present(linkRow, weaponChoices.length > 0 || offhandChoices.length > 0, (node) => {
-        armorHeader.before(node);
-      });
 
       doll.update(character);
 
