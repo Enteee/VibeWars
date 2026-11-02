@@ -483,6 +483,8 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "swirling-aura": icon("swirling-aura"),
   "magnetic-surge": icon("magnetic-surge"),
   "sliver-armor": icon("sliver-armor"),
+  // Elementalist staples (#2166).
+  "teinais-prison": icon("teinais-prison"),
   // Chain and Paradox tools (#2134).
   "way-of-the-empty-palm": icon("way-of-the-empty-palm"),
   "mark-of-instability": icon("mark-of-instability"),
