@@ -1400,7 +1400,7 @@ slash): Strudel does not derive it from the map's URL.
 
 | Mood        | Sounds like                                               | Tracks                         |
 | ----------- | --------------------------------------------------------- | ------------------------------ |
-| atmospheric | Open fifths, flute over harp, long reverb                 | first-light, jungle-veil       |
+| atmospheric | Open fifths, harp with strings or flute, long reverb      | first-light, jungle-veil       |
 | melancholy  | Low strings, sparse harp, minor, lots of air              | ashen-fields                   |
 | adventurous | Horn call, striding bass, frame drum, tin whistle         | northern-pass                  |
 | mysterious  | Odd-length phrases, pizzicato, breathy flute, drones      | jungle-veil, glass-dunes       |
