@@ -2,6 +2,7 @@
   "id": "arena-long-hall",
   "name": "Long Hall",
   "mode": "annihilation",
+  "teamSizes": [4, 8],
   "width": 3200,
   "height": 1100,
   "walls": [
@@ -114,6 +115,34 @@
       }
     },
     {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 250
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 160,
+        "y": 850
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 400
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 290,
+        "y": 700
+      }
+    },
+    {
       "team": 1,
       "position": {
         "x": 3040,
@@ -139,6 +168,34 @@
       "position": {
         "x": 2910,
         "y": 550
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3040,
+        "y": 850
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 3040,
+        "y": 250
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2910,
+        "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 2910,
+        "y": 400
       }
     }
   ]

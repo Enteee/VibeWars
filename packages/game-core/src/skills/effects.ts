@@ -46,6 +46,7 @@ import {
 import { wieldsFor } from "../equipment/weapons.js";
 import { distanceWithinRange } from "../geometry.js";
 import { isFreshCorpse } from "../match/corpses.js";
+import { MASTERLESS_TEAM } from "../match/minions.js";
 import { distance, type Vec2 } from "../vec2.js";
 import type { Creature } from "../match/simulation.js";
 import type { ProfessionId } from "../professions.js";
@@ -1337,7 +1338,7 @@ function isSummoned(creature: Creature | undefined): boolean {
  * Whether a splash that `hits` reaches `combatant` (#885), its distance
  * aside: `own-spirits` only the caster's own spirits (#1777), `own-minions`
  * its own minions (#1836), `allied-minions` any minion on its side
- * (#1986).
+ * (#1986), `foe-minions` any minion not on its side (#2092).
  */
 function splashReaches(
   hits: SplashEffect["hits"],
@@ -1356,6 +1357,8 @@ function splashReaches(
       return combatant.team !== caster.team;
     case "foe-creatures":
       return combatant.team !== caster.team && isSummoned(creature);
+    case "foe-minions":
+      return combatant.team !== caster.team && creature?.kind === "minion";
     case "own-spirits":
       return creature?.kind === "spirit" && creature.ownerId === caster.id;
     case "own-minions":
@@ -1372,6 +1375,39 @@ function splashReaches(
  */
 function measuredFromCaster(hits: SplashEffect["hits"]): boolean {
   return hits === "own-spirits" || hits === "own-minions" || hits === "allied-minions";
+}
+
+/**
+ * Whom a splash reaches round its centre, nearest first, past its
+ * `maxTargets` none; its target is never one of them. Your own spirits are
+ * within earshot of you, not of the target (#1777); Return's adjacent foes
+ * are around its caster (#1826). The resolution reads it too, for the
+ * minions a nested `take-control` takes (#2092).
+ */
+function splashTargets(
+  effect: SplashEffect,
+  context: SkillContext,
+): { readonly centre: Combatant | undefined; readonly reached: readonly Combatant[] } {
+  const { caster, target } = context;
+  const centre = effect.around === "caster" || measuredFromCaster(effect.hits) ? caster : target;
+  const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
+  if (target === undefined || at === undefined) {
+    return { centre, reached: [] };
+  }
+  const reached = [...context.surroundings.values()].filter(
+    ({ combatant, position, creature }) =>
+      !combatant.dead &&
+      combatant.id !== target.id &&
+      splashReaches(effect.hits, caster, combatant, creature) &&
+      distance(position, at) <= effect.radius &&
+      (effect.onlyBearing === undefined ||
+        combatant.statuses.countByCategory(effect.onlyBearing) > 0),
+  );
+  const maxTargets =
+    effect.maxTargets === undefined || typeof effect.maxTargets === "number"
+      ? effect.maxTargets
+      : resolveMagnitude(effect.maxTargets, caster);
+  return { centre, reached: nearestFirst(reached, at).slice(0, maxTargets) };
 }
 
 /**
@@ -1535,6 +1571,20 @@ export function interruptLands(
 }
 
 /**
+ * The Health `caster` gives up to a sacrifice of `percentOfMax` of its
+ * max: larger under Awaken the Blood (#1979). The bots weigh it with this
+ * too (#2000).
+ */
+export function sacrificedHealth(caster: Combatant, percentOfMax: number): number {
+  return Math.round(
+    (caster.maxHealth *
+      percentOfMax *
+      aggregateModifiers(caster.statuses.active).sacrificeMultiplier) /
+      100,
+  );
+}
+
+/**
  * Apply one effect to `context.target`. `earlier` is what this skill's
  * resolution has emitted before it, for a `perEnergyLost` amount (#793)
  * and an interrupt that finds its target already interrupted (#817); an
@@ -1590,7 +1640,7 @@ export function applyEffect(
       );
       applyDamage(
         target,
-        mitigate(packet, target, context.rules, hitLocationOf(packet, context.rng)),
+        mitigate(packet, target, context.rules, hitLocationOf(packet, context.rng), context.rng),
         packet.type,
         false,
         events,
@@ -1723,17 +1773,7 @@ export function applyEffect(
     }
 
     case "sacrifice-health": {
-      loseHealth(
-        caster,
-        Math.round(
-          (caster.maxHealth *
-            effect.percentOfMax *
-            aggregateModifiers(caster.statuses.active).sacrificeMultiplier) /
-            100,
-        ),
-        "sacrifice",
-        events,
-      );
+      loseHealth(caster, sacrificedHealth(caster, effect.percentOfMax), "sacrifice", events);
       return events;
     }
 
@@ -1786,13 +1826,14 @@ export function applyEffect(
       if (bearer === undefined || bearer.dead) {
         return events;
       }
-      // A weapon spell lasts longer with its caster's Spawning Power (#1098),
-      // whatever skill or trigger lands it.
+      // The duration at the ranks the status's stats use (#2041): a spirit's,
+      // ward's or trigger's are its owner's. A weapon spell lasts longer with
+      // its caster's Spawning Power (#1098), whatever skill or trigger lands it.
+      const seconds = resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster);
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
-          ? effect.durationSeconds *
-            spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
-          : effect.durationSeconds;
+          ? seconds * spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
+          : seconds;
       // A status the caster bears lengthens what its skills of a kind put on (#1761).
       // Infuse Condition's (#1915): a condition goes to the bearer's
       // closest living minion instead, if it has one.
@@ -1802,7 +1843,11 @@ export function applyEffect(
         effect.statusId,
         base *
           (context.own?.durationMultiplier ?? 1) *
-          inflictedScale(effect.statusId, bearer, context),
+          inflictedScale(effect.statusId, bearer, context) *
+          // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
+          (getStatusDefinition(effect.statusId).category === "enchantment"
+            ? caster.equipment.spellMods.enchantmentDurationScale
+            : 1),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster),
         events,
@@ -2143,28 +2188,8 @@ export function applyEffect(
     }
 
     case "splash": {
-      // Your own spirits are within earshot of you, not of the target (#1777);
-      // Return's adjacent foes are around its caster (#1826).
-      const centre =
-        effect.around === "caster" || measuredFromCaster(effect.hits) ? caster : target;
-      const at = centre === undefined ? undefined : context.surroundings.get(centre.id)?.position;
-      if (target === undefined || at === undefined) {
-        return events;
-      }
-      const reached = [...context.surroundings.values()].filter(
-        ({ combatant, position, creature }) =>
-          !combatant.dead &&
-          combatant.id !== target.id &&
-          splashReaches(effect.hits, caster, combatant, creature) &&
-          distance(position, at) <= effect.radius &&
-          (effect.onlyBearing === undefined ||
-            combatant.statuses.countByCategory(effect.onlyBearing) > 0),
-      );
-      const maxTargets =
-        effect.maxTargets === undefined || typeof effect.maxTargets === "number"
-          ? effect.maxTargets
-          : resolveMagnitude(effect.maxTargets, caster);
-      for (const combatant of nearestFirst(reached, at).slice(0, maxTargets)) {
+      const { centre, reached } = splashTargets(effect, context);
+      for (const combatant of reached) {
         for (const inner of effect.effects) {
           events.push(...applyEffect(inner, { ...context, target: combatant }, earlier, centre));
         }
@@ -2331,6 +2356,18 @@ export function applyEffect(
     case "recharge-others":
       if (context.firingStatusId !== undefined && !caster.dead) {
         rechargeOthers(caster, undefined, effect.which);
+      }
+      return events;
+    case "gaze-minion":
+      // A masterless minion is healed as it becomes the caster's (#2092);
+      // the simulation moves it, as the resolution's `taken` says.
+      if (
+        target !== undefined &&
+        !caster.dead &&
+        target.team === MASTERLESS_TEAM &&
+        context.surroundings.get(target.id)?.creature?.kind === "minion"
+      ) {
+        applyHeal(target, resolveMagnitude(effect.heal, caster), events);
       }
       return events;
     case "recharge-faster":
@@ -2990,6 +3027,7 @@ function effectActsOnCaster(effect: SkillEffect): boolean {
     case "copy-disabled":
     case "copy-elite":
     case "take-control":
+    case "gaze-minion":
     case "owner-gains-damage-dealt":
     case "chain-mark":
     case "overcast":
@@ -3058,11 +3096,12 @@ export interface SkillOutcome {
    */
   readonly grounds: readonly CreateGroundEffect[];
   /**
-   * The ids of the spirits a `take-control` took (#1965), in order: the
-   * simulation moves them to the caster, which only it can do. Not when
-   * the caster died first, as of Signet of Binding's own Health loss.
+   * The creatures a `take-control` took (#1965), a splash's too (#2092),
+   * or a `gaze-minion` gazed, in order: the simulation moves them, which
+   * only it can do. Not when the caster died first, as of Signet of
+   * Binding's own Health loss.
    */
-  readonly taken: readonly string[];
+  readonly taken: readonly TakenCreature[];
   /**
    * The first `if` that did not hold (#1735), when nothing of the skill
    * happened, before or after it; else `undefined`. Its use is told so.
@@ -3070,10 +3109,48 @@ export interface SkillOutcome {
   readonly skipped: SkippedEffect | undefined;
 }
 
+/** A creature a skill moves between sides (#1965, #2092). */
+export interface TakenCreature {
+  readonly id: string;
+  /**
+   * `take`: it becomes the caster's. `gaze`: Verata's Gaze's, masterless
+   * if it has a master, else the caster's.
+   */
+  readonly kind: "take" | "gaze";
+  /** A `take-control`'s `bondStatusId`; `undefined` for a gaze. */
+  readonly bondStatusId: StatusId | undefined;
+}
+
 /** An `if` that did not hold on `targetId`, the caster's when it had none (#1735). */
 export interface SkippedEffect {
   readonly condition: EffectCondition;
   readonly targetId: string;
+}
+
+/**
+ * What `effect`, landing on `context.target`, moves between sides
+ * (#1965, #2092): its target, living, or each a splash of it reaches.
+ */
+function takenBy(effect: UnconditionalEffect, context: SkillContext): TakenCreature[] {
+  const target = context.target;
+  switch (effect.kind) {
+    case "take-control":
+      return target === undefined || target.dead
+        ? []
+        : [{ id: target.id, kind: "take", bondStatusId: effect.bondStatusId }];
+    case "gaze-minion":
+      return target === undefined || target.dead
+        ? []
+        : [{ id: target.id, kind: "gaze", bondStatusId: undefined }];
+    case "splash": {
+      const { reached } = splashTargets(effect, context);
+      return effect.effects.flatMap((inner) =>
+        reached.flatMap((combatant) => takenBy(inner, { ...context, target: combatant })),
+      );
+    }
+    default:
+      return [];
+  }
 }
 
 /**
@@ -3096,7 +3173,7 @@ export function resolveSkillEffects(
   let rechargeLongerSeconds = 0;
   const summons: SummonEffect[] = [];
   const grounds: CreateGroundEffect[] = [];
-  const taken: string[] = [];
+  const taken: TakenCreature[] = [];
   let skipped: SkippedEffect | undefined;
   for (const effect of skill.effects) {
     const on = effectActsOnCaster(effect) ? [targets[0]] : targets;
@@ -3140,8 +3217,8 @@ export function resolveSkillEffects(
         if (inner.kind === "create-ground-effect") {
           grounds.push(inner);
         }
-        if (inner.kind === "take-control" && target !== undefined && !target.dead && !caster.dead) {
-          taken.push(target.id);
+        if (!caster.dead) {
+          taken.push(...takenBy(inner, context));
         }
         events.push(...applyEffect(inner, context, [...earlier, ...events]));
       }

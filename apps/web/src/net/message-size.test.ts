@@ -498,6 +498,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       teamLobby: null,
       // The longest a nonce is (#1766).
       queueNonce: "f".repeat(64),
+      ascentRound: 3,
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
@@ -540,7 +541,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       claims: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, i) => id(i)),
     };
     const state: WireLobbyState = {
-      code: "ACDEFGHJKMNP",
+      code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", // pragma: allowlist secret
       phase: "team-lobby",
       // The longest mode.
       mode: "heroes-ascent",
@@ -563,6 +564,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       countdownSeconds: null,
       teamLobby: null,
       queueNonce: null,
+      ascentRound: null,
     };
     // The vote has proposals and no choice yet; the claim the choice and its claims.
     const vote = {

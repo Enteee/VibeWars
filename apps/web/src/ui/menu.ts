@@ -6,10 +6,18 @@ import type { StoredCharacter } from "../storage/schema.js";
 import { validateBuild } from "../storage/build-validation.js";
 import { characterFigureCard, lookOfCharacter } from "./character-card.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
-import { button, emptyState, h, playCard, screenBar } from "./kit.js";
+import { button, emptyState, h, playCard, readyButton, screenBar } from "./kit.js";
 import { loadPlayerName, playerGuild } from "./player-section.js";
 import { isAlone } from "./party-strip.js";
-import { railParty, railScreen, type RailEntry } from "./rail.js";
+import {
+  loadTeamSize,
+  onTeamSizeChange,
+  railParty,
+  railScreen,
+  teamSizeProblem,
+  type RailEntry,
+  type TeamSize,
+} from "./rail.js";
 
 /**
  * The menu's character screens (brief §21, #1525): Random Arena, where
@@ -35,16 +43,20 @@ export interface MenuCallbacks {
   readonly onSelectCharacter: (id: string) => void;
 }
 
-/** The Random Arena formats (Q97), as their tiles read, smallest first. */
-export const RANDOM_ARENA_MODES: readonly { readonly mode: QueueMode; readonly label: string }[] = [
-  { mode: "random-arena-1v1", label: "1v1" },
-  { mode: "random-arena-2v2", label: "2v2" },
-  { mode: "random-arena-4v4", label: "4v4" },
+/** The Random Arena formats (Q97), smallest first: the queue each team size joins (#2022). */
+export const RANDOM_ARENA_MODES: readonly {
+  readonly size: TeamSize;
+  readonly mode: QueueMode;
+  readonly label: string;
+}[] = [
+  { size: 1, mode: "random-arena-1v1", label: "1v1" },
+  { size: 2, mode: "random-arena-2v2", label: "2v2" },
+  { size: 4, mode: "random-arena-4v4", label: "4v4" },
 ];
 
-/** Why the Random Arena tiles are greyed out: a queue needs a character to show strangers. */
+/** Why Random Arena's Ready is greyed out: a queue needs a character to show strangers. */
 export const NO_CHARACTER_FOR_QUEUE = "Make a character first.";
-/** Under the tiles while anyone else is in the lobby (#1526): a party queues in card 4. */
+/** Why it is, while anyone else is in the lobby (#1526): a party queues in card 4. */
 export const PARTY_CANNOT_QUEUE = "Leave the party, or play a Hosted Game";
 
 /** What Random Arena is for, under its heading. */
@@ -195,8 +207,28 @@ function wornCape(): ReturnType<typeof capeLook> | undefined {
 }
 
 /**
+ * Why Random Arena's Ready cannot queue at `size` (#2022), or `undefined`
+ * when it can: a character to show strangers, alone (#1526), at a size
+ * Random Arena plays.
+ */
+export function randomArenaProblem(
+  size: TeamSize,
+  hasCharacter: boolean,
+  alone: boolean,
+): string | undefined {
+  if (!hasCharacter) {
+    return NO_CHARACTER_FOR_QUEUE;
+  }
+  if (!alone) {
+    return PARTY_CANNOT_QUEUE;
+  }
+  return teamSizeProblem("random-arena", size);
+}
+
+/**
  * Render Random Arena (#880, #1525): your characters as cards, to pick who
- * to queue as and nothing more, and the three format tiles that queue.
+ * to queue as and nothing more, and Ready in the bar, which queues at the
+ * sidebar's team size (#2022).
  */
 export function renderRandomArena(
   root: HTMLElement,
@@ -207,7 +239,13 @@ export function renderRandomArena(
 ): void {
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
-  screenBar({ crumbs: ["VibeWars"], actions: [], join: true });
+  const ready = readyButton(false, () => {
+    const queue = RANDOM_ARENA_MODES.find(({ size }) => size === loadTeamSize());
+    if (queue !== undefined) {
+      callbacks.onRandomArena(queue.mode, loadPlayerName());
+    }
+  });
+  screenBar({ crumbs: ["VibeWars"], actions: [ready], join: true });
   const body = railScreen(root, "random-arena", RANDOM_ARENA_GOAL, callbacks.onSwitch);
 
   // Why the last try failed, under the bar it was tried from.
@@ -260,24 +298,20 @@ export function renderRandomArena(
     body.appendChild(cards);
   }
 
-  const tiles = h("div", "random-arena-tiles");
-  tiles.setAttribute("role", "group");
-  tiles.setAttribute("aria-label", "Find a match");
   // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
   const alone = isAlone(railParty());
-  for (const { mode, label } of RANDOM_ARENA_MODES) {
-    const tile = button(label, "random-arena-tile", () => {
-      callbacks.onRandomArena(mode, loadPlayerName());
-    });
-    tile.disabled = !activeExists || !alone;
-    tiles.appendChild(tile);
-  }
-  body.appendChild(tiles);
-  if (!activeExists) {
-    body.appendChild(h("p", "random-arena-hint", NO_CHARACTER_FOR_QUEUE));
-  } else if (!alone) {
-    body.appendChild(h("p", "random-arena-hint", PARTY_CANNOT_QUEUE));
-  }
+  const hint = h("p", "random-arena-hint");
+  body.appendChild(hint);
+  /** Ready, and the hint under the cards, as `size` leaves them. */
+  const showProblem = (size: TeamSize): void => {
+    const problem = randomArenaProblem(size, activeExists, alone);
+    ready.disabled = problem !== undefined;
+    ready.title = problem ?? "";
+    hint.textContent = problem ?? "";
+    hint.hidden = problem === undefined;
+  };
+  showProblem(loadTeamSize());
+  onTeamSizeChange(showProblem);
 }
 
 /**

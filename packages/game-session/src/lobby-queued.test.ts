@@ -485,6 +485,7 @@ describe("a queued lobby", () => {
           matchId: null,
           teamLobby: null,
           queueNonce: null,
+          ascentRound: null,
           players: [
             {
               id: from,
@@ -987,10 +988,12 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
       createQueueClient({
         board: board.board(),
         mode: "random-arena-2v2",
+        ascentRound: null,
         ...(party === undefined ? {} : { party }),
         now: () => now,
         newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),
         mapPool: ["other-arena"],
+        hardNat: false,
       });
     const clients = [
       client({ members, key: KEY_H, groupId, consents }),

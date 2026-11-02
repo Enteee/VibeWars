@@ -2,6 +2,7 @@
   "id": "arena-split",
   "name": "Split Paths",
   "mode": "priest-annihilation",
+  "teamSizes": [2, 4],
   "width": 1000,
   "height": 700,
   "walls": [

@@ -26,7 +26,7 @@ import {
   type Insignia,
 } from "./insignias.js";
 import type { BuildEquipment, WeaponSet } from "./loadout.js";
-import { wornMods, type ModEffect, type WeaponMod } from "./mods.js";
+import { wornMods, type ModEffect, type ModSpells, type ModWhile, type WeaponMod } from "./mods.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
   ATTRIBUTE_RUNE_TIERS,
@@ -85,7 +85,12 @@ export interface WeaponHitMods {
   readonly doubleAdrenalineChance: number;
   /** Multiplier on a condition the weapon's attacks cause: Barbed's 1.33 on Bleeding. */
   readonly inflictedDurationScale: ReadonlyMap<StatusId, number>;
+  /** More from the weapon's roll, each while its condition holds (#2010): Strength and Honor's. */
+  readonly attackDamage: readonly ModOf<"attack-damage">[];
 }
+
+/** One kind of mod effect, as the resolved set carries it. */
+export type ModOf<K extends ModEffect["kind"]> = Extract<ModEffect, { readonly kind: K }>;
 
 export const NO_HIT_MODS: WeaponHitMods = Object.freeze({
   lifeSteal: 0,
@@ -94,12 +99,40 @@ export const NO_HIT_MODS: WeaponHitMods = Object.freeze({
   sunderPenetration: 0,
   doubleAdrenalineChance: 0,
   inflictedDurationScale: new Map(),
+  attackDamage: [],
+});
+
+/** A chance a mod acts on a spell (#2011); `attributeId` `undefined`: on any spell. */
+export interface SpellChance {
+  readonly chance: number;
+  readonly attributeId: string | undefined;
+}
+
+/** What the held set's mods do to its wielder's spells (#2011). */
+export interface SpellMods {
+  /** Each halves a spell's casting time at its chance: Adept's, Swift's. */
+  readonly castHalves: readonly SpellChance[];
+  /** Each halves a spell's recharge at its chance: of Memory's, of Quickening's. */
+  readonly rechargeHalves: readonly SpellChance[];
+  /** Each raises its item's attribute by 1 for a spell at its chance: of Mastery's. */
+  readonly attributePlusOne: readonly (SpellChance & { readonly attributeId: string })[];
+  /** Multiplier on enchantments the wielder casts: of Enchanting's 1.2. */
+  readonly enchantmentDurationScale: number;
+}
+
+export const NO_SPELL_MODS: SpellMods = Object.freeze({
+  castHalves: [],
+  rechargeHalves: [],
+  attributePlusOne: [],
+  enchantmentDurationScale: 1,
 });
 
 export interface ResolvedEquipment {
   readonly mainHand: ResolvedWeapon;
   /** The held set's mods that act on a hit (#2009). */
   readonly hitMods: WeaponHitMods;
+  /** The held set's mods that act on its wielder's spells (#2011). */
+  readonly spellMods: SpellMods;
   /** Health regeneration the held set's mods give, in pips: Vampiric's -1. */
   readonly healthPips: number;
   /** Armor before any conditional bonus or status modifier. */
@@ -112,6 +145,12 @@ export interface ResolvedEquipment {
   readonly pieceReduction: PieceReduction;
   /** Rune of Absorption: subtracted from each physical hit, after mitigation. */
   readonly flatPhysicalReduction: number;
+  /** The held set's cuts off a physical hit, by condition or chance (#2010): Luck of the Draw's. */
+  readonly physicalReductions: readonly ModOf<"physical-reduction">[];
+  /** The held set's maximum Health while its condition holds (#2010): of Devotion's. */
+  readonly conditionalMaxHealth: readonly ModOf<"conditional-max-health">[];
+  /** The held set's maximum Energy while its condition holds (#2010): Hale and Hearty's. */
+  readonly conditionalMaxEnergy: readonly ModOf<"conditional-max-energy">[];
   /** Multiplier applied to an incoming condition's duration. Absent means 1. */
   readonly statusDurationScale: ReadonlyMap<StatusId, number>;
   /**
@@ -428,7 +467,13 @@ function resolveWeaponSet(
   let baseArmor = shared.baseArmor;
   let energyDelta = shared.energyDelta;
   let offhandId: OffhandId | undefined;
-  const mods: WeaponMod[] = wornMods(set.mainHand.upgrades);
+  // Each mod with its item's attribute (#2011): Adept's "of the item's attribute".
+  const mods: { readonly mod: WeaponMod; readonly itemAttribute: string | undefined }[] = wornMods(
+    set.mainHand.upgrades,
+  ).map((mod) => ({
+    mod,
+    itemAttribute: set.mainHand.requirementAttributeId ?? undefined,
+  }));
 
   const offHand = set.offHand;
   if (offHand !== null) {
@@ -446,7 +491,7 @@ function resolveWeaponSet(
       } else {
         energyDelta += amount;
       }
-      mods.push(...wornMods(offHand.upgrades));
+      mods.push(...wornMods(offHand.upgrades).map((mod) => ({ mod, itemAttribute: linked })));
     }
   }
 
@@ -458,7 +503,23 @@ function resolveWeaponSet(
   let statusDurationScale = shared.statusDurationScale;
   let mainHand = resolvedWeapon;
   let hitMods = NO_HIT_MODS;
-  for (const effect of mods.flatMap((mod) => mod.effects)) {
+  const physicalReductions: ModOf<"physical-reduction">[] = [];
+  const conditionalMaxHealth: ModOf<"conditional-max-health">[] = [];
+  const conditionalMaxEnergy: ModOf<"conditional-max-energy">[] = [];
+  const castHalves: SpellChance[] = [];
+  const rechargeHalves: SpellChance[] = [];
+  const attributePlusOne: (SpellChance & { readonly attributeId: string })[] = [];
+  let enchantmentDurationScale = 1;
+  for (const { effect, itemAttribute } of mods.flatMap(({ mod, itemAttribute }) =>
+    mod.effects.map((effect) => ({ effect, itemAttribute })),
+  )) {
+    // An item with no attribute has none to act on: never one a mod fits.
+    const scoped = (chance: number, spells: ModSpells): SpellChance | undefined =>
+      spells === "any"
+        ? { chance, attributeId: undefined }
+        : itemAttribute === undefined
+          ? undefined
+          : { chance, attributeId: itemAttribute };
     switch (effect.kind) {
       case "max-health":
         healthDelta += effect.amount;
@@ -513,6 +574,39 @@ function resolveWeaponSet(
       case "damage-type":
         mainHand = { ...mainHand, damageType: effect.type };
         break;
+      case "attack-damage":
+        hitMods = { ...hitMods, attackDamage: [...hitMods.attackDamage, effect] };
+        break;
+      case "conditional-armor":
+        conditionalArmor = [...conditionalArmor, whileArmor(effect.amount, effect.while)];
+        break;
+      case "conditional-max-health":
+        conditionalMaxHealth.push(effect);
+        break;
+      case "conditional-max-energy":
+        conditionalMaxEnergy.push(effect);
+        break;
+      case "physical-reduction":
+        physicalReductions.push(effect);
+        break;
+      case "cast-halve-chance": {
+        const scope = scoped(effect.chance, effect.of);
+        if (scope !== undefined) castHalves.push(scope);
+        break;
+      }
+      case "recharge-halve-chance": {
+        const scope = scoped(effect.chance, effect.of);
+        if (scope !== undefined) rechargeHalves.push(scope);
+        break;
+      }
+      case "attribute-plus-one-chance":
+        if (itemAttribute !== undefined) {
+          attributePlusOne.push({ chance: effect.chance, attributeId: itemAttribute });
+        }
+        break;
+      case "enchantment-duration":
+        enchantmentDurationScale *= 1 + effect.increase;
+        break;
     }
   }
 
@@ -520,12 +614,16 @@ function resolveWeaponSet(
     equipment: {
       mainHand,
       hitMods,
+      spellMods: { castHalves, rechargeHalves, attributePlusOne, enchantmentDurationScale },
       healthPips,
       baseArmor,
       conditionalArmor,
       pieceArmor: shared.pieceArmor,
       pieceReduction: shared.pieceReduction,
       flatPhysicalReduction: shared.flatPhysicalReduction,
+      physicalReductions,
+      conditionalMaxHealth,
+      conditionalMaxEnergy,
       statusDurationScale,
       attributeBonuses: shared.attributeBonuses,
       offhandId,
@@ -545,6 +643,11 @@ function modArmor(effect: Extract<ModEffect, { kind: "armor-vs" }>): Conditional
         ? { kind: "vs-elemental" }
         : { kind: "vs-type", type: effect.against };
   return { amount: effect.amount, conditions: [condition] };
+}
+
+/** A mod's armor while the wielder's `condition` holds (#2010), as an insignia's is written. */
+function whileArmor(amount: number, condition: ModWhile): ConditionalArmor {
+  return { amount, conditions: [{ kind: "mod-while", while: condition }] };
 }
 
 function resolveWeapon(
@@ -586,12 +689,16 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
       creatureDamageScale: undefined,
     },
     hitMods: NO_HIT_MODS,
+    spellMods: NO_SPELL_MODS,
     healthPips: 0,
     baseArmor,
     conditionalArmor: [],
     pieceArmor: NO_PIECE_ARMOR,
     pieceReduction: NO_PIECE_REDUCTION,
     flatPhysicalReduction: 0,
+    physicalReductions: [],
+    conditionalMaxHealth: [],
+    conditionalMaxEnergy: [],
     statusDurationScale: new Map(),
     attributeBonuses: new Map(),
     offhandId: undefined,

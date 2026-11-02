@@ -15,6 +15,7 @@ import {
   MIN_WIRE_MORALE,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
+  MASTERLESS_WIRE_TEAM,
   MAX_WIRE_STATUSES,
   MAX_WIRE_ACTORS,
   MAX_WIRE_STATUS_INDEX,
@@ -508,6 +509,7 @@ const lobbyState: WireLobbyState = {
   ],
   countdownSeconds: null,
   queueNonce: null,
+  ascentRound: null,
   teamLobby: null,
 };
 
@@ -830,7 +832,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-consent (#1078)", parsePeerPartyConsent, partyConsent],
   ["party-split (#882)", parseWirePartySplit, {}],
-  ["lobby-move (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP" }],
+  [
+    "lobby-move (#1553)",
+    parseWireLobbyMove,
+    { code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE" }, // pragma: allowlist secret
+  ],
   [
     "counting-down lobby-state (#871)",
     parseWireLobbyState,
@@ -842,6 +848,18 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, phase: "queued", matchId: null, queueNonce: "ab".repeat(32) },
   ],
+  [
+    "queued Heroes' Ascent lobby-state at its last round (#1996)",
+    parseWireLobbyState,
+    {
+      ...lobbyState,
+      mode: "heroes-ascent",
+      phase: "queued",
+      matchId: null,
+      queueNonce: "ab".repeat(32),
+      ascentRound: 3,
+    },
+  ],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
@@ -849,7 +867,12 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
-  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match" }],
+  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match", ascentRound: null }],
+  [
+    "find-match at a Heroes' Ascent round (#1996)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: 2 },
+  ],
   ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
   ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
@@ -1831,10 +1854,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { members: ["ab".repeat(32), "cd".repeat(32)], consents: ["ef".repeat(64), "ef".repeat(64)] },
   ],
   ["party-split with a field (#882)", parseWirePartySplit, { members: [] }],
-  ["lobby-move with a dashed key (#1553)", parseWireLobbyMove, { code: "ACDE-FGHJ-KMNP" }],
+  [
+    "lobby-move with an old twelve-symbol key (#2100)",
+    parseWireLobbyMove,
+    { code: "ACDEFGHJKMNP" },
+  ],
   ["lobby-move with a short key (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMN" }],
   ["lobby-move with a number (#1553)", parseWireLobbyMove, { code: 7 }],
-  ["lobby-move with a field more (#1553)", parseWireLobbyMove, { code: "ACDEFGHJKMNP", to: "x" }],
+  [
+    "lobby-move with a field more (#1553)",
+    parseWireLobbyMove,
+    { code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", to: "x" }, // pragma: allowlist secret
+  ],
   [
     "lobby-welcome of a non-hex signature (#871)",
     parseWireLobbyWelcome,
@@ -1862,6 +1893,18 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     "lobby-state without a queue nonce (#1766)",
     parseWireLobbyState,
     { ...lobbyState, queueNonce: undefined },
+  ],
+  [
+    "lobby-state without an ascent round (#1996)",
+    parseWireLobbyState,
+    { ...lobbyState, ascentRound: undefined },
+  ],
+  ["lobby-state past the Hall (#1996)", parseWireLobbyState, { ...lobbyState, ascentRound: 4 }],
+  ["find-match without a round (#1996)", parseWireLobbyCommand, { kind: "find-match" }],
+  [
+    "find-match at a negative round (#1996)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: -1 },
   ],
   [
     "lobby-state of a short queue nonce (#1766)",
@@ -2130,6 +2173,11 @@ describe("the P2P validators (#82)", () => {
         players: [player],
       },
     );
+  });
+
+  it("accept a masterless body on MASTERLESS_WIRE_TEAM (#2092)", () => {
+    const loose = { ...player, team: MASTERLESS_WIRE_TEAM };
+    expect(parseWireSnapshotPart({ ...snapshot, players: [loose] })?.players).toEqual([loose]);
   });
 
   it("drop a token from a hello's rejoin: a rejoin is proven, never told (#593)", () => {

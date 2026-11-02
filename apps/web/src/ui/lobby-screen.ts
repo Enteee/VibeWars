@@ -1,8 +1,9 @@
 import type { MatchMode } from "@vibewars/game-core";
-import { LOBBY_CODE_LENGTH } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
-import { button, h, toast } from "./kit.js";
+import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
+import { ascentMapId } from "../net/maps.js";
+import { button, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { relayLine } from "./relay-section.js";
 import { playerLabelElement } from "./player-label.js";
 
@@ -29,7 +30,8 @@ export interface LobbyMatchmaking {
   readonly queuedMs: number | null;
   readonly onFindMatch: () => void;
   readonly onLeaveQueue: () => void;
-  readonly onPlayHouseTeam: () => void;
+  /** `undefined` where no house team is offered: Heroes' Ascent waits for a side (#1996). */
+  readonly onPlayHouseTeam: (() => void) | undefined;
 }
 
 /** The host may play the house team after this long with no other team (Q191). */
@@ -42,9 +44,16 @@ export const SELECTABLE_TEAMS = [0, 1] as const;
 
 export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens again when it ends.";
 
-/** A lobby key as it is read aloud: `ACDEFGHJKMNP` as `ACDE-FGHJ-KMNP` (#379, #1681). */
-export function displayLobbyCode(code: string): string {
-  return code.length === LOBBY_CODE_LENGTH ? (code.match(/.{4}/g) ?? []).join("-") : code;
+/**
+ * The invite link to lobby `code` (#2100): this page's own origin and
+ * path, so a fork or a dev server invites to itself, with `#lobby=<key>`
+ * for its only fragment. Its query and any other fragment are left out.
+ */
+export function inviteUrl(
+  code: string,
+  where: Pick<Location, "origin" | "pathname"> = location,
+): string {
+  return `${where.origin}${where.pathname}#${LOBBY_FRAGMENT_KEY}=${code}`;
 }
 
 /**
@@ -100,20 +109,20 @@ export function waitingFor(snapshot: LobbySnapshot): string | undefined {
 }
 
 export const COPIED = "Copied";
-export const COPY_BY_HAND = "Could not copy: the key is selected, copy it by hand";
+export const COPY_BY_HAND = "Could not copy: the invite link is selected, copy it by hand";
 
 /**
- * Copy the code to the clipboard, and say so. A browser may refuse the
- * clipboard, or not offer one off https: the code is then selected, so
- * the player's own copy takes it, and the toast says to.
+ * Copy lobby `code`'s invite link (#2100), and say so. A browser may
+ * refuse the clipboard, or not offer one off https: the link is then
+ * shown selected in `share`, to copy by hand.
  */
-export async function copyCode(code: string, shown: HTMLElement): Promise<void> {
+export async function copyInviteLink(code: string, share: ShareLine): Promise<void> {
+  const url = inviteUrl(code);
   try {
-    await navigator.clipboard.writeText(code);
+    await navigator.clipboard.writeText(url);
     toast(COPIED);
   } catch {
-    const selection = window.getSelection();
-    selection?.selectAllChildren(shown);
+    share.show(url);
     toast(COPY_BY_HAND);
   }
 }
@@ -194,7 +203,11 @@ export function lobbyPanel(
   // Only a Hosted Game's host may change the map (#1994), so everyone
   // else sees it as a label rather than a control they would be refused
   // on clicking. Team Arena draws its own at the start.
-  const current = availableMaps.find((map) => map.id === snapshot.mapId);
+  // A party queued in Heroes' Ascent is bound for its round's map, not
+  // the lobby's (#1996).
+  const shownMapId =
+    snapshot.ascentRound === null ? snapshot.mapId : ascentMapId(snapshot.ascentRound);
+  const current = availableMaps.find((map) => map.id === shownMapId);
   let mapPart: HTMLElement;
   if (snapshot.mode === "hosted-game" && snapshot.isHost && availableMaps.length > 1) {
     mapPart = h("label", "lobby-map");
@@ -218,25 +231,21 @@ export function lobbyPanel(
     mapPart = h(
       "div",
       "lobby-map",
-      `Map: ${current === undefined ? snapshot.mapId : mapLabel(current)}`,
+      `Map: ${current === undefined ? shownMapId : mapLabel(current)}`,
     );
   }
 
   // The next thing to press is the primary one, the one a phone keeps out
   // of the ⋯ (#1272): Ready until you are, then the host's Start match.
   const ready = self?.ready === true;
-  const readyButton = button(
-    ready ? "Not ready" : "Ready",
-    ready ? "" : "primary",
-    callbacks.onToggleReady,
-  );
-  readyButton.disabled = controls.readyDisabled;
+  const readyToggle = readyButton(ready, callbacks.onToggleReady);
+  readyToggle.disabled = controls.readyDisabled;
   // A member on no team has nothing to ready while the match runs, but
   // can watch it (#480).
   const actions: HTMLElement[] = controls.canWatch
     ? [button("Watch", "primary lobby-watch", callbacks.onWatch)]
     : matchmaking === undefined
-      ? [readyButton]
+      ? [readyToggle]
       : [];
   if (matchmaking !== undefined) {
     if (snapshot.isHost) {
@@ -316,12 +325,10 @@ export function matchmakingButtons(
     return [find];
   }
   const leave = button("Leave the queue", "lobby-leave-queue", matchmaking.onLeaveQueue);
-  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS
+  const { onPlayHouseTeam } = matchmaking;
+  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS || onPlayHouseTeam === undefined
     ? [leave]
-    : [
-        button("Play the house team", "primary lobby-house-team", matchmaking.onPlayHouseTeam),
-        leave,
-      ];
+    : [button("Play the house team", "primary lobby-house-team", onPlayHouseTeam), leave];
 }
 
 /**

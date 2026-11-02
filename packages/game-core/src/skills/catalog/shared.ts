@@ -173,7 +173,7 @@ export const JAGGED_HORROR: CreatureTemplate = {
     { atZero: 5, perLevel: 3.75 },
     [8, 16],
     "blunt",
-    [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 25 }],
+    [{ kind: "apply-status", statusId: "bleeding", durationSeconds: { flat: 25 } }],
   ),
   replacedBy: undefined,
   leavesCorpses: undefined,

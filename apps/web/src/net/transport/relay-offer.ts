@@ -1,12 +1,11 @@
 /**
- * A lobby host's TURN relay, offered to whoever knows the lobby code
- * (#2091, ADR-0048). A joiner who needs a relay cannot reach the host to
+ * A lobby host's TURN relay, offered to whoever knows the lobby invite link
+ * (#2091, ADR-0049). A joiner who needs a relay cannot reach the host to
  * be handed one, so the offer goes over the Nostr relays, as signalling
  * does: an ephemeral event, tagged with the lobby's relay topic, its
  * content a short-lived credential sealed with AES-GCM under the lobby's
- * relay key. Both come from the lobby key's slow derivation (ADR-0043),
- * so the public ciphertext costs as much to open as the key does to
- * guess.
+ * relay key. Both come from the 256-bit lobby key (ADR-0048), so the
+ * public ciphertext cannot be opened by anyone without the invite link.
  *
  * Only a credential minted from the host's shared secret is ever sealed:
  * the secret stays on the host's device. A joiner keeps an offer in
@@ -242,7 +241,7 @@ export interface RelayOffers {
    * live offers name different relays. Offers are not bound to the host:
    * any code holder can seal one, and a second relay is how a hostile
    * member would learn each joiner's address. Using neither turns that
-   * into a denied relay only (ADR-0048).
+   * into a denied relay only (ADR-0049).
    */
   latest(): TurnConfig | undefined;
   /** An offer opened; `latest()` may have changed. */

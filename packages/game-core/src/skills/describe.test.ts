@@ -760,7 +760,7 @@ describe("attack skills (#417)", () => {
       "Off-hand attack. Only if target is knocked down.",
     );
     expect(texts("assassin.leaping-mantis-sting")).toContain(
-      "If target is moving: applies Crippled for 13s (moves at 50% speed)",
+      "If target is moving: applies Crippled for 3s (moves at 50% speed)",
     );
     expect(texts("assassin.trampling-ox")).toContain("If target has Crippled: knocks down for 2s");
     expect(texts("assassin.jungle-strike")[0]).toBe("Off-hand attack. Must follow a lead attack.");
@@ -1130,6 +1130,22 @@ describe("scaled numbers in the prose (#1932)", () => {
     expect(scaledParts(parts)).toContainEqual({ scaled: "258", attributeId: "warrior.strength" });
   });
 
+  it.each([
+    [0, "7s"],
+    [12, "16s"],
+    [15, "18s"],
+  ])("says how long Endure Pain lasts at Strength %i: %s (#2041)", (rank, seconds) => {
+    const [stance] = describeSkill(
+      skill("warrior.endure-pain"),
+      at(rank, "warrior.strength"),
+    ).effects;
+    expect(stance?.text).toMatch(new RegExp(`^Applies Endure Pain for ${seconds} `));
+    expect(scaledParts(stance?.parts ?? [])).toContainEqual({
+      scaled: seconds,
+      attributeId: "warrior.strength",
+    });
+  });
+
   it("draws a status's attack rider at the live rank: Avatar of Grenth's life steal", () => {
     const stolen = (rank: number) =>
       describeSkill(skill("dervish.avatar-of-grenth"), at(rank, "dervish.mysticism"))
@@ -1281,7 +1297,13 @@ describe("Spawning Power in the tooltip (#1098)", () => {
   it("lengthens a weapon spell's duration, the base in brackets", () => {
     const quickening = skill("ritualist.weapon-of-quickening");
     const line = (rank: number) =>
-      describeSkill(quickening, new Map([["ritualist.spawning-power", rank]])).effects[0]?.text;
+      describeSkill(
+        quickening,
+        new Map([
+          ["ritualist.spawning-power", rank],
+          ["ritualist.communing", 12],
+        ]),
+      ).effects[0]?.text;
     expect(line(12)).toMatch(/^Applies Weapon of Quickening for 31\.1s \(21s\) \(/);
     expect(line(0)).toMatch(/^Applies Weapon of Quickening for 21s \(/);
   });
@@ -1387,7 +1409,12 @@ describe("blocks that pay or pay off (#1974)", () => {
 });
 
 describe("enchantment party moves (#1975)", () => {
-  const texts = (id: string): string[] => describeSkill(skill(id)).effects.map(({ text }) => text);
+  /** `id`'s lines at rank 12 of its attribute. */
+  const texts = (id: string): string[] => {
+    const { attributeId } = skill(id);
+    const ranks = new Map(attributeId === undefined ? [] : [[attributeId, 12]]);
+    return describeSkill(skill(id), ranks).effects.map(({ text }) => text);
+  };
 
   it("says what each strips, cheapens or costs, at rank 12", () => {
     expect(texts("monk.air-of-enchantment")).toEqual([
@@ -1460,5 +1487,20 @@ describe("minion care (#1986)", () => {
     ]);
     // Feast for the Dead's target is one of them, and left out.
     expect(texts("necromancer.feast-for-the-dead")[0]).toMatch(/^Your other minions/);
+  });
+
+  it("says whose a taken minion is, and what rises from Malign Intervention (#2092)", () => {
+    expect(texts("necromancer.veratas-gaze")).toEqual([
+      "Target minion with a master becomes masterless; a masterless one becomes yours and is healed for 76 Health",
+    ]);
+    expect(texts("necromancer.veratas-aura")).toEqual([
+      "You sacrifice 33% of your maximum health",
+      "Applies Verata's Aura for 264s (the minions it took become masterless when it ends)",
+      "Foe minions in the area become your minions while you bear Verata's Aura",
+    ]);
+    expect(texts("necromancer.malign-intervention")).toEqual([
+      "Applies Malign Intervention for 17s (−20% healing, when the bearer dies, " +
+        "1 Bone Horror (level 14, 360 Health) rises where it fell, masterless)",
+    ]);
   });
 });

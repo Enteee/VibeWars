@@ -11,6 +11,19 @@ but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
 
+Every map is made for some team sizes, and a mode only plays a map made
+for its size: an 8v8 never crowds onto an arena built for a 1v1. The
+rail's **Team size** offers 1v1, 2v2, 4v4 and 8v8; a mode greys out
+the sizes it does not play.
+
+| Mode           | Team sizes    | Map                                  |
+| -------------- | ------------- | ------------------------------------ |
+| Random Arena   | 1v1, 2v2, 4v4 | drawn for you, one made for the size |
+| Team Arena     | 4v4           | drawn for each match, made for 4v4   |
+| Heroes' Ascent | 8v8           | its maps in order, up to the Hall    |
+| GvG            | 8v8           | Guild Hall Isle                      |
+| Hosted Game    | any           | the host picks any map               |
+
 In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
 objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for
@@ -186,7 +199,8 @@ Lobby is ready.
 side's size (in a Hosted Game, any size with a character for each player
 on the side), one proposal each, by clicking one of your Team Builds'
 cards; click it again to withdraw. A Team Build of the wrong size is
-shown faded, with the size it needs. Anyone may vote for one of their
+shown faded, with the size it needs; one with problems is not shown at
+all. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
 initials of who voted for it: click a card to vote, and click it again
@@ -214,3 +228,18 @@ After a queued team match, its winners queue again on their own after
 20 seconds, and its losers (a draw too) return to the menu; a coded
 lobby's match returns everyone to the lobby. A button under the result
 skips the wait, or, for winners, leaves without queueing.
+
+## Heroes' Ascent
+
+A queued Heroes' Ascent is four rounds, always in this order: Relic
+Temples (Relic Run), Forgotten Shrines (Capture Points), Hill Courtyard
+(King of the Hill), then the Hall of Heroes. The party strip says where
+you are while you look for a team: `Round 2 of 4 · Forgotten Shrines`.
+You only ever meet a team at the same round, and you wait for one as
+long as it takes: no bots fill in. Win, and your party ascends to the
+next map on its own after 20 seconds; win in the Hall, and you stay to
+defend it. Lose, or leave a match before it ends, and your next Ascent
+starts again at round 1; so does leaving the queue or the party. A match
+lost to its host leaving keeps your round. The round is remembered by
+the host of your party, and only until you close the tab. A Heroes'
+Ascent lobby joined by code plays round 1's map.

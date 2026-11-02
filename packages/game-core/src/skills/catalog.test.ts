@@ -15,7 +15,7 @@ import { computeCoverage, formatCoverage } from "./coverage.js";
 import { applyEffects } from "./effects.js";
 import { chargeAdrenaline, makeCombatant } from "./testing.js";
 import { getStatusDefinition } from "./status.js";
-import { blowRuleOf, type Combatant } from "./types.js";
+import { blowRuleOf, type Combatant, type Magnitude } from "./types.js";
 
 /** A hammer in hand, for the hammer's attack skills. */
 const HAMMER = {
@@ -460,9 +460,16 @@ describe("headless combat simulation", () => {
   });
 
   it("Blood Ritual sacrifices 17% of health and enchants a touched ally with +3 energy pips", () => {
-    const necro = actor(makeCombatant({ id: "necro", team: 0, health: 500, maxHealth: 500 }), [
-      "necromancer.blood-ritual",
-    ]);
+    const necro = actor(
+      makeCombatant({
+        id: "necro",
+        team: 0,
+        health: 500,
+        maxHealth: 500,
+        attributeRanks: new Map([["necromancer.blood-magic", 12]]),
+      }),
+      ["necromancer.blood-ritual"],
+    );
     const far = actor(makeCombatant({ id: "far", team: 0 }), [], 100);
     expect(tryCast(necro, "necromancer.blood-ritual", far)).toBe("out-of-range");
     expect(tryCast(necro, "necromancer.blood-ritual", necro)).toBe("invalid-target-self");
@@ -494,7 +501,14 @@ describe("headless combat simulation", () => {
   });
 
   it("Enfeeble weakens a foe at spell range for its rank-12 26 s (#762)", () => {
-    const necro = actor(makeCombatant({ id: "necro", team: 0 }), ["necromancer.enfeeble"]);
+    const necro = actor(
+      makeCombatant({
+        id: "necro",
+        team: 0,
+        attributeRanks: new Map([["necromancer.curses", 12]]),
+      }),
+      ["necromancer.enfeeble"],
+    );
     const foe = actor(makeCombatant({ id: "foe", team: 1 }), [], 300);
 
     expect(tryCast(necro, "necromancer.enfeeble", foe)).toBeUndefined();
@@ -664,26 +678,28 @@ describe("skill types", () => {
     };
     const energy = (amount: number) => ({ kind: "energy", amount });
     const common = { type: "shout", target: "living-companion", range: PET_REACH };
-    const status = (statusId: string, durationSeconds: number) => [
+    const status = (statusId: string, durationSeconds: Magnitude) => [
       { kind: "apply-status", statusId, durationSeconds },
     ];
     expect(call("ranger.call-of-haste")).toEqual({
       ...common,
       cost: energy(10),
       recharge: 25,
-      effects: status("call-of-haste", 30),
+      effects: status("call-of-haste", { flat: 30 }),
     });
     expect(call("ranger.call-of-protection")).toEqual({
       ...common,
       cost: energy(5),
       recharge: 90,
-      effects: status("call-of-protection", 120),
+      effects: status("call-of-protection", { flat: 120 }),
     });
     expect(call("ranger.symbiotic-bond")).toEqual({
       ...common,
       cost: energy(10),
       recharge: 55,
-      effects: status("symbiotic-bond", 264),
+      effects: status("symbiotic-bond", {
+        scaling: { attributeId: "ranger.beast-mastery", atZero: 120, atTwelve: 264 },
+      }),
     });
     expect(getSkill("ranger.revive-animal")).toMatchObject({
       type: "skill",

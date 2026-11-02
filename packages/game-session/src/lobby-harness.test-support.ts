@@ -26,7 +26,7 @@ import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { Transport } from "./transport.js";
 
-export const CODE = "ACDEFGHJKMNP";
+export const CODE = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE"; // pragma: allowlist secret
 
 /**
  * What the test lobby's peers prove its key with (#1681): any bytes do,

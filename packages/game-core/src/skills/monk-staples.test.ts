@@ -102,7 +102,9 @@ describe("Reversal of Fortune (#987)", () => {
       activationSeconds: 0.25,
       rechargeSeconds: 2,
       target: "single-ally",
-      effects: [{ kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: 8 }],
+      effects: [
+        { kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: { flat: 8 } },
+      ],
     });
   });
 
@@ -159,7 +161,7 @@ describe("Reversal of Fortune (#987)", () => {
     target.statuses.apply("protective-spirit", 19, "monk", NO_RANKS);
     applyDamage(
       target,
-      mitigate(skillDamage(200, "typeless", 0), target, RULES, null),
+      mitigate(skillDamage(200, "typeless", 0), target, RULES, null, createRng(1)),
       "typeless",
       false,
       [],

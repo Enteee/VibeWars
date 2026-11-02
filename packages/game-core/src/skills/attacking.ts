@@ -1,6 +1,6 @@
 import { getSkill } from "./catalog.js";
 import { resolvedBar } from "./cast-state.js";
-import type { Combatant } from "./types.js";
+import { isSpell, type Combatant } from "./types.js";
 
 /**
  * Whether `combatant` is attacking, as GW1 counts it: swinging at a foe,
@@ -18,6 +18,16 @@ export function isAttacking(combatant: Combatant): boolean {
     (combatant.attack !== undefined && !combatant.moving) ||
     (cast !== undefined && getSkill(cast.skillId)?.type === "attack")
   );
+}
+
+/** Whether `combatant` is activating a spell (#2010): Knowing is Half the Battle's test. */
+export function isCastingSpell(combatant: Combatant): boolean {
+  const cast = combatant.cast.activeCast;
+  if (combatant.dead || cast === undefined) {
+    return false;
+  }
+  const skill = getSkill(cast.skillId);
+  return skill !== undefined && isSpell(skill.type);
 }
 
 /**

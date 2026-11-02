@@ -365,7 +365,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
             hits: "foes",
             radius: AREA_NEARBY,
             maxTargets: undefined,
-            effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 7 }],
+            effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: { flat: 7 } }],
           },
         ],
         target: "bearer",
@@ -564,7 +564,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
-      effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: 17 }],
+      effects: [{ kind: "apply-status", statusId: "cracked-armor", durationSeconds: { flat: 17 } }],
       skillId: "ritualist.sundering-weapon",
     },
     endsAfterHits: { count: 3, weapon: undefined },
@@ -578,14 +578,14 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     onAttackHit: {
       attackSkillsOnly: false,
       weapon: undefined,
-      effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
+      effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: { flat: 5 } }],
       skillId: "ritualist.weapon-of-shadow",
     },
     triggers: [
       {
         on: "bearer-hit-by-attack",
         target: "offender",
-        effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 5 }],
+        effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: { flat: 5 } }],
         skillId: "ritualist.weapon-of-shadow",
       },
     ],

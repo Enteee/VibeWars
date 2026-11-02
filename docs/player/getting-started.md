@@ -10,9 +10,10 @@ on a phone or a touch-only tablet: open it on a computer.
 
 The rail down the left of the main screen holds the
 [modes](modes.md), top to bottom: **Random Arena**, **Team Arena**,
-**Heroes' Ascent**, **GvG** and **Hosted Game**. Below them, at the
-bottom, are **Character Builder**, where you make your characters, and
-**Team Builder**, where you make your
+**Heroes' Ascent**, **GvG** and **Hosted Game**. Under them is the
+**Team size**, one for every screen, which the game keeps for next
+time. Below that, at the bottom, are **Character Builder**, where you
+make your characters, and **Team Builder**, where you make your
 [Team Builds](skills-and-builds.md#team-builds). The game opens on the
 one you used last.
 
@@ -52,8 +53,9 @@ team shown as your own Team Build and opens it, to change as you like.
 ## Play a Random Arena
 
 The quickest way into a fight. On **Random Arena**, click the card of
-the character you play as, then press a team size, **1v1**, **2v2** or
-**4v4**, and wait: you are put in a team with other players, against
+the character you play as, pick a team size, **1v1**, **2v2** or
+**4v4**, in the rail's **Team size**, then press **Ready** in the title
+bar, and wait: you are put in a team with other players, against
 another team, on a random map. Closing the tab while you wait takes you
 out of the queue at once.
 
@@ -63,25 +65,27 @@ the team you just played with.
 ## Host or join a match
 
 You are always in a lobby: from the moment the page opens it hosts one
-of your own, and the top bar shows its key. The lobby is your party,
+of your own. The lobby is your party,
 and the strip on top of every mode screen lists who is in it.
 
-- **Invite:** press **Copy** beside your key in the top bar and send it
-  to your friends. The key is 12 characters, such as `ACDE-FGHJ-KMNP`.
-  Share it only with people you want in.
+- **Invite:** press **Copy invite link** in the top bar and send the
+  link to your friends. It holds your lobby's secret key, so share it
+  only with people you want in. If your browser refuses to copy, the link
+  shows selected: copy it by hand.
 - **Open your lobby** before friends join: your lobby starts **Closed**
-  (🔒), and nobody can join it, even with the key. Press the lock beside
-  your key to open it; anyone with the key can then join. Press it again
+  (🔒), and nobody can join it, even with the link. Press the lock in the
+  top bar to open it; anyone with the link can then join. Press it again
   to close it: friends already in stay, and nobody new gets in. A guest
   sees "Lobby closed" in the party strip while it is closed.
-- **Join:** paste the key you were sent into **Lobby Key** in the top
-  bar and press **Join**, or Enter. Dashes and lower case are fine. Your
-  own lobby stays open until the join is in. Once in, the top bar shows
-  your friend's key, and **Leave** takes you back to a fresh lobby of
-  your own, with a new key. If your connection drops, your seat is held
+- **Join:** open the invite link you were sent, in a new tab or pasted
+  into the address bar of one already open. Your own lobby stays open
+  until the join is in. Once in, the top bar says **Lobby**, and
+  **Leave** takes you back to a fresh lobby of your own, with a new
+  invite link. A link opened on a lobby's screen or in a match asks you
+  to go back to the menu first. If your connection drops, your seat is held
   for 30 seconds.
 - **Your party comes along:** if you had friends in your lobby, the top
-  bar asks first (**Join** again to go, Esc to stay), and once you are
+  bar asks first (**Join** to go, Esc to stay), and once you are
   in, they follow you into your friend's lobby. Anyone who cannot get in,
   because it is full or was closed meanwhile, gets a fresh lobby of their
   own and is told why.
@@ -120,7 +124,9 @@ mode's maps, each side with its own builds, and come back to your lobby
 afterwards. The host can press
 **Leave the queue** at any time; a guest who leaves takes the whole
 party out of it. With no other team after a minute, the host can also
-press **Play the house team**: a match in your own lobby against bots.
+press **Play the house team**: a match in your own lobby against bots,
+except in [Heroes' Ascent](modes.md#heroes-ascent), which waits for a
+team at your round.
 
 ## Your name, guild tag and cape
 

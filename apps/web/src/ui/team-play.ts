@@ -8,6 +8,7 @@ import { professionLabel } from "./character-preview.js";
 import { button, h, listenForPaste, screenBar } from "./kit.js";
 import type { LobbyPanel } from "./lobby-screen.js";
 import { railScreen, type RailEntry } from "./rail.js";
+import { validateTeam } from "./team-builder.js";
 
 /**
  * The menu's team screens (#1525, #1522 variant C): a screen per team
@@ -102,6 +103,20 @@ function rerollFocused(): boolean {
   return document.activeElement?.classList.contains("play-card-reroll") === true;
 }
 
+/** What a saved team without a name is called on its card (#2110); its stored name stays empty. */
+export const UNNAMED_TEAM = "Unnamed team";
+
+/**
+ * A saved team that could not be proposed (#2110): Save always stores,
+ * so its card says why, by its first problem.
+ */
+function unplayable(team: StoredTeam): HTMLElement[] {
+  const first = validateTeam(team)[0];
+  return first === undefined
+    ? []
+    : [h("span", "play-card-unplayable", `Not playable: ${first.message}`)];
+}
+
 /** The Team Build cards, each opening in the editor as its Edit does, then New team build. */
 function teamCards(
   body: HTMLElement,
@@ -125,8 +140,9 @@ function teamCards(
       team.id === starter
         ? starterTeamCard(members, team, callbacks)
         : teamFigureCard({
-            title: team.name,
+            title: team.name.trim() === "" ? UNNAMED_TEAM : team.name,
             members,
+            footer: unplayable(team),
             onOpen: edit,
             actions: [button("Edit", "play-card-edit", edit)],
           }),

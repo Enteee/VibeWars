@@ -23,6 +23,25 @@ export type ModId = string;
 /** What can carry a mod: everything but fists. */
 export type ModItem = Exclude<WeaponId, "unarmed"> | OffhandId;
 
+/**
+ * What a conditional mod waits on (#2010), the wielder's state now:
+ * Health strictly above or below half its maximum, any enchantment, stance
+ * or hex on it, an attack or a spell under way, or, for damage only, a
+ * hexed target.
+ */
+export type ModWhile =
+  | "health-above-half"
+  | "health-below-half"
+  | "enchanted"
+  | "in-stance"
+  | "hexed"
+  | "attacking"
+  | "casting"
+  | "target-hexed";
+
+/** The conditions a maximum may wait on: never Health, which the maximum moves. */
+export type ModStatusWhile = Extract<ModWhile, "enchanted" | "in-stance" | "hexed">;
+
 export type ModEffect =
   | { readonly kind: "max-health"; readonly amount: number }
   | { readonly kind: "max-energy"; readonly amount: number }
@@ -63,7 +82,37 @@ export type ModEffect =
       readonly increase: number;
     }
   /** The weapon's damage becomes this type: Ebon, Fiery, Icy, Shocking. */
-  | { readonly kind: "damage-type"; readonly type: DamageType };
+  | { readonly kind: "damage-type"; readonly type: DamageType }
+  /** The weapon's own roll, `increase` more (0.15: +15%), never a skill's bonus. */
+  | { readonly kind: "attack-damage"; readonly increase: number; readonly while?: ModWhile }
+  | { readonly kind: "conditional-armor"; readonly amount: number; readonly while: ModWhile }
+  | {
+      readonly kind: "conditional-max-health";
+      readonly amount: number;
+      readonly while: ModStatusWhile;
+    }
+  | { readonly kind: "conditional-max-energy"; readonly amount: number; readonly while: ModWhile }
+  /** Each physical hit on the bearer, `amount` less, after armor; at `chance`, when given. */
+  | {
+      readonly kind: "physical-reduction";
+      readonly amount: number;
+      readonly while?: ModWhile;
+      readonly chance?: number;
+    }
+  /**
+   * At `chance`, a spell casts in half the time (#2011): one of the item's
+   * attribute, as Adept's, or `any`, as Swift's.
+   */
+  | { readonly kind: "cast-halve-chance"; readonly chance: number; readonly of: ModSpells }
+  /** At `chance`, a spell recharges in half the time (#2011): of Memory's, of Quickening's. */
+  | { readonly kind: "recharge-halve-chance"; readonly chance: number; readonly of: ModSpells }
+  /** At `chance`, the item's attribute is 1 higher for a spell (#2011): of Mastery's. */
+  | { readonly kind: "attribute-plus-one-chance"; readonly chance: number }
+  /** Enchantments the wielder casts last `increase` longer (#2011): of Enchanting's 0.2. */
+  | { readonly kind: "enchantment-duration"; readonly increase: number };
+
+/** Which spells a chance mod acts on (#2011): the item's attribute's, or every one. */
+export type ModSpells = "item-attribute" | "any";
 
 export interface WeaponMod {
   readonly id: ModId;
@@ -145,6 +194,23 @@ const VAMPIRIC_STEAL: Readonly<Partial<Record<WeaponId, number>>> = Object.freez
   ),
 );
 const OFFHANDS: readonly ModItem[] = Object.freeze(["shield", "focus"]);
+const ALL_WEAPONS: readonly ModItem[] = Object.freeze([...MARTIAL_AND_STAFF, "wand"]);
+/** Staff wrapping, shield handle, focus core: of Devotion, of Endurance, of Valor. */
+const STAFF_AND_OFFHANDS: readonly ModItem[] = Object.freeze(["staff", ...OFFHANDS]);
+/** A caster weapon's inscription (#2011): Aptitude not Attitude's. */
+const STAFF_AND_WAND: readonly ModItem[] = Object.freeze(["staff", "wand"]);
+
+/** How each condition reads in a tooltip. */
+export const MOD_WHILE_TEXT: Readonly<Record<ModWhile, string>> = Object.freeze({
+  "health-above-half": "while Health is above 50%",
+  "health-below-half": "while Health is below 50%",
+  enchanted: "while Enchanted",
+  "in-stance": "while in a Stance",
+  hexed: "while Hexed",
+  attacking: "while attacking",
+  casting: "while casting",
+  "target-hexed": "vs. Hexed foes",
+});
 
 function mod(
   id: ModId,
@@ -155,6 +221,58 @@ function mod(
   text: string,
 ): WeaponMod {
   return Object.freeze({ id, name, slot, fits, effects: Object.freeze([...effects]), text });
+}
+
+/** A spell's casting time halved at `chance` (#2011). */
+function hastened(
+  id: ModId,
+  name: string,
+  slot: ModSlot,
+  fits: readonly ModItem[],
+  chance: number,
+  of: ModSpells,
+): WeaponMod {
+  const spells = of === "any" ? "spells" : "item's attribute spells";
+  return mod(
+    id,
+    name,
+    slot,
+    fits,
+    [{ kind: "cast-halve-chance", chance, of }],
+    `Halves casting time of ${spells} (Chance: ${String(chance * 100)}%)`,
+  );
+}
+
+/** A spell's recharge halved at `chance` (#2011). */
+function remembered(
+  id: ModId,
+  name: string,
+  slot: ModSlot,
+  fits: readonly ModItem[],
+  chance: number,
+  of: ModSpells,
+): WeaponMod {
+  const spells = of === "any" ? "spells" : "item's attribute spells";
+  return mod(
+    id,
+    name,
+    slot,
+    fits,
+    [{ kind: "recharge-halve-chance", chance, of }],
+    `Halves skill recharge of ${spells} (Chance: ${String(chance * 100)}%)`,
+  );
+}
+
+/** The item's attribute +1 for a spell, at 20% (#2011). */
+function mastered(id: ModId, name: string, slot: ModSlot, fits: readonly ModItem[]): WeaponMod {
+  return mod(
+    id,
+    name,
+    slot,
+    fits,
+    [{ kind: "attribute-plus-one-chance", chance: 0.2 }],
+    "Item's attribute +1 (Chance: 20%)",
+  );
 }
 
 /** `+10 armor vs <type>` on a shield or focus inscription. */
@@ -196,6 +314,71 @@ function longer(
     fits,
     [{ kind: "inflicted-condition-duration", statusId, increase: 0.33 }],
     `Lengthens ${label} duration on foes by 33%`,
+  );
+}
+
+/** A martial inscription: `increase` more damage from the weapon's roll `condition`. */
+function damage(id: ModId, name: string, increase: number, condition: ModWhile): WeaponMod {
+  return mod(
+    id,
+    name,
+    "inscription",
+    MARTIAL,
+    [{ kind: "attack-damage", increase, while: condition }],
+    `Damage +${String(Math.round(increase * 100))}% (${MOD_WHILE_TEXT[condition]})`,
+  );
+}
+
+/** A weapon inscription: `amount` more maximum Energy `condition`. */
+function energyWhile(id: ModId, name: string, amount: number, condition: ModWhile): WeaponMod {
+  return mod(
+    id,
+    name,
+    "inscription",
+    ALL_WEAPONS,
+    [{ kind: "conditional-max-energy", amount, while: condition }],
+    `Energy +${String(amount)} (${MOD_WHILE_TEXT[condition]})`,
+  );
+}
+
+/** A staff, shield or focus suffix: `amount` more maximum Health `condition`. */
+function healthWhile(
+  id: ModId,
+  name: string,
+  amount: number,
+  condition: ModStatusWhile,
+): WeaponMod {
+  return mod(
+    id,
+    name,
+    "suffix",
+    STAFF_AND_OFFHANDS,
+    [{ kind: "conditional-max-health", amount, while: condition }],
+    `Health +${String(amount)} (${MOD_WHILE_TEXT[condition]})`,
+  );
+}
+
+/** A shield or focus inscription: `amount` less from each physical hit `condition`. */
+function sheltered(id: ModId, name: string, amount: number, condition: ModWhile): WeaponMod {
+  return mod(
+    id,
+    name,
+    "inscription",
+    OFFHANDS,
+    [{ kind: "physical-reduction", amount, while: condition }],
+    `Received physical damage -${String(amount)} (${MOD_WHILE_TEXT[condition]})`,
+  );
+}
+
+/** A focus inscription: `amount` more armor `condition`. */
+function guarded(id: ModId, name: string, amount: number, condition: ModWhile): WeaponMod {
+  return mod(
+    id,
+    name,
+    "inscription",
+    ["focus"],
+    [{ kind: "conditional-armor", amount, while: condition }],
+    `Armor +${String(amount)} (${MOD_WHILE_TEXT[condition]})`,
   );
 }
 
@@ -341,6 +524,133 @@ export const WEAPON_MODS: readonly WeaponMod[] = Object.freeze([
   elemental("fiery", "Fiery", "fire", "Fire"),
   elemental("icy", "Icy", "cold", "Cold"),
   elemental("shocking", "Shocking", "lightning", "Lightning"),
+  // The mods that wait on the wielder's state (#2010).
+  damage("strength-and-honor", '"Strength and Honor"', 0.15, "health-above-half"),
+  damage("guided-by-fate", '"Guided by Fate"', 0.15, "enchanted"),
+  damage("dance-with-death", '"Dance with Death"', 0.15, "in-stance"),
+  damage("too-much-information", '"Too Much Information"', 0.15, "target-hexed"),
+  damage("vengeance-is-mine", '"Vengeance is Mine"', 0.2, "health-below-half"),
+  damage("dont-fear-the-reaper", '"Don\'t Fear the Reaper"', 0.2, "hexed"),
+  mod(
+    "to-the-pain",
+    '"To the Pain!"',
+    "inscription",
+    MARTIAL,
+    [
+      { kind: "attack-damage", increase: 0.15 },
+      { kind: "conditional-armor", amount: -10, while: "attacking" },
+    ],
+    "Damage +15%, Armor -10 (while attacking)",
+  ),
+  mod(
+    "brawn-over-brains",
+    '"Brawn over Brains"',
+    "inscription",
+    MARTIAL,
+    [
+      { kind: "attack-damage", increase: 0.15 },
+      { kind: "max-energy", amount: -5 },
+    ],
+    "Damage +15%, Energy -5",
+  ),
+  energyWhile("hale-and-hearty", '"Hale and Hearty"', 5, "health-above-half"),
+  energyWhile("have-faith", '"Have Faith"', 5, "enchanted"),
+  energyWhile("dont-call-it-a-comeback", '"Don\'t call it a comeback!"', 7, "health-below-half"),
+  energyWhile("i-am-sorrow", '"I am Sorrow."', 7, "hexed"),
+  healthWhile("of-devotion", "of Devotion", 45, "enchanted"),
+  healthWhile("of-endurance", "of Endurance", 45, "in-stance"),
+  healthWhile("of-valor", "of Valor", 60, "hexed"),
+  mod(
+    "luck-of-the-draw",
+    '"Luck of the Draw"',
+    "inscription",
+    OFFHANDS,
+    [{ kind: "physical-reduction", amount: 5, chance: 0.2 }],
+    "Received physical damage -5 (Chance: 20%)",
+  ),
+  sheltered("sheltered-by-faith", '"Sheltered by Faith"', 2, "enchanted"),
+  sheltered("run-for-your-life", '"Run For Your Life!"', 2, "in-stance"),
+  sheltered("nothing-to-fear", '"Nothing to Fear"', 3, "hexed"),
+  guarded("hail-to-the-king", '"Hail to the King"', 5, "health-above-half"),
+  guarded("faith-is-my-shield", '"Faith is My Shield"', 5, "enchanted"),
+  guarded("might-makes-right", '"Might makes Right"', 5, "attacking"),
+  guarded("knowing-is-half-the-battle", '"Knowing is Half the Battle."', 5, "casting"),
+  guarded("down-but-not-out", '"Down But Not Out"', 10, "health-below-half"),
+  guarded("be-just-and-fear-not", '"Be Just and Fear Not"', 10, "hexed"),
+  mod(
+    "man-for-all-seasons",
+    '"Man for All Seasons"',
+    "inscription",
+    ["focus"],
+    [{ kind: "armor-vs", against: "elemental", amount: 5 }],
+    "Armor +5 (vs. Elemental damage)",
+  ),
+  mod(
+    "survival-of-the-fittest",
+    '"Survival of the Fittest"',
+    "inscription",
+    ["focus"],
+    [{ kind: "armor-vs", against: "physical", amount: 5 }],
+    "Armor +5 (vs. Physical damage)",
+  ),
+  mod(
+    "ignorance-is-bliss",
+    '"Ignorance is Bliss"',
+    "inscription",
+    ["focus"],
+    [
+      { kind: "armor", amount: 5 },
+      { kind: "max-energy", amount: -5 },
+    ],
+    "Armor +5, Energy -5",
+  ),
+  mod(
+    "life-is-pain",
+    '"Life is Pain"',
+    "inscription",
+    ["focus"],
+    [
+      { kind: "armor", amount: 5 },
+      { kind: "max-health", amount: -20 },
+    ],
+    "Armor +5, Health -20",
+  ),
+  // Caster chance mods (#2011), at their perfect values.
+  hastened("adept", "Adept", "prefix", ["staff"], 0.2, "item-attribute"),
+  hastened("swift", "Swift", "prefix", ["staff"], 0.1, "any"),
+  hastened("of-swiftness", "of Swiftness", "suffix", ["focus"], 0.1, "any"),
+  hastened("of-aptitude", "of Aptitude", "suffix", ["focus"], 0.2, "item-attribute"),
+  remembered("of-quickening", "of Quickening", "suffix", ["wand"], 0.1, "any"),
+  remembered("of-memory", "of Memory", "suffix", ["wand"], 0.2, "item-attribute"),
+  mastered("of-mastery", "of Mastery", "suffix", ["staff"]),
+  mod(
+    "of-enchanting",
+    "of Enchanting",
+    "suffix",
+    MARTIAL_AND_STAFF,
+    [{ kind: "enchantment-duration", increase: 0.2 }],
+    "Enchantments last 20% longer",
+  ),
+  hastened(
+    "aptitude-not-attitude",
+    '"Aptitude not Attitude"',
+    "inscription",
+    STAFF_AND_WAND,
+    0.2,
+    "item-attribute",
+  ),
+  hastened("dont-think-twice", '"Don\'t think twice"', "inscription", STAFF_AND_WAND, 0.1, "any"),
+  remembered(
+    "let-the-memory-live-again",
+    '"Let the Memory Live Again"',
+    "inscription",
+    STAFF_AND_WAND,
+    0.1,
+    "any",
+  ),
+  remembered("serenity-now", '"Serenity Now"', "inscription", ["focus"], 0.1, "any"),
+  remembered("forget-me-not", '"Forget Me Not"', "inscription", ["focus"], 0.2, "item-attribute"),
+  mastered("master-of-my-domain", '"Master of My Domain"', "inscription", OFFHANDS),
 ]);
 
 const MODS_BY_ID: ReadonlyMap<ModId, WeaponMod> = new Map(WEAPON_MODS.map((m) => [m.id, m]));

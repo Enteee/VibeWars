@@ -2,6 +2,7 @@ import { hmac } from "@noble/hashes/hmac.js";
 import { sha1 } from "@noble/hashes/legacy.js";
 
 import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
+import { takeFragmentPart } from "../fragment.js";
 
 /**
  * A TURN relay the player brings (#972): the project hosts none (ADR-0022),
@@ -80,7 +81,7 @@ function isTurnUrl(url: string): boolean {
  * link-local or CGNAT range are refused, IPv4 and IPv6 alike, and so are
  * the names that are local by definition. A public name that resolves
  * privately cannot be told from here: that is the relay operator's
- * `denied-peer-ip` (ADR-0048).
+ * `denied-peer-ip` (ADR-0049).
  */
 function isPublicHost(host: string): boolean {
   if (host.startsWith("[")) {
@@ -272,15 +273,13 @@ export type TurnFragment =
  * `rest`, in order, without a leading `#`.
  */
 export function parseTurnFragment(hash: string): TurnFragment {
-  const parts = (hash.startsWith("#") ? hash.slice(1) : hash).split("&");
-  const isTurn = (part: string): boolean => part.startsWith(`${FRAGMENT_KEY}=`);
-  const values = parts.filter(isTurn).map((part) => part.slice(FRAGMENT_KEY.length + 1));
-  const [value] = values;
-  if (value === undefined) {
+  const part = takeFragmentPart(hash, FRAGMENT_KEY);
+  const [value] = part?.values ?? [];
+  if (part === undefined || value === undefined) {
     return { kind: "none" };
   }
-  const rest = parts.filter((part) => !isTurn(part)).join("&");
-  const config = values.length === 1 ? decode(value) : undefined;
+  const { rest } = part;
+  const config = part.values.length === 1 ? decode(value) : undefined;
   return config === undefined ? { kind: "malformed", rest } : { kind: "config", config, rest };
 }
 

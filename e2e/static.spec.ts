@@ -118,11 +118,11 @@ test("online play is on, and hosting a lobby reaches nothing but our own origin"
   await page.goto("./");
   await expect(page.locator(".screen-random-arena")).toBeVisible();
 
-  await expect(page.getByRole("button", { name: "Join", exact: true })).toBeEnabled();
-  await expect(page.getByPlaceholder("KEY")).toBeEnabled();
   await expect(page.getByRole("button", { name: "quick match" })).toHaveCount(0);
-  // Every page hosts its own lobby from load (#1526).
-  await expect(page.locator("#topbar .topbar-lobby-code")).toBeVisible();
+  // Every page hosts its own lobby from load (#1526), its invite link to
+  // copy (#2100).
+  await expect(page.locator("#topbar .lobby-code-label")).toHaveText("Your lobby");
+  await expect(page.getByRole("button", { name: "Copy invite link", exact: true })).toBeEnabled();
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
 
