@@ -566,6 +566,122 @@
   .cnt b {
     color: #d7dee8;
   }
+
+  .cdot {
+    position: relative;
+    width: 46px;
+    height: 36px;
+  }
+  .cdot .cd {
+    position: absolute;
+    left: 9px;
+    top: 4px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #59c2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cdot .g {
+    display: block;
+    width: 13px;
+    height: 13px;
+    background: rgba(11, 15, 20, 0.6);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+  }
+  .cdot .sec {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: #0b0f14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cdot .sec .g {
+    width: 10px;
+    height: 10px;
+    background: #d7dee8;
+  }
+  .cdot img.hw {
+    position: absolute;
+    right: -7px;
+    top: 2px;
+    width: 24px;
+    height: 24px;
+  }
+  .cdot img.ho {
+    position: absolute;
+    left: -6px;
+    top: 12px;
+    width: 20px;
+    height: 20px;
+  }
+  .cdot .sets {
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+  }
+  .cdot.hl {
+    outline: 1px dotted #59c2ff;
+    outline-offset: 2px;
+  }
+  .vit {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .vb {
+    position: relative;
+    height: 14px;
+    background: #202836;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .vb i {
+    position: absolute;
+    inset: 0;
+  }
+  .vb.hp i {
+    background: #3a6a3e;
+  }
+  .vb.en i {
+    background: #2f6787;
+  }
+  .vb span {
+    position: relative;
+    display: block;
+    text-align: center;
+    font-size: 10px;
+    line-height: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .row {
+    grid-template-columns: 18px 46px 190px 130px repeat(8, 40px) 1fr !important;
+  }
+  .sf .row {
+    grid-template-columns: 18px 46px 150px 60px repeat(8, 40px) 0 !important;
+    gap: 4px;
+    padding: 5px 6px;
+  }
+  .sf > div {
+    padding: 14px 12px !important;
+  }
+  .sf .id .pf {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 </style>
 <h1>#2224 mockup: Team Builder, A: row expands</h1>
 <h2>1. The team at rest, right panel on My characters</h2>
@@ -585,8 +701,18 @@
     <div class="grid">
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -597,6 +723,10 @@
             />Ranger
           </div>
           <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
@@ -613,9 +743,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -627,6 +767,10 @@
             />Monk
           </div>
           <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>25</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
@@ -642,7 +786,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div class="id">
           <div class="nm">Fireball</div>
           <div class="pf">
@@ -651,6 +807,10 @@
             />Mesmer
           </div>
           <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>45</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
@@ -671,9 +831,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -686,6 +856,10 @@
             />Ritualist
           </div>
           <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>40</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
@@ -706,8 +880,18 @@
       <div class="tabs"><span class="on">My characters</span><span class="">Skills</span></div>
       <div class="cnt"><b>6</b> characters · drag one onto a member to copy it there</div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div>
@@ -716,9 +900,19 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -728,16 +922,38 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div>
           <div class="nm">Fireball</div>
           <div class="pf">Elementalist/Mesmer</div>
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -748,8 +964,18 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
         </div>
         <div>
           <div class="nm">Arrow Rain</div>
@@ -757,7 +983,19 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div>
           <div class="nm">Cook</div>
           <div class="pf">Elementalist/Monk</div>
@@ -783,8 +1021,18 @@
     <div class="grid">
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -795,6 +1043,10 @@
             />Ranger
           </div>
           <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
@@ -811,9 +1063,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -825,6 +1087,10 @@
             />Monk
           </div>
           <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>25</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
@@ -840,7 +1106,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div class="id">
           <div class="nm">Fireball</div>
           <div class="pf">
@@ -849,6 +1127,10 @@
             />Mesmer
           </div>
           <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>45</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
@@ -869,9 +1151,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -884,6 +1176,10 @@
             />Ritualist
           </div>
           <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>40</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
@@ -901,8 +1197,18 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/staff.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
           <div class="sets"><i class=""></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -914,6 +1220,10 @@
           </div>
           <div class="rk">Wat 13 · Ener 10 · Curs 5</div>
         </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>45</span></div>
+        </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/elementalist.ice-spikes.svg" /></span
         ><span class="sl"
@@ -924,9 +1234,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/spear.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/paragon.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/spear.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -939,14 +1259,28 @@
           </div>
           <div class="rk">Lead 12 · Spear 10 · Str 5</div>
         </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>30</span></div>
+        </div>
         <span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
         ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
         ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/daggers.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/assassin.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/daggers.svg" />
         </div>
         <div class="id">
           <div class="nm">Dagger</div>
@@ -957,14 +1291,28 @@
           </div>
           <div class="rk">Dag 12 · Shad 10 · Ill 5</div>
         </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>30</span></div>
+        </div>
         <span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
         ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
         ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/scythe.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/dervish.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/scythe.svg" />
         </div>
         <div class="id">
           <div class="nm">Scythe</div>
@@ -975,6 +1323,10 @@
           </div>
           <div class="rk">Scy 12 · Mys 10 · Heal 5</div>
         </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
+        </div>
         <span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
         ><span class="sl em"></span><span class="sl em"></span><span class="sl em"></span
         ><span class="sl em"></span><span class="sl em"></span><span class="ed"></span>
@@ -984,8 +1336,18 @@
       <div class="tabs"><span class="on">My characters</span><span class="">Skills</span></div>
       <div class="cnt"><b>6</b> characters · drag one onto a member to copy it there</div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div>
@@ -994,9 +1356,19 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -1006,16 +1378,38 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div>
           <div class="nm">Fireball</div>
           <div class="pf">Elementalist/Mesmer</div>
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -1026,8 +1420,18 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
         </div>
         <div>
           <div class="nm">Arrow Rain</div>
@@ -1035,7 +1439,19 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div>
           <div class="nm">Cook</div>
           <div class="pf">Elementalist/Monk</div>
@@ -1061,8 +1477,18 @@
     <div class="grid">
       <div class="row focus">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -1073,6 +1499,10 @@
             />Ranger
           </div>
           <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
@@ -1089,9 +1519,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -1103,6 +1543,10 @@
             />Monk
           </div>
           <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>25</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
@@ -1118,7 +1562,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div class="id">
           <div class="nm">Fireball</div>
           <div class="pf">
@@ -1127,6 +1583,10 @@
             />Mesmer
           </div>
           <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>45</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
@@ -1147,9 +1607,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -1162,6 +1632,10 @@
             />Ritualist
           </div>
           <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>40</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
@@ -1252,8 +1726,18 @@
     <div class="grid">
       <div class="row open">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -1264,6 +1748,10 @@
             />Ranger
           </div>
           <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
@@ -1280,7 +1768,7 @@
       </div>
       <div class="exp">
         <div>
-          <h4>Inset · professions open</h4>
+          <h4>Professions</h4>
           <div class="pick">
             <span><img src="../../apps/web/public/icons/profession/monk.svg" />Monk ▾</span
             ><span><img src="../../apps/web/public/icons/profession/ranger.svg" />Ranger ▾</span>
@@ -1330,9 +1818,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -1344,6 +1842,10 @@
             />Monk
           </div>
           <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>25</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
@@ -1359,7 +1861,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div class="id">
           <div class="nm">Fireball</div>
           <div class="pf">
@@ -1368,6 +1882,10 @@
             />Mesmer
           </div>
           <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>45</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
@@ -1388,9 +1906,19 @@
       </div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -1403,6 +1931,10 @@
             />Ritualist
           </div>
           <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>40</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
@@ -1423,8 +1955,18 @@
       <div class="tabs"><span class="on">My characters</span><span class="">Skills</span></div>
       <div class="cnt"><b>6</b> characters · drag one onto a member to copy it there</div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div>
@@ -1433,9 +1975,19 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -1445,16 +1997,38 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div>
           <div class="nm">Fireball</div>
           <div class="pf">Elementalist/Mesmer</div>
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -1465,8 +2039,18 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
         </div>
         <div>
           <div class="nm">Arrow Rain</div>
@@ -1474,7 +2058,19 @@
         </div>
       </div>
       <div class="ch">
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div>
           <div class="nm">Cook</div>
           <div class="pf">Elementalist/Monk</div>
@@ -1493,8 +2089,18 @@
     <div style="padding: 14px 16px">
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -1505,6 +2111,10 @@
             />Ranger
           </div>
           <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
@@ -1522,7 +2132,19 @@
       <div style="height: 6px"></div>
       <div class="row tgt">
         <span class="h">⠿</span>
-        <div class="ball"><img class="w" src="../../apps/web/public/icons/weapon/staff.svg" /></div>
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/elementalist.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/mesmer.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/staff.svg" />
+        </div>
         <div class="id">
           <div class="nm">Fireball</div>
           <div class="pf">
@@ -1531,6 +2153,10 @@
             />Mesmer
           </div>
           <div class="rk">Fire 14 · Ener 10 · Illu 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>45</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/elementalist.fireball.svg" /></span
@@ -1552,9 +2178,19 @@
     </div>
     <div class="ghost" style="left: 270px; top: 112px; align-items: flex-start">
       <div style="display: flex; align-items: center; gap: 6px">
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -1568,9 +2204,19 @@
     <div style="padding: 14px 16px">
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -1582,6 +2228,10 @@
             />Monk
           </div>
           <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>25</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
@@ -1598,8 +2248,18 @@
       <div style="height: 6px"></div>
       <div class="row tgt">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -1610,6 +2270,10 @@
             />Ranger
           </div>
           <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
@@ -1635,9 +2299,19 @@
     <div style="padding: 14px 16px">
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -1649,6 +2323,10 @@
             />Monk
           </div>
           <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>25</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
@@ -1665,8 +2343,18 @@
       <div style="height: 6px"></div>
       <div class="row tgt">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/longbow.svg" />
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ranger.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/longbow.svg" />
           <div class="sets"><i class=""></i><i class="off"></i><i class="off"></i></div>
         </div>
         <div class="id">
@@ -1677,6 +2365,10 @@
             />Ranger
           </div>
           <div class="rk">Heal 12 · Prot 10 · Mark 8</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>35</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/monk.healing-breeze.svg" /></span
@@ -1702,9 +2394,19 @@
     <div style="padding: 14px 16px">
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/sword.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/warrior.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/monk.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/sword.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/shield.svg"
           />
         </div>
@@ -1716,6 +2418,10 @@
             />Monk
           </div>
           <div class="rk">Str 12 · Tac 10 · Heal 5</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>25</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/warrior.shield-bash.svg" /></span
@@ -1732,9 +2438,19 @@
       <div style="height: 6px"></div>
       <div class="row">
         <span class="h">⠿</span>
-        <div class="ball">
-          <img class="w" src="../../apps/web/public/icons/weapon/wand.svg" /><img
-            class="o"
+        <div class="cdot">
+          <span class="cd"
+            ><span
+              class="g"
+              style="mask-image: url(../../apps/web/public/icons/profession/necromancer.svg)"
+            ></span
+            ><span class="sec"
+              ><span
+                class="g"
+                style="mask-image: url(../../apps/web/public/icons/profession/ritualist.svg)"
+              ></span></span></span
+          ><img class="hw" src="../../apps/web/public/icons/weapon/wand.svg" /><img
+            class="ho"
             src="../../apps/web/public/icons/offhand/focus.svg"
           />
           <div class="sets"><i class=""></i><i class="off"></i></div>
@@ -1747,6 +2463,10 @@
             />Ritualist
           </div>
           <div class="rk">Curs 12 · Blood 10 · Chan 6</div>
+        </div>
+        <div class="vit">
+          <div class="vb hp"><i></i><span>480</span></div>
+          <div class="vb en"><i></i><span>40</span></div>
         </div>
         <span class="sl"
           ><img src="../../apps/web/public/icons/skill/necromancer.vampiric-touch.svg" /></span
