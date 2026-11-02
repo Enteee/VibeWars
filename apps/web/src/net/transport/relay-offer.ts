@@ -249,6 +249,60 @@ export function shareRelay(
   };
 }
 
+/** Where a lobby's share learns what Options offers now, and hears it change. */
+export interface OfferedRelaySource {
+  readonly load: () => SharedRelay | undefined;
+  readonly onChange: (handler: () => void) => () => void;
+}
+
+const sameRelay = (a: SharedRelay, b: SharedRelay): boolean =>
+  a.secret === b.secret && a.urls.join("\n") === b.urls.join("\n");
+
+/**
+ * A lobby's share that follows Options while the lobby is open (#2091):
+ * ticking the box starts offering at once, unticking it or forgetting the
+ * relay stops, and a changed relay is offered from a fresh share.
+ */
+export function followOfferedRelay(
+  room: RelayOfferRoom,
+  source: OfferedRelaySource,
+  deps: RelayOfferDeps = BROWSER,
+): RelayShare {
+  let on = false;
+  let closed = false;
+  let current: { readonly shared: SharedRelay; readonly share: RelayShare } | undefined;
+
+  const sync = (): void => {
+    if (closed) {
+      return;
+    }
+    const shared = source.load();
+    if (current !== undefined && (shared === undefined || !sameRelay(shared, current.shared))) {
+      current.share.close();
+      current = undefined;
+    }
+    if (current === undefined && shared !== undefined) {
+      current = { shared, share: shareRelay(room, shared, deps) };
+    }
+    current?.share.follow(on);
+  };
+  const stopHearing = source.onChange(sync);
+  sync();
+
+  return {
+    follow(next) {
+      on = next;
+      sync();
+    },
+    close() {
+      closed = true;
+      stopHearing();
+      current?.share.close();
+      current = undefined;
+    },
+  };
+}
+
 /** A joiner's view of a lobby's offers, held in memory only. */
 export interface RelayOffers {
   /**

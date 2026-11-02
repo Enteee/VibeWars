@@ -6,6 +6,7 @@ import {
   MAX_OFFER_OPENS_PER_SECOND,
   OFFER_OPEN_INTERVAL_MS,
   RELAY_OFFER_KIND,
+  followOfferedRelay,
   openOffer,
   sealOffer,
   shareRelay,
@@ -382,6 +383,87 @@ describe("a host's relay offers, heard by a joiner (#2091)", () => {
     expect(offers.latest()).toBeUndefined();
     host.close();
     hostile.close();
+    offers.close();
+  });
+
+  it("follows Options while the lobby is open: ticked, changed, unticked, closed", async () => {
+    const relay = fakeRelay();
+    let openSockets = 0;
+    const sent: string[] = [];
+    const counting: OpenRelaySocket = (url, handlers) => {
+      const socket = relay.openSocket(url, handlers);
+      openSockets += 1;
+      return {
+        send(data) {
+          if (data.startsWith('["EVENT"')) {
+            sent.push(data);
+          }
+          socket.send(data);
+        },
+        close() {
+          openSockets -= 1;
+          socket.close();
+        },
+      };
+    };
+    const offers = watchRelayOffers(
+      ROOM,
+      deps(relay.openSocket, () => NOW),
+    );
+    await settle();
+    let offered: SharedRelay | undefined;
+    const watchers = new Set<() => void>();
+    const setOptions = (next: SharedRelay | undefined): void => {
+      offered = next;
+      for (const watcher of watchers) {
+        watcher();
+      }
+    };
+    const share = followOfferedRelay(
+      ROOM,
+      {
+        load: () => offered,
+        onChange: (handler) => {
+          watchers.add(handler);
+          return () => watchers.delete(handler);
+        },
+      },
+      deps(counting, () => NOW),
+    );
+    share.follow(true);
+    await settle();
+    expect(sent).toHaveLength(0);
+
+    // Ticked in Options with the lobby already open: offered at once.
+    setOptions(SHARED);
+    await settle();
+    expect(offers.latest()?.urls).toEqual(SHARED.urls);
+    expect(openSockets).toBe(1);
+
+    // Another relay saved: the first share stops, a fresh one offers it.
+    const before = sent.length;
+    setOptions({ urls: ["turns:other.example:5349"], secret: "t" });
+    await settle();
+    expect(sent.length).toBeGreaterThan(before);
+    expect(openSockets).toBe(1);
+
+    // Unticked: nothing is offered any more.
+    setOptions(undefined);
+    await settle();
+    expect(openSockets).toBe(0);
+
+    // Out of the room and ticked again: it waits for the room.
+    share.follow(false);
+    setOptions(SHARED);
+    await settle();
+    expect(openSockets).toBe(0);
+    share.follow(true);
+    await settle();
+    expect(openSockets).toBe(1);
+
+    share.close();
+    expect(openSockets).toBe(0);
+    expect(watchers.size).toBe(0);
     offers.close();
   });
 });

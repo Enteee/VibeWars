@@ -52,6 +52,7 @@ import { startHostClock } from "./transport/host-clock.js";
 import {
   checkTransportNat,
   joinGuestRoom,
+  joinHostRoom,
   joinQueueBoard,
   joinRoom,
   roomSelfId,
@@ -230,7 +231,7 @@ export async function hostLobby(
   // A queued lobby is open from the start, and its group is on its way.
   const link =
     queued === undefined
-      ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinRoom(lobbyRoom) })
+      ? linkLobbyRoom({ selfId: roomSelfId(), join: () => joinHostRoom(lobbyRoom) })
       : undefined;
   const host = createLobbyHost({
     transport: link ?? joinRoom(lobbyRoom),

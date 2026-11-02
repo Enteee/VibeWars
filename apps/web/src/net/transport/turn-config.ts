@@ -304,7 +304,11 @@ function decode(value: string): TurnConfig | undefined {
  * `validate` is removed, and `onRemoved` hears of it: the app says so
  * once, at boot. When storage refuses it, it is kept for this visit.
  */
-function storedRelay<T>(key: string, validate: (value: unknown) => T | undefined) {
+function storedRelay<T>(
+  key: string,
+  validate: (value: unknown) => T | undefined,
+  changed: () => void = () => undefined,
+) {
   let unstored: T | undefined;
   const forget = (): void => {
     unstored = undefined;
@@ -313,6 +317,7 @@ function storedRelay<T>(key: string, validate: (value: unknown) => T | undefined
     } catch {
       // Nothing was stored to remove.
     }
+    changed();
   };
   return {
     load: (onRemoved?: () => void): T | undefined => {
@@ -344,6 +349,7 @@ function storedRelay<T>(key: string, validate: (value: unknown) => T | undefined
       } catch {
         // Kept in memory: the relay works for this visit, it just is not remembered.
       }
+      changed();
     },
     forget,
   };
@@ -356,7 +362,20 @@ export const loadTurnConfig = relay.load;
 export const saveTurnConfig = relay.save;
 export const forgetTurnConfig = relay.forget;
 
-const sharedRelay = storedRelay(`${STORAGE_NAMESPACE}.turn-shared-relay`, validateSharedRelay);
+/** Who hears a change to what this player's lobbies offer. */
+const sharingWatchers = new Set<() => void>();
+
+const sharingChanged = (): void => {
+  for (const watcher of [...sharingWatchers]) {
+    watcher();
+  }
+};
+
+const sharedRelay = storedRelay(
+  `${STORAGE_NAMESPACE}.turn-shared-relay`,
+  validateSharedRelay,
+  sharingChanged,
+);
 
 /** The player's REST-secret relay (#2091), which their lobbies may be offered. */
 export const loadSharedRelay = sharedRelay.load;
@@ -384,4 +403,21 @@ export function saveRelaySharing(on: boolean): void {
   } catch {
     // Not remembered: the box is unticked again next visit, which shares nothing.
   }
+  sharingChanged();
+}
+
+/** The relay this player's lobbies offer now: none unless one is saved and the box is ticked. */
+export function loadOfferedRelay(): SharedRelay | undefined {
+  return loadRelaySharing() ? loadSharedRelay() : undefined;
+}
+
+/**
+ * Hear every change Options makes to what this player's lobbies offer
+ * (#2091), so an open lobby follows it at once, not from the next one.
+ */
+export function onRelaySharingChange(handler: () => void): () => void {
+  sharingWatchers.add(handler);
+  return () => {
+    sharingWatchers.delete(handler);
+  };
 }
