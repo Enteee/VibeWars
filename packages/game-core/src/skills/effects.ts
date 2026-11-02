@@ -934,17 +934,15 @@ function perRemovedByAnyone(
   earlier: readonly CombatEvent[],
 ): number {
   const category = effect.perRemoved;
-  if (category === undefined) {
-    return amount;
-  }
-  return (
-    amount *
-    earlier.filter(
-      (event) =>
-        event.kind === "status-removed" &&
-        getStatusDefinition(event.statusId).category === category,
-    ).length
-  );
+  return category === undefined ? amount : amount * removedByAnyone(category, earlier);
+}
+
+/** How many statuses of `category` an earlier `remove-status` took off anyone. */
+function removedByAnyone(category: StatusCategory, earlier: readonly CombatEvent[]): number {
+  return earlier.filter(
+    (event) =>
+      event.kind === "status-removed" && getStatusDefinition(event.statusId).category === category,
+  ).length;
 }
 
 /**
@@ -1940,6 +1938,14 @@ export function applyEffect(
       if (bearer === undefined || bearer.dead) {
         return events;
       }
+      // Convert Hexes' (#2189): a stack for each such status the use took off it, or nothing.
+      const stacks =
+        effect.stacksPerRemovedOfProfession === undefined
+          ? 1
+          : removedOfProfession(bearer.id, effect.stacksPerRemovedOfProfession, earlier);
+      if (stacks === 0) {
+        return events;
+      }
       // The duration at the ranks the status's stats use (#2041): a spirit's,
       // ward's or trigger's are its owner's. A weapon spell lasts longer with
       // its caster's Spawning Power (#1098), whatever skill or trigger lands it.
@@ -1975,6 +1981,10 @@ export function applyEffect(
         castSpot(context, caster),
         context.skillId,
       );
+      const stacked = bearer.statuses.get(effect.statusId);
+      if (stacked !== undefined && effect.stacksPerRemovedOfProfession !== undefined) {
+        stacked.stacks = stacks;
+      }
       // Elemental Flame's (#1951): the caster's hex landed on a foe.
       if (
         bearer.team !== caster.team &&
@@ -3391,14 +3401,21 @@ export function resolveSkillEffects(
           rechargeOthers(caster, skill.id, inner.which);
         }
         if (inner.kind === "lengthen-recharge" && inner.of === "this-skill") {
-          const seconds = resolveMagnitude(inner.seconds, caster);
-          rechargeLongerSeconds += seconds;
-          events.push({
-            kind: "recharge-lengthened",
-            targetId: caster.id,
-            skillId: skill.id,
-            seconds,
-          });
+          // Withdraw Hexes' (#2189): for each hex this use took off anyone.
+          const seconds =
+            resolveMagnitude(inner.seconds, caster) *
+            (inner.perRemoved === undefined
+              ? 1
+              : removedByAnyone(inner.perRemoved, [...earlier, ...events]));
+          if (seconds > 0) {
+            rechargeLongerSeconds += seconds;
+            events.push({
+              kind: "recharge-lengthened",
+              targetId: caster.id,
+              skillId: skill.id,
+              seconds,
+            });
+          }
         }
         if (inner.kind === "summon") {
           summons.push(inner);

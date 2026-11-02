@@ -652,6 +652,7 @@ describe("describeSkill", () => {
           (rule === undefined || rule.unblockable === false ? 0 : 1) +
           (entry.attack?.weapon === "scythe" && entry.area === undefined ? 1 : 0) +
           (entry.attack?.cleavesAllWhen === undefined ? 0 : 1) +
+          (entry.failChanceUnless === undefined ? 0 : 1) +
           (rule?.conditionalBonus === undefined ? 0 : 1) +
           (rule?.bonusPer === undefined ? 0 : 1) +
           (rule?.criticalWhen === undefined ? 0 : 1) +

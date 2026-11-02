@@ -55,6 +55,7 @@ function status(id: StatusId, remainingSeconds: number): ActiveStatus {
     triggersLeft: undefined,
     reflectionsLeft: undefined,
     touchFailsLeft: undefined,
+    stacks: 1,
     hitsLeft: undefined,
     hitsTaken: 0,
     unblockableLeft: undefined,

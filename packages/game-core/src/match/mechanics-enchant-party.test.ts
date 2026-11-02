@@ -143,6 +143,12 @@ describe("Air of Enchantment (#1975)", () => {
     bearer.statuses.apply("jaundiced-gaze", 16, "b", BLOOD_MAGIC_12);
     expect(energyCostOf(skill(TEN), bearer, bearer)).toBe(1);
   });
+
+  it("Jaundiced Gaze alone takes an enchantment down to 0 (#2189): 5 − 8, no floor", () => {
+    const bearer = makeCombatant({ id: "b" });
+    bearer.statuses.apply("jaundiced-gaze", 16, "b", BLOOD_MAGIC_12);
+    expect(energyCostOf(skill("monk.patient-spirit"), bearer)).toBe(0);
+  });
 });
 
 describe("Order of Apostasy (#1975)", () => {
