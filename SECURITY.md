@@ -82,6 +82,12 @@ channels, as often as they like.
   half the tickets hard, half the work. `hardNat` is one more public bit
   about each queued player, a recon hint, accepted. The NAT check's two
   STUN servers see the player's IP, as Trystero's already do.
+- **A Heroes' Ascent round is self-claimed.** A ticket's `ascentRound`
+  (#1996) is the party host's page memory, checked only for range, and no
+  match result is signed. A modded client can queue straight into the
+  Hall of Heroes, or claim to hold it. Accepted while the Hall carries
+  nothing past the visit; a signed record of the round won is the lever
+  if it ever does.
 - **A flood of fake queue tickets.** A ticket costs nothing to publish,
   so a sybil flood can stall the queue, every group falling through. A
   ticket id is its signing key, so nobody can rewrite an honest ticket.
