@@ -10,18 +10,26 @@ import { bringStarter, starterKey } from "./helpers/starter.js";
 const ARMORED = "Elementalist/Mesmer";
 const ARMOR_OF_EARTH = starterKey(ARMORED, "elementalist.armor-of-earth");
 
+type Text = string | RegExp;
+
 /**
- * Hover `icon` until the tooltip says `text`, and return the tooltip. A
- * solo match's foe is a random starter build (#2148): a hex it lands
- * mid-hover reflows the list, and the pointer ends on another icon.
+ * Hover `icon` until one tooltip says every one of `says` and none of
+ * `omits`. A solo match's foe is a random starter build (#2148): a hex it
+ * lands mid-hover reflows the list and the pointer ends on another icon, so
+ * every check on the text sits inside the retry.
  */
-async function hoverEffect(page: Page, icon: Locator, text: string): Promise<Locator> {
+async function hoverEffect(
+  page: Page,
+  icon: Locator,
+  says: readonly Text[],
+  omits: readonly Text[] = [],
+): Promise<void> {
   const tip = page.getByRole("tooltip");
   await expect(async () => {
     await icon.hover();
-    await expect(tip).toContainText(text, { timeout: 1000 });
+    for (const text of says) await expect(tip).toContainText(text, { timeout: 1000 });
+    for (const text of omits) await expect(tip).not.toContainText(text, { timeout: 1000 });
   }).toPass();
-  return tip;
 }
 
 /**
@@ -51,10 +59,7 @@ test("your enchantment shows as an icon, marked yours, its bar draining; the hov
   expect(first).toBeGreaterThan(0);
   await expect.poll(width).toBeLessThan(first);
 
-  const tip = await hoverEffect(page, icon, "Armor Boost");
-  await expect(tip).toContainText("Enchantment");
-  await expect(tip).toContainText("from you");
-  await expect(tip).toContainText(/\d+ s left/);
+  await hoverEffect(page, icon, ["Armor Boost", "Enchantment", "from you", /\d+ s left/]);
 });
 
 test("a maintained enchantment has no bar, its hover says maintained, costs you an energy pip, and a double-click ends it (#837, #838)", async ({
@@ -84,9 +89,7 @@ test("a maintained enchantment has no bar, its hover says maintained, costs you 
   await expect(icon.locator(".effect-bar")).toBeHidden();
   await expect(energyPips).toHaveAttribute("data-pips", "3");
 
-  const tip = await hoverEffect(page, icon, "Mending");
-  await expect(tip).toContainText("maintained, −1 energy");
-  await expect(tip).not.toContainText(/s left/);
+  await hoverEffect(page, icon, ["Mending", "maintained, −1 energy"], [/s left/]);
 
   // A double-click ends it, and the pip comes back (#838).
   await icon.dblclick();
@@ -114,10 +117,12 @@ test("a spirit's aura shows with no bar, from the spirit, while you stand in its
   await expect(icon).toBeVisible({ timeout: 10_000 });
   await expect(icon.locator(".effect-bar")).toBeHidden();
 
-  const tip = await hoverEffect(page, icon, "take +4 from physical damage");
-  await expect(tip).toContainText("from Winnowing");
-  await expect(tip).toContainText("while in its range");
-  await expect(tip).not.toContainText("maintained");
+  await hoverEffect(
+    page,
+    icon,
+    ["take +4 from physical damage", "from Winnowing", "while in its range"],
+    ["maintained"],
+  );
 });
 
 test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ page }) => {
@@ -151,8 +156,7 @@ test("a ward's aura shows with no bar while you stand in it (#1087)", async ({ p
   // Hover first, while the ward still stands: each check on the loaded
   // match page can take seconds (#1659). The tooltip stays open for the
   // bar check after it.
-  const tip = await hoverEffect(page, icon, "50% chance to block melee attacks");
-  await expect(tip).toContainText("while in its range");
+  await hoverEffect(page, icon, ["50% chance to block melee attacks", "while in its range"]);
   await expect(icon.locator(".effect-bar")).toBeHidden();
 });
 
