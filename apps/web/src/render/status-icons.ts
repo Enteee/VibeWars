@@ -493,6 +493,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "mark-of-instability": icon("mark-of-instability"),
   "deadly-paradox": icon("deadly-paradox"),
   "unseen-fury": icon("unseen-fury"),
+  // Warrior staples 4 (#2181).
+  "tiger-stance": icon("tiger-stance"),
+  "berserker-stance": icon("berserker-stance"),
+  "bulls-charge": icon("bulls-charge"),
 };
 
 const GAP = 2;
