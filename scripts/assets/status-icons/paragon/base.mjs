@@ -232,6 +232,45 @@ const rows = {
       `<path d="M6 19v-4M11 19v-7M16 19v-10" ${stroke(c, 2.4)}/>` +
       `<path d="M14 5.5l3-3 3 3" ${stroke(c, 1.8)}/>`,
   ],
+  // Paragon riders (#2178): each pairs with its skill icon.
+  // Skill: a winged heart under a halo, one death turned aside.
+  "angelic-bond": [
+    "skill-effect",
+    (c) =>
+      `<path d="M12 20L6 14a3.4 3.4 0 0 1 6-3.4 3.4 3.4 0 0 1 6 3.4z" ${stroke(c, 1.8)}/>` +
+      `<ellipse cx="12" cy="5" rx="3.2" ry="1.3" ${stroke(c, 1.4)}/>` +
+      `<path d="M5.5 12.5C3.5 11 2.5 8.5 2 5M18.5 12.5c2-1.5 3-4 3.5-7.5" ${stroke(c, 1.8)}/>`,
+  ],
+  // Shout: chevrons inside a ring, the enchanted hurry.
+  godspeed: [
+    "shout",
+    (c) =>
+      `<circle cx="12" cy="12" r="9" ${stroke(c, 1.8)}/>` +
+      `<path d="M8 8.5l3.5 3.5L8 15.5M12.5 8.5l3.5 3.5-3.5 3.5" ${stroke(c, 2)}/>`,
+  ],
+  // Shout: one figure with chevrons ahead of it.
+  "lead-the-way": [
+    "shout",
+    (c) =>
+      `<ellipse cx="6.5" cy="7.5" rx="2.6" ry="3" ${stroke(c, 1.8)}/>` +
+      `<path d="M6.5 11V19M2.5 13.5h8" ${stroke(c, 2)}/>` +
+      `<path d="M13.5 6l5.5 6-5.5 6M17.5 6l5.5 6-5.5 6" ${stroke(c, 2)}/>`,
+  ],
+  // Shout: a heart with a plus and a bolt, healed and quickened.
+  help: [
+    "shout",
+    (c) =>
+      `<path d="M9 20L3.5 14.5a3.2 3.2 0 0 1 5.5-3.6 3.2 3.2 0 0 1 5.5 3.6z" ${stroke(c, 1.8)}/>` +
+      `<path d="M9 13v4M7 15h4" ${stroke(c, 1.6)}/>` +
+      `<path d="M19.5 2L14 10.5h4.5L16.5 17l6-9.5H18z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Shout: a shield with rays at both sides, the foes beside it struck.
+  "brace-yourself": [
+    "shout",
+    (c) =>
+      `<path d="M12 5l6 2.2V12c0 3.4-2.6 5.4-6 7-3.4-1.6-6-3.6-6-7V7.2z" ${stroke(c, 1.8)}/>` +
+      `<path d="M2 6l2.5 2M1.5 12H4M2 18l2.5-2M22 6l-2.5 2M22.5 12H20M22 18l-2.5-2" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 export default rows;
