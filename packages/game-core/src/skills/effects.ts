@@ -559,7 +559,7 @@ function healAmount(
   );
   // Imbue Health's (#2207): a share of the caster's Health, capped.
   if (effect.ofCasterHealth !== undefined) {
-    return Math.min(effect.ofCasterHealth.max, Math.floor((base / 100) * caster.health));
+    return Math.min(effect.ofCasterHealth.max, Math.floor((base * caster.health) / 100));
   }
   const { perAlly } = effect;
   if (perAlly === undefined) {

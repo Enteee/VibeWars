@@ -113,12 +113,17 @@ describe("in a match (#2207)", () => {
   type BarSkill = (typeof BAR)[number];
   const SLOT = Object.fromEntries(BAR.map((id, slot) => [id, slot])) as Record<BarSkill, number>;
 
-  function body(id: string, team: number, spawn: Vec2): ParticipantSpec {
+  function body(
+    id: string,
+    team: number,
+    spawn: Vec2,
+    ranks: ReadonlyMap<string, number> = RANKS,
+  ): ParticipantSpec {
     return {
       id,
       team,
       skillBar: [...BAR],
-      attributeRanks: id === "c" ? RANKS : new Map(),
+      attributeRanks: id === "c" ? ranks : new Map(),
       equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
       maxHealth: 1000,
       maxEnergy: 100,
@@ -131,11 +136,11 @@ describe("in a match (#2207)", () => {
    * Dervish `c`; allies `a` in spell range and `b` far off; foes `f` and
    * `g` in earshot of `c`, `far` outside it.
    */
-  function match(foesNear = true): MatchSimulation {
+  function match(foesNear = true, ranks?: ReadonlyMap<string, number>): MatchSimulation {
     return new MatchSimulation({
       seed: "dervish-staples",
       participants: [
-        body("c", 1, vec2(0, 0)),
+        body("c", 1, vec2(0, 0), ranks),
         body("a", 1, vec2(200, 0)),
         body("b", 1, vec2(1500, 0)),
         ...(foesNear ? [body("f", 0, vec2(0, 200)), body("g", 0, vec2(0, -200))] : []),
@@ -235,6 +240,14 @@ describe("in a match (#2207)", () => {
       expect(healed(log, "a", "dervish.imbue-health")).toBe(41);
     });
 
+    it("at Mysticism 8 heals 29 of 100, no float loss", () => {
+      const sim = match(true, new Map([...RANKS, ["dervish.mysticism", 8]]));
+      get(sim, "a").health = 100;
+      get(sim, "c").health = 100;
+      const log = use(sim, "dervish.imbue-health", "a");
+      expect(healed(log, "a", "dervish.imbue-health")).toBe(29);
+    });
+
     it("heals at most 300", () => {
       const sim = match();
       get(sim, "c").maxHealth = 1000;
@@ -296,6 +309,15 @@ describe("in a match (#2207)", () => {
       get(sim, "c").energy = 20;
       get(sim, "c").statuses.remove("eremites-zeal");
       expect(gained(stepFor(sim, DT), "c")).toBe(6);
+    });
+
+    it("at Mysticism 0 pays 1 for each foe, as cast and as it ends", () => {
+      const sim = match(true, new Map([...RANKS, ["dervish.mysticism", 0]]));
+      get(sim, "c").energy = 20;
+      expect(gained(use(sim, "dervish.eremites-zeal"), "c")).toBe(2);
+      get(sim, "c").energy = 20;
+      get(sim, "c").statuses.remove("eremites-zeal");
+      expect(gained(stepFor(sim, DT), "c")).toBe(2);
     });
 
     it("with no foe in earshot, gains nothing", () => {

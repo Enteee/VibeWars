@@ -729,7 +729,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
   }),
   // "For 10 seconds afterward, this enchantment does nothing. When this
   // enchantment ends, you gain 1...3 Energy for each foe within earshot,
-  // maximum 8 Energy": 3, its rank-12 value, counted as it ends.
+  // maximum 8 Energy": by its Mysticism, as the cast's, counted as it ends.
   "eremites-zeal": define("eremites-zeal", "Eremite's Zeal", "enchantment", {
     profession: "dervish",
     triggers: [
@@ -741,7 +741,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
             amount: { flat: 0 },
             per: {
               count: { kind: "foes-within", radius: AREA_EARSHOT },
-              amount: { flat: 3 },
+              amount: { scaling: { attributeId: "dervish.mysticism", atZero: 1, atTwelve: 2.6 } },
               max: { flat: 8 },
             },
           },
