@@ -208,6 +208,13 @@ const rows = {
       `<path d="M12 3c2 2.6 3.5 4.3 3.5 6a3.5 3.5 0 0 1-7 0c0-1.7 1.5-3.4 3.5-6z" ${stroke(c, 1.8)}/>` +
       `<path d="M8 15l4 3 4-3M8 19l4 3 4-3" ${stroke(c, 1.8)}/>`,
   ],
+  // Hex: two bursts on a thread, interrupting when cast and again when it ends.
+  "web-of-disruption": [
+    "hex",
+    (c) =>
+      `<path d="M9 9l6 6" ${stroke(c, 1.6)}/>` +
+      `<path d="M7 3l1.4 3.1 3.1 1.4-3.1 1.4L7 12 5.6 8.9 2.5 7.5l3.1-1.4zM17 12l1.4 3.1 3.1 1.4-3.1 1.4L17 21l-1.4-3.1-3.1-1.4 3.1-1.4z" ${stroke(c, 1.5)}/>`,
+  ],
 };
 
 export default rows;
