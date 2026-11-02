@@ -1,6 +1,6 @@
 import { MAX_ATTRIBUTE_RANK } from "../attributes.js";
 
-import { rankOf } from "./tick.js";
+import { rankOf, type RankHolder } from "./tick.js";
 import type { StatusStat } from "./status.js";
 import type { AttributeScaling, Combatant, Magnitude } from "./types.js";
 
@@ -16,7 +16,7 @@ import type { AttributeScaling, Combatant, Magnitude } from "./types.js";
  * every call site. The caster's rank is `rankOf`'s: weakness scales a
  * skill one rank lower (#762).
  */
-export function resolveMagnitude(magnitude: Magnitude, caster: Combatant): number {
+export function resolveMagnitude(magnitude: Magnitude, caster: RankHolder): number {
   if ("flat" in magnitude) {
     return magnitude.flat;
   }

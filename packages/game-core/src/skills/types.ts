@@ -9,6 +9,7 @@ import type { CreatureKind, CreatureLook } from "../match/simulation.js";
 import type { ProfessionId, SkillProfession } from "../professions.js";
 import type { CastState, SlotSkill } from "./cast-state.js";
 import type { TargetCandidate } from "./targeting.js";
+import type { RankHolder } from "./tick.js";
 import type { AttackState } from "./weapon-attack.js";
 import type {
   AttributeDelta,
@@ -2209,9 +2210,10 @@ export interface SkillContext {
   readonly own?: OwnSkillBoost | undefined;
   /**
    * Whose attribute ranks scale the statuses these effects put on (#1976),
-   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965).
+   * when not the caster's: Mirrored Stance's copy takes the foe's (#1965),
+   * and a next-skill status its source's, as it landed (#2143).
    */
-  readonly ranksFrom?: Combatant | undefined;
+  readonly ranksFrom?: RankHolder | undefined;
 }
 
 /**

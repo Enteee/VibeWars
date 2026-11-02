@@ -153,6 +153,7 @@ import {
   netPips,
   preCapEnergyPips,
   raisedMaxHealth,
+  outsideMatch,
   rankOf,
   statusRanks,
   upkeepPips,
@@ -4393,13 +4394,16 @@ export class MatchSimulation {
     const bearer = record.combatant;
     const { answered, ended } = bearer.statuses.useNextSkill(skill, spared);
     this.#logFired(
-      answered.map(({ statusId, next }) => ({
+      answered.map(({ statusId, next, ranks }) => ({
         sourceId: record.id,
         skillId: next.skillId,
         events: [
+          // At its source's ranks as it landed (#2143): an ally's Anthem
+          // of Fury gives the Paragon's strikes.
           ...applyEffects(next.effects, {
             caster: bearer,
             target: bearer,
+            ranksFrom: outsideMatch(ranks),
             rng: this.#rng,
             rules: this.#ruleset.combat,
             surroundings: this.#participants,
