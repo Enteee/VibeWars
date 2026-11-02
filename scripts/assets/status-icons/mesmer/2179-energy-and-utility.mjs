@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Mesmer energy and utility (#2132), stand-ins until their art card.
+  // Mesmer energy and utility (#2132, art #2179).
   // Enchantment: a bolt in a ring that closes on itself, Energy renewed.
   "lyssas-aura": [
     "enchantment",
