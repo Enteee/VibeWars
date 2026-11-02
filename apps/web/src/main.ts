@@ -3,7 +3,7 @@ import type { Guild, LobbyConnection, LobbySnapshot, MatchStarting } from "@vibe
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
+import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -91,6 +91,7 @@ import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
 import {
   mountQueueScreen,
+  nextAscentRound,
   nextStreak,
   requeuedSince,
   teamEndAction,
@@ -155,7 +156,12 @@ import {
 } from "./ui/team-editor.js";
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
-import { teamQueueModeOf, teamSizeOf, type QueueMode } from "@vibewars/game-protocol";
+import {
+  teamQueueModeOf,
+  teamSizeOf,
+  type LobbyMode,
+  type QueueMode,
+} from "@vibewars/game-protocol";
 import { type PlayerBuild } from "@vibewars/game-core";
 
 /**
@@ -448,12 +454,20 @@ async function main(): Promise<void> {
         teams: number | undefined;
         /** Its match is over: whoever leaves it first is no news. */
         finished: boolean;
+        /** The Heroes' Ascent round its lobby queued at (#1996); `null` in other modes. */
+        readonly ascentRound: number | null;
       }
     | undefined;
   /** Set while *Random Arena* is reading the character, so a second press makes no second ticket. */
   let joiningQueue = false;
   /** Queued wins in a row this visit (#881): page memory only, never stored. */
   let queueStreak = 0;
+  /**
+   * The Heroes' Ascent round this tab's party queues at next, as its host
+   * (#1996): page memory only, like the streak, and back to the first
+   * once the run ends.
+   */
+  let ascentRound = 0;
   /** The queued match's result line once it finished, whether this side won, and the timer to its ended view. */
   let queuedEnd:
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
@@ -466,6 +480,8 @@ async function main(): Promise<void> {
         action: TeamEndAction;
         readonly endsAt: number;
         readonly party: LobbyConnection | undefined;
+        /** The Heroes' Ascent round just played (#1996); `null` in other modes. */
+        readonly ascentRound: number | null;
         readonly timer: number;
       }
     | undefined;
@@ -928,6 +944,8 @@ async function main(): Promise<void> {
    */
   const closeLobby = async (moveTo?: string): Promise<void> => {
     endTeamQueue();
+    // Out of the party, its Heroes' Ascent run is over (#1996).
+    ascentRound = 0;
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
@@ -1078,12 +1096,19 @@ async function main(): Promise<void> {
         },
       },
       lobbyNotice,
-      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter((map) =>
-        modeMapIds()[entry].includes(map.id),
+      // A queued Heroes' Ascent names its round's map, the Hall's too (#1996).
+      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
+        (map) =>
+          modeMapIds()[entry].includes(map.id) ||
+          (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
       ),
       matchmakingFor(entry),
     );
   };
+
+  /** The round a lobby of `mode` queues at (#1996): this tab's run in Heroes' Ascent, none in others. */
+  const roundFor = (mode: LobbyMode): number | null =>
+    mode === "heroes-ascent" ? ascentRound : null;
 
   /** A team mode's Find a match, Leave the queue and Play the house team (#1766). */
   const matchmakingFor = (entry: HostEntry): LobbyMatchmaking | undefined => {
@@ -1095,14 +1120,20 @@ async function main(): Promise<void> {
     return {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
       onFindMatch: () => {
-        lobby?.findMatch();
+        lobby?.findMatch(roundFor(entry));
       },
       onLeaveQueue: () => {
+        // Out of the queue, its Heroes' Ascent run is over (#1996).
+        ascentRound = 0;
         lobby?.leaveQueue();
       },
-      onPlayHouseTeam: () => {
-        lobby?.playHouseTeam();
-      },
+      // Heroes' Ascent waits for a side at its round, never for bots (#1996).
+      onPlayHouseTeam:
+        entry === "heroes-ascent"
+          ? undefined
+          : () => {
+              lobby?.playHouseTeam();
+            },
     };
   };
 
@@ -1358,6 +1389,7 @@ async function main(): Promise<void> {
     const { note } = from;
     const place = enterQueue(
       mode,
+      null,
       name,
       entrant.guild,
       {
@@ -1586,6 +1618,7 @@ async function main(): Promise<void> {
       houseTeamShown: false,
       teams: undefined,
       finished: false,
+      ascentRound: snapshot.ascentRound,
     };
     teamQueue = started;
     music().menu("queue");
@@ -1619,6 +1652,7 @@ async function main(): Promise<void> {
     const own = hosted?.lobby === current.party ? hosted : undefined;
     current.place = enterQueue(
       mode,
+      current.ascentRound,
       name,
       entrant.guild,
       {
@@ -2110,6 +2144,14 @@ async function main(): Promise<void> {
     const team = teamQueue?.parked === undefined ? undefined : teamQueue;
     const said = team?.finished === true ? undefined : notice;
     if (team !== undefined) {
+      // Left before the end, a Heroes' Ascent run is over, unless it was
+      // lost to its host leaving (#1996).
+      if (!team.finished && team.ascentRound !== null) {
+        ascentRound = nextAscentRound(
+          team.ascentRound,
+          notice === undefined ? "forfeit" : "host-left",
+        );
+      }
       endTeamQueue();
       // Its host may have left the match first and queued the party
       // again (#1997), a change this tab saw while parked and let pass.
@@ -2141,12 +2183,17 @@ async function main(): Promise<void> {
    * menu, a coded lobby's players back to it. Its button goes now; a
    * winner's, without queueing.
    */
-  const startTeamEnd = (action: TeamEndAction, party: LobbyConnection | undefined): void => {
+  const startTeamEnd = (
+    action: TeamEndAction,
+    party: LobbyConnection | undefined,
+    ascentRound: number | null,
+  ): void => {
     clearTeamEnd();
     teamEnd = {
       action,
       endsAt: Date.now() + TEAM_RESULT_SECONDS * 1000,
       party,
+      ascentRound,
       timer: window.setInterval(tickTeamEnd, 250),
     };
     tickTeamEnd();
@@ -2167,7 +2214,7 @@ async function main(): Promise<void> {
       return;
     }
     match?.setEndLine({
-      ...teamEndLine(current.action, seconds),
+      ...teamEndLine(current.action, seconds, current.ascentRound),
       onPress: () => {
         void exitMatch();
       },
@@ -2185,7 +2232,7 @@ async function main(): Promise<void> {
       lobby === party &&
       party.getSnapshot().isHost
     ) {
-      party.findMatch();
+      party.findMatch(roundFor(party.getSnapshot().mode));
     }
   };
 
@@ -2278,8 +2325,15 @@ async function main(): Promise<void> {
               // A team match, queued by its party or in a coded lobby (#1997).
               if (team !== undefined) {
                 queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
+                if (team.ascentRound !== null) {
+                  ascentRound = nextAscentRound(team.ascentRound, won ? "win" : "loss");
+                }
               }
-              startTeamEnd(teamEndAction(won, team !== undefined), team?.party);
+              startTeamEnd(
+                teamEndAction(won, team !== undefined),
+                team?.party,
+                team?.ascentRound ?? null,
+              );
               return;
             }
             queueStreak = nextStreak(queueStreak, won ? "win" : "loss");

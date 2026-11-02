@@ -68,6 +68,8 @@ export interface LobbySnapshot {
   readonly proposalBuilds: ReadonlyMap<string, readonly WireProposalBuild[]>;
   /** While `phase` is `"queued"` (#1766), this queueing's nonce; `null` otherwise. */
   readonly queueNonce: string | null;
+  /** While `phase` is `"queued"` in Heroes' Ascent (#1996), the party's round; `null` otherwise. */
+  readonly ascentRound: number | null;
 }
 
 /** A seat of a party's team plan as its host sends it (ADR-0042): its human's member key, `null` for a bot. */
@@ -122,8 +124,11 @@ export interface LobbyConnection {
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;
-  /** Host only, in a team mode (#1766): the party's Team Lobby, then the queue. */
-  findMatch(): void;
+  /**
+   * Host only, in a team mode (#1766): the party's Team Lobby, then the
+   * queue; in Heroes' Ascent at `ascentRound` (#1996), `null` otherwise.
+   */
+  findMatch(ascentRound: number | null): void;
   /** Host only (#1766): the queued party back in its lobby. */
   leaveQueue(): void;
   /** Host only (#1766): the queued party plays the house team, here. */

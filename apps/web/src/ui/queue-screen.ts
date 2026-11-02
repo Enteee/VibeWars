@@ -1,6 +1,7 @@
-import type { QueueMode } from "@vibewars/game-protocol";
+import { ASCENT_ROUNDS, type QueueMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot, QueueState } from "@vibewars/game-session";
 
+import { ascentMapName } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
@@ -69,6 +70,29 @@ export function nextStreak(streak: number, result: QueuedResult): number {
     case "host-left":
       return streak;
   }
+}
+
+/**
+ * The Heroes' Ascent round after `result` at `round` (#1996): a win
+ * moves on, and in the Hall defends it; a defeat or leaving before the
+ * end starts again at the first; a match lost to its host leaving
+ * stands.
+ */
+export function nextAscentRound(round: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return Math.min(round + 1, ASCENT_ROUNDS - 1);
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return round;
+  }
+}
+
+/** "Round 2 of 4 · Forgotten Shrines" (#1996). */
+export function ascentLine(round: number): string {
+  return `Round ${String(round + 1)} of ${String(ASCENT_ROUNDS)} · ${ascentMapName(round)}`;
 }
 
 /** "3 wins in a row this visit (not a rating)"; nothing at 0. */
@@ -228,15 +252,31 @@ export function requeuedSince(
   );
 }
 
-/** The line under a team match's result (#1997), `seconds` before `action`, and its button. */
+/**
+ * The line under a team match's result (#1997), `seconds` before
+ * `action`, and its button. A Heroes' Ascent won at `ascentRound`
+ * names where it goes on to (#1996); `null` in any other mode.
+ */
 export function teamEndLine(
   action: TeamEndAction,
   seconds: number,
+  ascentRound: number | null,
 ): { text: string; button: string } {
   const left = `${String(seconds)} s`;
   switch (action) {
     case "requeue":
-      return { text: `Next match in ${left}`, button: "Leave" };
+      if (ascentRound === null) {
+        return { text: `Next match in ${left}`, button: "Leave" };
+      }
+      return ascentRound === ASCENT_ROUNDS - 1
+        ? {
+            text: `You hold the ${ascentMapName(ascentRound)} · defending in ${left}`,
+            button: "Leave",
+          }
+        : {
+            text: `Ascending to ${ascentMapName(ascentRound + 1)} in ${left}`,
+            button: "Leave",
+          };
     case "menu":
       return { text: `Back to menu in ${left}`, button: "Now" };
     case "lobby":

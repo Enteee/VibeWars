@@ -463,6 +463,7 @@
     "zojuns-haste"
   ],
   "constants": {
+    "ASCENT_ROUNDS": { "literal": 4 },
     "FORMATION_SETTLE_MS": { "literal": 3000 },
     "FORMATION_TIMEOUT_MS": { "literal": 20000 },
     "LOBBY_CODE_LENGTH": { "literal": 43 },
@@ -4147,6 +4148,7 @@
     },
     "QueueTicket": {
       "properties": [
+        { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "bots", "optional": false, "type": "number" },
         { "name": "enteredAt", "optional": false, "type": "number" },
         { "name": "hardNat", "optional": false, "type": "boolean" },
@@ -4786,6 +4788,12 @@
       "union": [
         {
           "properties": [
+            { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
+            { "name": "kind", "optional": false, "type": { "literal": "find-match" } }
+          ]
+        },
+        {
+          "properties": [
             {
               "name": "build",
               "optional": false,
@@ -4850,9 +4858,6 @@
             { "name": "kind", "optional": false, "type": { "literal": "claim" } },
             { "name": "slot", "optional": false, "type": { "union": ["null", "number"] } }
           ]
-        },
-        {
-          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "find-match" } }]
         },
         {
           "properties": [{ "name": "kind", "optional": false, "type": { "literal": "house-team" } }]
@@ -5003,6 +5008,7 @@
     },
     "WireLobbyState": {
       "properties": [
+        { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "code", "optional": false, "type": "string" },
         { "name": "countdownSeconds", "optional": false, "type": { "union": ["null", "number"] } },
         { "name": "hostId", "optional": false, "type": "string" },

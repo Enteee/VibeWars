@@ -1,7 +1,10 @@
+import { ASCENT_ROUNDS, teamSizeOf } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
   ARENA_MAPS,
+  ASCENT_PROGRESSION,
+  ascentMapName,
   hostMap,
   mapFlagField,
   mapMode,
@@ -81,9 +84,9 @@ describe("team sizes (#2108)", () => {
       "Random Arena 1v1": randomArenaMapPool("random-arena-1v1"),
       "Random Arena 2v2": randomArenaMapPool("random-arena-2v2"),
       "Random Arena 4v4": randomArenaMapPool("random-arena-4v4"),
-      "Team Arena 4v4": queueMapPool("team-arena"),
-      "Heroes' Ascent 8v8": queueMapPool("heroes-ascent"),
-      "GvG 8v8": queueMapPool("gvg"),
+      "Team Arena 4v4": queueMapPool("team-arena", null),
+      "Heroes' Ascent 8v8": queueMapPool("heroes-ascent", 0),
+      "GvG 8v8": queueMapPool("gvg", null),
       ...Object.fromEntries(
         [1, 2, 4, 8].map((size) => [
           `Hosted Game ${String(size)}v${String(size)}`,
@@ -135,10 +138,10 @@ describe("team sizes (#2108)", () => {
 });
 
 describe("the Hall of Heroes (#1995)", () => {
-  it("is a Hosted Game's pick, and in no Ascent or queue pool until the progression places it", () => {
+  it("is a Hosted Game's pick, and a queued Ascent's last round alone (#1996)", () => {
     expect(modeMapIds()["hosted-game"]).toContain("hall-of-heroes");
     expect(modeMapIds()["heroes-ascent"]).not.toContain("hall-of-heroes");
-    expect(queueMapPool("heroes-ascent")).not.toContain("hall-of-heroes");
+    expect(queueMapPool("heroes-ascent", ASCENT_ROUNDS - 1)).toEqual(["hall-of-heroes"]);
     expect(modeMapIds()["team-arena"]).not.toContain("hall-of-heroes");
     expect(modeMapIds()["random-arena"]).toContain("hall-of-heroes");
   });
@@ -146,11 +149,47 @@ describe("the Hall of Heroes (#1995)", () => {
 
 describe("queueMapPool (#1766)", () => {
   it("draws a team mode's match from its own maps, and a Random Arena's from its pool", () => {
-    for (const mode of ["team-arena", "heroes-ascent", "gvg"] as const) {
-      expect(queueMapPool(mode)).toEqual(modeMapIds()[mode]);
-      expect(queueMapPool(mode)).not.toHaveLength(0);
+    for (const mode of ["team-arena", "gvg"] as const) {
+      expect(queueMapPool(mode, null)).toEqual(modeMapIds()[mode]);
+      expect(queueMapPool(mode, null)).not.toHaveLength(0);
     }
-    expect(queueMapPool("random-arena-2v2")).toEqual(randomArenaMapPool("random-arena-2v2"));
+    expect(queueMapPool("random-arena-2v2", null)).toEqual(randomArenaMapPool("random-arena-2v2"));
+  });
+
+  it("draws a Heroes' Ascent's match from its round's one map (#1996)", () => {
+    expect(ASCENT_PROGRESSION.map((_, round) => queueMapPool("heroes-ascent", round))).toEqual(
+      ASCENT_PROGRESSION.map((id) => [id]),
+    );
+    expect(() => queueMapPool("heroes-ascent", null)).toThrow();
+    expect(() => queueMapPool("heroes-ascent", ASCENT_ROUNDS)).toThrow();
+  });
+});
+
+describe("the Heroes' Ascent progression (#1996)", () => {
+  it("is four rounds: Relic Run, Capture Points, King of the Hill, then the Hall", () => {
+    expect(ASCENT_PROGRESSION).toHaveLength(ASCENT_ROUNDS);
+    expect(ASCENT_PROGRESSION.map((id) => [id, hostMap(id)?.mode])).toEqual([
+      ["relic-temples", "relic-run"],
+      ["forgotten-shrines", "capture-points"],
+      ["hill-courtyard", "king-of-the-hill"],
+      ["hall-of-heroes", "king-of-the-hill"],
+    ]);
+    expect(ASCENT_PROGRESSION.map((_, round) => ascentMapName(round))).toEqual([
+      "Relic Temples",
+      "Forgotten Shrines",
+      "Hill Courtyard",
+      "Hall of Heroes",
+    ]);
+  });
+
+  it("plays every round on a map made for its team size (#2108)", () => {
+    for (const id of ASCENT_PROGRESSION) {
+      expect(sizesOf(id), id).toContain(teamSizeOf("heroes-ascent"));
+    }
+  });
+
+  it("starts a coded Ascent lobby on its first round's map (#1994)", () => {
+    expect(modeMapIds()["heroes-ascent"][0]).toBe(ASCENT_PROGRESSION[0]);
   });
 });
 

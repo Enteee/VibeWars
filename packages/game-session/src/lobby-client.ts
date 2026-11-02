@@ -300,6 +300,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     teamLobby: state.teamLobby,
     proposalBuilds: new Map(proposalBuilds),
     queueNonce: state.queueNonce,
+    ascentRound: state.ascentRound,
   });
 
   /**
@@ -376,8 +377,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       startMatch() {
         send({ kind: "start" });
       },
-      findMatch() {
-        send({ kind: "find-match" });
+      findMatch(ascentRound) {
+        send({ kind: "find-match", ascentRound });
       },
       leaveQueue() {
         send({ kind: "leave-queue" });

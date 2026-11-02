@@ -83,6 +83,12 @@ export interface QueueParty {
 export interface QueueClientOptions {
   readonly board: QueueBoard;
   readonly mode: QueueMode;
+  /**
+   * In Heroes' Ascent, the 0-based round this side has reached (#1996):
+   * it meets, and counts as searching, only sides at the same round.
+   * `null` in every other mode.
+   */
+  readonly ascentRound: number | null;
   /** A party that stayed together, as this member of it; alone without. */
   readonly party?: QueueParty;
   /** ms since the epoch. */
@@ -133,7 +139,7 @@ export function startingQueueState(mode: QueueMode): QueueState {
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, party, now, newTicketKey, mapPool, hardNat } = options;
+  const { board, mode, ascentRound, party, now, newTicketKey, mapPool, hardNat } = options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
@@ -188,6 +194,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       heartbeatAt: now(),
       // Kept across fall-throughs: the consents sign the group won, not the current one.
       party: party === undefined ? null : { groupId: party.groupId, consents: party.consents },
+      ascentRound,
       hardNat,
     };
     publishedAt = ticket.heartbeatAt;
@@ -266,6 +273,7 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       tickets: [...tickets.values()],
       now: at,
       mode,
+      ascentRound,
       ignored: stillIgnored(at),
       mapPool,
     }).then((groups) => {
@@ -288,7 +296,11 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     }
     if (event.kind === "withdrawn") {
       tickets.delete(event.ticketId);
-    } else if (event.ticket.mode === mode && isLive(event.ticket, now())) {
+    } else if (
+      event.ticket.mode === mode &&
+      event.ticket.ascentRound === ascentRound &&
+      isLive(event.ticket, now())
+    ) {
       // Not kept if it is not live: a heartbeat from the far future would
       // be the newest copy for ever.
       const known = tickets.get(event.ticket.ticketId);

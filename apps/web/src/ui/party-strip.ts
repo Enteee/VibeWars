@@ -2,7 +2,7 @@ import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
 import { h } from "./kit.js";
-import { waitedLabel } from "./queue-screen.js";
+import { ascentLine, waitedLabel } from "./queue-screen.js";
 
 /**
  * The party strip (#1526, ADR-0041): on top of every mode screen, who is
@@ -31,6 +31,8 @@ export interface RailParty {
   readonly queuedMs: number | null;
   /** Teams its queue hears searching, its own included (#1881); `undefined` until it says. */
   readonly teams: number | undefined;
+  /** The Heroes' Ascent round it is queued at (#1996); `null` otherwise. */
+  readonly ascentRound: number | null;
 }
 
 /** Beside a member whose connection dropped, while its seat is held (#1764). */
@@ -65,6 +67,7 @@ export function partyOf(
   return {
     queuedMs,
     teams,
+    ascentRound: snapshot.ascentRound,
     code: snapshot.code,
     mode: snapshot.mode,
     isHost: snapshot.isHost,
@@ -119,6 +122,9 @@ export function partyStrip(party: RailParty): HTMLElement {
   }
   strip.appendChild(list);
   if (party.queuedMs !== null) {
+    if (party.ascentRound !== null) {
+      strip.appendChild(h("span", "party-ascent", ascentLine(party.ascentRound)));
+    }
     strip.appendChild(h("span", "party-queued", lookingLabel(party.queuedMs, party.teams)));
   }
   if (showsClosed(party)) {
