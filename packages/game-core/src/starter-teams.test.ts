@@ -15,10 +15,11 @@ const NAME = /^[A-Z][a-z]+( [A-Z][a-z]+)+$/;
 const NAME_MAX_LENGTH = 20;
 
 describe("STARTER_TEAMS (#2035)", () => {
-  it("are four teams of 4 and two of 8", () => {
+  it("are three teams of 2, four of 4 and three of 8 (#2147)", () => {
     const sizes = STARTER_TEAMS.map((team) => team.members.length);
+    expect(sizes.filter((size) => size === 2)).toHaveLength(3);
     expect(sizes.filter((size) => size === 4)).toHaveLength(4);
-    expect(sizes.filter((size) => size === 8)).toHaveLength(2);
+    expect(sizes.filter((size) => size === 8)).toHaveLength(3);
   });
 
   it("have unique names", () => {
@@ -85,9 +86,9 @@ describe("STARTER_TEAMS (#2035)", () => {
 describe("pickStarterTeam (#2035)", () => {
   const FOURS = STARTER_TEAMS.filter((team) => team.members.length === 4);
 
-  it("has only teams of 1, 2, 4 or 8, a size a Team Build can have (#2109)", () => {
+  it("has only teams of 2, 4 or 8, a size Team Builder offers (#2109, #2147)", () => {
     for (const team of STARTER_TEAMS) {
-      expect([1, 2, 4, 8], team.name).toContain(team.members.length);
+      expect([2, 4, 8], team.name).toContain(team.members.length);
     }
   });
 
@@ -99,7 +100,7 @@ describe("pickStarterTeam (#2035)", () => {
   it("picks only a team of the size asked for, and none when there is none (#2109)", () => {
     for (const r of [0, 0.5, 0.9999999]) {
       expect(pickStarterTeam(() => r, 8)?.members).toHaveLength(8);
-      expect(pickStarterTeam(() => r, 2)).toBeUndefined();
+      expect(pickStarterTeam(() => r, 1)).toBeUndefined();
     }
   });
 
@@ -121,6 +122,7 @@ describe("pickStarterTeam (#2035)", () => {
     };
     const seen = new Set<string | undefined>();
     for (let i = 0; i < 200; i += 1) {
+      seen.add(pickStarterTeam(random, 2)?.name);
       seen.add(pickStarterTeam(random, 4)?.name);
       seen.add(pickStarterTeam(random, 8)?.name);
     }

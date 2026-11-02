@@ -132,6 +132,7 @@ import {
   redrawModeRail,
   redrawsOnLobbyChange,
   setRailParty,
+  TEAM_SIZES,
   type RailEntry,
 } from "./ui/rail.js";
 import {
@@ -341,16 +342,24 @@ async function main(): Promise<void> {
     if (rolled !== undefined) {
       saveActiveCharacterId(rolled.id);
     }
-    // And a curated Team Build, on its own key (#2036).
-    await rollStarterTeam({
-      teams,
-      key: { load: loadStarterTeamId, save: saveStarterTeamId },
-      random: Math.random,
-      size: loadTeamSize(),
-      id: crypto.randomUUID(),
-      newId: () => crypto.randomUUID(),
-      now: Date.now(),
-    });
+    // And a curated Team Build of every size that has one, each on its
+    // own key (#2036, #2147).
+    for (const size of TEAM_SIZES) {
+      await rollStarterTeam({
+        teams,
+        key: {
+          load: () => loadStarterTeamId(size),
+          save: (id) => {
+            saveStarterTeamId(size, id);
+          },
+        },
+        random: Math.random,
+        size,
+        id: crypto.randomUUID(),
+        newId: () => crypto.randomUUID(),
+        now: Date.now(),
+      });
+    }
   }
 
   // The arenas a host can pick, built into the client (#403).

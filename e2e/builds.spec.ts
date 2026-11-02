@@ -563,6 +563,24 @@ test("the random Team Build: last, Reroll changes it in place, Clone opens a cop
   await expect(name).toHaveText(rerolled);
 });
 
+test("Team Builder has a random Team Build at each size, 2v2, 4v4 and 8v8 (#2147)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  for (const size of [2, 8, 4] as const) {
+    await setTeamSize(page, size);
+    const starter = starterTeamCard(page);
+    await expect(starter).toHaveCount(1);
+    await expect(starter.locator(".play-card-member")).toHaveCount(size);
+    const name = starter.locator(".play-card-name");
+    const before = (await name.textContent()) ?? "";
+    await starter.getByRole("button", { name: "Reroll", exact: true }).click();
+    await expect(name).not.toHaveText(before);
+    await expect(starter.locator(".play-card-member")).toHaveCount(size);
+  }
+});
+
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
   page,
 }) => {
@@ -702,7 +720,9 @@ test("a Team Build is made at the sidebar's size, which its editor shows locked 
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
   await setTeamSize(page, 2);
-  await expect(page.locator(".team-play-hint")).toHaveText("No 2v2 Team Builds yet.");
+  // Only the random 2v2 starter (#2147) is listed.
+  await expect(teamRows(page)).toHaveCount(0);
+  await expect(starterTeamCard(page)).toHaveCount(1);
   await page.getByRole("button", { name: "new team" }).click();
 
   const size = page.locator("#topbar").getByRole("combobox", { name: "Team size" });
