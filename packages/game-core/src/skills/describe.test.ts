@@ -433,7 +433,11 @@ describe("describeSkill", () => {
 
   it("says a negative Health change while under a status is degeneration (#2166)", () => {
     expect(describeStatus("teinais-prison")).toContain(
-      "while under Cracked Armor: −8 Health degeneration",
+      "while under Cracked Armor: −5...8 Health degeneration",
+    );
+    // At its caster's ranks, scaled (#2191).
+    expect(describeStatus("teinais-prison", new Map([["elementalist.water-magic", 15]]))).toContain(
+      "while under Cracked Armor: −9 Health degeneration",
     );
   });
 

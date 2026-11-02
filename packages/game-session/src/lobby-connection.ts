@@ -102,7 +102,7 @@ export interface ChatLine {
 export interface MatchStarting {
   readonly mapId: string;
   readonly matchId: string;
-  /** This peer's party sent a team plan that was not whole: the house team plays. */
+  /** This peer's party sent a team plan that was not whole: a random preset team plays. */
   readonly teamPlanRejected: boolean;
   /**
    * The room, for this match alone: hand it to `connectMatch`. Leaving it
@@ -136,8 +136,8 @@ export interface LobbyConnection {
   findMatch(ascentRound: number | null): void;
   /** Host only (#1766): the queued party back in its lobby. */
   leaveQueue(): void;
-  /** Host only (#1766): the queued party plays the house team, here. */
-  playHouseTeam(): void;
+  /** Host only (#1766): the queued party plays against bots, here. */
+  playAgainstBots(): void;
   /**
    * The party is queued (#1766): this member's `key`, fresh, which signs
    * its consent to the party, once per queueing. The answer comes through

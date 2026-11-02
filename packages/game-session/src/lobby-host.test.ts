@@ -1,4 +1,9 @@
-import { ANNIHILATION_MATCH_RULES, STARTER_BUILDS } from "@vibewars/game-core";
+import {
+  ANNIHILATION_MATCH_RULES,
+  STARTER_BUILDS,
+  STARTER_TEAMS,
+  type StarterTeam,
+} from "@vibewars/game-core";
 import {
   CHANNELS,
   type Channel,
@@ -41,6 +46,7 @@ import { canStart, type MatchPlan } from "./lobby-host.js";
 import { cryptoTurns, settle, until } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
+import { sanitizeCharacterName } from "./names.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
 /**
@@ -1542,38 +1548,57 @@ describe("a Team Lobby (#1458)", () => {
     expect(await run([null, null, null, null], draws(0.9))).toEqual([2, "random"]);
   });
 
-  it("plays the house team without a proposal, the starters in order, round and round, of the team size (#2104)", async () => {
-    const { lobby, members } = await teamLobby(["Ann"], [0, 1], draws(), undefined, undefined, 8);
-    await begin(lobby);
-    members[1]?.connection.propose([WARRIOR, RANGER, MONK, NECRO, ELE, MONK, WARRIOR, RANGER]);
-    await settle();
-    await timeOut(lobby);
-    expect(sideOf(lobby.host)?.chosen).toEqual({
+  it("plays a random preset team of the team size without a proposal, under its name and jobs (#2148)", async () => {
+    const chosen = async (draw: number) => {
+      const { lobby, members } = await teamLobby(
+        ["Ann"],
+        [0, 1],
+        draws(draw),
+        undefined,
+        undefined,
+        8,
+      );
+      await begin(lobby);
+      members[1]?.connection.propose([WARRIOR, RANGER, MONK, NECRO, ELE, MONK, WARRIOR, RANGER]);
+      await settle();
+      await timeOut(lobby);
+      expect(teamOf(lobby.host)).toMatchObject({ stage: "claim" });
+      expect(sideOf(lobby.host)?.claims).toHaveLength(8);
+      return sideOf(lobby.host)?.chosen;
+    };
+    const presets = STARTER_TEAMS.filter((team) => team.members.length === 8);
+    const wire = (preset: StarterTeam) => ({
       proposerId: null,
-      reason: "house",
+      reason: "preset",
+      presetName: preset.name,
       // At most 16 long, as a player's name, but cut at a word (#1460).
-      members: (
-        [
-          [WARRIOR, "Warrior/Monk"],
-          [RANGER, "Ranger/Mesmer"],
-          [MONK, "Monk…"],
-          [NECRO, "Necromancer…"],
-          [ELE, "Elementalist…"],
-          [WARRIOR, "Warrior/Monk"],
-          [RANGER, "Ranger/Mesmer"],
-          [MONK, "Monk…"],
-        ] as const
-      ).map(([build, name]) => ({
-        name,
+      members: preset.members.map(({ name, build }) => ({
+        name: sanitizeCharacterName(name, ""),
         primary: build.primaryProfession,
         secondary: build.secondaryProfession ?? null,
       })),
     });
-    expect(teamOf(lobby.host)).toMatchObject({ stage: "claim" });
-    expect(sideOf(lobby.host)?.claims).toHaveLength(8);
+    const [first] = presets;
+    const last = presets.at(-1);
+    expect(presets.length).toBeGreaterThan(1);
+    expect(await chosen(0)).toEqual(first === undefined ? undefined : wire(first));
+    expect(await chosen(0.999)).toEqual(last === undefined ? undefined : wire(last));
   });
 
-  it("plays house teams of the team size when neither side chose, and a team mode's of its size (#2104)", async () => {
+  it("plays one starter build at random for a side of one, a preset with no name (#2148)", async () => {
+    const { lobby } = await teamLobby([], [0], draws(0.999), undefined, undefined, 1);
+    await begin(lobby);
+    await timeOut(lobby);
+    const build = STARTER_BUILDS.at(-1);
+    expect(sideOf(lobby.host)?.chosen).toMatchObject({
+      proposerId: null,
+      reason: "preset",
+      presetName: null,
+      members: [{ primary: build?.primaryProfession }],
+    });
+  });
+
+  it("plays preset teams of the team size when neither side chose, and a team mode's of its size (#2104)", async () => {
     const sizes = async (lobby: TestLobby, members: readonly Member[]) => {
       await begin(lobby);
       await timeOut(lobby);
@@ -1669,19 +1694,18 @@ describe("a Team Lobby (#1458)", () => {
       const seat = seats?.get(id);
       return [seat?.team, seat?.name, seat?.bot, seat?.build?.name];
     };
-    const [bot0, ...house] = [...(seats?.keys() ?? [])].filter((id) => id.startsWith("bot-"));
+    const [bot0, ...preset] = [...(seats?.keys() ?? [])].filter((id) => id.startsWith("bot-"));
     expect(seatOf(idOf(host))).toEqual([0, "Host", false, WARRIOR.name]);
     expect(seatOf(idOf(ann))).toEqual([0, "Ann", false, MONK.name]);
     expect(seatOf(idOf(bob))).toEqual([0, "Bob", false, NECRO.name]);
     // A bot plays the slot nobody took, under its character's name.
     expect(seatOf(bot0 ?? "")).toEqual([0, RANGER.name, true, RANGER.name]);
-    // Nobody on the other side: its house team is as many, all bots (#2029).
-    expect(house.map(seatOf)).toEqual([
-      [1, "Warrior/Monk", true, WARRIOR.name],
-      [1, "Ranger/Mesmer", true, RANGER.name],
-      [1, "Monk…", true, MONK.name],
-      [1, "Necromancer…", true, NECRO.name],
-    ]);
+    // Nobody on the other side: its preset team is as many, all bots (#2029).
+    // The first 4v4 preset, as drawn, under its members' jobs (#2148).
+    const drawn = STARTER_TEAMS.find((team) => team.members.length === 4);
+    expect(preset.map(seatOf)).toEqual(
+      drawn?.members.map(({ name }) => [1, sanitizeCharacterName(name, ""), true, name]),
+    );
     expect(host.starts).toHaveLength(1);
   });
 
@@ -1705,9 +1729,9 @@ describe("a Team Lobby (#1458)", () => {
       ["Host", 0, false],
       ["Bob", 0, false],
     ]);
-    // The rest ready: the vote is over at once, with the house team.
+    // The rest ready: the vote is over at once, with a preset team.
     await allReady([host, bob]);
-    expect(sideOf(host)?.chosen?.reason).toBe("house");
+    expect(sideOf(host)?.chosen?.reason).toBe("preset");
   });
 
   it("leaves the slot of a member who leaves in the claim to a bot, made at its end (#2029)", async () => {
@@ -1918,7 +1942,7 @@ describe("a Team Lobby (#1458)", () => {
     host.connection.propose([WARRIOR, MONK]);
     host.connection.vote(idOf(host));
     await settle();
-    expect(sideOf(host)?.chosen?.reason).toBe("house");
+    expect(sideOf(host)?.chosen?.reason).toBe("preset");
     expect(sideOf(host)?.proposals).toEqual([]);
   });
 });

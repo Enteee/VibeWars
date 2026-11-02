@@ -5,6 +5,7 @@ import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
+import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
 import { projection, type Projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
@@ -45,6 +46,7 @@ async function openTraining(
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
+  await openLibraryGroup(page, "Fire Magic");
   await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
   await expect(page.locator(FILLED_SLOTS)).toHaveText([codeLabel(skillKey(0, keymap))]);
   await expect(page.locator(FILLED_SLOTS).first()).toHaveAccessibleName("Fireball");
@@ -233,6 +235,7 @@ test("(7) editing the build re-arms the arena in place", async ({ page }) => {
   await castFireballAndLand(page);
   const canvasHandle = await page.locator(".training canvas").elementHandle();
 
+  await openLibraryGroup(page, "Earth Magic");
   await page
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .locator(".skill-box-equip")
@@ -304,6 +307,7 @@ test("(10) on a narrow screen the columns stack: training, editor, library", asy
 
 test("(11) every skill button shows its skill-type badge, as the HUD does", async ({ page }) => {
   await openTraining(page);
+  await openLibraryGroup(page, "Earth Magic");
   await page
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .locator(".skill-box-equip")
@@ -627,6 +631,7 @@ test("(21) the casting slot is lit, and Esc cancels the cast and flashes it (#30
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
+  await openLibraryGroup(page, "Wilderness Survival");
   await page
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
@@ -752,6 +757,7 @@ test("(24) an empty slot's key does nothing; the next key casts its own skill (#
 }) => {
   await openTraining(page);
   // Fireball on Q, nothing on W, Armor of Earth on E.
+  await openLibraryGroup(page, "Earth Magic");
   await page
     .locator(".skill-box", { hasText: "Armor of Earth" })
     .dragTo(page.locator(".skill-slot").nth(2));
@@ -909,6 +915,7 @@ test("(29) an attack skill pressed out of reach walks in, then lands (#415)", as
   await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
   await page.getByRole("button", { name: "skills", exact: true }).click();
+  await openLibraryGroup(page, "Axe Mastery");
   await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
   await expectFilledSlots(page, ["Swift Chop"]);
   const canvas = page.locator(".training canvas");
@@ -971,6 +978,7 @@ test("(31) a slot out of reach of the target is marked, and the mark goes once i
   await page.locator(".gear-box").filter({ hasText: "Axe" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
   await page.getByRole("button", { name: "skills", exact: true }).click();
+  await openLibraryGroup(page, "Axe Mastery");
   await page.locator(".skill-box", { hasText: "Swift Chop" }).locator(".skill-box-equip").click();
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
@@ -1007,6 +1015,7 @@ test("(32) the casting slot fills as the cast goes, hovering it shows its toolti
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
+  await openLibraryGroup(page, "Wilderness Survival");
   await page
     .locator(".skill-box", { hasText: "Troll Unguent" })
     .locator(".skill-box-equip")
@@ -1043,6 +1052,7 @@ test("(34) Backbreaker lays the melee dummy flat until it rises (#545)", async (
   await page.locator(".gear-box").filter({ hasText: "Hammer" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
   await page.getByRole("button", { name: "skills", exact: true }).click();
+  await openLibraryGroup(page, "Hammer Mastery");
   await page.locator(".skill-box", { hasText: "Backbreaker" }).locator(".skill-box-equip").click();
   const canvas = page.locator(".training canvas");
   await page.locator("select.training-scenario").selectOption("weapon-dps");
@@ -1286,6 +1296,7 @@ test("(40) an adrenaline skill's slot fills from dark to lit as it charges (#826
   await page.locator(".gear-box").filter({ hasText: "Sword" }).first().click();
   await expect(page.locator(".gear-slot").first()).toContainText("Sword");
   await page.getByRole("button", { name: "skills", exact: true }).click();
+  await openLibraryGroup(page, "Swordsmanship");
   await page.locator(".skill-box", { hasText: "Sever Artery" }).locator(".skill-box-equip").click();
   await expectFilledSlots(page, ["Sever Artery"]);
   const canvas = page.locator(".training canvas");
@@ -1327,6 +1338,7 @@ test("(41) a well with no corpse near sacrifices Health and goes off anyway (#11
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "necromancer");
+  await openLibraryGroup(page, "Death Magic");
   await page
     .locator(".skill-box", { hasText: "Well of Suffering" })
     .locator(".skill-box-equip")
@@ -1356,6 +1368,7 @@ test("(42) Symbol of Wrath strikes the dummy it was cast at once a second, five 
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "monk");
+  await openLibraryGroup(page, "Smiting Prayers");
   await page
     .locator(".skill-box", { hasText: "Symbol of Wrath" })
     .locator(".skill-box-equip")
@@ -1490,6 +1503,7 @@ test("a pet attack arms the wolf's next bite, and the log says so (#1107)", asyn
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
+  await openLibraryGroup(page, "Beast Mastery");
   for (const name of ["Charm Animal", "Brutal Strike"]) {
     await page.locator(".skill-box", { hasText: name }).locator(".skill-box-equip").click();
   }
@@ -1516,6 +1530,7 @@ test("(45) your wolf's row in the party window takes Heel, and lights it (#1110)
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "ranger");
+  await openLibraryGroup(page, "Beast Mastery");
   await page.locator(".skill-box", { hasText: "Charm Animal" }).locator(".skill-box-equip").click();
   await expectFilledSlots(page, ["Charm Animal"]);
   const orders = page.getByRole("group", { name: "Pet orders" });

@@ -89,6 +89,7 @@
     "barbed-arrows-armor",
     "barbs",
     "battle-rage",
+    "berserker-stance",
     "bladeturn-refrain",
     "blazing-finale",
     "bleeding",
@@ -104,6 +105,7 @@
     "brace-yourself",
     "brambles",
     "brutal-weapon",
+    "bulls-charge",
     "burning",
     "burning-refrain",
     "cacophony",
@@ -435,6 +437,7 @@
     "symbiotic-bond",
     "teinais-prison",
     "the-power-is-yours",
+    "tiger-stance",
     "toxicity",
     "tranquil-was-tanasen",
     "tranquility",
@@ -880,6 +883,7 @@
                   { "literal": "barbed-arrows-armor" },
                   { "literal": "barbs" },
                   { "literal": "battle-rage" },
+                  { "literal": "berserker-stance" },
                   { "literal": "bladeturn-refrain" },
                   { "literal": "blazing-finale" },
                   { "literal": "bleeding" },
@@ -895,6 +899,7 @@
                   { "literal": "brace-yourself" },
                   { "literal": "brambles" },
                   { "literal": "brutal-weapon" },
+                  { "literal": "bulls-charge" },
                   { "literal": "burning" },
                   { "literal": "burning-refrain" },
                   { "literal": "cacophony" },
@@ -1226,6 +1231,7 @@
                   { "literal": "symbiotic-bond" },
                   { "literal": "teinais-prison" },
                   { "literal": "the-power-is-yours" },
+                  { "literal": "tiger-stance" },
                   { "literal": "toxicity" },
                   { "literal": "tranquil-was-tanasen" },
                   { "literal": "tranquility" },
@@ -1380,6 +1386,7 @@
                   { "literal": "barbed-arrows-armor" },
                   { "literal": "barbs" },
                   { "literal": "battle-rage" },
+                  { "literal": "berserker-stance" },
                   { "literal": "bladeturn-refrain" },
                   { "literal": "blazing-finale" },
                   { "literal": "bleeding" },
@@ -1395,6 +1402,7 @@
                   { "literal": "brace-yourself" },
                   { "literal": "brambles" },
                   { "literal": "brutal-weapon" },
+                  { "literal": "bulls-charge" },
                   { "literal": "burning" },
                   { "literal": "burning-refrain" },
                   { "literal": "cacophony" },
@@ -1726,6 +1734,7 @@
                   { "literal": "symbiotic-bond" },
                   { "literal": "teinais-prison" },
                   { "literal": "the-power-is-yours" },
+                  { "literal": "tiger-stance" },
                   { "literal": "toxicity" },
                   { "literal": "tranquil-was-tanasen" },
                   { "literal": "tranquility" },
@@ -1860,6 +1869,7 @@
                   { "literal": "barbed-arrows-armor" },
                   { "literal": "barbs" },
                   { "literal": "battle-rage" },
+                  { "literal": "berserker-stance" },
                   { "literal": "bladeturn-refrain" },
                   { "literal": "blazing-finale" },
                   { "literal": "bleeding" },
@@ -1875,6 +1885,7 @@
                   { "literal": "brace-yourself" },
                   { "literal": "brambles" },
                   { "literal": "brutal-weapon" },
+                  { "literal": "bulls-charge" },
                   { "literal": "burning" },
                   { "literal": "burning-refrain" },
                   { "literal": "cacophony" },
@@ -2206,6 +2217,7 @@
                   { "literal": "symbiotic-bond" },
                   { "literal": "teinais-prison" },
                   { "literal": "the-power-is-yours" },
+                  { "literal": "tiger-stance" },
                   { "literal": "toxicity" },
                   { "literal": "tranquil-was-tanasen" },
                   { "literal": "tranquility" },
@@ -2337,6 +2349,7 @@
                   { "literal": "barbed-arrows-armor" },
                   { "literal": "barbs" },
                   { "literal": "battle-rage" },
+                  { "literal": "berserker-stance" },
                   { "literal": "bladeturn-refrain" },
                   { "literal": "blazing-finale" },
                   { "literal": "bleeding" },
@@ -2352,6 +2365,7 @@
                   { "literal": "brace-yourself" },
                   { "literal": "brambles" },
                   { "literal": "brutal-weapon" },
+                  { "literal": "bulls-charge" },
                   { "literal": "burning" },
                   { "literal": "burning-refrain" },
                   { "literal": "cacophony" },
@@ -2683,6 +2697,7 @@
                   { "literal": "symbiotic-bond" },
                   { "literal": "teinais-prison" },
                   { "literal": "the-power-is-yours" },
+                  { "literal": "tiger-stance" },
                   { "literal": "toxicity" },
                   { "literal": "tranquil-was-tanasen" },
                   { "literal": "tranquility" },
@@ -2949,6 +2964,7 @@
                   { "literal": "barbed-arrows-armor" },
                   { "literal": "barbs" },
                   { "literal": "battle-rage" },
+                  { "literal": "berserker-stance" },
                   { "literal": "bladeturn-refrain" },
                   { "literal": "blazing-finale" },
                   { "literal": "bleeding" },
@@ -2964,6 +2980,7 @@
                   { "literal": "brace-yourself" },
                   { "literal": "brambles" },
                   { "literal": "brutal-weapon" },
+                  { "literal": "bulls-charge" },
                   { "literal": "burning" },
                   { "literal": "burning-refrain" },
                   { "literal": "cacophony" },
@@ -3295,6 +3312,7 @@
                   { "literal": "symbiotic-bond" },
                   { "literal": "teinais-prison" },
                   { "literal": "the-power-is-yours" },
+                  { "literal": "tiger-stance" },
                   { "literal": "toxicity" },
                   { "literal": "tranquil-was-tanasen" },
                   { "literal": "tranquility" },
@@ -3418,6 +3436,7 @@
                   { "literal": "barbed-arrows-armor" },
                   { "literal": "barbs" },
                   { "literal": "battle-rage" },
+                  { "literal": "berserker-stance" },
                   { "literal": "bladeturn-refrain" },
                   { "literal": "blazing-finale" },
                   { "literal": "bleeding" },
@@ -3433,6 +3452,7 @@
                   { "literal": "brace-yourself" },
                   { "literal": "brambles" },
                   { "literal": "brutal-weapon" },
+                  { "literal": "bulls-charge" },
                   { "literal": "burning" },
                   { "literal": "burning-refrain" },
                   { "literal": "cacophony" },
@@ -3764,6 +3784,7 @@
                   { "literal": "symbiotic-bond" },
                   { "literal": "teinais-prison" },
                   { "literal": "the-power-is-yours" },
+                  { "literal": "tiger-stance" },
                   { "literal": "toxicity" },
                   { "literal": "tranquil-was-tanasen" },
                   { "literal": "tranquility" },
@@ -5142,12 +5163,12 @@
           ]
         },
         {
-          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "house-team" } }]
-        },
-        {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "leave-queue" } }
           ]
+        },
+        {
+          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "play-bots" } }]
         },
         {
           "properties": [
@@ -5478,6 +5499,11 @@
                                             }
                                           },
                                           {
+                                            "name": "presetName",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
                                             "name": "proposerId",
                                             "optional": false,
                                             "type": { "union": ["null", "string"] }
@@ -5488,7 +5514,7 @@
                                             "type": {
                                               "union": [
                                                 { "literal": "captain" },
-                                                { "literal": "house" },
+                                                { "literal": "preset" },
                                                 { "literal": "random" },
                                                 { "literal": "votes" }
                                               ]
@@ -5593,6 +5619,11 @@
                                             }
                                           },
                                           {
+                                            "name": "presetName",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
                                             "name": "proposerId",
                                             "optional": false,
                                             "type": { "union": ["null", "string"] }
@@ -5603,7 +5634,7 @@
                                             "type": {
                                               "union": [
                                                 { "literal": "captain" },
-                                                { "literal": "house" },
+                                                { "literal": "preset" },
                                                 { "literal": "random" },
                                                 { "literal": "votes" }
                                               ]
@@ -6959,6 +6990,7 @@
             }
           }
         },
+        { "name": "presetName", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "proposerId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "reason",
@@ -6966,7 +6998,7 @@
           "type": {
             "union": [
               { "literal": "captain" },
-              { "literal": "house" },
+              { "literal": "preset" },
               { "literal": "random" },
               { "literal": "votes" }
             ]
@@ -7018,6 +7050,11 @@
                                   }
                                 },
                                 {
+                                  "name": "presetName",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
                                   "name": "proposerId",
                                   "optional": false,
                                   "type": { "union": ["null", "string"] }
@@ -7028,7 +7065,7 @@
                                   "type": {
                                     "union": [
                                       { "literal": "captain" },
-                                      { "literal": "house" },
+                                      { "literal": "preset" },
                                       { "literal": "random" },
                                       { "literal": "votes" }
                                     ]
@@ -7117,6 +7154,11 @@
                                   }
                                 },
                                 {
+                                  "name": "presetName",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
                                   "name": "proposerId",
                                   "optional": false,
                                   "type": { "union": ["null", "string"] }
@@ -7127,7 +7169,7 @@
                                   "type": {
                                     "union": [
                                       { "literal": "captain" },
-                                      { "literal": "house" },
+                                      { "literal": "preset" },
                                       { "literal": "random" },
                                       { "literal": "votes" }
                                     ]
@@ -7259,6 +7301,11 @@
                     }
                   },
                   {
+                    "name": "presetName",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
+                  {
                     "name": "proposerId",
                     "optional": false,
                     "type": { "union": ["null", "string"] }
@@ -7269,7 +7316,7 @@
                     "type": {
                       "union": [
                         { "literal": "captain" },
-                        { "literal": "house" },
+                        { "literal": "preset" },
                         { "literal": "random" },
                         { "literal": "votes" }
                       ]

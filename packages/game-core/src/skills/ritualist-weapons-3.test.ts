@@ -159,17 +159,20 @@ describe("the ten are the corpus's (#1654)", () => {
 
   it("describes the new primitives", () => {
     expect(describeStatus("resilient-weapon")).toMatch(
-      /while under a condition or hex: \+5 Health regeneration, \+24 armor/,
+      /while under a condition or hex: \+1\.\.\.5 Health regeneration, \+24 armor/,
     );
     expect(describeStatus("guided-weapon")).toMatch(/attacks cannot be blocked/);
     expect(describeStatus("nightmare-weapon")).toMatch(/attacks deal 42 less damage/);
   });
 });
 
+/** A Ritualist at 12 Restoration Magic: Resilient Weapon's +5 regeneration (#2191). */
+const RESTORATION_12: ReadonlyMap<string, number> = new Map([["ritualist.restoration-magic", 12]]);
+
 describe("Resilient Weapon (#1654)", () => {
   it("gives +5 regeneration and +24 armor only while hexed or under a condition", () => {
     const ally = makeCombatant({ id: "ally" });
-    ally.statuses.apply("resilient-weapon", 10, "r", NO_RANKS);
+    ally.statuses.apply("resilient-weapon", 10, "r", RESTORATION_12);
     expect(aggregateModifiers(ally.statuses.active)).toMatchObject({
       healthPips: 0,
       armorModifier: 0,
@@ -187,6 +190,14 @@ describe("Resilient Weapon (#1654)", () => {
     });
     ally.statuses.apply("lamentation", 5, "x", NO_RANKS);
     expect(aggregateModifiers(ally.statuses.active).armorModifier).toBe(24);
+  });
+
+  it("gives +1 regeneration at 0 Restoration Magic (#2191)", () => {
+    const ally = makeCombatant({ id: "ally" });
+    ally.statuses.apply("resilient-weapon", 10, "r", new Map([["ritualist.restoration-magic", 0]]));
+    ally.statuses.apply("bleeding", 5, "x", NO_RANKS);
+    // Bleeding's own −3 plus the weapon's +1.
+    expect(aggregateModifiers(ally.statuses.active).healthPips).toBe(-2);
   });
 });
 
@@ -330,7 +341,7 @@ describe("in a match (#1654)", () => {
     const w = get(sim, "w");
     w.health = 5000;
     w.statuses.apply("bleeding", 10, "x", NO_RANKS);
-    w.statuses.apply("resilient-weapon", 10, "rit", NO_RANKS);
+    w.statuses.apply("resilient-weapon", 10, "rit", RESTORATION_12);
     const log: CombatLogEntry[] = [];
     for (let tick = 0; tick < Math.round(1 / DT); tick += 1) {
       log.push(...sim.step(DT).log);

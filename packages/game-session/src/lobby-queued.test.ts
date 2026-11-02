@@ -1,4 +1,9 @@
-import { ANNIHILATION_MATCH_RULES, STARTER_BUILDS, type PlayerBuild } from "@vibewars/game-core";
+import {
+  ANNIHILATION_MATCH_RULES,
+  STARTER_BUILDS,
+  pickStarterTeam,
+  type PlayerBuild,
+} from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   parseWireLobbyNote,
@@ -667,7 +672,7 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
     });
   }
 
-  /** Starter build `index`, renamed `"plan <index>"`, so it is told from the house team's. */
+  /** Starter build `index`, renamed `"plan <index>"`, so it is told from a preset team's. */
   const planned = (index: number): JsonValue =>
     JSON.parse(JSON.stringify({ ...starter(index), name: `plan ${String(index)}` })) as JsonValue;
 
@@ -717,12 +722,15 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
       .sort();
   }
 
-  /** Seats as `sideOf` says them: who, and a plan's build or a house one. */
-  function side(builds: readonly (readonly [string, number, "plan" | "house"])[]): string[] {
+  /** The 4v4 preset team the lobby's RNG, always 0.5, draws (#2148). */
+  const PRESET = pickStarterTeam(() => 0.5, 4);
+
+  /** Seats as `sideOf` says them: who, and a plan's build or PRESET's member `index`. */
+  function side(builds: readonly (readonly [string, number, "plan" | "preset"])[]): string[] {
     return builds
       .map(
         ([who, index, from]) =>
-          `${who}:${from === "plan" ? `plan ${String(index)}` : starter(index).name}`,
+          `${who}:${from === "plan" ? `plan ${String(index)}` : (PRESET?.members[index]?.name ?? "none")}`,
       )
       .sort();
   }
@@ -756,23 +764,23 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
     );
   });
 
-  it("gives a side with no plan the house team, its humans first", async () => {
+  it("gives a side with no plan a random preset team, its humans first (#2148)", async () => {
     const { seats } = await play((_, foe) => sendPlan(foe, FOE_PLAN));
     expect(sideOf(seats, 0)).toEqual(
       side([
-        ["ticket-1", 0, "house"],
-        ["ticket-2", 1, "house"],
-        ["bot", 2, "house"],
-        ["bot", 3, "house"],
+        ["ticket-1", 0, "preset"],
+        ["ticket-2", 1, "preset"],
+        ["bot", 2, "preset"],
+        ["bot", 3, "preset"],
       ]),
     );
   });
 
-  const HOUSE_FOE = side([
-    ["ticket-3", 0, "house"],
-    ["bot", 1, "house"],
-    ["bot", 2, "house"],
-    ["bot", 3, "house"],
+  const PRESET_FOE = side([
+    ["ticket-3", 0, "preset"],
+    ["bot", 1, "preset"],
+    ["bot", 2, "preset"],
+    ["bot", 3, "preset"],
   ]);
 
   it.each<[string, (queued: QueuedLobby, foe: Transport) => void]>([
@@ -807,9 +815,9 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
       "sends something that is no build",
       (_, foe) => sendPlan(foe, [{ ...FOE_SEAT, build: "a build" }, ...FOE_BOTS]),
     ],
-  ])("gives the house team to a side whose plan %s", async (_, plan) => {
+  ])("gives a random preset team to a side whose plan %s", async (_, plan) => {
     const { seats } = await play(plan);
-    expect(sideOf(seats, 1)).toEqual(HOUSE_FOE);
+    expect(sideOf(seats, 1)).toEqual(PRESET_FOE);
   });
 
   /** Each human's `teamPlanRejected`, HOST and ALLY on side 0, FOE on side 1. */
@@ -853,10 +861,10 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
     );
     expect(sideOf(seats, 0)).toEqual(
       side([
-        ["ticket-1", 0, "house"],
-        ["ticket-2", 1, "house"],
-        ["bot", 2, "house"],
-        ["bot", 3, "house"],
+        ["ticket-1", 0, "preset"],
+        ["ticket-2", 1, "preset"],
+        ["bot", 2, "preset"],
+        ["bot", 3, "preset"],
       ]),
     );
   });

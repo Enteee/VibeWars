@@ -197,8 +197,8 @@ export async function playOwnTeams(
 
 /**
  * The Team Lobby (#1460) for a spec that needs a match and not a
- * particular character: nobody proposes, so each side plays the house
- * team. Everyone is ready, then each takes its side's seat `seats[i]`,
+ * particular character: nobody proposes, so each side plays a random
+ * preset team. Everyone is ready, then each takes its side's seat `seats[i]`,
  * the first unless said, and is ready again. Resolves once each page's
  * HUD shows the player.
  */
@@ -228,7 +228,7 @@ export async function playHouseTeams(
 /**
  * A match in a lobby of one, which `canStart` allows: what Quick Match
  * was for the tests that need nobody else, but for the one bot of the
- * house team its empty side plays (#2029). The player plays the active
+ * preset team its empty side plays (#2029). The player plays the active
  * character, through a Team Build of one (#1525). Resolves once the HUD
  * shows the player, so the match is really on. Starts from the menu.
  */
