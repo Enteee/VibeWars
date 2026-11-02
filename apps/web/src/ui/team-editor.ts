@@ -153,17 +153,16 @@ function sentence(message: string): string {
 
 /**
  * What makes this team not playable, in plain sentences (#573): `validateTeam`'s
- * problems and an empty slot (#2109), then a full team as a hint that never blocks.
+ * problems. A team is always full (#2225): no empty slot to count.
  */
 export function teamEditorProblems(team: StoredTeam): TeamEditorProblem[] {
-  const blocking = validateTeam(team).map((problem): TeamEditorProblem => ({
+  return validateTeam(team).map((problem): TeamEditorProblem => ({
     text:
       problem.message === "team name must not be empty"
         ? "Give the team a name."
         : sentence(problem.message),
     blocking: true,
   }));
-  return blocking;
 }
 
 /**
@@ -638,9 +637,10 @@ export function mountTeamEditor(
   // What is being dragged: a row, to reorder; one of my characters, to
   // copy onto a member; or a library skill, to equip on a slot.
   let dragging: TeamDrag | undefined;
-  const showReason = (anchor: HTMLElement, text: string): void => {
+  const showReason = (anchor: HTMLElement, text: string, refused: boolean): void => {
     const box = anchor.getBoundingClientRect();
     dropReason.textContent = text;
+    dropReason.classList.toggle("is-refused", refused);
     dropReason.style.left = `${String(box.left)}px`;
     dropReason.style.top = `${String(box.bottom + 6)}px`;
     dropReason.hidden = false;
@@ -745,7 +745,7 @@ export function mountTeamEditor(
           event.preventDefault();
           dropReason.hidden = true;
         } else {
-          showReason(cell, `⊘ ${refusal}`);
+          showReason(cell, `⊘ ${refusal}`, true);
         }
       });
       cell.addEventListener("dragleave", () => {
@@ -791,7 +791,7 @@ export function mountTeamEditor(
         const from = characters.find((c) => c.id === drag.id);
         const member = memberOf(characterId);
         if (from !== undefined && member !== undefined) {
-          showReason(row, `Replace ${member.name} with ${from.name}`);
+          showReason(row, `Replace ${member.name} with ${from.name}`, false);
         }
       }
     });

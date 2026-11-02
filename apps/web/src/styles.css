@@ -1697,7 +1697,7 @@ body {
 
 .team-editor-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 12rem;
+  grid-template-columns: minmax(0, 1fr) 20rem;
   align-items: start;
   gap: 1rem;
 }
@@ -1724,7 +1724,7 @@ body {
 
 .team-row {
   display: grid;
-  grid-template-columns: 2.4rem 10rem repeat(8, 36px) auto;
+  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, 36px);
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.5rem;
@@ -1744,6 +1744,11 @@ body {
   border-color: var(--accent);
 }
 
+/* The member the Skills tab shows (#2225). */
+.team-row.is-focused {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
 .team-row-order {
   display: flex;
   align-items: center;
@@ -1757,7 +1762,7 @@ body {
 
 .team-row-character {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto 1fr;
   column-gap: 0.4rem;
   align-items: center;
   min-width: 0;
@@ -1768,15 +1773,52 @@ body {
   display: inline-flex;
 }
 
-/* The member's weapons, after its dot (#1786). */
-.team-row-gear {
-  grid-row: span 3;
+/* The character ball (#2225): the figure with its weapons, a dot a weapon set under it. */
+.character-ball {
   display: inline-flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* Stacked, so the name keeps its width. */
-.team-row-gear .mini-gear {
+.character-ball-sets {
+  display: flex;
+  gap: 2px;
+  margin-top: -3px;
+}
+
+.character-ball-set {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--line);
+}
+
+.character-ball-set.is-active {
+  background: var(--ink);
+}
+
+/* Maximum Health over maximum Energy (#2225), as the HUD's bars colour them. */
+.team-row-stats {
+  display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+.team-row-health,
+.team-row-energy {
+  padding: 0 0.3rem;
+  font-size: 0.68rem;
+  line-height: 0.95rem;
+  text-align: center;
+  color: var(--ink);
+}
+
+.team-row-health {
+  background: #3d6b35;
+}
+
+.team-row-energy {
+  background: #2f5a7d;
 }
 
 .team-row-name,
@@ -1787,6 +1829,15 @@ body {
   white-space: nowrap;
 }
 
+/* The name reads as the row's title (#2225); it opens the member in the build editor. */
+.screen .team-row-name {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-weight: 600;
+  text-align: left;
+}
+
 .team-row-professions,
 .team-row-attributes {
   color: var(--ink-dim);
@@ -1795,15 +1846,6 @@ body {
 
 .team-row-skills {
   display: contents;
-}
-
-.team-row-controls {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.screen .team-row-controls button {
-  padding: 0.25rem 0.5rem;
 }
 
 /* What the bars hold (#575); one at 0 the team lacks is amber. */
@@ -1939,22 +1981,84 @@ body {
   white-space: nowrap;
 }
 
+/* The right panel (#2225): My characters | Skills, beside the rows as they scroll. */
 .team-picker {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.5rem;
+  position: sticky;
+  top: 0.5rem;
+  height: calc(100vh - 9rem);
+  min-height: 20rem;
 }
 
-.team-picker-header,
-.team-picker-copy {
+.team-picker-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+}
+
+.screen .team-picker-tab.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.team-picker-pane {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.team-picker-pane[hidden] {
+  display: none;
+}
+
+/* The Character Builder's library, in the panel's height rather than the window's. */
+.team-picker-skills.skill-library {
+  position: static;
+  height: auto;
+}
+
+.team-picker-hint {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--ink-dim);
 }
 
-.team-picker-copy {
-  margin-top: 0.4rem;
-  font-weight: normal;
+.team-pick[draggable="true"] {
+  cursor: grab;
+}
+
+.team-pick.is-dragging {
+  opacity: 0.5;
+}
+
+/* A slot a dragged skill may land on, and one it may not: never colour alone. */
+.team-skill.is-drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.team-skill.is-drop-refused {
+  outline: 2px dashed var(--damage);
+  outline-offset: -1px;
+}
+
+.team-drop-reason {
+  position: fixed;
+  z-index: 30;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.team-drop-reason.is-refused {
+  border-color: var(--damage);
+  color: var(--damage);
 }
 
 .team-picker-list {
@@ -4696,6 +4800,14 @@ button.skill-group-header > .skill-group-rank {
   font-family: inherit;
   font-size: 0.72rem;
   cursor: pointer;
+}
+
+/* Inside a .screen, the Team Builder's (#2225), as small as in the Character Builder. */
+.screen .skill-type-chip {
+  padding: 0.1rem 0.5rem;
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 0.72rem;
 }
 
 .skill-type-chip[aria-pressed="true"] {
