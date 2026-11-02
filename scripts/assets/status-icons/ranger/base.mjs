@@ -308,6 +308,29 @@ const rows = {
       `<path d="M4 13l4 4 4-4 4 4 4-4" ${stroke(c, 1.8)}/>` +
       `<path d="M6 7h12M14 4l4 3-4 3" ${stroke(c, 1.8)}/>`,
   ],
+  // Ranger staples 5 (#2192): each pairs with its skill icon.
+  // Preparation: an arrow driving into a burst, the critical arrow interrupts.
+  "disrupting-accuracy": [
+    "preparation",
+    (c) =>
+      `<path d="M3 21L10 14" ${stroke(c, 2)}/>` +
+      `<path d="M15 3l1.6 4.4 4.4 1.6-4.4 1.6L15 15l-1.6-4.4L9 9l4.4-1.6z" ${stroke(c, 1.6)}/>`,
+  ],
+  // Preparation: a target and a bolt, Energy won or lost on each shot.
+  "marksmans-wager": [
+    "preparation",
+    (c) =>
+      `<circle cx="9.5" cy="14.5" r="6.5" ${stroke(c, 1.8)}/>` +
+      `<circle cx="9.5" cy="14.5" r="1.6" fill="${c}"/>` +
+      `<path d="M19 3l-4.5 6.5h3.5L16.5 15l5-7h-3.5z" ${stroke(c, 1.5)}/>`,
+  ],
+  // Stance: chevrons running at a bolt.
+  "storm-chaser": [
+    "stance",
+    (c) =>
+      `<path d="M3 7l5 5-5 5M8 7l5 5-5 5" ${stroke(c, 2)}/>` +
+      `<path d="M19 3l-5 9h6l-5 9" ${stroke(c, 2)}/>`,
+  ],
 };
 
 export default rows;
