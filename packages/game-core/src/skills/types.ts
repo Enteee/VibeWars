@@ -90,6 +90,11 @@ export type TargetRule =
    * one controls.
    */
   | "enemy-spirit"
+  /**
+   * A living minion not on the caster's team (#2092): Verata's Gaze's
+   * "target minion", a foe's or a masterless one.
+   */
+  | "enemy-minion"
   /** A living minion the caster made (#1836): Putrid Flesh's "target minion". */
   | "own-minion"
   /** A living minion on the caster's team, whoever made it (#1836): Feast for the Dead's. */
@@ -707,7 +712,9 @@ export interface CompanionStepsToTargetEffect {
  * earshot of you, even when the skill strikes a foe (Spirit Boon Strike).
  * `allied-minions` reaches every living minion on the caster's side,
  * anyone's, measured from the caster as `own-minions` (#1986): Blood of
- * the Master's "all animated undead allies".
+ * the Master's "all animated undead allies". `foe-minions` reaches every
+ * living minion not on the caster's side, a masterless one too (#2092):
+ * Verata's Aura's "foe minions in the area".
  * `around: "caster"` centres it on the caster instead, whatever it
  * targeted (#1826): Return's "all adjacent foes", cast on an ally.
  */
@@ -716,6 +723,7 @@ export interface SplashEffect {
   readonly hits:
     | "foes"
     | "foe-creatures"
+    | "foe-minions"
     | "allies"
     | "non-spirit-allies"
     | "party"
@@ -1134,13 +1142,31 @@ export interface Aura {
 }
 
 /**
- * The caster takes control of its target, a spirit (#1965): Signet of
- * Binding's. It is the caster's from then on, on its team, and leaves
- * with it, keeping what it has left. Acts on each target; the simulation
- * moves it, as it makes a `summon`'s. A dead caster takes nothing.
+ * The caster takes control of its target, a spirit (#1965) or a minion
+ * (#2092): Signet of Binding's, Verata's Aura's. It is the caster's from
+ * then on, on its team, and leaves with it, keeping what it has left.
+ * Acts on each target; the simulation moves it, as it makes a `summon`'s.
+ * A dead caster takes nothing. Never a cull: the cap is checked at the
+ * caster's next raise.
  */
 export interface TakeControlEffect {
   readonly kind: "take-control";
+  /**
+   * The caster's status that holds it (#2092): Verata's Aura's. Once the
+   * caster no longer bears it, the creature goes masterless. `undefined`:
+   * it is the caster's for good.
+   */
+  readonly bondStatusId: StatusId | undefined;
+}
+
+/**
+ * Verata's Gaze on its target, a foe's minion (#2092): one with a master
+ * goes masterless; a masterless one is healed for `heal` and becomes the
+ * caster's, as a `take-control`'s. The simulation moves it.
+ */
+export interface GazeMinionEffect {
+  readonly kind: "gaze-minion";
+  readonly heal: Magnitude;
 }
 
 /**
@@ -1533,6 +1559,7 @@ export type UnconditionalEffect =
   | ChainMarkEffect
   | SummonEffect
   | TakeControlEffect
+  | GazeMinionEffect
   | CreateGroundEffect;
 
 export type SkillEffect = UnconditionalEffect | ConditionalEffect;

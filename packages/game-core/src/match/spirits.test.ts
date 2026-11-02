@@ -348,6 +348,7 @@ describe("bodies a spirit, minion or pet does not block (#1278)", () => {
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   };

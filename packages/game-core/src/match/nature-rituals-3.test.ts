@@ -95,6 +95,7 @@ function creatureSpec(id: string, team: number, spawn: Vec2, kind: CreatureKind,
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   });

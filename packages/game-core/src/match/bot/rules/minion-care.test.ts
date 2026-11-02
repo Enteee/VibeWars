@@ -33,6 +33,7 @@ describe("play-build's minion care (#1986)", () => {
         corpsesLeft: 0,
         companionSkillId: undefined,
         leaderId: undefined,
+        bondStatusId: undefined,
         mode: "guard",
       },
     });

@@ -76,6 +76,7 @@ function creature(
       onDeathInRange: undefined,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
       replacedBy: undefined,
       corpsesLeft: 0,

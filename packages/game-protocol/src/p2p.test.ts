@@ -15,6 +15,7 @@ import {
   MIN_WIRE_MORALE,
   MAX_WIRE_RANKS,
   MAX_WIRE_SLOTS,
+  MASTERLESS_WIRE_TEAM,
   MAX_WIRE_STATUSES,
   MAX_WIRE_ACTORS,
   MAX_WIRE_STATUS_INDEX,
@@ -2160,6 +2161,11 @@ describe("the P2P validators (#82)", () => {
         players: [player],
       },
     );
+  });
+
+  it("accept a masterless body on MASTERLESS_WIRE_TEAM (#2092)", () => {
+    const loose = { ...player, team: MASTERLESS_WIRE_TEAM };
+    expect(parseWireSnapshotPart({ ...snapshot, players: [loose] })?.players).toEqual([loose]);
   });
 
   it("drop a token from a hello's rejoin: a rejoin is proven, never told (#593)", () => {

@@ -1,6 +1,6 @@
 import { AREA_ADJACENT, AREA_IN_THE_AREA, AREA_NEARBY } from "../../distances.js";
 import type { StatusDefinition, StatusTrigger } from "../status.js";
-import { JAGGED_HORROR } from "../catalog/shared.js";
+import { BONE_HORROR, JAGGED_HORROR } from "../catalog/shared.js";
 import type { DamageEffect } from "../types.js";
 import { define, ownSkills } from "./define.js";
 
@@ -63,6 +63,9 @@ export type NecromancerStatusId =
   | "veratas-sacrifice"
   | "dark-bond"
   | "jagged-bones"
+  // Taking foe minions (#2092).
+  | "veratas-aura"
+  | "malign-intervention"
   // Casting-state hexes (#1931).
   | "spinal-shivers"
   | "shivers-of-dread"
@@ -562,6 +565,23 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     profession: "necromancer",
     attribute: "necromancer.death-magic",
     replacedOnDeathBy: { creature: JAGGED_HORROR, count: 1 },
+  }),
+  // "For 120...264...300 seconds, all foe minions in the area become your
+  // minions. When Verata's Aura ends, those minions become masterless"
+  // (#2092): the minions are bound to it; the simulation frees them.
+  "veratas-aura": define("veratas-aura", "Verata's Aura", "enchantment", {
+    profession: "necromancer",
+    attribute: "necromancer.death-magic",
+    bindsCreatures: true,
+  }),
+  // "For 5...17...20 seconds, target foe receives 20% less from healing. If
+  // that foe dies, a masterless level 1...14...17 bone horror is created":
+  // at its caster's Death Magic, where the foe fell.
+  "malign-intervention": define("malign-intervention", "Malign Intervention", "hex", {
+    profession: "necromancer",
+    attribute: "necromancer.death-magic",
+    healingMultiplier: 0.8,
+    replacedOnDeathBy: { creature: BONE_HORROR, count: 1, masterless: true },
   }),
   // Casting-state hexes (#1931). "Whenever target foe is struck for cold
   // damage while using a skill, that skill is interrupted and you lose

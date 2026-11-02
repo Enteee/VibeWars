@@ -112,6 +112,7 @@ export function define(
     damageReductionFromHexedSource: undefined,
     damageTypeTakenMultiplier: undefined,
     destroysBearerOnExpiry: false,
+    bindsCreatures: false,
     redirectsPhysicalDamage: 0,
     redirectsDamageToMinion: 0,
     replacedOnDeathBy: undefined,

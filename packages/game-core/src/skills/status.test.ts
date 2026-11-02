@@ -139,7 +139,8 @@ describe("status definitions", () => {
         def.redirectsConditionsToMinion ||
         def.physicalDamageDealtAs !== undefined ||
         def.interruptGuard !== undefined ||
-        def.damageTypeTakenMultiplier !== undefined;
+        def.damageTypeTakenMultiplier !== undefined ||
+        def.bindsCreatures;
       expect(hasEffect, `${id} has no mechanical effect`).toBe(true);
     }
   });

@@ -96,6 +96,12 @@ export const MAX_WIRE_TEXT = 256;
 export const MAX_WIRE_STATUSES = 32;
 
 /**
+ * `WirePlayer.team` for a masterless creature (#2092): one Verata's Gaze
+ * broke off its master, or one that rose masterless. A foe to both teams.
+ */
+export const MASTERLESS_WIRE_TEAM = -1;
+
+/**
  * The most creatures a snapshot carries (#1052): game-core's
  * `MAX_CREATURES` summons plus its `MAX_MAP_CREATURES` map creatures
  * (#1281), mirrored, with a test holding them together.
@@ -411,7 +417,8 @@ export interface WirePlayer {
   readonly guildTag: string | null;
   /** Worn behind the body (#1422); `null` for none, and whenever `guildTag` is. */
   readonly guildCape: WireCape | null;
-  readonly team: 0 | 1;
+  /** A match team, or `MASTERLESS_WIRE_TEAM` for a masterless creature (#2092). */
+  readonly team: 0 | 1 | typeof MASTERLESS_WIRE_TEAM;
   readonly x: number;
   readonly y: number;
   /** Radians, `atan2` convention, 0 = +x (#187). */
@@ -1249,6 +1256,11 @@ function isTeam(value: unknown): value is 0 | 1 {
   return value === 0 || value === 1;
 }
 
+/** A body's `WirePlayer.team` (#2092): a match team, or masterless. */
+function isBodyTeam(value: unknown): value is 0 | 1 | typeof MASTERLESS_WIRE_TEAM {
+  return isTeam(value) || value === MASTERLESS_WIRE_TEAM;
+}
+
 function isNullableString(value: unknown): value is string | null {
   return value === null || isString(value);
 }
@@ -1667,7 +1679,7 @@ function parsePlayer(value: unknown): WirePlayer | undefined {
     !isString(raw.id) ||
     !isString(raw.name) ||
     !isNullableString(raw.guildTag) ||
-    !isTeam(raw.team) ||
+    !isBodyTeam(raw.team) ||
     !isNumber(raw.x) ||
     !isNumber(raw.y) ||
     !isNumber(raw.facing) ||
