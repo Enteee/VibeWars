@@ -700,3 +700,18 @@ test("a bot plays every slot nobody claims, tagged BOT in the match alone (#1194
   await expect(page.locator(".hud-target-bot")).toBeVisible();
   await expect(page.locator(".hud-target-bot")).toHaveText("BOT");
 });
+
+test("a player leaves their team without leaving the lobby, and their Ready clears (#2199)", async ({
+  page,
+}) => {
+  await hostLobby(page, "Host");
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Not ready", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "leave team 1" }).click();
+  await expect(page.locator(".lobby-spectators")).toContainText("Host");
+  await expect(page.locator(".lobby-team").first()).toContainText("Empty");
+  await expect(page.getByRole("button", { name: "Ready", exact: true })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "join team 1" })).toBeEnabled();
+});

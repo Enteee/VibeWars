@@ -347,8 +347,9 @@ export function matchmakingButtons(
 }
 
 /**
- * One team's column: its name and Join, and its members by name (#2029);
- * a bot plays a slot nobody claimed, under that slot's character's name.
+ * One team's column: its name and Join, or Leave on one's own (#2199),
+ * and its members by name (#2029); a bot plays a slot nobody claimed,
+ * under that slot's character's name.
  */
 export function teamColumn(
   team: 0 | 1,
@@ -360,12 +361,15 @@ export function teamColumn(
   const column = h("div", "lobby-team");
   const title = h("div", "lobby-team-header");
   title.appendChild(h("h3", "lobby-team-title", `Team ${String(team + 1)}`));
-  const join = button("Join", "lobby-join", () => {
-    callbacks.onChooseTeam(team);
+  // On their own team a player sees Leave, back to unassigned (#2199).
+  const own = self?.team === team;
+  const verb = own ? "Leave" : "Join";
+  const choose = button(verb, "lobby-join", () => {
+    callbacks.onChooseTeam(own ? null : team);
   });
-  join.setAttribute("aria-label", `Join team ${String(team + 1)}`);
-  join.disabled = controls.teamsDisabled || self?.team === team;
-  title.appendChild(join);
+  choose.setAttribute("aria-label", `${verb} team ${String(team + 1)}`);
+  choose.disabled = controls.teamsDisabled;
+  title.appendChild(choose);
   column.appendChild(title);
   const members = snapshot.players.filter((p) => p.team === team);
   if (members.length === 0) {
