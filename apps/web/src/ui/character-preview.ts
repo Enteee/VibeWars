@@ -51,16 +51,6 @@ export function cssColour(colour: number): string {
   return `#${colour.toString(16).padStart(6, "0")}`;
 }
 
-/**
- * Render the preview circle.
- *
- * Sized from the ruleset's collision radius so the proportions match the
- * arena rather than being an arbitrary pretty size.
- */
-export function createCharacterDot(character: TeamCharacter): HTMLElement {
-  return createProfessionDot(character.primaryProfession, character.secondaryProfession);
-}
-
 /** The secondary's disc, as a share of the circle's diameter (#1785). */
 export const SECONDARY_BADGE_SHARE = 0.45;
 /** Below this, px, the secondary's disc is unreadable and left out. */

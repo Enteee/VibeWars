@@ -1,6 +1,6 @@
 import { pickStarterTeam, STARTER_TEAMS, type StarterTeam } from "@vibewars/game-core";
 
-import { newTeam } from "../ui/team-builder.js";
+import { teamOf } from "../ui/team-builder.js";
 import { fromPlayerBuild } from "./build-validation.js";
 import { STORAGE_NAMESPACE } from "./namespace.js";
 import type { TeamRepository } from "./repository.js";
@@ -71,9 +71,9 @@ function storedStarterTeam(
       ...character
     } = fromPlayerBuild(build, newId(), now);
     const member: TeamCharacter = { ...character, name };
-    return { character: member };
+    return member;
   });
-  return { ...newTeam(id, size), name: starter.name, members, updatedAt: now };
+  return { ...teamOf(id, size, members), name: starter.name, updatedAt: now };
 }
 
 /** The curated team `team` is, by its name; `undefined` once renamed. */
