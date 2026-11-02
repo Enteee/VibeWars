@@ -11,7 +11,15 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { files, parseSettings } from "./settings.mjs";
-import { HEALTH_USER, allUsers, checkSecret, friendName, mintLogin, userSecret } from "./users.mjs";
+import {
+  HEALTH_USER,
+  allUsers,
+  checkSecret,
+  friendName,
+  mintLogin,
+  orphanSecrets,
+  userSecret,
+} from "./users.mjs";
 
 const HEX64 = "0123456789abcdef".repeat(4);
 
@@ -79,6 +87,25 @@ describe("friendName", () => {
   it("refuses the health user's name", () => {
     expect(HEALTH_USER).toBe("health");
     expect(friendName("health")).toBe(false);
+  });
+});
+
+describe("orphanSecrets", () => {
+  it("is the userdb's secrets no file holds, a pending turn-link's temp file counted", () => {
+    const s = temp();
+    const [kept, pending, orphan] = ["a", "b", "c"].map((d) => d.repeat(64));
+    const write = (/** @type {string} */ n, /** @type {string} */ v) => {
+      fs.writeFileSync(path.join(files(s).shared, n), `${v}\n`, { mode: 0o600 });
+    };
+    write("alice.secret", kept);
+    write("alice.secret.0123456789abcdef.tmp", pending);
+    expect(orphanSecrets(s, [kept, pending, orphan])).toEqual([orphan]);
+  });
+
+  it("revokes nothing on a guess: a file that is not a secret is an error", () => {
+    const s = temp();
+    fs.writeFileSync(path.join(files(s).shared, "bob.secret"), "nope\n", { mode: 0o600 });
+    expect(() => orphanSecrets(s, [HEX64])).toThrow(/64 hex digits/);
   });
 });
 

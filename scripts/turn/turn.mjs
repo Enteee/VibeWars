@@ -15,11 +15,19 @@ import { DEFAULT_BASE, inviteLink, turnUrls } from "./link.mjs";
 import { filterLog, tailLines } from "./log.mjs";
 import { formatBytes, procIo, rate, scrape } from "./metrics.mjs";
 import { files, readSettings, turnNft, turnserverConf } from "./settings.mjs";
-import { HEALTH_USER, addUser, allUsers, friendName, relinkUser, removeUser } from "./users.mjs";
+import {
+  HEALTH_USER,
+  addUser,
+  allUsers,
+  friendName,
+  reconcileUsers,
+  relinkUser,
+  removeUser,
+} from "./users.mjs";
 
 const HELP = {
   user: `usage: turn-user add <name> [--base <url>]   add a friend with a secret of their own; prints their invite link
-       turn-user remove <name>                  remove them; logins they minted run on until they expire
+       turn-user remove <name>                  remove them; no login from their secret works after
        turn-user list                           every user`,
   link: `usage: turn-link <name> [--base <url>]
   Gives <name> a new secret and prints their new invite link: the old link
@@ -94,9 +102,20 @@ function printLink(name, link) {
   );
 }
 
+/**
+ * Finishes a revoke an earlier command left half done (reconcileUsers).
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ */
+function reconcile(s) {
+  const n = reconcileUsers(s);
+  if (n > 0) process.stderr.write(`revoked ${String(n)} secret(s) no friend holds any more\n`);
+}
+
 /** @param {string[]} args */
 function user(args) {
   const s = readSettings(process.env);
+  reconcile(s);
   const { rest, base } = baseOption(args);
   const [verb, name] = rest;
   if (verb === "add") {
@@ -110,8 +129,8 @@ function user(args) {
     if (!allUsers(s).includes(friend)) fail(`no user ${friend}`);
     removeUser(s, friend);
     process.stdout.write(
-      `removed ${friend}: their link mints no new logins. Logins already minted, theirs and\n` +
-        "their lobbies', work until they expire (2 h at most).\n",
+      `removed ${friend}: no login from their secret works from now on, theirs or their\n` +
+        "lobbies'. Relays already open run on until they end.\n",
     );
   } else if (verb === "list") {
     for (const n of allUsers(s)) if (n !== HEALTH_USER) process.stdout.write(`${n}\n`);
@@ -123,6 +142,7 @@ function user(args) {
 /** @param {string[]} args */
 function link(args) {
   const s = readSettings(process.env);
+  reconcile(s);
   const { rest, base } = baseOption(args);
   const friend = friendArg(rest[0]);
   if (!allUsers(s).includes(friend)) fail(`no user ${friend}; turn-user add ${friend}`);

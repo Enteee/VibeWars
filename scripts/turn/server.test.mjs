@@ -231,6 +231,19 @@ describe("a real turnserver", () => {
     expect(turn(["user", "list"]).stdout).toBe("bob\n");
   });
 
+  it("revokes, on the next turn-user, a secret a failed remove left in the userdb", async () => {
+    // What a turn-link whose turnadmin -X failed leaves: in the userdb, in no file.
+    const orphan = crypto.randomBytes(32).toString("hex");
+    const db = ["-r", settings.realm, "-b", files(settings).db];
+    expect(spawnSync("turnadmin", ["-s", orphan, ...db]).status).toBe(0);
+    expect(await allocate(login(orphan))).toMatchObject({ ok: true });
+    const list = turn(["user", "list"]);
+    expect(list.status).toBe(0);
+    expect(list.stderr).toContain("revoked 1 secret(s)");
+    expect(await allocate(login(orphan))).toEqual({ ok: false, code: 401 });
+    expect(await allocate(login(secretOf("bob")))).toMatchObject({ ok: true });
+  });
+
   it("gives a friend a new secret on turn-link, and the old one stops working", async () => {
     const old = secretOf("bob");
     const relink = turn(["link", "bob", "--base", "https://play.example/"]);

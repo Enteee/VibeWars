@@ -171,9 +171,10 @@ channels, as often as they like.
   link (fragment only, taken out of the address bar at once, never logged,
   never in a lobby offer), and sharing is on by default: a friend's secret
   reaches the friend plus everyone in their lobbies, through minted logins
-  that live until they expire. Removing or re-linking the friend
-  (`turn-user remove`, `turn-link`) stops new logins; the relay's total
-  quotas bound the rest. Like any saved relay, the secret sits in browser
+  that last as long as their minter chose. Removing or re-linking the
+  friend (`turn-user remove`, `turn-link`) refuses every one of them at
+  once; relays already open run on until refresh, and the relay's total
+  quotas bound those. Like any saved relay, the secret sits in browser
   storage, so an XSS in the client could read it.
 - **Volumetric DoS.** A host is one browser tab. A peer that floods it with
   traffic can make its tick late; filtering that is the network's job.

@@ -129,16 +129,18 @@ She can untick that in Options.
 
 To use your own relay, add yourself (`turn-user add me`) and open the link.
 
-| Command                  | What it does                                                                                                                                                                                                                                         |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `turn-link alice`        | Gives Alice a new secret and prints her new link. Her old link, and every lobby offer made from it, stops working for new allocations.                                                                                                               |
-| `turn-user list`         | Lists everyone. It never shows a secret.                                                                                                                                                                                                             |
-| `turn-user remove alice` | Removes Alice's secret. No new login can be minted from it, at once and without a restart. Logins already minted, hers and her lobbies', live until they expire (2 h at most). A session open on one runs on until it ends: coturn has no kick here. |
+| Command                  | What it does                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `turn-link alice`        | Gives Alice a new secret and prints her new link. Her old link, and every lobby offer made from it, stops working for new allocations.                                                                        |
+| `turn-user list`         | Lists everyone. It never shows a secret.                                                                                                                                                                      |
+| `turn-user remove alice` | Removes Alice's secret. At once and without a restart, no login from it works, hers or her lobbies', whatever expiry it was minted with. A relay already open runs on until it ends: coturn has no kick here. |
 
 Each friend has their own secret, so removing one leaves the others alone.
 The secrets are in coturn's user database, which coturn reads on each
 request, and in `<stateDir>/shared/<name>.secret` (mode 0600), since
-turnadmin keeps no names. coturn cannot also serve static
+turnadmin keeps no names. A secret in the database that no file holds, left by a
+remove or link that failed halfway, is revoked by the next `turn-user` or
+`turn-link`. coturn cannot also serve static
 username/password users once secrets are on, so there are none. Links
 point at the game's latest `main` by default. Use `--base <url>` for
 another page, such as a release:

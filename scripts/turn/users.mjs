@@ -223,8 +223,14 @@ export function userSecret(s, name) {
 export function addUser(s, name) {
   sharedDir(s);
   const secret = newSecret();
-  createSecretFile(secretFile(s, name), secret);
-  turnadmin(s, ["-s", secret]);
+  const file = secretFile(s, name);
+  createSecretFile(file, secret);
+  try {
+    turnadmin(s, ["-s", secret]);
+  } catch (e) {
+    fs.rmSync(file);
+    throw e;
+  }
   return secret;
 }
 
@@ -241,8 +247,7 @@ export function relinkUser(s, name) {
   const file = secretFile(s, name);
   const old = readSecretFile(file);
   const secret = newSecret();
-  const tmp = `${file}.${String(process.pid)}.tmp`;
-  fs.rmSync(tmp, { force: true });
+  const tmp = `${file}.${crypto.randomBytes(8).toString("hex")}.tmp`;
   createSecretFile(tmp, secret);
   turnadmin(s, ["-s", secret]);
   fs.renameSync(tmp, file);
@@ -251,8 +256,8 @@ export function relinkUser(s, name) {
 }
 
 /**
- * Removes `name`'s secret from the userdb, then their file. A login minted
- * from it already lives on until it expires.
+ * Removes `name`'s secret from the userdb, then their file. No login from
+ * it works after; a relay already open on one runs on until it ends.
  *
  * @param {import("./settings.mjs").TurnSettings} s
  * @param {string} name
@@ -261,6 +266,37 @@ export function removeUser(s, name) {
   const file = secretFile(s, name);
   turnadmin(s, ["-X", readSecretFile(file)]);
   fs.rmSync(file);
+}
+
+/**
+ * The secrets of `listed` (the userdb's, for this realm) that no file in
+ * shared/ holds: what a turnadmin -X that failed left behind, with no name
+ * to remove it by. A pending turn-link's temp file counts as holding its
+ * secret. A file that is not a secret is an error, so nothing is revoked
+ * on a guess.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @param {string[]} listed
+ * @returns {string[]}
+ */
+export function orphanSecrets(s, listed) {
+  sharedDir(s);
+  const dir = files(s).shared;
+  const held = new Set(fs.readdirSync(dir).map((n) => readSecretFile(path.join(dir, n))));
+  return listed.filter((secret) => !held.has(secret));
+}
+
+/**
+ * Revokes every orphan secret (see orphanSecrets). turn-user and turn-link
+ * run it first, so a revoke that failed is finished by the next command.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @returns {number} how many it revoked
+ */
+export function reconcileUsers(s) {
+  const orphans = orphanSecrets(s, parseSecretList(turnadmin(s, ["-S"]), s.realm));
+  for (const secret of orphans) turnadmin(s, ["-X", secret]);
+  return orphans.length;
 }
 
 /**
