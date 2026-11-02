@@ -26,6 +26,8 @@ import { MatchSimulation, type Participant, type ParticipantSpec } from "./simul
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 /** 10 Energy, 2 s, on the caster. */
+/** Jaundiced Gaze cast at Blood Magic 12 (#2158): 8 Energy and 0.8 s off. */
+const BLOOD_MAGIC_12: ReadonlyMap<string, number> = new Map([["necromancer.blood-magic", 12]]);
 const TEN = "mesmer.illusion-of-weakness";
 /** 15 Energy, on an ally. */
 const FIFTEEN = "monk.spell-breaker";
@@ -138,7 +140,7 @@ describe("Air of Enchantment (#1975)", () => {
   it("comes off after Jaundiced Gaze's: 10 − 8 = 2, then floor 1", () => {
     const bearer = makeCombatant({ id: "b" });
     bearer.statuses.apply("air-of-enchantment", 9, "x", NO_RANKS);
-    bearer.statuses.apply("jaundiced-gaze", 16, "b", NO_RANKS);
+    bearer.statuses.apply("jaundiced-gaze", 16, "b", BLOOD_MAGIC_12);
     expect(energyCostOf(skill(TEN), bearer, bearer)).toBe(1);
   });
 });
@@ -271,13 +273,13 @@ describe("Dark Apostasy (#1975)", () => {
 });
 
 describe("Jaundiced Gaze (#1975)", () => {
-  it("the next enchantment costs 8 less and casts 1 s faster; the one after, full", () => {
+  it("at Blood Magic 12, the next enchantment costs 8 less and casts 0.8 s faster; the one after, full", () => {
     const sim = match();
     const caster = get(sim, "c").combatant;
-    caster.statuses.apply("jaundiced-gaze", 16, "c", NO_RANKS);
-    expect(effectiveActivationSeconds(skill(TEN), caster)).toBe(1);
+    caster.statuses.apply("jaundiced-gaze", 16, "c", BLOOD_MAGIC_12);
+    expect(effectiveActivationSeconds(skill(TEN), caster)).toBeCloseTo(1.2);
     expect(paid(sim, TEN, "c")).toBe(2);
-    expect(castSeconds(caster)).toBe(1);
+    expect(castSeconds(caster)).toBeCloseTo(1.2);
     expect(caster.statuses.has("jaundiced-gaze")).toBe(false);
     for (let i = 0; caster.cast.activeCast !== undefined || caster.cast.inAftercast; i++) {
       expect(i).toBeLessThan(5 * RULES.tickRateHz);
