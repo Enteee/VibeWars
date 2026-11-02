@@ -3352,10 +3352,13 @@ function chainText(chain: ChainStep): string {
 /**
  * What an `if` waited for, lower case for the middle of a log line
  * (#1735), the tooltip's own words: "only if target has Burning", "unless
- * target is moving".
+ * target is moving". Plain text, its numbers at the caster's `ranks`.
  */
-export function conditionRequirementText(condition: EffectCondition): string {
-  const text = conditionText(condition);
+export function conditionRequirementText(
+  condition: EffectCondition,
+  ranks: ReadonlyMap<string, number>,
+): string {
+  const text = plain(conditionText(condition, ranks));
   return text.startsWith("If ") ? `only ${lowerFirst(text)}` : lowerFirst(text);
 }
 

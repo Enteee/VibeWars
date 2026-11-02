@@ -126,9 +126,16 @@ describe("Ether Signet (#2132)", () => {
   it("at exactly 9 Energy gains nothing, and still recharges for 45 s", () => {
     const sim = duel();
     get(sim, "c").combatant.energy = 9;
-    use(sim, "c", ETHER, "c");
+    const events = use(sim, "c", ETHER, "c");
     expect(get(sim, "c").combatant.energy).toBe(9);
     expect(recharge(sim, "c", ETHER)).toBeCloseTo(45, 0);
+    // The log says why in plain words, at the caster's Inspiration 12.
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "effect-skipped",
+        requirement: "only if you have less than 9 Energy",
+      }),
+    );
   });
 });
 

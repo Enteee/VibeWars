@@ -4166,7 +4166,7 @@ export class MatchSimulation {
       attributeId: undefined,
       area,
       doubleStrike: false,
-      events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped)],
+      events: [...usedEvents, ...events, ...this.#skippedEvent(record, skill, skipped, ranks)],
     });
     this.#logFired(riders);
     if (borrowing !== undefined) {
@@ -4197,11 +4197,15 @@ export class MatchSimulation {
     }
   }
 
-  /** What `record`'s use of `skill` that did nothing says (#1735): why, if an `if` did not hold. */
+  /**
+   * What `record`'s use of `skill` that did nothing says (#1735): why, if
+   * an `if` did not hold, its numbers at the `ranks` it went off at.
+   */
   #skippedEvent(
     record: ParticipantRecord,
     skill: Skill,
     skipped: SkippedEffect | undefined,
+    ranks: ReadonlyMap<string, number>,
   ): CombatEvent[] {
     return skipped === undefined
       ? []
@@ -4211,7 +4215,7 @@ export class MatchSimulation {
             casterId: record.id,
             targetId: skipped.targetId,
             skillId: skill.id,
-            requirement: conditionRequirementText(skipped.condition),
+            requirement: conditionRequirementText(skipped.condition, ranks),
           },
         ];
   }
@@ -6053,7 +6057,15 @@ export class MatchSimulation {
       projectile,
       casterRecord === undefined
         ? events
-        : [...events, ...this.#skippedEvent(casterRecord, skill, skipped)],
+        : [
+            ...events,
+            ...this.#skippedEvent(
+              casterRecord,
+              skill,
+              skipped,
+              withRankLoan(caster, spell.loan, skill, () => ranksOf(caster)),
+            ),
+          ],
       area,
     );
   }
