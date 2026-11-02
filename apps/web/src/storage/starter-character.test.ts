@@ -5,7 +5,6 @@ import { toPlayerBuild } from "./build-validation.js";
 import { CharacterRepository, createMemoryStore } from "./repository.js";
 import {
   rerollStarterCharacter,
-  rollClone,
   rollStarterCharacter,
   type StarterCharacterKey,
 } from "./starter-character.js";
@@ -168,44 +167,6 @@ describe("rerollStarterCharacter", () => {
           name: STARTER_BUILDS.find((b) => b.primaryProfession === picked.primaryProfession)?.name,
         });
         expect(await characters.load("a")).toEqual(rerolled);
-      }
-    }
-  });
-});
-
-describe("rollClone (#1457)", () => {
-  it("rolls a new id, other professions and a name not taken, and leaves the source alone", async () => {
-    const characters = new CharacterRepository(createMemoryStore());
-    for (const build of STARTER_BUILDS) {
-      const source = await rollStarterCharacter({
-        characters,
-        key: memoryKey(),
-        random: () => STARTER_BUILDS.indexOf(build) / STARTER_BUILDS.length,
-        id: "starter",
-        now: 1,
-        taken: [],
-      });
-      if (source === undefined) {
-        throw new Error("no roll");
-      }
-      const before = structuredClone(source);
-      for (const random of [0, 0.5, 0.999]) {
-        let next = random;
-        const stepping = (): number => {
-          const value = next;
-          next = (next + 0.37) % 1;
-          return value;
-        };
-        const taken = [source.name, "Other Name"];
-        const clone = rollClone(source, stepping, "clone", 2, taken);
-
-        expect(clone.id).toBe("clone");
-        expect(taken).not.toContain(clone.name);
-        expect([clone.primaryProfession, clone.secondaryProfession]).not.toEqual([
-          source.primaryProfession,
-          source.secondaryProfession,
-        ]);
-        expect(source).toEqual(before);
       }
     }
   });

@@ -600,7 +600,8 @@ export const BODY_GLYPH_ALPHA = 0.6;
 
 /**
  * A creature's kind glyph (#1162): the study's glyph scale (0.95) over the
- * icon's 14-unit box, at `CREATURE_RADIUS`. Opaque, as the study draws it.
+ * icon's 14-unit box, at `CREATURE_RADIUS`, scaled with the drawn radius.
+ * Opaque, as the study draws it.
  */
 export const CREATURE_GLYPH_SIZE = 13.3;
 /** A Ghostly Hero's glyph (#1377): the priest's, pale, until its own is drawn. */
@@ -644,7 +645,8 @@ export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undef
     return undefined;
   }
   const { x, y } = actor.position;
-  const size = creature ? CREATURE_GLYPH_SIZE : BODY_GLYPH_SIZE;
+  // A creature's glyph grows with its drawn radius (#2047).
+  const size = creature ? (CREATURE_GLYPH_SIZE * actor.radius) / CREATURE_RADIUS : BODY_GLYPH_SIZE;
   if (actor.dead) {
     return {
       glyph,

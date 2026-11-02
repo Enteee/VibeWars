@@ -1,4 +1,5 @@
 import { effectiveRank } from "../attributes.js";
+import type { ModStatusWhile } from "../equipment/mods.js";
 import type { ResolvedEquipment } from "../equipment/resolve.js";
 import type { DamageType } from "../equipment/types.js";
 import { wieldsFor } from "../equipment/weapons.js";
@@ -7,6 +8,7 @@ import { FAST_CASTING_ATTRIBUTE, fastCastingMultiplier } from "../primary-attrib
 import type { ResourceRules } from "../ruleset.js";
 import type { CombatEvent } from "./effects.js";
 import { guardedDegeneration } from "./loss-guard.js";
+import { effectiveMaxEnergy, energyFloor } from "./overcast.js";
 import {
   aggregateModifiers,
   clampPips,
@@ -16,6 +18,7 @@ import {
   isStatusId,
   isSuppressed,
   NO_RANKS,
+  isUnderAnother,
   ownSkillBoost,
   scaledStatAttributes,
   type ArmorReduction,
@@ -101,8 +104,28 @@ export function advanceStatuses(
   for (const statusId of combatant.statuses.advance(dt, combatant.moving)) {
     events.push({ kind: "status-expired", targetId: combatant.id, statusId });
   }
+  loseModMaxima(combatant);
 
   return events;
+}
+
+/**
+ * A mod's maximum whose condition no longer holds (#2010), of Devotion's
+ * once the enchantment ends or Hale and Hearty's below half Health: what
+ * is above the maximum left is lost, as when a status's bonus ends. It
+ * never kills, and takes no hidden energy deeper.
+ */
+function loseModMaxima(combatant: Combatant): void {
+  const { conditionalMaxHealth, conditionalMaxEnergy } = combatant.equipment;
+  if (conditionalMaxHealth.length > 0) {
+    combatant.health = Math.min(combatant.health, effectiveMaxHealth(combatant));
+  }
+  if (conditionalMaxEnergy.length > 0) {
+    combatant.energy = Math.max(
+      energyFloor(combatant),
+      Math.min(combatant.energy, effectiveMaxEnergy(combatant)),
+    );
+  }
 }
 
 /** Net regeneration (+) or degeneration (−), in pips, clamped to ±`MAX_PIPS`. */
@@ -113,9 +136,9 @@ export interface NetPips {
 
 /**
  * The bearer's net pips as they apply (#502, #504): every status's, plus
- * `naturalPips` of natural regeneration for health and the base pips for
- * energy, and `upkeepPips` (`upkeepPips`) for energy, each clamped. None
- * when dead. The tick applies these and the wire shows these, so the two
+ * `naturalPips` of natural regeneration and the held set's mods' (#2009) for
+ * health, the base pips and `upkeepPips` (`upkeepPips`) for energy, each
+ * clamped. None when dead. The tick applies these and the wire shows these, so the two
  * cannot disagree.
  */
 export function netPips(combatant: Combatant, naturalPips: number, upkeepPips: number): NetPips {
@@ -123,7 +146,11 @@ export function netPips(combatant: Combatant, naturalPips: number, upkeepPips: n
     return { health: 0, energy: 0 };
   }
   return {
-    health: clampPips(aggregateModifiers(combatant.statuses.active).healthPips + naturalPips),
+    health: clampPips(
+      aggregateModifiers(combatant.statuses.active).healthPips +
+        combatant.equipment.healthPips +
+        naturalPips,
+    ),
     energy: clampPips(preCapEnergyPips(combatant, upkeepPips)),
   };
 }
@@ -193,9 +220,9 @@ const PIP_EPSILON = 1e-6;
  * before the cut, so the 20% is of the larger maximum, the one the wire
  * carries. The simulation clamps heals to it.
  */
-export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
+export function effectiveMaxHealth(combatant: MaxHealthHolder): number {
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  const raised = combatant.maxHealth + modifiers.maxHealthBonus;
+  const raised = combatant.maxHealth + modifiers.maxHealthBonus + modMaxHealthBonus(combatant);
   return raised - lossOf(raised, modifiers.maxHealthLoss);
 }
 
@@ -203,14 +230,45 @@ export function effectiveMaxHealth(combatant: Pick<Combatant, "maxHealth" | "sta
  * The bearer's maximum health with its statuses' bonus (#1359), before any
  * loss: what its health bar is drawn against.
  */
-export function raisedMaxHealth(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
-  return combatant.maxHealth + aggregateModifiers(combatant.statuses.active).maxHealthBonus;
+export function raisedMaxHealth(combatant: MaxHealthHolder): number {
+  return (
+    combatant.maxHealth +
+    aggregateModifiers(combatant.statuses.active).maxHealthBonus +
+    modMaxHealthBonus(combatant)
+  );
 }
 
 /** How much maximum health the bearer's statuses take: 0 for none. */
-export function maxHealthLossOf(combatant: Pick<Combatant, "maxHealth" | "statuses">): number {
+export function maxHealthLossOf(combatant: MaxHealthHolder): number {
   const modifiers = aggregateModifiers(combatant.statuses.active);
-  return lossOf(combatant.maxHealth + modifiers.maxHealthBonus, modifiers.maxHealthLoss);
+  return lossOf(
+    combatant.maxHealth + modifiers.maxHealthBonus + modMaxHealthBonus(combatant),
+    modifiers.maxHealthLoss,
+  );
+}
+
+/** What a maximum Health is read from: the base, statuses and the held set's mods. */
+type MaxHealthHolder = Pick<Combatant, "maxHealth" | "statuses" | "equipment">;
+
+/** Whether an enchantment, stance or hex is on `bearer`: a mod's condition (#2010). */
+export function statusWhileHolds(
+  condition: ModStatusWhile,
+  bearer: Pick<Combatant, "statuses">,
+): boolean {
+  const category =
+    condition === "enchanted" ? "enchantment" : condition === "in-stance" ? "stance" : "hex";
+  return bearer.statuses.countByCategory(category) > 0;
+}
+
+/** The held set's maximum Health whose condition holds now (#2010): of Devotion's +45. */
+function modMaxHealthBonus(combatant: Pick<Combatant, "statuses" | "equipment">): number {
+  let bonus = 0;
+  for (const mod of combatant.equipment.conditionalMaxHealth) {
+    if (statusWhileHolds(mod.while, combatant)) {
+      bonus += mod.amount;
+    }
+  }
+  return bonus;
 }
 
 /**
@@ -461,7 +519,8 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * and so does the skill's own `activationWhile` (#1916), as Natural
  * Healing's half while the caster is not enchanted. A spell an ally casts
  * on a `target` under "Help!" (#1955) takes half as long; the target's own
- * and a foe's do not.
+ * and a foe's do not. Last, the seconds a status takes off its own skills
+ * of a kind (#1975), never below 0.
  */
 export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number;
 export function effectiveActivationSeconds(
@@ -476,24 +535,29 @@ export function effectiveActivationSeconds(
 ): number {
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   const modifiers = aggregateModifiers(caster.statuses.active);
+  const own = ownSkillBoost(caster.statuses.active, skill);
   const slowed =
     (skill.type === "attack" || skill.type === "pet-attack"
       ? 1
       : modifiers.skillActivationMultiplier) *
-    ownSkillBoost(caster.statuses.active, skill).activationMultiplier *
+    own.activationMultiplier *
     activationWhileMultiplier(skill, caster);
+  // Jaundiced Gaze's second (#1975), off after every multiplier.
+  const less = (seconds: number): number => Math.max(0, seconds - own.activationSecondsLess);
   if (!isSpell(skill.type)) {
-    return skill.activationSeconds * fastCasting * slowed;
+    return less(skill.activationSeconds * fastCasting * slowed);
   }
   if (target === undefined) {
-    return skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting;
+    return less(skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting);
   }
   const onTarget = aggregateModifiers(target.statuses.active);
   const fromAlly = target.id !== caster.id && target.team === caster.team;
   const targeted =
     (skill.type === "hex" ? onTarget.incomingHexCastTimeMultiplier : 1) *
     (fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : 1);
-  return skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * targeted;
+  return less(
+    skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * targeted,
+  );
 }
 
 /** `skill`'s own `activationWhile` multiplier for `caster` now (#1916); 1 without one. */
@@ -538,11 +602,16 @@ export function combinedBlockChance(
  * The chance in [0, 1] that the bearer blocks an attack of this kind
  * (#534). None while knocked down, as in GW1 (#610): 0, so no block is
  * rolled at all. A block that holds only below a share of health (#988)
- * reads the bearer's health as it is now.
+ * reads the bearer's health as it is now. `attackSkill`: the blow or shot
+ * is an attack skill's, which a block of attack skills only (#1978) needs.
  */
-export function blockChanceOf(combatant: Combatant, kind: "melee" | "projectile"): number {
+export function blockChanceOf(
+  combatant: Combatant,
+  kind: "melee" | "projectile",
+  attackSkill: boolean,
+): number {
   return combinedBlockChance(
-    blockingStatusesOf(combatant).map(({ block }) => block),
+    blockingStatusesOf(combatant, attackSkill).map(({ block }) => block),
     kind,
   );
 }
@@ -556,16 +625,26 @@ export interface BlockingStatus {
 /**
  * The bearer's statuses that block now, in the order they roll (#1265),
  * as `blockChanceOf` reads them: none while knocked down, and one that
- * holds only below a share of health only below it.
+ * holds only below a share of health only below it. One that blocks only
+ * attack skills drops out against a plain swing, and one that holds only
+ * while under a shout or chant drops out without one (#1978).
  */
-export function blockingStatusesOf(combatant: Combatant): readonly BlockingStatus[] {
+export function blockingStatusesOf(
+  combatant: Combatant,
+  attackSkill: boolean,
+): readonly BlockingStatus[] {
   if (combatant.knockdownRemaining > 0) {
     return [];
   }
   const maxHealth = effectiveMaxHealth(combatant);
   return combatant.statuses.active.flatMap((status) => {
-    const { block, blockBelowHealth } = getStatusDefinition(status.id);
-    const holds = blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth;
-    return block !== undefined && holds ? [{ statusId: status.id, block }] : [];
+    const { block, blockBelowHealth, blockWhileUnder } = getStatusDefinition(status.id);
+    const holds =
+      (blockBelowHealth === undefined || combatant.health < maxHealth * blockBelowHealth) &&
+      (blockWhileUnder === undefined ||
+        isUnderAnother(combatant.statuses.active, status, blockWhileUnder));
+    return block !== undefined && holds && (attackSkill || block.attackSkillsOnly !== true)
+      ? [{ statusId: status.id, block }]
+      : [];
   });
 }

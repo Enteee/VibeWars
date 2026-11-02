@@ -4,22 +4,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   BLOCKED_NOTICE,
   CharacterRepository,
-  MATCH_RECORD_CAP,
-  MatchRecordRepository,
   TeamRepository,
   createMemoryStore,
   discardedCharactersNotice,
-  discardedMatchRecordsNotice,
   discardedTeamsNotice,
   openIndexedDbStore,
 } from "./repository.js";
 import {
   CHARACTER_SCHEMA_VERSION,
-  MATCH_RECORD_SCHEMA_VERSION,
   PersistenceError,
   TEAM_SCHEMA_VERSION,
   type StoredCharacter,
-  type StoredMatchRecord,
   type StoredTeam,
   type StoredTeamMember,
 } from "./schema.js";
@@ -53,20 +48,6 @@ function team(overrides: Partial<StoredTeam> = {}): StoredTeam {
     members: [member("char-1")],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: 1000,
-    ...overrides,
-  };
-}
-
-function played(overrides: Partial<StoredMatchRecord> = {}): StoredMatchRecord {
-  return {
-    schemaVersion: MATCH_RECORD_SCHEMA_VERSION,
-    id: "match-1",
-    characterId: "char-1",
-    characterName: "Test Character",
-    finishedAt: 1000,
-    mapId: "arena-alpha",
-    mode: "annihilation",
-    result: "win",
     ...overrides,
   };
 }
@@ -241,60 +222,6 @@ describe("TeamRepository", () => {
   });
 });
 
-describe("MatchRecordRepository (#1404)", () => {
-  it("round-trips a record, newest first", async () => {
-    const repo = new MatchRecordRepository(createMemoryStore());
-    await repo.save(played({ id: "old", finishedAt: 1 }));
-    await repo.save(played({ id: "new", finishedAt: 3, result: "loss" }));
-    await repo.save(played({ id: "mid", finishedAt: 2 }));
-    const { records, problems } = await repo.list();
-    expect(records.map((r) => r.id)).toEqual(["new", "mid", "old"]);
-    expect(records[0]).toEqual(played({ id: "new", finishedAt: 3, result: "loss" }));
-    expect(problems).toEqual([]);
-  });
-
-  it("drops the oldest once past the cap, across characters", async () => {
-    const repo = new MatchRecordRepository(createMemoryStore());
-    for (let i = 0; i <= MATCH_RECORD_CAP; i += 1) {
-      await repo.save(
-        played({ id: `m${String(i)}`, finishedAt: i, characterId: i % 2 === 0 ? "a" : "b" }),
-      );
-    }
-    const { records } = await repo.list();
-    expect(records).toHaveLength(MATCH_RECORD_CAP);
-    expect(records.map((r) => r.id)).not.toContain("m0");
-    expect(records[0]?.id).toBe(`m${String(MATCH_RECORD_CAP)}`);
-  });
-
-  it("refuses to save a record whose schema version is not current", async () => {
-    const repo = new MatchRecordRepository(createMemoryStore());
-    await expect(repo.save(played({ schemaVersion: 99 }))).rejects.toBeInstanceOf(PersistenceError);
-  });
-
-  it("discards a record at another schema version, or with an unknown result, and says so", async () => {
-    const store = createMemoryStore();
-    await store.put("matches", "stale", played({ id: "stale", schemaVersion: 99 }));
-    await store.put("matches", "odd", { ...played({ id: "odd" }), result: "forfeit" });
-    await store.put("matches", "match-1", played());
-    const repo = new MatchRecordRepository(store);
-
-    const { records, problems } = await repo.list();
-    expect(records.map((r) => r.id)).toEqual(["match-1"]);
-    expect(problems).toEqual([discardedMatchRecordsNotice(2)]);
-    expect(await store.get("matches", "stale")).toBeUndefined();
-  });
-
-  it("deletes a character's records and keeps the others'", async () => {
-    const repo = new MatchRecordRepository(createMemoryStore());
-    await repo.save(played({ id: "a1", characterId: "a" }));
-    await repo.save(played({ id: "b1", characterId: "b" }));
-    await repo.save(played({ id: "a2", characterId: "a" }));
-    await repo.deleteFor("a");
-    const { records } = await repo.list();
-    expect(records.map((r) => r.id)).toEqual(["b1"]);
-  });
-});
-
 describe("openIndexedDbStore and other tabs (#1404)", () => {
   /** The handlers the store sets on an open request and its database. */
   interface FakeOpen {
@@ -302,16 +229,29 @@ describe("openIndexedDbStore and other tabs (#1404)", () => {
     onsuccess: (() => void) | null;
     onupgradeneeded: (() => void) | null;
     onerror: (() => void) | null;
-    result: { onversionchange: (() => void) | null; close: () => void };
+    result: {
+      onversionchange: (() => void) | null;
+      close: () => void;
+      objectStoreNames: { contains: (name: string) => boolean };
+      createObjectStore: (name: string) => void;
+      deleteObjectStore: (name: string) => void;
+    };
   }
 
-  function stubOpen(): FakeOpen {
+  /** An open request on a database that holds `stores`, which an upgrade changes. */
+  function stubOpen(stores = new Set<string>()): FakeOpen {
     const request: FakeOpen = {
       onblocked: null,
       onsuccess: null,
       onupgradeneeded: null,
       onerror: null,
-      result: { onversionchange: null, close: vi.fn() },
+      result: {
+        onversionchange: null,
+        close: vi.fn(),
+        objectStoreNames: { contains: (name) => stores.has(name) },
+        createObjectStore: (name) => stores.add(name),
+        deleteObjectStore: (name) => stores.delete(name),
+      },
     };
     vi.stubGlobal("indexedDB", { open: () => request });
     return request;
@@ -337,5 +277,21 @@ describe("openIndexedDbStore and other tabs (#1404)", () => {
     await opened;
     request.result.onversionchange?.();
     expect(request.result.close).toHaveBeenCalledOnce();
+  });
+
+  it("creates only the character and team stores on a first run (#2019)", () => {
+    const stores = new Set<string>();
+    const request = stubOpen(stores);
+    void openIndexedDbStore(() => undefined);
+    request.onupgradeneeded?.();
+    expect([...stores].sort()).toEqual(["characters", "teams"]);
+  });
+
+  it("drops an older build's match store and keeps characters and teams (#2019)", () => {
+    const stores = new Set(["characters", "teams", "matches"]);
+    const request = stubOpen(stores);
+    void openIndexedDbStore(() => undefined);
+    request.onupgradeneeded?.();
+    expect([...stores].sort()).toEqual(["characters", "teams"]);
   });
 });

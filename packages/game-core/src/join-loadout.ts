@@ -6,7 +6,7 @@ import {
   type PlayerBuild,
   type SkillBar,
 } from "./build.js";
-import { baseEnergyPipsFor, type BuildEquipment } from "./equipment/index.js";
+import type { BuildEquipment } from "./equipment/index.js";
 import type { ProfessionId } from "./professions.js";
 import type { AttributeRules } from "./ruleset.js";
 import { pickStarterBuild } from "./starter-builds.js";
@@ -18,8 +18,6 @@ export interface JoinLoadout {
   readonly primaryProfession: ProfessionId;
   readonly secondaryProfession: ProfessionId | undefined;
   readonly equipment: BuildEquipment;
-  /** Energy regeneration in pips, before effects (#502). */
-  readonly baseEnergyPips: number;
 }
 
 /** What `build` plays as. */
@@ -31,7 +29,6 @@ export function loadoutOf(build: PlayerBuild): JoinLoadout {
     primaryProfession: build.primaryProfession,
     secondaryProfession: build.secondaryProfession,
     equipment: build.equipment,
-    baseEnergyPips: baseEnergyPipsFor(build.primaryProfession),
   };
 }
 

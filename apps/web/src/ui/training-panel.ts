@@ -36,6 +36,7 @@ import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
 import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
+import { MENU_DEPTH } from "../music/fixed-tracks.js";
 import { attachMatchMusic, type MatchMusic } from "../music/match-music.js";
 import { music } from "../music/play-music.js";
 import { mapShrines, type MapShrine } from "../net/maps.js";
@@ -660,6 +661,8 @@ export function createTrainingPanel(): TrainingPanel {
       sounds: attachMatchSounds(connection, soundPlayer()),
       music: attachMatchMusic(connection, {
         screen: "training",
+        // Every editor the panel sits in is as deep as the Character Builder.
+        menuDepth: MENU_DEPTH["character-builder"],
         mode: () => music().mode(),
         tracks: TRACKS,
         onChange: (state) => {

@@ -39,6 +39,9 @@
  *                                the music through changes and print how late
  *                                each is heard (#509): intensity +1, -1, +2,
  *                                0-1-0-1 within a second, a switch, an edit
+ *   --latency-hint <hint>        the music context asks for this latencyHint
+ *                                (`playback`, `interactive` or seconds)
+ *                                instead of the one it is built with (#2023)
  *   --json <file>                write the totals per browser and load, and
  *                                whether each browser's readings are
  *                                validated (#519), to this file
@@ -86,10 +89,18 @@ const { values: options } = parseArgs({
     json: { type: "string" },
     reactivity: { type: "boolean", default: false },
     intensity: { type: "string", default: "3" },
+    "latency-hint": { type: "string" },
   },
 });
 const SECONDS = Number(options.seconds);
 const INTENSITY = Number(options.intensity);
+/** @type {AudioContextLatencyCategory | number | undefined} */
+const LATENCY_HINT =
+  options["latency-hint"] === undefined
+    ? undefined
+    : Number.isNaN(Number(options["latency-hint"]))
+      ? /** @type {AudioContextLatencyCategory} */ (options["latency-hint"])
+      : Number(options["latency-hint"]);
 /** The track the crossfade goes to: one no Training Ground map plays by default. */
 const CROSSFADE_TO = "last-stand";
 
@@ -382,6 +393,22 @@ async function measure(url, load, progress) {
         }
       });
     });
+    if (LATENCY_HINT !== undefined) {
+      // The music host's context asks for this hint instead of its own; the
+      // sound effects' context, in the top frame, keeps the default.
+      await page.addInitScript((hint) => {
+        if (window === window.top) {
+          return;
+        }
+        const Native = window.AudioContext;
+        window.AudioContext = class extends Native {
+          /** @param {AudioContextOptions} [contextOptions] */
+          constructor(contextOptions) {
+            super({ ...contextOptions, latencyHint: hint });
+          }
+        };
+      }, LATENCY_HINT);
+    }
     const query =
       `?musicstats${load.stress > 0 ? `&stress=${String(load.stress)}` : ""}` +
       ((load.audioStress ?? 0) > 0 ? `&audiostress=${String(load.audioStress)}` : "");
@@ -445,8 +472,11 @@ async function measure(url, load, progress) {
         const seen = await page.evaluate(() =>
           "musicStressSeen" in window ? window.musicStressSeen : [],
         );
+        // Playwright's message names why: not visible, outside of the
+        // viewport, or which element intercepts the pointer.
+        const why = error instanceof Error ? error.message : String(error);
         console.log(
-          `[${load.browser}] no profession picker; the page shows:\n${shown}\n` +
+          `[${load.browser}] no profession picker: ${why}\nthe page shows:\n${shown}\n` +
             `it saw:\n${JSON.stringify(seen, null, 1)}`,
         );
         throw error;

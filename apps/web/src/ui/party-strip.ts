@@ -1,11 +1,8 @@
-import type { ProfessionId } from "@vibewars/game-core";
 import type { LobbyMode } from "@vibewars/game-protocol";
 import type { LobbySnapshot } from "@vibewars/game-session";
 
-import { createProfessionDot, professionLabel } from "./character-preview.js";
 import { h } from "./kit.js";
-import { displayLobbyCode } from "./lobby-screen.js";
-import { waitedLabel } from "./queue-screen.js";
+import { ascentLine, waitedLabel } from "./queue-screen.js";
 
 /**
  * The party strip (#1526, ADR-0041): on top of every mode screen, who is
@@ -15,8 +12,6 @@ import { waitedLabel } from "./queue-screen.js";
 /** One person in the party: a bot is the lobby's, not the party's. */
 export interface PartyMember {
   readonly name: string;
-  /** The active character's; `null` for a starter build. */
-  readonly primary: ProfessionId | null;
   readonly isHost: boolean;
   readonly self: boolean;
   /** Dropped, its seat held while it may come back (#1764). */
@@ -34,8 +29,12 @@ export interface RailParty {
   readonly members: readonly PartyMember[];
   /** How long the party has looked for a team (#1766); `null` while not queued. */
   readonly queuedMs: number | null;
+  /** Its players a side (#2104): in a Hosted Game, the host's pick. */
+  readonly teamSize: number;
   /** Teams its queue hears searching, its own included (#1881); `undefined` until it says. */
   readonly teams: number | undefined;
+  /** The Heroes' Ascent round it is queued at (#1996); `null` otherwise. */
+  readonly ascentRound: number | null;
 }
 
 /** Beside a member whose connection dropped, while its seat is held (#1764). */
@@ -70,6 +69,8 @@ export function partyOf(
   return {
     queuedMs,
     teams,
+    ascentRound: snapshot.ascentRound,
+    teamSize: snapshot.teamSize,
     code: snapshot.code,
     mode: snapshot.mode,
     isHost: snapshot.isHost,
@@ -78,7 +79,6 @@ export function partyOf(
       .filter((player) => !player.bot)
       .map((player) => ({
         name: player.name,
-        primary: player.character?.primary ?? null,
         isHost: player.isHost,
         self: player.sessionId === snapshot.selfSessionId,
         away: player.away,
@@ -114,11 +114,6 @@ export function partyStrip(party: RailParty): HTMLElement {
   const list = h("ul", "party-members");
   for (const member of party.members) {
     const row = h("li", memberClass(member));
-    if (member.primary !== null) {
-      const dot = createProfessionDot(member.primary, undefined);
-      dot.title = professionLabel(member.primary, undefined);
-      row.appendChild(dot);
-    }
     row.appendChild(h("span", "party-member-name", member.name));
     if (member.isHost) {
       row.appendChild(h("span", "party-host-mark", "Host"));
@@ -130,11 +125,13 @@ export function partyStrip(party: RailParty): HTMLElement {
   }
   strip.appendChild(list);
   if (party.queuedMs !== null) {
+    if (party.ascentRound !== null) {
+      strip.appendChild(h("span", "party-ascent", ascentLine(party.ascentRound)));
+    }
     strip.appendChild(h("span", "party-queued", lookingLabel(party.queuedMs, party.teams)));
   }
   if (showsClosed(party)) {
     strip.appendChild(h("span", "party-closed", PARTY_CLOSED));
   }
-  strip.appendChild(h("span", "party-code", displayLobbyCode(party.code)));
   return strip;
 }

@@ -157,6 +157,7 @@ export function guardSpec(guard: BaseGuard, index: number, facing: number): Part
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   };

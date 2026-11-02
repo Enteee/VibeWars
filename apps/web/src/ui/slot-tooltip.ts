@@ -148,7 +148,10 @@ export function slotDescription(
   const description =
     echoed === undefined
       ? described
-      : { ...described, effects: [...described.effects, { text: echoed, magnitude: undefined }] };
+      : {
+          ...described,
+          effects: [...described.effects, { text: echoed, parts: [echoed], magnitude: undefined }],
+        };
   // A signet under Primal Echoes (#1886) costs Energy it does not list.
   const listed = skill.cost?.kind === "energy" ? skill.cost.amount : undefined;
   if (listed === undefined && slot.energyCost === 0) {

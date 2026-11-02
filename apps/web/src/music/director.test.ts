@@ -80,13 +80,43 @@ describe("directMusic: track choice", () => {
     }
   });
 
+  it("keeps first-light from a menu into the Training Ground and back (#2020)", () => {
+    const states = run([
+      { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null },
+      {
+        screen: "training",
+        menuDepth: 1,
+        mapId: "training-hall",
+        matchSeed: "training-hall:1",
+        ...FIGHTING,
+      },
+      { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null },
+    ]);
+    expect(states.map((state) => [state.context, state.trackId])).toEqual([
+      ["menu", "first-light"],
+      ["menu", "first-light"],
+      ["menu", "first-light"],
+    ]);
+  });
+
+  it("keeps Shuffle's song from a menu into the Training Ground (#2020)", () => {
+    const shuffle: MusicMode = { kind: "shuffle" };
+    const states = run(
+      [
+        { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null },
+        { screen: "training", menuDepth: 1, mapId: "training-hall", matchSeed: null, ...FIGHTING },
+      ],
+      shuffle,
+    );
+    expect(states[1]?.trackId).toBe(states[0]?.trackId);
+  });
+
   it("gives every map its table's song for any seed, and an unknown map hall-of-champions", () => {
     for (const [mapId, expected] of MAP_TRACKS) {
-      const screen = mapId.startsWith("training-") ? "training" : "match";
       const picked = new Set(
         Array.from(
           { length: 20 },
-          (_, i) => run([{ screen, mapId, matchSeed: `${mapId}:${String(i)}` }])[0]?.trackId,
+          (_, i) => run([{ mapId, matchSeed: `${mapId}:${String(i)}` }])[0]?.trackId,
         ),
       );
       expect([...picked], mapId).toEqual([expected]);
@@ -192,6 +222,16 @@ describe("targetIntensity", () => {
     { why: "nothing near", at: {}, level: 0 },
     { why: "training, nothing near", at: { screen: "training" }, level: 0 },
     { why: "training, fighting", at: { screen: "training", ...FIGHTING }, level: 2 },
+    {
+      why: "training, fighting, in an editor (#2020)",
+      at: { screen: "training", menuDepth: 1, ...FIGHTING },
+      level: 2,
+    },
+    {
+      why: "training, nothing near, in an editor",
+      at: { screen: "training", menuDepth: 1 },
+      level: 1,
+    },
   ];
   for (const { why, at, level } of rows) {
     it(`is ${String(level)} for ${why}`, () => {

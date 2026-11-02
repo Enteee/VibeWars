@@ -4,6 +4,7 @@ import type {
   WireTeamProposal,
   WireTeamSide,
 } from "@vibewars/game-protocol";
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,15 +13,22 @@ import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
   NO_PROPOSALS,
+  NO_PLAYABLE_TEAM_BUILDS,
   NO_TEAM_BUILDS,
   SEATS_LINE,
   SPECTATING_LINE,
   VOTE_HINT,
   clockText,
+  drawerRows,
+  drawerShowing,
   initial,
+  memberCount,
+  noTeamBuildNamed,
   proposableTeams,
+  putAwayBuildsDrawer,
   reasonLine,
   teamLobbyBody,
+  teamLobbySize,
   type TeamLobbyCallbacks,
 } from "./team-lobby-screen.js";
 
@@ -46,6 +54,8 @@ class FakeElement {
   title = "";
   value = "";
   disabled = false;
+  hidden = false;
+  placeholder = "";
   type = "";
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -72,6 +82,15 @@ class FakeElement {
   appendChild(child: FakeElement): FakeElement {
     this.children.push(child);
     return child;
+  }
+
+  replaceChildren(...children: FakeElement[]): void {
+    this.children.length = 0;
+    this.append(...children);
+  }
+
+  focus(): void {
+    focusLog.push(this);
   }
 
   append(...children: FakeElement[]): void {
@@ -102,6 +121,9 @@ class FakeElement {
   }
 }
 
+/** Each element focused, in order: the last is `document.activeElement`. */
+const focusLog: FakeElement[] = [];
+
 /** A card's own press, which votes and carries its state. */
 function press(card: FakeElement | undefined): FakeElement | undefined {
   return card?.all("play-card-open")[0];
@@ -120,7 +142,6 @@ function player(
     team,
     ready: false,
     isHost: sessionId === "aria",
-    character: null,
     bot,
     away: false,
   };
@@ -179,12 +200,14 @@ function lobby(
     phase: "team-lobby",
     mode: "hosted-game",
     mapId: "arena",
+    teamSize: 4,
     open: true,
     hostId: "aria",
     players,
     isHost: self === "aria",
     countdownSeconds: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds,
     teamLobby: {
       stage,
@@ -201,8 +224,8 @@ function team(id: string, name: string, size: number): StoredTeam {
     primaryProfession: "warrior" as const,
     secondaryProfession: undefined,
     attributes: [],
-    skillBar: [],
-    equipment: { weapon: null, offhand: null, armor: null },
+    skillBar: Array.from({ length: 8 }, () => null),
+    equipment: defaultBuildEquipment("warrior"),
   };
   return {
     schemaVersion: 1,
@@ -211,7 +234,7 @@ function team(id: string, name: string, size: number): StoredTeam {
     members: Array.from({ length: size }, () => ({ character })),
     rulesetId: "r",
     updatedAt: 0,
-  } as unknown as StoredTeam;
+  };
 }
 
 describe("the Team Lobby's words (#1460)", () => {
@@ -237,14 +260,40 @@ describe("the Team Lobby's words (#1460)", () => {
     expect([initial("aria"), initial(" Brann"), initial("")]).toEqual(["A", "B", "?"]);
   });
 
-  it("offers only the Team Builds of the side's exact size", () => {
-    const duo = team("a", "Duo", 2);
+  it("never offers a Team Build with problems: it saves, but is not playable (#2110)", () => {
+    const unnamed = team("a", "", 4);
     const four = team("b", "Four", 4);
-    expect(proposableTeams([duo, four], 4)).toEqual([
-      { team: duo, disabled: true, reason: "needs 4 characters" },
-      { team: four, disabled: false, reason: undefined },
-    ]);
-    expect(proposableTeams([duo], 1)[0]?.reason).toBe("needs 1 character");
+    expect(proposableTeams([unnamed, four], 4)).toEqual([four]);
+  });
+
+  it("offers only the Team Builds of the side's exact size (#2104)", () => {
+    const solo = team("a", "Solo", 1);
+    const duo = team("b", "Duo", 2);
+    const four = team("c", "Four", 4);
+    const sixteen = team("d", "Sixteen", 16);
+    expect(proposableTeams([solo, duo, four, sixteen], 4)).toEqual([four]);
+    expect(proposableTeams([solo, duo, four, sixteen], 1)).toEqual([solo]);
+    expect(proposableTeams([duo, sixteen], 8)).toEqual([]);
+  });
+
+  it("lists the drawer's Team Builds by size and name, and counts the other sizes (#2116)", () => {
+    const four = team("a", "Ward & Spike", 4);
+    const hexway = team("b", "Hexway", 4);
+    const duo = team("c", "Duo", 2);
+    const broken = team("d", "", 2);
+    const all = [four, hexway, duo, broken];
+    // A Team Build with problems is no row, and not one hidden either.
+    expect(drawerRows(all, 4, "")).toEqual({ rows: [four, hexway], hiddenOtherSizes: 1 });
+    expect(drawerRows(all, 4, " WARD ").rows).toEqual([four]);
+    expect(drawerRows(all, 4, "spike").rows).toEqual([four]);
+    expect(drawerRows(all, 4, "zzz")).toEqual({ rows: [], hiddenOtherSizes: 1 });
+    expect(drawerRows(all, 2, "")).toEqual({ rows: [duo], hiddenOtherSizes: 2 });
+    expect(drawerShowing(4, 0)).toBe("Showing 4-player builds");
+    expect(drawerShowing(4, 1)).toBe("Showing 4-player builds · 1 other hidden");
+    expect(drawerShowing(4, 2)).toBe("Showing 4-player builds · 2 others hidden");
+    expect(memberCount(1)).toBe("1 member");
+    expect(memberCount(4)).toBe("4 members");
+    expect(noTeamBuildNamed("zzz")).toBe("No Team Build named “zzz”.");
   });
 });
 
@@ -256,6 +305,7 @@ describe("the Team Lobby's body (#1460)", () => {
     onClaim: (slot) => sent.push({ kind: "claim", value: slot }),
     onToggleReady: () => undefined,
     onLeave: () => undefined,
+    onSelectTeamSize: () => undefined,
   };
   const body = (
     shown: LobbySnapshot,
@@ -273,10 +323,32 @@ describe("the Team Lobby's body (#1460)", () => {
       createElement: (tag: string) =>
         Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
     });
+    // A spectator's body forgets the last test's drawer (#2116).
+    teamLobbyBody(lobby("watcher", "vote", voteSide([])), [], undefined, callbacks);
+    focusLog.length = 0;
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("shows the team size in the bar, the host's to change in a Hosted Game's vote only (#2104)", () => {
+    const picked: number[] = [];
+    const select = (shown: LobbySnapshot, stage: WireTeamLobby["stage"]): FakeElement | undefined =>
+      (
+        teamLobbySize(shown, stage, (size) => picked.push(size)) as unknown as FakeElement
+      ).children.find((child) => child.tagName === "SELECT");
+    const vote = select(lobby("aria", "vote", voteSide([])), "vote");
+    expect([vote?.value, vote?.disabled]).toEqual(["4", false]);
+    if (vote !== undefined) {
+      vote.value = "2";
+    }
+    vote?.listeners.get("change")?.();
+    expect(picked).toEqual([2]);
+    expect(select(lobby("aria", "claim", voteSide([])), "claim")?.disabled).toBe(true);
+    expect(select(lobby("brann", "vote", voteSide([])), "vote")?.disabled).toBe(true);
+    const arena = { ...lobby("aria", "vote", voteSide([])), mode: "team-arena" } as const;
+    expect(select(arena, "vote")?.disabled).toBe(true);
   });
 
   it("draws a card per proposal with its proposer, captain crown and voters' initials", () => {
@@ -319,50 +391,148 @@ describe("the Team Lobby's body (#1460)", () => {
     ]);
   });
 
-  it("shows each saved Team Build as a card to propose, and a click on yours withdraws it (#1862)", () => {
-    const shown = body(
-      lobby("aria", "vote", voteSide([])),
-      [team("duo", "Duo", 2), team("four", "Four", 4), team("quad", "Quad", 4)],
-      "four",
-    );
-    const own = shown.all("team-lobby-own-cards")[0]?.all("play-card") ?? [];
-    expect(own.map((card) => card.all("play-card-name")[0]?.textContent)).toEqual([
-      "Duo",
+  /** The drawer's tab, the drawer, and its rows' heads, in `shown`. */
+  const drawerOf = (shown: FakeElement) => ({
+    tab: shown.all("team-lobby-drawer-tab")[0],
+    drawer: shown.all("team-lobby-drawer")[0],
+    search: shown.all("team-lobby-drawer-search")[0],
+    rows: () => shown.all("team-lobby-drawer-row"),
+    heads: () => shown.all("team-lobby-drawer-row-head"),
+    go: () => shown.all("team-lobby-drawer-go")[0],
+  });
+
+  it("keeps Your Team Builds in a closed drawer behind a tab, which opens it on the search (#2116)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [team("four", "Four", 4)]);
+    const { tab, drawer, search } = drawerOf(shown);
+    expect(tab?.text()).toBe("Your Team Builds ▾");
+    expect(drawer?.hidden).toBe(true);
+    expect(tab?.attributes.get("aria-expanded")).toBe("false");
+    // No card of your own in the page: only the proposals' row is there.
+    expect(shown.all("play-card")).toEqual([]);
+    tab?.click();
+    expect(drawer?.hidden).toBe(false);
+    expect(tab?.attributes.get("aria-expanded")).toBe("true");
+    expect(focusLog.at(-1)).toBe(search);
+    expect(shown.all("team-lobby-drawer-showing").map((line) => line.textContent)).toEqual([
+      "Showing 4-player builds",
+    ]);
+  });
+
+  it("expands one row at a time to its members; Propose proposes and closes (#2116)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [
+      team("four", "Four", 4),
+      team("quad", "Quad", 4),
+    ]);
+    const { tab, drawer, rows, heads, go } = drawerOf(shown);
+    tab?.click();
+    expect(rows().map((row) => row.all("team-lobby-drawer-row-name")[0]?.textContent)).toEqual([
       "Four",
       "Quad",
     ]);
-    expect(own[1]?.all("character-figure")).toHaveLength(4);
-    // The one proposed is marked, and only it.
-    expect(own.map((card) => press(card)?.attributes.get("aria-pressed"))).toEqual([
-      "false",
-      "true",
-      "false",
+    expect(rows()[0]?.text()).toContain("4 members");
+    expect(
+      rows()[0]
+        ?.all("team-lobby-drawer-chip")
+        .map((chip) => chip.textContent),
+    ).toEqual(["W", "W", "W", "W"]);
+    expect(go()).toBeUndefined();
+    heads()[0]?.click();
+    heads()[1]?.click();
+    // Only Quad's is open now, its four members drawn with their weapons.
+    expect(rows().map((row) => row.has("is-expanded"))).toEqual([false, true]);
+    expect(heads()[1]?.attributes.get("aria-expanded")).toBe("true");
+    expect(rows()[1]?.all("character-figure")).toHaveLength(4);
+    expect(go()?.textContent).toBe("Propose this build");
+    go()?.click();
+    expect(sent).toEqual([{ kind: "propose", value: "quad" }]);
+    expect(drawer?.hidden).toBe(true);
+    expect(focusLog.at(-1)).toBe(tab);
+  });
+
+  it("marks your proposal, whose button withdraws it (#1862, #2116)", () => {
+    const shown = body(
+      lobby("aria", "vote", voteSide([])),
+      [team("four", "Four", 4), team("quad", "Quad", 4)],
+      "four",
+    );
+    const { tab, rows, heads, go } = drawerOf(shown);
+    tab?.click();
+    expect(rows().map((row) => row.has("is-proposed"))).toEqual([true, false]);
+    expect(
+      rows()[0]
+        ?.all("team-lobby-drawer-tag")
+        .map((tag) => tag.textContent),
+    ).toEqual(["proposed"]);
+    heads()[0]?.click();
+    expect(go()?.textContent).toBe("Withdraw proposal");
+    go()?.click();
+    expect(sent).toEqual([{ kind: "propose", value: undefined }]);
+  });
+
+  it("filters as you type, and says so when no name matches (#2116)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [
+      team("four", "Four", 4),
+      team("quad", "Quad", 4),
+      team("duo", "Duo", 2),
     ]);
-    expect(own.map((card) => card.has("is-proposed"))).toEqual([false, true, false]);
-    expect(own[1]?.text()).toContain("Proposed ✓");
-    press(own[2])?.click();
-    press(own[1])?.click();
-    expect(sent).toEqual([
-      { kind: "propose", value: "quad" },
-      { kind: "propose", value: undefined },
+    const { tab, search, rows } = drawerOf(shown);
+    tab?.click();
+    expect(shown.all("team-lobby-drawer-showing")[0]?.textContent).toBe(
+      "Showing 4-player builds · 1 other hidden",
+    );
+    if (search !== undefined) {
+      search.value = "QU";
+      search.listeners.get("input")?.();
+    }
+    expect(rows().map((row) => row.all("team-lobby-drawer-row-name")[0]?.textContent)).toEqual([
+      "Quad",
+    ]);
+    if (search !== undefined) {
+      search.value = "zzz";
+      search.listeners.get("input")?.();
+    }
+    expect(rows()).toEqual([]);
+    expect(shown.all("team-lobby-drawer-empty")[0]?.textContent).toBe("No Team Build named “zzz”.");
+    // A redraw, as the next snapshot brings, keeps the search.
+    const again = drawerOf(body(lobby("aria", "vote", voteSide([])), [team("quad", "Quad", 4)]));
+    expect(again.drawer?.hidden).toBe(false);
+    expect(again.search?.value).toBe("zzz");
+  });
+
+  it("puts the drawer away on Esc, focus back on its tab, before Esc leaves (#2116)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [team("four", "Four", 4)]);
+    const { tab, drawer } = drawerOf(shown);
+    expect(putAwayBuildsDrawer()).toBe(false);
+    tab?.click();
+    expect(putAwayBuildsDrawer()).toBe(true);
+    expect(drawer?.hidden).toBe(true);
+    expect(focusLog.at(-1)).toBe(tab);
+    expect(putAwayBuildsDrawer()).toBe(false);
+  });
+
+  it("leaves out a Team Build of the wrong size, and says so when none is the side's (#2104)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [
+      team("duo", "Duo", 2),
+      team("eight", "Eight", 8),
+    ]);
+    expect(drawerOf(shown).rows()).toEqual([]);
+    expect(drawerOf(shown).search?.hidden).toBe(true);
+    expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
+      "No 4-player Team Builds — make one in the Team Builder.",
     ]);
   });
 
-  it("shows a Team Build of the wrong size faded, its press disabled, and says why", () => {
-    const [duo] =
-      body(lobby("aria", "vote", voteSide([])), [team("duo", "Duo", 2)])
-        .all("team-lobby-own-cards")[0]
-        ?.all("play-card") ?? [];
-    expect(press(duo)?.disabled).toBe(true);
-    expect(duo?.has("is-faded")).toBe(true);
-    expect(duo?.all("team-lobby-needs").map((line) => line.textContent)).toEqual([
-      "needs 4 characters",
+  it("says to fix a Team Build when none is playable (#2110)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [team("unnamed", "", 4)]);
+    expect(drawerOf(shown).rows()).toEqual([]);
+    expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
+      NO_PLAYABLE_TEAM_BUILDS,
     ]);
   });
 
-  it("says where to make a Team Build when you have none, with no cards and no dropdown", () => {
+  it("says where to make a Team Build when you have none, with no rows and no dropdown", () => {
     const shown = body(lobby("aria", "vote", voteSide([])));
-    expect(shown.all("team-lobby-own-cards")).toEqual([]);
+    expect(drawerOf(shown).rows()).toEqual([]);
     expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
       NO_TEAM_BUILDS,
     ]);

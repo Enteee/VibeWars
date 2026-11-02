@@ -6,6 +6,7 @@ import {
   isOffhandId,
   isProfessionId,
   isStatusId,
+  MASTERLESS_TEAM,
   resolvedBar,
   STATUS_DEFINITIONS,
   type ActiveStatus,
@@ -26,6 +27,7 @@ import {
   type StatusId,
 } from "@vibewars/game-core";
 import {
+  MASTERLESS_WIRE_TEAM,
   MAX_WIRE_STATUSES,
   type SkillBarSlot,
   type WireCombat,
@@ -638,7 +640,8 @@ export interface SeatIdentity {
 /**
  * Who a body on the wire is: a seat's player, or a creature (#1052),
  * named for its kind, on its owner's team, with no professions; a map's
- * NPC (#1186) on its own. `undefined` for a body with no seat that is
+ * NPC (#1186) on its own, and a masterless one (#2092) on
+ * `MASTERLESS_WIRE_TEAM`. `undefined` for a body with no seat that is
  * neither a seated player's creature nor a map's: it is not sent. A
  * companion's armed pet attack lapses at `elapsedSeconds` on.
  */
@@ -667,7 +670,8 @@ export function wireIdentity(
     return undefined;
   }
   const { team } = participant.combatant;
-  const ownTeam = team === 0 || team === 1 ? team : undefined;
+  const ownTeam =
+    team === 0 || team === 1 ? team : team === MASTERLESS_TEAM ? MASTERLESS_WIRE_TEAM : undefined;
   const sentTeam = creature.ownerId === undefined ? ownTeam : seats.get(creature.ownerId)?.team;
   return sentTeam === undefined
     ? undefined

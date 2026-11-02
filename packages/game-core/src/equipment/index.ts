@@ -93,6 +93,29 @@ export {
 } from "./insignias.js";
 
 export type {
+  ItemUpgrades,
+  ModEffect,
+  ModId,
+  ModItem,
+  ModSlot,
+  ModStatusWhile,
+  ModWhile,
+  WeaponMod,
+} from "./mods.js";
+export {
+  MOD_SLOTS,
+  MOD_WHILE_TEXT,
+  MOD_SLOT_KEYS,
+  NO_UPGRADES,
+  WEAPON_MODS,
+  fittingUpgrades,
+  getWeaponMod,
+  isModId,
+  modFits,
+  wornMods,
+} from "./mods.js";
+
+export type {
   BuildEquipment,
   EquippedOffhand,
   EquippedWeapon,
@@ -120,8 +143,10 @@ export type {
   ResolvedWeapon,
   ResolvedWeaponSet,
   ResolvedWeaponSets,
+  WeaponHitMods,
 } from "./resolve.js";
 export {
+  NO_HIT_MODS,
   creatureResolvedEquipment,
   effectiveRanks,
   resolveLoadout,

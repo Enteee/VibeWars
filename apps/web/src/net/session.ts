@@ -6,9 +6,9 @@ import {
   PROTOCOL_VERSION,
   isLobbyCode,
   isTeamQueueMode,
-  normalizeLobbyCode,
   type JsonValue,
   type LobbyRefusal,
+  type LobbyTeamSize,
   type PeerHello,
   type QueueMode,
 } from "@vibewars/game-protocol";
@@ -26,9 +26,9 @@ import {
   generateLobbyCode,
   joinLobby,
   publicRoom,
+  startingQueueState,
   type FormedGroup,
   type Guild,
-  type LobbyCharacter,
   type LobbyClosedReason,
   type LobbyConnection,
   type MatchPlan,
@@ -37,6 +37,7 @@ import {
   type ObserverConnection,
   type PartyPlanSeat,
   type PeerMatchConnection,
+  type QueueClient,
   type QueueParty,
   type QueueState,
   type QueuedPlan,
@@ -46,9 +47,9 @@ import {
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
 import { linkLobbyRoom } from "./lobby-room.js";
-import { arenaIds, hostMap, modeMapIds, queueMapPool } from "./maps.js";
+import { arenaIds, hostMap, mapTeamSizes, modeMapIds, queueMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
-import { joinQueueBoard, joinRoom, roomSelfId } from "./transport/index.js";
+import { checkTransportNat, joinQueueBoard, joinRoom, roomSelfId } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadTurnConfig } from "./transport/turn-config.js";
@@ -74,11 +75,11 @@ const MATCH_TIMEOUT_MS = 10_000;
  * lobby, whose host is in no room (#1682), cannot be told apart.
  */
 export const NO_ANSWER_MESSAGE =
-  "Couldn't reach that lobby. Check the key, and ask the host to open it.";
-/** Typed wrong: not 12 symbols of the key alphabet (#1681). Nothing was sent anywhere. */
-export const NOT_A_KEY_MESSAGE = "That is not a lobby key.";
+  "Couldn't reach that lobby. Check the invite link, and ask the host to open it.";
+/** Not a 43-character lobby key (#2100). Nothing was sent anywhere. */
+export const NOT_A_KEY_MESSAGE = "That invite link is broken.";
 
-/** What was typed cannot be a lobby key, so it was never looked for (#1681). */
+/** What was given cannot be a lobby key, so it was never looked for (#1681). */
 export class NotALobbyKeyError extends Error {
   public constructor() {
     super("That is not a lobby key.");
@@ -104,13 +105,14 @@ export const NOT_ADMITTED_MESSAGE = "The match would not let this ticket in.";
 export const TICKET_USED_MESSAGE = "This ticket is already in the match, in another tab.";
 /** #854 C7's wording. */
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
-/** A joined player's ask the host turned down (#1194): a bot it had no seat for, or could not add. */
-export const NO_SEAT_FOR_BOT_MESSAGE = "The lobby is full: there is no seat for a bot.";
 /** A queued party's team plan (ADR-0042) was not whole at the start (#1822). */
 export const TEAM_PLAN_REJECTED_NOTICE =
   "Your party's team plan was not accepted; the house team plays for you.";
-export const BOT_REFUSED_MESSAGE = "The host could not add or remove that bot.";
-export const NOT_HOST_MESSAGE = "Only the host can add or remove bots.";
+/** A joined player's ask the host turned down (#1194). */
+export const REFUSED_MESSAGE = "The host turned that down.";
+export const NOT_HOST_MESSAGE = "Only the host can do that.";
+/** A map picked outside a Hosted Game (#1994). */
+export const NOT_PICKABLE_MESSAGE = "Only a Hosted Game lets the host pick the map.";
 /** A Team Lobby's refusals (#1460). */
 export const PROPOSAL_REFUSED_MESSAGE =
   "That team build cannot be proposed: it needs your side's size and legal builds.";
@@ -183,10 +185,10 @@ function startMatch(plan: MatchPlan) {
 
 /**
  * Host a lobby in this tab: a fresh key, the room derived from it, the
- * lobby host on it, and this player joined to it as one more peer,
- * bringing `character`. A coded lobby starts closed, and its host is in
- * its room only while it is open or has guests (#1682); its room is
- * derived once, here, for the lobby's life.
+ * lobby host on it, and this player joined to it as one more peer. A
+ * coded lobby starts closed, and its host is in its room only while it
+ * is open or has guests (#1682); its room is derived once, here, for the
+ * lobby's life.
  *
  * One clock runs the whole lobby, from now until `close()`: the lobby's
  * message budget counts on it, and its match runs on it.
@@ -197,8 +199,8 @@ function startMatch(plan: MatchPlan) {
 export async function hostLobby(
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   teamLobby: boolean,
+  hostedTeamSize: LobbyTeamSize,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
   // A queued lobby meets in its group's room, which no lobby key can
@@ -229,6 +231,8 @@ export async function hostLobby(
     proofKey: lobbyRoom.proofKey,
     mapIds: arenaIds(),
     modeMaps: modeMapIds(),
+    mapTeamSizes: mapTeamSizes(),
+    hostedTeamSize,
     startMatch,
     teamLobby,
     random: secureRandom,
@@ -272,7 +276,6 @@ export async function hostLobby(
       proofKey: null,
       name,
       ...guild,
-      character,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
@@ -293,19 +296,18 @@ export async function hostLobby(
 }
 
 /**
- * Join the lobby `code` names, hosted on another peer's browser, bringing
- * `character`; with `queued`, a Random Arena group's lobby in the group's room,
- * `code` the group's id.
+ * Join the lobby `code` names, hosted on another peer's browser; with
+ * `queued`, a Random Arena group's lobby in the group's room, `code` the
+ * group's id.
  */
 export async function joinLobbyByCode(
   code: string,
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   queued?: QueuedSeat,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
-  if (queued === undefined && !isLobbyCode(normalizeLobbyCode(code))) {
+  if (queued === undefined && !isLobbyCode(code)) {
     throw new NotALobbyKeyError();
   }
   const lobbyRoom =
@@ -326,7 +328,6 @@ export async function joinLobbyByCode(
       proofKey: lobbyRoom.proofKey,
       name,
       ...guild,
-      character,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
     });
@@ -345,6 +346,8 @@ export async function joinLobbyByCode(
 export const QUEUED_COUNTDOWN_SECONDS = 5;
 /** How long a queued match's result stays on the HUD before the queue's ended view (#881). */
 export const QUEUED_RESULT_SECONDS = 4;
+/** How long a team match's result stays, counting down to its next match or the menu (#1997). */
+export const TEAM_RESULT_SECONDS = 20;
 /** How long the ended view offers *Stay together* to a winning team (#882). */
 export const STAY_TOGETHER_SECONDS = 15;
 /**
@@ -397,6 +400,30 @@ export interface PartyPlace {
   readonly board: NostrQueue;
 }
 
+/** This page's `checkTransportNat`, once it was asked for: a NAT does not change under a tab. */
+let natCheck: Promise<boolean> | undefined;
+
+/**
+ * Start this page's NAT check (#2090) if it has not been, so it runs
+ * while the player is still on their way into the queue.
+ */
+export function startNatCheck(): void {
+  void natHint();
+}
+
+function natChecked(): Promise<boolean> {
+  natCheck ??= checkTransportNat();
+  return natCheck;
+}
+
+/**
+ * The `hardNat` this tab's tickets carry (#2090): never with a relay of
+ * the player's own (#972), which makes them reachable, else `checkTransportNat`.
+ */
+function natHint(): Promise<boolean> {
+  return loadTurnConfig() === undefined ? natChecked() : Promise.resolve(false);
+}
+
 /** One player's place in the Random Arena queue (#880). */
 export interface RandomArenaQueue {
   /**
@@ -422,7 +449,7 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
 }
 
 /**
- * Queue for a Random Arena of `mode` as `name` of `guild`, bringing `character`
+ * Queue for a Random Arena of `mode` as `name` of `guild`
  * (#854 C1–C7): a ticket on the board `joinQueueBoard` picks, ticked from
  * the host clock so a background tab keeps its place. When a group
  * settles, this tab hosts its lobby or joins it; a lobby that never fills,
@@ -432,33 +459,28 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
  * queues again on it. With `party`, it queues as a member of a team that
  * stayed together, or of a team mode's party (#1766); with `teamPlan`,
  * as that party's host, which sends the match's host its side's seats
- * once in the match's lobby (ADR-0042).
+ * once in the match's lobby (ADR-0042). A Heroes' Ascent queues at
+ * `ascentRound` (#1996), every other mode at `null`.
  */
 export function enterQueue(
   mode: QueueMode,
+  ascentRound: number | null,
   name: string,
   guild: Guild,
-  character: LobbyCharacter | null,
   events: RandomArenaEvents,
   party?: PartyPlace,
   teamPlan?: HostedLobby["teamPlan"],
 ): RandomArenaQueue {
   const queue = party?.board ?? joinQueueBoard();
-  const client = createQueueClient({
-    board: queue.board,
-    mode,
-    ...(party === undefined ? {} : { party: party.party }),
-    now: () => Date.now(),
-    newTicketKey: () => queue.newTicketKey(),
-    mapPool: queueMapPool(mode),
-  });
+  /** Made once the NAT hint is in (#2090), unless the player left first. */
+  let client: QueueClient | undefined;
   let done = false;
   let sinceTick = 0;
   const stopClock = startHostClock((seconds) => {
     sinceTick += seconds;
     if (sinceTick >= QUEUE_TICK_SECONDS) {
       sinceTick = 0;
-      void client.tick();
+      void client?.tick();
     }
   });
   const stopPageHide = leaveOnPageHide(window, () => {
@@ -473,19 +495,24 @@ export function enterQueue(
     done = true;
     stopClock();
     stopPageHide();
-    client.leave();
+    client?.leave();
     queue.close();
     return true;
   };
 
   /** Host the group's lobby, or join it, and hand it to the shell. */
-  const meet = async (group: FormedGroup, key: TicketKey): Promise<void> => {
-    client.enteredLobby();
+  const meet = async (
+    group: FormedGroup,
+    key: TicketKey,
+    queueClient: QueueClient,
+  ): Promise<void> => {
+    queueClient.enteredLobby();
     let lobby: LobbyConnection;
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guild, character, false, {
+        // A queued lobby plays its group's size, never a Hosted Game's.
+        hosted = await hostLobby(name, guild, false, 4, {
           group,
           key,
           verifyTicketSig,
@@ -494,13 +521,13 @@ export function enterQueue(
           stayTogetherSeconds: STAY_TOGETHER_WINDOW_SECONDS,
           onFellThrough: (noShows) => {
             if (!done) {
-              client.fellThrough(noShows);
+              queueClient.fellThrough(noShows);
             }
           },
         });
         lobby = hosted.lobby;
       } else {
-        lobby = await joinLobbyByCode(group.groupId, name, guild, character, {
+        lobby = await joinLobbyByCode(group.groupId, name, guild, {
           group,
           key,
           verifyTicketSig,
@@ -519,7 +546,7 @@ export function enterQueue(
         return;
       }
       // A host that never answered is skipped next time, as a no-show is.
-      client.fellThrough(error instanceof LobbyNoAnswerError ? [group.hostTicketId] : []);
+      queueClient.fellThrough(error instanceof LobbyNoAnswerError ? [group.hostTicketId] : []);
       return;
     }
     if (done) {
@@ -548,23 +575,43 @@ export function enterQueue(
         }
       }
       // The group is gone before its match: queue again, keeping the place.
-      client.fellThrough([]);
+      queueClient.fellThrough([]);
     });
     events.onLobby(lobby, hosted);
   };
 
-  client.onChange((state) => {
-    if (state.kind === "party-gone") {
-      finish();
-      events.onPartyGone();
+  const start = async (): Promise<void> => {
+    const hardNat = await natHint();
+    if (done) {
       return;
     }
-    events.onState(state);
-    if (state.kind === "in-lobby") {
-      void meet(state.group, state.key);
-    }
-  });
-  events.onState(client.state);
+    const started = createQueueClient({
+      board: queue.board,
+      mode,
+      ascentRound,
+      ...(party === undefined ? {} : { party: party.party }),
+      now: () => Date.now(),
+      newTicketKey: () => queue.newTicketKey(),
+      mapPool: queueMapPool(mode, ascentRound),
+      hardNat,
+    });
+    client = started;
+    started.onChange((state) => {
+      if (state.kind === "party-gone") {
+        finish();
+        events.onPartyGone();
+        return;
+      }
+      events.onState(state);
+      if (state.kind === "in-lobby") {
+        void meet(state.group, state.key, started);
+      }
+    });
+    events.onState(started.state);
+  };
+  // The screen is searching at once, not once the NAT hint is in (#2090).
+  events.onState(startingQueueState(mode));
+  void start();
 
   return {
     leave: () => {
@@ -720,9 +767,11 @@ export async function followHost<T>(
 export function lobbyRefusalNotice(reason: LobbyRefusal): string {
   switch (reason) {
     case "lobby-full":
-      return NO_SEAT_FOR_BOT_MESSAGE;
+      return LOBBY_FULL_MESSAGE;
     case "not-host":
       return NOT_HOST_MESSAGE;
+    case "not-pickable":
+      return NOT_PICKABLE_MESSAGE;
     case "invalid-proposal":
       return PROPOSAL_REFUSED_MESSAGE;
     case "invalid-vote":
@@ -732,7 +781,7 @@ export function lobbyRefusalNotice(reason: LobbyRefusal): string {
     case "invalid-slot":
       return SEAT_REFUSED_MESSAGE;
     default:
-      return BOT_REFUSED_MESSAGE;
+      return REFUSED_MESSAGE;
   }
 }
 

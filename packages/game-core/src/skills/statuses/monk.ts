@@ -43,7 +43,9 @@ export type MonkStatusId =
   // Skill-type and heal triggers (#1913).
   | "scribes-insight"
   // Blocks that pay (#1974).
-  | "shield-guardian";
+  | "shield-guardian"
+  // Enchantment party moves (#1975).
+  | "air-of-enchantment";
 
 /**
  * Shield Guardian's heal (#1974), to the ally that blocked and, by the
@@ -480,5 +482,11 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         skillId: "monk.shield-guardian",
       },
     ],
+  }),
+  // "For 4...10 seconds, enchantments cast on target other ally cost 10
+  // less Energy (minimum 1 Energy)" (#1975).
+  "air-of-enchantment": define("air-of-enchantment", "Air of Enchantment", "enchantment", {
+    profession: "monk",
+    enchantmentsOnBearerCostLess: 10,
   }),
 };

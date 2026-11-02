@@ -63,6 +63,7 @@ export function priestSpec(shrine: Shrine, facing: number): ParticipantSpec {
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   };

@@ -44,7 +44,6 @@ describe("resolveJoinLoadout", () => {
     expect(loadout.skillBar).toEqual(LEGAL.skillBar);
     expect(loadout.primaryProfession).toBe("elementalist");
     expect(loadout.secondaryProfession).toBe("monk");
-    expect(loadout.baseEnergyPips).toBe(4);
     expect(loadout.attributeRanks.get("elementalist.fire-magic")).toBe(12);
   });
 
@@ -103,12 +102,5 @@ describe("resolveJoinLoadout", () => {
     );
     expect(twoElites.loadout).toEqual(loadoutOf(starter(0)));
     expect(twoElites.refused?.kind).toBe("illegal");
-  });
-});
-
-describe("loadoutOf", () => {
-  it("regenerates the primary's energy pips (#502)", () => {
-    expect(loadoutOf(LEGAL).baseEnergyPips).toBe(4);
-    expect(loadoutOf({ ...LEGAL, primaryProfession: "warrior" }).baseEnergyPips).toBe(2);
   });
 });

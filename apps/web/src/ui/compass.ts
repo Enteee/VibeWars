@@ -1,11 +1,7 @@
 import { AREA_EARSHOT, RANGE_COMPASS, RANGE_SPELL, type Vec2 } from "@vibewars/game-core";
 import { PING_SECONDS } from "@vibewars/game-session";
 
-import {
-  CREATURE_RADIUS,
-  type ArenaSnapshot,
-  type RenderableWall,
-} from "../render/arena-snapshot.js";
+import { type ArenaSnapshot, type RenderableWall } from "../render/arena-snapshot.js";
 import { setHidden } from "./dom-write.js";
 import { prefersReducedMotion } from "./recharge-overlay.js";
 
@@ -187,8 +183,8 @@ export function compassView(
         kind: actor === self ? "self" : actor.team === "enemy" ? "foe" : "friend",
         targeted: actor.id === arena.targetId,
         called: actor.id === arena.calledId,
-        // A creature is drawn at its own radius (match-view.ts).
-        small: actor.radius === CREATURE_RADIUS,
+        // Any creature, whatever radius its kind is drawn at (#2047).
+        small: actor.creatureLook !== undefined,
       })),
     pings: arena.pings
       .filter((ping) => within(ping.position))

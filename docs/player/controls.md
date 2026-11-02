@@ -28,8 +28,10 @@ These keys are fixed:
 
 - **Esc** cancels what you are doing: a cast, an attack, a walk. Pressed
   again, it clears your target. It also closes Help and Options.
-- **Enter** opens the chat, and sends. Start a line with `!` to talk to
-  everyone, or `#` for your team only.
+- **Enter** opens the chat, or click the chat icon at the bottom left;
+  Enter sends, and Esc closes it. Start a line with `!` to talk to
+  everyone, or `#` for your team only. Closed, the chat shows only its
+  newest lines, which fade after a few seconds, and clicks go through it.
 - **F10** asks whether to leave the match.
 
 ## Mouse

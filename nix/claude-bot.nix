@@ -316,6 +316,21 @@ let
   # mounts. Nothing here is the host's: the userland is what a job's shell
   # finds on PATH, the /etc is the jail's own, and the closure below is the
   # whole of /nix/store a job can see.
+  # The jail's user already owns everything a job may touch and cannot become
+  # root, so `sudo` has nothing to do: devenv's cache action and the Nix
+  # installer call it and fail 127 without one. It runs, as the job's own user,
+  # the commands that act on files the job owns (tar into /nix, chown and chmod
+  # of the Nix database, install -d /nix) and skips the rest (udev rules, mount,
+  # KVM), which mean nothing in the jail and which a pass-through would run for
+  # real. A skip is said on stderr, so CI logs show it.
+  runnerSudo = pkgs.writeShellScriptBin "sudo" ''
+    case "''${1:-}" in
+      tar|chown|chmod|install|cp|mv|rm|mkdir|ln|cat) exec "$@" ;;
+    esac
+    echo "sudo (no-op shim): skipped: $*" >&2
+    exit 0
+  '';
+
   runnerUserland = pkgs.buildEnv {
     name = "vibewars-runner-userland";
     paths = [
@@ -332,6 +347,13 @@ let
       pkgs.curl
       pkgs.cacert
       pkgs.jq
+      pkgs.sqlite
+      pkgs.gawk
+      pkgs.diffutils
+      pkgs.which
+      pkgs.procps
+      pkgs.bzip2
+      runnerSudo
     ];
   };
 

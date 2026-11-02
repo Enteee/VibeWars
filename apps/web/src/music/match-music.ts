@@ -33,6 +33,8 @@ export interface MatchMusic {
 
 export interface MatchMusicOptions {
   readonly screen: "training" | "match";
+  /** Training only: the depth of the editor it sits in (#2020); a match passes `null`. */
+  readonly menuDepth: 0 | 1 | null;
   /** Asked on every snapshot, so a mode the player changes mid-match applies at once. */
   readonly mode: () => MusicMode;
   readonly tracks: readonly TrackChoice[];
@@ -61,7 +63,7 @@ function fromSnapshot(
         : "defeat";
   if (self === undefined) {
     return {
-      screen: finished ? "result" : screen,
+      screen: finished && screen === "match" ? "result" : screen,
       result,
       self: null,
       enemyInRange: false,
@@ -79,7 +81,7 @@ function fromSnapshot(
   const enemies = living.filter((p) => p.team !== self.team);
   const others = allies.filter((p) => p.sessionId !== self.sessionId);
   return {
-    screen: finished ? "result" : screen,
+    screen: finished && screen === "match" ? "result" : screen,
     result,
     self: { alive: !self.dead, healthFraction: fraction(self.health, self.maxHealth) },
     enemyInRange:
@@ -99,10 +101,11 @@ function sameMusic(a: MusicState, b: MusicState): boolean {
 export function attachMatchMusic(
   /** A seat, or a watcher's match (#480). */
   connection: Pick<MatchConnection, "map" | "selfSessionId" | "onCombat">,
-  { screen, mode, tracks, onChange, now = Date.now }: MatchMusicOptions,
+  { screen, menuDepth, mode, tracks, onChange, now = Date.now }: MatchMusicOptions,
 ): MatchMusic {
   const mapId = connection.map.id;
-  const matchSeed = `${mapId}:${String(now())}`;
+  // The Training Ground is a menu (#2020): Shuffle seeds it as one, by context.
+  const matchSeed = screen === "training" ? null : `${mapId}:${String(now())}`;
   /** When each hit this player dealt or took landed, oldest first. */
   const dealt: number[] = [];
   const taken: number[] = [];
@@ -150,7 +153,7 @@ export function attachMatchMusic(
         ...fromSnapshot(next, screen, teamSize),
         mapId,
         matchSeed,
-        menuDepth: null,
+        menuDepth,
         hitsDealtLast5s: recent(dealt, at),
         hitsTakenLast5s: recent(taken, at),
         nowMs: at,

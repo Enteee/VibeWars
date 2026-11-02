@@ -19,7 +19,7 @@ export const TEAM_FORMAT = "vibewars.team";
  * What `exportTeam` writes and the only version `importTeam` reads. A
  * team code from any other version is refused, not adapted (ADR-0016).
  */
-export const TEAM_FORMAT_VERSION = 1;
+export const TEAM_FORMAT_VERSION = 2;
 
 export interface ExportedTeam {
   readonly format: typeof TEAM_FORMAT;

@@ -17,16 +17,14 @@ export {
   CHAIN_ROLES,
   MAX_LOBBY_PLAYERS,
   MAX_TEAM_LOBBY_SIDE,
+  LOBBY_TEAM_SIZES,
   TEAM_LOBBY_STAGE_SECONDS,
   isLobbyCode,
-  normalizeLobbyCode,
   parseClientIntent,
   COMPANION_MODES,
   LOBBY_MODES,
   LOBBY_CODE_LENGTH,
-  LOBBY_KEY_ITERATIONS,
   LOBBY_KEY_SALT,
-  LOBBY_CODE_ALPHABET,
 } from "./protocol.js";
 
 export type {
@@ -56,6 +54,7 @@ export type {
   RectWallDescriptor,
   PolygonWallDescriptor,
   LobbyPhase,
+  LobbyTeamSize,
   LobbyMode,
   SkillBarSlot,
   CombatMessage,
@@ -91,6 +90,7 @@ export {
   MAX_WIRE_COMBATS,
   MAX_WIRE_PROJECTILES,
   MAX_WIRE_GROUND_EFFECTS,
+  MASTERLESS_WIRE_TEAM,
   MAX_SNAPSHOT_PARTS,
   MAX_WIRE_JSON_DEPTH,
   MAX_WIRE_JSON_VALUES,
@@ -210,6 +210,7 @@ export type {
 } from "./p2p.js";
 
 export {
+  ASCENT_ROUNDS,
   FORMATION_SETTLE_MS,
   FORMATION_TIMEOUT_MS,
   NO_SHOW_IGNORE_MS,

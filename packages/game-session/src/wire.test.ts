@@ -1,5 +1,6 @@
 import {
   CastState,
+  MASTERLESS_TEAM,
   NO_RANKS,
   outsideMatch,
   getStatusDefinition,
@@ -8,7 +9,7 @@ import {
   type StatusCategory,
   type StatusId,
 } from "@vibewars/game-core";
-import { MAX_WIRE_STATUSES, type WireCape } from "@vibewars/game-protocol";
+import { MASTERLESS_WIRE_TEAM, MAX_WIRE_STATUSES, type WireCape } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -375,6 +376,7 @@ describe("wireIdentity (#1052)", () => {
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard" as const,
     },
   });
@@ -496,6 +498,19 @@ describe("wireIdentity (#1052)", () => {
         leaderId: null,
       },
       bot: false,
+    });
+  });
+
+  it("sends a masterless minion, owned by nobody, on the masterless team (#2092)", () => {
+    const loose = {
+      ...minion("p1"),
+      combatant: { team: MASTERLESS_TEAM },
+      creature: { ...minion("p1").creature, ownerId: undefined },
+    };
+    expect(wireIdentity(loose, seats, 0)).toMatchObject({
+      name: "Bone Minion",
+      team: MASTERLESS_WIRE_TEAM,
+      creature: { ownerId: null, kind: "minion" },
     });
   });
 });

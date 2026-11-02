@@ -41,6 +41,17 @@ describe("docs/player (#1257)", () => {
     expect(PLAYER_DOC_PAGES[0]?.title).toBe("Getting started");
   });
 
+  it("ends with Support VibeWars, whose sponsor link opens in a new tab (#2097)", () => {
+    expect(PLAYER_DOC_PAGES.at(-1)?.id).toBe("support");
+    const nodes = renderPlayerDoc(PLAYER_DOC_SOURCES.get("support.md") ?? "", TARGETS);
+    const sponsor = elements(nodes).filter(
+      (node) => node.tag === "a" && node.attrs.href?.includes("/sponsors/"),
+    );
+    expect(sponsor.map((node) => node.attrs)).toEqual([
+      { href: "https://github.com/sponsors/Enteee", target: "_blank", rel: "noopener noreferrer" },
+    ]);
+  });
+
   it("keeps index.md's order and names, and leaves out a file that is not there", () => {
     const pages = playerDocPages(
       new Map([
@@ -113,7 +124,7 @@ describe("renderPlayerDoc (#1257)", () => {
     const links = elements(nodes).filter((node) => node.tag === "a");
     expect(links.map((node) => node.attrs)).toEqual([
       { href: "#controls", "data-page": "controls" },
-      { href: "https://example.com/a", target: "_blank", rel: "noopener" },
+      { href: "https://example.com/a", target: "_blank", rel: "noopener noreferrer" },
     ]);
     expect(textOf(nodes)).toBe("keys site bad gone rel");
   });

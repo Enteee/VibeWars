@@ -132,6 +132,7 @@ export function ghostSpec(spawn: GhostSpawn, facing: number): ParticipantSpec {
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   };

@@ -247,9 +247,12 @@ describe("Endure Pain (#1359)", () => {
     use(sim, ENDURE_PAIN);
     const loadout: ResolvedLoadout = {
       attributeRanks: new Map([["warrior.strength", 12]]),
-      weaponSets: [{ equipment: wielding("sword"), maxEnergy: 30 }, null, null, null],
-      maxHealth: 600,
-      baseEnergyPips: 4,
+      weaponSets: [
+        { equipment: wielding("sword"), maxEnergy: 30, maxHealth: 600, baseEnergyPips: 4 },
+        null,
+        null,
+        null,
+      ],
     };
     sim.rearm("w", loadout, []);
     expect(combatant(sim, "w").health).toBe(600);

@@ -2,6 +2,7 @@
   "id": "arena-alpha",
   "name": "Arena Alpha",
   "mode": "annihilation",
+  "teamSizes": [1, 2],
   "width": 960,
   "height": 640,
   "walls": [

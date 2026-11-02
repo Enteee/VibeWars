@@ -2,7 +2,6 @@ import {
   LOBBY_REFUSALS,
   MAX_WIRE_CHAT_TEXT,
   PROTOCOL_VERSION,
-  normalizeLobbyCode,
   parseWireChatLine,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
@@ -29,10 +28,8 @@ import {
 } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
-import { lobbyCharacter } from "./lobby-character.js";
 import type {
   ChatLine,
-  LobbyCharacter,
   LobbyClosedReason,
   LobbyConnection,
   LobbySnapshot,
@@ -106,8 +103,6 @@ export interface JoinLobbyOptions {
   readonly guildTag: string | null;
   /** The guild cape the player designed (#1422); `null` for none. */
   readonly guildCape: WireCape | null;
-  /** The selected character's name and professions; `null` brings a starter build. */
-  readonly character: LobbyCharacter | null;
   /** How long to wait for a state that lists this player. */
   readonly timeoutMs: number;
   /** The queue's lobby, joined with this seat's ticket; not a coded one. */
@@ -134,13 +129,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       ? options.transport
       : keyGated(options.transport, options.proofKey, "guest", () => hostId);
   const selfId = transport.selfId;
-  const code = normalizeLobbyCode(options.code);
+  const code = options.code;
   const base = {
     protocolVersion: PROTOCOL_VERSION,
     name: options.name,
     guildTag: options.guildTag,
     guildCape: options.guildCape,
-    character: options.character,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
   const codedJoin: PeerLobbyJoin = { ...base, admission: null };
@@ -179,6 +173,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const changeHandlers: (() => void)[] = [];
   const startingHandlers: ((start: MatchStarting) => void)[] = [];
   const rejectedHandlers: ((reason: string) => void)[] = [];
+  const noticeHandlers: ((text: string) => void)[] = [];
   const refusedHandlers: ((reason: LobbyRefusal) => void)[] = [];
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const moveHandlers: ((code: string) => void)[] = [];
@@ -216,6 +211,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     changeHandlers.length = 0;
     startingHandlers.length = 0;
     rejectedHandlers.length = 0;
+    noticeHandlers.length = 0;
     refusedHandlers.length = 0;
     closedHandlers.length = 0;
     moveHandlers.length = 0;
@@ -289,6 +285,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     phase: state.phase,
     mode: state.mode,
     mapId: state.mapId,
+    teamSize: state.teamSize,
     open: state.open,
     hostId: state.hostId,
     players: state.players.map((player) => ({
@@ -298,7 +295,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       team: player.team,
       ready: player.ready,
       isHost: player.isHost,
-      character: lobbyCharacter(player.character),
       bot: player.bot,
       away: player.away,
     })),
@@ -307,6 +303,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     teamLobby: state.teamLobby,
     proposalBuilds: new Map(proposalBuilds),
     queueNonce: state.queueNonce,
+    ascentRound: state.ascentRound,
   });
 
   /**
@@ -377,8 +374,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       selectMap(mapId) {
         send({ kind: "select-map", mapId });
       },
-      setCharacter(character) {
-        send({ kind: "set-character", character });
+      selectTeamSize(size) {
+        send({ kind: "select-team-size", size });
       },
       selectMode(mode) {
         send({ kind: "select-mode", mode });
@@ -386,8 +383,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       startMatch() {
         send({ kind: "start" });
       },
-      findMatch() {
-        send({ kind: "find-match" });
+      findMatch(ascentRound) {
+        send({ kind: "find-match", ascentRound });
       },
       leaveQueue() {
         send({ kind: "leave-queue" });
@@ -413,9 +410,6 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
             build: JSON.parse(JSON.stringify(build)) as JsonValue,
           });
         });
-      },
-      setBots(team, count) {
-        send({ kind: "set-bots", team, count });
       },
       propose(members) {
         if (members === null) {
@@ -458,6 +452,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onStartRejected(handler) {
         rejectedHandlers.push(handler);
+      },
+      onNotice(handler) {
+        noticeHandlers.push(handler);
       },
       onRefused(handler) {
         refusedHandlers.push(handler);
@@ -545,7 +542,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           return;
         }
         const state = parseWireLobbyState(data);
-        if (state?.hostId !== from || normalizeLobbyCode(state.code) !== code) {
+        if (state?.hostId !== from || state.code !== code) {
           return;
         }
         if (hostId === undefined) {
@@ -579,6 +576,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         }
         if (note.kind === "start-rejected") {
           for (const handler of [...rejectedHandlers]) {
+            handler(note.reason);
+          }
+        } else if (note.kind === "notice") {
+          for (const handler of [...noticeHandlers]) {
             handler(note.reason);
           }
         } else if (note.kind === "chat-throttled") {

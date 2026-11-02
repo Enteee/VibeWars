@@ -8,6 +8,7 @@ import {
   type ResolvedWeaponSets,
 } from "../equipment/resolve.js";
 import { wieldsFor, type WeaponId } from "../equipment/weapons.js";
+import { spellModComesUp } from "../skills/spell-mods.js";
 import {
   distanceWithinRange,
   firstHit,
@@ -101,10 +102,11 @@ import { getSkill } from "../skills/catalog.js";
 import { conditionRequirementText } from "../skills/describe.js";
 import { clearChainMarksOn, tickChainMarks } from "../skills/chain.js";
 import {
-  applyDamage,
   applyEffects,
+  applyRedirectedDamage,
   applySkillEffects,
   applyStatus,
+  closestOwnMinion,
   conditionTaker,
   disableOwnSkills,
   gainEnergy,
@@ -115,6 +117,7 @@ import {
   type SkillOutcome,
   type SkippedEffect,
   type SkillResolution,
+  type TakenCreature,
 } from "../skills/effects.js";
 import {
   aggregateModifiers,
@@ -135,6 +138,7 @@ import {
   type ActiveStatus,
   type Outbreak,
   type StatusChange,
+  type StatusDefinition,
   type StatusId,
 } from "../skills/status.js";
 import { effectiveMaxEnergy, energyFloor, recoverOvercast } from "../skills/overcast.js";
@@ -191,6 +195,7 @@ import {
   bearerHit,
   blindMisses,
   blocks,
+  criticalHitRiders,
   landedCritical,
   landBlow,
   nextAttackSkillOf,
@@ -234,7 +239,12 @@ import {
 import type { CombatLogEntry } from "./combat-log.js";
 import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
-import { MINION_CAP_ATTRIBUTE, minionCap, minionDegenerationPips } from "./minions.js";
+import {
+  MASTERLESS_TEAM,
+  MINION_CAP_ATTRIBUTE,
+  minionCap,
+  minionDegenerationPips,
+} from "./minions.js";
 import { directionAngle, showsBackTo, spawnFacing } from "./facing.js";
 import {
   GUILD_LORD_HEALTH_PIPS,
@@ -384,10 +394,16 @@ export type ArrivedDeathInRange =
 export interface Creature {
   /**
    * Whoever summoned it, and whom it answers to: it leaves with them.
-   * `undefined`: a map's NPC, as a priest (#1186), which answers to nobody.
-   * A spirit someone takes control of (#1965) answers to them from then on.
+   * `undefined`: a map's NPC, as a priest (#1186), which answers to nobody,
+   * or a masterless minion (#2092), on `MASTERLESS_TEAM`. A spirit or
+   * minion someone takes control of (#1965) answers to them from then on.
    */
   ownerId: string | undefined;
+  /**
+   * The owner's status that holds it (#2092): Verata's Aura's. Once the
+   * owner no longer bears it, it goes masterless. `undefined`: none.
+   */
+  bondStatusId: StatusId | undefined;
   readonly kind: CreatureKind;
   /** From the template (#1162): how it is drawn. */
   readonly look: CreatureLook;
@@ -588,9 +604,9 @@ export function loadoutSpec(
   return {
     attributeRanks: loadout.attributeRanks,
     equipment: set1.equipment,
-    maxHealth: loadout.maxHealth,
+    maxHealth: set1.maxHealth,
     maxEnergy: set1.maxEnergy,
-    baseEnergyPips: loadout.baseEnergyPips,
+    baseEnergyPips: set1.baseEnergyPips,
     spareWeaponSets: [set2, set3, set4],
   };
 }
@@ -782,6 +798,11 @@ interface ParticipantRecord extends Participant {
   resurrectedAtSeconds: number;
   weaponSets: ResolvedWeaponSets;
   activeWeaponSet: WeaponSetIndex;
+  /**
+   * Health a swap's floor of 1 held back from its drop (#2007): the next
+   * swap up pays it first, so swapping down and up again is never a heal.
+   */
+  swapHealthDebt: number;
   pendingWeaponSet: WeaponSetIndex | undefined;
   corpseExploited: boolean;
   armedAttack: { readonly skillId: string; remainingSeconds: number } | undefined;
@@ -916,6 +937,15 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
 /** How a step toward a waypoint went; see `#stepToward`. */
 type PathStep = "moved" | "stalled" | "held";
 
+/**
+ * What a status on a body that died stands up there (#1986, #2092), at
+ * its caster's `ranks`, as the status's `replacedOnDeathBy` says.
+ */
+type ReplacedOnDeath = NonNullable<StatusDefinition["replacedOnDeathBy"]> & {
+  readonly ranks: ReadonlyMap<string, number>;
+  readonly skillId: string | undefined;
+};
+
 /** Every participant's combatant, without a copy: read each tick (#837). */
 function* combatantsOf(records: Iterable<Participant>): Generator<Combatant> {
   for (const record of records) {
@@ -1005,13 +1035,19 @@ export class MatchSimulation {
    * removed once, at its end, never mid-loop.
    */
   readonly #leaving = new Set<string>();
-  /** Who stands up where a minion fell this step (#1836), after the fallen leave. */
+  /**
+   * Who stands up where a minion fell this step (#1836), after the fallen
+   * leave, or where any bearer of Malign Intervention fell (#2092).
+   */
   readonly #replacements: {
-    readonly ownerId: string;
+    /** Whose it is; `undefined`: masterless (#2092), at `ranks`. */
+    readonly ownerId: string | undefined;
     readonly skillId: string;
     readonly creature: CreatureTemplate;
     readonly count: number;
     readonly at: Vec2;
+    /** Whose ranks it stands up at; `undefined`: its owner's as it does. */
+    readonly ranks: ReadonlyMap<string, number> | undefined;
   }[] = [];
   /** Priest Annihilation's shrines (#1186), one a team; `[]` for every other match. */
   readonly #shrines: readonly Shrine[];
@@ -1318,6 +1354,7 @@ export class MatchSimulation {
       creature: spec.creature === undefined ? undefined : { ...spec.creature },
       weaponSets: this.#weaponSets(spec),
       activeWeaponSet: 0,
+      swapHealthDebt: 0,
       pendingWeaponSet: undefined,
       corpseExploited: false,
       armedAttack: undefined,
@@ -1407,18 +1444,7 @@ export class MatchSimulation {
     if (template.kind === "minion" && !replacement) {
       this.#cullMinions(owner, skillId, count);
     }
-    // A body lying as corpses (#1836) takes no room.
-    let creatures = 0;
-    for (const record of this.#participants.values()) {
-      if (
-        record.creature?.ownerId !== undefined &&
-        !record.combatant.dead &&
-        !this.#leaving.has(record.id)
-      ) {
-        creatures += 1;
-      }
-    }
-    const fits = Math.max(0, Math.min(count, MAX_CREATURES - creatures));
+    const fits = Math.max(0, Math.min(count, MAX_CREATURES - this.#summonedCount()));
     const radius = template.aura?.radius;
     if (fits > 0 && radius !== undefined) {
       for (const record of this.#participants.values()) {
@@ -1436,92 +1462,163 @@ export class MatchSimulation {
     for (let i = 0; i < fits; i += 1) {
       const id = `${owner.id}/c${String(this.#nextCreature)}`;
       this.#nextCreature += 1;
-      this.add({
+      this.#addCreature(
         id,
-        team: owner.combatant.team,
-        skillBar: [],
-        // The summoner's rank, read once (#467): the creature's weapon mastery.
-        attributeRanks:
-          template.attack === undefined
-            ? new Map()
-            : new Map([[template.attack.attributeId, ranks.get(template.attack.attributeId) ?? 0]]),
-        equipment: creatureResolvedEquipment(
-          resolveMagnitudeAtRanks(template.armor, ranks),
-          template.attack,
-          template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
-        ),
-        spawn: at,
-        facing: owner.facing,
-        // Spawning Power is the summoner's (#1098), for what they create: spirits
-        // and minions. A pet is charmed, not created, and is not on the wiki's
-        // list (#1144).
-        maxHealth:
-          template.kind === "pet"
-            ? resolveMagnitudeAtRanks(template.maxHealth, ranks)
-            : spawningPowerHealth(
-                ranks.get(SPAWNING_POWER_ATTRIBUTE) ?? 0,
-                resolveMagnitudeAtRanks(template.maxHealth, ranks),
-              ),
-        maxEnergy: 0,
-        baseEnergyPips: 0,
-        behaviour: template.behaviour,
-        creature: {
-          ownerId: owner.id,
-          kind: template.kind,
-          look: template.look,
-          name: template.name,
-          expiresInSeconds:
-            template.durationSeconds === undefined
-              ? Number.POSITIVE_INFINITY
-              : resolveMagnitudeAtRanks(template.durationSeconds, ranks),
-          ageSeconds: 0,
-          summonedAtTick: this.#tick,
-          skillId,
-          aura: template.aura,
-          onDeath: template.onDeath,
-          ownerDisableSeconds:
-            template.ownerDisableOnDeath === undefined
-              ? 0
-              : resolveMagnitudeAtRanks(template.ownerDisableOnDeath, ranks),
-          deathBurst:
-            template.deathBurst === undefined
-              ? undefined
-              : template.deathBurst.effect === "apply-status"
-                ? {
-                    ...template.deathBurst,
-                    durationSeconds: resolveMagnitudeAtRanks(
-                      template.deathBurst.durationSeconds,
-                      ranks,
-                    ),
-                  }
-                : {
-                    ...template.deathBurst,
-                    perSecondAlive: resolveMagnitudeAtRanks(
-                      template.deathBurst.perSecondAlive,
-                      ranks,
-                    ),
-                  },
-          onDeathInRange:
-            template.onDeathInRange?.kind === "damage-same-type"
-              ? {
-                  ...template.onDeathInRange,
-                  damage: resolveMagnitudeAtRanks(template.onDeathInRange.damage, ranks),
-                }
-              : template.onDeathInRange,
-          replacedBy: template.replacedBy,
-          corpsesLeft:
-            template.leavesCorpses === undefined
-              ? 0
-              : Math.round(resolveMagnitudeAtRanks(template.leavesCorpses, ranks)),
-          companionSkillId: companion ? skillId : undefined,
-          leaderId: undefined,
-          mode: "guard",
-        },
-      });
+        owner.combatant.team,
+        owner.id,
+        owner.facing,
+        skillId,
+        template,
+        at,
+        ranks,
+        companion,
+      );
       if (template.kind !== "pet") {
         this.#logFired(fireCreationTriggers(owner.combatant, id, this.#triggerContext()));
       }
     }
+  }
+
+  /**
+   * `count` masterless creatures of `template` at `at` (#2092), numbers
+   * read on `ranks`: Malign Intervention's horror. Nobody's, so no cap
+   * culls for them and no trigger fires; as many as `MAX_CREATURES`
+   * leaves room for. Ids are `masterless/c<n>`.
+   */
+  #summonMasterless(
+    template: CreatureTemplate,
+    count: number,
+    at: Vec2,
+    ranks: ReadonlyMap<string, number>,
+    skillId: string,
+  ): void {
+    const fits = Math.max(0, Math.min(count, MAX_CREATURES - this.#summonedCount()));
+    for (let i = 0; i < fits; i += 1) {
+      const id = `masterless/c${String(this.#nextCreature)}`;
+      this.#nextCreature += 1;
+      this.#addCreature(id, MASTERLESS_TEAM, undefined, 0, skillId, template, at, ranks, false);
+    }
+  }
+
+  /**
+   * Adds one creature of `template` at `at` (#1052): `ownerId`'s, on
+   * `team`, its numbers read on `ranks`; `undefined` and
+   * `MASTERLESS_TEAM` for a masterless one (#2092).
+   */
+  #addCreature(
+    id: string,
+    team: number,
+    ownerId: string | undefined,
+    facing: number,
+    skillId: string | undefined,
+    template: CreatureTemplate,
+    at: Vec2,
+    ranks: ReadonlyMap<string, number>,
+    companion: boolean,
+  ): void {
+    this.add({
+      id,
+      team,
+      skillBar: [],
+      // The summoner's rank, read once (#467): the creature's weapon mastery.
+      attributeRanks:
+        template.attack === undefined
+          ? new Map()
+          : new Map([[template.attack.attributeId, ranks.get(template.attack.attributeId) ?? 0]]),
+      equipment: creatureResolvedEquipment(
+        resolveMagnitudeAtRanks(template.armor, ranks),
+        template.attack,
+        template.attack === undefined ? 0 : (ranks.get(template.attack.attributeId) ?? 0),
+      ),
+      spawn: at,
+      facing,
+      // Spawning Power is the summoner's (#1098), for what they create: spirits
+      // and minions. A pet is charmed, not created, and is not on the wiki's
+      // list (#1144).
+      maxHealth:
+        template.kind === "pet"
+          ? resolveMagnitudeAtRanks(template.maxHealth, ranks)
+          : spawningPowerHealth(
+              ranks.get(SPAWNING_POWER_ATTRIBUTE) ?? 0,
+              resolveMagnitudeAtRanks(template.maxHealth, ranks),
+            ),
+      maxEnergy: 0,
+      baseEnergyPips: 0,
+      behaviour: template.behaviour,
+      creature: {
+        ownerId,
+        kind: template.kind,
+        look: template.look,
+        name: template.name,
+        expiresInSeconds:
+          template.durationSeconds === undefined
+            ? Number.POSITIVE_INFINITY
+            : resolveMagnitudeAtRanks(template.durationSeconds, ranks),
+        ageSeconds: 0,
+        summonedAtTick: this.#tick,
+        skillId,
+        aura: template.aura,
+        onDeath: template.onDeath,
+        ownerDisableSeconds:
+          template.ownerDisableOnDeath === undefined
+            ? 0
+            : resolveMagnitudeAtRanks(template.ownerDisableOnDeath, ranks),
+        deathBurst:
+          template.deathBurst === undefined
+            ? undefined
+            : template.deathBurst.effect === "apply-status"
+              ? {
+                  ...template.deathBurst,
+                  durationSeconds: resolveMagnitudeAtRanks(
+                    template.deathBurst.durationSeconds,
+                    ranks,
+                  ),
+                }
+              : {
+                  ...template.deathBurst,
+                  perSecondAlive: resolveMagnitudeAtRanks(
+                    template.deathBurst.perSecondAlive,
+                    ranks,
+                  ),
+                },
+        onDeathInRange:
+          template.onDeathInRange?.kind === "damage-same-type"
+            ? {
+                ...template.onDeathInRange,
+                damage: resolveMagnitudeAtRanks(template.onDeathInRange.damage, ranks),
+              }
+            : template.onDeathInRange,
+        replacedBy: template.replacedBy,
+        corpsesLeft:
+          template.leavesCorpses === undefined
+            ? 0
+            : Math.round(resolveMagnitudeAtRanks(template.leavesCorpses, ranks)),
+        companionSkillId: companion ? skillId : undefined,
+        leaderId: undefined,
+        mode: "guard",
+        bondStatusId: undefined,
+      },
+    });
+  }
+
+  /**
+   * Living spirits and minions (#1052), toward `MAX_CREATURES`: anyone's,
+   * a masterless minion too (#2092), never a map's. A body lying as
+   * corpses (#1836) takes no room.
+   */
+  #summonedCount(): number {
+    let creatures = 0;
+    for (const record of this.#participants.values()) {
+      if (
+        (record.creature?.ownerId !== undefined || record.combatant.team === MASTERLESS_TEAM) &&
+        record.creature !== undefined &&
+        !record.combatant.dead &&
+        !this.#leaving.has(record.id)
+      ) {
+        creatures += 1;
+      }
+    }
+    return creatures;
   }
 
   /**
@@ -1567,24 +1664,72 @@ export class MatchSimulation {
   }
 
   /**
-   * `owner` takes control of the spirit `spiritId` (#1965): Signet of
-   * Binding's. It answers to `owner` and is on its team from now on, and
-   * leaves with it; it keeps its Health, its time left and the ranks it
-   * arrived with. The aura pass reads its team each step.
+   * `owner` takes control of a spirit (#1965) or a minion (#2092): Signet
+   * of Binding's, Verata's Aura's. It answers to `owner` and is on its
+   * team from now on, and leaves with it; it keeps its Health, its time
+   * left, its statuses and the ranks it arrived with. The aura pass reads
+   * its team each step. A gazed minion with a master goes masterless
+   * instead. Never a cull: the cap is checked at `owner`'s next raise.
    */
-  #takeControl(owner: ParticipantRecord, spiritId: string): void {
-    const spirit = this.#participants.get(spiritId);
+  #takeControl(owner: ParticipantRecord, taken: TakenCreature): void {
+    const record = this.#participants.get(taken.id);
+    const creature = record?.creature;
     if (
-      spirit?.creature?.kind !== "spirit" ||
-      spirit.combatant.dead ||
-      this.#leaving.has(spiritId)
+      record === undefined ||
+      (creature?.kind !== "spirit" && creature?.kind !== "minion") ||
+      record.combatant.dead ||
+      this.#leaving.has(taken.id)
     ) {
       return;
     }
-    spirit.creature.ownerId = owner.id;
-    spirit.combatant.team = owner.combatant.team;
-    // An attack spirit's swing was at its new side.
-    spirit.combatant.attack = undefined;
+    if (taken.kind === "gaze" && creature.ownerId !== undefined) {
+      this.#makeMasterless(record, creature);
+      return;
+    }
+    creature.ownerId = owner.id;
+    creature.bondStatusId = taken.bondStatusId;
+    creature.leaderId = undefined;
+    creature.mode = "guard";
+    record.combatant.team = owner.combatant.team;
+    record.targetId = undefined;
+    // Its swing was at its new side.
+    record.combatant.attack = undefined;
+  }
+
+  /**
+   * A minion answers to nobody from now on (#2092): Verata's Gaze broke
+   * it off, or the status that bound it ended. On `MASTERLESS_TEAM`, a
+   * foe to everyone, it goes on rotting and fights whoever is nearest.
+   */
+  #makeMasterless(record: ParticipantRecord, creature: Creature): void {
+    creature.ownerId = undefined;
+    creature.bondStatusId = undefined;
+    creature.leaderId = undefined;
+    record.combatant.team = MASTERLESS_TEAM;
+    record.targetId = undefined;
+    record.combatant.attack = undefined;
+  }
+
+  /**
+   * Every creature bound to a status its owner no longer bears goes
+   * masterless (#2092): Verata's Aura's minions, as it expires, is
+   * removed, or its owner dies.
+   */
+  #breakBonds(): void {
+    for (const record of this.#participants.values()) {
+      const creature = record.creature;
+      if (creature?.bondStatusId === undefined || creature.ownerId === undefined) {
+        continue;
+      }
+      const bond = creature.bondStatusId;
+      const owner = this.#participants.get(creature.ownerId);
+      const held = owner?.combatant.statuses.active.some(
+        (status) => status.id === bond && status.remainingSeconds > 0,
+      );
+      if (held !== true) {
+        this.#makeMasterless(record, creature);
+      }
+    }
   }
 
   /**
@@ -2052,7 +2197,7 @@ export class MatchSimulation {
       }
       const effect: SkillEffect =
         burst.effect === "apply-status"
-          ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: amount }
+          ? { kind: "apply-status", statusId: burst.statusId, durationSeconds: { flat: amount } }
           : burst.effect === "damage"
             ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
             : { kind: "heal", amount: { flat: amount } };
@@ -2114,11 +2259,12 @@ export class MatchSimulation {
     const fraction = raised > 0 ? before.health / raised : 0;
     const spec: ParticipantSpec = { ...record.spec, skillBar, ...loadoutSpec(loadout) };
     record.combatant = this.#combatant(spec);
-    record.resolvedMaxHealth = loadout.maxHealth;
+    record.resolvedMaxHealth = loadout.weaponSets[0].maxHealth;
     record.resolvedMaxEnergy = loadout.weaponSets[0].maxEnergy;
     // Back to set 1, as a fresh build starts (#489).
     record.weaponSets = this.#weaponSets(spec);
     record.activeWeaponSet = 0;
+    record.swapHealthDebt = 0;
     record.pendingWeaponSet = undefined;
     this.#setMorale(record, before.morale);
     record.combatant.health = record.combatant.maxHealth * fraction;
@@ -2675,7 +2821,7 @@ export class MatchSimulation {
     if (pet === undefined) {
       return;
     }
-    const { rule } = this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key, undefined);
     // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
     const faster = Math.max(
       aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster,
@@ -2726,7 +2872,7 @@ export class MatchSimulation {
     key: string,
     castTargetId: string | undefined,
   ): void {
-    const { rule } = this.#payForUse(record, skill, key);
+    const { rule } = this.#payForUse(record, skill, key, castTargetId);
     this.#castBegun(record, skill, castTargetId);
     // An instant flies nowhere, so no time passes for it.
     this.resolveCast(
@@ -2747,17 +2893,24 @@ export class MatchSimulation {
   /**
    * A skill used, at once or as it begins: its cost, and what it uses up
    * of a glyph, the chants on its user, or a status counting its next
-   * skills of a kind (#1761). Returns what they give it.
+   * skills of a kind (#1761). Returns what they give it. `castTargetId`
+   * is whose statuses may cut an enchantment's cost (#1975).
    */
   #payForUse(
     record: ParticipantRecord,
     skill: Skill,
     key: string,
+    castTargetId: string | undefined,
   ): { rule: CastRule; castsInstantly: boolean } {
     // Read before anything is spent: Extend Enchantments lengthens the
     // enchantment that uses it up.
     const own = ownSkillBoost(record.combatant.statuses.active, skill);
-    payCost(skill, record.combatant, key);
+    payCost(
+      skill,
+      record.combatant,
+      key,
+      castTargetId === undefined ? undefined : this.#participants.get(castTargetId)?.combatant,
+    );
     const glyphs = this.#useGlyph(record, skill);
     this.#logSpent(record, skill, record.combatant.statuses.useOwnSkillModifiers(skill));
     // Heket's Rampage (#1869) ends before the attack skill is timed.
@@ -2808,8 +2961,8 @@ export class MatchSimulation {
     }
 
     // Timed before it is paid for, so a status its use spends (#1761)
-    // still hastens it.
-    const timed =
+    // still hastens it. Adept's chance (#2011) halves it after the rest.
+    const scaled =
       skill.attack === undefined
         ? effectiveActivationSeconds(
             skill,
@@ -2819,7 +2972,13 @@ export class MatchSimulation {
               : this.#participants.get(castTargetId)?.combatant,
           )
         : undefined;
-    const { rule, castsInstantly } = this.#payForUse(record, skill, key);
+    const timed =
+      scaled !== undefined &&
+      scaled > 0 &&
+      spellModComesUp(record.combatant.equipment.spellMods.castHalves, skill, this.#rng)
+        ? scaled / 2
+        : scaled;
+    const { rule, castsInstantly } = this.#payForUse(record, skill, key, castTargetId);
     // The swing in progress is lost, as in GW1; the attack itself resumes
     // once the skill is done. A flash enchantment keeps it (#1421).
     if (record.combatant.attack !== undefined && !skill.flash) {
@@ -3230,6 +3389,7 @@ export class MatchSimulation {
     this.#fireEnergyEmpty();
     this.#spreadStatuses();
     this.#fireStatusChanges();
+    this.#breakBonds();
     this.#awardKillMorale();
     this.#settleMoving();
     this.#tallyAggression();
@@ -3705,7 +3865,25 @@ export class MatchSimulation {
         ? undefined
         : getStatusDefinition(borrowing).borrowsAttribute?.attributeId;
     // What its start spent still boosts it (#1941): the last glyph spell's.
-    const loan = { lent, held: cast.rule.heldAttributeDeltas };
+    // Of Mastery's +1 (#2011), rolled once a use, as the ranks are read.
+    const mastered =
+      skill.attributeId !== undefined &&
+      spellModComesUp(
+        record.combatant.equipment.spellMods.attributePlusOne.filter(
+          ({ attributeId }) => attributeId === skill.attributeId,
+        ),
+        skill,
+        this.#rng,
+      )
+        ? skill.attributeId
+        : undefined;
+    const loan = {
+      lent,
+      held:
+        mastered === undefined
+          ? cast.rule.heldAttributeDeltas
+          : [...cast.rule.heldAttributeDeltas, { scope: { attributeId: mastered }, amount: 1 }],
+    };
     const primary = skill.target === "self" ? record : targetRecord;
     const exposed = this.#exposedTo(record);
     const speed = record.combatant.equipment.mainHand.weapon.projectileSpeed;
@@ -3888,8 +4066,8 @@ export class MatchSimulation {
         }
       }
     });
-    for (const spiritId of taken) {
-      this.#takeControl(record, spiritId);
+    for (const creature of taken) {
+      this.#takeControl(record, creature);
     }
     // An attack skill is a swing, so it turns on its target with the
     // weapon: it starts an attack, or switches one to them. Any other skill
@@ -3946,16 +4124,24 @@ export class MatchSimulation {
         cast.rule.rechargeFaster,
       );
       // A glyph's hold on the spell (#1730): Renewal's 0 over Sacrifice's 30 more.
+      // Of Memory's chance (#2011) halves the whole of it.
       beginRecharge(
         record.combatant.cast,
         skill,
         cast.rule.rechargesInstantly
           ? 0
           : // Energizing Wind's slower share (#1886), once the faster is off.
-            reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) *
+            (reducedRecharge(skill.rechargeSeconds * (1 - rechargeFraction), faster) *
               (1 + cast.rule.own.rechargeSlower) +
               rechargeLongerSeconds +
-              cast.rule.extraRechargeSeconds,
+              cast.rule.extraRechargeSeconds) *
+              (spellModComesUp(
+                record.combatant.equipment.spellMods.rechargeHalves,
+                skill,
+                this.#rng,
+              )
+                ? 0.5
+                : 1),
         cast.key,
       );
       // A form's "disabled for 45 seconds" (#1437), beside its recharge.
@@ -4264,7 +4450,7 @@ export class MatchSimulation {
     for (const { record, changes: recorded } of changes) {
       for (const change of recorded) {
         if (change.kind === "redirected-damage") {
-          this.#landRedirected(record, change.toId, change.amount);
+          this.#landRedirected(record, change);
         }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4318,7 +4504,7 @@ export class MatchSimulation {
     const settle = (record: ParticipantRecord, changes: readonly StatusChange[]): void => {
       for (const change of changes) {
         if (change.kind === "redirected-damage") {
-          this.#landRedirected(record, change.toId, change.amount);
+          this.#landRedirected(record, change);
         }
         if (change.kind === "charged-source") {
           this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4355,7 +4541,7 @@ export class MatchSimulation {
       for (const { record, changes } of left) {
         for (const change of changes) {
           if (round < LAST_PASS_LANDINGS && change.kind === "redirected-damage") {
-            this.#landRedirected(record, change.toId, change.amount);
+            this.#landRedirected(record, change);
           }
           if (round < LAST_PASS_LANDINGS && change.kind === "charged-source") {
             this.#landCharge(change.toId, change.statusId, change.amount);
@@ -4450,15 +4636,21 @@ export class MatchSimulation {
 
   /**
    * Symbiotic Bond's share of a hit on `bearer` (#1108), on `toId`, the
-   * bond's caster: typeless, unmitigated and from nobody, so it is never
+   * bond's caster, or Dark Bond's (#1986) on the bearer's closest living
+   * minion now: typeless, unmitigated and from nobody, so it is never
    * redirected again and answers nothing. With its caster dead or gone,
-   * the bearer takes it back: damage never vanishes.
+   * or no minion, the bearer takes it back: damage never vanishes.
    */
-  #landRedirected(bearer: ParticipantRecord, toId: string, amount: number): void {
-    const to = this.#participants.get(toId);
-    const victim = to === undefined || to.combatant.dead ? bearer : to;
+  #landRedirected(
+    bearer: ParticipantRecord,
+    { toId, amount, toClosestMinion }: Extract<StatusChange, { kind: "redirected-damage" }>,
+  ): void {
+    const to = toClosestMinion
+      ? closestOwnMinion(bearer.combatant, this.#participants)
+      : this.#participants.get(toId)?.combatant;
+    const victim = to === undefined || to.dead ? bearer.combatant : to;
     const events: CombatEvent[] = [];
-    applyDamage(victim.combatant, amount, "typeless", false, events, undefined);
+    applyRedirectedDamage(victim, amount, events);
     if (events.length === 0) {
       return;
     }
@@ -4495,7 +4687,13 @@ export class MatchSimulation {
       )
       .flatMap((other) =>
         applyEffects(
-          [{ kind: "apply-status", statusId: gained.id, durationSeconds: gained.durationSeconds }],
+          [
+            {
+              kind: "apply-status",
+              statusId: gained.id,
+              durationSeconds: { flat: gained.durationSeconds },
+            },
+          ],
           {
             caster: bearer,
             target: other.combatant,
@@ -5709,7 +5907,13 @@ export class MatchSimulation {
         target.combatant,
         this.#participants,
       ) &&
-      blocks(target.combatant, projectile.attackerId, "projectile", this.#rng)
+      blocks(
+        target.combatant,
+        projectile.attackerId,
+        "projectile",
+        skillHit !== undefined,
+        this.#rng,
+      )
     ) {
       events.push({ kind: "attack-blocked", targetId: target.id });
       if (attacker !== undefined) {
@@ -5762,6 +5966,14 @@ export class MatchSimulation {
     );
     if (critical && attacker !== undefined) {
       landedCritical(attacker.combatant, projectile.weaponSnapshot.criticalStrikes, events);
+      criticalHitRiders(
+        attacker.combatant,
+        target.combatant,
+        this.#rng,
+        this.#ruleset.combat,
+        this.#participants,
+        fired,
+      );
     }
     if (attacker !== undefined) {
       events.push(
@@ -5949,8 +6161,8 @@ export class MatchSimulation {
    * attack skill landed on (#936), one for a shot, and one per landed blow
    * of a swing, so
    * a double strike earns two. A blocked blow deals no damage, so it earns
-   * nothing (#534). "For Great Justice!" (#936) adds its extra strikes
-   * to each. What filled is told in `log` (#1735), the events logged
+   * nothing (#534). A Furious weapon's blow may count twice (#2009).
+   * "For Great Justice!" (#936) adds its extra strikes to each. What filled is told in `log` (#1735), the events logged
    * for the blow.
    */
   #gainAdrenaline(
@@ -5965,7 +6177,16 @@ export class MatchSimulation {
     });
     if (damagedFoe) {
       const { extraStrikesPerHit } = aggregateModifiers(record.combatant.statuses.active);
-      const strikes = blows * (1 + extraStrikesPerHit);
+      // Furious (#2009): each blow rolls to count twice. Drawn only for a
+      // weapon that has it, so no other fight's stream moves.
+      const { doubleAdrenalineChance } = record.combatant.equipment.hitMods;
+      let doubled = 0;
+      for (let blow = 0; doubleAdrenalineChance > 0 && blow < blows; blow += 1) {
+        if (this.#rng.nextFloat() < doubleAdrenalineChance) {
+          doubled += 1;
+        }
+      }
+      const strikes = (blows + doubled) * (1 + extraStrikesPerHit);
       if (gainStrikes(record.combatant, strikes, this.#elapsedSeconds)) {
         log.push({ kind: "adrenaline-gained", targetId: record.id, strikes, skillId: undefined });
       }
@@ -6049,6 +6270,17 @@ export class MatchSimulation {
               remainingSeconds > 0 && getStatusDefinition(id).category === "condition",
           ),
         });
+        // Jagged Bones (#1986) stands a horror up, Malign Intervention a
+        // masterless one (#2092): read before death clears it.
+        const replacedOnDeath = victim.combatant.statuses.active.flatMap(
+          ({ id, remainingSeconds, ranks, sourceSkillId }) => {
+            const by = getStatusDefinition(id).replacedOnDeathBy;
+            return by === undefined || remainingSeconds <= 0
+              ? []
+              : [{ ...by, ranks, skillId: sourceSkillId }];
+          },
+        );
+        this.#riseMasterless(victim, replacedOnDeath);
         victim.combatant.statuses.endAll();
         victim.armedAttack = undefined;
         this.#clearChainMarks(victim);
@@ -6067,6 +6299,7 @@ export class MatchSimulation {
               : Number.POSITIVE_INFINITY;
           if (victim.creature.onDeath === "vanish") {
             this.#creatureFell(victim);
+            this.#replaceOnDeath(victim, replacedOnDeath);
           } else if (victim.creature.onDeath === "lie") {
             this.#deathPenalty(victim);
           }
@@ -6222,21 +6455,81 @@ export class MatchSimulation {
         skillId: creature.skillId ?? "",
         ...creature.replacedBy,
         at: record.position,
+        ranks: undefined,
       });
+    }
+  }
+
+  /**
+   * What its statuses stand up where `record`, a creature, died (#1986):
+   * Jagged Bones's horror, its owner's, at its caster's ranks, beside
+   * the creature's own replacement.
+   */
+  #replaceOnDeath(record: ParticipantRecord, replacedOnDeath: readonly ReplacedOnDeath[]): void {
+    const ownerId = record.creature?.ownerId;
+    if (ownerId === undefined) {
+      return;
+    }
+    for (const { creature, count, ranks, masterless } of replacedOnDeath) {
+      if (masterless === true) {
+        continue;
+      }
+      this.#replacements.push({
+        ownerId,
+        skillId: record.creature?.skillId ?? "",
+        creature,
+        count,
+        at: record.position,
+        ranks,
+      });
+    }
+  }
+
+  /**
+   * What rises masterless where `record` died (#2092): Malign
+   * Intervention's horror, at its caster's ranks, whoever the bearer was,
+   * a player or a creature. Its corpse is not spent.
+   */
+  #riseMasterless(record: ParticipantRecord, replacedOnDeath: readonly ReplacedOnDeath[]): void {
+    for (const { creature, count, ranks, masterless, skillId } of replacedOnDeath) {
+      if (masterless === true) {
+        this.#replacements.push({
+          ownerId: undefined,
+          skillId: skillId ?? "",
+          creature,
+          count,
+          at: record.position,
+          ranks,
+        });
+      }
     }
   }
 
   /**
    * Who stands up where a minion fell this step (#1836), once the fallen
    * have left, so there is room: its owner's, unless its owner is dead or
-   * gone. As many as `MAX_CREATURES` leaves room for, past no cap.
+   * gone; a masterless one regardless (#2092). As many as `MAX_CREATURES`
+   * leaves room for, past no cap.
    */
   #replaceFallen(): void {
     const replacements = this.#replacements.splice(0);
-    for (const { ownerId, skillId, creature, count, at } of replacements) {
+    for (const { ownerId, skillId, creature, count, at, ranks } of replacements) {
+      if (ownerId === undefined) {
+        this.#summonMasterless(creature, count, at, ranks ?? new Map(), skillId);
+        continue;
+      }
       const owner = this.#participants.get(ownerId);
       if (owner !== undefined && !owner.combatant.dead) {
-        this.#summon(owner, skillId, creature, count, at, false, true);
+        this.#summon(
+          owner,
+          skillId,
+          creature,
+          count,
+          at,
+          false,
+          true,
+          ranks ?? ranksOf(owner.combatant),
+        );
       }
     }
   }
@@ -6676,6 +6969,7 @@ export class MatchSimulation {
         record.respawnInSeconds = 0;
         record.outOfCombatSeconds = 0;
         record.resurrectedAtSeconds = this.#elapsedSeconds;
+        record.swapHealthDebt = 0;
         record.corpseExploited = false;
       }
     }
@@ -6807,6 +7101,9 @@ export class MatchSimulation {
    * Put `set` in hand (#489): the only writer of `combatant.equipment`.
    * Maximum energy becomes the set's, and current energy moves by the
    * same amount, below 0 if it must (GW1's hidden energy, ADR-0036).
+   * Maximum health and regeneration follow the set's mods (#2007);
+   * health moves like energy but never below 1: a swap does not kill, and
+   * what that floor held back is owed to the next swap up.
    * `moraleMaximum` is linear, so the move is the sets' difference at any
    * morale. An attack in progress swings afresh with the new weapon.
    */
@@ -6817,9 +7114,11 @@ export class MatchSimulation {
     }
     const { combatant } = record;
     const before = combatant.maxEnergy;
+    const healthBefore = combatant.maxHealth;
     record.activeWeaponSet = set;
     record.pendingWeaponSet = undefined;
     combatant.equipment = held.equipment;
+    combatant.baseEnergyPips = held.baseEnergyPips;
     record.resolvedMaxEnergy = held.maxEnergy;
     combatant.maxEnergy = moraleMaximum(
       this.#ruleset.combat.baseEnergy,
@@ -6827,6 +7126,22 @@ export class MatchSimulation {
       combatant.morale,
     );
     combatant.energy += combatant.maxEnergy - before;
+    record.resolvedMaxHealth = held.maxHealth;
+    combatant.maxHealth = moraleMaximum(
+      this.#ruleset.combat.baseHealth,
+      record.resolvedMaxHealth,
+      combatant.morale,
+    );
+    const change = combatant.maxHealth - healthBefore;
+    if (change >= 0) {
+      const repaid = Math.min(record.swapHealthDebt, change);
+      record.swapHealthDebt -= repaid;
+      combatant.health += change - repaid;
+    } else {
+      const health = Math.max(Math.min(1, combatant.health), combatant.health + change);
+      record.swapHealthDebt += health - (combatant.health + change);
+      combatant.health = health;
+    }
     if (combatant.attack !== undefined) {
       combatant.attack.swingElapsed = 0;
     }
@@ -6956,7 +7271,8 @@ export class MatchSimulation {
         continue;
       }
       const team = this.#participants.get(entry.sourceId)?.combatant.team;
-      if (team === undefined) {
+      // A masterless minion's blows are no side's (#2092).
+      if (team === undefined || team === MASTERLESS_TEAM) {
         continue;
       }
       for (const event of entry.events) {
@@ -7044,6 +7360,7 @@ export class MatchSimulation {
     combatant.statuses.clear();
     combatant.dead = false;
     combatant.health = effectiveMaxHealth(combatant);
+    record.swapHealthDebt = 0;
     combatant.invulnerableRemaining = SHRINE_INVULNERABLE_SECONDS;
     combatant.energy = Math.max(0, effectiveMaxEnergy(combatant));
     emptyAdrenaline(combatant);
@@ -7239,6 +7556,7 @@ export class MatchSimulation {
     }
     record.combatant.dead = false;
     record.combatant.health = record.combatant.maxHealth * (record.spec.startHealthFraction ?? 1);
+    record.swapHealthDebt = 0;
     record.corpseExploited = false;
     record.combatant.energy = Math.max(0, effectiveMaxEnergy(record.combatant));
     emptyAdrenaline(record.combatant);
@@ -7311,7 +7629,12 @@ export class MatchSimulation {
   #weaponSets(spec: ParticipantSpec): ResolvedWeaponSets {
     const [set2, set3, set4] = spec.spareWeaponSets ?? [null, null, null];
     return [
-      { equipment: spec.equipment, maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy },
+      {
+        equipment: spec.equipment,
+        maxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
+        maxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
+        baseEnergyPips: spec.baseEnergyPips ?? 0,
+      },
       set2,
       set3,
       set4,

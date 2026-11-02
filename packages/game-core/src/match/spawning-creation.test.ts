@@ -78,6 +78,7 @@ function standing(id: string, spawn: Vec2, kind: "spirit" | "minion" | "pet"): P
       corpsesLeft: 0,
       companionSkillId: undefined,
       leaderId: undefined,
+      bondStatusId: undefined,
       mode: "guard",
     },
   };

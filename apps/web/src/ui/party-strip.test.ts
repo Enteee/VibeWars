@@ -21,7 +21,6 @@ function player(
     team: null,
     ready: false,
     isHost: false,
-    character: null,
     bot: false,
     away: false,
     ...overrides,
@@ -35,6 +34,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     phase: "waiting",
     mode: "team-arena",
     mapId: "arena-alpha",
+    teamSize: 4,
     open: true,
     hostId: "host",
     players,
@@ -42,6 +42,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     countdownSeconds: null,
     teamLobby: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds: new Map(),
   };
 }
@@ -52,7 +53,6 @@ describe("the party strip's party (#1526)", () => {
       lobby([
         player("host", {
           isHost: true,
-          character: { name: "Mhenlo", primary: "monk", secondary: null },
         }),
         player("Warrior Bot", { bot: true, team: 0 }),
         player("me"),
@@ -63,14 +63,16 @@ describe("the party strip's party (#1526)", () => {
     expect(party).toEqual({
       code: "ACDEFG",
       mode: "team-arena",
+      teamSize: 4,
       isHost: false,
       open: true,
       members: [
-        { name: "host", primary: "monk", isHost: true, self: false, away: false },
-        { name: "me", primary: null, isHost: false, self: true, away: false },
+        { name: "host", isHost: true, self: false, away: false },
+        { name: "me", isHost: false, self: true, away: false },
       ],
       queuedMs: null,
       teams: undefined,
+      ascentRound: null,
     });
     expect(isAlone(party)).toBe(false);
   });
@@ -111,6 +113,11 @@ describe("the party strip's party (#1526)", () => {
   it("says how long a queued party has looked for a team (#1766)", () => {
     expect(partyOf(lobby([player("me")]), 65_000, 2)).toMatchObject({ queuedMs: 65_000, teams: 2 });
     expect(lookingLabel(65_000, undefined)).toBe("Looking for a team… 1:05");
+  });
+
+  it("carries a queued Heroes' Ascent party's round from its lobby (#1996)", () => {
+    const queued = { ...lobby([player("me")]), phase: "queued", ascentRound: 1 } as const;
+    expect(partyOf(queued, 5_000, 1).ascentRound).toBe(1);
   });
 
   it("says how many teams are searching, its own included (#1881)", () => {

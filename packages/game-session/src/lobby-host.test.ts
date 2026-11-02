@@ -3,7 +3,8 @@ import {
   CHANNELS,
   type Channel,
   type JsonValue,
-  MAX_TEAM_LOBBY_SIDE,
+  type LobbyMode,
+  type LobbyTeamSize,
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
   parseWireLobbyNote,
@@ -35,9 +36,9 @@ import {
   type Member,
   type TestLobby,
 } from "./lobby-harness.test-support.js";
-import { canStart } from "./lobby-host.js";
+import { canStart, type MatchPlan } from "./lobby-host.js";
 import { cryptoTurns, settle, until } from "./match-harness.test-support.js";
-import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
+import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -124,8 +125,8 @@ describe("lobby host", () => {
 
   it("lists a joiner's guild tag to everyone, a bad one as none (#1406)", async () => {
     const lobby = await openLobby();
-    const tagged = await lobby.join("Ann", null, " VIBE ");
-    const bad = await lobby.join("Bob", null, "[VB]");
+    const tagged = await lobby.join("Ann", " VIBE ");
+    const bad = await lobby.join("Bob", "[VB]");
     for (const member of [lobby.host, tagged, bad]) {
       expect(member.connection.getSnapshot().players.map(({ guildTag }) => guildTag)).toEqual([
         null,
@@ -137,7 +138,7 @@ describe("lobby host", () => {
 
   it("plays a member's guild tag in the lobby's match (#1406)", async () => {
     const lobby = await openLobby();
-    const guest = await lobby.join("Ann", null, "Vb");
+    const guest = await lobby.join("Ann", "Vb");
     await seat([lobby.host, guest], [0, 1]);
     await start(lobby);
     const seats = lobby.matches[0]?.plan.seats;
@@ -148,9 +149,9 @@ describe("lobby host", () => {
   it("plays a member's cape in the lobby's match, and none without a valid tag (#1422)", async () => {
     const lobby = await openLobby();
     const cape = { main: "gold", trim: "black", emblem: "ring" } as const;
-    const ann = await lobby.join("Ann", null, "Vb", cape);
-    const bob = await lobby.join("Bob", null, null, cape);
-    const cy = await lobby.join("Cy", null, "[x]", cape);
+    const ann = await lobby.join("Ann", "Vb", cape);
+    const bob = await lobby.join("Bob", null, cape);
+    const cy = await lobby.join("Cy", "[x]", cape);
     await seat([lobby.host, ann, bob, cy], [0, 1, 0, 1]);
     await start(lobby);
     const seats = lobby.matches[0]?.plan.seats;
@@ -158,48 +159,6 @@ describe("lobby host", () => {
     expect(seats?.get(bob.transport.selfId)?.guildCape).toBeNull();
     expect(seats?.get(cy.transport.selfId)?.guildCape).toBeNull();
     expect(seats?.get(lobby.host.transport.selfId)?.guildCape).toBeNull();
-  });
-
-  it("lists the character a joiner brings to everyone, and a starter build as null (#580)", async () => {
-    const lobby = await openLobby();
-    const guest = await lobby.join("Guest", {
-      name: "Mhenlo",
-      primary: "monk",
-      secondary: "elementalist",
-    });
-    for (const member of [lobby.host, guest]) {
-      expect(member.connection.getSnapshot().players.map(({ character }) => character)).toEqual([
-        null,
-        { name: "Mhenlo", primary: "monk", secondary: "elementalist" },
-      ]);
-    }
-  });
-
-  it("lists a character no build could be as a starter build, and sanitises its name (#580)", async () => {
-    const lobby = await openLobby();
-    for (const [primary, secondary] of [
-      ["pirate", null],
-      ["monk", "pirate"],
-      ["monk", "monk"],
-      ["elementalist", null],
-    ] as const) {
-      const peer = await rawPeer(lobby);
-      peer.transport.send("lobby-join", {
-        protocolVersion: PROTOCOL_VERSION,
-        name: primary,
-        guildTag: null,
-        character: { name: "  \u202eCynn\u0000  ", primary, secondary },
-        admission: null,
-      });
-    }
-    await settle();
-    expect(lobby.host.connection.getSnapshot().players.map(({ character }) => character)).toEqual([
-      null,
-      null,
-      null,
-      null,
-      { name: "Cynn", primary: "elementalist", secondary: null },
-    ]);
   });
 
   it("lets a second player join with the code and does not make them host", async () => {
@@ -313,8 +272,6 @@ describe("lobby host", () => {
   it("tells each guest, and only them, the lobby its host left for, before it closes (#1553)", async () => {
     const { lobby, guest } = await hostAndGuest();
     const other = await lobby.join("Other");
-    // A bot belongs to this lobby: it is nobody to tell.
-    lobby.host.connection.setBots(1, 1);
     await settle();
     const heard: string[] = [];
     for (const who of [lobby.host, guest, other]) {
@@ -322,14 +279,14 @@ describe("lobby host", () => {
       who.connection.onMove((code) => heard.push(`${name} move ${code}`));
       who.connection.onClosed((reason) => heard.push(`${name} ${reason}`));
     }
-    await lobby.lobby.close("ACDEFGHJKMNP");
+    await lobby.lobby.close("mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw"); // pragma: allowlist secret
     await settle();
     expect(heard.filter((line) => line.startsWith("Guest"))).toEqual([
-      "Guest move ACDEFGHJKMNP",
+      "Guest move mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw", // pragma: allowlist secret
       "Guest host-left",
     ]);
     expect(heard.filter((line) => line.startsWith("Other"))).toEqual([
-      "Other move ACDEFGHJKMNP",
+      "Other move mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw", // pragma: allowlist secret
       "Other host-left",
     ]);
     expect(heard.filter((line) => line.startsWith("Host"))).toEqual(["Host host-left"]);
@@ -340,7 +297,11 @@ describe("lobby host", () => {
     const moves: string[] = [];
     guest.connection.onMove((code) => moves.push(code));
     const peer = await rawPeer(lobby);
-    peer.transport.send("lobby-move", { code: "ACDEFGHJKMNP" }, guest.transport.selfId);
+    peer.transport.send(
+      "lobby-move",
+      { code: "mOvEdToHeRe0123456789_-AbCdEfGhIjKlMnOpQrSw" }, // pragma: allowlist secret
+      guest.transport.selfId,
+    );
     await settle();
     expect(moves).toEqual([]);
   });
@@ -379,6 +340,7 @@ describe("lobby host", () => {
 
   it("ignores a map selection from a non-host, and an unknown map from the host", async () => {
     const { lobby, guest } = await hostAndGuest();
+    lobby.host.connection.selectMode("hosted-game");
     guest.connection.selectMap(MAP_IDS[1]);
     lobby.host.connection.selectMap("no-such-map");
     await settle();
@@ -397,20 +359,6 @@ describe("lobby host", () => {
     await expect(joining).rejects.toBeInstanceOf(LobbyNoAnswerError);
     await closing;
     expect(lobby.host.connection.getSnapshot().players).toHaveLength(1);
-  });
-
-  it("lists the character a member picks after joining, checked as a join's (#1526)", async () => {
-    const { lobby, guest } = await hostAndGuest();
-    guest.connection.setCharacter({ name: "Mhenlo", primary: "monk", secondary: "elementalist" });
-    await settle();
-    expect(lobby.host.connection.getSnapshot().players[1]?.character).toEqual({
-      name: "Mhenlo",
-      primary: "monk",
-      secondary: "elementalist",
-    });
-    guest.connection.setCharacter({ name: "Twin", primary: "monk", secondary: "monk" });
-    await settle();
-    expect(lobby.host.connection.getSnapshot().players[1]?.character).toBeNull();
   });
 
   it("starts on Random Arena, and lets only the host pick the mode (#1526)", async () => {
@@ -450,10 +398,58 @@ describe("lobby host", () => {
 
   it("clears everyone's readiness when the host picks another map", async () => {
     const { lobby, guest } = await hostAndGuest();
+    lobby.host.connection.selectMode("hosted-game");
     await seat([lobby.host, guest], [0, 1]);
     lobby.host.connection.selectMap(MAP_IDS[1]);
     await settle();
     expect(playersOf(guest).map(({ ready }) => ready)).toEqual([false, false]);
+  });
+
+  it("refuses a map pick outside a Hosted Game, and changes nothing (#1994)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const notes: string[] = [];
+    guest.transport.on("lobby-note", (data) => {
+      notes.push(parseWireLobbyNote(data)?.reason ?? "");
+    });
+    await seat([lobby.host, guest], [0, 1]);
+    for (const mode of ["team-arena", "heroes-ascent"] as const) {
+      lobby.host.connection.selectMode(mode);
+      await settle();
+      await seat([lobby.host, guest], [0, 1]);
+      lobby.host.connection.selectMap(MAP_IDS[1]);
+      guest.connection.selectMap(MAP_IDS[1]);
+      await settle();
+      expect(guest.connection.getSnapshot().mapId).toBe(MAP_IDS[0]);
+      expect(playersOf(guest).map(({ ready }) => ready)).toEqual([true, true]);
+    }
+    expect(notes).toEqual(["not-pickable", "not-pickable"]);
+  });
+
+  it("draws Team Arena's map at each start from the lobby's RNG (#1994)", async () => {
+    for (const [draw, mapId] of [
+      [0, MAP_IDS[0]],
+      [0.9, MAP_IDS[1]],
+    ] as const) {
+      const lobby = await openLobby({ random: () => draw });
+      const guest = await lobby.join();
+      lobby.host.connection.selectMode("team-arena");
+      await seat([lobby.host, guest], [0, 1]);
+      await start(lobby);
+      expect(lobby.matches[0]?.plan.mapId).toBe(mapId);
+      expect(guest.starts[0]?.mapId).toBe(mapId);
+      expect(guest.connection.getSnapshot().mapId).toBe(mapId);
+    }
+  });
+
+  it("starts Heroes' Ascent on its first map, whatever the Hosted Game picked (#1994)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    lobby.host.connection.selectMode("hosted-game");
+    lobby.host.connection.selectMap(MAP_IDS[1]);
+    lobby.host.connection.selectMode("heroes-ascent");
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    expect(lobby.matches[0]?.plan.mapId).toBe(MAP_IDS[0]);
+    expect(guest.starts[0]?.mapId).toBe(MAP_IDS[0]);
   });
 
   it("turns a member away once it holds MAX_LOBBY_PLAYERS, and says so", async () => {
@@ -469,7 +465,6 @@ describe("lobby host", () => {
         name: "Late",
         guildTag: null,
         guildCape: null,
-        character: null,
         timeoutMs: 1000,
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
@@ -566,7 +561,6 @@ describe("an open or closed lobby (#1682)", () => {
       name,
       guildTag: null,
       guildCape: null,
-      character: null,
       timeoutMs: 1000,
     }).catch((error: unknown) => error);
 
@@ -595,13 +589,12 @@ describe("an open or closed lobby (#1682)", () => {
     expect(playersOf(lobby.host).map(({ name }) => name)).toEqual(["Host", "Guest"]);
   });
 
-  it("tells its reach on every change: open, and guests other than the host and bots", async () => {
+  it("tells its reach on every change: open, and guests other than the host", async () => {
     const lobby = await openLobby({ open: false });
     const reaches: { open: boolean; guests: number }[] = [];
     lobby.lobby.onReach((reach) => reaches.push({ ...reach }));
     lobby.lobby.setOpen(true);
     const guest = await lobby.join();
-    lobby.host.connection.setBots(0, 1);
     await settle();
     lobby.lobby.setOpen(false);
     await guest.connection.disconnect();
@@ -859,12 +852,11 @@ describe("joining by code", () => {
     await expect(
       joinLobby({
         transport,
-        code: "WXYKMNPQRT34",
+        code: "zYxWvUtSrQpOnMlKjIhGfEdCbA9876543210_-ZyXwA", // pragma: allowlist secret
         proofKey: PROOF_KEY,
         name: "Lost",
         guildTag: null,
         guildCape: null,
-        character: null,
         timeoutMs: 50,
       }),
     ).rejects.toEqual(new LobbyNoAnswerError(50, null));
@@ -875,12 +867,11 @@ describe("joining by code", () => {
     const failure = (peerId: string, troubles: readonly TransportTrouble[]): Promise<unknown> => {
       const joining = joinLobby({
         transport: lobby.network.join(peerId),
-        code: "WXYKMNPQRT34",
+        code: "zYxWvUtSrQpOnMlKjIhGfEdCbA9876543210_-ZyXwA", // pragma: allowlist secret
         proofKey: PROOF_KEY,
         name: peerId,
         guildTag: null,
         guildCape: null,
-        character: null,
         timeoutMs: 50,
       });
       for (const trouble of troubles) {
@@ -896,21 +887,6 @@ describe("joining by code", () => {
     expect(untold instanceof LobbyNoAnswerError && untold.trouble).toBeNull();
   });
 
-  it("accepts a lower-case or spaced code, because players mistype them", async () => {
-    const lobby = await openLobby();
-    const connection = await joinLobby({
-      transport: lobby.network.join(),
-      code: " acde-fghj-kmnp ",
-      proofKey: PROOF_KEY,
-      name: "Typist",
-      guildTag: null,
-      guildCape: null,
-      character: null,
-      timeoutMs: 1000,
-    });
-    expect(connection.getSnapshot().code).toBe(CODE);
-  });
-
   it("gives up with no-answer when nobody in the room hosts", async () => {
     const lonely = createMemoryNetwork().join();
     await expect(
@@ -921,7 +897,6 @@ describe("joining by code", () => {
         name: "Alone",
         guildTag: null,
         guildCape: null,
-        character: null,
         timeoutMs: 50,
       }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
@@ -933,180 +908,6 @@ describe("joining by code", () => {
     peer.transport.send("lobby-join", { protocolVersion: `${PROTOCOL_VERSION}x`, name: "Old" });
     await settle();
     expect(peer.notes).toEqual([{ kind: "refused", reason: "protocol-mismatch" }]);
-  });
-});
-
-describe("bots in a lobby (#1193)", () => {
-  /** `who` asks the host for `command`, by hand: no UI sends these yet. */
-  async function ask(lobby: TestLobby, who: Member, command: WireLobbyCommand): Promise<void> {
-    who.transport.send("lobby-cmd", command, lobby.room.selfId);
-    await settle();
-  }
-  const botsOf = (who: Member) =>
-    who.connection
-      .getSnapshot()
-      .players.filter((player) => player.bot)
-      .map(({ name, team, ready, isHost }) => ({ name, team, ready, isHost }));
-
-  /** Each bot's name, by team. */
-  const botNames = (who: Member) =>
-    [0, 1].map((team) =>
-      botsOf(who)
-        .filter((bot) => bot.team === team)
-        .map(({ name }) => name),
-    );
-
-  it("lets the host set a side's bots, named for their profession and numbered, always ready", async () => {
-    const { lobby, guest } = await hostAndGuest();
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 1 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 2 });
-    expect(botsOf(guest)).toEqual([
-      { name: "Warrior Bot", team: 1, ready: true, isHost: false },
-      { name: "Warrior Bot 2", team: 0, ready: true, isHost: false },
-      { name: "Ranger Bot", team: 0, ready: true, isHost: false },
-    ]);
-    // A bot is nobody's guild (#1406).
-    expect(
-      guest.connection
-        .getSnapshot()
-        .players.filter((player) => player.bot)
-        .map(({ guildTag }) => guildTag),
-    ).toEqual([null, null, null]);
-  });
-
-  it("takes out a side's last-added bots first when the count goes down", async () => {
-    const { lobby, guest } = await hostAndGuest();
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 3 });
-    const ids = guest.connection
-      .getSnapshot()
-      .players.filter((player) => player.bot)
-      .map(({ sessionId }) => sessionId);
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
-    expect(
-      guest.connection
-        .getSnapshot()
-        .players.filter((player) => player.bot)
-        .map(({ sessionId }) => sessionId),
-    ).toEqual(ids.slice(0, 1));
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 0 });
-    expect(botsOf(guest)).toEqual([]);
-  });
-
-  it("skips the professions the side's players play, then goes round them all", async () => {
-    const lobby = await openLobby();
-    const monk = await lobby.join("Mo", { name: "Mo", primary: "monk", secondary: null });
-    const ranger = await lobby.join("Ra", { name: "Ra", primary: "ranger", secondary: "monk" });
-    await ask(lobby, monk, { kind: "choose-team", team: 0 });
-    await ask(lobby, ranger, { kind: "choose-team", team: 0 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 5 });
-    expect(botNames(monk)).toEqual([
-      ["Warrior Bot", "Necromancer Bot", "Elementalist Bot", "Warrior Bot 2", "Ranger Bot"],
-      [],
-    ]);
-    // A player switching sides refigures both sides' bots.
-    await ask(lobby, ranger, { kind: "choose-team", team: 1 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 2 });
-    expect(botNames(monk)).toEqual([
-      ["Warrior Bot", "Ranger Bot", "Necromancer Bot", "Elementalist Bot", "Warrior Bot 2"],
-      ["Warrior Bot 3", "Monk Bot"],
-    ]);
-    // So does one leaving.
-    await monk.connection.disconnect();
-    await settle();
-    expect(botNames(ranger)[0]?.slice(0, 3)).toEqual(["Warrior Bot", "Ranger Bot", "Monk Bot"]);
-  });
-
-  it("plans each bot with the build its name says", async () => {
-    const lobby = await openLobby();
-    const monk = await lobby.join("Mo", { name: "Mo", primary: "monk", secondary: null });
-    await ask(lobby, monk, { kind: "choose-team", team: 1 });
-    await ask(lobby, monk, { kind: "ready", ready: true });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 3 });
-    await start(lobby);
-    const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])].filter((seat) => seat.bot);
-    expect(seats.map(({ name, build }) => [name, build.primaryProfession])).toEqual([
-      ["Warrior Bot", "warrior"],
-      ["Ranger Bot", "ranger"],
-      ["Necromancer Bot", "necromancer"],
-    ]);
-  });
-
-  it("refuses a guest's bot count, and a count that is no integer from 0", async () => {
-    const { lobby, guest } = await hostAndGuest();
-    const onlooker = await rawPeer(lobby);
-    const notes = { host: [] as string[], guest: [] as string[] };
-    lobby.host.transport.on("lobby-note", (data) => {
-      notes.host.push(parseWireLobbyNote(data)?.reason ?? "");
-    });
-    guest.transport.on("lobby-note", (data) => {
-      notes.guest.push(parseWireLobbyNote(data)?.reason ?? "");
-    });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
-    await ask(lobby, guest, { kind: "set-bots", team: 0, count: 3 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: -1 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1.5 });
-    expect(notes).toEqual({
-      host: ["invalid-bot", "invalid-bot"],
-      guest: ["not-host"],
-    });
-    expect(botNames(guest)).toEqual([["Warrior Bot"], []]);
-    expect(onlooker.notes).toEqual([]);
-  });
-
-  it("counts bots against MAX_LOBBY_PLAYERS, and changes nothing past it", async () => {
-    const lobby = await openLobby();
-    const notes: string[] = [];
-    lobby.host.transport.on("lobby-note", (data) => {
-      notes.push(parseWireLobbyNote(data)?.reason ?? "");
-    });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 2 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: MAX_LOBBY_PLAYERS - 3 });
-    expect(notes).toEqual([]);
-    expect(playersOf(lobby.host)).toHaveLength(MAX_LOBBY_PLAYERS);
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: MAX_LOBBY_PLAYERS - 2 });
-    expect(notes).toEqual(["lobby-full"]);
-    expect(playersOf(lobby.host)).toHaveLength(MAX_LOBBY_PLAYERS);
-    // Taking one from the other side frees the seat.
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: MAX_LOBBY_PLAYERS - 2 });
-    expect(notes).toEqual(["lobby-full"]);
-  });
-
-  it("ignores a bot count once the match is on", async () => {
-    const lobby = await openLobby();
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
-    await start(lobby);
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 3 });
-    expect(botNames(lobby.host)).toEqual([["Warrior Bot"], []]);
-  });
-
-  it("starts a match of bots alone, the host spectating, and plans each with its build", async () => {
-    const lobby = await openLobby();
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 1 });
-    await start(lobby);
-    expect(lobby.matches).toHaveLength(1);
-    const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
-    expect(seats.map(({ team, name, build }) => [team, name, build?.primaryProfession])).toEqual([
-      [0, "Warrior Bot", "warrior"],
-      [1, "Warrior Bot 2", "warrior"],
-    ]);
-    await lobby.step(1);
-    expect(lobby.host.connection.getSnapshot().phase).toBe("in-match");
-  });
-
-  it("keeps its bots, ready, on their teams when the match ends", async () => {
-    const lobby = await openLobby();
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 1 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 1 });
-    await start(lobby);
-    await lobby.matches[0]?.host.close("host-left");
-    await lobby.step(0.1);
-    expect(lobby.host.connection.getSnapshot().phase).toBe("waiting");
-    expect(botsOf(lobby.host)).toEqual([
-      { name: "Warrior Bot", team: 0, ready: true, isHost: false },
-      { name: "Warrior Bot 2", team: 1, ready: true, isHost: false },
-    ]);
   });
 });
 
@@ -1127,16 +928,36 @@ describe("a Team Lobby (#1458)", () => {
     return () => values.shift() ?? 0;
   }
 
-  /** A lobby hosted from Team Play: the host and `guests`, seated on `teams`, all ready. */
+  /**
+   * A lobby hosted from Team Play: the host and `guests`, seated on
+   * `teams`, all ready. A Hosted Game of `size` a side unless `mode` is a
+   * team mode (#2029, #2104).
+   */
   async function teamLobby(
     names: readonly string[],
     teams: readonly (0 | 1 | null)[],
     random: () => number = draws(),
+    mode?: LobbyMode,
+    startMatch?: (plan: MatchPlan) => MatchHost | undefined,
+    size?: LobbyTeamSize,
   ): Promise<{ lobby: TestLobby; members: Member[] }> {
-    const lobby = await openLobby({ teamLobby: true, random });
+    const lobby = await openLobby({
+      teamLobby: true,
+      random,
+      ...(startMatch === undefined ? {} : { startMatch }),
+    });
     const guests: Member[] = [];
     for (const name of names) {
       guests.push(await lobby.join(name));
+    }
+    if (mode !== undefined) {
+      lobby.host.connection.selectMode(mode);
+      await settle();
+    }
+    if (size !== undefined) {
+      lobby.host.connection.selectMode(mode ?? "hosted-game");
+      lobby.host.connection.selectTeamSize(size);
+      await settle();
     }
     const members = [lobby.host, ...guests];
     await seat(members, teams);
@@ -1192,7 +1013,6 @@ describe("a Team Lobby (#1458)", () => {
     expect(plain.matches).toHaveLength(1);
 
     const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 1]);
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 2 });
     await begin(lobby);
     expect(lobby.matches).toEqual([]);
     const [host, ann, bob] = members;
@@ -1200,32 +1020,198 @@ describe("a Team Lobby (#1458)", () => {
       throw new Error("three members");
     }
     expect(teamOf(host)).toMatchObject({ stage: "vote", secondsLeft: TEAM_LOBBY_STAGE_SECONDS });
-    // Each side's size is frozen: its humans and its bots.
-    expect(sideOf(host)?.size).toBe(2);
-    expect(sideOf(bob)?.size).toBe(3);
-    // Everyone confirms again, for the vote.
-    expect(
-      host.connection
-        .getSnapshot()
-        .players.filter((player) => !player.bot)
-        .map(({ ready }) => ready),
-    ).toEqual([false, false, false]);
+    // A Hosted Game's sides are its team size, 4 until the host picks (#2104).
+    expect(host.connection.getSnapshot().teamSize).toBe(4);
+    expect(sideOf(host)?.size).toBe(4);
+    expect(sideOf(bob)?.size).toBe(4);
+    // Everyone confirms again, for the vote, and nobody is a bot yet.
+    expect(host.connection.getSnapshot().players.map(({ ready, bot }) => [ready, bot])).toEqual([
+      [false, false],
+      [false, false],
+      [false, false],
+    ]);
   });
 
-  it("refuses a start with a side over a GW1 team, saying why to the host", async () => {
-    const { lobby } = await teamLobby([], [0]);
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: MAX_TEAM_LOBBY_SIDE });
+  it("sizes each side of a team mode as the mode, whoever is on it (#2029)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 1], draws(), "team-arena");
+    await begin(lobby);
+    const [host, ann] = members;
+    expect(host === undefined ? null : sideOf(host)?.size).toBe(4);
+    expect(ann === undefined ? null : sideOf(ann)?.size).toBe(4);
+  });
+
+  it("refuses a start with a side of more players than it plays, saying why to the host (#2029)", async () => {
+    // Five on a Hosted Game's side of eight, then a mode of four a side.
+    const { lobby } = await teamLobby(
+      ["G0", "G1", "G2", "G3"],
+      [0, 0, 0, 0, 0],
+      draws(),
+      undefined,
+      undefined,
+      8,
+    );
+    lobby.host.connection.selectMode("team-arena");
+    await settle();
     const rejected: string[] = [];
     lobby.host.connection.onStartRejected((reason) => rejected.push(reason));
     await start(lobby);
     expect(lobby.host.connection.getSnapshot().phase).toBe("waiting");
-    expect(rejected).toEqual([
-      `a team plays at most ${String(MAX_TEAM_LOBBY_SIDE)}, bots included`,
+    expect(rejected).toEqual(["a team plays at most 4"]);
+  });
+
+  it("refuses a join to a side of as many players as it plays, telling the joiner (#2104)", async () => {
+    const { lobby, members } = await teamLobby(
+      ["Ann", "Bob"],
+      [0, 0, 1],
+      draws(),
+      undefined,
+      undefined,
+      2,
+    );
+    const [, , bob] = members;
+    if (bob === undefined) {
+      throw new Error("three members");
+    }
+    const told: string[] = [];
+    bob.connection.onNotice((text) => told.push(text));
+    bob.connection.chooseTeam(0);
+    await settle();
+    expect(told).toEqual(["Team 1 is full"]);
+    expect(playersOf(lobby.host).map(({ team }) => team)).toEqual([0, 0, 1]);
+  });
+
+  it("lets only a Hosted Game's host pick its team size, before its Team Lobby or in its vote (#2104)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 1], draws(), "hosted-game");
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    const refused = refusals(ann);
+    ann.connection.selectTeamSize(2);
+    await settle();
+    expect(refused).toEqual(["not-host"]);
+    // The host's pick: everyone sees it, and confirms again.
+    host.connection.selectTeamSize(8);
+    await settle();
+    expect(ann.connection.getSnapshot().teamSize).toBe(8);
+    expect(playersOf(ann).map(({ ready }) => ready)).toEqual([false, false]);
+    // Every other mode plays its own.
+    const hostRefused = refusals(host);
+    host.connection.selectMode("heroes-ascent");
+    await settle();
+    expect(ann.connection.getSnapshot().teamSize).toBe(8);
+    host.connection.selectTeamSize(2);
+    await settle();
+    expect(hostRefused).toEqual(["not-pickable"]);
+    host.connection.selectMode("hosted-game");
+    await settle();
+    expect(ann.connection.getSnapshot().teamSize).toBe(8);
+    // In the vote it may change; in the claim the builds are chosen.
+    await seat([host, ann], [0, 1]);
+    await begin(lobby);
+    host.connection.selectTeamSize(2);
+    await settle();
+    expect(sideOf(ann)?.size).toBe(2);
+    await timeOut(lobby);
+    host.connection.selectTeamSize(4);
+    await settle();
+    expect(hostRefused).toEqual(["not-pickable", "not-pickable"]);
+    expect(sideOf(ann)?.claims).toHaveLength(2);
+  });
+
+  it("starts a Hosted Game at the host's team size, on the first map made for it (#2104)", async () => {
+    const lobby = await openLobby({ teamLobby: true, hostedTeamSize: 1 });
+    lobby.host.connection.selectMode("hosted-game");
+    await settle();
+    expect(lobby.host.connection.getSnapshot()).toMatchObject({ teamSize: 1, mapId: "test-arena" });
+  });
+
+  it("plays a Hosted Game only on a map made for its team size (#2104)", async () => {
+    const { members } = await teamLobby(["Ann"], [0, 1], draws(), "hosted-game");
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    host.connection.selectMap("other-arena");
+    await settle();
+    expect(ann.connection.getSnapshot().mapId).toBe("other-arena");
+    // The other arena plays no 1v1: the lobby moves to the first that does.
+    host.connection.selectTeamSize(1);
+    await settle();
+    expect(ann.connection.getSnapshot()).toMatchObject({ teamSize: 1, mapId: "test-arena" });
+    host.connection.selectMap("other-arena");
+    await settle();
+    expect(ann.connection.getSnapshot().mapId).toBe("test-arena");
+  });
+
+  it("refuses a team size below a side's players, and tells the host why (#2104)", async () => {
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 1, 1], draws(), "hosted-game");
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("three members");
+    }
+    const told: string[] = [];
+    host.connection.onNotice((text) => told.push(text));
+    host.connection.selectTeamSize(1);
+    await settle();
+    expect(told).toEqual(["Team 2 has 2 players: team size can't go below 2"]);
+    expect(lobby.host.connection.getSnapshot().teamSize).toBe(4);
+    // Nobody is moved, and nobody needs to confirm again.
+    expect(playersOf(ann).map(({ team, ready }) => [team, ready])).toEqual([
+      [0, true],
+      [1, true],
+      [1, true],
     ]);
   });
 
-  it("takes only a proposal of exactly the side's size of legal builds", async () => {
-    const { lobby, members } = await teamLobby(["Ann"], [0, 0]);
+  it("withdraws each proposal of another size in the vote, and its votes, telling its proposer, and runs the clock again (#2104)", async () => {
+    const { lobby, members } = await teamLobby(
+      ["Ann", "Bob"],
+      [0, 0, 1],
+      draws(),
+      undefined,
+      undefined,
+      2,
+    );
+    const [host, ann, bob] = members;
+    if (host === undefined || ann === undefined || bob === undefined) {
+      throw new Error("three members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, MONK]);
+    bob.connection.propose([RANGER, ELE]);
+    await settle();
+    ann.connection.vote(idOf(host));
+    ann.connection.setReady(true);
+    lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS / 2);
+    await settle();
+    const told = members.map((who) => {
+      const got: string[] = [];
+      who.connection.onNotice((text) => got.push(text));
+      return got;
+    });
+    host.connection.selectTeamSize(4);
+    await settle();
+    expect(told).toEqual([
+      ["Team size is now 4: your proposal was withdrawn"],
+      [],
+      ["Team size is now 4: your proposal was withdrawn"],
+    ]);
+    expect(sideOf(ann)).toMatchObject({ size: 4, proposals: [] });
+    expect(sideOf(bob)).toMatchObject({ size: 4, proposals: [] });
+    expect(teamOf(ann)?.secondsLeft).toBe(TEAM_LOBBY_STAGE_SECONDS);
+    expect(playersOf(ann).map(({ ready }) => ready)).toEqual([false, false, false]);
+    // Of the new size, a proposal stands; of the old, it is refused.
+    const refused = refusals(ann);
+    ann.connection.propose([WARRIOR, MONK]);
+    host.connection.propose([WARRIOR, MONK, RANGER, ELE]);
+    await settle();
+    expect(refused).toEqual(["invalid-proposal", "invalid-proposal"]);
+    expect(sideOf(ann)?.proposals.map(({ proposerId }) => proposerId)).toEqual([idOf(host)]);
+  });
+
+  it("takes only a proposal of exactly a team mode's size of legal builds", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 0], draws(), "team-arena");
     const [host] = members;
     if (host === undefined) {
       throw new Error("a host");
@@ -1236,13 +1222,15 @@ describe("a Team Lobby (#1458)", () => {
     host.connection.propose([WARRIOR, RANGER, MONK]);
     host.connection.propose([
       WARRIOR,
+      MONK,
+      RANGER,
       { ...RANGER, attributes: [], skillBar: ["no.such-skill", ...RANGER.skillBar.slice(1)] },
     ]);
     await settle();
     // One a slot: each slot of the wrong size, and the illegal build.
     expect(refused).toEqual(Array.from({ length: 5 }, () => "invalid-proposal"));
     expect(sideOf(host)?.proposals).toEqual([]);
-    host.connection.propose([WARRIOR, MONK]);
+    host.connection.propose([WARRIOR, MONK, RANGER, NECRO]);
     await settle();
     expect(sideOf(host)?.proposals).toEqual([
       {
@@ -1250,14 +1238,45 @@ describe("a Team Lobby (#1458)", () => {
         members: [
           { primary: "warrior", secondary: "monk" },
           { primary: "monk", secondary: "elementalist" },
+          { primary: "ranger", secondary: "mesmer" },
+          { primary: "necromancer", secondary: NECRO.secondaryProfession ?? null },
         ],
         voterIds: [],
       },
     ]);
   });
 
+  it("takes only a proposal of exactly a Hosted Game's team size (#2104)", async () => {
+    const { lobby, members } = await teamLobby(
+      ["Ann", "Bob", "Cy"],
+      [0, 0, 0, 1],
+      draws(),
+      undefined,
+      undefined,
+      4,
+    );
+    const [host, ann, , cy] = members;
+    if (host === undefined || ann === undefined || cy === undefined) {
+      throw new Error("four members");
+    }
+    await begin(lobby);
+    const refused = refusals(host);
+    host.connection.propose([WARRIOR, MONK]);
+    host.connection.propose([WARRIOR, MONK, RANGER]);
+    await settle();
+    // One refusal a slot.
+    expect(refused).toHaveLength(5);
+    expect(sideOf(host)?.proposals).toEqual([]);
+    host.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    cy.connection.propose([NECRO, ELE, MONK, WARRIOR]);
+    await settle();
+    expect(refused).toHaveLength(5);
+    expect(sideOf(host)?.proposals.map(({ members: builds }) => builds.length)).toEqual([4]);
+    expect(sideOf(cy)?.proposals.map(({ members: builds }) => builds.length)).toEqual([4]);
+  });
+
   it("lets a proposal stand only once all its slots are in, the old one until then", async () => {
-    const { lobby, members } = await teamLobby(["Ann"], [0, 0]);
+    const { lobby, members } = await teamLobby(["Ann"], [0, 0], draws(), undefined, undefined, 2);
     const [host, ann] = members;
     if (host === undefined || ann === undefined) {
       throw new Error("two members");
@@ -1294,7 +1313,7 @@ describe("a Team Lobby (#1458)", () => {
   });
 
   it("replaces a member's proposal with a new one, clearing its votes, and withdraws it", async () => {
-    const { lobby, members } = await teamLobby(["Ann"], [0, 0]);
+    const { lobby, members } = await teamLobby(["Ann"], [0, 0], draws(), undefined, undefined, 2);
     const [host, ann] = members;
     if (host === undefined || ann === undefined) {
       throw new Error("two members");
@@ -1320,14 +1339,21 @@ describe("a Team Lobby (#1458)", () => {
   });
 
   it("takes a vote for a proposal of one's own side only, one's own included, and withdraws it", async () => {
-    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 1]);
+    const { lobby, members } = await teamLobby(
+      ["Ann", "Bob"],
+      [0, 0, 1],
+      draws(),
+      undefined,
+      undefined,
+      2,
+    );
     const [host, ann, bob] = members;
     if (host === undefined || ann === undefined || bob === undefined) {
       throw new Error("three members");
     }
     await begin(lobby);
     host.connection.propose([WARRIOR, MONK]);
-    bob.connection.propose([ELE]);
+    bob.connection.propose([ELE, MONK]);
     await settle();
     const refused = refusals(ann);
     ann.connection.vote(idOf(bob));
@@ -1344,7 +1370,14 @@ describe("a Team Lobby (#1458)", () => {
   });
 
   it("sends a proposal's builds once it stands, to its side alone, again on a rejoin, never for a withdrawal (#1811)", async () => {
-    const { lobby, members } = await teamLobby(["Ann", "Cy"], [0, 0, 1]);
+    const { lobby, members } = await teamLobby(
+      ["Ann", "Cy"],
+      [0, 0, 1],
+      draws(),
+      undefined,
+      undefined,
+      2,
+    );
     const [host, ann, cy] = members;
     if (host === undefined || ann === undefined || cy === undefined) {
       throw new Error("three members");
@@ -1387,7 +1420,14 @@ describe("a Team Lobby (#1458)", () => {
   });
 
   it("shows each side only its own vote, and a spectator neither", async () => {
-    const { lobby, members } = await teamLobby(["Ann", "Cy"], [0, 1, null]);
+    const { lobby, members } = await teamLobby(
+      ["Ann", "Cy"],
+      [0, 1, null],
+      draws(),
+      undefined,
+      undefined,
+      1,
+    );
     const [host, ann, cy] = members;
     if (host === undefined || ann === undefined || cy === undefined) {
       throw new Error("three members");
@@ -1436,11 +1476,11 @@ describe("a Team Lobby (#1458)", () => {
     expect(await run([null, null, null, null], draws(0.9))).toEqual([2, "random"]);
   });
 
-  it("plays the house team without a proposal, the starters in order, round and round", async () => {
-    const { lobby } = await teamLobby([], [0]);
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 0, count: 5 });
-    await ask(lobby, lobby.host, { kind: "set-bots", team: 1, count: 1 });
+  it("plays the house team without a proposal, the starters in order, round and round, of the team size (#2104)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 1], draws(), undefined, undefined, 8);
     await begin(lobby);
+    members[1]?.connection.propose([WARRIOR, RANGER, MONK, NECRO, ELE, MONK, WARRIOR, RANGER]);
+    await settle();
     await timeOut(lobby);
     expect(sideOf(lobby.host)?.chosen).toEqual({
       proposerId: null,
@@ -1454,6 +1494,8 @@ describe("a Team Lobby (#1458)", () => {
           [NECRO, "Necromancer…"],
           [ELE, "Elementalist…"],
           [WARRIOR, "Warrior/Monk"],
+          [RANGER, "Ranger/Mesmer"],
+          [MONK, "Monk…"],
         ] as const
       ).map(([build, name]) => ({
         name,
@@ -1462,6 +1504,45 @@ describe("a Team Lobby (#1458)", () => {
       })),
     });
     expect(teamOf(lobby.host)).toMatchObject({ stage: "claim" });
+    expect(sideOf(lobby.host)?.claims).toHaveLength(8);
+  });
+
+  it("plays house teams of the team size when neither side chose, and a team mode's of its size (#2104)", async () => {
+    const sizes = async (lobby: TestLobby, members: readonly Member[]) => {
+      await begin(lobby);
+      await timeOut(lobby);
+      return members.map((who) => sideOf(who)?.chosen?.members.length);
+    };
+    // 4 a side until the host picks, then the pick.
+    const hosted = await teamLobby(["Ann", "Bob"], [0, 0, 1]);
+    expect(await sizes(hosted.lobby, hosted.members)).toEqual([4, 4, 4]);
+    const many = await teamLobby(
+      ["Ann", "Bob", "Cy", "Di", "Ed"],
+      [0, 0, 0, 0, 0, 1],
+      draws(),
+      undefined,
+      undefined,
+      8,
+    );
+    expect(await sizes(many.lobby, many.members)).toEqual([8, 8, 8, 8, 8, 8]);
+    // A side alone: the empty side plays as many, all bots.
+    const alone = await teamLobby([], [0]);
+    expect(await sizes(alone.lobby, alone.members)).toEqual([4]);
+    await timeOut(alone.lobby);
+    expect(
+      [...(alone.lobby.matches[0]?.plan.seats.values() ?? [])].map(({ team, bot }) => [team, bot]),
+    ).toEqual([
+      [0, false],
+      [0, true],
+      [0, true],
+      [0, true],
+      [1, true],
+      [1, true],
+      [1, true],
+      [1, true],
+    ]);
+    const arena = await teamLobby(["Ann"], [0, 1], draws(), "team-arena");
+    expect(await sizes(arena.lobby, arena.members)).toEqual([4, 4]);
   });
 
   it("ends a stage early once every human on both sides is ready", async () => {
@@ -1492,8 +1573,6 @@ describe("a Team Lobby (#1458)", () => {
     if (host === undefined || ann === undefined || bob === undefined) {
       throw new Error("three members");
     }
-    await ask(lobby, host, { kind: "set-bots", team: 0, count: 1 });
-    await ask(lobby, host, { kind: "set-bots", team: 1, count: 1 });
     await begin(lobby);
     ann.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
     await settle();
@@ -1524,40 +1603,76 @@ describe("a Team Lobby (#1458)", () => {
       const seat = seats?.get(id);
       return [seat?.team, seat?.name, seat?.bot, seat?.build?.name];
     };
-    const [bot0, bot1] = [...(seats?.keys() ?? [])].filter((id) => id.startsWith("bot-"));
+    const [bot0, ...house] = [...(seats?.keys() ?? [])].filter((id) => id.startsWith("bot-"));
     expect(seatOf(idOf(host))).toEqual([0, "Host", false, WARRIOR.name]);
     expect(seatOf(idOf(ann))).toEqual([0, "Ann", false, MONK.name]);
     expect(seatOf(idOf(bob))).toEqual([0, "Bob", false, NECRO.name]);
     // A bot plays the slot nobody took, under its character's name.
     expect(seatOf(bot0 ?? "")).toEqual([0, RANGER.name, true, RANGER.name]);
-    expect(seatOf(bot1 ?? "")).toEqual([1, WARRIOR.name, true, WARRIOR.name]);
+    // Nobody on the other side: its house team is as many, all bots (#2029).
+    expect(house.map(seatOf)).toEqual([
+      [1, "Warrior/Monk", true, WARRIOR.name],
+      [1, "Ranger/Mesmer", true, RANGER.name],
+      [1, "Monk…", true, MONK.name],
+      [1, "Necromancer…", true, NECRO.name],
+    ]);
     expect(host.starts).toHaveLength(1);
   });
 
-  it("drops a leaver's proposal and the votes for it, and seats a bot in its place", async () => {
+  it("drops a leaver's proposal and the votes for it, and seats no bot for it yet (#2029)", async () => {
     const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 0]);
     const [host, ann, bob] = members;
     if (host === undefined || ann === undefined || bob === undefined) {
       throw new Error("three members");
     }
     await begin(lobby);
-    ann.connection.propose([WARRIOR, RANGER, MONK]);
+    ann.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
     await settle();
     host.connection.vote(idOf(ann));
     bob.connection.vote(idOf(ann));
     await settle();
     await ann.connection.disconnect();
     await settle();
-    expect(sideOf(host)).toMatchObject({ size: 3, proposals: [] });
+    expect(sideOf(host)).toMatchObject({ size: 4, proposals: [] });
     const players = host.connection.getSnapshot().players;
     expect(players.map(({ name, team, bot }) => [name, team, bot])).toEqual([
       ["Host", 0, false],
       ["Bob", 0, false],
-      [expect.stringMatching(/ Bot$/), 0, true],
     ]);
     // The rest ready: the vote is over at once, with the house team.
     await allReady([host, bob]);
     expect(sideOf(host)?.chosen?.reason).toBe("house");
+  });
+
+  it("leaves the slot of a member who leaves in the claim to a bot, made at its end (#2029)", async () => {
+    const { lobby, members } = await teamLobby(["Ann", "Bob"], [0, 0, 0]);
+    const [host, ann, bob] = members;
+    if (host === undefined || ann === undefined || bob === undefined) {
+      throw new Error("three members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    await settle();
+    await timeOut(lobby);
+    ann.connection.claim(0);
+    await settle();
+    expect(sideOf(host)?.claims).toEqual([idOf(ann), null, null, null]);
+    await ann.connection.disconnect();
+    await settle();
+    // Its claim is free, and nobody plays it until the claim is over.
+    expect(sideOf(host)?.claims).toEqual([null, null, null, null]);
+    expect(host.connection.getSnapshot().players.some(({ bot }) => bot)).toBe(false);
+    await allReady([host, bob]);
+    const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])].filter(
+      (seat) => seat.team === 0,
+    );
+    // The humans in join order from the first free slot, the bot in the last.
+    expect(seats.map(({ name, bot, build }) => [name, bot, build?.name])).toEqual([
+      ["Host", false, WARRIOR.name],
+      ["Bob", false, RANGER.name],
+      ["Monk…", true, MONK.name],
+      ["Necromancer…", true, NECRO.name],
+    ]);
   });
 
   it("plays a bot in the slot of a guest away when its stage runs out, and holds its seat on (#1764)", async () => {
@@ -1567,9 +1682,9 @@ describe("a Team Lobby (#1458)", () => {
       throw new Error("two members");
     }
     await begin(lobby);
-    const size = teamOf(host)?.sides[0]?.size;
     await timeOut(lobby);
     expect(teamOf(host)?.stage).toBe("claim");
+    const size = sideOf(host)?.claims.length;
     // Late in the claim stage: its window outlasts the stage.
     lobby.lobby.advance(TEAM_LOBBY_STAGE_SECONDS - 10);
     lobby.network.partition("host", idOf(ann));
@@ -1584,6 +1699,8 @@ describe("a Team Lobby (#1458)", () => {
     expect(side).toHaveLength(size ?? 0);
     expect(side.map(({ name, bot }) => [name, bot])).toEqual([
       ["Host", false],
+      [expect.any(String), true],
+      [expect.any(String), true],
       [expect.any(String), true],
     ]);
     expect(host.connection.getSnapshot().players.find(({ name }) => name === "Ann")?.away).toBe(
@@ -1600,6 +1717,118 @@ describe("a Team Lobby (#1458)", () => {
     expect(
       host.connection.getSnapshot().players.map(({ name, team, away }) => [name, team, away]),
     ).toEqual(expect.arrayContaining([["Ann", 0, false]]));
+  });
+
+  it("plays a Hosted Game of two as both sides chose, a bot named for its slot in each one nobody claimed (#2029)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 1]);
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, RANGER, MONK, NECRO]);
+    ann.connection.propose([ELE, MONK, RANGER, WARRIOR]);
+    await settle();
+    await timeOut(lobby);
+    host.connection.claim(2);
+    ann.connection.claim(0);
+    await settle();
+    expect(sideOf(host)?.claims).toEqual([null, null, idOf(host), null]);
+    expect(sideOf(ann)?.claims).toEqual([idOf(ann), null, null, null]);
+    await allReady([host, ann]);
+
+    const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
+    const sideSeats = (team: 0 | 1) =>
+      seats
+        .filter((seat) => seat.team === team)
+        .map(({ name, bot, build }) => [name, bot, build?.name]);
+    expect(sideSeats(0)).toEqual([
+      ["Host", false, MONK.name],
+      ["Warrior/Monk", true, WARRIOR.name],
+      ["Ranger/Mesmer", true, RANGER.name],
+      ["Necromancer…", true, NECRO.name],
+    ]);
+    expect(sideSeats(1)).toEqual([
+      ["Ann", false, ELE.name],
+      ["Monk…", true, MONK.name],
+      ["Ranger/Mesmer", true, RANGER.name],
+      ["Warrior/Monk", true, WARRIOR.name],
+    ]);
+    // Its bots are in the lobby while the match is on: always ready,
+    // never the host, nobody's guild (#1406).
+    const bots = ann.connection.getSnapshot().players.filter((player) => player.bot);
+    expect(bots).toHaveLength(6);
+    expect(bots.every(({ ready, isHost, guildTag }) => ready && !isHost && guildTag === null)).toBe(
+      true,
+    );
+  });
+
+  it("keeps no bot in a coded lobby once its match is over: the next makes its own (#2029)", async () => {
+    const { lobby, members } = await teamLobby(["Ann"], [0, 1], draws(), undefined, undefined, 2);
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    await begin(lobby);
+    host.connection.propose([WARRIOR, RANGER]);
+    await settle();
+    await timeOut(lobby);
+    await timeOut(lobby);
+    expect(host.connection.getSnapshot().phase).toBe("in-match");
+    expect(host.connection.getSnapshot().players.filter(({ bot }) => bot)).toHaveLength(2);
+    await lobby.matches[0]?.host.close("host-left");
+    await lobby.step(0.1);
+    expect(host.connection.getSnapshot().phase).toBe("waiting");
+    expect(
+      host.connection.getSnapshot().players.map(({ name, team, bot }) => [name, team, bot]),
+    ).toEqual([
+      ["Host", 0, false],
+      ["Ann", 1, false],
+    ]);
+  });
+
+  it("drops a failed start's bots and everyone's ready, so a retry makes one set (#2086)", async () => {
+    let failures = 1;
+    const { lobby, members } = await teamLobby(
+      ["Ann"],
+      [0, 1],
+      draws(),
+      undefined,
+      () => {
+        if (failures > 0) {
+          failures -= 1;
+          throw new Error("no match today");
+        }
+        return undefined;
+      },
+      2,
+    );
+    const [host, ann] = members;
+    if (host === undefined || ann === undefined) {
+      throw new Error("two members");
+    }
+    const rejected: string[] = [];
+    host.connection.onStartRejected((reason) => rejected.push(reason));
+    const toStart = async (): Promise<void> => {
+      await begin(lobby);
+      host.connection.propose([WARRIOR, RANGER]);
+      await settle();
+      await timeOut(lobby);
+      await timeOut(lobby);
+    };
+    await toStart();
+    const snapshot = host.connection.getSnapshot();
+    expect(snapshot.phase).toBe("waiting");
+    expect(rejected).toEqual(["the match could not be created"]);
+    expect(snapshot.players.map(({ name, bot, ready }) => [name, bot, ready])).toEqual([
+      ["Host", false, false],
+      ["Ann", false, false],
+    ]);
+
+    await allReady([host, ann]);
+    await toStart();
+    expect(host.connection.getSnapshot().phase).toBe("in-match");
+    expect(host.connection.getSnapshot().players.filter(({ bot }) => bot)).toHaveLength(2);
   });
 
   it("lets a joiner in only to watch, and ignores what a spectator or a command out of its stage asks", async () => {
@@ -1668,7 +1897,6 @@ describe("the key gate (#1681, ADR-0043)", () => {
     name,
     guildTag: null,
     guildCape: null,
-    character: null,
     admission: null,
   });
 
@@ -1998,7 +2226,6 @@ describe("the key gate (#1681, ADR-0043)", () => {
       name: "Fooled",
       guildTag: null,
       guildCape: null,
-      character: null,
       timeoutMs: 50,
     });
     await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));

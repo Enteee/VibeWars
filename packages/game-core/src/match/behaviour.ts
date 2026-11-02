@@ -4,6 +4,7 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, normalize, sub, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
+import { MASTERLESS_TEAM } from "./minions.js";
 import type { Participant } from "./simulation.js";
 
 /**
@@ -467,7 +468,9 @@ function keepRange(
  * goes on, to the foe's death. A minion with none assists (#1118): its
  * living owner's attack target within the leash of the owner, else a foe
  * in aggro of the minion itself, through `requestAttack` as Space does.
- * Otherwise it walks to heel, stopping a step early.
+ * Otherwise it walks to heel, stopping a step early. A masterless minion
+ * (#2092) has no heel: it fights on, else goes for the nearest living
+ * body in its aggro, whoever's.
  */
 function followAndAttack(
   behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
@@ -475,6 +478,9 @@ function followAndAttack(
   context: BehaviourContext,
 ): BehaviourIntent {
   const self = context.self;
+  if (self.combatant.team === MASTERLESS_TEAM) {
+    return masterless(behaviour, context);
+  }
   const ownerId = self.creature?.leaderId ?? self.creature?.ownerId;
   const owner = context.participants.find((other) => other.id === ownerId);
   if (owner === undefined) {
@@ -552,6 +558,28 @@ function followAndAttack(
     return toOwner;
   }
   return STAND_STILL;
+}
+
+/**
+ * A masterless minion's fight (#2092): the one it is in, else the nearest
+ * body in aggro. Another masterless one shares its team, so is spared.
+ */
+function masterless(
+  behaviour: Extract<Behaviour, { kind: "follow-and-attack" }>,
+  context: BehaviourContext,
+): BehaviourIntent {
+  const self = context.self;
+  const fighting = self.combatant.attack?.targetId;
+  const foe =
+    context.participants.find((other) => other.id === fighting && !other.combatant.dead)?.id ??
+    nearestLiving(
+      self,
+      context.participants,
+      (other) =>
+        other.combatant.team !== MASTERLESS_TEAM &&
+        distance(other.position, self.position) <= behaviour.aggroUnits,
+    );
+  return foe === undefined ? STAND_STILL : { ...STAND_STILL, targetId: foe, attackTargetId: foe };
 }
 
 function statusCadence(

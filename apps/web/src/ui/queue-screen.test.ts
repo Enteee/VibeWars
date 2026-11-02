@@ -8,14 +8,19 @@ import {
   MATCH_FOUND,
   TEAM_SPLIT,
   UNREACHABLE,
+  ascentLine,
   endedLines,
   modeLabel,
+  nextAscentRound,
   nextStreak,
   queueLines,
   queueTitle,
   searchingLabel,
   stayButton,
   streakLine,
+  requeuedSince,
+  teamEndAction,
+  teamEndLine,
   versusTeams,
   waitedLabel,
 } from "./queue-screen.js";
@@ -37,6 +42,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     phase: countdownSeconds === null ? "waiting" : "starting",
     mode: "random-arena",
     mapId: "arena-open",
+    teamSize: 1,
     open: true,
     hostId: "host",
     players: [
@@ -47,7 +53,6 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         team: selfTeam,
         ready: false,
         isHost: false,
-        character: null,
         bot: false,
         away: false,
       },
@@ -58,7 +63,6 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         team: selfTeam,
         ready: false,
         isHost: false,
-        character: { name: "Mhenlo", primary: "monk", secondary: null },
         bot: false,
         away: false,
       },
@@ -69,7 +73,6 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
         team: selfTeam === 0 ? 1 : 0,
         ready: false,
         isHost: true,
-        character: null,
         bot: false,
         away: false,
       },
@@ -78,6 +81,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     countdownSeconds,
     teamLobby: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds: new Map(),
   };
 }
@@ -174,6 +178,28 @@ describe("nextStreak (#881)", () => {
   });
 });
 
+describe("nextAscentRound (#1996)", () => {
+  it("moves on with a win, to the Hall and no further", () => {
+    expect(nextAscentRound(0, "win")).toBe(1);
+    expect(nextAscentRound(2, "win")).toBe(3);
+    expect(nextAscentRound(3, "win")).toBe(3);
+  });
+
+  it("starts again at the first after a defeat or a forfeit, and stands when the host left", () => {
+    expect(nextAscentRound(2, "loss")).toBe(0);
+    expect(nextAscentRound(3, "forfeit")).toBe(0);
+    expect(nextAscentRound(2, "host-left")).toBe(2);
+  });
+});
+
+describe("ascentLine (#1996)", () => {
+  it("names the round out of four and its map", () => {
+    expect(ascentLine(0)).toBe("Round 1 of 4 · Relic Temples");
+    expect(ascentLine(1)).toBe("Round 2 of 4 · Forgotten Shrines");
+    expect(ascentLine(3)).toBe("Round 4 of 4 · Hall of Heroes");
+  });
+});
+
 describe("streakLine (#881)", () => {
   it("says nothing at 0, and counts the wins after", () => {
     expect(streakLine(0)).toBeUndefined();
@@ -203,6 +229,56 @@ describe("endedLines (#881)", () => {
       status: "Defeat (morale)",
       action: "ended",
     });
+  });
+});
+
+describe("teamEndAction and teamEndLine (#1997)", () => {
+  it("queues a party's winners again and sends its losers to the menu", () => {
+    expect(teamEndAction(true, true)).toBe("requeue");
+    expect(teamEndAction(false, true)).toBe("menu");
+  });
+
+  it("takes a coded lobby's players back to it, won or lost", () => {
+    expect(teamEndAction(true, false)).toBe("lobby");
+    expect(teamEndAction(false, false)).toBe("lobby");
+  });
+
+  it("counts down to each, with its button", () => {
+    expect(teamEndLine("requeue", 20, null)).toEqual({
+      text: "Next match in 20 s",
+      button: "Leave",
+    });
+    expect(teamEndLine("menu", 3, null)).toEqual({ text: "Back to menu in 3 s", button: "Now" });
+    expect(teamEndLine("lobby", 1, null)).toEqual({ text: "Back to lobby in 1 s", button: "Now" });
+  });
+
+  it("names where a won Heroes' Ascent goes on to, and the Hall held (#1996)", () => {
+    expect(teamEndLine("requeue", 20, 0)).toEqual({
+      text: "Ascending to Forgotten Shrines in 20 s",
+      button: "Leave",
+    });
+    expect(teamEndLine("requeue", 20, 2)).toEqual({
+      text: "Ascending to Hall of Heroes in 20 s",
+      button: "Leave",
+    });
+    expect(teamEndLine("requeue", 5, 3)).toEqual({
+      text: "You hold the Hall of Heroes · defending in 5 s",
+      button: "Leave",
+    });
+    // A lost Ascent goes back to the menu as any other team match.
+    expect(teamEndLine("menu", 3, 2)).toEqual({ text: "Back to menu in 3 s", button: "Now" });
+  });
+});
+
+describe("requeuedSince (#1997)", () => {
+  it("catches a member up on a queue its host started while it was still in the match", () => {
+    expect(requeuedSince({ phase: "queued", queueNonce: "next" }, "played")).toBe(true);
+  });
+
+  it("leaves a member out before its host to the host's own requeue", () => {
+    // Its host is still in the played match's queue, or out of it and not queued again.
+    expect(requeuedSince({ phase: "queued", queueNonce: "played" }, "played")).toBe(false);
+    expect(requeuedSince({ phase: "waiting", queueNonce: null }, "played")).toBe(false);
   });
 });
 

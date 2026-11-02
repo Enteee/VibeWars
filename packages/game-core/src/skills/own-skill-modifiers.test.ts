@@ -38,9 +38,18 @@ function skill(id: string): Skill {
   return found;
 }
 
-/** A caster with no attribute ranks, bearing `statuses` for a minute each. */
+/**
+ * A caster with Protection Prayers 12, for Guardian's 6 s (#2041), and no
+ * other attribute ranks, bearing `statuses` for a minute each.
+ */
 function bearer(...statuses: StatusId[]): Combatant {
-  const caster = makeCombatant({ id: "m", team: 0, health: 200, maxHealth: 500 });
+  const caster = makeCombatant({
+    id: "m",
+    team: 0,
+    health: 200,
+    maxHealth: 500,
+    attributeRanks: new Map([["monk.protection-prayers", 12]]),
+  });
   for (const id of statuses) {
     caster.statuses.apply(id, 60, "m", NO_RANKS);
   }
@@ -97,6 +106,7 @@ describe("the rule (#1761)", () => {
       energyFloor: 1,
       energySurcharge: 0,
       activationMultiplier: 1,
+      activationSecondsLess: 0,
       rechargeFaster: 0,
       rechargeSlower: 0,
       durationMultiplier: 1,
@@ -276,6 +286,7 @@ describe("in flight, and on its caster (#1761)", () => {
       energyFloor: 1,
       energySurcharge: 0,
       activationMultiplier: 1,
+      activationSecondsLess: 0,
       rechargeFaster: 0,
       rechargeSlower: 0,
       durationMultiplier: 2,
@@ -292,7 +303,11 @@ describe("in flight, and on its caster (#1761)", () => {
             id: "m",
             team: 0,
             skillBar: [id],
-            attributeRanks: new Map(),
+            // Rank 12 of what each skill's duration scales with (#2041).
+            attributeRanks: new Map([
+              ["elementalist.water-magic", 12],
+              ["ranger.marksmanship", 12],
+            ]),
             equipment: {
               ...unarmed,
               mainHand: {

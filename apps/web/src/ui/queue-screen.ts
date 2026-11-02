@@ -1,9 +1,9 @@
-import type { QueueMode } from "@vibewars/game-protocol";
+import { ASCENT_ROUNDS, type QueueMode } from "@vibewars/game-protocol";
 import type { LobbyPlayerSnapshot, LobbySnapshot, QueueState } from "@vibewars/game-session";
 
+import { ascentMapName } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
-import { createProfessionDot, cssColour } from "./character-preview.js";
-import { characterLine } from "./lobby-screen.js";
+import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
 import { button, h, screenBar } from "./kit.js";
 import { playerLabelElement } from "./player-label.js";
@@ -70,6 +70,29 @@ export function nextStreak(streak: number, result: QueuedResult): number {
     case "host-left":
       return streak;
   }
+}
+
+/**
+ * The Heroes' Ascent round after `result` at `round` (#1996): a win
+ * moves on, and in the Hall defends it; a defeat or leaving before the
+ * end starts again at the first; a match lost to its host leaving
+ * stands.
+ */
+export function nextAscentRound(round: number, result: QueuedResult): number {
+  switch (result) {
+    case "win":
+      return Math.min(round + 1, ASCENT_ROUNDS - 1);
+    case "loss":
+    case "forfeit":
+      return 0;
+    case "host-left":
+      return round;
+  }
+}
+
+/** "Round 2 of 4 · Forgotten Shrines" (#1996). */
+export function ascentLine(round: number): string {
+  return `Round ${String(round + 1)} of ${String(ASCENT_ROUNDS)} · ${ascentMapName(round)}`;
 }
 
 /** "3 wins in a row this visit (not a rating)"; nothing at 0. */
@@ -200,6 +223,67 @@ export function endedLines(outcome: string, streak: number, stay?: StayOffer): Q
   };
 }
 
+/**
+ * What a team match's end leads to (#1997): a queued party's winners
+ * queue again, its losers (a draw too) go back to the menu; a coded
+ * lobby's players go back to it.
+ */
+export type TeamEndAction = "requeue" | "menu" | "lobby";
+
+/** The end of a team match that `won`, queued by its party or not (#1997). */
+export function teamEndAction(won: boolean, queued: boolean): TeamEndAction {
+  if (!queued) {
+    return "lobby";
+  }
+  return won ? "requeue" : "menu";
+}
+
+/**
+ * Whether a member out of its party's team match finds the party queued
+ * again (#1997), under a nonce other than the `played` match's: its host
+ * left the match first and queued while this tab was still in it.
+ */
+export function requeuedSince(
+  snapshot: Pick<LobbySnapshot, "phase" | "queueNonce">,
+  played: string,
+): boolean {
+  return (
+    snapshot.phase === "queued" && snapshot.queueNonce !== null && snapshot.queueNonce !== played
+  );
+}
+
+/**
+ * The line under a team match's result (#1997), `seconds` before
+ * `action`, and its button. A Heroes' Ascent won at `ascentRound`
+ * names where it goes on to (#1996); `null` in any other mode.
+ */
+export function teamEndLine(
+  action: TeamEndAction,
+  seconds: number,
+  ascentRound: number | null,
+): { text: string; button: string } {
+  const left = `${String(seconds)} s`;
+  switch (action) {
+    case "requeue":
+      if (ascentRound === null) {
+        return { text: `Next match in ${left}`, button: "Leave" };
+      }
+      return ascentRound === ASCENT_ROUNDS - 1
+        ? {
+            text: `You hold the ${ascentMapName(ascentRound)} · defending in ${left}`,
+            button: "Leave",
+          }
+        : {
+            text: `Ascending to ${ascentMapName(ascentRound + 1)} in ${left}`,
+            button: "Leave",
+          };
+    case "menu":
+      return { text: `Back to menu in ${left}`, button: "Now" };
+    case "lobby":
+      return { text: `Back to lobby in ${left}`, button: "Now" };
+  }
+}
+
 /** The splash's two sides and its countdown line, from a queued lobby's snapshot. */
 export interface VersusTeams {
   readonly ours: readonly LobbyPlayerSnapshot[];
@@ -221,28 +305,18 @@ export function versusTeams(snapshot: LobbySnapshot): VersusTeams {
   };
 }
 
-function splashRow(player: LobbyPlayerSnapshot, ours: boolean, self: boolean): HTMLElement {
+/** A player on the splash, by name alone (#2029): what they play is not the lobby's to say. */
+function splashRow(player: LobbyPlayerSnapshot): HTMLElement {
   const row = h("div", "versus-player");
-  const { character } = player;
-  row.appendChild(
-    character === null
-      ? h("span", "character-dot is-house", "?")
-      : createProfessionDot(
-          character.primary,
-          character.secondary ?? undefined,
-          self ? "self" : ours ? "ally" : "enemy",
-        ),
-  );
   const text = h("span", "versus-player-text");
   text.appendChild(playerLabelElement("versus-player-name", player.name, player.guildTag));
-  text.appendChild(h("span", "versus-player-character", characterLine(character, player.bot)));
   row.appendChild(text);
   return row;
 }
 
 /**
  * The versus splash (GW1): the map, and both teams side by side in team
- * colours, each player's name and professions, from the queued lobby's
+ * colours, each player's name, from the queued lobby's
  * snapshot. Yours on the left.
  */
 export function renderVersusSplash(
@@ -258,7 +332,7 @@ export function renderVersusSplash(
     node.style.setProperty("--team-colour", cssColour(teamColour(isOurs ? "ally" : "enemy")));
     node.appendChild(h("h3", "versus-team-title", isOurs ? "Your team" : "Their team"));
     for (const player of players) {
-      node.appendChild(splashRow(player, isOurs, player.sessionId === snapshot.selfSessionId));
+      node.appendChild(splashRow(player));
     }
     return node;
   };

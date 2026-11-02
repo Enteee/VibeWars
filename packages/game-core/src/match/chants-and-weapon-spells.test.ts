@@ -197,7 +197,7 @@ describe("Weapon of Warding (#758)", () => {
     const rng = createRng(758);
     let blocked = 0;
     for (let i = 0; i < 2000; i += 1) {
-      if (blocks(ally, "e", i % 2 === 0 ? "melee" : "projectile", rng)) {
+      if (blocks(ally, "e", i % 2 === 0 ? "melee" : "projectile", false, rng)) {
         blocked += 1;
       }
     }
@@ -252,7 +252,7 @@ describe("Weapon of Warding (#758)", () => {
     const description = describeSkill(skill(WARDING));
     expect(description.typeText).toBe("Weapon Spell.");
     expect(description.effects.map((effect) => effect.text)).toEqual([
-      "Applies Weapon of Warding for 7s (+4 Health regeneration, " +
+      "Applies Weapon of Warding for 3s (+4 Health regeneration, " +
         "50% chance to block attacks, ends if the bearer attacks)",
     ]);
   });
@@ -431,7 +431,7 @@ describe("Anthem of Flame in the match (#758)", () => {
     );
     expect(first?.skill.id).toBe("ranger.barrage");
     expect(first?.next.effects).toEqual([
-      { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+      { kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } },
     ]);
     expect(second?.skill.id).toBe("ranger.broad-head-arrow");
     expect(second?.next).toEqual({ statusIds: [], effects: [] });

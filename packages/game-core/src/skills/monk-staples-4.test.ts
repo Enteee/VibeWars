@@ -158,7 +158,15 @@ describe("the enchantments (#1511)", () => {
   it("Aegis: everyone in earshot, the Monk too, blocks half of all attacks for 13 s", () => {
     expect(skill("monk.aegis")).toMatchObject({
       area: { radius: AREA_EARSHOT, origin: "caster", affects: "allies", includesCaster: true },
-      effects: [{ kind: "apply-status", statusId: "aegis", durationSeconds: 13 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "aegis",
+          durationSeconds: {
+            scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 13.2 },
+          },
+        },
+      ],
     });
     expect(getStatusDefinition("aegis").block).toEqual({ chance: 0.5, against: "all" });
   });
@@ -181,8 +189,9 @@ describe("the enchantments (#1511)", () => {
   });
 
   it("say so", () => {
+    // At Divine Favor 0 (#2041).
     expect(described("monk.spell-breaker")).toEqual([
-      "Applies Spell Breaker for 15s (cannot be the target of enemy spells)",
+      "Applies Spell Breaker for 5s (cannot be the target of enemy spells)",
     ]);
     expect(described("monk.shielding-hands")).toEqual([
       "Applies Shielding Hands for 8s (−15 damage taken, −15 life stolen. When it ends: heals for 41)",
@@ -345,14 +354,19 @@ describe("in a match (#1511)", () => {
   }
 
   /**
-   * Monk `m`; its ally `a`, and `x` beside `a`, with Orison of Healing;
+   * Monk `m`, at `divineFavor` Divine Favor (Spell Breaker lasts by it,
+   * #2041); its ally `a`, and `x` beside `a`, with Orison of Healing;
    * foe `f` in touch of both, with Fireball and an axe.
    */
-  function match(): MatchSimulation {
+  function match(divineFavor = 0): MatchSimulation {
+    const monk = body("m", 1, vec2(0, 0), [...MONK_BAR]);
     return new MatchSimulation({
       seed: "monk-staples-4",
       participants: [
-        body("m", 1, vec2(0, 0), [...MONK_BAR]),
+        {
+          ...monk,
+          attributeRanks: new Map([...monk.attributeRanks, ["monk.divine-favor", divineFavor]]),
+        },
         body("a", 1, vec2(100, 0), ["monk.orison-of-healing"]),
         body("x", 1, vec2(100, 30), ["monk.orison-of-healing"]),
         body("f", 0, vec2(130, 0), ["elementalist.fireball"]),
@@ -396,7 +410,7 @@ describe("in a match (#1511)", () => {
 
   describe("Spell Breaker", () => {
     it("refuses a foe's Fireball at the bearer for 15 s, nothing spent", () => {
-      const sim = match();
+      const sim = match(12);
       cast(sim, "monk.spell-breaker");
       expect(get(sim, "a").statuses.get("spell-breaker")?.durationSeconds).toBe(15);
       sim.setTarget("f", "a");

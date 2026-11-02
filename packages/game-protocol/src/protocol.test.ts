@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  COMPANION_MODES,
-  LOBBY_CODE_ALPHABET,
-  LOBBY_CODE_LENGTH,
-  isLobbyCode,
-  normalizeLobbyCode,
-  parseClientIntent,
-} from "./protocol.js";
+import { COMPANION_MODES, LOBBY_CODE_LENGTH, isLobbyCode, parseClientIntent } from "./protocol.js";
 import { PROTOCOL_VERSION, fingerprint } from "./protocol-version.js";
 
 describe("protocol constants", () => {
@@ -16,73 +9,43 @@ describe("protocol constants", () => {
   });
 });
 
-describe("lobby code alphabet", () => {
-  it("omits visually ambiguous characters", () => {
-    for (const ambiguous of ["0", "O", "1", "I", "L", "2", "Z", "5", "S", "8", "B", "U", "V"]) {
-      expect(LOBBY_CODE_ALPHABET).not.toContain(ambiguous);
-    }
+describe("isLobbyCode (#2100)", () => {
+  const KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
+
+  it("accepts 43 base64url characters", () => {
+    expect(isLobbyCode(KEY)).toBe(true);
+    expect(isLobbyCode(`${"_".repeat(21)}${"-".repeat(21)}w`)).toBe(true);
   });
 
-  it("contains no duplicates", () => {
-    expect(new Set(LOBBY_CODE_ALPHABET).size).toBe(LOBBY_CODE_ALPHABET.length);
+  it("is a 256-bit key", () => {
+    expect(LOBBY_CODE_LENGTH).toBe(43);
+    // 42 characters of 6 bits, and 4 more in the last.
+    expect((LOBBY_CODE_LENGTH - 1) * 6 + 4).toBeGreaterThanOrEqual(256);
   });
 
-  it("is large enough to be worth using", () => {
-    // 23^4 is ~280k codes, plenty for concurrent LAN lobbies.
-    expect(LOBBY_CODE_ALPHABET.length).toBeGreaterThanOrEqual(20);
+  it("takes a mixed-case key as it is", () => {
+    const mixed = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE";
+    expect(isLobbyCode(mixed)).toBe(true);
   });
 
-  it("is upper-case alphanumeric only", () => {
-    expect(/^[A-Z0-9]+$/.test(LOBBY_CODE_ALPHABET)).toBe(true);
-  });
-});
-
-describe("normalizeLobbyCode", () => {
-  it("upper-cases", () => {
-    expect(normalizeLobbyCode("a7kq")).toBe("A7KQ");
-  });
-
-  it("strips whitespace and dashes", () => {
-    expect(normalizeLobbyCode(" a7 - kq ")).toBe("A7KQ");
-  });
-
-  it("leaves an already-normal code alone", () => {
-    expect(normalizeLobbyCode("A7KQ")).toBe("A7KQ");
-  });
-});
-
-describe("isLobbyCode", () => {
-  it("accepts a well-formed code", () => {
-    const code = LOBBY_CODE_ALPHABET.slice(0, LOBBY_CODE_LENGTH);
-    expect(isLobbyCode(code)).toBe(true);
-  });
-
-  it("is 12 symbols, 23¹² ≈ 2⁵⁴ keys (#1681)", () => {
-    expect(LOBBY_CODE_LENGTH).toBe(12);
-    expect(LOBBY_CODE_ALPHABET.length ** LOBBY_CODE_LENGTH).toBeGreaterThan(2 ** 54);
-  });
-
-  it("rejects wrong lengths", () => {
-    expect(isLobbyCode("ACDEFG")).toBe(false);
-    expect(isLobbyCode("ACDEFGHJKMN")).toBe(false);
-    expect(isLobbyCode("ACDEFGHJKMNPQ")).toBe(false);
+  it("refuses a wrong length", () => {
+    expect(isLobbyCode(KEY.slice(0, -1))).toBe(false);
+    expect(isLobbyCode(`${KEY}A`)).toBe(false);
+    expect(isLobbyCode("ACDEFGHJKMNP")).toBe(false);
     expect(isLobbyCode("")).toBe(false);
   });
 
-  it("rejects characters outside the alphabet", () => {
-    expect(isLobbyCode("ACDEFGHJKMN0")).toBe(false);
-    expect(isLobbyCode("ACDEFGHJKMNO")).toBe(false);
-    expect(isLobbyCode("acdefghjkmnp")).toBe(false);
+  it("refuses anything outside base64url, padding included", () => {
+    expect(isLobbyCode(`${KEY.slice(0, -2)}+A`)).toBe(false);
+    expect(isLobbyCode(`${KEY.slice(0, -2)}/A`)).toBe(false);
+    expect(isLobbyCode(`${KEY.slice(0, -1)}=`)).toBe(false);
+    expect(isLobbyCode(`${KEY.slice(0, -2)} A`)).toBe(false);
+    expect(isLobbyCode(`${KEY.slice(0, 20)}\n${KEY.slice(21)}`)).toBe(false);
   });
 
-  it("rejects keys with separators before normalisation", () => {
-    expect(isLobbyCode("ACDE-FGHJ-KMNP")).toBe(false);
-    expect(isLobbyCode(normalizeLobbyCode("acde-fghj-kmnp"))).toBe(true);
-  });
-
-  it("is not fooled by regex metacharacters or newlines", () => {
-    expect(isLobbyCode("....")).toBe(false);
-    expect(isLobbyCode("ACDE\nACDE")).toBe(false);
+  it("refuses a last character with bits past the 256th", () => {
+    expect(isLobbyCode(`${KEY.slice(0, -1)}B`)).toBe(false);
+    expect(isLobbyCode(`${KEY.slice(0, -1)}_`)).toBe(false);
   });
 });
 

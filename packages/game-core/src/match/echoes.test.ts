@@ -48,6 +48,8 @@ function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
 const SWORD: ResolvedWeaponSet = {
   equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
   maxEnergy: 1000,
+  maxHealth: 1e4,
+  baseEnergyPips: 0,
 };
 
 /** The echoer: both echoes, two fire spells, a signet and two axe attacks. */

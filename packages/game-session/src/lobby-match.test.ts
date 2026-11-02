@@ -356,6 +356,7 @@ describe("a lobby's own match", () => {
       ...ANNIHILATION_MATCH_RULES,
       timeLimitSeconds: 2,
     });
+    lobby.host.connection.selectMode("hosted-game");
     lobby.host.connection.selectMap("other-arena");
     await seat(members, [0, 1, 0, 1]);
     await start(lobby);

@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import {
+  ALL_INSIGNIAS,
   ALL_OFFHANDS,
+  ALL_UNIVERSAL_RUNES,
   ALL_WEAPONS,
   IMPLEMENTED_SKILLS,
   PROFESSIONS,
@@ -19,9 +21,11 @@ import {
   SKILL_TYPE_NAME,
   attackingIcon,
   fullscreenIcon,
+  insigniaIcon,
   musicIcon,
   offhandIcon,
   professionIcon,
+  runeIcon,
   settingsIcon,
   skillBadgeHtml,
   skillIcon,
@@ -42,6 +46,32 @@ describe("icons", () => {
     for (const type of Object.keys(SKILL_TYPE_NAME) as SkillType[]) {
       expect(fs.existsSync(path.join(PUBLIC, skillTypeIcon(type))), type).toBe(true);
     }
+  });
+
+  it("has an insignia and a rune file under public/ for each, named for alt (#2058)", () => {
+    for (const insignia of ALL_INSIGNIAS) {
+      const icon = insigniaIcon(insignia.id);
+      expect(icon?.name, insignia.id).toBe(insignia.name);
+      expect(fs.existsSync(path.join(PUBLIC, icon?.src ?? "")), insignia.id).toBe(true);
+    }
+    for (const rune of ALL_UNIVERSAL_RUNES) {
+      const icon = runeIcon({ kind: "universal", runeId: rune.id, tier: "major" });
+      expect(icon?.tier, rune.id).toBe(rune.tiered ? "major" : undefined);
+      expect(fs.existsSync(path.join(PUBLIC, icon?.src ?? "")), rune.id).toBe(true);
+    }
+    for (const profession of Object.keys(PROFESSIONS)) {
+      const icon = runeIcon({
+        kind: "attribute",
+        attributeId: `${profession}.x`,
+        tier: "superior",
+      });
+      expect(icon?.src, profession).toContain(`attribute-${profession}.svg`);
+      expect(fs.existsSync(path.join(PUBLIC, icon?.src ?? "")), profession).toBe(true);
+    }
+    expect(insigniaIcon("nope")).toBeUndefined();
+    expect(
+      runeIcon({ kind: "attribute", attributeId: "bard.song", tier: "minor" }),
+    ).toBeUndefined();
   });
 
   it("has a file under public/ for every profession", () => {

@@ -1,23 +1,19 @@
 import { sizeClass } from "@vibewars/game-maps/size-class";
-import type {
-  Guild,
-  LobbyCharacter,
-  LobbyConnection,
-  LobbySnapshot,
-  MatchStarting,
-} from "@vibewars/game-session";
+import type { Guild, LobbyConnection, LobbySnapshot, MatchStarting } from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 
-import { ARENA_MAPS, LOBBY_MODE_MATCH_MODES, mapMode, modeMapIds } from "./net/maps.js";
+import { ARENA_MAPS, ASCENT_PROGRESSION, LOBBY_MODE_MATCH_MODES, modeMapIds } from "./net/maps.js";
 import {
   connectMatchFor,
   observeMatchFor,
   enterQueue,
+  startNatCheck,
   followHost,
   hostLobby,
   joinFailureNotice,
   joinLobbyByCode,
+  NOT_A_KEY_MESSAGE,
   lobbyClosedNotice,
   lobbyRefusalNotice,
   matchFailureNotice,
@@ -27,6 +23,7 @@ import {
   STAY_TOGETHER_GRACE_SECONDS,
   STAY_TOGETHER_SECONDS,
   TEAM_PLAN_REJECTED_NOTICE,
+  TEAM_RESULT_SECONDS,
   TEAM_SPLIT_MESSAGE,
   watchHostMove,
   type HostMove,
@@ -34,6 +31,7 @@ import {
   type PartyPlace,
   type RandomArenaQueue,
 } from "./net/session.js";
+import { parseLobbyFragment, type LobbyFragment } from "./net/fragment.js";
 import {
   UNREADABLE_RELAY_NOTICE,
   loadTurnConfig,
@@ -48,7 +46,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
-import { startMatchView, type MatchOutcome, type MatchView } from "./match-view.js";
+import { startMatchView, type MatchView } from "./match-view.js";
 import { beatEdits } from "./music/beat-edits.js";
 import { musicPlayer } from "./music/music-player.js";
 import { music } from "./music/play-music.js";
@@ -57,25 +55,25 @@ import { STRESS_BUILD, startStress, stressMs } from "./music/stress.js";
 import {
   BLOCKED_NOTICE,
   CharacterRepository,
-  MatchRecordRepository,
   TeamRepository,
   createMemoryStore,
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
 import { cloneCharacter } from "./storage/clone-character.js";
-import { matchRecordFrom, tally, type Tally } from "./storage/match-record.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
   type StoredTeam,
   type TeamCharacter,
 } from "./storage/schema.js";
+import { rerollStarterCharacter, rollStarterCharacter } from "./storage/starter-character.js";
 import {
-  rerollStarterCharacter,
-  rollClone,
-  rollStarterCharacter,
-} from "./storage/starter-character.js";
+  loadStarterTeamId,
+  rerollStarterTeam,
+  rollStarterTeam,
+  saveStarterTeamId,
+} from "./storage/starter-team.js";
 import { importTeam, importedTeamSummary } from "./storage/team-transfer.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-banner.js";
@@ -93,9 +91,14 @@ import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
 import {
   mountQueueScreen,
+  nextAscentRound,
   nextStreak,
+  requeuedSince,
+  teamEndAction,
+  teamEndLine,
   type QueueScreen,
   type StayOffer,
+  type TeamEndAction,
 } from "./ui/queue-screen.js";
 import {
   HOUSE_TEAM_AFTER_MS,
@@ -105,7 +108,6 @@ import {
   type LobbyPanel,
 } from "./ui/lobby-screen.js";
 import { renderTeamLobbyScreen } from "./ui/team-lobby-screen.js";
-import { renderRecordScreen } from "./ui/record-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
   loadActiveCharacterId,
@@ -123,6 +125,8 @@ import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
 import {
   isModeEntry,
   loadRail,
+  loadTeamSize,
+  onTeamSizeChange,
   railParty,
   redrawModeRail,
   redrawsOnLobbyChange,
@@ -155,16 +159,12 @@ import {
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import {
-  normalizeLobbyCode,
   teamQueueModeOf,
   teamSizeOf,
+  type LobbyMode,
   type QueueMode,
 } from "@vibewars/game-protocol";
-import {
-  MINIMAL_GW_INSPIRED_PVP_V1,
-  resolveJoinLoadout,
-  type PlayerBuild,
-} from "@vibewars/game-core";
+import { type PlayerBuild } from "@vibewars/game-core";
 
 /**
  * Application shell: owns which screen is showing and the connections
@@ -177,8 +177,10 @@ import {
 
 /** Shown on the lobby or the menu once a match is lost for good. */
 const LOST_MATCH_NOTICE = "Lost the connection to the match.";
-/** A code typed into the title bar that is this tab's own lobby's (#1526). */
+/** An invite link to this tab's own lobby (#1526, #2100). */
 const OWN_LOBBY_NOTICE = "That is your own lobby";
+/** An invite link opened over a lobby's screen or a match (#2100), which a join would leave. */
+const INVITE_IN_LOBBY_NOTICE = "Go back to the menu, then open the invite link again.";
 
 function requireElement(selector: string): HTMLElement {
   const element = document.querySelector<HTMLElement>(selector);
@@ -235,6 +237,21 @@ function takeRelayLink(): TurnFragment {
   return fragment;
 }
 
+/**
+ * The lobby invite link this page was opened with, if any (#2100), taken
+ * out of the address bar and the history entry at once, as `takeRelayLink`
+ * does: a reload or a screenshot of the URL carries no key. Only `lobby=`
+ * goes; the rest of the fragment stays.
+ */
+function takeLobbyLink(): LobbyFragment {
+  const fragment = parseLobbyFragment(location.hash);
+  if (fragment.kind !== "none") {
+    const rest = fragment.rest === "" ? "" : `#${fragment.rest}`;
+    history.replaceState(history.state, "", `${location.pathname}${location.search}${rest}`);
+  }
+  return fragment;
+}
+
 /** The served build id this tab last reloaded for (#1268): once per id, never a loop. */
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 
@@ -248,10 +265,6 @@ interface TeamPicks {
 interface Entrant {
   /** Played every match of the lobby; `undefined` plays a starter build from the host. */
   readonly build: PlayerBuild | undefined;
-  /** How the lobby lists it (#580). */
-  readonly character: LobbyCharacter | null;
-  /** Whose record its matches go on (#1404); `undefined` for a starter build. */
-  readonly characterId: string | undefined;
   /** The menu's guild tag (#1406) if it is a valid one, and its cape (#1422). */
   readonly guild: Guild;
 }
@@ -259,6 +272,7 @@ interface Entrant {
 async function main(): Promise<void> {
   // Before anything mounts or waits.
   const relayLink = takeRelayLink();
+  const lobbyLink = takeLobbyLink();
   // A touch-only device is told it needs a keyboard and mouse (#1392)
   // before the menu, which waits until it goes past.
   if (needsTouchNotice((query) => matchMedia(query).matches, loadTouchNoticeDismissed)) {
@@ -296,6 +310,9 @@ async function main(): Promise<void> {
     notices.add(UNREADABLE_RELAY_NOTICE);
   });
   const framed = window.top !== window.self;
+  if (lobbyLink.kind === "malformed") {
+    notices.add(NOT_A_KEY_MESSAGE);
+  }
   if (relayLink.kind === "malformed") {
     notices.add(MALFORMED_RELAY_LINK_NOTICE);
   } else if (relayLink.kind === "config" && framed) {
@@ -303,7 +320,6 @@ async function main(): Promise<void> {
   }
   const characters = new CharacterRepository(store);
   const teams = new TeamRepository(store);
-  const records = new MatchRecordRepository(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
   if (persistent) {
@@ -324,6 +340,15 @@ async function main(): Promise<void> {
     if (rolled !== undefined) {
       saveActiveCharacterId(rolled.id);
     }
+    // And a curated Team Build, on its own key (#2036).
+    await rollStarterTeam({
+      teams,
+      key: { load: loadStarterTeamId, save: saveStarterTeamId },
+      random: Math.random,
+      id: crypto.randomUUID(),
+      newId: () => crypto.randomUUID(),
+      now: Date.now(),
+    });
   }
 
   // The arenas a host can pick, built into the client (#403).
@@ -332,6 +357,7 @@ async function main(): Promise<void> {
     name: map.name,
     size: sizeClass(map),
     mode: map.mode,
+    teamSizes: map.teamSizes,
   }));
 
   /**
@@ -431,15 +457,37 @@ async function main(): Promise<void> {
         teams: number | undefined;
         /** Its match is over: whoever leaves it first is no news. */
         finished: boolean;
+        /** The Heroes' Ascent round its lobby queued at (#1996); `null` in other modes. */
+        readonly ascentRound: number | null;
       }
     | undefined;
   /** Set while *Random Arena* is reading the character, so a second press makes no second ticket. */
   let joiningQueue = false;
   /** Queued wins in a row this visit (#881): page memory only, never stored. */
   let queueStreak = 0;
+  /**
+   * The Heroes' Ascent round this tab's party queues at next, as its host
+   * (#1996): page memory only, like the streak, and back to the first
+   * once the run ends.
+   */
+  let ascentRound = 0;
   /** The queued match's result line once it finished, whether this side won, and the timer to its ended view. */
   let queuedEnd:
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
+  /**
+   * A team match's end (#1997), once it finished: what comes next, when
+   * by `Date.now`, the party a win queues again, and the countdown's tick.
+   */
+  let teamEnd:
+    | {
+        action: TeamEndAction;
+        readonly endsAt: number;
+        readonly party: LobbyConnection | undefined;
+        /** The Heroes' Ascent round just played (#1996); `null` in other modes. */
+        readonly ascentRound: number | null;
+        readonly timer: number;
+      }
+    | undefined;
   /** The ended view's result line, while it is up. */
   let endedOutcome: string | undefined;
   /** The ended view's match summary (#1057), while it is up. */
@@ -471,6 +519,13 @@ async function main(): Promise<void> {
     if (queuedEnd !== undefined) {
       clearTimeout(queuedEnd.timer);
       queuedEnd = undefined;
+    }
+  };
+
+  const clearTeamEnd = (): void => {
+    if (teamEnd !== undefined) {
+      clearInterval(teamEnd.timer);
+      teamEnd = undefined;
     }
   };
 
@@ -638,29 +693,10 @@ async function main(): Promise<void> {
 
   /**
    * The selected character, read fresh: the one read per lobby (#1070).
-   * The lobby lists it (#580) by the selected one's name and professions,
-   * or `null` for a starter build. A build the host would refuse, an
-   * illegal one, plays a starter build, so it is listed as that too.
+   * A build the host would refuse, an illegal one, plays a starter build.
    */
   const readEntrant = async (): Promise<Entrant> => {
-    const id = loadActiveCharacterId();
-    const build = await activeBuild(id);
-    const character =
-      build === undefined ||
-      resolveJoinLoadout(build, MINIMAL_GW_INSPIRED_PVP_V1.attributes, Math.random).refused !==
-        undefined
-        ? null
-        : {
-            name: build.name,
-            primary: build.primaryProfession,
-            secondary: build.secondaryProfession ?? null,
-          };
-    return {
-      build,
-      guild: playerGuild(),
-      character,
-      characterId: character === null ? undefined : id,
-    };
+    return { build: await activeBuild(loadActiveCharacterId()), guild: playerGuild() };
   };
 
   /** The open build editor; every way out of it passes through `showMenu`. */
@@ -711,10 +747,7 @@ async function main(): Promise<void> {
       return;
     }
     void (async () => {
-      const [{ characters: list, problems }, played] = await Promise.all([
-        characters.list(),
-        records.list(),
-      ]);
+      const { characters: list, problems } = await characters.list();
       // Host, Join or Random Arena clicked on the old menu while this
       // awaited (#1513): that screen has it now, so draw nothing over it.
       if (!turn()) {
@@ -724,12 +757,7 @@ async function main(): Promise<void> {
       // the card it was on keeps the focus (#1526).
       const cardsBefore = [...screenRoot.querySelectorAll<HTMLElement>(".play-card-open")];
       const focused = cardsBefore.findIndex((card) => card === document.activeElement);
-      renderMenuWith(
-        entry,
-        list,
-        [...problems, ...played.problems, ...notices.draw(entry)],
-        tally(played.records),
-      );
+      renderMenuWith(entry, list, [...problems, ...notices.draw(entry)]);
       if (focused !== -1) {
         screenRoot.querySelectorAll<HTMLElement>(".play-card-open")[focused]?.focus();
       }
@@ -746,15 +774,12 @@ async function main(): Promise<void> {
     const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
     if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
       lobby?.selectMode(entry);
+      // A Hosted Game starts at the host's sidebar team size (#2104).
+      if (entry === "hosted-game") {
+        lobby?.selectTeamSize(loadTeamSize());
+      }
     }
     showMenu();
-  };
-
-  const showRecord = async (): Promise<void> => {
-    leaveScreen();
-    music().menu("record");
-    const { records: played, problems } = await records.list();
-    renderRecordScreen(screenRoot, played, problems, { onBack: showMenu });
   };
 
   /** Random Arena or Character Builder (#1525), with `list`. */
@@ -762,8 +787,9 @@ async function main(): Promise<void> {
     entry: "random-arena" | "characters",
     list: readonly StoredCharacter[],
     problems: readonly string[] = [],
-    tallies: ReadonlyMap<string, Tally> = new Map(),
   ): void => {
+    // Both carry the Random Arena join controls: its NAT check starts now (#2090).
+    startNatCheck();
     (entry === "random-arena" ? renderRandomArena : renderCharacterBuilder)(
       screenRoot,
       {
@@ -771,9 +797,6 @@ async function main(): Promise<void> {
           void enterRandomArena(mode, name);
         },
         onSwitch: switchTo,
-        onShowRecord: () => {
-          void showRecord();
-        },
         onNewCharacter: () => {
           showCharacterEditor(newCharacter(crypto.randomUUID()));
         },
@@ -792,14 +815,9 @@ async function main(): Promise<void> {
               showMenu();
               return;
             }
-            // Only the random starter has Clone: a fresh roll, not a copy (#1457).
-            const copy = rollClone(
-              character,
-              Math.random,
-              crypto.randomUUID(),
-              Date.now(),
-              list.map((c) => c.name),
-            );
+            // Only the random starter has Clone: a copy of the character shown,
+            // as the editor's Duplicate makes (#2038).
+            const copy = cloneCharacter(character, crypto.randomUUID(), Date.now());
             try {
               await characters.save(copy);
             } catch (error) {
@@ -829,7 +847,7 @@ async function main(): Promise<void> {
         // highlighted row matches what was just picked, without a round
         // trip to storage for a list we already hold.
         onSelectCharacter: () => {
-          renderMenuWith(entry, list, problems, tallies);
+          renderMenuWith(entry, list, problems);
           // The lobby lists, and plays, the one picked (#1526).
           void refreshEntrant();
         },
@@ -837,7 +855,6 @@ async function main(): Promise<void> {
       list,
       problems,
       menuNotice,
-      tallies,
     );
   };
 
@@ -850,10 +867,6 @@ async function main(): Promise<void> {
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
-          // Its record goes with it (#1404); a failure leaves orphans, which no roster tallies.
-          await records.deleteFor(id).catch((error: unknown) => {
-            console.warn("[web] could not delete the character's record", error);
-          });
           back();
         })();
       },
@@ -890,7 +903,7 @@ async function main(): Promise<void> {
       const entrant = await readEntrant();
       let own: HostedLobby;
       try {
-        own = await hostLobby(name, entrant.guild, entrant.character, true);
+        own = await hostLobby(name, entrant.guild, true, loadTeamSize());
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
@@ -938,6 +951,8 @@ async function main(): Promise<void> {
    */
   const closeLobby = async (moveTo?: string): Promise<void> => {
     endTeamQueue();
+    // Out of the party, its Heroes' Ascent run is over (#1996).
+    ascentRound = 0;
     const leaving = lobby;
     const ending = hosted;
     lobby = undefined;
@@ -978,7 +993,7 @@ async function main(): Promise<void> {
       {
         join: async (code) => {
           const entrant = await readEntrant();
-          const joined = await joinLobbyByCode(code, name, entrant.guild, entrant.character);
+          const joined = await joinLobbyByCode(code, name, entrant.guild);
           return { joined, entrant };
         },
         movedOn: () => movedOnSince(turn),
@@ -1011,7 +1026,7 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Join the lobby `code` from the title bar (#1526): this tab's own stays
+   * Join the lobby `code` an invite link named (#1526, #2100): this tab's own stays
    * open until the join is in, so a failed one keeps its code and guests,
    * and only then sends them after it (#1553).
    */
@@ -1020,7 +1035,7 @@ async function main(): Promise<void> {
     const movedOn = (): boolean => movedOnSince(turn);
     void (async () => {
       const current = lobby?.getSnapshot().code;
-      if (current !== undefined && normalizeLobbyCode(code) === current) {
+      if (current !== undefined && code === current) {
         if (hosted !== undefined) {
           toast(OWN_LOBBY_NOTICE);
         }
@@ -1031,7 +1046,7 @@ async function main(): Promise<void> {
       menuNotice = undefined;
       let joined: LobbyConnection;
       try {
-        joined = await joinLobbyByCode(code, name, entrant.guild, entrant.character);
+        joined = await joinLobbyByCode(code, name, entrant.guild);
       } catch (error) {
         console.warn("[web] could not join the lobby", error);
         if (movedOn()) {
@@ -1050,7 +1065,7 @@ async function main(): Promise<void> {
       }
       // In: only now does this tab's own lobby close, sending its guests
       // after it (#1553).
-      await closeLobby(normalizeLobbyCode(code));
+      await closeLobby(code);
       if (movedOn()) {
         await joined.disconnect();
         return;
@@ -1086,34 +1101,46 @@ async function main(): Promise<void> {
         onWatch: () => {
           void watchMatch();
         },
-        onSetBots: (team, count) => {
-          lobby?.setBots(team, count);
-        },
       },
       lobbyNotice,
-      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter((map) =>
-        modeMapIds()[entry].includes(map.id),
+      // A queued Heroes' Ascent names its round's map, the Hall's too (#1996).
+      hostMaps(availableMaps, LOBBY_MODE_MATCH_MODES[entry]).filter(
+        (map) =>
+          modeMapIds()[entry].includes(map.id) ||
+          (entry === "heroes-ascent" && ASCENT_PROGRESSION.includes(map.id)),
       ),
       matchmakingFor(entry),
     );
   };
+
+  /** The round a lobby of `mode` queues at (#1996): this tab's run in Heroes' Ascent, none in others. */
+  const roundFor = (mode: LobbyMode): number | null =>
+    mode === "heroes-ascent" ? ascentRound : null;
 
   /** A team mode's Find a match, Leave the queue and Play the house team (#1766). */
   const matchmakingFor = (entry: HostEntry): LobbyMatchmaking | undefined => {
     if (lobby === undefined || teamQueueModeOf(entry) === undefined) {
       return undefined;
     }
+    // A lobby that may queue checks its NAT now, not on Find a match (#2090).
+    startNatCheck();
     return {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
       onFindMatch: () => {
-        lobby?.findMatch();
+        lobby?.findMatch(roundFor(entry));
       },
       onLeaveQueue: () => {
+        // Out of the queue, its Heroes' Ascent run is over (#1996).
+        ascentRound = 0;
         lobby?.leaveQueue();
       },
-      onPlayHouseTeam: () => {
-        lobby?.playHouseTeam();
-      },
+      // Heroes' Ascent waits for a side at its round, never for bots (#1996).
+      onPlayHouseTeam:
+        entry === "heroes-ascent"
+          ? undefined
+          : () => {
+              lobby?.playHouseTeam();
+            },
     };
   };
 
@@ -1153,18 +1180,50 @@ async function main(): Promise<void> {
         }
         openPastedTeam(result.team, characterList.characters);
       },
+      // Only the random starter team has Clone: an exact copy, to edit (#2036).
+      onCloneStarterTeam: (id) => {
+        void (async () => {
+          const team = await teams.load(id);
+          if (team === undefined) {
+            showMenu();
+            return;
+          }
+          const copy = duplicateTeam(team, crypto.randomUUID());
+          try {
+            await teams.save(copy);
+          } catch (error) {
+            console.warn("[web] could not save the clone", error);
+            showMenu();
+            return;
+          }
+          showTeamEditor(openedTeam(copy, true), characterList.characters);
+        })();
+      },
+      onRerollTeam: (id) => {
+        void (async () => {
+          const team = await teams.load(id);
+          if (team !== undefined) {
+            await rerollStarterTeam(
+              teams,
+              team,
+              Math.random,
+              () => crypto.randomUUID(),
+              Date.now(),
+            );
+          }
+          showMenu();
+        })();
+      },
     };
     const problems = [...teamList.problems, ...notices.draw(entry)];
     if (isHostEntry(entry)) {
-      renderHostScreen(
-        screenRoot,
-        entry,
-        teamList.teams,
-        problems,
-        menuNotice,
-        callbacks,
-        panelFor(entry),
-      );
+      renderHostScreen(screenRoot, entry, problems, menuNotice, callbacks, panelFor(entry));
+      // A Hosted Game's host sets its lobby's size with the sidebar's (#2104).
+      if (entry === "hosted-game") {
+        onTeamSizeChange((size) => {
+          lobby?.selectTeamSize(size);
+        });
+      }
     } else {
       renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
     }
@@ -1283,6 +1342,7 @@ async function main(): Promise<void> {
     name: string,
     from: { readonly party?: PartyPlace; readonly note?: string } = {},
   ): Promise<boolean> => {
+    startNatCheck();
     if (
       queue !== undefined ||
       joiningQueue ||
@@ -1342,9 +1402,9 @@ async function main(): Promise<void> {
     const { note } = from;
     const place = enterQueue(
       mode,
+      null,
       name,
       entrant.guild,
-      entrant.character,
       {
         // Never past `in-lobby` while a lobby is up, unless it fell through.
         onState: (state) => {
@@ -1571,6 +1631,7 @@ async function main(): Promise<void> {
       houseTeamShown: false,
       teams: undefined,
       finished: false,
+      ascentRound: snapshot.ascentRound,
     };
     teamQueue = started;
     music().menu("queue");
@@ -1604,9 +1665,9 @@ async function main(): Promise<void> {
     const own = hosted?.lobby === current.party ? hosted : undefined;
     current.place = enterQueue(
       mode,
+      current.ascentRound,
       name,
       entrant.guild,
-      entrant.character,
       {
         // The queue strip says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
@@ -1799,8 +1860,8 @@ async function main(): Promise<void> {
   };
 
   /**
-   * The character this player picked now, for the lobby to list and its
-   * matches to play (#1526): the lobby outlives a pick on the menu.
+   * The character this player picked now, for its matches to play and
+   * keep a record of (#1526): the lobby outlives a pick on the menu.
    */
   const refreshEntrant = async (): Promise<void> => {
     const current = lobby;
@@ -1810,9 +1871,6 @@ async function main(): Promise<void> {
     const entrant = await readEntrant();
     if (lobby !== current || lobbyEntrant === undefined) {
       return;
-    }
-    if (JSON.stringify(entrant.character) !== JSON.stringify(lobbyEntrant.character)) {
-      current.setCharacter(entrant.character);
     }
     lobbyEntrant = entrant;
   };
@@ -1847,6 +1905,11 @@ async function main(): Promise<void> {
         lobbyChanged();
       });
     }
+    // A team size change withdrew the proposal of another size (#2104).
+    const proposed = teamPicks.teams.find((saved) => saved.id === teamPicks?.proposed);
+    if (proposed !== undefined && proposed.members.length !== snapshot.teamSize) {
+      teamPicks.proposed = undefined;
+    }
     renderTeamLobbyScreen(
       screenRoot,
       snapshot,
@@ -1859,6 +1922,9 @@ async function main(): Promise<void> {
         onPropose: proposeTeam,
         onClaim: (slot) => {
           lobby?.claim(slot);
+        },
+        onSelectTeamSize: (size) => {
+          lobby?.selectTeamSize(size);
         },
         onToggleReady: () => {
           const self = lobby
@@ -1948,6 +2014,12 @@ async function main(): Promise<void> {
     joined.onStartRejected((reason) => {
       if (lobby === joined) {
         lobbyNotice = reason;
+        lobbyChanged();
+      }
+    });
+    joined.onNotice((text) => {
+      if (lobby === joined) {
+        lobbyNotice = text;
         lobbyChanged();
       }
     });
@@ -2082,6 +2154,8 @@ async function main(): Promise<void> {
     if (match === undefined) {
       return;
     }
+    // Out before its countdown is over, or by it (#1997): no second exit.
+    clearTeamEnd();
     if (queue !== undefined && queuedEnd !== undefined) {
       // Finished: leaving now, or the host going, only skips the wait.
       await endQueuedMatch(queuedEnd.outcome, queuedEnd.won);
@@ -2097,7 +2171,20 @@ async function main(): Promise<void> {
     const team = teamQueue?.parked === undefined ? undefined : teamQueue;
     const said = team?.finished === true ? undefined : notice;
     if (team !== undefined) {
+      // Left before the end, a Heroes' Ascent run is over, unless it was
+      // lost to its host leaving (#1996).
+      if (!team.finished && team.ascentRound !== null) {
+        ascentRound = nextAscentRound(
+          team.ascentRound,
+          notice === undefined ? "forfeit" : "host-left",
+        );
+      }
       endTeamQueue();
+      // Its host may have left the match first and queued the party
+      // again (#1997), a change this tab saw while parked and let pass.
+      if (lobby === team.party && requeuedSince(team.party.getSnapshot(), team.nonce)) {
+        syncTeamQueue(team.party);
+      }
     }
     if (queue !== undefined) {
       // Before the end, the player's own leave forfeits; a host or a
@@ -2118,25 +2205,61 @@ async function main(): Promise<void> {
   };
 
   /**
-   * Keeps a finished match on `entrant`'s character's record (#1404). A
-   * starter build has none. Saving is a convenience: a failure is only logged.
+   * A finished team match counts down to `action` (#1997) over its
+   * result: its winners' party queues again, its losers go back to the
+   * menu, a coded lobby's players back to it. Its button goes now; a
+   * winner's, without queueing.
    */
-  const recordMatch = (outcome: MatchOutcome, mapId: string, entrant: Entrant): void => {
-    if (entrant.characterId === undefined || entrant.character === null) {
+  const startTeamEnd = (
+    action: TeamEndAction,
+    party: LobbyConnection | undefined,
+    ascentRound: number | null,
+  ): void => {
+    clearTeamEnd();
+    teamEnd = {
+      action,
+      endsAt: Date.now() + TEAM_RESULT_SECONDS * 1000,
+      party,
+      ascentRound,
+      timer: window.setInterval(tickTeamEnd, 250),
+    };
+    tickTeamEnd();
+  };
+
+  const tickTeamEnd = (): void => {
+    const current = teamEnd;
+    if (current === undefined) {
       return;
     }
-    const record = matchRecordFrom(outcome, {
-      id: crypto.randomUUID(),
-      characterId: entrant.characterId,
-      characterName: entrant.character.name,
-      mapId,
-      mode: mapMode(mapId),
-      finishedAt: Date.now(),
+    // The winning party's host left it: nothing to queue with, so the menu.
+    if (current.action === "requeue" && teamQueue?.partyClosed !== undefined) {
+      current.action = "menu";
+    }
+    const seconds = Math.ceil((current.endsAt - Date.now()) / 1000);
+    if (seconds <= 0) {
+      void endTeamMatch(current);
+      return;
+    }
+    match?.setEndLine({
+      ...teamEndLine(current.action, seconds, current.ascentRound),
+      onPress: () => {
+        void exitMatch();
+      },
     });
-    if (record !== undefined) {
-      records.save(record).catch((error: unknown) => {
-        console.warn("[web] could not record the match", error);
-      });
+  };
+
+  /** `ending`'s countdown is over (#1997): out of the match, and a winning host queues again. */
+  const endTeamMatch = async (ending: NonNullable<typeof teamEnd>): Promise<void> => {
+    await exitMatch();
+    // As its host pressing Find a match: its members follow the lobby.
+    const { party } = ending;
+    if (
+      ending.action === "requeue" &&
+      party !== undefined &&
+      lobby === party &&
+      party.getSnapshot().isHost
+    ) {
+      party.findMatch(roundFor(party.getSnapshot().mode));
     }
   };
 
@@ -2217,17 +2340,29 @@ async function main(): Promise<void> {
           onLeave: () => {
             void exitMatch();
           },
-          // Every lobby match, coded or queued, goes on the record (#1404).
           onFinished: (finished) => {
-            recordMatch(finished, start.mapId, entrant);
-            if (teamQueue?.parked !== undefined) {
-              teamQueue.finished = true;
-            }
-            if (queue === undefined) {
-              return;
+            const team = teamQueue?.parked === undefined ? undefined : teamQueue;
+            if (team !== undefined) {
+              team.finished = true;
             }
             const { winningTeam, endReason, selfTeam, aggression } = finished;
+            // A draw is no win.
             const won = selfTeam !== undefined && winningTeam === selfTeam;
+            if (queue === undefined) {
+              // A team match, queued by its party or in a coded lobby (#1997).
+              if (team !== undefined) {
+                queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
+                if (team.ascentRound !== null) {
+                  ascentRound = nextAscentRound(team.ascentRound, won ? "win" : "loss");
+                }
+              }
+              startTeamEnd(
+                teamEndAction(won, team !== undefined),
+                team?.party,
+                team?.ascentRound ?? null,
+              );
+              return;
+            }
             queueStreak = nextStreak(queueStreak, won ? "win" : "loss");
             const outcome = describeOutcome(winningTeam, endReason, selfTeam, aggression);
             queuedEnd = {
@@ -2337,12 +2472,21 @@ async function main(): Promise<void> {
   const buildWatch = watchServedBuild();
 
   showMenu();
+  if (lobbyLink.kind === "invite") {
+    topbarView.invite(lobbyLink.code);
+  }
   if (relayLink.kind === "config" && !framed) {
     openRelayPrompt(app, relayLink.config, savedRelay);
   }
   // An invite link pasted into this open tab only changes the fragment:
   // nothing reloads, so it is taken out and asked about here.
-  window.addEventListener("hashchange", () => {
+  const takeFragmentLinks = (): void => {
+    const invited = takeLobbyLink();
+    if (invited.kind === "malformed") {
+      toast(NOT_A_KEY_MESSAGE);
+    } else if (invited.kind === "invite" && !topbarView.invite(invited.code)) {
+      toast(INVITE_IN_LOBBY_NOTICE);
+    }
     const pasted = takeRelayLink();
     if (pasted.kind === "malformed") {
       toast(MALFORMED_RELAY_LINK_NOTICE);
@@ -2351,7 +2495,10 @@ async function main(): Promise<void> {
     } else if (pasted.kind === "config") {
       openRelayPrompt(app, pasted.config, loadTurnConfig());
     }
-  });
+  };
+  window.addEventListener("hashchange", takeFragmentLinks);
+  // One pasted while the page was still starting, before there was a listener.
+  takeFragmentLinks();
 }
 
 main().catch((error: unknown) => {

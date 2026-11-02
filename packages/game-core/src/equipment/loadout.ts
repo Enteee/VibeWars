@@ -1,5 +1,6 @@
 import { primaryAttributeOf, type ProfessionId } from "../professions.js";
 import { bareArmorSet, type ArmorSet } from "./armor.js";
+import { NO_UPGRADES, type ItemUpgrades } from "./mods.js";
 import type { OffhandId } from "./offhands.js";
 import type { WeaponId } from "./weapons.js";
 
@@ -21,11 +22,14 @@ export interface EquippedWeapon {
    * class, where naming one would be the client inventing a rule.
    */
   readonly requirementAttributeId: string | null;
+  /** Its prefix, suffix and inscription (#2007); fists carry none. */
+  readonly upgrades: ItemUpgrades;
 }
 
 export interface EquippedOffhand {
   readonly offhandId: OffhandId;
   readonly requirementAttributeId: string | null;
+  readonly upgrades: ItemUpgrades;
 }
 
 /** How many weapon sets a build carries (GW1, F1-F4). */
@@ -134,9 +138,12 @@ export function defaultEquipmentFor(profession: ProfessionId): BuildEquipment {
         mainHand: {
           weaponId,
           requirementAttributeId: needsNomination ? primaryAttributeId : null,
+          upgrades: NO_UPGRADES,
         },
         offHand:
-          offhandId === null ? null : { offhandId, requirementAttributeId: primaryAttributeId },
+          offhandId === null
+            ? null
+            : { offhandId, requirementAttributeId: primaryAttributeId, upgrades: NO_UPGRADES },
       },
       null,
       null,

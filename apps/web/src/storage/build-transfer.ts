@@ -44,7 +44,7 @@ export const BUILD_FORMAT = "vibewars.character";
  * A build string from any other version is refused, not adapted
  * (ADR-0016).
  */
-export const BUILD_FORMAT_VERSION = 4;
+export const BUILD_FORMAT_VERSION = 5;
 
 export interface ExportedBuild {
   readonly format: typeof BUILD_FORMAT;

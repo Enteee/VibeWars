@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { joinByCode, openRail } from "./helpers/menu.js";
-import { hostLobby, openPeers, openToFriends } from "./helpers/peers.js";
+import { copyInvite, hostLobby, openPeers, openToFriends } from "./helpers/peers.js";
 
 /**
  * The screen bar every menu screen shares (#578), in the top bar (#1272):
@@ -104,23 +104,22 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
   try {
     await openMenu(host);
     await openMenu(guest);
-    const code = host.locator("#topbar .topbar-lobby-code");
-    await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-    const hostCode = (await code.textContent()) ?? "";
+    const hostInvite = await copyInvite(host);
     await openToFriends(host);
-    const guestCode = guest.locator("#topbar .topbar-lobby-code");
-    await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-    const ownCode = (await guestCode.textContent()) ?? "";
+    // The bar names whose lobby it is, never its key (#2100).
+    const guestLabel = guest.locator("#topbar .lobby-code-label");
+    await expect(guestLabel).toHaveText("Your lobby");
+    const ownInvite = await copyInvite(guest);
     // Alone, the host has no party strip (#1782).
     await expect(host.locator(".party-strip")).toHaveCount(0);
 
-    await joinByCode(guest, hostCode);
-    await expect(guestCode).toHaveText(hostCode);
+    await joinByCode(guest, hostInvite);
+    await expect(guestLabel).toHaveText("Lobby");
     const leave = guest.locator("#topbar").getByRole("button", { name: "Leave", exact: true });
     await expect(leave).toBeVisible();
     await expect(host.locator(".party-strip .party-member")).toHaveCount(2);
     // A party queues in card 4: alone only.
-    await expect(guest.locator(".random-arena-tile").first()).toBeDisabled();
+    await expect(guest.locator("#topbar .screen-ready")).toBeDisabled();
 
     // The host picks the mode; the guest's rail and screen follow, its modes locked.
     await openRail(host, "GvG");
@@ -130,13 +129,16 @@ test("#1526: a guest joins from the title bar, follows the host's mode, and leav
     await expect(hosted).toHaveAttribute("title", "The host picks the mode");
     // The builders are everyone's, and opening one leaves no lobby.
     await openRail(guest, "Team Builder");
-    await expect(guestCode).toHaveText(hostCode);
+    await expect(guestLabel).toHaveText("Lobby");
+    await expect(leave).toBeVisible();
 
     await leave.click();
-    await expect(guestCode).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-    await expect(guestCode).not.toHaveText(hostCode);
-    await expect(guestCode).not.toHaveText(ownCode);
+    await expect(guestLabel).toHaveText("Your lobby");
     await expect(leave).toBeHidden();
+    // A new lobby of its own: neither the host's nor the one it left.
+    const newInvite = await copyInvite(guest);
+    expect(newInvite).not.toBe(hostInvite);
+    expect(newInvite).not.toBe(ownInvite);
     await expect(host.locator(".party-strip")).toHaveCount(0);
   } finally {
     await context.close();
@@ -151,9 +153,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
   try {
     await openMenu(host);
     await openMenu(guest);
-    const code = host.locator("#topbar .topbar-lobby-code");
-    await expect(code).toHaveText(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/);
-    const hostCode = (await code.textContent()) ?? "";
+    const hostInvite = await copyInvite(host);
     await openToFriends(host);
     await expect(host.locator(".party-strip")).toHaveCount(0);
 
@@ -161,8 +161,8 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
     const debugger_ = await context.newCDPSession(host);
     await debugger_.send("Debugger.enable");
     await debugger_.send("Debugger.pause");
-    await joinByCode(guest, hostCode);
-    await guest.locator(".random-arena-tile").first().click();
+    await joinByCode(guest, hostInvite);
+    await guest.locator("#topbar .screen-ready").click();
     await expect(guest.locator(".queue-count")).toBeVisible();
 
     // The host answers: the join lands late, and is let go.
@@ -179,7 +179,7 @@ test("#1526: a join that lands after the player queued seats nothing: the queue 
 /** A rolled character's random name (#1149): "Kaelen Ashvale". */
 const ROLLED_NAME = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 
-test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone rolls a new one", async ({
+test("#853: the first start rolls a starter character, chosen; Reroll replaces it in place, Clone copies it", async ({
   page,
 }) => {
   await openMenu(page);
@@ -191,7 +191,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const card = page.locator(".character-card");
   await expect(card).toHaveCount(1);
   await expect(card).toHaveClass(/is-selected/);
-  await expect(page.locator(".random-arena-tile").first()).toBeEnabled();
+  await expect(page.locator("#topbar .screen-ready")).toBeEnabled();
   const name = card.locator(".play-card-name");
   await expect(name).toHaveText(ROLLED_NAME);
   const first = await name.innerText();
@@ -216,13 +216,13 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   await expect(name).toHaveText(ROLLED_NAME);
   await expect(card).toHaveCount(1);
 
-  // It has Clone, not Edit (#1147): Clone opens the editor on a fresh
-  // roll under another random name (#1457), one even for a double-click.
+  // It has Clone, not Edit (#1147): Clone opens the editor on a copy of
+  // the character shown (#2038), one even for a double-click.
   const rolled = await name.innerText();
+  const professions = await card.locator(".play-card-line").innerText();
   await expect(actions.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
   await actions.getByRole("button", { name: "Clone", exact: true }).dblclick();
-  await expect(page.locator("input.editor-name")).toHaveValue(ROLLED_NAME);
-  await expect(page.locator("input.editor-name")).not.toHaveValue(rolled);
+  await expect(page.locator("input.editor-name")).toHaveValue(`${rolled} (copy)`);
   await page.locator("input.editor-name").fill("Pyro");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -232,6 +232,7 @@ test("#853: the first start rolls a starter character, chosen; Reroll replaces i
   const original = page.locator(".character-card", { hasText: rolled });
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
   await expect(pyro.locator(".roster-clone, .roster-reroll")).toHaveCount(0);
+  await expect(pyro.locator(".play-card-line")).toHaveText(professions);
   await expect(original.locator(".roster-reroll")).toHaveCount(1);
   // The rerolled one is still chosen.
   await openRail(page, "Random Arena");
@@ -283,9 +284,9 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   // Random Arena only chooses: nothing to edit there.
   await expect(pyro.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
 
-  // Record is Random Arena's own button in the top bar; Options is its ⚙ (#1272), Music its ♪ (#1453).
+  // Random Arena's one button is Ready (#2022); Options is its ⚙ (#1272), Music its ♪ (#1453).
   const own = page.locator("#topbar .topbar-screen-actions").getByRole("button");
-  await expect(own).toHaveText(["Record"]);
+  await expect(own).toHaveText(["Ready"]);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
 
@@ -298,50 +299,52 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   await expect(starter).toHaveClass(/is-selected/);
 });
 
-test("#1272: on a phone, the menu's ⋯ holds Record and the chevron is Back", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 800 });
-  await openMenu(page);
-  const more = page.locator("#topbar .topbar-more");
-  const record = page
-    .locator("#topbar .topbar-screen-actions")
-    .getByRole("button", { name: "Record", exact: true });
+for (const screen of ["Random Arena", "Character Builder"] as const) {
+  test(`#2053: on a phone, ${screen} folds the lobby's Copy invite link into a ⋯, in full`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openMenu(page);
+    await openRail(page, screen);
+    const bar = page.locator("#topbar");
+    await expect(bar.getByRole("button", { name: "Record", exact: true })).toHaveCount(0);
+    const copy = bar.getByRole("button", { name: "Copy invite link", exact: true });
+    await expect(copy).toBeHidden();
+    await bar.locator(".topbar-more").click();
+    await expect(copy).toBeVisible();
+    const box = await copy.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box?.x ?? -1).toBeGreaterThanOrEqual(0);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
+    // Nothing inside the box is cut off: the whole label shows.
+    const clipped = await copy.evaluate((node) => node.scrollWidth > node.clientWidth);
+    expect(clipped).toBe(false);
+    // No key to type, and none shown (#2100).
+    await expect(bar.getByRole("textbox")).toHaveCount(0);
+    expect(await bar.textContent()).not.toMatch(/[A-Za-z0-9_-]{43}/);
+  });
+}
 
-  // Folded away until ⋯ opens; the global icons with them.
-  await expect(record).toBeHidden();
-  await expect(page.locator("#topbar .topbar-options")).toBeHidden();
-  await more.click();
-  await expect(more).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator("#topbar .topbar-options")).toBeVisible();
-  await record.click();
-  await expect(page.getByRole("heading", { name: "Record" })).toBeVisible();
-  await expect(more).toHaveAttribute("aria-expanded", "false");
-
-  // Only the place shows, not the crumbs before it.
-  await expect(page.locator("#topbar .topbar-crumb", { hasText: "VibeWars" })).toBeHidden();
-
-  const back = page.locator("#topbar").getByRole("button", { name: "Back", exact: true });
-  await expect(back).toHaveText("‹", { useInnerText: true });
-  await back.click();
-  await expect(menuHeading(page)).toBeVisible();
-});
-
-test("#1525: on a phone, a screen with no ⋯ keeps Lobby Code, Join and the global icons on screen", async ({
+test("#1525: on a phone, the join's ⋯, Copy invite link and the global icons stay on screen", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 640 });
   await openMenu(page);
   await openRail(page, "Team Builder");
   const bar = page.locator("#topbar");
-  await expect(bar.locator(".topbar-more")).toBeHidden();
-  await expect(bar.getByRole("textbox", { name: "Lobby key", exact: true })).toBeVisible();
-  await expect(bar.getByRole("button", { name: "Join", exact: true })).toBeVisible();
-  // The rightmost icon still inside the bar, and nothing scrolls sideways.
-  const right = await bar.locator(".topbar-fullscreen").evaluate((node) => {
-    return node.getBoundingClientRect().right;
-  });
+  const more = bar.locator(".topbar-more");
+  await expect(more).toBeVisible();
+  const right = await more.evaluate((node) => node.getBoundingClientRect().right);
   expect(right).toBeLessThanOrEqual(320);
   const overflow = await bar.evaluate((node) => node.scrollWidth - node.clientWidth);
   expect(overflow).toBe(0);
+  await more.click();
+  await expect(bar.getByRole("button", { name: "Copy invite link", exact: true })).toBeVisible();
+  // No key to type (#2100).
+  await expect(bar.getByRole("textbox")).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
 });
 
 test("#1525: the rail switches screens and keeps the last; each mode hosts on its own maps", async ({
@@ -381,9 +384,11 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   // GvG plays one map, so its host sees it named, not picked.
   await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
 
-  // Heroes' Ascent picks among its three.
+  // Heroes' Ascent starts on its first map, and Team Arena draws one for
+  // each match: neither is picked (#1994).
   await openRail(page, "Heroes' Ascent");
-  const options = page.locator("#topbar .lobby-map select option");
-  await expect(options).toHaveCount(3);
-  await expect(page.locator("#topbar .lobby-map select")).toHaveValue("relic-temples");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: Relic Temples \(/);
+  await expect(page.locator("#topbar .lobby-map select")).toHaveCount(0);
+  await openRail(page, "Team Arena");
+  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: random (Team Arena)");
 });

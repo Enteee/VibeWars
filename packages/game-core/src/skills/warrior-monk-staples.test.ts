@@ -50,31 +50,45 @@ describe("Protective Spirit (#936)", () => {
       activationSeconds: 0.25,
       rechargeSeconds: 5,
       target: "single-ally",
-      effects: [{ kind: "apply-status", statusId: "protective-spirit", durationSeconds: 19 }],
+      effects: [
+        {
+          kind: "apply-status",
+          statusId: "protective-spirit",
+          durationSeconds: {
+            scaling: { attributeId: "monk.protection-prayers", atZero: 5, atTwelve: 19.4 },
+          },
+        },
+      ],
     });
   });
 
   it("caps a hit at 10% of max health: 48 of 480; a hit under it is unchanged", () => {
-    expect(mitigate(typeless(200), spirited(), RULES, "chest")).toBe(48);
-    expect(mitigate(typeless(48), spirited(), RULES, "chest")).toBe(48);
-    expect(mitigate(typeless(30), spirited(), RULES, "chest")).toBe(30);
+    expect(mitigate(typeless(200), spirited(), RULES, "chest", createRng(1))).toBe(48);
+    expect(mitigate(typeless(48), spirited(), RULES, "chest", createRng(1))).toBe(48);
+    expect(mitigate(typeless(30), spirited(), RULES, "chest", createRng(1))).toBe(30);
     expect(
-      mitigate(typeless(200), makeCombatant({ id: "x", maxHealth: 480 }), RULES, "chest"),
+      mitigate(
+        typeless(200),
+        makeCombatant({ id: "x", maxHealth: 480 }),
+        RULES,
+        "chest",
+        createRng(1),
+      ),
     ).toBe(200);
   });
 
   it("caps last, after Frenzy's 160%: 40 is 64, and still 48", () => {
     const frenzied = spirited();
     frenzied.statuses.apply("frenzy", 8, "b", new Map([["warrior.strength", 12]]));
-    expect(mitigate(typeless(20), frenzied, RULES, "chest")).toBe(32);
-    expect(mitigate(typeless(40), frenzied, RULES, "chest")).toBe(48);
+    expect(mitigate(typeless(20), frenzied, RULES, "chest", createRng(1))).toBe(32);
+    expect(mitigate(typeless(40), frenzied, RULES, "chest", createRng(1))).toBe(48);
   });
 
   it("caps at 10% of the max a deep wound leaves: 38 of 384", () => {
     const wounded = spirited();
     wounded.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     expect(effectiveMaxHealth(wounded)).toBe(384);
-    expect(mitigate(typeless(200), wounded, RULES, "chest")).toBe(38);
+    expect(mitigate(typeless(200), wounded, RULES, "chest", createRng(1))).toBe(38);
   });
 
   it("keeps the lowest of two caps, and none without one", () => {
@@ -229,7 +243,9 @@ describe('Cyclone Axe and "For Great Justice!" (#936)', () => {
       cost: { kind: "energy", amount: 5 },
       rechargeSeconds: 45,
       target: "self",
-      effects: [{ kind: "apply-status", statusId: "for-great-justice", durationSeconds: 8 }],
+      effects: [
+        { kind: "apply-status", statusId: "for-great-justice", durationSeconds: { flat: 8 } },
+      ],
     });
     expect(
       aggregateModifiers([{ id: "for-great-justice", ranks: NO_RANKS }]).extraStrikesPerHit,

@@ -273,7 +273,7 @@ function link(token: Tokens.Link, targets: DocTargets): DocNode[] {
     return [element("a", children, { href: `#${page}`, "data-page": page })];
   }
   if (/^https?:\/\//i.test(href)) {
-    return [element("a", children, { href, target: "_blank", rel: "noopener" })];
+    return [element("a", children, { href, target: "_blank", rel: "noopener noreferrer" })];
   }
   return children;
 }

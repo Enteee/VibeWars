@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { IMPLEMENTED_SKILLS, getSkill } from "../../skills/catalog.js";
-import { botUses, onlyInterrupts, removedCategories, takenOffFoe } from "./skill-intent.js";
+import {
+  botUses,
+  onlyInterrupts,
+  removedCategories,
+  setupOf,
+  takenOffFoe,
+} from "./skill-intent.js";
 
 /**
  * Skills a bot never uses (#1189). A new skill is either given a use by
@@ -79,25 +85,17 @@ const NO_BOT_USE = new Set([
   "ranger.scavenger-strike",
   "ranger.symbiotic-bond",
   // Speed, energy, attack speed and other self-help no rule reaches for.
-  "assassin.critical-eye",
   "assassin.dash",
   "dervish.arcane-zeal",
   "dervish.avatar-of-balthazar",
   "dervish.avatar-of-dwayna",
-  "dervish.avatar-of-grenth",
   "dervish.avatar-of-lyssa",
   "dervish.avatar-of-melandru",
   "dervish.enchanted-haste",
   "dervish.featherfoot-grace",
   "dervish.fleeting-stability",
-  "dervish.harriers-haste",
-  "dervish.heart-of-fury",
-  "dervish.mystic-vigor",
-  "dervish.onslaught",
   "dervish.pious-fury",
   "dervish.pious-haste",
-  "dervish.vow-of-strength",
-  "dervish.zealous-vow",
   "elementalist.glyph-of-lesser-energy",
   "elementalist.windborne-speed",
   "mesmer.arcane-echo",
@@ -117,7 +115,6 @@ const NO_BOT_USE = new Set([
   "paragon.incoming",
   "paragon.lead-the-way",
   "paragon.make-haste",
-  "ranger.hekets-rampage",
   "ranger.serpents-quickness",
   "ranger.winnowing",
   "ritualist.cruel-was-daoshen",
@@ -127,15 +124,9 @@ const NO_BOT_USE = new Set([
   "ritualist.signet-of-creation",
   "ritualist.signet-of-spirits",
   "ritualist.vengeful-was-khanhei",
-  "ritualist.weapon-of-aggression",
   "ritualist.weapon-of-quickening",
   "warrior.balanced-stance",
   "warrior.endure-pain",
-  "warrior.enraging-charge",
-  "warrior.flail",
-  "warrior.flurry",
-  "warrior.for-great-justice",
-  "warrior.frenzy",
   "warrior.rage-of-the-ntouka",
   "warrior.rush",
   "warrior.sprint",
@@ -187,16 +178,10 @@ const NO_BOT_USE = new Set([
   "ritualist.signet-of-ghostly-might",
   // What they do lands through a status trigger, not an effect a bot reads.
   "assassin.way-of-perfection",
-  "warrior.hundred-blades",
-  "warrior.warriors-endurance",
-  "dervish.sand-shards",
-  "dervish.whirling-charge",
   "ritualist.explosive-growth",
   "ritualist.splinter-weapon",
   "ritualist.vengeful-weapon",
   "ritualist.weapon-of-remedy",
-  "ranger.kindle-arrows",
-  "ranger.ignite-arrows",
   // Ranger staples 4 (#1742): an arrow that cannot be blocked or flies faster.
   "ranger.seeking-arrows",
   "ranger.read-the-wind",
@@ -208,7 +193,6 @@ const NO_BOT_USE = new Set([
   // Scribe's Insight (#1913), the same, for signets still to be used.
   "monk.scribes-insight",
   // Echoes (#1423): what they do waits for a chant or a shout to end.
-  "paragon.aggressive-refrain",
   "paragon.blazing-finale",
   "paragon.enduring-harmony",
   "paragon.finale-of-restoration",
@@ -230,11 +214,13 @@ const NO_BOT_USE = new Set([
   "paragon.anthem-of-fury",
   // An ally's attacks made holy and penetrating (#1519): no rule weighs it.
   "monk.judges-insight",
-  // Necromancer and Elementalist staples (#1540): an ally's energy, a
-  // party's blows through an enchantment's rider, armor against one kind
-  // of damage, and a spirit's adrenaline aura are none the bot weighs.
+  // Necromancer and Elementalist staples (#1540): an ally's energy, armor
+  // against one kind of damage, and a spirit's adrenaline aura are none
+  // the bot weighs.
   "necromancer.blood-is-power",
-  "necromancer.order-of-pain",
+  // Awaken the Blood (#1979) makes sacrifices larger: no attack status
+  // for a boost (#2000) to weigh.
+  "necromancer.awaken-the-blood",
   "elementalist.ward-against-elements",
   "ranger.infuriating-heat",
   // Nature rituals 1 (#1745): auras on both teams the bot does not weigh,
@@ -270,9 +256,8 @@ const NO_BOT_USE = new Set([
   // The not condition (#1670): energy from a foe doing nothing is no rule
   // the bot weighs.
   "mesmer.waste-not-want-not",
-  // Paragon staples 4 (#1677): a next attack's crit, energy and adrenaline
-  // on a condition are no rules the bot weighs.
-  "paragon.go-for-the-eyes",
+  // Paragon staples 4 (#1677): energy and adrenaline on a condition are
+  // no rules the bot weighs.
   "paragon.never-give-up",
   "paragon.the-power-is-yours",
   "paragon.focused-anger",
@@ -284,22 +269,20 @@ const NO_BOT_USE = new Set([
   // Assassin staples 5 (#1757): unblockable next attacks are no rule the
   // bot weighs.
   "assassin.way-of-the-fox",
-  // "Not enchanted" and next attacks (#1916): more damage or adrenaline
-  // on the bearer's attacks is no rule the bot weighs, as Flurry's.
+  // "Not enchanted" (#1916): an ally's weapon, and adrenaline gained
+  // faster while not enchanted, are no rules the bot weighs.
   "ritualist.brutal-weapon",
   "paragon.natural-temper",
-  "warrior.signet-of-strength",
   // Attributes set or borrowed (#1929): a higher rank on its own spells is
   // no rule the bot weighs, as an attunement's energy.
   "elementalist.master-of-magic",
   "mesmer.signet-of-illusions",
   // Attributes raised (#1941): a boost timed before the next spell, binding
-  // ritual or bow shot has no use in the bot's vocabulary yet, as the glyphs
-  // on the next spell and Heket's Rampage's attack speed.
+  // ritual has no use in the bot's vocabulary yet, as the glyphs on the
+  // next spell.
   "elementalist.glyph-of-elemental-power",
   "elementalist.glyph-of-energy",
   "ritualist.ritual-lord",
-  "ranger.experts-dexterity",
   // Take what another has (#1965): an ally's elite borrowed and a foe's
   // spirit taken have steps of their own in `playBuild`, no use to weigh.
   "mesmer.arcane-mimicry",
@@ -344,6 +327,25 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("assassin.spirit-walk"))).toEqual(["escape"]);
     expect(botUses(skill("assassin.swap"))).toEqual(["escape"]);
     expect(botUses(skill("assassin.dark-prison"))).toEqual(["offence"]);
+    // Taking foe minions is the take-minion rule's, not minion care's (#2092).
+    expect(botUses(skill("necromancer.veratas-gaze"))).toEqual(["take-minion"]);
+    expect(botUses(skill("necromancer.veratas-aura"))).toEqual(["take-minion"]);
+    expect(botUses(skill("necromancer.malign-intervention"))).toEqual(["take-minion"]);
+    expect(botUses(skill("necromancer.jagged-bones"))).toEqual(["minion-care"]);
+  });
+
+  it("boosts with a buff that only makes attacks hit harder (#2000)", () => {
+    expect(botUses(skill("necromancer.order-of-pain"))).toEqual(["boost"]);
+    expect(botUses(skill("warrior.for-great-justice"))).toEqual(["boost"]);
+    expect(botUses(skill("warrior.frenzy"))).toEqual(["boost"]);
+    // Blood Magic orders (#1979): a steal on each hit, a strike more of adrenaline.
+    expect(botUses(skill("necromancer.order-of-the-vampire"))).toEqual(["boost"]);
+    expect(botUses(skill("necromancer.dark-fury"))).toEqual(["boost"]);
+    // A glyph, an attunement or a run acts on no blow.
+    expect(botUses(skill("elementalist.glyph-of-energy"))).toEqual([]);
+    expect(botUses(skill("elementalist.fire-attunement"))).toEqual([]);
+    expect(botUses(skill("warrior.sprint"))).toEqual([]);
+    expect(botUses(skill("monk.orison-of-healing"))).not.toContain("boost");
   });
 
   it("casts a pure enchantment strip at an enchanted foe (#1954)", () => {
@@ -354,6 +356,21 @@ describe("botUses (#1189)", () => {
     expect(takenOffFoe(skill("necromancer.pain-of-disenchantment"))).toBe("enchantment");
     // Anything else is cast at any foe.
     expect(takenOffFoe(skill("elementalist.fireball"))).toBeUndefined();
+  });
+
+  it("knows each setup and the status it puts on (#1975)", () => {
+    expect(setupOf(skill("monk.air-of-enchantment"))).toEqual({
+      setup: "cheaper-enchantments",
+      statusId: "air-of-enchantment",
+    });
+    expect(setupOf(skill("necromancer.order-of-apostasy"))?.setup).toBe("party-strips");
+    expect(setupOf(skill("assassin.dark-apostasy"))?.setup).toBe("critical-strips");
+    expect(botUses(skill("assassin.dark-apostasy"))).toEqual(["setup"]);
+    // Order of Pain's rider is no setup; Jaundiced Gaze is a strip at an
+    // enchanted foe.
+    expect(setupOf(skill("necromancer.order-of-pain"))).toBeUndefined();
+    expect(botUses(skill("necromancer.jaundiced-gaze"))).toEqual(["offence"]);
+    expect(takenOffFoe(skill("necromancer.jaundiced-gaze"))).toBe("enchantment");
   });
 
   it("holds a skill whose only role is interrupting", () => {

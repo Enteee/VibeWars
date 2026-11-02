@@ -75,6 +75,12 @@ const CYCLIST_LOOKAHEAD_SECONDS = 0.2;
  * quantum's worth of time and Firefox's scheduling slack.
  */
 const LATE_MARGIN_SECONDS = 0.01;
+/**
+ * The output buffer the music context asks for, in seconds (#2023,
+ * ADR-0028 §12). Music needs no low latency, and every second of buffer is
+ * slack for an audio thread the OS schedules late on a busy machine.
+ */
+const MUSIC_LATENCY_SECONDS = 0.5;
 /** A track as it plays: its pattern, unshifted, and where it started. */
 interface Playing {
   readonly trackId: string;
@@ -126,10 +132,9 @@ export async function startEngine(): Promise<void> {
     parent.postMessage(message, "*");
   };
 
-  // Music needs no low latency, and a bigger output buffer is what keeps
-  // a busy phone's audio thread from running dry (#420). The sound effects
-  // have a context of their own.
-  const context = new AudioContext({ latencyHint: "playback" });
+  // A big output buffer keeps a busy machine's audio thread from running
+  // dry (#420, #2023). The sound effects have a context of their own.
+  const context = new AudioContext({ latencyHint: MUSIC_LATENCY_SECONDS });
   suspendWhileHidden(document, context, (error) => {
     post(describe(error));
   });

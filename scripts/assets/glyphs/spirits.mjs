@@ -69,6 +69,12 @@ const glyphs = {
       "The spirit post split by a crack: an allied spirit destroyed (#1309). With the jagged mark of the attacking spirits: the burst damages and blinds foes.",
     draw: () => brokenPost(7) + inkFill("M20.5 1.5L13.5 10H18L14 17L23 7.5H18.5Z"),
   },
+  "spirit-bound": {
+    means: "The spirit post in a chain ring: a foe's spirit taken as your own (#1999).",
+    draw: () =>
+      `<g transform="translate(9,8) scale(0.62) translate(-12,-12)">${spiritPost()}</g>` +
+      `<rect x="3" y="12" width="8" height="5.5" rx="2.7" ${stroke(C.ink, 1.8)}/><rect x="7" y="12" width="8" height="5.5" rx="2.7" ${stroke(C.ink, 1.8)}/>`,
+  },
   "spirit-feast": {
     means: "Two small cracked posts: every spirit near you is spent (#1309).",
     draw: () =>

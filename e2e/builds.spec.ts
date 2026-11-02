@@ -49,6 +49,7 @@ test("Esc leaves at once without edits, and asks before it discards them; Save l
   await expect(bar.locator(".editor-more button")).toHaveText([
     "Share",
     "Share as GW1 code",
+    "Load GW1 code",
     "Duplicate",
     "Delete",
   ]);
@@ -366,8 +367,14 @@ const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
 async function openTeamBuilder(page: Page): Promise<void> {
   await openRail(page, "Team Builder");
 }
-/** Team Builder's Team Build cards (#1453, #1525), without New team build: "Duo · 2 members". */
-const teamRows = (page: Page) => page.locator(".screen-teams .play-card:not(.play-card-new)");
+/**
+ * Team Builder's Team Build cards (#1453, #1525), without New team build
+ * and the random starter team (#2036): "Duo · 2 members".
+ */
+const teamRows = (page: Page) =>
+  page.locator(".screen-teams .play-card:not(.play-card-new):not(.is-random)");
+/** The random starter team's card (#2036), which every first start rolls. */
+const starterTeamCard = (page: Page) => page.locator(".screen-teams .play-card.is-random");
 async function teamList(page: Page): Promise<string[]> {
   return teamRows(page).evaluateAll((cards) =>
     cards.map((card) => {
@@ -395,7 +402,7 @@ test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens 
   await bar.getByRole("button", { name: "more actions" }).click();
   await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
   await bar.getByRole("button", { name: "Share", exact: true }).click();
-  await expect(bar.locator(".editor-share")).toBeVisible();
+  await expect(bar.locator(".editor-share:not([hidden])")).toBeVisible();
 });
 
 test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
@@ -413,9 +420,13 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await expect(bar.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
 
   // Nothing stored yet: Esc leaves at once and the list is still empty.
+  // Save would store it anyway, problems and all (#2110).
   const save = page.getByRole("button", { name: "Save", exact: true });
-  await expect(save).toBeDisabled();
-  await expect(save).toHaveAttribute("title", "A team needs at least one member.");
+  await expect(save).toBeEnabled();
+  await expect(save).toHaveAttribute(
+    "title",
+    "Save this team (it has problems: A team needs at least one member.)",
+  );
   // Nothing stored to copy or delete, so neither can store a half-made team.
   await page.getByRole("button", { name: "more actions" }).click();
   await expect(bar.locator(".editor-more button")).toHaveText(["Share", "Duplicate", "Delete"]);
@@ -425,14 +436,18 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await page.keyboard.press("Escape");
   await expect(bar.locator(".editor-more")).toBeHidden();
   await page.keyboard.press("Escape");
-  await expect(page.getByText("Make a team build to propose it in the Team Lobby.")).toBeVisible();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect(teamRows(page)).toHaveCount(0);
 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
   await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(save).toHaveAttribute("title", "Give the team a name.");
+  await expect(save).toHaveAttribute(
+    "title",
+    "Save this team (it has problems: Give the team a name.)",
+  );
   await page.getByLabel("team name").fill("Duo");
-  await expect(save).toBeEnabled();
+  await expect(save).toHaveAttribute("title", "Save this team");
   await save.click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
@@ -491,11 +506,12 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamBuilder(page);
-  // Empty: only New team build, with the one line under it; no None.
+  // None of your own yet: the random starter team (#2036) and New team
+  // build, and no None.
   await expect(page.getByRole("heading", { name: "Team Builds" })).toBeVisible();
   await expect(teamRows(page)).toHaveCount(0);
+  await expect(starterTeamCard(page)).toHaveCount(1);
   await expect(page.locator(".screen-teams .play-cards")).not.toContainText("None");
-  await expect(page.locator(".team-play-hint")).toBeVisible();
   await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
@@ -516,6 +532,33 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await page.keyboard.press("Escape");
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await expect(page.getByLabel("team name")).toHaveValue("Duo");
+});
+
+test("the random Team Build: last, Reroll changes it in place, Clone opens a copy to edit (#2036)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  const starter = starterTeamCard(page);
+  await expect(starter).toHaveCount(1);
+  await expect(starter.locator(".roster-random-tag")).toHaveText("Random");
+  await expect(starter.getByRole("button", { name: "Edit" })).toHaveCount(0);
+  // Last of the Team Builds, New team build after it.
+  await expect(page.locator(".screen-teams .play-card").nth(-2)).toHaveClass(/is-random/);
+
+  const name = starter.locator(".play-card-name");
+  const before = (await name.textContent()) ?? "";
+  await starter.getByRole("button", { name: "Reroll", exact: true }).click();
+  await expect(name).not.toHaveText(before);
+  await expect(starter).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Reroll", exact: true })).toBeFocused();
+
+  const rerolled = (await name.textContent()) ?? "";
+  await starter.getByRole("button", { name: "Clone", exact: true }).click();
+  await expect(page.getByLabel("team name")).toHaveValue(`${rerolled} (copy)`);
+  await page.keyboard.press("Escape");
+  await expect(teamRows(page).locator(".play-card-name")).toHaveText([`${rerolled} (copy)`]);
+  await expect(name).toHaveText(rerolled);
 });
 
 test("on a phone, a Team Build card's Edit sits below its members, never on them (#1786)", async ({
@@ -539,6 +582,33 @@ test("on a phone, a Team Build card's Edit sits below its members, never on them
   const edit = await card.getByRole("button", { name: "Edit" }).boundingBox();
   expect(edit).not.toBeNull();
   expect(members).toBeLessThanOrEqual(edit?.y ?? 0);
+});
+
+test("Save stores a team with problems at once, and its card says why it is not playable (#2110)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  const save = page.getByRole("button", { name: "Save", exact: true });
+  const unplayable = teamRows(page).locator(".play-card-unplayable");
+
+  // An untouched new team: Save stores it as it is.
+  await page.getByRole("button", { name: "new team" }).click();
+  await save.click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect.poll(() => teamList(page)).toEqual(["New Team · 0 members"]);
+  await expect(unplayable).toHaveText(["Not playable: a team needs at least one member"]);
+
+  // A team with no name is "Unnamed team" on its card; its name stays empty.
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("team name").fill("");
+  await save.click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect.poll(() => teamList(page)).toEqual(["Unnamed team · 0 members"]);
+  await expect(unplayable).toHaveText(["Not playable: team name must not be empty"]);
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await expect(page.getByLabel("team name")).toHaveValue("");
 });
 
 test("team edits stay on screen until Save, which leaves; Esc and Delete ask first (#573, #1902)", async ({
@@ -889,6 +959,77 @@ test("⋯ Share as GW1 code shows a template code; a pasted one imports, missing
     "Vital Transfer is not a GW1 skill, so this build has no GW1 code.",
   );
   await expect(page.getByLabel("build to share")).toBeHidden();
+});
+
+test("⋯ Load GW1 code loads a pasted code, and says plainly why it will not (#2004)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.getByRole("button", { name: "more actions" }).click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  const field = page.getByLabel("GW1 code to load");
+  await expect(field).toBeFocused();
+  await expect(field).toHaveAttribute("placeholder", "Paste a GW1 template code");
+
+  await field.fill("gg, well played");
+  await field.press("Enter");
+  await expect(page.getByRole("alert")).toHaveText("That is not a GW1 template code.");
+  await expect(field).toHaveValue("gg, well played");
+
+  // Warrior/Monk, Swift Chop and Orison of Healing, as the paste test's.
+  await field.fill("OUwQEROqaGBAAAAAAAAA");
+  await page.getByRole("button", { name: "Load", exact: true }).click();
+  await expect(page.locator(".toast")).toHaveText("Imported Warrior/Monk build");
+  await expect(field).toBeHidden();
+  await expect(page.locator("input.editor-name")).toHaveValue("Warrior/Monk build");
+  await expect(page.locator(".skill-slot", { hasText: "Swift Chop" })).toHaveCount(1);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+});
+
+test("⋯ opens above the Load field, and Share takes its place (#2004)", async ({ page }) => {
+  await newCharacter(page);
+  const more = page.getByRole("button", { name: "more actions" });
+  await more.click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  const field = page.getByLabel("GW1 code to load");
+  await expect(field).toBeVisible();
+
+  await more.click();
+  await page.getByRole("button", { name: "Share", exact: true }).click();
+  await expect(page.getByLabel("build to share")).toBeVisible();
+  await expect(field).toBeHidden();
+
+  await more.click();
+  await page.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+  await expect(field).toBeVisible();
+  await expect(page.getByLabel("build to share")).toBeHidden();
+});
+
+test("⋯, Share and Load stay inside the window at 1100 px and on a phone (#2028)", async ({
+  page,
+}) => {
+  const inside = async (panel: Locator, width: number): Promise<void> => {
+    await expect(panel).toBeVisible();
+    const box = await panel.boundingBox();
+    expect(box?.x).toBeGreaterThanOrEqual(8);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width - 8);
+  };
+  for (const [width, height] of [
+    [1100, 800],
+    [360, 740],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await newCharacter(page);
+    const bar = page.locator("#topbar");
+    const more = bar.getByRole("button", { name: "more actions" });
+    await more.click();
+    await inside(bar.locator(".editor-more"), width);
+    await bar.getByRole("button", { name: "Share", exact: true }).click();
+    await inside(bar.locator(".editor-share:not([hidden])"), width);
+    await more.click();
+    await bar.getByRole("button", { name: "Load GW1 code", exact: true }).click();
+    await inside(bar.locator(".editor-load"), width);
+  }
 });
 
 test("Share keeps the line selected when the clipboard is refused (#572)", async ({ page }) => {
@@ -1365,15 +1506,15 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   await page.reload();
   // The page's own lobby opening redraws the roster (#1526): a click
   // before it lands on a card the redraw takes away.
-  await expect(page.locator("#topbar .topbar-lobby-code")).not.toBeEmpty();
+  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
 
   const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);
   await expect(outlaw.locator(".roster-invalid-tag")).toHaveText("Invalid");
   await expect(outlaw.locator(".play-card-open")).toHaveAttribute("aria-disabled", "true");
-  // Kept, but no choice: nothing is chosen, so Random Arena's tiles wait.
+  // Kept, but no choice: nothing is chosen, so Random Arena's Ready waits.
   await expect(page.locator(".character-card.is-selected")).toHaveCount(0);
-  const queue = page.locator(".random-arena-tile").first();
+  const queue = page.locator("#topbar .screen-ready");
   await expect(queue).toBeDisabled();
 
   // Clicking it anyway chooses nothing; the rolled character still can be.
@@ -1441,6 +1582,27 @@ async function equipFromLibrary(page: Page, name: string): Promise<void> {
   await page.locator(".gear-box").filter({ hasText: name }).first().click();
 }
 
+/** A piece's row in the paper-doll's summary (#2059). */
+function armorRow(page: Page, slot: string): Locator {
+  return page.locator(`.paper-doll-row[data-slot="${slot}"]`);
+}
+
+/** Open a piece's popover from its hotspot on the figure (#2059). */
+async function openPiece(page: Page, slot: string): Promise<Locator> {
+  await page.locator(`.paper-doll-hotspot[data-slot="${slot}"]`).click();
+  const popover = page.locator(".paper-doll-popover");
+  await expect(popover).toBeVisible();
+  return popover;
+}
+
+/** Pick an insignia or rune, by its name, for `slot`. */
+async function pickForPiece(page: Page, slot: string, name: string): Promise<void> {
+  const popover = await openPiece(page, slot);
+  await popover.locator(".paper-doll-choice", { hasText: name }).first().click();
+  await page.keyboard.press("Escape");
+  await expect(popover).toBeHidden();
+}
+
 test("gear is equipped from a library, like skills are", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
@@ -1495,31 +1657,20 @@ test("a weapon can be dragged from the library onto the weapon slot", async ({ p
   await expect(page.locator(".gear-slot").first()).toContainText("Recurve Bow");
 });
 
-test("a rune dropped on an armor piece shows what it costs", async ({ page }) => {
+test("a rune picked for an armor piece shows what it costs (#2059)", async ({ page }) => {
   await newCharacter(page);
-  await openGearLibrary(page);
 
   const health = stat(page, "health");
   await expect(health).toHaveText("500");
 
-  const runeBox = page
-    .locator(".gear-box")
-    .filter({ hasText: "Superior Rune of Swordsmanship" })
-    .first();
-  await expect(runeBox).toHaveCount(1);
-  await runeBox.evaluate((node) => {
-    node.id = "drag-source";
-  });
-  await dragGear(page, "#drag-source", ".armor-row .gear-slot:nth-child(3)");
-
-  const headRune = page.locator(".armor-row").first().locator(".gear-slot").nth(1);
-  await expect(headRune).toContainText("Superior Rune of Swordsmanship");
+  await pickForPiece(page, "head", "Superior Rune of Swordsmanship");
+  await expect(armorRow(page, "head")).toContainText("Superior Rune of Swordsmanship");
   // +3 Swordsmanship, paid for with 75 health — both halves on screen.
   await expect(health).toHaveText("425");
   await expect(page.locator(".gear-stats")).toContainText("+3");
 });
 
-test("the library follows your clicks; an insignia goes to the selected piece (#570)", async ({
+test("the library follows your clicks; a piece's popover picks its insignia (#570, #2059)", async ({
   page,
 }) => {
   await newCharacter(page);
@@ -1533,56 +1684,66 @@ test("the library follows your clicks; an insignia goes to the selected piece (#
   const offhands = page.locator('.skill-group[data-group="off-hands"]');
   const top = async (locator: Locator): Promise<number> =>
     (await locator.boundingBox())?.y ?? Number.NaN;
-  await expect.poll(async () => (await top(offhands)) - (await top(library))).toBeLessThan(20);
+  // Off-hands is the tab's last group: at the top, or the list scrolled as far as it goes.
+  await expect
+    .poll(async () => {
+      const atTop = (await top(offhands)) - (await top(library)) < 20;
+      const atEnd = await library.evaluate(
+        (node) => node.scrollTop + node.clientHeight >= node.scrollHeight - 1,
+      );
+      return atTop || atEnd;
+    })
+    .toBe(true);
 
   // A bar slot clicked opens the skills tab.
   await page.locator(".skill-slot").first().click();
   await expect(skillsTab).toHaveClass(/is-active/);
   await page.keyboard.press("Escape");
 
-  // No piece picked: an insignia goes to the first free one, and says so.
+  // The gear tab holds weapons and off-hands only: armor is picked on the figure.
   await gearTab.click();
-  const survivor = page.locator(".gear-box").filter({ hasText: "Survivor Insignia" }).first();
-  await expect(survivor.locator(".gear-box-target")).toHaveText("→ head");
-  await survivor.click();
-  const insigniaOn = (slot: string): Locator =>
-    page.locator(`.armor-row[data-slot="${slot}"] .gear-slot`).first();
-  await expect(insigniaOn("head")).toContainText("Survivor");
+  await expect(page.locator('.skill-group[data-group="insignias"]')).toHaveCount(0);
+  await expect(page.locator('.skill-group[data-group="runes"]')).toHaveCount(0);
 
-  // The legs picked: outlined, and the next insignia goes there.
-  const legs = page.locator('.armor-row[data-slot="legs"]');
-  await legs.locator(".armor-slot-name").click();
-  await expect(legs).toHaveClass(/is-selected/);
-  await expect(survivor.locator(".gear-box-target")).toHaveText("→ legs");
+  // The legs' row opens the legs' popover; a pick stays open, and lands there only.
+  await armorRow(page, "legs").locator(".paper-doll-row-pick").click();
+  const popover = page.locator(".paper-doll-popover");
+  await expect(popover.locator(".paper-doll-popover-title")).toHaveText("④ Leggings");
+  const survivor = popover.locator(".paper-doll-choice", { hasText: "Survivor Insignia" });
   await survivor.click();
-  await expect(insigniaOn("legs")).toContainText("Survivor");
-  await expect(insigniaOn("chest")).toContainText("empty");
+  await expect(survivor).toHaveClass(/is-chosen/);
+  await expect(armorRow(page, "legs")).toContainText("Survivor");
+  await expect(armorRow(page, "chest")).not.toContainText("Survivor");
 
-  // Switching the tab by hand lets the piece go.
-  await skillsTab.click();
-  await expect(legs).not.toHaveClass(/is-selected/);
+  // A click elsewhere puts it away.
+  await page.locator(".editor-label", { hasText: "Equipment" }).click();
+  await expect(popover).toBeHidden();
 });
 
-test("dragging worn gear back to the library takes it off", async ({ page }) => {
+test("dragging a worn off-hand back to the library takes it off", async ({ page }) => {
   await newCharacter(page);
   await openGearLibrary(page);
 
-  await equipFromLibrary(page, "Survivor Insignia");
-  const headInsignia = page.locator(".armor-row").first().locator(".gear-slot").first();
-  await expect(headInsignia).toContainText("Survivor");
-
-  await dragGear(page, ".armor-row .gear-slot", ".skill-library");
-  await expect(headInsignia).toContainText("empty");
+  const offhand = page.locator(".gear-slot").nth(1);
+  await expect(offhand).toContainText("Shield");
+  await offhand.evaluate((node) => {
+    node.id = "drag-source";
+  });
+  await dragGear(page, "#drag-source", ".skill-library");
+  await expect(offhand).toContainText("empty");
 });
 
-test("the × on a worn piece clears it", async ({ page }) => {
+test("None in a piece's popover takes its insignia off (#2059)", async ({ page }) => {
   await newCharacter(page);
-  await openGearLibrary(page);
-  await equipFromLibrary(page, "Survivor Insignia");
+  await pickForPiece(page, "head", "Survivor Insignia");
+  await expect(armorRow(page, "head")).toContainText("Survivor");
 
-  const headInsignia = page.locator(".armor-row").first().locator(".gear-slot").first();
-  await headInsignia.getByRole("button", { name: "×" }).click();
-  await expect(headInsignia).toContainText("empty");
+  const popover = await openPiece(page, "head");
+  await popover
+    .getByRole("listbox", { name: "Insignia" })
+    .getByRole("option", { name: "None" })
+    .click();
+  await expect(armorRow(page, "head")).not.toContainText("Survivor");
 });
 
 test("an unmet weapon requirement is called out before the match, not during", async ({ page }) => {
@@ -1614,7 +1775,7 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
   await page.locator("input.editor-name").fill("Gear Keeper");
   await openGearLibrary(page);
   await equipFromLibrary(page, "Axe");
-  await equipFromLibrary(page, "Survivor Insignia");
+  await pickForPiece(page, "head", "Survivor Insignia");
   // Set 2 (#489): its tab, then a weapon from the library goes into it.
   const setTab = (n: number): Locator =>
     page.getByRole("tab", { name: new RegExp(`^${String(n)}`) });
@@ -1634,11 +1795,33 @@ test("a chosen weapon and insignia survive a reload", async ({ page }) => {
     .click();
 
   await expect(page.locator(".gear-slot").first()).toContainText("Axe");
-  await expect(page.locator(".armor-row").first().locator(".gear-slot").first()).toContainText(
-    "Survivor",
-  );
+  await expect(armorRow(page, "head")).toContainText("Survivor");
   await setTab(2).click();
   await expect(page.locator(".gear-slot").first()).toContainText("Hammer");
+});
+
+test("an insignia applied to all five pieces survives a reload (#2059)", async ({ page }) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Matched Set");
+  const popover = await openPiece(page, "chest");
+  await expect(popover.locator(".paper-doll-popover-title")).toHaveText("② Chest");
+  await popover.locator(".paper-doll-choice", { hasText: "Survivor Insignia" }).click();
+  await popover.getByRole("button", { name: "Apply insignia to all 5" }).click();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(roster(page)).toContainText("Matched Set");
+
+  await page.reload();
+  await page
+    .locator(".character-card")
+    .filter({ hasText: "Matched Set" })
+    .getByRole("button", { name: "edit" })
+    .click();
+  const rows = page.locator(".paper-doll-row");
+  await expect(rows).toHaveCount(5);
+  for (const slot of ["head", "chest", "hands", "legs", "feet"]) {
+    await expect(armorRow(page, slot)).toContainText("Survivor Insignia");
+  }
 });
 
 /* --- the editor updates in place (#563, ADR-0030) ------------------------- */
@@ -2173,4 +2356,28 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await page.reload();
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
+});
+
+test("of Fortitude on the sword adds 30 Health, and stays on after Save and a reload (#2008)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Fortified");
+  await expect(page.locator(".gear-slot").first()).toContainText("Sword");
+  const health = page.locator('.editor-stat-value[data-stat="health"]');
+  const before = Number(await health.innerText());
+  const suffix = page.locator('.gear-mods-hand[data-hand="mainHand"] [data-slot="suffix"] select');
+  await suffix.selectOption({ label: "of Fortitude — +30 Health" });
+  await expect(health).toHaveText(String(before + 30));
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(roster(page)).toContainText("Fortified");
+
+  await page.reload();
+  await page
+    .locator(".character-card", { hasText: "Fortified" })
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  await expect(suffix).toHaveValue("of-fortitude");
+  await expect(health).toHaveText(String(before + 30));
 });

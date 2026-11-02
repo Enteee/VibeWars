@@ -3,10 +3,15 @@ import {
   ALL_OFFHANDS,
   ALL_WEAPONS,
   IMPLEMENTED_SKILLS,
+  MOD_SLOTS,
   PROFESSIONS,
   STATUS_DEFINITIONS,
+  WEAPON_MODS,
   bareArmorSet,
   type ArmorSet,
+  type ItemUpgrades,
+  type ModItem,
+  type ModSlot,
   type PlayerBuild,
 } from "@vibewars/game-core";
 import {
@@ -111,6 +116,21 @@ const FLYING_SKILL_ID = longest(
   IMPLEMENTED_SKILLS.filter((skill) => skill.projectile !== undefined).map((skill) => skill.id),
 );
 const INSIGNIA_ID = longest(ALL_INSIGNIAS.map((insignia) => insignia.id));
+
+/** The longest mod id that fits `item` in each slot it has; a slot no mod fits stays empty. */
+function fullUpgrades(item: ModItem): ItemUpgrades {
+  const fitting = (slot: ModSlot): string | null => {
+    const ids = WEAPON_MODS.filter((mod) => mod.slot === slot && mod.fits.includes(item)).map(
+      (mod) => mod.id,
+    );
+    return MOD_SLOTS[item].includes(slot) && ids.length > 0 ? longest(ids) : null;
+  };
+  return {
+    prefix: fitting("prefix"),
+    suffix: fitting("suffix"),
+    inscription: fitting("inscription"),
+  };
+}
 const bare = bareArmorSet();
 
 function player(index: number): WirePlayer {
@@ -219,8 +239,16 @@ const NECRO_ELE_ATTRIBUTES = [
 /** The largest build a player can bring: longest name, ids and every set linked. */
 function fullBuild(): PlayerBuild {
   const linkedSet = {
-    mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
-    offHand: { offhandId: "focus", requirementAttributeId: "necromancer.soul-reaping" },
+    mainHand: {
+      weaponId: "wand",
+      requirementAttributeId: "elementalist.fire-magic",
+      upgrades: fullUpgrades("wand"),
+    },
+    offHand: {
+      offhandId: "focus",
+      requirementAttributeId: "necromancer.soul-reaping",
+      upgrades: fullUpgrades("focus"),
+    },
   } as const;
   return {
     name: NAME,
@@ -231,7 +259,11 @@ function fullBuild(): PlayerBuild {
     equipment: {
       weaponSets: [
         {
-          mainHand: { weaponId: "staff", requirementAttributeId: "necromancer.soul-reaping" },
+          mainHand: {
+            weaponId: "staff",
+            requirementAttributeId: "necromancer.soul-reaping",
+            upgrades: fullUpgrades("staff"),
+          },
           offHand: null,
         },
         // Every set carried, each with both hands linked: the largest gear.
@@ -446,6 +478,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       phase: "in-match",
       // The longest mode.
       mode: "heroes-ascent",
+      teamSize: MAX_TEAM_LOBBY_SIDE,
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       open: true,
       hostId: PEER_ID,
@@ -466,6 +499,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       teamLobby: null,
       // The longest a nonce is (#1766).
       queueNonce: "f".repeat(64),
+      ascentRound: 3,
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
@@ -508,10 +542,11 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       claims: Array.from({ length: MAX_TEAM_LOBBY_SIDE }, (_, i) => id(i)),
     };
     const state: WireLobbyState = {
-      code: "ACDEFGHJKMNP",
+      code: "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE", // pragma: allowlist secret
       phase: "team-lobby",
       // The longest mode.
       mode: "heroes-ascent",
+      teamSize: MAX_TEAM_LOBBY_SIDE,
       mapId: longest(ARENA_MAPS.map((map) => map.id)),
       open: true,
       hostId: PEER_ID,
@@ -531,6 +566,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       countdownSeconds: null,
       teamLobby: null,
       queueNonce: null,
+      ascentRound: null,
     };
     // The vote has proposals and no choice yet; the claim the choice and its claims.
     const vote = {

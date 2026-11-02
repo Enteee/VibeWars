@@ -78,7 +78,11 @@ describe("applyIntent", () => {
       participants: [
         {
           ...spec("a", 0, vec2(0, 0)),
-          spareWeaponSets: [{ equipment: bow, maxEnergy: 20 }, null, null],
+          spareWeaponSets: [
+            { equipment: bow, maxEnergy: 20, maxHealth: 500, baseEnergyPips: 0 },
+            null,
+            null,
+          ],
         },
       ],
     });
@@ -130,6 +134,7 @@ describe("applyIntent — command (#1110)", () => {
             corpsesLeft: 0,
             companionSkillId: undefined,
             leaderId: undefined,
+            bondStatusId: undefined,
             mode: "guard",
           },
         },

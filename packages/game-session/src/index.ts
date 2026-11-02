@@ -84,7 +84,6 @@ export type {
   MatchToWatch,
   PartyPlanSeat,
 } from "./lobby-connection.js";
-export { UNNAMED_CHARACTER, lobbyCharacter } from "./lobby-character.js";
 export { PARTY_CONSENT_MS, canStart, createLobbyHost } from "./lobby-host.js";
 export type {
   LobbyHost,
@@ -111,7 +110,7 @@ export { ROOM_PREFIX, formGroups, groupOf, isLive, ticketsOf } from "./queue-for
 export type { FormGroupsInput, FormedGroup } from "./queue-formation.js";
 export { createMemoryBoard } from "./queue-board.js";
 export type { MemoryBoard, QueueBoard, QueueBoardEvent } from "./queue-board.js";
-export { createQueueClient } from "./queue-client.js";
+export { createQueueClient, startingQueueState } from "./queue-client.js";
 export type {
   QueueClient,
   QueueClientOptions,

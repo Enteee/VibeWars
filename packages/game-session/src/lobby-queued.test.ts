@@ -17,7 +17,13 @@ import { describe, expect, it } from "vitest";
 
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
-import { MAP_IDS, MODE_MAPS, openLobby, provenPeer } from "./lobby-harness.test-support.js";
+import {
+  MAP_IDS,
+  MAP_TEAM_SIZES,
+  MODE_MAPS,
+  openLobby,
+  provenPeer,
+} from "./lobby-harness.test-support.js";
 import { PARTY_CONSENT_MS, createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
 import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
@@ -194,7 +200,6 @@ function joinQueued(transport: Transport, ticketId: string, timeoutMs = 1000, gr
     name: `ticket-${ticketId.slice(0, 1)}`,
     guildTag: null,
     guildCape: null,
-    character: null,
     timeoutMs,
     queued: { group, key: keyOf(ticketId), verifyTicketSig },
   });
@@ -214,6 +219,8 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     proofKey: null,
     mapIds: MAP_IDS,
     modeMaps: MODE_MAPS,
+    mapTeamSizes: MAP_TEAM_SIZES,
+    hostedTeamSize: 4,
     teamLobby: false,
     random: () => 0.5,
     startMatch(plan) {
@@ -311,7 +318,6 @@ async function forgedJoin(
     name: "Forger",
     guildTag: null,
     guildCape: null,
-    character: null,
     admission: { seatKey: ticketId, admissionSig: keyOf(signer).sign(bytes) },
   };
 }
@@ -365,7 +371,6 @@ describe("a queued lobby", () => {
         protocolVersion: PROTOCOL_VERSION,
         name: "Bare",
         guildTag: null,
-        character: null,
         admission: null,
       },
       "host",
@@ -483,11 +488,13 @@ describe("a queued lobby", () => {
           phase: "waiting",
           mode: "random-arena",
           mapId: "other-arena",
+          teamSize: 1,
           open: true,
           hostId: "impostor",
           matchId: null,
           teamLobby: null,
           queueNonce: null,
+          ascentRound: null,
           players: [
             {
               id: from,
@@ -497,7 +504,6 @@ describe("a queued lobby", () => {
               isHost: false,
               guildTag: null,
               guildCape: null,
-              character: null,
               bot: false,
               away: false,
             },
@@ -991,10 +997,12 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
       createQueueClient({
         board: board.board(),
         mode: "random-arena-2v2",
+        ascentRound: null,
         ...(party === undefined ? {} : { party }),
         now: () => now,
         newTicketKey: () => keyOf(String((fresh += 1)).padStart(64, "5")),
         mapPool: ["other-arena"],
+        hardNat: false,
       });
     const clients = [
       client({ members, key: KEY_H, groupId, consents }),

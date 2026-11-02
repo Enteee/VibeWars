@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
 import type * as Figure from "./character-figure.js";
+import type * as Kit from "./kit.js";
 import {
   NO_CHARACTER_FOR_QUEUE,
+  PARTY_CANNOT_QUEUE,
   isPlayable,
-  randomArenaActions,
+  randomArenaProblem,
   renderCharacterBuilder,
   renderRandomArena,
   rosterOrder,
@@ -15,6 +17,17 @@ import {
   rosterTags,
   type MenuCallbacks,
 } from "./menu.js";
+
+/** The title bar's actions, as the last screen drawn put them there. */
+const bar = vi.hoisted(() => ({ actions: [] as readonly unknown[] }));
+
+vi.mock("./kit.js", async (original) => ({
+  ...(await original<typeof Kit>()),
+  screenBar: (options: { readonly actions?: readonly unknown[] }) => {
+    bar.actions = options.actions ?? [];
+    return { back: undefined, release: () => undefined };
+  },
+}));
 
 // The figure draws on a canvas, which Node has none of.
 vi.mock("./character-figure.js", async (original) => ({
@@ -47,17 +60,6 @@ describe("rosterSubtitle (#579)", () => {
       skillBar: ["no.such-skill", null, null, null, null, null, null, null],
     });
     expect(rosterSubtitle(illegal)).toBe("Elementalist / Monk · 1/8 skills");
-  });
-
-  it("follows it with the character's record, draws only when there are some (#1404)", () => {
-    expect(rosterSubtitle(character(), { wins: 12, losses: 7, draws: 0 })).toBe(
-      "Elementalist / Monk · 1/8 skills · 12W 7L",
-    );
-    expect(rosterSubtitle(character(), { wins: 12, losses: 7, draws: 1 })).toBe(
-      "Elementalist / Monk · 1/8 skills · 12W 7L 1D",
-    );
-    // A character that has not played shows nothing extra.
-    expect(rosterSubtitle(character(), undefined)).toBe("Elementalist / Monk · 1/8 skills");
   });
 });
 
@@ -114,14 +116,6 @@ describe("rosterOrder (#1425)", () => {
 
   it("lists a starter alone as the only row", () => {
     expect(ids(rosterOrder([character({ id: "rolled" })], "rolled"))).toEqual(["rolled"]);
-  });
-});
-
-describe("Random Arena's bar (#1453, #1525)", () => {
-  it("keeps Record in the bar, and no Teams or Music", () => {
-    expect(randomArenaActions({ onShowRecord: () => undefined }).map(({ label }) => label)).toEqual(
-      ["Record"],
-    );
   });
 });
 
@@ -191,7 +185,6 @@ describe("the character screens (#1525)", () => {
   const callbacks: MenuCallbacks = {
     onRandomArena: (mode, name) => queued.push(`${mode} ${name}`),
     onSwitch: (entry) => switched.push(entry),
-    onShowRecord: () => undefined,
     onNewCharacter: () => {
       added += 1;
     },
@@ -255,18 +248,64 @@ describe("the character screens (#1525)", () => {
     expect(stored.get(`${STORAGE_NAMESPACE}.activeCharacterId`)).toBe("rolled");
   });
 
-  it("Random Arena's tiles queue as the saved name, once a character is picked", () => {
+  /** Random Arena's Ready, from the title bar. */
+  const ready = (): FakeElement => {
+    const [button] = bar.actions;
+    if (!(button instanceof FakeElement)) {
+      throw new Error("no Ready in the bar");
+    }
+    return button;
+  };
+
+  it("Random Arena's Ready queues the sidebar's size as the saved name, once a character is picked (#2022)", () => {
     let nodes = shown(renderRandomArena);
-    const tiles = nodes.filter((node) => node.className === "random-arena-tile");
-    expect(tiles.map((tile) => tile.textContent)).toEqual(["1v1", "2v2", "4v4"]);
-    expect(tiles.every((tile) => tile.disabled)).toBe(true);
+    expect(ready().textContent).toBe("Ready");
+    expect(ready().disabled).toBe(true);
+    expect(ready().title).toBe(NO_CHARACTER_FOR_QUEUE);
     expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(true);
 
     stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
     nodes = shown(renderRandomArena);
+    expect(ready().disabled).toBe(false);
     expect(nodes.some((node) => node.textContent === NO_CHARACTER_FOR_QUEUE)).toBe(false);
-    press(nodes, "2v2");
-    expect(queued).toEqual(["random-arena-2v2 Rurik"]);
+    ready().click();
+    expect(queued).toEqual(["random-arena-4v4 Rurik"]);
+
+    stored.set(`${STORAGE_NAMESPACE}.teamSize`, "2");
+    shown(renderRandomArena);
+    ready().click();
+    expect(queued).toEqual(["random-arena-4v4 Rurik", "random-arena-2v2 Rurik"]);
+  });
+
+  it("Random Arena's Ready follows the sidebar: disabled at 8v8, with the reason (#2022)", () => {
+    stored.set(`${STORAGE_NAMESPACE}.activeCharacterId`, "mine");
+    const nodes = shown(renderRandomArena);
+    const select = nodes.find((node) => node.tagName === "select");
+    if (select === undefined) {
+      throw new Error("no team size dropdown");
+    }
+    select.value = "8";
+    select.listeners.get("change")?.();
+    expect(stored.get(`${STORAGE_NAMESPACE}.teamSize`)).toBe("8");
+    expect(ready().disabled).toBe(true);
+    expect(ready().title).toBe("8v8 is not in Random Arena");
+    const hint = nodes.find((node) => node.className === "random-arena-hint");
+    expect(hint?.hidden).toBe(false);
+    expect(hint?.textContent).toBe("8v8 is not in Random Arena");
+
+    select.value = "1";
+    select.listeners.get("change")?.();
+    expect(ready().disabled).toBe(false);
+    expect(hint?.hidden).toBe(true);
+    ready().click();
+    expect(queued).toEqual(["random-arena-1v1 Rurik"]);
+  });
+
+  it("says why Random Arena cannot queue: no character, then a party, then the size (#2022)", () => {
+    expect(randomArenaProblem(8, false, false)).toBe(NO_CHARACTER_FOR_QUEUE);
+    expect(randomArenaProblem(8, true, false)).toBe(PARTY_CANNOT_QUEUE);
+    expect(randomArenaProblem(8, true, true)).toBe("8v8 is not in Random Arena");
+    expect(randomArenaProblem(2, true, true)).toBeUndefined();
   });
 
   it("Random Arena with no characters points to Character Builder", () => {

@@ -34,7 +34,7 @@ for rationale and trade-offs.
 There is no game server ([ADR-0022](docs/adr/0022-peer-to-peer-networking.md)).
 The page is a static site (GitHub Pages); one player's browser hosts the
 lobby and its match, and public Nostr relays only introduce the peers:
-by a lobby key, or, for Random Arena, by tickets every queued client
+by a lobby key from an invite link ([ADR-0048](docs/adr/0048-lobby-keys-in-urls.md)), or, for Random Arena, by tickets every queued client
 reads to work out the same match ([ADR-0032](docs/adr/0032-random-arena-queue.md)).
 
 Dependencies point one way only (ADR-0001). `game-core` depends on nothing
@@ -73,10 +73,10 @@ Everything that decides what happens in a fight.
   the host, the build editor and the Training Ground run one copy of the
   rules; a second copy would be the obvious way to get them quietly
   disagreeing.
-- `equipment/` — weapons, off-hands, armor, runes and insignias as static
-  catalogs, plus resolving a build's equipment into the numbers a fight
-  uses (ADR-0012). `weapons.ts` is the one table of weapon damage, speed,
-  range and projectile speed.
+- `equipment/` — weapons, off-hands, armor, runes, insignias and weapon
+  mods (ADR-0047) as static catalogs, plus resolving a build's equipment
+  into the numbers a fight uses (ADR-0012). `weapons.ts` is the one table
+  of weapon damage, speed, range and projectile speed.
 - `skills/` — the composable skill system (see below).
 - `match-rules.ts` — score target, clock, and victory evaluation.
 - `match/` — the one copy of the per-tick pipeline (ADR-0017).
@@ -86,7 +86,10 @@ Everything that decides what happens in a fight.
   stepped by whoever owns the clock. `facing.ts` defines where a
   participant looks. `combat-log.ts` records each resolution with its
   source and time. `behaviour.ts` turns behaviours (data) into the same
-  intents a player sends. `training-scenarios.ts` holds the Training
+  intents a player sends; `bot/play-build.ts` thinks by trying
+  `bot/rules/index.ts`'s `BOT_RULES` in order, one file per rule. A new
+  bot rule = `bot/rules/<name>.ts` + its test + one line in
+  `bot/rules/index.ts`. `training-scenarios.ts` holds the Training
   Ground's scenarios as data (ADR-0020).
   Creatures, bodies that are not players, are participants with a
   `creature` record that never count for their team (ADR-0035).

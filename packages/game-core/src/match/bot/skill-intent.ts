@@ -1,9 +1,20 @@
 import type { DamageType } from "../../equipment/types.js";
 import { isCompanionRule } from "../../skills/activation.js";
-import { interruptLands, isStateCondition, stateHolds } from "../../skills/effects.js";
+import {
+  interruptLands,
+  isStateCondition,
+  sacrificedHealth,
+  stateHolds,
+} from "../../skills/effects.js";
 import { skillRoles } from "../../skills/roles.js";
 import { copiesSkill } from "../../skills/stand-in.js";
-import { getStatusDefinition, type StatusCategory, type StatusId } from "../../skills/status.js";
+import { statAtTwelve } from "../../skills/scaling.js";
+import {
+  getStatusDefinition,
+  type StatusCategory,
+  type StatusDefinition,
+  type StatusId,
+} from "../../skills/status.js";
 import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
@@ -18,10 +29,22 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * What a bot may use a skill for (#1189), in the order `play-build`
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
- * skill, raising the dead, and a way out (#1930).
+ * skill, raising the dead, a way out (#1930), a buff that only makes
+ * attacks hit harder (#2000), a setup (#1975) and minion care (#1986),
+ * which is that alone.
  */
 export type BotUse =
-  "interrupt" | "healing" | "defence" | "escape" | "removal" | "resurrect" | "offence";
+  | "interrupt"
+  | "healing"
+  | "defence"
+  | "escape"
+  | "removal"
+  | "resurrect"
+  | "boost"
+  | "offence"
+  | "setup"
+  | "minion-care"
+  | "take-minion";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -31,6 +54,14 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (isCompanionRule(skill.target)) {
     return [];
   }
+  // Taking or freeing foe minions (#2092) is the take-minion rule's alone.
+  if (takesMinions(skill)) {
+    return ["take-minion"];
+  }
+  // Healing or bonding minions (#1986) is no heal or defence of a player's.
+  if (minionCareOf(skill) !== undefined) {
+    return ["minion-care"];
+  }
   const roles = skillRoles(skill);
   const uses: BotUse[] = [];
   if (roles.includes("interrupt")) uses.push("interrupt");
@@ -39,6 +70,7 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (escapes(skill)) uses.push("escape");
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
+  if (setupOf(skill) !== undefined) uses.push("setup");
   // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
     skill.target !== "allied-minion" &&
@@ -56,7 +88,55 @@ export function botUses(skill: Skill): readonly BotUse[] {
   ) {
     uses.push("offence");
   }
+  if (uses.length === 0 && boosts(skill)) uses.push("boost");
   return uses;
+}
+
+/**
+ * What `skill` does for minions (#1986), or `undefined` for any other:
+ * Blood of the Master heals every allied one, Verata's Sacrifice takes its
+ * own ones' conditions, Dark Bond sends a share of a hit to one, Jagged
+ * Bones stands a horror up where one dies.
+ */
+export type MinionCare = "heal-all" | "take-conditions" | "bond" | "replace-on-death";
+
+export function minionCareOf(skill: Skill): MinionCare | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind === "splash" && effect.hits === "allied-minions") {
+      return "heal-all";
+    }
+    if (
+      effect.kind === "splash" &&
+      effect.hits === "own-minions" &&
+      effect.effects.some((inner) => inner.kind === "transfer-conditions")
+    ) {
+      return "take-conditions";
+    }
+    if (effect.kind === "apply-status") {
+      const status = getStatusDefinition(effect.statusId);
+      if (status.redirectsDamageToMinion > 0) {
+        return "bond";
+      }
+      if (status.replacedOnDeathBy !== undefined) {
+        return "replace-on-death";
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Whether `skill` takes foe minions or frees them (#2092): Verata's Gaze,
+ * Verata's Aura, and Malign Intervention's masterless horror.
+ */
+export function takesMinions(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) =>
+      effect.kind === "gaze-minion" ||
+      (effect.kind === "splash" && effect.effects.some(({ kind }) => kind === "take-control")) ||
+      (effect.kind === "apply-status" &&
+        getStatusDefinition(effect.statusId).replacedOnDeathBy?.masterless === true),
+  );
 }
 
 /** Whether `skill` sends its user's pet to its target (#1966), as Strike as One. */
@@ -94,6 +174,87 @@ export function wardsTouch(skill: Skill): boolean {
         effect.kind === "apply-status" &&
         getStatusDefinition(effect.statusId).failsFoeTouchSkills !== undefined,
     )
+  );
+}
+
+/**
+ * A buff for the side's attacks and nothing else (#2000): Order of Pain's,
+ * Order of the Vampire's (#1979), "For Great Justice!"'s. Cast on the
+ * caster alone, its party, or an area round it that takes it in, with a
+ * status that acts on its bearer's attacks. A glyph, an attunement or a
+ * run is none: what it does is no blow's.
+ */
+function boosts(skill: Skill): boolean {
+  const area = skill.area;
+  const ours =
+    area === undefined ||
+    area.origin === "party" ||
+    (area.origin === "caster" && area.includesCaster && area.affects !== "enemies");
+  return (
+    skill.target === "self" &&
+    ours &&
+    skill.effects.some(
+      (effect) =>
+        effect.kind === "apply-status" && actsOnAttacks(getStatusDefinition(effect.statusId)),
+    )
+  );
+}
+
+/**
+ * Whether `status` makes its bearer's attacks worth more (#2000): more on
+ * a hit, more adrenaline, faster, more often critical or through more
+ * armor, a rider on its next attack skill, or a trigger on its attacking.
+ */
+function actsOnAttacks(status: StatusDefinition): boolean {
+  return (
+    status.onAttackHit !== undefined ||
+    status.extraStrikesPerHit > 0 ||
+    status.attackDamageDelta > 0 ||
+    statAtTwelve(status.attackDurationMultiplier) < 1 ||
+    status.criticalChanceBonus > 0 ||
+    status.attackArmorPenetration > 0 ||
+    status.nextAttackSkill !== undefined ||
+    status.triggers.some(({ on }) => on === "bearer-attacks" || on === "bearer-hits")
+  );
+}
+
+/**
+ * Whether `skill`'s boost does `member` any good (#2000). A rider on its
+ * hits whose every effect waits on a state of the attacker's, as Order of
+ * the Vampire's "not under another Necromancer enchantment", counts only
+ * while that state holds for `member`; one on the foe hit may hold.
+ */
+export function boostsMember(skill: Skill, member: Combatant): boolean {
+  return skill.effects.some((effect) => {
+    if (effect.kind !== "apply-status") {
+      return false;
+    }
+    const status = getStatusDefinition(effect.statusId);
+    const rider = status.onAttackHit;
+    if (rider === undefined || actsOnAttacks({ ...status, onAttackHit: undefined })) {
+      return actsOnAttacks(status);
+    }
+    return rider.effects.some(
+      (hit) =>
+        hit.kind !== "if" ||
+        !isStateCondition(hit.condition) ||
+        !hit.condition.kind.startsWith("caster-") ||
+        stateHolds(hit.condition, member, member, new Map()),
+    );
+  });
+}
+
+/**
+ * The share of its max Health `skill` costs `caster` (#2000): Order of
+ * Pain's 17%, more under Awaken the Blood.
+ */
+export function sacrificedFraction(skill: Skill, caster: Combatant): number {
+  return skill.effects.reduce(
+    (sum, effect) =>
+      effect.kind === "sacrifice-health"
+        ? sum + sacrificedHealth(caster, effect.percentOfMax) / caster.maxHealth
+        : sum,
+    0,
   );
 }
 
@@ -247,6 +408,33 @@ export function takenOffFoe(skill: Skill): StatusCategory | undefined {
   }
   const strips = removal.category === "enchantment" && skillRoles(skill).length === 0;
   return copiesSkill(skill.id) || strips ? removal.category : undefined;
+}
+
+/**
+ * A setup (#1975): a status that is worth putting on only at a moment
+ * the bot can see, no role of its own. Air of Enchantment's cheaper
+ * enchantments on an ally, before one; Order of Apostasy's strip on the
+ * party's hits, while they hit enchanted foes; Dark Apostasy's strip on
+ * a critical hit, at an enchanted foe.
+ */
+export type Setup = "cheaper-enchantments" | "party-strips" | "critical-strips";
+
+/** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975). */
+export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | undefined {
+  const applied = skill.effects.find((effect) => effect.kind === "apply-status");
+  if (applied?.kind !== "apply-status") {
+    return undefined;
+  }
+  const status = getStatusDefinition(applied.statusId);
+  const setup: Setup | undefined =
+    status.enchantmentsOnBearerCostLess > 0
+      ? "cheaper-enchantments"
+      : status.onAttackHit?.sourceLosesPerRemoved !== undefined
+        ? "party-strips"
+        : status.onCriticalHit !== undefined
+          ? "critical-strips"
+          : undefined;
+  return setup === undefined ? undefined : { setup, statusId: applied.statusId };
 }
 
 /**

@@ -4,6 +4,7 @@ import type {
   LobbyMode,
   LobbyPhase,
   LobbyRefusal,
+  LobbyTeamSize,
   WirePartyFormed,
   WireProposalBuild,
   WireTeamLobby,
@@ -33,8 +34,6 @@ export interface LobbyPlayerSnapshot {
   readonly team: 0 | 1 | null;
   readonly ready: boolean;
   readonly isHost: boolean;
-  /** `null` brings a starter build. */
-  readonly character: LobbyCharacter | null;
   /** A bot the host added (#1193): no peer behind it. */
   readonly bot: boolean;
   /** Dropped, its seat held while it may come back (#1764). */
@@ -48,6 +47,8 @@ export interface LobbySnapshot {
   /** The host's mode (#1526): every member's rail follows it. */
   readonly mode: LobbyMode;
   readonly mapId: string;
+  /** Players a side (#2104): a Hosted Game's, its host's pick; every other mode's, its own. */
+  readonly teamSize: number;
   /** Whether a peer with the key may join (#1682): a guest's party strip says when not. */
   readonly open: boolean;
   /** The peer the lobby and its match are hosted on. */
@@ -70,6 +71,8 @@ export interface LobbySnapshot {
   readonly proposalBuilds: ReadonlyMap<string, readonly WireProposalBuild[]>;
   /** While `phase` is `"queued"` (#1766), this queueing's nonce; `null` otherwise. */
   readonly queueNonce: string | null;
+  /** While `phase` is `"queued"` in Heroes' Ascent (#1996), the party's round; `null` otherwise. */
+  readonly ascentRound: number | null;
 }
 
 /** A seat of a party's team plan as its host sends it (ADR-0042): its human's member key, `null` for a bot. */
@@ -121,13 +124,16 @@ export interface LobbyConnection {
   chooseTeam(team: 0 | 1 | null): void;
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
-  /** The character this player now brings (#1526); `null` for a starter build. */
-  setCharacter(character: LobbyCharacter | null): void;
+  /** Host only, in a Hosted Game (#2104): players a side. */
+  selectTeamSize(size: LobbyTeamSize): void;
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;
-  /** Host only, in a team mode (#1766): the party's Team Lobby, then the queue. */
-  findMatch(): void;
+  /**
+   * Host only, in a team mode (#1766): the party's Team Lobby, then the
+   * queue; in Heroes' Ascent at `ascentRound` (#1996), `null` otherwise.
+   */
+  findMatch(ascentRound: number | null): void;
   /** Host only (#1766): the queued party back in its lobby. */
   leaveQueue(): void;
   /** Host only (#1766): the queued party plays the house team, here. */
@@ -140,8 +146,6 @@ export interface LobbyConnection {
   queueParty(key: TicketKey): void;
   /** A team mode's party host, in its match's lobby (ADR-0042): its side's seats, in order. */
   sendTeamPlan(seats: readonly PartyPlanSeat[]): void;
-  /** Host only (#1454): `team` has `count` bots, playing what the host picks. */
-  setBots(team: 0 | 1, count: number): void;
   /** In a Team Lobby's vote (#1458): propose `members` for this side, or withdraw with `null`. */
   propose(members: readonly PlayerBuild[] | null): void;
   /** In a Team Lobby's vote: vote for `proposerId`'s proposal, or withdraw with `null`. */
@@ -156,6 +160,8 @@ export interface LobbyConnection {
   watchMatch(): MatchToWatch | undefined;
   /** The host's own player alone: why the start it asked for did not happen. */
   onStartRejected(handler: (reason: string) => void): void;
+  /** What the host did to this player's choice, or would not do (#2104), in its words. */
+  onNotice(handler: (text: string) => void): void;
   /** Once joined: the host refused something this player asked for, such as a bot (#1194). */
   onRefused(handler: (reason: LobbyRefusal) => void): void;
   /** A chat line reached this player. */

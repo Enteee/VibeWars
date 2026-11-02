@@ -323,24 +323,24 @@ describe("Shroud of Distress (#988)", () => {
   it("blocks 75% only below half of the maximum a deep wound leaves", () => {
     const bearer = makeCombatant({ id: "b", maxHealth: 500, health: 250 });
     bearer.statuses.apply("shroud-of-distress", 54, "b", NO_RANKS);
-    expect(blockChanceOf(bearer, "melee")).toBe(0);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0);
     bearer.health = 249;
-    expect(blockChanceOf(bearer, "melee")).toBe(0.75);
-    expect(blockChanceOf(bearer, "projectile")).toBe(0.75);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0.75);
+    expect(blockChanceOf(bearer, "projectile", false)).toBe(0.75);
 
     // Deep Wound: a max of 400, so 210 is above half.
     bearer.health = 210;
     bearer.statuses.apply("deep-wound", 10, "f", NO_RANKS);
-    expect(blockChanceOf(bearer, "melee")).toBe(0);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0);
     bearer.health = 199;
-    expect(blockChanceOf(bearer, "melee")).toBe(0.75);
+    expect(blockChanceOf(bearer, "melee", false)).toBe(0.75);
   });
 
   it("combines with Guardian as blocks do", () => {
     const bearer = makeCombatant({ id: "b", health: 100 });
     bearer.statuses.apply("shroud-of-distress", 54, "b", NO_RANKS);
     bearer.statuses.apply("guardian", 10, "m", NO_RANKS);
-    expect(blockChanceOf(bearer, "melee")).toBeCloseTo(1 - 0.25 * 0.5, 9);
+    expect(blockChanceOf(bearer, "melee", false)).toBeCloseTo(1 - 0.25 * 0.5, 9);
   });
 
   /** Blows an attacker with `weapon` lands on the shrouded assassin at `health` of 1e6, blocked share. */

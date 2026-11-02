@@ -282,6 +282,7 @@ describe("Signet of Return (#474)", () => {
           corpsesLeft: 0,
           companionSkillId: undefined,
           leaderId: undefined,
+          bondStatusId: undefined,
           mode: "guard",
         },
       }),

@@ -407,11 +407,22 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "soul-bind": icon("soul-bind"),
   "wail-of-doom": icon("wail-of-doom"),
   atrophy: icon("atrophy"),
+  // Blood Magic orders and leeches (#1979).
+  "order-of-the-vampire": icon("order-of-the-vampire"),
+  "dark-fury": icon("dark-fury"),
+  "awaken-the-blood": icon("awaken-the-blood"),
+  "soul-leech": icon("soul-leech"),
   "scribes-insight": icon("scribes-insight"),
   // Minions 3 (#1915).
   "order-of-undeath": icon("order-of-undeath"),
   "aura-of-the-lich": icon("aura-of-the-lich"),
   "infuse-condition": icon("infuse-condition"),
+  // Minion care (#1986).
+  "veratas-sacrifice": icon("veratas-sacrifice"),
+  "dark-bond": icon("dark-bond"),
+  "jagged-bones": icon("jagged-bones"),
+  "veratas-aura": icon("veratas-aura"),
+  "malign-intervention": icon("malign-intervention"),
   // Casting-state hexes (#1931).
   "spinal-shivers": icon("spinal-shivers"),
   "shivers-of-dread": icon("shivers-of-dread"),
@@ -432,12 +443,22 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "shadow-form": icon("shadow-form"),
   "elemental-flame": icon("elemental-flame"),
   "mist-form": icon("mist-form"),
+  // Enchantment party moves (#1975).
+  "air-of-enchantment": icon("air-of-enchantment"),
+  "order-of-apostasy": icon("order-of-apostasy"),
+  "jaundiced-gaze": icon("jaundiced-gaze"),
+  "dark-apostasy": icon("dark-apostasy"),
   // Take what another has (#1965).
   "mirrored-stance": icon("mirrored-stance"),
   // Blocks that pay or pay off (#1974).
   distortion: icon("distortion"),
   "shield-guardian": icon("shield-guardian"),
   "glass-arrows": icon("glass-arrows"),
+  // Tactics stances that pay on a block (#1978).
+  "wary-stance": icon("wary-stance"),
+  "soldiers-defense": icon("soldiers-defense"),
+  "defensive-stance": icon("defensive-stance"),
+  "auspicious-parry": icon("auspicious-parry"),
 };
 
 const GAP = 2;

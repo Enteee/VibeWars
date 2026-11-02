@@ -1,6 +1,12 @@
 import type { AttributeAllocation } from "./attributes.js";
 import type { PlayerBuild } from "./build.js";
-import type { ArmorPiece, ArmorSet, EquippedRune, InsigniaId } from "./equipment/index.js";
+import {
+  NO_UPGRADES,
+  type ArmorPiece,
+  type ArmorSet,
+  type EquippedRune,
+  type InsigniaId,
+} from "./equipment/index.js";
 
 /**
  * The starter builds (#852): what the host hands a player who brings no
@@ -13,7 +19,9 @@ import type { ArmorPiece, ArmorSet, EquippedRune, InsigniaId } from "./equipment
  * Only skills the engine runs today. A new build is one more entry here.
  */
 
-function allocations(ranks: Readonly<Record<string, number>>): readonly AttributeAllocation[] {
+export function allocations(
+  ranks: Readonly<Record<string, number>>,
+): readonly AttributeAllocation[] {
   return Object.entries(ranks).map(([attributeId, rank]) => ({ attributeId, rank }));
 }
 
@@ -29,7 +37,11 @@ const SUPERIOR_VIGOR: EquippedRune = { kind: "universal", runeId: "vigor", tier:
  * (#1140), and a superior Vigor on the chest; `hands` takes one more
  * rune where the build has a use for it.
  */
-function armor(insigniaId: InsigniaId, mainAttributeId: string, hands?: EquippedRune): ArmorSet {
+export function armor(
+  insigniaId: InsigniaId,
+  mainAttributeId: string,
+  hands?: EquippedRune,
+): ArmorSet {
   const piece = (rune: EquippedRune | null): ArmorPiece => ({ insigniaId, rune });
   return {
     head: { ...piece(minorRune(mainAttributeId)), headgearAttributeId: mainAttributeId },
@@ -66,8 +78,12 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
     equipment: {
       weaponSets: [
         {
-          mainHand: { weaponId: "sword", requirementAttributeId: null },
-          offHand: { offhandId: "shield", requirementAttributeId: "warrior.tactics" },
+          mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+          offHand: {
+            offhandId: "shield",
+            requirementAttributeId: "warrior.tactics",
+            upgrades: NO_UPGRADES,
+          },
         },
         null,
         null,
@@ -104,7 +120,14 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
     ],
     equipment: {
       weaponSets: [
-        { mainHand: { weaponId: "recurve-bow", requirementAttributeId: null }, offHand: null },
+        {
+          mainHand: {
+            weaponId: "recurve-bow",
+            requirementAttributeId: null,
+            upgrades: NO_UPGRADES,
+          },
+          offHand: null,
+        },
         null,
         null,
         null,
@@ -137,8 +160,16 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
     equipment: {
       weaponSets: [
         {
-          mainHand: { weaponId: "wand", requirementAttributeId: "monk.healing-prayers" },
-          offHand: { offhandId: "focus", requirementAttributeId: "monk.protection-prayers" },
+          mainHand: {
+            weaponId: "wand",
+            requirementAttributeId: "monk.healing-prayers",
+            upgrades: NO_UPGRADES,
+          },
+          offHand: {
+            offhandId: "focus",
+            requirementAttributeId: "monk.protection-prayers",
+            upgrades: NO_UPGRADES,
+          },
         },
         null,
         null,
@@ -172,8 +203,16 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
     equipment: {
       weaponSets: [
         {
-          mainHand: { weaponId: "wand", requirementAttributeId: "necromancer.curses" },
-          offHand: { offhandId: "focus", requirementAttributeId: "elementalist.fire-magic" },
+          mainHand: {
+            weaponId: "wand",
+            requirementAttributeId: "necromancer.curses",
+            upgrades: NO_UPGRADES,
+          },
+          offHand: {
+            offhandId: "focus",
+            requirementAttributeId: "elementalist.fire-magic",
+            upgrades: NO_UPGRADES,
+          },
         },
         null,
         null,
@@ -207,8 +246,16 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = [
     equipment: {
       weaponSets: [
         {
-          mainHand: { weaponId: "wand", requirementAttributeId: "elementalist.fire-magic" },
-          offHand: { offhandId: "focus", requirementAttributeId: "elementalist.energy-storage" },
+          mainHand: {
+            weaponId: "wand",
+            requirementAttributeId: "elementalist.fire-magic",
+            upgrades: NO_UPGRADES,
+          },
+          offHand: {
+            offhandId: "focus",
+            requirementAttributeId: "elementalist.energy-storage",
+            upgrades: NO_UPGRADES,
+          },
         },
         null,
         null,

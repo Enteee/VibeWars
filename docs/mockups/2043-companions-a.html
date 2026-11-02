@@ -1,0 +1,288 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>#2043 mockup: companions, direction A</title>
+<style>
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    background: #080a0d;
+    color: #d7dee8;
+    font:
+      15px system-ui,
+      sans-serif;
+  }
+  h1 {
+    font-size: 1.2rem;
+  }
+  h2 {
+    font-size: 1rem;
+    margin: 1.6rem 0 0.3rem;
+    color: #59c2ff;
+  }
+  p.n {
+    color: #7d8899;
+    margin: 0.2rem 0 0.6rem;
+    max-width: 62rem;
+  }
+  p.n b {
+    color: #d7dee8;
+  }
+  .row {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  svg {
+    display: block;
+    border: 1px solid #2b3440;
+  }
+  text {
+    font-family: system-ui, sans-serif;
+  }
+</style>
+<h1>#2043 · companions · A: a silhouette per kind</h1>
+<p class="n">
+  Revisits #1158 A with what it lacked. The outline alone names the kind: a paw for the pet, a
+  spiked star for the minion (bigger, with a hole, for the horror), a ring with a trailing tail for
+  the spirit, an arch for the priest, a shield for the guard, a circle with a crown for the Guild
+  Lord, a haloed circle for the Ghostly Hero. No glyph, no hexagon.
+</p>
+<p class="n">
+  <b>Reads apart at 1×:</b> nothing here is a circle or a plain polygon, so every kind separates
+  from a player and from each other without a glyph; weapons on the four NPCs make them the armed
+  ones.
+</p>
+<p class="n">
+  <b>Costs:</b> team colour is a fill everywhere, but the spirit is mostly a ring (thin on team
+  colour) and the paw is four small lobes: at 1× they are the weakest reads. The horror's star
+  points eat a neighbour in a crowd, and the dead pet needs its dash to show.
+</p>
+<h2>True arena size (player radius 14, creature 10)</h2>
+<div id="l1"></div>
+<h2>The same at 4×</h2>
+<div id="l4"></div>
+<h2>A busy scene: 2 players, pet, 3 minions, 2 spirits, guard, Ghostly Hero. 1× then 2.5×</h2>
+<div class="row">
+  <div id="s1"></div>
+  <div id="s2"></div>
+</div>
+<script>
+  const COL = {
+    friend: "#59c2ff",
+    foe: "#ff7b72",
+    edge: "#0b0f14",
+    ink: "#d7dee8",
+    dead: "#4a5464",
+    bg: "#0e1116",
+    grid: "#1a212c",
+    panel: "#161b22",
+  };
+  const KINDS = [
+    "pet",
+    "minion",
+    "horror",
+    "spirit",
+    "priest",
+    "guard",
+    "guild-lord",
+    "ghostly-hero",
+  ];
+  const LABEL = {
+    pet: "pet",
+    minion: "bone minion",
+    horror: "bone horror",
+    spirit: "spirit",
+    priest: "priest",
+    guard: "guard",
+    "guild-lord": "guild lord",
+    "ghostly-hero": "ghostly hero",
+  };
+  const teamCol = (t) => (t === "foe" ? COL.foe : COL.friend);
+  const f = (n) => (Math.round(n * 100) / 100).toString();
+  const pts = (a) => a.map(([x, y]) => `${f(x)},${f(y)}`).join(" ");
+  const poly = (a, fill, sw = 1.6) =>
+    `<polygon points="${pts(a)}" fill="${fill}" stroke="${COL.edge}" stroke-width="${sw}" stroke-linejoin="round"/>`;
+  const circ = (x, y, r, fill, sw = 1.6, stroke = COL.edge) =>
+    `<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
+  const ngon = (n, r, rot = -Math.PI / 2) =>
+    Array.from({ length: n }, (_, k) => [
+      Math.cos(rot + (k * 2 * Math.PI) / n) * r,
+      Math.sin(rot + (k * 2 * Math.PI) / n) * r,
+    ]);
+  const star = (n, ro, ri, rot = -Math.PI / 2) =>
+    Array.from({ length: n * 2 }, (_, k) => {
+      const r = k % 2 ? ri : ro;
+      const a = rot + (k * Math.PI) / n;
+      return [Math.cos(a) * r, Math.sin(a) * r];
+    });
+  const ln = (x1, y1, x2, y2, w, c = COL.ink) =>
+    `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/>`;
+  // A weapon mark: ink with an edge casing, pointing along +x from radius r.
+  const cased = (draw) => draw(COL.edge, 3.4, 1) + draw(COL.ink, 1.7, 0);
+  const WEAPON = {
+    sword: (r, len = 11) =>
+      cased((c, w) => ln(r - 1, 0, r + len, 0, w, c) + ln(r + 2.5, -3.2, r + 2.5, 3.2, w, c)),
+    staff: (r) =>
+      cased((c, w) => ln(r - 2, 0, r + 12, 0, w, c)) + circ(r + 13, 0, 2.4, COL.ink, 1.2),
+    spear: (r) =>
+      cased((c, w) => ln(r - 4, 0, r + 12, 0, w, c)) +
+      poly(
+        [
+          [r + 11, -3],
+          [r + 17, 0],
+          [r + 11, 3],
+        ],
+        COL.ink,
+        1.2,
+      ),
+    greatsword: (r) =>
+      cased((c, w) => ln(r - 1, 0, r + 17, 0, w * 1.2, c) + ln(r + 3, -4.5, r + 3, 4.5, w, c)),
+    shield: (r) =>
+      poly(
+        [
+          [0, -4.5],
+          [4.5, -3],
+          [4.5, 1.5],
+          [0, 5],
+          [-4.5, 1.5],
+          [-4.5, -3],
+        ].map(([x, y]) => [x + r * 0.35, y + r * 0.95]),
+        COL.ink,
+        1.2,
+      ),
+  };
+  const NPC_WEAPON = {
+    priest: ["staff"],
+    guard: ["spear", "shield"],
+    "guild-lord": ["greatsword"],
+    "ghostly-hero": ["sword"],
+  };
+  const weapons = (kind, r) => (NPC_WEAPON[kind] || []).map((w) => WEAPON[w](r)).join("");
+  // A player: team circle r 14, sword in front, a buckler for the foe.
+  const player = (team, off) =>
+    circ(0, 0, 14, teamCol(team), 1.8) + WEAPON.sword(14, 9) + (off ? WEAPON.shield(14) : "");
+  const dashedHex = (r) =>
+    `<polygon points="${pts(ngon(6, r * 1.1, -Math.PI / 2))}" fill="none" stroke="${COL.dead}" stroke-width="1.6" stroke-dasharray="3 2" stroke-linejoin="round"/>`;
+  const unit = (inner, x, y, s) => `<g transform="translate(${x},${y}) scale(${s})">${inner}</g>`;
+  const gridBg = (w, h) =>
+    `<rect width="${w}" height="${h}" fill="${COL.bg}"/>` +
+    Array.from(
+      { length: Math.ceil(w / 40) },
+      (_, i) => `<line x1="${i * 40}" y1="0" x2="${i * 40}" y2="${h}" stroke="${COL.grid}"/>`,
+    ).join("") +
+    Array.from(
+      { length: Math.ceil(h / 40) },
+      (_, i) => `<line x1="0" y1="${i * 40}" x2="${w}" y2="${i * 40}" stroke="${COL.grid}"/>`,
+    ).join("");
+  const svgEl = (w, h, inner) =>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`;
+  // Lineup: ally row, foe row, kinds across; the pet's corpse last.
+  function lineup(s) {
+    const cell = Math.max(64, 44 * s);
+    const w = (KINDS.length + 2) * cell + 90;
+    const h = 2 * cell + 24;
+    let g = gridBg(w, h);
+    ["friend", "foe"].forEach((t, row) => {
+      g += `<text x="6" y="${(row + 0.5) * cell + 16}" fill="${COL.ink}" font-size="11">${t === "friend" ? "ally" : "foe"}</text>`;
+      g += unit(player(t, false), 70 + 0.5 * cell, (row + 0.5) * cell + 12, s);
+      KINDS.forEach((k, i) => {
+        g += unit(body(k, t, false), 70 + (i + 1.5) * cell, (row + 0.5) * cell + 12, s);
+      });
+      g += unit(body("pet", t, true), 70 + (KINDS.length + 1.5) * cell, (row + 0.5) * cell + 12, s);
+    });
+    ["player"].concat(KINDS, ["dead pet"]).forEach((k, i) => {
+      g += `<text x="${70 + (i + 0.5) * cell}" y="11" fill="#7d8899" font-size="10" text-anchor="middle">${LABEL[k] || k}</text>`;
+    });
+    return svgEl(w, h, g);
+  }
+  // Busy scene: 2 players, a pet, 3 minions, 2 spirits, a guard, a Ghostly Hero.
+  function scene(s) {
+    const w = 320,
+      h = 200;
+    let g =
+      gridBg(w, h) +
+      `<rect x="150" y="60" width="14" height="80" fill="#202836" stroke="#3b4759"/>`;
+    const put = (inner, x, y) => (g += unit(inner, x, y, 1));
+    put(player("friend", false), 60, 90);
+    put(player("foe", true), 250, 110);
+    put(body("pet", "friend", false), 85, 120);
+    put(body("minion", "friend", false), 95, 70);
+    put(body("minion", "friend", false), 105, 88);
+    put(body("horror", "foe", false), 225, 80);
+    put(body("spirit", "friend", false), 120, 105);
+    put(body("spirit", "foe", false), 205, 100);
+    put(body("guard", "foe", false), 230, 140);
+    put(body("ghostly-hero", "friend", false), 130, 150);
+    put(body("minion", "foe", false), 215, 112);
+    return svgEl(w * s, h * s, `<g transform="scale(${s})">${g}</g>`);
+  }
+  function render() {
+    document.getElementById("l1").innerHTML = lineup(1);
+    document.getElementById("l4").innerHTML = lineup(4);
+    document.getElementById("s1").innerHTML = scene(1);
+    document.getElementById("s2").innerHTML = scene(2.5);
+  }
+
+  // A: a silhouette per kind. The outline alone names the kind; team colour is the fill.
+  const TOES = [
+    [-6.2, -3.2],
+    [-2.3, -7.2],
+    [2.3, -7.2],
+    [6.2, -3.2],
+  ];
+  function body(kind, team, dead) {
+    const c = teamCol(team);
+    if (kind === "pet") {
+      if (dead)
+        return `<g stroke="${COL.dead}" fill="none" stroke-width="1.6" stroke-dasharray="2.4 1.8">${TOES.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.7"/>`).join("")}<circle cx="0" cy="2.5" r="5.6"/></g>`;
+      const parts = (fill, stroke, w) =>
+        `<g fill="${fill}" stroke="${stroke}" stroke-width="${w}"><circle cx="0" cy="2.5" r="5.6"/>${TOES.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.7"/>`).join("")}</g>`;
+      // The fat edge pass first, then the fill: one silhouette, one rim.
+      return parts(COL.edge, COL.edge, 3.2) + parts(c, "none", 0);
+    }
+    if (kind === "minion") return poly(star(8, 11.5, 6.4), c, 1.6);
+    if (kind === "horror") return poly(star(6, 13.5, 6.2), c, 1.6) + circ(0, 0, 3.2, COL.edge, 0);
+    if (kind === "spirit") {
+      const tail = "M-3 7 C-14 12 -16 4 -10 2";
+      return `<path d="${tail}" fill="none" stroke="${COL.edge}" stroke-width="5.4" stroke-linecap="round"/><path d="${tail}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round"/><circle r="7.6" fill="#161b22"/><circle r="7.6" fill="none" stroke="${COL.edge}" stroke-width="5.6"/><circle r="7.6" fill="none" stroke="${c}" stroke-width="3.4"/>`;
+    }
+    if (kind === "guard")
+      return (
+        `<path d="M-9.5 -9.5H9.5V0Q9.5 8 0 12.5Q-9.5 8 -9.5 0Z" fill="${c}" stroke="${COL.edge}" stroke-width="1.6" stroke-linejoin="round"/>` +
+        WEAPON.spear(8)
+      );
+    if (kind === "priest")
+      return (
+        `<path d="M-8 10.5V-2Q-8 -11 0 -13.5Q8 -11 8 -2V10.5Z" fill="${c}" stroke="${COL.edge}" stroke-width="1.6" stroke-linejoin="round"/>` +
+        weapons(kind, 8)
+      );
+    if (kind === "guild-lord")
+      return (
+        circ(0, 0, 12, c, 1.8) +
+        poly(
+          [
+            [-9, -8],
+            [-9, -17],
+            [-4.5, -11.5],
+            [0, -18],
+            [4.5, -11.5],
+            [9, -17],
+            [9, -8],
+          ],
+          c,
+          1.6,
+        ) +
+        weapons(kind, 12)
+      );
+    if (kind === "ghostly-hero")
+      return (
+        circ(0, 0, 10.5, c, 1.6) +
+        `<circle r="14" fill="none" stroke="${COL.edge}" stroke-width="4.2"/><circle r="14" fill="none" stroke="${COL.ink}" stroke-width="1.8" stroke-dasharray="5 2.4"/>` +
+        weapons(kind, 14)
+      );
+    return "";
+  }
+
+  render();
+</script>

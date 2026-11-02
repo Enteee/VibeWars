@@ -6,6 +6,7 @@ import {
   dismissToast,
   emptyState,
   inlineConfirm,
+  keepInside,
   screenBar,
   selectableRow,
   setToastHost,
@@ -713,5 +714,43 @@ describe("emptyState (#578)", () => {
     expect(state.children.map((child) => child.textContent)).toEqual(["No teams yet.", "New team"]);
     state.button("New team").click();
     expect(onAction).toHaveBeenCalledOnce();
+  });
+});
+
+describe("keepInside (#2028)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("window", { innerWidth: 1100 });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const panel = (left: number, width: number) => ({
+    style: { translate: "4px", maxWidth: "" },
+    getBoundingClientRect: () => ({ left, right: left + width }),
+  });
+
+  it("moves a panel past the left edge to 8 px inside it", () => {
+    const shown = panel(-26, 448);
+    keepInside(shown);
+    expect(shown.style.translate).toBe("34px");
+  });
+
+  it("moves one past the right edge back inside it", () => {
+    const shown = panel(800, 400);
+    keepInside(shown);
+    expect(shown.style.translate).toBe("-108px");
+  });
+
+  it("leaves one already inside where its anchor puts it", () => {
+    const shown = panel(600, 448);
+    keepInside(shown);
+    expect(shown.style.translate).toBe("");
+  });
+
+  it("is never wider than the window less both margins", () => {
+    const shown = panel(8, 448);
+    keepInside(shown);
+    expect(shown.style.maxWidth).toBe("1084px");
   });
 });
