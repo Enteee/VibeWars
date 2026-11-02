@@ -531,6 +531,7 @@ const teamSide = {
   chosen: {
     proposerId: "peer-1/local",
     reason: "votes",
+    presetName: null,
     members: [
       { name: "Mhenlo", primary: "monk", secondary: null },
       { name: "Devona", primary: "warrior", secondary: "monk" },
@@ -877,7 +878,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { kind: "find-match", ascentRound: 2 },
   ],
   ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
-  ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
+  ["play-bots (#2148)", parseWireLobbyCommand, { kind: "play-bots" }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
   [
     "Hosted Game's Team Lobby lobby-state, a side of one (#2104)",
@@ -893,7 +894,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   [
-    "Team Lobby lobby-state in its vote, with the house team chosen (#1458)",
+    "Team Lobby lobby-state in its vote, with a preset team chosen (#2148)",
     parseWireLobbyState,
     {
       ...teamLobbyState,
@@ -905,7 +906,12 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
           {
             ...teamSide,
             captainId: null,
-            chosen: { ...teamSide.chosen, proposerId: null, reason: "house" },
+            chosen: {
+              ...teamSide.chosen,
+              proposerId: null,
+              reason: "preset",
+              presetName: "Balanced 4v4",
+            },
           },
         ],
       },
@@ -2017,6 +2023,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
         stage: "claim",
         secondsLeft: 1,
         sides: [{ ...teamSide, chosen: { ...teamSide.chosen, reason: "coin" } }, null],
+      },
+    },
+  ],
+  [
+    "Team Lobby choice by votes with a preset name (#2148)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 1,
+        sides: [{ ...teamSide, chosen: { ...teamSide.chosen, presetName: "Spike 8v8" } }, null],
+      },
+    },
+  ],
+  [
+    "Team Lobby choice with no preset name at all (#2148)",
+    parseWireLobbyState,
+    {
+      ...teamLobbyState,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 1,
+        sides: [{ ...teamSide, chosen: { ...teamSide.chosen, presetName: undefined } }, null],
       },
     },
   ],

@@ -2,6 +2,8 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
   STARTER_BUILDS,
   getProfession,
+  pickStarterBuild,
+  pickStarterTeam,
   parsePlayerBuild,
   validatePlayerBuild,
   type PlayerBuild,
@@ -122,6 +124,8 @@ interface TeamSide {
     | {
         readonly proposerId: string | null;
         readonly reason: WireTeamChoice["reason"];
+        /** The preset team's name when `reason` is `"preset"`, else `null`. */
+        readonly presetName: string | null;
         readonly builds: readonly PlayerBuild[];
       }
     | undefined;
@@ -432,7 +436,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let teamLobby: TeamLobby | undefined;
   /**
    * A team mode's party, from its Team Lobby's end until it leaves the
-   * queue or plays the house team (#1766), while `phase` is `"queued"`.
+   * queue or plays against bots (#1766), while `phase` is `"queued"`.
    */
   let queueing:
     | {
@@ -516,6 +520,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           : {
               proposerId: side.chosen.proposerId,
               reason: side.chosen.reason,
+              presetName: side.chosen.presetName,
               members: side.chosen.builds.map(characterOf),
             },
       claims: lobby.stage === "claim" ? [...side.claims] : [],
@@ -776,8 +781,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     return true;
   };
 
-  /** Whether `team` plays the house team: nobody proposed, or nobody is there to. */
-  const playsHouse = (team: 0 | 1, side: TeamSide): boolean =>
+  /** Whether `team` plays a preset team: nobody proposed, or nobody is there to. */
+  const playsPreset = (team: 0 | 1, side: TeamSide): boolean =>
     side.proposals.size === 0 || humansOn(team).length === 0;
 
   /** One of `options`, at random from the lobby's RNG. */
@@ -785,29 +790,44 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     options[Math.min(options.length - 1, Math.floor(random() * options.length))];
 
   /**
+   * A preset team of `size` at random from the lobby's RNG (#2148): its
+   * name, and its builds in slot order under its members' job names.
+   * Size 1 has no preset team: one starter build, and no name. A queued
+   * party's foe side is of size 0, and plays none.
+   */
+  const presetTeamFor = (
+    size: number,
+  ): { readonly name: string | null; readonly builds: readonly PlayerBuild[] } => {
+    if (size === 0) {
+      return { name: null, builds: [] };
+    }
+    if (size === 1) {
+      return { name: null, builds: [pickStarterBuild(random)] };
+    }
+    const preset = pickStarterTeam(random, size);
+    if (preset === undefined) {
+      throw new Error(`there are no preset teams of ${String(size)}`);
+    }
+    return {
+      name: preset.name,
+      builds: preset.members.map(({ name, build }) => ({ ...build, name })),
+    };
+  };
+
+  /**
    * The Team Build `team` plays, and why: the most votes; on a tie the
    * captain's vote if it is one of the tied, else one of them at random;
    * with no votes any proposal at random; with no proposal, or nobody to
-   * make one, the house team of `houseSize`: the starter builds in order,
-   * round and round.
+   * make one, a random preset team of `size`.
    */
   const chooseFor = (
     team: 0 | 1,
     side: TeamSide,
-    houseSize: number,
+    size: number,
   ): NonNullable<TeamSide["chosen"]> => {
-    if (playsHouse(team, side)) {
-      return {
-        proposerId: null,
-        reason: "house",
-        builds: Array.from({ length: houseSize }, (_, slot) => {
-          const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
-          if (build === undefined) {
-            throw new Error("there are no starter builds for a house team");
-          }
-          return build;
-        }),
-      };
+    if (playsPreset(team, side)) {
+      const preset = presetTeamFor(size);
+      return { proposerId: null, reason: "preset", presetName: preset.name, builds: preset.builds };
     }
     const tally = new Map([...side.proposals.keys()].map((proposerId) => [proposerId, 0]));
     for (const votedFor of side.votes.values()) {
@@ -828,7 +848,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (proposerId === undefined || builds === undefined) {
       throw new Error("a side with proposals chose none");
     }
-    return { proposerId, reason, builds };
+    return { proposerId, reason, presetName: null, builds };
   };
 
   /**
@@ -1011,9 +1031,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   /**
    * No other team came (#1766, Q191): the party plays its own seats here,
-   * a bot in each seat nobody holds, against a house team of bots.
+   * a bot in each seat nobody holds, against a random preset team of bots.
    */
-  const playHouseTeam = (): void => {
+  const playAgainstBots = (): void => {
     const current = queueing;
     if (current === undefined) {
       return;
@@ -1029,11 +1049,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const holder = seat.holder === null ? undefined : peerMember(seat.holder);
       assigned.set(holder?.team === 0 ? holder.id : addBot(0), seat.build);
     }
-    for (const slot of current.seats.keys()) {
-      const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
-      if (build !== undefined) {
-        assigned.set(addBot(1), build);
-      }
+    for (const build of presetTeamFor(current.seats.length).builds) {
+      assigned.set(addBot(1), build);
     }
     nameSlotBots(assigned);
     start(assigned);
@@ -1358,7 +1375,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return beginTeamLobby(true, command.ascentRound);
       }
       case "leave-queue":
-      case "house-team":
+      case "play-bots":
         // A queued party's, and this one is not.
         return false;
       case "propose":
@@ -1523,8 +1540,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /**
    * Seat each side of a team mode's queued match by its plan (ADR-0042),
    * its bots added to the lobby, and say what each member plays. A side
-   * with no whole plan plays the house team: its humans, then its bots,
-   * the starter builds in order, round and round. A human's own hello
+   * with no whole plan plays a random preset team: its humans, then its
+   * bots, the preset's builds in slot order. A human's own hello
    * build is never read: every seat has one here. `rejected` holds the
    * sides that sent a plan which was not whole.
    */
@@ -1544,17 +1561,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       if (teamPlans[team] !== undefined && whole === undefined) {
         rejected.add(team);
       }
+      const preset = whole === undefined ? presetTeamFor(size).builds : [];
       const seats =
-        whole ??
-        [...keys, ...Array.from({ length: size - keys.length }, () => null)].map(
-          (memberKey, slot) => {
-            const build = STARTER_BUILDS[slot % STARTER_BUILDS.length];
-            if (build === undefined) {
-              throw new Error("there are no starter builds for a house team");
-            }
-            return { memberKey, build };
-          },
-        );
+        whole ?? preset.map((build, slot) => ({ memberKey: keys[slot] ?? null, build }));
       for (const { memberKey, build } of seats) {
         if (memberKey === null) {
           const id = addBot(team);
@@ -1742,17 +1751,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       takeTeamPlan(queued, member, command);
       return;
     }
-    // Queued, the host may only take its party out, or play the house team (#1766).
+    // Queued, the host may only take its party out, or play against bots (#1766).
     if (phase === "queued") {
       if (member.id === local.selfId && command.kind === "leave-queue") {
         leaveQueue();
       } else if (
         member.id === local.selfId &&
-        command.kind === "house-team" &&
+        command.kind === "play-bots" &&
         // Heroes' Ascent waits for a side at its round, never for bots (#1996).
         mode !== "heroes-ascent"
       ) {
-        playHouseTeam();
+        playAgainstBots();
       }
       return;
     }

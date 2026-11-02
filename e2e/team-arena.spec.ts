@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
+import { STARTER_TEAMS } from "../packages/game-core/src/starter-teams.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { copyInvite, openPeers, openToFriends, proposeTeam } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
@@ -101,6 +102,13 @@ async function runTeamLobby(
 }
 
 /** `page` plays `build`: its skill bar's first skill is the build's. */
+/** The first skill on `page`'s bar, once the HUD shows one. */
+async function firstSkill(page: Page): Promise<string | null> {
+  const skill = page.locator(".hud-skills .hud-skill").first();
+  await expect(skill).toHaveAttribute("data-skill-id", /./);
+  return skill.getAttribute("data-skill-id");
+}
+
 async function expectPlays(
   page: Page,
   build: (typeof STARTER_BUILDS)[number] | undefined,
@@ -140,14 +148,17 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     }
     await expect(ann.getByRole("button", { name: "Leave the queue" })).toBeVisible();
 
-    // The other party plays the house team: nobody proposes.
+    // The other party plays a random 4v4 preset team: nobody proposes (#2148).
     await formParty([cid, dot], ["Cid", "Dot"]);
     await runTeamLobby([cid, dot]);
 
     await expectPlays(ann, QUAD[0]);
     await expectPlays(bea, QUAD[1]);
-    await expectPlays(cid, STARTER_BUILDS[0]);
-    await expectPlays(dot, STARTER_BUILDS[1]);
+    expect(
+      STARTER_TEAMS.filter((preset) => preset.members.length === 4).map((preset) =>
+        preset.members.slice(0, 2).map(({ build }) => build.skillBar[0]),
+      ),
+    ).toContainEqual([await firstSkill(cid), await firstSkill(dot)]);
     // Four a side: the party's two and two bots.
     await expect(ann.locator(".party-row-bot:visible")).toHaveCount(2);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);

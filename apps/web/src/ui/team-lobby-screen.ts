@@ -46,7 +46,7 @@ export const VOTE_TITLE = "Choose a team build";
 export const CLAIM_TITLE = "Take a character";
 export const VOTE_HINT = "Click a card to vote";
 export const SPECTATING_LINE = "Teams are choosing their builds";
-export const NO_PROPOSALS = "No proposals: the house team build plays";
+export const NO_PROPOSALS = "No proposals: a random preset team plays";
 export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder.";
 /** Every Team Build has problems (#2110): saved, but none can be proposed. */
 export const NO_PLAYABLE_TEAM_BUILDS =
@@ -71,7 +71,8 @@ export const PROPOSE_BUILD = "Propose this build";
 export const WITHDRAW_PROPOSAL = "Withdraw proposal";
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
-export const HOUSE_TEAM = "House team";
+/** A preset team's card title where it has no name (#2148): a side of one plays a starter build. */
+export const PRESET_TEAM = "Preset team";
 
 /** Why the chosen build won, as the line under it reads. */
 export type ReasonLine =
@@ -79,7 +80,7 @@ export type ReasonLine =
   | "Tie: captain's pick"
   | "Tie: picked at random"
   | "No votes: picked at random"
-  | "House team";
+  | "No proposals: a random preset";
 
 /**
  * The reason line for `choice`. The host says `"random"` both for a tie
@@ -99,8 +100,8 @@ export function reasonLine(
       return proposals.some((proposal) => proposal.voterIds.length > 0)
         ? "Tie: picked at random"
         : "No votes: picked at random";
-    case "house":
-      return "House team";
+    case "preset":
+      return "No proposals: a random preset";
   }
 }
 
@@ -224,7 +225,7 @@ export function proposalCard(
   return card;
 }
 
-/** The chosen build as a card: its proposer, or the house team, and its characters. */
+/** The chosen build as a card: its proposer, or the preset team's name, and its characters. */
 function chosenCard(
   choice: WireTeamChoice,
   side: WireTeamSide,
@@ -233,7 +234,7 @@ function chosenCard(
   const card = teamFigureCard({
     title:
       choice.proposerId === null
-        ? personName("team-lobby-card-name", HOUSE_TEAM, false)
+        ? personName("team-lobby-card-name", choice.presetName ?? PRESET_TEAM, false)
         : personName(
             "team-lobby-card-name",
             nameOf(snapshot.players, choice.proposerId),

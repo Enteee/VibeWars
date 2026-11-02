@@ -115,7 +115,7 @@ export const TICKET_USED_MESSAGE = "This ticket is already in the match, in anot
 export const FELL_THROUGH_MESSAGE = "Match fell through, searching again.";
 /** A queued party's team plan (ADR-0042) was not whole at the start (#1822). */
 export const TEAM_PLAN_REJECTED_NOTICE =
-  "Your party's team plan was not accepted; the house team plays for you.";
+  "Your party's team plan was not accepted; a preset team plays for you.";
 /** A joined player's ask the host turned down (#1194). */
 export const REFUSED_MESSAGE = "The host turned that down.";
 export const NOT_HOST_MESSAGE = "Only the host can do that.";

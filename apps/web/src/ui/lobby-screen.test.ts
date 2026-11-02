@@ -2,7 +2,7 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  HOUSE_TEAM_AFTER_MS,
+  PLAY_BOTS_AFTER_MS,
   MATCH_RUNNING_NOTICE,
   READY_JOIN_A_TEAM,
   READY_MATCH_STARTED,
@@ -406,7 +406,7 @@ describe("matchmakingButtons (#1766)", () => {
     queuedMs,
     onFindMatch: () => pressed.push("find"),
     onLeaveQueue: () => pressed.push("leave"),
-    onPlayHouseTeam: () => pressed.push("house"),
+    onPlayBots: () => pressed.push("bots"),
   });
   const labels = (queuedMs: number | null, phase: LobbySnapshot["phase"] = "waiting") =>
     (
@@ -430,24 +430,24 @@ describe("matchmakingButtons (#1766)", () => {
     expect(labels(null, "team-lobby")).toEqual([["Find a match", true]]);
   });
 
-  it("offers Leave the queue once queued, and the house team only after a minute alone (Q191)", () => {
+  it("offers Leave the queue once queued, and Play against bots only after a minute alone (Q191)", () => {
     expect(labels(0)).toEqual([["Leave the queue", false]]);
-    expect(labels(HOUSE_TEAM_AFTER_MS - 1)).toEqual([["Leave the queue", false]]);
-    expect(labels(HOUSE_TEAM_AFTER_MS)).toEqual([
-      ["Play the house team", false],
+    expect(labels(PLAY_BOTS_AFTER_MS - 1)).toEqual([["Leave the queue", false]]);
+    expect(labels(PLAY_BOTS_AFTER_MS)).toEqual([
+      ["Play against bots", false],
       ["Leave the queue", false],
     ]);
-    const [house, leave] = matchmakingButtons(
-      matchmaking(HOUSE_TEAM_AFTER_MS),
+    const [bots, leave] = matchmakingButtons(
+      matchmaking(PLAY_BOTS_AFTER_MS),
       lobbyControls(snapshot("waiting")),
     ) as unknown as FakeElement[];
-    house?.click();
+    bots?.click();
     leave?.click();
-    expect(pressed).toEqual(["house", "leave"]);
+    expect(pressed).toEqual(["bots", "leave"]);
   });
-  it("never offers Heroes' Ascent the house team: it waits for a side (#1996)", () => {
+  it("never offers Heroes' Ascent bots: it waits for a side (#1996)", () => {
     const shown = matchmakingButtons(
-      { ...matchmaking(10 * HOUSE_TEAM_AFTER_MS), onPlayHouseTeam: undefined },
+      { ...matchmaking(10 * PLAY_BOTS_AFTER_MS), onPlayBots: undefined },
       lobbyControls(snapshot("waiting")),
     ) as unknown as FakeElement[];
     expect(shown.map((button) => button.textContent)).toEqual(["Leave the queue"]);

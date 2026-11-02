@@ -101,7 +101,7 @@ import {
   type TeamEndAction,
 } from "./ui/queue-screen.js";
 import {
-  HOUSE_TEAM_AFTER_MS,
+  PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
   type LobbyMatchmaking,
@@ -462,8 +462,8 @@ async function main(): Promise<void> {
           | undefined;
         /** The party lobby closed while out of sight: what to say back on the menu. */
         partyClosed: string | undefined;
-        /** Whether the screen offers *Play the house team* yet. */
-        houseTeamShown: boolean;
+        /** Whether the screen offers *Play against bots* yet. */
+        playBotsShown: boolean;
         /** Teams its queue last heard searching (#1881); `undefined` until it says, or while it can't. */
         teams: number | undefined;
         /** Its match is over: whoever leaves it first is no news. */
@@ -1128,7 +1128,7 @@ async function main(): Promise<void> {
   const roundFor = (mode: LobbyMode): number | null =>
     mode === "heroes-ascent" ? ascentRound : null;
 
-  /** A team mode's Find a match, Leave the queue and Play the house team (#1766). */
+  /** A team mode's Find a match, Leave the queue and Play against bots (#1766). */
   const matchmakingFor = (entry: HostEntry): LobbyMatchmaking | undefined => {
     if (lobby === undefined || teamQueueModeOf(entry) === undefined) {
       return undefined;
@@ -1146,11 +1146,11 @@ async function main(): Promise<void> {
         lobby?.leaveQueue();
       },
       // Heroes' Ascent waits for a side at its round, never for bots (#1996).
-      onPlayHouseTeam:
+      onPlayBots:
         entry === "heroes-ascent"
           ? undefined
           : () => {
-              lobby?.playHouseTeam();
+              lobby?.playAgainstBots();
             },
     };
   };
@@ -1592,7 +1592,7 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The queue strip's wait, each second; the screen again once the house team is offered. */
+  /** The queue strip's wait, each second; the screen again once Play against bots is offered. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
@@ -1607,8 +1607,8 @@ async function main(): Promise<void> {
     for (const label of document.querySelectorAll(".party-queued")) {
       label.textContent = lookingLabel(queuedMs, current.teams);
     }
-    if (!current.houseTeamShown && queuedMs >= HOUSE_TEAM_AFTER_MS) {
-      current.houseTeamShown = true;
+    if (!current.playBotsShown && queuedMs >= PLAY_BOTS_AFTER_MS) {
+      current.playBotsShown = true;
       redrawRail();
     }
   };
@@ -1644,7 +1644,7 @@ async function main(): Promise<void> {
       place: undefined,
       parked: undefined,
       partyClosed: undefined,
-      houseTeamShown: false,
+      playBotsShown: false,
       teams: undefined,
       finished: false,
       ascentRound: snapshot.ascentRound,

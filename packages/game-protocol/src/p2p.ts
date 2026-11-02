@@ -1088,9 +1088,11 @@ export interface WireTeamProposal {
 
 /** The Team Build a side plays, and why it was picked. */
 export interface WireTeamChoice {
-  /** `null` for the house team. */
+  /** `null` for a preset team. */
   readonly proposerId: string | null;
-  readonly reason: "votes" | "captain" | "random" | "house";
+  readonly reason: "votes" | "captain" | "random" | "preset";
+  /** The preset team's name (#2148): `null` unless `reason` is `"preset"`, and at size 1. */
+  readonly presetName: string | null;
   readonly members: readonly WireLobbyCharacter[];
 }
 
@@ -1126,13 +1128,13 @@ export type WireLobbyCommand =
   | { readonly kind: "start" }
   /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
-   * queue; `leave-queue` takes it out again, `house-team` plays the house
-   * team instead, in this lobby. In Heroes' Ascent it queues at the
+   * queue; `leave-queue` takes it out again, `play-bots` plays against
+   * bots instead, in this lobby. In Heroes' Ascent it queues at the
    * host's `ascentRound` (#1996), `null` in every other mode.
    */
   | { readonly kind: "find-match"; readonly ascentRound: number | null }
   | { readonly kind: "leave-queue" }
-  | { readonly kind: "house-team" }
+  | { readonly kind: "play-bots" }
   /**
    * In a Team Lobby's vote (#1458): slot `slot` of a Team Build of `size`,
    * its build opaque here. One build a message, so a side of large builds
@@ -1208,7 +1210,7 @@ export type LobbyRefusal = (typeof LOBBY_REFUSALS)[number];
  * Lobby host to each seated peer, and only to them: the match is on, on
  * `mapId`. The peer then says `hello` to the host on the same transport.
  * `teamPlanRejected`: the peer's party sent a team plan (ADR-0042) that
- * was not whole, so the house team plays for its side.
+ * was not whole, so a random preset team plays for its side.
  */
 export interface WireMatchStart {
   readonly mapId: string;
@@ -2504,9 +2506,11 @@ function parseTeamChoice(value: unknown): WireTeamChoice | null | undefined {
   );
   return raw !== undefined &&
     isNullableString(raw.proposerId) &&
-    isOneOf(raw.reason, ["votes", "captain", "random", "house"] as const) &&
+    isOneOf(raw.reason, ["votes", "captain", "random", "preset"] as const) &&
+    isNullableString(raw.presetName) &&
+    (raw.presetName === null || raw.reason === "preset") &&
     members !== undefined
-    ? { proposerId: raw.proposerId, reason: raw.reason, members }
+    ? { proposerId: raw.proposerId, reason: raw.reason, presetName: raw.presetName, members }
     : undefined;
 }
 
@@ -2612,7 +2616,7 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
         : undefined;
     case "start":
     case "leave-queue":
-    case "house-team":
+    case "play-bots":
       return { kind: raw.kind };
     case "propose": {
       if (raw.slot === null) {

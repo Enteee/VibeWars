@@ -13,6 +13,7 @@ import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
   NO_PROPOSALS,
+  PRESET_TEAM,
   NO_PLAYABLE_TEAM_BUILDS,
   NO_TEAM_BUILDS,
   SEATS_LINE,
@@ -173,6 +174,7 @@ function voteSide(proposals: readonly WireTeamProposal[]): WireTeamSide {
 const SUNRISE = {
   proposerId: "aria",
   reason: "captain" as const,
+  presetName: null,
   members: [
     { name: "Bram", primary: "warrior", secondary: null },
     { name: "Mira", primary: "monk", secondary: null },
@@ -248,7 +250,12 @@ describe("the Team Lobby's words (#1460)", () => {
     expect(reasonLine({ ...SUNRISE, reason: "random" }, unvoted)).toBe(
       "No votes: picked at random",
     );
-    expect(reasonLine({ ...SUNRISE, proposerId: null, reason: "house" }, [])).toBe("House team");
+    expect(
+      reasonLine(
+        { ...SUNRISE, proposerId: null, reason: "preset", presetName: "Balanced 4v4" },
+        [],
+      ),
+    ).toBe("No proposals: a random preset");
   });
 
   it("shows the clock as m:ss and a voter as an initial", () => {
@@ -717,18 +724,37 @@ describe("the Team Lobby's body (#1460)", () => {
     });
   });
 
-  it("names the house team when nobody proposed", () => {
+  it("names the random preset team when nobody proposed (#2148)", () => {
     body(lobby("aria", "vote", voteSide([])));
     const shown = body(
       lobby("aria", "claim", {
         ...claimSide([null, null, null, null]),
-        chosen: { ...SUNRISE, proposerId: null, reason: "house" },
+        chosen: { ...SUNRISE, proposerId: null, reason: "preset", presetName: "Balanced 4v4" },
       }),
     );
     const cards = shown.all("play-card");
     expect(cards.map((card) => card.all("team-lobby-name-text")[0]?.textContent)).toEqual([
-      "House team",
+      "Balanced 4v4",
     ]);
-    expect(shown.all("team-lobby-reason")[0]?.textContent).toBe("House team");
+    expect(shown.all("team-lobby-reason")[0]?.textContent).toBe("No proposals: a random preset");
+  });
+
+  it("titles a side of one's preset, which has no name, a preset team (#2148)", () => {
+    const shown = body(
+      lobby("aria", "claim", {
+        ...claimSide([null]),
+        size: 1,
+        chosen: {
+          ...SUNRISE,
+          proposerId: null,
+          reason: "preset",
+          presetName: null,
+          members: SUNRISE.members.slice(0, 1),
+        },
+      }),
+    );
+    expect(
+      shown.all("play-card").map((card) => card.all("team-lobby-name-text")[0]?.textContent),
+    ).toEqual([PRESET_TEAM]);
   });
 });

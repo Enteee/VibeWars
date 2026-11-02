@@ -389,8 +389,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       leaveQueue() {
         send({ kind: "leave-queue" });
       },
-      playHouseTeam() {
-        send({ kind: "house-team" });
+      playAgainstBots() {
+        send({ kind: "play-bots" });
       },
       queueParty(key) {
         if (hostId !== undefined && !closed && queueing !== undefined && partyKey === undefined) {
