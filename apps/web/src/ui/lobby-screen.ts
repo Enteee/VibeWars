@@ -30,12 +30,12 @@ export interface LobbyMatchmaking {
   readonly queuedMs: number | null;
   readonly onFindMatch: () => void;
   readonly onLeaveQueue: () => void;
-  /** `undefined` where no house team is offered: Heroes' Ascent waits for a side (#1996). */
-  readonly onPlayHouseTeam: (() => void) | undefined;
+  /** `undefined` where bots are not offered: Heroes' Ascent waits for a side (#1996). */
+  readonly onPlayBots: (() => void) | undefined;
 }
 
-/** The host may play the house team after this long with no other team (Q191). */
-export const HOUSE_TEAM_AFTER_MS = 60_000;
+/** The host may play against bots after this long with no other team (Q191). */
+export const PLAY_BOTS_AFTER_MS = 60_000;
 /** A guest's word on a team-mode screen: matchmaking is the host's. */
 export const HOST_STARTS_MATCHMAKING = "The host starts matchmaking";
 
@@ -328,7 +328,7 @@ export function lobbyPanel(
 
 /**
  * The host's matchmaking buttons (#1766): Find a match, and once queued,
- * Leave the queue, and after a minute alone also Play the house team.
+ * Leave the queue, and after a minute alone also Play against bots.
  */
 export function matchmakingButtons(
   matchmaking: LobbyMatchmaking,
@@ -340,10 +340,10 @@ export function matchmakingButtons(
     return [find];
   }
   const leave = button("Leave the queue", "lobby-leave-queue", matchmaking.onLeaveQueue);
-  const { onPlayHouseTeam } = matchmaking;
-  return matchmaking.queuedMs < HOUSE_TEAM_AFTER_MS || onPlayHouseTeam === undefined
+  const { onPlayBots } = matchmaking;
+  return matchmaking.queuedMs < PLAY_BOTS_AFTER_MS || onPlayBots === undefined
     ? [leave]
-    : [button("Play the house team", "primary lobby-house-team", onPlayHouseTeam), leave];
+    : [button("Play against bots", "primary lobby-play-bots", onPlayBots), leave];
 }
 
 /**

@@ -5128,12 +5128,12 @@
           ]
         },
         {
-          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "house-team" } }]
-        },
-        {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "leave-queue" } }
           ]
+        },
+        {
+          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "play-bots" } }]
         },
         {
           "properties": [
@@ -5464,6 +5464,11 @@
                                             }
                                           },
                                           {
+                                            "name": "presetName",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
                                             "name": "proposerId",
                                             "optional": false,
                                             "type": { "union": ["null", "string"] }
@@ -5474,7 +5479,7 @@
                                             "type": {
                                               "union": [
                                                 { "literal": "captain" },
-                                                { "literal": "house" },
+                                                { "literal": "preset" },
                                                 { "literal": "random" },
                                                 { "literal": "votes" }
                                               ]
@@ -5579,6 +5584,11 @@
                                             }
                                           },
                                           {
+                                            "name": "presetName",
+                                            "optional": false,
+                                            "type": { "union": ["null", "string"] }
+                                          },
+                                          {
                                             "name": "proposerId",
                                             "optional": false,
                                             "type": { "union": ["null", "string"] }
@@ -5589,7 +5599,7 @@
                                             "type": {
                                               "union": [
                                                 { "literal": "captain" },
-                                                { "literal": "house" },
+                                                { "literal": "preset" },
                                                 { "literal": "random" },
                                                 { "literal": "votes" }
                                               ]
@@ -6945,6 +6955,7 @@
             }
           }
         },
+        { "name": "presetName", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "proposerId", "optional": false, "type": { "union": ["null", "string"] } },
         {
           "name": "reason",
@@ -6952,7 +6963,7 @@
           "type": {
             "union": [
               { "literal": "captain" },
-              { "literal": "house" },
+              { "literal": "preset" },
               { "literal": "random" },
               { "literal": "votes" }
             ]
@@ -7004,6 +7015,11 @@
                                   }
                                 },
                                 {
+                                  "name": "presetName",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
                                   "name": "proposerId",
                                   "optional": false,
                                   "type": { "union": ["null", "string"] }
@@ -7014,7 +7030,7 @@
                                   "type": {
                                     "union": [
                                       { "literal": "captain" },
-                                      { "literal": "house" },
+                                      { "literal": "preset" },
                                       { "literal": "random" },
                                       { "literal": "votes" }
                                     ]
@@ -7103,6 +7119,11 @@
                                   }
                                 },
                                 {
+                                  "name": "presetName",
+                                  "optional": false,
+                                  "type": { "union": ["null", "string"] }
+                                },
+                                {
                                   "name": "proposerId",
                                   "optional": false,
                                   "type": { "union": ["null", "string"] }
@@ -7113,7 +7134,7 @@
                                   "type": {
                                     "union": [
                                       { "literal": "captain" },
-                                      { "literal": "house" },
+                                      { "literal": "preset" },
                                       { "literal": "random" },
                                       { "literal": "votes" }
                                     ]
@@ -7245,6 +7266,11 @@
                     }
                   },
                   {
+                    "name": "presetName",
+                    "optional": false,
+                    "type": { "union": ["null", "string"] }
+                  },
+                  {
                     "name": "proposerId",
                     "optional": false,
                     "type": { "union": ["null", "string"] }
@@ -7255,7 +7281,7 @@
                     "type": {
                       "union": [
                         { "literal": "captain" },
-                        { "literal": "house" },
+                        { "literal": "preset" },
                         { "literal": "random" },
                         { "literal": "votes" }
                       ]
