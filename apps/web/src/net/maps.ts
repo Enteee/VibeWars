@@ -1,6 +1,5 @@
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import { validateMapData, type MapData, type Objective } from "@vibewars/game-maps/schema";
-import { sizeClass, type SizeClass } from "@vibewars/game-maps/size-class";
 import arenaAlpha from "@vibewars/game-maps/maps/arena-alpha/map.json" with { type: "json" };
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
@@ -88,46 +87,53 @@ export const LOBBY_MODE_MATCH_MODES: Readonly<Record<LobbyMode, readonly MatchMo
  */
 const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 
-/** Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them. */
+/**
+ * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
+ * team mode's only those that suit its team size (#2108), so its draw never seats 8 on a map
+ * for 4. A Hosted Game's are every map until its host picks a size (#2104).
+ */
 export function modeMapIds(): Record<LobbyMode, string[]> {
-  const of = (mode: LobbyMode): string[] => {
+  const of = (mode: LobbyMode, size?: number): string[] => {
     const modes = LOBBY_MODE_MATCH_MODES[mode];
-    return arenaIds().filter((id) => modes === undefined || modes.includes(mapMode(id)));
+    return arenaIds().filter(
+      (id) =>
+        (modes === undefined || modes.includes(mapMode(id))) &&
+        (size === undefined || suits(id, size)),
+    );
   };
   return {
     "random-arena": of("random-arena"),
-    "team-arena": of("team-arena"),
-    "heroes-ascent": of("heroes-ascent").filter((id) => !ASCENT_FINALE_ONLY.includes(id)),
-    gvg: of("gvg"),
+    "team-arena": of("team-arena", teamSizeOf("team-arena")),
+    "heroes-ascent": of("heroes-ascent", teamSizeOf("heroes-ascent")).filter(
+      (id) => !ASCENT_FINALE_ONLY.includes(id),
+    ),
+    gvg: of("gvg", teamSizeOf("gvg")),
     "hosted-game": of("hosted-game"),
   };
 }
 
-/**
- * How many players an arena of each size class seats (#880): the small
- * four are tight for more than a 2v2, and a 1v1 on a large one is a walk.
- */
-const PLAYERS_BY_SIZE: Readonly<Record<SizeClass, { readonly min: number; readonly max: number }>> =
-  {
-    small: { min: 2, max: 4 },
-    medium: { min: 5, max: 8 },
-    large: { min: 5, max: 8 },
-  };
+/** The arenas among `maps` that suit a side of `size` (#2108), in their order. */
+export function mapsForSize(maps: readonly MapData[], size: number): MapData[] {
+  return maps.filter((map) => map.teamSizes.some((each) => each === size));
+}
+
+/** Whether the arena `mapId` suits a side of `size` (#2108); no map this build lacks does. */
+function suits(mapId: string, size: number): boolean {
+  return mapsForSize(ARENA_MAPS, size).some((map) => map.id === mapId);
+}
 
 /**
  * The arenas a Random Arena of `mode` is drawn from (#854 A2): every one
- * whose size class seats both teams, so a map added later joins by its
- * size and not by a list. Never a Guild Battle's (#1222): a 28-minute
+ * that suits its team size (#2108), so a map added later joins by the
+ * sizes it declares and not by a list. Never a Guild Battle's (#1222): a 28-minute
  * siege is not a Random Arena; nor a Relic Run's (#1374) or King of the
  * Hill's (#1377), Heroes' Ascent modes. In `ARENA_MAPS`' order, as `formGroups` wants the same
  * pool on every client.
  */
 export function randomArenaMapPool(mode: QueueMode): string[] {
-  const players = 2 * teamSizeOf(mode);
-  return ARENA_MAPS.filter((map) => {
-    const { min, max } = PLAYERS_BY_SIZE[sizeClass(map)];
-    return !NOT_RANDOM.includes(map.mode) && players >= min && players <= max;
-  }).map((map) => map.id);
+  return mapsForSize(ARENA_MAPS, teamSizeOf(mode))
+    .filter((map) => !NOT_RANDOM.includes(map.mode))
+    .map((map) => map.id);
 }
 
 /**
@@ -157,8 +163,9 @@ export function ascentMapId(round: number): string {
 
 /**
  * The arenas a queued match of `mode` is drawn from: a team mode's are
- * its lobby mode's (#1766), a Random Arena's its own pool, and a Heroes'
- * Ascent's the one map of `ascentRound` (#1996), `null` in other modes.
+ * its lobby mode's (#1766), which suit its size (#2108), a Random
+ * Arena's its own pool, and a Heroes' Ascent's the one map of
+ * `ascentRound` (#1996), each made for 8 a side; `null` in other modes.
  */
 export function queueMapPool(mode: QueueMode, ascentRound: number | null): string[] {
   switch (mode) {

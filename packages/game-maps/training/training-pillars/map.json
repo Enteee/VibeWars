@@ -2,6 +2,7 @@
   "id": "training-pillars",
   "name": "Training Pillars",
   "mode": "annihilation",
+  "teamSizes": [1],
   "width": 560,
   "height": 420,
   "walls": [

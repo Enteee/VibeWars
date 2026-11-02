@@ -2,6 +2,7 @@
   "id": "forgotten-shrines",
   "name": "Forgotten Shrines",
   "mode": "capture-points",
+  "teamSizes": [4, 8],
   "width": 2200,
   "height": 1400,
   "walls": [
@@ -143,6 +144,34 @@
       }
     },
     {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 420
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 220,
+        "y": 980
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 340,
+        "y": 560
+      }
+    },
+    {
+      "team": 0,
+      "position": {
+        "x": 340,
+        "y": 840
+      }
+    },
+    {
       "team": 1,
       "position": {
         "x": 1980,
@@ -168,6 +197,34 @@
       "position": {
         "x": 1860,
         "y": 700
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 980
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1980,
+        "y": 420
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1860,
+        "y": 840
+      }
+    },
+    {
+      "team": 1,
+      "position": {
+        "x": 1860,
+        "y": 560
       }
     }
   ]

@@ -1,5 +1,4 @@
-import { sizeClass } from "@vibewars/game-maps/size-class";
-import { ASCENT_ROUNDS } from "@vibewars/game-protocol";
+import { ASCENT_ROUNDS, teamSizeOf } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -11,34 +10,49 @@ import {
   mapMode,
   mapRelicField,
   mapShrines,
+  mapsForSize,
   modeMapIds,
   queueMapPool,
   randomArenaMapPool,
 } from "./maps.js";
 
-function sizesOf(ids: readonly string[]): string[] {
-  return ids.map((id) => {
-    const map = ARENA_MAPS.find((candidate) => candidate.id === id);
-    if (map === undefined) {
-      throw new Error(`no arena ${id}`);
-    }
-    return sizeClass(map);
-  });
+/** The team sizes the arena `id` declares. */
+function sizesOf(id: string): readonly number[] {
+  const map = ARENA_MAPS.find((candidate) => candidate.id === id);
+  if (map === undefined) {
+    throw new Error(`no arena ${id}`);
+  }
+  return map.teamSizes;
 }
 
 describe("randomArenaMapPool", () => {
-  it("plays a 1v1 and a 2v2 on the small arenas", () => {
-    for (const mode of ["random-arena-1v1", "random-arena-2v2"] as const) {
-      const pool = randomArenaMapPool(mode);
-      expect(pool).toEqual(["arena-alpha", "arena-open", "arena-pillars", "arena-split"]);
-      expect(new Set(sizesOf(pool))).toEqual(new Set(["small"]));
-    }
+  it("plays each size only on the arenas that declare it (#2108)", () => {
+    expect(randomArenaMapPool("random-arena-1v1")).toEqual([
+      "arena-alpha",
+      "arena-open",
+      "arena-pillars",
+    ]);
+    expect(randomArenaMapPool("random-arena-2v2")).toEqual([
+      "arena-alpha",
+      "arena-open",
+      "arena-pillars",
+      "arena-split",
+    ]);
+    expect(randomArenaMapPool("random-arena-4v4")).toEqual([
+      "arena-pillars",
+      "arena-split",
+      "arena-ring",
+      "arena-crossroads",
+      "arena-canyon",
+      "arena-long-hall",
+    ]);
   });
 
-  it("plays a 4v4 on every medium and large arena", () => {
-    const pool = randomArenaMapPool("random-arena-4v4");
-    expect(pool).toEqual(["arena-ring", "arena-crossroads", "arena-canyon", "arena-long-hall"]);
-    expect(sizesOf(pool)).not.toContain("small");
+  it("never draws a 1v1 on an arena for 4 or 8", () => {
+    for (const id of randomArenaMapPool("random-arena-1v1")) {
+      expect(sizesOf(id), id).toContain(1);
+    }
+    expect(randomArenaMapPool("random-arena-1v1")).not.toContain("arena-crossroads");
   });
 
   it("leaves no arena out of every pool but the Guild Battle's (#1222), the Relic Run's (#1374) and King of the Hill's (#1377)", () => {
@@ -61,6 +75,65 @@ describe("randomArenaMapPool", () => {
         )
         .sort(),
     );
+  });
+});
+
+describe("team sizes (#2108)", () => {
+  it("has a map for every mode at every size it plays", () => {
+    const pools: Record<string, readonly string[]> = {
+      "Random Arena 1v1": randomArenaMapPool("random-arena-1v1"),
+      "Random Arena 2v2": randomArenaMapPool("random-arena-2v2"),
+      "Random Arena 4v4": randomArenaMapPool("random-arena-4v4"),
+      "Team Arena 4v4": queueMapPool("team-arena", null),
+      "Heroes' Ascent 8v8": queueMapPool("heroes-ascent", 0),
+      "GvG 8v8": queueMapPool("gvg", null),
+      ...Object.fromEntries(
+        [1, 2, 4, 8].map((size) => [
+          `Hosted Game ${String(size)}v${String(size)}`,
+          mapsForSize(ARENA_MAPS, size).filter((map) =>
+            modeMapIds()["hosted-game"].includes(map.id),
+          ),
+        ]),
+      ),
+    };
+    for (const [name, pool] of Object.entries(pools)) {
+      expect(pool, name).not.toHaveLength(0);
+    }
+  });
+
+  it("gives each team mode only the maps that suit its size", () => {
+    for (const [mode, size] of [
+      ["team-arena", 4],
+      ["heroes-ascent", 8],
+      ["gvg", 8],
+    ] as const) {
+      for (const id of modeMapIds()[mode]) {
+        expect(sizesOf(id), `${mode} ${id}`).toContain(size);
+      }
+    }
+    expect(modeMapIds()["team-arena"]).not.toContain("arena-alpha");
+    expect(modeMapIds()["heroes-ascent"]).toEqual([
+      "relic-temples",
+      "hill-courtyard",
+      "forgotten-shrines",
+    ]);
+  });
+
+  it("lists every map for a Hosted Game until its host picks a size (#2104)", () => {
+    expect(modeMapIds()["hosted-game"]).toHaveLength(ARENA_MAPS.length);
+  });
+
+  it("picks the maps of a size in their order", () => {
+    expect(mapsForSize(ARENA_MAPS, 8).map((map) => map.id)).toEqual([
+      "arena-crossroads",
+      "arena-canyon",
+      "arena-long-hall",
+      "guild-hall-isle",
+      "relic-temples",
+      "hill-courtyard",
+      "hall-of-heroes",
+      "forgotten-shrines",
+    ]);
   });
 });
 
@@ -107,6 +180,12 @@ describe("the Heroes' Ascent progression (#1996)", () => {
       "Hill Courtyard",
       "Hall of Heroes",
     ]);
+  });
+
+  it("plays every round on a map made for its team size (#2108)", () => {
+    for (const id of ASCENT_PROGRESSION) {
+      expect(sizesOf(id), id).toContain(teamSizeOf("heroes-ascent"));
+    }
   });
 
   it("starts a coded Ascent lobby on its first round's map (#1994)", () => {
