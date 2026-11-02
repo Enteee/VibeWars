@@ -5,9 +5,9 @@ import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
   type TeamCharacter,
+  type TeamSize,
 } from "../storage/schema.js";
 import {
-  MAX_TEAM_SIZE,
   addMember,
   moveMember,
   newTeam,
@@ -15,6 +15,7 @@ import {
   replaceMember,
   teamCounters,
 } from "./team-builder.js";
+import { TEAM_SIZES } from "./rail.js";
 import {
   copyIntoTeam,
   dragMember,
@@ -40,13 +41,22 @@ function character(id: string): TeamCharacter {
   };
 }
 
-/** A team of a member per id, in order. */
+/** A team of `size` (#2109) of a member per id, in order. */
+function teamAt(size: TeamSize, ...ids: readonly string[]) {
+  return ids.reduce((team, id) => addMember(team, character(id)), newTeam("t1", size));
+}
+
+/** A complete team of a member per id: as many as a team size. */
 function teamOf(...ids: readonly string[]) {
-  return ids.reduce((team, id) => addMember(team, character(id)), newTeam("t1"));
+  const size = TEAM_SIZES.find((s) => s === ids.length);
+  if (size === undefined) {
+    throw new Error(`no team size of ${String(ids.length)}`);
+  }
+  return teamAt(size, ...ids);
 }
 
 describe("isTeamUnsaved (#573)", () => {
-  const opened = teamOf("a", "b");
+  const opened = teamAt(4, "a", "b");
 
   it("is false for the team as opened, however late it was touched", () => {
     expect(isTeamUnsaved(opened, { ...opened, updatedAt: opened.updatedAt + 5000 })).toBe(false);
@@ -85,7 +95,7 @@ describe("copyIntoTeam (#1452)", () => {
   };
 
   it("adds a copy under a new id, which an edit to the Solo character does not reach", () => {
-    const team = copyIntoTeam(newTeam("t1"), solo, "m1");
+    const team = copyIntoTeam(newTeam("t1", 4), solo, "m1");
     const copy = team.members[0]?.character;
     expect(copy).toEqual({ ...character("solo"), id: "m1" });
 
@@ -95,7 +105,7 @@ describe("copyIntoTeam (#1452)", () => {
   });
 
   it("copies the same character twice as two members", () => {
-    const team = copyIntoTeam(copyIntoTeam(newTeam("t1"), solo, "m1"), solo, "m2");
+    const team = copyIntoTeam(copyIntoTeam(newTeam("t1", 4), solo, "m1"), solo, "m2");
     expect(team.members.map((m) => m.character.id)).toEqual(["m1", "m2"]);
   });
 });
@@ -114,37 +124,48 @@ describe("teamEditorProblems (#573)", () => {
     teamEditorProblems(team).map((problem) => [problem.text, problem.blocking]);
 
   it("blocks a new team: it has no members", () => {
-    expect(texts(newTeam("t1"))).toEqual([["A team needs at least one member.", true]]);
+    expect(texts(newTeam("t1", 4))).toEqual([["A team needs at least one member.", true]]);
   });
 
   it("asks for a name in a sentence", () => {
-    expect(texts({ ...teamOf("a"), name: "  " })).toEqual([["Give the team a name.", true]]);
+    expect(texts({ ...teamOf("a"), name: "  " })).toEqual([
+      ["Give the team a name.", true],
+      ["The team is full: 1 member.", false],
+    ]);
   });
 
   it("names the slot and the name of an illegal member build (#1452)", () => {
     const illegal = { ...character("Bravo"), skillBar: ["monk.orison-of-healing"] };
-    expect(texts(addMember(teamOf("a"), illegal))).toEqual([
+    expect(texts(addMember(teamAt(2, "a"), illegal))).toEqual([
       ["Slot 2, Bravo, is not a legal build: open it to see why.", true],
+      ["The team is full: 2 members.", false],
+    ]);
+  });
+
+  it("blocks a team short of its size, counting its empty slots (#2109)", () => {
+    expect(texts(teamAt(4, "a", "b", "c"))).toEqual([
+      ["1 of 4 slots is empty: a lobby takes only a full team.", true],
+    ]);
+    expect(texts(teamAt(8, "a"))).toEqual([
+      ["7 of 8 slots are empty: a lobby takes only a full team.", true],
     ]);
   });
 
   it("says a full team is full, as a hint that never blocks", () => {
-    const ids = Array.from({ length: MAX_TEAM_SIZE }, (_, index) => `m${String(index)}`);
-    expect(texts(teamOf(...ids))).toEqual([
-      [`The team is full: ${String(MAX_TEAM_SIZE)} members.`, false],
-    ]);
+    const ids = Array.from({ length: 8 }, (_, index) => `m${String(index)}`);
+    expect(texts(teamOf(...ids))).toEqual([["The team is full: 8 members.", false]]);
   });
 });
 
 describe("saveTitle (#2110)", () => {
   it("saves an empty new team, naming its first problem", () => {
-    expect(saveTitle(teamEditorProblems(newTeam("t1")))).toBe(
+    expect(saveTitle(teamEditorProblems(newTeam("t1", 4)))).toBe(
       "Save this team (it has problems: A team needs at least one member.)",
     );
   });
 
   it("names no problem for a playable team, a full one included", () => {
-    const ids = Array.from({ length: MAX_TEAM_SIZE }, (_, index) => `m${String(index)}`);
+    const ids = Array.from({ length: 8 }, (_, index) => `m${String(index)}`);
     expect([
       saveTitle(teamEditorProblems(teamOf("a"))),
       saveTitle(teamEditorProblems(teamOf(...ids))),
@@ -153,13 +174,13 @@ describe("saveTitle (#2110)", () => {
 });
 
 describe("placesLeft (#574)", () => {
-  it("counts down from the team size and stops at nought", () => {
-    expect(placesLeft(newTeam("t1"))).toBe(MAX_TEAM_SIZE);
-    expect(placesLeft(teamOf("a"))).toBe(MAX_TEAM_SIZE - 1);
-    const members = Array.from({ length: MAX_TEAM_SIZE + 1 }, (_, index) => ({
+  it("counts down from the team's size and stops at nought (#2109)", () => {
+    expect(placesLeft(newTeam("t1", 4))).toBe(4);
+    expect(placesLeft(teamAt(8, "a"))).toBe(7);
+    const members = Array.from({ length: 3 }, (_, index) => ({
       character: character(`m${String(index)}`),
     }));
-    expect(placesLeft({ ...newTeam("t1"), members })).toBe(0);
+    expect(placesLeft({ ...newTeam("t1", 2), members })).toBe(0);
   });
 });
 
@@ -244,7 +265,7 @@ describe("markedCells (#575)", () => {
     skillBar: Array.from({ length: 8 }, (_, slot) => bar[slot] ?? null),
   });
   const team = addMember(
-    addMember(newTeam("t1"), withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"])),
+    addMember(newTeam("t1", 4), withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"])),
     withBar("b", [null, "monk.mend-condition", "warrior.distracting-blow"]),
   );
   const counters = teamCounters(team.members);

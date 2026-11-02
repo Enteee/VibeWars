@@ -7,24 +7,29 @@ import {
 } from "@vibewars/game-core";
 
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
-import { TEAM_SCHEMA_VERSION, type StoredTeam, type TeamCharacter } from "../storage/schema.js";
+import {
+  TEAM_SCHEMA_VERSION,
+  type StoredTeam,
+  type TeamCharacter,
+  type TeamSize,
+} from "../storage/schema.js";
 
 /**
  * The team builder (brief §18, §4).
  *
- * Teams are first-class and of *arbitrary* size — the brief is explicit
- * that 8 must not be hardcoded, so nothing here caps membership. Each
+ * Teams are first-class. Each has a size, 1, 2, 4 or 8, fixed when it is
+ * made (#2109): its members never exceed it, and a lobby proposes only a
+ * complete one. Each
  * member is a character of the team's own (#1452): one copied from a Solo
  * character is a copy, and editing either leaves the other alone.
  */
 
-export const MAX_TEAM_SIZE = 16;
-
-export function newTeam(id: string): StoredTeam {
+export function newTeam(id: string, size: TeamSize): StoredTeam {
   return {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id,
     name: "New Team",
+    size,
     members: [],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: Date.now(),
@@ -48,7 +53,7 @@ export function teamCharacter(character: TeamCharacter, id: string): TeamCharact
 }
 
 export function addMember(team: StoredTeam, character: TeamCharacter): StoredTeam {
-  if (team.members.length >= MAX_TEAM_SIZE) {
+  if (team.members.length >= team.size) {
     return team;
   }
   return {
@@ -117,8 +122,8 @@ export function validateTeam(team: StoredTeam): TeamProblem[] {
   if (team.members.length === 0) {
     problems.push({ message: "a team needs at least one member" });
   }
-  if (team.members.length > MAX_TEAM_SIZE) {
-    problems.push({ message: `a team may not exceed ${String(MAX_TEAM_SIZE)} members` });
+  if (team.members.length > team.size) {
+    problems.push({ message: "slot count exceeds the team size" });
   }
 
   team.members.forEach(({ character }, index) => {
@@ -132,7 +137,17 @@ export function validateTeam(team: StoredTeam): TeamProblem[] {
   return problems;
 }
 
-/** Duplicate a team under a new id, so the original is untouched. */
+/** "1 member", "4 members": a builds drawer row's (#2116), a full team's (#2109). */
+export function memberCount(n: number): string {
+  return `${String(n)} ${n === 1 ? "member" : "members"}`;
+}
+
+/** Whether every one of the team's slots is filled: a lobby proposes only such a build (#2109). */
+export function isTeamComplete(team: StoredTeam): boolean {
+  return team.members.length === team.size;
+}
+
+/** Duplicate a team under a new id, so the original is untouched, at its size. */
 export function duplicateTeam(team: StoredTeam, newId: string): StoredTeam {
   return { ...team, id: newId, name: `${team.name} (copy)`, updatedAt: Date.now() };
 }

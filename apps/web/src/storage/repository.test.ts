@@ -45,6 +45,7 @@ function team(overrides: Partial<StoredTeam> = {}): StoredTeam {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id: "team-1",
     name: "Test Team",
+    size: 1,
     members: [member("char-1")],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: 1000,
@@ -182,16 +183,16 @@ describe("TeamRepository", () => {
   it("keeps each member's own build (#1452)", async () => {
     const repo = new TeamRepository(createMemoryStore());
     const members = [member("char-1"), member("char-2")];
-    await repo.save(team({ members }));
+    await repo.save(team({ size: 2, members }));
     const loaded = await repo.load("team-1");
     expect(loaded?.members).toEqual(members);
   });
 
-  it("supports an arbitrary team size, not a hardcoded 8", async () => {
+  it("keeps a Team Build of 8 (#2109)", async () => {
     const repo = new TeamRepository(createMemoryStore());
-    const members = Array.from({ length: 12 }, (_unused, i) => member(`c${String(i)}`));
-    await repo.save(team({ members }));
-    expect((await repo.load("team-1"))?.members).toHaveLength(12);
+    const members = Array.from({ length: 8 }, (_unused, i) => member(`c${String(i)}`));
+    await repo.save(team({ size: 8, members }));
+    expect((await repo.load("team-1"))?.members).toHaveLength(8);
   });
 
   it("deletes a team", async () => {
@@ -219,6 +220,18 @@ describe("TeamRepository", () => {
     expect(teams.map((t) => t.id)).toEqual(["team-1"]);
     expect(problems).toEqual([discardedTeamsNotice(1)]);
     expect(await store.get("teams", "stale")).toBeUndefined();
+  });
+
+  it("discards a team without a size, and says so (#2109)", async () => {
+    const store = createMemoryStore();
+    const { size: _size, ...sizeless } = team({ id: "sizeless" });
+    await store.put("teams", "sizeless", sizeless);
+    const repo = new TeamRepository(store);
+
+    const { teams, problems } = await repo.list();
+    expect(teams).toEqual([]);
+    expect(problems).toEqual([discardedTeamsNotice(1)]);
+    expect(await store.get("teams", "sizeless")).toBeUndefined();
   });
 });
 

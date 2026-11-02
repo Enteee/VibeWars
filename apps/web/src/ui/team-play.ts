@@ -7,7 +7,14 @@ import { lookOfCharacter, teamFigureCard } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, listenForPaste, screenBar } from "./kit.js";
 import type { LobbyPanel } from "./lobby-screen.js";
-import { railScreen, type RailEntry } from "./rail.js";
+import {
+  loadTeamSize,
+  onTeamSizeChange,
+  railScreen,
+  teamSizeLabel,
+  type RailEntry,
+  type TeamSize,
+} from "./rail.js";
 import { validateTeam } from "./team-builder.js";
 
 /**
@@ -37,8 +44,15 @@ export function isHostEntry(entry: RailEntry): entry is HostEntry {
 /** Where the lobby goes while this tab has none yet (#1526). */
 export const OPENING_LOBBY = "Opening your lobby…";
 
-/** Under the cards while there are no Team Builds. */
-export const NO_TEAM_BUILDS = "Make a team build to propose it in the Team Lobby.";
+/** Under the cards while there are no Team Builds of the picked size (#2109). */
+export function noTeamBuilds(size: TeamSize): string {
+  return `No ${teamSizeLabel(size)} Team Builds yet.`;
+}
+
+/** A Team Build card's tag (#2109): its filled slots of its size, "3/4". */
+function sizeTag(team: StoredTeam): HTMLElement {
+  return h("span", "play-card-size", `${String(team.members.length)}/${String(team.size)}`);
+}
 
 /** What Team Builder is for, under its heading. */
 export const TEAM_BUILDER_GOAL = "Make and edit the Team Builds you propose in a Team Lobby.";
@@ -80,7 +94,7 @@ function starterTeamCard(
   });
   const card = teamFigureCard({
     title: team.name,
-    tags: [h("span", "roster-random-tag", "Random")],
+    tags: [h("span", "roster-random-tag", "Random"), sizeTag(team)],
     members,
     actions: [
       clone,
@@ -117,17 +131,21 @@ function unplayable(team: StoredTeam): HTMLElement[] {
     : [h("span", "play-card-unplayable", `Not playable: ${first.message}`)];
 }
 
-/** The Team Build cards, each opening in the editor as its Edit does, then New team build. */
+/**
+ * The Team Build cards of `size` (#2109), each opening in the editor as
+ * its Edit does, then New team build.
+ */
 function teamCards(
-  body: HTMLElement,
   teams: readonly StoredTeam[],
+  size: TeamSize,
   callbacks: TeamPlayCallbacks,
-  rerolled: boolean,
-): void {
-  body.appendChild(h("h3", "menu-column-title", "Team Builds"));
+): HTMLElement {
+  const section = h("div", "team-play-builds");
+  section.appendChild(h("h3", "menu-column-title", "Team Builds"));
   const starter = loadStarterTeamId();
   const cards = h("div", "play-cards");
-  for (const team of teamOrder(teams, starter)) {
+  const shown = teams.filter((team) => team.size === size);
+  for (const team of teamOrder(shown, starter)) {
     const edit = (): void => {
       callbacks.onEditTeam(team.id);
     };
@@ -141,6 +159,7 @@ function teamCards(
         ? starterTeamCard(members, team, callbacks)
         : teamFigureCard({
             title: team.name.trim() === "" ? UNNAMED_TEAM : team.name,
+            tags: [sizeTag(team)],
             members,
             footer: unplayable(team),
             onOpen: edit,
@@ -149,13 +168,31 @@ function teamCards(
     );
   }
   cards.appendChild(button("New team build", "play-card play-card-new", callbacks.onNewTeam));
-  body.appendChild(cards);
-  if (teams.length === 0) {
-    body.appendChild(h("p", "team-play-hint", NO_TEAM_BUILDS));
+  section.appendChild(cards);
+  if (shown.length === 0) {
+    section.appendChild(h("p", "team-play-hint", noTeamBuilds(size)));
   }
+  return section;
+}
+
+/** Team Builder's cards at the sidebar's team size, and a team code pasted on it. */
+function teamBuilderBody(
+  body: HTMLElement,
+  teams: readonly StoredTeam[],
+  callbacks: TeamPlayCallbacks,
+  rerolled: boolean,
+): void {
+  let section = teamCards(teams, loadTeamSize(), callbacks);
+  body.appendChild(section);
   if (rerolled) {
-    cards.querySelector<HTMLElement>(".play-card-reroll")?.focus();
+    section.querySelector<HTMLElement>(".play-card-reroll")?.focus();
   }
+  // Another size in the sidebar shows its builds at once (#2109).
+  onTeamSizeChange((size) => {
+    const next = teamCards(teams, size, callbacks);
+    section.replaceWith(next);
+    section = next;
+  });
 
   // A team code pasted here opens that team (#577); a single build code
   // is not a team, and is ignored. The screen has no dispose, so the
@@ -236,5 +273,5 @@ export function renderTeamBuilder(
 ): void {
   const rerolled = rerollFocused();
   const body = teamScreen(root, "teams", TEAM_BUILDER_GOAL, problems, connectionNotice, callbacks);
-  teamCards(body, teams, callbacks, rerolled);
+  teamBuilderBody(body, teams, callbacks, rerolled);
 }

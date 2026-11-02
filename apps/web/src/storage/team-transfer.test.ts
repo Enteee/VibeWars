@@ -1,7 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { MAX_TEAM_SIZE, newTeam, teamCharacter } from "../ui/team-builder.js";
+import { newTeam, teamCharacter } from "../ui/team-builder.js";
 import { buildPayload, exportBuild } from "./build-transfer.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter, type StoredTeam } from "./schema.js";
 import {
@@ -40,7 +40,7 @@ const BOB: StoredCharacter = {
   equipment: defaultBuildEquipment("warrior"),
 };
 const TEAM: StoredTeam = {
-  ...newTeam("team-1"),
+  ...newTeam("team-1", 2),
   name: "Duo",
   members: [
     { character: teamCharacter(ALICE, "m-alice") },
@@ -62,6 +62,7 @@ function code(members: readonly unknown[], overrides: Record<string, unknown> = 
     format: TEAM_FORMAT,
     formatVersion: TEAM_FORMAT_VERSION,
     name: "Duo",
+    size: 4,
     members,
     ...overrides,
   });
@@ -90,6 +91,7 @@ describe("team export", () => {
     expect(members[0]).not.toHaveProperty("schemaVersion");
     expect(members[0]).not.toHaveProperty("updatedAt");
     expect(result.team.name).toBe("Duo");
+    expect(result.team.size).toBe(2);
     expect(result.team.id).toBe("new-3");
     expect(result.team.updatedAt).toBe(42);
   });
@@ -109,6 +111,24 @@ describe("team import", () => {
 
     expect(result.ok).toBe(false);
     expect(!result.ok && result.problems.join(" ")).toContain("format version 99");
+  });
+
+  it("refuses a version 2 code, from before a Team Build had a size (#2109)", () => {
+    const { size: _size, ...sizeless } = JSON.parse(code([buildPayload(ALICE)])) as Record<
+      string,
+      unknown
+    >;
+    const result = importTeam(JSON.stringify({ ...sizeless, formatVersion: 2 }), ids(), 0);
+
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.problems.join(" ")).toContain("format version 2");
+  });
+
+  it("refuses a code without a size a Team Build can have (#2109)", () => {
+    for (const size of [undefined, 3, 16, "4"]) {
+      const result = importTeam(code([buildPayload(ALICE)], { size }), ids(), 0);
+      expect(!result.ok && result.problems).toEqual(["size must be 1, 2, 4 or 8"]);
+    }
   });
 
   it("refuses a member of another build format version", () => {
@@ -139,14 +159,11 @@ describe("team import", () => {
     expect(result.problems[1]).toMatch(/^Member 3 \(Carol\): skillBar must have exactly 8 slots/);
   });
 
-  it("refuses no members, too many, and no name", () => {
+  it("refuses no members, more than its size, and no name", () => {
     expect(!importTeam(code([]), ids(), 0).ok).toBe(true);
     // Invalid members, so a read of any of them would add a problem.
-    const many = Array.from({ length: MAX_TEAM_SIZE + 1 }, () => null);
-    const tooMany = importTeam(code(many), ids(), 0);
-    expect(!tooMany.ok && tooMany.problems).toEqual([
-      `A team may not exceed ${String(MAX_TEAM_SIZE)} members.`,
-    ]);
+    const tooMany = importTeam(code([null, null, null], { size: 2 }), ids(), 0);
+    expect(!tooMany.ok && tooMany.problems).toEqual(["A team of 2 may not have 3 members."]);
     const nameless = importTeam(code([buildPayload(BOB)], { name: " " }), ids(), 0);
     expect(!nameless.ok && nameless.problems).toEqual(["Give the team a name."]);
   });
