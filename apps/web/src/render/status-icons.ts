@@ -391,6 +391,7 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "intimidating-aura": icon("intimidating-aura"),
   "eremites-zeal": icon("eremites-zeal"),
   "vow-of-silence": icon("vow-of-silence"),
+  conviction: icon("conviction"),
   // Pets 2 (#1865).
   "otyughs-cry": icon("otyughs-cry"),
   "predatory-bond": icon("predatory-bond"),
@@ -519,6 +520,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "tiger-stance": icon("tiger-stance"),
   "berserker-stance": icon("berserker-stance"),
   "bulls-charge": icon("bulls-charge"),
+  // Monk and Ranger mechanics (#2189).
+  "spell-shield": icon("spell-shield"),
+  "convert-hexes": icon("convert-hexes"),
+  "melandrus-resilience": icon("melandrus-resilience"),
+  "expert-focus": icon("expert-focus"),
+  "rapid-fire": icon("rapid-fire"),
   // Paragon staples (#2222).
   "song-of-power": icon("song-of-power"),
   "ballad-of-restoration": icon("ballad-of-restoration"),
