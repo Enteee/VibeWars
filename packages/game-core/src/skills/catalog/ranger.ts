@@ -158,7 +158,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // by itself (#546), so it still shuts a caster down, a spell-caster
     // only. It lands with the arrow (#416). (The real arrow also flies
     // slower; per-skill arrow speeds are not modelled.)
-    effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dazed",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.troll-unguent",
@@ -186,7 +194,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // Strong self-regeneration behind a long 3s cast — the canonical
     // "interrupt me" target, which is exactly why it pairs well with the
     // interrupt skills above in a test and in play.
-    effects: [{ kind: "apply-status", statusId: "regeneration", durationSeconds: 13 }],
+    effects: [{ kind: "apply-status", statusId: "regeneration", durationSeconds: { flat: 13 } }],
   },
   {
     id: "ranger.punishing-shot",
@@ -270,7 +278,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If Pin Down hits, your target is crippled for 3...13...15 seconds":
     // 13 s, its rank-12 value, when the arrow lands.
-    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.hunters-shot",
@@ -312,7 +328,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If Hunter's Shot hits, your target begins Bleeding for 3...21...25
     // seconds": 21 s, its rank-12 value, when the arrow lands.
-    effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 20.6 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.crippling-shot",
@@ -357,7 +381,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If Crippling Shot hits, your target becomes Crippled for 1...10...12
     // seconds": 10 s, its rank-12 value, when the arrow lands.
-    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 10 }],
+    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 10 } }],
   },
   {
     id: "ranger.debilitating-shot",
@@ -445,7 +469,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "...and cause Burning for 1...6...7 seconds": 6 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 6 }],
+    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 6 } }],
   },
   {
     id: "ranger.throw-dirt",
@@ -480,7 +504,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "...become blinded for 3...13...15 seconds": 13 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "blind", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "blind",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.expertise", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.natural-stride",
@@ -507,7 +539,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 1...7...8 seconds, you run 33% faster and have a 50% chance to
     // block incoming attacks": 7 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "natural-stride", durationSeconds: 7 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "natural-stride",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.wilderness-survival", atZero: 1, atTwelve: 6.6 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.lightning-reflexes",
@@ -536,7 +576,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 5...10...11 seconds, you have a 75% chance to block melee and
     // projectile attacks, and you attack 33% faster": 10 s, its rank-12
     // value.
-    effects: [{ kind: "apply-status", statusId: "lightning-reflexes", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "lightning-reflexes",
+        durationSeconds: { scaling: { attributeId: "ranger.expertise", atZero: 5, atTwelve: 9.8 } },
+      },
+    ],
   },
   {
     id: "ranger.escape",
@@ -564,7 +610,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 1...7...8 seconds, you move 33% faster and have a 75% chance to
     // block attacks. Escape ends if you make a melee attack" (PvP): 7 s,
     // its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "escape", durationSeconds: 7 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "escape",
+        durationSeconds: { scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 6.6 } },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -597,7 +649,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 24 seconds, enemies struck by your physical attacks become
     // poisoned for 3...13...15 seconds": the poison is the status's
     // `onAttackHit`.
-    effects: [{ kind: "apply-status", statusId: "apply-poison", durationSeconds: 24 }],
+    effects: [{ kind: "apply-status", statusId: "apply-poison", durationSeconds: { flat: 24 } }],
   },
   {
     id: "ranger.savage-shot",
@@ -694,7 +746,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "interrupted-spell" },
-        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 17 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "dazed",
+            durationSeconds: {
+              scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 17 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -916,7 +976,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     // "If that attack hits, that foe becomes Crippled for 3...13...15
     // seconds": 13 s, its rank-12 value, as Pin Down's.
-    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 3, atTwelve: 12.6 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.disrupting-lunge",
@@ -994,7 +1062,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     // The PvP version: "For 30 seconds, your animal companion has a 25%
     // faster attack speed and moves 25% faster."
-    effects: [{ kind: "apply-status", statusId: "call-of-haste", durationSeconds: 30 }],
+    effects: [{ kind: "apply-status", statusId: "call-of-haste", durationSeconds: { flat: 30 } }],
   },
   {
     id: "ranger.call-of-protection",
@@ -1021,7 +1089,9 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     // "For 120 seconds, your animal companion has a 5...17...20 base
     // damage reduction."
-    effects: [{ kind: "apply-status", statusId: "call-of-protection", durationSeconds: 120 }],
+    effects: [
+      { kind: "apply-status", statusId: "call-of-protection", durationSeconds: { flat: 120 } },
+    ],
   },
   {
     id: "ranger.symbiotic-bond",
@@ -1049,7 +1119,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 120...264...300 seconds, your animal companion gains
     // +1...3...3 health regeneration, and half of any physical damage
     // dealt to your animal companion is redirected to you."
-    effects: [{ kind: "apply-status", statusId: "symbiotic-bond", durationSeconds: 264 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "symbiotic-bond",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 120, atTwelve: 264 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.revive-animal",
@@ -1205,8 +1283,28 @@ export const RANGER_SKILLS: readonly Skill[] = [
                   type: "piercing",
                   armorPenetration: 0,
                 },
-                { kind: "apply-status", statusId: "crippled", durationSeconds: 21 },
-                { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+                {
+                  kind: "apply-status",
+                  statusId: "crippled",
+                  durationSeconds: {
+                    scaling: {
+                      attributeId: "ranger.wilderness-survival",
+                      atZero: 3,
+                      atTwelve: 20.6,
+                    },
+                  },
+                },
+                {
+                  kind: "apply-status",
+                  statusId: "bleeding",
+                  durationSeconds: {
+                    scaling: {
+                      attributeId: "ranger.wilderness-survival",
+                      atZero: 3,
+                      atTwelve: 20.6,
+                    },
+                  },
+                },
               ],
             },
           },
@@ -1271,7 +1369,17 @@ export const RANGER_SKILLS: readonly Skill[] = [
                   type: "fire",
                   armorPenetration: 0,
                 },
-                { kind: "apply-status", statusId: "burning", durationSeconds: 3 },
+                {
+                  kind: "apply-status",
+                  statusId: "burning",
+                  durationSeconds: {
+                    scaling: {
+                      attributeId: "ranger.wilderness-survival",
+                      atZero: 1,
+                      atTwelve: 2.6,
+                    },
+                  },
+                },
               ],
             },
           },
@@ -1370,11 +1478,25 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // seconds ... and is Crippled for 5...15 seconds": 21 s, and 13 s on a
     // foe moving or knocked down.
     effects: [
-      { kind: "apply-status", statusId: "bleeding", durationSeconds: 21 },
+      {
+        kind: "apply-status",
+        statusId: "bleeding",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 21 },
+        },
+      },
       {
         kind: "if",
         condition: MOVING_OR_KNOCKED_DOWN,
-        effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: 13 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "crippled",
+            durationSeconds: {
+              scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 13 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -1406,7 +1528,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 8...20 seconds, you have 75% chance to block attacks": 18 s,
     // its rank-12 value; the damage a blocked projectile spreads is the
     // status's.
-    effects: [{ kind: "apply-status", statusId: "whirling-defense", durationSeconds: 18 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "whirling-defense",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.expertise", atZero: 8, atTwelve: 17.6 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.serpents-quickness",
@@ -1433,7 +1563,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 15...30 seconds, recharge times for your skills are reduced by
     // 33%": 27 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "serpents-quickness", durationSeconds: 27 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "serpents-quickness",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.wilderness-survival", atZero: 15, atTwelve: 27 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.dodge",
@@ -1460,7 +1598,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...11 seconds, you move 33% faster and have a 27...75% chance
     // to block incoming projectiles": 10 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "dodge", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "dodge",
+        durationSeconds: { scaling: { attributeId: "ranger.expertise", atZero: 5, atTwelve: 9.8 } },
+      },
+    ],
   },
   // Infuriating Heat, with the Necromancer and Elementalist staples (#1540).
   {
@@ -1791,7 +1935,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "If Poison Arrow hits, your target becomes Poisoned for 5...20
     // seconds": 17 s.
-    effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "poison",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.wilderness-survival", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.volley",
@@ -1868,7 +2020,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 24 seconds, your arrows deal fire damage and hit for an
     // additional 3...24 fire damage": the status's.
-    effects: [{ kind: "apply-status", statusId: "kindle-arrows", durationSeconds: 24 }],
+    effects: [{ kind: "apply-status", statusId: "kindle-arrows", durationSeconds: { flat: 24 } }],
   },
   {
     id: "ranger.ignite-arrows",
@@ -1895,7 +2047,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 24 seconds, your arrows explode on contact, dealing 3...18 fire
     // damage to target and all adjacent foes": the status's.
-    effects: [{ kind: "apply-status", statusId: "ignite-arrows", durationSeconds: 24 }],
+    effects: [{ kind: "apply-status", statusId: "ignite-arrows", durationSeconds: { flat: 24 } }],
   },
   {
     id: "ranger.dust-trap",
@@ -1946,7 +2098,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
                 includesCaster: false,
               },
               effects: [
-                { kind: "apply-status", statusId: "blind", durationSeconds: 7 },
+                {
+                  kind: "apply-status",
+                  statusId: "blind",
+                  durationSeconds: {
+                    scaling: { attributeId: "ranger.wilderness-survival", atZero: 3, atTwelve: 7 },
+                  },
+                },
                 {
                   kind: "damage",
                   amount: {
@@ -2027,7 +2185,17 @@ export const RANGER_SKILLS: readonly Skill[] = [
                   type: "piercing",
                   armorPenetration: 0,
                 },
-                { kind: "apply-status", statusId: "crippled", durationSeconds: 21 },
+                {
+                  kind: "apply-status",
+                  statusId: "crippled",
+                  durationSeconds: {
+                    scaling: {
+                      attributeId: "ranger.wilderness-survival",
+                      atZero: 3,
+                      atTwelve: 20.6,
+                    },
+                  },
+                },
                 { kind: "knockdown", durationSeconds: KNOCKDOWN_SECONDS },
               ],
             },
@@ -2415,7 +2583,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-attacking" },
-        effects: [{ kind: "apply-status", statusId: "bleeding", durationSeconds: 21 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "bleeding",
+            durationSeconds: {
+              scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 21 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -2458,7 +2634,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     // "Your animal companion attempts a Poisonous Bite that Poisons target
     // foe for 5...20 seconds": 17 s.
-    effects: [{ kind: "apply-status", statusId: "poison", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "poison",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.vipers-nest",
@@ -2517,7 +2701,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
                   type: "piercing",
                   armorPenetration: 0,
                 },
-                { kind: "apply-status", statusId: "poison", durationSeconds: 17 },
+                {
+                  kind: "apply-status",
+                  statusId: "poison",
+                  durationSeconds: {
+                    scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 17 },
+                  },
+                },
               ],
             },
           },
@@ -2640,8 +2830,20 @@ export const RANGER_SKILLS: readonly Skill[] = [
                 includesCaster: false,
               },
               effects: [
-                { kind: "apply-status", statusId: "blind", durationSeconds: 9 },
-                { kind: "apply-status", statusId: "dazed", durationSeconds: 9 },
+                {
+                  kind: "apply-status",
+                  statusId: "blind",
+                  durationSeconds: {
+                    scaling: { attributeId: "ranger.wilderness-survival", atZero: 5, atTwelve: 9 },
+                  },
+                },
+                {
+                  kind: "apply-status",
+                  statusId: "dazed",
+                  durationSeconds: {
+                    scaling: { attributeId: "ranger.wilderness-survival", atZero: 5, atTwelve: 9 },
+                  },
+                },
               ],
             },
           },
@@ -2675,7 +2877,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 5...11 seconds, you move 33% faster and have a 27...75% chance
     // to block incoming projectiles. Zojun's Haste ends if you attack":
     // 10 s, as Dodge's.
-    effects: [{ kind: "apply-status", statusId: "zojuns-haste", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "zojuns-haste",
+        durationSeconds: { scaling: { attributeId: "ranger.expertise", atZero: 5, atTwelve: 9.8 } },
+      },
+    ],
   },
 
   /* ---------------------------------------------------------------------- */
@@ -2758,7 +2966,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 3...14 seconds, your arrows cannot be blocked. Seeking Arrows
     // ends if you fail to hit": 12 s.
-    effects: [{ kind: "apply-status", statusId: "seeking-arrows", durationSeconds: 12 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "seeking-arrows",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 3, atTwelve: 11.8 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.barbed-arrows",
@@ -2785,7 +3001,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 24 seconds, your arrows cause Bleeding for 3...15 seconds. You
     // have -40 armor while activating this skill": the statuses'.
-    effects: [{ kind: "apply-status", statusId: "barbed-arrows", durationSeconds: 24 }],
+    effects: [{ kind: "apply-status", statusId: "barbed-arrows", durationSeconds: { flat: 24 } }],
   },
   {
     id: "ranger.melandrus-arrows",
@@ -2813,7 +3029,9 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 18 seconds, whenever your arrows hit, they cause Bleeding for
     // 3...25 seconds, and if they hit a target who is under an enchantment,
     // they do +8...28 damage": the status's.
-    effects: [{ kind: "apply-status", statusId: "melandrus-arrows", durationSeconds: 18 }],
+    effects: [
+      { kind: "apply-status", statusId: "melandrus-arrows", durationSeconds: { flat: 18 } },
+    ],
   },
   {
     id: "ranger.read-the-wind",
@@ -2840,7 +3058,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // The PvP version's (2969): "For 24 seconds, your arrows move twice as
     // fast", without the PvE one's extra damage.
-    effects: [{ kind: "apply-status", statusId: "read-the-wind", durationSeconds: 24 }],
+    effects: [{ kind: "apply-status", statusId: "read-the-wind", durationSeconds: { flat: 24 } }],
   },
   {
     id: "ranger.crossfire",
@@ -4080,7 +4298,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 20...32...35 seconds, your preparations recharge 50% faster and
     // last 30...246...300% longer" (#1761).
-    effects: [{ kind: "apply-status", statusId: "practiced-stance", durationSeconds: 32 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "practiced-stance",
+        durationSeconds: { scaling: { attributeId: "ranger.expertise", atZero: 20, atTwelve: 32 } },
+      },
+    ],
   },
 
   // Pets 2 (#1865): effects that reach your pet, or its owner. The PvP
@@ -4110,7 +4334,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     // The PvP version: "For 5...13...15 seconds, your animal companion
     // gains +24 armor and cannot be blocked."
-    effects: [{ kind: "apply-status", statusId: "otyughs-cry", durationSeconds: 13 }],
+    effects: [{ kind: "apply-status", statusId: "otyughs-cry", durationSeconds: { flat: 13 } }],
   },
   {
     id: "ranger.predatory-bond",
@@ -4137,7 +4361,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     // The PvP version: "For 5...17...20 seconds, successful attacks by
     // your animal companion heal you for 1...25...31 Health."
-    effects: [{ kind: "apply-status", statusId: "predatory-bond", durationSeconds: 17 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "predatory-bond",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.companionship",
@@ -4216,7 +4448,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 3...13...15 seconds, both you and your animal companion attack
     // 33% faster and run 25% faster." Refused without a living pet.
     effects: [
-      { kind: "apply-status", statusId: "rampage-as-one", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "rampage-as-one",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 3, atTwelve: 12.6 },
+        },
+      },
       { kind: "caster-gains-status", statusId: "rampage-as-one", durationSeconds: 13 },
     ],
   },
@@ -4246,7 +4484,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 5...13...15 seconds, you and your pet run 25% faster." No pet:
     // just you.
     effects: [
-      { kind: "apply-status", statusId: "run-as-one", durationSeconds: 13 },
+      {
+        kind: "apply-status",
+        statusId: "run-as-one",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 13 },
+        },
+      },
       { kind: "companion-gains-status", statusId: "run-as-one", durationSeconds: 13 },
     ],
   },
@@ -4342,7 +4586,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-knocked-down" },
-        effects: [{ kind: "apply-status", statusId: "dazed", durationSeconds: 9 }],
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "dazed",
+            durationSeconds: {
+              scaling: { attributeId: "ranger.beast-mastery", atZero: 4, atTwelve: 8.8 },
+            },
+          },
+        ],
       },
     ],
   },
@@ -4372,7 +4624,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...11 seconds, you attack 33% faster. This stance ends if you
     // use an attack skill": 10 s at rank 12.
-    effects: [{ kind: "apply-status", statusId: "hekets-rampage", durationSeconds: 10 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "hekets-rampage",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 9.8 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.sundering-attack",
@@ -4601,7 +4861,9 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 60 seconds, your next attack also inflicts Poison for
     // 8...14...15 seconds": the poison is the status's `onAttackHit`.
-    effects: [{ kind: "apply-status", statusId: "poison-tip-signet", durationSeconds: 60 }],
+    effects: [
+      { kind: "apply-status", statusId: "poison-tip-signet", durationSeconds: { flat: 60 } },
+    ],
   },
   // Attributes raised (#1941).
   {
@@ -4630,7 +4892,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // "For 1...16...20 seconds, you attack 15% faster and your
     // Marksmanship attribute is increased by 1" (#1941): PvP's (2959),
     // not PvE's 33% and +2.
-    effects: [{ kind: "apply-status", statusId: "experts-dexterity", durationSeconds: 16 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "experts-dexterity",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.expertise", atZero: 1, atTwelve: 16.2 },
+        },
+      },
+    ],
   },
   // Touch and trap riders (#1966), at rank 12.
   {
@@ -4691,7 +4961,15 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 12...36 seconds, your trap skills are not easily interruptible
     // and your Wilderness Survival attribute is increased by 0...4."
-    effects: [{ kind: "apply-status", statusId: "trappers-focus", durationSeconds: 31 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "trappers-focus",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.expertise", atZero: 12, atTwelve: 31.2 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.trappers-speed",
@@ -4718,7 +4996,13 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 5...30 seconds, your Traps recharge 25% faster and activate 25%
     // faster. This stance ends if you successfully hit with an attack."
-    effects: [{ kind: "apply-status", statusId: "trappers-speed", durationSeconds: 25 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "trappers-speed",
+        durationSeconds: { scaling: { attributeId: "ranger.expertise", atZero: 5, atTwelve: 25 } },
+      },
+    ],
   },
   // Pets 3 (#1957): pet attacks that pay their owner, and Heal as One. A
   // pet attack's effects land with the pet as their caster.
@@ -5072,6 +5356,12 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // +6...18 damage if they hit and cause Bleeding for 10...20 seconds
     // if they are Blocked" (#1974): 30 s, its rank-12 value. The damage and
     // the Bleeding are the status's.
-    effects: [{ kind: "apply-status", statusId: "glass-arrows", durationSeconds: 30 }],
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "glass-arrows",
+        durationSeconds: { scaling: { attributeId: "ranger.expertise", atZero: 10, atTwelve: 30 } },
+      },
+    ],
   },
 ];

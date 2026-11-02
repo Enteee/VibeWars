@@ -102,7 +102,9 @@ describe("Reversal of Fortune (#987)", () => {
       activationSeconds: 0.25,
       rechargeSeconds: 2,
       target: "single-ally",
-      effects: [{ kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: 8 }],
+      effects: [
+        { kind: "apply-status", statusId: "reversal-of-fortune", durationSeconds: { flat: 8 } },
+      ],
     });
   });
 
