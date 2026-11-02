@@ -5,7 +5,14 @@ import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { STARTER_TEAMS } from "../packages/game-core/src/starter-teams.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
-import { copyInvite, openPeers, openToFriends, proposeTeam, setTeamSize } from "./helpers/peers.js";
+import {
+  copyInvite,
+  expectTeamSize,
+  openPeers,
+  openToFriends,
+  proposeTeam,
+  setTeamSize,
+} from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -184,15 +191,13 @@ test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 
   test.setTimeout(90_000);
   const { context, pages } = await openPeers(browser, 2);
   const [ann, bea] = pages as [Page, Page];
-  const teamSize = (page: Page) => page.getByRole("combobox", { name: "Team size" });
 
   try {
     await formParty([ann, bea], ["Ann", "Bea"]);
     // The leader's size is the party's; a member's is locked to it.
     await ann.bringToFront();
     await setTeamSize(ann, 2);
-    await expect(teamSize(bea)).toHaveValue("2");
-    await expect(teamSize(bea)).toBeDisabled();
+    await expectTeamSize(bea, 2, { locked: true });
     await runTeamLobby([ann, bea], undefined, 2);
     for (const page of [ann, bea]) {
       await expect(page.locator(".party-queued")).toContainText("Team Arena 2v2 — searching…");

@@ -363,7 +363,7 @@ describe("in a match (#1540)", () => {
     );
   });
 
-  it("Infuriating Heat: a level-8 spirit for 102 s whose aura speeds both teams' adrenaline by 59%", () => {
+  it("Infuriating Heat: a level-8 spirit for 102 s whose aura speeds both teams' adrenaline by 59%, at Expertise 12", () => {
     const sim = match();
     cast(sim, "ranger.infuriating-heat", "c");
     const spirits = [...sim.participants()].filter(
@@ -376,6 +376,12 @@ describe("in a match (#1540)", () => {
       expect(get(sim, id).statuses.has("infuriating-heat"), id).toBe(true);
     }
     expect(32 + AREA_NEARBY + 100).toBeLessThan(RANGE_NATURE_RITUAL);
-    expect(getStatusDefinition("infuriating-heat").adrenalineGainFaster).toBe(0.59);
+    // 33...66% at its summoner's Expertise, 12 here: 59.4% (#2158).
+    expect(getStatusDefinition("infuriating-heat").adrenalineGainFaster).toEqual({
+      scaling: { attributeId: "ranger.expertise", atZero: 0.33, atTwelve: 0.594 },
+    });
+    for (const id of ["c", "f"]) {
+      expect(get(sim, id).statuses.get("infuriating-heat")?.ranks.get("ranger.expertise")).toBe(12);
+    }
   });
 });

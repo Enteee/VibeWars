@@ -486,7 +486,9 @@ export function takenOffFoe(skill: Skill): StatusCategory | undefined {
  * blows a Blinded foe cannot block (#2134). The Elementalist's self-buffs
  * (#1984): a conjure's rider for the element it wields, Ether Prodigy's
  * Energy for Health, Ether Renewal's gains per enchantment on the next
- * spell, Elemental Attunement's ranks.
+ * spell, Elemental Attunement's ranks. The Ranger's (#2159): Disrupting
+ * Accuracy's interrupts on a critical hit, Marksman's Wager's Energy won
+ * or lost on each arrow, Storm Chaser's Energy from elemental damage.
  */
 export type Setup =
   | "cheaper-enchantments"
@@ -498,7 +500,10 @@ export type Setup =
   | "elemental-ranks"
   | "free-chain"
   | "profession-haste"
-  | "blind-unblock";
+  | "blind-unblock"
+  | "critical-interrupts"
+  | "hit-wager"
+  | "elemental-energy";
 
 /** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975, #1984). */
 export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | undefined {
@@ -512,42 +517,57 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
       ? "cheaper-enchantments"
       : status.onAttackHit?.sourceLosesPerRemoved !== undefined
         ? "party-strips"
-        : status.onCriticalHit !== undefined
-          ? "critical-strips"
-          : status.onAttackHit?.weaponDamage !== undefined
-            ? "weapon-element"
-            : status.energyPips > 0 &&
-                status.triggers.some(
-                  ({ on, effects }) =>
-                    on === "ends" && effects.some(({ kind }) => kind === "lose-health"),
-                )
-              ? "energy-for-health"
-              : status.triggers.some(
+        : status.onCriticalHit?.effects.some(({ kind }) => kind === "interrupt") === true
+          ? "critical-interrupts"
+          : status.onCriticalHit !== undefined
+            ? "critical-strips"
+            : status.onAttackHit?.weaponDamage !== undefined
+              ? "weapon-element"
+              : status.energyPips > 0 &&
+                  status.triggers.some(
                     ({ on, effects }) =>
-                      on === "bearer-casts-spell" &&
-                      effects.some(
-                        (effect) =>
-                          effect.kind === "energy-gain" && effect.per?.count.kind === "statuses",
-                      ),
+                      on === "ends" && effects.some(({ kind }) => kind === "lose-health"),
                   )
-                ? "spell-gains"
-                : status.category === "enchantment" &&
-                    status.attributeDeltas.some(
-                      ({ scope, amount }) => scope === "elemental" && amount > 0,
+                ? "energy-for-health"
+                : status.triggers.some(
+                      ({ on, effects }) =>
+                        on === "bearer-casts-spell" &&
+                        effects.some(
+                          (effect) =>
+                            effect.kind === "energy-gain" && effect.per?.count.kind === "statuses",
+                        ),
                     )
-                  ? "elemental-ranks"
-                  : status.ownSkillModifiers.some(({ filter }) => filter.chainRoles !== undefined)
-                    ? "free-chain"
-                    : status.ownSkillModifiers.some(
-                          ({ filter, rechargeFaster }) =>
-                            filter.profession !== undefined &&
-                            filter.type === undefined &&
-                            rechargeFaster > 0,
-                        )
-                      ? "profession-haste"
-                      : status.unblockableByBlinded
-                        ? "blind-unblock"
-                        : undefined;
+                  ? "spell-gains"
+                  : status.category === "enchantment" &&
+                      status.attributeDeltas.some(
+                        ({ scope, amount }) => scope === "elemental" && amount > 0,
+                      )
+                    ? "elemental-ranks"
+                    : status.ownSkillModifiers.some(({ filter }) => filter.chainRoles !== undefined)
+                      ? "free-chain"
+                      : status.ownSkillModifiers.some(
+                            ({ filter, rechargeFaster }) =>
+                              filter.profession !== undefined &&
+                              filter.type === undefined &&
+                              statAtTwelve(rechargeFaster) > 0,
+                          )
+                        ? "profession-haste"
+                        : status.unblockableByBlinded
+                          ? "blind-unblock"
+                          : status.triggers.some(
+                                ({ on, effects }) =>
+                                  on === "bearer-fails-to-hit" &&
+                                  effects.some(({ kind }) => kind === "energy-loss"),
+                              )
+                            ? "hit-wager"
+                            : status.triggers.some(
+                                  ({ on, damageType, effects }) =>
+                                    on === "bearer-takes-damage-from-foe" &&
+                                    damageType === "elemental" &&
+                                    effects.some(({ kind }) => kind === "energy-gain"),
+                                )
+                              ? "elemental-energy"
+                              : undefined;
   return setup === undefined ? undefined : { setup, statusId: applied.statusId };
 }
 
@@ -662,6 +682,42 @@ export function blindsUser(skill: Skill): boolean {
   return skill.effects.some(
     (effect) => effect.kind === "caster-gains-status" && effect.statusId === "blind",
   );
+}
+
+/**
+ * Whether a miss with `skill` disables its user's whole bar (#2159):
+ * Oath Shot's price, worth risking only when it cannot miss for rank.
+ */
+export function missDisablesBar(skill: Skill): boolean {
+  return (
+    skill.attack?.onFailedToHit.some(
+      (effect) => effect.kind === "disable-own-skills" && effect.which === "all",
+    ) ?? false
+  );
+}
+
+/**
+ * The condition `skill` gives a foe only within a reach of its user
+ * (#2159), and that reach: Screaming Shot's Bleeding within earshot.
+ * `undefined` for any other.
+ */
+export function conditionWithin(
+  skill: Skill,
+): { readonly statusId: StatusId; readonly radius: number } | undefined {
+  for (const effect of skill.effects) {
+    if (effect.kind !== "if" || effect.condition.kind !== "target-within") {
+      continue;
+    }
+    const applied = effect.effects.find(
+      (inner) =>
+        inner.kind === "apply-status" &&
+        getStatusDefinition(inner.statusId).category === "condition",
+    );
+    if (applied?.kind === "apply-status") {
+      return { statusId: applied.statusId, radius: effect.condition.radius };
+    }
+  }
+  return undefined;
 }
 
 /**

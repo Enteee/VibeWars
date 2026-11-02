@@ -2,7 +2,7 @@ import { stroke } from "../../icon-kit.mjs";
 
 /** @type {Readonly<Record<string, import("../../status-icon-table.mjs").StatusIconRow>>} */
 const rows = {
-  // Chain and Paradox tools (#2134), stand-ins until their art card.
+  // Chain and Paradox tools (#2134, art #2179).
   // Enchantment: an open palm, free off-hand and dual attacks.
   "way-of-the-empty-palm": [
     "enchantment",

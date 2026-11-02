@@ -278,11 +278,19 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
     ],
   }),
   // "For 5...15 seconds, off-hand and dual attacks cost no Energy and
-  // recharge 25...50% faster" (#2134): 45% at rank 12. Lead attacks pay.
+  // recharge 25...50% faster" (#2134), at its Deadly Arts (#2158). Lead attacks pay.
   "way-of-the-empty-palm": define("way-of-the-empty-palm", "Way of the Empty Palm", "enchantment", {
     profession: "assassin",
     ownSkillModifiers: [
-      ownSkills({ chainRoles: ["off-hand", "dual"] }, { energyBase: 0, rechargeFaster: 0.45 }),
+      ownSkills(
+        { chainRoles: ["off-hand", "dual"] },
+        {
+          energyBase: 0,
+          rechargeFaster: {
+            scaling: { attributeId: "assassin.deadly-arts", atZero: 0.25, atTwelve: 0.45 },
+          },
+        },
+      ),
     ],
   }),
   // "For 20 seconds, the next time you hit target foe with a dual attack

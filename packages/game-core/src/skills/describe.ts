@@ -324,9 +324,17 @@ function signed(n: number): string {
  * A change in how fast adrenaline builds: "gain adrenaline 33% faster",
  * or, slowed, as Soothing's (#1550), "gain adrenaline 50% slower".
  */
-function adrenalineGainText(faster: number): string {
-  const percent = String(Math.round(Math.abs(faster) * 100));
-  return `gain adrenaline ${percent}% ${faster > 0 ? "faster" : "slower"}`;
+function adrenalineGainText(
+  faster: StatusStat,
+  ranks: ReadonlyMap<string, number> | undefined,
+): string {
+  const shown = statText(faster, ranks, percent);
+  return `gain adrenaline ${shown} ${statAtTwelve(faster) > 0 ? "faster" : "slower"}`;
+}
+
+/** "45%": a share as its line prints it, whatever its sign. */
+function percent(share: number): string {
+  return `${String(Math.round(Math.abs(share) * 100))}%`;
 }
 
 /**
@@ -510,8 +518,8 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const names = definition.immuneTo.map((id) => getStatusDefinition(id).name);
     parts.push(`immune to ${names.join(" and ")}`);
   }
-  if (definition.adrenalineGainFaster !== 0) {
-    parts.push(adrenalineGainText(definition.adrenalineGainFaster));
+  if (statAtTwelve(definition.adrenalineGainFaster) !== 0) {
+    parts.push(adrenalineGainText(definition.adrenalineGainFaster, ranks));
   }
   parts.push(...definition.attributeDeltas.map(attributeDeltaText));
   if (definition.attributeSet !== undefined) {
@@ -851,7 +859,7 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       ...(attackDurationMultiplier === 1
         ? []
         : [`attacks ${String(Math.round((1 - attackDurationMultiplier) * 100))}% faster`]),
-      ...(adrenalineGainFaster === 0 ? [] : [adrenalineGainText(adrenalineGainFaster)]),
+      ...(adrenalineGainFaster === 0 ? [] : [adrenalineGainText(adrenalineGainFaster, ranks)]),
     ];
     // Toxicity's (#1873): "while under Poison or Disease".
     const under = [
@@ -955,7 +963,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     const faster = String(Math.round(share * 100));
     parts.push(`${getProfession(profession).name} enchantments recharge ${faster}% faster`);
   }
-  parts.push(...definition.ownSkillModifiers.map(describeOwnSkillModifier));
+  parts.push(
+    ...definition.ownSkillModifiers.map((modifier) => describeOwnSkillModifier(modifier, ranks)),
+  );
   if (definition.skillArmorPenetration !== undefined) {
     const { share, profession } = definition.skillArmorPenetration;
     const pierce = String(Math.round(share * 100));
@@ -1971,47 +1981,52 @@ function describeNextSkill(
  * Monk spells cost 5 less Energy (minimum 1)", "your next Dervish
  * enchantment lasts 122% longer".
  */
-function describeOwnSkillModifier({
-  filter,
-  energyBase,
-  energyDiscount,
-  energyFloor,
-  energySurcharge,
-  activationMultiplier,
-  activationSecondsLess,
-  rechargeFaster,
-  rechargeSlower,
-  durationMultiplier,
-  healMultiplier,
-  notEasilyInterrupted,
-  uses,
-}: OwnSkillModifier): string {
+function describeOwnSkillModifier(
+  {
+    filter,
+    energyBase,
+    energyDiscount,
+    energyFloor,
+    energySurcharge,
+    activationMultiplier,
+    activationSecondsLess,
+    rechargeFaster,
+    rechargeSlower,
+    durationMultiplier,
+    healMultiplier,
+    notEasilyInterrupted,
+    uses,
+  }: OwnSkillModifier,
+  ranks: ReadonlyMap<string, number> | undefined,
+): string {
   const one = uses === 1;
-  const percent = (share: number): string => `${String(Math.round(Math.abs(share) * 100))}%`;
+  // A scaled number prints at `ranks` (#2158), as a status stat does.
+  const at = (stat: StatusStat, format: (value: number) => string): string =>
+    statText(stat, ranks, format);
   const verb = (plural: string, singular: string): string => (one ? singular : plural);
   const changes = [
     energyBase === undefined ? undefined : `${verb("cost", "costs")} ${String(energyBase)} Energy`,
-    energyDiscount === 0
+    statAtTwelve(energyDiscount) === 0
       ? undefined
-      : `${verb("cost", "costs")} ${String(energyDiscount)} less Energy (minimum ${String(energyFloor)})`,
-    energySurcharge === 0
+      : `${verb("cost", "costs")} ${at(energyDiscount, whole)} less Energy (minimum ${String(energyFloor)})`,
+    statAtTwelve(energySurcharge) === 0
       ? undefined
-      : `${verb("cost", "costs")} ${String(energySurcharge)} more Energy`,
+      : `${verb("cost", "costs")} ${at(energySurcharge, whole)} more Energy`,
     activationMultiplier === 1
       ? undefined
       : `${verb("cast", "casts")} ${percent(1 - activationMultiplier)} ${activationMultiplier < 1 ? "faster" : "slower"}`,
-    activationSecondsLess === 0
+    statAtTwelve(activationSecondsLess) === 0
       ? undefined
-      : `${verb("cast", "casts")} ${seconds(activationSecondsLess)} faster`,
-    rechargeFaster === 0
+      : `${verb("cast", "casts")} ${at(activationSecondsLess, seconds)} faster`,
+    statAtTwelve(rechargeFaster) === 0
       ? undefined
-      : `${verb("recharge", "recharges")} ${percent(rechargeFaster)} faster`,
+      : `${verb("recharge", "recharges")} ${at(rechargeFaster, percent)} faster`,
     rechargeSlower === 0
       ? undefined
       : `${verb("recharge", "recharges")} ${percent(rechargeSlower)} slower`,
-    durationMultiplier === 1
+    statAtTwelve(durationMultiplier) === 1
       ? undefined
-      : `${verb("last", "lasts")} ${percent(durationMultiplier - 1)} ${durationMultiplier > 1 ? "longer" : "shorter"}`,
+      : `${verb("last", "lasts")} ${at(durationMultiplier, (value) => percent(value - 1))} ${statAtTwelve(durationMultiplier) > 1 ? "longer" : "shorter"}`,
     healMultiplier === 1
       ? undefined
       : `${verb("heal", "heals")} ${percent(1 - healMultiplier)} ${healMultiplier < 1 ? "less" : "more"}`,
@@ -3214,6 +3229,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "disable-skill": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const time = `${shown(magnitude)} seconds`;
+      // Signet of Distraction's (#2165).
+      const perSignet = effect.perOwnSignet === true ? " for each signet you have equipped" : "";
       return {
         text:
           effect.which === "all"
@@ -3223,8 +3240,10 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
               : effect.which === "random-spell"
                 ? `One of the target's spells, at random, is disabled for ${time}`
                 : effect.which === "interrupted"
-                  ? `The interrupted skill is disabled for ${time}`
-                  : `That skill and all skills of the same attribute are disabled for ${time}`,
+                  ? `The interrupted skill is disabled for ${time}${perSignet}`
+                  : effect.which === "centre-interrupted"
+                    ? `holding that skill have it disabled for ${time}`
+                    : `That skill and all skills of the same attribute are disabled for ${time}`,
         magnitude,
       };
     }

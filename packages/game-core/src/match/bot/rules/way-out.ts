@@ -12,6 +12,23 @@ const ESCAPE_FRACTION = 0.5;
 const ESCAPE_THREAT_UNITS = AREA_IN_THE_AREA;
 
 /**
+ * The foe `self` retreats from (#1930): the nearest, when it is at hand
+ * and `self` is hurt. `undefined` while it stands its ground. Storm
+ * Chaser goes up then too (#2159).
+ */
+export function retreatsFrom(
+  self: Participant,
+  foes: readonly Participant[],
+): Participant | undefined {
+  const threat = nearestLiving(self, foes);
+  return healthFraction(self) >= ESCAPE_FRACTION ||
+    threat === undefined ||
+    distance(threat.position, self.position) > ESCAPE_THREAT_UNITS
+    ? undefined
+    : threat;
+}
+
+/**
  * Hurt with a foe at hand, and nothing to heal it (#1930): step away to
  * the creature of its side farthest from that foe, one farther than it
  * stands, in reach now; never a walk towards one.
@@ -20,12 +37,8 @@ const wayOut: BotRule = {
   order: 30,
   name: "way-out",
   decide: ({ context, self, bar, foes, use }) => {
-    const threat = nearestLiving(self, foes);
-    if (
-      healthFraction(self) >= ESCAPE_FRACTION ||
-      threat === undefined ||
-      distance(threat.position, self.position) > ESCAPE_THREAT_UNITS
-    ) {
+    const threat = retreatsFrom(self, foes);
+    if (threat === undefined) {
       return undefined;
     }
     const fromThreat = (body: Participant): number => distance(body.position, threat.position);

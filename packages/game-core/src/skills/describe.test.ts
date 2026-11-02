@@ -1444,7 +1444,7 @@ describe("enchantment party moves (#1975)", () => {
     return describeSkill(skill(id), ranks).effects.map(({ text }) => text);
   };
 
-  it("says what each strips, cheapens or costs, at rank 12", () => {
+  it("says what each strips, cheapens or costs, at rank 12 (#2158: 0.8s, unrounded)", () => {
     expect(texts("monk.air-of-enchantment")).toEqual([
       "Applies Air of Enchantment for 9s " +
         "(enchantments cast on the bearer cost 10 less Energy, minimum 1)",
@@ -1460,7 +1460,7 @@ describe("enchantment party moves (#1975)", () => {
     expect(texts("necromancer.jaundiced-gaze")).toEqual([
       "Removes 1 enchantment",
       "If it removes an enchantment: applies Jaundiced Gaze to you for 16s " +
-        "(your next enchantment costs 8 less Energy (minimum 0) and casts 1s faster)",
+        "(your next enchantment costs 8 less Energy (minimum 0) and casts 0.8s faster)",
     ]);
   });
 });
@@ -1650,5 +1650,33 @@ describe("Assassin chain and Paradox tools (#2134)", () => {
       "Your non-dagger attack skills are disabled for 10 seconds",
     ]);
     expect(texts("assassin.unseen-fury")).toEqual(["For 51s, cannot be blocked by Blinded foes"]);
+  });
+});
+
+describe("Mesmer interrupts (#2165)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(skill(id), new Map([["mesmer.domination-magic", 12]])).effects.map(
+      ({ text }) => text,
+    );
+
+  it("says the disable per signet, the one on foes in the area and the hex's second interrupt", () => {
+    expect(texts("mesmer.power-lock")).toEqual([
+      "Interrupts the target's spell or chant, if they are casting one",
+      "The interrupted skill is disabled for 11 seconds",
+    ]);
+    expect(texts("mesmer.signet-of-distraction")).toEqual([
+      "Interrupts the target's spell, if they are casting one",
+      "The interrupted skill is disabled for 4 seconds for each signet you have equipped",
+    ]);
+    expect(texts("mesmer.complicate")).toEqual([
+      "Interrupts the target's skill, if they are using one",
+      "The interrupted skill is disabled for 11 seconds",
+      "If it interrupts a skill: foes in the area holding that skill have it disabled for 11 seconds",
+    ]);
+    expect(texts("mesmer.web-of-disruption")).toEqual([
+      "Interrupts the target's action: a skill or an attack",
+      "Applies Web of Disruption for 10s " +
+        "(when it ends: interrupts the target's action: a skill or an attack)",
+    ]);
   });
 });
