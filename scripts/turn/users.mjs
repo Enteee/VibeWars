@@ -83,12 +83,14 @@ export function mintLogin(secret, expiry, tag) {
  */
 function turnadmin(s, args) {
   fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
-  // turnadmin reads a secret from argv only: a short, local call.
-  const res = spawnSync("turnadmin", [...args, "-r", s.realm, "-b", files(s).db], {
+  // turnadmin reads a secret from argv only: a short, local call. Under
+  // umask 077, so a userdb it makes is 0600 whoever runs it.
+  const argv = [...args, "-r", s.realm, "-b", files(s).db];
+  const res = spawnSync("sh", ["-c", 'umask 077 && exec turnadmin "$@"', "turnadmin", ...argv], {
     encoding: "utf8",
   });
-  if (res.error !== undefined)
-    throw new Error(`turnadmin: ${res.error.message} (is coturn on PATH?)`);
+  if (res.error !== undefined) throw new Error(`turnadmin: ${res.error.message}`);
+  if (res.status === 127) throw new Error("turnadmin: not found (is coturn on PATH?)");
   if (res.status !== 0)
     throw new Error(`turnadmin ${String(args[0])} failed (exit ${String(res.status)})`);
   return res.stdout;

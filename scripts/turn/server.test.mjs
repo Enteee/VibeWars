@@ -96,7 +96,10 @@ beforeAll(async () => {
   fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings));
   fs.mkdirSync(settings.stateDir, { mode: 0o700 });
   fs.writeFileSync(files(settings).conf, turnserverConf(settings));
-  server = spawn("turnserver", ["-c", files(settings).conf], { stdio: "ignore" });
+  // As processes.turn.exec starts it: under umask 077.
+  server = spawn("sh", ["-c", 'umask 077 && exec turnserver -c "$1"', "sh", files(settings).conf], {
+    stdio: "ignore",
+  });
   // Ready is answering a Binding: the pid file does not mean the UDP
   // listener is up, and a check's single request would be lost to it.
   const give = Date.now() + 10_000;
