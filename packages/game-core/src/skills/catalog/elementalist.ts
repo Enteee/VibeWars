@@ -4210,7 +4210,8 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "elementalist",
     attributeId: "elementalist.water-magic",
-    cost: { kind: "energy", amount: 5 },
+    // The wiki's 10 Energy; the corpus record reads 5.
+    cost: { kind: "energy", amount: 10 },
     overcast: 5,
     activationSeconds: 1.5,
     rechargeSeconds: 7,
