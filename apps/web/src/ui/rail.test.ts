@@ -4,6 +4,7 @@ import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import {
   HOST_PICKS_MODE,
   HOST_SETS_TEAM_SIZE,
+  LEAVE_QUEUE_FOR_TEAM_SIZE,
   NO_TEAM_SIZE_HERE,
   RAIL,
   loadRail,
@@ -331,6 +332,33 @@ describe("the mode rail (#1525)", () => {
     const field = rail.children.find((child) => child.className === "mode-rail-size");
     expect(field?.title).toBe(HOST_SETS_TEAM_SIZE);
     expect(field?.children.find((child) => child.tagName === "select")?.disabled).toBe(true);
+  });
+
+  it("locks a queued leader's dropdown: the queue is for the size it has (#2107)", () => {
+    const party = {
+      code: "ACDEFG",
+      mode: "team-arena",
+      isHost: true,
+      open: false,
+      members: [],
+      queuedMs: null,
+      teams: undefined,
+      ascentRound: null,
+      teamSize: 2,
+    } as const;
+    const sizeField = (): FakeElement | undefined =>
+      (modeRail("team-arena", () => undefined) as unknown as FakeElement).children.find(
+        (child) => child.className === "mode-rail-size",
+      );
+    setRailParty(party);
+    expect(sizeField()?.children.find((child) => child.tagName === "select")?.disabled).toBe(false);
+
+    setRailParty({ ...party, queuedMs: 5_000 });
+    const field = sizeField();
+    expect(field?.title).toBe(LEAVE_QUEUE_FOR_TEAM_SIZE);
+    expect(field?.children.find((child) => child.tagName === "select")?.disabled).toBe(true);
+    // A builder's size is its own filter, queued or not.
+    expect(sizeSelect("teams").disabled).toBe(false);
   });
 
   it("shows a Hosted Game lobby's team size, the host's pick, not your own (#2104)", () => {

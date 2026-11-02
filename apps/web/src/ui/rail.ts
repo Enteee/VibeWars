@@ -72,6 +72,8 @@ export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]
 export const NO_TEAM_SIZE_HERE = "Team size is for team modes and Team Builds";
 /** A lobby guest's dropdown title: the host's size is everyone's. */
 export const HOST_SETS_TEAM_SIZE = "The host sets the team size";
+/** A queued party's dropdown title: the queue is for the size it has (#2107). */
+export const LEAVE_QUEUE_FOR_TEAM_SIZE = "Leave the queue to change the team size";
 
 /** `size` as the dropdown reads it, e.g. "2v2". */
 export function teamSizeLabel(size: TeamSize): string {
@@ -164,20 +166,33 @@ export function teamSizeSelect(
  * The rail's team size field (#2022): a builder without sizes disables
  * it all. A lobby guest's is locked, as its modes are (#1526); in a
  * Hosted Game or a Team Arena it shows the lobby's size, the host's pick
- * (#2104, #2107).
+ * (#2104, #2107). There, a queued party's is locked too: the queue is
+ * for the size it has.
  */
 function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLElement {
   const guest = party !== undefined && !party.isHost;
   const noSizes = TEAM_SIZES_BY_ENTRY[active].length === 0;
+  const queued = party?.mode === active && party.queuedMs !== null;
   const lobbySize =
     (active === "hosted-game" || active === "team-arena") && party?.mode === active
       ? party.teamSize
       : undefined;
-  const select = teamSizeSelect(active, lobbySize ?? loadTeamSize(), noSizes || guest, (size) => {
-    teamSizeListener?.(size);
-  });
+  const select = teamSizeSelect(
+    active,
+    lobbySize ?? loadTeamSize(),
+    noSizes || guest || queued,
+    (size) => {
+      teamSizeListener?.(size);
+    },
+  );
   const field = h("label", "mode-rail-size");
-  field.title = noSizes ? NO_TEAM_SIZE_HERE : guest ? HOST_SETS_TEAM_SIZE : "Team size";
+  field.title = noSizes
+    ? NO_TEAM_SIZE_HERE
+    : guest
+      ? HOST_SETS_TEAM_SIZE
+      : queued
+        ? LEAVE_QUEUE_FOR_TEAM_SIZE
+        : "Team size";
   field.append(h("span", "mode-rail-label", "Team size"), select);
   return field;
 }
