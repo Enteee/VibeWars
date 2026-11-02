@@ -488,6 +488,19 @@ export interface ApplyStatusEffect {
 }
 
 /**
+ * Apply one of `choices` to the effect's target (#2180), picked with the
+ * match's rng, each as likely: Desperation Blow's "one of the following
+ * conditions". Each lands as an `apply-status` of it would.
+ */
+export interface ApplyRandomStatusEffect {
+  readonly kind: "apply-random-status";
+  readonly choices: readonly {
+    readonly statusId: StatusId;
+    readonly durationSeconds: Magnitude;
+  }[];
+}
+
+/**
  * Maintain an enchantment on the target (#837): it lasts until something
  * ends it, and costs its caster an energy pip while it does. `on` is who
  * wears it: the target, or the caster whatever it targeted (#1826), as
@@ -594,11 +607,15 @@ export interface InterruptEffect {
 /**
  * Knock the target down (#468): for `durationSeconds` it cannot move,
  * attack or use skills, and whatever it was doing ends. Not an
- * interrupt, and not a status: `Combatant.knockdownRemaining`.
+ * interrupt, and not a status: `Combatant.knockdownRemaining`. With
+ * `on: "caster"`, the caster falls instead (#2180), whatever it
+ * targeted: Desperation Blow's "after making a Desperation Blow, you are
+ * knocked down".
  */
 export interface KnockdownEffect {
   readonly kind: "knockdown";
   readonly durationSeconds: number;
+  readonly on?: "caster";
 }
 
 /**
@@ -858,10 +875,13 @@ export interface RechargeOthersEffect {
  * the elite skill on the target's bar (#1473), Signet of Humility's; no
  * elite: nothing. With `random-spell`, one spell on the target's bar,
  * picked with the match's rng (#1928), Arcane Thievery's; no spell: nothing.
+ * With `attacks`, every attack skill on the target's bar (#2180),
+ * Disarm's "all of that foe's attack skills are disabled".
  */
 export interface DisableSkillEffect {
   readonly kind: "disable-skill";
-  readonly which: "interrupted" | "interrupted-and-attribute" | "all" | "elite" | "random-spell";
+  readonly which:
+    "interrupted" | "interrupted-and-attribute" | "all" | "elite" | "random-spell" | "attacks";
   readonly seconds: Magnitude;
 }
 
@@ -1296,6 +1316,17 @@ export type EventCondition =
    */
   | { readonly kind: "interrupted-spell" }
   /**
+   * An `interrupt` earlier in the list cancelled an attack (#2180): an
+   * attack skill or a plain swing, as Disarm's "if that action was an
+   * attack".
+   */
+  | { readonly kind: "interrupted-attack" }
+  /**
+   * Damage earlier in the list brought this target to 0 Health (#2180):
+   * Decapitate's "if foe is killed".
+   */
+  | { readonly kind: "target-killed" }
+  /**
    * A `remove-status` earlier in the list removed at least one status of
    * this category; with `from: "caster"`, from the caster (#845), which
    * holds for every target of that use.
@@ -1576,6 +1607,7 @@ export type UnconditionalEffect =
   | SpreadConditionsEffect
   | GiveHealthEffect
   | ApplyStatusEffect
+  | ApplyRandomStatusEffect
   | MaintainStatusEffect
   | RemoveStatusEffect
   | InterruptEffect

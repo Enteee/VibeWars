@@ -767,6 +767,12 @@ export interface StatusDefinition {
    */
   readonly endsWhenBearerUsesAdrenalSkill: boolean;
   /**
+   * It ends the moment the bearer uses a skill that costs no adrenaline
+   * (#2180), as `endsWhenBearerUsesSkill` does for any: Battle Rage's
+   * "ends if you use any non-adrenal skills".
+   */
+  readonly endsWhenBearerUsesNonAdrenalSkill: boolean;
+  /**
    * It ends the moment the bearer starts an attack skill (#1869), before
    * that attack is timed, so the attack does not get its speed: Heket's
    * Rampage's "ends if you use an attack skill". A plain swing keeps it.
@@ -954,6 +960,12 @@ export interface StatusDefinition {
    * damage taken and skills alike: Avatar of Balthazar's 0.25.
    */
   readonly adrenalineGainFaster: StatusStat;
+  /**
+   * Where `adrenalineGainFaster` reaches (#2180): `all` of it, or only
+   * what the bearer's own blows earn, `attacks`, as Battle Rage's "gain
+   * double adrenaline from attacks".
+   */
+  readonly adrenalineGainFasterFrom: "all" | "attacks";
   /**
    * The share taken off the recharge of each spell the bearer finishes
    * (#938): Mantra of Recovery's 0.33. Read as the recharge starts, so
@@ -3456,7 +3468,7 @@ export class StatusSet {
   /**
    * The bearer used a skill (#949): every status that ends when it does
    * is gone, and every one that ends on an adrenal skill if it was one
-   * (#1329), but those in `spared`, which that skill put on its own user
+   * (#1329), or on a non-adrenal one if it was not (#2180), but those in `spared`, which that skill put on its own user
    * (#999). Returns the ids that ended on it.
    */
   public endOnBearerUseSkill(spared: ReadonlySet<StatusId>, adrenal: boolean): StatusId[] {
@@ -3465,7 +3477,8 @@ export class StatusSet {
         const definition = getStatusDefinition(id);
         return (
           (definition.endsWhenBearerUsesSkill ||
-            (adrenal && definition.endsWhenBearerUsesAdrenalSkill)) &&
+            (adrenal && definition.endsWhenBearerUsesAdrenalSkill) ||
+            (!adrenal && definition.endsWhenBearerUsesNonAdrenalSkill)) &&
           !spared.has(id)
         );
       })
@@ -3834,8 +3847,10 @@ export interface StatusModifiers {
   readonly skillRechargeFaster: number;
   /** As `spellRechargeFaster`, for a binding ritual (#1064). */
   readonly bindingRitualRechargeFaster: number;
-  /** Every status's, summed (#1455). */
+  /** Every status's that reaches all adrenaline, summed (#1455). */
   readonly adrenalineGainFaster: number;
+  /** What only the bearer's own blows gain faster on top (#2180): `adrenalineGainFasterFrom: "attacks"`. */
+  readonly adrenalineGainFasterFromAttacks: number;
   /** Every status's (#1455): the recharge takes the largest that applies. */
   readonly enchantmentRechargeFaster: readonly EnchantmentRechargeFaster[];
   /** Every status's (#1464): a skill takes every share that names its profession. */
@@ -3963,6 +3978,7 @@ export function aggregateModifiers(
   let knockdownMinSeconds: number | undefined;
   let extraStrikesPerHit = 0;
   let adrenalineGainFaster = 0;
+  let adrenalineGainFasterFromAttacks = 0;
   const enchantmentRechargeFaster: EnchantmentRechargeFaster[] = [];
   const skillArmorPenetration: SkillArmorPenetration[] = [];
   let uninterruptible = false;
@@ -4063,7 +4079,11 @@ export function aggregateModifiers(
       knockdownMinSeconds = def.knockdownMinSeconds;
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
-    adrenalineGainFaster += statAt(def.adrenalineGainFaster, ranks);
+    if (def.adrenalineGainFasterFrom === "attacks") {
+      adrenalineGainFasterFromAttacks += statAt(def.adrenalineGainFaster, ranks);
+    } else {
+      adrenalineGainFaster += statAt(def.adrenalineGainFaster, ranks);
+    }
     if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
@@ -4129,6 +4149,7 @@ export function aggregateModifiers(
     skillRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - skillRechargeKept),
     bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
     adrenalineGainFaster,
+    adrenalineGainFasterFromAttacks,
     enchantmentRechargeFaster,
     skillArmorPenetration,
     uninterruptible,

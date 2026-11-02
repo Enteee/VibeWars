@@ -48,6 +48,11 @@ export interface DamagePacket {
   readonly source: DamageSource;
   /** Fraction of the target's armor ignored, 0..1. */
   readonly armorPenetration: number;
+  /**
+   * A projectile weapon's blow (#2180): a bow's, a spear's, a wand's or a
+   * staff's. A spell's projectile is no attack. Absent: not one.
+   */
+  readonly projectile?: true;
 }
 
 /** Skill damage of these types ignores armor (GW1). */
@@ -186,6 +191,8 @@ function conditionHolds(
       return isElementalDamage(packet.type);
     case "vs-type":
       return packet.type === condition.type;
+    case "vs-projectile":
+      return packet.projectile === true;
     case "attacking":
       return isAttacking(target);
     case "enchantments-at-least":
