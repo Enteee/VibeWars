@@ -266,6 +266,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.blackout": "",
   "mesmer.channeling": "",
   "mesmer.clumsiness": "hex",
+  "mesmer.complicate": "interrupt",
   "mesmer.conjure-phantasm": "hex",
   "mesmer.crippling-anguish": "hex",
   "mesmer.cry-of-frustration": "interrupt",
@@ -318,6 +319,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.power-flux": "interrupt hex",
   "mesmer.power-leak": "interrupt",
   "mesmer.power-leech": "interrupt hex",
+  "mesmer.power-lock": "interrupt",
   "mesmer.power-return": "interrupt",
   "mesmer.power-spike": "interrupt",
   "mesmer.price-of-pride": "hex",
@@ -330,6 +332,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.shatter-hex": "removal",
   "mesmer.shrinking-armor": "hex",
   "mesmer.signet-of-disruption": "interrupt",
+  "mesmer.signet-of-distraction": "interrupt",
   "mesmer.signet-of-humility": "",
   "mesmer.signet-of-illusions": "",
   "mesmer.signet-of-midnight": "condition",
@@ -341,6 +344,7 @@ exports[`skillRoles > tags every mesmer skill the same way every time 1`] = `
   "mesmer.waste-not-want-not": "",
   "mesmer.wastrels-demise": "hex",
   "mesmer.wastrels-worry": "hex",
+  "mesmer.web-of-disruption": "interrupt hex",
 }
 `;
 

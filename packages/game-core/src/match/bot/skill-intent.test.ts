@@ -115,7 +115,6 @@ const NO_BOT_USE = new Set([
   "paragon.lead-the-way",
   "paragon.make-haste",
   "ranger.serpents-quickness",
-  "ranger.storm-chaser",
   "ranger.winnowing",
   "ritualist.cruel-was-daoshen",
   "ritualist.destructive-was-glaive",
@@ -362,6 +361,10 @@ describe("botUses (#1189)", () => {
     expect(setupOf(skill("necromancer.order-of-apostasy"))?.setup).toBe("party-strips");
     expect(setupOf(skill("assassin.dark-apostasy"))?.setup).toBe("critical-strips");
     expect(botUses(skill("assassin.dark-apostasy"))).toEqual(["setup"]);
+    // The Ranger's (#2159).
+    expect(setupOf(skill("ranger.disrupting-accuracy"))?.setup).toBe("critical-interrupts");
+    expect(setupOf(skill("ranger.marksmans-wager"))?.setup).toBe("hit-wager");
+    expect(botUses(skill("ranger.storm-chaser"))).toEqual(["setup"]);
     // Order of Pain's rider is no setup; Jaundiced Gaze is a strip at an
     // enchanted foe.
     expect(setupOf(skill("necromancer.order-of-pain"))).toBeUndefined();

@@ -3229,6 +3229,8 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "disable-skill": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const time = `${shown(magnitude)} seconds`;
+      // Signet of Distraction's (#2165).
+      const perSignet = effect.perOwnSignet === true ? " for each signet you have equipped" : "";
       return {
         text:
           effect.which === "all"
@@ -3238,8 +3240,10 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
               : effect.which === "random-spell"
                 ? `One of the target's spells, at random, is disabled for ${time}`
                 : effect.which === "interrupted"
-                  ? `The interrupted skill is disabled for ${time}`
-                  : `That skill and all skills of the same attribute are disabled for ${time}`,
+                  ? `The interrupted skill is disabled for ${time}${perSignet}`
+                  : effect.which === "centre-interrupted"
+                    ? `holding that skill have it disabled for ${time}`
+                    : `That skill and all skills of the same attribute are disabled for ${time}`,
         magnitude,
       };
     }
