@@ -85,6 +85,7 @@ describe("status definitions", () => {
         def.attributeSet !== undefined ||
         def.borrowsAttribute !== undefined ||
         def.castTimeMultiplier !== 1 ||
+        def.skillActivationMultiplier !== 1 ||
         def.interruptsSpells ||
         def.untargetableByFoeSpells ||
         def.preventsEnchantments ||
@@ -219,6 +220,8 @@ describe("status definitions", () => {
       "ice-spear": 3,
       overload: -3,
       migraine: -7,
+      "conjure-nightmare": -8,
+      "images-of-remorse": -3,
       wither: -4,
       "life-siphon": -3,
       "life-siphon-regen": 3,

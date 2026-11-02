@@ -64,7 +64,11 @@ export type MesmerStatusId =
   | "lyssas-aura"
   | "persistence-of-memory"
   // Mesmer interrupts (#2165).
-  | "web-of-disruption";
+  | "web-of-disruption"
+  // Mesmer staples 5 (#2231).
+  | "conjure-nightmare"
+  | "images-of-remorse"
+  | "confusing-images";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -775,5 +779,23 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         skillId: "mesmer.web-of-disruption",
       },
     ],
+  }),
+  // "For 2...16 seconds, target foe suffers -8 Health degeneration" (#2231).
+  "conjure-nightmare": define("conjure-nightmare", "Conjure Nightmare", "hex", {
+    profession: "mesmer",
+    healthPips: -8,
+  }),
+  // "For 5...10 seconds, target foe suffers -1...3 Health degeneration"
+  // (#2231): -3, its rank-12 2.6 rounded. The damage if it was attacking
+  // is the skill's.
+  "images-of-remorse": define("images-of-remorse", "Images of Remorse", "hex", {
+    profession: "mesmer",
+    healthPips: -3,
+  }),
+  // "...target foe takes twice as long to activate non-attack skills"
+  // (#2231), as Migraine's.
+  "confusing-images": define("confusing-images", "Confusing Images", "hex", {
+    profession: "mesmer",
+    skillActivationMultiplier: 2,
   }),
 };
