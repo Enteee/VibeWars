@@ -322,6 +322,11 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("assassin.spirit-walk"))).toEqual(["escape"]);
     expect(botUses(skill("assassin.swap"))).toEqual(["escape"]);
     expect(botUses(skill("assassin.dark-prison"))).toEqual(["offence"]);
+    // Taking foe minions is the take-minion rule's, not minion care's (#2092).
+    expect(botUses(skill("necromancer.veratas-gaze"))).toEqual(["take-minion"]);
+    expect(botUses(skill("necromancer.veratas-aura"))).toEqual(["take-minion"]);
+    expect(botUses(skill("necromancer.malign-intervention"))).toEqual(["take-minion"]);
+    expect(botUses(skill("necromancer.jagged-bones"))).toEqual(["minion-care"]);
   });
 
   it("boosts with a buff that only makes attacks hit harder (#2000)", () => {
