@@ -49,8 +49,8 @@ import {
  * The team editor (#573, epic #554), mounted once per ADR-0030.
  *
  * Add, remove, reorder and rename change the team in memory and stay on
- * screen; nothing is stored until Save, which `validateTeam` gates and
- * which leaves once it has stored (#1902). Esc with unsaved edits, and
+ * screen; nothing is stored until Save, which always stores, problems and all
+ * (#2110), and leaves once it has stored (#1902). Esc with unsaved edits, and
  * Delete always, ask inline first. A member's name
  * opens them in the build editor, and the way back hands the editor its
  * own state again (#576), so nothing unsaved is lost on the trip. Share
@@ -103,6 +103,12 @@ export interface TeamEditorView {
   dispose(): void;
 }
 
+/** Save's title (#2110): it always stores, and names the first problem that makes the team not playable. */
+export function saveTitle(problems: readonly TeamEditorProblem[]): string {
+  const first = problems.find((problem) => problem.blocking);
+  return first === undefined ? "Save this team" : `Save this team (it has problems: ${first.text})`;
+}
+
 /** `value` as JSON with every object's keys sorted, to compare two builds. */
 function canonical(value: unknown): string {
   if (Array.isArray(value)) {
@@ -131,6 +137,7 @@ export function isTeamUnsaved(opened: StoredTeam, current: StoredTeam): boolean 
 /** One line of the problems chip, as a plain sentence. */
 export interface TeamEditorProblem {
   readonly text: string;
+  /** Whether it makes the team not playable: it saves, but cannot be proposed (#2110). */
   readonly blocking: boolean;
 }
 
@@ -140,7 +147,7 @@ function sentence(message: string): string {
 }
 
 /**
- * What stops this team saving, in plain sentences (#573): `validateTeam`'s
+ * What makes this team not playable, in plain sentences (#573): `validateTeam`'s
  * problems, then a full team as a hint that never blocks.
  */
 export function teamEditorProblems(team: StoredTeam): TeamEditorProblem[] {
@@ -661,10 +668,9 @@ export function mountTeamEditor(
     const problems = teamEditorProblems(team);
     chip.update(problems);
     unsaved.hidden = !isTeamUnsaved(opened, team);
-    // A team that does not validate cannot be saved; the button says why.
-    const firstBlocking = problems.find((problem) => problem.blocking);
-    save.disabled = firstBlocking !== undefined;
-    save.title = firstBlocking?.text ?? "save this team";
+    // Save always stores (#2110): a team with problems is only not playable.
+    save.disabled = false;
+    save.title = saveTitle(problems);
     duplicate.disabled = !isStored || isTeamUnsaved(opened, team);
     duplicate.title = duplicate.disabled ? "Save first to duplicate" : "duplicate this team";
     // A new team has nothing to delete: Esc leaves it.

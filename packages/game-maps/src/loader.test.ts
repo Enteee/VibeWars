@@ -16,7 +16,7 @@ import hallOfHeroes from "../maps/hall-of-heroes/map.json" with { type: "json" }
 import hillCourtyard from "../maps/hill-courtyard/map.json" with { type: "json" };
 import relicTemples from "../maps/relic-temples/map.json" with { type: "json" };
 import { allWallSegments } from "./geometry.js";
-import { MapNotFoundError, listMapIds, loadAllMaps, loadMap } from "./loader.js";
+import { MapNotFoundError, listMapIds, loadAllMaps, loadMap, unseatedTeams } from "./loader.js";
 import { validateMapData } from "./schema.js";
 
 describe("listMapIds", () => {
@@ -100,6 +100,30 @@ describe("loadMap", () => {
   });
 });
 
+describe("unseatedTeams (#2108)", () => {
+  const map = loadMap("arena-alpha");
+  const spawns = (count: number) =>
+    [0, 1].flatMap((team) =>
+      Array.from({ length: count }, (_, index) => ({
+        team,
+        position: { x: 100 + team * 700, y: 100 + index * 50 },
+      })),
+    );
+
+  it("names each team with fewer spawns than its largest team size", () => {
+    expect(unseatedTeams({ ...map, teamSizes: [4, 8], spawnPoints: spawns(4) })).toEqual([
+      "team 0 has 4 spawns, not the 8 its team sizes need",
+      "team 1 has 4 spawns, not the 8 its team sizes need",
+    ]);
+    expect(unseatedTeams({ ...map, teamSizes: [4, 8], spawnPoints: spawns(8) })).toEqual([]);
+  });
+
+  it("wants two spawns a team even for a 1v1", () => {
+    expect(unseatedTeams({ ...map, teamSizes: [1], spawnPoints: spawns(1) })).toHaveLength(2);
+    expect(unseatedTeams({ ...map, teamSizes: [1], spawnPoints: spawns(2) })).toEqual([]);
+  });
+});
+
 describe("loadAllMaps", () => {
   it("loads every bundled map without throwing — a CI-facing validation gate", () => {
     const maps = loadAllMaps();
@@ -125,6 +149,18 @@ describe("every bundled map", () => {
     for (const map of maps) {
       const teams = new Set(map.spawnPoints.map((spawn) => spawn.team));
       expect([...teams].sort(), map.id).toEqual([0, 1]);
+    }
+  });
+
+  it("seats each team at its largest team size, and at least two (#2108)", () => {
+    for (const map of maps) {
+      expect(unseatedTeams(map), map.id).toEqual([]);
+      for (const team of [0, 1]) {
+        expect(
+          map.spawnPoints.filter((spawn) => spawn.team === team).length,
+          `${map.id} team ${String(team)}`,
+        ).toBeGreaterThanOrEqual(Math.max(2, ...map.teamSizes));
+      }
     }
   });
 

@@ -2,6 +2,7 @@
   "id": "hall-of-heroes",
   "name": "Hall of Heroes",
   "mode": "king-of-the-hill",
+  "teamSizes": [8],
   "width": 2400,
   "height": 1600,
   "walls": [

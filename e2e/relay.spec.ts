@@ -97,14 +97,16 @@ test("(4) framed by another page, a relay link asks nothing: it says to open it 
 test("(5) a saved relay of the wrong shape is removed, and the menu says so once", async ({
   page,
 }) => {
-  await page.goto("./");
+  // Written where the app never runs: a live page's own relay readers
+  // could eat the record before a reload (#2119).
+  await page.goto("./build.json");
   await page.evaluate(
     ({ key, value }) => {
       localStorage.setItem(key, value);
     },
     { key: RELAY_KEY, value: JSON.stringify({ ...RELAY, urls: ["stun:turn.example"] }) },
   );
-  await page.reload();
+  await page.goto("./");
   const notice = page.locator(".screen-problem", { hasText: "Saved relay was unreadable" });
   await expect(notice).toBeVisible();
   expect(await savedRelay(page)).toBeNull();
