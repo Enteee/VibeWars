@@ -162,7 +162,8 @@ function sharedRelayPanel(): HTMLElement {
   const save = button("Save shared relay", "relay-shared-save", () => {
     const shared = validateSharedRelay({ urls: splitRelayUrls(urls.value), secret: secret.value });
     if (shared === undefined) {
-      problem.textContent = "Not a shared relay: give 1 to 4 turn: or turns: URLs and its secret.";
+      problem.textContent =
+        "Not a shared relay: give 1 to 4 public turn: or turns: URLs and its secret.";
       problem.hidden = false;
       return;
     }
