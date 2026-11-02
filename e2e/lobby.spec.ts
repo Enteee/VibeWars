@@ -8,6 +8,7 @@ import {
   openToFriends,
   playHouseTeams,
   playOwnTeams,
+  proposeTeam,
   saveSoloTeam,
   setTeamSize,
 } from "./helpers/peers.js";
@@ -625,7 +626,7 @@ test("a match plays the seat the host took, not a character selected after joini
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
     await expect(host.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    await host.getByRole("button", { name: `Propose ${cynn}`, exact: true }).click();
+    await proposeTeam(host, cynn);
     await playHouseTeams([host, guest]);
 
     // Cynn's one skill, not Blank's empty bar.

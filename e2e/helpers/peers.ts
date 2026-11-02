@@ -115,6 +115,24 @@ export async function saveSoloTeam(page: Page, size = 1): Promise<string> {
 }
 
 /**
+ * Propose `team` in the Team Lobby's vote, as a player does (#2116):
+ * open Your Team Builds, expand its row, press Propose this build. A
+ * page that brought its starter twice has two Team Builds of that name,
+ * which propose the same: the first is as good as any. Resolves once
+ * the proposal is the side's.
+ */
+export async function proposeTeam(page: Page, team: string): Promise<void> {
+  const proposals = page.locator(".team-lobby-proposals .play-card");
+  const before = await proposals.count();
+  await page.getByRole("button", { name: "Your Team Builds", exact: true }).click();
+  const drawer = page.getByRole("complementary", { name: "Your Team Builds" });
+  await drawer.getByRole("button", { name: team, exact: true }).first().click();
+  await drawer.getByRole("button", { name: "Propose this build", exact: true }).click();
+  await expect(drawer).toBeHidden();
+  await expect(proposals).not.toHaveCount(before);
+}
+
+/**
  * The Team Lobby (#1460) of sides of one: each page proposes its Team
  * Build, everyone is ready, then each takes its side's seat `seat`, the
  * first unless said, and is ready again. Resolves once each page's HUD
@@ -125,11 +143,7 @@ export async function playOwnTeams(
 ): Promise<void> {
   for (const { page, team } of players) {
     await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
-    // A page that brought its starter twice has two Team Builds of that
-    // name, which propose the same: the first is as good as any.
-    const propose = page.getByRole("button", { name: `Propose ${team}`, exact: true }).first();
-    await propose.click();
-    await expect(propose).toHaveAttribute("aria-pressed", "true");
+    await proposeTeam(page, team);
   }
   for (const { page } of players) {
     await page.getByRole("button", { name: "Ready", exact: true }).click();
