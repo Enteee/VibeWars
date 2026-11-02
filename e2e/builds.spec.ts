@@ -517,7 +517,7 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   // A pasted team's note is raised once the team editor is up, so it stays.
   await paste(page.locator(".screen"), code);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
-  await expect(page.locator(".toast")).toHaveText("Pasted Duo, 1 member. Save to keep it.");
+  await expect(page.locator(".toast")).toHaveText("Pasted Duo, 2 members. Save to keep it.");
 });
 
 test("Team Builder's cards: New team build; a card shows its members, and it or its Edit opens it (#1453, #1515)", async ({
