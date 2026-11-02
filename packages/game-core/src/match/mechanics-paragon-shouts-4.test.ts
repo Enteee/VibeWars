@@ -290,7 +290,7 @@ describe("tooltips (#1955)", () => {
     );
     expect(texts(BOND).join(" ")).toContain("when one ally's is spent, it ends on all others");
     expect(texts(BRACE).join(" ")).toContain(
-      "1 nearby foe takes 75 damage whenever it has a knockdown stopped",
+      "the nearest of nearby foes takes 75 damage whenever it has a knockdown stopped",
     );
   });
 });

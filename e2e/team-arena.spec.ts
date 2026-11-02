@@ -34,6 +34,7 @@ function quadCode(): string {
     format: "vibewars.team",
     formatVersion: TEAM_FORMAT_VERSION,
     name: "Quad",
+    size: 4,
     members: QUAD.map((build) => ({
       format: "vibewars.character",
       formatVersion: BUILD_FORMAT_VERSION,

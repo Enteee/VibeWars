@@ -2,12 +2,17 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ARENA_MAPS, modeMapIds } from "../net/maps.js";
-import { TEAM_SCHEMA_VERSION, type StoredTeam, type TeamCharacter } from "../storage/schema.js";
+import {
+  TEAM_SCHEMA_VERSION,
+  type StoredTeam,
+  type TeamCharacter,
+  type TeamSize,
+} from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
   HOST_GOALS,
-  NO_TEAM_BUILDS,
+  noTeamBuilds,
   OPENING_LOBBY,
   renderHostScreen,
   renderTeamBuilder,
@@ -30,11 +35,12 @@ vi.mock("./character-figure.js", async (original) => ({
   },
 }));
 
-function team(id: string): StoredTeam {
+function team(id: string, size: TeamSize = 4): StoredTeam {
   return {
     schemaVersion: TEAM_SCHEMA_VERSION,
     id,
     name: `Team ${id}`,
+    size,
     members: [],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: 1,
@@ -95,6 +101,7 @@ class FakeElement {
   hidden = false;
   type = "";
   readonly children: FakeElement[] = [];
+  parent: FakeElement | undefined;
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, () => void>();
   readonly classList = { add: () => undefined, toggle: () => undefined };
@@ -110,7 +117,14 @@ class FakeElement {
 
   appendChild(child: FakeElement): FakeElement {
     this.children.push(child);
+    child.parent = this;
     return child;
+  }
+
+  replaceWith(next: FakeElement): void {
+    const siblings = this.parent?.children ?? [];
+    siblings.splice(siblings.indexOf(this), 1, next);
+    next.parent = this.parent;
   }
 
   append(...children: FakeElement[]): void {
@@ -252,10 +266,32 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     expect(root.everything().some((node) => node.textContent.startsWith("Ser "))).toBe(false);
   });
 
-  it("with no Team Builds, shows the hint and New team build", () => {
-    const root = render([]);
+  it("with no Team Builds of the size, shows the hint and New team build (#2109)", () => {
+    const root = render([team("a", 2)]);
+    expect(root.all("play-card-name")).toEqual([]);
     expect(root.all("play-card-new")).toHaveLength(1);
-    expect(root.all("team-play-hint")[0]?.textContent).toBe(NO_TEAM_BUILDS);
+    expect(root.all("team-play-hint")[0]?.textContent).toBe("No 4v4 Team Builds yet.");
+    expect(noTeamBuilds(2)).toBe("No 2v2 Team Builds yet.");
+  });
+
+  it("lists the Team Builds of the sidebar's size, each its slots filled, and follows a pick (#2109)", () => {
+    const root = render([
+      { ...team("a"), members: [{ character: warrior("Ser Bash") }] },
+      team("b", 2),
+      team("c", 8),
+    ]);
+    expect(root.all("play-card-name").map((name) => name.textContent)).toEqual(["Team a"]);
+    expect(root.all("play-card-size").map((tag) => tag.textContent)).toEqual(["1/4"]);
+
+    const [select] = root.all("mode-rail-size-select");
+    if (select === undefined) {
+      throw new Error("no team size dropdown");
+    }
+    select.value = "2";
+    select.listeners.get("change")?.();
+    expect(root.all("play-card-name").map((name) => name.textContent)).toEqual(["Team b"]);
+    expect(root.all("play-card-size").map((tag) => tag.textContent)).toEqual(["0/2"]);
+    expect(root.all("play-card-new")).toHaveLength(1);
   });
 
   it("says what each is for, and has no Host button: the lobby is always there (#1526)", () => {

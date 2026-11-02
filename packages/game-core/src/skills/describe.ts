@@ -1189,6 +1189,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-health-drops-below": "has its Health dropped below a line by damage",
   "bearer-fatal-damage-negated": "has fatal damage negated",
   "bearer-hit-by-attack": "is hit by a foe's attack",
+  "bearer-targeted-by-foe": "is targeted by a foe's spell or attack",
   "bearer-healed-by-skill": "is healed by a skill",
   "bearer-blocks-melee": "blocks a melee attack",
   "bearer-blocks-projectile": "blocks a projectile attack",
@@ -1818,13 +1819,7 @@ function describeTrigger(
       return [clause(`its caster steals ${amount(effect.amount)} Health ${when}`)];
     }
     if (effect.kind === "splash" && trigger.target === "bearer") {
-      // "Brace Yourself!"'s one foe (#1955): "1 nearby foe takes 75 damage".
-      const one =
-        !bearerIsFoe &&
-        effect.hits === "foes" &&
-        effect.maxTargets !== undefined &&
-        countAt(effect.maxTargets, ranks) === 1;
-      const allies = one ? `1 ${splashed(effect).replace("foes", "foe")}` : splashed(effect);
+      const allies = splashed(effect);
       // A drop's splash is one clause (#1434): "foes in the area: deals 63
       // damage, knocks down for 2s".
       if (when === DROPPED) {
@@ -1836,11 +1831,16 @@ function describeTrigger(
         const joint = effect.effects[0]?.kind === "apply-status" ? " " : ": ";
         return [sentence(`${when}: ${allies}${joint}${what.join(", ")}`)];
       }
+      // Sliver Armor's (#2095): "the nearest of nearby foes takes 29 earth damage".
+      const struck =
+        effect.maxTargets === 1
+          ? `the nearest of ${allies} takes`
+          : effect.maxTargets === undefined
+            ? `${allies} take`
+            : `up to ${String(countAt(effect.maxTargets, ranks))} ${allies} take`;
       return effect.effects.map((inner) =>
         inner.kind === "damage" && when !== DROPPED
-          ? clause(
-              `${allies} ${one ? "takes" : "take"} ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`,
-            )
+          ? clause(`${struck} ${amount(inner.amount)}${typeWord(inner.type)} damage ${when}`)
           : inner.kind === "apply-status"
             ? sentence(`${when}: ${allies} ${suffered(inner, ranks)}`)
             : sentence(`${when}: ${allies}: ${lowerFirst(describeEffect(inner, ranks).text)}`),
