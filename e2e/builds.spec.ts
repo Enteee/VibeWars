@@ -1844,7 +1844,7 @@ test("an insignia applied to all five pieces survives a reload (#2059)", async (
     .filter({ hasText: "Matched Set" })
     .getByRole("button", { name: "edit" })
     .click();
-  const rows = page.locator(".paper-doll-row");
+  const rows = page.locator(".paper-doll-row:not(.is-hand)");
   await expect(rows).toHaveCount(5);
   for (const slot of ["head", "chest", "hands", "legs", "feet"]) {
     await expect(armorRow(page, slot)).toContainText("Survivor Insignia");
