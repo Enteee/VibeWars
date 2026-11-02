@@ -2323,3 +2323,27 @@ test("the library lists GW1 skills not in the game yet only when asked, greyed a
   await page.getByRole("button", { name: "New character", exact: true }).click();
   await expect(page.getByLabel("Show skills not in the game yet")).toBeChecked();
 });
+
+test("of Fortitude on the sword adds 30 Health, and stays on after Save and a reload (#2008)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Fortified");
+  await expect(page.locator(".gear-slot").first()).toContainText("Sword");
+  const health = page.locator('.editor-stat-value[data-stat="health"]');
+  const before = Number(await health.innerText());
+  const suffix = page.locator('.gear-mods-hand[data-hand="mainHand"] [data-slot="suffix"] select');
+  await suffix.selectOption({ label: "of Fortitude — +30 Health" });
+  await expect(health).toHaveText(String(before + 30));
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(roster(page)).toContainText("Fortified");
+
+  await page.reload();
+  await page
+    .locator(".character-card", { hasText: "Fortified" })
+    .first()
+    .getByRole("button", { name: "Edit", exact: true })
+    .click();
+  await expect(suffix).toHaveValue("of-fortitude");
+  await expect(health).toHaveText(String(before + 30));
+});
