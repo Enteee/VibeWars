@@ -25,6 +25,7 @@ import {
   preventsShoutsAndChants,
   preventsSpells,
   untargetableByFoeSpells,
+  untargetableBySpells,
 } from "./status.js";
 import { rankOf, type RankHolder } from "./tick.js";
 import { isSpell, type Combatant, type Skill, type TargetRule } from "./types.js";
@@ -367,6 +368,14 @@ export function canActivate(request: ActivationRequest): ActivationCheck {
     request.target !== undefined &&
     request.target.team !== caster.team &&
     untargetableByFoeSpells(request.target.statuses.active, isCastingSpell(request.target))
+  ) {
+    return reject("invalid-target-untargetable");
+  }
+  // Vow of Silence's bearer (#2207): nobody's spell, an ally's included.
+  if (
+    isSpell(skill.type) &&
+    request.target !== undefined &&
+    untargetableBySpells(request.target.statuses.active)
   ) {
     return reject("invalid-target-untargetable");
   }

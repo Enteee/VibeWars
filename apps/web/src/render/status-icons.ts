@@ -388,6 +388,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   channeling: icon("channeling"),
   "arcane-zeal": icon("arcane-zeal"),
   "mystic-vigor": icon("mystic-vigor"),
+  "intimidating-aura": icon("intimidating-aura"),
+  "eremites-zeal": icon("eremites-zeal"),
+  "vow-of-silence": icon("vow-of-silence"),
   // Pets 2 (#1865).
   "otyughs-cry": icon("otyughs-cry"),
   "predatory-bond": icon("predatory-bond"),
