@@ -114,6 +114,13 @@ channels, as often as they like.
   footprint at all; an open one, or a closed one with guests, shows only
   its derived topic.
 - **A host leading its guests elsewhere (#1553).** A host that joins
+  another lobby tells its guests that lobby's key (`lobby-move`), and
+  they follow. Guests act only on a `lobby-move` from the host that
+  passed the key proof, and the host sends it only to admitted guests,
+  who are already trusted with a key (ADR-0043). A hostile host can
+  send its guests to any open lobby whose key it holds. That is
+  accepted: the follow is an ordinary keyed join, and the guest sees
+  the lobby it lands in.
 - **An invite link opens a join, framed or not (#2100).** Unlike a relay
   link, which a framed page never acts on, an invite link joins whatever
   frame it opens in, so any site can put a hidden frame in a lobby it
@@ -122,13 +129,6 @@ channels, as often as they like.
   player's, and the IP address the lobby sees is one any site can
   already learn over WebRTC. A top-level link joins as soon as it opens,
   as a party invite does; the player sees the lobby it lands in.
-  another lobby tells its guests that lobby's key (`lobby-move`), and
-  they follow. Guests act only on a `lobby-move` from the host that
-  passed the key proof, and the host sends it only to admitted guests,
-  who are already trusted with a key (ADR-0043). A hostile host can
-  send its guests to any open lobby whose key it holds. That is
-  accepted: the follow is an ordinary keyed join, and the guest sees
-  the lobby it lands in.
 - **A flooded lobby topic.** The topic a lobby announces on is public, so
   anyone watching the relays can announce on it too and make the host
   start handshakes that fail. That is denial of service, not access: such
