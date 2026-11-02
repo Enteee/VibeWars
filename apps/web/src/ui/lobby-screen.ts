@@ -44,6 +44,10 @@ export const SELECTABLE_TEAMS = [0, 1] as const;
 
 export const MATCH_RUNNING_NOTICE = "A match is still running. The lobby opens again when it ends.";
 
+// Why Ready is disabled, as its hover says (#2124).
+export const READY_MATCH_STARTED = "The match has already started.";
+export const READY_JOIN_A_TEAM = "Join a team first.";
+
 /**
  * The invite link to lobby `code` (#2100): this page's own origin and
  * path, so a fork or a dev server invites to itself, with `#lobby=<key>`
@@ -70,7 +74,8 @@ export interface LobbyControls {
   readonly running: string | undefined;
   readonly mapDisabled: boolean;
   readonly teamsDisabled: boolean;
-  readonly readyDisabled: boolean;
+  /** Why Ready is disabled (#2124); `undefined` when it is enabled. */
+  readonly readyProblem: string | undefined;
   readonly startDisabled: boolean;
   /** Watch (#480): only for a member on no team, and only while the match runs. */
   readonly canWatch: boolean;
@@ -86,7 +91,11 @@ export function lobbyControls(snapshot: LobbySnapshot): LobbyControls {
     teamsDisabled: !waiting,
     // Readiness is meaningless without a team, so the control is disabled
     // rather than silently doing nothing when pressed.
-    readyDisabled: !waiting || self === undefined || self.team === null,
+    readyProblem: !waiting
+      ? READY_MATCH_STARTED
+      : self === undefined || self.team === null
+        ? READY_JOIN_A_TEAM
+        : undefined,
     startDisabled: !waiting || assigned.length === 0 || !assigned.every((p) => p.ready),
     canWatch: snapshot.phase === "in-match" && self?.team === null,
   };
@@ -133,6 +142,8 @@ export interface LobbyMap {
   readonly name: string;
   readonly size: string;
   readonly mode: MatchMode;
+  /** The team sizes it is made for (#2108): a Hosted Game lists those for its own (#2104). */
+  readonly teamSizes: readonly number[];
 }
 
 /**
@@ -209,11 +220,13 @@ export function lobbyPanel(
     snapshot.ascentRound === null ? snapshot.mapId : ascentMapId(snapshot.ascentRound);
   const current = availableMaps.find((map) => map.id === shownMapId);
   let mapPart: HTMLElement;
-  if (snapshot.mode === "hosted-game" && snapshot.isHost && availableMaps.length > 1) {
+  // The host lists only the maps made for the lobby's team size (#2104).
+  const sized = availableMaps.filter((map) => map.teamSizes.includes(snapshot.teamSize));
+  if (snapshot.mode === "hosted-game" && snapshot.isHost && sized.length > 1) {
     mapPart = h("label", "lobby-map");
     mapPart.appendChild(h("span", "field-label", "Map"));
     const select = document.createElement("select");
-    for (const map of availableMaps) {
+    for (const map of sized) {
       const option = document.createElement("option");
       option.value = map.id;
       option.textContent = mapLabel(map);
@@ -239,7 +252,8 @@ export function lobbyPanel(
   // of the ⋯ (#1272): Ready until you are, then the host's Start match.
   const ready = self?.ready === true;
   const readyToggle = readyButton(ready, callbacks.onToggleReady);
-  readyToggle.disabled = controls.readyDisabled;
+  readyToggle.disabled = controls.readyProblem !== undefined;
+  readyToggle.title = controls.readyProblem ?? "";
   // A member on no team has nothing to ready while the match runs, but
   // can watch it (#480).
   const actions: HTMLElement[] = controls.canWatch

@@ -4,6 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   HOUSE_TEAM_AFTER_MS,
   MATCH_RUNNING_NOTICE,
+  READY_JOIN_A_TEAM,
+  READY_MATCH_STARTED,
   hostMaps,
   inviteUrl,
   lobbyControls,
@@ -22,6 +24,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     phase,
     mode: "hosted-game",
     mapId: "arena",
+    teamSize: 4,
     open: true,
     hostId: "host-peer",
     players: [
@@ -61,7 +64,7 @@ describe("lobbyControls", () => {
       running: MATCH_RUNNING_NOTICE,
       mapDisabled: true,
       teamsDisabled: true,
-      readyDisabled: true,
+      readyProblem: READY_MATCH_STARTED,
       startDisabled: true,
       canWatch: false,
     });
@@ -72,7 +75,7 @@ describe("lobbyControls", () => {
       running: undefined,
       mapDisabled: true,
       teamsDisabled: true,
-      readyDisabled: true,
+      readyProblem: READY_MATCH_STARTED,
       startDisabled: true,
       canWatch: false,
     });
@@ -83,7 +86,7 @@ describe("lobbyControls", () => {
       running: undefined,
       mapDisabled: false,
       teamsDisabled: false,
-      readyDisabled: false,
+      readyProblem: undefined,
       startDisabled: false,
       canWatch: false,
     });
@@ -116,8 +119,13 @@ describe("lobbyControls", () => {
         },
       ],
     });
-    expect(controls.readyDisabled).toBe(true);
+    expect(controls.readyProblem).toBe(READY_JOIN_A_TEAM);
     expect(controls.startDisabled).toBe(true);
+  });
+
+  it("asks one not in the lobby yet to join a team first (#2124)", () => {
+    const shown = { ...snapshot("waiting"), selfSessionId: "stranger" };
+    expect(lobbyControls(shown).readyProblem).toBe(READY_JOIN_A_TEAM);
   });
 
   it("offers Watch to a member on no team, only while the match runs (#480)", () => {
@@ -174,17 +182,35 @@ describe("inviteUrl (#2100)", () => {
 describe("mapLabel (#444)", () => {
   it("names an arena, then how big it plays", () => {
     expect(
-      mapLabel({ id: "arena-long-hall", name: "Long Hall", size: "large", mode: "annihilation" }),
+      mapLabel({
+        id: "arena-long-hall",
+        name: "Long Hall",
+        size: "large",
+        mode: "annihilation",
+        teamSizes: [4],
+      }),
     ).toBe("Long Hall (large)");
   });
 });
 
 describe("hostMaps (#1453)", () => {
   const maps = [
-    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation" },
-    { id: "guild-hall-isle", name: "Guild Hall Isle", size: "large", mode: "guild-battle" },
-    { id: "relic-temples", name: "Relic Temples", size: "large", mode: "relic-run" },
-    { id: "arena-open", name: "Open", size: "small", mode: "kill-count" },
+    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation", teamSizes: [4] },
+    {
+      id: "guild-hall-isle",
+      name: "Guild Hall Isle",
+      size: "large",
+      mode: "guild-battle",
+      teamSizes: [4],
+    },
+    {
+      id: "relic-temples",
+      name: "Relic Temples",
+      size: "large",
+      mode: "relic-run",
+      teamSizes: [4],
+    },
+    { id: "arena-open", name: "Open", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
 
   it("offers every map without a filter", () => {
@@ -202,7 +228,12 @@ describe("hostMaps (#1453)", () => {
 
 describe("modeLine (#476)", () => {
   it("says what the map's mode is, in a line", () => {
-    const map = { id: "arena-pillars", name: "Pillar Hall", size: "small" } as const;
+    const map = {
+      id: "arena-pillars",
+      name: "Pillar Hall",
+      size: "small",
+      teamSizes: [4],
+    } as const;
     expect(modeLine({ ...map, mode: "kill-count" })).toBe("Kill Count: most kills in 3 minutes");
     expect(modeLine({ ...map, mode: "annihilation" })).toBe("Annihilation: defeat every foe");
     expect(modeLine({ ...map, mode: "relic-run" })).toBe(
@@ -274,6 +305,7 @@ class FakeElement {
   value = "";
   disabled = false;
   hidden = false;
+  title = "";
   type = "";
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
@@ -432,8 +464,8 @@ describe("lobbyPanel: the map (#1994)", () => {
     onSetBots: () => undefined,
   };
   const maps = [
-    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation" },
-    { id: "arena-open", name: "Open", size: "small", mode: "kill-count" },
+    { id: "arena-alpha", name: "Alpha", size: "small", mode: "annihilation", teamSizes: [2, 4] },
+    { id: "arena-open", name: "Open", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
   /** The map part of the host's bar in `mode`, on Alpha. */
   const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
@@ -458,6 +490,15 @@ describe("lobbyPanel: the map (#1994)", () => {
     expect(selects(mapPart("hosted-game"))).toHaveLength(1);
   });
 
+  it("lists only the maps made for a Hosted Game's team size (#2104)", () => {
+    const [select] = selects(mapPart("hosted-game"));
+    expect(select?.children.map((option) => option.value)).toEqual(["arena-alpha", "arena-open"]);
+    const twos = { ...snapshot("waiting"), mapId: "arena-alpha", teamSize: 2 };
+    const [part] = lobbyPanel(twos, callbacks, undefined, maps).status;
+    // Alpha alone: nothing to pick.
+    expect(selects(part as unknown as FakeElement)).toEqual([]);
+  });
+
   it("says Team Arena draws it, with no picker", () => {
     const part = mapPart("team-arena");
     expect(selects(part)).toEqual([]);
@@ -468,6 +509,19 @@ describe("lobbyPanel: the map (#1994)", () => {
     const part = mapPart("heroes-ascent");
     expect(selects(part)).toEqual([]);
     expect(part.textContent).toBe("Map: Alpha (small)");
+  });
+
+  it("says on a disabled Ready why, and nothing on an enabled one (#2124)", () => {
+    const readyOf = (shown: LobbySnapshot): FakeElement => {
+      const [ready] = lobbyPanel(shown, callbacks, undefined, maps).actions;
+      return ready as unknown as FakeElement;
+    };
+    const started = readyOf(snapshot("starting"));
+    expect(started.disabled).toBe(true);
+    expect(started.title).toBe(READY_MATCH_STARTED);
+    const open = readyOf(snapshot("waiting"));
+    expect(open.disabled).toBe(false);
+    expect(open.title).toBe("");
   });
 
   /** The mode line under the bar in `mode`, on Alpha. */
@@ -487,12 +541,19 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("names a queued Heroes' Ascent's round map and its mode, not the lobby's (#1996)", () => {
     const ascent = [
-      { id: "relic-temples", name: "Relic Temples", size: "medium", mode: "relic-run" },
+      {
+        id: "relic-temples",
+        name: "Relic Temples",
+        size: "medium",
+        mode: "relic-run",
+        teamSizes: [4, 8],
+      },
       {
         id: "forgotten-shrines",
         name: "Forgotten Shrines",
         size: "medium",
         mode: "capture-points",
+        teamSizes: [4, 8],
       },
     ] as const;
     const queued = {

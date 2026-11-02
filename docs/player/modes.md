@@ -22,7 +22,7 @@ the sizes it does not play.
 | Team Arena     | 4v4           | drawn for each match, made for 4v4   |
 | Heroes' Ascent | 8v8           | its maps in order, up to the Hall    |
 | GvG            | 8v8           | Guild Hall Isle                      |
-| Hosted Game    | any           | the host picks any map               |
+| Hosted Game    | any           | the host picks one made for the size |
 
 In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
 objective off screen or under the HUD gets an outlined arrow at the
@@ -184,10 +184,15 @@ Forgotten Shrines plays it.
 
 A hosted lobby does not start the match when everyone is ready. It opens the Team Lobby first, where each side picks one Team
 Build together and then splits its characters. In Team Arena, Heroes'
-Ascent and GvG a side is as big as the mode's team (4, 8 and 8). In a
-Hosted Game a side is as big as the Team Build it chooses, up to 8, and
-the two sides may differ; a side playing the house team is as big as
-the other.
+Ascent and GvG a side is as big as the mode's team (4, 8 and 8), which
+the sidebar's **Team size** shows, locked. In a Hosted Game the host sets
+the team size with that dropdown, 1v1 to 8v8, before the Team Lobby and
+during its vote (from the Team Lobby's top bar), and both sides play
+exactly that many. A guest sees the host's, locked. The host's map list
+shows only maps made for that size, and a size the map does not suit
+moves the lobby to the first map that does. It never goes below a side's
+players, and a side that has as many players as the team size takes
+nobody more.
 A queued party ([Find a match](getting-started.md#host-or-join-a-match)
 on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
 only, as big as the mode's team (4 for Team Arena, 8 for the others)
@@ -196,11 +201,15 @@ Each stage lasts 60 seconds and ends early once everyone in the Team
 Lobby is ready.
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
-side's size (in a Hosted Game, any size with a character for each player
-on the side), one proposal each, by clicking one of your Team Builds'
-cards; click it again to withdraw. A Team Build of the wrong size is
-shown faded, with the size it needs; one with problems is not shown at
-all. Anyone may vote for one of their
+side's size, one proposal each. Your Team Builds open from the **Your
+Team Builds** tab on the right: search them by name, click one to see
+its members, then **Propose this build**; on yours, **Withdraw
+proposal**. Esc closes it. Only your Team Builds of that size and with
+no problems are listed; the drawer says how many of other sizes it
+leaves out. If the host changes the team size
+during the vote, every proposal of another size is withdrawn, its
+proposer is told, everyone confirms again, and the vote's 60 seconds
+start over. Anyone may vote for one of their
 side's proposals, their own included. Each proposal is a card
 showing each member holding its weapons, with its skills, and the
 initials of who voted for it: click a card to vote, and click it again

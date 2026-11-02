@@ -8,6 +8,7 @@ import {
   isTeamQueueMode,
   type JsonValue,
   type LobbyRefusal,
+  type LobbyTeamSize,
   type PeerHello,
   type QueueMode,
 } from "@vibewars/game-protocol";
@@ -46,7 +47,7 @@ import {
 
 import { NEW_VERSION_NOTICE, isStaleChunkError } from "../build-check.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
-import { arenaIds, hostMap, modeMapIds, queueMapPool } from "./maps.js";
+import { arenaIds, hostMap, mapTeamSizes, modeMapIds, queueMapPool } from "./maps.js";
 import { startHostClock } from "./transport/host-clock.js";
 import {
   checkTransportNat,
@@ -206,6 +207,7 @@ export async function hostLobby(
   name: string,
   guild: Guild,
   teamLobby: boolean,
+  hostedTeamSize: LobbyTeamSize,
   queued?: Omit<QueuedPlan, "onDone">,
 ): Promise<HostedLobby> {
   // A queued lobby meets in its group's room, which no lobby key can
@@ -236,6 +238,8 @@ export async function hostLobby(
     proofKey: lobbyRoom.proofKey,
     mapIds: arenaIds(),
     modeMaps: modeMapIds(),
+    mapTeamSizes: mapTeamSizes(),
+    hostedTeamSize,
     startMatch,
     teamLobby,
     random: secureRandom,
@@ -521,7 +525,8 @@ export function enterQueue(
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
-        hosted = await hostLobby(name, guild, false, {
+        // A queued lobby plays its group's size, never a Hosted Game's.
+        hosted = await hostLobby(name, guild, false, 4, {
           group,
           key,
           verifyTicketSig,

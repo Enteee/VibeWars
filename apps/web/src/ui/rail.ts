@@ -123,38 +123,58 @@ export function onTeamSizeChange(listener: (size: TeamSize) => void): void {
 }
 
 /**
- * The team size dropdown (#2022): one value shared by every rail screen.
- * A size `active` does not play stays shown, its option disabled, so
- * nothing changes on its own; a builder without sizes disables it all.
- * A lobby guest's is locked, as its modes are (#1526).
+ * The team size dropdown (#2022) showing `value`: the rail's, and the
+ * Team Lobby bar's (#2104). A size `entry` does not play stays shown,
+ * its option disabled, so nothing changes on its own. A pick is stored,
+ * one value shared by every screen, then goes to `onPick`.
  */
-function teamSizeField(active: RailEntry, guest: boolean): HTMLElement {
-  const field = h("label", "mode-rail-size");
+export function teamSizeSelect(
+  entry: RailEntry,
+  value: number,
+  disabled: boolean,
+  onPick: (size: TeamSize) => void,
+): HTMLSelectElement {
   const select = document.createElement("select");
   select.className = "mode-rail-size-select";
   select.setAttribute("data-entry", "team-size");
-  const supported = TEAM_SIZES_BY_ENTRY[active];
+  const supported = TEAM_SIZES_BY_ENTRY[entry];
   for (const size of TEAM_SIZES) {
     const option = document.createElement("option");
     option.value = String(size);
     const playable = supported.includes(size);
     option.textContent = playable
       ? teamSizeLabel(size)
-      : `${teamSizeLabel(size)} — not in ${railLabel(active)}`;
+      : `${teamSizeLabel(size)} — not in ${railLabel(entry)}`;
     option.disabled = !playable;
     select.appendChild(option);
   }
-  select.value = String(loadTeamSize());
-  const noSizes = supported.length === 0;
-  select.disabled = noSizes || guest;
-  field.title = noSizes ? NO_TEAM_SIZE_HERE : guest ? HOST_SETS_TEAM_SIZE : "Team size";
+  select.value = String(value);
+  select.disabled = disabled;
   select.addEventListener("change", () => {
     const size = Number(select.value);
     if (isTeamSize(size)) {
       saveTeamSize(size);
-      teamSizeListener?.(size);
+      onPick(size);
     }
   });
+  return select;
+}
+
+/**
+ * The rail's team size field (#2022): a builder without sizes disables
+ * it all. A lobby guest's is locked, as its modes are (#1526); in a
+ * Hosted Game it shows the lobby's size, the host's pick (#2104).
+ */
+function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLElement {
+  const guest = party !== undefined && !party.isHost;
+  const noSizes = TEAM_SIZES_BY_ENTRY[active].length === 0;
+  const lobbySize =
+    active === "hosted-game" && party?.mode === "hosted-game" ? party.teamSize : undefined;
+  const select = teamSizeSelect(active, lobbySize ?? loadTeamSize(), noSizes || guest, (size) => {
+    teamSizeListener?.(size);
+  });
+  const field = h("label", "mode-rail-size");
+  field.title = noSizes ? NO_TEAM_SIZE_HERE : guest ? HOST_SETS_TEAM_SIZE : "Team size";
   field.append(h("span", "mode-rail-label", "Team size"), select);
   return field;
 }
@@ -218,7 +238,7 @@ export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void
   const guest = shownParty !== undefined && !shownParty.isHost;
   for (const { entry, label, short } of RAIL) {
     if (entry === FIRST_BUILDER) {
-      rail.append(teamSizeField(active, guest), h("hr", "mode-rail-divider"));
+      rail.append(teamSizeField(active, shownParty), h("hr", "mode-rail-divider"));
     }
     const mode = isModeEntry(entry);
     const locked = guest && mode && entry !== shownParty?.mode;

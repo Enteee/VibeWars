@@ -17,7 +17,13 @@ import { describe, expect, it } from "vitest";
 
 import { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 import type { LobbyClosedReason, LobbyConnection } from "./lobby-connection.js";
-import { MAP_IDS, MODE_MAPS, openLobby, provenPeer } from "./lobby-harness.test-support.js";
+import {
+  MAP_IDS,
+  MAP_TEAM_SIZES,
+  MODE_MAPS,
+  openLobby,
+  provenPeer,
+} from "./lobby-harness.test-support.js";
 import { PARTY_CONSENT_MS, createLobbyHost, type LobbyHost, type MatchPlan } from "./lobby-host.js";
 import { ARENA, TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
@@ -213,6 +219,8 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     proofKey: null,
     mapIds: MAP_IDS,
     modeMaps: MODE_MAPS,
+    mapTeamSizes: MAP_TEAM_SIZES,
+    hostedTeamSize: 4,
     teamLobby: false,
     random: () => 0.5,
     startMatch(plan) {
@@ -480,6 +488,7 @@ describe("a queued lobby", () => {
           phase: "waiting",
           mode: "random-arena",
           mapId: "other-arena",
+          teamSize: 1,
           open: true,
           hostId: "impostor",
           matchId: null,
