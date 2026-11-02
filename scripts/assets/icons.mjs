@@ -331,6 +331,14 @@ const projectile = {
     ["M2 4.75h7v2.5H2zM9 1.5h2.5v9H9z", "#c8c8c8"],
     ["M11.5 3.5L26 4.5L31 6L26 7.5L11.5 8.5Z", "#fff"],
   ],
+  // Deathly swarm (necromancer): a cloud of grey insects trailing a white head.
+  "deathly-swarm": [
+    [
+      "M2 4L5.5 3L6.5 5.5L3.5 6.5ZM5.5 8L9 6.5L10.5 9L7 10.5ZM9 2.5L13 1L14.5 4L11 5.5ZM13 7L17 5.5L18.5 8.5L15 10ZM17.5 2L22 1L23 4.5L19 5Z",
+      "#c8c8c8",
+    ],
+    ["M26 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0", "#fff"],
+  ],
 };
 
 // ---------------------------------------------------------------------------
