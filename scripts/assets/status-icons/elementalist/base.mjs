@@ -306,6 +306,13 @@ const rows = {
       SHIELD(c) +
       `<path d="M12 7v6M9 9l1.5 2.5M15 9l-1.5 2.5M3 6l2 1M21 6l-2 1" ${stroke(c, 1.5)}/>`,
   ],
+  // Hex: a cage of ice bars over a crack, crawling and rotting.
+  "teinais-prison": [
+    "hex",
+    (c) =>
+      `<path d="M3 4.5h18M6 6v9M12 6v11M18 6v9" ${stroke(c, 2)}/>` +
+      `<path d="M13 15l-2 3 3 2-2 3" ${stroke(c, 1.6)}/>`,
+  ],
 };
 
 export default rows;
