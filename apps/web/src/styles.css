@@ -1649,20 +1649,6 @@ body {
   gap: 0.35rem;
 }
 
-/* A character's weapons at the mini skill bar's 16 px (#1786). */
-.mini-gear {
-  display: flex;
-  flex: 0 0 auto;
-  gap: 2px;
-}
-
-.mini-gear .gear-icon {
-  display: block;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-}
-
 .play-card-actions {
   position: absolute;
   right: 0.6rem;

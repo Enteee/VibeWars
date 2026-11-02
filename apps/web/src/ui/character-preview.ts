@@ -14,8 +14,7 @@ import {
 } from "../render/arena-snapshot.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
-import { characterAppearance } from "./character-figure.js";
-import { gearIconImg, offhandIcon, professionIcon, skillIcon, weaponIcon } from "./icons.js";
+import { professionIcon, skillIcon } from "./icons.js";
 
 /**
  * The little circle that stands for a character in a list.
@@ -163,27 +162,4 @@ export function miniSkillBar(character: Pick<TeamCharacter, "skillBar">): HTMLEl
     bar.appendChild(node);
   }
   return bar;
-}
-
-/**
- * The weapons `character` enters a match with (#1786): its main hand,
- * then its off-hand if it carries one, at the mini skill bar's size. An
- * invalid build, or a weapon this client does not know, shows none.
- */
-export function gearIcons(character: TeamCharacter): HTMLElement {
-  const { weaponId, offhandId } = characterAppearance(character);
-  const gear = document.createElement("span");
-  gear.className = "mini-gear";
-  const icons = [
-    weaponId === undefined ? undefined : gearIconImg(weaponIcon(weaponId)),
-    offhandId === undefined ? undefined : gearIconImg(offhandIcon(offhandId)),
-  ];
-  for (const icon of icons) {
-    if (icon !== undefined) {
-      icon.width = MINI_SKILL_ICON_PX;
-      icon.height = MINI_SKILL_ICON_PX;
-      gear.appendChild(icon);
-    }
-  }
-  return gear;
 }

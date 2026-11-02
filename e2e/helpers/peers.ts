@@ -155,8 +155,16 @@ export async function saveSoloTeam(page: Page, size: 2 | 4 | 8): Promise<string>
   await page.getByRole("button", { name: "New team build", exact: true }).click();
   const teamName = `${String(size)} × ${name}`;
   await page.getByLabel("team name").fill(teamName);
+  // A Team Build is its size in blank members (#2225): the character is
+  // dragged onto each.
+  await page.getByRole("tab", { name: "My characters", exact: true }).click();
+  const pick = page.locator(".team-pick").filter({
+    has: page.locator(".team-pick-name").getByText(name, { exact: true }),
+  });
+  const names = page.locator(".team-grid .team-row-name");
   for (let copy = 0; copy < size; copy += 1) {
-    await page.getByRole("button", { name: `add ${name}`, exact: true }).click();
+    await pick.dragTo(page.locator(".team-grid .team-row").nth(copy));
+    await expect(names.nth(copy)).toHaveText(name);
   }
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
