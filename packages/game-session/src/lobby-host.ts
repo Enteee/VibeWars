@@ -8,7 +8,6 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
-  MAX_TEAM_LOBBY_SIDE,
   PROTOCOL_VERSION,
   TEAM_LOBBY_STAGE_SECONDS,
   helloProtocolVersion,
@@ -24,6 +23,7 @@ import {
   teamSizeOf,
   type LobbyMode,
   type LobbyPhase,
+  type LobbyTeamSize,
   type PeerLobbyJoin,
   type LobbyRefusal,
   type WireCape,
@@ -109,8 +109,8 @@ interface PartyProposal {
 
 /** One side of a Team Lobby (#1458), as its host keeps it. */
 interface TeamSide {
-  /** Its team mode's size; `null` in a Hosted Game, which plays what it chose (#2029). */
-  readonly size: number | null;
+  /** The lobby's team size (#2104): every proposal is this many; a party's foe side, 0. */
+  size: number;
   /** Each proposer's builds, `size` legal ones, in the order proposed. */
   readonly proposals: Map<string, readonly PlayerBuild[]>;
   /** Each proposer's slots of its next proposal, as they arrive, one a message. */
@@ -232,6 +232,13 @@ export interface LobbyHostOptions {
    * mode the host picks moves a map outside it to that one.
    */
   readonly modeMaps: Readonly<Record<LobbyMode, readonly string[]>>;
+  /**
+   * The team sizes each of `mapIds` suits (#2108): a Hosted Game plays
+   * only a map made for its size (#2104).
+   */
+  readonly mapTeamSizes: Readonly<Record<string, readonly number[]>>;
+  /** A Hosted Game's players a side to begin with (#2104): the host's sidebar Team size. */
+  readonly hostedTeamSize: LobbyTeamSize;
   /** Build the match for `plan`. Injected, so a test can play a fake one. */
   readonly startMatch: (plan: MatchPlan) => MatchHost;
   /** The queue's lobby, not a coded one; its map must be one of `mapIds`. */
@@ -378,6 +385,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   const judged = new Set<string>();
   let phase: LobbyPhase = "waiting";
   let mapId = queued?.group.mapId ?? defaultMap;
+  /** A Hosted Game's players a side, the host's pick (#2104). */
+  let hostedSize: LobbyTeamSize = options.hostedTeamSize;
   /** The host's pick on the rail (#1526). */
   let mode: LobbyMode = "random-arena";
   /** Whether a peer with the key may join (#1682). */
@@ -448,6 +457,23 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
   const clockMs = (): number => Math.round(nowMs());
 
+  /**
+   * Players a side (#2104): a queued lobby's group's, a team mode's own,
+   * else the host's pick.
+   */
+  const teamSize = (): number => {
+    const queueMode = queued?.group.mode ?? teamQueueModeOf(mode);
+    return queueMode === undefined ? hostedSize : teamSizeOf(queueMode);
+  };
+
+  /** Whether `id` is made for a side of `size` (#2108). */
+  const suits = (id: string, size: number): boolean =>
+    options.mapTeamSizes[id]?.includes(size) === true;
+
+  /** A Hosted Game's maps for its team size (#2104), in the mode's order. */
+  const hostedMaps = (): string[] =>
+    options.modeMaps["hosted-game"].filter((id) => suits(id, hostedSize));
+
   /** Each human on `team`, in join order. */
   const humansOn = (team: 0 | 1): Member[] =>
     [...members.values()].filter((member) => member.bot === null && member.team === team);
@@ -509,6 +535,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     phase,
     mode,
     mapId,
+    teamSize: teamSize(),
     open,
     hostId: transport.selfId,
     matchId: match?.id ?? null,
@@ -719,19 +746,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
 
   /**
    * Everyone ready, in a lobby hosted from Team Play (#1458): its vote
-   * begins. A team mode's side is the mode's size; a Hosted Game's is the
-   * Team Build it chooses (#2029). A side with more players than it
-   * plays is turned down. A party's side alone queues (#1766).
+   * begins. Each side is the lobby's team size (#2104). A side with more
+   * players than it plays is turned down. A party's side alone queues
+   * (#1766).
    */
   const beginTeamLobby = (forQueue = false, ascentRound: number | null = null): boolean => {
-    const queueMode = teamQueueModeOf(mode);
-    const size = queueMode === undefined ? null : teamSizeOf(queueMode);
-    const most = size ?? MAX_TEAM_LOBBY_SIDE;
-    if (([0, 1] as const).some((team) => humansOn(team).length > most)) {
-      note("start-rejected", `a team plays at most ${String(most)}`, local.selfId);
+    const size = teamSize();
+    if (([0, 1] as const).some((team) => humansOn(team).length > size)) {
+      note("start-rejected", `a team plays at most ${String(size)}`, local.selfId);
       return false;
     }
-    const side = (size: number | null): TeamSide => ({
+    const side = (size: number): TeamSide => ({
       size,
       proposals: new Map(),
       pending: new Map(),
@@ -812,21 +837,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const endStage = (lobby: TeamLobby): void => {
     if (lobby.stage === "vote") {
-      // A Hosted Game's house team plays as many as the other side chose
-      // (#2029); with neither chosen, 4 or the larger side's players.
-      const order = playsHouse(0, lobby.sides[0]) ? ([1, 0] as const) : ([0, 1] as const);
-      for (const team of order) {
+      for (const team of [0, 1] as const) {
         const side = lobby.sides[team];
-        const other = team === 0 ? 1 : 0;
-        const otherSize =
-          lobby.sides[other].chosen?.builds.length ?? Math.max(4, humansOn(other).length);
         // A proposal still arriving is not one.
         side.pending.clear();
-        side.chosen = chooseFor(
-          team,
-          side,
-          side.size ?? Math.max(otherSize, humansOn(team).length),
-        );
+        side.chosen = chooseFor(team, side, side.size);
         side.claims = Array.from({ length: side.chosen.builds.length }, () => null);
       }
       lobby.stage = "claim";
@@ -1059,11 +1074,71 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
 
   /**
+   * The host picks a Hosted Game's team size (#2104), before its Team
+   * Lobby or in its vote; whether it changed. Never below a side's
+   * players, which the host is told. A map the size does not suit moves
+   * to the mode's first that does. In the vote, each proposal of another
+   * size is withdrawn, its proposer told, and the vote's clock starts
+   * again. Everyone re-confirms.
+   */
+  const pickTeamSize = (member: Member, size: LobbyTeamSize): boolean => {
+    if (member.id !== local.selfId) {
+      refuse(member.id, "not-host");
+      return false;
+    }
+    // A build is chosen by the claim: its size is the side's.
+    const between = phase === "waiting" || (phase === "team-lobby" && teamLobby?.stage === "vote");
+    if (mode !== "hosted-game" || !between) {
+      refuse(member.id, "not-pickable");
+      return false;
+    }
+    if (size === hostedSize) {
+      return false;
+    }
+    const players = Math.max(humansOn(0).length, humansOn(1).length);
+    if (players > size) {
+      const team = humansOn(0).length === players ? 1 : 2;
+      note(
+        "notice",
+        `Team ${String(team)} has ${String(players)} players: team size can't go below ${String(players)}`,
+        member.id,
+      );
+      return false;
+    }
+    hostedSize = size;
+    if (!suits(mapId, size)) {
+      mapId = hostedMaps()[0] ?? mapId;
+    }
+    if (teamLobby !== undefined) {
+      for (const side of teamLobby.sides) {
+        side.size = size;
+        side.pending.clear();
+        for (const [proposerId, builds] of [...side.proposals]) {
+          if (builds.length !== size) {
+            dropProposal(side, proposerId);
+            note(
+              "notice",
+              `Team size is now ${String(size)}: your proposal was withdrawn`,
+              proposerId,
+            );
+          }
+        }
+      }
+      teamLobby.endsAt = clockMs() + TEAM_LOBBY_STAGE_SECONDS * 1000;
+    }
+    clearReady();
+    return true;
+  };
+
+  /**
    * Apply `command` from `member` in a Team Lobby (#1458); whether
    * anything changed. Each command counts only in its own stage, and
-   * only from a member on a side.
+   * only from a member on a side; the host's team size in the vote.
    */
   const applyTeam = (lobby: TeamLobby, member: Member, command: WireLobbyCommand): boolean => {
+    if (command.kind === "select-team-size") {
+      return pickTeamSize(member, command.size);
+    }
     if (member.team === null) {
       return false;
     }
@@ -1086,13 +1161,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           side.pending.delete(member.id);
           return dropProposal(side, member.id);
         }
-        // Exactly the side's size, or in a Hosted Game any size with a
-        // slot for each of its players (#2029), each build held to the
-        // rule a hello's is.
+        // Exactly the side's size (#2104), each build held to the rule a
+        // hello's is.
         const build = parsePlayerBuild(command.build);
         if (
-          command.size !== (side.size ?? command.size) ||
-          command.size < humansOn(member.team).length ||
+          command.size !== side.size ||
           build === undefined ||
           validatePlayerBuild(build, RULESET.attributes).length > 0
         ) {
@@ -1176,6 +1249,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         if (member.team === command.team) {
           return false;
         }
+        // A side of as many players as it plays takes nobody more (#2104).
+        if (
+          options.teamLobby &&
+          command.team !== null &&
+          humansOn(command.team).length >= teamSize()
+        ) {
+          note("notice", `Team ${String(command.team + 1)} is full`, member.id);
+          return false;
+        }
         member.team = command.team;
         // A player re-confirms after the side they agreed to has changed.
         member.ready = false;
@@ -1194,7 +1276,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           return false;
         }
         // The host decides what maps exist, and only its own player picks.
-        if (member.id !== local.selfId || !mapIds.includes(command.mapId)) {
+        if (member.id !== local.selfId || !hostedMaps().includes(command.mapId)) {
           return false;
         }
         mapId = command.mapId;
@@ -1203,6 +1285,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           other.ready = false;
         }
         return true;
+      case "select-team-size":
+        return pickTeamSize(member, command.size);
       case "select-mode": {
         if (member.id !== local.selfId) {
           refuse(member.id, "not-host");
@@ -1212,11 +1296,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           return false;
         }
         mode = command.mode;
-        const [first = defaultMap, ...rest] = options.modeMaps[mode];
+        const [first = defaultMap, ...rest] =
+          mode === "hosted-game" ? hostedMaps() : options.modeMaps[mode];
         // In the same broadcast as the mode: no member ever sees a mode
         // with a map outside it. Only a Hosted Game keeps a picked one
-        // (#1994): Heroes' Ascent starts on its first, and Team Arena's is a
-        // placeholder until its draw.
+        // (#1994), if it suits its team size (#2104): Heroes' Ascent starts
+        // on its first, and Team Arena's is a placeholder until its draw.
         if (mapId !== first && (mode !== "hosted-game" || !rest.includes(mapId))) {
           mapId = first;
           for (const other of members.values()) {

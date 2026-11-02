@@ -3716,6 +3716,9 @@
         { "literal": "ticket-used" }
       ]
     },
+    "LobbyTeamSize": {
+      "union": [{ "literal": 1 }, { "literal": 2 }, { "literal": 4 }, { "literal": 8 }]
+    },
     "MapDescriptor": {
       "properties": [
         { "name": "height", "optional": false, "type": "number" },
@@ -4918,6 +4921,18 @@
             }
           ]
         },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "select-team-size" } },
+            {
+              "name": "size",
+              "optional": false,
+              "type": {
+                "union": [{ "literal": 1 }, { "literal": 2 }, { "literal": 4 }, { "literal": 8 }]
+              }
+            }
+          ]
+        },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
         {
           "properties": [
@@ -4936,6 +4951,7 @@
           "type": {
             "union": [
               { "literal": "chat-throttled" },
+              { "literal": "notice" },
               { "literal": "refused" },
               { "literal": "start-rejected" }
             ]
@@ -5264,11 +5280,7 @@
                                     }
                                   }
                                 },
-                                {
-                                  "name": "size",
-                                  "optional": false,
-                                  "type": { "union": ["null", "number"] }
-                                }
+                                { "name": "size", "optional": false, "type": "number" }
                               ]
                             }
                           ]
@@ -5383,11 +5395,7 @@
                                     }
                                   }
                                 },
-                                {
-                                  "name": "size",
-                                  "optional": false,
-                                  "type": { "union": ["null", "number"] }
-                                }
+                                { "name": "size", "optional": false, "type": "number" }
                               ]
                             }
                           ]
@@ -5404,7 +5412,8 @@
               }
             ]
           }
-        }
+        },
+        { "name": "teamSize", "optional": false, "type": "number" }
       ]
     },
     "WireLobbyWelcome": {
@@ -6801,7 +6810,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
+                      { "name": "size", "optional": false, "type": "number" }
                     ]
                   }
                 ]
@@ -6900,7 +6909,7 @@
                           }
                         }
                       },
-                      { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
+                      { "name": "size", "optional": false, "type": "number" }
                     ]
                   }
                 ]
@@ -7038,7 +7047,7 @@
             }
           }
         },
-        { "name": "size", "optional": false, "type": { "union": ["null", "number"] } }
+        { "name": "size", "optional": false, "type": "number" }
       ]
     },
     "WireTraps": {

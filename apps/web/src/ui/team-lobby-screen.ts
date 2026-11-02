@@ -1,6 +1,7 @@
 import type {
   WireProposalBuild,
   WireTeamChoice,
+  WireTeamLobby,
   WireTeamProposal,
   WireTeamSide,
 } from "@vibewars/game-protocol";
@@ -16,6 +17,7 @@ import {
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { button, h, screenBar } from "./kit.js";
+import { HOST_SETS_TEAM_SIZE, teamSizeSelect, type TeamSize } from "./rail.js";
 import { validateTeam } from "./team-builder.js";
 
 /**
@@ -35,6 +37,8 @@ export interface TeamLobbyCallbacks {
   readonly onClaim: (slot: number | null) => void;
   readonly onToggleReady: () => void;
   readonly onLeave: () => void;
+  /** The host's team size (#2104), in a Hosted Game's vote. */
+  readonly onSelectTeamSize: (size: TeamSize) => void;
 }
 
 export const VOTE_TITLE = "Choose a team build";
@@ -46,6 +50,10 @@ export const NO_TEAM_BUILDS = "You have no Team Builds. Make one in Team Builder
 /** Every Team Build has problems (#2110): saved, but none can be proposed. */
 export const NO_PLAYABLE_TEAM_BUILDS =
   "None of your Team Builds is playable. Fix one in Team Builder.";
+/** None of your Team Builds is the side's size (#2104). */
+export function noTeamBuildOf(size: number): string {
+  return `No Team Build of ${String(size)} — make one in the Team Builder.`;
+}
 export const SEATS_LINE =
   "Unclaimed seats are filled when the clock ends: players first, then bots.";
 export const HOUSE_TEAM = "House team";
@@ -92,36 +100,13 @@ export function initial(name: string): string {
   return name.trim().charAt(0).toUpperCase() || "?";
 }
 
-/** A saved Team Build as the propose cards show it (#1862). */
-export interface ProposableTeam {
-  readonly team: StoredTeam;
-  /** Not the side's size, so the host would refuse it (Q182). */
-  readonly disabled: boolean;
-  /** Why it is disabled, as a line on its card: "needs 4 characters". */
-  readonly reason: string | undefined;
-}
-
 /**
- * `teams` for a side of `size`: only those of exactly `size` members can
- * be proposed. A Hosted Game's side, `size` `null`, takes any with a slot
- * for each of its `players` (#2029). A team with problems is left out:
- * it saves, but is not playable (#2110).
+ * `teams` a side of `size` can propose: exactly `size` members (#2104),
+ * and no problems (#2110): a team with problems saves, but is not
+ * playable. The rest are left out, never shown greyed.
  */
-export function proposableTeams(
-  teams: readonly StoredTeam[],
-  size: number | null,
-  players: number,
-): readonly ProposableTeam[] {
-  const least = size ?? players;
-  const characters = `${String(least)} ${least === 1 ? "character" : "characters"}`;
-  const needs = size === null ? `needs at least ${characters}` : `needs ${characters}`;
-  return teams
-    .filter((team) => validateTeam(team).length === 0)
-    .map((team) => {
-      const count = team.members.length;
-      const disabled = size === null ? count < players : count !== size;
-      return { team, disabled, reason: disabled ? needs : undefined };
-    });
+export function proposableTeams(teams: readonly StoredTeam[], size: number): readonly StoredTeam[] {
+  return teams.filter((team) => team.members.length === size && validateTeam(team).length === 0);
 }
 
 /** The member at `sessionId`'s name, or the id itself for someone already gone. */
@@ -310,6 +295,7 @@ export function renderTeamLobbyScreen(
   const side = team === null ? null : lobby.sides[team];
   const clock = h("span", "team-lobby-clock", clockText(lobby.secondsLeft));
   tickDown(clock, lobby.secondsLeft);
+  const sizes = teamLobbySize(snapshot, lobby.stage, callbacks.onSelectTeamSize);
   const status = h("div", "team-lobby-status");
   status.append(
     h("span", "team-lobby-stage", lobby.stage === "vote" ? VOTE_TITLE : CLAIM_TITLE),
@@ -325,7 +311,7 @@ export function renderTeamLobbyScreen(
   screenBar({
     crumbs: ["VibeWars", team === null ? "Team Lobby" : `Team Lobby · Team ${String(team + 1)}`],
     back: { label: "Leave", onBack: callbacks.onLeave },
-    status: [status],
+    status: [status, sizes],
     actions,
   });
 
@@ -335,6 +321,27 @@ export function renderTeamLobbyScreen(
 
   panel.append(...teamLobbyBody(snapshot, teams, proposedTeamId, callbacks));
   root.appendChild(panel);
+}
+
+/**
+ * The sidebar's Team size dropdown in the bar, which the Team Lobby has no
+ * rail for (#2104): a Hosted Game's host may change it in the vote;
+ * everyone else, and the claim, sees it locked.
+ */
+export function teamLobbySize(
+  snapshot: LobbySnapshot,
+  stage: WireTeamLobby["stage"],
+  onSelectTeamSize: (size: TeamSize) => void,
+): HTMLElement {
+  const hosted = snapshot.mode === "hosted-game";
+  const editable = hosted && snapshot.isHost && stage === "vote";
+  const field = h("label", "team-lobby-size");
+  field.title = hosted && !snapshot.isHost ? HOST_SETS_TEAM_SIZE : "Team size";
+  field.append(
+    h("span", "field-label", "Team size"),
+    teamSizeSelect(snapshot.mode, snapshot.teamSize, !editable, onSelectTeamSize),
+  );
+  return field;
 }
 
 /**
@@ -372,15 +379,12 @@ function humansOnSide(snapshot: LobbySnapshot): number {
  * for the team, without Edit.
  */
 function ownCard(
-  { team, disabled, reason }: ProposableTeam,
+  team: StoredTeam,
   proposedTeamId: string | undefined,
   onPropose: (teamId: string | undefined) => void,
 ): HTMLElement {
   const proposed = team.id === proposedTeamId;
   const footer: HTMLElement[] = [];
-  if (reason !== undefined) {
-    footer.push(h("span", "team-lobby-needs", reason));
-  }
   if (proposed) {
     footer.push(h("span", "team-lobby-proposed", "Proposed ✓"));
   }
@@ -396,11 +400,9 @@ function ownCard(
       onPropose(proposed ? undefined : team.id);
     },
     pressed: proposed,
-    disabled,
     label: `Propose ${team.name}`,
   });
   card.classList.toggle("is-proposed", proposed);
-  card.classList.toggle("is-faded", disabled);
   return card;
 }
 
@@ -412,19 +414,24 @@ function voteStage(
   callbacks: TeamLobbyCallbacks,
 ): HTMLElement[] {
   const shown: HTMLElement[] = [h("h3", "menu-column-title", "Your Team Builds")];
-  const proposable = proposableTeams(teams, side.size, humansOnSide(snapshot));
+  const proposable = proposableTeams(teams, side.size);
   if (proposable.length === 0) {
+    const ofSize = teams.some((team) => team.members.length === side.size);
     shown.push(
       h(
         "div",
         "screen-info team-lobby-no-teams",
-        teams.length === 0 ? NO_TEAM_BUILDS : NO_PLAYABLE_TEAM_BUILDS,
+        teams.length === 0
+          ? NO_TEAM_BUILDS
+          : ofSize
+            ? NO_PLAYABLE_TEAM_BUILDS
+            : noTeamBuildOf(side.size),
       ),
     );
   } else {
     const own = h("div", "play-cards team-lobby-own-cards");
-    for (const one of proposable) {
-      own.appendChild(ownCard(one, proposedTeamId, callbacks.onPropose));
+    for (const team of proposable) {
+      own.appendChild(ownCard(team, proposedTeamId, callbacks.onPropose));
     }
     shown.push(own);
   }

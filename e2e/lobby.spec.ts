@@ -9,6 +9,7 @@ import {
   playHouseTeams,
   playOwnTeams,
   saveSoloTeam,
+  setTeamSize,
 } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -60,8 +61,10 @@ async function joinLobby(page: Page, playerName: string, invite: string): Promis
  */
 async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
   await openMenu(host, "Host");
-  const team = await saveSoloTeam(host, guestTeam === 1 ? 2 : 1);
+  const size = guestTeam === 1 ? 2 : 1;
+  const team = await saveSoloTeam(host, size);
   const invite = await hostFromMenu(host);
+  await setTeamSize(host, size);
   await joinLobby(guest, "Guest", invite);
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
@@ -186,6 +189,25 @@ test("a closed lobby takes nobody with its invite link; opened it does, and clos
     await expect(late.locator(".screen-connection-problem")).toHaveText(CLOSED);
     await expect(host.locator(".lobby-panel")).not.toContainText("Late");
     await expect(guest.locator("#topbar .topbar-leave")).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test("the host sets the team size in the sidebar, and the guest sees it there, locked (#2104)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
+    const size = (page: Page) => page.getByRole("combobox", { name: "Team size" });
+    await expect(size(guest)).toHaveValue("1");
+    await setTeamSize(host, 2);
+    await expect(size(guest)).toHaveValue("2");
+    await expect(size(guest)).toBeDisabled();
   } finally {
     await context.close();
   }

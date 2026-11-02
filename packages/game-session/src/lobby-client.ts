@@ -173,6 +173,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   const changeHandlers: (() => void)[] = [];
   const startingHandlers: ((start: MatchStarting) => void)[] = [];
   const rejectedHandlers: ((reason: string) => void)[] = [];
+  const noticeHandlers: ((text: string) => void)[] = [];
   const refusedHandlers: ((reason: LobbyRefusal) => void)[] = [];
   const closedHandlers: ((reason: LobbyClosedReason) => void)[] = [];
   const moveHandlers: ((code: string) => void)[] = [];
@@ -210,6 +211,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     changeHandlers.length = 0;
     startingHandlers.length = 0;
     rejectedHandlers.length = 0;
+    noticeHandlers.length = 0;
     refusedHandlers.length = 0;
     closedHandlers.length = 0;
     moveHandlers.length = 0;
@@ -283,6 +285,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     phase: state.phase,
     mode: state.mode,
     mapId: state.mapId,
+    teamSize: state.teamSize,
     open: state.open,
     hostId: state.hostId,
     players: state.players.map((player) => ({
@@ -371,6 +374,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       selectMap(mapId) {
         send({ kind: "select-map", mapId });
       },
+      selectTeamSize(size) {
+        send({ kind: "select-team-size", size });
+      },
       selectMode(mode) {
         send({ kind: "select-mode", mode });
       },
@@ -446,6 +452,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onStartRejected(handler) {
         rejectedHandlers.push(handler);
+      },
+      onNotice(handler) {
+        noticeHandlers.push(handler);
       },
       onRefused(handler) {
         refusedHandlers.push(handler);
@@ -567,6 +576,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         }
         if (note.kind === "start-rejected") {
           for (const handler of [...rejectedHandlers]) {
+            handler(note.reason);
+          }
+        } else if (note.kind === "notice") {
+          for (const handler of [...noticeHandlers]) {
             handler(note.reason);
           }
         } else if (note.kind === "chat-throttled") {

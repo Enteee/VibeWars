@@ -469,6 +469,7 @@ const lobbyState: WireLobbyState = {
   phase: "in-match",
   mode: "gvg",
   mapId: "isle",
+  teamSize: 8,
   open: true,
   hostId: "peer-1",
   matchId: "match-2",
@@ -865,6 +866,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
   ["ready", parseWireLobbyCommand, { kind: "ready", ready: false }],
   ["select-map", parseWireLobbyCommand, { kind: "select-map", mapId: "isle" }],
+  ["select-team-size (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 8 }],
+  ["select-team-size of one (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 1 }],
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
   ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match", ascentRound: null }],
@@ -877,11 +880,16 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["house-team (#1766)", parseWireLobbyCommand, { kind: "house-team" }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
   [
-    "Hosted Game's Team Lobby lobby-state, a side of any size (#2029)",
+    "Hosted Game's Team Lobby lobby-state, a side of one (#2104)",
     parseWireLobbyState,
     {
       ...teamLobbyState,
-      teamLobby: { stage: "claim", secondsLeft: 41, sides: [{ ...teamSide, size: null }, null] },
+      teamSize: 1,
+      teamLobby: {
+        stage: "claim",
+        secondsLeft: 41,
+        sides: [{ ...teamSide, size: 1, claims: [null] }, null],
+      },
     },
   ],
   [
@@ -931,6 +939,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["map pick refusal (#1994)", parseWireLobbyNote, { kind: "refused", reason: "not-pickable" }],
   ["Team Lobby refusal (#1458)", parseWireLobbyNote, { kind: "refused", reason: "slot-taken" }],
   ["start-rejected", parseWireLobbyNote, { kind: "start-rejected", reason: "nobody is ready" }],
+  ["notice (#2104)", parseWireLobbyNote, { kind: "notice", reason: "Red is full" }],
   ["lobby refusal", parseWireLobbyNote, { kind: "refused", reason: "lobby-full" }],
   ["fell-through (#871)", parseWireLobbyNote, { kind: "refused", reason: "fell-through" }],
   [
@@ -2070,6 +2079,15 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["choose-team of a string", parseWireLobbyCommand, { kind: "choose-team", team: "0" }],
   ["ready of a string", parseWireLobbyCommand, { kind: "ready", ready: "true" }],
   ["select-map with a long id", parseWireLobbyCommand, { kind: "select-map", mapId: long }],
+  ["select-team-size of 0 (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 0 }],
+  ["select-team-size of 9 (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 9 }],
+  ["select-team-size of 3 (#2104)", parseWireLobbyCommand, { kind: "select-team-size", size: 3 }],
+  [
+    "select-team-size of 2.5 (#2104)",
+    parseWireLobbyCommand,
+    { kind: "select-team-size", size: 2.5 },
+  ],
+  ["lobby-state of team size 0 (#2104)", parseWireLobbyState, { ...lobbyState, teamSize: 0 }],
   [
     "select-mode of an unknown mode (#1526)",
     parseWireLobbyCommand,

@@ -125,6 +125,8 @@ import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
 import {
   isModeEntry,
   loadRail,
+  loadTeamSize,
+  onTeamSizeChange,
   railParty,
   redrawModeRail,
   redrawsOnLobbyChange,
@@ -355,6 +357,7 @@ async function main(): Promise<void> {
     name: map.name,
     size: sizeClass(map),
     mode: map.mode,
+    teamSizes: map.teamSizes,
   }));
 
   /**
@@ -771,6 +774,10 @@ async function main(): Promise<void> {
     const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
     if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
       lobby?.selectMode(entry);
+      // A Hosted Game starts at the host's sidebar team size (#2104).
+      if (entry === "hosted-game") {
+        lobby?.selectTeamSize(loadTeamSize());
+      }
     }
     showMenu();
   };
@@ -896,7 +903,7 @@ async function main(): Promise<void> {
       const entrant = await readEntrant();
       let own: HostedLobby;
       try {
-        own = await hostLobby(name, entrant.guild, true);
+        own = await hostLobby(name, entrant.guild, true, loadTeamSize());
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
@@ -1211,6 +1218,12 @@ async function main(): Promise<void> {
     const problems = [...teamList.problems, ...notices.draw(entry)];
     if (isHostEntry(entry)) {
       renderHostScreen(screenRoot, entry, problems, menuNotice, callbacks, panelFor(entry));
+      // A Hosted Game's host sets its lobby's size with the sidebar's (#2104).
+      if (entry === "hosted-game") {
+        onTeamSizeChange((size) => {
+          lobby?.selectTeamSize(size);
+        });
+      }
     } else {
       renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
     }
@@ -1892,6 +1905,11 @@ async function main(): Promise<void> {
         lobbyChanged();
       });
     }
+    // A team size change withdrew the proposal of another size (#2104).
+    const proposed = teamPicks.teams.find((saved) => saved.id === teamPicks?.proposed);
+    if (proposed !== undefined && proposed.members.length !== snapshot.teamSize) {
+      teamPicks.proposed = undefined;
+    }
     renderTeamLobbyScreen(
       screenRoot,
       snapshot,
@@ -1904,6 +1922,9 @@ async function main(): Promise<void> {
         onPropose: proposeTeam,
         onClaim: (slot) => {
           lobby?.claim(slot);
+        },
+        onSelectTeamSize: (size) => {
+          lobby?.selectTeamSize(size);
         },
         onToggleReady: () => {
           const self = lobby
@@ -1993,6 +2014,12 @@ async function main(): Promise<void> {
     joined.onStartRejected((reason) => {
       if (lobby === joined) {
         lobbyNotice = reason;
+        lobbyChanged();
+      }
+    });
+    joined.onNotice((text) => {
+      if (lobby === joined) {
+        lobbyNotice = text;
         lobbyChanged();
       }
     });

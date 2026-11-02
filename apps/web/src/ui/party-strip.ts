@@ -29,6 +29,8 @@ export interface RailParty {
   readonly members: readonly PartyMember[];
   /** How long the party has looked for a team (#1766); `null` while not queued. */
   readonly queuedMs: number | null;
+  /** Its players a side (#2104): in a Hosted Game, the host's pick. */
+  readonly teamSize: number;
   /** Teams its queue hears searching, its own included (#1881); `undefined` until it says. */
   readonly teams: number | undefined;
   /** The Heroes' Ascent round it is queued at (#1996); `null` otherwise. */
@@ -68,6 +70,7 @@ export function partyOf(
     queuedMs,
     teams,
     ascentRound: snapshot.ascentRound,
+    teamSize: snapshot.teamSize,
     code: snapshot.code,
     mode: snapshot.mode,
     isHost: snapshot.isHost,
