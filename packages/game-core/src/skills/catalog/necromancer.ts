@@ -3967,4 +3967,259 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+  // Necromancer staples (#2230).
+  {
+    id: "necromancer.virulence",
+    name: "Virulence",
+    gwId: 107,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe was already suffering from a condition, that foe
+    // suffers from Disease, Poison, and Weakness for 3...15 seconds": 12.6 s.
+    // The check is read once, before any of the three lands.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-has-any", categories: ["condition"] },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "disease",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+          {
+            kind: "apply-status",
+            statusId: "poison",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+          {
+            kind: "apply-status",
+            statusId: "weakness",
+            durationSeconds: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 3, atTwelve: 12.6 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.chilblains",
+    name: "Chilblains",
+    gwId: 144,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.curses",
+    cost: { kind: "energy", amount: 25 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You become Poisoned for 10 seconds. Foes in the area of your target
+    // are struck for 10...44 cold damage and lose 1...2 enchantments": 37.2
+    // and 2.
+    effects: [
+      { kind: "caster-gains-status", statusId: "poison", durationSeconds: 10 },
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "necromancer.curses", atZero: 10, atTwelve: 37.2 } },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      { kind: "remove-status", category: "enchantment", count: 2 },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_IN_THE_AREA,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: { scaling: { attributeId: "necromancer.curses", atZero: 10, atTwelve: 37.2 } },
+            type: "cold",
+            armorPenetration: 0,
+          },
+          { kind: "remove-status", category: "enchantment", count: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.deathly-swarm",
+    name: "Deathly Swarm",
+    gwId: 105,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.death-magic",
+    cost: { kind: "energy", amount: 10 },
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 6,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    // "Flies out slowly", as Fireball: a foe who sees it leave can step out
+    // of its path, and then nobody is struck.
+    projectile: { speed: RANGE_SPELL },
+    // "Strikes for 30...90 cold damage on up to three targets in the
+    // area": 78 on the target and the nearest two foes.
+    effects: [
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 78 } },
+        type: "cold",
+        armorPenetration: 0,
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_IN_THE_AREA,
+        maxTargets: 2,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 78 },
+            },
+            type: "cold",
+            armorPenetration: 0,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.ravenous-gaze",
+    name: "Ravenous Gaze",
+    gwId: 862,
+    type: "spell",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 1 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // 8% Health, paid once a cast. "Deal 20...40 damage and steal 20...40
+    // Health from target foe and all nearby foes": 36 and 36.
+    effects: [
+      { kind: "sacrifice-health", percentOfMax: 8 },
+      {
+        kind: "damage",
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 36 } },
+        type: "typeless",
+        armorPenetration: 0,
+      },
+      {
+        kind: "life-steal",
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 36 } },
+      },
+      {
+        kind: "splash",
+        hits: "foes",
+        radius: AREA_NEARBY,
+        maxTargets: undefined,
+        effects: [
+          {
+            kind: "damage",
+            amount: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 36 },
+            },
+            type: "typeless",
+            armorPenetration: 0,
+          },
+          {
+            kind: "life-steal",
+            amount: {
+              scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 36 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "necromancer.vampiric-spirit",
+    name: "Vampiric Spirit",
+    gwId: 819,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "necromancer",
+    attributeId: "necromancer.blood-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 8,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "Steal up to 15...60 Health from target foe. For 10 seconds, you have
+    // +5...10 Health regeneration": 51, and the enchantment on the caster.
+    effects: [
+      {
+        kind: "life-steal",
+        amount: { scaling: { attributeId: "necromancer.blood-magic", atZero: 15, atTwelve: 51 } },
+      },
+      { kind: "caster-gains-status", statusId: "vampiric-spirit", durationSeconds: 10 },
+    ],
+  },
 ];
