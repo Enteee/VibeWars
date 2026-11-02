@@ -5,6 +5,7 @@
 // set inside the plate or stone; ink only, so each reads with the colour out.
 
 import { C, stroke } from "./icon-kit.mjs";
+import { HELD } from "../../apps/web/src/ui/paper-doll-figure.ts";
 
 const ink = `fill="${C.ink}"`;
 /** @param {string} d @param {number} [w] */
@@ -257,4 +258,338 @@ export function paperDollFigure() {
     `<circle cx="100" cy="40" r="${String(25 + grow / 2)}" fill="${colour}"/>` +
     `<rect x="${String(90 - grow / 2)}" y="60" width="${String(20 + grow)}" height="24" fill="${colour}"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 360" width="200" height="360">${body(3, C.inkDim)}${body(0, C.line)}</svg>\n`;
+}
+
+// Held items (#2154): what the paper-doll holds, drawn upright in the
+// figure's own units from `HELD`, so the client places each by its grip
+// alone. Flat shapes in the figure's style: a base tone, a light edge down
+// the left, a darker shade down the right, an `edge` outline.
+const M = {
+  edge: "#0b0f14",
+  steel: "#aeb8c6",
+  steelLight: "#e6ecf3",
+  steelDark: "#6c7789",
+  wood: "#8a6845",
+  woodDark: "#5c4430",
+  leather: "#6b4a35",
+  leatherLight: "#8d6649",
+  brass: "#c9a24a",
+  brassDark: "#8a6a2a",
+  horn: "#d8c7a1",
+  hornDark: "#9c8a63",
+  gem: "#8b9cff",
+  gemLight: "#d0d8ff",
+};
+
+const n = (/** @type {number} */ v) => String(Math.round(v * 10) / 10);
+/** @param {string} d @param {string} fill @param {number} [w] */
+const shape = (d, fill, w = 1.4) =>
+  `<path d="${d}" fill="${fill}" stroke="${M.edge}" stroke-width="${String(w)}" stroke-linejoin="round"/>`;
+/** @param {string} d @param {string} colour @param {number} w */
+const streak = (d, colour, w) =>
+  `<path d="${d}" fill="none" stroke="${colour}" stroke-width="${String(w)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+/** A rectangle centred on `cx`, from `y0` down to `y1`. */
+const bar = (
+  /** @type {number} */ cx,
+  /** @type {number} */ w,
+  /** @type {number} */ y0,
+  /** @type {number} */ y1,
+) => `M${n(cx - w / 2)} ${n(y0)}H${n(cx + w / 2)}V${n(y1)}H${n(cx - w / 2)}Z`;
+/** A round shaft of wood: base, a light left edge, a dark right edge. */
+const shaft = (
+  /** @type {number} */ cx,
+  /** @type {number} */ w,
+  /** @type {number} */ y0,
+  /** @type {number} */ y1,
+) =>
+  shape(bar(cx, w, y0, y1), M.wood) +
+  streak(`M${n(cx - w / 4)} ${n(y0 + 2)}V${n(y1 - 2)}`, "#a8865f", w / 4) +
+  streak(`M${n(cx + w / 4)} ${n(y0 + 2)}V${n(y1 - 2)}`, M.woodDark, w / 4);
+/** A leather wrap on a grip, `bands` turns. */
+const wrap = (
+  /** @type {number} */ cx,
+  /** @type {number} */ w,
+  /** @type {number} */ y0,
+  /** @type {number} */ y1,
+  bands = 4,
+) =>
+  shape(bar(cx, w, y0, y1), M.leather, 1.2) +
+  Array.from({ length: bands }, (_, i) => {
+    const y = y0 + ((i + 0.5) * (y1 - y0)) / bands;
+    return streak(
+      `M${n(cx - w / 2 + 1)} ${n(y + 1.5)}L${n(cx + w / 2 - 1)} ${n(y - 1.5)}`,
+      M.leatherLight,
+      1.1,
+    );
+  }).join("");
+/** A pommel or cap, round. */
+const knob = (
+  /** @type {number} */ cx,
+  /** @type {number} */ cy,
+  /** @type {number} */ r,
+  fill = M.brass,
+) =>
+  `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="${fill}" stroke="${M.edge}" stroke-width="1.2"/>` +
+  `<circle cx="${n(cx - r / 3)}" cy="${n(cy - r / 3)}" r="${n(r / 3)}" fill="${M.steelLight}" opacity=".55"/>`;
+/** A double-edged blade from `y0` (the guard) to its point at `top`, `w` wide. */
+const blade = (
+  /** @type {number} */ cx,
+  /** @type {number} */ w,
+  /** @type {number} */ y0,
+  /** @type {number} */ top,
+) => {
+  const shoulder = top + w * 1.6;
+  return (
+    shape(
+      `M${n(cx - w / 2)} ${n(y0)}V${n(shoulder)}L${n(cx)} ${n(top)}L${n(cx + w / 2)} ${n(shoulder)}V${n(y0)}Z`,
+      M.steel,
+    ) +
+    shape(
+      `M${n(cx)} ${n(top + 1)}L${n(cx + w / 2 - 0.7)} ${n(shoulder)}V${n(y0 - 0.7)}H${n(cx)}Z`,
+      M.steelDark,
+      0,
+    ) +
+    streak(
+      `M${n(cx - w / 2 + 1.2)} ${n(y0 - 1)}V${n(shoulder)}L${n(cx)} ${n(top + 1.5)}`,
+      M.steelLight,
+      1.2,
+    ) +
+    streak(`M${n(cx)} ${n(y0 - 3)}V${n(shoulder + 4)}`, M.edge, 1)
+  );
+};
+
+/**
+ * One drawing per held item: its width, and its body on a `width` x `length` box.
+ * @type {Readonly<Record<keyof typeof HELD, (length: number) => [number, string]>>}
+ */
+const HELD_DRAWINGS = {
+  sword: (/** @type {number} */ L) => {
+    const w = 38,
+      c = w / 2;
+    return [
+      w,
+      knob(c, L - 5, 4.6) +
+        wrap(c, 6.5, L - 34, L - 9) +
+        shape(
+          `M${n(c - 17)} ${n(L - 40)}H${n(c + 17)}L${n(c + 15)} ${n(L - 34)}H${n(c - 15)}Z`,
+          M.brass,
+        ) +
+        streak(`M${n(c - 15)} ${n(L - 38.5)}H${n(c + 15)}`, M.brassDark, 1) +
+        blade(c, 10, L - 40, 2),
+    ];
+  },
+  axe: (/** @type {number} */ L) => {
+    const w = 80,
+      c = w / 2;
+    // The bit outward (left), a short beak behind it.
+    return [
+      w,
+      shaft(c, 7, 6, L - 2) +
+        wrap(c, 8, L - 32, L - 6) +
+        knob(c, L - 3, 3.6, M.steelDark) +
+        shape(
+          `M${n(c - 3)} 14L${n(c - 18)} 10Q${n(c - 36)} 4 ${n(c - 38)} 2Q${n(c - 31)} 22 ${n(c - 38)} 46Q${n(c - 34)} 40 ${n(c - 18)} 36L${n(c - 3)} 32Z`,
+          M.steel,
+        ) +
+        streak(`M${n(c - 36)} 6Q${n(c - 29)} 24 ${n(c - 36)} 42`, M.steelLight, 1.6) +
+        shape(`M${n(c + 3)} 16L${n(c + 18)} 22L${n(c + 3)} 30Z`, M.steelDark) +
+        shape(bar(c, 10, 12, 36), M.steelDark, 1.2),
+    ];
+  },
+  hammer: (/** @type {number} */ L) => {
+    const w = 64,
+      c = w / 2;
+    return [
+      w,
+      shaft(c, 8, 26, L - 2) +
+        wrap(c, 9, L - 34, L - 6) +
+        knob(c, L - 3, 4, M.steelDark) +
+        shape(`M2 6H${n(w - 2)}V34H2Z`, M.steel) +
+        shape(`M${n(w / 2)} 7H${n(w - 3)}V33H${n(w / 2)}Z`, M.steelDark, 0) +
+        streak("M4 9V31", M.steelLight, 1.6) +
+        shape(bar(c, 14, 2, 38), M.brass, 1.2) +
+        streak(`M${n(c - 4)} 5V35`, "#e6c878", 1.4),
+    ];
+  },
+  daggers: (/** @type {number} */ L) => {
+    const w = 18,
+      c = w / 2;
+    return [
+      w,
+      knob(c, L - 3, 3) +
+        wrap(c, 5, L - 16, L - 5, 3) +
+        shape(
+          `M${n(c - 8)} ${n(L - 20)}H${n(c + 8)}L${n(c + 6)} ${n(L - 16)}H${n(c - 6)}Z`,
+          M.brass,
+          1.1,
+        ) +
+        blade(c, 7, L - 20, 1),
+    ];
+  },
+  scythe: (/** @type {number} */ L) => {
+    const w = 184,
+      c = w / 2;
+    // The snath upright, the blade sweeping outward (left) from its top.
+    return [
+      w,
+      shaft(c, 7, 4, L - 2) +
+        wrap(c, 9, L - 112, L - 96, 3) +
+        wrap(c, 9, L - 30, L - 14, 3) +
+        shape(
+          `M${n(c - 2)} 4Q${n(c - 60)} -2 ${n(c - 90)} 30Q${n(c - 62)} 10 ${n(c - 2)} 18Z`,
+          M.steel,
+        ) +
+        streak(`M${n(c - 6)} 7Q${n(c - 58)} 3 ${n(c - 86)} 27`, M.steelLight, 1.4) +
+        shape(bar(c, 11, 2, 20), M.steelDark, 1.2),
+    ];
+  },
+  spear: (/** @type {number} */ L) => {
+    const w = 22,
+      c = w / 2;
+    return [
+      w,
+      shaft(c, 6, 46, L - 8) +
+        wrap(c, 7.5, L - 132, L - 100, 4) +
+        shape(`M${n(c - 3)} ${n(L - 9)}H${n(c + 3)}L${n(c)} ${n(L - 1)}Z`, M.steelDark, 1.1) +
+        shape(bar(c, 8, 44, 54), M.brass, 1.1) +
+        shape(
+          `M${n(c)} 2Q${n(c + 11)} 26 ${n(c + 3)} 46H${n(c - 3)}Q${n(c - 11)} 26 ${n(c)} 2Z`,
+          M.steel,
+        ) +
+        shape(`M${n(c)} 4Q${n(c + 10)} 26 ${n(c + 3)} 45H${n(c)}Z`, M.steelDark, 0) +
+        streak(`M${n(c)} 6V43`, M.edge, 0.9),
+    ];
+  },
+  wand: (/** @type {number} */ L) => {
+    const w = 16,
+      c = w / 2;
+    return [
+      w,
+      shape(
+        `M${n(c - 3.4)} ${n(L - 2)}L${n(c - 2)} 12H${n(c + 2)}L${n(c + 3.4)} ${n(L - 2)}Z`,
+        M.wood,
+        1.2,
+      ) +
+        streak(`M${n(c + 1.6)} 14L${n(c + 2.4)} ${n(L - 4)}`, M.woodDark, 1.2) +
+        wrap(c, 7.5, L - 16, L - 4, 3) +
+        shape(bar(c, 7, 10, 15), M.brass, 1) +
+        knob(c, 6.5, 5.6, M.gem),
+    ];
+  },
+  staff: (/** @type {number} */ L) => {
+    const w = 36,
+      c = w / 2;
+    // A shaft with an orb held in a split crook.
+    return [
+      w,
+      shaft(c, 8, 34, L - 3) +
+        wrap(c, 10, L - 150, L - 112, 5) +
+        shape(bar(c, 10, L - 20, L - 4), M.brass, 1.1) +
+        streak(
+          `M${n(c - 2)} 36Q${n(c - 15)} 28 ${n(c - 12)} 8M${n(c + 2)} 36Q${n(c + 15)} 28 ${n(c + 12)} 8`,
+          M.woodDark,
+          5,
+        ) +
+        knob(c, 19, 9, M.gem) +
+        `<circle cx="${n(c)}" cy="19" r="13" fill="${M.gem}" opacity=".18"/>`,
+    ];
+  },
+  shortbow: (/** @type {number} */ L) => bow(L, "plain"),
+  "recurve-bow": (/** @type {number} */ L) => bow(L, "recurve"),
+  hornbow: (/** @type {number} */ L) => bow(L, "horn"),
+  flatbow: (/** @type {number} */ L) => bow(L, "flat"),
+  longbow: (/** @type {number} */ L) => bow(L, "long"),
+  shield: (/** @type {number} */ L) => {
+    // Drawn a little inward of the grip, so its outer rim stays by the figure.
+    const w = 96,
+      c = w / 2;
+    const outline = `M4 6Q${n(c)} -2 ${n(w - 4)} 6V${n(L * 0.45)}Q${n(w - 8)} ${n(L * 0.82)} ${n(c)} ${n(L - 3)}Q8 ${n(L * 0.82)} 4 ${n(L * 0.45)}Z`;
+    const inner = `M12 12Q${n(c)} 5 ${n(w - 12)} 12V${n(L * 0.45)}Q${n(w - 15)} ${n(L * 0.77)} ${n(c)} ${n(L - 13)}Q15 ${n(L * 0.77)} 12 ${n(L * 0.45)}Z`;
+    return [
+      w + 24,
+      `<g transform="translate(4,0)">` +
+        shape(outline, M.steelDark, 1.6) +
+        shape(inner, M.wood, 1.2) +
+        shape(
+          `M${n(c)} 9V${n(L - 13)}Q${n(w - 15)} ${n(L * 0.77)} ${n(w - 12)} ${n(L * 0.45)}V12Q${n(c + 20)} 7 ${n(c)} 9Z`,
+          M.woodDark,
+          0,
+        ) +
+        streak(`M7 9V${n(L * 0.45)}Q10 ${n(L * 0.78)} ${n(c - 4)} ${n(L - 6)}`, M.steelLight, 1.6) +
+        streak(`M${n(c)} 10V${n(L - 14)}M14 ${n(L * 0.4)}H${n(w - 14)}`, M.brassDark, 4) +
+        knob(c, L * 0.4, 11) +
+        "</g>",
+    ];
+  },
+  focus: (/** @type {number} */ L) => {
+    const w = 46,
+      c = w / 2;
+    return [
+      w,
+      `<circle cx="${n(c)}" cy="${n(L / 2)}" r="22" fill="${M.gem}" opacity=".2"/>` +
+        shape(
+          `M${n(c)} 6L${n(c + 12)} ${n(L / 2)}L${n(c)} ${n(L - 6)}L${n(c - 12)} ${n(L / 2)}Z`,
+          M.gem,
+          1.3,
+        ) +
+        shape(`M${n(c)} 7L${n(c + 11)} ${n(L / 2)}L${n(c)} ${n(L - 7)}Z`, "#5f6fd0", 0) +
+        streak(`M${n(c - 2)} 11L${n(c - 9)} ${n(L / 2)}`, M.gemLight, 1.6) +
+        shape(`M${n(c - 9)} ${n(L - 13)}Q${n(c)} ${n(L - 4)} ${n(c + 9)} ${n(L - 13)}`, "none", 0) +
+        streak(
+          `M${n(c - 10)} ${n(L - 12)}Q${n(c)} ${n(L - 2)} ${n(c + 10)} ${n(L - 12)}`,
+          M.brass,
+          2.6,
+        ),
+    ];
+  },
+};
+
+/**
+ * A bow upright in the left hand of the drawing, by the middle: its back
+ * outward (left), the string straight on the right.
+ * @param {number} L @param {"plain" | "recurve" | "horn" | "flat" | "long"} kind
+ * @returns {[number, string]}
+ */
+function bow(L, kind) {
+  const depth = kind === "long" ? 0.14 : kind === "flat" ? 0.13 : 0.18;
+  const w = Math.round(L * depth) + 12;
+  const string = w - 4;
+  const mid = L / 2;
+  const back = 4;
+  const tip = string - 2;
+  const limb =
+    kind === "flat"
+      ? `M${n(tip)} 3L${n(back + 4)} ${n(mid - 18)}L${n(back)} ${n(mid)}L${n(back + 4)} ${n(mid + 18)}L${n(tip)} ${n(L - 3)}`
+      : kind === "recurve" || kind === "horn"
+        ? `M${n(tip - 8)} 3Q${n(tip + 2)} 14 ${n(tip - 10)} 22Q${n(back - 4)} ${n(mid - 40)} ${n(back)} ${n(mid)}Q${n(back - 4)} ${n(mid + 40)} ${n(tip - 10)} ${n(L - 22)}Q${n(tip + 2)} ${n(L - 14)} ${n(tip - 8)} ${n(L - 3)}`
+        : `M${n(tip)} 3Q${n(back - 6)} ${n(mid)} ${n(tip)} ${n(L - 3)}`;
+  const stringTop = kind === "recurve" || kind === "horn" ? 22 : 3;
+  const tone = kind === "horn" ? M.horn : M.wood;
+  const dark = kind === "horn" ? M.hornDark : M.woodDark;
+  // The grip is the drawing's centre: the box runs as far left of it as the
+  // string is to its right.
+  const grip = back + 2;
+  const width = 2 * (w - grip);
+  return [
+    width,
+    `<g transform="translate(${n(width / 2 - grip)},0)">` +
+      streak(`M${n(string)} ${n(stringTop)}V${n(L - stringTop)}`, M.steelLight, 1) +
+      streak(limb, M.edge, 9.4) +
+      streak(limb, tone, 7) +
+      streak(limb, dark, 1.4) +
+      wrap(grip, 9, mid - 13, mid + 13, 4) +
+      "</g>",
+  ];
+}
+
+/** The held drawings of `HELD`, by id: upright, `length` tall, the grip at the bottom-centre of its fraction. */
+export function heldItems() {
+  /** @type {Record<string, string>} */
+  const out = {};
+  for (const [id, pose] of Object.entries(HELD)) {
+    const [width, body] = HELD_DRAWINGS[/** @type {keyof typeof HELD} */ (id)](pose.length);
+    out[id] =
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${String(width)} ${String(pose.length)}" width="${String(width)}" height="${String(pose.length)}">${body}</svg>\n`;
+  }
+  return out;
 }

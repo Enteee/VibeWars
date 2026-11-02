@@ -351,8 +351,8 @@ describe("the armor paper-doll (#2059)", () => {
   });
 
   it("holds the shown set's weapons as ⑥ and ⑦, and follows the set tab (#2151)", () => {
-    expect(hand("mainHand").all("gear-icon")[0]?.alt).toBe("Sword");
-    expect(hand("offHand").all("gear-icon")[0]?.alt).toBe("Shield");
+    expect(hand("mainHand").title).toContain("Sword");
+    expect(hand("offHand").title).toContain("Shield");
     expect(hand("offHand").hidden).toBe(false);
     expect(row("mainHand").text()).toContain("⑥ Sword·Swordsmanship·—·—·—");
     expect(row("offHand").text()).toContain("⑦ Shield");
@@ -360,7 +360,7 @@ describe("the armor paper-doll (#2059)", () => {
     character = setWeapon(character, 1, "hammer");
     set = 1;
     doll.update(character);
-    expect(hand("mainHand").all("gear-icon")[0]?.alt).toBe("Hammer");
+    expect(hand("mainHand").title).toContain("Hammer");
     // Two hands on the hammer: no ⑦ at all.
     expect(hand("offHand").hidden).toBe(true);
     expect(row("offHand").hidden).toBe(true);
@@ -368,9 +368,67 @@ describe("the armor paper-doll (#2059)", () => {
     // Bare hands: ⑥ is there, empty, and opens nothing.
     character = setOffhand(setWeapon(character, 1, "unarmed"), 1, null);
     doll.update(character);
-    expect(hand("mainHand").all("gear-icon")).toHaveLength(0);
+    expect(hand("mainHand").title).toBe("Main hand: empty");
     expect(hand("mainHand").disabled).toBe(true);
     expect(row("mainHand").hidden).toBe(true);
+  });
+
+  describe("draws the held weapons in the figure's hands (#2154)", () => {
+    /** The held drawings shown, by hand: their source, and whether mirrored. */
+    const held = (): Record<string, string> =>
+      Object.fromEntries(
+        root()
+          .all("paper-doll-held")
+          .filter((img) => !img.hidden)
+          .map((img) => [
+            img.dataset.slot ?? "",
+            img.src.replace(/^.*\/icons\//, "") +
+              (img.classList.contains("is-mirrored") ? " mirrored" : ""),
+          ]),
+      );
+
+    it("a sword and a shield, each in its hand", () => {
+      expect(held()).toEqual({
+        mainHand: "paper-doll/held/sword.svg",
+        offHand: "paper-doll/held/shield.svg",
+      });
+    });
+
+    it("daggers in both hands, the off one mirrored", () => {
+      character = setWeapon(character, 0, "daggers");
+      doll.update(character);
+      expect(held()).toEqual({
+        mainHand: "paper-doll/held/daggers.svg",
+        offHand: "paper-doll/held/daggers.svg mirrored",
+      });
+    });
+
+    it("a two-handed weapon alone, and nothing for bare hands", () => {
+      character = setWeapon(character, 0, "staff");
+      doll.update(character);
+      expect(held()).toEqual({ mainHand: "paper-doll/held/staff.svg" });
+
+      character = setOffhand(setWeapon(character, 0, "unarmed"), 0, null);
+      doll.update(character);
+      expect(held()).toEqual({});
+    });
+
+    it("sits under every hotspot and takes no click, so ⑥ still opens", () => {
+      const stage = root().all("paper-doll-stage")[0];
+      const order = stage?.children ?? [];
+      const lastArt = Math.max(
+        ...root()
+          .all("paper-doll-held")
+          .map((img) => order.indexOf(img)),
+      );
+      const firstHotspot = Math.min(...hotspots().map((spot) => order.indexOf(spot)));
+      expect(lastArt).toBeLessThan(firstHotspot);
+      for (const img of root().all("paper-doll-held")) {
+        expect(img.listeners.size).toBe(0);
+      }
+      hand("mainHand").click();
+      expect(hand("mainHand").getAttribute("aria-expanded")).toBe("true");
+    });
   });
 
   it("opens ⑥ on the sword: Prefix, Suffix and Inscription, None first, and no pills", () => {
