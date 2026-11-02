@@ -1,18 +1,27 @@
 /**
- * TURN users (#974): one long-term credential per friend in coturn's SQLite
- * userdb, managed through turnadmin. The userdb holds only the key,
- * MD5(user:realm:password); the password is printed once and kept nowhere,
- * except the health user's, which turn-check needs every time.
+ * TURN users (#974, #2240): one REST secret per friend (coturn
+ * `use-auth-secret`), in the SQLite userdb's secret table, managed through
+ * turnadmin. coturn reads that table on each request, so adding or removing
+ * a friend needs no restart. A friend's invite link carries their secret and
+ * the game mints short logins from it. turnadmin keeps no names, so
+ * `<stateDir>/shared/<name>.secret` maps each friend to their secret.
  */
 import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
-import { checkSharedSecret, files } from "./settings.mjs";
+import { files } from "./settings.mjs";
 
-/** The user turn-check allocates as. turn-user list does not show it. */
+/** The user turn-check mints its logins for. turn-user list does not show it. */
 export const HEALTH_USER = "vibewars-health";
+
+/** What a secret file holds: 32 random bytes, hex. */
+const SECRET = /^[0-9a-f]{64}$/;
+/** More than a secret and its newline: a file this long is not one. */
+const MAX_SECRET_FILE = 256;
+const SUFFIX = ".secret";
 
 /**
  * @param {string} name
@@ -22,9 +31,39 @@ export function validName(name) {
   return /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(name);
 }
 
-/** 24 random bytes, base64url. */
-export function newPassword() {
-  return crypto.randomBytes(24).toString("base64url");
+/** @returns {string} 32 random bytes, hex */
+export function newSecret() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+/**
+ * `text` as a secret, one trailing newline trimmed, or an error: never
+ * anything turnadmin or a link would take as something else.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function checkSecret(text) {
+  const secret = text.endsWith("\n") ? text.slice(0, -1) : text;
+  if (!SECRET.test(secret)) throw new Error("a secret file does not hold 64 hex digits");
+  return secret;
+}
+
+/**
+ * A coturn REST login from `secret`, valid until `expiry` (unix seconds):
+ * username `<expiry>:<tag>`, credential base64(HMAC-SHA1(secret, username)).
+ *
+ * @param {string} secret
+ * @param {number} expiry
+ * @param {string} tag
+ * @returns {{ username: string, password: string }}
+ */
+export function mintLogin(secret, expiry, tag) {
+  const username = `${String(expiry)}:${tag}`;
+  return {
+    username,
+    password: crypto.createHmac("sha1", secret).update(username).digest("base64"),
+  };
 }
 
 /**
@@ -34,7 +73,10 @@ export function newPassword() {
  */
 function turnadmin(s, args) {
   fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
-  const res = spawnSync("turnadmin", [...args, "-b", files(s).db], { encoding: "utf8" });
+  // turnadmin reads a secret from argv only: a short, local call.
+  const res = spawnSync("turnadmin", [...args, "-r", s.realm, "-b", files(s).db], {
+    encoding: "utf8",
+  });
   if (res.error !== undefined)
     throw new Error(`turnadmin: ${res.error.message} (is coturn on PATH?)`);
   if (res.status !== 0)
@@ -43,79 +85,29 @@ function turnadmin(s, args) {
 }
 
 /**
- * Adds the user, or sets a new password for one that exists.
- *
- * @param {import("./settings.mjs").TurnSettings} s
- * @param {string} name
- * @param {string} password
- */
-export function setUser(s, name, password) {
-  turnadmin(s, ["-a", "-u", name, "-r", s.realm, "-p", password]);
-}
-
-/**
- * @param {import("./settings.mjs").TurnSettings} s
- * @param {string} name
- */
-export function removeUser(s, name) {
-  turnadmin(s, ["-d", "-u", name, "-r", s.realm]);
-}
-
-/**
- * Every user of this realm, the health user included.
- *
- * @param {import("./settings.mjs").TurnSettings} s
- * @returns {string[]}
- */
-export function allUsers(s) {
-  return parseUserList(turnadmin(s, ["-l"]), s.realm);
-}
-
-/**
- * The users turnadmin -l prints, `name[realm]` per line, for one realm.
+ * The secrets turnadmin -S prints, `secret[realm]` per line, for one realm.
  *
  * @param {string} out
  * @param {string} realm
  * @returns {string[]}
  */
-export function parseUserList(out, realm) {
+export function parseSecretList(out, realm) {
   /** @type {string[]} */
-  const names = [];
+  const secrets = [];
   for (const line of out.split("\n")) {
-    const m = /^(\S+)\[([^\]]*)\]$/.exec(line.trim());
-    if (m !== null && m[2] === realm) names.push(/** @type {string} */ (m[1]));
+    const m = /^([0-9a-f]{64})\[([^\]]*)\]$/.exec(line.trim());
+    if (m !== null && m[2] === realm) secrets.push(/** @type {string} */ (m[1]));
   }
-  return names.sort();
+  return secrets;
 }
 
 /**
- * The health user's password, creating the user and its secret file
- * (mode 0600) the first time, and re-adding the user when the userdb lost it.
- *
  * @param {import("./settings.mjs").TurnSettings} s
- * @returns {string}
+ * @param {string} name
  */
-export function healthPassword(s) {
-  const file = files(s).healthSecret;
-  let password;
-  try {
-    password = fs.readFileSync(file, "utf8").trim();
-  } catch {
-    password = "";
-  }
-  if (password === "") {
-    password = newPassword();
-    fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
-    fs.writeFileSync(file, `${password}\n`, { mode: 0o600 });
-    setUser(s, HEALTH_USER, password);
-  } else if (!allUsers(s).includes(HEALTH_USER)) {
-    setUser(s, HEALTH_USER, password);
-  }
-  return password;
+function secretFile(s, name) {
+  return path.join(files(s).shared, `${name}${SUFFIX}`);
 }
-
-/** More than a secret and its newline: a file this long is not one. */
-const MAX_SECRET_FILE = 256;
 
 /**
  * Reads a secret file without following a link, and only when it is a
@@ -134,14 +126,18 @@ function readSecretFile(file) {
     const buf = Buffer.alloc(MAX_SECRET_FILE + 1);
     const n = fs.readSync(fd, buf, 0, buf.length, 0);
     if (n > MAX_SECRET_FILE) throw new Error(`${file} is too long for a secret`);
-    return checkSharedSecret(buf.subarray(0, n).toString("utf8"));
+    try {
+      return checkSecret(buf.subarray(0, n).toString("utf8"));
+    } catch (e) {
+      throw new Error(`${file}: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
+    }
   } finally {
     fs.closeSync(fd);
   }
 }
 
 /**
- * Creates `file` at 0600 with `secret`, never over an existing file or
+ * Creates `file` at 0600 holding `secret`, never over an existing file or
  * through a link: EEXIST when it is there.
  *
  * @param {string} file
@@ -151,59 +147,135 @@ function createSecretFile(file, secret) {
   const { O_WRONLY, O_CREAT, O_EXCL, O_NOFOLLOW } = fs.constants;
   const fd = fs.openSync(file, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0o600);
   try {
-    fs.writeSync(fd, `${secret}\n`);
+    fs.writeSync(fd, `${checkSecret(secret)}\n`);
     fs.fsyncSync(fd);
   } finally {
     fs.closeSync(fd);
   }
 }
 
-/** @returns {string} 32 random bytes, hex */
-function newSharedSecret() {
-  return crypto.randomBytes(32).toString("hex");
+/** @param {import("./settings.mjs").TurnSettings} s */
+function sharedDir(s) {
+  fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
+  fs.mkdirSync(files(s).shared, { recursive: true, mode: 0o700 });
 }
 
 /**
- * The shared relay's secret (#2240, coturn use-auth-secret), created the
- * first time it is needed. A malformed file is an error, never replaced:
- * a new secret would kill every host's offers without a word. Two first
- * creates racing end with the same secret: the loser reads the winner's.
- *
- * @param {import("./settings.mjs").TurnSettings} s
- * @returns {string}
+ * @param {unknown} e
+ * @param {string} code
  */
-export function sharedSecret(s) {
-  const file = files(s).sharedSecret;
-  fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
-  try {
-    return readSecretFile(file);
-  } catch (e) {
-    if (!(e instanceof Error && "code" in e && e.code === "ENOENT")) throw e;
-  }
-  const secret = newSharedSecret();
-  try {
-    createSecretFile(file, secret);
-    return secret;
-  } catch (e) {
-    if (!(e instanceof Error && "code" in e && e.code === "EEXIST")) throw e;
-    return readSecretFile(file);
-  }
+function isCode(e, code) {
+  return e instanceof Error && "code" in e && e.code === code;
 }
 
 /**
- * A new shared secret, written to a 0600 temp file and renamed over the
- * old one, so a crash mid-rotate leaves the old secret or the new one.
+ * Every user of this realm, the health user included, by their secret file.
  *
  * @param {import("./settings.mjs").TurnSettings} s
+ * @returns {string[]}
+ */
+export function allUsers(s) {
+  /** @type {string[]} */
+  let names;
+  try {
+    names = fs.readdirSync(files(s).shared);
+  } catch (e) {
+    if (isCode(e, "ENOENT")) return [];
+    throw e;
+  }
+  return names
+    .filter((n) => n.endsWith(SUFFIX))
+    .map((n) => n.slice(0, -SUFFIX.length))
+    .filter(validName)
+    .sort();
+}
+
+/**
+ * `name`'s secret, from their file.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @param {string} name
  * @returns {string}
  */
-export function rotateSharedSecret(s) {
-  const file = files(s).sharedSecret;
-  const secret = checkSharedSecret(newSharedSecret());
-  fs.mkdirSync(s.stateDir, { recursive: true, mode: 0o700 });
+export function userSecret(s, name) {
+  return readSecretFile(secretFile(s, name));
+}
+
+/**
+ * Adds `name` with a new secret, in their file and the userdb.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @param {string} name
+ * @returns {string} the secret
+ */
+export function addUser(s, name) {
+  sharedDir(s);
+  const secret = newSecret();
+  createSecretFile(secretFile(s, name), secret);
+  turnadmin(s, ["-s", secret]);
+  return secret;
+}
+
+/**
+ * Gives `name` a new secret: the new one is in the userdb before the old one
+ * leaves it, and the file is replaced by a rename, so a crash leaves one of
+ * the two.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @param {string} name
+ * @returns {string} the new secret
+ */
+export function relinkUser(s, name) {
+  const file = secretFile(s, name);
+  const old = readSecretFile(file);
+  const secret = newSecret();
   const tmp = `${file}.${String(process.pid)}.tmp`;
   fs.rmSync(tmp, { force: true });
   createSecretFile(tmp, secret);
+  turnadmin(s, ["-s", secret]);
   fs.renameSync(tmp, file);
+  turnadmin(s, ["-X", old]);
+  return secret;
+}
+
+/**
+ * Removes `name`'s secret from the userdb, then their file. A login minted
+ * from it already lives on until it expires.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @param {string} name
+ */
+export function removeUser(s, name) {
+  const file = secretFile(s, name);
+  turnadmin(s, ["-X", readSecretFile(file)]);
+  fs.rmSync(file);
+}
+
+/**
+ * The health user's secret, made the first time and put back into the
+ * userdb when it lost it. Two first makes racing end with the same secret:
+ * the loser reads the winner's file.
+ *
+ * @param {import("./settings.mjs").TurnSettings} s
+ * @returns {string}
+ */
+export function healthSecret(s) {
+  sharedDir(s);
+  const file = secretFile(s, HEALTH_USER);
+  let secret;
+  try {
+    secret = readSecretFile(file);
+  } catch (e) {
+    if (!isCode(e, "ENOENT")) throw e;
+    secret = newSecret();
+    try {
+      createSecretFile(file, secret);
+    } catch (made) {
+      if (!isCode(made, "EEXIST")) throw made;
+      secret = readSecretFile(file);
+    }
+  }
+  if (!parseSecretList(turnadmin(s, ["-S"]), s.realm).includes(secret))
+    turnadmin(s, ["-s", secret]);
   return secret;
 }

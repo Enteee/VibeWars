@@ -39,12 +39,7 @@ function decode(link) {
 }
 
 describe("invite links", () => {
-  const config = {
-    urls: turnUrls(settings),
-    username: "alice",
-    credential: "s3cr+t/=",
-    shared: { urls: turnUrls(settings), secret: "ab".repeat(32) },
-  };
+  const config = { urls: turnUrls(settings), secret: "ab".repeat(32) };
 
   it("carry the config as unpadded base64url JSON in the fragment", () => {
     const link = inviteLink("https://enteee.github.io/VibeWars/next/", config);
@@ -58,8 +53,7 @@ describe("invite links", () => {
     const link = inviteLink("https://x.example/", config);
     expect(parseTurnFragment(new URL(link).hash)).toEqual({
       kind: "config",
-      config: { urls: config.urls, username: "alice", credential: "s3cr+t/=" },
-      shared: config.shared,
+      relay: { kind: "rest", urls: config.urls, secret: config.secret },
       rest: "",
     });
   });

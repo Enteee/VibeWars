@@ -1,11 +1,6 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
+import { describe, expect, it } from "vitest";
 
-import { afterEach, describe, expect, it } from "vitest";
-
-import { files, parseSettings, turnNft, turnserverConf } from "./settings.mjs";
-import { rotateSharedSecret, sharedSecret } from "./users.mjs";
+import { parseSettings, turnNft, turnserverConf } from "./settings.mjs";
 
 /** @type {import("./settings.mjs").TurnSettings} */
 const BASE = {
@@ -28,13 +23,11 @@ const BASE = {
   stunProbe: "stun.l.google.com:19302",
 };
 
-const HEX64 = "0123456789abcdef".repeat(4);
-
 /** @param {string} conf */
 const lines = (conf) => conf.split("\n");
 
 describe("turnserverConf", () => {
-  const conf = lines(turnserverConf(BASE, HEX64));
+  const conf = lines(turnserverConf(BASE));
 
   // A regression guard on the hardening: each of these is a network a relay
   // must never reach, written out here rather than read from DENIED_PEERS.
@@ -64,15 +57,12 @@ describe("turnserverConf", () => {
   // address breaks relay to relay on one server. turnNft guards those instead.
   it("denies neither the unspecified address nor the host's own addresses", () => {
     const own = lines(
-      turnserverConf(
-        {
-          ...BASE,
-          externalIp: "203.0.113.5/10.0.0.5",
-          externalIp6: "2001:db8::5",
-          listeningIps: ["203.0.113.5", "198.51.100.9"],
-        },
-        HEX64,
-      ),
+      turnserverConf({
+        ...BASE,
+        externalIp: "203.0.113.5/10.0.0.5",
+        externalIp6: "2001:db8::5",
+        listeningIps: ["203.0.113.5", "198.51.100.9"],
+      }),
     );
     const denied = own.filter((l) => l.startsWith("denied-peer-ip=")).map((l) => l.slice(15));
     for (const ip of ["::", "0.0.0.0", "203.0.113.5", "10.0.0.5", "2001:db8::5", "198.51.100.9"]) {
@@ -88,7 +78,7 @@ describe("turnserverConf", () => {
   });
 
   it("never allows loopback, even as a listening address", () => {
-    const conf = lines(turnserverConf({ ...BASE, listeningIps: ["127.0.0.1", "::1"] }, HEX64));
+    const conf = lines(turnserverConf({ ...BASE, listeningIps: ["127.0.0.1", "::1"] }));
     expect(conf.filter((l) => l.startsWith("allowed-peer-ip="))).toEqual([
       "allowed-peer-ip=203.0.113.7",
       "allowed-peer-ip=10.0.0.7",
@@ -134,98 +124,19 @@ describe("turnserverConf", () => {
 
   it("listens for TLS only with a certificate", () => {
     expect(conf).toContain("no-tls");
-    const withTls = lines(turnserverConf({ ...BASE, cert: "/c.pem", key: "/k.pem" }, HEX64));
+    const withTls = lines(turnserverConf({ ...BASE, cert: "/c.pem", key: "/k.pem" }));
     expect(withTls).toEqual(
       expect.arrayContaining(["tls-listening-port=5349", "cert=/c.pem", "pkey=/k.pem"]),
     );
     expect(withTls).not.toContain("no-tls");
   });
 
-  // #2240: static users and REST credentials minted from the shared secret.
-  it("takes both static users and the shared secret", () => {
+  // #2240: REST logins from the secrets in the userdb, none in the conf.
+  it("takes REST logins from the userdb, and holds no secret", () => {
     expect(conf).toEqual(
-      expect.arrayContaining([
-        "lt-cred-mech",
-        "userdb=/state/turn/turndb",
-        "use-auth-secret",
-        `static-auth-secret=${HEX64}`,
-      ]),
+      expect.arrayContaining(["lt-cred-mech", "userdb=/state/turn/turndb", "use-auth-secret"]),
     );
-    expect(lines(turnserverConf(BASE, `${HEX64}\n`))).toContain(`static-auth-secret=${HEX64}`);
-  });
-
-  it("refuses a secret that is not 64 hex digits, so no directive rides in on it", () => {
-    for (const bad of [
-      "",
-      HEX64.slice(1),
-      HEX64.toUpperCase(),
-      `${HEX64}\n\n`,
-      `${HEX64}\nallowed-peer-ip=10.0.0.0-10.255.255.255`,
-    ]) {
-      expect(() => turnserverConf(BASE, bad)).toThrow(/64 hex digits/);
-    }
-  });
-});
-
-describe("the shared secret file", () => {
-  /** @type {string[]} */
-  const dirs = [];
-  afterEach(() => {
-    for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
-  });
-  /** @returns {import("./settings.mjs").TurnSettings} */
-  const temp = () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "vibewars-turn-secret-"));
-    dirs.push(dir);
-    return { ...BASE, stateDir: path.join(dir, "state") };
-  };
-
-  it("is made once at 0600, then read back the same", () => {
-    const s = temp();
-    const secret = sharedSecret(s);
-    expect(secret).toMatch(/^[0-9a-f]{64}$/);
-    expect(fs.statSync(files(s).sharedSecret).mode & 0o777).toBe(0o600);
-    expect(fs.readFileSync(files(s).sharedSecret, "utf8")).toBe(`${secret}\n`);
-    expect(sharedSecret(s)).toBe(secret);
-  });
-
-  it("is an error when malformed, never quietly replaced", () => {
-    const s = temp();
-    fs.mkdirSync(s.stateDir, { mode: 0o700 });
-    const bad = `${HEX64}\nallowed-peer-ip=10.0.0.0-10.255.255.255\n`;
-    fs.writeFileSync(files(s).sharedSecret, bad, { mode: 0o600 });
-    expect(() => sharedSecret(s)).toThrow(/64 hex digits/);
-    fs.writeFileSync(files(s).sharedSecret, "", { mode: 0o600 });
-    expect(() => sharedSecret(s)).toThrow(/64 hex digits/);
-    expect(fs.readFileSync(files(s).sharedSecret, "utf8")).toBe("");
-  });
-
-  it("is refused when others may read it, through a link, or too long", () => {
-    const s = temp();
-    fs.mkdirSync(s.stateDir, { mode: 0o700 });
-    const file = files(s).sharedSecret;
-    fs.writeFileSync(file, `${HEX64}\n`, { mode: 0o644 });
-    fs.chmodSync(file, 0o644);
-    expect(() => sharedSecret(s)).toThrow(/mode 0600/);
-    fs.rmSync(file);
-    const elsewhere = path.join(path.dirname(s.stateDir), "elsewhere");
-    fs.writeFileSync(elsewhere, `${HEX64}\n`, { mode: 0o600 });
-    fs.symlinkSync(elsewhere, file);
-    expect(() => sharedSecret(s)).toThrow(/ELOOP/);
-    fs.rmSync(file);
-    fs.writeFileSync(file, "a".repeat(300), { mode: 0o600 });
-    expect(() => sharedSecret(s)).toThrow(/too long/);
-  });
-
-  it("rotates to a new 0600 secret by rename, leaving no temp file", () => {
-    const s = temp();
-    const old = sharedSecret(s);
-    const next = rotateSharedSecret(s);
-    expect(next).toMatch(/^[0-9a-f]{64}$/);
-    expect(next).not.toBe(old);
-    expect(sharedSecret(s)).toBe(next);
-    expect(fs.statSync(files(s).sharedSecret).mode & 0o777).toBe(0o600);
-    expect(fs.readdirSync(s.stateDir)).toEqual(["shared.secret"]);
+    expect(conf.some((l) => l.startsWith("static-auth-secret"))).toBe(false);
   });
 });
 

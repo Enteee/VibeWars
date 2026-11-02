@@ -19,9 +19,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { healthy, runChecks } from "./check.mjs";
 import { files, parseSettings, turnserverConf } from "./settings.mjs";
-import { splitRelayUrls } from "../../apps/web/src/ui/relay-section.ts";
 import { allocate, binding, permissions } from "./stun.mjs";
-import { sharedSecret } from "./users.mjs";
+import { HEALTH_USER, mintLogin } from "./users.mjs";
 
 const TURN = path.join(import.meta.dirname, "turn.mjs");
 
@@ -58,9 +57,6 @@ let dir;
 let settings;
 /** @type {import("node:child_process").ChildProcess | null} */
 let server = null;
-
-/** The shared secret (#2240) the server was started with. */
-const secret = () => fs.readFileSync(files(settings).sharedSecret, "utf8").trim();
 
 /**
  * @param {string[]} args
@@ -99,7 +95,7 @@ beforeAll(async () => {
   });
   fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings));
   fs.mkdirSync(settings.stateDir, { mode: 0o700 });
-  fs.writeFileSync(files(settings).conf, turnserverConf(settings, sharedSecret(settings)));
+  fs.writeFileSync(files(settings).conf, turnserverConf(settings));
   server = spawn("turnserver", ["-c", files(settings).conf], { stdio: "ignore" });
   // Ready is answering a Binding: the pid file does not mean the UDP
   // listener is up, and a check's single request would be lost to it.
@@ -130,25 +126,60 @@ afterAll(async () => {
 });
 
 describe("a real turnserver", () => {
-  /** @type {string} */
-  let password = "";
+  /** @param {string} name */
+  const secretOf = (name) =>
+    fs.readFileSync(path.join(files(settings).shared, `${name}.secret`), "utf8").trim();
 
-  it("adds a user, prints the password once, and lists them", () => {
-    const add = turn(["user", "add", "alice", "--base", "https://play.example/"]);
-    expect(add.stderr).toBe("");
-    expect(add.status).toBe(0);
-    password = /^password: (\S+)$/m.exec(add.stdout)?.[1] ?? "";
-    expect(password).toMatch(/^[A-Za-z0-9_-]{32}$/);
-    expect(add.stdout).toMatch(/^link: {5}https:\/\/play\.example\/#turn=[A-Za-z0-9_-]+$/m);
-    expect(turn(["user", "list"]).stdout).toBe("alice\n");
+  /**
+   * A login the game would mint from `secret` (#2240), valid until `expiry`.
+   *
+   * @param {string} secret
+   * @param {number} [expiry]  unix seconds
+   */
+  const login = (secret, expiry = Math.floor(Date.now() / 1000) + 3600) => ({
+    host: "127.0.0.1",
+    port: settings.listeningPort,
+    ...mintLogin(secret, expiry, crypto.randomBytes(8).toString("hex")),
+  });
+
+  /**
+   * @param {string} stdout
+   * @returns {unknown}
+   */
+  const linkConfig = (stdout) => {
+    const value = /^link: https:\/\/play\.example\/#turn=([A-Za-z0-9_-]+)$/m.exec(stdout)?.[1];
+    return JSON.parse(Buffer.from(value ?? "", "base64url").toString("utf8"));
+  };
+
+  it("adds friends with a secret each, prints it only in their link, and lists them", () => {
+    for (const name of ["alice", "bob"]) {
+      const add = turn(["user", "add", name, "--base", "https://play.example/"]);
+      expect(add.stderr).toBe("");
+      expect(add.status).toBe(0);
+      expect(secretOf(name)).toMatch(/^[0-9a-f]{64}$/);
+      expect(linkConfig(add.stdout)).toEqual({
+        urls: [
+          `turn:127.0.0.1:${String(settings.listeningPort)}?transport=udp`,
+          `turn:127.0.0.1:${String(settings.listeningPort)}?transport=tcp`,
+        ],
+        secret: secretOf(name),
+      });
+      const file = path.join(files(settings).shared, `${name}.secret`);
+      expect(fs.statSync(file).mode & 0o777).toBe(0o600);
+    }
+    expect(fs.statSync(files(settings).shared).mode & 0o777).toBe(0o700);
+    expect(secretOf("alice")).not.toBe(secretOf("bob"));
+    expect(turn(["user", "add", "alice"]).status).not.toBe(0);
+    expect(turn(["user", "list"]).stdout).toBe("alice\nbob\n");
   });
 
   it("passes turn-check, and hides the health user it made", async () => {
     const checks = await runChecks(settings);
     expect(checks.filter((c) => c.status === "fail")).toEqual([]);
     expect(healthy(checks)).toBe(true);
-    expect(fs.statSync(files(settings).healthSecret).mode & 0o777).toBe(0o600);
-    expect(turn(["user", "list"]).stdout).toBe("alice\n");
+    const health = path.join(files(settings).shared, `${HEALTH_USER}.secret`);
+    expect(fs.statSync(health).mode & 0o777).toBe(0o600);
+    expect(turn(["user", "list"]).stdout).toBe("alice\nbob\n");
     expect(turn(["check"]).status).toBe(0);
   });
 
@@ -156,10 +187,7 @@ describe("a real turnserver", () => {
   // address was refused, so two players on one relay never connected.
   it("grants a public peer and the host's own address, and refuses private ones", async () => {
     const res = await permissions({
-      host: "127.0.0.1",
-      port: settings.listeningPort,
-      username: "alice",
-      password,
+      ...login(secretOf("alice")),
       peers: ["198.51.100.20", "203.0.113.7", "10.0.0.1", "192.168.1.1", "127.0.0.1"],
     });
     // A 403's reason phrase is coturn's to word (4.x leaves it empty). Any
@@ -178,54 +206,37 @@ describe("a real turnserver", () => {
     expect(checks.find((c) => c.name === "permissions")).toMatchObject({ status: "ok" });
   });
 
-  it("lets the user allocate until they are removed, then answers 401", async () => {
-    const as = { host: "127.0.0.1", port: settings.listeningPort, username: "alice", password };
-    expect(await allocate(as)).toMatchObject({ ok: true });
-    expect(turn(["user", "remove", "alice"]).status).toBe(0);
-    expect(await allocate(as)).toEqual({ ok: false, code: 401 });
-    expect(turn(["user", "list"]).stdout).toBe("");
+  it("refuses an expired login", async () => {
+    const past = Math.floor(Date.now() / 1000) - 60;
+    expect(await allocate(login(secretOf("alice"), past))).toEqual({ ok: false, code: 401 });
   });
 
-  // #2240: what the game mints from the shared secret, as coturn REST checks it.
-  /** @param {number} expiry  unix seconds */
-  const minted = (expiry) => {
-    const username = `${String(expiry)}:${crypto.randomBytes(4).toString("hex")}`;
-    const password = crypto.createHmac("sha1", secret()).update(username).digest("base64");
-    return { host: "127.0.0.1", port: settings.listeningPort, username, password };
-  };
-
-  it("prints the shared relay for Options, as the game splits it", () => {
-    const out = turn(["shared"]);
-    expect(out.stderr).toBe("");
-    expect(out.status).toBe(0);
-    const urls = splitRelayUrls(/^Shared URLs: (.*)$/m.exec(out.stdout)?.[1] ?? "");
-    expect(urls).toEqual([
-      `turn:127.0.0.1:${String(settings.listeningPort)}?transport=udp`,
-      `turn:127.0.0.1:${String(settings.listeningPort)}?transport=tcp`,
-    ]);
-    expect(out.stdout.split("\n")).toContain(`Shared secret: ${secret()}`);
-    expect(fs.statSync(files(settings).sharedSecret).mode & 0o777).toBe(0o600);
+  it("refuses new logins from a removed friend at once, without a restart", async () => {
+    const alice = secretOf("alice");
+    expect(await allocate(login(alice))).toMatchObject({ ok: true });
+    expect(await allocate(login(secretOf("bob")))).toMatchObject({ ok: true });
+    const remove = turn(["user", "remove", "alice"]);
+    expect(remove.status).toBe(0);
+    expect(remove.stdout).not.toContain(alice);
+    expect(await allocate(login(alice))).toEqual({ ok: false, code: 401 });
+    expect(await allocate(login(secretOf("bob")))).toMatchObject({ ok: true });
+    expect(fs.existsSync(path.join(files(settings).shared, "alice.secret"))).toBe(false);
+    expect(turn(["user", "list"]).stdout).toBe("bob\n");
   });
 
-  it("puts the shared secret in every invite link", () => {
-    const add = turn(["user", "add", "bob", "--base", "https://play.example/"]);
-    expect(add.status).toBe(0);
-    const value = /#turn=([A-Za-z0-9_-]+)$/m.exec(add.stdout)?.[1] ?? "";
-    /** @type {unknown} */
-    const config = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
-    expect(config).toMatchObject({ shared: { secret: secret() } });
-    expect(turn(["user", "remove", "bob"]).stdout).toMatch(/turn-shared rotate/);
+  it("gives a friend a new secret on turn-link, and the old one stops working", async () => {
+    const old = secretOf("bob");
+    const relink = turn(["link", "bob", "--base", "https://play.example/"]);
+    expect(relink.status).toBe(0);
+    expect(secretOf("bob")).not.toBe(old);
+    expect(linkConfig(relink.stdout)).toMatchObject({ secret: secretOf("bob") });
+    expect(await allocate(login(old))).toEqual({ ok: false, code: 401 });
+    expect(await allocate(login(secretOf("bob")))).toMatchObject({ ok: true });
   });
 
-  it("allocates with a credential minted from the shared secret, and keeps it out of the log", async () => {
-    const now = Math.floor(Date.now() / 1000);
-    expect(await allocate(minted(now + 3600))).toMatchObject({ ok: true });
-    expect(fs.readFileSync(files(settings).log, "utf8")).not.toContain(secret());
-  });
-
-  it("answers 401 to an expired minted credential", async () => {
-    const now = Math.floor(Date.now() / 1000);
-    expect(await allocate(minted(now - 60))).toEqual({ ok: false, code: 401 });
+  it("logs no secret", () => {
+    const log = fs.readFileSync(files(settings).log, "utf8");
+    for (const name of ["bob", HEALTH_USER]) expect(log).not.toContain(secretOf(name));
   });
 
   it("fails turn-check once the server is gone", async () => {

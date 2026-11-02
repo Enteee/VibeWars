@@ -1,8 +1,8 @@
 /**
- * Invite links (#974) in #972's format: the page URL plus
+ * Invite links (#974, #2240) in #972's format: the page URL plus
  * `#turn=<base64url(JSON)>`, no padding, where the JSON is
- * `{ urls, username, credential, shared: { urls, secret } }`: the relay
- * for the player, and its shared secret for their lobbies (#2240). The game's own parser is
+ * `{ urls, secret }`: the friend's own REST secret, which the game mints
+ * logins from for itself and its lobbies. The game's own parser is
  * apps/web/src/net/transport/turn-config.ts; scripts/ does not import from
  * apps/web, so this carries its own encoder.
  */
@@ -45,31 +45,17 @@ export function turnUrls(s) {
 }
 
 /**
- * @typedef {{
- *   urls: readonly string[],
- *   username: string,
- *   credential: string,
- *   shared: { urls: readonly string[], secret: string },
- * }} InviteConfig
- */
-
-/**
- * @param {InviteConfig} config
+ * @param {{ urls: readonly string[], secret: string }} config
  * @returns {string}  the fragment, starting `#turn=`
  */
 export function encodeTurnFragment(config) {
-  const json = JSON.stringify({
-    urls: config.urls,
-    username: config.username,
-    credential: config.credential,
-    shared: { urls: config.shared.urls, secret: config.shared.secret },
-  });
+  const json = JSON.stringify({ urls: config.urls, secret: config.secret });
   return `#turn=${Buffer.from(json, "utf8").toString("base64url")}`;
 }
 
 /**
  * @param {string} base  the page; any fragment it has is replaced
- * @param {InviteConfig} config
+ * @param {{ urls: readonly string[], secret: string }} config
  * @returns {string}
  */
 export function inviteLink(base, config) {

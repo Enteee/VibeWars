@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * The TURN server's commands (#974). nix/turn.nix exposes each as its own
- * command: turn-user, turn-link, turn-shared, turn-check and turn-dash. `conf` and `nft`
+ * command: turn-user, turn-link, turn-check and turn-dash. `conf` and `nft`
  * write the server's config and its nftables rules for processes.turn, and
  * `pane` is one of turn-dash's panes.
  * See docs/development/turn.md.
@@ -12,33 +12,18 @@ import { fileURLToPath } from "node:url";
 
 import { healthy, runChecks, serverPid } from "./check.mjs";
 import { DEFAULT_BASE, inviteLink, turnUrls } from "./link.mjs";
-import { filterLog, lastAllocations, tailLines } from "./log.mjs";
+import { filterLog, tailLines } from "./log.mjs";
 import { formatBytes, procIo, rate, scrape } from "./metrics.mjs";
 import { files, readSettings, turnNft, turnserverConf } from "./settings.mjs";
-import {
-  HEALTH_USER,
-  allUsers,
-  newPassword,
-  removeUser,
-  rotateSharedSecret,
-  setUser,
-  sharedSecret,
-  validName,
-} from "./users.mjs";
+import { HEALTH_USER, addUser, allUsers, relinkUser, removeUser, validName } from "./users.mjs";
 
 const HELP = {
-  user: `usage: turn-user add <name> [--base <url>]   add a friend; prints their password and invite link once
-       turn-user remove <name>                  remove their login; their live sessions run on until they end,
-                                                and their link keeps the shared secret: turn-shared rotate cuts that
+  user: `usage: turn-user add <name> [--base <url>]   add a friend with a secret of their own; prints their invite link
+       turn-user remove <name>                  remove them; logins they minted run on until they expire
        turn-user list                           every user`,
   link: `usage: turn-link <name> [--base <url>]
-  Prints <name>'s invite link. The password is not stored, so this sets a new
-  one: the user's old link stops working. --base is the game's page
-  (default ${DEFAULT_BASE}). The link carries the shared secret too.`,
-  shared: `usage: turn-shared [rotate]
-  Prints what Options > Relay > Shared URLs and Shared secret take, so your
-  lobbies can offer this relay. rotate sets a new secret: restart the turn
-  process after it.`,
+  Gives <name> a new secret and prints their new invite link: the old link
+  stops working. --base is the game's page (default ${DEFAULT_BASE}).`,
   check: `usage: turn-check
   Checks the TURN server once: process, STUN binding, an authenticated
   allocation, which peers it may relay to, whether turn.nft is loaded, the
@@ -94,20 +79,16 @@ function friendName(name) {
 }
 
 /**
- * Sets a fresh password for `name` and prints it with the link.
+ * Prints `name`'s invite link, which carries their secret.
  *
- * @param {import("./settings.mjs").TurnSettings} s
  * @param {string} name
- * @param {string} base
+ * @param {string} link
  */
-function issue(s, name, base) {
-  const urls = turnUrls(s);
-  const shared = { urls, secret: sharedSecret(s) };
-  const password = newPassword();
-  setUser(s, name, password);
+function printLink(name, link) {
   process.stdout.write(
-    `user:     ${name}\npassword: ${password}\nlink:     ${inviteLink(base, { urls, username: name, credential: password, shared })}\n` +
-      "Shown once: it is not stored. turn-link sets a new one.\n",
+    `user: ${name}\nlink: ${link}\n` +
+      "Whoever opens it can use this relay and offer it to their lobbies, until\n" +
+      `turn-user remove ${name} or turn-link ${name}.\n`,
   );
 }
 
@@ -120,15 +101,15 @@ function user(args) {
     const friend = friendName(name);
     if (allUsers(s).includes(friend))
       fail(`${friend} exists; turn-link ${friend} gives them a new link`);
-    issue(s, friend, base);
+    const urls = turnUrls(s);
+    printLink(friend, inviteLink(base, { urls, secret: addUser(s, friend) }));
   } else if (verb === "remove") {
     const friend = friendName(name);
     if (!allUsers(s).includes(friend)) fail(`no user ${friend}`);
     removeUser(s, friend);
     process.stdout.write(
-      `removed ${friend}'s login. A session they have open runs on until it ends.\n` +
-        "Their link carries the shared secret, so they can still mint relay credentials: to cut\n" +
-        "them off fully, turn-shared rotate and send new links to everyone else.\n",
+      `removed ${friend}: their link mints no new logins. Logins already minted, theirs and\n` +
+        "their lobbies', work until they expire (2 h at most).\n",
     );
   } else if (verb === "list") {
     for (const n of allUsers(s)) if (n !== HEALTH_USER) process.stdout.write(`${n}\n`);
@@ -143,29 +124,8 @@ function link(args) {
   const { rest, base } = baseOption(args);
   const friend = friendName(rest[0]);
   if (!allUsers(s).includes(friend)) fail(`no user ${friend}; turn-user add ${friend}`);
-  issue(s, friend, base);
-}
-
-/**
- * Prints the shared relay for Options (#2240), with a new secret first on
- * `rotate`. Only ever to stdout: the secret is in no log.
- *
- * @param {string[]} args
- */
-function shared(args) {
-  const s = readSettings(process.env);
-  const rotate = args[0] === "rotate";
-  if (args.length > (rotate ? 1 : 0)) fail(HELP.shared);
   const urls = turnUrls(s);
-  const secret = rotate ? rotateSharedSecret(s) : sharedSecret(s);
-  process.stdout.write(`Shared URLs: ${urls.join(" ")}\nShared secret: ${secret}\n`);
-  if (rotate) {
-    process.stdout.write(
-      "New secret. Restart the turn process: every shared lobby offer minted with the old\n" +
-        "secret stops working, and every relay invite link handed out so far carries a dead\n" +
-        "secret: paste this one into Options and send new links (turn-link <name>).\n",
-    );
-  }
+  printLink(friend, inviteLink(base, { urls, secret: relinkUser(s, friend) }));
 }
 
 /**
@@ -313,13 +273,8 @@ function pane(which) {
       paint(`users\n\n${RED}${e instanceof Error ? e.message : String(e)}${RESET}`);
       return;
     }
-    const seen = lastAllocations(tailLines(files(s).log));
-    const rows = names.map(
-      (n) => `${n.padEnd(24)} ${seen.get(n) ?? `${DIM}no allocation in the log${RESET}`}`,
-    );
-    paint(
-      `users  ${DIM}last allocation${RESET}\n\n${rows.length === 0 ? "none: turn-user add <name>" : rows.join("\n")}`,
-    );
+    // A minted login names no friend, so the log cannot tell whose it is.
+    paint(`users\n\n${names.length === 0 ? "none: turn-user add <name>" : names.join("\n")}`);
   };
 
   const log = () => {
@@ -361,13 +316,10 @@ if (args.includes("--help") || args.includes("-h")) {
   process.exit(0);
 }
 try {
-  if (command === "conf") {
-    const s = readSettings(process.env);
-    process.stdout.write(turnserverConf(s, sharedSecret(s)));
-  } else if (command === "nft") process.stdout.write(turnNft(readSettings(process.env)));
+  if (command === "conf") process.stdout.write(turnserverConf(readSettings(process.env)));
+  else if (command === "nft") process.stdout.write(turnNft(readSettings(process.env)));
   else if (command === "user") user(args);
   else if (command === "link") link(args);
-  else if (command === "shared") shared(args);
   else if (command === "check") await check();
   else if (command === "dash") dash(args);
   else if (command === "pane") pane(args[0]);
