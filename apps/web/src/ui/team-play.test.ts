@@ -314,7 +314,12 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
   });
 
   it("names an unnamed team and says why a team is not playable (#2110)", () => {
-    const playable = { ...team("p"), members: [{ character: warrior("Ser Bash") }] };
+    const playable = {
+      ...team("p"),
+      members: ["Ser Bash", "Ser Bonk", "Ser Clang", "Ser Dent"].map((name) => ({
+        character: warrior(name),
+      })),
+    };
     const root = render([{ ...team("u"), name: " " }, playable]);
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
       UNNAMED_TEAM,

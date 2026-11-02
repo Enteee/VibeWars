@@ -5,26 +5,27 @@ import {
   CHARACTER_SCHEMA_VERSION,
   TEAM_BUILD_SIZES,
   type StoredCharacter,
-  type TeamBuildSize,
   type TeamCharacter,
 } from "../storage/schema.js";
+import { setProfessions, setRank } from "./build-editor.js";
+import { summariseGear } from "./gear-editor.js";
 import {
-  addMember,
   moveMember,
-  newTeam,
-  removeMember,
   replaceMember,
   teamCounters,
+  teamOf as teamOfMembers,
 } from "./team-builder.js";
 import {
-  copyIntoTeam,
+  copyOntoMember,
   dragMember,
+  dropSkill,
   isTeamUnsaved,
   markedCells,
   memberSkillCells,
+  memberStats,
   pastedTeam,
-  placesLeft,
   saveTitle,
+  skillDropRefusal,
   teamEditorProblems,
   topAttributes,
 } from "./team-editor.js";
@@ -41,31 +42,30 @@ function character(id: string): TeamCharacter {
   };
 }
 
-/** A team of `size` (#2109) of a member per id, in order. */
-function teamAt(size: TeamBuildSize, ...ids: readonly string[]) {
-  return ids.reduce((team, id) => addMember(team, character(id)), newTeam("t1", size));
+/** A team of a member per id (#2225): as many as a team size. */
+function teamOf(...ids: readonly string[]) {
+  return membersTeam(ids.map(character));
 }
 
-/** A complete team of a member per id: as many as a team size. */
-function teamOf(...ids: readonly string[]) {
-  const size = TEAM_BUILD_SIZES.find((s) => s === ids.length);
+/** A team of `members`: as many as a team size. */
+function membersTeam(members: readonly TeamCharacter[]) {
+  const size = TEAM_BUILD_SIZES.find((s) => s === members.length);
   if (size === undefined) {
-    throw new Error(`no team size of ${String(ids.length)}`);
+    throw new Error(`no team size of ${String(members.length)}`);
   }
-  return teamAt(size, ...ids);
+  return teamOfMembers("t1", size, members);
 }
 
 describe("isTeamUnsaved (#573)", () => {
-  const opened = teamAt(4, "a", "b");
+  const opened = teamOf("a", "b");
 
   it("is false for the team as opened, however late it was touched", () => {
     expect(isTeamUnsaved(opened, { ...opened, updatedAt: opened.updatedAt + 5000 })).toBe(false);
   });
 
-  it("is true for a new name, an added, removed or moved member", () => {
+  it("is true for a new name, a replaced or moved member", () => {
     expect(isTeamUnsaved(opened, { ...opened, name: "Renamed" })).toBe(true);
-    expect(isTeamUnsaved(opened, addMember(opened, character("c")))).toBe(true);
-    expect(isTeamUnsaved(opened, removeMember(opened, 0))).toBe(true);
+    expect(isTeamUnsaved(opened, copyOntoMember(opened, "a", character("c")))).toBe(true);
     expect(isTeamUnsaved(opened, moveMember(opened, 0, 1))).toBe(true);
   });
 
@@ -87,26 +87,89 @@ describe("isTeamUnsaved (#573)", () => {
   });
 });
 
-describe("copyIntoTeam (#1452)", () => {
+describe("copyOntoMember (#1452, #2225)", () => {
   const solo: StoredCharacter = {
     ...character("solo"),
+    name: "Solo",
     schemaVersion: CHARACTER_SCHEMA_VERSION,
     updatedAt: 1,
   };
 
-  it("adds a copy under a new id, which an edit to the Solo character does not reach", () => {
-    const team = copyIntoTeam(newTeam("t1", 4), solo, "m1");
-    const copy = team.members[0]?.character;
-    expect(copy).toEqual({ ...character("solo"), id: "m1" });
+  it("replaces the member, in its slot and under its id, with a copy the Solo character's edits do not reach", () => {
+    const team = copyOntoMember(teamOf("a", "b"), "b", solo);
+    expect(team.members).toHaveLength(2);
+    const copy = team.members[1]?.character;
+    expect(copy).toEqual({ ...character("solo"), name: "Solo", id: "b" });
 
     // The copy shares no array with the Solo character it came from.
     (solo.skillBar as (string | null)[])[0] = "warrior.sever-artery";
     expect(copy?.skillBar[0]).toBeNull();
   });
 
-  it("copies the same character twice as two members", () => {
-    const team = copyIntoTeam(copyIntoTeam(newTeam("t1", 4), solo, "m1"), solo, "m2");
-    expect(team.members.map((m) => m.character.id)).toEqual(["m1", "m2"]);
+  it("copies the same character onto two members as two members", () => {
+    const team = copyOntoMember(copyOntoMember(teamOf("a", "b"), "a", solo), "b", solo);
+    expect(team.members.map((m) => [m.character.id, m.character.name])).toEqual([
+      ["a", "Solo"],
+      ["b", "Solo"],
+    ]);
+  });
+
+  it("onto the member it was copied from, is a fresh copy again", () => {
+    const once = copyOntoMember(teamOf("a", "b"), "a", solo);
+    const edited = replaceMember(once, { ...character("a"), name: "Edited" });
+    expect(copyOntoMember(edited, "a", solo).members[0]?.character.name).toBe("Solo");
+  });
+});
+
+describe("skillDropRefusal and dropSkill (#2225)", () => {
+  const monk: TeamCharacter = { ...character("m"), name: "Mira", primaryProfession: "monk" };
+
+  it("equips a skill the member may hold to the slot it was dropped on", () => {
+    const { team } = dropSkill(teamOf("a", "b"), "b", 3, "warrior.sever-artery");
+    expect(team.members[1]?.character.skillBar[3]).toBe("warrior.sever-artery");
+    expect(team.members[0]?.character.skillBar[3]).toBeNull();
+  });
+
+  it("refuses another profession's skill, saying why, and changes nothing", () => {
+    const team = membersTeam([character("a"), monk]);
+    expect(skillDropRefusal(monk, "warrior.sever-artery")).toBe("Monk can't use Sever Artery");
+    expect(dropSkill(team, "m", 0, "warrior.sever-artery").team).toBe(team);
+  });
+
+  it("refuses a skill already on the bar", () => {
+    const team = dropSkill(teamOf("a", "b"), "a", 0, "warrior.sever-artery").team;
+    const member = team.members[0]?.character ?? character("a");
+    expect(skillDropRefusal(member, "warrior.sever-artery")).toBe(
+      "Sever Artery is already on a's bar",
+    );
+    expect(dropSkill(team, "a", 5, "warrior.sever-artery").team).toBe(team);
+  });
+
+  it("lets a second elite take the first's place, and says so", () => {
+    const team = dropSkill(teamOf("a", "b"), "a", 0, "warrior.hundred-blades").team;
+    const dropped = dropSkill(team, "a", 4, "warrior.battle-rage");
+    const bar = dropped.team.members[0]?.character.skillBar;
+    expect(bar?.filter((id) => id !== null)).toEqual(["warrior.battle-rage"]);
+    expect(dropped.notice).toBe(
+      "Battle Rage replaced Hundred Blades: only one elite skill per bar.",
+    );
+  });
+});
+
+describe("memberStats (#2225)", () => {
+  it("reads the Character Builder's set 1 Health and Energy, and follows a rank change", () => {
+    const solo = setProfessions(
+      { ...character("a"), schemaVersion: CHARACTER_SCHEMA_VERSION, updatedAt: 1 },
+      "elementalist",
+      undefined,
+    );
+    const summary = summariseGear(solo, 0);
+    expect(memberStats(solo)).toEqual({
+      health: summary?.maxHealth,
+      energy: summary?.maxEnergy,
+    });
+    const raised = setRank(solo, "elementalist.energy-storage", 12);
+    expect(memberStats(raised)?.energy).toBeGreaterThan(memberStats(solo)?.energy ?? 0);
   });
 });
 
@@ -123,44 +186,26 @@ describe("teamEditorProblems (#573)", () => {
   const texts = (team: Parameters<typeof teamEditorProblems>[0]) =>
     teamEditorProblems(team).map((problem) => [problem.text, problem.blocking]);
 
-  it("blocks a new team: it has no members", () => {
-    expect(texts(newTeam("t1", 4))).toEqual([["A team needs at least one member.", true]]);
+  it("has none for a playable team", () => {
+    expect(texts(teamOf("a", "b"))).toEqual([]);
   });
 
   it("asks for a name in a sentence", () => {
-    expect(texts({ ...teamOf("a", "b"), name: "  " })).toEqual([
-      ["Give the team a name.", true],
-      ["The team is full: 2 members.", false],
-    ]);
+    expect(texts({ ...teamOf("a", "b"), name: "  " })).toEqual([["Give the team a name.", true]]);
   });
 
   it("names the slot and the name of an illegal member build (#1452)", () => {
     const illegal = { ...character("Bravo"), skillBar: ["monk.orison-of-healing"] };
-    expect(texts(addMember(teamAt(2, "a"), illegal))).toEqual([
+    expect(texts(membersTeam([character("a"), illegal]))).toEqual([
       ["Slot 2, Bravo, is not a legal build: open it to see why.", true],
-      ["The team is full: 2 members.", false],
     ]);
-  });
-
-  it("blocks a team short of its size, counting its empty slots (#2109)", () => {
-    expect(texts(teamAt(4, "a", "b", "c"))).toEqual([
-      ["1 of 4 slots is empty: a lobby takes only a full team.", true],
-    ]);
-    expect(texts(teamAt(8, "a"))).toEqual([
-      ["7 of 8 slots are empty: a lobby takes only a full team.", true],
-    ]);
-  });
-
-  it("says a full team is full, as a hint that never blocks", () => {
-    const ids = Array.from({ length: 8 }, (_, index) => `m${String(index)}`);
-    expect(texts(teamOf(...ids))).toEqual([["The team is full: 8 members.", false]]);
   });
 });
 
 describe("saveTitle (#2110)", () => {
-  it("saves an empty new team, naming its first problem", () => {
-    expect(saveTitle(teamEditorProblems(newTeam("t1", 4)))).toBe(
-      "Save this team (it has problems: A team needs at least one member.)",
+  it("saves a team with problems, naming its first", () => {
+    expect(saveTitle(teamEditorProblems({ ...teamOf("a", "b"), name: "" }))).toBe(
+      "Save this team (it has problems: Give the team a name.)",
     );
   });
 
@@ -170,17 +215,6 @@ describe("saveTitle (#2110)", () => {
       saveTitle(teamEditorProblems(teamOf("a", "b"))),
       saveTitle(teamEditorProblems(teamOf(...ids))),
     ]).toEqual(["Save this team", "Save this team"]);
-  });
-});
-
-describe("placesLeft (#574)", () => {
-  it("counts down from the team's size and stops at nought (#2109)", () => {
-    expect(placesLeft(newTeam("t1", 4))).toBe(4);
-    expect(placesLeft(teamAt(8, "a"))).toBe(7);
-    const members = Array.from({ length: 3 }, (_, index) => ({
-      character: character(`m${String(index)}`),
-    }));
-    expect(placesLeft({ ...newTeam("t1", 2), members })).toBe(0);
   });
 });
 
@@ -264,10 +298,10 @@ describe("markedCells (#575)", () => {
     ...character(id),
     skillBar: Array.from({ length: 8 }, (_, slot) => bar[slot] ?? null),
   });
-  const team = addMember(
-    addMember(newTeam("t1", 4), withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"])),
+  const team = membersTeam([
+    withBar("a", ["warrior.distracting-blow", "warrior.backbreaker"]),
     withBar("b", [null, "monk.mend-condition", "warrior.distracting-blow"]),
-  );
+  ]);
   const counters = teamCounters(team.members);
 
   it("marks exactly a counter's cells", () => {

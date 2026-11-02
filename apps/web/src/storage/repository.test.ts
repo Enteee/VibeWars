@@ -46,7 +46,7 @@ function team(overrides: Partial<StoredTeam> = {}): StoredTeam {
     id: "team-1",
     name: "Test Team",
     size: 2,
-    members: [member("char-1")],
+    members: [member("char-1"), member("char-2")],
     rulesetId: "minimal-gw-inspired-pvp-v1",
     updatedAt: 1000,
     ...overrides,
@@ -177,7 +177,7 @@ describe("TeamRepository", () => {
     await repo.save(team());
     const loaded = await repo.load("team-1");
     expect(loaded?.name).toBe("Test Team");
-    expect(loaded?.members).toHaveLength(1);
+    expect(loaded?.members).toHaveLength(2);
   });
 
   it("keeps each member's own build (#1452)", async () => {

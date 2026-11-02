@@ -8,17 +8,15 @@ import {
   type TeamCharacter,
 } from "../storage/schema.js";
 import {
-  addMember,
   duplicateTeam,
-  isTeamComplete,
   memberCount,
   moveMember,
   newTeam,
   professionMix,
-  removeMember,
   replaceMember,
   teamCharacter,
   teamCounters,
+  teamOf,
   validateTeam,
 } from "./team-builder.js";
 
@@ -34,17 +32,36 @@ function member(id: string): TeamCharacter {
   };
 }
 
+/** A team of a member for each of `names`, 2, 4 or 8 of them. */
+function teamWith(...names: string[]): StoredTeam {
+  const size = names.length;
+  if (size !== 2 && size !== 4 && size !== 8) {
+    throw new Error(`no team of ${String(size)}`);
+  }
+  return teamOf("t1", size, names.map(member));
+}
+
 /** The members' ids, in slot order. */
 function ids(team: StoredTeam): string[] {
   return team.members.map((m) => m.character.id);
 }
 
-describe("newTeam", () => {
-  it("starts empty with the default ruleset", () => {
-    const team = newTeam("t1", 4);
+describe("newTeam (#2225)", () => {
+  it("starts full: a blank member for each place, with the default ruleset", () => {
+    let made = 0;
+    const team = newTeam("t1", 4, () => {
+      made += 1;
+      return member(`blank${String(made)}`);
+    });
     expect(team.size).toBe(4);
-    expect(team.members).toEqual([]);
+    expect(ids(team)).toEqual(["blank1", "blank2", "blank3", "blank4"]);
     expect(team.rulesetId).toBe("minimal-gw-inspired-pvp-v1");
+  });
+
+  it("is always its size, 2, 4 or 8", () => {
+    for (const size of [2, 4, 8] as const) {
+      expect(newTeam("t1", size, () => member("x")).members).toHaveLength(size);
+    }
   });
 });
 
@@ -70,78 +87,40 @@ describe("teamCharacter (#1452)", () => {
   });
 });
 
-describe("addMember / removeMember / replaceMember", () => {
-  it("appends members in order", () => {
-    let team = addMember(newTeam("t1", 4), member("a"));
-    team = addMember(team, member("b"));
-    expect(ids(team)).toEqual(["a", "b"]);
-  });
-
-  it("takes members up to its size, and no more (#2109)", () => {
-    for (const size of [2, 4, 8] as const) {
-      let team = newTeam("t1", size);
-      for (let i = 0; i < size + 3; i += 1) {
-        team = addMember(team, member(`c${String(i)}`));
-      }
-      expect(team.members).toHaveLength(size);
-    }
-  });
-
-  it("removes the right member by index", () => {
-    let team = addMember(newTeam("t1", 4), member("a"));
-    team = addMember(team, member("b"));
-    team = addMember(team, member("c"));
-    expect(ids(removeMember(team, 1))).toEqual(["a", "c"]);
-  });
-
-  it("replaces a member in its own slot, by id", () => {
-    let team = addMember(newTeam("t1", 4), member("a"));
-    team = addMember(team, member("b"));
-    const renamed = replaceMember(team, { ...member("a"), name: "Alpha" });
+describe("replaceMember", () => {
+  it("replaces a member in its own slot, by id, and keeps the team its size", () => {
+    const renamed = replaceMember(teamWith("a", "b"), { ...member("a"), name: "Alpha" });
     expect(renamed.members.map((m) => m.character.name)).toEqual(["Alpha", "b"]);
   });
 });
 
 describe("moveMember", () => {
-  function threeMemberTeam() {
-    let team = addMember(newTeam("t1", 4), member("a"));
-    team = addMember(team, member("b"));
-    return addMember(team, member("c"));
-  }
-
   it("moves a member toward the front", () => {
-    expect(ids(moveMember(threeMemberTeam(), 2, -1))).toEqual(["a", "c", "b"]);
+    expect(ids(moveMember(teamWith("a", "b", "c", "d"), 2, -1))).toEqual(["a", "c", "b", "d"]);
   });
 
   it("moves a member toward the back", () => {
-    expect(ids(moveMember(threeMemberTeam(), 0, 1))).toEqual(["b", "a", "c"]);
+    expect(ids(moveMember(teamWith("a", "b", "c", "d"), 0, 1))).toEqual(["b", "a", "c", "d"]);
   });
 
   it("is a no-op past either end rather than losing a member", () => {
-    const team = threeMemberTeam();
-    expect(ids(moveMember(team, 0, -1))).toEqual(["a", "b", "c"]);
-    expect(ids(moveMember(team, 2, 1))).toEqual(["a", "b", "c"]);
+    const team = teamWith("a", "b", "c", "d");
+    expect(ids(moveMember(team, 0, -1))).toEqual(["a", "b", "c", "d"]);
+    expect(ids(moveMember(team, 3, 1))).toEqual(["a", "b", "c", "d"]);
   });
 
   it("is a no-op for an out-of-range index", () => {
-    const team = threeMemberTeam();
-    expect(moveMember(team, 99, -1).members).toHaveLength(3);
+    expect(moveMember(teamWith("a", "b", "c", "d"), 99, -1).members).toHaveLength(4);
   });
 });
 
 describe("validateTeam", () => {
   it("accepts a team whose members are all legal builds", () => {
-    expect(validateTeam(addMember(newTeam("t1", 4), member("a")))).toEqual([]);
-  });
-
-  it("rejects an empty team", () => {
-    expect(validateTeam(newTeam("t1", 4)).some((p) => p.message.includes("at least one"))).toBe(
-      true,
-    );
+    expect(validateTeam(teamWith("a", "b"))).toEqual([]);
   });
 
   it("rejects an empty name", () => {
-    const team = { ...addMember(newTeam("t1", 4), member("a")), name: "  " };
+    const team = { ...teamWith("a", "b"), name: "  " };
     expect(validateTeam(team).some((p) => p.message.includes("name"))).toBe(true);
   });
 
@@ -152,7 +131,7 @@ describe("validateTeam", () => {
       name: "Bravo",
       skillBar: ["monk.orison-of-healing", null, null, null, null, null, null, null],
     };
-    const team = addMember(addMember(newTeam("t1", 4), member("a")), illegal);
+    const team = teamOf("t1", 2, [member("a"), illegal]);
     expect(validateTeam(team).map((p) => p.message)).toEqual([
       "slot 2, Bravo, is not a legal build: open it to see why",
     ]);
@@ -166,29 +145,21 @@ describe("memberCount (#2116)", () => {
   });
 });
 
-describe("isTeamComplete (#2109)", () => {
-  it("is every slot filled: not short of its size, and never empty", () => {
-    const one = addMember(newTeam("t1", 2), member("a"));
-    expect(isTeamComplete(newTeam("t1", 2))).toBe(false);
-    expect(isTeamComplete(one)).toBe(false);
-    expect(isTeamComplete(addMember(one, member("b")))).toBe(true);
-  });
-});
-
-describe("validateTeam over its size (#2109)", () => {
-  it("flags more members than the size, as a stored record cannot hold", () => {
-    const team = addMember(
-      addMember(addMember(newTeam("t1", 4), member("a")), member("b")),
-      member("c"),
-    );
-    const over = { ...team, size: 2 as const };
-    expect(validateTeam(over).map((p) => p.message)).toEqual(["slot count exceeds the team size"]);
+describe("validateTeam off its size (#2225)", () => {
+  it("flags a team short of its size, or over it, as a stored record cannot hold", () => {
+    const team = teamWith("a", "b", "c", "d");
+    expect(validateTeam({ ...team, size: 2 }).map((p) => p.message)).toEqual([
+      "a team of 2 has 2 members, not 4",
+    ]);
+    expect(validateTeam({ ...team, size: 8 }).map((p) => p.message)).toEqual([
+      "a team of 8 has 8 members, not 4",
+    ]);
   });
 });
 
 describe("duplicateTeam", () => {
   it("copies members under a new id and leaves the original untouched", () => {
-    const original = addMember(newTeam("t1", 4), member("a"));
+    const original = teamWith("a", "b", "c", "d");
     const copy = duplicateTeam(original, "t2");
     expect(copy.id).toBe("t2");
     expect(copy.size).toBe(4);

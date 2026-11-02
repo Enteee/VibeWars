@@ -1,7 +1,7 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import { newTeam, teamCharacter } from "../ui/team-builder.js";
+import { teamOf, teamCharacter } from "../ui/team-builder.js";
 import { buildPayload, exportBuild } from "./build-transfer.js";
 import { CHARACTER_SCHEMA_VERSION, type StoredCharacter, type StoredTeam } from "./schema.js";
 import {
@@ -40,12 +40,8 @@ const BOB: StoredCharacter = {
   equipment: defaultBuildEquipment("warrior"),
 };
 const TEAM: StoredTeam = {
-  ...newTeam("team-1", 2),
+  ...teamOf("team-1", 2, [teamCharacter(ALICE, "m-alice"), teamCharacter(BOB, "m-bob")]),
   name: "Duo",
-  members: [
-    { character: teamCharacter(ALICE, "m-alice") },
-    { character: teamCharacter(BOB, "m-bob") },
-  ],
 };
 
 /** Ids handed out in order, so a test can say which went where. */
@@ -132,7 +128,11 @@ describe("team import", () => {
   });
 
   it("refuses a member of another build format version", () => {
-    const result = importTeam(code([{ ...buildPayload(ALICE), formatVersion: 1 }]), ids(), 0);
+    const result = importTeam(
+      code([{ ...buildPayload(ALICE), formatVersion: 1 }, buildPayload(BOB)], { size: 2 }),
+      ids(),
+      0,
+    );
 
     expect(!result.ok && result.problems).toEqual([
       expect.stringMatching(/^Member 1 \(Alice\): This build uses format version 1/),
@@ -145,6 +145,7 @@ describe("team import", () => {
         { ...buildPayload(ALICE), primaryProfession: "bard" },
         buildPayload(BOB),
         { ...buildPayload(BOB), name: "Carol", skillBar: ["no.such-skill"] },
+        buildPayload(BOB),
       ]),
       ids(),
       0,
@@ -159,12 +160,18 @@ describe("team import", () => {
     expect(result.problems[1]).toMatch(/^Member 3 \(Carol\): skillBar must have exactly 8 slots/);
   });
 
-  it("refuses no members, more than its size, and no name", () => {
+  it("refuses no members, fewer or more than its size (#2225), and no name", () => {
     expect(!importTeam(code([]), ids(), 0).ok).toBe(true);
+    const short = importTeam(code([buildPayload(BOB)], { size: 2 }), ids(), 0);
+    expect(!short.ok && short.problems).toEqual(["A team of 2 has 2 members, not 1."]);
     // Invalid members, so a read of any of them would add a problem.
     const tooMany = importTeam(code([null, null, null], { size: 2 }), ids(), 0);
-    expect(!tooMany.ok && tooMany.problems).toEqual(["A team of 2 may not have 3 members."]);
-    const nameless = importTeam(code([buildPayload(BOB)], { name: " " }), ids(), 0);
+    expect(!tooMany.ok && tooMany.problems).toEqual(["A team of 2 has 2 members, not 3."]);
+    const nameless = importTeam(
+      code([buildPayload(BOB), buildPayload(BOB)], { name: " ", size: 2 }),
+      ids(),
+      0,
+    );
     expect(!nameless.ok && nameless.problems).toEqual(["Give the team a name."]);
   });
 

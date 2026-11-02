@@ -366,6 +366,18 @@ const ROLLED_STARTER = /^[A-Z][a-z]+ [A-Z][a-z]+$/;
 /** The team editor's member rows, and their names. */
 const memberRows = (page: Page) => page.locator(".team-grid .team-row");
 const memberNames = (page: Page) => page.locator(".team-grid .team-row-name");
+/**
+ * Drag the Solo character `name` from the Team Builder's My characters
+ * onto member row `row` (#2225): the member becomes a copy of it.
+ */
+async function copyOnto(page: Page, name: string, row: number): Promise<void> {
+  await page.getByRole("tab", { name: "My characters", exact: true }).click();
+  const pick = page.locator(".team-pick").filter({
+    has: page.locator(".team-pick-name", { hasText: new RegExp(`^${name}$`) }),
+  });
+  await pick.dragTo(memberRows(page).nth(row));
+  await expect(memberNames(page).nth(row)).toHaveText(name);
+}
 /** Team Builder on the rail (#1525), where the Team Builds are made. */
 async function openTeamBuilder(page: Page): Promise<void> {
   await openRail(page, "Team Builder");
@@ -400,7 +412,8 @@ test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens 
   await expect(bar.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
   await page.keyboard.press("Escape");
 
-  await page.getByRole("button", { name: "New character", exact: true }).click();
+  // A member opens in the build editor (#576).
+  await page.locator(".team-row-name").first().click();
   await expect(bar.getByRole("button", { name: "Save", exact: true })).toBeVisible();
   await bar.getByRole("button", { name: "more actions" }).click();
   await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
@@ -424,14 +437,12 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await expect(bar.getByRole("textbox", { name: "team name", exact: true })).toBeVisible();
   await expect(bar.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
 
+  // A new team is its size in blank members (#2225), already playable.
   // Nothing stored yet: Esc leaves at once and the list is still empty.
-  // Save would store it anyway, problems and all (#2110).
+  await expect(memberNames(page)).toHaveText(["New Character", "New Character"]);
   const save = page.getByRole("button", { name: "Save", exact: true });
   await expect(save).toBeEnabled();
-  await expect(save).toHaveAttribute(
-    "title",
-    "Save this team (it has problems: A team needs at least one member.)",
-  );
+  await expect(save).toHaveAttribute("title", "Save this team");
   // Nothing stored to copy or delete, so neither can store a half-made team.
   await page.getByRole("button", { name: "more actions" }).click();
   await expect(bar.locator(".editor-more button")).toHaveText(["Share", "Duplicate", "Delete"]);
@@ -446,8 +457,9 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
 
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await page.getByRole("button", { name: "add Alpha" }).click();
+  await copyOnto(page, "Alpha", 0);
+  await copyOnto(page, "Alpha", 1);
+  // Save would store it anyway, problems and all (#2110).
   await expect(save).toHaveAttribute(
     "title",
     "Save this team (it has problems: Give the team a name.)",
@@ -481,14 +493,15 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
 test("a toast goes with its screen; one the next screen raises stays (#710)", async ({ page }) => {
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
-  await page.getByRole("button", { name: "add Alpha" }).click();
+  await copyOnto(page, "Alpha", 0);
   // Save leaves (#1902); its Saved shows on Team Builder.
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".screen-teams")).toBeVisible();
   await expect(page.locator(".toast")).toHaveText("Saved");
-  await expect.poll(() => teamList(page)).toEqual(["Duo · 1 member"]);
+  await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
 
   // Opening the editor at once: well inside the toast's 5 s, so only the
   // screen change can take it.
@@ -504,7 +517,7 @@ test("a toast goes with its screen; one the next screen raises stays (#710)", as
   // A pasted team's note is raised once the team editor is up, so it stays.
   await paste(page.locator(".screen"), code);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
-  await expect(page.locator(".toast")).toHaveText("Pasted Duo, 1 member. Save to keep it.");
+  await expect(page.locator(".toast")).toHaveText("Pasted Duo, 2 members. Save to keep it.");
 });
 
 test("Team Builder's cards: New team build; a card shows its members, and it or its Edit opens it (#1453, #1515)", async ({
@@ -519,10 +532,11 @@ test("Team Builder's cards: New team build; a card shows its members, and it or 
   await expect(starterTeamCard(page)).toHaveCount(1);
   await expect(page.locator(".screen-teams .play-cards")).not.toContainText("None");
   await expect(page.getByRole("button", { name: "new team" })).toHaveCount(1);
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await page.getByRole("button", { name: "add Bravo" }).click();
+  await copyOnto(page, "Alpha", 0);
+  await copyOnto(page, "Bravo", 1);
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
   await expect.poll(() => teamList(page)).toEqual(["Duo · 2 members"]);
@@ -589,13 +603,12 @@ test("on a phone, a Team Build card's Edit sits below its members, never on them
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 900 });
-  await saveCharacters(page, ["Alpha"]);
+  await page.goto("./");
   await openTeamBuilder(page);
+  await setTeamSize(page, 4);
+  // Four blank members (#2225).
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Quad");
-  for (let i = 0; i < 4; i++) {
-    await page.getByRole("button", { name: "add Alpha" }).click();
-  }
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect.poll(() => teamList(page)).toEqual(["Quad · 4 members"]);
 
@@ -613,23 +626,24 @@ test("Save stores a team with problems at once, and its card says why it is not 
 }) => {
   await page.goto("./");
   await openTeamBuilder(page);
+  await setTeamSize(page, 2);
   const save = page.getByRole("button", { name: "Save", exact: true });
   const unplayable = teamRows(page).locator(".play-card-unplayable");
 
-  // An untouched new team: Save stores it as it is.
+  // An untouched new team: its blank members (#2225) make it playable.
   await page.getByRole("button", { name: "new team" }).click();
   await save.click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
-  await expect.poll(() => teamList(page)).toEqual(["New Team · 0 members"]);
-  await expect(unplayable).toHaveText(["Not playable: a team needs at least one member"]);
+  await expect.poll(() => teamList(page)).toEqual(["New Team · 2 members"]);
+  await expect(unplayable).toHaveCount(0);
 
   // A team with no name is "Unnamed team" on its card; its name stays empty.
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("team name").fill("");
   await save.click();
   await expect(page.locator(".screen-teams")).toBeVisible();
-  await expect.poll(() => teamList(page)).toEqual(["Unnamed team · 0 members"]);
+  await expect.poll(() => teamList(page)).toEqual(["Unnamed team · 2 members"]);
   await expect(unplayable).toHaveText(["Not playable: team name must not be empty"]);
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await expect(page.getByLabel("team name")).toHaveValue("");
@@ -640,31 +654,32 @@ test("team edits stay on screen until Save, which leaves; Esc and Delete ask fir
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamBuilder(page);
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
 
-  // Add both: each is a copy (#1452), so the picker still offers them,
-  // and the first start's rolled starter, oldest and last (#853).
+  // Copy both onto the members: each is a copy (#1452), so the picker
+  // still offers them, and the first start's rolled starter, oldest and
+  // last (#853).
   const picks = page.locator(".team-picker .team-pick-name");
   await expect(picks).toHaveText(["Bravo", "Alpha", ROLLED_STARTER]);
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await page.getByRole("button", { name: "add Bravo" }).click();
+  await copyOnto(page, "Alpha", 0);
+  await copyOnto(page, "Bravo", 1);
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo"]);
   await expect(picks).toHaveText(["Bravo", "Alpha", ROLLED_STARTER]);
 
-  // Reorder, still on the editor.
-  const up = memberRows(page).nth(1).getByRole("button", { name: "move up" });
-  await up.click();
+  // Reorder by dragging, still on the editor.
+  await memberRows(page).nth(1).dragTo(memberRows(page).first());
   await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
 
-  // Remove a member: unsaved, and Esc asks.
+  // Replace a member: unsaved, and Esc asks.
   const more = page.getByRole("button", { name: "more actions" });
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
-  await memberRows(page).first().getByRole("button", { name: "remove" }).click();
-  await expect(memberNames(page)).toHaveText(["Alpha"]);
+  await copyOnto(page, "Alpha", 0);
+  await expect(memberNames(page)).toHaveText(["Alpha", "Alpha"]);
   await expect(page.locator(".editor-unsaved")).toBeVisible();
   await more.click();
   const duplicate = page.getByRole("button", { name: "duplicate" });
@@ -675,7 +690,7 @@ test("team edits stay on screen until Save, which leaves; Esc and Delete ask fir
   await page.keyboard.press("Escape");
   await expect(page.getByText("Discard changes?")).toBeVisible();
   await page.getByRole("button", { name: "keep editing" }).click();
-  await expect(memberNames(page)).toHaveText(["Alpha"]);
+  await expect(memberNames(page)).toHaveText(["Alpha", "Alpha"]);
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "discard" }).click();
   await expect.poll(() => teamList(page)).toEqual(["GvG Practice · 2 members"]);
@@ -704,7 +719,7 @@ test("the team editor's bar puts its status on a second row from 721 to 1200 px,
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
   await page.getByRole("button", { name: "new team" }).click();
-  await page.getByRole("button", { name: "add Alpha" }).click();
+  await copyOnto(page, "Alpha", 0);
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("team name").fill("GvG Practice");
@@ -730,10 +745,8 @@ test("a Team Build is made at the sidebar's size, which its editor shows locked 
   await page.getByRole("button", { name: "new team" }).click();
 
   await expectTeamSize(page.locator("#topbar"), 2, { locked: true });
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(page.locator(".team-picker-header")).toHaveText("0 places left");
-  await expect(memberRows(page)).toHaveCount(2);
+  // Full from the start (#2225): a blank member for each place.
+  await expect(memberNames(page)).toHaveText(["New Character", "New Character"]);
   await page.getByLabel("team name").fill("Pair");
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -743,35 +756,77 @@ test("a Team Build is made at the sidebar's size, which its editor shows locked 
   await expect(teamRows(page)).toHaveCount(0);
 });
 
-test("the team grid: eight cells a member, drag or ↑ ↓ to reorder, places left (#574)", async ({
+test("the team grid: a full team, eight cells and Health and Energy a member, drag to reorder (#574, #2225)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo", "Charlie"]);
   await openTeamBuilder(page);
+  await setTeamSize(page, 4);
   await page.getByRole("button", { name: "new team" }).click();
 
-  const header = page.locator(".team-picker-header");
-  await expect(header).toHaveText("4 places left");
+  // No number, no ↑ ↓ ×, no adding: four members from the start.
+  await expect(memberRows(page)).toHaveCount(4);
+  await expect(
+    memberRows(page).getByRole("button", { name: /^(move up|move down|remove)$/ }),
+  ).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "New character", exact: true })).toHaveCount(0);
   await expect(page.locator(".team-pick-sub").first()).toHaveText(/^Warrior.* · \d\/8 skills$/);
-  for (const name of ["Alpha", "Bravo", "Charlie"]) {
-    await page.getByRole("button", { name: `add ${name}` }).click();
+  for (const [row, name] of ["Alpha", "Bravo", "Charlie"].entries()) {
+    await copyOnto(page, name, row);
   }
-  await expect(header).toHaveText("1 place left");
-  // An added character is copied (#1452): all four stay on offer.
+  // A copied character is copied (#1452): all four stay on offer.
   await expect(page.locator(".team-pick")).toHaveCount(4);
-
-  await expect(memberRows(page)).toHaveCount(3);
   for (const row of await memberRows(page).all()) {
     await expect(row.locator(".team-skill")).toHaveCount(8);
+    await expect(row.locator(".team-row-health")).toHaveText(/^\d+$/);
+    await expect(row.locator(".team-row-energy")).toHaveText(/^\d+$/);
+    // The ball holds the member's weapon (#2225).
+    await expect(row.locator(".team-row-dot canvas.character-figure[data-weapon-id]")).toHaveCount(
+      1,
+    );
   }
-  await expect(page.locator(".team-row-index")).toHaveText(["1", "2", "3"]);
 
-  // Dragging Alpha onto Charlie's place is two ↓ presses.
+  // Dragging Alpha onto Charlie's place moves it there.
   await memberRows(page).first().dragTo(memberRows(page).nth(2));
-  await expect(memberNames(page)).toHaveText(["Bravo", "Charlie", "Alpha"]);
-  await memberRows(page).nth(2).getByRole("button", { name: "move up" }).click();
-  await memberRows(page).nth(1).getByRole("button", { name: "move up" }).click();
-  await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie"]);
+  await expect(memberNames(page)).toHaveText(["Bravo", "Charlie", "Alpha", "New Character"]);
+  await memberRows(page).nth(2).dragTo(memberRows(page).first());
+  await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie", "New Character"]);
+});
+
+test("a skill dragged from the Skills tab equips on a member's slot; a refused drop changes nothing (#2225)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  // The Skills tab shows the focused member's: the first, a blank Warrior.
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
+  await expect(page.locator(".team-picker-skills .team-picker-hint")).toContainText(
+    "New Character",
+  );
+  const library = page.locator(".team-picker-skills");
+  await openLibraryGroup(page, "Strength");
+  const box = library.locator(".skill-box").first();
+  const skillId = (await box.getAttribute("data-skill-id")) ?? "";
+  const target = memberRows(page).nth(1).locator(".team-skill").nth(3);
+  await box.dragTo(target);
+  await expect(target).toHaveAttribute("data-skill-id", skillId);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+
+  // The same skill again on that bar is refused: the slot is marked, the
+  // reason said, and the drop does nothing.
+  const other = memberRows(page).nth(1).locator(".team-skill").nth(5);
+  await box.hover();
+  await page.mouse.down();
+  const spot = await other.boundingBox();
+  await page.mouse.move((spot?.x ?? 0) + 8, (spot?.y ?? 0) + 8, { steps: 4 });
+  await page.mouse.move((spot?.x ?? 0) + 12, (spot?.y ?? 0) + 12, { steps: 2 });
+  await expect(other).toHaveClass(/is-drop-refused/);
+  await expect(page.locator(".team-drop-reason")).toContainText("already on New Character's bar");
+  await page.mouse.up();
+  await expect(other).not.toHaveAttribute("data-skill-id");
+  await expect(memberRows(page).nth(1).locator(".team-skill:not(.is-empty)")).toHaveCount(1);
 });
 
 test("team counters mark their cells; a cell finds its skill on the team (#575)", async ({
@@ -797,9 +852,10 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
     await expect(roster(page)).toContainText(name);
   }
   await openTeamBuilder(page);
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await page.getByRole("button", { name: "add Bravo" }).click();
+  await copyOnto(page, "Alpha", 0);
+  await copyOnto(page, "Bravo", 1);
 
   const counter = (id: string) => page.locator(`.team-counter[data-counter="${id}"]`);
   const marked = page.locator(".team-skill.is-marked");
@@ -851,11 +907,11 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamBuilder(page);
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Trip");
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await page.getByRole("button", { name: "add Bravo" }).click();
-  await memberRows(page).nth(1).getByRole("button", { name: "move up" }).click();
+  await copyOnto(page, "Bravo", 0);
+  await copyOnto(page, "Alpha", 1);
   await expect(memberNames(page)).toHaveText(["Bravo", "Alpha"]);
 
   // Equip one skill on Alpha in the build editor, and save.
@@ -873,23 +929,22 @@ test("a member opens in the build editor and comes back to the unsaved team (#57
   await expect(page.locator(".editor-unsaved")).toBeVisible();
   await expect(alphaCells).toHaveCount(before + 1);
 
-  // Deleted from the build editor: off the team, which is still unsaved.
+  // A team is always its size (#2225): a member has no Delete or Duplicate.
   await page.getByRole("button", { name: "Bravo", exact: true }).click();
   await page.getByRole("button", { name: "more actions" }).click();
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
-  await page.locator(".inline-confirm").getByRole("button", { name: "delete" }).click();
-  await expect(memberNames(page)).toHaveText(["Alpha"]);
-  await expect(page.getByLabel("team name")).toHaveValue("Trip");
+  await expect(page.getByRole("button", { name: "Delete", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Duplicate", exact: true })).toHaveCount(0);
 });
 
-test("a team member is the team's own: an edit leaves the saved character alone; New character joins on Save (#1452)", async ({
+test("a team member is the team's own: an edit leaves the saved character alone (#1452)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team build" }).click();
   await page.getByLabel("team name").fill("Own");
-  await page.getByRole("button", { name: "add Alpha" }).click();
+  await copyOnto(page, "Alpha", 0);
 
   // Rename the copy and give it a skill, then store the team.
   await page.getByRole("button", { name: "Alpha", exact: true }).click();
@@ -897,16 +952,16 @@ test("a team member is the team's own: an edit leaves the saved character alone;
   await openLibraryGroup(page);
   await page.locator(".skill-box").first().locator(".skill-box-equip").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(memberNames(page)).toHaveText(["Alpha Prime"]);
+  await expect(memberNames(page)).toHaveText(["Alpha Prime", "New Character"]);
   await expect(memberRows(page).locator(".team-skill:not(.is-empty)")).toHaveCount(1);
 
-  // A new character closed unsaved joins nothing; saved, it joins.
-  await page.getByRole("button", { name: "New character", exact: true }).click();
+  // A blank member renamed and closed unsaved stays blank; saved, it is renamed.
+  await page.getByRole("button", { name: "New Character", exact: true }).click();
   await page.locator("input.editor-name").fill("Fresh");
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "discard" }).click();
-  await expect(memberNames(page)).toHaveText(["Alpha Prime"]);
-  await page.getByRole("button", { name: "New character", exact: true }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha Prime", "New Character"]);
+  await page.getByRole("button", { name: "New Character", exact: true }).click();
   await page.locator("input.editor-name").fill("Fresh");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(memberNames(page)).toHaveText(["Alpha Prime", "Fresh"]);
@@ -1131,10 +1186,11 @@ test("Share copies a team as one line; pasted on Team Builder it opens unsaved (
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo"]);
   await openTeamBuilder(page);
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("Duo");
-  await page.getByRole("button", { name: "add Alpha" }).click();
-  await page.getByRole("button", { name: "add Bravo" }).click();
+  await copyOnto(page, "Alpha", 0);
+  await copyOnto(page, "Bravo", 1);
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.locator(".toast")).toHaveText("Saved");
 
