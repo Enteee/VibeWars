@@ -6600,6 +6600,15 @@ body:has(#app > .chat) .now-playing {
   gap: 0.6rem;
 }
 
+/* The shared relay (#2091), below the player's own, apart from it. */
+.relay-shared {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--line);
+}
+
 .licences-section,
 .licences-bundled {
   display: flex;
