@@ -419,6 +419,7 @@ let
         lib.escapeShellArg (
           builtins.toJSON {
             closure = "${runnerClosure}/store-paths";
+            registration = "${runnerClosure}/registration";
             runner = pkgs.github-runner;
             inherit bwrap;
             userland = runnerUserland;
