@@ -56,6 +56,7 @@ function match(): MatchSimulation {
         ],
         attributeRanks: new Map([
           ["monk.protection-prayers", 12],
+          ["monk.smiting-prayers", 12],
           ["monk.healing-prayers", 12],
         ]),
       }),
@@ -213,9 +214,11 @@ describe("Mark of Protection (#2187)", () => {
     cast(sim, MARK_OF_PROTECTION, "w", "mark-of-protection");
     sim.setTarget("monk", "w");
     stepFor(sim, 4.9);
-    expect(sim.requestSkill("monk", REVERSAL_OF_DAMAGE)?.check.ok).toBe(false);
-    stepFor(sim, 0.2);
+    expect(sim.requestSkill("monk", PROTECTIVE_BOND)?.check.ok).toBe(false);
+    // Reversal of Damage is Smiting Prayers: never disabled.
     expect(sim.requestSkill("monk", REVERSAL_OF_DAMAGE)?.check).toEqual({ ok: true });
+    stepFor(sim, 0.2);
+    expect(sim.requestSkill("monk", PROTECTIVE_BOND)?.check).toEqual({ ok: true });
   });
 
   it("heals what Protective Bond leaves of a hit", () => {

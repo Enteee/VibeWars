@@ -3265,7 +3265,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     flash: false,
     disabledAfterUseSeconds: undefined,
     profession: "monk",
-    attributeId: "monk.protection-prayers",
+    attributeId: "monk.smiting-prayers",
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
