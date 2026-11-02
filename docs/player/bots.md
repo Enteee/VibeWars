@@ -9,8 +9,8 @@ friends.
 Nobody adds bots: a lobby lists its people only. When the
 [Team Lobby](modes.md#team-lobby) ends, each side plays the Team Build it
 chose, and every one of its characters nobody claimed is played by a bot,
-under that character's name. A side with nobody on it plays the house
-team, all bots. Someone who leaves during the Team Lobby leaves their
+under that character's name. A side with nobody on it plays a random
+preset team, all bots. Someone who leaves during the Team Lobby leaves their
 character to a bot.
 
 In the lobby and the Team Lobby a bot looks like anyone else. In the

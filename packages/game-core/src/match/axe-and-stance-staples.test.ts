@@ -267,7 +267,14 @@ describe("Frenzied Defense (#1869)", () => {
     const bearer = makeCombatant({ id: "x", maxHealth: 480 });
     bearer.statuses.apply("frenzied-defense", 8, "x", NO_RANKS);
     expect(
-      mitigate(skillDamage(20, "typeless", 0), bearer, RULES.combat, "chest", createRng(1)),
+      mitigate(
+        skillDamage(20, "typeless", 0),
+        bearer,
+        RULES.combat,
+        "chest",
+        createRng(1),
+        new Map(),
+      ),
     ).toBe(40);
   });
 });

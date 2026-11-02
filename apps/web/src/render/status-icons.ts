@@ -455,6 +455,12 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "divine-intervention": icon("divine-intervention"),
   "healing-hands": icon("healing-hands"),
   "shield-of-judgment": icon("shield-of-judgment"),
+  // Protection staples (#2187).
+  "reversal-of-damage": icon("reversal-of-damage"),
+  "spotless-mind": icon("spotless-mind"),
+  "spotless-soul": icon("spotless-soul"),
+  "mark-of-protection": icon("mark-of-protection"),
+  "protective-bond": icon("protective-bond"),
   "order-of-apostasy": icon("order-of-apostasy"),
   "jaundiced-gaze": icon("jaundiced-gaze"),
   "dark-apostasy": icon("dark-apostasy"),
