@@ -18,6 +18,7 @@ import {
   getOffhand,
   getSkill,
   getWeapon,
+  getWeaponMod,
   IMPLEMENTED_SKILLS,
   neededWeaponText,
   reconcileEquipment,
@@ -26,6 +27,9 @@ import {
   weaponReachable,
   wieldsFor,
   type BuildEquipment,
+  type ItemUpgrades,
+  type ModSlot,
+  type OffhandId,
   type ProfessionId,
   type Skill,
   type SkillDescription,
@@ -69,12 +73,16 @@ import {
   clearArmorUpgrades,
   applyGearDrop,
   decodeGearDrag,
+  droppedModNotes,
   encodeGearDrag,
   headgearChoices,
+  modChoices,
+  modSlotsOf,
   offhandAttributeChoices,
   setHeadgearAttribute,
   setOffhand,
   setRequirementAttribute,
+  setUpgrade,
   setWeapon,
   summariseGear,
   weaponAttributeChoices,
@@ -2397,6 +2405,89 @@ function mountSkillLibrary(context: EditorContext): LibraryBody {
 /* Gear                                                                        */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * `commit` a gear change, toasting each mod a new weapon or off-hand
+ * could not keep (#2008); a change that drops none is silent.
+ */
+function commitGear(context: EditorContext, next: StoredCharacter): void {
+  const notes = droppedModNotes(context.current(), next);
+  context.commit(next);
+  for (const note of notes) {
+    toast(note);
+  }
+}
+
+const MOD_SLOT_LABEL: Readonly<Record<ModSlot, string>> = {
+  prefix: "Prefix",
+  suffix: "Suffix",
+  inscription: "Inscription",
+};
+
+/**
+ * One hand's mod pickers (#2008): a select per slot its item has, None
+ * and every mod that fits, from the catalog, so a new mod needs no UI.
+ */
+function mountModPickers(
+  context: EditorContext,
+  hand: "mainHand" | "offHand",
+): {
+  readonly element: HTMLElement;
+  update(item: WeaponId | OffhandId | undefined, upgrades: ItemUpgrades | undefined): void;
+} {
+  const element = h("div", "gear-mods-hand");
+  element.dataset.hand = hand;
+  const pickers = new Map(
+    (["prefix", "suffix", "inscription"] as const).map((slot) => [
+      slot,
+      mountSelectRow((value) => {
+        context.commit(
+          setUpgrade(
+            context.current(),
+            context.weaponSet(),
+            hand,
+            slot,
+            value === "" ? null : value,
+          ),
+        );
+      }),
+    ]),
+  );
+  let shown = "";
+  return {
+    element,
+    update(item, upgrades) {
+      const slots = item === undefined ? [] : modSlotsOf(item);
+      const rows = slots.flatMap((slot) => {
+        const picker = pickers.get(slot);
+        if (picker === undefined || item === undefined) {
+          return [];
+        }
+        const worn = upgrades?.[slot] ?? null;
+        picker.update(
+          MOD_SLOT_LABEL[slot],
+          [
+            { value: "", label: "None" },
+            ...modChoices(item, slot).map((mod) => ({
+              value: mod.id,
+              label: `${mod.name} — ${mod.text}`,
+            })),
+          ],
+          worn ?? "",
+        );
+        picker.element.dataset.slot = slot;
+        picker.element.title = worn === null ? "" : (getWeaponMod(worn)?.text ?? "");
+        return [picker.element];
+      });
+      // Kept, not rebuilt, so a picker keeps focus across a pick.
+      const signature = slots.join("|");
+      if (signature !== shown) {
+        shown = signature;
+        element.replaceChildren(...rows);
+      }
+    },
+  };
+}
+
 /** A labelled `<select>`, the shape this file already uses for professions, kept and refilled. */
 function mountSelectRow(onChange: (value: string) => void): {
   readonly element: HTMLElement;
@@ -2568,7 +2659,7 @@ function mountGear(panel: HTMLElement, context: EditorContext, doll: PaperDoll):
   section.appendChild(h("div", "editor-label", "Equipment"));
 
   const drop = (target: GearDropTarget) => (source: GearDragSource) => {
-    commit(applyGearDrop(current(), source, target));
+    commitGear(context, applyGearDrop(current(), source, target));
   };
 
   // --- weapon sets ----------------------------------------------------
@@ -2643,6 +2734,14 @@ function mountGear(panel: HTMLElement, context: EditorContext, doll: PaperDoll):
   );
   handsGrid.append(weaponSlot.element, offhandSlot.element);
   section.appendChild(handsGrid);
+
+  // --- weapon mods ----------------------------------------------------
+  // Under each hand, a picker per slot its item has (#2008).
+  const modsGrid = h("div", "gear-mods");
+  const weaponMods = mountModPickers(context, "mainHand");
+  const offhandMods = mountModPickers(context, "offHand");
+  modsGrid.append(weaponMods.element, offhandMods.element);
+  section.appendChild(modsGrid);
 
   // --- attribute nominations ------------------------------------------
   // Only shown for gear that genuinely has a choice to make. A sword is
@@ -2762,6 +2861,9 @@ function mountGear(panel: HTMLElement, context: EditorContext, doll: PaperDoll):
           commit(setOffhand(current(), context.weaponSet(), null));
         },
       });
+
+      weaponMods.update(mainHand?.weaponId, mainHand?.upgrades);
+      offhandMods.update(offHand?.offhandId, offHand?.upgrades);
 
       const weaponChoices =
         weapon?.requirement.kind === "chosen" ? weaponAttributeChoices(character, selected) : [];
@@ -2900,7 +3002,7 @@ function statLine(label: string, value: string): HTMLElement {
  * bar already knows how to use this.
  */
 function mountGearLibrary(context: EditorContext): LibraryBody {
-  const { current, commit } = context;
+  const { current } = context;
   const host = h("div", "skill-groups");
 
   function box(options: {
@@ -2948,7 +3050,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       detail: `${String(weapon.damageMin)}–${String(weapon.damageMax)} · ${weapon.attackIntervalSeconds.toFixed(2)}s`,
       drag: { from: "weapon-library", weaponId: weapon.id },
       onClick: () => {
-        commit(setWeapon(current(), context.weaponSet(), weapon.id));
+        commitGear(context, setWeapon(current(), context.weaponSet(), weapon.id));
       },
     });
     weapons.appendChild(node);
@@ -2964,7 +3066,7 @@ function mountGearLibrary(context: EditorContext): LibraryBody {
       detail: `+${String(offhand.baseBonus + offhand.metRequirementBonus)} ${offhand.kind}`,
       drag: { from: "offhand-library", offhandId: offhand.id },
       onClick: () => {
-        commit(setOffhand(current(), context.weaponSet(), offhand.id));
+        commitGear(context, setOffhand(current(), context.weaponSet(), offhand.id));
       },
     });
     offhands.appendChild(node);

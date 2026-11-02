@@ -153,6 +153,35 @@ with nobody negotiating.**
     The protocol version rides the ticket, and a ticket of another version
     never matches. Nothing adapts to it.
 
+### NAT hint (#2090)
+
+There is no hosted TURN, and a match is a star to one browser host, so a
+joiner behind a symmetric NAT, or with UDP blocked, cannot reach a host
+behind one too. Matching such a pair cost a wasted `JOIN_TIMEOUT_MS` and
+a broken group, again and again.
+
+- **Each ticket carries `hardNat: boolean`**, the publisher's (a party's
+  leader's). The browser decides it once per page, in at most 3 s: a
+  throwaway `RTCPeerConnection` against two STUN servers on different
+  IPs. One base mapped to two public ports is symmetric; gathering that
+  completes with no `srflx` is UDP blocked. Unknown, a timeout or an
+  error is not hard. A player with a relay of their own (#972) is never
+  hard.
+- **Formation never forms a group of only hard tickets.** Where the
+  front-first candidate is all hard, it gives way, per pool it draws
+  from, to the same candidate with that pool's latest member swapped for
+  its earliest ticket not hard; dropping it instead would block the
+  queue's head for good. Leftover hard tickets keep their place.
+- **`hostOf` ranks only tickets not hard**, by the same sha256.
+- **A boolean, not a ranking.** Hints are untrusted. A ranking ("open
+  beats cone") would let anyone claim "open" and host at will, for free.
+  With a boolean, a lie only takes the liar out of hosting (`true`) or
+  changes nothing (`false`).
+- **No pre-match connectivity probe.** In a star, a joiner in the lobby
+  already holds the one link it needs, and one that cannot reach the
+  host is caught by `JOIN_TIMEOUT_MS` and the fall-through, which skips
+  that host for 120 s. A probe would test a link already proven.
+
 ## Consequences
 
 - **A player can play with nobody to invite.** _Random Arena_ needs no

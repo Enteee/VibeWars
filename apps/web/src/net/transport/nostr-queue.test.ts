@@ -74,6 +74,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     enteredAt: NOW - 1_000,
     heartbeatAt: NOW,
     party: null,
+    hardNat: false,
     ...extra,
   };
 }

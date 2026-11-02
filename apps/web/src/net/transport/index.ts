@@ -1,5 +1,7 @@
 import type { LobbyRoom, Transport } from "@vibewars/game-session";
 
+import { checkNat } from "../nat-check.js";
+
 import { BROADCAST_SELF_ID, joinBroadcastRoom } from "./broadcast-channel.js";
 import { joinBroadcastQueue } from "./broadcast-queue.js";
 import { createNostrQueue, type NostrQueue } from "./nostr-queue.js";
@@ -37,4 +39,15 @@ export function joinQueueBoard(): NostrQueue {
   return import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast"
     ? joinBroadcastQueue()
     : createNostrQueue();
+}
+
+/**
+ * Whether this page's NAT is hard (#2090), on the same switch: pages
+ * that share one browser reach each other whatever their NAT, so the
+ * broadcast build never asks a STUN server.
+ */
+export function checkTransportNat(): Promise<boolean> {
+  return import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast"
+    ? Promise.resolve(false)
+    : checkNat();
 }
