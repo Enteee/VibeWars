@@ -235,6 +235,20 @@ function spawningPowerOf(ranks: ReadonlyMap<string, number>): number {
  * brackets when Spawning Power lengthens a weapon spell (#1098).
  */
 function statusDuration(effect: ApplyStatusEffect, ranks: ReadonlyMap<string, number>): string {
+  if (effect.per !== undefined) {
+    // "Lead the Way!"'s (#1955): "4s for each ally in earshot (maximum 30)".
+    return withPerText(
+      lasting(effect.durationSeconds, ranks),
+      effect.durationSeconds,
+      effect.per,
+      ranks,
+      {
+        alone: "",
+        unit: "s",
+        onTarget: "on target",
+      },
+    ).trim();
+  }
   const base = lasting(effect.durationSeconds, ranks);
   if (findStatusDefinition(effect.statusId)?.category !== "weapon-spell") {
     return base;
@@ -406,6 +420,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.moveSpeedMultiplier !== 1) {
     parts.push(`moves at ${String(Math.round(definition.moveSpeedMultiplier * 100))}% speed`);
+  }
+  if (definition.moveSpeedWhileEnchanted !== 1) {
+    const speed = String(Math.round(definition.moveSpeedWhileEnchanted * 100));
+    parts.push(`moves at ${speed}% speed while enchanted`);
   }
   if (definition.preventsSpeedBoosts) {
     parts.push("speed boosts have no effect");
@@ -594,6 +612,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}${under}`,
     );
   }
+  // Protector's Defense's "allies adjacent to you" (#2096).
+  if (definition.projectsAura !== undefined) {
+    const { statusId, radius } = definition.projectsAura;
+    const around = AREA_TEXT.get(radius) ?? `within ${String(radius)}`;
+    parts.push(`allies ${around} to the bearer: ${statusText(statusId, ranks)}`);
+  }
   if (definition.criticalChanceBonus !== 0) {
     parts.push(`${signed(Math.round(definition.criticalChanceBonus * 100))}% critical chance`);
   }
@@ -713,6 +737,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.endsWhenBearerAttacksInMelee) {
     parts.push("ends if the bearer makes a melee attack");
+  }
+  if (definition.endsWhenBearerMoves) {
+    parts.push("ends if the bearer moves");
   }
   if (statAtTwelve(definition.damageTakenMultiplier) !== 1) {
     parts.push(`takes ${statText(definition.damageTakenMultiplier, ranks, damageTaken)} damage`);
@@ -878,6 +905,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.negatesFatalDamage) {
     parts.push("the next damage or life steal that would kill it is negated");
   }
+  if (definition.endsEverywhereWhenSpent) {
+    parts.push("when one ally's is spent, it ends on all others");
+  }
   if (definition.extraStrikesPerHit > 0) {
     parts.push(
       `gain ${String(definition.extraStrikesPerHit)} more ${definition.extraStrikesPerHit === 1 ? "strike" : "strikes"} of adrenaline per hit`,
@@ -935,6 +965,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.incomingHexCastTimeMultiplier !== 1) {
     const times = String(definition.incomingHexCastTimeMultiplier);
     parts.push(`hexes cast on the bearer take ${times}× as long to cast`);
+  }
+  if (definition.incomingAllySpellCastTimeMultiplier !== 1) {
+    const times = String(definition.incomingAllySpellCastTimeMultiplier);
+    parts.push(`other allies' spells on the bearer take ${times}× as long to cast`);
   }
   if (definition.enchantmentsOnBearerCostLess !== 0) {
     const less = String(definition.enchantmentsOnBearerCostLess);
@@ -1176,6 +1210,7 @@ export const TRIGGER_WHEN: Record<StatusTriggerEvent, string> = {
   "bearer-blocks": "blocks",
   "bearer-interrupted": "is interrupted",
   "bearer-knocked-down": "is knocked down",
+  "bearer-knockdown-prevented": "has a knockdown stopped",
   "bearer-gains-hex-or-enchantment": "gains a hex or an enchantment",
   "bearer-gains-enchantment": "gains an enchantment",
   "bearer-loses-enchantment": "loses an enchantment",
@@ -2128,7 +2163,9 @@ function conditionText(condition: EffectCondition): string {
     case "target-alone":
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
-        : `If target has no allies within ${String(condition.radius)}`;
+        : condition.radius === AREA_NEARBY
+          ? "If target is not near any allies"
+          : `If target has no allies within ${String(condition.radius)}`;
     case "target-near-caster-ally":
       return condition.radius === AREA_NEARBY
         ? "If target is near any of your allies"
@@ -2177,6 +2214,8 @@ function conditionText(condition: EffectCondition): string {
       return `If you control ${String(condition.count)} or fewer ${condition.creature}s`;
     case "caster-spirit-or-corpse-within":
       return `If a spirit or a corpse is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
+    case "caster-dead-ally-within":
+      return `If an ally is dead ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`}`;
   }
 }
 
@@ -2652,11 +2691,11 @@ function perCountText(per: PerCount, ranks: ReadonlyMap<string, number>, onTarge
   const what =
     count.kind === "statuses"
       ? `${count.categories.join(" or ")} ${count.on === "caster" ? "on you" : onTarget}`
-      : count.kind === "foes-within"
-        ? `foe ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`
-        : count.kind === "recharging-skills"
-          ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
-          : `point of Energy ${count.on === "caster" ? "you have" : "they have"}`;
+      : count.kind === "recharging-skills"
+        ? `of your recharging ${getAttribute(count.attributeId)?.name ?? count.attributeId} skills`
+        : count.kind === "energy"
+          ? `point of Energy ${count.on === "caster" ? "you have" : "they have"}`
+          : `${count.kind === "foes-within" ? "foe" : "ally"} ${AREA_TEXT.get(count.radius) ?? `within ${String(count.radius)}`}`;
   const max = per.max === undefined ? "" : ` (maximum ${shown(describeMagnitude(per.max, ranks))})`;
   return `for each ${what}${max}`;
 }

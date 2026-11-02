@@ -1,4 +1,10 @@
-import { AREA_ADJACENT, AREA_EARSHOT, RANGE_MELEE, RANGE_SPELL } from "../../distances.js";
+import {
+  AREA_ADJACENT,
+  AREA_EARSHOT,
+  AREA_NEARBY,
+  RANGE_MELEE,
+  RANGE_SPELL,
+} from "../../distances.js";
 import { KNOCKDOWN_SECONDS, type Skill } from "../types.js";
 
 export const WARRIOR_SKILLS: readonly Skill[] = [
@@ -3733,5 +3739,211 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     // "For 8 seconds, the next attack against you is blocked" (#1978). The
     // 3 strikes when it ends are the status's.
     effects: [{ kind: "apply-status", statusId: "auspicious-parry", durationSeconds: { flat: 8 } }],
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Warrior conditions (#2096)                                             */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "warrior.thrill-of-victory",
+    name: "Thrill of Victory",
+    gwId: 324,
+    type: "attack",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.tactics",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 8,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    // "If this attack hits, you deal +20...40 damage. If you have more
+    // Health than target foe, you gain 1...2 strikes of adrenaline." Read
+    // after the blow, so its own damage counts; 2 strikes, its rank-12 value.
+    attack: {
+      weapon: "melee",
+      weaponDamage: 1,
+      bonusDamage: { scaling: { attributeId: "warrior.tactics", atZero: 20, atTwelve: 36 } },
+      conditionalBonus: undefined,
+      strikes: 1,
+      unblockable: false,
+      chain: undefined,
+      criticalWhen: undefined,
+      damageType: undefined,
+      armorPenetration: 0,
+      flightSpeed: undefined,
+      onCritical: [],
+      onFailedToHit: [],
+      onBlocked: [],
+    },
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-less-health" },
+        effects: [{ kind: "adrenaline-gain", strikes: 2 }],
+      },
+    ],
+  },
+  {
+    id: "warrior.you-will-die",
+    name: '"You Will Die!"',
+    gwId: 1141,
+    type: "shout",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.strength",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 15,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe has less than 90% Health, you gain 1...3 strikes of
+    // adrenaline": 3, its rank-12 value.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-health-below", fraction: 0.9 },
+        effects: [{ kind: "adrenaline-gain", strikes: 3 }],
+      },
+    ],
+  },
+  {
+    id: "warrior.youre-all-alone",
+    name: '"You\'re All Alone!"',
+    gwId: 1412,
+    type: "shout",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: undefined,
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 10,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is not near any allies, that foe suffers from Cripple
+    // and Weakness for 8 seconds." Its pets and spirits are allies.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "target-alone", radius: AREA_NEARBY },
+        effects: [
+          { kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 8 } },
+          { kind: "apply-status", statusId: "weakness", durationSeconds: { flat: 8 } },
+        ],
+      },
+    ],
+  },
+  {
+    id: "warrior.retreat",
+    name: '"Retreat!"',
+    gwId: 839,
+    type: "shout",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.tactics",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    // "All party members in earshot", the shouter among them.
+    area: {
+      radius: AREA_EARSHOT,
+      origin: "caster",
+      affects: "allies",
+      maxTargets: undefined,
+      includesCaster: true,
+    },
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If an ally is dead within earshot, all party members in earshot move
+    // 33% faster for 5...11 seconds." With nobody dead, it is spent for
+    // nothing.
+    effects: [
+      {
+        kind: "if",
+        condition: { kind: "caster-dead-ally-within", radius: AREA_EARSHOT },
+        effects: [
+          {
+            kind: "apply-status",
+            statusId: "retreat",
+            durationSeconds: {
+              scaling: { attributeId: "warrior.tactics", atZero: 5, atTwelve: 9.8 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "warrior.protectors-defense",
+    name: "Protector's Defense",
+    gwId: 810,
+    type: "skill",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "warrior",
+    attributeId: "warrior.tactics",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 4...8 seconds, allies adjacent to you have a 75% chance to block
+    // attacks. Protector's Defense ends if you move" (PvP): 7 s, its
+    // rank-12 value. The block is the status's aura.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "protectors-defense",
+        durationSeconds: { scaling: { attributeId: "warrior.tactics", atZero: 4, atTwelve: 7.2 } },
+      },
+    ],
   },
 ];

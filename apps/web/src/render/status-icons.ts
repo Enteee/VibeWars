@@ -179,6 +179,11 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "its-just-a-flesh-wound": icon("its-just-a-flesh-wound"),
   "focused-anger": icon("focused-anger"),
   "natural-temper": icon("natural-temper"),
+  "angelic-bond": icon("angelic-bond"),
+  godspeed: icon("godspeed"),
+  "lead-the-way": icon("lead-the-way"),
+  help: icon("help"),
+  "brace-yourself": icon("brace-yourself"),
   winnowing: icon("winnowing"),
   recuperation: icon("recuperation"),
   shelter: icon("shelter"),
@@ -460,6 +465,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "soldiers-defense": icon("soldiers-defense"),
   "defensive-stance": icon("defensive-stance"),
   "auspicious-parry": icon("auspicious-parry"),
+  // Warrior conditions (#2096).
+  retreat: icon("retreat"),
+  "protectors-defense": icon("protectors-defense"),
+  "protectors-defense-block": icon("protectors-defense-block"),
   // Elementalist auras (#2095).
   "magnetic-aura": icon("magnetic-aura"),
   "swirling-aura": icon("swirling-aura"),

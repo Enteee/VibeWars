@@ -517,13 +517,21 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * multiplies with Dazed's. A status that hastens the caster's own skills
  * of a kind (#1761), as Holy Haste's Healing Prayers, multiplies in too,
  * and so does the skill's own `activationWhile` (#1916), as Natural
- * Healing's half while the caster is not enchanted. Last, the seconds a
- * status takes off its own skills of a kind (#1975), never below 0.
+ * Healing's half while the caster is not enchanted. A spell an ally casts
+ * on a `target` under "Help!" (#1955) takes half as long; the target's own
+ * and a foe's do not. Last, the seconds a status takes off its own skills
+ * of a kind (#1975), never below 0.
  */
+export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number;
 export function effectiveActivationSeconds(
   skill: Skill,
-  caster: RankHolder,
-  target?: Pick<Combatant, "statuses">,
+  caster: RankHolder & Pick<Combatant, "id" | "team">,
+  target: Pick<Combatant, "id" | "team" | "statuses"> | undefined,
+): number;
+export function effectiveActivationSeconds(
+  skill: Skill,
+  caster: RankHolder & Partial<Pick<Combatant, "id" | "team">>,
+  target?: Pick<Combatant, "id" | "team" | "statuses">,
 ): number {
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   const modifiers = aggregateModifiers(caster.statuses.active);
@@ -539,12 +547,16 @@ export function effectiveActivationSeconds(
   if (!isSpell(skill.type)) {
     return less(skill.activationSeconds * fastCasting * slowed);
   }
-  const onTarget =
-    skill.type === "hex" && target !== undefined
-      ? aggregateModifiers(target.statuses.active).incomingHexCastTimeMultiplier
-      : 1;
+  if (target === undefined) {
+    return less(skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting);
+  }
+  const onTarget = aggregateModifiers(target.statuses.active);
+  const fromAlly = target.id !== caster.id && target.team === caster.team;
+  const targeted =
+    (skill.type === "hex" ? onTarget.incomingHexCastTimeMultiplier : 1) *
+    (fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : 1);
   return less(
-    skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * onTarget,
+    skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * targeted,
   );
 }
 

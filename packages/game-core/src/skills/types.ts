@@ -154,6 +154,8 @@ export type CountRule =
     }
   /** Living foes of the caster within `radius` of the caster. */
   | { readonly kind: "foes-within"; readonly radius: number }
+  /** Living allies of the caster within `radius` of the caster, the caster included (#1955). */
+  | { readonly kind: "allies-within"; readonly radius: number }
   /**
    * The skills of `attributeId` on the bar of the caster's living owner,
    * a pet's, that are recharging (#1957): Enraged Lunge's "for each of
@@ -476,6 +478,11 @@ export interface ApplyStatusEffect {
   readonly statusId: StatusId;
   readonly durationSeconds: Magnitude;
   readonly on?: "caster";
+  /**
+   * Seconds more for each of a count (#1955): "Lead the Way!"'s "1...5
+   * seconds for each ally in earshot (maximum 30 seconds)".
+   */
+  readonly per?: PerCount;
 }
 
 /**
@@ -1146,6 +1153,11 @@ export interface Aura {
   readonly affects: "all" | "allies" | "foes";
   /** Centre to centre, world units. Walls do not block it. */
   readonly radius: number;
+  /**
+   * The source does not wear it itself (#2096): Protector's Defense's
+   * "allies adjacent to you".
+   */
+  readonly excludesSource?: true;
 }
 
 /**
@@ -1500,7 +1512,13 @@ export type StateCondition =
    * the caster (#1270): Lamentation's "within earshot of a spirit or
    * corpse". The corpse is not exploited.
    */
-  | { readonly kind: "caster-spirit-or-corpse-within"; readonly radius: number };
+  | { readonly kind: "caster-spirit-or-corpse-within"; readonly radius: number }
+  /**
+   * A dead body of the caster's team other than the caster lies within
+   * `radius` of it (#2096): "Retreat!"'s "if an ally is dead within
+   * earshot". An exploited corpse and a dead pet count.
+   */
+  | { readonly kind: "caster-dead-ally-within"; readonly radius: number };
 
 export type EffectCondition = EventCondition | StateCondition;
 

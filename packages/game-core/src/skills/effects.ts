@@ -822,14 +822,16 @@ function countOf(
             0,
           );
     }
-    case "foes-within": {
+    case "foes-within":
+    case "allies-within": {
       const at = surroundings.get(caster.id)?.position;
+      const allies = rule.kind === "allies-within";
       return at === undefined
         ? 0
         : [...surroundings.values()].filter(
             ({ combatant, position }) =>
               !combatant.dead &&
-              combatant.team !== caster.team &&
+              (combatant.team === caster.team) === allies &&
               distance(position, at) <= rule.radius,
           ).length;
     }
@@ -1839,7 +1841,13 @@ export function applyEffect(
       // The duration at the ranks the status's stats use (#2041): a spirit's,
       // ward's or trigger's are its owner's. A weapon spell lasts longer with
       // its caster's Spawning Power (#1098), whatever skill or trigger lands it.
-      const seconds = resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster);
+      const seconds = withPerCount(
+        resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster),
+        effect.per,
+        caster,
+        target,
+        context.surroundings,
+      );
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
           ? seconds * spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
@@ -2476,6 +2484,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "caster-spirit-within":
     case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
+    case "caster-dead-ally-within":
       return true;
   }
 }
@@ -2631,6 +2640,19 @@ export function stateHolds(
             (body) =>
               isFreshCorpse(body) && distanceWithinRange(at, body.position, condition.radius),
           ))
+      );
+    }
+    case "caster-dead-ally-within": {
+      const at = surroundings.get(caster.id)?.position;
+      return (
+        at !== undefined &&
+        [...surroundings.values()].some(
+          ({ combatant, position }) =>
+            combatant.dead &&
+            combatant.id !== caster.id &&
+            combatant.team === caster.team &&
+            distanceWithinRange(at, position, condition.radius),
+        )
       );
     }
   }
@@ -2891,6 +2913,7 @@ function conditionHolds(
     case "caster-spirit-within":
     case "caster-controls-at-most":
     case "caster-spirit-or-corpse-within":
+    case "caster-dead-ally-within":
       return held.has(condition);
   }
 }
