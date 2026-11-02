@@ -114,6 +114,14 @@ channels, as often as they like.
   footprint at all; an open one, or a closed one with guests, shows only
   its derived topic.
 - **A host leading its guests elsewhere (#1553).** A host that joins
+- **An invite link opens a join, framed or not (#2100).** Unlike a relay
+  link, which a framed page never acts on, an invite link joins whatever
+  frame it opens in, so any site can put a hidden frame in a lobby it
+  holds the key to. Accepted: browsers partition a third-party frame's
+  storage, so that frame has no character, name or builds of the
+  player's, and the IP address the lobby sees is one any site can
+  already learn over WebRTC. A top-level link joins as soon as it opens,
+  as a party invite does; the player sees the lobby it lands in.
   another lobby tells its guests that lobby's key (`lobby-move`), and
   they follow. Guests act only on a `lobby-move` from the host that
   passed the key proof, and the host sends it only to admitted guests,
