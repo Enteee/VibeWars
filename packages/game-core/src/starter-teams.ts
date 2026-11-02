@@ -5,8 +5,8 @@ import { STARTER_BUILDS, allocations, armor } from "./starter-builds.js";
 /**
  * The starter teams (#2035): what Team Builder's random card rerolls
  * through, one picked at random. Each is a recognisable GW1 PvP archetype,
- * four of 4 for Team Arena and Hosted Games and two of 8 for Heroes'
- * Ascent and GvG, built only from skills the engine runs. Every team has
+ * three of 2, four of 4 and three of 8, one set for each size Team
+ * Builder offers, built only from skills the engine runs. Every team has
  * a healer.
  *
  * A team's name is its archetype and a member's name its job, never
@@ -23,7 +23,7 @@ export interface StarterTeamMember {
 export interface StarterTeam {
   /** The archetype: "Balanced 4v4", "Spike". */
   readonly name: string;
-  /** In slot order; how many is the team's size (#2109), 4 or 8. */
+  /** In slot order; how many is the team's size (#2109), 2, 4 or 8. */
   readonly members: readonly StarterTeamMember[];
 }
 
@@ -293,6 +293,36 @@ const PROTECTION_MONK: PlayerBuild = {
 };
 
 export const STARTER_TEAMS: readonly StarterTeam[] = [
+  // A frontline and the healer behind it.
+  {
+    name: "Warrior Duo",
+    members: [
+      // Bleeds and interrupts at the front.
+      { name: "Frontline Warrior", build: SWORD_WARRIOR },
+      // Keeps the warrior up.
+      { name: "Healer Monk", build: HEALER_MONK },
+    ],
+  },
+  // A caster burns them down while a monk heals.
+  {
+    name: "Caster Duo",
+    members: [
+      // Fireball and Chain Lightning.
+      { name: "Fire Elementalist", build: FIRE_ELEMENTALIST },
+      // Word of Healing for the burst that comes back.
+      { name: "Healer Monk", build: HEALING_MONK },
+    ],
+  },
+  // Hexes wear them down; the monk prevents what they hit back with.
+  {
+    name: "Hex Duo",
+    members: [
+      // Hexes and Rotting Flesh.
+      { name: "Hex Necromancer", build: HEX_NECROMANCER },
+      // Spirits, reversals and Aegis.
+      { name: "Protection Monk", build: PROTECTION_MONK },
+    ],
+  },
   // One of each job: a frontline, a bow, a mesmer, a healer.
   {
     name: "Balanced 4v4",
@@ -390,6 +420,28 @@ export const STARTER_TEAMS: readonly StarterTeam[] = [
       // Heals the counter-spike.
       { name: "Healer Monk", build: HEALER_MONK },
       // Prevents it.
+      { name: "Protection Monk", build: PROTECTION_MONK },
+    ],
+  },
+  // Condition Pressure at eight: bleeds, poison and hexes on every target.
+  {
+    name: "Condition 8v8",
+    members: [
+      // Sever Artery bleeds up close.
+      { name: "Bleeding Warrior", build: SWORD_WARRIOR },
+      // Knockdowns to hold them in the conditions.
+      { name: "Hammer Warrior", build: HAMMER_WARRIOR },
+      // Burning, crippling, bleeding and poison from range.
+      { name: "Condition Ranger", build: CONDITION_RANGER },
+      // Savage Shot on the cure that would save them.
+      { name: "Interrupt Ranger", build: INTERRUPT_RANGER },
+      // Hexes and Rotting Flesh.
+      { name: "Hex Necromancer", build: HEX_NECROMANCER },
+      // Shuts their monks' cures down.
+      { name: "Interrupt Mesmer", build: INTERRUPT_MESMER },
+      // Heals and party heals.
+      { name: "Healer Monk", build: HEALER_MONK },
+      // Spirits, reversals and Aegis.
       { name: "Protection Monk", build: PROTECTION_MONK },
     ],
   },
