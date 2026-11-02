@@ -226,6 +226,7 @@ describe("status definitions", () => {
       "reapers-mark": -4,
       "putrid-bile": -3,
       "blood-renewal": 5,
+      "vampiric-spirit": 9,
     });
   });
 
