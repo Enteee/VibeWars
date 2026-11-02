@@ -24,9 +24,9 @@ import {
   setRune,
   type RuneChoice,
 } from "./gear-editor.js";
-import { gearIconImg, insigniaIcon, offhandIcon, runeIcon, weaponIcon } from "./icons.js";
+import { gearIconImg, insigniaIcon, runeIcon } from "./icons.js";
 import { button, h, syncList } from "./kit.js";
-import { PAPER_DOLL_ANCHORS, PAPER_DOLL_SIZE } from "./paper-doll-figure.js";
+import { HELD, PAPER_DOLL_ANCHORS, PAPER_DOLL_SIZE } from "./paper-doll-figure.js";
 import {
   attributeName,
   HAND_NAME,
@@ -89,6 +89,10 @@ const PROFESSION_TINT: Readonly<Record<ProfessionId, string>> = {
 /** The figure (#2058); the stylesheet draws it, and tints it through it as a mask. */
 const FIGURE_URL = `${import.meta.env.BASE_URL}icons/paper-doll/figure.svg`;
 
+/** What a hand holds, drawn at the figure's scale (#2154). */
+const heldUrl = (item: keyof typeof HELD): string =>
+  `${import.meta.env.BASE_URL}icons/paper-doll/held/${item}.svg`;
+
 /**
  * At this width and under, the popover is a sheet along the bottom, placed
  * by the stylesheet: its @media (max-width: 700px) includes 700 too.
@@ -116,6 +120,38 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
   const at = (node: HTMLElement, anchor: { readonly x: number; readonly y: number }): void => {
     node.style.left = `${String((anchor.x / PAPER_DOLL_SIZE.width) * 100)}%`;
     node.style.top = `${String((anchor.y / PAPER_DOLL_SIZE.height) * 100)}%`;
+  };
+  // The shown set's weapons in the figure's hands (#2154): in front of the
+  // arms, behind every hotspot, and never in the way of a click.
+  const heldArt = Object.fromEntries(
+    HANDS.map((hand) => {
+      const img = h("img", "paper-doll-held") as HTMLImageElement;
+      img.alt = "";
+      img.dataset.slot = hand;
+      img.hidden = true;
+      at(img, PAPER_DOLL_ANCHORS[hand]);
+      stage.appendChild(img);
+      return [hand, { img, shown: "" }];
+    }),
+  ) as Record<Hand, { readonly img: HTMLImageElement; shown: string }>;
+  /** Draw `item` held in `hand`, its grip in the hand; nothing for none. */
+  const hold = (hand: Hand, item: keyof typeof HELD | undefined, mirrored: boolean): void => {
+    const art = heldArt[hand];
+    const signature = `${item ?? ""}|${String(mirrored)}`;
+    if (signature === art.shown) {
+      return;
+    }
+    art.shown = signature;
+    art.img.hidden = item === undefined;
+    if (item === undefined) {
+      return;
+    }
+    const pose = HELD[item];
+    art.img.src = heldUrl(item);
+    art.img.style.height = `${String((pose.length / PAPER_DOLL_SIZE.height) * 100)}%`;
+    art.img.style.setProperty("--grip", `${String((1 - pose.grip) * 100)}%`);
+    art.img.style.setProperty("--tilt", `${String(pose.tilt)}deg`);
+    art.img.classList.toggle("is-mirrored", mirrored);
   };
 
   // --- the summary ----------------------------------------------------
@@ -171,13 +207,8 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     hotspot.setAttribute("aria-expanded", "false");
     hotspot.setAttribute("aria-label", HAND_NAME[hand]);
     at(hotspot, PAPER_DOLL_ANCHORS[hand]);
-    const item = h("span", "paper-doll-hand-item");
     const icons = h("span", "paper-doll-hotspot-icons");
-    hotspot.append(
-      h("span", "paper-doll-hotspot-number", String(HANDS.indexOf(hand) + 6)),
-      item,
-      icons,
-    );
+    hotspot.append(h("span", "paper-doll-hotspot-number", String(HANDS.indexOf(hand) + 6)), icons);
     stage.appendChild(hotspot);
 
     const row = h("div", "paper-doll-row is-hand");
@@ -188,7 +219,7 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
     pick.setAttribute("aria-haspopup", "dialog");
     row.appendChild(pick);
     summary.appendChild(row);
-    return { slot: hand, hotspot, item, icons, row, pick, shown: undefined as string | undefined };
+    return { slot: hand, hotspot, icons, row, pick, shown: undefined as string | undefined };
   });
 
   // --- the popover ----------------------------------------------------
@@ -445,6 +476,13 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
       // The shown set's weapon and off-hand, with their mods (#2151). Bare
       // hands open nothing; no ⑦ where no off-hand can go.
       const set = context.weaponSet();
+      // Daggers are a pair: the off hand holds the second, mirrored.
+      const main = heldIn(character, set, "mainHand")?.item;
+      const off = canEquipOffhand(character, set)
+        ? heldIn(character, set, "offHand")?.item
+        : undefined;
+      hold("mainHand", main, false);
+      hold("offHand", main === "daggers" ? main : off, main === "daggers");
       for (const entry of hands) {
         const held = heldIn(character, set, entry.slot);
         const drawn = entry.slot === "mainHand" || canEquipOffhand(character, set);
@@ -456,13 +494,6 @@ export function mountPaperDoll(context: PaperDollContext): PaperDoll {
         entry.hotspot.hidden = !drawn;
         entry.hotspot.disabled = held === undefined;
         entry.row.hidden = held === undefined;
-        const img =
-          held === undefined
-            ? undefined
-            : gearIconImg(
-                entry.slot === "mainHand" ? weaponIcon(held.item) : offhandIcon(held.item),
-              );
-        entry.item.replaceChildren(...(img === undefined ? [] : [img]));
         if (held === undefined) {
           entry.icons.replaceChildren();
           entry.pick.replaceChildren();

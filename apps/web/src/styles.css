@@ -5121,19 +5121,48 @@ body.has-expanded-training #screens {
   border-radius: 3px;
 }
 
-/* A hand (#2151): what it holds on the hand, its mods in a row above, so
-   the two hands, level with each other, never meet. The off-hand runs
-   inwards from its hand. */
+/* What a hand holds (#2154), drawn in the figure's units: its grip in the
+   hand, leaning outward by its tilt, the off-hand's dagger mirrored. In
+   front of the arm, behind the hotspots; it takes no clicks. */
+.paper-doll-held {
+  position: absolute;
+  width: auto;
+  pointer-events: none;
+  transform-origin: 50% var(--grip);
+  transform: translate(-50%, calc(-1 * var(--grip))) rotate(calc(-1 * var(--tilt)));
+}
+
+.paper-doll-held[data-slot="offHand"] {
+  transform: translate(-50%, calc(-1 * var(--grip))) rotate(var(--tilt));
+}
+
+.paper-doll-held.is-mirrored {
+  transform: translate(-50%, calc(-1 * var(--grip))) rotate(var(--tilt)) scaleX(-1);
+}
+
+.paper-doll-held[hidden] {
+  display: none;
+}
+
+/* A hand (#2151): its number on the hand, its mods in a row above, so the
+   two hands, level with each other, never meet. The off-hand runs inwards
+   from its hand. */
 .paper-doll-hotspot.paper-doll-hand {
   display: grid;
-  grid-template-areas: "icons icons" "number item";
+  grid-template-areas: "icons" "number";
   justify-items: start;
   border-radius: 0.6rem;
   transform: translate(-0.65rem, calc(-100% + 0.8rem));
+  /* See-through, so a short weapon in the hand shows under it (#2154). */
+  background: transparent;
+  border-color: transparent;
+}
+
+.paper-doll-hotspot.paper-doll-hand:is(:hover, :focus-visible, [aria-expanded="true"]) {
+  border-color: var(--accent);
 }
 
 .paper-doll-hotspot.paper-doll-hand[data-slot="offHand"] {
-  grid-template-areas: "icons icons" "item number";
   justify-items: end;
   transform: translate(calc(-100% + 0.65rem), calc(-100% + 0.8rem));
 }
@@ -5145,17 +5174,6 @@ body.has-expanded-training #screens {
 .paper-doll-hand .paper-doll-hotspot-number {
   grid-area: number;
   background: var(--accent);
-}
-
-.paper-doll-hand-item {
-  grid-area: item;
-}
-
-.paper-doll-hand-item .gear-icon {
-  display: block;
-  width: 22px;
-  height: 22px;
-  margin: 0;
 }
 
 /* Bare hands: the number alone, and nothing to open. */
