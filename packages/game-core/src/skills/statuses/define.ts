@@ -151,6 +151,7 @@ export function define(
     damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
     renewsOnBearerSpell: false,
+    renewsOnBearerSpellAtFoe: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
     whileUnder: undefined,

@@ -806,6 +806,10 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.renewsOnBearerSpell) {
     parts.push("renewed whenever it casts a spell");
   }
+  // Lyssa's Aura's (#2132).
+  if (definition.renewsOnBearerSpellAtFoe) {
+    parts.push("reapplied whenever it casts a spell on a foe");
+  }
   if (definition.chantShoutDurationMultiplier !== 1) {
     const longer = Math.round((definition.chantShoutDurationMultiplier - 1) * 100);
     parts.push(`chants and shouts last ${String(longer)}% longer on it`);
@@ -1458,6 +1462,10 @@ const DROPPED = "drop effect";
  * `undefined`: bound to none.
  */
 function kindBoundWhen(event: StatusTriggerEvent, trigger: StatusTrigger): string | undefined {
+  // Persistence of Memory's (#2132).
+  if (event === "bearer-interrupted" && trigger.usedSkill?.spell !== undefined) {
+    return "has a spell interrupted";
+  }
   // Spinal Shivers' (#1931).
   if (
     event === "bearer-takes-damage-from-foe" &&
@@ -2096,8 +2104,14 @@ function negatedText(text: string): string {
   return `Unless ${text.replace(/^If /, "")}`;
 }
 
-/** What an `if` waits for, as the line it leads says it (#521, #794). */
-function conditionText(condition: EffectCondition): string {
+/**
+ * What an `if` waits for, as the line it leads says it (#521, #794), an
+ * amount at `ranks` (#2132).
+ */
+function conditionText(
+  condition: EffectCondition,
+  ranks: ReadonlyMap<string, number> = new Map(),
+): string {
   switch (condition.kind) {
     case "interrupted":
       return "If it interrupts a skill";
@@ -2160,17 +2174,19 @@ function conditionText(condition: EffectCondition): string {
     case "target-moving":
       return "If target is moving";
     case "any-of": {
-      const [first, ...rest] = condition.conditions.map(conditionText);
+      const [first, ...rest] = condition.conditions.map((each) => conditionText(each, ranks));
       return [first ?? "Never", ...rest.map((text) => text.replace(/^If /, ""))].join(" or ");
     }
     case "not":
-      return negatedText(conditionText(condition.condition));
+      return negatedText(conditionText(condition.condition, ranks));
     case "target-has-status":
       return `If target has ${statusName(condition.statusId)}`;
     case "target-lacks-status":
       return `If target does not have ${statusName(condition.statusId)}`;
     case "caster-more-energy":
       return "If you have more Energy than target";
+    case "caster-energy-below":
+      return `If you have less than ${shown(describeMagnitude(condition.amount, ranks))} Energy`;
     case "caster-overcast":
       return "If you are Overcast";
     case "caster-wields":
@@ -2368,7 +2384,7 @@ function describeEffects(effect: SkillEffect, ranks: ReadonlyMap<string, number>
   if (effect.kind !== "if") {
     return [describeEffect(effect, ranks)];
   }
-  const condition = conditionText(effect.condition);
+  const condition = conditionText(effect.condition, ranks);
   return effect.effects.map((inner) => {
     const { text, magnitude } = describeEffect(inner, ranks);
     return { text: `${condition}: ${lowerFirst(text)}`, magnitude };
@@ -3071,8 +3087,15 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
             : `This skill recharges ${String(Math.round(effect.fraction * 100))}% faster`,
         magnitude: undefined,
       };
+    // Persistence of Memory's (#2132): the skill the trigger answers.
     case "recharge-reset":
-      return { text: "This skill recharges instantly", magnitude: undefined };
+      return {
+        text:
+          effect.of === "used-skill"
+            ? "That skill recharges instantly"
+            : "This skill recharges instantly",
+        magnitude: undefined,
+      };
     case "recharge-others":
       return {
         text:
@@ -3376,10 +3399,13 @@ function chainText(chain: ChainStep): string {
 /**
  * What an `if` waited for, lower case for the middle of a log line
  * (#1735), the tooltip's own words: "only if target has Burning", "unless
- * target is moving".
+ * target is moving". Plain text, its numbers at the caster's `ranks`.
  */
-export function conditionRequirementText(condition: EffectCondition): string {
-  const text = conditionText(condition);
+export function conditionRequirementText(
+  condition: EffectCondition,
+  ranks: ReadonlyMap<string, number>,
+): string {
+  const text = plain(conditionText(condition, ranks));
   return text.startsWith("If ") ? `only ${lowerFirst(text)}` : lowerFirst(text);
 }
 

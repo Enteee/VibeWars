@@ -3086,4 +3086,189 @@ export const MESMER_SKILLS: readonly Skill[] = [
       },
     ],
   },
+
+  /* ---------------------------------------------------------------------- */
+  /* Mesmer energy and utility (#2132)                                      */
+  /* ---------------------------------------------------------------------- */
+
+  {
+    id: "mesmer.ether-signet",
+    name: "Ether Signet",
+    gwId: 881,
+    type: "signet",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 45,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If you have less than 5...10 Energy, gain 10...20 Energy": 9 and
+    // 18. At 9 or more it does nothing, and recharges all the same.
+    effects: [
+      {
+        kind: "if",
+        condition: {
+          kind: "caster-energy-below",
+          amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 9 } },
+        },
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: {
+              scaling: { attributeId: "mesmer.inspiration-magic", atZero: 10, atTwelve: 18 },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.lyssas-aura",
+    name: "Lyssa's Aura",
+    gwId: 813,
+    type: "enchantment",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.inspiration-magic",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 30,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 10 seconds, you have +0...5 Energy regeneration. This
+    // enchantment reapplies itself every time you cast a spell on a foe":
+    // +4, its rank-12 value. The renewal is the status's.
+    effects: [{ kind: "apply-status", statusId: "lyssas-aura", durationSeconds: { flat: 10 } }],
+  },
+  {
+    id: "mesmer.persistence-of-memory",
+    name: "Persistence of Memory",
+    gwId: 1338,
+    type: "enchantment",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 1,
+    rechargeSeconds: 20,
+    range: RANGE_SPELL,
+    target: "self",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "For 5...20 seconds, whenever a spell you cast is interrupted, that
+    // spell is instantly recharged": 17 s. The recharge is the status's.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "persistence-of-memory",
+        durationSeconds: {
+          scaling: { attributeId: "mesmer.fast-casting", atZero: 5, atTwelve: 17 },
+        },
+      },
+    ],
+  },
+  {
+    id: "mesmer.power-return",
+    name: "Power Return",
+    gwId: 931,
+    type: "spell",
+    elite: false,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    attributeId: "mesmer.fast-casting",
+    cost: { kind: "energy", amount: 5 },
+    overcast: 0,
+    activationSeconds: 0.25,
+    rechargeSeconds: 7,
+    range: RANGE_SPELL,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "If target foe is casting a spell or chant, that skill is interrupted
+    // and target foe gains 10...5 Energy": 6, fewer the higher the rank.
+    effects: [
+      { kind: "interrupt", only: "spell-or-chant" },
+      {
+        kind: "if",
+        condition: { kind: "interrupted" },
+        effects: [
+          {
+            kind: "energy-gain",
+            toTarget: true,
+            amount: { scaling: { attributeId: "mesmer.fast-casting", atZero: 10, atTwelve: 6 } },
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "mesmer.signet-of-midnight",
+    name: "Signet of Midnight",
+    gwId: 58,
+    type: "signet",
+    elite: true,
+    flash: false,
+    disabledAfterUseSeconds: undefined,
+    profession: "mesmer",
+    // GW1's "No Attribute": any mesmer can use it, and its 15 s is flat.
+    attributeId: undefined,
+    // A signet costs nothing: usable at 0 energy.
+    cost: undefined,
+    overcast: 0,
+    activationSeconds: 2,
+    rechargeSeconds: 10,
+    // "Target touched foe."
+    touch: true,
+    range: RANGE_MELEE,
+    target: "single-enemy",
+    area: undefined,
+    attack: undefined,
+    whileActivating: undefined,
+    corpse: undefined,
+    companion: undefined,
+    petAttack: undefined,
+    projectile: undefined,
+    // "You and target touched foe become Blinded for 15 seconds."
+    effects: [
+      { kind: "apply-status", statusId: "blind", durationSeconds: { flat: 15 } },
+      { kind: "caster-gains-status", statusId: "blind", durationSeconds: 15 },
+    ],
+  },
 ];

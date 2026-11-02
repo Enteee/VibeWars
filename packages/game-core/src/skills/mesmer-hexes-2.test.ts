@@ -365,11 +365,12 @@ describe("bearer-interrupted and usedSkill.elite (#1473)", () => {
     expect(damageTo(log, "mesmer.frustration", "a")).toEqual([41]);
     expect(lost(sim, "a") - before).toBeGreaterThan(41);
     const change = get(sim, "a").statuses;
-    change.recordInterrupt("m");
+    change.recordInterrupt("m", undefined);
     expect(change.drainChanges()).toEqual([
       {
         kind: "interrupted",
         offenderId: "m",
+        skill: undefined,
         fired: [{ statusId: "frustration", sourceId: "m", trigger: expect.anything() }],
       },
     ]);

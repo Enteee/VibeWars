@@ -15,9 +15,9 @@ const GUARDED_CAST_SECONDS = 2;
 
 /**
  * A mantra before it is needed (#1964), never one already up: a guard
- * against interrupts with a long cast on its bar and a foe in reach that
- * holds an interrupt, or one damage type's cut with a foe in reach that
- * deals mostly that type.
+ * against interrupts, or Persistence of Memory (#2132), with a long cast
+ * on its bar and a foe in reach that holds an interrupt, or one damage
+ * type's cut with a foe in reach that deals mostly that type.
  */
 const mantra: BotRule = {
   order: 80,

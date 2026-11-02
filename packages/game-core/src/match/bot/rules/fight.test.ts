@@ -95,6 +95,25 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
     expect(askBot(at(["monk.word-of-healing"]), "a").useSkillId).toBeUndefined();
   });
 
+  it("Signet of Midnight only at a melee foe attacking at its elbow, never with attacks of its own (#2132)", () => {
+    const MIDNIGHT = "mesmer.signet-of-midnight";
+    const at = (skillBar: string[], foeX: number, attacking: boolean) => {
+      const sim = match([
+        fighter("m", 0, ELEMENTALIST, vec2(400, 400), { skillBar }),
+        fighter("foe", 1, WARRIOR, vec2(foeX, 400), { behaviour: undefined }),
+      ]);
+      const foe = sim.get("foe");
+      if (foe !== undefined && attacking) {
+        foe.combatant.attack = { targetId: "m", swingElapsed: 0.1, unreachableSeconds: 0 };
+      }
+      return askBot(sim, "m");
+    };
+    expect(at([MIDNIGHT], 430, true)).toMatchObject({ useSkillId: MIDNIGHT, targetId: "foe" });
+    expect(at([MIDNIGHT], 430, false).useSkillId).toBeUndefined();
+    expect(at([MIDNIGHT], 700, true).useSkillId).toBeUndefined();
+    expect(at([MIDNIGHT, "warrior.sever-artery"], 430, true).useSkillId).not.toBe(MIDNIGHT);
+  });
+
   it("shouts one that only acts on a state only while it holds (#2096)", () => {
     const at = (bar: readonly string[], foeFraction: number, corpse: boolean) => {
       const sim = match([
