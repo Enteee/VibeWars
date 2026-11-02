@@ -2,6 +2,7 @@
   "id": "guild-hall-isle",
   "name": "Guild Hall Isle",
   "mode": "guild-battle",
+  "teamSizes": [8],
   "width": 3000,
   "height": 2000,
   "walls": [

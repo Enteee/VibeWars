@@ -4,6 +4,7 @@ import type {
   WireTeamProposal,
   WireTeamSide,
 } from "@vibewars/game-protocol";
+import { defaultBuildEquipment } from "@vibewars/game-core";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,6 +13,7 @@ import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import {
   NO_PROPOSALS,
+  NO_PLAYABLE_TEAM_BUILDS,
   NO_TEAM_BUILDS,
   SEATS_LINE,
   SPECTATING_LINE,
@@ -184,6 +186,7 @@ function lobby(
     isHost: self === "aria",
     countdownSeconds: null,
     queueNonce: null,
+    ascentRound: null,
     proposalBuilds,
     teamLobby: {
       stage,
@@ -200,8 +203,8 @@ function team(id: string, name: string, size: number): StoredTeam {
     primaryProfession: "warrior" as const,
     secondaryProfession: undefined,
     attributes: [],
-    skillBar: [],
-    equipment: { weapon: null, offhand: null, armor: null },
+    skillBar: Array.from({ length: 8 }, () => null),
+    equipment: defaultBuildEquipment("warrior"),
   };
   return {
     schemaVersion: 1,
@@ -210,7 +213,7 @@ function team(id: string, name: string, size: number): StoredTeam {
     members: Array.from({ length: size }, () => ({ character })),
     rulesetId: "r",
     updatedAt: 0,
-  } as unknown as StoredTeam;
+  };
 }
 
 describe("the Team Lobby's words (#1460)", () => {
@@ -244,6 +247,12 @@ describe("the Team Lobby's words (#1460)", () => {
       { team: four, disabled: false, reason: undefined },
     ]);
     expect(proposableTeams([duo], 1, 1)[0]?.reason).toBe("needs 1 character");
+  });
+
+  it("never offers a Team Build with problems: it saves, but is not playable (#2110)", () => {
+    const unnamed = team("a", "", 4);
+    const four = team("b", "Four", 4);
+    expect(proposableTeams([unnamed, four], 4, 1).map((one) => one.team)).toEqual([four]);
   });
 
   it("offers a Hosted Game's side any Team Build with a slot for each of its players (#2029)", () => {
@@ -367,6 +376,14 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(duo?.has("is-faded")).toBe(true);
     expect(duo?.all("team-lobby-needs").map((line) => line.textContent)).toEqual([
       "needs 4 characters",
+    ]);
+  });
+
+  it("says to fix a Team Build when none is playable (#2110)", () => {
+    const shown = body(lobby("aria", "vote", voteSide([])), [team("empty", "Empty", 0)]);
+    expect(shown.all("team-lobby-own-cards")).toEqual([]);
+    expect(shown.all("team-lobby-no-teams").map((line) => line.textContent)).toEqual([
+      NO_PLAYABLE_TEAM_BUILDS,
     ]);
   });
 

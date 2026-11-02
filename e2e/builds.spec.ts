@@ -402,7 +402,7 @@ test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens 
   await bar.getByRole("button", { name: "more actions" }).click();
   await expect(bar.getByRole("button", { name: "Share as GW1 code", exact: true })).toBeVisible();
   await bar.getByRole("button", { name: "Share", exact: true }).click();
-  await expect(bar.locator(".editor-share")).toBeVisible();
+  await expect(bar.locator(".editor-share:not([hidden])")).toBeVisible();
 });
 
 test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
@@ -420,9 +420,13 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await expect(bar.getByRole("button", { name: "Back", exact: true })).toHaveCount(0);
 
   // Nothing stored yet: Esc leaves at once and the list is still empty.
+  // Save would store it anyway, problems and all (#2110).
   const save = page.getByRole("button", { name: "Save", exact: true });
-  await expect(save).toBeDisabled();
-  await expect(save).toHaveAttribute("title", "A team needs at least one member.");
+  await expect(save).toBeEnabled();
+  await expect(save).toHaveAttribute(
+    "title",
+    "Save this team (it has problems: A team needs at least one member.)",
+  );
   // Nothing stored to copy or delete, so neither can store a half-made team.
   await page.getByRole("button", { name: "more actions" }).click();
   await expect(bar.locator(".editor-more button")).toHaveText(["Share", "Duplicate", "Delete"]);
@@ -438,9 +442,12 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
   await page.getByRole("button", { name: "new team" }).click();
   await page.getByLabel("team name").fill("");
   await page.getByRole("button", { name: "add Alpha" }).click();
-  await expect(save).toHaveAttribute("title", "Give the team a name.");
+  await expect(save).toHaveAttribute(
+    "title",
+    "Save this team (it has problems: Give the team a name.)",
+  );
   await page.getByLabel("team name").fill("Duo");
-  await expect(save).toBeEnabled();
+  await expect(save).toHaveAttribute("title", "Save this team");
   await save.click();
   await expect(page.locator(".toast")).toHaveText("Saved");
   await expect(page.locator(".screen-teams")).toBeVisible();
@@ -575,6 +582,33 @@ test("on a phone, a Team Build card's Edit sits below its members, never on them
   const edit = await card.getByRole("button", { name: "Edit" }).boundingBox();
   expect(edit).not.toBeNull();
   expect(members).toBeLessThanOrEqual(edit?.y ?? 0);
+});
+
+test("Save stores a team with problems at once, and its card says why it is not playable (#2110)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  const save = page.getByRole("button", { name: "Save", exact: true });
+  const unplayable = teamRows(page).locator(".play-card-unplayable");
+
+  // An untouched new team: Save stores it as it is.
+  await page.getByRole("button", { name: "new team" }).click();
+  await save.click();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect.poll(() => teamList(page)).toEqual(["New Team · 0 members"]);
+  await expect(unplayable).toHaveText(["Not playable: a team needs at least one member"]);
+
+  // A team with no name is "Unnamed team" on its card; its name stays empty.
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("team name").fill("");
+  await save.click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expect.poll(() => teamList(page)).toEqual(["Unnamed team · 0 members"]);
+  await expect(unplayable).toHaveText(["Not playable: team name must not be empty"]);
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await expect(page.getByLabel("team name")).toHaveValue("");
 });
 
 test("team edits stay on screen until Save, which leaves; Esc and Delete ask first (#573, #1902)", async ({
@@ -991,7 +1025,7 @@ test("⋯, Share and Load stay inside the window at 1100 px and on a phone (#202
     await more.click();
     await inside(bar.locator(".editor-more"), width);
     await bar.getByRole("button", { name: "Share", exact: true }).click();
-    await inside(bar.locator(".editor-share"), width);
+    await inside(bar.locator(".editor-share:not([hidden])"), width);
     await more.click();
     await bar.getByRole("button", { name: "Load GW1 code", exact: true }).click();
     await inside(bar.locator(".editor-load"), width);
@@ -1472,7 +1506,7 @@ test("#1290: an invalid character is striped and tagged Invalid, never chosen, a
   await page.reload();
   // The page's own lobby opening redraws the roster (#1526): a click
   // before it lands on a card the redraw takes away.
-  await expect(page.locator("#topbar .topbar-lobby-code")).not.toBeEmpty();
+  await expect(page.locator("#topbar .topbar-lobby:not([hidden])")).toBeAttached();
 
   const outlaw = page.locator(".character-card", { hasText: "Outlaw" });
   await expect(outlaw).toHaveClass(/is-invalid/);

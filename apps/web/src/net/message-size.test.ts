@@ -498,6 +498,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       teamLobby: null,
       // The longest a nonce is (#1766).
       queueNonce: "f".repeat(64),
+      ascentRound: 3,
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
@@ -563,6 +564,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       countdownSeconds: null,
       teamLobby: null,
       queueNonce: null,
+      ascentRound: null,
     };
     // The vote has proposals and no choice yet; the claim the choice and its claims.
     const vote = {

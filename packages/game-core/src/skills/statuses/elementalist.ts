@@ -267,7 +267,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       {
         on: "bearer-takes-damage-from-foe",
         damageType: "fire",
-        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 3 }],
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 3 } }],
         target: "bearer",
         skillId: "elementalist.mark-of-rodgort",
       },
@@ -391,7 +391,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
       {
         on: "bearer-applies-hex",
         appliedHex: { attributes: "elemental" },
-        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: 2 }],
+        effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 2 } }],
         target: "hexed-foe",
         skillId: "elementalist.elemental-flame",
       },

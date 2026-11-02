@@ -25,7 +25,7 @@ describe("entering the Random Arena queue (#2090)", () => {
   it("says searching at once, before the NAT check is in", () => {
     vi.stubGlobal("window", new EventTarget());
     const states: QueueState[] = [];
-    const place = enterQueue("random-arena-2v2", "Pyro", NO_GUILD, {
+    const place = enterQueue("random-arena-2v2", null, "Pyro", NO_GUILD, {
       onState: (state) => states.push(state),
       onLobby: () => undefined,
       onRefused: () => undefined,

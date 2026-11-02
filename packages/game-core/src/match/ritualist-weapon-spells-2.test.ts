@@ -115,7 +115,9 @@ describe("the four skills (#1022)", () => {
       activationSeconds: 0.25,
       rechargeSeconds: 3,
       target: "single-ally",
-      effects: [{ kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: 8 }],
+      effects: [
+        { kind: "apply-status", statusId: "weapon-of-remedy", durationSeconds: { flat: 8 } },
+      ],
     });
     expect(skill("ritualist.vengeful-weapon")).toMatchObject({
       type: "weapon-spell",
@@ -125,7 +127,9 @@ describe("the four skills (#1022)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 0.25,
       rechargeSeconds: 3,
-      effects: [{ kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: 8 }],
+      effects: [
+        { kind: "apply-status", statusId: "vengeful-weapon", durationSeconds: { flat: 8 } },
+      ],
     });
     expect(skill("ritualist.splinter-weapon")).toMatchObject({
       type: "weapon-spell",
@@ -136,7 +140,9 @@ describe("the four skills (#1022)", () => {
       cost: { kind: "energy", amount: 5 },
       activationSeconds: 1,
       rechargeSeconds: 8,
-      effects: [{ kind: "apply-status", statusId: "splinter-weapon", durationSeconds: 20 }],
+      effects: [
+        { kind: "apply-status", statusId: "splinter-weapon", durationSeconds: { flat: 20 } },
+      ],
     });
     expect(skill("ritualist.mending-grip")).toMatchObject({
       type: "spell",
