@@ -39,6 +39,7 @@ import {
   getStatusDefinition,
   physicalDamageDealtAsOf,
   isSuppressed,
+  type ActiveStatus,
   type AttackHitRider,
   type StatusId,
 } from "./status.js";
@@ -369,12 +370,15 @@ export function strikeCount(
  * is a chance to block, as blind is, so a fight without blocking keeps
  * its random stream. A hex of the attacker's that bars blocking it
  * (#1234, `unblockableBySource`) leaves no chance, and so does a hex that
- * bars blocking at all (#1332, `preventsBlocking`). `attackSkill`: an
+ * bars blocking at all (#1332, `preventsBlocking`), and so does the
+ * victim's blindness against an attacker whose `attackerStatuses` say so
+ * (#2134, `unblockableByBlinded`), as Unseen Fury. `attackSkill`: an
  * attack skill's blow or shot, which Wary Stance's block needs (#1978).
  */
 export function blocks(
   victim: Combatant,
   attackerId: string,
+  attackerStatuses: readonly ActiveStatus[],
   kind: "melee" | "projectile",
   attackSkill: boolean,
   rng: SimulationRng,
@@ -382,8 +386,12 @@ export function blocks(
   const exposed = victim.statuses.active.some(
     ({ id, sourceId }) => sourceId === attackerId && getStatusDefinition(id).unblockableBySource,
   );
+  const blindSpot =
+    victim.statuses.has("blind") &&
+    attackerStatuses.some(({ id }) => getStatusDefinition(id).unblockableByBlinded);
   if (
     exposed ||
+    blindSpot ||
     victim.statuses.active.some(({ id }) => getStatusDefinition(id).preventsBlocking)
   ) {
     return false;
@@ -958,26 +966,27 @@ export function withEndedStatuses(
 /**
  * One of the attacker's blows hit (#919): swing, attack skill or arrow
  * alike, never a miss or a block. Every status of its own that ends when
- * its bearer hits ends now, as Dark Escape, and, `withAttackSkill`, every
+ * its bearer hits ends now, as Dark Escape, and, with an `attackSkill`, every
  * one that ends when an attack skill hits, as Defensive Anthem (#956). The
  * hit is recorded for what answers one, as Insidious Parasite (#935), with
  * the `weapon` it struck with (#1359), and, on a foe's `victim`, for what
  * answers being hit there (#1464), as Vengeful Was Khanhei, with the
- * health the blow took from it (#1754), as Holy Wrath reflects.
+ * health the blow took from it (#1754), as Holy Wrath reflects, and the
+ * attack skill's chain role (#2134), as Mark of Instability answers a dual.
  */
 export function bearerHit(
   attacker: Combatant,
   victim: Combatant,
   events: CombatEvent[],
-  withAttackSkill: boolean,
+  attackSkill: Skill | undefined,
   weapon: Weapon,
   took: number,
 ): void {
   attacker.statuses.recordHit(weapon);
   if (victim.team !== attacker.team) {
-    victim.statuses.recordHitByAttack(attacker.id, took);
+    victim.statuses.recordHitByAttack(attacker.id, took, attackSkill?.attack?.chain?.role);
   }
-  for (const statusId of attacker.statuses.endOnBearerHit(withAttackSkill)) {
+  for (const statusId of attacker.statuses.endOnBearerHit(attackSkill !== undefined)) {
     events.push({ kind: "status-expired", targetId: attacker.id, statusId });
   }
 }
@@ -1106,7 +1115,7 @@ function strike(
     return;
   }
   const snapshot = withEndedStatuses(weaponSnapshotOf(attacker), attacked);
-  if (!unblockable && blocks(victim, attacker.id, "melee", false, rng)) {
+  if (!unblockable && blocks(victim, attacker.id, attacker.statuses.active, "melee", false, rng)) {
     events.push({ kind: "attack-blocked", targetId: victim.id });
     bearerFailedToHit(attacker, events);
     attackReached(victim, events);
@@ -1152,7 +1161,7 @@ function strike(
     attacker,
     victim,
     events,
-    false,
+    undefined,
     snapshot.mainHand.weapon,
     Math.max(0, before - victim.health),
   );
@@ -1349,7 +1358,7 @@ export function resolveAttackSkillOutcome(
       if (
         !unblockable &&
         (rule === undefined || !unblockableNow(rule.unblockable, caster, victim, surroundings)) &&
-        blocks(victim, caster.id, kind, true, rng)
+        blocks(victim, caster.id, caster.statuses.active, kind, true, rng)
       ) {
         events.push({ kind: "attack-blocked", targetId: victim.id });
         bearerFailedToHit(caster, events);
@@ -1401,7 +1410,7 @@ export function resolveAttackSkillOutcome(
         ),
         ...nextAttackSkillRiders(next, caster, victim, rng, rules, surroundings),
       );
-      bearerHit(caster, victim, events, true, weapon, Math.max(0, before - victim.health));
+      bearerHit(caster, victim, events, skill, weapon, Math.max(0, before - victim.health));
       attackReached(victim, events);
       markChain(caster, skill, victim.id);
       hit.push(victim);

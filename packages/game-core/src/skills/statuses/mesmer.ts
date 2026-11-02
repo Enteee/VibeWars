@@ -59,7 +59,10 @@ export type MesmerStatusId =
   | "power-flux"
   | "signet-of-illusions"
   // Blocks that pay (#1974).
-  | "distortion";
+  | "distortion"
+  // Mesmer energy and utility (#2132).
+  | "lyssas-aura"
+  | "persistence-of-memory";
 
 /** Wandering Eye's 76 (#1627), to its bearer and to each foe nearby. */
 const WANDERING_EYE_DAMAGE: DamageEffect = {
@@ -733,6 +736,28 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         target: "bearer",
         effects: [{ kind: "pay-energy-or-end", amount: 2 }],
         skillId: "mesmer.distortion",
+      },
+    ],
+  }),
+  // Mesmer energy and utility (#2132), at their rank-12 values.
+  // "For 10 seconds, you have +0...5 Energy regeneration. This enchantment
+  // reapplies itself every time you cast a spell on a foe."
+  "lyssas-aura": define("lyssas-aura", "Lyssa's Aura", "enchantment", {
+    profession: "mesmer",
+    energyPips: 4,
+    renewsOnBearerSpellAtFoe: true,
+  }),
+  // "For 5...20 seconds, whenever a spell you cast is interrupted, that
+  // spell is instantly recharged." A disable the interrupt adds stays.
+  "persistence-of-memory": define("persistence-of-memory", "Persistence of Memory", "enchantment", {
+    profession: "mesmer",
+    triggers: [
+      {
+        on: "bearer-interrupted",
+        target: "bearer",
+        usedSkill: { spell: true },
+        effects: [{ kind: "recharge-reset", of: "used-skill" }],
+        skillId: "mesmer.persistence-of-memory",
       },
     ],
   }),

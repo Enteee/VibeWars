@@ -961,7 +961,7 @@ function interruptCast(
   // A skill queued behind the cast goes with it, as in GW1 (#1722).
   target.cast.clearQueue();
   events.push({ kind: "interrupted", targetId: target.id, skillId: cancelled.skillId });
-  target.statuses.recordInterrupt(byId);
+  target.statuses.recordInterrupt(byId, { skillId: cancelled.skillId, key: cancelled.key });
   return true;
 }
 
@@ -1043,7 +1043,7 @@ function interruptSwing(
   }
   attack.swingElapsed = 0;
   events.push({ kind: "attack-interrupted", targetId: target.id });
-  target.statuses.recordInterrupt(byId);
+  target.statuses.recordInterrupt(byId, undefined);
   return true;
 }
 
@@ -2336,7 +2336,14 @@ export function applyEffect(
       return events;
 
     // A shot's (#1914): its recharge began as it left, and ends here.
+    // Persistence of Memory's (#2132): the interrupted spell's, by its key.
     case "recharge-reset":
+      if (effect.of === "used-skill") {
+        if (context.usedSkill !== undefined) {
+          caster.cast.endRecharge(context.usedSkill.key);
+        }
+        return events;
+      }
       for (const key of [...caster.cast.rechargeRemaining.keys()]) {
         if (skillIdOfKey(key) === context.skillId) {
           caster.cast.endRecharge(key);
@@ -2469,6 +2476,7 @@ export function isStateCondition(condition: EffectCondition): condition is State
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
+    case "caster-energy-below":
     case "caster-overcast":
     case "caster-wields":
     case "caster-holds-shield":
@@ -2594,6 +2602,8 @@ export function stateHolds(
       return !target.statuses.has(condition.statusId);
     case "caster-more-energy":
       return caster.energy > target.energy;
+    case "caster-energy-below":
+      return caster.energy < resolveMagnitude(condition.amount, caster);
     case "caster-overcast":
       return caster.overcast > 0;
     case "caster-wields":
@@ -2828,7 +2838,11 @@ function disabledOwn(
     return skillId !== usedId && skill?.attributeId === effect.attributeId;
   }
   if (effect.which === "attacks") {
-    return skillId !== usedId && skill?.type === "attack";
+    return (
+      skillId !== usedId &&
+      skill?.type === "attack" &&
+      (effect.exceptWeapon === undefined || skill.attack?.weapon !== effect.exceptWeapon)
+    );
   }
   if (effect.which === "types") {
     return skill !== undefined && effect.types.includes(skill.type);
@@ -2898,6 +2912,7 @@ function conditionHolds(
     case "target-has-status":
     case "target-lacks-status":
     case "caster-more-energy":
+    case "caster-energy-below":
     case "caster-overcast":
     case "caster-wields":
     case "caster-holds-shield":

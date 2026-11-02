@@ -1552,6 +1552,39 @@ describe("minion care (#1986)", () => {
   });
 });
 
+describe("Mesmer energy and utility (#2132)", () => {
+  const texts = (id: string, attributeId: string): string[] =>
+    describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+
+  it("says the Energy threshold, the renewal at a foe and the recharge, at rank 12", () => {
+    expect(texts("mesmer.ether-signet", "mesmer.inspiration-magic")).toEqual([
+      "If you have less than 9 Energy: gain 18 energy",
+    ]);
+    expect(texts("mesmer.lyssas-aura", "mesmer.inspiration-magic")).toEqual([
+      "Applies Lyssa's Aura for 10s " +
+        "(+4 Energy regeneration, reapplied whenever it casts a spell on a foe)",
+    ]);
+    expect(texts("mesmer.persistence-of-memory", "mesmer.fast-casting")).toEqual([
+      "Applies Persistence of Memory for 17s " +
+        "(whenever it has a spell interrupted: that skill recharges instantly)",
+    ]);
+    expect(texts("mesmer.power-return", "mesmer.fast-casting")).toEqual([
+      "Interrupts the target's spell or chant, if they are casting one",
+      "If it interrupts a skill: target gains 6 energy",
+    ]);
+    expect(texts("mesmer.signet-of-midnight", "")).toEqual([
+      "Applies Blind for 15s (90% of attacks miss)",
+      "You gain Blind for 15s (90% of attacks miss)",
+    ]);
+  });
+
+  it("says the Energy threshold at the caster's rank", () => {
+    expect(texts("mesmer.ether-signet", "mesmer.domination-magic")).toEqual([
+      "If you have less than 5 Energy: gain 10 energy",
+    ]);
+  });
+});
+
 describe("Elementalist auras (#2095)", () => {
   const texts = (id: string): string[] =>
     describeSkill(
@@ -1578,5 +1611,35 @@ describe("Elementalist auras (#2095)", () => {
     expect(texts("elementalist.sliver-armor")).toEqual([
       "Applies Sliver Armor for 10s (45% chance to block attacks, the nearest of nearby foes takes 29 earth damage whenever it is targeted by a foe's spell or attack)",
     ]);
+  });
+});
+
+describe("Assassin chain and Paradox tools (#2134)", () => {
+  const texts = (id: string): string[] =>
+    describeSkill(
+      skill(id),
+      new Map([
+        ["assassin.deadly-arts", 12],
+        ["assassin.shadow-arts", 12],
+      ]),
+    ).effects.map(({ text }) => text);
+
+  it("says what each frees, topples, hastens, disables and leaves unblockable, at rank 12", () => {
+    expect(texts("assassin.way-of-the-empty-palm")).toEqual([
+      "Applies Way of the Empty Palm for 13s (your off-hand and dual attacks cost 0 Energy and recharge 45% faster)",
+    ]);
+    expect(texts("assassin.mark-of-instability")).toEqual([
+      "Applies Mark of Instability for 20s (the next time it is hit by a dual attack of its caster's: knocks down for 2s)",
+    ]);
+    expect(texts("assassin.deadly-paradox")).toEqual([
+      "All of your other attack skills are disabled for 10 seconds",
+      "For 13s, your Assassin skills cast 33% faster and recharge 33% faster",
+    ]);
+    expect(texts("assassin.wastrels-collapse")).toEqual([
+      "Shadow steps to the target",
+      "If target is not using a skill: knocks down for 2s",
+      "Your non-dagger attack skills are disabled for 10 seconds",
+    ]);
+    expect(texts("assassin.unseen-fury")).toEqual(["For 51s, cannot be blocked by Blinded foes"]);
   });
 });

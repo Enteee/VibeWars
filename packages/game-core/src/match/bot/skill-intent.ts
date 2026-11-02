@@ -36,8 +36,9 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
  * skill, raising the dead, a way out (#1930), a buff that only makes
- * attacks hit harder (#2000), a setup (#1975) and minion care (#1986),
- * which is that alone.
+ * attacks hit harder (#2000), a setup (#1975), minion care (#1986),
+ * which is that alone, Energy for the user and a guard for its spells
+ * against interrupts (#2132).
  */
 export type BotUse =
   | "interrupt"
@@ -50,7 +51,9 @@ export type BotUse =
   | "offence"
   | "setup"
   | "minion-care"
-  | "take-minion";
+  | "take-minion"
+  | "energy"
+  | "guard";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -77,6 +80,8 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
   if (setupOf(skill) !== undefined) uses.push("setup");
+  if (lowEnergyGain(skill) !== undefined || energyAtFoes(skill)) uses.push("energy");
+  if (recallsInterrupted(skill)) uses.push("guard");
   // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
     skill.target !== "allied-minion" &&
@@ -476,7 +481,9 @@ export function takenOffFoe(skill: Skill): StatusCategory | undefined {
  * the bot can see, no role of its own. Air of Enchantment's cheaper
  * enchantments on an ally, before one; Order of Apostasy's strip on the
  * party's hits, while they hit enchanted foes; Dark Apostasy's strip on
- * a critical hit, at an enchanted foe. The Elementalist's self-buffs
+ * a critical hit, at an enchanted foe. Way of the Empty Palm's free chain
+ * attacks, Deadly Paradox's faster profession skills and Unseen Fury's
+ * blows a Blinded foe cannot block (#2134). The Elementalist's self-buffs
  * (#1984): a conjure's rider for the element it wields, Ether Prodigy's
  * Energy for Health, Ether Renewal's gains per enchantment on the next
  * spell, Elemental Attunement's ranks.
@@ -488,7 +495,10 @@ export type Setup =
   | "weapon-element"
   | "energy-for-health"
   | "spell-gains"
-  | "elemental-ranks";
+  | "elemental-ranks"
+  | "free-chain"
+  | "profession-haste"
+  | "blind-unblock";
 
 /** The setup `skill` is and the status it puts on, or `undefined` for any other (#1975, #1984). */
 export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | undefined {
@@ -526,7 +536,18 @@ export function setupOf(skill: Skill): { setup: Setup; statusId: StatusId } | un
                       ({ scope, amount }) => scope === "elemental" && amount > 0,
                     )
                   ? "elemental-ranks"
-                  : undefined;
+                  : status.ownSkillModifiers.some(({ filter }) => filter.chainRoles !== undefined)
+                    ? "free-chain"
+                    : status.ownSkillModifiers.some(
+                          ({ filter, rechargeFaster }) =>
+                            filter.profession !== undefined &&
+                            filter.type === undefined &&
+                            rechargeFaster > 0,
+                        )
+                      ? "profession-haste"
+                      : status.unblockableByBlinded
+                        ? "blind-unblock"
+                        : undefined;
   return setup === undefined ? undefined : { setup, statusId: applied.statusId };
 }
 
@@ -574,9 +595,73 @@ export function ownStatuses(skill: Skill): readonly StatusId[] {
     : [];
 }
 
-/** Whether `skill` guards its user from an interrupt (#1964): Mantra of Concentration. */
+/**
+ * Whether `skill` guards its user from an interrupt (#1964): Mantra of
+ * Concentration, or takes the sting out of one (#2132): Persistence of
+ * Memory.
+ */
 export function guardsInterrupt(skill: Skill): boolean {
-  return ownStatuses(skill).some((id) => getStatusDefinition(id).interruptGuard !== undefined);
+  return (
+    recallsInterrupted(skill) ||
+    ownStatuses(skill).some((id) => getStatusDefinition(id).interruptGuard !== undefined)
+  );
+}
+
+/**
+ * Whether `skill` puts on its user what recharges a skill of its that is
+ * interrupted (#2132): Persistence of Memory.
+ */
+export function recallsInterrupted(skill: Skill): boolean {
+  return ownStatuses(skill).some((id) =>
+    getStatusDefinition(id).triggers.some(
+      ({ on, effects }) =>
+        on === "bearer-interrupted" &&
+        effects.some((effect) => effect.kind === "recharge-reset" && effect.of === "used-skill"),
+    ),
+  );
+}
+
+/**
+ * The Energy below which `skill` gains its user Energy (#2132), Ether
+ * Signet's "if you have less than 9 Energy", or `undefined` for any other.
+ */
+export function lowEnergyGain(
+  skill: Skill,
+): Extract<StateCondition, { kind: "caster-energy-below" }> | undefined {
+  if (skill.target !== "self") {
+    return undefined;
+  }
+  for (const effect of skill.effects) {
+    if (
+      effect.kind === "if" &&
+      effect.condition.kind === "caster-energy-below" &&
+      effect.effects.some((inner) => inner.kind === "energy-gain")
+    ) {
+      return effect.condition;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Whether `skill` puts on its user Energy regeneration that its spells
+ * at foes keep up (#2132): Lyssa's Aura.
+ */
+export function energyAtFoes(skill: Skill): boolean {
+  return ownStatuses(skill).some((id) => {
+    const status = getStatusDefinition(id);
+    return status.renewsOnBearerSpellAtFoe && status.energyPips > 0;
+  });
+}
+
+/**
+ * Whether `skill` Blinds its own user (#2132): Signet of Midnight's price,
+ * worth paying only against a foe that attacks in melee.
+ */
+export function blindsUser(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) => effect.kind === "caster-gains-status" && effect.statusId === "blind",
+  );
 }
 
 /**

@@ -113,3 +113,48 @@ describe("play-build's Elementalist self-buffs (#1984)", () => {
     expect(askBot(up, "e").useSkillId).toBeUndefined();
   });
 });
+
+describe("play-build's Assassin setups (#2134)", () => {
+  const PALM = "assassin.way-of-the-empty-palm";
+  const PARADOX = "assassin.deadly-paradox";
+  const FURY = "assassin.unseen-fury";
+  const sim = (skillBar: string[]): MatchSimulation =>
+    match([
+      fighter("a", 0, WARRIOR, vec2(400, 400), { behaviour: undefined, skillBar }),
+      fighter("foe", 1, WARRIOR, vec2(480, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+
+  it("casts Way of the Empty Palm only with two off-hand or dual attacks on the bar", () => {
+    const one = sim([PALM, "assassin.death-blossom"]);
+    expect(askBot(one, "a").useSkillId).not.toBe(PALM);
+    const two = sim([PALM, "assassin.fox-fangs", "assassin.death-blossom"]);
+    expect(askBot(two, "a")).toMatchObject({ useSkillId: PALM, targetId: "a" });
+  });
+
+  it("casts Deadly Paradox only while one of two other Assassin non-attacks recharges", () => {
+    const bar = [PARADOX, "assassin.shadow-prison", "assassin.dark-escape"];
+    const fresh = sim(bar);
+    expect(askBot(fresh, "a").useSkillId).not.toBe(PARADOX);
+    const waiting = sim(bar);
+    waiting.setTarget("a", "a");
+    expect(waiting.requestSkill("a", 2)?.check).toEqual({ ok: true });
+    for (let tick = 0; tick < 10; tick += 1) {
+      waiting.step(0.05);
+    }
+    expect(
+      waiting.get("a")?.combatant.cast.rechargeRemaining.get("assassin.dark-escape"),
+    ).toBeGreaterThan(0);
+    expect(askBot(waiting, "a")).toMatchObject({ useSkillId: PARADOX, targetId: "a" });
+  });
+
+  it("casts Unseen Fury only at a Blinded foe, or with a blind ready", () => {
+    expect(askBot(sim([FURY]), "a").useSkillId).toBeUndefined();
+    const blinded = sim([FURY]);
+    blinded.get("foe")?.combatant.statuses.apply("blind", 10, "x", NO_RANKS);
+    expect(askBot(blinded, "a")).toMatchObject({ useSkillId: FURY, targetId: "a" });
+    expect(askBot(sim([FURY, "elementalist.blinding-flash"]), "a")).toMatchObject({
+      useSkillId: FURY,
+      targetId: "a",
+    });
+  });
+});

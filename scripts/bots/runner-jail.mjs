@@ -72,12 +72,15 @@ export const WORK = "/work";
 
 /** The cap on each runner when the supervisor names none. */
 export const DEFAULT_CPUS = 2;
+export const NIX_REGISTRATION = "/etc/vibewars/nix-registration";
+export const NIX_STORE_PATHS = "/etc/vibewars/nix-store-paths";
 export const DEFAULT_MEMORY_GIB = 6;
 export const DEFAULT_TASKS_MAX = 2048;
 
 /**
  * @typedef {object} RunnerStore
  * @property {string} closure a file listing every store path the jail mounts, one per line
+ * @property {string} registration the closure's Nix db dump (`nix-store --load-db` reads it)
  * @property {string} runner the `github-runner` package
  * @property {string} bwrap bubblewrap's binary
  * @property {string} userland the base userland: its `bin` is PATH
@@ -92,6 +95,8 @@ export const DEFAULT_TASKS_MAX = 2048;
 /**
  * @typedef {object} RunnerJail
  * @property {readonly string[]} storeDirs the closure's directories, each overlaid
+ * @property {string} closure the closure's path list, bound read-only for the job
+ * @property {string} registration the closure's Nix db dump, bound read-only for the job
  * @property {readonly string[]} storeFiles the closure's lone files, which an
  *   overlay cannot cover: bound read-only
  * @property {string} userland
@@ -122,6 +127,12 @@ export function runnerJailArgs(jail) {
     ...jail.storeDirs.flatMap((store) => ["--overlay-src", store, "--tmp-overlay", store]),
     ...jail.storeFiles.flatMap((store) => ["--ro-bind", store, store]),
     ...["--tmpfs", "/etc"],
+    // The job's fresh Nix db does not know the overlaid paths; the devenv
+    // action loads these so Nix never substitutes over (and chmods) them (#2101).
+    ...["--ro-bind", jail.registration, NIX_REGISTRATION],
+    ...["--ro-bind", jail.closure, NIX_STORE_PATHS],
+    ...["--setenv", "VIBEWARS_NIX_REGISTRATION", NIX_REGISTRATION],
+    ...["--setenv", "VIBEWARS_NIX_STORE_PATHS", NIX_STORE_PATHS],
     ...["passwd", "group", "hosts", "nsswitch.conf"].flatMap((name) => [
       "--symlink",
       `${jail.etc}/${name}`,
@@ -234,6 +245,7 @@ export function parseRunnerStore(json) {
   const get = (/** @type {string} */ name) => storePath(fields[name], name);
   return {
     closure: get("closure"),
+    registration: get("registration"),
     runner: get("runner"),
     bwrap: get("bwrap"),
     userland: get("userland"),
@@ -346,6 +358,8 @@ export async function runRunner({ store, jitconfigFile, lifeline, cpus, memoryGi
       jail: {
         storeDirs: storePaths.filter((store) => fs.statSync(store).isDirectory()),
         storeFiles: storePaths.filter((store) => !fs.statSync(store).isDirectory()),
+        closure: store.closure,
+        registration: store.registration,
         userland: store.userland,
         etc: store.etc,
         hook: store.hook,

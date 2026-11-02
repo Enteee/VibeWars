@@ -321,6 +321,12 @@ describe("botUses (#1189)", () => {
     expect(botUses(skill("necromancer.veratas-aura"))).toEqual(["take-minion"]);
     expect(botUses(skill("necromancer.malign-intervention"))).toEqual(["take-minion"]);
     expect(botUses(skill("necromancer.jagged-bones"))).toEqual(["minion-care"]);
+    // Mesmer energy and utility (#2132).
+    expect(botUses(skill("mesmer.ether-signet"))).toEqual(["energy"]);
+    expect(botUses(skill("mesmer.lyssas-aura"))).toEqual(["energy"]);
+    expect(botUses(skill("mesmer.persistence-of-memory"))).toEqual(["guard"]);
+    expect(botUses(skill("mesmer.power-return"))).toEqual(["interrupt"]);
+    expect(botUses(skill("mesmer.signet-of-midnight"))).toEqual(["offence"]);
   });
 
   it("boosts with a buff that only makes attacks hit harder (#2000)", () => {

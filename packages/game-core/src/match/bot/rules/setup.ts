@@ -26,6 +26,12 @@ const PRODIGY_HEALTH_PER_ENERGY = 2;
 /** Enchantments on itself that make Ether Renewal worth it (#1984). */
 const RENEWAL_ENCHANTMENTS = 2;
 
+/** Off-hand and dual attacks on the bar that make Way of the Empty Palm worth it (#2134). */
+const FREE_CHAIN_ATTACKS = 2;
+
+/** Other non-attack skills of its profession that make Deadly Paradox worth it (#2134). */
+const HASTE_SKILLS = 2;
+
 /** The setups on its bar (#1975), each with what it sets up. */
 function setupsOf(bar: readonly Skill[]) {
   return bar.flatMap((skill) => {
@@ -59,13 +65,23 @@ export function airFirst(
   )?.skill;
 }
 
+/** Whether `skill` puts `statusId` on its target (#2134), as Blinding Surge's Blind. */
+function applies(skill: Skill, statusId: StatusId): boolean {
+  return skill.effects.some(
+    (effect) => effect.kind === "apply-status" && effect.statusId === statusId,
+  );
+}
+
 /**
  * A setup on itself the fight calls for (#1975): Dark Apostasy at an
  * enchanted foe with Energy for its price, Order of Apostasy while the
- * party hits enchanted foes and it has Health for its price. The
- * Elementalist's (#1984): a conjure only for the element it wields;
- * Ether Prodigy short of Energy, with Health for its end; Ether Renewal
- * under two enchantments with a spell ready; Elemental Attunement kept up.
+ * party hits enchanted foes and it has Health for its price. Way of the
+ * Empty Palm before a chain of free attacks; Deadly Paradox while one of
+ * its profession's other non-attack skills recharges; Unseen Fury at a
+ * Blinded foe, or with a blind ready (#2134). The Elementalist's (#1984):
+ * a conjure only for the element it wields; Ether Prodigy short of Energy,
+ * with Health for its end; Ether Renewal under two enchantments with a
+ * spell ready; Elemental Attunement kept up.
  */
 const setup: BotRule = {
   order: 95,
@@ -74,13 +90,26 @@ const setup: BotRule = {
     if (targetId === undefined) {
       return undefined;
     }
+    const chainAttacks = bar.filter(
+      (held) => held.attack?.chain !== undefined && held.attack.chain.role !== "lead",
+    ).length;
+    const hastened = (skill: Skill): readonly Skill[] =>
+      bar.filter(
+        (held) =>
+          held.id !== skill.id && held.type !== "attack" && held.profession === skill.profession,
+      );
+    const recharging = (held: Skill): boolean =>
+      (self.combatant.cast.rechargeRemaining.get(held.id) ?? 0) > 0;
+    const blinded =
+      foes.find((other) => other.id === targetId)?.combatant.statuses.has("blind") ?? false;
+    const blindReady = bar.some((held) => applies(held, "blind") && mayUse(held, targetId));
     const enchanted = (id: string | undefined): boolean =>
       foes.some(
         (other) => other.id === id && other.combatant.statuses.countByCategory("enchantment") > 0,
       );
     const hitters = allies.filter((member) => enchanted(member.combatant.attack?.targetId)).length;
     const { combatant } = self;
-    const wanted = (setup: Setup, statusId: StatusId): boolean => {
+    const wanted = (setup: Setup, statusId: StatusId, skill: Skill): boolean => {
       switch (setup) {
         case "cheaper-enchantments":
           return false;
@@ -107,11 +136,19 @@ const setup: BotRule = {
           );
         case "elemental-ranks":
           return true;
+        case "free-chain":
+          return chainAttacks >= FREE_CHAIN_ATTACKS;
+        case "profession-haste":
+          return hastened(skill).length >= HASTE_SKILLS && hastened(skill).some(recharging);
+        case "blind-unblock":
+          return blinded || blindReady;
       }
     };
     const found = setupsOf(bar).find(
       ({ skill, setup, statusId }) =>
-        !combatant.statuses.has(statusId) && wanted(setup, statusId) && mayUse(skill, self.id),
+        !combatant.statuses.has(statusId) &&
+        wanted(setup, statusId, skill) &&
+        mayUse(skill, self.id),
     );
     return found === undefined ? undefined : use(found.skill, self.id);
   },

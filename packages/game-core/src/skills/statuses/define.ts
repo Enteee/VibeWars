@@ -68,6 +68,7 @@ export function define(
     preventsEnchantments: false,
     preventsShoutsAndChants: false,
     unblockableBySource: false,
+    unblockableByBlinded: false,
     preventsBlocking: false,
     renewsWhileMoving: undefined,
     preventsKnockdown: false,
@@ -151,6 +152,7 @@ export function define(
     damagePulse: undefined,
     renewsOnChantOrShoutEnd: false,
     renewsOnBearerSpell: false,
+    renewsOnBearerSpellAtFoe: false,
     endsAfterTriggers: undefined,
     chantShoutDurationMultiplier: 1,
     whileUnder: undefined,
@@ -169,7 +171,13 @@ export function ownSkills(
   change: Partial<Omit<OwnSkillModifier, "filter">>,
 ): OwnSkillModifier {
   return {
-    filter: { type: undefined, attributeId: undefined, profession: undefined, ...filter },
+    filter: {
+      type: undefined,
+      attributeId: undefined,
+      profession: undefined,
+      chainRoles: undefined,
+      ...filter,
+    },
     energyBase: undefined,
     energyDiscount: 0,
     energyFloor: 1,

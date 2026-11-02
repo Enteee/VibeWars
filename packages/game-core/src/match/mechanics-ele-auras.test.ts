@@ -254,9 +254,9 @@ describe("Swirling Aura (#2095)", () => {
     const c = get(sim, "c");
     expect(c.statuses.get("swirling-aura")?.durationSeconds).toBeCloseTo(6, 1);
     expect(netPips(c, 0, 0).health).toBe(5);
-    expect(blocks(c, "f", "projectile", false, rolling(0.4))).toBe(true);
-    expect(blocks(c, "f", "projectile", false, rolling(0.6))).toBe(false);
-    expect(blocks(c, "f", "melee", false, rolling(0))).toBe(false);
+    expect(blocks(c, "f", [], "projectile", false, rolling(0.4))).toBe(true);
+    expect(blocks(c, "f", [], "projectile", false, rolling(0.6))).toBe(false);
+    expect(blocks(c, "f", [], "melee", false, rolling(0))).toBe(false);
   });
 });
 
@@ -296,9 +296,9 @@ describe("Sliver Armor (#2095)", () => {
 
   it("blocks 45% of attacks", () => {
     const c = get(armored(), "c");
-    expect(blocks(c, "f", "melee", false, rolling(0.44))).toBe(true);
-    expect(blocks(c, "f", "projectile", false, rolling(0.44))).toBe(true);
-    expect(blocks(c, "f", "melee", false, rolling(0.46))).toBe(false);
+    expect(blocks(c, "f", [], "melee", false, rolling(0.44))).toBe(true);
+    expect(blocks(c, "f", [], "projectile", false, rolling(0.44))).toBe(true);
+    expect(blocks(c, "f", [], "melee", false, rolling(0.46))).toBe(false);
   });
 
   it("each swing at its bearer, hit or blocked, strikes the nearest foe", () => {
