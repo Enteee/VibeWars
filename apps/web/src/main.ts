@@ -63,6 +63,7 @@ import {
 import { cloneCharacter } from "./storage/clone-character.js";
 import {
   CHARACTER_SCHEMA_VERSION,
+  isTeamBuildSize,
   type StoredCharacter,
   TEAM_BUILD_SIZES,
   type StoredTeam,
@@ -127,7 +128,6 @@ import {
   isModeEntry,
   loadRail,
   loadTeamBuildSize,
-  loadTeamSize,
   saveTeamSize,
   onTeamSizeChange,
   railParty,
@@ -789,7 +789,7 @@ async function main(): Promise<void> {
       // A Hosted Game or a Team Arena starts at the size its host last
       // picked in it (#2104, #2107, #2141).
       if (entry === "hosted-game" || entry === "team-arena") {
-        lobby?.selectTeamSize(loadTeamSize(entry));
+        lobby?.selectTeamSize(loadTeamBuildSize(entry));
       }
     }
     showMenu();
@@ -916,7 +916,7 @@ async function main(): Promise<void> {
       const entrant = await readEntrant();
       let own: HostedLobby;
       try {
-        own = await hostLobby(name, entrant.guild, true, loadTeamSize("hosted-game"));
+        own = await hostLobby(name, entrant.guild, true, loadTeamBuildSize("hosted-game"));
       } catch (error) {
         opening = false;
         console.warn("[web] could not open a lobby", error);
@@ -1176,7 +1176,7 @@ async function main(): Promise<void> {
       // A new team is stored only once it is saved (#573).
       onNewTeam: () => {
         showTeamEditor(
-          openedTeam(newTeam(crypto.randomUUID(), loadTeamBuildSize()), false),
+          openedTeam(newTeam(crypto.randomUUID(), loadTeamBuildSize("teams")), false),
           characterList.characters,
         );
       },
@@ -1238,7 +1238,9 @@ async function main(): Promise<void> {
       // size with the sidebar's (#2104, #2107).
       if (entry === "hosted-game" || entry === "team-arena") {
         onTeamSizeChange((size) => {
-          lobby?.selectTeamSize(size);
+          if (isTeamBuildSize(size)) {
+            lobby?.selectTeamSize(size);
+          }
         });
       }
     } else {

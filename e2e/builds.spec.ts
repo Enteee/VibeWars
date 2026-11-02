@@ -7,7 +7,7 @@ import { defaultEquipmentFor } from "../packages/game-core/src/equipment/loadout
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { openRail, pickCharacter } from "./helpers/menu.js";
-import { setTeamSize, startSoloMatch } from "./helpers/peers.js";
+import { setTeamSize, startSoloMatch, teamSizeStepper } from "./helpers/peers.js";
 import { bringStarter } from "./helpers/starter.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
 import { skillKey } from "./keys.js";
@@ -410,8 +410,8 @@ test("a new team is stored only on Save, which leaves the editor (#573, #1902)",
 }) => {
   await saveCharacters(page, ["Alpha"]);
   await openTeamBuilder(page);
-  // A Team Build of one, so one member fills it (#2109).
-  await setTeamSize(page, 1);
+  // A Team Build of two, the smallest (#2109, #2141).
+  await setTeamSize(page, 2);
   await page.getByRole("button", { name: "new team" }).click();
 
   // The name is the last crumb, and Save and ⋯ are the bar's only buttons.
@@ -725,9 +725,9 @@ test("a Team Build is made at the sidebar's size, which its editor shows locked 
   await expect(starterTeamCard(page)).toHaveCount(1);
   await page.getByRole("button", { name: "new team" }).click();
 
-  const size = page.locator("#topbar").getByRole("combobox", { name: "Team size" });
-  await expect(size).toHaveValue("2");
-  await expect(size).toBeDisabled();
+  const size = teamSizeStepper(page.locator("#topbar"));
+  await expect(size.locator(".mode-rail-size-value")).toHaveText("2v2");
+  await expect(size.getByRole("button", { disabled: true })).toHaveCount(2);
   await page.getByRole("button", { name: "add Alpha" }).click();
   await page.getByRole("button", { name: "add Alpha" }).click();
   await expect(page.locator(".team-picker-header")).toHaveText("0 places left");

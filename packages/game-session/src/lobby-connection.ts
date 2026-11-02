@@ -4,7 +4,7 @@ import type {
   LobbyMode,
   LobbyPhase,
   LobbyRefusal,
-  LobbyTeamSize,
+  HostedGameTeamSize,
   WirePartyFormed,
   WireProposalBuild,
   WireTeamLobby,
@@ -125,7 +125,7 @@ export interface LobbyConnection {
   setReady(ready: boolean): void;
   selectMap(mapId: string): void;
   /** Host only, in a Hosted Game (#2104): players a side. */
-  selectTeamSize(size: LobbyTeamSize): void;
+  selectTeamSize(size: HostedGameTeamSize): void;
   /** Host only (#1526): the lobby's mode, and a map of it. */
   selectMode(mode: LobbyMode): void;
   startMatch(): void;

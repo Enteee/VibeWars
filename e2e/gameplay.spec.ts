@@ -11,7 +11,6 @@ import {
   playHouseTeams,
   playOwnTeams,
   saveSoloTeam,
-  setTeamSize,
   startSoloMatch as startMatchFromMenu,
 } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
@@ -100,13 +99,12 @@ async function startLobbyMatch(
   guests: readonly Page[],
   build = "Elementalist/Mesmer",
 ): Promise<Locator> {
-  // A known bar (#852), played through a Team Build of one (#1525). The
-  // pages of a test share one storage, so the guests propose and play it
-  // too: a side of one each, as a build of one needs.
+  // A known bar (#852), played through a Team Build of two (#1525,
+  // #2141). The pages of a test share one storage, so the guests propose
+  // and play it too.
   await bringStarter(host, build);
   const team = await saveSoloTeam(host);
   const code = await hostLobby(host);
-  await setTeamSize(host, 1);
   for (const guest of guests) {
     await guest.goto("./");
     await joinFriend(guest, code);

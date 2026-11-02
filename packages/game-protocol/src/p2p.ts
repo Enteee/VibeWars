@@ -29,7 +29,9 @@ import {
   isLobbyCode,
   MAX_TEAM_LOBBY_SIDE,
   LOBBY_TEAM_SIZES,
+  HOSTED_GAME_TEAM_SIZES,
   type LobbyTeamSize,
+  type HostedGameTeamSize,
   type CompanionMode,
   type LobbyMode,
   type LobbyPhase,
@@ -1136,8 +1138,11 @@ export type WireLobbyCommand =
   | { readonly kind: "choose-team"; readonly team: 0 | 1 | null }
   | { readonly kind: "ready"; readonly ready: boolean }
   | { readonly kind: "select-map"; readonly mapId: string }
-  /** Host only, in a Hosted Game (#2104): players a side, one of `LOBBY_TEAM_SIZES`. */
-  | { readonly kind: "select-team-size"; readonly size: LobbyTeamSize }
+  /**
+   * Host only, in a Hosted Game (#2104) or a Team Arena (#2107): players a
+   * side, one of `HOSTED_GAME_TEAM_SIZES` (#2141).
+   */
+  | { readonly kind: "select-team-size"; readonly size: HostedGameTeamSize }
   /** Host only (#1526): the lobby's mode; a map outside it moves to the mode's first. */
   | { readonly kind: "select-mode"; readonly mode: LobbyMode }
   | { readonly kind: "start" }
@@ -1263,6 +1268,11 @@ function isAscentRound(value: unknown): value is number | null {
 /** A lobby's team size (#2104): one of `LOBBY_TEAM_SIZES`. */
 function isTeamSize(value: unknown): value is LobbyTeamSize {
   return LOBBY_TEAM_SIZES.some((size) => size === value);
+}
+
+/** A size a host may pick (#2141): one of `HOSTED_GAME_TEAM_SIZES`. */
+function isHostedGameTeamSize(value: unknown): value is HostedGameTeamSize {
+  return HOSTED_GAME_TEAM_SIZES.some((size) => size === value);
 }
 
 function isPips(value: unknown): value is number {
@@ -2632,7 +2642,9 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
     case "select-map":
       return isString(raw.mapId) ? { kind: "select-map", mapId: raw.mapId } : undefined;
     case "select-team-size":
-      return isTeamSize(raw.size) ? { kind: "select-team-size", size: raw.size } : undefined;
+      return isHostedGameTeamSize(raw.size)
+        ? { kind: "select-team-size", size: raw.size }
+        : undefined;
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
     case "find-match":

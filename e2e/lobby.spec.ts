@@ -11,6 +11,7 @@ import {
   proposeTeam,
   saveSoloTeam,
   setTeamSize,
+  teamSizeStepper,
 } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
@@ -55,26 +56,38 @@ async function joinLobby(page: Page, playerName: string, invite: string): Promis
 }
 
 /**
- * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
- * the host starts; each side proposes a Team Build as big as its players
- * (#1525), so no bot plays beside them (#2029). A side nobody is on plays
- * the house team, as many as the other.
+ * A 2v2 (#2141): the host on team 1, the guest on team 2 unless
+ * `guestTeam` says, and on team 1 too each of `mates`, all ready, and
+ * the host starts. Each side proposes a Team Build of two (#1525): a
+ * side of one plays a bot beside its player (#2029). A side nobody is on
+ * plays the house team.
  */
-async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
+async function startTwoPlayerMatch(
+  host: Page,
+  guest: Page,
+  guestTeam = 2,
+  mates: readonly Page[] = [],
+): Promise<string> {
   await openMenu(host, "Host");
-  const size = guestTeam === 1 ? 2 : 1;
-  const team = await saveSoloTeam(host, size);
+  const team = await saveSoloTeam(host);
   const invite = await hostFromMenu(host);
-  await setTeamSize(host, size);
   await joinLobby(guest, "Guest", invite);
+  for (const [index, mate] of mates.entries()) {
+    await joinLobby(mate, `Mate ${String(index + 1)}`, invite);
+  }
   await host.getByRole("button", { name: "join team 1" }).click();
   await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
-  await host.getByRole("button", { name: "Ready", exact: true }).click();
-  await guest.getByRole("button", { name: "Ready", exact: true }).click();
+  for (const mate of mates) {
+    await mate.getByRole("button", { name: "join team 1" }).click();
+  }
+  for (const page of [host, guest, ...mates]) {
+    await page.getByRole("button", { name: "Ready", exact: true }).click();
+  }
   await host.getByRole("button", { name: "start match" }).click();
   await playOwnTeams([
     { page: host, team },
     { page: guest, team, seat: guestTeam === 1 ? 1 : 0 },
+    ...mates.map((page, index) => ({ page, team, seat: index + 1 })),
   ]);
   return invite;
 }
@@ -204,11 +217,11 @@ test("the host sets the team size in the sidebar, and the guest sees it there, l
   try {
     const invite = await hostLobby(host, "Host");
     await joinLobby(guest, "Guest", invite);
-    const size = (page: Page) => page.getByRole("combobox", { name: "Team size" });
-    await expect(size(guest)).toHaveValue("1");
-    await setTeamSize(host, 2);
-    await expect(size(guest)).toHaveValue("2");
-    await expect(size(guest)).toBeDisabled();
+    const size = teamSizeStepper(guest.locator(".mode-rail"));
+    await expect(size.locator(".mode-rail-size-value")).toHaveText("2v2");
+    await setTeamSize(host, 4);
+    await expect(size.locator(".mode-rail-size-value")).toHaveText("4v4");
+    await expect(size.getByRole("button", { disabled: true })).toHaveCount(2);
   } finally {
     await context.close();
   }
@@ -475,19 +488,23 @@ test("a player who quits early is told the match still runs, until it ends", asy
   }
 });
 
-test("a player who quits a 1v1 forfeits it, and is back in an open lobby; its winner follows (#846, #1997)", async ({
+test("a side whose players all quit forfeits, and is back in an open lobby; its winner follows (#846, #1997)", async ({
   browser,
 }) => {
-  // Annihilation: the quitter's team has nobody left, so it is wiped and
+  // Annihilation: the quitters' team has nobody left, so it is wiped and
   // the match ends at once, rather than running on with nobody to fight.
-  const { context, pages } = await openPeers(browser, 2);
-  const [host, guest] = pages as [Page, Page];
+  test.setTimeout(90_000);
+  const { context, pages } = await openPeers(browser, 3);
+  const [host, guest, mate] = pages as [Page, Page, Page];
 
   try {
-    await startTwoPlayerMatch(host, guest);
-    await expect(host.locator(".hud-leave")).toBeVisible();
-    await expect(guest.locator(".hud-leave")).toBeVisible();
+    await startTwoPlayerMatch(host, guest, 2, [mate]);
+    for (const page of [host, guest, mate]) {
+      await expect(page.locator(".hud-leave")).toBeVisible();
+    }
 
+    await leaveMatch(mate);
+    await expect(mate.locator(".lobby-running")).toBeVisible();
     await leaveMatch(host);
     await expect(host.locator(".lobby-panel")).toBeVisible();
     await expect(host.locator(".lobby-panel")).toBeVisible();

@@ -282,6 +282,15 @@ export const LOBBY_TEAM_SIZES = [1, 2, 4, 8] as const;
 /** One of `LOBBY_TEAM_SIZES`. */
 export type LobbyTeamSize = (typeof LOBBY_TEAM_SIZES)[number];
 
+/**
+ * The team sizes a Hosted Game plays (#2141): 2v2, 4v4 and 8v8. A side
+ * plays a Team Build of the lobby's size, and there are none of one.
+ */
+export const HOSTED_GAME_TEAM_SIZES = [2, 4, 8] as const;
+
+/** One of `HOSTED_GAME_TEAM_SIZES`. */
+export type HostedGameTeamSize = (typeof HOSTED_GAME_TEAM_SIZES)[number];
+
 /** How long each stage of a Team Lobby (#1458) lasts, on the lobby's clock. */
 export const TEAM_LOBBY_STAGE_SECONDS = 60;
 

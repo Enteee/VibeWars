@@ -1,4 +1,10 @@
-import { expect, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import {
+  expect,
+  type Browser,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 
 import { INVITE_URL, openRail } from "./menu.js";
 
@@ -61,20 +67,37 @@ export async function copyInvite(page: Page): Promise<string> {
  * side (#2104), and Team Builder lists and makes Team Builds of it (#2109).
  */
 export async function setTeamSize(page: Page, size: 1 | 2 | 4 | 8): Promise<void> {
-  const select = page.getByRole("combobox", { name: "Team size" });
-  await select.selectOption(String(size));
-  await expect(select).toHaveValue(String(size));
+  const stepper = teamSizeStepper(page.locator(".mode-rail"));
+  const shown = stepper.locator(".mode-rail-size-value");
+  const label = `${String(size)}v${String(size)}`;
+  // Step towards `size`, one size at a time, until it shows (#2141).
+  for (let steps = 0; steps < 3; steps += 1) {
+    const before = (await shown.textContent()) ?? "";
+    if (before === label) {
+      break;
+    }
+    const name = Number.parseInt(before, 10) > size ? "Smaller team" : "Larger team";
+    await stepper.getByRole("button", { name }).click();
+    await expect(shown).not.toHaveText(before);
+  }
+  await expect(shown).toHaveText(label);
+}
+
+/** The team size stepper (#2141) in `scope`: ‹ 4v4 ›. */
+export function teamSizeStepper(scope: Page | Locator): Locator {
+  return scope.getByRole("group", { name: "Team size" });
 }
 
 /**
  * The lobby every page hosts from load (#1526), on Hosted Game (#1525),
  * opened to friends (#1682); its invite link (#2100). It plays `size`
- * a side on `map`, 1v1 on arena-alpha unless said: the sidebar's
- * stored size (#2104) is 4v4, which most specs do not want.
+ * a side on `map`, 2v2 on arena-alpha unless said, the smallest a
+ * Hosted Game plays (#2141): the sidebar's default (#2104) is 4v4, which
+ * most specs do not want.
  */
 export async function hostLobby(
   page: Page,
-  { size = 1, map = "arena-alpha" }: { readonly size?: 1 | 2 | 4 | 8; readonly map?: string } = {},
+  { size = 2, map = "arena-alpha" }: { readonly size?: 2 | 4 | 8; readonly map?: string } = {},
 ): Promise<string> {
   await openRail(page, "Hosted Game");
   await expect(page.locator(".lobby-panel")).toBeVisible();
@@ -89,15 +112,15 @@ export async function hostLobby(
 }
 
 /**
- * Save the active character as a Team Build of one, named after it, so a
- * side of one can propose it in the Team Lobby and play it (#1525): every
- * hosted lobby is a Team Lobby, and a spec plays the character it
- * brought. `size` copies of it make a side of that many with no bot
- * (#2029), in a lobby of that team size (#2104): a Team Build of that
- * size (#2109), picked in the sidebar first. Ends on Team Builder;
- * returns the Team Build's name.
+ * Save `size` copies of the active character as a Team Build, named
+ * after it, so a side can propose it in the Team Lobby and play it
+ * (#1525): every hosted lobby is a Team Lobby, and a spec plays the
+ * character it brought. It is for a lobby of that team size (#2104): a
+ * Team Build of that size (#2109), picked in the sidebar first; 2v2, the
+ * smallest, unless said (#2141). Ends on Team Builder; returns the Team
+ * Build's name.
  */
-export async function saveSoloTeam(page: Page, size: 1 | 2 | 4 | 8 = 1): Promise<string> {
+export async function saveSoloTeam(page: Page, size: 2 | 4 | 8 = 2): Promise<string> {
   await openRail(page, "Random Arena");
   const picked = page.locator('.play-card-open[aria-pressed="true"] .play-card-name');
   const name = (await picked.textContent())?.trim() ?? "";
@@ -105,7 +128,7 @@ export async function saveSoloTeam(page: Page, size: 1 | 2 | 4 | 8 = 1): Promise
   await openRail(page, "Team Builder");
   await setTeamSize(page, size);
   await page.getByRole("button", { name: "New team build", exact: true }).click();
-  const teamName = size === 1 ? `Solo ${name}` : `${String(size)} × ${name}`;
+  const teamName = `${String(size)} × ${name}`;
   await page.getByLabel("team name").fill(teamName);
   for (let copy = 0; copy < size; copy += 1) {
     await page.getByRole("button", { name: `add ${name}`, exact: true }).click();

@@ -1,4 +1,4 @@
-import { ASCENT_ROUNDS, teamSizeOf } from "@vibewars/game-protocol";
+import { ASCENT_ROUNDS, HOSTED_GAME_TEAM_SIZES, teamSizeOf } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -91,7 +91,7 @@ describe("team sizes (#2108)", () => {
       "Heroes' Ascent 8v8": queueMapPool("heroes-ascent", 0),
       "GvG 8v8": queueMapPool("gvg", null),
       ...Object.fromEntries(
-        [1, 2, 4, 8].map((size) => [
+        HOSTED_GAME_TEAM_SIZES.map((size) => [
           `Hosted Game ${String(size)}v${String(size)}`,
           mapsForSize(ARENA_MAPS, size).filter((map) =>
             modeMapIds()["hosted-game"].includes(map.id),

@@ -2,13 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { key } from "./keys.js";
 import { joinFriend, openRail, pickCharacter } from "./helpers/menu.js";
-import {
-  hostLobby,
-  playOwnTeams,
-  saveSoloTeam,
-  setTeamSize,
-  startSoloMatch,
-} from "./helpers/peers.js";
+import { hostLobby, playOwnTeams, saveSoloTeam, startSoloMatch } from "./helpers/peers.js";
 import { chooseProfession } from "./helpers/professions.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 
@@ -163,11 +157,10 @@ test("the target frame shows a foe's enchantment, at 16 px and not marked yours 
   const foe = await page.context().newPage();
   // The pages share one storage, so the foe plays this starter too.
   await bringStarter(page, ARMORED);
-  // Each side of one plays it through a Team Build of one (#1525), saved
-  // once for both.
+  // Each side of one plays it through a Team Build of two (#1525, #2141),
+  // saved once for both.
   const team = await saveSoloTeam(page);
   const code = await hostLobby(page);
-  await setTeamSize(page, 1);
   await foe.goto("./");
   await joinFriend(foe, code);
   await foe.getByRole("button", { name: "join team 2" }).click();
