@@ -1,9 +1,12 @@
 import { energyCostOf } from "../../../skills/activation.js";
+import { isAttacking } from "../../../skills/attacking.js";
+import { getSkill } from "../../../skills/catalog.js";
 import { getStatusDefinition, type StatusId } from "../../../skills/status.js";
-import { isSpell, type Skill } from "../../../skills/types.js";
+import { isSpell, type Combatant, type Skill } from "../../../skills/types.js";
 import { setupOf, type Setup } from "../skill-intent.js";
 import { healthFraction } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
+import { retreatsFrom } from "./way-out.js";
 
 /** An enchantment at least this dear is worth Air of Enchantment first (#1975). */
 const AIR_WORTH_ENERGY = 10;
@@ -31,6 +34,17 @@ const FREE_CHAIN_ATTACKS = 2;
 
 /** Other non-attack skills of its profession that make Deadly Paradox worth it (#2134). */
 const HASTE_SKILLS = 2;
+
+/** Above this much Energy, Marksman's Wager is worth its price on a miss (#2159). */
+const WAGER_ENERGY = 10;
+
+/** Whether `combatant` stands in a stance that blocks (#2159), as Marksman's Wager's misses. */
+function inBlockStance(combatant: Combatant): boolean {
+  return combatant.statuses.active.some(({ id }) => {
+    const status = getStatusDefinition(id);
+    return status.category === "stance" && status.block !== undefined;
+  });
+}
 
 /** The setups on its bar (#1975), each with what it sets up. */
 function setupsOf(bar: readonly Skill[]) {
@@ -81,7 +95,11 @@ function applies(skill: Skill, statusId: StatusId): boolean {
  * Blinded foe, or with a blind ready (#2134). The Elementalist's (#1984):
  * a conjure only for the element it wields; Ether Prodigy short of Energy,
  * with Health for its end; Ether Renewal under two enchantments with a
- * spell ready; Elemental Attunement kept up.
+ * spell ready; Elemental Attunement kept up. The Ranger's (#2159):
+ * Disrupting Accuracy kept up while it attacks; Marksman's Wager kept up
+ * above 10 Energy, never at a foe in a block stance nor while Blinded;
+ * Storm Chaser on retreat, or while a foe casts an Elementalist skill at
+ * it.
  */
 const setup: BotRule = {
   order: 95,
@@ -100,8 +118,8 @@ const setup: BotRule = {
       );
     const recharging = (held: Skill): boolean =>
       (self.combatant.cast.rechargeRemaining.get(held.id) ?? 0) > 0;
-    const blinded =
-      foes.find((other) => other.id === targetId)?.combatant.statuses.has("blind") ?? false;
+    const target = foes.find((other) => other.id === targetId)?.combatant;
+    const blinded = target?.statuses.has("blind") ?? false;
     const blindReady = bar.some((held) => applies(held, "blind") && mayUse(held, targetId));
     const enchanted = (id: string | undefined): boolean =>
       foes.some(
@@ -142,6 +160,25 @@ const setup: BotRule = {
           return hastened(skill).length >= HASTE_SKILLS && hastened(skill).some(recharging);
         case "blind-unblock":
           return blinded || blindReady;
+        case "critical-interrupts":
+          return isAttacking(combatant);
+        case "hit-wager":
+          return (
+            combatant.energy > WAGER_ENERGY &&
+            !combatant.statuses.has("blind") &&
+            target !== undefined &&
+            !inBlockStance(target)
+          );
+        case "elemental-energy":
+          return (
+            retreatsFrom(self, foes) !== undefined ||
+            foes.some(({ combatant: foe }) => {
+              const cast = foe.cast.activeCast;
+              return (
+                cast?.targetId === self.id && getSkill(cast.skillId)?.profession === "elementalist"
+              );
+            })
+          );
       }
     };
     const found = setupsOf(bar).find(
