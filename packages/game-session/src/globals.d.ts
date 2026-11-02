@@ -22,8 +22,8 @@ declare const console: { error(...data: unknown[]): void };
 interface SubtleHmacKey {
   readonly type: string;
 }
-/** A lobby key is stretched with PBKDF2 before anything is derived from it (#1681). */
-interface SubtlePbkdf2Key {
+/** A lobby key's seed is HKDF of its bytes (#2100). */
+interface SubtleHkdfKey {
   readonly type: string;
 }
 declare const crypto: {
@@ -38,18 +38,18 @@ declare const crypto: {
     importKey(
       format: "raw",
       keyData: Uint8Array,
-      algorithm: "PBKDF2",
+      algorithm: "HKDF",
       extractable: false,
       keyUsages: readonly "deriveBits"[],
-    ): Promise<SubtlePbkdf2Key>;
+    ): Promise<SubtleHkdfKey>;
     deriveBits(
       algorithm: {
-        readonly name: "PBKDF2";
+        readonly name: "HKDF";
         readonly hash: "SHA-256";
         readonly salt: Uint8Array;
-        readonly iterations: number;
+        readonly info: Uint8Array;
       },
-      baseKey: SubtlePbkdf2Key,
+      baseKey: SubtleHkdfKey,
       length: number,
     ): Promise<ArrayBuffer>;
     sign(algorithm: "HMAC", key: SubtleHmacKey, data: Uint8Array): Promise<ArrayBuffer>;

@@ -75,7 +75,8 @@ arrives in Sprint 3/4.
   true" rather than a hard failure (see `apps/server/src/testing/harness.ts`).
 - Lobby codes exclude visually-ambiguous characters (`0/O`, `1/I/L`, `2/Z`,
   `5/S`, `8/B`, `U/V`) because they are read aloud across a room at a LAN
-  party — see `LOBBY_CODE_ALPHABET` in `packages/game-protocol/src/protocol.ts`.
+  party. Superseded by [ADR-0048](0048-lobby-keys-in-urls.md): keys are 256-bit
+  and travel only in invite links, never read aloud.
 
 ## Alternatives Considered
 

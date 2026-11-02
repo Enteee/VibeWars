@@ -316,8 +316,8 @@ async function openSide(kind, url) {
   return { page, watch, close: () => context.close() };
 }
 
-/** A lobby key as the title bar shows it (#1526). */
-const KEY_PATTERN = /^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+/** A lobby's invite link as Copy invite link writes it (#2100), as `INVITE_URL` in e2e/helpers/menu.ts. */
+const INVITE_PATTERN = /^https?:\/\/[^#]+#lobby=[A-Za-z0-9_-]{43}$/;
 
 /**
  * Play as `name`: typed into Options' Player section, as `namePlayer` in
@@ -361,6 +361,40 @@ async function openToFriends(page) {
   }
   await page.locator("#topbar .topbar-lobby-open").click();
   await expect(page.locator("#topbar .topbar-lobby-open")).toHaveAttribute("aria-pressed", "true");
+}
+
+/**
+ * The invite link to this page's lobby (#2100), from Copy invite link, as
+ * `copyInvite` in e2e/helpers/peers.ts. Firefox takes no clipboard
+ * permissions and asks before a read, so what Copy writes is noted on its
+ * way to the clipboard rather than read back from it.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<string>}
+ */
+async function copyInvite(page) {
+  if (page.context().browser()?.browserType().name() === "chromium") {
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  await page.evaluate(() => {
+    const clipboard = navigator.clipboard;
+    const write = clipboard.writeText.bind(clipboard);
+    clipboard.writeText = (text) => {
+      Reflect.set(window, "p2pSmokeInvite", text);
+      return write(text);
+    };
+  });
+  const copy = page.locator("#topbar .lobby-copy");
+  const more = page.locator("#topbar .topbar-more");
+  if (!(await copy.isVisible()) && (await more.isVisible())) {
+    await more.click();
+  }
+  await copy.click();
+  // Copied, or shown to copy by hand: the link is the same.
+  await expect(page.locator(".toast")).toBeVisible();
+  const invite = await page.evaluate(() => String(Reflect.get(window, "p2pSmokeInvite")));
+  expect(invite).toMatch(INVITE_PATTERN);
+  return invite;
 }
 
 /**
@@ -412,11 +446,11 @@ async function runPair(pair, url) {
   try {
     await namePlayer(host.page, "Host");
     // Every page hosts its own lobby from load (#1526): on Hosted Game,
-    // as `hostLobby` in e2e/helpers/peers.ts does, its key in the title bar.
+    // as `hostLobby` in e2e/helpers/peers.ts does, named in the title bar.
     await openRail(host.page, "Hosted Game");
-    const codeText = host.page.locator("#topbar .topbar-lobby-code");
+    const lobby = host.page.locator("#topbar .topbar-lobby:not([hidden])");
     try {
-      await expect(codeText).toHaveText(KEY_PATTERN, { timeout: TIMEOUT_MS });
+      await expect(lobby).toBeAttached({ timeout: TIMEOUT_MS });
     } catch {
       await report("host", host.page, host.watch);
       const shown = host.page.locator(".screen-connection-problem");
@@ -428,24 +462,23 @@ async function runPair(pair, url) {
     }
     // Closed until its host opens it (#1682).
     await openToFriends(host.page);
-    const code = (await codeText.textContent())?.trim() ?? "";
+    const invite = await copyInvite(host.page);
 
     await namePlayer(joiner.page, "Joiner");
-    // As `joinByCode` in e2e/helpers/menu.ts.
-    await joiner.page.locator("input.code-input").fill(code);
+    // As `joinByCode` in e2e/helpers/menu.ts: the invite link opened.
     const started = Date.now();
-    await joiner.page.getByRole("button", { name: "Join", exact: true }).click();
-    // The title bar naming the host's key, as `joinFriend` in
+    await joiner.page.goto(invite);
+    // The title bar's Leave, a guest's alone, as `joinFriend` in
     // e2e/helpers/menu.ts checks: the joiner's own lobby panel shows all
     // along, so a panel is no sign the join is in. Or a notice, whichever
     // comes first.
     const notice = joiner.page.locator(".screen-connection-problem");
-    const joinerCode = joiner.page.locator("#topbar .topbar-lobby-code");
+    const leave = joiner.page.locator("#topbar .topbar-leave");
     await Promise.race([
-      expect(joinerCode).toHaveText(code, { timeout: TIMEOUT_MS }),
+      leave.waitFor({ timeout: TIMEOUT_MS }),
       notice.first().waitFor({ timeout: TIMEOUT_MS }),
     ]).catch(() => undefined);
-    const joined = ((await joinerCode.textContent())?.trim() ?? "") === code;
+    const joined = await leave.isVisible();
     const seconds = ((Date.now() - started) / 1000).toFixed(1);
     await report("host", host.page, host.watch);
     await report("joiner", joiner.page, joiner.watch);

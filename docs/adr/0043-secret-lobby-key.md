@@ -2,6 +2,8 @@
 
 ## Status
 
+Superseded in part by [ADR-0048](0048-lobby-keys-in-urls.md) (2026-11-01): the key is 256 bits, shared only as an invite link, and derived with HKDF, not PBKDF2. The room, password and proof derivations and "Open and closed" stand.
+
 Accepted (2026-10-31). Issue #1681, operator ruling on PR 1591. "Open and closed" added by #1682 (operator, Q196).
 
 ## Context

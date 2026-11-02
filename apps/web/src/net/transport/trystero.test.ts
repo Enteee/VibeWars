@@ -86,7 +86,7 @@ function fakeRoom(options: { sendFails?: boolean; turn?: TurnConfig } = {}) {
 }
 
 describe("what the relays see of a lobby key (#1681, ADR-0043)", () => {
-  const KEY = "ACDE-FGHJ-KMNP";
+  const KEY = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE"; // pragma: allowlist secret
 
   async function digests(text: string): Promise<string[]> {
     const bytes = new TextEncoder().encode(text);
@@ -99,13 +99,13 @@ describe("what the relays see of a lobby key (#1681, ADR-0043)", () => {
     );
   }
 
-  it("is nothing of the key: not it, not normalised, not its sha1 or sha256", async () => {
+  it("is nothing of the key: not it, not its sha1 or sha256", async () => {
     const fake = fakeRoom();
     joinTrysteroRoom(await deriveLobbyRoom(KEY), fake.deps);
     const [join] = fake.joins;
     // Every argument Trystero was given, the config's password included.
     const seen = JSON.stringify(join).toLowerCase();
-    const forms = [KEY, "ACDEFGHJKMNP"];
+    const forms = [KEY];
     const secrets = [...forms, ...(await Promise.all(forms.map(digests))).flat()];
     for (const secret of secrets) {
       expect(seen).not.toContain(secret.toLowerCase());

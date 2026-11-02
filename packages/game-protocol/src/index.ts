@@ -19,14 +19,11 @@ export {
   MAX_TEAM_LOBBY_SIDE,
   TEAM_LOBBY_STAGE_SECONDS,
   isLobbyCode,
-  normalizeLobbyCode,
   parseClientIntent,
   COMPANION_MODES,
   LOBBY_MODES,
   LOBBY_CODE_LENGTH,
-  LOBBY_KEY_ITERATIONS,
   LOBBY_KEY_SALT,
-  LOBBY_CODE_ALPHABET,
 } from "./protocol.js";
 
 export type {
