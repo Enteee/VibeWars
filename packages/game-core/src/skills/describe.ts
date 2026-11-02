@@ -2103,7 +2103,9 @@ function conditionText(condition: EffectCondition): string {
     case "target-alone":
       return condition.radius === AREA_ADJACENT
         ? "If target is not adjacent to any allies"
-        : `If target has no allies within ${String(condition.radius)}`;
+        : condition.radius === AREA_NEARBY
+          ? "If target is not near any allies"
+          : `If target has no allies within ${String(condition.radius)}`;
     case "target-near-caster-ally":
       return condition.radius === AREA_NEARBY
         ? "If target is near any of your allies"
@@ -2152,6 +2154,8 @@ function conditionText(condition: EffectCondition): string {
       return `If you control ${String(condition.count)} or fewer ${condition.creature}s`;
     case "caster-spirit-or-corpse-within":
       return `If a spirit or a corpse is ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`} of you`;
+    case "caster-dead-ally-within":
+      return `If an ally is dead ${AREA_TEXT.get(condition.radius) ?? `within ${String(condition.radius)}`}`;
   }
 }
 
