@@ -55,6 +55,10 @@ export const NO_PLAYABLE_TEAM_BUILDS =
 export function noTeamBuildOf(size: number): string {
   return `No ${String(size)}-player Team Builds — make one in the Team Builder.`;
 }
+/** A builds drawer row's size: "1 member", "4 members" (#2116). */
+export function memberCount(n: number): string {
+  return `${String(n)} ${n === 1 ? "member" : "members"}`;
+}
 /** The builds drawer's search found nothing (#2116). */
 export function noTeamBuildNamed(query: string): string {
   return `No Team Build named “${query}”.`;
@@ -502,9 +506,7 @@ function drawerRow(
   if (proposed) {
     title.appendChild(h("span", "team-lobby-drawer-tag", "proposed"));
   }
-  title.appendChild(
-    h("span", "team-lobby-drawer-row-size", `${String(team.members.length)} members`),
-  );
+  title.appendChild(h("span", "team-lobby-drawer-row-size", memberCount(team.members.length)));
   const chips = h("span", "team-lobby-drawer-chips");
   chips.append(...team.members.map(professionChip));
   head.append(title, chips);

@@ -22,6 +22,7 @@ import {
   drawerRows,
   drawerShowing,
   initial,
+  memberCount,
   noTeamBuildNamed,
   proposableTeams,
   putAwayBuildsDrawer,
@@ -290,6 +291,8 @@ describe("the Team Lobby's words (#1460)", () => {
     expect(drawerShowing(4, 0)).toBe("Showing 4-player builds");
     expect(drawerShowing(4, 1)).toBe("Showing 4-player builds · 1 other hidden");
     expect(drawerShowing(4, 2)).toBe("Showing 4-player builds · 2 others hidden");
+    expect(memberCount(1)).toBe("1 member");
+    expect(memberCount(4)).toBe("4 members");
     expect(noTeamBuildNamed("zzz")).toBe("No Team Build named “zzz”.");
   });
 });
