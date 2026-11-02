@@ -2393,8 +2393,6 @@ async function main(): Promise<void> {
   showMenu();
   if (lobbyLink.kind === "invite") {
     topbarView.invite(lobbyLink.code);
-  } else if (lobbyLink.kind === "malformed") {
-    toast(NOT_A_KEY_MESSAGE);
   }
   if (relayLink.kind === "config" && !framed) {
     openRelayPrompt(app, relayLink.config, savedRelay);

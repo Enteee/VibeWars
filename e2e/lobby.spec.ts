@@ -247,6 +247,19 @@ test("a broken invite link is taken out of the address bar and says so, joining 
   await expect(page.locator("#topbar .topbar-leave")).toBeHidden();
 });
 
+test("a broken invite link opened in a new tab says so once, on the first menu (#2100)", async ({
+  page,
+}) => {
+  await page.goto("./#lobby=nope");
+  const broken = page.getByText("That invite link is broken.");
+  await expect(
+    page.locator(".screen-problem", { hasText: "That invite link is broken." }),
+  ).toBeVisible();
+  await expect(broken).toHaveCount(1);
+  expect(new URL(page.url()).hash).toBe("");
+  await expect(page.locator("#topbar .topbar-leave")).toBeHidden();
+});
+
 test("a guest opening the host's invite link in a new tab joins from boot, and the address bar keeps no key (#2100)", async ({
   browser,
 }) => {
