@@ -407,6 +407,17 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   if (definition.energyPips > 0) {
     parts.push(`+${String(definition.energyPips)} Energy regeneration`);
   }
+  // Melandru's Resilience's (#2189).
+  for (const [pips, what, each] of [
+    [definition.healthPipsPerCondition, "Health", "condition"],
+    [definition.healthPipsPerHex, "Health", "hex"],
+    [definition.energyPipsPerCondition, "Energy", "condition"],
+    [definition.energyPipsPerHex, "Energy", "hex"],
+  ] as const) {
+    if (pips !== 0) {
+      parts.push(`${signed(pips)} ${what} regeneration for each ${each} on you`);
+    }
+  }
   if (armorModifier !== 0) {
     const sign = armorModifier > 0 ? "+" : "-";
     parts.push(`${sign}${statText(definition.armorModifier, ranks, whole)} armor`);
@@ -556,7 +567,11 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       String(Math.round(Math.abs(multiplier - 1) * 100)),
     );
     const way = attackDurationMultiplier > 1 ? "slower" : "faster";
-    parts.push(`attacks ${change}% ${way}`);
+    // Rapid Fire's "while wielding a bow" (#2189).
+    const weapon = definition.attackDurationMultiplierWeapon;
+    parts.push(
+      `attacks ${change}% ${way}${weapon === undefined ? "" : ` while wielding a ${weapon}`}`,
+    );
   }
   if (definition.projectileSpeedMultiplier !== 1) {
     parts.push(`arrows move ${String(definition.projectileSpeedMultiplier)}× as fast`);
@@ -571,7 +586,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
     parts.push("cannot use resurrection skills");
   }
   if (definition.untargetableByFoeSpells) {
-    parts.push("cannot be the target of enemy spells");
+    // Spell Shield's (#2189).
+    parts.push(
+      definition.whileCasting
+        ? "cannot be the target of enemy spells while casting spells"
+        : "cannot be the target of enemy spells",
+    );
   }
   if (definition.untargetableBySpells) {
     parts.push("cannot be the target of spells");
@@ -2104,9 +2124,12 @@ function describeOwnSkillModifier(
   const kind =
     filter.chainRoles !== undefined
       ? `${filter.chainRoles.join(" and ")} attack`
-      : filter.type === undefined
-        ? "skill"
-        : filter.type.replaceAll("-", " ");
+      : // Expert Focus's "bow attack skills" (#2189).
+        filter.weapon !== undefined
+        ? `${filter.weapon} attack skill`
+        : filter.type === undefined
+          ? "skill"
+          : filter.type.replaceAll("-", " ");
   const named = [
     filter.profession === undefined ? undefined : getProfession(filter.profession).name,
     filter.attributeId === undefined
@@ -3104,7 +3127,11 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
           (ends(effect.durationSeconds)
             ? `for ${statusDuration(effect, ranks)} `
             : "until it ends ") +
-          `(${statusText(effect.statusId, ranks)})`,
+          `(${statusText(effect.statusId, ranks)}` +
+          // Convert Hexes' (#2189).
+          (effect.stacksPerRemovedOfProfession === undefined
+            ? ")"
+            : ` for each ${getProfession(effect.stacksPerRemovedOfProfession).name} hex removed)`),
         magnitude: undefined,
       };
     // Desperation Blow's (#2180).
@@ -3412,8 +3439,13 @@ function describeEffect(effect: UnconditionalEffect, ranks: ReadonlyMap<string, 
     case "lengthen-recharge": {
       const magnitude = describeMagnitude(effect.seconds, ranks);
       const which = effect.of === "this-skill" ? "This skill" : "That skill";
+      // Withdraw Hexes' (#2189).
+      const each =
+        effect.perRemoved === undefined
+          ? ""
+          : ` for each ${categoryNoun(1, effect.perRemoved)} removed`;
       return {
-        text: `${which} takes ${shown(magnitude)} seconds longer to recharge`,
+        text: `${which} takes ${shown(magnitude)} seconds longer to recharge${each}`,
         magnitude,
       };
     }
@@ -4108,6 +4140,17 @@ export function describeSkill(
   const easilyInterrupted = isEasilyInterrupted(skill)
     ? [{ text: "Easily interrupted", magnitude: undefined }]
     : [];
+  // Withdraw Hexes' (#2189): "50% failure chance with Divine Favor 4 or less".
+  const failChance = skill.failChanceUnless;
+  const failChanceLine =
+    failChance === undefined
+      ? []
+      : [
+          {
+            text: `${String(Math.round(failChance.chance * 100))}% failure chance with ${getAttribute(failChance.attributeId)?.name ?? failChance.attributeId} ${String(failChance.rank - 1)} or less`,
+            magnitude: undefined,
+          },
+        ];
   // Natural Healing's (#1916): "if you are not enchanted, this spell activates 50% faster".
   const activationWhileLine =
     skill.activationWhile === undefined
@@ -4238,6 +4281,7 @@ export function describeSkill(
     ...activationWhileLine,
     ...divineFavorLine,
     ...easilyInterrupted,
+    ...failChanceLine,
     ...projectile,
     ...halfRange,
     ...companionLine,

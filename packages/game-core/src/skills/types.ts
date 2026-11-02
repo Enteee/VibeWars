@@ -494,6 +494,13 @@ export interface ApplyStatusEffect {
   readonly durationSeconds: Magnitude;
   readonly on?: "caster";
   /**
+   * Lands only if an earlier `remove-status` took a status of this
+   * profession off the bearer, with one `stacks` for each (#2189):
+   * Convert Hexes' "+10 armor for each Necromancer hex that was removed".
+   * A recast sets the count anew. Absent: one stack, always.
+   */
+  readonly stacksPerRemovedOfProfession?: ProfessionId;
+  /**
    * Seconds more for each of a count (#1955): "Lead the Way!"'s "1...5
    * seconds for each ally in earshot (maximum 30 seconds)".
    */
@@ -959,6 +966,13 @@ export interface LengthenRechargeEffect {
   readonly kind: "lengthen-recharge";
   readonly of: "target-last-skill" | "this-skill";
   readonly seconds: Magnitude;
+  /**
+   * `seconds` for each status of this category an earlier `remove-status`
+   * of the use took off anyone (#2189), as Withdraw Hexes' "an additional
+   * 2 seconds to recharge for each hex removed". `this-skill` only.
+   * Absent: `seconds` once.
+   */
+  readonly perRemoved?: StatusCategory;
 }
 
 /**
@@ -1944,6 +1958,14 @@ export interface ActivationWhile {
   readonly multiplier: number;
 }
 
+/** `Skill.failChanceUnless` (#2189). */
+export interface FailChanceUnless {
+  readonly attributeId: string;
+  readonly rank: number;
+  /** In [0, 1]. */
+  readonly chance: number;
+}
+
 export interface Skill {
   readonly id: string;
   readonly name: string;
@@ -2019,6 +2041,14 @@ export interface Skill {
    * "target touched foe". What "Can't Touch This!" fails. Absent: not one.
    */
   readonly touch?: true;
+  /**
+   * It fails with `chance` unless its caster has `rank` or more in
+   * `attributeId` (#2189): Withdraw Hexes' "50% failure chance with Divine
+   * Favor 4 or less". Rolled as it finishes, a failure is paid for and
+   * recharges, as a spell failed by Guilt, and does nothing else. Absent:
+   * it never fails so.
+   */
+  readonly failChanceUnless?: FailChanceUnless;
   /**
    * GW1's "Health gain from Divine Favor is doubled for this spell"
    * (#1754): Healing Touch's. Absent: the normal bonus.
