@@ -18,7 +18,8 @@ vi.mock("./transport/index.js", async (original) => ({
 vi.mock("./transport/host-clock.js", () => ({ startHostClock: () => () => undefined }));
 vi.mock("./transport/turn-config.js", async (importOriginal) => ({
   ...(await importOriginal<typeof TurnConfig>()),
-  loadTurnConfig: () => undefined,
+  loadRelay: () => undefined,
+  loadOwnTurnConfig: () => undefined,
 }));
 
 afterEach(() => {

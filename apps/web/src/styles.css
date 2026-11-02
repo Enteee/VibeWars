@@ -6762,13 +6762,9 @@ body:has(#app > .chat) .now-playing {
   gap: 0.6rem;
 }
 
-/* The shared relay (#2091), below the player's own, apart from it. */
-.relay-shared {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--line);
+/* A static relay's login fields, or a link relay's secret line, never both (#2240). */
+.relay-section [hidden] {
+  display: none;
 }
 
 .licences-section,

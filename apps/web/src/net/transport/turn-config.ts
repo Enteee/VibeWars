@@ -7,12 +7,13 @@ import { takeFragmentPart } from "../fragment.js";
 /**
  * A TURN relay the player brings (#972): the project hosts none (ADR-0022),
  * but a pair that cannot connect directly can go through one a friend
- * runs, shared as an invite link whose fragment carries the config.
+ * runs, shared as an invite link whose fragment carries its URLs and a
+ * secret for this friend alone (#2240).
  *
  * The fragment, not the query string: a browser never sends it, so no
- * server log and no `Referer` sees the credential. A link is hostile
- * input, so `validateTurnConfig` is strict and takes nothing it does not
- * name. The config stays on this device: never on the wire, never logged.
+ * server log and no `Referer` sees the secret. A link is hostile input,
+ * so it is read strictly and nothing it does not name is taken. The
+ * relay stays on this device: never on the wire, never logged.
  */
 
 export interface TurnConfig {
@@ -39,7 +40,7 @@ const TURN_URL =
 /** What a stored relay that fails validation becomes: gone, with this said once. */
 export const UNREADABLE_RELAY_NOTICE = "Saved relay was unreadable and was removed.";
 
-/** `value` as a relay config, or `undefined` when it is not exactly one. */
+/** `value` as a TURN login, or `undefined` when it is not exactly one. */
 export function validateTurnConfig(value: unknown): TurnConfig | undefined {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return undefined;
@@ -184,33 +185,67 @@ function isField(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= MAX_FIELD_LENGTH;
 }
 
-/** The host each URL names, deduplicated, as the player is shown it: never the credential. */
-export function relayHosts(config: TurnConfig): string {
-  const hosts = config.urls.map((url) => TURN_URL.exec(url)?.[1] ?? url);
+/** The host each URL names, deduplicated, as the player is shown it: never a credential or secret. */
+export function relayHosts(relay: { readonly urls: readonly string[] }): string {
+  const hosts = relay.urls.map((url) => TURN_URL.exec(url)?.[1] ?? url);
   return [...new Set(hosts)].join(", ");
 }
 
 /**
- * A relay the player runs with coturn's `use-auth-secret` (#2091, the TURN
- * REST scheme): its shared secret mints credentials that expire on their
- * own, so one can be handed to a lobby. The secret never leaves this
- * device; only what `mintTurnCredential` makes of it does.
+ * A relay run with coturn's `use-auth-secret` (#2091, the TURN REST
+ * scheme): its secret mints credentials that expire on their own, so one
+ * can be handed to a lobby. The secret comes from the relay operator's
+ * invite link (#2240) and never goes into a lobby offer; only what
+ * `mintTurnCredential` makes of it does.
  */
 export interface SharedRelay {
   readonly urls: readonly string[];
   readonly secret: string;
 }
 
-/** `value` as a shared relay, or `undefined` when it is not exactly one: the same URL rules. */
-export function validateSharedRelay(value: unknown): SharedRelay | undefined {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+/**
+ * The one relay a player keeps (#2240): a `rest` one from a friend's
+ * invite link, which mints its own logins and may be shared with the
+ * player's lobbies, or a `static` one typed into Options, used as is and
+ * never shared.
+ */
+export type Relay =
+  ({ readonly kind: "rest" } & SharedRelay) | ({ readonly kind: "static" } & TurnConfig);
+
+/** A relay operator's per-friend secret: 32 random bytes, as lowercase hex (#2240). */
+const SECRET = /^[0-9a-f]{64}$/;
+
+/** `value` as a relay, or `undefined` when it is not exactly one of either kind. */
+export function validateRelay(value: unknown): Relay | undefined {
+  if (!isRecord(value)) {
     return undefined;
   }
-  if (Object.keys(value).sort().join(",") !== "secret,urls") {
+  const keys = Object.keys(value).sort().join(",");
+  if (value.kind === "rest" && keys === "kind,secret,urls") {
+    const rest = validateSharedRelay({ urls: value.urls, secret: value.secret });
+    return rest === undefined ? undefined : { kind: "rest", ...rest };
+  }
+  if (value.kind === "static" && keys === "credential,kind,urls,username") {
+    const { urls, username, credential } = value;
+    const login = validateTurnConfig({ urls, username, credential });
+    return login === undefined ? undefined : { kind: "static", ...login };
+  }
+  return undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** `value` as exactly `{ urls, secret }`: an invite link's relay (#2240). */
+function validateSharedRelay(value: unknown): SharedRelay | undefined {
+  if (!isRecord(value) || Object.keys(value).sort().join(",") !== "secret,urls") {
     return undefined;
   }
-  const { urls, secret } = value as Record<string, unknown>;
-  return isTurnUrls(urls) && isField(secret) ? { urls, secret } : undefined;
+  const { urls, secret } = value;
+  return isTurnUrls(urls) && typeof secret === "string" && SECRET.test(secret)
+    ? { urls, secret }
+    : undefined;
 }
 
 /** How long a minted credential lets its holder relay: anyone in the lobby, so not long. */
@@ -245,12 +280,8 @@ export function credentialExpiry(config: TurnConfig): number | undefined {
 }
 
 /** `turn=<base64url(JSON)>`, the fragment an invite link carries, without its `#`. */
-export function encodeTurnFragment(config: TurnConfig): string {
-  const json = JSON.stringify({
-    urls: config.urls,
-    username: config.username,
-    credential: config.credential,
-  });
+export function encodeTurnFragment(shared: SharedRelay): string {
+  const json = JSON.stringify({ urls: shared.urls, secret: shared.secret });
   const bytes = new TextEncoder().encode(json);
   let binary = "";
   for (const byte of bytes) {
@@ -260,15 +291,18 @@ export function encodeTurnFragment(config: TurnConfig): string {
   return `${FRAGMENT_KEY}=${base64url}`;
 }
 
-/** What a page's fragment says about a relay. `rest` is the fragment with `turn=` taken out. */
+/**
+ * What a page's fragment says about a relay. `rest` is the fragment with
+ * `turn=` taken out; a link's relay is always a `rest` one (#2240).
+ */
 export type TurnFragment =
   | { readonly kind: "none" }
   | { readonly kind: "malformed"; readonly rest: string }
-  | { readonly kind: "config"; readonly config: TurnConfig; readonly rest: string };
+  | { readonly kind: "config"; readonly relay: Relay; readonly rest: string };
 
 /**
  * Read `turn=` out of `hash` (`location.hash`, with or without its `#`).
- * Every `turn=` part is consumed, so no credential stays behind, and more
+ * Every `turn=` part is consumed, so no secret stays behind, and more
  * than one is malformed; the other `&`-separated parts are left in
  * `rest`, in order, without a leading `#`.
  */
@@ -279,11 +313,13 @@ export function parseTurnFragment(hash: string): TurnFragment {
     return { kind: "none" };
   }
   const { rest } = part;
-  const config = part.values.length === 1 ? decode(value) : undefined;
-  return config === undefined ? { kind: "malformed", rest } : { kind: "config", config, rest };
+  const shared = part.values.length === 1 ? decode(value) : undefined;
+  return shared === undefined
+    ? { kind: "malformed", rest }
+    : { kind: "config", relay: { kind: "rest", urls: shared.urls, secret: shared.secret }, rest };
 }
 
-function decode(value: string): TurnConfig | undefined {
+function decode(value: string): SharedRelay | undefined {
   // Base64 is 4 characters for 3 bytes: anything longer decodes past the limit.
   if (value.length > Math.ceil((MAX_DECODED_BYTES * 4) / 3) || !/^[A-Za-z0-9_-]*=*$/.test(value)) {
     return undefined;
@@ -292,75 +328,11 @@ function decode(value: string): TurnConfig | undefined {
     const binary = atob(value.replace(/-/g, "+").replace(/_/g, "/"));
     const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
     const json = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-    return validateTurnConfig(JSON.parse(json));
+    return validateSharedRelay(JSON.parse(json));
   } catch {
     return undefined;
   }
 }
-
-/**
- * One relay record in `localStorage` under `key`, read at each join so a
- * change in Options counts from the next one. A saved one that fails
- * `validate` is removed, and `onRemoved` hears of it: the app says so
- * once, at boot. When storage refuses it, it is kept for this visit.
- */
-function storedRelay<T>(
-  key: string,
-  validate: (value: unknown) => T | undefined,
-  changed: () => void = () => undefined,
-) {
-  let unstored: T | undefined;
-  const forget = (): void => {
-    unstored = undefined;
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // Nothing was stored to remove.
-    }
-    changed();
-  };
-  return {
-    load: (onRemoved?: () => void): T | undefined => {
-      let raw: string | null;
-      try {
-        raw = localStorage.getItem(key);
-      } catch {
-        return unstored;
-      }
-      if (raw === null) {
-        return undefined;
-      }
-      let value: T | undefined;
-      try {
-        value = validate(JSON.parse(raw));
-      } catch {
-        value = undefined;
-      }
-      if (value === undefined) {
-        forget();
-        onRemoved?.();
-      }
-      return value;
-    },
-    save: (value: T): void => {
-      unstored = value;
-      try {
-        localStorage.setItem(key, JSON.stringify(value));
-      } catch {
-        // Kept in memory: the relay works for this visit, it just is not remembered.
-      }
-      changed();
-    },
-    forget,
-  };
-}
-
-const relay = storedRelay(`${STORAGE_NAMESPACE}.turn-relay`, validateTurnConfig);
-
-/** The player's own relay (#972). */
-export const loadTurnConfig = relay.load;
-export const saveTurnConfig = relay.save;
-export const forgetTurnConfig = relay.forget;
 
 /** Who hears a change to what this player's lobbies offer. */
 const sharingWatchers = new Set<() => void>();
@@ -371,44 +343,114 @@ const sharingChanged = (): void => {
   }
 };
 
-const sharedRelay = storedRelay(
-  `${STORAGE_NAMESPACE}.turn-shared-relay`,
-  validateSharedRelay,
-  sharingChanged,
-);
+const RELAY_KEY = `${STORAGE_NAMESPACE}.turn-relay`;
+/** The relay this visit saved, for when storage refuses it. */
+let unstored: Relay | undefined;
 
-/** The player's REST-secret relay (#2091), which their lobbies may be offered. */
-export const loadSharedRelay = sharedRelay.load;
-export const saveSharedRelay = sharedRelay.save;
-export const forgetSharedRelay = sharedRelay.forget;
+/**
+ * The player's relay (#972, #2240), read at each join so a change in
+ * Options counts from the next one. A saved one that fails
+ * `validateRelay` is removed, and `onRemoved` hears of it: the app says
+ * so once, at boot. When storage refuses it, it is kept for this visit.
+ */
+export function loadRelay(onRemoved?: () => void): Relay | undefined {
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(RELAY_KEY);
+  } catch {
+    return unstored;
+  }
+  if (raw === null) {
+    return undefined;
+  }
+  let relay: Relay | undefined;
+  try {
+    relay = validateRelay(JSON.parse(raw));
+  } catch {
+    relay = undefined;
+  }
+  if (relay === undefined) {
+    forgetRelay();
+    onRemoved?.();
+  }
+  return relay;
+}
+
+export function saveRelay(relay: Relay): void {
+  unstored = relay;
+  try {
+    localStorage.setItem(RELAY_KEY, JSON.stringify(relay));
+  } catch {
+    // Kept in memory: the relay works for this visit, it just is not remembered.
+  }
+  sharingChanged();
+}
+
+export function forgetRelay(): void {
+  unstored = undefined;
+  try {
+    localStorage.removeItem(RELAY_KEY);
+  } catch {
+    // Nothing was stored to remove.
+  }
+  sharingChanged();
+}
+
+/** The log tag of a login minted for the player's own use: 8 random bytes, as hex. */
+function ownTag(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(8)), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+}
+
+/**
+ * The TURN login this player joins with (#2240): a `rest` relay's minted
+ * fresh for every join, a `static` one's as saved, none without a relay.
+ */
+export function loadOwnTurnConfig(nowMs: number = Date.now()): TurnConfig | undefined {
+  const relay = loadRelay();
+  if (relay === undefined) {
+    return undefined;
+  }
+  if (relay.kind === "rest") {
+    return mintTurnCredential(relay, ownTag(), nowMs);
+  }
+  return { urls: relay.urls, username: relay.username, credential: relay.credential };
+}
 
 const SHARING_KEY = `${STORAGE_NAMESPACE}.turn-share`;
 
-/** Whether this player's coded lobbies offer their shared relay (#2091): off unless ticked. */
+/** Whether this player's coded lobbies offer their relay (#2240): on unless unticked. */
 export function loadRelaySharing(): boolean {
   try {
-    return localStorage.getItem(SHARING_KEY) === "on";
+    return localStorage.getItem(SHARING_KEY) !== "off";
   } catch {
-    return false;
+    return true;
   }
 }
 
 export function saveRelaySharing(on: boolean): void {
   try {
     if (on) {
-      localStorage.setItem(SHARING_KEY, "on");
-    } else {
       localStorage.removeItem(SHARING_KEY);
+    } else {
+      localStorage.setItem(SHARING_KEY, "off");
     }
   } catch {
-    // Not remembered: the box is unticked again next visit, which shares nothing.
+    // Not remembered: the box is ticked again next visit.
   }
   sharingChanged();
 }
 
-/** The relay this player's lobbies offer now: none unless one is saved and the box is ticked. */
+/**
+ * The relay this player's lobbies offer now: a `rest` relay while the
+ * box is ticked; a `static` one never (#2240).
+ */
 export function loadOfferedRelay(): SharedRelay | undefined {
-  return loadRelaySharing() ? loadSharedRelay() : undefined;
+  const relay = loadRelay();
+  return relay?.kind === "rest" && loadRelaySharing()
+    ? { urls: relay.urls, secret: relay.secret }
+    : undefined;
 }
 
 /**

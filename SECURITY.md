@@ -167,6 +167,14 @@ channels, as often as they like.
   neither, so that member gets a denied relay, not the joiners' addresses.
   A relay _name_ that resolves to a private address cannot be checked
   from a browser; literal private and LAN addresses are refused.
+  Since #2240 the secret itself travels in the relay operator's invite
+  link (fragment only, taken out of the address bar at once, never logged,
+  never in a lobby offer), and sharing is on by default: a friend's secret
+  reaches the friend plus everyone in their lobbies, through minted logins
+  that live until they expire. Removing or re-linking the friend
+  (`turn-user remove`, `turn-link`) stops new logins; the relay's total
+  quotas bound the rest. Like any saved relay, the secret sits in browser
+  storage, so an XSS in the client could read it.
 - **Volumetric DoS.** A host is one browser tab. A peer that floods it with
   traffic can make its tick late; filtering that is the network's job.
   _Cheap application-level_ abuse (one peer making the tick slow) is in
