@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   ARENA_MAPS,
   ASCENT_PROGRESSION,
+  LOBBY_MODE_MATCH_MODES,
   ascentMapName,
   hostMap,
   mapFlagField,
@@ -84,7 +85,9 @@ describe("team sizes (#2108)", () => {
       "Random Arena 1v1": randomArenaMapPool("random-arena-1v1"),
       "Random Arena 2v2": randomArenaMapPool("random-arena-2v2"),
       "Random Arena 4v4": randomArenaMapPool("random-arena-4v4"),
-      "Team Arena 4v4": queueMapPool("team-arena", null),
+      "Team Arena 2v2": queueMapPool("team-arena-2v2", null),
+      "Team Arena 4v4": queueMapPool("team-arena-4v4", null),
+      "Team Arena 8v8": queueMapPool("team-arena-8v8", null),
       "Heroes' Ascent 8v8": queueMapPool("heroes-ascent", 0),
       "GvG 8v8": queueMapPool("gvg", null),
       ...Object.fromEntries(
@@ -103,7 +106,6 @@ describe("team sizes (#2108)", () => {
 
   it("gives each team mode only the maps that suit its size", () => {
     for (const [mode, size] of [
-      ["team-arena", 4],
       ["heroes-ascent", 8],
       ["gvg", 8],
     ] as const) {
@@ -111,7 +113,6 @@ describe("team sizes (#2108)", () => {
         expect(sizesOf(id), `${mode} ${id}`).toContain(size);
       }
     }
-    expect(modeMapIds()["team-arena"]).not.toContain("arena-alpha");
     expect(modeMapIds()["heroes-ascent"]).toEqual([
       "relic-temples",
       "hill-courtyard",
@@ -121,6 +122,14 @@ describe("team sizes (#2108)", () => {
 
   it("lists every map for a Hosted Game until its host picks a size (#2104)", () => {
     expect(modeMapIds()["hosted-game"]).toHaveLength(ARENA_MAPS.length);
+  });
+
+  it("lists a Team Arena's maps of every size, which its lobby narrows to its own (#2107)", () => {
+    const all = modeMapIds()["team-arena"];
+    for (const mode of ["team-arena-2v2", "team-arena-4v4", "team-arena-8v8"] as const) {
+      expect(all).toEqual(expect.arrayContaining(queueMapPool(mode, null)));
+    }
+    expect(queueMapPool("team-arena-4v4", null)).not.toContain("arena-alpha");
   });
 
   it("picks the maps of a size in their order", () => {
@@ -148,11 +157,17 @@ describe("the Hall of Heroes (#1995)", () => {
 });
 
 describe("queueMapPool (#1766)", () => {
-  it("draws a team mode's match from its own maps, and a Random Arena's from its pool", () => {
-    for (const mode of ["team-arena", "gvg"] as const) {
-      expect(queueMapPool(mode, null)).toEqual(modeMapIds()[mode]);
-      expect(queueMapPool(mode, null)).not.toHaveLength(0);
+  it("draws a Team Arena's match from its modes' maps that suit its size (#2107)", () => {
+    for (const mode of ["team-arena-2v2", "team-arena-4v4", "team-arena-8v8"] as const) {
+      for (const id of queueMapPool(mode, null)) {
+        expect(sizesOf(id), `${mode} ${id}`).toContain(teamSizeOf(mode));
+        expect(LOBBY_MODE_MATCH_MODES["team-arena"], id).toContain(mapMode(id));
+      }
     }
+  });
+
+  it("draws a team mode's match from its own maps, and a Random Arena's from its pool", () => {
+    expect(queueMapPool("gvg", null)).toEqual(modeMapIds().gvg);
     expect(queueMapPool("random-arena-2v2", null)).toEqual(randomArenaMapPool("random-arena-2v2"));
   });
 

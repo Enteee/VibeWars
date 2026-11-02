@@ -15,6 +15,7 @@ import {
   NO_ANSWER_MESSAGE,
   NO_RELAY_MESSAGE,
   NOT_HOST_MESSAGE,
+  PARTY_FULL_MESSAGE,
   PROPOSAL_REFUSED_MESSAGE,
   SEAT_REFUSED_MESSAGE,
   SEAT_TAKEN_MESSAGE,
@@ -61,6 +62,7 @@ describe("the notice for a closed lobby (#515)", () => {
 describe("the notice for a refused ask (#1194)", () => {
   it("says the lobby is full, who may ask, or that the host turned it down", () => {
     expect(lobbyRefusalNotice("lobby-full")).toBe(LOBBY_FULL_MESSAGE);
+    expect(lobbyRefusalNotice("party-full")).toBe(PARTY_FULL_MESSAGE);
     expect(lobbyRefusalNotice("not-host")).toBe(NOT_HOST_MESSAGE);
     expect(lobbyRefusalNotice("closed")).toBe(REFUSED_MESSAGE);
   });

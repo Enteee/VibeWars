@@ -279,7 +279,7 @@ describe("createQueueClient", () => {
   });
 
   it("fills a team mode's empty seats with bots, a party's and a soloist's alike", async () => {
-    const queue = new Queue("team-arena");
+    const queue = new Queue("team-arena-4v4");
     const { leader, follower } = partyOf(queue);
     queue.join(leader);
     queue.join(follower);

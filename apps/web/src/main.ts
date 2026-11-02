@@ -123,6 +123,7 @@ import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
 import { loadPlayerName, playerGuild } from "./ui/player-section.js";
 import { isAlone, lookingLabel, partyOf } from "./ui/party-strip.js";
 import {
+  DEFAULT_TEAM_SIZE,
   isModeEntry,
   loadRail,
   loadTeamSize,
@@ -161,6 +162,7 @@ import {
 import { toPlayerBuild } from "./storage/build-validation.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import {
+  isTeamArenaSize,
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
@@ -785,9 +787,13 @@ async function main(): Promise<void> {
     const snapshot = queue === undefined ? lobby?.getSnapshot() : undefined;
     if (isModeEntry(entry) && snapshot?.isHost === true && snapshot.mode !== entry) {
       lobby?.selectMode(entry);
-      // A Hosted Game starts at the host's sidebar team size (#2104).
+      // A Hosted Game starts at the host's sidebar team size (#2104), a
+      // Team Arena at it too, or 4v4 from 1v1 (#2107).
+      const size = loadTeamSize();
       if (entry === "hosted-game") {
-        lobby?.selectTeamSize(loadTeamSize());
+        lobby?.selectTeamSize(size);
+      } else if (entry === "team-arena") {
+        lobby?.selectTeamSize(isTeamArenaSize(size) ? size : DEFAULT_TEAM_SIZE);
       }
     }
     showMenu();
@@ -1130,7 +1136,7 @@ async function main(): Promise<void> {
 
   /** A team mode's Find a match, Leave the queue and Play the house team (#1766). */
   const matchmakingFor = (entry: HostEntry): LobbyMatchmaking | undefined => {
-    if (lobby === undefined || teamQueueModeOf(entry) === undefined) {
+    if (lobby === undefined || entry === "hosted-game") {
       return undefined;
     }
     // A lobby that may queue checks its NAT now, not on Find a match (#2090).
@@ -1232,8 +1238,9 @@ async function main(): Promise<void> {
     const problems = [...teamList.problems, ...notices.draw(entry)];
     if (isHostEntry(entry)) {
       renderHostScreen(screenRoot, entry, problems, menuNotice, callbacks, panelFor(entry));
-      // A Hosted Game's host sets its lobby's size with the sidebar's (#2104).
-      if (entry === "hosted-game") {
+      // A Hosted Game's host, or a Team Arena's leader, sets its lobby's
+      // size with the sidebar's (#2104, #2107).
+      if (entry === "hosted-game" || entry === "team-arena") {
         onTeamSizeChange((size) => {
           lobby?.selectTeamSize(size);
         });
@@ -1605,7 +1612,7 @@ async function main(): Promise<void> {
     }
     syncParty(snapshot);
     for (const label of document.querySelectorAll(".party-queued")) {
-      label.textContent = lookingLabel(queuedMs, current.teams);
+      label.textContent = lookingLabel(snapshot.mode, snapshot.teamSize, queuedMs, current.teams);
     }
     if (!current.houseTeamShown && queuedMs >= HOUSE_TEAM_AFTER_MS) {
       current.houseTeamShown = true;
@@ -1630,7 +1637,7 @@ async function main(): Promise<void> {
       }
       endTeamQueue();
     }
-    const mode = teamQueueModeOf(snapshot.mode);
+    const mode = teamQueueModeOf(snapshot.mode, snapshot.teamSize);
     const self = snapshot.players.find((p) => p.sessionId === party.selfSessionId);
     if (nonce === null || mode === undefined || self?.team !== 0 || lobby !== party) {
       return;
@@ -2018,7 +2025,8 @@ async function main(): Promise<void> {
       }
       const { board, key } = current.pressed;
       current.pressed = undefined;
-      const mode = teamQueueModeOf(joined.getSnapshot().mode);
+      const { mode: lobbyMode, teamSize } = joined.getSnapshot();
+      const mode = teamQueueModeOf(lobbyMode, teamSize);
       if (formed === null || mode === undefined) {
         // No party this time: its lobby goes back to waiting.
         board.close();

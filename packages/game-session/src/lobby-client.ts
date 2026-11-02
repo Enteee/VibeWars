@@ -693,7 +693,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         if (
           current === undefined ||
           latest === undefined ||
-          mode !== teamQueueModeOf(latest.mode)
+          mode !== teamQueueModeOf(latest.mode, latest.teamSize)
         ) {
           return;
         }

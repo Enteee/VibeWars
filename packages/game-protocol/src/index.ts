@@ -219,10 +219,13 @@ export {
   QUEUE_MODES,
   TICKET_HEARTBEAT_MS,
   TICKET_TTL_MS,
+  TEAM_ARENA_SIZES,
+  isTeamArena,
+  isTeamArenaSize,
   isTeamQueueMode,
   inPartyOrder,
   parseQueueTicket,
   teamQueueModeOf,
   teamSizeOf,
 } from "./queue.js";
-export type { QueueMode, QueueTicket, TicketParty } from "./queue.js";
+export type { QueueMode, QueueTicket, TeamArenaSize, TicketParty } from "./queue.js";
