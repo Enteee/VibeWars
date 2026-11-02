@@ -319,6 +319,7 @@ describe("the mode rail (#1525)", () => {
       members: [],
       queuedMs: null,
       teams: undefined,
+      ascentRound: null,
     });
     const rail = modeRail("hosted-game", () => undefined) as unknown as FakeElement;
     const field = rail.children.find((child) => child.className === "mode-rail-size");
