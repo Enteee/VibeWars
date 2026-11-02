@@ -1,9 +1,9 @@
-import type { Transport } from "@vibewars/game-session";
 import { createMemoryNetwork } from "@vibewars/game-session/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { RELAY_REJOIN_MS, joinWithRelayOffers } from "./relay-join.js";
+import { RELAY_REFRESH_LEFT_MS, RELAY_REJOIN_MS, joinWithRelayOffers } from "./relay-join.js";
 import type { RelayOffers } from "./transport/relay-offer.js";
+import type { TrysteroTransport } from "./transport/trystero.js";
 import type { TurnConfig } from "./transport/turn-config.js";
 
 function offer(expiry: number): TurnConfig {
@@ -59,7 +59,7 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
     let inRoom = 0;
     const room = joinWithRelayOffers({
       selfId: "guest",
-      join: (turn): Transport => {
+      join: (turn): TrysteroTransport => {
         joins.push(turn);
         const transport = network.join("guest");
         inRoom += 1;
@@ -70,6 +70,7 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
             inRoom -= 1;
             return leave();
           },
+          swapIceServers: () => undefined,
         };
       },
       offers: fake.offers,
@@ -152,11 +153,11 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
     const fake = fakeOffers();
     const room = joinWithRelayOffers({
       selfId: "guest",
-      join: (turn): Transport => {
+      join: (turn): TrysteroTransport => {
         if (turn !== undefined) {
           throw new Error("the relayed room would not open");
         }
-        return network.join("guest");
+        return { ...network.join("guest"), swapIceServers: () => undefined };
       },
       offers: fake.offers,
       ownRelay: false,
@@ -176,5 +177,113 @@ describe("a joiner's fallback on its host's shared relay (#2091)", () => {
     await room.leave();
     expect(fake.closed()).toBe(true);
     expect(inRoom()).toBe(0);
+  });
+});
+
+describe("a relayed joiner's login, refreshed in place between maps (#2245)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** The first offer's expiry, in seconds, and a moment it has just under an hour left. */
+  const EXPIRY = 10_000;
+  const LATE = EXPIRY * 1000 - RELAY_REFRESH_LEFT_MS + 1;
+  const NEWER = offer(EXPIRY + 2 * 60 * 60);
+
+  /** A joiner relayed through `offer(EXPIRY)`, which has reached its host. */
+  function relayedJoiner(ownRelay = false) {
+    const network = createMemoryNetwork();
+    const fake = fakeOffers();
+    const joins: (TurnConfig | undefined)[] = [];
+    const swaps: { peerId: string; turn: TurnConfig }[] = [];
+    const room = joinWithRelayOffers({
+      selfId: "guest",
+      join: (turn): TrysteroTransport => {
+        joins.push(turn);
+        return {
+          ...network.join("guest"),
+          swapIceServers: (peerId, swapped) => {
+            swaps.push({ peerId, turn: swapped });
+          },
+        };
+      },
+      offers: fake.offers,
+      ownRelay,
+    });
+    return { network, fake, room, joins, swaps };
+  }
+
+  async function reachHost(joiner: ReturnType<typeof relayedJoiner>) {
+    joiner.fake.open(offer(EXPIRY));
+    await vi.advanceTimersByTimeAsync(RELAY_REJOIN_MS);
+    const host = joiner.network.join("host");
+    await vi.advanceTimersByTimeAsync(0);
+    joiner.room.reached("host");
+    return host;
+  }
+
+  it("swaps the host's connection onto a newer offer under an hour left, once", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.fake.open(NEWER);
+    joiner.room.refreshRelay(LATE);
+    expect(joiner.swaps).toEqual([{ peerId: "host", turn: NEWER }]);
+    // `relayedWith` moved on: the same offer swaps nothing again.
+    joiner.room.refreshRelay(LATE + 60_000);
+    expect(joiner.swaps).toHaveLength(1);
+    // In place: no leave, no join.
+    expect(joiner.joins).toEqual([undefined, offer(EXPIRY)]);
+    await joiner.room.leave();
+  });
+
+  it("does not swap with an hour or more left", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.fake.open(NEWER);
+    joiner.room.refreshRelay(LATE - 1);
+    expect(joiner.swaps).toEqual([]);
+    await joiner.room.leave();
+  });
+
+  it("does not swap without a newer offer: none, the same login, or one no later", async () => {
+    const joiner = relayedJoiner();
+    await reachHost(joiner);
+    joiner.room.refreshRelay(LATE);
+    joiner.fake.open(offer(EXPIRY - 60));
+    joiner.room.refreshRelay(LATE);
+    joiner.fake.open(undefined);
+    joiner.room.refreshRelay(LATE);
+    expect(joiner.swaps).toEqual([]);
+    await joiner.room.leave();
+  });
+
+  it("never swaps a joiner with its own relay, or one that reached its host directly", async () => {
+    const own = relayedJoiner(true);
+    await reachHost(own);
+    own.fake.open(NEWER);
+    own.room.refreshRelay(LATE);
+    expect(own.swaps).toEqual([]);
+    await own.room.leave();
+
+    const direct = relayedJoiner();
+    direct.room.reached("host");
+    direct.fake.open(NEWER);
+    direct.room.refreshRelay(LATE);
+    expect(direct.swaps).toEqual([]);
+    await direct.room.leave();
+  });
+
+  it("still rejoins through the swapped-in offer when the host drops after all", async () => {
+    const joiner = relayedJoiner();
+    const host = await reachHost(joiner);
+    joiner.fake.open(NEWER);
+    joiner.room.refreshRelay(LATE);
+    await host.leave();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(joiner.joins).toEqual([undefined, offer(EXPIRY), NEWER]);
+    await joiner.room.leave();
   });
 });

@@ -61,10 +61,12 @@ export function checkTransportNat(): Promise<boolean> {
     : checkNat();
 }
 
-/** A guest's room, and how it is told the host answered. */
+/** A guest's room, how it is told the host answered, and how its relay is kept fresh (#2245). */
 export interface GuestRoom {
   readonly transport: Transport;
   reached(hostId: string): void;
+  /** Called in the lobby, never in a map: see `RelayJoin.refreshRelay`. */
+  refreshRelay(nowMs: number): void;
 }
 
 /**
@@ -74,7 +76,7 @@ export interface GuestRoom {
  */
 export function joinGuestRoom(room: LobbyRoom): GuestRoom {
   if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast" || room.relay === null) {
-    return { transport: joinRoom(room), reached: () => undefined };
+    return { transport: joinRoom(room), reached: () => undefined, refreshRelay: () => undefined };
   }
   const transport = joinWithRelayOffers({
     selfId: TRYSTERO_SELF_ID,
@@ -88,6 +90,9 @@ export function joinGuestRoom(room: LobbyRoom): GuestRoom {
     transport,
     reached: (hostId) => {
       transport.reached(hostId);
+    },
+    refreshRelay: (nowMs) => {
+      transport.refreshRelay(nowMs);
     },
   };
 }

@@ -130,7 +130,7 @@ function mountRelay(container: HTMLElement): () => void {
 /** What Options says sharing a relay means: who gets it, for how long, and what to lock down. */
 export const SHARED_RELAY_EXPLANATION =
   "A relay with a shared secret (coturn use-auth-secret) can be offered to your lobbies: " +
-  "anyone with a lobby's invite link may relay through it for up to 2 hours after its last " +
+  "anyone with a lobby's invite link may relay through it for up to 4 hours after its last " +
   "offer, and that cannot be taken back early. Set denied-peer-ip for private ranges, " +
   "no-loopback-peers, no-multicast-peers and quotas on it. The secret stays on this device. " +
   "A relay with a username and password above is never shared; its invite link is how. " +

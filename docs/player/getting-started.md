@@ -92,7 +92,7 @@ and the strip on top of every mode screen lists who is in it.
   Relay (TURN)** and tick **Share my relay with my lobbies**: a friend who
   cannot reach you directly then joins through it after a few seconds,
   with nothing to set up. Anyone with your invite link can use it for up
-  to 2 hours.
+  to 4 hours.
 - **Your party comes along:** if you had friends in your lobby, the top
   bar asks first (**Join** to go, Esc to stay), and once you are
   in, they follow you into your friend's lobby. Anyone who cannot get in,

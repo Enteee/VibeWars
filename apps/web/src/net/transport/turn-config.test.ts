@@ -164,11 +164,11 @@ describe("a shared relay (#2091)", () => {
     const minted = mintTurnCredential(SHARED, "0123456789abcdef", 1_700_000_000_000);
     expect(minted).toEqual({
       urls: SHARED.urls,
-      username: "1700007200:0123456789abcdef",
-      credential: "CMjsAVviRjf3czWnWgj9pgoCtDY=", // pragma: allowlist secret
+      username: "1700014400:0123456789abcdef",
+      credential: "eG+hjha+bFActl+XrrtyAd0VTe4=", // pragma: allowlist secret
     });
     expect(validateTurnConfig(minted)).toEqual(minted);
-    expect(credentialExpiry(minted)).toBe(1_700_007_200_000);
+    expect(credentialExpiry(minted)).toBe(1_700_014_400_000);
   });
 
   it.each([

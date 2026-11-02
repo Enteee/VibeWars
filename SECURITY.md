@@ -158,7 +158,7 @@ channels, as often as they like.
 - **A dropped match.** Without TURN, some pairs of networks never connect
   (ADR-0022). A peer that cannot reach the host cannot play.
 - **A shared relay (#2091, ADR-0049).** A host who shares their TURN
-  relay lets anyone with the invite link relay through it for up to 2 h
+  relay lets anyone with the invite link relay through it for up to 4 h
   after the last offer they saw; a minted credential cannot be revoked
   early. The host's coturn must set `denied-peer-ip` for private ranges,
   `no-loopback-peers`, `no-multicast-peers` and quotas. Offers are not

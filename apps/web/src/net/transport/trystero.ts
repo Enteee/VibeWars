@@ -13,6 +13,8 @@
  * relay socket is open.
  *
  * A TURN relay the player saved (#972) goes to Trystero as `turnConfig`.
+ * A peer can be moved onto another TURN login in place (#2245): an ICE
+ * restart, which Trystero renegotiates over the open data channel.
  *
  * It never sees a lobby key (#1681, ADR-0043): only the room and the
  * password derived from it, which is all the relays may learn.
@@ -44,6 +46,23 @@ export interface TrysteroDeps {
   readonly turnConfig: () => TurnConfig | undefined;
 }
 
+/** A Trystero room's `Transport`, which can also move one peer onto another relay. */
+export interface TrysteroTransport extends Transport {
+  /**
+   * Gather this page's candidates toward `peerId` through `turn` instead of
+   * the TURN servers it has, and restart ICE (#2245): the pair in use
+   * carries traffic until the new one is up. Nothing for an unknown peer,
+   * or in a browser without `restartIce`.
+   */
+  swapIceServers(peerId: string, turn: TurnConfig): void;
+}
+
+/** Whether an ICE server entry is a TURN relay rather than STUN. */
+function isTurnServer(server: RTCIceServer): boolean {
+  const urls = typeof server.urls === "string" ? [server.urls] : server.urls;
+  return urls.some((url) => url.startsWith("turn:") || url.startsWith("turns:"));
+}
+
 /** This page's peer id in every Trystero room: Trystero picks it once a page. */
 export const TRYSTERO_SELF_ID = selfId;
 
@@ -69,7 +88,7 @@ export function joinTrysteroRoom(
   room: LobbyRoom,
   offered?: TurnConfig,
   deps: TrysteroDeps = TRYSTERO,
-): Transport {
+): TrysteroTransport {
   const handlers = new HandlerSets();
   // Read at join, so a relay saved in Options counts from the next lobby,
   // and wins over an offered one. Added to Trystero's STUN, not instead:
@@ -159,6 +178,29 @@ export function joinTrysteroRoom(
     onPeerJoin: (handler) => handlers.onPeerJoin(handler),
     onPeerLeave: (handler) => handlers.onPeerLeave(handler),
     onTrouble: (handler) => handlers.onTrouble(handler),
+    swapIceServers(peerId, swap) {
+      const connection = trystero.getPeers()[peerId];
+      // `restartIce` is typed as always there; an old browser lacks it.
+      if (connection === undefined || typeof connection.restartIce !== "function") {
+        return;
+      }
+      try {
+        const config = connection.getConfiguration();
+        // STUN stays, so ICE can still find a direct path.
+        const kept = (config.iceServers ?? []).filter((server) => !isTurnServer(server));
+        connection.setConfiguration({
+          ...config,
+          iceServers: [
+            ...kept,
+            { urls: [...swap.urls], username: swap.username, credential: swap.credential },
+          ],
+        });
+        connection.restartIce();
+      } catch (error) {
+        // The old login runs out and the host drops, which rejoins (ADR-0049).
+        console.warn("trystero transport: could not swap the relay", error);
+      }
+    },
     async leave() {
       clearTimeout(relayCheck);
       handlers.clear();

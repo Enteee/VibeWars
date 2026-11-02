@@ -61,7 +61,7 @@ export const OFFER_OPEN_INTERVAL_MS = 5_000;
 export const MAX_OFFER_OPENS_PER_SECOND = 200;
 
 /** A host mints a fresh credential once its current one has this little left. */
-export const REMINT_LEFT_MS = 30 * 60 * 1000;
+export const REMINT_LEFT_MS = 2 * 60 * 60 * 1000;
 
 /** How far past a fresh credential's expiry an offer's may lie: clocks differ a little. */
 const EXPIRY_SLACK_MS = 60 * 1000;
