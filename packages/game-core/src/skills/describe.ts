@@ -846,7 +846,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       ...(attackMissChance === 0
         ? []
         : [`${String(Math.round(attackMissChance * 100))}% of attacks miss`]),
-      ...(healthPips === 0 ? [] : [`${signed(healthPips)} Health regeneration`]),
+      ...(healthPips === 0
+        ? []
+        : [`${signed(healthPips)} Health ${healthPips > 0 ? "regeneration" : "degeneration"}`]),
       ...(armorModifier === 0 ? [] : [`${signed(armorModifier)} armor`]),
       ...(attackDurationMultiplier === 1
         ? []
