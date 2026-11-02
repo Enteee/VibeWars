@@ -650,14 +650,19 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     ],
   }),
 
-  // "Your next Dervish enchantment lasts 10...122...150% longer" (#1761),
-  // at rank 12: the first one used spends it.
+  // "Your next Dervish enchantment lasts 10...150% longer" (#1761, #2158):
+  // the first one used spends it.
   "extend-enchantments": define("extend-enchantments", "Extend Enchantments", "skill-effect", {
     profession: "dervish",
     ownSkillModifiers: [
       ownSkills(
         { type: "enchantment", profession: "dervish" },
-        { durationMultiplier: 2.22, uses: 1 },
+        {
+          durationMultiplier: {
+            scaling: { attributeId: "dervish.mysticism", atZero: 1.1, atTwelve: 2.22 },
+          },
+          uses: 1,
+        },
       ),
     ],
   }),

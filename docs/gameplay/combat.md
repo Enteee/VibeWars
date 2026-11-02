@@ -811,13 +811,15 @@ already under 1 s keeps it.
 **Your skills of a kind** (#1761): some statuses change how your own
 skills of one type, attribute or profession go. Divine Spirit (Monk
 spells cost 5 less, never below 1), Blessed Aura (Monk enchantments last
-30% longer), Healer's Covenant (Healing Prayers spells cost 3 less and
-heal 20% less, the Divine Favor bonus too), Holy Haste (Healing Prayers
-spells cast 50% faster, until you cast an enchantment), Practiced Stance
-(preparations recharge 50% faster and last 246% longer) and Extend
-Enchantments (the next Dervish enchantment lasts 122% longer). Discounts
-add, multipliers multiply, and the largest recharge share counts. What a
-use gets is taken as it is paid for: a status it puts on keeps its
+10% longer, 30% at rank 12), Healer's Covenant (Healing Prayers spells
+cost 1 less, 3 at rank 12, and heal 20% less, the Divine Favor bonus
+too), Holy Haste (Healing Prayers spells cast 50% faster, until you cast
+an enchantment), Practiced Stance (preparations recharge 50% faster and
+last 30% longer, 246% at rank 12) and Extend Enchantments (the next
+Dervish enchantment lasts 10% longer, 122% at rank 12). These numbers
+grow with the caster's rank in the skill's attribute (#2158), read as
+the status goes on. Discounts add, multipliers multiply, and the largest
+recharge share counts. What a use gets is taken as it is paid for: a status it puts on keeps its
 longer time after the modifier ends, a spell or arrow lands with what
 it left with, a status the skill puts on you lengthens too, and a
 maintained enchantment has no time to lengthen.
