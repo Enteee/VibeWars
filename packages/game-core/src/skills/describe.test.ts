@@ -1504,3 +1504,36 @@ describe("minion care (#1986)", () => {
     ]);
   });
 });
+
+describe("Mesmer energy and utility (#2132)", () => {
+  const texts = (id: string, attributeId: string): string[] =>
+    describeSkill(skill(id), new Map([[attributeId, 12]])).effects.map(({ text }) => text);
+
+  it("says the Energy threshold, the renewal at a foe and the recharge, at rank 12", () => {
+    expect(texts("mesmer.ether-signet", "mesmer.inspiration-magic")).toEqual([
+      "If you have less than 9 Energy: gain 18 energy",
+    ]);
+    expect(texts("mesmer.lyssas-aura", "mesmer.inspiration-magic")).toEqual([
+      "Applies Lyssa's Aura for 10s " +
+        "(+4 Energy regeneration, reapplied whenever it casts a spell on a foe)",
+    ]);
+    expect(texts("mesmer.persistence-of-memory", "mesmer.fast-casting")).toEqual([
+      "Applies Persistence of Memory for 17s " +
+        "(whenever it has a spell interrupted: that skill recharges instantly)",
+    ]);
+    expect(texts("mesmer.power-return", "mesmer.fast-casting")).toEqual([
+      "Interrupts the target's spell or chant, if they are casting one",
+      "If it interrupts a skill: target gains 6 energy",
+    ]);
+    expect(texts("mesmer.signet-of-midnight", "")).toEqual([
+      "Applies Blind for 15s (90% of attacks miss)",
+      "You gain Blind for 15s (90% of attacks miss)",
+    ]);
+  });
+
+  it("says the Energy threshold at the caster's rank", () => {
+    expect(texts("mesmer.ether-signet", "mesmer.domination-magic")).toEqual([
+      "If you have less than 5 Energy: gain 10 energy",
+    ]);
+  });
+});

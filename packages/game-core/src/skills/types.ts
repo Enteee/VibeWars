@@ -546,6 +546,13 @@ export interface RechargeFasterEffect {
  */
 export interface RechargeResetEffect {
   readonly kind: "recharge-reset";
+  /**
+   * `used-skill`: the skill the trigger answers recharges instead, by its
+   * key (#2132), as Persistence of Memory's "whenever a spell you cast is
+   * interrupted, that spell is instantly recharged". No such skill: none.
+   * Absent: this skill.
+   */
+  readonly of?: "used-skill";
 }
 
 /**
@@ -1404,6 +1411,12 @@ export type StateCondition =
    * Shock's "if you have more energy than target foe". Equal is not more.
    */
   | { readonly kind: "caster-more-energy" }
+  /**
+   * The caster has less Energy than `amount`, at its own rank (#2132):
+   * Ether Signet's "if you have less than 5...10 Energy". Equal is not
+   * below.
+   */
+  | { readonly kind: "caster-energy-below"; readonly amount: Magnitude }
   /**
    * The caster is overcast, above 0, as the effect resolves (#1366):
    * Flare's "if you are Overcast". A spell's own overcast is paid as its

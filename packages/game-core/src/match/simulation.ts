@@ -4182,9 +4182,11 @@ export class MatchSimulation {
     this.#useNextSkill(record, skill, spared);
     this.#endOnUseSkill(record, skill, spared);
     if (isSpell(skill.type)) {
-      // Kinetic Armor's renewal (#1614); Aura of Restoration's gain reads
-      // the spell's cost.
-      record.combatant.statuses.castSpell();
+      // Kinetic Armor's renewal (#1614), and Lyssa's Aura's at a foe
+      // (#2132); Aura of Restoration's gain reads the spell's cost.
+      record.combatant.statuses.castSpell(
+        primary !== undefined && primary.combatant.team !== record.combatant.team,
+      );
       this.#fireTriggers(record, "bearer-casts-spell", spared, {
         skillId: skill.id,
         key: cast.key,

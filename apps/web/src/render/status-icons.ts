@@ -454,6 +454,9 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "soldiers-defense": icon("soldiers-defense"),
   "defensive-stance": icon("defensive-stance"),
   "auspicious-parry": icon("auspicious-parry"),
+  // Mesmer energy and utility (#2132).
+  "lyssas-aura": icon("lyssas-aura"),
+  "persistence-of-memory": icon("persistence-of-memory"),
 };
 
 const GAP = 2;

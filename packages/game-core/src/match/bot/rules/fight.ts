@@ -1,7 +1,10 @@
+import { RANGE_MELEE } from "../../../distances.js";
+import { isAttacking } from "../../../skills/attacking.js";
 import { getSkill } from "../../../skills/catalog.js";
 import type { Skill } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import {
+  blindsUser,
   botUses,
   mirrorsStance,
   onlyInterrupts,
@@ -19,7 +22,9 @@ const PET_SEND_UNITS = 300;
  * With a foe to fight: an offensive skill in bar order, else the weapon.
  * A copier or a stripper only at a foe with what it takes (#1928, #1954):
  * Inspired Enchantment and Mirror of Disenchantment at an enchanted one.
- * Mirrored Stance only at a foe with a stance to use (#1965).
+ * Mirrored Stance only at a foe with a stance to use (#1965). Signet of
+ * Midnight (#2132) only at a foe attacking in melee within touch, and
+ * never by a bot whose own fight is its attacks.
  */
 const fight: BotRule = {
   order: 100,
@@ -46,9 +51,19 @@ const fight: BotRule = {
       distance(pet.position, target.position) >= PET_SEND_UNITS;
     const hasStance =
       foe?.skillBar.some((id) => id !== null && getSkill(id)?.type === "stance") ?? false;
+    // Blinding itself as well (#2132) is worth it only against a melee
+    // attacker at hand, and never to a bot with attack skills to use.
+    const blindWorth =
+      foe !== undefined &&
+      target !== undefined &&
+      isAttacking(foe) &&
+      foe.equipment.mainHand.weapon.projectileSpeed === undefined &&
+      distance(target.position, self.position) <= RANGE_MELEE &&
+      !bar.some((held) => held.attack !== undefined || botUses(held).includes("boost"));
     const skill = bar.find(
       (held) =>
         botUses(held).includes("offence") &&
+        (blindWorth || !blindsUser(held)) &&
         !onlyInterrupts(held) &&
         copies(held) &&
         (!sendsPet(held) || petFar) &&

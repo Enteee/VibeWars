@@ -15,7 +15,7 @@ import {
   type StatusDefinition,
   type StatusId,
 } from "../../skills/status.js";
-import type { Combatant, Skill, SkillEffect } from "../../skills/types.js";
+import type { Combatant, Skill, SkillEffect, StateCondition } from "../../skills/types.js";
 import type { Vec2 } from "../../vec2.js";
 import { nearestFreshCorpse, type CorpseCandidate } from "../corpses.js";
 
@@ -30,8 +30,9 @@ export const WELL_SACRIFICE_FLOOR = 0.5;
  * weighs them. Read off the team editor's roles (`skillRoles`), which
  * this never changes, plus what those leave out: damage, an attack
  * skill, raising the dead, a way out (#1930), a buff that only makes
- * attacks hit harder (#2000), a setup (#1975) and minion care (#1986),
- * which is that alone.
+ * attacks hit harder (#2000), a setup (#1975), minion care (#1986),
+ * which is that alone, Energy for the user and a guard for its spells
+ * against interrupts (#2132).
  */
 export type BotUse =
   | "interrupt"
@@ -44,7 +45,9 @@ export type BotUse =
   | "offence"
   | "setup"
   | "minion-care"
-  | "take-minion";
+  | "take-minion"
+  | "energy"
+  | "guard";
 
 /**
  * Every use `skill` has; empty for none. A skill on the bot's own pet
@@ -71,6 +74,8 @@ export function botUses(skill: Skill): readonly BotUse[] {
   if (removedCategories(skill).length > 0) uses.push("removal");
   if (skill.target === "single-dead-ally") uses.push("resurrect");
   if (setupOf(skill) !== undefined) uses.push("setup");
+  if (lowEnergyGain(skill) !== undefined || energyAtFoes(skill)) uses.push("energy");
+  if (recallsInterrupted(skill)) uses.push("guard");
   // Taste of Death's life steal (#1915) is from its own minion: no foe's.
   if (
     skill.target !== "allied-minion" &&
@@ -449,9 +454,73 @@ export function ownStatuses(skill: Skill): readonly StatusId[] {
     : [];
 }
 
-/** Whether `skill` guards its user from an interrupt (#1964): Mantra of Concentration. */
+/**
+ * Whether `skill` guards its user from an interrupt (#1964): Mantra of
+ * Concentration, or takes the sting out of one (#2132): Persistence of
+ * Memory.
+ */
 export function guardsInterrupt(skill: Skill): boolean {
-  return ownStatuses(skill).some((id) => getStatusDefinition(id).interruptGuard !== undefined);
+  return (
+    recallsInterrupted(skill) ||
+    ownStatuses(skill).some((id) => getStatusDefinition(id).interruptGuard !== undefined)
+  );
+}
+
+/**
+ * Whether `skill` puts on its user what recharges a skill of its that is
+ * interrupted (#2132): Persistence of Memory.
+ */
+export function recallsInterrupted(skill: Skill): boolean {
+  return ownStatuses(skill).some((id) =>
+    getStatusDefinition(id).triggers.some(
+      ({ on, effects }) =>
+        on === "bearer-interrupted" &&
+        effects.some((effect) => effect.kind === "recharge-reset" && effect.of === "used-skill"),
+    ),
+  );
+}
+
+/**
+ * The Energy below which `skill` gains its user Energy (#2132), Ether
+ * Signet's "if you have less than 9 Energy", or `undefined` for any other.
+ */
+export function lowEnergyGain(
+  skill: Skill,
+): Extract<StateCondition, { kind: "caster-energy-below" }> | undefined {
+  if (skill.target !== "self") {
+    return undefined;
+  }
+  for (const effect of skill.effects) {
+    if (
+      effect.kind === "if" &&
+      effect.condition.kind === "caster-energy-below" &&
+      effect.effects.some((inner) => inner.kind === "energy-gain")
+    ) {
+      return effect.condition;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Whether `skill` puts on its user Energy regeneration that its spells
+ * at foes keep up (#2132): Lyssa's Aura.
+ */
+export function energyAtFoes(skill: Skill): boolean {
+  return ownStatuses(skill).some((id) => {
+    const status = getStatusDefinition(id);
+    return status.renewsOnBearerSpellAtFoe && status.energyPips > 0;
+  });
+}
+
+/**
+ * Whether `skill` Blinds its own user (#2132): Signet of Midnight's price,
+ * worth paying only against a foe that attacks in melee.
+ */
+export function blindsUser(skill: Skill): boolean {
+  return skill.effects.some(
+    (effect) => effect.kind === "caster-gains-status" && effect.statusId === "blind",
+  );
 }
 
 /**

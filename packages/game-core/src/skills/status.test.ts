@@ -236,6 +236,7 @@ describe("status definitions", () => {
       "the-power-is-yours": 2,
       "well-of-power": 2,
       "well-of-weariness": -1,
+      "lyssas-aura": 4,
     });
   });
 
@@ -1284,5 +1285,33 @@ describe("onAttackBlocked (#1974)", () => {
 
   it("a sword's blocked blow fires nothing", () => {
     expect(blocked(WEAPONS.sword, false)).toEqual([]);
+  });
+});
+
+describe("StatusSet.castSpell (#1614, #2132)", () => {
+  it("renews Lyssa's Aura only for a spell at a foe, and Kinetic Armor for any", () => {
+    expect(getStatusDefinition("lyssas-aura").renewsOnBearerSpellAtFoe).toBe(true);
+    expect(getStatusDefinition("kinetic-armor").renewsOnBearerSpellAtFoe).toBe(false);
+    const set = new StatusSet();
+    set.apply("lyssas-aura", 10, "m", NO_RANKS);
+    set.apply("kinetic-armor", 12, "m", NO_RANKS);
+    set.advance(7, false);
+    set.castSpell(false);
+    expect(set.get("lyssas-aura")?.remainingSeconds).toBeCloseTo(3);
+    expect(set.get("kinetic-armor")?.remainingSeconds).toBe(12);
+    set.castSpell(true);
+    expect(set.get("lyssas-aura")?.remainingSeconds).toBe(10);
+  });
+});
+
+describe("StatusSet.recordInterrupt (#1473, #2132)", () => {
+  it("carries the skill interrupted, and none for a plain swing", () => {
+    const set = new StatusSet();
+    set.apply("persistence-of-memory", 17, "m", NO_RANKS);
+    set.recordInterrupt("foe", { skillId: "mesmer.empathy", key: "mesmer.empathy" });
+    set.recordInterrupt("foe", undefined);
+    expect(
+      set.drainChanges().map((change) => change.kind === "interrupted" && change.skill),
+    ).toEqual([{ skillId: "mesmer.empathy", key: "mesmer.empathy" }, undefined]);
   });
 });
