@@ -20,7 +20,18 @@ runs:
     # Third-party actions are pinned to a commit, not a movable tag.
     - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
 
+    # A company runner pulls the 1.1 GB store cache at ~1 MB/s; the download's
+    # token expires partway ("Failed to restore"), and the half-extracted
+    # store paths it leaves are owned by nobody in the jail, so Nix cannot
+    # chmod them to substitute over them (#2101, runs 41434583044, 41441085541).
+    # Substituting from cache.nixos.org takes about a minute: no cache there.
+    - name: Skip the Nix cache on a company runner
+      shell: bash
+      run: |
+        [ -z "${VIBEWARS_NIX_REGISTRATION:-}" ] || echo "VIBEWARS_COMPANY_RUNNER=1" >> "$GITHUB_ENV"
+
     - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+      if: env.VIBEWARS_COMPANY_RUNNER != '1'
       with:
         primary-key: nix-${{ runner.os }}-${{ hashFiles('devenv.nix', 'devenv.lock', 'devenv.yaml', 'nix/**') }}
         restore-prefixes-first-match: nix-${{ runner.os }}-
