@@ -47,10 +47,20 @@ export const PARTY_CLOSED = "Lobby closed";
  * team… 1:05 · 2 teams searching", the time alone until the queue says
  * how many (#1881). Its own team always counts, so none means none heard
  * yet: a leader before its first tick, or a follower before it hears its
- * leader's ticket.
+ * leader's ticket. A Team Arena's names its size (#2107): "Team Arena
+ * 2v2 — searching… 1:05".
  */
-export function lookingLabel(queuedMs: number, teams: number | undefined): string {
-  const looking = `Looking for a team… ${waitedLabel(queuedMs)}`;
+export function lookingLabel(
+  mode: LobbyMode,
+  teamSize: number,
+  queuedMs: number,
+  teams: number | undefined,
+): string {
+  const size = `${String(teamSize)}v${String(teamSize)}`;
+  const looking =
+    mode === "team-arena"
+      ? `Team Arena ${size} — searching… ${waitedLabel(queuedMs)}`
+      : `Looking for a team… ${waitedLabel(queuedMs)}`;
   if (teams === undefined || teams === 0) {
     return looking;
   }
@@ -128,7 +138,13 @@ export function partyStrip(party: RailParty): HTMLElement {
     if (party.ascentRound !== null) {
       strip.appendChild(h("span", "party-ascent", ascentLine(party.ascentRound)));
     }
-    strip.appendChild(h("span", "party-queued", lookingLabel(party.queuedMs, party.teams)));
+    strip.appendChild(
+      h(
+        "span",
+        "party-queued",
+        lookingLabel(party.mode, party.teamSize, party.queuedMs, party.teams),
+      ),
+    );
   }
   if (showsClosed(party)) {
     strip.appendChild(h("span", "party-closed", PARTY_CLOSED));

@@ -7,6 +7,7 @@ import {
   isTeamQueueMode,
   parseQueueTicket,
   QUEUE_MODES,
+  TEAM_ARENA_SIZES,
   teamQueueModeOf,
   teamSizeOf,
   type QueueTicket,
@@ -179,11 +180,20 @@ describe("isTeamArena (#2107)", () => {
 
 describe("teamQueueModeOf (#1766)", () => {
   it("queues a team mode's lobby, and never a Random Arena's or a Hosted Game's", () => {
-    expect(teamQueueModeOf("team-arena")).toBe("team-arena-4v4");
-    expect(teamQueueModeOf("heroes-ascent")).toBe("heroes-ascent");
-    expect(teamQueueModeOf("gvg")).toBe("gvg");
-    expect(teamQueueModeOf("random-arena")).toBeUndefined();
-    expect(teamQueueModeOf("hosted-game")).toBeUndefined();
+    expect(teamQueueModeOf("heroes-ascent", 8)).toBe("heroes-ascent");
+    expect(teamQueueModeOf("gvg", 8)).toBe("gvg");
+    expect(teamQueueModeOf("random-arena", 4)).toBeUndefined();
+    expect(teamQueueModeOf("hosted-game", 4)).toBeUndefined();
+  });
+
+  it("queues a Team Arena at its size, and at none it does not play (#2107)", () => {
+    expect(TEAM_ARENA_SIZES.map((size) => teamQueueModeOf("team-arena", size))).toEqual([
+      "team-arena-2v2",
+      "team-arena-4v4",
+      "team-arena-8v8",
+    ]);
+    expect(teamQueueModeOf("team-arena", 1)).toBeUndefined();
+    expect(teamQueueModeOf("team-arena", 3)).toBeUndefined();
   });
 });
 

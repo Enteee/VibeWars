@@ -112,7 +112,7 @@ describe("the party strip's party (#1526)", () => {
 
   it("says how long a queued party has looked for a team (#1766)", () => {
     expect(partyOf(lobby([player("me")]), 65_000, 2)).toMatchObject({ queuedMs: 65_000, teams: 2 });
-    expect(lookingLabel(65_000, undefined)).toBe("Looking for a team… 1:05");
+    expect(lookingLabel("gvg", 8, 65_000, undefined)).toBe("Looking for a team… 1:05");
   });
 
   it("carries a queued Heroes' Ascent party's round from its lobby (#1996)", () => {
@@ -121,11 +121,20 @@ describe("the party strip's party (#1526)", () => {
   });
 
   it("says how many teams are searching, its own included (#1881)", () => {
-    expect(lookingLabel(65_000, 1)).toBe("Looking for a team… 1:05 · 1 team searching");
-    expect(lookingLabel(65_000, 2)).toBe("Looking for a team… 1:05 · 2 teams searching");
+    expect(lookingLabel("gvg", 8, 65_000, 1)).toBe("Looking for a team… 1:05 · 1 team searching");
+    expect(lookingLabel("gvg", 8, 65_000, 2)).toBe("Looking for a team… 1:05 · 2 teams searching");
+  });
+
+  it("names a Team Arena's size (#2107)", () => {
+    expect(lookingLabel("team-arena", 2, 65_000, undefined)).toBe(
+      "Team Arena 2v2 — searching… 1:05",
+    );
+    expect(lookingLabel("team-arena", 8, 65_000, 2)).toBe(
+      "Team Arena 8v8 — searching… 1:05 · 2 teams searching",
+    );
   });
 
   it("says the time alone before the queue has heard a team, a follower's own leader included (#1881)", () => {
-    expect(lookingLabel(65_000, 0)).toBe("Looking for a team… 1:05");
+    expect(lookingLabel("gvg", 8, 65_000, 0)).toBe("Looking for a team… 1:05");
   });
 });

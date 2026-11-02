@@ -1181,6 +1181,8 @@ export interface WireLobbyNote {
 export const LOBBY_REFUSALS = [
   "protocol-mismatch",
   "lobby-full",
+  // A Team Arena's (#2107): its party already has as many humans as a side plays.
+  "party-full",
   "host-left",
   // A queued lobby's (#871): no proof, one that does not verify, or one
   // brought to a coded lobby; a ticket already seated; the group never filled.

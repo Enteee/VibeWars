@@ -90,7 +90,8 @@ const ASCENT_FINALE_ONLY: readonly string[] = ["hall-of-heroes"];
 /**
  * Each lobby mode's map ids (#1526), in `arenaIds`' order, as `createLobbyHost` wants them: a
  * team mode's only those that suit its team size (#2108), so its draw never seats 8 on a map
- * for 4. A Hosted Game's are every map until its host picks a size (#2104).
+ * for 4. A Hosted Game's and a Team Arena's are every one of every size: the lobby keeps those
+ * of the size its host picks (#2104, #2107).
  */
 export function modeMapIds(): Record<LobbyMode, string[]> {
   const of = (mode: LobbyMode, size?: number): string[] => {
@@ -103,7 +104,7 @@ export function modeMapIds(): Record<LobbyMode, string[]> {
   };
   return {
     "random-arena": of("random-arena"),
-    "team-arena": teamArenaMapIds(teamSizeOf("team-arena-4v4")),
+    "team-arena": of("team-arena"),
     "heroes-ascent": of("heroes-ascent", teamSizeOf("heroes-ascent")).filter(
       (id) => !ASCENT_FINALE_ONLY.includes(id),
     ),

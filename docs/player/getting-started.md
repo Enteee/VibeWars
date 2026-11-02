@@ -111,12 +111,14 @@ opens the [Team Lobby](modes.md#team-lobby): propose a Team Build there,
 click a card, which shows each member's weapons and skills, to vote
 for one, then click a seat to take one of its characters.
 
-On **Team Arena** (4 a side), **Heroes' Ascent** and **GvG** (8 a side)
+On **Team Arena** (2, 4 or 8 a side, the host's **Team size**),
+**Heroes' Ascent** and **GvG** (8 a side)
 your lobby is one side, your party, and there is no Start or bot count:
 the host presses **Find a match**. The Team Lobby comes first, with only
 Team Builds of exactly that size; every seat nobody claims is a bot.
 Then the party is queued, and the party strip says **Looking for a
-team…** with the time waited and how many teams of that mode are
+team…** (in Team Arena, **Team Arena 2v2 — searching…** with its size)
+with the time waited and how many teams of that mode are
 searching, yours included: `1:05 · 2 teams searching`. Closing the
 host's tab takes the party out of the queue at once. When another
 queued team of the same mode turns up, you play them on one of the

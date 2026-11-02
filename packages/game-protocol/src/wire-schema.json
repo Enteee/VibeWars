@@ -3711,6 +3711,7 @@
         { "literal": "not-admitted" },
         { "literal": "not-host" },
         { "literal": "not-pickable" },
+        { "literal": "party-full" },
         { "literal": "protocol-mismatch" },
         { "literal": "slot-taken" },
         { "literal": "ticket-used" }
@@ -4264,6 +4265,7 @@
         { "name": "targetSessionId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
+    "TeamArenaSize": { "union": [{ "literal": 2 }, { "literal": 4 }, { "literal": 8 }] },
     "TicketParty": {
       "properties": [
         { "name": "consents", "optional": false, "type": { "array": "string" } },

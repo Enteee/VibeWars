@@ -37,11 +37,19 @@ const TEAM_SIZES: Readonly<Record<QueueMode, number>> = {
   gvg: 8,
 };
 
-const TEAM_ARENA_MODES: ReadonlySet<QueueMode> = new Set([
-  "team-arena-2v2",
-  "team-arena-4v4",
-  "team-arena-8v8",
-]);
+/** The sizes a Team Arena plays (#2107): its leader picks one. */
+export const TEAM_ARENA_SIZES = [2, 4, 8] as const;
+
+/** One of `TEAM_ARENA_SIZES`. */
+export type TeamArenaSize = (typeof TEAM_ARENA_SIZES)[number];
+
+const TEAM_ARENA_MODE_OF: Readonly<Record<TeamArenaSize, QueueMode>> = {
+  2: "team-arena-2v2",
+  4: "team-arena-4v4",
+  8: "team-arena-8v8",
+};
+
+const TEAM_ARENA_MODES: ReadonlySet<QueueMode> = new Set(Object.values(TEAM_ARENA_MODE_OF));
 
 const TEAM_QUEUE_MODES: ReadonlySet<QueueMode> = new Set([
   ...TEAM_ARENA_MODES,
@@ -52,6 +60,11 @@ const TEAM_QUEUE_MODES: ReadonlySet<QueueMode> = new Set([
 /** Players a side in `mode`; a match is twice this. */
 export function teamSizeOf(mode: QueueMode): number {
   return TEAM_SIZES[mode];
+}
+
+/** Whether `size` is one a Team Arena plays (#2107). */
+export function isTeamArenaSize(size: number): size is TeamArenaSize {
+  return TEAM_ARENA_SIZES.some((each) => each === size);
 }
 
 /** Whether `mode` is a Team Arena of any size (#2107). */
@@ -87,11 +100,12 @@ export function inPartyOrder(members: readonly string[]): boolean {
 
 /**
  * A lobby's `mode` as the queue mode its party queues for (#1766), if it
- * is a team mode. A Team Arena lobby queues at 4v4 (#2107).
+ * is a team mode: a Team Arena's at its `teamSize` (#2107), none at a
+ * size it does not play.
  */
-export function teamQueueModeOf(mode: LobbyMode): QueueMode | undefined {
+export function teamQueueModeOf(mode: LobbyMode, teamSize: number): QueueMode | undefined {
   if (mode === "team-arena") {
-    return "team-arena-4v4";
+    return isTeamArenaSize(teamSize) ? TEAM_ARENA_MODE_OF[teamSize] : undefined;
   }
   return mode === "heroes-ascent" || mode === "gvg" ? mode : undefined;
 }

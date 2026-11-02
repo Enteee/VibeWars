@@ -55,12 +55,12 @@ export const TEAM_SIZES: readonly TeamSize[] = [1, 2, 4, 8];
 export const DEFAULT_TEAM_SIZE: TeamSize = 4;
 
 /**
- * The sizes each rail screen plays (#2022). Team Arena is 4 until its
- * leader picks one (#2107); a builder's empty list disables the dropdown.
+ * The sizes each rail screen plays (#2022): Team Arena's its leader
+ * picks from (#2107). A builder's empty list disables the dropdown.
  */
 export const TEAM_SIZES_BY_ENTRY: Readonly<Record<RailEntry, readonly TeamSize[]>> = {
   "random-arena": [1, 2, 4],
-  "team-arena": [4],
+  "team-arena": [2, 4, 8],
   "heroes-ascent": [8],
   gvg: [8],
   "hosted-game": [1, 2, 4, 8],
@@ -163,13 +163,16 @@ export function teamSizeSelect(
 /**
  * The rail's team size field (#2022): a builder without sizes disables
  * it all. A lobby guest's is locked, as its modes are (#1526); in a
- * Hosted Game it shows the lobby's size, the host's pick (#2104).
+ * Hosted Game or a Team Arena it shows the lobby's size, the host's pick
+ * (#2104, #2107).
  */
 function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLElement {
   const guest = party !== undefined && !party.isHost;
   const noSizes = TEAM_SIZES_BY_ENTRY[active].length === 0;
   const lobbySize =
-    active === "hosted-game" && party?.mode === "hosted-game" ? party.teamSize : undefined;
+    (active === "hosted-game" || active === "team-arena") && party?.mode === active
+      ? party.teamSize
+      : undefined;
   const select = teamSizeSelect(active, lobbySize ?? loadTeamSize(), noSizes || guest, (size) => {
     teamSizeListener?.(size);
   });
