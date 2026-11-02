@@ -628,11 +628,6 @@ export interface ResurrectCompanionsEffect {
   readonly kind: "resurrect-companions";
   /** Centre to centre, world units. Walls do not block it. */
   readonly radius: number;
-  /**
-   * The source does not wear it itself (#2096): Protector's Defense's
-   * "allies adjacent to you".
-   */
-  readonly excludesSource?: true;
   readonly healthPercent: Magnitude;
 }
 
@@ -1144,6 +1139,11 @@ export interface Aura {
   readonly affects: "all" | "allies" | "foes";
   /** Centre to centre, world units. Walls do not block it. */
   readonly radius: number;
+  /**
+   * The source does not wear it itself (#2096): Protector's Defense's
+   * "allies adjacent to you".
+   */
+  readonly excludesSource?: true;
 }
 
 /**

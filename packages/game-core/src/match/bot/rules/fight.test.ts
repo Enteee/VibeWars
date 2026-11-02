@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { NO_RANKS } from "../../../skills/status.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import {
   BOT,
@@ -92,5 +93,42 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
       useSkillId: "assassin.mirrored-stance",
     });
     expect(askBot(at(["monk.word-of-healing"]), "a").useSkillId).toBeUndefined();
+  });
+
+  it("shouts one that only acts on a state only while it holds (#2096)", () => {
+    const at = (bar: readonly string[], foeFraction: number, corpse: boolean) => {
+      const sim = match([
+        body("a", 0, vec2(0, 0), { behaviour: BOT, skillBar: [...bar] }),
+        body("dead", 0, vec2(0, 200)),
+        body("foe", 1, vec2(300, 0)),
+      ]);
+      const foe = sim.get("foe")?.combatant;
+      const dead = sim.get("dead")?.combatant;
+      if (foe === undefined || dead === undefined) throw new Error("no bodies");
+      foe.health = foe.maxHealth * foeFraction;
+      dead.dead = corpse;
+      return sim;
+    };
+    const youWillDie = ["warrior.you-will-die"];
+    expect(askBot(at(youWillDie, 0.89, false), "a").useSkillId).toBe("warrior.you-will-die");
+    expect(askBot(at(youWillDie, 1, false), "a").useSkillId).toBeUndefined();
+    expect(askBot(at(["warrior.retreat"], 1, true), "a")).toMatchObject({
+      targetId: "a",
+      useSkillId: "warrior.retreat",
+    });
+    expect(askBot(at(["warrior.retreat"], 1, false), "a").useSkillId).toBeUndefined();
+  });
+
+  it("holding Protector's Defense, stands rather than walk to a foe out of reach (#2096)", () => {
+    const sim = match([
+      body("a", 0, vec2(0, 0), { behaviour: BOT, skillBar: [] }),
+      body("foe", 1, vec2(300, 0)),
+    ]);
+    sim.get("a")?.combatant.statuses.apply("protectors-defense", 7, "a", NO_RANKS);
+    expect(askBot(sim, "a")).toMatchObject({
+      targetId: "foe",
+      moveTo: undefined,
+      attackTargetId: undefined,
+    });
   });
 });

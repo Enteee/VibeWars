@@ -594,6 +594,12 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
       `${String(Math.round(definition.block.chance * 100))}% chance to block ${what}${below}${under}`,
     );
   }
+  // Protector's Defense's "allies adjacent to you" (#2096).
+  if (definition.projectsAura !== undefined) {
+    const { statusId, radius } = definition.projectsAura;
+    const around = AREA_TEXT.get(radius) ?? `within ${String(radius)}`;
+    parts.push(`allies ${around} to the bearer: ${statusText(statusId, ranks)}`);
+  }
   if (definition.criticalChanceBonus !== 0) {
     parts.push(`${signed(Math.round(definition.criticalChanceBonus * 100))}% critical chance`);
   }
@@ -708,6 +714,9 @@ function statusText(id: string, ranks: ReadonlyMap<string, number> | undefined):
   }
   if (definition.endsWhenBearerAttacksInMelee) {
     parts.push("ends if the bearer makes a melee attack");
+  }
+  if (definition.endsWhenBearerMoves) {
+    parts.push("ends if the bearer moves");
   }
   if (statAtTwelve(definition.damageTakenMultiplier) !== 1) {
     parts.push(`takes ${statText(definition.damageTakenMultiplier, ranks, damageTaken)} damage`);

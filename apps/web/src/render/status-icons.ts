@@ -454,6 +454,10 @@ export const STATUS_ICON: Readonly<Record<StatusId, string>> = {
   "soldiers-defense": icon("soldiers-defense"),
   "defensive-stance": icon("defensive-stance"),
   "auspicious-parry": icon("auspicious-parry"),
+  // Warrior conditions (#2096).
+  retreat: icon("retreat"),
+  "protectors-defense": icon("protectors-defense"),
+  "protectors-defense-block": icon("protectors-defense-block"),
 };
 
 const GAP = 2;
